@@ -1,7 +1,12 @@
 import type { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Account } from '{{alias.context}}/domain/aggregates/account.aggregate{{alias.ext}}';
+{{#unless refusals.named}}
 import { AccountError } from '{{alias.context}}/domain/errors/account.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { EmailNotVerified } from '{{alias.context}}/domain/errors/email-not-verified.error{{alias.ext}}';
+{{/if}}
 import type { AccountRepository } from '{{alias.context}}/domain/repositories/account.repository{{alias.ext}}';
 import { DisplayName } from '{{alias.context}}/domain/value-objects/display-name.vo{{alias.ext}}';
 import { EmailAddress } from '{{alias.context}}/domain/value-objects/email-address.vo{{alias.ext}}';
@@ -21,7 +26,12 @@ export class ProvisionAccountHandler implements CommandHandler<ProvisionAccountC
    */
   async execute({ actor, profile }: ProvisionAccountCommand): Promise<string> {
     if (!profile.emailVerified) {
+{{#if refusals.named}}
+      throw EmailNotVerified.forAccount(actor.id);
+{{/if}}
+{{#unless refusals.named}}
       throw AccountError.emailNotVerified(actor.id);
+{{/unless}}
     }
 
     const current = { email: EmailAddress.create(profile.email), displayName: DisplayName.create(profile.displayName) };

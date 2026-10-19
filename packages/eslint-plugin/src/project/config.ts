@@ -34,7 +34,7 @@ export interface Stack {
   /** Where a declared class states what it depends on: its constructor signature, or the list of its decorator. A config that does not say is `listed`. */
   readonly dependencies: 'signature' | 'listed';
   /** How a domain error is written: static factories on one class per concept, or a class per error. A config that does not say is `classes`. */
-  readonly refusals: 'factories' | 'classes';
+  readonly refusals: 'named' | 'factories' | 'classes';
   /** How the schemas of the HTTP contract are written: a shape declared once and shared, or one per route. A config that does not say is `per-route`. */
   readonly schemas: 'shared' | 'per-route';
   /** `named`: a value of a declared vocabulary and a number of the model are read through a name. A config that does not say is `free`, and both rules are silent. */

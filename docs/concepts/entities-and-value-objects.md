@@ -41,13 +41,19 @@ the rules that make it valid and the operations that belong to it.
 
 <!-- checked sample -->
 ```ts
-import { ConceptError, ValueObject } from '@ddd-ts-kit/kernel';
+import { DomainRefusal, ValueObject } from '@ddd-ts-kit/kernel';
 
-// contexts/appointments/domain/errors/appointment.error.ts
-export class AppointmentError extends ConceptError {
-  static invalidTimeSlot(startsAt: Date, endsAt: Date) {
-    return AppointmentError.refusal(
-      'INVALID_TIME_SLOT',
+// contexts/appointments/domain/errors/codes.ts
+export const AppointmentsCodes = {
+  InvalidTimeSlot: 'INVALID_TIME_SLOT',
+} as const;
+
+// contexts/appointments/domain/errors/invalid-time-slot.error.ts
+export class InvalidTimeSlot extends DomainRefusal {
+  readonly code = AppointmentsCodes.InvalidTimeSlot;
+
+  static forBounds(startsAt: Date, endsAt: Date) {
+    return InvalidTimeSlot.refusal(
       `A slot ends after it starts: ${startsAt.toISOString()} to ${endsAt.toISOString()} does not.`,
       { startsAt, endsAt },
     );
@@ -67,7 +73,7 @@ export class TimeSlot extends ValueObject<TimeSlotProps> {
 
   static create(startsAt: Date, endsAt: Date): TimeSlot {
     if (endsAt.getTime() <= startsAt.getTime()) {
-      throw AppointmentError.invalidTimeSlot(startsAt, endsAt);
+      throw InvalidTimeSlot.forBounds(startsAt, endsAt);
     }
 
     return new TimeSlot({ startsAt, endsAt });
@@ -182,7 +188,8 @@ The class form gathers all of that in one place:
 ```ts
 // domain/value-objects/money.vo.ts: npx ddd-ts-kit generate value-object billing Money
 import { ValueObject } from '@ddd-ts-kit/kernel';
-import { InvoiceError } from '@/contexts/billing/domain/errors/invoice.error';
+import { CurrencyMismatch } from '@/contexts/billing/domain/errors/currency-mismatch.error';
+import { InvalidAmount } from '@/contexts/billing/domain/errors/invalid-amount.error';
 
 export type MoneyProps = {
   readonly amount: number;
@@ -196,7 +203,7 @@ export class Money extends ValueObject<MoneyProps> {
 
   static of(amount: number, currency: string): Money {
     if (!Number.isInteger(amount)) {
-      throw InvoiceError.invalidAmount(amount);
+      throw InvalidAmount.withAmount(amount);
     }
 
     return new Money({ amount, currency });
@@ -208,7 +215,7 @@ export class Money extends ValueObject<MoneyProps> {
 
   add(other: Money): Money {
     if (other.currency !== this.currency) {
-      throw InvoiceError.currencyMismatch(this.currency, other.currency);
+      throw CurrencyMismatch.withCurrencies(this.currency, other.currency);
     }
 
     return Money.of(this.amount + other.amount, this.currency);
@@ -238,7 +245,7 @@ What the class gives, and the function cannot:
 | **Equality without identity** | every caller compares field by field, or compares references by mistake | `equals` compares the props: two equal values are interchangeable |
 | **Invariants checked once** | any object of the right shape passes, `{ amount: 0.5 }` included; each caller re-checks or forgets | the constructor is private, the static factory is the only way in: a `Money` that exists is valid |
 | **Behaviour next to the data** | `add`, `convert`, `isZero` become helpers in other files, found by searching | methods of the type they concern, found by completion |
-| **Refusals from static factories** | an invalid input goes through unnoticed | `Money.of` throws the refusal of its concept, `InvoiceError.invalidAmount(..)`, which the HTTP mapping, the audit trail and the tests know by its code; or returns it in a `Result` under `"stack.valueObjects": "result"` |
+| **Refusals from static factories** | an invalid input goes through unnoticed | `Money.of` throws a refusal named after what it refuses, `InvalidAmount.withAmount(..)`, which the HTTP mapping, the audit trail and the tests know by its code; or returns it in a `Result` under `"stack.valueObjects": "result"` |
 | **Immutability** | a `readonly` type is a promise of the compiler only: any holder can still spread and change it | the props are frozen by `ValueObject`, an operation returns a new instance (`domain/value-object-immutability`) |
 | **Recognised at the boundary** | a mapper cannot tell a `Money` from any object with two such fields | `value instanceof Money` in a mapper or a serializer; `toJSON()` gives the props to a read model or a log |
 
@@ -307,8 +314,8 @@ export const evolve = (state: InvoiceState, status: string): InvoiceState => ({ 
 What is reported, by decision, with what to write instead:
 
 ```ts
-// a decision answered as a record: the domain refuses by throwing the refusal of its concept,
-// `throw InvoiceError.refused(reason)`, or names the decision as a value object,
+// a decision answered as a record: the domain refuses by throwing a refusal named after it,
+// `throw InvoiceRefused.becauseOf(reason)`, or names the decision as a value object,
 // `Decision.refused(reason)`, whose class says which decisions exist
 export const decide = (reason: string) => ({ kind: 'refused' as const, reason });
 
@@ -330,12 +337,13 @@ compare. A value of the glossary that the model computes with is a value object:
 `MeasuredOutcome` and `OccupancyFigures` of the analytics context, which the occupancy measure
 reads and answers. Each checks its rules once, in its factory: `MeasuredOutcome.of` refuses an
 end before the start, `OccupancyFigures.of` a figure below zero and fewer appointments held than
-completed and missed ones, both through a factory of `OccupancyError`:
+completed and missed ones, each with a refusal of its own, `OutcomePeriodInverted` and
+`FiguresInconsistent`:
 
 ```ts
 static of(state: OutcomeState, startsAt: Date, endsAt: Date): MeasuredOutcome {
   if (endsAt.getTime() < startsAt.getTime()) {
-    throw OccupancyError.outcomeEndsBeforeStart(startsAt.toISOString(), endsAt.toISOString());
+    throw OutcomePeriodInverted.forPeriod(startsAt.toISOString(), endsAt.toISOString());
   }
 
   return new MeasuredOutcome({ state, startsAt: new Date(startsAt), endsAt: new Date(endsAt) });
@@ -375,14 +383,19 @@ An entity is defined by a thread of continuity. Its class protects that thread:
 
 <!-- checked sample -->
 ```ts
-import { ConceptError, Entity, ValueObject } from '@ddd-ts-kit/kernel';
+import { DomainRefusal, Entity, ValueObject } from '@ddd-ts-kit/kernel';
 
-// contexts/calendars/domain/errors/calendar.error.ts
-export class CalendarError extends ConceptError {
-  static timeOffCanOnlyShrink(timeOffId: string) {
-    return CalendarError.refusal('TIME_OFF_CAN_ONLY_SHRINK', `Time off ${timeOffId} can only be shortened.`, {
-      timeOffId,
-    });
+// contexts/calendars/domain/errors/codes.ts
+export const CalendarsCodes = {
+  TimeOffCanOnlyShrink: 'TIME_OFF_CAN_ONLY_SHRINK',
+} as const;
+
+// contexts/calendars/domain/errors/time-off-can-only-shrink.error.ts
+export class TimeOffCanOnlyShrink extends DomainRefusal {
+  readonly code = CalendarsCodes.TimeOffCanOnlyShrink;
+
+  static forTimeOff(timeOffId: string) {
+    return TimeOffCanOnlyShrink.refusal(`Time off ${timeOffId} can only be shortened.`, { timeOffId });
   }
 }
 
@@ -431,7 +444,7 @@ export class TimeOff extends Entity<string> {
 
   shortenTo(period: Period): void {
     if (!this.state.period.contains(period)) {
-      throw CalendarError.timeOffCanOnlyShrink(this.id);
+      throw TimeOffCanOnlyShrink.forTimeOff(this.id);
     }
 
     this.state = { ...this.state, period };
@@ -498,12 +511,13 @@ table of its own with a technical key the domain never sees.
   nothing from a wrapper class. Wrap what has validity rules, behaviour, or a real risk of
   confusion.
 - **Throw, or `Result`.** The generated value object throws from `create`, as an aggregate
-  method does: `throw PersonError.invalidEmail(raw)`, and the caller takes the value with no
+  method does: `throw InvalidEmail.forAddress(raw)`, and the caller takes the value with no
   `unwrap`. A project that prefers expected failures as values says `"stack.valueObjects":
-  "result"`: `create` returns `err(PersonError.invalidEmail(raw))` and the caller unwraps it; a
+  "result"`: `create` returns `err(InvalidEmail.forAddress(raw))` and the caller unwraps it; a
   config without the key is read that way, and `ddd-ts-kit value-objects` moves such a project to
-  throwing factories ([CONFIG.md](../CONFIG.md#stack)). Either way the refusal is built by a
-  factory of the error class of the concept the value describes, not a class per value object.
+  throwing factories ([CONFIG.md](../CONFIG.md#stack)). Either way the refusal is a class named
+  after what it refuses, `InvalidEmail`, built by one of its factories: not an error class per
+  value object.
 - **Immutability is checked syntactically.** `domain/value-object-immutability` sees readonly
   properties and writes to `this`; it does not see a mutable object held in a readonly field
   (a `Date` can still be mutated through its methods, an array can be pushed to). Hold values

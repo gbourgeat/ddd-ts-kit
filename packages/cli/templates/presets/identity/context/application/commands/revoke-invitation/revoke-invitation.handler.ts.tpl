@@ -1,7 +1,12 @@
 import type { Access } from '@ddd-ts-kit/auth';
 import type { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+{{#unless refusals.named}}
 import { InvitationError } from '{{alias.context}}/domain/errors/invitation.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { UnknownInvitation } from '{{alias.context}}/domain/errors/unknown-invitation.error{{alias.ext}}';
+{{/if}}
 import type { DelegationRepository } from '{{alias.context}}/domain/repositories/delegation.repository{{alias.ext}}';
 import type { InvitationRepository } from '{{alias.context}}/domain/repositories/invitation.repository{{alias.ext}}';
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
@@ -31,7 +36,12 @@ export class RevokeInvitationHandler implements CommandHandler<RevokeInvitationC
     const invitation = await this.invitationRepository.findById(invitationId);
 
     if (invitation?.organisationId !== organisationId) {
+{{#if refusals.named}}
+      throw UnknownInvitation.forReference();
+{{/if}}
+{{#unless refusals.named}}
       throw InvitationError.notFound();
+{{/unless}}
     }
 
     invitation.revoke(now);

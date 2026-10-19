@@ -135,7 +135,7 @@ const FASTIFY_STACK = {
   audit: 'on',
   errors: 'none',
   logger: 'stdout',
-  refusals: 'factories',
+  refusals: 'named',
   routes: 'controllers',
   representations: 'negotiated',
   forms: 'on',

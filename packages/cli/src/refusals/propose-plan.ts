@@ -1,6 +1,7 @@
 import type { Config } from '../config/index.js';
-import { splitWords, toName } from '../naming/index.js';
 import type { Workspace } from '../workspace/index.js';
+import { aggregatesOf } from './aggregates-of.js';
+import { conceptNamed } from './concept-named.js';
 import { factoryNameFor } from './factory-name-for.js';
 import type { LegacyError } from './legacy-error.js';
 import type { MigrationPlan } from './migration-plan.js';
@@ -20,7 +21,7 @@ export function proposePlan(errors: readonly LegacyError[], tree: Tree): Migrati
   const contexts: Record<string, PlannedFactory[]> = {};
 
   for (const error of errors) {
-    const concept = conceptOf(error, aggregatesOf(tree, error.context));
+    const concept = conceptNamed(error.className, aggregatesOf(tree, error.context));
 
     (contexts[error.context] ??= []).push({
       class: error.className,
@@ -32,26 +33,4 @@ export function proposePlan(errors: readonly LegacyError[], tree: Tree): Migrati
   }
 
   return { contexts };
-}
-
-function aggregatesOf({ ws, config }: Tree, context: string): string[] {
-  return ws
-    .list(`${config.contextsDir}/${context}/domain/aggregates`)
-    .filter((name) => name.endsWith('.aggregate.ts'))
-    .map((name) => toName(name.replace(/\.aggregate\.ts$/, '')).pascal);
-}
-
-/** The longest aggregate name the words of the class start or end with. */
-function conceptOf(error: LegacyError, aggregates: readonly string[]): string {
-  const words = splitWords(error.className.replace(/Error$/, '')).join(' ');
-
-  const named = aggregates
-    .filter((aggregate) => {
-      const subject = splitWords(aggregate).join(' ');
-
-      return words === subject || words.startsWith(`${subject} `) || words.endsWith(` ${subject}`);
-    })
-    .sort((a, b) => b.length - a.length);
-
-  return named[0] ?? '';
 }

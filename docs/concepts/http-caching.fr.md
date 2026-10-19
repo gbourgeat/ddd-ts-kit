@@ -1,5 +1,5 @@
 [English](http-caching.md) · **Français**
-<!-- translation-of: http-caching.md sha256:3d8d826af27fabd1 -->
+<!-- translation-of: http-caching.md sha256:c3ebc75fddcbe67d -->
 
 # Cache HTTP
 
@@ -203,7 +203,7 @@ import {
   AggregateRoot,
   AuthorizedCommand,
   Clock,
-  ConceptError,
+  DomainRefusal,
   expectVersion,
   type Actor,
 } from '@ddd-ts-kit/kernel';
@@ -217,8 +217,9 @@ declare abstract class CalendarRepository {
   findById(id: string): Promise<Calendar | undefined>;
   save(calendar: Calendar): Promise<void>;
 }
-declare class CalendarError extends ConceptError {
-  static unknown(calendarId: string): CalendarError;
+declare class UnknownCalendar extends DomainRefusal {
+  readonly code: 'UNKNOWN_CALENDAR';
+  static forCalendar(calendarId: string): UnknownCalendar;
 }
 
 const permissions = definePermissions('scheduling', { 'calendar.set-opening-hours': { description: 'Set opening hours' } });
@@ -249,7 +250,7 @@ export class SetOpeningHoursHandler implements CommandHandler<SetOpeningHoursCom
     const calendar = await this.calendars.findById(command.calendarId);
 
     if (calendar === undefined) {
-      throw CalendarError.unknown(command.calendarId);
+      throw UnknownCalendar.forCalendar(command.calendarId);
     }
 
     // PreconditionFailedError, répondue 412, quand quelqu'un a modifié le calendrier depuis cette lecture

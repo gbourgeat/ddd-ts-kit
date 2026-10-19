@@ -1,7 +1,7 @@
 import { Access } from '@ddd-ts-kit/auth';
 import type { Actor, Clock, IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { UnknownCalendar } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
 import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import { SchedulerService } from '@/contexts/scheduling/domain/services/scheduler.service';
@@ -28,7 +28,7 @@ export class BookAppointmentHandler implements CommandHandler<BookAppointmentCom
     const calendar = await this.calendarRepository.findById(calendarId);
 
     if (calendar === undefined) {
-      throw CalendarError.unknown(calendarId);
+      throw UnknownCalendar.forCalendar(calendarId);
     }
 
     const now = this.clock.now();

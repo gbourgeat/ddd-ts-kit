@@ -91,12 +91,14 @@ describe('init --preset identity', () => {
     const prisma = initFailure('--orm', 'prisma', '--preset', 'identity');
     const anonymous = initFailure('--authn', 'none', '--preset', 'identity');
     const unknown = initFailure('--preset', 'billing');
+    const classes = initFailure('--refusals', 'classes', '--preset', 'identity');
 
     expect(prisma.message).toBe('The identity preset is not written for "stack.orm": "prisma".');
     expect(prisma.fix).toContain('--orm knex or --orm drizzle');
     expect(anonymous.message).toBe('The identity preset is not written for "stack.authn": "none".');
     expect(anonymous.fix).toContain('--authn jwt or --authn keycloak');
     expect(unknown.message).toBe('Unknown preset "billing".');
+    expect(classes.fix).toContain('--refusals named or --refusals factories');
   });
 
   it('is written once when it is named twice', () => {
@@ -187,5 +189,34 @@ describe('generate context --preset identity', () => {
     expect(result.code).not.toBe(0);
     expect(result.stderr).toContain('The context identity is written from the identity preset already');
     expect(fs.existsSync(path.join(root, 'src/contexts/people'))).toBe(false);
+  });
+});
+
+describe('init --preset identity, the form of its refusals', () => {
+  it('writes one class per refusal under the codes of the context, or one error class per concept under factories', () => {
+    const errors = `${CONTEXT}/domain/errors`;
+    const named = initProject('--preset', 'identity');
+    const factories = initProject('--refusals', 'factories', '--preset', 'identity');
+    const exists = (root: string, file: string) => fs.existsSync(path.join(root, errors, file));
+
+    expect(read(named, `${errors}/codes.ts`)).toContain("  DeactivatedAccount: 'ACCOUNT_DEACTIVATED',");
+
+    expect(read(named, `${errors}/unknown-member.error.ts`)).toContain('readonly code = IdentityCodes.UnknownMember;');
+
+    expect(read(named, `${CONTEXT}/domain/aggregates/member.aggregate.ts`)).toContain(
+      'throw LastOwner.forOrganisation(',
+    );
+
+    expect(read(named, `${CONTEXT}/domain/aggregates/member.aggregate.ts`)).not.toContain('MemberError');
+    expect(exists(named, 'member.error.ts')).toBe(false);
+    expect(cli(factories, 'check').stdout).toContain('0 errors, 0 warnings, 0 suppressions');
+    expect(read(factories, `${errors}/member.error.ts`)).toContain('export class MemberError extends ConceptError {');
+
+    expect(read(factories, `${CONTEXT}/domain/aggregates/member.aggregate.ts`)).toContain(
+      'throw MemberError.lastOwner(',
+    );
+
+    expect(exists(factories, 'codes.ts')).toBe(false);
+    expect(exists(factories, 'unknown-member.error.ts')).toBe(false);
   });
 });

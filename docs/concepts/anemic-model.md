@@ -68,7 +68,7 @@ Everything a domain expert would call a rule is in the handler. The consequences
 import {
   AggregateRoot,
   AuthorizedCommand,
-  ConceptError,
+  DomainRefusal,
   Repository,
   type Clock,
   type CommandHandler,
@@ -89,10 +89,17 @@ declare class AppointmentCancelled implements DomainEvent {
   readonly occurredAt: Date;
   readonly aggregateId: string;
 }
-declare class AppointmentError extends ConceptError {
-  static notFound(appointmentId: string): AppointmentError;
-  static alreadyCancelled(appointmentId: string): AppointmentError;
-  static cancellationWindowPassed(appointmentId: string, startsAt: Date): AppointmentError;
+declare class UnknownAppointment extends DomainRefusal {
+  readonly code: 'APPOINTMENT_NOT_FOUND';
+  static forAppointment(appointmentId: string): UnknownAppointment;
+}
+declare class AppointmentAlreadyCancelled extends DomainRefusal {
+  readonly code: 'APPOINTMENT_ALREADY_CANCELLED';
+  static forAppointment(appointmentId: string): AppointmentAlreadyCancelled;
+}
+declare class CancellationWindowPassed extends DomainRefusal {
+  readonly code: 'CANCELLATION_WINDOW_PASSED';
+  static forAppointment(appointmentId: string, startsAt: Date): CancellationWindowPassed;
 }
 declare class CancelAppointment extends AuthorizedCommand {
   readonly appointmentId: string;
@@ -127,13 +134,13 @@ export class Appointment extends AggregateRoot<string> {
 
   private assertNotCancelled(): void {
     if (this.state.status === 'cancelled') {
-      throw AppointmentError.alreadyCancelled(this.id);
+      throw AppointmentAlreadyCancelled.forAppointment(this.id);
     }
   }
 
   private assertCancellationStillFree(at: Date): void {
     if (this.state.slot.startsWithin(FREE_CANCELLATION_MS, at)) {
-      throw AppointmentError.cancellationWindowPassed(this.id, this.state.slot.startsAt);
+      throw CancellationWindowPassed.forAppointment(this.id, this.state.slot.startsAt);
     }
   }
 }
@@ -149,7 +156,7 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
   async execute(command: CancelAppointment): Promise<void> {
     const appointment = await this.appointments.findById(command.appointmentId);
     if (appointment === undefined) {
-      throw AppointmentError.notFound(command.appointmentId);
+      throw UnknownAppointment.forAppointment(command.appointmentId);
     }
 
     appointment.cancel(CancellationReason.of(command.reason), this.clock.now());
@@ -234,16 +241,17 @@ is written for it, and so is a human review focused on the domain layer
 1. Pick one rule in one handler. Write the domain spec first: given a state, when the
    intention, then the event or the error.
 2. Add the intention method on the aggregate and move the condition into it. Name the refusal
-   with `generate error <context> <Concept> <refusal>`, which adds a factory to the error class
-   of the concept:
+   with `generate error <context> <Refusal> <factory>`, which writes one class named after the
+   refusal, and its code in the list of the context:
 
    ```bash
-   npx ddd-ts-kit generate error appointments Appointment alreadyCancelled --code APPOINTMENT_ALREADY_CANCELLED
+   npx ddd-ts-kit generate error appointments AppointmentAlreadyCancelled forAppointment
    ```
 
-   It adds `AppointmentError.alreadyCancelled()` to `domain/errors/appointment.error.ts`, and
-   its case to the spec. Without `--code`, the code is the name of the refusal alone,
-   `ALREADY_CANCELLED`.
+   It writes `AppointmentAlreadyCancelled.forAppointment()` in
+   `domain/errors/appointment-already-cancelled.error.ts`, its code in `domain/errors/codes.ts`
+   and its case to the spec. Without `--code`, the code is the name of the refusal in constant
+   case, `APPOINTMENT_ALREADY_CANCELLED`.
 3. Replace the handler's branches by the single call. Its spec gets shorter: happy path, each
    error code, nothing saved or published on failure.
 4. Remove the setter or public property the handler was using. The compiler lists the other
@@ -261,7 +269,7 @@ if (appointment.startsAt.getTime() - Date.now() < 24 * 60 * 60 * 1000) {
 appointment.status = 'cancelled';
 
 // Write: one intention; the aggregate checks the rule on the instant it is given
-appointment.cancel(reason, this.clock.now()); // throws AppointmentError.cancellationWindowPassed
+appointment.cancel(reason, this.clock.now()); // throws CancellationWindowPassed
 ```
 
 ## When a thin model is fine

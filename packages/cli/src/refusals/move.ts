@@ -1,4 +1,4 @@
-/** One class per error on its way to a factory: what replaces it wherever it is named. */
+/** One class per error on its way to a factory, of a concept class or of a class of its own: what replaces it wherever it is named. */
 export interface Move {
   /** The class that disappears, for example `SlotTakenError`. */
   readonly className: string;
@@ -11,4 +11,9 @@ export interface Move {
   readonly context: string;
   readonly legacyPath: string;
   readonly code: string;
+  /**
+   * The class that takes its place is a refusal class of its own (`"stack.refusals": "named"`):
+   * it stands for the old one as a value too, and its factories set no code.
+   */
+  readonly ownClass?: boolean;
 }

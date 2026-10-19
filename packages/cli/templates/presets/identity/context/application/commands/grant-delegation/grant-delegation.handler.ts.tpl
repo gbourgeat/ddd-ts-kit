@@ -2,7 +2,12 @@ import type { Access } from '@ddd-ts-kit/auth';
 import type { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Delegation } from '{{alias.context}}/domain/aggregates/delegation.aggregate{{alias.ext}}';
+{{#unless refusals.named}}
 import { MemberError } from '{{alias.context}}/domain/errors/member.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { UnknownMember } from '{{alias.context}}/domain/errors/unknown-member.error{{alias.ext}}';
+{{/if}}
 import type { DelegationRepository } from '{{alias.context}}/domain/repositories/delegation.repository{{alias.ext}}';
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
 import { RoleRightsService } from '{{alias.context}}/domain/services/role-rights.service{{alias.ext}}';
@@ -29,7 +34,12 @@ export class GrantDelegationHandler implements CommandHandler<GrantDelegationCom
     await this.access.authorize(actor, {{context.camel}}Permissions['delegation.grant'], held);
 
     if ((await this.memberRepository.findOf(organisationId, terms.delegateId)) === undefined) {
+{{#if refusals.named}}
+      throw UnknownMember.forMembership(organisationId, terms.delegateId);
+{{/if}}
+{{#unless refusals.named}}
       throw MemberError.notFound(organisationId, terms.delegateId);
+{{/unless}}
     }
 
     const period = DelegationPeriod.create(terms.startsAt, terms.endsAt);

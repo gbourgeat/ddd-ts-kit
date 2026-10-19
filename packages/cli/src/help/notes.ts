@@ -17,9 +17,14 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    refused while the journal holds conflict markers, when two of them change the schema,
                    or when drizzle-kit now writes a generated one otherwise (edited by hand), the folder
                    then put back as it was
-  error-factories  moves a project from one class per error to static factories on one error class per
-                   concept: --plan writes error-factories.plan.json, where each class is given its concept;
-                   --apply follows it (classes, specs, every usage, "stack.refusals" in the config)
+  error-factories  moves the refusals of a project to one class per refusal (--to named, the default), from
+                   one class per error or from the factories of one error class per concept: --plan writes
+                   error-factories.plan.json, where each refusal is given a class (the PascalCase of its
+                   code, which it keeps) and a factory (for<Concept>), both editable; --apply follows it
+                   (codes.ts per context, one class file per refusal, specs, every usage, the concept
+                   classes left empty, "stack.refusals" in the config) and lists what it cannot rewrite
+                   (a bare <Concept>Error.is(error), CodeOf<typeof <Concept>Error>); --to factories moves
+                   one class per error to static factories on one error class per concept instead
   value-objects    moves the value objects of a project from a Result to factories that return the value or
                    throw: every create returning Result<T, E> returns T, err(..) is thrown, unwrap(..) of
                    them goes, specs assert expectRefusal(() => ..), "stack.valueObjects" becomes throwing

@@ -8,7 +8,7 @@ export const ROLES: readonly Role[] = [
   { directory: 'domain/value-objects', suffixes: ['.vo.ts'], oneConcept: true, specFor: ['.vo.ts'] },
   { directory: 'domain/vocabularies', suffixes: ['.vocabulary.ts'], oneConcept: true },
   { directory: 'domain/events', suffixes: ['.event.ts'], oneConcept: true },
-  { directory: 'domain/errors', suffixes: ['.error.ts'] },
+  { directory: 'domain/errors', suffixes: ['.error.ts'], files: ['codes.ts'] },
   { directory: 'domain/repositories', suffixes: ['.repository.ts'] },
   { directory: 'domain/services', suffixes: ['.service.ts'], specFor: ['.service.ts'] },
   {

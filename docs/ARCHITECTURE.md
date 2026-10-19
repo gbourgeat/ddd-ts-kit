@@ -80,7 +80,8 @@ src/
       value-objects/             *.vo.ts
       vocabularies/              *.vocabulary.ts   (closed vocabularies: an object `as const` and its union type)
       events/                    *.event.ts
-      errors/                    *.error.ts        (one class per concept; each refusal is a static factory)
+      errors/                    codes.ts          (the closed list of the codes of the context)
+                                 *.error.ts        (one class per refusal, built by its static factories)
       repositories/              *.repository.ts   (ports: abstract classes)
       services/                  *.service.ts      (stateless domain logic over several aggregates)
       state-machines/            *.state-machine.ts (the lifecycle of an aggregate: states, transitions, refusals)
@@ -250,7 +251,7 @@ the platform binds it at start-up. Why, and what each layer holds:
 | `tree/closed` | A context holds only the canonical directories, plus its declared `extraDirectories`, and no source file outside a role directory. |
 | `tree/context-doc` | Every context has a `CONTEXT.md` with the required sections (`Purpose`, `Classification`, `Ubiquitous language`, `Aggregates`, `Published events`, `Relationships`) and the classification declared in the config. |
 | `tree/documented-paths` | A path of a bounded context written as code in a Markdown file of `docs/architecture/` (a plan, a design note, a review) is a place the canonical tree allows, judged as `tree/closed` judges a file: its directories and the file itself. A path written relative to its context (it starts with `domain/`, `application/`, `infrastructure/`, `presentation/` or `published-language/`) names no context: it is reported only when every declared context refuses it, their extra directories considered. A path that does not exist yet is not reported, a plan names files to create; one that the tree refuses (`application/services/`) describes a design the code no longer has. Default severity `warn`. |
-| `naming/suffix` | A file in a role directory carries the role's suffix, in kebab-case. |
+| `naming/suffix` | A file in a role directory carries the role's suffix, in kebab-case. `domain/errors/codes.ts`, the code list of a context, is the one file named otherwise. |
 | `naming/one-concept-per-file` | One exported aggregate, entity, value object, event, handler, job or projection per file, and one declared class per role file. |
 | `naming/search-not-list` | A read that takes criteria, a scope or a page is a search. In a context, no method is named `list`, or `list` followed by an upper-case letter (`listByCustomer`), in a port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) nor in a class of `infrastructure/` or `test/fakes/`: it is named `search...`. Under `application/queries/`, no folder or file is named `list` or starts with `list-` or `list.`, and no class is named `List` or starts with `List` followed by an upper-case letter: the query is `Search<Things>Query` in `search-<things>/`. A property is not judged, nor `listAccessible`, which the `Authorizer` port of the kit requires; a read of one element or none stays `findById` or `findBy...`. |
 | `naming/business-name` | A variable, a loop variable, a destructured binding, a parameter (of a function, a method, a signature or an arrow) and a property (of a class, an interface or a type of an object) of `domain/` and `application/` of a context, and of the shared kernel outside `presentation/`, is named after the concept it holds, never by a generic word: `target`, `targets`, `data`, `item`, `items`, `obj`, `object`, `thing`, `things`, `stuff`, `info`, `element`, `el`, `tmp`, `temp`, `foo`, `bar`, `baz`. `businessNames.words` of the config replaces the list, `businessNames.allow` removes words from it. A key of an object literal follows the type it is written for and is not judged, nor the tests. ESLint fixes a variable built by `X.create(..)` or `new X(..)`, or read from a repository, renaming it with every use to the camel name of `X` (`appointment`) unless that name is taken; a loop variable is reported with the singular of its collection. |
@@ -263,7 +264,7 @@ the platform binds it at start-up. Why, and what each layer holds:
 | `test/helper-placed` | A file of a context's `test/unit/` or `test/integration/` is a spec (`*.spec.ts`, `*.test.ts`). A helper written among them is moved to the place of its kind: an arrangement several specs share to `test/worlds/*.world.ts`, test data to `test/builders/`, an in-memory port to `test/fakes/`. Default severity `warn`. |
 | `test/acceptance-black-box` | An acceptance spec (`test/acceptance/<story>.acceptance.spec.ts`) drives the application as a client does: it imports nothing from the source root but the builders of a context (`test/builders/`) and its `published-language/`. Its scenarios are written before the code of the story and assert what a client observes. Default severity `warn`. |
 | `test/coverage-governed` | Coverage cannot be gamed by exclusion. The test runner config reads what it measures and its thresholds from the `coverage` key of `ddd-ts-kit.config.json` through `governedCoverage` (`governedJestCoverage` under jest) of `@ddd-ts-kit/testing/coverage`: the four layers of every context, the files no spec loads included, each context and layer held to its floor from its first source file. Refused: `include`, `exclude`, `thresholds` or `ignoreClassMethods` written by hand in a `coverage` block (`collectCoverageFrom`, `coveragePathIgnorePatterns`, `coverageThreshold` under jest), the same set by a flag in a script of `package.json`, and a `v8 ignore`, `c8 ignore` or `istanbul ignore` comment in a production source that does not end with `-- ADR-NNNN: <reason>` naming an existing decision record. |
-| `language/glossary-term` | Every aggregate, entity, value object, domain service, domain event, command and query is named with terms of the `## Ubiquitous language` table of its context's `CONTEXT.md`, and under `"stack.refusals": "factories"` every error class of `domain/errors/` too (`AppointmentError` is named after `Appointment`). The glossary is written before the code. |
+| `language/glossary-term` | Every aggregate, entity, value object, domain service, domain event, command and query is named with terms of the `## Ubiquitous language` table of its context's `CONTEXT.md`, and under `"stack.refusals": "factories"` or `"named"` every class of `domain/errors/` too: `AppointmentError` is named after `Appointment`, `SlotTaken` after `Slot` and `Take`. A refusal class of `named` (one that extends `DomainRefusal`) may also use the qualifiers of a refusal, `invalid`, `unknown`, `already`, `too`, `no`, `missing` and `required` (`InvalidAppointment`, `BookingTooLate`); `codes.ts` holds no class and is not judged. The glossary is written before the code. |
 | `language/declared-vocabulary` | A value of a closed vocabulary the project declares, an object `as const` exported with the union type of its name (`domain/vocabularies/*.vocabulary.ts`, the `Role` of the platform) or a permission set of `definePermissions`, is read through it (`AppointmentStatus.NoShow`, `billingPermissions['invoice.issue']`), never written again as a string literal outside its declaration, a quoted key included (`[AppointmentStatus.NoShow]: ..`). Under `"stack.literals": "named"`, which `init` writes; a config that does not say keeps free literals. Where: the vocabulary of a context in that context only, the one of the platform in the platform and the route groups `*.routes.ts`, a permission id and a vocabulary of the shared kernel everywhere. Tests, published languages and the relationship schema (`defineSchema`) are not judged. In the persistence of a context (`infrastructure/persistence/`), the name of a column, a table or a schema is a word of the storage and is not judged: the first argument of a call (`text('note')`, `createTable('invoice')`, `.where('note', ..)`) and the value of `name`, `tableName` or `schema`; a stored value, the argument of `.default(..)` or a value compared in a query, is. A word of another language is not the context's and is not judged when its type says so, outside `domain/`: a key of an object typed `Record<T, ..>` and a string value of one typed `Record<.., T>` (by the annotation of its declaration or by `satisfies`; `as const` and `Readonly`, `Partial`, `Required` around allowed), and a literal written `'x' satisfies T`, where `T` is one type reference (`Payload['state']`, `typeof x`, no union) whose name is imported from a published language, imported as a type from a package, or imported from or declared in `infrastructure/anti-corruption/` or `infrastructure/external/`. There, the literal types of an interface or a type alias, which describe an outside record as it arrives, are not judged either. A key of a table typed by the context's own vocabulary, a comparison or a `case` without `satisfies`, and a value of the context in a translation table are still judged. Read as a vocabulary: each entry a key and a string literal, comments, either quote and `as const satisfies ..` allowed, next to `export type X = (typeof X)[keyof typeof X]`; a number, a spread or a computed entry leaves the object unread. |
 | `language/no-technical-name` | No `Manager`, `Helper`, `Util`, `Utils`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`, `Abstract`, `Dto`, `Entity`, `Model` in a name under `domain/` or in a use case name. |
 | `purity/no-system-clock` | No `new Date()` without argument, `Date.now()` or `performance.now()` in `domain/` or `application/`: time comes from the `Clock` port. |
@@ -280,13 +281,14 @@ the platform binds it at start-up. Why, and what each layer holds:
 | `domain/value-object-immutability` | A value object has only readonly properties and never assigns to itself outside its constructor. |
 | `domain/value-object-class` | Under `"stack.values": "classes"`, which `init` writes (a config without the key is `free` and the rule is silent), a value object is a class. A file of `domain/value-objects/` of a context, or a `*.vo.ts` of the shared kernel outside `presentation/`, exports exactly one class extending `ValueObject` of the kernel (directly, or through a class of the same file or of another value object file that does), whose constructor is private or protected (or inherited from `ValueObject`), built through static factories (a concrete class has a static method that is not private); it exports no function, no constant bound to an arrow or a function expression and no object literal, inline, by an export list or by default, and may export the types and interfaces of its props. In `domain/` of a context and in the shared kernel outside `presentation/`, no exported function answers a record of data: an object literal, in the expression of an arrow or in a `return` of its own body, that holds data (a literal, a parameter, an operation on them, a call of the language such as `Math.round` or `new Date`), no spread and nothing a call or `new` of the model built (`Money.of(..)`, `total.add(..)`); such a value is written as a value object class (`generate value-object`). A domain service, a state machine (`defineStateMachine(..)`), a specification answering a boolean or an object of functions, a record of value objects the function builds, a record derived by a spread and a function declaring a return type of a package are not concerned; a decision answered as a plain record is. Specs are not judged. |
 | `domain/no-generic-error` | `domain/` and `application/` never `throw new Error(...)`: a business failure is a `DomainError` subclass. |
-| `errors/through-factory` | Under `"stack.refusals": "factories"`, a domain error is built by a static factory of the error class of its concept: `throw AppointmentError.slotTaken(calendar.id, slot.startsAt)`. No `new` of a class imported from `domain/errors/`, in any file of a context, tests included. The errors of the kit, each one refusal under a fixed code (`NotFoundError`, `InvariantViolation`, `ValidationError`), are not concerned. |
-| `errors/constructor-not-public` | Under `"stack.refusals": "factories"`, the constructor of an error class of `domain/errors/` is not public: the class extends `ConceptError` of the kernel, whose constructor is protected, and declares none; a constructor it declares is private or protected. Refused: a public constructor, and a class that extends `DomainError` without a constructor, which inherits a public one. An abstract class is not judged. |
-| `errors/factory-name` | Under `"stack.refusals": "factories"`, a factory (a public static method of an error class that calls `refusal(..)`) is named after the refusal, in the words of the business: never `create`, `make`, `of`, `from`, `build`, `new`, `error`, `failure`, `fail`, `refusal`, `refuse`, nor a name holding a digit. Its code is a string literal in constant case, and is the name of the factory in constant case, alone or with the name of the concept before or after it: `AppointmentError.notFound` sets `NOT_FOUND`, `APPOINTMENT_NOT_FOUND` or `NOT_FOUND_APPOINTMENT`; `slotTaken` setting `BOOKING_FAILED` is reported. |
-| `errors/code-unique` | Under `"stack.refusals": "factories"`, a code names one refusal of a context: no two factories, and no two error classes, of the `domain/errors/` of one context set the same code, whichever form writes it (the first argument of `refusal(..)`, a `readonly code` field). The same code in two contexts is allowed: each context owns its language, and the error mapper gives a code one status. |
+| `errors/through-factory` | Under `"stack.refusals": "named"`, which `init` writes, and `"factories"`, a domain error is built by a static factory of its class: `throw SlotTaken.forCalendar(calendar.id, slot.startsAt)` under `named`, `throw AppointmentError.slotTaken(calendar.id, slot.startsAt)` under `factories`. No `new` of a class imported from `domain/errors/`, in any file of a context, tests included; under `named`, no `new` either of a class of the same file that extends `DomainRefusal`, in its own factories too: a factory builds with `refusal(message, facts)`. The errors of the kit, each one refusal under a fixed code (`NotFoundError`, `InvariantViolation`, `ValidationError`), are not concerned. |
+| `errors/constructor-not-public` | Under `"stack.refusals": "named"` or `"factories"`, the constructor of an error class of `domain/errors/` is not public: the class extends `DomainRefusal` (under `named`) or `ConceptError` (under `factories`) of the kernel, whose constructor is protected, and declares none; a constructor it declares is private or protected. Refused: a public constructor, and a class that extends `DomainError` without a constructor, which inherits a public one. An abstract class is not judged. |
+| `errors/factory-name` | A factory is a public static method of an error class that calls `refusal(..)`. Under `"stack.refusals": "named"`, the class says what is refused and the factory what the refusal is about: the class is never named `...Error` (`SlotTaken`, `InsufficientFunds`), and a factory starts with `for`, `with`, `because`, `on` or `at` followed by an upper-case letter, with no digit (`forCalendar`, `withNotice`, `becauseOf`, `onDate`, `atStart`; `slotTaken`, `create` and `forAccount2` are reported). The code is not read there: `errors/code-listed` holds it. Under `"factories"`, a factory is named after the refusal, in the words of the business: never `create`, `make`, `of`, `from`, `build`, `new`, `error`, `failure`, `fail`, `refusal`, `refuse`, nor a name holding a digit. Its code is a string literal in constant case, and is the name of the factory in constant case, alone or with the name of the concept before or after it: `AppointmentError.notFound` sets `NOT_FOUND`, `APPOINTMENT_NOT_FOUND` or `NOT_FOUND_APPOINTMENT`; `slotTaken` setting `BOOKING_FAILED` is reported. |
+| `errors/code-unique` | Under `"stack.refusals": "named"` or `"factories"`, a code names one refusal of a context: no two keys of `domain/errors/codes.ts` hold the same value, and no two factories, and no two error classes, of the `domain/errors/` of one context set the same code, whichever form writes it (a value of `codes.ts`, the first argument of `refusal(..)` in a concept class, a `readonly code` field). The same code in two contexts is allowed: each context owns its language, and the error mapper gives a code one status. |
+| `errors/code-listed` | Under `"stack.refusals": "named"`, which `init` writes, the codes of a context are one closed list, `domain/errors/codes.ts`: `export const SchedulingCodes = { SlotTaken: 'SLOT_TAKEN' } as const`, with its union type `SchedulingCode`. Every refusal class of `domain/errors/` (a class that extends `DomainRefusal`, an abstract one aside) reads its code from the list of its own context under its own name, `readonly code = SchedulingCodes.SlotTaken`, and `codes.ts` exists as soon as one such class does. Every key of the list is a refusal class of the context, and every value a string literal in constant case, usually the name of the class in constant case but not always: a migrated project keeps its codes, since the code is the contract. Refused: a refusal class without a code or with a code written another way (a string literal, another entry, the list of another context), a context with refusal classes and no `codes.ts`, a class the list does not hold, a list missing from `codes.ts` or not declared `as const`, a key that names no refusal class (a code nothing raises), a value not in constant case. |
 | `schema/presentation-only` | Under `"stack.schemas": "shared"`, a schema of the HTTP contract lives in `presentation/`: of its context, or of the shared kernel when several contexts answer with it. In the shared kernel outside `presentation/`, no import of a validation library (zod, class-validator, class-transformer, class-validator-jsonschema, valibot, arktype, TypeBox, `@ddd-ts-kit/validation`); in `domain/`, `application/`, `infrastructure/` and `published-language/` of a context, and in the shared kernel outside `presentation/`, no import of a file of `presentation/` of the shared kernel. Specs are not judged. |
 | `schema/no-duplicate-shape` | Under `"stack.schemas": "shared"`, one shape of the contract is declared once in its context: in the presentation layer of one context, or in it and `presentation/` of the shared kernel, no two DTO classes (of the module, extending nothing, without method, every property decorated) with the same properties, decorators and optionality, and no two object schemas (`z.object`, `v.object`, `Type.Object`) with the same entries, whatever their order and layout. Request parameters (`*.params.ts`, `*.query.ts`, `*.headers.ts`, objects assigned to `params`, `query` or `headers`) empty shapes and shapes that still carry a `TODO(domain)` of the generator (a search line starts as `{ id }`) or a `TODO(review)` are not judged. Two contexts may declare the same shape: an equal structure with two meanings is two concepts, and moving it to the shared kernel would couple contexts that stay extractable. The original is the declaration of the shared kernel, then of `presentation/http/shared/` of the context, then the first in path order; each copy is reported. |
-| `errors/known-code` | Under `"stack.refusals": "factories"`, every code a route (`*.route.ts`) or a controller (`*.controller.ts`) declares in `errors` exists: a factory or an error class of the context of the route sets it, a class outside the contexts (the platform, the shared kernel) does, or it is a code of the kit (`VALIDATION_FAILED`, `NOT_FOUND`, `CONFLICT`, `INVARIANT_VIOLATION`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_ACCEPTABLE`, `CONCURRENCY_CONFLICT`, `INVALID_CRITERIA`, `INVALID_PAGE_REQUEST`, `TIMEOUT`, `CIRCUIT_OPEN`, `BULKHEAD_FULL`, `ATTEMPTS_EXHAUSTED`, the conditions of a write, `PRECONDITION_FAILED`, `PRECONDITION_REQUIRED`, and the refusals of a file, `FILE_TOO_LARGE`, `UNSUPPORTED_MEDIA_TYPE`, `FILE_NOT_FOUND`, `FILE_REJECTED`, `INVALID_FILE_KEY`). A code another context sets does not count. |
+| `errors/known-code` | Under `"stack.refusals": "named"` or `"factories"`, every code a route (`*.route.ts`) or a controller (`*.controller.ts`) declares in `errors` exists: it is a value of the `domain/errors/codes.ts` of the context of the route, a factory or an error class of that context sets it, a class outside the contexts (the platform, the shared kernel) does, or it is a code of the kit (`VALIDATION_FAILED`, `NOT_FOUND`, `CONFLICT`, `INVARIANT_VIOLATION`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_ACCEPTABLE`, `CONCURRENCY_CONFLICT`, `INVALID_CRITERIA`, `INVALID_PAGE_REQUEST`, `TIMEOUT`, `CIRCUIT_OPEN`, `BULKHEAD_FULL`, `ATTEMPTS_EXHAUSTED`, the conditions of a write, `PRECONDITION_FAILED`, `PRECONDITION_REQUIRED`, and the refusals of a file, `FILE_TOO_LARGE`, `UNSUPPORTED_MEDIA_TYPE`, `FILE_NOT_FOUND`, `FILE_REJECTED`, `INVALID_FILE_KEY`). A code another context sets does not count. |
 | `persistence/migration-history` | Every migration of the migration tool the config names (drizzle-kit `migrations/*.sql`, knex and TypeORM `migrations/*`, Prisma `prisma/migrations/*/`) starts with the number that orders it, then what it does (`20261012093000_add-invoices`, written by `npm run db:generate <what-it-does>`), and no two share a number. A working migration, named `<timestamp>_working-<what-it-does>` (Prisma writes `working_`), is the one a worker generates in its worktree so that the specs of its branch run against the tables it changes: it is accepted only where the worker scope file `.ddd-ts-kit/worker.json` exists, and reported anywhere else, since the conductor deletes it and generates the real one on the trunk at merge. Under drizzle-kit, `meta/_journal.json` and the `.sql` files match one for one, the entries keep the order they were generated in (`idx` and `when` ascending: the migrator skips an entry older than the last one a database applied) and each snapshot was generated from the one of the entry before it (two snapshots with one parent are two branches merged without regenerating). |
 | `persistence/primary-key-order` | Under drizzle-kit, no migration (`migrations/*.sql`) changes a primary key in an order PostgreSQL refuses: it adds the new primary key of a table before the old one is dropped (a table has one primary key), or drops a column before the dropped primary key that holds it (the column takes the key with it, and the later `DROP CONSTRAINT` fails). A dropped constraint is a primary key when the snapshot the migration was generated from records it, or its name ends in `_pkey` or `_pk`. It reads the `ALTER TABLE` statements of PostgreSQL. drizzle-kit can write either order; `drizzle-generate` warns when it does, and this rule reports the migration until the old key is dropped first or the change is written with `--custom`. Default severity `warn`. |
 | `persistence/no-file-content` | No column of file content in a persistence schema or a migration (the persistence sources of the contexts and of the platform database, `migrations/`, `drizzle/`, `prisma/`): no binary type (`bytea`, `blob` and its sizes, `varbinary`, knex `.binary()`, a drizzle `customType` of `Buffer` or `Uint8Array`, a Prisma `Bytes` field) and no column of base64 text (a text column whose name says base64; the word in a cursor, an ETag, a comment or a URL is not a column). Files live in the `FileStorage` port of the kernel; a row keeps the `StoredFile` reference (key, size, media type, checksum). A small binary value that is not a file (a hash, a key) is a recorded deviation. |
@@ -379,7 +381,7 @@ it is cheap enough to run:
 
 | Analyzer | Holds | When |
 |---|---|---|
-| `ddd-ts-kit check` (zero dependency, text level) | alone, structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `persistence/migration-history`, `persistence/primary-key-order`, `tenancy/scoped-statement`, `context/no-cycle`, `authz/policy-asked`, `authz/granted`, `test/spec-required`, `test/builder-required`, `test/helper-placed`, `test/acceptance-black-box`, `test/coverage-governed`, `events/defined-in-published-language`, `events/name-declared-once`, `composition/only-in-module`, `declarations/barrel-current`, `declarations/port-adapter-wired`, `imports/alias-declared`, `imports/alias-only` and `imports/extension` in `test/` and `scripts/` as under the source root, the import that names a directory, the config side of `events/outbox-required` and of `governance/recorded-deviation` (decision records exist), and what must be unique in the project (consumer names, job names) or in a context (error codes, `errors/code-unique`), `errors/known-code` and `schema/no-duplicate-shape`, the lock of `event-sourcing/upcaster-required`. It also holds a fast approximation of every code rule below except `domain/*` (but `domain/value-object-class`, which it reads from the text of the files), `application/*` and the three code rules of `errors/*`; of `clean/blank-lines` it holds the `return` and the padded block only, and it holds nothing of `clean/formatted` | at every file write (editor hook), on staged files, in CI |
+| `ddd-ts-kit check` (zero dependency, text level) | alone, structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `persistence/migration-history`, `persistence/primary-key-order`, `tenancy/scoped-statement`, `context/no-cycle`, `authz/policy-asked`, `authz/granted`, `test/spec-required`, `test/builder-required`, `test/helper-placed`, `test/acceptance-black-box`, `test/coverage-governed`, `events/defined-in-published-language`, `events/name-declared-once`, `composition/only-in-module`, `declarations/barrel-current`, `declarations/port-adapter-wired`, `imports/alias-declared`, `imports/alias-only` and `imports/extension` in `test/` and `scripts/` as under the source root, the import that names a directory, the config side of `events/outbox-required` and of `governance/recorded-deviation` (decision records exist), and what must be unique in the project (consumer names, job names) or in a context (error codes, `errors/code-unique`), the code list of a context (`errors/code-listed`), `errors/known-code` and `schema/no-duplicate-shape`, the lock of `event-sourcing/upcaster-required`. It also holds a fast approximation of every code rule below except `domain/*` (but `domain/value-object-class`, which it reads from the text of the files), `application/*` and the three code rules of `errors/*`; of `clean/blank-lines` it holds the `return` and the padded block only, and it holds nothing of `clean/formatted` | at every file write (editor hook), on staged files, in CI |
 | `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, the imports of `context/*` and `context/extractable`, `purity/*`, `clean/*` but `clean/formatted` (`clean/blank-lines` through two rules of `@stylistic/eslint-plugin` and `clean/braces` through `curly`, which its presets enable), `domain/*`, `application/*`, `errors/through-factory`, `errors/constructor-not-public`, `errors/factory-name`, `authz/*` but `authz/policy-asked`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `aspects/*`, `tracing/*`, `domain-events/*`, `event-sourcing/*` but the lock of `event-sourcing/upcaster-required`, `schema/presentation-only`, `standard/*`, `ports/*`, `scheduling/*`, `lifecycle/*` (of `lifecycle/status-through-machine`, the writes one file shows; the machine left unimported is read by `ddd-ts-kit check` alone), `process/*`, `declarations/role-declared`, `declarations/constructor-injection` (which it also fixes, removing a redundant list), `test/no-mocks`, `imports/alias-only` and `imports/extension` (which it also fixes), `naming/business-name` (which it also fixes where the name is known), and the comment side of `governance/recorded-deviation`. `domain/*` but `domain/value-object-class`, `application/*` and those three rules of `errors/*` are held by it alone. Of `declarations/constructor-injection` and of the constructor side of `ports/no-concrete-dependency` it holds what one file shows: an interface or a type alias declared in another file and a constructor inherited from another class are read by `ddd-ts-kit check`. Of `domain-events/transactional-before-commit` it holds what one declared class shows; where the adapters of an `application/ports/` port live and the phase an explicit-style module file registers a handler in are held by `ddd-ts-kit check` alone. Authoritative when the two disagree | on staged files, in CI |
 | Biome (formatter only: its linter and its import organiser are off) | `clean/formatted`: where every token goes, at a line width of 120, with the `biome.json` that `init` writes; it also removes the padding of a block and never leaves a body on the line of its braces, which completes `clean/blank-lines` and `clean/braces`. ESLint enables no rule that decides the same thing | on staged files, in CI |
 | dependency-cruiser (resolved import graph) | the same boundaries through barrels and re-exports, cycles between files, orphans, undeclared dependencies; its configuration is generated from the config by `ddd-ts-kit depcruise-config` | in CI |
@@ -392,8 +394,8 @@ the compiler and the unit tests also run before every push.
 **Aggregates.** Private constructor, a `create` factory for birth and a `rehydrate` factory for
 loading. State changes through methods named after the business intention, never setters. One
 aggregate per transaction; another aggregate is referenced by id. Invariants are checked inside,
-and a violated one raises a `DomainError` with a stable `code`, built by a factory of the error
-class of its concept: `throw AppointmentError.slotTaken(calendar.id, slot.startsAt)`.
+and a violated one raises a `DomainError` with a stable `code`, built by a static factory of the
+class named after the refusal: `throw SlotTaken.forCalendar(calendar.id, slot.startsAt)`.
 
 ```ts
 // Instead of: a setter, and the rule lives in every caller that remembers it
@@ -405,12 +407,19 @@ invoice.pay(clock.now());
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, NamedDomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainRefusal, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
-// domain/errors/invoice.error.ts: one class per concept, one factory per refusal
-export class InvoiceError extends ConceptError {
-  static alreadyPaid(invoiceId: string) {
-    return InvoiceError.refusal('INVOICE_ALREADY_PAID', `Invoice ${invoiceId} is already paid.`, { invoiceId });
+// domain/errors/codes.ts: the closed list of the codes of the context
+export const BillingCodes = {
+  InvoiceAlreadyPaid: 'INVOICE_ALREADY_PAID',
+} as const;
+
+// domain/errors/invoice-already-paid.error.ts: one class per refusal, built by its static factories
+export class InvoiceAlreadyPaid extends DomainRefusal {
+  readonly code = BillingCodes.InvoiceAlreadyPaid;
+
+  static forInvoice(invoiceId: string) {
+    return InvoiceAlreadyPaid.refusal(`Invoice ${invoiceId} is already paid.`, { invoiceId });
   }
 }
 
@@ -450,7 +459,7 @@ export class Invoice extends AggregateRoot<string> {
 
   pay(at: Date): void {
     if (this.state.paidAt !== null) {
-      throw InvoiceError.alreadyPaid(this.id);
+      throw InvoiceAlreadyPaid.forInvoice(this.id);
     }
 
     this.state = { ...this.state, paidAt: at };
@@ -470,11 +479,19 @@ obsession is a defect: an email, an amount, a period are types.
 
 <!-- checked sample -->
 ```ts
-import { ConceptError, ValueObject } from '@ddd-ts-kit/kernel';
+import { DomainRefusal, ValueObject } from '@ddd-ts-kit/kernel';
 
-export class PersonError extends ConceptError {
-  static invalidEmail(raw: string) {
-    return PersonError.refusal('INVALID_EMAIL', `"${raw}" is not an email address.`, { raw });
+// domain/errors/codes.ts
+export const IdentityCodes = {
+  InvalidEmail: 'INVALID_EMAIL',
+} as const;
+
+// domain/errors/invalid-email.error.ts
+export class InvalidEmail extends DomainRefusal {
+  readonly code = IdentityCodes.InvalidEmail;
+
+  static forAddress(raw: string) {
+    return InvalidEmail.refusal(`"${raw}" is not an email address.`, { raw });
   }
 }
 
@@ -487,7 +504,7 @@ export class Email extends ValueObject<{ readonly address: string }> {
     const address = raw.trim().toLowerCase();
 
     if (!/^[^\s@]+@[^\s@]+$/.test(address)) {
-      throw PersonError.invalidEmail(raw);
+      throw InvalidEmail.forAddress(raw);
     }
 
     return new Email(address);
@@ -755,7 +772,7 @@ registration, its constructor is the list of what it is given, and it ends with 
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, AuthorizedCommand, Clock, ConceptError, Repository } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, AuthorizedCommand, Clock, DomainRefusal, Repository } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 
 declare class Invoice extends AggregateRoot<string> {
@@ -766,8 +783,9 @@ declare class PayInvoiceCommand extends AuthorizedCommand<void> {
   readonly invoiceId: string;
 }
 
-declare class InvoiceError extends ConceptError {
-  static notFound(invoiceId: string): InvoiceError;
+declare class UnknownInvoice extends DomainRefusal {
+  readonly code: 'INVOICE_NOT_FOUND';
+  static forInvoice(invoiceId: string): UnknownInvoice;
 }
 
 // domain/repositories/invoice.repository.ts: the port is the injection token
@@ -785,7 +803,7 @@ export class PayInvoiceHandler implements CommandHandler<PayInvoiceCommand> {
     const invoice = await this.invoices.findById(command.invoiceId);
 
     if (invoice === undefined) {
-      throw InvoiceError.notFound(command.invoiceId);
+      throw UnknownInvoice.forInvoice(command.invoiceId);
     }
 
     invoice.pay(this.clock.now());
@@ -879,24 +897,33 @@ See [Sagas and process managers](concepts/sagas-and-process-managers.md).
 transport statuses in one place. Infrastructure faults are plain errors and become a 5xx.
 Messages of caught errors never go into logs or spans (they quote data).
 
-A context has one error class per concept of its language (`AppointmentError`, `CalendarError`),
-which extends `ConceptError` of the kernel, and each refusal is a static factory of that class,
-named in the words of the business: the code that refuses reads as a sentence, and the refusals
-of a concept are read in one file. The refusal is about the concept the caller asked for, not
-the class that detects it: a calendar that finds no free slot refuses with
-`AppointmentError.slotTaken`. The refusals of a value object are factories of the concept it
-describes (`PersonError.invalidEmail(raw)`), thrown by its `create` as an aggregate throws its own
-(`"stack.valueObjects": "throwing"`, what `init` writes), or returned in a `Result` that the
-caller unwraps under `"result"`, the form of a config without the key. A
+A refusal of the model is a class of its own, named after what is refused, in the words of the
+business (`SlotTaken`, `InsufficientFunds`, `AppointmentEnded`, never `...Error`), in
+`domain/errors/<refusal>.error.ts`. It extends `DomainRefusal` of the kernel, reads its code from
+the closed list of the codes of its context, and is built by static factories named after what
+the refusal is about: `for`, `with`, `because`, `on` or `at`, then a word of the business
+(`SlotTaken.forCalendar`, `BookingTooLate.withNotice`, `AgendaUnreachable.becauseOf`). The code
+that refuses reads as a sentence, `throw SlotTaken.forCalendar(calendar.id, slot.startsAt)`, and
+the constructor is protected: a refusal exists only through a factory. The refusals of a value
+object are classes of the same list (`InvalidEmail.forAddress(raw)`), thrown by its `create` as an
+aggregate throws its own (`"stack.valueObjects": "throwing"`, what `init` writes), or returned in
+a `Result` that the caller unwraps under `"result"`, the form of a config without the key. A
 factory takes the facts of the refusal as typed parameters, more than three as one typed object,
-writes the message, and sets one code.
+writes the message and gives both to `refusal(message, facts)`. A class may have several
+factories, one per place the refusal is seen from, all under its one code.
+`ddd-ts-kit generate error <context> <Refusal> <factory>` writes the class, its entry in the
+list, the factory and its spec case, each when absent.
 
-- **The code is the contract.** It is a closed vocabulary: `CodeOf<typeof AppointmentError>` is
-  the union of the codes its factories set, `AppointmentError.is(error)` narrows to a union a
-  `switch` on `error.code` exhausts, and `isRefusal(error, 'SLOT_TAKEN')` knows a refusal
-  whatever its class. The HTTP mapper, the OpenAPI document, the audit trail, the spans, the logs
-  and the tests key on the code alone; nothing downstream names the class or the factory of one
-  refusal.
+- **The code is the contract.** `domain/errors/codes.ts` holds every code of the context, one
+  entry per refusal class under the name of the class: `SchedulingCodes` and its union type
+  `SchedulingCode` are the closed vocabulary the HTTP mapper, the OpenAPI document, the audit
+  trail, the spans, the logs and the tests key on; nothing downstream names the class or the
+  factory of a refusal. A class reads its code from the list under its own name,
+  `readonly code = SchedulingCodes.SlotTaken` (`errors/code-listed`), and a code names one
+  refusal of the context (`errors/code-unique`). The value is usually the name of the class in
+  constant case, but need not be: a published code stays as it is when the class is renamed.
+  `SlotTaken.is(error)` narrows what was caught to that refusal, with the facts of its factories,
+  and `isRefusal(error, 'SLOT_TAKEN')` knows a refusal whatever its class.
 - **The facts travel with the error, and are private.** `error.facts` holds what the factory was
   given, as plain data (text, numbers, booleans, dates, lists of them), for the code that catches
   it and for the tests. A fact leaves the process only when its factory names it,
@@ -904,55 +931,94 @@ writes the message, and sets one code.
   by default, and nothing that identifies a person is. The audit trail and the spans record the
   code alone, and no logger writes the facts. The message is answered as `detail`: it says
   nothing the caller did not send.
-- **A class that grows is a concept to split.** A file holds at most 350 lines, some twenty
-  factories. An error class that nears it serves two concepts: split it along a term of the
-  glossary (`BookingError` for the refusals of taking a slot, `AppointmentError` for the life of
-  the appointment), never along a technical line (`AppointmentValidationError`, `AppointmentError2`).
-- **Two forms.** `"stack.refusals": "factories"` is what `init` writes, and what the `errors/*`
-  rules judge. A config without the key was written when an error was a class built with `new`
-  (`class SlotTakenError extends DomainError { readonly code = 'SLOT_TAKEN' }`): it is read as
-  `classes`, nothing new is reported, and both forms run in either. `ddd-ts-kit error-factories`
-  moves a project: `--plan` proposes a concept for each class, `--apply` writes the factories,
-  merges the specs, rewrites every usage and sets the key.
+- **Two refusals are two classes.** A class is one refusal, seen from as many places as it has
+  factories (`SlotTaken.forCalendar`, `SlotTaken.atStart`); a second code is a second class
+  (`SlotOutsideAvailability`), never a factory of the first. A file holds one refusal class, and
+  the list grows by one entry.
+- **Three forms.** `"stack.refusals": "named"` is what `init` writes, and what the `errors/*`
+  rules judge. Two earlier forms keep working. Under `factories`, a context has one error class
+  per concept of its glossary, which extends `ConceptError`, each refusal a static factory of it
+  that gives its code to `refusal(code, message, facts)` (`AppointmentError.slotTaken(..)` sets
+  `SLOT_TAKEN`); the `errors/*` rules judge it by the rules of that form, and
+  `generate error <context> <Concept> <refusal>` adds a factory. A config without the key was
+  written when an error was a class built with `new` (`class SlotTakenError extends DomainError
+  { readonly code = 'SLOT_TAKEN' }`): it is read as `classes`, nothing new is reported, and
+  `generate domain-error` writes one. The three forms run in any project: `DomainRefusal`,
+  `ConceptError` and `DomainError` are one family, and the HTTP mapper reads the code of each.
+  `ddd-ts-kit error-factories` moves a project to `named` from either: `--plan` proposes, for each
+  refusal, a class (the PascalCase of its code, which it keeps, `Unknown<X>` for `X_NOT_FOUND`)
+  and a factory (`for` and its first parameter), both editable; `--apply` writes `codes.ts` and the classes, moves the specs, rewrites every
+  usage, removes the concept classes left empty and sets the key. `--to factories` is the earlier
+  move, from `classes` to concept classes.
 
 <!-- checked sample -->
 ```ts
-import { ConceptError, type CodeOf } from '@ddd-ts-kit/kernel';
+import { DomainRefusal, isRefusal } from '@ddd-ts-kit/kernel';
 
-// domain/errors/appointment.error.ts
-export class AppointmentError extends ConceptError {
-  static slotTaken(calendarId: string, startsAt: Date) {
-    return AppointmentError.refusal(
-      'SLOT_TAKEN',
-      `The slot starting at ${startsAt.toISOString()} is already held.`,
-      { calendarId, startsAt },
-    ).exposing('startsAt');
-  }
+// domain/errors/codes.ts: the closed list of the codes of the context
+export const SchedulingCodes = {
+  SlotTaken: 'SLOT_TAKEN',
+  AppointmentEnded: 'APPOINTMENT_ENDED',
+} as const;
 
-  static ended(appointmentId: string, status: string) {
-    return AppointmentError.refusal(
-      'APPOINTMENT_ENDED',
-      `Appointment ${appointmentId} is ${status} and does not change any more.`,
-      { appointmentId, status },
-    ).exposing('status');
+// 'SLOT_TAKEN' | 'APPOINTMENT_ENDED'
+export type SchedulingCode = (typeof SchedulingCodes)[keyof typeof SchedulingCodes];
+
+// domain/errors/slot-taken.error.ts
+export class SlotTaken extends DomainRefusal {
+  readonly code = SchedulingCodes.SlotTaken;
+
+  static forCalendar(calendarId: string, startsAt: Date) {
+    return SlotTaken.refusal(`The slot starting at ${startsAt.toISOString()} is already held.`, {
+      calendarId,
+      startsAt,
+    }).exposing('startsAt');
   }
 }
 
-// The closed vocabulary of the concept: 'SLOT_TAKEN' | 'APPOINTMENT_ENDED'
-export type AppointmentCode = CodeOf<typeof AppointmentError>;
+// domain/errors/appointment-ended.error.ts
+export class AppointmentEnded extends DomainRefusal {
+  readonly code = SchedulingCodes.AppointmentEnded;
 
-// Code that catches a refusal keys on its code: the switch is exhaustive, each case knows its facts.
+  static forAppointment(appointmentId: string, status: string) {
+    return AppointmentEnded.refusal(`Appointment ${appointmentId} is ${status} and does not change any more.`, {
+      appointmentId,
+      status,
+    }).exposing('status');
+  }
+}
+
+// Code that catches one refusal narrows to its class, and reads the facts of its factories.
 export function nextStep(error: unknown): string | undefined {
-  if (!AppointmentError.is(error)) {
-    return undefined;
+  if (SlotTaken.is(error)) {
+    return `Choose a slot other than ${error.facts.startsAt.toISOString()}.`;
   }
 
-  switch (error.code) {
-    case 'SLOT_TAKEN':
-      return `Choose a slot other than ${error.facts.startsAt.toISOString()}.`;
-    case 'APPOINTMENT_ENDED':
-      return `Book again: this appointment is ${error.facts.status}.`;
+  if (AppointmentEnded.is(error)) {
+    return `Book again: this appointment is ${error.facts.status}.`;
   }
+
+  return undefined;
+}
+
+// Code that handles every refusal of the context keys on the code: the switch is exhaustive.
+export function advice(code: SchedulingCode): string {
+  switch (code) {
+    case SchedulingCodes.SlotTaken:
+      return 'Choose another slot.';
+    case SchedulingCodes.AppointmentEnded:
+      return 'Book a new appointment.';
+  }
+}
+
+// What was caught is a refusal of the context when the list holds its code.
+export function adviceFor(error: unknown): string | undefined {
+  return isRefusal(error, SchedulingCodes) ? advice(error.code) : undefined;
+}
+
+// Whatever its class, a refusal is known by its code.
+export function isSlotTaken(error: unknown): boolean {
+  return isRefusal(error, SchedulingCodes.SlotTaken);
 }
 ```
 
@@ -1388,7 +1454,8 @@ blocking, for the conductor to settle or to attribute by naming its row. Any oth
 accepts a `TODO(review)` the same way.
 
 **Errors.** Exceptions or `Result`, never error codes mixed with return values, never `null`
-for "failed". One error class per concept, a named factory per refusal, the facts as data.
+for "failed". One class per refusal, built by factories named after what it is about, its code
+in the closed list of its context, the facts as data.
 
 **Types.** `strict` TypeScript. No `any`, no non-null assertion, no type assertion outside
 mappers, no suppressed diagnostics without a written reason.

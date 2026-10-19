@@ -1,5 +1,5 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
-import { OccupancyError } from '@/contexts/analytics/domain/errors/occupancy.error';
+import { FiguresInconsistent } from '@/contexts/analytics/domain/errors/figures-inconsistent.error';
 
 /** The occupancy of a calendar over a day. */
 export type OccupancyFiguresProps = {
@@ -26,11 +26,11 @@ export class OccupancyFigures extends ValueObject<OccupancyFiguresProps> {
    */
   static of(props: OccupancyFiguresProps): OccupancyFigures {
     if (!Object.values(props).every((figure) => Number.isInteger(figure) && figure >= 0)) {
-      throw OccupancyError.figuresInconsistent('are whole numbers, none below zero');
+      throw FiguresInconsistent.forRule('are whole numbers, none below zero');
     }
 
     if (props.appointmentsHeld < props.completed + props.noShows) {
-      throw OccupancyError.figuresInconsistent('hold at least the appointments completed and those missed');
+      throw FiguresInconsistent.forRule('hold at least the appointments completed and those missed');
     }
 
     return new OccupancyFigures(props);

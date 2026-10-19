@@ -1,5 +1,5 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { InvalidSlot } from '@/contexts/scheduling/domain/errors/invalid-slot.error';
 
 export type SlotProps = {
   readonly startsAt: Date;
@@ -15,15 +15,15 @@ export class Slot extends ValueObject<SlotProps> {
   /** The start, the end of the appointment, and the end of what it holds once the buffer is counted. */
   static create(startsAt: Date, endsAt: Date, heldUntil: Date): Slot {
     if ([startsAt, endsAt, heldUntil].some((instant) => Number.isNaN(instant.getTime()))) {
-      throw AppointmentError.invalidSlot('is made of real instants');
+      throw InvalidSlot.forRule('is made of real instants');
     }
 
     if (endsAt.getTime() <= startsAt.getTime()) {
-      throw AppointmentError.invalidSlot('ends after it starts');
+      throw InvalidSlot.forRule('ends after it starts');
     }
 
     if (heldUntil.getTime() < endsAt.getTime()) {
-      throw AppointmentError.invalidSlot('is held at least until it ends');
+      throw InvalidSlot.forRule('is held at least until it ends');
     }
 
     return new Slot({ startsAt: new Date(startsAt), endsAt: new Date(endsAt), heldUntil: new Date(heldUntil) });

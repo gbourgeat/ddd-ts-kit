@@ -19,17 +19,17 @@ export const ESLINT_ONLY_RULES: readonly { readonly id: string; readonly descrip
   {
     id: 'errors/through-factory',
     description:
-      'Under "stack.refusals": "factories", a domain error is built by a static factory of its concept class: no `new` of a class of domain/errors/ outside that class.',
+      'Under "stack.refusals": "factories" or "named", a domain error is built by a static factory of its class: no `new` of a class of domain/errors/ outside that class, nor of a class extending DomainRefusal.',
   },
   {
     id: 'errors/constructor-not-public',
     description:
-      'Under "stack.refusals": "factories", the constructor of an error class of domain/errors/ is not public: the class extends ConceptError and declares none, or declares it private or protected.',
+      'Under "stack.refusals": "factories" or "named", the constructor of an error class of domain/errors/ is not public: the class extends ConceptError or DomainRefusal and declares none, or declares it private or protected.',
   },
   {
     id: 'errors/factory-name',
     description:
-      'Under "stack.refusals": "factories", a static factory of an error class is named after the refusal, never `create`, `make`, `of` or `error1`, and its code is that name in constant case, alone or with the name of the concept.',
+      'Under "stack.refusals": "factories", a static factory of an error class is named after the refusal, never `create`, `make`, `of` or `error1`, and its code is that name in constant case, alone or with the name of the concept. Under "named", the class is named after the refusal, never `...Error`, and a factory after what the refusal is about: for, with, because, on or at, then an upper-case letter, no digit.',
   },
   {
     id: 'clean/no-magic-number',

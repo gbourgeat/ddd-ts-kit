@@ -59,4 +59,38 @@ export const IDENTITY_TERMS: readonly GlossaryRow[] = [
     meaning:
       'The system that authenticates the people (Keycloak): the application follows it, never stores its secrets',
   },
+  {
+    term: 'Owner',
+    meaning:
+      'The highest role: an owner may do everything in an organisation, appointing or changing another owner included',
+  },
+  {
+    term: 'Last owner',
+    meaning:
+      'The only owner an organisation has left: they are neither removed nor given another role, an organisation keeps one owner at least',
+  },
+  { term: 'Above', meaning: 'Higher in the order of roles: an owner is above an admin, an admin above a member' },
+  {
+    term: 'Own role',
+    meaning: 'The role of the member who acts: they do not change it themselves, and act on no one above it',
+  },
+  { term: 'Oneself', meaning: 'The member who acts, as the other party of their own act: no one delegates to oneself' },
+  {
+    term: 'Pending',
+    meaning:
+      'Said of an invitation issued and not yet accepted, declined, revoked or expired: the only state in which it is answered',
+  },
+  { term: 'Expire', meaning: 'For an invitation, to pass its week unanswered: it is accepted or declined no more' },
+  {
+    term: 'Verified',
+    meaning:
+      'Said of an email address the identity provider confirmed belongs to the person: an account is provisioned with it only then',
+  },
+  { term: 'Taken', meaning: 'Said of a slug an organisation holds already: two organisations never share one' },
+  { term: 'Active', meaning: 'Said of a delegation granted and not ended yet: neither revoked nor past its period' },
+  { term: 'Inverted', meaning: 'Said of a period whose end does not come after its start' },
+  {
+    term: 'Long',
+    meaning: 'Said of a delegation whose period lasts more than ninety days: a longer one is a role, not a delegation',
+  },
 ];

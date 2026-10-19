@@ -1652,3 +1652,63 @@ by the type of the call), 4 built (`const calendar = Calendar.create(..)`), 5 lo
 `npm run docs:generate` rewrote `openapi/`, `clients/` and `docs/integration/` byte for byte: a
 local name is not part of the contract. `check`: 0 errors. The 1145 unit tests pass unchanged in
 number.
+
+## 2026-10-18: one class per refusal
+
+The kit's new default form, `"stack.refusals": "named"`, the one `init` now writes: a refusal is
+a class named after what is refused, extending `DomainRefusal`, which reads its code from the
+closed list of its context (`domain/errors/codes.ts`) and is built by static factories named
+after what the refusal is about. `throw AppointmentError.slotTaken(calendar.id, slot.startsAt)`
+became `throw SlotTaken.forCalendar(calendar.id, slot.startsAt)`.
+
+| | Before | After |
+|---|---|---|
+| error classes (`domain/errors/*.error.ts`) | 10 files, 337 lines | 50 files, 566 lines |
+| closed lists of codes (`domain/errors/codes.ts`) | none | 4 files, 66 lines |
+| their specs (`test/unit/*.error.spec.ts`) | 10 files, 512 lines | 50 files, 764 lines |
+| refusals | 50 factories on 10 classes | 50 classes of one factory each, the same 50 codes |
+| facts a client can read as data | 11 refusals expose one | the same 11, by the same name |
+
+How it was done, in this order:
+
+1. `ddd-ts-kit error-factories --plan` (`--to named` is the default) proposed for each of the
+   50 factories a class named after its code and a factory named after its old concept
+   (`forAppointment` for the 15 refusals of `AppointmentError`). 38 factory names were changed
+   in the plan, read from the parameters of each factory: `BookingTooLate.withNotice(notice)`,
+   `PatientLimitReached.atLimit(limit)`, `OutsideAvailability.atStart(startsAt)`,
+   `ReasonRequired.onCancellation()`, `UnknownPractitioner.atPractice(practiceId, practitionerId)`,
+   `forRule(rule)` for the ten that take a sentence. No class name was changed in the plan, and
+   none clashes with a domain event or another class of its context.
+2. `ddd-ts-kit error-factories --apply` wrote 147 files and removed 12: the 4 `codes.ts`, the 50
+   classes, the specs of the two concepts whose cases stood alone (the attendance record,
+   occupancy) split per class, every usage with its imports, and `"stack.refusals": "named"`.
+   Then `npm run format` (17 files).
+3. By hand: the specs of the other 8 concepts split into one spec per class, the class of
+   `LAST_MANAGER`, `knip.json`, the agent rules on refusals and two mentions in a `CONTEXT.md`
+   (below), and the plan file deleted.
+
+What the tools said:
+
+- `ddd-ts-kit check` refused `LastManager`, the class the plan proposed for `LAST_MANAGER`
+  (`language/no-technical-name`: "manager"), though `Manager` is a term of the identity glossary.
+  The class is `PracticeLeftUnmanaged`, the name it had before the factories
+  (`PracticeLeftUnmanagedError`), and it keeps its code: under `named` the key of `codes.ts` is
+  the class and the value is the code, so the two may say different words.
+- The 8 specs written as one table per concept (`it.each`) were rewritten in place, not split:
+  the command said so ("its cases share a setup or code around them"), and their `describe`
+  still named the removed classes. They were split into one spec per class by a script (44
+  specs), two cases written apart were moved by hand, and `UnknownClearance`, which had no case,
+  got one. The case "gives each refusal a code of its own" is gone: `errors/code-unique` holds it.
+- `npm run deadcode` reported the 4 types `<Context>Code` of the `codes.ts` files as unused
+  exports. `knip.json` gained the `ignoreIssues` entry that `init` writes under `named`; the
+  migration does not touch the pipeline files.
+- The agent rules on refusals (`.claude/rules/domain.md`, `.claude/rules/presentation.md` and
+  their copies under `.github/instructions/`) were rewritten by hand from the templates of `init`:
+  no command rewrites them.
+- `npx ddd-ts-kit docs` rewrote the `Errors` table of each `CONTEXT.md`: class, factory, code,
+  exposed facts. The text of the analytics `CONTEXT.md` named two factories; edited by hand.
+- The HTTP contract did not move: `openapi.js --check`, `events.js --check` and `sdk --check`
+  pass, and the end-to-end specs were not edited.
+
+`check`: 0 errors. `lint`: 0 problems. 277 unit and adapter test files (1 496 tests) and 16 end-to-end files
+pass. Sections above this one name the forms the example had on their date.

@@ -10,6 +10,7 @@ import { renderFactory } from '../src/refusals/render-factory.js';
 import { replaceInCode } from '../src/refusals/replace-in-code.js';
 import { specParts } from '../src/refusals/spec-parts.js';
 import { cli, read, tempDir, write } from './helpers.js';
+import { failure } from './reports.js';
 
 const ORIGIN = { file: 'src/contexts/billing/domain/errors/ledger.error.ts', context: 'billing' };
 
@@ -179,7 +180,7 @@ describe('error-factories, what it leaves to a person', () => {
       "import { it } from 'vitest';\n\nit.todo('refuses');\n",
     );
 
-    cli(root, 'error-factories', '--plan');
+    cli(root, 'error-factories', '--plan', '--to', 'factories');
 
     const applied = cli(root, 'error-factories', '--apply', '--json').json() as { manual: string[] };
 
@@ -192,4 +193,71 @@ describe('error-factories, what it leaves to a person', () => {
 
     expect(cli(root, 'describe', 'billing').stdout).toContain('INVOICE_REFUSED (InvoiceError.refused)');
   });
+
+  it('keeps the spec of a class whose cases the spec of its concept class cannot take, and says it', () => {
+    const root = refusedInvoiceProject('error-factories-left-spec');
+    const unit = 'src/contexts/billing/test/unit';
+    const target = "import { it } from 'vitest';\n\nit.todo('refuses');\n";
+
+    write(root, `${unit}/invoice.error.spec.ts`, target);
+
+    write(
+      root,
+      `${unit}/invoice-refused.error.spec.ts`,
+      "import { describe, it } from 'vitest';\n\ndescribe('InvoiceRefusedError', () => {\n  it('refuses', () => new InvoiceRefusedError('i-1'));\n});\n",
+    );
+
+    cli(root, 'error-factories', '--plan', '--to', 'factories');
+
+    const applied = cli(root, 'error-factories', '--apply', '--json').json() as { removed: string[]; manual: string[] };
+
+    expect(applied.manual).toContain(
+      `${unit}/invoice.error.spec.ts: no describe block was found, move the cases of ${unit}/invoice-refused.error.spec.ts to it by hand.`,
+    );
+
+    expect(applied.removed).not.toContain(`${unit}/invoice-refused.error.spec.ts`);
+
+    expect(read(root, `${unit}/invoice-refused.error.spec.ts`)).toContain(
+      "it('refuses', () => InvoiceError.refused('i-1'));",
+    );
+
+    expect(read(root, `${unit}/invoice.error.spec.ts`)).toBe(target);
+  });
 });
+
+describe('error-factories --apply to factories, the file of a concept class that holds another class', () => {
+  it('refuses the whole move, names the file and the fix, and writes nothing', () => {
+    const root = refusedInvoiceProject('error-factories-occupied');
+    const errors = 'src/contexts/billing/domain/errors';
+    const other = 'export class InvoiceMessages {}\n';
+
+    write(root, `${errors}/invoice.error.ts`, other);
+    cli(root, 'error-factories', '--plan', '--to', 'factories');
+
+    expect(failure(cli(root, 'error-factories', '--apply', '--json'))).toEqual({
+      message: `${errors}/invoice.error.ts holds another class than InvoiceError.`,
+      fix: `Give InvoiceRefusedError another concept in the plan, or move what ${errors}/invoice.error.ts holds to a file of its own, then run \`ddd-ts-kit error-factories --apply\` again.`,
+    });
+
+    expect(read(root, `${errors}/invoice.error.ts`)).toBe(other);
+    expect(read(root, `${errors}/invoice-refused.error.ts`)).toContain('export class InvoiceRefusedError');
+    expect(JSON.parse(read(root, 'ddd-ts-kit.config.json'))).toMatchObject({ stack: { refusals: 'classes' } });
+  });
+});
+
+/** A project of classes per error whose billing context knows the invoice, and refuses one. */
+function refusedInvoiceProject(name: string): string {
+  const root = tempDir(name);
+
+  cli(root, 'init', '--refusals', 'classes');
+  cli(root, 'generate', 'context', 'billing', '--classification', 'core', '--term', 'Invoice=A request for payment');
+  cli(root, 'generate', 'aggregate', 'billing', 'Invoice');
+
+  write(
+    root,
+    'src/contexts/billing/domain/errors/invoice-refused.error.ts',
+    "import { DomainError } from '@ddd-ts-kit/kernel';\n\nexport class InvoiceRefusedError extends DomainError {\n  readonly code = 'INVOICE_REFUSED';\n\n  constructor(invoiceId: string) {\n    super(`Invoice ${invoiceId} is refused.`);\n  }\n}\n",
+  );
+
+  return root;
+}

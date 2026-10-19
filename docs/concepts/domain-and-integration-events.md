@@ -69,7 +69,7 @@ The full declaration is in [Designing the payload](#designing-the-payload).
    <!-- checked sample -->
    ```ts
    // contexts/scheduling/domain/aggregates/appointment.aggregate.ts (simplified)
-   import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+   import { AggregateRoot, DomainRefusal, type DomainEvent } from '@ddd-ts-kit/kernel';
 
    interface Slot {
      readonly calendarId: string;
@@ -91,9 +91,15 @@ The full declaration is in [Designing the payload](#designing-the-payload).
      ) {}
    }
 
-   export class AppointmentError extends ConceptError {
-     static emptySlot(startsAt: Date) {
-       return AppointmentError.refusal('EMPTY_SLOT', 'A slot ends after it starts.', { startsAt });
+   // contexts/scheduling/domain/errors/codes.ts
+   export const SchedulingCodes = { EmptySlot: 'EMPTY_SLOT' } as const;
+
+   // contexts/scheduling/domain/errors/empty-slot.error.ts
+   export class EmptySlot extends DomainRefusal {
+     readonly code = SchedulingCodes.EmptySlot;
+
+     static atStart(startsAt: Date) {
+       return EmptySlot.refusal('A slot ends after it starts.', { startsAt });
      }
    }
 
@@ -107,7 +113,7 @@ The full declaration is in [Designing the payload](#designing-the-payload).
 
      static book(id: string, slot: Slot, now: Date): Appointment {
        if (slot.endsAt <= slot.startsAt) {
-         throw AppointmentError.emptySlot(slot.startsAt); // the invariant first
+         throw EmptySlot.atStart(slot.startsAt); // the invariant first
        }
 
        const appointment = new Appointment(id, slot);

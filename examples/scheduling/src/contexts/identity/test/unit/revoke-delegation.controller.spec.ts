@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { RevokeDelegationCommand } from '@/contexts/identity/application/commands/revoke-delegation/revoke-delegation.command';
-import { DelegationError } from '@/contexts/identity/domain/errors/delegation.error';
+import { DelegationNotActive } from '@/contexts/identity/domain/errors/delegation-not-active.error';
+import { UnknownDelegation } from '@/contexts/identity/domain/errors/unknown-delegation.error';
 import { RevokeDelegationController } from '@/contexts/identity/presentation/http/practices/revoke-delegation/revoke-delegation.controller';
 
 const params = { practiceId: 'practice-1', practitionerId: 'person-2', delegationId: 'delegation-1' };
@@ -49,8 +50,8 @@ describe('DELETE /practices/:practiceId/desks/:practitionerId/delegations/:deleg
   });
 
   it.each([
-    ['DELEGATION_NOT_FOUND', DelegationError.notFound('delegation-1')],
-    ['DELEGATION_NOT_ACTIVE', DelegationError.notActive('delegation-1')],
+    ['DELEGATION_NOT_FOUND', UnknownDelegation.forDelegation('delegation-1')],
+    ['DELEGATION_NOT_ACTIVE', DelegationNotActive.forDelegation('delegation-1')],
   ])('answers 422 with the code %s when the use case refuses', async (code, refusal) => {
     const commands = new InMemoryCommandBus().register(RevokeDelegationCommand, {
       execute: async () => {

@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:2558312a89b87a86 -->
+<!-- translation-of: persistence.md sha256:e3153e145573d833 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -34,7 +34,7 @@ PostgreSQL, c'est une contrainte d'exclusion sur le calendrier et le créneau qu
 rendez-vous actif. Aucune des quatre bibliothèques ne l'exprime dans son langage de schéma, pour
 autant que cette page ait pu l'établir : elle s'écrit à la main dans une migration, et
 l'adaptateur du *repository* fait correspondre sa violation au refus `SLOT_TAKEN` du domaine
-(`AppointmentError.slotTaken`). L'application d'exemple la déclare dans
+(`SlotTaken.forCalendar`). L'application d'exemple la déclare dans
 `create-scheduling-tables.schema.ts`, après `create extension if not exists btree_gist` :
 
 ```sql
@@ -83,7 +83,7 @@ dans un projet, chaque partie est un fichier à part, nommé dans les commentair
 <!-- checked sample -->
 ```ts
 import type { Knex } from 'knex';
-import { AggregateRoot, ConceptError, NamedDomainEvent, Repository } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainRefusal, NamedDomainEvent, Repository } from '@ddd-ts-kit/kernel';
 import { type KnexContext, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
 
 // domain/events/invoice-paid.event.ts : le domaine ne connaît ni ligne, ni SQL, ni bibliothèque.
@@ -96,10 +96,15 @@ export class InvoicePaid extends NamedDomainEvent('billing.invoice.paid') {
   }
 }
 
-// domain/errors/invoice.error.ts
-export class InvoiceError extends ConceptError {
-  static alreadyPaid(invoiceId: string) {
-    return InvoiceError.refusal('INVOICE_ALREADY_PAID', `Invoice ${invoiceId} is already paid.`, { invoiceId });
+// domain/errors/codes.ts
+export const BillingCodes = { InvoiceAlreadyPaid: 'INVOICE_ALREADY_PAID' } as const;
+
+// domain/errors/invoice-already-paid.error.ts
+export class InvoiceAlreadyPaid extends DomainRefusal {
+  readonly code = BillingCodes.InvoiceAlreadyPaid;
+
+  static forInvoice(invoiceId: string) {
+    return InvoiceAlreadyPaid.refusal(`Invoice ${invoiceId} is already paid.`, { invoiceId });
   }
 }
 
@@ -128,7 +133,7 @@ export class Invoice extends AggregateRoot {
 
   pay(on: Date): void {
     if (this.paidOn !== null) {
-      throw InvoiceError.alreadyPaid(this.id);
+      throw InvoiceAlreadyPaid.forInvoice(this.id);
     }
 
     this.paidOn = on;

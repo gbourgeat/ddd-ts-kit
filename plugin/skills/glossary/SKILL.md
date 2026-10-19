@@ -23,7 +23,9 @@ Context: `$ARGUMENTS` (every context of `docs/architecture/contexts.md` when emp
 
 The glossary is the source of every class, method, event, command and permission name. The
 generator refuses a name whose words it does not define, and `language/glossary-term` fails
-the check.
+the check. A refusal class is named from it too (`SlotTaken`: `Slot`, `Take`), with the
+qualifiers of a refusal besides: `invalid`, `unknown`, `already`, `too`, `no`, `missing`,
+`required` (`BookingTooLate`, `InvalidAppointment`).
 
 ## Where it is written
 

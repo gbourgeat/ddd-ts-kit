@@ -1,5 +1,10 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
+{{#unless refusals.named}}
 import { OrganisationError } from '{{alias.context}}/domain/errors/organisation.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { InvalidOrganisationSlug } from '{{alias.context}}/domain/errors/invalid-organisation-slug.error{{alias.ext}}';
+{{/if}}
 
 /** Lower-case letters, digits and hyphens, at most 63: a slug is also a valid tenant id and a valid alias of the identity provider. */
 const SHAPE = /^[a-z0-9][a-z0-9-]{1,62}$/;
@@ -18,7 +23,12 @@ export class OrganisationSlug extends ValueObject<OrganisationSlugProps> {
     const value = raw.trim().toLowerCase();
 
     if (!SHAPE.test(value)) {
+{{#if refusals.named}}
+      throw InvalidOrganisationSlug.forValue(raw);
+{{/if}}
+{{#unless refusals.named}}
       throw OrganisationError.invalidOrganisationSlug(raw);
+{{/unless}}
     }
 
     return new OrganisationSlug({ value });

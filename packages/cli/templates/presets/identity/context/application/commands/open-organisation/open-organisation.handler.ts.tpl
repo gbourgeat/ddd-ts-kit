@@ -2,8 +2,14 @@ import type { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Member } from '{{alias.context}}/domain/aggregates/member.aggregate{{alias.ext}}';
 import { Organisation } from '{{alias.context}}/domain/aggregates/organisation.aggregate{{alias.ext}}';
+{{#unless refusals.named}}
 import { AccountError } from '{{alias.context}}/domain/errors/account.error{{alias.ext}}';
 import { OrganisationError } from '{{alias.context}}/domain/errors/organisation.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { OrganisationSlugTaken } from '{{alias.context}}/domain/errors/organisation-slug-taken.error{{alias.ext}}';
+import { UnknownAccount } from '{{alias.context}}/domain/errors/unknown-account.error{{alias.ext}}';
+{{/if}}
 import type { AccountRepository } from '{{alias.context}}/domain/repositories/account.repository{{alias.ext}}';
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
 import type { OrganisationRepository } from '{{alias.context}}/domain/repositories/organisation.repository{{alias.ext}}';
@@ -29,13 +35,23 @@ export class OpenOrganisationHandler implements CommandHandler<OpenOrganisationC
     const opener = await this.accountRepository.findById(actor.id);
 
     if (opener === undefined) {
+{{#if refusals.named}}
+      throw UnknownAccount.forAccount(actor.id);
+{{/if}}
+{{#unless refusals.named}}
       throw AccountError.notFound(actor.id);
+{{/unless}}
     }
 
     opener.assertActive();
 
     if ((await this.organisationRepository.findById(slug.value)) !== undefined) {
+{{#if refusals.named}}
+      throw OrganisationSlugTaken.forSlug(slug.value);
+{{/if}}
+{{#unless refusals.named}}
       throw OrganisationError.slugTaken(slug.value);
+{{/unless}}
     }
 
     const now = this.clock.now();

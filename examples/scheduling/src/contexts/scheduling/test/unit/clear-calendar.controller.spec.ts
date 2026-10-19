@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { ClearCalendarCommand } from '@/contexts/scheduling/application/commands/clear-calendar/clear-calendar.command';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { UnknownCalendar } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
 import { ClearCalendarController } from '@/contexts/scheduling/presentation/http/calendars/clear-calendar/clear-calendar.controller';
 
 const valid = {
@@ -60,7 +60,7 @@ describe('POST /calendars/:calendarId/clearances', () => {
   it('answers the refusal of the use case with its code', async () => {
     const commands = new InMemoryCommandBus().register(ClearCalendarCommand, {
       execute: async () => {
-        throw CalendarError.unknown('calendar-1');
+        throw UnknownCalendar.forCalendar('calendar-1');
       },
     });
 

@@ -13,7 +13,7 @@ export const BROKER_STACKS = ['none', 'rabbitmq', 'kafka', 'nats', 'redis', 'cus
 export const STYLES = ['declared', 'explicit'] as const;
 export const ASSEMBLIES = ['barrel', 'discovery'] as const;
 export const DEPENDENCY_STATEMENTS = ['signature', 'listed'] as const;
-export const REFUSAL_FORMS = ['factories', 'classes'] as const;
+export const REFUSAL_FORMS = ['named', 'factories', 'classes'] as const;
 export const ROUTE_FORMS = ['controllers', 'functions'] as const;
 export const REPRESENTATION_MODES = ['negotiated', 'json'] as const;
 export const FORM_MODES = ['on', 'off'] as const;
@@ -96,11 +96,14 @@ export interface Stack {
    */
   readonly dependencies: (typeof DEPENDENCY_STATEMENTS)[number];
   /**
-   * How a domain error is written: `factories`, one error class per concept of the model, each
-   * refusal built by a static factory named in the words of the business
-   * (`AppointmentError.slotTaken(..)`), which the `errors/*` rules hold; `classes`, one class per
-   * error, built with `new`. A config that says nothing was written when every error was a
-   * class: it is `classes`, and both forms run in either.
+   * How a domain error is written: `named`, one class per refusal, named after it and extending
+   * `DomainRefusal`, built by static factories named after what it is about
+   * (`SlotTaken.forCalendar(..)`), its code read from the closed list `domain/errors/codes.ts` of
+   * its context; `factories`, one error class per concept of the model, each refusal built by a
+   * static factory named in the words of the business (`AppointmentError.slotTaken(..)`); both
+   * are held by the `errors/*` rules. `classes`, one class per error, built with `new`. A config
+   * that says nothing was written when every error was a class: it is `classes`, and every form
+   * runs in any.
    */
   readonly refusals: (typeof REFUSAL_FORMS)[number];
   /**

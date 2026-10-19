@@ -13,6 +13,9 @@ export class {{name.pascal}} extends Entity<string> {
   }
 
   static create(id: string, state: {{name.pascal}}State): {{name.pascal}} {
+{{#if refusals.named}}
+    // TODO(domain): check the invariants {{name.pascal}} guards on its own and throw the refusal named after one when it is violated (`ddd-ts-kit generate error {{context.kebab}} <Refusal> <factory>`); invariants spanning several entities belong to the aggregate root.
+{{/if}}
 {{#if refusals.factories}}
     // TODO(domain): check the invariants {{name.pascal}} guards on its own and throw a refusal of the error class of its aggregate when one is violated (`ddd-ts-kit generate error {{context.kebab}} <Concept> <refusal>`); invariants spanning several entities belong to the aggregate root.
 {{/if}}

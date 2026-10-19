@@ -1,6 +1,7 @@
 import type { FileStorage } from '@ddd-ts-kit/kernel';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { UnknownAppointment } from '@/contexts/scheduling/domain/errors/unknown-appointment.error';
+import { NoDocument } from '@/contexts/scheduling/domain/errors/no-document.error';
 import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import { GetAppointmentDocumentQuery } from '@/contexts/scheduling/application/queries/get-appointment-document/get-appointment-document.query';
 import type { GetAppointmentDocumentResult } from '@/contexts/scheduling/application/queries/get-appointment-document/get-appointment-document.result';
@@ -19,13 +20,13 @@ export class GetAppointmentDocumentHandler implements QueryHandler<GetAppointmen
     const appointment = await this.appointmentRepository.findById(query.appointmentId);
 
     if (appointment === undefined) {
-      throw AppointmentError.notFound(query.appointmentId);
+      throw UnknownAppointment.forAppointment(query.appointmentId);
     }
 
     const { document } = appointment;
 
     if (document === undefined) {
-      throw AppointmentError.noDocument(appointment.id);
+      throw NoDocument.forAppointment(appointment.id);
     }
 
     const { file, name } = document;

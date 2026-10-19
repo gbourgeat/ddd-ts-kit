@@ -16,6 +16,9 @@ export class {{name.pascal}} extends EventSourcedAggregate<{{name.pascal}}Event,
   }
 
   static create(id: string, now: Date): {{name.pascal}} {
+{{#if refusals.named}}
+    // TODO(domain): take the facts known at birth as parameters, check each birth invariant and throw the refusal named after it when one is violated: `throw <Refusal>.for<Fact>(...)`, written with `ddd-ts-kit generate error {{context.kebab}} <Refusal> <factory>`.
+{{/if}}
 {{#if refusals.factories}}
     // TODO(domain): take the facts known at birth as parameters, check each birth invariant and throw the refusal of its error class when one is violated: `throw {{name.pascal}}Error.<refusal>(...)`, added with `ddd-ts-kit generate error {{context.kebab}} {{name.pascal}} <refusal>`.
 {{/if}}

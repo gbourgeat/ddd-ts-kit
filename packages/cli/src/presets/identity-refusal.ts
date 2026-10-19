@@ -9,7 +9,7 @@ const NEEDED: readonly {
 }[] = [
   { key: 'style', values: ['declared'], flag: '--style declared' },
   { key: 'dependencies', values: ['signature'], flag: '--dependencies signature' },
-  { key: 'refusals', values: ['factories'], flag: '--refusals factories' },
+  { key: 'refusals', values: ['named', 'factories'], flag: '--refusals named or --refusals factories' },
   { key: 'valueObjects', values: ['throwing'], flag: '--value-objects throwing' },
   { key: 'routes', values: ['controllers'], flag: '--routes controllers' },
   { key: 'orm', values: ['knex', 'drizzle'], flag: '--orm knex or --orm drizzle' },

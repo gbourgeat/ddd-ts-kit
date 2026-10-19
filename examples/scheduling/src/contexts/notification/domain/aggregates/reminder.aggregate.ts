@@ -1,5 +1,5 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { ReminderError } from '@/contexts/notification/domain/errors/reminder.error';
+import { ReminderNotDue } from '@/contexts/notification/domain/errors/reminder-not-due.error';
 import { ReminderSent } from '@/contexts/notification/domain/events/reminder-sent.event';
 import { ReminderStatus } from '@/contexts/notification/domain/vocabularies/reminder-status.vocabulary';
 
@@ -70,7 +70,7 @@ export class Reminder extends AggregateRoot<string> {
 
   send(asOf: Date): void {
     if (!this.isDue(asOf)) {
-      throw ReminderError.notDue(this.id);
+      throw ReminderNotDue.forReminder(this.id);
     }
 
     this.state = { ...this.state, status: ReminderStatus.Sent };

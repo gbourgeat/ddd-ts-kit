@@ -20,5 +20,8 @@
   "ignoreDependencies": ["eslint-formatter-gitlab", "@typescript/native"],
   "ignoreBinaries": ["flock", "diff", "patch"],
   "ignoreExportsUsedInFile": true,
+  "ignoreIssues": {
+    "src/contexts/*/domain/errors/codes.ts": ["types"]
+  },
   "ignoreWorkspaces": ["clients/*"]
 }

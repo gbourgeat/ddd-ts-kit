@@ -1,5 +1,5 @@
 [English](bounded-context.md) · **Français**
-<!-- translation-of: bounded-context.md sha256:4b2321dc101e0a76 -->
+<!-- translation-of: bounded-context.md sha256:3ac5fd777b59ecc3 -->
 
 # Contexte délimité
 
@@ -194,17 +194,24 @@ retard. Une règle qui doit tenir à chaque instant ne peut pas reposer sur des 
 La règle appartient à `appointments`, gardée par l'agrégat et par une contrainte de base de
 données ; `availability` ne fait que conseiller l'interface utilisateur, et réserver un créneau
 pris un instant plus tôt se termine par le refus `SLOT_TAKEN`, construit par une fabrique de la
-classe d'erreur du concept :
+classe nommée d'après lui, `SlotTaken`, qui lit son code dans la liste des codes de
+`appointments` :
 
 <!-- checked sample -->
 ```ts
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-// contexts/appointments/domain/errors/appointment.error.ts
-export class AppointmentError extends ConceptError {
-  static slotTaken(practitionerId: string, startsAt: Date) {
-    return AppointmentError.refusal(
-      'SLOT_TAKEN',
+// contexts/appointments/domain/errors/codes.ts
+export const AppointmentsCodes = {
+  SlotTaken: 'SLOT_TAKEN',
+} as const;
+
+// contexts/appointments/domain/errors/slot-taken.error.ts
+export class SlotTaken extends DomainRefusal {
+  readonly code = AppointmentsCodes.SlotTaken;
+
+  static forPractitioner(practitionerId: string, startsAt: Date) {
+    return SlotTaken.refusal(
       `The slot starting at ${startsAt.toISOString()} is already held for practitioner ${practitionerId}.`,
       { practitionerId, startsAt },
     ).exposing('startsAt');
@@ -227,7 +234,7 @@ export function assertFree(wish: HeldSlot, held: readonly HeldSlot[]): void {
   );
 
   if (taken) {
-    throw AppointmentError.slotTaken(wish.practitionerId, wish.startsAt);
+    throw SlotTaken.forPractitioner(wish.practitionerId, wish.startsAt);
   }
 }
 ```

@@ -2,7 +2,7 @@ import type { JobQueue } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { ClearCalendarBackgroundJob } from '@/contexts/scheduling/application/background/clear-calendar.background-job';
 import { ClearCalendarCommand } from '@/contexts/scheduling/application/commands/clear-calendar/clear-calendar.command';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { UnknownCalendar } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
 import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import { TimeOff } from '@/contexts/scheduling/domain/value-objects/time-off.vo';
@@ -26,7 +26,7 @@ export class ClearCalendarHandler implements CommandHandler<ClearCalendarCommand
     const calendar = await this.calendarRepository.findById(command.calendarId);
 
     if (calendar === undefined) {
-      throw CalendarError.unknown(command.calendarId);
+      throw UnknownCalendar.forCalendar(command.calendarId);
     }
 
     const period = TimeOff.create(command.startsAt, command.endsAt);

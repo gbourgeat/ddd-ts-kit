@@ -148,3 +148,125 @@ ruleTester.run('errors-factory-name', errorsFactoryName, {
     },
   ],
 });
+
+const NAMED = { ...SAMPLE_CONFIG, stack: { refusals: 'named' } };
+const REFUSAL = `${BILLING}/domain/errors/invoice-already-issued.error.ts`;
+
+const IMPORTED_REFUSAL =
+  "import { InvoiceAlreadyIssued } from '@/contexts/billing/domain/errors/invoice-already-issued.error';\n";
+
+const refusal = (members: string, name = 'InvoiceAlreadyIssued'): string =>
+  `import { DomainRefusal } from '@ddd-ts-kit/kernel';\nimport { BillingCodes } from './codes';\nexport class ${name} extends DomainRefusal {\nreadonly code = BillingCodes.${name};\n${members}\n}`;
+
+const named = (name: string, owner = 'InvoiceAlreadyIssued'): string =>
+  `static ${name}(invoiceId: string) { return ${owner}.refusal('Refused.', { invoiceId }); }`;
+
+ruleTester.run('errors-through-factory under named', errorsThroughFactory, {
+  valid: [
+    at(AGGREGATE, `${IMPORTED_REFUSAL}throw InvoiceAlreadyIssued.forInvoice(this.id);`, NAMED),
+    at(REFUSAL, refusal(named('forInvoice')), NAMED),
+    at(
+      AGGREGATE,
+      "import { InvariantViolation } from '@ddd-ts-kit/kernel';\nthrow new InvariantViolation('No.');",
+      NAMED,
+    ),
+    at(SPEC, "class Probe extends DomainRefusal { readonly code = 'X'; }\nthrow new Probe('x');"),
+    at(SPEC, "class Probe extends DomainRefusal { readonly code = 'X'; }\nthrow new Probe('x');", FACTORIES),
+    at('src/platform/http/server.ts', `${IMPORTED_REFUSAL}throw new InvoiceAlreadyIssued('x');`, NAMED),
+  ],
+  invalid: [
+    {
+      ...at(AGGREGATE, `${IMPORTED_REFUSAL}throw new InvoiceAlreadyIssued('Refused.');`, NAMED),
+      errors: [{ messageId: 'constructedRefusal', data: { name: 'InvoiceAlreadyIssued', context: 'billing' } }],
+    },
+    {
+      ...at(
+        REFUSAL,
+        refusal("static forInvoice(invoiceId: string) { return new InvoiceAlreadyIssued('Refused.', { invoiceId }); }"),
+        NAMED,
+      ),
+      errors: [{ messageId: 'constructedRefusal', data: { name: 'InvoiceAlreadyIssued', context: 'billing' } }],
+    },
+    {
+      ...at(
+        SPEC,
+        "const probe = () => new Probe('x');\nclass Probe extends DomainRefusal { readonly code = 'X'; }",
+        NAMED,
+      ),
+      errors: [{ messageId: 'constructedRefusal', data: { name: 'Probe', context: 'billing' } }],
+    },
+    {
+      ...at(SPEC, `${IMPORTED}const error = new InvoiceError('ANY', 'ad hoc', {});`, NAMED),
+      errors: [{ messageId: 'constructedRefusal', data: { name: 'InvoiceError', context: 'billing' } }],
+    },
+  ],
+});
+
+ruleTester.run('errors-constructor-not-public under named', errorsConstructorNotPublic, {
+  valid: [
+    at(REFUSAL, refusal(named('forInvoice')), NAMED),
+    at(REFUSAL, refusal('protected constructor(message: string) { super(message); }'), NAMED),
+    at(REFUSAL, refusal('private constructor(message: string) { super(message); }'), NAMED),
+    at(REFUSAL, 'export abstract class BillingRefusal extends DomainRefusal { constructor() { super(); } }', NAMED),
+    at(AGGREGATE, refusal('constructor(message: string) { super(message); }'), NAMED),
+  ],
+  invalid: [
+    {
+      ...at(REFUSAL, refusal('constructor(message: string) { super(message); }'), NAMED),
+      errors: [{ messageId: 'publicRefusalConstructor', data: { className: 'InvoiceAlreadyIssued' } }],
+    },
+    {
+      ...at(REFUSAL, "export class InvoiceAlreadyIssued extends DomainError { readonly code = 'X'; }", NAMED),
+      errors: [{ messageId: 'inheritedPublicRefusal', data: { className: 'InvoiceAlreadyIssued' } }],
+    },
+  ],
+});
+
+ruleTester.run('errors-factory-name under named', errorsFactoryName, {
+  valid: [
+    ...['forInvoice', 'withNotice', 'becauseOf', 'onDate', 'atStart'].map((name) =>
+      at(REFUSAL, refusal(named(name)), NAMED),
+    ),
+    at(REFUSAL, refusal(`${named('forInvoice')}\n${named('atIssue')}`), NAMED),
+    at(REFUSAL, refusal('static is(error: unknown): boolean { return error instanceof InvoiceAlreadyIssued; }'), NAMED),
+    at(REFUSAL, refusal('private static forInvoices() { return 1; }\nstatic later() { return 2; }'), NAMED),
+    at(AGGREGATE, refusal(named('slotTaken'), 'InvoiceAlreadyIssuedError'), NAMED),
+    at(SPEC, refusal(named('slotTaken'), 'InvoiceAlreadyIssuedError'), NAMED),
+    at(ERROR, concept(factory('alreadyIssued', "'INVOICE_ALREADY_ISSUED'")), FACTORIES),
+  ],
+  invalid: [
+    ...[
+      ['alreadyIssued', 'forAlreadyIssued'],
+      ['create', 'forCreate'],
+      ['format', 'forFormat'],
+      ['onboard', 'forOnboard'],
+      ['at', 'forAt'],
+    ].map(([name = '', expected = '']) => ({
+      ...at(REFUSAL, refusal(named(name)), NAMED),
+      errors: [{ messageId: 'unprefixed' as const, data: { className: 'InvoiceAlreadyIssued', name, expected } }],
+    })),
+    ...['forInvoice2', 'error1'].map((name) => ({
+      ...at(REFUSAL, refusal(named(name)), NAMED),
+      errors: [{ messageId: 'digitInName' as const, data: { className: 'InvoiceAlreadyIssued', name } }],
+    })),
+    {
+      ...at(REFUSAL, refusal(named('forInvoice', 'InvoiceAlreadyIssuedError'), 'InvoiceAlreadyIssuedError'), NAMED),
+      errors: [
+        {
+          messageId: 'errorSuffix',
+          data: { className: 'InvoiceAlreadyIssuedError', expected: 'InvoiceAlreadyIssued' },
+        },
+      ],
+    },
+    {
+      ...at(ERROR, concept(factory('alreadyIssued', "'INVOICE_ALREADY_ISSUED'")), NAMED),
+      errors: [
+        { messageId: 'errorSuffix', data: { className: 'InvoiceError', expected: 'Invoice' } },
+        {
+          messageId: 'unprefixed',
+          data: { className: 'InvoiceError', name: 'alreadyIssued', expected: 'forAlreadyIssued' },
+        },
+      ],
+    },
+  ],
+});

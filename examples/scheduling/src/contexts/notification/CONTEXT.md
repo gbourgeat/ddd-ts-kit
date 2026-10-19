@@ -119,9 +119,9 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 
 ### Errors
 
-| Error class | Refusal | Code | Exposed facts |
+| Refusal | Factory | Code | Exposed facts |
 |---|---|---|---|
-| `NotificationError` | `contactUnknown` | `CONTACT_UNKNOWN` | none |
-| `NotificationError` | `invalidNotificationKind` | `INVALID_NOTIFICATION_KIND` | none |
-| `ReminderError` | `notDue` | `REMINDER_NOT_DUE` | none |
+| `ContactUnknown` | `forRecipient` | `CONTACT_UNKNOWN` | none |
+| `InvalidNotificationKind` | `forKind` | `INVALID_NOTIFICATION_KIND` | none |
+| `ReminderNotDue` | `forReminder` | `REMINDER_NOT_DUE` | none |
 <!-- /ddd-ts-kit:reference -->

@@ -1,6 +1,6 @@
 import { type Clock, type FileStaging } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { UnknownAppointment } from '@/contexts/scheduling/domain/errors/unknown-appointment.error';
 import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import { AttachedDocument } from '@/contexts/scheduling/domain/value-objects/attached-document.vo';
 import { AttachAppointmentDocumentCommand } from '@/contexts/scheduling/application/commands/attach-appointment-document/attach-appointment-document.command';
@@ -18,7 +18,7 @@ export class AttachAppointmentDocumentHandler implements CommandHandler<AttachAp
     const appointment = await this.appointmentRepository.findById(command.appointmentId);
 
     if (appointment === undefined) {
-      throw AppointmentError.notFound(command.appointmentId);
+      throw UnknownAppointment.forAppointment(command.appointmentId);
     }
 
     const { file, fileName } = command.document;

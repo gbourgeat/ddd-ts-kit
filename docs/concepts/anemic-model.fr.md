@@ -1,5 +1,5 @@
 [English](anemic-model.md) · **Français**
-<!-- translation-of: anemic-model.md sha256:25baaacb93704bae -->
+<!-- translation-of: anemic-model.md sha256:1cde2f90a21c5d02 -->
 
 # Modèle anémique
 
@@ -74,7 +74,7 @@ conséquences :
 import {
   AggregateRoot,
   AuthorizedCommand,
-  ConceptError,
+  DomainRefusal,
   Repository,
   type Clock,
   type CommandHandler,
@@ -95,10 +95,17 @@ declare class AppointmentCancelled implements DomainEvent {
   readonly occurredAt: Date;
   readonly aggregateId: string;
 }
-declare class AppointmentError extends ConceptError {
-  static notFound(appointmentId: string): AppointmentError;
-  static alreadyCancelled(appointmentId: string): AppointmentError;
-  static cancellationWindowPassed(appointmentId: string, startsAt: Date): AppointmentError;
+declare class UnknownAppointment extends DomainRefusal {
+  readonly code: 'APPOINTMENT_NOT_FOUND';
+  static forAppointment(appointmentId: string): UnknownAppointment;
+}
+declare class AppointmentAlreadyCancelled extends DomainRefusal {
+  readonly code: 'APPOINTMENT_ALREADY_CANCELLED';
+  static forAppointment(appointmentId: string): AppointmentAlreadyCancelled;
+}
+declare class CancellationWindowPassed extends DomainRefusal {
+  readonly code: 'CANCELLATION_WINDOW_PASSED';
+  static forAppointment(appointmentId: string, startsAt: Date): CancellationWindowPassed;
 }
 declare class CancelAppointment extends AuthorizedCommand {
   readonly appointmentId: string;
@@ -133,13 +140,13 @@ export class Appointment extends AggregateRoot<string> {
 
   private assertNotCancelled(): void {
     if (this.state.status === 'cancelled') {
-      throw AppointmentError.alreadyCancelled(this.id);
+      throw AppointmentAlreadyCancelled.forAppointment(this.id);
     }
   }
 
   private assertCancellationStillFree(at: Date): void {
     if (this.state.slot.startsWithin(FREE_CANCELLATION_MS, at)) {
-      throw AppointmentError.cancellationWindowPassed(this.id, this.state.slot.startsAt);
+      throw CancellationWindowPassed.forAppointment(this.id, this.state.slot.startsAt);
     }
   }
 }
@@ -155,7 +162,7 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
   async execute(command: CancelAppointment): Promise<void> {
     const appointment = await this.appointments.findById(command.appointmentId);
     if (appointment === undefined) {
-      throw AppointmentError.notFound(command.appointmentId);
+      throw UnknownAppointment.forAppointment(command.appointmentId);
     }
 
     appointment.cancel(CancellationReason.of(command.reason), this.clock.now());
@@ -243,15 +250,17 @@ est écrit pour cela, tout comme une revue humaine centrée sur la couche domain
 1. Choisissez une règle dans un gestionnaire. Écrivez d'abord la *spec* du domaine : étant donné
    un état, quand l'intention, alors l'événement ou l'erreur.
 2. Ajoutez la méthode d'intention sur l'agrégat et déplacez-y la condition. Nommez le refus avec
-   `generate error <context> <Concept> <refusal>`, qui ajoute une fabrique à la classe d'erreur
-   du concept :
+   `generate error <context> <Refusal> <factory>`, qui écrit une classe nommée d'après le refus,
+   et son code dans la liste du contexte :
 
    ```bash
-   npx ddd-ts-kit generate error appointments Appointment alreadyCancelled --code APPOINTMENT_ALREADY_CANCELLED
+   npx ddd-ts-kit generate error appointments AppointmentAlreadyCancelled forAppointment
    ```
 
-   Elle ajoute `AppointmentError.alreadyCancelled()` à `domain/errors/appointment.error.ts`, et
-   son cas à la *spec*. Sans `--code`, le code est le seul nom du refus, `ALREADY_CANCELLED`.
+   Elle écrit `AppointmentAlreadyCancelled.forAppointment()` dans
+   `domain/errors/appointment-already-cancelled.error.ts`, son code dans `domain/errors/codes.ts`
+   et son cas dans la *spec*. Sans `--code`, le code est le nom du refus en majuscules séparées
+   par des tirets bas, `APPOINTMENT_ALREADY_CANCELLED`.
 3. Remplacez les branches du gestionnaire par l'appel unique. Sa *spec* raccourcit : le chemin
    nominal, chaque code d'erreur, rien d'enregistré ni de publié en cas d'échec.
 4. Retirez le *setter* ou la propriété publique qu'utilisait le gestionnaire. Le compilateur liste
@@ -270,7 +279,7 @@ if (appointment.startsAt.getTime() - Date.now() < 24 * 60 * 60 * 1000) {
 appointment.status = 'cancelled';
 
 // Écrire : une intention ; l'agrégat vérifie la règle sur l'instant qu'on lui donne
-appointment.cancel(reason, this.clock.now()); // lève AppointmentError.cancellationWindowPassed
+appointment.cancel(reason, this.clock.now()); // lève CancellationWindowPassed
 ```
 
 ## Quand un modèle mince convient

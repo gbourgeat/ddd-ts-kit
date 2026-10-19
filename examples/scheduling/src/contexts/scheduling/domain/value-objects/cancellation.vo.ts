@@ -1,5 +1,5 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { ReasonRequired } from '@/contexts/scheduling/domain/errors/reason-required.error';
 
 export type CancellationProps = {
   readonly by: 'patient' | 'practice';
@@ -16,7 +16,7 @@ export class Cancellation extends ValueObject<CancellationProps> {
     const given = reason?.trim() ?? '';
 
     if (by === 'practice' && given.length === 0) {
-      throw AppointmentError.reasonRequired();
+      throw ReasonRequired.onCancellation();
     }
 
     return new Cancellation({ by, reason: given.length === 0 ? undefined : given });

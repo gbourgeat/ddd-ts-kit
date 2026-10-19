@@ -13,7 +13,7 @@ import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appoin
 import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
 import { AppointmentMapper } from '@/contexts/scheduling/infrastructure/persistence/appointment.mapper';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { SlotTaken } from '@/contexts/scheduling/domain/errors/slot-taken.error';
 import {
   APPOINTMENT_SLOT_HELD_ONCE,
   type AppointmentColumns,
@@ -86,7 +86,7 @@ export class KnexAppointmentRepository implements AppointmentRepository {
       });
     } catch (error) {
       if (isSlotHeldTwice(error) || (saved.isActive && isDeadlock(error))) {
-        throw AppointmentError.slotTaken(saved.calendarId, saved.slot.startsAt);
+        throw SlotTaken.forCalendar(saved.calendarId, saved.slot.startsAt);
       }
 
       throw error;
