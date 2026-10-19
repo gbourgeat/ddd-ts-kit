@@ -62,12 +62,12 @@ import {
 {{#if audit.on}}
 import { createAudit } from '{{alias.platform}}/audit/create-audit{{alias.ext}}';
 {{/if}}
-import { accessPolicies } from '{{alias.platform}}/auth/access-policies{{alias.ext}}';
-import { createAuthorizer } from '{{alias.platform}}/auth/create-authorizer{{alias.ext}}';
+import { accessPolicies } from '{{alias.platform}}/auth/authorization/access-policies{{alias.ext}}';
+import { createAuthorizer } from '{{alias.platform}}/auth/authorization/create-authorizer{{alias.ext}}';
 {{#unless audit.on}}
-import { logDecisions } from '{{alias.platform}}/auth/log-decisions{{alias.ext}}';
+import { logDecisions } from '{{alias.platform}}/auth/authorization/log-decisions{{alias.ext}}';
 {{/unless}}
-import { UseCaseProtection } from '{{alias.platform}}/auth/use-case-protection{{alias.ext}}';
+import { UseCaseProtection } from '{{alias.platform}}/auth/authorization/use-case-protection{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 import type { EventProvider } from '{{alias.platform}}/events/event-provider{{alias.ext}}';
 {{#if files.any}}

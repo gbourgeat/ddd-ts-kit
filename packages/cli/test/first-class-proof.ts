@@ -73,14 +73,14 @@ export function writeBusinessDecisions(root: string): void {
     ],
   ]);
 
-  edit(root, 'src/platform/auth/relationship-schema.ts', [
+  edit(root, 'src/platform/auth/relationships/relationship-schema.ts', [
     [
       "    permissions: { operate: union('operator') },\n  },",
       "    permissions: { operate: union('operator') },\n  },\n  invoice: {\n    relations: { viewer: ['user'] },\n    permissions: { view: union('viewer') },\n  },",
     ],
   ]);
 
-  edit(root, 'src/platform/auth/permission-mapping.ts', [
+  edit(root, 'src/platform/auth/relationships/permission-mapping.ts', [
     [/^import \{ permissions \}.*$/m, `$&\n${importOfBillingPermissions(root)}`],
     [
       "  return { context: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operate'])) };",
@@ -94,10 +94,12 @@ export function writeBusinessDecisions(root: string): void {
 
 /** The import of the permission set of billing, as the generated registry of permissions writes it. */
 function importOfBillingPermissions(root: string): string {
-  const line = /^import \{ billingPermissions \}.*$/m.exec(read(root, 'src/platform/auth/permissions.ts'));
+  const line = /^import \{ billingPermissions \}.*$/m.exec(
+    read(root, 'src/platform/auth/authorization/permissions.ts'),
+  );
 
   if (line === null) {
-    throw new Error('src/platform/auth/permissions.ts no longer imports the permission set of billing.');
+    throw new Error('src/platform/auth/authorization/permissions.ts no longer imports the permission set of billing.');
   }
 
   return line[0];

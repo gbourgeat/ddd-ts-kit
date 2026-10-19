@@ -6,6 +6,7 @@ import { wiringFamily } from '../wiring-family.js';
 import type { ContextPlan } from './context-plan.js';
 import { importAssembler } from './import-assembler.js';
 import { planVars } from './plan-vars.js';
+import { authFileIn } from '../../platform-auth/index.js';
 
 const PROOF = 'test/architecture/extractable.spec.ts';
 const COMPOSITION = 'compose-application.ts';
@@ -20,7 +21,7 @@ export function wireContext(ws: Workspace, plan: ContextPlan): void {
   const { config, context } = plan;
   const vars = planVars(plan);
   const family = wiringFamily(config);
-  const registry = `${config.platformDir}/auth/permissions.ts`;
+  const registry = authFileIn(config, 'permissions.ts', (path) => ws.exists(path));
 
   if (!ws.exists(PROOF)) {
     ws.create(PROOF, renderTemplate(`architecture/extractable.${family}.spec.ts.tpl`, vars));

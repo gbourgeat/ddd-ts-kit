@@ -442,7 +442,7 @@ seconde. Pour nommer les littéraux : posez `"literals": "named"` sous `stack` e
 place (`billingPermissions['invoice.cancel']`, importé du fichier de permissions du contexte) ;
 une liste fermée qui vous est propre devient un vocabulaire avec
 `npx ddd-ts-kit generate vocabulary <context> <Name> --value ..`, et les rôles un objet `Role`
-dans `<platformDir>/auth/role.ts` écrit de la même manière. Un nombre du modèle devient une
+dans `<platformDir>/auth/authorization/role.ts` écrit de la même manière. Un nombre du modèle devient une
 constante du module ou un `static readonly`. Tant que ce n'est pas fait, une règle peut rester à
 `warn` sous `rules`, enregistrée dans `deviations`.
 

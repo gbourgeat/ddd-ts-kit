@@ -79,7 +79,7 @@ export const AUTHZ_AND_EVENT_INJECTIONS: readonly Injection[] = [
     changes: [
       { file: 'ddd-ts-kit.config.json', from: '"authz": "rebac"', to: '"authz": "rbac"' },
       {
-        file: 'src/platform/auth/roles.ts',
+        file: 'src/platform/auth/roles/roles.ts',
         to: "/** What each role may do: every context but scheduling, whose permissions nobody holds by name. */\nexport const roles: Readonly<Record<string, readonly string[]>> = {\n  admin: ['*'],\n  staff: ['identity:*', 'notification:*', 'analytics:*'],\n};\n",
       },
     ],
@@ -91,7 +91,7 @@ export const AUTHZ_AND_EVENT_INJECTIONS: readonly Injection[] = [
     file: 'src/contexts/notification/application/queries/search-notifications/search-notifications.handler.ts',
     changes: [
       {
-        file: 'src/platform/auth/signed-in-grants.ts',
+        file: 'src/platform/auth/authorization/signed-in-grants.ts',
         to: "import type { Grant } from '@ddd-ts-kit/auth';\nimport { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';\n\n/** What every signed-in person may do, whatever the model decides: here, read every notification. */\nexport const signedInGrants: readonly Grant[] = [notificationPermissions['notification.read']];\n",
       },
     ],

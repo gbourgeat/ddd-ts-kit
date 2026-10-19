@@ -281,7 +281,7 @@ bien qu'une colonne de base de données, une charge utile et une énumération O
 pas. `npx ddd-ts-kit generate vocabulary scheduling AppointmentStatus --value requested --value
 booked --value no-show` écrit le fichier (`domain/vocabularies/`), et relancée, la commande
 ajoute les valeurs qu'il ne contient pas encore. Les rôles que porte un justificatif
-sont le vocabulaire `Role` de la plateforme (`<platformDir>/auth/role.ts`), écrit par `init` et
+sont le vocabulaire `Role` de la plateforme (`<platformDir>/auth/authorization/role.ts`), écrit par `init` et
 complété par `generate route-group --role <role>` ; une permission se lit dans l'ensemble de
 permissions de son contexte (`billingPermissions['invoice.issue']`), jamais par son
 identifiant.

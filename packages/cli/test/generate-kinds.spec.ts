@@ -59,7 +59,7 @@ describe('authorization and gateway kinds', () => {
       "permission: billingPermissions['invoice.cancel'],",
     );
 
-    expect(read(root, 'src/platform/auth/access-policies.ts')).toContain('onlyIssuerCancels,');
+    expect(read(root, 'src/platform/auth/authorization/access-policies.ts')).toContain('onlyIssuerCancels,');
     expect(walk(root, `${BILLING}/test/unit`)).toContain(`${BILLING}/test/unit/only-issuer-cancels.policy.spec.ts`);
   });
 

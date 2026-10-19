@@ -44,7 +44,7 @@ import type { Clock, ErrorReporter, ExecutionScope, Logger, Session } from '@ddd
 import { multipartUploads } from '@ddd-ts-kit/http/uploads';
 {{/if}}
 import { tracedRoutes } from '@ddd-ts-kit/tracing';
-import { principalOf } from '{{alias.platform}}/auth/principal-of{{alias.ext}}';
+import { principalOf } from '{{alias.platform}}/auth/authentication/principal-of{{alias.ext}}';
 {{#if presentation.any}}
 import type { Presentation } from '{{alias.platform}}/http/presentation-of{{alias.ext}}';
 {{/if}}

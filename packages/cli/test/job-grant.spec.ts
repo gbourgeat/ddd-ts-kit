@@ -29,12 +29,12 @@ describe('generate job, the grant of its system actor', () => {
     const rule =
       "  permit(\n    'system-billing.cancel-stale-invoices',\n    [billingPermissions['invoice.cancel']],\n    ({ actor }) => actor.id === 'system:billing.cancel-stale-invoices',\n  ),";
 
-    expect(read(root, `${AUTH}/attribute-policies.ts`)).toContain(
+    expect(read(root, `${AUTH}/attributes/attribute-policies.ts`)).toContain(
       `  // ddd-ts-kit:system-grants\n${rule}\n  // /ddd-ts-kit:system-grants`,
     );
 
     expect(generated.todos.find((todo) => todo.text.startsWith('check this rule'))).toMatchObject({
-      file: `${AUTH}/attribute-policies.ts`,
+      file: `${AUTH}/attributes/attribute-policies.ts`,
       // The rule takes several lines: the step points at the one that names it.
       line: 18,
     });
@@ -49,11 +49,11 @@ describe('generate job, the grant of its system actor', () => {
     const tuple =
       "  { object: 'context:billing', relation: 'operator', subject: 'system:system:billing.cancel-stale-invoices' },";
 
-    expect(read(root, `${AUTH}/relate-system-actors.ts`)).toContain(
+    expect(read(root, `${AUTH}/relationships/relate-system-actors.ts`)).toContain(
       `  // ddd-ts-kit:system-grants\n${tuple}\n  // /ddd-ts-kit:system-grants`,
     );
 
-    expect(read(root, `${AUTH}/relationship-schema.ts`)).toContain(
+    expect(read(root, `${AUTH}/relationships/relationship-schema.ts`)).toContain(
       "  system: {},\n  context: {\n    relations: { operator: ['user', 'system'] },",
     );
 
@@ -73,13 +73,13 @@ describe('generate job, the grant of its system actor', () => {
 
     write(
       root,
-      `${AUTH}/relationship-schema.ts`,
-      read(root, `${AUTH}/relationship-schema.ts`).replace("['user', 'system']", "['user']"),
+      `${AUTH}/relationships/relationship-schema.ts`,
+      read(root, `${AUTH}/relationships/relationship-schema.ts`).replace("['user', 'system']", "['user']"),
     );
 
     const generated = report(cli(root, ...EVERY_QUARTER));
 
-    expect(read(root, `${AUTH}/relate-system-actors.ts`)).not.toContain('cancel-stale-invoices');
+    expect(read(root, `${AUTH}/relationships/relate-system-actors.ts`)).not.toContain('cancel-stale-invoices');
     expect(generated.todos.find((todo) => todo.text.startsWith('grant the system actor'))).toMatchObject({ file: JOB });
   });
 
@@ -89,8 +89,8 @@ describe('generate job, the grant of its system actor', () => {
 
     write(
       edited,
-      `${AUTH}/roles.ts`,
-      read(edited, `${AUTH}/roles.ts`).replace(/ {4}\/\/ \/?ddd-ts-kit:system-grants\n/g, ''),
+      `${AUTH}/roles/roles.ts`,
+      read(edited, `${AUTH}/roles/roles.ts`).replace(/ {4}\/\/ \/?ddd-ts-kit:system-grants\n/g, ''),
     );
 
     for (const root of [custom, edited]) {
@@ -128,7 +128,7 @@ describe('generate job, the grant of its system actor', () => {
       ).code,
     ).toBe(0);
 
-    expect(read(root, `${AUTH}/roles.ts`).match(/billingPermissions\['invoice\.cancel'\],/g)).toHaveLength(1);
+    expect(read(root, `${AUTH}/roles/roles.ts`).match(/billingPermissions\['invoice\.cancel'\],/g)).toHaveLength(1);
   });
 });
 
@@ -140,8 +140,8 @@ describe('generate job, a grant written by 0.5', () => {
 
     write(
       rbac,
-      `${AUTH}/roles.ts`,
-      read(rbac, `${AUTH}/roles.ts`).replace(
+      `${AUTH}/roles/roles.ts`,
+      read(rbac, `${AUTH}/roles/roles.ts`).replace(
         '// /ddd-ts-kit:system-grants',
         `${raw}\n    // /ddd-ts-kit:system-grants`,
       ),
@@ -149,8 +149,8 @@ describe('generate job, a grant written by 0.5', () => {
 
     write(
       abac,
-      `${AUTH}/attribute-policies.ts`,
-      read(abac, `${AUTH}/attribute-policies.ts`).replace(
+      `${AUTH}/attributes/attribute-policies.ts`,
+      read(abac, `${AUTH}/attributes/attribute-policies.ts`).replace(
         '// /ddd-ts-kit:system-grants',
         "permit(\n    'system-billing.cancel-stale-invoices',\n    ['billing:invoice.cancel'],\n    () => true,\n  ),\n  // /ddd-ts-kit:system-grants",
       ),
@@ -160,11 +160,11 @@ describe('generate job, a grant written by 0.5', () => {
       expect(cli(root, ...EVERY_QUARTER).code).toBe(0);
     }
 
-    expect(read(rbac, `${AUTH}/roles.ts`)).not.toContain("billingPermissions['invoice.cancel']");
+    expect(read(rbac, `${AUTH}/roles/roles.ts`)).not.toContain("billingPermissions['invoice.cancel']");
 
-    expect(read(abac, `${AUTH}/attribute-policies.ts`).match(/'system-billing\.cancel-stale-invoices'/g)).toHaveLength(
-      1,
-    );
+    expect(
+      read(abac, `${AUTH}/attributes/attribute-policies.ts`).match(/'system-billing\.cancel-stale-invoices'/g),
+    ).toHaveLength(1);
   });
 });
 

@@ -1,6 +1,6 @@
 import { PolicyBasedAuthorizer, type Authorizer } from '@ddd-ts-kit/auth';
 import { SystemClock } from '@ddd-ts-kit/kernel';
-import { attributePolicies } from '{{alias.platform}}/auth/attribute-policies{{alias.ext}}';
+import { attributePolicies } from '{{alias.platform}}/auth/attributes/attribute-policies{{alias.ext}}';
 
 /** Attribute policies: do the attributes of the actor, the resource and the moment satisfy a rule? */
 export function createAuthorizer(): Authorizer {

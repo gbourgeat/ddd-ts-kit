@@ -5,7 +5,7 @@ import { tracing } from '{{alias.platform}}/tracing{{alias.ext}}';
 import { errors } from '{{alias.platform}}/errors{{alias.ext}}';
 {{/if}}
 {{#if http.any}}
-import { createAuthenticator } from '{{alias.platform}}/auth/create-authenticator{{alias.ext}}';
+import { createAuthenticator } from '{{alias.platform}}/auth/authentication/create-authenticator{{alias.ext}}';
 {{/if}}
 import { composeApplication } from '{{alias.platform}}/compose-application{{alias.ext}}';
 import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';

@@ -40,7 +40,7 @@ A word means one thing in one context, and may mean something else next door; th
 | Declared in | Judged in |
 |---|---|
 | a context (`domain/vocabularies/` of `billing`) | that context only: `issued` in `catalog` is another word |
-| the platform (the `Role` of `<platformDir>/auth/role.ts`) | the platform, and the route groups `*.routes.ts` of the contexts, where a guard names a role |
+| the platform (the `Role` of `<platformDir>/auth/authorization/role.ts`) | the platform, and the route groups `*.routes.ts` of the contexts, where a guard names a role |
 | the shared kernel | everywhere |
 | a permission set (`definePermissions`) | everywhere: a permission id names one permission of one context |
 

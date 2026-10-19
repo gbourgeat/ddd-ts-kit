@@ -1,7 +1,7 @@
 import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
 import { openApiDocumentsRoutes } from '@ddd-ts-kit/http/docs';
 import { generateOpenApi, routesByDocument } from '@ddd-ts-kit/http/openapi';
-import { securitySchemes } from '{{alias.platform}}/auth/security-schemes{{alias.ext}}';
+import { securitySchemes } from '{{alias.platform}}/auth/authentication/security-schemes{{alias.ext}}';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 import { OPENAPI_DOCUMENTS } from '{{alias.platform}}/http/openapi-documents{{alias.ext}}';
 

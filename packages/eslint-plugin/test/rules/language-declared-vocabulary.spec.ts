@@ -11,7 +11,7 @@ import { BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ddd-ts-kit-vocabulary-'));
 const STATUS = `${BILLING}/domain/vocabularies/invoice-status.vocabulary.ts`;
 const AGGREGATE = `${BILLING}/domain/aggregates/invoice.aggregate.ts`;
-const GRANTS = 'src/platform/auth/roles.ts';
+const GRANTS = 'src/platform/auth/roles/roles.ts';
 const ROUTES = `${BILLING}/presentation/http/billing.routes.ts`;
 const SERVICE = `${BILLING}/domain/services/pricing.service.ts`;
 const CATALOG = 'src/contexts/catalog/domain/services/listing.service.ts';
@@ -44,7 +44,7 @@ onDisk(
 );
 
 onDisk(
-  'src/platform/auth/role.ts',
+  'src/platform/auth/authorization/role.ts',
   '/** The roles. */\nexport const Role = {\n  /** Everything. */\n  Admin: "admin",\n  // A job.\n  System: \'system\',\n} as const satisfies Record<string, string>;\n\nexport type Role = (typeof Role)[keyof typeof Role];\n',
 );
 
@@ -105,7 +105,11 @@ ruleTester.run('language-declared-vocabulary', languageDeclaredVocabulary, {
       errors: [
         {
           messageId: 'raw',
-          data: { value: 'admin', vocabularies: 'Role (src/platform/auth/role.ts)', written: 'Role.Admin' },
+          data: {
+            value: 'admin',
+            vocabularies: 'Role (src/platform/auth/authorization/role.ts)',
+            written: 'Role.Admin',
+          },
         },
       ],
     },

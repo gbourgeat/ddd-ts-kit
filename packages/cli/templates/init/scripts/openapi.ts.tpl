@@ -5,8 +5,8 @@ import { formDocumentsOf } from '@ddd-ts-kit/http';
 {{/if}}
 import { generateOpenApi, routesByDocument } from '@ddd-ts-kit/http/openapi';
 import { contractFormat, stringifyContract } from 'ddd-ts-kit/dist/contracts.js';
-import { offlineAuthenticator } from '{{alias.platform}}/auth/offline-authenticator{{alias.ext}}';
-import { securitySchemes } from '{{alias.platform}}/auth/security-schemes{{alias.ext}}';
+import { offlineAuthenticator } from '{{alias.platform}}/auth/authentication/offline-authenticator{{alias.ext}}';
+import { securitySchemes } from '{{alias.platform}}/auth/authentication/security-schemes{{alias.ext}}';
 import { composeApplication } from '{{alias.platform}}/compose-application{{alias.ext}}';
 import { inertPersistence } from '{{alias.platform}}/database/inert-persistence{{alias.ext}}';
 import { inProcessEvents } from '{{alias.platform}}/events/in-process-events{{alias.ext}}';

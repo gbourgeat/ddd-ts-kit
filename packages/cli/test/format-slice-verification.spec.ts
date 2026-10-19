@@ -59,7 +59,9 @@ describe('the report of verify-slice', () => {
   });
 
   it('says that nothing of the slice is to commit when every change is left out', () => {
-    const report = formatSliceVerification(verification({ leftOut: ['src/platform/auth/relationship-schema.ts'] }));
+    const report = formatSliceVerification(
+      verification({ leftOut: ['src/platform/auth/relationships/relationship-schema.ts'] }),
+    );
 
     expect(report).toContain(
       "next: nothing of the slice of billing to commit; every change is left out below, outside the slice: a shared file is the conductor's",

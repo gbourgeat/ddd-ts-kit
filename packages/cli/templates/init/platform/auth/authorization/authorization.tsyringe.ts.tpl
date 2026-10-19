@@ -6,8 +6,8 @@ import type { OnDecision } from '@ddd-ts-kit/auth';
 {{/unless}}
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import type { ContextModule } from '@ddd-ts-kit/di';
-import { accessPolicies } from '{{alias.platform}}/auth/access-policies{{alias.ext}}';
-import { createAuthorizer } from '{{alias.platform}}/auth/create-authorizer{{alias.ext}}';
+import { accessPolicies } from '{{alias.platform}}/auth/authorization/access-policies{{alias.ext}}';
+import { createAuthorizer } from '{{alias.platform}}/auth/authorization/create-authorizer{{alias.ext}}';
 
 /**
  * Binds `Authorizer`, the guard both buses ask before any handler, the `Access` of the policies{{#if http.any}} and

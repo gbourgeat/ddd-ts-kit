@@ -39,7 +39,7 @@ déduit l'émetteur et le jeu de clés. Voici l'authentificateur de l'exemple sc
 
 <!-- checked sample -->
 ```ts
-// platform/auth/create-authenticator.ts
+// platform/auth/authentication/create-authenticator.ts
 import type { Authenticator } from '@ddd-ts-kit/auth';
 import { keycloakAuthenticator } from '@ddd-ts-kit/auth/jwt';
 
@@ -69,7 +69,7 @@ reconnu par un *claim* du fournisseur :
 
 <!-- checked sample -->
 ```ts
-// platform/auth/create-authenticator.ts
+// platform/auth/authentication/create-authenticator.ts
 import type { Authenticator } from '@ddd-ts-kit/auth';
 import { JwtAuthenticator } from '@ddd-ts-kit/auth/jwt';
 import type { Actor } from '@ddd-ts-kit/kernel';

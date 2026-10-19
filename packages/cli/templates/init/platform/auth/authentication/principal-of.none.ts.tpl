@@ -1,6 +1,6 @@
 import { resolveSession, type Authenticator } from '@ddd-ts-kit/auth';
 import type { Session } from '@ddd-ts-kit/kernel';
-import { developmentActorHeader } from '{{alias.platform}}/auth/development-actor-header{{alias.ext}}';
+import { developmentActorHeader } from '{{alias.platform}}/auth/authentication/development-actor-header{{alias.ext}}';
 
 /** Reads the development header of a request and answers its session, derived from the actor it names. */
 export function principalOf(authenticator: Authenticator): (raw: unknown) => Promise<Session> {

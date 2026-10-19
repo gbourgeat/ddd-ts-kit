@@ -108,27 +108,27 @@ describe('integration events', () => {
 
 describe('authentication and authorization', () => {
   it.each([
-    ['rbac', 'roles.ts', 'new RoleBasedAuthorizer({ roles, systemRole: Role.System })'],
-    ['abac', 'attribute-policies.ts', 'policies: attributePolicies'],
+    ['rbac', 'roles/roles.ts', 'new RoleBasedAuthorizer({ roles, systemRole: Role.System })'],
+    ['abac', 'attributes/attribute-policies.ts', 'policies: attributePolicies'],
     [
       'rebac',
-      'relationship-schema.ts',
+      'relationships/relationship-schema.ts',
       'schema: relationshipSchema,\n    store: relationTuples,\n    mapping: permissionMapping(),',
     ],
-    ['custom', 'custom-authorizer.contract.spec.ts', 'permissions.all()'],
+    ['custom', 'custom/custom-authorizer.contract.spec.ts', 'permissions.all()'],
   ])('writes the authorizer of the model %s behind the one port', (authz, file, expected) => {
     const root = initProject('--authz', authz);
 
     expect(exists(root, `src/platform/auth/${file}`)).toBe(true);
-    expect(platform(root, 'auth/create-authorizer.ts')).toContain(expected);
+    expect(platform(root, 'auth/authorization/create-authorizer.ts')).toContain(expected);
 
-    expect(platform(root, 'auth/authorization.ts')).toContain(
+    expect(platform(root, 'auth/authorization/authorization.ts')).toContain(
       'return authorizationModule({ authorizer: createAuthorizer(), authenticator, policies: accessPolicies, onDecision });',
     );
 
     expect(platform(root, 'compose-application.ts')).toContain("authorization: 'required'");
 
-    expect(platform(root, 'auth/http-boundary.ts')).toContain(
+    expect(platform(root, 'auth/authentication/http-boundary.ts')).toContain(
       'resolvePrincipal: principalOf(authenticator),\n    executionScope,\n    errorMapper,',
     );
   });
@@ -136,9 +136,12 @@ describe('authentication and authorization', () => {
   it('keeps a registry of every permission where the model is laid out over it', () => {
     const root = initProject('--authz', 'rebac');
 
-    expect(platform(root, 'auth/permissions.ts')).toContain('export const permissions = PermissionRegistry.of(');
-    expect(platform(root, 'auth/permissions.ts')).toContain('// ddd-ts-kit:permission-sets');
-    expect(exists(root, 'src/platform/auth/create-tuple-store.contract.spec.ts')).toBe(true);
+    expect(platform(root, 'auth/authorization/permissions.ts')).toContain(
+      'export const permissions = PermissionRegistry.of(',
+    );
+
+    expect(platform(root, 'auth/authorization/permissions.ts')).toContain('// ddd-ts-kit:permission-sets');
+    expect(exists(root, 'src/platform/auth/relationships/create-tuple-store.contract.spec.ts')).toBe(true);
 
     expect(read(root, 'test/e2e/support/start-application.ts')).toContain(
       'relate: (tuple) => relationTuples.write([tuple]),',
@@ -148,9 +151,15 @@ describe('authentication and authorization', () => {
   it('writes a development authenticator that refuses production, when no credential is verified', () => {
     const root = initProject('--authn', 'none');
 
-    expect(platform(root, 'auth/development-header-authenticator.ts')).toContain('must never run in production');
-    expect(platform(root, 'auth/security-schemes.ts')).toContain('developmentActor');
-    expect(platform(root, 'auth/principal-of.ts')).toContain('resolveSession(authenticator, developmentActorOf(raw))');
+    expect(platform(root, 'auth/authentication/development-header-authenticator.ts')).toContain(
+      'must never run in production',
+    );
+
+    expect(platform(root, 'auth/authentication/security-schemes.ts')).toContain('developmentActor');
+
+    expect(platform(root, 'auth/authentication/principal-of.ts')).toContain(
+      'resolveSession(authenticator, developmentActorOf(raw))',
+    );
 
     expect(read(root, 'test/e2e/support/create-credentials.ts')).toContain(
       "new DevelopmentHeaderAuthenticator('test')",
@@ -177,7 +186,7 @@ describe('what the stack does not have', () => {
 
     expect(exists(root, 'scripts/openapi.ts')).toBe(false);
     expect(exists(root, 'src/platform/http')).toBe(false);
-    expect(exists(root, 'src/platform/auth/create-authenticator.ts')).toBe(false);
+    expect(exists(root, 'src/platform/auth/authentication/create-authenticator.ts')).toBe(false);
     expect(exists(root, 'test/e2e')).toBe(false);
     expect(textsAt(readJson(root, 'package.json'), 'scripts')['openapi:check']).toBeUndefined();
     expect(read(root, '.github/workflows/ci.yml')).not.toContain('openapi');

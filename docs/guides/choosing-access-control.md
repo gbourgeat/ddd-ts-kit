@@ -175,7 +175,7 @@ import { RoleBasedAuthorizer, tenantOfContext, type Grant, type PermissionSet } 
 
 declare const billingPermissions: PermissionSet<'billing', 'invoice.read' | 'invoice.issue' | 'invoice.void'>;
 
-// platform/auth/roles.ts
+// platform/auth/roles/roles.ts
 export const ROLES = ['admin', 'accountant', 'clerk', 'system'] as const;
 export type Role = (typeof ROLES)[number];
 
@@ -293,7 +293,7 @@ import type { Clock } from '@ddd-ts-kit/kernel';
 declare const billingPermissions: PermissionSet<'billing', 'invoice.read' | 'invoice.issue' | 'invoice.void'>;
 declare const clock: Clock;
 
-// platform/auth/attribute-policies.ts
+// platform/auth/attributes/attribute-policies.ts
 const sameDepartment: Condition = ({ actor, attributes }) => actor.attributes['department'] === attributes['department'];
 const large: Condition = ({ attributes }) => Number(attributes['amount']) > 10_000;
 const approvedTwice: Condition = ({ attributes }) => attributes['approvals'] === 2;
@@ -354,7 +354,7 @@ export const docsPermissions = definePermissions('docs', {
   'folder.view': { description: 'Read a folder and list what it holds' },
 });
 
-// platform/auth/relationship-schema.ts
+// platform/auth/relationships/relationship-schema.ts
 export const relationshipSchema = defineSchema({
   user: {},
   system: {},
@@ -372,7 +372,7 @@ export const relationshipSchema = defineSchema({
   },
 });
 
-// platform/auth/permission-mapping.ts: which permission of the schema each use case permission stands for
+// platform/auth/relationships/permission-mapping.ts: which permission of the schema each use case permission stands for
 export const mapping = {
   document: { [docsPermissions['document.edit'].id]: 'edit', [docsPermissions['document.view'].id]: 'view' },
   folder: { [docsPermissions['folder.view'].id]: 'view' },

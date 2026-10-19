@@ -13,7 +13,7 @@ const VALUE_OBJECT = `${BILLING}/domain/value-objects/money.vo.ts`;
 const JOB = `${BILLING}/application/scheduling/cancel-stale-invoices.job.ts`;
 const EVENT_HANDLER = `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`;
 const OTHER_JOB = `${BILLING}/application/scheduling/issue-invoices-monthly.job.ts`;
-const ROLES = 'src/platform/auth/roles.ts';
+const ROLES = 'src/platform/auth/roles/roles.ts';
 const READER = `${BILLING}/application/ports/search-invoices-reader.port.ts`;
 const BARE = '@CommandHandler(IssueInvoiceCommand)';
 /** The list a 0.1 project writes in the decorator: still read, and held to the same rules. */

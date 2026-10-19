@@ -76,8 +76,11 @@ ruleTester.run('imports-alias-only', importsAliasOnly, {
       errors: [{ messageId: 'relative' }],
     },
     {
-      ...at('scripts/openapi.ts', "import { securitySchemes } from '../src/platform/auth/security-schemes.js';"),
-      output: "import { securitySchemes } from '@/platform/auth/security-schemes.js';",
+      ...at(
+        'scripts/openapi.ts',
+        "import { securitySchemes } from '../src/platform/auth/authentication/security-schemes.js';",
+      ),
+      output: "import { securitySchemes } from '@/platform/auth/authentication/security-schemes.js';",
       errors: [{ messageId: 'relative' }],
     },
     {

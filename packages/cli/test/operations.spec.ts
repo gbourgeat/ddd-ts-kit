@@ -62,7 +62,7 @@ describe('init --authn keycloak', () => {
       users: { username: string; realmRoles: string[] }[];
     };
 
-    expect(read(root, 'src/platform/auth/create-authenticator.ts')).toContain(
+    expect(read(root, 'src/platform/auth/authentication/create-authenticator.ts')).toContain(
       'keycloakAuthenticator({ baseUrl, realm, audience',
     );
 
@@ -119,7 +119,7 @@ describe('init --audit', () => {
 
     expect(read(root, 'src/platform/audit/search-audit-entries.controller.ts')).toContain("path: '/audit/entries'");
     expect(read(root, 'src/platform/audit/audit.module.ts')).toContain(".requires(auditPermissions['trail.read'])");
-    expect(exists(root, 'src/platform/auth/log-decisions.ts')).toBe(false);
+    expect(exists(root, 'src/platform/auth/authorization/log-decisions.ts')).toBe(false);
     expect(manifest(root).dependencies).toMatchObject({ '@ddd-ts-kit/audit': KIT_RANGE });
   });
 
@@ -141,7 +141,10 @@ describe('init --audit', () => {
     expect(stack(bare)).toMatchObject({ audit: 'off' });
     expect(stack(off)).toMatchObject({ audit: 'off' });
     expect(exists(off, 'src/platform/audit/create-audit.ts')).toBe(false);
-    expect(read(off, 'src/platform/auth/log-decisions.ts')).toContain("logger.warn('authorization decision', fields)");
+
+    expect(read(off, 'src/platform/auth/authorization/log-decisions.ts')).toContain(
+      "logger.warn('authorization decision', fields)",
+    );
   });
 });
 

@@ -59,7 +59,7 @@ describe('a path a design cites', () => {
 
   it('is refused under the contexts directory when the tree has no place for it, planned elsewhere', () => {
     expect(judgePath(`${BILLING}/application/services/pricing.service.ts`, citing, evidence([])).state).toBe('refused');
-    expect(judgePath('src/platform/auth/roles.ts', citing, evidence([])).state).toBe('planned');
+    expect(judgePath('src/platform/auth/roles/roles.ts', citing, evidence([])).state).toBe('planned');
   });
 
   it('reads a change not committed yet: what it removes, renames and adds', () => {

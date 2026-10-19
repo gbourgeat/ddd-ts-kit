@@ -1,5 +1,5 @@
 import type { RelationTuple } from '@ddd-ts-kit/auth/rebac';
-import { relationTuples } from '{{alias.platform}}/auth/relation-tuples{{alias.ext}}';
+import { relationTuples } from '{{alias.platform}}/auth/relationships/relation-tuples{{alias.ext}}';
 
 /**
  * What the application does on its own behalf: the relationships of its system actors, one per

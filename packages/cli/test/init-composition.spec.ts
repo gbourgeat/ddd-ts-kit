@@ -87,7 +87,7 @@ describe('the composition root init writes, on tsyringe', () => {
       '.use((message, next, info) => resolve(UseCaseGuard).check(message, next, info))\n    .use(foundations.traced.useCase)',
     );
 
-    expect(platform(root, 'auth/http-boundary.ts')).toContain('around: tracedRoutes(),');
+    expect(platform(root, 'auth/authentication/http-boundary.ts')).toContain('around: tracedRoutes(),');
     expect(exists(root, 'src/platform/decorate-bindings.ts')).toBe(false);
     expect(platform(root, 'resilience/adapter-aspects.ts')).not.toContain('traceDependency');
   });

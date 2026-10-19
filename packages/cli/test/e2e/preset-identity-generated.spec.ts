@@ -29,7 +29,7 @@ const STACK = [
 const OPEN_FGA_AUTHORIZER = `import type { Authorizer } from '@ddd-ts-kit/auth';
 import { OpenFgaAuthorizer } from '@ddd-ts-kit/openfga';
 import { openFgaClient } from '@ddd-ts-kit/openfga/sdk';
-import { permissionMapping } from '@/platform/auth/permission-mapping';
+import { permissionMapping } from '@/platform/auth/relationships/permission-mapping';
 
 /** Where the OpenFGA server of the deployment answers, and the store that holds the tuples of this project. */
 const OPEN_FGA = { apiUrl: 'http://openfga:8080', storeId: '01JA0000000000000000000000' };
@@ -55,11 +55,13 @@ describe.runIf(SLOW)('the identity preset generated into a project that decides 
   }, 120_000);
 
   it('wraps the authorizer of the team, and reads the organisations of the token as tenants', () => {
-    expect(read(root, 'src/platform/auth/create-authorizer.ts')).toContain(
+    expect(read(root, 'src/platform/auth/authorization/create-authorizer.ts')).toContain(
       'return new SignedInGrantsAuthorizer({ grants: signedInGrants, otherwise: model });',
     );
 
-    expect(read(root, 'src/platform/auth/create-authenticator.ts')).toContain("tenantClaim: 'organization'");
+    expect(read(root, 'src/platform/auth/authentication/create-authenticator.ts')).toContain(
+      "tenantClaim: 'organization'",
+    );
   });
 
   it('has no finding, and is laid out as its formatter wants it', () => {
@@ -82,7 +84,7 @@ function generatedInto(): string {
 
   expect(cli(root, 'init', '--package-manager', 'npm', ...STACK).code).toBe(0);
 
-  write(root, 'src/platform/auth/create-authorizer.ts', OPEN_FGA_AUTHORIZER);
+  write(root, 'src/platform/auth/authorization/create-authorizer.ts', OPEN_FGA_AUTHORIZER);
   write(root, 'package.json', withOpenFga(read(root, 'package.json')));
 
   expect(cli(root, 'generate', 'context', 'identity', '--preset', 'identity').code).toBe(0);

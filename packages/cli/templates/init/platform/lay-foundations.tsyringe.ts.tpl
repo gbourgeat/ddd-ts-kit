@@ -16,7 +16,7 @@ import { traceApplication, type ConsumerTrace, type TracedApplication } from '@d
 import { createAudit, type Audit } from '{{alias.platform}}/audit/create-audit{{alias.ext}}';
 {{/if}}
 {{#unless audit.on}}
-import { logDecisions } from '{{alias.platform}}/auth/log-decisions{{alias.ext}}';
+import { logDecisions } from '{{alias.platform}}/auth/authorization/log-decisions{{alias.ext}}';
 {{/unless}}
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 import { createLogger, type LogSettings } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';

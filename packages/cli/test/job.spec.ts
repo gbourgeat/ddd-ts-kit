@@ -5,7 +5,7 @@ import { jobProject } from './support/job-project.js';
 
 const BILLING = 'src/contexts/billing';
 const JOB = `${BILLING}/application/scheduling/cancel-stale-invoices.job.ts`;
-const ROLES = 'src/platform/auth/roles.ts';
+const ROLES = 'src/platform/auth/roles/roles.ts';
 const SPEC = `${BILLING}/test/unit/cancel-stale-invoices.job.spec.ts`;
 
 const EVERY_QUARTER = [

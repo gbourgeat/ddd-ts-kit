@@ -1,5 +1,5 @@
 import { permit, type AttributePolicy, type Condition } from '@ddd-ts-kit/auth';
-import { Role } from '{{alias.platform}}/auth/role{{alias.ext}}';
+import { Role } from '{{alias.platform}}/auth/authorization/role{{alias.ext}}';
 
 const isAdministrator: Condition = ({ actor }) => actor.roles.includes(Role.Admin);
 

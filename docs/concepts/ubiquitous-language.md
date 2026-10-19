@@ -271,7 +271,7 @@ Code reads `AppointmentStatus.NoShow`, completed by the editor; a parameter type
 database column, a payload and an OpenAPI enum do not change. `npx ddd-ts-kit generate vocabulary
 scheduling AppointmentStatus --value requested --value booked --value no-show` writes the file
 (`domain/vocabularies/`), and run again adds the values it does not hold yet. The roles a
-credential carries are the vocabulary `Role` of the platform (`<platformDir>/auth/role.ts`),
+credential carries are the vocabulary `Role` of the platform (`<platformDir>/auth/authorization/role.ts`),
 written by `init` and completed by `generate route-group --role <role>`; a permission is read
 from the permission set of its context (`billingPermissions['invoice.issue']`), never by its id.
 

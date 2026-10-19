@@ -4,6 +4,7 @@ import { withImport } from '../../with-import.js';
 import { permissionOf, type PermissionReference } from './permission-of.js';
 import type { Scope } from '../../scope.js';
 import type { SentCommand } from './sent-command.js';
+import { authFile } from '../../auth-file.js';
 
 const REGION = 'system-grants';
 const SYSTEM_OPERATES = /operator:\s*\[[^\]]*'system'/;
@@ -48,14 +49,13 @@ export function grantSystemActor(scope: Scope, job: string, command: SentCommand
 }
 
 function placementOf(scope: Scope, job: string, permission: string): Placement | undefined {
-  const auth = `${scope.config.platformDir}/auth`;
   const actor = `system:${job}`;
   const read: PermissionReference = permissionOf(scope.config, permission);
 
   switch (scope.config.stack.authz) {
     case 'rbac':
       return {
-        file: `${auth}/roles.ts`,
+        file: authFile(scope, 'roles.ts'),
         line: `${read.written},`,
         anchor: `${read.written},`,
         needs: read.importLine,
@@ -64,7 +64,7 @@ function placementOf(scope: Scope, job: string, permission: string): Placement |
       };
     case 'abac':
       return {
-        file: `${auth}/attribute-policies.ts`,
+        file: authFile(scope, 'attribute-policies.ts'),
         line: `permit('system-${job}', [${read.written}], ({ actor }) => actor.id === '${actor}'),`,
         anchor: `'system-${job}',`,
         needs: read.importLine,
@@ -80,15 +80,14 @@ function placementOf(scope: Scope, job: string, permission: string): Placement |
 
 /** The starting schema maps every permission of a context to `operate`; once the team has remodelled it, the relationship is theirs to write. */
 function operatorOfContext(scope: Scope, actor: string, permission: string): Placement | undefined {
-  const auth = `${scope.config.platformDir}/auth`;
   const context = scope.context.kebab;
 
-  if (!SYSTEM_OPERATES.test(scope.ws.read(`${auth}/relationship-schema.ts`) ?? '')) {
+  if (!SYSTEM_OPERATES.test(scope.ws.read(authFile(scope, 'relationship-schema.ts')) ?? '')) {
     return undefined;
   }
 
   return {
-    file: `${auth}/relate-system-actors.ts`,
+    file: authFile(scope, 'relate-system-actors.ts'),
     line: `{ object: 'context:${context}', relation: 'operator', subject: 'system:${actor}' },`,
     anchor: `subject: 'system:${actor}'`,
     check: `check this relationship: \`${actor}\` now operates the context \`${context}\`, which gives it \`${permission}\` and every other permission mapped to \`operate\`.`,

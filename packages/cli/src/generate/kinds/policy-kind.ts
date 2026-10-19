@@ -11,6 +11,7 @@ import { named } from '../named.js';
 import { openScope } from '../open-scope.js';
 import { permissionNamed } from '../permission-named.js';
 import { vars } from '../vars.js';
+import { authFile } from '../auth-file.js';
 
 export const policyKind: Kind = {
   name: 'policy',
@@ -45,11 +46,7 @@ export const policyKind: Kind = {
 
     // A declared policy is found through its decorator: only a policy written as a value is listed for `Access`.
     if (!isDeclared(scope.config)) {
-      applyWiring(
-        scope.ws,
-        `${scope.config.platformDir}/auth/access-policies.ts`,
-        renderTemplate('policy/registration.tpl', context),
-      );
+      applyWiring(scope.ws, authFile(scope, 'access-policies.ts'), renderTemplate('policy/registration.tpl', context));
     }
   },
 };

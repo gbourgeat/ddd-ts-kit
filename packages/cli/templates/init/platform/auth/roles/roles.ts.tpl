@@ -1,5 +1,5 @@
 import type { Grant } from '@ddd-ts-kit/auth';
-import { Role } from '{{alias.platform}}/auth/role{{alias.ext}}';
+import { Role } from '{{alias.platform}}/auth/authorization/role{{alias.ext}}';
 
 /**
  * What each role may do. A grant is a permission of a context (`billingPermissions['invoice.issue']`,

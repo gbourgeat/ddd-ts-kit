@@ -249,7 +249,7 @@ export const TREE_FIXTURES: readonly Fixture[] = [
     expect: 'pass',
     files: project({
       'docs/architecture/slices.md':
-        '# Slices\n\nAdd `src/contexts/billing/application/ports/credit-limit-reader.port.ts` and fill `src/contexts/billing/domain/aggregates/invoice.aggregate.ts:42`, then `src/platform/auth/roles.ts` and `npm test`.\n',
+        '# Slices\n\nAdd `src/contexts/billing/application/ports/credit-limit-reader.port.ts` and fill `src/contexts/billing/domain/aggregates/invoice.aggregate.ts:42`, then `src/platform/auth/roles/roles.ts` and `npm test`.\n',
       'docs/architecture/reviews/billing.md': 'See `src/contexts/billing/infrastructure/persistence/`.\n',
     }),
   },

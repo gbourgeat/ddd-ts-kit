@@ -104,7 +104,7 @@ describe('init --preset identity', () => {
   it('is written once when it is named twice', () => {
     const root = initProject('--preset', 'identity', '--preset', 'identity');
 
-    expect(read(root, 'src/platform/auth/signed-in-grants.ts').match(/'identity:\*'/g)).toHaveLength(1);
+    expect(read(root, 'src/platform/auth/authorization/signed-in-grants.ts').match(/'identity:\*'/g)).toHaveLength(1);
   });
 
   it('with tenants, reads the organisations of a Keycloak token as the tenants of the person', () => {
@@ -122,14 +122,17 @@ describe('init --preset identity', () => {
     const jwt = initProject('--tenancy', 'shared-table', '--orm', 'knex', '--preset', 'identity');
     const alone = initProject('--authn', 'keycloak', '--preset', 'identity');
 
-    expect(read(keycloak, 'src/platform/auth/create-authenticator.ts')).toContain("tenantClaim: 'organization'");
-    expect(read(alone, 'src/platform/auth/create-authenticator.ts')).not.toContain('tenantClaim');
-    expect(read(jwt, 'src/platform/auth/create-authenticator.ts')).not.toContain('tenantClaim');
+    expect(read(keycloak, 'src/platform/auth/authentication/create-authenticator.ts')).toContain(
+      "tenantClaim: 'organization'",
+    );
+
+    expect(read(alone, 'src/platform/auth/authentication/create-authenticator.ts')).not.toContain('tenantClaim');
+    expect(read(jwt, 'src/platform/auth/authentication/create-authenticator.ts')).not.toContain('tenantClaim');
   });
 });
 
 describe('the grant of the preset to every signed-in person', () => {
-  const AUTHORIZER = 'src/platform/auth/create-authorizer.ts';
+  const AUTHORIZER = 'src/platform/auth/authorization/create-authorizer.ts';
 
   it('is asked before the access model, whatever it is', () => {
     for (const authz of ['rbac', 'abac', 'rebac', 'custom']) {
@@ -139,7 +142,7 @@ describe('the grant of the preset to every signed-in person', () => {
         'return new SignedInGrantsAuthorizer({ grants: signedInGrants, otherwise: model });',
       );
 
-      expect(read(root, 'src/platform/auth/signed-in-grants.ts')).toContain("  'identity:*',\n");
+      expect(read(root, 'src/platform/auth/authorization/signed-in-grants.ts')).toContain("  'identity:*',\n");
     }
   });
 
@@ -149,7 +152,7 @@ describe('the grant of the preset to every signed-in person', () => {
     fs.writeFileSync(path.join(root, AUTHORIZER), 'export { createAuthorizer } from "./elsewhere";\n');
     const result = cli(root, 'generate', 'context', 'people', '--preset', 'identity', '--json');
 
-    expect(read(root, 'src/platform/auth/signed-in-grants.ts')).toContain("  'people:*',\n");
+    expect(read(root, 'src/platform/auth/authorization/signed-in-grants.ts')).toContain("  'people:*',\n");
     expect(result.stdout).toContain('wrap the authorizer of create-authorizer.ts');
   });
 });

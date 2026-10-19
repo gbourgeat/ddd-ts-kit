@@ -9,7 +9,7 @@ import type { IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
 {{/unless}}
 import { createHttpClient, settled, type HttpClient, type SettledOptions } from '@ddd-ts-kit/testing/e2e';
 {{#if authz.rebac}}
-import { relationTuples } from '{{alias.platform}}/auth/relation-tuples{{alias.ext}}';
+import { relationTuples } from '{{alias.platform}}/auth/relationships/relation-tuples{{alias.ext}}';
 {{/if}}
 import { composeApplication } from '{{alias.platform}}/compose-application{{alias.ext}}';
 {{#if broker.provided}}

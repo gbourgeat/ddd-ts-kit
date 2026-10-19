@@ -9,7 +9,7 @@ import { VarnishCachePurger } from '@ddd-ts-kit/http/purgers';
 import { PurgingPublisher } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#if http.any}}
-import { createAuthenticator } from '{{alias.platform}}/auth/create-authenticator{{alias.ext}}';
+import { createAuthenticator } from '{{alias.platform}}/auth/authentication/create-authenticator{{alias.ext}}';
 {{/if}}
 import { composeApplication } from '{{alias.platform}}/compose-application{{alias.ext}}';
 import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';

@@ -36,7 +36,7 @@ derives the issuer and the key set. This is the authenticator of the scheduling 
 
 <!-- checked sample -->
 ```ts
-// platform/auth/create-authenticator.ts
+// platform/auth/authentication/create-authenticator.ts
 import type { Authenticator } from '@ddd-ts-kit/auth';
 import { keycloakAuthenticator } from '@ddd-ts-kit/auth/jwt';
 
@@ -65,7 +65,7 @@ specific to the provider, here a service account recognised by a claim of the pr
 
 <!-- checked sample -->
 ```ts
-// platform/auth/create-authenticator.ts
+// platform/auth/authentication/create-authenticator.ts
 import type { Authenticator } from '@ddd-ts-kit/auth';
 import { JwtAuthenticator } from '@ddd-ts-kit/auth/jwt';
 import type { Actor } from '@ddd-ts-kit/kernel';
