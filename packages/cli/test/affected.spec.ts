@@ -81,7 +81,7 @@ describe('selectAffected(), what a change set has to run', () => {
 
   it.each([
     ['the shared kernel', 'src/shared-kernel/money.vo.ts'],
-    ['the platform', 'src/platform/compose-application.ts'],
+    ['the platform', 'src/platform/composition/compose-application.ts'],
     ['the composition root', 'src/main.ts'],
     ['the config file', 'ddd-ts-kit.config.json'],
     ['the manifest', 'package.json'],

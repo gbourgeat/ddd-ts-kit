@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { platformTestModule } from '@/platform/platform-test.module';
+import { platformTestModule } from '@/platform/composition/platform-test.module';
 import {
   appointmentBookedV1,
   appointmentCancelledV1,

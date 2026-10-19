@@ -7,10 +7,10 @@ span. The application is observed from outside, where it is composed. API: READM
 
 ## What the bootstrap wires
 
-- `src/platform/tracing.ts` starts the SDK (`initTracing`) and is the **first import** of
+- `src/platform/observability/tracing.ts` starts the SDK (`initTracing`) and is the **first import** of
   `src/main.ts`: in an ES module every static import is evaluated before the body, so
   starting it later misses `http` and the database drivers.
-- `src/platform/lay-foundations.ts` builds `traceApplication()` once, and
+- `src/platform/composition/lay-foundations.ts` builds `traceApplication()` once, and
   `compose-application.ts` hands it to `kernelModule({ instrumentation })`: one span per use
   case, per call to a repository, a gateway or an outside adapter, per domain event handler,
   outbox append, publication, consumed event and job. Nothing is wrapped by hand, and no

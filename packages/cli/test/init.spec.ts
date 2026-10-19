@@ -14,11 +14,11 @@ const BOOTSTRAPPED = [
   'package.json',
   'tsconfig.json',
   'src/main.ts',
-  'src/platform/tracing.ts',
-  'src/platform/compose-application.ts',
-  'src/platform/platform.module.ts',
-  'src/platform/platform-test.module.ts',
-  'src/platform/job-settings.ts',
+  'src/platform/observability/tracing.ts',
+  'src/platform/composition/compose-application.ts',
+  'src/platform/composition/platform.module.ts',
+  'src/platform/composition/platform-test.module.ts',
+  'src/platform/jobs/job-settings.ts',
   'src/platform/config/load-config.ts',
   'src/platform/http/start-http-server.ts',
   'scripts/openapi.ts',
@@ -49,11 +49,11 @@ describe('init', () => {
     // Controllers declare themselves: nothing lists the routes of a declared context, and the composition root mounts what the contexts declare.
     expect(created).not.toContain('src/contexts/billing/presentation/http/billing.routes.ts');
 
-    expect(read(root, 'src/platform/compose-application.ts')).toContain(
+    expect(read(root, 'src/platform/composition/compose-application.ts')).toContain(
       "controllerRoutes(container.resolve(DeclaredEdges).of('controller'), { resolve: container.resolve, security }),",
     );
 
-    expect(read(root, 'src/platform/compose-application.ts')).toContain(
+    expect(read(root, 'src/platform/composition/compose-application.ts')).toContain(
       "contextModule('billing', billingDeclarations),",
     );
   });
@@ -72,7 +72,7 @@ describe('init', () => {
     expect(created).not.toContain('src/contexts/billing/billing.declarations.ts');
     expect(stack).toMatchObject({ style: 'explicit' });
     expect(stack).not.toHaveProperty('assembly');
-    expect(read(root, 'src/platform/compose-application.ts')).toContain('billingModule,');
+    expect(read(root, 'src/platform/composition/compose-application.ts')).toContain('billingModule,');
   });
 
   it('keeps the declared style for the container that reads the declarations, and the barrel for the declared style', () => {
@@ -104,8 +104,8 @@ describe('init', () => {
 
     expect(exists(root, 'src/contexts/billing/billing.declarations.ts')).toBe(false);
 
-    expect(read(root, 'src/platform/compose-application.ts')).toContain(
-      "await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),",
+    expect(read(root, 'src/platform/composition/compose-application.ts')).toContain(
+      "await discoverContext('billing', new URL('../../contexts/billing/', import.meta.url)),",
     );
 
     expect(read(root, 'knip.json')).toContain(
@@ -288,7 +288,7 @@ describe('init in a project that already exists', () => {
       'keeps its own "lint" script; the kit expects: ddd-ts-kit lint',
     );
 
-    expect(read(root, 'src/platform/tracing.ts')).toContain("'legacy-shop'");
+    expect(read(root, 'src/platform/observability/tracing.ts')).toContain("'legacy-shop'");
   });
 
   it('replaces existing files only with --force', () => {

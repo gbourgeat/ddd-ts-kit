@@ -35,12 +35,12 @@ import { withForms } from '{{alias.platform}}/http/with-forms{{alias.ext}}';
 {{#if authz.rebac}}
 import { relateSystemActors } from '{{alias.platform}}/auth/relationships/relate-system-actors{{alias.ext}}';
 {{/if}}
-import { createPlatform, type PlatformOptions } from '{{alias.platform}}/create-platform{{alias.ext}}';
+import { createPlatform, type PlatformOptions } from '{{alias.platform}}/composition/create-platform{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 {{#if files.http}}
 import { fileRoutes } from '{{alias.platform}}/files/file-routes{{alias.ext}}';
 {{/if}}
-import type { Platform } from '{{alias.platform}}/platform{{alias.ext}}';
+import type { Platform } from '{{alias.platform}}/composition/platform{{alias.ext}}';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 

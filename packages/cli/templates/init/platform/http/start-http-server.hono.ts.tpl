@@ -5,7 +5,7 @@ import { getConnInfo } from '@hono/node-server/conninfo';
 {{/if}}
 import { Hono } from 'hono';
 import { mountHono } from '@ddd-ts-kit/http/hono';
-import type { Application } from '{{alias.platform}}/compose-application{{alias.ext}}';
+import type { Application } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 {{#if cache.rateLimit}}
 import { refusalFor } from '{{alias.platform}}/http/refusal-for{{alias.ext}}';

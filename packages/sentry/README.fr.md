@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ab8effc74cf05f27 -->
+<!-- translation-of: README.md sha256:d3b6725c2c4de0c8 -->
 
 # @ddd-ts-kit/sentry
 
@@ -26,7 +26,7 @@ confie à l'`ErrorReporter` du noyau, le seul port que ce *package* implémente.
 ## Racine de composition
 
 ```ts
-// platform/errors.ts : importé en second, juste après platform/tracing.ts
+// platform/observability/errors.ts : importé en second, juste après platform/observability/tracing.ts
 import { reportProcessFailures } from '@ddd-ts-kit/kernel';
 import { initSentry } from '@ddd-ts-kit/sentry';
 import { loadConfig } from '@/platform/config/load-config';
@@ -40,8 +40,8 @@ reportProcessFailures(errors); // uncaughtException et unhandledRejection : remo
 
 ```ts
 // main.ts
-import { tracing } from '@/platform/tracing'; // en premier
-import { errors } from '@/platform/errors'; // en second
+import { tracing } from '@/platform/observability/tracing'; // en premier
+import { errors } from '@/platform/observability/errors'; // en second
 import { DeadLetterReports, ExecutionScope } from '@ddd-ts-kit/kernel';
 import { createApplication, kernelModule } from '@ddd-ts-kit/di';
 import { reportHttpErrors } from '@ddd-ts-kit/http';
@@ -71,7 +71,7 @@ Trois lignes portent l'ensemble : `initSentry`, `errorReporter: errors`,
 letters) tiennent chacun en une ligne, pour qui les veut.
 
 `init --errors sentry` écrit exactement ces pièces, chacune dans son fichier :
-`platform/errors.ts` comme ci-dessus, avec `SENTRY_DSN`, `SENTRY_ENVIRONMENT` (par défaut :
+`platform/observability/errors.ts` comme ci-dessus, avec `SENTRY_DSN`, `SENTRY_ENVIRONMENT` (par défaut :
 `NODE_ENV`), `SENTRY_RELEASE` et `SENTRY_SCRUB_MESSAGES` lus par
 `platform/config/load-config.ts` ; `errors` passé par `main.ts` à `composeApplication`, qui le
 donne à `kernelModule({ errorReporter })` ; `reportHttpErrors` dans
@@ -79,7 +79,7 @@ donne à `kernelModule({ errorReporter })` ; `reportHttpErrors` dans
 `platform/events/create-event-provider.ts` (le *broker*) et dans
 `platform/events/start-outbox-relay.ts` (une publication déclarée morte).
 
-**Ordre de chargement.** `platform/tracing.ts` reste le premier import : OpenTelemetry modifie
+**Ordre de chargement.** `platform/observability/tracing.ts` reste le premier import : OpenTelemetry modifie
 `http` et les pilotes lorsqu'ils sont chargés, il doit donc s'exécuter avant eux. `initSentry` ne
 modifie rien, sa place ne change donc rien pour le traçage, quel que soit celui des deux qui
 démarre en premier (les deux ordres sont testés). Il vient en second pour qu'un échec pendant le

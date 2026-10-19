@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:584e655554df324c -->
+<!-- translation-of: README.md sha256:5c1237bc2e516383 -->
 
 # Consignes des *workers*
 
@@ -44,7 +44,7 @@ partagent un seul arbre au lieu d'avoir chacun un *worktree*, et l'exemple mesur
   les erreurs hors de vos fichiers). Ne lancez pas `npm run verify` : le chef d'orchestre le fait,
   sur tout l'arbre.
 - Besoins hors de votre périmètre (la plateforme, la configuration, le contrat d'un autre contexte,
-  un acteur système à relier, une liaison dans `src/platform/platform.module.ts`) : ne les
+  un acteur système à relier, une liaison dans `src/platform/composition/platform.module.ts`) : ne les
   contournez pas, finissez ce qui n'en dépend pas et mettez-les dans votre rapport, assez précis
   pour être faits sans vous redemander. Le *worker* de la plateforme ajoute, en parallèle : un
   `RelationTupleStore` persistant (la classe de port de `@ddd-ts-kit/auth/rebac`, liée par la

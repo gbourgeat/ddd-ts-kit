@@ -34,7 +34,7 @@ application as two ports of the kernel: `IntegrationEventPublisher` stays the ou
 ![The handler of ordering writes the order and an outbox record in one transaction; the outbox relay gives the record to NatsEventBus, which publishes it to the stream integration-events with the event id as Nats-Msg-Id and waits for the acknowledgement; the stream drops a second message with the same id within its duplicate window; one durable consumer per consumer and event type pulls the message and hands it to the handlers of its context, acknowledged after their unit of work committed; what a consumer gives up on is copied to the stream integration-events-dead](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/nats-outbox-to-consumers.svg)
 
 `init --broker nats` writes this wiring in the platform of the project: the bus is built by
-`platform/events/create-event-provider.ts`, `platform/platform.module.ts` rebinds
+`platform/events/create-event-provider.ts`, `platform/composition/platform.module.ts` rebinds
 `EventSubscribers` on it, and `main.ts` gives it, traced, to the outbox relay. By hand, the
 same thing reads:
 

@@ -40,7 +40,7 @@ migrations that a merge left out of order (`npx ddd-ts-kit explain persistence/m
 `npm run dev` restarts the application when a source file changes. It runs `tsx watch`, which
 executes TypeScript directly and resolves an import alias from the `paths` of `tsconfig.json`;
 `--env-file-if-exists=.env` gives Node the variables of `.env`
-when the file is there, and `--import` loads `{{config.platformDir}}/tracing.ts` before
+when the file is there, and `--import` loads `{{config.platformDir}}/observability/tracing.ts` before
 everything else so that instrumentation is installed first.
 `{{config.platformDir}}/config/load-config.ts` validates the variables and refuses to start when
 one is wrong.
@@ -63,12 +63,12 @@ the error codes of each operation, a credential per security scheme, no runtime 
 
 {{#if errors.none}}
 `{{config.sourceRoot}}/main.ts` is the composition root: tracing first, then the validated
-configuration, the storage, and `composeApplication` of `{{config.platformDir}}/compose-application.ts`.
+configuration, the storage, and `composeApplication` of `{{config.platformDir}}/composition/compose-application.ts`.
 {{/if}}
 {{#if errors.sentry}}
 `{{config.sourceRoot}}/main.ts` is the composition root: tracing first, error reporting second
-(`{{config.platformDir}}/errors.ts`), then the validated configuration, the storage, and
-`composeApplication` of `{{config.platformDir}}/compose-application.ts`.
+(`{{config.platformDir}}/observability/errors.ts`), then the validated configuration, the storage, and
+`composeApplication` of `{{config.platformDir}}/composition/compose-application.ts`.
 {{/if}}
 
 - **A port is an abstract class, and the class is what is injected.** A repository port lives in
@@ -80,13 +80,13 @@ configuration, the storage, and `composeApplication` of `{{config.platformDir}}/
 {{#if di.tsyringe}}
 - **Three modules, then the contexts.** `kernelModule({...})` binds the ports of the kernel to what
   this platform chose (one execution scope, one clock, the two buses with their middlewares);
-  `platformModule` (`{{config.platformDir}}/platform.module.ts`) rebinds what needs the storage{{#if broker.external}}, the broker{{/if}}{{#if cache.redis}} or the Redis protocol server{{/if}}
+  `platformModule` (`{{config.platformDir}}/composition/platform.module.ts`) rebinds what needs the storage{{#if broker.external}}, the broker{{/if}}{{#if cache.redis}} or the Redis protocol server{{/if}}
   (`builder.rebind(UnitOfWork)`, `builder.bind({{persistence.tokenOrNone}})`...); the authorization
   module binds the guard both buses ask first. Replacing a provider happens in the platform module
   and nowhere else.
 {{/if}}
 {{#unless di.tsyringe}}
-- **One `Platform`, handed to each context.** `createPlatform` (`{{config.platformDir}}/create-platform.ts`)
+- **One `Platform`, handed to each context.** `createPlatform` (`{{config.platformDir}}/composition/create-platform.ts`)
   builds the buses, the clock, the storage and the event ports once; the module file of a context
   receives it and registers its handlers, adapters and jobs on it. Replacing a provider happens
   there and nowhere else.
@@ -144,7 +144,7 @@ and `execution.scheduledAt` says which period the work is for.
 | Variable | Says |
 |---|---|
 | `RUN_JOBS` | whether this process runs the jobs by time ({{#if worker.off}}`true` by default{{/if}}{{#if worker.on}}`false` by default: the worker runs them{{/if}}) |
-| `JOB_<CONTEXT>_<JOB>_ENABLED` | `false` switches one job off in one environment (`{{config.platformDir}}/job-settings.ts`, where a schedule or a timeout can be read from the environment too) |
+| `JOB_<CONTEXT>_<JOB>_ENABLED` | `false` switches one job off in one environment (`{{config.platformDir}}/jobs/job-settings.ts`, where a schedule or a timeout can be read from the environment too) |
 
 - **A dedicated worker**: `npx ddd-ts-kit generate worker` writes `{{config.sourceRoot}}/apps/worker/main.ts`
   (the same modules as `main.ts`, no HTTP server, the jobs started whatever `RUN_JOBS` says), the
@@ -191,7 +191,7 @@ upload; see https://github.com/gbourgeat/ddd-ts-kit/blob/main/docs/concepts/file
 
 Unexpected failures go to an error tracker through the kernel `ErrorReporter`, bound to
 `@ddd-ts-kit/sentry`: Sentry or GlitchTip, which speak the same protocol, so only the DSN differs.
-`{{config.platformDir}}/errors.ts` starts it, second import of every entry point, and nothing in
+`{{config.platformDir}}/observability/errors.ts` starts it, second import of every entry point, and nothing in
 `domain/` or `application/` reports anything: a handler throws, and what stands around it reports.
 
 | Variable | Says |
@@ -222,7 +222,7 @@ One failure is one report: the first boundary that sees an error reports it, the
 it. Each report carries the trace id of the active span, which opens the trace in the tracing
 backend. What leaves the process is scrubbed first: no request body, header, cookie or query
 string, no local variable, no breadcrumb, no email or name (the actor id only), no tenant. The
-message of the error is sent: `scrubMessages: true` in `{{config.platformDir}}/errors.ts` removes
+message of the error is sent: `scrubMessages: true` in `{{config.platformDir}}/observability/errors.ts` removes
 it for everything that is not a `DomainError`, which is the setting for a tracker hosted by a
 third party. The README of `@ddd-ts-kit/sentry` has the full table and the other options
 (`sampleRate`, `tagTenant`, `beforeSend`).

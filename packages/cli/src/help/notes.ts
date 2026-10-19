@@ -31,12 +31,15 @@ export const NOTES = `  affected         what a pull request has to run: the con
   value-objects    moves the value objects of a project from a Result to factories that return the value or
                    throw: every create returning Result<T, E> returns T, err(..) is thrown, unwrap(..) of
                    them goes, specs assert expectRefusal(() => ..), "stack.valueObjects" becomes throwing
-  platform-folders takes the files of the platform a project generated flat to their folders: under
-                   auth/, authentication/ (who is calling), authorization/ (what they may do, whatever the
-                   model) and the folder of the model (roles/, attributes/, relationships/, custom/); every
-                   import of them under the source root, test/ and scripts/ follows; a file the kit did not
-                   write stays where it is, named, unless --place <file>=<folder> gives it its folder; the
-                   generators read either layout until then
+  platform-folders takes the files of the platform a project generated flat to their folders:
+                   composition/, observability/ (tracing.ts first), jobs/, auth/authentication/ (who is
+                   calling), auth/authorization/ (what they may do, whatever the model), the folder of
+                   the model (auth/roles/, attributes/, relationships/, custom/) and
+                   audit/search-audit-entries/; every import of them under the source root, test/ and
+                   scripts/ follows, and the scripts of package.json; a file the kit did not write at
+                   the root of the platform or of auth/ stays where it is, named, unless --place
+                   <file>=<folder> (both from the platform) gives it its folder; the generators and
+                   init --force keep either layout until then
   controllers      moves the function routes of a project, or of one context, to controller classes: each
                    <name>.route.ts becomes <resource>/<name>/<name>.controller.ts behind the route group of
                    its resource, its schema files and its spec follow; a context is turned whole or not at all

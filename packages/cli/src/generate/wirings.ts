@@ -3,6 +3,7 @@ import type { RenderContext } from '../templating/index.js';
 import { renderTemplate, templateExists } from '../templating/index.js';
 import type { Scope } from './scope.js';
 import { wiringFamily, type WiringFamily } from './wiring-family.js';
+import { platformPath } from './platform-path.js';
 
 /** What `wire` adds, file by file, without adding it. */
 export function wirings(scope: Scope, kind: string, context: RenderContext): { file: string; wiring: string }[] {
@@ -19,7 +20,7 @@ export function wirings(scope: Scope, kind: string, context: RenderContext): { f
 }
 
 function targetsOf(scope: Scope, family: WiringFamily): Record<string, string> {
-  const { config, context, dir } = scope;
+  const { context, dir } = scope;
   const module = `${dir}/${context.kebab}.module.ts`;
 
   if (family === 'manual') {
@@ -29,7 +30,7 @@ function targetsOf(scope: Scope, family: WiringFamily): Record<string, string> {
   return {
     ...(family === 'tsyringe' ? { wiring: module } : {}),
     routes: `${dir}/${routesFile(context.kebab)}`,
-    platform: `${config.platformDir}/platform.module.ts`,
-    'platform-test': `${config.platformDir}/platform-test.module.ts`,
+    platform: platformPath(scope, 'composition/platform.module.ts'),
+    'platform-test': platformPath(scope, 'composition/platform-test.module.ts'),
   };
 }

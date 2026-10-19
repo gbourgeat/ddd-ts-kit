@@ -21,12 +21,12 @@ describe('discovery in place of the barrel', () => {
   });
 
   it('writes no barrel: the composition root discovers each context, publishers included', () => {
-    const composition = read(discovered, 'src/platform/compose-application.ts');
+    const composition = read(discovered, 'src/platform/composition/compose-application.ts');
 
     expect(exists(discovered, `${BILLING}/billing.declarations.ts`)).toBe(false);
 
     expect(composition).toContain(
-      "    await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),",
+      "    await discoverContext('billing', new URL('../../contexts/billing/', import.meta.url)),",
     );
 
     expect(composition).not.toContain('InvoiceIssuedPublisher');
@@ -78,8 +78,8 @@ describe('discovery in place of the barrel', () => {
     expect(cli(behindBroker, 'init', '--assembly', 'discovery', '--broker', 'rabbitmq').code).toBe(0);
     expect(cli(behindBroker, 'generate', 'context', 'billing', '--classification', 'core').code).toBe(0);
 
-    expect(read(behindBroker, 'src/platform/compose-application.ts')).toContain(
-      "await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),",
+    expect(read(behindBroker, 'src/platform/composition/compose-application.ts')).toContain(
+      "await discoverContext('billing', new URL('../../contexts/billing/', import.meta.url)),",
     );
   });
 });

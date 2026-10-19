@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 536" width="960" height="536" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">The composition root of the example application</title>
-  <desc id="desc">main.ts imports tracing first, loads the configuration and opens the storage, then calls composeApplication of src/platform/compose-application.ts. It hands createApplication the modules: the kernel module, the platform module, the authorization and audit modules, the files module, and one module per bounded context, identity, scheduling, notification and analytics, each built from the generated declarations of its context. The container checks the whole graph before it builds anything.</desc>
+  <desc id="desc">main.ts imports tracing first, loads the configuration and opens the storage, then calls composeApplication of src/platform/composition/compose-application.ts. It hands createApplication the modules: the kernel module, the platform module, the authorization and audit modules, the files module, and one module per bounded context, identity, scheduling, notification and analytics, each built from the generated declarations of its context. The container checks the whole graph before it builds anything.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>

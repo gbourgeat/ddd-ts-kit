@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import { platformTestModule } from '@/platform/platform-test.module';
+import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { personRegisteredV1 } from '@/contexts/identity/published-language/index';
 import { Contacts } from '@/contexts/notification/application/ports/contacts.port';
 import * as notificationDeclarations from '@/contexts/notification/notification.declarations';

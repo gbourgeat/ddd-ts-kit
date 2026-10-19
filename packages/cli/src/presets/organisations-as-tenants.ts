@@ -1,5 +1,5 @@
 import type { Scope } from '../generate/scope.js';
-import { authFile } from '../generate/auth-file.js';
+import { platformPath } from '../generate/platform-path.js';
 
 const KEYCLOAK_CALL =
   'return keycloakAuthenticator({ baseUrl, realm, audience, ...(clientId === undefined ? {} : { clientId }) });';
@@ -35,7 +35,7 @@ export function organisationsAsTenants(scope: Scope): void {
     return;
   }
 
-  const file = authFile(scope, 'create-authenticator.ts');
+  const file = platformPath(scope, 'auth/authentication/create-authenticator.ts');
   const source = scope.ws.read(file);
 
   if (source?.includes(READS_ORGANISATIONS) === true) {

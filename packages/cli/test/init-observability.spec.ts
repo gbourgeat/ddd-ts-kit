@@ -89,7 +89,7 @@ describe('init --logger', () => {
 describe('the tracing configuration init writes', () => {
   it('is validated before the instrumentation starts, by a reader that imports nothing', () => {
     const root = initProject();
-    const tracing = platform(root, 'tracing.ts');
+    const tracing = platform(root, 'observability/tracing.ts');
 
     expect(tracing.split('\n')[0]).toBe("import { initTracing } from '@ddd-ts-kit/tracing/node';");
 
@@ -170,7 +170,7 @@ describe('a generated command handler', () => {
   });
 
   it('wired by hand, is given a repository that dispatches on save, inside its span', () => {
-    const create = platform(initProject('--di', 'manual'), 'create-platform.ts');
+    const create = platform(initProject('--di', 'manual'), 'composition/create-platform.ts');
 
     expect(create).toContain(
       "const saving = info.kind === 'repository' ? dispatchingOnSave(governed, () => domainEvents) : governed;",

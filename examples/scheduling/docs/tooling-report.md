@@ -323,7 +323,7 @@ time, instead of maintaining figures that events increment or recount.
 - Removed: the projection `analytics.occupancy`, the port `OccupancyRegister` with its Knex
   adapter and its fake, the table `analytics.occupancy`, the command `VerifyOccupancy` with its
   handler, the job `analytics.verify-occupancy`, the permission `analytics:occupancy.verify`,
-  the grant of the job's system actor, the line of the job in `src/platform/job-settings.ts`
+  the grant of the job's system actor, the line of the job in `src/platform/jobs/job-settings.ts`
   (and with it the key `JOB_ANALYTICS_VERIFY_OCCUPANCY_ENABLED`, which no file of the example
   set), their five specs, and the value object `Day` with its error `InvalidDayError`, which
   only the verification used.
@@ -774,7 +774,7 @@ What was done here, in this order, each step by a tool of the kit:
    `--import ddd-ts-kit/dist/refresh-declarations.js`.
 5. The three `extraDirectories` entries and their three deviations, removed: the checker knows
    `application/projections/`. ADR 0002 is marked superseded and kept.
-6. `src/platform/compose-application.ts` no longer names the four projections: the barrels
+6. `src/platform/composition/compose-application.ts` no longer names the four projections: the barrels
    bring them.
 
 What it changed in the tests:

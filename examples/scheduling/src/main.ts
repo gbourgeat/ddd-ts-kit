@@ -1,11 +1,11 @@
 // Imported first on purpose: instrumentation has to be installed before any module it patches is loaded.
-import { tracing } from '@/platform/tracing';
+import { tracing } from '@/platform/observability/tracing';
 // Imported second on purpose: a failure while the rest of the application loads is already reported.
-import { errors } from '@/platform/errors';
+import { errors } from '@/platform/observability/errors';
 import { VarnishCachePurger } from '@ddd-ts-kit/http/purgers';
 import { PersonalDataCipher, PurgingPublisher, RepeatedCachePurger } from '@ddd-ts-kit/kernel';
 import { createAuthenticator } from '@/platform/auth/authentication/create-authenticator';
-import { composeApplication } from '@/platform/compose-application';
+import { composeApplication } from '@/platform/composition/compose-application';
 import { loadConfig } from '@/platform/config/load-config';
 import { openPersistence } from '@/platform/database/open-persistence';
 import { createEventProvider } from '@/platform/events/create-event-provider';
@@ -14,7 +14,7 @@ import { startOutboxRelay } from '@/platform/events/start-outbox-relay';
 import { openFiles } from '@/platform/files/open-files';
 import { storeFedProjections } from '@/platform/events/store-fed-projections';
 import { startHttpServer } from '@/platform/http/start-http-server';
-import { jobSettings } from '@/platform/job-settings';
+import { jobSettings } from '@/platform/jobs/job-settings';
 import { openRedis } from '@/platform/redis/open-redis';
 
 // Longer than the slowest read of the API: a read on its way when the first purge ran is purged by the second.

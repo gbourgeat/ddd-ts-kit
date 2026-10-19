@@ -11,6 +11,7 @@ import { vars } from '../vars.js';
 import { wire } from '../wire.js';
 import { wiringFamily } from '../wiring-family.js';
 import { publishInIndex } from './publish-in-index.js';
+import { platformPath } from '../platform-path.js';
 
 export const gatewayKind: Kind = {
   name: 'gateway',
@@ -60,7 +61,7 @@ function explain(scope: Scope, upstream: string, name: Name): void {
   const { ws, config, context } = scope;
 
   const where: Readonly<Record<string, string>> = {
-    declared: `${name.pascal}Contract is bound to an empty value in ${config.platformDir}/platform.module.ts and in ${config.platformDir}/platform-test.module.ts: bind the implementation ${upstream} gives of it there.`,
+    declared: `${name.pascal}Contract is bound to an empty value in ${platformPath(scope, 'composition/platform.module.ts')} and in ${platformPath(scope, 'composition/platform-test.module.ts')}: bind the implementation ${upstream} gives of it there.`,
     tsyringe: `${name.pascal}Contract is bound to an empty value in ${context.kebab}.module.ts: bind the implementation ${upstream} gives of it there.`,
     manual: `Instantiate InProcess${name.pascal}Gateway in ${context.kebab}.module.ts, with the implementation of ${name.pascal}Contract the platform hands over, and give it to the handlers that need it.`,
   };

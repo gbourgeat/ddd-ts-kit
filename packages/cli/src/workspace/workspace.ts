@@ -28,6 +28,8 @@ export class Workspace {
 
   private readonly steps: NextStep[] = [];
 
+  private rewrite: ((file: string, text: string) => string) | undefined;
+
   constructor(
     readonly root: string,
     private readonly force: boolean,
@@ -90,13 +92,13 @@ export class Workspace {
       return false;
     }
 
-    this.pending.set(file, { content: this.spoken(content), existed: onDisk });
+    this.pending.set(file, { content: this.spoken(this.withImports(file, content)), existed: onDisk });
 
     return true;
   }
 
   update(file: string, written: string): void {
-    const content = this.spoken(written);
+    const content = this.spoken(this.withImports(file, written));
     const pending = this.pending.get(file);
 
     if (pending !== undefined) {
@@ -110,6 +112,14 @@ export class Workspace {
     }
 
     this.pending.set(file, { content, existed: true });
+  }
+
+  /**
+   * Every module this command writes names the files of the project through `rewrite`: a project
+   * that keeps its platform flat is written imports of the flat files.
+   */
+  rewriteImports(rewrite: (file: string, text: string) => string): void {
+    this.rewrite = rewrite;
   }
 
   /** A text written for npm, as the package manager of the project says it: what is compared with a file is compared in its dialect. */
@@ -181,6 +191,10 @@ export class Workspace {
 
   private absolute(file: string): string {
     return path.join(this.root, file);
+  }
+
+  private withImports(file: string, text: string): string {
+    return this.rewrite !== undefined && /\.(?:ts|tsx|mts|js|mjs)$/.test(file) ? this.rewrite(file, text) : text;
   }
 }
 

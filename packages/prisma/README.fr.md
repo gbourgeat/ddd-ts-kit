@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b49a6b7ba1150d8f -->
+<!-- translation-of: README.md sha256:95af436f8417a4ae -->
 
 # @ddd-ts-kit/prisma
 
@@ -189,7 +189,7 @@ ouvre sa propre transaction courte.
 
 Un projet écrit par la CLI tient le même câblage en deux fichiers :
 `platform/database/persistence-over.ts` construit une fois l'unité de travail et les deux
-registres, et `platform/platform.module.ts` les lie, le *publisher* de l'outbox étant donné à
+registres, et `platform/composition/platform.module.ts` les lie, le *publisher* de l'outbox étant donné à
 `kernelModule({ eventPublisher })`.
 
 `unitOfWork.run(work)` ouvre la `prisma.$transaction` interactive et garde le client de

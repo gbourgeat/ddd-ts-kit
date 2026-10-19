@@ -117,7 +117,10 @@ describe('init --audit', () => {
       /decisions: auditDecisions\([\s\S]*commands: auditMiddleware\([\s\S]*subscriptions: auditIntegrationEvents\(/,
     );
 
-    expect(read(root, 'src/platform/audit/search-audit-entries.controller.ts')).toContain("path: '/audit/entries'");
+    expect(read(root, 'src/platform/audit/search-audit-entries/search-audit-entries.controller.ts')).toContain(
+      "path: '/audit/entries'",
+    );
+
     expect(read(root, 'src/platform/audit/audit.module.ts')).toContain(".requires(auditPermissions['trail.read'])");
     expect(exists(root, 'src/platform/auth/authorization/log-decisions.ts')).toBe(false);
     expect(manifest(root).dependencies).toMatchObject({ '@ddd-ts-kit/audit': KIT_RANGE });

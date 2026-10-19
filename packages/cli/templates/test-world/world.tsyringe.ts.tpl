@@ -2,7 +2,7 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 {{world.diImport}}
 {{world.contextImport}}
-import { platformTestModule } from '{{alias.platform}}/platform-test.module{{alias.ext}}';
+import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
 {{#if world.hasFakes}}
 {{world.portImports}}
 {{world.fakeImports}}

@@ -72,7 +72,7 @@ ruleTester.run('presentation-controller-delegates', presentationControllerDelega
     ),
     at(CONTROLLER, 'export class PlainController { constructor(private readonly invoices: InvoiceRepository) {} }'),
     at(
-      'src/platform/audit/search-audit-entries.controller.ts',
+      'src/platform/audit/search-audit-entries/search-audit-entries.controller.ts',
       `${HTTP}${GET}\nexport class AuditController { constructor(private readonly reader: AuditReader) {} handle(): void {} }`,
     ),
   ],

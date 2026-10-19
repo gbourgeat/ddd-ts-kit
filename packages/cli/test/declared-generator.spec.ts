@@ -212,11 +212,11 @@ describe('a context generated in the declared style, towards the outside', () =>
       'export abstract class InvoiceStatusContract {',
     );
 
-    expect(read(root, 'src/platform/platform.module.ts')).toContain(
+    expect(read(root, 'src/platform/composition/platform.module.ts')).toContain(
       '      // ddd-ts-kit:bindings\n      builder.bind(InvoiceStatusContract).toValue({});\n      // /ddd-ts-kit:bindings',
     );
 
-    expect(read(root, 'src/platform/platform-test.module.ts')).toContain(
+    expect(read(root, 'src/platform/composition/platform-test.module.ts')).toContain(
       '    // ddd-ts-kit:test-bindings\n    builder.bind(InvoiceStatusContract).toValue({});\n    // /ddd-ts-kit:test-bindings',
     );
   });
@@ -224,7 +224,7 @@ describe('a context generated in the declared style, towards the outside', () =>
 
 describe('a declared context and what hosts it', () => {
   it('is assembled in one line of the composition root, of the entry point of a context run alone, and of the proof that it wires alone', () => {
-    const composition = read(root, 'src/platform/compose-application.ts');
+    const composition = read(root, 'src/platform/composition/compose-application.ts');
 
     expect(composition).toContain("import * as billingDeclarations from '@/contexts/billing/billing.declarations';");
 
@@ -252,7 +252,7 @@ describe('a declared context and what hosts it', () => {
     const open = read(root, 'src/contexts/order-fulfilment/test/unit/track-purchase-order.handler.spec.ts');
 
     expect(spec).toContain("import * as billingDeclarations from '@/contexts/billing/billing.declarations';");
-    expect(spec).toContain("import { platformTestModule } from '@/platform/platform-test.module';");
+    expect(spec).toContain("import { platformTestModule } from '@/platform/composition/platform-test.module';");
 
     expect(spec).toContain(
       "  const context = contextModule('billing', billingDeclarations);\n\n  const invoiceRepository = new FakeInvoiceRepository();\n\n  const application = createTestApplication({\n    modules: [platformTestModule, context, holders],\n    fakes: [fake(InvoiceRepository, invoiceRepository)],\n    idPrefix: 'invoice',\n  });",

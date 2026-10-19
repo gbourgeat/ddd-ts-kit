@@ -133,7 +133,7 @@ bus of the kernel module runs every command in the bound `UnitOfWork`; handlers 
 
 A project written by the CLI holds the same wiring in two files:
 `platform/database/persistence-over.ts` builds the unit of work and the two stores once, and
-`platform/platform.module.ts` binds them, the outbox publisher being given to
+`platform/composition/platform.module.ts` binds them, the outbox publisher being given to
 `kernelModule({ eventPublisher })`.
 
 Pass to a store the very entity the data source registers. Without `entity`, a store uses

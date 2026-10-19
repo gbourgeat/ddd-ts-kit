@@ -1,8 +1,8 @@
 // Imported first on purpose: instrumentation has to be installed before any module it patches is loaded.
-import { tracing } from '{{alias.platform}}/tracing{{alias.ext}}';
+import { tracing } from '{{alias.platform}}/observability/tracing{{alias.ext}}';
 {{#if errors.sentry}}
 // Imported second on purpose: a failure while the rest of the application loads is already reported.
-import { errors } from '{{alias.platform}}/errors{{alias.ext}}';
+import { errors } from '{{alias.platform}}/observability/errors{{alias.ext}}';
 {{/if}}
 {{#if httpCache.varnish}}
 import { VarnishCachePurger } from '@ddd-ts-kit/http/purgers';
@@ -11,7 +11,7 @@ import { PurgingPublisher } from '@ddd-ts-kit/kernel';
 {{#if http.any}}
 import { createAuthenticator } from '{{alias.platform}}/auth/authentication/create-authenticator{{alias.ext}}';
 {{/if}}
-import { composeApplication } from '{{alias.platform}}/compose-application{{alias.ext}}';
+import { composeApplication } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
 import { openPersistence } from '{{alias.platform}}/database/open-persistence{{alias.ext}}';
 import { {{events.providerName}} } from '{{alias.platform}}/events/{{events.providerFile}}{{alias.ext}}';
@@ -24,7 +24,7 @@ import { openFiles } from '{{alias.platform}}/files/open-files{{alias.ext}}';
 {{#if http.any}}
 import { startHttpServer } from '{{alias.platform}}/http/start-http-server{{alias.ext}}';
 {{/if}}
-import { jobSettings } from '{{alias.platform}}/job-settings{{alias.ext}}';
+import { jobSettings } from '{{alias.platform}}/jobs/job-settings{{alias.ext}}';
 {{#if cache.redis}}
 import { openRedis } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
 {{/if}}

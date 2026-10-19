@@ -6,7 +6,7 @@ import { jsonAt } from './support/json-at.js';
 import { readJson } from './support/read-json.js';
 
 const CONFIG = 'ddd-ts-kit.config.json';
-const PLATFORM = 'src/platform/platform.module.ts';
+const PLATFORM = 'src/platform/composition/platform.module.ts';
 const PERSISTENCE = 'src/platform/database/persistence-over.ts';
 const SCHEMA = 'src/platform/database/schema.ts';
 

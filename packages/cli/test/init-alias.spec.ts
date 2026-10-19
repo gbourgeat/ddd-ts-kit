@@ -94,7 +94,7 @@ describe('init and the import alias', () => {
 
     expect(written.filter((file) => /['"]@\//.test(read(root, file)))).toEqual([]);
     expect(written.filter((file) => RELATIVE.test(read(root, file)))).toEqual([]);
-    expect(read(root, 'src/main.ts')).toContain("from '$app/platform/compose-application';");
+    expect(read(root, 'src/main.ts')).toContain("from '$app/platform/composition/compose-application';");
     expect(report.violations).toEqual([]);
     expect(cli(root, 'docs', '--check').code).toBe(0);
   });

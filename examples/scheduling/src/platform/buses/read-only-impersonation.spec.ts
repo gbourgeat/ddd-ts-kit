@@ -12,7 +12,7 @@ import { anActor } from '@ddd-ts-kit/auth/testing';
 import { aSession } from '@ddd-ts-kit/testing';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
-import { layFoundations, type Foundations } from '@/platform/lay-foundations';
+import { layFoundations, type Foundations } from '@/platform/composition/lay-foundations';
 import { createCommandBus } from '@/platform/buses/create-command-bus';
 
 class RenamePractice extends Command {}

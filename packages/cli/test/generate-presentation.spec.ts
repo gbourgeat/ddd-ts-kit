@@ -32,7 +32,7 @@ describe('the presentation of a new project', () => {
       'export interface HttpBoundary extends Presentation {',
     );
 
-    expect(read(root, 'src/platform/compose-application.ts')).toContain(
+    expect(read(root, 'src/platform/composition/compose-application.ts')).toContain(
       'routes: withForms(routesOf(container, contexts), presentation),',
     );
 

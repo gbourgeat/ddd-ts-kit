@@ -38,7 +38,7 @@ tree instead of a worktree each, and the example measures the tooling.
   `node scripts/kit.mjs check src/contexts/<context>`, `npm run typecheck` (whole project: ignore
   errors outside your files). Do not run `npm run verify`: the conductor does, on the whole tree.
 - Needs outside your scope (the platform, the config, another context's contract, a system actor
-  to relate, a binding in `src/platform/platform.module.ts`): do not work around them, finish
+  to relate, a binding in `src/platform/composition/platform.module.ts`): do not work around them, finish
   what does not depend on them and put them in your report, precise enough to be done without
   asking you again. The platform worker is adding, in parallel: a persistent `RelationTupleStore`
   (the port class of `@ddd-ts-kit/auth/rebac`, bound by the platform, in-memory in handler specs),

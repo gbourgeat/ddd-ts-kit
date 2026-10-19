@@ -20,7 +20,7 @@ export const platformFoldersCommand: Command = (argv, io) => {
   const ws = new Workspace(args.projectRoot, false);
   const { config } = readConfig(args.projectRoot);
   const draft = new MigrationDraft(ws);
-  const migration = platformFolders({ ws, config, placed: placements(args.many('place')) }, draft);
+  const migration = platformFolders({ ws, config, placed: placements(args.many('place'), ws, config) }, draft);
 
   const outcome: Outcome = {
     dryRun: args.flag('dry-run'),

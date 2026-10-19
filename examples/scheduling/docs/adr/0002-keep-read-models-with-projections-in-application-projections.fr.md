@@ -1,5 +1,5 @@
 [English](0002-keep-read-models-with-projections-in-application-projections.md) · **Français**
-<!-- translation-of: 0002-keep-read-models-with-projections-in-application-projections.md sha256:c5f6d3519a65bf21 -->
+<!-- translation-of: 0002-keep-read-models-with-projections-in-application-projections.md sha256:d20eefd8b31d79c2 -->
 
 # ADR-0002 : garder les modèles de lecture et leurs projections dans application/projections
 
@@ -17,7 +17,7 @@ Les projections vivent dans `application/projections/` des trois contextes, déc
 
 ## Conséquences
 
-Un modèle de lecture est écrit par une seule classe nommée, que le kit rend idempotente et ordonnée, au lieu de plusieurs gestionnaires d'événements d'intégration qui envoient chacun une commande. Le *barrel* ne liste pas ces classes : une projection qui n'est pas nommée dans `src/platform/compose-application.ts` n'est pas abonnée, en silence ; ce sont donc les *specs* de bout en bout de chaque modèle de lecture qui prouvent le câblage. `ddd-ts-kit docs` ne liste pas les projections dans `CONTEXT.md`.
+Un modèle de lecture est écrit par une seule classe nommée, que le kit rend idempotente et ordonnée, au lieu de plusieurs gestionnaires d'événements d'intégration qui envoient chacun une commande. Le *barrel* ne liste pas ces classes : une projection qui n'est pas nommée dans `src/platform/composition/compose-application.ts` n'est pas abonnée, en silence ; ce sont donc les *specs* de bout en bout de chaque modèle de lecture qui prouvent le câblage. `ddd-ts-kit docs` ne liste pas les projections dans `CONTEXT.md`.
 
 ## Alternatives envisagées
 

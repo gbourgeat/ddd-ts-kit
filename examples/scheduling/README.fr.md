@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:175c2ecc1a5b14cd -->
+<!-- translation-of: README.md sha256:113326608b721b04 -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -121,7 +121,7 @@ et le mot de passe de chacun est son nom d'utilisateur.
 | Une ligne par fait, calculée à la lecture : des chiffres groupés dans une seule requête SQL au moment où on les lit, au lieu de compteurs tenus par des événements (rien qui dérive, rien à vérifier la nuit) | `analytics/CONTEXT.md` (« How occupancy is measured »), `analytics/infrastructure/persistence/knex-occupancy-reader.repository.ts` |
 | Une définition métier et son SQL gardés égaux par un seul contrat | `analytics/domain/services/occupancy-measure.service.ts`, `analytics/test/integration/occupancy-reader.contract.spec.ts` |
 | Un consommateur avec un port sortant, nouvelle tentative (retry) puis file de rejet (dead letter) | `notification/application/integration/handlers/`, `infrastructure/external/remote-mailer.adapter.ts`, `test/integration/mailer-outage.spec.ts` |
-| La résilience sur la classe d'adaptateur, et à la liaison | le *mailer* ci-dessus (`@Retry`, `@Timeout`) ; `src/platform/platform.module.ts` (`builder.around`) |
+| La résilience sur la classe d'adaptateur, et à la liaison | le *mailer* ci-dessus (`@Retry`, `@Timeout`) ; `src/platform/composition/platform.module.ts` (`builder.around`) |
 | Des fichiers gardés dans un stockage, jamais dans la base : un envoi lu en flux et contrôlé, un lien signé court, une suppression après la validation, chaque lecture d'un document auditée | `scheduling/application/commands/attach-appointment-document/`, `queries/get-appointment-document/`, `domain/value-objects/attached-document.vo.ts`, `src/platform/files/`, `test/e2e/journey-documents.e2e.spec.ts` |
 | Des *jobs* planifiés qui ne font qu'envoyer une commande, dans un *worker* | `application/scheduling/` de `scheduling`, `identity` et `notification`, `src/apps/worker/main.ts` |
 | Une trace par action, des journaux, l'audit, un rapport d'erreur | `test/e2e/journey-observability.e2e.spec.ts` |

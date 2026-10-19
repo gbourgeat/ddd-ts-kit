@@ -4,7 +4,7 @@ import { withImport } from '../../with-import.js';
 import { permissionOf, type PermissionReference } from './permission-of.js';
 import type { Scope } from '../../scope.js';
 import type { SentCommand } from './sent-command.js';
-import { authFile } from '../../auth-file.js';
+import { platformPath } from '../../platform-path.js';
 
 const REGION = 'system-grants';
 const SYSTEM_OPERATES = /operator:\s*\[[^\]]*'system'/;
@@ -55,7 +55,7 @@ function placementOf(scope: Scope, job: string, permission: string): Placement |
   switch (scope.config.stack.authz) {
     case 'rbac':
       return {
-        file: authFile(scope, 'roles.ts'),
+        file: platformPath(scope, 'auth/roles/roles.ts'),
         line: `${read.written},`,
         anchor: `${read.written},`,
         needs: read.importLine,
@@ -64,7 +64,7 @@ function placementOf(scope: Scope, job: string, permission: string): Placement |
       };
     case 'abac':
       return {
-        file: authFile(scope, 'attribute-policies.ts'),
+        file: platformPath(scope, 'auth/attributes/attribute-policies.ts'),
         line: `permit('system-${job}', [${read.written}], ({ actor }) => actor.id === '${actor}'),`,
         anchor: `'system-${job}',`,
         needs: read.importLine,
@@ -82,12 +82,12 @@ function placementOf(scope: Scope, job: string, permission: string): Placement |
 function operatorOfContext(scope: Scope, actor: string, permission: string): Placement | undefined {
   const context = scope.context.kebab;
 
-  if (!SYSTEM_OPERATES.test(scope.ws.read(authFile(scope, 'relationship-schema.ts')) ?? '')) {
+  if (!SYSTEM_OPERATES.test(scope.ws.read(platformPath(scope, 'auth/relationships/relationship-schema.ts')) ?? '')) {
     return undefined;
   }
 
   return {
-    file: authFile(scope, 'relate-system-actors.ts'),
+    file: platformPath(scope, 'auth/relationships/relate-system-actors.ts'),
     line: `{ object: 'context:${context}', relation: 'operator', subject: 'system:${actor}' },`,
     anchor: `subject: 'system:${actor}'`,
     check: `check this relationship: \`${actor}\` now operates the context \`${context}\`, which gives it \`${permission}\` and every other permission mapped to \`operate\`.`,

@@ -3,6 +3,7 @@ import { CONFIG_FILE, editConfigText } from '../config/index.js';
 import { isDeclared } from '../generate/is-declared.js';
 import { toName } from '../naming/index.js';
 import { projectSources } from '../refusals/project-sources.js';
+import { platformFileIn } from '../platform-layout/index.js';
 import type { Migration } from './migration.js';
 
 const MOUNTS = "controllerRoutes(container.resolve(DeclaredEdges).of('controller'), { resolve: container.resolve })";
@@ -51,7 +52,7 @@ export function finishMigration(migration: Migration, contexts: readonly string[
 /** A declared context lists nothing: its controllers reach the application through its generated file. */
 function dropList({ config, draft }: Migration, context: string): void {
   const list = `${config.contextsDir}/${context}/presentation/http/${context}.routes.ts`;
-  const composition = `${config.platformDir}/compose-application.ts`;
+  const composition = compositionOf(config, draft);
   const name = `${toName(context).camel}Routes`;
 
   if (draft.read(list)?.includes('@RouteGroup') !== true) {
@@ -98,7 +99,7 @@ function listedByHand(text: string, kebab: string): string {
 }
 
 function remind({ config, draft }: Migration): void {
-  const composition = draft.read(`${config.platformDir}/compose-application.ts`) ?? '';
+  const composition = draft.read(compositionOf(config, draft)) ?? '';
 
   draft.manual.push(
     'Run the formatter, then `ddd-ts-kit docs` (the generated file of each context registers what each controller is given), then the checks.',
@@ -109,7 +110,11 @@ function remind({ config, draft }: Migration): void {
 
   if (isDeclared(config) && !composition.includes("of('controller')")) {
     draft.manual.push(
-      `Mount the declared controllers in ${config.platformDir}/compose-application.ts: add \`${MOUNTS}\` to the routes it defines, with \`controllerRoutes\` of @ddd-ts-kit/http and \`DeclaredEdges\` of @ddd-ts-kit/di.`,
+      `Mount the declared controllers in ${compositionOf(config, draft)}: add \`${MOUNTS}\` to the routes it defines, with \`controllerRoutes\` of @ddd-ts-kit/http and \`DeclaredEdges\` of @ddd-ts-kit/di.`,
     );
   }
+}
+
+function compositionOf(config: Migration['config'], draft: Migration['draft']): string {
+  return platformFileIn(config, 'composition/compose-application.ts', (path) => draft.read(path) !== undefined);
 }

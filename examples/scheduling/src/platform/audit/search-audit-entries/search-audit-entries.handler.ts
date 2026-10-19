@@ -1,7 +1,7 @@
 import type { AuditEntry, AuditReader } from '@ddd-ts-kit/audit';
 import type { Page, QueryHandler, TenantElevation } from '@ddd-ts-kit/kernel';
 import type { Audit } from '@/platform/audit/create-audit';
-import type { SearchAuditEntriesQuery } from '@/platform/audit/search-audit-entries.query';
+import type { SearchAuditEntriesQuery } from '@/platform/audit/search-audit-entries/search-audit-entries.query';
 
 /** Why platform staff reach every network here, as the trail records it: a code, never a sentence. */
 const SEARCH_ACROSS_NETWORKS = 'AUDIT_TRAIL_SEARCH';

@@ -10,7 +10,7 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { relayWakeUpMiddleware } from '@ddd-ts-kit/redis';
 import { stagingUploads } from '@/platform/files/staging-uploads';
-import type { Foundations } from '@/platform/lay-foundations';
+import type { Foundations } from '@/platform/composition/lay-foundations';
 import type { RedisServices } from '@/platform/redis/open-redis';
 import { readOnlyImpersonation } from '@/platform/buses/read-only-impersonation';
 

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:cc46bd75b26b1d0e -->
+<!-- translation-of: README.md sha256:c47420de486f4b8c -->
 
 # @ddd-ts-kit/rabbitmq
 
@@ -29,7 +29,7 @@ consommateur.
 ![Le gestionnaire de ordering écrit la commande client et un enregistrement d'outbox dans une seule transaction ; le relais de l'outbox donne l'enregistrement à RabbitMqEventBus, qui le publie sur l'exchange topic integration-events avec le type d'événement comme clé de routage et attend la confirmation du broker ; l'exchange route une copie vers la file de travail de chaque consommateur lié pour ce type, billing.ordering.order.placed et shipping.ordering.order.placed ; chaque file la remet aux gestionnaires de son contexte, acquittée après la validation de leur unité de travail](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/rabbitmq-outbox-to-queues.fr.svg)
 
 `init --broker rabbitmq` écrit ce câblage dans la plateforme du projet : le bus est construit par
-`platform/events/create-event-provider.ts`, `platform/platform.module.ts` lie à nouveau
+`platform/events/create-event-provider.ts`, `platform/composition/platform.module.ts` lie à nouveau
 (`rebind`) `EventSubscribers` sur lui, et `main.ts` le donne, tracé, au relais de l'outbox. À la
 main, la même chose s'écrit :
 

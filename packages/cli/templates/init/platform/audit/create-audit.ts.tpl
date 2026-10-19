@@ -47,7 +47,7 @@ import { auditPermissions } from '{{alias.platform}}/audit/audit.permissions{{al
 {{/if}}
 import { auditedEvents } from '{{alias.platform}}/audit/audited-events{{alias.ext}}';
 {{#if audit.route}}
-import { SearchAuditEntriesQuery } from '{{alias.platform}}/audit/search-audit-entries.query{{alias.ext}}';
+import { SearchAuditEntriesQuery } from '{{alias.platform}}/audit/search-audit-entries/search-audit-entries.query{{alias.ext}}';
 {{/if}}
 
 /** The name the audit trail consumes integration events under: its idempotency scope, and its queues behind a broker. */

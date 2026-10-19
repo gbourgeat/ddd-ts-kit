@@ -35,7 +35,7 @@ describe.runIf(SLOW).each(PROVEN)('a freshly generated project (%s)', (_label, s
   it('passes its own specs: each job run by its name and held to the command it sent, a decorated adapter, the extraction of every context', () => {
     const specs = vitest();
 
-    const ran = exists(root, 'src/platform/platform-test.module.ts')
+    const ran = exists(root, 'src/platform/composition/platform-test.module.ts')
       ? "await application.jobs.runNow('billing.cancel-stale-invoices');"
       : 'await job.run(occurrence);';
 

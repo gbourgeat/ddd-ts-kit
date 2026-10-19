@@ -474,7 +474,7 @@ test('a context worker never writes a shared file', () => {
   for (const path of [
     'ddd-ts-kit.config.json',
     'src/main.ts',
-    'src/platform/compose-application.ts',
+    'src/platform/composition/compose-application.ts',
     'package.json',
     'package-lock.json',
     'docs/context-map.md',
@@ -493,7 +493,7 @@ test('a context worker never writes a shared file', () => {
 
 test('the worker scope comes from the scope file or the environment, and binds the worker agent only', () => {
   const root = project();
-  const shared = join(root, 'src/platform/compose-application.ts');
+  const shared = join(root, 'src/platform/composition/compose-application.ts');
   const agent = { agent_type: 'ddd-ts-kit:context-builder' };
   assert.equal(run('pre-write', write(shared, agent)).output, undefined);
   assert.equal(decision(run('pre-write', write(shared, agent), { DDD_TS_KIT_WORKER_CONTEXT: 'billing' })), 'deny');
@@ -1104,7 +1104,7 @@ const WORKER_COMMANDS_ALLOWED = [
   'git apply --check invoicing.patch',
   'cat src/contexts/invoicing/CONTEXT.md',
   'grep -rn Invoice src/contexts | head',
-  'sed -n 1,20p src/platform/compose-application.ts',
+  'sed -n 1,20p src/platform/composition/compose-application.ts',
   'echo "notes" > "$TMPDIR/notes.txt"',
   'rm src/contexts/invoicing/domain/draft.notes.md',
   'rm -f .ddd-ts-kit/report.md',
@@ -1155,7 +1155,7 @@ const WORKER_COMMANDS_REFUSED = [
   ['git checkout .', /the whole project/],
   ['git restore src/main.ts', /`git restore`/],
   ['git -C src restore main.ts', /`git restore` changes src\/main\.ts/],
-  ['git rm src/platform/compose-application.ts', /`git rm`/],
+  ['git rm src/platform/composition/compose-application.ts', /`git rm`/],
   ['git mv src/main.ts src/contexts/invoicing/main.ts', /`git mv` changes src\/main\.ts/],
   ['git clean -fd', /`git clean` changes the whole project/],
   ['git apply invoicing.patch', /`git apply`/],

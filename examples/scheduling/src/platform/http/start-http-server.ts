@@ -2,7 +2,7 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import express from 'express';
 import { mountExpress } from '@ddd-ts-kit/http/express';
-import type { Application } from '@/platform/compose-application';
+import type { Application } from '@/platform/composition/compose-application';
 import type { AppConfig } from '@/platform/config/app-config';
 import { refusalFor } from '@/platform/http/refusal-for';
 import { withDocumentation } from '@/platform/http/with-documentation';

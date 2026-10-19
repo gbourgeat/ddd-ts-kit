@@ -1,14 +1,14 @@
 // Imported first on purpose: instrumentation has to be installed before any module it patches is loaded.
-import { tracing } from '@/platform/tracing';
+import { tracing } from '@/platform/observability/tracing';
 // Imported second on purpose: a failure while the rest of the application loads is already reported.
-import { errors } from '@/platform/errors';
+import { errors } from '@/platform/observability/errors';
 import { createAuthenticator } from '@/platform/auth/authentication/create-authenticator';
-import { composeApplication } from '@/platform/compose-application';
+import { composeApplication } from '@/platform/composition/compose-application';
 import { loadConfig } from '@/platform/config/load-config';
 import { openPersistence } from '@/platform/database/open-persistence';
 import { createEventProvider } from '@/platform/events/create-event-provider';
 import { openFiles } from '@/platform/files/open-files';
-import { jobSettings } from '@/platform/job-settings';
+import { jobSettings } from '@/platform/jobs/job-settings';
 import { openRedis } from '@/platform/redis/open-redis';
 
 // The scheduled jobs in a process of their own: the same modules as `main.ts`, no HTTP server, no outbox relay (the API keeps the one relay).

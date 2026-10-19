@@ -57,7 +57,7 @@ describe('generate job, the grant of its system actor', () => {
       "  system: {},\n  context: {\n    relations: { operator: ['user', 'system'] },",
     );
 
-    expect(read(root, 'src/platform/compose-application.ts')).toContain(
+    expect(read(root, 'src/platform/composition/compose-application.ts')).toContain(
       'start: () =>\n      relateSystemActors()\n        .then(() => container.start())',
     );
 

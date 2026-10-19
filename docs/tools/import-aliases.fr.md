@@ -1,5 +1,5 @@
 [English](import-aliases.md) · **Français**
-<!-- translation-of: import-aliases.md sha256:1037cd49eb55bd83 -->
+<!-- translation-of: import-aliases.md sha256:e148af8baf2d269a -->
 
 # Alias d'import : les `paths` de tsconfig, réécrits à la construction
 
@@ -295,7 +295,7 @@ la partie exécution sur Node 22 également (`npm run ci:test:alias`).
   pour un spécificateur qui ne nomme aucun fichier, dans les deux graphies ; tous deux vérifient
   les types de chaque *stack* et des deux modes de décorateurs.
 - **tsx** résout `@/x` (et `@/x.js`) vers `src/x.ts` sans option, aussi quand une copie compilée
-  existe et aussi pour un module chargé par `--import ./src/platform/tracing.ts`.
+  existe et aussi pour un module chargé par `--import ./src/platform/observability/tracing.ts`.
 - **vitest** avec `resolve.tsconfigPaths` exécute une *spec* sur la source bien qu'une copie
   compilée existe ; sans lui, la *spec* échoue à son premier import. Le *plugin* de décorateurs de
   `@ddd-ts-kit/testing/vitest` compile un fichier dont les imports ne portent aucune extension

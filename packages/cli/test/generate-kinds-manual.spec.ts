@@ -19,7 +19,7 @@ describe('a context wired by hand', () => {
   it('is a function of the platform, named after its file, that registers on the buses and answers what it declares', () => {
     const module = read(root, `${BILLING}/billing.module.ts`);
 
-    expect(module).toContain("import type { Platform } from '@/platform/platform';");
+    expect(module).toContain("import type { Platform } from '@/platform/composition/platform';");
     expect(module).toContain('export function billingModule(platform: Platform): BillingWiring {');
 
     expect(module).toContain(
@@ -30,7 +30,7 @@ describe('a context wired by hand', () => {
     expect(module).toContain('issueInvoiceRoute(platform.commands),');
     expect(module).toContain('  // /ddd-ts-kit:registrations\n\n  return {');
 
-    expect(read(root, 'src/platform/compose-application.ts')).toContain(
+    expect(read(root, 'src/platform/composition/compose-application.ts')).toContain(
       '  billingModule,\n  shippingModule,\n  orderFulfilmentModule,',
     );
   });

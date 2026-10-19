@@ -1,5 +1,5 @@
 [English](tooling-report.md) · **Français**
-<!-- translation-of: tooling-report.md sha256:ed20a7bbb3748c1a -->
+<!-- translation-of: tooling-report.md sha256:8eb74aacb67a00a9 -->
 
 # Rapport sur l'outillage
 
@@ -358,7 +358,7 @@ lecture, au lieu de tenir des chiffres que les événements incrémentent ou rec
   Knex et son *fake*, la table `analytics.occupancy`, la commande `VerifyOccupancy` avec son
   gestionnaire, le *job* `analytics.verify-occupancy`, la permission
   `analytics:occupancy.verify`, l'autorisation de l'acteur système du *job*, la ligne du *job*
-  dans `src/platform/job-settings.ts` (et avec elle la clé
+  dans `src/platform/jobs/job-settings.ts` (et avec elle la clé
   `JOB_ANALYTICS_VERIFY_OCCUPANCY_ENABLED`, qu'aucun fichier de l'exemple ne positionnait),
   leurs cinq *specs*, et l'objet-valeur `Day` avec son erreur `InvalidDayError`, que seule la
   vérification utilisait.
@@ -850,7 +850,7 @@ Ce qui a été fait ici, dans cet ordre, chaque étape par un outil du kit :
    `--import ddd-ts-kit/dist/refresh-declarations.js`.
 5. Les trois entrées `extraDirectories` et leurs trois dérogations, retirées : le *checker*
    connaît `application/projections/`. L'ADR 0002 est marqué remplacé et gardé.
-6. `src/platform/compose-application.ts` ne nomme plus les quatre projections : les barrels les
+6. `src/platform/composition/compose-application.ts` ne nomme plus les quatre projections : les barrels les
    apportent.
 
 Ce que cela a changé dans les tests :

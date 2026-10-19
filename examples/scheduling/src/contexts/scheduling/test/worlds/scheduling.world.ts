@@ -2,7 +2,7 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { contextModule, createTestApplication, fake, type ContextModule } from '@ddd-ts-kit/di';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
+import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
 import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import { AttendanceHistory } from '@/contexts/scheduling/application/ports/attendance-history.port';

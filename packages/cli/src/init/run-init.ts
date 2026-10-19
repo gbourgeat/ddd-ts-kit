@@ -17,7 +17,7 @@ import { presetNamed } from '../presets/preset-named.js';
 import { addContext } from './add-context.js';
 import { existingName } from './existing-name.js';
 import { initFiles } from './files/init-files.js';
-import { flatRelocation, withMovedImports } from '../platform-folders/index.js';
+import { keepFlatPlatform } from '../platform-folders/index.js';
 import { ignoreWorktrees } from './ignore-worktrees.js';
 import { writeManifest } from './manifest/write-manifest.js';
 import { recordNoOutbox } from './record-no-outbox.js';
@@ -28,6 +28,7 @@ import { writeContracts } from './write-contracts.js';
 import { writeCopilotInstructions } from './write-copilot-instructions.js';
 import { writeCopilotSettings } from './write-copilot-settings.js';
 import { writeTypeScriptConfigs } from './write-type-script-configs.js';
+import type { Relocation } from '../platform-folders/moved-specifier.js';
 
 const KNIP_FILE = 'knip.json';
 
@@ -47,11 +48,12 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   const ws = new Workspace(root, options.force);
   const config = { ...recordNoOutbox(ws, resolveStack(root, options), options.allowNoOutbox), initVersion: VERSION };
   const projectName = existingName(root) ?? (toName(path.basename(path.resolve(root))).kebab || 'app');
+  const flat = keepFlatPlatform(ws, config);
 
   ws.create(CONFIG_FILE, configText(ws, config));
   writeManifest(ws, { config, projectName, force: options.force });
   writeTypeScriptConfigs(ws, config);
-  writeFiles(ws, config, projectName);
+  writeFiles(ws, { config, projectName, flat });
   ignoreWorktrees(ws);
   writeCopilotInstructions(ws);
   ws.create(DEPCRUISE_FILE, renderCruiseFile(config));
@@ -146,14 +148,15 @@ function addPresets(ws: Workspace, config: Config, names: readonly string[]): Co
   );
 }
 
-/** A template ending in `.tpl` is rendered; any other is copied as it is. */
-function writeFiles(ws: Workspace, config: Config, projectName: string): void {
+/**
+ * A template ending in `.tpl` is rendered; any other is copied as it is. A file of the platform a
+ * version before the folders wrote flat is written flat again, its imports with it.
+ */
+function writeFiles(ws: Workspace, { config, projectName, flat }: Written): void {
   const context = templateVars(config, projectName);
-  const flat = flatRelocation(ws, config);
 
   for (const [target, template] of initFiles(config, projectName)) {
-    const rendered = template.endsWith('.tpl') ? renderTemplate(template, context) : readTemplate(template);
-    const content = flat.moved.size === 0 ? rendered : withMovedImports(rendered, target, flat);
+    const content = template.endsWith('.tpl') ? renderTemplate(template, context) : readTemplate(template);
     const kept = flat.moved.get(target.replace(/\.ts$/, ''));
 
     ws.create(kept === undefined ? target : `${kept}.ts`, target === KNIP_FILE ? laidOut(content) : content);
@@ -161,9 +164,15 @@ function writeFiles(ws: Workspace, config: Config, projectName: string): void {
 
   if (flat.moved.size > 0) {
     ws.note(
-      `The files of ${config.platformDir}/auth are flat, as a version before their folders wrote them: --force rewrote them there. \`npx ddd-ts-kit platform-folders\` moves them to authentication/, authorization/ and the folder of the model, with every import.`,
+      `Files of ${config.platformDir} are flat, as a version before their folders wrote them: --force rewrote them there. \`npx ddd-ts-kit platform-folders\` moves them to their folders, with every import.`,
     );
   }
+}
+
+interface Written {
+  readonly config: Config;
+  readonly projectName: string;
+  readonly flat: Relocation;
 }
 
 /** The lists of knip.json depend on the stack: they are laid out as the formatter of the project would, whatever their length. */

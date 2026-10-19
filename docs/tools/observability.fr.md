@@ -1,5 +1,5 @@
 [English](observability.md) · **Français**
-<!-- translation-of: observability.md sha256:0d5f7005b1555d3f -->
+<!-- translation-of: observability.md sha256:23874695f88725f8 -->
 
 # Observabilité : backends de traçage, *loggers* et suivi des erreurs
 
@@ -226,7 +226,7 @@ propres au framework, et n'en livre aucun.
 défaillance, une `DomainError` jamais signalée comme un incident. Le SDK de Sentry est initialisé
 de sorte qu'il n'enregistre aucun fournisseur de traceur ni aucune seconde instrumentation : le
 *package* de traçage possède OpenTelemetry, et le rapport porte l'identifiant de trace du *span*
-actif. `init --errors sentry` génère le câblage (`src/platform/errors.ts`, configuré par
+actif. `init --errors sentry` génère le câblage (`src/platform/observability/errors.ts`, configuré par
 `SENTRY_DSN`) et un service compose qui fait tourner GlitchTip 6.2.6 derrière le profil
 `errors`, pour le développement.
 
@@ -305,12 +305,12 @@ identifiant, jamais une saisie d'utilisateur, si bien que le nombre de séries r
 ### Les quatre, câblés dans la plateforme
 
 L'exemple ci-dessous condense ce que l'application d'exemple répartit entre
-`src/platform/lay-foundations.ts` (le logger pino et les métriques),
-`src/platform/platform.module.ts` (les liaisons) et `src/platform/errors.ts` (Sentry). Un projet
+`src/platform/composition/lay-foundations.ts` (le logger pino et les métriques),
+`src/platform/composition/platform.module.ts` (les liaisons) et `src/platform/observability/errors.ts` (Sentry). Un projet
 généré a ces fichiers sur la famille tsyringe, `errors.ts` seulement avec `--errors sentry`.
 L'amorçage du traçage
 (`initTracing` de `@ddd-ts-kit/tracing/node`) n'y figure pas : il vit dans son propre module,
-`src/platform/tracing.ts`, importé en premier par `main.ts`, parce que les instrumentations
+`src/platform/observability/tracing.ts`, importé en premier par `main.ts`, parce que les instrumentations
 modifient `http` et les pilotes au moment où ils sont chargés.
 
 <!-- checked sample -->

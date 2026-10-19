@@ -7,7 +7,7 @@ import type { Rule } from '../model/rule.js';
 import type { SourceFile } from '../model/source-file.js';
 import { reporter } from '../support/reporter.js';
 import { toViolations } from '../support/to-violations.js';
-import { authFileIn } from '../../platform-auth/index.js';
+import { platformFileIn } from '../../platform-layout/index.js';
 import { isInProject } from '../authz/is-in-project.js';
 
 /**
@@ -42,7 +42,7 @@ export const authzGranted: Rule = {
 
 /** The roles of the platform, and what every signed-in person holds when a context preset wrote it. */
 function grantFiles(project: Project): { roles: SourceFile | undefined; signedIn: SourceFile[] } {
-  const path = authFileIn(project.config, 'roles.ts', (candidate) => isInProject(project, candidate));
+  const path = platformFileIn(project.config, 'auth/roles/roles.ts', (candidate) => isInProject(project, candidate));
   const roles = project.files.find((file) => file.path === path);
   const signedIn = signedInGrants(project);
 

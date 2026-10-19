@@ -76,7 +76,7 @@ import { createFiles, type Files } from '{{alias.platform}}/files/create-files{{
 import { ConfiguredJobScheduler } from '{{alias.platform}}/jobs/configured-job-scheduler{{alias.ext}}';
 import { createLogger, type LogSettings } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
 import { createMetrics } from '{{alias.platform}}/observability/create-metrics{{alias.ext}}';
-import type { Platform } from '{{alias.platform}}/platform{{alias.ext}}';
+import type { Platform } from '{{alias.platform}}/composition/platform{{alias.ext}}';
 {{#if cache.redis}}
 import type { RedisServices } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
 {{/if}}

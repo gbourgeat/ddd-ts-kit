@@ -11,7 +11,7 @@ import { createHttpClient, settled, type HttpClient, type SettledOptions } from 
 {{#if authz.rebac}}
 import { relationTuples } from '{{alias.platform}}/auth/relationships/relation-tuples{{alias.ext}}';
 {{/if}}
-import { composeApplication } from '{{alias.platform}}/compose-application{{alias.ext}}';
+import { composeApplication } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
 import { openTestDatabase, type TestDatabase } from '{{alias.platform}}/database/open-test-database{{alias.ext}}';

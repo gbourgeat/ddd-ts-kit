@@ -17,7 +17,7 @@ import type { Persistence } from '@/platform/database/persistence';
 import { AUDIT_SCHEMA } from '@/platform/database/schema';
 import { auditPermissions } from '@/platform/audit/audit.permissions';
 import { auditedEvents } from '@/platform/audit/audited-events';
-import { SearchAuditEntriesQuery } from '@/platform/audit/search-audit-entries.query';
+import { SearchAuditEntriesQuery } from '@/platform/audit/search-audit-entries/search-audit-entries.query';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 
 /** Reading the trail, and reading a document that may hold health data: every allowed access is recorded. */

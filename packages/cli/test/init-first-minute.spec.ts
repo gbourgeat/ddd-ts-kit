@@ -5,7 +5,7 @@ import { jsonAt } from './support/json-at.js';
 import { readJson } from './support/read-json.js';
 import { stringsAt } from './support/strings-at.js';
 
-const COMPOSITION = 'src/platform/compose-application.ts';
+const COMPOSITION = 'src/platform/composition/compose-application.ts';
 const PROOF = 'test/architecture/extractable.spec.ts';
 const OWN_POLICY = 'src/platform/resilience/own-policy.ts';
 

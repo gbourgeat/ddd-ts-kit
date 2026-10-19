@@ -10,10 +10,13 @@ import { testScripts } from './test-scripts.js';
 /**
  * The scripts of a project: the `ci:*` ones of the pipeline, then what a developer runs, and
  * `verify`, which chains every gate the stack has. A script that calls another does so through
- * the package manager of the project.
+ * the package manager of the project. `tracing` is where the project keeps the module `dev` preloads.
  */
-export function scriptsFor(config: Config): Record<string, string> {
-  const written = Object.entries(scriptsOf(config));
+export function scriptsFor(
+  config: Config,
+  tracing = `${config.platformDir}/observability/tracing.ts`,
+): Record<string, string> {
+  const written = Object.entries(scriptsOf(config, tracing));
 
   return Object.fromEntries(written.map(([name, script]) => [name, inDialect(script, config.stack.packageManager)]));
 }
@@ -21,10 +24,10 @@ export function scriptsFor(config: Config): Record<string, string> {
 /** The module of this package that rewrites the generated declarations when it is loaded. */
 const REFRESH = 'ddd-ts-kit/dist/refresh-declarations.js';
 
-function scriptsOf(config: Config): Record<string, string> {
+function scriptsOf(config: Config, tracing: string): Record<string, string> {
   const scripts = {
     ...pipelineManifest().scripts,
-    ...runScripts(config),
+    ...runScripts(config, tracing),
     'lint:fix': 'eslint . --fix',
     'hooks:install': 'lefthook install',
     'check:arch': 'ddd-ts-kit check',
@@ -54,9 +57,9 @@ function scriptsOf(config: Config): Record<string, string> {
  * In the declared style every start of `dev`, the first and each reload, begins by rewriting the
  * generated declarations: a dependency added to a constructor is injected without a manual step.
  */
-function runScripts(config: Config): Record<string, string> {
+function runScripts(config: Config, tracing: string): Record<string, string> {
   const compiled = `dist/${config.sourceRoot}`;
-  const preloads = [`./${config.platformDir}/tracing.ts`, ...(config.stack.style === 'declared' ? [REFRESH] : [])];
+  const preloads = [`./${tracing}`, ...(config.stack.style === 'declared' ? [REFRESH] : [])];
 
   return {
     start: `node ${compiled}/main.js`,

@@ -63,7 +63,7 @@ application as two ports of the kernel: `IntegrationEventPublisher` stays the ou
 
 `init --broker kafka` writes this wiring in the platform of the project: the bus is built by
 `platform/events/create-event-provider.ts`, keyed by `platform/events/aggregate-key-of.ts`,
-`platform/platform.module.ts` rebinds `EventSubscribers` on it, and `main.ts` gives it, traced,
+`platform/composition/platform.module.ts` rebinds `EventSubscribers` on it, and `main.ts` gives it, traced,
 to the outbox relay of `platform/events/start-outbox-relay.ts`, which runs
 `ordering: 'per-key'` with the same key. By hand, the same thing reads:
 

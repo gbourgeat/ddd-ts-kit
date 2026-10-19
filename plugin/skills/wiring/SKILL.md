@@ -83,7 +83,7 @@ A class says what it is on its own file, and that is its registration. There is 
   constructor. Keep the form the project uses; to move to signatures, set
   `"dependencies": "signature"`, `npx eslint . --fix`, `npx ddd-ts-kit docs`.
 - A value or a factory, which no decorator can say, is bound in
-  `src/platform/platform.module.ts` (and its test twin): that file belongs to the platform,
+  `src/platform/composition/platform.module.ts` (and its test twin): that file belongs to the platform,
   not to a context.
 
 ## Explicit style (NestJS, manual wiring, or by choice)
@@ -101,7 +101,7 @@ keep `@Injectable()` out of `domain/` and `application/`.
 ## Composition root
 
 `src/main.ts` starts tracing first, loads the configuration, opens persistence, then calls
-`composeApplication` of `src/platform/compose-application.ts`, where each context is one line
+`composeApplication` of `src/platform/composition/compose-application.ts`, where each context is one line
 (`contextModule('<context>', declarations)`, or the module of an explicit context) added by
 `generate context`. Adapters are instantiated, and declarations assembled, nowhere else
 (`composition/only-in-module`). `createApplication` refuses duplicate bindings, missing

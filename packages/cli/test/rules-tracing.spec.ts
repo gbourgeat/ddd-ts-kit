@@ -13,7 +13,7 @@ const API = "import { trace } from '@opentelemetry/api';";
 describe('tracing/platform-only', () => {
   it('accepts the tracing package and OpenTelemetry in the platform, main.ts and apps/', () => {
     const files = {
-      'src/platform/tracing.ts': lines(TRACING, NODE, API),
+      'src/platform/observability/tracing.ts': lines(TRACING, NODE, API),
       'src/platform/observability/create-logger.ts': lines(API),
       'src/main.ts': lines(NODE),
       'src/apps/billing/main.ts': lines(TRACING),
@@ -58,13 +58,13 @@ describe('tracing/platform-only', () => {
 
   it('follows platformDir of the config, and names it in the fix', () => {
     const root = projectWith(
-      { 'src/infra-platform/tracing.ts': lines(API), 'src/platform/tracing.ts': lines(API) },
+      { 'src/infra-platform/tracing.ts': lines(API), 'src/platform/observability/tracing.ts': lines(API) },
       { platformDir: 'src/infra-platform' },
     );
 
     const { violations } = runOn(root);
 
-    expect(violations.map(({ file }) => file)).toEqual(['src/platform/tracing.ts']);
+    expect(violations.map(({ file }) => file)).toEqual(['src/platform/observability/tracing.ts']);
     expect(violations[0]?.fix).toContain('lives in src/infra-platform/.');
   });
 

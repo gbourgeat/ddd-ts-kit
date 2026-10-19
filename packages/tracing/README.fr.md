@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b8e68665b9006be5 -->
+<!-- translation-of: README.md sha256:582c2a4a48eecd3d -->
 
 # @ddd-ts-kit/tracing
 
@@ -54,7 +54,7 @@ builder.bind(PaymentGateway).toClass(StripePaymentGateway, [StripeClient]).as('e
 ## Mise en place
 
 ```ts
-// platform/tracing.ts : importé avant tout le reste
+// platform/observability/tracing.ts : importé avant tout le reste
 import { initTracing } from '@ddd-ts-kit/tracing/node';
 
 export const tracing = initTracing({ serviceName: 'clinic-api' });
@@ -62,7 +62,7 @@ export const tracing = initTracing({ serviceName: 'clinic-api' });
 
 ```ts
 // main.ts
-import { tracing } from '@/platform/tracing'; // premier import, voir « Ordre de chargement »
+import { tracing } from '@/platform/observability/tracing'; // premier import, voir « Ordre de chargement »
 import { createApplication, kernelModule } from '@ddd-ts-kit/di';
 import { traceApplication, tracedPublisher, tracedRoutes } from '@ddd-ts-kit/tracing';
 
@@ -110,7 +110,7 @@ L'auto-instrumentation modifie `http` et les pilotes de base de données au mome
 chargés, donc `initTracing` doit s'être exécuté avant. Dans un module ES, les imports statiques
 sont évalués avant la première instruction du fichier : gardez l'appel dans son propre module et
 importez ce module en premier (comme ci-dessus), ou préchargez-le avec
-`node --import ./dist/platform/tracing.js`. Les *packages* publiés en modules ES ont aussi besoin
+`node --import ./dist/platform/observability/tracing.js`. Les *packages* publiés en modules ES ont aussi besoin
 du *hook* de chargement `@opentelemetry/instrumentation`.
 
 ## À quoi ressemble une trace
@@ -276,9 +276,9 @@ Les deux dernières lignes sont pour une application dont le module du noyau ne 
 noyau place autour de chaque liaison, et la portée d'exécution est transmise par le module, si
 bien que le *hook* `decorate` n'ajoute rien (envelopper deux fois une instance est sans effet).
 Un projet généré par la CLI n'a aucune des deux lignes : il appelle `traceApplication()` une fois
-dans `src/platform/lay-foundations.ts`, `tracedRoutes()` dans
+dans `src/platform/composition/lay-foundations.ts`, `tracedRoutes()` dans
 `src/platform/auth/authentication/http-boundary.ts`, `tracedPublisher(...)` dans
-`src/platform/compose-application.ts`, et `initTracing` dans `src/platform/tracing.ts`. La règle
+`src/platform/composition/compose-application.ts`, et `initTracing` dans `src/platform/observability/tracing.ts`. La règle
 `tracing/platform-only` garde ces imports dans le répertoire de la plateforme, `main.ts` et
 `apps/`.
 

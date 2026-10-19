@@ -2,7 +2,7 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { contextModule, createTestApplication, fake, type ContextModule } from '@ddd-ts-kit/di';
 import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
+import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { Contacts } from '@/contexts/notification/application/ports/contacts.port';
 import { Mailer } from '@/contexts/notification/application/ports/mailer.port';
 import { NotificationRepository } from '@/contexts/notification/domain/repositories/notification.repository';

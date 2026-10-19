@@ -65,7 +65,11 @@ describe.runIf(SLOW).each(CASES)('the import alias at run time (%s)', (_label, s
   it('compiled and not rewritten, the output stops under plain node at its first alias: the rewrite step is what makes it run', () => {
     expect(bare.unresolved, bare.output).toBe(true);
     expect(bare.output).toContain("'@/");
-    expect(read(root, 'src/main.ts')).toContain(`from '${spelled(root, '@/platform/compose-application')}';`);
+
+    expect(read(root, 'src/main.ts')).toContain(
+      `from '${spelled(root, '@/platform/composition/compose-application')}';`,
+    );
+
     expect(spelled(root, '@/main')).toBe(bareSpelling ? '@/main' : '@/main.js');
     expect(sourcesWrittenTheOtherWay(root, bareSpelling)).toEqual([]);
     expect(rewritten.specifiers).toBeGreaterThan(50);
@@ -89,7 +93,7 @@ describe.runIf(SLOW).each(CASES)('the import alias at run time (%s)', (_label, s
     expect(linked.linked).toBe(linked.modules);
     expect(unknown.unresolved, 'Node itself knows no alias: only the rewrite made the output run').toBe(true);
     expect(extensionless.unresolved, 'Node completes no extension: the rewrite wrote each one').toBe(true);
-    expect(read(root, 'dist/src/main.js')).toContain("from './platform/compose-application.js';");
+    expect(read(root, 'dist/src/main.js')).toContain("from './platform/composition/compose-application.js';");
     expect(rewriteAliases(root)).toMatchObject({ changed: 0, specifiers: 0 });
   }, 120_000);
 
@@ -111,7 +115,7 @@ describe.runIf(SLOW).each(CASES)('the import alias at run time (%s)', (_label, s
     const run = started(root, process.execPath, command);
 
     expect(command).toContain('--import');
-    expect(command).toContain('./src/platform/tracing.ts');
+    expect(command).toContain('./src/platform/observability/tracing.ts');
     expect(resolvedBy(root, DEV_RUNNER, spelled(root, '@/main'))).toBe('src/main.ts');
     expect(resolvedBy(root, DEV_RUNNER, spelled(root, '@/alias-probe'))).toBe('src/alias-probe.ts');
 

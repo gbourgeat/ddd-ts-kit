@@ -89,7 +89,7 @@ describe('generate --help --json', () => {
       expect.objectContaining({
         name: 'job',
         writesShared: true,
-        shared: expect.arrayContaining(['<platformDir>/job-settings.ts']),
+        shared: expect.arrayContaining(['<platformDir>/jobs/job-settings.ts']),
         sharedWhen: null,
       }),
     );
@@ -164,7 +164,7 @@ describe.each([
 
     expect(refused.code).toBe(2);
     expect(refused.stderr).toContain('--local-only: this command would write');
-    expect(refused.stderr).toContain('src/platform/job-settings.ts');
+    expect(refused.stderr).toContain('src/platform/jobs/job-settings.ts');
     expect(refused.stderr).toContain('Nothing was written.');
     expect(exists(root, 'src/contexts/billing/application/scheduling/remind-late-invoices.job.ts')).toBe(false);
   });

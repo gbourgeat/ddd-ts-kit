@@ -6,7 +6,7 @@ import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import { FileStorage, InMemoryFileStorage } from '@ddd-ts-kit/kernel';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
+import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 import { AttachAppointmentDocumentCommand } from '@/contexts/scheduling/application/commands/attach-appointment-document/attach-appointment-document.command';
 import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';

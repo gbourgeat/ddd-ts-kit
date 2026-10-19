@@ -29,7 +29,7 @@ describe('init and the extension of an import', () => {
     expect(resolution(root)).toEqual(['ESNext', 'Bundler']);
     expect(imports.length).toBeGreaterThan(300);
     expect(imports.filter((specifier) => EXTENSION.test(specifier))).toEqual([]);
-    expect(read(root, 'src/main.ts')).toContain("from '@/platform/compose-application';");
+    expect(read(root, 'src/main.ts')).toContain("from '@/platform/composition/compose-application';");
     expect(read(root, 'src/contexts/billing/billing.declarations.ts')).toMatch(/^export \* from '@\/[^']*[^s]';$/m);
 
     expect(read(root, 'src/contexts/billing/published-language/index.ts')).toContain(
@@ -51,7 +51,7 @@ describe('init and the extension of an import', () => {
     expect(resolution(root)).toEqual(['NodeNext', 'NodeNext']);
     expect(imports.length).toBeGreaterThan(300);
     expect(imports.filter((specifier) => !specifier.endsWith('.js'))).toEqual([]);
-    expect(read(root, 'src/main.ts')).toContain("from '@/platform/compose-application.js';");
+    expect(read(root, 'src/main.ts')).toContain("from '@/platform/composition/compose-application.js';");
     expect(checkJsonOf(cli(root, 'check', '--json')).violations).toEqual([]);
     expect(cli(root, 'docs', '--check').code).toBe(0);
   });

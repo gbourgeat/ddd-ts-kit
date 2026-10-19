@@ -57,7 +57,7 @@ describe('init --tenancy', () => {
     const declared = initProject('--orm', 'knex', ...SHARED);
     const explicit = initProject('--style', 'explicit', '--di', 'manual', ...SHARED);
     const single = initProject();
-    const handler = 'src/platform/audit/search-audit-entries.handler.ts';
+    const handler = 'src/platform/audit/search-audit-entries/search-audit-entries.handler.ts';
 
     expect(read(declared, 'src/platform/audit/create-audit.ts')).toContain(
       'reader: new TenantAuditReader(trail, source.scope),',

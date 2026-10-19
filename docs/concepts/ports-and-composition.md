@@ -277,7 +277,7 @@ Something has to know every layer in order to connect them. The kit confines tha
 adapters are instantiated or bound, and declared classes assembled, only in a context's module
 file (explicit style), in `main.ts` and in the platform directory
 (`composition/only-in-module`). `main.ts` imports tracing first, loads the configuration, opens
-the storage and calls `composeApplication` of `src/platform/compose-application.ts`, which lists
+the storage and calls `composeApplication` of `src/platform/composition/compose-application.ts`, which lists
 the modules: the kernel module (default buses, clock, id generator, in-memory defaults), the
 platform module (storage, the event provider, the policy around outbound adapters), the
 authorization and audit modules, the files module when the project stores files, and one module

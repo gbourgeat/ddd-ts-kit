@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ae159f1f989deb60 -->
+<!-- translation-of: README.md sha256:8d4dcdad147c34ee -->
 
 # @ddd-ts-kit/di
 
@@ -439,7 +439,7 @@ export abstract class PaymentSettings {
   abstract readonly apiKey: string;
 }
 
-// platform/platform.module.ts
+// platform/composition/platform.module.ts
 builder.bind(Database).toValue({ client: knex(config.database) });
 builder.bind(PaymentSettings).toValue({ apiUrl: config.payments.url, apiKey: config.payments.key });
 ```

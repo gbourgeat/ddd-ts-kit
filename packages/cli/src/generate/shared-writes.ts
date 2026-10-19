@@ -25,7 +25,7 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
   context: {
     files: [
       'ddd-ts-kit.config.json',
-      'the composition root (<platformDir>/compose-application.ts)',
+      'the composition root (<platformDir>/composition/compose-application.ts)',
       'test/architecture/extractable.spec.ts',
       'the permissions registry (<platformDir>/auth/authorization/permissions.ts)',
       'the CONTEXT.md of each upstream',
@@ -56,7 +56,7 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
     when: '--role names a role the vocabulary does not hold yet',
     worker: 'without --role, or with a role the vocabulary already holds',
   },
-  job: { files: ['<platformDir>/job-settings.ts', 'the grant of its system actor (<platformDir>/auth/)'] },
+  job: { files: ['<platformDir>/jobs/job-settings.ts', 'the grant of its system actor (<platformDir>/auth/)'] },
   policy: {
     files: ['the access policies registry (<platformDir>/auth/authorization/access-policies.ts)'],
     when: 'stack.style is explicit',
@@ -64,7 +64,7 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
   gateway: {
     files: [
       'the read contract and the index of the published language of the upstream',
-      '<platformDir>/platform.module.ts and platform-test.module.ts (declared style)',
+      '<platformDir>/composition/platform.module.ts and platform-test.module.ts (declared style)',
     ],
   },
   service: {

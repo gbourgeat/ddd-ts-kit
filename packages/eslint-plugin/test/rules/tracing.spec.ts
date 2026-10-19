@@ -19,19 +19,25 @@ const MOVED = { ...SAMPLE_CONFIG, sourceRoot: 'lib', contextsDir: 'lib/contexts'
 
 ruleTester.run('tracing-platform-only', tracingPlatformOnly, {
   valid: [
-    at('src/platform/tracing.ts', `${TRACING}\n${API}\nimport { NodeSDK } from '@opentelemetry/sdk-node';`),
+    at(
+      'src/platform/observability/tracing.ts',
+      `${TRACING}\n${API}\nimport { NodeSDK } from '@opentelemetry/sdk-node';`,
+    ),
     at(
       'src/platform/observability/create-logger.ts',
       "import { defaultInstrumentations } from '@ddd-ts-kit/tracing/node';",
     ),
     at('src/platform/tracing.spec.ts', "import { installTestTracing } from '@ddd-ts-kit/tracing/testing';"),
-    at('src/main.ts', "import './platform/tracing.js';\nimport { initTracing } from '@ddd-ts-kit/tracing/node';"),
+    at(
+      'src/main.ts',
+      "import './platform/observability/tracing.js';\nimport { initTracing } from '@ddd-ts-kit/tracing/node';",
+    ),
     at('src/apps/billing/main.ts', TRACING),
     at('src/apps/worker/main.ts', API),
     at('lib/infra-platform/tracing.ts', TRACING, MOVED),
     at('test/e2e/tracing.e2e.spec.ts', "import { installTestTracing } from '@ddd-ts-kit/tracing/testing';"),
     at('scripts/probe.ts', API),
-    at('src/platform/tracing.ts', TRACING, MOVED),
+    at('src/platform/observability/tracing.ts', TRACING, MOVED),
     at('vitest.config.ts', API),
     at(
       ADAPTER,

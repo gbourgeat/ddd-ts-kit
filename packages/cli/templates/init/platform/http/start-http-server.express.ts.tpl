@@ -2,7 +2,7 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import express from 'express';
 import { mountExpress } from '@ddd-ts-kit/http/express';
-import type { Application } from '{{alias.platform}}/compose-application{{alias.ext}}';
+import type { Application } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 {{#if cache.rateLimit}}
 import { refusalFor } from '{{alias.platform}}/http/refusal-for{{alias.ext}}';

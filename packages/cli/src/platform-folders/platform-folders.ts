@@ -3,9 +3,9 @@ import type { Config } from '../config/index.js';
 import type { MigrationDraft } from '../refusals/migration-draft.js';
 import { projectSources } from '../refusals/project-sources.js';
 import type { Workspace } from '../workspace/index.js';
-import { authMoves } from './auth-moves.js';
 import type { FolderMove } from './folder-move.js';
-import { unknownAuthFiles } from './unknown-auth-files.js';
+import { platformMoves } from './platform-moves.js';
+import { unknownFlatFiles } from './unknown-flat-files.js';
 import { withMovedImports } from './with-moved-imports.js';
 
 const EXTENSION = /\.(?:ts|js)$/;
@@ -20,18 +20,20 @@ export interface PlatformFolders {
 interface Tree {
   readonly ws: Workspace;
   readonly config: Config;
-  /** The folder of each file of the team, by its name in `auth/`. */
+  /** The folder of each file of the team, both by their path from the platform. */
   readonly placed?: ReadonlyMap<string, string>;
 }
 
 /**
- * Takes the files a project generated before the folders of the platform to the folder of the
- * question each answers (`auth/authentication/`, `auth/authorization/`, the folder of the model),
- * and rewrites every import of them under the source root, `test/` and `scripts/`. A file the kit
- * did not write stays where it is, said in `draft.manual`, unless `placed` gives it a folder.
+ * Takes the files a project generated before the folders of the platform to the folder of what
+ * each answers (`composition/`, `observability/`, `jobs/`, `auth/authentication/`,
+ * `auth/authorization/`, the folder of the model, `audit/search-audit-entries/`), rewrites every
+ * import of them under the source root, `test/` and `scripts/`, and the paths the scripts of
+ * package.json name. A file the kit did not write in a directory that holds folders only stays
+ * where it is, said in `draft.manual`, unless `placed` gives it a folder.
  */
 export function platformFolders(tree: Tree, draft: MigrationDraft): PlatformFolders {
-  const moves = authMoves(tree.ws, tree.config, tree.placed);
+  const moves = platformMoves(tree.ws, tree.config, tree.placed);
   const moved = new Map(moves.map(({ from, to }) => [from.replace(EXTENSION, ''), to.replace(EXTENSION, '')]));
   const relocation = { roots: aliasRoots(tree.config), moved };
   const rewritten: string[] = [];
@@ -53,7 +55,13 @@ export function platformFolders(tree: Tree, draft: MigrationDraft): PlatformFold
     }
   }
 
-  const left = unknownAuthFiles(tree.ws, tree.config).filter((file) => !moves.some(({ from }) => from === file));
+  rewriteScripts(draft, moves);
+
+  const platform = `${tree.config.platformDir}/`;
+
+  const left = unknownFlatFiles(tree.ws, tree.config).filter(
+    (file) => !moves.some(({ from }) => from === `${platform}${file}`),
+  );
 
   if (left.length > 0) {
     draft.manual.push(leftFlat(left));
@@ -62,8 +70,18 @@ export function platformFolders(tree: Tree, draft: MigrationDraft): PlatformFold
   return { moved: moves, rewritten };
 }
 
-function leftFlat(files: readonly string[]): string {
-  const names = files.map((file) => file.slice(file.lastIndexOf('/') + 1));
+/** `dev` preloads the tracing module by its path: the scripts name it where it is now. */
+function rewriteScripts(draft: MigrationDraft, moves: readonly FolderMove[]): void {
+  const manifest = draft.read('package.json');
 
-  return `Not written by the kit, left flat: ${names.join(', ')}. Give each the folder of what it answers, \`--place <file>=<folder>\` once per file, in this run or the next: its imports follow.`;
+  if (manifest !== undefined) {
+    draft.write(
+      'package.json',
+      moves.reduce((text, { from, to }) => text.replaceAll(`./${from}`, `./${to}`), manifest),
+    );
+  }
+}
+
+function leftFlat(files: readonly string[]): string {
+  return `Not written by the kit, left where folders only belong: ${files.join(', ')}. Give each the folder of what it answers, \`--place <file>=<folder>\` once per file, both from the platform (\`--place auth/role-grants.ts=auth/roles\`), in this run or the next: its imports follow.`;
 }

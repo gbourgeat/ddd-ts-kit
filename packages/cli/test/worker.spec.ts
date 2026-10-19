@@ -12,8 +12,8 @@ describe('generate worker', () => {
   it('writes an entry point with the modules of main.ts, no HTTP server, and the jobs started whatever RUN_JOBS says', () => {
     const worker = read(withWorker(), WORKER);
 
-    expect(worker.split('\n')[1]).toBe("import { tracing } from '@/platform/tracing';");
-    expect(worker).toContain("import { composeApplication } from '@/platform/compose-application';");
+    expect(worker.split('\n')[1]).toBe("import { tracing } from '@/platform/observability/tracing';");
+    expect(worker).toContain("import { composeApplication } from '@/platform/composition/compose-application';");
     expect(worker).toContain('jobs: { start: true, settings: jobSettings(process.env) },');
     expect(worker).toContain('authenticator: createAuthenticator(config),');
     expect(worker).not.toContain('startHttpServer');

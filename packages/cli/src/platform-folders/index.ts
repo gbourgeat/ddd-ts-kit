@@ -1,6 +1,5 @@
-export { authMoves } from './auth-moves.js';
-export { flatRelocation } from './flat-relocation.js';
 export type { FolderMove } from './folder-move.js';
+export { keepFlatPlatform } from './keep-flat-platform.js';
 export { placements } from './placements.js';
 export { platformFolders } from './platform-folders.js';
-export { withMovedImports } from './with-moved-imports.js';
+export { platformMoves } from './platform-moves.js';

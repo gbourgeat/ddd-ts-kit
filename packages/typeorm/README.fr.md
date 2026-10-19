@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:102e8a726437a11d -->
+<!-- translation-of: README.md sha256:a256c76e1a818442 -->
 
 # @ddd-ts-kit/typeorm
 
@@ -140,7 +140,7 @@ déclarées d'un contexte en son module.
 
 Un projet écrit par la CLI contient le même câblage en deux fichiers :
 `platform/database/persistence-over.ts` construit l'unité de travail et les deux stores une
-fois, et `platform/platform.module.ts` les lie, le *publisher* de l'outbox étant passé à
+fois, et `platform/composition/platform.module.ts` les lie, le *publisher* de l'outbox étant passé à
 `kernelModule({ eventPublisher })`.
 
 Passez à un store l'entité même que la source de données enregistre. Sans `entity`, un store

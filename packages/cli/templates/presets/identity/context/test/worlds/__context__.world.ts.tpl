@@ -4,7 +4,7 @@ import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import type { Actor } from '@ddd-ts-kit/kernel';
 import * as {{context.camel}}Declarations from '{{alias.context}}/{{context.kebab}}.declarations{{alias.ext}}';
-import { platformTestModule } from '{{alias.platform}}/platform-test.module{{alias.ext}}';
+import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
 import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions{{alias.ext}}';
 import { IdentityProviderAdmin } from '{{alias.context}}/application/ports/identity-provider-admin.port{{alias.ext}}';
 import { InvitationTokens } from '{{alias.context}}/application/ports/invitation-tokens.port{{alias.ext}}';

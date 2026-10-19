@@ -217,7 +217,7 @@ dead-lettered events, process failures), one report per failure, a `DomainError`
 reported as an incident. The Sentry SDK is initialised so that it registers no tracer provider
 and no second instrumentation: the tracing package owns OpenTelemetry, and the report carries
 the trace id of the active span. `init --errors sentry` generates the wiring
-(`src/platform/errors.ts`, configured by `SENTRY_DSN`) and a compose service running
+(`src/platform/observability/errors.ts`, configured by `SENTRY_DSN`) and a compose service running
 GlitchTip 6.2.6 behind the `errors` profile, for development.
 
 **Metrics**: the kernel defines the `Metrics` port (counters, histograms, gauges, with label
@@ -294,11 +294,11 @@ never user input, so the number of series stays bounded.
 ### The four, wired in the platform
 
 The sample condenses what the example application spreads over
-`src/platform/lay-foundations.ts` (the pino logger and the metrics), `src/platform/platform.module.ts`
-(the bindings) and `src/platform/errors.ts` (Sentry). A generated project has these files on the
+`src/platform/composition/lay-foundations.ts` (the pino logger and the metrics), `src/platform/composition/platform.module.ts`
+(the bindings) and `src/platform/observability/errors.ts` (Sentry). A generated project has these files on the
 tsyringe family, `errors.ts` only with `--errors sentry`. The tracing bootstrap
 (`initTracing` of `@ddd-ts-kit/tracing/node`) is not in it: it lives in its own module,
-`src/platform/tracing.ts`, imported first by `main.ts`, because the instrumentations patch
+`src/platform/observability/tracing.ts`, imported first by `main.ts`, because the instrumentations patch
 `http` and the drivers when they are loaded.
 
 <!-- checked sample -->

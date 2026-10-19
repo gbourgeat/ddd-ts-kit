@@ -42,7 +42,7 @@ describe('a real HTTP server under the default instrumentations', () => {
   beforeAll(async () => {
     tracing = initTracing({ serviceName: 'clinic', extraSpanProcessors: [processor] });
 
-    // Required after the SDK started, as an application loads `http` after `platform/tracing`.
+    // Required after the SDK started, as an application loads `http` after `platform/observability/tracing`.
     const http: typeof import('node:http') = createRequire(import.meta.url)('node:http');
     const around = tracedRoutes();
 

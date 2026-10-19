@@ -1,5 +1,5 @@
 [English](dependency-injection.md) · **Français**
-<!-- translation-of: dependency-injection.md sha256:10befc54a5002fa7 -->
+<!-- translation-of: dependency-injection.md sha256:94e5d058947d0312 -->
 
 # Injection de dépendances : tsyringe avec déclarations, NestJS, câblage manuel
 
@@ -266,7 +266,7 @@ const appointmentsPermissions = definePermissions('appointments', {
   'appointment.book': { description: 'Book an appointment' },
 });
 
-// platform/platform.ts, réduit : ce que reçoit chaque contexte
+// platform/composition/platform.ts, réduit : ce que reçoit chaque contexte
 interface Platform {
   readonly commands: InMemoryCommandBus;
   readonly clock: Clock;

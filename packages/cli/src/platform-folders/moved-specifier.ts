@@ -34,7 +34,12 @@ export function movedSpecifier(specifier: string, file: string, relocation: Relo
     : `${root.prefix}${moved.slice(root.directory.length + 1)}${suffix}`;
 }
 
+/** A directory written with its slash keeps it; `.`, the directory of the file itself, moves with it. */
 function relativeSpecifier(bare: string, file: string, moved: Relocation['moved']): string | undefined {
+  if (bare === '.' || bare === './') {
+    return undefined;
+  }
+
   const importing = file.replace(SUFFIX, '');
   const target = path.posix.join(path.posix.dirname(importing), bare);
   const from = moved.get(importing) ?? importing;
@@ -45,6 +50,7 @@ function relativeSpecifier(bare: string, file: string, moved: Relocation['moved'
   }
 
   const relative = path.posix.relative(path.posix.dirname(from), to);
+  const slash = bare.endsWith('/') ? '/' : '';
 
-  return relative.startsWith('.') ? relative : `./${relative}`;
+  return `${relative.startsWith('.') ? relative : `./${relative}`}${slash}`;
 }

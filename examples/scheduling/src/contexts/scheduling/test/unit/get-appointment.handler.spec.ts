@@ -4,7 +4,7 @@ import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
+import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
 import { GetAppointmentQuery } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.query';
 import { PersonDirectoryGateway } from '@/contexts/scheduling/application/ports/person-directory-gateway.port';

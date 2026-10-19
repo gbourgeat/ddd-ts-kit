@@ -115,7 +115,7 @@ of each is its user name.
 | One row per fact, computed at read time: figures grouped in one statement when they are read, instead of counters kept by events (nothing to drift, nothing to verify at night) | `analytics/CONTEXT.md` ("How occupancy is measured"), `analytics/infrastructure/persistence/knex-occupancy-reader.repository.ts` |
 | A business definition and its SQL held equal by one contract | `analytics/domain/services/occupancy-measure.service.ts`, `analytics/test/integration/occupancy-reader.contract.spec.ts` |
 | A consumer with an outbound port, retry then dead letter | `notification/application/integration/handlers/`, `infrastructure/external/remote-mailer.adapter.ts`, `test/integration/mailer-outage.spec.ts` |
-| Resilience on the adapter class, and at the binding | the mailer above (`@Retry`, `@Timeout`); `src/platform/platform.module.ts` (`builder.around`) |
+| Resilience on the adapter class, and at the binding | the mailer above (`@Retry`, `@Timeout`); `src/platform/composition/platform.module.ts` (`builder.around`) |
 | Files kept in a storage, never in the database: an upload streamed and checked, a short signed link, a removal after the commit, every read of a document audited | `scheduling/application/commands/attach-appointment-document/`, `queries/get-appointment-document/`, `domain/value-objects/attached-document.vo.ts`, `src/platform/files/`, `test/e2e/journey-documents.e2e.spec.ts` |
 | Scheduled jobs that only send a command, in a worker | `application/scheduling/` of `scheduling`, `identity` and `notification`, `src/apps/worker/main.ts` |
 | One trace per action, logs, audit, error report | `test/e2e/journey-observability.e2e.spec.ts` |
