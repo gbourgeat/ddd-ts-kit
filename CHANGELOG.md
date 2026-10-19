@@ -4,6 +4,12 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.83.2
+
+**A project written with `init --preset identity` passes its whole `verify` right after the install, with no step of its own.** Two of its steps failed on a project just initialised. `test:coverage`: the branches of `identity/presentation` stood at 66.66% under their floor of 70%, as the controller of `PUT /accounts/me` was never called by a token without an address, nor without a display name in the body; its spec now covers that case. `docs:check`: `openapi/openapi.yaml`, `docs/integration/asyncapi.yaml` and `docs/integration/event-catalog.md` held none of the routes and events of the preset, as the contracts are written from the running application, which `init` cannot build. `init --preset` now marks them with `x-ddd-ts-kit-pending`, and the first check of `scripts/openapi.ts` and `scripts/events.ts` (in `verify` or `docs:check`) writes them, saying `<file> is written for the first time, ...: commit it.`; where `CI` is set, a contract still marked fails instead (`<file> was never generated: run the script docs:generate and commit it.`), so that a pipeline never passes on a contract nobody wrote. The `bootstrap` skill runs `docs:generate` after `generate context --preset` in a project that exists, whose contracts are already written.
+
+To move: a project written from the preset by 0.83.1 or earlier runs `npm run docs:generate` once and commits the contracts; its `verify` then fails only on the coverage of `presentation`, which the case `names the person after their username when the body names nothing, and sends no address the token lacks` of `provision-account.controller.spec.ts` covers. Projects initialised with 0.83.1 or earlier keep their `scripts/openapi.ts` and `scripts/events.ts`, which know no mark and need none.
+
 ## 0.83.1
 
 0.83.0 was set but never published: four fixes reached `main` before its version did, and 0.83.1 holds them with the rest. No version 0.83.0 is on the registry.
