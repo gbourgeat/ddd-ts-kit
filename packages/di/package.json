@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/di",
-  "version": "0.83.2",
+  "version": "0.83.3",
   "description": "Port classes and context modules on top of tsyringe, for projects without a heavy framework.",
   "keywords": [
     "ddd",
@@ -40,8 +40,8 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.83.2",
-    "@ddd-ts-kit/scheduling": "0.83.2"
+    "@ddd-ts-kit/kernel": "0.83.3",
+    "@ddd-ts-kit/scheduling": "0.83.3"
   },
   "peerDependencies": {
     "tsyringe": "^4.10.0",
