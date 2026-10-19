@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:fdc406be5a82f216 -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:6573e5a8c6c3f7f5 -->
 
 # L'analyse statique et le pipeline
 
@@ -209,7 +209,9 @@ pre-push:
     - name: typecheck
       run: npm run ci:typecheck
     - name: unit tests
-      run: npm run ci:test:unit
+      # The contexts the branch reaches and the ones downstream of them, as on a pull request; everything when git
+      # cannot tell (no origin/HEAD: `git remote set-head origin --auto`). The pipeline runs everything on the trunk.
+      run: npx --no -- ddd-ts-kit affected --base origin/HEAD --run ci:test:unit
     - name: merges
       run: npx --no -- ddd-ts-kit verify-merge --warn
 
@@ -218,6 +220,14 @@ commit-msg:
     - name: conventional commit
       run: npx --no -- commitlint --edit {1}
 ```
+
+Avant un *push*, les *specs* unitaires tournent comme sur une *pull request* :
+`ddd-ts-kit affected --run` met dans `DDD_TS_KIT_AFFECTED` les contextes que la branche atteint
+depuis `origin/HEAD` et ceux qui en dépendent, ne lance rien quand seuls des documents ont
+changé, et lance tout quand un chemin partagé a changé ou que git ne sait pas le dire. Un *push*
+ne lance plus toutes les *specs* d'un projet qui grossit ; le *pipeline* le fait, sur le tronc et
+chaque nuit. Hors *pipeline*, le lanceur de tests prend la moitié des cœurs
+([Isoler les agents de code](../guides/agent-sandbox.fr.md)).
 
 Le *job* ESLint d'avant *commit* n'a pas de `--max-warnings` : il affiche un avertissement et
 laisse passer le *commit*, et `npm run lint`, `verify` et le *pipeline* échouent dessus. Comment un

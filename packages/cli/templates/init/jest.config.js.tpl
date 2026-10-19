@@ -29,6 +29,8 @@ export default {
       },
     ],
   },
+  // A developer machine shares its cores with the editor, the coding agents and their worktrees: the specs take half of them. A pipeline runner has its own.
+  ...(process.env.CI ? {} : { maxWorkers: '50%' }),
   coverageProvider: 'v8',
   coverageReporters: ['text', 'cobertura', 'lcov'],
   coverageDirectory: 'coverage',

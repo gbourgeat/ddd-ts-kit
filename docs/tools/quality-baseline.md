@@ -112,7 +112,7 @@ first and on what changed; the wider ones run later, on every file:
 | architecture | kit `check:self`, the fixtures of every rule, and the guard tests (in `ci:arch`); example and project `check:arch` | kit `ci:arch`; example and project `ci:arch:check` | project and example: staged files, before a commit; at every write through the editor hook |
 | every rule proven on the example | kit: `example:verify` runs `example:conformance` after the example's own gate | kit: the `example` job | no |
 | documents drift | kit `ci:docs` (no em dash or en dash, every French page in step with its English page); example and project `docs:check` | `ci:docs` | kit: the dash check (`check:dashes`), before a commit |
-| unit specs | kit `ci:test:unit`; example and project `test:coverage` | `ci:test:unit` | before a push |
+| unit specs | kit `ci:test:unit`; example and project `test:coverage` | `ci:test:unit` | before a push (example and project: the contexts the branch reaches, `ddd-ts-kit affected --run`) |
 | integration specs | kit: the pipeline only (they need servers); example and project `test:coverage` (PostgreSQL in process) | `ci:test:integration` | no |
 | end-to-end specs | kit: the pipeline only (`ci:test:e2e`, every stack generated and run); example and project `test:e2e` | `ci:test:e2e` | no |
 | coverage thresholds | kit: a floor per package in `vitest.config.ts`, in `ci:test:unit`; example and project: per context and layer, from `ddd-ts-kit.config.json`, in `test:coverage` | `ci:test:unit` and, for the example and a project, `ci:test:integration` | before a push (the unit run) |

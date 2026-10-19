@@ -236,7 +236,7 @@ Stated exactly, from [pipeline/lefthook.yml](../../pipeline/lefthook.yml), [pipe
 | every file write in an agent session | the plugin's hook | refuses a hand-written file where a generator exists, an edit of a generated file (contracts, barrels, `.dependency-cruiser.cjs`) and, for a worker of one context, a write outside that context; asks the owner before a suppression, a skipped test or a change of the governed files; returns the violations of the written file; refuses to finish while architecture errors remain, then reminds of the commit size without blocking |
 | `pre-commit` (lefthook) | ESLint and the formatter (`biome format`) on staged files; `ddd-ts-kit check` on staged sources under `src/`; `ddd-ts-kit check --commit-size --staged` | code rules, format and structure on what is being committed; the size of the commit, as advice |
 | `commit-msg` (lefthook) | commitlint | the conventional commit format |
-| `pre-push` (lefthook) | type check and unit tests; `ddd-ts-kit verify-merge --warn` | the project compiles and its fast tests pass; what a merge since the trunk lost (a line, a row done, a test) is shown, as a warning in this version |
+| `pre-push` (lefthook) | type check; the unit specs of the contexts the branch reaches (`ddd-ts-kit affected --run`); `ddd-ts-kit verify-merge --warn` | the project compiles and the fast tests of what the branch changed pass; what a merge since the trunk lost (a line, a row done, a test) is shown, as a warning in this version |
 | pull request | the title check | the title is a conventional commit |
 | CI | type check, lint, architecture, dead code, tests, documentation and contract drift, security, build, image, then the single `gate` job | everything, including stale generated files |
 

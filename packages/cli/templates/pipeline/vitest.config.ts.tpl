@@ -11,6 +11,8 @@ const INTEGRATION_SPECS = '{{config.contextsDir}}/*/test/integration/**/*.spec.t
 const INTEGRATION_MODE = 'integration';
 // A pull request names the contexts its change reaches (DDD_TS_KIT_AFFECTED, from `ddd-ts-kit affected`): the specs of the others are left to the default branch.
 const NOT_AFFECTED = unaffectedContexts().map((directory) => `${directory}**`);
+// A developer machine shares its cores with the editor, the coding agents and their worktrees: the specs take half of them. A pipeline runner has its own.
+const WORKERS = process.env.CI ? {} : { maxWorkers: '50%' };
 
 const UNIT_PROJECT: TestProjectInlineConfiguration = {
   extends: true,
@@ -52,6 +54,7 @@ export default defineConfig(({ mode }) => ({
   test: {
     // The integration project has no spec before the first repository or adapter of the project: its run passes until then.
     passWithNoTests: mode === INTEGRATION_MODE,
+    ...WORKERS,
     {{#if assembly.discovery}}
     // Discovery imports the role files of a context itself: inlined, the package loads them through the runner, which compiles them.
     server: { deps: { inline: ['@ddd-ts-kit/di'] } },

@@ -6,6 +6,8 @@ const INTEGRATION_SPECS = 'src/contexts/*/test/integration/**/*.spec.ts';
 const INTEGRATION_MODE = 'integration';
 // A pull request names the contexts its change reaches (DDD_TS_KIT_AFFECTED, from `ddd-ts-kit affected`): the specs of the others are left to the default branch.
 const NOT_AFFECTED = unaffectedContexts().map((directory) => `${directory}**`);
+// A developer machine shares its cores with the editor, the coding agents and their worktrees: the specs take half of them. A pipeline runner has its own.
+const WORKERS = process.env.CI ? {} : { maxWorkers: '50%' };
 
 const UNIT_PROJECT: TestProjectInlineConfiguration = {
   extends: true,
@@ -31,6 +33,7 @@ export default defineConfig(({ mode }) => ({
   test: {
     // The integration project has no spec before the first repository or adapter of the project: its run passes until then.
     passWithNoTests: mode === INTEGRATION_MODE,
+    ...WORKERS,
     projects: [UNIT_PROJECT, INTEGRATION_PROJECT],
     coverage: {
       provider: 'v8',

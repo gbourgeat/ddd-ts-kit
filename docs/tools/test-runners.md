@@ -213,6 +213,9 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
+- outside a pipeline (no `CI` variable) the specs take half of the cores (`maxWorkers: '50%'`):
+  a developer machine shares them with the editor and the coding agents. `VITEST_MAX_WORKERS`
+  sets another number, for a sandbox capped below the cores of its host;
 - a separate end-to-end configuration that starts the whole application on a free port, on an
   in-process PostgreSQL unless a database URL is given;
 - JUnit and Cobertura reports for GitLab, the Actions reporter for GitHub;
@@ -246,6 +249,7 @@ export default {
   transform: {
     '^.+\\.ts$': ['@swc/jest', { jsc: { parser: { syntax: 'typescript', decorators: true }, transform: { decoratorVersion: '2022-03' }, target: 'es2022' } }],
   },
+  ...(process.env.CI ? {} : { maxWorkers: '50%' }), // half of the cores outside a pipeline
   coverageProvider: 'v8',
   ...governedJestCoverage(),
 };

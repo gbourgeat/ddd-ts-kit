@@ -23,7 +23,9 @@ pre-push:
     - name: typecheck
       run: npm run ci:typecheck
     - name: unit tests
-      run: npm run ci:test:unit
+      # The contexts the branch reaches and the ones downstream of them, as on a pull request; everything when git
+      # cannot tell (no origin/HEAD: `git remote set-head origin --auto`). The pipeline runs everything on the trunk.
+      run: npx --no -- ddd-ts-kit affected --base origin/HEAD --run ci:test:unit
     - name: merges
       run: npx --no -- ddd-ts-kit verify-merge --warn
 
