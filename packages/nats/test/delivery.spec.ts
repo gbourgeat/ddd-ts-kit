@@ -1,19 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { EventDelivery } from '@ddd-ts-kit/kernel';
-import { Broker } from './support/broker.js';
-import { MAX_ATTEMPTS, NATS_URL } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
+import { MAX_ATTEMPTS } from './support/environment.js';
 import { PLACED, TRACEPARENT, anEvent } from './support/events.js';
 import { InvoicingFailed } from './support/invoicing-failed.js';
 import { unique } from './support/unique.js';
 
-describe.skipIf(NATS_URL === undefined)(
-  'NatsEventBus: what a handler is told of a delivery',
+describe.each(BROKERS)(
+  'NatsEventBus: what a handler is told of a delivery, %s',
   { timeout: 30_000 },
-  () => {
+  (_name, connect) => {
     let broker: Broker;
 
     beforeEach(async () => {
-      broker = await Broker.connect(NATS_URL ?? '');
+      broker = await connect();
     });
 
     afterEach(async () => {

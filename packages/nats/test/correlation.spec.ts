@@ -7,16 +7,16 @@ import {
   systemActor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
-import { Broker } from './support/broker.js';
-import { NATS_URL } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
 import { PLACED, anEvent } from './support/events.js';
 import { InvoicingFailed } from './support/invoicing-failed.js';
 
-describe.skipIf(NATS_URL === undefined)('NatsEventBus: correlation', { timeout: 30_000 }, () => {
+describe.each(BROKERS)('NatsEventBus: correlation, %s', { timeout: 30_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(NATS_URL ?? '');
+    broker = await connect();
   });
 
   afterEach(async () => {

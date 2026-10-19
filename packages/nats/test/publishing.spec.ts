@@ -1,19 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { type NatsFailure } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { NATS_URL } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
 import { PLACED, TRACEPARENT, anEvent } from './support/events.js';
 import { FaultyNetwork } from './support/faulty-network.js';
 import { failuresOf } from './support/hooks.js';
 import { recorder } from './support/recorder.js';
 import { eventually, pause } from './support/waiting.js';
 
-describe.skipIf(NATS_URL === undefined)('NatsEventBus: publishing', { timeout: 30_000 }, () => {
-  const url = NATS_URL ?? '';
+describe.each(BROKERS)('NatsEventBus: publishing, %s', { timeout: 30_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(url);
+    broker = await connect();
   });
 
   afterEach(async () => {
@@ -57,7 +56,7 @@ describe.skipIf(NATS_URL === undefined)('NatsEventBus: publishing', { timeout: 3
   });
 
   it('resolves only once the stream acknowledged, and rejects a publication cut mid-flight', async () => {
-    const network = await FaultyNetwork.to(url);
+    const network = await FaultyNetwork.to(broker.url);
     const bus = broker.bus({ connection: network.url, publishTimeoutMs: 1_000 });
 
     await bus.assertTopology();
@@ -81,7 +80,7 @@ describe.skipIf(NATS_URL === undefined)('NatsEventBus: publishing', { timeout: 3
   });
 
   it('fails with a code, never with the URL, when the server cannot be reached', async () => {
-    const network = await FaultyNetwork.to(url);
+    const network = await FaultyNetwork.to(broker.url);
     const unreachable = network.url;
 
     await network.close();
@@ -93,5 +92,17 @@ describe.skipIf(NATS_URL === undefined)('NatsEventBus: publishing', { timeout: 3
     expect(failure).toMatchObject({ code: 'BROKER_UNAVAILABLE', reason: 'ECONNREFUSED' });
     expect(String(failure)).not.toContain('127.0.0.1');
     expect(reported).toEqual([{ kind: 'connection', code: 'ECONNREFUSED' }]);
+  });
+
+  it('publishes nothing, and connects to nothing, for no event', async () => {
+    const network = await FaultyNetwork.to(broker.url);
+    const unreachable = network.url;
+
+    await network.close();
+    const reported: NatsFailure[] = [];
+    const bus = broker.bus({ connection: unreachable, onFailure: failuresOf(reported) });
+
+    expect(await bus.publish([])).toBeUndefined();
+    expect(reported).toEqual([]);
   });
 });

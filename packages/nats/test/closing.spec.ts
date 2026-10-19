@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Broker } from './support/broker.js';
-import { NATS_URL } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
 import { PLACED, anEvent } from './support/events.js';
 import { unique } from './support/unique.js';
 import { eventually, pause } from './support/waiting.js';
 
-describe.skipIf(NATS_URL === undefined)('NatsEventBus: closing', { timeout: 30_000 }, () => {
+describe.each(BROKERS)('NatsEventBus: closing, %s', { timeout: 30_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(NATS_URL ?? '');
+    broker = await connect();
   });
 
   afterEach(async () => {
@@ -58,5 +58,14 @@ describe.skipIf(NATS_URL === undefined)('NatsEventBus: closing', { timeout: 30_0
     expect(() => bus.subscribe(PLACED, async () => undefined)).toThrow(
       expect.objectContaining({ code: 'EVENT_BUS_CLOSED' }),
     );
+  });
+
+  it('gives up the connection it was opening when it is closed meanwhile', async () => {
+    const bus = broker.bus();
+
+    bus.subscribe(PLACED, async () => undefined);
+    await bus.close();
+
+    await expect(bus.publish([anEvent('evt-1')])).rejects.toMatchObject({ code: 'EVENT_BUS_CLOSED' });
   });
 });

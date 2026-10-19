@@ -4,20 +4,23 @@ import {
   ERROR_CODE_HEADER,
   POISON_MESSAGE,
   REPLAY_FOR_HEADER,
+  deadStreamOf,
   type NatsFailure,
 } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { MAX_ATTEMPTS, NATS_URL } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
+import { MAX_ATTEMPTS } from './support/environment.js';
 import { PLACED, anEvent } from './support/events.js';
 import { failuresOf } from './support/hooks.js';
 import { recorder } from './support/recorder.js';
 import { unique } from './support/unique.js';
+import { eventually } from './support/waiting.js';
 
-describe.skipIf(NATS_URL === undefined)('NatsEventBus: dead letters', { timeout: 30_000 }, () => {
+describe.each(BROKERS)('NatsEventBus: dead letters, %s', { timeout: 30_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(NATS_URL ?? '');
+    broker = await connect();
   });
 
   afterEach(async () => {
@@ -80,5 +83,18 @@ describe.skipIf(NATS_URL === undefined)('NatsEventBus: dead letters', { timeout:
       [ERROR_CODE_HEADER]: POISON_MESSAGE,
       [DEAD_REASON_HEADER]: 'poison',
     });
+  });
+
+  it('keeps a message it cannot bury, its dead-letter stream gone, and tries again', async () => {
+    const bus = broker.bus();
+    const billing = recorder(Number.POSITIVE_INFINITY);
+
+    bus.subscribe(PLACED, billing.handler);
+    await bus.assertTopology();
+    await broker.deleteStream(deadStreamOf(broker.stream));
+    await bus.publish([anEvent('evt-1')]);
+
+    await eventually(() => billing.received.length > MAX_ATTEMPTS);
+    expect(await broker.dead()).toEqual([]);
   });
 });

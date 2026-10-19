@@ -8,6 +8,7 @@ import {
   type NatsEventBusOptions,
 } from '../../src/index.js';
 import { MAX_ATTEMPTS, RETRY_DELAY_MS } from './environment.js';
+import { InMemoryNats } from './server/in-memory-nats.js';
 import type { StoredMessage } from './stored-message.js';
 import { unique } from './unique.js';
 import { eventually } from './waiting.js';
@@ -25,16 +26,25 @@ export class Broker {
   private readonly buses: NatsEventBus[] = [];
 
   private constructor(
-    private readonly url: string,
+    /** The server the buses connect to, a real one or the in-memory one. */
+    readonly url: string,
     private readonly connection: NatsConnection,
     private readonly client: JetStreamClient,
     private readonly manager: JetStreamManager,
+    private readonly server: InMemoryNats | undefined,
   ) {}
 
-  static async connect(url: string): Promise<Broker> {
+  static async connect(url: string, server?: InMemoryNats): Promise<Broker> {
     const connection = await connect({ servers: url });
 
-    return new Broker(url, connection, jetstream(connection), await jetstreamManager(connection));
+    return new Broker(url, connection, jetstream(connection), await jetstreamManager(connection), server);
+  }
+
+  /** A server of its own, in the process: closed by `dispose`. */
+  static async inMemory(): Promise<Broker> {
+    const server = await InMemoryNats.start();
+
+    return Broker.connect(server.url, server);
   }
 
   /** A bus on the stream of this test, with fast retries. Closed and cleaned by `dispose`. */
@@ -52,6 +62,18 @@ export class Broker {
     this.buses.push(bus);
 
     return bus;
+  }
+
+  /** Creates the stream of this test before a bus does, with what a test wants to differ. */
+  async declareStream(
+    subjects: readonly string[],
+    limits: { readonly max_msgs?: number; readonly max_consumers?: number } = {},
+  ): Promise<void> {
+    await this.manager.streams.add({ name: this.stream, subjects: [...subjects], ...limits });
+  }
+
+  async deleteStream(name: string): Promise<void> {
+    await this.manager.streams.delete(name);
   }
 
   namesOf(binding: ConsumerBinding): ReturnType<typeof bindingNamesOf> {
@@ -107,6 +129,7 @@ export class Broker {
     }
 
     await this.connection.close();
+    await this.server?.close();
   }
 
   private async isQuiet(bus: NatsEventBus): Promise<boolean> {
