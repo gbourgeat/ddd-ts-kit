@@ -25,9 +25,11 @@ allowed-tools:
   - Bash(corepack enable)
   - Bash(pnpm install)
   - Bash(pnpm run verify)
+  - Bash(pnpm run docs:generate)
   - Bash(pnpm run hooks:install)
   - Bash(npm install)
   - Bash(npm run verify)
+  - Bash(npm run docs:generate)
   - Bash(npm run hooks:install)
 ---
 
@@ -87,7 +89,9 @@ A `generic` context whose language is the one of a preset of the kit is written 
 provider, organisations, members with roles, invitations and delegations. Propose it only when
 the row of `contexts.md` says so in those words, never for a context that only looks generic
 (delegations on a desk, practices in a time zone are a model of their own); the preset refuses
-a stack it is not written for, with the flag to change, and a second context of the same preset. It is green as written: read its
+a stack it is not written for, with the flag to change, and a second context of the same preset. It is green as written once
+`pnpm run docs:generate` has added its routes and events to the contracts, which are written from
+the running application: run it before `verify`, then read its
 `## Design` with the owner. Why and when:
 `docs/guides/bootstrap-with-well-designed-contexts.md` of the kit.
 

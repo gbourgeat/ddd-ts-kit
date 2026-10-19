@@ -66,7 +66,7 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   const withContexts = addPresets(ws, declared, [...new Set(options.presets ?? [])]);
 
   writeDocs(ws, withContexts);
-  writeContracts(ws, withContexts, projectName);
+  writeContracts(ws, { config: withContexts, projectName, presetApplied: (options.presets ?? []).length > 0 });
   setUpSdk(ws, withContexts);
 
   const report = ws.commit(options.dryRun);
