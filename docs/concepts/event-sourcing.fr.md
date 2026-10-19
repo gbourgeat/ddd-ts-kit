@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:e606635bd03afe2b -->
+<!-- translation-of: event-sourcing.md sha256:91c5d743f5a4f701 -->
 
 # Event sourcing, par agrégat
 
@@ -50,7 +50,7 @@ l'agrégat.
 | Les événements stockés sont immuables | la forme d'un événement stocké une fois est lue aussi longtemps que vit l'agrégat : un changement est une nouvelle version avec un *upcaster*, pour toujours (`event-sourcing/upcaster-required`) |
 | Données personnelles | un événement ne peut pas être modifié pour oublier une personne : les valeurs personnelles sont scellées avec une clé par personne concernée, et l'effacement détruit la clé (ci-dessous) |
 | Les projections sont en retard | une projection alimentée par le store est cohérente à terme avec les flux ; une lecture qui doit voir l'écriture qu'elle suit lit l'agrégat, ou une projection alimentée dans l'unité de travail |
-| Les ajouts sont sérialisés | le store PostgreSQL donne les positions dans l'ordre des validations en verrouillant la tête du store jusqu'à la fin de chaque transaction qui ajoute : deux ajouts ne s'exécutent jamais côte à côte, quels que soient leurs flux. Cela convient à un agrégat métier, pas à un flot massif. Un ajout qui perd face à un autre est une `ConcurrencyError` que l'appelant réessaie : une version en double, mais aussi un échec de sérialisation (une unité de travail en REPEATABLE READ ou SERIALIZABLE) ou un interblocage avec des verrous de ligne que la même transaction a pris dans un autre ordre. Ajoutez en dernier dans une unité de travail pour garder la tête verrouillée le moins longtemps possible |
+| Les ajouts sont sérialisés | le store PostgreSQL donne les positions dans l'ordre des validations en verrouillant la tête du store jusqu'à la fin de chaque transaction qui ajoute : deux ajouts ne s'exécutent jamais côte à côte, quels que soient leurs flux. Cela convient à un agrégat métier, pas à un flot massif. Un ajout qui perd face à un autre est une `ConcurrencyError` que l'appelant réessaie : une version en double, mais aussi un échec de sérialisation (une unité de travail en REPEATABLE READ ou SERIALIZABLE) ou un interblocage avec des verrous de ligne que la même transaction a pris dans un autre ordre. PostgreSQL peut abandonner l'autre instruction du cycle, la mise à jour d'une ligne : l'unité de travail est alors rejetée par une `TransactionConflictError`, une `ConcurrencyError` elle aussi. Ajoutez en dernier dans une unité de travail pour garder la tête verrouillée le moins longtemps possible |
 | Le débogage | l'état n'est pas dans une ligne : un bogue se trouve en rejouant un flux, ce que font les tests sans base de données (`givenEvents`) |
 | L'équipe | méthodes apply, *upcasters*, *snapshots* et reconstructions sont de nouvelles habitudes ; les règles tiennent la partie mécanique |
 

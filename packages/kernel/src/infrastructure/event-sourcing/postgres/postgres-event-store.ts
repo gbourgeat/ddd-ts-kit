@@ -26,7 +26,9 @@ const SELECTED = `position, stream, version, event_id, type, schema_version, dat
  * price is that two appends never run side by side, whatever their streams. A conflict that slips
  * between the check and the insert hits the unique (stream, version) and is a ConcurrencyError too,
  * and so are a serialization failure (a unit of work at REPEATABLE READ or SERIALIZABLE) and a
- * deadlock with row locks the same transaction took in another order: the caller retries.
+ * deadlock with row locks the same transaction took in another order: the caller retries. When
+ * PostgreSQL gives up the other statement of such a cycle, the unit of work rejects with a
+ * `TransactionConflictError`, a `ConcurrencyError` too.
  */
 export class PostgresEventStore implements EventStore {
   private readonly events: string;

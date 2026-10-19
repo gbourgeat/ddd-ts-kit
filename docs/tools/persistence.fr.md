@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:e3153e145573d833 -->
+<!-- translation-of: persistence.md sha256:68a02dbe00677cb8 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -274,7 +274,11 @@ Les mêmes pièces, sous le nom que leur donne chaque *package* :
 Deux commandes peuvent charger la même facture à la même version. La première sauvegarde
 correspond à la version et la fait avancer ; la seconde ne correspond à aucune ligne, et
 `optimisticUpdate` lève `ConcurrencyError` (code `CONCURRENCY_CONFLICT`), ce qui annule sa
-transaction.
+transaction. Les quatre unités de travail répondent de même quand la base de données abandonne
+leur transaction pour une transaction concurrente, sur un interblocage (`40P01`) ou un échec de
+sérialisation (`40001`, `P2034` de Prisma), quelle que soit l'instruction choisie :
+`TransactionConflictError`, une `ConcurrencyError` dont la `cause` est l'erreur du pilote, jamais
+une erreur inattendue.
 
 ![Deux transactions chargent la facture inv-1 à la version 3 ; la première mise à jour correspond à la version 3 et écrit la version 4 ; la seconde attend toujours la version 3, n'écrit aucune ligne et échoue avec ConcurrencyError](../assets/diagrams/persistence-optimistic-concurrency.fr.svg)
 

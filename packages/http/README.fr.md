@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2b6dfab4475bed5a -->
+<!-- translation-of: README.md sha256:26f5291b6c7fc8e3 -->
 
 # @ddd-ts-kit/http
 
@@ -551,8 +551,9 @@ export function startsAtOf(problem: Problem): string | undefined {
 ```
 
 Valeurs par défaut : `VALIDATION_FAILED` 422 (avec `issues`, chemins préfixés par la partie :
-`body.items.0.sku`), `NOT_FOUND` 404, `CONFLICT` 409, `INVARIANT_VIOLATION` 422, `UNAUTHORIZED`
-401, `FORBIDDEN` 403, `NOT_ACCEPTABLE` 406, `PRECONDITION_FAILED` 412,
+`body.items.0.sku`), `NOT_FOUND` 404, `CONFLICT` 409, `CONCURRENCY_CONFLICT` 409 (une mise à jour
+perdue ou un interblocage : le client renvoie la requête), `INVARIANT_VIOLATION` 422,
+`UNAUTHORIZED` 401, `FORBIDDEN` 403, `NOT_ACCEPTABLE` 406, `PRECONDITION_FAILED` 412,
 `UNSUPPORTED_MEDIA_TYPE` 415 (un corps ou un fichier d'un type que la route ne prend pas),
 `PRECONDITION_REQUIRED` 428, et pour les fichiers `FILE_NOT_FOUND` 404, `FILE_TOO_LARGE` 413. Un
 code du domaine sans correspondance répond 422 (`fallbackStatus` du second argument le change).
