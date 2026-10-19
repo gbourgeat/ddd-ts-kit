@@ -117,6 +117,7 @@ limits, and a recommendation by situation.
 | [Bootstrap with well-designed contexts](guides/bootstrap-with-well-designed-contexts.md) | a generic context written whole with `--preset identity`: what it writes, what it asks of the stack, how it composes with each access model and with tenants |
 | [Choosing access control](guides/choosing-access-control.md) | five questions that pick roles, attributes or relationships (Zanzibar), worked presets for each, the combined model of the example, scopes and refusals at the edge |
 | [Token economy](guides/token-economy.md) | spending fewer tokens with coding agents, and complementary tools |
+| [Sandboxing coding agents](guides/agent-sandbox.md) | what loads a machine and what the kit does about it; capping an agent, the sandbox of the agent, NVIDIA OpenShell for the security of a session |
 | [The French documentation](translation.md) | contributors: how every page keeps its French translation current, the glossary, the style of the diagrams, the code samples the pipeline compiles |
 
 ## Proposals

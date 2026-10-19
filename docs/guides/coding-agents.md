@@ -72,7 +72,7 @@ has its design review and the acceptance is written and locked, says the phase o
 session start with where it meets the other open stories, says once per file when the session
 writes a file another open story changes, and refuses once to end the session before its report
 ([story workflow](story-workflow.md)). No hook
-runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work. Set
+runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 
 Each agent gets what its host runs. The skills work in all three. The five agents are sub-agents

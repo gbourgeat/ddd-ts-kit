@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:b75e37afde6bb6ed -->
+<!-- translation-of: parallel-work.md sha256:5a240de43381a27e -->
 
 # Travailler en parallèle sans collisions
 
@@ -760,7 +760,8 @@ reste.
 - **Les agents multiplient le coût autant que la vitesse.** Chacun porte sa propre fenêtre de
   contexte ; quatre *workers* dépensent environ quatre fois les *tokens* d'un seul, voir
   [Économie de tokens](token-economy.fr.md). Sur une même machine, ils partagent aussi la
-  mémoire, le processeur, les ports et le démon Docker.
+  mémoire, le processeur, les ports et le démon Docker : lancez autant de *workers* que la
+  machine en tient, et plafonnez-les ([Isoler les agents de code](agent-sandbox.fr.md)).
 - **Rien ne verrouille un fichier entre des personnes.** Les règles interdisent les imports entre
   contextes ; elles n'empêchent pas deux branches de modifier la configuration. Le séquencement
   ci-dessus est une discipline, tenue par la revue et par la consigne que reçoit chaque *worker*.
@@ -786,6 +787,7 @@ reste.
 ## Voir aussi
 
 - [Parcours d'une story](story-workflow.fr.md) : une session par *user story*, une *story* par terminal
+- [Isoler les agents de code](agent-sandbox.fr.md) : la charge de plusieurs *workers* sur une machine, et leur isolation
 - [Travailler en équipe](team-workflow.fr.md)
 - [La discipline des commits](commit-discipline.fr.md)
 - [Méthodologie](methodology.fr.md)

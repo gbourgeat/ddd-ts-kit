@@ -62,6 +62,11 @@ the merges become the bottleneck. Inside one context, two workers only on two di
 aggregates, and expect to merge its route list and its permissions file by keeping both
 sides' lines; otherwise, one context, one worker, slices in sequence.
 
+Fewer on a machine that slows down: each worker runs its own compiler, linter and test runner.
+When the user reports a stalled or restarting machine, launch one worker at a time and point
+to `docs/guides/agent-sandbox.md` of the kit (a resource cap per session, NVIDIA OpenShell when
+the security of the session matters).
+
 A worker is one context and its worktree; an agent holds **one row, two at most**, before its
 turns or its context run out. Inside a worktree, launch one `context-builder` agent per row,
 in sequence, each on the commits of the previous one.

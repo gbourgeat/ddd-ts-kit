@@ -702,7 +702,8 @@ small fraction of the total time and remove nearly every collision from the rest
 - **Agents multiply cost as well as speed.** Each one carries its own context window; four
   workers spend roughly four times the tokens of one, see
   [Token economy](token-economy.md). On one machine they also share memory, CPU, ports and the
-  Docker daemon.
+  Docker daemon: run as many workers as the machine holds, and cap them
+  ([Sandboxing coding agents](agent-sandbox.md)).
 - **Nothing locks a file between people.** The rules forbid cross-context imports; they do not
   stop two branches from editing the config. The sequencing above is a discipline, held by
   review and by the brief each worker receives. The confinement by `.ddd-ts-kit/worker.json`
@@ -725,6 +726,7 @@ small fraction of the total time and remove nearly every collision from the rest
 ## See also
 
 - [Story workflow](story-workflow.md): one session per user story, one story per terminal
+- [Sandboxing coding agents](agent-sandbox.md): the load of several workers on one machine, and isolating them
 - [Team workflow](team-workflow.md)
 - [Commit discipline](commit-discipline.md)
 - [Methodology](methodology.md)
