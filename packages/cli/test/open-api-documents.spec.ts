@@ -60,7 +60,7 @@ describe('the documents of the contract', () => {
     );
 
     expect(messages).toEqual([
-      '"openapi.format" is "xml": the contracts are written in YAML.',
+      '"openapi.format" is "xml", a format the contracts are not written in.',
       'The document 1 of "openapi.documents" has the name undefined: it names its file, openapi/<name>.yaml.',
       'The document "empty" names no route group, context or tag: it would hold no route.',
       'The document "ghost" names the context "ghost", which the config does not declare.',
