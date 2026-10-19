@@ -19,8 +19,8 @@ import {
   type OutboxRelayFailure,
 } from '@ddd-ts-kit/events';
 import type { RabbitMqFailure } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { AMQP_URL } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
 import { failuresOf } from './support/hooks.js';
 import { unique } from './support/unique.js';
 import { eventually } from './support/waiting.js';
@@ -132,14 +132,14 @@ class PaymentProviderDown extends Error {
   readonly code = 'PAYMENT_PROVIDER_DOWN';
 }
 
-describe.skipIf(AMQP_URL === undefined)(
-  'outbox, relay, RabbitMQ and an idempotent consumer',
+describe.each(BROKERS)(
+  'outbox, relay, RabbitMQ and an idempotent consumer, %s',
   { timeout: 30_000 },
-  () => {
+  (_name, connect) => {
     let broker: Broker;
 
     beforeEach(async () => {
-      broker = await Broker.connect(AMQP_URL ?? '');
+      broker = await connect();
     });
 
     afterEach(async () => {

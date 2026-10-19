@@ -1,12 +1,16 @@
 import { connect, type Channel, type ChannelModel, type GetMessage } from 'amqplib';
 import { RabbitMqEventBus, type RabbitMqEventBusOptions, type RabbitMqTopology } from '../../src/index.js';
 import { MAX_ATTEMPTS, RETRY_DELAY_MS } from './environment.js';
+import { FaultyNetwork } from './faulty-network.js';
+import { InMemoryAmqp } from './amqp/in-memory-amqp.js';
+import type { Network } from './network.js';
 import { unique } from './unique.js';
 import { eventually } from './waiting.js';
 
 /**
  * A second, plain AMQP client next to the buses under test: it looks into the queues, drops
- * raw messages in, and removes what the buses declared so that nothing outlives the run.
+ * raw messages in, and removes what the buses declared so that nothing outlives the run. On a
+ * real broker or on the in-memory one, the same specs hold.
  */
 export class Broker {
   private readonly buses: RabbitMqEventBus[] = [];
@@ -17,21 +21,35 @@ export class Broker {
   private awaitedRetries = 0;
 
   private constructor(
-    private readonly url: string,
+    /** What a bus connects with: a URL, or a factory of in-memory connections. */
+    readonly connection: RabbitMqEventBusOptions['connection'],
     private readonly model: ChannelModel,
     private readonly channel: Channel,
+    private readonly networkTo: () => Promise<Network>,
   ) {}
 
   static async connect(url: string): Promise<Broker> {
     const model = await connect(url);
 
-    return new Broker(url, model, await model.createChannel());
+    return new Broker(url, model, await model.createChannel(), () => FaultyNetwork.to(url));
+  }
+
+  static async inMemory(): Promise<Broker> {
+    const memory = new InMemoryAmqp();
+    const model = await memory.connection();
+
+    return new Broker(memory.connection, model, await model.createChannel(), async () => memory.network());
+  }
+
+  /** A network between a bus and this broker, that the test can sabotage. */
+  network(): Promise<Network> {
+    return this.networkTo();
   }
 
   /** A bus on an exchange of its own, with fast retries. Closed and cleaned by `dispose`. */
   bus(options: Partial<RabbitMqEventBusOptions> = {}): RabbitMqEventBus {
     const bus = new RabbitMqEventBus({
-      connection: this.url,
+      connection: this.connection,
       exchange: unique('test-events'),
       consumer: unique('consumer'),
       retry: { delayMs: RETRY_DELAY_MS, maxAttempts: MAX_ATTEMPTS },
@@ -77,6 +95,23 @@ export class Broker {
 
   send(exchange: string, routingKey: string, content: Buffer): void {
     this.channel.publish(exchange, routingKey, content, { persistent: true });
+  }
+
+  async declareExchange(exchange: string, type: string): Promise<void> {
+    await this.channel.assertExchange(exchange, type, { durable: true });
+  }
+
+  async declareQueue(queue: string, args: Record<string, unknown>): Promise<void> {
+    await this.channel.assertQueue(queue, { durable: true, arguments: args });
+  }
+
+  async deleteExchange(exchange: string): Promise<void> {
+    await this.channel.deleteExchange(exchange);
+  }
+
+  /** Removes a queue under the feet of its consumers: the broker cancels them. */
+  async deleteQueue(queue: string): Promise<void> {
+    await this.channel.deleteQueue(queue);
   }
 
   /**

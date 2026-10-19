@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { eventBusContract } from '@ddd-ts-kit/testing/contracts';
 import type { QueueType } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { AMQP_URL } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
 
 const runner = { describe, it, beforeEach, afterEach, expect };
 
-const contractOn = (url: string, queueType: QueueType): void => {
+const contractOn = (name: string, connect: () => Promise<Broker>, queueType: QueueType): void => {
   eventBusContract(runner, {
-    name: `RabbitMqEventBus on ${queueType} queues`,
+    name: `RabbitMqEventBus ${name}, on ${queueType} queues`,
     async createBus() {
-      const broker = await Broker.connect(url);
+      const broker = await connect();
       const bus = broker.bus({ queueType });
 
       return { bus, settle: () => broker.settled(bus), close: () => broker.dispose() };
@@ -18,7 +18,7 @@ const contractOn = (url: string, queueType: QueueType): void => {
   });
 };
 
-describe.skipIf(AMQP_URL === undefined)('against a real broker', { timeout: 30_000 }, () => {
-  contractOn(AMQP_URL ?? '', 'quorum');
-  contractOn(AMQP_URL ?? '', 'classic');
+describe.each(BROKERS)('the event bus contract, %s', { timeout: 30_000 }, (name, connect) => {
+  contractOn(name, connect, 'quorum');
+  contractOn(name, connect, 'classic');
 });
