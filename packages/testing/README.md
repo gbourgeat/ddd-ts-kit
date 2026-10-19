@@ -949,7 +949,9 @@ export default defineConfig({ plugins: [decorators()] });
   and coverage point at the source.
 - **Cache.** One entry per file content, compiler and options, under the cache directory of
   Vite (`cacheDir` option to move it). A file is compiled once, then read back: about 60 ms
-  with the native TypeScript 7 and 220 ms with TypeScript 6 the first time, nothing after.
+  with the native TypeScript 7 and 220 ms with TypeScript 6 the first time, nothing after. An
+  entry that lost its output or its map (a cleanup, a copy cut short) is compiled again and
+  replaced.
 - **Which compiler.** The `tsc` of the `typescript` package the project installs, from 5.6,
   the native TypeScript 7 included: it runs the compiler binary, not its JavaScript API,
   which the native compiler does not have. `compiler` names another package or a path.

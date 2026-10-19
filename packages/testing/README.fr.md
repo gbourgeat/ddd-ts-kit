@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:0ee776f7afe36659 -->
+<!-- translation-of: README.md sha256:96e3045b3d9eb97b -->
 
 # @ddd-ts-kit/testing
 
@@ -955,7 +955,9 @@ export default defineConfig({ plugins: [decorators()] });
   d'arrêt et la couverture pointent sur la source.
 - **Cache.** Une entrée par contenu de fichier, compilateur et options, sous le répertoire de cache de
   Vite (option `cacheDir` pour le déplacer). Un fichier est compilé une fois, puis relu : environ 60 ms
-  avec le TypeScript 7 natif et 220 ms avec TypeScript 6 la première fois, rien ensuite.
+  avec le TypeScript 7 natif et 220 ms avec TypeScript 6 la première fois, rien ensuite. Une
+  entrée qui a perdu sa sortie ou sa *source map* (un nettoyage, une copie interrompue) est compilée
+  à nouveau et remplacée.
 - **Quel compilateur.** Le `tsc` du *package* `typescript` qu'installe le projet, à partir de la 5.6, le
   TypeScript 7 natif compris : il exécute le binaire du compilateur, pas son API JavaScript, que le
   compilateur natif n'a pas. `compiler` désigne un autre *package* ou un chemin.

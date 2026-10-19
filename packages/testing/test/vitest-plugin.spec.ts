@@ -129,6 +129,23 @@ describe('decorators(), the Vitest plugin', () => {
     expect(cached()).toHaveLength(2);
   });
 
+  it('compiles again an entry of the cache that lost its output or its map, and mends it', () => {
+    const { root, plugin, cached } = projectWith({ target: 'es2023' });
+    const file = path.join(root, 'calendar.ts');
+    const first = plugin.transform(DECORATED, file);
+    const entry = path.join(root, 'cache', 'ddd-ts-kit-decorators', cached()[0] ?? '');
+
+    rmSync(path.join(entry, 'source.js'));
+
+    expect(plugin.transform(DECORATED, file)).toEqual(first);
+
+    rmSync(path.join(entry, 'source.js.map'));
+
+    expect(plugin.transform(DECORATED, file)).toEqual(first);
+    expect(readdirSync(entry)).toEqual(expect.arrayContaining(['source.js', 'source.js.map']));
+    expect(cached()).toHaveLength(1);
+  });
+
   it('compiles .mts as well, and takes a tsconfig named in its options', () => {
     const named = mkdtempSync(path.join(workspace, 'named-'));
 
