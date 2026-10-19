@@ -418,9 +418,13 @@ option names (`consumer`, `retry`, `reconnect`, `onFailure`, `onDelivery`) and t
 
 ## Testing
 
-The codec of the envelope, the settings and their defaults, the topology description and the
-failure codes are covered without a server, in the unit run. The other suites need a real
-server and are skipped without `DDD_TS_KIT_TEST_NATS_URL`:
+Every suite runs in the unit run: the bus connects, through the real client and its TCP
+transport, to a NATS server the test starts in its own process on a free port
+(`test/support/server/`). It speaks the core protocol and answers what the bus asks of JetStream
+as nats-server 2.15 does: limits streams and their duplicate window, durable pull consumers with
+explicit acknowledgement, `ack_wait`, `max_deliver`, a delayed `-NAK`, `+TERM`, direct gets, the
+errors 10058, 10059, 10148 and 10026. With `DDD_TS_KIT_TEST_NATS_URL`, the same suites run a
+second time against a real server, which is what keeps the in-memory one honest:
 
 ```
 docker run -d --rm --name ddd-ts-kit-test-nats -p 127.0.0.1:4222:4222 nats:2.15.0-alpine -js
@@ -428,7 +432,7 @@ DDD_TS_KIT_TEST_NATS_URL=nats://127.0.0.1:4222 npx vitest run packages/nats
 docker rm -f ddd-ts-kit-test-nats
 ```
 
-The integration job of the CI runs them on every pull request that reaches this package,
+The integration job of the CI runs them against a real server on every pull request that reaches this package,
 against NATS Server 2.15.0 with JetStream that `pipeline/github/scripts/start-nats.sh` starts, its image pinned by digest.
 
 They run the contract suite on file and on memory storage, then the behaviours of this

@@ -4,13 +4,14 @@ import { ON_A_SERVER } from './pipeline/monorepo/affected-packages.mjs';
 /**
  * The floor of each package, as [statements, branches, functions, lines]: what the unit run measured
  * on 2026-10-10 (2026-10-18 for cli, kernel, knex, prisma, sentry and testing, 2026-10-19 for
- * rabbitmq), rounded down, so that the coverage of a package cannot fall without the gate saying
- * so. The statements and lines of sentry, measured at 100, are held at 99: a floor of 100 would
- * leave no line of margin. A floor is raised when the package gains tests, never lowered to make a
- * change pass.
- * Three broker packages and s3 are low on purpose of the measure, not of the code: most of their
+ * rabbitmq and nats), rounded down, so that the coverage of a package cannot fall without the gate
+ * saying so. The statements and lines of sentry, measured at 100, are held at 99: a floor of 100
+ * would leave no line of margin. A floor is raised when the package gains tests, never lowered to
+ * make a change pass.
+ * Two broker packages and s3 are low on purpose of the measure, not of the code: most of their
  * specs need a server (a broker, MinIO) and run in the integration job, which this run skips.
- * rabbitmq runs the same specs on an AMQP broker held in memory, so this run measures it whole.
+ * rabbitmq runs the same specs on an AMQP broker held in memory, and nats on a NATS server the test
+ * starts in its own process, so this run measures them whole.
  */
 const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>> = {
   aspects: [97, 95, 97, 97],
@@ -25,7 +26,7 @@ const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>
   kafka: [40, 53, 44, 40],
   kernel: [98, 94, 98, 98],
   knex: [96, 90, 98, 96],
-  nats: [49, 60, 57, 48],
+  nats: [98, 96, 98, 98],
   openfga: [99, 94, 97, 99],
   pino: [96, 88, 100, 96],
   prisma: [97, 83, 100, 97],
