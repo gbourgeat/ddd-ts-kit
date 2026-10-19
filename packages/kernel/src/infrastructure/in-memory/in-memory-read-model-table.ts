@@ -99,7 +99,7 @@ function found<Row>(rows: Rows<Row>, key: string): StampedRow<Row> | undefined {
 }
 
 function inserted<Row>(rows: Rows<Row>, entry: StampedRow<Row>): boolean {
-  if (rows.has(entry.key)) {
+  if (entry.row === undefined || rows.has(entry.key)) {
     return false;
   }
 
