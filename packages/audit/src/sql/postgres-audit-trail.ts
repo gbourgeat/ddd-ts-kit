@@ -1,5 +1,7 @@
 import {
+  atCommit,
   pageOf,
+  unitOfWorkStage,
   type AuditEntry,
   type AuditFilter,
   type AuditReader,
@@ -8,10 +10,12 @@ import {
   type AuditTrail,
   type Page,
   type PageRequest,
+  type UnitOfWorkStage,
 } from '@ddd-ts-kit/kernel';
 import type { ChainHead } from '../chain/chain-head.js';
 import { chainOfTenant } from '../chain/chain-of-tenant.js';
 import { GENESIS_HASH } from '../chain/genesis-hash.js';
+import { headAfter } from '../chain/head-after.js';
 import { seal } from '../chain/seal.js';
 import { sealCheckpoint } from '../chain/seal-checkpoint.js';
 import { decodeCursor } from '../search/decode-cursor.js';
@@ -30,11 +34,18 @@ import { joined, sql, type Sql } from './sql.js';
  * is the transaction of the unit of work in progress when there is one.
  *
  * An append locks the head row of its chain (`SELECT ... FOR UPDATE`) until its transaction
- * ends, so two appends to one chain never read the same head and the chain cannot fork. Under
- * REPEATABLE READ or SERIALIZABLE the second one fails with a serialization error instead of
- * waiting: the caller retries its unit of work, as for any other statement.
+ * ends, so two appends to one chain never read the same head and the chain cannot fork. Inside
+ * a unit of work the records wait for its commit (`atCommit`): they are written last, each chain
+ * once, the chains in the order of their names. The head is then the last lock a transaction
+ * takes and every transaction takes the heads in one order, so an append never closes a
+ * deadlock with the rows the work locked, nor with another chain. Under REPEATABLE READ or
+ * SERIALIZABLE a second append fails with a serialization error instead of waiting: the caller
+ * retries its unit of work, as for any other statement.
  */
 export class PostgresAuditTrail implements AuditTrail, AuditReader {
+  // What each unit of work in progress recorded and has not written yet, by its transaction.
+  private readonly waiting = new WeakMap<object, AuditRecord[]>();
+
   constructor(
     private readonly session: () => SqlSession,
     private readonly tables: AuditTables,
@@ -42,18 +53,33 @@ export class PostgresAuditTrail implements AuditTrail, AuditReader {
   ) {}
 
   async record(record: AuditRecord): Promise<void> {
-    const chain = (this.options.chainOf ?? chainOfTenant)(record);
+    const session = this.session();
+    const transaction = session.ambientTransaction;
 
-    await this.session().transaction(async (transaction) => {
-      const entry = seal(record, await this.lockHead(transaction, chain));
+    if (transaction === undefined || !isBeforeCommit(unitOfWorkStage())) {
+      return this.append(session, [record]);
+    }
 
-      await transaction.query(insertOf(this.tables.entries, entry));
+    const waiting = this.waiting.get(transaction);
 
-      await transaction.query(
-        sql`update ${this.tables.chains} set "sequence" = ${entry.sequence}, "hash" = ${entry.hash} where "chain" = ${chain}`,
-      );
+    if (waiting !== undefined) {
+      waiting.push(record);
 
-      await sealCheckpoint(entry, this.options.sealing);
+      return;
+    }
+
+    const records = [record];
+
+    this.waiting.set(transaction, records);
+
+    await atCommit({
+      apply: () => {
+        // A record made after this point waits for a step of its own.
+        this.waiting.delete(transaction);
+
+        return this.append(this.stillIn(transaction) ?? this.session(), records);
+      },
+      undo: async () => undefined,
     });
   }
 
@@ -73,6 +99,43 @@ export class PostgresAuditTrail implements AuditTrail, AuditReader {
     const last = items.at(-1);
 
     return pageOf(items, rows.length > items.length && last !== undefined ? { nextCursor: encodeCursor(last) } : {});
+  }
+
+  /**
+   * The session of `transaction` while it is still the ambient one. A unit of work of another
+   * database opened inside this one has ended before this commit: its records then go in a
+   * transaction of their own, never on a connection that was handed back.
+   */
+  private stillIn(transaction: object): SqlSession | undefined {
+    const session = this.session();
+
+    return session.ambientTransaction === transaction ? session : undefined;
+  }
+
+  private async append(session: SqlSession, records: readonly AuditRecord[]): Promise<void> {
+    const chainOf = this.options.chainOf ?? chainOfTenant;
+
+    await session.transaction(async (transaction) => {
+      for (const [chain, ofChain] of byChain(records, chainOf)) {
+        await this.appendTo(transaction, chain, ofChain);
+      }
+    });
+  }
+
+  private async appendTo(transaction: SqlSession, chain: string, records: readonly AuditRecord[]): Promise<void> {
+    let head = await this.lockHead(transaction, chain);
+
+    for (const record of records) {
+      const entry = seal(record, head);
+
+      await transaction.query(insertOf(this.tables.entries, entry));
+      await sealCheckpoint(entry, this.options.sealing);
+      head = headAfter(entry);
+    }
+
+    await transaction.query(
+      sql`update ${this.tables.chains} set "sequence" = ${head.sequence}, "hash" = ${head.hash} where "chain" = ${chain}`,
+    );
   }
 
   private async lockHead(transaction: SqlSession, chain: string): Promise<ChainHead> {
@@ -108,6 +171,23 @@ export class PostgresAuditTrail implements AuditTrail, AuditReader {
 
     return Number(row?.['total']);
   }
+}
+
+function isBeforeCommit(stage: UnitOfWorkStage): boolean {
+  return stage === 'open' || stage === 'before-commit';
+}
+
+/** The records of each chain in the order they were made, the chains in the order of their names. */
+function byChain(records: readonly AuditRecord[], chainOf: (record: AuditRecord) => string): [string, AuditRecord[]][] {
+  const chains = new Map<string, AuditRecord[]>();
+
+  for (const record of records) {
+    const chain = chainOf(record);
+
+    chains.set(chain, [...(chains.get(chain) ?? []), record]);
+  }
+
+  return [...chains].sort(([left], [right]) => (left < right ? -1 : 1));
 }
 
 function conditionsOf(filter: AuditFilter): Sql[] {

@@ -300,9 +300,10 @@ These are stated by [`@ddd-ts-kit/audit`](../../packages/audit/README.md):
 - **PostgreSQL only** for the SQL stores shipped (Knex and Drizzle). With Prisma, TypeORM, a
   custom ORM or no ORM, the generated project starts on an in-memory trail behind a
   `TODO(platform)`; another database is another adapter held to the contract suite.
-- **Appends to one chain are serialized.** The head of a chain stays locked until the commit; a
-  handler that records by hand early and then works for long makes the other writers of its
-  tenant wait.
+- **Appends to one chain are serialized.** Inside a unit of work the entries are written at its
+  commit, the heads last and always in the same order: two units of work of one tenant wait for
+  each other during their commits only, and an append never closes a deadlock with the rows the
+  work locked. The price: an entry is not visible inside its unit of work before the commit.
 - **The timestamp is the clock of the instance that recorded.** Inside a chain the order is the
   sequence.
 - **No retention or archiving policy** is provided. How long entries are kept and where old
