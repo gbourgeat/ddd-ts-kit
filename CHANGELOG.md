@@ -4,7 +4,9 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## 0.83.0
+## 0.83.1
+
+0.83.0 was set but never published: four fixes reached `main` before its version did, and 0.83.1 holds them with the rest. No version 0.83.0 is on the registry.
 
 **`DomainRefusal` in the kernel: one class per refusal, named after it, built by static factories named after what it is about.**
 `class InsufficientFunds extends DomainRefusal { readonly code = BankingCodes.InsufficientFunds; static forAccountId(..) { return InsufficientFunds.refusal(message, facts) } }`,
@@ -61,6 +63,30 @@ To move: in a project whose stored events hold a type argument list with a comma
 **`signedDownloadUrl` and `signedUploadUrl` of `LocalFileStorage` and `InMemoryFileStorage` reject the promise they return for a key or an expiry they refuse.** They threw at the call, before any promise, so a `.catch(...)` chained on the call missed the `FileError` (`INVALID_FILE_KEY`, `INVALID_FILE_URL_EXPIRY`). They now behave as `S3FileStorage` always did; code that awaits the call sees no difference.
 
 **`authz/policy-asked` reads the permission of `definePolicy` from the object written as its first argument only.** It took the first `{` anywhere after `definePolicy(`: in a file holding `definePolicy(options)` and, further on, any object with a `permission` entry, that permission counted as refined by a policy, and every handler of a use case requiring it was reported as never asking it. A policy whose options are not written in the call refines no permission the rule can see, as before.
+
+**The `decorators()` plugin of `@ddd-ts-kit/testing/vitest` compiles again a cache entry that lost its output or its map, and replaces it.** An entry whose directory was left without its emitted file or its source map failed every compile of its file with `ENOENT` until the cache directory was removed by hand.
+
+**`config/valid` no longer says the contracts are written in YAML only.** An unknown `openapi.format` was reported with "the contracts are written in YAML" although `json` is accepted too; it now reads "a format the contracts are not written in", its fix listing `yaml` and `json`. A document of `openapi.documents` with a wrong name is told its file is `openapi/<name>.json` when the contracts are written in JSON, instead of `.yaml` whatever the format.
+
+**`InMemoryReadModelTable` refuses to insert an entry without a `row`, as the Knex, Prisma, Drizzle and TypeORM tables do.** Its `insert` stored such an entry as the trace of a deleted row and answered `true`, where every ORM adapter answers `false` and writes nothing, so a test over the fake could pass where the real table did not. `TableReadModelStore` never inserts such an entry, so a read model written through it sees no difference. `readModelStoreContract` of `@ddd-ts-kit/testing` now holds every adapter of `ReadModelTable` to it.
+
+**`@ddd-ts-kit/audit`: inside a unit of work, `KnexAuditTrail` and `DrizzleAuditTrail` write the entries at its commit, so an append no longer ends in a PostgreSQL deadlock (`40P01`).**
+An append used to lock the head of its chain at the call to `record` and hold it until the commit. A
+unit of work that recorded (an authorization decision, an entry by hand) and then locked a row could
+deadlock with another unit of work of the same tenant that held the row and appended to the same chain,
+the head being created or not: PostgreSQL killed one of them with `40P01`, which reached the caller as an
+error 500. The same happened between two units of work that appended to two chains in opposite orders.
+The records of a unit of work now wait for its commit (`atCommit` of the kernel): they are written last,
+after the work and its `before-commit` handlers, each chain once, the chains in the order of their names.
+The head is the last lock a transaction takes, every transaction takes the heads in one order, and a unit
+of work still at its work no longer makes the other writers of its tenant wait. Outside a unit of work an
+entry is written at once, as before. Nothing changes in the tables, the hashes or the chains already
+written.
+
+To move: nothing for most projects. An entry recorded inside a unit of work is no longer visible inside it
+before the commit, and a refusal of the store (an `id` written twice) now fails the commit instead of the
+call to `record`: a test or a handler that read the trail back inside the same unit of work reads it after
+the commit.
 
 ## 0.82.0
 
