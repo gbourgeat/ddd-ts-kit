@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import { ON_A_SERVER } from './pipeline/monorepo/affected-packages.mjs';
 
 /**
  * The floor of each package, as [statements, branches, functions, lines]: what the unit run measured
@@ -48,6 +49,15 @@ const AFFECTED = (process.env['KIT_AFFECTED'] ?? '').split(',').filter((name) =>
 const MEASURED = Object.entries(FLOORS).filter(([name]) => AFFECTED.length === 0 || AFFECTED.includes(name));
 
 /**
+ * The integration job measures too (KIT_COVERAGE=integration): what its specs on a server reach in the
+ * packages that have some, with no floor, since it runs a few spec files of each. Codecov adds that
+ * report to the one of the unit run, so a line covered by either counts. Its own directory: the unit
+ * report is not touched.
+ */
+const INTEGRATION = process.env['KIT_COVERAGE'] === 'integration';
+const MEASURED_SOURCES = INTEGRATION ? ON_A_SERVER : AFFECTED;
+
+/**
  * Git hands its hooks the repository they run for: in a worktree, a pre-push hook gets GIT_DIR. Inherited
  * by the specs, every git command they run in a throwaway repository would act on this one instead.
  */
@@ -66,14 +76,20 @@ export default defineConfig({
     hookTimeout: 60_000,
     coverage: {
       provider: 'v8',
-      include: AFFECTED.length === 0 ? ['packages/*/src/**'] : AFFECTED.map((name) => `packages/${name}/src/**`),
-      reporter: ['text', 'cobertura', 'lcov'],
-      thresholds: Object.fromEntries(
-        MEASURED.map(([name, [statements, branches, functions, lines]]) => [
-          `packages/${name}/src/**`,
-          { statements, branches, functions, lines },
-        ]),
-      ),
+      include:
+        MEASURED_SOURCES.length === 0
+          ? ['packages/*/src/**']
+          : MEASURED_SOURCES.map((name) => `packages/${name}/src/**`),
+      reporter: INTEGRATION ? ['text-summary', 'lcov'] : ['text', 'cobertura', 'lcov'],
+      reportsDirectory: INTEGRATION ? 'coverage/integration' : 'coverage',
+      thresholds: INTEGRATION
+        ? {}
+        : Object.fromEntries(
+            MEASURED.map(([name, [statements, branches, functions, lines]]) => [
+              `packages/${name}/src/**`,
+              { statements, branches, functions, lines },
+            ]),
+          ),
     },
   },
 });

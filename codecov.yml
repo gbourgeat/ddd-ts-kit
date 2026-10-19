@@ -1,6 +1,7 @@
-# Codecov reads the lcov report of the unit job of a whole run, on main and at night (.github/workflows/ci.yml,
-# job coverage). It feeds the badge of the README and keeps the history; the gate is the floor of each package in
-# vitest.config.ts. The unit run skips the specs that need a server, so the broker and S3 packages read low.
+# Codecov reads two lcov reports of a whole run, on main and at night (.github/workflows/ci.yml, job coverage): the
+# unit job (flag `unit`) and the integration job (flag `integration`, the specs on a server: databases, brokers,
+# MinIO, OpenFGA, Varnish), and adds them up, a line covered by either counting. It feeds the badge of the README and
+# keeps the history; the gate is the floor of each package in vitest.config.ts, which measures the unit run alone.
 coverage:
   status:
     project:
