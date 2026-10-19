@@ -4,12 +4,12 @@
  * of one checkout, not of the project.
  */
 export interface DoctorFinding {
-  readonly area: 'script' | 'package' | 'permission' | 'hook' | 'node' | 'install' | 'submodule';
+  readonly area: 'script' | 'package' | 'permission' | 'hook' | 'folder' | 'node' | 'install' | 'submodule';
   readonly name: string;
   /**
    * `not installed`: a git hook this clone lacks, or a package of the kit node_modules lacks.
    * `unsupported`: a running Node outside `engines.node`. `outdated`: node_modules installed
-   * before the lockfile last changed.
+   * before the lockfile last changed. `flat`: files of the platform generated before their folders.
    */
   readonly problem:
     | 'missing'
@@ -18,7 +18,8 @@ export interface DoctorFinding {
     | 'not installed'
     | 'unsupported'
     | 'outdated'
-    | 'not initialised';
+    | 'not initialised'
+    | 'flat';
   /** What this version writes, or what the project asks of its environment. */
   readonly expected: string;
   /** What the project has, when it has something. */

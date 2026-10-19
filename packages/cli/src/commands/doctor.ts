@@ -10,13 +10,15 @@ import type { Command } from './command.js';
  * What --strict fails on: what the project lacks, and what keeps this checkout from running it.
  * A script written otherwise may be the project's on purpose, a git hook not installed is a state
  * of one clone, the Node `.nvmrc` names is a choice of the team when `engines.node` accepts the
- * running one, and a lockfile changed after the install may hold what node_modules has.
+ * running one, a lockfile changed after the install may hold what node_modules has, and the
+ * generators read the files of the platform flat as well as in their folders.
  */
 const STRICT_PROBLEMS: Readonly<Record<DoctorFinding['area'], ReadonlySet<DoctorFinding['problem']>>> = {
   script: new Set(['missing']),
   package: new Set(['missing', 'other version']),
   permission: new Set(['missing']),
   hook: new Set(['missing']),
+  folder: new Set(),
   node: new Set(['unsupported']),
   install: new Set(['missing', 'not installed', 'other version']),
   submodule: new Set(['not initialised']),

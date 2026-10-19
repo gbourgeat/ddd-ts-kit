@@ -1,9 +1,9 @@
 import type { Config } from '../config/index.js';
 import type { Workspace } from '../workspace/index.js';
 
-/** Every TypeScript file under the source root and under `test/` at the root of the project. */
-export function projectSources(ws: Workspace, config: Config): string[] {
-  return [config.sourceRoot, 'test'].flatMap((directory) => sourcesUnder(ws, directory));
+/** Every TypeScript file under the source root, under `test/` at the root of the project, and under the other directories named. */
+export function projectSources(ws: Workspace, config: Config, others: readonly string[] = []): string[] {
+  return [config.sourceRoot, 'test', ...others].flatMap((directory) => sourcesUnder(ws, directory));
 }
 
 function sourcesUnder(ws: Workspace, directory: string): string[] {

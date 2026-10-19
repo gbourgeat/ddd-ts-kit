@@ -21,9 +21,17 @@ Three questions, three places. API and examples: README of `@ddd-ts-kit/auth`.
 
 | Question | Where | How |
 |---|---|---|
-| Who is calling? (authentication) | `src/platform/auth/`, at the boundary | an adapter of the `Authenticator` port turns the credential into a `Session` holding the `Actor`; a route hands `actorOf(...)` to the use case and declares its `security` |
+| Who is calling? (authentication) | `src/platform/auth/authentication/`, at the boundary | an adapter of the `Authenticator` port turns the credential into a `Session` holding the `Actor`; a route hands `actorOf(...)` to the use case and declares its `security` |
 | May this actor do this, on this? (authorization) | `application/authorization/` of the context | permissions as data, required by each use case, decided by the `Authorizer` port in a bus middleware before the handler runs |
 | Is this valid at all? (invariant) | `domain/` | "an invoice cannot be paid twice" is not a permission and knows no actor |
+
+The platform side lives in `<platformDir>/auth/`, one folder per question: `authentication/`
+(the authenticator, the session of a request, the HTTP boundary), `authorization/` (the
+authorizer behind the port, the guard of the buses, the access policies, the `Role` vocabulary,
+the registry of permissions, the grants of every signed-in person), then the folder of the
+model: `roles/`, `attributes/`, `relationships/` or `custom/`. A project generated before the
+folders keeps them flat: read and write them there, or run `npx ddd-ts-kit platform-folders`
+when the team asks for the move.
 
 ## A permission is mandatory
 
@@ -37,10 +45,10 @@ npx ddd-ts-kit generate query <ctx> <UseCase> --public --json
 
 - A permission is held by somebody: decide who when you declare it. With roles
   (`stack.authz` `rbac`), `--grant <role>` writes `[Role.<Role>]: [<context>Permissions['<p>']]`
-  in `<platformDir>/auth/roles.ts` and adds the role to `role.ts` when it is new. The
+  in `<platformDir>/auth/roles/roles.ts` and adds the role to `authorization/role.ts` when it is new. The
   super-admin `*` alone does not count: a permission no role names is refused to everybody
   else, and `check` warns (`authz/granted`). One meant for administrators only is granted to
-  `Role.Admin` by name. A grant to every signed-in person goes in `signed-in-grants.ts`.
+  `Role.Admin` by name. A grant to every signed-in person goes in `authorization/signed-in-grants.ts`.
   Under attributes or relationships, `--grant` is refused: give the right in that model.
 
 - The permission is named in the ubiquitous language (`invoice.issue`, not `admin.write`),
@@ -60,7 +68,7 @@ npx ddd-ts-kit generate query <ctx> <UseCase> --public --json
   the whole set of routes (signed in, a role, the tenant of the path), a permission or a policy
   for everything that depends on the element.
 - A role is never a string in code: it is a key of the vocabulary `Role` of the platform
-  (`<platformDir>/auth/role.ts`), and `generate route-group <ctx> <Name> --role <role>` adds
+  (`<platformDir>/auth/authorization/role.ts`), and `generate route-group <ctx> <Name> --role <role>` adds
   the role there. A grant names the permission through its set,
   `billingPermissions['invoice.issue']`, never by its id `'billing:invoice.issue'`.
 - `npx ddd-ts-kit describe <ctx>` shows what each use case and route requires; the

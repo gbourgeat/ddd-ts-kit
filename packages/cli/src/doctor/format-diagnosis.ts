@@ -34,6 +34,7 @@ function projectLines(findings: readonly DoctorFinding[], version: string, manag
     ...findings.map(lineOf),
     '',
     ...fixesOf(findings),
+    ...folderFixesOf(findings),
     ...hookFixesOf(findings).map((fix) => inDialect(fix, manager)),
   ];
 }
@@ -68,7 +69,7 @@ function version(area: DoctorFinding['area']): string {
 }
 
 function fixesOf(findings: readonly DoctorFinding[]): string[] {
-  const ofTheProject = findings.filter((finding) => finding.area !== 'hook');
+  const ofTheProject = findings.filter((finding) => finding.area !== 'hook' && finding.area !== 'folder');
 
   const fixes =
     ofTheProject.length === 0
@@ -88,6 +89,14 @@ function fixesOf(findings: readonly DoctorFinding[]): string[] {
   }
 
   return fixes;
+}
+
+function folderFixesOf(findings: readonly DoctorFinding[]): string[] {
+  return findings.some((finding) => finding.area === 'folder')
+    ? [
+        'fix: `npx ddd-ts-kit platform-folders` moves them to their folders and rewrites every import of them (`--dry-run` shows what it would do); the generators read either layout until then.',
+      ]
+    : [];
 }
 
 /** Written for npm, said in the dialect of the project by the caller. */

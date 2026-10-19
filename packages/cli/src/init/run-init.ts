@@ -17,6 +17,7 @@ import { presetNamed } from '../presets/preset-named.js';
 import { addContext } from './add-context.js';
 import { existingName } from './existing-name.js';
 import { initFiles } from './files/init-files.js';
+import { flatRelocation, withMovedImports } from '../platform-folders/index.js';
 import { ignoreWorktrees } from './ignore-worktrees.js';
 import { writeManifest } from './manifest/write-manifest.js';
 import { recordNoOutbox } from './record-no-outbox.js';
@@ -148,11 +149,20 @@ function addPresets(ws: Workspace, config: Config, names: readonly string[]): Co
 /** A template ending in `.tpl` is rendered; any other is copied as it is. */
 function writeFiles(ws: Workspace, config: Config, projectName: string): void {
   const context = templateVars(config, projectName);
+  const flat = flatRelocation(ws, config);
 
   for (const [target, template] of initFiles(config, projectName)) {
-    const content = template.endsWith('.tpl') ? renderTemplate(template, context) : readTemplate(template);
+    const rendered = template.endsWith('.tpl') ? renderTemplate(template, context) : readTemplate(template);
+    const content = flat.moved.size === 0 ? rendered : withMovedImports(rendered, target, flat);
+    const kept = flat.moved.get(target.replace(/\.ts$/, ''));
 
-    ws.create(target, target === KNIP_FILE ? laidOut(content) : content);
+    ws.create(kept === undefined ? target : `${kept}.ts`, target === KNIP_FILE ? laidOut(content) : content);
+  }
+
+  if (flat.moved.size > 0) {
+    ws.note(
+      `The files of ${config.platformDir}/auth are flat, as a version before their folders wrote them: --force rewrote them there. \`npx ddd-ts-kit platform-folders\` moves them to authentication/, authorization/ and the folder of the model, with every import.`,
+    );
   }
 }
 
