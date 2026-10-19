@@ -1,17 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { KafkaEventBus } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { KAFKA_BROKERS } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
 import { PLACED, TRACEPARENT, anEvent } from './support/events.js';
 import { recorder } from './support/recorder.js';
-import { eventually } from './support/waiting.js';
+import { eventually, pause } from './support/waiting.js';
 
-describe.skipIf(KAFKA_BROKERS === undefined)('KafkaEventBus: consuming', { timeout: 60_000 }, () => {
-  const brokers = KAFKA_BROKERS ?? '';
+describe.each(BROKERS)('KafkaEventBus: consuming, %s', { timeout: 60_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(brokers);
+    broker = await connect();
   });
 
   afterEach(async () => {
@@ -19,7 +18,7 @@ describe.skipIf(KAFKA_BROKERS === undefined)('KafkaEventBus: consuming', { timeo
   }, 30_000);
 
   it('needs a consumer name', () => {
-    const anonymous = new KafkaEventBus({ brokers });
+    const anonymous = new KafkaEventBus({ brokers: '127.0.0.1:1' });
 
     expect(() => anonymous.subscribe(PLACED, async () => undefined)).toThrow(
       expect.objectContaining({ code: 'CONSUMER_NAME_REQUIRED' }),
@@ -93,5 +92,26 @@ describe.skipIf(KAFKA_BROKERS === undefined)('KafkaEventBus: consuming', { timeo
 
     expect(billing.ids()).toEqual(['evt-2']);
     expect(await broker.countIn(broker.topicOf('ordering'))).toBe(2);
+  });
+
+  it('needs a consumer name for forConsumer too', () => {
+    expect(() => broker.bus().forConsumer('')).toThrow(expect.objectContaining({ code: 'CONSUMER_NAME_REQUIRED' }));
+  });
+
+  it('keeps the record of a type whose handlers all unsubscribed, for the next handler', async () => {
+    const bus = broker.bus({ consumer: broker.consumer('billing') });
+    const [first, second] = [recorder(), recorder()];
+    const subscription = bus.subscribe(PLACED, first.handler);
+
+    await bus.publish([anEvent('evt-1')]);
+    await broker.settled(bus);
+    subscription.unsubscribe();
+    await bus.publish([anEvent('evt-2')]);
+    await pause(300);
+    bus.subscribe(PLACED, second.handler);
+    await broker.settled(bus);
+
+    expect(first.ids()).toEqual(['evt-1']);
+    expect(second.ids()).toEqual(['evt-2']);
   });
 });

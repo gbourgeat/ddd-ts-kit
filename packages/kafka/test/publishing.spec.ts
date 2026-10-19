@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { type KafkaFailure } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { KAFKA_BROKERS } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
 import { PLACED, TRACEPARENT, anEvent } from './support/events.js';
 import { failuresOf } from './support/hooks.js';
 import { orderOf } from './support/order-of.js';
 
-describe.skipIf(KAFKA_BROKERS === undefined)('KafkaEventBus: publishing', { timeout: 60_000 }, () => {
+describe.each(BROKERS)('KafkaEventBus: publishing, %s', { timeout: 60_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(KAFKA_BROKERS ?? '');
+    broker = await connect();
   });
 
   afterEach(async () => {
@@ -62,7 +62,7 @@ describe.skipIf(KAFKA_BROKERS === undefined)('KafkaEventBus: publishing', { time
     const reported: KafkaFailure[] = [];
 
     const bus = broker.bus({
-      brokers: '127.0.0.1:1',
+      ...broker.unreachable(),
       connectTimeoutMs: 500,
       onFailure: failuresOf(reported),
     });
@@ -72,5 +72,27 @@ describe.skipIf(KAFKA_BROKERS === undefined)('KafkaEventBus: publishing', { time
     expect(failure).toMatchObject({ code: 'BROKER_UNAVAILABLE' });
     expect(String(failure)).not.toContain('127.0.0.1');
     expect(reported.every((report) => report.kind === 'connection')).toBe(true);
+  });
+
+  it('publishes nothing, and connects to nothing, for no event', async () => {
+    const reported: KafkaFailure[] = [];
+    const bus = broker.bus({ ...broker.unreachable(), onFailure: failuresOf(reported) });
+
+    expect(await bus.publish([])).toBeUndefined();
+    expect(reported).toEqual([]);
+  });
+
+  it('reports a producer it cannot connect when it creates no topic first', async () => {
+    const reported: KafkaFailure[] = [];
+
+    const bus = broker.bus({
+      ...broker.unreachable(),
+      topics: { create: false },
+      connectTimeoutMs: 500,
+      onFailure: failuresOf(reported),
+    });
+
+    await expect(bus.publish([anEvent('evt-1')])).rejects.toMatchObject({ code: 'BROKER_UNAVAILABLE' });
+    expect(reported).toContainEqual(expect.objectContaining({ kind: 'connection' }));
   });
 });

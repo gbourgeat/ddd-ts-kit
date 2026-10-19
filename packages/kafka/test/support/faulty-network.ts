@@ -1,4 +1,5 @@
 import { createConnection, createServer, type Server, type Socket } from 'node:net';
+import type { Network, NetworkConnection } from './network.js';
 
 interface Address {
   readonly host: string;
@@ -11,19 +12,20 @@ interface Address {
  * ones. A Kafka client connects to the addresses the broker advertises, so the relay listens
  * on the address a second listener of the broker advertises, and forwards to that listener.
  */
-export class FaultyNetwork {
+export class FaultyNetwork implements Network {
   private readonly sockets = new Set<Socket>();
 
   private repliesHeld = false;
 
   private refusing = false;
 
-  bytesFromClient = 0;
+  /** Bytes sent by the bus, to know that a publication left it. */
+  traffic = 0;
 
   private constructor(
     private readonly server: Server,
     /** The brokers to give a bus, through this relay. */
-    readonly brokers: string,
+    private readonly brokers: string,
     private readonly target: Address,
   ) {
     server.on('connection', (client) => {
@@ -40,6 +42,10 @@ export class FaultyNetwork {
     await new Promise<void>((resolve) => server.listen(listening.port, listening.host, resolve));
 
     return new FaultyNetwork(server, advertised, addressOf(behind));
+  }
+
+  get connection(): NetworkConnection {
+    return { brokers: this.brokers };
   }
 
   holdReplies(): void {
@@ -87,7 +93,7 @@ export class FaultyNetwork {
     }
 
     client.on('data', (data) => {
-      this.bytesFromClient += data.length;
+      this.traffic += data.length;
       broker.write(data);
     });
 

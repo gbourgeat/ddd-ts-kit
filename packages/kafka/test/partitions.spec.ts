@@ -1,18 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { type IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { Broker } from './support/broker.js';
-import { KAFKA_BROKERS } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
 import { PLACED, anEvent } from './support/events.js';
 import { InvoicingFailed } from './support/invoicing-failed.js';
 import { orderOf } from './support/order-of.js';
 import { recorder } from './support/recorder.js';
 import { eventually, pause } from './support/waiting.js';
 
-describe.skipIf(KAFKA_BROKERS === undefined)('KafkaEventBus: partitions', { timeout: 60_000 }, () => {
+describe.each(BROKERS)('KafkaEventBus: partitions, %s', { timeout: 60_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(KAFKA_BROKERS ?? '');
+    broker = await connect();
   });
 
   afterEach(async () => {

@@ -1,24 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { KafkaEventBus, deadTopicOf } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { KAFKA_BROKERS } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { InMemoryKafka } from './support/cluster/in-memory-kafka.js';
+import { BROKERS } from './support/brokers.js';
 import { PLACED } from './support/events.js';
 
-describe.skipIf(KAFKA_BROKERS === undefined)('KafkaEventBus: topology', { timeout: 60_000 }, () => {
-  const brokers = KAFKA_BROKERS ?? '';
+describe.each(BROKERS)('KafkaEventBus: topology, %s', { timeout: 60_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(brokers);
+    broker = await connect();
   });
 
   afterEach(async () => {
     await broker.dispose();
   }, 30_000);
 
-  it('describes what it creates and joins, as data', () => {
+  it('describes what it creates and joins, as data', async () => {
+    // A cluster of its own: the subscription connects in the background, and nothing is left behind.
     const bus = new KafkaEventBus({
-      brokers,
+      brokers: '127.0.0.1:1',
+      cluster: new InMemoryKafka(),
       consumer: 'billing',
       publishedTypes: ['billing.invoice.issued'],
       topics: { partitions: 6, replicationFactor: 3 },
@@ -35,6 +37,8 @@ describe.skipIf(KAFKA_BROKERS === undefined)('KafkaEventBus: topology', { timeou
       ],
       groups: [{ groupId: 'billing', topics: ['ordering.order.placed'] }],
     });
+
+    await bus.close();
   });
 
   it('creates it idempotently', async () => {
