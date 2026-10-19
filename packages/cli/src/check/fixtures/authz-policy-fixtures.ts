@@ -121,6 +121,20 @@ export const AUTHZ_POLICY_FIXTURES: readonly Fixture[] = [
       ),
     }),
   },
+  {
+    ruleId: 'authz/policy-asked',
+    name: 'wired by hand: a policy defined from options written elsewhere, an object naming the permission after it',
+    expect: 'pass',
+    files: project({
+      [MODULE]: EXPLICIT_MODULE,
+      [COMMAND]: 'export class IssueInvoiceCommand {}\n',
+      [POLICY]:
+        "export const passed = definePolicy(options);\nexport const settings = { permission: billingPermissions['invoice.issue'] };\n",
+      ...handler(
+        'export class IssueInvoiceHandler {\n  async execute(command: IssueInvoiceCommand): Promise<void> {\n    await this.invoices.save(command);\n  }\n}\n',
+      ),
+    }),
+  },
 ];
 
 /** The declared issue-invoice handler, given the body of `execute`. */
