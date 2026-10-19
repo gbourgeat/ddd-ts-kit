@@ -63,6 +63,7 @@ function declarationOf(
     upcasters: upcastersOf(properties),
     payloadType,
     fingerprint: shape?.fingerprint,
+    formerFingerprint: shape?.formerFingerprint,
     unresolved: shape?.unresolved ?? [],
   };
 }

@@ -127,7 +127,7 @@ line only. `npx ddd-ts-kit explain <rule-id>` gives the reason and a good and a 
 | `governance/*`, `config/*` | a suppression or a config entry without its reason or record | skill `ddd-ts-kit:deviation` |
 | `test/*` | behaviour without a test, or a mock | skill `ddd-ts-kit:testing` |
 | documentation drift | generated files not regenerated | `npm run regenerate`, commit them with the code |
-| `event-sourcing/*`, `unrecorded ... in stored-events.lock.json` from `docs:check` | a state change outside an apply method, a stored shape changed in place, a stored version not recorded | skill `ddd-ts-kit:persistence`; a changed stored shape is a new version with its upcaster, and an unrecorded one is recorded by `npx ddd-ts-kit docs --stored-events` once final, never by hand |
+| `event-sourcing/*`, `unrecorded ...` or `formerly recorded ... in stored-events.lock.json` from `docs:check` | a state change outside an apply method, a stored shape changed in place, a stored version not recorded, or recorded by 0.82.0 or earlier | skill `ddd-ts-kit:persistence`; a changed stored shape is a new version with its upcaster, and an unrecorded or formerly recorded one is recorded by `npx ddd-ts-kit docs --stored-events` (once final), never by hand |
 
 Five ids are held by ESLint (`domain/*`, `application/*`): `npm run lint` reports them.
 

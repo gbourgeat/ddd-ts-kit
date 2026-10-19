@@ -276,9 +276,12 @@ discipline with its own mechanism:
    so the codec maps it to a stored type of its own.
 2. `ddd-ts-kit docs --stored-events` records the fingerprint of that type, and of the types it
    reaches, for each version in `stored-events.lock.json`, once the shape of the version is the
-   one to store. A recorded version is never rewritten. `ddd-ts-kit docs --check`, which the
-   generated pipeline runs (`npm run docs:check`), fails while a declared version is not
-   recorded: a version cannot reach the main branch, and so a release, unrecorded. Before it is
+   one to store. A recorded version is never rewritten, but one recorded by 0.82.0 or earlier:
+   that release read the type arguments of a member (`Record<string, number>`) apart, so that two
+   shapes could share a fingerprint, and `docs --stored-events` records it again as the kit reads
+   it now. `ddd-ts-kit docs --check`, which the generated pipeline runs (`npm run docs:check`),
+   fails while a declared version is not recorded, or recorded by 0.82.0 or earlier: a version
+   cannot reach the main branch, and so a release, unrecorded. Before it is
    merged, a recorded version that was never stored can still be dropped from the lock by hand
    and recorded again.
 3. A change of the type is a new version: `version: 2` and the upcaster from version 1,

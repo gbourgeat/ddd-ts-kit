@@ -5,6 +5,7 @@ import { generatedDrift } from '../declared/index.js';
 import { readContexts } from '../docs/read-contexts.js';
 import { writeDocs } from '../docs/write-docs.js';
 import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file.js';
+import { formerlyRecordedStoredEvents } from '../docs/formerly-recorded-stored-events.js';
 import { unrecordedStoredEvents } from '../docs/unrecorded-stored-events.js';
 import { writeStoredEventsLock } from '../docs/write-stored-events-lock.js';
 import { stopIgnoringValidation } from '../generate/stop-ignoring-validation.js';
@@ -46,33 +47,53 @@ interface DocsRun {
   readonly config: Config;
 }
 
-/** `docs --check`: the generated files that would change, and the stored-event versions not recorded yet; 0 when there is none. */
+/** `docs --check`: the generated files that would change, and the stored-event versions not recorded yet or recorded by 0.82.0 or earlier; 0 when there is none. */
 function reportCheck(io: Io, args: Arguments, { ws, config }: DocsRun): number {
   const report = ws.commit(true);
   const stale = [...report.created, ...report.updated];
   const drift = Object.fromEntries(stale.flatMap((file) => driftOf(ws.root, ws, file)));
-  const unrecorded = args.flag('stored-events') ? [] : unrecordedStoredEvents(ws, config, contextsOnDisk(ws, config));
-  const ok = stale.length === 0 && unrecorded.length === 0;
+  const recording = args.flag('stored-events');
+  const unrecorded = recording ? [] : unrecordedStoredEvents(ws, config, contextsOnDisk(ws, config));
+  const formerlyRecorded = recording ? [] : formerlyRecordedStoredEvents(ws, config, contextsOnDisk(ws, config));
+  const ok = stale.length === 0 && unrecorded.length === 0 && formerlyRecorded.length === 0;
 
   if (args.json) {
-    io.out(JSON.stringify({ ok, stale, drift, unrecorded }, null, 2));
+    io.out(JSON.stringify({ ok, stale, drift, unrecorded, formerlyRecorded }, null, 2));
   } else if (ok) {
     io.out('The generated documentation is up to date.');
   } else {
-    io.out(staleLines(stale, drift, unrecorded).join('\n'));
+    io.out(staleLines(stale, drift, { unrecorded, formerlyRecorded }).join('\n'));
   }
 
   return ok ? 0 : 1;
 }
 
+/** The versions of stored events `docs --check` holds against the lock. */
+interface LockGaps {
+  readonly unrecorded: readonly string[];
+  readonly formerlyRecorded: readonly string[];
+}
+
 function staleLines(
   stale: readonly string[],
   drift: Readonly<Record<string, string>>,
-  unrecorded: readonly string[],
+  { unrecorded, formerlyRecorded }: LockGaps,
 ): string[] {
   const lines = stale.map((file) => `stale  ${file}${drift[file] === undefined ? '' : `: ${drift[file]}`}`);
   const versions = unrecorded.map((version) => `unrecorded  ${version} in ${STORED_EVENTS_LOCK}`);
+
+  const former = formerlyRecorded.map(
+    (version) => `formerly recorded  ${version} in ${STORED_EVENTS_LOCK}, by 0.82.0 or earlier`,
+  );
+
   const runDocs = stale.length === 0 ? [] : ['Run `ddd-ts-kit docs` and commit the result.'];
+
+  const recordAgain =
+    formerlyRecorded.length === 0
+      ? []
+      : [
+          'Run `ddd-ts-kit docs --stored-events` and commit the lock: it records these versions again as the kit reads them now, where two shapes no longer share a fingerprint.',
+        ];
 
   const runStoredEvents =
     unrecorded.length === 0
@@ -81,7 +102,7 @@ function staleLines(
           'Once the shape of these versions is the one to keep, run `ddd-ts-kit docs --stored-events` and commit the lock: event-sourcing/upcaster-required then refuses any change of it.',
         ];
 
-  return [...lines, ...versions, '', ...runDocs, ...runStoredEvents];
+  return [...lines, ...versions, ...former, '', ...runDocs, ...runStoredEvents, ...recordAgain];
 }
 
 function contextsOnDisk(ws: Workspace, config: Config): string[] {

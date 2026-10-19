@@ -9,6 +9,13 @@ export interface DeclaredShape {
   readonly references: readonly string[];
 }
 
+/**
+ * How the members of a type are read. `current` keeps a member whole across the commas of its type
+ * arguments (`Map<string, Side>`); `0.82` is the reading of 0.82.0 and earlier, which split a member
+ * there and sorted the pieces, so that two shapes could share a fingerprint. A lock written then holds it.
+ */
+export type ShapeReading = 'current' | '0.82';
+
 /** Words of a type that name no declaration: keywords, primitives, and the generic types of the language. */
 const NOT_DECLARED = new Set([
   ...['readonly', 'extends', 'keyof', 'typeof', 'infer', 'unique', 'symbol', 'in', 'is', 'as', 'any', 'void'],
@@ -23,7 +30,11 @@ const TYPE_WORD = /(?<![\w$.])[A-Za-z_$][\w$]*(?![\w$])(?!\s*\??\s*[:(])/g;
  * The shape the file declares under `typeName`: an interface, an object type, an enum, or any
  * other alias up to its semicolon. `undefined` when the file declares no such type.
  */
-export function declaredShape(scan: Scan, typeName: string): DeclaredShape | undefined {
+export function declaredShape(
+  scan: Scan,
+  typeName: string,
+  reading: ShapeReading = 'current',
+): DeclaredShape | undefined {
   const declared = new RegExp(`(?<![\\w$.])(?<!import\\s+)(interface|type|enum)\\s+${typeName}(?![\\w$])`).exec(
     scan.code,
   );
@@ -36,7 +47,7 @@ export function declaredShape(scan: Scan, typeName: string): DeclaredShape | und
   const [start, end] = bodyOf(scan.code, from);
 
   return {
-    members: membersOf(scan, start, end).sort(),
+    members: membersOf(scan, [start, end], reading).sort(),
     references: declared[1] === 'enum' ? [] : typeWords(scan.code.slice(from, end), typeParameters(scan.code, from)),
   };
 }
@@ -102,7 +113,7 @@ function bodyOf(code: string, from: number): [number, number] {
 }
 
 /** The members between two offsets, split at the separators of depth zero, each without its whitespace, literals kept. */
-function membersOf(scan: Scan, from: number, to: number): string[] {
+function membersOf(scan: Scan, [from, to]: readonly [number, number], reading: ShapeReading): string[] {
   const members: string[] = [];
   let current = '';
   let depth = 0;
@@ -118,12 +129,23 @@ function membersOf(scan: Scan, from: number, to: number): string[] {
       members.push(current);
       current = '';
     } else {
-      depth += depthChange(char);
+      depth += depthChange(char) + (reading === 'current' ? angleChange(scan.code, at) : 0);
       current += /\s/.test(char) ? '' : char;
     }
   }
 
   return [...members, current].filter((member) => member !== '');
+}
+
+/** The brackets of type arguments; the `>` of an arrow `=>` closes none. */
+function angleChange(code: string, at: number): number {
+  const char = code.charAt(at);
+
+  if (char === '<') {
+    return 1;
+  }
+
+  return char === '>' && code.charAt(at - 1) !== '=' ? -1 : 0;
 }
 
 function depthChange(char: string): number {

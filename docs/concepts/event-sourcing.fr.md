@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:c6adf6cb378fda21 -->
+<!-- translation-of: event-sourcing.md sha256:e606635bd03afe2b -->
 
 # Event sourcing, par agrégat
 
@@ -281,9 +281,13 @@ passée du code. Le kit applique la même discipline avec son propre mécanisme 
    sans que personne ne le voie, donc le codec le traduit en un type stocké qui lui est propre.
 2. `ddd-ts-kit docs --stored-events` enregistre l'empreinte de ce type, et des types qu'il
    atteint, pour chaque version, dans `stored-events.lock.json`, une fois que la forme de la
-   version est celle à stocker. Une version enregistrée n'est jamais réécrite.
+   version est celle à stocker. Une version enregistrée n'est jamais réécrite, sauf une version
+   enregistrée par la 0.82.0 ou une version antérieure : celle-ci lisait à part les arguments de
+   type d'un membre (`Record<string, number>`), si bien que deux formes pouvaient partager une
+   empreinte, et `docs --stored-events` l'enregistre à nouveau telle que le kit la lit désormais.
    `ddd-ts-kit docs --check`, que le *pipeline* généré exécute (`npm run docs:check`), échoue
-   tant qu'une version déclarée n'est pas enregistrée : une version ne peut pas atteindre la
+   tant qu'une version déclarée n'est pas enregistrée, ou l'a été par la 0.82.0 ou une version
+   antérieure : une version ne peut pas atteindre la
    branche principale, ni donc une version publiée (release), sans être enregistrée. Avant la
    fusion, une version enregistrée qui n'a jamais été stockée peut encore être retirée du fichier
    de verrouillage à la main et enregistrée à nouveau.

@@ -1,10 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { readStoredShape } from '../src/check/event-sourcing/read-stored-shape.js';
+import { scan } from '../src/check/scan/scan.js';
 import { isPastWord } from '../src/naming/index.js';
 import { parseConfig } from '../src/config/index.js';
 import { writeStoredEventsLock } from '../src/docs/write-stored-events-lock.js';
 import { Workspace } from '../src/workspace/index.js';
+import { cli } from './helpers.js';
 import { lines, projectWith, reported } from './rules-support.js';
 
 const BILLING = 'src/contexts/billing';
@@ -193,6 +196,34 @@ describe('event-sourcing/upcaster-required and the lock of the stored shapes', (
 
     expect(messages(root, 'event-sourcing/upcaster-required')).toEqual([
       '3 InvoicePaid is declared in version 1, and version 2 is already stored.',
+    ]);
+  });
+
+  it('takes a version 0.82.0 recorded for its shape, records it again as it reads now, then refuses a change', () => {
+    const records = 'readonly totals: Record<string, number>; readonly counts: Record<number, string>;';
+    const shape = readStoredShape(scan(codec(records, 1)), 'InvoicePaidData');
+
+    const root = projectWith({
+      [CODEC]: codec(records, 1),
+      [LOCK]: JSON.stringify({ 'billing.invoice.paid': { 1: shape?.formerFingerprint } }),
+    });
+
+    expect(messages(root, 'event-sourcing/upcaster-required')).toEqual([]);
+
+    expect(cli(root, 'docs', '--check').stdout).toContain(
+      `formerly recorded  billing.invoice.paid version 1 in ${LOCK}, by 0.82.0 or earlier`,
+    );
+
+    expect(lockOf(root)).toEqual({ 'billing.invoice.paid': { 1: shape?.fingerprint } });
+    expect(cli(root, 'docs', '--check', '--json').json()).toMatchObject({ unrecorded: [], formerlyRecorded: [] });
+
+    fs.writeFileSync(
+      path.join(root, CODEC),
+      codec('readonly totals: Record<string, string>; readonly counts: Record<number, number>;', 1),
+    );
+
+    expect(messages(root, 'event-sourcing/upcaster-required')).toEqual([
+      '3 The stored shape of InvoicePaid in version 1 changed.',
     ]);
   });
 

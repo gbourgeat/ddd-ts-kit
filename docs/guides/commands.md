@@ -499,8 +499,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    explain gives it without its examples ("explanations" in JSON); with github and gitlab, each
                    annotation carries the reason of its rule, a pull request showing an annotation on its own
   --stored-events  docs records the shape of each version of the stored events in stored-events.lock.json,
-                   never rewriting a recorded one: run it once the shape of a version is the one to store;
-                   docs --check fails while a declared version is not recorded
+                   never rewriting a recorded one but one recorded by 0.82.0 or earlier, recorded again as
+                   the kit reads it now: run it once the shape of a version is the one to store; docs --check
+                   fails while a declared version is not recorded, or recorded by 0.82.0 or earlier
   --sdk            init records "sdk" in the config and generates the clients with the project
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
                    "generate --help --json" says which kinds do
