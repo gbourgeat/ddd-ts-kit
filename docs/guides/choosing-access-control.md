@@ -432,7 +432,10 @@ export class TupleDocumentGrants implements DocumentGrants {
 ```
 
 Lists come by construction: `listAccessible` answers the ids the actor reaches, which the read
-port turns into `id in (...)`. Delegation is one more relation (`delegate`), and so is a hierarchy
+port turns into `id in (...)`. The search itself still names a resource in its requirement, an
+enclosing one (the context, or the tenant when an actor who reaches nothing must get 403), and
+its scope is asked on the permission of one element, `document.view` on `document`, never on a
+permission every signed-in person holds, which lists `all`. Delegation is one more relation (`delegate`), and so is a hierarchy
 (`parent`); nothing in the use cases changes when one is added.
 
 ## The combined model of the example

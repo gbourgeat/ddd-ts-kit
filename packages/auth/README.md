@@ -604,7 +604,9 @@ The three authorizers implement the same `Authorizer` port and pass the same con
 **What changes when you switch.** The adapter given to `authorizationModule`, and the data it
 needs. From RBAC to ReBAC: add `resource:` to the `requires` of the use cases that did not name
 one (a relationship is always to something), map each permission to a schema permission, and
-start writing tuples. Permissions, commands, queries, handlers, policies, routes and tests of
+start writing tuples. A search across many elements names an enclosing resource, the context
+(`{ type: 'context', id: 'docs' }`, what the generator writes) or the tenant of the actor, and
+`Access.scope` on the type of the elements narrows what it reads. Permissions, commands, queries, handlers, policies, routes and tests of
 handlers do not change. Models can also be layered: `Access` asks the instance policies and
 then the authorizer, so "roles for actions, policies for the few per-element rules" needs no
 tuple store at all, and is the place to start.
@@ -628,6 +630,11 @@ Only an actor of type `user` holds these grants: a system, a service and the ano
 to the model. What they cover lists `all`; another listing is the model's, and a model that
 cannot list makes it fail with `ListingNotSupportedError`. The identity preset of the CLI writes
 this wrapper in `createAuthorizer` and its grant in `signed-in-grants.ts`.
+
+A permission in these grants lists `all` whatever the model, before the model is asked: every
+signed-in person reads every element. It is never the way to let a search past the bus when the
+model refuses it: grant there the permission of running the search (`document.search`), and
+narrow the search by the scope of another one (`document.view`), which the model decides.
 
 ### Roles
 
@@ -998,7 +1005,7 @@ function whereOf(scope: AccessScope): SQL | undefined {
 
 | `AccessScope` | Given by | The read port |
 |---|---|---|
-| `{ kind: 'all' }` | RBAC when the role grants the permission | adds nothing |
+| `{ kind: 'all' }` | RBAC when the role grants the permission; `SignedInGrantsAuthorizer` for what its grants cover, whatever the model | adds nothing |
 | `{ kind: 'none' }` | any model, and always for the anonymous actor | returns an empty page without querying |
 | `{ kind: 'filter', filter }` | RBAC with the tenant check: `{ tenantId }` | adds one equality per entry, on columns it chooses to map |
 | `{ kind: 'ids', ids }` | ReBAC | adds `id IN (...)`, or joins a temporary table when the list is long |

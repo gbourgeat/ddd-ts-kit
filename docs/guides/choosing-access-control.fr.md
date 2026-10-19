@@ -1,5 +1,5 @@
 [English](choosing-access-control.md) · **Français**
-<!-- translation-of: choosing-access-control.md sha256:30fba3301223bdd7 -->
+<!-- translation-of: choosing-access-control.md sha256:3acdbdf8af82e37a -->
 
 # Choisir le contrôle d'accès, avec des préréglages commentés
 
@@ -440,7 +440,11 @@ export class TupleDocumentGrants implements DocumentGrants {
 ```
 
 Les listes viennent par construction : `listAccessible` répond les identifiants que l'acteur
-atteint, que le port de lecture transforme en `id in (...)`. La délégation est une relation de
+atteint, que le port de lecture transforme en `id in (...)`. La recherche elle-même nomme quand
+même une ressource dans son exigence, une ressource englobante (le contexte, ou le *tenant* quand
+un acteur qui n'atteint rien doit recevoir 403), et sa portée est demandée sur la permission d'un
+élément, `document.view` sur `document`, jamais sur une permission que détient toute personne
+connectée, qui liste `all`. La délégation est une relation de
 plus (`delegate`), et une hiérarchie aussi (`parent`) ; rien ne change dans les cas d'usage quand
 on en ajoute une.
 
