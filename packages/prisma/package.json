@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/prisma",
-  "version": "0.83.1",
+  "version": "0.83.2",
   "description": "Prisma adapters for the kernel ports: unit of work, transactional outbox store, processed-event store, PostgreSQL event store.",
   "keywords": [
     "ddd",
@@ -39,8 +39,8 @@
     "prisma"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.83.1",
-    "@ddd-ts-kit/events": "0.83.1"
+    "@ddd-ts-kit/kernel": "0.83.2",
+    "@ddd-ts-kit/events": "0.83.2"
   },
   "peerDependencies": {
     "@prisma/client": "^7.0.0"
@@ -49,7 +49,7 @@
     "@prisma/client": "^7.10.1",
     "prisma": "^7.10.1",
     "@prisma/adapter-pg": "^7.10.1",
-    "@ddd-ts-kit/testing": "0.83.1",
+    "@ddd-ts-kit/testing": "0.83.2",
     "pg": "^8.23.1",
     "@types/pg": "^8.23.1",
     "@electric-sql/pglite": "0.5.10",

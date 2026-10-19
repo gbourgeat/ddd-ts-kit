@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/kafka",
-  "version": "0.83.1",
+  "version": "0.83.2",
   "description": "Kafka provider for integration events: idempotent keyed publishing for the outbox relay, one consumer group per consumer, offsets committed after handling, bounded retries and a dead-letter topic.",
   "keywords": [
     "ddd",
@@ -38,12 +38,12 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/events": "0.83.1",
-    "@ddd-ts-kit/kernel": "0.83.1"
+    "@ddd-ts-kit/events": "0.83.2",
+    "@ddd-ts-kit/kernel": "0.83.2"
   },
   "devDependencies": {
     "@confluentinc/kafka-javascript": "^1.11.0",
-    "@ddd-ts-kit/testing": "0.83.1"
+    "@ddd-ts-kit/testing": "0.83.2"
   },
   "peerDependencies": {
     "@confluentinc/kafka-javascript": ">=1.11.0 <2"
