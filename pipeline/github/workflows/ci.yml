@@ -19,7 +19,7 @@ permissions:
 jobs:
   install:
     name: Install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     outputs:
       scope: ${{ steps.affected.outputs.scope }}
@@ -41,7 +41,7 @@ jobs:
   typecheck:
     name: Typecheck
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -51,7 +51,7 @@ jobs:
   lint:
     name: Lint
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -65,7 +65,7 @@ jobs:
   architecture:
     name: Architecture
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -78,7 +78,7 @@ jobs:
   deadcode:
     name: Dead code
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -88,7 +88,7 @@ jobs:
   unit:
     name: Unit tests
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
@@ -110,7 +110,7 @@ jobs:
   integration:
     name: Integration tests
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     env:
       DATABASE_URL: postgres://app:app@localhost:5432/app
@@ -132,7 +132,7 @@ jobs:
   e2e:
     name: End-to-end tests
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     env:
       DATABASE_URL: postgres://app:app@localhost:5432/app
@@ -151,7 +151,7 @@ jobs:
   build:
     name: Build, docs and contract drift
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -164,7 +164,7 @@ jobs:
   security:
     name: Security
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -180,7 +180,7 @@ jobs:
   image:
     name: Docker image
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
@@ -197,7 +197,7 @@ jobs:
     name: gate
     if: ${{ always() }}
     needs: [install, typecheck, lint, architecture, deadcode, unit, integration, e2e, build, security, image]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
       - name: Every gate passed

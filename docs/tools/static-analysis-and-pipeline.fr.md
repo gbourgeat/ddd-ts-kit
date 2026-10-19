@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:6573e5a8c6c3f7f5 -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:d821ee515b59ba82 -->
 
 # L'analyse statique et le pipeline
 
@@ -313,6 +313,7 @@ et sur un poste de travail, `npm run ci:arch`, qui lance les deux.
 | Élément | GitHub Actions | GitLab CI |
 |---|---|---|
 | Déclencheurs | les *push* sur la branche par défaut et les *pull requests* | les *merge requests* et la branche par défaut |
+| Machine d'exécution | `ubuntu-26.04`, épinglée : une nouvelle image de GitHub atteint le projet quand l'équipe change le libellé, pas quand `ubuntu-latest` bouge | l'image que nomme chaque job (`node:24-bookworm-slim` par défaut) |
 | Exécutions redondantes | annulées par des groupes de concurrence | annulées par des *jobs* interruptibles |
 | Portes | les mêmes scripts `ci:*` | les mêmes scripts `ci:*` |
 | Constats de lint et d'architecture | des annotations sur la *pull request* (`check --format github`) | des rapports Code Quality (`check --format gitlab` écrit directement le rapport ; ESLint par son formateur GitLab) |
