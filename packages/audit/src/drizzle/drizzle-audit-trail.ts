@@ -1,5 +1,5 @@
 import { sql, type SQL, type TablesRelationalConfig } from 'drizzle-orm';
-import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import { PgTransaction, type PgDatabase, type PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { auditTables } from '../sql/audit-tables.js';
 import { PostgresAuditTrail } from '../sql/postgres-audit-trail.js';
 import { rowsOf } from '../sql/rows-of.js';
@@ -31,6 +31,7 @@ function sessionOn<Q extends PgQueryResultHKT, F extends Record<string, unknown>
   database: PgDatabase<Q, F, S>,
 ): SqlSession {
   return {
+    ambientTransaction: database instanceof PgTransaction ? database : undefined,
     query: async (statement) => {
       const result: unknown = await database.execute(drizzleSqlOf(statement));
 

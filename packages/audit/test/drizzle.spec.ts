@@ -10,7 +10,8 @@ import { verifyChain, type AuditTrailOptions } from '../src/index.js';
 import { auditTrailContract } from '../src/testing.js';
 import { createTableSql } from './support/drizzle-ddl.js';
 import { startPostgres, type TestPostgres } from './support/postgres.js';
-import { REAL_SERVER, aRecord, sqlTrailSpecs, type SqlTrailFixture } from './support/sql-trail-specs.js';
+import { sqlTrailSpecs } from './support/sql-trail-specs.js';
+import { REAL_SERVER, aRecord, type SqlTrailFixture } from './support/sql-trail-fixture.js';
 
 const runner = { describe, it, expect, beforeEach };
 
@@ -64,17 +65,18 @@ async function fixture(options: AuditTrailOptions = {}): Promise<SqlTrailFixture
   const on = (database: NodePgDatabase) => {
     const unitOfWork = createDrizzleUnitOfWork(database);
 
-    return { unitOfWork, trail: new DrizzleAuditTrail(unitOfWork, { ...options, schema }) };
+    return {
+      unitOfWork,
+      trail: new DrizzleAuditTrail(unitOfWork, { ...options, schema }),
+      run: (statement: string) => unitOfWork.executor().execute(inSchema(statement, schema)),
+    };
   };
 
-  const here = on(db);
+  return { ...on(db), elsewhere: () => on(elsewhere) };
+}
 
-  return {
-    ...here,
-    run: (statement) =>
-      here.unitOfWork.executor().execute(statement.replaceAll('$table', `"${schema}"."audit_entries"`)),
-    elsewhere: () => on(elsewhere),
-  };
+function inSchema(statement: string, schema: string): string {
+  return statement.replaceAll('$table', `"${schema}"."audit_entries"`).replaceAll('$schema', `"${schema}"`);
 }
 
 let current: SqlTrailFixture;

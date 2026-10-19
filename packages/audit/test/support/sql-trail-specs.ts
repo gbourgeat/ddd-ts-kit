@@ -1,51 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { InMemoryCommandBus, unitOfWorkMiddleware, type UnitOfWork } from '@ddd-ts-kit/kernel';
-import {
-  auditMiddleware,
-  verifyChain,
-  type AuditCheckpoint,
-  type AuditRecord,
-  type AuditTrailOptions,
-} from '../../src/index.js';
-import type { AuditTrailUnderContract } from '../../src/testing.js';
-import { NOW, aSource, ada } from './fixtures.js';
+import { InMemoryCommandBus, atCommit, unitOfWorkMiddleware } from '@ddd-ts-kit/kernel';
+import { auditMiddleware, verifyChain, type AuditCheckpoint } from '../../src/index.js';
+import { aSource, ada } from './fixtures.js';
 import { CancelAppointmentCommand } from './scheduling/application/commands/cancel-appointment.command.js';
 import { AppointmentAlreadyCancelled } from './scheduling/domain/errors/appointment-already-cancelled.js';
-
-/** What a spec of a SQL store gives: a fresh schema with the tables and the guard, per call. */
-export interface SqlTrailFixture {
-  readonly trail: AuditTrailUnderContract;
-  readonly unitOfWork: UnitOfWork;
-  /** Runs one statement on the connection of the unit of work in progress, or on the database. `$table` names the entries table. */
-  run(statement: string): Promise<{ readonly rows: readonly Record<string, unknown>[] }>;
-  /** The same trail and unit of work on a pool of their own, as another process would have. */
-  elsewhere(): { readonly trail: AuditTrailUnderContract; readonly unitOfWork: UnitOfWork };
-}
-
-export interface SqlTrailSpecs {
-  readonly name: string;
-  /** True when the tests run on a real server: several connections, real concurrency. */
-  readonly real: boolean;
-  create(options?: AuditTrailOptions): Promise<SqlTrailFixture>;
-}
-
-export const REAL_SERVER = (process.env['DDD_TS_KIT_TEST_DATABASE_URL'] ?? '') !== '';
-
-export function aRecord(id: string, tenantId = 'acme'): AuditRecord {
-  return {
-    id,
-    occurredAt: NOW,
-    category: 'data-access',
-    action: 'scheduling.appointments.export',
-    outcome: 'succeeded',
-    actor: { id: 'ada', type: 'user', tenantId },
-    tenantId,
-    correlationId: 'correlation-1',
-    origin: 'http',
-  };
-}
-
-const CHAIN = 'tenant:acme';
+import { lockSpecs } from './sql-trail-lock-specs.js';
+import { CHAIN, aRecord, sequencesOf, type SqlTrailSpecs } from './sql-trail-fixture.js';
 
 /** The SQLSTATE a statement failed with, whether the driver error comes bare (knex) or as the cause of another (drizzle). */
 async function sqlStateOf(statement: Promise<unknown>): Promise<unknown> {
@@ -61,7 +21,9 @@ async function sqlStateOf(statement: Promise<unknown>): Promise<unknown> {
 export function sqlTrailSpecs(specs: SqlTrailSpecs): void {
   appendOnlySpecs(specs);
   unitOfWorkSpecs(specs);
+  atCommitSpecs(specs);
   concurrencySpecs(specs);
+  lockSpecs(specs);
 }
 
 function appendOnlySpecs(specs: SqlTrailSpecs): void {
@@ -186,6 +148,63 @@ function unitOfWorkSpecs(specs: SqlTrailSpecs): void {
   });
 }
 
+function atCommitSpecs(specs: SqlTrailSpecs): void {
+  describe(`${specs.name}: written at the commit of the unit of work`, () => {
+    it('writes what a unit of work recorded at its commit, each chain in the order of its records', async () => {
+      const { trail, unitOfWork } = await specs.create();
+
+      const beforeTheCommit = await unitOfWork.run(async () => {
+        await trail.record(aRecord('acme-1'));
+        await trail.record(aRecord('other-1', 'other'));
+        await trail.record(aRecord('acme-2'));
+
+        return sequencesOf(trail);
+      });
+
+      expect(beforeTheCommit).toEqual([]);
+
+      expect(await sequencesOf(trail)).toEqual([
+        { id: 'acme-1', sequence: 1 },
+        { id: 'acme-2', sequence: 2 },
+      ]);
+
+      expect(await sequencesOf(trail, 'tenant:other')).toEqual([{ id: 'other-1', sequence: 1 }]);
+    });
+
+    it('writes a record made at the commit, once the others were written', async () => {
+      const { trail, unitOfWork } = await specs.create();
+
+      await unitOfWork.run(async () => {
+        await trail.record(aRecord('entry-1'));
+        await atCommit({ apply: () => trail.record(aRecord('entry-2')), undo: async () => undefined });
+      });
+
+      expect(await sequencesOf(trail)).toEqual([
+        { id: 'entry-1', sequence: 1 },
+        { id: 'entry-2', sequence: 2 },
+      ]);
+
+      expect(await verifyChain(trail, { chain: CHAIN })).toEqual({ valid: true, checked: 2 });
+    });
+
+    it('leaves no entry when a step after the entries fails the commit', async () => {
+      const { trail, unitOfWork } = await specs.create();
+
+      const failing = unitOfWork.run(async () => {
+        await trail.record(aRecord('entry-1'));
+
+        await atCommit({
+          apply: () => Promise.reject(new Error('The step after the entries failed')),
+          undo: async () => undefined,
+        });
+      });
+
+      await expect(failing).rejects.toThrow('The step after the entries failed');
+      expect(await sequencesOf(trail)).toEqual([]);
+    });
+  });
+}
+
 function concurrencySpecs(specs: SqlTrailSpecs): void {
   describe(`${specs.name}: concurrent appends`, () => {
     it.skipIf(!specs.real)('never forks a chain under appends from several connections and processes', async () => {
@@ -238,37 +257,5 @@ function concurrencySpecs(specs: SqlTrailSpecs): void {
         break: { kind: 'missing-entry' },
       });
     });
-
-    it.skipIf(!specs.real)(
-      'makes a second append wait for the transaction that holds the head of the chain',
-      async () => {
-        const here = await specs.create();
-        const there = here.elsewhere();
-        const order: string[] = [];
-        let release: () => void = () => undefined;
-
-        const held = new Promise<void>((resolve) => {
-          release = resolve;
-        });
-
-        const first = here.unitOfWork.run(async () => {
-          await here.trail.record(aRecord('entry-first'));
-          order.push('first wrote');
-          await held;
-          order.push('first commits');
-        });
-
-        await expect.poll(() => order).toEqual(['first wrote']);
-        const second = there.trail.record(aRecord('entry-second')).then(() => order.push('second wrote'));
-        const other = there.trail.record(aRecord('entry-other', 'other')).then(() => order.push('other tenant wrote'));
-
-        await other;
-        release();
-        await Promise.all([first, second]);
-
-        expect(order).toEqual(['first wrote', 'other tenant wrote', 'first commits', 'second wrote']);
-        expect(await verifyChain(here.trail, { chain: CHAIN })).toEqual({ valid: true, checked: 2 });
-      },
-    );
   });
 }

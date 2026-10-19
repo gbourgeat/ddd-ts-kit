@@ -22,6 +22,7 @@ export class KnexAuditTrail extends PostgresAuditTrail {
 
 function sessionOn(knex: Knex): SqlSession {
   return {
+    ambientTransaction: knex.isTransaction === true ? knex : undefined,
     query: async (statement) => rowsOf(await knex.raw(statement.strings.join('?'), bindingsOf(statement))),
     transaction: (work) => knex.transaction((transaction) => work(sessionOn(transaction))),
   };

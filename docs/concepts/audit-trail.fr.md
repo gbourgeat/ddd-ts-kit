@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:68992df8eefc5809 -->
+<!-- translation-of: audit-trail.md sha256:98e98815f3d4fe26 -->
 
 # Journal d'audit
 
@@ -321,9 +321,11 @@ Elles sont énoncées par [`@ddd-ts-kit/audit`](../../packages/audit/README.fr.m
   TypeORM, un ORM maison ou sans ORM, le projet généré démarre sur un journal en mémoire derrière
   un `TODO(platform)` ; une autre base de données est un autre adaptateur, soumis à la suite de
   contrat.
-- **Les ajouts à une même chaîne sont sérialisés.** La tête d'une chaîne reste verrouillée
-  jusqu'à la validation ; un gestionnaire qui enregistre tôt à la main puis travaille longtemps
-  fait attendre les autres écrivains de son *tenant*.
+- **Les ajouts à une même chaîne sont sérialisés.** Dans une unité de travail, les entrées sont
+  écrites à sa validation, les têtes en dernier et toujours dans le même ordre : deux unités de
+  travail d'un même *tenant* ne s'attendent que pendant leurs validations, et un ajout ne referme
+  jamais d'interblocage avec les lignes que le travail a verrouillées. Le prix : une entrée n'est
+  pas visible dans son unité de travail avant la validation.
 - **L'horodatage est l'horloge de l'instance qui a enregistré.** Dans une chaîne, l'ordre est la
   séquence.
 - **Aucune politique de conservation ni d'archivage** n'est fournie. Combien de temps les

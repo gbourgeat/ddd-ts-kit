@@ -595,8 +595,9 @@ entries removed) is only seen by comparing with a later checkpoint or by asking 
 assert and to tamper with) and enough for an application without a database.
 
 The SQL stores are for **PostgreSQL**. They write on the executor of the unit of work
-(`KnexContext.executor()`, `DrizzleContext.executor()`): inside a transaction the entry shares
-its fate, outside it is written at once in a transaction of its own.
+(`KnexContext.executor()`, `DrizzleContext.executor()`): inside a unit of work the entry is
+written at its commit and shares its fate, outside it is written at once in a transaction of its
+own.
 
 ```ts
 // knex: a migration of the project
@@ -626,6 +627,18 @@ head and the chain cannot fork; appends to other chains do not wait. The primary
 duplicate position should the lock ever be bypassed. Under `REPEATABLE READ` or `SERIALIZABLE`
 the second append fails with a serialization error instead of waiting, and its caller retries
 the unit of work, as for any other statement under those levels: the kit does not retry it.
+
+**At the commit.** Inside a unit of work, what is recorded waits for its commit (`atCommit` of
+the kernel): the entries are written last, after the work and its `before-commit` handlers,
+each chain once, the chains in the order of their names. The head is then the last lock the
+transaction takes and every transaction takes the heads in one order, so an append never closes
+a deadlock (`40P01`) with the rows the work locked, nor with another chain, and a unit of work
+still at its work does not make the other writers of its tenant wait. In return, the entries of
+a unit of work are not visible inside it before the commit, and a refusal of the store (an `id`
+written twice) fails the commit, not the call to `record`. Outside a unit of work the entry is
+written at once; in a transaction opened by hand, the head then stays locked until that
+transaction ends. A unit of work of another database opened inside the one in progress ends
+before it: its entries are written at the commit of the outer one, in a transaction of their own.
 
 ![Three transactions append at the same time: T1 locks the head of tenant:acme, writes entry 42 and commits; T2, on the same chain, waits for that commit, then reads 42 and writes entry 43; T3, on tenant:globex, writes entry 8 without waiting](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/audit-chain-append.svg)
 
@@ -712,9 +725,10 @@ recorded), and work that names neither is refused (`NoCurrentTenantError`).
 
 - **PostgreSQL only** for the SQL stores: row locks, row comparison for cursors, `jsonb`,
   triggers. Another database is another adapter of the two ports, held to the contract suite.
-- **Appends to one chain are serialized**, and inside a unit of work the head stays locked
-  until the commit. `auditMiddleware` writes last, so the window is short; a handler that
-  records by hand early and then works for long makes the other writers of its tenant wait.
+- **Appends to one chain are serialized**: two units of work of one tenant write their entries
+  one after the other. Inside a unit of work the head is taken at the commit only, so the wait
+  lasts a commit, not the work; in a transaction opened by hand outside of any unit of work, the
+  head stays locked from the append to the end of that transaction.
 - **A rolled back unit of work frees its positions**: the next entry reuses the sequence.
   There is never a gap, and never an entry for work that did not commit.
 - **A command sent from inside another unit of work** (a consumer whose `consume` opened one)

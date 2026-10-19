@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2ca1f2a6664a4f13 -->
+<!-- translation-of: README.md sha256:881c024b0dc348b9 -->
 
 # @ddd-ts-kit/audit
 
@@ -620,8 +620,9 @@ qu'en comparant avec un point de contrôle ultérieur ou en demandant `to`.
 vérifier et pour altérer) et de quoi suffire à une application sans base de données.
 
 Les stores SQL sont pour **PostgreSQL**. Ils écrivent sur l'exécuteur de l'unité de travail
-(`KnexContext.executor()`, `DrizzleContext.executor()`) : dans une transaction, l'entrée partage
-son sort ; hors transaction, elle est écrite immédiatement dans une transaction à elle.
+(`KnexContext.executor()`, `DrizzleContext.executor()`) : dans une unité de travail, l'entrée est
+écrite à sa validation et partage son sort ; hors de toute unité de travail, elle est écrite
+immédiatement dans une transaction à elle.
 
 ```ts
 // knex : une migration du projet
@@ -653,6 +654,20 @@ n'attendent pas. La clé primaire refuse une position en double si le verrou dev
 contourné. En `REPEATABLE READ` ou `SERIALIZABLE`, le second ajout échoue sur une erreur de
 sérialisation au lieu d'attendre, et son appelant rejoue l'unité de travail, comme pour toute autre
 instruction à ces niveaux : le kit ne la rejoue pas.
+
+**À la validation.** Dans une unité de travail, ce qui est enregistré attend sa validation
+(`atCommit` du noyau) : les entrées sont écrites en dernier, après le travail et ses gestionnaires
+`before-commit`, chaque chaîne une seule fois, les chaînes dans l'ordre de leurs noms. La tête est
+alors le dernier verrou que prend la transaction, et toutes les transactions prennent les têtes
+dans le même ordre : un ajout ne referme donc jamais d'interblocage (`40P01`) avec les lignes que
+le travail a verrouillées, ni avec une autre chaîne, et une unité de travail encore à son travail
+ne fait pas attendre les autres écrivains de son *tenant*. En contrepartie, les entrées d'une unité
+de travail ne sont pas visibles en son sein avant la validation, et un refus du store (un `id`
+écrit deux fois) fait échouer la validation, pas l'appel à `record`. Hors d'une unité de travail,
+l'entrée est écrite tout de suite ; dans une transaction ouverte à la main, la tête reste alors
+verrouillée jusqu'à la fin de cette transaction. Une unité de travail d'une autre base de données
+ouverte dans celle en cours se termine avant elle : ses entrées sont écrites à la validation de
+celle du dehors, dans une transaction à elles.
 
 ![Trois transactions ajoutent en même temps : T1 verrouille la tête de tenant:acme, écrit l'entrée 42 et valide ; T2, sur la même chaîne, attend cette validation, puis lit 42 et écrit l'entrée 43 ; T3, sur tenant:globex, écrit l'entrée 8 sans attendre](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/audit-chain-append.fr.svg)
 
@@ -743,10 +758,11 @@ du noyau, elle-même enregistrée), et un travail qui ne nomme ni l'un ni l'autr
 - **PostgreSQL seulement** pour les stores SQL : verrous de ligne, comparaison de lignes pour les
   curseurs, `jsonb`, triggers. Une autre base de données est un autre adaptateur des deux ports,
   tenu à la suite de contrat.
-- **Les ajouts à une chaîne sont sérialisés**, et dans une unité de travail la tête reste
-  verrouillée jusqu'à la validation. `auditMiddleware` écrit en dernier, la fenêtre est donc
-  courte ; un gestionnaire qui enregistre à la main tôt puis travaille longtemps fait attendre les
-  autres écrivains de son *tenant*.
+- **Les ajouts à une chaîne sont sérialisés** : deux unités de travail d'un même *tenant*
+  écrivent leurs entrées l'une après l'autre. Dans une unité de travail, la tête n'est prise qu'à
+  la validation, l'attente dure donc une validation, pas le travail ; dans une transaction ouverte
+  à la main hors de toute unité de travail, la tête reste verrouillée de l'ajout à la fin de cette
+  transaction.
 - **Une unité de travail annulée libère ses positions** : l'entrée suivante réutilise la
   séquence. Il n'y a jamais de trou, et jamais d'entrée pour un travail qui n'a pas été validé.
 - **Une commande envoyée depuis une autre unité de travail** (un consommateur dont `consume` en a

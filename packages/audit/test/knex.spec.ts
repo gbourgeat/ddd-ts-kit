@@ -5,7 +5,8 @@ import { KnexAuditTrail, createAuditTables, dropAuditTables } from '../src/knex.
 import type { AuditTrailOptions } from '../src/index.js';
 import { auditTrailContract } from '../src/testing.js';
 import { startPostgres, type TestPostgres } from './support/postgres.js';
-import { REAL_SERVER, aRecord, sqlTrailSpecs, type SqlTrailFixture } from './support/sql-trail-specs.js';
+import { sqlTrailSpecs } from './support/sql-trail-specs.js';
+import { REAL_SERVER, aRecord, type SqlTrailFixture } from './support/sql-trail-fixture.js';
 
 const runner = { describe, it, expect, beforeEach };
 
@@ -49,16 +50,18 @@ async function fixture(options: AuditTrailOptions = {}): Promise<SqlTrailFixture
   const on = (database: Knex) => {
     const unitOfWork = createKnexUnitOfWork(database);
 
-    return { unitOfWork, trail: new KnexAuditTrail(unitOfWork, { ...options, schema }) };
+    return {
+      unitOfWork,
+      trail: new KnexAuditTrail(unitOfWork, { ...options, schema }),
+      run: (statement: string) => unitOfWork.executor().raw(inSchema(statement, schema)),
+    };
   };
 
-  const here = on(db);
+  return { ...on(db), elsewhere: () => on(elsewhere) };
+}
 
-  return {
-    ...here,
-    run: (statement) => here.unitOfWork.executor().raw(statement.replaceAll('$table', `"${schema}"."audit_entries"`)),
-    elsewhere: () => on(elsewhere),
-  };
+function inSchema(statement: string, schema: string): string {
+  return statement.replaceAll('$table', `"${schema}"."audit_entries"`).replaceAll('$schema', `"${schema}"`);
 }
 
 let current: SqlTrailFixture;
