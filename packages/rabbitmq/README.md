@@ -354,9 +354,12 @@ and outlines SQS/SNS, which is not built.
 
 ## Testing
 
-The codec of the envelope, the settings and their defaults, the topology description and the
-failure codes are covered without a broker, in the unit run. The other suites need a real
-broker and are skipped without `DDD_TS_KIT_TEST_AMQP_URL`:
+Every suite runs in the unit run, without a server: the bus connects to an AMQP broker held in
+memory (`test/support/amqp/`), which implements the interfaces of amqplib and keeps what the bus
+relies on (topic exchanges and the default one, dead-letter arguments, `x-message-ttl`, publisher
+confirms and returns, prefetch, redelivery of what a closed channel had not acknowledged, 406 and
+404 refusals). With `DDD_TS_KIT_TEST_AMQP_URL`, the same suites run a second time against a real
+broker, which is what keeps the in-memory one honest:
 
 ```
 docker run -d --rm --name ddd-ts-kit-test-rabbitmq -e RABBITMQ_DEFAULT_USER=kit -e RABBITMQ_DEFAULT_PASS=kit -p 127.0.0.1:5672:5672 rabbitmq:4-management-alpine
@@ -364,11 +367,12 @@ DDD_TS_KIT_TEST_AMQP_URL=amqp://kit:kit@127.0.0.1:5672 npx vitest run packages/r
 docker rm -f ddd-ts-kit-test-rabbitmq
 ```
 
-The integration job of the CI runs them on every pull request that reaches this package,
+The integration job of the CI runs them against a real broker on every pull request that reaches this package,
 against RabbitMQ 4.3.6 that `pipeline/github/scripts/start-rabbitmq.sh` starts, its image pinned by digest.
 
 They run the contract suite on quorum and on classic queues, then the behaviours of this
 provider, one suite per behaviour (`publishing`, `consuming`, `correlation`, `retries`,
-`dead-letters`, `topology`, `connection-loss` through a TCP relay the test cuts, `closing`)
+`dead-letters`, `topology`, `connection-loss` through a network the test cuts, a TCP relay in
+front of a real broker, `closing`)
 and the whole chain from the outbox to an idempotent consumer. Every test works on an exchange and queues of its
 own and deletes them.
