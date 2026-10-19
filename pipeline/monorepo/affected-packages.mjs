@@ -30,7 +30,7 @@ const SITE = 'site/';
 const READ_BY_THE_WHOLE_RUNS = ['README.md', 'docs/ARCHITECTURE.md'];
 
 /** The packages whose adapter specs need a server of the integration job: PostgreSQL, OpenFGA, MinIO for s3, Varnish for http, Dragonfly for redis, or the broker of nats, rabbitmq and kafka. */
-const ON_A_SERVER = [
+export const ON_A_SERVER = [
   'drizzle',
   'knex',
   'prisma',

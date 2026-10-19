@@ -137,8 +137,10 @@ jobs:
     name: Coverage report (Codecov)
     # The measure of a whole run only: a pull request measures the packages it reaches, which would read as a drop.
     # Not a gate: the floors of vitest.config.ts are. The report feeds the badge of the README and the history.
-    if: ${{ github.event_name != 'pull_request' && needs.install.outputs.scope == 'all' && needs.unit.result == 'success' }}
-    needs: [install, unit]
+    # The unit report, and the integration one when that job passed: Codecov adds what the specs on a server cover.
+    # `!cancelled()` keeps a failed integration job from skipping the unit report.
+    if: ${{ !cancelled() && github.event_name != 'pull_request' && needs.install.outputs.scope == 'all' && needs.unit.result == 'success' }}
+    needs: [install, unit, integration]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -155,6 +157,19 @@ jobs:
           files: coverage/lcov.info
           disable_search: true
           flags: unit
+          fail_ci_if_error: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: ${{ needs.integration.result == 'success' }}
+        with:
+          name: coverage-integration
+          path: coverage-integration
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        if: ${{ needs.integration.result == 'success' }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage-integration/lcov.info
+          disable_search: true
+          flags: integration
           fail_ci_if_error: false
 
   unit-oldest:
@@ -257,9 +272,18 @@ jobs:
       - name: Kafka for the broker adapter, with the relayed listener of the connection-loss specs (pinned by digest)
         if: ${{ needs.install.outputs.integration == 'true' }}
         run: sh pipeline/github/scripts/start-kafka.sh
-      - name: Adapter specs on a server (skipped when no adapter package is reached)
+      - name: Adapter specs on a server (skipped when no adapter package is reached), measured for Codecov
         if: ${{ needs.install.outputs.integration == 'true' }}
-        run: npm run ci:test:integration
+        env:
+          KIT_COVERAGE: integration
+        run: npm run ci:test:integration -- --coverage
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() && needs.install.outputs.integration == 'true' }}
+        with:
+          name: coverage-integration
+          path: coverage/integration
+          if-no-files-found: ignore
+          retention-days: 14
 
   e2e:
     name: End-to-end tests (${{ matrix.shard }}/4)
