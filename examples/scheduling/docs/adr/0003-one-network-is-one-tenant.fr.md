@@ -1,5 +1,5 @@
 [English](0003-one-network-is-one-tenant.md) · **Français**
-<!-- translation-of: 0003-one-network-is-one-tenant.md sha256:c830ef669e3a1d94 -->
+<!-- translation-of: 0003-one-network-is-one-tenant.md sha256:67beffdebdb496ac -->
 
 # ADR-0003 : un réseau de cabinets est un *tenant*
 
@@ -80,7 +80,7 @@ que l'*event store* ne garde pas de *tenant* : ADR-0004.
   entre les réseaux : des identifiants que l'application génère, et des sujets d'un seul *realm*
   pour les personnes. Un jeton dont le *claim* nomme plusieurs réseaux (`north,south`) n'en nomme
   aucun qui puisse exister et reçoit un 404 en bordure ; un sujet déjà enregistré dans un réseau
-  qui s'enregistre dans un autre est refusé (422, `CONCURRENCY_CONFLICT`, la clé étant prise) et
+  qui s'enregistre dans un autre est refusé (409, `CONCURRENCY_CONFLICT`, la clé étant prise) et
   reste là où il était, si bien qu'aucune projection du second réseau ne le manque en silence.
   Une personne qui travaille pour deux réseaux a deux comptes. Servir un seul compte dans
   plusieurs réseaux ferait commencer chaque clé et chaque contrainte d'unicité par `tenant_id`
