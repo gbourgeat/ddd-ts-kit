@@ -1,5 +1,5 @@
 [English](language-declared-vocabulary.md) · **Français**
-<!-- translation-of: language-declared-vocabulary.md sha256:a297ca03357580ce -->
+<!-- translation-of: language-declared-vocabulary.md sha256:38684c24de6c3252 -->
 
 # ddd-ts-kit/language-declared-vocabulary
 

@@ -1,5 +1,5 @@
 [English](authorization-in-practice.md) · **Français**
-<!-- translation-of: authorization-in-practice.md sha256:42320c74cf27488b -->
+<!-- translation-of: authorization-in-practice.md sha256:afb2b3a9e2e390d4 -->
 
 # L'autorisation en pratique
 

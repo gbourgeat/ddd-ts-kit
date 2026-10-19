@@ -1,5 +1,5 @@
 [English](bootstrap-with-well-designed-contexts.md) · **Français**
-<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:f03c127d93b59e57 -->
+<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:a7bf18dd37904d3e -->
 
 # Démarrer avec des contextes bien conçus
 

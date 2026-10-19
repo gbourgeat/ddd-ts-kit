@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4e0553c362a45a3d -->
+<!-- translation-of: README.md sha256:ab8effc74cf05f27 -->
 
 # @ddd-ts-kit/sentry
 

@@ -1,5 +1,5 @@
 [English](commit-plan.md) · **Français**
-<!-- translation-of: commit-plan.md sha256:0a9add5962cfc522 -->
+<!-- translation-of: commit-plan.md sha256:c5dc56588f9ab88e -->
 
 # Plan des *commits*
 

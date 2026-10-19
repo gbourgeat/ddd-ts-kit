@@ -1,5 +1,5 @@
 [English](0001-combine-token-roles-with-relationships-in-one-authorizer.md) · **Français**
-<!-- translation-of: 0001-combine-token-roles-with-relationships-in-one-authorizer.md sha256:72d97db5695c780e -->
+<!-- translation-of: 0001-combine-token-roles-with-relationships-in-one-authorizer.md sha256:a90080ebcd6de4c6 -->
 
 # ADR-0001 : combiner les rôles du jeton et les relations dans un seul autorisateur
 

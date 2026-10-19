@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:860413972237a22f -->
+<!-- translation-of: README.md sha256:b8e68665b9006be5 -->
 
 # @ddd-ts-kit/tracing
 

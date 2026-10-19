@@ -1,5 +1,5 @@
 [English](identity.md) · **Français**
-<!-- translation-of: identity.md sha256:7d10b81c2ceda863 -->
+<!-- translation-of: identity.md sha256:302acdb25a511316 -->
 
 # Identité : Keycloak ou simple OIDC et JWT
 

@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:3df1728d8041cb77 -->
+<!-- translation-of: token-economy.md sha256:c6cae4f82fe2037c -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 

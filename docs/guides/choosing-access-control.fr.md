@@ -1,5 +1,5 @@
 [English](choosing-access-control.md) · **Français**
-<!-- translation-of: choosing-access-control.md sha256:3acdbdf8af82e37a -->
+<!-- translation-of: choosing-access-control.md sha256:2842c04985ffd66b -->
 
 # Choisir le contrôle d'accès, avec des préréglages commentés
 
