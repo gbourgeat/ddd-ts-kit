@@ -337,7 +337,9 @@ aggregate carries a `version`, managed by the repository adapter: the update suc
 where the stored version matches the loaded one, and otherwise raises a concurrency conflict
 (the kernel's `ConcurrencyError`, code `CONCURRENCY_CONFLICT`, which the repository contract
 suite requires). The caller retries or reports the conflict. No lock is held while the user
-thinks.
+thinks. A deadlock or a serialization failure that the database raises anywhere in the
+transaction is the same outcome: the unit of work rejects with `TransactionConflictError`, a
+`ConcurrencyError` whose `cause` is the error of the driver.
 
 ![Requests A and B both load appointment a-1 at version 3; A's update guarded by version 3 writes one row and moves it to version 4; B's update with the same guard writes no row and raises a ConcurrencyError](../assets/diagrams/aggregates-optimistic-concurrency.svg)
 

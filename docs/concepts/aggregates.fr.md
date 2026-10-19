@@ -1,5 +1,5 @@
 [English](aggregates.md) · **Français**
-<!-- translation-of: aggregates.md sha256:3f7f35a9098b3963 -->
+<!-- translation-of: aggregates.md sha256:70e5c3d3631fc98d -->
 
 # Agrégats
 
@@ -346,7 +346,10 @@ enregistrer toutes deux. L'agrégat porte une `version`, gérée par l'adaptateu
 la mise à jour ne réussit que si la version stockée correspond à celle qui a été chargée, et
 lève sinon un conflit de concurrence (la `ConcurrencyError` du noyau, code
 `CONCURRENCY_CONFLICT`, qu'exige la suite de contrat du *repository*). L'appelant réessaie ou
-signale le conflit. Aucun verrou n'est tenu pendant que l'utilisateur réfléchit.
+signale le conflit. Aucun verrou n'est tenu pendant que l'utilisateur réfléchit. Un
+interblocage ou un échec de sérialisation que la base de données lève n'importe où dans la
+transaction mène au même résultat : l'unité de travail est rejetée par une
+`TransactionConflictError`, une `ConcurrencyError` dont la `cause` est l'erreur du pilote.
 
 ![Les requêtes HTTP A et B chargent toutes deux le rendez-vous a-1 en version 3 ; la mise à jour de A, gardée par la version 3, écrit une ligne et le fait passer en version 4 ; celle de B, avec la même garde, n'écrit aucune ligne et lève une ConcurrencyError](../assets/diagrams/aggregates-optimistic-concurrency.fr.svg)
 
