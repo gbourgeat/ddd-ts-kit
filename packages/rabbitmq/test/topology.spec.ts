@@ -1,13 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Broker } from './support/broker.js';
-import { AMQP_URL } from './support/environment.js';
-import { PLACED } from './support/events.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
+import { PLACED, anEvent } from './support/events.js';
+import { failuresOf } from './support/hooks.js';
+import { unique } from './support/unique.js';
+import { eventually } from './support/waiting.js';
+import { queueNamesOf, type RabbitMqFailure } from '../src/index.js';
 
-describe.skipIf(AMQP_URL === undefined)('RabbitMqEventBus: topology', { timeout: 30_000 }, () => {
+describe.each(BROKERS)('RabbitMqEventBus: topology, %s', { timeout: 30_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(AMQP_URL ?? '');
+    broker = await connect();
   });
 
   afterEach(async () => {
@@ -65,5 +69,45 @@ describe.skipIf(AMQP_URL === undefined)('RabbitMqEventBus: topology', { timeout:
     for (const queue of bus.describeTopology().queues) {
       expect(await broker.readyIn(queue.name)).toBe(0);
     }
+  });
+
+  it('rejects, with the code of the broker, a declaration that contradicts what exists', async () => {
+    const exchange = unique('test-events');
+    const bus = broker.bus({ exchange });
+
+    bus.subscribe(PLACED, async () => undefined);
+    await bus.assertTopology();
+    await broker.deleteExchange(exchange);
+    await broker.declareExchange(exchange, 'fanout');
+
+    await expect(bus.assertTopology()).rejects.toMatchObject({ code: 406 });
+  });
+
+  it('cannot connect while its exchange exists with another type, and says why', async () => {
+    const exchange = unique('test-events');
+    const reported: RabbitMqFailure[] = [];
+
+    await broker.declareExchange(exchange, 'fanout');
+    const bus = broker.bus({ exchange, onFailure: failuresOf(reported) });
+
+    await expect(bus.publish([anEvent('evt-1')])).rejects.toMatchObject({
+      code: 'BROKER_UNAVAILABLE',
+      reason: 'AMQP_406',
+    });
+
+    expect(reported[0]).toEqual({ kind: 'connection', code: 'AMQP_406' });
+  });
+
+  it('reports a queue it cannot declare for a subscription made once connected', async () => {
+    const consumer = unique('billing');
+    const reported: RabbitMqFailure[] = [];
+    const bus = broker.bus({ consumer, onFailure: failuresOf(reported) });
+
+    await bus.publish([anEvent('evt-0')]);
+    await broker.declareQueue(queueNamesOf({ consumer, type: PLACED }).work, { 'x-queue-type': 'classic' });
+    bus.subscribe(PLACED, async () => undefined);
+
+    await eventually(() => reported.some((failure) => failure.kind === 'connection' && failure.code === 'AMQP_406'));
+    broker.remember(bus);
   });
 });

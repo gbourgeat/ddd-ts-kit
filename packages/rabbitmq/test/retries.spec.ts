@@ -7,18 +7,19 @@ import {
   type RabbitMqDelivery,
   type RabbitMqFailure,
 } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { AMQP_URL, MAX_ATTEMPTS, RETRY_DELAY_MS } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
+import { MAX_ATTEMPTS, RETRY_DELAY_MS } from './support/environment.js';
 import { PLACED, anEvent } from './support/events.js';
 import { deliveriesOf, failuresOf } from './support/hooks.js';
 import { recorder } from './support/recorder.js';
 import { unique } from './support/unique.js';
 
-describe.skipIf(AMQP_URL === undefined)('RabbitMqEventBus: retries', { timeout: 30_000 }, () => {
+describe.each(BROKERS)('RabbitMqEventBus: retries, %s', { timeout: 30_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(AMQP_URL ?? '');
+    broker = await connect();
   });
 
   afterEach(async () => {

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1f7d369470f657a0 -->
+<!-- translation-of: README.md sha256:cc46bd75b26b1d0e -->
 
 # @ddd-ts-kit/rabbitmq
 
@@ -369,9 +369,13 @@ ces *packages* le font, et esquisse SQS/SNS, qui n'est pas construit.
 
 ## Tests
 
-Le codec de l'enveloppe, les réglages et leurs valeurs par défaut, la description de la
-topologie et les codes d'échec sont couverts sans *broker*, par les tests unitaires. Les autres
-suites ont besoin d'un vrai *broker* et sont ignorées sans `DDD_TS_KIT_TEST_AMQP_URL` :
+Toutes les suites tournent dans les tests unitaires, sans serveur : le bus se connecte à un
+*broker* AMQP tenu en mémoire (`test/support/amqp/`), qui implémente les interfaces d'amqplib et
+garde ce dont le bus dépend (*exchanges* topic et celui par défaut, arguments de *dead-letter*,
+`x-message-ttl`, confirmations et retours de publication, *prefetch*, nouvelle livraison de ce
+qu'un canal fermé n'avait pas acquitté, refus 406 et 404). Avec `DDD_TS_KIT_TEST_AMQP_URL`, les
+mêmes suites tournent une seconde fois contre un vrai *broker*, ce qui garde celui en mémoire
+fidèle :
 
 ```
 docker run -d --rm --name ddd-ts-kit-test-rabbitmq -e RABBITMQ_DEFAULT_USER=kit -e RABBITMQ_DEFAULT_PASS=kit -p 127.0.0.1:5672:5672 rabbitmq:4-management-alpine
@@ -379,11 +383,11 @@ DDD_TS_KIT_TEST_AMQP_URL=amqp://kit:kit@127.0.0.1:5672 npx vitest run packages/r
 docker rm -f ddd-ts-kit-test-rabbitmq
 ```
 
-Le *job* d'intégration de la CI les exécute sur chaque *pull request* qui atteint ce *package*,
+Le *job* d'intégration de la CI les exécute contre un vrai *broker* sur chaque *pull request* qui atteint ce *package*,
 contre RabbitMQ 4.3.6 que démarre `pipeline/github/scripts/start-rabbitmq.sh`, son image épinglée par *digest*.
 
 Elles exécutent la suite de contrat sur des files quorum et sur des files classiques, puis les
 comportements de ce fournisseur, une suite par comportement (`publishing`, `consuming`,
-`correlation`, `retries`, `dead-letters`, `topology`, `connection-loss` à travers un relais TCP
-que le test coupe, `closing`), et toute la chaîne de l'outbox jusqu'à un consommateur idempotent.
+`correlation`, `retries`, `dead-letters`, `topology`, `connection-loss` à travers un réseau que
+le test coupe, un relais TCP devant un vrai *broker*, `closing`), et toute la chaîne de l'outbox jusqu'à un consommateur idempotent.
 Chaque test travaille sur un *exchange* et des files qui lui sont propres, et les supprime.

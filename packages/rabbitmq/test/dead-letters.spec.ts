@@ -6,19 +6,20 @@ import {
   queueNamesOf,
   type RabbitMqFailure,
 } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { AMQP_URL, MAX_ATTEMPTS } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
+import { MAX_ATTEMPTS } from './support/environment.js';
 import { PLACED, anEvent } from './support/events.js';
 import { failuresOf } from './support/hooks.js';
 import { recorder } from './support/recorder.js';
 import { unique } from './support/unique.js';
 import { eventually } from './support/waiting.js';
 
-describe.skipIf(AMQP_URL === undefined)('RabbitMqEventBus: dead letters', { timeout: 30_000 }, () => {
+describe.each(BROKERS)('RabbitMqEventBus: dead letters, %s', { timeout: 30_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(AMQP_URL ?? '');
+    broker = await connect();
   });
 
   afterEach(async () => {
@@ -71,5 +72,36 @@ describe.skipIf(AMQP_URL === undefined)('RabbitMqEventBus: dead letters', { time
     });
 
     expect(await broker.readyIn(queues.retry)).toBe(0);
+  });
+
+  it('replays no more dead messages than the limit', async () => {
+    const consumer = unique('billing');
+    const bus = broker.bus({ consumer });
+    const handled: string[] = [];
+    let failing = true;
+
+    bus.subscribe(PLACED, async (event) => {
+      if (failing) {
+        throw new Error('invoicing is down');
+      }
+
+      handled.push(event.id);
+    });
+
+    await bus.publish([anEvent('evt-1'), anEvent('evt-2'), anEvent('evt-3')]);
+    await broker.settled(bus);
+    failing = false;
+
+    expect(await bus.replayDead({ consumer, type: PLACED }, 2)).toBe(2);
+    await broker.settled(bus);
+
+    expect(handled).toHaveLength(2);
+    expect(await broker.readyIn(queueNamesOf({ consumer, type: PLACED }).dead)).toBe(1);
+  });
+
+  it('rejects, with the code of the broker, the replay of a consumer that has no dead queue', async () => {
+    const bus = broker.bus();
+
+    await expect(bus.replayDead({ consumer: unique('nobody'), type: PLACED })).rejects.toMatchObject({ code: 404 });
   });
 });

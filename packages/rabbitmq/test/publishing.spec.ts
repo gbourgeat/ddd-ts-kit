@@ -1,20 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { type RabbitMqFailure } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { AMQP_URL } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
 import { PLACED, TRACEPARENT, anEvent } from './support/events.js';
-import { FaultyNetwork } from './support/faulty-network.js';
 import { failuresOf } from './support/hooks.js';
 import { recorder } from './support/recorder.js';
 import { unique } from './support/unique.js';
 import { eventually, pause } from './support/waiting.js';
 
-describe.skipIf(AMQP_URL === undefined)('RabbitMqEventBus: publishing', { timeout: 30_000 }, () => {
-  const url = AMQP_URL ?? '';
+describe.each(BROKERS)('RabbitMqEventBus: publishing, %s', { timeout: 30_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(url);
+    broker = await connect();
   });
 
   afterEach(async () => {
@@ -44,13 +42,13 @@ describe.skipIf(AMQP_URL === undefined)('RabbitMqEventBus: publishing', { timeou
   });
 
   it('resolves only once the broker confirmed, and rejects a publication cut mid-flight', async () => {
-    const network = await FaultyNetwork.to(url);
-    const bus = broker.bus({ connection: network.url });
+    const network = await broker.network();
+    const bus = broker.bus({ connection: network.connection });
 
     await bus.assertTopology();
 
     network.holdReplies();
-    const sent = network.bytesFromClient;
+    const sent = network.traffic;
     const publication = bus.publish([anEvent('evt-1'), anEvent('evt-2')]);
 
     const outcome = publication.then(
@@ -58,7 +56,7 @@ describe.skipIf(AMQP_URL === undefined)('RabbitMqEventBus: publishing', { timeou
       (error: unknown) => error,
     );
 
-    await eventually(() => network.bytesFromClient > sent);
+    await eventually(() => network.traffic > sent);
     expect(await Promise.race([outcome, pause(100).then(() => 'still waiting')])).toBe('still waiting');
     network.cutConnections();
 
@@ -93,8 +91,8 @@ describe.skipIf(AMQP_URL === undefined)('RabbitMqEventBus: publishing', { timeou
   });
 
   it('fails with a code, never with the URL, when the broker cannot be reached', async () => {
-    const network = await FaultyNetwork.to(url);
-    const unreachable = network.url;
+    const network = await broker.network();
+    const unreachable = network.connection;
 
     await network.close();
     const reported: RabbitMqFailure[] = [];
@@ -105,5 +103,17 @@ describe.skipIf(AMQP_URL === undefined)('RabbitMqEventBus: publishing', { timeou
     expect(failure).toMatchObject({ code: 'BROKER_UNAVAILABLE', reason: 'ECONNREFUSED' });
     expect(String(failure)).not.toContain('kit');
     expect(reported).toEqual([{ kind: 'connection', code: 'ECONNREFUSED' }]);
+  });
+
+  it('publishes nothing, and connects to nothing, for no event', async () => {
+    const network = await broker.network();
+    const unreachable = network.connection;
+
+    await network.close();
+    const reported: RabbitMqFailure[] = [];
+    const bus = broker.bus({ connection: unreachable, onFailure: failuresOf(reported) });
+
+    expect(await bus.publish([])).toBeUndefined();
+    expect(reported).toEqual([]);
   });
 });
