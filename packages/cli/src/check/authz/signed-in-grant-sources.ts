@@ -12,7 +12,7 @@ const GRANTS_PROPERTY = /^grants\b\s*(?::\s*)?/;
 const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
 
 /** A construction of `SignedInGrantsAuthorizer` whose grants the checker cannot read. */
-export interface UnreadGrants {
+interface UnreadGrants {
   readonly file: SourceFile;
   readonly line: number;
 }

@@ -86,6 +86,18 @@ export const AUTHZ_AND_EVENT_INJECTIONS: readonly Injection[] = [
     checker: true,
   },
   {
+    rule: 'authz/scope-narrows',
+    what: 'a permission every signed-in person holds, which a search of notification narrows by',
+    file: 'src/contexts/notification/application/queries/search-notifications/search-notifications.handler.ts',
+    changes: [
+      {
+        file: 'src/platform/auth/signed-in-grants.ts',
+        to: "import type { Grant } from '@ddd-ts-kit/auth';\nimport { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';\n\n/** What every signed-in person may do, whatever the model decides: here, read every notification. */\nexport const signedInGrants: readonly Grant[] = [notificationPermissions['notification.read']];\n",
+      },
+    ],
+    checker: true,
+  },
+  {
     rule: 'authz/actor-explicit',
     what: 'a handler that reads the ambient actor instead of the one its command carries',
     file: DUE_HANDLER,
