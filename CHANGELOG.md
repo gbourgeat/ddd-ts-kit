@@ -4,6 +4,64 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.83.0
+
+**`DomainRefusal` in the kernel: one class per refusal, named after it, built by static factories named after what it is about.**
+`class InsufficientFunds extends DomainRefusal { readonly code = BankingCodes.InsufficientFunds; static forAccountId(..) { return InsufficientFunds.refusal(message, facts) } }`,
+thrown as `InsufficientFunds.forAccountId(account.id, missing)`. The class sets the code, read from a
+closed list of the codes of the context; `refusal(message, facts?)` types the facts of each factory,
+`.exposing(..)` and `.causedBy(..)` work as on `ConceptError`, and `InsufficientFunds.is(error)` narrows
+with those facts. `ConceptError` and `DomainRefusal` now share `FactualRefusal`, which `@ddd-ts-kit/http`
+reads to write the exposed facts of either form in the problem document. `isRefusal(error, SchedulingCodes)`
+takes the closed list of the codes of a context and narrows to one of them, so that a `switch` on the code
+is exhaustive. Nothing changes for a project that writes `ConceptError`.
+
+**`init` writes `"stack.refusals": "named"`: a refusal is a class of its own, named after what is refused, built by static factories named after what it is about, its code read from the closed list of its context.**
+`throw SlotTaken.forCalendar(calendar.id, slot.startsAt)`, where `SlotTaken` extends `DomainRefusal` in
+`domain/errors/slot-taken.error.ts` and reads `readonly code = SchedulingCodes.SlotTaken` from
+`domain/errors/codes.ts`, the list `SchedulingCodes` of every code of the context and its union type
+`SchedulingCode`. `ddd-ts-kit generate error <context> <Refusal> <factory> [--code CODE]`
+(`generate error banking InsufficientFunds forAccountId`) writes the class, its entry in `codes.ts`, the
+factory and its spec case, each when absent; run again, it changes nothing. A factory starts with `for`,
+`with`, `because`, `on` or `at` (`forCalendar`, `withNotice`, `becauseOf`); the code defaults to the refusal
+in constant case and is unique in the context. Under `named`, `errors/through-factory`,
+`errors/constructor-not-public`, `errors/code-unique` and `errors/known-code` judge the classes of
+`DomainRefusal` and the values of `codes.ts`; `errors/factory-name` refuses a class named `...Error` and a
+factory without one of the five prefixes; the new `errors/code-listed` of `ddd-ts-kit check` holds the list
+(each refusal class reads its code under its own name, `codes.ts` exists as soon as one does, every key is a
+refusal class of the context, every value a string literal in constant case, the list is `as const`);
+`language/glossary-term` judges every class of `domain/errors/` under `named` as it judges an aggregate,
+each word of its name a term of the glossary of its context, a refusal class allowed the qualifiers
+`invalid`, `unknown`, `already`, `too`, `no`, `missing` and `required` besides (`SlotTaken`, `BookingTooLate`
+and `InvalidAppointment` pass with `Slot`, `Take`, `Booking`, `Late` and `Appointment` in the glossary);
+`codes.ts` is not judged. `generate error` refuses a refusal named with a word the glossary does not define,
+and `--term "<Term>=<meaning>"` adds it in the same command. `generate domain-error` is refused under
+`named`, pointing to `generate error`. The two earlier
+forms keep working as they are: a project that says `"factories"` (one `ConceptError` class per concept)
+is judged by the rules of that form, and a config without the key is still `classes`.
+`ddd-ts-kit error-factories` now moves a project to `named` (`--to named`, the default), from either form: `--plan`
+proposes, per refusal, a class (the PascalCase of its code, which it keeps) and a factory (`for<Concept>`),
+both editable; `--apply` writes `codes.ts` in each context, one class file per refusal and its spec,
+rewrites every usage (`AppointmentError.ended(a, b)` becomes `AppointmentEnded.forAppointment(a, b)`,
+`AppointmentError.is(error, 'APPOINTMENT_ENDED')` becomes `AppointmentEnded.is(error)`, imports included),
+removes the concept classes left empty, sets the key, and lists what it cannot rewrite (a bare
+`AppointmentError.is(error)`, `CodeOf<typeof AppointmentError>`); `--plan` and `--apply` both list each class
+whose name uses words the glossary of its context does not define. `--to factories` keeps the earlier move
+from one class per error to concept classes.
+
+To move: nothing is required, a project keeps its form. To adopt named refusals, run
+`npx ddd-ts-kit error-factories --plan`, edit the class and factory names in `error-factories.plan.json`,
+then `npx ddd-ts-kit error-factories --apply`, run the formatter and `npx ddd-ts-kit check`, and settle
+the lines it lists as left to you.
+
+**`event-sourcing/upcaster-required` sees a change inside the type arguments of a stored shape.** The fingerprint of a stored event read a member such as `totals: Record<string, number>` as two pieces split at its comma, and sorted them with the other members: `{ a: Record<string, number>; b: Record<number, string> }` and `{ a: Record<string, string>; b: Record<number, number> }` had one fingerprint, so a stored event could change in place unseen. A member is now read whole, an arrow `=>` inside its type arguments included. A version recorded by 0.82.0 or earlier for such a type is still taken for the same shape, `docs --stored-events` records it again as the kit reads it now, and `docs --check` reports it (`formerly recorded <event> version <n> in stored-events.lock.json`, `formerlyRecorded` in JSON) until it is.
+
+To move: in a project whose stored events hold a type argument list with a comma, a semicolon or a line break (`Record<string, number>`, `Map<K, V>`), `docs --check` fails right after the upgrade, and with it the generated pipeline (`npm run docs:check`), until the lock is recorded again: run `npx ddd-ts-kit docs --stored-events` once, with the codecs as they are, and commit `stored-events.lock.json` in the same pull request as the upgrade. It rewrites only the versions `docs --check` lists as formerly recorded. Any other shape keeps its fingerprint, and its project sees no change.
+
+**`signedDownloadUrl` and `signedUploadUrl` of `LocalFileStorage` and `InMemoryFileStorage` reject the promise they return for a key or an expiry they refuse.** They threw at the call, before any promise, so a `.catch(...)` chained on the call missed the `FileError` (`INVALID_FILE_KEY`, `INVALID_FILE_URL_EXPIRY`). They now behave as `S3FileStorage` always did; code that awaits the call sees no difference.
+
+**`authz/policy-asked` reads the permission of `definePolicy` from the object written as its first argument only.** It took the first `{` anywhere after `definePolicy(`: in a file holding `definePolicy(options)` and, further on, any object with a `permission` entry, that permission counted as refined by a policy, and every handler of a use case requiring it was reported as never asking it. A policy whose options are not written in the call refines no permission the rule can see, as before.
+
 ## 0.82.0
 
 **`drizzle-generate --replay` replays only what forks, and refuses to lose a migration edited by
