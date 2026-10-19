@@ -211,7 +211,17 @@ describe('ddd-ts-kit affected --run', () => {
   let probed: string;
 
   beforeAll(() => {
-    root = committedProject('shop', '--context', 'billing:core', '--context', 'catalog:supporting');
+    // npm runs the script: every runner of the pipeline has it, not every one has pnpm.
+    root = committedProject(
+      'shop',
+      '--context',
+      'billing:core',
+      '--context',
+      'catalog:supporting',
+      '--package-manager',
+      'npm',
+    );
+
     cli(root, 'generate', 'context', 'shipping', '--classification', 'supporting', '--upstream', 'billing');
     probed = path.join(tempDir('probe'), 'probed.json');
 
@@ -244,10 +254,6 @@ describe('ddd-ts-kit affected --run', () => {
   const probe = (...args: string[]): { code: number; stdout: string; run: unknown } => {
     fs.rmSync(probed, { force: true });
     const result = cli(root, 'affected', ...args, '--run', 'probe');
-
-    // pnpm writes its lockfile and settles its workspace file on a first run: committed by a later change, they would reach every context.
-    git(root, 'checkout', '--', '.');
-    git(root, 'clean', '--force', '--quiet');
 
     return {
       code: result.code,
