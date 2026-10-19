@@ -119,6 +119,11 @@ export class RowsSuite extends ReadModelStoreSuite {
       this.expect((await this.store.get('a1'))?.title).toBe('back');
     });
 
+    this.it('inserts no trace of a deleted row under a key it does not hold', async () => {
+      this.expect(await this.subject.table.insert({ key: 'a1', row: undefined, stamp: at('evt-1', 1) })).toBe(false);
+      this.expect(await this.subject.table.find('a1')).toBe(undefined);
+    });
+
     this.it('ignores a deletion older than the row, or of a row it never held', async () => {
       await this.put(row('a1'), at('evt-2', 2));
 

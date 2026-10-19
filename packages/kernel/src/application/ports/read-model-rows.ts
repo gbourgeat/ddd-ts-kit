@@ -9,7 +9,7 @@ export abstract class ReadModelRows<Row> {
   /** The row of the key with its stamp, a deleted one included (without `row`). */
   abstract find(key: string): Promise<StampedRow<Row> | undefined>;
 
-  /** Inserts unless the key exists, and says whether it did. */
+  /** Inserts unless the key exists or the entry has no `row`, and says whether it did. */
   abstract insert(entry: StampedRow<Row>): Promise<boolean>;
 
   /** Replaces the row of the key if it still holds the stamp `held`, and says whether it did. */
