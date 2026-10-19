@@ -19,8 +19,8 @@ import {
   type OutboxRelayFailure,
 } from '@ddd-ts-kit/events';
 import type { NatsFailure } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { NATS_URL } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
 import { failuresOf } from './support/hooks.js';
 import { eventually } from './support/waiting.js';
 
@@ -131,14 +131,14 @@ class PaymentProviderDown extends Error {
   readonly code = 'PAYMENT_PROVIDER_DOWN';
 }
 
-describe.skipIf(NATS_URL === undefined)(
-  'outbox, relay, NATS JetStream and an idempotent consumer',
+describe.each(BROKERS)(
+  'outbox, relay, NATS JetStream and an idempotent consumer, %s',
   { timeout: 30_000 },
-  () => {
+  (_name, connect) => {
     let broker: Broker;
 
     beforeEach(async () => {
-      broker = await Broker.connect(NATS_URL ?? '');
+      broker = await connect();
     });
 
     afterEach(async () => {

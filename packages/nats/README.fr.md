@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f38da105c12a0ddc -->
+<!-- translation-of: README.md sha256:bfde6b4ebfa4d955 -->
 
 # @ddd-ts-kit/nats
 
@@ -437,9 +437,14 @@ des options (`consumer`, `retry`, `reconnect`, `onFailure`, `onDelivery`) et les
 
 ## Tests
 
-Le codec de l'enveloppe, les réglages et leurs valeurs par défaut, la description de la
-topologie et les codes d'échec sont couverts sans serveur, par les tests unitaires. Les autres
-suites ont besoin d'un vrai serveur et sont ignorées sans `DDD_TS_KIT_TEST_NATS_URL` :
+Toutes les suites tournent dans les tests unitaires : le bus se connecte, par le vrai client et
+son transport TCP, à un serveur NATS que le test démarre dans son propre processus, sur un port
+libre (`test/support/server/`). Il parle le protocole de base et répond à ce que le bus demande à
+JetStream comme nats-server 2.15 : flux à rétention par limites et leur fenêtre de déduplication,
+consommateurs durables en *pull* avec acquittement explicite, `ack_wait`, `max_deliver`, `-NAK`
+différé, `+TERM`, lectures directes, erreurs 10058, 10059, 10148 et 10026. Avec
+`DDD_TS_KIT_TEST_NATS_URL`, les mêmes suites tournent une seconde fois contre un vrai serveur, ce
+qui garde celui en mémoire fidèle :
 
 ```
 docker run -d --rm --name ddd-ts-kit-test-nats -p 127.0.0.1:4222:4222 nats:2.15.0-alpine -js
@@ -447,7 +452,7 @@ DDD_TS_KIT_TEST_NATS_URL=nats://127.0.0.1:4222 npx vitest run packages/nats
 docker rm -f ddd-ts-kit-test-nats
 ```
 
-Le *job* d'intégration de la CI les exécute sur chaque *pull request* qui atteint ce *package*,
+Le *job* d'intégration de la CI les exécute contre un vrai serveur sur chaque *pull request* qui atteint ce *package*,
 contre NATS Server 2.15.0 avec JetStream que démarre `pipeline/github/scripts/start-nats.sh`, son image épinglée par *digest*.
 
 Elles exécutent la suite de contrat sur le stockage fichier et sur le stockage mémoire, puis les

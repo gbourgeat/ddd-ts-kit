@@ -7,18 +7,19 @@ import {
   type NatsDelivery,
   type NatsFailure,
 } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { MAX_ATTEMPTS, NATS_URL, RETRY_DELAY_MS } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
+import { MAX_ATTEMPTS, RETRY_DELAY_MS } from './support/environment.js';
 import { PLACED, anEvent } from './support/events.js';
 import { deliveriesOf, failuresOf } from './support/hooks.js';
 import { recorder } from './support/recorder.js';
 import { unique } from './support/unique.js';
 
-describe.skipIf(NATS_URL === undefined)('NatsEventBus: retries', { timeout: 30_000 }, () => {
+describe.each(BROKERS)('NatsEventBus: retries, %s', { timeout: 30_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(NATS_URL ?? '');
+    broker = await connect();
   });
 
   afterEach(async () => {

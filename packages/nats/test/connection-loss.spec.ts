@@ -1,19 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { type NatsFailure } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { NATS_URL } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
 import { PLACED, anEvent } from './support/events.js';
 import { FaultyNetwork } from './support/faulty-network.js';
 import { failuresOf } from './support/hooks.js';
 import { recorder } from './support/recorder.js';
 import { eventually } from './support/waiting.js';
 
-describe.skipIf(NATS_URL === undefined)('NatsEventBus: when the connection is lost', { timeout: 30_000 }, () => {
-  const url = NATS_URL ?? '';
+describe.each(BROKERS)('NatsEventBus: when the connection is lost, %s', { timeout: 30_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(url);
+    broker = await connect();
   });
 
   afterEach(async () => {
@@ -21,7 +20,7 @@ describe.skipIf(NATS_URL === undefined)('NatsEventBus: when the connection is lo
   });
 
   it('fails fast while the server is away, then publishes and consumes again by itself', async () => {
-    const network = await FaultyNetwork.to(url);
+    const network = await FaultyNetwork.to(broker.url);
     const reported: NatsFailure[] = [];
     const bus = broker.bus({ connection: network.url, onFailure: failuresOf(reported) });
     const billing = recorder();
@@ -57,7 +56,7 @@ describe.skipIf(NATS_URL === undefined)('NatsEventBus: when the connection is lo
   });
 
   it('receives, once back, what was published while it was away', async () => {
-    const network = await FaultyNetwork.to(url);
+    const network = await FaultyNetwork.to(broker.url);
     const publisher = broker.bus();
     const consumerBus = broker.bus({ connection: network.url });
     const billing = recorder();

@@ -1,17 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { NatsEventBus } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { NATS_URL } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
 import { PLACED, TRACEPARENT, anEvent } from './support/events.js';
 import { recorder } from './support/recorder.js';
 import { unique } from './support/unique.js';
+import { eventually } from './support/waiting.js';
 
-describe.skipIf(NATS_URL === undefined)('NatsEventBus: consuming', { timeout: 30_000 }, () => {
-  const url = NATS_URL ?? '';
+describe.each(BROKERS)('NatsEventBus: consuming, %s', { timeout: 30_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(url);
+    broker = await connect();
   });
 
   afterEach(async () => {
@@ -19,7 +19,7 @@ describe.skipIf(NATS_URL === undefined)('NatsEventBus: consuming', { timeout: 30
   });
 
   it('needs a consumer name', () => {
-    const anonymous = new NatsEventBus({ connection: url });
+    const anonymous = new NatsEventBus({ connection: broker.url });
 
     expect(() => anonymous.subscribe(PLACED, async () => undefined)).toThrow(
       expect.objectContaining({ code: 'CONSUMER_NAME_REQUIRED' }),
@@ -77,5 +77,40 @@ describe.skipIf(NATS_URL === undefined)('NatsEventBus: consuming', { timeout: 30
     expect(billing.ids()).toEqual(['evt-1']);
     expect(shipping.ids()).toEqual(['evt-1']);
     expect(bus.describeTopology().consumers).toHaveLength(2);
+  });
+
+  it('needs a consumer name for forConsumer too', () => {
+    expect(() => broker.bus().forConsumer('')).toThrow(expect.objectContaining({ code: 'CONSUMER_NAME_REQUIRED' }));
+  });
+
+  it('starts consuming a subscription made once it is connected, before it publishes again', async () => {
+    const bus = broker.bus();
+    const billing = recorder();
+
+    await bus.assertTopology();
+    bus.subscribe(PLACED, billing.handler);
+    await bus.publish([anEvent('evt-1')]);
+    await broker.settled(bus);
+
+    expect(billing.ids()).toEqual(['evt-1']);
+  });
+
+  it('stops reading when the last handler unsubscribes, while its durable consumer keeps its place', async () => {
+    const consumer = unique('billing');
+    const bus = broker.bus({ consumer });
+    const [first, second] = [recorder(), recorder()];
+    const subscriptions = [bus.subscribe(PLACED, first.handler), bus.subscribe(PLACED, second.handler)];
+
+    await bus.publish([anEvent('evt-1')]);
+    await broker.settled(bus);
+    subscriptions[0]?.unsubscribe();
+    await bus.publish([anEvent('evt-2')]);
+    await broker.settled(bus);
+    subscriptions[1]?.unsubscribe();
+    await bus.publish([anEvent('evt-3')]);
+
+    await eventually(async () => (await broker.waitingFor(broker.namesOf({ consumer, type: PLACED }).durable)) === 1);
+    expect(first.ids()).toEqual(['evt-1']);
+    expect(second.ids()).toEqual(['evt-1', 'evt-2']);
   });
 });
