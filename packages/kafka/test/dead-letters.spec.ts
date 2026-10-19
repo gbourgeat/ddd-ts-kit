@@ -7,17 +7,18 @@ import {
   deadTopicOf,
   type KafkaFailure,
 } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { KAFKA_BROKERS, MAX_ATTEMPTS } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
+import { MAX_ATTEMPTS } from './support/environment.js';
 import { PLACED, anEvent } from './support/events.js';
 import { failuresOf } from './support/hooks.js';
 import { recorder } from './support/recorder.js';
 
-describe.skipIf(KAFKA_BROKERS === undefined)('KafkaEventBus: dead letters', { timeout: 60_000 }, () => {
+describe.each(BROKERS)('KafkaEventBus: dead letters, %s', { timeout: 60_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(KAFKA_BROKERS ?? '');
+    broker = await connect();
   });
 
   afterEach(async () => {

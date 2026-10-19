@@ -1,4 +1,4 @@
-import type { GlobalConfig } from '@confluentinc/kafka-javascript';
+import type { GlobalConfig, KafkaJS } from '@confluentinc/kafka-javascript';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import type { KafkaDelivery } from './kafka-delivery.js';
 import type { KafkaFailure } from './kafka-failure.js';
@@ -11,6 +11,13 @@ export interface KafkaEventBusOptions {
   readonly brokers: string | readonly string[];
   /** librdkafka properties given to every client of the bus: TLS, SASL, `client.id`. */
   readonly client?: GlobalConfig;
+  /**
+   * The KafkaJS client the bus builds its producer, consumers and admin from, instead of one
+   * made of `brokers` and `client`, which it then does not read: a client the application
+   * configures or instruments itself, or a cluster held in memory in tests. The bus
+   * disconnects what it builds, never the client itself.
+   */
+  readonly cluster?: KafkaJS.Kafka;
   /** The consuming context `subscribe` works for: its name is the consumer group id. */
   readonly consumer?: string;
   /** The topic of an event type. Default: the type itself, one topic per event type. */

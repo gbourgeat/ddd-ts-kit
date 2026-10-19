@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Broker } from './support/broker.js';
-import { KAFKA_BROKERS } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
 import { PLACED, anEvent } from './support/events.js';
 import { recorder } from './support/recorder.js';
 import { eventually, pause } from './support/waiting.js';
 
-describe.skipIf(KAFKA_BROKERS === undefined)('KafkaEventBus: closing', { timeout: 60_000 }, () => {
+describe.each(BROKERS)('KafkaEventBus: closing, %s', { timeout: 60_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(KAFKA_BROKERS ?? '');
+    broker = await connect();
   });
 
   afterEach(async () => {
@@ -77,5 +77,17 @@ describe.skipIf(KAFKA_BROKERS === undefined)('KafkaEventBus: closing', { timeout
     expect(() => bus.subscribe(PLACED, async () => undefined)).toThrow(
       expect.objectContaining({ code: 'EVENT_BUS_CLOSED' }),
     );
+  });
+
+  it('refuses to declare its topology or to replay once closed', async () => {
+    const bus = broker.bus();
+
+    await bus.close();
+
+    await expect(bus.assertTopology()).rejects.toMatchObject({ code: 'EVENT_BUS_CLOSED' });
+
+    await expect(bus.replayDead({ consumer: 'billing', type: PLACED })).rejects.toMatchObject({
+      code: 'EVENT_BUS_CLOSED',
+    });
   });
 });

@@ -1,14 +1,28 @@
 import { KafkaJS } from '@confluentinc/kafka-javascript';
 import { KafkaEventBus, type KafkaEventBusOptions } from '../../src/index.js';
-import { MAX_ATTEMPTS, RETRY_DELAY_MS } from './environment.js';
+import { InMemoryKafka } from './cluster/in-memory-kafka.js';
+import { KAFKA_RELAY, MAX_ATTEMPTS, RETRY_DELAY_MS } from './environment.js';
+import { FaultyNetwork } from './faulty-network.js';
+import { MemoryNetwork } from './memory-network.js';
+import type { Network, NetworkConnection } from './network.js';
 import type { StoredRecord } from './stored-record.js';
 import { unique } from './unique.js';
 import { eventually } from './waiting.js';
 
+interface Reach {
+  /** What a bus connects with: the bootstrap brokers, or the in-memory cluster. */
+  readonly connection: NetworkConnection;
+  /** A network the test can sabotage, when this broker has one. */
+  readonly network: (() => Promise<Network>) | undefined;
+  /** What a bus connects with to reach nothing. */
+  readonly unreachable: () => NetworkConnection;
+}
+
 /**
  * A second, plain Kafka client next to the buses under test: it reads the topics, drops raw
  * records in, measures the lag of the groups, and deletes what the test created. Every topic
- * and group of a test starts with the namespace of its `Broker`.
+ * and group of a test starts with the namespace of its `Broker`. On a real cluster or on the
+ * in-memory one, the same specs hold.
  */
 export class Broker {
   readonly namespace = unique('t');
@@ -16,23 +30,62 @@ export class Broker {
   private readonly buses: KafkaEventBus[] = [];
 
   private constructor(
-    private readonly brokers: string,
+    private readonly reach: Reach,
     private readonly kafka: KafkaJS.Kafka,
     private readonly admin: KafkaJS.Admin,
     private readonly producer: KafkaJS.Producer,
   ) {}
 
   static async connect(brokers: string): Promise<Broker> {
+    const relay = KAFKA_RELAY;
+
     const kafka = new KafkaJS.Kafka({
       kafkaJS: { brokers: brokers.split(','), logLevel: KafkaJS.logLevel.NOTHING },
     });
 
+    return Broker.on(kafka, {
+      connection: { brokers },
+      network: relay === undefined ? undefined : () => FaultyNetwork.from(relay),
+      unreachable: () => ({ brokers: '127.0.0.1:1' }),
+    });
+  }
+
+  static async inMemory(): Promise<Broker> {
+    const cluster = new InMemoryKafka();
+
+    return Broker.on(cluster, {
+      connection: { cluster },
+      network: async () => new MemoryNetwork(cluster),
+      unreachable: () => {
+        const network = new MemoryNetwork(cluster);
+
+        void network.close();
+
+        return network.connection;
+      },
+    });
+  }
+
+  private static async on(kafka: KafkaJS.Kafka, reach: Reach): Promise<Broker> {
     const admin = kafka.admin();
     const producer = kafka.producer({ kafkaJS: { allowAutoTopicCreation: false }, 'linger.ms': 0 });
 
     await Promise.all([admin.connect(), producer.connect()]);
 
-    return new Broker(brokers, kafka, admin, producer);
+    return new Broker(reach, kafka, admin, producer);
+  }
+
+  /** A network between a bus and this broker that the test can sabotage. */
+  network(): Promise<Network> {
+    if (this.reach.network === undefined) {
+      throw new Error('This broker has no network to sabotage: set DDD_TS_KIT_TEST_KAFKA_RELAY.');
+    }
+
+    return this.reach.network();
+  }
+
+  unreachable(): NetworkConnection {
+    return this.reach.unreachable();
   }
 
   readonly topicOf = (type: string): string => `${this.namespace}.${type}`;
@@ -45,7 +98,8 @@ export class Broker {
   /** A bus on topics of this test, with fast retries. Closed and cleaned by `dispose`. */
   bus(options: Partial<KafkaEventBusOptions> = {}): KafkaEventBus {
     const bus = new KafkaEventBus({
-      brokers: this.brokers,
+      brokers: 'in-memory',
+      ...this.reach.connection,
       consumer: this.consumer('consumer'),
       topicOf: this.topicOf,
       retry: { delayMs: RETRY_DELAY_MS, maxAttempts: MAX_ATTEMPTS },

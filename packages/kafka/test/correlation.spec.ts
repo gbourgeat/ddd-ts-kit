@@ -7,16 +7,16 @@ import {
   systemActor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
-import { Broker } from './support/broker.js';
-import { KAFKA_BROKERS } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
 import { PLACED, anEvent } from './support/events.js';
 import { InvoicingFailed } from './support/invoicing-failed.js';
 
-describe.skipIf(KAFKA_BROKERS === undefined)('KafkaEventBus: correlation', { timeout: 60_000 }, () => {
+describe.each(BROKERS)('KafkaEventBus: correlation, %s', { timeout: 60_000 }, (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
-    broker = await Broker.connect(KAFKA_BROKERS ?? '');
+    broker = await connect();
   });
 
   afterEach(async () => {

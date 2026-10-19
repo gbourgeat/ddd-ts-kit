@@ -19,8 +19,8 @@ import {
   type OutboxRelayFailure,
 } from '@ddd-ts-kit/events';
 import type { KafkaFailure } from '../src/index.js';
-import { Broker } from './support/broker.js';
-import { KAFKA_BROKERS } from './support/environment.js';
+import type { Broker } from './support/broker.js';
+import { BROKERS } from './support/brokers.js';
 import { failuresOf } from './support/hooks.js';
 import { eventually } from './support/waiting.js';
 
@@ -138,83 +138,79 @@ class PaymentProviderDown extends Error {
   readonly code = 'PAYMENT_PROVIDER_DOWN';
 }
 
-describe.skipIf(KAFKA_BROKERS === undefined)(
-  'outbox, relay, Kafka and an idempotent consumer',
-  { timeout: 60_000 },
-  () => {
-    let broker: Broker;
+describe.each(BROKERS)('outbox, relay, Kafka and an idempotent consumer, %s', { timeout: 60_000 }, (_name, connect) => {
+  let broker: Broker;
 
-    beforeEach(async () => {
-      broker = await Broker.connect(KAFKA_BROKERS ?? '');
+  beforeEach(async () => {
+    broker = await connect();
+  });
+
+  afterEach(async () => {
+    await broker.dispose();
+  });
+
+  it('has each order invoiced exactly once despite a relay retry and a redelivery', async () => {
+    const relayFailures: OutboxRelayFailure[] = [];
+    const busFailures: KafkaFailure[] = [];
+    const signal = new InMemoryRelaySignal();
+    const outbox = new InMemoryOutboxStore({ signal });
+    const ordering = new Ordering(new OutboxPublisher(outbox));
+    const producerBus = broker.bus({ keyOf: orderOf });
+
+    const relay = new OutboxRelay({
+      store: outbox,
+      publisher: new LosingTheFirstConfirmation(producerBus),
+      clock: new SystemClock(),
+      backoff: { baseMs: 20 },
+      wakeOn: signal,
+      onFailure: (failure) => relayFailures.push(failure),
     });
 
-    afterEach(async () => {
-      await broker.dispose();
-    });
+    const billingBus = broker.bus({ onFailure: failuresOf(busFailures) });
+    const database = new BillingDatabase();
+    const deliveries: string[] = [];
+    let providerOutages = 1;
 
-    it('has each order invoiced exactly once despite a relay retry and a redelivery', async () => {
-      const relayFailures: OutboxRelayFailure[] = [];
-      const busFailures: KafkaFailure[] = [];
-      const signal = new InMemoryRelaySignal();
-      const outbox = new InMemoryOutboxStore({ signal });
-      const ordering = new Ordering(new OutboxPublisher(outbox));
-      const producerBus = broker.bus({ keyOf: orderOf });
+    const subscriptions = subscribeAll(billingBus, [
+      consume(orderPlaced, { consumer: 'billing', processed: database, unitOfWork: database }, async (event) => {
+        deliveries.push(event.id);
+        database.invoice(event.payload.orderId);
 
-      const relay = new OutboxRelay({
-        store: outbox,
-        publisher: new LosingTheFirstConfirmation(producerBus),
-        clock: new SystemClock(),
-        backoff: { baseMs: 20 },
-        wakeOn: signal,
-        onFailure: (failure) => relayFailures.push(failure),
-      });
+        if (providerOutages > 0) {
+          providerOutages -= 1;
+          throw new PaymentProviderDown();
+        }
+      }),
+    ]);
 
-      const billingBus = broker.bus({ onFailure: failuresOf(busFailures) });
-      const database = new BillingDatabase();
-      const deliveries: string[] = [];
-      let providerOutages = 1;
+    const everyDelivery: string[] = [];
 
-      const subscriptions = subscribeAll(billingBus, [
-        consume(orderPlaced, { consumer: 'billing', processed: database, unitOfWork: database }, async (event) => {
-          deliveries.push(event.id);
-          database.invoice(event.payload.orderId);
+    billingBus.subscribe(orderPlaced.type, async (event) => void everyDelivery.push(event.id));
+    await billingBus.assertTopology();
 
-          if (providerOutages > 0) {
-            providerOutages -= 1;
-            throw new PaymentProviderDown();
-          }
-        }),
-      ]);
+    relay.start({ intervalMs: 25 });
+    await ordering.placeOrder('order-1');
+    await ordering.placeOrder('order-2');
+    await ordering.placeOrder('order-3');
+    await eventually(async () => (await outbox.stats()).pending === 0);
+    await relay.stop();
+    await broker.settled(billingBus);
+    subscriptions.unsubscribe();
 
-      const everyDelivery: string[] = [];
+    expect(ordering.orders).toEqual(['order-1', 'order-2', 'order-3']);
+    expect(database.invoicedOrders().sort()).toEqual(['order-1', 'order-2', 'order-3']);
+    expect(await outbox.stats()).toEqual({ pending: 0, failed: 0, dead: 0 });
 
-      billingBus.subscribe(orderPlaced.type, async (event) => void everyDelivery.push(event.id));
-      await billingBus.assertTopology();
+    expect(relayFailures).toEqual([
+      expect.objectContaining({ kind: 'publish', eventId: 'evt-1', code: 'CONFIRMATION_LOST', dead: false }),
+    ]);
 
-      relay.start({ intervalMs: 25 });
-      await ordering.placeOrder('order-1');
-      await ordering.placeOrder('order-2');
-      await ordering.placeOrder('order-3');
-      await eventually(async () => (await outbox.stats()).pending === 0);
-      await relay.stop();
-      await broker.settled(billingBus);
-      subscriptions.unsubscribe();
+    expect(busFailures).toEqual([
+      expect.objectContaining({ kind: 'handler', code: 'PAYMENT_PROVIDER_DOWN', attempt: 1, dead: false }),
+    ]);
 
-      expect(ordering.orders).toEqual(['order-1', 'order-2', 'order-3']);
-      expect(database.invoicedOrders().sort()).toEqual(['order-1', 'order-2', 'order-3']);
-      expect(await outbox.stats()).toEqual({ pending: 0, failed: 0, dead: 0 });
-
-      expect(relayFailures).toEqual([
-        expect.objectContaining({ kind: 'publish', eventId: 'evt-1', code: 'CONFIRMATION_LOST', dead: false }),
-      ]);
-
-      expect(busFailures).toEqual([
-        expect.objectContaining({ kind: 'handler', code: 'PAYMENT_PROVIDER_DOWN', attempt: 1, dead: false }),
-      ]);
-
-      // Three events, one written twice by the relay, one read again after the failure.
-      expect(everyDelivery.length).toBeGreaterThanOrEqual(5);
-      expect(deliveries.length).toBe(4);
-    });
-  },
-);
+    // Three events, one written twice by the relay, one read again after the failure.
+    expect(everyDelivery.length).toBeGreaterThanOrEqual(5);
+    expect(deliveries.length).toBe(4);
+  });
+});
