@@ -1,5 +1,5 @@
 import { HasRole, RouteGroup } from '@ddd-ts-kit/http';
-import { Role } from '@/platform/auth/role';
+import { Role } from '@/platform/auth/authorization/role';
 
 /**
  * The routes of the audit trail, for the operators of the platform only: the role is asked at

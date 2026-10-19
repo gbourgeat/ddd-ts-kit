@@ -1,10 +1,10 @@
 import type { AuthorizationContext } from '@ddd-ts-kit/auth';
-import type { RoleGrant } from '@/platform/auth/role-grant';
+import type { RoleGrant } from '@/platform/auth/authorization/role-grant';
 import { auditPermissions } from '@/platform/audit/audit.permissions';
 import { identityPermissions } from '@/contexts/identity/application/authorization/identity.permissions';
 import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
-import { Role } from '@/platform/auth/role';
+import { Role } from '@/platform/auth/authorization/role';
 
 /**
  * What a role of the token grants before any relationship is read. Kept short on purpose: a

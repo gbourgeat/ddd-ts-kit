@@ -1,7 +1,7 @@
 import type { RelationTuple, RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
-import { createTupleStore } from '@/platform/auth/create-tuple-store';
+import { createTupleStore } from '@/platform/auth/relationships/create-tuple-store';
 
 const docManages: RelationTuple = { object: 'practice:p1', relation: 'manager', subject: 'user:doc' };
 

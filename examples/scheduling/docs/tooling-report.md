@@ -358,7 +358,7 @@ time, instead of maintaining figures that events increment or recount.
 | Consumers of each appointment event | 2 | 1 |
 
 Outside the context: three lines less in `src/platform/` (`compose-application.ts`,
-`auth/relate-system-actors.ts`, `job-settings.ts`), four less in
+`auth/relationships/relate-system-actors.ts`, `job-settings.ts`), four less in
 `test/e2e/journey-observability.e2e.spec.ts` (the trace of a booking lost a consumer). The gate
 counts 1 282 unit and adapter tests (1 288 before) and the same 57 end to end. The 210 source
 lines the context lost, net, were the part that defended a copy: recounting on every event, choosing between
@@ -1050,7 +1050,7 @@ decision was asked. The HTTP pipeline now reports every refusal of a guard to `o
 and `auditGuardRefusals` of `@ddd-ts-kit/audit` records it: category `authorization`, action
 `http:<operationId>`, outcome `denied`, the code of the refusal as reason, and the actor, the
 session and the correlation of the request. Three files changed here, as `init` now writes them:
-`audit/create-audit.ts` (the hook, next to `decisions`), `auth/http-boundary.ts` (`refusals` in,
+`audit/create-audit.ts` (the hook, next to `decisions`), `auth/authentication/http-boundary.ts` (`refusals` in,
 `onGuardRefusal` out) and `compose-application.ts` (the hook built from the bound `AuditTrail`,
 `Clock` and `IdGenerator`). `identity-open-practice.e2e.spec.ts` now holds that the refusal of
 a person who is not a platform admin is in the trail, under `http:openPractice`.
@@ -1267,7 +1267,7 @@ What else is a closed list of values in the example, with what holds it:
 | Category | Count | Declared in | Read as | State |
 |---|---|---|---|---|
 | Statuses and kinds of the model | 7 vocabularies, 33 values | `domain/vocabularies/*.vocabulary.ts` | `AppointmentStatus.NoShow` | typed, `language/declared-vocabulary` |
-| Realm roles | 1 vocabulary, 3 values | `src/platform/auth/role.ts` | `Role.Admin` | typed, same rule |
+| Realm roles | 1 vocabulary, 3 values | `src/platform/auth/authorization/role.ts` | `Role.Admin` | typed, same rule |
 | Permission ids | 31 | `definePermissions` of each context | `schedulingPermissions['appointment.book']` | typed, same rule |
 | Domain event names | 22 | `static readonly eventName` of the event class | `AppointmentExpired.eventName`, 33 reactions | typed, `events/name-format`, `declarations/role-declared` |
 | Integration event types | 14 declarations | `type` of the published-language declaration | `appointmentExpiredV1.type`, 5 handlers | typed |

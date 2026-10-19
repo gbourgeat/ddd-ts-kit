@@ -1,6 +1,6 @@
 import { HasRole, RouteGroup } from '@ddd-ts-kit/http';
 import { PracticesRoutes } from '@/contexts/identity/presentation/http/practices.routes';
-import { Role } from '@/platform/auth/role';
+import { Role } from '@/platform/auth/authorization/role';
 
 /**
  * Opening a practice is for the administrator of the network it opens in: the role is asked at

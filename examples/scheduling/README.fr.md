@@ -103,8 +103,8 @@ et le mot de passe de chacun est son nom d'utilisateur.
 | Un service du domaine sur deux agrégats | `scheduling/domain/services/scheduler.service.ts` |
 | Un chevauchement décidé par le domaine et par une contrainte d'exclusion de PostgreSQL | `scheduling/infrastructure/persistence/create-scheduling-tables.schema.ts`, `knex-appointment.repository.ts`, `test/integration/concurrent-booking.spec.ts` |
 | Des permissions sur chaque cas d'usage, des politiques sur l'élément chargé | `scheduling/application/authorization/` |
-| Des relations (à la Zanzibar) combinées aux rôles | `src/platform/auth/relationship-schema.ts`, `resource-permissions.ts`, `role-grants.ts`, `roles-and-relationships.authorizer.ts`, [ADR 0001](docs/adr/0001-combine-token-roles-with-relationships-in-one-authorizer.fr.md) |
-| Des tuples de relation persistants, écrits dans l'unité de travail | `src/platform/auth/knex-relation-tuple-store.ts` ; `*/application/ports/*-relationships.port.ts` et leurs adaptateurs |
+| Des relations (à la Zanzibar) combinées aux rôles | `src/platform/auth/relationships/relationship-schema.ts`, `resource-permissions.ts`, `role-grants.ts`, `roles-and-relationships.authorizer.ts`, [ADR 0001](docs/adr/0001-combine-token-roles-with-relationships-in-one-authorizer.fr.md) |
+| Des tuples de relation persistants, écrits dans l'unité de travail | `src/platform/auth/relationships/knex-relation-tuple-store.ts` ; `*/application/ports/*-relationships.port.ts` et leurs adaptateurs |
 | Des recherches restreintes dans la requête SQL par le périmètre d'accès, avec des critères | `scheduling/application/queries/search-appointments/`, `search-practice-agenda/`, `analytics/application/queries/search-occupancy/` |
 | Une différence au niveau des champs : occupé sans le nom | `scheduling/application/queries/get-calendar-day/` |
 | Un champ réservé à l'équipe, dans toutes les représentations : la note interne, cachée au patient, en lecture seule pour un assistant, écrite par qui tient l'agenda | `scheduling/presentation/http/appointments/book-appointment/book-appointment.controller.ts`, `get-appointment/get-appointment.controller.ts` (`withFieldAccess`), `test/e2e/book-appointment.e2e.spec.ts` |
@@ -256,7 +256,7 @@ que par `availability_delegate`. `scheduling` n'a jamais copié la délégation.
 ![La vérification de scheduling:appointment.book sur calendar:c1 pour user:linus : la permission signifie run sur le calendrier, qui est run sur son poste desk:p1.grace par le tuple écrit par scheduling à la création du calendrier ; run sur le poste vaut pour son holder user:grace, pour un delegate, et pour les responsables de son cabinet practice:p1 comme user:ada ; le chemin est trouvé par le tuple desk:p1.grace#delegate@user:linus qu'identity a écrit à l'octroi de la délégation, et effacé à sa révocation](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/scheduling-example-delegation-tuples.fr.svg)
 
 La même vérification, exécutée avec le store en mémoire de `@ddd-ts-kit/auth/rebac` sur la partie
-de `src/platform/auth/relationship-schema.ts` qu'elle parcourt (l'exemple lie un store sur
+de `src/platform/auth/relationships/relationship-schema.ts` qu'elle parcourt (l'exemple lie un store sur
 PostgreSQL, `knex-relation-tuple-store.ts`, derrière le même port) :
 
 <!-- checked sample -->

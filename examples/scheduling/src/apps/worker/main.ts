@@ -2,7 +2,7 @@
 import { tracing } from '@/platform/tracing';
 // Imported second on purpose: a failure while the rest of the application loads is already reported.
 import { errors } from '@/platform/errors';
-import { createAuthenticator } from '@/platform/auth/create-authenticator';
+import { createAuthenticator } from '@/platform/auth/authentication/create-authenticator';
 import { composeApplication } from '@/platform/compose-application';
 import { loadConfig } from '@/platform/config/load-config';
 import { openPersistence } from '@/platform/database/open-persistence';

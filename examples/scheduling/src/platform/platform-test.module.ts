@@ -13,7 +13,7 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { InMemoryFileStorage } from '@ddd-ts-kit/kernel';
 import { KnexContext } from '@ddd-ts-kit/knex';
-import { relationshipSchema } from '@/platform/auth/relationship-schema';
+import { relationshipSchema } from '@/platform/auth/relationships/relationship-schema';
 import { bindFiles } from '@/platform/files/bind-files';
 // ddd-ts-kit:imports
 import { PersonDirectoryContract } from '@/contexts/identity/published-language/index';

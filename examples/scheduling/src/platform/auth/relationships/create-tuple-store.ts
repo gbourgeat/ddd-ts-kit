@@ -1,8 +1,8 @@
 import { SchemaCheckedTupleStore, type RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
 import type { KnexContext } from '@ddd-ts-kit/knex';
 import { AUTHORIZATION_SCHEMA } from '@/platform/database/schema';
-import { KnexRelationTupleStore } from '@/platform/auth/knex-relation-tuple-store';
-import { relationshipSchema } from '@/platform/auth/relationship-schema';
+import { KnexRelationTupleStore } from '@/platform/auth/relationships/knex-relation-tuple-store';
+import { relationshipSchema } from '@/platform/auth/relationships/relationship-schema';
 
 /**
  * The relationships the authorizer reads and the adapters of the contexts write, over the

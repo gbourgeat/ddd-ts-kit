@@ -19,7 +19,7 @@ The platform binds one authorizer, `RolesAndRelationshipsAuthorizer`, which answ
 
 1. the anonymous actor is refused;
 2. a system actor named `<context>.<what it does>` may use the permissions of that context on the resource `context:<context>`, without a stored tuple;
-3. a role of the token may grant the permission, from the table `src/platform/auth/role-grants.ts`; a grant may depend on a fact the use case states in the `context` of its requirement (`selfService: true` for a patient who books for themselves); a system actor never holds a role;
+3. a role of the token may grant the permission, from the table `src/platform/auth/authorization/role-grants.ts`; a grant may depend on a fact the use case states in the `context` of its requirement (`selfService: true` for a patient who books for themselves); a system actor never holds a role;
 4. otherwise the relationships decide, through `RelationBasedAuthorizer` over the schema of `relationship-schema.ts` and the mapping of `resource-permissions.ts`.
 
 For a list, only a grant marked `listing: 'all'` and without condition answers `{ kind: 'all' }` (the administrator of the platform). Every other grant opens the use case only: the relationships answer which elements.

@@ -12,7 +12,7 @@ import { PersonRegisteredEventHandler } from '@/contexts/identity/application/ev
 import { PersonRegistered } from '@/contexts/identity/domain/events/person-registered.event';
 import { KnexPersonRepository } from '@/contexts/identity/infrastructure/persistence/knex-person.repository';
 import { TupleIdentityRelationships } from '@/contexts/identity/infrastructure/persistence/tuple-identity-relationships.repository';
-import { createTupleStore } from '@/platform/auth/create-tuple-store';
+import { createTupleStore } from '@/platform/auth/relationships/create-tuple-store';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { aPerson } from '@/contexts/identity/test/builders/person.builder';
 

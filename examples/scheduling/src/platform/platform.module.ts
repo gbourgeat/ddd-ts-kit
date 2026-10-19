@@ -23,7 +23,7 @@ import {
 import { KnexContext } from '@ddd-ts-kit/knex';
 import { JobStore } from '@ddd-ts-kit/scheduling';
 import type { ConsumerTrace } from '@ddd-ts-kit/tracing';
-import { createTupleStore } from '@/platform/auth/create-tuple-store';
+import { createTupleStore } from '@/platform/auth/relationships/create-tuple-store';
 import type { Persistence } from '@/platform/database/persistence';
 import type { EventProvider } from '@/platform/events/event-provider';
 import type { LogSettings } from '@/platform/observability/create-logger';

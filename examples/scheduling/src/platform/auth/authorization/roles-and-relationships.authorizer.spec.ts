@@ -8,10 +8,10 @@ import {
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { anonymousActor, systemActor } from '@ddd-ts-kit/kernel';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { relationshipSchema } from '@/platform/auth/relationship-schema';
-import { resourcePermissions } from '@/platform/auth/resource-permissions';
-import { roleGrants } from '@/platform/auth/role-grants';
-import { RolesAndRelationshipsAuthorizer } from '@/platform/auth/roles-and-relationships.authorizer';
+import { relationshipSchema } from '@/platform/auth/relationships/relationship-schema';
+import { resourcePermissions } from '@/platform/auth/relationships/resource-permissions';
+import { roleGrants } from '@/platform/auth/authorization/role-grants';
+import { RolesAndRelationshipsAuthorizer } from '@/platform/auth/authorization/roles-and-relationships.authorizer';
 
 const book = permission('scheduling:appointment.book');
 const browse = permission('scheduling:calendar.browse');

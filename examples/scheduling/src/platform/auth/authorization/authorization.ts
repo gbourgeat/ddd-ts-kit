@@ -2,9 +2,9 @@ import type { Authenticator, OnDecision } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
 import type { ContextModule } from '@ddd-ts-kit/di';
-import { accessPolicies } from '@/platform/auth/access-policies';
-import { createAuthorizer } from '@/platform/auth/create-authorizer';
-import { resourceOf } from '@/platform/auth/resource-of';
+import { accessPolicies } from '@/platform/auth/authorization/access-policies';
+import { createAuthorizer } from '@/platform/auth/authorization/create-authorizer';
+import { resourceOf } from '@/platform/auth/relationships/resource-of';
 
 /**
  * Binds `Authorizer`, the guard both buses ask before any handler, the `Access` of the policies and

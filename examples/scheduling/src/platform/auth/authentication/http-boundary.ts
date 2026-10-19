@@ -16,7 +16,7 @@ import {
 import type { Clock, ErrorReporter, ExecutionScope, Logger, Session } from '@ddd-ts-kit/kernel';
 import { multipartUploads } from '@ddd-ts-kit/http/uploads';
 import { tracedRoutes } from '@ddd-ts-kit/tracing';
-import { principalOf } from '@/platform/auth/principal-of';
+import { principalOf } from '@/platform/auth/authentication/principal-of';
 import type { Presentation } from '@/platform/http/presentation-of';
 
 /** What the HTTP adapter needs at the edge of the application: spread into its mount options, for every route. */

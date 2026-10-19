@@ -2,7 +2,7 @@ import { relationTupleStoreContract } from '@ddd-ts-kit/auth/testing';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { AUTHORIZATION_SCHEMA } from '@/platform/database/schema';
-import { KnexRelationTupleStore } from '@/platform/auth/knex-relation-tuple-store';
+import { KnexRelationTupleStore } from '@/platform/auth/relationships/knex-relation-tuple-store';
 
 let database: TestDatabase;
 

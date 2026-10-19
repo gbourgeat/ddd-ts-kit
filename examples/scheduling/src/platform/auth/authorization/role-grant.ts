@@ -1,5 +1,5 @@
 import type { AuthorizationContext } from '@ddd-ts-kit/auth';
-import type { Role } from '@/platform/auth/role';
+import type { Role } from '@/platform/auth/authorization/role';
 
 /** What the token alone grants, whatever the element: a line of `role-grants.ts`. */
 export interface RoleGrant {

@@ -4,7 +4,7 @@ import { tracing } from '@/platform/tracing';
 import { errors } from '@/platform/errors';
 import { VarnishCachePurger } from '@ddd-ts-kit/http/purgers';
 import { PersonalDataCipher, PurgingPublisher, RepeatedCachePurger } from '@ddd-ts-kit/kernel';
-import { createAuthenticator } from '@/platform/auth/create-authenticator';
+import { createAuthenticator } from '@/platform/auth/authentication/create-authenticator';
 import { composeApplication } from '@/platform/compose-application';
 import { loadConfig } from '@/platform/config/load-config';
 import { openPersistence } from '@/platform/database/open-persistence';
