@@ -7,7 +7,7 @@ import { readJson } from './support/read-json.js';
 import { VERSION } from '../src/version.js';
 
 const CONFIG = 'ddd-ts-kit.config.json';
-const COMPOSITION = 'src/platform/compose-application.ts';
+const COMPOSITION = 'src/platform/composition/compose-application.ts';
 const config = (root: string, ...keys: string[]): unknown => jsonAt(readJson(root, CONFIG), ...keys);
 
 describe('init --force on a project that is already initialised', () => {
@@ -119,7 +119,7 @@ describe('init --force and the spelling of the imports, the settings of the agen
     expect(Object.keys(Object(readJson(root, CONFIG))).slice(5, 7)).toEqual(['importAlias', 'importExtension']);
     expect(config(root, 'importExtension')).toBe('js');
     expect(jsonAt(readJson(root, 'tsconfig.json'), 'compilerOptions', 'moduleResolution')).toBe('NodeNext');
-    expect(read(root, 'src/main.ts')).toContain("from '@/platform/compose-application.js';");
+    expect(read(root, 'src/main.ts')).toContain("from '@/platform/composition/compose-application.js';");
 
     // The roles of the platform are written from their template again: the grants the generators had added are gone, and said.
     expect([...new Set(checkJsonOf(cli(root, 'check', '--json')).violations.map(({ ruleId }) => ruleId))]).toEqual([
@@ -136,7 +136,7 @@ describe('init --force and the spelling of the imports, the settings of the agen
 
     expect(config(root, 'importExtension')).toBe('none');
     expect(jsonAt(readJson(root, 'tsconfig.json'), 'compilerOptions', 'moduleResolution')).toBe('Bundler');
-    expect(read(root, 'src/main.ts')).toContain("from '@/platform/compose-application';");
+    expect(read(root, 'src/main.ts')).toContain("from '@/platform/composition/compose-application';");
     expect(found.length).toBeGreaterThan(50);
     expect([...new Set(found.map(({ ruleId }) => ruleId))].sort()).toEqual(['authz/granted', 'imports/extension']);
 

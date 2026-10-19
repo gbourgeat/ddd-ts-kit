@@ -19,7 +19,7 @@ export const TRACING_FIXTURES: readonly Fixture[] = [
     name: 'tracing wired by the platform, main.ts and the entry point of a context',
     expect: 'pass',
     files: project({
-      'src/platform/tracing.ts': `${TRACING}${API}import { initTracing } from '@ddd-ts-kit/tracing/node';\n\nexport const tracing = initTracing(traceApplication, trace);\n`,
+      'src/platform/observability/tracing.ts': `${TRACING}${API}import { initTracing } from '@ddd-ts-kit/tracing/node';\n\nexport const tracing = initTracing(traceApplication, trace);\n`,
       'src/platform/tracing.spec.ts': SPEC,
       'src/main.ts': `${TRACING}\nawait traceApplication();\n`,
       'src/apps/billing/main.ts': `${API}\ntrace.getTracer('billing');\n`,
@@ -49,11 +49,11 @@ export const TRACING_FIXTURES: readonly Fixture[] = [
   {
     ruleId: RULE,
     name: 'the test entry of the tracing package in a spec of a context, and the default directory once the platform is moved',
-    expect: { file: 'src/platform/tracing.ts' },
+    expect: { file: 'src/platform/observability/tracing.ts' },
     files: project(
       {
         [`${PATHS.BILLING}/test/unit/spans.spec.ts`]: SPEC,
-        'src/platform/tracing.ts': `${API}export const tracer = trace.getTracer('billing');\n`,
+        'src/platform/observability/tracing.ts': `${API}export const tracer = trace.getTracer('billing');\n`,
         'src/infra-platform/tracing.ts': `${API}export const tracer = trace;\n`,
       },
       { [CONFIG_FILE]: config({ platformDir: 'src/infra-platform' }) },

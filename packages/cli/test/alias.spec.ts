@@ -50,9 +50,9 @@ describe('the import alias', () => {
       '^\\$scripts/(.*)\\.js$': '<rootDir>/scripts/$1.ts',
     });
 
-    expect(new RegExp(Object.keys(moduleNameMapper(ROOTS, '.js'))[0] ?? '').exec('@/platform/errors.js')?.[1]).toBe(
-      'platform/errors',
-    );
+    expect(
+      new RegExp(Object.keys(moduleNameMapper(ROOTS, '.js'))[0] ?? '').exec('@/platform/observability/errors.js')?.[1],
+    ).toBe('platform/observability/errors');
   });
 
   it('gives jest a mapping without the extension when the imports are written without one, and still answers the TypeScript source alone', () => {
@@ -102,7 +102,7 @@ describe('the ending of an import and the names the alias gives', () => {
   });
 
   it.each([
-    ['src/platform/errors.ts', '@/platform/errors.js'],
+    ['src/platform/observability/errors.ts', '@/platform/observability/errors.js'],
     [
       'src/contexts/billing/domain/aggregates/invoice.aggregate.js',
       '@/contexts/billing/domain/aggregates/invoice.aggregate.js',

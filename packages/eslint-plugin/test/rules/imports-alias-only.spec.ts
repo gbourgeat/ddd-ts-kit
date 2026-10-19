@@ -15,7 +15,7 @@ ruleTester.run('imports-alias-only', importsAliasOnly, {
     at(HANDLER, `export * from '${COMMAND}';\nconst later = import('${AGGREGATE}');`),
     at(HANDLER, "import { Clock } from '@ddd-ts-kit/kernel';\nimport path from 'node:path';\nimport { z } from 'zod';"),
     at(E2E, "import { startApplication } from '$test/e2e/support/start-application.js';"),
-    at('scripts/openapi.ts', "import { composeApplication } from '@/platform/compose-application.js';"),
+    at('scripts/openapi.ts', "import { composeApplication } from '@/platform/composition/compose-application.js';"),
     at('src/platform/database/database.ts', "import { PrismaClient } from '$generated/prisma/client.js';", WITH_PRISMA),
     at('vitest.config.ts', "import base from './vitest.base.js';"),
     at('generated/prisma/client.ts', "export * from './internal/class.js';", WITH_PRISMA),

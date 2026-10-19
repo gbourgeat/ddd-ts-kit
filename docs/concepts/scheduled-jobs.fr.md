@@ -106,7 +106,7 @@ npx ddd-ts-kit generate job notifications SendReminders --cron "0 7 * * *" --tim
 ```
 
 écrit le *job*, sa *spec*, son interrupteur dans les réglages des *jobs* de la plateforme
-(`src/platform/job-settings.ts`, désactivé par `JOB_<CONTEXT>_<JOB>_ENABLED=false`) et, là où le
+(`src/platform/jobs/job-settings.ts`, désactivé par `JOB_<CONTEXT>_<JOB>_ENABLED=false`) et, là où le
 modèle d'autorisation en fait une ligne, la permission accordée à son acteur système.
 
 ## Planifications

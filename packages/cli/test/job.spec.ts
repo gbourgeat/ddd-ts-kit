@@ -35,7 +35,7 @@ describe('generate job, in the declared style', () => {
 
     expect(generated.updated).toEqual(
       expect.arrayContaining([
-        'src/platform/job-settings.ts',
+        'src/platform/jobs/job-settings.ts',
         `${BILLING}/billing.declarations.ts`,
         `${BILLING}/CONTEXT.md`,
       ]),
@@ -45,7 +45,7 @@ describe('generate job, in the declared style', () => {
       "export * from '@/contexts/billing/application/scheduling/cancel-stale-invoices.job';",
     );
 
-    expect(read(root, 'src/platform/job-settings.ts')).toContain(
+    expect(read(root, 'src/platform/jobs/job-settings.ts')).toContain(
       "    'billing.cancel-stale-invoices': { enabled: environment['JOB_BILLING_CANCEL_STALE_INVOICES_ENABLED'] !== 'false' },",
     );
 

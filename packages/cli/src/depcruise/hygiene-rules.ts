@@ -60,7 +60,7 @@ function orphanExceptions(config: Config): string[] {
   return [
     `^${escapePattern(config.sourceRoot)}/main\\.ts$`,
     `^${escapePattern(config.sourceRoot)}/apps/[^/]+/main\\.ts$`,
-    `^${escapePattern(config.platformDir)}/tracing\\.ts$`,
+    `^${escapePattern(config.platformDir)}/(observability/)?tracing\\.ts$`,
     `^${escapePattern(config.contextsDir)}/[^/]+/published-language/`,
     `^${escapePattern(config.contextsDir)}/[^/]+/test/fakes/`,
     `^${escapePattern(config.contextsDir)}/[^/]+/test/worlds/`,

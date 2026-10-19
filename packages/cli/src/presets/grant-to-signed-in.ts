@@ -4,7 +4,7 @@ import type { Scope } from '../generate/scope.js';
 import { withImport } from '../generate/with-import.js';
 import { renderTemplate } from '../templating/index.js';
 import { withAuthorizerImport } from './with-authorizer-import.js';
-import { authFile } from '../generate/auth-file.js';
+import { platformPath } from '../generate/platform-path.js';
 
 const REGION = 'signed-in-grants';
 const WRAPPED = 'SignedInGrantsAuthorizer';
@@ -17,7 +17,7 @@ const AUTHORIZER = /(export function createAuthorizer\(\): Authorizer \{\n) {2}r
  * read is left to the team, with a step saying how.
  */
 export function grantToSignedIn(scope: Scope): void {
-  const grants = authFile(scope, 'signed-in-grants.ts');
+  const grants = platformPath(scope, 'auth/authorization/signed-in-grants.ts');
   const line = `'${scope.context.kebab}:*',`;
   const current = scope.ws.read(grants) ?? renderTemplate('presets/signed-in-grants.ts.tpl', {});
   const next = insertInRegion(current, REGION, line) ?? current;
@@ -27,7 +27,10 @@ export function grantToSignedIn(scope: Scope): void {
   scope.ws.step({
     file: grants,
     anchor: line,
-    text: grantStep(scope, wrapAuthorizer(scope, authFile(scope, 'create-authorizer.ts'), grants)),
+    text: grantStep(
+      scope,
+      wrapAuthorizer(scope, platformPath(scope, 'auth/authorization/create-authorizer.ts'), grants),
+    ),
   });
 }
 

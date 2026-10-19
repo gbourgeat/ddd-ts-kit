@@ -70,6 +70,10 @@ src/
   shared-kernel/                 facultatif : objets-valeurs utilisés par deux contextes ou plus
     presentation/                schémas du contrat HTTP par lesquels plusieurs contextes répondent (*.schema.ts)
   platform/                      capacités techniques : config, base de données, événements, auth, traçage, serveur HTTP
+    composition/                 ce qui fait de la plateforme et des contextes une application
+    observability/               tracing.ts (premier import de chaque point d'entrée), journaux, mesures, rapports d'erreur
+    jobs/                        les réglages des jobs planifiés
+    audit/search-audit-entries/  le côté lecture du journal d'audit
     auth/
       authentication/            qui appelle : l'authentificateur, la session d'une requête, la frontière HTTP
       authorization/             ce qu'il peut faire, quel que soit le modèle : l'authorizer derrière le port, la garde des bus, Role

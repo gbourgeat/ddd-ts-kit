@@ -189,7 +189,7 @@ ouvre sa propre transaction courte.
 
 Un projet écrit par la CLI tient le même câblage en deux fichiers :
 `platform/database/persistence-over.ts` construit une fois l'unité de travail et les deux
-registres, et `platform/platform.module.ts` les lie, le *publisher* de l'outbox étant donné à
+registres, et `platform/composition/platform.module.ts` les lie, le *publisher* de l'outbox étant donné à
 `kernelModule({ eventPublisher })`.
 
 `unitOfWork.run(work)` ouvre la `prisma.$transaction` interactive et garde le client de

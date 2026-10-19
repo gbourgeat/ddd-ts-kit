@@ -13,7 +13,7 @@ describe('integration events', () => {
   it('behind a broker, hands each context the subscriber of its own name through the kernel port', () => {
     const root = initProject('--broker', 'rabbitmq');
 
-    expect(platform(root, 'platform.module.ts')).toContain(
+    expect(platform(root, 'composition/platform.module.ts')).toContain(
       'builder.rebind(EventSubscribers).toValue({ forContext: (name) => options.events.forConsumer(name) });',
     );
 
@@ -49,12 +49,12 @@ describe('integration events', () => {
         broker,
       });
 
-      expect(platform(root, 'compose-application.ts')).toContain(
+      expect(platform(root, 'composition/compose-application.ts')).toContain(
         "await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),",
       );
 
-      expect(platform(root, 'compose-application.ts')).not.toContain('listeningContext');
-      expect(platform(root, 'platform.module.ts')).toContain('builder.rebind(EventSubscribers)');
+      expect(platform(root, 'composition/compose-application.ts')).not.toContain('listeningContext');
+      expect(platform(root, 'composition/platform.module.ts')).toContain('builder.rebind(EventSubscribers)');
     },
   );
 
@@ -78,7 +78,7 @@ describe('integration events', () => {
     expect(read(root, 'src/main.ts')).toContain(relay);
     expect(read(root, 'src/main.ts')).toContain('events: inProcessEvents(),');
     expect(exists(root, 'src/platform/events/create-event-provider.ts')).toBe(false);
-    expect(platform(root, 'platform.module.ts')).not.toContain('EventSubscribers');
+    expect(platform(root, 'composition/platform.module.ts')).not.toContain('EventSubscribers');
   });
 
   it('orders the events of an aggregate on Kafka, in the bus and in the relay', () => {
@@ -126,7 +126,7 @@ describe('authentication and authorization', () => {
       'return authorizationModule({ authorizer: createAuthorizer(), authenticator, policies: accessPolicies, onDecision });',
     );
 
-    expect(platform(root, 'compose-application.ts')).toContain("authorization: 'required'");
+    expect(platform(root, 'composition/compose-application.ts')).toContain("authorization: 'required'");
 
     expect(platform(root, 'auth/authentication/http-boundary.ts')).toContain(
       'resolvePrincipal: principalOf(authenticator),\n    executionScope,\n    errorMapper,',
@@ -169,14 +169,14 @@ describe('authentication and authorization', () => {
   it('logs the authorization decisions when the audit trail is off, and writes no audit file', () => {
     const root = initProject('--audit', 'off');
 
-    expect(platform(root, 'lay-foundations.ts')).toContain('decisions: logDecisions(logger),');
+    expect(platform(root, 'composition/lay-foundations.ts')).toContain('decisions: logDecisions(logger),');
 
-    expect(platform(root, 'compose-application.ts')).toContain(
+    expect(platform(root, 'composition/compose-application.ts')).toContain(
       'const guard = authorization(foundations.decisions, options.authenticator);',
     );
 
     expect(exists(root, 'src/platform/audit/create-audit.ts')).toBe(false);
-    expect(platform(root, 'compose-application.ts')).not.toContain('auditModule');
+    expect(platform(root, 'composition/compose-application.ts')).not.toContain('auditModule');
   });
 });
 

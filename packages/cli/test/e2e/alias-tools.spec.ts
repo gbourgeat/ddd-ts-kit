@@ -169,7 +169,7 @@ describe.runIf(SLOW)('a project initialised with --import-alias "$app/"', () => 
 
     expect(linkCompiled(root).unresolved).toEqual([]);
     expect(linkCompiled(root).aliased).toEqual([]);
-    expect(read(root, 'dist/src/main.js')).toContain("from './platform/compose-application.js';");
+    expect(read(root, 'dist/src/main.js')).toContain("from './platform/composition/compose-application.js';");
     expect(resolvedBy(root, DEV_RUNNER, '$app/main')).toBe('src/main.ts');
 
     expect(compiledEntries(root).map((entry) => started(root, process.execPath, [entry]).unresolved)).toEqual([

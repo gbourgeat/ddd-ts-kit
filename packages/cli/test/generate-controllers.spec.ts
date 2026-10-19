@@ -255,7 +255,7 @@ describe('generate route-group and guard, and a controller next to function rout
     expect(exists(root, `${HTTP}/invoices/get-invoice/get-invoice.controller.ts`)).toBe(true);
     expect(exists(root, `${HTTP}/void-invoice.route.ts`)).toBe(true);
     expect(read(root, `${HTTP}/billing.routes.ts`)).toContain('voidInvoiceRoute(commands),');
-    expect(read(root, 'src/platform/compose-application.ts')).toContain("of('controller')");
+    expect(read(root, 'src/platform/composition/compose-application.ts')).toContain("of('controller')");
   });
 });
 
@@ -275,7 +275,7 @@ describe('a controller of an explicit context', () => {
       '...controllerRoutes([new IssueInvoiceController(platform.commands)]),',
     );
 
-    expect(read(listed, 'src/platform/compose-application.ts')).not.toContain('DeclaredEdges');
+    expect(read(listed, 'src/platform/composition/compose-application.ts')).not.toContain('DeclaredEdges');
   });
 });
 

@@ -25,7 +25,7 @@ application as two ports of the kernel: `IntegrationEventPublisher` stays the ou
 ![The handler of ordering writes the order and an outbox record in one transaction; the outbox relay gives the record to RabbitMqEventBus, which publishes it to the topic exchange integration-events with the event type as routing key and waits for the confirmation of the broker; the exchange routes a copy to the work queue of each consumer bound for that type, billing.ordering.order.placed and shipping.ordering.order.placed; each queue hands it to the handlers of its context, acknowledged after their unit of work committed](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/rabbitmq-outbox-to-queues.svg)
 
 `init --broker rabbitmq` writes this wiring in the platform of the project: the bus is built by
-`platform/events/create-event-provider.ts`, `platform/platform.module.ts` rebinds
+`platform/events/create-event-provider.ts`, `platform/composition/platform.module.ts` rebinds
 `EventSubscribers` on it, and `main.ts` gives it, traced, to the outbox relay. By hand, the
 same thing reads:
 

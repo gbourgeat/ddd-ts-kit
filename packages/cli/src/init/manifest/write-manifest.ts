@@ -7,6 +7,7 @@ import { PINNED_PACKAGE_MANAGERS } from '../../package-manager/pinned-package-ma
 import { isRecord } from '../is-record.js';
 import { scriptsFor } from './scripts-for.js';
 import { VERSIONS } from './versions.js';
+import { platformFileIn } from '../../platform-layout/index.js';
 
 export interface ManifestRequest {
   readonly config: Config;
@@ -16,7 +17,8 @@ export interface ManifestRequest {
 
 /** Creates package.json, or adds what is missing to an existing one without touching what is there. */
 export function writeManifest(ws: Workspace, request: ManifestRequest): void {
-  const scripts = scriptsFor(request.config);
+  const tracing = platformFileIn(request.config, 'observability/tracing.ts', (path) => ws.exists(path));
+  const scripts = scriptsFor(request.config, tracing);
   const wanted = dependenciesFor(request.config);
   const existing = ws.read('package.json');
 

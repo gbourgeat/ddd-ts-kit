@@ -12,7 +12,7 @@ const manifest = (root: string): unknown => readJson(root, 'package.json');
 
 const DEFAULT_SCRIPTS = {
   start: 'node dist/src/main.js',
-  dev: 'tsx watch --env-file-if-exists=.env --import ./src/platform/tracing.ts --import ddd-ts-kit/dist/refresh-declarations.js src/main.ts',
+  dev: 'tsx watch --env-file-if-exists=.env --import ./src/platform/observability/tracing.ts --import ddd-ts-kit/dist/refresh-declarations.js src/main.ts',
   typecheck: 'node node_modules/@typescript/native/bin/tsc -p tsconfig.json --noEmit',
   build: 'node node_modules/@typescript/native/bin/tsc -p tsconfig.build.json && ddd-ts-kit build-aliases',
   test: 'vitest run',

@@ -2,7 +2,7 @@ import { specifierOf } from '../../alias/index.js';
 import type { Scope } from '../scope.js';
 import { entriesOf } from './entries-of.js';
 import { vocabularyText } from './vocabulary-text.js';
-import { authFile } from '../auth-file.js';
+import { platformPath } from '../platform-path.js';
 
 /** The key of a role in the role vocabulary of the platform, and the specifier that imports it. */
 export interface DeclaredRole {
@@ -16,7 +16,7 @@ export interface DeclaredRole {
  * and the file written when the project has none yet.
  */
 export function declareRole(scope: Scope, role: string): DeclaredRole {
-  const file = authFile(scope, 'role.ts');
+  const file = platformPath(scope, 'auth/authorization/role.ts');
   const entries = entriesOf([role]);
   const existing = scope.ws.read(file);
   const text = vocabularyText('Role', entries, existing);

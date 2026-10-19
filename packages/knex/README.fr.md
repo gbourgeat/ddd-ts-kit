@@ -200,7 +200,7 @@ déclarées d'un contexte en son module.
 
 Un projet écrit par la CLI tient le même câblage en deux fichiers :
 `platform/database/persistence-over.ts` construit une fois l'unité de travail et ses stores, et
-`platform/platform.module.ts` les lie, le *publisher* de l'outbox étant donné à
+`platform/composition/platform.module.ts` les lie, le *publisher* de l'outbox étant donné à
 `kernelModule({ eventPublisher })`.
 
 `toClass` construit les stores avec leurs options par défaut (les tables `outbox` et

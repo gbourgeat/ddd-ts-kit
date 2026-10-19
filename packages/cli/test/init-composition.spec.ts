@@ -15,12 +15,15 @@ describe('the composition root init writes, on tsyringe', () => {
       .split('\n')
       .find((line) => line.trim() !== '' && !line.startsWith('//'));
 
-    expect(firstStatement).toBe("import { tracing } from '@/platform/tracing';");
-    expect(platform(root, 'tracing.ts').split('\n')[0]).toBe("import { initTracing } from '@ddd-ts-kit/tracing/node';");
+    expect(firstStatement).toBe("import { tracing } from '@/platform/observability/tracing';");
+
+    expect(platform(root, 'observability/tracing.ts').split('\n')[0]).toBe(
+      "import { initTracing } from '@ddd-ts-kit/tracing/node';",
+    );
   });
 
   it('lists the kernel module, the platform module, the authorization module, then the contexts', () => {
-    const composition = platform(initProject('--context', 'billing:core'), 'compose-application.ts');
+    const composition = platform(initProject('--context', 'billing:core'), 'composition/compose-application.ts');
 
     expect(composition).toContain(
       'modules: [\n      kernel(foundations, persistence, options),\n      platformModule(persistence, options),\n      guard,\n      auditModule(foundations.audit),\n      filesModule(options.files ?? new InMemoryFileStorage()),\n      ...contexts.modules,\n    ],',
@@ -38,7 +41,7 @@ describe('the composition root init writes, on tsyringe', () => {
   });
 
   it('resolves the ports of the kernel by their class, imported as values', () => {
-    const composition = platform(initProject(), 'compose-application.ts');
+    const composition = platform(initProject(), 'composition/compose-application.ts');
 
     expect(composition).toContain('container.resolve(Logger)');
     expect(composition).toContain('container.resolve(Authenticator)');
@@ -50,7 +53,7 @@ describe('the composition root init writes, on tsyringe', () => {
   });
 
   it('rebinds in the platform module what needs the storage, and binds the storage under its class', () => {
-    const module = platform(initProject('--docs-ui', 'scalar'), 'platform.module.ts');
+    const module = platform(initProject('--docs-ui', 'scalar'), 'composition/platform.module.ts');
 
     expect(module).toContain('builder.rebind(UnitOfWork).toValue(persistence.unitOfWork);');
     expect(module).toContain('builder.rebind(ProcessedEventStore).toValue(persistence.processedEvents);');
@@ -59,7 +62,7 @@ describe('the composition root init writes, on tsyringe', () => {
     // The outbox publisher is given to the kernel module, which puts its span around it: a port rebound here would not be observed.
     expect(module).not.toContain('IntegrationEventPublisher');
 
-    expect(platform(initProject(), 'compose-application.ts')).toContain(
+    expect(platform(initProject(), 'composition/compose-application.ts')).toContain(
       'eventPublisher: scopedPublisher(new OutboxPublisher(persistence.outbox), scope),',
     );
 
@@ -69,9 +72,9 @@ describe('the composition root init writes, on tsyringe', () => {
 
   it('observes the application through the kernel module, the policy of what leaves the process inside the span of each call', () => {
     const root = initProject('--broker', 'rabbitmq');
-    const composition = platform(root, 'compose-application.ts');
+    const composition = platform(root, 'composition/compose-application.ts');
 
-    expect(platform(root, 'lay-foundations.ts')).toContain(
+    expect(platform(root, 'composition/lay-foundations.ts')).toContain(
       "traced: traceApplication({ consumers: options.traceConsumers ?? 'continue' }),",
     );
 
@@ -79,7 +82,7 @@ describe('the composition root init writes, on tsyringe', () => {
     expect(composition).toContain('eventBus: tracedPublisher(container.resolve(EventBus)),');
     expect(composition).not.toMatch(/traceBindings|tracedSubscriber|traceUseCases/);
 
-    expect(platform(root, 'platform.module.ts')).toContain(
+    expect(platform(root, 'composition/platform.module.ts')).toContain(
       "builder.around(['external', 'gateway'], () => adapterAspects(options.resilience ?? defaultResilience));",
     );
 
@@ -95,12 +98,12 @@ describe('the composition root init writes, on tsyringe', () => {
   it('closes the event provider inside the stop of the application, before the logger is flushed', () => {
     const root = initProject('--broker', 'rabbitmq');
 
-    expect(platform(root, 'platform.module.ts')).toContain('onStop: () => options.events.close(),');
-    expect(platform(root, 'compose-application.ts')).toContain('stop: () => container.stop(),');
+    expect(platform(root, 'composition/platform.module.ts')).toContain('onStop: () => options.events.close(),');
+    expect(platform(root, 'composition/compose-application.ts')).toContain('stop: () => container.stop(),');
   });
 
   it('gives a handler spec a platform whose storage refuses to be used', () => {
-    const module = platform(initProject('--orm', 'knex'), 'platform-test.module.ts');
+    const module = platform(initProject('--orm', 'knex'), 'composition/platform-test.module.ts');
 
     expect(module).toContain("import { KnexContext } from '@ddd-ts-kit/knex';");
     expect(module).toContain('builder.bind(KnexContext).toFactory(() => {');
@@ -116,8 +119,12 @@ describe('the storage token of each ORM', () => {
     const root = initProject('--orm', orm);
 
     expect(exists(root, 'src/platform/database/database.ts')).toBe(false);
-    expect(platform(root, 'platform.module.ts')).toContain(`builder.bind(${token}).toValue(persistence.database);`);
-    expect(platform(root, 'platform.module.ts')).toContain(`import { ${token} } from '${from}';`);
+
+    expect(platform(root, 'composition/platform.module.ts')).toContain(
+      `builder.bind(${token}).toValue(persistence.database);`,
+    );
+
+    expect(platform(root, 'composition/platform.module.ts')).toContain(`import { ${token} } from '${from}';`);
     expect(platform(root, 'database/persistence.ts')).toContain(`readonly database: ${token};`);
   });
 
@@ -128,7 +135,9 @@ describe('the storage token of each ORM', () => {
       'export abstract class Database extends PrismaContext<Prisma.TransactionClient> {}',
     );
 
-    expect(platform(root, 'platform.module.ts')).toContain('builder.bind(Database).toValue(persistence.database);');
+    expect(platform(root, 'composition/platform.module.ts')).toContain(
+      'builder.bind(Database).toValue(persistence.database);',
+    );
   });
 
   it.each([
@@ -175,19 +184,19 @@ describe('the composition root init writes, by hand', () => {
   it('builds one platform and hands it to each context, with a scheduler for its jobs', () => {
     const root = initProject('--di', 'manual', '--context', 'billing:core');
 
-    expect(platform(root, 'platform.ts')).toContain('readonly jobs: JobScheduler;');
+    expect(platform(root, 'composition/platform.ts')).toContain('readonly jobs: JobScheduler;');
 
-    expect(platform(root, 'create-platform.ts')).toContain(
+    expect(platform(root, 'composition/create-platform.ts')).toContain(
       'jobs: new ConfiguredJobScheduler(\n      new InProcessJobScheduler({ clock, lock, scope, ids, logger, metrics }),\n      options.jobs?.settings ?? {},\n      traced.job,\n    ),',
     );
 
-    expect(platform(root, 'create-platform.ts')).toContain(
+    expect(platform(root, 'composition/create-platform.ts')).toContain(
       'access: new PolicyAccess({ authorizer, clock, policies: accessPolicies, onDecision }),',
     );
 
-    expect(platform(root, 'compose-application.ts')).toContain('billingModule,');
+    expect(platform(root, 'composition/compose-application.ts')).toContain('billingModule,');
 
-    expect(platform(root, 'compose-application.ts')).toContain(
+    expect(platform(root, 'composition/compose-application.ts')).toContain(
       'const contexts = [...selection, auditModule].map((module) => module(platform));',
     );
 
@@ -197,7 +206,7 @@ describe('the composition root init writes, by hand', () => {
   });
 
   it('starts the jobs after the subscriptions, only where the process is told to, and stops them first', () => {
-    const composition = platform(initProject('--di', 'manual'), 'compose-application.ts');
+    const composition = platform(initProject('--di', 'manual'), 'composition/compose-application.ts');
 
     expect(composition).toContain(
       'await options.events.start();\n\n  if (options.jobs?.start === true) {\n    await platform.jobs.start();\n  }',

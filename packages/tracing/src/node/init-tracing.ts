@@ -5,7 +5,7 @@
  * loaded, otherwise auto-instrumentation registers too late and those modules stay
  * unpatched. Make it the very first statement of `main.ts`. In an ES module, static
  * imports are evaluated before the first statement, so there the call goes in a file of
- * its own (`platform/tracing.ts`) that `main.ts` imports first, or that is preloaded
+ * its own (`platform/observability/tracing.ts`) that `main.ts` imports first, or that is preloaded
  * with `node --import`. Packages published as ES modules additionally need the
  * `@opentelemetry/instrumentation` loader hook; CommonJS packages and Node built-ins
  * do not.

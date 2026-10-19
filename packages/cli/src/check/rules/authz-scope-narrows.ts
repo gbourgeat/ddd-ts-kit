@@ -9,7 +9,7 @@ import type { Scan } from '../scan/scan.js';
 import { reporter } from '../support/reporter.js';
 import { toViolations } from '../support/to-violations.js';
 import { callArguments } from '../text/call-arguments.js';
-import { authFileIn } from '../../platform-auth/index.js';
+import { platformFileIn } from '../../platform-layout/index.js';
 import { isInProject } from '../authz/is-in-project.js';
 
 /** `<receiver>.scope(`, the opening parenthesis last. */
@@ -46,7 +46,7 @@ export const authzScopeNarrows: Rule = {
         report(
           { file: file.path, line },
           'The grants of this SignedInGrantsAuthorizer are neither an array literal nor a constant declared as one: the checker cannot tell which searches they widen to all.',
-          `Write them in ${authFileIn(project.config, 'signed-in-grants.ts', (path) => isInProject(project, path))}, \`export const signedInGrants: readonly Grant[] = [...]\`, and pass \`grants: signedInGrants\`.`,
+          `Write them in ${platformFileIn(project.config, 'auth/authorization/signed-in-grants.ts', (path) => isInProject(project, path))}, \`export const signedInGrants: readonly Grant[] = [...]\`, and pass \`grants: signedInGrants\`.`,
         ),
       ),
       ...project.files

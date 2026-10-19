@@ -289,7 +289,7 @@ les adaptateurs ne sont instanciés ou liés, et les classes déclarées assembl
 fichier de module d'un contexte (style explicite), dans `main.ts` et dans le répertoire de la
 plateforme (`composition/only-in-module`). `main.ts` importe d'abord le traçage, charge la
 configuration, ouvre le stockage et appelle `composeApplication` de
-`src/platform/compose-application.ts`, qui liste les modules : le module du kernel (bus par
+`src/platform/composition/compose-application.ts`, qui liste les modules : le module du kernel (bus par
 défaut, horloge, générateur d'identifiants, implémentations en mémoire par défaut), le module de
 la plateforme (stockage, fournisseur d'événements, politique autour des adaptateurs sortants), les
 modules d'autorisation et d'audit, le module des fichiers quand le projet stocke des fichiers, et

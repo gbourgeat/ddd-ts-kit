@@ -7,8 +7,8 @@ import { auditPermissions } from '{{alias.platform}}/audit/audit.permissions{{al
 {{/if}}
 import type { Audit } from '{{alias.platform}}/audit/create-audit{{alias.ext}}';
 {{#if audit.route}}
-import { SearchAuditEntriesHandler } from '{{alias.platform}}/audit/search-audit-entries.handler{{alias.ext}}';
-import { SearchAuditEntriesQuery } from '{{alias.platform}}/audit/search-audit-entries.query{{alias.ext}}';
+import { SearchAuditEntriesHandler } from '{{alias.platform}}/audit/search-audit-entries/search-audit-entries.handler{{alias.ext}}';
+import { SearchAuditEntriesQuery } from '{{alias.platform}}/audit/search-audit-entries/search-audit-entries.query{{alias.ext}}';
 {{/if}}
 
 /**

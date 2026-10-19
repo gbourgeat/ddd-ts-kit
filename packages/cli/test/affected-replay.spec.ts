@@ -31,7 +31,7 @@ const KNOWN_CHANGE_SETS: readonly (readonly [string, readonly string[], readonly
   ],
   [
     'the platform, which composes every context',
-    ['src/platform/compose-application.ts'],
+    ['src/platform/composition/compose-application.ts'],
     ['identity', 'scheduling', 'notification', 'analytics'],
   ],
   [

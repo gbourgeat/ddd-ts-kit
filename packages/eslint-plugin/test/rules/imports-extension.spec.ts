@@ -13,7 +13,7 @@ ruleTester.run('imports-extension, "importExtension": "none"', importsExtension,
     at(HANDLER, `import { Invoice } from '${AGGREGATE}';\nexport * from '${AGGREGATE}';`, NONE),
     at(HANDLER, `const later = import('${AGGREGATE}');\ntype Loaded = typeof import('${AGGREGATE}');`, NONE),
     at(E2E, "import { startApplication } from '$test/e2e/support/start-application';", NONE),
-    at('scripts/openapi.ts', "import { composeApplication } from '@/platform/compose-application';", NONE),
+    at('scripts/openapi.ts', "import { composeApplication } from '@/platform/composition/compose-application';", NONE),
     // A package is not a file of the project, whatever its subpath ends with.
     at(HANDLER, "import { z } from 'zod/v4/core.js';\nimport { x } from '@scope/pkg/file.js';", NONE),
     at(HANDLER, "import { Clock } from '@ddd-ts-kit/kernel';\nimport path from 'node:path';", NONE),

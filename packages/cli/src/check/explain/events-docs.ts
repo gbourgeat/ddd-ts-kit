@@ -31,7 +31,7 @@ import { connect } from 'amqplib';
 "stack": { "orm": "drizzle", "events": "in-memory" }`,
     good: `// application/commands/issue-invoice/issue-invoice.handler.ts
 constructor(private readonly publisher: IntegrationEventPublisher) {}
-// platform/platform.module.ts
+// platform/composition/platform.module.ts
 eventPublisher: new OutboxPublisher(persistence.outbox),`,
   },
   'events/consumer-idempotent': {

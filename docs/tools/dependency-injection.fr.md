@@ -266,7 +266,7 @@ const appointmentsPermissions = definePermissions('appointments', {
   'appointment.book': { description: 'Book an appointment' },
 });
 
-// platform/platform.ts, réduit : ce que reçoit chaque contexte
+// platform/composition/platform.ts, réduit : ce que reçoit chaque contexte
 interface Platform {
   readonly commands: InMemoryCommandBus;
   readonly clock: Clock;

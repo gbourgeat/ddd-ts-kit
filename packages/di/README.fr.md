@@ -439,7 +439,7 @@ export abstract class PaymentSettings {
   abstract readonly apiKey: string;
 }
 
-// platform/platform.module.ts
+// platform/composition/platform.module.ts
 builder.bind(Database).toValue({ client: knex(config.database) });
 builder.bind(PaymentSettings).toValue({ apiUrl: config.payments.url, apiKey: config.payments.key });
 ```

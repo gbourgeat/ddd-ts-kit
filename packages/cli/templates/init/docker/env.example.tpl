@@ -22,7 +22,7 @@ LOG_LEVEL=info
 # API_DOCS=true
 {{/if}}
 # Scheduled jobs. RUN_JOBS says whether this process runs them: {{#if worker.off}}true by default; `ddd-ts-kit generate worker` moves them to a process of their own{{/if}}{{#if worker.on}}false by default, the worker (apps/worker) runs them{{/if}}.
-# One job is switched off in one environment with JOB_<CONTEXT>_<JOB>_ENABLED=false (see {{config.platformDir}}/job-settings.ts).
+# One job is switched off in one environment with JOB_<CONTEXT>_<JOB>_ENABLED=false (see {{config.platformDir}}/jobs/job-settings.ts).
 {{#if worker.off}}
 # RUN_JOBS=true
 {{/if}}

@@ -34,7 +34,7 @@ import {
 {{#if files.any}}
 import { stagingUploads } from '{{alias.platform}}/files/staging-uploads{{alias.ext}}';
 {{/if}}
-import type { Foundations } from '{{alias.platform}}/lay-foundations{{alias.ext}}';
+import type { Foundations } from '{{alias.platform}}/composition/lay-foundations{{alias.ext}}';
 {{#if cache.relaySignal}}
 import type { RedisServices } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
 

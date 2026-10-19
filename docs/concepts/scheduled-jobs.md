@@ -101,7 +101,7 @@ npx ddd-ts-kit generate job notifications SendReminders --cron "0 7 * * *" --tim
 ```
 
 writes the job, its spec, its switch in the job settings of the platform
-(`src/platform/job-settings.ts`, switched off with `JOB_<CONTEXT>_<JOB>_ENABLED=false`) and,
+(`src/platform/jobs/job-settings.ts`, switched off with `JOB_<CONTEXT>_<JOB>_ENABLED=false`) and,
 where the authorization model makes it one line, the grant of its system actor.
 
 ## Schedules

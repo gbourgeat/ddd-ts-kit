@@ -183,7 +183,7 @@ their model. The outbox store takes the unit of work itself, not only the contex
 
 A project written by the CLI holds the same wiring in two files:
 `platform/database/persistence-over.ts` builds the unit of work and the two stores once, and
-`platform/platform.module.ts` binds them, the outbox publisher being given to
+`platform/composition/platform.module.ts` binds them, the outbox publisher being given to
 `kernelModule({ eventPublisher })`.
 
 `unitOfWork.run(work)` opens the interactive `prisma.$transaction` and keeps the transaction

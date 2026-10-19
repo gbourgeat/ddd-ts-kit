@@ -1,40 +1,62 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { PLATFORM_LAYOUT } from '../src/platform-layout/index.js';
 import { cli, exists, read, walk, write } from './helpers.js';
 import { initProject } from './support/init-project.js';
 
-const AUTH = 'src/platform/auth';
-const FOLDER = /\/auth\/(?:authentication|authorization|roles|attributes|relationships|custom)\//g;
+const PLATFORM = 'src/platform';
+const AUTH = `${PLATFORM}/auth`;
 
-/** Every source of the project, by its path from the root. */
+/** Each file of the platform in its folder, and where a version before the folders wrote it, both from the platform without extension. */
+const FLAT: ReadonlyArray<readonly [string, string]> = PLATFORM_LAYOUT.flatMap(({ files }) => Object.entries(files))
+  .map(([flat, placed]): readonly [string, string] => [placed.replace(/\.ts$/, ''), flat.replace(/\.ts$/, '')])
+  .sort(([one], [other]) => other.length - one.length);
+
+/** Every source of the project, by its path from the root, and its manifest. */
 function sources(root: string): Record<string, string> {
-  return Object.fromEntries(
-    ['src', 'test', 'scripts']
+  return Object.fromEntries([
+    ...['src', 'test', 'scripts']
       .filter((directory) => exists(root, directory))
       .flatMap((directory) => walk(root, directory))
       .filter((file) => file.endsWith('.ts'))
       .map((file) => [file, read(root, file)]),
-  );
+    ['package.json', read(root, 'package.json')],
+  ]);
 }
 
-/** The project as a version of the kit before the folders wrote it: every file of auth flat, imported flat. */
+function flatPath(file: string): string {
+  const found = FLAT.find(([placed]) => file === `${PLATFORM}/${placed}.ts`);
+
+  return found === undefined ? file : `${PLATFORM}/${found[1]}.ts`;
+}
+
+/** The project as a version of the kit before the folders wrote it: every file of the platform flat, named flat. */
 function flatten(root: string): void {
   for (const [file, content] of Object.entries(sources(root))) {
-    const target = file.startsWith(`${AUTH}/`) ? `${AUTH}/${path.posix.basename(file)}` : file;
+    const flat = FLAT.reduce(
+      (text, [placed, kept]) => text.replaceAll(`platform/${placed}`, `platform/${kept}`),
+      content,
+    );
 
     fs.rmSync(path.join(root, file));
-    write(root, target, content.replace(FOLDER, '/auth/'));
+    write(root, flatPath(file), flat);
   }
 
-  for (const folder of fs.readdirSync(path.join(root, AUTH))) {
-    if (fs.statSync(path.join(root, AUTH, folder)).isDirectory()) {
-      fs.rmSync(path.join(root, AUTH, folder), { recursive: true });
-    }
+  for (const folder of [
+    'composition',
+    'auth/authentication',
+    'auth/authorization',
+    'auth/roles',
+    'auth/relationships',
+  ]) {
+    fs.rmSync(path.join(root, PLATFORM, folder), { recursive: true, force: true });
   }
+
+  fs.rmSync(path.join(root, PLATFORM, 'audit/search-audit-entries'), { recursive: true, force: true });
 }
 
-describe('platform-folders, on a project generated before the folders of auth', () => {
+describe('platform-folders, on a project generated before the folders of the platform', () => {
   it('puts every file back where a new project has it, and every import with it', () => {
     const root = initProject('--context', 'billing:core', '--authz', 'rebac');
     const expected = sources(root);
@@ -42,6 +64,9 @@ describe('platform-folders, on a project generated before the folders of auth', 
     flatten(root);
 
     expect(exists(root, `${AUTH}/relationship-schema.ts`)).toBe(true);
+    expect(exists(root, `${PLATFORM}/compose-application.ts`)).toBe(true);
+    expect(exists(root, `${PLATFORM}/audit/search-audit-entries.handler.ts`)).toBe(true);
+    expect(read(root, 'package.json')).toContain(`--import ./${PLATFORM}/tracing.ts`);
     expect(cli(root, 'platform-folders').code).toBe(0);
     expect(sources(root)).toEqual(expected);
     expect(cli(root, 'platform-folders').stdout).toContain('Nothing to do');
@@ -61,6 +86,7 @@ describe('platform-folders, on a project generated before the folders of auth', 
       `would move    ${AUTH}/create-authenticator.ts -> ${AUTH}/authentication/create-authenticator.ts`,
     );
 
+    expect(result.stdout).toContain(`would move    ${PLATFORM}/tracing.ts -> ${PLATFORM}/observability/tracing.ts`);
     expect(result.stdout).toContain('would rewrite src/main.ts');
     expect(sources(root)).toEqual(before);
   });
@@ -72,16 +98,15 @@ describe('platform-folders, on a project generated before the folders of auth', 
 
     const flat = cli(root, 'doctor', '--strict');
 
-    expect(flat.stdout).toContain(
-      `folder ${AUTH}: flat (authentication/, authorization/ and the folder of the model; yours: `,
-    );
+    expect(flat.stdout).toContain(`folder ${PLATFORM}: flat (composition/, observability/, jobs/, auth/<question>/`);
+    expect(flat.stdout).not.toContain('script dev: written otherwise');
 
     expect(flat.stdout).toContain('ddd-ts-kit platform-folders` moves them to their folders');
     expect(flat.stdout).not.toContain('`npx ddd-ts-kit init` adds what is missing');
 
     cli(root, 'platform-folders');
 
-    expect(cli(root, 'doctor').stdout).not.toContain(`folder ${AUTH}`);
+    expect(cli(root, 'doctor').stdout).not.toContain(`folder ${PLATFORM}`);
   });
 
   it('is kept flat by init --force, which says how to move it', () => {
@@ -126,6 +151,21 @@ describe('platform-folders, on a project generated before the folders of auth', 
     expect(exists(root, `${AUTH}/roles`)).toBe(false);
     expect(exists(root, `${AUTH}/authorization`)).toBe(false);
   });
+
+  it('gives a new use case imports of the flat platform', () => {
+    const root = initProject('--context', 'billing:core');
+
+    flatten(root);
+
+    expect(cli(root, 'generate', 'query', 'billing', 'ListInvoices', '--allow-name', '--public').code).toBe(0);
+
+    const written = Object.entries(sources(root)).filter(([, content]) =>
+      FLAT.some(([placed]) => content.includes(`platform/${placed}'`) || content.includes(`platform/${placed}.js'`)),
+    );
+
+    expect(written.map(([file]) => file)).toEqual([]);
+    expect(exists(root, `${PLATFORM}/composition`)).toBe(false);
+  });
 });
 
 describe('platform-folders, on the files of the team', () => {
@@ -143,11 +183,13 @@ describe('platform-folders, on the files of the team', () => {
     flatten(root);
     write(root, `${AUTH}/role-grants.ts`, GRANTS);
     write(root, `${AUTH}/describe-grant.ts`, 'export const describeGrant = (role: string): string => role;\n');
-    write(root, 'src/platform/uses-grants.ts', "export { roleGrants } from './auth/role-grants.js';\n");
+    write(root, 'src/platform/http/uses-grants.ts', "export { roleGrants } from '../auth/role-grants.js';\n");
 
     const left = cli(root, 'platform-folders');
 
-    expect(left.stdout).toContain('Not written by the kit, left flat: describe-grant.ts, role-grants.ts.');
+    expect(left.stdout).toContain(
+      'Not written by the kit, left where folders only belong: auth/describe-grant.ts, auth/role-grants.ts.',
+    );
 
     expect(read(root, `${AUTH}/role-grants.ts`)).toContain(
       "import { Role } from '@/platform/auth/authorization/role';",
@@ -157,31 +199,35 @@ describe('platform-folders, on the files of the team', () => {
       root,
       'platform-folders',
       '--place',
-      'role-grants.ts=roles',
+      'auth/role-grants.ts=auth/roles',
       '--place',
-      'describe-grant.ts=roles',
+      'auth/describe-grant.ts=auth/roles',
     );
 
     expect(placed.code).toBe(0);
     expect(read(root, `${AUTH}/roles/role-grants.ts`)).toContain("import { describeGrant } from './describe-grant';");
     expect(exists(root, `${AUTH}/roles/describe-grant.ts`)).toBe(true);
 
-    expect(read(root, 'src/platform/uses-grants.ts')).toBe(
-      "export { roleGrants } from './auth/roles/role-grants.js';\n",
+    expect(read(root, 'src/platform/http/uses-grants.ts')).toBe(
+      "export { roleGrants } from '../auth/roles/role-grants.js';\n",
     );
 
-    expect(placed.stdout).not.toContain('left flat');
+    expect(placed.stdout).not.toContain('left where');
   });
 
-  it('refuses a --place that names no folder of auth, or a file the kit writes', () => {
+  it('refuses a --place that names no folder of the platform, a file the kit writes or no file', () => {
     const root = initProject();
 
-    expect(cli(root, 'platform-folders', '--place', 'role-grants.ts=grants').stderr).toContain(
+    expect(cli(root, 'platform-folders', '--place', 'auth/role-grants.ts=grants').stderr).toContain(
       'Write --place <file>=<folder>',
     );
 
-    expect(cli(root, 'platform-folders', '--place', 'roles.ts=authorization').stderr).toContain(
+    expect(cli(root, 'platform-folders', '--place', 'auth/roles.ts=auth/authorization').stderr).toContain(
       'names a file the kit writes',
+    );
+
+    expect(cli(root, 'platform-folders', '--place', 'auth/role-grants.ts=auth/roles').stderr).toContain(
+      'which does not exist',
     );
   });
 });

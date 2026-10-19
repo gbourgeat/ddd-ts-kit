@@ -157,7 +157,7 @@ describe('the module file of an explicit context', () => {
       'issueInvoiceRoute(commands),\n    cancelInvoiceRoute(commands),\n    searchInvoicesRoute(queries),',
     );
 
-    expect(read(root, 'src/platform/compose-application.ts')).toContain(
+    expect(read(root, 'src/platform/composition/compose-application.ts')).toContain(
       '    billingRoutes,\n    shippingRoutes,\n    orderFulfilmentRoutes,',
     );
   });

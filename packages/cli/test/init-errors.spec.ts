@@ -42,8 +42,8 @@ describe('init --errors', () => {
   ])('goes with every other choice of the stack (%j)', (flags) => {
     const root = reported(...flags);
 
-    expect(read(root, 'src/main.ts')).toContain("import { errors } from '@/platform/errors';");
-    expect(platform(root, 'errors.ts')).toContain('initSentry(');
+    expect(read(root, 'src/main.ts')).toContain("import { errors } from '@/platform/observability/errors';");
+    expect(platform(root, 'observability/errors.ts')).toContain('initSentry(');
 
     expect(platform(root, 'config/load-config.ts')).toContain(
       'errorReporting: readErrorReporting(env, environment, problems),',
@@ -62,7 +62,7 @@ describe('init --errors', () => {
     );
 
     expect(files.filter((file) => TRACE_OF_REPORTING.test(read(root, file)))).toEqual([]);
-    expect(exists(root, 'src/platform/errors.ts')).toBe(false);
+    expect(exists(root, 'src/platform/observability/errors.ts')).toBe(false);
   });
 });
 
@@ -71,19 +71,19 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
     const root = reported();
     const [first, , second] = read(root, 'src/main.ts').split('\n').slice(1);
 
-    expect(first).toBe("import { tracing } from '@/platform/tracing';");
-    expect(second).toBe("import { errors } from '@/platform/errors';");
+    expect(first).toBe("import { tracing } from '@/platform/observability/tracing';");
+    expect(second).toBe("import { errors } from '@/platform/observability/errors';");
 
-    expect(platform(root, 'errors.ts')).toContain(
+    expect(platform(root, 'observability/errors.ts')).toContain(
       "import { reportProcessFailures } from '@ddd-ts-kit/kernel';\nimport { initSentry } from '@ddd-ts-kit/sentry';",
     );
 
-    expect(platform(root, 'errors.ts')).toContain(
+    expect(platform(root, 'observability/errors.ts')).toContain(
       'export const errors = initSentry(loadConfig(process.env).errorReporting);',
     );
 
-    expect(platform(root, 'errors.ts')).toContain('\nreportProcessFailures(errors);\n');
-    expect(platform(root, 'errors.ts')).not.toContain("process.env['SENTRY");
+    expect(platform(root, 'observability/errors.ts')).toContain('\nreportProcessFailures(errors);\n');
+    expect(platform(root, 'observability/errors.ts')).not.toContain("process.env['SENTRY");
   });
 
   it('binds the port of the kernel to the reporter on tsyringe: buses, jobs, HTTP, and the flush of container.stop()', () => {
@@ -96,12 +96,12 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
       'const application = composeApplication(persistence, {\n  events: inProcessEvents(),\n  errors,\n',
     );
 
-    expect(platform(root, 'compose-application.ts')).toContain(
-      '    ...(options.errors === undefined ? {} : { errorReporter: options.errors }),\n',
-    );
+    const composition = platform(root, 'composition/compose-application.ts');
 
-    expect(platform(root, 'compose-application.ts')).toContain('      errors: container.resolve(ErrorReporter),\n');
-    expect(platform(root, 'platform.module.ts')).toContain('  readonly errors?: ErrorReporter;\n');
+    expect(composition).toContain('    ...(options.errors === undefined ? {} : { errorReporter: options.errors }),\n');
+    expect(composition).toContain('      errors: container.resolve(ErrorReporter),\n');
+
+    expect(platform(root, 'composition/platform.module.ts')).toContain('  readonly errors?: ErrorReporter;\n');
 
     expect(platform(root, 'buses/create-command-bus.ts')).toContain(
       `return new InMemoryCommandBus()\n    ${use}\n    .use(loggingMiddleware(`,
@@ -122,8 +122,8 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
     'wires it by hand the same way, and flushes it when the application stops (%j)',
     (flags) => {
       const root = reported(...flags);
-      const create = platform(root, 'create-platform.ts');
-      const compose = platform(root, 'compose-application.ts');
+      const create = platform(root, 'composition/create-platform.ts');
+      const compose = platform(root, 'composition/compose-application.ts');
 
       expect(create).toContain('  const errors = traced.errorReporter(options.errors ?? new NoopErrorReporter());\n');
 
@@ -137,7 +137,7 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
         'new InProcessJobScheduler({ clock, lock, scope, ids, logger, metrics, onRun: reportFailedRuns(errors) })',
       );
 
-      expect(platform(root, 'platform.ts')).toContain('  readonly errors: ErrorReporter;\n');
+      expect(platform(root, 'composition/platform.ts')).toContain('  readonly errors: ErrorReporter;\n');
 
       expect(compose).toContain(
         'clock,\n      logger,\n      refusals: platform.audit.refusals,\n      errors: platform.errors,\n      presentation,\n    }),',
@@ -155,8 +155,8 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
     const root = reported('--http', 'none');
 
     expect(exists(root, 'src/platform/auth/authentication/http-boundary.ts')).toBe(false);
-    expect(platform(root, 'compose-application.ts')).toContain('{ errorReporter: options.errors }');
-    expect(platform(root, 'compose-application.ts')).not.toContain('  ErrorReporter,\n');
+    expect(platform(root, 'composition/compose-application.ts')).toContain('{ errorReporter: options.errors }');
+    expect(platform(root, 'composition/compose-application.ts')).not.toContain('  ErrorReporter,\n');
 
     expect(platform(root, 'buses/create-command-bus.ts')).toContain(
       'errorReportingMiddleware(resolve(ErrorReporter), foundations.scope)',
@@ -300,7 +300,7 @@ describe('a local GlitchTip', () => {
       '| an integration event given up: retries exhausted, poison message, publication of the outbox relay declared dead | a delivery that fails and is retried |',
     );
 
-    expect(readme).toContain('tracing first, error reporting second\n(`src/platform/errors.ts`)');
+    expect(readme).toContain('tracing first, error reporting second\n(`src/platform/observability/errors.ts`)');
     expect(read(initProject(), 'README.md')).not.toContain('Error reporting');
   });
 });
@@ -314,9 +314,9 @@ describe('the other entry points of a project that reports', () => {
     const worker = read(root, 'src/apps/worker/main.ts');
 
     expect(worker.split('\n').slice(1, 4)).toEqual([
-      "import { tracing } from '@/platform/tracing';",
+      "import { tracing } from '@/platform/observability/tracing';",
       '// Imported second on purpose: a failure while the rest of the application loads is already reported.',
-      "import { errors } from '@/platform/errors';",
+      "import { errors } from '@/platform/observability/errors';",
     ]);
 
     expect(worker).toContain('  events: createEventProvider(config, errors),\n  errors,\n');
@@ -332,7 +332,7 @@ describe('the other entry points of a project that reports', () => {
 
       const service = read(root, 'src/apps/billing/main.ts');
 
-      expect(service.split('\n')[3]).toBe("import { errors } from '@/platform/errors';");
+      expect(service.split('\n')[3]).toBe("import { errors } from '@/platform/observability/errors';");
       expect(service).toContain('    events: inProcessEvents(),\n    errors,\n');
       expect(service).toContain('  logger: application.logger,\n  errors,\n});');
     },

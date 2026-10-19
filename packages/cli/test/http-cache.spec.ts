@@ -84,8 +84,8 @@ describe('init --http-cache', () => {
       'cacheTags: { header: CacheTagHeader.xkey, perTenant: true },\n    resolveTenant: tenantFromHeader(),',
     );
 
-    expect(read(shared, 'src/platform/compose-application.ts')).toContain('perTenant: true,');
-    expect(read(single, 'src/platform/compose-application.ts')).not.toContain('perTenant');
+    expect(read(shared, 'src/platform/composition/compose-application.ts')).toContain('perTenant: true,');
+    expect(read(single, 'src/platform/composition/compose-application.ts')).not.toContain('perTenant');
   });
 
   it('gives a project wired by hand, or by Nest, the invalidation its handlers ask, per tenant when it is multi-tenant', () => {
@@ -93,9 +93,11 @@ describe('init --http-cache', () => {
     const nest = initProject('--http-cache', 'varnish', '--di', 'nest', '--http', 'nest');
     const without = initProject('--di', 'manual');
 
-    expect(read(byHand, 'src/platform/platform.ts')).toContain('readonly cacheInvalidation: CacheInvalidation;');
+    expect(read(byHand, 'src/platform/composition/platform.ts')).toContain(
+      'readonly cacheInvalidation: CacheInvalidation;',
+    );
 
-    expect(read(byHand, 'src/platform/create-platform.ts')).toContain(
+    expect(read(byHand, 'src/platform/composition/create-platform.ts')).toContain(
       'cacheInvalidation: new PublishedCacheInvalidation({ publisher, ids, clock, scope, perTenant: true }),',
     );
 
@@ -103,11 +105,11 @@ describe('init --http-cache', () => {
       'resolveTenant: tenantFromHeader(),',
     );
 
-    expect(read(nest, 'src/platform/create-platform.ts')).toContain(
+    expect(read(nest, 'src/platform/composition/create-platform.ts')).toContain(
       'return { ...events, cacheInvalidation: new PublishedCacheInvalidation({ publisher, ids, clock, scope }) };',
     );
 
-    expect(read(without, 'src/platform/platform.ts')).not.toContain('CacheInvalidation');
+    expect(read(without, 'src/platform/composition/platform.ts')).not.toContain('CacheInvalidation');
   });
 
   it('refuses a shared cache without an API, or without the outbox its purges ride on', () => {

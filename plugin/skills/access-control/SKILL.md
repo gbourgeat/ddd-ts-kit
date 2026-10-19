@@ -31,7 +31,8 @@ authorizer behind the port, the guard of the buses, the access policies, the `Ro
 the registry of permissions, the grants of every signed-in person), then the folder of the
 model: `roles/`, `attributes/`, `relationships/` or `custom/`. A project generated before the
 folders keeps them flat: read and write them there, or run `npx ddd-ts-kit platform-folders`
-when the team asks for the move.
+when the team asks for the move (it moves the whole platform: `composition/`, `observability/`,
+`jobs/`, `audit/search-audit-entries/` too).
 
 ## A permission is mandatory
 

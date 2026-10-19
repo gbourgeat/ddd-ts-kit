@@ -5,7 +5,7 @@ import { InMemoryErrorReporter, type ErrorReporter } from '@ddd-ts-kit/kernel';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createCredentials } from '$test/e2e/support/create-credentials';
 import { testEnvironment } from '$test/e2e/support/test-environment';
-import { composeApplication } from '@/platform/compose-application';
+import { composeApplication } from '@/platform/composition/compose-application';
 import { loadConfig } from '@/platform/config/load-config';
 import { openPersistence } from '@/platform/database/open-persistence';
 import { inProcessEvents } from '@/platform/events/in-process-events';
@@ -69,7 +69,7 @@ async function reporterOf(environment: Record<string, string>): Promise<ErrorRep
   vi.resetModules();
   Object.assign(process.env, testEnvironment(environment));
 
-  const { errors } = await import('@/platform/errors');
+  const { errors } = await import('@/platform/observability/errors');
 
   return errors;
 }

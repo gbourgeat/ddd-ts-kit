@@ -4,7 +4,7 @@ import { authorizationModule } from '@ddd-ts-kit/auth/di';
 {{spec.diPlain}}
 {{spec.contextImports}}
 import type { Actor, Message } from '@ddd-ts-kit/kernel';
-import { platformTestModule } from '{{alias.platform}}/platform-test.module{{alias.ext}}';
+import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
 {{job.permissionsImport}}
 import { {{job.command}}Command } from '{{alias.context}}/application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command{{alias.ext}}';
 {{job.specImport}}

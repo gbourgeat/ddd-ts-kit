@@ -5,7 +5,7 @@ import { anActor } from '@ddd-ts-kit/auth/testing';
 {{spec.diWithFake}}
 {{spec.contextImports}}
 import { offsetPage } from '@ddd-ts-kit/kernel';
-import { platformTestModule } from '{{alias.platform}}/platform-test.module{{alias.ext}}';
+import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
 {{#if access.protected}}
 import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions{{alias.ext}}';
 {{/if}}

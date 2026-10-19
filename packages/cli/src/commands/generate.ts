@@ -15,6 +15,7 @@ import { Workspace } from '../workspace/index.js';
 import { Arguments } from './arguments.js';
 import type { Command } from './command.js';
 import { printReport } from './print-report.js';
+import { keepFlatPlatform } from '../platform-folders/index.js';
 
 export const generateCommand: Command = (argv, io) => {
   const asked = findKind(argv.find((argument) => !argument.startsWith('-')) ?? '');
@@ -25,6 +26,7 @@ export const generateCommand: Command = (argv, io) => {
   const ws = new Workspace(root, args.flag('force'));
   const { config } = readConfig(root);
 
+  keepFlatPlatform(ws, config);
   kind.run({ ws, config, args: rest, flags: flagsOf(args) });
   refreshDocs(ws);
 

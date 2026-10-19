@@ -137,7 +137,7 @@ describe('generate, the next steps and the document of a new context', () => {
     expect(result.updated).toEqual(
       expect.arrayContaining([
         'ddd-ts-kit.config.json',
-        'src/platform/compose-application.ts',
+        'src/platform/composition/compose-application.ts',
         'docs/context-map.md',
         'src/contexts/billing/CONTEXT.md',
       ]),
@@ -150,7 +150,7 @@ describe('generate, the next steps and the document of a new context', () => {
       upstreams: [{ context: 'billing', relationship: 'conformist' }],
     });
 
-    expect(read(root, 'src/platform/compose-application.ts')).toContain('catalogModule,');
+    expect(read(root, 'src/platform/composition/compose-application.ts')).toContain('catalogModule,');
     expect(read(root, 'src/contexts/catalog/CONTEXT.md')).toContain('- Downstream of `billing` (conformist).');
     expect(read(root, 'src/contexts/billing/CONTEXT.md')).toContain('- Upstream of `catalog` (conformist).');
   });

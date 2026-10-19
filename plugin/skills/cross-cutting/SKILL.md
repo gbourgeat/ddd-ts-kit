@@ -31,8 +31,8 @@ imported by the platform, `main.ts` and `apps/` only (`tracing/platform-only`).
 |---|---|---|
 | log and measure every use case | bus middlewares, `src/platform/buses/` | `loggingMiddleware`, `metricsMiddleware` |
 | the logger itself | `src/platform/observability/create-logger.ts` | the kernel `Logger` port; `stack.logger` chooses the adapter: `stdout` (default), `pino` or `winston` |
-| trace the application | `src/platform/tracing.ts`, first import of `main.ts`, and the instrumentation given to the kernel module | [tracing.md](tracing.md) |
-| report unexpected failures | the boundaries, never a use case | the kernel `ErrorReporter` port; `stack.errors: sentry` wires `@ddd-ts-kit/sentry` (Sentry or GlitchTip) in `src/platform/errors.ts` |
+| trace the application | `src/platform/observability/tracing.ts`, first import of `main.ts`, and the instrumentation given to the kernel module | [tracing.md](tracing.md) |
+| report unexpected failures | the boundaries, never a use case | the kernel `ErrorReporter` port; `stack.errors: sentry` wires `@ddd-ts-kit/sentry` (Sentry or GlitchTip) in `src/platform/observability/errors.ts` |
 | who did what | around the use cases, in `src/platform/audit/` | [audit-trail.md](audit-trail.md) |
 | retry, timeout, circuit breaker on an outside call | the adapter's declaration or binding; defaults in `src/platform/resilience/` | `@Adapter(Port, { kind, aspects })`, or `.with(retry(...), timeout(...))` in an explicit module |
 | the same, when the policy is part of what the adapter is | the adapter class, in `infrastructure/` only | `@Retry`, `@Timeout` of `@ddd-ts-kit/aspects/decorators` (`aspects/outside-in`) |

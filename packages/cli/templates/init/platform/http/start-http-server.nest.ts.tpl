@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { Server } from 'node:http';
 import { NestFactory } from '@nestjs/core';
-import type { Application } from '{{alias.platform}}/compose-application{{alias.ext}}';
+import type { Application } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 import { createAppModule } from '{{alias.platform}}/http/create-app-module{{alias.ext}}';
 {{#if cache.rateLimit}}

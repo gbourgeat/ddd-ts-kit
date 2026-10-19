@@ -42,20 +42,20 @@ describe('scheduled jobs in the platform', () => {
         'jobs: { start: config.runJobs, settings: jobSettings(process.env) },',
       );
 
-      expect(read(root, 'src/main.ts')).toContain("import { jobSettings } from '@/platform/job-settings';");
+      expect(read(root, 'src/main.ts')).toContain("import { jobSettings } from '@/platform/jobs/job-settings';");
     },
   );
 
   it('starts no job by time where nothing asks for it: the tools and the tests', () => {
     const root = initProject();
 
-    expect(platform(root, 'compose-application.ts')).toContain('jobs: options.jobs ?? { start: false },');
+    expect(platform(root, 'composition/compose-application.ts')).toContain('jobs: options.jobs ?? { start: false },');
     expect(read(root, 'scripts/openapi.ts')).not.toContain('jobs');
     expect(read(root, 'test/e2e/support/start-application.ts')).not.toContain('jobs');
   });
 
   it('keeps one marker region for the settings of the jobs, in a file that needs no helper', () => {
-    const settings = platform(initProject(), 'job-settings.ts');
+    const settings = platform(initProject(), 'jobs/job-settings.ts');
 
     expect(settings).toContain(
       'export function jobSettings(environment: Environment, context?: string): Readonly<Record<string, JobSettings>> {',
@@ -98,7 +98,7 @@ describe('the lock that keeps a job to one instance', () => {
       "lock: new RedisLock(connection.client, { namespace: serviceName + ':lock' }),",
     );
 
-    expect(platform(root, 'platform.module.ts')).toContain('builder.rebind(Lock).toValue(redis.lock);');
+    expect(platform(root, 'composition/platform.module.ts')).toContain('builder.rebind(Lock).toValue(redis.lock);');
     expect(read(root, 'README.md')).toContain('the kernel `Lock` is bound to `RedisLock`');
     expect(read(root, 'README.md')).not.toContain('Limitation: one instance runs the jobs');
   });
@@ -106,7 +106,7 @@ describe('the lock that keeps a job to one instance', () => {
   it('is the one of the process otherwise, and the README says what that limits', () => {
     const root = initProject();
 
-    expect(platform(root, 'platform.module.ts')).not.toContain('Lock');
+    expect(platform(root, 'composition/platform.module.ts')).not.toContain('Lock');
     expect(read(root, 'README.md')).toContain('**Limitation: one instance runs the jobs.**');
     expect(read(root, 'README.md')).toContain('`--cache redis`, which binds `RedisLock`');
   });
@@ -114,11 +114,11 @@ describe('the lock that keeps a job to one instance', () => {
   it('reaches the scheduler of a hand-wired platform the same way', () => {
     const byHand = initProject('--di', 'manual', '--cache', 'redis');
 
-    expect(platform(byHand, 'create-platform.ts')).toContain(
+    expect(platform(byHand, 'composition/create-platform.ts')).toContain(
       'const lock = options.redis?.lock ?? new InMemoryLock(clock);',
     );
 
-    expect(platform(initProject('--di', 'manual'), 'create-platform.ts')).toContain(
+    expect(platform(initProject('--di', 'manual'), 'composition/create-platform.ts')).toContain(
       '// TODO(platform): this lock excludes inside one process only.',
     );
   });
@@ -154,7 +154,7 @@ async function settingsOf(root: string, ...parameters: readonly unknown[]): Prom
 
 /** The settings file of a project as `generate job` leaves it: one line per job inside the marker region. */
 function withJobs(root: string): string {
-  const file = 'src/platform/job-settings.ts';
+  const file = 'src/platform/jobs/job-settings.ts';
 
   write(
     root,

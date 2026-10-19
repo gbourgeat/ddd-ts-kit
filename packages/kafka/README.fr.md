@@ -70,7 +70,7 @@ consommateur.
 
 `init --broker kafka` écrit ce câblage dans la plateforme du projet : le bus est construit par
 `platform/events/create-event-provider.ts`, avec la clé de `platform/events/aggregate-key-of.ts`,
-`platform/platform.module.ts` y lie de nouveau `EventSubscribers`, et `main.ts` le donne, tracé, au
+`platform/composition/platform.module.ts` y lie de nouveau `EventSubscribers`, et `main.ts` le donne, tracé, au
 relais de l'outbox de `platform/events/start-outbox-relay.ts`, qui tourne en
 `ordering: 'per-key'` avec la même clé. À la main, la même chose s'écrit :
 

@@ -17,6 +17,7 @@ import { jobVars } from './job/job-vars.js';
 import { readSentCommand } from './job/read-sent-command.js';
 import { requestedSchedule } from './job/requested-schedule.js';
 import { writtenSchedule } from './job/written-schedule.js';
+import { platformPath } from '../platform-path.js';
 
 export const jobKind: Kind = {
   name: 'job',
@@ -70,5 +71,5 @@ function writeJob(scope: Scope, name: Name, context: RenderContext): void {
   ]);
 
   wire(scope, 'job', context);
-  applyWiring(scope.ws, `${scope.config.platformDir}/job-settings.ts`, renderTemplate('job/settings.tpl', context));
+  applyWiring(scope.ws, platformPath(scope, 'jobs/job-settings.ts'), renderTemplate('job/settings.tpl', context));
 }

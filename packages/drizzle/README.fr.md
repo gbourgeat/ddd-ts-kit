@@ -128,7 +128,7 @@ déclarées d'un contexte en son module.
 
 Un projet écrit par la CLI contient le même câblage en deux fichiers :
 `platform/database/persistence-over.ts` construit l'unité de travail et les deux stores une
-fois, et `platform/platform.module.ts` les lie, le *publisher* de l'outbox étant passé à
+fois, et `platform/composition/platform.module.ts` les lie, le *publisher* de l'outbox étant passé à
 `kernelModule({ eventPublisher })`.
 
 Les fabriques passent les tables du schéma `messaging`. Avec les tables dans `public`, les

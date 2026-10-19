@@ -44,7 +44,7 @@ export function createLogger(scope: ExecutionScope, settings: LogSettings): Wins
 
 ```ts
 // main.ts
-import { tracing } from '@/platform/tracing'; // first
+import { tracing } from '@/platform/observability/tracing'; // first
 import { createLogger } from '@/platform/observability/create-logger';
 import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
 import { createApplication, kernelModule } from '@ddd-ts-kit/di';
@@ -65,7 +65,7 @@ async function shutdown(): Promise<void> {
 ```
 
 `init --logger winston` writes this `create-logger.ts` (it answers a `NoopLogger` when given no
-settings, which is how the tools and the tests stay silent); `platform/lay-foundations.ts`
+settings, which is how the tools and the tests stay silent); `platform/composition/lay-foundations.ts`
 calls it once and `composeApplication` hands the logger to `kernelModule({ logger })`.
 
 One line of the application, as it is written:

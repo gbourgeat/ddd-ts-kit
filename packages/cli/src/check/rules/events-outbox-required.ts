@@ -8,6 +8,7 @@ import { lineOfSequence } from '../support/line-of-sequence.js';
 import { perFile } from '../support/per-file.js';
 import { reporter } from '../support/reporter.js';
 import { identifier } from '../text/identifier.js';
+import { platformFilePaths } from '../../platform-layout/index.js';
 
 const BROKER_CLIENTS = [
   'amqplib',
@@ -139,8 +140,10 @@ function platformWithoutOutbox(file: SourceFile, config: Config): Finding[] {
   ];
 }
 
-function givesThePublisher(file: SourceFile, { platformDir }: Config): boolean {
-  if (file.path === `${platformDir}/platform.module.ts`) {
+function givesThePublisher(file: SourceFile, config: Config): boolean {
+  const { platformDir } = config;
+
+  if (platformFilePaths(config, 'composition/platform.module.ts').includes(file.path)) {
     return true;
   }
 

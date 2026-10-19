@@ -11,6 +11,7 @@ import { packageFindings } from './package-findings.js';
 import { permissionFindings } from './permission-findings.js';
 import { scriptFindings } from './script-findings.js';
 import { submoduleFindings } from './submodule-findings.js';
+import { platformFileIn } from '../platform-layout/index.js';
 
 /**
  * What the project lacks of what this version of the kit writes, the steps an upgrade leaves to do:
@@ -32,7 +33,7 @@ export function diagnose(root: string, config: Config): DoctorFinding[] {
   const settingsFile = path.join(root, '.claude', 'settings.json');
 
   return [
-    ...scriptFindings(config, scripts),
+    ...scriptFindings(config, scripts, tracingOf(root, config)),
     ...packageFindings(config, declared),
     ...(fs.existsSync(settingsFile) ? permissionFindings(config, readJson(settingsFile)) : []),
     ...hookFindings(root),
@@ -41,6 +42,11 @@ export function diagnose(root: string, config: Config): DoctorFinding[] {
     ...installFindings(root, config.stack.packageManager, declared),
     ...submoduleFindings(root),
   ];
+}
+
+/** Where the project keeps the module `dev` preloads: in its folder, or flat as a version before the folders wrote it. */
+function tracingOf(root: string, config: Config): string {
+  return platformFileIn(config, 'observability/tracing.ts', (file) => fs.existsSync(path.join(root, file)));
 }
 
 function nodeEngine(manifest: unknown): unknown {

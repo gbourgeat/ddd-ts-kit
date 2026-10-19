@@ -7,7 +7,7 @@ import { stringsAt } from './support/strings-at.js';
 
 const HTTP = 'src/contexts/billing/presentation/http';
 const FUNCTIONS = ['--routes', 'functions'];
-const COMPOSITION = 'src/platform/compose-application.ts';
+const COMPOSITION = 'src/platform/composition/compose-application.ts';
 
 describe('controllers, on a declared project of function routes', () => {
   let root: string;
@@ -77,7 +77,7 @@ describe('controllers, on a declared project of function routes', () => {
       "controllerRoute(new IssueInvoiceController(commands), { guards: 'skip' })",
     );
 
-    expect(read(root, 'src/platform/compose-application.ts')).not.toContain('billingRoutes');
+    expect(read(root, 'src/platform/composition/compose-application.ts')).not.toContain('billingRoutes');
     expect(stringsAt(outcome.json(), 'manual').join('\n')).not.toContain('Mount the declared controllers');
   });
 

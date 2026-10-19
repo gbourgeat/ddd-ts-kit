@@ -6,10 +6,9 @@ import { wiringFamily } from '../wiring-family.js';
 import type { ContextPlan } from './context-plan.js';
 import { importAssembler } from './import-assembler.js';
 import { planVars } from './plan-vars.js';
-import { authFileIn } from '../../platform-auth/index.js';
+import { platformFileIn } from '../../platform-layout/index.js';
 
 const PROOF = 'test/architecture/extractable.spec.ts';
-const COMPOSITION = 'compose-application.ts';
 
 /**
  * What the shared files of the project say of one context: the composition root assembles it,
@@ -21,7 +20,7 @@ export function wireContext(ws: Workspace, plan: ContextPlan): void {
   const { config, context } = plan;
   const vars = planVars(plan);
   const family = wiringFamily(config);
-  const registry = authFileIn(config, 'permissions.ts', (path) => ws.exists(path));
+  const registry = platformFileIn(config, 'auth/authorization/permissions.ts', (path) => ws.exists(path));
 
   if (!ws.exists(PROOF)) {
     ws.create(PROOF, renderTemplate(`architecture/extractable.${family}.spec.ts.tpl`, vars));
@@ -29,7 +28,10 @@ export function wireContext(ws: Workspace, plan: ContextPlan): void {
 
   for (const [file, wiring] of [
     [PROOF, `architecture/wiring.${family}.tpl`],
-    [`${config.platformDir}/${COMPOSITION}`, `context/wiring.${family}.tpl`],
+    [
+      platformFileIn(config, 'composition/compose-application.ts', (path) => ws.exists(path)),
+      `context/wiring.${family}.tpl`,
+    ],
   ] as const) {
     if (family === 'declared') {
       importAssembler(ws, config, file);

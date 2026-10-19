@@ -66,6 +66,10 @@ src/
   shared-kernel/                 optional: value objects used by two contexts or more
     presentation/                schemas of the HTTP contract several contexts answer with (*.schema.ts)
   platform/                      technical capabilities: config, database, events, auth, tracing, http server
+    composition/                 what turns the platform and the contexts into an application
+    observability/               tracing.ts (the first import of every entry point), logs, measures, error reports
+    jobs/                        the settings of the scheduled jobs
+    audit/search-audit-entries/  the read side of the audit trail
     auth/
       authentication/            who is calling: the authenticator, the session of a request, the HTTP boundary
       authorization/             what they may do, whatever the model: the authorizer behind the port, the guard of the buses, Role

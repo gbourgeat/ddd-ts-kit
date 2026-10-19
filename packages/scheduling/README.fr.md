@@ -427,7 +427,7 @@ Un contexte extrait en service à part emporte ses *jobs* avec lui : ce sont des
 contexte, enregistrées par l'application qui liste son module. Rien n'est global.
 
 Dans un projet généré par la CLI : `ddd-ts-kit generate job` écrit le *job* et sa ligne dans
-`src/platform/job-settings.ts` (désactivé avec `JOB_<CONTEXT>_<JOB>_ENABLED=false`), `main.ts`
+`src/platform/jobs/job-settings.ts` (désactivé avec `JOB_<CONTEXT>_<JOB>_ENABLED=false`), `main.ts`
 passe `jobs: { start: config.runJobs, settings: jobSettings(process.env) }` (`RUN_JOBS`), et
 `ddd-ts-kit generate worker` écrit `src/apps/worker/main.ts` et désactive par défaut `RUN_JOBS`
 pour l'API.

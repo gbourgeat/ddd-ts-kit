@@ -39,7 +39,7 @@ consommateur.
 ![Le gestionnaire de ordering écrit la commande client et un enregistrement d'outbox dans une seule transaction ; le relais de l'outbox donne l'enregistrement à NatsEventBus, qui le publie dans le flux integration-events avec l'identifiant de l'événement comme Nats-Msg-Id et attend l'acquittement ; le flux écarte un second message de même identifiant dans sa fenêtre de déduplication ; un consommateur durable par consommateur et par type d'événement tire le message et le remet aux gestionnaires de son contexte, acquitté après la validation de leur unité de travail ; ce qu'un consommateur abandonne est copié dans le flux integration-events-dead](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/nats-outbox-to-consumers.fr.svg)
 
 `init --broker nats` écrit ce câblage dans la plateforme du projet : le bus est construit par
-`platform/events/create-event-provider.ts`, `platform/platform.module.ts` lie à nouveau
+`platform/events/create-event-provider.ts`, `platform/composition/platform.module.ts` lie à nouveau
 (`rebind`) `EventSubscribers` sur lui, et `main.ts` le donne, tracé, au relais de l'outbox. À la
 main, la même chose s'écrit :
 

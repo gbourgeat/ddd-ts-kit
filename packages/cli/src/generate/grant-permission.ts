@@ -8,7 +8,7 @@ import { permissionsFile } from './permissions-file.js';
 import type { Scope } from './scope.js';
 import { declareRole } from './vocabulary/declare-role.js';
 import { withImport } from './with-import.js';
-import { authFile } from './auth-file.js';
+import { platformPath } from './platform-path.js';
 
 const ROLES = /export\s+const\s+roles\b[^=]*=\s*\{/;
 const IMPORTS_ROLE = /import\s*\{[^}]*\bRole\b[^}]*\}\s*from/;
@@ -21,7 +21,7 @@ const IMPORTS_ROLE = /import\s*\{[^}]*\bRole\b[^}]*\}\s*from/;
  */
 export function grantPermission(scope: Scope, permission: string): void {
   const role = scope.flags.grant;
-  const file = authFile(scope, 'roles.ts');
+  const file = platformPath(scope, 'auth/roles/roles.ts');
 
   if (scope.config.stack.authz !== 'rbac') {
     refuseGrantOutsideRoles(scope, role);
@@ -45,7 +45,7 @@ export function grantPermission(scope: Scope, permission: string): void {
   }
 
   if (role === undefined) {
-    const holders = [content, scope.ws.read(authFile(scope, 'signed-in-grants.ts')) ?? ''];
+    const holders = [content, scope.ws.read(platformPath(scope, 'auth/authorization/signed-in-grants.ts')) ?? ''];
 
     if (!holders.some((holder) => isGranted(scan(holder), { set, context: scope.context.kebab }, permission))) {
       scope.ws.step({

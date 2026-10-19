@@ -40,8 +40,8 @@ describe.runIf(SLOW).each(REPORTED)('a generated project that reports its failur
         .split('\n')
         .filter((line) => line.startsWith('import '));
 
-      expect(first).toContain("/platform/tracing';");
-      expect(second).toContain("/platform/errors';");
+      expect(first).toContain("/platform/observability/tracing';");
+      expect(second).toContain("/platform/observability/errors';");
     }
   }, 240_000);
 

@@ -1,6 +1,6 @@
 import Fastify{{#if cache.rateLimit}}, { type FastifyInstance }{{/if}} from 'fastify';
 import { mountFastify } from '@ddd-ts-kit/http/fastify';
-import type { Application } from '{{alias.platform}}/compose-application{{alias.ext}}';
+import type { Application } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 {{#if cache.rateLimit}}
 import { refusalFor } from '{{alias.platform}}/http/refusal-for{{alias.ext}}';

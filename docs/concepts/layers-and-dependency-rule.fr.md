@@ -219,7 +219,7 @@ La *clean architecture* ajoute un anneau d'« adaptateurs d'interface » (contr�
 | `CommandBus`, `QueryBus`, commandes et requêtes | ports pilotants | API des services d'application | frontières d'entrée (input boundaries) |
 | `presentation/` | adaptateurs pilotants | interface utilisateur | contrôleurs (adaptateurs d'interface) |
 | `infrastructure/` | adaptateurs pilotés | infrastructure | implémentations de *gateways*, *frameworks* et pilotes |
-| `<context>.declarations.ts` (ou `<context>.module.ts` dans le style explicite), `platform/compose-application.ts`, `main.ts` | configurateur | résolution des dépendances | composant principal (main component) |
+| `<context>.declarations.ts` (ou `<context>.module.ts` dans le style explicite), `platform/composition/compose-application.ts`, `main.ts` | configurateur | résolution des dépendances | composant principal (main component) |
 
 Le kit garde séparés les deux côtés de la bordure (`presentation/` et `infrastructure/`) et leur
 interdit de s'importer l'un l'autre. C'est la symétrie hexagonale rendue vérifiable : une route ne

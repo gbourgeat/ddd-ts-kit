@@ -10,8 +10,8 @@ export function platformFiles(config: Config): InitFile[] {
 
   return [
     [`${config.sourceRoot}/main.ts`, 'init/main.ts.tpl'],
-    file('tracing.ts'),
-    file('job-settings.ts'),
+    file('observability/tracing.ts'),
+    file('jobs/job-settings.ts'),
     ...['config/app-config.ts', 'config/load-config.ts', 'config/read-tracing.ts', 'config/config-error.ts'].map(
       (name) => file(name),
     ),
@@ -26,7 +26,7 @@ export function platformFiles(config: Config): InitFile[] {
     ...eventFiles(config),
     ...httpFiles(config),
     ...when(config.stack.cache === 'redis', [file('redis/open-redis.ts')]),
-    ...when(config.stack.errors === 'sentry', [file('errors.ts')]),
+    ...when(config.stack.errors === 'sentry', [file('observability/errors.ts')]),
     ...fileStorageFiles(config),
   ];
 }
@@ -55,14 +55,19 @@ function fileStorageFiles(config: Config): InitFile[] {
   ];
 }
 
-const TSYRINGE = ['platform.module.ts', 'platform-test.module.ts', 'lay-foundations.ts'];
-const MANUAL = ['platform.ts', 'create-platform.ts'];
+const TSYRINGE = [
+  'composition/platform.module.ts',
+  'composition/platform-test.module.ts',
+  'composition/lay-foundations.ts',
+];
+
+const MANUAL = ['composition/platform.ts', 'composition/create-platform.ts'];
 
 /** What turns the platform and the contexts into an application: modules of `@ddd-ts-kit/di` on tsyringe, a `Platform` handed to each context otherwise. */
 function compositionFiles(config: Config): InitFile[] {
   const family = familyOf(config);
   const file = (name: string, variant?: string): InitFile => platformFile(config, name, variant);
-  const shared = [file('compose-application.ts', family)];
+  const shared = [file('composition/compose-application.ts', family)];
 
   if (family === 'manual') {
     return [...shared, ...MANUAL.map((name) => file(name, family)), file('jobs/configured-job-scheduler.ts')];

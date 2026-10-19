@@ -13,7 +13,7 @@ describe('a declared context whose routes are functions', () => {
       'issueInvoiceRoute(commands),\n    cancelInvoiceRoute(commands),\n    searchInvoicesRoute(queries),',
     );
 
-    expect(read(functions, 'src/platform/compose-application.ts')).toContain(
+    expect(read(functions, 'src/platform/composition/compose-application.ts')).toContain(
       '    billingRoutes,\n    shippingRoutes,\n    orderFulfilmentRoutes,',
     );
 

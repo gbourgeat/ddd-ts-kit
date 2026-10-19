@@ -4,7 +4,7 @@ import { authorizationModule } from '@ddd-ts-kit/auth/di';
 {{spec.diPlain}}
 {{spec.contextImports}}
 import { ProcessRunner } from '@ddd-ts-kit/kernel';
-import { platformTestModule } from '{{alias.platform}}/platform-test.module{{alias.ext}}';
+import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
 import { {{name.pascal}}Process } from '{{alias.context}}/application/processes/{{name.kebab}}.process{{alias.ext}}';
 
 const HOUR = 3_600_000;

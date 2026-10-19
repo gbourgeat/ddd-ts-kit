@@ -281,7 +281,7 @@ well (`npm run ci:test:alias`).
   `NodeNext` (`--explainFiles`), never to `dist/`; both report `TS2307` for a specifier that
   names no file, in both spellings; both type-check every stack and both decorator modes.
 - **tsx** resolves `@/x` (and `@/x.js`) to `src/x.ts` with no flag, also when a compiled copy
-  exists and also for a module loaded by `--import ./src/platform/tracing.ts`.
+  exists and also for a module loaded by `--import ./src/platform/observability/tracing.ts`.
 - **vitest** with `resolve.tsconfigPaths` runs a spec on the source although a compiled copy
   exists; without it the spec fails on its first import. The decorator plugin of
   `@ddd-ts-kit/testing/vitest` compiles a file whose imports carry no extension as it did before.

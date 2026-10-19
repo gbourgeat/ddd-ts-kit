@@ -277,7 +277,7 @@ function testFiles(project) {
 function orphanExceptions(project) {
   return [
     `^${escape(project.sourceRoot)}/main\\.ts$`,
-    `^${escape(project.sourceRoot)}/platform/tracing\\.ts$`,
+    `^${escape(project.sourceRoot)}/platform/(observability/)?tracing\\.ts$`,
     `^${escape(project.contextsDir)}/[^/]+/published-language/`,
     '\\.d\\.[cm]?ts$',
     '\\.(spec|test)\\.[cm]?ts$',

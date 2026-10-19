@@ -87,10 +87,10 @@ import { AuditTrail, auditGuardRefusals } from '@ddd-ts-kit/audit';
 import { auditModule } from '{{alias.platform}}/audit/audit.module{{alias.ext}}';
 {{/if}}
 {{#if audit.functionRoute}}
-import { searchAuditEntriesRoute } from '{{alias.platform}}/audit/search-audit-entries.route{{alias.ext}}';
+import { searchAuditEntriesRoute } from '{{alias.platform}}/audit/search-audit-entries/search-audit-entries.route{{alias.ext}}';
 {{/if}}
 {{#if audit.controller}}
-import { SearchAuditEntriesController } from '{{alias.platform}}/audit/search-audit-entries.controller{{alias.ext}}';
+import { SearchAuditEntriesController } from '{{alias.platform}}/audit/search-audit-entries/search-audit-entries.controller{{alias.ext}}';
 {{/if}}
 import { authorization } from '{{alias.platform}}/auth/authorization/authorization{{alias.ext}}';
 {{#if routes.mountsControllers}}
@@ -117,8 +117,8 @@ import { fileRoutes } from '{{alias.platform}}/files/file-routes{{alias.ext}}';
 {{#if files.any}}
 import { filesModule } from '{{alias.platform}}/files/files.module{{alias.ext}}';
 {{/if}}
-import { layFoundations, type Foundations } from '{{alias.platform}}/lay-foundations{{alias.ext}}';
-import { platformModule, type PlatformOptions } from '{{alias.platform}}/platform.module{{alias.ext}}';
+import { layFoundations, type Foundations } from '{{alias.platform}}/composition/lay-foundations{{alias.ext}}';
+import { platformModule, type PlatformOptions } from '{{alias.platform}}/composition/platform.module{{alias.ext}}';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 

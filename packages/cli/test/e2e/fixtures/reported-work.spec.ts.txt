@@ -9,7 +9,7 @@ import * as billing from '@/contexts/billing/billing.declarations';
 import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
 import { invoiceIssuedV2 } from '@/contexts/billing/published-language/invoice-issued.v2.integration-event';
 import { startOutboxRelay } from '@/platform/events/start-outbox-relay';
-import { platformTestModule } from '@/platform/platform-test.module';
+import { platformTestModule } from '@/platform/composition/platform-test.module';
 
 const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { scheduler: [billingPermissions['invoice.issue']] }, systemRole: 'scheduler' }) });
 

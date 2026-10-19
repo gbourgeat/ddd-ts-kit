@@ -31,7 +31,7 @@ export class StripePaymentGateway implements PaymentGateway {
 Correct:
 
 ```ts
-// src/platform/tracing.ts: the one place that knows the tracing package
+// src/platform/observability/tracing.ts: the one place that knows the tracing package
 import { traceApplication, tracedPublisher } from '@ddd-ts-kit/tracing';
 import { initTracing } from '@ddd-ts-kit/tracing/node';
 

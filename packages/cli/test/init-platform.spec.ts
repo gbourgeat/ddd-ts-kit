@@ -7,8 +7,8 @@ import { sourceFiles } from './support/source-files.js';
 type Export = readonly [file: string, declaration: string];
 
 const SHARED: readonly Export[] = [
-  ['compose-application.ts', 'export function composeApplication('],
-  ['job-settings.ts', 'export function jobSettings('],
+  ['composition/compose-application.ts', 'export function composeApplication('],
+  ['jobs/job-settings.ts', 'export function jobSettings('],
   ['config/app-config.ts', 'export interface AppConfig'],
   ['config/load-config.ts', 'export function loadConfig('],
   ['config/config-error.ts', 'export class ConfigError'],
@@ -27,11 +27,11 @@ const SHARED: readonly Export[] = [
 
 const TSYRINGE: readonly Export[] = [
   [
-    'platform.module.ts',
+    'composition/platform.module.ts',
     'export function platformModule(persistence: Persistence, options: PlatformOptions): ContextModule',
   ],
-  ['platform-test.module.ts', 'export const platformTestModule = defineContextModule('],
-  ['lay-foundations.ts', 'export function layFoundations('],
+  ['composition/platform-test.module.ts', 'export const platformTestModule = defineContextModule('],
+  ['composition/lay-foundations.ts', 'export function layFoundations('],
   ['buses/create-command-bus.ts', 'export function createCommandBus('],
   ['buses/create-query-bus.ts', 'export function createQueryBus('],
   ['auth/authorization/authorization.ts', 'export function authorization('],
@@ -40,9 +40,9 @@ const TSYRINGE: readonly Export[] = [
 
 const MANUAL: readonly Export[] = [
   ['resilience/own-policy.ts', 'export function ownPolicy('],
-  ['platform.ts', 'export interface Platform'],
+  ['composition/platform.ts', 'export interface Platform'],
   [
-    'create-platform.ts',
+    'composition/create-platform.ts',
     'export function createPlatform(persistence: Persistence, options: PlatformOptions): Platform',
   ],
   ['jobs/configured-job-scheduler.ts', 'export class ConfiguredJobScheduler implements JobScheduler'],
@@ -94,8 +94,13 @@ describe('the platform init writes', () => {
       expect(exists(root, `src/platform/${file}`), file).toBe(false);
     }
 
-    expect(exists(root, 'src/platform/platform.module.ts')).toBe(!flags.includes('manual') && !flags.includes('nest'));
-    expect(exists(root, 'src/platform/platform.ts')).toBe(flags.includes('manual') || flags.includes('nest'));
+    expect(exists(root, 'src/platform/composition/platform.module.ts')).toBe(
+      !flags.includes('manual') && !flags.includes('nest'),
+    );
+
+    expect(exists(root, 'src/platform/composition/platform.ts')).toBe(
+      flags.includes('manual') || flags.includes('nest'),
+    );
   });
 
   it('gives the Nest application its module, next to the server that mounts the routes', () => {
