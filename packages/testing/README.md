@@ -669,7 +669,10 @@ outbox relayed, the handlers it reaches, what they store in turn) is awaited wit
 then asserted at once. Each source counts its pending work, from the moment it is started until
 it has finished: the `stats()` of an outbox store are such a count, since a record stays pending
 while the relay publishes it and the handlers it reaches run. The `test/e2e/support/start-application.ts`
-of a generated project offers it as `application.settled()`, on the outbox of its database.
+of a generated project offers it as `application.settled()`, on the outbox of its database. A use case
+no route reaches, started by the handler of an integration event of an upstream, is started as the
+relay of that upstream would start it: `await application.publish([event])`, the event built from its
+declaration in the published language, then `await application.settled()`.
 
 <!-- checked sample -->
 ```ts

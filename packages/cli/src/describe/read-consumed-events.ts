@@ -67,9 +67,15 @@ interface GivenDefinition {
   readonly definition: EventDefinition;
 }
 
-/** The declaration a handler is given (`@IntegrationEventHandler(definition`, `on(definition`), found in the published language it is imported from. */
+/**
+ * The declaration a handler is given (`@IntegrationEventHandler(definition`, `on(definition`,
+ * `consume(definition` behind a broker) or reads its type from (`eventType = definition.type`),
+ * found in the published language it is imported from.
+ */
 function givenDefinition({ ws, config }: ContextSources, text: string): GivenDefinition | undefined {
-  const local = /(?:@IntegrationEventHandler|\bon)\(\s*(\w+)\s*,/.exec(text)?.[1];
+  const local =
+    /(?:@IntegrationEventHandler|\bon|\bconsume)\(\s*(\w+)\s*,/.exec(text)?.[1] ??
+    /\bstatic readonly eventType = (\w+)\.type\b/.exec(text)?.[1];
 
   for (const [, names = '', from = ''] of text.matchAll(
     /\bimport \{([^}]*)\} from '([^']*\/published-language\/[^']*)'/g,

@@ -56,10 +56,10 @@ describe.runIf(SLOW).each(PROVEN)('a freshly generated project (%s)', (_label, s
     expect(vitest('test/architecture/extractable.spec.ts')).toMatch(/Tests\s+\d+ passed/);
   }, 240_000);
 
-  it('passes its end-to-end specs: 401, 403 and 2xx with tokens signed in the test, and the trace of the request as one tree', () => {
+  it('passes its end-to-end specs: 401, 403 and 2xx with tokens signed in the test, the trace of the request as one tree, and a use case started by an integration event', () => {
     const endToEnd = vitest('--config', 'vitest.e2e.config.ts');
 
-    expect(endToEnd).toMatch(/Tests\s+5 passed/);
+    expect(endToEnd).toMatch(/Tests\s+6 passed/);
     expect(endToEnd).not.toContain('failed');
 
     expect(read(root, 'test/e2e/issue-invoice.e2e.spec.ts')).toMatch(

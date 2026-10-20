@@ -35,7 +35,7 @@ shared files each kind writes (`writesShared`, `shared`, `sharedWhen`).
 | `acl` | `<ctx> <upstream-or-system>` | `infrastructure/anti-corruption/<name>.translator.ts`, spec |
 | `builder` | `<ctx> <Aggregate>` | `test/builders/` |
 | `test-world` | `<ctx> [Name]` | `test/worlds/<name>.world.ts`: `a<Name>World({ now, idPrefix, given })`, the test application (or the buses) with every fake of `test/fakes/`, each returned under the name of its port; the arrangement several specs share |
-| `e2e` | `<ctx> <UseCase>` | `test/e2e/<use-case>.e2e.spec.ts` (needs the route) |
+| `e2e` | `<ctx> <UseCase> [--event <eventType>]` | `test/e2e/<use-case>.e2e.spec.ts` (needs the route, or an integration event handler that sends the command: the spec publishes its event) |
 | `service` | `<ctx>` | `src/apps/<ctx>/main.ts`: the context run alone, a start script, a compose service |
 | `worker` | | `src/apps/worker/main.ts`: a process for the scheduled jobs and the queues, a start script, a compose service |
 | `adr` | `"<title>" [--deviation <what>] [--reason "<why>"]` | `docs/adr/NNNN-<slug>.md` |

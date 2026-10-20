@@ -8,6 +8,7 @@ import {
   PurgingPublisher,
   type CachePurger,
   type ErrorReporter,
+  type IntegrationEvent,
   type IntegrationEventSubscriber,
 } from '@ddd-ts-kit/kernel';
 import {
@@ -58,6 +59,14 @@ export interface RunningApplication {
   headersOf(actor: TestActor): Promise<HttpHeaders>;
   /** The typed client presenting the credential of `actor`, given as the client is given it: a function asked before each request. */
   apiAs(actor: TestActor): Client;
+
+  /**
+   * Publishes integration events of an upstream as its relay would, to the handlers of the
+   * application: what starts a use case no route reaches. Await `settled()` next, before asserting
+   * what the handlers did. With a Redis server (REDIS_URL), the events go to the broker: what its
+   * consumers do is awaited with `collectEvents(application.events, [...]).waitFor(...)`.
+   */
+  publish(events: readonly IntegrationEvent[]): Promise<void>;
 
   /**
    * Resolves once the work the requests so far started has settled: every event stored in the
@@ -129,6 +138,7 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
     filesDirectory,
     events: application.eventSubscriber,
     purges,
+    publish: (events) => application.eventBus.publish(events),
     settled: (settling) => settled({ outbox: () => persistence.outbox.stats() }, settling),
     relate: (tuple) => tuples.write([tuple]),
     reset: () => relay.whileStopped(() => database.reset().then(() => relateSystemActors(tuples))),

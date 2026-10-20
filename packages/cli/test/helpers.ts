@@ -9,6 +9,7 @@ import { initFlags } from './support/init-flags.js';
 import { scaffoldBillingJobs } from './support/scaffold-billing-jobs.js';
 import { scaffoldBillingLifecycle } from './support/scaffold-billing-lifecycle.js';
 import { scaffoldNamedReactions } from './support/scaffold-named-reactions.js';
+import { scaffoldShippingReaction } from './support/scaffold-shipping-reaction.js';
 import type { StackFlags } from './support/stack-flags.js';
 
 export type { StackFlags } from './support/stack-flags.js';
@@ -120,6 +121,7 @@ export function scaffoldEverything(root: string, stack = DEFAULT_STACK, more: re
 
   scaffoldDecoratedAdapter(step);
   scaffoldShipping(step, isDeclared(stack));
+  scaffoldShippingReaction(step, withHttp, grantOf(stack, more));
   scaffoldOrderFulfilment(step, withHttp, grantOf(stack, more));
   scaffoldBillingLifecycle(step, stack);
   scaffoldNamedReactions(step);

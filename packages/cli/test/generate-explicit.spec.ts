@@ -319,18 +319,18 @@ describe('an explicit project, as `list` maps it', () => {
       expect.objectContaining({
         name: 'shipping',
         classification: 'supporting',
-        glossary: 1,
+        glossary: 2,
         upstreams: [{ context: 'billing', relationship: 'customer-supplier' }],
       }),
     ]);
 
-    expect(map.e2e).toEqual(['issue-invoice', 'track-purchase-order']);
+    expect(map.e2e).toEqual(['issue-invoice', 'ship-parcel', 'track-purchase-order']);
     expect(text).toContain('billing [core]\n  glossary: 17 terms\n  upstreams: none\n  aggregates: Invoice');
 
     expect(text).toContain(
       '  scheduled jobs: billing.cancel-stale-invoices (every 15m, sends CancelInvoice), billing.issue-invoices-monthly (cron 0 6 1 * * (Europe/Paris), sends IssueInvoice)\n  builders: Invoice\n  worlds: Billing',
     );
 
-    expect(text).toContain('end-to-end specs: issue-invoice, track-purchase-order');
+    expect(text).toContain('end-to-end specs: issue-invoice, ship-parcel, track-purchase-order');
   });
 });

@@ -556,7 +556,7 @@ Kinds
   background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]...
   process <context> <Name> [--term "<Term>=<meaning>"]...   (alias: process-manager)
   acl <context> <upstreamOrSystemName>
-  e2e <context> <UseCaseName>
+  e2e <context> <UseCaseName> [--event <eventType>]
   acceptance <story> ["<title>"]
   policy <context> <Name> --permission <aggregate>.<action>
   gateway <context> <upstreamContext> <Name>
