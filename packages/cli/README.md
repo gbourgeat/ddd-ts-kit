@@ -134,9 +134,9 @@ module file of the context: `builder.bind(Port).toClass(Adapter, [Ports])`,
 `builder.command(Message).requires(...).handledBy(Handler, [Ports])`, `builder.job(name, schedule)`.
 `--style declared` is refused with `--di manual` and `--di nest`: the declarations are plain
 metadata, and only `@ddd-ts-kit/di` (on tsyringe) turns them into bindings.
-`--assembly` says how a declared context reaches the composition root: `barrel` (the default) is one
-generated file per context, `<context>.declarations.ts`, static, followed by a bundler, by knip and
-by dependency-cruiser; `discovery` writes `await discoverContext(...)` instead, with the knip entry
+`--assembly` says how a declared context reaches the composition root: `barrel` (the default) is
+generated files, `<context>.declarations.ts` at the root of the context re-exporting the
+declarations of each role folder, static, followed by a bundler, by knip and by dependency-cruiser; `discovery` writes `await discoverContext(...)` instead, with the knip entry
 and the dependency-cruiser exception the discovered files need (publishers and jobs included: they
 are discovered like the rest), and inlines `@ddd-ts-kit/di` in the two vitest configs, so that the
 files it imports itself are compiled by the runner. Discovery is accepted behind a broker: a
@@ -297,9 +297,9 @@ export class SettleInvoiceHandler {
 nothing in its decorator (`@CommandHandler(IssueInvoiceCommand)`): each constructor parameter
 is typed by one class, its token (`declarations/constructor-injection`). `generate`, `docs` and
 the `dev` script read the signatures, with the zero-dependency scanner of the checker and no
-compiler, and write `injected(Class, [Tokens])` statements in the generated file of each
-context: the barrel `<context>.declarations.ts`, or `<context>.dependencies.ts` under
-discovery. `@ddd-ts-kit/di` injects from there. `emitDecoratorMetadata` is never relied on: it
+compiler, and write `injected(Class, [Tokens])` statements in the generated files of each
+context: the `<folder>.declarations.ts` of each role folder, next to the classes it registers,
+which `<context>.declarations.ts` re-exports, or `<context>.dependencies.ts` under discovery. `@ddd-ts-kit/di` injects from there. `emitDecoratorMetadata` is never relied on: it
 is absent with standard decorators and under `tsx`. `init` writes
 `"stack.dependencies": "signature"`; a config without the key is `listed`, the 0.1 form
 (`@CommandHandler(M, [Ports])`), which keeps working untouched, and
@@ -307,26 +307,35 @@ is absent with standard decorators and under `tsx`. `init` writes
 what each class is given. Every generated file exports one class, interface or function and is named
 after it.
 
-![How a declared context reaches the composition root: the role files carry their decorator and type their constructor parameters by classes; generate, docs and the dev script read those signatures and write the barrel, one export per role file and one injected statement per class that takes something; the composition root includes the barrel with contextModule and @ddd-ts-kit/di injects from it; check and docs --check report a barrel that no longer matches the role files](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-declared-barrel.svg)
+![How a declared context reaches the composition root: the role files carry their decorator and type their constructor parameters by classes; generate, docs and the dev script read those signatures and write the declarations of each role folder, one export per role file of the folder and one injected statement per class that takes something, and a summary at the root of the context that re-exports them; the composition root includes the summary with contextModule and @ddd-ts-kit/di injects from it; check and docs --check report generated declarations that no longer match the role files](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-declared-barrel.svg)
 
-An excerpt of the barrel of the `notification` context of the example application, as the CLI
-writes it (never by hand):
+An excerpt of the declarations of the `notification` context of the example application, as
+the CLI writes them (never by hand): one file per role folder, next to the classes it registers,
+and a summary at the root of the context that only re-exports them.
 
 ```ts
-// src/contexts/notification/notification.declarations.ts
+// src/contexts/notification/application/commands/commands.declarations.ts
 import { injected } from '@ddd-ts-kit/kernel/declarations';
 import { WithdrawReminderHandler } from '@/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.handler';
 import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
+
+export * from '@/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.command';
+export * from '@/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.handler';
+
+injected(WithdrawReminderHandler, [ReminderRepository]);
+
+// src/contexts/notification/infrastructure/persistence/persistence.declarations.ts
 import { KnexReminderRepository } from '@/contexts/notification/infrastructure/persistence/knex-reminder.repository';
 import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
 import { KnexContext } from '@ddd-ts-kit/knex';
 
-export * from '@/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.command';
-export * from '@/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.handler';
 export * from '@/contexts/notification/infrastructure/persistence/knex-reminder.repository';
 
-injected(WithdrawReminderHandler, [ReminderRepository]);
 injected(KnexReminderRepository, [KnexContext, ExecutionScope, Clock]);
+
+// src/contexts/notification/notification.declarations.ts
+export * from '@/contexts/notification/application/commands/commands.declarations';
+export * from '@/contexts/notification/infrastructure/persistence/persistence.declarations';
 ```
 
 and the one line of the composition root that adds the whole context:
@@ -637,7 +646,7 @@ would create src/contexts/notification/application/commands/archive-notification
 would create src/contexts/notification/test/unit/archive-notification.handler.spec.ts
 would update src/contexts/notification/CONTEXT.md
 would update src/contexts/notification/application/authorization/notification.permissions.ts
-would update src/contexts/notification/notification.declarations.ts
+would update src/contexts/notification/application/commands/commands.declarations.ts
 
 Next, in this order: the language of the context first, then the business decisions only you can make
   src/contexts/notification/application/commands/archive-notification/archive-notification.command.ts:9  declare the input of "archive notification" as a constructor with the actor first, ...
@@ -737,12 +746,19 @@ Next, in this order: the language of the context first, then the business decisi
   `system` subject operate a context. With `--authz custom`, a removed region, a remodelled
   relationship schema or a permission the generator cannot read, nothing is written and the job
   file carries the `TODO(domain)` naming the actor and the permission.
-- **The barrel is derived.** `<context>.declarations.ts` holds one `export *` per role file, sorted
-  by path, then one `injected(Class, [Tokens])` per class whose constructor takes something,
-  read from its signature, with the imports they need. Every `generate`, and `docs`, rewrite it;
-  `docs --check` and `check` (`declarations/barrel-current`) report one that a role file written
-  by hand left behind or whose constructor changed since, naming the class
-  (`stale  src/contexts/billing/billing.declarations.ts: the dependency list of IssueInvoiceHandler is stale: ...`).
+- **The declarations are derived.** Each role folder of a context that holds a declared role
+  file has its `<folder>.declarations.ts`, in that folder: `application/commands/commands.declarations.ts`,
+  `infrastructure/persistence/persistence.declarations.ts`, `presentation/http/http.declarations.ts`
+  (the files of a use case or of a route roll up to the folder at `<layer>/<folder>/`; a role file
+  sitting directly in its layer goes to `<layer>/<layer>.declarations.ts`). It holds one
+  `export *` per role file of the folder, sorted by path, then one `injected(Class, [Tokens])` per
+  class whose constructor takes something, read from its signature, with the imports they need.
+  `<context>.declarations.ts`, at the root of the context, only re-exports these files, sorted by
+  path. Every `generate`, and `docs`, rewrite them and delete the declarations of a folder that
+  holds no role file any more; `docs --check` and `check` (`declarations/barrel-current`) report
+  one that a role file written by hand left behind or whose constructor changed since, naming the
+  class
+  (`stale  src/contexts/billing/application/commands/commands.declarations.ts: the dependency list of IssueInvoiceHandler is stale: ...`).
   The `dev` script loads `ddd-ts-kit/dist/refresh-declarations.js` before the application, on
   every start and reload of `tsx watch`: a port added to a constructor is injected on the
   reload that follows the save. The same module is the binary `ddd-ts-kit-refresh-declarations`.
@@ -829,9 +845,11 @@ Regenerates what is derived from the config and the code, and nothing else:
   kept; on first creation the four written sections are laid out with hints.
 - the generated lists of every `CONTEXT.md` (aggregates, published events, permissions, scheduled
   jobs as a table of name, schedule and command, relationships);
-- the generated file of every declared context: the barrel `<context>.declarations.ts`, with
-  what each constructor is injected, read from its signature, or under discovery
-  `<context>.dependencies.ts`, which holds that alone;
+- the generated declarations of every declared context: the `<folder>.declarations.ts` of each
+  role folder, with what each constructor is injected, read from its signature, and
+  `<context>.declarations.ts`, which re-exports them (the declarations of a folder left without a
+  role file are deleted), or under discovery `<context>.dependencies.ts`, which holds the lists
+  alone;
 - the reference of every `CONTEXT.md`: the facts of `describe`, as tables under `## Reference`,
   between `ddd-ts-kit:reference` markers; a `CONTEXT.md` that has no such section gets it after its
   last generated list;
@@ -1712,7 +1730,7 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 | `context/declared-relationship` | an import of a published language whose context is not a declared upstream |
 | `context/published-language-is-a-contract` | `published-language/` importing anything but its allow-list and other published languages |
 | `context/no-cycle` | a cycle in the declared upstreams, with its path |
-| `tree/closed` | a directory outside the canonical tree and `extraDirectories`; a source file outside a role directory; in the declared style `<context>.declarations.ts` is accepted at the root of a context |
+| `tree/closed` | a directory outside the canonical tree and `extraDirectories`; a source file outside a role directory; in the declared style `<context>.declarations.ts` is accepted at the root of a context, and the `<folder>.declarations.ts` of a role folder in that folder |
 | `tree/context-doc` | a missing `CONTEXT.md`, a missing section, a classification that contradicts the config |
 | `naming/suffix` | a file without the suffix of its role, or not in kebab-case. `application/scheduling/` holds `*.job.ts`; a use case folder accepts `*.result.ts` next to its message and its handler; `presentation/http/<context>.routes.ts`, named after its context instead of a role, is accepted in both styles |
 | `naming/one-concept-per-file` | several exported classes in an aggregate, entity, value object, event, command, query, handler, event handler, integration event handler or job file; in the declared style, several classes carrying a declaration decorator in one role file |
@@ -1770,7 +1788,7 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 | `context/extractable` | a module file importing another context outside its published language; persistence importing another context's infrastructure or naming its schema; a handler importing another context's repository; `export let` or an exported `new Map`, `Set`, `WeakMap` at module level; `deployable: true` without `apps/<context>/main.ts`; in the declared style, a role file importing anything of a port file of another context |
 | `governance/recorded-deviation` | a `ddd-ts-kit-disable` or `eslint-disable` comment whose reason names no `ADR-<number>` with a file `docs/adr/<number>-*.md`; a rule set to `off` (or to `warn` below its default), an extra directory, an extra allowed package, a `guard` other than `enforce` or `stack.events` off the outbox, without a `deviations` entry `{ what, adr, reason }` pointing to an existing record |
 | `declarations/role-declared` | declared style only: a role file (other than `*.command.ts` and `*.query.ts`, held by `authz/declared`; `*.job.ts` under `application/scheduling/` with `@Scheduled` and `*.publisher.ts` with `@DomainEventHandler` are roles) exporting no class with the decorator of its suffix and folder, or one carrying another declaration; a declared class in a file that is not a role file; a `consumer` or `name` option that is missing, empty, a variable, a concatenation or a template with a substitution; any declaration decorator on a class under `domain/` |
-| `declarations/barrel-current` | declared style only: with `stack.assembly: barrel`, a missing `<context>.declarations.ts` or one that differs from one `export *` per role file sorted by path followed by one `injected(Class, [Tokens])` per class whose constructor takes something (read from the signatures, with their imports); with `discovery`, a barrel that still exists, and a `<context>.dependencies.ts` that differs from those `injected` statements (absent is accepted while it would hold none). The message names the missing role file or the class whose list is stale. It needs the tree, so `check-file` does not run it |
+| `declarations/barrel-current` | declared style only: with `stack.assembly: barrel`, a missing `<folder>.declarations.ts` of a role folder or one that differs from one `export *` per role file of the folder sorted by path followed by one `injected(Class, [Tokens])` per class of the folder whose constructor takes something (read from the signatures, with their imports), a `<context>.declarations.ts` that is missing or differs from one `export *` per such file sorted by path, and the declarations of a folder that holds no role file any more; with `discovery`, generated declarations that still exist, and a `<context>.dependencies.ts` that differs from those `injected` statements (absent is accepted while it would hold none). The message names the missing role file or the class whose list is stale. It needs the tree, so `check-file` does not run it |
 | `declarations/constructor-injection` | declared style only, in a role file: on a class whose decorator lists nothing, a constructor parameter that is optional, has a default value, is a rest parameter or is destructured, has no type, or is typed by anything but one class name (type arguments aside): a union, an intersection, an array, a qualified name, a type of the language, an interface, a type alias, an enum or an unexported class of the file or of the file of the project it is imported from; a class that inherits its constructor from a class the project cannot read. Under `stack.dependencies: signature`, a decorator that carries a list although the constructor can be read: one that repeats it, one that differs |
 | `declarations/port-adapter-wired` | a class of `infrastructure/` implementing a port that nothing wires: no `@Repository`, `@Gateway` or `@Adapter` in the declared style, and no file of the composition root (`<context>.module.ts`, `main.ts`, `apps/<context>/main.ts`, the platform) importing it, once the file carries no `TODO(domain)` or `TODO(platform)` left; one kept on purpose carries `// ddd-ts-kit-disable-next-line declarations/port-adapter-wired -- ADR-NNNN: <why>` |
 | `ports/abstract-class` | in a port file (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`): a class that is not `abstract`; a member that is not an abstract method or property (`static readonly tokenKey = '<text>'` apart): a constructor, a body, an initializer, a `private`, `protected` or `#` member; an exported `interface` (a `type` alias, a data shape, is not reported) |

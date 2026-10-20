@@ -1,5 +1,5 @@
 [English](commit-discipline.md) · **Français**
-<!-- translation-of: commit-discipline.md sha256:54463ea8e0818a31 -->
+<!-- translation-of: commit-discipline.md sha256:16ca257dba025dd8 -->
 
 # La discipline des commits et des pull requests
 
@@ -36,7 +36,8 @@ l'historique utilisable par `git bisect` et permet d'annuler n'importe quel *com
 
 Plusieurs fichiers sont des produits des sources et sont commités : `openapi/openapi.yaml`,
 `docs/integration/asyncapi.yaml`, `docs/integration/event-catalog.md`, `docs/context-map.md` et
-les listes générées de chaque `CONTEXT.md`, le *barrel* `<context>.declarations.ts`,
+les listes générées de chaque `CONTEXT.md`, les déclarations `<context>.declarations.ts` et le
+`<folder>.declarations.ts` de chaque dossier de rôle,
 `.dependency-cruiser.cjs`.
 
 La règle : **le fichier régénéré est dans le même *commit* que le changement qui l'a causé.**
@@ -129,7 +130,8 @@ Une tranche est un cas d'usage d'un contexte (le dossier de sa commande ou de sa
 route, leurs *specs*), sinon une couche d'un contexte, sinon `platform` ou le dossier de premier
 niveau du fichier. « Généré » désigne ce qu'une commande réécrit : les fichiers de verrouillage,
 les documents OpenAPI et AsyncAPI, le catalogue d'événements, `docs/context-map.md`,
-`.dependency-cruiser.cjs`, et les fichiers *barrel* et de dépendances de chaque contexte. Les
+`.dependency-cruiser.cjs`, et les déclarations (à la racine de chaque contexte et dans ses
+dossiers de rôle) et les fichiers de dépendances de chaque contexte. Les
 limites sont une clé de `ddd-ts-kit.config.json` :
 
 ```json
@@ -218,11 +220,12 @@ git add src/contexts/scheduling/domain/value-objects/booking-window.vo.ts
 git commit -m "refactor(scheduling): extract BookingWindow from Calendar"
 
 # puis un cas d'usage avec tout ce que son générateur et docs:generate ont écrit :
-# commande et gestionnaire, route, leurs specs, le barrel régénéré et le contrat
+# commande et gestionnaire, route, leurs specs, les déclarations régénérées de leurs dossiers et le contrat
 git add src/contexts/scheduling/application/commands/reschedule-appointment/ \
         src/contexts/scheduling/presentation/http/appointments/reschedule-appointment/ \
         src/contexts/scheduling/test/unit/reschedule-appointment.*.spec.ts \
-        src/contexts/scheduling/scheduling.declarations.ts \
+        src/contexts/scheduling/application/commands/commands.declarations.ts \
+        src/contexts/scheduling/presentation/http/http.declarations.ts \
         openapi/openapi.yaml
 npx ddd-ts-kit check --commit-size --staged
 git commit -m "feat(scheduling): reschedule an appointment"

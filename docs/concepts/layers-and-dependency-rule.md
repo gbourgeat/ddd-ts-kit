@@ -212,7 +212,7 @@ frameworks, where hexagonal has just adapters.
 | `CommandBus`, `QueryBus`, commands and queries | driving ports | application services API | input boundaries |
 | `presentation/` | driving adapters | user interface | controllers (interface adapters) |
 | `infrastructure/` | driven adapters | infrastructure | gateways implementations, frameworks and drivers |
-| `<context>.declarations.ts` (or `<context>.module.ts` in the explicit style), `platform/composition/compose-application.ts`, `main.ts` | configurator | dependency resolution | main component |
+| `<context>.declarations.ts` and the declarations of its role folders (or `<context>.module.ts` in the explicit style), `platform/composition/compose-application.ts`, `main.ts` | configurator | dependency resolution | main component |
 
 The kit keeps two sides of the edge apart (`presentation/` and `infrastructure/`) and forbids
 them to import each other. That is the hexagonal symmetry made checkable: a route cannot reach a

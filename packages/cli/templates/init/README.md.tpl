@@ -94,7 +94,8 @@ configuration, the storage, and `composeApplication` of `{{config.platformDir}}/
 {{#if style.declared}}
 - **A context declares itself.** Each class says what it is with a decorator of
   `@ddd-ts-kit/kernel/declarations` and is its own registration{{#if assembly.barrel}}; the composition root reads the
-  generated barrel `<context>.declarations.ts`{{/if}}{{#if assembly.discovery}}; the composition root discovers the role files of
+  generated `<context>.declarations.ts`, which re-exports the generated declarations of each role folder
+  (`application/commands/commands.declarations.ts`){{/if}}{{#if assembly.discovery}}; the composition root discovers the role files of
   each context at startup (`discoverContext`), publishers and jobs included{{/if}}.
 {{/if}}
 {{#if broker.external}}

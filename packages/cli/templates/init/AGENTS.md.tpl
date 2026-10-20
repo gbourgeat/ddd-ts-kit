@@ -24,7 +24,7 @@ One file per layer in `.claude/rules/`: `domain.md` (`domain/`, the shared kerne
 
 Create every file of a role with `npx ddd-ts-kit generate <kind> ... --json`, then fill the `TODO(domain)` places it lists; never write one by hand, never restructure what a generator wrote.
 {{#if assembly.barrel}}
-Never edit `<context>.declarations.ts`: `generate`, `docs` and `npm run dev` rewrite it, from the role files and from the constructor signatures (it registers what each constructor is injected). After changing a constructor by hand, `npx ddd-ts-kit docs`.
+Never edit `<context>.declarations.ts` nor the `<folder>.declarations.ts` of a role folder (`application/commands/commands.declarations.ts`): `generate`, `docs` and `npm run dev` rewrite them, from the role files and from the constructor signatures (each folder file registers what the constructors of its folder are injected; the one at the root re-exports them). After changing a constructor by hand, `npx ddd-ts-kit docs`.
 {{/if}}
 {{#if assembly.discovery}}
 Never edit `<context>.dependencies.ts`: `generate`, `docs` and `npm run dev` rewrite it from the constructor signatures (it registers what each constructor is injected). After changing a constructor by hand, `npx ddd-ts-kit docs`.

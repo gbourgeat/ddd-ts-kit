@@ -3,8 +3,8 @@ name: wiring
 description: >-
   Explains how the classes of a bounded context reach the composition root in a ddd-ts-kit
   project. Ports as abstract classes used as injection tokens, the declared style
-  (decorators of the kernel, dependencies stated by the constructor signature, a generated
-  barrel) or the explicit module file, values bound in the platform, fakes in tests. Use
+  (decorators of the kernel, dependencies stated by the constructor signature, generated
+  declarations per role folder) or the explicit module file, values bound in the platform, fakes in tests. Use
   when binding an adapter to a port, adding a dependency to a handler, replacing an adapter
   by a fake, composing main.ts, or when a WiringError, DeclarationError, ports/*,
   declarations/* or composition/only-in-module is reported.
@@ -66,11 +66,15 @@ A class says what it is on its own file, and that is its registration. There is 
 - To add a dependency to a handler: add the constructor parameter. Then `npx ddd-ts-kit docs`
   (`npm run dev` does it by itself on every reload). Nothing else, and no list in the
   decorator.
-- The generated file `<context>.declarations.ts` holds one `export *` per role file, then one
-  `injected(Class, [Tokens])` per class whose constructor takes something, read from the
-  source. After adding, moving or deleting a role file, or changing a constructor, by hand:
-  `npx ddd-ts-kit docs` (`declarations/barrel-current` names the class whose list is stale).
-  Never edit it. With `stack.assembly: discovery` the composition root reads the role files
+- Each role folder holds a generated `<folder>.declarations.ts`
+  (`application/commands/commands.declarations.ts`; a use case or a route rolls up to the folder
+  at `<layer>/<folder>/`): one `export *` per role file of the folder, then one
+  `injected(Class, [Tokens])` per class whose constructor takes something, read from the source.
+  `<context>.declarations.ts` only re-exports these files; the composition root imports it.
+  After adding, moving or deleting a role file, or changing a constructor, by hand:
+  `npx ddd-ts-kit docs`, which also deletes the declarations of an emptied folder
+  (`declarations/barrel-current` names the file and the class whose list is stale). Never edit
+  them. With `stack.assembly: discovery` the composition root reads the role files
   itself (`discoverContext`) and the lists from the generated `<context>.dependencies.ts`.
 - `WiringError MISSING_DEPENDENCIES` or `DEPENDENCY_ARITY` at startup: the generated file is
   stale or was not loaded. Run `npx ddd-ts-kit docs`; in a test, assemble the context from its

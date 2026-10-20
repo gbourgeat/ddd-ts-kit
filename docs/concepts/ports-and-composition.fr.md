@@ -1,5 +1,5 @@
 [English](ports-and-composition.md) · **Français**
-<!-- translation-of: ports-and-composition.md sha256:d0b184ea92bbd5d4 -->
+<!-- translation-of: ports-and-composition.md sha256:8ed2bf6d84a01845 -->
 
 # Ports et composition
 
@@ -157,7 +157,7 @@ class-validator et pas pour un projet sur zod. Le kit lit donc les signatures lu
 statiquement, et les écrit :
 
 ```ts
-// contexts/scheduling/scheduling.declarations.ts, généré : jamais modifié (un extrait)
+// contexts/scheduling/application/commands/commands.declarations.ts, généré : jamais modifié (un extrait)
 import { injected } from '@ddd-ts-kit/kernel/declarations';
 import { BookAppointmentHandler } from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.handler';
 import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
@@ -169,6 +169,11 @@ export * from '@/contexts/scheduling/application/commands/book-appointment/book-
 
 injected(BookAppointmentHandler, [AppointmentRepository, CalendarRepository, IdGenerator, Clock]);
 ```
+
+Un tel fichier se trouve dans chaque dossier de rôle du contexte, à côté des classes qu'il
+enregistre ; `scheduling.declarations.ts`, à la racine du contexte, ne fait que les réexporter,
+et c'est lui que la racine de composition importe
+(déclarations générées, dans [l'arborescence canonique](../ARCHITECTURE.fr.md#2-arborescence-canonique)).
 
 `injected` est typé comme l'était la liste d'un décorateur : le compilateur refuse une liste qui
 ne correspond pas au constructeur, si bien qu'un fichier généré est vérifié par le compilateur
@@ -411,12 +416,12 @@ Un contexte déclaré atteint la racine de l'une de deux façons (`stack.assembl
 
 | | *Barrel* généré | Découverte |
 |---|---|---|
-| Mécanisme | un fichier généré qui réexporte chaque fichier de rôle | un parcours des dossiers du contexte au démarrage |
-| Où sont les listes des constructeurs | dans le *barrel*, après les exports | dans un `<context>.dependencies.ts` généré, que le parcours charge avec les fichiers de rôle ; jamais les métadonnées du compilateur |
+| Mécanisme | un fichier généré par dossier de rôle qui réexporte ses fichiers de rôle, rassemblés par `<context>.declarations.ts` | un parcours des dossiers du contexte au démarrage |
+| Où sont les listes des constructeurs | dans les déclarations de chaque dossier de rôle, après ses exports | dans un `<context>.dependencies.ts` généré, que le parcours charge avec les fichiers de rôle ; jamais les métadonnées du compilateur |
 | Analyse statique | les bundlers, knip et dependency-cruiser le suivent | les fichiers chargés ne sont importés par rien : il faut dire aux analyseurs que ce sont des points d'entrée |
 | Démarrage | rien à lire | lit des répertoires et importe séquentiellement |
 | Empaqueté (bundle) ou serverless | convient | un bundler ne peut pas le suivre |
-| Un fichier écrit à la main | doit être dans le *barrel* : `declarations/barrel-current` signale un *barrel* périmé | pris en compte tout seul ; son constructeur doit tout de même être dans le fichier des dépendances, ce que tient la même règle |
+| Un fichier écrit à la main | doit être dans les déclarations de son dossier : `declarations/barrel-current` signale des déclarations périmées | pris en compte tout seul ; son constructeur doit tout de même être dans le fichier des dépendances, ce que tient la même règle |
 | Sous Vitest | rien à configurer | `@ddd-ts-kit/di` doit être intégré (`server.deps.inline`), ce que fait la config générée |
 
 ### Ce qu'un décorateur ne peut pas exprimer

@@ -78,7 +78,7 @@ src/
   apps/worker/main.ts            optional: the scheduled jobs in a process of their own
   contexts/<context>/
     CONTEXT.md
-    <context>.declarations.ts    generated: the barrel of the context's declared classes, and what each constructor is injected
+    <context>.declarations.ts    generated: re-exports the <folder>.declarations.ts of each role folder (below the tree)
     <context>.dependencies.ts    generated, under discovery only: what each constructor is injected
     <context>.module.ts          explicit style only: binds ports to adapters by hand
     published-language/          contracts designed for other contexts
@@ -125,6 +125,20 @@ src/
       worlds/                    *.world.ts        (the arrangement several specs of the context share: the test
                                  application or the buses with the fakes of the context)
 ```
+
+**Generated declarations.** In the declared style assembled by barrel, every role folder of a
+context that holds a declared role file has a generated `<folder>.declarations.ts`, in that
+folder: `application/commands/commands.declarations.ts`, `application/queries/queries.declarations.ts`,
+`infrastructure/persistence/persistence.declarations.ts`, `presentation/http/http.declarations.ts`.
+A role folder is the folder at `<layer>/<folder>/` under the context: the files of a use case
+(`application/commands/<use-case>/`) or of a route (`presentation/http/<resource>/<use-case>/`)
+roll up to it, and a role file sitting directly in its layer goes to
+`<layer>/<layer>.declarations.ts`. Each file holds the imports it needs, one `export *` per role
+file of its folder, sorted by path, then one `injected(Class, [Tokens])` per class of the folder
+whose constructor takes something. `<context>.declarations.ts`, at the root of the context, only
+re-exports these files, sorted by path: it is what the composition root imports. The
+declarations of a folder that holds no role file any more are deleted by the next `generate`,
+`docs` or `npm run dev`. None of these files is edited by hand (`declarations/barrel-current`).
 
 Under `presentation/http/` one route is one folder. `"stack.routes": "controllers"` (the form of
 a new project) writes each route as a class carrying `@Controller` of `@ddd-ts-kit/http`, in
@@ -327,7 +341,7 @@ the platform binds it at start-up. Why, and what each layer holds:
 | `aspects/outside-in` | Aspects are applied from outside. The decorators of `@ddd-ts-kit/aspects/decorators` are imported only by an adapter in `infrastructure/` or by the platform; everywhere else an aspect is a wrapper given to a binding or to a declaration (`.with(...)`, `aspects` of `@Adapter`), put around every binding of a kind by the platform (`builder.around(...)`), or a bus middleware. |
 | `standard/no-parallel-interface` | No home-made copy of a standard interface of the kernel: no declared `ILogger`, `AppLogger`, `UserContext`, `CurrentUser`, `UserSession`, `PaginatedResult`, `AuditLog` and the like. Use the kernel interface and extend it by declaration merging; the list is `standardInterfaces` in the config. Default severity `warn`. |
 | `declarations/role-declared` | In the declared style, a role file exports a class carrying the decorator of its role, and a declared class lives in a role file. Consumer and policy names are non-empty string literals; a domain event handler writes no name, `@DomainEventHandler(InvoiceIssued)`, and is attached under the one its event class declares once, `static readonly eventName`. No class under `domain/` carries a declaration. |
-| `declarations/barrel-current` | In the declared style, the generated file of a context is what its tree says. With a barrel, `<context>.declarations.ts` holds exactly one `export *` per role file of its context, sorted by path, then one `injected(Class, [Tokens])` per declared class whose constructor takes something and whose decorator lists nothing, with the imports they need: a role file cannot be silently left unregistered, and a constructor cannot change without its list. Under discovery `<context>.dependencies.ts` holds the `injected` statements alone, may be absent while it would hold none, and a barrel left behind is reported. The message names the role file that is missing or the class whose list is stale; `ddd-ts-kit docs` rewrites the file. |
+| `declarations/barrel-current` | In the declared style, the generated files of a context are what its tree says. With a barrel, the `<folder>.declarations.ts` of each role folder (section 2, generated declarations) holds exactly one `export *` per role file of its folder, sorted by path, then one `injected(Class, [Tokens])` per declared class of the folder whose constructor takes something and whose decorator lists nothing, with the imports they need, and `<context>.declarations.ts` holds one `export *` per such file, sorted by path, and nothing else: a role file cannot be silently left unregistered, and a constructor cannot change without its list. The declarations of a folder that holds no role file any more are reported until they are deleted. Under discovery `<context>.dependencies.ts` holds the `injected` statements alone, may be absent while it would hold none, and generated declarations left behind are reported. The message names the file, the role file that is missing or the class whose list is stale; `ddd-ts-kit docs` rewrites the files and deletes the ones nothing derives. |
 | `declarations/constructor-injection` | In the declared style, the constructor of a declared class is the one statement of what it depends on. A class whose decorator lists no dependency (every decorator but `@Requires` and `@Public`, which declare messages) types each constructor parameter by exactly one class, type arguments aside (`Cache<Session>` names `Cache`): a port, a port of the kernel, another declared class, or an abstract class that types a value bound in the platform. Refused: a parameter that is optional, has a default value, is a rest parameter or is destructured; a parameter without a type, or typed by a union, an intersection, an array, a function, a literal, an object type, a qualified name or a type of the language; a parameter typed by an interface, a type alias, an enum or a class its file does not export, in the file or in the file of the project it is imported from (a name imported from a package is trusted: the compiler judges the generated file, which imports it as a value); a class that inherits its constructor from a class the project cannot read, a class of a package (a constructor inherited from a class of the project is followed and read there). Under `"stack.dependencies": "signature"`, what `init` writes, a decorator carries no dependency list when the constructor can be read: a list that repeats the constructor is reported and ESLint removes it; a list that differs is reported, since it wins at run time. Under `"stack.dependencies": "listed"`, what a config without the key means, lists are never reported, and a class that inherits a constructor nothing can read and lists nothing takes nothing, as it always did. |
 | `declarations/port-adapter-wired` | A class of `infrastructure/` that implements a port (a class imported from `domain/repositories/*.repository.ts` or `application/ports/*.port.ts`), an abstract one aside, is wired. In the declared style it carries `@Repository`, `@Gateway` or `@Adapter` (the exported class of a role file is judged by `declarations/role-declared`); in both styles a file of the composition root (`<context>.module.ts`, `main.ts`, `apps/<context>/main.ts`, the platform directory) may import it as a value instead, to bind it. A test that builds it does not wire it. A file that still carries a `TODO(domain)` or `TODO(platform)` is not judged yet: the generator writes an adapter before the outside system is ready, wired once its markers are done, and `ddd-ts-kit todo` lists it meanwhile. An adapter kept unwired on purpose says so above its class, `// ddd-ts-kit-disable-next-line declarations/port-adapter-wired -- ADR-NNNN: <why>`, and its decision record is in `docs/adr/` (`governance/recorded-deviation`). Default severity `warn`. |
 | `ports/abstract-class` | A port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) is an abstract class with abstract members only: no constructor, no private or protected member, no body, no initializer, `static readonly tokenKey` excepted. Never an interface. |
@@ -339,8 +353,8 @@ the platform binds it at start-up. Why, and what each layer holds:
 | `clean/blank-lines` | A blank line before every `return` that is not alone in its block and between the logical blocks of a function (after a group of declarations, around `if`, `for`, `try`, around a multiline statement, around a method); no blank line at the edges of a block, never two in a row. Consecutive declarations and fields may stay together. |
 | `clean/braces` | Every `if`, `else`, `for`, `while` and `do` has braces, and its body is on its own lines; `else` follows the closing brace on the same line. A ternary, an arrow function returning an expression and a one-line object literal are not judged. |
 | `clean/formatted` | Every TypeScript, JavaScript and JSON file is laid out by the formatter of the project, Biome, at a line width of 120: `npm run format:check` reports nothing to change. Markdown and YAML are not formatted. |
-| `clean/one-export-per-file` | A source file exports one class, interface or function and is named after it in kebab-case. Its companions are the types of its own signature, a derived form it calls, or a closed family (a type with its constructors or combinators, the accessors of one private state); anything else is listed in `onePerFile.allow` with its reason. Entry files (`index.ts`, subpath entries) only re-export. The generated files of a declared context (`<context>.declarations.ts`, `<context>.dependencies.ts`) are not judged here: `declarations/barrel-current` holds every line of them. |
-| `clean/file-size` | A file is at most 350 lines, tests included, under the source root, `test/` (the end-to-end specs) and `scripts/`, and the limit is not configurable; files under a directory named `generated`, the generated `<context>.declarations.ts` and `<context>.dependencies.ts` at the root of a context, and `.d.ts` files are exempt. |
+| `clean/one-export-per-file` | A source file exports one class, interface or function and is named after it in kebab-case. Its companions are the types of its own signature, a derived form it calls, or a closed family (a type with its constructors or combinators, the accessors of one private state); anything else is listed in `onePerFile.allow` with its reason. Entry files (`index.ts`, subpath entries) only re-export. The generated files of a declared context (`<context>.declarations.ts` and the `<folder>.declarations.ts` of its role folders, `<context>.dependencies.ts`) are not judged here: `declarations/barrel-current` holds every line of them. |
+| `clean/file-size` | A file is at most 350 lines, tests included, under the source root, `test/` (the end-to-end specs) and `scripts/`, and the limit is not configurable; files under a directory named `generated`, the generated `<context>.declarations.ts` and `<context>.dependencies.ts` at the root of a context, the generated `<folder>.declarations.ts` of its role folders, and `.d.ts` files are exempt. |
 | `scheduling/job-triggers-use-case` | A job lives in `application/scheduling/*.job.ts`, implements `ScheduledJob` and only sends commands: no repository among its dependencies, no import of aggregates, entities, domain services or `infrastructure/`. |
 | `scheduling/job-name` | A job is named `<context>.<job-name>` by a string literal in lower-case kebab-case, the context being its own; its `systemActor` carries the same name; the name is unique in the project. |
 | `lifecycle/status-through-machine` | The status of an aggregate that has a state machine changes only through it: an aggregate of `domain/aggregates/<name>.aggregate.ts` whose `domain/state-machines/<name>.state-machine.ts` exists imports it as soon as it writes a status (a machine just generated waits for the field), and inside the members of its classes every `status: <value>` of an object, every `<target>.status = <value>` and every shorthand `{ ...this.state, status }` (the value of its local `const status = ..`) takes its value from `<machine>.next(..)` or `<machine>.start(..)` of an imported machine, or copies a status already read (`state.status`, a parameter `status`, `const { status } = ..`). |
@@ -384,8 +398,8 @@ import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate'
 ```
 
 Only the composition root (`main.ts`, `apps/`, the platform directory) and what assembles a
-context (its generated `<context>.declarations.ts`, or its `<context>.module.ts` in the
-explicit style) are allowed to know every layer.
+context (its generated declarations, `<context>.declarations.ts` and those of its role folders,
+or its `<context>.module.ts` in the explicit style) are allowed to know every layer.
 
 ### Who checks what
 
@@ -752,7 +766,7 @@ handler `@CommandHandler(Message)` or `@QueryHandler(Message)`, a reaction to an
 `@Scheduled`, a projector `@Projection`, an adapter `@Repository`, `@Gateway` or `@Adapter`
 with the port it implements, a policy `@Policy`. Declarations are metadata of the kernel:
 they instantiate nothing and import no container. The composition root turns a context's
-declarations into its module, from the generated barrel or by discovery, so a context has no
+declarations into its module, from its generated declarations or by discovery, so a context has no
 hand-maintained registration file.
 
 **Constructor injection.** The constructor signature of a declared class is the single
@@ -761,8 +775,9 @@ private readonly clock: Clock) {}`, each parameter typed by one class, which is 
 injection token (`declarations/constructor-injection`). Nothing repeats it in the decorator.
 `ddd-ts-kit docs` (and every `generate`, and every start of `npm run dev`) reads the
 signatures from the sources and writes `injected(Class, [Tokens])` statements in the
-generated file of each context, `<context>.declarations.ts` or, under discovery,
-`<context>.dependencies.ts`; the composition root reads the lists from there, and the
+generated files of each context, the `<folder>.declarations.ts` of each role folder, which
+`<context>.declarations.ts` re-exports, or, under discovery, `<context>.dependencies.ts`; the
+composition root reads the lists from there, and the
 compiler checks each one against its constructor. The types are never asked of the compiler
 at run time: `emitDecoratorMetadata` exists only with legacy decorators compiled by `tsc` or
 swc, so it is absent with standard decorators and under `tsx` or esbuild, and it records
