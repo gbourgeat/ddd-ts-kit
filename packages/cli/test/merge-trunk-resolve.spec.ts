@@ -29,6 +29,71 @@ const slices = (...rows: readonly string[]): string =>
 const row = (id: string, slice: string, status: string, owner = 'billing'): string =>
   `| ${id} | billing | slice | ${slice} | generate command | | ${owner} | ${status} |`;
 
+/** The package.json of a client as `sdk` writes it, at a version, with a description of its own. */
+const clientManifest = (version: string, description = 'Typed client of Billing.'): string =>
+  `${JSON.stringify({ name: '@shop/billing-client', version, description, type: 'module' }, null, 2)}\n`;
+
+const MANIFEST = 'clients/billing/package.json';
+
+describe('merge-trunk: the package.json of a client', () => {
+  it('keeps the trunk side at the version this branch raised above it', () => {
+    const settled = resolveConflict(
+      path(MANIFEST, conflict(['  "version": "1.3.0",'], ['  "version": "1.2.0",'], ['  "version": "1.2.1",']), {
+        base: clientManifest('1.2.0'),
+        ours: clientManifest('1.3.0'),
+        theirs: clientManifest('1.2.1', 'Typed client of Billing, with refunds.'),
+      }),
+      REPO,
+    );
+
+    expect(settled).toMatchObject({
+      kind: 'client-manifest',
+      settled: true,
+      content: clientManifest('1.3.0', 'Typed client of Billing, with refunds.'),
+      how: 'client package.json: trunk side, version 1.3.0 kept, the higher of 1.3.0 on this branch and 1.2.1 on the trunk',
+    });
+  });
+
+  it('keeps the trunk side as it is when its version is the higher', () => {
+    const theirs = clientManifest('2.0.0-rc.1', 'Typed client of Billing, with refunds.');
+
+    expect(resolveConflict(path(MANIFEST, [], { ours: clientManifest('1.9.0'), theirs }), REPO)).toMatchObject({
+      kind: 'client-manifest',
+      settled: true,
+      content: theirs,
+    });
+  });
+
+  it('leaves the choice to a person when a version is not a semantic version', () => {
+    const left = resolveConflict(
+      path(MANIFEST, conflict(['  "version": "next",'], [], ['  "version": "1.2.1",']), {
+        ours: clientManifest('next'),
+        theirs: clientManifest('1.2.1'),
+      }),
+      REPO,
+    );
+
+    expect(left).toMatchObject({
+      kind: 'source',
+      settled: false,
+      how: 'the version of a side is not a semantic version (next on this branch, 1.2.1 on the trunk)',
+    });
+
+    expect(left.blocks).toHaveLength(1);
+  });
+
+  it('takes the deletion of the trunk, and leaves the other files of a client derived', () => {
+    const { theirs, ...deleted } = path(MANIFEST, [], { ours: clientManifest('1.3.0') });
+
+    expect(theirs).toBe('theirs');
+    expect(resolveConflict(deleted, REPO)).toMatchObject({ kind: 'client-manifest', settled: true, content: null });
+
+    for (const file of ['clients/billing/src/package.json', 'clients/package.json', 'package.json']) {
+      expect(resolveConflict(path(file, [], { ours: '{}', theirs: '{}' }), REPO).kind).not.toBe('client-manifest');
+    }
+  });
+});
+
 describe('merge-trunk: what is settled without a person', () => {
   it('takes the trunk side of a derived file, a drizzle-kit journal and a lockfile, and deletes one the trunk deleted', () => {
     for (const [file, kind] of [

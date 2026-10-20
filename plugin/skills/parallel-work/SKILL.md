@@ -195,7 +195,8 @@ branch (step 6): the run goes on.
 Each agent commits its rows. When the rows of a branch are committed: bring the trunk into the
 branch, `npx ddd-ts-kit merge-trunk --cwd <worktree>`, never `git merge` alone. It computes the
 merge from the newest commit of the branch the trunk holds (a first row already squash-merged, a
-branch it was stacked on), settles the derived files, generated regions and registries, the rows
+branch it was stacked on), settles the derived files (the `package.json` of a client at the higher
+of both versions), generated regions and registries, the rows
 of `slices.md`, the drizzle-kit journal and the lockfile itself, and leaves each source or test
 hunk in a merge in progress with what each side did there (exit 1). Resolve each hunk keeping
 both sides, never by taking one side of a source file or a test (`-X theirs`, `-X ours`,

@@ -133,7 +133,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | Command or skill | Does | When | Produces | Then |
 |---|---|---|---|---|
 | `/ddd-ts-kit:quality-gate`, `npm run verify` | every gate of the pipeline, fixed at the root cause | before opening the pull or merge request | a green gate | the request |
-| `npx ddd-ts-kit merge-trunk` | brings the trunk into the branch as one merge commit computed from the branch's own diff (from where it landed after a squash): derived files, generated regions and registries, `slices.md` rows, drizzle meta, the lockfile and the stored-events lock settled, migrations replayed (renamed with `--to-land`), decision records renumbered, regenerate, then `verify-merge` on the result | a worker: to bring the trunk in, never `git merge` alone; the conductor: `--to-land --cwd <worktree>` just before the squash merge | one merge commit with `Merge-Base:`, `Trunk:` and `Landed:` trailers; or a merge in progress with each hunk left, what each side did there, exit 1 | resolve each hunk, `git add`, `merge-trunk --continue` (`--accept-lost` for a removal decided on purpose, `--abort` to undo), then `npm run verify` |
+| `npx ddd-ts-kit merge-trunk` | brings the trunk into the branch as one merge commit computed from the branch's own diff (from where it landed after a squash): derived files, the package.json of each client (at the higher of both versions), generated regions and registries, `slices.md` rows, drizzle meta, the lockfile and the stored-events lock settled, migrations replayed (renamed with `--to-land`), decision records renumbered, regenerate, then `verify-merge` on the result | a worker: to bring the trunk in, never `git merge` alone; the conductor: `--to-land --cwd <worktree>` just before the squash merge | one merge commit with `Merge-Base:`, `Trunk:` and `Landed:` trailers; or a merge in progress with each hunk left, what each side did there, exit 1 | resolve each hunk, `git add`, `merge-trunk --continue` (`--accept-lost` for a removal decided on purpose, `--abort` to undo), then `npm run verify` |
 | `npx ddd-ts-kit verify-merge` | what the merges of the branch lost, read from git alone: a line one side added, a row done, a test, a spec file, a migration, a conflict marker | merge-trunk runs it before its commit; after a merge made otherwise, or of a squash with `--theirs <head>`; the pre-push hook (`--warn`) and `verify-slice` run it too, as a warning in this version: a later minor version blocks | the findings of each merge, with `file:line` and the side that held them; nothing without a merge; exit 1 on an error, 0 with `--warn` | restore each one from its side, or record a removal decided on purpose with a `Lost-Accepted: <file:line>` trailer |
 | `npx ddd-ts-kit affected --base origin/main` | the contexts a change reaches through the context map | in the pipeline; locally to see what it will run | filters for the tests and the linter | the pipeline |
 | agent `architecture-reviewer` | a read-only review of the diff against the rules | before merging a slice | findings with file and line | fixes, then merge |
@@ -496,19 +496,20 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    migrations, slices.md, plan.md and lockfiles left out, is one commit of the trunk, on this
                    branch or a branch it shares commits with; else the base recorded for the worker when its
                    lines are on the trunk; else git merge-base). Settles derived files and drizzle-kit meta
-                   (trunk side), generated regions of CONTEXT.md and the context map (trunk side), conflicts
-                   inside generated registries (lines of both sides), slices.md row by row (the furthest
-                   status), the stored-events lock by key, the lockfile (trunk side, installed again when
-                   the branch changed package.json); the rest is left in a merge in progress git
-                   understands, with what each side did (exit 1). Then, or on --continue: the drizzle
-                   migrations of both sides replayed, on --to-land the working migrations renamed (knex,
-                   Prisma, TypeORM; stop when both sides change one table), decision records renumbered,
-                   regenerate, verify-merge on the uncommitted result (an error stops; --accept-lost records
-                   a Lost-Accepted: trailer), and the commit of the merge's paths only, with the trailers
-                   Merge-Base:, Trunk: and Landed:; any other changed path blocks it. --dry-run previews,
-                   --abort undoes; refused (exit 2) on a dirty tree, another operation in progress, no
-                   committer known to git, an unknown trunk, or a git older than 2.40 with a base git
-                   would not compute
+                   (trunk side), the package.json of a client (trunk side, at the higher of both versions;
+                   left to you when one is not a semantic version), generated regions of CONTEXT.md and the
+                   context map (trunk side), conflicts inside generated registries (lines of both sides),
+                   slices.md row by row (the furthest status), the stored-events lock by key, the lockfile
+                   (trunk side, installed again when the branch changed package.json); the rest is left in a
+                   merge in progress git understands, with what each side did (exit 1). Then, or on
+                   --continue: the drizzle migrations of both sides replayed, on --to-land the working
+                   migrations renamed (knex, Prisma, TypeORM; stop when both sides change one table), decision
+                   records renumbered, regenerate, verify-merge on the uncommitted result (an error stops;
+                   --accept-lost records a Lost-Accepted: trailer), and the commit of the merge's paths only,
+                   with the trailers Merge-Base:, Trunk: and Landed:; any other changed path blocks it.
+                   --dry-run previews, --abort undoes; refused (exit 2) on a dirty tree, another operation in
+                   progress, no committer known to git, an unknown trunk, or a git older than 2.40 with a base
+                   git would not compute
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over

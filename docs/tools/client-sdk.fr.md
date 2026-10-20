@@ -1,5 +1,5 @@
 [English](client-sdk.md) · **Français**
-<!-- translation-of: client-sdk.md sha256:e18f362439098e78 -->
+<!-- translation-of: client-sdk.md sha256:2ffb21aa9cbcbe50 -->
 
 # SDK client : un client typé à partir du contrat OpenAPI
 
@@ -139,7 +139,10 @@ les deux noms.
 
 Chaque exécution réécrit tous les fichiers sauf package.json ; package.json garde sa version et
 toutes les clés que l'équipe ajoute, et seuls le nom, les points d'entrée, le script de *build* et
-`publishConfig.access` suivent la config.
+`publishConfig.access` suivent la config. Quand une branche a relevé la version et que le tronc a
+changé le même package.json, `merge-trunk` garde le fichier du tronc à la plus haute des deux
+versions, et le dit dans son rapport ; une version qui n'est pas une version sémantique d'un côté
+ou de l'autre vous est laissée comme un conflit.
 
 La commande câble aussi le projet, et la relancer ne change rien :
 

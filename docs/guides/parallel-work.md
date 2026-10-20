@@ -91,7 +91,9 @@ The regenerated document holds both routes, `/notifications/preferences` from th
 
 `npx ddd-ts-kit merge-trunk` brings the trunk into the branch as one merge commit and never
 rebases. It settles by itself what a tool writes: a derived file takes the trunk's side and is
-rewritten by `npm run regenerate` at the end, the generated regions of `CONTEXT.md` and of the
+rewritten by `npm run regenerate` at the end, the `package.json` of a client takes the trunk's
+side at the higher of the two versions (the version is the team's, and `regenerate` keeps the one
+it finds; a version that is not a semantic version is left to you), the generated regions of `CONTEXT.md` and of the
 context map take the trunk's side, a conflict inside a generated registry
 (`// ddd-ts-kit:<region>`) keeps the lines of both sides (a line one side removed stays removed),
 `slices.md` merges row by row (each status the furthest of both sides), the stored-events lock
