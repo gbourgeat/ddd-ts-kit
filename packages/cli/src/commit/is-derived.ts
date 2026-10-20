@@ -1,5 +1,5 @@
 import type { Config } from '../config/index.js';
-import { barrelFile, dependenciesFile } from '../declared/index.js';
+import { dependenciesFile, isDeclarationsFile } from '../declared/index.js';
 import { DEPCRUISE_FILE } from '../depcruise/depcruise-file.js';
 import { CONTEXT_MAP } from '../docs/context-map-file.js';
 import { openApiDocumentsFile } from '../docs/open-api-documents-file.js';
@@ -18,13 +18,13 @@ export function isDerived(config: Config, file: string): boolean {
     return true;
   }
 
-  const [context, name, ...deeper] = file.startsWith(`${config.contextsDir}/`)
+  const [context, ...inside] = file.startsWith(`${config.contextsDir}/`)
     ? file.slice(config.contextsDir.length + 1).split('/')
     : [];
 
-  if (context === undefined || deeper.length > 0) {
+  if (context === undefined) {
     return false;
   }
 
-  return name === barrelFile(context) || name === dependenciesFile(context);
+  return isDeclarationsFile(context, inside.join('/')) || inside.join('/') === dependenciesFile(context);
 }

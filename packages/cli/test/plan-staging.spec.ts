@@ -15,6 +15,7 @@ describe('what a slice stages, by a closed list', () => {
       [
         fresh('src/contexts/billing/domain/services/pricing.service.ts'),
         modified('src/contexts/billing/billing.declarations.ts'),
+        modified('src/contexts/billing/application/commands/commands.declarations.ts'),
         fresh('test/e2e/issue-invoice.e2e.spec.ts'),
         modified('docs/context-map.md'),
         modified('openapi/openapi.yaml'),
@@ -26,7 +27,7 @@ describe('what a slice stages, by a closed list', () => {
     );
 
     expect(plan.leftOut).toEqual([]);
-    expect(plan.toStage).toHaveLength(7);
+    expect(plan.toStage).toHaveLength(8);
   });
 
   it('stages the acceptance spec a slice unwraps, never the lock of the story', () => {

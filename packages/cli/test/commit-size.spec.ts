@@ -54,7 +54,7 @@ describe('check --commit-size', () => {
     const changed = git(root, 'status', '--porcelain', '--untracked-files=all')
       .trim()
       .split('\n')
-      .filter((line) => !line.endsWith('billing.declarations.ts'));
+      .filter((line) => !line.endsWith('.declarations.ts'));
 
     expect(size).toMatchObject({ files: changed.length, over: false });
     expect(size).toMatchObject({ slices: expect.arrayContaining([{ slice: 'billing: issue-invoice', files: 3 }]) });

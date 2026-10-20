@@ -97,11 +97,29 @@ function isEntryFile(file: LintedFile, options: Options): boolean {
   return isIndex(file) || globMatcher(options.entries ?? [])(file.path);
 }
 
-/** The generated files of a declared context: `declarations/barrel-current` of `ddd-ts-kit check` holds every line of them. */
+/** The layers whose role folders hold generated declarations, as `declaredRoleOf` of the CLI places role files. */
+const ROLE_LAYERS = ['application', 'infrastructure', 'presentation'];
+
+/**
+ * The generated files of a declared context: at its root, `<context>.declarations.ts` and
+ * `<context>.dependencies.ts`; in a role folder, `<layer>/<folder>/<folder>.declarations.ts` or
+ * `<layer>/<layer>.declarations.ts`. `declarations/barrel-current` of `ddd-ts-kit check` holds
+ * every line of them.
+ */
 function isGenerated(file: LintedFile): boolean {
   const { contextsDir } = file.config;
 
-  return globMatcher([`${contextsDir}/*/*.declarations.ts`, `${contextsDir}/*/*.dependencies.ts`])(file.path);
+  if (globMatcher([`${contextsDir}/*/*.declarations.ts`, `${contextsDir}/*/*.dependencies.ts`])(file.path)) {
+    return true;
+  }
+
+  const [, layer = '', ...inside] = file.path.startsWith(`${contextsDir}/`)
+    ? file.path.slice(contextsDir.length + 1).split('/')
+    : [];
+
+  const folder = inside.length === 2 ? inside[0] : layer;
+
+  return ROLE_LAYERS.includes(layer) && inside.length <= 2 && inside.at(-1) === `${folder}.declarations.ts`;
 }
 
 function isIndex(file: LintedFile): boolean {
