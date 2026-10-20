@@ -383,6 +383,20 @@ test('the generated barrel and the generated import graph rules are never edited
   const barrel = run('pre-write', write(join(root, 'src/contexts/ordering/ordering.declarations.ts')));
   assert.equal(decision(barrel), 'deny');
   assert.match(reason(barrel), /ddd-ts-kit docs/);
+  for (const folder of [
+    'application/commands/commands.declarations.ts',
+    'infrastructure/persistence/persistence.declarations.ts',
+    'infrastructure/infrastructure.declarations.ts',
+  ]) {
+    const declarations = run('pre-write', write(join(root, `src/contexts/ordering/${folder}`)));
+    assert.equal(decision(declarations), 'deny', folder);
+    assert.match(reason(declarations), /generated declarations .* ddd-ts-kit docs/, folder);
+  }
+  const named = run(
+    'pre-write',
+    write(join(root, 'src/contexts/ordering/application/commands/orders.declarations.ts')),
+  );
+  assert.doesNotMatch(named.output === undefined ? '' : reason(named), /generated declarations/);
   const graph = run('pre-write', write(join(root, '.dependency-cruiser.cjs')));
   assert.equal(decision(graph), 'deny');
   assert.match(reason(graph), /depcruise-config --write/);
@@ -1362,6 +1376,7 @@ test('generated files are not counted in the size of a commit', () => {
   put(root, 'docs/a.md', 'a\n');
   for (const path of [
     'src/contexts/ordering/ordering.declarations.ts',
+    'src/contexts/ordering/application/commands/commands.declarations.ts',
     'openapi/openapi.yaml',
     'openapi/back-office.yaml',
     'docs/integration/asyncapi.yaml',

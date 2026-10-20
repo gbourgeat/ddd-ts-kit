@@ -893,13 +893,22 @@ function generatedFileReason(project, file) {
     return `${path} is generated from ${CONFIG}. Change the config, then run \`npx ddd-ts-kit depcruise-config --write\`.`;
   }
   return isBarrel(project, path)
-    ? `${path} is the generated barrel of its context. Never edit it: \`npx ddd-ts-kit generate ...\` and \`npx ddd-ts-kit docs\` rewrite it from the role files.`
+    ? `${path} holds generated declarations of its context. Never edit it: \`npx ddd-ts-kit generate ...\` and \`npx ddd-ts-kit docs\` rewrite it from the role files.`
     : undefined;
 }
 
+/** The summary at the root of a context, or the declarations of a role folder, named after the folder. */
 function isBarrel(project, path) {
-  const [context, file, ...deeper] = insideContexts(project, path) ?? [];
-  return deeper.length === 0 && file === `${context}.declarations.ts`;
+  const [context, layer, ...rest] = insideContexts(project, path) ?? [];
+  if (rest.length === 0) {
+    return layer === `${context}.declarations.ts`;
+  }
+  const folder = rest.length === 2 ? rest[0] : layer;
+  return (
+    ['application', 'infrastructure', 'presentation'].includes(layer) &&
+    rest.length <= 2 &&
+    rest.at(-1) === `${folder}.declarations.ts`
+  );
 }
 
 function insideContexts(project, path) {
