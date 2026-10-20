@@ -1,6 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { specifierOf } from '../src/alias/index.js';
+import { readConfig } from '../src/config/index.js';
+import { isDeclarationsFile, singleFileDeclarations } from '../src/declared/index.js';
+import { filesUnder } from '../src/generate/files-under.js';
+import { workspaceSources } from '../src/generate/workspace-sources.js';
+import { Workspace } from '../src/workspace/index.js';
 import { cli, read, scaffoldEverything, tempDir, write } from './helpers.js';
 
 const BILLING = 'src/contexts/billing';
@@ -130,6 +136,109 @@ describe('the declarations of a context, as its tree changes', () => {
     expect(fs.existsSync(path.join(root, `${SHIPPING}/infrastructure/infrastructure.declarations.ts`))).toBe(false);
   });
 });
+
+describe('a context still declared in the single file of 0.84', () => {
+  const summary = `${BILLING}/billing.declarations.ts`;
+  const commands = `${BILLING}/application/commands/commands.declarations.ts`;
+
+  it('is a warning for check and docs --check, which pass, and generate --local-only leaves it alone', () => {
+    const single = toSingleFile('billing');
+
+    const checked = cli(root, 'check', '--rule', 'declarations/barrel-current', '--json');
+
+    expect(checked.code).toBe(0);
+
+    expect(checked.json()).toMatchObject({
+      errors: 0,
+      violations: [{ ruleId: 'declarations/barrel-current', severity: 'warn', file: summary }],
+    });
+
+    expect(cli(root, 'check', '--rule', 'declarations/barrel-current').stdout).toContain(
+      'a later minor version reports it as an error',
+    );
+
+    const docs = cli(root, 'docs', '--check');
+
+    expect(docs.code).toBe(0);
+    expect(docs.stdout).toContain('The generated documentation is up to date.');
+
+    expect(docs.stdout).toContain(
+      `warning  ${summary}: "billing" still keeps all its declarations in billing.declarations.ts`,
+    );
+
+    expect(docs.stdout).toContain('Run `npx ddd-ts-kit docs`');
+
+    const local = cli(root, 'generate', 'port', 'shipping', 'CarrierRates', '--local-only');
+
+    expect(local.code).toBe(0);
+    expect(local.stdout).toContain('note: "billing" still keeps all its declarations in billing.declarations.ts');
+    expect(read(root, summary)).toBe(single);
+  });
+
+  it('is an error once the single file is stale, or once the context is half moved', () => {
+    const single = read(root, summary);
+    const job = "export * from '@/contexts/billing/application/scheduling/cancel-stale-invoices.job';\n";
+
+    expect(single).toContain(job);
+    write(root, summary, single.replace(job, ''));
+    expect(cli(root, 'check', '--rule', 'declarations/barrel-current').code).toBe(1);
+    expect(cli(root, 'docs', '--check').code).toBe(1);
+
+    write(root, summary, single);
+
+    write(
+      root,
+      commands,
+      "export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command';\n",
+    );
+
+    expect(cli(root, 'check', '--rule', 'declarations/barrel-current').code).toBe(1);
+    expect(cli(root, 'docs', '--check').code).toBe(1);
+    fs.rmSync(path.join(root, commands));
+  });
+
+  it('moves to the declarations of the role folders on docs, and the warning goes', () => {
+    const moved = cli(root, 'docs');
+
+    expect(moved.stdout).toMatch(new RegExp(`created\\s+${commands}`));
+
+    expect(read(root, summary)).toContain(
+      "export * from '@/contexts/billing/application/commands/commands.declarations';",
+    );
+
+    const checked = cli(root, 'check', '--rule', 'declarations/barrel-current', '--json');
+
+    expect(checked.json()).toMatchObject({ errors: 0, warnings: 0 });
+    expect(cli(root, 'docs', '--check').stdout).toBe('The generated documentation is up to date.');
+  });
+});
+
+/**
+ * Puts a context back in the layout the generator wrote up to 0.84: every declaration in
+ * `<context>.declarations.ts`, no declarations file in a role folder. Answers that file.
+ */
+function toSingleFile(context: string): string {
+  const ws = new Workspace(root, false);
+  const { config } = readConfig(root);
+  const directory = `${config.contextsDir}/${context}`;
+  const entries = filesUnder(ws, directory);
+
+  const single = singleFileDeclarations({
+    context,
+    directory,
+    entries,
+    sources: workspaceSources(ws, config),
+    specifierOf: (file) => specifierOf(config, file),
+  });
+
+  for (const entry of entries.filter((candidate) => isDeclarationsFile(context, candidate))) {
+    fs.rmSync(path.join(root, directory, entry));
+  }
+
+  write(root, `${directory}/${context}.declarations.ts`, single);
+
+  return single;
+}
 
 /** The declarations of every role folder of a context, in the order its summary re-exports them. */
 function declarationsOf(context: string): string {

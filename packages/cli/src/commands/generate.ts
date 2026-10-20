@@ -7,7 +7,7 @@ import { CliError } from '../cli-error.js';
 import { findKind } from '../generate/find-kind.js';
 import type { Kind, KindFlags } from '../generate/kind.js';
 import { KINDS } from '../generate/kinds.js';
-import { refreshBarrels } from '../generate/refresh-barrels.js';
+import { refreshBarrels, type SingleFile } from '../generate/refresh-barrels.js';
 import { refuseSharedWrites } from '../generate/refuse-shared-writes.js';
 import { stopIgnoringValidation } from '../generate/stop-ignoring-validation.js';
 import { toName } from '../naming/index.js';
@@ -28,7 +28,8 @@ export const generateCommand: Command = (argv, io) => {
 
   keepFlatPlatform(ws, config);
   kind.run({ ws, config, args: rest, flags: flagsOf(args) });
-  refreshDocs(ws);
+  // A worker confined to its context leaves another context in the single declarations file of 0.84: the trunk moves it.
+  refreshDocs(ws, args.flag('local-only') ? 'keep' : 'move');
 
   if (args.flag('local-only')) {
     refuseSharedWrites(ws, config, kind.positionals[0] === 'context' ? toName(rest[0] ?? '').kebab : undefined);
@@ -97,7 +98,7 @@ function optionsOf(kind: Kind | undefined): Record<string, typeof TEXT | typeof 
 }
 
 /** Keeps what is derived from the config and the tree in step with what was just scaffolded, once the project has it. */
-function refreshDocs(ws: Workspace): void {
+function refreshDocs(ws: Workspace, singleFile: SingleFile): void {
   const config = ws.read(CONFIG_FILE);
 
   if (config === undefined) {
@@ -106,10 +107,10 @@ function refreshDocs(ws: Workspace): void {
 
   const current = parseConfig(JSON.parse(config));
 
-  refreshBarrels(ws, current);
+  refreshBarrels(ws, current, singleFile);
 
   if (ws.exists(CONTEXT_MAP)) {
-    writeDocs(ws, current);
+    writeDocs(ws, current, singleFile);
   }
 
   // The import graph rules are derived from the config: a new context or upstream changes them.

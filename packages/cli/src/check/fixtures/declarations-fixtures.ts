@@ -5,10 +5,12 @@ import { DECLARED_DECLARATIONS } from './declared-declarations.js';
 import { declaredProject } from './declared-project.js';
 import { discoveredProject } from './discovered-project.js';
 import type { Fixture } from './fixture.js';
+import type { FixtureFiles } from './fixture-files.js';
 import { handler } from './handler.js';
 import { PATHS } from './paths.js';
 import { project } from './project.js';
 import { SAMPLES } from './samples.js';
+import { SINGLE_FILE_DECLARATIONS } from './single-file-declarations.js';
 import { source } from './source.js';
 import { withoutFile } from './without-file.js';
 
@@ -45,6 +47,14 @@ const PORT_IMPORT = "import { PaymentGateway } from '@/contexts/billing/applicat
 
 const stripeGateway = (...before: string[]): string =>
   source(PORT_IMPORT, '', ...before, 'export class StripePaymentGateway implements PaymentGateway {}');
+
+/** The billing context declared in the single file of 0.84: no declarations file in a role folder. */
+const singleFile = (declarations: string): FixtureFiles =>
+  Object.fromEntries(
+    Object.entries(declaredProject(DECLARED_CONTEXT, { [BARREL]: declarations })).filter(
+      ([file]) => file === BARREL || !file.startsWith(`${BILLING}/`) || !file.endsWith('.declarations.ts'),
+    ),
+  );
 
 const explicitModule = (...statements: string[]): string =>
   source("import type { ModuleBuilder } from '@ddd-ts-kit/di';", PORT_IMPORT, ...statements);
@@ -184,6 +194,30 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
     files: declaredProject(DECLARED_CONTEXT, {
       [`${BILLING}/application/background/background.declarations.ts`]: 'export {};\n',
     }),
+  },
+  {
+    ruleId: 'declarations/barrel-current',
+    name: 'the single declarations file of 0.84, current and not moved yet: a warning, until a later minor version',
+    expect: { file: BARREL },
+    severity: 'warn',
+    files: singleFile(SINGLE_FILE_DECLARATIONS),
+  },
+  {
+    ruleId: 'declarations/barrel-current',
+    name: 'the single declarations file of 0.84 that misses a role file: stale, an error',
+    expect: { file: BARREL },
+    files: singleFile(
+      SINGLE_FILE_DECLARATIONS.replace(
+        "export * from '@/contexts/billing/application/scheduling/send-reminders.job.js';\n",
+        '',
+      ),
+    ),
+  },
+  {
+    ruleId: 'declarations/barrel-current',
+    name: 'a context half moved, the single declarations file of 0.84 next to the declarations of its role folders: an error',
+    expect: { file: BARREL },
+    files: declaredProject(DECLARED_CONTEXT, { [BARREL]: SINGLE_FILE_DECLARATIONS }),
   },
   {
     ruleId: 'declarations/barrel-current',

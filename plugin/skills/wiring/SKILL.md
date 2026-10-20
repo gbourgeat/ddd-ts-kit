@@ -74,7 +74,9 @@ A class says what it is on its own file, and that is its registration. There is 
   After adding, moving or deleting a role file, or changing a constructor, by hand:
   `npx ddd-ts-kit docs`, which also deletes the declarations of an emptied folder
   (`declarations/barrel-current` names the file and the class whose list is stale). Never edit
-  them. With `stack.assembly: discovery` the composition root reads the role files
+  them. A context still declared in the single `<context>.declarations.ts` of 0.84 is a warning
+  of that rule in this version and an error in a later one: `npx ddd-ts-kit docs` moves it, and
+  the moved files are committed together. With `stack.assembly: discovery` the composition root reads the role files
   itself (`discoverContext`) and the lists from the generated `<context>.dependencies.ts`.
 - `WiringError MISSING_DEPENDENCIES` or `DEPENDENCY_ARITY` at startup: the generated file is
   stale or was not loaded. Run `npx ddd-ts-kit docs`; in a test, assemble the context from its

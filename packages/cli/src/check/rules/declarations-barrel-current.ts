@@ -5,9 +5,12 @@ import {
   contextInjections,
   dependenciesFile,
   generatedDrift,
+  type DeclaredContext,
   isDeclarationsFile,
+  keepsSingleFile,
   renderDependenciesFile,
   renderInjections,
+  singleFileNotice,
 } from '../../declared/index.js';
 import type { Flaw } from '../model/flaw.js';
 import type { Project } from '../model/project.js';
@@ -22,6 +25,8 @@ const REGENERATE =
 interface Judged {
   readonly file: string;
   readonly flaw: Flaw | undefined;
+  /** Set on the single file of 0.84, current but not moved yet: a warning whatever the severity of the rule. */
+  readonly severity?: 'warn';
 }
 
 export const declarationsBarrelCurrent: Rule = {
@@ -39,20 +44,28 @@ export const declarationsBarrelCurrent: Rule = {
     return project.contextsOnDisk
       .filter((context) => project.config.contexts[context] !== undefined)
       .flatMap((context) => judge(project, context))
-      .flatMap(({ file, flaw }) => (flaw === undefined ? [] : [report({ file, line: 1 }, flaw.message, flaw.fix)]));
+      .flatMap(({ file, flaw, severity }) => {
+        if (flaw === undefined) {
+          return [];
+        }
+
+        const violation = report({ file, line: 1 }, flaw.message, flaw.fix);
+
+        return [severity === undefined ? violation : { ...violation, severity }];
+      });
   },
 };
 
 function judge(project: Project, context: string): Judged[] {
   const directory = `${project.config.contextsDir}/${context}`;
   const entries = entriesOf(project, context);
-  const generated = entries.filter((entry) => isDeclarationsFile(context, entry));
   const specifierOfFile = (file: string): string => specifierOf(project.config, file);
   const sources = (file: string) => sourceAt(project, file);
 
   if (project.config.stack.assembly === 'discovery') {
     const injected = renderInjections(contextInjections(sources, directory, entries), specifierOfFile);
     const lists = { name: `dependency lists of "${context}"`, expected: renderDependenciesFile(injected) };
+    const generated = entries.filter((entry) => isDeclarationsFile(context, entry));
 
     return [
       ...generated.map((entry) => ({ file: `${directory}/${entry}`, flaw: leftBehind(context, entry) })),
@@ -63,17 +76,31 @@ function judge(project: Project, context: string): Judged[] {
     ];
   }
 
-  const { files } = contextDeclarations({ context, directory, entries, sources, specifierOf: specifierOfFile });
+  return judgeDeclarations(project, { context, directory, entries, sources, specifierOf: specifierOfFile });
+}
 
-  return [
+/** With a barrel: the declarations of each role folder and their summary, or the single file of 0.84 while it is current. */
+function judgeDeclarations(project: Project, declared: DeclaredContext): Judged[] {
+  const { context, directory, entries } = declared;
+  const { files } = contextDeclarations(declared);
+
+  const judged = [
     ...[...files].map(([entry, expected]) => ({
       file: `${directory}/${entry}`,
       flaw: stale(project, context, { name: nameOf(context, entry), file: entry, expected, optional: false }),
     })),
-    ...generated
-      .filter((entry) => !files.has(entry))
+    ...entries
+      .filter((entry) => isDeclarationsFile(context, entry) && !files.has(entry))
       .map((entry) => ({ file: `${directory}/${entry}`, flaw: emptied(context, entry) })),
   ];
+
+  const barrel = `${directory}/${barrelFile(context)}`;
+
+  if (judged.some(({ flaw }) => flaw !== undefined) && keepsSingleFile(declared, writtenIn(project, barrel))) {
+    return [{ file: barrel, flaw: singleFileNotice(context), severity: 'warn' }];
+  }
+
+  return judged;
 }
 
 interface Generated {
