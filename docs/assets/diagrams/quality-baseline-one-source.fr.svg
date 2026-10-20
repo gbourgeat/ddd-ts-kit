@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">Chaque partie de la base est écrite une seule fois</title>
-  <desc id="desc">Deux panneaux. À gauche, la liste des portes BASELINE, dans packages/cli/src/init/manifest/baseline.ts : le script verify d'un projet est construit à partir d'elle, et un test de la CLI tient le workflow GitHub et le pipeline GitLab à chacune de ses portes. À droite, biome.json à la racine du kit : le template biome.json.tpl qu'init copie dans un projet lui est tenu identique par un test, octet pour octet sauf deux exclusions du kit (les sources des clients générés et les exemples compilés de la documentation), et examples/scheduling/biome.json l'étend. Chaque flèche part de la source vers ce qui en découle.</desc>
+  <desc id="desc">Deux panneaux. À gauche, la liste des portes BASELINE, dans packages/cli/src/init/manifest/baseline.ts : le script verify d'un projet est construit à partir d'elle, et un test de la CLI tient le workflow GitHub et le pipeline GitLab à chacune de ses portes. À droite, biome.json à la racine du kit : le template biome.json.tpl qu'init copie dans un projet lui est tenu identique par un test, octet pour octet sauf une exclusion du kit (les sources des clients générés), et examples/scheduling/biome.json l'étend. Chaque flèche part de la source vers ce qui en découle.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
@@ -43,7 +43,7 @@
   <line x1="680" y1="158" x2="644" y2="226" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
   <line x1="780" y1="158" x2="800" y2="226" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
   <text x="512" y="180" font-size="13" fill="#1f2328">octet pour octet sauf</text>
-  <text x="512" y="196" font-size="13" fill="#1f2328">deux lignes du kit,</text>
+  <text x="512" y="196" font-size="13" fill="#1f2328">une ligne du kit,</text>
   <text x="512" y="212" font-size="13" fill="#1f2328">tenu par un test</text>
   <text x="806" y="190" font-size="13" fill="#1f2328">étendu par</text>
   <text x="806" y="206" font-size="13" fill="#1f2328">l'exemple</text>

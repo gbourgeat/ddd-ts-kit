@@ -14,6 +14,7 @@
       "!**/coverage",
       "!**/reports",
       "!**/.worktrees",
+      "!**/.ddd-ts-kit",
       "!**/generated",
       "!**/package-lock.json",
       "!**/.dependency-cruiser.cjs",

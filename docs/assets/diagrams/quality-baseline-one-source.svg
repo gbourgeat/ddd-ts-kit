@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">Each part of the baseline is written once</title>
-  <desc id="desc">Two panels. On the left, the list of gates BASELINE, in packages/cli/src/init/manifest/baseline.ts: the verify script of a project is built from it, and a test of the CLI holds the GitHub workflow and the GitLab pipeline to every gate of it. On the right, biome.json at the root of the kit: the template biome.json.tpl that init copies into a project is held identical to it by a test, byte for byte but for two exclusions of the kit (the sources of the generated clients and the compiled doc samples), and examples/scheduling/biome.json extends it. Every arrow runs from the source to what follows from it.</desc>
+  <desc id="desc">Two panels. On the left, the list of gates BASELINE, in packages/cli/src/init/manifest/baseline.ts: the verify script of a project is built from it, and a test of the CLI holds the GitHub workflow and the GitLab pipeline to every gate of it. On the right, biome.json at the root of the kit: the template biome.json.tpl that init copies into a project is held identical to it by a test, byte for byte but for one exclusion of the kit (the sources of the generated clients), and examples/scheduling/biome.json extends it. Every arrow runs from the source to what follows from it.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
@@ -43,7 +43,7 @@
   <line x1="680" y1="158" x2="644" y2="226" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
   <line x1="780" y1="158" x2="800" y2="226" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
   <text x="512" y="180" font-size="13" fill="#1f2328">byte for byte but for</text>
-  <text x="512" y="196" font-size="13" fill="#1f2328">two lines of the kit,</text>
+  <text x="512" y="196" font-size="13" fill="#1f2328">one line of the kit,</text>
   <text x="512" y="212" font-size="13" fill="#1f2328">held by a test</text>
   <text x="806" y="190" font-size="13" fill="#1f2328">extended by</text>
   <text x="806" y="206" font-size="13" fill="#1f2328">the example</text>

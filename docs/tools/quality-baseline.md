@@ -28,7 +28,7 @@ The list is written once, in the CLI (`BASELINE`, `packages/cli/src/init/manifes
 `verify` is built from it and a test of the CLI holds the two pipelines, for several stacks and
 for the example application, to every gate of it, so a gate cannot leave one place silently.
 
-![Two sources written once: the list BASELINE of the CLI, from which the verify script is built and to which a test holds the GitHub and GitLab pipelines; and biome.json at the root of the kit, which the template of the CLI copies under a test, byte for byte but for two exclusions of the kit, and which the example extends](../assets/diagrams/quality-baseline-one-source.svg)
+![Two sources written once: the list BASELINE of the CLI, from which the verify script is built and to which a test holds the GitHub and GitLab pipelines; and biome.json at the root of the kit, which the template of the CLI copies under a test, byte for byte but for one exclusion of the kit, and which the example extends](../assets/diagrams/quality-baseline-one-source.svg)
 
 In a generated project and in the example application, `verify` is that list, in that order:
 
@@ -204,12 +204,13 @@ semicolons, parentheses around the parameter of an arrow function.
 - Formatted: `.ts`, `.mts`, `.cts`, `.js`, `.mjs`, `.cjs`, `.json`, `.jsonc`.
 - Not formatted: Markdown (a formatter would rewrap tables and prose) and YAML.
 - Left out in `biome.json`: build outputs (`dist`, `coverage`, `reports`), the lockfile, a
-  `generated` directory, the snapshots of the migrations (`migrations/meta`), and the
+  `generated` directory, the snapshots of the migrations (`migrations/meta`), the state the
+  guard and the workers keep in `.ddd-ts-kit/` (git-ignored, and written on one line), and the
   artifacts their own check compares byte for byte (`openapi/*.json` and `asyncapi.json` under
   `openapi.format: json`, the forms of `openapi/forms/`, `.dependency-cruiser.cjs`); the YAML
-  contracts are not formatted anyway. Two more lines appear only where they apply: the sources of
+  contracts are not formatted anyway. One more line appears only where it applies: the sources of
   a generated client (`clients/*/src`), which `ddd-ts-kit sdk` adds to a project that asks for
-  clients, and, in the kit alone, the compiled samples of its documentation (`.ddd-ts-kit`).
+  clients. In the kit, `.ddd-ts-kit` also holds the compiled samples of its documentation.
 
 What the CLI writes is already formatted: `npm run format:check` passes right after `init` and
 after every `generate`, and the end-to-end suite of the CLI holds that for every stack it
@@ -238,10 +239,9 @@ const next = steps.shift();
 ## One configuration, three places
 
 `biome.json` at the root of the kit is the source. The template the CLI copies into a project
-is compared with it byte for byte by a test of the CLI, but for the two lines a new project
-does not need: the one that leaves out the generated client of the example (`ddd-ts-kit sdk`
-adds it to a project that asks for clients) and the one that leaves out the compiled doc samples
-of the kit. The example application extends it instead of copying it, so the three cannot drift
+is compared with it byte for byte by a test of the CLI, but for the line a new project does
+not need: the one that leaves out the generated client of the example (`ddd-ts-kit sdk` adds it
+to a project that asks for clients). The example application extends it instead of copying it, so the three cannot drift
 (the right half of the drawing at the top of this page):
 
 ```json

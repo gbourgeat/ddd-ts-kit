@@ -1,5 +1,5 @@
 [English](quality-baseline.md) · **Français**
-<!-- translation-of: quality-baseline.md sha256:fc3b98bb405b8f97 -->
+<!-- translation-of: quality-baseline.md sha256:0d4f5ae4cca4d882 -->
 
 # Base de qualité
 
@@ -31,7 +31,7 @@ La liste est écrite une seule fois, dans la CLI (`BASELINE`,
 de la CLI tient les deux *pipelines*, pour plusieurs *stacks* et pour l'application d'exemple, à
 chacune de ses portes, si bien qu'une porte ne peut pas quitter un endroit en silence.
 
-![Deux sources écrites une seule fois : la liste BASELINE de la CLI, à partir de laquelle le script verify est construit et à laquelle un test tient les pipelines GitHub et GitLab ; et biome.json à la racine du kit, que le template de la CLI copie sous un test, octet pour octet sauf deux exclusions du kit, et que l'exemple étend](../assets/diagrams/quality-baseline-one-source.fr.svg)
+![Deux sources écrites une seule fois : la liste BASELINE de la CLI, à partir de laquelle le script verify est construit et à laquelle un test tient les pipelines GitHub et GitLab ; et biome.json à la racine du kit, que le template de la CLI copie sous un test, octet pour octet sauf une exclusion du kit, et que l'exemple étend](../assets/diagrams/quality-baseline-one-source.fr.svg)
 
 Dans un projet généré et dans l'application d'exemple, `verify` est cette liste, dans cet ordre :
 
@@ -216,14 +216,14 @@ finales, points-virgules, parenthèses autour du paramètre d'une fonction fléc
 - Non formatés : le Markdown (un formateur remettrait en forme les tableaux et la prose) et le
   YAML.
 - Exclus dans `biome.json` : les sorties de build (`dist`, `coverage`, `reports`), le fichier de
-  verrouillage, un répertoire `generated`, les instantanés des migrations (`migrations/meta`), et
-  les artefacts que leur propre contrôle compare octet pour octet (`openapi/*.json` et
-  `asyncapi.json` sous `openapi.format: json`, les formulaires de `openapi/forms/`,
-  `.dependency-cruiser.cjs`) ; les contrats YAML ne
-  sont de toute façon pas formatés. Deux lignes de plus n'apparaissent que là où elles servent :
-  les sources d'un client généré (`clients/*/src`), que `ddd-ts-kit sdk` ajoute à un projet qui
-  demande des clients, et, dans le kit seul, les exemples compilés de sa documentation
-  (`.ddd-ts-kit`).
+  verrouillage, un répertoire `generated`, les instantanés des migrations (`migrations/meta`),
+  l'état que la garde et les *workers* gardent dans `.ddd-ts-kit/` (ignoré par git, et écrit sur
+  une ligne), et les artefacts que leur propre contrôle compare octet pour octet
+  (`openapi/*.json` et `asyncapi.json` sous `openapi.format: json`, les formulaires de
+  `openapi/forms/`, `.dependency-cruiser.cjs`) ; les contrats YAML ne sont de toute façon pas
+  formatés. Une ligne de plus n'apparaît que là où elle sert : les sources d'un client généré
+  (`clients/*/src`), que `ddd-ts-kit sdk` ajoute à un projet qui demande des clients. Dans le
+  kit, `.ddd-ts-kit` contient aussi les exemples compilés de sa documentation.
 
 Ce qu'écrit la CLI est déjà formaté : `npm run format:check` passe juste après `init` et après
 chaque `generate`, et la suite de bout en bout de la CLI le tient pour chaque *stack* qu'elle
@@ -254,10 +254,9 @@ const next = steps.shift();
 ## Une configuration, trois endroits
 
 `biome.json` à la racine du kit est la source. Le *template* que la CLI copie dans un projet est
-comparé avec lui octet pour octet par un test de la CLI, sauf les deux lignes dont un nouveau
-projet n'a pas besoin : celle qui exclut le client généré de l'exemple (`ddd-ts-kit sdk` l'ajoute
-à un projet qui demande des clients) et celle qui exclut les exemples compilés de la
-documentation du kit. L'application d'exemple l'étend au lieu de le copier, si bien que les trois
+comparé avec lui octet pour octet par un test de la CLI, sauf la ligne dont un nouveau projet
+n'a pas besoin : celle qui exclut le client généré de l'exemple (`ddd-ts-kit sdk` l'ajoute à un
+projet qui demande des clients). L'application d'exemple l'étend au lieu de le copier, si bien que les trois
 ne peuvent pas dériver (la moitié droite du dessin en haut de cette page) :
 
 ```json
