@@ -20,7 +20,7 @@ export function injected<Args extends readonly unknown[], const List extends Dep
 
   if (known !== undefined && !sameList(known, dependencies)) {
     throw new DeclarationError(
-      `${target.name} is given two dependency lists, [${named(known)}] and [${named(dependencies)}]: two generated files disagree. Run \`ddd-ts-kit docs\` and load one file per context.`,
+      `${target.name} is given two dependency lists, [${named(known)}] and [${named(dependencies)}]: two generated files disagree. Run \`ddd-ts-kit docs\`, and assemble each context from one generated entry: <context>.declarations.ts, or <context>.dependencies.ts under discovery.`,
     );
   }
 

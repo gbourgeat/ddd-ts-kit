@@ -3,7 +3,7 @@ import { WiringError } from '../errors/wiring-error.js';
 import type { Declarer } from '../wiring/declarer.js';
 
 const REGENERATE =
-  'Run `ddd-ts-kit docs`, which reads the constructors and rewrites the generated file of the context (<context>.declarations.ts, or <context>.dependencies.ts under discovery), and assemble the context from that file';
+  'Run `ddd-ts-kit docs`, which reads the constructors and rewrites the generated files of the context (the <folder>.declarations.ts of each role folder, which <context>.declarations.ts re-exports, or <context>.dependencies.ts under discovery), and assemble the context from <context>.declarations.ts or by discovery';
 
 interface Declared {
   readonly implementation: new (...args: never) => unknown;
