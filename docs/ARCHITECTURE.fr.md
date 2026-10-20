@@ -1,8 +1,6 @@
 [English](ARCHITECTURE.md) · **Français**
 <!-- translation-of: ARCHITECTURE.md sha256:92c44ceb5b71fe4c -->
 
-<!-- translation-of: ARCHITECTURE.md sha256:5bfe9e1816734d2d -->
-
 # Référence de l'architecture
 
 Le seul document normatif. La CLI (`ddd-ts-kit check`), les *templates*, les *skills* et le

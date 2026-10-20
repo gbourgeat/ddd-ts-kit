@@ -1,8 +1,6 @@
 [English](README.md) · **Français**
 <!-- translation-of: README.md sha256:7f7fe3fe2a615f20 -->
 
-<!-- translation-of: README.md sha256:f1a2ab5a4aafb6da -->
-
 # ddd-ts-kit
 
 Amorcez, générez, documentez et vérifiez des projets en Domain-Driven Design et en Clean
