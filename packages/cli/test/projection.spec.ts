@@ -15,12 +15,16 @@ beforeAll(() => {
 });
 
 describe('generate projection', () => {
-  it('writes a projector of an event of a declared upstream and its spec, in the canonical place, and exports it from the barrel', () => {
+  it('writes a projector of an event of a declared upstream and its spec, in the canonical place, and exports it from the declarations of its folder', () => {
     const generated = report(
       cli(root, 'generate', 'projection', 'shipping', 'InvoicesToShip', 'billing.invoice.issued', '--json'),
     );
 
-    expect(generated.created).toEqual([PROJECTION, SPEC]);
+    expect(generated.created).toEqual([
+      PROJECTION,
+      SPEC,
+      `${SHIPPING}/application/projections/projections.declarations.ts`,
+    ]);
 
     expect(read(root, PROJECTION)).toContain(
       "@Projection('shipping.invoices-to-ship')\nexport class InvoicesToShipProjection {\n  @On(invoiceIssuedV2)\n  async issued(event: InvoiceIssuedV2): Promise<void> {",
@@ -32,7 +36,7 @@ describe('generate projection', () => {
 
     expect(read(root, SPEC)).toContain('await expect(projection.issued(event)).resolves.toBeUndefined();');
 
-    expect(read(root, `${SHIPPING}/shipping.declarations.ts`)).toContain(
+    expect(read(root, `${SHIPPING}/application/projections/projections.declarations.ts`)).toContain(
       "export * from '@/contexts/shipping/application/projections/invoices-to-ship.projection';",
     );
 

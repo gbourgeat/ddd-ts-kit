@@ -4,7 +4,7 @@ import { SIGNATURE } from './signature.js';
 import { signatureProject } from './signature-project.js';
 import { source } from './source.js';
 
-const { BARREL, BILLING, HANDLER } = PATHS;
+const { BILLING, COMMANDS_DECLARATIONS, HANDLER } = PATHS;
 const RULE = 'declarations/constructor-injection';
 const BARE = '@CommandHandler(IssueInvoiceCommand)';
 const SETTINGS = `${BILLING}/application/ports/invoice-settings.port.ts`;
@@ -27,13 +27,15 @@ export const CONSTRUCTOR_INJECTION_FIXTURES: readonly Fixture[] = [
     ruleId: RULE,
     name: 'a handler that lists nothing and types each constructor parameter by a port, its barrel registering what was read',
     expect: 'pass',
-    files: signatureProject(SIGNATURE.handler, { [BARREL]: SIGNATURE.barrel }),
+    files: signatureProject(SIGNATURE.handler, { [COMMANDS_DECLARATIONS]: SIGNATURE.declarations }),
   },
   {
     ruleId: RULE,
     name: 'a parameter typed by a generic class, whose raw class is the token',
     expect: 'pass',
-    files: signatureProject(takingInstead('private readonly clock: Clock<Date>'), { [BARREL]: SIGNATURE.barrel }),
+    files: signatureProject(takingInstead('private readonly clock: Clock<Date>'), {
+      [COMMANDS_DECLARATIONS]: SIGNATURE.declarations,
+    }),
   },
   ...REFUSED_PARAMETERS.map(
     ([name, parameter]): Fixture => ({
@@ -123,16 +125,16 @@ export const CONSTRUCTOR_INJECTION_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'declarations/barrel-current',
-    name: 'a barrel whose dependency list was read from a constructor that has changed since',
-    expect: { file: BARREL },
+    name: 'declarations whose dependency list was read from a constructor that has changed since',
+    expect: { file: COMMANDS_DECLARATIONS },
     files: signatureProject(SIGNATURE.handler, {
-      [BARREL]: SIGNATURE.barrel.replace('[InvoiceRepository, Clock]', '[InvoiceRepository]'),
+      [COMMANDS_DECLARATIONS]: SIGNATURE.declarations.replace('[InvoiceRepository, Clock]', '[InvoiceRepository]'),
     }),
   },
   {
     ruleId: 'declarations/barrel-current',
-    name: 'a barrel that registers no dependency list for a constructor that takes something',
-    expect: { file: BARREL },
+    name: 'declarations that register no dependency list for a constructor that takes something',
+    expect: { file: COMMANDS_DECLARATIONS },
     files: signatureProject(SIGNATURE.handler),
   },
   {

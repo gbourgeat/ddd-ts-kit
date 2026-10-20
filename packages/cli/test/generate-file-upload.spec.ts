@@ -41,7 +41,7 @@ describe('generate file-upload', () => {
     expect(controller).toContain("upload: { field: 'file', maxBytes: 10_485_760,");
     expect(controller).toContain('new AttachInvoiceScanCommand(request.actor, request.upload)');
 
-    expect(read(root, `${BILLING}/billing.declarations.ts`)).toContain(
+    expect(read(root, `${BILLING}/application/commands/commands.declarations.ts`)).toContain(
       'injected(AttachInvoiceScanHandler, [FileStaging]);',
     );
 

@@ -1,12 +1,16 @@
 export { barrelFile } from './barrel-file.js';
+export { contextDeclarations, type ContextDeclarations } from './context-declarations.js';
 export { DECLARED_ROLES, DISCOVERED_SUFFIXES, EDGE_SUFFIXES, type DeclaredRole } from './declared-role.js';
 export { declaredRoleOf } from './declared-role-of.js';
+export { declarationsFolderOf } from './declarations-folder-of.js';
 export { dependenciesFile } from './dependencies-file.js';
+export { folderDeclarationsFile } from './folder-declarations-file.js';
 export { generatedDrift } from './generated-drift.js';
 export type { ClassInjection } from './injection/class-injection.js';
 export { contextInjections } from './injection/context-injections.js';
 export { renderInjections } from './injection/render-injections.js';
 export type { Sources } from './injection/sources.js';
-export { renderBarrel } from './render-barrel.js';
+export { isDeclarationsFile } from './is-declarations-file.js';
+export { renderDeclarations } from './render-declarations.js';
 export { renderDependenciesFile } from './render-dependencies-file.js';
 export { routesFile } from './routes-file.js';

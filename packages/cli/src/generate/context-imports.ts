@@ -1,4 +1,5 @@
 import { specifierOf } from '../alias/index.js';
+import { barrelFile } from '../declared/index.js';
 import { isDeclared } from './is-declared.js';
 import type { Scope } from './scope.js';
 
@@ -15,5 +16,5 @@ export function contextImports(scope: Scope): string {
     return "import { discoverContext } from '@ddd-ts-kit/di/discovery';";
   }
 
-  return `import * as ${context.camel}Declarations from '${inContext(`${context.kebab}.declarations.ts`)}';`;
+  return `import * as ${context.camel}Declarations from '${inContext(barrelFile(context.kebab))}';`;
 }

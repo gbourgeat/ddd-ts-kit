@@ -8,7 +8,7 @@ import { optionOf } from '../src/check/declarations/option-of.js';
 import { runCheck } from '../src/check/engine/run-check.js';
 import { loadProject } from '../src/check/project/load-project.js';
 import { scan } from '../src/check/scan/scan.js';
-import { renderBarrel } from '../src/declared/index.js';
+import { renderDeclarations } from '../src/declared/index.js';
 import { cli, tempDir } from './helpers.js';
 
 const BILLING = 'src/contexts/billing';
@@ -193,14 +193,14 @@ describe('the declared style in check and check-file', () => {
     ]);
   });
 
-  it('compares the barrel whatever its line endings, and skips a directory the config does not declare', () => {
-    const barrel = renderBarrel(
-      Object.keys(SOURCES).map((file) => file.slice(BILLING.length + 1)),
-      inBilling,
-    );
+  it('compares the declarations whatever their line endings, and skips a directory the config does not declare', () => {
+    const declarations = Object.entries(declarationsOf(SOURCES)).map(([file, text]): [string, string] => [
+      file,
+      text.replaceAll('\n', '\r\n'),
+    ]);
 
     const root = declaredProject(SOURCES, {
-      [BARREL]: barrel.replaceAll('\n', '\r\n'),
+      ...Object.fromEntries(declarations),
       'src/contexts/draft/domain/events/noted.event.ts': 'export class Noted {}\n',
     });
 
@@ -283,12 +283,21 @@ describe('list in the declared style', () => {
 type Files = Readonly<Record<string, string>>;
 
 function declaredProject(files: Files, overrides: Files = {}, config: Record<string, unknown> = {}): string {
-  const barrel = renderBarrel(
-    Object.keys(files).flatMap((file) => (file.startsWith(`${BILLING}/`) ? [file.slice(BILLING.length + 1)] : [])),
-    inBilling,
-  );
+  return projectWith({ ...declarationsOf(files), ...files, ...overrides }, { stack: { style: 'declared' }, ...config });
+}
 
-  return projectWith({ [BARREL]: barrel, ...files, ...overrides }, { stack: { style: 'declared' }, ...config });
+/** The declarations the generator derives for the role files of billing, by path from the project root. */
+function declarationsOf(files: Files): Files {
+  const rendered = renderDeclarations({
+    context: 'billing',
+    files: Object.keys(files).flatMap((file) =>
+      file.startsWith(`${BILLING}/`) ? [file.slice(BILLING.length + 1)] : [],
+    ),
+    specifierOf: inBilling,
+    injectedIn: () => ({ imports: [], calls: [] }),
+  });
+
+  return Object.fromEntries([...rendered].map(([file, text]) => [`${BILLING}/${file}`, text]));
 }
 
 function explicitProject(files: Files): string {

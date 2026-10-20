@@ -1,7 +1,7 @@
 import { aggregate } from './aggregate.js';
 import { DECLARED } from './declared.js';
-import { DECLARED_BARREL } from './declared-barrel.js';
 import { DECLARED_CONTEXT } from './declared-context.js';
+import { DECLARED_DECLARATIONS } from './declared-declarations.js';
 import { declaredProject } from './declared-project.js';
 import { discoveredProject } from './discovered-project.js';
 import type { Fixture } from './fixture.js';
@@ -18,6 +18,7 @@ const {
   BARREL,
   BILLING,
   COMMAND,
+  COMMANDS_DECLARATIONS,
   EVENT,
   EVENT_HANDLER,
   EVENT_HANDLER_SPEC,
@@ -134,9 +135,9 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'declarations/barrel-current',
-    name: 'a barrel listing the role files of its context, one export per file, sorted by path',
+    name: 'the declarations of each role folder list its role files, sorted by path, and the summary at the root re-exports them',
     expect: 'pass',
-    files: declaredProject(DECLARED_CONTEXT, { [BARREL]: DECLARED_BARREL }),
+    files: declaredProject(DECLARED_CONTEXT, DECLARED_DECLARATIONS),
   },
   {
     ruleId: 'declarations/barrel-current',
@@ -155,26 +156,48 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'declarations/barrel-current',
-    name: 'a declared context without its barrel',
+    name: 'a declared context without the summary of its declarations',
     expect: { file: BARREL },
     files: withoutFile(declaredProject(DECLARED_CONTEXT), BARREL),
   },
   {
     ruleId: 'declarations/barrel-current',
-    name: 'a role file added by hand that the barrel does not list',
-    expect: { file: BARREL },
+    name: 'a role folder without its declarations',
+    expect: { file: COMMANDS_DECLARATIONS },
+    files: withoutFile(declaredProject(DECLARED_CONTEXT), COMMANDS_DECLARATIONS),
+  },
+  {
+    ruleId: 'declarations/barrel-current',
+    name: 'a role file added by hand that the declarations of its folder do not list',
+    expect: { file: COMMANDS_DECLARATIONS },
     files: declaredProject(DECLARED_CONTEXT, {
-      [BARREL]: DECLARED_BARREL.replace(
-        "export * from '@/contexts/billing/application/authorization/only-issuer-voids.policy.js';\n",
-        '',
+      ...DECLARED_DECLARATIONS,
+      [COMMANDS_DECLARATIONS]: source(
+        "export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js';",
       ),
+    }),
+  },
+  {
+    ruleId: 'declarations/barrel-current',
+    name: 'the declarations of a folder that holds no role file any more, left behind',
+    expect: { file: `${BILLING}/application/background/background.declarations.ts` },
+    files: declaredProject(DECLARED_CONTEXT, {
+      [`${BILLING}/application/background/background.declarations.ts`]: 'export {};\n',
     }),
   },
   {
     ruleId: 'declarations/barrel-current',
     name: 'assembly by discovery: a barrel left behind',
     expect: { file: BARREL },
-    files: discoveredProject(DECLARED_CONTEXT, { [BARREL]: DECLARED_BARREL }),
+    files: discoveredProject(DECLARED_CONTEXT, { [BARREL]: DECLARED_DECLARATIONS[BARREL] ?? '' }),
+  },
+  {
+    ruleId: 'declarations/barrel-current',
+    name: 'assembly by discovery: the declarations of a role folder left behind',
+    expect: { file: COMMANDS_DECLARATIONS },
+    files: discoveredProject(DECLARED_CONTEXT, {
+      [COMMANDS_DECLARATIONS]: DECLARED_DECLARATIONS[COMMANDS_DECLARATIONS] ?? '',
+    }),
   },
   {
     ruleId: 'declarations/role-declared',

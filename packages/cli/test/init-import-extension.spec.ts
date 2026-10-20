@@ -30,7 +30,10 @@ describe('init and the extension of an import', () => {
     expect(imports.length).toBeGreaterThan(300);
     expect(imports.filter((specifier) => EXTENSION.test(specifier))).toEqual([]);
     expect(read(root, 'src/main.ts')).toContain("from '@/platform/composition/compose-application';");
-    expect(read(root, 'src/contexts/billing/billing.declarations.ts')).toMatch(/^export \* from '@\/[^']*[^s]';$/m);
+
+    expect(read(root, 'src/contexts/billing/application/commands/commands.declarations.ts')).toMatch(
+      /^export \* from '@\/[^']*[^s]';$/m,
+    );
 
     expect(read(root, 'src/contexts/billing/published-language/index.ts')).toContain(
       "export * from '@/contexts/billing/published-language/invoice-issued.v1.integration-event';",
@@ -91,7 +94,12 @@ describe('init and the extension of an import', () => {
     expect(cli(root, 'init').code).toBe(0);
     expect(read(root, CONFIG)).not.toContain('importExtension');
     expect(projectImports(root).filter((specifier) => !specifier.endsWith('.js'))).toEqual([]);
-    expect(read(root, 'src/contexts/billing/billing.declarations.ts')).toContain('refund-invoice.handler.js');
+
+    expect(read(root, 'src/contexts/billing/application/commands/commands.declarations.ts')).toContain(
+      'refund-invoice.handler.js',
+    );
+
+    expect(read(root, 'src/contexts/billing/billing.declarations.ts')).toContain('commands.declarations.js');
     expect(checkJsonOf(cli(root, 'check', '--json')).violations).toEqual([]);
   });
 

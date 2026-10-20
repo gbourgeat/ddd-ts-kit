@@ -30,8 +30,8 @@ describe('generate job, in the declared style', () => {
     generated = report(cli(root, ...EVERY_QUARTER, '--json'));
   });
 
-  it('writes the job and its spec, and refreshes the barrel, the job settings and the document of the context', () => {
-    expect(generated.created).toEqual([JOB, SPEC]);
+  it('writes the job, its spec and the declarations of its folder, and refreshes the summary of the declarations, the job settings and the document of the context', () => {
+    expect(generated.created).toEqual([JOB, SPEC, `${BILLING}/application/scheduling/scheduling.declarations.ts`]);
 
     expect(generated.updated).toEqual(
       expect.arrayContaining([
@@ -41,7 +41,7 @@ describe('generate job, in the declared style', () => {
       ]),
     );
 
-    expect(read(root, `${BILLING}/billing.declarations.ts`)).toContain(
+    expect(read(root, `${BILLING}/application/scheduling/scheduling.declarations.ts`)).toContain(
       "export * from '@/contexts/billing/application/scheduling/cancel-stale-invoices.job';",
     );
 

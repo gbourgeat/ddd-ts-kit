@@ -34,6 +34,7 @@ export const PATHS = {
   PUBLISHED: `${BILLING}/published-language/invoice-issued.v1.integration-event.ts`,
   MODULE: `${BILLING}/billing.module.ts`,
   BARREL: `${BILLING}/billing.declarations.ts`,
+  COMMANDS_DECLARATIONS: `${BILLING}/application/commands/commands.declarations.ts`,
   PLATFORM_MODULE: 'src/platform/composition/platform.module.ts',
   /** The decision record behind what the fixtures relax on purpose, so that only the rule under test speaks. */
   FIXTURE_ADR: 'docs/adr/0001-fixture-decisions.md',

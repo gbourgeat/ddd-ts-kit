@@ -42,7 +42,10 @@ describe('a policy and the use cases of its permission', () => {
       "    await this.access.authorize(command.actor, billingPermissions['invoice.cancel'], command);",
     );
 
-    expect(read(project, `${BILLING}/billing.declarations.ts`)).toContain('injected(CancelInvoiceHandler, [Access]);');
+    expect(read(project, `${BILLING}/application/commands/commands.declarations.ts`)).toContain(
+      'injected(CancelInvoiceHandler, [Access]);',
+    );
+
     expect(cli(project, 'check', '--rule', 'authz/policy-asked').code).toBe(0);
   });
 
@@ -158,7 +161,7 @@ describe('a policy and the use cases of its permission, beyond a plain command',
       'TODO(domain): a policy refines',
     );
 
-    expect(read(project, `${BILLING}/billing.declarations.ts`)).toContain(
+    expect(read(project, `${BILLING}/application/queries/queries.declarations.ts`)).toContain(
       'injected(GetInvoiceHandler, [GetInvoiceReader, Access]);',
     );
   });

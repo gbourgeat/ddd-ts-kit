@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, scaffoldEverything, tempDir, walk, write } from './helpers.js';
+import { cli, read, scaffoldEverything, tempDir, walk } from './helpers.js';
 import { failure } from './reports.js';
 
 const BILLING = 'src/contexts/billing';
@@ -14,7 +14,7 @@ beforeAll(() => {
 
 /** The default way a project is written: each class declares what it is, and no file lists the bindings of a context. */
 describe('a context generated in the declared style', () => {
-  it('has no module file, no token file and no list of routes: one generated barrel is all that assembles it', () => {
+  it('has no module file, no token file and no list of routes: generated declarations are all that assembles it', () => {
     const billing = walk(root, BILLING).map((file) => file.replace(`${BILLING}/`, ''));
 
     expect(billing).not.toContain('billing.module.ts');
@@ -24,59 +24,13 @@ describe('a context generated in the declared style', () => {
     expect(billing).toEqual(
       expect.arrayContaining([
         'billing.declarations.ts',
+        'application/commands/commands.declarations.ts',
+        'infrastructure/persistence/persistence.declarations.ts',
+        'presentation/http/http.declarations.ts',
         'presentation/http/invoices.routes.ts',
         'presentation/http/invoices/issue-invoice/issue-invoice.controller.ts',
       ]),
     );
-  });
-
-  it('exports every role file from the barrel, sorted by path', () => {
-    const barrel = read(root, `${BILLING}/billing.declarations.ts`).trimEnd().split('\n');
-
-    expect(barrel.filter((line) => line.startsWith('export ') && !line.includes('/background/'))).toEqual([
-      "export * from '@/contexts/billing/application/authorization/only-issuer-cancels.policy';",
-      "export * from '@/contexts/billing/application/commands/cancel-invoice/cancel-invoice.command';",
-      "export * from '@/contexts/billing/application/commands/cancel-invoice/cancel-invoice.handler';",
-      "export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command';",
-      "export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler';",
-      "export * from '@/contexts/billing/application/event-handlers/invoice-issued.event-handler';",
-      "export * from '@/contexts/billing/application/event-handlers/invoice-marked-as-paid.event-handler';",
-      "export * from '@/contexts/billing/application/event-handlers/thank-buyer.event-handler';",
-      "export * from '@/contexts/billing/application/integration/publishers/invoice-issued-v2.publisher';",
-      "export * from '@/contexts/billing/application/integration/publishers/invoice-issued.publisher';",
-      "export * from '@/contexts/billing/application/queries/search-invoices/search-invoices.handler';",
-      "export * from '@/contexts/billing/application/queries/search-invoices/search-invoices.query';",
-      "export * from '@/contexts/billing/application/scheduling/cancel-stale-invoices.job';",
-      "export * from '@/contexts/billing/application/scheduling/issue-invoices-monthly.job';",
-      "export * from '@/contexts/billing/infrastructure/external/remote-payment-gateway.adapter';",
-      "export * from '@/contexts/billing/infrastructure/external/remote-tax-rates.adapter';",
-      "export * from '@/contexts/billing/infrastructure/persistence/drizzle-invoice.repository';",
-      "export * from '@/contexts/billing/infrastructure/persistence/in-memory-search-invoices-reader.repository';",
-      "export * from '@/contexts/billing/presentation/http/invoices/cancel-invoice/cancel-invoice.controller';",
-      "export * from '@/contexts/billing/presentation/http/invoices/issue-invoice/issue-invoice.controller';",
-      "export * from '@/contexts/billing/presentation/http/invoices/search-invoices/search-invoices.controller';",
-    ]);
-  });
-
-  it('registers in the barrel what each constructor takes, read from its signature, and nothing for a class that takes nothing', () => {
-    const barrel = read(root, `${BILLING}/billing.declarations.ts`);
-
-    expect(barrel.split('\n')[0]).toBe("import { injected } from '@ddd-ts-kit/kernel/declarations';");
-
-    expect(barrel).toContain(
-      "import {\n  Clock,\n  CommandBus,\n  ExecutionScope,\n  IdGenerator,\n  IntegrationEventPublisher,\n  ProcessRunner,\n  QueryBus,\n} from '@ddd-ts-kit/kernel';",
-    );
-
-    expect(barrel).toContain("import { Database } from '@/platform/database/database';");
-    expect(barrel).toContain('injected(IssueInvoiceHandler, [InvoiceRepository, IdGenerator, Clock]);');
-    expect(barrel).toContain('injected(SearchInvoicesHandler, [SearchInvoicesReader, Access]);');
-    expect(barrel).toContain('injected(InvoiceIssuedPublisher, [IntegrationEventPublisher, IdGenerator]);');
-    expect(barrel).toContain('injected(CancelStaleInvoicesJob, [CommandBus]);');
-    expect(barrel).toContain('injected(SearchInvoicesController, [QueryBus]);');
-    expect(barrel).toContain('injected(DrizzleInvoiceRepository, [Database, ExecutionScope, Clock]);');
-    expect(barrel).toContain('injected(CancelInvoiceHandler, [Access]);');
-    expect(barrel).not.toContain('injected(OnlyIssuerCancelsPolicy');
-    expect(barrel.trimEnd().split('\n').at(-1)).toMatch(/^injected\(/);
   });
 
   it('says who may send a message on the message, and what handles it on the handler, whose constructor states its ports', () => {
@@ -204,7 +158,7 @@ describe('a context generated in the declared style, towards the outside', () =>
       "import type { InvoiceStatusContract } from '@/contexts/billing/published-language/index';",
     );
 
-    expect(read(root, `${SHIPPING}/shipping.declarations.ts`)).toContain(
+    expect(read(root, `${SHIPPING}/infrastructure/external/external.declarations.ts`)).toContain(
       'injected(InProcessInvoiceStatusGateway, [InvoiceStatusContract]);',
     );
 
@@ -306,29 +260,5 @@ describe('a declared context and what hosts it', () => {
     expect(cli(root, 'generate', 'consumer', 'shipping', 'billing', 'billing.invoice.issued', '--dry-run').code).toBe(
       0,
     );
-  });
-
-  it('rewrites the barrel on every generate and on docs, and reports one that a hand-added role file left behind', () => {
-    const added = `${SHIPPING}/infrastructure/external/remote-carrier.adapter.ts`;
-
-    write(
-      root,
-      added,
-      "import { Adapter } from '@ddd-ts-kit/kernel/declarations';\nimport { InvoiceStatusContract } from '@/contexts/billing/published-language/index';\n\n@Adapter(InvoiceStatusContract)\nexport class RemoteCarrier implements InvoiceStatusContract {}\n",
-    );
-
-    const stale = cli(root, 'docs', '--check');
-
-    expect(stale.code).toBe(1);
-    expect(stale.stdout).toContain(`stale  ${SHIPPING}/shipping.declarations.ts`);
-    expect(cli(root, 'check', '--rule', 'declarations/barrel-current').code).toBe(1);
-
-    expect(cli(root, 'docs').code).toBe(0);
-
-    expect(read(root, `${SHIPPING}/shipping.declarations.ts`)).toContain(
-      "export * from '@/contexts/shipping/infrastructure/external/remote-carrier.adapter';",
-    );
-
-    expect(cli(root, 'check', '--rule', 'declarations/barrel-current').code).toBe(0);
   });
 });

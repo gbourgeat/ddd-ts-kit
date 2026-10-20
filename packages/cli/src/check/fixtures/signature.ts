@@ -18,7 +18,8 @@ export const SIGNATURE = {
   handlerOf: handler,
   ports: PORTS,
   taken: TAKEN,
-  barrel: source(
+  /** The declarations of application/commands/, which the handler and its command sit in. */
+  declarations: source(
     `import { injected } from ${DECLARATIONS};`,
     `import { IssueInvoiceHandler } from ${HANDLER};`,
     `import { InvoiceRepository } from ${REPOSITORY};`,
