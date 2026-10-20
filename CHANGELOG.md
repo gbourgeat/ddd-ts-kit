@@ -4,6 +4,12 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.84.1
+
+**The GitHub workflows `init` writes run on `ubuntu-26.04`, pinned instead of `ubuntu-latest`.** GitHub moves `ubuntu-latest` from Ubuntu 24.04 to 26.04 between 2026-10-19 and 2026-11-19; the whole pipeline of the kit, generated projects on npm and pnpm included, was run on 26.04 first. With the label pinned, a new image of GitHub reaches a project when its team changes the label, not on a day GitHub chooses. The kit runs its own workflows on the same label.
+
+To move: replace `runs-on: ubuntu-latest` by `runs-on: ubuntu-26.04` in `.github/workflows/`. Do not run `init --force` for this: it writes every file of the platform again from the templates, losing what the generators added there (a grant of a role, the settings of a job, a policy), and replaces a workflow the team changed.
+
 ## 0.84.0
 
 **`src/platform/auth/` holds one folder per question, and `ddd-ts-kit platform-folders` moves a project there.** A new project writes its authentication in `auth/authentication/` (the authenticator, the session of a request, the HTTP boundary), what a caller may do whatever the model in `auth/authorization/` (the authorizer behind the port, the guard of the buses, the access policies, `role.ts`, `permissions.ts`, `signed-in-grants.ts`, `log-decisions.ts`), and its model in the one folder `stack.authz` names: `roles/`, `attributes/`, `relationships/` or `custom/`. The names of the files do not change. A project generated before keeps working as it is: the generators, the presets, `init --force` and the rules `authz/granted` and `authz/scope-narrows` read and write its files flat, and `ddd-ts-kit doctor` reports `folder src/platform: flat` without failing `--strict`. `ddd-ts-kit platform-folders` moves the files the kit writes and rewrites every import of them under the source root, `test/` and `scripts/`, by alias or relative path, keeping the extension as written; it names the files of the team it leaves flat, and `--place <file>=<folder>` moves those too; `--dry-run` shows the plan.
