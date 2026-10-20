@@ -7,7 +7,7 @@ import {
   type IntegrationEventPublisher,
   type QueryHandler,
 } from '@ddd-ts-kit/kernel';
-import { ConcurrencyError, InMemoryRepository, createTestBuses, snapshots } from '../src/index.js';
+import { ConcurrencyError, InMemoryRepository, createTestBuses, snapshots, type TestBuses } from '../src/index.js';
 import { Order, at, type OrderSnapshot } from './support/order.js';
 
 class PlaceOrder extends Command<string> {
@@ -154,6 +154,28 @@ describe('createTestBuses', () => {
     expect(clock.now()).toEqual(at);
     clock.advance(1_000);
     expect(clock.now()).toEqual(new Date('2026-03-01T10:00:01.000Z'));
+  });
+});
+
+describe('createTestBuses, when a handler of an event fails', () => {
+  const refusal = new Error('cannot invoice order-1');
+
+  const publishRefused = (buses: TestBuses): Promise<void> => {
+    buses.eventBus.subscribe('ordering.order.placed', async () => {
+      throw refusal;
+    });
+
+    return buses.eventBus.publish([
+      { id: 'event-1', type: 'ordering.order.placed', version: 1, occurredAt: at.toISOString(), payload: {} },
+    ]);
+  };
+
+  it('rejects with an AggregateError holding the failure by default', async () => {
+    await expect(publishRefused(createTestBuses())).rejects.toMatchObject({ errors: [refusal] });
+  });
+
+  it('rejects with the failure as it is when failures are delivered as thrown', async () => {
+    await expect(publishRefused(createTestBuses({ eventBusFailures: 'as-thrown' }))).rejects.toBe(refusal);
   });
 });
 

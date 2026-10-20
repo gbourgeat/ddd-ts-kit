@@ -76,19 +76,22 @@ describe('OutboxRelay.tick when the provider refuses an event', () => {
     expect(publisher.delivered).toEqual(['evt-1']);
   });
 
-  it('stores the code of the one handler that failed on the in-memory bus', async () => {
-    const store = new InMemoryOutboxStore({ leaseMs: 60_000 });
-    const bus = new InMemoryEventBus();
-    const relay = new OutboxRelay({ store, publisher: bus, clock: new FixedClock(at) });
-
-    bus.subscribe('billing.invoice.issued', async () => {
-      throw Object.assign(new Error('the invoice changed meanwhile'), { code: 'CONCURRENCY_CONFLICT' });
-    });
+  it('stores the code of the one handler that failed when the in-memory bus delivers failures as thrown', async () => {
+    const { store, relay } = relayToInMemoryBus(new InMemoryEventBus({ failures: 'as-thrown' }));
 
     await store.append([event('evt-1')]);
 
     expect(await relay.tick()).toEqual({ published: 0, failed: 1 });
     expect(store.records()[0]?.lastErrorCode).toBe('CONCURRENCY_CONFLICT');
+  });
+
+  it('stores AggregateError for the one handler that failed on the in-memory bus by default', async () => {
+    const { store, relay } = relayToInMemoryBus(new InMemoryEventBus());
+
+    await store.append([event('evt-1')]);
+
+    expect(await relay.tick()).toEqual({ published: 0, failed: 1 });
+    expect(store.records()[0]?.lastErrorCode).toBe('AggregateError');
   });
 
   it('stores and reports a code, never the message of the caught error', async () => {
@@ -114,3 +117,14 @@ describe('OutboxRelay.tick when the provider refuses an event', () => {
     expect(JSON.stringify([store.records(), reported])).not.toContain('secret');
   });
 });
+
+/** A relay publishing to `bus`, where the one handler of the event refuses it as a lost update. */
+function relayToInMemoryBus(bus: InMemoryEventBus): { store: InMemoryOutboxStore; relay: OutboxRelay } {
+  const store = new InMemoryOutboxStore({ leaseMs: 60_000 });
+
+  bus.subscribe('billing.invoice.issued', async () => {
+    throw Object.assign(new Error('the invoice changed meanwhile'), { code: 'CONCURRENCY_CONFLICT' });
+  });
+
+  return { store, relay: new OutboxRelay({ store, publisher: bus, clock: new FixedClock(at) }) };
+}

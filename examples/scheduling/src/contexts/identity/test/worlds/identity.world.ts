@@ -42,6 +42,7 @@ export async function anIdentityWorld({ modules = [nobody], given, ...settings }
 
   const application = createTestApplication({
     ...settings,
+    eventBusFailures: 'as-thrown',
     modules: [platformTestModule, context, ...modules],
     fakes: [
       fake(DelegationRepository, fakes.delegationRepository),

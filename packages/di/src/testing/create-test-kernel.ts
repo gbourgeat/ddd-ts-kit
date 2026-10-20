@@ -53,7 +53,7 @@ export function createTestKernel(options: TestApplicationOptions, resolve: Resol
   return {
     commandBus: transactionalCommandBus(resolve),
     queryBus: guardedQueryBus(resolve),
-    eventBus: new InMemoryEventBus(),
+    eventBus: new InMemoryEventBus({ failures: options.eventBusFailures }),
     domainEvents: domainEventsReportedTo(errors, observability.logger, executionScope),
     clock,
     ids: new SequentialIdGenerator(options.idPrefix),

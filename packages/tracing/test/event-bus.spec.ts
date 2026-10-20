@@ -244,7 +244,7 @@ describe('tracedSubscriber', () => {
       throw new Error('cannot bill jane@example.org');
     });
 
-    await expect(bus.publish([orderPlaced()])).rejects.toThrow('cannot bill jane@example.org');
+    await expect(bus.publish([orderPlaced()])).rejects.toThrow(AggregateError);
 
     const span = tracing.span('process ordering.order.placed');
 

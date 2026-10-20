@@ -137,7 +137,9 @@ function isFactory<T>(provided: Provided<T>): provided is (resolve: Resolve) => 
 }
 
 function bindEventPorts(builder: ModuleBuilder, options: KernelModuleOptions): void {
-  builder.bind(EventBus).toFactory(either(options.eventBus, () => new InMemoryEventBus()));
+  builder
+    .bind(EventBus)
+    .toFactory(either(options.eventBus, () => new InMemoryEventBus({ failures: options.eventBusFailures })));
 
   builder.bind(IntegrationEventPublisher).toFactory(
     wrapped(

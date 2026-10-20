@@ -38,6 +38,7 @@ export async function {{world.article}}{{world.pascal}}World({ modules = [nobody
 {{/if}}
   const application = createTestApplication({
     ...settings,
+    eventBusFailures: 'as-thrown',
     modules: [platformTestModule, {{world.contextModule}}, ...modules],
 {{#if world.hasFakes}}
 {{world.overrides}}

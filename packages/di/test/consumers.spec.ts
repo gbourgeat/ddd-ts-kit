@@ -106,12 +106,10 @@ describe('consumers declared with builder.on', () => {
       .publish([orderPlaced('event-1', { orderId: 42 })])
       .catch((error: unknown) => error);
 
-    expect(failure).toBeInstanceOf(UnreadableEventError);
+    expect(failure).toBeInstanceOf(AggregateError);
 
     expect(failure).toMatchObject({
-      code: 'UNREADABLE_EVENT',
-      eventType: 'ordering.order.placed',
-      reason: 'invalid-payload',
+      errors: [{ code: 'UNREADABLE_EVENT', eventType: 'ordering.order.placed', reason: 'invalid-payload' }],
     });
 
     expect(new UnreadableEventError('a.b.c', 1, 'invalid-payload').message).toBe(

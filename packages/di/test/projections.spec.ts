@@ -146,7 +146,7 @@ describe('a declared projection, with a unit of work and a processed-event store
 
     await app.start();
     rows.failing = true;
-    await expect(app.resolve(EventBus).publish([placed('evt-1', 1)])).rejects.toThrow('the table is locked');
+    await expect(app.resolve(EventBus).publish([placed('evt-1', 1)])).rejects.toThrow('1 event handler(s) failed');
     rows.failing = false;
     await app.resolve(EventBus).publish([placed('evt-1', 1)]);
 
@@ -175,7 +175,7 @@ describe('a declared projection, seen from outside', () => {
     await app.start();
     await app.resolve(EventBus).publish([placed('evt-2', 2), placed('evt-1', 1)]);
     rows.failing = true;
-    await expect(app.resolve(EventBus).publish([placed('evt-3', 3)])).rejects.toThrow('the table is locked');
+    await expect(app.resolve(EventBus).publish([placed('evt-3', 3)])).rejects.toThrow(AggregateError);
 
     expect(metrics.counterValue('projection_events_total', { ...labels, result: 'applied' })).toBe(1);
     expect(metrics.counterValue('projection_events_total', { ...labels, result: 'stale' })).toBe(1);

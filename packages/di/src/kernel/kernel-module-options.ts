@@ -7,6 +7,7 @@ import type {
   DomainEventDispatcher,
   ErrorReporter,
   EventBus,
+  EventBusFailures,
   EventSubscribers,
   ExecutionScope,
   IdGenerator,
@@ -36,6 +37,12 @@ export interface KernelModuleOptions {
   readonly commandBus?: Provided<CommandBus>;
   readonly queryBus?: Provided<QueryBus>;
   readonly eventBus?: Provided<EventBus>;
+  /**
+   * How the default event bus, `InMemoryEventBus`, rejects when its handlers fail: `as-thrown`
+   * rethrows the failure of a single handler as it is. Default `aggregated`, which becomes
+   * `as-thrown` in a later minor version. Ignored when `eventBus` is given.
+   */
+  readonly eventBusFailures?: EventBusFailures;
   /** Defaults to the event bus. An outbox goes here. */
   readonly eventPublisher?: Provided<IntegrationEventPublisher>;
   /** Defaults to the event bus. A broker adapter goes here. */

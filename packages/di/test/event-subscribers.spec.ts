@@ -193,3 +193,35 @@ describe('an application without the kernel module', () => {
     expect(journal).toEqual(['shipping declared event-1', 'shipping written event-1']);
   });
 });
+
+describe('the failure of a single event handler on the default bus', () => {
+  const refusal = new Error('cannot invoice order-1');
+
+  const refusing = async (): Promise<void> => {
+    throw refusal;
+  };
+
+  it('reaches the publisher in an AggregateError when nothing is said', async () => {
+    const bus = createApplication({ modules: [kernelModule()] }).resolve(EventBus);
+
+    bus.subscribe(TYPE, refusing);
+
+    await expect(bus.publish([placed('event-1')])).rejects.toMatchObject({ errors: [refusal] });
+  });
+
+  it('reaches the publisher as it is when the kernel module delivers failures as thrown', async () => {
+    const bus = createApplication({ modules: [kernelModule({ eventBusFailures: 'as-thrown' })] }).resolve(EventBus);
+
+    bus.subscribe(TYPE, refusing);
+
+    await expect(bus.publish([placed('event-1')])).rejects.toBe(refusal);
+  });
+
+  it('reaches the publisher as it is when the test application delivers failures as thrown', async () => {
+    const app = createTestApplication({ modules: [], eventBusFailures: 'as-thrown' });
+
+    app.eventBus.subscribe(TYPE, refusing);
+
+    await expect(app.eventBus.publish([placed('event-1')])).rejects.toBe(refusal);
+  });
+});

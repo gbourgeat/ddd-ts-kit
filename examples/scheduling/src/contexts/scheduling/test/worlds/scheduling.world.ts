@@ -62,6 +62,7 @@ export async function aSchedulingWorld({ modules = [nobody], given, ...settings 
 
   const application = createTestApplication({
     ...settings,
+    eventBusFailures: 'as-thrown',
     modules: [platformTestModule, context, ...modules],
     fakes: [
       fake(Agenda, fakes.agenda),

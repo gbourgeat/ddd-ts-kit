@@ -1,4 +1,4 @@
-import type { Actor, ExecutionContext, Session } from '@ddd-ts-kit/kernel';
+import type { Actor, EventBusFailures, ExecutionContext, Session } from '@ddd-ts-kit/kernel';
 import type { Override } from '../application/override.js';
 import type { AuthorizationMode } from '../authorization/authorization-mode.js';
 import type { JobsOptions } from '../jobs/jobs-options.js';
@@ -28,6 +28,11 @@ export interface TestApplicationOptions {
    * a deadline or an origin. Its actor and session win over `actor` and `session`.
    */
   readonly executionContext?: ExecutionContext;
+  /**
+   * How `eventBus` rejects when its handlers fail: `as-thrown` rethrows the failure of a single
+   * handler as it is. Default `aggregated`, which becomes `as-thrown` in a later minor version.
+   */
+  readonly eventBusFailures?: EventBusFailures;
   /** See `ApplicationOptions.authorization`. */
   readonly authorization?: AuthorizationMode;
   /** See `JobsOptions.settings`: what configuration changes of a declared job, by job name. */

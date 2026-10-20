@@ -77,7 +77,9 @@ describe('an integration event handler, with a unit of work and a processed-even
 
     await app.start();
 
-    await expect(app.resolve(EventBus).publish([placed('event-1')])).rejects.toThrow('cannot invoice order-1');
+    await expect(app.resolve(EventBus).publish([placed('event-1')])).rejects.toMatchObject({
+      errors: [{ message: 'cannot invoice order-1' }],
+    });
 
     expect(unitOfWork.outcomes).toEqual(['rolled back']);
     expect(processed.lines()).toEqual([]);
@@ -160,9 +162,7 @@ describe('the unit of work of an integration event handler', () => {
 
     await app.start();
 
-    await expect(app.resolve(EventBus).publish([placed('event-1')])).rejects.toThrow(
-      'the command fails after its write',
-    );
+    await expect(app.resolve(EventBus).publish([placed('event-1')])).rejects.toBeInstanceOf(AggregateError);
 
     expect(unitOfWork.outcomes).toEqual(['rolled back']);
     expect(processed.lines()).toEqual([]);
@@ -196,7 +196,7 @@ describe('the unit of work of an integration event handler', () => {
 
     await app.start();
 
-    await expect(app.eventBus.publish([placed('event-1')])).rejects.toThrow('cannot invoice order-1');
+    await expect(app.eventBus.publish([placed('event-1')])).rejects.toBeInstanceOf(AggregateError);
     refused.clear();
     await app.eventBus.publish([placed('event-1')]);
     await app.eventBus.publish([placed('event-1')]);

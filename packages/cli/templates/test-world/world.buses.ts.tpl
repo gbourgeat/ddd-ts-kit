@@ -27,7 +27,7 @@ export async function {{world.article}}{{world.pascal}}World(settings: {{world.p
   await given?.(fakes);
 
 {{/if}}
-  const buses = createTestBuses(settings);
+  const buses = createTestBuses({ ...settings, eventBusFailures: 'as-thrown' });
 
 {{world.returnedBuses}}
 }

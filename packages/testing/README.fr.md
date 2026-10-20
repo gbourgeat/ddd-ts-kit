@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:96e3045b3d9eb97b -->
+<!-- translation-of: README.md sha256:6a5fa1a57fdb2695 -->
 
 # @ddd-ts-kit/testing
 
@@ -592,6 +592,16 @@ Le *mock* casse quand le gestionnaire appelle une autre méthode du port pour le
 quand la commande sauvegardée ne peut pas être retrouvée ; le *fake* ne fait ni l'un ni l'autre. La règle
 [`test/no-mocks`](../eslint-plugin/docs/rules/test-no-mocks.fr.md) signale `vi.fn`, `vi.mock` et leurs
 semblables dans les tests d'un contexte.
+
+### Quand un gestionnaire d'un événement échoue
+
+`eventBus.publish` exécute chaque gestionnaire de l'événement, puis rejette avec une
+`AggregateError` des échecs. `createTestBuses({ eventBusFailures: 'as-thrown' })` rejette avec
+l'échec d'un seul gestionnaire tel quel, si bien qu'une spec affirme sa classe ou son `code`
+(`rejects.toMatchObject({ code: 'CONCURRENCY_CONFLICT' })`) ; plusieurs échecs arrivent toujours
+ensemble dans une `AggregateError`. Un projet créé par `ddd-ts-kit init` le règle dans ses
+*worlds*, comme son application le fait sur son bus en processus ; ce sera la valeur par défaut
+d'une prochaine version mineure.
 
 ### Qui agit
 

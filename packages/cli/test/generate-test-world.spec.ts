@@ -65,7 +65,9 @@ describe('generate test-world, in the declared style', () => {
       '  const fakes = { invoiceRepository: new FakeInvoiceRepository(), paymentGateway: new FakePaymentGateway() };\n\n  await given?.(fakes);',
     );
 
-    expect(world).toContain('    ...settings,\n    modules: [platformTestModule, context, ...modules],');
+    expect(world).toContain(
+      "    ...settings,\n    eventBusFailures: 'as-thrown',\n    modules: [platformTestModule, context, ...modules],",
+    );
 
     expect(world).toContain(
       '    fakes: [fake(InvoiceRepository, fakes.invoiceRepository), fake(PaymentGateway, fakes.paymentGateway)],',
@@ -199,7 +201,10 @@ describe('generate test-world, on other stacks', () => {
 
     expect(world).toContain("import { createTestBuses } from '@ddd-ts-kit/testing';");
     expect(world).toContain('export async function aBillingWorld({ given, ...settings }: BillingWorldOptions = {}) {');
-    expect(world).toContain('  await given?.(fakes);\n\n  const buses = createTestBuses(settings);');
+
+    expect(world).toContain(
+      "  await given?.(fakes);\n\n  const buses = createTestBuses({ ...settings, eventBusFailures: 'as-thrown' });",
+    );
 
     expect(world).toContain(
       '  return { ...buses, ...fakes, invoiceRepository: buses.dispatching(fakes.invoiceRepository) };',
@@ -218,7 +223,7 @@ describe('generate test-world, on a context wired by hand without a fake', () =>
     expect(cli(root, 'generate', 'test-world', 'billing').code).toBe(0);
 
     expect(read(root, WORLD)).toContain(
-      'export async function aBillingWorld(settings: BillingWorldOptions = {}) {\n  const buses = createTestBuses(settings);\n\n  return { ...buses };\n}',
+      "export async function aBillingWorld(settings: BillingWorldOptions = {}) {\n  const buses = createTestBuses({ ...settings, eventBusFailures: 'as-thrown' });\n\n  return { ...buses };\n}",
     );
   });
 });

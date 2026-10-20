@@ -99,7 +99,7 @@ describe('integration events', () => {
     expect(initFailure('--broker', 'rabbitmq', '--orm', 'none').code).toBe(2);
 
     expect(platform(root, 'events/custom-event-bus.ts')).toContain(
-      'private readonly delivery = new InMemoryEventBus();',
+      "private readonly delivery = new InMemoryEventBus({ failures: 'as-thrown' });",
     );
 
     expect(exists(root, 'src/platform/events/custom-event-bus.contract.spec.ts')).toBe(true);

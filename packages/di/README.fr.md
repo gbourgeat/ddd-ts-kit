@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:8d4dcdad147c34ee -->
+<!-- translation-of: README.md sha256:20aca4a1e68e6226 -->
 
 # @ddd-ts-kit/di
 
@@ -1091,7 +1091,7 @@ là où se trouve `RabbitMqEventBus`.
 | `UnitOfWork` | `InMemoryUnitOfWork` | `unitOfWork` |
 | `CommandBus` | `InMemoryCommandBus`, qui exécute chaque commande dans l'unité de travail : les événements du domaine qu'annoncent ses enregistrements sont distribués une fois que le gestionnaire a rendu la main, avant la validation, puis les gestionnaires `after-commit` s'exécutent | `commandBus` |
 | `QueryBus` | `InMemoryQueryBus` | `queryBus` |
-| `EventBus` | `InMemoryEventBus` | `eventBus` |
+| `EventBus` | `InMemoryEventBus`, qui rejette avec une `AggregateError` de ce qu'ont levé ses gestionnaires ; `eventBusFailures: 'as-thrown'` relance l'échec d'un seul gestionnaire tel quel (la valeur par défaut d'une prochaine version mineure) | `eventBus`, `eventBusFailures` |
 | `IntegrationEventPublisher` | le bus d'événements | `eventPublisher` |
 | `IntegrationEventSubscriber` | le bus d'événements | `eventSubscriber` |
 | `EventSubscribers` | l'unique `IntegrationEventSubscriber`, pour chaque contexte | `eventSubscribers` |
@@ -1263,14 +1263,14 @@ const app = createTestApplication({
 littéral d'objet et une classe écrite dans la *spec* conviennent tous, puisqu'un port est une
 forme.
 
-`createTestApplication({ modules, fakes, now?, idPrefix?, actor?, session?, executionContext?, authorization?, jobs? })` place les modules sur un kernel
+`createTestApplication({ modules, fakes, now?, idPrefix?, actor?, session?, executionContext?, authorization?, jobs?, eventBusFailures? })` place les modules sur un kernel
 déterministe, qu'ils listent `kernelModule()` ou non, et renvoie l'application plus ce que
 touche une *spec* :
 
 | Membre | Est |
 |---|---|
 | `commandBus`, `queryBus` | les bus en mémoire, avec chaque gestionnaire déclaré |
-| `eventBus` | `InMemoryEventBus` ; `eventBus.published` liste ce qu'ont annoncé les cas d'usage. Chaque contexte l'écoute, quels que soient les `EventSubscribers` que lient les modules |
+| `eventBus` | `InMemoryEventBus` ; `eventBus.published` liste ce qu'ont annoncé les cas d'usage. Chaque contexte l'écoute, quels que soient les `EventSubscribers` que lient les modules. Avec `eventBusFailures: 'as-thrown'`, `publish` rejette avec l'échec d'un seul gestionnaire tel quel au lieu d'une `AggregateError` |
 | `domainEvents` | `InMemoryDomainEventDispatcher` : l'enregistrement de chaque *repository*, adaptateur ou *fake*, lui annonce ses événements, avec le calendrier de l'application (à la fin de la commande, puis après elle pour les gestionnaires `after-commit`) ; une *spec* peut distribuer elle-même un événement du domaine pour voir réagir les gestionnaires déclarés, et `domainEvents.afterCommitFailures` contient ce qu'ont levé les gestionnaires `after-commit` |
 | `clock` | `FixedClock` à `now` (par défaut `2026-01-01T00:00:00.000Z`) ; `clock.advance(ms)` |
 | `ids` | `SequentialIdGenerator` : `id-1`, `id-2`... |
