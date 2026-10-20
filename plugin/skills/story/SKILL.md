@@ -101,7 +101,9 @@ not pass: do what its `Next:` line says, never write around it.
 
 In the order of `npx ddd-ts-kit plan-waves`, one row at a time, each started with `git fetch`
 and `npx ddd-ts-kit stories` (a conflict for you with the trunk is brought in now, with
-`merge-trunk`, while it is small):
+`merge-trunk`, while it is small). A row of another story it lists under `Rows another story waits
+for, not done` is not yours to build: the rows waiting on it start once it is done on the trunk;
+tell the owner when no open story carries it.
 
 - a `contract` or `skeleton` row: yourself, with its generator commands, then
   `npx ddd-ts-kit verify-slice <context> --since <base>` and its commit;

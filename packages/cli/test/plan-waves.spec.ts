@@ -57,8 +57,24 @@ describe('plan-waves, two stories building in one context', () => {
         owner: 'billing',
         context: 'billing',
         rows: [
-          { id: 'US1.02', kind: 'slice', slice: 'Issue invoice', status: 'todo', waitingFor: [] },
-          { id: 'US1.03', kind: 'slice', slice: 'Cancel invoice', status: 'todo', waitingFor: [] },
+          {
+            id: 'US1.02',
+            kind: 'slice',
+            slice: 'Issue invoice',
+            status: 'todo',
+            story: 'US1',
+            waitingFor: [],
+            waitingForRows: [],
+          },
+          {
+            id: 'US1.03',
+            kind: 'slice',
+            slice: 'Cancel invoice',
+            status: 'todo',
+            story: 'US1',
+            waitingFor: [],
+            waitingForRows: [],
+          },
         ],
         aggregates: ['Invoice'],
         brief: `npx ddd-ts-kit worker-scope billing --base origin/main --rows US1.02,US1.03 --worktree .worktrees/billing-w1.1 --branch build/billing-w1.1`,
@@ -69,7 +85,17 @@ describe('plan-waves, two stories building in one context', () => {
         id: 'W1.2',
         owner: 'conductor',
         context: 'billing',
-        rows: [{ id: 'US2.01', kind: 'skeleton', slice: 'Customer', status: 'todo', waitingFor: [] }],
+        rows: [
+          {
+            id: 'US2.01',
+            kind: 'skeleton',
+            slice: 'Customer',
+            status: 'todo',
+            story: 'US2',
+            waitingFor: [],
+            waitingForRows: [],
+          },
+        ],
         aggregates: ['Customer'],
         brief: null,
         sameFiles: [],
@@ -102,7 +128,9 @@ describe('plan-waves, two stories building in one context', () => {
 
     expect(jsonAt(plan, 'mergeOrder')).toEqual(['W1.1', 'W1.2', 'W1.3', 'W2.1', 'W2.2', 'W2.3', 'W3.1']);
   });
+});
 
+describe('plan-waves for a reader', () => {
   it('prints each wave, its batches with the command that briefs them, then the merge order and what precedes each merge', () => {
     const text = cli(root, 'plan-waves').stdout;
 
@@ -117,12 +145,57 @@ describe('plan-waves, two stories building in one context', () => {
     );
 
     expect(text).toContain('    #US2.04 slice "Credit invoice" (in progress)\n');
-    expect(text).toContain('  W2.3 billing (aggregate unknown)\n    #US2.03 slice "Overdue invoices", after #US1.02\n');
+    expect(text).toContain('    #US1.04 slice "Pay invoice", after #US1.02 (todo)\n');
+
+    expect(text).toContain(
+      '  W2.3 billing (aggregate unknown)\n    #US2.03 slice "Overdue invoices", after #US1.02 (todo, billing, story US1)\n',
+    );
+
     expect(text).toContain('    unknown whether it touches the files of W2.1, W2.2: no aggregate named');
+
+    expect(text).toContain(
+      [
+        'Rows another story waits for, not done',
+        '  #US1.02 billing slice "Issue invoice" (story US1, owner billing, todo): in W1.1, waited for by #US2.03',
+        '  #US1.04 billing slice "Pay invoice" (story US1, owner billing, todo): in W2.1, waited for by #US2.05',
+        'Merge order: W1.1',
+      ].join('\n'),
+    );
 
     expect(text).toContain(
       'Merge order: W1.1, W1.2, W1.3, W2.1, W2.2, W2.3, W3.1\nBefore each merge: `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, then the squash merge',
     );
+  });
+});
+
+describe('plan-waves, the rows one story waits for in another', () => {
+  it('gives each row it waits for with its context, story and status, and lists apart the rows another story waits for', () => {
+    const plan = cli(root, 'plan-waves', '--json').json();
+
+    const rows = listAt(plan, 'waves').flatMap((wave) =>
+      listAt(wave, 'batches').flatMap((batch) => listAt(batch, 'rows')),
+    );
+
+    expect(rows.find((row) => jsonAt(row, 'id') === 'US2.05')).toMatchObject({
+      story: 'US2',
+      waitingFor: ['US1.04'],
+      waitingForRows: [{ id: 'US1.04', context: 'billing', story: 'US1', status: 'todo' }],
+    });
+
+    expect(jsonAt(plan, 'otherStories')).toEqual([
+      {
+        id: 'US1.02',
+        context: 'billing',
+        story: 'US1',
+        kind: 'slice',
+        slice: 'Issue invoice',
+        owner: 'billing',
+        status: 'todo',
+        batch: 'W1.1',
+        waitedForBy: ['US2.03'],
+      },
+      expect.objectContaining({ id: 'US1.04', story: 'US1', status: 'todo', batch: 'W2.1', waitedForBy: ['US2.05'] }),
+    ]);
   });
 });
 
@@ -146,7 +219,16 @@ describe('plan-waves <context>', () => {
         },
       ],
       mergeOrder: ['W3.1'],
+      otherStories: [expect.objectContaining({ id: 'US1.04', batch: null, waitedForBy: ['US2.05'] })],
     });
+
+    const text = cli(root, 'plan-waves', 'shipping').stdout;
+
+    expect(text).toContain('    #US2.05 slice "Ship a paid invoice", after #US1.04 (todo, billing, story US1)\n');
+
+    expect(text).toContain(
+      'Rows another story waits for, not done\n  #US1.04 billing slice "Pay invoice" (story US1, owner billing, todo): not shown here (npx ddd-ts-kit plan-waves billing), waited for by #US2.05\n',
+    );
 
     expect(cli(root, 'plan-waves', 'ordering').stderr).toContain(
       'No row of docs/architecture/slices.md is in the context "ordering"',
@@ -174,6 +256,7 @@ describe('plan-waves, a plan that cannot be ordered', () => {
       ],
       waves: [],
       mergeOrder: [],
+      otherStories: [],
     });
 
     expect(cli(root, 'plan-waves').stdout.split('\n')).toEqual([

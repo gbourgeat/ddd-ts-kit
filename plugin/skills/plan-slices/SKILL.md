@@ -114,7 +114,8 @@ least one scenario: a row no client can observe is a `skeleton` or a `contract`.
 
 Then run `npx ddd-ts-kit plan-waves`: it refuses a cycle in `Depends on`, an id no row carries
 and a row without owner, and otherwise shows the rows in waves (wave 1 can start now), cut into
-batches of one or two rows that `parallel-work` hands out. A batch it says names no aggregate
+batches of one or two rows that `parallel-work` hands out, each row with the status of the rows it
+waits for, and apart the rows of another story that it waits for. A batch it says names no aggregate
 gets one in `Start with` (`--aggregate <Name>`) when the slice works on one.
 
 Aim for slices of half a day at most. A slice with more than two failures to handle, two

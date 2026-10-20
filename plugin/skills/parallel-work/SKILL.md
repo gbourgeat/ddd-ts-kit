@@ -78,6 +78,9 @@ cuts each wave into batches of one owner and one or two rows on one aggregate, p
 (same aggregate: run them one after the other) or unknown (no aggregate named: read their rows
 before running them side by side), and gives the merge order. It refuses a cycle, an unknown id or a row without owner: fix
 `slices.md` first. Launch a wave's batches side by side, the next wave once they merged.
+Before a wave, read `Rows another story waits for, not done`: a row of another story that no
+batch you launch and no open story (`npx ddd-ts-kit stories`) carries leaves its waiting rows
+blocked; plan it, or hold those rows back.
 
 ## 2. Prepare the trunk (conductor, before any worker starts)
 

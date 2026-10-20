@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d8d11066d69637d5 -->
+<!-- translation-of: README.md sha256:657280fb027789f8 -->
 
 # ddd-ts-kit
 
@@ -1221,11 +1221,23 @@ attendent, directement ou non, et ce qui se lance avant chaque fusion :
 contexte, seules ses lignes sont montrées ; les lignes
 d'autres contextes qu'elles attendent comptent dans la numérotation des vagues.
 
+Une ligne dit les lignes qu'elle attend, chacune avec son statut : `after #US1.02 (todo)`. Une ligne
+attendue qui appartient à une autre story (son identifiant sans son dernier `.<numéro>`, `US1` pour
+`US1.04`) ou à un contexte qui n'est pas montré porte aussi son contexte et sa story :
+`after #US1.04 (todo, billing, story US1)`. Les lignes d'une story qu'une ligne planifiée d'une
+autre story attend sont listées à nouveau, après les vagues, sous
+`Rows another story waits for, not done`, avec leur responsable, leur statut, le lot qui les porte
+(ou le `plan-waves <context>` qui les montre) et les lignes qui attendent : avant de lancer une
+vague, le chef d'orchestre voit qu'elle attend le travail d'une autre story, et si quelqu'un le
+porte.
+
 Un cycle dans `Depends on`, une dépendance vers un identifiant qu'aucune ligne ne porte, une ligne
 sans responsable et un identifiant que portent deux lignes rendent les lignes impossibles à
 ordonner : ils sont signalés seuls, sans vagues, et la commande sort avec 1. Un fichier sans table
 de tranches, ou un contexte qu'aucune ligne ne nomme, est refusé. `--json` affiche
-`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, waitingFor }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder }`.
+`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }] }`,
+`story` valant `null` pour une ligne dont l'identifiant n'en nomme aucune, et `batch` `null` pour
+une ligne que le contexte demandé ne montre pas.
 
 ## story-check
 
