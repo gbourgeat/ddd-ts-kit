@@ -1,0 +1,3 @@
+**The `biome.json` that `init` writes leaves out `.ddd-ts-kit/`, so `npm run format:check` and `verify` pass while the guard keeps its state there.** The guard and the workers write their state in `.ddd-ts-kit/` (git-ignored) as JSON on one line, and the formatter, which formats every `.json` file, reported each of them: `verify` failed in a project where an agent had run. The template now has `"!**/.ddd-ts-kit"` in `files.includes`, as the kit has.
+
+To move: add `"!**/.ddd-ts-kit"` to `files.includes` of `biome.json`, next to `"!**/.worktrees"`. `doctor` does not judge `biome.json`: the line is added by hand.
