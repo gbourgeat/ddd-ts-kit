@@ -12,7 +12,8 @@ export const PATHS = {
   SCHEDULING,
   ANALYTICS: 'src/contexts/analytics',
   CONTEXT_DOC: `${NOTIFICATION}/CONTEXT.md`,
-  BARREL: `${NOTIFICATION}/notification.declarations.ts`,
+  /** The generated declarations of the role folder the commands of the context sit in. */
+  COMMANDS_DECLARATIONS: `${NOTIFICATION}/application/commands/commands.declarations.ts`,
   AGGREGATE: `${NOTIFICATION}/domain/aggregates/reminder.aggregate.ts`,
   SENT_AGGREGATE: `${NOTIFICATION}/domain/aggregates/notification.aggregate.ts`,
   VALUE_OBJECT: `${NOTIFICATION}/domain/value-objects/notification-kind.vo.ts`,
