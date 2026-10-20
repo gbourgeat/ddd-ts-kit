@@ -2,10 +2,15 @@
 import type { RelationTuple } from '@ddd-ts-kit/auth/rebac';
 {{/if}}
 {{#if httpCache.varnish}}
-import { InMemoryCachePurger, PurgingPublisher, type IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
+import {
+  InMemoryCachePurger,
+  PurgingPublisher,
+  type IntegrationEvent,
+  type IntegrationEventSubscriber,
+} from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#unless httpCache.varnish}}
-import type { IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
+import type { IntegrationEvent, IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
 {{/unless}}
 import { createHttpClient, settled, type HttpClient, type SettledOptions } from '@ddd-ts-kit/testing/e2e';
 {{#if authz.rebac}}
@@ -62,6 +67,17 @@ export interface RunningApplication {
   as(actor: TestActor): Promise<HttpClient>;
 
   /**
+   * Publishes integration events of an upstream as its relay would, to the handlers of the
+   * application: what starts a use case no route reaches. Await `settled()` next, before asserting
+   * what the handlers did.
+{{#if broker.provided}}
+   * With a broker server (its URL in the environment), the events go to the broker: what its
+   * consumers do is awaited with `collectEvents(application.events, [...]).waitFor(...)`.
+{{/if}}
+   */
+  publish(events: readonly IntegrationEvent[]): Promise<void>;
+
+  /**
 {{#if events.outbox}}
    * Resolves once the work the requests so far started has settled: every event stored in the
    * outbox relayed, and the handlers it reached run, with what they stored in turn. Await it
@@ -109,6 +125,7 @@ export async function startApplication(): Promise<RunningApplication> {
     },
 {{/if}}
     as: async (actor) => current.client.withHeaders(await credentials.headersOf(actor)),
+    publish: (events) => current.publish(events),
 {{#if authz.rebac}}
     relate: (tuple) => relationTuples.write([tuple]),
 {{/if}}
@@ -127,6 +144,8 @@ interface Started {
 {{#if httpCache.varnish}}
   readonly purges: InMemoryCachePurger;
 {{/if}}
+
+  publish(events: readonly IntegrationEvent[]): Promise<void>;
 
   settled(options?: SettledOptions): Promise<void>;
 
@@ -177,6 +196,7 @@ async function start(credentials: Credentials): Promise<Started> {
 {{#if httpCache.varnish}}
     purges,
 {{/if}}
+    publish: (events) => application.eventBus.publish(events),
 {{#if events.outbox}}
     settled: (options) => settled({ outbox: () => persistence.outbox.stats() }, options),
 {{/if}}

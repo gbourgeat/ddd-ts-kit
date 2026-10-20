@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:fef6a1af0d3681e7 -->
+<!-- translation-of: commands.md sha256:2bc2b00425819f5c -->
 
 # Quelle commande, quand
 
@@ -561,7 +561,7 @@ Kinds
   background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]...
   process <context> <Name> [--term "<Term>=<meaning>"]...   (alias: process-manager)
   acl <context> <upstreamOrSystemName>
-  e2e <context> <UseCaseName>
+  e2e <context> <UseCaseName> [--event <eventType>]
   acceptance <story> ["<title>"]
   policy <context> <Name> --permission <aggregate>.<action>
   gateway <context> <upstreamContext> <Name>

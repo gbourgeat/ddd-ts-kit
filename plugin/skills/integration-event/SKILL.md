@@ -81,6 +81,10 @@ comes from the event; when the design names the handler after what it does here,
   declares those values as a vocabulary of its published language.
 - A foreign model the context does not want is translated first:
   `npx ddd-ts-kit generate acl <ctx> <upstream>`.
+- End to end, once the handler sends its command: `npx ddd-ts-kit generate e2e <ctx>
+  <UseCase>` publishes the upstream event through the running application
+  (`application.publish`), awaits `settled()` and leaves what to observe; `--event
+  <eventType>` when handlers of several events send that command.
 
 ## Evolve
 

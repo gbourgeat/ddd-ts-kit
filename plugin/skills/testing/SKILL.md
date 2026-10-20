@@ -138,7 +138,10 @@ built. A test states only what its rule depends on.
 the business scenario; assert what a client observes (responses, published events), never
 the database. What happens after the answer (the outbox relayed, the handlers it reaches) is
 asserted once `await application.settled()` has resolved, never after a fixed delay: it fails
-naming what is still pending. With Vitest on an ORM, each spec opens a copy of the PostgreSQL
+naming what is still pending. A use case no route reaches, sent by an integration event
+handler, gets the same command: its spec publishes the upstream event, built from its
+declaration, with `await application.publish([event])`, then awaits `settled()`; pass
+`--event <eventType>` when handlers of several events send it. With Vitest on an ORM, each spec opens a copy of the PostgreSQL
 cluster a global setup initialised once per run (`test/support/test-database-template.ts`), and
 creates its tables there.
 

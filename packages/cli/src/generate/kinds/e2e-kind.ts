@@ -1,4 +1,3 @@
-import { CliError } from '../../cli-error.js';
 import { readControllers } from '../../describe/read-controllers.js';
 import { fitStatement } from '../../layout/index.js';
 import { toName, type Name } from '../../naming/index.js';
@@ -10,35 +9,63 @@ import { named } from '../named.js';
 import { openScope } from '../open-scope.js';
 import type { Scope } from '../scope.js';
 import { vars } from '../vars.js';
+import { reactionOf } from './e2e/reaction-of.js';
 import { tracedCommand } from './traced-command.js';
 
 export const e2eKind: Kind = {
   name: 'e2e',
   aliases: [],
-  usage: 'e2e <context> <UseCaseName>',
+  usage: 'e2e <context> <UseCaseName> [--event <eventType>]',
   summary:
-    'An end-to-end spec driving the route of a use case on the whole application, in test/e2e/ at the project root.',
+    'An end-to-end spec on the whole application, in test/e2e/ at the project root: driving the route of a use case, or, for a use case no route reaches, publishing the integration event its handler receives (--event names it when several do).',
   positionals: ['context', 'UseCaseName'],
   writesShared: false,
   run: (request) => {
     const scope = openScope(request);
     const name = label(scope, request.args[1] ?? '', { what: 'use case', strip: ['route', 'controller', 'handler'] });
+    const file = `${scope.dir}/presentation/http/${name.kebab}.route.ts`;
+    const endpoint = scope.flags.event === undefined ? endpointOf(scope, name, file) : undefined;
+    const spec = `test/e2e/${name.kebab}.e2e.spec.ts`;
 
-    const endpoint = endpointOf(scope, name);
-    const traced = tracedCommand(scope, name);
-    const command = `{ name: 'command ${name.pascal}Command'${traced.saved} }`;
-    const tree = spanTree(`${endpoint.method} ${endpoint.path}`, command);
-    const context = vars(scope, { name: named(name), e2e: { ...endpoint, ...traced, tree } });
+    if (endpoint === undefined) {
+      const reaction = reactionOf(scope, name, file);
 
-    scope.ws.create(`test/e2e/${name.kebab}.e2e.spec.ts`, renderTemplate('e2e/e2e.spec.ts.tpl', context));
+      scope.ws.create(
+        spec,
+        renderTemplate('e2e/e2e-reaction.spec.ts.tpl', vars(scope, { name: named(name), ...reaction })),
+      );
+    } else {
+      const traced = tracedCommand(scope, name);
+      const command = `{ name: 'command ${name.pascal}Command'${traced.saved} }`;
+      const tree = spanTree(`${endpoint.method} ${endpoint.path}`, command);
 
-    if (!scope.ws.exists('test/e2e/support/start-application.ts')) {
-      scope.ws.note(
-        'test/e2e/support/start-application.ts is missing: `ddd-ts-kit init` creates it (existing files are kept).',
+      scope.ws.create(
+        spec,
+        renderTemplate(
+          'e2e/e2e.spec.ts.tpl',
+          vars(scope, { name: named(name), e2e: { ...endpoint, ...traced, tree } }),
+        ),
       );
     }
+
+    noteSupport(scope, endpoint === undefined);
   },
 };
+
+const SUPPORT = 'test/e2e/support/start-application.ts';
+
+/** What the spec needs of the support of the project: `init` writes it, older projects add `publish` by hand. */
+function noteSupport(scope: Scope, publishes: boolean): void {
+  const support = scope.ws.read(SUPPORT);
+
+  if (support === undefined) {
+    scope.ws.note(`${SUPPORT} is missing: \`ddd-ts-kit init\` creates it (existing files are kept).`);
+  } else if (publishes && !/^\s*publish\(/m.test(support)) {
+    scope.ws.note(
+      `${SUPPORT} has no publish(events): add \`publish(events: readonly IntegrationEvent[]): Promise<void>;\` to RunningApplication and implement it with \`(events) => application.eventBus.publish(events)\` on the composed application, as a new project has it.`,
+    );
+  }
+}
 
 /** The spans a request leaves, as the spec expects them, laid out for the six spaces the element is written after. */
 function spanTree(request: string, command: string): string {
@@ -54,15 +81,17 @@ interface Declared {
   readonly isProtected: boolean;
 }
 
-/** What the route of the use case declares: an end-to-end spec drives the application through it. */
-function endpointOf(scope: Scope, name: Name): RenderContext & { readonly method: string; readonly path: string } {
-  const file = `${scope.dir}/presentation/http/${name.kebab}.route.ts`;
-
+/** What the route of the use case declares, when it has one: an end-to-end spec drives the application through it. */
+function endpointOf(
+  scope: Scope,
+  name: Name,
+  file: string,
+): (RenderContext & { readonly method: string; readonly path: string }) | undefined {
   const { method, path, status, isProtected } =
     functionRoute(scope.ws.read(file) ?? '') ?? controllerOf(scope, name) ?? {};
 
   if (method === undefined || path === undefined || status === undefined) {
-    throw noRoute(scope, name, file);
+    return undefined;
   }
 
   return {
@@ -107,11 +136,4 @@ function controllerOf(scope: Scope, name: Name): Declared | undefined {
     status: response.status,
     isProtected: !route.guards.includes('Public'),
   };
-}
-
-function noRoute(scope: Scope, name: Name, file: string): CliError {
-  return new CliError(
-    `The use case ${name.pascal} has no route in "${scope.context.kebab}" (${file}).`,
-    `An end-to-end spec drives the application through HTTP: create the route first with \`ddd-ts-kit generate route ${scope.context.kebab} ${name.pascal} --method <M> --path <path>\`.`,
-  );
 }

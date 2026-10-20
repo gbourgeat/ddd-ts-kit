@@ -415,6 +415,13 @@ turn) is awaited with `await application.settled()`, then asserted at once. A fi
 when long and flaky when short; `settled` resolves as soon as the outbox holds no pending event,
 and when the time is up it fails naming what is still pending and how much of it failed.
 
+A use case no route reaches is started by the integration event its handler receives: its
+end-to-end spec (`ddd-ts-kit generate e2e <context> <UseCase>`, with `--event <eventType>` when
+handlers of several events send its command) builds that event from the declaration of the
+upstream, hands it to the running application with `await application.publish([event])`, as the
+relay of the upstream would, then awaits `application.settled()` before asserting what a client or
+another context observes.
+
 The acceptance of a story is an end-to-end spec written before its code, from the criteria of the
 story (`docs/architecture/stories/<story>.md`): `test/acceptance/<story>.acceptance.spec.ts`, one
 scenario per criterion, through the API only. Each scenario runs wrapped in `pending(...)` of

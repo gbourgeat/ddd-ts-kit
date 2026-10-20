@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6a5fa1a57fdb2695 -->
+<!-- translation-of: README.md sha256:436e54fde486201b -->
 
 # @ddd-ts-kit/testing
 
@@ -677,7 +677,10 @@ tour) s'attend avec `settled`, puis se vérifie aussitôt. Chaque source compte 
 du moment où il commence jusqu'à ce qu'il soit fini : les `stats()` d'un store de l'outbox sont un
 tel compte, puisqu'un enregistrement reste en attente pendant que le relais le publie et que les
 gestionnaires qu'il atteint s'exécutent. Le `test/e2e/support/start-application.ts` d'un projet
-généré l'offre en `application.settled()`, sur l'outbox de sa base de données.
+généré l'offre en `application.settled()`, sur l'outbox de sa base de données. Un cas d'usage
+qu'aucune route n'atteint, lancé par le gestionnaire d'un événement d'intégration de l'amont, est
+lancé comme le ferait le relais de cet amont : `await application.publish([event])`, l'événement
+construit depuis sa déclaration dans le langage publié, puis `await application.settled()`.
 
 <!-- checked sample -->
 ```ts

@@ -50,6 +50,8 @@ export interface KindFlags {
   readonly name?: string;
   /** When a domain event handler runs: `before-commit`, the default, or `after-commit`. */
   readonly phase?: string;
+  /** The integration event an end-to-end spec publishes to start its use case, as `<context>.<aggregate>.<fact>`. */
+  readonly event?: string;
   /** The route group of a controller, or the parent of a group, by its name. */
   readonly group?: string;
   /** The path prefix of a route group. */

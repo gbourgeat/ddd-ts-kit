@@ -124,8 +124,8 @@ describe.runIf(SLOW).each(FIRST_CLASS_BROKERS)('the first-class stack, events on
 
     const endToEnd = vitest('--config', 'vitest.e2e.config.ts');
 
-    // The generated specs (401, 403, 201, the whole trace of the request in one tree; one public query) and the five of the proof.
-    expect(endToEnd).toMatch(/Tests\s+10 passed/);
+    // The generated specs (401, 403, 201, the whole trace of the request in one tree; one public query; one use case an integration event starts) and the five of the proof.
+    expect(endToEnd).toMatch(/Tests\s+11 passed/);
 
     expect(read(root, 'test/e2e/issue-invoice.e2e.spec.ts')).toMatch(
       /expectSpanTree\(storyOf\(trace\)[\s\S]*'POST \/invoices'[\s\S]*'command IssueInvoiceCommand'[\s\S]*'repository InvoiceRepository\.save'[\s\S]*'domain-event billing\.invoice\.issued'/,

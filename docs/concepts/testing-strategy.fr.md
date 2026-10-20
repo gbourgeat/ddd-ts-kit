@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:22f9fe50741b1565 -->
+<!-- translation-of: testing-strategy.md sha256:ab0b8535d4d880b7 -->
 
 # Stratégie de test
 
@@ -433,6 +433,13 @@ enregistrent à leur tour) s'attend avec `await application.settled()`, puis se 
 Un délai fixe est lent quand il est long et instable quand il est court ; `settled` se résout dès
 que l'outbox ne tient plus aucun événement en attente, et quand le temps est écoulé il échoue en
 nommant ce qui attend encore et combien en a échoué.
+
+Un cas d'usage qu'aucune route n'atteint est lancé par l'événement d'intégration que reçoit son
+gestionnaire : sa spec de bout en bout (`ddd-ts-kit generate e2e <context> <UseCase>`, avec
+`--event <eventType>` quand des gestionnaires de plusieurs événements envoient sa commande)
+construit cet événement depuis la déclaration de l'amont, le remet à l'application qui tourne avec
+`await application.publish([event])`, comme le ferait le relais de l'amont, puis attend
+`application.settled()` avant de vérifier ce qu'un client ou un autre contexte observe.
 
 L'acceptation d'une *story* est une *spec* de bout en bout écrite avant son code, à partir des
 critères de la *story* (`docs/architecture/stories/<story>.md`) :
