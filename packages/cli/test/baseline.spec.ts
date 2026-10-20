@@ -204,7 +204,7 @@ describe('what a pull request runs, against the default branch', () => {
 
   it('needs every job in the gate, cancels a superseded run of a pull request only, and installs once', () => {
     const jobs = [...github.matchAll(/\n {2}([\w-]+):\n {4}name:/g)].map((match) => match[1] ?? '');
-    const needed = /needs: \[([^\]]+)\]\n {4}runs-on: ubuntu-latest\n {4}timeout-minutes: 5/.exec(github)?.[1] ?? '';
+    const needed = /needs: \[([^\]]+)\]\n {4}runs-on: ubuntu-26.04\n {4}timeout-minutes: 5/.exec(github)?.[1] ?? '';
 
     expect(needed.split(', ')).toEqual(jobs.filter((job) => job !== 'gate'));
     expect(github).toContain("cancel-in-progress: ${{ github.event_name == 'pull_request' }}");

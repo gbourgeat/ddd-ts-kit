@@ -303,6 +303,7 @@ and on a laptop, `npm run ci:arch`, which runs both.
 | Piece | GitHub Actions | GitLab CI |
 |---|---|---|
 | Triggers | pushes to the default branch and pull requests | merge requests and the default branch |
+| Runner | `ubuntu-26.04`, pinned: a new image of GitHub reaches the project when the team changes the label, not when `ubuntu-latest` moves | the image each job names (`node:24-bookworm-slim` by default) |
 | Redundant runs | cancelled by concurrency groups | cancelled by interruptible jobs |
 | Gates | the same `ci:*` scripts | the same `ci:*` scripts |
 | Lint and architecture findings | annotations on the pull request (`check --format github`) | Code Quality reports (`check --format gitlab` writes the report directly; ESLint through its GitLab formatter) |
