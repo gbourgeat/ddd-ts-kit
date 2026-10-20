@@ -163,7 +163,7 @@ class InMemoryAppointmentRepository implements AppointmentRepository {
   }
 }
 
-// contexts/appointments/appointments.declarations.ts, generated: never written by hand
+// contexts/appointments/application/commands/commands.declarations.ts, generated: never written by hand
 injected(BookAppointmentHandler, [AppointmentRepository, Clock, IdGenerator]);
 
 // main.ts
@@ -177,7 +177,9 @@ export async function main(): Promise<void> {
 
 In a project, the composition root imports the whole generated barrel instead of naming the
 classes: `contextModule('appointments', appointments)` after
-`import * as appointments from '@/contexts/appointments/appointments.declarations'`.
+`import * as appointments from '@/contexts/appointments/appointments.declarations'`. That file
+only re-exports the generated declarations of each role folder of the context, where the
+`injected` statements are, one file per folder (`application/commands/commands.declarations.ts`).
 
 **Explicit (tsyringe and `@ddd-ts-kit/di`).** Every binding is a statement of
 `<context>.module.ts`, with the list of what each constructor takes. No decorator is needed:

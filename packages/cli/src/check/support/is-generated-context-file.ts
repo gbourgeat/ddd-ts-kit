@@ -1,15 +1,23 @@
 import path from 'node:path';
-import { barrelFile, dependenciesFile } from '../../declared/index.js';
+import { dependenciesFile, isDeclarationsFile } from '../../declared/index.js';
 import type { SourceFile } from '../model/source-file.js';
 
-/** The generated files at the root of a declared context: `declarations/barrel-current` holds every line of them. */
+/**
+ * The generated files of a declared context: the declarations of each role folder and their
+ * summary at its root, or `<context>.dependencies.ts`; `declarations/barrel-current` holds every
+ * line of them.
+ */
 export function isGeneratedContextFile(file: SourceFile): boolean {
-  const name = path.posix.basename(file.path);
   const { location } = file;
 
-  if (location.area !== 'context' || location.layer !== 'root' || location.inside.length > 0) {
+  if (location.area !== 'context') {
     return false;
   }
 
-  return name === barrelFile(location.context) || name === dependenciesFile(location.context);
+  const inContext =
+    location.layer === 'root' && location.inside.length === 0
+      ? path.posix.basename(file.path)
+      : [location.layer, ...location.inside].join('/');
+
+  return isDeclarationsFile(location.context, inContext) || inContext === dependenciesFile(location.context);
 }

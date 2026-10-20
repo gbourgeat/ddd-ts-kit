@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 572" width="960" height="572" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">Comment un contexte déclaré rejoint la racine de composition</title>
-  <desc id="desc">À gauche, les fichiers de rôle du contexte billing : la commande porte @Requires, le gestionnaire (handler) @CommandHandler avec un constructeur typé par InvoiceRepository, IdGenerator et Clock, l'adaptateur du repository @Repository avec un constructeur typé par Database, ExecutionScope et Clock. generate, docs et le script dev lisent ces signatures avec le scanner du checker, sans compilateur, et écrivent le barrel billing.declarations.ts : un export de chaque fichier de rôle, triés par chemin, puis une instruction injected par classe dont le constructeur reçoit quelque chose. La racine de composition inclut le barrel avec contextModule, et @ddd-ts-kit/di lie chaque classe et injecte ce que le barrel liste. En bas, check avec declarations/barrel-current et docs --check comparent le barrel aux fichiers de rôle et signalent un barrel périmé.</desc>
+  <desc id="desc">À gauche, les fichiers de rôle du contexte billing : la commande porte @Requires, le gestionnaire (handler) @CommandHandler avec un constructeur typé par InvoiceRepository, IdGenerator et Clock, l'adaptateur du repository @Repository avec un constructeur typé par Database, ExecutionScope et Clock. generate, docs et le script dev lisent ces signatures avec le scanner du checker, sans compilateur, et écrivent les déclarations de chaque dossier de rôle : application/commands/commands.declarations.ts et infrastructure/persistence/persistence.declarations.ts exportent chacun les fichiers de rôle de leur dossier, triés par chemin, puis portent une instruction injected par classe du dossier dont le constructeur reçoit quelque chose ; billing.declarations.ts, à la racine du contexte, ne fait que réexporter ces fichiers. La racine de composition inclut billing.declarations.ts avec contextModule, et @ddd-ts-kit/di lie chaque classe et injecte ce que les déclarations listent. En bas, check avec declarations/barrel-current et docs --check comparent chaque fichier généré aux fichiers de rôle et signalent un fichier périmé.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
@@ -32,19 +32,20 @@
   <text x="396" y="166" font-size="13" fill="#1f2328">du checker, sans compilateur</text>
   <line x1="514" y1="186" x2="514" y2="216" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
   <text x="524" y="206" font-size="13" fill="#1f2328">écrivent</text>
-  <!-- barrel -->
-  <rect x="382" y="220" width="264" height="200" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2.5"/>
-  <text x="396" y="246" font-size="15" font-weight="700" fill="#1f2328">billing.declarations.ts</text>
-  <text x="396" y="268" font-size="13" fill="#5f6b73">le barrel, généré, jamais retouché</text>
-  <line x1="396" y1="280" x2="630" y2="280" stroke="#3d4449" stroke-opacity="0.3"/>
-  <text x="396" y="302" font-size="13" fill="#1f2328">export * de chaque fichier de rôle,</text>
-  <text x="396" y="322" font-size="13" fill="#1f2328">triés par chemin</text>
-  <text x="396" y="350" font-size="13" fill="#1f2328">injected(IssueInvoiceHandler,</text>
-  <text x="412" y="370" font-size="13" fill="#1f2328">[InvoiceRepository,</text>
-  <text x="420" y="390" font-size="13" fill="#1f2328">IdGenerator, Clock]);</text>
-  <text x="396" y="410" font-size="13" fill="#1f2328">injected(DrizzleInvoiceRepository, ...);</text>
+  <!-- declarations of each role folder, then their summary -->
+  <rect x="382" y="220" width="264" height="66" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="396" y="242" font-size="14" font-weight="700" fill="#1f2328">commands.declarations.ts</text>
+  <text x="396" y="261" font-size="13" fill="#5f6b73">application/commands/, généré</text>
+  <text x="396" y="279" font-size="13" fill="#1f2328">injected(IssueInvoiceHandler, ...);</text>
+  <rect x="382" y="294" width="264" height="66" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="396" y="316" font-size="14" font-weight="700" fill="#1f2328">persistence.declarations.ts</text>
+  <text x="396" y="335" font-size="13" fill="#5f6b73">infrastructure/persistence/, généré</text>
+  <text x="396" y="353" font-size="13" fill="#1f2328">injected(DrizzleInvoiceRepository, ...);</text>
+  <rect x="382" y="368" width="264" height="52" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2.5"/>
+  <text x="396" y="390" font-size="15" font-weight="700" fill="#1f2328">billing.declarations.ts</text>
+  <text x="396" y="410" font-size="13" fill="#1f2328">export * de chaque fichier de dossier</text>
   <!-- composition root -->
-  <line x1="648" y1="270" x2="672" y2="270" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M648,394 H660 V270 H672" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
   <rect x="676" y="220" width="260" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
   <text x="692" y="246" font-size="15" font-weight="700" fill="#5f6b73">compose-application.ts</text>
   <text x="692" y="268" font-size="13" fill="#1f2328">src/platform/ : la seule ligne</text>
@@ -54,13 +55,13 @@
   <rect x="676" y="344" width="260" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
   <text x="692" y="370" font-size="15" font-weight="700" fill="#5f6b73">@ddd-ts-kit/di</text>
   <text x="692" y="394" font-size="13" fill="#1f2328">lie chaque classe à son jeton,</text>
-  <text x="692" y="412" font-size="13" fill="#1f2328">injecte ce que le barrel liste</text>
+  <text x="692" y="412" font-size="13" fill="#1f2328">injecte ce que les déclarations listent</text>
   <!-- check -->
   <line x1="514" y1="456" x2="514" y2="424" stroke="#3d4449" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
   <text x="524" y="446" font-size="13" fill="#1f2328">comparent</text>
   <rect x="24" y="460" width="912" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
   <text x="40" y="486" font-size="15" font-weight="700" fill="#5f6b73">check (declarations/barrel-current) et docs --check</text>
-  <text x="40" y="510" font-size="13" fill="#1f2328">un fichier de rôle écrit à la main, un constructeur modifié depuis : le barrel est périmé, le constat nomme la classe</text>
+  <text x="40" y="510" font-size="13" fill="#1f2328">un fichier de rôle écrit à la main, un constructeur modifié depuis : les déclarations de son dossier sont périmées, le constat nomme la classe</text>
   <!-- legend -->
   <line x1="40" y1="550" x2="84" y2="550" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
   <text x="96" y="555" font-size="13" fill="#1f2328">lit, écrit, importe</text>

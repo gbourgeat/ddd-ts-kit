@@ -120,6 +120,14 @@ ruleTester.run('clean-one-export-per-file: entry files', cleanOneExportPerFile, 
       "import { injected } from '@ddd-ts-kit/kernel/declarations';\nimport { A } from './application/a.handler.js';\nexport * from './application/a.handler.js';\nexport * from './infrastructure/b.repository.js';\ninjected(A, [B]);",
     ),
     at(`${BILLING}/billing.dependencies.ts`, "import { A } from './application/a.handler.js';\ninjected(A, [B]);"),
+    at(
+      `${BILLING}/application/commands/commands.declarations.ts`,
+      "import { injected } from '@ddd-ts-kit/kernel/declarations';\nimport { A } from './a/a.handler.js';\nexport * from './a/a.command.js';\nexport * from './a/a.handler.js';\ninjected(A, [B]);",
+    ),
+    at(
+      `${BILLING}/infrastructure/infrastructure.declarations.ts`,
+      "export * from './a.gateway.js';\nexport * from './b.adapter.js';",
+    ),
     {
       ...at('packages/kernel/src/declarations.ts', "export * from './declarations/a.js';", {}),
       options: [{ entries: ['packages/*/src/declarations.ts'] }],
@@ -151,6 +159,20 @@ ruleTester.run('clean-one-export-per-file: entry files', cleanOneExportPerFile, 
     },
     {
       ...at('packages/kernel/src/declarations.ts', 'export interface Token {}\nexport function token(): void {}', {}),
+      errors: [{ messageId: 'several' }],
+    },
+    {
+      ...at(
+        `${BILLING}/domain/events/events.declarations.ts`,
+        'export class InvoiceIssued {}\nexport class InvoicePaid {}',
+      ),
+      errors: [{ messageId: 'several' }],
+    },
+    {
+      ...at(
+        `${BILLING}/application/commands/queries.declarations.ts`,
+        'export class IssueInvoice {}\nexport class PayInvoice {}',
+      ),
       errors: [{ messageId: 'several' }],
     },
   ],

@@ -1,5 +1,5 @@
 [English](layers-and-dependency-rule.md) · **Français**
-<!-- translation-of: layers-and-dependency-rule.md sha256:3d2646aef607548a -->
+<!-- translation-of: layers-and-dependency-rule.md sha256:50aa98db8e191d03 -->
 
 # Les couches et la règle de dépendance
 
@@ -219,7 +219,7 @@ La *clean architecture* ajoute un anneau d'« adaptateurs d'interface » (contr�
 | `CommandBus`, `QueryBus`, commandes et requêtes | ports pilotants | API des services d'application | frontières d'entrée (input boundaries) |
 | `presentation/` | adaptateurs pilotants | interface utilisateur | contrôleurs (adaptateurs d'interface) |
 | `infrastructure/` | adaptateurs pilotés | infrastructure | implémentations de *gateways*, *frameworks* et pilotes |
-| `<context>.declarations.ts` (ou `<context>.module.ts` dans le style explicite), `platform/composition/compose-application.ts`, `main.ts` | configurateur | résolution des dépendances | composant principal (main component) |
+| `<context>.declarations.ts` et les déclarations de ses dossiers de rôle (ou `<context>.module.ts` dans le style explicite), `platform/composition/compose-application.ts`, `main.ts` | configurateur | résolution des dépendances | composant principal (main component) |
 
 Le kit garde séparés les deux côtés de la bordure (`presentation/` et `infrastructure/`) et leur
 interdit de s'importer l'un l'autre. C'est la symétrie hexagonale rendue vérifiable : une route ne

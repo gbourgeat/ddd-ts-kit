@@ -1,0 +1,33 @@
+import { injected } from '@ddd-ts-kit/kernel/declarations';
+import { EventStoreAttendanceRecordRepository } from '@/contexts/scheduling/infrastructure/persistence/event-store-attendance-record.repository';
+import { KnexAgenda } from '@/contexts/scheduling/infrastructure/persistence/knex-agenda.repository';
+import { KnexAppointmentExport } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment-export.repository';
+import { KnexAppointmentRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment.repository';
+import { KnexAttendanceHistory } from '@/contexts/scheduling/infrastructure/persistence/knex-attendance-history.repository';
+import { KnexCalendarRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-calendar.repository';
+import { KnexPractitionerDirectory } from '@/contexts/scheduling/infrastructure/persistence/knex-practitioner-directory.repository';
+import { KnexWaitlistRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-waitlist.repository';
+import { TupleSchedulingRelationships } from '@/contexts/scheduling/infrastructure/persistence/tuple-scheduling-relationships.repository';
+import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
+import { Clock, EventStore, ExecutionScope, PersonalDataCipher, SnapshotStore } from '@ddd-ts-kit/kernel';
+import { KnexContext } from '@ddd-ts-kit/knex';
+
+export * from '@/contexts/scheduling/infrastructure/persistence/event-store-attendance-record.repository';
+export * from '@/contexts/scheduling/infrastructure/persistence/knex-agenda.repository';
+export * from '@/contexts/scheduling/infrastructure/persistence/knex-appointment-export.repository';
+export * from '@/contexts/scheduling/infrastructure/persistence/knex-appointment.repository';
+export * from '@/contexts/scheduling/infrastructure/persistence/knex-attendance-history.repository';
+export * from '@/contexts/scheduling/infrastructure/persistence/knex-calendar.repository';
+export * from '@/contexts/scheduling/infrastructure/persistence/knex-practitioner-directory.repository';
+export * from '@/contexts/scheduling/infrastructure/persistence/knex-waitlist.repository';
+export * from '@/contexts/scheduling/infrastructure/persistence/tuple-scheduling-relationships.repository';
+
+injected(EventStoreAttendanceRecordRepository, [EventStore, SnapshotStore, PersonalDataCipher]);
+injected(KnexAgenda, [KnexContext, ExecutionScope]);
+injected(KnexAppointmentExport, [KnexContext, ExecutionScope]);
+injected(KnexAppointmentRepository, [KnexContext, ExecutionScope, Clock]);
+injected(KnexAttendanceHistory, [KnexContext]);
+injected(KnexCalendarRepository, [KnexContext, ExecutionScope, Clock]);
+injected(KnexPractitionerDirectory, [KnexContext, ExecutionScope]);
+injected(KnexWaitlistRepository, [KnexContext, ExecutionScope, Clock]);
+injected(TupleSchedulingRelationships, [RelationTupleStore]);

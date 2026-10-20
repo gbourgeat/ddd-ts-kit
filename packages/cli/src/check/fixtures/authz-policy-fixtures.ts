@@ -6,16 +6,15 @@ import { project } from './project.js';
 import { signatureProject } from './signature-project.js';
 import { source } from './source.js';
 
-const { BARREL, COMMAND, HANDLER, MODULE, POLICY } = PATHS;
+const { COMMAND, COMMANDS_DECLARATIONS, HANDLER, MODULE, POLICY } = PATHS;
 
-/** The barrel the generator derives once the handler takes `Access` and the repository in its constructor. */
-const BARREL_OF_THE_POLICY = source(
+/** The declarations of application/commands/ the generator derives once the handler takes `Access` and the repository in its constructor. */
+const COMMANDS_OF_THE_POLICY = source(
   "import { injected } from '@ddd-ts-kit/kernel/declarations';",
   "import { IssueInvoiceHandler } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js';",
   "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';",
   "import { Access } from '@ddd-ts-kit/auth';",
   '',
-  "export * from '@/contexts/billing/application/authorization/only-issuer-voids.policy.js';",
   "export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';",
   "export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js';",
   '',
@@ -162,5 +161,5 @@ function declaredHandler(body: string): string {
 
 /** The declared issue-invoice use case whose permission a policy refines, its handler written with `body`. */
 function withPolicy(body: string): FixtureFiles {
-  return signatureProject(body, { [POLICY]: ISSUE_POLICY, [BARREL]: BARREL_OF_THE_POLICY });
+  return signatureProject(body, { [POLICY]: ISSUE_POLICY, [COMMANDS_DECLARATIONS]: COMMANDS_OF_THE_POLICY });
 }

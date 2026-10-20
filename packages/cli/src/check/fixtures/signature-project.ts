@@ -10,9 +10,9 @@ type Assembly = 'barrel' | 'discovery';
 
 /**
  * A declared project that states dependencies in constructor signatures, holding the
- * issue-invoice use case with the handler it is given. Its barrel is the one the generator
- * derives from the role files alone: a fixture whose handler is injected something writes the
- * generated file out, so that it does not prove the rule with its own code.
+ * issue-invoice use case with the handler it is given. Its declarations are the ones the
+ * generator derives from the role files alone: a fixture whose handler is injected something
+ * writes the generated file of its folder out, so that it does not prove the rule with its own code.
  */
 export function signatureProject(
   body: string,

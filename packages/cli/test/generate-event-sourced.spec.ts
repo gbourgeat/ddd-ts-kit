@@ -109,6 +109,7 @@ describe('generate aggregate --event-sourced', () => {
       drift: {},
       unrecorded: ['billing.ledger.created version 1', 'billing.ledger.credited version 1'],
       formerlyRecorded: [],
+      warnings: [],
     });
 
     expect(read(root, `${BILLING}/CONTEXT.md`)).toContain('- `Invoice`\n- `Ledger` (event-sourced)');

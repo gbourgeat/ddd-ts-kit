@@ -1,4 +1,5 @@
 import type { CoverageRates } from './coverage-rates.js';
+import { generatedDeclarations } from './generated-declarations.js';
 import { measuredFiles } from './measured-files.js';
 import { governedSettings } from './governed-settings.js';
 import { heldLayers } from './held-layers.js';
@@ -8,6 +9,8 @@ import { measuredLayers } from './measured-layers.js';
 export interface GovernedCoverage {
   /** The measured layers of every context, the files no spec loads included. */
   readonly include: string[];
+  /** The generated declarations of the role folders, which no spec has to load. */
+  readonly exclude: string[];
   /** One entry per context and layer that holds a source file: a context cannot hide behind another. */
   readonly thresholds: Record<string, CoverageRates>;
 }
@@ -32,6 +35,7 @@ export function governedCoverage(mode: string, root: string = process.cwd()): Go
 
   return {
     include: measuredFiles(contextsDir, layers),
+    exclude: [generatedDeclarations(contextsDir)],
     thresholds: Object.fromEntries(
       held.map(({ layer, directory }) => [`${directory}/**/*.ts`, { ...thresholds[layer] }]),
     ),

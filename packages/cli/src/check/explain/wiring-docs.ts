@@ -32,18 +32,29 @@ export class IssueInvoiceHandler {}
 export class InvoiceIssuedEventHandler {}`,
   },
   'declarations/barrel-current': {
-    why: 'With stack.assembly set to barrel, the composition root assembles a context from <context>.declarations.ts and from nothing else. A role file added by hand and missing from the barrel compiles, passes its unit tests and is never registered. The same file registers what each constructor is injected, read from its signature: a constructor changed without regenerating would be given the dependencies of the old one. The file is derived from the tree, one export per role file sorted by path then one injected(Class, [Tokens]) per class that takes something, so it is compared with what the tree says, and the message names the class whose list is stale. With stack.assembly set to discovery the role files are found at startup, <context>.dependencies.ts holds the lists alone and is compared the same way, and a barrel left behind is reported.',
-    bad: `// billing.declarations.ts, while only-issuer-voids.policy.ts exists and IssueInvoiceHandler now also takes a Clock
+    why: 'With stack.assembly set to barrel, the composition root assembles a context from <context>.declarations.ts and from nothing else. That file only re-exports the generated <folder>.declarations.ts of each role folder of the context (application/commands/commands.declarations.ts, infrastructure/persistence/persistence.declarations.ts, presentation/http/http.declarations.ts; the files of a use case or of a route roll up to the folder at <layer>/<folder>/, and a role file sitting directly in a layer to <layer>/<layer>.declarations.ts). A role file added by hand and missing from the declarations of its folder compiles, passes its unit tests and is never registered. The same file registers what each constructor of its folder is injected, read from its signature: a constructor changed without regenerating would be given the dependencies of the old one. Each file is derived from the tree, one export per role file sorted by path then one injected(Class, [Tokens]) per class that takes something, so it is compared with what the tree says, and the message names the class whose list is stale; the declarations of a folder that holds no role file any more are reported until they are deleted. A context still declared in the single <context>.declarations.ts of 0.84, exactly as that version would write it for the current tree and with no declarations file in a role folder yet, is a warning in this version, not an error: ddd-ts-kit docs moves it to the files of its role folders, and a later minor version reports it as an error. With stack.assembly set to discovery the role files are found at startup, <context>.dependencies.ts holds the lists alone and is compared the same way, and generated declarations left behind are reported.',
+    bad: `// application/commands/commands.declarations.ts, while IssueInvoiceHandler now also takes a Clock
 export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command';
 export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler';
 
-injected(IssueInvoiceHandler, [InvoiceRepository]);`,
-    good: `// billing.declarations.ts, rewritten by \`ddd-ts-kit generate\`, \`ddd-ts-kit docs\` and \`npm run dev\`
-export * from '@/contexts/billing/application/authorization/only-issuer-voids.policy';
+injected(IssueInvoiceHandler, [InvoiceRepository]);
+
+// billing.declarations.ts, while application/authorization/only-issuer-voids.policy.ts exists
+export * from '@/contexts/billing/application/commands/commands.declarations';`,
+    good: `// application/commands/commands.declarations.ts, rewritten by \`ddd-ts-kit generate\`, \`ddd-ts-kit docs\` and \`npm run dev\`
+import { injected } from '@ddd-ts-kit/kernel/declarations';
+import { Clock } from '@ddd-ts-kit/kernel';
+import { IssueInvoiceHandler } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler';
+import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
+
 export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command';
 export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler';
 
-injected(IssueInvoiceHandler, [InvoiceRepository, Clock]);`,
+injected(IssueInvoiceHandler, [InvoiceRepository, Clock]);
+
+// billing.declarations.ts, the summary the composition root imports
+export * from '@/contexts/billing/application/authorization/authorization.declarations';
+export * from '@/contexts/billing/application/commands/commands.declarations';`,
   },
   'declarations/constructor-injection': {
     why: 'The constructor signature is the one statement of what a declared class depends on: `ddd-ts-kit docs` reads it and writes the list the composition root injects, so nothing is repeated in the decorator and nothing can disagree with the constructor. That only works when each parameter names exactly one injection token, and a token is a class: an interface, a type alias or a primitive is erased by the compiler, a union names two things, an optional or defaulted parameter says the container might not give a value, which it always does. A constructor inherited from a class of a package cannot be read at all. The compiler is not asked for the types at run time: `emitDecoratorMetadata` exists only with legacy decorators compiled by tsc or swc, not with standard decorators nor under tsx or esbuild. Under "stack.dependencies": "signature" a list left in a decorator is a second statement: it wins at run time, so it is removed when it repeats the constructor (ESLint fixes it) and reported when it differs. A project whose config does not say lists its dependencies in its decorators, as 0.1 did, and may keep doing so.',

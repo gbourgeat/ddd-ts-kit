@@ -8,7 +8,8 @@ import { installAsPublished } from './install-as-published.js';
 import { SLOW } from './stacks.js';
 
 const BILLING = 'src/contexts/billing';
-const BARREL = `${BILLING}/billing.declarations.ts`;
+/** The generated declarations of the role folder the handler sits in, where its list is registered. */
+const BARREL = `${BILLING}/application/commands/commands.declarations.ts`;
 const HANDLER = `${BILLING}/application/commands/cancel-invoice/cancel-invoice.handler.ts`;
 const HANDLER_ALIAS = '@/contexts/billing/application/commands/cancel-invoice/cancel-invoice.handler';
 
@@ -85,7 +86,7 @@ describe.runIf(SLOW)('npm run dev, when a dependency is added to a constructor',
   });
 
   it(
-    'reloads with the port injected, the generated barrel rewritten by the reload itself',
+    'reloads with the port injected, the generated declarations rewritten by the reload itself',
     async () => {
       const generated = TAKING_NOTHING;
 

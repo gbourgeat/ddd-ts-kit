@@ -48,7 +48,8 @@ function main() {
   process.stderr.write(run.stderr);
 
   const result = parse(run.stdout);
-  const touched = result === undefined ? planned : [...(result.created ?? []), ...(result.updated ?? [])];
+  const touched =
+    result === undefined ? planned : [...(result.created ?? []), ...(result.updated ?? []), ...(result.deleted ?? [])];
 
   for (const file of new Set([...touched, ...planned])) {
     accumulate(file, before.get(file));
@@ -96,7 +97,7 @@ function plannedFiles() {
   );
   const result = parse(dry.stdout);
 
-  return result === undefined ? [] : [...(result.created ?? []), ...(result.updated ?? [])];
+  return result === undefined ? [] : [...(result.created ?? []), ...(result.updated ?? []), ...(result.deleted ?? [])];
 }
 
 /** `docs` answers no list: the files it may rewrite are known by their names. */
@@ -106,14 +107,44 @@ function regeneratedByDocs() {
 
   return [
     'docs/context-map.md',
-    ...names.flatMap((name) => [`src/contexts/${name}/CONTEXT.md`, `src/contexts/${name}/${name}.declarations.ts`]),
+    ...names.flatMap((name) => [
+      `src/contexts/${name}/CONTEXT.md`,
+      `src/contexts/${name}/${name}.declarations.ts`,
+      ...folderDeclarations(`src/contexts/${name}`),
+    ]),
   ];
+}
+
+/** The declarations the generator writes in each role folder of a context: `<layer>/<folder>/<folder>.declarations.ts`. */
+function folderDeclarations(context) {
+  return ['application', 'infrastructure', 'presentation'].flatMap((layer) => [
+    `${context}/${layer}/${layer}.declarations.ts`,
+    ...subdirectories(`${context}/${layer}`).map((folder) => `${context}/${layer}/${folder}/${folder}.declarations.ts`),
+  ]);
+}
+
+function subdirectories(directory) {
+  try {
+    return fs
+      .readdirSync(path.join(root, directory), { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+  } catch {
+    return [];
+  }
 }
 
 /** Keeps the copy equal to what generators wrote: a new file is copied, an updated one takes the generator's change only. */
 function accumulate(file, previous) {
   const current = read(file);
   const copy = path.join(snapshotDir, file);
+
+  if (current === undefined && previous !== undefined) {
+    // A derived file the generator deleted: the copy no longer holds it either.
+    fs.rmSync(copy, { force: true });
+
+    return;
+  }
 
   if (current === undefined || current === previous) {
     return;

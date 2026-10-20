@@ -48,7 +48,8 @@ the tree, so a generated file conforms by construction and costs no tokens.
 ## What the generator settles for you
 
 - **Registration.** In the declared style (the default with tsyringe) the class carries its
-  decorator and the barrel `<context>.declarations.ts` is rewritten; never edit the barrel.
+  decorator, and the declarations of its role folder (`application/commands/commands.declarations.ts`)
+  and `<context>.declarations.ts`, which re-exports them, are rewritten; never edit them.
   In the explicit style the binding is added between the markers of `<context>.module.ts`.
 - **Dependencies.** A generated class states what it depends on in its constructor, each
   parameter typed by a port, and its decorator lists nothing: the generator reads the

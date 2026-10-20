@@ -1,10 +1,11 @@
 import path from 'node:path';
-import { routesFile } from '../../declared/index.js';
+import { isDeclarationsFile, routesFile } from '../../declared/index.js';
 import { roleOf } from '../canonical/role-of.js';
 import type { ContextLocation } from '../model/context-location.js';
 import type { Flaw } from '../model/flaw.js';
 import type { Rule } from '../model/rule.js';
 import { inContext } from '../support/in-context.js';
+import { isDeclaredStyle } from '../support/is-declared-style.js';
 import { KEBAB_SEGMENT } from '../support/kebab-segment.js';
 import { pathInContext } from '../support/path-in-context.js';
 import { perFile } from '../support/per-file.js';
@@ -26,8 +27,12 @@ export const namingSuffix: Rule = {
         return [];
       }
 
-      // The routes of a context are one list named after it instead of a role, in either style.
-      if (pathInContext(project, file) === routesFile(file.location.context)) {
+      const relative = pathInContext(project, file) ?? '';
+      const generated = isDeclaredStyle(project) && isDeclarationsFile(file.location.context, relative);
+
+      // The routes of a context are one list named after it instead of a role, in either style;
+      // the generated declarations of a role folder are named after the folder.
+      if (relative === routesFile(file.location.context) || generated) {
         return [];
       }
 

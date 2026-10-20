@@ -1,6 +1,6 @@
 import path from 'node:path';
 import type { Config } from '../../config/index.js';
-import { barrelFile, dependenciesFile } from '../../declared/index.js';
+import { barrelFile, dependenciesFile, isDeclarationsFile } from '../../declared/index.js';
 import type { Flaw } from '../model/flaw.js';
 import { isCanonicalDirectory } from './is-canonical-directory.js';
 import { OPEN_DIRECTORIES } from './open-directories.js';
@@ -8,7 +8,7 @@ import { roleOf } from './role-of.js';
 
 interface Placed {
   readonly context: string;
-  /** True when the classes of the project declare themselves: the context then has a generated barrel at its root. */
+  /** True when the classes of the project declare themselves: the context then has generated declarations, at its root and in its role folders. */
   readonly declared: boolean;
   /** Path of the entry inside its context. */
   readonly inside: string;
@@ -72,8 +72,9 @@ function straySource(placed: Placed): Flaw | undefined {
   }
 
   const open = OPEN_DIRECTORIES.some((root) => directory === root || directory.startsWith(`${root}/`));
+  const generated = placed.declared && isDeclarationsFile(placed.context, inside);
 
-  if (open || roleOf(directory) !== undefined || coveredByExtra(extras, directory)) {
+  if (open || generated || roleOf(directory) !== undefined || coveredByExtra(extras, directory)) {
     return undefined;
   }
 

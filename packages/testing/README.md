@@ -996,6 +996,8 @@ export default defineConfig(({ mode }) => ({
 - `include`: the layers of every context the run executes, the files no spec loads included.
   `--mode unit` measures `domain`, `application` and `presentation`, `--mode integration`
   measures `infrastructure`, any other mode the four.
+- `exclude`: the `<folder>.declarations.ts` the generator writes in the role folders of a
+  declared context, derived from the tree and never loaded by a spec of an adapter.
 - `thresholds`: one entry per context and layer that holds a source file, so a context cannot
   hide behind another and an empty layer is held to nothing until its first file.
 - A partial run measures and holds only the contexts named in `DDD_TS_KIT_AFFECTED` (comma

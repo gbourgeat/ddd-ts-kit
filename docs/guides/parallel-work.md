@@ -20,7 +20,8 @@ directories.
 
 **By vertical use case, inside a context.** One command or query, end to end: its folder under
 `application/commands/` or `application/queries/`, its route, its specs. Two use cases of one
-context share the aggregate file and the context's generated barrel, so they conflict more
+context share the aggregate file and the generated declarations of their role folder
+(`application/commands/commands.declarations.ts`), so they conflict more
 often than two contexts do. Parallelise inside a context only after the aggregate's shape has
 settled.
 
@@ -32,13 +33,13 @@ until the other exists, and the two meet in every file.
 | File or area | Written by | Parallel? | How to handle |
 |---|---|---|---|
 | `src/contexts/<A>/**` and `src/contexts/<B>/**` | different workers | yes | disjoint by construction |
-| two use case folders of one context | different workers | mostly | they meet in the aggregate, the barrel and the routes file: merge often |
+| two use case folders of one context | different workers | mostly | they meet in the aggregate, the declarations of their role folder and the routes file: merge often |
 | `ddd-ts-kit.config.json` | `init`, `generate context`, `generate service`, `generate worker`, `generate adr --deviation` | **no** | create all contexts and relationships in the bootstrap; later changes one at a time, by the platform owner |
 | `src/platform/composition/compose-application.ts`, `src/platform/composition/platform.module.ts`, `src/platform/composition/platform-test.module.ts` | `generate context` (the composition root), `generate gateway` (the two modules, in the declared style), hand edits | **no** | registration regions are written between markers; two branches adding a context both touch them |
 | the registries of the platform: `src/platform/database/schema.ts` (with Prisma, `prisma/schema.prisma`), `src/platform/auth/authorization/permissions.ts`, `src/platform/auth/authorization/role.ts`, `src/platform/auth/authorization/access-policies.ts` (explicit style), `src/platform/audit/audited-events.ts`, `src/platform/jobs/job-settings.ts`, the grants under `src/platform/auth/`, and the helper `src/platform/resilience/own-policy.ts` | `generate context`, `generate repository` (the first of a context; every one with Prisma), `generate command --aggregate` on an aggregate that has no repository yet, `generate route-group --role` with a new role, `generate policy` (explicit style), `generate integration-event`, `generate job`, `generate adapter` (the first of a project wired on tsyringe) | **no** | run these generators on the trunk before the workers start; `generate --help --json` says which kinds write shared files (`writesShared`) and which ones |
 | `src/main.ts` | hand edits | **no** | the platform owner |
 | `test/architecture/extractable.spec.ts`, `knip.json` (the first context) | `init`, `generate context` | **no** | same: written with each context |
-| `<context>.declarations.ts` (the barrel, with what each constructor is injected), `<context>.dependencies.ts` under discovery | every `generate` in that context, `docs`, and `npm run dev` | per context | derived: never merge by hand, regenerate (below) |
+| `<context>.declarations.ts` and the `<folder>.declarations.ts` of each role folder (what each constructor is injected), `<context>.dependencies.ts` under discovery | every `generate` in that context, `docs`, and `npm run dev` | per context | derived: never merge by hand, regenerate (below) |
 | `docs/context-map.md`, the generated lists of each `CONTEXT.md` | `ddd-ts-kit docs`, every `generate` | **no**, but cheap | derived: regenerate after merging |
 | `openapi/*.yaml`, `docs/integration/asyncapi.yaml`, `docs/integration/event-catalog.md` | `npm run docs:generate` | **no**, but cheap | derived and deterministic: regenerate after merging |
 | `.dependency-cruiser.cjs` | `depcruise-config --write`, `generate context` | **no**, but cheap | derived from the config: regenerate |
@@ -54,7 +55,7 @@ never a merge problem as long as nobody tries to merge it.
 
 ### Generated files: regenerate, never resolve by hand
 
-The barrel, the context map, the `CONTEXT.md` lists, the dependency-cruiser configuration, the
+The declarations of each context, the context map, the `CONTEXT.md` lists, the dependency-cruiser configuration, the
 OpenAPI document, the AsyncAPI document and the event catalog are all functions of the sources.
 When two branches changed one of them, the conflict carries no information. Take either side,
 then:

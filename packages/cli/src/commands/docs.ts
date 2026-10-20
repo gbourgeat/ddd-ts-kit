@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { readConfig, type Config } from '../config/index.js';
-import { generatedDrift } from '../declared/index.js';
+import { barrelFile, generatedDrift, singleFileNotice } from '../declared/index.js';
 import { readContexts } from '../docs/read-contexts.js';
 import { writeDocs } from '../docs/write-docs.js';
 import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file.js';
@@ -25,47 +25,67 @@ export const docsCommand: Command = (argv, io) => {
   const ws = new Workspace(args.projectRoot, false);
 
   const { config } = readConfig(args.projectRoot);
+  const check = args.flag('check');
 
-  writeDocs(ws, config);
+  // A check writes nothing: a context still declared in the single file of 0.84 is only warned about.
+  const singleFile = writeDocs(ws, config, check ? 'keep' : 'move');
 
   if (args.flag('stored-events')) {
     recordStoredEvents(ws, config);
   }
 
-  if (!args.flag('check')) {
+  if (!check) {
     stopIgnoringValidation(ws, config);
     printReport(io, args, ws.commit(args.flag('dry-run')));
 
     return 0;
   }
 
-  return reportCheck(io, args, { ws, config });
+  return reportCheck(io, args, { ws, config, singleFile });
 };
 
 interface DocsRun {
   readonly ws: Workspace;
   readonly config: Config;
+  /** The contexts still declared in the single file of 0.84: a warning, not a failure, in this version. */
+  readonly singleFile: readonly string[];
 }
 
 /** `docs --check`: the generated files that would change, and the stored-event versions not recorded yet or recorded by 0.82.0 or earlier; 0 when there is none. */
-function reportCheck(io: Io, args: Arguments, { ws, config }: DocsRun): number {
+function reportCheck(io: Io, args: Arguments, { ws, config, singleFile }: DocsRun): number {
   const report = ws.commit(true);
-  const stale = [...report.created, ...report.updated];
+  const stale = [...report.created, ...report.updated, ...report.deleted];
   const drift = Object.fromEntries(stale.flatMap((file) => driftOf(ws.root, ws, file)));
   const recording = args.flag('stored-events');
   const unrecorded = recording ? [] : unrecordedStoredEvents(ws, config, contextsOnDisk(ws, config));
   const formerlyRecorded = recording ? [] : formerlyRecordedStoredEvents(ws, config, contextsOnDisk(ws, config));
   const ok = stale.length === 0 && unrecorded.length === 0 && formerlyRecorded.length === 0;
+  const warnings = singleFile.map((context) => singleFileWarning(config, context));
 
   if (args.json) {
-    io.out(JSON.stringify({ ok, stale, drift, unrecorded, formerlyRecorded }, null, 2));
+    io.out(JSON.stringify({ ok, stale, drift, unrecorded, formerlyRecorded, warnings }, null, 2));
   } else if (ok) {
-    io.out('The generated documentation is up to date.');
+    io.out(['The generated documentation is up to date.', ...warningLines(warnings)].join('\n'));
   } else {
-    io.out(staleLines(stale, drift, { unrecorded, formerlyRecorded }).join('\n'));
+    io.out([...staleLines(stale, drift, { unrecorded, formerlyRecorded }), ...warningLines(warnings)].join('\n'));
   }
 
   return ok ? 0 : 1;
+}
+
+/** A context still declared in the single file of 0.84, as `docs --check` warns about it. */
+interface SingleFileWarning {
+  readonly file: string;
+  readonly message: string;
+  readonly fix: string;
+}
+
+function singleFileWarning(config: Config, context: string): SingleFileWarning {
+  return { file: `${config.contextsDir}/${context}/${barrelFile(context)}`, ...singleFileNotice(context) };
+}
+
+function warningLines(warnings: readonly SingleFileWarning[]): string[] {
+  return warnings.flatMap(({ file, message, fix }) => ['', `warning  ${file}: ${message}`, `  ${fix}`]);
 }
 
 /** The versions of stored events `docs --check` holds against the lock. */
@@ -120,10 +140,14 @@ const GENERATED_CONTEXT_FILE = /\.(?:declarations|dependencies)\.ts$/;
 
 /** What makes a generated file of a context stale, in words: the role file it misses, or the class whose constructor changed. */
 function driftOf(root: string, ws: Workspace, file: string): [string, string][] {
-  const expected = GENERATED_CONTEXT_FILE.test(file) ? ws.read(file) : undefined;
+  if (!GENERATED_CONTEXT_FILE.test(file)) {
+    return [];
+  }
+
+  const expected = ws.read(file);
 
   if (expected === undefined) {
-    return [];
+    return [[file, 'it is no longer generated: its folder holds no declared class']];
   }
 
   const written = fs.existsSync(path.join(root, file)) ? fs.readFileSync(path.join(root, file), 'utf8') : '';

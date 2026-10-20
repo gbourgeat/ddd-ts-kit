@@ -26,6 +26,9 @@ export class Workspace {
 
   private readonly skipped = new Set<string>();
 
+  /** Files on disk this command removes: no longer derived from anything. */
+  private readonly removed = new Set<string>();
+
   private readonly steps: NextStep[] = [];
 
   private rewrite: ((file: string, text: string) => string) | undefined;
@@ -36,7 +39,7 @@ export class Workspace {
   ) {}
 
   exists(file: string): boolean {
-    return this.pending.has(file) || fs.existsSync(this.absolute(file));
+    return this.pending.has(file) || (!this.removed.has(file) && fs.existsSync(this.absolute(file)));
   }
 
   read(file: string): string | undefined {
@@ -44,6 +47,10 @@ export class Workspace {
 
     if (pending !== undefined) {
       return pending.content;
+    }
+
+    if (this.removed.has(file)) {
+      return undefined;
     }
 
     try {
@@ -59,7 +66,11 @@ export class Workspace {
       .filter((file) => path.posix.dirname(file) === directory)
       .map((file) => path.posix.basename(file));
 
-    return [...new Set([...this.onDisk(directory, (entry) => entry.isFile()), ...planned])].sort();
+    const onDisk = this.onDisk(directory, (entry) => entry.isFile()).filter(
+      (name) => !this.removed.has(`${directory}/${name}`),
+    );
+
+    return [...new Set([...onDisk, ...planned])].sort();
   }
 
   /** Names of the directories directly inside `directory`, on disk or planned. */
@@ -84,7 +95,7 @@ export class Workspace {
   create(file: string, content: string): boolean {
     const onDisk = fs.existsSync(this.absolute(file));
 
-    if ((onDisk || this.pending.has(file)) && !this.force) {
+    if (this.exists(file) && !this.force) {
       if (onDisk) {
         this.skipped.add(file);
       }
@@ -92,6 +103,7 @@ export class Workspace {
       return false;
     }
 
+    this.removed.delete(file);
     this.pending.set(file, { content: this.spoken(this.withImports(file, content)), existed: onDisk });
 
     return true;
@@ -107,11 +119,26 @@ export class Workspace {
       return;
     }
 
+    this.removed.delete(file);
+
     if (this.read(file) === content) {
       return;
     }
 
     this.pending.set(file, { content, existed: true });
+  }
+
+  /**
+   * Removes a file a command derives and that is no longer derived from anything, such as the
+   * generated declarations of a folder that holds no declared class any more. A file only
+   * planned is forgotten; one on disk is deleted at the commit, and reported.
+   */
+  delete(file: string): void {
+    this.pending.delete(file);
+
+    if (fs.existsSync(this.absolute(file))) {
+      this.removed.add(file);
+    }
   }
 
   /**
@@ -151,6 +178,7 @@ export class Workspace {
 
     if (!dryRun) {
       written.forEach(({ file, content }) => this.write(file, content));
+      this.removed.forEach((file) => fs.rmSync(this.absolute(file), { force: true }));
     }
 
     // The language comes before the code: its definition is the first thing to do.
@@ -159,6 +187,7 @@ export class Workspace {
     return {
       created: written.filter(({ existed }) => !existed).map(({ file }) => file),
       updated: written.filter(({ existed }) => existed).map(({ file }) => file),
+      deleted: [...this.removed].sort(),
       skipped: [...this.skipped].sort(),
       next: todos.map((todo) => `${todo.file}:${todo.line}`),
       todos,

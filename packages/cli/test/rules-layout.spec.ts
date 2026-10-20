@@ -268,9 +268,11 @@ describe('config/valid', () => {
 describe('clean/file-size', () => {
   const long = lines('export const entries = [', ...Array.from({ length: 400 }, (_, index) => `  ${index},`), '];');
 
-  it('does not judge the generated barrel and dependency file at the root of a context', () => {
+  it('does not judge the generated declarations, at the root of a context and in its role folders, nor its dependency file', () => {
     const root = projectWith({
       'src/contexts/billing/billing.declarations.ts': long,
+      'src/contexts/billing/application/commands/commands.declarations.ts': long,
+      'src/contexts/billing/infrastructure/infrastructure.declarations.ts': long,
       'src/contexts/shipping/shipping.dependencies.ts': long,
     });
 
@@ -279,11 +281,13 @@ describe('clean/file-size', () => {
 
   it('judges a file named like a generated one anywhere else, or after another context', () => {
     const root = projectWith({
+      'src/contexts/billing/application/commands/queries.declarations.ts': long,
       'src/contexts/billing/domain/billing.declarations.ts': long,
       'src/contexts/billing/shipping.declarations.ts': long,
     });
 
     expect(reported(root, 'clean/file-size').map(({ file }) => file)).toEqual([
+      'src/contexts/billing/application/commands/queries.declarations.ts',
       'src/contexts/billing/domain/billing.declarations.ts',
       'src/contexts/billing/shipping.declarations.ts',
     ]);

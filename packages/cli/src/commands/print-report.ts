@@ -38,6 +38,7 @@ function fileLines(report: WorkspaceReport, dryRun: boolean): string[] {
   const lines = [
     ...report.created.map((file) => `${verb('created')}${file}`),
     ...report.updated.map((file) => `${verb('updated')}${file}`),
+    ...report.deleted.map((file) => `${verb('deleted')}${file}`),
     ...report.skipped.map((file) => `${'skipped'.padEnd(13)}${file} (exists; pass --force to replace it)`),
   ];
 

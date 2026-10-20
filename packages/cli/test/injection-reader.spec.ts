@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadSourceFile } from '../src/check/project/load-source-file.js';
 import { parseConfig } from '../src/config/index.js';
-import { generatedDrift, renderBarrel, renderDependenciesFile, renderInjections } from '../src/declared/index.js';
+import { generatedDrift, renderDeclarations, renderDependenciesFile, renderInjections } from '../src/declared/index.js';
 import { readInjections } from '../src/declared/injection/read-injections.js';
 
 const config = parseConfig({ contexts: { billing: { classification: 'core', upstreams: [] } } });
@@ -200,8 +200,10 @@ describe('what the generated file of a context holds', () => {
       `import { injected } from 'k';\n\ninjected(Accept, [Clock]);\n\n${broken}\n\ninjected(Open, [Ids]);\n`,
     );
   });
+});
 
-  it('follows the exports of the barrel, and says in words what tells a written file from the expected one', () => {
+describe('the declarations of a role folder, and how a written one drifts', () => {
+  it('follows the exports of the declarations, and says in words what tells a written file from the expected one', () => {
     const files = [
       'application/commands/issue/issue.handler.ts',
       'CONTEXT.md',
@@ -209,17 +211,32 @@ describe('what the generated file of a context holds', () => {
     ];
 
     const injected = { imports: ["import { injected } from 'k';"], calls: ['injected(Issue, [Clock, Ids]);'] };
-    const barrel = renderBarrel(files, (file) => `@/${file}`, injected);
+
+    const render = (from: readonly string[], given = injected): Map<string, string> =>
+      renderDeclarations({
+        context: 'billing',
+        files: from,
+        specifierOf: (file) => `@/${file}`,
+        injectedIn: () => given,
+      });
+
+    const barrel = render(files).get('application/commands/commands.declarations.ts') ?? '';
 
     expect(barrel).toBe(
       "import { injected } from 'k';\n\nexport * from '@/application/commands/issue/issue.handler.ts';\n\ninjected(Issue, [Clock, Ids]);\n",
     );
 
-    expect(renderBarrel(files, (file) => `@/${file}`)).toBe(
-      "export * from '@/application/commands/issue/issue.handler.ts';\n",
+    expect(render(files, { imports: [], calls: [] })).toEqual(
+      new Map([
+        [
+          'application/commands/commands.declarations.ts',
+          "export * from '@/application/commands/issue/issue.handler.ts';\n",
+        ],
+        ['billing.declarations.ts', "export * from '@/application/commands/commands.declarations.ts';\n"],
+      ]),
     );
 
-    expect(renderBarrel(['CONTEXT.md'], (file) => file, injected)).toBe('export {};\n');
+    expect(render(['CONTEXT.md'])).toEqual(new Map([['billing.declarations.ts', 'export {};\n']]));
 
     expect(generatedDrift(barrel.replace('[Clock, Ids]', '[\n  Clock,\n]'), barrel)).toBe(
       'the dependency list of Issue is stale: its constructor takes [Clock, Ids] and the file says [Clock]',

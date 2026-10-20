@@ -38,7 +38,7 @@ describe('governedCoverage(), what a Vitest run measures and is held to', () => 
   it('measures the four layers of every context and holds each layer that has a source to the reference', () => {
     const root = projectWith({}, [...BILLING, 'src/contexts/shipping/domain/value-objects/parcel.vo.ts']);
 
-    const { include, thresholds } = governedCoverage('test', root);
+    const { include, exclude, thresholds } = governedCoverage('test', root);
 
     expect(include).toEqual([
       'src/contexts/*/domain/**/*.ts',
@@ -46,6 +46,8 @@ describe('governedCoverage(), what a Vitest run measures and is held to', () => 
       'src/contexts/*/presentation/**/*.ts',
       'src/contexts/*/infrastructure/**/*.ts',
     ]);
+
+    expect(exclude).toEqual(['src/contexts/**/*.declarations.ts']);
 
     expect(thresholds).toEqual({
       'src/contexts/billing/domain/**/*.ts': REFERENCE_COVERAGE.domain,
@@ -65,6 +67,7 @@ describe('governedCoverage(), what a Vitest run measures and is held to', () => 
 
     expect(governedCoverage('integration', root)).toEqual({
       include: ['src/contexts/*/infrastructure/**/*.ts'],
+      exclude: ['src/contexts/**/*.declarations.ts'],
       thresholds: { 'src/contexts/billing/infrastructure/**/*.ts': REFERENCE_COVERAGE.infrastructure },
     });
   });
@@ -130,6 +133,7 @@ describe('governedJestCoverage(), the same in the options of Jest', () => {
         '<rootDir>/src/contexts/*/application/**/*.ts',
         '<rootDir>/src/contexts/*/presentation/**/*.ts',
         '<rootDir>/src/contexts/*/infrastructure/**/*.ts',
+        '!<rootDir>/src/contexts/**/*.declarations.ts',
       ],
       coverageThreshold: {
         './src/contexts/billing/domain/': REFERENCE_COVERAGE.domain,
@@ -182,6 +186,7 @@ describe('a partial run, which DDD_TS_KIT_AFFECTED narrows to the contexts a pul
 
     expect(governedCoverage('integration', root)).toEqual({
       include: ['src/contexts/shipping/infrastructure/**/*.ts'],
+      exclude: ['src/contexts/**/*.declarations.ts'],
       thresholds: { 'src/contexts/shipping/infrastructure/**/*.ts': REFERENCE_COVERAGE.infrastructure },
     });
 

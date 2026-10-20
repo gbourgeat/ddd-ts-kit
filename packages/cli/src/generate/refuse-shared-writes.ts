@@ -14,7 +14,7 @@ export function refuseSharedWrites(ws: Workspace, config: Config, context: strin
   const local = (file: string): boolean =>
     E2E_SPEC.test(file) || (context !== undefined && file.startsWith(`${config.contextsDir}/${context}/`));
 
-  const shared = [...plan.created, ...plan.updated].filter((file) => !local(file)).sort();
+  const shared = [...plan.created, ...plan.updated, ...plan.deleted].filter((file) => !local(file)).sort();
 
   if (shared.length === 0) {
     return;

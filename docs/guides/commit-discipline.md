@@ -34,7 +34,8 @@ makes the history usable by `git bisect` and makes any single commit revertable.
 
 Several files are outputs of the sources and are committed: `openapi/openapi.yaml`,
 `docs/integration/asyncapi.yaml`, `docs/integration/event-catalog.md`, `docs/context-map.md`
-and the generated lists of each `CONTEXT.md`, the barrel `<context>.declarations.ts`,
+and the generated lists of each `CONTEXT.md`, the declarations `<context>.declarations.ts` and
+the `<folder>.declarations.ts` of each role folder,
 `.dependency-cruiser.cjs`.
 
 The rule: **the regenerated file is in the same commit as the change that caused it.**
@@ -124,8 +125,8 @@ scheduling: cancel-appointment (10 files), scheduling: domain (8 files), schedul
 A slice is a use case of a context (the folder of its command or query, its route, their
 specs), else a layer of a context, else `platform` or the top folder of the file. "Generated"
 means what a command rewrites: the lock files, the OpenAPI and AsyncAPI documents, the event
-catalog, `docs/context-map.md`, `.dependency-cruiser.cjs`, and the barrel and dependency files
-of each context. The limits are a key of `ddd-ts-kit.config.json`:
+catalog, `docs/context-map.md`, `.dependency-cruiser.cjs`, and the declarations (at the root of
+each context and in its role folders) and dependency files of each context. The limits are a key of `ddd-ts-kit.config.json`:
 
 ```json
 {
@@ -208,11 +209,12 @@ git add src/contexts/scheduling/domain/value-objects/booking-window.vo.ts
 git commit -m "refactor(scheduling): extract BookingWindow from Calendar"
 
 # then one use case with everything its generator and docs:generate wrote:
-# command and handler, route, their specs, the regenerated barrel and the contract
+# command and handler, route, their specs, the regenerated declarations of their folders and the contract
 git add src/contexts/scheduling/application/commands/reschedule-appointment/ \
         src/contexts/scheduling/presentation/http/appointments/reschedule-appointment/ \
         src/contexts/scheduling/test/unit/reschedule-appointment.*.spec.ts \
-        src/contexts/scheduling/scheduling.declarations.ts \
+        src/contexts/scheduling/application/commands/commands.declarations.ts \
+        src/contexts/scheduling/presentation/http/http.declarations.ts \
         openapi/openapi.yaml
 npx ddd-ts-kit check --commit-size --staged
 git commit -m "feat(scheduling): reschedule an appointment"
