@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:c8e5a77f6cbdfc54 -->
+<!-- translation-of: commands.md sha256:fef6a1af0d3681e7 -->
 
 # Quelle commande, quand
 
@@ -377,9 +377,11 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    dependency done; wave n: the others in earlier waves), each wave cut into batches of one
                    owner, one or two rows on one aggregate, with the worker-scope command that briefs each,
                    the batches of a wave likely to touch the same files (same aggregate in Start with, or
-                   unknown when it names none), the merge order and what runs before each merge (merge-trunk
-                   --to-land); a cycle, a dependency on an unknown id or a row without owner is reported
-                   alone, and exits 1
+                   unknown when it names none), each row a row waits for with its status (and its context
+                   and story when it is of another story or outside the context shown), the rows of other
+                   stories the planned rows wait for, not done, in a section of their own, the merge order
+                   and what runs before each merge (merge-trunk --to-land); a cycle, a dependency on an
+                   unknown id or a row without owner is reported alone, and exits 1
   story-check      whether a story or a milestone can close, <code> being the start of the ids of its rows
                    (M1 for M1.01, M1.02: the id without its last .<number>): every row of it done in
                    slices.md (the others listed with their status), and no marker of its own left

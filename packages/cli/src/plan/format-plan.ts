@@ -1,4 +1,4 @@
-import type { Batch, PlannedRow, Wave, WavePlan } from './wave-plan.js';
+import type { Batch, OtherStoryRow, PlannedRow, WaitedRow, Wave, WavePlan } from './wave-plan.js';
 
 /** Before the squash merge of each branch, its migrations get their real names and the trunk comes in from what already landed. */
 const BEFORE_EACH_MERGE =
@@ -6,7 +6,7 @@ const BEFORE_EACH_MERGE =
 
 /**
  * `plan-waves` for a reader: the problems alone when there are some, else each wave and its
- * batches, then the merge order and what to run before each merge.
+ * batches, the rows another story waits for, then the merge order and what to run before each merge.
  */
 export function formatPlan(plan: WavePlan): string {
   const scope = plan.context === null ? plan.file : `${plan.file}, context ${plan.context}`;
@@ -28,7 +28,8 @@ export function formatPlan(plan: WavePlan): string {
 
   return [
     `Waves (${scope}): ${rows} rows not done, ${plural(plan.waves.length, 'wave', 'waves')}, ${plural(batches.length, 'batch', 'batches')}`,
-    ...plan.waves.flatMap(waveLines),
+    ...plan.waves.flatMap((wave) => waveLines(wave, plan.context)),
+    ...otherStoriesLines(plan),
     `Merge order: ${plan.mergeOrder.join(', ')}`,
     BEFORE_EACH_MERGE,
   ].join('\n');
@@ -38,17 +39,17 @@ function plural(count: number, one: string, many: string): string {
   return `${count} ${count === 1 ? one : many}`;
 }
 
-function waveLines(wave: Wave): string[] {
-  return [`Wave ${wave.wave}`, ...wave.batches.flatMap(batchLines)];
+function waveLines(wave: Wave, context: string | null): string[] {
+  return [`Wave ${wave.wave}`, ...wave.batches.flatMap((batch) => batchLines(batch, context))];
 }
 
-function batchLines(batch: Batch): string[] {
+function batchLines(batch: Batch, context: string | null): string[] {
   const owner = batch.owner === batch.context ? batch.context : `${batch.owner}, ${batch.context}`;
   const aggregates = batch.aggregates.length === 0 ? 'aggregate unknown' : `aggregate ${batch.aggregates.join(', ')}`;
 
   return [
     `  ${batch.id} ${owner} (${aggregates})`,
-    ...batch.rows.map(rowLine),
+    ...batch.rows.map((row) => rowLine(row, context)),
     `    ${howLine(batch)}`,
     ...(batch.sameFiles.length === 0 ? [] : [`    likely to touch the same files as ${batch.sameFiles.join(', ')}`]),
     ...(batch.unknownOverlap.length === 0
@@ -57,11 +58,43 @@ function batchLines(batch: Batch): string[] {
   ];
 }
 
-function rowLine(row: PlannedRow): string {
+function rowLine(row: PlannedRow, context: string | null): string {
   const status = row.status === 'todo' ? '' : ` (${row.status})`;
-  const waits = row.waitingFor.length === 0 ? '' : `, after ${row.waitingFor.map((id) => `#${id}`).join(', ')}`;
+  const after = row.waitingForRows.map((waited) => waitedText(waited, row, context));
+  const waits = after.length === 0 ? '' : `, after ${after.join(', ')}`;
 
   return `    #${row.id} ${row.kind} "${row.slice}"${status}${waits}`;
+}
+
+/** `#US1.02 (todo)`; with its context and story when it is of another story or outside the context shown: `#US1.04 (todo, billing, story US1)`. */
+function waitedText(waited: WaitedRow, row: PlannedRow, context: string | null): string {
+  const elsewhere = waited.story !== row.story || (context !== null && waited.context !== context);
+
+  if (!elsewhere) {
+    return `#${waited.id} (${waited.status})`;
+  }
+
+  const story = waited.story === null ? (row.story === null ? '' : ', no story') : `, story ${waited.story}`;
+
+  return `#${waited.id} (${waited.status}, ${waited.context}${story})`;
+}
+
+/** The rows a story waits for in another, each with its status, and where it is planned. */
+function otherStoriesLines(plan: WavePlan): string[] {
+  if (plan.otherStories.length === 0) {
+    return [];
+  }
+
+  return ['Rows another story waits for, not done', ...plan.otherStories.map(otherStoryLine)];
+}
+
+/** `#US1.04 billing slice "Pay invoice" (story US1, owner billing, todo): in W2.1, waited for by #US2.05`. */
+function otherStoryLine(row: OtherStoryRow): string {
+  const story = row.story === null ? '' : `story ${row.story}, `;
+  const where = row.batch === null ? `not shown here (npx ddd-ts-kit plan-waves ${row.context})` : `in ${row.batch}`;
+  const waiting = row.waitedForBy.map((id) => `#${id}`).join(', ');
+
+  return `  #${row.id} ${row.context} ${row.kind} "${row.slice}" (${story}owner ${row.owner}, ${row.status}): ${where}, waited for by ${waiting}`;
 }
 
 function howLine(batch: Batch): string {

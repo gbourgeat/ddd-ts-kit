@@ -8,6 +8,8 @@ export interface WavePlan {
   readonly waves: readonly Wave[];
   /** The ids of the batches, by wave, then the batch more rows wait for first. */
   readonly mergeOrder: readonly string[];
+  /** The rows not done that a planned row of another story depends on, in the order of the file. */
+  readonly otherStories: readonly OtherStoryRow[];
 }
 
 export interface PlanProblem {
@@ -46,6 +48,34 @@ export interface PlannedRow {
   readonly kind: string;
   readonly slice: string;
   readonly status: string;
+  /** The story or milestone of the row, its id without the last `.<number>` (`US1` for `US1.02`); null for an id without it. */
+  readonly story: string | null;
   /** The dependencies not done yet, each in an earlier wave. */
   readonly waitingFor: readonly string[];
+  /** The rows of `waitingFor`, in its order, with where they belong and their status. */
+  readonly waitingForRows: readonly WaitedRow[];
+}
+
+/** A row not done that a planned row waits for, shown in the waves or not. */
+export interface WaitedRow {
+  readonly id: string;
+  readonly context: string;
+  readonly story: string | null;
+  /** `todo` or `in progress`. */
+  readonly status: string;
+}
+
+/** A row not done of one story that rows of another story wait for: they start once it is done. */
+export interface OtherStoryRow {
+  readonly id: string;
+  readonly context: string;
+  readonly story: string | null;
+  readonly kind: string;
+  readonly slice: string;
+  readonly owner: string;
+  readonly status: string;
+  /** The batch that holds it; null when it is not shown, being outside the context asked for. */
+  readonly batch: string | null;
+  /** The planned rows of other stories that depend on it, in the order of the file. */
+  readonly waitedForBy: readonly string[];
 }

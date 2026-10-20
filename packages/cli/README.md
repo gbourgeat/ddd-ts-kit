@@ -1161,11 +1161,22 @@ a wave the batch that the most rows wait for, directly or not, first, and what r
 merge: `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, then the squash merge. With a context, only its rows
 are shown; the rows of other contexts it waits for count in the numbering of the waves.
 
+A row says the rows it waits for, each with its status: `after #US1.02 (todo)`. A row it waits for
+that belongs to another story (its id without the last `.<number>`, `US1` for `US1.04`) or to a
+context that is not shown also gets its context and its story: `after #US1.04 (todo, billing, story
+US1)`. The rows of one story that a planned row of another story waits for are listed again, after
+the waves, under `Rows another story waits for, not done`, with their owner, their status, the
+batch that holds them (or the `plan-waves <context>` that shows them) and the rows that wait:
+before launching a wave, the conductor sees that it waits on the work of another story, and whether
+anyone carries it.
+
 A cycle in `Depends on`, a dependency on an id no row carries, a row without owner and an id two
 rows carry make the rows impossible to order: they are reported alone, without waves, and the
 command exits 1. A file without a slices table, or a context no row names, is refused. `--json`
 prints
-`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, waitingFor }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder }`.
+`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }] }`,
+`story` being `null` for a row whose id names none and `batch` `null` for a row the context asked
+for does not show.
 
 ## story-check
 

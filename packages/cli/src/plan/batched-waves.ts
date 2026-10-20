@@ -1,6 +1,7 @@
 import type { Slice } from '../progress/slice.js';
+import { storyOf } from '../story/story-of.js';
 import { aggregatesOf } from './aggregates-of.js';
-import type { Batch, Wave } from './wave-plan.js';
+import type { Batch, PlannedRow, WaitedRow, Wave } from './wave-plan.js';
 
 /** Past this many rows, an agent runs out of turns or context before its report. */
 const ROWS_PER_BATCH = 2;
@@ -9,6 +10,8 @@ const ROWS_PER_BATCH = 2;
 export interface WaveRows {
   /** The rows to show, in the order of the file. */
   readonly rows: readonly Slice[];
+  /** Every planned row, shown or not: what the shown rows wait for. */
+  readonly planned: readonly Slice[];
   /** The wave of every planned row, by id: a dependency it does not hold is done. */
   readonly numbers: ReadonlyMap<string, number>;
 }
@@ -72,19 +75,35 @@ function batchesOf(wave: number, drafts: readonly Draft[], input: WaveRows): Bat
       id: id(draft),
       owner: draft.owner,
       context: draft.context,
-      rows: draft.rows.map((row) => ({
-        id: row.id,
-        kind: row.kind,
-        slice: row.slice,
-        status: row.status,
-        waitingFor: row.dependsOn.filter((dependency) => input.numbers.has(dependency)),
-      })),
+      rows: draft.rows.map((row) => plannedRow(row, input)),
       aggregates: draft.aggregates,
       brief: briefOf(draft, drafts, id(draft)),
       sameFiles: neighbours.filter((other) => draft.aggregates.some((name) => other.aggregates.includes(name))).map(id),
       unknownOverlap: neighbours.filter(unknown).map(id),
     };
   });
+}
+
+function plannedRow(row: Slice, input: WaveRows): PlannedRow {
+  const waitingFor = row.dependsOn.filter((dependency) => input.numbers.has(dependency));
+
+  return {
+    id: row.id,
+    kind: row.kind,
+    slice: row.slice,
+    status: row.status,
+    story: storyOf(row.id) ?? null,
+    waitingFor,
+    waitingForRows: waitingFor.flatMap((id) => waitedRow(id, input.planned)),
+  };
+}
+
+function waitedRow(id: string, planned: readonly Slice[]): WaitedRow[] {
+  const row = planned.find((candidate) => candidate.id === id);
+
+  return row === undefined
+    ? []
+    : [{ id: row.id, context: row.context, story: storyOf(row.id) ?? null, status: row.status }];
 }
 
 /**

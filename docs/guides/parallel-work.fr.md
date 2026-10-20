@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:dd470c4dd4f6c5e6 -->
+<!-- translation-of: parallel-work.md sha256:1dda5124b0d730b3 -->
 
 # Travailler en parallèle sans collisions
 
@@ -548,8 +548,13 @@ risquent de toucher les mêmes fichiers : lancez-les l'un après l'autre. Quand 
 aucun agrégat, la commande dit que le chevauchement est inconnu au lieu de le deviner. Chaque lot
 d'un *worker* vient avec sa commande `worker-scope`, avec un *worktree* et une branche à lui quand
 sa vague porte un autre lot de ce contexte ; un lot du chef d'orchestre se construit sur le
-tronc. Suit l'ordre des fusions : par vague, et dans une vague d'abord le lot que le plus de
-lignes attendent. Pour deux histoires dans `billing`, un extrait :
+tronc. Chaque ligne nomme les lignes qu'elle attend avec leur statut, et avec leur contexte et
+leur histoire quand elles appartiennent à une autre histoire ou à un contexte qui n'est pas
+montré. Les lignes d'une histoire qu'une autre histoire attend sont listées à nouveau après les
+vagues, avec leur propriétaire, leur statut et le lot qui les porte : avant de lancer une vague,
+vérifiez que quelqu'un les porte, sinon la vague attend un travail que personne ne fait. Suit
+l'ordre des fusions : par vague, et dans une vague d'abord le lot que le plus de lignes
+attendent. Pour deux histoires dans `billing`, un extrait :
 
 ```text
 Waves (docs/architecture/slices.md): 7 rows not done, 2 waves, 6 batches
@@ -565,9 +570,11 @@ Wave 1
   ...
 Wave 2
   W2.3 billing (aggregate unknown)
-    #US2.03 slice "Overdue invoices", after #US1.02
+    #US2.03 slice "Overdue invoices", after #US1.02 (todo, billing, story US1)
     npx ddd-ts-kit worker-scope billing --base origin/main --rows US2.03 --worktree .worktrees/billing-w2.3 --branch build/billing-w2.3
     unknown whether it touches the files of W2.1, W2.2: no aggregate named
+Rows another story waits for, not done
+  #US1.02 billing slice "Issue invoice" (story US1, owner billing, todo): in W1.1, waited for by #US2.03
 Merge order: W1.1, W1.2, W1.3, W2.1, W2.2, W2.3
 Before each merge: `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, then the squash merge
 ```

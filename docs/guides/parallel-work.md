@@ -506,8 +506,13 @@ batches of one context in one wave that name the same aggregate are likely to to
 files: run them one after the other. When a batch names no aggregate, the command says the
 overlap is unknown instead of guessing. Each batch of a worker comes with its `worker-scope`
 command, with a worktree and a branch of its own when its wave holds another batch of that
-context; a batch of the conductor is built on the trunk. The merge order follows: by wave, and in
-a wave the batch the most rows wait for first. For two stories in `billing`, an excerpt:
+context; a batch of the conductor is built on the trunk. Each row names the rows it waits for
+with their status, and with their context and story when they belong to another story or to a
+context not shown. The rows of one story that another story waits for are listed again after the
+waves, with their owner, their status and the batch that holds them: before launching a wave,
+check that someone carries them, or the wave waits on work nobody does. The merge order follows:
+by wave, and in a wave the batch the most rows wait for first. For two stories in `billing`, an
+excerpt:
 
 ```text
 Waves (docs/architecture/slices.md): 7 rows not done, 2 waves, 6 batches
@@ -523,9 +528,11 @@ Wave 1
   ...
 Wave 2
   W2.3 billing (aggregate unknown)
-    #US2.03 slice "Overdue invoices", after #US1.02
+    #US2.03 slice "Overdue invoices", after #US1.02 (todo, billing, story US1)
     npx ddd-ts-kit worker-scope billing --base origin/main --rows US2.03 --worktree .worktrees/billing-w2.3 --branch build/billing-w2.3
     unknown whether it touches the files of W2.1, W2.2: no aggregate named
+Rows another story waits for, not done
+  #US1.02 billing slice "Issue invoice" (story US1, owner billing, todo): in W1.1, waited for by #US2.03
 Merge order: W1.1, W1.2, W1.3, W2.1, W2.2, W2.3
 Before each merge: `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, then the squash merge
 ```
