@@ -1,3 +1,3 @@
 **The GitHub workflows `init` writes run on `ubuntu-26.04`, pinned instead of `ubuntu-latest`.** GitHub moves `ubuntu-latest` from Ubuntu 24.04 to 26.04 between 2026-10-19 and 2026-11-19; the whole pipeline of the kit, generated projects on npm and pnpm included, was run on 26.04 first. With the label pinned, a new image of GitHub reaches a project when its team changes the label, not on a day GitHub chooses. The kit runs its own workflows on the same label.
 
-To move: `npx ddd-ts-kit init --force` writes the new workflows; or replace `runs-on: ubuntu-latest` by `runs-on: ubuntu-26.04` in `.github/workflows/`.
+To move: replace `runs-on: ubuntu-latest` by `runs-on: ubuntu-26.04` in `.github/workflows/`. Do not run `init --force` for this: it writes every file of the platform again from the templates, losing what the generators added there (a grant of a role, the settings of a job, a policy), and replaces a workflow the team changed.
