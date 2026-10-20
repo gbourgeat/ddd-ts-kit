@@ -205,19 +205,20 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    migrations, slices.md, plan.md and lockfiles left out, is one commit of the trunk, on this
                    branch or a branch it shares commits with; else the base recorded for the worker when its
                    lines are on the trunk; else git merge-base). Settles derived files and drizzle-kit meta
-                   (trunk side), generated regions of CONTEXT.md and the context map (trunk side), conflicts
-                   inside generated registries (lines of both sides), slices.md row by row (the furthest
-                   status), the stored-events lock by key, the lockfile (trunk side, installed again when
-                   the branch changed package.json); the rest is left in a merge in progress git
-                   understands, with what each side did (exit 1). Then, or on --continue: the drizzle
-                   migrations of both sides replayed, on --to-land the working migrations renamed (knex,
-                   Prisma, TypeORM; stop when both sides change one table), decision records renumbered,
-                   regenerate, verify-merge on the uncommitted result (an error stops; --accept-lost records
-                   a Lost-Accepted: trailer), and the commit of the merge's paths only, with the trailers
-                   Merge-Base:, Trunk: and Landed:; any other changed path blocks it. --dry-run previews,
-                   --abort undoes; refused (exit 2) on a dirty tree, another operation in progress, no
-                   committer known to git, an unknown trunk, or a git older than 2.40 with a base git
-                   would not compute
+                   (trunk side), the package.json of a client (trunk side, at the higher of both versions;
+                   left to you when one is not a semantic version), generated regions of CONTEXT.md and the
+                   context map (trunk side), conflicts inside generated registries (lines of both sides),
+                   slices.md row by row (the furthest status), the stored-events lock by key, the lockfile
+                   (trunk side, installed again when the branch changed package.json); the rest is left in a
+                   merge in progress git understands, with what each side did (exit 1). Then, or on
+                   --continue: the drizzle migrations of both sides replayed, on --to-land the working
+                   migrations renamed (knex, Prisma, TypeORM; stop when both sides change one table), decision
+                   records renumbered, regenerate, verify-merge on the uncommitted result (an error stops;
+                   --accept-lost records a Lost-Accepted: trailer), and the commit of the merge's paths only,
+                   with the trailers Merge-Base:, Trunk: and Landed:; any other changed path blocks it.
+                   --dry-run previews, --abort undoes; refused (exit 2) on a dirty tree, another operation in
+                   progress, no committer known to git, an unknown trunk, or a git older than 2.40 with a base
+                   git would not compute
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over

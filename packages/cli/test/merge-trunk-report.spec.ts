@@ -4,6 +4,7 @@ import { formatMergeReport } from '../src/merge/format-merge-report.js';
 import type { MergeReport } from '../src/merge/merge-report.js';
 import { migrationsAt } from '../src/merge/migrations-at.js';
 import { NEXT_STEPS } from '../src/merge/next-steps.js';
+import { read } from './helpers.js';
 import { commitFiles, mergeTrunk, onBranch, trunkRepository } from './support/trunk-history.js';
 
 const TRUNK = 'a'.repeat(40);
@@ -132,6 +133,26 @@ describe('merge-trunk: the migrations of a commit, and a derived file the trunk 
     expect(migrationsAt(root, 'HEAD', { folder: 'prisma/migrations', directories: true })).toEqual([
       { name: '20261015101500_add_invoices', file: 'prisma/migrations/20261015101500_add_invoices/migration.sql' },
     ]);
+  });
+
+  it('keeps the version of a client the branch raised when the trunk changed its package.json too', () => {
+    const manifest = (version: string, description: string): string =>
+      `${JSON.stringify({ name: '@shop/billing-client', version, description }, null, 2)}\n`;
+
+    const file = 'clients/billing/package.json';
+    const root = trunkRepository({ [file]: manifest('1.2.0', 'Typed client of Billing.') });
+
+    onBranch(root, 'build/billing');
+    commitFiles(root, { [file]: manifest('1.3.0', 'Typed client of Billing.') }, 'chore(billing): client 1.3.0');
+    onBranch(root, 'main');
+    commitFiles(root, { [file]: manifest('1.2.1', 'Typed client of Billing, with refunds.') }, 'feat: refunds (#2)');
+    onBranch(root, 'build/billing');
+
+    const how =
+      'client package.json: trunk side, version 1.3.0 kept, the higher of 1.3.0 on this branch and 1.2.1 on the trunk';
+
+    expect(mergeTrunk(root).stdout).toContain(`automatic:\n  ${file}  ${how}`);
+    expect(read(root, file)).toBe(manifest('1.3.0', 'Typed client of Billing, with refunds.'));
   });
 
   it('deletes a derived file the trunk deleted while the branch changed it', () => {

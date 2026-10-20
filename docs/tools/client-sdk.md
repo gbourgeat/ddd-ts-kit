@@ -132,7 +132,10 @@ stray `api.yaml` in a contract that is not split) are refused with both names.
 
 Every file but package.json is rewritten by each run; package.json keeps its version and every
 key the team adds, and only the name, the entry points, the build script and
-`publishConfig.access` follow the config.
+`publishConfig.access` follow the config. When a branch raised the version and the trunk changed
+the same package.json, `merge-trunk` keeps the trunk's file at the higher of the two versions,
+and says so in its report; a version that is not a semantic version on either side is left to
+you as a conflict.
 
 The command also wires the project, and running it again changes nothing:
 

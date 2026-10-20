@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:2bc2b00425819f5c -->
+<!-- translation-of: commands.md sha256:0a26db479ce80d65 -->
 
 # Quelle commande, quand
 
@@ -136,7 +136,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 | Commande ou *skill* | Fait | Quand | Produit | Ensuite |
 |---|---|---|---|---|
 | `/ddd-ts-kit:quality-gate`, `npm run verify` | chaque porte du *pipeline*, corrigée à la racine | avant d'ouvrir la *pull request* ou la *merge request* | une porte verte | la *request* |
-| `npx ddd-ts-kit merge-trunk` | apporte le tronc dans la branche en un seul *commit* de fusion calculé à partir du *diff* propre de la branche (depuis l'endroit où elle est arrivée après un *squash*) : fichiers dérivés, régions et registres générés, lignes de `slices.md`, méta de drizzle, fichier de verrouillage et verrou des événements stockés réglés, migrations rejouées (renommées avec `--to-land`), décisions renumérotées, régénération, puis `verify-merge` sur le résultat | un *worker* : pour apporter le tronc, jamais `git merge` seul ; le chef d'orchestre : `--to-land --cwd <worktree>` juste avant la fusion en *squash* | un *commit* de fusion avec les *trailers* `Merge-Base:`, `Trunk:` et `Landed:` ; ou une fusion en cours avec chaque bloc laissé, ce que chaque côté y a fait, code de sortie 1 | résoudre chaque bloc, `git add`, `merge-trunk --continue` (`--accept-lost` pour une suppression voulue, `--abort` pour défaire), puis `npm run verify` |
+| `npx ddd-ts-kit merge-trunk` | apporte le tronc dans la branche en un seul *commit* de fusion calculé à partir du *diff* propre de la branche (depuis l'endroit où elle est arrivée après un *squash*) : fichiers dérivés, package.json de chaque client (à la plus haute des deux versions), régions et registres générés, lignes de `slices.md`, méta de drizzle, fichier de verrouillage et verrou des événements stockés réglés, migrations rejouées (renommées avec `--to-land`), décisions renumérotées, régénération, puis `verify-merge` sur le résultat | un *worker* : pour apporter le tronc, jamais `git merge` seul ; le chef d'orchestre : `--to-land --cwd <worktree>` juste avant la fusion en *squash* | un *commit* de fusion avec les *trailers* `Merge-Base:`, `Trunk:` et `Landed:` ; ou une fusion en cours avec chaque bloc laissé, ce que chaque côté y a fait, code de sortie 1 | résoudre chaque bloc, `git add`, `merge-trunk --continue` (`--accept-lost` pour une suppression voulue, `--abort` pour défaire), puis `npm run verify` |
 | `npx ddd-ts-kit verify-merge` | ce que les fusions de la branche ont perdu, lu dans git seul : une ligne ajoutée par un côté, une tranche terminée, un test, une *spec*, une migration, un marqueur de conflit | merge-trunk la lance avant son *commit* ; après une fusion faite autrement, ou un *squash* avec `--theirs <head>` ; le *hook* de *pre-push* (`--warn`) et `verify-slice` la lancent aussi, en avertissement dans cette version : une version mineure ultérieure bloquera | les constats de chaque fusion, avec `file:line` et le côté qui les portait ; rien sans fusion ; code de sortie 1 sur une erreur, 0 avec `--warn` | rétablir chacun depuis son côté, ou consigner une suppression voulue par un *trailer* `Lost-Accepted: <file:line>` |
 | `npx ddd-ts-kit affected --base origin/main` | les contextes qu'un changement atteint à travers la carte des contextes | dans le *pipeline* ; en local pour voir ce qu'il lancera | des filtres pour les tests et le *linter* | le *pipeline* |
 | agent `architecture-reviewer` | une revue en lecture seule du *diff* au regard des règles | avant de fusionner une tranche | des constats avec fichier et ligne | les corrections, puis la fusion |
@@ -501,19 +501,20 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    migrations, slices.md, plan.md and lockfiles left out, is one commit of the trunk, on this
                    branch or a branch it shares commits with; else the base recorded for the worker when its
                    lines are on the trunk; else git merge-base). Settles derived files and drizzle-kit meta
-                   (trunk side), generated regions of CONTEXT.md and the context map (trunk side), conflicts
-                   inside generated registries (lines of both sides), slices.md row by row (the furthest
-                   status), the stored-events lock by key, the lockfile (trunk side, installed again when
-                   the branch changed package.json); the rest is left in a merge in progress git
-                   understands, with what each side did (exit 1). Then, or on --continue: the drizzle
-                   migrations of both sides replayed, on --to-land the working migrations renamed (knex,
-                   Prisma, TypeORM; stop when both sides change one table), decision records renumbered,
-                   regenerate, verify-merge on the uncommitted result (an error stops; --accept-lost records
-                   a Lost-Accepted: trailer), and the commit of the merge's paths only, with the trailers
-                   Merge-Base:, Trunk: and Landed:; any other changed path blocks it. --dry-run previews,
-                   --abort undoes; refused (exit 2) on a dirty tree, another operation in progress, no
-                   committer known to git, an unknown trunk, or a git older than 2.40 with a base git
-                   would not compute
+                   (trunk side), the package.json of a client (trunk side, at the higher of both versions;
+                   left to you when one is not a semantic version), generated regions of CONTEXT.md and the
+                   context map (trunk side), conflicts inside generated registries (lines of both sides),
+                   slices.md row by row (the furthest status), the stored-events lock by key, the lockfile
+                   (trunk side, installed again when the branch changed package.json); the rest is left in a
+                   merge in progress git understands, with what each side did (exit 1). Then, or on
+                   --continue: the drizzle migrations of both sides replayed, on --to-land the working
+                   migrations renamed (knex, Prisma, TypeORM; stop when both sides change one table), decision
+                   records renumbered, regenerate, verify-merge on the uncommitted result (an error stops;
+                   --accept-lost records a Lost-Accepted: trailer), and the commit of the merge's paths only,
+                   with the trailers Merge-Base:, Trunk: and Landed:; any other changed path blocks it.
+                   --dry-run previews, --abort undoes; refused (exit 2) on a dirty tree, another operation in
+                   progress, no committer known to git, an unknown trunk, or a git older than 2.40 with a base
+                   git would not compute
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over

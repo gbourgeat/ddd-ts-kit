@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:6b1d83f06dfcd584 -->
+<!-- translation-of: parallel-work.md sha256:f6da5a8110d16a69 -->
 
 # Travailler en parallèle sans collisions
 
@@ -96,7 +96,10 @@ sources.
 
 `npx ddd-ts-kit merge-trunk` apporte le tronc dans la branche en un seul *commit* de fusion et ne
 rebase jamais. Il règle seul ce qu'un outil écrit : un fichier dérivé prend le côté du tronc et
-est réécrit par `npm run regenerate` à la fin, les régions générées de `CONTEXT.md` et de la carte
+est réécrit par `npm run regenerate` à la fin, le `package.json` d'un client prend le côté du
+tronc à la plus haute des deux versions (la version est celle de l'équipe, et `regenerate` garde
+celle qu'il trouve ; une version qui n'est pas une version sémantique vous est laissée), les
+régions générées de `CONTEXT.md` et de la carte
 des contextes prennent le côté du tronc, un conflit à l'intérieur d'un registre généré
 (`// ddd-ts-kit:<region>`) garde les lignes des deux côtés (une ligne retirée par un côté reste
 retirée), `slices.md` se fusionne ligne par ligne (chaque statut le plus avancé des deux côtés),
