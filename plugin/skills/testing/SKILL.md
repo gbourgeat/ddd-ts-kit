@@ -145,6 +145,12 @@ declaration, with `await application.publish([event])`, then awaits `settled()`;
 cluster a global setup initialised once per run (`test/support/test-database-template.ts`), and
 creates its tables there.
 
+A spec past 350 lines (`clean/file-size`) is split by behaviour into parts named after it:
+`test/e2e/place-order-refusals.e2e.spec.ts` beside `test/e2e/place-order.e2e.spec.ts`. With a
+journey across use cases, `test/e2e/journey-<name>.e2e.spec.ts`, it is the only end-to-end spec
+the guard lets you create by hand. What the specs of one context share (signing a person in, a
+world) goes in `test/e2e/support/<context>/`, never copied into each spec.
+
 ## Acceptance of a story, before its code
 
 The criteria are written first, in `docs/architecture/stories/<story>.md` under

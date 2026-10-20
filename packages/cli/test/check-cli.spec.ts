@@ -106,6 +106,22 @@ describe('check', () => {
     expect(fixes).toContainEqual([HANDLER, expect.stringContaining('Split it by responsibility')]);
   });
 
+  it('names how an end-to-end spec past the size limit splits into parts named after it', () => {
+    const long = projectWithImpureAggregate('check-e2e-size');
+    const spec = 'test/e2e/issue-invoice.e2e.spec.ts';
+    const padding = Array.from({ length: 360 }, (_, line) => `export const line${line} = ${line};`).join('\n');
+
+    write(long, spec, `${padding}\n`);
+
+    const fixes = checkJsonOf(cli(long, 'check', '--rule', 'clean/file-size', '--json')).violations.map((violation) => [
+      violation.file,
+      violation.fix,
+    ]);
+
+    expect(fixes).toContainEqual([spec, expect.stringContaining('test/e2e/<use-case>-<behaviour>.e2e.spec.ts')]);
+    expect(fixes).toContainEqual([spec, expect.stringContaining('test/e2e/support/<context>/')]);
+  });
+
   it('finds the project root from a sub-directory', () => {
     expect(cli(`${root}/src/contexts/billing`, 'check', ...LAYERS, '--json').json()).toMatchObject({ errors: 2 });
   });

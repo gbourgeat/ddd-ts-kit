@@ -415,6 +415,27 @@ test('every generated role of the canonical tree names its generator', () => {
   assert.equal(run('pre-write', write(join(root, 'test/e2e/journey-tenancy.e2e.spec.ts'))).output, undefined);
 });
 
+test('a long end-to-end spec is split by behaviour into parts named after it', () => {
+  const root = project();
+  const part = join(root, 'test/e2e/place-order-refusals.e2e.spec.ts');
+  const alone = run('pre-write', write(part));
+  assert.equal(decision(alone), 'deny');
+  assert.match(reason(alone), /generate e2e /);
+  assert.match(
+    reason(alone),
+    /test\/e2e\/<use-case>-<behaviour>\.e2e\.spec\.ts beside test\/e2e\/<use-case>\.e2e\.spec\.ts/,
+  );
+  assert.match(reason(alone), /test\/e2e\/journey-<name>\.e2e\.spec\.ts/);
+  put(root, 'test/e2e/place-order.e2e.spec.ts');
+  assert.equal(run('pre-write', write(part)).output, undefined);
+  assert.equal(
+    run('pre-write', write(join(root, 'test/e2e/place-order-refusals-stock.e2e.spec.ts'))).output,
+    undefined,
+  );
+  // A name that only starts like the spec, without the hyphen, is not a part of it.
+  assert.equal(decision(run('pre-write', write(join(root, 'test/e2e/place-orders.e2e.spec.ts')))), 'deny');
+});
+
 test('a file of tokens is refused: a port is an abstract class', () => {
   const root = project();
   const result = run('pre-write', write(join(root, 'src/contexts/ordering/application/ports/ordering.ports.ts')));
@@ -466,6 +487,18 @@ test('a context worker writes inside its bounded context and its end-to-end spec
   assert.equal(decision(neighbour), 'deny');
   assert.match(reason(neighbour), /another bounded context/);
   assert.match(reason(neighbour), /report the need to the conductor/);
+});
+
+test('a context worker keeps the support of its end-to-end specs in a folder named after its context', () => {
+  const root = project();
+  const agent = worker(root);
+  for (const path of ['test/e2e/support/ordering/order-world.ts', 'test/e2e/support/ordering/sign-in-buyer.ts']) {
+    assert.equal(run('pre-write', write(join(root, path), agent)).output, undefined, path);
+  }
+  const shared = run('pre-write', write(join(root, 'test/e2e/support/billing/invoice-world.ts'), agent));
+  assert.equal(decision(shared), 'deny');
+  assert.match(reason(shared), /test\/e2e\/support\/ordering\//);
+  assert.match(reason(shared), /shared file .* conductor/);
 });
 
 test('a context worker never writes a shared file', () => {

@@ -15,7 +15,9 @@ Run every command from the worktree (`cd <path> && ...` or `--cwd <path>`).
 Without node_modules: `npm ci`, never an install that names a package.
 
 Scope
-- You may write: src/contexts/<context>/** and test/e2e/<use-case>.e2e.spec.ts of your slices.
+- You may write: src/contexts/<context>/**, test/e2e/<use-case>.e2e.spec.ts of your slices (split by behaviour into
+  test/e2e/<use-case>-<behaviour>.e2e.spec.ts when one grows long), and their helpers and worlds in
+  test/e2e/support/<context>/.
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
   report the need, do not work around it. The shell writes inside your scope only, as the editor tools do:

@@ -88,10 +88,12 @@ function stepLines({ context, trunk }: WorkerPlace): string[] {
   ];
 }
 
-function scopeLines({ config, generators }: WorkerPlace, directory: string): string[] {
+function scopeLines({ config, context, generators }: WorkerPlace, directory: string): string[] {
   return [
     'Scope',
-    `- You may write: ${directory}/** and test/e2e/<use-case>.e2e.spec.ts of your slices.`,
+    `- You may write: ${directory}/**, test/e2e/<use-case>.e2e.spec.ts of your slices (split by behaviour into`,
+    `  test/e2e/<use-case>-<behaviour>.e2e.spec.ts when one grows long), and their helpers and worlds in`,
+    `  test/e2e/support/${context}/.`,
     `- You may not write anything else. Shared files (config, ${config.platformDir}, ${config.sourceRoot}/main.ts,`,
     '  package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:',
     '  report the need, do not work around it. The shell writes inside your scope only, as the editor tools do:',

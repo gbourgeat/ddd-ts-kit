@@ -118,6 +118,8 @@ const READING_PROGRAMS = new Set([
 
 // A journey crosses use cases, and often contexts: no single route generates it, so it is written by hand.
 const JOURNEY = /^test\/e2e\/journey-[^/]+\.e2e\.spec\.ts$/;
+// An end-to-end spec at the top of test/e2e/: the one of a use case, a part of it, or a journey.
+const E2E_SPEC = /^test\/e2e\/([^/]+)\.e2e\.spec\.ts$/;
 
 // Changing these is a decision about the rules themselves: the project owner confirms it.
 const GOVERNED_FILES = [
@@ -922,7 +924,8 @@ function workerScopeReason(project, file, input) {
   const path = projectPath(project, file);
   if (
     path.startsWith(`${project.contextsDir}/${context}/`) ||
-    /^test\/e2e\/[^/]+\.e2e\.spec\.ts$/.test(path) ||
+    E2E_SPEC.test(path) ||
+    path.startsWith(`test/e2e/support/${context}/`) ||
     path === WORKER_REPORT ||
     isWorkingMigration(project, path) ||
     isOwnDecisionRecord(project, path)
@@ -933,7 +936,7 @@ function workerScopeReason(project, file, input) {
     ? 'belongs to another bounded context, which has its own worker'
     : 'is a shared file (config, composition root, platform, generated documents, migrations, dependencies) that only the conductor or a generator changes';
 
-  return `You build the context "${context}": writes are limited to ${project.contextsDir}/${context}/ and its end-to-end specs. ${path} ${owner}. ${REPORT_TO_CONDUCTOR}`;
+  return `You build the context "${context}": writes are limited to ${project.contextsDir}/${context}/, its end-to-end specs and their support in test/e2e/support/${context}/. ${path} ${owner}. ${REPORT_TO_CONDUCTOR}`;
 }
 
 // A record the worker generated and has not committed yet; the records of the trunk are not its to rewrite.
@@ -1245,6 +1248,7 @@ function handWrittenRoleReason(project, file) {
   if (
     existsSync(file) ||
     JOURNEY.test(path) ||
+    isPartOfSpec(project, path) ||
     !(insideContexts(project, path) || path.startsWith('test/e2e/') || path.startsWith('test/acceptance/'))
   ) {
     return undefined;
@@ -1252,10 +1256,24 @@ function handWrittenRoleReason(project, file) {
   if (/\.ports\.ts$/.test(path)) {
     return `${path} would be a file of tokens. A port is an abstract class and its own injection token, one per \`*.port.ts\`: \`npx ddd-ts-kit generate port <context> <Name> --json\`.`;
   }
+  if (E2E_SPEC.test(path)) {
+    return `${path} is a new end-to-end spec. The spec of a use case is generated: \`npx ddd-ts-kit generate e2e <context> <UseCase> --json\`. Two are written by hand: a part of a spec split by behaviour, named after the spec it comes from (test/e2e/<use-case>-<behaviour>.e2e.spec.ts beside test/e2e/<use-case>.e2e.spec.ts), and a journey across use cases (test/e2e/journey-<name>.e2e.spec.ts).`;
+  }
   const generator = GENERATORS.find(([suffix]) => suffix.test(path));
   return generator
     ? `${path} is a new file of a generated role. Create it with \`npx ddd-ts-kit generate ${generator[1]} --json\`, then fill the TODO(domain) markers.`
     : undefined;
+}
+
+// A long end-to-end spec is split by behaviour: each part is named after the spec it comes from,
+// `<use-case>-<behaviour>.e2e.spec.ts` beside `<use-case>.e2e.spec.ts`, which no generator can write.
+function isPartOfSpec(project, path) {
+  const words = E2E_SPEC.exec(path)?.[1].split('-') ?? [];
+  return words
+    .slice(1)
+    .some((_, index) =>
+      existsSync(join(project.root, 'test/e2e', `${words.slice(0, index + 1).join('-')}.e2e.spec.ts`)),
+    );
 }
 
 function governedFileReason(project, file) {

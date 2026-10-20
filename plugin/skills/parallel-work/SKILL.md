@@ -121,8 +121,8 @@ every tool, never nested in another worktree) on the branch
 writes `.ddd-ts-kit/worker.json` (its context, rows, base and branch) in it,
 runs the clean install of the project in a worktree it creates (`--no-install` leaves it to
 you; a note then says what to run), and prints the briefing of that worker. With that file,
-the guard refuses any write of a `context-builder` agent outside `src/contexts/<context>/` and
-its end-to-end specs (in an acceptance spec, anything but removing `pending(...)`), any generator that writes a shared file, any dependency change, and any
+the guard refuses any write of a `context-builder` agent outside `src/contexts/<context>/`,
+its end-to-end specs and their support in `test/e2e/support/<context>/` (in an acceptance spec, anything but removing `pending(...)`), any generator that writes a shared file, any dependency change, and any
 shell command that writes outside the scope (`sed -i`, `>`, `tee`, `cp`, `mv`, `rm`, or a path
 only the shell knows); inline code (`node -e`, a heredoc) runs, and a file it changed outside the
 scope stops the worker until it is put back; `npx prettier` and a bare `npx biome` are refused too.

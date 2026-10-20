@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:3dd85eb18590656a -->
+<!-- translation-of: ARCHITECTURE.md sha256:5bfe9e1816734d2d -->
 
 # Référence de l'architecture
 
@@ -210,6 +210,11 @@ plusieurs *specs* a la place de son genre, un *fake*, un *builder* ou un monde
 (`test/e2e/`), les *specs* d'acceptation des *stories* (`test/acceptance/`, chacune avec son
 verrou), le test d'architecture (`test/architecture/`) et la mise en place globale des
 exécutions de test (`test/support/`) vivent à la racine du projet, hors des contextes.
+Une *spec* de bout en bout porte le nom du cas d'usage dont elle conduit la route
+(`<use-case>.e2e.spec.ts`, générée). Une *spec* découpée par comportement garde ce nom dans
+chaque partie (`<use-case>-<behaviour>.e2e.spec.ts`, à côté d'elle), et un parcours qui
+traverse plusieurs cas d'usage est `journey-<name>.e2e.spec.ts`. Leurs aides vivent dans `test/e2e/support/`,
+celles que partagent les *specs* d'un contexte dans `test/e2e/support/<context>/`.
 
 **Un concept sans rôle à lui a quand même sa place.** Le domaine n'a pas de répertoire
 `types/`, `functions/` ni `utils/` : chacun accueillerait des concepts que personne n'a nommés.

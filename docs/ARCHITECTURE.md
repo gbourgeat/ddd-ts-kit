@@ -200,6 +200,11 @@ specs only: a helper several specs share has the place of its kind, a fake, a bu
 (`test/helper-placed`). End-to-end specs (`test/e2e/`), the acceptance specs of the stories
 (`test/acceptance/`, each with its lock), the architecture test (`test/architecture/`) and the
 global setup of the test runs (`test/support/`) live at the project root, outside the contexts.
+An end-to-end spec is named after the use case whose route it drives (`<use-case>.e2e.spec.ts`,
+generated). A spec split by behaviour keeps that name in each part
+(`<use-case>-<behaviour>.e2e.spec.ts`, beside it), and a journey across use cases is
+`journey-<name>.e2e.spec.ts`. Their helpers live in
+`test/e2e/support/`, those the specs of one context share in `test/e2e/support/<context>/`.
 
 **A concept with no role of its own still has a home.** The domain has no `types/`,
 `functions/` or `utils/` directory: each would hold concepts nobody named. A type alone or a

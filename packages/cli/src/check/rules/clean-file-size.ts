@@ -19,6 +19,10 @@ const SPLIT_BY_RESPONSIBILITY =
 const SPLIT_AN_AGGREGATE =
   'Move a decision out of the aggregate: a domain service of domain/services/ that takes the state (or a value of it) and returns the new state and its events, which the aggregate applies in its intention method; a value object for fields that travel together, with their rules; an entity for a part with its own identity. Never a public method that sets the state from outside, and never a shortened comment, test or written rule.';
 
+/** An end-to-end spec splits into parts named after it: a generator cannot write them, the guard lets that name through. */
+const SPLIT_AN_E2E_SPEC =
+  'Split it by behaviour into parts named after it, beside it: test/e2e/<use-case>-<behaviour>.e2e.spec.ts next to test/e2e/<use-case>.e2e.spec.ts (the guard lets that name be written by hand), each part with its own describe. Move what the parts share (signing a person in, a world) to test/e2e/support/<context>/ instead of copying it.';
+
 export const cleanFileSize: Rule = {
   id: 'clean/file-size',
   description: `A file is at most ${MAX_FILE_LINES} lines, sources and tests alike, under the source root, \`test/\` (end-to-end specs included) and \`scripts/\`: past that it holds more than one responsibility.`,
@@ -44,9 +48,17 @@ function tooLong(file: SourceFile): Finding[] {
     {
       line: MAX_FILE_LINES + 1,
       message: `The file is ${lines} lines long (limit ${MAX_FILE_LINES}).`,
-      fix: file.path.endsWith('.aggregate.ts') ? SPLIT_AN_AGGREGATE : SPLIT_BY_RESPONSIBILITY,
+      fix: fixFor(file.path),
     },
   ];
+}
+
+function fixFor(path: string): string {
+  if (path.endsWith('.aggregate.ts')) {
+    return SPLIT_AN_AGGREGATE;
+  }
+
+  return path.endsWith('.e2e.spec.ts') ? SPLIT_AN_E2E_SPEC : SPLIT_BY_RESPONSIBILITY;
 }
 
 /** A file written by a tool: under a directory named `generated`, or the barrel or dependency file of a context. */
