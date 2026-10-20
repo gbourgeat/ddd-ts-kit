@@ -1,0 +1,35 @@
+import { injected } from '@ddd-ts-kit/kernel/declarations';
+import { AddMemberHandler } from '@/contexts/identity/application/commands/add-member/add-member.handler';
+import { ExpireDelegationsHandler } from '@/contexts/identity/application/commands/expire-delegations/expire-delegations.handler';
+import { GrantDelegationHandler } from '@/contexts/identity/application/commands/grant-delegation/grant-delegation.handler';
+import { OpenPracticeHandler } from '@/contexts/identity/application/commands/open-practice/open-practice.handler';
+import { RegisterPersonHandler } from '@/contexts/identity/application/commands/register-person/register-person.handler';
+import { RemoveMemberHandler } from '@/contexts/identity/application/commands/remove-member/remove-member.handler';
+import { RevokeDelegationHandler } from '@/contexts/identity/application/commands/revoke-delegation/revoke-delegation.handler';
+import { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository';
+import { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository';
+import { PracticeRepository } from '@/contexts/identity/domain/repositories/practice.repository';
+import { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
+
+export * from '@/contexts/identity/application/commands/add-member/add-member.command';
+export * from '@/contexts/identity/application/commands/add-member/add-member.handler';
+export * from '@/contexts/identity/application/commands/expire-delegations/expire-delegations.command';
+export * from '@/contexts/identity/application/commands/expire-delegations/expire-delegations.handler';
+export * from '@/contexts/identity/application/commands/grant-delegation/grant-delegation.command';
+export * from '@/contexts/identity/application/commands/grant-delegation/grant-delegation.handler';
+export * from '@/contexts/identity/application/commands/open-practice/open-practice.command';
+export * from '@/contexts/identity/application/commands/open-practice/open-practice.handler';
+export * from '@/contexts/identity/application/commands/register-person/register-person.command';
+export * from '@/contexts/identity/application/commands/register-person/register-person.handler';
+export * from '@/contexts/identity/application/commands/remove-member/remove-member.command';
+export * from '@/contexts/identity/application/commands/remove-member/remove-member.handler';
+export * from '@/contexts/identity/application/commands/revoke-delegation/revoke-delegation.command';
+export * from '@/contexts/identity/application/commands/revoke-delegation/revoke-delegation.handler';
+
+injected(AddMemberHandler, [PracticeRepository, PersonRepository, Clock]);
+injected(ExpireDelegationsHandler, [DelegationRepository]);
+injected(GrantDelegationHandler, [DelegationRepository, PracticeRepository, IdGenerator, Clock]);
+injected(OpenPracticeHandler, [PracticeRepository, PersonRepository, IdGenerator, Clock]);
+injected(RegisterPersonHandler, [PersonRepository, Clock]);
+injected(RemoveMemberHandler, [PracticeRepository, Clock]);
+injected(RevokeDelegationHandler, [DelegationRepository, Clock]);
