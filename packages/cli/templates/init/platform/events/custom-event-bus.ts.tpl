@@ -13,7 +13,7 @@ import {
  */
 // TODO(platform): publish with a confirmation of the broker (resolve only once it took every event, reject otherwise) and consume from one durable queue per consumer, acknowledging after the handler succeeded.
 export class CustomEventBus implements EventBus {
-  private readonly delivery = new InMemoryEventBus();
+  private readonly delivery = new InMemoryEventBus({ failures: 'as-thrown' });
 
   publish(events: readonly IntegrationEvent[]): Promise<void> {
     return this.delivery.publish(events);

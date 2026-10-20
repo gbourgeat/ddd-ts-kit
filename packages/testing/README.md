@@ -587,6 +587,15 @@ green when the saved order cannot be found again; the fake does neither. The
 [`test/no-mocks`](../eslint-plugin/docs/rules/test-no-mocks.md) rule reports `vi.fn`,
 `vi.mock` and their kin in the tests of a context.
 
+### When a handler of an event fails
+
+`eventBus.publish` runs every handler of the event, then rejects with an `AggregateError` of
+the failures. `createTestBuses({ eventBusFailures: 'as-thrown' })` rejects with the failure of a
+single handler as it is, so a spec asserts its class or its `code`
+(`rejects.toMatchObject({ code: 'CONCURRENCY_CONFLICT' })`); several failures still come
+together in an `AggregateError`. A project created by `ddd-ts-kit init` sets it in its worlds,
+as its application does on its in-process bus; it becomes the default in a later minor version.
+
 ### Who is acting
 
 `createTestBuses()` also gives `executionScope` and `actorContext`, the two doubles of the

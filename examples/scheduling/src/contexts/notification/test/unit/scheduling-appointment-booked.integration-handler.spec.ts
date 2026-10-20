@@ -99,7 +99,7 @@ describe('When scheduling publishes scheduling.appointment.booked', () => {
           { id: 'event-2', occurredAt: new Date('2026-01-02T08:00:00.000Z') },
         ),
       ]),
-    ).rejects.toMatchObject({ errors: [{ code: 'CONTACT_UNKNOWN' }] });
+    ).rejects.toMatchObject({ code: 'CONTACT_UNKNOWN' });
 
     expect(notificationRepository.count()).toBe(0);
   });
