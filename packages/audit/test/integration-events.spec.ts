@@ -147,7 +147,7 @@ describe('auditIntegrationEvents when the entry cannot be written or committed',
 
     subscribeAll(bus, auditIntegrationEvents(flaky, { ...options, registry }));
 
-    await expect(bus.publish([cancelled('evt-1')])).rejects.toThrow(AggregateError);
+    await expect(bus.publish([cancelled('evt-1')])).rejects.toThrow('The audit store is unreachable');
     await bus.publish([cancelled('evt-1')]);
 
     expect(committed.entries.map((entry) => entry.causationId)).toEqual(['evt-1']);
@@ -162,7 +162,7 @@ describe('auditIntegrationEvents when the entry cannot be written or committed',
     subscribeAll(bus, auditIntegrationEvents(trail, { ...options, registry, unitOfWork }));
 
     unitOfWork.failOnCommit = true;
-    await expect(bus.publish([cancelled('evt-1')])).rejects.toThrow(AggregateError);
+    await expect(bus.publish([cancelled('evt-1')])).rejects.toThrow('The commit was refused by the database');
     expect(committed.entries).toEqual([]);
 
     unitOfWork.failOnCommit = false;

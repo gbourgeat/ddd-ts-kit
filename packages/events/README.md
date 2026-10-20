@@ -579,8 +579,9 @@ not guarantee.
   (the in-memory signal, or `LISTEN/NOTIFY` on PostgreSQL) and keep a long interval as the
   safety net.
 - **Publisher requirements.** None beyond the port. The in-memory bus runs the handlers inside
-  `publish` and rejects when one fails: the relay then retries the record, so the retry
-  policy of the consumers IS the backoff of the relay.
+  `publish` and rejects when one fails, with the error of that handler as it is (the relay
+  stores its `code`), or with an `AggregateError` when several failed: the relay then retries
+  the record, so the retry policy of the consumers IS the backoff of the relay.
 - **Consumer requirements.** `consume` with the processed-event store and the unit of work of
   the consuming context. A redelivery runs every handler of the type again, so every one of
   them deduplicates.

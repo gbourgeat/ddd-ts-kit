@@ -7,7 +7,9 @@ import type { IntegrationEventSubscriber } from '../../application/ports/integra
 /**
  * Reference provider for IntegrationEvents, for tests, local dev and single-process apps.
  * Delivery is at-least-once-shaped: handlers are awaited in order, a failing handler
- * does not stop the others, and failures are collected and rethrown together.
+ * does not stop the others, and failures are collected. One failure is rethrown as it is, so
+ * its class and its `code` (`CONCURRENCY_CONFLICT`, answered 409) reach the caller; several
+ * are rethrown together in an `AggregateError`.
  */
 export class InMemoryEventBus implements IntegrationEventPublisher, IntegrationEventSubscriber {
   /** Read by what observes the bus from outside: the name of the transport. */
@@ -32,8 +34,12 @@ export class InMemoryEventBus implements IntegrationEventPublisher, IntegrationE
       }
     }
 
-    if (failures.length > 0) {
-      throw new AggregateError(failures, `${failures.length} event handler(s) failed`);
+    if (failures.length === 1) {
+      throw failures[0];
+    }
+
+    if (failures.length > 1) {
+      throw new AggregateError(failures, `${failures.length} event handlers failed`);
     }
   }
 

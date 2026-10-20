@@ -157,17 +157,37 @@ describe('InMemoryEventBus', () => {
     expect(bus.published).toHaveLength(1);
   });
 
-  it('runs every handler even when one fails, then reports all failures', async () => {
+  it('runs every handler even when one fails, then rethrows that failure as it is', async () => {
     const bus = new InMemoryEventBus();
+    const conflict = Object.assign(new Error('the cart changed meanwhile'), { code: 'CONCURRENCY_CONFLICT' });
     let ran = false;
 
     bus.subscribe('shop.cart.checked-out', async () => {
-      throw new Error('first');
+      throw conflict;
     });
 
     bus.subscribe('shop.cart.checked-out', async () => void (ran = true));
-    await expect(bus.publish([event('e1')])).rejects.toBeInstanceOf(AggregateError);
+    await expect(bus.publish([event('e1')])).rejects.toBe(conflict);
     expect(ran).toBe(true);
+  });
+
+  it('rethrows several failures together, in the order the handlers ran', async () => {
+    const bus = new InMemoryEventBus();
+    const first = new Error('first');
+    const second = new Error('second');
+
+    bus.subscribe('shop.cart.checked-out', async () => {
+      throw first;
+    });
+
+    bus.subscribe('shop.cart.checked-out', async () => {
+      throw second;
+    });
+
+    const failure = await bus.publish([event('e1'), event('e2')]).catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(AggregateError);
+    expect(failure).toMatchObject({ errors: [first, second, first, second], message: '4 event handlers failed' });
   });
 
   it('processes a redelivered event once per consumer', async () => {
