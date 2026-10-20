@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:436e54fde486201b -->
+<!-- translation-of: README.md sha256:f0e0bee55dc9a5c2 -->
 
 # @ddd-ts-kit/testing
 
@@ -1003,6 +1003,8 @@ export default defineConfig(({ mode }) => ({
 - `include` : les couches de chaque contexte qu'exécute le lancement, y compris les fichiers qu'aucune
   *spec* ne charge. `--mode unit` mesure `domain`, `application` et `presentation`, `--mode integration`
   mesure `infrastructure`, tout autre mode les quatre.
+- `exclude` : les `<folder>.declarations.ts` que le générateur écrit dans les dossiers de rôle d'un
+  contexte déclaré, dérivés de l'arborescence et jamais chargés par une *spec* d'adaptateur.
 - `thresholds` : une entrée par contexte et par couche qui contient un fichier source, si bien qu'un
   contexte ne peut pas se cacher derrière un autre et qu'une couche vide n'est tenue à rien jusqu'à son
   premier fichier.
