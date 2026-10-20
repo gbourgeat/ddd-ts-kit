@@ -23,6 +23,10 @@ ruleTester.run('clean-file-size', cleanFileSize, {
       ...at(`${BILLING}/domain/aggregates/invoice.aggregate.ts`, lines(351)),
       errors: [{ messageId: 'aggregateTooLong', data: { count: 351, limit: 350 } }],
     },
+    {
+      ...at('test/e2e/issue-invoice.e2e.spec.ts', lines(351)),
+      errors: [{ messageId: 'e2eSpecTooLong', data: { count: 351, limit: 350 } }],
+    },
   ],
 });
 

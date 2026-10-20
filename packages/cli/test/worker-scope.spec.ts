@@ -106,7 +106,9 @@ describe('worker-scope', () => {
     expect(briefing).toMatch(/^Worktree: \/.*\.worktrees\/billing {3}Branch: build\/billing {3}Trunk: main$/m);
 
     expect(briefing).toContain(
-      '- You may write: src/contexts/billing/** and test/e2e/<use-case>.e2e.spec.ts of your slices.',
+      '- You may write: src/contexts/billing/**, test/e2e/<use-case>.e2e.spec.ts of your slices (split by behaviour into\n' +
+        '  test/e2e/<use-case>-<behaviour>.e2e.spec.ts when one grows long), and their helpers and worlds in\n' +
+        '  test/e2e/support/billing/.',
     );
 
     expect(briefing).toContain('`npx ddd-ts-kit verify-slice billing --since main`');

@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:ab0b8535d4d880b7 -->
+<!-- translation-of: testing-strategy.md sha256:2069ac195441aa5e -->
 
 # Stratégie de test
 
@@ -406,6 +406,14 @@ Les mêmes *builders* servent à chaque niveau. Les tests de bout en bout créen
 publique, utilisent des données générées avec une graine affichée en cas d'échec pour qu'une
 exécution en échec puisse être rejouée, et vérifient ce qu'un client observe (réponses, événements
 publiés), jamais directement la base de données.
+`generate e2e` nomme une *spec* d'après le cas d'usage dont elle conduit la route,
+`test/e2e/issue-invoice.e2e.spec.ts`. Une *spec* qui dépasse la limite de taille
+(`clean/file-size`, 350 lignes) est découpée par comportement en parties qui portent son nom,
+`test/e2e/issue-invoice-refusals.e2e.spec.ts`, et un parcours qui traverse plusieurs cas d'usage
+est `test/e2e/journey-<name>.e2e.spec.ts` : la garde du *plugin* laisse écrire ces deux-là à la
+main, et refuse toute autre nouvelle *spec* de bout en bout. Ce que partagent les *specs* d'un
+contexte (connecter une personne, un monde) vit dans `test/e2e/support/<context>/`, au lieu
+d'être copié dans chacune.
 
 Les *specs* d'adaptateur et de bout en bout d'un projet généré s'exécutent sur PostgreSQL dans le
 processus (PGlite). Avec Vitest, une mise en place globale (`test/support/test-database-template.ts`)

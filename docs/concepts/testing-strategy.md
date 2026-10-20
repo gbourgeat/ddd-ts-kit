@@ -390,6 +390,13 @@ each context alone to prove it stays extractable.
 The same builders serve every level. End-to-end tests create their state through the public
 API, use generated data with a seed printed on failure so a failing run can be replayed, and
 assert what a client observes (responses, published events), never the database directly.
+`generate e2e` names a spec after the use case whose route it drives,
+`test/e2e/issue-invoice.e2e.spec.ts`. A spec that grows past the size limit (`clean/file-size`,
+350 lines) is split by behaviour into parts named after it,
+`test/e2e/issue-invoice-refusals.e2e.spec.ts`, and a journey that crosses use cases is
+`test/e2e/journey-<name>.e2e.spec.ts`: the guard of the plugin lets these two be written by hand,
+and refuses any other new end-to-end spec. What the specs of one context share (signing a
+person in, a world) lives in `test/e2e/support/<context>/`, instead of being copied into each.
 
 Adapter and end-to-end specs of a generated project run on PostgreSQL in process (PGlite). With
 Vitest, a global setup (`test/support/test-database-template.ts`) starts it once per run and saves

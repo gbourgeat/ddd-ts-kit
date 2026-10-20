@@ -39,7 +39,9 @@ install of its package manager), never an install that names a package.
 
 ## Your scope, held by the guard
 
-- You write only `src/contexts/<your context>/**` and the end-to-end specs of your slices. In
+- You write only `src/contexts/<your context>/**`, the end-to-end specs of your slices (a long
+  one split by behaviour into `test/e2e/<use-case>-<behaviour>.e2e.spec.ts`) and the helpers and
+  worlds they share in `test/e2e/support/<your context>/`, never copied into each spec. In
   the acceptance spec of the story (`test/acceptance/`), you only remove `pending(...)` around a
   scenario your row now satisfies: the guard refuses any other change, and `npx ddd-ts-kit
   acceptance --lock` to you. A scenario that seems wrong is a need of your report, with the

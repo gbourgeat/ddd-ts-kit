@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:1dda5124b0d730b3 -->
+<!-- translation-of: parallel-work.md sha256:6b1d83f06dfcd584 -->
 
 # Travailler en parallèle sans collisions
 
@@ -308,7 +308,9 @@ Run every command from the worktree (`cd .worktrees/notification/ && ...` or `--
 Without node_modules: `npm ci`, never an install that names a package.
 
 Scope
-- You may write: src/contexts/notification/** and test/e2e/<use-case>.e2e.spec.ts of your slices.
+- You may write: src/contexts/notification/**, test/e2e/<use-case>.e2e.spec.ts of your slices (split by behaviour into
+  test/e2e/<use-case>-<behaviour>.e2e.spec.ts when one grows long), and their helpers and worlds in
+  test/e2e/support/notification/.
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
   report the need, do not work around it. The shell writes inside your scope only, as the editor tools do:
@@ -416,7 +418,8 @@ modification d'un fichier généré (les trois contrats, le *barrel*, `.dependen
 demande confirmation avant un changement des fichiers gouvernés (la configuration, celle du lint,
 des tests, du compilateur et du *pipeline*). Pour son agent `context-builder`, il va plus loin :
 avec un `.ddd-ts-kit/worker.json` dans le *worktree*, une écriture hors de
-`src/contexts/<context>/` et des *specs* de bout en bout est refusée (dans la *spec* d'acceptation
+`src/contexts/<context>/`, des *specs* de bout en bout et de leur support dans
+`test/e2e/support/<context>/` est refusée (dans la *spec* d'acceptation
 d'une *story*, tout sauf retirer `pending(...)` autour d'un scénario ; la verrouiller est refusé
 aussi), de même qu'un générateur
 qui écrit des fichiers partagés et un changement de dépendance, où que se trouvent ses options
