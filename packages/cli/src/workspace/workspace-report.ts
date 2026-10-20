@@ -4,6 +4,8 @@ import type { TodoLocation } from './todo-location.js';
 export interface WorkspaceReport {
   readonly created: string[];
   readonly updated: string[];
+  /** Derived files removed because nothing derives them any more. */
+  readonly deleted: string[];
   readonly skipped: string[];
   readonly next: string[];
   readonly todos: TodoLocation[];

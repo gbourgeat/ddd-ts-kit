@@ -17,13 +17,14 @@ export function refreshDeclarations(start: string, tell: (line: string) => void)
 
     refreshBarrels(ws, readConfig(root).config);
 
-    const { created, updated, notes } = ws.commit(false);
+    const { created, updated, deleted, notes } = ws.commit(false);
     const rewritten = [...created, ...updated];
 
     rewritten.forEach((file) => tell(`ddd-ts-kit: rewrote ${file} from the role files and their constructors`));
+    deleted.forEach((file) => tell(`ddd-ts-kit: deleted ${file}: its folder holds no declared class any more`));
     notes.forEach((note) => tell(`ddd-ts-kit: ${note}`));
 
-    return rewritten;
+    return [...rewritten, ...deleted];
   } catch (error) {
     tell(
       `ddd-ts-kit: the generated declarations were not refreshed: ${error instanceof Error ? error.message : String(error)}`,

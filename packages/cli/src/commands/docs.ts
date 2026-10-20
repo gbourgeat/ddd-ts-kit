@@ -50,7 +50,7 @@ interface DocsRun {
 /** `docs --check`: the generated files that would change, and the stored-event versions not recorded yet or recorded by 0.82.0 or earlier; 0 when there is none. */
 function reportCheck(io: Io, args: Arguments, { ws, config }: DocsRun): number {
   const report = ws.commit(true);
-  const stale = [...report.created, ...report.updated];
+  const stale = [...report.created, ...report.updated, ...report.deleted];
   const drift = Object.fromEntries(stale.flatMap((file) => driftOf(ws.root, ws, file)));
   const recording = args.flag('stored-events');
   const unrecorded = recording ? [] : unrecordedStoredEvents(ws, config, contextsOnDisk(ws, config));
@@ -120,10 +120,14 @@ const GENERATED_CONTEXT_FILE = /\.(?:declarations|dependencies)\.ts$/;
 
 /** What makes a generated file of a context stale, in words: the role file it misses, or the class whose constructor changed. */
 function driftOf(root: string, ws: Workspace, file: string): [string, string][] {
-  const expected = GENERATED_CONTEXT_FILE.test(file) ? ws.read(file) : undefined;
+  if (!GENERATED_CONTEXT_FILE.test(file)) {
+    return [];
+  }
+
+  const expected = ws.read(file);
 
   if (expected === undefined) {
-    return [];
+    return [[file, 'it is no longer generated: its folder holds no declared class']];
   }
 
   const written = fs.existsSync(path.join(root, file)) ? fs.readFileSync(path.join(root, file), 'utf8') : '';
