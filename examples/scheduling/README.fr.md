@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:113326608b721b04 -->
+<!-- translation-of: README.md sha256:1a4e0378a6e7571b -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -564,12 +564,20 @@ Le registre de présence d'un patient est gardé sous forme de ses événements 
   *compare-and-set* du point de reprise laisse l'un d'eux appliquer chaque lot ; les autres
   sautent ce tour (une ligne de débogage, pas une erreur). Un déclenchement qui arrive pendant
   qu'un tour s'exécute est sauté.
-- **Un effacement.** `DATABASE_URL=<url> npm run erase:patient -- <patientId>` détruit la clé avec
-  laquelle les paroles du patient ont été scellées, puis reconstruit chaque projection alimentée par
-  le store (`src/platform/events/erase-data-subject.ts`, `scripts/erase-patient.ts`) : le flux et
-  les *snapshots* affichent `[erased]` immédiatement, et l'historique aussi une fois reconstruit.
-  Une reconstruction n'arrête jamais le rattrapage, donc l'API peut continuer de tourner. Le
-  relancer achève un effacement dont la reconstruction a échoué.
+- **Un effacement.** `DATABASE_URL=<url> npm run erase:patient -- <patientId> [<operatorId>]`
+  détruit la clé avec laquelle les paroles du patient ont été scellées, écrit l'effacement dans le
+  journal d'audit, puis reconstruit chaque projection alimentée par le store
+  (`src/platform/events/erase-data-subject.ts`, `src/platform/events/erase-on-the-command-line.ts`,
+  `scripts/erase-patient.ts`) : le flux et les *snapshots* affichent `[erased]` immédiatement, et
+  l'historique aussi une fois reconstruit. Une reconstruction n'arrête jamais le rattrapage, donc
+  l'API peut continuer de tourner. Le relancer achève un effacement dont l'entrée ou la
+  reconstruction a échoué.
+- **La preuve d'un effacement.** Le stockage des clés lié par la plateforme est décoré par
+  `auditedSubjectKeys` (`src/platform/audit/create-audit.ts`), donc chaque effacement, depuis ce
+  script ou depuis un cas d'usage, écrit une entrée : action `personal-data:erase`, le patient
+  comme ressource `data-subject`, `keyDestroyed: true` ou `false`, l'opérateur nommé (ou
+  `system:erase-patient`) comme acteur, origine `cli`. Sa date plus la rétention des sauvegardes
+  des clés donne le jour où l'effacement est complet.
 - **Les clés.** `PostgresSubjectKeyStore`, dans le schéma `scheduling` de l'unique base, à côté des
   événements, pour que l'exemple tourne avec un seul PostgreSQL. Une sauvegarde de cette base prise
   avant un effacement détient encore la clé et les paroles scellées jusqu'à son expiration. Un
