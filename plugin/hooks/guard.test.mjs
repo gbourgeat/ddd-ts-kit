@@ -805,6 +805,112 @@ test('a session of a story starts on its phase and ends on its report, refused o
   assert.equal(run('stop', stopping).output, undefined);
 });
 
+// The worktree of a fix: its story file with its statement and the spec that proves it, no row, no review.
+const FIX_SPEC = 'src/contexts/ordering/test/unit/order.aggregate.spec.ts';
+const FIX_TEST =
+  "import { it } from 'vitest';\n\nit('#FIX-412 refuses to cancel a shipped order', () => {\n  expect(cancel('order-1')).toBe('refused');\n});\n";
+
+function fixWorktree() {
+  const root = project();
+  put(
+    root,
+    '.ddd-ts-kit/story.json',
+    JSON.stringify({ story: 'FIX-412', base: 'main', branch: 'fix/fix-412', kind: 'fix' }),
+  );
+  put(
+    root,
+    'docs/architecture/stories/FIX-412.md',
+    `# FIX-412\n\n## Statement\n\nA shipped order is cancelled.\n\n## Regression\n\n- ${FIX_SPEC}\n`,
+  );
+  return root;
+}
+
+function lockTheFix(root) {
+  put(root, FIX_SPEC, FIX_TEST);
+  const locked = spawnSync('node', [cli, 'acceptance', 'FIX-412', '--lock'], { cwd: root, encoding: 'utf8' });
+  assert.equal(locked.status, 0, locked.stderr);
+}
+
+test('in the worktree of a fix, the code waits for the regression spec locked, which no one then edits', () => {
+  const root = fixWorktree();
+  const code = join(root, 'src/contexts/ordering/domain/order-number.ts');
+  const refused = run('pre-write', write(code));
+  assert.equal(decision(refused), 'deny');
+  assert.match(reason(refused), /The code of fix FIX-412 waits for its regression spec, locked/);
+  assert.match(reason(refused), /skill ddd-ts-kit:fix/);
+  assert.equal(
+    decision(run('pre-bash', bash(root, 'npx ddd-ts-kit generate command ordering PlaceOrder --public'))),
+    'deny',
+  );
+  assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit generate builder ordering Order')).output, undefined);
+  assert.equal(run('pre-write', write(join(root, FIX_SPEC))).output, undefined);
+  assert.match(
+    run('session', { cwd: root }).output.hookSpecificOutput.additionalContext,
+    /Fix FIX-412 \(skill ddd-ts-kit:fix\)/,
+  );
+});
+
+test('once the regression spec of a fix is locked, the code opens and no one edits the spec', () => {
+  const root = fixWorktree();
+  const code = join(root, 'src/contexts/ordering/domain/order-number.ts');
+  lockTheFix(root);
+  assert.equal(run('pre-write', write(code)).output, undefined);
+  assert.equal(
+    run('pre-bash', bash(root, 'npx ddd-ts-kit generate command ordering PlaceOrder --public')).output,
+    undefined,
+  );
+  for (const writer of [
+    {},
+    { agent_type: 'ddd-ts-kit:context-builder' },
+    { agent_type: 'ddd-ts-kit:domain-test-writer' },
+  ]) {
+    const held = run('pre-write', edit(join(root, FIX_SPEC), { from: "'refused'", to: "'cancelled'" }, writer));
+    assert.equal(decision(held), 'deny');
+    assert.match(reason(held), /is a regression spec of fix FIX-412, locked: it is the proof of the fix/);
+    assert.match(reason(held), /acceptance-judge agent with the statement of the fix/);
+  }
+  assert.equal(
+    decision(run('pre-write', write(join(root, FIX_SPEC), { agent_type: 'ddd-ts-kit:acceptance-judge' }))),
+    'deny',
+  );
+  assert.equal(
+    run('pre-write', write(join(root, 'src/contexts/ordering/test/unit/order-number.spec.ts'))).output,
+    undefined,
+  );
+  assert.equal(decision(run('pre-write', write(join(root, 'test/acceptance/fix-412.acceptance.lock.json')))), 'deny');
+});
+
+test('the shell runs and versions a locked regression spec of a fix, and never rewrites it', () => {
+  const root = fixWorktree();
+  lockTheFix(root);
+  for (const command of [
+    `npm test -- ${FIX_SPEC}`,
+    `npx vitest run ${FIX_SPEC}`,
+    `node node_modules/.bin/vitest run ${FIX_SPEC}`,
+    `git add ${FIX_SPEC}`,
+    `cat ${FIX_SPEC}`,
+    `npm test -- order.aggregate.spec.ts`,
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
+  }
+  for (const command of [
+    `sed -i s/refused/cancelled/ ${FIX_SPEC}`,
+    `echo "" > ${FIX_SPEC}`,
+    `rm ${FIX_SPEC}`,
+    `cp /tmp/order.aggregate.spec.ts ${FIX_SPEC}`,
+    `node -e "require('fs').writeFileSync('${FIX_SPEC}', '')"`,
+    `npm test -- ${FIX_SPEC} > ${FIX_SPEC}`,
+  ]) {
+    const held = run('pre-bash', bash(root, command, { agent_type: 'ddd-ts-kit:context-builder' }));
+    assert.equal(decision(held), 'deny', command);
+    assert.match(reason(held), /A command may read it, version it or run it/);
+  }
+  assert.equal(
+    run('pre-bash', bash(root, `sed -i s/a/b/ src/contexts/ordering/test/unit/other.spec.ts`)).output,
+    undefined,
+  );
+});
+
 test('a sub-agent only removes pending(...) from an acceptance scenario, by edit or by rewrite', () => {
   const root = project();
   const agent = worker(root);

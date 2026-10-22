@@ -1196,6 +1196,69 @@ prints
 `story` being `null` for a row whose id names none and `batch` `null` for a row the context asked
 for does not show.
 
+## acceptance
+
+```
+ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock]
+```
+
+The acceptance scenarios of each story (`test/acceptance/<story>.acceptance.spec.ts`, written by
+`generate acceptance <story>`) against its rows in `docs/architecture/slices.md` and the criteria
+of `docs/architecture/stories/<story>.md`: the rows and criteria each scenario names in its title
+(`#US5.02 AC1 ...`), the scenarios left to write (`it.todo`), those wrapped in `pending(...)` until
+their code is built, and what is inconsistent. `--gate written` holds a story before the code of
+its rows: every slice row and criterion has a written scenario, and the acceptance is locked;
+`--gate passing` before it closes: none is pending either. `--lock` writes
+`test/acceptance/<story>.acceptance.lock.json`, the fingerprint of each criterion and of each
+scenario (`pending(...)`, layout and comments aside); after it, a scenario changes only with its
+criterion, and a criterion, or a scenario whose criteria stayed, only with a `Verdict: amend` of
+the `acceptance-judge` agent on that very version (`test/acceptance/verdicts/*.md`), which the lock
+keeps as an amendment for the owner to validate. It never runs a test. Exits 1 while a gate is not
+met, or, without one, on an inconsistency or a drift from the lock. `--json` prints
+`{ gate, met, stories: [{ story, file?, specification?, rows, criteria, scenarios, regression?, lock?, amendments, problems }] }`.
+
+### The regression specs of a fix
+
+A fix is a story file whose `## Regression` section lists the spec files that prove it, one path
+per item, relative to the project root, with or without backticks:
+
+```md
+# FIX-412 A cancelled order frees its slot
+
+## Statement
+
+A customer cancels an order after it was shipped, and the order is still marked cancelled.
+
+## Regression
+
+- src/contexts/ordering/test/unit/order.aggregate.spec.ts
+- test/unit/cancel-order.handler.spec.ts
+```
+
+Such a story needs no row of `slices.md` and no acceptance spec: `acceptance FIX-412` reads each
+listed file and fingerprints each of its `it` or `test` as it fingerprints a scenario. `--gate
+written` holds that each listed file exists and holds at least one test (an `it.todo` is still to
+write; a test the runner puts aside is reported whatever the gate), and that the lock is written;
+`--lock` records the tests under `regression` of `test/acceptance/fix-412.acceptance.lock.json`
+(`{ file, title, fingerprint }` each) and refuses while a listed spec is missing or holds no test.
+A locked test changed or removed is reported as a changed scenario is, as the subject
+`test "<title>" of <file>` with its fingerprint, until the `acceptance-judge` agent lets that
+version through, the `## Statement` of the fix being the criterion; a new test only needs locking
+again. `--gate passing` holds that each locked test is there, unchanged and no longer wrapped in
+`pending(...)`; the test runner, not this command, proves it passes. The guard of the plugin reads
+the same lock in the worktree of a fix (`"kind": "fix"` in `.ddd-ts-kit/story.json`): it opens the
+code once the lock exists and refuses every edit of a locked spec (skill `fix`,
+[story workflow](../../docs/guides/story-workflow.md)).
+
+```
+$ npx ddd-ts-kit acceptance FIX-412 --gate written
+FIX-412  fix, 2 regression specs, locked
+  specification docs/architecture/stories/FIX-412.md: no acceptance criterion stated
+  src/contexts/ordering/test/unit/order.aggregate.spec.ts: 1 test, 1 active
+  test/unit/cancel-order.handler.spec.ts: 1 test, 1 active
+  gate written: met
+```
+
 ## story-check
 
 ```

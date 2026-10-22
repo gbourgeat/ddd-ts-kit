@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:3c9fbb7b0179e54e -->
+<!-- translation-of: coding-agents.md sha256:01f729cc7ade6b19 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -13,7 +13,7 @@ les trois agents :
 | Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, puis `copilot plugin install ddd-ts-kit@ddd-ts-kit` | par son nom, `start` |
 | Agent cloud de Copilot, VS Code | déclaré par le `.github/copilot/settings.json` qu'écrit `init` : l'agent cloud l'installe, VS Code le recommande | par son nom, `start` |
 
-Vingt-trois skills, dans l'ordre où un projet les rencontre :
+Vingt-quatre skills, dans l'ordre où un projet les rencontre :
 
 | Skill | Usage |
 |---|---|
@@ -26,6 +26,7 @@ Vingt-trois skills, dans l'ordre où un projet les rencontre :
 | `plan-slices` | le travail en tranches verticales par contexte, ordonnées, avec leurs commandes de génération |
 | `parallel-work` | répartir les tranches entre plusieurs agents ou personnes sans collision |
 | `story` | mener une *user story* de ses questions à une *pull request* verte en une session, une *story* par terminal (lancée par l'utilisateur ; [parcours d'une story](story-workflow.fr.md)) |
+| `fix` | réparer un défaut dans son propre *worktree*, sa *spec* de régression écrite et verrouillée avant tout code (lancée par l'utilisateur ; [un correctif](story-workflow.fr.md#un-correctif--la-spec-de-régression-dabord-verrouillée)) |
 | `scaffold` | un fichier de n'importe quel rôle, à partir d'un template |
 | `use-case` | une fonctionnalité de bout en bout, test d'abord |
 | `integration-event` | faire collaborer deux contextes par un événement versionné |
@@ -80,7 +81,10 @@ pas sa revue de conception et que l'acceptation n'est pas écrite et verrouillé
 la *story* au démarrage de session avec ses croisements avec les autres *stories* ouvertes, dit
 une fois par fichier quand la session écrit un fichier qu'une autre *story* ouverte change, et
 refuse une fois de finir la session avant son rapport
-([parcours d'une story](story-workflow.fr.md)). Aucun *hook* ne tourne sur
+([parcours d'une story](story-workflow.fr.md)). Dans le *worktree* d'un correctif
+(`"kind": "fix"` dans ce fichier), il ouvre le code dès que la *spec* de régression est
+verrouillée, et refuse toute modification d'une *spec* verrouillée, par les outils d'édition
+comme par le *shell*, à la session comme à ses sous-agents. Aucun *hook* ne tourne sur
 chaque appel d'outil : une session ordinaire ne lance pas plus de processus qu'avant. En cas de
 panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
 configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le faire taire.

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7f7fe3fe2a615f20 -->
+<!-- translation-of: README.md sha256:c57162db7046bd8e -->
 
 # ddd-ts-kit
 
@@ -1259,6 +1259,74 @@ de tranches, ou un contexte qu'aucune ligne ne nomme, est refusé. `--json` affi
 `{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }] }`,
 `story` valant `null` pour une ligne dont l'identifiant n'en nomme aucune, et `batch` `null` pour
 une ligne que le contexte demandé ne montre pas.
+
+## acceptance
+
+```
+ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock]
+```
+
+Les scénarios d'acceptation de chaque story (`test/acceptance/<story>.acceptance.spec.ts`, écrits
+par `generate acceptance <story>`) face à ses lignes de `docs/architecture/slices.md` et aux
+critères de `docs/architecture/stories/<story>.md` : les lignes et les critères que chaque
+scénario nomme dans son titre (`#US5.02 AC1 ...`), les scénarios restant à écrire (`it.todo`),
+ceux enveloppés dans `pending(...)` jusqu'à ce que leur code soit construit, et ce qui est
+incohérent. `--gate written` tient une story avant le code de ses lignes : chaque ligne `slice`
+et chaque critère a un scénario écrit, et l'acceptation est verrouillée ; `--gate passing` avant
+sa clôture : aucun n'est plus en attente. `--lock` écrit
+`test/acceptance/<story>.acceptance.lock.json`, l'empreinte de chaque critère et de chaque
+scénario (`pending(...)`, mise en page et commentaires mis à part) ; ensuite un scénario ne
+change qu'avec son critère, et un critère, ou un scénario dont les critères n'ont pas bougé,
+seulement avec un `Verdict: amend` de l'agent `acceptance-judge` sur cette version précise
+(`test/acceptance/verdicts/*.md`), que le verrou garde comme amendement à valider par le
+responsable du projet. Elle ne lance jamais de test. Sort en 1 tant qu'une porte n'est pas
+franchie, ou, sans porte, sur une incohérence ou une dérive depuis le verrou. `--json` affiche
+`{ gate, met, stories: [{ story, file?, specification?, rows, criteria, scenarios, regression?, lock?, amendments, problems }] }`.
+
+### Les specs de régression d'un correctif
+
+Un correctif est un fichier de story dont la section `## Regression` liste les fichiers de spec
+qui le prouvent, un chemin par élément, relatif à la racine du projet, avec ou sans accents
+graves :
+
+```md
+# FIX-412 A cancelled order frees its slot
+
+## Statement
+
+A customer cancels an order after it was shipped, and the order is still marked cancelled.
+
+## Regression
+
+- src/contexts/ordering/test/unit/order.aggregate.spec.ts
+- test/unit/cancel-order.handler.spec.ts
+```
+
+Une telle story n'a besoin d'aucune ligne de `slices.md` ni de spec d'acceptation :
+`acceptance FIX-412` lit chaque fichier listé et prend l'empreinte de chacun de ses `it` ou
+`test` comme celle d'un scénario. `--gate written` tient que chaque fichier listé existe et
+contient au moins un test (un `it.todo` reste à écrire ; un test que le lanceur met de côté est
+signalé quelle que soit la porte), et que le verrou est écrit ; `--lock` enregistre les tests
+sous `regression` de `test/acceptance/fix-412.acceptance.lock.json` (`{ file, title, fingerprint }`
+chacun) et refuse tant qu'une spec listée manque ou ne contient aucun test. Un test verrouillé
+changé ou supprimé est signalé comme l'est un scénario changé, sous le sujet
+`test "<title>" of <file>` avec son empreinte, jusqu'à ce que l'agent `acceptance-judge` laisse
+passer cette version, le `## Statement` du correctif étant le critère ; un nouveau test n'a
+besoin que d'un nouveau verrou. `--gate passing` tient que chaque test verrouillé est là,
+inchangé et plus enveloppé dans `pending(...)` ; c'est le lanceur de tests, pas cette commande,
+qui prouve qu'il passe. La garde du plugin lit le même verrou dans le *worktree* d'un correctif
+(`"kind": "fix"` dans `.ddd-ts-kit/story.json`) : elle ouvre le code dès que le verrou existe
+et refuse toute modification d'une spec verrouillée (skill `fix`,
+[parcours d'une story](../../docs/guides/story-workflow.fr.md)).
+
+```
+$ npx ddd-ts-kit acceptance FIX-412 --gate written
+FIX-412  fix, 2 regression specs, locked
+  specification docs/architecture/stories/FIX-412.md: no acceptance criterion stated
+  src/contexts/ordering/test/unit/order.aggregate.spec.ts: 1 test, 1 active
+  test/unit/cancel-order.handler.spec.ts: 1 test, 1 active
+  gate written: met
+```
 
 ## story-check
 

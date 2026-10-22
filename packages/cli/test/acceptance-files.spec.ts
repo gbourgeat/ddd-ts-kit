@@ -29,6 +29,7 @@ describe('the lock of a story, read back', () => {
     const lock = {
       criteria: { AC1: 'abc', AC2: 3 },
       scenarios: [{ title: 7, criteria: ['AC1', 2], fingerprint: 'f1' }, 'not a record'],
+      regression: [{ file: 'test/unit/order.spec.ts', title: 'refuses', fingerprint: 'f2' }, { file: 3 }],
       amendments: 'not a list',
     };
 
@@ -36,6 +37,10 @@ describe('the lock of a story, read back', () => {
       story: 'US5',
       criteria: { AC1: 'abc' },
       scenarios: [{ title: '', criteria: ['AC1'], fingerprint: 'f1' }],
+      regression: [
+        { file: 'test/unit/order.spec.ts', title: 'refuses', fingerprint: 'f2' },
+        { file: '', title: '', fingerprint: '' },
+      ],
       amendments: [],
     });
 

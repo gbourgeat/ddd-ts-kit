@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:bfde44bfd1abfc20 -->
+<!-- translation-of: commands.md sha256:269c5549fe456e24 -->
 
 # Quelle commande, quand
 
@@ -413,7 +413,10 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    criteria did not, without a verdict "amend" of the acceptance-judge agent on that very
                    version (test/acceptance/verdicts/*.md, lines Story:, Subject:, Fingerprint:,
                    Verdict:, Reason:); a refusal wins; the verdicts become amendments of the lock,
-                   listed for the owner to validate
+                   listed for the owner to validate. A fix is a story file with a ## Regression section
+                   listing the spec files that prove it (- test/unit/<name>.spec.ts): held to the tests of
+                   those files instead of rows and scenarios, locked and judged the same way, the statement
+                   of the fix being the criterion
   worker-scope     a git worktree on the branch build/<context> (by default .worktrees/<context>, see worktree),
                    cut from --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>
