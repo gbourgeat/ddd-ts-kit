@@ -101,6 +101,19 @@ describe('doctor, on the git hooks', () => {
     expect(cli(root, 'doctor', '--strict').code).toBe(1);
   });
 
+  it('names a lefthook.yml without the secrets job, and how to take it, failing --strict', () => {
+    write(root, 'lefthook.yml', read(root, 'lefthook.yml').replace('    - name: secrets\n', '    - name: leaks\n'));
+
+    const result = cli(root, 'doctor');
+
+    expect(result.stdout).toContain(
+      '  hook lefthook.yml secrets: missing (the pre-commit job `secrets`: gitleaks on the staged changes when it is installed, one line otherwise)',
+    );
+
+    expect(result.stdout).toContain('fix: add the `secrets` job to the pre-commit jobs of lefthook.yml');
+    expect(cli(root, 'doctor', '--strict').code).toBe(1);
+  });
+
   it('names a missing lefthook.yml', () => {
     fs.rmSync(path.join(root, 'lefthook.yml'));
 

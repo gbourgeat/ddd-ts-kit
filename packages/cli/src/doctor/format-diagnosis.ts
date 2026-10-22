@@ -110,6 +110,12 @@ function hookFixesOf(findings: readonly DoctorFinding[]): string[] {
     );
   }
 
+  if (hooks.some((finding) => finding.name === 'lefthook.yml secrets')) {
+    fixes.push(
+      'fix: add the `secrets` job to the pre-commit jobs of lefthook.yml, as `npx ddd-ts-kit init --force` writes it (it runs `gitleaks git --pre-commit --staged` when gitleaks is installed, prints one line otherwise, and the pipeline scans the whole history anyway).',
+    );
+  }
+
   if (hooks.some((finding) => finding.name === 'lefthook.yml')) {
     fixes.push('fix: `npx ddd-ts-kit init` writes lefthook.yml; then `npm run hooks:install`.');
   }
