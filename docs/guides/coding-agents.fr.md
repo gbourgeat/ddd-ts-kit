@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:007cfba43fb1a6d7 -->
+<!-- translation-of: coding-agents.md sha256:ed2fb79f5b56f7e1 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -104,6 +104,11 @@ les règles par couche pour
 Claude Code dans `.claude/rules/` et les mêmes règles pour Copilot dans `.github/instructions/`,
 ciblées par `applyTo`, `REVIEW.md`, la politique de revue que lit chaque relecteur, écrite une
 fois et possédée par l'équipe ([Travailler en équipe](team-workflow.fr.md#ce-que-la-revue-regarde-dans-chaque-couche)),
-et, avec le pipeline GitHub, `copilot-setup-steps.yml`, qui installe le
+`.claude/settings.json`, les permissions de Claude Code (les vérifications et les générateurs
+s'exécutent sans demander ; `.env` et les contrats générés ne sont jamais lus ni modifiés ;
+`git push`, `npm publish`, les fichiers qui portent les règles et le pipeline, les migrations de
+l'ORM, `Dockerfile`, `docker-compose.yml` et `docker/` demandent d'abord : la liste est dans le
+[README de la CLI](../../packages/cli/README.fr.md#init), et `ddd-ts-kit doctor` dit ce qu'un
+projet en manque), et, avec le pipeline GitHub, `copilot-setup-steps.yml`, qui installe le
 projet avant le démarrage de l'agent cloud de Copilot. `npm run verify` et le pipeline tiennent
 chaque agent aux mêmes règles.

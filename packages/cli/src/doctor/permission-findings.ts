@@ -1,5 +1,5 @@
 import type { Config } from '../config/index.js';
-import { AGENT_PERMISSIONS } from '../init/agent-permissions.js';
+import { agentPermissions } from '../init/agent-permissions.js';
 import { isRecord } from '../config/values/is-record.js';
 import { inDialect } from '../package-manager/in-dialect.js';
 import type { DoctorFinding } from './doctor-finding.js';
@@ -8,7 +8,7 @@ import type { DoctorFinding } from './doctor-finding.js';
 export function permissionFindings(config: Config, settings: unknown): DoctorFinding[] {
   const permissions = isRecord(settings) && isRecord(settings['permissions']) ? settings['permissions'] : {};
 
-  return Object.entries(AGENT_PERMISSIONS).flatMap(([kind, rules]) => {
+  return Object.entries(agentPermissions(config)).flatMap(([kind, rules]) => {
     const present: unknown = permissions[kind];
     const held = Array.isArray(present) ? present : [];
 

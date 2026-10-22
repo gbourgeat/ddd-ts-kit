@@ -58,7 +58,7 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   ignoreWorktrees(ws);
   writeCopilotInstructions(ws);
   ws.create(DEPCRUISE_FILE, renderCruiseFile(config));
-  writeAgentSettings(ws);
+  writeAgentSettings(ws, config);
   writeCopilotSettings(ws);
   ws.create(`${config.sharedKernelDir}/.gitkeep`, '');
 

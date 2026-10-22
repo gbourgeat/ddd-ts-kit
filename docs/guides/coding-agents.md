@@ -95,7 +95,13 @@ agent and the `quality-gate` skill apply, after the AI-native SDLC playbook of A
 the rules by layer for Claude Code
 in `.claude/rules/` and the same rules for Copilot in `.github/instructions/`, scoped by
 `applyTo`, `REVIEW.md`, the review policy every reviewer reads, written once and owned by the
-team ([Working as a team](team-workflow.md#review-focus-per-layer)), and, with the GitHub
+team ([Working as a team](team-workflow.md#review-focus-per-layer)), `.claude/settings.json`,
+the permissions of Claude Code (the checks and generators run without asking; `.env` and the
+generated contracts are never read or edited; `git push`, `npm publish`, the files that hold
+the rules and the pipeline, the migrations of the ORM, `Dockerfile`, `docker-compose.yml` and
+`docker/` ask first: the list is in the
+[README of the CLI](../../packages/cli/README.md#init), and `ddd-ts-kit doctor` says what a
+project lacks of it), and, with the GitHub
 pipeline, `copilot-setup-steps.yml`, which installs the project
 before the Copilot cloud agent starts. `npm run verify` and the pipeline hold every agent to
 the same rules.

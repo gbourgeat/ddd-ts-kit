@@ -1,17 +1,19 @@
+import type { Config } from '../config/index.js';
 import type { Workspace } from '../workspace/index.js';
 import { isRecord } from './is-record.js';
 import { jsonObject } from './json-object.js';
 import { formatJson } from '../json/format-json.js';
-import { AGENT_PERMISSIONS as PERMISSIONS } from './agent-permissions.js';
+import { agentPermissions, type AgentPermissions } from './agent-permissions.js';
 
 const AGENT_SETTINGS = '.claude/settings.json';
 
 /** Creates the settings, or adds the missing permissions to the ones the project already has, and says which. */
-export function writeAgentSettings(ws: Workspace): void {
+export function writeAgentSettings(ws: Workspace, config: Config): void {
   const existing = ws.read(AGENT_SETTINGS);
+  const permissions = agentPermissions(config);
 
   if (existing === undefined) {
-    ws.create(AGENT_SETTINGS, serialize({ permissions: PERMISSIONS }));
+    ws.create(AGENT_SETTINGS, serialize({ permissions }));
 
     return;
   }
@@ -24,7 +26,7 @@ export function writeAgentSettings(ws: Workspace): void {
     return;
   }
 
-  const merged = mergePermissions(settings, (rule) => ws.spoken(rule));
+  const merged = mergePermissions(settings, permissions, (rule) => ws.spoken(rule));
 
   ws.update(AGENT_SETTINGS, serialize(merged.settings));
 
@@ -41,12 +43,16 @@ interface Merged {
 }
 
 /** A rule is compared as the project says it: its settings name the package manager it runs, not npm. */
-function mergePermissions(settings: Record<string, unknown>, spoken: (rule: string) => string): Merged {
+function mergePermissions(
+  settings: Record<string, unknown>,
+  expected: AgentPermissions,
+  spoken: (rule: string) => string,
+): Merged {
   const current = isRecord(settings['permissions']) ? settings['permissions'] : {};
   const added: string[] = [];
   const permissions: Record<string, unknown> = { ...current };
 
-  for (const [kind, wanted] of Object.entries(PERMISSIONS)) {
+  for (const [kind, wanted] of Object.entries(expected)) {
     const present: unknown[] = Array.isArray(current[kind]) ? current[kind] : [];
     const missing = wanted.map(spoken).filter((rule) => !present.includes(rule));
 
