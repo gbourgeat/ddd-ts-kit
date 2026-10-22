@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { WaitlistJoined } from '@/contexts/scheduling/domain/events/waitlist-joined.event';
+import { WaitlistJoined } from '@/contexts/scheduling/domain/waitlist/events/waitlist-joined.event';
 
 describe('WaitlistJoined', () => {
   it('is named after the context, the aggregate and the fact', () => {

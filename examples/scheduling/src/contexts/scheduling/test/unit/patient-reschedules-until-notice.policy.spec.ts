@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { anonymousActor } from '@ddd-ts-kit/kernel';
 import { declarationOf } from '@ddd-ts-kit/kernel/declarations';
-import { PatientReschedulesUntilNoticePolicy } from '@/contexts/scheduling/application/authorization/patient-reschedules-until-notice.policy';
+import { PatientReschedulesUntilNoticePolicy } from '@/contexts/scheduling/application/calendars/authorization/patient-reschedules-until-notice.policy';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 

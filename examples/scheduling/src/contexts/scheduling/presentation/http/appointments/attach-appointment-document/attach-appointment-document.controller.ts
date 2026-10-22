@@ -1,7 +1,7 @@
 import { acceptedSchema, Controller, type Accepted, type HttpRequest, type IncomingFile } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { AttachAppointmentDocumentCommand } from '@/contexts/scheduling/application/commands/attach-appointment-document/attach-appointment-document.command';
+import { AttachAppointmentDocumentCommand } from '@/contexts/scheduling/application/calendars/commands/attach-appointment-document/attach-appointment-document.command';
 import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
 import { AttachAppointmentDocumentParams } from '@/contexts/scheduling/presentation/http/appointments/attach-appointment-document/attach-appointment-document.params';
 

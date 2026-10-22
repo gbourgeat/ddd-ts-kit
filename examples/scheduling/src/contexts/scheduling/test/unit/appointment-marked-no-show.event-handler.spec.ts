@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { NoteNoShowCommand } from '@/contexts/scheduling/application/commands/note-no-show/note-no-show.command';
-import { AppointmentMarkedNoShowEventHandler } from '@/contexts/scheduling/application/event-handlers/appointment-marked-no-show.event-handler';
-import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/events/appointment-marked-no-show.event';
+import { NoteNoShowCommand } from '@/contexts/scheduling/application/calendars/commands/note-no-show/note-no-show.command';
+import { AppointmentMarkedNoShowEventHandler } from '@/contexts/scheduling/application/calendars/event-handlers/appointment-marked-no-show.event-handler';
+import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/calendars/events/appointment-marked-no-show.event';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 const held = anAppointment().identifiedBy('appointment-1').startingAt(new Date('2026-03-02T09:00:00.000Z')).build();

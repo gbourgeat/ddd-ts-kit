@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { FixedClock, FixedExecutionScope, executionContext, systemActor } from '@ddd-ts-kit/kernel';
-import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
+import type { Appointment } from '@/contexts/scheduling/domain/calendars/aggregates/appointment.aggregate';
 import { KnexAppointmentExport } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment-export.repository';
 import { KnexAppointmentRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment.repository';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';

@@ -93,6 +93,13 @@ This is why practices come: a time on a calendar is held once, under rules of av
 | Cover | For a time off, to fall on the time of appointments still held: refused, the calendar is cleared first | Hold, which only an appointment does |
 | Long | Said of a document name with more characters than the practice keeps for it |  |
 
+## Modules
+
+| Module | Purpose |
+|---|---|
+| `calendars` | The calendars of the practitioners and the appointments they hold: opening hours, exceptions, time off and appointment types; the booking, lifecycle and attendance of each appointment. |
+| `waitlist` | The waitlist of a calendar for one day: its waiters, and the offers of a freed slot made to them. |
+
 ## Aggregates
 
 <!-- ddd-ts-kit:aggregates -->
@@ -166,7 +173,7 @@ This is why practices come: a time on a calendar is held once, under rules of av
 ## State machines
 
 <!-- ddd-ts-kit:state-machines -->
-Lifecycle of `appointment` (`domain/state-machines/appointment.state-machine.ts`):
+Lifecycle of `appointment` (`calendars/state-machines/appointment.state-machine.ts`):
 
 ```mermaid
 stateDiagram-v2
@@ -340,7 +347,6 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | Refusal | Factory | Code | Exposed facts |
 |---|---|---|---|
 | `AlreadyNoted` | `forAppointment` | `ALREADY_NOTED` | none |
-| `AlreadyWaiting` | `forPatient` | `ALREADY_WAITING` | none |
 | `AppointmentAlreadyConfirmed` | `forAppointment` | `APPOINTMENT_ALREADY_CONFIRMED` | none |
 | `AppointmentEnded` | `forAppointment` | `APPOINTMENT_ENDED` | `status` |
 | `AppointmentNotStarted` | `forAppointment` | `APPOINTMENT_NOT_STARTED` | `startsAt` |
@@ -351,11 +357,9 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `InvalidBookingWindow` | `forRule` | `INVALID_BOOKING_WINDOW` | none |
 | `InvalidBooking` | `forRule` | `INVALID_BOOKING` | none |
 | `InvalidDay` | `forDay` | `INVALID_DAY` | `day` |
-| `InvalidOffer` | `forRule` | `INVALID_OFFER` | none |
 | `InvalidRange` | `forRule` | `INVALID_RANGE` | none |
 | `InvalidSlot` | `forRule` | `INVALID_SLOT` | none |
 | `InvalidTimeOff` | `forRule` | `INVALID_TIME_OFF` | none |
-| `InvalidWaiter` | `forRule` | `INVALID_WAITER` | none |
 | `NoDocument` | `forAppointment` | `NO_DOCUMENT` | none |
 | `OffGrid` | `forGrid` | `OFF_GRID` | `grid` |
 | `OutsideAvailability` | `atStart` | `OUTSIDE_AVAILABILITY` | `startsAt` |
@@ -369,6 +373,9 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `UnknownClearance` | `forClearance` | `UNKNOWN_CLEARANCE` | none |
 | `UnknownPractitioner` | `atPractice` | `UNKNOWN_PRACTITIONER` | none |
 | `UnknownTimeZone` | `forName` | `UNKNOWN_TIME_ZONE` | none |
+| `AlreadyWaiting` | `forPatient` | `ALREADY_WAITING` | none |
+| `InvalidOffer` | `forRule` | `INVALID_OFFER` | none |
+| `InvalidWaiter` | `forRule` | `INVALID_WAITER` | none |
 
 ### Gateways
 

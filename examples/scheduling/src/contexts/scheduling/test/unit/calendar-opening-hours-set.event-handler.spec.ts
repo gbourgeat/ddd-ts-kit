@@ -6,8 +6,8 @@ import {
   announceDomainEvents,
   unitOfWorkStage,
 } from '@ddd-ts-kit/kernel';
-import { CalendarOpeningHoursSetEventHandler } from '@/contexts/scheduling/application/event-handlers/calendar-opening-hours-set.event-handler';
-import { CalendarOpeningHoursSet } from '@/contexts/scheduling/domain/events/calendar-opening-hours-set.event';
+import { CalendarOpeningHoursSetEventHandler } from '@/contexts/scheduling/application/calendars/event-handlers/calendar-opening-hours-set.event-handler';
+import { CalendarOpeningHoursSet } from '@/contexts/scheduling/domain/calendars/events/calendar-opening-hours-set.event';
 
 describe('When the opening hours of a calendar are set', () => {
   it('asks, before the commit, for the answers filed under the calendar to be purged after it', async () => {

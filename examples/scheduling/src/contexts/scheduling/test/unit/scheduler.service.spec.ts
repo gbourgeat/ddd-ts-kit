@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
-import { SchedulerService } from '@/contexts/scheduling/domain/services/scheduler.service';
+import type { Appointment } from '@/contexts/scheduling/domain/calendars/aggregates/appointment.aggregate';
+import { SchedulerService } from '@/contexts/scheduling/domain/calendars/services/scheduler.service';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 

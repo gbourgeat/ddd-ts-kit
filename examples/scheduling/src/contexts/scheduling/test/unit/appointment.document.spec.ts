@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
+import { Cancellation } from '@/contexts/scheduling/domain/calendars/value-objects/cancellation.vo';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 import { anAttachedDocument } from '@/contexts/scheduling/test/builders/attached-document.builder';
 

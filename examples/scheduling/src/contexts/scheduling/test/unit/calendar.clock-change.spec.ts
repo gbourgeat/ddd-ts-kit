@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
+import { Slot } from '@/contexts/scheduling/domain/calendars/value-objects/slot.vo';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 
 describe('Calendar, on the days the clock of Europe/Paris changes', () => {

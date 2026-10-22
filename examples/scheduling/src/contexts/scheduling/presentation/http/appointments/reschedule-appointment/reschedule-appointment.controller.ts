@@ -1,7 +1,7 @@
 import { acceptedSchema, Controller, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
 import type { Actor, CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { RescheduleAppointmentCommand } from '@/contexts/scheduling/application/commands/reschedule-appointment/reschedule-appointment.command';
+import { RescheduleAppointmentCommand } from '@/contexts/scheduling/application/calendars/commands/reschedule-appointment/reschedule-appointment.command';
 import { RescheduleAppointmentParams } from '@/contexts/scheduling/presentation/http/appointments/reschedule-appointment/reschedule-appointment.params';
 import { RescheduleAppointmentBody } from '@/contexts/scheduling/presentation/http/appointments/reschedule-appointment/reschedule-appointment.body';
 import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';

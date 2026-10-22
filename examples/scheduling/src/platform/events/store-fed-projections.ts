@@ -7,8 +7,8 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { applyingProjection } from '@ddd-ts-kit/kernel/declarations';
 import type { Persistence } from '@/platform/database/persistence';
-import type { AttendanceRecordEvent } from '@/contexts/scheduling/domain/aggregates/attendance-record.aggregate';
-import { AttendanceHistoryProjection } from '@/contexts/scheduling/application/projections/attendance-history.projection';
+import type { AttendanceRecordEvent } from '@/contexts/scheduling/domain/calendars/aggregates/attendance-record.aggregate';
+import { AttendanceHistoryProjection } from '@/contexts/scheduling/application/calendars/projections/attendance-history.projection';
 import { attendanceRecordEvents } from '@/contexts/scheduling/infrastructure/persistence/attendance-record-events.mapper';
 import { KnexAttendanceHistory } from '@/contexts/scheduling/infrastructure/persistence/knex-attendance-history.repository';
 

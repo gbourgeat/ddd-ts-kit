@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { NoDocument } from '@/contexts/scheduling/domain/errors/no-document.error';
+import { NoDocument } from '@/contexts/scheduling/domain/calendars/errors/no-document.error';
 
 describe('NoDocument', () => {
   it('refuses to read or remove the document of an appointment that holds none, keeping which appointment to itself', () => {

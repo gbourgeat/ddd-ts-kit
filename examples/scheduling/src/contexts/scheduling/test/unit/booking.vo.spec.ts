@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Booking, type BookingProps } from '@/contexts/scheduling/domain/value-objects/booking.vo';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
+import { Booking, type BookingProps } from '@/contexts/scheduling/domain/calendars/value-objects/booking.vo';
+import { Slot } from '@/contexts/scheduling/domain/calendars/value-objects/slot.vo';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 
 const morning: BookingProps = {

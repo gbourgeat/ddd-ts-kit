@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { Offer } from '@/contexts/scheduling/domain/value-objects/offer.vo';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
-import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
+import { Offer } from '@/contexts/scheduling/domain/waitlist/value-objects/offer.vo';
+import { Slot } from '@/contexts/scheduling/domain/calendars/value-objects/slot.vo';
+import { Waiter } from '@/contexts/scheduling/domain/waitlist/value-objects/waiter.vo';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 
 const waiter = Waiter.create({

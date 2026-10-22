@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { UnknownPractitioner } from '@/contexts/scheduling/domain/errors/unknown-practitioner.error';
+import { UnknownPractitioner } from '@/contexts/scheduling/domain/calendars/errors/unknown-practitioner.error';
 
 describe('UnknownPractitioner', () => {
   it('refuses with the code UNKNOWN_PRACTITIONER, its message and its facts', () => {

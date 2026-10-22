@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryEventBus, SequentialIdGenerator } from '@ddd-ts-kit/kernel';
-import { CalendarCreatedPublisher } from '@/contexts/scheduling/application/integration/publishers/calendar-created.publisher';
-import { CalendarCreated } from '@/contexts/scheduling/domain/events/calendar-created.event';
+import { CalendarCreatedPublisher } from '@/contexts/scheduling/application/calendars/integration/publishers/calendar-created.publisher';
+import { CalendarCreated } from '@/contexts/scheduling/domain/calendars/events/calendar-created.event';
 
 describe('Publishing "calendar created" to other contexts', () => {
   it('publishes version 1 of scheduling.calendar.created with every field of its public payload', async () => {

@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { controllerRoute, createErrorMapper, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { errorStatuses } from '@/platform/http/error-statuses';
-import { BookAppointmentCommand } from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.command';
-import { PatientLimitReached } from '@/contexts/scheduling/domain/errors/patient-limit-reached.error';
-import { SlotTaken } from '@/contexts/scheduling/domain/errors/slot-taken.error';
-import { UnknownCalendar } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
+import { BookAppointmentCommand } from '@/contexts/scheduling/application/calendars/commands/book-appointment/book-appointment.command';
+import { PatientLimitReached } from '@/contexts/scheduling/domain/calendars/errors/patient-limit-reached.error';
+import { SlotTaken } from '@/contexts/scheduling/domain/calendars/errors/slot-taken.error';
+import { UnknownCalendar } from '@/contexts/scheduling/domain/calendars/errors/unknown-calendar.error';
 import { BookAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.controller';
 import { BookAppointmentMapper } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.mapper';
 

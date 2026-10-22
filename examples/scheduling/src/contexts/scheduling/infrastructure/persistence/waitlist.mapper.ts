@@ -1,5 +1,5 @@
-import { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate';
-import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
+import { Waitlist } from '@/contexts/scheduling/domain/waitlist/aggregates/waitlist.aggregate';
+import { Waiter } from '@/contexts/scheduling/domain/waitlist/value-objects/waiter.vo';
 import type {
   WaitlistColumns,
   WaitlistRow,

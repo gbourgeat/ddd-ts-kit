@@ -1,7 +1,7 @@
 import { CacheScope, Controller, Public, type HttpRequest } from '@ddd-ts-kit/http';
 import type { QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { GetOpeningHoursQuery } from '@/contexts/scheduling/application/queries/get-opening-hours/get-opening-hours.query';
+import { GetOpeningHoursQuery } from '@/contexts/scheduling/application/calendars/queries/get-opening-hours/get-opening-hours.query';
 import { GetOpeningHoursParams } from '@/contexts/scheduling/presentation/http/calendars/get-opening-hours/get-opening-hours.params';
 import { GetOpeningHoursAnswer } from '@/contexts/scheduling/presentation/http/calendars/get-opening-hours/get-opening-hours.answer';
 

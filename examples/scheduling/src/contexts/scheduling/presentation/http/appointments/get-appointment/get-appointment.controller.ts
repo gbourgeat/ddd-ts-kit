@@ -1,8 +1,8 @@
 import { Controller, withFieldAccess, type HttpRequest } from '@ddd-ts-kit/http';
 import type { QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { GetAppointmentQuery } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.query';
-import type { GetAppointmentResult } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.result';
+import { GetAppointmentQuery } from '@/contexts/scheduling/application/calendars/queries/get-appointment/get-appointment.query';
+import type { GetAppointmentResult } from '@/contexts/scheduling/application/calendars/queries/get-appointment/get-appointment.result';
 import { GetAppointmentParams } from '@/contexts/scheduling/presentation/http/appointments/get-appointment/get-appointment.params';
 import { GetAppointmentAnswer } from '@/contexts/scheduling/presentation/http/appointments/get-appointment/get-appointment.answer';
 import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';

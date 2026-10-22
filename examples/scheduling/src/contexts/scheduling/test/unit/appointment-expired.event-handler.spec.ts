@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command';
-import { AppointmentExpiredEventHandler } from '@/contexts/scheduling/application/event-handlers/appointment-expired.event-handler';
-import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointment-expired.event';
+import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/waitlist/commands/offer-freed-slot/offer-freed-slot.command';
+import { AppointmentExpiredEventHandler } from '@/contexts/scheduling/application/waitlist/event-handlers/appointment-expired.event-handler';
+import { AppointmentExpired } from '@/contexts/scheduling/domain/calendars/events/appointment-expired.event';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 const occurredAt = new Date('2026-03-01T00:00:00.000Z');
