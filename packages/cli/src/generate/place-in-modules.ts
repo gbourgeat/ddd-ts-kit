@@ -55,8 +55,15 @@ function askedModule(
   config: Config,
   { context, module }: ModuleRequest,
 ): { context: string; module: string } | undefined {
-  if (module === undefined || context === undefined) {
+  if (module === undefined) {
     return undefined;
+  }
+
+  if (context === undefined) {
+    throw new CliError(
+      '--module applies to a kind that writes in a context.',
+      'Give the module to the kinds that write the model or its use cases: `ddd-ts-kit generate <kind> <context> ... --module <module>`.',
+    );
   }
 
   return { context, module: declaredModule(config, context, module) };

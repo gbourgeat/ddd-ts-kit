@@ -8,8 +8,8 @@ import { intoModule, moduleSplit } from '../model-modules/index.js';
  * `application/commands` or `presentation/http`; a file sitting directly in its layer
  * (`infrastructure/tax-rates.gateway.ts`) belongs to the layer itself.
  */
-export function declarationsFolderOf(inModule: string): string {
-  const { module, path: file } = moduleSplit(inModule);
+export function declarationsFolderOf(inModule: string, modules: readonly string[]): string {
+  const { module, path: file } = moduleSplit(inModule, modules);
   const [layer = '', folder, ...rest] = file.split('/');
 
   return intoModule(module, folder === undefined || rest.length === 0 ? layer : `${layer}/${folder}`);

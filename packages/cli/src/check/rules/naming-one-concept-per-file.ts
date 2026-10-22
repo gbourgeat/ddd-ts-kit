@@ -10,6 +10,7 @@ import { isDeclaredStyle } from '../support/is-declared-style.js';
 import { pathInContext } from '../support/path-in-context.js';
 import { perFile } from '../support/per-file.js';
 import { roleDirectory } from '../support/role-directory.js';
+import { WITHOUT_MODULE } from '../../model-modules/index.js';
 
 const EXPORTED_CLASS = /(?<![\w$.])export\s+(?:default\s+)?(?:abstract\s+)?class\s+([\w$]+)/g;
 
@@ -54,7 +55,7 @@ function severalExportedClasses(file: SourceFile): Finding[] {
 
 /** In the declared style a role file is found by its name and read for one class: a second declared class hides behind the first. */
 function severalDeclaredClasses(file: SourceFile, project: Project): Finding[] {
-  if (!isDeclaredStyle(project) || declaredRoleOf(pathInContext(project, file) ?? '') === undefined) {
+  if (!isDeclaredStyle(project) || declaredRoleOf(pathInContext(project, file) ?? '', WITHOUT_MODULE) === undefined) {
     return [];
   }
 

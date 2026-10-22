@@ -81,9 +81,8 @@ A class says what it is on its own file, and that is its registration. There is 
 - A context divided into modules of the model (`contexts.<name>.modules`) wires the same way:
   each role folder of a module has its own declarations,
   `application/<module>/commands/commands.declarations.ts`, re-exported by
-  `<context>.declarations.ts` like the others; `discoverContext` recognises a module by its
-  structure (a folder directly under `application/` that is no role folder), without the
-  config. Infrastructure and presentation keep their folders; a module never has a module file
+  `<context>.declarations.ts` like the others; `discoverContext` reads the modules in the
+  generated `<context>.dependencies.ts`, which names them, without the config. Infrastructure and presentation keep their folders; a module never has a module file
   of its own. `npx ddd-ts-kit move-to-module` rewrites the declarations it moves.
 - `WiringError MISSING_DEPENDENCIES` or `DEPENDENCY_ARITY` at startup: the generated file is
   stale or was not loaded. Run `npx ddd-ts-kit docs`; in a test, assemble the context from its

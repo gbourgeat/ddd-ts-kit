@@ -29,7 +29,8 @@ const LOCKFILES = new Set(['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-loc
 const DRIZZLE_META = /(?:^|\/)meta\/(?:_journal|\d+_snapshot)\.json$/;
 
 /** The class of a conflicted path, from the top of the repository. */
-export function classifyConflict(file: string, { prefix, contextsDir }: MergeRepository): ConflictClass {
+export function classifyConflict(file: string, repo: MergeRepository): ConflictClass {
+  const { prefix, contextsDir } = repo;
   const inProject = file.startsWith(prefix) ? file.slice(prefix.length) : undefined;
   const name = file.split('/').at(-1) ?? file;
 
@@ -49,7 +50,7 @@ export function classifyConflict(file: string, { prefix, contextsDir }: MergeRep
     return 'client-manifest';
   }
 
-  if (isDerived(inProject, { contextsDir })) {
+  if (isDerived(inProject, repo)) {
     return 'derived';
   }
 

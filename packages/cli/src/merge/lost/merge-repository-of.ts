@@ -3,6 +3,7 @@ import path from 'node:path';
 import { CliError } from '../../cli-error.js';
 import { runGit } from '../../commit/run-git.js';
 import { CONFIG_FILE, readConfig } from '../../config/index.js';
+import { modulesByContext } from '../../model-modules/index.js';
 import type { MergeRepository } from './merge-repository.js';
 
 /** Where the contexts live when the directory holds no config: a repository checked without a project. */
@@ -19,11 +20,12 @@ export function mergeRepositoryOf(root: string): MergeRepository {
     );
   }
 
-  const configured = fs.existsSync(path.join(root, CONFIG_FILE));
+  const config = fs.existsSync(path.join(root, CONFIG_FILE)) ? readConfig(root).config : undefined;
 
   return {
     top,
     prefix: runGit(root, ['rev-parse', '--show-prefix'])?.trim() ?? '',
-    contextsDir: configured ? readConfig(root).config.contextsDir : DEFAULT_CONTEXTS_DIR,
+    contextsDir: config?.contextsDir ?? DEFAULT_CONTEXTS_DIR,
+    modules: config === undefined ? {} : modulesByContext(config),
   };
 }

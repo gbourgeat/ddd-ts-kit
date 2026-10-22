@@ -2,7 +2,7 @@ import { CliError } from '../cli-error.js';
 import type { Config } from '../config/index.js';
 import { isDeclarationsFile } from '../declared/index.js';
 import { filesUnder } from '../generate/files-under.js';
-import { intoModule, isContextLevel, isRoleFolder, moduleSplit } from '../model-modules/index.js';
+import { declaredModules, intoModule, isContextLevel, isRoleFolder, moduleSplit } from '../model-modules/index.js';
 import type { Workspace } from '../workspace/index.js';
 import type { ModuleMove } from './module-move.js';
 
@@ -20,6 +20,7 @@ export interface MoveRequest {
  */
 export function movesIntoModule(ws: Workspace, config: Config, request: MoveRequest): ModuleMove[] {
   const directory = `${config.contextsDir}/${request.context}`;
+  const placement = { ...request, directory, modules: declaredModules(config, request.context) };
 
   const moves = request.paths.flatMap((asked) => {
     const relative = asked.replace(/^\.\//, '').replace(/\/+$/, '');
@@ -36,27 +37,46 @@ export function movesIntoModule(ws: Workspace, config: Config, request: MoveRequ
       );
     }
 
-    return files.flatMap((file) => moveOf(directory, request, file));
+    return files.flatMap((file) => moveOf(file, placement));
   });
 
   const unique = [...new Map(moves.map((move) => [move.from, move])).values()];
 
-  refuseLosses(ws, unique);
+  refuseLosses(ws, unique, placement);
 
   return unique;
+}
+
+/** Where the files go: the context, its directory, the modules of its model and the one the files go into. */
+interface Placement {
+  readonly context: string;
+  readonly directory: string;
+  readonly modules: readonly string[];
+  readonly module: string;
 }
 
 /**
  * Nothing is written when a move would lose a file: a target that exists already (two files of
  * one name in two modules), or a file the workspace cannot carry as text.
  */
-function refuseLosses(ws: Workspace, moves: readonly ModuleMove[]): void {
+function refuseLosses(ws: Workspace, moves: readonly ModuleMove[], placement: Placement): void {
+  const targets = new Set<string>();
+  const colliding = moves.filter((move) => targets.size === targets.add(move.to).size).map((move) => move.to);
   const taken = moves.filter((move) => ws.exists(move.to)).map((move) => move.to);
 
-  if (taken.length > 0) {
+  if (colliding.length > 0 || taken.length > 0) {
     throw new CliError(
-      `Nothing was moved: ${taken.join(', ')} exist(s) already.`,
+      `Nothing was moved: ${[...new Set([...colliding, ...taken])].join(', ')} would be written twice, or exist(s) already.`,
       'Two files of one name cannot share a module: rename one after the concept it holds, or merge them by hand, then run the command again.',
+    );
+  }
+
+  const twins = moves.flatMap((move) => twinsOf(ws, move, placement));
+
+  if (twins.length > 0) {
+    throw new CliError(
+      `Nothing was moved: ${twins.join(', ')} hold(s) a file of the same role and name.`,
+      'One name is one concept in a context, and the declarations of the context would export it twice: rename one after the concept it holds, or move the two into the module that owns the concept.',
     );
   }
 
@@ -70,8 +90,19 @@ function refuseLosses(ws: Workspace, moves: readonly ModuleMove[]): void {
   }
 }
 
-function moveOf(directory: string, { context, module }: MoveRequest, file: string): ModuleMove[] {
-  const { path } = moduleSplit(file);
+/** The same file of the role in another module, or at the level of the context, a move would make a twin of. */
+function twinsOf(ws: Workspace, move: ModuleMove, { directory, modules, module }: Placement): string[] {
+  const inContext = move.to.slice(directory.length + 1);
+  const { path } = moduleSplit(inContext, modules);
+  const elsewhere = [path, ...modules.filter((other) => other !== module).map((other) => intoModule(other, path))];
+
+  return elsewhere
+    .map((candidate) => `${directory}/${candidate}`)
+    .filter((file) => file !== move.from && ws.exists(file));
+}
+
+function moveOf(file: string, { context, directory, modules, module }: Placement): ModuleMove[] {
+  const { path } = moduleSplit(file, modules);
   const [layer = '', folder = ''] = path.split('/');
 
   if (!isRoleFolder(layer, folder)) {
@@ -81,7 +112,7 @@ function moveOf(directory: string, { context, module }: MoveRequest, file: strin
     );
   }
 
-  if (isContextLevel(context, path) || isDeclarationsFile(context, file)) {
+  if (isContextLevel(context, path) || isDeclarationsFile(context, file, modules)) {
     return [];
   }
 

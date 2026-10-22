@@ -1,5 +1,5 @@
 [English](modules.md) · **Français**
-<!-- translation-of: modules.md sha256:59967778aac3fee0 -->
+<!-- translation-of: modules.md sha256:6f7c7485c9d2f56b -->
 
 # Modules du modèle
 
@@ -191,7 +191,9 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   imports sous la racine des sources, `test/` et `scripts/` ; les déclarations générées suivent
   dans le même passage. Un chemin déjà dans un module passe dans l'autre, et tous les fichiers
   d'un dossier sont déplacés, pas seulement ses sources. Rien n'est déplacé quand un fichier du
-  même nom est déjà dans le module, ou quand un fichier n'est pas du texte. `--dry-run` montre
+  même nom est déjà dans le module, quand deux fichiers atterriraient sur le même chemin, quand un
+  autre module du contexte tient un fichier du même rôle et du même nom (les déclarations du
+  contexte l'exporteraient deux fois), ou quand un fichier n'est pas du texte. `--dry-run` montre
   le plan ; viennent ensuite les vérifications et les tests.
 
 ### Ce qui lit les modules
@@ -205,9 +207,10 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   signale.
 - Dans le style déclaré assemblé par barrel, chaque dossier de rôle d'un module a son
   `<folder>.declarations.ts` généré, réexporté par `<context>.declarations.ts`.
-- `discoverContext` de `@ddd-ts-kit/di` s'exécute sans la configuration : il reconnaît un module
-  à sa structure, tout dossier placé directement sous `application/` qui n'est pas un dossier de
-  rôle.
+- `discoverContext` de `@ddd-ts-kit/di` s'exécute sans la configuration : il lit les modules dans
+  le `<context>.dependencies.ts` généré, que `ddd-ts-kit docs` écrit avec eux
+  (`export const modules = [...]`). Un dossier que ce fichier ne nomme pas n'est pas un module au
+  démarrage non plus : un fichier de rôle qui s'y trouve est refusé, comme `check` le signale.
 
 ## Adopter les modules, pas à pas
 

@@ -181,8 +181,9 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   `application/`, moves them into a declared module and rewrites every import of them under the
   source root, `test/` and `scripts/`; the generated declarations follow in the same run. A path
   already in a module moves to the other one, and every file of a folder moves, not only its
-  sources. Nothing is moved when a file of the same name is in the module already, or when a
-  file is not text. `--dry-run` shows the plan; the checks and the
+  sources. Nothing is moved when a file of the same name is in the module already, when two
+  files would land on one path, when another module of the context holds a file of the same role
+  and name (the declarations of the context would export it twice), or when a file is not text. `--dry-run` shows the plan; the checks and the
   tests come next.
 
 ### What reads the modules
@@ -195,8 +196,10 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   folder the config does not declare is read by none of them, and `tree/closed` reports it.
 - In the declared style assembled by barrel, each role folder of a module has its generated
   `<folder>.declarations.ts`, re-exported by `<context>.declarations.ts`.
-- `discoverContext` of `@ddd-ts-kit/di` runs without the config: it recognises a module by
-  structure, any folder directly under `application/` that is not a role folder.
+- `discoverContext` of `@ddd-ts-kit/di` runs without the config: it reads the modules in the
+  generated `<context>.dependencies.ts`, which `ddd-ts-kit docs` writes with them
+  (`export const modules = [...]`). A folder that file does not name is no module at boot either:
+  a role file in it is refused, as `check` reports it.
 
 ## Adopting modules, step by step
 

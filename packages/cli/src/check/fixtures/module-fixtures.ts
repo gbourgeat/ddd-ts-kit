@@ -1,6 +1,7 @@
 import { CONFIG_FILE } from '../../config/index.js';
 import { config } from './config.js';
 import { contextDoc } from './context-doc.js';
+import { declaredProject } from './declared-project.js';
 import type { Fixture } from './fixture.js';
 import type { FixtureFiles } from './fixture-files.js';
 import { PATHS } from './paths.js';
@@ -13,6 +14,9 @@ const { SPEC } = SAMPLES;
 const IN_MODULE = `${BILLING}/application/invoices/commands/issue-invoice/issue-invoice.handler.ts`;
 const INVOICE_ISSUED = `${BILLING}/domain/invoices/events/invoice-issued.event.ts`;
 const REMINDER_SENT = `${BILLING}/domain/reminders/events/reminder-sent.event.ts`;
+
+const HANDLER_CLASS =
+  "import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@CommandHandler(IssueInvoice)\nexport class IssueInvoiceHandler {}\n";
 
 export const MODULE_FIXTURES: readonly Fixture[] = [
   {
@@ -99,6 +103,28 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
     ),
   },
   {
+    ruleId: 'declarations/barrel-current',
+    name: 'two modules holding a role file of one name, which the declarations of the context would export twice',
+    expect: { file: `${BILLING}/application/reminders/commands/issue-invoice/issue-invoice.handler.ts` },
+    files: declaredProject(
+      {
+        [IN_MODULE]: HANDLER_CLASS,
+        [`${BILLING}/application/reminders/commands/issue-invoice/issue-invoice.handler.ts`]: HANDLER_CLASS,
+        [HANDLER_SPEC]: SPEC,
+      },
+      withModules({ invoices: {}, reminders: {} }, ['invoices', 'reminders'], 'declared'),
+    ),
+  },
+  {
+    ruleId: 'tree/closed',
+    name: 'a stray folder inside a module of the model',
+    expect: { file: `${BILLING}/domain/invoices/helpers` },
+    files: project(
+      { [`${BILLING}/domain/invoices/helpers/rounding.ts`]: 'export const rounding = 1;\n' },
+      withModules({ invoices: {} }),
+    ),
+  },
+  {
     ruleId: 'tree/closed',
     name: 'a folder of the model that no config declares as a module',
     expect: { file: `${BILLING}/domain/invoices` },
@@ -135,6 +161,7 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
 function withModules(
   modules: Readonly<Record<string, object>>,
   rows: readonly string[] = Object.keys(modules),
+  style: 'explicit' | 'declared' = 'explicit',
 ): FixtureFiles {
   const table = rows.map((module) => `| \`${module}\` | What the ${module} hold. |`).join('\n');
 
@@ -144,6 +171,7 @@ function withModules(
         billing: { classification: 'core', upstreams: ['catalog'], modules },
         catalog: { classification: 'supporting', upstreams: [] },
       },
+      ...(style === 'declared' ? { stack: { style: 'declared' } } : {}),
     }),
     [`${BILLING}/CONTEXT.md`]:
       rows.length === 0

@@ -8,6 +8,7 @@ import { filesUnder } from '../src/generate/files-under.js';
 import { workspaceSources } from '../src/generate/workspace-sources.js';
 import { Workspace } from '../src/workspace/index.js';
 import { cli, read, scaffoldEverything, tempDir, write } from './helpers.js';
+import { declaredModules } from '../src/model-modules/index.js';
 
 const BILLING = 'src/contexts/billing';
 const SHIPPING = 'src/contexts/shipping';
@@ -228,10 +229,13 @@ function toSingleFile(context: string): string {
     directory,
     entries,
     sources: workspaceSources(ws, config),
+    modules: declaredModules(config, context),
     specifierOf: (file) => specifierOf(config, file),
   });
 
-  for (const entry of entries.filter((candidate) => isDeclarationsFile(context, candidate))) {
+  for (const entry of entries.filter((candidate) =>
+    isDeclarationsFile(context, candidate, declaredModules(config, context)),
+  )) {
     fs.rmSync(path.join(root, directory, entry));
   }
 

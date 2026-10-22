@@ -1,5 +1,3 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { CONFIG_FILE, type ModuleConfig } from '../../config/index.js';
 import { moduleNameFlaw } from '../../model-modules/index.js';
 import { Glossaries } from '../language/glossaries.js';
@@ -26,7 +24,7 @@ export const moduleDeclared: Rule = {
       }
 
       const doc = glossaries.docOf(context);
-      const section = modulesSection(readIfPresent(path.join(project.root, doc)));
+      const section = modulesSection(glossaries.textOf(context));
 
       return modules.flatMap((module): Violation[] => {
         const where = { file: CONFIG_FILE, line: lineOf(project.configText, `"${module.name}"`) };
@@ -85,13 +83,4 @@ function missingRow(report: Report, { doc, context, module, line }: Missing): Vi
     `The module "${module.name}" of "${context}" has no row in the "${MODULES_HEADING}" table of its CONTEXT.md.`,
     `Say what it holds, one sentence in the words of the domain: \`ddd-ts-kit generate module ${context} ${module.name} --purpose "<what it holds>"\` writes the row.`,
   );
-}
-
-function readIfPresent(file: string): string {
-  try {
-    return fs.readFileSync(file, 'utf8');
-  } catch {
-    // A missing CONTEXT.md is reported by tree/context-doc.
-    return '';
-  }
 }

@@ -1,6 +1,6 @@
 import { parseGlossary } from '../check/language/parse-glossary.js';
 import type { Config, Upstream } from '../config/index.js';
-import { roleDirectoriesOf, roleFilesOf } from '../model-modules/index.js';
+import { declaredModules, roleDirectoriesOf, roleFilesOf } from '../model-modules/index.js';
 import { toName } from '../naming/index.js';
 import type { Workspace } from '../workspace/index.js';
 import type { ContextFacts, PublishedEvent } from './context-facts.js';
@@ -19,7 +19,9 @@ export function readContext(ws: Workspace, config: Config, name: string): Contex
   const directory = `${config.contextsDir}/${name}`;
   const declared = config.contexts[name];
   const doc = ws.read(`${directory}/CONTEXT.md`) ?? '';
-  const declarations = config.stack.style === 'declared' ? readDeclarations(ws, directory) : undefined;
+
+  const declarations =
+    config.stack.style === 'declared' ? readDeclarations(ws, directory, declaredModules(config, name)) : undefined;
 
   return {
     name,

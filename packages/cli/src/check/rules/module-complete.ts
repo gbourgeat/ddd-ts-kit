@@ -1,5 +1,5 @@
 import { isDeclarationsFile } from '../../declared/index.js';
-import { declaredModules, isContextLevel, isRoleFolder } from '../../model-modules/index.js';
+import { declaredModules, isContextLevel, isRoleFolder, WITHOUT_MODULE } from '../../model-modules/index.js';
 import type { Project } from '../model/project.js';
 import type { Rule } from '../model/rule.js';
 import type { SourceFile } from '../model/source-file.js';
@@ -71,6 +71,8 @@ function isLeftOutside(project: Project, file: SourceFile, context: string): boo
 
   // A folder that is no role folder is an undeclared module or a stray: tree/closed reports it.
   return (
-    isRoleFolder(location.layer, folder) && !isContextLevel(context, relative) && !isDeclarationsFile(context, relative)
+    isRoleFolder(location.layer, folder) &&
+    !isContextLevel(context, relative) &&
+    !isDeclarationsFile(context, relative, WITHOUT_MODULE)
   );
 }

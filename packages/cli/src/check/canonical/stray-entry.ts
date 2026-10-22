@@ -1,7 +1,7 @@
 import path from 'node:path';
 import type { Config } from '../../config/index.js';
 import { barrelFile, dependenciesFile, isDeclarationsFile } from '../../declared/index.js';
-import { declaredModules, MODULE_LAYERS } from '../../model-modules/index.js';
+import { declaredModules, MODULE_LAYERS, WITHOUT_MODULE } from '../../model-modules/index.js';
 import type { Flaw } from '../model/flaw.js';
 import { isCanonicalDirectory } from './is-canonical-directory.js';
 import { OPEN_DIRECTORIES } from './open-directories.js';
@@ -11,8 +11,10 @@ interface Placed {
   readonly context: string;
   /** True when the classes of the project declare themselves: the context then has generated declarations, at its root and in its role folders. */
   readonly declared: boolean;
-  /** Path of the entry inside its context. */
+  /** Path of the entry inside its context, its module of the model left out. */
   readonly inside: string;
+  /** The declared module the entry sits in, when it does. */
+  readonly module?: string;
   readonly extras: readonly string[];
 }
 
@@ -53,18 +55,20 @@ function place(entry: string, config: Config): Placed | undefined {
     context,
     declared: stack.style === 'declared',
     inside,
+    ...(inModule ? { module } : {}),
     extras: contexts[context]?.extraDirectories ?? [],
   };
 }
 
-function strayDirectory({ context, inside, extras }: Placed): Flaw | undefined {
+function strayDirectory({ context, inside, module, extras }: Placed): Flaw | undefined {
   if (isCanonicalDirectory(inside) || coveredByExtra(extras, inside)) {
     return undefined;
   }
 
   const [layer = '', folder, ...below] = inside.split('/');
 
-  if (folder !== undefined && below.length === 0 && MODULE_LAYERS.includes(layer)) {
+  // A folder directly under the layer may be a module the config does not declare yet; one inside a module is not.
+  if (folder !== undefined && below.length === 0 && MODULE_LAYERS.includes(layer) && module === undefined) {
     return {
       message: `"${inside}" is not a directory of the canonical tree.`,
       fix: `If ${folder} is a part of the model of ${context}, declare it as a module with \`ddd-ts-kit generate module ${context} ${folder}\`; otherwise move its files to the canonical directory of their role (see \`ddd-ts-kit explain tree/closed\`).`,
@@ -91,7 +95,7 @@ function straySource(placed: Placed): Flaw | undefined {
   }
 
   const open = OPEN_DIRECTORIES.some((root) => directory === root || directory.startsWith(`${root}/`));
-  const generated = placed.declared && isDeclarationsFile(placed.context, inside);
+  const generated = placed.declared && isDeclarationsFile(placed.context, inside, WITHOUT_MODULE);
 
   if (open || generated || roleOf(directory) !== undefined || coveredByExtra(extras, directory)) {
     return undefined;

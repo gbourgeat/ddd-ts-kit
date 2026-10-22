@@ -68,13 +68,24 @@ describe('a whole context moved into a module of its model', () => {
   });
 });
 
+let generating: string | undefined;
+
+/** One generated project whose billing declares the module invoices, shared by the specs that generate into it. */
+function projectWithModule(): string {
+  if (generating === undefined) {
+    generating = tempDir('modules-generate');
+    scaffoldEverything(generating);
+    expect(cli(generating, 'generate', 'module', 'billing', 'invoices', '--purpose', PURPOSE).code).toBe(0);
+  }
+
+  return generating;
+}
+
 describe('generating into a module of the model', () => {
   let root: string;
 
   beforeAll(() => {
-    root = tempDir('modules-generate');
-    scaffoldEverything(root);
-    expect(cli(root, 'generate', 'module', 'billing', 'invoices', '--purpose', PURPOSE).code).toBe(0);
+    root = projectWithModule();
   }, 120_000);
 
   it('writes the files of the model and of the use case in the module, and the imports follow them', () => {
@@ -169,5 +180,98 @@ describe('generating into a module of the model', () => {
     expect(cli(root, 'move-to-module', 'billing', 'invoices', 'application/commands/cancel-invoice').code).toBe(0);
     expect(read(root, `${BILLING}/application/invoices/commands/cancel-invoice/NOTES.md`)).toContain('paid invoice');
     expect(exists(root, `${BILLING}/application/commands/cancel-invoice`)).toBe(false);
+  });
+});
+
+describe('what guides the move into modules, and what refuses it', () => {
+  let root: string;
+
+  beforeAll(() => {
+    root = projectWithModule();
+  }, 120_000);
+
+  it('refuses --module on a kind that writes in no context', () => {
+    const refused = cli(root, 'generate', 'worker', '--module', 'invoices');
+
+    expect(refused.code).not.toBe(0);
+    expect(refused.stderr).toContain('--module applies to a kind that writes in a context');
+  });
+
+  it('points the next steps at the file in its module, not at the path without it', () => {
+    const terms = ['--term', 'Refund=An amount given back'];
+
+    const generated = cli(
+      root,
+      'generate',
+      'command',
+      'billing',
+      'RefundCreditNote',
+      '--aggregate',
+      'CreditNote',
+      '--permission',
+      'credit-note.refund',
+      '--module',
+      'invoices',
+      ...terms,
+      '--json',
+    );
+
+    const report = generated.json() as { next: string[] };
+
+    expect(generated.code).toBe(0);
+    expect(report.next.filter((step) => step.includes('/application/'))).not.toEqual([]);
+
+    expect(
+      report.next.filter((step) => step.includes('/application/') && !step.includes('/application/invoices/')),
+    ).toEqual([]);
+  });
+
+  it('moves nothing when two files would land on one path, or when another module holds a twin', () => {
+    expect(
+      cli(
+        root,
+        'generate',
+        'module',
+        'billing',
+        'reminders',
+        '--purpose',
+        'The reminders.',
+        '--term',
+        'Reminder=A message about an unpaid invoice',
+      ).code,
+    ).toBe(0);
+
+    write(root, `${BILLING}/domain/value-objects/twin.vo.ts`, 'export const flat = 1;\n');
+    write(root, `${BILLING}/domain/reminders/value-objects/twin.vo.ts`, 'export const inReminders = 1;\n');
+
+    const colliding = cli(
+      root,
+      'move-to-module',
+      'billing',
+      'invoices',
+      'domain/value-objects/twin.vo.ts',
+      'domain/reminders/value-objects/twin.vo.ts',
+    );
+
+    expect(colliding.code).not.toBe(0);
+    expect(colliding.stderr).toContain('written twice');
+    expect(read(root, `${BILLING}/domain/value-objects/twin.vo.ts`)).toBe('export const flat = 1;\n');
+    expect(read(root, `${BILLING}/domain/reminders/value-objects/twin.vo.ts`)).toBe('export const inReminders = 1;\n');
+
+    const twinned = cli(root, 'move-to-module', 'billing', 'invoices', 'domain/value-objects/twin.vo.ts');
+
+    expect(twinned.code).not.toBe(0);
+    expect(twinned.stderr).toContain('same role and name');
+    expect(exists(root, `${BILLING}/domain/invoices/value-objects/twin.vo.ts`)).toBe(false);
+  });
+
+  it('tells a stray folder inside a module where its files go, not to declare it as a module', () => {
+    write(root, `${BILLING}/domain/invoices/helpers/rounding.ts`, 'export const rounding = 1;\n');
+
+    const { violations } = checkJsonOf(cli(root, 'check', '--rule', 'tree/closed', '--json'));
+    const stray = violations.find((violation) => violation.file.endsWith('domain/invoices/helpers'));
+
+    expect(stray).toBeDefined();
+    expect(stray?.fix).not.toContain('generate module');
   });
 });

@@ -196,7 +196,10 @@ export class Workspace {
   }
 
   /** Points the team at a line of a file this command changed, the way a `TODO(domain)` of a created file does. */
-  step(step: NextStep): void {
+  step(asked: NextStep): void {
+    // Recorded where the file is, in its module of the model when the command writes in one.
+    const step = { ...asked, file: this.placed(asked.file) };
+
     if (!this.steps.some((known) => known.file === step.file && known.text === step.text)) {
       this.steps.push(step);
     }

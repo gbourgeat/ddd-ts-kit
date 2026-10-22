@@ -49,7 +49,13 @@ function edgesByContext(project: Project): Map<string, Edge[]> {
 
   for (const file of project.files.filter((candidate) => !candidate.isTest)) {
     for (const edge of edgesOf(file)) {
-      byContext.set(edge.context, [...(byContext.get(edge.context) ?? []), edge]);
+      const edges = byContext.get(edge.context);
+
+      if (edges === undefined) {
+        byContext.set(edge.context, [edge]);
+      } else {
+        edges.push(edge);
+      }
     }
   }
 

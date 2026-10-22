@@ -290,6 +290,7 @@ function declaredProject(files: Files, overrides: Files = {}, config: Record<str
 function declarationsOf(files: Files): Files {
   const rendered = renderDeclarations({
     context: 'billing',
+    modules: [],
     files: Object.keys(files).flatMap((file) =>
       file.startsWith(`${BILLING}/`) ? [file.slice(BILLING.length + 1)] : [],
     ),

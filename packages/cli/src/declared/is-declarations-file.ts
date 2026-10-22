@@ -12,14 +12,14 @@ const ROLE_LAYERS = new Set(DECLARED_ROLES.flatMap((role) => role.folders.map((f
  * to the context: the summary at its root, `<context>.declarations.ts`, or the declarations of a
  * role folder, `<layer>/<folder>/<folder>.declarations.ts` or `<layer>/<layer>.declarations.ts`.
  */
-export function isDeclarationsFile(context: string, file: string): boolean {
+export function isDeclarationsFile(context: string, file: string, modules: readonly string[]): boolean {
   if (file === barrelFile(context)) {
     return true;
   }
 
   const folder = path.posix.dirname(file);
 
-  const [layer = '', ...deeper] = moduleSplit(`${folder}/`)
+  const [layer = '', ...deeper] = moduleSplit(`${folder}/`, modules)
     .path.split('/')
     .filter((part) => part !== '');
 

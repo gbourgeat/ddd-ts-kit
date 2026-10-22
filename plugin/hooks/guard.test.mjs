@@ -860,6 +860,36 @@ test('the shell only reads, versions or checks the lock and the verdicts of an a
   assert.equal(decision(run('pre-bash', bash(root, 'npx ddd-ts-kit acceptance US5 --lock', judge))), 'deny');
 });
 
+test('the declarations of a module of the model are generated too, and a module is declared by the conductor', () => {
+  const root = project({ contexts: { ordering: { classification: 'core', upstreams: [], modules: { orders: {} } } } });
+  for (const folder of [
+    'application/orders/commands/commands.declarations.ts',
+    'application/orders/orders.declarations.ts',
+  ]) {
+    const declarations = run('pre-write', write(join(root, `src/contexts/ordering/${folder}`)));
+    assert.equal(decision(declarations), 'deny', folder);
+    assert.match(reason(declarations), /generated declarations .* ddd-ts-kit docs/, folder);
+  }
+  const undeclared = run(
+    'pre-write',
+    write(join(root, 'src/contexts/ordering/application/legacy/commands/commands.declarations.ts')),
+  );
+  assert.doesNotMatch(undeclared.output === undefined ? '' : reason(undeclared), /generated declarations/);
+  const service = run(
+    'pre-write',
+    write(join(root, 'src/contexts/ordering/domain/orders/services/pricing.service.ts')),
+  );
+  assert.equal(decision(service), 'deny');
+  assert.match(reason(service), /generate domain-service /);
+  const agent = worker(root);
+  const declaring = run(
+    'pre-bash',
+    bash(root, 'npx ddd-ts-kit generate module ordering orders --purpose "Orders."', agent),
+  );
+  assert.equal(decision(declaring), 'deny');
+  assert.match(reason(declaring), /conductor runs it on the trunk/);
+});
+
 test('a context worker does not run a generator that writes shared files or another context', () => {
   const root = project();
   const agent = worker(root);

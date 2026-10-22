@@ -14,3 +14,5 @@ export { ROLE_FOLDERS } from './role-folders.js';
 export { roleFoldersOf } from './role-folders-of.js';
 export { declaredModule } from './declared-module.js';
 export { moduleNameFlaw, type ModuleNameFlaw } from './module-name-flaw.js';
+export { WITHOUT_MODULE } from './without-module.js';
+export { modulesByContext, type ModulesByContext } from './modules-by-context.js';

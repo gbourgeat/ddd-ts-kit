@@ -152,8 +152,8 @@ already group a route or an adapter by use case.
 `application/` as a module when the config declares it; an undeclared one stays reported by
 `tree/closed`, whose fix names `generate module`, so a mistyped role folder
 (`domain/aggregate/`) is reported, not taken as a module. `discoverContext` of
-`@ddd-ts-kit/di`, which runs without the config, recognises a module by structure: any folder
-directly under `application/` that is not a role folder.
+`@ddd-ts-kit/di`, which runs without the config, reads the modules in the generated
+`<context>.dependencies.ts`, which `ddd-ts-kit docs` writes with them.
 
 **What stays at the level of the context.** `domain/errors/codes.ts` (the closed list of the
 codes of the context), `application/authorization/<context>.permissions.ts` (its permission
@@ -241,7 +241,7 @@ the remedy that applies. It never counts.
 
 The spike ran before the build, on a branch. Every gap it found is now covered: `docs` and
 `describe` read the modules and a spec guards it, `serialize-config` keeps `modules`,
-`discoverContext` recognises a module by structure, and the generator writes into modules.
+`discoverContext` reads the modules in the generated dependencies file, and the generator writes into modules.
 
 **What was done.** In the example application, the `scheduling` context was divided into two
 modules taken from its glossary: `calendars` (calendar, opening hours, exceptions, time off,

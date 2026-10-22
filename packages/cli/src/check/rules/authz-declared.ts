@@ -13,6 +13,7 @@ import { sourceDeclaring } from '../support/source-declaring.js';
 import { exportedClass } from '../text/exported-class.js';
 import { firstArgument } from '../text/first-argument.js';
 import { statementEnd } from '../text/statement-end.js';
+import { WITHOUT_MODULE } from '../../model-modules/index.js';
 
 const REGISTRATION = /\.\s*(command|query)\s*\(\s*([A-Z][\w$]*)\s*\)/g;
 const DECLARATION = /\.\s*(?:requires|public)\s*\(/;
@@ -94,7 +95,9 @@ function declaresItsAccess(file: SourceFile, name: string): boolean {
 /** In the declared style there is no registration to read: the exported class of a command or query file says who may send it. */
 function undeclaredMessages(file: SourceFile, project: Project): Finding[] {
   const role =
-    isDeclaredStyle(project) && !file.isTest ? declaredRoleOf(pathInContext(project, file) ?? '') : undefined;
+    isDeclaredStyle(project) && !file.isTest
+      ? declaredRoleOf(pathInContext(project, file) ?? '', WITHOUT_MODULE)
+      : undefined;
 
   const message = classesOf(file.scan).find((candidate) => candidate.exported);
 

@@ -53,7 +53,6 @@ function locateInContexts(config: Config, file: string): Location {
   return { area: 'context', context, layer, inside: layer === 'root' ? [first, ...rest] : rest };
 }
 
-/** A directory import (`../billing/published-language`) names the layer without a file. */
 interface Placed {
   readonly context: string;
   readonly layer: Layer;
@@ -77,6 +76,7 @@ function moduleLocation(config: Config, { context, layer, rest }: Placed): Locat
     : undefined;
 }
 
+/** A directory import (`../billing/published-language`) names the layer without a file. */
 function locateAtContextRoot(context: string, entry: string): Location {
   if (entry === `${context}.module.ts`) {
     return { area: 'context', context, layer: 'module', inside: [] };

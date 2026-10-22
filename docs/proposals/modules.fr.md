@@ -1,5 +1,5 @@
 [English](modules.md) · **Français**
-<!-- translation-of: modules.md sha256:beffa487fe08f0a5 -->
+<!-- translation-of: modules.md sha256:edaab8a624e45bdb -->
 
 # Proposition : des modules à l'intérieur d'un contexte délimité
 
@@ -160,8 +160,8 @@ technique et regroupent déjà une route ou un adaptateur par cas d'usage.
 `domain/` ou `application/` comme un module quand la configuration le déclare ; un dossier non
 déclaré reste signalé par `tree/closed`, dont le correctif nomme `generate module`, si bien qu'un
 dossier de rôle mal orthographié (`domain/aggregate/`) est signalé, pas pris pour un module.
-`discoverContext` de `@ddd-ts-kit/di`, qui tourne sans la configuration, reconnaît un module à sa
-structure : tout dossier placé juste sous `application/` qui n'est pas un dossier de rôle.
+`discoverContext` de `@ddd-ts-kit/di`, qui tourne sans la configuration, lit les modules dans le
+`<context>.dependencies.ts` généré, que `ddd-ts-kit docs` écrit avec eux.
 
 **Ce qui reste au niveau du contexte.** `domain/errors/codes.ts` (la liste fermée des codes du
 contexte), `application/authorization/<context>.permissions.ts` (son jeu de permissions), le
@@ -251,8 +251,8 @@ et nomme le remède qui s'applique. Il ne compte jamais.
 
 L'essai a tourné avant la construction, sur une branche. Chaque manque qu'il a trouvé est
 désormais couvert : `docs` et `describe` lisent les modules et une *spec* le garde,
-`serialize-config` garde `modules`, `discoverContext` reconnaît un module à sa structure, et le
-générateur écrit dans les modules.
+`serialize-config` garde `modules`, `discoverContext` lit les modules dans le fichier de
+dépendances généré, et le générateur écrit dans les modules.
 
 **Ce qui a été fait.** Dans l'application d'exemple, le contexte `scheduling` a été divisé en
 deux modules tirés de son glossaire : `calendars` (calendrier, horaires d'ouverture, exceptions,
