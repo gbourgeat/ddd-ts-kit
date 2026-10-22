@@ -1,13 +1,6 @@
-import {
-  DomainError,
-  type AuditRecord,
-  type AuditTrail,
-  type ExecutionContext,
-  type SubjectKey,
-  type SubjectKeyStore,
-} from '@ddd-ts-kit/kernel';
-import { UNEXPECTED_ERROR } from './audit-middleware.js';
+import type { AuditRecord, AuditTrail, ExecutionContext, SubjectKey, SubjectKeyStore } from '@ddd-ts-kit/kernel';
 import type { AuditSource } from './audit-source.js';
+import { failureReason } from './failure-reason.js';
 import { recordIn } from './record-in.js';
 
 /** The action of the entry an erasure writes. */
@@ -81,11 +74,10 @@ class AuditedSubjectKeyStore implements SubjectKeyStore {
   }
 
   private async recordFailure(context: ExecutionContext, subject: string, failure: unknown): Promise<void> {
-    const reason = failure instanceof DomainError ? failure.code : UNEXPECTED_ERROR;
     let record: AuditRecord | undefined;
 
     try {
-      record = this.recordOf(context, subject, { outcome: 'failed', reason });
+      record = this.recordOf(context, subject, { outcome: 'failed', reason: failureReason(failure) });
       await this.trail.record(record);
     } catch (error) {
       this.options.onLostRecord?.(error, record);
