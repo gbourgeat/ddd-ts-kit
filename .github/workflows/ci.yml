@@ -103,6 +103,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
+          check-latest: true
       - name: No em dash or en dash, and the French documentation complete and current (the scripts need no dependency)
         run: npm run ci:docs
       - name: What the change does for a user in a file of changes/, CHANGELOG.md and the plugin version left to the release

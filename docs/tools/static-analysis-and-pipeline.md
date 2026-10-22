@@ -304,6 +304,7 @@ and on a laptop, `npm run ci:arch`, which runs both.
 |---|---|---|
 | Triggers | pushes to the default branch and pull requests | merge requests and the default branch |
 | Runner | `ubuntu-26.04`, pinned: a new image of GitHub reaches the project when the team changes the label, not when `ubuntu-latest` moves | the image each job names (`node:24-bookworm-slim` by default) |
+| Node | the newest patch of the release line (`check-latest` of `setup-node`), not the older one the runner image may hold: a security release of Node reaches the next run | the image tag, which follows the newest patch of its release line |
 | Redundant runs | cancelled by concurrency groups | cancelled by interruptible jobs |
 | Gates | the same `ci:*` scripts | the same `ci:*` scripts |
 | Lint and architecture findings | annotations on the pull request (`check --format github`) | Code Quality reports (`check --format gitlab` writes the report directly; ESLint through its GitLab formatter) |
