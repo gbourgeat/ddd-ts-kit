@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:86f377ba46e75db0 -->
+<!-- translation-of: README.md sha256:7f839079a5213717 -->
 
 # @ddd-ts-kit/audit
 
@@ -428,7 +428,7 @@ entrée :
 |---|---|
 | `category` | `data-access` |
 | `action` | `personal-data:erase` (`SUBJECT_ERASURE_ACTION`) |
-| `outcome` | `succeeded`, ou `failed` avec la raison `UNEXPECTED_ERROR` quand le stockage a levé une erreur |
+| `outcome` | `succeeded`, ou `failed` quand le stockage a levé une erreur, avec le `code` d'une `DomainError` ou `UNEXPECTED_ERROR` comme `reason` |
 | `resource` | `{ type: 'data-subject', id: <personne> }` |
 | `changes` | `{ keyDestroyed: true }`, ou `{ keyDestroyed: false }` quand la personne n'avait plus de clé |
 | acteur, *tenant*, session, corrélation, origine | le scope d'exécution |

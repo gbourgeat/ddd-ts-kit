@@ -416,7 +416,7 @@ handler, a job), writes an entry:
 |---|---|
 | `category` | `data-access` |
 | `action` | `personal-data:erase` (`SUBJECT_ERASURE_ACTION`) |
-| `outcome` | `succeeded`, or `failed` with reason `UNEXPECTED_ERROR` when the store threw |
+| `outcome` | `succeeded`, or `failed` when the store threw, with the `code` of a `DomainError` or `UNEXPECTED_ERROR` as `reason` |
 | `resource` | `{ type: 'data-subject', id: <subject> }` |
 | `changes` | `{ keyDestroyed: true }`, or `{ keyDestroyed: false }` when the subject had no key left |
 | actor, tenant, session, correlation, origin | the execution scope |

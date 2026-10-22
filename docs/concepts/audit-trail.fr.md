@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:4b221969c4f14350 -->
+<!-- translation-of: audit-trail.md sha256:2c2ed6f95cc0fcba -->
 
 # Journal d'audit
 
@@ -31,13 +31,14 @@ ou qu'un journal d'audit devient illisible.
 
 Un gestionnaire (handler) qui doit penser à appeler l'audit l'oubliera un jour, et rien
 n'échouera. Un agrégat qui l'appelle a cessé d'être un modèle. Le kit enregistre donc depuis
-trois endroits que chaque unité de travail traverse déjà, câblés une fois dans la plateforme :
+les endroits que chaque unité de travail traverse déjà, câblés une fois dans la plateforme :
 
 | Source | Enregistre | Mécanisme |
 |---|---|---|
 | décisions d'autorisation | chaque refus ; chaque action autorisée qui n'est pas une lecture ; les lectures autorisées que vous déclarez sensibles | le *hook* de décision du *middleware* d'autorisation |
 | commandes | chaque commande avec `succeeded` ou `failed` et le code de l'erreur | un *middleware* de bus placé avant l'unité de travail |
 | événements d'intégration | qu'un événement d'un type donné a eu lieu, d'après sa seule enveloppe | un abonnement idempotent |
+| effacements de personnes concernées | que la clé d'une personne a été détruite, ou qu'il n'en restait aucune, par qui et quand | le stockage des clés, décoré par `auditedSubjectKeys` |
 
 ![Une commande traverse le middleware d'autorisation, le middleware d'audit et l'unité de travail avant le cas d'usage, qui ne contient aucun appel d'audit ; le hook de décision, le middleware d'audit et un abonnement aux événements ajoutent au journal d'audit et lisent qui a agi dans la portée d'exécution](../assets/diagrams/audit-trail-sources.fr.svg)
 
@@ -47,10 +48,8 @@ auquel l'appelant n'appartient pas) n'atteint jamais le bus : le *pipeline* HTTP
 appelants authentifiés seulement (un appelant sans justificatif relève du journal d'accès et de
 la limitation de débit). Une quatrième source, exceptionnelle, existe pour ce qu'aucune de
 celles-ci ne voit : un enregistrement explicite écrit par l'infrastructure, comme un export en
-masse. L'effacement d'une personne concernée est enregistré par le stockage des clés lui-même,
-décoré par `auditedSubjectKeys`, quel que soit le demandeur : l'entrée date la destruction de la
-clé sur laquelle repose le crypto-shredding. Un appel au journal depuis `domain/` ou
-`application/` est le défaut que la conception existe pour empêcher.
+masse. Un appel au journal depuis `domain/` ou `application/` est le défaut que la conception
+existe pour empêcher.
 
 Qui a agi, dans quelle session, sous l'identité empruntée par qui, pour quel *tenant*, avec quel
 identifiant de corrélation et depuis quelle origine : tout cela vient de la portée d'exécution

@@ -26,7 +26,7 @@ up holding personal data for ten years, or an audit trail ends up unreadable.
 ## Why handlers never write it
 
 A handler that must remember to call the audit will one day forget, and nothing will fail. An
-aggregate that calls it has stopped being a model. So the kit records from three places every
+aggregate that calls it has stopped being a model. So the kit records from the places every
 unit of work already crosses, wired once in the platform:
 
 | Source | Records | Mechanism |
@@ -34,6 +34,7 @@ unit of work already crosses, wired once in the platform:
 | authorization decisions | every denial; every allowed action that is not a read; the allowed reads you declare sensitive | the decision hook of the authorization middleware |
 | commands | each command with `succeeded` or `failed` and the code of the error | a bus middleware placed before the unit of work |
 | integration events | that an event of a given type occurred, from its envelope only | one idempotent subscription |
+| erasures of data subjects | that the key of a subject was destroyed, or that none was left, by whom and when | the key store, wrapped by `auditedSubjectKeys` |
 
 ![A command crosses the authorization middleware, the audit middleware and the unit of work before the use case, which holds no audit call; the decision hook, the audit middleware and an event subscription append to the audit trail and read who acted from the execution scope](../assets/diagrams/audit-trail-sources.svg)
 
@@ -42,9 +43,7 @@ belong to) never reaches the bus: the HTTP pipeline reports it to `auditGuardRef
 records it as an `authorization` entry, `denied`, for authenticated callers only (a caller
 without a credential belongs to the access log and to rate limiting). A fourth, exceptional
 source exists for what none of these can see: an explicit record written by infrastructure,
-such as a bulk export. The erasure of a data subject is recorded by the key store itself,
-wrapped by `auditedSubjectKeys`, whoever asks for it: the entry dates the destruction of the
-key that crypto-shredding relies on. A call to the trail from `domain/` or
+such as a bulk export. A call to the trail from `domain/` or
 `application/` is the defect the design exists to prevent.
 
 Who acted, in which session, impersonated by whom, for which tenant, with which correlation id
