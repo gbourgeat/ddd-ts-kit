@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DomainError,
   FixedExecutionScope,
   InMemorySubjectKeyStore,
   NoExecutionContextError,
@@ -28,6 +29,17 @@ class FailingErasureKeyStore extends InMemorySubjectKeyStore {
   override async erase(): Promise<boolean> {
     throw new Error('key database unreachable');
   }
+}
+
+/** A key store that refuses an erasure as a business rule, with a code of its own. */
+class LockedKeyStore extends InMemorySubjectKeyStore {
+  override async erase(): Promise<boolean> {
+    throw new KeyStoreLocked('The key store is locked for maintenance');
+  }
+}
+
+class KeyStoreLocked extends DomainError {
+  readonly code = 'KEY_STORE_LOCKED';
 }
 
 describe('auditedSubjectKeys, what an erasure records', () => {
@@ -109,6 +121,18 @@ describe('auditedSubjectKeys, when a step fails', () => {
     expect(trail.entries.map(({ action, outcome, reason, changes }) => ({ action, outcome, reason, changes }))).toEqual(
       [{ action: SUBJECT_ERASURE_ACTION, outcome: 'failed', reason: UNEXPECTED_ERROR, changes: undefined }],
     );
+  });
+
+  it('records the code of a refusal of the store, as for a command', async () => {
+    const trail = new InMemoryAuditTrail();
+
+    await expect(auditedSubjectKeys(new LockedKeyStore(), trail, aSource()).erase('patient-1')).rejects.toThrow(
+      KeyStoreLocked,
+    );
+
+    expect(trail.entries.map(({ outcome, reason }) => ({ outcome, reason }))).toEqual([
+      { outcome: 'failed', reason: 'KEY_STORE_LOCKED' },
+    ]);
   });
 
   it('tells onLostRecord when a failed erasure cannot be recorded either, and still throws the failure of the erasure', async () => {

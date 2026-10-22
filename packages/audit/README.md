@@ -425,21 +425,22 @@ The subject is the id the keys are stored under: an opaque identifier, never a n
 email, like every resource id. `keyFor` and `find` pass through and write nothing.
 
 ```ts
-// src/platform/audit/audit.module.ts
+// the composition root: wrap once, and give the same instance to the container and to the scripts
 const subjectKeys = auditedSubjectKeys(eventSourcing.subjectKeys, trail, { scope, clock, ids });
 
 builder.rebind(SubjectKeyStore).toValue(subjectKeys); // an erasure from a use case is recorded too
 ```
 
 The keys and the trail are better kept apart (the keys in a store of their own, with a shorter
-backup retention), so the two writes share no transaction. The order is chosen so that the
-trail never says more than what happened:
+backup retention), and then the two writes share no transaction; neither do they in a script
+that opens no unit of work. The order is chosen so that the trail never says more than what
+happened:
 
 1. The execution context is read first: an erasure outside `ExecutionScope.run` throws
    `NoExecutionContextError` before any key is touched. A script opens one, with the operator
    as actor and the origin `cli`.
 2. The key is destroyed.
-3. The entry is written; its `occurredAt` is after the destruction, never before.
+3. The entry is written, dated once the store has answered.
 
 When step 3 fails, `erase` rejects with that error: the key is gone, no entry says so yet, and
 the caller knows the erasure is not finished. Running it again finds no key and records
@@ -449,8 +450,15 @@ the projections that hold a clear copy) can fail too. The opposite order would w
 before knowing it, and leave a false proof when the destruction then fails.
 
 When step 2 fails, the store may or may not have destroyed the key: the entry says `failed`,
-and the caller receives the error of the store. If that entry cannot be written either,
-`onLostRecord(error, record)` is told, as with `auditMiddleware`.
+with the `code` of a `DomainError` or `UNEXPECTED_ERROR`, and the caller receives the error of
+the store. If that entry cannot be written either, `onLostRecord(error, record)` is told, as
+with `auditMiddleware`.
+
+When the keys and the trail are in one database and the erasure runs inside a unit of work (a
+command handler, behind `unitOfWorkMiddleware`), both writes join its transaction: the
+destruction and its entry commit together or neither exists, and a failure rolls back the
+`failed` entry with the rest. What the trail keeps of that failure is the `failed` entry of the
+command, which `auditMiddleware` writes after the rollback.
 
 ### In an application of `@ddd-ts-kit/di`
 

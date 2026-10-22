@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:d4fc487dcc6657ec -->
+<!-- translation-of: event-sourcing.md sha256:344ee47a327f9409 -->
 
 # Event sourcing, par agrégat
 
@@ -458,9 +458,9 @@ ou un *job*, écrit une entrée d'audit (catégorie `data-access`, action `perso
 personne comme ressource `data-subject`, `keyDestroyed: true` ou `false`) avec l'acteur et la
 date, dans la chaîne de hachage. La date de cette entrée plus la rétention des sauvegardes des
 clés donne le jour où l'effacement est complet. La clé est détruite d'abord et l'entrée écrite
-ensuite, puisque les deux stockages ne partagent aucune transaction : quand l'entrée ne peut pas
-être écrite, l'effacement échoue, et le relancer enregistre qu'il ne restait aucune clé, à une
-date ultérieure, de sorte que la date d'achèvement n'est jamais précoce
+ensuite, puisque les deux stockages, séparés, ne partagent aucune transaction : quand l'entrée
+ne peut pas être écrite, l'effacement échoue, et le relancer enregistre qu'il ne restait aucune
+clé, à une date ultérieure, de sorte que la date d'achèvement n'est jamais précoce
 ([`@ddd-ts-kit/audit`](../../packages/audit/README.fr.md#e-effacements-de-personnes-concernées)).
 
 Ce qu'il ne fait pas : les identifiants ne sont pas scellés. Un flux nommé d'après un patient

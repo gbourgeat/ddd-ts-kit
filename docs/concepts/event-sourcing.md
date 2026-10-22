@@ -445,9 +445,9 @@ wraps the key store: every `erase`, from a script, a command or a job, writes an
 (category `data-access`, action `personal-data:erase`, the subject as a `data-subject`
 resource, `keyDestroyed: true` or `false`) with the actor and the date, in the hash chain. The
 date of that entry plus the retention of the key backups is the day the erasure is complete.
-The key is destroyed first and the entry written after, since the two stores share no
-transaction: when the entry cannot be written the erasure fails, and running it again records
-that no key was left, at a later date, so the completion date is never early
+The key is destroyed first and the entry written after, since the two stores, kept apart,
+share no transaction: when the entry cannot be written the erasure fails, and running it again
+records that no key was left, at a later date, so the completion date is never early
 ([`@ddd-ts-kit/audit`](../../packages/audit/README.md#e-erasures-of-data-subjects)).
 
 What it does not do: identifiers are not sealed. A stream named after a patient

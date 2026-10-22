@@ -1,4 +1,11 @@
-import type { AuditRecord, AuditTrail, ExecutionContext, SubjectKey, SubjectKeyStore } from '@ddd-ts-kit/kernel';
+import {
+  DomainError,
+  type AuditRecord,
+  type AuditTrail,
+  type ExecutionContext,
+  type SubjectKey,
+  type SubjectKeyStore,
+} from '@ddd-ts-kit/kernel';
 import { UNEXPECTED_ERROR } from './audit-middleware.js';
 import type { AuditSource } from './audit-source.js';
 import { recordIn } from './record-in.js';
@@ -20,12 +27,14 @@ export interface AuditedSubjectKeysOptions extends AuditSource {
  * `personal-data:erase`, the subject as resource of type `data-subject`, and says in `changes`
  * whether a key was destroyed (`keyDestroyed`). `keyFor` and `find` pass through.
  *
- * The keys and the trail share no transaction, so the order is chosen: the actor is read first,
- * and an erasure outside an execution context is refused before any key is touched; then the
- * key is destroyed, then the entry is written. An entry never states an erasure that did not
- * happen, and its date is never before the destruction. When the entry cannot be written, the
- * erasure fails with that error: run it again, it finds no key left and records that, at a
- * later date, which only delays the instant the erasure is said to be complete.
+ * The keys and the trail may share no transaction (two databases, or a script that opens none),
+ * so the order is chosen: the actor is read first, and an erasure outside an execution context
+ * is refused before any key is touched; then the key is destroyed, then the entry is written,
+ * dated once the store has answered. An entry never states an erasure that did not happen. When
+ * the entry cannot be written, the erasure fails with that error: run it again, it finds no key
+ * left and records that, at a later date, which only delays the instant the erasure is said to
+ * be complete. Inside a unit of work over one database, the destruction and the entry commit
+ * together or not at all, and a failure is the one of the work around them.
  */
 export function auditedSubjectKeys(
   keys: SubjectKeyStore,
@@ -65,17 +74,18 @@ class AuditedSubjectKeyStore implements SubjectKeyStore {
     try {
       return await this.keys.erase(subject);
     } catch (error) {
-      await this.recordFailure(context, subject);
+      await this.recordFailure(context, subject, error);
 
       throw error;
     }
   }
 
-  private async recordFailure(context: ExecutionContext, subject: string): Promise<void> {
+  private async recordFailure(context: ExecutionContext, subject: string, failure: unknown): Promise<void> {
+    const reason = failure instanceof DomainError ? failure.code : UNEXPECTED_ERROR;
     let record: AuditRecord | undefined;
 
     try {
-      record = this.recordOf(context, subject, { outcome: 'failed', reason: UNEXPECTED_ERROR });
+      record = this.recordOf(context, subject, { outcome: 'failed', reason });
       await this.trail.record(record);
     } catch (error) {
       this.options.onLostRecord?.(error, record);

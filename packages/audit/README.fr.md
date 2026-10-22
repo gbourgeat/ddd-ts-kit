@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a27f7f6b84828a64 -->
+<!-- translation-of: README.md sha256:86f377ba46e75db0 -->
 
 # @ddd-ts-kit/audit
 
@@ -437,21 +437,22 @@ La personne est l'id sous lequel ses clés sont rangées : un identifiant opaque
 un email, comme tout id de ressource. `keyFor` et `find` passent tels quels et n'écrivent rien.
 
 ```ts
-// src/platform/audit/audit.module.ts
+// la racine de composition : décorer une fois, et donner la même instance au conteneur et aux scripts
 const subjectKeys = auditedSubjectKeys(eventSourcing.subjectKeys, trail, { scope, clock, ids });
 
 builder.rebind(SubjectKeyStore).toValue(subjectKeys); // un effacement depuis un cas d'usage est enregistré aussi
 ```
 
 Les clés et le journal gagnent à être séparés (les clés dans un stockage à elles, avec une
-conservation des sauvegardes plus courte), donc les deux écritures ne partagent aucune
-transaction. L'ordre est choisi pour que le journal ne dise jamais plus que ce qui s'est passé :
+conservation des sauvegardes plus courte), et les deux écritures ne partagent alors aucune
+transaction ; elles n'en partagent pas non plus dans un script qui n'ouvre aucune unité de
+travail. L'ordre est choisi pour que le journal ne dise jamais plus que ce qui s'est passé :
 
 1. Le contexte d'exécution est lu d'abord : un effacement hors de `ExecutionScope.run` lève
    `NoExecutionContextError` avant qu'aucune clé ne soit touchée. Un script en ouvre un, avec
    l'opérateur comme acteur et l'origine `cli`.
 2. La clé est détruite.
-3. L'entrée est écrite ; son `occurredAt` est postérieur à la destruction, jamais antérieur.
+3. L'entrée est écrite, datée une fois que le stockage a répondu.
 
 Quand l'étape 3 échoue, `erase` est rejeté avec cette erreur : la clé n'existe plus, aucune
 entrée ne le dit encore, et l'appelant sait que l'effacement n'est pas terminé. Le relancer ne
@@ -461,9 +462,16 @@ de toute façon pouvoir être relancé, puisque ce qui le suit (reconstruire les
 gardent une copie en clair) peut échouer aussi. L'ordre inverse écrirait « effacé » avant de le
 savoir, et laisserait une preuve fausse si la destruction échouait ensuite.
 
-Quand l'étape 2 échoue, le stockage a pu détruire la clé ou non : l'entrée dit `failed`, et
-l'appelant reçoit l'erreur du stockage. Si cette entrée ne peut pas être écrite non plus,
-`onLostRecord(error, record)` en est informé, comme avec `auditMiddleware`.
+Quand l'étape 2 échoue, le stockage a pu détruire la clé ou non : l'entrée dit `failed`, avec le
+`code` d'une `DomainError` ou `UNEXPECTED_ERROR`, et l'appelant reçoit l'erreur du stockage. Si
+cette entrée ne peut pas être écrite non plus, `onLostRecord(error, record)` en est informé,
+comme avec `auditMiddleware`.
+
+Quand les clés et le journal sont dans une même base et que l'effacement tourne dans une unité de
+travail (un gestionnaire de commande, derrière `unitOfWorkMiddleware`), les deux écritures
+rejoignent sa transaction : la destruction et son entrée sont validées ensemble ou aucune
+n'existe, et un échec annule l'entrée `failed` avec le reste. Ce que le journal garde de cet
+échec, c'est l'entrée `failed` de la commande, que `auditMiddleware` écrit après l'annulation.
 
 ### Dans une application de `@ddd-ts-kit/di`
 
