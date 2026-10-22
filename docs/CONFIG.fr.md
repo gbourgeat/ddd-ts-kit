@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:4afccb36f8ac0bd6 -->
+<!-- translation-of: CONFIG.md sha256:eb0e6b1e6b098ed2 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -587,6 +587,7 @@ même listés dans une liste d'autorisation.
 | `commit` | `{ "maxFiles": 20, "maxLines": 600 }` : taille conseillée d'un *commit*, lue par `ddd-ts-kit check --commit-size` (indicatif, `--strict` sort en 1) et par le *hook* d'éditeur (un rappel, jamais bloquant). Les fichiers générés ne sont pas comptés. Une limite qui n'est pas un entier positif est lue comme sa valeur par défaut et signalée | comme montré |
 | `guard` | `enforce`, `advise`, `off` : comment le *hook* d'éditeur du *plugin* réagit à une violation. La variable d'environnement `DDD_TS_KIT_GUARD` l'emporte sur elle | `enforce` |
 | `worktrees` | `required`, `advised` : où la garde du *plugin* laisse une session écrire le code d'un contexte. `required` : dans un *worktree* seulement (`npx ddd-ts-kit worktree <name>`, `story-scope`, `worker-scope`, tous sous `.worktrees/`) ; dans le *checkout* principal, sur la branche du tronc, le code des contextes et les générateurs qui l'écrivent sont refusés. `advised` : partout, avec un avis au démarrage de la session, ce que garde un projet démarré avant cette clé tant qu'elle n'est pas posée | `required` dans un projet que crée `init`, `advised` quand la clé est absente |
+| `formatOnWrite` | `true`, `false` : si le *hook* d'éditeur du *plugin* lance le Biome du projet (`node_modules/.bin/biome format --write`) sur chaque fichier qu'une session écrit, avant de le vérifier, pour que la mise en page soit réglée à l'écriture et que les constats du lint qui suivent une ligne repliée reviennent dans la même sortie du *hook*. Un fichier, aucun autre formateur, rien quand Biome n'est pas installé dans le projet. C'est le projet qui la pose ; la clé n'est lue que comme `true`. Issu du [*playbook* du cycle de vie natif à l'IA d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf) | `false` |
 | `worker` | `true`, `false` : le projet a `src/apps/worker/main.ts` ; les *jobs* planifiés tournent alors là et non dans le processus de l'API. `generate worker` la pose | `false` |
 | `deviations[]` | `{ "what", "adr", "reason" }` : une exception enregistrée ; `adr` nomme un `docs/adr/<number>-*.md` existant | `[]` |
 

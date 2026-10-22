@@ -52,7 +52,10 @@ when the installed packages are not the version the skills describe, refuses
 a hand-written file where a generator exists and any edit of a generated contract, asks the
 project owner before a suppression, a skipped test or a change of the rules is written, checks
 every written file and returns the violations with their fix, and refuses to finish while
-architecture errors remain. It reminds, without blocking, when the uncommitted changes exceed
+architecture errors remain. With `"formatOnWrite": true` in the config, it first runs the Biome
+the project installed on the written file (`node_modules/.bin/biome format --write`, one file,
+never another formatter), so that the layout is settled at the write and the lint findings
+that follow a wrapped line come back in the same output; a run that fails changes nothing. It reminds, without blocking, when the uncommitted changes exceed
 the advised size of a commit, and in a worker's worktree (`.ddd-ts-kit/worker.json`) it
 refuses a write outside the worker's context, by the editor tools or by the shell (`sed -i`, a
 redirection, `tee`, `cp`, `mv`, `rm`), stops the worker when its inline code (`node -e`, a heredoc)

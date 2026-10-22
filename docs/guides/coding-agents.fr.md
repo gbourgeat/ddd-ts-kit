@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:1b1c585a208ef692 -->
+<!-- translation-of: coding-agents.md sha256:3c9fbb7b0179e54e -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -54,7 +54,11 @@ session, signale quand les packages installés ne sont pas la version que décri
 modification d'un contrat généré, demande l'avis du propriétaire du projet avant qu'une
 désactivation, un test sauté ou un changement des règles soit écrit, vérifie chaque fichier
 écrit et renvoie les violations avec leur correction, et refuse de terminer tant que des
-erreurs d'architecture restent. Il rappelle, sans bloquer, quand les changements non commités
+erreurs d'architecture restent. Avec `"formatOnWrite": true` dans la configuration, il lance
+d'abord le Biome que le projet a installé sur le fichier écrit (`node_modules/.bin/biome format
+--write`, un fichier, jamais un autre formateur), pour que la mise en page soit réglée à
+l'écriture et que les constats du lint qui suivent une ligne repliée reviennent dans la même
+sortie ; une exécution qui échoue ne change rien. Il rappelle, sans bloquer, quand les changements non commités
 dépassent la taille conseillée d'un commit, et dans le worktree d'un worker
 (`.ddd-ts-kit/worker.json`), il refuse une écriture hors du contexte du worker, par les outils
 d'édition ou par le *shell* (`sed -i`, une redirection, `tee`, `cp`, `mv`, `rm`), arrête le

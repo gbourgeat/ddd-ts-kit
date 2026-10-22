@@ -48,6 +48,9 @@ const WORKER_AGENT = 'context-builder';
 const SESSION_CONTEXT_LIMIT = 3000;
 const COMMIT_DEFAULTS = { maxFiles: 20, maxLines: 600 };
 const COUNTED_FILE_BYTES = 1_000_000;
+// The files Biome formats: with `formatOnWrite` in the config, the project's own Biome lays one out as it is written.
+const FORMATTED_FILE = /\.(?:[cm]?[jt]sx?|jsonc?)$/;
+const FORMAT_TIMEOUT = 5000;
 
 // The contracts in YAML or JSON (openapi/<document>, the AsyncAPI document), the event catalog
 // and the split of the contract that `ddd-ts-kit docs` writes in the platform.
@@ -399,7 +402,9 @@ function workerCommandReason(project, input, { context, command, commands }) {
 }
 
 function postWrite(input) {
-  const errors = writesOf(input)
+  const writes = writesOf(input);
+  formatWrites(writes);
+  const errors = writes
     .filter(({ file }) => isChecked(file))
     .flatMap(({ file }) => {
       const project = findProject(dirname(file));
@@ -417,6 +422,22 @@ function postWrite(input) {
   }
   process.stderr.write(`${feedback}\n`);
   process.exitCode = 2;
+}
+
+// With `formatOnWrite` in the config, the Biome the project installed lays out each written file
+// before it is checked, so that the layout is settled at the write and the lint findings that follow
+// a wrapped line come back in the same output. One file, the project's binary only, never `npx biome`.
+function formatWrites(writes) {
+  for (const { file } of writes) {
+    const project = findProject(dirname(file));
+    if (!project?.formatOnWrite || project.mode === 'off' || !FORMATTED_FILE.test(file) || !existsSync(file)) {
+      continue;
+    }
+    const biome = join(project.root, 'node_modules', '.bin', 'biome');
+    if (existsSync(biome)) {
+      spawnSync(biome, ['format', '--write', file], { cwd: project.root, encoding: 'utf8', timeout: FORMAT_TIMEOUT });
+    }
+  }
 }
 
 // A context-builder of Claude Code: its tool calls are counted, its runs and stops recorded.
@@ -645,6 +666,8 @@ function describeProject(root) {
     // required (what init writes in a new project): the code of a context is refused in the main checkout
     // of the trunk; advised (the key absent, a project started before): only said.
     worktrees: config.worktrees === 'required' ? 'required' : 'advised',
+    // The project's Biome runs on each written file before the check; absent, off.
+    formatOnWrite: config.formatOnWrite === true,
   };
 }
 
