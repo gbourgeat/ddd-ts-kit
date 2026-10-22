@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:8ba3e081c5e8027a -->
+<!-- translation-of: story-workflow.md sha256:e478911510da01b7 -->
 
 # Parcours d'une story : une session par user story
 
@@ -79,9 +79,15 @@ Chaque ligne reçoit une section de la revue de conception avant que rien ne soi
 l'agrégat et ses invariants, la commande ou la requête et sa permission, les événements, les
 erreurs par leur nom métier, la route, les ports, le contrat lu dans un autre contexte. L'agent
 `architecture-reviewer` la lit comme une revue de conception de lignes à construire ; ses
-remarques bloquantes changent la conception. `npx ddd-ts-kit cited --rows <ids>` liste les noms
-que la conception cite et que le tronc a remplacés entre-temps. `worker-scope` nomme la section
-d'une ligne dans la consigne de son agent.
+remarques bloquantes changent la conception. Les politiques du projet sont des *skills*, celles
+du plugin (contrôle d'accès, persistance, préoccupations transverses, tests) et celles du projet
+sous `.claude/skills/` : la session liste celles qu'elle a chargées sur la ligne
+`Policies in force:` de `## Origin`, et écrit dans la section d'une ligne
+`Policies: <skill>: <ce qu'elle a imposé ici>` quand une politique a changé la conception, une
+ligne que le relecteur lit avec le reste ; deux politiques qui se contredisent deviennent une
+décision pour le responsable du projet. `npx ddd-ts-kit cited --rows <ids>` liste les noms que la
+conception cite et que le tronc a remplacés entre-temps. `worker-scope` nomme la section d'une
+ligne dans la consigne de son agent.
 
 ## L'acceptation avant le code, et verrouillée
 

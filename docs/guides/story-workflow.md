@@ -76,8 +76,14 @@ Each row gets a section of the design review before anything is generated: the a
 its invariants, the command or query and its permission, the events, the errors by business
 name, the route, the ports, the contract read from another context. The `architecture-reviewer`
 agent reads it as a design review of rows still to build; its blocking findings change the
-design. `npx ddd-ts-kit cited --rows <ids>` lists the names the design cites that the trunk
-replaced in the meantime. `worker-scope` names the section of a row in the briefing of its agent.
+design. The policies of the project are skills, those of the plugin (access control,
+persistence, cross-cutting concerns, testing) and the project's own under `.claude/skills/`:
+the session lists the ones it loaded on the `Policies in force:` line of `## Origin`, and writes
+in the section of a row `Policies: <skill>: <what it imposed here>` when a policy changed the
+design, a line the reviewer reads with the rest; two policies that contradict each other become
+a decision for the owner. `npx ddd-ts-kit cited --rows <ids>` lists the names the design cites
+that the trunk replaced in the meantime. `worker-scope` names the section of a row in the
+briefing of its agent.
 
 ## The acceptance before the code, and locked
 

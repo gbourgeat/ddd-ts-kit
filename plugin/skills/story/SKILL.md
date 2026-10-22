@@ -84,10 +84,16 @@ otherwise record which story lands first as a decision.
 In `docs/architecture/reviews/$0.md`, one `## #<id> <slice>` section per row: the aggregate and
 its invariants, the command or query and its permission, the events, the errors by business
 name, the route, the ports, what it reads from another context and through which contract, the
-specs it changes; every class, method and path in backticks. Then launch the
-`architecture-reviewer` agent on that file as a design review of rows still to build. Its
-blocking findings change the design; a non-blocking one is settled at once or becomes a
-decision `D<n>`. `npx ddd-ts-kit cited --rows <ids> --base <base>` lists the names the design
+specs it changes; every class, method and path in backticks. The policies of the project are
+skills: those of the plugin (`ddd-ts-kit:access-control`, `ddd-ts-kit:persistence`,
+`ddd-ts-kit:cross-cutting`, `ddd-ts-kit:testing`) and the project's own under `.claude/skills/`.
+Load the ones the rows need, list them on the `Policies in force:` line of `## Origin`, and in
+the section of a row write `Policies: <skill>: <what it imposed here>` whenever a policy changed
+the design (a permission it required, a port it moved, a field it masked); when two policies
+contradict each other, write both and the choice as a decision `D<n>`. Then launch the
+`architecture-reviewer` agent on that file as a design review of rows still to build; it reads
+the `Policies:` lines as part of the design. Its blocking findings change the design; a
+non-blocking one is settled at once or becomes a decision `D<n>`. `npx ddd-ts-kit cited --rows <ids> --base <base>` lists the names the design
 cites that the trunk replaced: write the name the trunk has.
 
 ## 4. The acceptance, before any code
