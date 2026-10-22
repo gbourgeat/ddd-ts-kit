@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:0a26db479ce80d65 -->
+<!-- translation-of: commands.md sha256:bfde44bfd1abfc20 -->
 
 # Quelle commande, quand
 
@@ -146,7 +146,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 | Commande | Fait | Quand | Produit | Ensuite |
 |---|---|---|---|---|
 | `npm run build`, `npm start` | compile, réécrit les alias de `dist/`, l'exécute avec Node seul | pour livrer | `dist/` | l'image |
-| `docker build .` | l'image du `Dockerfile` qu'a écrit `init` (le *pipeline* la construit sans la pousser) | pour livrer | une image | `npm run db:migrate` sur la base de données cible, puis le déploiement |
+| `docker build --pull .` | l'image du `Dockerfile` qu'a écrit `init`, sur la dernière image de base `node` plutôt que sur celle que la machine contient déjà (le *pipeline* la construit sans la pousser) | pour livrer | une image | `npm run db:migrate` sur la base de données cible, puis le déploiement |
 | `npx ddd-ts-kit sdk` (ou `init --sdk`) | génère le client typé de chaque document du contrat sous `clients/<document>`, câble ses scripts et le tient à jour (`docs:generate` le lance, `docs:check` le compare) | quand une autre équipe, un *front end* ou un test appelle l'API | un *package* de *workspace* par document, construit par `npm run sdk:build` | `npm publish --workspace clients/<document>` à la main, voir [le SDK client](../tools/client-sdk.fr.md) |
 | `npx ddd-ts-kit generate worker`, `generate service <context>` | un processus pour les *jobs*, ou un contexte exécuté seul | quand les *jobs* ou un contexte doivent monter en charge à part | `src/apps/<name>/main.ts` | `/ddd-ts-kit:extract-service` |
 
