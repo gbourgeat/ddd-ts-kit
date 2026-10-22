@@ -7,6 +7,7 @@ import {
   InMemoryUnitOfWork,
 } from '@ddd-ts-kit/kernel';
 import { eraseDataSubject } from '@/platform/events/erase-data-subject';
+import { UnknownDataSubjectError } from '@/platform/events/unknown-data-subject-error';
 import type { StoreFedProjection } from '@/platform/events/store-fed-projections';
 
 describe('eraseDataSubject', () => {
@@ -34,6 +35,36 @@ describe('eraseDataSubject', () => {
     });
 
     expect(erasure).toEqual({ erased: false, rebuilt: { 'scheduling.history': 0 } });
+    expect(order).toEqual(['scheduling.history']);
+  });
+
+  it('refuses an id that destroys no key and that nobody knows, before any rebuild', async () => {
+    const order: string[] = [];
+
+    await expect(
+      eraseDataSubject('patinet-1', {
+        keys: new InMemorySubjectKeyStore(),
+        projections: [projection('scheduling.history', 0, order)],
+        isKnown: async () => false,
+      }),
+    ).rejects.toThrow(UnknownDataSubjectError);
+
+    expect(order).toEqual([]);
+  });
+
+  it('erases a subject nobody knows any more, as long as it has a key: the key comes first, the record after', async () => {
+    const keys = new InMemorySubjectKeyStore();
+    const order: string[] = [];
+
+    await keys.keyFor('patient-gone');
+
+    const erasure = await eraseDataSubject('patient-gone', {
+      keys,
+      projections: [projection('scheduling.history', 2, order)],
+      isKnown: async () => false,
+    });
+
+    expect(erasure).toEqual({ erased: true, rebuilt: { 'scheduling.history': 2 } });
     expect(order).toEqual(['scheduling.history']);
   });
 

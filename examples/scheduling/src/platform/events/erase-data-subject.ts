@@ -1,9 +1,17 @@
 import type { SubjectKeyStore } from '@ddd-ts-kit/kernel';
 import type { StoreFedProjection } from '@/platform/events/store-fed-projections';
+import { UnknownDataSubjectError } from '@/platform/events/unknown-data-subject-error';
 
 export interface ErasureParts {
   readonly keys: SubjectKeyStore;
   readonly projections: readonly StoreFedProjection[];
+  /**
+   * Whether the subject exists at all, asked only when no key was destroyed: an id that
+   * destroys no key and that nobody knows is a mistyped one, refused before the rebuilds; one
+   * that somebody knows is a run again. Left out, every id is taken as known. A subject with a
+   * key is erased whether anybody still knows it or not: the key comes first, the record after.
+   */
+  readonly isKnown?: (subject: string) => Promise<boolean>;
 }
 
 /** What an erasure did: whether the subject had a key, and the events each projection replayed. */
@@ -18,10 +26,18 @@ export interface ErasureReport {
  * projection fed by the store, so no read model keeps a clear copy. The rebuilds run even when
  * the subject had no key left, and even when the erasure failed, since the key may be gone all
  * the same (an audit entry that could not be written): that failure is thrown once they are
- * done, and running the erasure again completes it.
+ * done, and running the erasure again completes it. Only a mistyped id skips them.
  */
-export async function eraseDataSubject(subject: string, { keys, projections }: ErasureParts): Promise<ErasureReport> {
+export async function eraseDataSubject(
+  subject: string,
+  { keys, projections, isKnown }: ErasureParts,
+): Promise<ErasureReport> {
   const [erasure] = await Promise.allSettled([keys.erase(subject)]);
+
+  if (await isMistyped(subject, erasure, isKnown)) {
+    throw new UnknownDataSubjectError(subject);
+  }
+
   const rebuilt = await rebuildAll(projections);
 
   if (erasure.status === 'rejected') {
@@ -29,6 +45,19 @@ export async function eraseDataSubject(subject: string, { keys, projections }: E
   }
 
   return { erased: erasure.value, rebuilt };
+}
+
+/** No key was destroyed, and nobody knows the subject: not a run again, a mistyped id. */
+async function isMistyped(
+  subject: string,
+  erasure: PromiseSettledResult<boolean>,
+  isKnown: ErasureParts['isKnown'],
+): Promise<boolean> {
+  if (erasure.status === 'rejected' || erasure.value || isKnown === undefined) {
+    return false;
+  }
+
+  return !(await isKnown(subject));
 }
 
 async function rebuildAll(projections: readonly StoreFedProjection[]): Promise<Record<string, number>> {

@@ -551,10 +551,11 @@ The attendance record of a patient is kept as its events; its history
   `src/platform/events/erase-on-the-command-line.ts`, `scripts/erase-patient.ts`): the stream and
   the snapshots read `[erased]` at once, and so does the history once rebuilt. A rebuild never
   stops the catch-up, so the API may keep running. Running it again completes an erasure whose
-  entry or rebuild failed. An id that names nobody is refused before anything is touched (exit
-  code 2): a person belongs to one network and the script to none, so the lookup runs under an
-  elevation over every network, which the trail records (`tenancy:elevate`, reason
-  `PATIENT_ERASURE`) just before the erasure.
+  entry or rebuild failed. The key is destroyed whether identity still knows the patient or
+  not: the key comes first, the record after. When no key was destroyed, the id is looked up
+  among the persons of every network, under an elevation the trail records (`tenancy:elevate`,
+  reason `PATIENT_ERASURE`), to tell a run again from a mistyped id, which is refused before
+  the rebuilds (exit code 2).
 - **The proof of an erasure.** The key store bound by the platform is wrapped by
   `auditedSubjectKeys` (`src/platform/audit/create-audit.ts`), so every erasure, from this script
   or from a use case, writes an entry: action `personal-data:erase`, the patient as a

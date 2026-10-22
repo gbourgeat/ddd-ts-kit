@@ -8,6 +8,7 @@ import {
   executionContext,
   offsetPage,
   type Actor,
+  type AuditEntry,
   type AuditFilter,
 } from '@ddd-ts-kit/kernel';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -15,7 +16,7 @@ import { createAudit, type Audit } from '@/platform/audit/create-audit';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { eraseOnTheCommandLine } from '@/platform/events/erase-on-the-command-line';
 import { storeFedProjections } from '@/platform/events/store-fed-projections';
-import { UnknownPatientError } from '@/platform/events/unknown-patient-error';
+import { UnknownDataSubjectError } from '@/platform/events/unknown-data-subject-error';
 import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persistence/knex-person-directory.reader';
 import { KnexPersonRepository } from '@/contexts/identity/infrastructure/persistence/knex-person.repository';
 import { aPerson } from '@/contexts/identity/test/builders/person.builder';
@@ -94,17 +95,25 @@ describe('npm run erase:patient', () => {
     await expect(verifyChain(audit.trail, { chain: 'global' })).resolves.toMatchObject({ valid: true });
   });
 
-  it('looks the patient up in every network, which the trail records, and refuses an id that names nobody', async () => {
-    await expect(erase('nobody', 'operator-5')).rejects.toThrow(UnknownPatientError);
+  it('tells a run again from a mistyped id by a lookup of every network, which the trail records', async () => {
+    await expect(erase('nobody', 'operator-5')).rejects.toThrow(UnknownDataSubjectError);
 
-    const left = (await entries({ actorId: 'operator-5' })).map(({ action, outcome, reason }) => ({
-      action,
-      outcome,
-      reason,
-    }));
+    expect((await entriesOf('operator-5')).map(gist)).toEqual([
+      { action: SUBJECT_ERASURE_ACTION, outcome: 'succeeded', reason: undefined, changes: { keyDestroyed: false } },
+      { action: 'tenancy:elevate', outcome: 'allowed', reason: 'PATIENT_ERASURE', changes: undefined },
+    ]);
+  });
 
-    expect(left).toEqual([{ action: 'tenancy:elevate', outcome: 'allowed', reason: 'PATIENT_ERASURE' }]);
-    expect(await erasuresOf('nobody')).toEqual([]);
+  it('erases a patient whose person is gone from every network, as long as they have a key: the key comes first', async () => {
+    await database.persistence.eventSourcing.subjectKeys.keyFor('patient-gone');
+
+    const report = await erase('patient-gone', 'operator-3');
+
+    expect(report.erased).toBe(true);
+
+    expect((await entriesOf('operator-3')).map(gist)).toEqual([
+      { action: SUBJECT_ERASURE_ACTION, outcome: 'succeeded', reason: undefined, changes: { keyDestroyed: true } },
+    ]);
   });
 });
 
@@ -117,8 +126,16 @@ function erase(patientId: string, operator: string) {
   return eraseOnTheCommandLine(patientId, parts, { scope, ids, operator, persons, elevate: audit.elevate });
 }
 
+function gist({ action, outcome, reason, changes }: AuditEntry) {
+  return { action, outcome, reason, changes };
+}
+
 function erasuresOf(patientId: string) {
   return entries({ action: SUBJECT_ERASURE_ACTION, resource: { type: 'data-subject', id: patientId } });
+}
+
+function entriesOf(operator: string) {
+  return entries({ actorId: operator });
 }
 
 async function entries(filter: AuditFilter) {

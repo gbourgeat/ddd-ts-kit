@@ -3,17 +3,17 @@ import { layFoundations } from '@/platform/composition/lay-foundations';
 import { openPersistence } from '@/platform/database/open-persistence';
 import { eraseOnTheCommandLine } from '@/platform/events/erase-on-the-command-line';
 import { storeFedProjections } from '@/platform/events/store-fed-projections';
-import { UnknownPatientError } from '@/platform/events/unknown-patient-error';
+import { UnknownDataSubjectError } from '@/platform/events/unknown-data-subject-error';
 import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persistence/knex-person-directory.reader';
 
 // `npm run erase:patient -- <patientId> <operatorId>`: the right to erasure of a patient.
-// Checks that the id names a person of some network, destroys the key the words of the patient
-// were sealed with in the attendance records, writes the erasure to the audit trail, with the
-// operator as actor, then rebuilds the projections fed by the event store, so the history shows
-// `[erased]` in their place. Run against the database of the application (DATABASE_URL), while
-// it runs or not: a rebuild never stops the catch-up. Running it again for the same patient
-// completes an erasure whose entry or rebuild failed. Exit code 2: a usage error, or an id that
-// names nobody, with nothing touched.
+// Destroys the key the words of the patient were sealed with in the attendance records, writes
+// the erasure to the audit trail, with the operator as actor, then rebuilds the projections fed
+// by the event store, so the history shows `[erased]` in their place. Run against the database
+// of the application (DATABASE_URL), while it runs or not: a rebuild never stops the catch-up.
+// Running it again for the same patient completes an erasure whose entry or rebuild failed.
+// Exit code 2: a usage error, or an id that destroyed no key and that no network knows, a
+// mistyped one, with nothing rebuilt.
 const patientId = process.argv[2] ?? '';
 // The operator is required: the audit entry is the proof of the erasure, and it names who ran it.
 const operator = process.argv[3] ?? '';
@@ -40,7 +40,7 @@ try {
 
   console.log(JSON.stringify({ patientId, ...report }));
 } catch (error) {
-  if (!(error instanceof UnknownPatientError)) {
+  if (!(error instanceof UnknownDataSubjectError)) {
     throw error;
   }
 
