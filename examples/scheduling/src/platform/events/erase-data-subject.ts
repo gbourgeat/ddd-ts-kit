@@ -1,4 +1,6 @@
 import type { SubjectKeyStore } from '@ddd-ts-kit/kernel';
+import { isSubjectId } from '@/platform/events/is-subject-id';
+import { NotASubjectIdError } from '@/platform/events/not-a-subject-id-error';
 import type { StoreFedProjection } from '@/platform/events/store-fed-projections';
 import { UnknownDataSubjectError } from '@/platform/events/unknown-data-subject-error';
 
@@ -26,12 +28,18 @@ export interface ErasureReport {
  * projection fed by the store, so no read model keeps a clear copy. The rebuilds run even when
  * the subject had no key left, and even when the erasure failed, since the key may be gone all
  * the same (an audit entry that could not be written): that failure is thrown once they are
- * done, and running the erasure again completes it. Only a mistyped id skips them.
+ * done, and running the erasure again completes it. Only a mistyped id skips them. A subject
+ * that is not an opaque identifier is refused before any key is touched: the audited keys
+ * write the subject into the append-only trail, which never holds a name or an email.
  */
 export async function eraseDataSubject(
   subject: string,
   { keys, projections, isKnown }: ErasureParts,
 ): Promise<ErasureReport> {
+  if (!isSubjectId(subject)) {
+    throw new NotASubjectIdError();
+  }
+
   const [erasure] = await Promise.allSettled([keys.erase(subject)]);
 
   if (await isMistyped(subject, erasure, isKnown)) {

@@ -7,6 +7,7 @@ import {
   InMemoryUnitOfWork,
 } from '@ddd-ts-kit/kernel';
 import { eraseDataSubject } from '@/platform/events/erase-data-subject';
+import { NotASubjectIdError } from '@/platform/events/not-a-subject-id-error';
 import { UnknownDataSubjectError } from '@/platform/events/unknown-data-subject-error';
 import type { StoreFedProjection } from '@/platform/events/store-fed-projections';
 
@@ -36,6 +37,23 @@ describe('eraseDataSubject', () => {
 
     expect(erasure).toEqual({ erased: false, rebuilt: { 'scheduling.history': 0 } });
     expect(order).toEqual(['scheduling.history']);
+  });
+
+  it('refuses a subject that is not an opaque identifier before any key is touched: a name or an email', async () => {
+    const keys = new InMemorySubjectKeyStore();
+    const order: string[] = [];
+    const pasted = await keys.keyFor('Ada Lovelace');
+
+    await expect(
+      eraseDataSubject('Ada Lovelace', { keys, projections: [projection('scheduling.history', 0, order)] }),
+    ).rejects.toThrow(NotASubjectIdError);
+
+    await expect(
+      eraseDataSubject('ada@example.org', { keys, projections: [projection('scheduling.history', 0, order)] }),
+    ).rejects.toThrow(NotASubjectIdError);
+
+    await expect(keys.find(pasted.id)).resolves.toEqual(pasted);
+    expect(order).toEqual([]);
   });
 
   it('refuses an id that destroys no key and that nobody knows, before any rebuild', async () => {

@@ -15,6 +15,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createAudit, type Audit } from '@/platform/audit/create-audit';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { eraseOnTheCommandLine } from '@/platform/events/erase-on-the-command-line';
+import { NotASubjectIdError } from '@/platform/events/not-a-subject-id-error';
 import { storeFedProjections } from '@/platform/events/store-fed-projections';
 import { UnknownDataSubjectError } from '@/platform/events/unknown-data-subject-error';
 import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persistence/knex-person-directory.reader';
@@ -93,6 +94,13 @@ describe('npm run erase:patient', () => {
     ]);
 
     await expect(verifyChain(audit.trail, { chain: 'global' })).resolves.toMatchObject({ valid: true });
+  });
+
+  it('refuses an email or a name pasted in place of the id before any entry is written', async () => {
+    await expect(erase('ada@example.org', 'operator-1')).rejects.toThrow(NotASubjectIdError);
+    await expect(erase('Ada Lovelace', 'operator-1')).rejects.toThrow(NotASubjectIdError);
+
+    expect(await entriesOf('operator-1')).toEqual([]);
   });
 
   it('tells a run again from a mistyped id by a lookup of every network, which the trail records', async () => {

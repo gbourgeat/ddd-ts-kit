@@ -422,7 +422,9 @@ handler, a job), writes an entry:
 | actor, tenant, session, correlation, origin | the execution scope |
 
 The subject is the id the keys are stored under: an opaque identifier, never a name or an
-email, like every resource id. `keyFor` and `find` pass through and write nothing.
+email, like every resource id. A caller that takes the subject from a person (a script, a
+form) checks its shape before `erase`: the entry is permanent, and the trail never holds
+personal data. `keyFor` and `find` pass through and write nothing.
 
 ```ts
 // the composition root: wrap once, and give the same instance to the container and to the scripts

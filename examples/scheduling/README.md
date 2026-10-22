@@ -555,7 +555,9 @@ The attendance record of a patient is kept as its events; its history
   not: the key comes first, the record after. When no key was destroyed, the id is looked up
   among the persons of every network, under an elevation the trail records (`tenancy:elevate`,
   reason `PATIENT_ERASURE`), to tell a run again from a mistyped id, which is refused before
-  the rebuilds (exit code 2).
+  the rebuilds (exit code 2). A value that is not an opaque identifier (letters, digits, `_`,
+  `-`), a name or an email pasted in place of the id, is refused before any key is touched or
+  any entry written: the entry would carry it into the append-only trail.
 - **The proof of an erasure.** The key store bound by the platform is wrapped by
   `auditedSubjectKeys` (`src/platform/audit/create-audit.ts`), so every erasure, from this script
   or from a use case, writes an entry: action `personal-data:erase`, the patient as a

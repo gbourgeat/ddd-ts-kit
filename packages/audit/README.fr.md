@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7f839079a5213717 -->
+<!-- translation-of: README.md sha256:e5f25d124edd72d6 -->
 
 # @ddd-ts-kit/audit
 
@@ -434,7 +434,9 @@ entrée :
 | acteur, *tenant*, session, corrélation, origine | le scope d'exécution |
 
 La personne est l'id sous lequel ses clés sont rangées : un identifiant opaque, jamais un nom ni
-un email, comme tout id de ressource. `keyFor` et `find` passent tels quels et n'écrivent rien.
+un email, comme tout id de ressource. Un appelant qui reçoit l'id d'un humain (un script, un
+formulaire) vérifie sa forme avant `erase` : l'entrée est définitive, et le journal ne contient
+jamais de donnée personnelle. `keyFor` et `find` passent tels quels et n'écrivent rien.
 
 ```ts
 // la racine de composition : décorer une fois, et donner la même instance au conteneur et aux scripts

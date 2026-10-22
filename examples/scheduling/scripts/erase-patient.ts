@@ -2,6 +2,7 @@ import { PersonalDataCipher } from '@ddd-ts-kit/kernel';
 import { layFoundations } from '@/platform/composition/lay-foundations';
 import { openPersistence } from '@/platform/database/open-persistence';
 import { eraseOnTheCommandLine } from '@/platform/events/erase-on-the-command-line';
+import { NotASubjectIdError } from '@/platform/events/not-a-subject-id-error';
 import { storeFedProjections } from '@/platform/events/store-fed-projections';
 import { UnknownDataSubjectError } from '@/platform/events/unknown-data-subject-error';
 import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persistence/knex-person-directory.reader';
@@ -12,8 +13,8 @@ import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persiste
 // by the event store, so the history shows `[erased]` in their place. Run against the database
 // of the application (DATABASE_URL), while it runs or not: a rebuild never stops the catch-up.
 // Running it again for the same patient completes an erasure whose entry or rebuild failed.
-// Exit code 2: a usage error, or an id that destroyed no key and that no network knows, a
-// mistyped one, with nothing rebuilt.
+// Exit code 2: a usage error, a value that is not an opaque identifier (a name, an email), or
+// an id that destroyed no key and that no network knows, a mistyped one, with nothing rebuilt.
 const patientId = process.argv[2] ?? '';
 // The operator is required: the audit entry is the proof of the erasure, and it names who ran it.
 const operator = process.argv[3] ?? '';
@@ -40,7 +41,7 @@ try {
 
   console.log(JSON.stringify({ patientId, ...report }));
 } catch (error) {
-  if (!(error instanceof UnknownDataSubjectError)) {
+  if (!(error instanceof UnknownDataSubjectError || error instanceof NotASubjectIdError)) {
     throw error;
   }
 

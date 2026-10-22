@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:75c61a154b136433 -->
+<!-- translation-of: README.md sha256:f310ce06cb3b2637 -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -576,7 +576,9 @@ Le registre de présence d'un patient est gardé sous forme de ses événements 
   clé n'a été détruite, l'id est cherché parmi les personnes de tous les réseaux, sous une
   élévation que le journal enregistre (`tenancy:elevate`, raison `PATIENT_ERASURE`), pour
   distinguer une relance d'une faute de frappe, refusée avant les reconstructions (code de
-  sortie 2).
+  sortie 2). Une valeur qui n'est pas un identifiant opaque (lettres, chiffres, `_`, `-`), un nom
+  ou un email collé à la place de l'id, est refusée avant qu'une clé ne soit touchée ou qu'une
+  entrée ne soit écrite : l'entrée l'emporterait dans le journal en ajout seul.
 - **La preuve d'un effacement.** Le stockage des clés lié par la plateforme est décoré par
   `auditedSubjectKeys` (`src/platform/audit/create-audit.ts`), donc chaque effacement, depuis ce
   script ou depuis un cas d'usage, écrit une entrée : action `personal-data:erase`, le patient
