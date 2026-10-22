@@ -19,6 +19,7 @@ import { initCommand } from './commands/init.js';
 import { listCommand } from './commands/list.js';
 import { mergeTrunkCommand } from './commands/merge-trunk.js';
 import { planWavesCommand } from './commands/plan-waves.js';
+import { moveToModuleCommand } from './commands/move-to-module.js';
 import { platformFoldersCommand } from './commands/platform-folders.js';
 import { sdkCommand } from './commands/sdk.js';
 import { statusCommand } from './commands/status.js';
@@ -68,6 +69,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   'error-factories': errorFactoriesCommand,
   'value-objects': valueObjectsCommand,
   'platform-folders': platformFoldersCommand,
+  'move-to-module': moveToModuleCommand,
   controllers: controllersCommand,
   check: checksCommand,
   'check-file': checkFileCommand,

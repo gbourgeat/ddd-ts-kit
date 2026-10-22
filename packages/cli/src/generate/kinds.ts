@@ -22,6 +22,7 @@ import { guardKind } from './kinds/guard-kind.js';
 import { integrationEventKind } from './kinds/integration-event-kind.js';
 import { integrationHandlerKind } from './kinds/integration-handler-kind.js';
 import { jobKind } from './kinds/job-kind.js';
+import { moduleKind } from './kinds/module-kind.js';
 import { policyKind } from './kinds/policy-kind.js';
 import { portKind } from './kinds/port-kind.js';
 import { processKind } from './kinds/process-kind.js';
@@ -42,6 +43,7 @@ import { workerKind } from './kinds/worker-kind.js';
 /** Every kind `generate` knows, in the order the help lists them. */
 export const KINDS: readonly Kind[] = [
   contextKind,
+  moduleKind,
   aggregateKind,
   builderKind,
   testWorldKind,

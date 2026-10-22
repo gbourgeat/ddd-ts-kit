@@ -31,18 +31,32 @@ export class Workspace {
 
   private readonly steps: NextStep[] = [];
 
-  private rewrite: ((file: string, text: string) => string) | undefined;
+  private readonly rewrites: ((file: string, text: string) => string)[] = [];
+
+  private placement: ((file: string, writing: boolean) => string) | undefined;
 
   constructor(
     readonly root: string,
     private readonly force: boolean,
   ) {}
 
-  exists(file: string): boolean {
+  exists(asked: string): boolean {
+    const file = this.placed(asked);
+
     return this.pending.has(file) || (!this.removed.has(file) && fs.existsSync(this.absolute(file)));
   }
 
-  read(file: string): string | undefined {
+  /** True when a file or a directory is at this very path, on disk or planned, wherever `placeFiles` would take it. */
+  existsAsIs(file: string): boolean {
+    return (
+      this.pending.has(file) ||
+      [...this.pending.keys()].some((planned) => planned.startsWith(`${file}/`)) ||
+      (!this.removed.has(file) && fs.existsSync(this.absolute(file)))
+    );
+  }
+
+  read(asked: string): string | undefined {
+    const file = this.placed(asked);
     const pending = this.pending.get(file);
 
     if (pending !== undefined) {
@@ -88,11 +102,12 @@ export class Workspace {
 
   /** True when this command already wrote the file, whether it is on disk or not. */
   planned(file: string): boolean {
-    return this.pending.has(file);
+    return this.pending.has(this.placed(file));
   }
 
   /** Never replaces a file the user may have edited, unless asked to with --force. */
-  create(file: string, content: string): boolean {
+  create(asked: string, content: string): boolean {
+    const file = this.placed(asked, true);
     const onDisk = fs.existsSync(this.absolute(file));
 
     if (this.exists(file) && !this.force) {
@@ -109,7 +124,8 @@ export class Workspace {
     return true;
   }
 
-  update(file: string, written: string): void {
+  update(asked: string, written: string): void {
+    const file = this.placed(asked, true);
     const content = this.spoken(this.withImports(file, written));
     const pending = this.pending.get(file);
 
@@ -133,7 +149,9 @@ export class Workspace {
    * generated declarations of a folder that holds no declared class any more. A file only
    * planned is forgotten; one on disk is deleted at the commit, and reported.
    */
-  delete(file: string): void {
+  delete(asked: string): void {
+    const file = this.placed(asked);
+
     this.pending.delete(file);
 
     if (fs.existsSync(this.absolute(file))) {
@@ -146,7 +164,17 @@ export class Workspace {
    * that keeps its platform flat is written imports of the flat files.
    */
   rewriteImports(rewrite: (file: string, text: string) => string): void {
-    this.rewrite = rewrite;
+    this.rewrites.push(rewrite);
+  }
+
+  /**
+   * While set, every path this command reads or writes goes through `place`: a generator names the
+   * files of a context as they are without modules of its model, and the workspace finds them in
+   * the module that holds them, or writes them in the module the command was given. Unset with
+   * `undefined` before what derives the generated files from the tree.
+   */
+  placeFiles(place: ((file: string, writing: boolean) => string) | undefined): void {
+    this.placement = place;
   }
 
   /** A text written for npm, as the package manager of the project says it: what is compared with a file is compared in its dialect. */
@@ -178,7 +206,11 @@ export class Workspace {
 
     if (!dryRun) {
       written.forEach(({ file, content }) => this.write(file, content));
-      this.removed.forEach((file) => fs.rmSync(this.absolute(file), { force: true }));
+
+      this.removed.forEach((file) => {
+        fs.rmSync(this.absolute(file), { force: true });
+        this.pruneEmptied(path.posix.dirname(file));
+      });
     }
 
     // The language comes before the code: its definition is the first thing to do.
@@ -213,6 +245,18 @@ export class Workspace {
     }
   }
 
+  /** A folder a removed file leaves empty goes with it, and so does its parent once empty: a moved use case leaves no folder behind. */
+  private pruneEmptied(directory: string): void {
+    const absolute = this.absolute(directory);
+
+    if (directory === '.' || directory === '' || !fs.existsSync(absolute) || fs.readdirSync(absolute).length > 0) {
+      return;
+    }
+
+    fs.rmdirSync(absolute);
+    this.pruneEmptied(path.posix.dirname(directory));
+  }
+
   private write(file: string, content: string): void {
     fs.mkdirSync(path.dirname(this.absolute(file)), { recursive: true });
     fs.writeFileSync(this.absolute(file), content);
@@ -223,7 +267,13 @@ export class Workspace {
   }
 
   private withImports(file: string, text: string): string {
-    return this.rewrite !== undefined && /\.(?:ts|tsx|mts|js|mjs)$/.test(file) ? this.rewrite(file, text) : text;
+    return /\.(?:ts|tsx|mts|js|mjs)$/.test(file)
+      ? this.rewrites.reduce((written, rewrite) => rewrite(file, written), text)
+      : text;
+  }
+
+  private placed(file: string, writing = false): string {
+    return this.placement === undefined ? file : this.placement(file, writing);
   }
 }
 
