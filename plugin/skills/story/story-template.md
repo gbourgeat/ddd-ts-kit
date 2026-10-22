@@ -28,3 +28,13 @@ report that becomes the body of the pull request. -->
 - D1 (provisional): <what>. Why: <...>. Alternatives: <...>. Where: `<file>`.
 
 ## Report
+
+<what the story delivers; each D<n>; each compromise; each amendment of the acceptance with its
+verdict; each TODO(review) left>
+
+### Verification
+
+- `npm run verify`: <its last lines, pasted>
+- `npm run test:e2e -- test/acceptance/<code>`: <its last lines, pasted>
+- `npx ddd-ts-kit story-check <code>`: <its first line, pasted>
+- not verified: <what could not run here (a broker, a provider, a platform), and why>

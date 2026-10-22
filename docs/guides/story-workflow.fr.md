@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:20b118bc97d545f5 -->
+<!-- translation-of: story-workflow.md sha256:8ba3e081c5e8027a -->
 
 # Parcours d'une story : une session par user story
 
@@ -39,7 +39,7 @@ terminal 2 : /ddd-ts-kit:story US6 docs/backlog/us6.md
 | 5 | la barrière de construction : `npx ddd-ts-kit story US5 --gate build` | la garde ouvre le code des contextes | |
 | 6 | construire, ligne par ligne | un commit par ligne, un agent `context-builder` par ligne `slice` | la session |
 | 7 | clore : tronc fusionné dans la branche, revue, `npm run verify`, `acceptance US5 --gate passing` | une branche verte | |
-| 8 | le rapport, puis la *pull request* | `## Report`, le corps de la *pull request* | le responsable du projet, à la revue |
+| 8 | le rapport, puis la *pull request* | `## Report` avec `### Verification`, le corps de la *pull request* | le responsable du projet, à la revue |
 
 `npx ddd-ts-kit story US5` affiche les phases, ce que chacune contient et l'étape suivante ; une
 session qui démarre dans le *worktree* d'une *story* reçoit la même chose de la garde.
@@ -65,7 +65,10 @@ lignes : `From:`, l'intention, le ticket ou l'incident d'où vient la *story* ; 
 version du kit et du plugin, la base et son *commit* ; `Policies in force:`, les *skills*
 chargées en phase 3. `story --gate close` refuse une *story* sans ses lignes `From:` et
 `Built with:`, et le corps de la *pull request* répète le bloc, si bien que le tronc renvoie à
-l'origine de la *story*. Le bloc est ce que le
+l'origine de la *story*. Le rapport clôt la trace par `### Verification` : les dernières lignes
+de `npm run verify`, de l'exécution de l'acceptation et de `story-check`, collées telles que
+l'outillage les a imprimées, et `not verified:` pour ce qui n'a pas pu tourner (un *broker*, un
+fournisseur, une plateforme) ; la barrière de clôture le lit aussi. Le bloc est ce que le
 [playbook du cycle de vie natif de l'IA d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
 demande comme preuve de gouvernance : la spécification, ce qui l'a produite et les politiques
 en vigueur, consignées avec elle.
@@ -137,7 +140,7 @@ l'autre, chacune sur un tronc vert.
 | la même *story* dans deux sessions | `story-scope` |
 | deux *stories* qui changent le même fichier | `stories` ; la garde, au démarrage de la session et à la première écriture d'un tel fichier |
 | une session qui finit avant son rapport | la garde, qui refuse le premier arrêt de chaque étape |
-| la *pull request* : chaque ligne faite, aucun scénario en attente, le tronc fusionné, l'origine consignée, le rapport écrit | `story --gate close` |
+| la *pull request* : chaque ligne faite, aucun scénario en attente, le tronc fusionné, l'origine consignée, le rapport écrit avec sa vérification | `story --gate close` |
 
 ## Hôtes
 

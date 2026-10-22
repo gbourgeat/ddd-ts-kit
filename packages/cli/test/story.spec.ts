@@ -52,6 +52,17 @@ it('#US5.02 AC1 a customer places an order and reads its number', pending(async 
 }));
 `;
 
+const REPORT = `
+## Report
+
+- D1 (provisional): the number is a sequence.
+
+### Verification
+
+- \`npm run verify\`: verify: ok
+- not verified: the broker, which has no fake here.
+`;
+
 /** Deletes each line holding a marker `story-check` says keeps the story open: what the session settles before it closes. */
 function settleMarkers(directory: string, code: string): void {
   const markers = jsonAt(cli(directory, 'story-check', code, '--json').json(), 'markers') as Array<{
@@ -225,11 +236,14 @@ describe('story', () => {
 
     expect(cli(story, 'story').stdout).toContain('Next: Write `## Report` in docs/architecture/stories/US5.md');
 
-    write(
-      story,
-      'docs/architecture/stories/US5.md',
-      `${SPECIFICATION}\n## Report\n\n- D1 (provisional): the number is a sequence.\n`,
-    );
+    write(story, 'docs/architecture/stories/US5.md', `${SPECIFICATION}${REPORT.replace(/### Verification[^]*$/, '')}`);
+
+    const unverified = cli(story, 'story', '--gate', 'close');
+
+    expect(unverified.code).toBe(1);
+    expect(unverified.stdout).toMatch(/\[ \] report +written, without `### Verification` naming `npm run verify`/);
+
+    write(story, 'docs/architecture/stories/US5.md', `${SPECIFICATION}${REPORT}`);
 
     const closed = cli(story, 'story', '--gate', 'close');
 
@@ -238,9 +252,7 @@ describe('story', () => {
   });
 
   it('holds the close gate until `## Origin` says where the story comes from and what built it', () => {
-    const report = '\n## Report\n\n- D1 (provisional): the number is a sequence.\n';
-
-    write(story, 'docs/architecture/stories/US5.md', `${SPECIFICATION.replace(/^- From:.*\n/m, '')}${report}`);
+    write(story, 'docs/architecture/stories/US5.md', `${SPECIFICATION.replace(/^- From:.*\n/m, '')}${REPORT}`);
 
     const unsourced = cli(story, 'story', '--gate', 'close');
 
@@ -251,7 +263,7 @@ describe('story', () => {
     write(
       story,
       'docs/architecture/stories/US5.md',
-      `${SPECIFICATION.replace(/## Origin[^]*?\n(?=## )/, '')}${report}`,
+      `${SPECIFICATION.replace(/## Origin[^]*?\n(?=## )/, '')}${REPORT}`,
     );
 
     expect(cli(story, 'story', '--json').json()).toMatchObject({
@@ -260,7 +272,7 @@ describe('story', () => {
       ]),
     });
 
-    write(story, 'docs/architecture/stories/US5.md', `${SPECIFICATION}${report}`);
+    write(story, 'docs/architecture/stories/US5.md', `${SPECIFICATION}${REPORT}`);
 
     expect(cli(story, 'story', '--gate', 'close').code).toBe(0);
   });

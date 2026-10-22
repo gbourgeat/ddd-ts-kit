@@ -37,7 +37,7 @@ terminal 2: /ddd-ts-kit:story US6 docs/backlog/us6.md
 | 5 | the build gate: `npx ddd-ts-kit story US5 --gate build` | the guard opens the code of the contexts | |
 | 6 | build, row by row | one commit per row, one `context-builder` agent per slice row | the session |
 | 7 | close: trunk merged in, review, `npm run verify`, `acceptance US5 --gate passing` | a green branch | |
-| 8 | the report, then the pull request | `## Report`, the body of the pull request | the owner, at the review |
+| 8 | the report, then the pull request | `## Report` with `### Verification`, the body of the pull request | the owner, at the review |
 
 `npx ddd-ts-kit story US5` prints the phases with what each one holds and the next step; a
 session that starts in the worktree of a story is told the same by the guard.
@@ -62,7 +62,10 @@ the intent, the ticket or the incident the story comes from; `Built with:`, the 
 kit and of the plugin, the base and its commit; `Policies in force:`, the skills loaded at
 phase 3. `story --gate close` refuses a story without its `From:` and `Built with:` lines, and
 the body of the pull request repeats the block, so that the trunk links back to where the story
-came from. The block is what the
+came from. The report ends the record with `### Verification`: the last lines of
+`npm run verify`, of the acceptance run and of `story-check`, pasted as the toolchain printed
+them, and `not verified:` for what could not run (a broker, a provider, a platform); the close
+gate reads it too. The block is what the
 [AI-native SDLC playbook of Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
 asks as governance evidence: the spec, what produced it and the policies in force, logged with
 it.
@@ -128,7 +131,7 @@ share. The pull requests merge one after the other, each on a green trunk.
 | the same story in two sessions | `story-scope` |
 | two stories that change the same file | `stories`; the guard, at session start and on the first write of such a file |
 | a session that ends before its report | the guard, which refuses the first stop of each step |
-| the pull request: every row done, no scenario pending, the trunk merged in, the origin recorded, the report written | `story --gate close` |
+| the pull request: every row done, no scenario pending, the trunk merged in, the origin recorded, the report written with its verification | `story --gate close` |
 
 ## Hosts
 
