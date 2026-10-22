@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:be1a99cf6bbb42e4 -->
+<!-- translation-of: agent-sandbox.md sha256:9c270d8ee3282abf -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -95,10 +95,46 @@ ligne apporte, en termes de contrôle :
 | `allowManagedHooksOnly: true` | gérés | seuls les *hooks* de l'organisation tournent ; copiez-y les *hooks* du profil, sinon un fichier de projet ne peut pas les garder. Un projet ne peut pas retirer la porte de production |
 | `strictKnownMarketplaces: [{ "source": "github", "repo": "gbourgeat/ddd-ts-kit" }]` | gérés | les *plugins* viennent des *marketplaces* que l'organisation nomme (celle du kit, ou votre miroir) : aucun *skill* non relu |
 | `requiredMinimumVersion: "<version>"` | gérés | un Claude Code plus ancien que la version nommée ne démarre pas : chaque session a les contrôles de cette version |
+| `hooks.PreToolUse` : `production-gate.mjs` sur `Bash` | projet, `.claude/hooks/` | une commande qui nomme l'environnement de production avec une action de mise en production ne tourne pas sans approbation nommée : l'autorisation de mise en production du processus de changement, tenue au moment où la commande tournerait |
+| `hooks.PreToolUse` : `change-reference.mjs` sur `Edit\|Write` | projet, `.claude/hooks/` | une modification d'une migration ou des conteneurs est confirmée par une personne avec une référence de changement en tête, enregistrée comme *trailer* `Change:` du *commit* : le ticket de changement du processus, sur ce qui atteint la production autrement que par le code |
 
 Les réglages gérés vivent hors du dépôt (`managed-settings.json`, déployé par l'équipe
 plateforme) : `init` les affiche comme un bloc à coller, la version laissée à l'équipe. Associez
 le profil au niveau 1 pour la charge de la machine.
+
+Les deux *hooks* sont de petits scripts Node qu'`init` écrit une fois sous `.claude/hooks/` (pas
+de `jq`, rien à installer), enregistrés sous `hooks.PreToolUse` de `.claude/settings.json`,
+possédés par l'équipe dès lors, et signalés par `doctor` quand un fichier ou un enregistrement
+manque. Chacun s'explique à l'agent :
+
+- `production-gate.mjs` tourne avant chaque commande `Bash`. Une commande qui nomme
+  l'environnement de production du projet (les mots de `PRODUCTION_ENVIRONMENTS` en tête du
+  fichier, `production` par défaut) avec une action de mise en production (`RELEASE_ACTIONS` :
+  `deploy`, `migrate`, `rollback`) est bloquée, code de sortie 2, avec la raison que l'agent lit :
+  la commande ne tourne qu'une fois qu'une personne a approuvé la mise en production, d'après la
+  liste de contrôle de l'équipe, en posant `RELEASE_APPROVAL="<approbateur> <id du changement>"`
+  dans l'environnement de la session ; le *hook* la laisse alors passer et dit qui a approuvé
+  quoi. L'agent est prévenu de ne pas poser la variable lui-même. Les listes se modifient dans le
+  fichier, ou s'étendent pour une session par les variables `PRODUCTION_GATE_ENVIRONMENTS` et
+  `PRODUCTION_GATE_ACTIONS` (séparées par des virgules). Toute autre commande passe telle quelle.
+- `change-reference.mjs` tourne avant chaque `Edit` et `Write`. Un fichier sous `migrations/` ou
+  `prisma/migrations/`, sous `docker/`, le `Dockerfile` ou `docker-compose.yml` fait répondre au
+  *hook* `permissionDecision: "ask"` : la personne confirme la modification avec une référence de
+  changement en tête (l'identifiant du ticket de changement ou de la *story*), et la session
+  l'enregistre comme *trailer* `Change: <id>` du *commit* qui porte le fichier
+  (`git commit -m "<message>" -m "Change: <id>"`,
+  [Discipline de commit](commit-discipline.fr.md#les-messages--conventional-commits)). Il demande, il
+  ne bloque pas, et il reste muet pour tout autre fichier. Le *trailer* est lu par des personnes,
+  dans l'historique ; aucune commande du kit ne le lit encore.
+
+L'entrée et les codes de sortie d'un *hook* suivent la
+[référence des hooks](https://code.claude.com/docs/en/hooks) de Claude Code, lue le 2026-10-23 :
+le JSON de l'appel d'outil sur l'entrée standard (`tool_name`, `tool_input.command` pour `Bash`,
+`tool_input.file_path` pour `Edit` et `Write`, `cwd`), le code de sortie 2 pour bloquer avec la
+sortie d'erreur comme raison, le code 0 avec un `hookSpecificOutput` de `permissionDecision`
+`ask` pour solliciter la personne. Les deux *hooks* sont enregistrés dans `.claude/settings.json`,
+que seul Claude Code lit : Codex et Copilot ne lancent ni l'un ni l'autre, et ce qu'ils portent
+y reste une règle de l'équipe.
 
 Les noms et les formes des clés ci-dessus ont été vérifiés le 2026-10-23 dans la documentation de
 Claude Code : [settings](https://code.claude.com/docs/en/settings),
@@ -120,7 +156,7 @@ connaisse, et ces noms n'ont pas été revérifiés pour cette page. L'agent clo
 dans un environnement hébergé par GitHub dont la liste d'hôtes autorisés se règle dans les
 réglages du dépôt sur GitHub, pas dans un fichier du projet ; `.github/copilot/settings.json` n'a
 pas de clé de bac à sable, donc le profil n'écrit rien pour Copilot. Les deux *hooks* du profil
-tournent partout où l'hôte lance les *hooks* d'un projet ; voir plus bas.
+ne tournent que dans Claude Code, comme dit plus haut.
 
 ### 3. NVIDIA OpenShell
 
@@ -223,7 +259,8 @@ refusées : n'y autorisez un hôte que quand le travail en a besoin.
 - [Claude Code : configure the sandboxed Bash tool](https://code.claude.com/docs/en/sandboxing),
   [settings](https://code.claude.com/docs/en/settings),
   [permissions](https://code.claude.com/docs/en/permissions),
-  [managed settings](https://code.claude.com/docs/en/managed-settings), lus le 2026-10-23.
+  [managed settings](https://code.claude.com/docs/en/managed-settings),
+  [hooks](https://code.claude.com/docs/en/hooks), lus le 2026-10-23.
 - Anthropic, *AI-Native SDLC Playbook*
   ([PDF](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)) :
   l'exemple d'une organisation réglementée que suit le profil.

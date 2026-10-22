@@ -7,14 +7,15 @@ import { agentPermissions, type AgentPermissions } from './agent-permissions.js'
 import { gitHostOf } from './git-host-of.js';
 import { managedSettingsNote } from './managed-settings-note.js';
 import { mergeSandbox } from './merge-sandbox.js';
+import { mergeHooks } from './merge-hooks.js';
 import { regulatedSandbox } from './regulated-sandbox.js';
 
 const AGENT_SETTINGS = '.claude/settings.json';
 
 /**
  * Creates the settings, or adds the missing permissions to the ones the project already has, and
- * says which. Under the regulated profile the sandbox block comes with them, the keys the project
- * set kept, and the managed settings the platform team pastes are said.
+ * says which. Under the regulated profile the sandbox block and the two hooks come with them, the
+ * keys the project set kept, and the managed settings the platform team pastes are said.
  */
 export function writeAgentSettings(ws: Workspace, config: Config): void {
   const existing = ws.read(AGENT_SETTINGS);
@@ -22,9 +23,9 @@ export function writeAgentSettings(ws: Workspace, config: Config): void {
   const regulated = config.agents.profile === 'regulated';
 
   if (existing === undefined) {
-    const sandbox = regulated ? { sandbox: regulatedSandbox(gitHostOf(ws.root)) } : {};
+    const profile = regulated ? { sandbox: regulatedSandbox(gitHostOf(ws.root)), hooks: mergeHooks(undefined) } : {};
 
-    ws.create(AGENT_SETTINGS, serialize({ permissions, ...sandbox }));
+    ws.create(AGENT_SETTINGS, serialize({ permissions, ...profile }));
     noteManaged(ws, regulated);
 
     return;
@@ -51,7 +52,11 @@ export function writeAgentSettings(ws: Workspace, config: Config): void {
 }
 
 function withSandbox(settings: Record<string, unknown>, gitHost: string | undefined): Record<string, unknown> {
-  return { ...settings, sandbox: mergeSandbox(settings['sandbox'], regulatedSandbox(gitHost)) };
+  return {
+    ...settings,
+    sandbox: mergeSandbox(settings['sandbox'], regulatedSandbox(gitHost)),
+    hooks: mergeHooks(settings['hooks']),
+  };
 }
 
 function noteManaged(ws: Workspace, regulated: boolean): void {

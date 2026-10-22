@@ -38,7 +38,7 @@ export function diagnose(root: string, config: Config): DoctorFinding[] {
     ...packageFindings(config, declared),
     ...(fs.existsSync(settingsFile) ? permissionFindings(config, readJson(settingsFile)) : []),
     ...hookFindings(root),
-    ...guidanceFindings(root),
+    ...guidanceFindings(root, config),
     ...folderFindings(root, config),
     ...nodeFindings(process.versions.node, nodeEngine(manifest), readText(path.join(root, '.nvmrc'))),
     ...installFindings(root, config.stack.packageManager, declared),

@@ -1,5 +1,5 @@
 [English](commit-discipline.md) · **Français**
-<!-- translation-of: commit-discipline.md sha256:df39c0f2e6dba60a -->
+<!-- translation-of: commit-discipline.md sha256:fffab3587303faf0 -->
 
 # La discipline des commits et des pull requests
 
@@ -106,6 +106,23 @@ of defence, not as the rule.
 Avec les fusions par *squash*, le titre de la *pull request* devient le *commit* sur la branche
 par défaut ; le titre suit donc le même format, et le *pipeline* le vérifie avec la même
 configuration.
+
+Deux *trailers* portent ce qu'un message ne peut pas dire. `Slice: <id de ligne>` nomme la ligne
+de `docs/architecture/slices.md` qu'un *commit* clôt ([Travail en parallèle](parallel-work.fr.md)) ;
+`story-check` le lit. `Change: <id>` nomme le ticket de changement, ou la *story*, auquel
+appartient une modification d'une migration ou des conteneurs : le *hook* `change-reference` du
+profil réglementé ([Mettre les agents de code en bac à sable](agent-sandbox.fr.md#le-profil-réglementé))
+le demande avant la modification, et la session l'écrit dans le *commit* qui porte le fichier :
+
+```
+feat(billing): add the paid_at column to invoices
+
+Change: CHG-1234
+```
+
+Le *trailer* est lu par des personnes, dans l'historique
+(`git log --format='%h %(trailers:key=Change,valueonly)' -- migrations/`) ; aucune commande du kit
+ne le lit encore, et `story-check` ne signale pas un *commit* de migration qui en manque.
 
 ## Des tailles cibles, et pourquoi
 

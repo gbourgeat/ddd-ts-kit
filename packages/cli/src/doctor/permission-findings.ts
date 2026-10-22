@@ -1,13 +1,33 @@
 import type { Config } from '../config/index.js';
 import { agentPermissions } from '../init/agent-permissions.js';
+import { hookCommand } from '../init/hook-command.js';
+import { PROFILE_HOOKS } from '../init/profile-hooks.js';
+import { registeredHookCommands } from '../init/registered-hook-commands.js';
 import { regulatedSandbox } from '../init/regulated-sandbox.js';
 import { isRecord } from '../config/values/is-record.js';
 import { inDialect } from '../package-manager/in-dialect.js';
 import type { DoctorFinding } from './doctor-finding.js';
 
-/** The permissions of `.claude/settings.json` this version writes that the project's settings lack, and the sandbox of the regulated profile when the config asks for it. */
+/** The permissions of `.claude/settings.json` this version writes that the project's settings lack, and the sandbox and the hooks of the regulated profile when the config asks for it. */
 export function permissionFindings(config: Config, settings: unknown): DoctorFinding[] {
-  return [...ruleFindings(config, settings), ...sandboxFindings(config, settings)];
+  return [...ruleFindings(config, settings), ...sandboxFindings(config, settings), ...hookFindings(config, settings)];
+}
+
+/** Under the regulated profile, each hook of the profile the settings do not register under `PreToolUse`. */
+function hookFindings(config: Config, settings: unknown): DoctorFinding[] {
+  if (config.agents.profile !== 'regulated') {
+    return [];
+  }
+
+  const hooks = isRecord(settings) && isRecord(settings['hooks']) ? settings['hooks'] : {};
+  const registered = registeredHookCommands(hooks['PreToolUse']);
+
+  return PROFILE_HOOKS.filter((hook) => !registered.includes(hookCommand(hook))).map((hook) => ({
+    area: 'permission',
+    name: `hooks.${hook.name}`,
+    problem: 'missing',
+    expected: `a PreToolUse hook on ${hook.matcher} running ${hookCommand(hook)}`,
+  }));
 }
 
 function ruleFindings(config: Config, settings: unknown): DoctorFinding[] {

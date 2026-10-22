@@ -103,6 +103,22 @@ of defence, not as the rule.
 With squash merges the pull request title becomes the commit on the default branch, so the
 title follows the same format and the pipeline checks it with the same configuration.
 
+Two trailers carry what a message cannot. `Slice: <row id>` names the row of
+`docs/architecture/slices.md` a commit closes ([Parallel work](parallel-work.md)); `story-check`
+reads it. `Change: <id>` names the change ticket, or the story, a change of a migration or of the
+containers belongs to: the `change-reference` hook of the regulated profile
+([Sandboxing coding agents](agent-sandbox.md#the-regulated-profile)) asks for it before the
+edit, and the session writes it in the commit that holds the file:
+
+```
+feat(billing): add the paid_at column to invoices
+
+Change: CHG-1234
+```
+
+The trailer is read by people, in the history (`git log --format='%h %(trailers:key=Change,valueonly)' -- migrations/`);
+no command of the kit reads it yet, and `story-check` does not report a migration commit without it.
+
 ## Target sizes, and why
 
 These are targets to steer by. The kit measures one of them, with a threshold a little above

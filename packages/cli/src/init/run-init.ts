@@ -26,6 +26,7 @@ import { recordNoOutbox } from './record-no-outbox.js';
 import { resolveStack, type StackOptions } from './stack/resolve-stack.js';
 import { templateVars } from './template-vars.js';
 import { writeAgentSettings } from './write-agent-settings.js';
+import { writeProfileHooks } from './write-profile-hooks.js';
 import { writeContracts } from './write-contracts.js';
 import { writeCopilotInstructions } from './write-copilot-instructions.js';
 import { writeCopilotSettings } from './write-copilot-settings.js';
@@ -61,6 +62,7 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   writeCopilotInstructions(ws);
   ws.create(DEPCRUISE_FILE, renderCruiseFile(config));
   writeAgentSettings(ws, config);
+  writeProfileHooks(ws, config);
   writeCopilotSettings(ws);
   ws.create(`${config.sharedKernelDir}/.gitkeep`, '');
 

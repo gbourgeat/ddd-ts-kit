@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:bec3df5f686154bc -->
+<!-- translation-of: README.md sha256:5ce6cf56adb08871 -->
 
 # ddd-ts-kit
 
@@ -574,6 +574,7 @@ choix sont enregistrés sous `stack` dans la configuration, `docsUi`, `ci` et `l
 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | comment le lancer ; un guide léger dans `AGENTS.md`, que lisent Codex, Copilot et la plupart des agents de code et qu'importe `CLAUDE.md` (commandes, comment lire moins, la carte des règles, fichiers générés, les commandes de vérification avec les lignes que chacune affiche quand elle passe, à lancer avant de se dire fini, les erreurs vues ici, une section que l'équipe possède sous la règle de deux, note sur le compilateur, les *skills* du *plugin* : `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) et les invariants dans sept fichiers de règles, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` et `tests.md`, chacun délimité par un frontmatter `paths`, et les mêmes sept pour GitHub Copilot, chacun délimité par `applyTo` |
 | `REVIEW.md` | la politique de revue du projet : les passes d'une revue (bugs, sécurité, conformité face à la revue de conception de la ligne, l'acceptation de la *story*, les enregistrements de `docs/adr/` et les règles), ce qu'Important veut dire, au plus cinq *nits* (un *nit* récurrent devient une ligne de `AGENTS.md` sous `## Mistakes seen here` ou une règle de la configuration), ce qui n'est pas signalé (les fichiers générés, ce que `npm run verify` refuse). Lu par l'agent `architecture-reviewer` par-dessus sa méthode, par un relecteur humain et par tout robot de revue. Écrit une fois, pour que l'équipe le modifie : `--force` le laisse tel quel, `doctor` dit quand il manque |
 | `.github/copilot/settings.json` | le *plugin* du kit, déclaré pour GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`) : son agent cloud l'installe, la CLI Copilot et VS Code le recommandent ; un fichier existant garde ce qu'il contient et reçoit les deux entrées |
+| `.claude/hooks/production-gate.mjs`, `.claude/hooks/change-reference.mjs` | avec `--agent-profile regulated` : les deux *hooks* du profil, enregistrés sous `hooks.PreToolUse` de `.claude/settings.json`, écrits une fois pour que l'équipe les modifie (`--force` les réécrit). La porte bloque une commande qui nomme l'environnement de production avec une action de mise en production sauf si `RELEASE_APPROVAL` nomme un approbateur et un changement ; la référence demande avant une modification d'une migration ou des conteneurs, pour le *trailer* `Change: <id>` du *commit* ([Mettre les agents de code en bac à sable](../../docs/guides/agent-sandbox.fr.md#le-profil-réglementé)) |
 | `.claude/settings.json` | des permissions (et, avec `--agent-profile regulated`, le bloc de bac à sable ci-dessous) : les vérifications et les générateurs s'exécutent sans demander, les fichiers `.env` sont illisibles (`.env.example` reste lisible), les trois documents générés ne sont pas modifiés à la main, `git push`, `npm publish` et toute modification des fichiers qui portent les règles et le *pipeline* (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) demandent d'abord, comme une modification de ce qui atteint la production autrement que par le code : les migrations de l'ORM (`migrations/**` avec drizzle, knex et typeorm, `prisma/migrations/**` avec prisma, rien avec une persistance *custom* ou sans ORM), `Dockerfile`, `docker-compose.yml` et `docker/**`. Le fichier compose lit `.env` à la racine, que la liste de refus couvre déjà ; rien sous `docker/` ne porte de secret |
 | `.gitignore` | `node_modules`, `dist`, `coverage`, `.env`, `*.tsbuildinfo`, `.ddd-ts-kit/`, où écrit `worker-scope`, et `.worktrees/`, où vivent les *worktrees* |
 
@@ -1375,14 +1376,16 @@ ddd-ts-kit doctor [--strict]
 Ce qu'une montée de version a laissé à faire : les scripts, les paquets du kit (aux plages de
 cette version) et les permissions des agents que cette version écrit et que le projet n'a pas ou
 écrit autrement (sous `agents.profile: "regulated"`, chaque ligne du bloc de bac à sable aussi,
-comme `permission sandbox.<key>`), puis les *hooks* git. `lefthook.yml` doit porter
+comme `permission sandbox.<key>`, et chaque *hook* du profil que les réglages n'enregistrent pas,
+comme `permission hooks.<name>`), puis les *hooks* git. `lefthook.yml` doit porter
 `lefthook: node_modules/.bin/lefthook`, qui fait lancer à chaque *checkout* et à chaque
 *worktree* son propre lefthook, et fait échouer un *commit*, bruyamment, quand ses dépendances
 manquent ; le correctif est cette ligne, ou `init --force` pour le fichier entier. Le *hook*
 pre-commit sous `git rev-parse --git-path hooks` doit exister et venir de lefthook ; le correctif
 est `npm run hooks:install`, une fois par clone. Puis la consigne écrite une fois pour que
-l'équipe la possède : `REVIEW.md`, la politique de revue, est signalé manquant (`guidance`) et
-`init` l'écrit de nouveau sans toucher à rien d'autre.
+l'équipe la possède : `REVIEW.md`, la politique de revue, et sous le profil réglementé les deux
+*hooks* de `.claude/hooks/`, sont signalés manquants (`guidance`) et `init` les écrit de nouveau
+sans toucher à rien d'autre.
 
 Puis ce qui manque à ce *checkout* pour faire tourner le projet, l'état d'un clone ou d'un
 nouveau *worktree* plutôt que du projet, lu dans ses fichiers sans réseau : le Node qui tourne
