@@ -56,27 +56,27 @@ describe('npm run erase:patient', () => {
     await expect(verifyChain(audit.trail, { chain: 'global' })).resolves.toMatchObject({ valid: true });
   });
 
-  it('records a run again as an erasure that found no key, under the script when no operator is named', async () => {
-    const report = await erase('patient-1');
+  it('records a run again as an erasure that found no key, under the operator who ran it again', async () => {
+    const report = await erase('patient-1', 'operator-9');
 
     expect(report.erased).toBe(false);
 
     expect((await erasures()).map(({ actor, changes }) => ({ actor: actor.id, changes }))).toEqual([
       { actor: 'operator-7', changes: { keyDestroyed: true } },
-      { actor: 'system:erase-patient', changes: { keyDestroyed: false } },
+      { actor: 'operator-9', changes: { keyDestroyed: false } },
     ]);
 
     await expect(verifyChain(audit.trail, { chain: 'global' })).resolves.toMatchObject({ valid: true });
   });
 });
 
-function erase(patientId: string, operator?: string) {
+function erase(patientId: string, operator: string) {
   const parts = {
     keys: audit.subjectKeys,
     projections: storeFedProjections(database.persistence, new PersonalDataCipher(audit.subjectKeys)),
   };
 
-  return eraseOnTheCommandLine(patientId, parts, { source, ...(operator === undefined ? {} : { operator }) });
+  return eraseOnTheCommandLine(patientId, parts, { source, operator });
 }
 
 async function erasures() {

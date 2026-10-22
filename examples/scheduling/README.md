@@ -544,7 +544,7 @@ The attendance record of a patient is kept as its events; its history
   within one relay interval. With several replicas, each one polls, and the compare-and-set of
   the checkpoint lets one of them apply each batch; the others skip that round (a debug line,
   not an error). A tick that comes while a round runs is skipped.
-- **An erasure.** `DATABASE_URL=<url> npm run erase:patient -- <patientId> [<operatorId>]`
+- **An erasure.** `DATABASE_URL=<url> npm run erase:patient -- <patientId> <operatorId>`
   destroys the key the words of the patient were sealed with, writes the erasure to the audit
   trail, then rebuilds every projection fed by the store (`src/platform/events/erase-data-subject.ts`,
   `src/platform/events/erase-on-the-command-line.ts`, `scripts/erase-patient.ts`): the stream and
@@ -554,9 +554,10 @@ The attendance record of a patient is kept as its events; its history
 - **The proof of an erasure.** The key store bound by the platform is wrapped by
   `auditedSubjectKeys` (`src/platform/audit/create-audit.ts`), so every erasure, from this script
   or from a use case, writes an entry: action `personal-data:erase`, the patient as a
-  `data-subject` resource, `keyDestroyed: true` or `false`, the operator named (or
-  `system:erase-patient`) as actor, origin `cli`. Its date plus the retention of the backups of
-  the keys is the day the erasure is complete.
+  `data-subject` resource, `keyDestroyed: true` or `false`, the operator as actor, origin
+  `cli`. The operator is required: without one, the script refuses to run and touches nothing,
+  since a proof that names the script and not a person does not say who erased. Its date plus
+  the retention of the backups of the keys is the day the erasure is complete.
 - **The keys.** `PostgresSubjectKeyStore`, in the `scheduling` schema of the one database, next
   to the events, so that the example runs with one PostgreSQL. A backup of that database taken
   before an erasure still holds the key and the sealed words until it expires. A deployment
