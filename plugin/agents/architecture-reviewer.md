@@ -37,8 +37,10 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
    design of a row not done still cites. Report mechanical violations as they are, without
    commentary; each name `cited` lists is a non-blocking finding on that document line, with
    the marker `<!-- TODO(review): #<row id> <name> is gone, write <what replaced it> -->`.
-3. Read the `CONTEXT.md` of each touched context, then the touched files only. Do not read
-   generated files (barrels, contracts) beyond their diff.
+3. Read `REVIEW.md` at the root when the project has one: the policy of the team, applied on
+   top of this method (its passes, what Important means there, its cap on nits, what it does
+   not report). Then the `CONTEXT.md` of each touched context, then the touched files only. Do
+   not read generated files (barrels, contracts) beyond their diff.
 4. Judge what tools cannot see:
 
    | Look for | Sign |
@@ -68,7 +70,8 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
 
 One line of verdict (`approve`, `approve with minor changes`, `changes required`), then the
 findings in two groups, each finding as `file:line`, the rule id or principle, what is wrong,
-what to do instead:
+what to do instead, and, when `REVIEW.md` names passes, the pass it belongs to (`bugs`,
+`security`, `compliance`, or one the team added):
 
 - **Blocking**: fixed before the merge. Every violation `check` reports, wrong behaviour, a
   broken boundary, design debt that will spread, an `it.todo` or a `TODO(domain)` left in the

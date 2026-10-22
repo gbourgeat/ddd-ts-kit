@@ -9,7 +9,7 @@ import { formatJson } from '../json/format-json.js';
 import { parseContextName, toName } from '../naming/index.js';
 import { inDialect } from '../package-manager/in-dialect.js';
 import { setUpSdk } from '../sdk/index.js';
-import { readTemplate, renderTemplate } from '../templating/index.js';
+import { readTemplate, renderTemplate, type RenderContext } from '../templating/index.js';
 import { VERSION } from '../version.js';
 import { Workspace, type WorkspaceReport } from '../workspace/index.js';
 import { applyPreset } from '../presets/apply-preset.js';
@@ -17,6 +17,7 @@ import { presetNamed } from '../presets/preset-named.js';
 import { addContext } from './add-context.js';
 import { existingName } from './existing-name.js';
 import { initFiles } from './files/init-files.js';
+import { REVIEW_POLICY } from './files/guidance-files.js';
 import { keepFlatPlatform } from '../platform-folders/index.js';
 import { ignoreWorktrees } from './ignore-worktrees.js';
 import { writeManifest } from './manifest/write-manifest.js';
@@ -166,6 +167,17 @@ function writeFiles(ws: Workspace, { config, projectName, flat }: Written): void
     ws.note(
       `Files of ${config.platformDir} are flat, as a version before their folders wrote them: --force rewrote them there. \`npx ddd-ts-kit platform-folders\` moves them to their folders, with every import.`,
     );
+  }
+
+  writeReviewPolicy(ws, context);
+}
+
+/** The review policy is the team's once written: created when missing, never replaced, not even with --force. */
+function writeReviewPolicy(ws: Workspace, context: RenderContext): void {
+  const [target, template] = REVIEW_POLICY;
+
+  if (!ws.exists(target)) {
+    ws.create(target, renderTemplate(template, context));
   }
 }
 

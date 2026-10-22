@@ -273,3 +273,37 @@ describe('the rule files and the README init writes', () => {
     expect(byHand).not.toContain('kernelModule');
   });
 });
+
+describe('the review policy init writes', () => {
+  it('writes REVIEW.md once, with its passes, what Important means, the cap on nits and what is not reported, and leaves it to the team even with --force', () => {
+    const root = initProject(...NPM);
+    const policy = read(root, 'REVIEW.md');
+
+    expect(policy).toContain('# Review instructions');
+    expect(policy).toContain('## Passes');
+    expect(policy).toContain('- Bugs:');
+    expect(policy).toContain('- Security:');
+    expect(policy).toContain('- Compliance:');
+    expect(policy).toContain('npx ddd-ts-kit check --changed-since <base> --explain');
+    expect(policy).toContain('## What Important means here');
+    expect(policy).toContain('## Cap the nits');
+    expect(policy).toContain('a line of `AGENTS.md` under `## Mistakes seen here`');
+    expect(policy).toContain('## Do not report');
+    expect(policy).toContain('`src/platform/http/openapi-documents.ts`');
+    expect(policy).toContain('anything `npm run verify` already refuses');
+
+    write(root, 'REVIEW.md', '# Ours\n');
+
+    const forced = cli(root, 'init', ...NPM, '--force', '--json').json();
+
+    expect(read(root, 'REVIEW.md')).toBe('# Ours\n');
+    expect(forced).toMatchObject({ created: expect.not.arrayContaining(['REVIEW.md']) });
+    expect(forced).toMatchObject({ updated: expect.not.arrayContaining(['REVIEW.md']) });
+  });
+
+  it('speaks the package manager of the project', () => {
+    expect(read(initProject('--package-manager', 'pnpm'), 'REVIEW.md')).toContain(
+      'anything `pnpm run verify` already refuses',
+    );
+  });
+});

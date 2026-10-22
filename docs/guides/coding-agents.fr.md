@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:1b1c585a208ef692 -->
+<!-- translation-of: coding-agents.md sha256:37a656dd9ef7667d -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -44,7 +44,9 @@ Vingt-trois skills, dans l'ordre où un projet les rencontre :
 Cinq agents : `domain-explorer` (réponses en lecture seule sur ce qui existe et où),
 `context-builder` (construit les tranches d'un contexte dans son propre worktree),
 `domain-test-writer` (transforme les entrées `it.todo` en specs), `architecture-reviewer`
-(revue en lecture seule d'un diff, d'une branche ou d'un contexte) et `acceptance-judge` (juge un
+(revue en lecture seule d'un diff, d'une branche ou d'un contexte, sous le `REVIEW.md` du projet
+quand il en a un : les passes de l'équipe par-dessus la méthode de l'agent, chaque constat
+étiqueté de sa passe) et `acceptance-judge` (juge un
 changement d'un test d'acceptation verrouillé, indépendamment de la session qui l'a fait, et écrit
 son verdict).
 
@@ -92,6 +94,8 @@ pipeline.
 Même sans plugin, un projet guide chaque agent : `init` écrit `AGENTS.md`, le guide que lisent
 Codex, Copilot et la plupart des agents (`CLAUDE.md` l'importe), les règles par couche pour
 Claude Code dans `.claude/rules/` et les mêmes règles pour Copilot dans `.github/instructions/`,
-ciblées par `applyTo`, et, avec le pipeline GitHub, `copilot-setup-steps.yml`, qui installe le
+ciblées par `applyTo`, `REVIEW.md`, la politique de revue que lit chaque relecteur, écrite une
+fois et possédée par l'équipe ([Travailler en équipe](team-workflow.fr.md#ce-que-la-revue-regarde-dans-chaque-couche)),
+et, avec le pipeline GitHub, `copilot-setup-steps.yml`, qui installe le
 projet avant le démarrage de l'agent cloud de Copilot. `npm run verify` et le pipeline tiennent
 chaque agent aux mêmes règles.

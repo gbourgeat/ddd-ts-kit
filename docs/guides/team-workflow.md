@@ -197,8 +197,26 @@ cannot judge. What to look for differs by layer:
 | `published-language/` | Would a consumer understand this payload without asking? Is anything internal or personal leaking? Is this additive, or a new version? | importing outside the allow-list |
 | tests | Does the name read as a business rule? Does it assert an outcome through the public API? | mocks, a missing spec file, a missing builder |
 
+The policy a review applies is a file at the root of the project, `REVIEW.md`, written once by
+`ddd-ts-kit init` and owned by the team from then on (`init --force` leaves it alone, and
+`ddd-ts-kit doctor` says when a project has none). It names the passes of a review, each finding
+tagged with its pass: bugs (a wrong business rule, a state the aggregate should not reach, a
+replay that is not idempotent, a failure path without a test), security (a search not narrowed
+by the access scope, a field reserved to a permission that leaks, personal data in a log or an
+error, an error code not declared on its route, a tenant read outside the scope) and
+compliance (the diff against the design review of its row, the acceptance of its story, the
+records of `docs/adr/` and the rules); what Important means in this project; a cap of five
+nits per review, a recurring nit becoming a line of `AGENTS.md` under `## Mistakes seen here`
+or a rule of the config; and what is not reported (generated files, anything `npm run verify`
+already refuses). A team adds its own pass there (a data classification rule, a brand rule),
+and the `architecture-reviewer` agent, a human reviewer and any review bot read the same file.
+The file is the review policy of the AI-native SDLC playbook of Anthropic
+([PDF](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)),
+with the kit's own lists.
+
 The plugin offers the same split as a tool: the `architecture-reviewer` agent reviews a diff
-or a whole context read-only, starting from the checker's output and then judging what tools
+or a whole context read-only, starting from the checker's output, then `REVIEW.md` on top of
+its own method, then judging what tools
 cannot. It sorts its findings: a blocking one is fixed before the merge; a non-blocking one
 comes with the `TODO(review): #<row id> <remark>` line to write at its `file:line`, so that the
 remark lives in the code rather than in a pull request that is soon closed, tied to the row it is

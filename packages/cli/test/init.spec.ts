@@ -26,6 +26,7 @@ const BOOTSTRAPPED = [
   '.github/workflows/ci.yml',
   'AGENTS.md',
   'CLAUDE.md',
+  'REVIEW.md',
   '.claude/rules/domain.md',
   '.claude/rules/tests.md',
   'src/contexts/billing/CONTEXT.md',

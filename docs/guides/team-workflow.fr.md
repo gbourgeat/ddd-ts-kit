@@ -1,5 +1,5 @@
 [English](team-workflow.md) · **Français**
-<!-- translation-of: team-workflow.md sha256:20961fdde37c30e3 -->
+<!-- translation-of: team-workflow.md sha256:5e8660c3c4525106 -->
 
 # Travailler en équipe sur un projet DDD
 
@@ -207,8 +207,27 @@ son attention là où un outil ne peut pas juger. Ce qu'il faut regarder diffèr
 | `published-language/` | Un consommateur comprendrait-il ce contenu sans poser de question ? Quelque chose d'interne ou de personnel fuit-il ? Est-ce un ajout, ou une nouvelle version ? | un import hors de la liste autorisée |
 | tests | Le nom se lit-il comme une règle métier ? Vérifie-t-il un résultat par l'API publique ? | les *mocks*, un fichier de *spec* manquant, un *builder* manquant |
 
+La politique qu'une revue applique est un fichier à la racine du projet, `REVIEW.md`, écrit une
+fois par `ddd-ts-kit init` et possédé par l'équipe dès lors (`init --force` le laisse tel quel, et
+`ddd-ts-kit doctor` dit quand un projet n'en a pas). Il nomme les passes d'une revue, chaque
+constat étiqueté de sa passe : bugs (une règle métier fausse, un état que l'agrégat ne devrait pas
+atteindre, un rejeu qui n'est pas idempotent, un chemin d'échec sans test), sécurité (une
+recherche non restreinte par le périmètre d'accès, un champ réservé à une permission qui fuit,
+une donnée personnelle dans un journal ou une erreur, un code d'erreur non déclaré sur sa route,
+une lecture de *tenant* hors du périmètre) et conformité (le diff face à la revue de conception
+de sa ligne, l'acceptation de sa *story*, les enregistrements de `docs/adr/` et les règles) ; ce
+qu'Important veut dire dans ce projet ; un plafond de cinq *nits* par revue, un *nit* récurrent
+devenant une ligne de `AGENTS.md` sous `## Mistakes seen here` ou une règle de la configuration ;
+et ce qui n'est pas signalé (les fichiers générés, tout ce que `npm run verify` refuse déjà). Une
+équipe y ajoute sa propre passe (une règle de classification des données, une règle de marque),
+et l'agent `architecture-reviewer`, un relecteur humain et tout robot de revue lisent le même
+fichier. Le fichier est la politique de revue du *playbook* AI-native SDLC d'Anthropic
+([PDF](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)),
+avec les listes propres au kit.
+
 Le *plugin* offre le même découpage sous forme d'outil : l'agent `architecture-reviewer` relit un
-diff ou un contexte entier en lecture seule, en partant de la sortie du *checker* puis en jugeant
+diff ou un contexte entier en lecture seule, en partant de la sortie du *checker*, puis de
+`REVIEW.md` par-dessus sa propre méthode, puis en jugeant
 ce que les outils ne peuvent pas juger. Il trie ses constats : un constat bloquant se corrige
 avant la fusion ; un constat non bloquant vient avec la ligne
 `TODO(review): #<identifiant de ligne> <remarque>` à écrire à son `file:line`, pour que la remarque

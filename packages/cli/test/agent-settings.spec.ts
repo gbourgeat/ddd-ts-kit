@@ -24,6 +24,7 @@ const ASKED = [
   'Bash(git push *)',
   'Bash(npm publish *)',
   'Edit(./ddd-ts-kit.config.json)',
+  'Edit(./REVIEW.md)',
   'Edit(./eslint.config.mjs)',
   'Edit(./biome.json)',
   'Edit(./.dependency-cruiser.cjs)',
@@ -88,7 +89,7 @@ describe('agent settings', () => {
     expect(permissions(root, 'deny')).toContain('Edit(./openapi/**)');
 
     expect(stringsAt(report, 'notes').join('\n')).toMatch(
-      /\.claude\/settings\.json gained 49 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
+      /\.claude\/settings\.json gained 50 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
     );
 
     expect(stringsAt(cli(root, 'init', '--json').json(), 'updated')).not.toContain(SETTINGS);

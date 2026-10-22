@@ -553,8 +553,9 @@ config, `docsUi`, `ci` and `logger` included.
 | `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node and the dependencies, installed before the Copilot cloud agent starts), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json`; `codeql.yml` with `--ci-extras codeql` |
 | `--ci gitlab` | `.gitlab-ci.yml` (architecture findings as a Code Quality report through `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` |
 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | how to run it; a slim guide in `AGENTS.md`, which Codex, Copilot and most coding agents read and `CLAUDE.md` imports (commands, how to read less, the map of the rules, generated files, compiler note, the skills of the plugin: `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) and the invariants in seven rule files, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` and `tests.md`, each scoped by a `paths` frontmatter, and the same seven for GitHub Copilot, each scoped by `applyTo` |
+| `REVIEW.md` | the review policy of the project: the passes of a review (bugs, security, compliance against the design review of the row, the acceptance of the story, the records of `docs/adr/` and the rules), what Important means, at most five nits (a recurring one becomes a line of `AGENTS.md` under `## Mistakes seen here` or a rule of the config), what is not reported (generated files, what `npm run verify` refuses). Read by the `architecture-reviewer` agent on top of its method, by a human reviewer and by any review bot. Written once, for the team to edit: `--force` leaves it alone, `doctor` says when it is missing |
 | `.github/copilot/settings.json` | the plugin of the kit, declared for GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`): its cloud agent installs it, the Copilot CLI and VS Code recommend it; an existing file keeps what it holds and gains the two entries |
-| `.claude/settings.json` | permissions only: the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), the three generated documents are not edited by hand, `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) ask first |
+| `.claude/settings.json` | permissions only: the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), the three generated documents are not edited by hand, `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) ask first |
 | `.gitignore` | `node_modules`, `dist`, `coverage`, `.env`, `*.tsbuildinfo`, `.ddd-ts-kit/`, where `worker-scope` writes, and `.worktrees/`, where the worktrees live |
 
 `--ci both` writes the two pipelines, `--ci none` neither (and no `renovate.json`). The pipeline
@@ -1283,7 +1284,9 @@ otherwise, then the git hooks. `lefthook.yml` must hold `lefthook: node_modules/
 which makes each checkout and each worktree run its own lefthook and fail a commit, loudly,
 when its dependencies are missing; the fix is that line, or `init --force` for the whole file.
 The pre-commit hook under `git rev-parse --git-path hooks` must exist and come from lefthook;
-the fix is `npm run hooks:install`, once per clone.
+the fix is `npm run hooks:install`, once per clone. Then the guidance written once for the team
+to own: `REVIEW.md`, the review policy, is reported missing (`guidance`) and `init` writes it
+again without touching anything else.
 
 Then what this checkout lacks to run the project, the state of a clone or a new worktree rather
 than of the project, read from its files without network: the running Node against
@@ -1305,8 +1308,8 @@ installed or at another version, a submodule not initialised. A script written o
 this clone has not installed, a Node `.nvmrc` does not name while `engines.node` accepts it, and a
 lockfile changed since the install (a checkout may rewrite it with what `node_modules` already
 holds) are said without failing it. `--json` prints `{ version, findings: [{ area, name, problem,
-expected, found }] }`, `area` being `script`, `package`, `permission`, `hook`, `node`, `install`
-or `submodule`.
+expected, found }] }`, `area` being `script`, `package`, `permission`, `hook`, `guidance`, `node`,
+`install` or `submodule`.
 
 ## worker-scope
 

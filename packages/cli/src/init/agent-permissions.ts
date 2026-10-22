@@ -52,11 +52,13 @@ export const AGENT_PERMISSIONS: AgentPermissions = {
     'Edit(./test/acceptance/*.acceptance.lock.json)',
   ],
   // Then the files that hold the rules and the pipeline: changing one is a decision of the
-  // project owner, the same list as the editor hook of the plugin asks about.
+  // project owner, the same list as the editor hook of the plugin asks about. The review policy
+  // holds a rule of the project too.
   ask: [
     'Bash(git push *)',
     'Bash(npm publish *)',
     'Edit(./ddd-ts-kit.config.json)',
+    'Edit(./REVIEW.md)',
     'Edit(./eslint.config.mjs)',
     'Edit(./biome.json)',
     'Edit(./.dependency-cruiser.cjs)',

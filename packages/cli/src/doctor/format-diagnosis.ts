@@ -25,7 +25,7 @@ export function formatDiagnosis(
 function projectLines(findings: readonly DoctorFinding[], version: string, manager: Stack['packageManager']): string[] {
   if (findings.length === 0) {
     return [
-      `The project has what ddd-ts-kit ${version} writes: scripts, packages of the kit, permissions and git hooks.`,
+      `The project has what ddd-ts-kit ${version} writes: scripts, packages of the kit, permissions, git hooks and review policy.`,
     ];
   }
 

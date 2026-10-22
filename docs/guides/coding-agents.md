@@ -43,7 +43,9 @@ Twenty-three skills, in the order a project meets them:
 Five agents: `domain-explorer` (read-only answers about what exists and where),
 `context-builder` (builds the slices of one context in its own worktree),
 `domain-test-writer` (turns `it.todo` entries into specs) and `architecture-reviewer`
-(read-only review of a diff, a branch or a context), and `acceptance-judge` (judges a change to a
+(read-only review of a diff, a branch or a context, under the `REVIEW.md` of the project when it
+has one: the passes of the team on top of the agent's method, each finding tagged with its pass),
+and `acceptance-judge` (judges a change to a
 locked acceptance test, independently of the session that made it, and writes its verdict).
 
 The hook is the part that makes the rest binding. In a project that has a
@@ -85,6 +87,8 @@ and left to the checks of the pipeline.
 Without any plugin, a project still guides every agent: `init` writes `AGENTS.md`, the guide
 Codex, Copilot and most agents read (`CLAUDE.md` imports it), the rules by layer for Claude Code
 in `.claude/rules/` and the same rules for Copilot in `.github/instructions/`, scoped by
-`applyTo`, and, with the GitHub pipeline, `copilot-setup-steps.yml`, which installs the project
+`applyTo`, `REVIEW.md`, the review policy every reviewer reads, written once and owned by the
+team ([Working as a team](team-workflow.md#review-focus-per-layer)), and, with the GitHub
+pipeline, `copilot-setup-steps.yml`, which installs the project
 before the Copilot cloud agent starts. `npm run verify` and the pipeline hold every agent to
 the same rules.
