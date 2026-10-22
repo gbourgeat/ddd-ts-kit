@@ -23,7 +23,27 @@ once. The guard of the plugin holds the order: no code before the design and the
 ```text
 terminal 1: /ddd-ts-kit:story US5 "A customer places an order and is invoiced"
 terminal 2: /ddd-ts-kit:story US6 docs/backlog/us6.md
+terminal 3: /ddd-ts-kit:story US7 docs/architecture/intents/faster-checkout.md
 ```
+
+## Where a story comes from
+
+A story starts from plain words, a file, a ticket, or an intent. An intent is the idea written
+by whoever has it, in their own words, before anyone designs anything: `/ddd-ts-kit:intent`
+brainstorms with the originator until the idea is concrete (what is wrong, what would be true
+once it is solved, who and what it touches, the constraints, what the author would observe),
+maps the affected systems on `npx ddd-ts-kit list` when it runs inside the project, and writes
+`docs/architecture/intents/<slug>.md` from the template of the story skill with
+`Status: draft`. The person runs it from Claude Code, from Cowork or claude.ai with a git
+connector, or fills the template by hand. The product owner corrects the intent in a pull
+request and accepts it by setting `Status: accepted`: the merge is the acceptance, and nothing
+is decided for the owner. The story then reads it, `npx ddd-ts-kit story-scope US7 --from
+docs/architecture/intents/faster-checkout.md` (refused while the intent is not accepted):
+`## Problem` and `## Proposed outcome` seed `## Statement`, each constraint is a question
+answered "by the intent", the open questions join phase 1, and each line of the acceptance the
+author wrote is the first draft of a criterion. An incident record
+(`docs/architecture/incidents/<id>.md`) is accepted the same way, as it is. An intent is not a ticket: a project whose tracker is the source of truth
+writes the key in the intent and the path in the ticket, and `## Origin` carries both.
 
 ## The phases
 

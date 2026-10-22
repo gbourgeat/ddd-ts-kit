@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:4bad4c521d5e5117 -->
+<!-- translation-of: story-workflow.md sha256:f291435a5179a7c2 -->
 
 # Parcours d'une story : une session par user story
 
@@ -25,7 +25,29 @@ garde du plugin tient l'ordre : pas de code avant la conception et l'acceptation
 ```text
 terminal 1 : /ddd-ts-kit:story US5 "Un client passe une commande et reçoit sa facture"
 terminal 2 : /ddd-ts-kit:story US6 docs/backlog/us6.md
+terminal 3 : /ddd-ts-kit:story US7 docs/architecture/intents/faster-checkout.md
 ```
+
+## D'où vient une story
+
+Une *story* part de mots simples, d'un fichier, d'un ticket ou d'une intention. Une intention
+est l'idée écrite par celui qui l'a, dans ses propres mots, avant que quiconque ne conçoive
+quoi que ce soit : `/ddd-ts-kit:intent` réfléchit avec son auteur jusqu'à ce que l'idée soit
+concrète (ce qui ne va pas, ce qui serait vrai une fois résolu, qui et quoi elle touche, les
+contraintes, ce que l'auteur observerait), place les systèmes touchés sur `npx ddd-ts-kit list`
+quand elle tourne dans le projet, et écrit `docs/architecture/intents/<slug>.md` depuis le
+*template* de la *skill* story avec `Status: draft`. La personne la lance depuis Claude Code,
+depuis Cowork ou claude.ai avec un connecteur git, ou remplit le *template* à la main. Le
+responsable du produit corrige l'intention dans une *pull request* et l'accepte en posant
+`Status: accepted` : la fusion est l'acceptation, et rien n'est décidé à sa place. La *story*
+la lit ensuite, `npx ddd-ts-kit story-scope US7 --from docs/architecture/intents/faster-checkout.md`
+(refusé tant que l'intention n'est pas acceptée) : `## Problem` et `## Proposed outcome`
+amorcent `## Statement`, chaque contrainte est une question répondue « par l'intention », les
+questions ouvertes rejoignent la phase 1, et chaque ligne de l'acceptation écrite par l'auteur
+est le premier jet d'un critère. Un compte rendu d'incident
+(`docs/architecture/incidents/<id>.md`) est accepté de la même façon, tel quel. Une intention
+n'est pas un ticket : un projet dont le *tracker* est la source de vérité écrit la clé dans
+l'intention et le chemin dans le ticket, et `## Origin` porte les deux.
 
 ## Les phases
 

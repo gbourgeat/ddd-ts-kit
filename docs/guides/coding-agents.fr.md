@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:1b1c585a208ef692 -->
+<!-- translation-of: coding-agents.md sha256:e0f5eb2d8b57e483 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -13,7 +13,7 @@ les trois agents :
 | Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, puis `copilot plugin install ddd-ts-kit@ddd-ts-kit` | par son nom, `start` |
 | Agent cloud de Copilot, VS Code | déclaré par le `.github/copilot/settings.json` qu'écrit `init` : l'agent cloud l'installe, VS Code le recommande | par son nom, `start` |
 
-Vingt-trois skills, dans l'ordre où un projet les rencontre :
+Vingt-quatre skills, dans l'ordre où un projet les rencontre :
 
 | Skill | Usage |
 |---|---|
@@ -25,6 +25,7 @@ Vingt-trois skills, dans l'ordre où un projet les rencontre :
 | `bootstrap` | choisir la stack et créer le projet (lancée par l'utilisateur) |
 | `plan-slices` | le travail en tranches verticales par contexte, ordonnées, avec leurs commandes de génération |
 | `parallel-work` | répartir les tranches entre plusieurs agents ou personnes sans collision |
+| `intent` | saisir une idée comme une intention avant toute *story*, dans les mots de celui qui l'a, pour que le responsable du produit l'accepte dans une *pull request* (lancée par l'utilisateur ; [parcours d'une story](story-workflow.fr.md#doù-vient-une-story)) |
 | `story` | mener une *user story* de ses questions à une *pull request* verte en une session, une *story* par terminal (lancée par l'utilisateur ; [parcours d'une story](story-workflow.fr.md)) |
 | `scaffold` | un fichier de n'importe quel rôle, à partir d'un template |
 | `use-case` | une fonctionnalité de bout en bout, test d'abord |

@@ -38,10 +38,14 @@ until phase 5 is met. Reading costs: [../start/token-economy.md](../start/token-
 
 ## 0. Its worktree
 
-From the checkout of the trunk, after `git fetch`: `npx ddd-ts-kit story-scope $0`. It opens
+From the checkout of the trunk, after `git fetch`: `npx ddd-ts-kit story-scope $0`, with
+`--from <file>` when `$ARGUMENTS` names an intent (`docs/architecture/intents/<slug>.md`,
+written by the `intent` skill and accepted by the owner: `story-scope` refuses one whose header
+is not `Status: accepted`) or an incident record (`docs/architecture/incidents/<id>.md`). It opens
 `.worktrees/<story>` on `story/<story>`, cut from the branch the trunk follows (`origin/main`)
-when it has one (or finds it again: the story resumes where it was left), installs it, and
-names the other stories open in the repository with the contexts they change. From now on every
+when it has one (or finds it again: the story resumes where it was left), installs it, records
+the origin in `.ddd-ts-kit/story.json`, and names the other stories open in the repository with
+the contexts they change. From now on every
 command is `cd <worktree> && ...` and every file is written by its absolute path under the
 worktree. A story it names on the same contexts is being built in another terminal: read its
 rows before you cut yours, and keep yours off its aggregates when you can.
@@ -49,8 +53,13 @@ rows before you cut yours, and keep yours off its aggregates when you can.
 ## 1. Every question, at once
 
 The statement is `$ARGUMENTS`: plain words, a file to read, or the key of a ticket a connector
-of the session can read. Read `docs/architecture/plan.md`, the `CONTEXT.md` of each context the
-story touches and `npx ddd-ts-kit describe <context> --json`, once each. List every question
+of the session can read. An intent seeds the story: its `## Problem` and `## Proposed outcome`
+become `## Statement`, word for word; each line of its `## Constraints` is listed under
+`## Questions` as answered "by the intent"; its `## Open questions` join the questions below;
+each line of its `## Acceptance, as the author would observe it` is the first draft of a
+criterion, rewritten as what a client observes through the API; its author and status go on
+the `From:` line of `## Origin`. Read `docs/architecture/plan.md`, the `CONTEXT.md` of each
+context the story touches and `npx ddd-ts-kit describe <context> --json`, once each. List every question
 whose answer changes an artefact of the story: a business rule you would have to guess, who
 holds a permission, a word missing from a glossary, a criterion that cannot be observed, a
 boundary or a relationship between contexts. Ask them in one go with AskUserQuestion (four per
