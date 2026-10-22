@@ -567,6 +567,17 @@ The attendance record of a patient is kept as its events; its history
   as typed, the access to the script being the credential. The entry is in the global chain,
   which platform staff read: the keys are outside the networks (ADR-0004). Its date plus the
   retention of the backups of the keys is the day the erasure is complete.
+- **Limits of the erasure.** The id has to be what a slug or a UUID is made of
+  (`src/platform/events/is-subject-id.ts`): an identity provider whose subjects carry another
+  character (`auth0|abc`) needs that grammar widened, knowingly, since whatever it lets through
+  can reach the trail. A mistyped id of that grammar leaves a permanent `keyDestroyed: false`
+  entry: an identifier, not personal data, and a faithful trace of the attempt. A run again for
+  a patient whose key is gone and whose person is gone from every network is refused as a
+  mistyped id; the projections it would have rebuilt are rebuilt by the next erasure of anyone,
+  since a rebuild replays the whole store. A patient that `identity` no longer knows is still
+  erasable as long as their key exists: the key comes first, the record after, the order to keep
+  the day identity erases persons. The operator id is taken as typed, and the entry names no
+  network, as said above.
 - **The keys.** `PostgresSubjectKeyStore`, in the `scheduling` schema of the one database, next
   to the events, so that the example runs with one PostgreSQL. A backup of that database taken
   before an erasure still holds the key and the sealed words until it expires. A deployment

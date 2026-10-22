@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f310ce06cb3b2637 -->
+<!-- translation-of: README.md sha256:adfd051f914baf57 -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -588,6 +588,18 @@ Le registre de présence d'un patient est gardé sous forme de ses événements 
   id est pris tel que saisi, l'accès au script étant le justificatif. L'entrée est dans la chaîne
   globale, que lit le personnel de la plateforme : les clés sont hors des réseaux (ADR-0004). Sa
   date plus la rétention des sauvegardes des clés donne le jour où l'effacement est complet.
+- **Limites de l'effacement.** L'id doit être fait de ce dont un slug ou un UUID est fait
+  (`src/platform/events/is-subject-id.ts`) : un fournisseur d'identité dont les sujets portent un
+  autre caractère (`auth0|abc`) demande d'élargir cette grammaire, en connaissance de cause,
+  puisque ce qu'elle laisse passer peut atteindre le journal. Une faute de frappe qui respecte
+  cette grammaire laisse une entrée `keyDestroyed: false` définitive : un identifiant, pas une
+  donnée personnelle, et une trace fidèle de la tentative. Une relance pour un patient dont la
+  clé a disparu et dont la personne a disparu de tous les réseaux est refusée comme une faute de
+  frappe ; les projections qu'elle aurait reconstruites le sont par le prochain effacement de
+  n'importe qui, puisqu'une reconstruction rejoue tout le store. Un patient qu'`identity` ne
+  connaît plus reste effaçable tant que sa clé existe : la clé d'abord, la fiche ensuite, l'ordre
+  à garder le jour où identity effacera des personnes. L'id de l'opérateur est pris tel que saisi,
+  et l'entrée ne nomme aucun réseau, comme dit plus haut.
 - **Les clés.** `PostgresSubjectKeyStore`, dans le schéma `scheduling` de l'unique base, à côté des
   événements, pour que l'exemple tourne avec un seul PostgreSQL. Une sauvegarde de cette base prise
   avant un effacement détient encore la clé et les paroles scellées jusqu'à son expiration. Un
