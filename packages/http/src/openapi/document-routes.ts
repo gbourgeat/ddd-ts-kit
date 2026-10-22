@@ -1,4 +1,4 @@
-import type { Route } from '../route/route.js';
+import type { Route } from '../route/route';
 
 /** The routes of one document of the contract. */
 export interface DocumentRoutes {

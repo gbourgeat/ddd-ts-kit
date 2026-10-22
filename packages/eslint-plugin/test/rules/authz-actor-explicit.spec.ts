@@ -1,5 +1,5 @@
-import { authzActorExplicit } from '../../src/rules/authz-actor-explicit.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+import { authzActorExplicit } from '../../src/rules/authz-actor-explicit';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const MODULE = `${BILLING}/billing.module.ts`;
 const ROUTE = `${BILLING}/presentation/http/void-invoice.route.ts`;

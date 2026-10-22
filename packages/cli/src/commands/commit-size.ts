@@ -1,8 +1,8 @@
-import { readConfig } from '../config/index.js';
-import { formatCommitSize } from '../commit/format-commit-size.js';
-import { measureCommit } from '../commit/measure-commit.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
+import { readConfig } from '../config';
+import { formatCommitSize } from '../commit/format-commit-size';
+import { measureCommit } from '../commit/measure-commit';
+import { Arguments } from './arguments';
+import type { Command } from './command';
 
 /** `check --commit-size`: says whether what is about to be committed fits one slice. Advisory unless `--strict`. */
 export const commitSizeCommand: Command = (argv, io) => {

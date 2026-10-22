@@ -1,5 +1,5 @@
-import type { Violation } from '../model/violation.js';
-import type { Suppression } from './find-suppressions.js';
+import type { Violation } from '../model/violation';
+import type { Suppression } from './find-suppressions';
 
 /**
  * A directive covers the line below it. On the first line of a file it also covers

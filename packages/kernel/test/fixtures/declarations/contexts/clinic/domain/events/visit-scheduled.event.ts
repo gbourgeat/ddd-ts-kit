@@ -1,4 +1,4 @@
-import type { DomainEvent } from '../../../../../../../src/index.js';
+import type { DomainEvent } from '../../../../../../../src';
 
 export class VisitScheduled implements DomainEvent {
   static readonly eventName = 'clinic.visit.scheduled';

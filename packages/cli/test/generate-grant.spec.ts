@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { checkJsonOf } from './check-support.js';
+import { checkJsonOf } from './check-support';
 import fs from 'node:fs';
 import path from 'node:path';
-import { cli, read, write } from './helpers.js';
-import { failure, report } from './reports.js';
-import { initProject } from './support/init-project.js';
+import { cli, read, write } from './helpers';
+import { failure, report } from './reports';
+import { initProject } from './support/init-project';
 
 const ROLES = 'src/platform/auth/roles/roles.ts';
 const ROLE = 'src/platform/auth/authorization/role.ts';

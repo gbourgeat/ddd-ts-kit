@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { LIFECYCLE_HOOKS, defineAspect, type JoinPoint } from '../src/index.js';
-import { PROBE } from './support/probe.js';
-import { QuoteGateway } from './support/quote-gateway.js';
-import { recording } from './support/recording.js';
+import { LIFECYCLE_HOOKS, defineAspect, type JoinPoint } from '../src';
+import { PROBE } from './support/probe';
+import { QuoteGateway } from './support/quote-gateway';
+import { recording } from './support/recording';
 
 describe('an aspect applied to an instance', () => {
   it('answers the same object, still an instance of its class', () => {

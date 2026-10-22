@@ -1,8 +1,8 @@
 import { backgroundJobPolicy, isJobName, type BackgroundJob, type BackgroundJobOptions } from '@ddd-ts-kit/kernel';
 import type { Token } from '@ddd-ts-kit/kernel/declarations';
-import { WiringError } from '../errors/wiring-error.js';
-import type { BackgroundJobRegistration } from '../wiring/background-job-registration.js';
-import { readable } from './readable.js';
+import { WiringError } from '../errors/wiring-error';
+import type { BackgroundJobRegistration } from '../wiring/background-job-registration';
+import { readable } from './readable';
 
 interface Located {
   readonly module: string;

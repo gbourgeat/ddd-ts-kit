@@ -8,10 +8,10 @@ import {
   defineContextModule,
   fake,
   kernelModule,
-} from '../src/index.js';
-import { wiringFailure } from './support/failure.js';
-import { InMemoryStock } from './support/shop/in-memory-stock.js';
-import { Stock } from './support/shop/stock.port.js';
+} from '../src';
+import { wiringFailure } from './support/failure';
+import { InMemoryStock } from './support/shop/in-memory-stock';
+import { Stock } from './support/shop/stock.port';
 
 describe('a port', () => {
   it('is bound to a class that implements it, and resolved by the port', () => {

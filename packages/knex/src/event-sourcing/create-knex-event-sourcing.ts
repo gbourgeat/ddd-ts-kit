@@ -1,7 +1,7 @@
 import { postgresEventSourcing, type EventSourcingStores, type EventStoreTablesOptions } from '@ddd-ts-kit/kernel';
-import { dialectOf } from '../sql/dialect-of.js';
-import type { KnexContext } from '../unit-of-work/knex-context.js';
-import { knexSqlRun } from './knex-sql-run.js';
+import { dialectOf } from '../sql/dialect-of';
+import type { KnexContext } from '../unit-of-work/knex-context';
+import { knexSqlRun } from './knex-sql-run';
 
 /**
  * The event store, the snapshots, the checkpoints and the keys of the data subjects on

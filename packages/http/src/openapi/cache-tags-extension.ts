@@ -1,5 +1,5 @@
-import type { CacheTagSource } from '../cache/cache-tag-source.js';
-import type { Route } from '../route/route.js';
+import type { CacheTagSource } from '../cache/cache-tag-source';
+import type { Route } from '../route/route';
 
 /**
  * `x-cache-tags`: the tags an answer is filed under, as templates (`calendar:{calendarId}`,

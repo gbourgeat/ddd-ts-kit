@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { REPO_ROOT } from '../helpers.js';
+import { REPO_ROOT } from '../helpers';
 
 /** What a YAML text reads as, for each parser: YAML 1.2 and 1.1 by `yaml`, and `js-yaml`. */
 export interface ReadBack {

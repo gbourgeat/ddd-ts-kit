@@ -1,6 +1,6 @@
 import { UNWRITABLE_FIELDS } from '@ddd-ts-kit/kernel';
 import winston from 'winston';
-import { isoTime } from './iso-time.js';
+import { isoTime } from './iso-time';
 
 /** The key under which winston and its transports read the level of a line (package `triple-beam`). */
 const LEVEL = Symbol.for('level');

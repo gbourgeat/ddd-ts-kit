@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { cli, exists, read, tempDir, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
-import { keysAt } from './support/keys-at.js';
-import { readContract } from './support/read-contract.js';
-import { readJson } from './support/read-json.js';
+import { cli, exists, read, tempDir, write } from './helpers';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
+import { keysAt } from './support/keys-at';
+import { readContract } from './support/read-contract';
+import { readJson } from './support/read-json';
 
 const OPENAPI = 'openapi/openapi.yaml';
 const ASYNCAPI = 'docs/integration/asyncapi.yaml';

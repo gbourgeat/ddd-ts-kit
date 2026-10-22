@@ -1,6 +1,6 @@
-import type { Arguments } from '../../commands/arguments.js';
-import type { Io } from '../../commands/io.js';
-import { runSelfCheck } from '../fixtures/run-self-check.js';
+import type { Arguments } from '../../commands/arguments';
+import type { Io } from '../../commands/io';
+import { runSelfCheck } from '../fixtures/run-self-check';
 
 /** `check --self`: replays the rule fixtures shipped with the CLI and exits 0 when every rule behaves as expected. */
 export function selfCheck(args: Arguments, io: Io): number {

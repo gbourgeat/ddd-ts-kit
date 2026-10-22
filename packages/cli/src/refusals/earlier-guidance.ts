@@ -1,4 +1,4 @@
-import type { MigrationDraft } from './migration-draft.js';
+import type { MigrationDraft } from './migration-draft';
 
 /** The guides `init` writes for agents that say how a refusal is built: the rules by layer, and the guide of every agent. */
 const GUIDES = [

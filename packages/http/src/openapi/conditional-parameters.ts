@@ -1,6 +1,6 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import { IfMatch } from '../cache/if-match.js';
-import type { Route } from '../route/route.js';
+import { IfMatch } from '../cache/if-match';
+import type { Route } from '../route/route';
 
 const TEXT = { type: 'string' };
 

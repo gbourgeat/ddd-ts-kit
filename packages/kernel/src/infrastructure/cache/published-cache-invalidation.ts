@@ -1,11 +1,11 @@
-import { CachePurgeRequest } from '../../application/cache/cache-purge-request.js';
-import { NoCurrentTenantError } from '../../application/audit/no-current-tenant-error.js';
-import { tenantCacheTags } from '../../application/cache/tenant-cache-tags.js';
-import type { CacheInvalidation } from '../../application/ports/cache-invalidation.js';
-import type { Clock } from '../../application/ports/clock.js';
-import type { ExecutionScope } from '../../application/ports/execution-scope.js';
-import type { IdGenerator } from '../../application/ports/id-generator.js';
-import type { IntegrationEventPublisher } from '../../application/ports/integration-event-publisher.js';
+import { CachePurgeRequest } from '../../application/cache/cache-purge-request';
+import { NoCurrentTenantError } from '../../application/audit/no-current-tenant-error';
+import { tenantCacheTags } from '../../application/cache/tenant-cache-tags';
+import type { CacheInvalidation } from '../../application/ports/cache-invalidation';
+import type { Clock } from '../../application/ports/clock';
+import type { ExecutionScope } from '../../application/ports/execution-scope';
+import type { IdGenerator } from '../../application/ports/id-generator';
+import type { IntegrationEventPublisher } from '../../application/ports/integration-event-publisher';
 
 export interface PublishedCacheInvalidationOptions {
   /** The publisher of the application: with an outbox, the purge request commits with the work. */

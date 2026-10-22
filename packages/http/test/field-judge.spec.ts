@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { Actor } from '@ddd-ts-kit/kernel';
-import { assertWritable } from '../src/field-access/assert-writable.js';
-import type { FieldDecider } from '../src/field-access/field-decider.js';
-import { FieldJudge } from '../src/field-access/field-judge.js';
-import { FieldTree } from '../src/field-access/field-tree.js';
-import { visibleBody } from '../src/field-access/visible-body.js';
-import { isAsyncIterable } from '../src/support/is-async-iterable.js';
+import { assertWritable } from '../src/field-access/assert-writable';
+import type { FieldDecider } from '../src/field-access/field-decider';
+import { FieldJudge } from '../src/field-access/field-judge';
+import { FieldTree } from '../src/field-access/field-tree';
+import { visibleBody } from '../src/field-access/visible-body';
+import { isAsyncIterable } from '../src/support/is-async-iterable';
 
 const actor: Actor = { id: 'ana', type: 'user', roles: [], attributes: {} };
 const reads = { permission: { id: 'notes:read' } };

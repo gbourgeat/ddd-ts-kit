@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as v from 'valibot';
 import { z } from 'zod';
-import { standardSchema, type StandardSchemaV1 } from '../src/standard-schema.js';
+import { standardSchema, type StandardSchemaV1 } from '../src/standard-schema';
 
 const valibotOrder = v.object({
   customerId: v.pipe(v.string(), v.uuid()),

@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { Clock, FixedClock, IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, fake, override } from '../src/index.js';
-import { CancelOrder } from './support/ordering/application/commands/cancel-order/cancel-order.command.js';
-import { CancelOrderHandler } from './support/ordering/application/commands/cancel-order/cancel-order.handler.js';
-import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command.js';
-import { PlaceOrderHandler } from './support/ordering/application/commands/place-order/place-order.handler.js';
-import { GetOrder } from './support/ordering/application/queries/get-order/get-order.query.js';
-import { GetOrderHandler } from './support/ordering/application/queries/get-order/get-order.handler.js';
-import { OrderRepository } from './support/ordering/domain/repositories/order.repository.js';
-import { InMemoryOrderRepository } from './support/ordering/infrastructure/persistence/in-memory-order.repository.js';
-import { EpochClock } from './support/shop/epoch-clock.js';
-import { platform } from './support/shop/platform.module.js';
-import { ReserveStock } from './support/shop/reserve-stock.js';
-import { Stock } from './support/shop/stock.port.js';
+import { createApplication, defineContextModule, fake, override } from '../src';
+import { CancelOrder } from './support/ordering/application/commands/cancel-order/cancel-order.command';
+import { CancelOrderHandler } from './support/ordering/application/commands/cancel-order/cancel-order.handler';
+import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command';
+import { PlaceOrderHandler } from './support/ordering/application/commands/place-order/place-order.handler';
+import { GetOrder } from './support/ordering/application/queries/get-order/get-order.query';
+import { GetOrderHandler } from './support/ordering/application/queries/get-order/get-order.handler';
+import { OrderRepository } from './support/ordering/domain/repositories/order.repository';
+import { InMemoryOrderRepository } from './support/ordering/infrastructure/persistence/in-memory-order.repository';
+import { EpochClock } from './support/shop/epoch-clock';
+import { platform } from './support/shop/platform.module';
+import { ReserveStock } from './support/shop/reserve-stock';
+import { Stock } from './support/shop/stock.port';
 
 /** Nothing here runs: each statement is a mistake the compiler must refuse, checked with the test sources. */
 

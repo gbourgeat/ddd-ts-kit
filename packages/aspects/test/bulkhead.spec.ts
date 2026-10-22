@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { BULKHEAD_FULL, BulkheadFullError, bulkhead } from '../src/index.js';
-import { QuoteGateway } from './support/quote-gateway.js';
-import { settled } from './support/settled.js';
-import { SlowGateway } from './support/slow-gateway.js';
-import { Unreachable } from './support/unreachable.js';
+import { BULKHEAD_FULL, BulkheadFullError, bulkhead } from '../src';
+import { QuoteGateway } from './support/quote-gateway';
+import { settled } from './support/settled';
+import { SlowGateway } from './support/slow-gateway';
+import { Unreachable } from './support/unreachable';
 
 describe('bulkhead', () => {
   it('refuses at once the call beyond what may run', async () => {

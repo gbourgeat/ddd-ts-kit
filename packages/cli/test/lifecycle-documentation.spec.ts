@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, tempDir, write } from './helpers.js';
+import { cli, read, tempDir, write } from './helpers';
 
 const BILLING = 'src/contexts/billing';
 const DOC = `${BILLING}/CONTEXT.md`;

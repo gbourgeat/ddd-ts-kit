@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { BOUNDARY_CASES, SPELLINGS, type BoundaryCase } from '../../eslint-plugin/test/support/boundary-cases.js';
-import { RULES } from '../src/check/catalogue/rules.js';
-import { runCheck } from '../src/check/engine/run-check.js';
-import { loadProject } from '../src/check/project/load-project.js';
-import { lines, projectWith } from './rules-support.js';
+import { BOUNDARY_CASES, SPELLINGS, type BoundaryCase } from '../../eslint-plugin/test/support/boundary-cases';
+import { RULES } from '../src/check/catalogue/rules';
+import { runCheck } from '../src/check/engine/run-check';
+import { loadProject } from '../src/check/project/load-project';
+import { lines, projectWith } from './rules-support';
 
 const ALIAS_RULE = 'imports/alias-only';
 const EXTENSION_RULE = 'imports/extension';

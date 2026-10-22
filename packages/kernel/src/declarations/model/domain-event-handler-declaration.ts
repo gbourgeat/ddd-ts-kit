@@ -1,8 +1,8 @@
-import type { DomainEventPhase } from '../../application/events/domain-event-phase.js';
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { Token } from '../token/token.js';
-import type { DomainEventHandlerUse } from './domain-event-handler-use.js';
-import type { DomainEventType } from './domain-event-type.js';
+import type { DomainEventPhase } from '../../application/events/domain-event-phase';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { Token } from '../token/token';
+import type { DomainEventHandlerUse } from './domain-event-handler-use';
+import type { DomainEventType } from './domain-event-type';
 
 export interface DomainEventHandlerDeclaration {
   readonly role: 'domain-event-handler';

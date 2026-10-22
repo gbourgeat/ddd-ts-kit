@@ -1,9 +1,9 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../../project/linted-file.js';
-import type { ClassNode } from '../classes/class-name.js';
-import { topLevelClasses } from '../classes/top-level-classes.js';
-import { importedBindings } from '../ports/imported-bindings.js';
-import { isValueObjectPath } from './is-value-object-path.js';
+import type { LintedFile } from '../../project/linted-file';
+import type { ClassNode } from '../classes/class-name';
+import { topLevelClasses } from '../classes/top-level-classes';
+import { importedBindings } from '../ports/imported-bindings';
+import { isValueObjectPath } from './is-value-object-path';
 
 /**
  * Whether a class is a value object: it extends `ValueObject` of the kernel, a class of its own

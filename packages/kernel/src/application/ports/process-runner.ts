@@ -1,6 +1,6 @@
-import type { ProcessDecision } from '../process/process-decision.js';
-import type { ProcessTimeoutDue } from '../process/process-timeout-due.js';
-import type { ProcessType } from '../process/process-type.js';
+import type { ProcessDecision } from '../process/process-decision';
+import type { ProcessTimeoutDue } from '../process/process-timeout-due';
+import type { ProcessType } from '../process/process-type';
 
 /**
  * Runs the steps of the process managers: in one unit of work, it loads the instance a key

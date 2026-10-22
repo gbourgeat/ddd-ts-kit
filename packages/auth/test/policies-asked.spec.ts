@@ -9,9 +9,9 @@ import {
   definePolicy,
   policiesAskedMiddleware,
   requires,
-} from '../src/index.js';
-import { AllowAll } from '../src/testing.js';
-import { IssueInvoice, VoidInvoice, ada, billingPermissions, bob } from './support/billing.js';
+} from '../src';
+import { AllowAll } from '../src/testing';
+import { IssueInvoice, VoidInvoice, ada, billingPermissions, bob } from './support/billing';
 
 interface Invoice {
   readonly id: string;

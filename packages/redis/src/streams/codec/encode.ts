@@ -7,7 +7,7 @@ import {
   EVENT_VERSION_FIELD,
   TENANT_FIELD,
   TRACEPARENT_FIELD,
-} from './entry-fields.js';
+} from './entry-fields';
 
 /**
  * The fields of an entry: the whole envelope as JSON, so any client of the protocol can

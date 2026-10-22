@@ -1,4 +1,4 @@
-import { callEnd } from './call-end.js';
+import { callEnd } from './call-end';
 
 const CHAINED_CALL = /^\s*\.\s*[\w$]+\s*(?:<[^<>()]*>)?\s*\(/;
 

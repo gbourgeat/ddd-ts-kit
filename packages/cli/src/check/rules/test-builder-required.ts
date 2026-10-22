@@ -1,8 +1,8 @@
 import path from 'node:path';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inContext } from '../support/in-context.js';
-import { perFile } from '../support/per-file.js';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { inContext } from '../support/in-context';
+import { perFile } from '../support/per-file';
 
 const AGGREGATE_SUFFIX = '.aggregate.ts';
 const BUILDER_SUFFIX = '.builder.ts';

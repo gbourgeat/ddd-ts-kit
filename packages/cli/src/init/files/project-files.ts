@@ -1,6 +1,6 @@
-import type { Config } from '../../config/index.js';
-import type { InitFile } from './init-file.js';
-import { when } from './when.js';
+import type { Config } from '../../config';
+import type { InitFile } from './init-file';
+import { when } from './when';
 
 /** What sits at the root of the project: the containers, the environment, the test runner, the analyzers and the git hooks. */
 export function projectFiles(config: Config, projectName: string): InitFile[] {

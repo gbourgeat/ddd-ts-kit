@@ -1,4 +1,4 @@
-import type { Project } from '../model/project.js';
+import type { Project } from '../model/project';
 
 /** The project holds a file at this path, from its root. */
 export function isInProject(project: Project, path: string): boolean {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { previousPrimaryKeys } from '../src/migration/previous-primary-keys.js';
+import { previousPrimaryKeys } from '../src/migration/previous-primary-keys';
 
 const SQL = 'migrations/0002_change-key.sql';
 

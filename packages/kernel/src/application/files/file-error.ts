@@ -1,5 +1,5 @@
-import { ConceptError } from '../../domain/errors/concept-error.js';
-import { MAX_SIGNED_URL_SECONDS } from './max-signed-url-seconds.js';
+import { ConceptError } from '../../domain/errors/concept-error';
+import { MAX_SIGNED_URL_SECONDS } from './max-signed-url-seconds';
 
 /**
  * The refusals of a file. `FILE_TOO_LARGE` and `UNSUPPORTED_MEDIA_TYPE` are answered 413 and 415

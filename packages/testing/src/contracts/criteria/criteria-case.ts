@@ -1,5 +1,5 @@
 import type { Criteria, ReadScope } from '@ddd-ts-kit/kernel';
-import type { CriteriaContractRow } from './criteria-contract-row.js';
+import type { CriteriaContractRow } from './criteria-contract-row';
 
 /** One line of the contract: a read, and the ids it answers, in order. */
 export interface CriteriaCase {

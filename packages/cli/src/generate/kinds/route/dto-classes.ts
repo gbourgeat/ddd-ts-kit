@@ -1,5 +1,5 @@
-import type { Endpoint } from './endpoint.js';
-import type { UseCase } from './use-case.js';
+import type { Endpoint } from './endpoint';
+import type { UseCase } from './use-case';
 
 const WITH_BODY = ['POST', 'PUT', 'PATCH'];
 

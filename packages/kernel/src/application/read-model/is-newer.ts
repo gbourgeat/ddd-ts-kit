@@ -1,4 +1,4 @@
-import type { EventStamp } from './event-stamp.js';
+import type { EventStamp } from './event-stamp';
 
 /** Whether a row holding `held` is changed by an event stamped `incoming`: only a later one does. */
 export function isNewer(incoming: EventStamp, held: EventStamp): boolean {

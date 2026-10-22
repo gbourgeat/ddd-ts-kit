@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { groupVars } from '../src/generate/kinds/route/group-vars.js';
-import { toName } from '../src/naming/index.js';
+import { groupVars } from '../src/generate/kinds/route/group-vars';
+import { toName } from '../src/naming';
 
 const PARENT = { className: 'AdminRoutes', specifier: '@/platform/http/admin-routes.route-group' };
 

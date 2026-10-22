@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { defineContextModule, fake } from '@ddd-ts-kit/di';
-import { Access, Authorizer, PolicyAccess } from '../src/index.js';
-import { AllowAll } from '../src/testing.js';
-import { docsPermissions } from './fixtures/docs/application/authorization/docs.permissions.js';
-import { ShareDocument } from './fixtures/docs/application/commands/share-document/share-document.command.js';
-import { DocumentRepository } from './fixtures/docs/domain/repositories/document.repository.js';
+import { Access, Authorizer, PolicyAccess } from '../src';
+import { AllowAll } from '../src/testing';
+import { docsPermissions } from './fixtures/docs/application/authorization/docs.permissions';
+import { ShareDocument } from './fixtures/docs/application/commands/share-document/share-document.command';
+import { DocumentRepository } from './fixtures/docs/domain/repositories/document.repository';
 
 const share = docsPermissions['document.share'];
 

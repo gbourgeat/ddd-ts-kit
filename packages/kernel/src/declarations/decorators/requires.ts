@@ -1,11 +1,11 @@
-import type { Actored } from '../../application/actor/actored.js';
-import type { Message } from '../../application/messaging/message.js';
-import type { PermissionRef } from '../model/permission-ref.js';
-import type { ResourcePointer } from '../model/resource-pointer.js';
-import { record } from '../registry/record.js';
-import { kindOf } from './kind-of.js';
-import type { MessageDeclarator } from './message-declarator.js';
-import type { PublicOptions } from './public.js';
+import type { Actored } from '../../application/actor/actored';
+import type { Message } from '../../application/messaging/message';
+import type { PermissionRef } from '../model/permission-ref';
+import type { ResourcePointer } from '../model/resource-pointer';
+import { record } from '../registry/record';
+import { kindOf } from './kind-of';
+import type { MessageDeclarator } from './message-declarator';
+import type { PublicOptions } from './public';
 
 export interface ProtectedOptions<M, Fields extends string = never> extends PublicOptions<Fields> {
   /** The element the message is about, when the right depends on it. */

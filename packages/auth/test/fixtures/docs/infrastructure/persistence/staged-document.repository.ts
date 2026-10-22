@@ -1,7 +1,7 @@
 import { ConflictError } from '@ddd-ts-kit/kernel';
-import type { Document } from '../../domain/document.js';
-import type { DocumentRepository } from '../../domain/repositories/document.repository.js';
-import type { StagingUnitOfWork } from './staging-unit-of-work.js';
+import type { Document } from '../../domain/document';
+import type { DocumentRepository } from '../../domain/repositories/document.repository';
+import type { StagingUnitOfWork } from './staging-unit-of-work';
 
 export class StagedDocumentRepository implements DocumentRepository {
   readonly documents = new Map<string, Document>();

@@ -1,5 +1,5 @@
-import { citationLine } from '../citations/citation-line.js';
-import type { CitationsAtRef } from '../citations/stale-names-at.js';
+import { citationLine } from '../citations/citation-line';
+import type { CitationsAtRef } from '../citations/stale-names-at';
 
 /** Past this many lines, the briefing points to the JSON: it stays under 300 words. */
 const MOST = 8;

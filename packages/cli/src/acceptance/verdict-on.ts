@@ -1,5 +1,5 @@
-import type { Judged } from './drift.js';
-import type { Verdict } from './verdict.js';
+import type { Judged } from './drift';
+import type { Verdict } from './verdict';
 
 /**
  * The verdict on that change of that version: a refusal wins over a judgement that let it through,

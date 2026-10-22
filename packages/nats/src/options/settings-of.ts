@@ -1,8 +1,8 @@
 import type { NatsConnection, NodeConnectionOptions } from '@nats-io/transport-node';
-import { DEFAULT_STREAM, DEFAULT_SUBJECT_PREFIX, type NatsEventBusOptions } from './nats-event-bus-options.js';
-import type { ReconnectOptions } from './reconnect-options.js';
-import type { RetryOptions } from './retry-options.js';
-import type { Settings } from './settings.js';
+import { DEFAULT_STREAM, DEFAULT_SUBJECT_PREFIX, type NatsEventBusOptions } from './nats-event-bus-options';
+import type { ReconnectOptions } from './reconnect-options';
+import type { RetryOptions } from './retry-options';
+import type { Settings } from './settings';
 
 export function settingsOf(
   options: NatsEventBusOptions,

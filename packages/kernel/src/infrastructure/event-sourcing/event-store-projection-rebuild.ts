@@ -1,9 +1,9 @@
-import type { StoredEvent } from '../../application/event-sourcing/stored-event.js';
-import type { EventStore } from '../../application/ports/event-store.js';
-import type { ReadModelStore } from '../../application/ports/read-model-store.js';
-import type { ReadModelTable } from '../../application/ports/read-model-table.js';
-import type { UnitOfWork } from '../../application/ports/unit-of-work.js';
-import { ShadowReadModelStore } from '../read-model/shadow-read-model-store.js';
+import type { StoredEvent } from '../../application/event-sourcing/stored-event';
+import type { EventStore } from '../../application/ports/event-store';
+import type { ReadModelStore } from '../../application/ports/read-model-store';
+import type { ReadModelTable } from '../../application/ports/read-model-table';
+import type { UnitOfWork } from '../../application/ports/unit-of-work';
+import { ShadowReadModelStore } from '../read-model/shadow-read-model-store';
 
 export interface EventStoreProjectionRebuildParts<Row> {
   readonly table: ReadModelTable<Row>;

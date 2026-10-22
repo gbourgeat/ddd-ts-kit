@@ -11,7 +11,7 @@ import {
   type StoredProcess,
   type UnitOfWork,
 } from '@ddd-ts-kit/kernel';
-import { NoTimeoutJobError } from './no-timeout-job-error.js';
+import { NoTimeoutJobError } from './no-timeout-job-error';
 
 export interface StoredProcessRunnerOptions {
   readonly store: ProcessStore;

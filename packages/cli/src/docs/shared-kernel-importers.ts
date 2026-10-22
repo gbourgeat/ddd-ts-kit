@@ -1,6 +1,6 @@
-import { aliasRoots, toAlias } from '../alias/index.js';
-import type { Config } from '../config/index.js';
-import type { Workspace } from '../workspace/index.js';
+import { aliasRoots, toAlias } from '../alias';
+import type { Config } from '../config';
+import type { Workspace } from '../workspace';
 
 /** The names of the contexts whose files import the shared kernel, by its alias, in the order given. */
 export function sharedKernelImporters(ws: Workspace, config: Config, contexts: readonly string[]): string[] {

@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
 import type { ExecutionScope } from '@ddd-ts-kit/kernel';
-import { tenantSchemaOf } from './tenant-schema-of.js';
+import { tenantSchemaOf } from './tenant-schema-of';
 
 /**
  * The `begin` of a unit of work under the schema-per-tenant strategy, for SQL that names its

@@ -1,7 +1,7 @@
-import { CONFIG_FILE, editConfigText, type Deviation } from '../../config/index.js';
-import type { Workspace } from '../../workspace/index.js';
-import type { Kind } from '../kind.js';
-import { writeAdr } from './write-adr.js';
+import { CONFIG_FILE, editConfigText, type Deviation } from '../../config';
+import type { Workspace } from '../../workspace';
+import type { Kind } from '../kind';
+import { writeAdr } from './write-adr';
 
 export const adrKind: Kind = {
   name: 'adr',

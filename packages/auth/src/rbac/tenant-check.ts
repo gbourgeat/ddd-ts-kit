@@ -1,6 +1,6 @@
 import { isSystem, isTenantId, isTenantMember } from '@ddd-ts-kit/kernel';
-import type { CheckRequest } from '../authorization/check-request.js';
-import type { Trace } from '../authorization/trace.js';
+import type { CheckRequest } from '../authorization/check-request';
+import type { Trace } from '../authorization/trace';
 
 /** The tenant a request targets, or `undefined` when it targets none. See `tenantOfContext`. */
 export type TenantOf = (request: CheckRequest) => string | undefined | Promise<string | undefined>;

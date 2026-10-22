@@ -9,7 +9,7 @@ import {
   type Session,
 } from '@ddd-ts-kit/kernel';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
-import { UnauthorizedError, defineRoute, executeRoute, type ErrorContext, type RawRequest } from '../src/index.js';
+import { UnauthorizedError, defineRoute, executeRoute, type ErrorContext, type RawRequest } from '../src';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: ['clerk'], attributes: {} };
 

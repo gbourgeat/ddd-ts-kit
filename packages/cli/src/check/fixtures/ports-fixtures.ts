@@ -1,12 +1,12 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { config } from './config.js';
-import { DECLARED } from './declared.js';
-import { declaredProject } from './declared-project.js';
-import type { Fixture } from './fixture.js';
-import { handler } from './handler.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { source } from './source.js';
+import { CONFIG_FILE } from '../../config';
+import { config } from './config';
+import { DECLARED } from './declared';
+import { declaredProject } from './declared-project';
+import type { Fixture } from './fixture';
+import { handler } from './handler';
+import { PATHS } from './paths';
+import { project } from './project';
+import { source } from './source';
 
 const { ADAPTER, COMMAND, HANDLER, MODULE, PAYMENT_ADAPTER, PORT, REPOSITORY_PORT } = PATHS;
 

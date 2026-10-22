@@ -7,14 +7,14 @@ import {
   type Lock,
   type TenantDirectory,
 } from '@ddd-ts-kit/kernel';
-import { JobLockUnavailableError } from './errors/job-lock-unavailable-error.js';
-import { JobTimeoutError } from './errors/job-timeout-error.js';
-import type { JobRecorder } from './job-recorder.js';
-import type { JobTimers } from './job-timers.js';
-import type { Occurrence } from './occurrence.js';
-import type { RegisteredJob } from './registered-job.js';
-import type { StartedRun } from './started-run.js';
-import { unlessAborted } from './unless-aborted.js';
+import { JobLockUnavailableError } from './errors/job-lock-unavailable-error';
+import { JobTimeoutError } from './errors/job-timeout-error';
+import type { JobRecorder } from './job-recorder';
+import type { JobTimers } from './job-timers';
+import type { Occurrence } from './occurrence';
+import type { RegisteredJob } from './registered-job';
+import type { StartedRun } from './started-run';
+import { unlessAborted } from './unless-aborted';
 
 export interface RunnerOptions {
   readonly clock: Clock;

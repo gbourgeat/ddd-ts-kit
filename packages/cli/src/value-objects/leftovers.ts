@@ -1,4 +1,4 @@
-import { scan } from '../check/scan/scan.js';
+import { scan } from '../check/scan/scan';
 
 const STILL_A_RESULT = /(?<![\w$.])unwrap\s*\(|\bok:\s*(?:true|false)\b|\.ok\b|(?<![\w$.])(?:err|ok)\s*\(/g;
 

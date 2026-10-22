@@ -1,5 +1,5 @@
-import { mergeImports } from '../markers/merge-imports.js';
-import type { ConflictBlock } from './conflict-blocks.js';
+import { mergeImports } from '../markers/merge-imports';
+import type { ConflictBlock } from './conflict-blocks';
 
 /** A whole import statement on one line, or a blank line: what the imports region merges by statement. */
 const ONE_LINE_IMPORT = /^\s*(?:import\s.+;\s*)?$/;

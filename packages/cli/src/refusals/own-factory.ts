@@ -1,7 +1,7 @@
-import { scan } from '../check/scan/scan.js';
-import { callArguments } from '../check/text/call-arguments.js';
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
-import type { ConceptFactory } from './concept-error-class.js';
+import { scan } from '../check/scan/scan';
+import { callArguments } from '../check/text/call-arguments';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
+import type { ConceptFactory } from './concept-error-class';
 
 const REFUSAL_CALL = /(?<![\w$])([A-Za-z_$][\w$]*)(\s*\.\s*refusal\s*\()/;
 

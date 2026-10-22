@@ -1,5 +1,5 @@
-import type { DependencyTokens } from './dependency-tokens.js';
-import type { MatchingDependencies } from './matching-dependencies.js';
+import type { DependencyTokens } from './dependency-tokens';
+import type { MatchingDependencies } from './matching-dependencies';
 
 /**
  * The token list of a constructor as a rest parameter, which may only be left out when the

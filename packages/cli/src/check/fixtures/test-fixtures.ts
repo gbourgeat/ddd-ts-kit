@@ -1,10 +1,10 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { aggregate } from './aggregate.js';
-import { config } from './config.js';
-import type { Fixture } from './fixture.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { SAMPLES } from './samples.js';
+import { CONFIG_FILE } from '../../config';
+import { aggregate } from './aggregate';
+import { config } from './config';
+import type { Fixture } from './fixture';
+import { PATHS } from './paths';
+import { project } from './project';
+import { SAMPLES } from './samples';
 
 const { AGGREGATE, AGGREGATE_SPEC, BILLING, BUILDER, CATALOG, HANDLER, HANDLER_SPEC } = PATHS;
 const WORLD = `${BILLING}/test/worlds/billing.world.ts`;

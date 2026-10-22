@@ -1,5 +1,5 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import { sessionOf } from './session-of.js';
+import { sessionOf } from './session-of';
 
 /**
  * The actor a boundary received, anonymous when there is none. Takes the principal (a session

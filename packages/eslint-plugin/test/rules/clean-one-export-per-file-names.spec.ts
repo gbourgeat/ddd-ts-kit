@@ -1,5 +1,5 @@
-import { cleanOneExportPerFile } from '../../src/rules/clean-one-export-per-file.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+import { cleanOneExportPerFile } from '../../src/rules/clean-one-export-per-file';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const TWO =
   'export function loggerOr(given?: Logger): Logger { return given ?? fallback(); }\nexport function clockOr(given?: Clock): Clock { return given ?? fallback(); }';

@@ -14,8 +14,8 @@ import {
   type Application,
   type BindingAspect,
 } from '@ddd-ts-kit/di';
-import { resetTracingConfiguration, traceApplication } from '../src/index.js';
-import { expectSpanTree, installTestTracing, type ExpectedSpan, type TestTracing } from '../src/testing.js';
+import { resetTracingConfiguration, traceApplication } from '../src';
+import { expectSpanTree, installTestTracing, type ExpectedSpan, type TestTracing } from '../src/testing';
 
 class Parcel extends AggregateRoot {
   static sent(id: string): Parcel {

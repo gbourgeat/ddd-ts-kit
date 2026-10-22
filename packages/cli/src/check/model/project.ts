@@ -1,6 +1,6 @@
-import type { Config, Severity } from '../../config/index.js';
-import type { Location } from './location.js';
-import type { SourceFile } from './source-file.js';
+import type { Config, Severity } from '../../config';
+import type { Location } from './location';
+import type { SourceFile } from './source-file';
 
 export interface Project {
   readonly root: string;

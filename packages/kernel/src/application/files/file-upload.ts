@@ -1,5 +1,5 @@
-import type { ReceivedFile } from './received-file.js';
-import type { StoredFile } from './stored-file.js';
+import type { ReceivedFile } from './received-file';
+import type { StoredFile } from './stored-file';
 
 /**
  * A file a command carries. The controller hands over the `ReceivedFile`, still streaming, and

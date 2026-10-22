@@ -1,5 +1,5 @@
 import type { AuditRecord } from '@ddd-ts-kit/kernel';
-import { inTenant } from './in-tenant.js';
+import { inTenant } from './in-tenant';
 
 export function fullRecord(id: string): AuditRecord {
   return {

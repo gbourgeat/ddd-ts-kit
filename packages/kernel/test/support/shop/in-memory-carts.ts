@@ -1,5 +1,5 @@
-import type { Repository } from '../../../src/index.js';
-import { Cart } from './cart.js';
+import type { Repository } from '../../../src';
+import { Cart } from './cart';
 
 /** A repository adapter as the kit asks for it: it persists, and knows nothing of events. */
 export class InMemoryCarts implements Repository<Cart> {

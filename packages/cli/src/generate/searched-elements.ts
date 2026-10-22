@@ -1,4 +1,4 @@
-import { plural, singular, toName, type Name } from '../naming/index.js';
+import { plural, singular, toName, type Name } from '../naming';
 
 /** What one line and the lines of a search are named in the generated code. */
 export interface SearchedElements {

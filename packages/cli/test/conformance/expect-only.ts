@@ -1,6 +1,6 @@
 import { expect } from 'vitest';
-import type { Finding } from './finding.js';
-import type { Injection } from './injection.js';
+import type { Finding } from './finding';
+import type { Injection } from './injection';
 
 type Tool = 'checker' | 'eslint';
 

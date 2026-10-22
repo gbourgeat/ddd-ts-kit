@@ -1,3 +1,3 @@
-import type { ExecuteOptions } from '../pipeline/execute-options.js';
+import type { ExecuteOptions } from '../pipeline/execute-options';
 
 export type FastifyMountOptions = ExecuteOptions;

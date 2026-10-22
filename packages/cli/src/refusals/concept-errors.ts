@@ -1,8 +1,8 @@
-import type { Config } from '../config/index.js';
-import { roleFilesOf, treeOf } from '../model-modules/index.js';
-import type { Workspace } from '../workspace/index.js';
-import type { ConceptErrorClass } from './concept-error-class.js';
-import { readConceptError } from './read-concept-error.js';
+import type { Config } from '../config';
+import { roleFilesOf, treeOf } from '../model-modules';
+import type { Workspace } from '../workspace';
+import type { ConceptErrorClass } from './concept-error-class';
+import { readConceptError } from './read-concept-error';
 
 /** Every error class per concept of the `domain/errors/` of every context and of its modules, in the order of their files. */
 export function conceptErrors(ws: Workspace, config: Config): ConceptErrorClass[] {

@@ -1,5 +1,5 @@
-import type { Config } from '../../config/index.js';
-import type { StackOptions } from './stack-options.js';
+import type { Config } from '../../config';
+import type { StackOptions } from './stack-options';
 
 /** `init` offers two ways of publishing events: a third one written by hand in the config is kept as it is. */
 const OFFERED_EVENTS = ['in-memory', 'outbox'];

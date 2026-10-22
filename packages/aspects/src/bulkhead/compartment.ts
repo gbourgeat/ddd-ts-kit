@@ -1,5 +1,5 @@
-import { BulkheadFullError } from '../errors/bulkhead-full-error.js';
-import type { BulkheadOptions } from './bulkhead-options.js';
+import { BulkheadFullError } from '../errors/bulkhead-full-error';
+import type { BulkheadOptions } from './bulkhead-options';
 
 /** The calls one bulkhead lets run at once, and those that wait for a place. */
 export class Compartment {

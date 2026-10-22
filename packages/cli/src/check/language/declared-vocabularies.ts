@@ -1,7 +1,7 @@
-import { permissionSets } from '../authz/permission-sets.js';
-import type { SourceFile } from '../model/source-file.js';
-import { matchingBracket } from '../text/matching-bracket.js';
-import type { DeclaredValue } from './declared-value.js';
+import { permissionSets } from '../authz/permission-sets';
+import type { SourceFile } from '../model/source-file';
+import { matchingBracket } from '../text/matching-bracket';
+import type { DeclaredValue } from './declared-value';
 
 const AS_CONST = /export\s+const\s+([A-Z][\w$]*)\s*=\s*\{/g;
 const CONST_ASSERTION = /^\s*as\s+const\b/;

@@ -1,8 +1,8 @@
 import type { AuditTrail } from '@ddd-ts-kit/kernel';
-import type { AllowedReads } from './allowed-reads.js';
-import { auditRecordOf } from './audit-record-of.js';
-import type { AuditSource } from './audit-source.js';
-import type { AuthorizationDecision } from './authorization-decision.js';
+import type { AllowedReads } from './allowed-reads';
+import { auditRecordOf } from './audit-record-of';
+import type { AuditSource } from './audit-source';
+import type { AuthorizationDecision } from './authorization-decision';
 
 export interface AuditDecisionsOptions extends AuditSource {
   /** Says that a decision concerns a read. Default: its `kind` is `query`, as the bus that carried it says. */

@@ -1,5 +1,5 @@
 import type { Knex } from 'knex';
-import type { KnexContext } from '../unit-of-work/knex-context.js';
+import type { KnexContext } from '../unit-of-work/knex-context';
 
 /**
  * The rows of a query, as a table to select from: a measure grouped by the query, then filtered,

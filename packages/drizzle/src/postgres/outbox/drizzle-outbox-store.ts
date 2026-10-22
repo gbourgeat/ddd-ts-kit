@@ -2,8 +2,8 @@ import { and, eq, inArray, lt, lte, ne, sql, type TablesRelationalConfig } from 
 import type { PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import type { OutboxRecord, OutboxStats, OutboxStore } from '@ddd-ts-kit/events';
-import type { DrizzleContext } from '../unit-of-work/drizzle-context.js';
-import { outboxTable, type OutboxTable } from './outbox-table.js';
+import type { DrizzleContext } from '../unit-of-work/drizzle-context';
+import { outboxTable, type OutboxTable } from './outbox-table';
 
 export interface DrizzleOutboxStoreOptions {
   /** Default `outboxTable()`, in the `public` schema. `tenantOutboxTable()` keeps the tenant of each event. */

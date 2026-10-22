@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { higherVersion } from '../src/merge/higher-version.js';
+import { higherVersion } from '../src/merge/higher-version';
 
 describe('the higher of two versions', () => {
   it.each([

@@ -1,4 +1,4 @@
-import { runGit } from '../commit/run-git.js';
+import { runGit } from '../commit/run-git';
 
 /**
  * What limits a judgement made at a ref: a shallow history, where a removed name looks planned,

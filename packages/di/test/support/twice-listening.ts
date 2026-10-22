@@ -1,7 +1,7 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { defineContextModule, type ContextModule } from '../../src/index.js';
-import { OrderPlaced, type OrderPlacedPayload } from './ordering/published-language/order-placed.js';
+import { defineContextModule, type ContextModule } from '../../src';
+import { OrderPlaced, type OrderPlacedPayload } from './ordering/published-language/order-placed';
 
 /**
  * A context that listens to placed orders twice: through a class that declares itself and

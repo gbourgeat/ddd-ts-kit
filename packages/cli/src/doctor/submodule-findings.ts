@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { runGit } from '../commit/run-git.js';
-import type { DoctorFinding } from './doctor-finding.js';
+import { runGit } from '../commit/run-git';
+import type { DoctorFinding } from './doctor-finding';
 
 /** A line of `git submodule status` for a submodule not initialised: `-<commit> <path>`. */
 const NOT_INITIALISED = /^-(\S+) (.+?)(?: \(.*\))?$/;

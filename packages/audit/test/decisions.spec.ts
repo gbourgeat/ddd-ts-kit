@@ -9,13 +9,13 @@ import {
   type OnDecision,
 } from '@ddd-ts-kit/auth';
 import { AllowAll, DenyAll } from '@ddd-ts-kit/auth/testing';
-import { InMemoryAuditTrail, auditDecisions, verifyChain, type AuditDecisionsOptions } from '../src/index.js';
-import { NOW, aSource, ada, requestOf, support } from './support/fixtures.js';
-import { CancelAppointmentCommand } from './support/scheduling/application/commands/cancel-appointment.command.js';
-import { SaveSearchQuery } from './support/scheduling/application/commands/save-search-query.command.js';
-import { SearchAppointmentsQuery } from './support/scheduling/application/queries/search-appointments.query.js';
-import { ReadMedicalFileQuery } from './support/scheduling/application/queries/read-medical-file.query.js';
-import { UpcomingAppointments } from './support/scheduling/application/queries/upcoming-appointments.query.js';
+import { InMemoryAuditTrail, auditDecisions, verifyChain, type AuditDecisionsOptions } from '../src';
+import { NOW, aSource, ada, requestOf, support } from './support/fixtures';
+import { CancelAppointmentCommand } from './support/scheduling/application/commands/cancel-appointment.command';
+import { SaveSearchQuery } from './support/scheduling/application/commands/save-search-query.command';
+import { SearchAppointmentsQuery } from './support/scheduling/application/queries/search-appointments.query';
+import { ReadMedicalFileQuery } from './support/scheduling/application/queries/read-medical-file.query';
+import { UpcomingAppointments } from './support/scheduling/application/queries/upcoming-appointments.query';
 
 const permissions = definePermissions('scheduling', {
   'appointment.cancel': { description: 'Cancel an appointment' },

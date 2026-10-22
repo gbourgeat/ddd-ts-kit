@@ -1,8 +1,8 @@
-import { CliError } from '../cli-error.js';
-import { formatStoryClosing } from '../story/format-story-closing.js';
-import { readStoryClosing } from '../story/read-story-closing.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
+import { CliError } from '../cli-error';
+import { formatStoryClosing } from '../story/format-story-closing';
+import { readStoryClosing } from '../story/read-story-closing';
+import { Arguments } from './arguments';
+import type { Command } from './command';
 
 /**
  * Says whether a story or a milestone can close: every row of it done in the slices file, no

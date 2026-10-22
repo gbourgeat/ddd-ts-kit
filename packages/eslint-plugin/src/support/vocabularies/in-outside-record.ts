@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../../project/linted-file.js';
-import { ancestors } from '../ancestors.js';
-import { isOutsidePlace } from './is-outside-place.js';
+import type { LintedFile } from '../../project/linted-file';
+import { ancestors } from '../ancestors';
+import { isOutsidePlace } from './is-outside-place';
 
 /**
  * Whether a literal is a type of an interface or a type alias of `infrastructure/anti-corruption/`

@@ -1,5 +1,5 @@
 import type { Knex } from 'knex';
-import type { SqlDialect } from './sql-dialect.js';
+import type { SqlDialect } from './sql-dialect';
 
 export function dialectOf(knex: Knex): SqlDialect {
   // `client.dialect` is the name knex itself gives the dialect, whatever driver is behind it.

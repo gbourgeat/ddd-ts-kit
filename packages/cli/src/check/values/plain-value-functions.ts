@@ -1,11 +1,11 @@
-import type { Finding } from '../model/finding.js';
-import type { SourceFile } from '../model/source-file.js';
-import { answeredLiterals } from './answered-literals.js';
-import { exportedFunctionBody } from './exported-function-body.js';
-import { exportedValues } from './exported-values.js';
-import { generateHint } from './generate-hint.js';
-import { returnsPackageType } from './returns-package-type.js';
-import { standsForAValue } from './stands-for-a-value.js';
+import type { Finding } from '../model/finding';
+import type { SourceFile } from '../model/source-file';
+import { answeredLiterals } from './answered-literals';
+import { exportedFunctionBody } from './exported-function-body';
+import { exportedValues } from './exported-values';
+import { generateHint } from './generate-hint';
+import { returnsPackageType } from './returns-package-type';
+import { standsForAValue } from './stands-for-a-value';
 
 /**
  * The exported functions of a file of the model that answer a record of data: a value of the

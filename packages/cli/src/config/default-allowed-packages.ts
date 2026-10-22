@@ -1,6 +1,6 @@
-import type { Config } from './config.js';
-import { isOneOf } from './is-one-of.js';
-import { VALIDATION_STACKS, type ValidationStack } from './stack.js';
+import type { Config } from './config';
+import { isOneOf } from './is-one-of';
+import { VALIDATION_STACKS, type ValidationStack } from './stack';
 
 /**
  * An integration event is declared with a payload schema, so a published language needs

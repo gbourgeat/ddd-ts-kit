@@ -1,4 +1,4 @@
-import type { SubjectKey } from '../event-sourcing/subject-key.js';
+import type { SubjectKey } from '../event-sourcing/subject-key';
 
 /**
  * The keys personal data is sealed with, one per data subject (crypto-shredding). Erasing a

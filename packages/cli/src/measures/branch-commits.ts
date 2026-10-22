@@ -1,5 +1,5 @@
-import type { BranchCommit } from './branch-commit.js';
-import type { Repository } from './repository.js';
+import type { BranchCommit } from './branch-commit';
+import type { Repository } from './repository';
 
 const FORMAT = '--format=%x1e%H%x1f%P%x1f%cI%x1f%an%x1f%s%x1f%(trailers:key=Slice,valueonly,separator=%x2C)';
 

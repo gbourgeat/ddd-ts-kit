@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
-import type { Io } from '../commands/io.js';
-import { findProjectFormatter } from './find-project-formatter.js';
-import type { WrittenMigration } from './written-migration.js';
+import type { Io } from '../commands/io';
+import { findProjectFormatter } from './find-project-formatter';
+import type { WrittenMigration } from './written-migration';
 
 /** Enough of a failing formatter to read the cause. */
 const TAIL_LINES = 20;

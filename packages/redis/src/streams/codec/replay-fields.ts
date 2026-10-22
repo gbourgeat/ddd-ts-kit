@@ -1,4 +1,4 @@
-import type { Entry } from './entry.js';
+import type { Entry } from './entry';
 import {
   ATTEMPT_FIELD,
   CONSUMER_FIELD,
@@ -6,7 +6,7 @@ import {
   ENTRY_ID_FIELD,
   ERROR_CODE_FIELD,
   REPLAY_FOR_FIELD,
-} from './entry-fields.js';
+} from './entry-fields';
 
 const DEAD_LETTER_FIELDS: ReadonlySet<string> = new Set([
   ERROR_CODE_FIELD,

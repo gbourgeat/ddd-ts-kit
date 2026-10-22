@@ -1,7 +1,7 @@
 import { cacheKey, type Cache, type CacheKey } from '@ddd-ts-kit/kernel';
-import type { Awaitable } from './awaitable.js';
-import type { ContractRunner } from './contract-runner.js';
-import { ContractSuite } from './contract-suite.js';
+import type { Awaitable } from './awaitable';
+import type { ContractRunner } from './contract-runner';
+import { ContractSuite } from './contract-suite';
 
 export interface CacheContractOptions {
   readonly name: string;

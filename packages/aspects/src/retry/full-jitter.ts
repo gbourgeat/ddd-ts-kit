@@ -1,4 +1,4 @@
-import type { Jitter } from './jitter.js';
+import type { Jitter } from './jitter';
 
 /**
  * A delay anywhere between zero and the computed one, so that callers failing together do not

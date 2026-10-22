@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { parseArgs, type ParseArgsConfig } from 'node:util';
-import { CliError } from '../cli-error.js';
-import { findRoot } from './find-root.js';
+import { CliError } from '../cli-error';
+import { findRoot } from './find-root';
 
 type Options = NonNullable<ParseArgsConfig['options']>;
 

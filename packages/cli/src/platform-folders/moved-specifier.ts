@@ -1,5 +1,5 @@
 import path from 'node:path';
-import type { AliasRoot } from '../alias/index.js';
+import type { AliasRoot } from '../alias';
 
 const SUFFIX = /\.(?:js|ts)$/;
 

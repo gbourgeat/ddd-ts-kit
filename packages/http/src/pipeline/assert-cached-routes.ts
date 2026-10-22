@@ -1,13 +1,13 @@
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
-import type { CachePolicy } from '../cache/cache-policy.js';
-import { CacheScope } from '../cache/cache-scope.js';
-import { CacheTagHeader } from '../cache/cache-tag-header.js';
-import { varyOf } from '../cache/vary-of.js';
-import { fieldAccess } from '../field-access/field-access.js';
-import { answersWithSchema } from '../route/answers-with-schema.js';
-import type { ResponseSpec } from '../route/response-spec.js';
-import type { Route } from '../route/route.js';
-import type { ExecuteOptions } from './execute-options.js';
+import type { CachePolicy } from '../cache/cache-policy';
+import { CacheScope } from '../cache/cache-scope';
+import { CacheTagHeader } from '../cache/cache-tag-header';
+import { varyOf } from '../cache/vary-of';
+import { fieldAccess } from '../field-access/field-access';
+import { answersWithSchema } from '../route/answers-with-schema';
+import type { ResponseSpec } from '../route/response-spec';
+import type { Route } from '../route/route';
+import type { ExecuteOptions } from './execute-options';
 
 // The request headers that say who calls: an answer that varies on one is never handed to another caller.
 const ACTOR_HEADERS: readonly string[] = ['authorization', 'cookie'];

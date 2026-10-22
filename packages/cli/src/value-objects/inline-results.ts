@@ -1,11 +1,11 @@
-import { scan } from '../check/scan/scan.js';
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
-import { isAssertedUse } from './is-asserted-use.js';
-import { isConvertedCall } from './is-converted-call.js';
-import { applyEdits } from './apply-edits.js';
-import type { Edit } from './edit.js';
-import type { ResultMethods } from './result-methods.js';
-import { statementEnd } from './statement-end.js';
+import { scan } from '../check/scan/scan';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
+import { isAssertedUse } from './is-asserted-use';
+import { isConvertedCall } from './is-converted-call';
+import { applyEdits } from './apply-edits';
+import type { Edit } from './edit';
+import type { ResultMethods } from './result-methods';
+import { statementEnd } from './statement-end';
 
 const DECLARATION = /(?<=^|\n)([ \t]*)const\s+([A-Za-z_$][\w$]*)\s*=\s*/g;
 

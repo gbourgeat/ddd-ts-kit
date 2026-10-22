@@ -1,6 +1,6 @@
-import type { WorkspaceReport } from '../workspace/index.js';
-import type { Arguments } from './arguments.js';
-import type { Io } from './io.js';
+import type { WorkspaceReport } from '../workspace';
+import type { Arguments } from './arguments';
+import type { Io } from './io';
 
 /** Prints what a command wrote (or would write), then where the next human decisions are. */
 export function printReport(io: Io, args: Arguments, report: WorkspaceReport): void {

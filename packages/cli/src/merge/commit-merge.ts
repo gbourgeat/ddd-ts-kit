@@ -1,10 +1,10 @@
-import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file.js';
-import { ADR_DIRECTORY } from '../check/governance/adr-directory.js';
-import { runGit } from '../commit/run-git.js';
-import { isDerived } from '../derived/is-derived.js';
-import { SLICES_FILE } from '../progress/read-slices.js';
-import { gitProcess } from './git-process.js';
-import type { MergeRepository } from './lost/merge-repository.js';
+import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file';
+import { ADR_DIRECTORY } from '../check/governance/adr-directory';
+import { runGit } from '../commit/run-git';
+import { isDerived } from '../derived/is-derived';
+import { SLICES_FILE } from '../progress/read-slices';
+import { gitProcess } from './git-process';
+import type { MergeRepository } from './lost/merge-repository';
 
 const LOCKFILES = new Set(['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lock']);
 

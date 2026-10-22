@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CONFIG_FILE } from '../config/config-file.js';
-import { parseConfig } from '../config/parse-config.js';
+import { CONFIG_FILE } from '../config/config-file';
+import { parseConfig } from '../config/parse-config';
 
 /** What `openapi.format` of the config says, for the scripts that write the contracts: `yaml` or `json`. */
 export function contractFormat(root = process.cwd()): 'yaml' | 'json' {

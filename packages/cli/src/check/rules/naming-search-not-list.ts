@@ -1,12 +1,12 @@
-import type { ContextLocation } from '../model/context-location.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { bodilessMembers } from '../ports/bodiless-members.js';
-import type { ClassShape } from '../structure/class-shape.js';
-import { inContext } from '../support/in-context.js';
-import { isPortFile } from '../support/is-port-file.js';
-import { perFile } from '../support/per-file.js';
+import type { ContextLocation } from '../model/context-location';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { bodilessMembers } from '../ports/bodiless-members';
+import type { ClassShape } from '../structure/class-shape';
+import { inContext } from '../support/in-context';
+import { isPortFile } from '../support/is-port-file';
+import { perFile } from '../support/per-file';
 
 const LIST_METHOD = /^list(?=[A-Z]|$)/;
 const LIST_CLASS = /^List(?=[A-Z]|$)/;

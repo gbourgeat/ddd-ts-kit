@@ -9,9 +9,9 @@ import {
   PersonalDataCipher,
   personalData,
   type SnapshotPolicy,
-} from '../src/index.js';
-import { Account, type AccountEvent, type AccountState } from './support/bank/account.js';
-import { accountEvents } from './support/bank/account-events.js';
+} from '../src';
+import { Account, type AccountEvent, type AccountState } from './support/bank/account';
+import { accountEvents } from './support/bank/account-events';
 
 const cipher = new PersonalDataCipher(new InMemorySubjectKeyStore());
 

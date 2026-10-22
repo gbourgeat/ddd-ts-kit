@@ -16,7 +16,7 @@ import {
   tenantCacheTags,
   type CachePurger,
   type IntegrationEvent,
-} from '../src/index.js';
+} from '../src';
 
 const now = new Date('2026-03-02T09:00:00.000Z');
 

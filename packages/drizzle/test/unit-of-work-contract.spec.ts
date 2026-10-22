@@ -1,8 +1,8 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { unitOfWorkContract } from '@ddd-ts-kit/testing/contracts';
-import { DrizzleOutboxStore, createDrizzleUnitOfWork, outboxTable } from '../src/postgres.js';
-import { createDatabase } from './support/database.js';
+import { DrizzleOutboxStore, createDrizzleUnitOfWork, outboxTable } from '../src/postgres';
+import { createDatabase } from './support/database';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const outbox = outboxTable();

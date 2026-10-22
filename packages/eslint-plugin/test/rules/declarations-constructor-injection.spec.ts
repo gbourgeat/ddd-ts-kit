@@ -1,6 +1,6 @@
-import { declarationsConstructorInjection } from '../../src/rules/declarations-constructor-injection.js';
-import { DECLARED, EXPLICIT, HANDLER, JOB, REPOSITORY, SPEC, declaring } from '../support/declared-style.js';
-import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { declarationsConstructorInjection } from '../../src/rules/declarations-constructor-injection';
+import { DECLARED, EXPLICIT, HANDLER, JOB, REPOSITORY, SPEC, declaring } from '../support/declared-style';
+import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const SIGNATURE = { ...SAMPLE_CONFIG, stack: { style: 'declared', assembly: 'barrel', dependencies: 'signature' } };
 const MAPPER = `${BILLING}/infrastructure/persistence/invoice.mapper.ts`;

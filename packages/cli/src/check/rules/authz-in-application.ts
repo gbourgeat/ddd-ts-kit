@@ -1,11 +1,11 @@
-import { DECLARATIONS_ENTRY } from '../declarations/declarations-entry.js';
-import type { Finding } from '../model/finding.js';
-import type { Layer } from '../model/layer.js';
-import type { ResolvedImport } from '../model/resolved-import.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inLayer } from '../support/in-layer.js';
-import { perFile } from '../support/per-file.js';
+import { DECLARATIONS_ENTRY } from '../declarations/declarations-entry';
+import type { Finding } from '../model/finding';
+import type { Layer } from '../model/layer';
+import type { ResolvedImport } from '../model/resolved-import';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { inLayer } from '../support/in-layer';
+import { perFile } from '../support/per-file';
 
 interface Shortcut {
   readonly pattern: RegExp;

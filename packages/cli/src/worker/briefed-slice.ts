@@ -1,5 +1,5 @@
-import type { DesignDocument } from '../citations/design-of.js';
-import type { Slice } from '../progress/slice.js';
+import type { DesignDocument } from '../citations/design-of';
+import type { Slice } from '../progress/slice';
 
 /** A row of the slices table as a worker is briefed on it: with the rules written for it under the tables. */
 export interface BriefedSlice extends Slice {

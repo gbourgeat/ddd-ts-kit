@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { runCheck } from '../src/check/engine/run-check.js';
-import { loadProject } from '../src/check/project/load-project.js';
-import { parseConfig, serializeConfig } from '../src/config/index.js';
-import { projectWith, reported } from './rules-support.js';
+import { runCheck } from '../src/check/engine/run-check';
+import { loadProject } from '../src/check/project/load-project';
+import { parseConfig, serializeConfig } from '../src/config';
+import { projectWith, reported } from './rules-support';
 
 const BILLING = 'src/contexts/billing';
 const SHIPPING = 'src/contexts/shipping';

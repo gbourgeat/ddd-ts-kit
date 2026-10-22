@@ -1,4 +1,4 @@
-import type { AliasRoot, BuildLayout } from '../alias/index.js';
+import type { AliasRoot, BuildLayout } from '../alias';
 
 /** Where the compiler wrote, and what it wrote there. */
 export interface EmittedPlace {

@@ -1,6 +1,6 @@
-import type { Name } from '../../naming/index.js';
-import type { Output } from '../emit.js';
-import type { Scope } from '../scope.js';
+import type { Name } from '../../naming';
+import type { Output } from '../emit';
+import type { Scope } from '../scope';
 
 /** The files of a command, relative to its context. */
 export function commandOutputs(scope: Scope, name: Name): Output[] {

@@ -1,4 +1,4 @@
-import type { PolicyInput } from './policy-input.js';
+import type { PolicyInput } from './policy-input';
 
 export type Condition = (input: PolicyInput) => boolean;
 

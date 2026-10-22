@@ -1,7 +1,7 @@
-import { CliError } from '../../../cli-error.js';
-import type { Name } from '../../../naming/index.js';
-import { filesUnder } from '../../files-under.js';
-import type { Scope } from '../../scope.js';
+import { CliError } from '../../../cli-error';
+import type { Name } from '../../../naming';
+import { filesUnder } from '../../files-under';
+import type { Scope } from '../../scope';
 
 /** A controller of the context, found by its use case, with its source as it stands. */
 export interface FoundController {

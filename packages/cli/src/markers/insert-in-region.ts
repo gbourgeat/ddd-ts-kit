@@ -1,6 +1,6 @@
-import { fitBlock } from '../layout/index.js';
-import { marker } from './marker.js';
-import { mergeImports } from './merge-imports.js';
+import { fitBlock } from '../layout';
+import { marker } from './marker';
+import { mergeImports } from './merge-imports';
 
 /** Regions made of independent lines (imports): each line is added unless already there. */
 const LINEWISE = new Set(['imports']);

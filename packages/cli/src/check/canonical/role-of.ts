@@ -1,6 +1,6 @@
-import { matchesDirectory } from './matches-directory.js';
-import type { Role } from './role.js';
-import { ROLES } from './roles.js';
+import { matchesDirectory } from './matches-directory';
+import type { Role } from './role';
+import { ROLES } from './roles';
 
 /** The role of a directory given relative to its context, if it is a role directory. */
 export function roleOf(directory: string): Role | undefined {

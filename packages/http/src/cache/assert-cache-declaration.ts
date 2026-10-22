@@ -1,9 +1,9 @@
 import type { DurationText } from '@ddd-ts-kit/kernel';
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
-import type { CacheDeclaration } from './cache-declaration.js';
-import type { CachePolicy } from './cache-policy.js';
-import { CacheScope } from './cache-scope.js';
-import { cacheSeconds } from './cache-seconds.js';
+import type { CacheDeclaration } from './cache-declaration';
+import type { CachePolicy } from './cache-policy';
+import { CacheScope } from './cache-scope';
+import { cacheSeconds } from './cache-seconds';
 
 const READS: readonly string[] = ['GET', 'HEAD'];
 

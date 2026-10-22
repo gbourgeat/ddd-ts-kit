@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FixedClock, SequentialIdGenerator, anonymousActor, executionContext, type Actor } from '@ddd-ts-kit/kernel';
-import { InMemoryAuditTrail, auditGuardRefusals } from '../src/index.js';
+import { InMemoryAuditTrail, auditGuardRefusals } from '../src';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: [], attributes: {} };
 

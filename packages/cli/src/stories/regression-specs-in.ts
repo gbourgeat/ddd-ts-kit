@@ -1,4 +1,4 @@
-import { sectionOf } from './section-of.js';
+import { sectionOf } from './section-of';
 
 /** One item of `## Regression`: `- test/unit/order.aggregate.spec.ts`, with or without backticks. */
 const ITEM = /^\s*[-*]\s+`?([^`\s]+)`?/;

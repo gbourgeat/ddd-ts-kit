@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { forYouEntry } from '../src/merge/for-you-entry.js';
-import { formatMergeReport } from '../src/merge/format-merge-report.js';
-import type { MergeReport } from '../src/merge/merge-report.js';
-import { migrationsAt } from '../src/merge/migrations-at.js';
-import { NEXT_STEPS } from '../src/merge/next-steps.js';
-import { read } from './helpers.js';
-import { commitFiles, mergeTrunk, onBranch, trunkRepository } from './support/trunk-history.js';
+import { forYouEntry } from '../src/merge/for-you-entry';
+import { formatMergeReport } from '../src/merge/format-merge-report';
+import type { MergeReport } from '../src/merge/merge-report';
+import { migrationsAt } from '../src/merge/migrations-at';
+import { NEXT_STEPS } from '../src/merge/next-steps';
+import { read } from './helpers';
+import { commitFiles, mergeTrunk, onBranch, trunkRepository } from './support/trunk-history';
 
 const TRUNK = 'a'.repeat(40);
 const BASE = 'b'.repeat(40);

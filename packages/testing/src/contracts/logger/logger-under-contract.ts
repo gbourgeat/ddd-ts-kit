@@ -1,6 +1,6 @@
 import type { Logger } from '@ddd-ts-kit/kernel';
-import type { Awaitable } from '../awaitable.js';
-import type { LoggedLine } from './logged-line.js';
+import type { Awaitable } from '../awaitable';
+import type { LoggedLine } from './logged-line';
 
 export interface LoggerUnderContract {
   readonly logger: Logger;

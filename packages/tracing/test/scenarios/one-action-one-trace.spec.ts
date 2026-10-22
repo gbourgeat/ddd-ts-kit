@@ -1,14 +1,14 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { resetTracingConfiguration } from '../../src/index.js';
+import { resetTracingConfiguration } from '../../src';
 import {
   expectSpanTree,
   installTestTracing,
   type ExpectedSpan,
   type SpanNode,
   type TestTracing,
-} from '../../src/testing.js';
-import { aClinic } from '../support/clinic/a-clinic.js';
-import { bookingTree, confirmationTree, recordingTree } from '../support/clinic/trees.js';
+} from '../../src/testing';
+import { aClinic } from '../support/clinic/a-clinic';
+import { bookingTree, confirmationTree, recordingTree } from '../support/clinic/trees';
 
 let tracing: TestTracing;
 

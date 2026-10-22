@@ -1,5 +1,5 @@
-import type { Flaw } from '../model/flaw.js';
-import type { ClassShape } from '../structure/class-shape.js';
+import type { Flaw } from '../model/flaw';
+import type { ClassShape } from '../structure/class-shape';
 
 /** What is wrong with the way `adapter` stands for `port`: it has to implement it, and never extend it. */
 export function portMisuse(adapter: ClassShape, port: string): Flaw | undefined {

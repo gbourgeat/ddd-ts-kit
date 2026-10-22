@@ -1,4 +1,4 @@
-import { DomainError } from './domain-error.js';
+import { DomainError } from './domain-error';
 
 /** The code of a write refused because the version the caller read is no longer the current one. */
 export const PRECONDITION_FAILED = 'PRECONDITION_FAILED';

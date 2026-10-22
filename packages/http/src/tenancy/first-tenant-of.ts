@@ -1,4 +1,4 @@
-import type { TenantResolver } from './tenant-resolver.js';
+import type { TenantResolver } from './tenant-resolver';
 
 /**
  * The first tenant one of the resolvers names, in order: `firstTenantOf(tenantFromSubdomain('app.example.com'), tenantFromClaim())`.

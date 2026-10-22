@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CONFIG_FILE } from './config-file.js';
-import { parseConfig } from './parse-config.js';
-import type { Project } from './linted-file.js';
+import { CONFIG_FILE } from './config-file';
+import { parseConfig } from './parse-config';
+import type { Project } from './linted-file';
 
 const projectsByDirectory = new Map<string, Project | undefined>();
 

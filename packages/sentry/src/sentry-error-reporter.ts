@@ -1,10 +1,10 @@
 import { inspect } from 'node:util';
 import type { ErrorReport, ErrorReporter, ErrorSeverity } from '@ddd-ts-kit/kernel';
 import { Scope, type NodeClient, type SeverityLevel } from '@sentry/node';
-import { activeTrace } from './event/active-trace.js';
-import { fingerprintOf } from './event/fingerprint-of.js';
-import { tagsOf } from './event/tags-of.js';
-import { conceal } from './secrecy/conceal.js';
+import { activeTrace } from './event/active-trace';
+import { fingerprintOf } from './event/fingerprint-of';
+import { tagsOf } from './event/tags-of';
+import { conceal } from './secrecy/conceal';
 
 export interface SentryErrorReporterOptions {
   /** Tags every event with `tenant_id`. Default `false`. */

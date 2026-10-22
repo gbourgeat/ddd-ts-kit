@@ -1,5 +1,5 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import type { OutboxRecord, OutboxStats, OutboxStore } from '../../src/index.js';
+import type { OutboxRecord, OutboxStats, OutboxStore } from '../../src';
 
 class StoreUnavailable extends Error {
   constructor() {

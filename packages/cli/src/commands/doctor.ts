@@ -1,10 +1,10 @@
-import { readConfig } from '../config/index.js';
-import { diagnose } from '../doctor/diagnose.js';
-import type { DoctorFinding } from '../doctor/doctor-finding.js';
-import { formatDiagnosis } from '../doctor/format-diagnosis.js';
-import { VERSION } from '../version.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
+import { readConfig } from '../config';
+import { diagnose } from '../doctor/diagnose';
+import type { DoctorFinding } from '../doctor/doctor-finding';
+import { formatDiagnosis } from '../doctor/format-diagnosis';
+import { VERSION } from '../version';
+import { Arguments } from './arguments';
+import type { Command } from './command';
 
 /**
  * What --strict fails on: what the project lacks, and what keeps this checkout from running it.

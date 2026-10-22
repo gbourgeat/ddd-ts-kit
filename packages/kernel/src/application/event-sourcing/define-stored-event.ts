@@ -1,8 +1,8 @@
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { DomainEventType } from '../../declarations/model/domain-event-type.js';
-import { storedDataOf } from './stored-data-of.js';
-import type { StoredEventSpec } from './stored-event-spec.js';
-import type { StoredEventType } from './stored-event-type.js';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { DomainEventType } from '../../declarations/model/domain-event-type';
+import { storedDataOf } from './stored-data-of';
+import type { StoredEventSpec } from './stored-event-spec';
+import type { StoredEventType } from './stored-event-type';
 
 /**
  * Declares how an event of `type` is stored, in the event codec of its aggregate (infrastructure):

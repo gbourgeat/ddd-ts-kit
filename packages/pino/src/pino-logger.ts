@@ -1,6 +1,6 @@
 import { UNWRITABLE_FIELDS, type LogFields, type LogLevel, type Logger } from '@ddd-ts-kit/kernel';
 import type { Logger as Pino } from 'pino';
-import { lineFields } from './fields/line-fields.js';
+import { lineFields } from './fields/line-fields';
 
 export interface PinoLoggerOptions {
   /**

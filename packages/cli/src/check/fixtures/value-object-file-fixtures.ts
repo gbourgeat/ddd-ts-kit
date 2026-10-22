@@ -1,8 +1,8 @@
-import type { Fixture } from './fixture.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { SAMPLES } from './samples.js';
-import { VALUE_FILES, VALUES } from './value-object-files.js';
+import type { Fixture } from './fixture';
+import { PATHS } from './paths';
+import { project } from './project';
+import { SAMPLES } from './samples';
+import { VALUE_FILES, VALUES } from './value-object-files';
 
 const { RULE, MONEY, INVOICE_MONEY, SHARED, PROPS, PRIVATE, OF, PLAIN, KERNEL } = VALUES;
 const { classes, money, VALUE_OBJECT, valueObject } = VALUE_FILES;

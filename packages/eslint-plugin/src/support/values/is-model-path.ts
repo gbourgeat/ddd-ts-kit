@@ -1,5 +1,5 @@
-import { isTestFile } from '../../project/is-test-file.js';
-import type { Location } from '../../project/location.js';
+import { isTestFile } from '../../project/is-test-file';
+import type { Location } from '../../project/location';
 
 /**
  * Where a value of the model may be written as a function and is looked for: `domain/` of a

@@ -1,9 +1,9 @@
 import { FixedClock, InMemoryEventBus } from '@ddd-ts-kit/kernel';
 import { describe, expect, it } from 'vitest';
-import { InMemoryOutboxStore, OutboxRelay } from '../src/index.js';
-import { at } from './support/events.js';
-import { invoiceIssuedEvent as event } from './support/invoice-issued-event.js';
-import { setupRelay } from './support/setup-relay.js';
+import { InMemoryOutboxStore, OutboxRelay } from '../src';
+import { at } from './support/events';
+import { invoiceIssuedEvent as event } from './support/invoice-issued-event';
+import { setupRelay } from './support/setup-relay';
 
 describe('OutboxRelay.tick when the provider refuses an event', () => {
   it('keeps publishing the other events when one fails, so order is not preserved', async () => {

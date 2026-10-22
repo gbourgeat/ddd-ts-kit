@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
-import { REPO_ROOT } from '../helpers.js';
+import { REPO_ROOT } from '../helpers';
 
 /** Real services are named by the environment of this run; without them the generated projects stay in the process. */
 const SERVICES = {

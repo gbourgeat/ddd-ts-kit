@@ -1,9 +1,9 @@
-import { runGit } from '../commit/run-git.js';
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
-import type { Citing } from './citing.js';
-import type { Evidence } from './evidence.js';
-import { judgeSymbol } from './judge-symbol.js';
-import type { Judgement } from './stale-citation.js';
+import { runGit } from '../commit/run-git';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
+import type { Citing } from './citing';
+import type { Evidence } from './evidence';
+import { judgeSymbol } from './judge-symbol';
+import type { Judgement } from './stale-citation';
 
 /** A commit as the pickaxe prints it: abbreviated hash, day, subject. */
 const FORMAT = '--format=%h%x09%cs%x09%s';

@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { jsonObject } from '../init/json-object.js';
-import { VERIFICATION_FILE } from '../slice/verification-file.js';
-import type { ProgressVerification } from './worker-progress.js';
+import { jsonObject } from '../init/json-object';
+import { VERIFICATION_FILE } from '../slice/verification-file';
+import type { ProgressVerification } from './worker-progress';
 
 /** What the worker's slice looks like now: the commit checked out and when each file of the slice last changed. */
 export interface SliceNow {

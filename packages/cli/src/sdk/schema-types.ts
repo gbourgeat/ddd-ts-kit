@@ -1,7 +1,7 @@
-import { isRecord } from '../config/values/is-record.js';
-import { propertyKey } from './property-key.js';
-import { schemaTypeName } from './schema-type-name.js';
-import { docComment } from './doc-comment.js';
+import { isRecord } from '../config/values/is-record';
+import { propertyKey } from './property-key';
+import { schemaTypeName } from './schema-type-name';
+import { docComment } from './doc-comment';
 
 const INDENT = '  ';
 const SCHEMA_REF = /^#\/components\/schemas\/(.+)$/;

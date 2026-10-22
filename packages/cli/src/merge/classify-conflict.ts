@@ -1,8 +1,8 @@
-import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file.js';
-import { isDerived } from '../derived/is-derived.js';
-import { SLICES_FILE } from '../progress/read-slices.js';
-import { CLIENTS_DIRECTORY } from '../sdk/clients-directory.js';
-import type { MergeRepository } from './lost/merge-repository.js';
+import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file';
+import { isDerived } from '../derived/is-derived';
+import { SLICES_FILE } from '../progress/read-slices';
+import { CLIENTS_DIRECTORY } from '../sdk/clients-directory';
+import type { MergeRepository } from './lost/merge-repository';
 
 /**
  * How a conflicted path is settled:

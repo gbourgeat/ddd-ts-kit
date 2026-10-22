@@ -1,13 +1,13 @@
-import { changedPaths } from '../affected/changed-paths.js';
-import { everything } from '../affected/everything.js';
-import { formatSelection } from '../affected/format-selection.js';
-import { runAffected } from '../affected/run-affected.js';
-import { selectAffected } from '../affected/select-affected.js';
-import type { Selection } from '../affected/selection.js';
-import { CliError } from '../cli-error.js';
-import { readConfig, type Config } from '../config/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
+import { changedPaths } from '../affected/changed-paths';
+import { everything } from '../affected/everything';
+import { formatSelection } from '../affected/format-selection';
+import { runAffected } from '../affected/run-affected';
+import { selectAffected } from '../affected/select-affected';
+import type { Selection } from '../affected/selection';
+import { CliError } from '../cli-error';
+import { readConfig, type Config } from '../config';
+import { Arguments } from './arguments';
+import type { Command } from './command';
 
 const FORMATS = ['text', 'json', 'github', 'env'];
 

@@ -1,16 +1,16 @@
 import { isAnonymous, type Clock } from '@ddd-ts-kit/kernel';
-import type { Authorizer } from '../authorization/authorizer.js';
-import type { CheckRequest } from '../authorization/check-request.js';
-import { ALLOWED, deny, type Decision } from '../authorization/decision.js';
-import { DenialReason } from '../authorization/denial-reason.js';
-import type { Explanation } from '../authorization/explanation.js';
-import type { ResourceRef } from '../authorization/resource-ref.js';
-import { Trace } from '../authorization/trace.js';
-import { grantCovers } from '../permissions/grant-covers.js';
-import type { Permission } from '../permissions/permission.js';
-import type { AttributePolicy } from './attribute-policy.js';
-import type { PolicyInput } from './policy-input.js';
-import type { ResourceAttributes } from './resource-attributes.js';
+import type { Authorizer } from '../authorization/authorizer';
+import type { CheckRequest } from '../authorization/check-request';
+import { ALLOWED, deny, type Decision } from '../authorization/decision';
+import { DenialReason } from '../authorization/denial-reason';
+import type { Explanation } from '../authorization/explanation';
+import type { ResourceRef } from '../authorization/resource-ref';
+import { Trace } from '../authorization/trace';
+import { grantCovers } from '../permissions/grant-covers';
+import type { Permission } from '../permissions/permission';
+import type { AttributePolicy } from './attribute-policy';
+import type { PolicyInput } from './policy-input';
+import type { ResourceAttributes } from './resource-attributes';
 
 export interface PolicyBasedAuthorizerOptions {
   readonly policies: readonly AttributePolicy[];

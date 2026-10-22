@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { hasSpread } from '../calls/has-spread.js';
-import { propertyOf } from '../calls/property-of.js';
-import { staticString } from '../imports/static-string.js';
+import { hasSpread } from '../calls/has-spread';
+import { propertyOf } from '../calls/property-of';
+import { staticString } from '../imports/static-string';
 
 /** Why a name is not written where a declaration needs it, in the words of a report. */
 type NameProblem = 'missing' | 'empty' | 'not a string literal';

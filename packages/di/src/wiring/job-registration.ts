@@ -1,6 +1,6 @@
 import type { JobOptions, JobSchedule, ScheduledJob } from '@ddd-ts-kit/kernel';
 import type { Token } from '@ddd-ts-kit/kernel/declarations';
-import type { Declarer } from './declarer.js';
+import type { Declarer } from './declarer';
 
 /** A job a context declared, for the application to register on the job scheduler. */
 export interface JobRegistration {

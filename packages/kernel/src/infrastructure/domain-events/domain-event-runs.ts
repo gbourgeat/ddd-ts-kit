@@ -1,5 +1,5 @@
-import type { DomainEventPhase } from '../../application/events/domain-event-phase.js';
-import { unitOfWorkScope, type QueuedDomainEvent, type UnitOfWorkScope } from './unit-of-work-scope.js';
+import type { DomainEventPhase } from '../../application/events/domain-event-phase';
+import { unitOfWorkScope, type QueuedDomainEvent, type UnitOfWorkScope } from './unit-of-work-scope';
 
 /** Neighbours of a queue handed over by the same save to the same dispatcher: they leave together. */
 export interface DomainEventRun {

@@ -1,16 +1,16 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../project/linted-file.js';
-import { className } from '../support/classes/class-name.js';
-import { constructorOf } from '../support/classes/constructor-of.js';
-import { enclosingMember } from '../support/classes/enclosing-member.js';
-import { isCallable } from '../support/classes/is-callable.js';
-import { isConstructor } from '../support/classes/is-constructor.js';
-import { memberName } from '../support/classes/member-name.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
-import { propertyName } from '../support/globals/property-name.js';
-import { parameterName } from '../support/members/parameter-name.js';
-import { parameterProperties } from '../support/members/parameter-properties.js';
-import { startsAtThis } from '../support/members/starts-at-this.js';
+import type { LintedFile } from '../project/linted-file';
+import { className } from '../support/classes/class-name';
+import { constructorOf } from '../support/classes/constructor-of';
+import { enclosingMember } from '../support/classes/enclosing-member';
+import { isCallable } from '../support/classes/is-callable';
+import { isConstructor } from '../support/classes/is-constructor';
+import { memberName } from '../support/classes/member-name';
+import { defineRule, type Report } from '../support/rule/define-rule';
+import { propertyName } from '../support/globals/property-name';
+import { parameterName } from '../support/members/parameter-name';
+import { parameterProperties } from '../support/members/parameter-properties';
+import { startsAtThis } from '../support/members/starts-at-this';
 
 const ARRAY_MUTATORS = new Set(['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse', 'fill', 'copyWithin']);
 

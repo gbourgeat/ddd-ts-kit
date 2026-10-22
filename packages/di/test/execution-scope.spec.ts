@@ -12,11 +12,11 @@ import {
   type IntegrationEvent,
   type Session,
 } from '@ddd-ts-kit/kernel';
-import { createApplication, createTestApplication, defineContextModule, kernelModule } from '../src/index.js';
-import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command.js';
-import { orderingModule } from './support/ordering/ordering.module.js';
-import { orderPlaced } from './support/ordering/published-language/order-placed-event.js';
-import { OrderPlaced } from './support/ordering/published-language/order-placed.js';
+import { createApplication, createTestApplication, defineContextModule, kernelModule } from '../src';
+import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command';
+import { orderingModule } from './support/ordering/ordering.module';
+import { orderPlaced } from './support/ordering/published-language/order-placed-event';
+import { OrderPlaced } from './support/ordering/published-language/order-placed';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: ['accountant'], attributes: {} };
 const bob: Actor = { id: 'bob', type: 'user', roles: ['clerk'], attributes: {} };

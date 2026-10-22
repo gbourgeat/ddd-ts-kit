@@ -1,5 +1,5 @@
-import { scan } from '../../check/scan/scan.js';
-import { matchingBracket } from '../../check/text/matching-bracket.js';
+import { scan } from '../../check/scan/scan';
+import { matchingBracket } from '../../check/text/matching-bracket';
 
 const DESCRIBE = /(?<![\w$.])describe\s*\(/;
 

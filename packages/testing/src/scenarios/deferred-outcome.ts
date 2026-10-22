@@ -1,9 +1,9 @@
-import type { AsyncOutcome } from './async-outcome.js';
-import type { ExpectedFacts } from '../refusals/expected-facts.js';
-import type { ErrorClass } from './error-class.js';
-import type { EventMatcher } from './event-matcher.js';
-import { ImmediateOutcome } from './immediate-outcome.js';
-import type { Recorded } from './recorded.js';
+import type { AsyncOutcome } from './async-outcome';
+import type { ExpectedFacts } from '../refusals/expected-facts';
+import type { ErrorClass } from './error-class';
+import type { EventMatcher } from './event-matcher';
+import { ImmediateOutcome } from './immediate-outcome';
+import type { Recorded } from './recorded';
 
 /** The assertions of an outcome that is not known yet: each one waits for it, the chain is awaited. */
 export class DeferredOutcome<A> implements AsyncOutcome<A> {

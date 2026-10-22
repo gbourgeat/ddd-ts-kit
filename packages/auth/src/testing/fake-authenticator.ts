@@ -1,7 +1,7 @@
 import type { Actor, Session } from '@ddd-ts-kit/kernel';
-import type { SessionAuthenticator } from '../authentication/session-authenticator.js';
-import { sessionOf } from '../authentication/session-of.js';
-import { InvalidCredentialError } from '../errors/invalid-credential-error.js';
+import type { SessionAuthenticator } from '../authentication/session-authenticator';
+import { sessionOf } from '../authentication/session-of';
+import { InvalidCredentialError } from '../errors/invalid-credential-error';
 
 /**
  * Knows a few credentials by heart, each standing for an actor or for a whole session:

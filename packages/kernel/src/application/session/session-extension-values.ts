@@ -1,4 +1,4 @@
-import type { SessionExtensions } from './session-extensions.js';
+import type { SessionExtensions } from './session-extensions';
 
 /** The extensions as a session carries them: each one optional. */
 export type SessionExtensionValues = {

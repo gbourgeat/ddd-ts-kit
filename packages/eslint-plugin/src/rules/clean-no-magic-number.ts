@@ -1,6 +1,6 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../project/linted-file.js';
-import { defineRule } from '../support/rule/define-rule.js';
+import type { LintedFile } from '../project/linted-file';
+import { defineRule } from '../support/rule/define-rule';
 
 type MessageId = 'magic';
 type Options = [{ readonly allow?: readonly number[] }];

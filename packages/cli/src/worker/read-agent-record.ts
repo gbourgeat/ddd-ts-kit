@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { jsonObject } from '../init/json-object.js';
-import { isRecord } from '../init/is-record.js';
-import { AGENT_FILE } from './agent-file.js';
-import type { AgentRecord } from './worker-progress.js';
+import { jsonObject } from '../init/json-object';
+import { isRecord } from '../init/is-record';
+import { AGENT_FILE } from './agent-file';
+import type { AgentRecord } from './worker-progress';
 
 /** The agent the guard saw working in the project at `project`; null when it recorded none, or a file it cannot read. */
 export function readAgentRecord(project: string): AgentRecord | null {

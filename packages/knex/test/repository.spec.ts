@@ -9,14 +9,14 @@ import {
   createKnexUnitOfWork,
   optimisticUpdate,
   schemaNameOf,
-} from '../src/index.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
-import { Invoice } from './support/billing-core/domain/invoice.js';
-import { InvoiceRepository } from './support/billing-core/domain/repositories/invoice.repository.js';
-import { BILLING } from './support/billing-core/infrastructure/persistence/billing-schema.js';
-import { createInvoicesTable } from './support/billing-core/infrastructure/persistence/create-invoices-table.js';
-import { KnexInvoiceRepository } from './support/billing-core/infrastructure/persistence/knex-invoice.repository.js';
-import { ada, scopeOf } from './support/scopes.js';
+} from '../src';
+import { createDatabase, type TestDatabase } from './support/database';
+import { Invoice } from './support/billing-core/domain/invoice';
+import { InvoiceRepository } from './support/billing-core/domain/repositories/invoice.repository';
+import { BILLING } from './support/billing-core/infrastructure/persistence/billing-schema';
+import { createInvoicesTable } from './support/billing-core/infrastructure/persistence/create-invoices-table';
+import { KnexInvoiceRepository } from './support/billing-core/infrastructure/persistence/knex-invoice.repository';
+import { ada, scopeOf } from './support/scopes';
 
 let database: TestDatabase;
 

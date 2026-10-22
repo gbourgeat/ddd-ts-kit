@@ -1,11 +1,11 @@
-import type { Config } from '../config/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { aggregatesOf } from './aggregates-of.js';
-import { conceptNamed } from './concept-named.js';
-import { factoryNameFor } from './factory-name-for.js';
-import type { LegacyError } from './legacy-error.js';
-import type { MigrationPlan } from './migration-plan.js';
-import type { PlannedFactory } from './planned-factory.js';
+import type { Config } from '../config';
+import type { Workspace } from '../workspace';
+import { aggregatesOf } from './aggregates-of';
+import { conceptNamed } from './concept-named';
+import { factoryNameFor } from './factory-name-for';
+import type { LegacyError } from './legacy-error';
+import type { MigrationPlan } from './migration-plan';
+import type { PlannedFactory } from './planned-factory';
 
 interface Tree {
   readonly ws: Workspace;

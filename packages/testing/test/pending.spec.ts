@@ -1,6 +1,6 @@
 import { AssertionError, strictEqual } from 'node:assert';
 import { describe, expect, it } from 'vitest';
-import { eventually, pending } from '../src/e2e.js';
+import { eventually, pending } from '../src/e2e';
 
 describe('pending', () => {
   it('passes while an assertion of the scenario fails: the code it waits for is not built', async () => {

@@ -1,4 +1,4 @@
-import type { StoredMetadata } from './stored-metadata.js';
+import type { StoredMetadata } from './stored-metadata';
 
 export function isStoredMetadata(value: unknown): value is StoredMetadata {
   if (typeof value !== 'object' || value === null) {

@@ -1,6 +1,6 @@
-import type { Config } from '../config/index.js';
-import { dependenciesFor } from '../init/manifest/dependencies-for.js';
-import type { DoctorFinding } from './doctor-finding.js';
+import type { Config } from '../config';
+import { dependenciesFor } from '../init/manifest/dependencies-for';
+import type { DoctorFinding } from './doctor-finding';
 
 /** The packages of the kit are released together: each one at the range this version writes. */
 export const OF_THE_KIT = /^(?:ddd-ts-kit|@ddd-ts-kit\/.+)$/;

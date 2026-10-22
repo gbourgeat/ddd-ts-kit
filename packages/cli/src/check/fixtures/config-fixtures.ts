@@ -1,12 +1,12 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { aggregate } from './aggregate.js';
-import { config } from './config.js';
-import { contextDoc } from './context-doc.js';
-import type { Fixture } from './fixture.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { SAMPLES } from './samples.js';
-import { source } from './source.js';
+import { CONFIG_FILE } from '../../config';
+import { aggregate } from './aggregate';
+import { config } from './config';
+import { contextDoc } from './context-doc';
+import type { Fixture } from './fixture';
+import { PATHS } from './paths';
+import { project } from './project';
+import { SAMPLES } from './samples';
+import { source } from './source';
 
 const { AGGREGATE, DECIMAL_ADR } = PATHS;
 const LONG_FILE = 'src/platform/ledger-import.ts';

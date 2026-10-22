@@ -1,5 +1,5 @@
-import { runGit } from '../commit/run-git.js';
-import type { ChangedEntry } from './changed-entry.js';
+import { runGit } from '../commit/run-git';
+import type { ChangedEntry } from './changed-entry';
 
 /**
  * Every path modified or new in the working tree, from `git status -z`, which keeps a name with

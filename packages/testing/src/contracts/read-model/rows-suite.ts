@@ -1,10 +1,10 @@
 import { Criteria, cursorPage, scoped } from '@ddd-ts-kit/kernel';
-import type { CriteriaContractRow } from '../criteria/criteria-contract-row.js';
-import { criteriaContractRows } from '../criteria/criteria-contract-rows.js';
-import { everything } from './everything.js';
-import { ReadModelStoreSuite } from './read-model-store-suite.js';
-import { rowOf as row } from './row-of.js';
-import { stampedAt as at } from './stamped-at.js';
+import type { CriteriaContractRow } from '../criteria/criteria-contract-row';
+import { criteriaContractRows } from '../criteria/criteria-contract-rows';
+import { everything } from './everything';
+import { ReadModelStoreSuite } from './read-model-store-suite';
+import { rowOf as row } from './row-of';
+import { stampedAt as at } from './stamped-at';
 
 type Row = CriteriaContractRow;
 

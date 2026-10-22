@@ -1,5 +1,5 @@
-import { isRecord } from '../support/is-record.js';
-import type { Project } from '../model/project.js';
+import { isRecord } from '../support/is-record';
+import type { Project } from '../model/project';
 
 /** The config as it is written, before parsing clamps a limit or drops an entry: what `config/valid` has to see. */
 export function rawConfig(project: Project): Record<string, unknown> {

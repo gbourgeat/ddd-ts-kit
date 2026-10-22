@@ -1,4 +1,4 @@
-import type { FieldType } from './field-type.js';
+import type { FieldType } from './field-type';
 
 const DECIMAL = /^-?\d+(?:\.\d+)?$/;
 

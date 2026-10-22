@@ -1,5 +1,5 @@
 import type { ParsedCron } from '@ddd-ts-kit/kernel';
-import { offsetAt } from './offset-at.js';
+import { offsetAt } from './offset-at';
 
 const DAY_MS = 86_400_000;
 

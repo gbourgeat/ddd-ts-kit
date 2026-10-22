@@ -1,6 +1,6 @@
-import type { FormCondition } from './form-condition.js';
-import type { FieldLookup } from './field-lookup.js';
-import type { Widget } from './widget.js';
+import type { FormCondition } from './form-condition';
+import type { FieldLookup } from './field-lookup';
+import type { Widget } from './widget';
 
 /** One field of a form described by the server, as the caller may use it: `Block` is what a nested object holds, a `FormBlock`. */
 export interface FieldBlock<Block = unknown> {

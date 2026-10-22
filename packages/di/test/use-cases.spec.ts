@@ -13,23 +13,17 @@ import {
   QueryBus,
   UnitOfWork,
 } from '@ddd-ts-kit/kernel';
-import {
-  createApplication,
-  defineContextModule,
-  kernelModule,
-  overrideForTests,
-  type BindingInfo,
-} from '../src/index.js';
-import { wiringFailure } from './support/failure.js';
-import { CancelOrder } from './support/ordering/application/commands/cancel-order/cancel-order.command.js';
-import { CancelOrderHandler } from './support/ordering/application/commands/cancel-order/cancel-order.handler.js';
-import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command.js';
-import { PlaceOrderHandler } from './support/ordering/application/commands/place-order/place-order.handler.js';
-import { GetOrder } from './support/ordering/application/queries/get-order/get-order.query.js';
-import { GetOrderHandler } from './support/ordering/application/queries/get-order/get-order.handler.js';
-import { OrderRepository } from './support/ordering/domain/repositories/order.repository.js';
-import { deterministicKernel } from './support/deterministic-kernel.js';
-import { orderingModule } from './support/ordering/ordering.module.js';
+import { createApplication, defineContextModule, kernelModule, overrideForTests, type BindingInfo } from '../src';
+import { wiringFailure } from './support/failure';
+import { CancelOrder } from './support/ordering/application/commands/cancel-order/cancel-order.command';
+import { CancelOrderHandler } from './support/ordering/application/commands/cancel-order/cancel-order.handler';
+import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command';
+import { PlaceOrderHandler } from './support/ordering/application/commands/place-order/place-order.handler';
+import { GetOrder } from './support/ordering/application/queries/get-order/get-order.query';
+import { GetOrderHandler } from './support/ordering/application/queries/get-order/get-order.handler';
+import { OrderRepository } from './support/ordering/domain/repositories/order.repository';
+import { deterministicKernel } from './support/deterministic-kernel';
+import { orderingModule } from './support/ordering/ordering.module';
 
 beforeEach(() => {
   PlaceOrderHandler.built = 0;

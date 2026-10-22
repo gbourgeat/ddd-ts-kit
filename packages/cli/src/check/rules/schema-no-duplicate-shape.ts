@@ -1,13 +1,13 @@
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { Violation } from '../model/violation.js';
-import { classShapes } from '../schemas/class-shapes.js';
-import type { DeclaredShape } from '../schemas/declared-shape.js';
-import { holdsSchemas } from '../schemas/holds-schemas.js';
-import { objectShapes } from '../schemas/object-shapes.js';
-import { restoredCode } from '../schemas/restored-code.js';
-import { sharesSchemas } from '../schemas/shares-schemas.js';
-import { reporter } from '../support/reporter.js';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { Violation } from '../model/violation';
+import { classShapes } from '../schemas/class-shapes';
+import type { DeclaredShape } from '../schemas/declared-shape';
+import { holdsSchemas } from '../schemas/holds-schemas';
+import { objectShapes } from '../schemas/object-shapes';
+import { restoredCode } from '../schemas/restored-code';
+import { sharesSchemas } from '../schemas/shares-schemas';
+import { reporter } from '../support/reporter';
 
 /** What a route reads from its path, its query string or its headers is documented per operation, never as a component. */
 const PARAMETER_FILE = /\.(?:params|query|headers)\.ts$/;

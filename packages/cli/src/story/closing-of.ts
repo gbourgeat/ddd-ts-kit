@@ -1,10 +1,10 @@
-import type { Remaining } from '../progress/remaining.js';
-import type { Slice } from '../progress/slice.js';
-import type { AttributedMarker, MarkerAttribution } from './attributed-marker.js';
-import type { OpenRow, StoryClosing, StoryMarker } from './story-closing.js';
-import { storyOf } from './story-of.js';
-import type { StoryPlan } from './story-plan.js';
-import { type StoryScope, storyScope } from './story-scope.js';
+import type { Remaining } from '../progress/remaining';
+import type { Slice } from '../progress/slice';
+import type { AttributedMarker, MarkerAttribution } from './attributed-marker';
+import type { OpenRow, StoryClosing, StoryMarker } from './story-closing';
+import { storyOf } from './story-of';
+import type { StoryPlan } from './story-plan';
+import { type StoryScope, storyScope } from './story-scope';
 
 const ADR = '`npx ddd-ts-kit generate adr "<title>"`';
 

@@ -1,6 +1,6 @@
-import type { DependencyKind } from '../../application/dependency-kind.js';
-import type { Token } from '../token/token.js';
-import type { BindingAspect } from './binding-aspect.js';
+import type { DependencyKind } from '../../application/dependency-kind';
+import type { Token } from '../token/token';
+import type { BindingAspect } from './binding-aspect';
 
 export interface PortDeclaration {
   readonly role: 'repository' | 'gateway' | 'adapter';

@@ -1,12 +1,12 @@
-import { CliError } from '../cli-error.js';
-import { readSlices } from '../progress/read-slices.js';
-import { formatStoryPhases } from '../stories/format-story-phases.js';
-import { readStoryPhases } from '../stories/read-story-phases.js';
-import { readStoryPlace } from '../stories/read-story-place.js';
-import { STORY_GATES, type StoryGate } from '../stories/story-gate.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
+import { CliError } from '../cli-error';
+import { readSlices } from '../progress/read-slices';
+import { formatStoryPhases } from '../stories/format-story-phases';
+import { readStoryPhases } from '../stories/read-story-phases';
+import { readStoryPlace } from '../stories/read-story-place';
+import { STORY_GATES, type StoryGate } from '../stories/story-gate';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import type { Command } from './command';
 
 /**
  * Where a story stands, phase by phase: specification, rows, design review, acceptance written and

@@ -1,4 +1,4 @@
-import type { Location } from '../model/location.js';
+import type { Location } from '../model/location';
 
 /**
  * Where a value object is declared: `domain/value-objects/` of a context, or a `*.vo.ts` of the

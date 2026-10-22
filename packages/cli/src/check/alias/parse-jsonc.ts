@@ -1,4 +1,4 @@
-import { isRecord } from '../support/is-record.js';
+import { isRecord } from '../support/is-record';
 
 const COMMENT = /("(?:[^"\\]|\\.)*")|\/\/[^\n]*|\/\*[\s\S]*?\*\//g;
 const TRAILING_COMMA = /("(?:[^"\\]|\\.)*")|,(\s*[}\]])/g;

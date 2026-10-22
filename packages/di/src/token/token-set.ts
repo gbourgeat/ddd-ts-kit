@@ -1,5 +1,5 @@
 import type { Token } from '@ddd-ts-kit/kernel/declarations';
-import { TokenMap } from './token-map.js';
+import { TokenMap } from './token-map';
 
 export class TokenSet {
   private readonly members = new TokenMap<true>();

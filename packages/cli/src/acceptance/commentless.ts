@@ -1,5 +1,5 @@
-import type { Scan } from '../check/scan/scan.js';
-import { blank } from '../check/scan/blank.js';
+import type { Scan } from '../check/scan/scan';
+import { blank } from '../check/scan/blank';
 
 /** The source with its comments blanked and everything else as written, strings and expressions alike: offsets are preserved. */
 export function commentless(source: string, scanned: Scan): string {

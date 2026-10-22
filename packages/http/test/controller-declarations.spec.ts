@@ -13,7 +13,7 @@ import {
   controllerRoutes,
   executeRoute,
   type GuardRequest,
-} from '../src/index.js';
+} from '../src';
 
 const answer = { method: 'GET', summary: 'Read', response: { status: 204 } } as const;
 

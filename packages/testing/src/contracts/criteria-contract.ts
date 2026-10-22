@@ -7,16 +7,16 @@ import {
   type ReadScopeMapping,
   type ScopedCriteria,
 } from '@ddd-ts-kit/kernel';
-import type { Awaitable } from './awaitable.js';
-import type { ContractRunner } from './contract-runner.js';
-import { ContractSuite } from './contract-suite.js';
-import type { CriteriaCase } from './criteria/criteria-case.js';
-import type { CriteriaContractRow } from './criteria/criteria-contract-row.js';
-import { criteriaContractRows } from './criteria/criteria-contract-rows.js';
-import { GROUP_CASES } from './criteria/group-cases.js';
-import { OPERATOR_CASES } from './criteria/operator-cases.js';
-import { SCOPE_CASES } from './criteria/scope-cases.js';
-import { SORT_CASES } from './criteria/sort-cases.js';
+import type { Awaitable } from './awaitable';
+import type { ContractRunner } from './contract-runner';
+import { ContractSuite } from './contract-suite';
+import type { CriteriaCase } from './criteria/criteria-case';
+import type { CriteriaContractRow } from './criteria/criteria-contract-row';
+import { criteriaContractRows } from './criteria/criteria-contract-rows';
+import { GROUP_CASES } from './criteria/group-cases';
+import { OPERATOR_CASES } from './criteria/operator-cases';
+import { SCOPE_CASES } from './criteria/scope-cases';
+import { SORT_CASES } from './criteria/sort-cases';
 
 /** What the contract reads through: the `search` of a read port over the rows it was given. */
 export interface ReadModelUnderContract {

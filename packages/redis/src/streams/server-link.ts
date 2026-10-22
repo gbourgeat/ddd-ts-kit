@@ -1,14 +1,14 @@
 import { inspect } from 'node:util';
 import { Redis } from 'ioredis';
-import { closeRedis } from '../connection/close-redis.js';
-import { FAIL_FAST } from '../connection/fail-fast.js';
-import type { RedisSource } from '../connection/redis-source.js';
-import { conceal } from '../secrecy/conceal.js';
-import { BrokerUnavailableError } from './errors/broker-unavailable-error.js';
-import { EventBusClosedError } from './errors/event-bus-closed-error.js';
-import { failureCode } from './errors/failure-code.js';
-import { reconnectDelay } from './options/reconnect-delay.js';
-import type { ReconnectOptions } from './options/reconnect-options.js';
+import { closeRedis } from '../connection/close-redis';
+import { FAIL_FAST } from '../connection/fail-fast';
+import type { RedisSource } from '../connection/redis-source';
+import { conceal } from '../secrecy/conceal';
+import { BrokerUnavailableError } from './errors/broker-unavailable-error';
+import { EventBusClosedError } from './errors/event-bus-closed-error';
+import { failureCode } from './errors/failure-code';
+import { reconnectDelay } from './options/reconnect-delay';
+import type { ReconnectOptions } from './options/reconnect-options';
 
 export interface LinkSettings {
   readonly connection: RedisSource;

@@ -1,6 +1,6 @@
-import type { Config } from '../config/index.js';
-import type { RenderContext } from '../templating/index.js';
-import { WITH_DATABASE } from './with-database.js';
+import type { Config } from '../config';
+import type { RenderContext } from '../templating';
+import { WITH_DATABASE } from './with-database';
 
 interface StorageToken {
   readonly token: string;

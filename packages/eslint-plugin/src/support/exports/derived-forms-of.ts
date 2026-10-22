@@ -1,6 +1,6 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
-import { descendants } from '../descendants.js';
-import type { ModuleShape } from './module-shape.js';
+import { descendants } from '../descendants';
+import type { ModuleShape } from './module-shape';
 
 /**
  * The exported functions that are a form of the function `main`: named after it with a suffix

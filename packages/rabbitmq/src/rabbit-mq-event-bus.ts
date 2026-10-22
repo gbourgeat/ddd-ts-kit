@@ -7,25 +7,25 @@ import type {
   IntegrationEventSubscriber,
   Subscription,
 } from '@ddd-ts-kit/kernel';
-import { ATTEMPT_HEADER } from './codec/headers.js';
-import { republication } from './codec/republication.js';
-import { BrokerLink } from './connection/broker-link.js';
-import { Consumption } from './consumption/consumption.js';
-import { ConsumerNameRequiredError } from './errors/consumer-name-required-error.js';
-import { MESSAGING_SYSTEM } from './messaging-system.js';
-import { EventBusClosedError } from './errors/event-bus-closed-error.js';
-import type { RabbitMqEventBusOptions } from './options/rabbit-mq-event-bus-options.js';
-import type { Settings } from './options/settings.js';
-import { settingsOf } from './options/settings-of.js';
-import { Publications } from './publication/publications.js';
-import { conceal } from './secrecy/conceal.js';
-import { sendConfirmed } from './publication/send-confirmed.js';
-import type { ConsumerBinding } from './topology/consumer-binding.js';
-import { declareTopology } from './topology/declare-topology.js';
-import { queueNamesOf } from './topology/queue-names-of.js';
-import type { RabbitMqTopology } from './topology/rabbit-mq-topology.js';
-import { topologyOf } from './topology/topology-of.js';
-import type { TopologySettings } from './topology/topology-settings.js';
+import { ATTEMPT_HEADER } from './codec/headers';
+import { republication } from './codec/republication';
+import { BrokerLink } from './connection/broker-link';
+import { Consumption } from './consumption/consumption';
+import { ConsumerNameRequiredError } from './errors/consumer-name-required-error';
+import { MESSAGING_SYSTEM } from './messaging-system';
+import { EventBusClosedError } from './errors/event-bus-closed-error';
+import type { RabbitMqEventBusOptions } from './options/rabbit-mq-event-bus-options';
+import type { Settings } from './options/settings';
+import { settingsOf } from './options/settings-of';
+import { Publications } from './publication/publications';
+import { conceal } from './secrecy/conceal';
+import { sendConfirmed } from './publication/send-confirmed';
+import type { ConsumerBinding } from './topology/consumer-binding';
+import { declareTopology } from './topology/declare-topology';
+import { queueNamesOf } from './topology/queue-names-of';
+import type { RabbitMqTopology } from './topology/rabbit-mq-topology';
+import { topologyOf } from './topology/topology-of';
+import type { TopologySettings } from './topology/topology-settings';
 
 const DESCRIPTION = 'RabbitMqEventBus [connection concealed]';
 

@@ -1,4 +1,4 @@
-import type { StringRecord } from '../check/scan/string-record.js';
+import type { StringRecord } from '../check/scan/string-record';
 
 /** A string literal of an emitted file that stands where a module specifier is read. */
 export interface SpecifierLiteral {

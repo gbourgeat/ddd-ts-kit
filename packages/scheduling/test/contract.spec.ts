@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { jobSchedulerContract } from '@ddd-ts-kit/testing/contracts';
-import { aBench } from './support/a-bench.js';
+import { aBench } from './support/a-bench';
 
 jobSchedulerContract(
   { describe, it, expect, beforeEach, afterEach },

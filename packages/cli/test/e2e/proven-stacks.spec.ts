@@ -1,10 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { exists, isDeclared, read, scaffoldEverything, tempDir } from '../helpers.js';
-import { buildAndCheckDocuments } from './build-and-check-documents.js';
-import { expectNoFinding } from './expect-no-finding.js';
-import { installAsPublished } from './install-as-published.js';
-import { bin, runIn } from './run-in.js';
-import { PROVEN, SLOW } from './stacks.js';
+import { exists, isDeclared, read, scaffoldEverything, tempDir } from '../helpers';
+import { buildAndCheckDocuments } from './build-and-check-documents';
+import { expectNoFinding } from './expect-no-finding';
+import { installAsPublished } from './install-as-published';
+import { bin, runIn } from './run-in';
+import { PROVEN, SLOW } from './stacks';
 
 const UNIT = 'src/contexts/billing/test/unit';
 const JOB_SPECS = [`${UNIT}/cancel-stale-invoices.job.spec.ts`, `${UNIT}/issue-invoices-monthly.job.spec.ts`];

@@ -1,9 +1,9 @@
 import type { Redis } from 'ioredis';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { FixedClock } from '@ddd-ts-kit/kernel';
-import { RedisRateLimiter } from '../src/index.js';
-import { rateLimiterContract } from '../src/testing.js';
-import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing, sleep } from './support/server.js';
+import { RedisRateLimiter } from '../src';
+import { rateLimiterContract } from '../src/testing';
+import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing, sleep } from './support/server';
 
 const runner = { describe, it, expect, beforeEach };
 const NOW = new Date('2026-03-01T10:00:00.000Z');

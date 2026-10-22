@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { selectAffected } from '../src/affected/select-affected.js';
-import { parseConfig, readConfig, type Config } from '../src/config/index.js';
-import { exists, REPO_ROOT, walk } from './helpers.js';
+import { selectAffected } from '../src/affected/select-affected';
+import { parseConfig, readConfig, type Config } from '../src/config';
+import { exists, REPO_ROOT, walk } from './helpers';
 
 const EXAMPLE = `${REPO_ROOT}/examples/scheduling`;
 const example = readConfig(EXAMPLE).config;

@@ -1,9 +1,9 @@
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import type { ClassShape } from '../structure/class-shape.js';
-import type { MethodShape } from '../structure/method-shape.js';
-import { inContext } from '../support/in-context.js';
-import { perFile } from '../support/per-file.js';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import type { ClassShape } from '../structure/class-shape';
+import type { MethodShape } from '../structure/method-shape';
+import { inContext } from '../support/in-context';
+import { perFile } from '../support/per-file';
 
 const BOOLEAN_PARAMETER =
   /^(?:(?:public|private|protected|readonly|override)\s+)*([A-Za-z_$][\w$]*)\s*\??\s*(?::\s*boolean\s*(?:=.*)?|=\s*(?:true|false))$/;

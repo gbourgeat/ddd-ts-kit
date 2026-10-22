@@ -1,4 +1,4 @@
-import { ROLES } from '../check/canonical/roles.js';
+import { ROLES } from '../check/canonical/roles';
 
 /**
  * The files of `domain/` and `application/` that stay one per context once it is divided into

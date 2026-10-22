@@ -1,10 +1,10 @@
-import { eventSourcedClasses } from '../event-sourcing/event-sourced-classes.js';
-import { factWords } from '../event-sourcing/fact-words.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { isPastFact } from '../../naming/index.js';
-import { perFile } from '../support/per-file.js';
+import { eventSourcedClasses } from '../event-sourcing/event-sourced-classes';
+import { factWords } from '../event-sourcing/fact-words';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { isPastFact } from '../../naming';
+import { perFile } from '../support/per-file';
 
 const FIX =
   'Name the event after what happened, with a verb in the past tense: `InvoiceIssued`, `NoShowNoted`, `AmountWithdrawn`, `AppointmentMarkedNoShow`. A stored event is a fact that will be replayed for years; a name in the present or the imperative reads as a command.';

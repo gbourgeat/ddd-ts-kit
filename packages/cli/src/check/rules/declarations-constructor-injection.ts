@@ -1,15 +1,15 @@
-import { declaredRoleOf } from '../../declared/declared-role-of.js';
-import type { ClassInjection } from '../../declared/injection/class-injection.js';
-import { readInjections } from '../../declared/injection/read-injections.js';
-import type { Finding } from '../model/finding.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import { sourceAt } from '../project/source-at.js';
-import { inContext } from '../support/in-context.js';
-import { isDeclaredStyle } from '../support/is-declared-style.js';
-import { pathInContext } from '../support/path-in-context.js';
-import { perFile } from '../support/per-file.js';
-import { WITHOUT_MODULE } from '../../model-modules/index.js';
+import { declaredRoleOf } from '../../declared/declared-role-of';
+import type { ClassInjection } from '../../declared/injection/class-injection';
+import { readInjections } from '../../declared/injection/read-injections';
+import type { Finding } from '../model/finding';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import { sourceAt } from '../project/source-at';
+import { inContext } from '../support/in-context';
+import { isDeclaredStyle } from '../support/is-declared-style';
+import { pathInContext } from '../support/path-in-context';
+import { perFile } from '../support/per-file';
+import { WITHOUT_MODULE } from '../../model-modules';
 
 export const declarationsConstructorInjection: Rule = {
   id: 'declarations/constructor-injection',

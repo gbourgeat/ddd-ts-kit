@@ -1,4 +1,4 @@
-import type { LockHandle } from '../lock/lock-handle.js';
+import type { LockHandle } from '../lock/lock-handle';
 
 export interface AcquireOptions {
   /** After it the lock frees itself: the holder crashed, or took longer than it promised. */

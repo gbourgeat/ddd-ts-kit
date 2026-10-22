@@ -24,7 +24,7 @@ import { Product } from '@/contexts/catalog/domain/aggregates/product.aggregate'
 Correct:
 
 ```ts
-import type { ProductListedV1 } from '@/contexts/catalog/published-language/index';
+import type { ProductListedV1 } from '@/contexts/catalog/published-language';
 ```
 
 ## Details

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, exists, read, write } from './helpers.js';
-import { failure } from './reports.js';
-import { BILLING, conceptErrorsProject, NOTES_FILE, SCHEDULING } from './support/concept-errors-project.js';
+import { cli, exists, read, write } from './helpers';
+import { failure } from './reports';
+import { BILLING, conceptErrorsProject, NOTES_FILE, SCHEDULING } from './support/concept-errors-project';
 
 const PLAN = 'error-factories.plan.json';
 const ERRORS = `${SCHEDULING}/domain/errors`;

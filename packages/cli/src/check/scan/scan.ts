@@ -1,9 +1,9 @@
-import type { BlockCommentRecord } from './block-comment-record.js';
-import type { CommentRecord } from './comment-record.js';
-import { findImports } from './find-imports.js';
-import type { ImportRecord } from './import-record.js';
-import { Lexer } from './lexer.js';
-import type { StringRecord } from './string-record.js';
+import type { BlockCommentRecord } from './block-comment-record';
+import type { CommentRecord } from './comment-record';
+import { findImports } from './find-imports';
+import type { ImportRecord } from './import-record';
+import { Lexer } from './lexer';
+import type { StringRecord } from './string-record';
 
 export interface Scan {
   /** Source with comments and literal contents blanked; offsets and lines are preserved. */

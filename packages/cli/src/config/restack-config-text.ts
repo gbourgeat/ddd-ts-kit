@@ -1,7 +1,7 @@
-import type { Config } from './config.js';
-import { editConfigText } from './edit-config-text.js';
-import { isRecord } from './values/is-record.js';
-import { writtenStack } from './written-stack.js';
+import type { Config } from './config';
+import { editConfigText } from './edit-config-text';
+import { isRecord } from './values/is-record';
+import { writtenStack } from './written-stack';
 
 type Restacked = Pick<
   Config,

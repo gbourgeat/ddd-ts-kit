@@ -2,11 +2,11 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { read, REPO_ROOT } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { pipelineAsset } from './support/pipeline-asset.js';
-import { readJson } from './support/read-json.js';
-import { textsAt } from './support/texts-at.js';
+import { read, REPO_ROOT } from './helpers';
+import { initProject } from './support/init-project';
+import { pipelineAsset } from './support/pipeline-asset';
+import { readJson } from './support/read-json';
+import { textsAt } from './support/texts-at';
 
 const inRepository = (file: string): string => fs.readFileSync(path.join(REPO_ROOT, file), 'utf8');
 const FORMAT_GATE = 'npm run lint && npm run format:check';

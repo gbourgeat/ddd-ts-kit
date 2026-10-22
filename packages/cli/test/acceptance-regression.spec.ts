@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, exists, read, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
+import { cli, exists, read, write } from './helpers';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
 
 // One project for the whole file: the fix FIX-412, its regression specs written, locked, then changed.
 let root: string;

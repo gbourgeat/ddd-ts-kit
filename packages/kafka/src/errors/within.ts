@@ -1,4 +1,4 @@
-import { BrokerUnavailableError } from './broker-unavailable-error.js';
+import { BrokerUnavailableError } from './broker-unavailable-error';
 
 /** Rejects with `BROKER_UNAVAILABLE` when `work` has not settled after `timeoutMs`. */
 export async function within<T>(work: Promise<T>, timeoutMs: number, reason: string): Promise<T> {

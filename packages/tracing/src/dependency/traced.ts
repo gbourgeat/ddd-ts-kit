@@ -1,9 +1,9 @@
 import { SpanKind, context, trace, type Attributes } from '@opentelemetry/api';
-import { admitDependencySpan } from '../local-root/admit-dependency-span.js';
-import { isThenable } from '../span/is-thenable.js';
-import { markSpanFailed } from '../span/mark-span-failed.js';
-import { tracer } from '../span/tracer.js';
-import type { Method } from './method.js';
+import { admitDependencySpan } from '../local-root/admit-dependency-span';
+import { isThenable } from '../span/is-thenable';
+import { markSpanFailed } from '../span/mark-span-failed';
+import { tracer } from '../span/tracer';
+import type { Method } from './method';
 
 // Shared by every instance of a class: one call returning a thenable teaches them all.
 const learnedAsync = new WeakSet<Method>();

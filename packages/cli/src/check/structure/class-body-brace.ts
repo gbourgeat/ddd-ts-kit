@@ -1,4 +1,4 @@
-import { matchingBracket } from '../text/matching-bracket.js';
+import { matchingBracket } from '../text/matching-bracket';
 
 /**
  * The brace opening the body of a class whose heritage starts at `from`, past the object types

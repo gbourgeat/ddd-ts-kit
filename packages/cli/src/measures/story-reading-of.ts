@@ -1,15 +1,15 @@
-import { reviewFileOf } from '../stories/review-file-of.js';
-import type { Workspace } from '../workspace/index.js';
-import type { BranchCommit } from './branch-commit.js';
-import { repeatedIncident } from './repeated-incident.js';
-import { reportMeasuresOf } from './report-measures-of.js';
-import type { Repository } from './repository.js';
-import { reviewReadingOf } from './review-reading-of.js';
-import { reworkOf } from './rework-of.js';
-import { storyCommitsOf } from './story-commits-of.js';
-import { storyFilesOf } from './story-files-of.js';
-import type { StoryReading } from './story-reading.js';
-import { timelineOf } from './timeline-of.js';
+import { reviewFileOf } from '../stories/review-file-of';
+import type { Workspace } from '../workspace';
+import type { BranchCommit } from './branch-commit';
+import { repeatedIncident } from './repeated-incident';
+import { reportMeasuresOf } from './report-measures-of';
+import type { Repository } from './repository';
+import { reviewReadingOf } from './review-reading-of';
+import { reworkOf } from './rework-of';
+import { storyCommitsOf } from './story-commits-of';
+import { storyFilesOf } from './story-files-of';
+import type { StoryReading } from './story-reading';
+import { timelineOf } from './timeline-of';
 
 export const STORIES_DIR = 'docs/architecture/stories';
 

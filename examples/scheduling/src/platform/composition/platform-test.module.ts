@@ -16,8 +16,8 @@ import { KnexContext } from '@ddd-ts-kit/knex';
 import { relationshipSchema } from '@/platform/auth/relationships/relationship-schema';
 import { bindFiles } from '@/platform/files/bind-files';
 // ddd-ts-kit:imports
-import { PersonDirectoryContract } from '@/contexts/identity/published-language/index';
-import { AppointmentExportContract } from '@/contexts/scheduling/published-language/index';
+import { PersonDirectoryContract } from '@/contexts/identity/published-language';
+import { AppointmentExportContract } from '@/contexts/scheduling/published-language';
 // /ddd-ts-kit:imports
 
 /** The platform of a handler spec: no storage behind it, so every repository a test touches has to be faked. */

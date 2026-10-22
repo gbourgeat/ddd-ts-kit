@@ -1,4 +1,4 @@
-import { WiringError } from '../../src/index.js';
+import { WiringError } from '../../src';
 
 /** The wiring error a promise rejects with. */
 export async function wiringRejection(work: Promise<unknown>): Promise<WiringError> {

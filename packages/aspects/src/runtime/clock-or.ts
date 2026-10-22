@@ -1,5 +1,5 @@
 import { SystemClock, type Clock } from '@ddd-ts-kit/kernel';
-import { currentRuntime } from './installed-runtime.js';
+import { currentRuntime } from './installed-runtime';
 
 const systemClock = new SystemClock();
 

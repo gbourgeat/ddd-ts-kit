@@ -1,8 +1,8 @@
-import type { ClaimWindow } from './claim-window.js';
-import type { EventKey } from './event-key.js';
-import type { HoldUntil } from './hold-until.js';
-import type { KeyedRecord } from './keyed-record.js';
-import type { RecordGroup } from './record-group.js';
+import type { ClaimWindow } from './claim-window';
+import type { EventKey } from './event-key';
+import type { HoldUntil } from './hold-until';
+import type { KeyedRecord } from './keyed-record';
+import type { RecordGroup } from './record-group';
 
 interface Head {
   readonly eventId: string;

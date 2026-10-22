@@ -10,8 +10,8 @@ import {
   type ListRequest,
 } from '@ddd-ts-kit/auth';
 import { isAnonymous, type Actor } from '@ddd-ts-kit/kernel';
-import { relationNameOf } from '../model/relation-name-of.js';
-import type { OpenFgaAuthorizerOptions } from './open-fga-authorizer-options.js';
+import { relationNameOf } from '../model/relation-name-of';
+import type { OpenFgaAuthorizerOptions } from './open-fga-authorizer-options';
 
 /** `OPENFGA_LIST_OBJECTS_MAX_RESULTS` of a server that leaves it at its default. */
 const SERVER_LIST_OBJECTS_LIMIT = 1000;

@@ -1,7 +1,7 @@
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { WiringError } from '../errors/wiring-error.js';
+import { WiringError } from '../errors/wiring-error';
 
 interface Loading {
   readonly extensions: readonly string[];

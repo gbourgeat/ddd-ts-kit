@@ -1,11 +1,11 @@
-import { CliError } from '../cli-error.js';
-import { formatPlan } from '../plan/format-plan.js';
-import { planWaves } from '../plan/plan-waves.js';
-import { readSlices, SLICES_FILE } from '../progress/read-slices.js';
-import type { Slice } from '../progress/slice.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
+import { CliError } from '../cli-error';
+import { formatPlan } from '../plan/format-plan';
+import { planWaves } from '../plan/plan-waves';
+import { readSlices, SLICES_FILE } from '../progress/read-slices';
+import type { Slice } from '../progress/slice';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import type { Command } from './command';
 
 /**
  * Orders the rows of the slices file not done, of the project or of one context, in waves cut

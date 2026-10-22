@@ -1,9 +1,9 @@
 import type { ExtractTablesWithRelations, TablesRelationalConfig } from 'drizzle-orm';
 import type { PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { TableReadModelStore, type CriteriaDefinition } from '@ddd-ts-kit/kernel';
-import type { DrizzleContext } from '../unit-of-work/drizzle-context.js';
-import type { DrizzleReadModelOptions } from './drizzle-read-model-options.js';
-import { DrizzleReadModelTable } from './drizzle-read-model-table.js';
+import type { DrizzleContext } from '../unit-of-work/drizzle-context';
+import type { DrizzleReadModelOptions } from './drizzle-read-model-options';
+import { DrizzleReadModelTable } from './drizzle-read-model-table';
 
 export interface DrizzleReadModel<Row> extends DrizzleReadModelOptions<Row> {
   /** What a read of the read model may filter and sort by. */

@@ -1,9 +1,9 @@
 import { PGlite } from '@electric-sql/pglite';
 import { getTableConfig, type PgTable } from 'drizzle-orm/pg-core';
 import { drizzle } from 'drizzle-orm/pglite';
-import { createTableSql } from './create-table-sql.js';
-import { quote } from './quote.js';
-import { RecordingLogger } from './recording-logger.js';
+import { createTableSql } from './create-table-sql';
+import { quote } from './quote';
+import { RecordingLogger } from './recording-logger';
 
 /** One in-process PostgreSQL (PGlite) with the given tables created. */
 export async function createDatabase(tables: readonly PgTable[]) {

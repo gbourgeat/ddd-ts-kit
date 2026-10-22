@@ -1,13 +1,13 @@
-import type { OrmStack } from '../../config/index.js';
-import type { Name } from '../../naming/index.js';
-import type { RenderContext } from '../../templating/index.js';
-import { emit } from '../emit.js';
-import { named } from '../named.js';
-import type { Scope } from '../scope.js';
-import { vars } from '../vars.js';
-import { wire } from '../wire.js';
-import { declareStorage } from './declare-storage.js';
-import { REPOSITORY_ADAPTERS } from './repository-adapter.js';
+import type { OrmStack } from '../../config';
+import type { Name } from '../../naming';
+import type { RenderContext } from '../../templating';
+import { emit } from '../emit';
+import { named } from '../named';
+import type { Scope } from '../scope';
+import { vars } from '../vars';
+import { wire } from '../wire';
+import { declareStorage } from './declare-storage';
+import { REPOSITORY_ADAPTERS } from './repository-adapter';
 
 /** The port of the repository of an aggregate, the adapter of the ORM of the stack, the fake and the contract both pass. */
 export function generateRepository(scope: Scope, aggregate: Name): void {

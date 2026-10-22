@@ -1,4 +1,4 @@
-import type { CommitLimits } from './commit-limits.js';
+import type { CommitLimits } from './commit-limits';
 
 /** The `commit` key of the config: the advised size of one commit, and what a commit made by an agent says of itself. */
 export interface CommitConfig extends CommitLimits {

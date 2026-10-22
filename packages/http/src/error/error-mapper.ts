@@ -1,4 +1,4 @@
-import type { ErrorMapping } from './error-mapping.js';
+import type { ErrorMapping } from './error-mapping';
 
 /**
  * Says which status and which problem `type` a domain error code answers. One per application:

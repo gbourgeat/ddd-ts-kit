@@ -1,16 +1,16 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { writeBusinessDecisions } from '../first-class-proof.js';
-import { changeConfig, CONFIG } from '../check-support.js';
-import { cli, read, scaffoldEverything, tempDir, walk } from '../helpers.js';
-import { jsonAt } from '../support/json-at.js';
-import { keysAt } from '../support/keys-at.js';
-import { buildAndCheckDocuments } from './build-and-check-documents.js';
-import { expectNoFinding } from './expect-no-finding.js';
-import { installAsPublished } from './install-as-published.js';
-import { bin, findingsOf, runIn } from './run-in.js';
-import { FIRST_CLASS, FIRST_CLASS_BROKERS, SLOW } from './stacks.js';
-import { NATIVE_COMPILER } from './type-errors.js';
-import { REPORTED_WORK_PROOF, writeReportedWorkProof } from './write-reported-work-proof.js';
+import { writeBusinessDecisions } from '../first-class-proof';
+import { changeConfig, CONFIG } from '../check-support';
+import { cli, read, scaffoldEverything, tempDir, walk } from '../helpers';
+import { jsonAt } from '../support/json-at';
+import { keysAt } from '../support/keys-at';
+import { buildAndCheckDocuments } from './build-and-check-documents';
+import { expectNoFinding } from './expect-no-finding';
+import { installAsPublished } from './install-as-published';
+import { bin, findingsOf, runIn } from './run-in';
+import { FIRST_CLASS, FIRST_CLASS_BROKERS, SLOW } from './stacks';
+import { NATIVE_COMPILER } from './type-errors';
+import { REPORTED_WORK_PROOF, writeReportedWorkProof } from './write-reported-work-proof';
 
 const DECORATED = 'src/contexts/billing/infrastructure/external/remote-tax-rates.adapter.ts';
 const DECORATED_SPEC = 'src/contexts/billing/test/integration/remote-tax-rates.adapter.spec.ts';

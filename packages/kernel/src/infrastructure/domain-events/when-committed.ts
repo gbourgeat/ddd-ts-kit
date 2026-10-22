@@ -1,5 +1,5 @@
-import { afterCommit } from './after-commit.js';
-import { unitOfWorkScope } from './unit-of-work-scope.js';
+import { afterCommit } from './after-commit';
+import { unitOfWorkScope } from './unit-of-work-scope';
 
 /**
  * For an adapter writing to a store that cannot join the transaction (Redis, a remote queue):

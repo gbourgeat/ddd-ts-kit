@@ -1,5 +1,5 @@
-import type { MergeForecast } from './merge-forecast.js';
-import type { OpenStory } from './open-story.js';
+import type { MergeForecast } from './merge-forecast';
+import type { OpenStory } from './open-story';
 
 /** One open story as `stories` reads it in its worktree. */
 export interface StoryState extends OpenStory {

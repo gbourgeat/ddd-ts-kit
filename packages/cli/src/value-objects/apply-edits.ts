@@ -1,4 +1,4 @@
-import type { Edit } from './edit.js';
+import type { Edit } from './edit';
 
 /** Applies edits that do not overlap, whatever their order. */
 export function applyEdits(source: string, edits: readonly Edit[]): string {

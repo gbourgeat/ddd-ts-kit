@@ -1,7 +1,7 @@
-import type { FileSource } from '../files/file-source.js';
-import type { SignedDownload } from '../files/signed-download.js';
-import type { StoredFile } from '../files/stored-file.js';
-import { FileStorage } from './file-storage.js';
+import type { FileSource } from '../files/file-source';
+import type { SignedDownload } from '../files/signed-download';
+import type { StoredFile } from '../files/stored-file';
+import { FileStorage } from './file-storage';
 
 /**
  * A storage whose signed links point at the application itself, which must then answer them:

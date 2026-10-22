@@ -1,4 +1,4 @@
-import { MODULE_LAYERS } from './module-layers.js';
+import { MODULE_LAYERS } from './module-layers';
 
 /** Puts a path relative to its context, written without modules, back in its module. */
 export function intoModule(module: string | undefined, file: string): string {

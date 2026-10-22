@@ -7,8 +7,8 @@ import {
   resetTracingConfiguration,
   traceDependency,
   withSpan,
-} from '../src/index.js';
-import { defaultInstrumentations, initTracing } from '../src/node.js';
+} from '../src';
+import { defaultInstrumentations, initTracing } from '../src/node';
 
 afterEach(() => {
   vi.unstubAllEnvs();

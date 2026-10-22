@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers.js';
-import { committedProject } from './support/committed-project.js';
-import { jsonAt } from './support/json-at.js';
-import { commitFiles, squashInto } from './support/trunk-history.js';
+import { cli, read, write } from './helpers';
+import { committedProject } from './support/committed-project';
+import { jsonAt } from './support/json-at';
+import { commitFiles, squashInto } from './support/trunk-history';
 
 const SLICES_FILE = 'docs/architecture/slices.md';
 

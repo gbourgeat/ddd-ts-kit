@@ -14,13 +14,13 @@ import {
   type DomainEvent,
 } from '@ddd-ts-kit/kernel';
 import { OutboxPublisher, OutboxRelay } from '@ddd-ts-kit/events';
-import { KnexOutboxStore, createKnexUnitOfWork, createOutboxTables } from '../src/index.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
-import { Invoice } from './support/billing-core/domain/invoice.js';
-import { BILLING } from './support/billing-core/infrastructure/persistence/billing-schema.js';
-import { createInvoicesTable } from './support/billing-core/infrastructure/persistence/create-invoices-table.js';
-import { KnexInvoiceRepository } from './support/billing-core/infrastructure/persistence/knex-invoice.repository.js';
-import { ada, scopeOf } from './support/scopes.js';
+import { KnexOutboxStore, createKnexUnitOfWork, createOutboxTables } from '../src';
+import { createDatabase, type TestDatabase } from './support/database';
+import { Invoice } from './support/billing-core/domain/invoice';
+import { BILLING } from './support/billing-core/infrastructure/persistence/billing-schema';
+import { createInvoicesTable } from './support/billing-core/infrastructure/persistence/create-invoices-table';
+import { KnexInvoiceRepository } from './support/billing-core/infrastructure/persistence/knex-invoice.repository';
+import { ada, scopeOf } from './support/scopes';
 
 const now = new Date('2026-03-01T10:00:00.000Z');
 const INVOICE = cacheTag('invoice', 'inv-1');

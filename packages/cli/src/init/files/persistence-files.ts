@@ -1,8 +1,8 @@
-import type { Config } from '../../config/index.js';
-import type { InitFile } from './init-file.js';
-import { WITH_DATABASE } from '../../stack/with-database.js';
-import { platformFile } from './platform-file.js';
-import { when } from './when.js';
+import type { Config } from '../../config';
+import type { InitFile } from './init-file';
+import { WITH_DATABASE } from '../../stack/with-database';
+import { platformFile } from './platform-file';
+import { when } from './when';
 
 type Variants = readonly (readonly [file: string, variant?: string])[];
 

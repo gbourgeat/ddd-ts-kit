@@ -1,10 +1,10 @@
-import type { HandlerRegistration } from '../../application/messaging/handler-registration.js';
-import type { MessageType } from '../../application/messaging/message-type.js';
-import type { QueryHandler } from '../../application/messaging/query-handler.js';
-import type { Query } from '../../application/messaging/query.js';
-import type { ResultOf } from '../../application/messaging/result-of.js';
-import type { QueryBus } from '../../application/ports/query-bus.js';
-import { InProcessBus } from './in-process-bus.js';
+import type { HandlerRegistration } from '../../application/messaging/handler-registration';
+import type { MessageType } from '../../application/messaging/message-type';
+import type { QueryHandler } from '../../application/messaging/query-handler';
+import type { Query } from '../../application/messaging/query';
+import type { ResultOf } from '../../application/messaging/result-of';
+import type { QueryBus } from '../../application/ports/query-bus';
+import { InProcessBus } from './in-process-bus';
 
 export class InMemoryQueryBus extends InProcessBus implements QueryBus {
   constructor() {

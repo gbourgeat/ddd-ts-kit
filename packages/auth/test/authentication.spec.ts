@@ -24,9 +24,9 @@ import {
   resolveSession,
   sessionOf,
   type Authenticator,
-} from '../src/index.js';
-import { FakeAuthenticator } from '../src/testing.js';
-import { SearchInvoices, ada, billingPermissions, bob } from './support/billing.js';
+} from '../src';
+import { FakeAuthenticator } from '../src/testing';
+import { SearchInvoices, ada, billingPermissions, bob } from './support/billing';
 
 describe('bearerCredential', () => {
   it('extracts the token of the Authorization header, whatever its case', () => {

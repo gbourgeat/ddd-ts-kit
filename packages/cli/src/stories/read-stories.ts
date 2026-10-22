@@ -1,18 +1,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { runGit } from '../commit/run-git.js';
-import { classifyConflict } from '../merge/classify-conflict.js';
-import type { MergeRepository } from '../merge/lost/merge-repository.js';
-import { mergeRepositoryOf } from '../merge/lost/merge-repository-of.js';
-import { changedFiles } from '../worker/changed-files.js';
-import { forecastMerge } from './forecast-merge.js';
-import type { MergeForecast } from './merge-forecast.js';
-import type { OpenStory } from './open-story.js';
-import { openStories } from './open-stories.js';
-import { readStoryPlace } from './read-story-place.js';
-import type { StoriesView } from './stories-view.js';
-import type { StoryCrossing } from './story-crossing.js';
-import type { StoryState } from './story-state.js';
+import { runGit } from '../commit/run-git';
+import { classifyConflict } from '../merge/classify-conflict';
+import type { MergeRepository } from '../merge/lost/merge-repository';
+import { mergeRepositoryOf } from '../merge/lost/merge-repository-of';
+import { changedFiles } from '../worker/changed-files';
+import { forecastMerge } from './forecast-merge';
+import type { MergeForecast } from './merge-forecast';
+import type { OpenStory } from './open-story';
+import { openStories } from './open-stories';
+import { readStoryPlace } from './read-story-place';
+import type { StoriesView } from './stories-view';
+import type { StoryCrossing } from './story-crossing';
+import type { StoryState } from './story-state';
 
 /**
  * The stories open in the worktrees of the repository of the project at `root`, each with the

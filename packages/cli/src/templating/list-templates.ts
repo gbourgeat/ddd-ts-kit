@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { TEMPLATES_ROOT } from './templates-root.js';
+import { TEMPLATES_ROOT } from './templates-root';
 
 /** Every template of the package, relative to its templates directory. */
 export function listTemplates(directory = ''): string[] {

@@ -1,4 +1,4 @@
-import type { ContentExpectation } from './content-expectation.js';
+import type { ContentExpectation } from './content-expectation';
 
 export interface InspectionLimits {
   /** Beyond it the stream fails with `FILE_TOO_LARGE`. */

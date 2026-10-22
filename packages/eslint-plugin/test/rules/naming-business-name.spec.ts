@@ -1,5 +1,5 @@
-import { namingBusinessName } from '../../src/rules/naming-business-name.js';
-import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { namingBusinessName } from '../../src/rules/naming-business-name';
+import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
 const AGGREGATE = `${BILLING}/domain/aggregates/invoice.aggregate.ts`;

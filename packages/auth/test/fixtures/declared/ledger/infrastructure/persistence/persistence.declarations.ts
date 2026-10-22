@@ -1,1 +1,1 @@
-export * from './in-memory-entry.repository.js';
+export * from './in-memory-entry.repository';

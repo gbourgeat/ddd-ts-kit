@@ -1,8 +1,8 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { readModelStoreContract, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
-import { TypeOrmReadModelTable, createTypeOrmUnitOfWork } from '../src/index.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
-import { contractRows } from './support/read-model/criteria-contract-rows.js';
+import { TypeOrmReadModelTable, createTypeOrmUnitOfWork } from '../src';
+import { createDatabase, type TestDatabase } from './support/database';
+import { contractRows } from './support/read-model/criteria-contract-rows';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

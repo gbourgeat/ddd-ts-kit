@@ -18,7 +18,7 @@ import {
   type Actor,
   type ErrorReporter,
   type IntegrationEvent,
-} from '../src/index.js';
+} from '../src';
 
 class StockExhausted extends DomainError {
   readonly code = 'STOCK_EXHAUSTED';

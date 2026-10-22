@@ -1,6 +1,6 @@
 import { stampOf } from '@ddd-ts-kit/kernel';
 import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
-import { personRegisteredV1, type PersonRegisteredV1 } from '@/contexts/identity/published-language/index';
+import { personRegisteredV1, type PersonRegisteredV1 } from '@/contexts/identity/published-language';
 import { storableStamp } from '@/shared-kernel/storable-stamp';
 import type { Contacts } from '@/contexts/notification/application/ports/contacts.port';
 

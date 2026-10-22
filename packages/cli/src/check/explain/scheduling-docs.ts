@@ -1,4 +1,4 @@
-import type { RuleDoc } from '../model/rule-doc.js';
+import type { RuleDoc } from '../model/rule-doc';
 
 export const SCHEDULING_DOCS: Readonly<Record<string, RuleDoc>> = {
   'scheduling/job-triggers-use-case': {

@@ -1,4 +1,4 @@
-import { DomainError } from '../../domain/errors/domain-error.js';
+import { DomainError } from '../../domain/errors/domain-error';
 
 export const INVALID_PAGE_REQUEST = 'INVALID_PAGE_REQUEST';
 

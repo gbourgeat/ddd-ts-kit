@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { deadTopicOf } from '../src/topology/dead-topic-of.js';
-import { replayGroupOf } from '../src/topology/replay-group-of.js';
-import { topologyOf } from '../src/topology/topology-of.js';
-import type { TopologySettings } from '../src/topology/topology-settings.js';
-import { PLACED } from './support/events.js';
+import { deadTopicOf } from '../src/topology/dead-topic-of';
+import { replayGroupOf } from '../src/topology/replay-group-of';
+import { topologyOf } from '../src/topology/topology-of';
+import type { TopologySettings } from '../src/topology/topology-settings';
+import { PLACED } from './support/events';
 
 const ISSUED = 'billing.invoice.issued';
 

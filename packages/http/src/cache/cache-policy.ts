@@ -1,7 +1,7 @@
 import type { DurationText } from '@ddd-ts-kit/kernel';
-import type { CacheScope } from './cache-scope.js';
-import type { CacheTagSource } from './cache-tag-source.js';
-import type { EntityTagSource } from './entity-tag-source.js';
+import type { CacheScope } from './cache-scope';
+import type { CacheTagSource } from './cache-tag-source';
+import type { EntityTagSource } from './entity-tag-source';
 
 /**
  * How the answer of a read may be kept by the caches on the way, declared on a controller or a

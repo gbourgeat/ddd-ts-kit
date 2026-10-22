@@ -18,11 +18,11 @@ import {
   subscribeAll,
   type OutboxRelayFailure,
 } from '@ddd-ts-kit/events';
-import type { NatsFailure } from '../src/index.js';
-import type { Broker } from './support/broker.js';
-import { BROKERS } from './support/brokers.js';
-import { failuresOf } from './support/hooks.js';
-import { eventually } from './support/waiting.js';
+import type { NatsFailure } from '../src';
+import type { Broker } from './support/broker';
+import { BROKERS } from './support/brokers';
+import { failuresOf } from './support/hooks';
+import { eventually } from './support/waiting';
 
 const orderPlaced = defineIntegrationEvent({
   type: 'ordering.order.placed',

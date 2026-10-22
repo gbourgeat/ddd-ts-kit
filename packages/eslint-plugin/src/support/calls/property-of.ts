@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { keyName } from '../classes/key-name.js';
+import { keyName } from '../classes/key-name';
 
 export function propertyOf(object: TSESTree.ObjectExpression, key: string): TSESTree.Property | undefined {
   return object.properties

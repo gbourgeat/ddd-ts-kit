@@ -1,4 +1,4 @@
-import type { Repository } from './repository.js';
+import type { Repository } from './repository';
 
 /** The current branch, `main`, or `HEAD` when detached; `none` outside a repository. */
 export function currentBranch({ root, git }: Repository): string {

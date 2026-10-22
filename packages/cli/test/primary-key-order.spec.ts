@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { primaryKeyOrderFindings } from '../src/migration/index.js';
-import { sqlStatements } from '../src/migration/sql-statements.js';
+import { primaryKeyOrderFindings } from '../src/migration';
+import { sqlStatements } from '../src/migration/sql-statements';
 
 const BREAK = '--> statement-breakpoint';
 

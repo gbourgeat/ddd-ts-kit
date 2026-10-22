@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { changeConfig, checkJsonOf } from './check-support.js';
-import { cli, DEFAULT_STACK, read, scaffoldEverything, tempDir, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
-import { readJson } from './support/read-json.js';
-import { VERSION } from '../src/version.js';
+import { changeConfig, checkJsonOf } from './check-support';
+import { cli, DEFAULT_STACK, read, scaffoldEverything, tempDir, write } from './helpers';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
+import { readJson } from './support/read-json';
+import { VERSION } from '../src/version';
 
 const CONFIG = 'ddd-ts-kit.config.json';
 const COMPOSITION = 'src/platform/composition/compose-application.ts';

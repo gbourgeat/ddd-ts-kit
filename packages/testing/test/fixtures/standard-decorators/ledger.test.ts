@@ -1,9 +1,9 @@
 import { declarationOf } from '@ddd-ts-kit/kernel/declarations';
 import { expect, it } from 'vitest';
-import { Journal } from './application/ports/journal.port.js';
-import { Ledger } from './domain/repositories/ledger.repository.js';
+import { Journal } from './application/ports/journal.port';
+import { Ledger } from './domain/repositories/ledger.repository';
 import { EmptyJournal } from './infrastructure/external/empty-journal.adapter.mjs';
-import { InMemoryLedger } from './infrastructure/persistence/in-memory-ledger.repository.js';
+import { InMemoryLedger } from './infrastructure/persistence/in-memory-ledger.repository';
 
 it('runs a TypeScript source that holds standard decorators', () => {
   const ledger = new InMemoryLedger();

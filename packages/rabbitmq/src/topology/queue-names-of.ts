@@ -1,5 +1,5 @@
-import type { ConsumerBinding } from './consumer-binding.js';
-import type { QueueNames } from './queue-names.js';
+import type { ConsumerBinding } from './consumer-binding';
+import type { QueueNames } from './queue-names';
 
 export function queueNamesOf({ consumer, type }: ConsumerBinding): QueueNames {
   const work = `${consumer}.${type}`;

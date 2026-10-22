@@ -17,11 +17,11 @@ import {
   kernelModule,
   type BindingAspect,
   type Instrumentation,
-} from '../src/index.js';
-import { GetOrder } from './support/ordering/application/queries/get-order/get-order.query.js';
-import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command.js';
-import { orderingModule } from './support/ordering/ordering.module.js';
-import { billingModule } from './support/billing/billing.module.js';
+} from '../src';
+import { GetOrder } from './support/ordering/application/queries/get-order/get-order.query';
+import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command';
+import { orderingModule } from './support/ordering/ordering.module';
+import { billingModule } from './support/billing/billing.module';
 
 /** An instrumentation that notes what it is asked to wrap and what goes through its wrappers. */
 function noting(journal: string[]): Instrumentation {

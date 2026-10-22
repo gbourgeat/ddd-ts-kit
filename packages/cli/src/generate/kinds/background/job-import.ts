@@ -1,7 +1,7 @@
-import { specifierOf } from '../../../alias/index.js';
-import { LINE_WIDTH } from '../../../layout/index.js';
-import type { Name } from '../../../naming/index.js';
-import type { Scope } from '../../scope.js';
+import { specifierOf } from '../../../alias';
+import { LINE_WIDTH } from '../../../layout';
+import type { Name } from '../../../naming';
+import type { Scope } from '../../scope';
 
 /**
  * How the spec of a background job imports it, with its payload type when it has one: on one

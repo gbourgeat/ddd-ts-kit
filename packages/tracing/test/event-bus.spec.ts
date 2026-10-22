@@ -11,8 +11,8 @@ import {
   tracedPublisher,
   tracedSubscriber,
   withSpan,
-} from '../src/index.js';
-import { setupTracing, type TestTracing } from './support/setup-tracing.js';
+} from '../src';
+import { setupTracing, type TestTracing } from './support/setup-tracing';
 
 const TRACE_ID = '4bf92f3577b34da6a3ce929d0e0e4736';
 const SPAN_ID = '00f067aa0ba902b7';

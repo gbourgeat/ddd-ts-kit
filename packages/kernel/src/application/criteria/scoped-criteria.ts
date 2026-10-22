@@ -1,5 +1,5 @@
-import type { Criteria } from './criteria.js';
-import type { FilterCondition } from './filter-node.js';
+import type { Criteria } from './criteria';
+import type { FilterCondition } from './filter-node';
 
 export interface ScopeRestriction {
   /** Conditions joined to the criteria by AND, on fields the read port chose. */

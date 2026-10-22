@@ -1,5 +1,5 @@
-import type { BusinessNames } from './config.js';
-import { isRecord } from './values/is-record.js';
+import type { BusinessNames } from './config';
+import { isRecord } from './values/is-record';
 
 /** Tolerant: an entry that is not a word is left out, and a `words` that is not a list keeps the defaults. */
 export function parseBusinessNames(value: unknown): BusinessNames {

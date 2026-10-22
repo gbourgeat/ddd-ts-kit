@@ -1,12 +1,12 @@
-import { readConfig } from '../config/index.js';
-import { formatResume } from '../worker/format-resume.js';
-import { openWorkerScope } from '../worker/open-worker-scope.js';
-import { resumeWorker } from '../worker/resume-worker.js';
-import type { WorkerScope } from '../worker/worker-scope.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
-import { knownContext } from './known-context.js';
-import { rowsOption } from './rows-option.js';
+import { readConfig } from '../config';
+import { formatResume } from '../worker/format-resume';
+import { openWorkerScope } from '../worker/open-worker-scope';
+import { resumeWorker } from '../worker/resume-worker';
+import type { WorkerScope } from '../worker/worker-scope';
+import { Arguments } from './arguments';
+import type { Command } from './command';
+import { knownContext } from './known-context';
+import { rowsOption } from './rows-option';
 
 /**
  * Prepares the place of one worker of a parallel build (worktree, branch, dependencies, scope file) and prints its briefing.

@@ -1,10 +1,10 @@
-import type { Name } from '../../../naming/index.js';
-import type { RenderContext } from '../../../templating/index.js';
-import type { Scope } from '../../scope.js';
-import { grantedInSpec } from '../job/granted-in-spec.js';
-import type { SentCommand } from '../job/sent-command.js';
-import { jobImport } from './job-import.js';
-import { payloadFieldOf } from './payload-field.js';
+import type { Name } from '../../../naming';
+import type { RenderContext } from '../../../templating';
+import type { Scope } from '../../scope';
+import { grantedInSpec } from '../job/granted-in-spec';
+import type { SentCommand } from '../job/sent-command';
+import { jobImport } from './job-import';
+import { payloadFieldOf } from './payload-field';
 
 const SPEC_INDENT = '      ';
 

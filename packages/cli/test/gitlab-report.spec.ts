@@ -1,8 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { cli, read, REPO_ROOT, scaffoldEverything, tempDir, write } from './helpers.js';
-import { jsonAt } from './support/json-at.js';
+import { cli, read, REPO_ROOT, scaffoldEverything, tempDir, write } from './helpers';
+import { jsonAt } from './support/json-at';
 
 const CONVERTER = path.join(REPO_ROOT, 'pipeline/gitlab/arch-to-codequality.mjs');
 const AGGREGATE = 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts';

@@ -1,7 +1,7 @@
-import { NoCurrentTenantError } from '../audit/no-current-tenant-error.js';
-import type { ExecutionScope } from '../ports/execution-scope.js';
-import { assertTenantId } from './assert-tenant-id.js';
-import type { TenantReach } from './tenant-reach.js';
+import { NoCurrentTenantError } from '../audit/no-current-tenant-error';
+import type { ExecutionScope } from '../ports/execution-scope';
+import { assertTenantId } from './assert-tenant-id';
+import type { TenantReach } from './tenant-reach';
 
 /**
  * For an adapter scoping a read: the tenants it may see. An elevation opened by `acrossTenants`

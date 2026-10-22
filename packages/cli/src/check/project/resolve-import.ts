@@ -1,9 +1,9 @@
 import { builtinModules } from 'node:module';
 import path from 'node:path';
-import { aliasRoots } from '../../alias/index.js';
-import type { Config } from '../../config/index.js';
-import type { ImportTarget } from '../model/import-target.js';
-import { locate } from './locate.js';
+import { aliasRoots } from '../../alias';
+import type { Config } from '../../config';
+import type { ImportTarget } from '../model/import-target';
+import { locate } from './locate';
 
 const SOURCE = /\.(?:ts|mts|cts)$/;
 /** A file that is not a module of the project, named with its own extension. */

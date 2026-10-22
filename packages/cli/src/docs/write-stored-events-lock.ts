@@ -1,8 +1,8 @@
-import { readStoredEventsLock } from '../check/event-sourcing/read-stored-events-lock.js';
-import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file.js';
-import type { Config } from '../config/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { declaredStoredEvents } from './declared-stored-events.js';
+import { readStoredEventsLock } from '../check/event-sourcing/read-stored-events-lock';
+import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file';
+import type { Config } from '../config';
+import type { Workspace } from '../workspace';
+import { declaredStoredEvents } from './declared-stored-events';
 
 /**
  * `ddd-ts-kit docs --stored-events`: records in `stored-events.lock.json` the shape of each

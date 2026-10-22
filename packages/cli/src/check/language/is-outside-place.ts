@@ -1,4 +1,4 @@
-import type { Location } from '../model/location.js';
+import type { Location } from '../model/location';
 
 /** The folders of `infrastructure/` where a context meets a language that is not its own. */
 const OUTSIDE = new Set(['anti-corruption', 'external']);

@@ -1,6 +1,6 @@
-import type { Finding } from '../model/finding.js';
-import { lineOf } from '../support/line-of.js';
-import type { DrizzleMigrations, JournalEntry } from './drizzle-migrations.js';
+import type { Finding } from '../model/finding';
+import { lineOf } from '../support/line-of';
+import type { DrizzleMigrations, JournalEntry } from './drizzle-migrations';
 
 const REGENERATE =
   'Keep the migrations of the main branch, delete the one of your branch (its .sql file, its snapshot under meta/ and its entry of meta/_journal.json), then run `npm run db:generate <name>` again on top of them, or let `npx ddd-ts-kit drizzle-generate --replay` do both.';

@@ -1,11 +1,11 @@
-import type { Config } from '../config/index.js';
-import { formatJson } from '../json/format-json.js';
-import type { Workspace } from '../workspace/index.js';
-import { clientFiles } from './client-files.js';
-import { clientManifest } from './client-manifest.js';
-import { CLIENTS_DIRECTORY } from './clients-directory.js';
-import type { PlannedClient } from './planned-client.js';
-import { putFile } from './put-file.js';
+import type { Config } from '../config';
+import { formatJson } from '../json/format-json';
+import type { Workspace } from '../workspace';
+import { clientFiles } from './client-files';
+import { clientManifest } from './client-manifest';
+import { CLIENTS_DIRECTORY } from './clients-directory';
+import type { PlannedClient } from './planned-client';
+import { putFile } from './put-file';
 
 /**
  * Writes the client of every document of the contract, and the build config that compiles them

@@ -1,10 +1,10 @@
-import type { Awaitable } from './awaitable.js';
-import type { ContractRunner } from './contract-runner.js';
-import { ClaimSuite } from './job-store/claim-suite.js';
-import type { JobStoreUnderContract } from './job-store/job-store-under-contract.js';
-import { KeepSuite } from './job-store/keep-suite.js';
-import { ReportSuite } from './job-store/report-suite.js';
-import { TransactionSuite, type UnitOfWorkOfTheStore } from './job-store/transaction-suite.js';
+import type { Awaitable } from './awaitable';
+import type { ContractRunner } from './contract-runner';
+import { ClaimSuite } from './job-store/claim-suite';
+import type { JobStoreUnderContract } from './job-store/job-store-under-contract';
+import { KeepSuite } from './job-store/keep-suite';
+import { ReportSuite } from './job-store/report-suite';
+import { TransactionSuite, type UnitOfWorkOfTheStore } from './job-store/transaction-suite';
 
 export interface JobStoreContractOptions {
   readonly name: string;

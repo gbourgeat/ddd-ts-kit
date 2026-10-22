@@ -1,5 +1,5 @@
-import type { Page } from '../pagination/page.js';
-import type { StampedRow } from './stamped-row.js';
+import type { Page } from '../pagination/page';
+import type { StampedRow } from './stamped-row';
 
 /**
  * Where a read model is rebuilt from: the read contract the owning context publishes, behind

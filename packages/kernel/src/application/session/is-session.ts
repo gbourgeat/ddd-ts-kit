@@ -1,5 +1,5 @@
-import { isActor } from '../actor/is-actor.js';
-import type { Session } from './session.js';
+import { isActor } from '../actor/is-actor';
+import type { Session } from './session';
 
 type SessionKeys = Record<'id' | 'actor' | 'issuedAt' | 'authenticationMethod' | 'extensions', unknown>;
 

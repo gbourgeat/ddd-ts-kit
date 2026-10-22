@@ -1,6 +1,6 @@
-import { ResponseContractError } from '../error/response-contract-error.js';
-import type { RouteOutput } from '../route/route-output.js';
-import type { Route } from '../route/route.js';
+import { ResponseContractError } from '../error/response-contract-error';
+import type { RouteOutput } from '../route/route-output';
+import type { Route } from '../route/route';
 
 export function assertDeclaredResponse(route: Route, { status, body }: RouteOutput): void {
   const declared = route.responses[status];

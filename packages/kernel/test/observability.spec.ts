@@ -7,7 +7,7 @@ import {
   NoopMetrics,
   type Logger,
   type Metrics,
-} from '../src/index.js';
+} from '../src';
 
 describe('InMemoryLogger', () => {
   it('records entries as data, one per call, in order', () => {

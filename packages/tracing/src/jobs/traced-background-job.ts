@@ -1,10 +1,10 @@
 import { SpanKind, context, trace } from '@opentelemetry/api';
 import type { BackgroundJobExecution } from '@ddd-ts-kit/kernel';
-import { workAttributes } from '../local-root/work-attributes.js';
-import { spanContextFromTraceparent } from '../propagation/span-context-from-traceparent.js';
-import { inSpan } from '../span/in-span.js';
-import { OUTCOME_ATTRIBUTE } from '../span/outcome-attribute.js';
-import type { TracedJobOptions } from './traced-job.js';
+import { workAttributes } from '../local-root/work-attributes';
+import { spanContextFromTraceparent } from '../propagation/span-context-from-traceparent';
+import { inSpan } from '../span/in-span';
+import { OUTCOME_ATTRIBUTE } from '../span/outcome-attribute';
+import type { TracedJobOptions } from './traced-job';
 
 type BackgroundJobRun = (payload: unknown, execution: BackgroundJobExecution) => Promise<void>;
 

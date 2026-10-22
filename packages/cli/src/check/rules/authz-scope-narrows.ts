@@ -1,16 +1,16 @@
-import { isGranted } from '../authz/is-granted.js';
-import { type PermissionSet, permissionSets } from '../authz/permission-sets.js';
-import { scopedPermission } from '../authz/scoped-permission.js';
-import { type SignedInGrantSources, signedInGrantSources } from '../authz/signed-in-grant-sources.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import type { Scan } from '../scan/scan.js';
-import { reporter } from '../support/reporter.js';
-import { toViolations } from '../support/to-violations.js';
-import { callArguments } from '../text/call-arguments.js';
-import { platformFileIn } from '../../platform-layout/index.js';
-import { isInProject } from '../authz/is-in-project.js';
+import { isGranted } from '../authz/is-granted';
+import { type PermissionSet, permissionSets } from '../authz/permission-sets';
+import { scopedPermission } from '../authz/scoped-permission';
+import { type SignedInGrantSources, signedInGrantSources } from '../authz/signed-in-grant-sources';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import type { Scan } from '../scan/scan';
+import { reporter } from '../support/reporter';
+import { toViolations } from '../support/to-violations';
+import { callArguments } from '../text/call-arguments';
+import { platformFileIn } from '../../platform-layout';
+import { isInProject } from '../authz/is-in-project';
 
 /** `<receiver>.scope(`, the opening parenthesis last. */
 const SCOPE_CALL = /([\w$.]*)\.scope\s*\(/g;

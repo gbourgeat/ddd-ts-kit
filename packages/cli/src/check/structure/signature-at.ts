@@ -1,6 +1,6 @@
-import { BRACKETS } from '../text/brackets.js';
-import { matchingBracket } from '../text/matching-bracket.js';
-import { splitParameters } from '../text/split-parameters.js';
+import { BRACKETS } from '../text/brackets';
+import { matchingBracket } from '../text/matching-bracket';
+import { splitParameters } from '../text/split-parameters';
 
 export interface Signature {
   readonly parameters: readonly string[];

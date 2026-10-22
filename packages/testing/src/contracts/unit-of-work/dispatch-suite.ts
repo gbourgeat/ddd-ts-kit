@@ -1,9 +1,9 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { Command, InMemoryCommandBus, unitOfWorkMiddleware } from '@ddd-ts-kit/kernel';
-import { ContractSuite } from '../contract-suite.js';
-import { Parcel } from './parcel.js';
-import { ShippingBench } from './shipping-bench.js';
-import type { UnitOfWorkUnderContract } from './unit-of-work-under-contract.js';
+import { ContractSuite } from '../contract-suite';
+import { Parcel } from './parcel';
+import { ShippingBench } from './shipping-bench';
+import type { UnitOfWorkUnderContract } from './unit-of-work-under-contract';
 
 class RegisterParcels extends Command<undefined> {
   constructor(readonly ids: readonly string[]) {

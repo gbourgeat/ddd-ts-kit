@@ -1,12 +1,12 @@
 import { ASTUtils, AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { accessedName } from '../calls/accessed-name.js';
-import { constructorOf } from '../classes/constructor-of.js';
-import { enclosingMember } from '../classes/enclosing-member.js';
-import { memberName } from '../classes/member-name.js';
-import { parameterName } from '../members/parameter-name.js';
-import { parameterProperties } from '../members/parameter-properties.js';
-import { startsAtThis } from '../members/starts-at-this.js';
-import { typeReferenceName } from './type-reference-name.js';
+import { accessedName } from '../calls/accessed-name';
+import { constructorOf } from '../classes/constructor-of';
+import { enclosingMember } from '../classes/enclosing-member';
+import { memberName } from '../classes/member-name';
+import { parameterName } from '../members/parameter-name';
+import { parameterProperties } from '../members/parameter-properties';
+import { startsAtThis } from '../members/starts-at-this';
+import { typeReferenceName } from './type-reference-name';
 
 type Source = Readonly<TSESLint.SourceCode>;
 

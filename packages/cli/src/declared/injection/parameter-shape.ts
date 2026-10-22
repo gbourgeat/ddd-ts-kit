@@ -1,4 +1,4 @@
-import { matchingBracket } from '../../check/text/matching-bracket.js';
+import { matchingBracket } from '../../check/text/matching-bracket';
 
 /** A constructor parameter, read as text: its name, the type it is annotated with, and what makes it more than that. */
 export interface ParameterShape {

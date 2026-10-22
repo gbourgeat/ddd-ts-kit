@@ -1,5 +1,5 @@
 import { defineCriteria, type CriteriaDefinition } from '@ddd-ts-kit/kernel';
-import type { CriteriaContractRow } from './criteria-contract-row.js';
+import type { CriteriaContractRow } from './criteria-contract-row';
 
 /** What the read port of the contract accepts: every operator of every type, groups two deep. */
 export const criteriaContractDefinition: CriteriaDefinition<CriteriaContractRow> = defineCriteria<CriteriaContractRow>({

@@ -1,6 +1,6 @@
 import { bigint, text } from 'drizzle-orm/pg-core';
-import { AUDIT_CHAINS_TABLE } from '../sql/audit-chains-table-name.js';
-import { tableIn } from './table-in.js';
+import { AUDIT_CHAINS_TABLE } from '../sql/audit-chains-table-name';
+import { tableIn } from './table-in';
 
 export type AuditChainsTable = ReturnType<typeof auditChainsTable>;
 

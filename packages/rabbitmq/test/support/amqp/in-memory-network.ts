@@ -1,6 +1,6 @@
 import type { ChannelModel } from 'amqplib';
-import { ConnectionRefused } from './errors.js';
-import type { Opening, Severable, Wire } from './model.js';
+import { ConnectionRefused } from './errors';
+import type { Opening, Severable, Wire } from './model';
 
 /**
  * The network between a bus and the broker: it can stop passing the replies of the broker

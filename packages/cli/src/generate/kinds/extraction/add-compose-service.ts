@@ -1,4 +1,4 @@
-import type { Workspace } from '../../../workspace/index.js';
+import type { Workspace } from '../../../workspace';
 
 const COMPOSE = 'docker-compose.yml';
 

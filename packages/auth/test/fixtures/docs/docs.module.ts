@@ -1,14 +1,14 @@
 import { defineContextModule } from '@ddd-ts-kit/di';
 import { IdGenerator } from '@ddd-ts-kit/kernel';
-import { docsPermissions } from './application/authorization/docs.permissions.js';
-import { CreateDocument } from './application/commands/create-document/create-document.command.js';
-import { CreateDocumentHandler } from './application/commands/create-document/create-document.handler.js';
-import { ShareDocument } from './application/commands/share-document/share-document.command.js';
-import { ShareDocumentHandler } from './application/commands/share-document/share-document.handler.js';
-import { DocumentGrants } from './application/ports/document-grants.port.js';
-import { GetDocument } from './application/queries/get-document/get-document.query.js';
-import { GetDocumentHandler } from './application/queries/get-document/get-document.handler.js';
-import { DocumentRepository } from './domain/repositories/document.repository.js';
+import { docsPermissions } from './application/authorization/docs.permissions';
+import { CreateDocument } from './application/commands/create-document/create-document.command';
+import { CreateDocumentHandler } from './application/commands/create-document/create-document.handler';
+import { ShareDocument } from './application/commands/share-document/share-document.command';
+import { ShareDocumentHandler } from './application/commands/share-document/share-document.handler';
+import { DocumentGrants } from './application/ports/document-grants.port';
+import { GetDocument } from './application/queries/get-document/get-document.query';
+import { GetDocumentHandler } from './application/queries/get-document/get-document.handler';
+import { DocumentRepository } from './domain/repositories/document.repository';
 
 export const docsModule = defineContextModule({
   name: 'docs',

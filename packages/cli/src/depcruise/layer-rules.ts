@@ -1,8 +1,8 @@
-import type { Config } from '../config/index.js';
-import type { CruiseRule } from './cruise-rule.js';
-import { escapePattern } from './escape-pattern.js';
-import { packagePatterns } from './package-patterns.js';
-import { testFiles } from './test-files.js';
+import type { Config } from '../config';
+import type { CruiseRule } from './cruise-rule';
+import { escapePattern } from './escape-pattern';
+import { packagePatterns } from './package-patterns';
+import { testFiles } from './test-files';
 
 export function layerRules(config: Config): CruiseRule[] {
   return [

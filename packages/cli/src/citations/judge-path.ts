@@ -1,10 +1,10 @@
-import { firstFlaw } from '../check/canonical/first-flaw.js';
-import { flawInContexts } from '../check/canonical/flaw-in-contexts.js';
-import type { Citing } from './citing.js';
-import type { Evidence } from './evidence.js';
-import type { Removal } from './history.js';
-import { removedByOf } from './removed-by-of.js';
-import type { Judgement } from './stale-citation.js';
+import { firstFlaw } from '../check/canonical/first-flaw';
+import { flawInContexts } from '../check/canonical/flaw-in-contexts';
+import type { Citing } from './citing';
+import type { Evidence } from './evidence';
+import type { Removal } from './history';
+import { removedByOf } from './removed-by-of';
+import type { Judgement } from './stale-citation';
 
 /**
  * A path cited by a design, under the source root or relative to a context (looked for in each

@@ -1,8 +1,8 @@
-import type { SourceFile } from '../../check/model/source-file.js';
-import { importedFrom } from '../../check/support/imported-from.js';
-import { exportedNameOf } from './exported-name-of.js';
-import type { ReadConstructor } from './read-constructor.js';
-import type { Sources } from './sources.js';
+import type { SourceFile } from '../../check/model/source-file';
+import { importedFrom } from '../../check/support/imported-from';
+import { exportedNameOf } from './exported-name-of';
+import type { ReadConstructor } from './read-constructor';
+import type { Sources } from './sources';
 
 interface Lookup {
   readonly sources: Sources;

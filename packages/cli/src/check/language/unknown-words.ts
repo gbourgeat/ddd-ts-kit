@@ -1,6 +1,6 @@
-import { splitWords } from '../../naming/index.js';
-import type { Glossary } from './parse-glossary.js';
-import { sameWord } from './same-word.js';
+import { splitWords } from '../../naming';
+import type { Glossary } from './parse-glossary';
+import { sameWord } from './same-word';
 
 /** Words that name a role of the architecture, not a concept of the business. */
 const STRUCTURAL_WORDS = new Set([

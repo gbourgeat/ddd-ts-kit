@@ -1,13 +1,13 @@
-import { emit } from '../emit.js';
-import type { Kind } from '../kind.js';
-import { learnTerms } from '../learn-terms.js';
-import { named } from '../named.js';
-import { openScope } from '../open-scope.js';
-import { vars } from '../vars.js';
-import { existingAggregate } from './existing-aggregate.js';
-import { parseTransitions } from './state-machine/parse-transitions.js';
-import { stateMachineVars } from './state-machine/state-machine-vars.js';
-import { statusVocabulary } from './state-machine/status-vocabulary.js';
+import { emit } from '../emit';
+import type { Kind } from '../kind';
+import { learnTerms } from '../learn-terms';
+import { named } from '../named';
+import { openScope } from '../open-scope';
+import { vars } from '../vars';
+import { existingAggregate } from './existing-aggregate';
+import { parseTransitions } from './state-machine/parse-transitions';
+import { stateMachineVars } from './state-machine/state-machine-vars';
+import { statusVocabulary } from './state-machine/status-vocabulary';
 
 export const stateMachineKind: Kind = {
   name: 'state-machine',

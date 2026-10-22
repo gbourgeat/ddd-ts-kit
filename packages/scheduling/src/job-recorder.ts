@@ -1,10 +1,10 @@
 import type { Clock, JobOutcome, JobRun, LogFields, LogLevel, Logger, Metrics } from '@ddd-ts-kit/kernel';
-import { errorCodeOf } from './errors/error-code-of.js';
-import type { JobRunObserver } from './job-run-observer.js';
-import { DURATION_HISTOGRAM, RUNS_COUNTER } from './metric-names.js';
-import type { Occurrence } from './occurrence.js';
-import type { RegisteredJob } from './registered-job.js';
-import type { StartedRun } from './started-run.js';
+import { errorCodeOf } from './errors/error-code-of';
+import type { JobRunObserver } from './job-run-observer';
+import { DURATION_HISTOGRAM, RUNS_COUNTER } from './metric-names';
+import type { Occurrence } from './occurrence';
+import type { RegisteredJob } from './registered-job';
+import type { StartedRun } from './started-run';
 
 export interface RecorderOptions {
   readonly clock: Clock;

@@ -1,5 +1,5 @@
-import { DomainError } from '../../domain/errors/domain-error.js';
-import { hasDriverCode } from './has-driver-code.js';
+import { DomainError } from '../../domain/errors/domain-error';
+import { hasDriverCode } from './has-driver-code';
 
 /**
  * What a database answers when it gives a transaction up for a concurrent one: a serialization

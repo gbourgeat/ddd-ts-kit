@@ -1,5 +1,5 @@
-import type { Name } from '../../../naming/index.js';
-import type { CommandInput } from './command-input.js';
+import type { Name } from '../../../naming';
+import type { CommandInput } from './command-input';
 
 /** The command a job sends, as its file and the wiring of its context say it. */
 export interface SentCommand {

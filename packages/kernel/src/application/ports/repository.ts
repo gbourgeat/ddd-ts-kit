@@ -1,4 +1,4 @@
-import type { AggregateRoot } from '../../domain/aggregate-root.js';
+import type { AggregateRoot } from '../../domain/aggregate-root';
 
 /**
  * The contract every repository shares, one per aggregate root. The port of a context extends

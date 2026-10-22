@@ -1,7 +1,7 @@
-import type { Config } from '../config/index.js';
-import { toName } from '../naming/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { roleFilesOf, treeOf } from '../model-modules/index.js';
+import type { Config } from '../config';
+import { toName } from '../naming';
+import type { Workspace } from '../workspace';
+import { roleFilesOf, treeOf } from '../model-modules';
 
 interface Tree {
   readonly ws: Workspace;

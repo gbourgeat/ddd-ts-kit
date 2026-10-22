@@ -1,5 +1,5 @@
-import type { EventToAppend } from './event-to-append.js';
-import type { StoredData } from './stored-data.js';
+import type { EventToAppend } from './event-to-append';
+import type { StoredData } from './stored-data';
 
 /** An event as the store gives it back, placed in its stream and in the whole store. */
 export interface StoredEvent extends EventToAppend {

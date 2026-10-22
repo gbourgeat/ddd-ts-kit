@@ -1,4 +1,4 @@
-import type { TokenReference } from './token-reference.js';
+import type { TokenReference } from './token-reference';
 
 /** The class a constructor parameter names, or why it names none. */
 export type ResolvedToken =

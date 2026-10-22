@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { exists, read } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { textsAt } from './support/texts-at.js';
-import { readJson } from './support/read-json.js';
-import { KIT_RANGE } from './support/kit-range.js';
+import { exists, read } from './helpers';
+import { initProject } from './support/init-project';
+import { textsAt } from './support/texts-at';
+import { readJson } from './support/read-json';
+import { KIT_RANGE } from './support/kit-range';
 
 const platform = (root: string, file: string): string => read(root, `src/platform/${file}`);
 

@@ -1,4 +1,4 @@
-import { InMemoryJobStore, type ClaimRequest, type ClaimedJob, type JobLease } from '../../src/index.js';
+import { InMemoryJobStore, type ClaimRequest, type ClaimedJob, type JobLease } from '../../src';
 
 class StoreDown extends Error {
   readonly code = 'STORE_DOWN';

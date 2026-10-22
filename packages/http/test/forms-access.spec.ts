@@ -12,7 +12,7 @@ import {
   type FieldQuestion,
   type RawRequest,
   type Route,
-} from '../src/index.js';
+} from '../src';
 
 const permissions = {
   enrol: { id: 'school:pupil.enrol' },

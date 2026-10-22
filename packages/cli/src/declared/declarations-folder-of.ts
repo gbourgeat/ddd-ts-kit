@@ -1,4 +1,4 @@
-import { intoModule, moduleSplit } from '../model-modules/index.js';
+import { intoModule, moduleSplit } from '../model-modules';
 
 /**
  * The role folder a role file of a context belongs to, both relative to the context: the folder

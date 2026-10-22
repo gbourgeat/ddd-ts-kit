@@ -1,4 +1,4 @@
-import { hasDriverCode } from '../../persistence/has-driver-code.js';
+import { hasDriverCode } from '../../persistence/has-driver-code';
 
 /**
  * What PostgreSQL answers when another transaction appended first: a duplicate (stream, version)

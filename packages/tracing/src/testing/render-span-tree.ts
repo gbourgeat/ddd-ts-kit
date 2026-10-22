@@ -1,4 +1,4 @@
-import type { ExpectedSpan } from './expected-span.js';
+import type { ExpectedSpan } from './expected-span';
 
 /**
  * A tree as indented text, one span per line: `name [KIND] ERROR {key=value}`. Only the

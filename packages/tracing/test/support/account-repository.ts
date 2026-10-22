@@ -1,4 +1,4 @@
-import { InsufficientFunds } from './insufficient-funds.js';
+import { InsufficientFunds } from './insufficient-funds';
 
 export class AccountRepository {
   private readonly rows = new Map<string, number>([['acc-1', 100]]);

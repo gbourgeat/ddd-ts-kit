@@ -1,6 +1,6 @@
-import type { UploadSpec } from '../route/upload-spec.js';
-import type { RawRequest } from './raw-request.js';
-import type { ReceivedUpload } from './received-upload.js';
+import type { UploadSpec } from '../route/upload-spec';
+import type { RawRequest } from './raw-request';
+import type { ReceivedUpload } from './received-upload';
 
 /**
  * Reads the upload a route declares out of its request, as soon as the file starts to arrive.

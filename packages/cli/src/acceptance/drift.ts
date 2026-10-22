@@ -1,6 +1,6 @@
-import type { AcceptanceLock, LockedScenario } from './acceptance-lock.js';
-import type { Criterion } from './criteria-in.js';
-import type { Scenario } from './scenario.js';
+import type { AcceptanceLock, LockedScenario } from './acceptance-lock';
+import type { Criterion } from './criteria-in';
+import type { Scenario } from './scenario';
 
 /** What a locked scenario or criterion became: its new fingerprint, or `removed`. */
 const REMOVED = 'removed';

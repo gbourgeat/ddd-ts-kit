@@ -1,5 +1,5 @@
-import { mentionedRows } from '../citations/mentioned-rows.js';
-import type { GitRunner } from './attributed-marker.js';
+import { mentionedRows } from '../citations/mentioned-rows';
+import type { GitRunner } from './attributed-marker';
 
 /** The rows a commit belongs to. */
 export interface CommitRows {

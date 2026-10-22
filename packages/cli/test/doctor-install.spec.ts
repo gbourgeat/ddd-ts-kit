@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { VERSION } from '../src/version.js';
-import { cli, tempDir, write } from './helpers.js';
-import { installKit } from './support/install-kit.js';
-import { jsonAt } from './support/json-at.js';
+import { VERSION } from '../src/version';
+import { cli, tempDir, write } from './helpers';
+import { installKit } from './support/install-kit';
+import { jsonAt } from './support/json-at';
 
 let root: string;
 

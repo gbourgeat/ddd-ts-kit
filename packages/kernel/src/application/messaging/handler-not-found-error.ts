@@ -1,4 +1,4 @@
-import type { MessageInfo } from './message-info.js';
+import type { MessageInfo } from './message-info';
 
 export class HandlerNotFoundError extends Error {
   constructor(info: MessageInfo) {

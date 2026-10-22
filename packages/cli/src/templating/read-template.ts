@@ -1,6 +1,6 @@
 import fs from 'node:fs';
-import { CliError } from '../cli-error.js';
-import { TEMPLATES_ROOT } from './templates-root.js';
+import { CliError } from '../cli-error';
+import { TEMPLATES_ROOT } from './templates-root';
 
 const cache = new Map<string, string>();
 

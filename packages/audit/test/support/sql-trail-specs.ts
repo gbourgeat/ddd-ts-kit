@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryCommandBus, atCommit, unitOfWorkMiddleware } from '@ddd-ts-kit/kernel';
-import { auditMiddleware, verifyChain, type AuditCheckpoint } from '../../src/index.js';
-import { aSource, ada } from './fixtures.js';
-import { CancelAppointmentCommand } from './scheduling/application/commands/cancel-appointment.command.js';
-import { AppointmentAlreadyCancelled } from './scheduling/domain/errors/appointment-already-cancelled.js';
-import { lockSpecs } from './sql-trail-lock-specs.js';
-import { CHAIN, aRecord, sequencesOf, type SqlTrailSpecs } from './sql-trail-fixture.js';
+import { auditMiddleware, verifyChain, type AuditCheckpoint } from '../../src';
+import { aSource, ada } from './fixtures';
+import { CancelAppointmentCommand } from './scheduling/application/commands/cancel-appointment.command';
+import { AppointmentAlreadyCancelled } from './scheduling/domain/errors/appointment-already-cancelled';
+import { lockSpecs } from './sql-trail-lock-specs';
+import { CHAIN, aRecord, sequencesOf, type SqlTrailSpecs } from './sql-trail-fixture';
 
 /** The SQLSTATE a statement failed with, whether the driver error comes bare (knex) or as the cause of another (drizzle). */
 async function sqlStateOf(statement: Promise<unknown>): Promise<unknown> {

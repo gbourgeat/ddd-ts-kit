@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { checkJsonOf } from './check-support.js';
-import { cli, EXPLICIT_STACK, read, scaffoldEverything, tempDir } from './helpers.js';
-import { failure, report } from './reports.js';
+import { checkJsonOf } from './check-support';
+import { cli, EXPLICIT_STACK, read, scaffoldEverything, tempDir } from './helpers';
+import { failure, report } from './reports';
 
 const SHIPPING = 'src/contexts/shipping';
 const PROJECTION = `${SHIPPING}/application/projections/invoices-to-ship.projection.ts`;
@@ -31,7 +31,7 @@ describe('generate projection', () => {
     );
 
     expect(read(root, PROJECTION)).toContain(
-      "import { invoiceIssuedV2, type InvoiceIssuedV2 } from '@/contexts/billing/published-language/index';",
+      "import { invoiceIssuedV2, type InvoiceIssuedV2 } from '@/contexts/billing/published-language';",
     );
 
     expect(read(root, SPEC)).toContain('await expect(projection.issued(event)).resolves.toBeUndefined();');

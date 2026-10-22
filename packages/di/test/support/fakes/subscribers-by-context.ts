@@ -1,5 +1,5 @@
 import type { EventSubscribers } from '@ddd-ts-kit/kernel';
-import { RecordingSubscriber } from './recording-subscriber.js';
+import { RecordingSubscriber } from './recording-subscriber';
 
 /** What a broker bus does: each consuming context gets a subscriber of its own, made on first demand. */
 export class SubscribersByContext implements EventSubscribers {

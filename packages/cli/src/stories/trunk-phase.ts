@@ -1,7 +1,7 @@
-import { runGit } from '../commit/run-git.js';
-import type { Workspace } from '../workspace/index.js';
-import { readStoryPlace } from './read-story-place.js';
-import type { StoryPhase } from './story-phase.js';
+import { runGit } from '../commit/run-git';
+import type { Workspace } from '../workspace';
+import { readStoryPlace } from './read-story-place';
+import type { StoryPhase } from './story-phase';
 
 /**
  * Its base merged into its branch, as this repository knows the base: the pull request is read

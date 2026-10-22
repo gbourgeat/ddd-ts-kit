@@ -12,7 +12,7 @@ import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 {{/if}}
 {{#if upstream.known}}
-import { {{upstream.definition}} } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index{{alias.ext}}';
+import { {{upstream.definition}} } from '{{alias.contexts}}/{{upstream.kebab}}/published-language{{alias.index}}';
 {{/if}}
 import { startApplication, type RunningApplication } from '{{alias.test}}/e2e/support/start-application{{alias.ext}}';
 

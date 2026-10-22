@@ -1,9 +1,9 @@
-import { statementEnd } from '../text/statement-end.js';
-import { closingParenthesis } from './closing-parenthesis.js';
-import { identifierAt } from './identifier-at.js';
-import type { NamedBinding } from './named-binding.js';
-import { patternBindings } from './pattern-bindings.js';
-import { topLevelSeparator } from './top-level-separator.js';
+import { statementEnd } from '../text/statement-end';
+import { closingParenthesis } from './closing-parenthesis';
+import { identifierAt } from './identifier-at';
+import type { NamedBinding } from './named-binding';
+import { patternBindings } from './pattern-bindings';
+import { topLevelSeparator } from './top-level-separator';
 
 const DECLARATION = /(?<![\w$.])(?:const|let|var)\s+(?=[A-Za-z_$[{])/g;
 const OPENS_A_LOOP = /(?<![\w$.])for\s*(?:await\s*)?\(\s*$/;

@@ -1,9 +1,9 @@
 import { isAnonymous } from '@ddd-ts-kit/kernel';
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
-import { ForbiddenError } from '../../error/forbidden-error.js';
-import { UnauthorizedError } from '../../error/unauthorized-error.js';
-import type { GuardAdmission } from '../guard-admission.js';
-import type { Guard } from '../guard.js';
+import { ForbiddenError } from '../../error/forbidden-error';
+import { UnauthorizedError } from '../../error/unauthorized-error';
+import type { GuardAdmission } from '../guard-admission';
+import type { Guard } from '../guard';
 
 /**
  * Lets through a caller that holds one of the roles, as its `Actor` carries them: 401 to the

@@ -1,5 +1,5 @@
-import { isDeclarationsFile } from '../declared/index.js';
-import type { ModulesByContext } from '../model-modules/index.js';
+import { isDeclarationsFile } from '../declared';
+import type { ModulesByContext } from '../model-modules';
 
 /** Where the contexts are, and the modules of the model each declares. */
 export interface DerivedTree {

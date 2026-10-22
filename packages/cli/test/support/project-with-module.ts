@@ -1,5 +1,5 @@
 import { expect } from 'vitest';
-import { cli, scaffoldEverything, tempDir } from '../helpers.js';
+import { cli, scaffoldEverything, tempDir } from '../helpers';
 
 export const BILLING = 'src/contexts/billing';
 export const PURPOSE = 'The invoices from their draft to their payment.';

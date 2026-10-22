@@ -1,4 +1,4 @@
-import type { KafkaDelivery, KafkaFailure } from '../../src/index.js';
+import type { KafkaDelivery, KafkaFailure } from '../../src';
 
 export const deliveriesOf = (settled: KafkaDelivery[]) => (delivery: KafkaDelivery) => void settled.push(delivery);
 

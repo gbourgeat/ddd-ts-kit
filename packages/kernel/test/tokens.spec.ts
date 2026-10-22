@@ -7,8 +7,8 @@ import {
   IntegrationEventPublisher,
   IntegrationEventSubscriber,
   Repository,
-} from '../src/index.js';
-import { describeToken, portDefect, tokenIdentity } from '../src/declarations.js';
+} from '../src';
+import { describeToken, portDefect, tokenIdentity } from '../src/declarations';
 
 describe('tokens', () => {
   abstract class Mailer {

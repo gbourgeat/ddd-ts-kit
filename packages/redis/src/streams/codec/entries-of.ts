@@ -1,5 +1,5 @@
-import { listOf } from '../../replies/list-of.js';
-import type { Entry } from './entry.js';
+import { listOf } from '../../replies/list-of';
+import type { Entry } from './entry';
 
 /** The reply of `XRANGE` and `XCLAIM`. An entry deleted from its stream comes back empty and is left out. */
 export function entriesOf(reply: unknown): Entry[] {

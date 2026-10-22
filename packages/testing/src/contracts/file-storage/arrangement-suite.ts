@@ -1,5 +1,5 @@
-import { PDF, TEXT } from './contents.js';
-import { FileStorageSuite } from './file-storage-suite.js';
+import { PDF, TEXT } from './contents';
+import { FileStorageSuite } from './file-storage-suite';
 
 /** Files are copied, moved and listed by key, without reading them through the application. */
 export class ArrangementSuite extends FileStorageSuite {

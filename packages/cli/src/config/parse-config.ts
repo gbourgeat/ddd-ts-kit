@@ -1,25 +1,25 @@
-import { CliError } from '../cli-error.js';
-import type { AgentsConfig, Config, Deviation, OwnersConfig } from './config.js';
-import { CONFIG_FILE } from './config-file.js';
-import { defaultAllowedPackages } from './default-allowed-packages.js';
-import { DEFAULT_IMPORT_ALIAS } from './default-import-alias.js';
-import { parseBusinessNames } from './parse-business-names.js';
-import { parseCi } from './parse-ci.js';
-import { parseCommitConfig } from './parse-commit-config.js';
-import { parseContext } from './parse-context.js';
-import { parseCoverage } from './parse-coverage.js';
-import { parseLimits } from './parse-limits.js';
-import { parseOnePerFile } from './parse-one-per-file.js';
-import { parseOpenApi } from './parse-open-api.js';
-import { parseRuleSetting } from './parse-rule-setting.js';
-import { parseSdk } from './parse-sdk.js';
-import { parseStack } from './parse-stack.js';
-import { isRecord } from './values/is-record.js';
-import { mapEntries } from './values/map-entries.js';
-import { posix } from './values/posix.js';
-import { strings } from './values/strings.js';
-import { text } from './values/text.js';
-import { UNWRITTEN_IMPORT_EXTENSION } from './unwritten-import-extension.js';
+import { CliError } from '../cli-error';
+import type { AgentsConfig, Config, Deviation, OwnersConfig } from './config';
+import { CONFIG_FILE } from './config-file';
+import { defaultAllowedPackages } from './default-allowed-packages';
+import { DEFAULT_IMPORT_ALIAS } from './default-import-alias';
+import { parseBusinessNames } from './parse-business-names';
+import { parseCi } from './parse-ci';
+import { parseCommitConfig } from './parse-commit-config';
+import { parseContext } from './parse-context';
+import { parseCoverage } from './parse-coverage';
+import { parseLimits } from './parse-limits';
+import { parseOnePerFile } from './parse-one-per-file';
+import { parseOpenApi } from './parse-open-api';
+import { parseRuleSetting } from './parse-rule-setting';
+import { parseSdk } from './parse-sdk';
+import { parseStack } from './parse-stack';
+import { isRecord } from './values/is-record';
+import { mapEntries } from './values/map-entries';
+import { posix } from './values/posix';
+import { strings } from './values/strings';
+import { text } from './values/text';
+import { UNWRITTEN_IMPORT_EXTENSION } from './unwritten-import-extension';
 
 /**
  * Tolerant on purpose: a wrong classification or an unknown upstream is reported by

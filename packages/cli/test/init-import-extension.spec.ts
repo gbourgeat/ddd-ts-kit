@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { checkJsonOf } from './check-support.js';
-import { cli, DEFAULT_STACK, read, scaffoldEverything, tempDir, walk, write } from './helpers.js';
-import { initFailure } from './support/init-failure.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
-import { readJson } from './support/read-json.js';
+import { checkJsonOf } from './check-support';
+import { cli, DEFAULT_STACK, read, scaffoldEverything, tempDir, walk, write } from './helpers';
+import { initFailure } from './support/init-failure';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
+import { readJson } from './support/read-json';
 
 const CONFIG = 'ddd-ts-kit.config.json';
 const PROJECT_IMPORT = /(?:\bfrom|\bimport\(?)\s*['"]((?:@|\$[a-z][a-z0-9-]*)\/[^'"]*)['"]/g;

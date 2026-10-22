@@ -1,6 +1,6 @@
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { IntegrationEvent } from '../events/integration-event.js';
-import type { EventStamp } from './event-stamp.js';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { IntegrationEvent } from '../events/integration-event';
+import type { EventStamp } from './event-stamp';
 
 /**
  * The stamp of an event, for the row it changes. An integration event gives its id and

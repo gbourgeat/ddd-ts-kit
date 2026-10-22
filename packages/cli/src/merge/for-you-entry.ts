@@ -1,7 +1,7 @@
-import { runGit } from '../commit/run-git.js';
-import type { ConflictBlock } from './conflict-blocks.js';
-import type { ForYou } from './merge-report.js';
-import type { Resolution } from './resolution.js';
+import { runGit } from '../commit/run-git';
+import type { ConflictBlock } from './conflict-blocks';
+import type { ForYou } from './merge-report';
+import type { Resolution } from './resolution';
 
 /** Who the two sides are: the branch with its rows, the trunk since the base. */
 export interface SidesNamed {

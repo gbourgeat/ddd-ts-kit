@@ -1,4 +1,4 @@
-import type { JobCheckpoints } from '../../src/index.js';
+import type { JobCheckpoints } from '../../src';
 
 export class InMemoryJobCheckpoints implements JobCheckpoints {
   readonly handled = new Map<string, Date>();

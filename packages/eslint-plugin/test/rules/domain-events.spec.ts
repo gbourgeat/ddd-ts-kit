@@ -1,5 +1,5 @@
-import { domainEventsDispatchedOnSave } from '../../src/rules/domain-events-dispatched-on-save.js';
-import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { domainEventsDispatchedOnSave } from '../../src/rules/domain-events-dispatched-on-save';
+import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
 const QUERY_HANDLER = `${BILLING}/application/queries/invoices-issued/invoices-issued.handler.ts`;

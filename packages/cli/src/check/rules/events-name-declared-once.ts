@@ -1,10 +1,10 @@
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import type { StringRecord } from '../scan/string-record.js';
-import type { ClassShape } from '../structure/class-shape.js';
-import { inContext } from '../support/in-context.js';
-import { perFile } from '../support/per-file.js';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import type { StringRecord } from '../scan/string-record';
+import type { ClassShape } from '../structure/class-shape';
+import { inContext } from '../support/in-context';
+import { perFile } from '../support/per-file';
 
 /** `static readonly eventName = '...'`, typed or not, or `extends NamedDomainEvent('...')`. */
 const STATIC_NAME =

@@ -1,7 +1,7 @@
-import { type WaitingOptions, acquiring } from '../../application/lock/acquiring.js';
-import type { LockHandle } from '../../application/lock/lock-handle.js';
-import type { Clock } from '../../application/ports/clock.js';
-import type { AcquireOptions, Lock } from '../../application/ports/lock.js';
+import { type WaitingOptions, acquiring } from '../../application/lock/acquiring';
+import type { LockHandle } from '../../application/lock/lock-handle';
+import type { Clock } from '../../application/ports/clock';
+import type { AcquireOptions, Lock } from '../../application/ports/lock';
 
 interface Holder {
   readonly token: number;

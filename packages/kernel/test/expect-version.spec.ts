@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PRECONDITION_FAILED, PreconditionFailedError, expectVersion } from '../src/index.js';
+import { PRECONDITION_FAILED, PreconditionFailedError, expectVersion } from '../src';
 
 describe('expectVersion', () => {
   const calendar = { id: 'calendar-1', version: 4 };

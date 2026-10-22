@@ -1,5 +1,5 @@
-import { compareDecimals } from './compare-decimals.js';
-import type { FieldType } from './field-type.js';
+import { compareDecimals } from './compare-decimals';
+import type { FieldType } from './field-type';
 
 /**
  * The order of two values of a field, neither being `null`: negative, zero or positive.

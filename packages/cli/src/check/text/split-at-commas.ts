@@ -1,4 +1,4 @@
-import type { ListPart } from './list-part.js';
+import type { ListPart } from './list-part';
 
 /** Splits on the commas met at depth zero, the depth being moved by `depthChange(char, previous)`; empty parts are dropped. */
 export function splitAtCommas(text: string, depthChange: (char: string, previous: string) => number): ListPart[] {

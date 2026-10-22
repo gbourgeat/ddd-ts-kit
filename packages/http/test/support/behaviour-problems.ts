@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { AdapterClient } from './adapter-client.js';
-import { BROKEN_ORDER, SECRET, SHIPPED_ORDER } from './orders.js';
+import type { AdapterClient } from './adapter-client';
+import { BROKEN_ORDER, SECRET, SHIPPED_ORDER } from './orders';
 
 interface ProblemBody {
   readonly issues: readonly { readonly path: string }[];

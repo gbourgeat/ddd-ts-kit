@@ -1,4 +1,4 @@
-import type { NamedBinding } from './named-binding.js';
+import type { NamedBinding } from './named-binding';
 
 const PROPERTY =
   /^[ \t]*(?:(?:public|private|protected|static|readonly|declare|override|abstract)\s+)*([A-Za-z_$][\w$]*)\??\s*(?=:|;|=(?![=>]))/gm;

@@ -1,4 +1,4 @@
-import { isRecord } from '../config/values/is-record.js';
+import { isRecord } from '../config/values/is-record';
 
 /** The alternatives of a security requirement, each the names of the schemes it sends together; none: public. */
 export function readSecurity(value: unknown): string[][] {

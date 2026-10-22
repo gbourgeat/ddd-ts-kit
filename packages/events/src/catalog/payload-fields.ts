@@ -1,7 +1,7 @@
-import { isRecord } from '../internal/json-schema/is-record.js';
-import { localRefName } from '../internal/json-schema/local-ref-name.js';
-import { splitDefinitions } from '../internal/json-schema/split-definitions.js';
-import type { PayloadField } from './payload-field.js';
+import { isRecord } from '../internal/json-schema/is-record';
+import { localRefName } from '../internal/json-schema/local-ref-name';
+import { splitDefinitions } from '../internal/json-schema/split-definitions';
+import type { PayloadField } from './payload-field';
 
 /**
  * Flattens the object properties of a JSON Schema: nested objects with dotted paths, one

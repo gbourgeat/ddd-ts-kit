@@ -1,8 +1,8 @@
 import type { TablesRelationalConfig } from 'drizzle-orm';
 import type { PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import type { ProcessedEventStore } from '@ddd-ts-kit/kernel';
-import type { DrizzleContext } from '../unit-of-work/drizzle-context.js';
-import { processedEventsTable, type ProcessedEventsTable } from './processed-events-table.js';
+import type { DrizzleContext } from '../unit-of-work/drizzle-context';
+import { processedEventsTable, type ProcessedEventsTable } from './processed-events-table';
 
 export interface DrizzleProcessedEventStoreOptions {
   /** Default `processedEventsTable()`, in the `public` schema. */

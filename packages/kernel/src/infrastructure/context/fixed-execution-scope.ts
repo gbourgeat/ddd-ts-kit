@@ -1,9 +1,9 @@
-import type { ExecutionContext } from '../../application/execution/execution-context.js';
-import { withActor } from '../../application/execution/with-actor.js';
-import type { ExecutionScope } from '../../application/ports/execution-scope.js';
-import type { FixedActorContext } from './fixed-actor-context.js';
-import { requiredExecutionContext } from './required-execution-context.js';
-import { restoring } from './restoring.js';
+import type { ExecutionContext } from '../../application/execution/execution-context';
+import { withActor } from '../../application/execution/with-actor';
+import type { ExecutionScope } from '../../application/ports/execution-scope';
+import type { FixedActorContext } from './fixed-actor-context';
+import { requiredExecutionContext } from './required-execution-context';
+import { restoring } from './restoring';
 
 /**
  * The test double: answers the context it was given. `run` switches to another context until

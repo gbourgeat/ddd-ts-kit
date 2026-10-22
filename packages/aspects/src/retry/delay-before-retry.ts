@@ -1,5 +1,5 @@
-import type { Backoff } from './backoff.js';
-import { fullJitter } from './full-jitter.js';
+import type { Backoff } from './backoff';
+import { fullJitter } from './full-jitter';
 
 const DEFAULT_FACTOR = 2;
 const DEFAULT_MAX_MS = 30_000;

@@ -1,4 +1,4 @@
-import type { IntegrationEvent } from '../events/integration-event.js';
+import type { IntegrationEvent } from '../events/integration-event';
 
 /** What use cases publish through, for any provider: in-memory, outbox and broker, SQS, Kafka, NATS, RabbitMQ. */
 export abstract class IntegrationEventPublisher {

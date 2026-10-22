@@ -1,4 +1,4 @@
-import type { StackFlags } from './stack-flags.js';
+import type { StackFlags } from './stack-flags';
 
 const term = (row: string): string[] => ['--term', row];
 

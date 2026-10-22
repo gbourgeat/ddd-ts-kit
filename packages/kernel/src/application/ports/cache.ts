@@ -1,4 +1,4 @@
-import type { CacheKey } from '../cache/cache-key.js';
+import type { CacheKey } from '../cache/cache-key';
 
 export interface CacheEntryOptions {
   /** Time to live. Without it the entry stays until deleted or evicted. */

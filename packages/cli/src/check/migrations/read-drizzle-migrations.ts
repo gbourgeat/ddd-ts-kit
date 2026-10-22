@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { isRecord } from '../support/is-record.js';
-import type { DrizzleMigrations, JournalEntry, SnapshotLink } from './drizzle-migrations.js';
-import { drizzleOutFolder } from './drizzle-out-folder.js';
+import { isRecord } from '../support/is-record';
+import type { DrizzleMigrations, JournalEntry, SnapshotLink } from './drizzle-migrations';
+import { drizzleOutFolder } from './drizzle-out-folder';
 
 /** The journal, the SQL files and the snapshots of the project; undefined when it has no journal to read. */
 export function readDrizzleMigrations(root: string): DrizzleMigrations | undefined {

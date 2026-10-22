@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lines, projectWith, reported } from './rules-support.js';
+import { lines, projectWith, reported } from './rules-support';
 
 const RULE = 'domain-events/transactional-before-commit';
 const BILLING = 'src/contexts/billing';

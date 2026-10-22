@@ -1,6 +1,6 @@
-import type { Workspace } from '../workspace/index.js';
-import type { ContextTree } from './context-tree.js';
-import { intoModule } from './into-module.js';
+import type { Workspace } from '../workspace';
+import type { ContextTree } from './context-tree';
+import { intoModule } from './into-module';
 
 /**
  * Every folder of a context that plays one role, by its path from the project root: the folder

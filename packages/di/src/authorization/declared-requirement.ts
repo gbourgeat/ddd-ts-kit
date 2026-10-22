@@ -1,6 +1,6 @@
 import type { Message, MessageType } from '@ddd-ts-kit/kernel';
 import { declarationOf } from '@ddd-ts-kit/kernel/declarations';
-import type { Requirement } from './requirement.js';
+import type { Requirement } from './requirement';
 
 /** What the message says of itself with `@Requires` or `@Public`; nothing for an undecorated one. */
 export function declaredRequirement(type: MessageType<Message>): Requirement {

@@ -1,8 +1,8 @@
-import type { Awaitable } from './awaitable.js';
-import type { ContractRunner } from './contract-runner.js';
-import { RebuildSuite } from './read-model/rebuild-suite.js';
-import type { ReadModelStoreUnderContract } from './read-model/read-model-store-under-contract.js';
-import { RowsSuite } from './read-model/rows-suite.js';
+import type { Awaitable } from './awaitable';
+import type { ContractRunner } from './contract-runner';
+import { RebuildSuite } from './read-model/rebuild-suite';
+import type { ReadModelStoreUnderContract } from './read-model/read-model-store-under-contract';
+import { RowsSuite } from './read-model/rows-suite';
 
 export interface ReadModelStoreContractOptions {
   readonly name: string;

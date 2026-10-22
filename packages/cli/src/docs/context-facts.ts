@@ -1,8 +1,8 @@
-import type { Upstream } from '../config/index.js';
-import type { BackgroundJobFacts } from './background-job-facts.js';
-import type { DeclaredFacts } from './declared-facts.js';
-import type { ProcessFacts } from './process-facts.js';
-import type { StateMachineFacts } from './state-machine-facts.js';
+import type { Upstream } from '../config';
+import type { BackgroundJobFacts } from './background-job-facts';
+import type { DeclaredFacts } from './declared-facts';
+import type { ProcessFacts } from './process-facts';
+import type { StateMachineFacts } from './state-machine-facts';
 
 /** What the documentation and `list` say about one bounded context, read from the config and the files. */
 export interface ContextFacts {

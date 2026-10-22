@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import { HydrationTimeoutError, defineCriteria, hydrate, pageOf, type Page } from '../src/index.js';
+import { HydrationTimeoutError, defineCriteria, hydrate, pageOf, type Page } from '../src';
 
 interface AppointmentRow {
   readonly id: string;

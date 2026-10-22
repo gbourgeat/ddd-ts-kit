@@ -1,6 +1,6 @@
-import type { DocumentPart } from './document-part.js';
-import { mentionedRows } from './mentioned-rows.js';
-import { textUnits } from './text-units.js';
+import type { DocumentPart } from './document-part';
+import { mentionedRows } from './mentioned-rows';
+import { textUnits } from './text-units';
 
 /** A Markdown file of the project, relative to its root, with its text. */
 export interface MarkdownFile {

@@ -1,5 +1,5 @@
-import type { ExecutionScope } from '../ports/execution-scope.js';
-import { tenantScopeOf } from '../audit/tenant-scope-of.js';
+import type { ExecutionScope } from '../ports/execution-scope';
+import { tenantScopeOf } from '../audit/tenant-scope-of';
 
 /**
  * A key of a shared store (a rate limit, a lock, a counter) confined to the tenant of the work

@@ -1,4 +1,4 @@
-import type { Actor } from '../actor/actor.js';
+import type { Actor } from '../actor/actor';
 
 /**
  * What travels with a background job from the work that enqueued it to its run: the run belongs

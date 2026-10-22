@@ -1,4 +1,4 @@
-import type { Exported } from './exported.js';
+import type { Exported } from './exported';
 
 /** What the exports of a file come to, once the general allowances are applied. */
 export interface ExportVerdict {

@@ -1,7 +1,7 @@
-import type { CommitLimitProblem } from './commit-limit-problems.js';
-import { OPENAPI_FORMATS } from './openapi-formats.js';
-import { isRecord } from './values/is-record.js';
-import { strings } from './values/strings.js';
+import type { CommitLimitProblem } from './commit-limit-problems';
+import { OPENAPI_FORMATS } from './openapi-formats';
+import { isRecord } from './values/is-record';
+import { strings } from './values/strings';
 
 const FILE_NAME = /^[a-z0-9][a-z0-9-]*$/;
 const CRITERIA = ['groups', 'contexts', 'tags'] as const;

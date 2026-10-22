@@ -1,7 +1,7 @@
-import { barrelFile } from './barrel-file.js';
-import type { DeclaredContext } from './context-declarations.js';
-import { isDeclarationsFile } from './is-declarations-file.js';
-import { singleFileDeclarations } from './single-file-declarations.js';
+import { barrelFile } from './barrel-file';
+import type { DeclaredContext } from './context-declarations';
+import { isDeclarationsFile } from './is-declarations-file';
+import { singleFileDeclarations } from './single-file-declarations';
 
 /** What both layouts write for a context that declares no role file: such a context is current either way. */
 const NOTHING_DECLARED = 'export {};\n';

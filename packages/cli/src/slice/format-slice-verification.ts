@@ -1,7 +1,7 @@
-import { formatCheck } from '../check/engine/format-check.js';
-import { formatMergeVerification } from '../merge/lost/format-merge-verification.js';
-import type { ScriptRun } from './script-run.js';
-import type { SliceVerification } from './slice-verification.js';
+import { formatCheck } from '../check/engine/format-check';
+import { formatMergeVerification } from '../merge/lost/format-merge-verification';
+import type { ScriptRun } from './script-run';
+import type { SliceVerification } from './slice-verification';
 
 const MERGES_WILL_BLOCK =
   '  restore each loss above before the commit: a later minor version fails the slice on them; `npx ddd-ts-kit verify-merge` alone already exits 1 on them';

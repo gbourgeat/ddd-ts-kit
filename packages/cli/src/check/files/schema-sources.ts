@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Project } from '../model/project.js';
+import type { Project } from '../model/project';
 
 /** A file that declares tables, by its path from the root, with its text. */
 export interface SchemaSource {

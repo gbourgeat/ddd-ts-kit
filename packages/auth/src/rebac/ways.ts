@@ -1,4 +1,4 @@
-import type { Way } from './via.js';
+import type { Way } from './via';
 
 /**
  * The ways of holding a derived relation: one of `anyOf` (OpenFGA: `or`), every one of `allOf`

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decode } from '../src/codec/decode.js';
+import { decode } from '../src/codec/decode';
 
 const envelope = { id: 'evt-1', type: 'billing.invoice-issued', version: 1, occurredAt: '2026-03-01T10:00:00.000Z' };
 

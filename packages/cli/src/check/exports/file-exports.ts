@@ -1,9 +1,9 @@
-import type { SourceFile } from '../model/source-file.js';
-import { braceDepthAt } from '../text/brace-depth-at.js';
-import { endAtDepthZero } from '../text/end-at-depth-zero.js';
-import { escapeRegExp } from '../text/escape-reg-exp.js';
-import { matchingBracket } from '../text/matching-bracket.js';
-import type { Exported } from './exported.js';
+import type { SourceFile } from '../model/source-file';
+import { braceDepthAt } from '../text/brace-depth-at';
+import { endAtDepthZero } from '../text/end-at-depth-zero';
+import { escapeRegExp } from '../text/escape-reg-exp';
+import { matchingBracket } from '../text/matching-bracket';
+import type { Exported } from './exported';
 
 const DECLARED =
   /(?<![\w$.])export\s+(?:default\s+)?(?:declare\s+)?(?:abstract\s+)?(?:async\s+)?(class|function|interface|const\s+enum|const|let|var|type|enum)\b\s*\*?\s*([A-Za-z_$][\w$]*)/g;

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers.js';
-import { failure, report } from './reports.js';
-import { jobProject } from './support/job-project.js';
+import { cli, read, write } from './helpers';
+import { failure, report } from './reports';
+import { jobProject } from './support/job-project';
 
 const BILLING = 'src/contexts/billing';
 const JOB = `${BILLING}/application/background/compile-statements.background-job.ts`;

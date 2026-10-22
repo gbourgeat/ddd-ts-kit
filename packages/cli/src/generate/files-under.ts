@@ -1,4 +1,4 @@
-import type { Workspace } from '../workspace/index.js';
+import type { Workspace } from '../workspace';
 
 /** Every file below `directory`, on disk or planned, relative to it. */
 export function filesUnder(ws: Workspace, directory: string, inside = ''): string[] {

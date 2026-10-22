@@ -1,6 +1,6 @@
-import type { CalledMember } from './called-member.js';
-import type { ProposedName } from './proposed-name.js';
-import { repositoryConcept } from './repository-concept.js';
+import type { CalledMember } from './called-member';
+import type { ProposedName } from './proposed-name';
+import { repositoryConcept } from './repository-concept';
 
 /** A read of one element: `findById`, `get`, `load`, `findOne`, `requireById`. */
 const ONE = /^(?:find|get|load|require)(?:One)?(?:ById)?$/;

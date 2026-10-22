@@ -1,4 +1,4 @@
-import { YamlShapeError } from './yaml-shape-error.js';
+import { YamlShapeError } from './yaml-shape-error';
 
 /** What starts a scalar the kit never writes plain: a flow collection, an anchor, an alias, a tag, a comment, a folded block. */
 const UNWRITTEN = /^[[\]{}&*!#>%@`|]/;

@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { Clock, CommandBus, FixedClock, IntegrationEventPublisher, UnitOfWork } from '@ddd-ts-kit/kernel';
-import { createTestApplication, fake, kernelModule } from '../src/index.js';
-import { InvoiceLedger } from './support/billing/application/ports/invoice-ledger.port.js';
-import { billingModule } from './support/billing/billing.module.js';
-import { InMemoryInvoiceLedger } from './support/billing/infrastructure/persistence/in-memory-invoice-ledger.js';
-import { wiringFailure } from './support/failure.js';
-import { CancelOrder } from './support/ordering/application/commands/cancel-order/cancel-order.command.js';
-import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command.js';
-import { GetOrder } from './support/ordering/application/queries/get-order/get-order.query.js';
-import { OrderRepository } from './support/ordering/domain/repositories/order.repository.js';
-import { InMemoryOrderRepository } from './support/ordering/infrastructure/persistence/in-memory-order.repository.js';
-import { orderingModule } from './support/ordering/ordering.module.js';
+import { createTestApplication, fake, kernelModule } from '../src';
+import { InvoiceLedger } from './support/billing/application/ports/invoice-ledger.port';
+import { billingModule } from './support/billing/billing.module';
+import { InMemoryInvoiceLedger } from './support/billing/infrastructure/persistence/in-memory-invoice-ledger';
+import { wiringFailure } from './support/failure';
+import { CancelOrder } from './support/ordering/application/commands/cancel-order/cancel-order.command';
+import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command';
+import { GetOrder } from './support/ordering/application/queries/get-order/get-order.query';
+import { OrderRepository } from './support/ordering/domain/repositories/order.repository';
+import { InMemoryOrderRepository } from './support/ordering/infrastructure/persistence/in-memory-order.repository';
+import { orderingModule } from './support/ordering/ordering.module';
 
 describe('createTestApplication', () => {
   it('makes a handler spec: fakes in, a command through the bus, the fake asserted', async () => {

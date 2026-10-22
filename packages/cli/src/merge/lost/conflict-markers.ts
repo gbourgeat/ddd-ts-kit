@@ -1,5 +1,5 @@
-import type { MergeFinding } from './merge-finding.js';
-import type { MergeSides } from './merge-sides.js';
+import type { MergeFinding } from './merge-finding';
+import type { MergeSides } from './merge-sides';
 
 const OPENING = /^<{7}(?: |$)/;
 const BASE = /^\|{7}(?: |$)/;

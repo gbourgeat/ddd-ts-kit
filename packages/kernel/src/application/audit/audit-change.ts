@@ -1,4 +1,4 @@
-import type { AuditScalar } from './audit-scalar.js';
-import type { MaskedValue } from './masked-value.js';
+import type { AuditScalar } from './audit-scalar';
+import type { MaskedValue } from './masked-value';
 
 export type AuditChange = AuditScalar | MaskedValue;

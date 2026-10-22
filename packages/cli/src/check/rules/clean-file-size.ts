@@ -1,11 +1,11 @@
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { besideTheSources } from '../project/beside-the-sources.js';
-import { isGeneratedContextFile } from '../support/is-generated-context-file.js';
-import { perFile } from '../support/per-file.js';
-import { reporter } from '../support/reporter.js';
-import { toViolations } from '../support/to-violations.js';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { besideTheSources } from '../project/beside-the-sources';
+import { isGeneratedContextFile } from '../support/is-generated-context-file';
+import { perFile } from '../support/per-file';
+import { reporter } from '../support/reporter';
+import { toViolations } from '../support/to-violations';
 
 const MAX_FILE_LINES = 350;
 

@@ -1,6 +1,6 @@
-import type { Stack } from '../config/index.js';
-import { inDialect } from '../package-manager/in-dialect.js';
-import type { DoctorFinding } from './doctor-finding.js';
+import type { Stack } from '../config';
+import { inDialect } from '../package-manager/in-dialect';
+import type { DoctorFinding } from './doctor-finding';
 
 /** The areas of a checkout rather than of the project: two clones of one project may differ in them. */
 const OF_THE_CHECKOUT: ReadonlySet<DoctorFinding['area']> = new Set(['node', 'install', 'submodule']);

@@ -1,5 +1,5 @@
-import { InvalidPageRequestError } from './invalid-page-request-error.js';
-import type { PageLimits } from './page-limits.js';
+import { InvalidPageRequestError } from './invalid-page-request-error';
+import type { PageLimits } from './page-limits';
 
 export function sizeWithin(limit: number | undefined, limits: PageLimits): number {
   const size = limit ?? limits.defaultSize;

@@ -1,4 +1,4 @@
-import { isPastParticiple } from './is-past-participle.js';
+import { isPastParticiple } from './is-past-participle';
 
 /**
  * Past participles spelled like the imperative of their verb: at the head of a name they read as

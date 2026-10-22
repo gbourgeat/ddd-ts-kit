@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Config } from '../config/index.js';
-import { REVIEW_POLICY } from '../init/files/guidance-files.js';
-import { PROFILE_HOOKS } from '../init/profile-hooks.js';
-import type { DoctorFinding } from './doctor-finding.js';
+import type { Config } from '../config';
+import { REVIEW_POLICY } from '../init/files/guidance-files';
+import { PROFILE_HOOKS } from '../init/profile-hooks';
+import type { DoctorFinding } from './doctor-finding';
 
 /**
  * The guidance this version writes once and the team then owns: the review policy, `REVIEW.md`,

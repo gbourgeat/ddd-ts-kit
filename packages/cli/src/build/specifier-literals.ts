@@ -1,7 +1,7 @@
-import type { Scan } from '../check/scan/scan.js';
-import { statementOf } from '../check/scan/statement-of.js';
-import type { StringRecord } from '../check/scan/string-record.js';
-import type { SpecifierLiteral } from './specifier-literal.js';
+import type { Scan } from '../check/scan/scan';
+import { statementOf } from '../check/scan/statement-of';
+import type { StringRecord } from '../check/scan/string-record';
+import type { SpecifierLiteral } from './specifier-literal';
 
 /** An ambient module declaration, which a declaration file may hold: `declare module '@/x.js'`. */
 const AUGMENTATION = /(?<![\w$.])declare\s+module\s*$/;

@@ -1,7 +1,7 @@
 import { sql, type SQL } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 import type { ExecutionScope } from '@ddd-ts-kit/kernel';
-import { reachCondition } from './reach-condition.js';
+import { reachCondition } from './reach-condition';
 
 /**
  * The condition every read of a table of tenant data carries: `.where(and(eq(invoices.id, id),

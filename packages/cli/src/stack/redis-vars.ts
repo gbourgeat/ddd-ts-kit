@@ -1,5 +1,5 @@
-import type { Config } from '../config/index.js';
-import type { RenderContext } from '../templating/index.js';
+import type { Config } from '../config';
+import type { RenderContext } from '../templating';
 
 /** One Redis protocol server for whatever asks for one: the cache, the lock, the rate limiter and the relay signal, the streams of the event bus. */
 export function redisVars(config: Config): RenderContext {

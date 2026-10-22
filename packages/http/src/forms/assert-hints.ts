@@ -1,8 +1,8 @@
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
-import type { SchemaNode } from '../schema/schema-node.js';
-import type { FieldLookup } from './field-lookup.js';
-import type { FormGroupHint } from './form-group-hint.js';
-import type { FormHints } from './form-hints.js';
+import type { SchemaNode } from '../schema/schema-node';
+import type { FieldLookup } from './field-lookup';
+import type { FormGroupHint } from './form-group-hint';
+import type { FormHints } from './form-hints';
 
 const MAX_DEPTH = 8;
 

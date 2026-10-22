@@ -1,21 +1,21 @@
 import { isAnonymous, ok } from '@ddd-ts-kit/kernel';
 import { customSchema, parseOrThrow } from '@ddd-ts-kit/validation';
-import { UnauthorizedError } from '../error/unauthorized-error.js';
-import type { FieldDecider } from '../field-access/field-decider.js';
-import { FieldJudge } from '../field-access/field-judge.js';
-import type { RouteInput } from '../route/route-input.js';
-import type { RouteOutput } from '../route/route-output.js';
-import type { Route } from '../route/route.js';
-import { withoutTrailingSlashes } from '../route/without-trailing-slashes.js';
-import { isRecord } from '../support/is-record.js';
-import { assertOpens } from './assert-opens.js';
-import { FORM_SCHEMA } from './form-schema.js';
-import { FormFormat } from './form-format.js';
-import { FormOfRoute } from './form-of-route.js';
-import type { FormQuery } from './form-query.js';
-import { formQuerySchema } from './form-query-schema.js';
-import { jsonFormsOf } from './json-forms-of.js';
-import { lookupsOf } from './lookups-of.js';
+import { UnauthorizedError } from '../error/unauthorized-error';
+import type { FieldDecider } from '../field-access/field-decider';
+import { FieldJudge } from '../field-access/field-judge';
+import type { RouteInput } from '../route/route-input';
+import type { RouteOutput } from '../route/route-output';
+import type { Route } from '../route/route';
+import { withoutTrailingSlashes } from '../route/without-trailing-slashes';
+import { isRecord } from '../support/is-record';
+import { assertOpens } from './assert-opens';
+import { FORM_SCHEMA } from './form-schema';
+import { FormFormat } from './form-format';
+import { FormOfRoute } from './form-of-route';
+import type { FormQuery } from './form-query';
+import { formQuerySchema } from './form-query-schema';
+import { jsonFormsOf } from './json-forms-of';
+import { lookupsOf } from './lookups-of';
 
 export interface FormRoutesOptions {
   /** Decides the fields the request schemas reserve: the same as `fieldAccess` of the mount options. Left out, every restricted field is absent. */

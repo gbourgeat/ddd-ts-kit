@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { DomainEventDispatcher } from '../../application/ports/domain-event-dispatcher.js';
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { CommitStep } from './commit-step.js';
+import type { DomainEventDispatcher } from '../../application/ports/domain-event-dispatcher';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { CommitStep } from './commit-step';
 
 /** One event waiting for the end of its scope: who dispatches it, and in which asynchronous context. */
 export interface QueuedDomainEvent {

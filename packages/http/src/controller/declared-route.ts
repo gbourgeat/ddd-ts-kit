@@ -1,11 +1,11 @@
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
-import type { CachePolicy } from '../cache/cache-policy.js';
-import { ROUTE_PATH_PATTERN } from '../route/route-path-pattern.js';
-import type { ControllerSpec } from './controller-spec.js';
-import type { GuardReference } from './guard-reference.js';
-import { Public } from './guards/public.js';
-import { presentationRegistry } from './presentation-registry.js';
-import type { RouteGroupClass } from './route-group-class.js';
+import type { CachePolicy } from '../cache/cache-policy';
+import { ROUTE_PATH_PATTERN } from '../route/route-path-pattern';
+import type { ControllerSpec } from './controller-spec';
+import type { GuardReference } from './guard-reference';
+import { Public } from './guards/public';
+import { presentationRegistry } from './presentation-registry';
+import type { RouteGroupClass } from './route-group-class';
 
 /** What a controller says once the groups above it are folded in. */
 export interface DeclaredRoute {

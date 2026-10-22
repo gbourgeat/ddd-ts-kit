@@ -1,7 +1,7 @@
-import type { Config } from '../config/index.js';
-import { readTemplate } from '../templating/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { PROFILE_HOOKS } from './profile-hooks.js';
+import type { Config } from '../config';
+import { readTemplate } from '../templating';
+import type { Workspace } from '../workspace';
+import { PROFILE_HOOKS } from './profile-hooks';
 
 /** Under the regulated profile, the two hooks of `.claude/hooks/`, written once for the team to own. */
 export function writeProfileHooks(ws: Workspace, config: Config): void {

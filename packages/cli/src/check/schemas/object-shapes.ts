@@ -1,8 +1,8 @@
-import type { SourceFile } from '../model/source-file.js';
-import { matchingBracket } from '../text/matching-bracket.js';
-import type { DeclaredShape } from './declared-shape.js';
-import { stillGenerated } from './still-generated.js';
-import { topLevelStatements } from './top-level-statements.js';
+import type { SourceFile } from '../model/source-file';
+import { matchingBracket } from '../text/matching-bracket';
+import type { DeclaredShape } from './declared-shape';
+import { stillGenerated } from './still-generated';
+import { topLevelStatements } from './top-level-statements';
 
 /** The object builders of zod, valibot and TypeBox: `z.object({`, `v.object({`, `Type.Object({`. */
 const OBJECT_BUILDER = /(?<![\w$])(?:z|v|Type|t)\s*\.\s*(?:object|strictObject|looseObject|Object)\s*\(\s*\{/g;

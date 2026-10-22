@@ -3,7 +3,7 @@ import { connect, type AddressInfo } from 'node:net';
 import { PassThrough } from 'node:stream';
 import { afterEach, describe, expect, it } from 'vitest';
 import { InMemoryFileStorage } from '@ddd-ts-kit/kernel';
-import { multipartUploads } from '../src/uploads.js';
+import { multipartUploads } from '../src/uploads';
 
 const SPEC = { field: 'document', maxBytes: 10_000_000, mediaTypes: ['application/pdf'] };
 const BOUNDARY = 'XyZ';

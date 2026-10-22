@@ -1,4 +1,4 @@
-import type { Stack } from '../config/index.js';
+import type { Stack } from '../config';
 
 /** The lockfile each package manager writes: what a cache of the installed dependencies is keyed on. */
 export const LOCKFILES: Readonly<Record<Stack['packageManager'], string>> = {

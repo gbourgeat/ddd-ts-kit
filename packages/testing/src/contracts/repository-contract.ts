@@ -1,9 +1,9 @@
 import { CONCURRENCY_CONFLICT } from '@ddd-ts-kit/kernel';
 import type { AggregateRoot, Repository } from '@ddd-ts-kit/kernel';
-import type { Awaitable } from './awaitable.js';
-import type { ContractRunner } from './contract-runner.js';
-import { ContractSuite } from './contract-suite.js';
-import { failureOf } from './failure-of.js';
+import type { Awaitable } from './awaitable';
+import type { ContractRunner } from './contract-runner';
+import { ContractSuite } from './contract-suite';
+import { failureOf } from './failure-of';
 
 export interface RepositoryContractOptions<A extends AggregateRoot<Id>, Id extends string | number> {
   readonly name: string;

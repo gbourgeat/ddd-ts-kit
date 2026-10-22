@@ -25,10 +25,10 @@ import {
   UnauthenticatedError,
   UndeclaredUseCaseError,
   type DecisionRecord,
-} from '../src/index.js';
-import { Access, Authenticator, AuthorizationMap, Authorizer, authorizationModule } from '../src/di.js';
-import { AllowAll, FakeAuthenticator, RecordingAuthorizer } from '../src/testing.js';
-import { Article, author, onlyAuthorEditsDraft, publishingPermissions, reader } from './support/articles.js';
+} from '../src';
+import { Access, Authenticator, AuthorizationMap, Authorizer, authorizationModule } from '../src/di';
+import { AllowAll, FakeAuthenticator, RecordingAuthorizer } from '../src/testing';
+import { Article, author, onlyAuthorEditsDraft, publishingPermissions, reader } from './support/articles';
 import {
   ArchiveInvoices,
   GetCatalog,
@@ -38,7 +38,7 @@ import {
   ada,
   billingPermissions,
   bob,
-} from './support/billing.js';
+} from './support/billing';
 
 class IssueInvoiceHandler {
   async execute(command: IssueInvoice): Promise<string> {

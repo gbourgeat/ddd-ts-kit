@@ -1,5 +1,5 @@
-import { splitWords } from '../../naming/index.js';
-import { sameWord } from '../language/same-word.js';
+import { splitWords } from '../../naming';
+import { sameWord } from '../language/same-word';
 
 /** Words that add nothing to the name they sit next to. */
 const FILLER = new Set([

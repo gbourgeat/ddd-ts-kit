@@ -1,5 +1,5 @@
 import type { FixedClock } from '@ddd-ts-kit/kernel';
-import type { Scheduler } from '../runtime/scheduler.js';
+import type { Scheduler } from '../runtime/scheduler';
 
 interface ScheduledWork {
   readonly dueAt: number;

@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { aliasRoots, specifierSuffix } from '../../src/alias/index.js';
-import { readConfig } from '../../src/config/index.js';
-import { read, REPO_ROOT, scaffoldEverything, type StackFlags, tempDir, write } from '../helpers.js';
-import { installAsPublished } from './install-as-published.js';
-import { bin, runIn } from './run-in.js';
-import { NATIVE_COMPILER } from './type-errors.js';
+import { aliasRoots, specifierSuffix } from '../../src/alias';
+import { readConfig } from '../../src/config';
+import { read, REPO_ROOT, scaffoldEverything, type StackFlags, tempDir, write } from '../helpers';
+import { installAsPublished } from './install-as-published';
+import { bin, runIn } from './run-in';
+import { NATIVE_COMPILER } from './type-errors';
 
 const LINKER = path.join(import.meta.dirname, 'fixtures/link-compiled.mjs');
 const TSX = path.join(REPO_ROOT, 'node_modules/tsx/dist/cli.mjs');

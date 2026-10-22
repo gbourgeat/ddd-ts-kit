@@ -1,7 +1,7 @@
-import { formatStories } from '../stories/format-stories.js';
-import { readStories } from '../stories/read-stories.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
+import { formatStories } from '../stories/format-stories';
+import { readStories } from '../stories/read-stories';
+import { Arguments } from './arguments';
+import type { Command } from './command';
 
 /**
  * The stories open in the worktrees of the repository and where they meet: the contexts and the

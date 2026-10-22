@@ -1,9 +1,9 @@
 import fs from 'node:fs';
-import { CliError } from '../cli-error.js';
-import { gitPath } from './git-path.js';
-import { gitProcess } from './git-process.js';
-import type { StageEntry } from './preview-merge.js';
-import { unmergedEntries } from './unmerged-entries.js';
+import { CliError } from '../cli-error';
+import { gitPath } from './git-path';
+import { gitProcess } from './git-process';
+import type { StageEntry } from './preview-merge';
+import { unmergedEntries } from './unmerged-entries';
 
 /**
  * Starts the merge with `git merge` itself, for a git older than 2.40 when the base is the one

@@ -1,7 +1,7 @@
-import { scan, type Scan } from '../check/scan/scan.js';
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
-import { matchingBracket } from '../check/text/matching-bracket.js';
-import type { NamedMove } from './named-move.js';
+import { scan, type Scan } from '../check/scan/scan';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
+import { matchingBracket } from '../check/text/matching-bracket';
+import type { NamedMove } from './named-move';
 
 const DESCRIBE = /(?<![\w$.])describe\s*\(/;
 const IMPORT = /^import [^;]+;\n/gm;

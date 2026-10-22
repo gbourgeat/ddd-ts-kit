@@ -1,12 +1,12 @@
-import { FUNCTION_LINES_CEILING, type Limits } from '../../config/index.js';
-import type { Finding } from '../model/finding.js';
-import type { Flaw } from '../model/flaw.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import type { Violation } from '../model/violation.js';
-import type { FunctionShape } from '../structure/function-shape.js';
-import { inlineFunctions } from '../structure/inline-functions.js';
-import { reporter } from '../support/reporter.js';
+import { FUNCTION_LINES_CEILING, type Limits } from '../../config';
+import type { Finding } from '../model/finding';
+import type { Flaw } from '../model/flaw';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import type { Violation } from '../model/violation';
+import type { FunctionShape } from '../structure/function-shape';
+import { inlineFunctions } from '../structure/inline-functions';
+import { reporter } from '../support/reporter';
 
 interface Measured {
   readonly label: string;

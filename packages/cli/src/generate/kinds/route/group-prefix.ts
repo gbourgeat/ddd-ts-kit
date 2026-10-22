@@ -1,7 +1,7 @@
-import { CliError } from '../../../cli-error.js';
-import { toName } from '../../../naming/index.js';
-import type { Scope } from '../../scope.js';
-import { groupFile } from './group-file.js';
+import { CliError } from '../../../cli-error';
+import { toName } from '../../../naming';
+import type { Scope } from '../../scope';
+import { groupFile } from './group-file';
 
 const MAX_DEPTH = 8;
 

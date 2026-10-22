@@ -1,7 +1,7 @@
-import { TENANCY_STRATEGIES } from '../../config/index.js';
-import { CliError } from '../../cli-error.js';
-import { choose } from './choose.js';
-import type { StackOptions } from './stack-options.js';
+import { TENANCY_STRATEGIES } from '../../config';
+import { CliError } from '../../cli-error';
+import { choose } from './choose';
+import type { StackOptions } from './stack-options';
 
 /** The ORMs whose package ships the helpers of the shared-table strategy, and the generated repositories use them. */
 const SHARED_TABLE_ORMS = ['knex', 'drizzle'];

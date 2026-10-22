@@ -1,10 +1,10 @@
-import { CliError } from '../cli-error.js';
-import type { Config } from '../config/index.js';
-import { isDeclarationsFile } from '../declared/index.js';
-import { filesUnder } from '../generate/files-under.js';
-import { declaredModules, intoModule, isContextLevel, isRoleFolder, moduleSplit } from '../model-modules/index.js';
-import type { Workspace } from '../workspace/index.js';
-import type { ModuleMove } from './module-move.js';
+import { CliError } from '../cli-error';
+import type { Config } from '../config';
+import { isDeclarationsFile } from '../declared';
+import { filesUnder } from '../generate/files-under';
+import { declaredModules, intoModule, isContextLevel, isRoleFolder, moduleSplit } from '../model-modules';
+import type { Workspace } from '../workspace';
+import type { ModuleMove } from './module-move';
 
 /** What to move: a context, the module it goes into, and paths relative to the context. */
 export interface MoveRequest {

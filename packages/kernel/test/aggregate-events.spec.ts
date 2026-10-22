@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AggregateRoot } from '../src/index.js';
+import { AggregateRoot } from '../src';
 
 interface OrderSnapshot {
   readonly id: string;

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { mentionedRows } from '../src/citations/mentioned-rows.js';
-import { partsOfDocument } from '../src/citations/parts-of-document.js';
-import { partsOfSlices } from '../src/citations/parts-of-slices.js';
-import { rowDocuments } from '../src/citations/row-documents.js';
-import { selectParts } from '../src/citations/select-parts.js';
-import type { DocumentPart } from '../src/citations/document-part.js';
-import type { Slice } from '../src/progress/slice.js';
-import { tempDir, write } from './helpers.js';
+import { mentionedRows } from '../src/citations/mentioned-rows';
+import { partsOfDocument } from '../src/citations/parts-of-document';
+import { partsOfSlices } from '../src/citations/parts-of-slices';
+import { rowDocuments } from '../src/citations/row-documents';
+import { selectParts } from '../src/citations/select-parts';
+import type { DocumentPart } from '../src/citations/document-part';
+import type { Slice } from '../src/progress/slice';
+import { tempDir, write } from './helpers';
 
 const REVIEW = `# Refunds
 

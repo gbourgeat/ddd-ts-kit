@@ -7,14 +7,14 @@ import {
   deadTopicOf,
   type KafkaDelivery,
   type KafkaFailure,
-} from '../src/index.js';
-import type { Broker } from './support/broker.js';
-import { BROKERS } from './support/brokers.js';
-import { MAX_ATTEMPTS, RETRY_DELAY_MS } from './support/environment.js';
-import { PLACED, anEvent } from './support/events.js';
-import { deliveriesOf, failuresOf } from './support/hooks.js';
-import { InvoicingFailed } from './support/invoicing-failed.js';
-import { recorder } from './support/recorder.js';
+} from '../src';
+import type { Broker } from './support/broker';
+import { BROKERS } from './support/brokers';
+import { MAX_ATTEMPTS, RETRY_DELAY_MS } from './support/environment';
+import { PLACED, anEvent } from './support/events';
+import { deliveriesOf, failuresOf } from './support/hooks';
+import { InvoicingFailed } from './support/invoicing-failed';
+import { recorder } from './support/recorder';
 
 describe.each(BROKERS)('KafkaEventBus: retries, %s', { timeout: 60_000 }, (_name, connect) => {
   let broker: Broker;

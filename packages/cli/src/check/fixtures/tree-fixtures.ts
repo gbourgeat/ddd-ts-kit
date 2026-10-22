@@ -1,15 +1,15 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { CONTEXT_DOC_HEADINGS } from '../canonical/context-doc-headings.js';
-import { aggregate } from './aggregate.js';
-import { config } from './config.js';
-import { contextDoc } from './context-doc.js';
-import { DECLARED } from './declared.js';
-import { declaredProject } from './declared-project.js';
-import type { Fixture } from './fixture.js';
-import { handler } from './handler.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { SAMPLES } from './samples.js';
+import { CONFIG_FILE } from '../../config';
+import { CONTEXT_DOC_HEADINGS } from '../canonical/context-doc-headings';
+import { aggregate } from './aggregate';
+import { config } from './config';
+import { contextDoc } from './context-doc';
+import { DECLARED } from './declared';
+import { declaredProject } from './declared-project';
+import type { Fixture } from './fixture';
+import { handler } from './handler';
+import { PATHS } from './paths';
+import { project } from './project';
+import { SAMPLES } from './samples';
 
 const { AGGREGATE, BARREL, BILLING, JOB, JOB_SPEC, MODULE, POLICY, ROUTES } = PATHS;
 const { SPEC } = SAMPLES;

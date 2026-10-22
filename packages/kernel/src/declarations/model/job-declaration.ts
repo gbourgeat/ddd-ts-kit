@@ -1,7 +1,7 @@
-import type { JobOptions } from '../../application/scheduling/job-options.js';
-import type { JobSchedule } from '../../application/scheduling/job-schedule.js';
-import type { ScheduledJob } from '../../application/scheduling/scheduled-job.js';
-import type { Token } from '../token/token.js';
+import type { JobOptions } from '../../application/scheduling/job-options';
+import type { JobSchedule } from '../../application/scheduling/job-schedule';
+import type { ScheduledJob } from '../../application/scheduling/scheduled-job';
+import type { Token } from '../token/token';
 
 export interface JobDeclaration {
   readonly role: 'job';

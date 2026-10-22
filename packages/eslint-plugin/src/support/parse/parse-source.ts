@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { isRecord } from '../../project/is-record.js';
+import { isRecord } from '../../project/is-record';
 
 type Parser = TSESLint.FlatConfig.Parser;
 

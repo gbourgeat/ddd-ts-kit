@@ -1,7 +1,7 @@
 import { ok } from '@ddd-ts-kit/kernel';
 import { customSchema } from '@ddd-ts-kit/validation';
-import { defineRoute } from '../route/define-route.js';
-import type { Route } from '../route/route.js';
+import { defineRoute } from '../route/define-route';
+import type { Route } from '../route/route';
 
 /** A public GET route answering a fixed text: a contract or a page of the documentation. */
 export interface TextRoute {

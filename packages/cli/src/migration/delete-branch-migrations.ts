@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { runGit } from '../commit/run-git.js';
-import type { ReplayPlan } from './replay-plan.js';
+import { runGit } from '../commit/run-git';
+import type { ReplayPlan } from './replay-plan';
 
 /**
  * Deletes the migrations of the branch, their snapshots and their journal entries: the journal

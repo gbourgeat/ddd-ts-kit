@@ -1,5 +1,5 @@
-import type { Way } from './via.js';
-import type { Ways } from './ways.js';
+import type { Way } from './via';
+import type { Ways } from './ways';
 
 /**
  * Who counts as what on an element, computed from the stored facts: a single way

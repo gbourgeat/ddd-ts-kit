@@ -1,5 +1,5 @@
 import { ConcurrencyError, type AggregateRoot, type Repository } from '@ddd-ts-kit/kernel';
-import type { SnapshotCodec } from './snapshot-codec.js';
+import type { SnapshotCodec } from './snapshot-codec';
 
 /**
  * How the fake keeps its own copy, so that mutating an aggregate after `save` (or a loaded

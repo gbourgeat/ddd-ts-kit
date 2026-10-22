@@ -19,7 +19,7 @@ import {
   type ExecutionContext,
   type ExecutionScope,
   type Session,
-} from '../src/index.js';
+} from '../src';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: [], attributes: {} };
 const bob: Actor = { id: 'bob', type: 'user', roles: [], attributes: {} };

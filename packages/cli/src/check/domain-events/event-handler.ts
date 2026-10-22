@@ -1,4 +1,4 @@
-import type { HandlerDependency } from './handler-dependency.js';
+import type { HandlerDependency } from './handler-dependency';
 
 /** A production class of a context that handles a domain event, with the phase it runs in. */
 export interface EventHandler {

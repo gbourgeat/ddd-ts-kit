@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { SizedFile } from './sized-file.js';
+import type { SizedFile } from './sized-file';
 
 /** The limit of clean/file-size, and where adding to a file starts with an extraction. */
 const LIMIT = 350;

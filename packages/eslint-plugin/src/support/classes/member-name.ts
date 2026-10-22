@@ -1,6 +1,6 @@
 import type { TSESTree } from '@typescript-eslint/utils';
-import { keyName } from './key-name.js';
-import { isKeyed } from './is-keyed.js';
+import { keyName } from './key-name';
+import { isKeyed } from './is-keyed';
 
 /** `#secret` keeps its hash, so a private name never collides with a public one. */
 export function memberName(member: TSESTree.ClassElement): string | undefined {

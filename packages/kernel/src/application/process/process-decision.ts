@@ -1,5 +1,5 @@
-import type { Command } from '../messaging/command.js';
-import type { ProcessTimeout } from './process-timeout.js';
+import type { Command } from '../messaging/command';
+import type { ProcessTimeout } from './process-timeout';
 
 /**
  * What one step of a process decides, as data: its next state, the commands it sends, the

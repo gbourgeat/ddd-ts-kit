@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { checkJsonOf } from './check-support.js';
-import { cli, exists, read, write } from './helpers.js';
-import { BILLING, projectWithModule } from './support/project-with-module.js';
+import { checkJsonOf } from './check-support';
+import { cli, exists, read, write } from './helpers';
+import { BILLING, projectWithModule } from './support/project-with-module';
 
 /** The credit note, an aggregate and its use case written in the module invoices, which the guidance specs build on. */
 function withCreditNote(root: string): void {

@@ -1,14 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { specifierOf } from '../src/alias/index.js';
-import { readConfig } from '../src/config/index.js';
-import { isDeclarationsFile, singleFileDeclarations } from '../src/declared/index.js';
-import { filesUnder } from '../src/generate/files-under.js';
-import { workspaceSources } from '../src/generate/workspace-sources.js';
-import { Workspace } from '../src/workspace/index.js';
-import { cli, read, scaffoldEverything, tempDir, write } from './helpers.js';
-import { declaredModules } from '../src/model-modules/index.js';
+import { specifierOf } from '../src/alias';
+import { readConfig } from '../src/config';
+import { isDeclarationsFile, singleFileDeclarations } from '../src/declared';
+import { filesUnder } from '../src/generate/files-under';
+import { workspaceSources } from '../src/generate/workspace-sources';
+import { Workspace } from '../src/workspace';
+import { cli, read, scaffoldEverything, tempDir, write } from './helpers';
+import { declaredModules } from '../src/model-modules';
 
 const BILLING = 'src/contexts/billing';
 const SHIPPING = 'src/contexts/shipping';
@@ -95,7 +95,7 @@ describe('the declarations of a context, as its tree changes', () => {
     write(
       root,
       added,
-      "import { Adapter } from '@ddd-ts-kit/kernel/declarations';\nimport { InvoiceStatusContract } from '@/contexts/billing/published-language/index';\n\n@Adapter(InvoiceStatusContract)\nexport class RemoteCarrier implements InvoiceStatusContract {}\n",
+      "import { Adapter } from '@ddd-ts-kit/kernel/declarations';\nimport { InvoiceStatusContract } from '@/contexts/billing/published-language';\n\n@Adapter(InvoiceStatusContract)\nexport class RemoteCarrier implements InvoiceStatusContract {}\n",
     );
 
     const stale = cli(root, 'docs', '--check');

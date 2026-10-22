@@ -1,8 +1,8 @@
 import { AST_NODE_TYPES, AST_TOKEN_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../project/linted-file.js';
-import { ancestors } from '../support/ancestors.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import { globMatcher } from '../support/glob-matcher.js';
+import type { LintedFile } from '../project/linted-file';
+import { ancestors } from '../support/ancestors';
+import { defineRule } from '../support/rule/define-rule';
+import { globMatcher } from '../support/glob-matcher';
 
 type Assertion = TSESTree.TSAsExpression | TSESTree.TSTypeAssertion;
 type Generic = TSESTree.FunctionDeclaration | TSESTree.FunctionExpression | TSESTree.ArrowFunctionExpression;

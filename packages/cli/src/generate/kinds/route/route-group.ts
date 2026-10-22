@@ -1,4 +1,4 @@
-import type { Name } from '../../../naming/index.js';
+import type { Name } from '../../../naming';
 
 /** The group a controller stands in: where it is written, and the prefix its groups put before the path. */
 export interface RouteGroup {

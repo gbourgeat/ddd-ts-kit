@@ -1,8 +1,8 @@
-import type { SourceFile } from '../model/source-file.js';
-import type { ErrorCode } from './error-code.js';
-import { errorCodes } from './error-codes.js';
-import { listedCodes } from './listed-codes.js';
-import { refusalClasses } from './refusal-classes.js';
+import type { SourceFile } from '../model/source-file';
+import type { ErrorCode } from './error-code';
+import { errorCodes } from './error-codes';
+import { listedCodes } from './listed-codes';
+import { refusalClasses } from './refusal-classes';
 
 /**
  * Every code a source sets: those its refusals give themselves, and, for the code list of a

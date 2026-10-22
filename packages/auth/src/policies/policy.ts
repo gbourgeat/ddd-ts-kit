@@ -1,7 +1,7 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import type { Decision } from '../authorization/decision.js';
-import type { Permission } from '../permissions/permission.js';
-import type { PolicyContext } from './policy-context.js';
+import type { Decision } from '../authorization/decision';
+import type { Permission } from '../permissions/permission';
+import type { PolicyContext } from './policy-context';
 
 /**
  * A named rule that needs loaded state: "only the author may edit, and not after publication".

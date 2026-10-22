@@ -1,4 +1,4 @@
-import type { Hunk } from './hunk.js';
+import type { Hunk } from './hunk';
 
 const FILE = /^\+\+\+ (?:b\/(.+)|\/dev\/null)$/;
 const HUNK = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/;

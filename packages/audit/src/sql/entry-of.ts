@@ -8,7 +8,7 @@ import type {
   AuditOutcome,
   AuditResource,
 } from '@ddd-ts-kit/kernel';
-import type { SqlRow } from './sql-row.js';
+import type { SqlRow } from './sql-row';
 
 /** The mapper: a row comes back as the driver gives it, and leaves as an entry or not at all. */
 export function entryOf(row: SqlRow): AuditEntry {

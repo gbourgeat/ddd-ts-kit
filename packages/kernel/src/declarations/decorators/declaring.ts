@@ -1,14 +1,14 @@
-import type { DependencyKind } from '../../application/dependency-kind.js';
-import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
-import type { PortDeclaration } from '../model/port-declaration.js';
-import { DeclarationError } from '../registry/declaration-error.js';
-import { record } from '../registry/record.js';
-import { portDefect } from '../token/port-defect.js';
-import type { Token } from '../token/token.js';
-import { isDependencies } from './is-dependencies.js';
-import type { PortOptions } from './port-options.js';
-import type { Settings } from './settings.js';
+import type { DependencyKind } from '../../application/dependency-kind';
+import type { ClassDeclarator } from '../dependencies/class-declarator';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies';
+import type { PortDeclaration } from '../model/port-declaration';
+import { DeclarationError } from '../registry/declaration-error';
+import { record } from '../registry/record';
+import { portDefect } from '../token/port-defect';
+import type { Token } from '../token/token';
+import { isDependencies } from './is-dependencies';
+import type { PortOptions } from './port-options';
+import type { Settings } from './settings';
 
 interface Port<T> {
   readonly role: PortDeclaration['role'];

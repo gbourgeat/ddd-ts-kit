@@ -3,6 +3,6 @@
  * (`import { contractFormat, stringifyContract } from 'ddd-ts-kit/dist/contracts.js'`): the
  * format the config asks for, and the bytes to commit in it.
  */
-export { contractFormat } from './contracts/contract-format.js';
-export { stringifyContract } from './contracts/stringify-contract.js';
-export { toYaml } from './yaml/to-yaml.js';
+export { contractFormat } from './contracts/contract-format';
+export { stringifyContract } from './contracts/stringify-contract';
+export { toYaml } from './yaml/to-yaml';

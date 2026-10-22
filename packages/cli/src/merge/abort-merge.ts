@@ -1,9 +1,9 @@
 import fs from 'node:fs';
-import { CliError } from '../cli-error.js';
-import { gitPath } from './git-path.js';
-import { gitProcess } from './git-process.js';
-import { mergeRepositoryOf } from './lost/merge-repository-of.js';
-import { mergeState } from './merge-state.js';
+import { CliError } from '../cli-error';
+import { gitPath } from './git-path';
+import { gitProcess } from './git-process';
+import { mergeRepositoryOf } from './lost/merge-repository-of';
+import { mergeState } from './merge-state';
 
 /**
  * `merge-trunk --abort`: undoes the merge in progress as `git merge --abort` does (the index and

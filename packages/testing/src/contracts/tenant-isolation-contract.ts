@@ -5,11 +5,11 @@ import {
   systemActor,
 } from '@ddd-ts-kit/kernel';
 import type { AggregateRoot, ExecutionContext, ExecutionScope, Repository, TenantElevation } from '@ddd-ts-kit/kernel';
-import { asTenant } from '../execution/as-tenant.js';
-import type { Awaitable } from './awaitable.js';
-import type { ContractRunner } from './contract-runner.js';
-import { ContractSuite } from './contract-suite.js';
-import { failureOf } from './failure-of.js';
+import { asTenant } from '../execution/as-tenant';
+import type { Awaitable } from './awaitable';
+import type { ContractRunner } from './contract-runner';
+import { ContractSuite } from './contract-suite';
+import { failureOf } from './failure-of';
 
 export interface TenantIsolationContractOptions<A extends AggregateRoot<Id>, Id extends string | number> {
   /** The strategy and the adapter: `KnexInvoiceRepository, shared tables`. */

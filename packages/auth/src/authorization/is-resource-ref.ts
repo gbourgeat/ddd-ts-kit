@@ -1,4 +1,4 @@
-import type { ResourceRef } from './resource-ref.js';
+import type { ResourceRef } from './resource-ref';
 
 /** Strict on purpose: an aggregate that happens to have a `type` and an `id` is not a reference. */
 export function isResourceRef(value: unknown): value is ResourceRef {

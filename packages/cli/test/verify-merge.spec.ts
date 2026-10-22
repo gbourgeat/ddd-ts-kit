@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { cli } from './helpers.js';
-import { git } from './support/git.js';
+import { cli } from './helpers';
+import { git } from './support/git';
 import {
   BOTH_KEPT,
   CANCEL,
@@ -12,9 +12,9 @@ import {
   SLICES,
   slices,
   SPEC,
-} from './support/invoicing-merge.js';
-import { jsonAt } from './support/json-at.js';
-import { mergeRepository, mergeWith, startMerge } from './support/merge-repository.js';
+} from './support/invoicing-merge';
+import { jsonAt } from './support/json-at';
+import { mergeRepository, mergeWith, startMerge } from './support/merge-repository';
 
 const MODULE = 'src/contexts/billing/pricing.ts';
 

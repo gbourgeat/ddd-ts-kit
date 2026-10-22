@@ -1,5 +1,5 @@
-import { Broker } from './broker.js';
-import { KAFKA_BROKERS, KAFKA_RELAY } from './environment.js';
+import { Broker } from './broker';
+import { KAFKA_BROKERS, KAFKA_RELAY } from './environment';
 
 type BrokerRow = readonly [name: string, connect: () => Promise<Broker>];
 

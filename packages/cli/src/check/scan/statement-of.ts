@@ -1,7 +1,7 @@
-import { clauseNames } from './clause-names.js';
-import type { FoundStatement } from './found-statement.js';
-import type { ImportKind } from './import-record.js';
-import type { StringRecord } from './string-record.js';
+import { clauseNames } from './clause-names';
+import type { FoundStatement } from './found-statement';
+import type { ImportKind } from './import-record';
+import type { StringRecord } from './string-record';
 
 const FROM_CLAUSE = /(?<![\w$.])(import|export)\b(\s+type\b)?([\w\s{},*$]*?)\bfrom\s*$/;
 const SIDE_EFFECT = /(?<![\w$.])import\s*$/;

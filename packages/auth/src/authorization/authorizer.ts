@@ -1,8 +1,8 @@
-import type { AccessScope } from './access-scope.js';
-import type { CheckRequest } from './check-request.js';
-import type { Decision } from './decision.js';
-import type { Explanation } from './explanation.js';
-import type { ListRequest } from './list-request.js';
+import type { AccessScope } from './access-scope';
+import type { CheckRequest } from './check-request';
+import type { Decision } from './decision';
+import type { Explanation } from './explanation';
+import type { ListRequest } from './list-request';
 
 /**
  * The one port every authorization model implements: roles, attribute policies, relationships,

@@ -1,5 +1,5 @@
-import { laidOutCalls } from './injection/laid-out-calls.js';
-import type { RenderedInjections } from './injection/rendered-injections.js';
+import { laidOutCalls } from './injection/laid-out-calls';
+import type { RenderedInjections } from './injection/rendered-injections';
 
 /**
  * What `<context>.dependencies.ts` holds under discovery: the imports and the

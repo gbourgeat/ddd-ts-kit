@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { cli, exists, read } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
-import { readJson } from './support/read-json.js';
-import { stringsAt } from './support/strings-at.js';
-import { textsAt } from './support/texts-at.js';
+import { cli, exists, read } from './helpers';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
+import { readJson } from './support/read-json';
+import { stringsAt } from './support/strings-at';
+import { textsAt } from './support/texts-at';
 
 const WORKER = 'src/apps/worker/main.ts';
 

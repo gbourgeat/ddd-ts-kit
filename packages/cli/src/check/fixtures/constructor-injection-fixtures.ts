@@ -1,8 +1,8 @@
-import type { Fixture } from './fixture.js';
-import { PATHS } from './paths.js';
-import { SIGNATURE } from './signature.js';
-import { signatureProject } from './signature-project.js';
-import { source } from './source.js';
+import type { Fixture } from './fixture';
+import { PATHS } from './paths';
+import { SIGNATURE } from './signature';
+import { signatureProject } from './signature-project';
+import { source } from './source';
 
 const { BILLING, COMMANDS_DECLARATIONS, HANDLER } = PATHS;
 const RULE = 'declarations/constructor-injection';

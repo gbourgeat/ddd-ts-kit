@@ -2,9 +2,9 @@ import { inspect } from 'node:util';
 import { Redis } from 'ioredis';
 import { afterAll, describe, expect, it } from 'vitest';
 import { expectNoSecret } from '@ddd-ts-kit/testing';
-import { RedisStreamsEventBus } from '../src/event-bus.js';
-import { RedisCache, RedisLock, RedisRateLimiter, RedisRelaySignal, connectRedis } from '../src/index.js';
-import { ServerLink } from '../src/streams/server-link.js';
+import { RedisStreamsEventBus } from '../src/event-bus';
+import { RedisCache, RedisLock, RedisRateLimiter, RedisRelaySignal, connectRedis } from '../src';
+import { ServerLink } from '../src/streams/server-link';
 
 const PASSWORD = 'redis-password-e2a8';
 const URL_WITH_PASSWORD = `redis://ordering:${PASSWORD}@127.0.0.1:1`;

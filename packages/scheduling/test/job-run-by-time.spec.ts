@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { FixedClock, SequentialIdGenerator, type ExecutionContext } from '@ddd-ts-kit/kernel';
-import { InProcessJobScheduler } from '../src/index.js';
-import { ManualJobTimers } from '../src/testing.js';
-import { aBench } from './support/a-bench.js';
-import { HOUR, MINUTE } from './support/durations.js';
-import { REMINDERS } from './support/job-names.js';
-import { QUARTERLY } from './support/quarterly.js';
-import { RecordingJob } from './support/recording-job.js';
-import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections.js';
+import { InProcessJobScheduler } from '../src';
+import { ManualJobTimers } from '../src/testing';
+import { aBench } from './support/a-bench';
+import { HOUR, MINUTE } from './support/durations';
+import { REMINDERS } from './support/job-names';
+import { QUARTERLY } from './support/quarterly';
+import { RecordingJob } from './support/recording-job';
+import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections';
 
 refuseUnhandledRejections();
 

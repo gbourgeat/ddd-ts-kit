@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { gitPath } from './git-path.js';
+import { gitPath } from './git-path';
 
 /**
  * Adds a `Lost-Accepted:` trailer to the message of the merge in progress: lines it does not keep

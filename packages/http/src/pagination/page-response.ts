@@ -1,5 +1,5 @@
 import type { Page } from '@ddd-ts-kit/kernel';
-import type { PageBody } from './page-body.js';
+import type { PageBody } from './page-body';
 
 /** The body of a search answer: the items through `map`, `total` and `nextCursor` when the page has them. */
 export function pageResponse<T, U>(page: Page<T>, map: (item: T) => U): PageBody<U> {

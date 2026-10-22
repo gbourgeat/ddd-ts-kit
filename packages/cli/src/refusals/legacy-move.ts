@@ -1,5 +1,5 @@
-import type { Move } from './move.js';
-import type { NamedMove } from './named-move.js';
+import type { Move } from './move';
+import type { NamedMove } from './named-move';
 
 /** A class per error on its way to a class of its own, as the rewriting of its usages reads it. */
 export function legacyMove(move: NamedMove): Move {

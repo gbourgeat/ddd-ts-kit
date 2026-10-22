@@ -1,5 +1,5 @@
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { DomainEventType } from './domain-event-type.js';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { DomainEventType } from './domain-event-type';
 
 /**
  * A domain event class that declares once the name its events carry,

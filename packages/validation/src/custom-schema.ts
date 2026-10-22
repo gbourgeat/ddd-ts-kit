@@ -1,7 +1,7 @@
 import type { Result } from '@ddd-ts-kit/kernel';
-import type { JsonSchema } from './json-schema.js';
-import type { Schema } from './schema.js';
-import type { ValidationIssue } from './validation-issue.js';
+import type { JsonSchema } from './json-schema';
+import type { Schema } from './schema';
+import type { ValidationIssue } from './validation-issue';
 
 /** Builds a schema from a plain function, for hand-written checks and for tests. */
 export function customSchema<T>(

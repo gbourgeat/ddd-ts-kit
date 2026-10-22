@@ -1,4 +1,4 @@
-import { AggregateRoot, type DomainEvent } from '../../../src/index.js';
+import { AggregateRoot, type DomainEvent } from '../../../src';
 
 /** An aggregate that records one named event per intention. */
 export class Cart extends AggregateRoot {

@@ -1,5 +1,5 @@
-import type { AliasRoot } from './alias-root.js';
-import type { Config } from './config.js';
+import type { AliasRoot } from './alias-root';
+import type { Config } from './config';
 
 const TEST: AliasRoot = { prefix: '$test/', directory: 'test' };
 const SCRIPTS: AliasRoot = { prefix: '$scripts/', directory: 'scripts' };

@@ -1,12 +1,12 @@
 import type { EventDelivery, IntegrationEventCallback } from '@ddd-ts-kit/kernel';
 import { describe, expect, it } from 'vitest';
-import type { IncomingRecord } from '../src/codec/incoming-record.js';
-import { Attempts } from '../src/consumption/attempts.js';
-import { Backoff } from '../src/consumption/backoff.js';
-import { failureOf } from '../src/consumption/failure-of.js';
-import { BrokerUnavailableError } from '../src/errors/broker-unavailable-error.js';
-import { within } from '../src/errors/within.js';
-import { anEvent, PLACED } from './support/events.js';
+import type { IncomingRecord } from '../src/codec/incoming-record';
+import { Attempts } from '../src/consumption/attempts';
+import { Backoff } from '../src/consumption/backoff';
+import { failureOf } from '../src/consumption/failure-of';
+import { BrokerUnavailableError } from '../src/errors/broker-unavailable-error';
+import { within } from '../src/errors/within';
+import { anEvent, PLACED } from './support/events';
 
 const recordAt = (offset: string, partition = 0): IncomingRecord => ({
   topic: PLACED,

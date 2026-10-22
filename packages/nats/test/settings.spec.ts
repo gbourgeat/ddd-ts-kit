@@ -1,8 +1,8 @@
 import type { NatsConnection, NodeConnectionOptions } from '@nats-io/transport-node';
 import { describe, expect, it } from 'vitest';
-import type { NatsDelivery } from '../src/options/nats-delivery.js';
-import type { NatsFailure } from '../src/options/nats-failure.js';
-import { settingsOf } from '../src/options/settings-of.js';
+import type { NatsDelivery } from '../src/options/nats-delivery';
+import type { NatsFailure } from '../src/options/nats-failure';
+import { settingsOf } from '../src/options/settings-of';
 
 const failure: NatsFailure = { kind: 'connection', code: 'ECONNREFUSED' };
 

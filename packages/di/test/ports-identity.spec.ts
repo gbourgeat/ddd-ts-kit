@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Clock, CommandBus, FixedClock, QueryBus } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, describeToken, kernelModule, tokenIdentity } from '../src/index.js';
-import { wiringFailure } from './support/failure.js';
-import { EpochClock } from './support/shop/epoch-clock.js';
+import { createApplication, defineContextModule, describeToken, kernelModule, tokenIdentity } from '../src';
+import { wiringFailure } from './support/failure';
+import { EpochClock } from './support/shop/epoch-clock';
 
 describe('the identity of a port', () => {
   it('is the class for a port of a project: two ports of the same name are two tokens', () => {

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { FixedClock, InMemoryLock, type JobExecution, type Lock } from '@ddd-ts-kit/kernel';
-import { aBench } from './support/a-bench.js';
-import { MINUTE } from './support/durations.js';
-import { EXPORT, REMINDERS } from './support/job-names.js';
-import { ObservedLock } from './support/observed-lock.js';
-import { QUARTERLY } from './support/quarterly.js';
-import { RecordingJob } from './support/recording-job.js';
-import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections.js';
+import { aBench } from './support/a-bench';
+import { MINUTE } from './support/durations';
+import { EXPORT, REMINDERS } from './support/job-names';
+import { ObservedLock } from './support/observed-lock';
+import { QUARTERLY } from './support/quarterly';
+import { RecordingJob } from './support/recording-job';
+import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections';
 
 refuseUnhandledRejections();
 

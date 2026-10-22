@@ -1,6 +1,6 @@
-import { Command } from '../messaging/command.js';
-import type { Actor } from './actor.js';
-import type { Actored } from './actored.js';
+import { Command } from '../messaging/command';
+import type { Actor } from './actor';
+import type { Actored } from './actored';
 
 /**
  * A command that somebody must be allowed to send. The actor is the first constructor

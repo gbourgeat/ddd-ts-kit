@@ -1,5 +1,5 @@
-import { ResponseContractError } from '../error/response-contract-error.js';
-import { valuesAt } from '../support/values-at.js';
+import { ResponseContractError } from '../error/response-contract-error';
+import { valuesAt } from '../support/values-at';
 
 const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
 

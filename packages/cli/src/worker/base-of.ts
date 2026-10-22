@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CliError } from '../cli-error.js';
-import { runGit } from '../commit/run-git.js';
-import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
-import type { Config } from '../config/index.js';
+import { CliError } from '../cli-error';
+import { runGit } from '../commit/run-git';
+import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file';
+import type { Config } from '../config';
 
 /**
  * The ref a worker's worktree is cut from and checked against: `--base` when given, which must

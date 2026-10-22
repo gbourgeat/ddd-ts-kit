@@ -1,5 +1,5 @@
-import { cleanNoCommentedOutCode } from '../../src/rules/clean-no-commented-out-code.js';
-import { ruleTester } from '../support/rule-tester.js';
+import { cleanNoCommentedOutCode } from '../../src/rules/clean-no-commented-out-code';
+import { ruleTester } from '../support/rule-tester';
 
 const PROSE = [
   '// The outbox is drained after the transaction commits, never inside it.',

@@ -1,6 +1,6 @@
 import type { KafkaJS } from '@confluentinc/kafka-javascript';
-import { kafkaError } from './errors.js';
-import type { Wire } from './wire.js';
+import { kafkaError } from './errors';
+import type { Wire } from './wire';
 
 const SILENT: KafkaJS.Logger = {
   info: () => undefined,

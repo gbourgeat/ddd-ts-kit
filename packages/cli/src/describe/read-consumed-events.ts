@@ -1,8 +1,8 @@
-import { toName } from '../naming/index.js';
-import type { ConsumedEventFact } from './context-description.js';
-import type { ContextSources } from './context-sources.js';
-import { readEventDefinitions, type EventDefinition } from './read-event-definitions.js';
-import { roleFilesOf, type RoleFile } from '../model-modules/index.js';
+import { toName } from '../naming';
+import type { ConsumedEventFact } from './context-description';
+import type { ContextSources } from './context-sources';
+import { readEventDefinitions, type EventDefinition } from './read-event-definitions';
+import { roleFilesOf, type RoleFile } from '../model-modules';
 
 const FOLDER = 'application/integration/handlers';
 const SUFFIX = '.integration-handler.ts';
@@ -77,9 +77,9 @@ function givenDefinition({ ws, config }: ContextSources, text: string): GivenDef
     /\bstatic readonly eventType = (\w+)\.type\b/.exec(text)?.[1];
 
   for (const [, names = '', from = ''] of text.matchAll(
-    /\bimport \{([^}]*)\} from '([^']*\/published-language\/[^']*)'/g,
+    /\bimport \{([^}]*)\} from '([^']*\/published-language(?:\/[^']*)?)'/g,
   )) {
-    const context = /([a-z0-9-]+)\/published-language\//.exec(from)?.[1] ?? '';
+    const context = /([a-z0-9-]+)\/published-language(?:\/|$)/.exec(from)?.[1] ?? '';
     const original = originalName(names, local);
 
     const definition = readEventDefinitions(ws, `${config.contextsDir}/${context}`).find(

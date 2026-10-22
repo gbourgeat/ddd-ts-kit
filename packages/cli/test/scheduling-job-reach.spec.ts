@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { DECLARED } from '../src/check/fixtures/declared.js';
-import { declaredProject } from '../src/check/fixtures/declared-project.js';
-import { PATHS } from '../src/check/fixtures/paths.js';
-import { SAMPLES } from '../src/check/fixtures/samples.js';
-import { tempDir, write } from './helpers.js';
-import { reported } from './rules-support.js';
+import { DECLARED } from '../src/check/fixtures/declared';
+import { declaredProject } from '../src/check/fixtures/declared-project';
+import { PATHS } from '../src/check/fixtures/paths';
+import { SAMPLES } from '../src/check/fixtures/samples';
+import { tempDir, write } from './helpers';
+import { reported } from './rules-support';
 
 const { JOB, JOB_SPEC } = PATHS;
 const RULE = 'scheduling/job-triggers-use-case';

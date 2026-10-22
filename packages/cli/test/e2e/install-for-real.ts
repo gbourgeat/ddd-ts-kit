@@ -1,6 +1,6 @@
-import { read, write } from '../helpers.js';
-import { packedKit } from './packed-kit.js';
-import { runIn } from './run-in.js';
+import { read, write } from '../helpers';
+import { packedKit } from './packed-kit';
+import { runIn } from './run-in';
 
 export type Manager = 'npm' | 'pnpm';
 

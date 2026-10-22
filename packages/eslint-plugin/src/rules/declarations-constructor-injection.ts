@@ -1,15 +1,15 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { className, type ClassNode } from '../support/classes/class-name.js';
-import { constructorOf } from '../support/classes/constructor-of.js';
-import { ACCESS_DECORATORS } from '../support/declarations/access-decorators.js';
-import { declarationReader } from '../support/declarations/declaration-reader.js';
-import { declaredRoleOf } from '../support/declarations/declared-role-of.js';
-import { isDeclaredStyle } from '../support/declarations/is-declared-style.js';
-import { notClasses } from '../support/injection/not-classes.js';
-import type { ParameterReading } from '../support/injection/parameter-reading.js';
-import { readParameter } from '../support/injection/read-parameter.js';
-import { writtenName } from '../support/injection/written-name.js';
-import { defineRule } from '../support/rule/define-rule.js';
+import { className, type ClassNode } from '../support/classes/class-name';
+import { constructorOf } from '../support/classes/constructor-of';
+import { ACCESS_DECORATORS } from '../support/declarations/access-decorators';
+import { declarationReader } from '../support/declarations/declaration-reader';
+import { declaredRoleOf } from '../support/declarations/declared-role-of';
+import { isDeclaredStyle } from '../support/declarations/is-declared-style';
+import { notClasses } from '../support/injection/not-classes';
+import type { ParameterReading } from '../support/injection/parameter-reading';
+import { readParameter } from '../support/injection/read-parameter';
+import { writtenName } from '../support/injection/written-name';
+import { defineRule } from '../support/rule/define-rule';
 
 type MessageId = 'parameter' | 'redundant' | 'differs';
 type Finding = TSESLint.ReportDescriptor<MessageId>;

@@ -1,4 +1,4 @@
-import type { ReconnectOptions } from '../options/reconnect-options.js';
+import type { ReconnectOptions } from '../options/reconnect-options';
 
 /** The wait before the next attempt of something that keeps failing: longer after each failure. */
 export class Backoff {

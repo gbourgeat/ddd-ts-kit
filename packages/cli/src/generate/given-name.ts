@@ -1,6 +1,6 @@
-import { splitWords, type Name } from '../naming/index.js';
-import { concept } from './concept.js';
-import type { Scope } from './scope.js';
+import { splitWords, type Name } from '../naming';
+import { concept } from './concept';
+import type { Scope } from './scope';
 
 /** The element `--name` names, and the role words its generator adds itself after the name. */
 export interface NamedElement {

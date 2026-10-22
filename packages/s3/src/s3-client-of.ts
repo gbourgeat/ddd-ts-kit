@@ -1,5 +1,5 @@
 import { S3Client } from '@aws-sdk/client-s3';
-import type { S3Settings } from './s3-settings.js';
+import type { S3Settings } from './s3-settings';
 
 /**
  * A client for any provider of the S3 protocol. Checksums are computed only when an operation

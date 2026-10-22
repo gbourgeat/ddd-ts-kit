@@ -1,11 +1,11 @@
-import { specifierOf } from '../../../alias/index.js';
-import { toName, type Name } from '../../../naming/index.js';
-import type { RenderContext } from '../../../templating/index.js';
-import type { Scope } from '../../scope.js';
-import { dtoClasses } from './dto-classes.js';
-import { sharesSchemas } from './shares-schemas.js';
-import type { Endpoint } from './endpoint.js';
-import type { UseCase } from './use-case.js';
+import { specifierOf } from '../../../alias';
+import { toName, type Name } from '../../../naming';
+import type { RenderContext } from '../../../templating';
+import type { Scope } from '../../scope';
+import { dtoClasses } from './dto-classes';
+import { sharesSchemas } from './shares-schemas';
+import type { Endpoint } from './endpoint';
+import type { UseCase } from './use-case';
 
 /** The validation libraries whose templates declare a schema for the path parameters. */
 const TYPES_PARAMETERS: readonly string[] = ['zod', 'class-validator', 'typebox'];

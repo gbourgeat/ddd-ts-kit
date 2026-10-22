@@ -1,4 +1,4 @@
-import { runGit } from '../commit/run-git.js';
+import { runGit } from '../commit/run-git';
 
 /**
  * When a line of a document was last changed, as a commit time in seconds, from `git blame` on

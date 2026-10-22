@@ -1,10 +1,10 @@
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers.js';
-import { BUILT, LOCK, SLICES, SPEC, SPECIFICATION, STORY } from './support/acceptance-story.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
+import { cli, read, write } from './helpers';
+import { BUILT, LOCK, SLICES, SPEC, SPECIFICATION, STORY } from './support/acceptance-story';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
 
 // One project for the whole file: the scenarios of US5 written and locked, then changed test after test.
 let root: string;

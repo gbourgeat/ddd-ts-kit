@@ -1,5 +1,5 @@
-import type { LegacyError } from './legacy-error.js';
-import type { Move } from './move.js';
+import type { LegacyError } from './legacy-error';
+import type { Move } from './move';
 
 /** A type a fact may have: plain data, as `RefusalFact` of the kernel says. */
 const FACT_TYPE = /^(?:readonly\s+)?(?:string|number|boolean|Date)(?:\[\])?$/;

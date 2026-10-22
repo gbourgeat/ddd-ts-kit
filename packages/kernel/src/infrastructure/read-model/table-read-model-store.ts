@@ -1,13 +1,13 @@
-import type { CriteriaDefinition } from '../../application/criteria/criteria-definition.js';
-import { pageOfPlan } from '../../application/criteria/page-of-plan.js';
-import { planCriteria } from '../../application/criteria/plan-criteria.js';
-import type { ScopedCriteria } from '../../application/criteria/scoped-criteria.js';
-import type { Page } from '../../application/pagination/page.js';
-import type { ReadModelStore } from '../../application/ports/read-model-store.js';
-import type { ReadModelTable } from '../../application/ports/read-model-table.js';
-import type { EventStamp } from '../../application/read-model/event-stamp.js';
-import type { ReadModelWrite } from '../../application/read-model/read-model-write.js';
-import { writeIfNewer, type StampedChange } from './write-if-newer.js';
+import type { CriteriaDefinition } from '../../application/criteria/criteria-definition';
+import { pageOfPlan } from '../../application/criteria/page-of-plan';
+import { planCriteria } from '../../application/criteria/plan-criteria';
+import type { ScopedCriteria } from '../../application/criteria/scoped-criteria';
+import type { Page } from '../../application/pagination/page';
+import type { ReadModelStore } from '../../application/ports/read-model-store';
+import type { ReadModelTable } from '../../application/ports/read-model-table';
+import type { EventStamp } from '../../application/read-model/event-stamp';
+import type { ReadModelWrite } from '../../application/read-model/read-model-write';
+import { writeIfNewer, type StampedChange } from './write-if-newer';
 
 /**
  * A `ReadModelStore` over the table an adapter gives: the same class in memory and on every

@@ -1,4 +1,4 @@
-import { typeBrackets } from './type-brackets.js';
+import { typeBrackets } from './type-brackets';
 
 /** What ends a type written after `satisfies`, outside any bracket. */
 const END = /^(?:[;,:?=)\]}]|\|\||&&|\n(?!\s*[|&]))/;

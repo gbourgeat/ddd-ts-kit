@@ -1,4 +1,4 @@
-import type { AuditCheckpoint } from './audit-checkpoint.js';
+import type { AuditCheckpoint } from './audit-checkpoint';
 
 export interface SealingOptions {
   /** A checkpoint is handed over each time the sequence of a chain is a multiple of it. */

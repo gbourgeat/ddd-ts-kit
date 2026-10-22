@@ -1,4 +1,4 @@
-import type { ClientDocument } from './client-document.js';
+import type { ClientDocument } from './client-document';
 
 /** Every error code an operation of the document declares, in the order of the alphabet. */
 export function errorCodes(document: ClientDocument): string[] {

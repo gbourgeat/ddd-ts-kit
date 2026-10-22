@@ -1,1 +1,1 @@
-export { zodSchema, type ZodSchemaOptions } from './zod/zod-schema.js';
+export { zodSchema, type ZodSchemaOptions } from './zod/zod-schema';

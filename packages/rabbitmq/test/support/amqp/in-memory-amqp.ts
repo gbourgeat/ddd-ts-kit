@@ -1,7 +1,7 @@
 import type { ChannelModel } from 'amqplib';
-import { AmqpError } from './errors.js';
-import { InMemoryNetwork } from './in-memory-network.js';
-import { MemoryConnection } from './memory-connection.js';
+import { AmqpError } from './errors';
+import { InMemoryNetwork } from './in-memory-network';
+import { MemoryConnection } from './memory-connection';
 import {
   DEFAULT_EXCHANGE,
   RELIABLE,
@@ -12,10 +12,10 @@ import {
   type QueueState,
   type StoredMessage,
   type Wire,
-} from './model.js';
-import { Queue } from './queue.js';
-import { routes } from './routing.js';
-import { sameArguments } from './messages.js';
+} from './model';
+import { Queue } from './queue';
+import { routes } from './routing';
+import { sameArguments } from './messages';
 
 /**
  * An AMQP 0-9-1 broker in the memory of the test, behind the interfaces of amqplib, so that the

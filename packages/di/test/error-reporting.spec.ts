@@ -7,10 +7,10 @@ import {
   NoopErrorReporter,
   type ErrorReport,
 } from '@ddd-ts-kit/kernel';
-import { createApplication, createTestApplication, defineContextModule, fake, kernelModule } from '../src/index.js';
-import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command.js';
-import { OrderRepository } from './support/ordering/domain/repositories/order.repository.js';
-import { orderingModule } from './support/ordering/ordering.module.js';
+import { createApplication, createTestApplication, defineContextModule, fake, kernelModule } from '../src';
+import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command';
+import { OrderRepository } from './support/ordering/domain/repositories/order.repository';
+import { orderingModule } from './support/ordering/ordering.module';
 
 class WarehouseClosed extends DomainError {
   readonly code = 'WAREHOUSE_CLOSED';

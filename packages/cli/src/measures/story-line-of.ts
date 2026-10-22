@@ -1,5 +1,5 @@
-import { durationText } from './duration-text.js';
-import type { StoryMeasures } from './story-measures.js';
+import { durationText } from './duration-text';
+import type { StoryMeasures } from './story-measures';
 
 /** One story as a line of the text output. */
 export function storyLineOf(story: StoryMeasures): string {

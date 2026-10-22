@@ -1,4 +1,4 @@
-import type { RuleDoc } from '../model/rule-doc.js';
+import type { RuleDoc } from '../model/rule-doc';
 
 export const TREE_DOCS: Readonly<Record<string, RuleDoc>> = {
   'tree/closed': {

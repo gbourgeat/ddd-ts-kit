@@ -1,5 +1,5 @@
-import type { SchemaNode } from '../schema/schema-node.js';
-import type { Widget } from './widget.js';
+import type { SchemaNode } from '../schema/schema-node';
+import type { Widget } from './widget';
 
 const BY_FORMAT: Readonly<Record<string, Widget>> = {
   'date-time': 'datetime',

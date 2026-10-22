@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { sdkScripts } from '../src/sdk/sdk-scripts.js';
-import { withKnipWorkspaces } from '../src/sdk/with-knip-workspaces.js';
-import { cli, read, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
+import { sdkScripts } from '../src/sdk/sdk-scripts';
+import { withKnipWorkspaces } from '../src/sdk/with-knip-workspaces';
+import { cli, read, write } from './helpers';
+import { initProject } from './support/init-project';
 
 describe('the wiring of the clients', () => {
   it('extends each script once, and leaves a script that already runs the generator or delegates to docs:check', () => {

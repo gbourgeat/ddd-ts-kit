@@ -1,5 +1,5 @@
-import type { StateMachineDeclaration } from './state-machine-declaration.js';
-import { StateMachine } from './state-machine.js';
+import type { StateMachineDeclaration } from './state-machine-declaration';
+import { StateMachine } from './state-machine';
 
 /**
  * Declares the lifecycle of an aggregate, in `domain/state-machines/<aggregate>.state-machine.ts`:

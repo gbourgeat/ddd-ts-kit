@@ -1,8 +1,8 @@
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { isUnder } from '../project/is-under.js';
-import { perFile } from '../support/per-file.js';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { isUnder } from '../project/is-under';
+import { perFile } from '../support/per-file';
 
 const TRACING_PACKAGE = '@ddd-ts-kit/tracing';
 const OPEN_TELEMETRY_SCOPE = '@opentelemetry/';

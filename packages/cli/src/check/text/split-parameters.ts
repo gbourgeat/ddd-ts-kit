@@ -1,5 +1,5 @@
-import { BRACKETS } from './brackets.js';
-import { splitAtCommas } from './split-at-commas.js';
+import { BRACKETS } from './brackets';
+import { splitAtCommas } from './split-at-commas';
 
 /** The parameters of a signature: split on the commas nested neither in brackets nor in type arguments, `this` left out. */
 export function splitParameters(text: string): string[] {

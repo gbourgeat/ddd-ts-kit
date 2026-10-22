@@ -1,5 +1,5 @@
-import { CliError } from '../../../cli-error.js';
-import type { Scope } from '../../scope.js';
+import { CliError } from '../../../cli-error';
+import type { Scope } from '../../scope';
 
 /**
  * Background jobs and process managers run in the worker the kernel module of `@ddd-ts-kit/di`

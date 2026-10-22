@@ -1,11 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, DEFAULT_STACK, exists, read, tempDir, write } from '../helpers.js';
-import { initFlags } from '../support/init-flags.js';
-import { expectNoFinding } from './expect-no-finding.js';
-import { installAsPublished } from './install-as-published.js';
-import { bin, runIn } from './run-in.js';
-import { SLOW } from './stacks.js';
-import { NATIVE_COMPILER } from './type-errors.js';
+import { cli, DEFAULT_STACK, exists, read, tempDir, write } from '../helpers';
+import { initFlags } from '../support/init-flags';
+import { expectNoFinding } from './expect-no-finding';
+import { installAsPublished } from './install-as-published';
+import { bin, runIn } from './run-in';
+import { SLOW } from './stacks';
+import { NATIVE_COMPILER } from './type-errors';
 
 const CONSUMER = 'test/e2e/support/invoices-client.ts';
 

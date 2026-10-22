@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
-import { defineRule } from '../support/rule/define-rule.js';
-import { propertyName } from '../support/globals/property-name.js';
-import { startsAtThis } from '../support/members/starts-at-this.js';
+import { defineRule } from '../support/rule/define-rule';
+import { propertyName } from '../support/globals/property-name';
+import { startsAtThis } from '../support/members/starts-at-this';
 
 interface Options {
   readonly mutators?: readonly string[];

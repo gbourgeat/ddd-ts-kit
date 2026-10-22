@@ -1,11 +1,11 @@
 import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
-import { derivedFormsOf } from './derived-forms-of.js';
-import type { ExportExplanation } from './export-explanation.js';
-import type { ModuleShape } from './module-shape.js';
-import { sharesPrivateState } from './shares-private-state.js';
-import { signatureOf } from './signature-of.js';
-import { typeClosure } from './type-closure.js';
-import { typeFamilyOf } from './type-family-of.js';
+import { derivedFormsOf } from './derived-forms-of';
+import type { ExportExplanation } from './export-explanation';
+import type { ModuleShape } from './module-shape';
+import { sharesPrivateState } from './shares-private-state';
+import { signatureOf } from './signature-of';
+import { typeClosure } from './type-closure';
+import { typeFamilyOf } from './type-family-of';
 
 type Source = Readonly<TSESLint.SourceCode>;
 

@@ -1,4 +1,4 @@
-import type { PlannedRefusal } from './planned-refusal.js';
+import type { PlannedRefusal } from './planned-refusal';
 
 /** What `error-factories --plan` proposes and `--apply` follows under `--to named`: per context, the class of each refusal. */
 export interface NamedPlan {

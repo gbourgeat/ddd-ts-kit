@@ -1,8 +1,8 @@
-import type { Exported } from '../exports/exported.js';
-import { signatureAt } from '../structure/signature-at.js';
-import { braceDepthAt } from '../text/brace-depth-at.js';
-import { endAtDepthZero } from '../text/end-at-depth-zero.js';
-import { escapeRegExp } from '../text/escape-reg-exp.js';
+import type { Exported } from '../exports/exported';
+import { signatureAt } from '../structure/signature-at';
+import { braceDepthAt } from '../text/brace-depth-at';
+import { endAtDepthZero } from '../text/end-at-depth-zero';
+import { escapeRegExp } from '../text/escape-reg-exp';
 
 /**
  * The declaration of a name at the top of a module, read as an export would be: a function with

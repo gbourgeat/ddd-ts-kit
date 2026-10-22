@@ -1,9 +1,9 @@
-import { Command } from '../../application/messaging/command.js';
-import type { MessageInfo } from '../../application/messaging/message-info.js';
-import type { MessageType } from '../../application/messaging/message-type.js';
-import type { Message } from '../../application/messaging/message.js';
-import { Query } from '../../application/messaging/query.js';
-import { DeclarationError } from '../registry/declaration-error.js';
+import { Command } from '../../application/messaging/command';
+import type { MessageInfo } from '../../application/messaging/message-info';
+import type { MessageType } from '../../application/messaging/message-type';
+import type { Message } from '../../application/messaging/message';
+import { Query } from '../../application/messaging/query';
+import { DeclarationError } from '../registry/declaration-error';
 
 export function kindOf(target: MessageType<Message>): MessageInfo['kind'] {
   const prototype: unknown = target.prototype;

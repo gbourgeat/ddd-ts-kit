@@ -1,9 +1,9 @@
-import { toName } from '../../../naming/index.js';
-import type { Scope } from '../../scope.js';
-import { constructorParameters } from '../job/constructor-parameters.js';
-import { declaredPorts, type DeclaredPort } from './declared-ports.js';
-import { fakeClass } from './fake-class.js';
-import { portsInUse } from './ports-in-use.js';
+import { toName } from '../../../naming';
+import type { Scope } from '../../scope';
+import { constructorParameters } from '../job/constructor-parameters';
+import { declaredPorts, type DeclaredPort } from './declared-ports';
+import { fakeClass } from './fake-class';
+import { portsInUse } from './ports-in-use';
 
 /** A fake of `test/fakes/` a world can build alone, and the port of the context it stands for. */
 export interface ContextFake {

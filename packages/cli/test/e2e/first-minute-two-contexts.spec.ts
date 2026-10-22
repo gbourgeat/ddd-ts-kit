@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest';
-import { initAloneIsGreen } from './init-alone.js';
-import { label, RUNNABLE, SLOW } from './stacks.js';
+import { initAloneIsGreen } from './init-alone';
+import { label, RUNNABLE, SLOW } from './stacks';
 
 /**
  * Slow, opt-in (DDD_TS_KIT_E2E=1): a project is green from its first minute, with the contexts asked of `init` and nothing generated,

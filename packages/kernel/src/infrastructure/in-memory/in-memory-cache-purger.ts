@@ -1,4 +1,4 @@
-import type { CachePurger } from '../../application/ports/cache-purger.js';
+import type { CachePurger } from '../../application/ports/cache-purger';
 
 /**
  * A shared cache in the memory of the process, for tests: `store` files an answer under its

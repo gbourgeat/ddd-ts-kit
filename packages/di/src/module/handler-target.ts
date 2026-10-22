@@ -1,5 +1,5 @@
 import type { Dependencies, DependencyList, DependencyTokens } from '@ddd-ts-kit/kernel/declarations';
-import type { Resolve } from '../wiring/resolve.js';
+import type { Resolve } from '../wiring/resolve';
 
 export interface HandlerTarget<Handler> {
   /**

@@ -1,10 +1,10 @@
 import type { EventStamp, ReadModelRows, StampedRow } from '@ddd-ts-kit/kernel';
-import type { PrismaContext } from '../unit-of-work/prisma-context.js';
-import type { PrismaReadModelDelegate } from './prisma-read-model-delegate.js';
-import type { PrismaReadModelOptions } from './prisma-read-model-options.js';
-import { RowMapper } from './row.mapper.js';
-import { stampedRowOf } from './stamped-row-of.js';
-import { writtenOf } from './written-of.js';
+import type { PrismaContext } from '../unit-of-work/prisma-context';
+import type { PrismaReadModelDelegate } from './prisma-read-model-delegate';
+import type { PrismaReadModelOptions } from './prisma-read-model-options';
+import { RowMapper } from './row.mapper';
+import { stampedRowOf } from './stamped-row-of';
+import { writtenOf } from './written-of';
 
 /** The stamped rows of the table of a read model, through its model. */
 export class PrismaModelRows<Row extends object, Tx> implements ReadModelRows<Row> {

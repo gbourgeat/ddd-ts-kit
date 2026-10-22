@@ -5,7 +5,7 @@ import {
   type RelationTupleStore,
   type Schema,
 } from '@ddd-ts-kit/auth/rebac';
-import type { OpenFgaApi, OpenFgaTupleKey } from '../client/open-fga-api.js';
+import type { OpenFgaApi, OpenFgaTupleKey } from '../client/open-fga-api';
 
 /** OpenFGA answers a page of tuples at a time; this many, at most, per read. */
 const PAGE_SIZE = 100;

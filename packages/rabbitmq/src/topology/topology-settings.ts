@@ -1,4 +1,4 @@
-import type { QueueType } from '../options/queue-type.js';
+import type { QueueType } from '../options/queue-type';
 
 export interface TopologySettings {
   readonly exchange: string;

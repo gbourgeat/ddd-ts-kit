@@ -8,8 +8,8 @@ import {
   type DomainEvent,
 } from '@ddd-ts-kit/kernel';
 import { createApplication, defineContextModule, kernelModule, type Application } from '@ddd-ts-kit/di';
-import { resetTracingConfiguration, traceApplication } from '../src/index.js';
-import { expectSpanTree, installTestTracing, type TestTracing } from '../src/testing.js';
+import { resetTracingConfiguration, traceApplication } from '../src';
+import { expectSpanTree, installTestTracing, type TestTracing } from '../src/testing';
 
 class Parcel extends AggregateRoot {
   static of(id: string, fact: string): Parcel {

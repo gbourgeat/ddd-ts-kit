@@ -1,7 +1,7 @@
 import { EventSerializer, EventSourcedRepository, defineStoredEvent, type EventStore } from '@ddd-ts-kit/kernel';
-import { Consignment, type ConsignmentEvent } from './consignment.js';
-import { ConsignmentRegistered } from './consignment-registered.js';
-import { ConsignmentWeighed } from './consignment-weighed.js';
+import { Consignment, type ConsignmentEvent } from './consignment';
+import { ConsignmentRegistered } from './consignment-registered';
+import { ConsignmentWeighed } from './consignment-weighed';
 
 /** The repository adapter of the contract: it delegates to `EventSourcedRepository`, and knows nothing of events. */
 export class Consignments {

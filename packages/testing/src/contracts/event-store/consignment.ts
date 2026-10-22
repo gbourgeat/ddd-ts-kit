@@ -1,6 +1,6 @@
 import { EventSourcedAggregate, type AggregateHistory, type Appliers } from '@ddd-ts-kit/kernel';
-import { ConsignmentRegistered } from './consignment-registered.js';
-import { ConsignmentWeighed } from './consignment-weighed.js';
+import { ConsignmentRegistered } from './consignment-registered';
+import { ConsignmentWeighed } from './consignment-weighed';
 
 export type ConsignmentEvent = ConsignmentRegistered | ConsignmentWeighed;
 

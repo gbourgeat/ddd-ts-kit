@@ -1,5 +1,5 @@
 import type { EnqueuedBy } from '@ddd-ts-kit/kernel';
-import { NOW, QUEUE } from './job-fixtures.js';
+import { NOW, QUEUE } from './job-fixtures';
 
 const TENANT = 'tenant-3';
 

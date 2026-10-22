@@ -1,8 +1,8 @@
-import { CliError } from '../cli-error.js';
-import { formatMeasures } from '../measures/format-measures.js';
-import { readMeasures } from '../measures/read-measures.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
+import { CliError } from '../cli-error';
+import { formatMeasures } from '../measures/format-measures';
+import { readMeasures } from '../measures/read-measures';
+import { Arguments } from './arguments';
+import type { Command } from './command';
 
 /**
  * The measures of the stories of the project, from the git history of the current branch and

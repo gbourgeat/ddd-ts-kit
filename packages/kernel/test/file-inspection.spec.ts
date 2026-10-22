@@ -1,7 +1,7 @@
 import { Readable, Writable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { describe, expect, it } from 'vitest';
-import { FileError, FileInspection, acceptsMediaType, contentMatches, mediaTypeOf, signatureOf } from '../src/index.js';
+import { FileError, FileInspection, acceptsMediaType, contentMatches, mediaTypeOf, signatureOf } from '../src';
 
 const bytes = (text: string) => new Uint8Array(Buffer.from(text, 'latin1'));
 const PDF = bytes('%PDF-1.7\n%%EOF');

@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { CliError } from '../../cli-error.js';
+import { CliError } from '../../cli-error';
 
 /**
  * The files changed since `ref`, relative to the project root: committed since the merge base,

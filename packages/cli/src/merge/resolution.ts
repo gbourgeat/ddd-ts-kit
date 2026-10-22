@@ -1,5 +1,5 @@
-import type { ConflictClass } from './classify-conflict.js';
-import type { ConflictBlock } from './conflict-blocks.js';
+import type { ConflictClass } from './classify-conflict';
+import type { ConflictBlock } from './conflict-blocks';
 
 /** How one conflicted path was settled, or what of it is left to a person. */
 export interface Resolution {

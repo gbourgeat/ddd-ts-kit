@@ -1,7 +1,7 @@
 import type { AuditRecord, AuditTrail, ExecutionContext, SubjectKey, SubjectKeyStore } from '@ddd-ts-kit/kernel';
-import type { AuditSource } from './audit-source.js';
-import { failureReason } from './failure-reason.js';
-import { recordIn } from './record-in.js';
+import type { AuditSource } from './audit-source';
+import { failureReason } from './failure-reason';
+import { recordIn } from './record-in';
 
 /** The action of the entry an erasure writes. */
 export const SUBJECT_ERASURE_ACTION = 'personal-data:erase';

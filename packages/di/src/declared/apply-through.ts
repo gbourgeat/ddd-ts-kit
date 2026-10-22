@@ -1,4 +1,4 @@
-import { WiringError } from '../errors/wiring-error.js';
+import { WiringError } from '../errors/wiring-error';
 
 /** Calls the method of a projection that applies an event, and answers what it answered. */
 export async function applyThrough(projection: object, method: string, event: unknown): Promise<unknown> {

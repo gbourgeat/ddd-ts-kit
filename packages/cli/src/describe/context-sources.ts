@@ -1,6 +1,6 @@
-import type { Config } from '../config/index.js';
-import type { DeclaredFacts } from '../docs/declared-facts.js';
-import type { Workspace } from '../workspace/index.js';
+import type { Config } from '../config';
+import type { DeclaredFacts } from '../docs/declared-facts';
+import type { Workspace } from '../workspace';
 
 /** Where the facts of one context are read from. */
 export interface ContextSources {

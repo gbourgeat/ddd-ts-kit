@@ -1,6 +1,6 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { topLevelClasses } from './top-level-classes.js';
-import { isInlineExport } from './is-inline-export.js';
+import { topLevelClasses } from './top-level-classes';
+import { isInlineExport } from './is-inline-export';
 
 /** Those a module exports: inline, by `export { A }` or by `export default A`. */
 export function exportedClasses(program: TSESTree.Program): TSESTree.ClassDeclaration[] {

@@ -1,4 +1,4 @@
-import type { Location } from '../model/location.js';
+import type { Location } from '../model/location';
 
 /** A job file: `application/scheduling/*.job.ts` of a context, specs aside. */
 export function isJobFile(file: string, location: Location): boolean {

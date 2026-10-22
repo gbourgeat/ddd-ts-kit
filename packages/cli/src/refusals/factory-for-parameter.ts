@@ -1,4 +1,4 @@
-import { toName } from '../naming/index.js';
+import { toName } from '../naming';
 
 /** Parameters that are not what the refusal is about, but how it is told: each has the factory that says so. */
 const TOLD: Readonly<Record<string, string>> = { message: 'withMessage', cause: 'becauseOf' };

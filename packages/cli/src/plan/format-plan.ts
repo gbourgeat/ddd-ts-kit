@@ -1,4 +1,4 @@
-import type { Batch, OtherStoryRow, PlannedRow, WaitedRow, Wave, WavePlan } from './wave-plan.js';
+import type { Batch, OtherStoryRow, PlannedRow, WaitedRow, Wave, WavePlan } from './wave-plan';
 
 /** Before the squash merge of each branch, its migrations get their real names and the trunk comes in from what already landed. */
 const BEFORE_EACH_MERGE =

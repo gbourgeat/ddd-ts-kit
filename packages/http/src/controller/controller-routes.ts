@@ -1,21 +1,21 @@
 import type { Schema } from '@ddd-ts-kit/validation';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { assertCacheDeclaration } from '../cache/assert-cache-declaration.js';
-import { assertUniqueRoutes } from '../route/assert-unique-routes.js';
-import type { RequestSchemas } from '../route/request-schemas.js';
-import type { RouteInput } from '../route/route-input.js';
-import type { RouteOutput } from '../route/route-output.js';
-import type { RouteAdmission } from '../route/route-admission.js';
-import type { RouteSpec } from '../route/route-spec.js';
-import type { Route } from '../route/route.js';
-import type { ControllerClass } from './controller-class.js';
-import type { ErasedController } from './erased-controller.js';
-import type { ControllerRoutesOptions } from './controller-routes-options.js';
-import type { ControllerSpec } from './controller-spec.js';
-import type { GuardRequest } from './guard-request.js';
-import { guardRefusals } from './guard-refusals.js';
-import type { Guard } from './guard.js';
-import { resolvedController, type ResolvedController } from './resolved-controller.js';
+import { assertCacheDeclaration } from '../cache/assert-cache-declaration';
+import { assertUniqueRoutes } from '../route/assert-unique-routes';
+import type { RequestSchemas } from '../route/request-schemas';
+import type { RouteInput } from '../route/route-input';
+import type { RouteOutput } from '../route/route-output';
+import type { RouteAdmission } from '../route/route-admission';
+import type { RouteSpec } from '../route/route-spec';
+import type { Route } from '../route/route';
+import type { ControllerClass } from './controller-class';
+import type { ErasedController } from './erased-controller';
+import type { ControllerRoutesOptions } from './controller-routes-options';
+import type { ControllerSpec } from './controller-spec';
+import type { GuardRequest } from './guard-request';
+import { guardRefusals } from './guard-refusals';
+import type { Guard } from './guard';
+import { resolvedController, type ResolvedController } from './resolved-controller';
 
 const DEFAULT_SECURITY = ['bearer'];
 

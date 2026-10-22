@@ -1,5 +1,5 @@
-import { InvalidTenantIdError } from './invalid-tenant-id-error.js';
-import { isTenantId } from './is-tenant-id.js';
+import { InvalidTenantIdError } from './invalid-tenant-id-error';
+import { isTenantId } from './is-tenant-id';
 
 /** The tenant id as it came in, refused (`InvalidTenantIdError`) when it is outside the grammar of `isTenantId`. */
 export function assertTenantId(tenantId: string): string {

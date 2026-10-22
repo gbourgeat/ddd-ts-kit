@@ -1,5 +1,5 @@
-import type { DurationText } from '../scheduling/duration-text.js';
-import type { JobBackoff } from './job-backoff.js';
+import type { DurationText } from '../scheduling/duration-text';
+import type { JobBackoff } from './job-backoff';
 
 export interface BackgroundJobOptions {
   /** Attempts before the job is declared dead. Default 5. */

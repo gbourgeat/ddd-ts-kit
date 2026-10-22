@@ -42,7 +42,7 @@
     "docs"
   ],
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b && node ../../pipeline/monorepo/add-extensions.mjs dist"
   },
   "peerDependencies": {
     "@eslint/js": "^9.0.0 || ^10.0.0",

@@ -1,10 +1,7 @@
-import { layerApplicationInward } from '../../src/rules/layer-application-inward.js';
-import { layerDomainPurity } from '../../src/rules/layer-domain-purity.js';
-import {
-  layerInfrastructureNoPresentation,
-  layerPresentationNoInfrastructure,
-} from '../../src/rules/layer-sideways.js';
-import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { layerApplicationInward } from '../../src/rules/layer-application-inward';
+import { layerDomainPurity } from '../../src/rules/layer-domain-purity';
+import { layerInfrastructureNoPresentation, layerPresentationNoInfrastructure } from '../../src/rules/layer-sideways';
+import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const AGGREGATE = `${BILLING}/domain/aggregates/invoice.aggregate.ts`;
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;

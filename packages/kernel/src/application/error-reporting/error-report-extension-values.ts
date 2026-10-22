@@ -1,4 +1,4 @@
-import type { ErrorReportExtensions } from './error-report-extensions.js';
+import type { ErrorReportExtensions } from './error-report-extensions';
 
 /** The extensions as a report carries them: each one optional. */
 export type ErrorReportExtensionValues = {

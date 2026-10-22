@@ -1,4 +1,4 @@
-import type { BindingAspect } from '../model/binding-aspect.js';
+import type { BindingAspect } from '../model/binding-aspect';
 
 export interface PortOptions {
   /** A new instance on every resolution, instead of one per application. */

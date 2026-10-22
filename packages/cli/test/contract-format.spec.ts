@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { contractFormat } from '../src/contracts.js';
-import { tempDir, write } from './helpers.js';
+import { contractFormat } from '../src/contracts';
+import { tempDir, write } from './helpers';
 
 describe('the format the scripts write the contracts in', () => {
   it('is YAML in a directory with no config, and in a project whose config says nothing of it', () => {

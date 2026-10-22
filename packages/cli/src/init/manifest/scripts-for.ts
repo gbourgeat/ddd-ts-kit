@@ -1,11 +1,11 @@
-import type { Config } from '../../config/index.js';
-import { DEPCRUISE_FILE } from '../../depcruise/depcruise-file.js';
-import { inDialect } from '../../package-manager/in-dialect.js';
-import { BASELINE } from './baseline.js';
-import { databaseScripts } from './database-scripts.js';
-import { documentationScripts } from './documentation-scripts.js';
-import { pipelineManifest } from './pipeline-manifest.js';
-import { testScripts } from './test-scripts.js';
+import type { Config } from '../../config';
+import { DEPCRUISE_FILE } from '../../depcruise/depcruise-file';
+import { inDialect } from '../../package-manager/in-dialect';
+import { BASELINE } from './baseline';
+import { databaseScripts } from './database-scripts';
+import { documentationScripts } from './documentation-scripts';
+import { pipelineManifest } from './pipeline-manifest';
+import { testScripts } from './test-scripts';
 
 /**
  * The scripts of a project: the `ci:*` ones of the pipeline, then what a developer runs, and

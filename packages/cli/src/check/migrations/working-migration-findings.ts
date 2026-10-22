@@ -1,5 +1,5 @@
-import type { Finding } from '../model/finding.js';
-import type { Migration } from './migration-folder.js';
+import type { Finding } from '../model/finding';
+import type { Migration } from './migration-folder';
 
 /**
  * What a worker names the migration it generates in its worktree: `working-` right after the

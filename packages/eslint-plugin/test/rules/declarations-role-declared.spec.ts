@@ -1,5 +1,5 @@
-import { declarationsRoleDeclared } from '../../src/rules/declarations-role-declared.js';
-import { inProject } from '../support/declared-project.js';
+import { declarationsRoleDeclared } from '../../src/rules/declarations-role-declared';
+import { inProject } from '../support/declared-project';
 import {
   DECLARED,
   EXPLICIT,
@@ -22,8 +22,8 @@ import {
   MAPPER,
   AGGREGATE,
   SPEC,
-} from '../support/declared-style.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+} from '../support/declared-style';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const ISSUED =
   '@DomainEventHandler(InvoiceIssued)\nexport class InvoiceIssuedEventHandler { async handle(event: InvoiceIssued): Promise<void> {} }';

@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { describe, expect, it } from 'vitest';
-import { InMemoryErrorReporter, reportProcessFailures, type ErrorReporter } from '../src/index.js';
+import { InMemoryErrorReporter, reportProcessFailures, type ErrorReporter } from '../src';
 
 describe('reportProcessFailures', () => {
   class FakeProcess extends EventEmitter {

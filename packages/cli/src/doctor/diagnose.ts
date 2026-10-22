@@ -1,18 +1,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Config } from '../config/index.js';
-import { isRecord } from '../config/values/is-record.js';
-import type { DoctorFinding } from './doctor-finding.js';
-import { folderFindings } from './folder-findings.js';
-import { guidanceFindings } from './guidance-findings.js';
-import { hookFindings } from './hook-findings.js';
-import { installFindings } from './install-findings.js';
-import { nodeFindings } from './node-findings.js';
-import { packageFindings } from './package-findings.js';
-import { permissionFindings } from './permission-findings.js';
-import { scriptFindings } from './script-findings.js';
-import { submoduleFindings } from './submodule-findings.js';
-import { platformFileIn } from '../platform-layout/index.js';
+import type { Config } from '../config';
+import { isRecord } from '../config/values/is-record';
+import type { DoctorFinding } from './doctor-finding';
+import { folderFindings } from './folder-findings';
+import { guidanceFindings } from './guidance-findings';
+import { hookFindings } from './hook-findings';
+import { installFindings } from './install-findings';
+import { nodeFindings } from './node-findings';
+import { packageFindings } from './package-findings';
+import { permissionFindings } from './permission-findings';
+import { scriptFindings } from './script-findings';
+import { submoduleFindings } from './submodule-findings';
+import { platformFileIn } from '../platform-layout';
 
 /**
  * What the project lacks of what this version of the kit writes, the steps an upgrade leaves to do:

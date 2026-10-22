@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { openApiProblems } from '../src/config/open-api-problems.js';
+import { openApiProblems } from '../src/config/open-api-problems';
 
 const messagesOf = (openapi: unknown) => openApiProblems(openapi, ['billing']).map(({ message }) => message);
 

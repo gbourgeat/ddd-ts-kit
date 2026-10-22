@@ -1,7 +1,7 @@
-import type { FieldHint } from './field-hint.js';
-import type { FormGroupHint } from './form-group-hint.js';
-import type { FormHints } from './form-hints.js';
-import type { FormRequirement } from './form-requirement.js';
+import type { FieldHint } from './field-hint';
+import type { FormGroupHint } from './form-group-hint';
+import type { FormHints } from './form-hints';
+import type { FormRequirement } from './form-requirement';
 
 /** The hints of a form whose field names the compiler checks against the body of the route. */
 export interface TypedFormHints<Body> {

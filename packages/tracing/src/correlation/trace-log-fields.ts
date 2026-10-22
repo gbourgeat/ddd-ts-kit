@@ -1,6 +1,6 @@
 import { isSpanContextValid, trace } from '@opentelemetry/api';
 import { logFieldsOf, type ExecutionScope, type LogFields } from '@ddd-ts-kit/kernel';
-import { tracingConfiguration } from '../configuration/configure-tracing.js';
+import { tracingConfiguration } from '../configuration/configure-tracing';
 
 export interface TraceLogFields extends LogFields {
   trace_id?: string;

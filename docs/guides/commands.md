@@ -213,7 +213,7 @@ Bad:
 
 Good:
     // contexts/shipping/application/...
-    import type { InvoiceIssuedV1 } from '@/contexts/billing/published-language/index';
+    import type { InvoiceIssuedV1 } from '@/contexts/billing/published-language';
 
 Suppress one line (with a reason): // ddd-ts-kit-disable-next-line context/published-language-only -- <reason>
 ```

@@ -1,5 +1,5 @@
-import type { Remaining } from '../progress/remaining.js';
-import type { GitRunner } from './attributed-marker.js';
+import type { Remaining } from '../progress/remaining';
+import type { GitRunner } from './attributed-marker';
 
 const NOT_COMMITTED = '0'.repeat(40);
 const HEADER = /^([0-9a-f]{40}) \d+ (\d+)/gm;

@@ -1,4 +1,4 @@
-import type { CriteriaCase } from './criteria-case.js';
+import type { CriteriaCase } from './criteria-case';
 
 /** Orders, each total: the tie-breaker follows in the direction of the last field. A null is the greatest value. */
 export const SORT_CASES: readonly CriteriaCase[] = [

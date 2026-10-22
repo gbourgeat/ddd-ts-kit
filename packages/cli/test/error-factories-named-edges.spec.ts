@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { cutFactories } from '../src/refusals/cut-factories.js';
-import { importsUsedBy } from '../src/refusals/imports-used-by.js';
-import type { NamedMove } from '../src/refusals/named-move.js';
-import { ownFactory } from '../src/refusals/own-factory.js';
-import { planTarget } from '../src/refusals/plan-target.js';
-import { readConceptError } from '../src/refusals/read-concept-error.js';
-import { rewriteConceptUsages } from '../src/refusals/rewrite-concept-usages.js';
-import { splitConceptSpec } from '../src/refusals/split-concept-spec.js';
-import { withCodes } from '../src/refusals/with-codes.js';
+import { cutFactories } from '../src/refusals/cut-factories';
+import { importsUsedBy } from '../src/refusals/imports-used-by';
+import type { NamedMove } from '../src/refusals/named-move';
+import { ownFactory } from '../src/refusals/own-factory';
+import { planTarget } from '../src/refusals/plan-target';
+import { readConceptError } from '../src/refusals/read-concept-error';
+import { rewriteConceptUsages } from '../src/refusals/rewrite-concept-usages';
+import { splitConceptSpec } from '../src/refusals/split-concept-spec';
+import { withCodes } from '../src/refusals/with-codes';
 import fs from 'node:fs';
 import path from 'node:path';
-import { cli, read, tempDir, write } from './helpers.js';
+import { cli, read, tempDir, write } from './helpers';
 
 const ORIGIN = { file: 'src/contexts/scheduling/domain/errors/slot.error.ts', context: 'scheduling' };
 

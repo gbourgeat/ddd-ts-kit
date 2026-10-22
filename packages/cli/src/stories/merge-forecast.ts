@@ -1,4 +1,4 @@
-import type { Resolution } from '../merge/resolution.js';
+import type { Resolution } from '../merge/resolution';
 
 /** What merging one branch into another would leave now, computed without touching a working tree. */
 export interface MergeForecast {

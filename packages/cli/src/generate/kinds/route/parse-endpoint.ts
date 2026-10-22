@@ -1,7 +1,7 @@
-import { isOneOf } from '../../../config/index.js';
-import { CliError } from '../../../cli-error.js';
-import type { KindFlags } from '../../kind.js';
-import type { Endpoint } from './endpoint.js';
+import { isOneOf } from '../../../config';
+import { CliError } from '../../../cli-error';
+import type { KindFlags } from '../../kind';
+import type { Endpoint } from './endpoint';
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
 const ROUTE_PATH = /^\/$|^(\/(:[A-Za-z_][A-Za-z0-9_]*|[A-Za-z0-9._~-]+))+$/;

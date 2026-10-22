@@ -1,19 +1,19 @@
-import { CliError } from '../cli-error.js';
-import { runGit } from '../commit/run-git.js';
-import { readConfig } from '../config/index.js';
-import { readRemaining } from '../progress/read-remaining.js';
-import { readSlices, SLICES_FILE } from '../progress/read-slices.js';
-import type { Slice } from '../progress/slice.js';
-import { Workspace } from '../workspace/index.js';
-import { attributeMarkers } from './attribute-markers.js';
-import { closingOf } from './closing-of.js';
-import { designDepartures } from './design-departures.js';
-import { mayKeepOpen } from './may-keep-open.js';
-import { projectContexts } from './project-contexts.js';
-import type { StoryClosing } from './story-closing.js';
-import { storyOf } from './story-of.js';
-import { storyScope } from './story-scope.js';
-import { unreferencedCommits } from './unreferenced-commits.js';
+import { CliError } from '../cli-error';
+import { runGit } from '../commit/run-git';
+import { readConfig } from '../config';
+import { readRemaining } from '../progress/read-remaining';
+import { readSlices, SLICES_FILE } from '../progress/read-slices';
+import type { Slice } from '../progress/slice';
+import { Workspace } from '../workspace';
+import { attributeMarkers } from './attribute-markers';
+import { closingOf } from './closing-of';
+import { designDepartures } from './design-departures';
+import { mayKeepOpen } from './may-keep-open';
+import { projectContexts } from './project-contexts';
+import type { StoryClosing } from './story-closing';
+import { storyOf } from './story-of';
+import { storyScope } from './story-scope';
+import { unreferencedCommits } from './unreferenced-commits';
 
 /**
  * Whether the story or milestone `asked` (`M1`, `#M1`) can close, read from the slices file, the

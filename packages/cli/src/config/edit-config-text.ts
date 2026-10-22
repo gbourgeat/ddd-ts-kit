@@ -1,5 +1,5 @@
-import { isRecord } from './values/is-record.js';
-import { formatJson } from '../json/format-json.js';
+import { isRecord } from './values/is-record';
+import { formatJson } from '../json/format-json';
 
 /** Changes the config text through its JSON value, so that what the user wrote elsewhere keeps its shape. */
 export function editConfigText(content: string, edit: (raw: Record<string, unknown>) => void): string {

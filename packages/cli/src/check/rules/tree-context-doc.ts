@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CLASSIFICATIONS } from '../../config/index.js';
-import { CONTEXT_DOC_HEADINGS } from '../canonical/context-doc-headings.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import { reporter } from '../support/reporter.js';
-import { toViolations } from '../support/to-violations.js';
+import { CLASSIFICATIONS } from '../../config';
+import { CONTEXT_DOC_HEADINGS } from '../canonical/context-doc-headings';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import { reporter } from '../support/reporter';
+import { toViolations } from '../support/to-violations';
 
 export const treeContextDoc: Rule = {
   id: 'tree/context-doc',

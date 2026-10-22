@@ -1,12 +1,12 @@
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { BOUNDARY_NAMES } from '../standard/boundary-names.js';
-import { parallelNames } from '../standard/parallel-names.js';
-import { STANDARD_INTERFACES_FIX } from '../standard/standard-interfaces-fix.js';
-import { standardNamesIn } from '../standard/standard-names-in.js';
-import { perFile } from '../support/per-file.js';
-import { identifier } from '../text/identifier.js';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { BOUNDARY_NAMES } from '../standard/boundary-names';
+import { parallelNames } from '../standard/parallel-names';
+import { STANDARD_INTERFACES_FIX } from '../standard/standard-interfaces-fix';
+import { standardNamesIn } from '../standard/standard-names-in';
+import { perFile } from '../support/per-file';
+import { identifier } from '../text/identifier';
 
 /** A class or an interface with its heritage, or a type alias: `import { type X }` and `import type X from` declare nothing. */
 const DECLARATION =

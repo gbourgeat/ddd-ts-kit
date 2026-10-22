@@ -1,5 +1,5 @@
-import { CachePurgeError } from './cache-purge-error.js';
-import type { PurgeRequest } from './purge-request.js';
+import { CachePurgeError } from './cache-purge-error';
+import type { PurgeRequest } from './purge-request';
 
 const SUCCESS_FROM = 200;
 const SUCCESS_TO = 299;

@@ -1,2 +1,2 @@
-export { rewriteAliases } from './rewrite-aliases.js';
-export { rewriteSpecifiers } from './rewrite-specifiers.js';
+export { rewriteAliases } from './rewrite-aliases';
+export { rewriteSpecifiers } from './rewrite-specifiers';

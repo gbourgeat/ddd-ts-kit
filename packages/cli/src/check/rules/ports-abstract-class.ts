@@ -1,11 +1,11 @@
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { bodilessMembers, type BodilessMember } from '../ports/bodiless-members.js';
-import type { ClassShape } from '../structure/class-shape.js';
-import { isPortFile } from '../support/is-port-file.js';
-import { perFile } from '../support/per-file.js';
-import { braceDepthAt } from '../text/brace-depth-at.js';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { bodilessMembers, type BodilessMember } from '../ports/bodiless-members';
+import type { ClassShape } from '../structure/class-shape';
+import { isPortFile } from '../support/is-port-file';
+import { perFile } from '../support/per-file';
+import { braceDepthAt } from '../text/brace-depth-at';
 
 const EXPORTED_INTERFACE = /(?<![\w$.])export\s+(?:declare\s+)?interface\s+([A-Za-z_$][\w$]*)/g;
 const TOKEN_KEY = /^static readonly tokenKey ?(?:: ?string ?)?= ?(['"`]) ?\1$/;

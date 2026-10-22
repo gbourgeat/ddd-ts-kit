@@ -1,7 +1,7 @@
 import type { ErrorReporter } from '@ddd-ts-kit/kernel';
 import { close } from '@sentry/node';
-import { initSentry, type InitSentryOptions } from '../../src/index.js';
-import { EnvelopeServer } from './envelope-server.js';
+import { initSentry, type InitSentryOptions } from '../../src';
+import { EnvelopeServer } from './envelope-server';
 
 export interface Tracker {
   readonly server: EnvelopeServer;

@@ -1,4 +1,4 @@
-import type { PrismaJsonInput } from './prisma-json-input.js';
+import type { PrismaJsonInput } from './prisma-json-input';
 
 /**
  * A JSON `null` payload is left out and stored as SQL NULL: Prisma refuses a bare null in a

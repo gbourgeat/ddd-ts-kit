@@ -1,7 +1,7 @@
-import { findRoot } from '../commands/find-root.js';
-import { readConfig } from '../config/index.js';
-import { refreshBarrels } from '../generate/refresh-barrels.js';
-import { Workspace } from '../workspace/index.js';
+import { findRoot } from '../commands/find-root';
+import { readConfig } from '../config';
+import { refreshBarrels } from '../generate/refresh-barrels';
+import { Workspace } from '../workspace';
 
 /**
  * Rewrites the generated file of every declared context of the project around `start` from

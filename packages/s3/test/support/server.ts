@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { CreateBucketCommand, S3ServiceException, type S3Client } from '@aws-sdk/client-s3';
-import { s3ClientOf } from '../../src/index.js';
+import { s3ClientOf } from '../../src';
 
 /** The server the specs run against, MinIO in the pipeline. Without it they are skipped. */
 export const SERVER_URL = process.env['DDD_TS_KIT_TEST_S3_ENDPOINT'] ?? '';

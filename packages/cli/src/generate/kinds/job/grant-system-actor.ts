@@ -1,10 +1,10 @@
-import { escapeRegExp } from '../../../check/text/escape-reg-exp.js';
-import { insertInRegion } from '../../../markers/index.js';
-import { withImport } from '../../with-import.js';
-import { permissionOf, type PermissionReference } from './permission-of.js';
-import type { Scope } from '../../scope.js';
-import type { SentCommand } from './sent-command.js';
-import { platformPath } from '../../platform-path.js';
+import { escapeRegExp } from '../../../check/text/escape-reg-exp';
+import { insertInRegion } from '../../../markers';
+import { withImport } from '../../with-import';
+import { permissionOf, type PermissionReference } from './permission-of';
+import type { Scope } from '../../scope';
+import type { SentCommand } from './sent-command';
+import { platformPath } from '../../platform-path';
 
 const REGION = 'system-grants';
 const SYSTEM_OPERATES = /operator:\s*\[[^\]]*'system'/;

@@ -1,17 +1,11 @@
 import { jetstream, jetstreamManager, type JetStreamClient, type JetStreamManager } from '@nats-io/jetstream';
 import { connect, type NatsConnection } from '@nats-io/transport-node';
-import {
-  NatsEventBus,
-  bindingNamesOf,
-  deadStreamOf,
-  type ConsumerBinding,
-  type NatsEventBusOptions,
-} from '../../src/index.js';
-import { MAX_ATTEMPTS, RETRY_DELAY_MS } from './environment.js';
-import { InMemoryNats } from './server/in-memory-nats.js';
-import type { StoredMessage } from './stored-message.js';
-import { unique } from './unique.js';
-import { eventually } from './waiting.js';
+import { NatsEventBus, bindingNamesOf, deadStreamOf, type ConsumerBinding, type NatsEventBusOptions } from '../../src';
+import { MAX_ATTEMPTS, RETRY_DELAY_MS } from './environment';
+import { InMemoryNats } from './server/in-memory-nats';
+import type { StoredMessage } from './stored-message';
+import { unique } from './unique';
+import { eventually } from './waiting';
 
 /**
  * A second, plain NATS client next to the buses under test: it reads the streams, drops raw

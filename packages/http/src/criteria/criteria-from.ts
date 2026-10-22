@@ -1,7 +1,7 @@
 import type { Criteria, CriteriaDefinition } from '@ddd-ts-kit/kernel';
 import { ValidationError } from '@ddd-ts-kit/validation';
-import type { CriteriaQueryOptions } from './criteria-query-options.js';
-import { parseCriteriaQuery } from './parse-criteria-query.js';
+import type { CriteriaQueryOptions } from './criteria-query-options';
+import { parseCriteriaQuery } from './parse-criteria-query';
 
 /**
  * Reads the criteria of a search route from its query: `filter[<field>]=<operator>:<value>`,

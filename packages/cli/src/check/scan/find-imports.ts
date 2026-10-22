@@ -1,6 +1,6 @@
-import type { ImportRecord } from './import-record.js';
-import { statementOf } from './statement-of.js';
-import type { StringRecord } from './string-record.js';
+import type { ImportRecord } from './import-record';
+import { statementOf } from './statement-of';
+import type { StringRecord } from './string-record';
 
 /** The import and export statements of a blanked source: one record per string literal that is a module specifier. */
 export function findImports(

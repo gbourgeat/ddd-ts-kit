@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { eventBusContract } from '@ddd-ts-kit/testing/contracts';
-import type { StreamStorage } from '../src/index.js';
-import type { Broker } from './support/broker.js';
-import { BROKERS } from './support/brokers.js';
+import type { StreamStorage } from '../src';
+import type { Broker } from './support/broker';
+import { BROKERS } from './support/brokers';
 
 const runner = { describe, it, beforeEach, afterEach, expect };
 

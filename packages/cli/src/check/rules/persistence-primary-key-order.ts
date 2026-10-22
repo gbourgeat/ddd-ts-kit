@@ -1,12 +1,12 @@
 import path from 'node:path';
-import { migrationFiles } from '../../migration/migration-files.js';
-import { previousPrimaryKeys } from '../../migration/previous-primary-keys.js';
-import { primaryKeyOrderFindings } from '../../migration/primary-key-order-findings.js';
-import { drizzleOutFolder } from '../migrations/drizzle-out-folder.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import { reporter } from '../support/reporter.js';
-import { toViolations } from '../support/to-violations.js';
+import { migrationFiles } from '../../migration/migration-files';
+import { previousPrimaryKeys } from '../../migration/previous-primary-keys';
+import { primaryKeyOrderFindings } from '../../migration/primary-key-order-findings';
+import { drizzleOutFolder } from '../migrations/drizzle-out-folder';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import { reporter } from '../support/reporter';
+import { toViolations } from '../support/to-violations';
 
 export const persistencePrimaryKeyOrder: Rule = {
   id: 'persistence/primary-key-order',

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
-import { jsonObject } from '../init/json-object.js';
-import type { WorkerFile } from './worker-file.js';
+import { jsonObject } from '../init/json-object';
+import type { WorkerFile } from './worker-file';
 
 /** The scope file of a worker; undefined when it is missing, unreadable or names no context. What it lacks is left out. */
 export function readWorkerFile(file: string): WorkerFile | undefined {

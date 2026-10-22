@@ -9,12 +9,12 @@ import {
   type PageRequest,
   type SortDirection,
 } from '@ddd-ts-kit/kernel';
-import type { Database } from '../../../platform/database/database.js';
-import type { InvoiceQueries, InvoiceSort, InvoiceSummary } from '../../application/ports/invoice-queries.port.js';
-import { directionOf } from './direction-of.js';
-import { invoices } from './invoices.js';
-import { ownTenant } from './own-tenant.js';
-import { positionOf, type InvoicePosition } from './position-of.js';
+import type { Database } from '../../../platform/database/database';
+import type { InvoiceQueries, InvoiceSort, InvoiceSummary } from '../../application/ports/invoice-queries.port';
+import { directionOf } from './direction-of';
+import { invoices } from './invoices';
+import { ownTenant } from './own-tenant';
+import { positionOf, type InvoicePosition } from './position-of';
 
 /**
  * The list query of a read port, in both variants of `PageRequest`. The order is total: the

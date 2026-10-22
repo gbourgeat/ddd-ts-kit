@@ -1,7 +1,7 @@
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
-import { WiringError } from '../errors/wiring-error.js';
-import { ROLE_RULES, type RoleRule } from './role-rule.js';
+import { WiringError } from '../errors/wiring-error';
+import { ROLE_RULES, type RoleRule } from './role-rule';
 
 export interface RoleFile {
   readonly absolute: string;

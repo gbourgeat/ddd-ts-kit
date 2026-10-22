@@ -1,6 +1,6 @@
-import type { Workspace } from '../workspace/index.js';
-import { regressionSpecsIn } from './regression-specs-in.js';
-import type { StoryPhase } from './story-phase.js';
+import type { Workspace } from '../workspace';
+import { regressionSpecsIn } from './regression-specs-in';
+import type { StoryPhase } from './story-phase';
 
 /**
  * The regression specs of a fix story, in place of its acceptance: listed under `## Regression` of

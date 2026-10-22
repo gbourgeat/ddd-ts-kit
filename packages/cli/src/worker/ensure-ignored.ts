@@ -1,7 +1,7 @@
 import path from 'node:path';
-import { CliError } from '../cli-error.js';
-import { runGit } from '../commit/run-git.js';
-import { WORKTREES_DIR } from './worktree-home.js';
+import { CliError } from '../cli-error';
+import { runGit } from '../commit/run-git';
+import { WORKTREES_DIR } from './worktree-home';
 
 /**
  * Refuses a worktree of `.worktrees/` that git does not ignore in the project holding it: its

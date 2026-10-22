@@ -1,7 +1,7 @@
 import { OpenFgaClient } from '@openfga/sdk';
 import type { Schema } from '@ddd-ts-kit/auth/rebac';
-import { ensureAuthorizationModel, type OpenFgaApi } from '../../src/index.js';
-import { openFgaClient } from '../../src/sdk.js';
+import { ensureAuthorizationModel, type OpenFgaApi } from '../../src';
+import { openFgaClient } from '../../src/sdk';
 
 /** The OpenFGA server of the integration job (`openfga/openfga`, pinned by digest); unset, the specs on a server are skipped. */
 export const OPENFGA_URL = process.env['DDD_TS_KIT_OPENFGA_URL'] ?? '';

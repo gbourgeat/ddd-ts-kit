@@ -1,4 +1,4 @@
-import type { Slice } from './slice.js';
+import type { Slice } from './slice';
 
 /** Where the work stands: the next step of the plan, the slices, and what the generators left to fill. */
 export interface Progress {

@@ -1,5 +1,5 @@
-import { CliError } from '../cli-error.js';
-import { gitProcess } from './git-process.js';
+import { CliError } from '../cli-error';
+import { gitProcess } from './git-process';
 
 /** One side of a conflicted path, as the index of a merge holds it: 1 the base, 2 ours, 3 theirs. */
 export interface StageEntry {

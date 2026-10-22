@@ -1,7 +1,7 @@
 import type { Actor, Clock } from '@ddd-ts-kit/kernel';
-import type { FieldDecider } from './field-decider.js';
-import type { FieldPolicy } from './field-policy.js';
-import type { FieldQuestion } from './field-question.js';
+import type { FieldDecider } from './field-decider';
+import type { FieldPolicy } from './field-policy';
+import type { FieldQuestion } from './field-question';
 
 interface Decided {
   readonly allowed: boolean;

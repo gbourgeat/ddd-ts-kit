@@ -1,4 +1,4 @@
-import type { DomainEvent } from '../../domain/domain-event.js';
+import type { DomainEvent } from '../../domain/domain-event';
 
 /** A class of `application/event-handlers/`: one handler of one domain event of its own context. */
 export interface DomainEventHandler<E extends DomainEvent> {

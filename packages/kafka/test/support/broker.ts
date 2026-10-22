@@ -1,13 +1,13 @@
 import { KafkaJS } from '@confluentinc/kafka-javascript';
-import { KafkaEventBus, type KafkaEventBusOptions } from '../../src/index.js';
-import { InMemoryKafka } from './cluster/in-memory-kafka.js';
-import { KAFKA_RELAY, MAX_ATTEMPTS, RETRY_DELAY_MS } from './environment.js';
-import { FaultyNetwork } from './faulty-network.js';
-import { MemoryNetwork } from './memory-network.js';
-import type { Network, NetworkConnection } from './network.js';
-import type { StoredRecord } from './stored-record.js';
-import { unique } from './unique.js';
-import { eventually } from './waiting.js';
+import { KafkaEventBus, type KafkaEventBusOptions } from '../../src';
+import { InMemoryKafka } from './cluster/in-memory-kafka';
+import { KAFKA_RELAY, MAX_ATTEMPTS, RETRY_DELAY_MS } from './environment';
+import { FaultyNetwork } from './faulty-network';
+import { MemoryNetwork } from './memory-network';
+import type { Network, NetworkConnection } from './network';
+import type { StoredRecord } from './stored-record';
+import { unique } from './unique';
+import { eventually } from './waiting';
 
 interface Reach {
   /** What a bus connects with: the bootstrap brokers, or the in-memory cluster. */

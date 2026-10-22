@@ -5,9 +5,9 @@ import {
   InMemoryMetrics,
   SequentialIdGenerator,
 } from '@ddd-ts-kit/kernel';
-import { QueueWorker, StoredJobQueue, type BackgroundJobRun, type QueueWorkerOptions } from '../../src/index.js';
-import { ManualJobTimers } from '../../src/testing.js';
-import { UnreliableJobStore } from './unreliable-job-store.js';
+import { QueueWorker, StoredJobQueue, type BackgroundJobRun, type QueueWorkerOptions } from '../../src';
+import { ManualJobTimers } from '../../src/testing';
+import { UnreliableJobStore } from './unreliable-job-store';
 
 export interface QueueBench {
   readonly clock: FixedClock;

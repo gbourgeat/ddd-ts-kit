@@ -1,5 +1,5 @@
-import type { Awaitable } from './awaitable.js';
-import type { ContractRunner } from './contract-runner.js';
+import type { Awaitable } from './awaitable';
+import type { ContractRunner } from './contract-runner';
 
 type Expectation = ReturnType<ContractRunner['expect']>;
 

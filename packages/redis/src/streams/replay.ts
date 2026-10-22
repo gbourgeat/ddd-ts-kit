@@ -1,6 +1,6 @@
 import type { Redis } from 'ioredis';
-import { entriesOf } from './codec/entries-of.js';
-import { replayFields } from './codec/replay-fields.js';
+import { entriesOf } from './codec/entries-of';
+import { replayFields } from './codec/replay-fields';
 
 export interface Replay {
   readonly stream: string;

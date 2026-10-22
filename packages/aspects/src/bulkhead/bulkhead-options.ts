@@ -1,4 +1,4 @@
-import type { StateScope } from '../state/state-scope.js';
+import type { StateScope } from '../state/state-scope';
 
 export interface BulkheadOptions {
   /** Calls running at once. */

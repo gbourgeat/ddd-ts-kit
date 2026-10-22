@@ -1,6 +1,6 @@
-import type { Rule } from '../model/rule.js';
-import { inContext } from '../support/in-context.js';
-import { perFile } from '../support/per-file.js';
+import type { Rule } from '../model/rule';
+import { inContext } from '../support/in-context';
+import { perFile } from '../support/per-file';
 
 export const contextPublishedLanguageOnly: Rule = {
   id: 'context/published-language-only',

@@ -1,8 +1,8 @@
 import { expect } from 'vitest';
-import { cli, read, scaffoldEverything, tempDir, write } from '../helpers.js';
-import { eslintOn } from './analyzers.js';
-import { installAsPublished } from './install-as-published.js';
-import { bin, findingsOf } from './run-in.js';
+import { cli, read, scaffoldEverything, tempDir, write } from '../helpers';
+import { eslintOn } from './analyzers';
+import { installAsPublished } from './install-as-published';
+import { bin, findingsOf } from './run-in';
 
 interface Reported {
   readonly ruleId: string;

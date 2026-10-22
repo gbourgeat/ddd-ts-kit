@@ -1,4 +1,4 @@
-import type { AspectInfo } from './aspect-info.js';
+import type { AspectInfo } from './aspect-info';
 
 /**
  * Cross-cutting behaviour applied from outside: takes an instance, answers it with its

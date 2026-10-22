@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { RedisStreamsDelivery, RedisStreamsFailure } from '../src/event-bus.js';
-import { InvoicingFailed, PLACED, anEvent, deliveriesOf, failuresOf, recorder, unique } from './support/events.js';
-import { REAL_SERVER, SERVER_URL } from './support/server.js';
-import { RETRY_DELAY_MS, Server } from './support/streams.js';
-import { pause } from './support/waiting.js';
+import type { RedisStreamsDelivery, RedisStreamsFailure } from '../src/event-bus';
+import { InvoicingFailed, PLACED, anEvent, deliveriesOf, failuresOf, recorder, unique } from './support/events';
+import { REAL_SERVER, SERVER_URL } from './support/server';
+import { RETRY_DELAY_MS, Server } from './support/streams';
+import { pause } from './support/waiting';
 
 describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, retrying', { timeout: 30_000 }, () => {
   let server: Server;

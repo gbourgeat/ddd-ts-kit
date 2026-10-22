@@ -1,5 +1,5 @@
-import { identifier } from '../text/identifier.js';
-import type { LocalType } from './local-types.js';
+import { identifier } from '../text/identifier';
+import type { LocalType } from './local-types';
 
 /**
  * The types of a file reached from the texts given: the ones they name, then the ones those name.

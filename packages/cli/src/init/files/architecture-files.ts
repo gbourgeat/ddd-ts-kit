@@ -1,6 +1,6 @@
-import type { Config } from '../../config/index.js';
-import { wiringFamily } from '../../generate/wiring-family.js';
-import type { InitFile } from './init-file.js';
+import type { Config } from '../../config';
+import { wiringFamily } from '../../generate/wiring-family';
+import type { InitFile } from './init-file';
 
 /**
  * The proof that the platform wires alone, which each context then joins: there from the start,

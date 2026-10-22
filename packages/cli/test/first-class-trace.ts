@@ -1,4 +1,4 @@
-import { read, write } from './helpers.js';
+import { read, write } from './helpers';
 
 const SPEC = 'test/e2e/issue-invoice.e2e.spec.ts';
 

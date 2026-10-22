@@ -10,14 +10,14 @@ import {
   createDrizzleUnitOfWork,
   optimisticUpdate,
   schemaNameOf,
-} from '../src/postgres.js';
-import { createDatabase } from './support/database.js';
-import { Database } from './support/platform/database/database.js';
-import { ada, scopeOf } from './support/scopes.js';
-import { Invoice } from './support/billing-core/domain/invoice.js';
-import { InvoiceRepository } from './support/billing-core/domain/repositories/invoice.repository.js';
-import { DrizzleInvoiceRepository } from './support/billing-core/infrastructure/persistence/drizzle-invoice.repository.js';
-import { invoices } from './support/billing-core/infrastructure/persistence/invoices.js';
+} from '../src/postgres';
+import { createDatabase } from './support/database';
+import { Database } from './support/platform/database/database';
+import { ada, scopeOf } from './support/scopes';
+import { Invoice } from './support/billing-core/domain/invoice';
+import { InvoiceRepository } from './support/billing-core/domain/repositories/invoice.repository';
+import { DrizzleInvoiceRepository } from './support/billing-core/infrastructure/persistence/drizzle-invoice.repository';
+import { invoices } from './support/billing-core/infrastructure/persistence/invoices';
 
 let database: Awaited<ReturnType<typeof createDatabase>>;
 

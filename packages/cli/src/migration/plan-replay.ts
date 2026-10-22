@@ -1,14 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { drizzleHistoryFindings } from '../check/migrations/drizzle-history-findings.js';
-import { drizzleOutFolder } from '../check/migrations/drizzle-out-folder.js';
-import { readDrizzleMigrations } from '../check/migrations/read-drizzle-migrations.js';
-import { CliError } from '../cli-error.js';
-import { runGit } from '../commit/run-git.js';
-import type { BranchMigration } from './branch-migration.js';
-import { branchMigrations } from './branch-migrations.js';
-import { migrationFiles } from './migration-files.js';
-import type { ReplayPlan } from './replay-plan.js';
+import { drizzleHistoryFindings } from '../check/migrations/drizzle-history-findings';
+import { drizzleOutFolder } from '../check/migrations/drizzle-out-folder';
+import { readDrizzleMigrations } from '../check/migrations/read-drizzle-migrations';
+import { CliError } from '../cli-error';
+import { runGit } from '../commit/run-git';
+import type { BranchMigration } from './branch-migration';
+import { branchMigrations } from './branch-migrations';
+import { migrationFiles } from './migration-files';
+import type { ReplayPlan } from './replay-plan';
 
 const CONFLICT_MARKER = /^(?:<{7}|={7}|>{7})(?: |$)/m;
 

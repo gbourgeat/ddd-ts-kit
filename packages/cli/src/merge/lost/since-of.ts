@@ -1,8 +1,8 @@
 import path from 'node:path';
-import { CliError } from '../../cli-error.js';
-import { WORKER_SCOPE_FILE } from '../../commit/worker-scope-file.js';
-import { readWorkerFile } from '../../worker/read-worker-file.js';
-import { commitOf } from './commit-of.js';
+import { CliError } from '../../cli-error';
+import { WORKER_SCOPE_FILE } from '../../commit/worker-scope-file';
+import { readWorkerFile } from '../../worker/read-worker-file';
+import { commitOf } from './commit-of';
 
 const TRUNKS = ['origin/HEAD', 'origin/main'];
 

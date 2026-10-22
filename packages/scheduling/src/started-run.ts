@@ -1,4 +1,4 @@
-import type { Occurrence } from './occurrence.js';
+import type { Occurrence } from './occurrence';
 
 export interface StartedRun {
   readonly occurrence: Occurrence;

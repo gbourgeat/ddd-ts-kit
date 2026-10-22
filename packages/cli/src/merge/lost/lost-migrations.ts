@@ -1,5 +1,5 @@
-import type { MergeFinding } from './merge-finding.js';
-import type { MergeSides } from './merge-sides.js';
+import type { MergeFinding } from './merge-finding';
+import type { MergeSides } from './merge-sides';
 
 /** A migration file: under a `migrations/` folder, outside the `meta/` of drizzle-kit. */
 const MIGRATION = /(?:^|\/)migrations\/(?!(?:.*\/)?meta\/)(.+)$/;

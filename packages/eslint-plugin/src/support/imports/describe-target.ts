@@ -1,4 +1,4 @@
-import type { ImportTarget } from '../../project/resolve-import.js';
+import type { ImportTarget } from '../../project/resolve-import';
 
 export function describeTarget(target: ImportTarget): string {
   if (target.kind !== 'file') {

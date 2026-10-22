@@ -1,4 +1,4 @@
-import type { RedisConnectionOptions } from './redis-connection-options.js';
+import type { RedisConnectionOptions } from './redis-connection-options';
 
 /**
  * What a connection opened here adds to the defaults of ioredis, unless the options say

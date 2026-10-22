@@ -1,5 +1,5 @@
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
-import { replaceInCode } from './replace-in-code.js';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
+import { replaceInCode } from './replace-in-code';
 
 const IMPORT_LINE = /^\s*import\s/;
 

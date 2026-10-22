@@ -1,7 +1,7 @@
 import path from 'node:path';
-import { dependenciesFile, isDeclarationsFile } from '../../declared/index.js';
-import { WITHOUT_MODULE } from '../../model-modules/index.js';
-import type { SourceFile } from '../model/source-file.js';
+import { dependenciesFile, isDeclarationsFile } from '../../declared';
+import { WITHOUT_MODULE } from '../../model-modules';
+import type { SourceFile } from '../model/source-file';
 
 /**
  * The generated files of a declared context: the declarations of each role folder and their

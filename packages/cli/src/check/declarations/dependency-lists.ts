@@ -1,10 +1,10 @@
-import type { SourceFile } from '../model/source-file.js';
-import { callArguments } from '../text/call-arguments.js';
-import type { ListPart } from '../text/list-part.js';
-import { splitTopLevel } from '../text/split-top-level.js';
-import { argumentsOf } from './arguments-of.js';
-import { classesOf } from './classes-of.js';
-import type { DependencyList } from './dependency-list.js';
+import type { SourceFile } from '../model/source-file';
+import { callArguments } from '../text/call-arguments';
+import type { ListPart } from '../text/list-part';
+import { splitTopLevel } from '../text/split-top-level';
+import { argumentsOf } from './arguments-of';
+import { classesOf } from './classes-of';
+import type { DependencyList } from './dependency-list';
 
 const WIRING_CALL = /\.\s*(toClass|handledBy)\s*\(/g;
 const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;

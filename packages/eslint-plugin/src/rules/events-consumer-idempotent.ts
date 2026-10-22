@@ -1,14 +1,14 @@
 import { ASTUtils, AST_NODE_TYPES, TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { calleeName } from '../support/calls/callee-name.js';
-import { methodChain } from '../support/calls/method-chain.js';
-import { missingKeys } from '../support/calls/missing-keys.js';
-import { className, type ClassNode } from '../support/classes/class-name.js';
-import { declarationReader, type Declaration } from '../support/declarations/declaration-reader.js';
-import { isDeclaredStyle } from '../support/declarations/is-declared-style.js';
-import { writtenName } from '../support/declarations/written-name.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import { propertyName } from '../support/globals/property-name.js';
-import { inContext } from '../support/imports/in-context.js';
+import { calleeName } from '../support/calls/callee-name';
+import { methodChain } from '../support/calls/method-chain';
+import { missingKeys } from '../support/calls/missing-keys';
+import { className, type ClassNode } from '../support/classes/class-name';
+import { declarationReader, type Declaration } from '../support/declarations/declaration-reader';
+import { isDeclaredStyle } from '../support/declarations/is-declared-style';
+import { writtenName } from '../support/declarations/written-name';
+import { defineRule } from '../support/rule/define-rule';
+import { propertyName } from '../support/globals/property-name';
+import { inContext } from '../support/imports/in-context';
 
 type MessageId = 'consumerName' | 'declaredName' | 'subscription' | 'directSubscribe';
 type Finding = TSESLint.ReportDescriptor<MessageId> | undefined;

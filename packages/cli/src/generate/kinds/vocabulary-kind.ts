@@ -1,9 +1,9 @@
-import { CliError } from '../../cli-error.js';
-import type { Kind } from '../kind.js';
-import { label } from '../label.js';
-import { openScope } from '../open-scope.js';
-import { entriesOf } from '../vocabulary/entries-of.js';
-import { vocabularyText } from '../vocabulary/vocabulary-text.js';
+import { CliError } from '../../cli-error';
+import type { Kind } from '../kind';
+import { label } from '../label';
+import { openScope } from '../open-scope';
+import { entriesOf } from '../vocabulary/entries-of';
+import { vocabularyText } from '../vocabulary/vocabulary-text';
 
 export const vocabularyKind: Kind = {
   name: 'vocabulary',

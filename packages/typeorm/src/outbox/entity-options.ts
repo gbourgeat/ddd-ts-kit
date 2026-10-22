@@ -1,4 +1,4 @@
-import type { TypeOrmDialect } from '../columns/type-orm-dialect.js';
+import type { TypeOrmDialect } from '../columns/type-orm-dialect';
 
 export interface EntityOptions {
   /**

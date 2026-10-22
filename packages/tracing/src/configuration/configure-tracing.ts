@@ -1,5 +1,5 @@
-import { DEFAULT_LIFECYCLE_HOOKS } from './default-lifecycle-hooks.js';
-import type { TracingConfiguration } from './tracing-configuration.js';
+import { DEFAULT_LIFECYCLE_HOOKS } from './default-lifecycle-hooks';
+import type { TracingConfiguration } from './tracing-configuration';
 
 const defaults: TracingConfiguration = {
   maxSpansPerName: 25,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createEventRegistry } from '../src/index.js';
-import { checkAsyncApiDrift, generateAsyncApi, stringifyAsyncApi } from '../src/asyncapi.js';
-import { invoiceIssued, orderPlacedV1, orderPlacedV2, shipmentSent } from './support/events.js';
+import { createEventRegistry } from '../src';
+import { checkAsyncApiDrift, generateAsyncApi, stringifyAsyncApi } from '../src/asyncapi';
+import { invoiceIssued, orderPlacedV1, orderPlacedV2, shipmentSent } from './support/events';
 
 const info = { title: 'Shop events', version: '1.4.0', description: 'Published language.' };
 const definitions = [orderPlacedV2, shipmentSent, invoiceIssued, orderPlacedV1];

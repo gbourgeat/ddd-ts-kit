@@ -1,4 +1,4 @@
-import type { Entry } from './codec/entry.js';
+import type { Entry } from './codec/entry';
 
 /** One entry handed to this process, with the number of times the group delivered it. */
 export interface Delivery {

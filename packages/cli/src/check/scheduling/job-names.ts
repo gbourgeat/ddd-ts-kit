@@ -1,10 +1,10 @@
-import { argumentsOf } from '../declarations/arguments-of.js';
-import { classesOf } from '../declarations/classes-of.js';
-import { wholeLiteral } from '../declarations/whole-literal.js';
-import type { SourceFile } from '../model/source-file.js';
-import { importsPackage } from '../support/imports-package.js';
-import { callArguments } from '../text/call-arguments.js';
-import type { ListPart } from '../text/list-part.js';
+import { argumentsOf } from '../declarations/arguments-of';
+import { classesOf } from '../declarations/classes-of';
+import { wholeLiteral } from '../declarations/whole-literal';
+import type { SourceFile } from '../model/source-file';
+import { importsPackage } from '../support/imports-package';
+import { callArguments } from '../text/call-arguments';
+import type { ListPart } from '../text/list-part';
 
 const JOB_CALL = /\.\s*job\s*\(/g;
 

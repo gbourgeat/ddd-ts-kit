@@ -1,6 +1,6 @@
-import { matchingBracket } from './matching-bracket.js';
-import type { ListPart } from './list-part.js';
-import { splitTopLevel } from './split-top-level.js';
+import { matchingBracket } from './matching-bracket';
+import type { ListPart } from './list-part';
+import { splitTopLevel } from './split-top-level';
 
 /** The arguments of the call whose opening parenthesis is at `open`, each with its offset in `code`. */
 export function callArguments(code: string, open: number): ListPart[] {

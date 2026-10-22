@@ -1,14 +1,14 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { acceptInMergeMessage } from './accept-in-merge-message.js';
-import { landDrizzle } from './land-drizzle.js';
-import type { MergeContext } from './merge-context.js';
-import type { MergeReport } from './merge-report.js';
-import type { MergeState, MergeStep } from './merge-state.js';
-import { NEXT_STEPS } from './next-steps.js';
-import { renumberAdrs } from './renumber-adrs.js';
-import { renumberMigrations } from './renumber-migrations.js';
+import { acceptInMergeMessage } from './accept-in-merge-message';
+import { landDrizzle } from './land-drizzle';
+import type { MergeContext } from './merge-context';
+import type { MergeReport } from './merge-report';
+import type { MergeState, MergeStep } from './merge-state';
+import { NEXT_STEPS } from './next-steps';
+import { renumberAdrs } from './renumber-adrs';
+import { renumberMigrations } from './renumber-migrations';
 
 /** What one step gave: the report with what it did, and why the merge stops when it does. */
 export interface StepOutcome {

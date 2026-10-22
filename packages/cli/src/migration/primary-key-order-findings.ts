@@ -1,8 +1,8 @@
-import type { KnownPrimaryKeys } from './known-primary-keys.js';
-import type { PrimaryKeyOrderFinding } from './primary-key-order-finding.js';
-import { sqlStatements } from './sql-statements.js';
-import type { TableChange } from './table-change.js';
-import { tableChanges } from './table-changes.js';
+import type { KnownPrimaryKeys } from './known-primary-keys';
+import type { PrimaryKeyOrderFinding } from './primary-key-order-finding';
+import { sqlStatements } from './sql-statements';
+import type { TableChange } from './table-change';
+import { tableChanges } from './table-changes';
 
 /** PostgreSQL names a key `<table>_pkey`; drizzle-kit names a composite one `<table>_<column>_<column>_pk`. */
 const KEY_NAME = /_(?:pkey|pk)$/;

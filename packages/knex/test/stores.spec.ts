@@ -8,8 +8,8 @@ import {
   createKnexUnitOfWork,
   createOutboxTables,
   dropOutboxTables,
-} from '../src/index.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
+} from '../src';
+import { createDatabase, type TestDatabase } from './support/database';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

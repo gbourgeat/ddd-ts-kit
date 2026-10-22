@@ -1,9 +1,9 @@
-import { scan } from '../check/scan/scan.js';
-import type { Workspace } from '../workspace/index.js';
-import { objectProperties, type PropertyValue } from './object-properties.js';
-import { readVocabularies } from './read-vocabularies.js';
-import type { StateMachineFacts, TransitionFacts } from './state-machine-facts.js';
-import { type ContextTree, roleFilesOf } from '../model-modules/index.js';
+import { scan } from '../check/scan/scan';
+import type { Workspace } from '../workspace';
+import { objectProperties, type PropertyValue } from './object-properties';
+import { readVocabularies } from './read-vocabularies';
+import type { StateMachineFacts, TransitionFacts } from './state-machine-facts';
+import { type ContextTree, roleFilesOf } from '../model-modules';
 
 const FOLDER = 'domain/state-machines';
 const SUFFIX = '.state-machine.ts';

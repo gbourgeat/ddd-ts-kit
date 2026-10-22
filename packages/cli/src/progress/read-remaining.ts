@@ -1,9 +1,9 @@
-import type { Config } from '../config/index.js';
-import { filesUnder } from '../generate/files-under.js';
-import { type ContextTree, roleDirectoriesOf, treeOf } from '../model-modules/index.js';
-import type { Workspace } from '../workspace/index.js';
-import type { Remaining } from './remaining.js';
-import { remainingIn } from './remaining-in.js';
+import type { Config } from '../config';
+import { filesUnder } from '../generate/files-under';
+import { type ContextTree, roleDirectoriesOf, treeOf } from '../model-modules';
+import type { Workspace } from '../workspace';
+import type { Remaining } from './remaining';
+import { remainingIn } from './remaining-in';
 
 const E2E = 'test/e2e';
 const READ = /\.(?:[cm]?ts|md)$/;

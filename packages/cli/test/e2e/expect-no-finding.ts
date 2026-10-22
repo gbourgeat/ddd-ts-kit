@@ -1,7 +1,7 @@
 import { expect } from 'vitest';
-import { cli } from '../helpers.js';
-import { DEPCRUISE, ESLINT, KNIP, NEW_ESLINT_RULES } from './analyzers.js';
-import { bin, findingsOf, runIn } from './run-in.js';
+import { cli } from '../helpers';
+import { DEPCRUISE, ESLINT, KNIP, NEW_ESLINT_RULES } from './analyzers';
+import { bin, findingsOf, runIn } from './run-in';
 
 /** The checker, ESLint with the preset and the rules of this wave, dependency-cruiser with the generated configuration, knip: nothing to say. */
 export function expectNoFinding(root: string): void {

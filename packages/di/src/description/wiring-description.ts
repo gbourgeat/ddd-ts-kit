@@ -1,6 +1,6 @@
 import type { BackgroundJobPolicy, DependencyKind, JobPolicy } from '@ddd-ts-kit/kernel';
-import type { BindingSource } from '../wiring/binding-source.js';
-import type { Lifetime } from '../wiring/lifetime.js';
+import type { BindingSource } from '../wiring/binding-source';
+import type { Lifetime } from '../wiring/lifetime';
 
 /**
  * Where a binding comes from. A binding written in a module is `explicit` and carries none of

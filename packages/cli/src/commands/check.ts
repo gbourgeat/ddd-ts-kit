@@ -1,3 +1,3 @@
-export { checkFileCommand } from '../check/commands/check-file-command.js';
-export { explainCommand } from '../check/commands/explain-command.js';
-export { rulesCommand } from '../check/commands/rules-command.js';
+export { checkFileCommand } from '../check/commands/check-file-command';
+export { explainCommand } from '../check/commands/explain-command';
+export { rulesCommand } from '../check/commands/rules-command';

@@ -1,7 +1,7 @@
-import type { Config } from '../config/index.js';
-import type { RenderContext } from '../templating/index.js';
-import { PROVIDED_BROKERS } from './provided-brokers.js';
-import { WITH_DATABASE } from './with-database.js';
+import type { Config } from '../config';
+import type { RenderContext } from '../templating';
+import { PROVIDED_BROKERS } from './provided-brokers';
+import { WITH_DATABASE } from './with-database';
 
 /** How integration events leave a use case, and what `main.ts` calls to get the event provider of the chosen broker. */
 export function eventVars(config: Config): RenderContext {

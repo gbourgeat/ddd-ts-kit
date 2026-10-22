@@ -1,4 +1,4 @@
-import type { Stack } from './stack.js';
+import type { Stack } from './stack';
 
 /**
  * The stack as the config file holds it. The assembly and where dependencies are stated are

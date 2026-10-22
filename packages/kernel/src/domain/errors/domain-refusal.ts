@@ -1,7 +1,7 @@
-import { FactualRefusal } from './factual-refusal.js';
-import type { RefusalFacts } from './refusal-facts.js';
-import type { RefusalOf } from './refusal-of.js';
-import type { Refusal } from './refusal.js';
+import { FactualRefusal } from './factual-refusal';
+import type { RefusalFacts } from './refusal-facts';
+import type { RefusalOf } from './refusal-of';
+import type { Refusal } from './refusal';
 
 /**
  * One refusal of the model, named after what is refused, with its code, and built by static

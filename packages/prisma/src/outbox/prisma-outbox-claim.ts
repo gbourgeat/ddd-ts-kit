@@ -1,4 +1,4 @@
-import type { PrismaRawQueries } from './prisma-raw-queries.js';
+import type { PrismaRawQueries } from './prisma-raw-queries';
 
 /**
  * How concurrent relays share the pending records.

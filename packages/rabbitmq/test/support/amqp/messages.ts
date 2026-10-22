@@ -1,5 +1,5 @@
 import type { MessageProperties, Options } from 'amqplib';
-import type { Arguments, StoredMessage } from './model.js';
+import type { Arguments, StoredMessage } from './model';
 
 export const SERVER_PROPERTIES = {
   host: 'in-memory',

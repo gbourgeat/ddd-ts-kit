@@ -1,14 +1,14 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { readModelStoreContract, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
-import { KnexReadModelTable, createKnexUnitOfWork } from '../src/index.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
+import { KnexReadModelTable, createKnexUnitOfWork } from '../src';
+import { createDatabase, type TestDatabase } from './support/database';
 import {
   CONTRACT_TABLE,
   CONTRACT_TABLE_IN_DEFAULT_SCHEMA,
   READ_SIDE,
   createContractTable,
   createContractTableInDefaultSchema,
-} from './support/read-model/criteria-contract-table.js';
+} from './support/read-model/criteria-contract-table';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const TABLE = `${READ_SIDE}.${CONTRACT_TABLE.table}`;

@@ -2,17 +2,17 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll } from 'vitest';
-import { run } from '../src/run.js';
-import { grantOf } from './support/grant-of.js';
-import { refusalOf } from './support/refusal-of.js';
-import { initFlags } from './support/init-flags.js';
-import { scaffoldBillingJobs } from './support/scaffold-billing-jobs.js';
-import { scaffoldBillingLifecycle } from './support/scaffold-billing-lifecycle.js';
-import { scaffoldNamedReactions } from './support/scaffold-named-reactions.js';
-import { scaffoldShippingReaction } from './support/scaffold-shipping-reaction.js';
-import type { StackFlags } from './support/stack-flags.js';
+import { run } from '../src/run';
+import { grantOf } from './support/grant-of';
+import { refusalOf } from './support/refusal-of';
+import { initFlags } from './support/init-flags';
+import { scaffoldBillingJobs } from './support/scaffold-billing-jobs';
+import { scaffoldBillingLifecycle } from './support/scaffold-billing-lifecycle';
+import { scaffoldNamedReactions } from './support/scaffold-named-reactions';
+import { scaffoldShippingReaction } from './support/scaffold-shipping-reaction';
+import type { StackFlags } from './support/stack-flags';
 
-export type { StackFlags } from './support/stack-flags.js';
+export type { StackFlags } from './support/stack-flags';
 
 export interface CliResult {
   readonly code: number;

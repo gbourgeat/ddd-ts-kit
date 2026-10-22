@@ -1,14 +1,14 @@
-import type { Exported } from '../exports/exported.js';
-import type { Finding } from '../model/finding.js';
-import type { SourceFile } from '../model/source-file.js';
-import type { ClassShape } from '../structure/class-shape.js';
-import type { MethodShape } from '../structure/method-shape.js';
-import { exportedFunctionBody } from './exported-function-body.js';
-import { extendsValueObject } from './extends-value-object.js';
-import { generateHint } from './generate-hint.js';
-import { exportedValues } from './exported-values.js';
-import { initializerOf } from './initializer-of.js';
-import { literalAt } from './literal-at.js';
+import type { Exported } from '../exports/exported';
+import type { Finding } from '../model/finding';
+import type { SourceFile } from '../model/source-file';
+import type { ClassShape } from '../structure/class-shape';
+import type { MethodShape } from '../structure/method-shape';
+import { exportedFunctionBody } from './exported-function-body';
+import { extendsValueObject } from './extends-value-object';
+import { generateHint } from './generate-hint';
+import { exportedValues } from './exported-values';
+import { initializerOf } from './initializer-of';
+import { literalAt } from './literal-at';
 
 /** What a value object file says of itself: one class extending ValueObject, built by static factories, and nothing else that stands for a value. */
 export function valueObjectFileFindings(file: SourceFile, sharedKernelDir: string): Finding[] {

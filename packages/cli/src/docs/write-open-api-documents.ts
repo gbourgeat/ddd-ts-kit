@@ -1,9 +1,9 @@
-import type { Config } from '../config/index.js';
-import { describeContext } from '../describe/describe-context.js';
-import type { Workspace } from '../workspace/index.js';
-import { openApiDocumentsFile } from './open-api-documents-file.js';
-import { readContext } from './read-context.js';
-import { renderOpenApiDocuments } from './render-open-api-documents.js';
+import type { Config } from '../config';
+import { describeContext } from '../describe/describe-context';
+import type { Workspace } from '../workspace';
+import { openApiDocumentsFile } from './open-api-documents-file';
+import { readContext } from './read-context';
+import { renderOpenApiDocuments } from './render-open-api-documents';
 
 const SCRIPT = 'scripts/openapi.ts';
 

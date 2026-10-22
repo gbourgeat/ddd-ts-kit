@@ -1,9 +1,9 @@
 import { KafkaJS } from '@confluentinc/kafka-javascript';
-import { ClientState, answered } from './client-basics.js';
-import type { ClusterState } from './cluster-state.js';
-import { Unsupported, kafkaError } from './errors.js';
-import type { Topic } from './log.js';
-import type { Wire } from './wire.js';
+import { ClientState, answered } from './client-basics';
+import type { ClusterState } from './cluster-state';
+import { Unsupported, kafkaError } from './errors';
+import type { Topic } from './log';
+import type { Wire } from './wire';
 
 /** The administrative client: topics, their offsets and metadata, the groups and their offsets. */
 export class MemoryAdmin implements KafkaJS.Admin {

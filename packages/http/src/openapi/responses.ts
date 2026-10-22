@@ -1,15 +1,15 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import { IfMatch } from '../cache/if-match.js';
-import { statusTitle } from '../error/status-title.js';
-import { NOT_ACCEPTABLE } from '../representation/not-acceptable-error.js';
-import { UNSUPPORTED_MEDIA_TYPE } from '../representation/unsupported-media-type-error.js';
-import { answersWithSchema } from '../route/answers-with-schema.js';
-import type { ResponseSpec } from '../route/response-spec.js';
-import type { Route } from '../route/route.js';
-import { isRecord } from '../support/is-record.js';
-import { cacheResponseHeaders } from './cache-response-headers.js';
-import { compare } from './compare.js';
-import type { Documenting } from './documenting.js';
+import { IfMatch } from '../cache/if-match';
+import { statusTitle } from '../error/status-title';
+import { NOT_ACCEPTABLE } from '../representation/not-acceptable-error';
+import { UNSUPPORTED_MEDIA_TYPE } from '../representation/unsupported-media-type-error';
+import { answersWithSchema } from '../route/answers-with-schema';
+import type { ResponseSpec } from '../route/response-spec';
+import type { Route } from '../route/route';
+import { isRecord } from '../support/is-record';
+import { cacheResponseHeaders } from './cache-response-headers';
+import { compare } from './compare';
+import type { Documenting } from './documenting';
 
 const VALIDATION_FAILED = 'VALIDATION_FAILED';
 const PRECONDITION_FAILED = 'PRECONDITION_FAILED';

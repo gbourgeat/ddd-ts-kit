@@ -1,9 +1,9 @@
-import type { SourceFile } from '../model/source-file.js';
-import type { Scan } from '../scan/scan.js';
-import { callArguments } from '../text/call-arguments.js';
-import { escapeRegExp } from '../text/escape-reg-exp.js';
-import { identifier } from '../text/identifier.js';
-import type { ListPart } from '../text/list-part.js';
+import type { SourceFile } from '../model/source-file';
+import type { Scan } from '../scan/scan';
+import { callArguments } from '../text/call-arguments';
+import { escapeRegExp } from '../text/escape-reg-exp';
+import { identifier } from '../text/identifier';
+import type { ListPart } from '../text/list-part';
 
 const ON = /\.\s*on\s*\(/g;
 const PHASE_KEY = /(?<![\w$.])phase\s*:\s*$/;

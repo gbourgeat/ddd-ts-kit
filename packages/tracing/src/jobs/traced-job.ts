@@ -1,8 +1,8 @@
 import { SpanKind } from '@opentelemetry/api';
 import type { JobExecution } from '@ddd-ts-kit/kernel';
-import { workAttributes } from '../local-root/work-attributes.js';
-import { inSpan } from '../span/in-span.js';
-import { OUTCOME_ATTRIBUTE } from '../span/outcome-attribute.js';
+import { workAttributes } from '../local-root/work-attributes';
+import { inSpan } from '../span/in-span';
+import { OUTCOME_ATTRIBUTE } from '../span/outcome-attribute';
 
 export interface TracedJobOptions {
   /** Name of the job, `<context>.<job>`: the span is `job <name>`. */

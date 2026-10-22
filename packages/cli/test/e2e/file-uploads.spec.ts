@@ -1,12 +1,12 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, DEFAULT_STACK, EXPLICIT_STACK, tempDir, type StackFlags } from '../helpers.js';
-import { grantOf } from '../support/grant-of.js';
-import { initFlags } from '../support/init-flags.js';
-import { expectNoFinding } from './expect-no-finding.js';
-import { installAsPublished } from './install-as-published.js';
-import { bin, findingsOf, runIn } from './run-in.js';
-import { SLOW } from './stacks.js';
-import { NATIVE_COMPILER } from './type-errors.js';
+import { cli, DEFAULT_STACK, EXPLICIT_STACK, tempDir, type StackFlags } from '../helpers';
+import { grantOf } from '../support/grant-of';
+import { initFlags } from '../support/init-flags';
+import { expectNoFinding } from './expect-no-finding';
+import { installAsPublished } from './install-as-published';
+import { bin, findingsOf, runIn } from './run-in';
+import { SLOW } from './stacks';
+import { NATIVE_COMPILER } from './type-errors';
 
 const UNIT = 'src/contexts/billing/test/unit';
 

@@ -5,7 +5,7 @@ import {
   InMemoryUnitOfWork,
   NotFoundError,
   TransactionConflictError,
-} from '../src/index.js';
+} from '../src';
 
 /** What a unit of work rejects with when its work throws `error`. */
 async function rejectionOf(error: unknown): Promise<unknown> {

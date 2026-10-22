@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { traceBindings } from '../src/index.js';
-import { Ledger } from './support/ledger.js';
-import { setupTracing, type TestTracing } from './support/setup-tracing.js';
+import { traceBindings } from '../src';
+import { Ledger } from './support/ledger';
+import { setupTracing, type TestTracing } from './support/setup-tracing';
 
 describe('traceBindings', () => {
   let tracing: TestTracing;

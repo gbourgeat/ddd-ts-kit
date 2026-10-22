@@ -1,6 +1,6 @@
-import type { Clock } from '../../application/ports/clock.js';
-import type { ScheduledJob } from '../../application/scheduling/scheduled-job.js';
-import type { FileStaging } from './file-staging.js';
+import type { Clock } from '../../application/ports/clock';
+import type { ScheduledJob } from '../../application/scheduling/scheduled-job';
+import type { FileStaging } from './file-staging';
 
 /** A day: a command that staged a file has long committed or rolled back. */
 const A_DAY_MS = 86_400_000;

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, exists, read } from './helpers.js';
-import { failure, report } from './reports.js';
-import { explicitProject } from './support/explicit-project.js';
+import { cli, exists, read } from './helpers';
+import { failure, report } from './reports';
+import { explicitProject } from './support/explicit-project';
 
 let root: string;
 

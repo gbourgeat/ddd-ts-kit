@@ -1,7 +1,7 @@
-import type { Config } from '../config/index.js';
-import type { Name } from '../naming/index.js';
-import type { Workspace } from '../workspace/index.js';
-import type { KindFlags } from './kind.js';
+import type { Config } from '../config';
+import type { Name } from '../naming';
+import type { Workspace } from '../workspace';
+import type { KindFlags } from './kind';
 
 /** What every generator works with: the project, its stack and one bounded context. */
 export interface Scope {

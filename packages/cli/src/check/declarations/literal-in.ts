@@ -1,5 +1,5 @@
-import type { Scan } from '../scan/scan.js';
-import type { ListPart } from '../text/list-part.js';
+import type { Scan } from '../scan/scan';
+import type { ListPart } from '../text/list-part';
 
 /** The first string literal written inside an argument, such as the permission name of `permissions['invoice.issue']`. */
 export function literalIn(scan: Scan, argument: ListPart): string | undefined {

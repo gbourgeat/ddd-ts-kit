@@ -1,6 +1,6 @@
 import type { MessageInfo } from '@ddd-ts-kit/kernel';
-import type { Decision } from './decision.js';
-import type { ResourceRef } from './resource-ref.js';
+import type { Decision } from './decision';
+import type { ResourceRef } from './resource-ref';
 
 /** What the audit hook receives, for an allowed decision as for a refused one. */
 export interface DecisionRecord {

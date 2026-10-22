@@ -1,13 +1,13 @@
-import type { Actor } from '../../application/actor/actor.js';
-import type { IntegrationEvent } from '../../application/events/integration-event.js';
-import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
-import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature.js';
-import type { EventContract } from '../model/event-contract.js';
-import type { IntegrationEventHandler as IntegrationEventHandlerShape } from '../model/integration-event-handler.js';
-import { record } from '../registry/record.js';
-import { assertNamed } from './assert-named.js';
-import type { Named } from './named.js';
+import type { Actor } from '../../application/actor/actor';
+import type { IntegrationEvent } from '../../application/events/integration-event';
+import type { ClassDeclarator } from '../dependencies/class-declarator';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies';
+import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature';
+import type { EventContract } from '../model/event-contract';
+import type { IntegrationEventHandler as IntegrationEventHandlerShape } from '../model/integration-event-handler';
+import { record } from '../registry/record';
+import { assertNamed } from './assert-named';
+import type { Named } from './named';
 
 export interface IntegrationEventHandlerOptions<Name extends string = string> {
   /**

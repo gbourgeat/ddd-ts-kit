@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { exists, read } from './helpers.js';
-import { initProject } from './support/init-project.js';
+import { exists, read } from './helpers';
+import { initProject } from './support/init-project';
 
 const TEMPLATE = 'test/support/test-database-template.ts';
 const GLOBAL_SETUP = `globalSetup: ['${TEMPLATE}'],`;

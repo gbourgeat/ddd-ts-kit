@@ -1,8 +1,8 @@
 import { JobScheduler } from '@ddd-ts-kit/kernel';
-import { definitionOf } from '../jobs/definition-of.js';
-import type { EffectiveJob } from '../jobs/effective-job.js';
-import { Instrumentation } from '../kernel/instrumentation.js';
-import type { BoundPorts } from './bound-ports.js';
+import { definitionOf } from '../jobs/definition-of';
+import type { EffectiveJob } from '../jobs/effective-job';
+import { Instrumentation } from '../kernel/instrumentation';
+import type { BoundPorts } from './bound-ports';
 
 /** The declared jobs on the job scheduler: registered at creation, run by time while the application runs. */
 export class JobLifecycle {

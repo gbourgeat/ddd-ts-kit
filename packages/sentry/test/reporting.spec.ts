@@ -2,10 +2,10 @@ import { createServer, type Socket } from 'node:net';
 import { errorReportOf, executionContext, NoopErrorReporter, type Actor } from '@ddd-ts-kit/kernel';
 import { close, defaultStackParser, isInitialized, makeNodeTransport, NodeClient } from '@sentry/node';
 import { afterEach, describe, expect, it } from 'vitest';
-import { initSentry, SentryErrorReporter } from '../src/index.js';
-import { aTracker, type Tracker } from './support/a-tracker.js';
-import { LedgerUnavailable } from './support/ledger-unavailable.js';
-import { UniqueViolation } from './support/unique-violation.js';
+import { initSentry, SentryErrorReporter } from '../src';
+import { aTracker, type Tracker } from './support/a-tracker';
+import { LedgerUnavailable } from './support/ledger-unavailable';
+import { UniqueViolation } from './support/unique-violation';
 
 declare module '@ddd-ts-kit/kernel' {
   interface ErrorReportExtensions {

@@ -1,5 +1,5 @@
 import type { Clock, MetricLabels, Metrics } from '@ddd-ts-kit/kernel';
-import { observed } from './observed.js';
+import { observed } from './observed';
 
 export interface TimedCall {
   readonly metrics: Metrics;

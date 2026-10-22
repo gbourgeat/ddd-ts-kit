@@ -1,6 +1,6 @@
-import type { Token } from '../token/token.js';
-import type { DeclaredPolicy } from './declared-policy.js';
-import type { PermissionRef } from './permission-ref.js';
+import type { Token } from '../token/token';
+import type { DeclaredPolicy } from './declared-policy';
+import type { PermissionRef } from './permission-ref';
 
 export interface PolicyDeclaration {
   readonly role: 'policy';

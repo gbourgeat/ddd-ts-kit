@@ -16,15 +16,15 @@ import {
   SEVERITIES,
   type ContextConfig,
   type Upstream,
-} from '../../config/index.js';
-import type { Project } from '../model/project.js';
-import type { Report } from '../model/report.js';
-import type { Violation } from '../model/violation.js';
-import { isRecord } from '../support/is-record.js';
-import { lineOf } from '../support/line-of.js';
-import { lineOfSequence } from '../support/line-of-sequence.js';
-import { moduleProblems } from './module-problems.js';
-import { rawConfig } from './raw-config.js';
+} from '../../config';
+import type { Project } from '../model/project';
+import type { Report } from '../model/report';
+import type { Violation } from '../model/violation';
+import { isRecord } from '../support/is-record';
+import { lineOf } from '../support/line-of';
+import { lineOfSequence } from '../support/line-of-sequence';
+import { moduleProblems } from './module-problems';
+import { rawConfig } from './raw-config';
 
 /** What `config/valid` looks at in one project, each finding placed on a line of the config file. */
 export class ConfigInspection {

@@ -1,5 +1,5 @@
 import type { QueuedJob } from '@ddd-ts-kit/kernel';
-import type { JobRow } from './job-row.js';
+import type { JobRow } from './job-row';
 
 /** What a row of the table shows of its job: never the payload, the checkpoint or the actor. */
 export function jobOfRow(row: JobRow): QueuedJob {

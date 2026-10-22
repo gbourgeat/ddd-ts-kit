@@ -8,11 +8,11 @@ import {
   fake,
   kernelModule,
   type BindingInfo,
-} from '../src/index.js';
-import * as billing from './fixtures/contexts/billing/billing.declarations.js';
-import { permissions } from './fixtures/contexts/billing/application/authorization/billing.permissions.js';
-import { InvoiceIssued } from './fixtures/contexts/billing/domain/events/invoice-issued.event.js';
-import { Outbox } from './support/fakes/outbox.js';
+} from '../src';
+import * as billing from './fixtures/contexts/billing/billing.declarations';
+import { permissions } from './fixtures/contexts/billing/application/authorization/billing.permissions';
+import { InvoiceIssued } from './fixtures/contexts/billing/domain/events/invoice-issued.event';
+import { Outbox } from './support/fakes/outbox';
 
 const {
   CustomerDirectory,

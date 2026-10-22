@@ -1,8 +1,8 @@
 import { and, asc, desc, sql, type SQL } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 import type { CriteriaPlan } from '@ddd-ts-kit/kernel';
-import { columnOf } from './column-of.js';
-import { predicateToDrizzle } from './predicate-to-drizzle.js';
+import { columnOf } from './column-of';
+import { predicateToDrizzle } from './predicate-to-drizzle';
 
 /** A criteria plan as the parts of a drizzle query. */
 export interface DrizzleCriteria {

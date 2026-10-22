@@ -1,7 +1,7 @@
 import path from 'node:path';
-import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
-import type { Slice } from '../progress/slice.js';
-import { readWorkerFile } from '../worker/read-worker-file.js';
+import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file';
+import type { Slice } from '../progress/slice';
+import { readWorkerFile } from '../worker/read-worker-file';
 
 /** The ids of the rows not done, without those the worker of this worktree builds (its scope file names them). */
 export function openRows(root: string, slices: readonly Slice[]): Set<string> {

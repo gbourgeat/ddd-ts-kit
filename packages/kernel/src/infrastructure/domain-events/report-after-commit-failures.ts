@@ -1,10 +1,10 @@
-import type { AfterCommitFailure } from '../../application/events/after-commit-failure.js';
-import { errorReportOf } from '../../application/error-reporting/error-report-of.js';
-import { reportOnce } from '../../application/error-reporting/report-once.js';
-import { identifyError } from '../../application/logging/identify-error.js';
-import type { ErrorReporter } from '../../application/ports/error-reporter.js';
-import type { ExecutionScope } from '../../application/ports/execution-scope.js';
-import type { Logger } from '../../application/ports/logger.js';
+import type { AfterCommitFailure } from '../../application/events/after-commit-failure';
+import { errorReportOf } from '../../application/error-reporting/error-report-of';
+import { reportOnce } from '../../application/error-reporting/report-once';
+import { identifyError } from '../../application/logging/identify-error';
+import type { ErrorReporter } from '../../application/ports/error-reporter';
+import type { ExecutionScope } from '../../application/ports/execution-scope';
+import type { Logger } from '../../application/ports/logger';
 
 export interface AfterCommitFailureSinks {
   readonly reporter: ErrorReporter;

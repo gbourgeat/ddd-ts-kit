@@ -1,6 +1,6 @@
-import { schedulingJobName } from '../../src/rules/scheduling-job-name.js';
-import { schedulingJobTriggersUseCase } from '../../src/rules/scheduling-job-triggers-use-case.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+import { schedulingJobName } from '../../src/rules/scheduling-job-name';
+import { schedulingJobTriggersUseCase } from '../../src/rules/scheduling-job-triggers-use-case';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const DECLARATIONS = '@ddd-ts-kit/kernel/declarations';
 const JOB = `${BILLING}/application/scheduling/send-reminders.job.ts`;

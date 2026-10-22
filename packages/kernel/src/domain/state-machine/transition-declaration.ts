@@ -1,4 +1,4 @@
-import type { DomainError } from '../errors/domain-error.js';
+import type { DomainError } from '../errors/domain-error';
 
 /** One transition of a state machine: the states it leaves, the state it reaches, and what may still refuse it. */
 export interface TransitionDeclaration<State extends string, Context> {

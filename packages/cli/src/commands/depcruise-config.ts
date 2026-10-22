@@ -1,9 +1,9 @@
-import { readConfig } from '../config/index.js';
-import { DEPCRUISE_FILE } from '../depcruise/depcruise-file.js';
-import { renderCruiseFile } from '../depcruise/render-cruise-file.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import { type Command } from './command.js';
+import { readConfig } from '../config';
+import { DEPCRUISE_FILE } from '../depcruise/depcruise-file';
+import { renderCruiseFile } from '../depcruise/render-cruise-file';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import { type Command } from './command';
 
 /** Prints the dependency-cruiser configuration of the project, writes it, or checks that the file on disk is current. */
 export const depcruiseConfigCommand: Command = (argv, io) => {

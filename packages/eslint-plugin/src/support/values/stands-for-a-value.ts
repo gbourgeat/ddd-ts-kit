@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { expressionRole } from './entry-role.js';
+import { expressionRole } from './entry-role';
 
 type PropertyValue = TSESTree.Property['value'];
 

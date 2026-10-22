@@ -1,5 +1,5 @@
 import path from 'node:path';
-import type { Workspace } from '../workspace/index.js';
+import type { Workspace } from '../workspace';
 
 /** The use cases an end-to-end spec drives. */
 export function e2eSpecs(ws: Workspace): string[] {

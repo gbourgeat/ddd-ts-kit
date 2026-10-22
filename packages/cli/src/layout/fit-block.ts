@@ -1,5 +1,5 @@
-import { fitStatement } from './fit-statement.js';
-import { openCallback } from './open-callback.js';
+import { fitStatement } from './fit-statement';
+import { openCallback } from './open-callback';
 
 /**
  * Lays out what a template adds to a region, statement by statement, at the indentation of the

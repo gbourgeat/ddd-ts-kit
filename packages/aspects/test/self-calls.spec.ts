@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { compose, logged, retry, timed, type Aspect } from '../src/index.js';
-import { createAspectFakes, withAspectRuntime } from '../src/testing.js';
-import { LedgerGateway } from './support/ledger-gateway.js';
-import { recording } from './support/recording.js';
-import { settled } from './support/settled.js';
-import { Unreachable } from './support/unreachable.js';
+import { compose, logged, retry, timed, type Aspect } from '../src';
+import { createAspectFakes, withAspectRuntime } from '../src/testing';
+import { LedgerGateway } from './support/ledger-gateway';
+import { recording } from './support/recording';
+import { settled } from './support/settled';
+import { Unreachable } from './support/unreachable';
 
 const STANDINGS: readonly [string, <T extends object>(instance: T) => T][] = [
   ['an extensible instance', (instance) => instance],

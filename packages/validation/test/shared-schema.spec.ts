@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { ok } from '@ddd-ts-kit/kernel';
-import { customSchema, schemaBehind, sharedNameOf, sharedSchema } from '../src/index.js';
-import { zodSchema } from '../src/zod.js';
+import { customSchema, schemaBehind, sharedNameOf, sharedSchema } from '../src';
+import { zodSchema } from '../src/zod';
 
 const slot = customSchema((input) => ok(input), {
   $schema: 'https://json-schema.org/draft/2020-12/schema',

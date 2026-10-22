@@ -1,5 +1,5 @@
-import { ARCHITECTURE_RULES } from './architecture-rules.js';
-import { SUPPRESSION_RULE } from './suppression-rule.js';
+import { ARCHITECTURE_RULES } from './architecture-rules';
+import { SUPPRESSION_RULE } from './suppression-rule';
 
 /** The ids this checker runs, in the order `ddd-ts-kit rules` lists them. */
 export const RULE_IDS: readonly string[] = [

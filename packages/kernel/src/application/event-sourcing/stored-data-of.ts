@@ -1,6 +1,6 @@
-import { isStoredData } from './is-stored-data.js';
-import type { StoredData } from './stored-data.js';
-import type { StoredJson } from './stored-json.js';
+import { isStoredData } from './is-stored-data';
+import type { StoredData } from './stored-data';
+import type { StoredJson } from './stored-json';
 
 /**
  * The JSON an event store keeps for what `encode` answered: a date becomes its ISO text, a field

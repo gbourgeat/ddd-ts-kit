@@ -1,4 +1,4 @@
-import type { TodoLocation } from './todo-location.js';
+import type { TodoLocation } from './todo-location';
 
 const TODO_MARK = 'TODO(domain):';
 

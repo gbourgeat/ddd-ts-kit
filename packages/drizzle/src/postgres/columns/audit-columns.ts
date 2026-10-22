@@ -1,5 +1,5 @@
 import { text } from 'drizzle-orm/pg-core';
-import { instant } from './instant.js';
+import { instant } from './instant';
 
 /**
  * The four audit columns, to spread into a table definition. Their keys are those of the

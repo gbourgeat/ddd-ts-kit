@@ -5,13 +5,13 @@ import { getTableConfig } from 'drizzle-orm/pg-core';
 import pg from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createDrizzleUnitOfWork } from '@ddd-ts-kit/drizzle/postgres';
-import { DrizzleAuditTrail, auditChainsTable, auditEntriesTable, auditGuardStatements } from '../src/drizzle.js';
-import { verifyChain, type AuditTrailOptions } from '../src/index.js';
-import { auditTrailContract } from '../src/testing.js';
-import { createTableSql } from './support/drizzle-ddl.js';
-import { startPostgres, type TestPostgres } from './support/postgres.js';
-import { sqlTrailSpecs } from './support/sql-trail-specs.js';
-import { REAL_SERVER, aRecord, type SqlTrailFixture } from './support/sql-trail-fixture.js';
+import { DrizzleAuditTrail, auditChainsTable, auditEntriesTable, auditGuardStatements } from '../src/drizzle';
+import { verifyChain, type AuditTrailOptions } from '../src';
+import { auditTrailContract } from '../src/testing';
+import { createTableSql } from './support/drizzle-ddl';
+import { startPostgres, type TestPostgres } from './support/postgres';
+import { sqlTrailSpecs } from './support/sql-trail-specs';
+import { REAL_SERVER, aRecord, type SqlTrailFixture } from './support/sql-trail-fixture';
 
 const runner = { describe, it, expect, beforeEach };
 
@@ -133,7 +133,7 @@ describe('table definitions', () => {
 
     const fromDrizzle = { entries: await columnsOf('audit_entries'), chains: await columnsOf('audit_chains') };
 
-    const { auditTablesSql } = await import('../src/sql/audit-tables-sql.js');
+    const { auditTablesSql } = await import('../src/sql/audit-tables-sql');
 
     await pool.query(
       `drop table "${schema}"."audit_entries", "${schema}"."audit_chains"; drop function "${schema}"."audit_entries_append_only"()`,

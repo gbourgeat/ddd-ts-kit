@@ -1,6 +1,6 @@
-import type { CachePolicy } from '../cache/cache-policy.js';
-import type { GuardReference } from './guard-reference.js';
-import type { RouteGroupClass } from './route-group-class.js';
+import type { CachePolicy } from '../cache/cache-policy';
+import type { GuardReference } from './guard-reference';
+import type { RouteGroupClass } from './route-group-class';
 
 export interface RouteGroupOptions {
   /** The group this one refines: its prefix comes first, its tags, guards and error codes are inherited. */

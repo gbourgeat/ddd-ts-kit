@@ -1,9 +1,9 @@
-import { eventSourcingPastTense } from '../../src/rules/event-sourcing-past-tense.js';
-import { eventSourcingProjectionNeverAppends } from '../../src/rules/event-sourcing-projection-never-appends.js';
-import { eventSourcingStateInApply } from '../../src/rules/event-sourcing-state-in-apply.js';
-import { eventSourcingStoreBehindRepository } from '../../src/rules/event-sourcing-store-behind-repository.js';
-import { eventSourcingUpcasterRequired } from '../../src/rules/event-sourcing-upcaster-required.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+import { eventSourcingPastTense } from '../../src/rules/event-sourcing-past-tense';
+import { eventSourcingProjectionNeverAppends } from '../../src/rules/event-sourcing-projection-never-appends';
+import { eventSourcingStateInApply } from '../../src/rules/event-sourcing-state-in-apply';
+import { eventSourcingStoreBehindRepository } from '../../src/rules/event-sourcing-store-behind-repository';
+import { eventSourcingUpcasterRequired } from '../../src/rules/event-sourcing-upcaster-required';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const AGGREGATE = `${BILLING}/domain/aggregates/invoice.aggregate.ts`;
 const HANDLER = `${BILLING}/application/commands/pay-invoice/pay-invoice.handler.ts`;

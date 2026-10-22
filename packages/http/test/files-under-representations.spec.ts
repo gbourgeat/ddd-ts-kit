@@ -1,10 +1,10 @@
 import { Readable } from 'node:stream';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { InMemoryFileStorage } from '@ddd-ts-kit/kernel';
-import { Representations, signedFileRoutes } from '../src/index.js';
-import { multipartUploads } from '../src/uploads.js';
-import type { RunningServer } from './support/running-server.js';
-import { onExpress, onFastify, uploadRoutes } from './support/upload-desk.js';
+import { Representations, signedFileRoutes } from '../src';
+import { multipartUploads } from '../src/uploads';
+import type { RunningServer } from './support/running-server';
+import { onExpress, onFastify, uploadRoutes } from './support/upload-desk';
 
 const PDF = Buffer.from('%PDF-1.7\n%%EOF\n');
 

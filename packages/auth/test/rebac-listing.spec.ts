@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { anonymousActor, type Actor } from '@ddd-ts-kit/kernel';
-import type { Permission } from '../src/index.js';
-import { ReverseExpansionLimitError } from '../src/rebac.js';
-import { ada, authorizerWith, docsPermissions, document, fact, user } from './support/documents.js';
+import type { Permission } from '../src';
+import { ReverseExpansionLimitError } from '../src/rebac';
+import { ada, authorizerWith, docsPermissions, document, fact, user } from './support/documents';
 
 const edit = docsPermissions['document.edit'];
 const view = docsPermissions['document.view'];

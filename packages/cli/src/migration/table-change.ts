@@ -1,4 +1,4 @@
-import type { SqlStatement } from './sql-statement.js';
+import type { SqlStatement } from './sql-statement';
 
 /** One action of an `ALTER TABLE` that bears on a primary key, with the position of its statement in the file. */
 export interface TableChange {

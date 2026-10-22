@@ -1,7 +1,7 @@
-import type { CommitLimitProblem } from './commit-limit-problems.js';
-import { DEFAULT_SDK_NAME } from './default-sdk-name.js';
-import { SDK_ACCESSES } from './sdk-accesses.js';
-import { isRecord } from './values/is-record.js';
+import type { CommitLimitProblem } from './commit-limit-problems';
+import { DEFAULT_SDK_NAME } from './default-sdk-name';
+import { SDK_ACCESSES } from './sdk-accesses';
+import { isRecord } from './values/is-record';
 
 /** A name npm takes once `{project}` and `{document}` are replaced: lower case, an optional scope. */
 const PACKAGE_NAME = /^(?:@[a-z0-9{][a-z0-9-._{}~]*\/)?[a-z0-9{][a-z0-9-._{}~]*$/;

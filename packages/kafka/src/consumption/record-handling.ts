@@ -1,29 +1,29 @@
 import type { KafkaJS } from '@confluentinc/kafka-javascript';
 import type { EventDelivery, IntegrationEvent, IntegrationEventCallback, Subscription } from '@ddd-ts-kit/kernel';
-import { decode } from '../codec/decode.js';
+import { decode } from '../codec/decode';
 import {
   ATTEMPT_HEADER,
   DEAD_REASON_HEADER,
   ERROR_CODE_HEADER,
   REPLAY_FOR_HEADER,
   SOURCE_HEADER,
-} from '../codec/headers.js';
-import { republication } from '../codec/republication.js';
-import { sourceOf } from '../codec/source-of.js';
-import { textHeader } from '../codec/text-header.js';
-import { reasonOf } from '../errors/reason-of.js';
-import type { KafkaDelivery } from '../options/kafka-delivery.js';
-import { MESSAGING_SYSTEM } from '../messaging-system.js';
-import type { KafkaFailure } from '../options/kafka-failure.js';
-import type { RetryOptions } from '../options/retry-options.js';
-import type { Publications } from '../publication/publications.js';
-import { deadTopicOf } from '../topology/dead-topic-of.js';
-import { Attempts } from './attempts.js';
-import type { Backoff } from './backoff.js';
-import { failureOf } from './failure-of.js';
-import { POISON_MESSAGE } from './poison-message.js';
-import { postpone } from './postpone.js';
-import type { Timers } from './timers.js';
+} from '../codec/headers';
+import { republication } from '../codec/republication';
+import { sourceOf } from '../codec/source-of';
+import { textHeader } from '../codec/text-header';
+import { reasonOf } from '../errors/reason-of';
+import type { KafkaDelivery } from '../options/kafka-delivery';
+import { MESSAGING_SYSTEM } from '../messaging-system';
+import type { KafkaFailure } from '../options/kafka-failure';
+import type { RetryOptions } from '../options/retry-options';
+import type { Publications } from '../publication/publications';
+import { deadTopicOf } from '../topology/dead-topic-of';
+import { Attempts } from './attempts';
+import type { Backoff } from './backoff';
+import { failureOf } from './failure-of';
+import { POISON_MESSAGE } from './poison-message';
+import { postpone } from './postpone';
+import type { Timers } from './timers';
 
 export interface RecordHandlingDependencies {
   readonly publications: Publications;

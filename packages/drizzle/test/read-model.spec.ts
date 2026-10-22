@@ -2,10 +2,10 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { sql } from 'drizzle-orm';
 import type { PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { readModelStoreContract, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
-import { DrizzleReadModelTable, createDrizzleUnitOfWork } from '../src/postgres.js';
-import { createContractDatabase, type ContractDatabase } from './support/read-model/contract-database.js';
-import { CONTRACT_TABLE, contractRows } from './support/read-model/criteria-contract-table.js';
-import { invoices as plain } from './support/billing-core/infrastructure/persistence/invoices.js';
+import { DrizzleReadModelTable, createDrizzleUnitOfWork } from '../src/postgres';
+import { createContractDatabase, type ContractDatabase } from './support/read-model/contract-database';
+import { CONTRACT_TABLE, contractRows } from './support/read-model/criteria-contract-table';
+import { invoices as plain } from './support/billing-core/infrastructure/persistence/invoices';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

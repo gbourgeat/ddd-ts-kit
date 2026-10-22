@@ -1,10 +1,10 @@
 import { sharedNameOf, type JsonSchema, type Schema } from '@ddd-ts-kit/validation';
-import { isRecord } from '../support/is-record.js';
-import type { FieldAccessEntry } from './field-access-entry.js';
-import { fieldAccess } from './field-access.js';
-import type { FieldRequirement } from './field-requirement.js';
-import type { FieldRule } from './field-rule.js';
-import type { FieldRules } from './field-rules.js';
+import { isRecord } from '../support/is-record';
+import type { FieldAccessEntry } from './field-access-entry';
+import { fieldAccess } from './field-access';
+import type { FieldRequirement } from './field-requirement';
+import type { FieldRule } from './field-rule';
+import type { FieldRules } from './field-rules';
 
 /**
  * The same schema, with fields reserved to some callers:

@@ -1,4 +1,4 @@
-import type { CodeEntry } from './code-entry.js';
+import type { CodeEntry } from './code-entry';
 
 /** The closed list of the codes of a context, `export const <Context>Codes = { .. } as const` in `domain/errors/codes.ts`. */
 export interface CodeList {

@@ -1,4 +1,4 @@
-import type { Name } from '../naming/index.js';
+import type { Name } from '../naming';
 
 /** The file holding the permissions of a context, relative to the context. */
 export function permissionsFile(context: Name): string {

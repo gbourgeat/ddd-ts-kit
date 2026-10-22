@@ -1,4 +1,4 @@
-import type { RawHeaders } from './raw-headers.js';
+import type { RawHeaders } from './raw-headers';
 
 /** One header as a string, the first of a repeated one, `''` when absent. */
 export function headerOf(headers: RawHeaders, name: string): string {

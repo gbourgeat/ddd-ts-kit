@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { exists, read } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { sourceFiles } from './support/source-files.js';
+import { exists, read } from './helpers';
+import { initProject } from './support/init-project';
+import { sourceFiles } from './support/source-files';
 
 /** A platform file and what it exports: the names the generated contexts and the documentation rely on. */
 type Export = readonly [file: string, declaration: string];

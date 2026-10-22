@@ -1,6 +1,6 @@
-import type { BranchCommit } from './branch-commit.js';
-import type { StoryCommits } from './story-commits.js';
-import type { StoryFiles } from './story-files.js';
+import type { BranchCommit } from './branch-commit';
+import type { StoryCommits } from './story-commits';
+import type { StoryFiles } from './story-files';
 
 /** The commits of the branch that belong to the story. */
 export function storyCommitsOf(files: StoryFiles, commits: readonly BranchCommit[]): StoryCommits {

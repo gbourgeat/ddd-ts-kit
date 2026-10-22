@@ -1,4 +1,4 @@
-import { runGit } from '../commit/run-git.js';
+import { runGit } from '../commit/run-git';
 
 /** The commit that closed a row of a worker, read from its branch. */
 export interface RowCommit {

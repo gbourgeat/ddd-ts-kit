@@ -1,8 +1,8 @@
-import type { IntegrationEventCallback } from '../../application/events/integration-event-callback.js';
-import type { IntegrationEvent } from '../../application/events/integration-event.js';
-import type { Subscription } from '../../application/events/subscription.js';
-import type { IntegrationEventPublisher } from '../../application/ports/integration-event-publisher.js';
-import type { IntegrationEventSubscriber } from '../../application/ports/integration-event-subscriber.js';
+import type { IntegrationEventCallback } from '../../application/events/integration-event-callback';
+import type { IntegrationEvent } from '../../application/events/integration-event';
+import type { Subscription } from '../../application/events/subscription';
+import type { IntegrationEventPublisher } from '../../application/ports/integration-event-publisher';
+import type { IntegrationEventSubscriber } from '../../application/ports/integration-event-subscriber';
 
 /**
  * How `publish` rejects once its handlers ran. `aggregated`: always an `AggregateError` holding

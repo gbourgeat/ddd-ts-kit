@@ -1,4 +1,4 @@
-import type { Config } from '../config/index.js';
+import type { Config } from '../config';
 
 /** What each validation library brings next to the package of the kit, all peers of it: knip counts them used as soon as the package is. */
 const LIBRARIES: Readonly<Record<string, readonly string[]>> = {

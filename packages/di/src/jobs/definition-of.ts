@@ -1,7 +1,7 @@
 import type { JobDefinition } from '@ddd-ts-kit/kernel';
-import type { Instrumentation } from '../kernel/instrumentation.js';
-import type { Resolve } from '../wiring/resolve.js';
-import type { EffectiveJob } from './effective-job.js';
+import type { Instrumentation } from '../kernel/instrumentation';
+import type { Resolve } from '../wiring/resolve';
+import type { EffectiveJob } from './effective-job';
 
 /** What a scheduler is given: the job is built on its first run, so a job that cannot be built fails that run. */
 export function definitionOf(job: EffectiveJob, resolve: Resolve, instrument?: Instrumentation['job']): JobDefinition {

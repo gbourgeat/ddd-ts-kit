@@ -1,9 +1,9 @@
-import type { ClientOperation } from './client-operation.js';
-import type { ClientParameter } from './client-parameter.js';
-import { docComment } from './doc-comment.js';
-import { propertyKey } from './property-key.js';
-import { SchemaTypes } from './schema-types.js';
-import { typeName } from './type-name.js';
+import type { ClientOperation } from './client-operation';
+import type { ClientParameter } from './client-parameter';
+import { docComment } from './doc-comment';
+import { propertyKey } from './property-key';
+import { SchemaTypes } from './schema-types';
+import { typeName } from './type-name';
 
 const TYPES = new SchemaTypes('Schemas.');
 const PLACES = ['path', 'query', 'header'] as const;

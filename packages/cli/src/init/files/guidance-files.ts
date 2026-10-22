@@ -1,5 +1,5 @@
-import type { InitFile } from './init-file.js';
-import { LAYER_RULES } from './layer-rules.js';
+import type { InitFile } from './init-file';
+import { LAYER_RULES } from './layer-rules';
 
 /**
  * The review policy of the project, at its root: the passes every review applies, what Important

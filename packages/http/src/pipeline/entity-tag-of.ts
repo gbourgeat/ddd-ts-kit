@@ -1,8 +1,8 @@
-import type { EntityTagSource } from '../cache/entity-tag-source.js';
-import { ResponseContractError } from '../error/response-contract-error.js';
-import { valuesAt } from '../support/values-at.js';
-import type { RouteResponse } from './route-response.js';
-import { serializeBody } from './serialize-body.js';
+import type { EntityTagSource } from '../cache/entity-tag-source';
+import { ResponseContractError } from '../error/response-contract-error';
+import { valuesAt } from '../support/values-at';
+import type { RouteResponse } from './route-response';
+import { serializeBody } from './serialize-body';
 
 /**
  * The `ETag` of an answer: strong, the SHA-256 of the bytes sent, for `representation`; weak,

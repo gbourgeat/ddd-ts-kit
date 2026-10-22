@@ -1,4 +1,4 @@
-import type { RouteResponse } from './route-response.js';
+import type { RouteResponse } from './route-response';
 
 /**
  * The bytes every adapter writes, so the three frameworks answer identically. A string or

@@ -1,10 +1,10 @@
-import { contextDoc } from './context-doc.js';
-import { DECLARED } from './declared.js';
-import { declaredProject } from './declared-project.js';
-import type { Fixture } from './fixture.js';
-import { PATHS } from './paths.js';
-import { SAMPLES } from './samples.js';
-import { source } from './source.js';
+import { contextDoc } from './context-doc';
+import { DECLARED } from './declared';
+import { declaredProject } from './declared-project';
+import type { Fixture } from './fixture';
+import { PATHS } from './paths';
+import { SAMPLES } from './samples';
+import { source } from './source';
 
 const { ADAPTER, BILLING, PORT, REPOSITORY_PORT } = PATHS;
 

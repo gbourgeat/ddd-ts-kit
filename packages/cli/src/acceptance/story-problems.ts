@@ -1,7 +1,7 @@
-import type { AcceptanceProblem } from './acceptance-problem.js';
-import type { Criterion } from './criteria-in.js';
-import type { Scenario } from './scenario.js';
-import type { RowAcceptance } from './story-acceptance.js';
+import type { AcceptanceProblem } from './acceptance-problem';
+import type { Criterion } from './criteria-in';
+import type { Scenario } from './scenario';
+import type { RowAcceptance } from './story-acceptance';
 
 /** What the story lacks as a whole: rows, a spec, a written scenario for each slice row and each criterion. */
 export interface StoryParts {

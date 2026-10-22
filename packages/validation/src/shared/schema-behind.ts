@@ -1,4 +1,4 @@
-import type { Schema } from '../schema.js';
+import type { Schema } from '../schema';
 
 interface Registry {
   readonly wrapped: WeakMap<Schema<unknown>, Schema<unknown>>;

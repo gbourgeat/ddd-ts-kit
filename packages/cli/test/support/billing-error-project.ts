@@ -1,5 +1,5 @@
 import { expect } from 'vitest';
-import { cli, type CliResult, tempDir } from '../helpers.js';
+import { cli, type CliResult, tempDir } from '../helpers';
 
 const TERMS = ['--term', 'Invoice=A request for payment', '--term', 'Issue=To make an invoice final'];
 

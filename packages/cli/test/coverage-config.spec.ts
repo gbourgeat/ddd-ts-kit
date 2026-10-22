@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { parseConfig, REFERENCE_COVERAGE, serializeConfig } from '../src/config/index.js';
-import { changeConfig, checkJsonOf } from './check-support.js';
-import { cli, read, REPO_ROOT, tempDir, write } from './helpers.js';
+import { parseConfig, REFERENCE_COVERAGE, serializeConfig } from '../src/config';
+import { changeConfig, checkJsonOf } from './check-support';
+import { cli, read, REPO_ROOT, tempDir, write } from './helpers';
 
 describe('the coverage thresholds of the config', () => {
   it('are the reference when the config says nothing, and are not written to the file then', () => {

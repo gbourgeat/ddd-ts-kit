@@ -1,10 +1,10 @@
 import { AST_TOKEN_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { commentLines, type CommentLine } from '../support/comments/comment-lines.js';
-import { isDirective } from '../support/comments/is-directive.js';
-import { isJsdoc } from '../support/comments/is-jsdoc.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import { sameWord } from '../support/words/same-word.js';
-import { splitWords } from '../support/words/split-words.js';
+import { commentLines, type CommentLine } from '../support/comments/comment-lines';
+import { isDirective } from '../support/comments/is-directive';
+import { isJsdoc } from '../support/comments/is-jsdoc';
+import { defineRule } from '../support/rule/define-rule';
+import { sameWord } from '../support/words/same-word';
+import { splitWords } from '../support/words/split-words';
 
 type Noise = 'banner' | 'closingBrace' | 'journal' | 'emptyTag' | 'ownerlessTodo';
 

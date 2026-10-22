@@ -1,5 +1,5 @@
-import type { COVERAGE_LAYERS } from './coverage-layers.js';
-import type { COVERAGE_METRICS } from './coverage-metrics.js';
+import type { COVERAGE_LAYERS } from './coverage-layers';
+import type { COVERAGE_METRICS } from './coverage-metrics';
 
 export type CoverageRates = Readonly<Record<(typeof COVERAGE_METRICS)[number], number>>;
 

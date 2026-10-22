@@ -1,10 +1,10 @@
-import { SchemaNode } from '../../schema/schema-node.js';
-import { isAsyncIterable } from '../../support/is-async-iterable.js';
-import { isRecord } from '../../support/is-record.js';
-import type { BodyShape } from '../body-shape.js';
-import type { RepresentedBody } from '../represented-body.js';
-import type { Representation } from '../representation.js';
-import { csvCell } from './csv-cell.js';
+import { SchemaNode } from '../../schema/schema-node';
+import { isAsyncIterable } from '../../support/is-async-iterable';
+import { isRecord } from '../../support/is-record';
+import type { BodyShape } from '../body-shape';
+import type { RepresentedBody } from '../represented-body';
+import type { Representation } from '../representation';
+import { csvCell } from './csv-cell';
 
 const LINE_END = '\r\n';
 

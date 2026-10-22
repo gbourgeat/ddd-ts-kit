@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { Permission } from '../permissions/permission.js';
+import type { Permission } from '../permissions/permission';
 
 // Follows the asynchronous call chain of the handler it was opened around: concurrent messages never share it.
 const asked = new AsyncLocalStorage<Set<string>>();

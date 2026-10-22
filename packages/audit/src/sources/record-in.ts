@@ -1,6 +1,6 @@
 import type { AuditActor, AuditRecord, ExecutionContext } from '@ddd-ts-kit/kernel';
-import type { AuditFact } from './audit-fact.js';
-import type { AuditSource } from './audit-source.js';
+import type { AuditFact } from './audit-fact';
+import type { AuditSource } from './audit-source';
 
 export function recordIn(context: ExecutionContext, source: Omit<AuditSource, 'scope'>, fact: AuditFact): AuditRecord {
   const session = context.session;

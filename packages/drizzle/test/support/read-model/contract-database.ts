@@ -5,8 +5,8 @@ import { drizzle as drizzleOverPg } from 'drizzle-orm/node-postgres';
 import type { PgDatabase, PgQueryResultHKT, PgTable } from 'drizzle-orm/pg-core';
 import { drizzle as drizzleOverPglite } from 'drizzle-orm/pglite';
 import pg from 'pg';
-import { createTableSql } from '../create-table-sql.js';
-import { RecordingLogger } from '../recording-logger.js';
+import { createTableSql } from '../create-table-sql';
+import { RecordingLogger } from '../recording-logger';
 
 export type ContractDb = PgDatabase<PgQueryResultHKT>;
 

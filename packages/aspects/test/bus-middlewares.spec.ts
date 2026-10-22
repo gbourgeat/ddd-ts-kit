@@ -8,8 +8,8 @@ import {
   Query,
   InMemoryQueryBus,
 } from '@ddd-ts-kit/kernel';
-import { loggingMiddleware, metricsMiddleware } from '../src/index.js';
-import { PairNotQuoted } from './support/pair-not-quoted.js';
+import { loggingMiddleware, metricsMiddleware } from '../src';
+import { PairNotQuoted } from './support/pair-not-quoted';
 
 class ShipOrder extends Command<string> {
   constructor(readonly orderId: string) {

@@ -1,10 +1,10 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { CliError } from '../../cli-error.js';
-import type { Kind } from '../kind.js';
-import { label } from '../label.js';
-import { openScope } from '../open-scope.js';
-import { controllerOf } from './presentation/controller-of.js';
-import { controllerSource } from './presentation/controller-source.js';
+import { CONFIG_FILE } from '../../config';
+import { CliError } from '../../cli-error';
+import type { Kind } from '../kind';
+import { label } from '../label';
+import { openScope } from '../open-scope';
+import { controllerOf } from './presentation/controller-of';
+import { controllerSource } from './presentation/controller-source';
 
 const HINTS = `/** How the body of the route is entered, served as a form at GET /forms/<operationId> for the caller who asks. */
 const form = defineForm<Infer<typeof body>>({

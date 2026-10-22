@@ -1,8 +1,8 @@
 import { FixedClock, stampCreation, stampUpdate, tenantScopeOf, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import { auditRow, insertIgnoringConflict, optimisticUpdate, tenantRow, type KnexContext } from '../../../src/index.js';
-import { Invoice, type InvoiceState } from '../billing-core/domain/invoice.js';
-import type { InvoiceRepository } from '../billing-core/domain/repositories/invoice.repository.js';
-import type { InvoiceTables } from './invoice-tables.js';
+import { auditRow, insertIgnoringConflict, optimisticUpdate, tenantRow, type KnexContext } from '../../../src';
+import { Invoice, type InvoiceState } from '../billing-core/domain/invoice';
+import type { InvoiceRepository } from '../billing-core/domain/repositories/invoice.repository';
+import type { InvoiceTables } from './invoice-tables';
 
 export interface StrategyRepositoryParts {
   readonly context: KnexContext;

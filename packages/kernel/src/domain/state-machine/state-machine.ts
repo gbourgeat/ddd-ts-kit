@@ -1,8 +1,8 @@
-import type { DomainError } from '../errors/domain-error.js';
-import { InvalidStateMachineError } from './invalid-state-machine-error.js';
-import type { StateMachineDeclaration } from './state-machine-declaration.js';
-import type { StateMachineDescription } from './state-machine-description.js';
-import { TransitionError } from './transition-error.js';
+import type { DomainError } from '../errors/domain-error';
+import { InvalidStateMachineError } from './invalid-state-machine-error';
+import type { StateMachineDeclaration } from './state-machine-declaration';
+import type { StateMachineDescription } from './state-machine-description';
+import { TransitionError } from './transition-error';
 
 /**
  * The lifecycle of an aggregate: its states, the transitions between them and what refuses

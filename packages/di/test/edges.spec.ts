@@ -4,9 +4,9 @@ import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { Clock } from '@ddd-ts-kit/kernel';
 import { Edge, injected } from '@ddd-ts-kit/kernel/declarations';
-import { DeclaredEdges, contextModule, createApplication, kernelModule } from '../src/index.js';
-import { discoverContext } from '../src/discovery.js';
-import { wiringRejection } from './support/rejection.js';
+import { DeclaredEdges, contextModule, createApplication, kernelModule } from '../src';
+import { discoverContext } from '../src/discovery';
+import { wiringRejection } from './support/rejection';
 
 class InvoiceMapper {
   readonly name = 'mapper';

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { formatResume } from '../src/worker/format-resume.js';
-import type { WorkerResume } from '../src/worker/resume-worker.js';
-import { resumeMessage } from '../src/worker/resume-message.js';
-import type { ProgressVerification, WorkerProgress } from '../src/worker/worker-progress.js';
+import { formatResume } from '../src/worker/format-resume';
+import type { WorkerResume } from '../src/worker/resume-worker';
+import { resumeMessage } from '../src/worker/resume-message';
+import type { ProgressVerification, WorkerProgress } from '../src/worker/worker-progress';
 
 const PLACE = { context: 'billing', project: '/work/billing', base: 'origin/main' };
 

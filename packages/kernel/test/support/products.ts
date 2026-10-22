@@ -1,4 +1,4 @@
-import { defineCriteria } from '../../src/index.js';
+import { defineCriteria } from '../../src';
 
 /** A row of a catalogue whose fields hold every type a criteria knows, some of them null. */
 export interface ProductRow {

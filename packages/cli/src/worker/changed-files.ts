@@ -1,4 +1,4 @@
-import { runGit } from '../commit/run-git.js';
+import { runGit } from '../commit/run-git';
 
 /** A renamed file counts under both its names: either can meet the change of another worker. */
 const NAMES = ['--name-only', '--no-renames', '-z'];

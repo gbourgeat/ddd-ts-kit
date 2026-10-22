@@ -1,8 +1,8 @@
-import { splitTopLevel } from '../text/split-top-level.js';
-import { identifierAt } from './identifier-at.js';
-import type { NamedBinding } from './named-binding.js';
-import { parameterLists } from './parameter-lists.js';
-import { patternBindings } from './pattern-bindings.js';
+import { splitTopLevel } from '../text/split-top-level';
+import { identifierAt } from './identifier-at';
+import type { NamedBinding } from './named-binding';
+import { parameterLists } from './parameter-lists';
+import { patternBindings } from './pattern-bindings';
 
 const MODIFIERS = /^(?:(?:public|private|protected|readonly|override)\s+)+/;
 

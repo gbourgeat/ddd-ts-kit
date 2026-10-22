@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll } from 'vitest';
-import { languageDeclaredVocabulary } from '../../src/rules/language-declared-vocabulary.js';
-import { BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { languageDeclaredVocabulary } from '../../src/rules/language-declared-vocabulary';
+import { BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 // The shapes of type a word of another language is written with: which say so, and which do not.
 

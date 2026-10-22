@@ -1,9 +1,9 @@
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
-import type { GitRunner } from './attributed-marker.js';
-import { CHANGE_GATED } from './change-gated.js';
-import { commitRows } from './commit-rows.js';
-import { storyOf } from './story-of.js';
-import type { UnreferencedCommit } from './unreferenced-commit.js';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
+import type { GitRunner } from './attributed-marker';
+import { CHANGE_GATED } from './change-gated';
+import { commitRows } from './commit-rows';
+import { storyOf } from './story-of';
+import type { UnreferencedCommit } from './unreferenced-commit';
 
 /** One record per commit: the hash, its subject and its `Change:` trailers, then the files it changes, one per line. */
 const SHOWN = '--format=%x1e%h%x1f%s%x1f%(trailers:key=Change,valueonly,separator=%x2C)%x1f';

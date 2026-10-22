@@ -1,8 +1,8 @@
-import type { ReportMeasures } from './report-measures.js';
-import type { ReviewReading } from './review-reading.js';
-import type { Rework } from './rework.js';
-import type { StoryHistory } from './story-history.js';
-import type { Timeline } from './timeline.js';
+import type { ReportMeasures } from './report-measures';
+import type { ReviewReading } from './review-reading';
+import type { Rework } from './rework';
+import type { StoryHistory } from './story-history';
+import type { Timeline } from './timeline';
 
 /** One story as read, before the measures that compare stories. */
 export interface StoryReading {

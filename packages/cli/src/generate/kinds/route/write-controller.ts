@@ -1,15 +1,15 @@
-import { emit, type Output } from '../../emit.js';
-import { named } from '../../named.js';
-import type { Scope } from '../../scope.js';
-import { searchedElements } from '../../searched-elements.js';
-import { vars } from '../../vars.js';
-import { wire } from '../../wire.js';
-import type { ControllerPlan } from './controller-plan.js';
-import { controllerVars } from './controller-vars.js';
-import { dtoClasses } from './dto-classes.js';
-import { groupVars } from './group-vars.js';
-import { sharesSchemas } from './shares-schemas.js';
-import { SEARCH_LINE_LIBRARIES } from './search-line-libraries.js';
+import { emit, type Output } from '../../emit';
+import { named } from '../../named';
+import type { Scope } from '../../scope';
+import { searchedElements } from '../../searched-elements';
+import { vars } from '../../vars';
+import { wire } from '../../wire';
+import type { ControllerPlan } from './controller-plan';
+import { controllerVars } from './controller-vars';
+import { dtoClasses } from './dto-classes';
+import { groupVars } from './group-vars';
+import { sharesSchemas } from './shares-schemas';
+import { SEARCH_LINE_LIBRARIES } from './search-line-libraries';
 
 /** Writes a controller in its folder, with its schemas, its mapper and serializer when asked, its spec and its group when it is new. */
 export function writeController(scope: Scope, plan: ControllerPlan): void {

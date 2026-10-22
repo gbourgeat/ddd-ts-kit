@@ -1,4 +1,4 @@
-import { ConceptError } from '../../src/index.js';
+import { ConceptError } from '../../src';
 
 export class BookingError extends ConceptError {
   static slotTaken(calendarId: string, startsAt: Date) {

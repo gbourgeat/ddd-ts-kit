@@ -58,7 +58,7 @@
   <text x="855" y="363" font-size="13" fill="#1f2328" text-anchor="middle">invoice-row.ts</text>
   <!-- row 4 -->
   <rect x="24" y="380" width="360" height="84" rx="8" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
-  <text x="40" y="412" font-size="14" font-weight="600" fill="#1f2328">from '@/shared-kernel/index';</text>
+  <text x="40" y="412" font-size="14" font-weight="600" fill="#1f2328">from '@/shared-kernel';</text>
   <text x="40" y="434" font-size="13" fill="#3d4449">dont l'index réexporte un type de zod :</text>
   <text x="40" y="452" font-size="13" fill="#3d4449">le domaine peut importer le noyau partagé</text>
   <rect x="394" y="380" width="180" height="84" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 3"/>

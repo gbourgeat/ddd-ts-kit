@@ -1,7 +1,7 @@
 import { TableReadModelStore, type CriteriaDefinition } from '@ddd-ts-kit/kernel';
-import type { KnexContext } from '../unit-of-work/knex-context.js';
-import type { KnexReadModelOptions } from './knex-read-model-options.js';
-import { KnexReadModelTable } from './knex-read-model-table.js';
+import type { KnexContext } from '../unit-of-work/knex-context';
+import type { KnexReadModelOptions } from './knex-read-model-options';
+import { KnexReadModelTable } from './knex-read-model-table';
 
 export interface KnexReadModel<Row> extends KnexReadModelOptions<Row> {
   /** What a read of the read model may filter and sort by. */

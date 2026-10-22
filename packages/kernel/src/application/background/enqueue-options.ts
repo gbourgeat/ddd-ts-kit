@@ -1,4 +1,4 @@
-import type { DurationText } from '../scheduling/duration-text.js';
+import type { DurationText } from '../scheduling/duration-text';
 
 export interface EnqueueOptions {
   /** Runs no earlier than this long after the commit. Default: as soon as a worker is free. */

@@ -1,4 +1,4 @@
-import type { CitedKind } from '../citations/cited-name.js';
+import type { CitedKind } from '../citations/cited-name';
 
 /**
  * A name the design review of a done row cites that the code does not have, and that the report

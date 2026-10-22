@@ -1,6 +1,6 @@
 import type { IntegrationEventCallback, Subscription } from '@ddd-ts-kit/kernel';
-import type { ConsumerBinding } from '../topology/consumer-binding.js';
-import type { GroupConsumer } from './group-consumer.js';
+import type { ConsumerBinding } from '../topology/consumer-binding';
+import type { GroupConsumer } from './group-consumer';
 
 /** The consuming side of a bus: one group consumer per consuming context, opened on demand. */
 export class Consumption {

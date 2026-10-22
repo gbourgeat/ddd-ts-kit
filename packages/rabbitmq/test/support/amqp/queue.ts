@@ -1,4 +1,4 @@
-import type { Arguments, Consumer, DeadLettering, QueueState, StoredMessage } from './model.js';
+import type { Arguments, Consumer, DeadLettering, QueueState, StoredMessage } from './model';
 
 /** A queue: its ready messages, each with its expiry, handed to its consumers in turn. */
 export class Queue implements QueueState {

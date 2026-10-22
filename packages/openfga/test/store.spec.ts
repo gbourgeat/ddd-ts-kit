@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { relationTupleStoreContract } from '@ddd-ts-kit/auth/testing';
-import { OpenFgaRelationTupleStore } from '../src/index.js';
-import { schema } from './support/documents.js';
-import { InMemoryOpenFga } from './support/in-memory-open-fga.js';
+import { OpenFgaRelationTupleStore } from '../src';
+import { schema } from './support/documents';
+import { InMemoryOpenFga } from './support/in-memory-open-fga';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

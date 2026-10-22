@@ -1,5 +1,5 @@
-import { isOneOf, PACKAGE_MANAGERS, type Stack } from '../config/index.js';
-import { isRecord } from '../config/values/is-record.js';
+import { isOneOf, PACKAGE_MANAGERS, type Stack } from '../config';
+import { isRecord } from '../config/values/is-record';
 
 /** The package manager a config file names, read from its text alone; npm when it names none or cannot be read. */
 export function packageManagerOf(configText: string | undefined): Stack['packageManager'] {

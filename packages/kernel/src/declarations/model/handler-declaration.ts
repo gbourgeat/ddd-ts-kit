@@ -1,6 +1,6 @@
-import type { MessageType } from '../../application/messaging/message-type.js';
-import type { Message } from '../../application/messaging/message.js';
-import type { Token } from '../token/token.js';
+import type { MessageType } from '../../application/messaging/message-type';
+import type { Message } from '../../application/messaging/message';
+import type { Token } from '../token/token';
 
 export interface HandlerDeclaration {
   readonly role: 'command-handler' | 'query-handler';

@@ -7,7 +7,7 @@ import {
   money,
   pageResponse,
   type BodyShape,
-} from '../src/index.js';
+} from '../src';
 
 /** A closed vocabulary, as the kit declares one: an object of codes and the union of its values. */
 const Status = { booked: 'booked', cancelled: 'cancelled' } as const;

@@ -1,5 +1,5 @@
-import type { Config } from '../../config/index.js';
-import { GENERIC_WORDS } from './generic-words.js';
+import type { Config } from '../../config';
+import { GENERIC_WORDS } from './generic-words';
 
 /** The words of the rule for a project: `businessNames.words` in place of the defaults, less `businessNames.allow`. */
 export function genericWordsOf(config: Config): ReadonlySet<string> {

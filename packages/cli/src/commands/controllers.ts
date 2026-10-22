@@ -1,12 +1,12 @@
-import { CliError } from '../cli-error.js';
-import { readConfig } from '../config/index.js';
-import { finishMigration } from '../controllers/finish-migration.js';
-import { migrateContext } from '../controllers/migrate-context.js';
-import type { Migration } from '../controllers/migration.js';
-import { MigrationDraft } from '../refusals/migration-draft.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
+import { CliError } from '../cli-error';
+import { readConfig } from '../config';
+import { finishMigration } from '../controllers/finish-migration';
+import { migrateContext } from '../controllers/migrate-context';
+import type { Migration } from '../controllers/migration';
+import { MigrationDraft } from '../refusals/migration-draft';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import type { Command } from './command';
 
 /**
  * Moves the function routes of a project to controller classes, context by context: each

@@ -1,9 +1,9 @@
-import { integrationEventKind } from '../generate/kinds/integration-event-kind.js';
-import { repositoryKind } from '../generate/kinds/repository-kind.js';
-import { identityRefusal } from './identity-refusal.js';
-import { IDENTITY_TERMS } from './identity-terms.js';
-import type { Preset } from './preset.js';
-import { presetFiles } from './preset-files.js';
+import { integrationEventKind } from '../generate/kinds/integration-event-kind';
+import { repositoryKind } from '../generate/kinds/repository-kind';
+import { identityRefusal } from './identity-refusal';
+import { IDENTITY_TERMS } from './identity-terms';
+import type { Preset } from './preset';
+import { presetFiles } from './preset-files';
 
 /** The tables of the context: the repository generator starts them, the preset lays them out whole. */
 const AFTER_STEPS = [

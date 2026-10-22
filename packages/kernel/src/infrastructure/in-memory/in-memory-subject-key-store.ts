@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from 'node:crypto';
-import type { SubjectKey } from '../../application/event-sourcing/subject-key.js';
-import type { SubjectKeyStore } from '../../application/ports/subject-key-store.js';
+import type { SubjectKey } from '../../application/event-sourcing/subject-key';
+import type { SubjectKeyStore } from '../../application/ports/subject-key-store';
 
 /** Reference implementation, for tests and single-process apps: the keys die with the process. */
 export class InMemorySubjectKeyStore implements SubjectKeyStore {

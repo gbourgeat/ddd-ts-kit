@@ -1,6 +1,6 @@
-import type { Config } from '../config/index.js';
-import type { RenderContext } from '../templating/index.js';
-import { one } from './one.js';
+import type { Config } from '../config';
+import type { RenderContext } from '../templating';
+import { one } from './one';
 
 /** Authentication happens at the HTTP boundary: without one there is nobody to identify. */
 export function authenticationVars(config: Config): RenderContext {

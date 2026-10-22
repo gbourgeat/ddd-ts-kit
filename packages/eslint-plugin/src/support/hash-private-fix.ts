@@ -1,9 +1,9 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { constructorOf } from './classes/constructor-of.js';
-import type { ClassNode } from './classes/class-name.js';
-import { descendants } from './descendants.js';
-import { parameterName } from './members/parameter-name.js';
-import { parameterProperties } from './members/parameter-properties.js';
+import { constructorOf } from './classes/constructor-of';
+import type { ClassNode } from './classes/class-name';
+import { descendants } from './descendants';
+import { parameterName } from './members/parameter-name';
+import { parameterProperties } from './members/parameter-properties';
 
 type Source = Readonly<TSESLint.SourceCode>;
 type Private = TSESTree.PrivateIdentifier;

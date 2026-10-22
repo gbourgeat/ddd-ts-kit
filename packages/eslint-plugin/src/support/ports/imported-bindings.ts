@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { resolveImport } from '../../project/resolve-import.js';
-import type { LintedFile } from '../../project/linted-file.js';
-import type { ImportedBinding } from './imported-binding.js';
+import { resolveImport } from '../../project/resolve-import';
+import type { LintedFile } from '../../project/linted-file';
+import type { ImportedBinding } from './imported-binding';
 
 /** The import behind every local name of a program. */
 export function importedBindings(file: LintedFile, program: TSESTree.Program): ReadonlyMap<string, ImportedBinding> {

@@ -1,6 +1,6 @@
-import type { JsonSchema } from '../json-schema.js';
-import { DEFINITIONS_POINTER } from './definitions-pointer.js';
-import { isRecord } from './is-record.js';
+import type { JsonSchema } from '../json-schema';
+import { DEFINITIONS_POINTER } from './definitions-pointer';
+import { isRecord } from './is-record';
 
 /**
  * The name a schema is shared under, when its JSON Schema is a reference to one of its own

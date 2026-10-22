@@ -1,18 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import {
-  allOf,
-  anyOf,
-  compose,
-  forClasses,
-  forContext,
-  forKinds,
-  forMethods,
-  not,
-  when,
-  type Aspect,
-} from '../src/index.js';
-import { QuoteGateway } from './support/quote-gateway.js';
-import { recording } from './support/recording.js';
+import { allOf, anyOf, compose, forClasses, forContext, forKinds, forMethods, not, when, type Aspect } from '../src';
+import { QuoteGateway } from './support/quote-gateway';
+import { recording } from './support/recording';
 
 describe('compose', () => {
   it('nests the aspects, the first outermost', async () => {

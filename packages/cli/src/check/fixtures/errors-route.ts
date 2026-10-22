@@ -1,4 +1,4 @@
-import { source } from './source.js';
+import { source } from './source';
 
 /** A route of billing declaring `codes` in its `errors`, for the fixtures of `errors/known-code`. */
 export function errorsRoute(...codes: string[]): string {

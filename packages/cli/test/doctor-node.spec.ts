@@ -1,10 +1,10 @@
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { inRange } from '../src/doctor/in-range.js';
-import { nodeFindings } from '../src/doctor/node-findings.js';
-import { cli, read, tempDir, write } from './helpers.js';
-import { installKit } from './support/install-kit.js';
-import { jsonAt } from './support/json-at.js';
+import { inRange } from '../src/doctor/in-range';
+import { nodeFindings } from '../src/doctor/node-findings';
+import { cli, read, tempDir, write } from './helpers';
+import { installKit } from './support/install-kit';
+import { jsonAt } from './support/json-at';
 
 describe('the range of engines.node and .nvmrc', () => {
   it.each([

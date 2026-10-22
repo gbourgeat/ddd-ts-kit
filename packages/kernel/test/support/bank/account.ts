@@ -1,4 +1,4 @@
-import { EventSourcedAggregate, type AggregateHistory, type Appliers, type DomainEvent } from '../../../src/index.js';
+import { EventSourcedAggregate, type AggregateHistory, type Appliers, type DomainEvent } from '../../../src';
 
 export class AccountOpened implements DomainEvent {
   static readonly eventName = 'bank.account.opened';

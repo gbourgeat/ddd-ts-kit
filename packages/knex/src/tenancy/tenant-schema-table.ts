@@ -1,9 +1,9 @@
 import type { Knex } from 'knex';
 import { tenantScopeOf, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import type { KnexContext } from '../unit-of-work/knex-context.js';
-import { tableIn } from './table-in.js';
-import { tenantSchemaOf } from './tenant-schema-of.js';
-import type { TenantSchemaTarget } from './tenant-schema-target.js';
+import type { KnexContext } from '../unit-of-work/knex-context';
+import { tableIn } from './table-in';
+import { tenantSchemaOf } from './tenant-schema-of';
+import type { TenantSchemaTarget } from './tenant-schema-target';
 
 /**
  * The table in the schema of the tenant of the work in progress (`<schema>__<tenant>`): reads

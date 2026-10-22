@@ -1,10 +1,10 @@
-import type { Name } from '../../naming/index.js';
-import type { RenderContext } from '../../templating/index.js';
-import { accessVars } from '../access-vars.js';
-import { named } from '../named.js';
-import type { Scope } from '../scope.js';
-import { specVars } from '../spec-vars.js';
-import { vars } from '../vars.js';
+import type { Name } from '../../naming';
+import type { RenderContext } from '../../templating';
+import { accessVars } from '../access-vars';
+import { named } from '../named';
+import type { Scope } from '../scope';
+import { specVars } from '../spec-vars';
+import { vars } from '../vars';
 
 /**
  * What the templates of a command read. `asksPolicy`: a policy refines its permission, so the

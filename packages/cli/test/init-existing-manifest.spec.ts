@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { cli, tempDir, write } from './helpers.js';
-import { jsonAt } from './support/json-at.js';
-import { readJson } from './support/read-json.js';
-import { stringsAt } from './support/strings-at.js';
+import { cli, tempDir, write } from './helpers';
+import { jsonAt } from './support/json-at';
+import { readJson } from './support/read-json';
+import { stringsAt } from './support/strings-at';
 
 describe('init in a project whose package.json says otherwise', () => {
   it('keeps a manifest that is not an ES module and a release of pnpm of its own, and says so', () => {

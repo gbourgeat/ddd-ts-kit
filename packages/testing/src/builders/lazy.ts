@@ -1,4 +1,4 @@
-import { RESOLVE, type Resolvable } from './resolvable.js';
+import { RESOLVE, type Resolvable } from './resolvable';
 
 /** A default computed at each `build()`, for values that must not be shared between tests. */
 export function lazy<T>(produce: () => T): Resolvable<T> {

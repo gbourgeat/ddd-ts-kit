@@ -1,5 +1,5 @@
-import type { RateLimitDecision } from '../rate-limit/rate-limit-decision.js';
-import type { RateLimit } from '../rate-limit/rate-limit.js';
+import type { RateLimitDecision } from '../rate-limit/rate-limit-decision';
+import type { RateLimit } from '../rate-limit/rate-limit';
 
 /**
  * A sliding window: at any instant, at most `limit` allowed calls in the `windowMs` before

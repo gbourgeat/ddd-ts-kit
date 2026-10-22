@@ -1,5 +1,5 @@
-import { nesting } from './nesting.js';
-import { splitTopLevel } from './split-top-level.js';
+import { nesting } from './nesting';
+import { splitTopLevel } from './split-top-level';
 
 const STEP = '  ';
 const NAMED_IMPORT = /^(import (?:type )?\{) (.+,.+) (\} from '[^']+';)$/;

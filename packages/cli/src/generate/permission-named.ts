@@ -1,6 +1,6 @@
-import { CliError } from '../cli-error.js';
-import { concept } from './concept.js';
-import type { Scope } from './scope.js';
+import { CliError } from '../cli-error';
+import { concept } from './concept';
+import type { Scope } from './scope';
 
 const PERMISSION_NAME = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$/;
 

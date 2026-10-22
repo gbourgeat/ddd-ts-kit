@@ -1,5 +1,5 @@
 import type { InjectionToken } from '@nestjs/common';
-import type { Route } from '../route/route.js';
+import type { Route } from '../route/route';
 
 /** Routes whose handlers close over injected dependencies. */
 export interface RoutesFactory {

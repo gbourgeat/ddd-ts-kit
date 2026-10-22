@@ -1,5 +1,5 @@
-import { isRecord } from '../config/values/is-record.js';
-import { manifestJson } from './manifest-json.js';
+import { isRecord } from '../config/values/is-record';
+import { manifestJson } from './manifest-json';
 
 /** What the package.json of a client is made of. */
 export interface ManifestFacts {

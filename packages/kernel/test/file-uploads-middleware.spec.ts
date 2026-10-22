@@ -14,7 +14,7 @@ import {
   unitOfWorkMiddleware,
   withinUnitOfWork,
   type StoredFile,
-} from '../src/index.js';
+} from '../src';
 
 const PDF = Buffer.from('%PDF-1.7\n%%EOF\n');
 

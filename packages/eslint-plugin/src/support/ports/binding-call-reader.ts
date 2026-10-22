@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { calleeName } from '../calls/callee-name.js';
+import { calleeName } from '../calls/callee-name';
 
 /** The name of a binding call (`bind`, `rebind`, `resolve`, `fake`, `override`), or undefined for any other call. */
 type BindingCallReader = (node: TSESTree.CallExpression) => string | undefined;

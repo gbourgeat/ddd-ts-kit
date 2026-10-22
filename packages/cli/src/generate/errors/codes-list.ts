@@ -1,6 +1,6 @@
-import { scan } from '../../check/scan/scan.js';
-import { escapeRegExp } from '../../check/text/escape-reg-exp.js';
-import { matchingBracket } from '../../check/text/matching-bracket.js';
+import { scan } from '../../check/scan/scan';
+import { escapeRegExp } from '../../check/text/escape-reg-exp';
+import { matchingBracket } from '../../check/text/matching-bracket';
 
 const ENTRY_KEY = /([A-Za-z_$][\w$]*)\s*:\s*(?=['"])/g;
 

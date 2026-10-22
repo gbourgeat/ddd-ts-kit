@@ -1,4 +1,4 @@
-import type { Method } from './method.js';
+import type { Method } from './method';
 
 /**
  * A sealed or frozen instance cannot receive own methods, so it is fronted by a proxy.

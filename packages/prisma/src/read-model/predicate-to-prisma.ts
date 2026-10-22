@@ -1,5 +1,5 @@
 import type { FieldValue, Predicate, PredicateTest } from '@ddd-ts-kit/kernel';
-import type { PrismaWhere } from './prisma-criteria.js';
+import type { PrismaWhere } from './prisma-criteria';
 
 type Fields = Readonly<Record<string, string>>;
 

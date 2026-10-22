@@ -1,5 +1,5 @@
-import { lazy } from './lazy.js';
-import type { Resolvable } from './resolvable.js';
+import { lazy } from './lazy';
+import type { Resolvable } from './resolvable';
 
 const counters = new Map<string, number>();
 

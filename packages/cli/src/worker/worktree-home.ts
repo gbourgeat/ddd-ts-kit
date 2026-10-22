@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { runGit } from '../commit/run-git.js';
+import { runGit } from '../commit/run-git';
 
 /** Where the worktrees of a project live: a folder of the project in its main checkout, ignored by git and by every tool. */
 export const WORKTREES_DIR = '.worktrees';

@@ -1,13 +1,13 @@
-import { CliError } from '../../../cli-error.js';
-import type { ConsumedEventFact } from '../../../describe/context-description.js';
-import type { ContextSources } from '../../../describe/context-sources.js';
-import { readConsumedEvents } from '../../../describe/read-consumed-events.js';
-import { readEventDefinitions } from '../../../describe/read-event-definitions.js';
-import { readRoutes } from '../../../describe/read-routes.js';
-import { toName, type Name } from '../../../naming/index.js';
-import type { RenderContext } from '../../../templating/index.js';
-import type { Scope } from '../../scope.js';
-import { declaredModules } from '../../../model-modules/index.js';
+import { CliError } from '../../../cli-error';
+import type { ConsumedEventFact } from '../../../describe/context-description';
+import type { ContextSources } from '../../../describe/context-sources';
+import { readConsumedEvents } from '../../../describe/read-consumed-events';
+import { readEventDefinitions } from '../../../describe/read-event-definitions';
+import { readRoutes } from '../../../describe/read-routes';
+import { toName, type Name } from '../../../naming';
+import type { RenderContext } from '../../../templating';
+import type { Scope } from '../../scope';
+import { declaredModules } from '../../../model-modules';
 
 /** What an end-to-end spec publishes to start a use case no route reaches, and where a client reads what followed. */
 export interface Reaction {

@@ -1,13 +1,13 @@
-import { scan } from '../check/scan/scan.js';
-import { callArguments } from '../check/text/call-arguments.js';
-import { matchingBracket } from '../check/text/matching-bracket.js';
-import { isConvertedCall } from './is-converted-call.js';
-import { applyEdits } from './apply-edits.js';
-import type { Edit } from './edit.js';
-import { inlineResults } from './inline-results.js';
-import { refusalCode } from './refusal-code.js';
-import type { ResultMethods } from './result-methods.js';
-import type { Rewrite } from './rewrite.js';
+import { scan } from '../check/scan/scan';
+import { callArguments } from '../check/text/call-arguments';
+import { matchingBracket } from '../check/text/matching-bracket';
+import { isConvertedCall } from './is-converted-call';
+import { applyEdits } from './apply-edits';
+import type { Edit } from './edit';
+import { inlineResults } from './inline-results';
+import { refusalCode } from './refusal-code';
+import type { ResultMethods } from './result-methods';
+import type { Rewrite } from './rewrite';
 
 const ASSERTION = /(?<![\w$.])(expect|expectRefusal)\s*\(/g;
 const OK_TO_BE = /^\s*\.toBe\(\s*(true|false)\s*\)/;

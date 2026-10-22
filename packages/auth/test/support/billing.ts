@@ -1,5 +1,5 @@
 import { AuthorizedCommand, AuthorizedQuery, Query, type Actor } from '@ddd-ts-kit/kernel';
-import { definePermissions } from '../../src/index.js';
+import { definePermissions } from '../../src';
 
 export const billingPermissions = definePermissions('billing', {
   'invoice.issue': { description: 'Issue an invoice to a customer' },

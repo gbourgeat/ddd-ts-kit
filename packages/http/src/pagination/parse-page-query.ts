@@ -9,10 +9,10 @@ import {
   type Sort,
 } from '@ddd-ts-kit/kernel';
 import type { ValidationIssue } from '@ddd-ts-kit/validation';
-import { isRecord } from '../support/is-record.js';
-import { issue } from './issue.js';
-import { limitsOf } from './limits-of.js';
-import type { PageQueryOptions } from './page-query-options.js';
+import { isRecord } from '../support/is-record';
+import { issue } from './issue';
+import { limitsOf } from './limits-of';
+import type { PageQueryOptions } from './page-query-options';
 
 type Query = Readonly<Record<string, unknown>>;
 

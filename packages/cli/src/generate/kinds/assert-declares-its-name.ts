@@ -1,9 +1,9 @@
-import { CliError } from '../../cli-error.js';
-import type { EventNames } from '../event-names.js';
-import { isDeclared } from '../is-declared.js';
-import type { Scope } from '../scope.js';
-import { declaresItsName } from './declares-its-name.js';
-import { eventFileOf } from './event-file-of.js';
+import { CliError } from '../../cli-error';
+import type { EventNames } from '../event-names';
+import { isDeclared } from '../is-declared';
+import type { Scope } from '../scope';
+import { declaresItsName } from './declares-its-name';
+import { eventFileOf } from './event-file-of';
 
 /**
  * In the declared style a reaction is attached under the name its event class declares,

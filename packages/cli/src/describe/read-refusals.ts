@@ -1,10 +1,10 @@
-import type { CodeList } from '../check/errors/code-list.js';
-import { refusalClasses } from '../check/errors/refusal-classes.js';
-import type { Scan } from '../check/scan/scan.js';
-import type { ClassShape } from '../check/structure/class-shape.js';
-import type { MethodShape } from '../check/structure/method-shape.js';
-import type { ErrorFact } from './context-description.js';
-import { exposedBy } from './exposed-by.js';
+import type { CodeList } from '../check/errors/code-list';
+import { refusalClasses } from '../check/errors/refusal-classes';
+import type { Scan } from '../check/scan/scan';
+import type { ClassShape } from '../check/structure/class-shape';
+import type { MethodShape } from '../check/structure/method-shape';
+import type { ErrorFact } from './context-description';
+import { exposedBy } from './exposed-by';
 
 const REFUSAL_CALL = /\.\s*refusal\s*\(/;
 const LISTED_CODE = /\breadonly\s+code\s*(?::[^=;]+)?=\s*([A-Za-z_$][\w$]*)\s*\.\s*([A-Za-z_$][\w$]*)/;

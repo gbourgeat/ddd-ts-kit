@@ -1,16 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { Clock, FixedClock } from '@ddd-ts-kit/kernel';
-import {
-  createApplication,
-  createTestApplication,
-  kernelModule,
-  overrideForTests,
-  type Application,
-} from '../src/index.js';
-import { createTestKernel } from '../src/testing/create-test-kernel.js';
-import { testApplicationOf } from '../src/testing/test-application-of.js';
-import type { Resolve } from '../src/wiring/resolve.js';
-import { orderingModule } from './support/ordering/ordering.module.js';
+import { createApplication, createTestApplication, kernelModule, overrideForTests, type Application } from '../src';
+import { createTestKernel } from '../src/testing/create-test-kernel';
+import { testApplicationOf } from '../src/testing/test-application-of';
+import type { Resolve } from '../src/wiring/resolve';
+import { orderingModule } from './support/ordering/ordering.module';
 
 /** An application whose private fields bear the names of members of the test kernel. */
 class ApplicationNamedLikeTheKernel implements Application {

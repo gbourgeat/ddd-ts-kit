@@ -1,5 +1,5 @@
-import { isRecord } from '../check/support/is-record.js';
-import type { MIGRATION_TARGETS } from './migration-targets.js';
+import { isRecord } from '../check/support/is-record';
+import type { MIGRATION_TARGETS } from './migration-targets';
 
 /**
  * The form a plan file moves the project to: its `to`. A plan without one was written before the

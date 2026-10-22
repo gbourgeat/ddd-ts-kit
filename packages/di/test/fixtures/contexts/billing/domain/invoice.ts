@@ -1,5 +1,5 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { InvoiceIssued } from './events/invoice-issued.event.js';
+import { InvoiceIssued } from './events/invoice-issued.event';
 
 export interface InvoiceIssuance {
   readonly id: string;

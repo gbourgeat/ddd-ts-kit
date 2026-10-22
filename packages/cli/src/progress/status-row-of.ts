@@ -1,5 +1,5 @@
-import type { StatusRow } from './progress.js';
-import type { Slice } from './slice.js';
+import type { StatusRow } from './progress';
+import type { Slice } from './slice';
 
 /** What a row is read against. */
 export interface RowsAround {

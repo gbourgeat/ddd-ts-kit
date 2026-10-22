@@ -1,4 +1,4 @@
-import type { BackgroundJobExecution } from './background-job-execution.js';
+import type { BackgroundJobExecution } from './background-job-execution';
 
 /**
  * A class of `application/background/`: work a use case hands to a worker, to run later and

@@ -1,11 +1,11 @@
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { contextModule, createApplication, kernelModule } from '@ddd-ts-kit/di';
-import { decoratorOf } from '../src/decorators.js';
-import type { DecoratedRateGateway } from './fixtures/decorated-rate-gateway.js';
-import { decoratorModes, removeCompiled } from './support/decorator-modes.js';
-import { PairNotQuoted } from './support/pair-not-quoted.js';
-import { Unreachable } from './support/unreachable.js';
+import { decoratorOf } from '../src/decorators';
+import type { DecoratedRateGateway } from './fixtures/decorated-rate-gateway';
+import { decoratorModes, removeCompiled } from './support/decorator-modes';
+import { PairNotQuoted } from './support/pair-not-quoted';
+import { Unreachable } from './support/unreachable';
 
 /*
  * The decorators serve the two decorator modes of the compiler. The fixtures are therefore run
@@ -15,9 +15,9 @@ import { Unreachable } from './support/unreachable.js';
  */
 const FIXTURES = path.join(import.meta.dirname, 'fixtures');
 
-type Fixture = typeof import('./fixtures/decorated-rate-gateway.js');
-type Declared = typeof import('./fixtures/pricing/index.js');
-type Testing = typeof import('../src/testing.js');
+type Fixture = typeof import('./fixtures/decorated-rate-gateway');
+type Declared = typeof import('./fixtures/pricing');
+type Testing = typeof import('../src/testing');
 
 interface Loaded {
   readonly fixture: Fixture;
@@ -26,9 +26,9 @@ interface Loaded {
 }
 
 describeDecorators('as the test runner transforms them (experimentalDecorators, no plugin)', async () => ({
-  fixture: await import('./fixtures/decorated-rate-gateway.js'),
-  declared: await import('./fixtures/pricing/index.js'),
-  testing: await import('../src/testing.js'),
+  fixture: await import('./fixtures/decorated-rate-gateway'),
+  declared: await import('./fixtures/pricing'),
+  testing: await import('../src/testing'),
 }));
 
 for (const mode of decoratorModes(FIXTURES)) {

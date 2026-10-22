@@ -1,6 +1,6 @@
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
-import type { Route } from '../route/route.js';
-import type { Representations } from './representations.js';
+import type { Route } from '../route/route';
+import type { Representations } from './representations';
 
 /**
  * Refuses, when the routes are mounted, what the platform cannot serve: a media type no

@@ -1,9 +1,9 @@
-import { COVERAGE_LAYERS } from './coverage-layers.js';
-import { COVERAGE_METRICS } from './coverage-metrics.js';
-import { isOneOf } from './is-one-of.js';
-import { isRate } from './is-rate.js';
-import { REFERENCE_COVERAGE } from './reference-coverage.js';
-import { isRecord } from './values/is-record.js';
+import { COVERAGE_LAYERS } from './coverage-layers';
+import { COVERAGE_METRICS } from './coverage-metrics';
+import { isOneOf } from './is-one-of';
+import { isRate } from './is-rate';
+import { REFERENCE_COVERAGE } from './reference-coverage';
+import { isRecord } from './values/is-record';
 
 /** Something written under `coverage` that is not read as written. */
 export interface CoverageProblem {

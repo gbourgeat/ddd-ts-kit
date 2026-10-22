@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, tempDir, write } from './helpers.js';
-import { jsonAt } from './support/json-at.js';
+import { cli, tempDir, write } from './helpers';
+import { jsonAt } from './support/json-at';
 
 const CONFIG = JSON.stringify({
   contexts: { ordering: { classification: 'core' }, billing: { classification: 'supporting' } },

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { FixedClock, InMemoryEventBus } from '@ddd-ts-kit/kernel';
-import { InMemoryOutboxStore, InMemoryRelaySignal, OutboxRelay, type OutboxRecord } from '../src/index.js';
-import { at } from './support/events.js';
-import { eventually } from './support/eventually.js';
-import { GatedPublisher } from './support/gated-publisher.js';
-import { invoiceIssuedEvent as event } from './support/invoice-issued-event.js';
+import { InMemoryOutboxStore, InMemoryRelaySignal, OutboxRelay, type OutboxRecord } from '../src';
+import { at } from './support/events';
+import { eventually } from './support/eventually';
+import { GatedPublisher } from './support/gated-publisher';
+import { invoiceIssuedEvent as event } from './support/invoice-issued-event';
 
 const AN_HOUR = 3_600_000;
 

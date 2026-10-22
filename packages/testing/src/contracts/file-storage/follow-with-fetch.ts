@@ -1,5 +1,5 @@
-import type { FollowedResponse } from './followed-response.js';
-import type { SignedRequest } from './signed-request.js';
+import type { FollowedResponse } from './followed-response';
+import type { SignedRequest } from './signed-request';
 
 /** Follows a link over the network: for a storage that answers its own links, an object store. */
 export async function followWithFetch(request: SignedRequest): Promise<FollowedResponse> {

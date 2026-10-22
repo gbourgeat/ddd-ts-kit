@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { runCheck } from '../src/check/engine/run-check.js';
-import type { CheckResult } from '../src/check/engine/check-result.js';
-import { loadProject } from '../src/check/project/load-project.js';
-import { lines, projectWith, reported } from './rules-support.js';
+import { runCheck } from '../src/check/engine/run-check';
+import type { CheckResult } from '../src/check/engine/check-result';
+import { loadProject } from '../src/check/project/load-project';
+import { lines, projectWith, reported } from './rules-support';
 
 const RULE = 'tracing/platform-only';
 const BILLING = 'src/contexts/billing';

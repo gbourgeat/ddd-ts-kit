@@ -1,6 +1,6 @@
 import type { AuditRecord } from '@ddd-ts-kit/kernel';
-import { inTenant } from './in-tenant.js';
-import { later } from './later.js';
+import { inTenant } from './in-tenant';
+import { later } from './later';
 
 /** Four records over two tenants, a second apart: what the filters and the pages of the contract read. */
 export const JOURNAL: readonly AuditRecord[] = [

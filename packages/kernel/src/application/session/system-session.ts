@@ -1,6 +1,6 @@
-import { systemActor } from '../actor/system-actor.js';
-import { NEVER_ISSUED } from './never-issued.js';
-import type { Session } from './session.js';
+import { systemActor } from '../actor/system-actor';
+import { NEVER_ISSUED } from './never-issued';
+import type { Session } from './session';
 
 /** The session of the system acting on its own behalf: a scheduled job, a consumer. */
 export function systemSession(name: string, issuedAt: Date = NEVER_ISSUED): Session {

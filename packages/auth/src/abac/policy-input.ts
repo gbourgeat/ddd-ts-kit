@@ -1,8 +1,8 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import type { AuthorizationContext } from '../authorization/authorization-context.js';
-import type { ResourceRef } from '../authorization/resource-ref.js';
-import type { Permission } from '../permissions/permission.js';
-import type { ResourceAttributeValues } from './resource-attribute-values.js';
+import type { AuthorizationContext } from '../authorization/authorization-context';
+import type { ResourceRef } from '../authorization/resource-ref';
+import type { Permission } from '../permissions/permission';
+import type { ResourceAttributeValues } from './resource-attribute-values';
 
 /** Everything a rule may look at. */
 export interface PolicyInput {

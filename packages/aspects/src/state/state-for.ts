@@ -1,5 +1,5 @@
-import type { JoinPoint } from '../aspect/join-point.js';
-import type { StateScope } from './state-scope.js';
+import type { JoinPoint } from '../aspect/join-point';
+import type { StateScope } from './state-scope';
 
 /** Answers the state of a join point: a new one per method, or the one of its instance. */
 export function stateFor<State>(

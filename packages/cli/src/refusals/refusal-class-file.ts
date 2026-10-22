@@ -1,9 +1,9 @@
-import { CliError } from '../cli-error.js';
-import { addFactory } from '../generate/errors/add-factory.js';
-import { fitSource } from '../layout/index.js';
-import { toName } from '../naming/index.js';
-import { importsUsedBy } from './imports-used-by.js';
-import type { NamedMove } from './named-move.js';
+import { CliError } from '../cli-error';
+import { addFactory } from '../generate/errors/add-factory';
+import { fitSource } from '../layout';
+import { toName } from '../naming';
+import { importsUsedBy } from './imports-used-by';
+import type { NamedMove } from './named-move';
 
 /** The refusal class of a context, the moves that give it its factories, and how its file imports the codes. */
 export interface RefusalClass {

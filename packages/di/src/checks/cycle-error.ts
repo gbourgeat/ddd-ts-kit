@@ -1,5 +1,5 @@
 import { describeToken, type Token } from '@ddd-ts-kit/kernel/declarations';
-import { WiringError } from '../errors/wiring-error.js';
+import { WiringError } from '../errors/wiring-error';
 
 export function cycleError(path: readonly Token<unknown>[]): WiringError {
   return new WiringError(

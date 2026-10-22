@@ -1,13 +1,13 @@
-import type { Config } from '../../config/index.js';
-import { CliError } from '../../cli-error.js';
-import type { Workspace } from '../../workspace/index.js';
-import { dependenciesFor, type Packages } from './dependencies-for.js';
-import { formatJson } from '../../json/format-json.js';
-import { PINNED_PACKAGE_MANAGERS } from '../../package-manager/pinned-package-managers.js';
-import { isRecord } from '../is-record.js';
-import { scriptsFor } from './scripts-for.js';
-import { VERSIONS } from './versions.js';
-import { platformFileIn } from '../../platform-layout/index.js';
+import type { Config } from '../../config';
+import { CliError } from '../../cli-error';
+import type { Workspace } from '../../workspace';
+import { dependenciesFor, type Packages } from './dependencies-for';
+import { formatJson } from '../../json/format-json';
+import { PINNED_PACKAGE_MANAGERS } from '../../package-manager/pinned-package-managers';
+import { isRecord } from '../is-record';
+import { scriptsFor } from './scripts-for';
+import { VERSIONS } from './versions';
+import { platformFileIn } from '../../platform-layout';
 
 export interface ManifestRequest {
   readonly config: Config;

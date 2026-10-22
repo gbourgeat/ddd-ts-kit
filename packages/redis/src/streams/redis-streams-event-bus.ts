@@ -6,22 +6,22 @@ import type {
   IntegrationEventSubscriber,
   Subscription,
 } from '@ddd-ts-kit/kernel';
-import { replay } from './replay.js';
-import { Consumption } from './consumption.js';
-import { ConsumerNameRequiredError } from './errors/consumer-name-required-error.js';
-import { EventBusClosedError } from './errors/event-bus-closed-error.js';
-import type { RedisStreamsEventBusOptions } from './options/redis-streams-event-bus-options.js';
-import { MESSAGING_SYSTEM } from './messaging-system.js';
-import type { Settings } from './options/settings.js';
-import { settingsOf } from './options/settings-of.js';
-import { conceal } from '../secrecy/conceal.js';
-import { Publications } from './publications.js';
-import { ServerLink } from './server-link.js';
-import type { ConsumerBinding } from './topology/consumer-binding.js';
-import { declareTopology } from './topology/declare-topology.js';
-import type { RedisStreamsTopology } from './topology/redis-streams-topology.js';
-import { streamNamesOf } from './topology/stream-names-of.js';
-import { topologyOf } from './topology/topology-of.js';
+import { replay } from './replay';
+import { Consumption } from './consumption';
+import { ConsumerNameRequiredError } from './errors/consumer-name-required-error';
+import { EventBusClosedError } from './errors/event-bus-closed-error';
+import type { RedisStreamsEventBusOptions } from './options/redis-streams-event-bus-options';
+import { MESSAGING_SYSTEM } from './messaging-system';
+import type { Settings } from './options/settings';
+import { settingsOf } from './options/settings-of';
+import { conceal } from '../secrecy/conceal';
+import { Publications } from './publications';
+import { ServerLink } from './server-link';
+import type { ConsumerBinding } from './topology/consumer-binding';
+import { declareTopology } from './topology/declare-topology';
+import type { RedisStreamsTopology } from './topology/redis-streams-topology';
+import { streamNamesOf } from './topology/stream-names-of';
+import { topologyOf } from './topology/topology-of';
 
 const DESCRIPTION = 'RedisStreamsEventBus [connection concealed]';
 

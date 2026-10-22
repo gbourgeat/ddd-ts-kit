@@ -1,9 +1,9 @@
 import fs from 'node:fs';
-import { CliError } from '../cli-error.js';
-import { runInit, type InitOptions } from '../init/run-init.js';
-import { Arguments } from './arguments.js';
-import { type Command } from './command.js';
-import { printReport } from './print-report.js';
+import { CliError } from '../cli-error';
+import { runInit, type InitOptions } from '../init/run-init';
+import { Arguments } from './arguments';
+import { type Command } from './command';
+import { printReport } from './print-report';
 
 const STACK_FLAGS = [
   'http',

@@ -1,7 +1,7 @@
 import { executionContext, type Actor, type ExecutionScope, type IdGenerator } from '@ddd-ts-kit/kernel';
 import type { Audit } from '@/platform/audit/create-audit';
 import { eraseDataSubject, type ErasureParts, type ErasureReport } from '@/platform/erasure/erase-data-subject';
-import type { PersonDirectoryContract } from '@/contexts/identity/published-language/index';
+import type { PersonDirectoryContract } from '@/contexts/identity/published-language';
 
 /** Why the operator reaches every network here, as the trail records it: a code, never a sentence. */
 const PATIENT_ERASURE = 'PATIENT_ERASURE';

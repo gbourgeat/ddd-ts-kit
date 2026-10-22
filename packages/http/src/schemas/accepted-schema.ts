@@ -1,7 +1,7 @@
 import { err, ok, type Result } from '@ddd-ts-kit/kernel';
 import { customSchema, sharedSchema, type Schema, type ValidationIssue } from '@ddd-ts-kit/validation';
-import { isRecord } from '../support/is-record.js';
-import type { Accepted } from './accepted.js';
+import { isRecord } from '../support/is-record';
+import type { Accepted } from './accepted';
 
 /**
  * The body every command route answers with, shared by the platform: one `Accepted` component in

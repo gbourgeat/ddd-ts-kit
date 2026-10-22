@@ -1,7 +1,7 @@
 import fs from 'node:fs';
-import { CliError } from '../cli-error.js';
-import { gitPath } from './git-path.js';
-import { gitProcess } from './git-process.js';
+import { CliError } from '../cli-error';
+import { gitPath } from './git-path';
+import { gitProcess } from './git-process';
 
 /** What git leaves in its directory while an operation waits for a person, and its name. */
 const OPERATIONS: readonly (readonly [string, string])[] = [

@@ -1,8 +1,8 @@
-import type { SourceFile } from '../model/source-file.js';
-import { codeListName } from './code-list-name.js';
-import type { ErrorCode } from './error-code.js';
-import { isCodesFile } from './is-codes-file.js';
-import { readCodeList } from './read-code-list.js';
+import type { SourceFile } from '../model/source-file';
+import { codeListName } from './code-list-name';
+import type { ErrorCode } from './error-code';
+import { isCodesFile } from './is-codes-file';
+import { readCodeList } from './read-code-list';
 
 /** The codes the code list of a context holds, when `file` is that list: each one is a code set in the context. */
 export function listedCodes(file: SourceFile): ErrorCode[] {

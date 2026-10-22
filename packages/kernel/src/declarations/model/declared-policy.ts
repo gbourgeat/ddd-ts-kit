@@ -1,5 +1,5 @@
-import type { Actor } from '../../application/actor/actor.js';
-import type { PolicyVerdict } from './policy-verdict.js';
+import type { Actor } from '../../application/actor/actor';
+import type { PolicyVerdict } from './policy-verdict';
 
 /**
  * A rule that needs loaded state, as a class of `application/authorization/`. `allows` uses

@@ -16,10 +16,10 @@ import {
   type RawRequest,
   type Route,
   type UploadReader,
-} from '../src/index.js';
-import { multipartUploads } from '../src/uploads.js';
-import type { RunningServer } from './support/running-server.js';
-import { UPLOAD, onExpress, onFastify, onHono } from './support/upload-desk.js';
+} from '../src';
+import { multipartUploads } from '../src/uploads';
+import type { RunningServer } from './support/running-server';
+import { UPLOAD, onExpress, onFastify, onHono } from './support/upload-desk';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: ['clerk'], attributes: {} };
 

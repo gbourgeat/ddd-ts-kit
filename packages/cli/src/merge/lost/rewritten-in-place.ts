@@ -1,8 +1,8 @@
-import type { MergeFinding } from './merge-finding.js';
-import type { MergeSides } from './merge-sides.js';
-import { normalizedLines } from './normalized-lines.js';
-import type { Hunk } from './hunk.js';
-import type { SideChanges } from './superseded-lines.js';
+import type { MergeFinding } from './merge-finding';
+import type { MergeSides } from './merge-sides';
+import { normalizedLines } from './normalized-lines';
+import type { Hunk } from './hunk';
+import type { SideChanges } from './superseded-lines';
 
 /**
  * The lost lines the merge replaced, where they stood, by lines of its own that no side has: a

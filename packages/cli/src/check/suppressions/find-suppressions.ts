@@ -1,4 +1,4 @@
-import type { SourceFile } from '../model/source-file.js';
+import type { SourceFile } from '../model/source-file';
 
 const DIRECTIVE = 'ddd-ts-kit-disable-next-line';
 const DIRECTIVE_END = /^(?:\W|$)/;

@@ -6,8 +6,8 @@ import {
   createKnexUnitOfWork,
   createOutboxTables,
   dropOutboxTables,
-} from '../src/index.js';
-import { createSqliteDatabase, type TestSqliteDatabase } from './support/sqlite.js';
+} from '../src';
+import { createSqliteDatabase, type TestSqliteDatabase } from './support/sqlite';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

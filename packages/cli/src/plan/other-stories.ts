@@ -1,6 +1,6 @@
-import type { Slice } from '../progress/slice.js';
-import { storyOf } from '../story/story-of.js';
-import type { OtherStoryRow, Wave } from './wave-plan.js';
+import type { Slice } from '../progress/slice';
+import { storyOf } from '../story/story-of';
+import type { OtherStoryRow, Wave } from './wave-plan';
 
 /**
  * The planned rows that a planned row of another story depends on, in the order of the file: the

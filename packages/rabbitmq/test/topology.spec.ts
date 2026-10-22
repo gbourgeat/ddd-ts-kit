@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { Broker } from './support/broker.js';
-import { BROKERS } from './support/brokers.js';
-import { PLACED, anEvent } from './support/events.js';
-import { failuresOf } from './support/hooks.js';
-import { unique } from './support/unique.js';
-import { eventually } from './support/waiting.js';
-import { queueNamesOf, type RabbitMqFailure } from '../src/index.js';
+import type { Broker } from './support/broker';
+import { BROKERS } from './support/brokers';
+import { PLACED, anEvent } from './support/events';
+import { failuresOf } from './support/hooks';
+import { unique } from './support/unique';
+import { eventually } from './support/waiting';
+import { queueNamesOf, type RabbitMqFailure } from '../src';
 
 describe.each(BROKERS)('RabbitMqEventBus: topology, %s', { timeout: 30_000 }, (_name, connect) => {
   let broker: Broker;

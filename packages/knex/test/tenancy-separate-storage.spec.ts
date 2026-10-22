@@ -22,15 +22,15 @@ import {
   tenantOfMigration,
   tenantSchemaOf,
   tenantSearchPath,
-} from '../src/index.js';
-import { Invoice } from './support/billing-core/domain/invoice.js';
-import { BILLING } from './support/billing-core/infrastructure/persistence/billing-schema.js';
-import { createInvoicesTable } from './support/billing-core/infrastructure/persistence/create-invoices-table.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
-import { startPostgres, type TestPostgres } from './support/postgres.js';
-import { DATABASE_PER_TENANT, SCHEMA_PER_TENANT } from './support/tenancy/invoice-tables.js';
-import { inUnitOfWork } from './support/tenancy/in-unit-of-work.js';
-import { StrategyInvoiceRepository } from './support/tenancy/strategy-invoice-repository.js';
+} from '../src';
+import { Invoice } from './support/billing-core/domain/invoice';
+import { BILLING } from './support/billing-core/infrastructure/persistence/billing-schema';
+import { createInvoicesTable } from './support/billing-core/infrastructure/persistence/create-invoices-table';
+import { createDatabase, type TestDatabase } from './support/database';
+import { startPostgres, type TestPostgres } from './support/postgres';
+import { DATABASE_PER_TENANT, SCHEMA_PER_TENANT } from './support/tenancy/invoice-tables';
+import { inUnitOfWork } from './support/tenancy/in-unit-of-work';
+import { StrategyInvoiceRepository } from './support/tenancy/strategy-invoice-repository';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const TENANTS = ['acme', 'globex'];

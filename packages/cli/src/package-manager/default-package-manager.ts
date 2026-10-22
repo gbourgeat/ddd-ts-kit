@@ -1,4 +1,4 @@
-import type { Stack } from '../config/index.js';
+import type { Stack } from '../config';
 
 /**
  * What `init` chooses when `--package-manager` is left out: the fastest of the three on a

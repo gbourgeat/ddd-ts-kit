@@ -1,11 +1,11 @@
 import path from 'node:path';
-import { mentionedRows } from '../citations/mentioned-rows.js';
-import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
-import type { Remaining } from '../progress/remaining.js';
-import { readWorkerFile } from '../worker/read-worker-file.js';
-import { blamedLines } from './blamed-lines.js';
-import { type CommitRows, commitRows } from './commit-rows.js';
-import type { AttributedMarker, GitRunner, MarkerAttribution } from './attributed-marker.js';
+import { mentionedRows } from '../citations/mentioned-rows';
+import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file';
+import type { Remaining } from '../progress/remaining';
+import { readWorkerFile } from '../worker/read-worker-file';
+import { blamedLines } from './blamed-lines';
+import { type CommitRows, commitRows } from './commit-rows';
+import type { AttributedMarker, GitRunner, MarkerAttribution } from './attributed-marker';
 
 const NONE: MarkerAttribution = { by: 'none', rows: [] };
 

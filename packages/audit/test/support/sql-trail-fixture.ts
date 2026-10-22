@@ -1,7 +1,7 @@
 import type { UnitOfWork } from '@ddd-ts-kit/kernel';
-import type { AuditRecord, AuditTrailOptions } from '../../src/index.js';
-import type { AuditTrailUnderContract } from '../../src/testing.js';
-import { NOW } from './fixtures.js';
+import type { AuditRecord, AuditTrailOptions } from '../../src';
+import type { AuditTrailUnderContract } from '../../src/testing';
+import { NOW } from './fixtures';
 
 /** What a spec of a SQL store gives: a fresh schema with the tables and the guard, per call. */
 export interface SqlTrailFixture {

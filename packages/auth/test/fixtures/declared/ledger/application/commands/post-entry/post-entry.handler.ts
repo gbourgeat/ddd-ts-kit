@@ -1,6 +1,6 @@
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import type { EntryRepository } from '../../../domain/repositories/entry.repository.js';
-import { PostEntry } from './post-entry.command.js';
+import type { EntryRepository } from '../../../domain/repositories/entry.repository';
+import { PostEntry } from './post-entry.command';
 
 @CommandHandler(PostEntry)
 export class PostEntryHandler implements CommandHandler<PostEntry> {

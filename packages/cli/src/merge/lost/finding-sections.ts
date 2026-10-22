@@ -1,4 +1,4 @@
-import type { MergeFinding } from './merge-finding.js';
+import type { MergeFinding } from './merge-finding';
 
 /** Past this many findings in a section, the rest is counted: `--json` lists them all. */
 const SHOWN = 30;

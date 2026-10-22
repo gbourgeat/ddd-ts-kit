@@ -1,10 +1,10 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { className } from '../support/classes/class-name.js';
-import { memberName } from '../support/classes/member-name.js';
-import { visibilityOf } from '../support/classes/visibility-of.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import { staticString } from '../support/imports/static-string.js';
-import { isPortFile } from '../support/ports/is-port-file.js';
+import { className } from '../support/classes/class-name';
+import { memberName } from '../support/classes/member-name';
+import { visibilityOf } from '../support/classes/visibility-of';
+import { defineRule } from '../support/rule/define-rule';
+import { staticString } from '../support/imports/static-string';
+import { isPortFile } from '../support/ports/is-port-file';
 
 const PORT =
   'A port is an abstract class with abstract members only: the class is the contract and the injection token at once.';

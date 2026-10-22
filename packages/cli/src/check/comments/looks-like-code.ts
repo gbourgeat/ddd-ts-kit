@@ -1,4 +1,4 @@
-import { isDirective } from './is-directive.js';
+import { isDirective } from './is-directive';
 
 const CODE_SHAPES: readonly RegExp[] = [
   /;\s*$/,

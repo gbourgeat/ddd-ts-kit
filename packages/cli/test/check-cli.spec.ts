@@ -1,9 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { RULE_DOCS } from '../src/check/explain/rule-docs.js';
-import { AGGREGATE, changeConfig, checkJsonOf, errorFixOf, HANDLER, isRecord } from './check-support.js';
-import { cli, read, scaffoldEverything, tempDir, write, type CliResult } from './helpers.js';
-import { committedProject } from './support/committed-project.js';
-import { git } from './support/git.js';
+import { RULE_DOCS } from '../src/check/explain/rule-docs';
+import { AGGREGATE, changeConfig, checkJsonOf, errorFixOf, HANDLER, isRecord } from './check-support';
+import { cli, read, scaffoldEverything, tempDir, write, type CliResult } from './helpers';
+import { committedProject } from './support/committed-project';
+import { git } from './support/git';
 
 const ADR = '# The amount schema is shared with the route until it moves\n';
 /** The rules these tests break on purpose: what else the generated project holds is judged by the generator's own tests. */

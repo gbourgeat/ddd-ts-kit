@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { ReverseExpansionLimitError } from '@ddd-ts-kit/auth/rebac';
 import { anonymousActor, type Actor } from '@ddd-ts-kit/kernel';
-import { OpenFgaAuthorizer, type OpenFgaApi, type OpenFgaTupleKey } from '../src/index.js';
-import { docsPermissions, schema } from './support/documents.js';
-import { InMemoryOpenFga } from './support/in-memory-open-fga.js';
+import { OpenFgaAuthorizer, type OpenFgaApi, type OpenFgaTupleKey } from '../src';
+import { docsPermissions, schema } from './support/documents';
+import { InMemoryOpenFga } from './support/in-memory-open-fga';
 
 const ada: Actor = { id: 'ada', type: 'user', roles: [], attributes: {} };
 const edit = docsPermissions['document.edit'];

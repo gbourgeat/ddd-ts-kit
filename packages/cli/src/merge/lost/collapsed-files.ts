@@ -1,6 +1,6 @@
-import type { MergeFinding } from './merge-finding.js';
-import type { MergeSides } from './merge-sides.js';
-import { SPEC_FILE } from './spec-file.js';
+import type { MergeFinding } from './merge-finding';
+import type { MergeSides } from './merge-sides';
+import { SPEC_FILE } from './spec-file';
 
 const LINE_KINDS: ReadonlySet<MergeFinding['kind']> = new Set(['lost-line', 'superseded', 'rewritten']);
 

@@ -14,16 +14,16 @@ import {
   type AuditMiddlewareOptions,
   type AuditRecord,
   type AuditTrail,
-} from '../src/index.js';
-import { NOW, aSource, ada } from './support/fixtures.js';
-import { StagingUnitOfWork } from './support/staging-unit-of-work.js';
-import { TransactionalAuditTrail } from './support/transactional-audit-trail.js';
-import { aRescheduling } from './support/scheduling/a-rescheduling.js';
-import { CancelAppointmentCommand } from './support/scheduling/application/commands/cancel-appointment.command.js';
-import { RescheduleAppointmentCommand } from './support/scheduling/application/commands/reschedule-appointment.command.js';
-import { SearchAppointmentsQuery } from './support/scheduling/application/queries/search-appointments.query.js';
-import { ReadMedicalFileQuery } from './support/scheduling/application/queries/read-medical-file.query.js';
-import { AppointmentAlreadyCancelled } from './support/scheduling/domain/errors/appointment-already-cancelled.js';
+} from '../src';
+import { NOW, aSource, ada } from './support/fixtures';
+import { StagingUnitOfWork } from './support/staging-unit-of-work';
+import { TransactionalAuditTrail } from './support/transactional-audit-trail';
+import { aRescheduling } from './support/scheduling/a-rescheduling';
+import { CancelAppointmentCommand } from './support/scheduling/application/commands/cancel-appointment.command';
+import { RescheduleAppointmentCommand } from './support/scheduling/application/commands/reschedule-appointment.command';
+import { SearchAppointmentsQuery } from './support/scheduling/application/queries/search-appointments.query';
+import { ReadMedicalFileQuery } from './support/scheduling/application/queries/read-medical-file.query';
+import { AppointmentAlreadyCancelled } from './support/scheduling/domain/errors/appointment-already-cancelled';
 
 /** A command bus as a composition root builds it: audit, then the unit of work, then the handlers. */
 function application(options: Partial<AuditMiddlewareOptions> = {}) {

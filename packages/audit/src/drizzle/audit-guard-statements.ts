@@ -1,4 +1,4 @@
-import { auditGuardSql } from '../sql/audit-guard-sql.js';
+import { auditGuardSql } from '../sql/audit-guard-sql';
 
 /**
  * drizzle-kit does not generate triggers: paste these statements in a custom migration

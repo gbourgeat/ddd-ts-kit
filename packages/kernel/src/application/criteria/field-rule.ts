@@ -1,5 +1,5 @@
-import type { FieldTypeOf } from './field-type-of.js';
-import type { OperatorOf } from './operator-of.js';
+import type { FieldTypeOf } from './field-type-of';
+import type { OperatorOf } from './operator-of';
 
 /**
  * What a read port says of one field of its read model. A field that may hold `null` says

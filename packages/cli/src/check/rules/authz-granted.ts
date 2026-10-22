@@ -1,14 +1,14 @@
-import { isGranted } from '../authz/is-granted.js';
-import { permissionSets } from '../authz/permission-sets.js';
-import { signedInGrants } from '../authz/signed-in-grants.js';
-import type { Finding } from '../model/finding.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { reporter } from '../support/reporter.js';
-import { toViolations } from '../support/to-violations.js';
-import { platformFileIn } from '../../platform-layout/index.js';
-import { isInProject } from '../authz/is-in-project.js';
+import { isGranted } from '../authz/is-granted';
+import { permissionSets } from '../authz/permission-sets';
+import { signedInGrants } from '../authz/signed-in-grants';
+import type { Finding } from '../model/finding';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { reporter } from '../support/reporter';
+import { toViolations } from '../support/to-violations';
+import { platformFileIn } from '../../platform-layout';
+import { isInProject } from '../authz/is-in-project';
 
 /**
  * In a project whose rights are roles, every permission a context declares is granted by name, to a

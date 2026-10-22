@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contentDisposition } from '../src/index.js';
+import { contentDisposition } from '../src';
 
 describe('contentDisposition', () => {
   it('answers a bare attachment for a file without a name', () => {

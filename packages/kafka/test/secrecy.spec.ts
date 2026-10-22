@@ -2,11 +2,11 @@ import { inspect } from 'node:util';
 import type { GlobalConfig } from '@confluentinc/kafka-javascript';
 import { describe, expect, it } from 'vitest';
 import { expectNoSecret } from '@ddd-ts-kit/testing';
-import { KafkaEventBus } from '../src/index.js';
-import { BrokerLink } from '../src/connection/broker-link.js';
-import { clusterOf } from '../src/connection/cluster-of.js';
-import { KAFKA_BROKERS } from './support/environment.js';
-import { unique } from './support/unique.js';
+import { KafkaEventBus } from '../src';
+import { BrokerLink } from '../src/connection/broker-link';
+import { clusterOf } from '../src/connection/cluster-of';
+import { KAFKA_BROKERS } from './support/environment';
+import { unique } from './support/unique';
 
 const PASSWORD = 'kafka-sasl-password-7f3a';
 const PRIVATE_KEY = '-----BEGIN PRIVATE KEY-----kafka-tls-key-91c2-----END PRIVATE KEY-----';

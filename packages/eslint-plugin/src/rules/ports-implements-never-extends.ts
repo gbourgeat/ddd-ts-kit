@@ -1,12 +1,12 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { calleeName } from '../support/calls/callee-name.js';
-import { className, type ClassNode } from '../support/classes/class-name.js';
-import { declarationReader } from '../support/declarations/declaration-reader.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
-import { inContext } from '../support/imports/in-context.js';
-import { importedBindings } from '../support/ports/imported-bindings.js';
-import { isPortFile } from '../support/ports/is-port-file.js';
-import { classFinder, type ClassFinder } from '../support/classes/class-finder.js';
+import { calleeName } from '../support/calls/callee-name';
+import { className, type ClassNode } from '../support/classes/class-name';
+import { declarationReader } from '../support/declarations/declaration-reader';
+import { defineRule, type Report } from '../support/rule/define-rule';
+import { inContext } from '../support/imports/in-context';
+import { importedBindings } from '../support/ports/imported-bindings';
+import { isPortFile } from '../support/ports/is-port-file';
+import { classFinder, type ClassFinder } from '../support/classes/class-finder';
 
 type MessageId = 'notImplemented' | 'extended';
 type Finding = TSESLint.ReportDescriptor<MessageId>;

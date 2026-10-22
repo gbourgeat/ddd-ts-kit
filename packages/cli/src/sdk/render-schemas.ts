@@ -1,9 +1,9 @@
-import { isRecord } from '../config/values/is-record.js';
-import type { ClientDocument } from './client-document.js';
-import { docComment } from './doc-comment.js';
-import { generatedHeader } from './generated-header.js';
-import { SchemaTypes } from './schema-types.js';
-import { schemaTypeName } from './schema-type-name.js';
+import { isRecord } from '../config/values/is-record';
+import type { ClientDocument } from './client-document';
+import { docComment } from './doc-comment';
+import { generatedHeader } from './generated-header';
+import { SchemaTypes } from './schema-types';
+import { schemaTypeName } from './schema-type-name';
 
 /** `schemas.ts`: one type per schema of `components.schemas`. */
 export function renderSchemas(document: ClientDocument): string {

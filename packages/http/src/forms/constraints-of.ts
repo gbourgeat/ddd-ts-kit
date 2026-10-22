@@ -1,5 +1,5 @@
-import type { SchemaNode } from '../schema/schema-node.js';
-import type { FieldBlock } from './field-block.js';
+import type { SchemaNode } from '../schema/schema-node';
+import type { FieldBlock } from './field-block';
 
 /** The keywords of JSON Schema a form mirrors so that the user is told early; the server checks them again. */
 const CONSTRAINTS = [

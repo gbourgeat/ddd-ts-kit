@@ -1,5 +1,5 @@
-import type { AuditCategory } from './audit-category.js';
-import type { AuditOutcome } from './audit-outcome.js';
+import type { AuditCategory } from './audit-category';
+import type { AuditOutcome } from './audit-outcome';
 
 export interface AuditFilter {
   readonly chain?: string;

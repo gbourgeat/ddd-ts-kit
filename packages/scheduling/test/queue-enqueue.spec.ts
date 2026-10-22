@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { executionContext, InMemoryUnitOfWork, systemActor, type Actor } from '@ddd-ts-kit/kernel';
-import { InvalidEnqueueError } from '../src/index.js';
-import { aQueueBench } from './support/a-queue-bench.js';
-import { CompileStatementsJob } from './support/statements-job.js';
+import { InvalidEnqueueError } from '../src';
+import { aQueueBench } from './support/a-queue-bench';
+import { CompileStatementsJob } from './support/statements-job';
 
 const ACCOUNTANT: Actor = { id: 'user-7', type: 'user', tenantId: 'tenant-3', roles: ['accountant'], attributes: {} };
 

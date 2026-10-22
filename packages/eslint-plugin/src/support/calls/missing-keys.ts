@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { staticString } from '../imports/static-string.js';
-import { propertyOf } from './property-of.js';
-import { hasSpread } from './has-spread.js';
+import { staticString } from '../imports/static-string';
+import { propertyOf } from './property-of';
+import { hasSpread } from './has-spread';
 
 /**
  * The keys of `required` an options argument visibly lacks. An argument that is not an object

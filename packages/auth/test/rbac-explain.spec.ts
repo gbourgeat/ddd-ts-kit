@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { anonymousActor, systemActor, type Actor } from '@ddd-ts-kit/kernel';
-import { RoleBasedAuthorizer, tenantOfContext, traceText, type CheckRequest } from '../src/index.js';
-import { ada, billingPermissions, bob } from './support/billing.js';
+import { RoleBasedAuthorizer, tenantOfContext, traceText, type CheckRequest } from '../src';
+import { ada, billingPermissions, bob } from './support/billing';
 
 const read = billingPermissions['invoice.read'];
 const voiding = billingPermissions['invoice.void'];

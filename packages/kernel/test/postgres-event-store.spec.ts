@@ -8,9 +8,9 @@ import {
   type EventSourcingStores,
   type EventToAppend,
   type SqlRun,
-} from '../src/index.js';
-import { isAppendConflict } from '../src/infrastructure/event-sourcing/postgres/is-append-conflict.js';
-import { storedDataFrom } from '../src/infrastructure/event-sourcing/postgres/stored-data-from.js';
+} from '../src';
+import { isAppendConflict } from '../src/infrastructure/event-sourcing/postgres/is-append-conflict';
+import { storedDataFrom } from '../src/infrastructure/event-sourcing/postgres/stored-data-from';
 
 describe('the event store on PostgreSQL', () => {
   it('knows an append that lost to another, whatever wraps the error of the driver', () => {

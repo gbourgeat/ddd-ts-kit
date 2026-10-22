@@ -1,11 +1,11 @@
-import type { AdviceFactory } from '../aspect/advice-factory.js';
-import type { Aspect } from '../aspect/aspect.js';
-import { defineAspect } from '../aspect/define-aspect.js';
-import type { JoinPoint } from '../aspect/join-point.js';
-import { clockOr } from '../runtime/clock-or.js';
-import { stateFor } from '../state/state-for.js';
-import type { CircuitBreakerOptions } from './circuit-breaker-options.js';
-import { Circuit, type CircuitSubject } from './circuit.js';
+import type { AdviceFactory } from '../aspect/advice-factory';
+import type { Aspect } from '../aspect/aspect';
+import { defineAspect } from '../aspect/define-aspect';
+import type { JoinPoint } from '../aspect/join-point';
+import { clockOr } from '../runtime/clock-or';
+import { stateFor } from '../state/state-for';
+import type { CircuitBreakerOptions } from './circuit-breaker-options';
+import { Circuit, type CircuitSubject } from './circuit';
 
 /**
  * Stops calling a dependency that keeps failing: after `failureThreshold` consecutive failures

@@ -1,5 +1,5 @@
-import type { Scope } from '../scope.js';
-import type { EventDeclaration } from './event-declaration.js';
+import type { Scope } from '../scope';
+import type { EventDeclaration } from './event-declaration';
 
 /** Looks for the declaration of `eventType` in the published language of an upstream of this repository. */
 export function findEventDeclaration(scope: Scope, upstream: string, eventType: string): EventDeclaration | undefined {

@@ -1,22 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { isTestFile as cliIsTestFile } from '../../cli/src/check/project/is-test-file.js';
-import { locate as cliLocate } from '../../cli/src/check/project/locate.js';
-import { resolveImport as cliResolveImport } from '../../cli/src/check/project/resolve-import.js';
-import { parallelNames as cliParallelNames } from '../../cli/src/check/standard/parallel-names.js';
+import { isTestFile as cliIsTestFile } from '../../cli/src/check/project/is-test-file';
+import { locate as cliLocate } from '../../cli/src/check/project/locate';
+import { resolveImport as cliResolveImport } from '../../cli/src/check/project/resolve-import';
+import { parallelNames as cliParallelNames } from '../../cli/src/check/standard/parallel-names';
 import {
   aliasRoots as cliAliasRoots,
   specifierSuffix as cliSpecifierSuffix,
   toAlias as cliToAlias,
-} from '../../cli/src/alias/index.js';
-import { parseConfig as cliParseConfig } from '../../cli/src/config/parse-config.js';
-import { isTestFile } from '../src/project/is-test-file.js';
-import { locate } from '../src/project/locate.js';
-import { resolveImport } from '../src/project/resolve-import.js';
-import { specifierSuffix } from '../src/project/specifier-suffix.js';
-import { aliasRoots } from '../src/project/alias-roots.js';
-import { parseConfig } from '../src/project/parse-config.js';
-import { toAlias } from '../src/project/to-alias.js';
-import { parallelNames } from '../src/support/standard-interfaces/parallel-names.js';
+} from '../../cli/src/alias';
+import { parseConfig as cliParseConfig } from '../../cli/src/config/parse-config';
+import { isTestFile } from '../src/project/is-test-file';
+import { locate } from '../src/project/locate';
+import { resolveImport } from '../src/project/resolve-import';
+import { specifierSuffix } from '../src/project/specifier-suffix';
+import { aliasRoots } from '../src/project/alias-roots';
+import { parseConfig } from '../src/project/parse-config';
+import { toAlias } from '../src/project/to-alias';
+import { parallelNames } from '../src/support/standard-interfaces/parallel-names';
 
 const RAW_CONFIGS: readonly Record<string, unknown>[] = [
   {},
@@ -108,7 +108,7 @@ const SPECIFIERS = [
   '@/shared-kernel/money.vo.js',
   '@/shared-kernel/money.vo',
   '@/contexts/catalog/domain/aggregates/product.aggregate',
-  '@/contexts/catalog/published-language/index',
+  '@/contexts/catalog/published-language',
   '@/contexts/catalog/published-language',
   '$test/e2e/support/start-application',
   '../value-objects/amount.vo',

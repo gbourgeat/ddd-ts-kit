@@ -1,6 +1,6 @@
 import type { EventStore } from '@ddd-ts-kit/kernel';
-import { ContractSuite } from '../contract-suite.js';
-import { eventOf } from './event-of.js';
+import { ContractSuite } from '../contract-suite';
+import { eventOf } from './event-of';
 
 /** The whole store: read in the order of the appends, from a position, page by page, for the subscriptions. */
 export class StoreSuite extends ContractSuite<EventStore> {

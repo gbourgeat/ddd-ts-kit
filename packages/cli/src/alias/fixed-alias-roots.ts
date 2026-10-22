@@ -1,4 +1,4 @@
-import type { AliasRoot } from './alias-root.js';
+import type { AliasRoot } from './alias-root';
 
 /**
  * The trees next to the source root, each under a prefix of its own that the config does not

@@ -1,15 +1,15 @@
-import { InvalidJobScheduleError } from '../../application/scheduling/invalid-job-schedule-error.js';
-import { isJobName } from '../../application/scheduling/is-job-name.js';
-import type { JobOptions } from '../../application/scheduling/job-options.js';
-import { jobPolicy } from '../../application/scheduling/job-policy.js';
-import { jobScheduleOf } from '../../application/scheduling/job-schedule-of.js';
-import type { JobSchedule } from '../../application/scheduling/job-schedule.js';
-import type { ScheduledJob } from '../../application/scheduling/scheduled-job.js';
-import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
-import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature.js';
-import { DeclarationError } from '../registry/declaration-error.js';
-import { record } from '../registry/record.js';
+import { InvalidJobScheduleError } from '../../application/scheduling/invalid-job-schedule-error';
+import { isJobName } from '../../application/scheduling/is-job-name';
+import type { JobOptions } from '../../application/scheduling/job-options';
+import { jobPolicy } from '../../application/scheduling/job-policy';
+import { jobScheduleOf } from '../../application/scheduling/job-schedule-of';
+import type { JobSchedule } from '../../application/scheduling/job-schedule';
+import type { ScheduledJob } from '../../application/scheduling/scheduled-job';
+import type { ClassDeclarator } from '../dependencies/class-declarator';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies';
+import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature';
+import { DeclarationError } from '../registry/declaration-error';
+import { record } from '../registry/record';
 
 /** When the job runs, and the options of `JobOptions` next to it: `{ every: '15m', overlap: 'queue' }`. */
 export type ScheduledOptions = JobSchedule & JobOptions;

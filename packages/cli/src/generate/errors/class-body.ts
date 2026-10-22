@@ -1,6 +1,6 @@
-import type { Scan } from '../../check/scan/scan.js';
-import { escapeRegExp } from '../../check/text/escape-reg-exp.js';
-import { matchingBracket } from '../../check/text/matching-bracket.js';
+import type { Scan } from '../../check/scan/scan';
+import { escapeRegExp } from '../../check/text/escape-reg-exp';
+import { matchingBracket } from '../../check/text/matching-bracket';
 
 /** Where the body of a class opens and closes in its source, braces included. */
 export interface ClassBody {

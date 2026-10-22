@@ -1,5 +1,5 @@
-import type { ModuleBuilder } from './module-builder.js';
-import type { ModuleContext } from './module-context.js';
+import type { ModuleBuilder } from './module-builder';
+import type { ModuleContext } from './module-context';
 
 export interface ContextModule {
   /** The bounded context's name; passed to the `decorate` hook as `context`. */

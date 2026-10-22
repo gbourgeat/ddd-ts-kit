@@ -1,8 +1,8 @@
-import type { AppliedMoves } from './applied-moves.js';
-import type { OnLeft } from './concept-leftovers.js';
-import { legacyMove } from './legacy-move.js';
-import { rewriteConceptUsages } from './rewrite-concept-usages.js';
-import { rewriteUsages } from './rewrite-usages.js';
+import type { AppliedMoves } from './applied-moves';
+import type { OnLeft } from './concept-leftovers';
+import { legacyMove } from './legacy-move';
+import { rewriteConceptUsages } from './rewrite-concept-usages';
+import { rewriteUsages } from './rewrite-usages';
 
 /**
  * A file where the refusals are named by their classes of their own: the classes per error as

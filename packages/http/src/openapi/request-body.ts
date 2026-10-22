@@ -1,7 +1,7 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import type { Route } from '../route/route.js';
-import type { UploadSpec } from '../route/upload-spec.js';
-import type { Documenting } from './documenting.js';
+import type { Route } from '../route/route';
+import type { UploadSpec } from '../route/upload-spec';
+import type { Documenting } from './documenting';
 
 /**
  * The request body of an operation: JSON and, under negotiation, every media type the route reads it in besides, or

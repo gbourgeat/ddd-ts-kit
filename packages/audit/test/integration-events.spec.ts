@@ -9,10 +9,10 @@ import {
   type IntegrationEvent,
 } from '@ddd-ts-kit/kernel';
 import { createEventRegistry, defineIntegrationEvent, subscribeAll } from '@ddd-ts-kit/events';
-import { InMemoryAuditTrail, auditIntegrationEvents, type AuditRecord, type AuditTrail } from '../src/index.js';
-import { NOW, ada, requestOf } from './support/fixtures.js';
-import { StagingUnitOfWork } from './support/staging-unit-of-work.js';
-import { TransactionalAuditTrail } from './support/transactional-audit-trail.js';
+import { InMemoryAuditTrail, auditIntegrationEvents, type AuditRecord, type AuditTrail } from '../src';
+import { NOW, ada, requestOf } from './support/fixtures';
+import { StagingUnitOfWork } from './support/staging-unit-of-work';
+import { TransactionalAuditTrail } from './support/transactional-audit-trail';
 
 const anything = { parse: (input: unknown) => ok(input), toJsonSchema: () => ({}) };
 

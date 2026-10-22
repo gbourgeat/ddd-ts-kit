@@ -1,8 +1,8 @@
-import type { Finding } from '../model/finding.js';
-import type { ResolvedImport } from '../model/resolved-import.js';
-import type { Rule } from '../model/rule.js';
-import { inLayer } from '../support/in-layer.js';
-import { perFile } from '../support/per-file.js';
+import type { Finding } from '../model/finding';
+import type { ResolvedImport } from '../model/resolved-import';
+import type { Rule } from '../model/rule';
+import { inLayer } from '../support/in-layer';
+import { perFile } from '../support/per-file';
 
 /** The connectors of the kernel: a model or a use case that names one has chosen where files live. */
 const CONNECTORS = ['InMemoryFileStorage', 'LocalFileStorage', 'SelfSignedFileStorage'];

@@ -1,5 +1,5 @@
-import type { AliasRoot } from './alias-root.js';
-import type { LintedFile } from './linted-file.js';
+import type { AliasRoot } from './alias-root';
+import type { LintedFile } from './linted-file';
 
 /** Written by a tool and never linted as project code. */
 const BUILD_PRODUCTS = ['generated'];

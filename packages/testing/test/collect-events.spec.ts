@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryEventBus } from '@ddd-ts-kit/kernel';
-import { collectEvents } from '../src/e2e.js';
-import { orderPlaced } from './support/order-placed.js';
+import { collectEvents } from '../src/e2e';
+import { orderPlaced } from './support/order-placed';
 
 describe('collectEvents, on a bus of its own', () => {
   it('filters by type, given as a name or as a declaration carrying one', async () => {

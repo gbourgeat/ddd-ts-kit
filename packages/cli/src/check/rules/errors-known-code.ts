@@ -1,13 +1,13 @@
-import { buildsThroughFactories } from '../errors/builds-through-factories.js';
-import { codesSetIn } from '../errors/codes-set-in.js';
-import { KIT_ERROR_CODES } from '../errors/kit-error-codes.js';
-import { namesRefusals } from '../errors/names-refusals.js';
-import type { Finding } from '../model/finding.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { perFile } from '../support/per-file.js';
-import { matchingBracket } from '../text/matching-bracket.js';
+import { buildsThroughFactories } from '../errors/builds-through-factories';
+import { codesSetIn } from '../errors/codes-set-in';
+import { KIT_ERROR_CODES } from '../errors/kit-error-codes';
+import { namesRefusals } from '../errors/names-refusals';
+import type { Finding } from '../model/finding';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { perFile } from '../support/per-file';
+import { matchingBracket } from '../text/matching-bracket';
 
 const ERRORS_LIST = /(?<![\w$.])errors\s*:\s*\[/g;
 const UNKEPT = 'A code declared and never raised is a promise the contract makes for nothing.';

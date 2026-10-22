@@ -1,4 +1,4 @@
-import type { ProcessedEventStore } from '../../application/ports/processed-event-store.js';
+import type { ProcessedEventStore } from '../../application/ports/processed-event-store';
 
 export class InMemoryProcessedEventStore implements ProcessedEventStore {
   private readonly seen = new Set<string>();

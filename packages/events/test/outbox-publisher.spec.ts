@@ -7,9 +7,9 @@ import {
   OutboxRelay,
   createEventRegistry,
   validatingPublisher,
-} from '../src/index.js';
-import { at } from './support/events.js';
-import { invoiceIssuedEvent as event } from './support/invoice-issued-event.js';
+} from '../src';
+import { at } from './support/events';
+import { invoiceIssuedEvent as event } from './support/invoice-issued-event';
 
 describe('OutboxPublisher', () => {
   it('only stores: nothing reaches the provider before the relay runs', async () => {

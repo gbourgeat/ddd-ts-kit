@@ -1,16 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { KNOWN_RULE_IDS } from '../../src/check/catalogue/known-rule-ids.js';
-import { REPO_ROOT } from '../helpers.js';
-import { CONFORMANCE } from './conformance-enabled.js';
-import { DELEGATED_PROOFS } from './delegated-proofs.js';
-import { ExampleCopy } from './example-copy.js';
-import { expectOnly } from './expect-only.js';
-import type { Finding } from './finding.js';
-import { INJECTIONS } from './injections.js';
-import { lintInRounds } from './lint-in-rounds.js';
-import { NOT_APPLICABLE } from './not-applicable.js';
+import { KNOWN_RULE_IDS } from '../../src/check/catalogue/known-rule-ids';
+import { REPO_ROOT } from '../helpers';
+import { CONFORMANCE } from './conformance-enabled';
+import { DELEGATED_PROOFS } from './delegated-proofs';
+import { ExampleCopy } from './example-copy';
+import { expectOnly } from './expect-only';
+import type { Finding } from './finding';
+import { INJECTIONS } from './injections';
+import { lintInRounds } from './lint-in-rounds';
+import { NOT_APPLICABLE } from './not-applicable';
 
 const started = Date.now();
 

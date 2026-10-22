@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { KafkaEventBus } from '../src/index.js';
-import type { Broker } from './support/broker.js';
-import { BROKERS } from './support/brokers.js';
-import { PLACED, TRACEPARENT, anEvent } from './support/events.js';
-import { recorder } from './support/recorder.js';
-import { eventually, pause } from './support/waiting.js';
+import { KafkaEventBus } from '../src';
+import type { Broker } from './support/broker';
+import { BROKERS } from './support/brokers';
+import { PLACED, TRACEPARENT, anEvent } from './support/events';
+import { recorder } from './support/recorder';
+import { eventually, pause } from './support/waiting';
 
 describe.each(BROKERS)('KafkaEventBus: consuming, %s', { timeout: 60_000 }, (_name, connect) => {
   let broker: Broker;

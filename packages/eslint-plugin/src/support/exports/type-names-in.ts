@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { descendants } from '../descendants.js';
+import { descendants } from '../descendants';
 
 /** The names of the types a piece of syntax refers to: `Options` for `Options`, `Partial<Options>` and `kernel.Options`. */
 export function typeNamesIn(node: TSESTree.Node): string[] {

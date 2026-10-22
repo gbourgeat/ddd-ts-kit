@@ -1,5 +1,5 @@
-import { QueryHandler } from '../../../../../../../../src/declarations.js';
-import { SearchOpeningHours } from './search-opening-hours.query.js';
+import { QueryHandler } from '../../../../../../../../src/declarations';
+import { SearchOpeningHours } from './search-opening-hours.query';
 
 @QueryHandler(SearchOpeningHours)
 export class SearchOpeningHoursHandler implements QueryHandler<SearchOpeningHours> {

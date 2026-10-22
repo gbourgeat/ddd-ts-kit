@@ -1,4 +1,4 @@
-import type { ClientOperation } from './client-operation.js';
+import type { ClientOperation } from './client-operation';
 
 /** What the comment of an operation says: its summary, its method and path, its error codes, and whether it is deprecated. */
 export function operationDescription(operation: ClientOperation): string {

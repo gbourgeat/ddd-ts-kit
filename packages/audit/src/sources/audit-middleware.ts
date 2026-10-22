@@ -8,13 +8,13 @@ import {
   type MessageType,
   type UnitOfWork,
 } from '@ddd-ts-kit/kernel';
-import type { AuditMasker } from '../redaction/audit-masker.js';
-import type { AuditedMessage } from '../redaction/audited-message.js';
-import { changesOf } from '../redaction/changes-of.js';
-import { MissingMaskerError } from '../redaction/missing-masker-error.js';
-import { auditRecordOf } from './audit-record-of.js';
-import type { AuditSource } from './audit-source.js';
-import { failureReason } from './failure-reason.js';
+import type { AuditMasker } from '../redaction/audit-masker';
+import type { AuditedMessage } from '../redaction/audited-message';
+import { changesOf } from '../redaction/changes-of';
+import { MissingMaskerError } from '../redaction/missing-masker-error';
+import { auditRecordOf } from './audit-record-of';
+import type { AuditSource } from './audit-source';
+import { failureReason } from './failure-reason';
 
 export interface AuditMiddlewareOptions extends AuditSource {
   /**

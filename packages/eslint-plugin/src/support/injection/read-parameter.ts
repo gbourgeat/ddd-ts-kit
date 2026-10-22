@@ -1,6 +1,6 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { LANGUAGE_TYPES } from './language-types.js';
-import type { ParameterReading } from './parameter-reading.js';
+import { LANGUAGE_TYPES } from './language-types';
+import type { ParameterReading } from './parameter-reading';
 
 const ALWAYS_GIVEN = 'the composition root gives every parameter a value, always';
 

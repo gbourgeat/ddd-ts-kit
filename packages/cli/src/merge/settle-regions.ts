@@ -1,4 +1,4 @@
-import type { ConflictBlock, Segment } from './conflict-blocks.js';
+import type { ConflictBlock, Segment } from './conflict-blocks';
 
 /** A marker of a generated region, `// ddd-ts-kit:<region>` or `<!-- ddd-ts-kit:<region> -->`, opening or closing. */
 const MARKER = /^\s*(?:\/\/|<!--)\s*(\/?)ddd-ts-kit:([a-z][a-z0-9-]*)\s*(?:-->)?\s*$/;

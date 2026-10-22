@@ -1,13 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect } from 'vitest';
-import { installAsPublished } from '../e2e/install-as-published.js';
-import { bin } from '../e2e/run-in.js';
-import { NATIVE_COMPILER } from '../e2e/type-errors.js';
-import { cli, read, REPO_ROOT, tempDir, write } from '../helpers.js';
-import type { Finding } from './finding.js';
-import type { Change, Injection } from './injection.js';
-import { toolRun, type ToolRun } from './tool-run.js';
+import { installAsPublished } from '../e2e/install-as-published';
+import { bin } from '../e2e/run-in';
+import { NATIVE_COMPILER } from '../e2e/type-errors';
+import { cli, read, REPO_ROOT, tempDir, write } from '../helpers';
+import type { Finding } from './finding';
+import type { Change, Injection } from './injection';
+import { toolRun, type ToolRun } from './tool-run';
 
 const EXAMPLE = path.join(REPO_ROOT, 'examples/scheduling');
 const NOT_COPIED = ['node_modules', 'dist', 'coverage'];

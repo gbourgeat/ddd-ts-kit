@@ -1,6 +1,6 @@
-import type { DerivedRelation } from './derived-relation.js';
-import type { Way } from './via.js';
-import { waysOf } from './ways-of.js';
+import type { DerivedRelation } from './derived-relation';
+import type { Way } from './via';
+import { waysOf } from './ways-of';
 
 /** A derived relation in words: `any of: owner, editor, edit via parent; but not: banned`. */
 export function derivedText(derived: DerivedRelation): string {

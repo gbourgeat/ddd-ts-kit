@@ -1,4 +1,4 @@
-import { scan } from '../check/scan/scan.js';
+import { scan } from '../check/scan/scan';
 
 const KERNEL_IMPORT = /import\s*\{([^}]*)\}\s*from\s*'@ddd-ts-kit\/kernel';[ \t]*\n?/;
 const TESTING_IMPORT = /import\s*\{([^}]*)\}\s*from\s*'@ddd-ts-kit\/testing';/;

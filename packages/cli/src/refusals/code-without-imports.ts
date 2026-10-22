@@ -1,4 +1,4 @@
-import { scan } from '../check/scan/scan.js';
+import { scan } from '../check/scan/scan';
 
 /** The code of a source, comments and the contents of strings blanked, and its import lines too: what the file reads. */
 export function codeWithoutImports(source: string): string {

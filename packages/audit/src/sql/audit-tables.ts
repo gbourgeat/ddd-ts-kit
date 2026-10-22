@@ -1,8 +1,8 @@
-import { AUDIT_CHAINS_TABLE } from './audit-chains-table-name.js';
-import { AUDIT_ENTRIES_TABLE } from './audit-entries-table-name.js';
-import type { AuditTablesOptions } from './audit-tables-options.js';
-import { qualified } from './qualified.js';
-import type { Sql } from './sql.js';
+import { AUDIT_CHAINS_TABLE } from './audit-chains-table-name';
+import { AUDIT_ENTRIES_TABLE } from './audit-entries-table-name';
+import type { AuditTablesOptions } from './audit-tables-options';
+import { qualified } from './qualified';
+import type { Sql } from './sql';
 
 export interface AuditTables {
   readonly entries: Sql;

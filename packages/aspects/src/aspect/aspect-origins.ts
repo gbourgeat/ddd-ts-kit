@@ -1,5 +1,5 @@
-import type { AdviceFactory } from './advice-factory.js';
-import type { Aspect } from './aspect.js';
+import type { AdviceFactory } from './advice-factory';
+import type { Aspect } from './aspect';
 
 export type AspectOrigin = { readonly advise: AdviceFactory } | { readonly parts: readonly Aspect[] };
 

@@ -1,4 +1,4 @@
-import type { Order } from '../order.js';
+import type { Order } from '../order';
 
 export abstract class OrderRepository {
   abstract save(order: Order): Promise<void>;

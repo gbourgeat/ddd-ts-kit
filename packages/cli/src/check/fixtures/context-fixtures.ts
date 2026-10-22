@@ -1,10 +1,10 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { config } from './config.js';
-import { declaration } from './declaration.js';
-import type { Fixture } from './fixture.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { SAMPLES } from './samples.js';
+import { CONFIG_FILE } from '../../config';
+import { config } from './config';
+import { declaration } from './declaration';
+import type { Fixture } from './fixture';
+import { PATHS } from './paths';
+import { project } from './project';
+import { SAMPLES } from './samples';
 
 const { ADAPTER, BILLING, CATALOG, PUBLISHED, ROUTE } = PATHS;
 const { DECLARE } = SAMPLES;

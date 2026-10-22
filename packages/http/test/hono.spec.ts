@@ -2,9 +2,9 @@ import type { AddressInfo } from 'node:net';
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
-import { mountHono, type HonoRaw } from '../src/hono.js';
-import { describeAdapter } from './support/behaviour.js';
-import { KNOWN_ORDER, orderRoutes } from './support/orders.js';
+import { mountHono, type HonoRaw } from '../src/hono';
+import { describeAdapter } from './support/behaviour';
+import { KNOWN_ORDER, orderRoutes } from './support/orders';
 
 describeAdapter(
   'Hono',

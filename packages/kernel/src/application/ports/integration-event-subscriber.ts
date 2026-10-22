@@ -1,5 +1,5 @@
-import type { IntegrationEventCallback } from '../events/integration-event-callback.js';
-import type { Subscription } from '../events/subscription.js';
+import type { IntegrationEventCallback } from '../events/integration-event-callback';
+import type { Subscription } from '../events/subscription';
 
 /** What integration event handlers are subscribed to: the event bus by default, a broker adapter otherwise. */
 export abstract class IntegrationEventSubscriber {

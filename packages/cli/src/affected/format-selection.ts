@@ -1,4 +1,4 @@
-import type { Selection } from './selection.js';
+import type { Selection } from './selection';
 
 /** Lets a partial run pass when a selected context has no spec of one kind. */
 export const PARTIAL_RUN = '--passWithNoTests';

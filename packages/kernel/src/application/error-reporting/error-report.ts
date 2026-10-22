@@ -1,6 +1,6 @@
-import type { ErrorOrigin } from './error-origin.js';
-import type { ErrorReportExtensionValues } from './error-report-extension-values.js';
-import type { ErrorSeverity } from './error-severity.js';
+import type { ErrorOrigin } from './error-origin';
+import type { ErrorReportExtensionValues } from './error-report-extension-values';
+import type { ErrorSeverity } from './error-severity';
 
 /**
  * Where and for whom an unexpected failure happened, as plain data: identifiers only, never

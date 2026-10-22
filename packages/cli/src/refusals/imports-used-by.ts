@@ -1,5 +1,5 @@
-import { scan } from '../check/scan/scan.js';
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
+import { scan } from '../check/scan/scan';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
 
 const NAMED = /^import\s+(type\s+)?\{([^}]*)\}\s*from\s*(['"][^'"]+['"]);?\s*$/;
 const WHOLE = /^import\s+(?:type\s+)?(?:\*\s+as\s+)?([A-Za-z_$][\w$]*)\s+from\s/;

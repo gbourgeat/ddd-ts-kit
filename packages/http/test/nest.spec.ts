@@ -7,9 +7,9 @@ import type { Request } from 'express';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
-import { defineRoute } from '../src/index.js';
-import { createRoutesModule } from '../src/nest.js';
-import { describeAdapter } from './support/behaviour.js';
+import { defineRoute } from '../src';
+import { createRoutesModule } from '../src/nest';
+import { describeAdapter } from './support/behaviour';
 
 describeAdapter(
   'NestJS over Express',

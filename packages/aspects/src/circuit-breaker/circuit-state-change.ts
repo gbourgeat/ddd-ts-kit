@@ -1,4 +1,4 @@
-import type { CircuitState } from './circuit-state.js';
+import type { CircuitState } from './circuit-state';
 
 export interface CircuitStateChange {
   readonly className: string;

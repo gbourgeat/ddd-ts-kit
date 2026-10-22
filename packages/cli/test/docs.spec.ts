@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers.js';
+import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers';
 
 let root: string;
 

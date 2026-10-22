@@ -1,11 +1,11 @@
 import type { Clock, MetricLabels, Metrics } from '@ddd-ts-kit/kernel';
-import type { AdviceFactory } from '../aspect/advice-factory.js';
-import type { Aspect } from '../aspect/aspect.js';
-import { defineAspect } from '../aspect/define-aspect.js';
-import type { JoinPoint } from '../aspect/join-point.js';
-import { clockOr } from '../runtime/clock-or.js';
-import { metricsOr } from '../runtime/metrics-or.js';
-import { timeCall } from './time-call.js';
+import type { AdviceFactory } from '../aspect/advice-factory';
+import type { Aspect } from '../aspect/aspect';
+import { defineAspect } from '../aspect/define-aspect';
+import type { JoinPoint } from '../aspect/join-point';
+import { clockOr } from '../runtime/clock-or';
+import { metricsOr } from '../runtime/metrics-or';
+import { timeCall } from './time-call';
 
 export interface TimedOptions {
   /** Prefix of the two series: `<name>_duration_ms` and `<name>_total`. Default `dependency_call`. */

@@ -8,7 +8,7 @@ import {
   errorReportingMiddleware,
   type Actor,
 } from '@ddd-ts-kit/kernel';
-import { createErrorMapper, defineRoute, executeRoute, reportHttpErrors, type RawRequest } from '../src/index.js';
+import { createErrorMapper, defineRoute, executeRoute, reportHttpErrors, type RawRequest } from '../src';
 
 class LedgerUnavailable extends DomainError {
   readonly code = 'LEDGER_UNAVAILABLE';

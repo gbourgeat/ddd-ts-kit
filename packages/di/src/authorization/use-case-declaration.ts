@@ -1,6 +1,6 @@
 import type { Message, MessageInfo, MessageType } from '@ddd-ts-kit/kernel';
 import type { PermissionRef, ResourcePointer } from '@ddd-ts-kit/kernel/declarations';
-import type { UseCaseAccess } from './use-case-access.js';
+import type { UseCaseAccess } from './use-case-access';
 
 export interface UseCaseDeclaration {
   readonly kind: MessageInfo['kind'];

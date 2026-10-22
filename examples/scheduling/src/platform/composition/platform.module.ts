@@ -35,8 +35,8 @@ import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persiste
 import { KnexAppointmentExport } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment-export.repository';
 import { errorStatuses } from '@/platform/http/error-statuses';
 // ddd-ts-kit:imports
-import { PersonDirectoryContract } from '@/contexts/identity/published-language/index';
-import { AppointmentExportContract } from '@/contexts/scheduling/published-language/index';
+import { PersonDirectoryContract } from '@/contexts/identity/published-language';
+import { AppointmentExportContract } from '@/contexts/scheduling/published-language';
 // /ddd-ts-kit:imports
 
 /** What the platform is built on, beyond the storage: chosen in `main.ts`, defaulted for the tools and the tests. */

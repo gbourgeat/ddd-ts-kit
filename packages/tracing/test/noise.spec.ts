@@ -12,10 +12,10 @@ import {
   tracedRoutes,
   withSpan,
   type EndedSpan,
-} from '../src/index.js';
+} from '../src';
 import { InMemoryDomainEventDispatcher, type IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { expectSpanTree, installTestTracing, type TestTracing } from '../src/testing.js';
-import { aClinic } from './support/clinic/a-clinic.js';
+import { expectSpanTree, installTestTracing, type TestTracing } from '../src/testing';
+import { aClinic } from './support/clinic/a-clinic';
 
 let tracing: TestTracing;
 

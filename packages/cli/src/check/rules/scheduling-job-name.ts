@@ -1,11 +1,11 @@
-import { wholeLiteral } from '../declarations/whole-literal.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { isJobFile } from '../scheduling/is-job-file.js';
-import { jobNames, type JobName } from '../scheduling/job-names.js';
-import { perFile } from '../support/per-file.js';
-import { callArguments } from '../text/call-arguments.js';
+import { wholeLiteral } from '../declarations/whole-literal';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { isJobFile } from '../scheduling/is-job-file';
+import { jobNames, type JobName } from '../scheduling/job-names';
+import { perFile } from '../support/per-file';
+import { callArguments } from '../text/call-arguments';
 
 const JOB_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*\.[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SYSTEM_ACTOR = /(?<![\w$.])systemActor\s*\(/g;

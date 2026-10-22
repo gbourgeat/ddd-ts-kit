@@ -1,4 +1,4 @@
-import type { AliasRoot } from './alias-root.js';
+import type { AliasRoot } from './alias-root';
 
 const SPECIAL = /[.*+?^${}()|[\]\\]/g;
 

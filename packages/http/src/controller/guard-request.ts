@@ -1,5 +1,5 @@
-import type { RequestContext } from '../route/request-context.js';
-import type { GuardAdmission } from './guard-admission.js';
+import type { RequestContext } from '../route/request-context';
+import type { GuardAdmission } from './guard-admission';
 
 /** What a guard reads to let a request through or refuse it: who calls, which route, and its validated path. */
 export interface GuardRequest extends GuardAdmission {

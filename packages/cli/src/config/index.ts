@@ -1,13 +1,13 @@
-export { addContextToConfigText } from './add-context-to-config-text.js';
-export { AGENT_PROFILES } from './agent-profiles.js';
-export { CI_EXTRAS } from './ci-extras.js';
-export { ciExtraProblems } from './ci-extra-problems.js';
-export { CLASSIFICATIONS } from './classifications.js';
-export { commitLimitProblems } from './commit-limit-problems.js';
-export type { CommitLimits } from './commit-limits.js';
-export { COVERAGE_LAYERS } from './coverage-layers.js';
-export { COVERAGE_METRICS } from './coverage-metrics.js';
-export { coverageProblems } from './coverage-problems.js';
+export { addContextToConfigText } from './add-context-to-config-text';
+export { AGENT_PROFILES } from './agent-profiles';
+export { CI_EXTRAS } from './ci-extras';
+export { ciExtraProblems } from './ci-extra-problems';
+export { CLASSIFICATIONS } from './classifications';
+export { commitLimitProblems } from './commit-limit-problems';
+export type { CommitLimits } from './commit-limits';
+export { COVERAGE_LAYERS } from './coverage-layers';
+export { COVERAGE_METRICS } from './coverage-metrics';
+export { coverageProblems } from './coverage-problems';
 export type {
   Config,
   ContextConfig,
@@ -16,28 +16,28 @@ export type {
   Limits,
   ModuleConfig,
   Upstream,
-} from './config.js';
-export { CONFIG_FILE } from './config-file.js';
-export { defaultAllowedPackages } from './default-allowed-packages.js';
-export { DEFAULT_IMPORT_ALIAS } from './default-import-alias.js';
-export { DEFAULT_IMPORT_EXTENSION } from './default-import-extension.js';
-export { editConfigText } from './edit-config-text.js';
-export { FUNCTION_LINES_CEILING } from './function-lines-ceiling.js';
-export { GUARD_MODES } from './guard-modes.js';
-export { WORKTREE_MODES } from './worktree-modes.js';
-export { IMPORT_EXTENSIONS } from './import-extensions.js';
-export { isOneOf } from './is-one-of.js';
-export { openApiProblems } from './open-api-problems.js';
-export { parseConfig } from './parse-config.js';
-export { projectSeverity } from './project-severity.js';
-export { DEFAULT_SDK_NAME } from './default-sdk-name.js';
-export { sdkProblems } from './sdk-problems.js';
-export { readConfig } from './read-config.js';
-export { REFERENCE_COVERAGE } from './reference-coverage.js';
-export { RELATIONSHIPS } from './relationships.js';
-export { restackConfigText } from './restack-config-text.js';
-export { serializeConfig } from './serialize-config.js';
-export { SEVERITIES, type Severity } from './severities.js';
+} from './config';
+export { CONFIG_FILE } from './config-file';
+export { defaultAllowedPackages } from './default-allowed-packages';
+export { DEFAULT_IMPORT_ALIAS } from './default-import-alias';
+export { DEFAULT_IMPORT_EXTENSION } from './default-import-extension';
+export { editConfigText } from './edit-config-text';
+export { FUNCTION_LINES_CEILING } from './function-lines-ceiling';
+export { GUARD_MODES } from './guard-modes';
+export { WORKTREE_MODES } from './worktree-modes';
+export { IMPORT_EXTENSIONS } from './import-extensions';
+export { isOneOf } from './is-one-of';
+export { openApiProblems } from './open-api-problems';
+export { parseConfig } from './parse-config';
+export { projectSeverity } from './project-severity';
+export { DEFAULT_SDK_NAME } from './default-sdk-name';
+export { sdkProblems } from './sdk-problems';
+export { readConfig } from './read-config';
+export { REFERENCE_COVERAGE } from './reference-coverage';
+export { RELATIONSHIPS } from './relationships';
+export { restackConfigText } from './restack-config-text';
+export { serializeConfig } from './serialize-config';
+export { SEVERITIES, type Severity } from './severities';
 export {
   ASSEMBLIES,
   AUDIT_MODES,
@@ -72,4 +72,4 @@ export {
   VALUE_FORMS,
   type OrmStack,
   type Stack,
-} from './stack.js';
+} from './stack';

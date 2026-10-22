@@ -1,4 +1,4 @@
-import type { AgentRecord, NextStep, WorkerProgress } from './worker-progress.js';
+import type { AgentRecord, NextStep, WorkerProgress } from './worker-progress';
 
 /** What decides the next step of the conductor for one worker. */
 export interface StepFacts {

@@ -1,6 +1,6 @@
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
-import type { EntryRepository } from '../../../domain/repositories/entry.repository.js';
-import { CountEntries } from './count-entries.query.js';
+import type { EntryRepository } from '../../../domain/repositories/entry.repository';
+import { CountEntries } from './count-entries.query';
 
 @QueryHandler(CountEntries)
 export class CountEntriesHandler implements QueryHandler<CountEntries> {

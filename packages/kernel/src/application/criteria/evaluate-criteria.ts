@@ -1,9 +1,9 @@
-import type { Page } from '../pagination/page.js';
-import type { CriteriaDefinition } from './criteria-definition.js';
-import type { Criteria } from './criteria.js';
-import { evaluatePlan } from './evaluate-plan.js';
-import { planCriteria } from './plan-criteria.js';
-import type { ScopedCriteria } from './scoped-criteria.js';
+import type { Page } from '../pagination/page';
+import type { CriteriaDefinition } from './criteria-definition';
+import type { Criteria } from './criteria';
+import { evaluatePlan } from './evaluate-plan';
+import { planCriteria } from './plan-criteria';
+import type { ScopedCriteria } from './scoped-criteria';
 
 /**
  * A criteria run over rows held in memory: what a fake of a read port answers with, and the

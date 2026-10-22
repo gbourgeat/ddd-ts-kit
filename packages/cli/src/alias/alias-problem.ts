@@ -1,4 +1,4 @@
-import { FIXED_ALIAS_ROOTS } from './fixed-alias-roots.js';
+import { FIXED_ALIAS_ROOTS } from './fixed-alias-roots';
 
 const SUPPORTED = /^(?:@|\$[a-z][a-z0-9-]*)\/$/;
 const SCOPED = /^@[^/]+\/$/;

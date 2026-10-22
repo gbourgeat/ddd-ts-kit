@@ -1,6 +1,6 @@
 import type { BusMiddleware, Clock, LogLevel, Logger } from '@ddd-ts-kit/kernel';
-import { clockOr } from '../runtime/clock-or.js';
-import { logCall } from './log-call.js';
+import { clockOr } from '../runtime/clock-or';
+import { logCall } from './log-call';
 
 export interface LoggingMiddlewareOptions {
   /** Level of the entry written on success. Default `info`. */

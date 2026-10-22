@@ -1,15 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { argumentsOf } from '../src/check/declarations/arguments-of.js';
-import { classesOf } from '../src/check/declarations/classes-of.js';
-import { literalIn } from '../src/check/declarations/literal-in.js';
-import { optionOf } from '../src/check/declarations/option-of.js';
-import { runCheck } from '../src/check/engine/run-check.js';
-import { loadProject } from '../src/check/project/load-project.js';
-import { scan } from '../src/check/scan/scan.js';
-import { renderDeclarations } from '../src/declared/index.js';
-import { cli, tempDir } from './helpers.js';
+import { argumentsOf } from '../src/check/declarations/arguments-of';
+import { classesOf } from '../src/check/declarations/classes-of';
+import { literalIn } from '../src/check/declarations/literal-in';
+import { optionOf } from '../src/check/declarations/option-of';
+import { runCheck } from '../src/check/engine/run-check';
+import { loadProject } from '../src/check/project/load-project';
+import { scan } from '../src/check/scan/scan';
+import { renderDeclarations } from '../src/declared';
+import { cli, tempDir } from './helpers';
 
 const BILLING = 'src/contexts/billing';
 /** As a new project writes it: an import names its file without an extension. */

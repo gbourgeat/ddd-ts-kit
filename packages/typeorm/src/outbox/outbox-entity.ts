@@ -1,11 +1,11 @@
 import { EntitySchema, type EntitySchemaColumnOptions } from 'typeorm';
-import { INDEXABLE_LENGTH } from '../columns/indexable-length.js';
-import { INSTANT } from '../columns/instant.js';
-import { RIGHT_NOW } from '../columns/right-now.js';
-import type { TypeOrmDialect } from '../columns/type-orm-dialect.js';
-import { entityName } from './entity-name.js';
-import type { EntityOptions } from './entity-options.js';
-import type { OutboxRow } from './outbox-row.js';
+import { INDEXABLE_LENGTH } from '../columns/indexable-length';
+import { INSTANT } from '../columns/instant';
+import { RIGHT_NOW } from '../columns/right-now';
+import type { TypeOrmDialect } from '../columns/type-orm-dialect';
+import { entityName } from './entity-name';
+import type { EntityOptions } from './entity-options';
+import type { OutboxRow } from './outbox-row';
 
 const JSON_DOCUMENT: Record<TypeOrmDialect, EntitySchemaColumnOptions> = {
   postgres: { type: 'jsonb' },

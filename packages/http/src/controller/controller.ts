@@ -1,8 +1,8 @@
 import { DeclarationError, Edge, type ClassDeclarator } from '@ddd-ts-kit/kernel/declarations';
-import type { ControllerSpec } from './controller-spec.js';
-import { declaredRoute } from './declared-route.js';
-import type { HttpController } from './http-controller.js';
-import { presentationRegistry } from './presentation-registry.js';
+import type { ControllerSpec } from './controller-spec';
+import { declaredRoute } from './declared-route';
+import type { HttpController } from './http-controller';
+import { presentationRegistry } from './presentation-registry';
 
 /**
  * Declares one route on the class that answers it:

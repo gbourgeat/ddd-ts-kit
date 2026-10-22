@@ -1,8 +1,8 @@
-import type { HttpClient } from './http-client.js';
-import type { HttpHeaders } from './http-headers.js';
-import type { HttpResponse } from './http-response.js';
-import { lowerCased } from './lower-cased.js';
-import type { RequestOptions } from './request-options.js';
+import type { HttpClient } from './http-client';
+import type { HttpHeaders } from './http-headers';
+import type { HttpResponse } from './http-response';
+import { lowerCased } from './lower-cased';
+import type { RequestOptions } from './request-options';
 
 interface Exchange {
   readonly method: string;

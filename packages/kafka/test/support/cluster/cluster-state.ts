@@ -1,6 +1,6 @@
 import type { KafkaJS } from '@confluentinc/kafka-javascript';
-import { Group } from './group.js';
-import { type StoredRecord, Topic } from './log.js';
+import { Group } from './group';
+import { type StoredRecord, Topic } from './log';
 
 /** What learns that a topic received records, or that the topics changed. */
 export interface TopicListener {

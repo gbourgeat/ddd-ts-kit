@@ -1,6 +1,6 @@
 import type { FieldDeclaration, FieldValue, FilterNode, FilterOperator } from '@ddd-ts-kit/kernel';
-import { coerceValue } from './coerce-value.js';
-import { splitList } from './split-list.js';
+import { coerceValue } from './coerce-value';
+import { splitList } from './split-list';
 
 const OPERATORS: readonly FilterOperator[] = [
   'eq',

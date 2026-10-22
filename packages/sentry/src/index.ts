@@ -1,5 +1,5 @@
-export { initSentry } from './init-sentry.js';
-export type { InitSentryOptions } from './init-sentry-options.js';
-export { scrubEvent, type ScrubOptions } from './scrubbing/scrub-event.js';
-export { scrubRequest } from './scrubbing/scrub-request.js';
-export { SentryErrorReporter, type SentryErrorReporterOptions } from './sentry-error-reporter.js';
+export { initSentry } from './init-sentry';
+export type { InitSentryOptions } from './init-sentry-options';
+export { scrubEvent, type ScrubOptions } from './scrubbing/scrub-event';
+export { scrubRequest } from './scrubbing/scrub-request';
+export { SentryErrorReporter, type SentryErrorReporterOptions } from './sentry-error-reporter';

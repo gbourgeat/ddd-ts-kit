@@ -1,8 +1,8 @@
-import { aggregate } from './aggregate.js';
-import type { Fixture } from './fixture.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { SAMPLES } from './samples.js';
+import { aggregate } from './aggregate';
+import type { Fixture } from './fixture';
+import { PATHS } from './paths';
+import { project } from './project';
+import { SAMPLES } from './samples';
 
 const { AGGREGATE, BILLING } = PATHS;
 

@@ -1,6 +1,6 @@
-import type { AllowedFile } from './config.js';
-import { posix } from './posix.js';
-import { isRecord } from './is-record.js';
+import type { AllowedFile } from './config';
+import { posix } from './posix';
+import { isRecord } from './is-record';
 
 /** An entry without a file or without a reason allows nothing: `ddd-ts-kit check` reports it as `config/valid`. */
 export function parseAllowedFile(value: unknown): AllowedFile[] {

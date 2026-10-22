@@ -1,13 +1,13 @@
-import { RULES } from '../catalogue/rules.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { Violation } from '../model/violation.js';
-import { findSuppressions } from '../suppressions/find-suppressions.js';
-import { isSuppressed } from '../suppressions/is-suppressed.js';
-import { SUPPRESSION_RULE_ID } from '../suppressions/suppression-rule-id.js';
-import { suppressionViolations } from '../suppressions/suppression-violations.js';
-import type { CheckResult } from './check-result.js';
-import { summarize } from './summarize.js';
+import { RULES } from '../catalogue/rules';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { Violation } from '../model/violation';
+import { findSuppressions } from '../suppressions/find-suppressions';
+import { isSuppressed } from '../suppressions/is-suppressed';
+import { SUPPRESSION_RULE_ID } from '../suppressions/suppression-rule-id';
+import { suppressionViolations } from '../suppressions/suppression-violations';
+import type { CheckResult } from './check-result';
+import { summarize } from './summarize';
 
 export interface CheckOptions {
   /** Run only these rule ids. */

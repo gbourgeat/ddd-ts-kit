@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import Fastify, { type FastifyRequest } from 'fastify';
-import { fastifyRoutes, mountFastify } from '../src/fastify.js';
-import { describeAdapter } from './support/behaviour.js';
-import { KNOWN_ORDER, orderRoutes } from './support/orders.js';
+import { fastifyRoutes, mountFastify } from '../src/fastify';
+import { describeAdapter } from './support/behaviour';
+import { KNOWN_ORDER, orderRoutes } from './support/orders';
 
 describeAdapter(
   'Fastify',

@@ -1,7 +1,7 @@
-import type { Scan } from '../scan/scan.js';
-import type { Structure } from '../structure/read-structure.js';
-import type { Location } from './location.js';
-import type { ResolvedImport } from './resolved-import.js';
+import type { Scan } from '../scan/scan';
+import type { Structure } from '../structure/read-structure';
+import type { Location } from './location';
+import type { ResolvedImport } from './resolved-import';
 
 export interface SourceFile {
   /** Posix path relative to the project root. */

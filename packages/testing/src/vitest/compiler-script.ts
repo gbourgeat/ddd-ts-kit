@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { isRecord } from './is-record.js';
+import { isRecord } from './is-record';
 
 /** The path of the `tsc` script of a compiler named as a package of the project, or as a path. */
 export function compilerScript(compiler: string, root: string): string {

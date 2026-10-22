@@ -1,6 +1,6 @@
 import { isTenantId, type IntegrationEvent } from '@ddd-ts-kit/kernel';
-import type { Entry } from './entry.js';
-import { ENVELOPE_FIELD } from './entry-fields.js';
+import type { Entry } from './entry';
+import { ENVELOPE_FIELD } from './entry-fields';
 
 interface Envelope {
   readonly id: string;

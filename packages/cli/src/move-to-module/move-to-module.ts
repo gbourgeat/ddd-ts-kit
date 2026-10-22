@@ -1,10 +1,10 @@
-import { aliasRoots } from '../alias/index.js';
-import type { Config } from '../config/index.js';
-import { projectSources } from '../refusals/project-sources.js';
-import { withMovedImports } from '../platform-folders/with-moved-imports.js';
-import type { Workspace } from '../workspace/index.js';
-import type { ModuleMove } from './module-move.js';
-import { movesIntoModule, type MoveRequest } from './moves-into-module.js';
+import { aliasRoots } from '../alias';
+import type { Config } from '../config';
+import { projectSources } from '../refusals/project-sources';
+import { withMovedImports } from '../platform-folders/with-moved-imports';
+import type { Workspace } from '../workspace';
+import type { ModuleMove } from './module-move';
+import { movesIntoModule, type MoveRequest } from './moves-into-module';
 
 const EXTENSION = /\.(?:ts|tsx|mts)$/;
 const SOURCE = /\.(?:ts|tsx|mts|js|mjs|cjs)$/;

@@ -1,5 +1,5 @@
 import { describeToken, type BindingAspect, type BindingAspectInfo } from '@ddd-ts-kit/kernel/declarations';
-import type { Binding } from '../wiring/binding.js';
+import type { Binding } from '../wiring/binding';
 
 /**
  * The instance inside the aspects of its binding, then inside the ones the modules put around

@@ -1,7 +1,7 @@
-import type { Rule } from '../model/rule.js';
-import { bindingPlace } from '../support/binding-place.js';
-import { inLayer } from '../support/in-layer.js';
-import { perFile } from '../support/per-file.js';
+import type { Rule } from '../model/rule';
+import { bindingPlace } from '../support/binding-place';
+import { inLayer } from '../support/in-layer';
+import { perFile } from '../support/per-file';
 
 export const layerPresentationNoInfrastructure: Rule = {
   id: 'layer/presentation-no-infrastructure',

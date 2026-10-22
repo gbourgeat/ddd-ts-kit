@@ -1,6 +1,6 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { CORRELATION_HEADER, EVENT_VERSION_HEADER, TENANT_HEADER, TRACEPARENT_HEADER } from './headers.js';
-import type { Publication } from './publication.js';
+import { CORRELATION_HEADER, EVENT_VERSION_HEADER, TENANT_HEADER, TRACEPARENT_HEADER } from './headers';
+import type { Publication } from './publication';
 
 /**
  * The body is the whole envelope as JSON, so any AMQP client can consume it. Properties and

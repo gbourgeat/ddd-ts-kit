@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Migration } from '../check/migrations/migration-folder.js';
-import { readMigrationFolder } from '../check/migrations/read-migration-folder.js';
-import { runGit } from '../commit/run-git.js';
-import { mentionedTables } from './mentioned-tables.js';
-import { migrationsAt } from './migrations-at.js';
-import { nextMigrationNumber } from './next-migration-number.js';
+import type { Migration } from '../check/migrations/migration-folder';
+import { readMigrationFolder } from '../check/migrations/read-migration-folder';
+import { runGit } from '../commit/run-git';
+import { mentionedTables } from './mentioned-tables';
+import { migrationsAt } from './migrations-at';
+import { nextMigrationNumber } from './next-migration-number';
 
 /** The migrations of a knex, Prisma or TypeORM project to land on the trunk. */
 export interface Renumbering {

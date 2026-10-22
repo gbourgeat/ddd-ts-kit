@@ -1,12 +1,12 @@
-import { errorReportOf } from '../../application/error-reporting/error-report-of.js';
-import type { ErrorReport } from '../../application/error-reporting/error-report.js';
-import { isUnexpectedError } from '../../application/error-reporting/is-unexpected-error.js';
-import { reportOnce } from '../../application/error-reporting/report-once.js';
-import type { IntegrationEventCallback } from '../../application/events/integration-event-callback.js';
-import type { IntegrationEvent } from '../../application/events/integration-event.js';
-import type { ErrorReporter } from '../../application/ports/error-reporter.js';
-import type { IntegrationEventSubscriber } from '../../application/ports/integration-event-subscriber.js';
-import { DeadLetterError } from './dead-letter-error.js';
+import { errorReportOf } from '../../application/error-reporting/error-report-of';
+import type { ErrorReport } from '../../application/error-reporting/error-report';
+import { isUnexpectedError } from '../../application/error-reporting/is-unexpected-error';
+import { reportOnce } from '../../application/error-reporting/report-once';
+import type { IntegrationEventCallback } from '../../application/events/integration-event-callback';
+import type { IntegrationEvent } from '../../application/events/integration-event';
+import type { ErrorReporter } from '../../application/ports/error-reporter';
+import type { IntegrationEventSubscriber } from '../../application/ports/integration-event-subscriber';
+import { DeadLetterError } from './dead-letter-error';
 
 /**
  * What the `onFailure` hook of every provider says, read structurally: the broker adapters

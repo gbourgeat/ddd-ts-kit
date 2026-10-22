@@ -7,7 +7,7 @@ import {
   tenantScopeOf,
   type Actor,
 } from '@ddd-ts-kit/kernel';
-import { aSession, anExecutionContext, createTestBuses, defineBuilder, resetSequences, scoped } from '../src/index.js';
+import { aSession, anExecutionContext, createTestBuses, defineBuilder, resetSequences, scoped } from '../src';
 
 /* What a project declares once in its platform: the extensions its sessions and its work carry. */
 declare module '@ddd-ts-kit/kernel' {

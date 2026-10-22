@@ -1,8 +1,8 @@
-import { ContractSuite } from '../contract-suite.js';
-import { aJob } from './a-job.js';
-import { LEASE_MS, NOW, QUEUE } from './job-fixtures.js';
-import { later } from './later.js';
-import type { JobStoreUnderContract } from './job-store-under-contract.js';
+import { ContractSuite } from '../contract-suite';
+import { aJob } from './a-job';
+import { LEASE_MS, NOW, QUEUE } from './job-fixtures';
+import { later } from './later';
+import type { JobStoreUnderContract } from './job-store-under-contract';
 
 const FIRST = { id: 'job-1', attempt: 1 };
 

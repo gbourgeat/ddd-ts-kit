@@ -1,6 +1,6 @@
-import { CORRELATION_HEADER } from '../pipeline/correlation-header.js';
-import { wellFormedIdentifier } from '../pipeline/well-formed-identifier.js';
-import type { RawHeaders } from '../route/raw-headers.js';
+import { CORRELATION_HEADER } from '../pipeline/correlation-header';
+import { wellFormedIdentifier } from '../pipeline/well-formed-identifier';
+import type { RawHeaders } from '../route/raw-headers';
 
 /** A request the adapter refuses before the pipeline runs: its status, its code and what is wrong. */
 export interface EdgeRefusal {

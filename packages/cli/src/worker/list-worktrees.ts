@@ -1,4 +1,4 @@
-import { runGit } from '../commit/run-git.js';
+import { runGit } from '../commit/run-git';
 
 /** One worktree of the repository, as `git worktree list --porcelain` prints it. */
 export interface Worktree {

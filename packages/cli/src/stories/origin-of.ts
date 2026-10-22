@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CliError } from '../cli-error.js';
+import { CliError } from '../cli-error';
 
 const INTENTS_DIR = 'docs/architecture/intents';
 const INCIDENTS_DIR = 'docs/architecture/incidents';

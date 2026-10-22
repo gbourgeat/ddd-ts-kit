@@ -1,5 +1,5 @@
-import type { Finding } from '../model/finding.js';
-import type { Migration } from './migration-folder.js';
+import type { Finding } from '../model/finding';
+import type { Migration } from './migration-folder';
 
 /** A number that orders the migration, a separator, then what it does: `20261012093000_add-invoices`. */
 const NAMED = /^(\d+)[_-][A-Za-z0-9][\w-]*$/;

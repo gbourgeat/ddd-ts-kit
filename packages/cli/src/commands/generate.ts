@@ -1,18 +1,18 @@
-import { readConfig } from '../config/index.js';
-import { CliError } from '../cli-error.js';
-import { findKind } from '../generate/find-kind.js';
-import type { Kind, KindFlags } from '../generate/kind.js';
-import { KINDS } from '../generate/kinds.js';
-import { placeInModules } from '../generate/place-in-modules.js';
-import { refreshDocs } from '../generate/refresh-docs.js';
-import { refuseSharedWrites } from '../generate/refuse-shared-writes.js';
-import { stopIgnoringValidation } from '../generate/stop-ignoring-validation.js';
-import { toName } from '../naming/index.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
-import { printReport } from './print-report.js';
-import { keepFlatPlatform } from '../platform-folders/index.js';
+import { readConfig } from '../config';
+import { CliError } from '../cli-error';
+import { findKind } from '../generate/find-kind';
+import type { Kind, KindFlags } from '../generate/kind';
+import { KINDS } from '../generate/kinds';
+import { placeInModules } from '../generate/place-in-modules';
+import { refreshDocs } from '../generate/refresh-docs';
+import { refuseSharedWrites } from '../generate/refuse-shared-writes';
+import { stopIgnoringValidation } from '../generate/stop-ignoring-validation';
+import { toName } from '../naming';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import type { Command } from './command';
+import { printReport } from './print-report';
+import { keepFlatPlatform } from '../platform-folders';
 
 export const generateCommand: Command = (argv, io) => {
   const asked = findKind(argv.find((argument) => !argument.startsWith('-')) ?? '');

@@ -1,7 +1,7 @@
 import type { Schema } from '@ddd-ts-kit/auth/rebac';
-import type { OpenFgaApi } from '../client/open-fga-api.js';
-import { authorizationModelOf } from './authorization-model-of.js';
-import { modelDrift } from './model-drift.js';
+import type { OpenFgaApi } from '../client/open-fga-api';
+import { authorizationModelOf } from './authorization-model-of';
+import { modelDrift } from './model-drift';
 
 /**
  * Makes the latest model of the store the one the schema generates, writing a new one only when

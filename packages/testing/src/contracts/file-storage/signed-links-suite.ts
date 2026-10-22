@@ -1,10 +1,10 @@
 import { MAX_SIGNED_URL_SECONDS, type SignedUpload } from '@ddd-ts-kit/kernel';
-import { PDF, TEXT } from './contents.js';
-import { tampered } from './tampered.js';
-import { followWithFetch } from './follow-with-fetch.js';
-import type { FollowedResponse } from './followed-response.js';
-import { FileStorageSuite } from './file-storage-suite.js';
-import type { SignedRequest } from './signed-request.js';
+import { PDF, TEXT } from './contents';
+import { tampered } from './tampered';
+import { followWithFetch } from './follow-with-fetch';
+import type { FollowedResponse } from './followed-response';
+import { FileStorageSuite } from './file-storage-suite';
+import type { SignedRequest } from './signed-request';
 
 /** A signed link grants one action on one file, for a short time, to whoever holds it unchanged. */
 export class SignedLinksSuite extends FileStorageSuite {

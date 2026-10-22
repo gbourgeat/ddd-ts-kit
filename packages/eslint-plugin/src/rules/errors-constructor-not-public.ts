@@ -1,10 +1,10 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
-import { className } from '../support/classes/class-name.js';
-import { constructorOf } from '../support/classes/constructor-of.js';
-import { visibilityOf } from '../support/classes/visibility-of.js';
-import { isErrorClass } from '../support/errors/is-error-class.js';
-import { isErrorFile } from '../support/errors/is-error-file.js';
-import { defineRule } from '../support/rule/define-rule.js';
+import { className } from '../support/classes/class-name';
+import { constructorOf } from '../support/classes/constructor-of';
+import { visibilityOf } from '../support/classes/visibility-of';
+import { isErrorClass } from '../support/errors/is-error-class';
+import { isErrorFile } from '../support/errors/is-error-file';
+import { defineRule } from '../support/rule/define-rule';
 
 type MessageId = 'publicConstructor' | 'inheritedPublic' | 'publicRefusalConstructor' | 'inheritedPublicRefusal';
 

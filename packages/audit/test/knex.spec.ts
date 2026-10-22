@@ -1,12 +1,12 @@
 import knex, { type Knex } from 'knex';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createKnexUnitOfWork } from '@ddd-ts-kit/knex';
-import { KnexAuditTrail, createAuditTables, dropAuditTables } from '../src/knex.js';
-import type { AuditTrailOptions } from '../src/index.js';
-import { auditTrailContract } from '../src/testing.js';
-import { startPostgres, type TestPostgres } from './support/postgres.js';
-import { sqlTrailSpecs } from './support/sql-trail-specs.js';
-import { REAL_SERVER, aRecord, type SqlTrailFixture } from './support/sql-trail-fixture.js';
+import { KnexAuditTrail, createAuditTables, dropAuditTables } from '../src/knex';
+import type { AuditTrailOptions } from '../src';
+import { auditTrailContract } from '../src/testing';
+import { startPostgres, type TestPostgres } from './support/postgres';
+import { sqlTrailSpecs } from './support/sql-trail-specs';
+import { REAL_SERVER, aRecord, type SqlTrailFixture } from './support/sql-trail-fixture';
 
 const runner = { describe, it, expect, beforeEach };
 

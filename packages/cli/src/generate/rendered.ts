@@ -1,8 +1,8 @@
-import type { Config } from '../config/index.js';
-import type { RenderContext } from '../templating/index.js';
-import { renderTemplate, templateExists } from '../templating/index.js';
-import { isDeclared } from './is-declared.js';
-import type { Scope } from './scope.js';
+import type { Config } from '../config';
+import type { RenderContext } from '../templating';
+import { renderTemplate, templateExists } from '../templating';
+import { isDeclared } from './is-declared';
+import type { Scope } from './scope';
 
 /** What `emit` writes for one template, in the style of the project, without writing it. */
 export function rendered(scope: Scope, template: string, context: RenderContext): string {

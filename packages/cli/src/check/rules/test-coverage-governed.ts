@@ -1,10 +1,10 @@
-import { ignoreHints } from '../coverage/ignore-hints.js';
-import { runnerSettings } from '../coverage/runner-settings.js';
-import { scriptFlags } from '../coverage/script-flags.js';
-import { DecisionRecords } from '../governance/decision-records.js';
-import type { Rule } from '../model/rule.js';
-import { perFile } from '../support/per-file.js';
-import { reporter } from '../support/reporter.js';
+import { ignoreHints } from '../coverage/ignore-hints';
+import { runnerSettings } from '../coverage/runner-settings';
+import { scriptFlags } from '../coverage/script-flags';
+import { DecisionRecords } from '../governance/decision-records';
+import type { Rule } from '../model/rule';
+import { perFile } from '../support/per-file';
+import { reporter } from '../support/reporter';
 
 export const testCoverageGoverned: Rule = {
   id: 'test/coverage-governed',

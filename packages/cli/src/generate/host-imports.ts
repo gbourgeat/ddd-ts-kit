@@ -1,4 +1,4 @@
-import type { Config } from '../config/index.js';
+import type { Config } from '../config';
 
 /** What a composition root imports, beyond the declarations, to host a declared context. */
 export function hostImports(config: Config): string[] {

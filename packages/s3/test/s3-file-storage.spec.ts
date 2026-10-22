@@ -1,7 +1,7 @@
 import { FileError } from '@ddd-ts-kit/kernel';
 import { describe, expect, it } from 'vitest';
-import { S3FileStorage, s3ClientOf } from '../src/index.js';
-import { settledFirst } from '../src/settled-first.js';
+import { S3FileStorage, s3ClientOf } from '../src';
+import { settledFirst } from '../src/settled-first';
 
 const client = s3ClientOf({
   endpoint: 'http://127.0.0.1:1',

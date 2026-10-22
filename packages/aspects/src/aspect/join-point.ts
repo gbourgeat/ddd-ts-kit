@@ -1,4 +1,4 @@
-import type { AspectKind } from './aspect-kind.js';
+import type { AspectKind } from './aspect-kind';
 
 /** One method of one instance: what a selector tests and what an advice is built for. */
 export interface JoinPoint {

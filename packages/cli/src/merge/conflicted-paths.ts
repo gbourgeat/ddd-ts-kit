@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { ConflictedPath } from './conflicted-path.js';
-import { objectBytes } from './object-bytes.js';
-import type { StageEntry } from './preview-merge.js';
+import type { ConflictedPath } from './conflicted-path';
+import { objectBytes } from './object-bytes';
+import type { StageEntry } from './preview-merge';
 
 /** Where the text a merge wrote for a conflicted path is read: the tree `merge-tree` wrote, or the working tree. */
 export type MergedFrom = { readonly tree: string } | 'worktree';

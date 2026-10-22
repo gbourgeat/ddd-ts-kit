@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Stack } from '../config/index.js';
-import { isRecord } from '../config/values/is-record.js';
-import { INSTALLED_LOCKFILES, LOCKFILES } from '../package-manager/lockfiles.js';
-import { VERSION } from '../version.js';
-import type { DoctorFinding } from './doctor-finding.js';
-import { OF_THE_KIT } from './package-findings.js';
+import type { Stack } from '../config';
+import { isRecord } from '../config/values/is-record';
+import { INSTALLED_LOCKFILES, LOCKFILES } from '../package-manager/lockfiles';
+import { VERSION } from '../version';
+import type { DoctorFinding } from './doctor-finding';
+import { OF_THE_KIT } from './package-findings';
 
 /**
  * What this checkout has installed: node_modules, installed since the lockfile last changed, then

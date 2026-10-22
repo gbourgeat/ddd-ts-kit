@@ -1,7 +1,7 @@
 import type { ProcessedEventStore } from '@ddd-ts-kit/kernel';
-import { insertIgnoringConflict } from '../sql/insert-ignoring-conflict.js';
-import type { KnexContext } from '../unit-of-work/knex-context.js';
-import { PROCESSED_EVENTS_TABLE } from './table-names.js';
+import { insertIgnoringConflict } from '../sql/insert-ignoring-conflict';
+import type { KnexContext } from '../unit-of-work/knex-context';
+import { PROCESSED_EVENTS_TABLE } from './table-names';
 
 export interface KnexProcessedEventStoreOptions {
   /** The schema the table was created in. Default: the default schema of the connection. */

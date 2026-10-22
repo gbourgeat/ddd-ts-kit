@@ -1,8 +1,8 @@
 import type { EntitySchemaColumnOptions } from 'typeorm';
-import { INDEXABLE_LENGTH } from '../columns/indexable-length.js';
-import { INSTANT } from '../columns/instant.js';
-import type { TypeOrmDialect } from '../columns/type-orm-dialect.js';
-import type { ReadModelStamps } from './read-model-stamps.js';
+import { INDEXABLE_LENGTH } from '../columns/indexable-length';
+import { INSTANT } from '../columns/instant';
+import type { TypeOrmDialect } from '../columns/type-orm-dialect';
+import type { ReadModelStamps } from './read-model-stamps';
 
 /**
  * The columns a projection orders its events by, to spread into the `columns` of the

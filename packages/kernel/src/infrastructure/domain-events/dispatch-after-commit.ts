@@ -1,6 +1,6 @@
-import { domainEventRuns } from './domain-event-runs.js';
-import { here } from './here.js';
-import type { UnitOfWorkScope } from './unit-of-work-scope.js';
+import { domainEventRuns } from './domain-event-runs';
+import { here } from './here';
+import type { UnitOfWorkScope } from './unit-of-work-scope';
 
 /**
  * Hands every event dispatched before the commit to the `after-commit` handlers. Never rejects:

@@ -1,13 +1,13 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { renderTemplate } from '../../templating/index.js';
-import type { Kind } from '../kind.js';
-import { openScope } from '../open-scope.js';
-import { vars } from '../vars.js';
-import { addComposeService } from './extraction/add-compose-service.js';
-import { editJson } from './extraction/edit-json.js';
-import { EntryPoint } from './extraction/entry-point.js';
-import { recordOf } from './extraction/record-of.js';
-import { serviceSelection } from './extraction/service-selection.js';
+import { CONFIG_FILE } from '../../config';
+import { renderTemplate } from '../../templating';
+import type { Kind } from '../kind';
+import { openScope } from '../open-scope';
+import { vars } from '../vars';
+import { addComposeService } from './extraction/add-compose-service';
+import { editJson } from './extraction/edit-json';
+import { EntryPoint } from './extraction/entry-point';
+import { recordOf } from './extraction/record-of';
+import { serviceSelection } from './extraction/service-selection';
 
 export const serviceKind: Kind = {
   name: 'service',

@@ -1,6 +1,6 @@
 import type { Readable } from 'node:stream';
-import type { ScanVerdict } from '../files/scan-verdict.js';
-import type { StoredFile } from '../files/stored-file.js';
+import type { ScanVerdict } from '../files/scan-verdict';
+import type { StoredFile } from '../files/stored-file';
 
 /**
  * The check a file passes before it is accepted: an antivirus (ClamAV over its socket, a cloud

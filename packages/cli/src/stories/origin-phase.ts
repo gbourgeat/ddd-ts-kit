@@ -1,6 +1,6 @@
-import type { Workspace } from '../workspace/index.js';
-import { sectionOf } from './section-of.js';
-import type { StoryPhase } from './story-phase.js';
+import type { Workspace } from '../workspace';
+import { sectionOf } from './section-of';
+import type { StoryPhase } from './story-phase';
 
 /** The lines `## Origin` holds: where the story came from, and the versions it was built under. */
 const ORIGIN_LINES = [

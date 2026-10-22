@@ -1,12 +1,12 @@
-import { isAggregateFile } from '../lifecycle/is-aggregate-file.js';
-import { machinesImported } from '../lifecycle/machines-imported.js';
-import { statusWrites } from '../lifecycle/status-writes.js';
-import type { Finding } from '../model/finding.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { perFile } from '../support/per-file.js';
-import { escapeRegExp } from '../text/escape-reg-exp.js';
+import { isAggregateFile } from '../lifecycle/is-aggregate-file';
+import { machinesImported } from '../lifecycle/machines-imported';
+import { statusWrites } from '../lifecycle/status-writes';
+import type { Finding } from '../model/finding';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { perFile } from '../support/per-file';
+import { escapeRegExp } from '../text/escape-reg-exp';
 
 const COPIED = /^(?:[\w$]+(?:\s*\.\s*[\w$]+)*\s*\.\s*)?status$/;
 

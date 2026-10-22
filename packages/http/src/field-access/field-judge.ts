@@ -1,7 +1,7 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import type { FieldDecider } from './field-decider.js';
-import type { FieldRequirement } from './field-requirement.js';
-import type { FieldRule } from './field-rule.js';
+import type { FieldDecider } from './field-decider';
+import type { FieldRequirement } from './field-requirement';
+import type { FieldRule } from './field-rule';
 
 /**
  * The decisions about the fields of one request, for one actor. A requirement about no element

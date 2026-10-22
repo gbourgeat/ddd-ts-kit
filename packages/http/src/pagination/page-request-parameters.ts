@@ -1,6 +1,6 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import { limitsOf } from './limits-of.js';
-import type { PageQueryOptions } from './page-query-options.js';
+import { limitsOf } from './limits-of';
+import type { PageQueryOptions } from './page-query-options';
 
 /**
  * The query parameters of a page as a JSON Schema object: one OpenAPI parameter per property

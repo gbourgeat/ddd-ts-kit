@@ -1,4 +1,4 @@
-import type { ChainBreak } from './chain-break.js';
+import type { ChainBreak } from './chain-break';
 
 export type ChainVerification =
   | { readonly valid: true; readonly checked: number }

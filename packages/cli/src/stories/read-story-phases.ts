@@ -1,20 +1,20 @@
-import { criteriaIn } from '../acceptance/criteria-in.js';
-import { countsFor } from '../acceptance/counts-for.js';
-import { readAcceptance } from '../acceptance/read-acceptance.js';
-import { storyFileOf } from '../acceptance/story-file-of.js';
-import { storyOfRow } from '../acceptance/story-of-row.js';
-import type { StoryAcceptance } from '../acceptance/story-acceptance.js';
-import type { Slice } from '../progress/slice.js';
-import type { Workspace } from '../workspace/index.js';
-import { readStoryClosing } from '../story/read-story-closing.js';
-import { originPhase } from './origin-phase.js';
-import { readStoryPlace } from './read-story-place.js';
-import { regressionPhase } from './regression-phase.js';
-import { regressionSpecsIn } from './regression-specs-in.js';
-import { reviewFileOf } from './review-file-of.js';
-import { sectionOf } from './section-of.js';
-import { trunkPhase } from './trunk-phase.js';
-import type { StoryPhase } from './story-phase.js';
+import { criteriaIn } from '../acceptance/criteria-in';
+import { countsFor } from '../acceptance/counts-for';
+import { readAcceptance } from '../acceptance/read-acceptance';
+import { storyFileOf } from '../acceptance/story-file-of';
+import { storyOfRow } from '../acceptance/story-of-row';
+import type { StoryAcceptance } from '../acceptance/story-acceptance';
+import type { Slice } from '../progress/slice';
+import type { Workspace } from '../workspace';
+import { readStoryClosing } from '../story/read-story-closing';
+import { originPhase } from './origin-phase';
+import { readStoryPlace } from './read-story-place';
+import { regressionPhase } from './regression-phase';
+import { regressionSpecsIn } from './regression-specs-in';
+import { reviewFileOf } from './review-file-of';
+import { sectionOf } from './section-of';
+import { trunkPhase } from './trunk-phase';
+import type { StoryPhase } from './story-phase';
 
 /** A design review section of a row: `## #US5.02 Place order`. */
 const ROW_HEADING = /^##\s+#(\S+)/gm;

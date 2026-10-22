@@ -9,12 +9,12 @@ import {
   kernelModule,
   tokenIdentity,
   type ContextModule,
-} from '../src/index.js';
-import { discoverContext } from '../src/discovery.js';
-import { decoratorModes, removeCompiled } from './support/decorator-modes.js';
+} from '../src';
+import { discoverContext } from '../src/discovery';
+import { decoratorModes, removeCompiled } from './support/decorator-modes';
 
-type Billing = typeof import('./fixtures/contexts/billing/billing.declarations.js');
-type Reporting = typeof import('./fixtures/contexts/reporting/reporting.declarations.js');
+type Billing = typeof import('./fixtures/contexts/billing/billing.declarations');
+type Reporting = typeof import('./fixtures/contexts/reporting/reporting.declarations');
 type Kernel = typeof import('@ddd-ts-kit/kernel');
 
 const FIXTURES = path.join(import.meta.dirname, 'fixtures');
@@ -185,7 +185,7 @@ function itFindsReactionsAndNamesFailures(found: () => Discovered): void {
 describeDiscovery('as the test runner loads its sources', async () => ({
   directory: path.join(FIXTURES, BILLING),
   extension: '.ts',
-  billing: await import('./fixtures/contexts/billing/billing.declarations.js'),
+  billing: await import('./fixtures/contexts/billing/billing.declarations'),
 }));
 
 for (const mode of decoratorModes(FIXTURES)) {

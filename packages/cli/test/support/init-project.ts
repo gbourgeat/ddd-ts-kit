@@ -1,4 +1,4 @@
-import { cli, tempDir } from '../helpers.js';
+import { cli, tempDir } from '../helpers';
 
 /** A new project in a temporary directory, initialised with the given flags: the directory, once `init` succeeded. */
 export function initProject(...flags: readonly string[]): string {

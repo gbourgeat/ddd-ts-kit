@@ -1,11 +1,11 @@
 import type { Knex } from 'knex';
 import { tenantScopeOf, type EventStamp, type ReadModelRows, type StampedRow } from '@ddd-ts-kit/kernel';
-import { insertIgnoringConflict } from '../sql/insert-ignoring-conflict.js';
-import { TENANT_COLUMN, whereTenant } from '../tenancy/where-tenant.js';
-import type { KnexContext } from '../unit-of-work/knex-context.js';
-import type { KnexReadModelOptions } from './knex-read-model-options.js';
-import { recordsOf } from './records-of.js';
-import { RowMapper } from './row.mapper.js';
+import { insertIgnoringConflict } from '../sql/insert-ignoring-conflict';
+import { TENANT_COLUMN, whereTenant } from '../tenancy/where-tenant';
+import type { KnexContext } from '../unit-of-work/knex-context';
+import type { KnexReadModelOptions } from './knex-read-model-options';
+import { recordsOf } from './records-of';
+import { RowMapper } from './row.mapper';
 
 /** The stamped rows of one table, the copy of a rebuild as well as the table itself. */
 export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {

@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { KafkaEventBus, deadTopicOf } from '../src/index.js';
-import type { Broker } from './support/broker.js';
-import { InMemoryKafka } from './support/cluster/in-memory-kafka.js';
-import { BROKERS } from './support/brokers.js';
-import { PLACED } from './support/events.js';
+import { KafkaEventBus, deadTopicOf } from '../src';
+import type { Broker } from './support/broker';
+import { InMemoryKafka } from './support/cluster/in-memory-kafka';
+import { BROKERS } from './support/brokers';
+import { PLACED } from './support/events';
 
 describe.each(BROKERS)('KafkaEventBus: topology, %s', { timeout: 60_000 }, (_name, connect) => {
   let broker: Broker;

@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll } from 'vitest';
-import { COMMAND, DECLARED, declaring, EVENT, QUERY } from './declared-style.js';
-import { BILLING } from './rule-tester.js';
+import { COMMAND, DECLARED, declaring, EVENT, QUERY } from './declared-style';
+import { BILLING } from './rule-tester';
 
 /** A project on disk, for what is read from the file a class is imported from. */
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ddd-ts-kit-declared-'));

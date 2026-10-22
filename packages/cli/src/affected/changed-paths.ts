@@ -1,4 +1,4 @@
-import { runGit } from '../commit/run-git.js';
+import { runGit } from '../commit/run-git';
 
 /**
  * The paths that differ between `base` and `head`, relative to the project at `root`; a path of

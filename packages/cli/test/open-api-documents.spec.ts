@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { changeConfig, checkJsonOf } from './check-support.js';
-import { cli, read, scaffoldEverything, tempDir } from './helpers.js';
-import { initProject } from './support/init-project.js';
+import { changeConfig, checkJsonOf } from './check-support';
+import { cli, read, scaffoldEverything, tempDir } from './helpers';
+import { initProject } from './support/init-project';
 
 const MODULE = 'src/platform/http/openapi-documents.ts';
 

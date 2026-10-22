@@ -8,8 +8,8 @@ import {
   offsetPage,
   validateCriteria,
   type CriteriaViolation,
-} from '../src/index.js';
-import { appointments, type AppointmentRow } from './support/appointments.js';
+} from '../src';
+import { appointments, type AppointmentRow } from './support/appointments';
 
 const codes = (violations: readonly CriteriaViolation[]): string[] =>
   violations.map(({ path, code }) => `${path}: ${code}`);

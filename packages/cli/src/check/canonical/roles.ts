@@ -1,4 +1,4 @@
-import type { Role } from './role.js';
+import type { Role } from './role';
 
 /** The canonical tree of docs/ARCHITECTURE.md section 2, as data. */
 export const ROLES: readonly Role[] = [

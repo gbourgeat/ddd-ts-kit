@@ -1,16 +1,16 @@
-import { specifierOf } from '../../alias/index.js';
-import { CliError } from '../../cli-error.js';
-import { toName } from '../../naming/index.js';
-import { emit } from '../emit.js';
-import type { Kind } from '../kind.js';
-import { label } from '../label.js';
-import { openScope } from '../open-scope.js';
-import type { Scope } from '../scope.js';
-import { vars } from '../vars.js';
-import { declareRole } from '../vocabulary/declare-role.js';
-import { groupFile } from './route/group-file.js';
-import { groupPrefix } from './route/group-prefix.js';
-import { groupVars, type GroupDeclaration } from './route/group-vars.js';
+import { specifierOf } from '../../alias';
+import { CliError } from '../../cli-error';
+import { toName } from '../../naming';
+import { emit } from '../emit';
+import type { Kind } from '../kind';
+import { label } from '../label';
+import { openScope } from '../open-scope';
+import type { Scope } from '../scope';
+import { vars } from '../vars';
+import { declareRole } from '../vocabulary/declare-role';
+import { groupFile } from './route/group-file';
+import { groupPrefix } from './route/group-prefix';
+import { groupVars, type GroupDeclaration } from './route/group-vars';
 
 const PREFIX = /^(\/(:[A-Za-z_][A-Za-z0-9_]*|[A-Za-z0-9._~-]+))*$/;
 

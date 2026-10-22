@@ -1,4 +1,4 @@
-import type { Span } from './span.js';
+import type { Span } from './span';
 
 /** For each story, the other ones whose span overlaps its own: built at the same time. */
 export function overlapsOf(spans: readonly Span[]): Map<string, string[]> {

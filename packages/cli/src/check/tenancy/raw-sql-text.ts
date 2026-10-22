@@ -1,4 +1,4 @@
-import type { SourceFile } from '../model/source-file.js';
+import type { SourceFile } from '../model/source-file';
 
 const QUOTES = new Set(["'", '"']);
 const BACKTICK = '`';

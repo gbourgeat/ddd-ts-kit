@@ -1,6 +1,6 @@
-import type { RenderContext } from '../../templating/index.js';
-import { renderTemplate } from '../../templating/index.js';
-import type { Scope } from '../scope.js';
+import type { RenderContext } from '../../templating';
+import { renderTemplate } from '../../templating';
+import type { Scope } from '../scope';
 
 /**
  * The helper an adapter states its own policy with joins the platform with the first adapter

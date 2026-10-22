@@ -1,7 +1,7 @@
 import { inspect } from 'node:util';
 import type { Redis } from 'ioredis';
-import { closeRedis } from '../connection/close-redis.js';
-import { conceal } from '../secrecy/conceal.js';
+import { closeRedis } from '../connection/close-redis';
+import { conceal } from '../secrecy/conceal';
 
 export interface RedisRelaySignalOptions {
   /** One channel per outbox. Default `ddd-ts-kit:outbox`. */

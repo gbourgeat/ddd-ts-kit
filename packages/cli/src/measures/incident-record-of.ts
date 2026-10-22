@@ -1,6 +1,6 @@
-import type { Workspace } from '../workspace/index.js';
-import type { BranchCommit } from './branch-commit.js';
-import type { IncidentRecord } from './incident-record.js';
+import type { Workspace } from '../workspace';
+import type { BranchCommit } from './branch-commit';
+import type { IncidentRecord } from './incident-record';
 
 const FIELD = /^\s*[-*]?\s*\**(message|error_code)\**\s*:\s*(.+)$/i;
 

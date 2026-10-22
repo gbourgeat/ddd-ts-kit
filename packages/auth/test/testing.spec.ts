@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { anonymousActor } from '@ddd-ts-kit/kernel';
 import { resetSequences } from '@ddd-ts-kit/testing';
-import { InvalidCredentialError, RoleBasedAuthorizer } from '../src/index.js';
-import { AllowAll, DenyAll, FakeAuthenticator, RecordingAuthorizer, anActor } from '../src/testing.js';
-import { ada, billingPermissions } from './support/billing.js';
+import { InvalidCredentialError, RoleBasedAuthorizer } from '../src';
+import { AllowAll, DenyAll, FakeAuthenticator, RecordingAuthorizer, anActor } from '../src/testing';
+import { ada, billingPermissions } from './support/billing';
 
 const read = billingPermissions['invoice.read'];
 

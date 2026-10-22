@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { LogFields } from '@ddd-ts-kit/kernel';
 import { loggerContract } from '@ddd-ts-kit/testing/contracts';
 import { pino } from 'pino';
-import { PinoLogger, correlationMixin, createPinoLogger } from '../src/index.js';
-import { loggedLine } from './support/logged-line.js';
-import { MemorySink } from './support/memory-sink.js';
+import { PinoLogger, correlationMixin, createPinoLogger } from '../src';
+import { loggedLine } from './support/logged-line';
+import { MemorySink } from './support/memory-sink';
 
 declare module '@ddd-ts-kit/kernel' {
   interface LogFields {

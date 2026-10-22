@@ -6,8 +6,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LOG_LEVELS } from '@ddd-ts-kit/kernel';
 import { pino } from 'pino';
 import pretty from 'pino-pretty';
-import { PinoLogger, createPinoLogger } from '../src/index.js';
-import { MemorySink } from './support/memory-sink.js';
+import { PinoLogger, createPinoLogger } from '../src';
+import { MemorySink } from './support/memory-sink';
 
 let directory: string;
 

@@ -1,5 +1,5 @@
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { StoredEventType } from './stored-event-type.js';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { StoredEventType } from './stored-event-type';
 
 /** The stored events of one aggregate, by the name each carries: every event of the union is declared. */
 export type StoredEventTypes<E extends DomainEvent> = {

@@ -1,8 +1,8 @@
-import type { Clock } from '../../application/ports/clock.js';
-import type { ExecutionScope } from '../../application/ports/execution-scope.js';
-import type { FileKeys } from '../../application/ports/file-keys.js';
-import type { IdGenerator } from '../../application/ports/id-generator.js';
-import { assertFinalKey } from '../../application/files/assert-final-key.js';
+import type { Clock } from '../../application/ports/clock';
+import type { ExecutionScope } from '../../application/ports/execution-scope';
+import type { FileKeys } from '../../application/ports/file-keys';
+import type { IdGenerator } from '../../application/ports/id-generator';
+import { assertFinalKey } from '../../application/files/assert-final-key';
 
 /**
  * Keys of the form `tenants/<tenant>/<area>/<year>/<month>/<id>`, the tenant segment only when

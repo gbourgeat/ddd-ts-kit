@@ -1,6 +1,6 @@
 import type { BusMiddleware, Clock, Metrics } from '@ddd-ts-kit/kernel';
-import { clockOr } from '../runtime/clock-or.js';
-import { timeCall } from './time-call.js';
+import { clockOr } from '../runtime/clock-or';
+import { timeCall } from './time-call';
 
 export interface MetricsMiddlewareOptions {
   /** Prefix of the two series: `<name>_duration_ms` and `<name>_total`. Default `use_case`. */

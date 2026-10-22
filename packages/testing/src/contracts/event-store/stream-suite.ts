@@ -1,7 +1,7 @@
 import { CONCURRENCY_CONFLICT, type EventStore } from '@ddd-ts-kit/kernel';
-import { ContractSuite } from '../contract-suite.js';
-import { failureOf } from '../failure-of.js';
-import { eventOf } from './event-of.js';
+import { ContractSuite } from '../contract-suite';
+import { failureOf } from '../failure-of';
+import { eventOf } from './event-of';
 
 /** One stream: appended at the version it was read at, read back in order, refused when somebody appended first. */
 export class StreamSuite extends ContractSuite<EventStore> {

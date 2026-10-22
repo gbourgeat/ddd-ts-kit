@@ -1,5 +1,5 @@
-import type { Stack } from '../config/index.js';
-import type { Dialect } from './dialect.js';
+import type { Stack } from '../config';
+import type { Dialect } from './dialect';
 
 /** `npm` and `npx` as words of their own: `pnpm run` is not `npm run`. */
 const NPM = String.raw`(?<![\w@/.-])npm`;

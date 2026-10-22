@@ -1,5 +1,5 @@
-import { BRACKETS } from '../check/text/brackets.js';
-import type { ResultMethods } from './result-methods.js';
+import { BRACKETS } from '../check/text/brackets';
+import type { ResultMethods } from './result-methods';
 
 const STATIC_CALLEE = /(?<![\w$.])([A-Z][\w$]*)\s*\.\s*([\w$]+)\s*$/;
 const INSTANCE_CALLEE = /[\w$)\]]\s*\.\s*([\w$]+)\s*$/;

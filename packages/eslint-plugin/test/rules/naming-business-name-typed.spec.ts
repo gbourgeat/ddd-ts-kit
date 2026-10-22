@@ -3,8 +3,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { RuleTester } from '@typescript-eslint/rule-tester';
 import { afterAll } from 'vitest';
-import { namingBusinessName } from '../../src/rules/naming-business-name.js';
-import { SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { namingBusinessName } from '../../src/rules/naming-business-name';
+import { SAMPLE_CONFIG } from '../support/rule-tester';
 
 const SCHEDULING = 'src/contexts/scheduling';
 const HANDLER = `${SCHEDULING}/application/commands/cancel-appointment/cancel-appointment.handler.ts`;

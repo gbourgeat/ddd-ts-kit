@@ -2,11 +2,11 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { cli, exists, read, tempDir, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { installKit } from './support/install-kit.js';
-import { NPM } from './support/npm.js';
-import { readJson } from './support/read-json.js';
+import { cli, exists, read, tempDir, write } from './helpers';
+import { initProject } from './support/init-project';
+import { installKit } from './support/install-kit';
+import { NPM } from './support/npm';
+import { readJson } from './support/read-json';
 
 const SETTINGS = '.claude/settings.json';
 const GATE = '.claude/hooks/production-gate.mjs';

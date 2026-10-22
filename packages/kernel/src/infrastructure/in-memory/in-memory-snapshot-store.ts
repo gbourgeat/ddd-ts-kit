@@ -1,5 +1,5 @@
-import type { StoredSnapshot } from '../../application/event-sourcing/stored-snapshot.js';
-import type { SnapshotStore } from '../../application/ports/snapshot-store.js';
+import type { StoredSnapshot } from '../../application/event-sourcing/stored-snapshot';
+import type { SnapshotStore } from '../../application/ports/snapshot-store';
 
 /** Reference implementation, for tests and single-process apps. */
 export class InMemorySnapshotStore implements SnapshotStore {

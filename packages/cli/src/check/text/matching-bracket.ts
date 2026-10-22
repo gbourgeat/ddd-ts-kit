@@ -1,4 +1,4 @@
-import { BRACKETS } from './brackets.js';
+import { BRACKETS } from './brackets';
 
 /** Offset of the bracket closing the one at `open`, or the end of the text. */
 export function matchingBracket(code: string, open: number): number {

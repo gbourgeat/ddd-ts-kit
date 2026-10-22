@@ -1,4 +1,4 @@
-import type { Config } from '../config/index.js';
+import type { Config } from '../config';
 
 export type AgentPermissions = Readonly<Record<'allow' | 'deny' | 'ask', readonly string[]>>;
 

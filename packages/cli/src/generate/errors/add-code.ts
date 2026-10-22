@@ -1,4 +1,4 @@
-import type { CodesList } from './codes-list.js';
+import type { CodesList } from './codes-list';
 
 /** One entry of the list: the name of a refusal class and the code it sets. */
 export interface CodeEntry {

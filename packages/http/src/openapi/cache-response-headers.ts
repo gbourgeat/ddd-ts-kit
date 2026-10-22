@@ -1,7 +1,7 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import { cacheHeadersOf } from '../pipeline/cache-headers-of.js';
-import { negotiatedVary } from '../pipeline/negotiated-vary.js';
-import type { Route } from '../route/route.js';
+import { cacheHeadersOf } from '../pipeline/cache-headers-of';
+import { negotiatedVary } from '../pipeline/negotiated-vary';
+import type { Route } from '../route/route';
 
 const SUCCESS_FROM = 200;
 const SUCCESS_TO = 299;

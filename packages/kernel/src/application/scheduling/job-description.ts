@@ -1,4 +1,4 @@
-import type { JobRun } from './job-run.js';
+import type { JobRun } from './job-run';
 
 export interface JobDescription {
   readonly name: string;

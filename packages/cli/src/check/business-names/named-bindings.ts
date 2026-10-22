@@ -1,7 +1,7 @@
-import { declaredBindings } from './declared-bindings.js';
-import type { NamedBinding } from './named-binding.js';
-import { parameterBindings } from './parameter-bindings.js';
-import { propertyBindings } from './property-bindings.js';
+import { declaredBindings } from './declared-bindings';
+import type { NamedBinding } from './named-binding';
+import { parameterBindings } from './parameter-bindings';
+import { propertyBindings } from './property-bindings';
 
 /** Every name a blanked source binds: variables, loop variables, destructured names, parameters and properties. */
 export function namedBindings(code: string): NamedBinding[] {

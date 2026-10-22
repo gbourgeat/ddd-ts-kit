@@ -1,5 +1,5 @@
-import type { ErrorReport } from '../../application/error-reporting/error-report.js';
-import type { ErrorReporter } from '../../application/ports/error-reporter.js';
+import type { ErrorReport } from '../../application/error-reporting/error-report';
+import type { ErrorReporter } from '../../application/ports/error-reporter';
 
 export interface ReportedError {
   readonly error: unknown;

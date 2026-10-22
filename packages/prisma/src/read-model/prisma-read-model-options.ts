@@ -1,4 +1,4 @@
-import type { PrismaReadModelDelegate } from './prisma-read-model-delegate.js';
+import type { PrismaReadModelDelegate } from './prisma-read-model-delegate';
 
 export interface PrismaReadModelOptions<Row, Tx> {
   /** How to reach the model from a client: `(client) => client.appointmentRow`. */

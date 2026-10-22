@@ -1,7 +1,7 @@
 import { AssertionError } from 'node:assert';
 import { describe, expect, it } from 'vitest';
 import { Command, type ProcessDecision } from '@ddd-ts-kit/kernel';
-import { givenProcess } from '../src/index.js';
+import { givenProcess } from '../src';
 
 interface Dunning {
   readonly invoiceId: string;

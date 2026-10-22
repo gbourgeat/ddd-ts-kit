@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
-import type { AuditTablesOptions } from '../sql/audit-tables-options.js';
-import { auditTablesSql } from '../sql/audit-tables-sql.js';
+import type { AuditTablesOptions } from '../sql/audit-tables-options';
+import { auditTablesSql } from '../sql/audit-tables-sql';
 
 /**
  * Creates the tables of the trail and the triggers that keep `audit_entries` append-only.

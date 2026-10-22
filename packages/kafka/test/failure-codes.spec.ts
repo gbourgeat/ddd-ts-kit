@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { BrokerUnavailableError } from '../src/errors/broker-unavailable-error.js';
-import { failureCode } from '../src/errors/failure-code.js';
-import { PublishNotAcknowledgedError } from '../src/errors/publish-not-acknowledged-error.js';
-import { reasonOf } from '../src/errors/reason-of.js';
-import { conceal } from '../src/secrecy/conceal.js';
+import { BrokerUnavailableError } from '../src/errors/broker-unavailable-error';
+import { failureCode } from '../src/errors/failure-code';
+import { PublishNotAcknowledgedError } from '../src/errors/publish-not-acknowledged-error';
+import { reasonOf } from '../src/errors/reason-of';
+import { conceal } from '../src/secrecy/conceal';
 
 class InvoiceRejected extends Error {}
 

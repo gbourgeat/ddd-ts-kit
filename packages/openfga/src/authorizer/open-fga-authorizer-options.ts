@@ -1,6 +1,6 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
 import type { Schema } from '@ddd-ts-kit/auth/rebac';
-import type { OpenFgaApi } from '../client/open-fga-api.js';
+import type { OpenFgaApi } from '../client/open-fga-api';
 
 export interface OpenFgaAuthorizerOptions {
   readonly client: OpenFgaApi;

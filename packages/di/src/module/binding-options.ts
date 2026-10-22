@@ -1,4 +1,4 @@
-import type { ValueBindingOptions } from './value-binding-options.js';
+import type { ValueBindingOptions } from './value-binding-options';
 
 export interface BindingOptions extends ValueBindingOptions {
   /** One instance per application. The default. */

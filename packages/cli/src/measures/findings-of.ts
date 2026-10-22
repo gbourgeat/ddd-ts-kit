@@ -1,5 +1,5 @@
-import { sectionOf } from '../stories/section-of.js';
-import type { Finding } from './finding.js';
+import { sectionOf } from '../stories/section-of';
+import type { Finding } from './finding';
 
 const PASS_ITEM = /^\s*[-*]\s+\**([A-Za-z][\w -]{0,30}?)\**\s*:\s*(.+)$/;
 const ITEM = /^\s*[-*]\s+(.+)$/;

@@ -1,4 +1,4 @@
-import { LINE_WIDTH } from '../layout/index.js';
+import { LINE_WIDTH } from '../layout';
 
 const NAMED_IMPORT = /^import (type )?\{ ([^}]+) \} from '([^']+)';$/;
 

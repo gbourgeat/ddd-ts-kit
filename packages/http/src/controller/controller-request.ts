@@ -1,8 +1,8 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import type { HandlerInput } from '../route/handler-input.js';
-import type { IncomingFile } from '../route/incoming-file.js';
-import type { UploadSpec } from '../route/upload-spec.js';
-import type { ControllerSpec } from './controller-spec.js';
+import type { HandlerInput } from '../route/handler-input';
+import type { IncomingFile } from '../route/incoming-file';
+import type { UploadSpec } from '../route/upload-spec';
+import type { ControllerSpec } from './controller-spec';
 
 /**
  * What `handle` receives for a given declaration: each part has the type its schema produces,

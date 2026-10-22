@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { descendants } from '../descendants.js';
+import { descendants } from '../descendants';
 
 /** Generic types of the language, and the stored shapes the kit keeps readable across its releases. */
 const NOT_DECLARED = new Set([

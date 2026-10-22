@@ -1,6 +1,6 @@
 import type { Redis } from 'ioredis';
-import type { Entry } from './codec/entry.js';
-import { fieldsWith } from './codec/fields-with.js';
+import type { Entry } from './codec/entry';
+import { fieldsWith } from './codec/fields-with';
 
 export interface DeadLetter {
   /** The stream the entry was read from, and the group it is pending in. */

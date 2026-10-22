@@ -1,5 +1,5 @@
-import type { WorkerFile } from '../worker/worker-file.js';
-import type { MergeRepository } from './lost/merge-repository.js';
+import type { WorkerFile } from '../worker/worker-file';
+import type { MergeRepository } from './lost/merge-repository';
 
 /** What the base of a merge of the trunk is looked for with. */
 export interface BaseQuery {

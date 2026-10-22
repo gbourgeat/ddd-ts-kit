@@ -1,4 +1,4 @@
-import type { VocabularyEntry } from './vocabulary-entry.js';
+import type { VocabularyEntry } from './vocabulary-entry';
 
 const DECLARED_VALUE = /^\s*([A-Za-z_$][\w$]*)\s*:\s*'([^']*)',?\s*$/gm;
 

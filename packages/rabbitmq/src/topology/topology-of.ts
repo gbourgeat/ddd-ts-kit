@@ -1,10 +1,10 @@
-import type { QueueType } from '../options/queue-type.js';
-import type { ConsumerBinding } from './consumer-binding.js';
-import type { QueueDescription } from './queue-description.js';
-import type { QueueNames } from './queue-names.js';
-import { queueNamesOf } from './queue-names-of.js';
-import type { RabbitMqTopology } from './rabbit-mq-topology.js';
-import type { TopologySettings } from './topology-settings.js';
+import type { QueueType } from '../options/queue-type';
+import type { ConsumerBinding } from './consumer-binding';
+import type { QueueDescription } from './queue-description';
+import type { QueueNames } from './queue-names';
+import { queueNamesOf } from './queue-names-of';
+import type { RabbitMqTopology } from './rabbit-mq-topology';
+import type { TopologySettings } from './topology-settings';
 
 export function topologyOf(settings: TopologySettings, bindings: readonly ConsumerBinding[]): RabbitMqTopology {
   return {

@@ -197,7 +197,7 @@ importez ce que l'amont a publié pour ses consommateurs, et rien d'autre :
 
 ```ts
 // src/contexts/availability/application/...
-import { appointmentBookedV1, type AppointmentBookedV1 } from '@/contexts/appointments/published-language/index';
+import { appointmentBookedV1, type AppointmentBookedV1 } from '@/contexts/appointments/published-language';
 ```
 
 Pour un besoin synchrone, l'aval déclare un port dans ses propres mots, et un adaptateur *gateway*

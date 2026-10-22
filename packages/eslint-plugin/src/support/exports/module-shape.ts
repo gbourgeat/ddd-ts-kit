@@ -1,5 +1,5 @@
 import type { TSESTree } from '@typescript-eslint/utils';
-import type { TopLevelDeclaration } from './top-level-declaration.js';
+import type { TopLevelDeclaration } from './top-level-declaration';
 
 export interface ModuleShape {
   readonly program: TSESTree.Program;

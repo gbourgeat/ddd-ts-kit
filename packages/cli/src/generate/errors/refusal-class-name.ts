@@ -1,6 +1,6 @@
-import { CliError } from '../../cli-error.js';
-import { parseConceptName, type Name } from '../../naming/index.js';
-import { VAGUE_REFUSAL_NAMES } from './vague-refusal-names.js';
+import { CliError } from '../../cli-error';
+import { parseConceptName, type Name } from '../../naming';
+import { VAGUE_REFUSAL_NAMES } from './vague-refusal-names';
 
 /**
  * The name of a refusal class under `"stack.refusals": "named"`, from `InsufficientFunds`,

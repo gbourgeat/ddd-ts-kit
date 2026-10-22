@@ -1,6 +1,6 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { splitWords } from '../words/split-words.js';
-import { singular } from './singular.js';
+import { splitWords } from '../words/split-words';
+import { singular } from './singular';
 
 /** The singular of the last word of a collection named after a concept: `reminder` for `dueReminders` or `this.reminders`. */
 export function collectionElement(collection: TSESTree.Expression): string | undefined {

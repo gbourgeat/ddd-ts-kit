@@ -1,4 +1,4 @@
-import type { CacheInvalidation } from '../../application/ports/cache-invalidation.js';
+import type { CacheInvalidation } from '../../application/ports/cache-invalidation';
 
 /** Remembers the tags the use cases asked to purge, for a spec to read: `invalidated`, in order. */
 export class InMemoryCacheInvalidation implements CacheInvalidation {

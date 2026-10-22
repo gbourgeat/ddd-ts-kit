@@ -1,7 +1,7 @@
 import type { Schema } from '@ddd-ts-kit/validation';
-import type { RawHeaders } from './raw-headers.js';
-import type { RequestContext } from './request-context.js';
-import type { RequestSchemas } from './request-schemas.js';
+import type { RawHeaders } from './raw-headers';
+import type { RequestContext } from './request-context';
+import type { RequestSchemas } from './request-schemas';
 
 interface PartDefaults {
   params: Record<string, string>;

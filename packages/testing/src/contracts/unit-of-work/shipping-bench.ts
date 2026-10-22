@@ -8,9 +8,9 @@ import {
   type DomainEventCallback,
   type DomainEventPhase,
 } from '@ddd-ts-kit/kernel';
-import { Parcel } from './parcel.js';
-import { Parcels } from './parcels.js';
-import type { UnitOfWorkUnderContract } from './unit-of-work-under-contract.js';
+import { Parcel } from './parcel';
+import { Parcels } from './parcels';
+import type { UnitOfWorkUnderContract } from './unit-of-work-under-contract';
 
 const LATER = new Date('2100-01-01T00:00:00.000Z');
 

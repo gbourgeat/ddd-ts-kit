@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, exists } from './helpers.js';
-import { failure } from './reports.js';
-import { initProject } from './support/init-project.js';
+import { cli, exists } from './helpers';
+import { failure } from './reports';
+import { initProject } from './support/init-project';
 
 const FIX_METHOD = 'Pass --method with one of: GET, POST, PUT, PATCH, DELETE.';
 const FIX_PATH = 'Pass --path made of literal segments and ":name" parameters, for example /invoices/:invoiceId.';

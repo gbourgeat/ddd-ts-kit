@@ -1,14 +1,14 @@
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { declarationOf, type DeclaredClass } from '@ddd-ts-kit/kernel/declarations';
-import { contextModule } from '../declared/context-module.js';
-import { rememberFile } from '../declared/discovered-files.js';
-import { WiringError } from '../errors/wiring-error.js';
-import type { ContextModule } from '../module/context-module.js';
-import { loadDependencyLists } from './load-dependency-lists.js';
-import { modulesNamedIn } from './modules-named-in.js';
-import { withoutModule } from './without-module.js';
-import { roleFilesOf, type RoleFile } from './role-files-of.js';
+import { contextModule } from '../declared/context-module';
+import { rememberFile } from '../declared/discovered-files';
+import { WiringError } from '../errors/wiring-error';
+import type { ContextModule } from '../module/context-module';
+import { loadDependencyLists } from './load-dependency-lists';
+import { modulesNamedIn } from './modules-named-in';
+import { withoutModule } from './without-module';
+import { roleFilesOf, type RoleFile } from './role-files-of';
 
 export interface DiscoveryOptions {
   /**

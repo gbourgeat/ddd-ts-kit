@@ -1,7 +1,7 @@
-import { DomainError } from '../../domain/errors/domain-error.js';
-import { isUnexpectedError } from '../error-reporting/is-unexpected-error.js';
-import type { ErrorDescription } from './error-description.js';
-import { SCRUBBED_MESSAGE } from './scrubbed-message.js';
+import { DomainError } from '../../domain/errors/domain-error';
+import { isUnexpectedError } from '../error-reporting/is-unexpected-error';
+import type { ErrorDescription } from './error-description';
+import { SCRUBBED_MESSAGE } from './scrubbed-message';
 
 export interface DescribeErrorOptions {
   /**

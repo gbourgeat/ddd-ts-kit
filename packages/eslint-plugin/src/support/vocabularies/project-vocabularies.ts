@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { TSESLint } from '@typescript-eslint/utils';
-import type { Project } from '../../project/linted-file.js';
-import { locate } from '../../project/locate.js';
-import { parseSource } from '../parse/parse-source.js';
-import type { DeclaredValue } from './declared-value.js';
-import { valuesDeclaredIn } from './values-declared-in.js';
+import type { Project } from '../../project/linted-file';
+import { locate } from '../../project/locate';
+import { parseSource } from '../parse/parse-source';
+import type { DeclaredValue } from './declared-value';
+import { valuesDeclaredIn } from './values-declared-in';
 
 /** How long a reading of the project is reused: a lint run reads it once, an editor sees a new value within seconds. */
 const FRESH_FOR_MS = 5000;

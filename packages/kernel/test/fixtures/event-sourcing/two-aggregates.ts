@@ -1,6 +1,6 @@
-import type { DomainEvent } from '../../../src/index.js';
-import { On, Projection } from '../../../src/declarations.js';
-import { MoneyDeposited } from '../../support/bank/account.js';
+import type { DomainEvent } from '../../../src';
+import { On, Projection } from '../../../src/declarations';
+import { MoneyDeposited } from '../../support/bank/account';
 
 /** An event of another aggregate than the account. */
 export class LoanRepaid implements DomainEvent {

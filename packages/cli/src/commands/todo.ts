@@ -1,10 +1,10 @@
-import { readConfig } from '../config/index.js';
-import { readRemaining } from '../progress/read-remaining.js';
-import type { Remaining } from '../progress/remaining.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
-import { knownContext } from './known-context.js';
+import { readConfig } from '../config';
+import { readRemaining } from '../progress/read-remaining';
+import type { Remaining } from '../progress/remaining';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import type { Command } from './command';
+import { knownContext } from './known-context';
 
 const MARKS: Readonly<Record<Remaining['kind'], string>> = {
   domain: 'TODO(domain)',

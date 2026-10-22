@@ -1,14 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Config } from '../../config/index.js';
-import { firstFlaw } from '../canonical/first-flaw.js';
-import { flawInContexts } from '../canonical/flaw-in-contexts.js';
-import { isContextRelative } from '../canonical/is-context-relative.js';
-import type { Flaw } from '../model/flaw.js';
-import type { Rule } from '../model/rule.js';
-import type { Violation } from '../model/violation.js';
-import { markdownUnder } from '../project/markdown-under.js';
-import { reporter } from '../support/reporter.js';
+import type { Config } from '../../config';
+import { firstFlaw } from '../canonical/first-flaw';
+import { flawInContexts } from '../canonical/flaw-in-contexts';
+import { isContextRelative } from '../canonical/is-context-relative';
+import type { Flaw } from '../model/flaw';
+import type { Rule } from '../model/rule';
+import type { Violation } from '../model/violation';
+import { markdownUnder } from '../project/markdown-under';
+import { reporter } from '../support/reporter';
 
 /** Where the plan, the design notes and the reviews of a project live. */
 const ARCHITECTURE_DOCS = 'docs/architecture';

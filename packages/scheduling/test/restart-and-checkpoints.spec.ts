@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { aBench } from './support/a-bench.js';
-import { MINUTE } from './support/durations.js';
-import { EXPORT, REMINDERS } from './support/job-names.js';
-import { InMemoryJobCheckpoints } from './support/in-memory-job-checkpoints.js';
-import { QUARTERLY } from './support/quarterly.js';
-import { RecordingJob } from './support/recording-job.js';
-import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections.js';
+import { aBench } from './support/a-bench';
+import { MINUTE } from './support/durations';
+import { EXPORT, REMINDERS } from './support/job-names';
+import { InMemoryJobCheckpoints } from './support/in-memory-job-checkpoints';
+import { QUARTERLY } from './support/quarterly';
+import { RecordingJob } from './support/recording-job';
+import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections';
 
 refuseUnhandledRejections();
 

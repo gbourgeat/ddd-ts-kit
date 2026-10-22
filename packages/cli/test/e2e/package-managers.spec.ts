@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { DEFAULT_STACK, exists, read, scaffoldEverything, type StackFlags, tempDir } from '../helpers.js';
-import { installForReal, type Manager } from './install-for-real.js';
-import { runIn } from './run-in.js';
-import { SLOW } from './stacks.js';
+import { DEFAULT_STACK, exists, read, scaffoldEverything, type StackFlags, tempDir } from '../helpers';
+import { installForReal, type Manager } from './install-for-real';
+import { runIn } from './run-in';
+import { SLOW } from './stacks';
 
 /** The heaviest install the generator offers: NestJS, class-validator, and Prisma, whose client is generated before every build. */
 const HEAVY: StackFlags = {

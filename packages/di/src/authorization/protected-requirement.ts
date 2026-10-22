@@ -1,7 +1,7 @@
 import type { Message, MessageType } from '@ddd-ts-kit/kernel';
 import type { PermissionRef } from '@ddd-ts-kit/kernel/declarations';
-import type { RequirementOptions } from './requirement-options.js';
-import type { Requirement } from './requirement.js';
+import type { RequirementOptions } from './requirement-options';
+import type { Requirement } from './requirement';
 
 export function protectedRequirement<M extends Message>(
   type: MessageType<M>,

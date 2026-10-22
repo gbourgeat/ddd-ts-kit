@@ -1,6 +1,6 @@
-import type { ClientDocument } from './client-document.js';
-import { generatedHeader } from './generated-header.js';
-import { renderOperation } from './render-operation.js';
+import type { ClientDocument } from './client-document';
+import { generatedHeader } from './generated-header';
+import { renderOperation } from './render-operation';
 
 const IMPORTS = [
   "import type * as Schemas from './schemas.js';",

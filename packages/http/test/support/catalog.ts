@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
-import { defineRoute, money, pageSchemaOf, streamSchemaOf, type Route } from '../../src/index.js';
+import { defineRoute, money, pageSchemaOf, streamSchemaOf, type Route } from '../../src';
 
 /** A closed vocabulary, written as its code in every representation. */
 export const ProductStatus = { onSale: 'on-sale', withdrawn: 'withdrawn' } as const;

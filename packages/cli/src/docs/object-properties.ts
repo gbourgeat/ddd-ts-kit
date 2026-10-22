@@ -1,5 +1,5 @@
-import { matchingBracket } from '../check/text/matching-bracket.js';
-import { splitTopLevel } from '../check/text/split-top-level.js';
+import { matchingBracket } from '../check/text/matching-bracket';
+import { splitTopLevel } from '../check/text/split-top-level';
 
 /** Where the value of one property of an object literal is: offsets in the text. */
 export interface PropertyValue {

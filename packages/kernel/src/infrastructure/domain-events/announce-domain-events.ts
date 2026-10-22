@@ -1,11 +1,11 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { DomainEventDispatcher } from '../../application/ports/domain-event-dispatcher.js';
-import type { DomainEvent } from '../../domain/domain-event.js';
-import { dispatchAfterCommit } from './dispatch-after-commit.js';
-import { dispatchBeforeCommit } from './dispatch-before-commit.js';
-import { here } from './here.js';
-import { SaveAfterCommitError } from './save-after-commit-error.js';
-import { unitOfWorkScope, type QueuedDomainEvent, type UnitOfWorkScope } from './unit-of-work-scope.js';
+import type { DomainEventDispatcher } from '../../application/ports/domain-event-dispatcher';
+import type { DomainEvent } from '../../domain/domain-event';
+import { dispatchAfterCommit } from './dispatch-after-commit';
+import { dispatchBeforeCommit } from './dispatch-before-commit';
+import { here } from './here';
+import { SaveAfterCommitError } from './save-after-commit-error';
+import { unitOfWorkScope, type QueuedDomainEvent, type UnitOfWorkScope } from './unit-of-work-scope';
 
 /**
  * Hands over the events a save pulled from its aggregates.

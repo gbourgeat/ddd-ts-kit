@@ -1,5 +1,5 @@
-import type { Config } from '../../config/index.js';
-import type { InitFile } from './init-file.js';
+import type { Config } from '../../config';
+import type { InitFile } from './init-file';
 
 const WITH_TEST_DATABASE = ['drizzle', 'knex', 'prisma', 'typeorm'];
 

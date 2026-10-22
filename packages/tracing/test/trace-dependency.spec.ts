@@ -1,14 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  LocalRootTracker,
-  configureTracing,
-  resetTracingConfiguration,
-  traceDependency,
-  withSpan,
-} from '../src/index.js';
-import { AccountRepository } from './support/account-repository.js';
-import { setupTracing, type TestTracing } from './support/setup-tracing.js';
-import { tracedRepository as repository } from './support/traced-repository.js';
+import { LocalRootTracker, configureTracing, resetTracingConfiguration, traceDependency, withSpan } from '../src';
+import { AccountRepository } from './support/account-repository';
+import { setupTracing, type TestTracing } from './support/setup-tracing';
+import { tracedRepository as repository } from './support/traced-repository';
 
 describe('traceDependency', () => {
   let tracing: TestTracing;

@@ -13,9 +13,9 @@ import {
   type DomainEvent,
   type EventToAppend,
   type StoredEvent,
-} from '../src/index.js';
-import { AT, AccountOpened, MoneyDeposited, type AccountEvent } from './support/bank/account.js';
-import { accountEvents } from './support/bank/account-events.js';
+} from '../src';
+import { AT, AccountOpened, MoneyDeposited, type AccountEvent } from './support/bank/account';
+import { accountEvents } from './support/bank/account-events';
 
 const keys = new InMemorySubjectKeyStore();
 

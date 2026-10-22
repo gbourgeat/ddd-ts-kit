@@ -1,7 +1,7 @@
-import type { Slice } from '../progress/slice.js';
-import { storyOf } from '../story/story-of.js';
-import { aggregatesOf } from './aggregates-of.js';
-import type { Batch, PlannedRow, WaitedRow, Wave } from './wave-plan.js';
+import type { Slice } from '../progress/slice';
+import { storyOf } from '../story/story-of';
+import { aggregatesOf } from './aggregates-of';
+import type { Batch, PlannedRow, WaitedRow, Wave } from './wave-plan';
 
 /** Past this many rows, an agent runs out of turns or context before its report. */
 const ROWS_PER_BATCH = 2;

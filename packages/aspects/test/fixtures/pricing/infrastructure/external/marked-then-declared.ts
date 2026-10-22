@@ -1,9 +1,9 @@
 import { Adapter } from '@ddd-ts-kit/kernel/declarations';
-import { Retry } from '../../../../../src/decorators.js';
-import { SpotRates } from '../../application/ports/spot-rates.port.js';
-import { FlakyRates } from './flaky-rates.js';
-import { Marked } from './marked.js';
-import { noting } from './noting.js';
+import { Retry } from '../../../../../src/decorators';
+import { SpotRates } from '../../application/ports/spot-rates.port';
+import { FlakyRates } from './flaky-rates';
+import { Marked } from './marked';
+import { noting } from './noting';
 
 @Marked()
 @Adapter(SpotRates, { aspects: [noting] })

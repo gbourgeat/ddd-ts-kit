@@ -1,6 +1,6 @@
-import type { Rule } from '../model/rule.js';
-import { strayEntry } from '../canonical/stray-entry.js';
-import { reporter } from '../support/reporter.js';
+import type { Rule } from '../model/rule';
+import { strayEntry } from '../canonical/stray-entry';
+import { reporter } from '../support/reporter';
 
 export const treeClosed: Rule = {
   id: 'tree/closed',

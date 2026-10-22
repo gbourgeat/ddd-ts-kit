@@ -1,8 +1,8 @@
-import type { ExecutionContext } from '../execution/execution-context.js';
-import type { ExecutionScope } from '../ports/execution-scope.js';
-import type { IntegrationEventPublisher } from '../ports/integration-event-publisher.js';
-import type { IntegrationEvent } from './integration-event.js';
-import { messagingSystemOf } from './messaging-system-of.js';
+import type { ExecutionContext } from '../execution/execution-context';
+import type { ExecutionScope } from '../ports/execution-scope';
+import type { IntegrationEventPublisher } from '../ports/integration-event-publisher';
+import type { IntegrationEvent } from './integration-event';
+import { messagingSystemOf } from './messaging-system-of';
 
 /**
  * Decorates a publisher: an event published without `correlationId` takes the one of the work

@@ -1,7 +1,7 @@
 import { context, trace, type Attributes } from '@opentelemetry/api';
-import { isThenable } from './is-thenable.js';
-import { markSpanFailed } from './mark-span-failed.js';
-import { tracer } from './tracer.js';
+import { isThenable } from './is-thenable';
+import { markSpanFailed } from './mark-span-failed';
+import { tracer } from './tracer';
 
 /**
  * Runs `fn` in a span. For the composition root and platform code only (a migration, a

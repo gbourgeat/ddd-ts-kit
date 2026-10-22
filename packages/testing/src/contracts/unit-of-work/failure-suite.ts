@@ -1,8 +1,8 @@
-import { ContractSuite } from '../contract-suite.js';
-import { failureOf } from '../failure-of.js';
-import { Parcel } from './parcel.js';
-import { ShippingBench } from './shipping-bench.js';
-import type { UnitOfWorkUnderContract } from './unit-of-work-under-contract.js';
+import { ContractSuite } from '../contract-suite';
+import { failureOf } from '../failure-of';
+import { Parcel } from './parcel';
+import { ShippingBench } from './shipping-bench';
+import type { UnitOfWorkUnderContract } from './unit-of-work-under-contract';
 
 class CarrierDown extends Error {}
 

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { scan } from '../src/check/scan/scan.js';
-import { cli, EXPLICIT_STACK, read, scaffoldEverything, tempDir, walk, type CliResult } from './helpers.js';
-import { report } from './reports.js';
+import { scan } from '../src/check/scan/scan';
+import { cli, EXPLICIT_STACK, read, scaffoldEverything, tempDir, walk, type CliResult } from './helpers';
+import { report } from './reports';
 
 const BILLING = 'src/contexts/billing';
 const SHIPPING = 'src/contexts/shipping';
@@ -171,7 +171,7 @@ describe('the module file of an explicit context', () => {
     const module = read(root, `${SHIPPING}/shipping.module.ts`);
 
     expect(consumer).toContain(
-      "import { invoiceIssuedV2, type InvoiceIssuedV2 } from '@/contexts/billing/published-language/index';",
+      "import { invoiceIssuedV2, type InvoiceIssuedV2 } from '@/contexts/billing/published-language';",
     );
 
     expect(consumer).toContain('static readonly eventType = invoiceIssuedV2.type;');

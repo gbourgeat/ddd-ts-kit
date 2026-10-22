@@ -1,4 +1,4 @@
-import { escapeRegExp } from './escape-reg-exp.js';
+import { escapeRegExp } from './escape-reg-exp';
 
 /** Matches `name` used as an identifier, not as a part of a longer one. */
 export function identifier(name: string): RegExp {

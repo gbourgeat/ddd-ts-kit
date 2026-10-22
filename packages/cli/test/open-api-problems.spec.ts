@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { openApiProblems } from '../src/config/index.js';
+import { openApiProblems } from '../src/config';
 
 const CONTEXTS = ['billing', 'shipping'];
 

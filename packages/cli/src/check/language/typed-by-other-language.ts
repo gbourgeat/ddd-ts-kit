@@ -1,10 +1,10 @@
-import type { StringRecord } from '../scan/string-record.js';
-import { annotationBefore } from '../text/annotation-before.js';
-import { BRACKETS } from '../text/brackets.js';
-import { matchingBracket } from '../text/matching-bracket.js';
-import { typeAt } from '../text/type-at.js';
-import { recordArguments } from './record-arguments.js';
-import { typeRoot } from './type-root.js';
+import type { StringRecord } from '../scan/string-record';
+import { annotationBefore } from '../text/annotation-before';
+import { BRACKETS } from '../text/brackets';
+import { matchingBracket } from '../text/matching-bracket';
+import { typeAt } from '../text/type-at';
+import { recordArguments } from './record-arguments';
+import { typeRoot } from './type-root';
 
 const SATISFIES = /^\s*satisfies\s+/;
 const TABLE_SATISFIES = /^\s*(?:as\s+const\s+)?satisfies\s+/;

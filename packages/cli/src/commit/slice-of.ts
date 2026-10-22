@@ -1,4 +1,4 @@
-import type { Config } from '../config/index.js';
+import type { Config } from '../config';
 
 /** The slice a changed file belongs to: a use case of a context (its folder, its route and their specs travel together), a layer of it, or a part of the project. */
 export function sliceOf(config: Config, file: string): string {

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, onTestFailed } from 'vitest';
-import { defineBuilder, resetSequences, sequence } from '../src/index.js';
+import { defineBuilder, resetSequences, sequence } from '../src';
 import {
   createDataGenerator,
   dataGenerator,
@@ -7,8 +7,8 @@ import {
   replayHint,
   reportSeedOnFailure,
   useDataGenerator,
-} from '../src/faker.js';
-import { anOrder } from './support/builders.js';
+} from '../src/faker';
+import { anOrder } from './support/builders';
 
 interface Customer {
   readonly id: string;

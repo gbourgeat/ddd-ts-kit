@@ -1,7 +1,7 @@
-import type { ControllerClass } from './controller-class.js';
-import type { ControllerSpec } from './controller-spec.js';
-import type { RouteGroupClass } from './route-group-class.js';
-import type { RouteGroupOptions } from './route-group-options.js';
+import type { ControllerClass } from './controller-class';
+import type { ControllerSpec } from './controller-spec';
+import type { RouteGroupClass } from './route-group-class';
+import type { RouteGroupOptions } from './route-group-options';
 
 export interface PresentationRegistry {
   readonly controllers: WeakMap<ControllerClass, ControllerSpec>;

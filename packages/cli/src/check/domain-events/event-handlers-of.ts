@@ -1,14 +1,14 @@
-import { classesOf } from '../declarations/classes-of.js';
-import type { DeclaredClass } from '../declarations/declared-class.js';
-import { optionOf } from '../declarations/option-of.js';
-import type { Project } from '../model/project.js';
-import type { SourceFile } from '../model/source-file.js';
-import { sourceAt } from '../project/source-at.js';
-import { inLayer } from '../support/in-layer.js';
-import type { EventHandler } from './event-handler.js';
-import type { HandlerDependency } from './handler-dependency.js';
-import { handlerDependencies } from './handler-dependencies.js';
-import { isRegisteredAfterCommit } from './is-registered-after-commit.js';
+import { classesOf } from '../declarations/classes-of';
+import type { DeclaredClass } from '../declarations/declared-class';
+import { optionOf } from '../declarations/option-of';
+import type { Project } from '../model/project';
+import type { SourceFile } from '../model/source-file';
+import { sourceAt } from '../project/source-at';
+import { inLayer } from '../support/in-layer';
+import type { EventHandler } from './event-handler';
+import type { HandlerDependency } from './handler-dependency';
+import { handlerDependencies } from './handler-dependencies';
+import { isRegisteredAfterCommit } from './is-registered-after-commit';
 
 const DECORATOR = 'DomainEventHandler';
 const AFTER_COMMIT = 'after-commit';

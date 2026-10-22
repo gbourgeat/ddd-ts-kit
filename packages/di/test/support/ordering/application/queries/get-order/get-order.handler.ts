@@ -1,6 +1,6 @@
-import type { Order } from '../../../domain/order.js';
-import type { OrderRepository } from '../../../domain/repositories/order.repository.js';
-import type { GetOrder } from './get-order.query.js';
+import type { Order } from '../../../domain/order';
+import type { OrderRepository } from '../../../domain/repositories/order.repository';
+import type { GetOrder } from './get-order.query';
 
 export class GetOrderHandler {
   constructor(private readonly orders: OrderRepository) {}

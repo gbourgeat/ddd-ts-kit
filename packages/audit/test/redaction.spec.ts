@@ -12,11 +12,11 @@ import {
   type AuditMasker,
   type AuditedMessage,
   type MaskingSubject,
-} from '../src/index.js';
-import { aSource, ada } from './support/fixtures.js';
-import { aRescheduling } from './support/scheduling/a-rescheduling.js';
-import { CancelAppointmentCommand } from './support/scheduling/application/commands/cancel-appointment.command.js';
-import { RescheduleAppointmentCommand } from './support/scheduling/application/commands/reschedule-appointment.command.js';
+} from '../src';
+import { aSource, ada } from './support/fixtures';
+import { aRescheduling } from './support/scheduling/a-rescheduling';
+import { CancelAppointmentCommand } from './support/scheduling/application/commands/cancel-appointment.command';
+import { RescheduleAppointmentCommand } from './support/scheduling/application/commands/reschedule-appointment.command';
 
 async function changesRecordedWith(fields: readonly AuditedMessage[], masker?: AuditMasker) {
   const trail = new InMemoryAuditTrail();

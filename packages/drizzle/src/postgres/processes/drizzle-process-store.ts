@@ -1,8 +1,8 @@
 import { and, eq, type TablesRelationalConfig } from 'drizzle-orm';
 import type { PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { ConcurrencyError, type ProcessStore, type StoredProcess } from '@ddd-ts-kit/kernel';
-import type { DrizzleContext } from '../unit-of-work/drizzle-context.js';
-import { processesTable, type ProcessesTable } from './processes-table.js';
+import type { DrizzleContext } from '../unit-of-work/drizzle-context';
+import { processesTable, type ProcessesTable } from './processes-table';
 
 /**
  * The instances of the process managers in PostgreSQL, on the executor of the context: a first

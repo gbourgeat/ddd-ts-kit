@@ -1,6 +1,6 @@
 import { context, trace, type Context, type Span, type SpanOptions } from '@opentelemetry/api';
-import { markSpanFailed } from './mark-span-failed.js';
-import { tracer } from './tracer.js';
+import { markSpanFailed } from './mark-span-failed';
+import { tracer } from './tracer';
 
 export interface SpanStart {
   readonly name: string;

@@ -1,8 +1,8 @@
-import type { Violation } from '../model/violation.js';
-import { lineOf } from '../support/line-of.js';
-import { ALIAS_FILES } from './alias-files.js';
-import type { Inspected } from './inspected.js';
-import { manifestScripts } from './manifest-scripts.js';
+import type { Violation } from '../model/violation';
+import { lineOf } from '../support/line-of';
+import { ALIAS_FILES } from './alias-files';
+import type { Inspected } from './inspected';
+import { manifestScripts } from './manifest-scripts';
 
 const { manifest: MANIFEST, typeCheck: TYPE_CHECK } = ALIAS_FILES;
 /** The dev runner, which loads the TypeScript sources and reads the `paths` of the tsconfig it is given. */

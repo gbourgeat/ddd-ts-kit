@@ -1,4 +1,4 @@
-import { BRACKETS } from '../check/text/brackets.js';
+import { BRACKETS } from '../check/text/brackets';
 
 /** Offset of the `;` ending the statement whose expression starts at `from`, brackets skipped; of the bracket closing around it when it has none. */
 export function statementEnd(code: string, from: number): number {

@@ -1,5 +1,5 @@
 import type { QueuedJob } from '@ddd-ts-kit/kernel';
-import type { RedisJobRecord } from './redis-job-record.js';
+import type { RedisJobRecord } from './redis-job-record';
 
 /** What a record shows of its job: never the payload, the checkpoint or the actor. */
 export function queuedJobOfRecord(record: RedisJobRecord): QueuedJob {

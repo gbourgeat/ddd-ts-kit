@@ -1,5 +1,5 @@
-import type { Injection } from '../injection.js';
-import { PATHS } from '../paths.js';
+import type { Injection } from '../injection';
+import { PATHS } from '../paths';
 
 const APPOINTMENTS = `${PATHS.SCHEDULING}/presentation/http/appointments`;
 const COMPLETE_BODY = `${APPOINTMENTS}/complete-appointment/complete-appointment.body.ts`;

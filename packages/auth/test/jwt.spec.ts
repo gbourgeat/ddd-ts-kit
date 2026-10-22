@@ -2,9 +2,9 @@ import { inspect } from 'node:util';
 import { describe, expect, it } from 'vitest';
 import { anonymousActor } from '@ddd-ts-kit/kernel';
 import { SignJWT, UnsecuredJWT, exportJWK, type JWTPayload } from 'jose';
-import { InvalidCredentialError } from '../src/index.js';
-import { JwtAuthenticator } from '../src/jwt.js';
-import { AUDIENCE, ISSUER, authenticator, foreign, refusalOf, signing, token, verifying } from './support/tokens.js';
+import { InvalidCredentialError } from '../src';
+import { JwtAuthenticator } from '../src/jwt';
+import { AUDIENCE, ISSUER, authenticator, foreign, refusalOf, signing, token, verifying } from './support/tokens';
 
 describe('JwtAuthenticator', () => {
   it('answers the anonymous actor without credential', async () => {

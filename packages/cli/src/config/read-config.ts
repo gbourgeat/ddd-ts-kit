@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CliError } from '../cli-error.js';
-import type { Config } from './config.js';
-import { CONFIG_FILE } from './config-file.js';
-import { parseConfig } from './parse-config.js';
+import { CliError } from '../cli-error';
+import type { Config } from './config';
+import { CONFIG_FILE } from './config-file';
+import { parseConfig } from './parse-config';
 
 export interface LoadedConfig {
   readonly config: Config;

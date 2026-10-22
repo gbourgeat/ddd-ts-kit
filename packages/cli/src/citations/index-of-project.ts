@@ -1,7 +1,7 @@
-import type { Project } from '../check/model/project.js';
-import type { Declaration } from './declaration.js';
-import type { NameIndex } from './name-index.js';
-import { nameIndexOf } from './name-index-of.js';
+import type { Project } from '../check/model/project';
+import type { Declaration } from './declaration';
+import type { NameIndex } from './name-index';
+import { nameIndexOf } from './name-index-of';
 
 const DECLARATION = /(?<![\w$])(?:class|interface|type|enum|function|const)\s+([A-Z][\w$]*)/g;
 

@@ -1,5 +1,5 @@
-import { CliError } from '../cli-error.js';
-import type { Scope } from './scope.js';
+import { CliError } from '../cli-error';
+import type { Scope } from './scope';
 
 export interface Prerequisite {
   /** Path inside the context. */

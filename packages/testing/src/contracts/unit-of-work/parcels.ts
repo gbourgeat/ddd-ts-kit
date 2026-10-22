@@ -1,5 +1,5 @@
-import type { Parcel } from './parcel.js';
-import type { UnitOfWorkUnderContract } from './unit-of-work-under-contract.js';
+import type { Parcel } from './parcel';
+import type { UnitOfWorkUnderContract } from './unit-of-work-under-contract';
 
 /** A repository adapter over the table of the subject: it persists, and knows nothing of events. */
 export class Parcels {

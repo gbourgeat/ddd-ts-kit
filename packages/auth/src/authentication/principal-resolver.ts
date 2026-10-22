@@ -1,9 +1,9 @@
 import type { Session } from '@ddd-ts-kit/kernel';
-import type { Authenticator } from './authenticator.js';
-import { bearerCredential } from './bearer-credential.js';
-import type { HeaderValues } from './header-values.js';
-import { resolveSession } from './resolve-session.js';
-import type { SessionAuthenticator } from './session-authenticator.js';
+import type { Authenticator } from './authenticator';
+import { bearerCredential } from './bearer-credential';
+import type { HeaderValues } from './header-values';
+import { resolveSession } from './resolve-session';
+import type { SessionAuthenticator } from './session-authenticator';
 
 /**
  * The `resolvePrincipal` option of @ddd-ts-kit/http: takes the framework request, answers the

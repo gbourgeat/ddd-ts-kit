@@ -3,15 +3,15 @@ import { AsyncLocalStorageExecutionScope, NoCurrentTenantError } from '@ddd-ts-k
 import { anExecutionContext, asTenant, scoped } from '@ddd-ts-kit/testing';
 import { tenantIsolationContract } from '@ddd-ts-kit/testing/contracts';
 import type { CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
-import { ConcurrencyError, KnexReadModelTable, createKnexUnitOfWork, tenantTable } from '../src/index.js';
-import { Invoice } from './support/billing-core/domain/invoice.js';
-import { BILLING } from './support/billing-core/infrastructure/persistence/billing-schema.js';
-import { createInvoicesTable } from './support/billing-core/infrastructure/persistence/create-invoices-table.js';
-import type { InvoiceRow } from './support/billing-core/infrastructure/persistence/invoice-row.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
-import { CONTRACT_TABLE, READ_SIDE, createContractTable } from './support/read-model/criteria-contract-table.js';
-import { SHARED_TABLES } from './support/tenancy/invoice-tables.js';
-import { StrategyInvoiceRepository } from './support/tenancy/strategy-invoice-repository.js';
+import { ConcurrencyError, KnexReadModelTable, createKnexUnitOfWork, tenantTable } from '../src';
+import { Invoice } from './support/billing-core/domain/invoice';
+import { BILLING } from './support/billing-core/infrastructure/persistence/billing-schema';
+import { createInvoicesTable } from './support/billing-core/infrastructure/persistence/create-invoices-table';
+import type { InvoiceRow } from './support/billing-core/infrastructure/persistence/invoice-row';
+import { createDatabase, type TestDatabase } from './support/database';
+import { CONTRACT_TABLE, READ_SIDE, createContractTable } from './support/read-model/criteria-contract-table';
+import { SHARED_TABLES } from './support/tenancy/invoice-tables';
+import { StrategyInvoiceRepository } from './support/tenancy/strategy-invoice-repository';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const INVOICES = { table: 'invoices', schema: BILLING };

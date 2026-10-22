@@ -1,4 +1,4 @@
-import type { Workspace } from '../workspace/index.js';
+import type { Workspace } from '../workspace';
 
 /** Where the specification of each story lives: its statement and its acceptance criteria. */
 export const STORIES_DIR = 'docs/architecture/stories';

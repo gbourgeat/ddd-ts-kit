@@ -1,5 +1,5 @@
-import type { DeclaredEntry } from './declared-entry.js';
-import { registry } from './registry.js';
+import type { DeclaredEntry } from './declared-entry';
+import { registry } from './registry';
 
 /** Every declared class this process still holds, in declaration order. For diagnostics. */
 export function listDeclarations(): readonly DeclaredEntry[] {

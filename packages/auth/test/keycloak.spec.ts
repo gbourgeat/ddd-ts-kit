@@ -2,8 +2,8 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { SignJWT, exportJWK, generateKeyPair, type CryptoKey, type JWTPayload } from 'jose';
-import { InvalidCredentialError, principalResolver } from '../src/index.js';
-import { keycloakAuthenticator, type KeycloakAuthenticatorOptions } from '../src/jwt.js';
+import { InvalidCredentialError, principalResolver } from '../src';
+import { keycloakAuthenticator, type KeycloakAuthenticatorOptions } from '../src/jwt';
 
 const REALM = 'shop';
 const AUDIENCE = 'shop-api';

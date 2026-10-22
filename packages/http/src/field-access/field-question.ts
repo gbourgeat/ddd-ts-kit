@@ -1,5 +1,5 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import type { FieldRequirement } from './field-requirement.js';
+import type { FieldRequirement } from './field-requirement';
 
 /** What a decider is asked: whether the actor meets a requirement of a field, or of the form of a route. */
 export interface FieldQuestion {

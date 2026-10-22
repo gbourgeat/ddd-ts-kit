@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, REPO_ROOT, tempDir, write } from '../helpers.js';
-import { git } from '../support/git.js';
-import { commitFiles, squashInto } from '../support/trunk-history.js';
-import { SLOW } from './stacks.js';
+import { cli, read, REPO_ROOT, tempDir, write } from '../helpers';
+import { git } from '../support/git';
+import { commitFiles, squashInto } from '../support/trunk-history';
+import { SLOW } from './stacks';
 
 const EXAMPLE = path.join(REPO_ROOT, 'examples/scheduling');
 const NOT_COPIED = ['node_modules', 'dist', 'coverage', '.ddd-ts-kit'];

@@ -1,8 +1,8 @@
-import { refusalAssertions } from './refusal-assertions.js';
-import type { ResultMethods } from './result-methods.js';
-import type { Rewrite } from './rewrite.js';
-import { tidyImports } from './tidy-imports.js';
-import { withoutUnwrap } from './without-unwrap.js';
+import { refusalAssertions } from './refusal-assertions';
+import type { ResultMethods } from './result-methods';
+import type { Rewrite } from './rewrite';
+import { tidyImports } from './tidy-imports';
+import { withoutUnwrap } from './without-unwrap';
 
 /** How many places of each kind a source had rewritten. */
 export interface UsageCounts {

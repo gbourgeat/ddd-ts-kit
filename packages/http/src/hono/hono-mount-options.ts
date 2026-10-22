@@ -1,4 +1,4 @@
-import type { ExecuteOptions } from '../pipeline/execute-options.js';
+import type { ExecuteOptions } from '../pipeline/execute-options';
 
 export interface HonoMountOptions extends ExecuteOptions {
   /**

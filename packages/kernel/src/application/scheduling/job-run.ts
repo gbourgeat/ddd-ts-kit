@@ -1,4 +1,4 @@
-import type { JobOutcome } from './job-outcome.js';
+import type { JobOutcome } from './job-outcome';
 
 /** One occurrence and what became of it, as data. Never the message of an error: it quotes data. */
 export interface JobRun {

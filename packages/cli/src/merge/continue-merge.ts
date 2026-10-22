@@ -1,15 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { isRecord } from '../config/values/is-record.js';
-import { runScript } from '../slice/run-script.js';
-import { commitMerge } from './commit-merge.js';
-import { lostLinesGate } from './lost-lines-gate.js';
-import type { MergeContext } from './merge-context.js';
-import type { MergeReport, StepRun } from './merge-report.js';
-import { type MergeState, mergeState } from './merge-state.js';
-import { MERGE_STEPS } from './merge-steps.js';
-import { NEXT_STEPS } from './next-steps.js';
-import { unmergedEntries } from './unmerged-entries.js';
+import { isRecord } from '../config/values/is-record';
+import { runScript } from '../slice/run-script';
+import { commitMerge } from './commit-merge';
+import { lostLinesGate } from './lost-lines-gate';
+import type { MergeContext } from './merge-context';
+import type { MergeReport, StepRun } from './merge-report';
+import { type MergeState, mergeState } from './merge-state';
+import { MERGE_STEPS } from './merge-steps';
+import { NEXT_STEPS } from './next-steps';
+import { unmergedEntries } from './unmerged-entries';
 
 /** How `--continue` goes on. */
 export interface ContinueOptions {

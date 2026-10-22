@@ -1,16 +1,16 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import type { AccessScope } from '../authorization/access-scope.js';
-import type { Authorizer } from '../authorization/authorizer.js';
-import type { CheckRequest } from '../authorization/check-request.js';
-import { ALLOWED, type Decision } from '../authorization/decision.js';
-import type { Explanation } from '../authorization/explanation.js';
-import type { ListRequest } from '../authorization/list-request.js';
-import { Trace } from '../authorization/trace.js';
-import { ListingNotSupportedError } from '../errors/listing-not-supported-error.js';
-import type { Grant } from '../permissions/grant.js';
-import { grantCovers } from '../permissions/grant-covers.js';
-import { grantPattern } from '../permissions/grant-pattern.js';
-import type { Permission } from '../permissions/permission.js';
+import type { AccessScope } from '../authorization/access-scope';
+import type { Authorizer } from '../authorization/authorizer';
+import type { CheckRequest } from '../authorization/check-request';
+import { ALLOWED, type Decision } from '../authorization/decision';
+import type { Explanation } from '../authorization/explanation';
+import type { ListRequest } from '../authorization/list-request';
+import { Trace } from '../authorization/trace';
+import { ListingNotSupportedError } from '../errors/listing-not-supported-error';
+import type { Grant } from '../permissions/grant';
+import { grantCovers } from '../permissions/grant-covers';
+import { grantPattern } from '../permissions/grant-pattern';
+import type { Permission } from '../permissions/permission';
 
 export interface SignedInGrantsAuthorizerOptions {
   /** What every signed-in person may do, whatever their roles, attributes or relationships. */

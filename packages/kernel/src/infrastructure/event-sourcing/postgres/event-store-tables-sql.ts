@@ -1,5 +1,5 @@
-import type { EventStoreTablesOptions } from './event-store-tables-options.js';
-import { qualifiedTable } from './qualified-table.js';
+import type { EventStoreTablesOptions } from './event-store-tables-options';
+import { qualifiedTable } from './qualified-table';
 
 /**
  * The statements that create the tables of an event store on PostgreSQL, for a migration of the

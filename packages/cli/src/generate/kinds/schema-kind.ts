@@ -1,11 +1,11 @@
-import { toName } from '../../naming/index.js';
-import { emit } from '../emit.js';
-import type { Kind, KindRequest } from '../kind.js';
-import { label } from '../label.js';
-import { named } from '../named.js';
-import { openScope } from '../open-scope.js';
-import type { Scope } from '../scope.js';
-import { vars } from '../vars.js';
+import { toName } from '../../naming';
+import { emit } from '../emit';
+import type { Kind, KindRequest } from '../kind';
+import { label } from '../label';
+import { named } from '../named';
+import { openScope } from '../open-scope';
+import type { Scope } from '../scope';
+import { vars } from '../vars';
 
 /** The first argument that writes in the shared kernel instead of a context. */
 const SHARED_KERNEL = 'shared-kernel';

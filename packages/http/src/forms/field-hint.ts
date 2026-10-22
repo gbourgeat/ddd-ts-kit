@@ -1,5 +1,5 @@
-import type { FormCondition } from './form-condition.js';
-import type { Widget } from './widget.js';
+import type { FormCondition } from './form-condition';
+import type { Widget } from './widget';
 
 /** What the request schema cannot say about one field of a form: how it is entered and when it applies. */
 export interface FieldHint {

@@ -17,7 +17,7 @@ import {
   evaluateCriteria,
 } from '@ddd-ts-kit/kernel';
 import { InMemoryOutboxStore } from '@ddd-ts-kit/events';
-import { InMemoryRepository, resetSequences, snapshots } from '../src/index.js';
+import { InMemoryRepository, resetSequences, snapshots } from '../src';
 import {
   cacheContract,
   cachePurgerContract,
@@ -33,11 +33,11 @@ import {
   readModelStoreContract,
   repositoryContract,
   type CriteriaContractRow,
-} from '../src/contracts.js';
-import { anOrder } from './support/builders.js';
-import { Order, at } from './support/order.js';
-import { RedeliveringBus } from './support/redelivering-bus.js';
-import { TransactionalJournal } from './support/transactional-journal.js';
+} from '../src/contracts';
+import { anOrder } from './support/builders';
+import { Order, at } from './support/order';
+import { RedeliveringBus } from './support/redelivering-bus';
+import { TransactionalJournal } from './support/transactional-journal';
 
 // The globals of the runner are passed as they are: the suites import no runner themselves.
 const runner = { describe, it, expect, beforeEach, afterEach };

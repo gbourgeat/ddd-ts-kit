@@ -1,5 +1,5 @@
-import type { Actor } from '../actor/actor.js';
-import type { JobProgress } from './job-progress.js';
+import type { Actor } from '../actor/actor';
+import type { JobProgress } from './job-progress';
 
 /** What a run of a background job is told about itself, and how it reports back. */
 export interface BackgroundJobExecution {

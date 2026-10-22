@@ -1,8 +1,8 @@
-import type { ClassInjection } from './injection/class-injection.js';
-import { contextInjections } from './injection/context-injections.js';
-import { renderInjections } from './injection/render-injections.js';
-import type { Sources } from './injection/sources.js';
-import { renderDeclarations } from './render-declarations.js';
+import type { ClassInjection } from './injection/class-injection';
+import { contextInjections } from './injection/context-injections';
+import { renderInjections } from './injection/render-injections';
+import type { Sources } from './injection/sources';
+import { renderDeclarations } from './render-declarations';
 
 /** A declared context, read where its files are. */
 export interface DeclaredContext {

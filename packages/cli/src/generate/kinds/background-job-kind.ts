@@ -1,18 +1,18 @@
-import { CliError } from '../../cli-error.js';
-import type { Name } from '../../naming/index.js';
-import { concept } from '../concept.js';
-import { emit } from '../emit.js';
-import type { Kind } from '../kind.js';
-import { learnTerms } from '../learn-terms.js';
-import { named } from '../named.js';
-import { openScope } from '../open-scope.js';
-import type { Scope } from '../scope.js';
-import { specVars } from '../spec-vars.js';
-import { vars } from '../vars.js';
-import { wire } from '../wire.js';
-import { backgroundJobVars } from './background/background-job-vars.js';
-import { requireContainer } from './background/require-container.js';
-import { readSentCommand } from './job/read-sent-command.js';
+import { CliError } from '../../cli-error';
+import type { Name } from '../../naming';
+import { concept } from '../concept';
+import { emit } from '../emit';
+import type { Kind } from '../kind';
+import { learnTerms } from '../learn-terms';
+import { named } from '../named';
+import { openScope } from '../open-scope';
+import type { Scope } from '../scope';
+import { specVars } from '../spec-vars';
+import { vars } from '../vars';
+import { wire } from '../wire';
+import { backgroundJobVars } from './background/background-job-vars';
+import { requireContainer } from './background/require-container';
+import { readSentCommand } from './job/read-sent-command';
 
 /** `CompileReportBackgroundJob` and `compile-report-background-job` name the job `CompileReport`. */
 const ROLE_SUFFIX = /(?<=[a-z0-9])[-_]?background[-_]?job$/i;

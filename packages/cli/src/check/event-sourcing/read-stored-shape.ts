@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
-import type { Scan } from '../scan/scan.js';
-import { declaredShape, type ShapeReading } from './declared-shape.js';
-import type { StoredShape } from './stored-shape.js';
+import type { Scan } from '../scan/scan';
+import { declaredShape, type ShapeReading } from './declared-shape';
+import type { StoredShape } from './stored-shape';
 
 /**
  * Stored shapes the kit itself owns and keeps readable across its releases: named in a data

@@ -1,10 +1,10 @@
-import type { Representations } from '../representation/representations.js';
-import { isJsonMediaType } from '../representation/is-json-media-type.js';
-import { mediaTypeOf } from '../representation/media-type-of.js';
-import { UnsupportedMediaTypeError } from '../representation/unsupported-media-type-error.js';
-import type { Route } from '../route/route.js';
-import { jsonSchemaOf } from '../schema/json-schema-of.js';
-import type { RawRequest } from './raw-request.js';
+import type { Representations } from '../representation/representations';
+import { isJsonMediaType } from '../representation/is-json-media-type';
+import { mediaTypeOf } from '../representation/media-type-of';
+import { UnsupportedMediaTypeError } from '../representation/unsupported-media-type-error';
+import type { Route } from '../route/route';
+import { jsonSchemaOf } from '../schema/json-schema-of';
+import type { RawRequest } from './raw-request';
 
 /**
  * The body of a request as the JSON path would have produced it, before its schema validates it:

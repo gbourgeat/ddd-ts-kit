@@ -1,5 +1,5 @@
-import type { AcceptanceProblem } from './acceptance-problem.js';
-import type { RegressionSpec, RegressionTest } from './regression-spec.js';
+import type { AcceptanceProblem } from './acceptance-problem';
+import type { RegressionSpec, RegressionTest } from './regression-spec';
 
 /**
  * What keeps a fix from its gates: a listed spec that is missing or holds no test (`written`), a

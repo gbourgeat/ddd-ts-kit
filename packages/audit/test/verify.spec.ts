@@ -6,7 +6,7 @@ import {
   type AuditCheckpoint,
   type AuditEntry,
   type AuditRecord,
-} from '../src/index.js';
+} from '../src';
 
 const CHAIN = 'tenant:acme';
 

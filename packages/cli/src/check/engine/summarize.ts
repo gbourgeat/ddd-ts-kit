@@ -1,5 +1,5 @@
-import type { Violation } from '../model/violation.js';
-import type { CheckResult } from './check-result.js';
+import type { Violation } from '../model/violation';
+import type { CheckResult } from './check-result';
 
 /** Counts what is reported; the totals about suppressions and files come from the run it derives from. */
 export function summarize(

@@ -1,9 +1,9 @@
-import type { Fixture } from './fixture.js';
-import type { FixtureFiles } from './fixture-files.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { SAMPLES } from './samples.js';
-import { source } from './source.js';
+import type { Fixture } from './fixture';
+import type { FixtureFiles } from './fixture-files';
+import { PATHS } from './paths';
+import { project } from './project';
+import { SAMPLES } from './samples';
+import { source } from './source';
 
 const { BILLING, QUERY_HANDLER, QUERY_HANDLER_SPEC } = PATHS;
 const PERMISSIONS = `${BILLING}/application/authorization/billing.permissions.ts`;

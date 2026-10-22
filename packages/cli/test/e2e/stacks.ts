@@ -1,4 +1,4 @@
-import { DEFAULT_STACK, EXPLICIT_STACK, type StackFlags } from '../helpers.js';
+import { DEFAULT_STACK, EXPLICIT_STACK, type StackFlags } from '../helpers';
 
 export const REBAC_ON_RABBITMQ: StackFlags = { ...DEFAULT_STACK, authz: 'rebac', broker: 'rabbitmq', ci: 'gitlab' };
 export const ABAC_ON_KNEX_BY_HAND: StackFlags = { ...DEFAULT_STACK, orm: 'knex', di: 'manual', authz: 'abac' };

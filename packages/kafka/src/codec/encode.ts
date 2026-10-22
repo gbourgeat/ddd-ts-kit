@@ -6,9 +6,9 @@ import {
   EVENT_VERSION_HEADER,
   TENANT_HEADER,
   TRACEPARENT_HEADER,
-} from './headers.js';
-import type { OutgoingRecord } from './outgoing-record.js';
-import type { Routing } from './routing.js';
+} from './headers';
+import type { OutgoingRecord } from './outgoing-record';
+import type { Routing } from './routing';
 
 /**
  * The value is the whole envelope as JSON, so any Kafka client can consume it. The headers

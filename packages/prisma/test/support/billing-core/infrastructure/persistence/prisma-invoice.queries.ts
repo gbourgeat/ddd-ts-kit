@@ -10,12 +10,12 @@ import {
   type SortDirection,
   type TenantScoped,
 } from '@ddd-ts-kit/kernel';
-import type { Prisma } from '../../../../generated/client/client.js';
-import type { Database } from '../../../platform/database/database.js';
-import type { InvoiceQueries, InvoiceSort, InvoiceSummary } from '../../application/ports/invoice-queries.port.js';
-import { directionOf } from './direction-of.js';
-import { positionOf, type InvoicePosition } from './position-of.js';
-import { statusOf } from './status-of.js';
+import type { Prisma } from '../../../../generated/client/client';
+import type { Database } from '../../../platform/database/database';
+import type { InvoiceQueries, InvoiceSort, InvoiceSummary } from '../../application/ports/invoice-queries.port';
+import { directionOf } from './direction-of';
+import { positionOf, type InvoicePosition } from './position-of';
+import { statusOf } from './status-of';
 
 /**
  * The list query of a read port, in both variants of `PageRequest`. The order is total: the

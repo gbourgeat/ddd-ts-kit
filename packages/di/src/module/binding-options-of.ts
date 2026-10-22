@@ -1,5 +1,5 @@
-import type { Binding } from '../wiring/binding.js';
-import type { BindingOptions } from './binding-options.js';
+import type { Binding } from '../wiring/binding';
+import type { BindingOptions } from './binding-options';
 
 /** The options a module chains after a binding: each changes the binding it was made for. */
 export function bindingOptionsOf(binding: Binding): BindingOptions {

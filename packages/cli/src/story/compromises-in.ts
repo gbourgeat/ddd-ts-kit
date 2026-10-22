@@ -1,4 +1,4 @@
-import { sectionOf } from '../stories/section-of.js';
+import { sectionOf } from '../stories/section-of';
 
 const COMPROMISES = /^###\s+compromises\s*$/i;
 const HEADING = /^#{1,3}\s/;

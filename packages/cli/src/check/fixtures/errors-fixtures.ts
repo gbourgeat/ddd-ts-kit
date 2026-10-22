@@ -1,10 +1,10 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { config } from './config.js';
-import { errorsRoute as route } from './errors-route.js';
-import type { Fixture } from './fixture.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { source } from './source.js';
+import { CONFIG_FILE } from '../../config';
+import { config } from './config';
+import { errorsRoute as route } from './errors-route';
+import type { Fixture } from './fixture';
+import { PATHS } from './paths';
+import { project } from './project';
+import { source } from './source';
 
 const { BILLING, ROUTE } = PATHS;
 const CONTROLLER = `${BILLING}/presentation/http/invoices/issue-invoice/issue-invoice.controller.ts`;

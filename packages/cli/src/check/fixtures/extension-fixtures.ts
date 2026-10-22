@@ -1,7 +1,7 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { config } from './config.js';
-import type { Fixture } from './fixture.js';
-import { project } from './project.js';
+import { CONFIG_FILE } from '../../config';
+import { config } from './config';
+import type { Fixture } from './fixture';
+import { project } from './project';
 
 const RULE = 'imports/extension';
 const LOAD_CONFIG = 'src/platform/config/load-config.ts';
@@ -26,7 +26,7 @@ export const EXTENSION_FIXTURES: readonly Fixture[] = [
         [LOAD_CONFIG]: [
           "import { core } from 'zod/v4/core.js';",
           "import { appConfig } from '@/platform/config/app-config';",
-          "export type { appConfig as Settings } from '@/platform/config/index';",
+          "export type { appConfig as Settings } from '@/platform/config';",
           "export const later = (): Promise<unknown> => import('@/platform/config/app-config');",
           'export const loaded = [core, appConfig];\n',
         ].join('\n'),
@@ -60,8 +60,8 @@ export const EXTENSION_FIXTURES: readonly Fixture[] = [
   ]),
   {
     ruleId: RULE,
-    name: 'a directory under "none": the compiler would complete it with its index',
-    expect: { file: LOAD_CONFIG },
+    name: 'a directory under "none": the compiler completes it with its index and so does the build',
+    expect: 'pass',
     files: project(
       {
         [APP_CONFIG]: SETTINGS,

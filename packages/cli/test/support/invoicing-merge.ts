@@ -1,4 +1,4 @@
-import type { Histories } from './merge-repository.js';
+import type { Histories } from './merge-repository';
 
 /** Files of a billing context: the branch adds paying an invoice, the trunk cancelling one, in the same places. */
 export const INVOICE = 'src/contexts/billing/invoice.ts';

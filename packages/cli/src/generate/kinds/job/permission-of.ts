@@ -1,7 +1,7 @@
-import { specifierOf } from '../../../alias/index.js';
-import type { Config } from '../../../config/index.js';
-import { toName } from '../../../naming/index.js';
-import { permissionsFile } from '../../permissions-file.js';
+import { specifierOf } from '../../../alias';
+import type { Config } from '../../../config';
+import { toName } from '../../../naming';
+import { permissionsFile } from '../../permissions-file';
 
 /** A permission as code reads it: the entry of the permission set of its context, and the import of that set. */
 export interface PermissionReference {

@@ -1,4 +1,4 @@
-import { PreconditionFailedError } from '../../domain/errors/precondition-failed-error.js';
+import { PreconditionFailedError } from '../../domain/errors/precondition-failed-error';
 
 /**
  * Refuses to change an element whose version is not the one the caller read: the version an

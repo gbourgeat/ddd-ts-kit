@@ -1,13 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { mergeRepositoryOf } from '../src/merge/lost/merge-repository-of.js';
-import { forecastMerge } from '../src/stories/forecast-merge.js';
-import { formatStories } from '../src/stories/format-stories.js';
-import { readStories } from '../src/stories/read-stories.js';
-import type { StoryState } from '../src/stories/story-state.js';
-import { tempDir, write } from './helpers.js';
-import { git } from './support/git.js';
+import { mergeRepositoryOf } from '../src/merge/lost/merge-repository-of';
+import { forecastMerge } from '../src/stories/forecast-merge';
+import { formatStories } from '../src/stories/format-stories';
+import { readStories } from '../src/stories/read-stories';
+import type { StoryState } from '../src/stories/story-state';
+import { tempDir, write } from './helpers';
+import { git } from './support/git';
 
 const BASE = { base: 'main', files: [] } as const;
 

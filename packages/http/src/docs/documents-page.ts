@@ -1,5 +1,5 @@
-import type { DocsUi } from './docs-ui.js';
-import { escapeHtml } from './escape-html.js';
+import type { DocsUi } from './docs-ui';
+import { escapeHtml } from './escape-html';
 
 /** One document of a split contract, as the documentation page lists it. */
 export interface ListedDocument {

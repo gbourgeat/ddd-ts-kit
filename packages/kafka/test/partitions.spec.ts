@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { type IntegrationEvent } from '@ddd-ts-kit/kernel';
-import type { Broker } from './support/broker.js';
-import { BROKERS } from './support/brokers.js';
-import { PLACED, anEvent } from './support/events.js';
-import { InvoicingFailed } from './support/invoicing-failed.js';
-import { orderOf } from './support/order-of.js';
-import { recorder } from './support/recorder.js';
-import { eventually, pause } from './support/waiting.js';
+import type { Broker } from './support/broker';
+import { BROKERS } from './support/brokers';
+import { PLACED, anEvent } from './support/events';
+import { InvoicingFailed } from './support/invoicing-failed';
+import { orderOf } from './support/order-of';
+import { recorder } from './support/recorder';
+import { eventually, pause } from './support/waiting';
 
 describe.each(BROKERS)('KafkaEventBus: partitions, %s', { timeout: 60_000 }, (_name, connect) => {
   let broker: Broker;

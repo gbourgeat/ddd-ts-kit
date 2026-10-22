@@ -1,6 +1,6 @@
-import { HydrationTimeoutError } from './hydration-timeout-error.js';
-import type { HydrationRun } from './hydration-run.js';
-import { property } from './property.js';
+import { HydrationTimeoutError } from './hydration-timeout-error';
+import type { HydrationRun } from './hydration-run';
+import { property } from './property';
 
 export interface Relation<Row, Name extends string, Related> {
   readonly name: Name;

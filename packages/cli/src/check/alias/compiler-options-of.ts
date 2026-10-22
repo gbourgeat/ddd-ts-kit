@@ -1,8 +1,8 @@
 import path from 'node:path';
-import type { Project } from '../model/project.js';
-import { isRecord } from '../support/is-record.js';
-import { parseJsonc } from './parse-jsonc.js';
-import { readProjectFile } from './read-project-file.js';
+import type { Project } from '../model/project';
+import { isRecord } from '../support/is-record';
+import { parseJsonc } from './parse-jsonc';
+import { readProjectFile } from './read-project-file';
 
 const DEPTH = 8;
 

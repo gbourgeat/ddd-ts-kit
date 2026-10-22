@@ -1,8 +1,8 @@
-import { aliasRoots, specifierSuffix } from '../alias/index.js';
-import { rewriteAliases } from '../build/index.js';
-import { readConfig } from '../config/index.js';
-import { Arguments } from './arguments.js';
-import { type Command } from './command.js';
+import { aliasRoots, specifierSuffix } from '../alias';
+import { rewriteAliases } from '../build';
+import { readConfig } from '../config';
+import { Arguments } from './arguments';
+import { type Command } from './command';
 
 const BUILD_PROJECT = 'tsconfig.build.json';
 

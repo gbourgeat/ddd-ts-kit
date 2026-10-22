@@ -1,7 +1,7 @@
-import { endAtDepthZero } from '../text/end-at-depth-zero.js';
-import { escapeRegExp } from '../text/escape-reg-exp.js';
-import { arrowBody } from './arrow-body.js';
-import { JAVASCRIPT_GLOBALS } from './javascript-globals.js';
+import { endAtDepthZero } from '../text/end-at-depth-zero';
+import { escapeRegExp } from '../text/escape-reg-exp';
+import { arrowBody } from './arrow-body';
+import { JAVASCRIPT_GLOBALS } from './javascript-globals';
 
 /**
  * What an entry of an object literal holds: `behaviour`, a function; `built`, what a call or

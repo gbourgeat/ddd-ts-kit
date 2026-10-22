@@ -1,4 +1,4 @@
-import type { PlannedFactory } from './planned-factory.js';
+import type { PlannedFactory } from './planned-factory';
 
 /** What `error-factories --plan` proposes and `--apply` follows: per context, where each class per error goes. */
 export interface MigrationPlan {

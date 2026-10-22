@@ -18,28 +18,28 @@ import {
   type ScheduledOptions,
   type Token,
 } from '@ddd-ts-kit/kernel/declarations';
-import { declaredRequirement } from '../authorization/declared-requirement.js';
-import { protectedRequirement } from '../authorization/protected-requirement.js';
-import { PUBLIC_REQUIREMENT, type Requirement } from '../authorization/requirement.js';
-import type { ConsumerOptions } from '../consumer/consumer-options.js';
-import { consumptionOf } from '../declared/consumption-of.js';
-import type { DeclaredSource } from '../declared/declared-source.js';
-import { includeDeclared } from '../declared/include-declared.js';
-import { WiringError } from '../errors/wiring-error.js';
-import { writtenBackgroundJob } from '../jobs/written-background-job.js';
-import { writtenJob } from '../jobs/written-job.js';
-import { assertPort } from '../wiring/assert-port.js';
-import type { Binding } from '../wiring/binding.js';
-import { naturalKind } from '../wiring/natural-kind.js';
-import { classRecipe, factoryRecipe, valueRecipe, type Recipe } from '../wiring/recipe.js';
-import type { WiringDraft } from '../wiring/wiring-draft.js';
-import { bindingOptionsOf } from './binding-options-of.js';
-import type { BindingOptions } from './binding-options.js';
-import type { BindingTarget } from './binding-target.js';
-import { backgroundJobOf, integrationEventHandlerOf, jobOf, messageHandlerOf } from './factory-made-handlers.js';
-import type { HandlerTarget } from './handler-target.js';
-import type { ModuleBuilder } from './module-builder.js';
-import type { ProtectedUseCaseTarget } from './protected-use-case-target.js';
+import { declaredRequirement } from '../authorization/declared-requirement';
+import { protectedRequirement } from '../authorization/protected-requirement';
+import { PUBLIC_REQUIREMENT, type Requirement } from '../authorization/requirement';
+import type { ConsumerOptions } from '../consumer/consumer-options';
+import { consumptionOf } from '../declared/consumption-of';
+import type { DeclaredSource } from '../declared/declared-source';
+import { includeDeclared } from '../declared/include-declared';
+import { WiringError } from '../errors/wiring-error';
+import { writtenBackgroundJob } from '../jobs/written-background-job';
+import { writtenJob } from '../jobs/written-job';
+import { assertPort } from '../wiring/assert-port';
+import type { Binding } from '../wiring/binding';
+import { naturalKind } from '../wiring/natural-kind';
+import { classRecipe, factoryRecipe, valueRecipe, type Recipe } from '../wiring/recipe';
+import type { WiringDraft } from '../wiring/wiring-draft';
+import { bindingOptionsOf } from './binding-options-of';
+import type { BindingOptions } from './binding-options';
+import type { BindingTarget } from './binding-target';
+import { backgroundJobOf, integrationEventHandlerOf, jobOf, messageHandlerOf } from './factory-made-handlers';
+import type { HandlerTarget } from './handler-target';
+import type { ModuleBuilder } from './module-builder';
+import type { ProtectedUseCaseTarget } from './protected-use-case-target';
 
 interface HandlerStatement<Handler> {
   /** The statement as the module wrote it, for error messages and factory handler names. */

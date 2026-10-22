@@ -1,4 +1,4 @@
-import type { RuleDoc } from '../model/rule-doc.js';
+import type { RuleDoc } from '../model/rule-doc';
 
 export const EVENT_SOURCING_DOCS: Readonly<Record<string, RuleDoc>> = {
   'event-sourcing/state-in-apply': {

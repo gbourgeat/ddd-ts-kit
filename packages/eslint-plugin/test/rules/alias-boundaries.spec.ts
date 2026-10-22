@@ -1,10 +1,10 @@
 import { TSESLint } from '@typescript-eslint/utils';
 import tseslint from 'typescript-eslint';
 import { describe, expect, it } from 'vitest';
-import plugin, { rules } from '../../src/index.js';
-import { docsOf } from '../../src/support/rule/docs-of.js';
-import { BOUNDARY_CASES, SPELLINGS, type BoundaryCase } from '../support/boundary-cases.js';
-import { SAMPLE_CONFIG } from '../support/rule-tester.js';
+import plugin, { rules } from '../../src';
+import { docsOf } from '../../src/support/rule/docs-of';
+import { BOUNDARY_CASES, SPELLINGS, type BoundaryCase } from '../support/boundary-cases';
+import { SAMPLE_CONFIG } from '../support/rule-tester';
 
 const ALIAS_RULE = 'ddd-ts-kit/imports-alias-only';
 const EXTENSION_RULE = 'ddd-ts-kit/imports-extension';

@@ -1,8 +1,8 @@
 import type { IntegrationEventCallback } from '@ddd-ts-kit/kernel';
 import type { Token } from '@ddd-ts-kit/kernel/declarations';
-import type { ConsumerRuntime } from '../consumer/consumer-runtime.js';
-import type { Declarer } from './declarer.js';
-import type { Resolve } from './resolve.js';
+import type { ConsumerRuntime } from '../consumer/consumer-runtime';
+import type { Declarer } from './declarer';
+import type { Resolve } from './resolve';
 
 export interface EventConsumption {
   readonly type: string;

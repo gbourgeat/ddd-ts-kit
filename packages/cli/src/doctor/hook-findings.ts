@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { runGit } from '../commit/run-git.js';
-import type { DoctorFinding } from './doctor-finding.js';
+import { runGit } from '../commit/run-git';
+import type { DoctorFinding } from './doctor-finding';
 
 /** The line of lefthook.yml that makes each checkout run its own lefthook, and fail without its dependencies. */
 const LEFTHOOK_KEY = 'lefthook: node_modules/.bin/lefthook';

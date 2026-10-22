@@ -1,13 +1,13 @@
 import { Readable } from 'node:stream';
-import type { BodyShape } from '../representation/body-shape.js';
-import type { Chosen } from '../representation/representations.js';
-import type { RouteOutput } from '../route/route-output.js';
-import type { Route } from '../route/route.js';
-import { jsonSchemaOf } from '../schema/json-schema-of.js';
-import { isAsyncIterable } from '../support/is-async-iterable.js';
-import { primed } from './primed.js';
-import type { RepresentedAnswer } from './represented-answer.js';
-import { writtenIn } from './written-in.js';
+import type { BodyShape } from '../representation/body-shape';
+import type { Chosen } from '../representation/representations';
+import type { RouteOutput } from '../route/route-output';
+import type { Route } from '../route/route';
+import { jsonSchemaOf } from '../schema/json-schema-of';
+import { isAsyncIterable } from '../support/is-async-iterable';
+import { primed } from './primed';
+import type { RepresentedAnswer } from './represented-answer';
+import { writtenIn } from './written-in';
 
 /** The answer of a route in the media type the request negotiated. A binary body, a file stream, is the handler's own and is left as it is. */
 export async function represented(route: Route, result: RouteOutput, chosen: Chosen): Promise<RepresentedAnswer> {

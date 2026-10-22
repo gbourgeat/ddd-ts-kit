@@ -1,4 +1,4 @@
-import type { Permission } from './permission.js';
+import type { Permission } from './permission';
 
 export function isPermission(value: unknown): value is Permission {
   if (typeof value !== 'object' || value === null) {

@@ -1,12 +1,12 @@
 import type { Schema } from '@ddd-ts-kit/validation';
-import type { FormHints } from '../forms/form-hints.js';
-import type { CachePolicy } from '../cache/cache-policy.js';
-import type { IfMatch } from '../cache/if-match.js';
-import type { HttpMethod } from '../route/http-method.js';
-import type { UploadSpec } from '../route/upload-spec.js';
-import type { ControllerResponse } from './controller-response.js';
-import type { GuardReference } from './guard-reference.js';
-import type { RouteGroupClass } from './route-group-class.js';
+import type { FormHints } from '../forms/form-hints';
+import type { CachePolicy } from '../cache/cache-policy';
+import type { IfMatch } from '../cache/if-match';
+import type { HttpMethod } from '../route/http-method';
+import type { UploadSpec } from '../route/upload-spec';
+import type { ControllerResponse } from './controller-response';
+import type { GuardReference } from './guard-reference';
+import type { RouteGroupClass } from './route-group-class';
 
 /** Everything a route says, in the decorator of its controller and nowhere else. */
 export interface ControllerSpec {

@@ -1,4 +1,4 @@
-import type { SqlStatement } from './sql-statement.js';
+import type { SqlStatement } from './sql-statement';
 
 /**
  * A comment, a string, a quoted name, a dollar-quoted body (a `DO $$ .. $$` block keeps its own

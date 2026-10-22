@@ -2,11 +2,11 @@
 import { systemActor, type CommandBus } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#if upstream.readsType}}
-import { {{upstream.definition}}, type {{upstream.eventType}} } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index{{alias.ext}}';
+import { {{upstream.definition}}, type {{upstream.eventType}} } from '{{alias.contexts}}/{{upstream.kebab}}/published-language{{alias.index}}';
 {{/if}}
 {{#unless upstream.readsType}}
 {{#if upstream.known}}
-import type { {{upstream.eventType}} } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index{{alias.ext}}';
+import type { {{upstream.eventType}} } from '{{alias.contexts}}/{{upstream.kebab}}/published-language{{alias.index}}';
 {{/if}}
 {{/unless}}
 {{#unless upstream.known}}

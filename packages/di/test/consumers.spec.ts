@@ -15,15 +15,15 @@ import {
   kernelModule,
   type ContextModule,
   type EventContract,
-} from '../src/index.js';
-import { InvoiceOnOrderPlaced } from './support/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.js';
-import { InvoiceLedger } from './support/billing/application/ports/invoice-ledger.port.js';
-import { billingModule } from './support/billing/billing.module.js';
-import { wiringFailure } from './support/failure.js';
-import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command.js';
-import { orderingModule } from './support/ordering/ordering.module.js';
-import { orderPlaced } from './support/ordering/published-language/order-placed-event.js';
-import { OrderPlaced } from './support/ordering/published-language/order-placed.js';
+} from '../src';
+import { InvoiceOnOrderPlaced } from './support/billing/application/integration/handlers/invoice-on-order-placed.integration-handler';
+import { InvoiceLedger } from './support/billing/application/ports/invoice-ledger.port';
+import { billingModule } from './support/billing/billing.module';
+import { wiringFailure } from './support/failure';
+import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command';
+import { orderingModule } from './support/ordering/ordering.module';
+import { orderPlaced } from './support/ordering/published-language/order-placed-event';
+import { OrderPlaced } from './support/ordering/published-language/order-placed';
 
 const placed = (id: string, orderId: string): IntegrationEvent => orderPlaced(id, { orderId, sku: 'book' });
 const neverSeenBefore = { markProcessed: async () => true };

@@ -1,19 +1,19 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { runGit } from '../commit/run-git.js';
-import { readConfig } from '../config/index.js';
-import { readRemaining } from '../progress/read-remaining.js';
-import { readSlices } from '../progress/read-slices.js';
-import { changedEntries } from '../slice/changed-entries.js';
-import { planStaging } from '../slice/plan-staging.js';
-import { Workspace } from '../workspace/index.js';
-import { nextStepOf } from './next-step-of.js';
-import { readAgentRecord } from './read-agent-record.js';
-import { readVerification, type SliceNow } from './read-verification.js';
-import { REPORT_FILE } from './report-file.js';
-import { rowCommits } from './row-commits.js';
-import type { WorkerFile } from './worker-file.js';
-import type { AgentRecord, ProgressReport, ProgressRow, WorkerProgress } from './worker-progress.js';
+import { runGit } from '../commit/run-git';
+import { readConfig } from '../config';
+import { readRemaining } from '../progress/read-remaining';
+import { readSlices } from '../progress/read-slices';
+import { changedEntries } from '../slice/changed-entries';
+import { planStaging } from '../slice/plan-staging';
+import { Workspace } from '../workspace';
+import { nextStepOf } from './next-step-of';
+import { readAgentRecord } from './read-agent-record';
+import { readVerification, type SliceNow } from './read-verification';
+import { REPORT_FILE } from './report-file';
+import { rowCommits } from './row-commits';
+import type { WorkerFile } from './worker-file';
+import type { AgentRecord, ProgressReport, ProgressRow, WorkerProgress } from './worker-progress';
 
 /** How the conductor asks: `stopped` when it knows the agent stopped (a notification), `fresh` for a new agent whatever the last one did. */
 export interface ProgressRequest {

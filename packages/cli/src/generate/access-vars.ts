@@ -1,13 +1,13 @@
-import { specifierOf } from '../alias/index.js';
-import { CliError } from '../cli-error.js';
-import { fitStatement } from '../layout/index.js';
-import type { RenderContext } from '../templating/index.js';
-import { declarePermission } from './declare-permission.js';
-import { grantPermission } from './grant-permission.js';
-import { permissionNamed } from './permission-named.js';
-import { permissionsFile } from './permissions-file.js';
-import type { Scope } from './scope.js';
-import type { UseCaseMessage } from './use-case-message.js';
+import { specifierOf } from '../alias';
+import { CliError } from '../cli-error';
+import { fitStatement } from '../layout';
+import type { RenderContext } from '../templating';
+import { declarePermission } from './declare-permission';
+import { grantPermission } from './grant-permission';
+import { permissionNamed } from './permission-named';
+import { permissionsFile } from './permissions-file';
+import type { Scope } from './scope';
+import type { UseCaseMessage } from './use-case-message';
 
 /**
  * What `--permission` or `--public` says about a use case, as template variables. Deny by

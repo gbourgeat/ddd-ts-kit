@@ -6,11 +6,11 @@ import {
   type SessionExtensionValues,
 } from '@ddd-ts-kit/kernel';
 import { createRemoteJWKSet, errors, jwtVerify, type JWTPayload, type JWTVerifyGetKey, type KeyInput } from 'jose';
-import type { SessionAuthenticator } from '../authentication/session-authenticator.js';
-import { InvalidCredentialError } from '../errors/invalid-credential-error.js';
-import { profileAttributesOf } from './profile-attributes-of.js';
-import { sessionOfClaims } from './session-of-claims.js';
-import { tenancyOfClaim } from './tenancy-of-claim.js';
+import type { SessionAuthenticator } from '../authentication/session-authenticator';
+import { InvalidCredentialError } from '../errors/invalid-credential-error';
+import { profileAttributesOf } from './profile-attributes-of';
+import { sessionOfClaims } from './session-of-claims';
+import { tenancyOfClaim } from './tenancy-of-claim';
 
 interface CommonOptions {
   readonly issuer: string;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { scan } from '../src/check/scan/scan.js';
+import { scan } from '../src/check/scan/scan';
 
 const EVERY_FORM = [
   "import a from 'a';",

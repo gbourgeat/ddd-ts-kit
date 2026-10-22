@@ -1,8 +1,8 @@
-import { specifierOf } from '../alias/index.js';
-import { toName } from '../naming/index.js';
-import type { Migration } from './migration.js';
-import { planContext, type ContextPlan, type PlannedController } from './plan-context.js';
-import { renderController } from './render-controller.js';
+import { specifierOf } from '../alias';
+import { toName } from '../naming';
+import type { Migration } from './migration';
+import { planContext, type ContextPlan, type PlannedController } from './plan-context';
+import { renderController } from './render-controller';
 
 /** The roles a file may play in the folder of a controller: what `naming/suffix` accepts there. */
 const ROLES = ['params', 'query', 'headers', 'body', 'accepted', 'answer', 'line'];

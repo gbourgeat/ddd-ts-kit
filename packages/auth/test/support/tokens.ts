@@ -1,5 +1,5 @@
 import { SignJWT, generateKeyPair, type CryptoKey, type JWTPayload } from 'jose';
-import { JwtAuthenticator } from '../../src/jwt.js';
+import { JwtAuthenticator } from '../../src/jwt';
 
 export const ISSUER = 'https://id.example.test/realms/shop';
 export const AUDIENCE = 'shop-api';

@@ -1,12 +1,12 @@
-import type { Name } from '../../naming/index.js';
-import type { RenderContext } from '../../templating/index.js';
-import { accessVars } from '../access-vars.js';
-import { named } from '../named.js';
-import type { Scope } from '../scope.js';
-import { searchedElements } from '../searched-elements.js';
-import { specVars } from '../spec-vars.js';
-import { vars } from '../vars.js';
-import { readerFile } from './reader-file.js';
+import type { Name } from '../../naming';
+import type { RenderContext } from '../../templating';
+import { accessVars } from '../access-vars';
+import { named } from '../named';
+import type { Scope } from '../scope';
+import { searchedElements } from '../searched-elements';
+import { specVars } from '../spec-vars';
+import { vars } from '../vars';
+import { readerFile } from './reader-file';
 
 /**
  * What the templates of a query read. `asksPolicy`: a policy refines its permission, so the

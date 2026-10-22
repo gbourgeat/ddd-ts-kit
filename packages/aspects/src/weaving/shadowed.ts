@@ -1,4 +1,4 @@
-import type { Method } from './method.js';
+import type { Method } from './method';
 
 /** The instance with the wrappers as own methods, in front of the ones of its class. */
 export function shadowed<T extends object>(instance: T, wrappers: ReadonlyMap<string, Method>): T {

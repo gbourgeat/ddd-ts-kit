@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm';
 import type { CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
-import { readModelColumns, type ReadModelStamps } from '../../../src/index.js';
+import { readModelColumns, type ReadModelStamps } from '../../../src';
 
 const INSTANT = { type: 'timestamp with time zone', precision: 3 } as const;
 

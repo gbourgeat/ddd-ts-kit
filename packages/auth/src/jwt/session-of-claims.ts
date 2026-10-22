@@ -5,7 +5,7 @@ import type {
   Session,
   SessionExtensionValues,
 } from '@ddd-ts-kit/kernel';
-import type { Claims } from './claims.js';
+import type { Claims } from './claims';
 
 export interface SessionClaimOptions<C extends Claims> {
   readonly impersonatorClaim?: string;

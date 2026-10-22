@@ -1,18 +1,18 @@
-export { NatsEventBus } from './nats-event-bus.js';
-export { DEFAULT_STREAM, DEFAULT_SUBJECT_PREFIX } from './options/nats-event-bus-options.js';
-export type { NatsEventBusOptions } from './options/nats-event-bus-options.js';
-export type { NatsDelivery } from './options/nats-delivery.js';
-export type { NatsFailure } from './options/nats-failure.js';
-export type { ReconnectOptions } from './options/reconnect-options.js';
-export type { RetryOptions } from './options/retry-options.js';
-export type { StreamStorage } from './options/stream-storage.js';
-export { bindingNamesOf } from './topology/binding-names-of.js';
-export { deadStreamOf } from './topology/dead-stream-of.js';
-export type { BindingNames } from './topology/binding-names.js';
-export type { ConsumerBinding } from './topology/consumer-binding.js';
-export type { ConsumerDescription } from './topology/consumer-description.js';
-export type { NatsTopology } from './topology/nats-topology.js';
-export type { StreamDescription } from './topology/stream-description.js';
+export { NatsEventBus } from './nats-event-bus';
+export { DEFAULT_STREAM, DEFAULT_SUBJECT_PREFIX } from './options/nats-event-bus-options';
+export type { NatsEventBusOptions } from './options/nats-event-bus-options';
+export type { NatsDelivery } from './options/nats-delivery';
+export type { NatsFailure } from './options/nats-failure';
+export type { ReconnectOptions } from './options/reconnect-options';
+export type { RetryOptions } from './options/retry-options';
+export type { StreamStorage } from './options/stream-storage';
+export { bindingNamesOf } from './topology/binding-names-of';
+export { deadStreamOf } from './topology/dead-stream-of';
+export type { BindingNames } from './topology/binding-names';
+export type { ConsumerBinding } from './topology/consumer-binding';
+export type { ConsumerDescription } from './topology/consumer-description';
+export type { NatsTopology } from './topology/nats-topology';
+export type { StreamDescription } from './topology/stream-description';
 export {
   ATTEMPT_HEADER,
   CORRELATION_HEADER,
@@ -24,9 +24,9 @@ export {
   REPLAY_FOR_HEADER,
   SOURCE_HEADER,
   TRACEPARENT_HEADER,
-} from './codec/headers.js';
-export { POISON_MESSAGE } from './consumption/poison-message.js';
-export { BrokerUnavailableError } from './errors/broker-unavailable-error.js';
-export { ConsumerNameRequiredError } from './errors/consumer-name-required-error.js';
-export { EventBusClosedError } from './errors/event-bus-closed-error.js';
-export { PublishNotAcknowledgedError } from './errors/publish-not-acknowledged-error.js';
+} from './codec/headers';
+export { POISON_MESSAGE } from './consumption/poison-message';
+export { BrokerUnavailableError } from './errors/broker-unavailable-error';
+export { ConsumerNameRequiredError } from './errors/consumer-name-required-error';
+export { EventBusClosedError } from './errors/event-bus-closed-error';
+export { PublishNotAcknowledgedError } from './errors/publish-not-acknowledged-error';

@@ -1,19 +1,19 @@
 import path from 'node:path';
-import { DECLARED_ROLES, declaredRoleOf, type DeclaredRole } from '../../declared/index.js';
-import { classesOf } from '../declarations/classes-of.js';
-import { DECLARATIONS_ENTRY } from '../declarations/declarations-entry.js';
-import type { DeclaredClass } from '../declarations/declared-class.js';
-import type { Decoration } from '../declarations/decoration.js';
-import { optionOf, type OptionValue } from '../declarations/option-of.js';
-import type { Finding } from '../model/finding.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inContext } from '../support/in-context.js';
-import { isDeclaredStyle } from '../support/is-declared-style.js';
-import { pathInContext } from '../support/path-in-context.js';
-import { perFile } from '../support/per-file.js';
-import { WITHOUT_MODULE } from '../../model-modules/index.js';
+import { DECLARED_ROLES, declaredRoleOf, type DeclaredRole } from '../../declared';
+import { classesOf } from '../declarations/classes-of';
+import { DECLARATIONS_ENTRY } from '../declarations/declarations-entry';
+import type { DeclaredClass } from '../declarations/declared-class';
+import type { Decoration } from '../declarations/decoration';
+import { optionOf, type OptionValue } from '../declarations/option-of';
+import type { Finding } from '../model/finding';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { inContext } from '../support/in-context';
+import { isDeclaredStyle } from '../support/is-declared-style';
+import { pathInContext } from '../support/path-in-context';
+import { perFile } from '../support/per-file';
+import { WITHOUT_MODULE } from '../../model-modules';
 
 /** The option of each decorator that names what it declares, written once and never derived. */
 const WRITTEN_NAMES: Readonly<Record<string, string>> = {

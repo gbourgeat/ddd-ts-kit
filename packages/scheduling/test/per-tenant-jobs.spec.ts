@@ -5,12 +5,12 @@ import {
   TenantDirectory,
   type JobExecution,
 } from '@ddd-ts-kit/kernel';
-import { aBench } from './support/a-bench.js';
-import { LedgerClosed } from './support/ledger-closed.js';
-import { MINUTE } from './support/durations.js';
-import { REMINDERS } from './support/job-names.js';
-import { QUARTERLY } from './support/quarterly.js';
-import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections.js';
+import { aBench } from './support/a-bench';
+import { LedgerClosed } from './support/ledger-closed';
+import { MINUTE } from './support/durations';
+import { REMINDERS } from './support/job-names';
+import { QUARTERLY } from './support/quarterly';
+import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections';
 
 refuseUnhandledRejections();
 

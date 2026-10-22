@@ -1,14 +1,14 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, DEFAULT_STACK, read as readFile, tempDir, type StackFlags } from '../helpers.js';
-import { grantOf } from '../support/grant-of.js';
-import { initFlags } from '../support/init-flags.js';
-import { readYaml } from '../support/read-yaml.js';
-import { shareMoney } from './contract-pair-sources.js';
-import { expectNoFinding } from './expect-no-finding.js';
-import { installAsPublished } from './install-as-published.js';
-import { bin, runIn } from './run-in.js';
-import { SLOW } from './stacks.js';
-import { NATIVE_COMPILER } from './type-errors.js';
+import { cli, DEFAULT_STACK, read as readFile, tempDir, type StackFlags } from '../helpers';
+import { grantOf } from '../support/grant-of';
+import { initFlags } from '../support/init-flags';
+import { readYaml } from '../support/read-yaml';
+import { shareMoney } from './contract-pair-sources';
+import { expectNoFinding } from './expect-no-finding';
+import { installAsPublished } from './install-as-published';
+import { bin, runIn } from './run-in';
+import { SLOW } from './stacks';
+import { NATIVE_COMPILER } from './type-errors';
 
 const IN_PROCESS = { tests: 'vitest', orm: 'none', events: 'in-memory' } as const;
 

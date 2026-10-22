@@ -20,10 +20,10 @@ import {
   on,
   subscribeAll,
   type PayloadOf,
-} from '../src/index.js';
-import { at, orderPlacedV1 } from './support/events.js';
-import { TransactionalMemory } from './support/transactional-memory.js';
-import { TransactionalProcessedEventStore } from './support/transactional-processed-event-store.js';
+} from '../src';
+import { at, orderPlacedV1 } from './support/events';
+import { TransactionalMemory } from './support/transactional-memory';
+import { TransactionalProcessedEventStore } from './support/transactional-processed-event-store';
 
 const placed = (id: string, orderId = 'order-1'): IntegrationEvent<PayloadOf<typeof orderPlacedV1>> =>
   orderPlacedV1.create({ orderId, total: 30 }, { id, occurredAt: at });

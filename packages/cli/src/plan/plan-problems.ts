@@ -1,6 +1,6 @@
-import type { Slice } from '../progress/slice.js';
-import { cyclesOf } from './cycles-of.js';
-import type { PlanProblem } from './wave-plan.js';
+import type { Slice } from '../progress/slice';
+import { cyclesOf } from './cycles-of';
+import type { PlanProblem } from './wave-plan';
 
 /**
  * What keeps the planned rows from being ordered, among `rows`, every row of the file: an id

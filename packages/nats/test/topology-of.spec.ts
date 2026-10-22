@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { bindingNamesOf } from '../src/topology/binding-names-of.js';
-import { deadStreamOf } from '../src/topology/dead-stream-of.js';
-import { topologyOf } from '../src/topology/topology-of.js';
-import type { TopologySettings } from '../src/topology/topology-settings.js';
-import { PLACED } from './support/events.js';
+import { bindingNamesOf } from '../src/topology/binding-names-of';
+import { deadStreamOf } from '../src/topology/dead-stream-of';
+import { topologyOf } from '../src/topology/topology-of';
+import type { TopologySettings } from '../src/topology/topology-settings';
+import { PLACED } from './support/events';
 
 const SHIPPED = 'shipping.parcel.shipped';
 

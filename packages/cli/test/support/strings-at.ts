@@ -1,4 +1,4 @@
-import { jsonAt } from './json-at.js';
+import { jsonAt } from './json-at';
 
 /** The texts a JSON value lists under a path of keys: the items of an array, or the values of an object. */
 export function stringsAt(value: unknown, ...keys: readonly string[]): string[] {

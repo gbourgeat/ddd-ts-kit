@@ -1,15 +1,15 @@
 import { backgroundJobPolicy, describeJobSchedule, type MessageInfo } from '@ddd-ts-kit/kernel';
 import { describeToken } from '@ddd-ts-kit/kernel/declarations';
-import type { EffectiveJob } from '../jobs/effective-job.js';
-import type { TokenSet } from '../token/token-set.js';
-import type { BackgroundJobRegistration } from '../wiring/background-job-registration.js';
-import type { Binding } from '../wiring/binding.js';
-import type { Declarer } from '../wiring/declarer.js';
-import type { DomainEventHandling } from '../wiring/domain-event-handling.js';
-import type { EventConsumption } from '../wiring/event-consumption.js';
-import type { PolicyBinding } from '../wiring/policy-binding.js';
-import type { ProjectionRegistration } from '../wiring/projection-registration.js';
-import type { Wiring } from '../wiring/wiring.js';
+import type { EffectiveJob } from '../jobs/effective-job';
+import type { TokenSet } from '../token/token-set';
+import type { BackgroundJobRegistration } from '../wiring/background-job-registration';
+import type { Binding } from '../wiring/binding';
+import type { Declarer } from '../wiring/declarer';
+import type { DomainEventHandling } from '../wiring/domain-event-handling';
+import type { EventConsumption } from '../wiring/event-consumption';
+import type { PolicyBinding } from '../wiring/policy-binding';
+import type { ProjectionRegistration } from '../wiring/projection-registration';
+import type { Wiring } from '../wiring/wiring';
 import type {
   BackgroundJobDescription,
   BindingDescription,
@@ -21,7 +21,7 @@ import type {
   ProjectionDescription,
   ScheduledJobDescription,
   WiringDescription,
-} from './wiring-description.js';
+} from './wiring-description';
 
 export function describeWiring(wiring: Wiring, overridden: TokenSet, jobs: readonly EffectiveJob[]): WiringDescription {
   return {

@@ -1,5 +1,5 @@
-import type { DoctorFinding } from './doctor-finding.js';
-import { inRange } from './in-range.js';
+import type { DoctorFinding } from './doctor-finding';
+import { inRange } from './in-range';
 
 /** A version `.nvmrc` names, as nvm reads it: `22`, `22.12` or `v22.12.0`. An alias such as `lts/*` is not judged. */
 const NVMRC_VERSION = /^v?\d+(?:\.\d+){0,2}$/;

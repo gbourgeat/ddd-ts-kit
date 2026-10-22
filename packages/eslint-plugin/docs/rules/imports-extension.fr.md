@@ -78,9 +78,9 @@ Aucune. C'est `importExtension` de `ddd-ts-kit.config.json` qui décide.
 
 ## Limites
 
-- Un spécificateur qui nomme un répertoire (`@/contexts/billing/published-language`, résolu par un bundler vers son `index.ts`) n'est pas signalé ici : cette règle ne lit pas le disque. `ddd-ts-kit check` le signale sous le même identifiant, et `ddd-ts-kit build-aliases` le refuse : un alias nomme un fichier, `.../published-language/index`.
+- Un spécificateur qui nomme un répertoire (`@/contexts/billing/published-language`, résolu par un bundler vers son `index.ts`) est accepté sous `none` : `ddd-ts-kit build-aliases` le complète avec `/index.js`.
 - La règle ne vérifie pas que `tsconfig.json` résout comme le dit la configuration : c'est le rôle de `imports/alias-declared` de `ddd-ts-kit check`.
 
 ## Avec le checker de la CLI
 
-`ddd-ts-kit check` signale le même identifiant à partir des spécificateurs d'import qu'il lit dans le texte des fichiers, sous la racine des sources, `test/` et `scripts/`, donne dans sa phrase de correction le spécificateur à écrire, et signale aussi un alias qui nomme un répertoire. Cette règle est celle qui réécrit l'import.
+`ddd-ts-kit check` signale le même identifiant à partir des spécificateurs d'import qu'il lit dans le texte des fichiers, sous la racine des sources, `test/` et `scripts/`, donne dans sa phrase de correction le spécificateur à écrire. Cette règle est celle qui réécrit l'import.

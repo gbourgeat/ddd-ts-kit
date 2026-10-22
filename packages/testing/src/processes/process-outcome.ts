@@ -1,9 +1,9 @@
 import { AssertionError } from 'node:assert';
 import { isDeepStrictEqual } from 'node:util';
 import type { ProcessDecision, ProcessTimeout } from '@ddd-ts-kit/kernel';
-import { show } from '../scenarios/show.js';
-import { subsetDifferences } from '../scenarios/subset-differences.js';
-import type { CommandMatcher } from './command-matcher.js';
+import { show } from '../scenarios/show';
+import { subsetDifferences } from '../scenarios/subset-differences';
+import type { CommandMatcher } from './command-matcher';
 
 /** What one step of a process decided, asserted without a store, a queue or a bus. Each assertion answers the outcome, to chain. */
 export class ProcessOutcome<State> {

@@ -1,5 +1,5 @@
-import type { BodyShape } from './body-shape.js';
-import type { RepresentedBody } from './represented-body.js';
+import type { BodyShape } from './body-shape';
+import type { RepresentedBody } from './represented-body';
 
 /**
  * Turns the value a route answers into the text of one media type, and back for a request body

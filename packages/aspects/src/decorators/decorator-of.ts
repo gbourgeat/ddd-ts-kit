@@ -1,7 +1,7 @@
-import type { AdviceFactory } from '../aspect/advice-factory.js';
-import { adviseMethod } from '../weaving/advise-method.js';
-import { advisePrototypeMethod } from '../weaving/advise-prototype-method.js';
-import type { AsyncMethodDecorator } from './async-method-decorator.js';
+import type { AdviceFactory } from '../aspect/advice-factory';
+import { adviseMethod } from '../weaving/advise-method';
+import { advisePrototypeMethod } from '../weaving/advise-prototype-method';
+import type { AsyncMethodDecorator } from './async-method-decorator';
 
 /**
  * The decorator form of any advice factory, by the same code as the wrappers of the composition

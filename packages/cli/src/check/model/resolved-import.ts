@@ -1,4 +1,4 @@
-import type { ImportTarget } from './import-target.js';
+import type { ImportTarget } from './import-target';
 
 export interface ResolvedImport {
   readonly specifier: string;

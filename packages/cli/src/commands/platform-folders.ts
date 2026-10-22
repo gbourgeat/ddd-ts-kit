@@ -1,10 +1,10 @@
-import { readConfig } from '../config/index.js';
-import { type FolderMove, placements, platformFolders } from '../platform-folders/index.js';
-import { MigrationDraft } from '../refusals/migration-draft.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
-import type { Io } from './io.js';
+import { readConfig } from '../config';
+import { type FolderMove, placements, platformFolders } from '../platform-folders';
+import { MigrationDraft } from '../refusals/migration-draft';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import type { Command } from './command';
+import type { Io } from './io';
 
 const MANUAL = [
   'Run the formatter, then the checks and the tests: an import the command could not read still names the old path.',

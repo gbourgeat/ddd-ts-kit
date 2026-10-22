@@ -1,5 +1,5 @@
-import type { Kind } from './kind.js';
-import { KINDS } from './kinds.js';
+import type { Kind } from './kind';
+import { KINDS } from './kinds';
 
 /** The kind of a name or of one of its aliases. */
 export function findKind(name: string): Kind | undefined {

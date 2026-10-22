@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { cachePurgerContract } from '@ddd-ts-kit/testing/contracts';
-import { CachePurgeError, VarnishCachePurger, VarnishPurgeMode } from '../src/purgers.js';
-import { startTaggedOrigin, type TaggedOrigin } from './support/tagged-origin.js';
+import { CachePurgeError, VarnishCachePurger, VarnishPurgeMode } from '../src/purgers';
+import { startTaggedOrigin, type TaggedOrigin } from './support/tagged-origin';
 
 /*
  * Varnish started by pipeline/github/scripts/start-varnish.sh with the VCL `init --http-cache varnish`

@@ -1,5 +1,5 @@
-import type { TenantResolver } from './tenant-resolver.js';
-import { UnknownTenantError } from './unknown-tenant-error.js';
+import type { TenantResolver } from './tenant-resolver';
+import { UnknownTenantError } from './unknown-tenant-error';
 
 /**
  * The tenant `resolver` names, when the deployment serves it: one it does not serve is answered

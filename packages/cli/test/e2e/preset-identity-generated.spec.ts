@@ -1,10 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, tempDir, write } from '../helpers.js';
-import { expectNoFinding } from './expect-no-finding.js';
-import { installAsPublished } from './install-as-published.js';
-import { bin, findingsOf, runIn } from './run-in.js';
-import { SLOW } from './stacks.js';
-import { typeErrors } from './type-errors.js';
+import { cli, read, tempDir, write } from '../helpers';
+import { expectNoFinding } from './expect-no-finding';
+import { installAsPublished } from './install-as-published';
+import { bin, findingsOf, runIn } from './run-in';
+import { SLOW } from './stacks';
+import { typeErrors } from './type-errors';
 
 /**
  * The project as a team left it: relationships decided by OpenFGA, Keycloak, Knex and tenants, the

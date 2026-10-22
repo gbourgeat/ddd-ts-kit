@@ -1,11 +1,11 @@
-import type { CriteriaPlan } from '../../application/criteria/criteria-plan.js';
-import { selectRows } from '../../application/criteria/select-rows.js';
-import type { ReadModelRows } from '../../application/ports/read-model-rows.js';
-import type { ReadModelTable } from '../../application/ports/read-model-table.js';
-import type { EventStamp } from '../../application/read-model/event-stamp.js';
-import type { SearchedRows } from '../../application/read-model/searched-rows.js';
-import type { StampedRow } from '../../application/read-model/stamped-row.js';
-import type { TouchedKey } from '../../application/read-model/touched-key.js';
+import type { CriteriaPlan } from '../../application/criteria/criteria-plan';
+import { selectRows } from '../../application/criteria/select-rows';
+import type { ReadModelRows } from '../../application/ports/read-model-rows';
+import type { ReadModelTable } from '../../application/ports/read-model-table';
+import type { EventStamp } from '../../application/read-model/event-stamp';
+import type { SearchedRows } from '../../application/read-model/searched-rows';
+import type { StampedRow } from '../../application/read-model/stamped-row';
+import type { TouchedKey } from '../../application/read-model/touched-key';
 
 type Rows<Row> = Map<string, StampedRow<Row>>;
 

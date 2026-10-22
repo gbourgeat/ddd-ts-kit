@@ -1,9 +1,9 @@
-import type { AdviceFactory } from '../aspect/advice-factory.js';
-import type { Aspect } from '../aspect/aspect.js';
-import { defineAspect } from '../aspect/define-aspect.js';
-import { stateFor } from '../state/state-for.js';
-import type { BulkheadOptions } from './bulkhead-options.js';
-import { Compartment } from './compartment.js';
+import type { AdviceFactory } from '../aspect/advice-factory';
+import type { Aspect } from '../aspect/aspect';
+import { defineAspect } from '../aspect/define-aspect';
+import { stateFor } from '../state/state-for';
+import type { BulkheadOptions } from './bulkhead-options';
+import { Compartment } from './compartment';
 
 /**
  * Bounds how many calls run at once, so that one slow dependency cannot take every resource

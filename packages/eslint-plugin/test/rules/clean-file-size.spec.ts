@@ -1,7 +1,7 @@
-import { cleanFileSize } from '../../src/rules/clean-file-size.js';
-import { cleanFunctionCeiling } from '../../src/rules/clean-function-ceiling.js';
-import { cleanFunctionSize } from '../../src/rules/clean-function-size.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+import { cleanFileSize } from '../../src/rules/clean-file-size';
+import { cleanFunctionCeiling } from '../../src/rules/clean-function-ceiling';
+import { cleanFunctionSize } from '../../src/rules/clean-function-size';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const lines = (count: number): string => Array.from({ length: count }, (_, index) => `step${index}();`).join('\n');
 const body = (count: number): string => Array.from({ length: count }, (_, index) => `  step${index}();`).join('\n');

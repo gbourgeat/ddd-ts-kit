@@ -1,4 +1,4 @@
-import { ReadModelStore } from '../../../../../../../src/index.js';
+import { ReadModelStore } from '../../../../../../../src';
 
 export interface PatientRow {
   readonly id: string;

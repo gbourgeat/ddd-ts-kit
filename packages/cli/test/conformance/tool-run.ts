@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import type { Invocation } from '../e2e/run-in.js';
+import type { Invocation } from '../e2e/run-in';
 
 const QUIET = { DATABASE_URL: '', OTEL_SDK_DISABLED: 'true', NO_COLOR: '1', FORCE_COLOR: '0' };
 

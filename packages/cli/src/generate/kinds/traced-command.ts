@@ -1,6 +1,6 @@
-import type { Name } from '../../naming/index.js';
-import type { RenderContext } from '../../templating/index.js';
-import type { Scope } from '../scope.js';
+import type { Name } from '../../naming';
+import type { RenderContext } from '../../templating';
+import type { Scope } from '../scope';
 
 /**
  * What the trace of a request says when its use case is a command, as far as its handler shows

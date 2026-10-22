@@ -1,7 +1,7 @@
-import { systemActor } from '../actor/system-actor.js';
-import { type ExecutionContext, executionContext } from '../execution/execution-context.js';
-import type { EventExecutionOptions } from './event-execution-options.js';
-import type { IntegrationEvent } from './integration-event.js';
+import { systemActor } from '../actor/system-actor';
+import { type ExecutionContext, executionContext } from '../execution/execution-context';
+import type { EventExecutionOptions } from './event-execution-options';
+import type { IntegrationEvent } from './integration-event';
 
 /**
  * The execution context of a consumed event: origin `event`, the correlation of the event (its

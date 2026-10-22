@@ -1,5 +1,5 @@
-import { contextExtractable } from '../../src/rules/context-extractable.js';
-import { eventsConsumerIdempotent } from '../../src/rules/events-consumer-idempotent.js';
+import { contextExtractable } from '../../src/rules/context-extractable';
+import { eventsConsumerIdempotent } from '../../src/rules/events-consumer-idempotent';
 import {
   DECLARED,
   EXPLICIT,
@@ -15,8 +15,8 @@ import {
   GATEWAY,
   MAPPER,
   SPEC,
-} from '../support/declared-style.js';
-import { at, ruleTester } from '../support/rule-tester.js';
+} from '../support/declared-style';
+import { at, ruleTester } from '../support/rule-tester';
 
 const REACTION = 'export class CatalogProductListedHandler { async handle(event: ProductListedV1): Promise<void> {} }';
 

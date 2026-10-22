@@ -1,5 +1,5 @@
-import type { Stack } from '../config/index.js';
-import { DIALECTS } from './dialects.js';
+import type { Stack } from '../config';
+import { DIALECTS } from './dialects';
 
 /**
  * A text written for npm, as the package manager of the project says it: the commands of a

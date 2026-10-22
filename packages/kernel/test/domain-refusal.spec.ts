@@ -8,14 +8,14 @@ import {
   err,
   isRefusal,
   unwrap,
-} from '../src/index.js';
+} from '../src';
 import {
   AgendaUnreachable,
   BookingTooLate,
   type SchedulingCode,
   SchedulingCodes,
   SlotTaken,
-} from './support/scheduling-refusals.js';
+} from './support/scheduling-refusals';
 
 const startsAt = new Date('2026-03-02T09:00:00.000Z');
 

@@ -1,7 +1,7 @@
 import type { EntityManager, EntitySchema, ObjectLiteral, QueryBuilder } from 'typeorm';
 import type { EventStamp, ReadModelRows, StampedRow } from '@ddd-ts-kit/kernel';
-import type { TypeOrmContext } from '../unit-of-work/type-orm-context.js';
-import type { RowMapper } from './row.mapper.js';
+import type { TypeOrmContext } from '../unit-of-work/type-orm-context';
+import type { RowMapper } from './row.mapper';
 
 export interface StampedTable<Row extends object> {
   /** `schema.table`, or the table alone. */

@@ -8,31 +8,31 @@ import {
 } from '@nats-io/jetstream';
 import type { NatsConnection } from '@nats-io/transport-node';
 import type { EventDelivery, IntegrationEvent, IntegrationEventCallback, Subscription } from '@ddd-ts-kit/kernel';
-import { decode } from '../codec/decode.js';
+import { decode } from '../codec/decode';
 import {
   ATTEMPT_HEADER,
   DEAD_REASON_HEADER,
   ERROR_CODE_HEADER,
   REPLAY_FOR_HEADER,
   SOURCE_HEADER,
-} from '../codec/headers.js';
-import { republication } from '../codec/republication.js';
-import { failureCode } from '../errors/failure-code.js';
-import { ignore } from '../ignore.js';
-import { MESSAGING_SYSTEM } from '../messaging-system.js';
-import type { NatsDelivery } from '../options/nats-delivery.js';
-import type { NatsFailure } from '../options/nats-failure.js';
-import type { RetryOptions } from '../options/retry-options.js';
-import type { Publications } from '../publication/publications.js';
-import type { BindingNames } from '../topology/binding-names.js';
-import { bindingNamesOf } from '../topology/binding-names-of.js';
-import type { ConsumerBinding } from '../topology/consumer-binding.js';
-import { declareTopology } from '../topology/declare-topology.js';
-import { topologyOf } from '../topology/topology-of.js';
-import type { TopologySettings } from '../topology/topology-settings.js';
-import { failureOf } from './failure-of.js';
-import { POISON_MESSAGE } from './poison-message.js';
-import { track } from './track.js';
+} from '../codec/headers';
+import { republication } from '../codec/republication';
+import { failureCode } from '../errors/failure-code';
+import { ignore } from '../ignore';
+import { MESSAGING_SYSTEM } from '../messaging-system';
+import type { NatsDelivery } from '../options/nats-delivery';
+import type { NatsFailure } from '../options/nats-failure';
+import type { RetryOptions } from '../options/retry-options';
+import type { Publications } from '../publication/publications';
+import type { BindingNames } from '../topology/binding-names';
+import { bindingNamesOf } from '../topology/binding-names-of';
+import type { ConsumerBinding } from '../topology/consumer-binding';
+import { declareTopology } from '../topology/declare-topology';
+import { topologyOf } from '../topology/topology-of';
+import type { TopologySettings } from '../topology/topology-settings';
+import { failureOf } from './failure-of';
+import { POISON_MESSAGE } from './poison-message';
+import { track } from './track';
 
 export interface ConsumptionSettings {
   readonly topology: TopologySettings;

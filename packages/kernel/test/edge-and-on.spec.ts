@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { DeclarationError, Edge, On, Projection, declarationOf, type EventContract } from '../src/declarations.js';
-import { ok, type IntegrationEvent } from '../src/index.js';
-import { MoneyDeposited, MoneyWithdrawn } from './support/bank/account.js';
+import { DeclarationError, Edge, On, Projection, declarationOf, type EventContract } from '../src/declarations';
+import { ok, type IntegrationEvent } from '../src';
+import { MoneyDeposited, MoneyWithdrawn } from './support/bank/account';
 
 const MISPLACED = '@On is written on a public instance method with a string name.';
 

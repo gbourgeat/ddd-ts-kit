@@ -1,5 +1,5 @@
-import { DECLARED_ROLES, type DeclaredRole } from './declared-role.js';
-import { moduleSplit } from '../model-modules/index.js';
+import { DECLARED_ROLES, type DeclaredRole } from './declared-role';
+import { moduleSplit } from '../model-modules';
 
 /**
  * The role of a source given relative to its context, or undefined when the file plays none.

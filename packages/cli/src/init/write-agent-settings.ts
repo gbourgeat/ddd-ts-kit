@@ -1,14 +1,14 @@
-import type { Config } from '../config/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { isRecord } from './is-record.js';
-import { jsonObject } from './json-object.js';
-import { formatJson } from '../json/format-json.js';
-import { agentPermissions, type AgentPermissions } from './agent-permissions.js';
-import { gitHostOf } from './git-host-of.js';
-import { managedSettingsNote } from './managed-settings-note.js';
-import { mergeSandbox } from './merge-sandbox.js';
-import { mergeHooks } from './merge-hooks.js';
-import { regulatedSandbox } from './regulated-sandbox.js';
+import type { Config } from '../config';
+import type { Workspace } from '../workspace';
+import { isRecord } from './is-record';
+import { jsonObject } from './json-object';
+import { formatJson } from '../json/format-json';
+import { agentPermissions, type AgentPermissions } from './agent-permissions';
+import { gitHostOf } from './git-host-of';
+import { managedSettingsNote } from './managed-settings-note';
+import { mergeSandbox } from './merge-sandbox';
+import { mergeHooks } from './merge-hooks';
+import { regulatedSandbox } from './regulated-sandbox';
 
 const AGENT_SETTINGS = '.claude/settings.json';
 

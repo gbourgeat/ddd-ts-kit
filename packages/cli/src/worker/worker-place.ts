@@ -1,6 +1,6 @@
-import type { CitationsAtRef } from '../citations/stale-names-at.js';
-import type { Config } from '../config/index.js';
-import type { BriefedSlice } from './briefed-slice.js';
+import type { CitationsAtRef } from '../citations/stale-names-at';
+import type { Config } from '../config';
+import type { BriefedSlice } from './briefed-slice';
 
 /** What a briefing is filled with. */
 export interface WorkerPlace {

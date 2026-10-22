@@ -1,4 +1,4 @@
-import { declarationsRoleDeclared } from '../../src/rules/declarations-role-declared.js';
+import { declarationsRoleDeclared } from '../../src/rules/declarations-role-declared';
 import {
   DECLARED,
   declaring,
@@ -12,8 +12,8 @@ import {
   REPOSITORY,
   GATEWAY,
   ADAPTER,
-} from '../support/declared-style.js';
-import { at, ruleTester } from '../support/rule-tester.js';
+} from '../support/declared-style';
+import { at, ruleTester } from '../support/rule-tester';
 
 const role = (suffix: string, folder: string, expected: string): Record<string, string> => ({
   suffix,

@@ -1,4 +1,4 @@
-import type { Declarer } from './declarer.js';
+import type { Declarer } from './declarer';
 
 interface Located {
   readonly module: string;

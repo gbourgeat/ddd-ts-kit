@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { runCheck } from '../src/check/engine/run-check.js';
-import { kebabCaseOf } from '../src/check/exports/kebab-case-of.js';
-import { matchesGlob } from '../src/check/exports/matches-glob.js';
-import { namedAfter } from '../src/check/exports/named-after.js';
-import { loadProject } from '../src/check/project/load-project.js';
-import { lines, projectWith, reported } from './rules-support.js';
+import { runCheck } from '../src/check/engine/run-check';
+import { kebabCaseOf } from '../src/check/exports/kebab-case-of';
+import { matchesGlob } from '../src/check/exports/matches-glob';
+import { namedAfter } from '../src/check/exports/named-after';
+import { loadProject } from '../src/check/project/load-project';
+import { lines, projectWith, reported } from './rules-support';
 
 const RULE = 'clean/one-export-per-file';
 

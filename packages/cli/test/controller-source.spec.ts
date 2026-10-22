@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { controllerSource } from '../src/generate/kinds/presentation/controller-source.js';
+import { controllerSource } from '../src/generate/kinds/presentation/controller-source';
 
 const CONTROLLER = [
   "import { Controller, type HttpRequest } from '@ddd-ts-kit/http';",

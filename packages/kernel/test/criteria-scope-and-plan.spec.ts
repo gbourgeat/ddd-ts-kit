@@ -7,8 +7,8 @@ import {
   evaluateCriteria,
   planCriteria,
   scoped,
-} from '../src/index.js';
-import { appointments, row, type AppointmentRow } from './support/appointments.js';
+} from '../src';
+import { appointments, row, type AppointmentRow } from './support/appointments';
 
 describe('scoped and planCriteria', () => {
   const rows = [row('a1'), row('a2', { tenantId: 'globex' }), row('a3', { status: 'cancelled' })];

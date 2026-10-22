@@ -12,11 +12,11 @@
  */
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { NodeSDK, resources, tracing } from '@opentelemetry/sdk-node';
-import { LocalRootTracker } from '../local-root/local-root-tracker.js';
-import { AttributeAllowList } from '../processors/attribute-allow-list.js';
-import { ErrorMessageScrubber } from '../processors/error-message-scrubber.js';
-import { UrlSecretSpanProcessor } from '../processors/url-secret-span-processor.js';
-import { defaultInstrumentations, type AutoInstrumentationSettings } from './default-instrumentations.js';
+import { LocalRootTracker } from '../local-root/local-root-tracker';
+import { AttributeAllowList } from '../processors/attribute-allow-list';
+import { ErrorMessageScrubber } from '../processors/error-message-scrubber';
+import { UrlSecretSpanProcessor } from '../processors/url-secret-span-processor';
+import { defaultInstrumentations, type AutoInstrumentationSettings } from './default-instrumentations';
 
 type NodeSdkOptions = NonNullable<ConstructorParameters<typeof NodeSDK>[0]>;
 

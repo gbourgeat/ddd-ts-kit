@@ -1,4 +1,4 @@
-import type { IdGenerator } from '../../application/ports/id-generator.js';
+import type { IdGenerator } from '../../application/ports/id-generator';
 
 export class SequentialIdGenerator implements IdGenerator {
   private n = 0;

@@ -1,15 +1,15 @@
-import type { DomainEventPhase } from '../../application/events/domain-event-phase.js';
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
-import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature.js';
-import type { DomainEventHandler as DomainEventHandlerShape } from '../model/domain-event-handler.js';
-import type { NamedDomainEventType } from '../model/named-domain-event-type.js';
-import { record } from '../registry/record.js';
-import { eventNameOf } from './event-name-of.js';
-import { isDependencies } from './is-dependencies.js';
-import type { Named } from './named.js';
-import type { Settings } from './settings.js';
+import type { DomainEventPhase } from '../../application/events/domain-event-phase';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { ClassDeclarator } from '../dependencies/class-declarator';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies';
+import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature';
+import type { DomainEventHandler as DomainEventHandlerShape } from '../model/domain-event-handler';
+import type { NamedDomainEventType } from '../model/named-domain-event-type';
+import { record } from '../registry/record';
+import { eventNameOf } from './event-name-of';
+import { isDependencies } from './is-dependencies';
+import type { Named } from './named';
+import type { Settings } from './settings';
 
 export interface DomainEventHandlerOptions {
   /**

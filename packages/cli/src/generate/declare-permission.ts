@@ -1,9 +1,9 @@
-import type { Name } from '../naming/index.js';
-import { renderTemplate } from '../templating/index.js';
-import { applyWiring } from './apply-wiring.js';
-import { permissionsFile } from './permissions-file.js';
-import type { Scope } from './scope.js';
-import { vars } from './vars.js';
+import type { Name } from '../naming';
+import { renderTemplate } from '../templating';
+import { applyWiring } from './apply-wiring';
+import { permissionsFile } from './permissions-file';
+import type { Scope } from './scope';
+import { vars } from './vars';
 
 /** Adds a permission to the permissions of the context, which are born with their first one. */
 export function declarePermission(scope: Scope, permission: string, useCase: Name): void {

@@ -1,5 +1,5 @@
 import type { EventDelivery, IntegrationEvent, IntegrationEventCallback } from '@ddd-ts-kit/kernel';
-import { failureCode } from '../errors/failure-code.js';
+import { failureCode } from '../errors/failure-code';
 
 /**
  * Runs every handler, so one that fails does not starve the others; gives the first code. Each

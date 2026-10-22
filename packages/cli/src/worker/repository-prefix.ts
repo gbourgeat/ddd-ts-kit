@@ -1,5 +1,5 @@
-import { CliError } from '../cli-error.js';
-import { runGit } from '../commit/run-git.js';
+import { CliError } from '../cli-error';
+import { runGit } from '../commit/run-git';
 
 /** The path of the project inside its repository, empty at its top; refused outside a repository or before its first commit. */
 export function repositoryPrefix(root: string): string {

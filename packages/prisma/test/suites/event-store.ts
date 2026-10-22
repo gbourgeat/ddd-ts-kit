@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { eventStoreContract, eventStoreUnitOfWorkContract } from '@ddd-ts-kit/testing/contracts';
-import { PrismaOutboxStore, createPrismaEventSourcing, createPrismaUnitOfWork } from '../../src/index.js';
-import { createDatabase, type TestDatabase } from '../support/database.js';
+import { PrismaOutboxStore, createPrismaEventSourcing, createPrismaUnitOfWork } from '../../src';
+import { createDatabase, type TestDatabase } from '../support/database';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

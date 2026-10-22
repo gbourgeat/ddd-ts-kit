@@ -1,8 +1,8 @@
-import { CriteriaDefinitionError } from './criteria-definition-error.js';
-import type { FieldDeclaration } from './field-declaration.js';
-import type { FieldType } from './field-type.js';
-import type { FilterOperator } from './filter-operator.js';
-import { operatorsOfType } from './operators-of-type.js';
+import { CriteriaDefinitionError } from './criteria-definition-error';
+import type { FieldDeclaration } from './field-declaration';
+import type { FieldType } from './field-type';
+import type { FilterOperator } from './filter-operator';
+import { operatorsOfType } from './operators-of-type';
 
 const TYPES: readonly FieldType[] = ['string', 'number', 'boolean', 'instant', 'decimal'];
 

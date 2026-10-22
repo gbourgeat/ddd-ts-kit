@@ -1,5 +1,5 @@
 import type { ChannelModel, ConsumeMessage, MessageProperties } from 'amqplib';
-import type { AmqpError } from './errors.js';
+import type { AmqpError } from './errors';
 
 export type Arguments = Readonly<Record<string, unknown>>;
 

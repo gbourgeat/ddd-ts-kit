@@ -22,7 +22,7 @@ import {
   type AuditTrail,
   type ElevationOptions,
   type Session,
-} from '../src/index.js';
+} from '../src';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: [], attributes: {} };
 const consultant: Actor = { id: 'cy', type: 'user', tenantId: 'acme', roles: [], attributes: { tenants: ['globex'] } };

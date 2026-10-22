@@ -1,8 +1,8 @@
 import type { CriteriaDefinition, FieldDeclaration } from '@ddd-ts-kit/kernel';
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import { pageRequestParameters } from '../pagination/page-request-parameters.js';
-import { isRecord } from '../support/is-record.js';
-import { sortableFields } from './sortable-fields.js';
+import { pageRequestParameters } from '../pagination/page-request-parameters';
+import { isRecord } from '../support/is-record';
+import { sortableFields } from './sortable-fields';
 
 const WRITTEN: Readonly<Record<FieldDeclaration['type'], string>> = {
   string: 'text',

@@ -1,5 +1,5 @@
-import { Command } from '../../../../../../../../src/index.js';
-import { Public } from '../../../../../../../../src/declarations.js';
+import { Command } from '../../../../../../../../src';
+import { Public } from '../../../../../../../../src/declarations';
 
 @Public({ audited: ['reason'] })
 export class RequestCallback extends Command {

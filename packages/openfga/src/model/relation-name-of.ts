@@ -1,4 +1,4 @@
-import { OpenFgaModelError } from './open-fga-model-error.js';
+import { OpenFgaModelError } from './open-fga-model-error';
 
 /** What OpenFGA admits as a relation name: 1 to 50 characters, none of them `:`, `#`, `@` or a space. */
 const OPENFGA_RELATION_NAME = /^[^:#@\s]{1,50}$/;

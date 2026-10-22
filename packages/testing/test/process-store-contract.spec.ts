@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryProcessStore } from '@ddd-ts-kit/kernel';
-import { processStoreContract } from '../src/contracts.js';
-import { TransactionalProcesses } from './support/transactional-processes.js';
+import { processStoreContract } from '../src/contracts';
+import { TransactionalProcesses } from './support/transactional-processes';
 
 // The reference store of the port, held to the contract as every adapter is.
 processStoreContract(

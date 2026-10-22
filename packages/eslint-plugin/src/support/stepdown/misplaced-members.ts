@@ -1,10 +1,10 @@
 import type { TSESTree } from '@typescript-eslint/utils';
-import { CallGraph } from './call-graph.js';
-import { className } from '../classes/class-name.js';
-import { isCallable } from '../classes/is-callable.js';
-import { memberName } from '../classes/member-name.js';
-import { visibilityOf } from '../classes/visibility-of.js';
-import type { MemberUse } from './member-use.js';
+import { CallGraph } from './call-graph';
+import { className } from '../classes/class-name';
+import { isCallable } from '../classes/is-callable';
+import { memberName } from '../classes/member-name';
+import { visibilityOf } from '../classes/visibility-of';
+import type { MemberUse } from './member-use';
 
 export type ClassMessageId = 'nonPublicBeforePublic' | 'staticAfterInstance' | 'memberAboveCaller';
 

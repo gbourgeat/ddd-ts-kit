@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { fitSource, fitStatement } from '../src/layout/index.js';
-import { insertInRegion } from '../src/markers/index.js';
+import { fitSource, fitStatement } from '../src/layout';
+import { insertInRegion } from '../src/markers';
 
 const LONG = 'InternationalPurchaseOrder';
 

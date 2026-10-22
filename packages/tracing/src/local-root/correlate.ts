@@ -1,5 +1,5 @@
-import { tracingConfiguration } from '../configuration/configure-tracing.js';
-import type { LocalRoot } from './local-root.js';
+import { tracingConfiguration } from '../configuration/configure-tracing';
+import type { LocalRoot } from './local-root';
 
 export const CORRELATION_ID_ATTRIBUTE = 'app.correlation_id';
 export const ORIGIN_ATTRIBUTE = 'app.origin';

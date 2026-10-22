@@ -1,9 +1,9 @@
 import { type Server, type Socket, createServer } from 'node:net';
-import { ClientSession, type Router } from './client-session.js';
-import type { ClientFrame } from './frames.js';
-import { statusHeaders } from './headers.js';
-import { JetStream } from './jetstream.js';
-import type { Outbox } from './outbox.js';
+import { ClientSession, type Router } from './client-session';
+import type { ClientFrame } from './frames';
+import { statusHeaders } from './headers';
+import { JetStream } from './jetstream';
+import type { Outbox } from './outbox';
 
 /**
  * A NATS server with JetStream, in the process of the test and on a port of its own, so that the

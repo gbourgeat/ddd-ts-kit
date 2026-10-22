@@ -1,10 +1,10 @@
 import { isAnonymous, isTenantId, isTenantMember, type Actor } from '@ddd-ts-kit/kernel';
-import { guardRefusals } from '../controller/guard-refusals.js';
-import { ForbiddenError } from '../error/forbidden-error.js';
-import { isRecord } from '../support/is-record.js';
-import type { RawHeaders } from '../route/raw-headers.js';
-import type { TenantResolver } from './tenant-resolver.js';
-import { UnknownTenantError } from './unknown-tenant-error.js';
+import { guardRefusals } from '../controller/guard-refusals';
+import { ForbiddenError } from '../error/forbidden-error';
+import { isRecord } from '../support/is-record';
+import type { RawHeaders } from '../route/raw-headers';
+import type { TenantResolver } from './tenant-resolver';
+import { UnknownTenantError } from './unknown-tenant-error';
 
 interface TenantResolution {
   readonly resolver: TenantResolver | undefined;

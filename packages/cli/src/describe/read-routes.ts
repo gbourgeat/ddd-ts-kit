@@ -1,7 +1,7 @@
-import { presentationOfRoute } from './presentation-of-route.js';
-import type { RequestPart, RouteFact, RouteResponse, UseCaseFact } from './context-description.js';
-import type { ContextSources } from './context-sources.js';
-import { readControllers } from './read-controllers.js';
+import { presentationOfRoute } from './presentation-of-route';
+import type { RequestPart, RouteFact, RouteResponse, UseCaseFact } from './context-description';
+import type { ContextSources } from './context-sources';
+import { readControllers } from './read-controllers';
 
 const FOLDER = 'presentation/http';
 

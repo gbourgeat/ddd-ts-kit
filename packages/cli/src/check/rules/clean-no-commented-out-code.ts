@@ -1,7 +1,7 @@
-import { commentLines } from '../comments/comment-lines.js';
-import { looksLikeCode } from '../comments/looks-like-code.js';
-import type { Rule } from '../model/rule.js';
-import { perFile } from '../support/per-file.js';
+import { commentLines } from '../comments/comment-lines';
+import { looksLikeCode } from '../comments/looks-like-code';
+import type { Rule } from '../model/rule';
+import { perFile } from '../support/per-file';
 
 const FIX = 'Delete it: version control keeps the old version, and code that does not run misleads the reader.';
 

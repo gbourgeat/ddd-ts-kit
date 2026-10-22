@@ -1,4 +1,4 @@
-import type { Actor } from '../actor/actor.js';
+import type { Actor } from '../actor/actor';
 
 /**
  * The tenants an actor belongs to: its `tenantId`, and the `tenants` attribute for an actor

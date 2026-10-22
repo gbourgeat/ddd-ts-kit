@@ -1,6 +1,6 @@
 import type { Context } from 'hono';
-import { mediaTypeOf } from '../representation/media-type-of.js';
-import type { EdgeRefusal } from './edge-problem.js';
+import { mediaTypeOf } from '../representation/media-type-of';
+import type { EdgeRefusal } from './edge-problem';
 
 export type ReadBody =
   | { readonly read: true; readonly value: unknown }

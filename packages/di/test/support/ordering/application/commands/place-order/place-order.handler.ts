@@ -1,7 +1,7 @@
 import type { Clock, IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
-import type { OrderRepository } from '../../../domain/repositories/order.repository.js';
-import { OrderPlaced } from '../../../published-language/order-placed.js';
-import type { PlaceOrder } from './place-order.command.js';
+import type { OrderRepository } from '../../../domain/repositories/order.repository';
+import { OrderPlaced } from '../../../published-language/order-placed';
+import type { PlaceOrder } from './place-order.command';
 
 export class PlaceOrderHandler {
   static built = 0;

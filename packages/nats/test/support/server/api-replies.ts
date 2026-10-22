@@ -1,5 +1,5 @@
-import type { Json } from './json.js';
-import type { Stream } from './stream.js';
+import type { Json } from './json';
+import type { Stream } from './stream';
 
 const TYPE = 'io.nats.jetstream.api.v1';
 

@@ -1,6 +1,6 @@
-import { DEFAULT_ERROR_MAPPING } from './default-error-mapping.js';
-import type { ErrorMapper } from './error-mapper.js';
-import type { ErrorMapping } from './error-mapping.js';
+import { DEFAULT_ERROR_MAPPING } from './default-error-mapping';
+import type { ErrorMapper } from './error-mapper';
+import type { ErrorMapping } from './error-mapping';
 
 export interface ErrorMapperOptions {
   /** Status of a `DomainError` whose code is not mapped. Defaults to 422. */

@@ -1,2 +1,2 @@
-export { openFgaClient } from './client/open-fga-client.js';
-export type { OpenFgaClientOptions } from './client/open-fga-client-options.js';
+export { openFgaClient } from './client/open-fga-client';
+export type { OpenFgaClientOptions } from './client/open-fga-client-options';

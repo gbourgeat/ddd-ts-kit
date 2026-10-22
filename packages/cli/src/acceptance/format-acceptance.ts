@@ -1,7 +1,7 @@
-import type { AcceptanceGate } from './acceptance-gate.js';
-import { countsFor } from './counts-for.js';
-import type { RegressionSpec } from './regression-spec.js';
-import type { RowAcceptance, StoryAcceptance } from './story-acceptance.js';
+import type { AcceptanceGate } from './acceptance-gate';
+import { countsFor } from './counts-for';
+import type { RegressionSpec } from './regression-spec';
+import type { RowAcceptance, StoryAcceptance } from './story-acceptance';
 
 /** The acceptance of each story as text: its spec, each row with its scenarios, then what keeps it from the gate. */
 export function formatAcceptance(stories: readonly StoryAcceptance[], gate: AcceptanceGate | undefined): string {

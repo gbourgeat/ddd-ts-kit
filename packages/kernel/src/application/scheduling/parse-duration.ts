@@ -1,4 +1,4 @@
-import { InvalidJobScheduleError } from './invalid-job-schedule-error.js';
+import { InvalidJobScheduleError } from './invalid-job-schedule-error';
 
 const UNIT_MS: Readonly<Record<string, number>> = { ms: 1, s: 1_000, m: 60_000, h: 3_600_000, d: 86_400_000 };
 

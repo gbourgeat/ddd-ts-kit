@@ -1,5 +1,5 @@
 import { FixedClock, SequentialIdGenerator } from '@ddd-ts-kit/kernel';
-import { kernelModule } from '../../src/index.js';
+import { kernelModule } from '../../src';
 
 /** The kernel module on a fixed clock, with ids numbered from `order-1`. */
 export const deterministicKernel = (): ReturnType<typeof kernelModule> =>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Workspace } from '../src/workspace/index.js';
-import { read, tempDir, write } from './helpers.js';
+import { Workspace } from '../src/workspace';
+import { read, tempDir, write } from './helpers';
 
 describe('a workspace of a pnpm project', () => {
   it('speaks pnpm in what a command writes, and keeps as it is what a move carries', () => {

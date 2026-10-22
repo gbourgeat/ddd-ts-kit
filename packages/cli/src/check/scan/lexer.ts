@@ -1,7 +1,7 @@
-import { blank } from './blank.js';
-import type { BlockCommentRecord } from './block-comment-record.js';
-import type { CommentRecord } from './comment-record.js';
-import type { StringRecord } from './string-record.js';
+import { blank } from './blank';
+import type { BlockCommentRecord } from './block-comment-record';
+import type { CommentRecord } from './comment-record';
+import type { StringRecord } from './string-record';
 
 const REGEX_PRECEDERS = new Set([
   '(',

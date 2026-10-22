@@ -1,8 +1,8 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../../project/linted-file.js';
-import { type ImportTarget, resolveImport } from '../../project/resolve-import.js';
-import { inLayer } from '../imports/in-layer.js';
-import { isOutsidePlace } from './is-outside-place.js';
+import type { LintedFile } from '../../project/linted-file';
+import { type ImportTarget, resolveImport } from '../../project/resolve-import';
+import { inLayer } from '../imports/in-layer';
+import { isOutsidePlace } from './is-outside-place';
 
 /**
  * The names a file reads from another language, with where they come from

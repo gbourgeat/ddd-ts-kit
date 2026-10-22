@@ -1,9 +1,9 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { config } from './config.js';
-import { contextDoc } from './context-doc.js';
-import type { FixtureFiles } from './fixture-files.js';
-import { PATHS } from './paths.js';
-import { SAMPLES } from './samples.js';
+import { CONFIG_FILE } from '../../config';
+import { config } from './config';
+import { contextDoc } from './context-doc';
+import type { FixtureFiles } from './fixture-files';
+import { PATHS } from './paths';
+import { SAMPLES } from './samples';
 
 /** Two declared contexts, billing downstream of catalog, each with a valid CONTEXT.md. */
 export function project(files: FixtureFiles, overrides: FixtureFiles = {}): FixtureFiles {

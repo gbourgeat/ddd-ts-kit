@@ -1,8 +1,8 @@
-import { specifierOf } from '../../../alias/index.js';
-import type { RenderContext } from '../../../templating/index.js';
-import { permissionsFile } from '../../permissions-file.js';
-import type { Scope } from '../../scope.js';
-import type { SentCommand } from './sent-command.js';
+import { specifierOf } from '../../../alias';
+import type { RenderContext } from '../../../templating';
+import { permissionsFile } from '../../permissions-file';
+import type { Scope } from '../../scope';
+import type { SentCommand } from './sent-command';
 
 /** What the spec gives the system actor of the job, so that the guard lets its command through: the permission of the command, read where it is written. */
 export function grantedInSpec(scope: Scope, command: SentCommand): RenderContext {

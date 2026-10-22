@@ -1,5 +1,5 @@
-import { describeToken } from './describe-token.js';
-import type { Token } from './token.js';
+import { describeToken } from './describe-token';
+import type { Token } from './token';
 
 /**
  * What a container keys a token by. A class is its own identity, which two copies of a package

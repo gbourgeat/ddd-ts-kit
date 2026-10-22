@@ -1,4 +1,4 @@
-import type { MetricLabels } from './metric-labels.js';
+import type { MetricLabels } from './metric-labels';
 
 /** A value that goes up and down: queue depth, circuit state. */
 export interface Gauge {

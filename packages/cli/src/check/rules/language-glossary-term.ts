@@ -1,15 +1,15 @@
-import { Glossaries } from '../language/glossaries.js';
-import type { Glossary } from '../language/parse-glossary.js';
-import { REFUSAL_QUALIFIERS } from '../language/refusal-qualifiers.js';
-import { unknownWords } from '../language/unknown-words.js';
-import { buildsThroughFactories } from '../errors/builds-through-factories.js';
-import { refusalClasses } from '../errors/refusal-classes.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inContext } from '../support/in-context.js';
-import { reporter } from '../support/reporter.js';
-import { toViolations } from '../support/to-violations.js';
+import { Glossaries } from '../language/glossaries';
+import type { Glossary } from '../language/parse-glossary';
+import { REFUSAL_QUALIFIERS } from '../language/refusal-qualifiers';
+import { unknownWords } from '../language/unknown-words';
+import { buildsThroughFactories } from '../errors/builds-through-factories';
+import { refusalClasses } from '../errors/refusal-classes';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { inContext } from '../support/in-context';
+import { reporter } from '../support/reporter';
+import { toViolations } from '../support/to-violations';
 
 const CLASS = /(?<![\w$.])class\s+([A-Za-z_$][\w$]*)/g;
 const DOMAIN_ROLES = new Set(['aggregates', 'entities', 'value-objects', 'services', 'events']);

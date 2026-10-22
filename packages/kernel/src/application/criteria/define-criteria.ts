@@ -1,11 +1,11 @@
-import type { Sort } from '../pagination/sort.js';
-import type { CriteriaDeclaration } from './criteria-declaration.js';
-import { CriteriaDefinitionError } from './criteria-definition-error.js';
-import type { CriteriaDefinition } from './criteria-definition.js';
-import { DEFAULT_CRITERIA_LIMITS, type CriteriaLimits } from './criteria-limits.js';
-import type { FieldDeclaration } from './field-declaration.js';
-import { fieldDeclarationOf } from './field-declaration-of.js';
-import type { FieldOf } from './field-of.js';
+import type { Sort } from '../pagination/sort';
+import type { CriteriaDeclaration } from './criteria-declaration';
+import { CriteriaDefinitionError } from './criteria-definition-error';
+import type { CriteriaDefinition } from './criteria-definition';
+import { DEFAULT_CRITERIA_LIMITS, type CriteriaLimits } from './criteria-limits';
+import type { FieldDeclaration } from './field-declaration';
+import { fieldDeclarationOf } from './field-declaration-of';
+import type { FieldOf } from './field-of';
 
 type Fields = Readonly<Record<string, FieldDeclaration>>;
 

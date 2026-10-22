@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { FixedClock } from '@ddd-ts-kit/kernel';
-import { InMemoryOutboxStore, OutboxRelay } from '../src/index.js';
-import { at } from './support/events.js';
-import { FlakyPublisher } from './support/flaky-publisher.js';
-import { invoiceIssuedEvent as event } from './support/invoice-issued-event.js';
-import { setupRelay } from './support/setup-relay.js';
+import { InMemoryOutboxStore, OutboxRelay } from '../src';
+import { at } from './support/events';
+import { FlakyPublisher } from './support/flaky-publisher';
+import { invoiceIssuedEvent as event } from './support/invoice-issued-event';
+import { setupRelay } from './support/setup-relay';
 
 describe('OutboxRelay.tick', () => {
   it('publishes each pending event once', async () => {

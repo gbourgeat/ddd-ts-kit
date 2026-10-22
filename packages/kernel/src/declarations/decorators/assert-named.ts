@@ -1,4 +1,4 @@
-import { DeclarationError } from '../registry/declaration-error.js';
+import { DeclarationError } from '../registry/declaration-error';
 
 export function assertNamed(name: string, complaint: string): void {
   if (name.trim() === '') {

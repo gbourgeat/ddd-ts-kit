@@ -18,8 +18,8 @@ import {
   traceLogFields,
   tracedSubscriber,
   withSpan,
-} from '../src/index.js';
-import { setupTracing, type TestTracing } from './support/setup-tracing.js';
+} from '../src';
+import { setupTracing, type TestTracing } from './support/setup-tracing';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: [], attributes: { email: 'ada@example.test' } };
 const request: ExecutionContext = executionContext({ correlationId: 'corr-1', actor: ada, origin: 'http' });

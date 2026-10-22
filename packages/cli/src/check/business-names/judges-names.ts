@@ -1,4 +1,4 @@
-import type { SourceFile } from '../model/source-file.js';
+import type { SourceFile } from '../model/source-file';
 
 /**
  * Where the language of the model lives: `domain/` and `application/` of a context, and the

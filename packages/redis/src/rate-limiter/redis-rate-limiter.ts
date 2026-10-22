@@ -9,9 +9,9 @@ import {
   type RateLimitDecision,
   type RateLimiter,
 } from '@ddd-ts-kit/kernel';
-import { namespaced } from '../keys/namespaced.js';
-import { listOf } from '../replies/list-of.js';
-import { conceal } from '../secrecy/conceal.js';
+import { namespaced } from '../keys/namespaced';
+import { listOf } from '../replies/list-of';
+import { conceal } from '../secrecy/conceal';
 
 export interface RedisRateLimiterOptions {
   /** Prefix of the keys. Default `rate`. */

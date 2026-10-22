@@ -4,11 +4,11 @@ import {
   type ProcessedEventStore,
   type UnitOfWork,
 } from '@ddd-ts-kit/kernel';
-import type { IntegrationEventDefinition } from '../definition/integration-event-definition.js';
-import { InvalidEventPayloadError } from '../definition/invalid-event-payload-error.js';
-import type { EventScopeOptions } from './event-scope-options.js';
-import type { EventSubscription } from './event-subscription.js';
-import type { ReleasableProcessedEventStore } from './releasable-processed-event-store.js';
+import type { IntegrationEventDefinition } from '../definition/integration-event-definition';
+import { InvalidEventPayloadError } from '../definition/invalid-event-payload-error';
+import type { EventScopeOptions } from './event-scope-options';
+import type { EventSubscription } from './event-subscription';
+import type { ReleasableProcessedEventStore } from './releasable-processed-event-store';
 
 export interface OnOptions extends EventScopeOptions {
   /** Name of the consuming context or handler: the idempotency scope. */

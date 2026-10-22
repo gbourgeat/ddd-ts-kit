@@ -1,12 +1,12 @@
-import { designOf } from '../citations/design-of.js';
-import { rowDocuments } from '../citations/row-documents.js';
-import { CliError } from '../cli-error.js';
-import { planWaves } from '../plan/plan-waves.js';
-import { readSliceRules } from '../progress/read-slice-rules.js';
-import { readSlices, SLICES_FILE } from '../progress/read-slices.js';
-import type { Slice } from '../progress/slice.js';
-import type { Workspace } from '../workspace/index.js';
-import type { BriefedSlice } from './briefed-slice.js';
+import { designOf } from '../citations/design-of';
+import { rowDocuments } from '../citations/row-documents';
+import { CliError } from '../cli-error';
+import { planWaves } from '../plan/plan-waves';
+import { readSliceRules } from '../progress/read-slice-rules';
+import { readSlices, SLICES_FILE } from '../progress/read-slices';
+import type { Slice } from '../progress/slice';
+import type { Workspace } from '../workspace';
+import type { BriefedSlice } from './briefed-slice';
 
 /** The rows a worker is briefed on, with their rules, and what the conductor should know about them. */
 export interface BriefedRows {

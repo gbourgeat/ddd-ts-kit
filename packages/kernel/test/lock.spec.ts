@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FixedClock, InMemoryLock } from '../src/index.js';
+import { FixedClock, InMemoryLock } from '../src';
 
 const NOW = new Date('2026-03-01T10:00:00.000Z');
 const HELD = { ttlMs: 1_000 };

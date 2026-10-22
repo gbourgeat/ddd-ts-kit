@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Actor } from '@ddd-ts-kit/kernel';
 import { authorizerContract, relationTupleStoreContract } from '@ddd-ts-kit/auth/testing';
-import { authorizationModelOf, modelDrift, OpenFgaAuthorizer, OpenFgaRelationTupleStore } from '../src/index.js';
-import { docsPermissions, schema } from './support/documents.js';
-import { freshStore, OPENFGA_URL } from './support/open-fga-server.js';
+import { authorizationModelOf, modelDrift, OpenFgaAuthorizer, OpenFgaRelationTupleStore } from '../src';
+import { docsPermissions, schema } from './support/documents';
+import { freshStore, OPENFGA_URL } from './support/open-fga-server';
 
 const runner = { describe: describe.runIf(OPENFGA_URL !== ''), it, expect, beforeEach, afterEach };
 const ada: Actor = { id: 'ada', type: 'user', roles: [], attributes: {} };

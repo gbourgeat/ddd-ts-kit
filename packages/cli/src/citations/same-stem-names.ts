@@ -1,10 +1,10 @@
 import path from 'node:path';
-import { splitWords } from '../naming/split-words.js';
-import { toName } from '../naming/to-name.js';
-import type { Evidence } from './evidence.js';
-import { roleSuffixOf } from './role-suffix-of.js';
-import type { Candidate } from './stale-citation.js';
-import { isTestFile } from './is-test-file.js';
+import { splitWords } from '../naming/split-words';
+import { toName } from '../naming/to-name';
+import type { Evidence } from './evidence';
+import { roleSuffixOf } from './role-suffix-of';
+import type { Candidate } from './stale-citation';
+import { isTestFile } from './is-test-file';
 
 const MOST = 3;
 

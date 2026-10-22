@@ -1,4 +1,4 @@
-import type { FieldRequirement } from './field-requirement.js';
+import type { FieldRequirement } from './field-requirement';
 
 /** Who may see and who may set one field of a schema. */
 export interface FieldRule<Container = unknown> {

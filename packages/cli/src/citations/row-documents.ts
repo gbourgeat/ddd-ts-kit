@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { markdownUnder } from '../check/project/markdown-under.js';
-import { SLICES_FILE } from '../progress/read-slices.js';
-import type { Slice } from '../progress/slice.js';
-import type { DocumentPart } from './document-part.js';
-import { partsOfDocument } from './parts-of-document.js';
-import { partsOfSlices } from './parts-of-slices.js';
+import { markdownUnder } from '../check/project/markdown-under';
+import { SLICES_FILE } from '../progress/read-slices';
+import type { Slice } from '../progress/slice';
+import type { DocumentPart } from './document-part';
+import { partsOfDocument } from './parts-of-document';
+import { partsOfSlices } from './parts-of-slices';
 
 /** Where the plan, the design notes and the reviews of a project live. */
 const ARCHITECTURE_DOCS = 'docs/architecture';

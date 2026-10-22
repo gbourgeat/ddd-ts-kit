@@ -1,4 +1,4 @@
-import type { ProjectOptions } from './project-options.js';
+import type { ProjectOptions } from './project-options';
 
 /*
  * One file, no resolution and no type check: imports are kept as they are written, for the

@@ -1,10 +1,10 @@
-import type { OpenApiDocument } from '../openapi/open-api-document.js';
-import { stringifyOpenApi } from '../openapi/stringify-open-api.js';
-import type { Route } from '../route/route.js';
-import { DEFAULT_ASSETS } from './default-assets.js';
-import { docsPage } from './docs-page.js';
-import type { DocsUi } from './docs-ui.js';
-import { textRoute } from './text-route.js';
+import type { OpenApiDocument } from '../openapi/open-api-document';
+import { stringifyOpenApi } from '../openapi/stringify-open-api';
+import type { Route } from '../route/route';
+import { DEFAULT_ASSETS } from './default-assets';
+import { docsPage } from './docs-page';
+import type { DocsUi } from './docs-ui';
+import { textRoute } from './text-route';
 
 export interface DocsRoutesOptions {
   /** Where the JSON contract is served. Default `/openapi.json`. */

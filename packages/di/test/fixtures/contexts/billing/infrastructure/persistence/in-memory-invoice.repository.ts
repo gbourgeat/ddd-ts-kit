@@ -1,6 +1,6 @@
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import type { Invoice } from '../../domain/invoice.js';
-import { InvoiceRepository } from '../../domain/repositories/invoice.repository.js';
+import type { Invoice } from '../../domain/invoice';
+import { InvoiceRepository } from '../../domain/repositories/invoice.repository';
 
 @Repository(InvoiceRepository)
 export class InMemoryInvoiceRepository implements InvoiceRepository {

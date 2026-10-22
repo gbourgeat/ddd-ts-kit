@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { Builder, lazy, resetSequences, resolve, type Defaults } from '../src/index.js';
-import { aCustomer, aLine, anOrder } from './support/builders.js';
-import { EmptyOrder, Order } from './support/order.js';
+import { Builder, lazy, resetSequences, resolve, type Defaults } from '../src';
+import { aCustomer, aLine, anOrder } from './support/builders';
+import { EmptyOrder, Order } from './support/order';
 
 beforeEach(() => {
   resetSequences();

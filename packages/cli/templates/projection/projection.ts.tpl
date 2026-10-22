@@ -1,5 +1,5 @@
 import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
-import { {{event.definition}}, type {{event.typeName}} } from '{{alias.contexts}}/{{publisher.kebab}}/published-language/index{{alias.ext}}';
+import { {{event.definition}}, type {{event.typeName}} } from '{{alias.contexts}}/{{publisher.kebab}}/published-language{{alias.index}}';
 
 // TODO(domain): receive the port of the read model "{{name.words}}" keeps in the constructor, typed by that port (an abstract class of application/ports that extends `ReadModelStore<Row>` of the kernel: `ddd-ts-kit generate port {{context.kebab}} <Name>`); its adapter and its fake are bound to it like any other port.
 @Projection('{{context.kebab}}.{{name.kebab}}')

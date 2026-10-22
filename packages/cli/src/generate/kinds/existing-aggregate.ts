@@ -1,7 +1,7 @@
-import type { Name } from '../../naming/index.js';
-import { concept } from '../concept.js';
-import { requireFile } from '../require-file.js';
-import type { Scope } from '../scope.js';
+import type { Name } from '../../naming';
+import { concept } from '../concept';
+import { requireFile } from '../require-file';
+import type { Scope } from '../scope';
 
 /** The name of an aggregate other kinds build on: it has to exist, its vocabulary was judged when it was created. */
 export function existingAggregate(scope: Scope, input: string): Name {

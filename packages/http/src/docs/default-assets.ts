@@ -1,4 +1,4 @@
-import type { DocsUi } from './docs-ui.js';
+import type { DocsUi } from './docs-ui';
 
 /** Where each documentation page loads its UI from by default: a public CDN, pinned to a major version. */
 export const DEFAULT_ASSETS: Readonly<Record<DocsUi, string>> = {

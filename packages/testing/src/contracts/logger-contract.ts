@@ -1,7 +1,7 @@
-import type { ContractRunner } from './contract-runner.js';
-import type { CreateLogger } from './logger/create-logger.js';
-import { LoggerEntriesSuite } from './logger/logger-entries-suite.js';
-import { LoggerShutdownSuite } from './logger/logger-shutdown-suite.js';
+import type { ContractRunner } from './contract-runner';
+import type { CreateLogger } from './logger/create-logger';
+import { LoggerEntriesSuite } from './logger/logger-entries-suite';
+import { LoggerShutdownSuite } from './logger/logger-shutdown-suite';
 
 export interface LoggerContractOptions {
   readonly name: string;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { withAuthorizerImport } from '../src/presets/with-authorizer-import.js';
+import { withAuthorizerImport } from '../src/presets/with-authorizer-import';
 
 const MEMBER = 'SignedInGrantsAuthorizer';
 

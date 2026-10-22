@@ -1,9 +1,9 @@
 import type { EventSourcingStores, EventStore } from '@ddd-ts-kit/kernel';
-import type { Awaitable } from './awaitable.js';
-import type { ContractRunner } from './contract-runner.js';
-import { CompanionStoresSuite } from './event-store/companion-stores-suite.js';
-import { StoreSuite } from './event-store/store-suite.js';
-import { StreamSuite } from './event-store/stream-suite.js';
+import type { Awaitable } from './awaitable';
+import type { ContractRunner } from './contract-runner';
+import { CompanionStoresSuite } from './event-store/companion-stores-suite';
+import { StoreSuite } from './event-store/store-suite';
+import { StreamSuite } from './event-store/stream-suite';
 
 export interface EventStoreContractOptions {
   readonly name: string;

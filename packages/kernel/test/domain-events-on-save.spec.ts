@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { dispatchingOnSave, type DomainEvent } from '../src/index.js';
-import { aBench } from './support/shop/a-bench.js';
-import { Cart } from './support/shop/cart.js';
-import { InMemoryCarts } from './support/shop/in-memory-carts.js';
+import { dispatchingOnSave, type DomainEvent } from '../src';
+import { aBench } from './support/shop/a-bench';
+import { Cart } from './support/shop/cart';
+import { InMemoryCarts } from './support/shop/in-memory-carts';
 
 describe('domain events leave with the save', () => {
   it('dispatches what the aggregate recorded, in recording order, once the save resolved', async () => {

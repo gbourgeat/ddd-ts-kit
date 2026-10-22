@@ -1,4 +1,4 @@
-import type { Method } from './method.js';
+import type { Method } from './method';
 
 /** The wrapper under the name and the declared parameters of what it wraps. */
 export function named(wrapper: Method, original: Method): Method {

@@ -1,10 +1,10 @@
-import { CliError } from '../../../cli-error.js';
-import type { Name } from '../../../naming/index.js';
-import type { Scope } from '../../scope.js';
-import { entriesOf } from '../../vocabulary/entries-of.js';
-import { heldEntries } from '../../vocabulary/held-entries.js';
-import type { VocabularyEntry } from '../../vocabulary/vocabulary-entry.js';
-import { vocabularyText } from '../../vocabulary/vocabulary-text.js';
+import { CliError } from '../../../cli-error';
+import type { Name } from '../../../naming';
+import type { Scope } from '../../scope';
+import { entriesOf } from '../../vocabulary/entries-of';
+import { heldEntries } from '../../vocabulary/held-entries';
+import type { VocabularyEntry } from '../../vocabulary/vocabulary-entry';
+import { vocabularyText } from '../../vocabulary/vocabulary-text';
 
 /**
  * The closed vocabulary of the status of an aggregate, `<Aggregate>Status`: created from the

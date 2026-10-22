@@ -1,10 +1,10 @@
-import type { Fixture } from './fixture.js';
-import type { FixtureFiles } from './fixture-files.js';
-import { handler } from './handler.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { signatureProject } from './signature-project.js';
-import { source } from './source.js';
+import type { Fixture } from './fixture';
+import type { FixtureFiles } from './fixture-files';
+import { handler } from './handler';
+import { PATHS } from './paths';
+import { project } from './project';
+import { signatureProject } from './signature-project';
+import { source } from './source';
 
 const { COMMAND, COMMANDS_DECLARATIONS, HANDLER, MODULE, POLICY } = PATHS;
 

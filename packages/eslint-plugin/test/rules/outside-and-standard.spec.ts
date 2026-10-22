@@ -1,6 +1,6 @@
-import { aspectsOutsideIn } from '../../src/rules/aspects-outside-in.js';
-import { standardNoParallelInterface } from '../../src/rules/standard-no-parallel-interface.js';
-import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { aspectsOutsideIn } from '../../src/rules/aspects-outside-in';
+import { standardNoParallelInterface } from '../../src/rules/standard-no-parallel-interface';
+import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const MODULE = `${BILLING}/billing.module.ts`;
 const ROUTE = `${BILLING}/presentation/http/issue-invoice.route.ts`;

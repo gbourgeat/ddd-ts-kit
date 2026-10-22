@@ -1,6 +1,6 @@
 import path from 'node:path';
-import { cli, tempDir } from '../helpers.js';
-import { git } from './git.js';
+import { cli, tempDir } from '../helpers';
+import { git } from './git';
 
 /** A new project in a directory named `name`, alone in a temporary directory, initialised and committed on the branch `main`. */
 export function committedProject(name: string, ...flags: readonly string[]): string {

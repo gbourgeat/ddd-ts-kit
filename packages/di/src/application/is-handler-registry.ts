@@ -1,5 +1,5 @@
 import type { HandlerRegistration, Message, MessageType } from '@ddd-ts-kit/kernel';
-import type { AnyMessageHandler } from '../wiring/any-message-handler.js';
+import type { AnyMessageHandler } from '../wiring/any-message-handler';
 
 interface HandlerRegistry {
   register(type: MessageType<Message>, handler: AnyMessageHandler, registration?: HandlerRegistration): unknown;

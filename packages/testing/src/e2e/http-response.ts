@@ -1,4 +1,4 @@
-import type { HttpHeaders } from './http-headers.js';
+import type { HttpHeaders } from './http-headers';
 
 export interface HttpResponse<Body = unknown> {
   readonly status: number;

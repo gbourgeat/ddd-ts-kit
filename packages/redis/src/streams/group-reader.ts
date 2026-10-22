@@ -1,19 +1,19 @@
 import type { Redis } from 'ioredis';
 import { inEventScope, type IntegrationEventCallback, type Subscription } from '@ddd-ts-kit/kernel';
-import { closeRedis } from '../connection/close-redis.js';
-import { claimDue, type RedeliverySettings } from './claim-due.js';
-import { entriesByStream } from './codec/entries-by-stream.js';
-import type { Delivery } from './delivery.js';
-import { BrokerUnavailableError } from './errors/broker-unavailable-error.js';
-import { EventBusClosedError } from './errors/event-bus-closed-error.js';
-import { failureCode } from './errors/failure-code.js';
-import { reconnectDelay } from './options/reconnect-delay.js';
-import type { Settings } from './options/settings.js';
-import type { ServerLink } from './server-link.js';
-import { Settlement } from './settlement.js';
-import type { ConsumerBinding } from './topology/consumer-binding.js';
-import { createGroup } from './topology/create-group.js';
-import { groupOf } from './topology/group-of.js';
+import { closeRedis } from '../connection/close-redis';
+import { claimDue, type RedeliverySettings } from './claim-due';
+import { entriesByStream } from './codec/entries-by-stream';
+import type { Delivery } from './delivery';
+import { BrokerUnavailableError } from './errors/broker-unavailable-error';
+import { EventBusClosedError } from './errors/event-bus-closed-error';
+import { failureCode } from './errors/failure-code';
+import { reconnectDelay } from './options/reconnect-delay';
+import type { Settings } from './options/settings';
+import type { ServerLink } from './server-link';
+import { Settlement } from './settlement';
+import type { ConsumerBinding } from './topology/consumer-binding';
+import { createGroup } from './topology/create-group';
+import { groupOf } from './topology/group-of';
 
 interface StreamSubscription {
   readonly type: string;

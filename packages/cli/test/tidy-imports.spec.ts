@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { tidyImports } from '../src/value-objects/tidy-imports.js';
+import { tidyImports } from '../src/value-objects/tidy-imports';
 
 describe('the imports of a file whose value objects now throw', () => {
   it('adds expectRefusal to the import of the testing package an assertion now calls', () => {

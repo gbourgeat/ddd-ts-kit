@@ -1,9 +1,9 @@
-import { commentLines } from '../comments/comment-lines.js';
-import { ADR_DIRECTORY } from '../governance/adr-directory.js';
-import type { DecisionRecords } from '../governance/decision-records.js';
-import { referencedRecord } from '../governance/referenced-record.js';
-import type { Finding } from '../model/finding.js';
-import type { SourceFile } from '../model/source-file.js';
+import { commentLines } from '../comments/comment-lines';
+import { ADR_DIRECTORY } from '../governance/adr-directory';
+import type { DecisionRecords } from '../governance/decision-records';
+import { referencedRecord } from '../governance/referenced-record';
+import type { Finding } from '../model/finding';
+import type { SourceFile } from '../model/source-file';
 
 /** A comment that tells the coverage provider to leave code out of the measure: `v8 ignore next`, `istanbul ignore if`, `c8 ignore start`. */
 const HINT = /\b((?:v8|c8|istanbul)\s+ignore\b(?:\s+(?:next|start|stop|if|else|file))?)/;

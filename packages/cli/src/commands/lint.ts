@@ -1,15 +1,15 @@
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { CliError } from '../cli-error.js';
-import { ESLINT_IN_PROJECT, LINT_RUN_VARIABLE } from '../lint/eslint-in-project.js';
-import { type LintAnswer, parseLintAnswer } from '../lint/parse-lint-answer.js';
-import type { LintRun } from '../lint/lint-run.js';
-import { formatVerdict } from '../lint/format-verdict.js';
-import { lintVerdict } from '../lint/lint-verdict.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
-import type { Io } from './io.js';
+import { CliError } from '../cli-error';
+import { ESLINT_IN_PROJECT, LINT_RUN_VARIABLE } from '../lint/eslint-in-project';
+import { type LintAnswer, parseLintAnswer } from '../lint/parse-lint-answer';
+import type { LintRun } from '../lint/lint-run';
+import { formatVerdict } from '../lint/format-verdict';
+import { lintVerdict } from '../lint/lint-verdict';
+import { Arguments } from './arguments';
+import type { Command } from './command';
+import type { Io } from './io';
 
 /**
  * `lint` and `ci:lint` of a generated project: the ESLint of the project, failing on an error or a

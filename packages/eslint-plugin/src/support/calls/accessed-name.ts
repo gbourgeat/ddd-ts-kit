@@ -1,6 +1,6 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { keyName } from '../classes/key-name.js';
-import { propertyName } from '../globals/property-name.js';
+import { keyName } from '../classes/key-name';
+import { propertyName } from '../globals/property-name';
 
 /** The last name of an access: `access` for `access`, `this.access` and `this.#access` (with its hash). */
 export function accessedName(node: TSESTree.Node): string | undefined {

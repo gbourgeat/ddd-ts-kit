@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { resetTracingConfiguration } from '../../src/index.js';
-import { expectSpanTree, installTestTracing, type TestTracing } from '../../src/testing.js';
-import { aClinic } from '../support/clinic/a-clinic.js';
-import { AppointmentRepository, InMemoryAppointmentRepository } from '../support/clinic/scheduling.js';
+import { resetTracingConfiguration } from '../../src';
+import { expectSpanTree, installTestTracing, type TestTracing } from '../../src/testing';
+import { aClinic } from '../support/clinic/a-clinic';
+import { AppointmentRepository, InMemoryAppointmentRepository } from '../support/clinic/scheduling';
 
 let tracing: TestTracing;
 

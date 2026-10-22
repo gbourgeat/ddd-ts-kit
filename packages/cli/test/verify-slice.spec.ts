@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers.js';
-import { commitFiles } from './support/commit-files.js';
-import { committedProject } from './support/committed-project.js';
-import { git } from './support/git.js';
-import { jsonAt } from './support/json-at.js';
+import { cli, read, write } from './helpers';
+import { commitFiles } from './support/commit-files';
+import { committedProject } from './support/committed-project';
+import { git } from './support/git';
+import { jsonAt } from './support/json-at';
 
 const SERVICE = 'src/contexts/billing/domain/services/pricing.service.ts';
 const SPEC = 'src/contexts/billing/test/unit/pricing.service.spec.ts';

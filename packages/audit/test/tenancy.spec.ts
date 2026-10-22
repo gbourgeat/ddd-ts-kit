@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AsyncLocalStorageExecutionScope, NoCurrentTenantError, type AuditRecord } from '@ddd-ts-kit/kernel';
 import { anExecutionContext, asTenant, scoped } from '@ddd-ts-kit/testing';
-import { InMemoryAuditTrail, TenantAuditReader } from '../src/index.js';
+import { InMemoryAuditTrail, TenantAuditReader } from '../src';
 
 const scope = new AsyncLocalStorageExecutionScope();
 const page = { kind: 'offset', offset: 0, limit: 10, sort: [] } as const;

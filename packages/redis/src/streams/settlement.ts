@@ -1,8 +1,8 @@
 import type { Redis } from 'ioredis';
 import type { EventDelivery, IntegrationEvent, IntegrationEventCallback } from '@ddd-ts-kit/kernel';
-import { bury } from './bury.js';
-import { decode } from './codec/decode.js';
-import type { Entry } from './codec/entry.js';
+import { bury } from './bury';
+import { decode } from './codec/decode';
+import type { Entry } from './codec/entry';
 import {
   ATTEMPT_FIELD,
   CONSUMER_FIELD,
@@ -10,14 +10,14 @@ import {
   ENTRY_ID_FIELD,
   ERROR_CODE_FIELD,
   REPLAY_FOR_FIELD,
-} from './codec/entry-fields.js';
-import type { Delivery } from './delivery.js';
-import { failureCode } from './errors/failure-code.js';
-import { MESSAGING_SYSTEM } from './messaging-system.js';
-import type { RedisStreamsDelivery } from './options/redis-streams-delivery.js';
-import type { RedisStreamsFailure } from './options/redis-streams-failure.js';
-import type { RetryOptions } from './options/retry-options.js';
-import { deadStreamOf } from './topology/dead-stream-of.js';
+} from './codec/entry-fields';
+import type { Delivery } from './delivery';
+import { failureCode } from './errors/failure-code';
+import { MESSAGING_SYSTEM } from './messaging-system';
+import type { RedisStreamsDelivery } from './options/redis-streams-delivery';
+import type { RedisStreamsFailure } from './options/redis-streams-failure';
+import type { RetryOptions } from './options/retry-options';
+import { deadStreamOf } from './topology/dead-stream-of';
 
 export interface SettlementSettings {
   /** The consumer name, which is the name of its group. */

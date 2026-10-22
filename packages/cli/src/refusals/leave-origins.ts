@@ -1,8 +1,8 @@
-import type { ConceptErrorClass } from './concept-error-class.js';
-import { cutFactories } from './cut-factories.js';
-import type { MigrationDraft } from './migration-draft.js';
-import type { NamedMove } from './named-move.js';
-import type { RefusalSources } from './propose-named-plan.js';
+import type { ConceptErrorClass } from './concept-error-class';
+import { cutFactories } from './cut-factories';
+import type { MigrationDraft } from './migration-draft';
+import type { NamedMove } from './named-move';
+import type { RefusalSources } from './propose-named-plan';
 
 /**
  * Removes what the moves leave: each class per error goes, and each concept class loses the

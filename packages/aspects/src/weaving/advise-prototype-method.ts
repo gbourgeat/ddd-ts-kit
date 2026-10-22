@@ -1,10 +1,10 @@
-import type { AdviceFactory } from '../aspect/advice-factory.js';
-import { advised } from './advised.js';
-import { isWrappable } from './is-wrappable.js';
-import { knownAsync } from './known-async.js';
-import type { Method } from './method.js';
-import { named } from './named.js';
-import { siteOf } from './site-of.js';
+import type { AdviceFactory } from '../aspect/advice-factory';
+import { advised } from './advised';
+import { isWrappable } from './is-wrappable';
+import { knownAsync } from './known-async';
+import type { Method } from './method';
+import { named } from './named';
+import { siteOf } from './site-of';
 
 /**
  * The same advice for a method decorated in the legacy mode, which has no initializer to run

@@ -1,7 +1,7 @@
-import { isAsyncIterable } from '../support/is-async-iterable.js';
-import { isRecord } from '../support/is-record.js';
-import type { FieldJudge } from './field-judge.js';
-import type { FieldTree } from './field-tree.js';
+import { isAsyncIterable } from '../support/is-async-iterable';
+import { isRecord } from '../support/is-record';
+import type { FieldJudge } from './field-judge';
+import type { FieldTree } from './field-tree';
 
 const EVERY_ITEM = '*';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { insertInRegion, parseWiring, replaceRegion } from '../src/markers/index.js';
+import { insertInRegion, parseWiring, replaceRegion } from '../src/markers';
 
 const file = [
   '// ddd-ts-kit:imports',

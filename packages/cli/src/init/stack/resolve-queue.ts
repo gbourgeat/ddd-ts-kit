@@ -1,7 +1,7 @@
-import { QUEUE_STORES } from '../../config/index.js';
-import { CliError } from '../../cli-error.js';
-import { choose } from './choose.js';
-import type { StackOptions } from './stack-options.js';
+import { QUEUE_STORES } from '../../config';
+import { CliError } from '../../cli-error';
+import { choose } from './choose';
+import type { StackOptions } from './stack-options';
 
 /** The ORMs whose package ships a job store and a process store sharing the transaction of the command. */
 const QUEUE_ORMS = ['knex', 'drizzle'];

@@ -14,14 +14,14 @@ import {
   QueryHandler,
   Repository,
 } from '@ddd-ts-kit/kernel/declarations';
-import { IssueInvoice } from './billing/application/commands/issue-invoice/issue-invoice.command.js';
-import { CustomerDirectory } from './billing/application/ports/customer-directory.port.js';
-import { Mailer } from './billing/application/ports/mailer.port.js';
-import { GetInvoice } from './billing/application/queries/get-invoice/get-invoice.query.js';
-import type { Invoice } from './billing/domain/invoice.js';
-import { InvoiceRepository } from './billing/domain/repositories/invoice.repository.js';
-import { InMemoryInvoiceRepository } from './billing/infrastructure/persistence/in-memory-invoice.repository.js';
-import { OrderPlaced, type OrderPlacedPayload } from './billing/published-language/order-placed.js';
+import { IssueInvoice } from './billing/application/commands/issue-invoice/issue-invoice.command';
+import { CustomerDirectory } from './billing/application/ports/customer-directory.port';
+import { Mailer } from './billing/application/ports/mailer.port';
+import { GetInvoice } from './billing/application/queries/get-invoice/get-invoice.query';
+import type { Invoice } from './billing/domain/invoice';
+import { InvoiceRepository } from './billing/domain/repositories/invoice.repository';
+import { InMemoryInvoiceRepository } from './billing/infrastructure/persistence/in-memory-invoice.repository';
+import { OrderPlaced, type OrderPlacedPayload } from './billing/published-language/order-placed';
 
 /** Classes that only exist to make a wiring check fail, when the application is created or when they compile. */
 

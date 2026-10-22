@@ -1,6 +1,6 @@
-import { runGit } from '../commit/run-git.js';
-import type { History } from './history.js';
-import { historyOf } from './history-of.js';
+import { runGit } from '../commit/run-git';
+import type { History } from './history';
+import { historyOf } from './history-of';
 
 /**
  * What the change of the working tree removed under the source root since it left `since`:

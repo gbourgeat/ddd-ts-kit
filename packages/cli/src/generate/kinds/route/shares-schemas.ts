@@ -1,4 +1,4 @@
-import type { Config } from '../../../config/index.js';
+import type { Config } from '../../../config';
 
 /** Under `"stack.schemas": "shared"`, a command answers with the `Accepted` schema of the platform instead of one of its own. */
 export function sharesSchemas(config: Config): boolean {

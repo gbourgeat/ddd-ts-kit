@@ -1,8 +1,8 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import { controllerRoutes, type Route } from '../../src/index.js';
-import type { Desk, StoredVisit, Visit } from '../fixtures/controllers/front-desk.js';
+import { controllerRoutes, type Route } from '../../src';
+import type { Desk, StoredVisit, Visit } from '../fixtures/controllers/front-desk';
 
-export type FrontDesk = typeof import('../fixtures/controllers/front-desk.js');
+export type FrontDesk = typeof import('../fixtures/controllers/front-desk');
 
 export const manager: Actor = { id: 'ada', type: 'user', tenantId: 'clinic-1', roles: ['manager'], attributes: {} };
 export const nurse: Actor = { id: 'grace', type: 'user', tenantId: 'clinic-1', roles: ['nurse'], attributes: {} };

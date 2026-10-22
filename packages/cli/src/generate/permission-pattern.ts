@@ -1,5 +1,5 @@
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
-import type { Scope } from './scope.js';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
+import type { Scope } from './scope';
 
 /** How the code of the context names `permission`: `<context>Permissions['<permission>']`, either quote. */
 export function permissionPattern(scope: Scope, permission: string): RegExp {

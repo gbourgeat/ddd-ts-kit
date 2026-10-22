@@ -1,5 +1,5 @@
-import { schemaPresentationOnly } from '../../src/rules/schema-presentation-only.js';
-import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { schemaPresentationOnly } from '../../src/rules/schema-presentation-only';
+import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const SHARED = { ...SAMPLE_CONFIG, stack: { schemas: 'shared' } };
 const MONEY = "import type { Money } from '@/shared-kernel/presentation/money.schema';\nexport type Amount = Money;";

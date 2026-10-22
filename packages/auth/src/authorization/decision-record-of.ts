@@ -1,7 +1,7 @@
 import type { MessageInfo } from '@ddd-ts-kit/kernel';
-import type { CheckRequest } from './check-request.js';
-import type { Decision } from './decision.js';
-import type { DecisionRecord } from './decision-record.js';
+import type { CheckRequest } from './check-request';
+import type { Decision } from './decision';
+import type { DecisionRecord } from './decision-record';
 
 /** `info` is the message the bus is handling, for a decision taken by the bus middleware. */
 export function decisionRecordOf(request: CheckRequest, decision: Decision, info?: MessageInfo): DecisionRecord {

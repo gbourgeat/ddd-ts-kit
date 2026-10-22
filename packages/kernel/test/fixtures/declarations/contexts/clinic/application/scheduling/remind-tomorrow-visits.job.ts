@@ -1,6 +1,6 @@
-import { CommandBus } from '../../../../../../../src/index.js';
-import { Scheduled, type JobExecution, type ScheduledJob } from '../../../../../../../src/declarations.js';
-import { RequestCallback } from '../commands/request-callback/request-callback.command.js';
+import { CommandBus } from '../../../../../../../src';
+import { Scheduled, type JobExecution, type ScheduledJob } from '../../../../../../../src/declarations';
+import { RequestCallback } from '../commands/request-callback/request-callback.command';
 
 @Scheduled(
   'clinic.remind-tomorrow-visits',

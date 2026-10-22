@@ -1,6 +1,6 @@
-import type { ExecutionContext } from '../execution/execution-context.js';
-import { identifyError } from '../logging/identify-error.js';
-import type { ErrorReport } from './error-report.js';
+import type { ExecutionContext } from '../execution/execution-context';
+import { identifyError } from '../logging/identify-error';
+import type { ErrorReport } from './error-report';
 
 /** What the capture point knows by itself. `origin` and `correlationId` only count outside of an execution context. */
 export type ErrorReportSource = Pick<ErrorReport, 'origin' | 'operation'> &

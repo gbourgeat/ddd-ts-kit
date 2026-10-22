@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { errorCode } from '../src/index.js';
+import { errorCode } from '../src';
 
 class BrokerDown extends Error {
   constructor() {

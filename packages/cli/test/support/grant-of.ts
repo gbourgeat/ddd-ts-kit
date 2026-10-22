@@ -1,4 +1,4 @@
-import type { StackFlags } from './stack-flags.js';
+import type { StackFlags } from './stack-flags';
 
 /**
  * `--grant <role>` where the rights of the project are roles, the default; nothing where they are

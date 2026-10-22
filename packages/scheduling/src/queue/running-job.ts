@@ -1,6 +1,6 @@
-import type { JobLease } from './store/job-lease.js';
-import type { ClaimedJob } from './store/claimed-job.js';
-import type { RegisteredBackgroundJob } from './registered-background-job.js';
+import type { JobLease } from './store/job-lease';
+import type { ClaimedJob } from './store/claimed-job';
+import type { RegisteredBackgroundJob } from './registered-background-job';
 
 /** One attempt in progress: what it runs, what it holds, and how to stop it. */
 export interface RunningJob {

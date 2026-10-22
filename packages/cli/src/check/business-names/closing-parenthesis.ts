@@ -1,4 +1,4 @@
-import { BRACKETS } from '../text/brackets.js';
+import { BRACKETS } from '../text/brackets';
 
 /** Offset of the `)` that closes a parenthesis opened before `from`, or the end of the text. */
 export function closingParenthesis(text: string, from: number): number {

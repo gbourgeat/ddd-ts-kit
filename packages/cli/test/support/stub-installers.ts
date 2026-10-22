@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { read, tempDir } from '../helpers.js';
+import { read, tempDir } from '../helpers';
 
 /** Package managers that stand for npm and pnpm on the PATH of the specs, and what they were asked. */
 export interface StubInstallers {

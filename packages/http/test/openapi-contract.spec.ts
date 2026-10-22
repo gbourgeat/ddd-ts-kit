@@ -3,10 +3,10 @@ import { z } from 'zod';
 import { customSchema } from '@ddd-ts-kit/validation';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
 import { ok } from '@ddd-ts-kit/kernel';
-import { DuplicateRouteError, defineRoute } from '../src/index.js';
-import { checkOpenApiDrift, generateOpenApi, stringifyOpenApi } from '../src/openapi.js';
-import { openApiOptions as options } from './support/open-api-options.js';
-import { cancelOrder, getOrder, orderRoutes, placeOrder, whoAmI } from './support/orders.js';
+import { DuplicateRouteError, defineRoute } from '../src';
+import { checkOpenApiDrift, generateOpenApi, stringifyOpenApi } from '../src/openapi';
+import { openApiOptions as options } from './support/open-api-options';
+import { cancelOrder, getOrder, orderRoutes, placeOrder, whoAmI } from './support/orders';
 
 describe('generateOpenApi, beyond the plain route', () => {
   it('describes a public, deprecated route with headers and an undescribed path parameter', () => {

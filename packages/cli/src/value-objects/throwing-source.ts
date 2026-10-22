@@ -1,10 +1,10 @@
-import { scan } from '../check/scan/scan.js';
-import { matchingBracket } from '../check/text/matching-bracket.js';
-import { closingAngle } from './closing-angle.js';
-import { ternaryReturns } from './ternary-returns.js';
-import { applyEdits } from './apply-edits.js';
-import type { Edit } from './edit.js';
-import { type Range, resultMethodDeclarations } from './result-method-declarations.js';
+import { scan } from '../check/scan/scan';
+import { matchingBracket } from '../check/text/matching-bracket';
+import { closingAngle } from './closing-angle';
+import { ternaryReturns } from './ternary-returns';
+import { applyEdits } from './apply-edits';
+import type { Edit } from './edit';
+import { type Range, resultMethodDeclarations } from './result-method-declarations';
 
 /** A value object file once its factories throw, and the methods that changed. */
 export interface ThrowingSource {

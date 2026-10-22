@@ -1,6 +1,6 @@
 import { expect } from 'vitest';
-import type { Manager } from './install-for-real.js';
-import { runIn } from './run-in.js';
+import type { Manager } from './install-for-real';
+import { runIn } from './run-in';
 
 /**
  * The `verify` script of a project, run by its package manager as a team runs it: every gate

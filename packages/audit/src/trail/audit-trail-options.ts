@@ -1,5 +1,5 @@
 import type { AuditRecord } from '@ddd-ts-kit/kernel';
-import type { SealingOptions } from '../chain/sealing-options.js';
+import type { SealingOptions } from '../chain/sealing-options';
 
 export interface AuditTrailOptions {
   /** The chain an entry is appended to. Default `chainOfTenant`. */

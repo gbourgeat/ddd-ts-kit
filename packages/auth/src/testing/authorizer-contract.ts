@@ -1,10 +1,10 @@
 import { anonymousActor } from '@ddd-ts-kit/kernel';
 import { ContractSuite, type Awaitable, type ContractRunner } from '@ddd-ts-kit/testing/contracts';
-import type { AccessScope } from '../authorization/access-scope.js';
-import type { Authorizer } from '../authorization/authorizer.js';
-import type { CheckRequest } from '../authorization/check-request.js';
-import type { Decision } from '../authorization/decision.js';
-import type { Permission } from '../permissions/permission.js';
+import type { AccessScope } from '../authorization/access-scope';
+import type { Authorizer } from '../authorization/authorizer';
+import type { CheckRequest } from '../authorization/check-request';
+import type { Decision } from '../authorization/decision';
+import type { Permission } from '../permissions/permission';
 
 export interface AuthorizerFixture {
   readonly authorizer: Authorizer;

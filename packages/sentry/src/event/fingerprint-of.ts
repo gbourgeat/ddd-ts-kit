@@ -1,5 +1,5 @@
 import { DomainError, type ErrorReport } from '@ddd-ts-kit/kernel';
-import { frameOrigin } from './frame-origin.js';
+import { frameOrigin } from './frame-origin';
 
 /**
  * What makes two events the same problem. Never the message: it quotes identifiers, and one

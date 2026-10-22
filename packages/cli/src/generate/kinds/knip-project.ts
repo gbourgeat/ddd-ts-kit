@@ -1,4 +1,4 @@
-import { isRecord } from '../../config/values/is-record.js';
+import { isRecord } from '../../config/values/is-record';
 
 /**
  * The part of knip.json that describes the project: the file itself, or its root workspace

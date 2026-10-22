@@ -1,9 +1,9 @@
-import type { StoredSnapshot } from '../../../application/event-sourcing/stored-snapshot.js';
-import type { SnapshotStore } from '../../../application/ports/snapshot-store.js';
-import type { SqlRun } from '../../read-model/sql-run.js';
-import type { EventStoreTablesOptions } from './event-store-tables-options.js';
-import { qualifiedTable } from './qualified-table.js';
-import { storedDataFrom } from './stored-data-from.js';
+import type { StoredSnapshot } from '../../../application/event-sourcing/stored-snapshot';
+import type { SnapshotStore } from '../../../application/ports/snapshot-store';
+import type { SqlRun } from '../../read-model/sql-run';
+import type { EventStoreTablesOptions } from './event-store-tables-options';
+import { qualifiedTable } from './qualified-table';
+import { storedDataFrom } from './stored-data-from';
 
 /** The snapshots of the streams on PostgreSQL: one row per stream, never replaced by an older version. */
 export class PostgresSnapshotStore implements SnapshotStore {

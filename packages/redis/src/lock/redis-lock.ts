@@ -2,8 +2,8 @@ import { randomBytes } from 'node:crypto';
 import { inspect } from 'node:util';
 import type { Redis } from 'ioredis';
 import { acquiring, type AcquireOptions, type Lock, type LockHandle, type WaitingOptions } from '@ddd-ts-kit/kernel';
-import { namespaced } from '../keys/namespaced.js';
-import { conceal } from '../secrecy/conceal.js';
+import { namespaced } from '../keys/namespaced';
+import { conceal } from '../secrecy/conceal';
 
 export interface RedisLockOptions extends WaitingOptions {
   /** Prefix of the keys, typically the bounded context. Default `lock`. */

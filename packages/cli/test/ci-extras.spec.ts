@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { cli, exists, read } from './helpers.js';
-import { checkJsonOf, changeConfig } from './check-support.js';
-import { initFailure } from './support/init-failure.js';
-import { initProject } from './support/init-project.js';
-import { readJson } from './support/read-json.js';
-import { readYaml } from './support/read-yaml.js';
+import { cli, exists, read } from './helpers';
+import { checkJsonOf, changeConfig } from './check-support';
+import { initFailure } from './support/init-failure';
+import { initProject } from './support/init-project';
+import { readJson } from './support/read-json';
+import { readYaml } from './support/read-yaml';
 
 const EVERY_EXTRA =
   'gitlab-sast,codeql,dependency-review,gitlab-secret-detection,gitlab-dependency-scanning,claude-review,claude-triage,intent-to-spec';

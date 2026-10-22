@@ -1,16 +1,16 @@
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
 import type { Schema } from '@ddd-ts-kit/validation';
-import { fieldAccess } from '../field-access/field-access.js';
-import type { FieldJudge } from '../field-access/field-judge.js';
-import { FieldTree } from '../field-access/field-tree.js';
-import type { Route } from '../route/route.js';
-import { jsonSchemaOf } from '../schema/json-schema-of.js';
-import { SchemaNode } from '../schema/schema-node.js';
-import type { FieldLookup } from './field-lookup.js';
-import { FormDescriber } from './form-describer.js';
-import type { FormDescription } from './form-description.js';
-import type { FormHints } from './form-hints.js';
-import { assertHints } from './assert-hints.js';
+import { fieldAccess } from '../field-access/field-access';
+import type { FieldJudge } from '../field-access/field-judge';
+import { FieldTree } from '../field-access/field-tree';
+import type { Route } from '../route/route';
+import { jsonSchemaOf } from '../schema/json-schema-of';
+import { SchemaNode } from '../schema/schema-node';
+import type { FieldLookup } from './field-lookup';
+import { FormDescriber } from './form-describer';
+import type { FormDescription } from './form-description';
+import type { FormHints } from './form-hints';
+import { assertHints } from './assert-hints';
 
 /** The form a route declares, ready to be described for any caller. */
 export class FormOfRoute {

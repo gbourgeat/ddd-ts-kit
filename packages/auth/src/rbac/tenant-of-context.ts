@@ -1,4 +1,4 @@
-import type { CheckRequest } from '../authorization/check-request.js';
+import type { CheckRequest } from '../authorization/check-request';
 
 /** For `tenantOf`: reads `context.tenantId`, which `requires(..., { context })` provides. */
 export function tenantOfContext(request: CheckRequest): string | undefined {

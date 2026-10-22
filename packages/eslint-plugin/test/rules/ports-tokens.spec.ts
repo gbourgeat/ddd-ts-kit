@@ -1,7 +1,7 @@
-import { portsNoConcreteDependency } from '../../src/rules/ports-no-concrete-dependency.js';
-import { portsNoTokenConstant } from '../../src/rules/ports-no-token-constant.js';
-import { portsValueImport } from '../../src/rules/ports-value-import.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+import { portsNoConcreteDependency } from '../../src/rules/ports-no-concrete-dependency';
+import { portsNoTokenConstant } from '../../src/rules/ports-no-token-constant';
+import { portsValueImport } from '../../src/rules/ports-value-import';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const DECLARATIONS = '@ddd-ts-kit/kernel/declarations';
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;

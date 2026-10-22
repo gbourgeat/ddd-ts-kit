@@ -1,6 +1,6 @@
-import type { BackgroundJobOptions } from '../../application/background/background-job-options.js';
-import type { BackgroundJob } from '../../application/background/background-job.js';
-import type { Token } from '../token/token.js';
+import type { BackgroundJobOptions } from '../../application/background/background-job-options';
+import type { BackgroundJob } from '../../application/background/background-job';
+import type { Token } from '../token/token';
 
 export interface BackgroundJobDeclaration {
   readonly role: 'background-job';

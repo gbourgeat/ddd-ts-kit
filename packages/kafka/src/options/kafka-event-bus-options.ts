@@ -1,10 +1,10 @@
 import type { GlobalConfig, KafkaJS } from '@confluentinc/kafka-javascript';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import type { KafkaDelivery } from './kafka-delivery.js';
-import type { KafkaFailure } from './kafka-failure.js';
-import type { ReconnectOptions } from './reconnect-options.js';
-import type { RetryOptions } from './retry-options.js';
-import type { TopicOptions } from './topic-options.js';
+import type { KafkaDelivery } from './kafka-delivery';
+import type { KafkaFailure } from './kafka-failure';
+import type { ReconnectOptions } from './reconnect-options';
+import type { RetryOptions } from './retry-options';
+import type { TopicOptions } from './topic-options';
 
 export interface KafkaEventBusOptions {
   /** Bootstrap brokers as `host:port`, in a list or separated by commas. */

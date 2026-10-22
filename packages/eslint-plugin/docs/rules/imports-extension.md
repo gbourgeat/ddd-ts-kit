@@ -77,9 +77,9 @@ None. `importExtension` of `ddd-ts-kit.config.json` decides.
 
 ## Limits
 
-- A specifier that names a directory (`@/contexts/billing/published-language`, resolved by a bundler to its `index.ts`) is not reported here: this rule reads no disk. `ddd-ts-kit check` reports it under the same id, and `ddd-ts-kit build-aliases` refuses it: an alias names one file, `.../published-language/index`.
+- A specifier that names a directory (`@/contexts/billing/published-language`, resolved by a bundler to its `index.ts`) is accepted under `none`: `ddd-ts-kit build-aliases` completes it with `/index.js`.
 - The rule does not check that `tsconfig.json` resolves as the config says: `imports/alias-declared` of `ddd-ts-kit check` does.
 
 ## With the CLI checker
 
-`ddd-ts-kit check` reports the same id from the import specifiers it reads in the text of the files, under the source root, `test/` and `scripts/`, gives the specifier to write in its fix sentence, and also reports an alias that names a directory. This rule is the one that rewrites the import.
+`ddd-ts-kit check` reports the same id from the import specifiers it reads in the text of the files, under the source root, `test/` and `scripts/`, gives the specifier to write in its fix sentence. This rule is the one that rewrites the import.

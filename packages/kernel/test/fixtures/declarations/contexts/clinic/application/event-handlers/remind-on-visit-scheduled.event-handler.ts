@@ -1,6 +1,6 @@
-import { DomainEventHandler } from '../../../../../../../src/declarations.js';
-import { VisitScheduled } from '../../domain/events/visit-scheduled.event.js';
-import { Reminders } from '../ports/reminders.port.js';
+import { DomainEventHandler } from '../../../../../../../src/declarations';
+import { VisitScheduled } from '../../domain/events/visit-scheduled.event';
+import { Reminders } from '../ports/reminders.port';
 
 @DomainEventHandler(VisitScheduled, [Reminders])
 export class RemindOnVisitScheduled implements DomainEventHandler<VisitScheduled> {

@@ -1,7 +1,7 @@
-import { isContextRelative } from '../check/canonical/is-context-relative.js';
-import { splitWords } from '../naming/split-words.js';
-import type { CitedKind, CitedName } from './cited-name.js';
-import type { DocumentPart, PartText } from './document-part.js';
+import { isContextRelative } from '../check/canonical/is-context-relative';
+import { splitWords } from '../naming/split-words';
+import type { CitedKind, CitedName } from './cited-name';
+import type { DocumentPart, PartText } from './document-part';
 
 /** What a part is read against: the source root, and the terms of the glossary of its context, in lower case without spaces. */
 export interface Vocabulary {

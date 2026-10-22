@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { verifyChain } from '../../src/index.js';
-import { gate } from './gate.js';
-import { CHAIN, aRecord, sequencesOf, type SqlTrailSpecs } from './sql-trail-fixture.js';
+import { verifyChain } from '../../src';
+import { gate } from './gate';
+import { CHAIN, aRecord, sequencesOf, type SqlTrailSpecs } from './sql-trail-fixture';
 
 /** Where the head of a chain is taken in a unit of work: at its commit, after every other lock. */
 export function lockSpecs(specs: SqlTrailSpecs): void {

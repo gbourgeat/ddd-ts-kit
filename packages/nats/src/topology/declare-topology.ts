@@ -1,8 +1,8 @@
 import { AckPolicy, DeliverPolicy, RetentionPolicy, StorageType, type JetStreamManager } from '@nats-io/jetstream';
-import { failureCode } from '../errors/failure-code.js';
-import type { ConsumerDescription } from './consumer-description.js';
-import type { NatsTopology } from './nats-topology.js';
-import type { StreamDescription } from './stream-description.js';
+import { failureCode } from '../errors/failure-code';
+import type { ConsumerDescription } from './consumer-description';
+import type { NatsTopology } from './nats-topology';
+import type { StreamDescription } from './stream-description';
 
 /**
  * Idempotent. A stream that exists is never altered, whatever its limits; a durable consumer

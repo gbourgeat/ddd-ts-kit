@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Clock, FixedClock } from '@ddd-ts-kit/kernel';
-import { createApplication, kernelModule, override } from '../src/index.js';
-import { billingModule } from './support/billing/billing.module.js';
-import { orderingModule } from './support/ordering/ordering.module.js';
+import { createApplication, kernelModule, override } from '../src';
+import { billingModule } from './support/billing/billing.module';
+import { orderingModule } from './support/ordering/ordering.module';
 
 describe('application.describe', () => {
   const app = createApplication({

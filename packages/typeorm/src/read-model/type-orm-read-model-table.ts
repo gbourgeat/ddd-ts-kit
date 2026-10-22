@@ -9,12 +9,12 @@ import {
   type StampedRow,
   type TouchedKey,
 } from '@ddd-ts-kit/kernel';
-import type { TypeOrmContext } from '../unit-of-work/type-orm-context.js';
-import { criteriaToTypeOrm } from './criteria-to-type-orm.js';
-import { predicateToTypeOrm } from './predicate-to-type-orm.js';
-import { RowMapper } from './row.mapper.js';
-import type { TypeOrmReadModelOptions } from './type-orm-read-model-options.js';
-import { TypeOrmStampedRows } from './type-orm-stamped-rows.js';
+import type { TypeOrmContext } from '../unit-of-work/type-orm-context';
+import { criteriaToTypeOrm } from './criteria-to-type-orm';
+import { predicateToTypeOrm } from './predicate-to-type-orm';
+import { RowMapper } from './row.mapper';
+import type { TypeOrmReadModelOptions } from './type-orm-read-model-options';
+import { TypeOrmStampedRows } from './type-orm-stamped-rows';
 
 const ALIAS = 'row';
 

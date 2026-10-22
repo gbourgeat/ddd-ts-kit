@@ -12,11 +12,11 @@ import {
   fake,
   kernelModule,
   type DeclaredSource,
-} from '../src/index.js';
-import { discoverContext } from '../src/discovery.js';
-import * as billing from './fixtures/contexts/billing/billing.declarations.js';
-import * as mistakes from './fixtures/contexts/wiring-mistakes.js';
-import { wiringFailure } from './support/failure.js';
+} from '../src';
+import { discoverContext } from '../src/discovery';
+import * as billing from './fixtures/contexts/billing/billing.declarations';
+import * as mistakes from './fixtures/contexts/wiring-mistakes';
+import { wiringFailure } from './support/failure';
 
 const workspace = mkdtempSync(path.join(os.tmpdir(), 'constructor-injection-'));
 

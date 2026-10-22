@@ -1,6 +1,6 @@
 import path from 'node:path';
-import type { Migration } from '../check/migrations/migration-folder.js';
-import { runGit } from '../commit/run-git.js';
+import type { Migration } from '../check/migrations/migration-folder';
+import { runGit } from '../commit/run-git';
 
 const SCRIPTS = ['.js', '.ts', '.mjs', '.cjs', '.sql'];
 

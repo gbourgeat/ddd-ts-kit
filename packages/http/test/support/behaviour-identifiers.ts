@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { AdapterClient } from './adapter-client.js';
-import { KNOWN_ORDER } from './orders.js';
-import { executionScope } from './read-execution.js';
+import type { AdapterClient } from './adapter-client';
+import { KNOWN_ORDER } from './orders';
+import { executionScope } from './read-execution';
 
 export function carriesIdentifiers({ call, post }: AdapterClient): void {
   describe('identifiers and execution scope', () => {

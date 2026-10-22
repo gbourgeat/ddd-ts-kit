@@ -1,9 +1,9 @@
 import { In, LessThan, LessThanOrEqual, Not, type EntityManager, type EntitySchema } from 'typeorm';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import type { OutboxRecord, OutboxStats, OutboxStore } from '@ddd-ts-kit/events';
-import type { TypeOrmContext } from '../unit-of-work/type-orm-context.js';
-import { outboxEntity } from './outbox-entity.js';
-import type { OutboxRow } from './outbox-row.js';
+import type { TypeOrmContext } from '../unit-of-work/type-orm-context';
+import { outboxEntity } from './outbox-entity';
+import type { OutboxRow } from './outbox-row';
 
 /**
  * How concurrent relays share the pending records.

@@ -1,8 +1,8 @@
-import { rules as pluginRules } from '../rules/rules.js';
-import { docsOf } from '../support/rule/docs-of.js';
-import { bracesRules } from './braces-rules.js';
-import { layoutRules } from './layout-rules.js';
-import type { Rules } from './flat-rules.js';
+import { rules as pluginRules } from '../rules/rules';
+import { docsOf } from '../support/rule/docs-of';
+import { bracesRules } from './braces-rules';
+import { layoutRules } from './layout-rules';
+import type { Rules } from './flat-rules';
 
 /** Severity of every rule of this plugin: the documented default, or `error` everywhere. */
 export function pluginRuleLevels(level: 'recommended' | 'error'): Rules {

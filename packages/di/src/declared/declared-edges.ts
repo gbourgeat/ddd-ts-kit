@@ -1,5 +1,5 @@
 import type { Token } from '@ddd-ts-kit/kernel/declarations';
-import type { EdgeBinding } from '../wiring/edge-binding.js';
+import type { EdgeBinding } from '../wiring/edge-binding';
 
 /**
  * The classes of the edge the contexts declared, each resolved by its class. The platform asks

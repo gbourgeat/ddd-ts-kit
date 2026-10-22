@@ -1,7 +1,7 @@
 import { Redis } from 'ioredis';
-import { RedisStreamsEventBus, type RedisStreamsEventBusOptions } from '../../src/event-bus.js';
-import { unique } from './events.js';
-import { eventually } from './waiting.js';
+import { RedisStreamsEventBus, type RedisStreamsEventBusOptions } from '../../src/event-bus';
+import { unique } from './events';
+import { eventually } from './waiting';
 
 export const RETRY_DELAY_MS = 60;
 export const MAX_ATTEMPTS = 3;

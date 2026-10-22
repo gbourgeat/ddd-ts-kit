@@ -1,4 +1,4 @@
-import type { LintAnswer } from './parse-lint-answer.js';
+import type { LintAnswer } from './parse-lint-answer';
 
 export interface LintVerdict {
   readonly errors: number;

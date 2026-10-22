@@ -1,5 +1,5 @@
-import type { AspectInfo } from '../aspect/aspect-info.js';
-import type { JoinPoint } from '../aspect/join-point.js';
+import type { AspectInfo } from '../aspect/aspect-info';
+import type { JoinPoint } from '../aspect/join-point';
 
 /** What every join point of an instance says of it. */
 export function siteOf(instance: object, info: AspectInfo): Omit<JoinPoint, 'method' | 'arity'> {

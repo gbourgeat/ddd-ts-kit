@@ -1,5 +1,5 @@
-import type { Config } from '../config/index.js';
-import type { PathReach } from './path-reach.js';
+import type { Config } from '../config';
+import type { PathReach } from './path-reach';
 
 /** Written for people and agents, never loaded by a spec, a build or a tool of the pipeline other than the documents gate, which always runs. */
 const DOCUMENT_DIRECTORIES = ['docs/', 'openapi/', '.claude/', '.github/instructions/', '.github/copilot/'];

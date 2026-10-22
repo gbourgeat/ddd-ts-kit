@@ -1,4 +1,4 @@
-import type { SourceFile } from '../model/source-file.js';
+import type { SourceFile } from '../model/source-file';
 
 /** The mark the generator leaves where a developer is expected to write, `TODO(domain)` and its kind, or a `TODO(review)` left there. */
 const LEFT_TO_WRITE = /\bTODO\([a-z-]+\)/;

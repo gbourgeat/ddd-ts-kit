@@ -7,11 +7,11 @@ import {
   ERROR_CODE_FIELD,
   POISON_ENTRY,
   type RedisStreamsFailure,
-} from '../src/event-bus.js';
-import { PLACED, anEvent, failuresOf, recorder, streamsOf, unique } from './support/events.js';
-import { REAL_SERVER, SERVER_URL } from './support/server.js';
-import { MAX_ATTEMPTS, Server } from './support/streams.js';
-import { eventually } from './support/waiting.js';
+} from '../src/event-bus';
+import { PLACED, anEvent, failuresOf, recorder, streamsOf, unique } from './support/events';
+import { REAL_SERVER, SERVER_URL } from './support/server';
+import { MAX_ATTEMPTS, Server } from './support/streams';
+import { eventually } from './support/waiting';
 
 describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, dead letters', { timeout: 30_000 }, () => {
   let server: Server;

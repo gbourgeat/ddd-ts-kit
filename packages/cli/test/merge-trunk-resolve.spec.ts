@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { ConflictedPath } from '../src/merge/conflicted-path.js';
-import type { MergeRepository } from '../src/merge/lost/merge-repository.js';
-import { mergeSlicesRows } from '../src/merge/merge-slices-rows.js';
-import { mergeStoredEventsLock } from '../src/merge/merge-stored-events-lock.js';
-import { resolveConflict } from '../src/merge/resolve-conflict.js';
+import type { ConflictedPath } from '../src/merge/conflicted-path';
+import type { MergeRepository } from '../src/merge/lost/merge-repository';
+import { mergeSlicesRows } from '../src/merge/merge-slices-rows';
+import { mergeStoredEventsLock } from '../src/merge/merge-stored-events-lock';
+import { resolveConflict } from '../src/merge/resolve-conflict';
 
 const REPO: MergeRepository = { top: '/repository', prefix: '', contextsDir: 'src/contexts', modules: {} };
 

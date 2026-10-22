@@ -1,7 +1,7 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import { ForbiddenError } from '../error/forbidden-error.js';
-import type { FieldDecider } from '../field-access/field-decider.js';
-import type { FormRequirement } from './form-requirement.js';
+import { ForbiddenError } from '../error/forbidden-error';
+import type { FieldDecider } from '../field-access/field-decider';
+import type { FormRequirement } from './form-requirement';
 
 /** Who asks for a form, how their rights are decided, and the values they ask it with. */
 export interface FormAsker {

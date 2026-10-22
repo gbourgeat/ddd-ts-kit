@@ -1,8 +1,8 @@
-import { CliError } from '../cli-error.js';
-import { capitalize } from './capitalize.js';
-import type { Name } from './name.js';
-import { splitWords } from './split-words.js';
-import { toName } from './to-name.js';
+import { CliError } from '../cli-error';
+import { capitalize } from './capitalize';
+import type { Name } from './name';
+import { splitWords } from './split-words';
+import { toName } from './to-name';
 
 const VAGUE_SUFFIXES = ['manager', 'helper', 'util', 'utils', 'data', 'info'];
 

@@ -1,5 +1,5 @@
-import type { Injection } from '../injection.js';
-import { PATHS } from '../paths.js';
+import type { Injection } from '../injection';
+import { PATHS } from '../paths';
 
 const { AGGREGATE, DUE_HANDLER, EVENT_HANDLER, HANDLER, POLICY, QUERY_HANDLER, ROUTE, SEND_HANDLER } = PATHS;
 const WITHDRAWN = '    this.state = { ...this.state, status: ReminderStatus.Withdrawn };\n';

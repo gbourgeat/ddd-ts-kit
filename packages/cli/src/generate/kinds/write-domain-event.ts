@@ -1,7 +1,7 @@
-import { emit } from '../emit.js';
-import type { EventNames } from '../event-names.js';
-import type { Scope } from '../scope.js';
-import { eventVars } from './event-vars.js';
+import { emit } from '../emit';
+import type { EventNames } from '../event-names';
+import type { Scope } from '../scope';
+import { eventVars } from './event-vars';
 
 export function writeDomainEvent(scope: Scope, names: EventNames): void {
   emit(scope, eventVars(scope, names), [

@@ -1,9 +1,9 @@
-import type { Exported } from '../exports/exported.js';
-import { fileExports } from '../exports/file-exports.js';
-import type { SourceFile } from '../model/source-file.js';
-import { braceDepthAt } from '../text/brace-depth-at.js';
-import { endAtDepthZero } from '../text/end-at-depth-zero.js';
-import { localDeclaration } from './local-declaration.js';
+import type { Exported } from '../exports/exported';
+import { fileExports } from '../exports/file-exports';
+import type { SourceFile } from '../model/source-file';
+import { braceDepthAt } from '../text/brace-depth-at';
+import { endAtDepthZero } from '../text/end-at-depth-zero';
+import { localDeclaration } from './local-declaration';
 
 const LOCAL_LIST = /(?<![\w$.])export\s*\{([^}]*)\}(?!\s*from\b)/g;
 

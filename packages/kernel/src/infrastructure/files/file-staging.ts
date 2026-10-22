@@ -1,24 +1,24 @@
 import { Writable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
-import { errorReportOf } from '../../application/error-reporting/error-report-of.js';
-import { reportOnce } from '../../application/error-reporting/report-once.js';
-import { assertFinalKey } from '../../application/files/assert-final-key.js';
-import type { ContentExpectation } from '../../application/files/content-expectation.js';
-import { FileError } from '../../application/files/file-error.js';
-import type { FileSource } from '../../application/files/file-source.js';
-import { mediaTypeOf } from '../../application/files/media-type-of.js';
-import type { PendingUpload } from '../../application/files/pending-upload.js';
-import type { PendingUploadLink } from '../../application/files/pending-upload-link.js';
-import type { PutOptions } from '../../application/files/put-options.js';
-import { STAGING_PREFIX, stagedKeyOf } from '../../application/files/staged-key-of.js';
-import type { StoredFile } from '../../application/files/stored-file.js';
-import type { UploadUrlOptions } from '../../application/files/upload-url-options.js';
-import type { ErrorReporter } from '../../application/ports/error-reporter.js';
-import type { FileScanner } from '../../application/ports/file-scanner.js';
-import type { FileStorage } from '../../application/ports/file-storage.js';
-import { afterCommit } from '../domain-events/after-commit.js';
-import { atCommit } from '../domain-events/at-commit.js';
-import { FileInspection } from './file-inspection.js';
+import { errorReportOf } from '../../application/error-reporting/error-report-of';
+import { reportOnce } from '../../application/error-reporting/report-once';
+import { assertFinalKey } from '../../application/files/assert-final-key';
+import type { ContentExpectation } from '../../application/files/content-expectation';
+import { FileError } from '../../application/files/file-error';
+import type { FileSource } from '../../application/files/file-source';
+import { mediaTypeOf } from '../../application/files/media-type-of';
+import type { PendingUpload } from '../../application/files/pending-upload';
+import type { PendingUploadLink } from '../../application/files/pending-upload-link';
+import type { PutOptions } from '../../application/files/put-options';
+import { STAGING_PREFIX, stagedKeyOf } from '../../application/files/staged-key-of';
+import type { StoredFile } from '../../application/files/stored-file';
+import type { UploadUrlOptions } from '../../application/files/upload-url-options';
+import type { ErrorReporter } from '../../application/ports/error-reporter';
+import type { FileScanner } from '../../application/ports/file-scanner';
+import type { FileStorage } from '../../application/ports/file-storage';
+import { afterCommit } from '../domain-events/after-commit';
+import { atCommit } from '../domain-events/at-commit';
+import { FileInspection } from './file-inspection';
 
 /**
  * Keeps the storage consistent with the database, which a write to the storage cannot join in a

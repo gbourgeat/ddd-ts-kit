@@ -1,5 +1,5 @@
-import type { AspectKind } from './aspect-kind.js';
-import type { Selector } from './selector.js';
+import type { AspectKind } from './aspect-kind';
+import type { Selector } from './selector';
 
 /** Instances bound with `.as(kind)` to one of the kinds. An instance without kind never matches. */
 export function forKinds(...kinds: readonly AspectKind[]): Selector {

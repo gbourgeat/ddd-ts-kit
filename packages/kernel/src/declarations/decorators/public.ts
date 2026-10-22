@@ -1,8 +1,8 @@
-import type { Message } from '../../application/messaging/message.js';
-import type { AuditedFieldHint } from '../model/audited-field-hint.js';
-import { record } from '../registry/record.js';
-import { kindOf } from './kind-of.js';
-import type { MessageDeclarator } from './message-declarator.js';
+import type { Message } from '../../application/messaging/message';
+import type { AuditedFieldHint } from '../model/audited-field-hint';
+import { record } from '../registry/record';
+import { kindOf } from './kind-of';
+import type { MessageDeclarator } from './message-declarator';
 
 export interface PublicOptions<Fields extends string = never> {
   /**

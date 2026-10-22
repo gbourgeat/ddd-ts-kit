@@ -1,8 +1,8 @@
-import type { AdviceFactory } from '../aspect/advice-factory.js';
-import type { JoinPoint } from '../aspect/join-point.js';
-import { knownAsync } from './known-async.js';
-import type { Method } from './method.js';
-import { named } from './named.js';
+import type { AdviceFactory } from '../aspect/advice-factory';
+import type { JoinPoint } from '../aspect/join-point';
+import { knownAsync } from './known-async';
+import type { Method } from './method';
+import { named } from './named';
 
 /** The method inside the advice built for its join point, `undefined` when the factory leaves it alone. */
 export function advised(original: Method, joinPoint: JoinPoint, advise: AdviceFactory): Method | undefined {

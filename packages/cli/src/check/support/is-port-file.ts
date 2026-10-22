@@ -1,4 +1,4 @@
-import type { Location } from '../model/location.js';
+import type { Location } from '../model/location';
 
 /** A port file: `domain/repositories/*.repository.ts` or `application/ports/*.port.ts` of a context, specs aside. */
 export function isPortFile(file: string, location: Location): boolean {

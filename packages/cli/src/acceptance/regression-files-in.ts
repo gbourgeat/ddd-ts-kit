@@ -1,4 +1,4 @@
-import { sectionOf } from '../stories/section-of.js';
+import { sectionOf } from '../stories/section-of';
 
 /** A list item naming a spec file: `- test/unit/order.aggregate.spec.ts`, with or without backticks. */
 const ITEM = /^\s*[-*]\s+`?([^\s`]+)`?/;

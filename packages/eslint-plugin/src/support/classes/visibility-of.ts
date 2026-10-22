@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { isKeyed } from './is-keyed.js';
+import { isKeyed } from './is-keyed';
 
 export type Visibility = 'public' | 'protected' | 'private';
 

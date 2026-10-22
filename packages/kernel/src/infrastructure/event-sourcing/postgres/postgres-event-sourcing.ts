@@ -1,10 +1,10 @@
-import type { SqlRun } from '../../read-model/sql-run.js';
-import type { EventSourcingStores } from '../event-sourcing-stores.js';
-import type { EventStoreTablesOptions } from './event-store-tables-options.js';
-import { PostgresCheckpointStore } from './postgres-checkpoint-store.js';
-import { PostgresEventStore } from './postgres-event-store.js';
-import { PostgresSnapshotStore } from './postgres-snapshot-store.js';
-import { PostgresSubjectKeyStore } from './postgres-subject-key-store.js';
+import type { SqlRun } from '../../read-model/sql-run';
+import type { EventSourcingStores } from '../event-sourcing-stores';
+import type { EventStoreTablesOptions } from './event-store-tables-options';
+import { PostgresCheckpointStore } from './postgres-checkpoint-store';
+import { PostgresEventStore } from './postgres-event-store';
+import { PostgresSnapshotStore } from './postgres-snapshot-store';
+import { PostgresSubjectKeyStore } from './postgres-subject-key-store';
 
 /** The stores of event sourcing on PostgreSQL over the statements of an ORM adapter: what each adapter package hands out. */
 export function postgresEventSourcing(run: SqlRun, options: EventStoreTablesOptions = {}): EventSourcingStores {

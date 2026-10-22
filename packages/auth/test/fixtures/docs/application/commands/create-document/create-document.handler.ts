@@ -1,7 +1,7 @@
 import type { IdGenerator } from '@ddd-ts-kit/kernel';
-import type { DocumentRepository } from '../../../domain/repositories/document.repository.js';
-import type { DocumentGrants } from '../../ports/document-grants.port.js';
-import type { CreateDocument } from './create-document.command.js';
+import type { DocumentRepository } from '../../../domain/repositories/document.repository';
+import type { DocumentGrants } from '../../ports/document-grants.port';
+import type { CreateDocument } from './create-document.command';
 
 export class CreateDocumentHandler {
   constructor(

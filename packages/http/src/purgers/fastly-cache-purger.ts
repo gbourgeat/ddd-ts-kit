@@ -1,6 +1,6 @@
 import type { CachePurger } from '@ddd-ts-kit/kernel';
-import { chunksOf } from './chunks-of.js';
-import { sendPurge } from './send-purge.js';
+import { chunksOf } from './chunks-of';
+import { sendPurge } from './send-purge';
 
 export interface FastlyCachePurgerOptions {
   readonly serviceId: string;

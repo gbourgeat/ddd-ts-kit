@@ -11,8 +11,8 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "build": "node node_modules/@typescript/native/bin/tsc -b packages/kernel packages/validation packages/http packages/tracing packages/di packages/events packages/testing packages/s3 packages/drizzle packages/knex packages/prisma packages/typeorm packages/aspects packages/rabbitmq packages/auth packages/openfga packages/audit packages/redis packages/scheduling packages/pino packages/winston packages/sentry packages/kafka packages/nats packages/cli packages/eslint-plugin",
-    "build:tsc6": "node node_modules/typescript/bin/tsc -b packages/kernel packages/validation packages/http packages/tracing packages/di packages/events packages/testing packages/s3 packages/drizzle packages/knex packages/prisma packages/typeorm packages/aspects packages/rabbitmq packages/auth packages/openfga packages/audit packages/redis packages/scheduling packages/pino packages/winston packages/sentry packages/kafka packages/nats packages/cli packages/eslint-plugin",
+    "build": "node node_modules/@typescript/native/bin/tsc -b packages/kernel packages/validation packages/http packages/tracing packages/di packages/events packages/testing packages/s3 packages/drizzle packages/knex packages/prisma packages/typeorm packages/aspects packages/rabbitmq packages/auth packages/openfga packages/audit packages/redis packages/scheduling packages/pino packages/winston packages/sentry packages/kafka packages/nats packages/cli packages/eslint-plugin && node pipeline/monorepo/add-extensions.mjs packages/*/dist",
+    "build:tsc6": "node node_modules/typescript/bin/tsc -b packages/kernel packages/validation packages/http packages/tracing packages/di packages/events packages/testing packages/s3 packages/drizzle packages/knex packages/prisma packages/typeorm packages/aspects packages/rabbitmq packages/auth packages/openfga packages/audit packages/redis packages/scheduling packages/pino packages/winston packages/sentry packages/kafka packages/nats packages/cli packages/eslint-plugin && node pipeline/monorepo/add-extensions.mjs packages/*/dist",
     "test": "vitest run",
     "check:self": "node packages/cli/dist/bin.js check --self",
     "verify": "npm run ci:typecheck && npm run ci:lint && npm run ci:format && npm run ci:test:unit && npm run ci:arch && npm run ci:deadcode && npm run ci:docs && npm run ci:build",
@@ -36,7 +36,7 @@
     "ci:typecheck": "npm run build && npm run typecheck:tests && npm run docs:samples",
     "ci:lint": "eslint --config eslint.config.mjs .",
     "ci:format": "npm run format:check",
-    "ci:arch": "npm run release:version && npm run check:self && npm run depcruise && node --test plugin/hooks/guard.test.mjs plugin/skills/controls.test.mjs pipeline/monorepo/affected-packages.test.mjs pipeline/monorepo/changes.test.mjs pipeline/monorepo/e2e-shards.test.mjs pipeline/monorepo/translations.test.mjs pipeline/monorepo/doc-samples.test.mjs site/scripts/assemble.test.mjs",
+    "ci:arch": "npm run release:version && npm run check:self && npm run depcruise && node --test plugin/hooks/guard.test.mjs plugin/skills/controls.test.mjs pipeline/monorepo/affected-packages.test.mjs pipeline/monorepo/changes.test.mjs pipeline/monorepo/e2e-shards.test.mjs pipeline/monorepo/translations.test.mjs pipeline/monorepo/add-extensions.test.mjs pipeline/monorepo/doc-samples.test.mjs site/scripts/assemble.test.mjs",
     "ci:deadcode": "knip",
     "ci:test:unit": "vitest run --coverage",
     "ci:test:integration": "vitest run packages/drizzle packages/knex packages/prisma packages/typeorm packages/audit packages/openfga packages/s3 packages/nats packages/rabbitmq packages/kafka packages/http/test/varnish-cache-purger.spec.ts packages/redis",

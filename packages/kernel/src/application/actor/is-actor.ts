@@ -1,4 +1,4 @@
-import type { Actor } from './actor.js';
+import type { Actor } from './actor';
 
 const ACTOR_TYPES: readonly string[] = ['user', 'service', 'system', 'anonymous'];
 

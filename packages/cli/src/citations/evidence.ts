@@ -1,6 +1,6 @@
-import type { Config } from '../config/index.js';
-import type { History } from './history.js';
-import type { NameIndex } from './name-index.js';
+import type { Config } from '../config';
+import type { History } from './history';
+import type { NameIndex } from './name-index';
 
 /** What a cited name is judged against. */
 export interface Evidence {

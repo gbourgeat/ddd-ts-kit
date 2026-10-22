@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { KafkaFailure } from '../src/index.js';
-import type { Broker } from './support/broker.js';
-import { NETWORKED_BROKERS } from './support/brokers.js';
-import { PLACED, anEvent } from './support/events.js';
-import { failuresOf } from './support/hooks.js';
-import type { Network } from './support/network.js';
-import { recorder } from './support/recorder.js';
-import { eventually, pause } from './support/waiting.js';
+import type { KafkaFailure } from '../src';
+import type { Broker } from './support/broker';
+import { NETWORKED_BROKERS } from './support/brokers';
+import { PLACED, anEvent } from './support/events';
+import { failuresOf } from './support/hooks';
+import type { Network } from './support/network';
+import { recorder } from './support/recorder';
+import { eventually, pause } from './support/waiting';
 
 interface SabotagedSuite {
   readonly broker: Broker;

@@ -1,13 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { readConfig, type Config } from '../../config/index.js';
-import type { Project } from '../model/project.js';
-import type { SourceFile } from '../model/source-file.js';
-import { assembleProject } from './assemble-project.js';
-import { isSource } from './is-source.js';
-import { isUnder } from './is-under.js';
-import { loadSourceFile } from './load-source-file.js';
-import { walkDirectory } from './walk-directory.js';
+import { readConfig, type Config } from '../../config';
+import type { Project } from '../model/project';
+import type { SourceFile } from '../model/source-file';
+import { assembleProject } from './assemble-project';
+import { isSource } from './is-source';
+import { isUnder } from './is-under';
+import { loadSourceFile } from './load-source-file';
+import { walkDirectory } from './walk-directory';
 
 export interface ProjectOptions {
   /** Load only this source instead of walking the tree (editor hook path). */

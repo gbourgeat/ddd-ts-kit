@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { InMemoryLogger } from '@ddd-ts-kit/kernel';
-import { AspectRuntimeError, installAspectRuntime, logged, systemScheduler } from '../src/index.js';
-import { ManualScheduler, createAspectFakes, withAspectRuntime } from '../src/testing.js';
-import { QuoteGateway } from './support/quote-gateway.js';
+import { AspectRuntimeError, installAspectRuntime, logged, systemScheduler } from '../src';
+import { ManualScheduler, createAspectFakes, withAspectRuntime } from '../src/testing';
+import { QuoteGateway } from './support/quote-gateway';
 
 afterEach(() => {
   installAspectRuntime({});

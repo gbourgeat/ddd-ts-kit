@@ -1,12 +1,12 @@
-import type { Finding } from '../model/finding.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { holdsSchemas } from '../schemas/holds-schemas.js';
-import { sharedPresentation } from '../schemas/shared-presentation.js';
-import { sharesSchemas } from '../schemas/shares-schemas.js';
-import { VALIDATION_PACKAGES } from '../schemas/validation-packages.js';
-import { perFile } from '../support/per-file.js';
+import type { Finding } from '../model/finding';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { holdsSchemas } from '../schemas/holds-schemas';
+import { sharedPresentation } from '../schemas/shared-presentation';
+import { sharesSchemas } from '../schemas/shares-schemas';
+import { VALIDATION_PACKAGES } from '../schemas/validation-packages';
+import { perFile } from '../support/per-file';
 
 /** Where a context reads a type of the contract: its presentation layer; the module file and the specs wire and drive it. */
 const READERS_OUTSIDE = ['domain', 'application', 'infrastructure', 'published-language'];

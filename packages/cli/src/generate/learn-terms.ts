@@ -1,7 +1,7 @@
-import { addGlossaryRows } from '../check/language/add-glossary-rows.js';
-import { CliError } from '../cli-error.js';
-import { parseTerms } from './parse-terms.js';
-import type { Scope } from './scope.js';
+import { addGlossaryRows } from '../check/language/add-glossary-rows';
+import { CliError } from '../cli-error';
+import { parseTerms } from './parse-terms';
+import type { Scope } from './scope';
 
 /** Writes the `--term` rows into the glossary of the context. Called once per command, before any name is judged. */
 export function learnTerms(scope: Scope): void {

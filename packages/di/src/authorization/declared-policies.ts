@@ -1,4 +1,4 @@
-import type { PolicyBinding } from '../wiring/policy-binding.js';
+import type { PolicyBinding } from '../wiring/policy-binding';
 
 /**
  * The policy classes the contexts declared with `@Policy`, each resolved by its class. An

@@ -1,10 +1,10 @@
-import type { CitedName } from './cited-name.js';
-import type { Citing } from './citing.js';
-import type { Evidence } from './evidence.js';
-import { judgeMember } from './judge-member.js';
-import { judgePath } from './judge-path.js';
-import { judgeSymbol } from './judge-symbol.js';
-import type { Judgement } from './stale-citation.js';
+import type { CitedName } from './cited-name';
+import type { Citing } from './citing';
+import type { Evidence } from './evidence';
+import { judgeMember } from './judge-member';
+import { judgePath } from './judge-path';
+import { judgeSymbol } from './judge-symbol';
+import type { Judgement } from './stale-citation';
 
 /** What a cited name is to the code, by its kind. */
 export function judgeCitation(name: CitedName, citing: Citing, evidence: Evidence): Judgement {

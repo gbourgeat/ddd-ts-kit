@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { checkJsonOf } from './check-support.js';
-import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers.js';
-import { type Report, report } from './reports.js';
-import { initProject } from './support/init-project.js';
+import { checkJsonOf } from './check-support';
+import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers';
+import { type Report, report } from './reports';
+import { initProject } from './support/init-project';
 
 const BILLING = 'src/contexts/billing';
 const AGGREGATE = `${BILLING}/domain/aggregates/ledger.aggregate.ts`;

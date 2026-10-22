@@ -1,7 +1,7 @@
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
-import type { Route } from '../route/route.js';
-import type { DocumentRoutes } from './document-routes.js';
-import type { OpenApiDocumentSelection } from './open-api-document-selection.js';
+import type { Route } from '../route/route';
+import type { DocumentRoutes } from './document-routes';
+import type { OpenApiDocumentSelection } from './open-api-document-selection';
 
 /** Without a selection, the one document every project had before the contract could be split. */
 const WHOLE = 'openapi';

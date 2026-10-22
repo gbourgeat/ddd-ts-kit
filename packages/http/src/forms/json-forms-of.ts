@@ -1,11 +1,11 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import type { SchemaNode } from '../schema/schema-node.js';
-import { isRecord } from '../support/is-record.js';
-import type { FieldBlock } from './field-block.js';
-import type { FormBlock } from './form-block.js';
-import type { FormCondition } from './form-condition.js';
-import type { FormDescription } from './form-description.js';
-import type { JsonForm } from './json-form.js';
+import type { SchemaNode } from '../schema/schema-node';
+import { isRecord } from '../support/is-record';
+import type { FieldBlock } from './field-block';
+import type { FormBlock } from './form-block';
+import type { FormCondition } from './form-condition';
+import type { FormDescription } from './form-description';
+import type { JsonForm } from './json-form';
 
 const MAX_DEPTH = 16;
 const WIDGET_FORMATS: Readonly<Partial<Record<string, string>>> = { datetime: 'date-time', date: 'date', time: 'time' };

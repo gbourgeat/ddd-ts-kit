@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
-import { CONFIG_FILE, type Config, readConfig } from '../config/index.js';
-import { readWorkerFile } from '../worker/read-worker-file.js';
-import type { WorkerFile } from '../worker/worker-file.js';
-import type { MergeRepository } from './lost/merge-repository.js';
-import { mergeRepositoryOf } from './lost/merge-repository-of.js';
+import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file';
+import { CONFIG_FILE, type Config, readConfig } from '../config';
+import { readWorkerFile } from '../worker/read-worker-file';
+import type { WorkerFile } from '../worker/worker-file';
+import type { MergeRepository } from './lost/merge-repository';
+import { mergeRepositoryOf } from './lost/merge-repository-of';
 
 /** Where a merge of the trunk happens: the project, its repository, its config when it has one, the worker of the worktree. */
 export interface MergeContext {

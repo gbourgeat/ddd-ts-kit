@@ -2,8 +2,8 @@ import { parse as parseQueryString } from 'node:querystring';
 import { describe, expect, it } from 'vitest';
 import { type Criteria, type FilterNode } from '@ddd-ts-kit/kernel';
 import { ValidationError } from '@ddd-ts-kit/validation';
-import { criteriaFrom } from '../src/index.js';
-import { appointments, type AppointmentRow } from './support/appointments.js';
+import { criteriaFrom } from '../src';
+import { appointments, type AppointmentRow } from './support/appointments';
 
 const condition = (field: string, operator: string, value: unknown): unknown => ({
   kind: 'condition',

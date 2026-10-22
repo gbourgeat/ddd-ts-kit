@@ -1,5 +1,5 @@
-import { assertTheWholeTrace } from './first-class-trace.js';
-import { cli, exists, read, write } from './helpers.js';
+import { assertTheWholeTrace } from './first-class-trace';
+import { cli, exists, read, write } from './helpers';
 
 const SHIPPING_HANDLER =
   'src/contexts/shipping/application/integration/handlers/billing-invoice-issued.integration-handler.ts';

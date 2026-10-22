@@ -1,11 +1,11 @@
 import { err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { formatPath } from '../format-path.js';
-import type { JsonSchema } from '../json-schema.js';
-import type { Schema } from '../schema.js';
-import type { ValidationIssue } from '../validation-issue.js';
-import type { InferStandardOutput } from './infer-standard-output.js';
-import type { StandardSchemaOptions } from './standard-schema-options.js';
-import type { StandardSchemaIssue, StandardSchemaResult, StandardSchemaV1 } from './standard-schema-v1.js';
+import { formatPath } from '../format-path';
+import type { JsonSchema } from '../json-schema';
+import type { Schema } from '../schema';
+import type { ValidationIssue } from '../validation-issue';
+import type { InferStandardOutput } from './infer-standard-output';
+import type { StandardSchemaOptions } from './standard-schema-options';
+import type { StandardSchemaIssue, StandardSchemaResult, StandardSchemaV1 } from './standard-schema-v1';
 
 /**
  * Validates with any Standard Schema library. The JSON Schema of the contract is the one given;

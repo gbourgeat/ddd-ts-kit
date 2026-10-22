@@ -1,10 +1,10 @@
-import type { Config } from '../config/index.js';
-import { packageManagerVars } from '../package-manager/package-manager-vars.js';
-import { stackVars } from '../stack/stack-vars.js';
-import { WITH_DATABASE } from '../stack/with-database.js';
-import { AGENT_INSTRUCTION } from '../sdk/agent-instruction.js';
-import type { RenderContext } from '../templating/index.js';
-import { knipVars } from './knip-vars.js';
+import type { Config } from '../config';
+import { packageManagerVars } from '../package-manager/package-manager-vars';
+import { stackVars } from '../stack/stack-vars';
+import { WITH_DATABASE } from '../stack/with-database';
+import { AGENT_INSTRUCTION } from '../sdk/agent-instruction';
+import type { RenderContext } from '../templating';
+import { knipVars } from './knip-vars';
 
 /** The Keycloak release the compose service runs and the realm file was written and imported for. */
 const KEYCLOAK_VERSION = '26.8.0';

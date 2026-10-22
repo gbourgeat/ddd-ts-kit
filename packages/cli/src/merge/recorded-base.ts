@@ -1,7 +1,7 @@
-import { runGit } from '../commit/run-git.js';
-import type { BasePoint } from './base-point.js';
-import type { BaseQuery } from './base-query.js';
-import { verifyMerge } from './lost/verify-merge.js';
+import { runGit } from '../commit/run-git';
+import type { BasePoint } from './base-point';
+import type { BaseQuery } from './base-query';
+import { verifyMerge } from './lost/verify-merge';
 
 /**
  * The base worker-scope recorded for the worker of this worktree, when it is a commit of this

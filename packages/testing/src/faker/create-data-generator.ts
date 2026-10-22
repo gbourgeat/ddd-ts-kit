@@ -1,5 +1,5 @@
 import { Faker, base, en, type LocaleDefinition } from '@faker-js/faker';
-import type { DataGenerator } from './data-generator.js';
+import type { DataGenerator } from './data-generator';
 
 export interface DataGeneratorOptions {
   /** Default: the `TEST_SEED` environment variable, else a random seed. */

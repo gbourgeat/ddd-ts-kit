@@ -1,7 +1,7 @@
-import type { Awaitable } from './awaitable.js';
-import type { ContractRunner } from './contract-runner.js';
-import type { EventStoreUnderContract } from './event-store/event-store-under-contract.js';
-import { OneTransactionSuite } from './event-store/one-transaction-suite.js';
+import type { Awaitable } from './awaitable';
+import type { ContractRunner } from './contract-runner';
+import type { EventStoreUnderContract } from './event-store/event-store-under-contract';
+import { OneTransactionSuite } from './event-store/one-transaction-suite';
 
 export interface EventStoreUnitOfWorkContractOptions {
   readonly name: string;

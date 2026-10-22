@@ -1,4 +1,4 @@
-import type { FieldOf } from './field-of.js';
+import type { FieldOf } from './field-of';
 
 /** Which fields of the read model a scope narrows: the read port chooses them, never the caller. */
 export interface ReadScopeMapping<Row> {

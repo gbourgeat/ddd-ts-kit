@@ -1,8 +1,8 @@
-import { CliError } from '../../cli-error.js';
-import { RULES } from '../catalogue/rules.js';
-import { SUPPRESSION_RULE } from '../catalogue/suppression-rule.js';
-import type { RuleDoc } from '../model/rule-doc.js';
-import { RULE_DOCS } from './rule-docs.js';
+import { CliError } from '../../cli-error';
+import { RULES } from '../catalogue/rules';
+import { SUPPRESSION_RULE } from '../catalogue/suppression-rule';
+import type { RuleDoc } from '../model/rule-doc';
+import { RULE_DOCS } from './rule-docs';
 
 export interface DocumentedRule extends RuleDoc {
   readonly id: string;

@@ -18,9 +18,9 @@ import {
   type RawHeaders,
   type RawRequest,
   type Route,
-} from '../src/index.js';
-import { mountExpress } from '../src/express.js';
-import { generateOpenApi } from '../src/openapi.js';
+} from '../src';
+import { mountExpress } from '../src/express';
+import { generateOpenApi } from '../src/openapi';
 
 const representations = Representations.standard();
 

@@ -12,22 +12,22 @@ import {
   type PageRequest,
   type UnitOfWorkStage,
 } from '@ddd-ts-kit/kernel';
-import type { ChainHead } from '../chain/chain-head.js';
-import { chainOfTenant } from '../chain/chain-of-tenant.js';
-import { GENESIS_HASH } from '../chain/genesis-hash.js';
-import { headAfter } from '../chain/head-after.js';
-import { seal } from '../chain/seal.js';
-import { sealCheckpoint } from '../chain/seal-checkpoint.js';
-import { decodeCursor } from '../search/decode-cursor.js';
-import { encodeCursor } from '../search/encode-cursor.js';
-import type { SearchOrder } from '../search/search-order.js';
-import { orderOf } from '../search/order-of.js';
-import type { AuditTrailOptions } from '../trail/audit-trail-options.js';
-import type { AuditTables } from './audit-tables.js';
-import { entryOf } from './entry-of.js';
-import { insertOf } from './insert-of.js';
-import type { SqlSession } from './sql-session.js';
-import { joined, sql, type Sql } from './sql.js';
+import type { ChainHead } from '../chain/chain-head';
+import { chainOfTenant } from '../chain/chain-of-tenant';
+import { GENESIS_HASH } from '../chain/genesis-hash';
+import { headAfter } from '../chain/head-after';
+import { seal } from '../chain/seal';
+import { sealCheckpoint } from '../chain/seal-checkpoint';
+import { decodeCursor } from '../search/decode-cursor';
+import { encodeCursor } from '../search/encode-cursor';
+import type { SearchOrder } from '../search/search-order';
+import { orderOf } from '../search/order-of';
+import type { AuditTrailOptions } from '../trail/audit-trail-options';
+import type { AuditTables } from './audit-tables';
+import { entryOf } from './entry-of';
+import { insertOf } from './insert-of';
+import type { SqlSession } from './sql-session';
+import { joined, sql, type Sql } from './sql';
 
 /**
  * The trail in PostgreSQL, whatever the query builder: the adapters give it a session, which

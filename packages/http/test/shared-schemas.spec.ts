@@ -3,8 +3,8 @@ import { z } from 'zod';
 import { ok } from '@ddd-ts-kit/kernel';
 import { customSchema, sharedSchema } from '@ddd-ts-kit/validation';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
-import { acceptedSchema, defineRoute, pageSchemaOf, type RequestSchemas, type ResponseSpec } from '../src/index.js';
-import { generateOpenApi } from '../src/openapi.js';
+import { acceptedSchema, defineRoute, pageSchemaOf, type RequestSchemas, type ResponseSpec } from '../src';
+import { generateOpenApi } from '../src/openapi';
 
 const slot = z.object({ startsAt: z.iso.datetime(), endsAt: z.iso.datetime() }).meta({ id: 'Slot' });
 const appointmentId = z.uuid().meta({ id: 'AppointmentId', description: 'An appointment.' });

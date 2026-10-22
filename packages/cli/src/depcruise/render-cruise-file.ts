@@ -1,5 +1,5 @@
-import { CONFIG_FILE, type Config } from '../config/index.js';
-import { cruiseConfiguration } from './cruise-configuration.js';
+import { CONFIG_FILE, type Config } from '../config';
+import { cruiseConfiguration } from './cruise-configuration';
 
 /** The file dependency-cruiser loads: plain data, regenerated whenever the config changes. */
 export function renderCruiseFile(config: Config): string {

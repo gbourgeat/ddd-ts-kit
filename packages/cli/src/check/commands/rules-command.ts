@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { Arguments } from '../../commands/arguments.js';
-import { type Command } from '../../commands/command.js';
-import { CONFIG_FILE, isOneOf, projectSeverity, readConfig, SEVERITIES } from '../../config/index.js';
-import { DEFAULT_SEVERITIES } from '../catalogue/default-severities.js';
-import { DELEGATED_RULES } from '../catalogue/delegated-rules.js';
-import { RULES } from '../catalogue/rules.js';
-import { SUPPRESSION_RULE } from '../catalogue/suppression-rule.js';
+import { Arguments } from '../../commands/arguments';
+import { type Command } from '../../commands/command';
+import { CONFIG_FILE, isOneOf, projectSeverity, readConfig, SEVERITIES } from '../../config';
+import { DEFAULT_SEVERITIES } from '../catalogue/default-severities';
+import { DELEGATED_RULES } from '../catalogue/delegated-rules';
+import { RULES } from '../catalogue/rules';
+import { SUPPRESSION_RULE } from '../catalogue/suppression-rule';
 
 interface ListedRule {
   readonly id: string;

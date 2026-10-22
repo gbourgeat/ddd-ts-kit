@@ -1,6 +1,6 @@
-import type { Config } from './config.js';
-import type { Layer } from './layer.js';
-import type { Location } from './location.js';
+import type { Config } from './config';
+import type { Layer } from './layer';
+import type { Location } from './location';
 
 const LAYERS: readonly Layer[] = [
   'domain',

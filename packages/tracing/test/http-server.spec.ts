@@ -2,8 +2,8 @@ import { createRequire } from 'node:module';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { defineRoute, executeRoute } from '@ddd-ts-kit/http';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { tracedRoutes } from '../src/index.js';
-import { initTracing, type TracingHandle } from '../src/node.js';
+import { tracedRoutes } from '../src';
+import { initTracing, type TracingHandle } from '../src/node';
 
 /** No hexadecimal digit in it: a random trace, span or correlation identifier cannot contain it by chance. */
 const URL_SECRET = 'zq-url-secret-zq';

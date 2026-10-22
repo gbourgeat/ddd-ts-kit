@@ -1,5 +1,5 @@
-import type { CheckpointStore } from '../../application/ports/checkpoint-store.js';
-import { ConcurrencyError } from '../../domain/errors/concurrency-error.js';
+import type { CheckpointStore } from '../../application/ports/checkpoint-store';
+import { ConcurrencyError } from '../../domain/errors/concurrency-error';
 
 /** Reference implementation, for tests and single-process apps. */
 export class InMemoryCheckpointStore implements CheckpointStore {

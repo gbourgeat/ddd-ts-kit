@@ -1,13 +1,13 @@
-import type { IntegrationEvent } from '../../application/events/integration-event.js';
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { EventContract } from '../model/event-contract.js';
-import type { ProjectionApplication } from '../model/projection-application.js';
-import { DeclarationError } from '../registry/declaration-error.js';
-import type { NamedDomainEventType } from '../model/named-domain-event-type.js';
-import { eventNameOf } from './event-name-of.js';
-import type { Named } from './named.js';
-import { pendingApplications } from './pending-applications.js';
-import type { ProjectionMethodDecorator } from './projection-method-decorator.js';
+import type { IntegrationEvent } from '../../application/events/integration-event';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { EventContract } from '../model/event-contract';
+import type { ProjectionApplication } from '../model/projection-application';
+import { DeclarationError } from '../registry/declaration-error';
+import type { NamedDomainEventType } from '../model/named-domain-event-type';
+import { eventNameOf } from './event-name-of';
+import type { Named } from './named';
+import { pendingApplications } from './pending-applications';
+import type { ProjectionMethodDecorator } from './projection-method-decorator';
 
 type Applied =
   | Omit<Extract<ProjectionApplication, { kind: 'integration' }>, 'method'>

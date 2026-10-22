@@ -1,4 +1,4 @@
-import type { Remaining } from '../progress/remaining.js';
+import type { Remaining } from '../progress/remaining';
 
 /** Runs git in a directory: what it prints, undefined when it fails. */
 export type GitRunner = (directory: string, args: readonly string[]) => string | undefined;

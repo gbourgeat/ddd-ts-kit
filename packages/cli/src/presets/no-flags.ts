@@ -1,4 +1,4 @@
-import type { KindFlags } from '../generate/kind.js';
+import type { KindFlags } from '../generate/kind';
 
 /** The flags of a generator nobody passed: what a preset starts each of its steps from. */
 export const NO_FLAGS: KindFlags = {

@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { describe, expect, it } from 'vitest';
-import { listenOnRandomPort, startTestServer, type NodeServer } from '../src/e2e.js';
+import { listenOnRandomPort, startTestServer, type NodeServer } from '../src/e2e';
 
 /** Answers the headers it received, as JSON. */
 const echo = () => createServer((request, response) => response.end(JSON.stringify(request.headers)));

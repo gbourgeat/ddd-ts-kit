@@ -12,7 +12,7 @@ import {
   type Page,
   type PageRequest,
   type Sort,
-} from '../src/index.js';
+} from '../src';
 
 type OrderField = 'placedAt' | 'total';
 

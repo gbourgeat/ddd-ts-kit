@@ -1,11 +1,11 @@
 import path from 'node:path';
-import type { Config } from '../../config/index.js';
-import { barrelFile, dependenciesFile, isDeclarationsFile } from '../../declared/index.js';
-import { declaredModules, MODULE_LAYERS, moduleSplit, WITHOUT_MODULE } from '../../model-modules/index.js';
-import type { Flaw } from '../model/flaw.js';
-import { isCanonicalDirectory } from './is-canonical-directory.js';
-import { OPEN_DIRECTORIES } from './open-directories.js';
-import { roleOf } from './role-of.js';
+import type { Config } from '../../config';
+import { barrelFile, dependenciesFile, isDeclarationsFile } from '../../declared';
+import { declaredModules, MODULE_LAYERS, moduleSplit, WITHOUT_MODULE } from '../../model-modules';
+import type { Flaw } from '../model/flaw';
+import { isCanonicalDirectory } from './is-canonical-directory';
+import { OPEN_DIRECTORIES } from './open-directories';
+import { roleOf } from './role-of';
 
 interface Placed {
   readonly context: string;

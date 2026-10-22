@@ -1,8 +1,8 @@
-import { CacheScope } from '../cache/cache-scope.js';
-import { CacheTagHeader } from '../cache/cache-tag-header.js';
-import type { Route } from '../route/route.js';
-import { cacheTagsOf, type TaggedParts } from './cache-tags-of.js';
-import type { RouteResponse } from './route-response.js';
+import { CacheScope } from '../cache/cache-scope';
+import { CacheTagHeader } from '../cache/cache-tag-header';
+import type { Route } from '../route/route';
+import { cacheTagsOf, type TaggedParts } from './cache-tags-of';
+import type { RouteResponse } from './route-response';
 
 /**
  * What tags an answer: the route, the header of the shared cache, and what the tags are read

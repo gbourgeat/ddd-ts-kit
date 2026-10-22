@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { calleeName } from '../support/calls/callee-name.js';
-import { propertyOf } from '../support/calls/property-of.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
+import { calleeName } from '../support/calls/callee-name';
+import { propertyOf } from '../support/calls/property-of';
+import { defineRule, type Report } from '../support/rule/define-rule';
 
 type MessageId = 'sharedWithoutVary';
 

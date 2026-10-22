@@ -1,6 +1,6 @@
-import type { Workspace } from '../workspace/index.js';
-import type { Verdict } from './verdict.js';
-import { VERDICTS_DIR } from './verdicts-dir.js';
+import type { Workspace } from '../workspace';
+import type { Verdict } from './verdict';
+import { VERDICTS_DIR } from './verdicts-dir';
 
 const FIELD = /^(Story|Subject|Fingerprint|Verdict|Reason):\s*(.*)$/;
 

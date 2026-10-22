@@ -1,5 +1,5 @@
 import type { IntegrationEventSubscriber, Subscription } from '@ddd-ts-kit/kernel';
-import type { EventSubscription } from './event-subscription.js';
+import type { EventSubscription } from './event-subscription';
 
 /** Registers every subscription and returns one handle that removes them all. */
 export function subscribeAll(

@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { DEFAULT_STACK, read, REPO_ROOT, write } from '../helpers.js';
-import { DEPCRUISE, KNIP } from './analyzers.js';
+import { DEFAULT_STACK, read, REPO_ROOT, write } from '../helpers';
+import { DEPCRUISE, KNIP } from './analyzers';
 import {
   compiledEntries,
   compiledProject,
@@ -12,12 +12,12 @@ import {
   resolvedBy,
   rewriteAliases,
   spelled,
-} from './compiled-project.js';
-import { expectNoFinding } from './expect-no-finding.js';
-import { bin, findingsOf, runIn } from './run-in.js';
-import { SLOW } from './stacks.js';
-import { started } from './started.js';
-import { NATIVE_COMPILER } from './type-errors.js';
+} from './compiled-project';
+import { expectNoFinding } from './expect-no-finding';
+import { bin, findingsOf, runIn } from './run-in';
+import { SLOW } from './stacks';
+import { started } from './started';
+import { NATIVE_COMPILER } from './type-errors';
 
 const TOOLS_COMPILER = path.join(REPO_ROOT, 'node_modules/typescript/bin/tsc');
 const escaped = (text: string): string => text.replace(/[.*+?^${}()|[\]\\/]/g, String.raw`\$&`);

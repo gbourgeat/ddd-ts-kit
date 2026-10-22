@@ -1,9 +1,9 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { ContextLocation } from '../project/location.js';
-import { keyName } from '../support/classes/key-name.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import { inContext } from '../support/imports/in-context.js';
-import { staticString } from '../support/imports/static-string.js';
+import type { ContextLocation } from '../project/location';
+import { keyName } from '../support/classes/key-name';
+import { defineRule } from '../support/rule/define-rule';
+import { inContext } from '../support/imports/in-context';
+import { staticString } from '../support/imports/static-string';
 
 type Keyed = TSESTree.Property | TSESTree.PropertyDefinition;
 

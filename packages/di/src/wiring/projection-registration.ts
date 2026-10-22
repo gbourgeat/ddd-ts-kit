@@ -1,5 +1,5 @@
 import type { ProjectionFeed, Token } from '@ddd-ts-kit/kernel/declarations';
-import type { Declarer } from './declarer.js';
+import type { Declarer } from './declarer';
 
 /** One event a projection applies, by which method. */
 interface AppliedEvent {

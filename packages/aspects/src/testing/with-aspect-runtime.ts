@@ -1,5 +1,5 @@
-import type { AspectRuntime } from '../runtime/aspect-runtime.js';
-import { runWithAspectRuntime } from '../runtime/installed-runtime.js';
+import type { AspectRuntime } from '../runtime/aspect-runtime';
+import { runWithAspectRuntime } from '../runtime/installed-runtime';
 
 /**
  * Runs the work, and everything it awaits, with these collaborators in place of the installed

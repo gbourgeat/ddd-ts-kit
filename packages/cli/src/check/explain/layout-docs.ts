@@ -1,4 +1,4 @@
-import type { RuleDoc } from '../model/rule-doc.js';
+import type { RuleDoc } from '../model/rule-doc';
 
 export const LAYOUT_DOCS: Readonly<Record<string, RuleDoc>> = {
   'clean/no-hash-private': {

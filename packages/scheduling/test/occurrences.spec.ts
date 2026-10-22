@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseJobSchedule, type JobSchedule } from '@ddd-ts-kit/kernel';
-import { latestOccurrence, nextOccurrence } from '../src/index.js';
+import { latestOccurrence, nextOccurrence } from '../src';
 
 /** The occurrences that follow an instant, as ISO texts. */
 function following(schedule: JobSchedule, after: string, count: number): string[] {

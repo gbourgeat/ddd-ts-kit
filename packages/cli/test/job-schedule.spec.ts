@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { parseJobSchedule, type JobSchedule as KernelSchedule } from '@ddd-ts-kit/kernel';
-import { writtenSchedule } from '../src/generate/kinds/job/written-schedule.js';
-import type { JobSchedule } from '../src/generate/schedule/job-schedule.js';
-import { jobScheduleProblem } from '../src/generate/schedule/job-schedule-problem.js';
+import { writtenSchedule } from '../src/generate/kinds/job/written-schedule';
+import type { JobSchedule } from '../src/generate/schedule/job-schedule';
+import { jobScheduleProblem } from '../src/generate/schedule/job-schedule-problem';
 
 const VALID: readonly JobSchedule[] = [
   { every: '30s' },

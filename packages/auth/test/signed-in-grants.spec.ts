@@ -8,9 +8,9 @@ import {
   traceText,
   type Authorizer,
   type Decision,
-} from '../src/index.js';
-import { authorizerContract, DenyAll } from '../src/testing.js';
-import { billingPermissions, bob, catalogPermissions } from './support/billing.js';
+} from '../src';
+import { authorizerContract, DenyAll } from '../src/testing';
+import { billingPermissions, bob, catalogPermissions } from './support/billing';
 
 const issue = billingPermissions['invoice.issue'];
 const read = billingPermissions['invoice.read'];

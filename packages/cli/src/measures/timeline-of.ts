@@ -1,10 +1,10 @@
-import { sectionOf } from '../stories/section-of.js';
-import type { BranchCommit } from './branch-commit.js';
-import { fileAt } from './file-at.js';
-import { hours } from './hours.js';
-import type { Repository } from './repository.js';
-import type { StoryHistory } from './story-history.js';
-import type { Timeline } from './timeline.js';
+import { sectionOf } from '../stories/section-of';
+import type { BranchCommit } from './branch-commit';
+import { fileAt } from './file-at';
+import { hours } from './hours';
+import type { Repository } from './repository';
+import type { StoryHistory } from './story-history';
+import type { Timeline } from './timeline';
 
 /**
  * Design: the first commit of the story file to the commit of its lock. Build: the lock to the

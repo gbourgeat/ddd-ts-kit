@@ -1,4 +1,4 @@
-import { type SlicesTable, slicesTable, type TableRow } from './slices-table.js';
+import { type SlicesTable, slicesTable, type TableRow } from './slices-table';
 
 /** The merged slices file, or the cells both sides changed differently, as `#<id> <column>`. */
 export type SlicesMerge = { readonly text: string } | { readonly conflicts: readonly string[] };

@@ -16,17 +16,17 @@ import {
   type Metrics,
   type TenantDirectory,
 } from '@ddd-ts-kit/kernel';
-import { JobAbortedError } from './errors/job-aborted-error.js';
-import type { JobCheckpoints } from './job-checkpoints.js';
-import { JobRecorder } from './job-recorder.js';
-import type { JobRunObserver } from './job-run-observer.js';
-import { JobRunner } from './job-runner.js';
-import type { JobTimers } from './job-timers.js';
-import type { Occurrence } from './occurrence.js';
-import { latestOccurrence } from './occurrences/latest-occurrence.js';
-import { nextOccurrence } from './occurrences/next-occurrence.js';
-import { RegisteredJob } from './registered-job.js';
-import { systemJobTimers } from './system-job-timers.js';
+import { JobAbortedError } from './errors/job-aborted-error';
+import type { JobCheckpoints } from './job-checkpoints';
+import { JobRecorder } from './job-recorder';
+import type { JobRunObserver } from './job-run-observer';
+import { JobRunner } from './job-runner';
+import type { JobTimers } from './job-timers';
+import type { Occurrence } from './occurrence';
+import { latestOccurrence } from './occurrences/latest-occurrence';
+import { nextOccurrence } from './occurrences/next-occurrence';
+import { RegisteredJob } from './registered-job';
+import { systemJobTimers } from './system-job-timers';
 
 export interface InProcessJobSchedulerOptions {
   /** Every instant comes from it: the system clock is never read. */

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { executionContext, type Actor, type ExecutionContext } from '@ddd-ts-kit/kernel';
-import { aQueueBench } from './support/a-queue-bench.js';
-import { CompileStatementsJob } from './support/statements-job.js';
+import { aQueueBench } from './support/a-queue-bench';
+import { CompileStatementsJob } from './support/statements-job';
 
 const FEBRUARY = { month: '2026-02', customers: ['c-1'] };
 

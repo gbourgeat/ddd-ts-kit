@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { index } from 'drizzle-orm/pg-core';
-import { tableIn } from '../schema/table-in.js';
-import { outboxColumns } from './outbox-columns.js';
+import { tableIn } from '../schema/table-in';
+import { outboxColumns } from './outbox-columns';
 
 export type OutboxTable = ReturnType<typeof outboxTable>;
 

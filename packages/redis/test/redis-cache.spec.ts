@@ -1,9 +1,9 @@
 import type { Redis } from 'ioredis';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryMetrics, cacheKey } from '@ddd-ts-kit/kernel';
-import { RedisCache, RedisLock, type CacheCodec } from '../src/index.js';
-import { cacheContract } from '../src/testing.js';
-import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing, sleep } from './support/server.js';
+import { RedisCache, RedisLock, type CacheCodec } from '../src';
+import { cacheContract } from '../src/testing';
+import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing, sleep } from './support/server';
 
 const runner = { describe, it, expect, beforeEach };
 const price = (sku: string) => cacheKey<{ amount: number }>('price', sku);

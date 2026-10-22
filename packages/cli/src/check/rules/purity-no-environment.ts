@@ -1,4 +1,4 @@
-import { definePurityRule } from '../purity/define-purity-rule.js';
+import { definePurityRule } from '../purity/define-purity-rule';
 
 export const purityNoEnvironment = definePurityRule({
   id: 'purity/no-environment',

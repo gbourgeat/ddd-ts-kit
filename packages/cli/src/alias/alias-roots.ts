@@ -1,6 +1,6 @@
-import type { Config } from '../config/index.js';
-import type { AliasRoot } from './alias-root.js';
-import { FIXED_ALIAS_ROOTS } from './fixed-alias-roots.js';
+import type { Config } from '../config';
+import type { AliasRoot } from './alias-root';
+import { FIXED_ALIAS_ROOTS } from './fixed-alias-roots';
 
 type Aliased = Pick<Config, 'importAlias' | 'sourceRoot'> & { readonly stack: Pick<Config['stack'], 'orm'> };
 

@@ -1,4 +1,4 @@
-import { unitOfWorkScope } from './unit-of-work-scope.js';
+import { unitOfWorkScope } from './unit-of-work-scope';
 
 /**
  * Runs `work` once the unit of work in progress has committed, after its `after-commit`

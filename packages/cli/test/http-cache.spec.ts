@@ -1,9 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, exists, read, walk } from './helpers.js';
-import { initFailure } from './support/init-failure.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
-import { readJson } from './support/read-json.js';
+import { cli, exists, read, walk } from './helpers';
+import { initFailure } from './support/init-failure';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
+import { readJson } from './support/read-json';
 
 const TERMS = ['--term', 'Get=to read', '--term', 'Invoice=a bill', '--term', 'Read=to look', '--term', 'Prices=costs'];
 const HTTP = 'src/contexts/billing/presentation/http';

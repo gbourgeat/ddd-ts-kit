@@ -1,6 +1,6 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
-import { defineRule } from '../support/rule/define-rule.js';
-import { ambientName } from '../support/globals/ambient-name.js';
+import { defineRule } from '../support/rule/define-rule';
+import { ambientName } from '../support/globals/ambient-name';
 
 export const domainNoGenericError = defineRule<'generic'>({
   id: 'domain/no-generic-error',

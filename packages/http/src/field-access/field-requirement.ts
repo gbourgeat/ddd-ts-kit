@@ -1,4 +1,4 @@
-import type { FieldPolicy } from './field-policy.js';
+import type { FieldPolicy } from './field-policy';
 
 /**
  * What an actor needs to see or set a field: a permission, decided by the `Access` of the

@@ -1,5 +1,5 @@
-import type { LogFields } from '../logging/log-fields.js';
-import type { ExecutionContext } from './execution-context.js';
+import type { LogFields } from '../logging/log-fields';
+import type { ExecutionContext } from './execution-context';
 
 /** The identifiers a log line needs to be found again, impersonation included. Never content. */
 export function logFieldsOf(context: ExecutionContext): LogFields {

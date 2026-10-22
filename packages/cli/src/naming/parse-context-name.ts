@@ -1,6 +1,6 @@
-import { CliError } from '../cli-error.js';
-import type { Name } from './name.js';
-import { toName } from './to-name.js';
+import { CliError } from '../cli-error';
+import type { Name } from './name';
+import { toName } from './to-name';
 
 export function parseContextName(input: string): Name {
   const name = toName(input);

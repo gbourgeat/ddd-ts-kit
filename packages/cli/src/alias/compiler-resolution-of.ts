@@ -1,4 +1,4 @@
-import type { CompilerResolution } from './compiler-resolution.js';
+import type { CompilerResolution } from './compiler-resolution';
 
 /**
  * What `init` writes in tsconfig.json for "importExtension". `Bundler` resolves a specifier

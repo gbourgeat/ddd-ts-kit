@@ -1,23 +1,23 @@
 import { isAnonymous, type Actor, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import type { Access } from '../authorization/access.js';
-import type { AccessQuestion } from '../authorization/access-question.js';
-import type { AccessScope } from '../authorization/access-scope.js';
-import { recordAsked } from '../authorization/asked-permissions.js';
-import type { Authorizer } from '../authorization/authorizer.js';
-import type { CheckRequest } from '../authorization/check-request.js';
-import { ALLOWED, deny, type Decision } from '../authorization/decision.js';
-import { decisionRecordOf } from '../authorization/decision-record-of.js';
-import { DenialReason } from '../authorization/denial-reason.js';
-import { isResourceRef } from '../authorization/is-resource-ref.js';
-import type { OnDecision } from '../authorization/on-decision.js';
-import type { ResourceRef } from '../authorization/resource-ref.js';
-import { workTenantOf } from '../authorization/work-tenant-of.js';
-import { ForbiddenError } from '../errors/forbidden-error.js';
-import { ListingNotSupportedError } from '../errors/listing-not-supported-error.js';
-import { UnauthenticatedError } from '../errors/unauthenticated-error.js';
-import type { Permission } from '../permissions/permission.js';
-import type { Policy } from './policy.js';
-import type { PolicyContext } from './policy-context.js';
+import type { Access } from '../authorization/access';
+import type { AccessQuestion } from '../authorization/access-question';
+import type { AccessScope } from '../authorization/access-scope';
+import { recordAsked } from '../authorization/asked-permissions';
+import type { Authorizer } from '../authorization/authorizer';
+import type { CheckRequest } from '../authorization/check-request';
+import { ALLOWED, deny, type Decision } from '../authorization/decision';
+import { decisionRecordOf } from '../authorization/decision-record-of';
+import { DenialReason } from '../authorization/denial-reason';
+import { isResourceRef } from '../authorization/is-resource-ref';
+import type { OnDecision } from '../authorization/on-decision';
+import type { ResourceRef } from '../authorization/resource-ref';
+import { workTenantOf } from '../authorization/work-tenant-of';
+import { ForbiddenError } from '../errors/forbidden-error';
+import { ListingNotSupportedError } from '../errors/listing-not-supported-error';
+import { UnauthenticatedError } from '../errors/unauthenticated-error';
+import type { Permission } from '../permissions/permission';
+import type { Policy } from './policy';
+import type { PolicyContext } from './policy-context';
 
 export interface PolicyAccessOptions {
   /** Asked after the policies, with the resource the subject stands for. */

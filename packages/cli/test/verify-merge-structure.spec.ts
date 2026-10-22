@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { cli, tempDir, write } from './helpers.js';
-import { git } from './support/git.js';
-import { BOTH_KEPT, INVOICE, PAY_AND_CANCEL, spec } from './support/invoicing-merge.js';
-import { jsonAt } from './support/json-at.js';
-import { commit, mergeRepository, mergeWith, startMerge } from './support/merge-repository.js';
+import { cli, tempDir, write } from './helpers';
+import { git } from './support/git';
+import { BOTH_KEPT, INVOICE, PAY_AND_CANCEL, spec } from './support/invoicing-merge';
+import { jsonAt } from './support/json-at';
+import { commit, mergeRepository, mergeWith, startMerge } from './support/merge-repository';
 
 const PAY_SPEC = 'src/contexts/billing/pay-invoice.spec.ts';
 

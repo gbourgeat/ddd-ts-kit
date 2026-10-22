@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { ReplayPlan } from './replay-plan.js';
-import { replayedName } from './replayed-name.js';
+import type { ReplayPlan } from './replay-plan';
+import { replayedName } from './replayed-name';
 
 /** A migration of the branch whose name changes, from its tag to the one it takes. */
 export interface RenamedMigration {

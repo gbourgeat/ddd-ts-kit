@@ -1,9 +1,9 @@
-import type { AfterCommitFailure } from '../../application/events/after-commit-failure.js';
-import type { DomainEventCallback } from '../../application/events/domain-event-callback.js';
-import type { DomainEventPhase } from '../../application/events/domain-event-phase.js';
-import type { DomainEventSubscription } from '../../application/events/domain-event-subscription.js';
-import type { DomainEventDispatcher } from '../../application/ports/domain-event-dispatcher.js';
-import type { DomainEvent } from '../../domain/domain-event.js';
+import type { AfterCommitFailure } from '../../application/events/after-commit-failure';
+import type { DomainEventCallback } from '../../application/events/domain-event-callback';
+import type { DomainEventPhase } from '../../application/events/domain-event-phase';
+import type { DomainEventSubscription } from '../../application/events/domain-event-subscription';
+import type { DomainEventDispatcher } from '../../application/ports/domain-event-dispatcher';
+import type { DomainEvent } from '../../domain/domain-event';
 
 /**
  * Calls the callbacks in process, in registration order. A failure of the `after-commit` phase

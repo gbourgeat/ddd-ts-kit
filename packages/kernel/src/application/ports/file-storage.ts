@@ -1,13 +1,13 @@
-import type { DownloadUrlOptions } from '../files/download-url-options.js';
-import type { FileContent } from '../files/file-content.js';
-import type { FileMetadata } from '../files/file-metadata.js';
-import type { FileSource } from '../files/file-source.js';
-import type { ListedFile } from '../files/listed-file.js';
-import type { PutOptions } from '../files/put-options.js';
-import type { SignedUpload } from '../files/signed-upload.js';
-import type { SignedUrl } from '../files/signed-url.js';
-import type { StoredFile } from '../files/stored-file.js';
-import type { UploadUrlOptions } from '../files/upload-url-options.js';
+import type { DownloadUrlOptions } from '../files/download-url-options';
+import type { FileContent } from '../files/file-content';
+import type { FileMetadata } from '../files/file-metadata';
+import type { FileSource } from '../files/file-source';
+import type { ListedFile } from '../files/listed-file';
+import type { PutOptions } from '../files/put-options';
+import type { SignedUpload } from '../files/signed-upload';
+import type { SignedUrl } from '../files/signed-url';
+import type { StoredFile } from '../files/stored-file';
+import type { UploadUrlOptions } from '../files/upload-url-options';
 
 /**
  * Where the content of files lives: an object store, a directory, the memory of a test. Never

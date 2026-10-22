@@ -1,8 +1,8 @@
 import { afterAll, beforeAll } from 'vitest';
-import { UnauthorizedError, createErrorMapper, type ErrorContext } from '../../src/index.js';
-import { orderRoutes } from './orders.js';
-import { executionScope, readExecution } from './read-execution.js';
-import type { ReadAuthorization, RunningServer, StartServer } from './running-server.js';
+import { UnauthorizedError, createErrorMapper, type ErrorContext } from '../../src';
+import { orderRoutes } from './orders';
+import { executionScope, readExecution } from './read-execution';
+import type { ReadAuthorization, RunningServer, StartServer } from './running-server';
 
 export interface AdapterClient {
   /** What the error hook of the server was told, in order. */

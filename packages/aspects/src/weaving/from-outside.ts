@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { Method } from './method.js';
-import { named } from './named.js';
+import type { Method } from './method';
+import { named } from './named';
 
 interface AdvisedCall {
   readonly application: object;

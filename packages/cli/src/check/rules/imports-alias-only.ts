@@ -1,14 +1,14 @@
 import path from 'node:path';
-import { aliasRoots, specifierSuffix, toAlias, type AliasRoot } from '../../alias/index.js';
-import type { Finding } from '../model/finding.js';
-import type { Flaw } from '../model/flaw.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { besideTheSources } from '../project/beside-the-sources.js';
-import { perFile } from '../support/per-file.js';
-import { reporter } from '../support/reporter.js';
-import { toViolations } from '../support/to-violations.js';
+import { aliasRoots, specifierSuffix, toAlias, type AliasRoot } from '../../alias';
+import type { Finding } from '../model/finding';
+import type { Flaw } from '../model/flaw';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { besideTheSources } from '../project/beside-the-sources';
+import { perFile } from '../support/per-file';
+import { reporter } from '../support/reporter';
+import { toViolations } from '../support/to-violations';
 
 const RELATIVE = /^\.{1,2}(?:\/|$)/;
 const DOT_SEGMENT = /\/\.{1,2}(?:\/|$)/;

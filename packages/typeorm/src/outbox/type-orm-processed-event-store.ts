@@ -1,9 +1,9 @@
 import type { EntitySchema } from 'typeorm';
 import type { ProcessedEventStore } from '@ddd-ts-kit/kernel';
-import { insertIgnoringConflict } from '../sql/insert-ignoring-conflict.js';
-import type { TypeOrmContext } from '../unit-of-work/type-orm-context.js';
-import { processedEventEntity } from './processed-event-entity.js';
-import type { ProcessedEventRow } from './processed-event-row.js';
+import { insertIgnoringConflict } from '../sql/insert-ignoring-conflict';
+import type { TypeOrmContext } from '../unit-of-work/type-orm-context';
+import { processedEventEntity } from './processed-event-entity';
+import type { ProcessedEventRow } from './processed-event-row';
 
 export interface TypeOrmProcessedEventStoreOptions {
   /** Default `processedEventEntity()`, which must then be the one the data source registers. */

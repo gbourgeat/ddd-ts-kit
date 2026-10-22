@@ -1,6 +1,6 @@
-import { scan } from '../../check/scan/scan.js';
-import { classBody, type ClassBody } from './class-body.js';
-import { staticMethods } from './static-methods.js';
+import { scan } from '../../check/scan/scan';
+import { classBody, type ClassBody } from './class-body';
+import { staticMethods } from './static-methods';
 
 export interface FactoryAddition {
   readonly className: string;

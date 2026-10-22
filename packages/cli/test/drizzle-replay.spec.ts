@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { drizzleHistoryFindings } from '../src/check/migrations/drizzle-history-findings.js';
-import { readDrizzleMigrations } from '../src/check/migrations/read-drizzle-migrations.js';
-import { cli, exists, read, tempDir, write } from './helpers.js';
-import { DRIZZLE_KIT_STUB } from './support/drizzle-kit-stub.js';
-import { git } from './support/git.js';
+import { drizzleHistoryFindings } from '../src/check/migrations/drizzle-history-findings';
+import { readDrizzleMigrations } from '../src/check/migrations/read-drizzle-migrations';
+import { cli, exists, read, tempDir, write } from './helpers';
+import { DRIZZLE_KIT_STUB } from './support/drizzle-kit-stub';
+import { git } from './support/git';
 
 const JOURNAL = 'migrations/meta/_journal.json';
 

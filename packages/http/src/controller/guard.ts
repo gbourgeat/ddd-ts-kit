@@ -4,9 +4,9 @@ import {
   type DeclaredDependencies,
   type DependenciesFromSignature,
 } from '@ddd-ts-kit/kernel/declarations';
-import type { GuardAdmission } from './guard-admission.js';
-import type { GuardDocumentation } from './guard-documentation.js';
-import type { GuardRequest } from './guard-request.js';
+import type { GuardAdmission } from './guard-admission';
+import type { GuardDocumentation } from './guard-documentation';
+import type { GuardRequest } from './guard-request';
 
 /**
  * A control at the edge, run in order before the controller: is the caller authenticated, does

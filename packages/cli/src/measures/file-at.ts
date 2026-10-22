@@ -1,4 +1,4 @@
-import type { Repository } from './repository.js';
+import type { Repository } from './repository';
 
 /** The text of a file at a commit; undefined when the commit has no such file. */
 export function fileAt({ root, git }: Repository, sha: string, file: string): string | undefined {

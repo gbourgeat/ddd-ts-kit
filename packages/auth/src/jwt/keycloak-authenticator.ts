@@ -1,10 +1,10 @@
 import type { SessionExtensionValues } from '@ddd-ts-kit/kernel';
 import type { JWTPayload } from 'jose';
-import { JwtAuthenticator } from './jwt-authenticator.js';
-import { keycloakActorOf } from './keycloak-actor-of.js';
-import { keycloakAuthenticationMethod } from './keycloak-authentication-method.js';
-import type { KeycloakClaimOptions } from './keycloak-claim-options.js';
-import { withoutTrailingSlashes } from './without-trailing-slashes.js';
+import { JwtAuthenticator } from './jwt-authenticator';
+import { keycloakActorOf } from './keycloak-actor-of';
+import { keycloakAuthenticationMethod } from './keycloak-authentication-method';
+import type { KeycloakClaimOptions } from './keycloak-claim-options';
+import { withoutTrailingSlashes } from './without-trailing-slashes';
 
 export interface KeycloakAuthenticatorOptions extends KeycloakClaimOptions {
   /** Where Keycloak is served, without the realm: `https://id.example.com`. */

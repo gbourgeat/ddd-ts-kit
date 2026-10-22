@@ -1,5 +1,5 @@
 import { errorReportOf, reportOnce, type ErrorReporter } from '@ddd-ts-kit/kernel';
-import type { ErrorContext } from './error-context.js';
+import type { ErrorContext } from './error-context';
 
 /**
  * The `onError` hook that reports every request answered as a server fault: an unexpected

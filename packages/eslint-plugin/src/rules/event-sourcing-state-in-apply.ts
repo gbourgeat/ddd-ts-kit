@@ -1,12 +1,12 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { className } from '../support/classes/class-name.js';
-import { enclosingMember } from '../support/classes/enclosing-member.js';
-import { memberName } from '../support/classes/member-name.js';
-import { isAggregateFile } from '../support/event-sourcing/is-aggregate-file.js';
-import { isEventSourcedClass } from '../support/event-sourcing/is-event-sourced-class.js';
-import { propertyName } from '../support/globals/property-name.js';
-import { startsAtThis } from '../support/members/starts-at-this.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
+import { className } from '../support/classes/class-name';
+import { enclosingMember } from '../support/classes/enclosing-member';
+import { memberName } from '../support/classes/member-name';
+import { isAggregateFile } from '../support/event-sourcing/is-aggregate-file';
+import { isEventSourcedClass } from '../support/event-sourcing/is-event-sourced-class';
+import { propertyName } from '../support/globals/property-name';
+import { startsAtThis } from '../support/members/starts-at-this';
+import { defineRule, type Report } from '../support/rule/define-rule';
 
 const MUTATORS = new Set([
   'push',

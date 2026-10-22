@@ -1,5 +1,5 @@
-import type { CriteriaContractRow } from '../criteria/criteria-contract-row.js';
-import { criteriaContractRows } from '../criteria/criteria-contract-rows.js';
+import type { CriteriaContractRow } from '../criteria/criteria-contract-row';
+import { criteriaContractRows } from '../criteria/criteria-contract-rows';
 
 /** The row of the contract dataset with this id. */
 export function rowOf(id: string): CriteriaContractRow {

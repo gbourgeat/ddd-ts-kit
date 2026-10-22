@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, scaffoldEverything, tempDir } from './helpers.js';
+import { cli, read, scaffoldEverything, tempDir } from './helpers';
 
 const UNIT = 'src/contexts/billing/test/unit';
 

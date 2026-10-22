@@ -1,5 +1,5 @@
-import type { Upstream } from '../../config/index.js';
-import type { GlossaryRow } from '../parse-terms.js';
+import type { Upstream } from '../../config';
+import type { GlossaryRow } from '../parse-terms';
 
 export interface ContextRequest {
   readonly name: string;

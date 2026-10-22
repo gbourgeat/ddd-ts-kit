@@ -1,6 +1,6 @@
 import { createConnection, createServer, type Server, type Socket } from 'node:net';
 import type { AddressInfo } from 'node:net';
-import type { Network } from './network.js';
+import type { Network } from './network';
 
 /**
  * A TCP relay between a bus and the broker that the test can sabotage: stop passing the

@@ -1,7 +1,7 @@
 import { FixedClock } from '@ddd-ts-kit/kernel';
-import { InMemoryOutboxStore, OutboxRelay, type OutboxRelayFailure } from '../../src/index.js';
-import { at } from './events.js';
-import { FlakyPublisher } from './flaky-publisher.js';
+import { InMemoryOutboxStore, OutboxRelay, type OutboxRelayFailure } from '../../src';
+import { at } from './events';
+import { FlakyPublisher } from './flaky-publisher';
 
 export interface RelaySetup {
   readonly clock: FixedClock;

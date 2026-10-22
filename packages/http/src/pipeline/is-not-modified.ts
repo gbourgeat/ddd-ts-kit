@@ -1,5 +1,5 @@
-import type { RawHeaders } from '../route/raw-headers.js';
-import { headerText } from '../support/header-text.js';
+import type { RawHeaders } from '../route/raw-headers';
+import { headerText } from '../support/header-text';
 
 const ANY = '*';
 const WEAK = /^W\//;

@@ -1,7 +1,7 @@
-import { escapeRegExp } from '../text/escape-reg-exp.js';
-import type { Exported } from './exported.js';
-import type { LocalType } from './local-types.js';
-import { typeClosure } from './type-closure.js';
+import { escapeRegExp } from '../text/escape-reg-exp';
+import type { Exported } from './exported';
+import type { LocalType } from './local-types';
+import { typeClosure } from './type-closure';
 
 /**
  * The exports M such that every other counted export is an interface of M's signature (allowance

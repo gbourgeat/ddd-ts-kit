@@ -1,10 +1,10 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { headers, type MsgHdrs } from '@nats-io/transport-node';
 import { describe, expect, it } from 'vitest';
-import { decode } from '../src/codec/decode.js';
-import { encode } from '../src/codec/encode.js';
-import { republication } from '../src/codec/republication.js';
-import { anEvent, PLACED, TRACEPARENT } from './support/events.js';
+import { decode } from '../src/codec/decode';
+import { encode } from '../src/codec/encode';
+import { republication } from '../src/codec/republication';
+import { anEvent, PLACED, TRACEPARENT } from './support/events';
 
 const traced: IntegrationEvent = {
   ...anEvent('evt-1'),

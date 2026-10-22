@@ -1,5 +1,5 @@
-import { CLIENT_NAMES } from './client-names.js';
-import { typeName } from './type-name.js';
+import { CLIENT_NAMES } from './client-names';
+import { typeName } from './type-name';
 
 /** The words of JavaScript and TypeScript that cannot name a function of a module. */
 const RESERVED_WORDS: ReadonlySet<string> = new Set(

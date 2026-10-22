@@ -1,6 +1,6 @@
 import { trace, type Context, type Span } from '@opentelemetry/api';
-import { correlate } from './correlate.js';
-import { localRoots } from './local-roots.js';
+import { correlate } from './correlate';
+import { localRoots } from './local-roots';
 
 /**
  * Span processor that remembers, for every span, the local root it belongs to (the

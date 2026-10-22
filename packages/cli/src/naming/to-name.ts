@@ -1,7 +1,7 @@
-import { capitalize } from './capitalize.js';
-import type { Name } from './name.js';
-import { plural as pluralize } from './plural.js';
-import { splitWords } from './split-words.js';
+import { capitalize } from './capitalize';
+import type { Name } from './name';
+import { plural as pluralize } from './plural';
+import { splitWords } from './split-words';
 
 export function toName(input: string): Name {
   const words = splitWords(input);

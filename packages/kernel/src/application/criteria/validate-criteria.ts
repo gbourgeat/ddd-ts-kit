@@ -1,8 +1,8 @@
-import type { CriteriaDefinition } from './criteria-definition.js';
-import type { CriteriaViolation } from './criteria-violation.js';
-import type { Criteria } from './criteria.js';
-import { filterViolations } from './filter-violations.js';
-import { pageViolations } from './page-violations.js';
+import type { CriteriaDefinition } from './criteria-definition';
+import type { CriteriaViolation } from './criteria-violation';
+import type { Criteria } from './criteria';
+import { filterViolations } from './filter-violations';
+import { pageViolations } from './page-violations';
 
 /**
  * Everything a definition refuses in a criteria, an empty list when it accepts it. It never

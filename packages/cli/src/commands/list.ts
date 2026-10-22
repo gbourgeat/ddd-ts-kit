@@ -1,14 +1,14 @@
-import { readConfig, type Stack } from '../config/index.js';
-import type { ContextFacts } from '../docs/context-facts.js';
-import { e2eSpecs } from '../docs/e2e-specs.js';
-import { readContext } from '../docs/read-context.js';
-import { readContexts } from '../docs/read-contexts.js';
-import { toName } from '../naming/index.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
-import { formatContext, type ContextSummary } from './format-context.js';
-import { knownContext } from './known-context.js';
+import { readConfig, type Stack } from '../config';
+import type { ContextFacts } from '../docs/context-facts';
+import { e2eSpecs } from '../docs/e2e-specs';
+import { readContext } from '../docs/read-context';
+import { readContexts } from '../docs/read-contexts';
+import { toName } from '../naming';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import type { Command } from './command';
+import { formatContext, type ContextSummary } from './format-context';
+import { knownContext } from './known-context';
 
 export const listCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, { context: { type: 'string' } });

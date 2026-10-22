@@ -1,7 +1,7 @@
-import { matchingBracket } from '../check/text/matching-bracket.js';
-import { closingAngle } from './closing-angle.js';
-import type { Edit } from './edit.js';
-import { firstTypeArgument } from './first-type-argument.js';
+import { matchingBracket } from '../check/text/matching-bracket';
+import { closingAngle } from './closing-angle';
+import type { Edit } from './edit';
+import { firstTypeArgument } from './first-type-argument';
 
 /** A method declared with a `Result<T, E>` return type, the edit that makes it return `T`, and where its body stands. */
 export interface ResultMethodDeclaration {

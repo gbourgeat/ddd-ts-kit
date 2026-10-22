@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { FunctionNode } from '../functions/function-node.js';
+import type { FunctionNode } from '../functions/function-node';
 
 /** What a name declared at the top of a module binds: its function, or the value of its constant. */
 export function localBinding(program: TSESTree.Program, name: string): FunctionNode | TSESTree.Expression | undefined {

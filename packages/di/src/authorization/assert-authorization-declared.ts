@@ -1,10 +1,10 @@
 import { describeToken } from '@ddd-ts-kit/kernel/declarations';
-import { WiringError } from '../errors/wiring-error.js';
-import type { TokenSet } from '../token/token-set.js';
-import type { MessageHandling } from '../wiring/message-handling.js';
-import { whereOf } from '../wiring/where-of.js';
-import type { Wiring } from '../wiring/wiring.js';
-import { UseCaseGuard } from './use-case-guard.js';
+import { WiringError } from '../errors/wiring-error';
+import type { TokenSet } from '../token/token-set';
+import type { MessageHandling } from '../wiring/message-handling';
+import { whereOf } from '../wiring/where-of';
+import type { Wiring } from '../wiring/wiring';
+import { UseCaseGuard } from './use-case-guard';
 
 /** Deny by default at wiring time: no use case becomes reachable because nobody said who may reach it. */
 export function assertAuthorizationDeclared(wiring: Wiring, overridden: TokenSet): void {

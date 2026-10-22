@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { unitOfWorkContract } from '../src/contracts.js';
-import { CollectingRunner } from './support/collecting-runner.js';
-import { TransactionalMemory } from './support/transactional-memory.js';
+import { unitOfWorkContract } from '../src/contracts';
+import { CollectingRunner } from './support/collecting-runner';
+import { TransactionalMemory } from './support/transactional-memory';
 
 // The globals of the runner are passed as they are: the suites import no runner themselves.
 const runner = { describe, it, expect, beforeEach, afterEach };

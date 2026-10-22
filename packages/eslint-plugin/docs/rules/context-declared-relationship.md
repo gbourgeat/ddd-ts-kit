@@ -19,14 +19,14 @@ Incorrect:
 ```ts
 // ddd-ts-kit.config.json: "shipping": { "upstreams": [] }
 // src/contexts/shipping/application/integration/handlers/billing-invoice-issued.integration-handler.ts
-import type { InvoiceIssuedV1 } from '@/contexts/billing/published-language/index';
+import type { InvoiceIssuedV1 } from '@/contexts/billing/published-language';
 ```
 
 Correct:
 
 ```ts
 // ddd-ts-kit.config.json: "shipping": { "upstreams": [{ "context": "billing", "relationship": "published-language" }] }
-import type { InvoiceIssuedV1 } from '@/contexts/billing/published-language/index';
+import type { InvoiceIssuedV1 } from '@/contexts/billing/published-language';
 ```
 
 ## Details

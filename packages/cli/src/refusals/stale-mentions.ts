@@ -1,8 +1,8 @@
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
-import type { Workspace } from '../workspace/index.js';
-import type { AppliedMoves } from './applied-moves.js';
-import { markdownFiles } from './markdown-files.js';
-import type { MigrationDraft } from './migration-draft.js';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
+import type { Workspace } from '../workspace';
+import type { AppliedMoves } from './applied-moves';
+import { markdownFiles } from './markdown-files';
+import type { MigrationDraft } from './migration-draft';
 
 /** A region `ddd-ts-kit docs` writes again: what it says follows the code by itself. */
 const REGION = /^\s*<!--\s*(\/?)ddd-ts-kit:[\w-]+\s*-->\s*$/;

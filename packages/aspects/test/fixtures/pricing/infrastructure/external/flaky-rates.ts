@@ -1,4 +1,4 @@
-import { noteAttempt } from './attempts.js';
+import { noteAttempt } from './attempts';
 
 class Unreachable extends Error {}
 

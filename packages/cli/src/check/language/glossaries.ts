@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseGlossary, type Glossary } from './parse-glossary.js';
+import { parseGlossary, type Glossary } from './parse-glossary';
 
 /** The glossary of each context, read once, and the contexts already reported as having none. */
 export class Glossaries {

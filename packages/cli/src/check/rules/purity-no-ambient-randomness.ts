@@ -1,4 +1,4 @@
-import { definePurityRule } from '../purity/define-purity-rule.js';
+import { definePurityRule } from '../purity/define-purity-rule';
 
 export const purityNoAmbientRandomness = definePurityRule({
   id: 'purity/no-ambient-randomness',

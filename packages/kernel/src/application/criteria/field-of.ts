@@ -1,4 +1,4 @@
-import type { FieldValue } from './field-value.js';
+import type { FieldValue } from './field-value';
 
 /**
  * The fields of a read model a criteria may name: those that hold a scalar. A property that

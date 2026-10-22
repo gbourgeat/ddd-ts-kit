@@ -1,13 +1,13 @@
-import { CONFIG_FILE, type Config } from '../../config/index.js';
-import { CliError } from '../../cli-error.js';
-import { replaceRegion } from '../../markers/index.js';
-import { stackVars } from '../../stack/stack-vars.js';
-import { renderTemplate } from '../../templating/index.js';
-import type { Workspace } from '../../workspace/index.js';
-import type { Kind } from '../kind.js';
-import { addComposeService } from './extraction/add-compose-service.js';
-import { editJson } from './extraction/edit-json.js';
-import { EntryPoint } from './extraction/entry-point.js';
+import { CONFIG_FILE, type Config } from '../../config';
+import { CliError } from '../../cli-error';
+import { replaceRegion } from '../../markers';
+import { stackVars } from '../../stack/stack-vars';
+import { renderTemplate } from '../../templating';
+import type { Workspace } from '../../workspace';
+import type { Kind } from '../kind';
+import { addComposeService } from './extraction/add-compose-service';
+import { editJson } from './extraction/edit-json';
+import { EntryPoint } from './extraction/entry-point';
 
 const NAME = 'worker';
 

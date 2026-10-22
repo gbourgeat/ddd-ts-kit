@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { checkJsonOf } from './check-support.js';
-import { cli, read, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
+import { checkJsonOf } from './check-support';
+import { cli, read, write } from './helpers';
+import { initProject } from './support/init-project';
 
 const VALIDATIONS = ['zod', 'class-validator', 'typebox'] as const;
 const HTTP = 'src/contexts/billing/presentation/http';

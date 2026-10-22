@@ -1,5 +1,5 @@
 import { declarationOf, type DeclaredClass, type Token } from '@ddd-ts-kit/kernel/declarations';
-import type { DeclaredSource } from './declared-source.js';
+import type { DeclaredSource } from './declared-source';
 
 /**
  * The token each declared class of a source is bound under: its port for a repository, a

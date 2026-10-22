@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { MeasuresView } from '../src/measures/measures-view.js';
-import { measuredStories, measuresOf, storyOf, US5 } from './support/measured-stories.js';
+import type { MeasuresView } from '../src/measures/measures-view';
+import { measuredStories, measuresOf, storyOf, US5 } from './support/measured-stories';
 
 let root: string;
 

@@ -2,13 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import {
-  InvalidEventDefinitionError,
-  InvalidEventPayloadError,
-  defineIntegrationEvent,
-  type PayloadOf,
-} from '../src/index.js';
-import { at, invoiceIssued, orderPlacedV1, shipmentSent } from './support/events.js';
+import { InvalidEventDefinitionError, InvalidEventPayloadError, defineIntegrationEvent, type PayloadOf } from '../src';
+import { at, invoiceIssued, orderPlacedV1, shipmentSent } from './support/events';
 
 const payload = zodSchema(z.object({ id: z.string() }));
 

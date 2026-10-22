@@ -1,7 +1,7 @@
-import type { SourceFile } from '../model/source-file.js';
-import { escapeRegExp } from '../text/escape-reg-exp.js';
-import type { ListPart } from '../text/list-part.js';
-import type { PermissionSet } from './permission-sets.js';
+import type { SourceFile } from '../model/source-file';
+import { escapeRegExp } from '../text/escape-reg-exp';
+import type { ListPart } from '../text/list-part';
+import type { PermissionSet } from './permission-sets';
 
 /** The entry of a set, `billingPermissions[`, up to its key. */
 const SET_ENTRY = /^([A-Za-z_$][\w$]*)\s*\[\s*/;

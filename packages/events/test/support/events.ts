@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
-import { defineIntegrationEvent } from '../../src/index.js';
+import { defineIntegrationEvent } from '../../src';
 
 export const orderPlacedV1 = defineIntegrationEvent({
   type: 'ordering.order.placed',

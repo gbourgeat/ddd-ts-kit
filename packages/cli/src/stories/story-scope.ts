@@ -1,6 +1,6 @@
-import type { DependencyInstall } from '../worker/install-dependencies.js';
-import type { OpenStory } from './open-story.js';
-import type { StoryKind } from './story-kind.js';
+import type { DependencyInstall } from '../worker/install-dependencies';
+import type { OpenStory } from './open-story';
+import type { StoryKind } from './story-kind';
 
 /** What `story-scope` prepared, or would prepare in a dry run. */
 export interface StoryScope {

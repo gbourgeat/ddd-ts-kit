@@ -1,7 +1,7 @@
-import type { ImportTarget } from '../project/resolve-import.js';
-import type { LintedFile } from '../project/linted-file.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import { importListener } from '../support/imports/import-listener.js';
+import type { ImportTarget } from '../project/resolve-import';
+import type { LintedFile } from '../project/linted-file';
+import { defineRule } from '../support/rule/define-rule';
+import { importListener } from '../support/imports/import-listener';
 
 type MessageId = 'writes';
 

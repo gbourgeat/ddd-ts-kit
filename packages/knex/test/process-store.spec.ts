@@ -1,9 +1,9 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { ConcurrencyError, NoCurrentTenantError, type StoredProcess } from '@ddd-ts-kit/kernel';
 import { processStoreContract } from '@ddd-ts-kit/testing/contracts';
-import { KnexProcessStore, createKnexUnitOfWork, createProcessTable, dropProcessTable } from '../src/index.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
-import { ada, bob, eve, nobody, scopeOf } from './support/scopes.js';
+import { KnexProcessStore, createKnexUnitOfWork, createProcessTable, dropProcessTable } from '../src';
+import { createDatabase, type TestDatabase } from './support/database';
+import { ada, bob, eve, nobody, scopeOf } from './support/scopes';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

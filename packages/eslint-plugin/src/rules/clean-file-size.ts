@@ -1,4 +1,4 @@
-import { defineRule } from '../support/rule/define-rule.js';
+import { defineRule } from '../support/rule/define-rule';
 
 const MAX_LINES = 350;
 

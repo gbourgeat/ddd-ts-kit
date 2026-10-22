@@ -1,4 +1,4 @@
-import type { Violation } from './violation.js';
+import type { Violation } from './violation';
 
 /** Where a violation is reported: a file of the project and a 1-based line. */
 interface Place {

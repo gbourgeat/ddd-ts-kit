@@ -1,5 +1,5 @@
-import { insertInRegion, parseWiring } from '../markers/index.js';
-import type { Workspace } from '../workspace/index.js';
+import { insertInRegion, parseWiring } from '../markers';
+import type { Workspace } from '../workspace';
 
 /** Applies a rendered wiring template to a file with marker regions. */
 export function applyWiring(ws: Workspace, file: string, wiring: string): void {

@@ -1,10 +1,10 @@
-import { DEPCRUISE_FILE } from '../../depcruise/depcruise-file.js';
-import type { Violation } from '../model/violation.js';
-import { isRecord } from '../support/is-record.js';
-import { ALIAS_FILES } from './alias-files.js';
-import type { Inspected } from './inspected.js';
-import { parseJsonc } from './parse-jsonc.js';
-import { readProjectFile } from './read-project-file.js';
+import { DEPCRUISE_FILE } from '../../depcruise/depcruise-file';
+import type { Violation } from '../model/violation';
+import { isRecord } from '../support/is-record';
+import { ALIAS_FILES } from './alias-files';
+import type { Inspected } from './inspected';
+import { parseJsonc } from './parse-jsonc';
+import { readProjectFile } from './read-project-file';
 
 const { deadCode: KNIP, typeCheck: TYPE_CHECK } = ALIAS_FILES;
 const READS_TSCONFIG = new RegExp(`["']?tsConfig["']?\\s*:\\s*\\{\\s*["']?fileName["']?\\s*:\\s*["']${TYPE_CHECK}["']`);

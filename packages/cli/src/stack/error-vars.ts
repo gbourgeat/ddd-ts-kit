@@ -1,6 +1,6 @@
-import type { Config } from '../config/index.js';
-import type { RenderContext } from '../templating/index.js';
-import { PROVIDED_BROKERS } from './provided-brokers.js';
+import type { Config } from '../config';
+import type { RenderContext } from '../templating';
+import { PROVIDED_BROKERS } from './provided-brokers';
 
 /**
  * Where unexpected failures are reported, and which hooks exist to hang the dead letters on: the

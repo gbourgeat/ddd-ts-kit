@@ -10,9 +10,9 @@ import {
   pageResponse,
   pageSchemaOf,
   type RawRequest,
-} from '../src/index.js';
-import { generateOpenApi } from '../src/openapi.js';
-import { appointments, type AppointmentRow } from './support/appointments.js';
+} from '../src';
+import { generateOpenApi } from '../src/openapi';
+import { appointments, type AppointmentRow } from './support/appointments';
 
 const rows: AppointmentRow[] = [
   {

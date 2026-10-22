@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { cli, read, tempDir, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { NPM } from './support/npm.js';
-import { jsonAt } from './support/json-at.js';
-import { keysAt } from './support/keys-at.js';
-import { readJson } from './support/read-json.js';
-import { stringsAt } from './support/strings-at.js';
+import { cli, read, tempDir, write } from './helpers';
+import { initProject } from './support/init-project';
+import { NPM } from './support/npm';
+import { jsonAt } from './support/json-at';
+import { keysAt } from './support/keys-at';
+import { readJson } from './support/read-json';
+import { stringsAt } from './support/strings-at';
 
 const SETTINGS = '.claude/settings.json';
 const permissions = (root: string, kind: string): string[] => stringsAt(readJson(root, SETTINGS), 'permissions', kind);

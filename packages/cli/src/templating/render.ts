@@ -1,5 +1,5 @@
-import type { RenderContext } from './render-context.js';
-import { Rendering } from './rendering.js';
+import type { RenderContext } from './render-context';
+import { Rendering } from './rendering';
 
 /** `${{ ... }}` is an expression of a GitHub workflow, never a tag of a template. */
 const TAG = /(?<!\$)\{\{\s*(#if|#unless|\/if|\/unless)?\s*([A-Za-z0-9_.]*)\s*\}\}/g;

@@ -1,7 +1,7 @@
 import type { ConfirmChannel, ConsumeMessage, GetMessage, Message, Options, Replies } from 'amqplib';
-import { DeclaringChannel } from './declaring-channel.js';
-import { AmqpError, IllegalOperation, Unsupported } from './errors.js';
-import { fieldsOf, propertiesOf } from './messages.js';
+import { DeclaringChannel } from './declaring-channel';
+import { AmqpError, IllegalOperation, Unsupported } from './errors';
+import { fieldsOf, propertiesOf } from './messages';
 import type {
   BrokerState,
   ChannelOwner,
@@ -11,7 +11,7 @@ import type {
   StoredMessage,
   Unacked,
   Wire,
-} from './model.js';
+} from './model';
 
 type Confirmation = (error: unknown, ok: Replies.Empty) => void;
 

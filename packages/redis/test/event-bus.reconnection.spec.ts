@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { RedisStreamsFailure } from '../src/event-bus.js';
-import { PLACED, anEvent, failuresOf, recorder, unique } from './support/events.js';
-import { FaultyNetwork } from './support/proxy.js';
-import { REAL_SERVER, SERVER_URL } from './support/server.js';
-import { Server } from './support/streams.js';
-import { eventually } from './support/waiting.js';
+import type { RedisStreamsFailure } from '../src/event-bus';
+import { PLACED, anEvent, failuresOf, recorder, unique } from './support/events';
+import { FaultyNetwork } from './support/proxy';
+import { REAL_SERVER, SERVER_URL } from './support/server';
+import { Server } from './support/streams';
+import { eventually } from './support/waiting';
 
 describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, when the connection is lost', { timeout: 30_000 }, () => {
   let server: Server;

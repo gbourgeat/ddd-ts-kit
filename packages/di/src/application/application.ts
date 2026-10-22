@@ -1,6 +1,6 @@
 import type { DependencyContainer } from 'tsyringe';
-import type { WiringDescription } from '../description/wiring-description.js';
-import type { Resolve } from '../wiring/resolve.js';
+import type { WiringDescription } from '../description/wiring-description';
+import type { Resolve } from '../wiring/resolve';
 
 export interface Application {
   readonly resolve: Resolve;

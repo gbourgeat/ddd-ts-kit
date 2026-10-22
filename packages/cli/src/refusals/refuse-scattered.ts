@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { CliError } from '../cli-error.js';
+import { CliError } from '../cli-error';
 
 /** One error class that a plan gathers into a class of refusals, and the file it is read from. */
 export interface GatheredError {

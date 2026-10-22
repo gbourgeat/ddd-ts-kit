@@ -1,5 +1,5 @@
-import type { SourceFile } from '../model/source-file.js';
-import { nameOfEventClass } from './name-of-event-class.js';
+import type { SourceFile } from '../model/source-file';
+import { nameOfEventClass } from './name-of-event-class';
 
 /** The name an event class declares, found by the name of the class. */
 export type EventNameResolver = (eventClass: string) => string | undefined;

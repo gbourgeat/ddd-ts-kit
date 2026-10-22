@@ -1,6 +1,6 @@
 import type { DependencyKind } from '@ddd-ts-kit/kernel';
 import { describeToken, type Token } from '@ddd-ts-kit/kernel/declarations';
-import { traceDependency } from './trace-dependency.js';
+import { traceDependency } from './trace-dependency';
 
 /**
  * What an application says about the binding an instance comes from: the `decorate` hook of

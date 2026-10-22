@@ -1,8 +1,8 @@
-import type { KafkaEventBusOptions } from './kafka-event-bus-options.js';
-import type { ReconnectOptions } from './reconnect-options.js';
-import type { RetryOptions } from './retry-options.js';
-import type { Settings } from './settings.js';
-import type { TopicOptions } from './topic-options.js';
+import type { KafkaEventBusOptions } from './kafka-event-bus-options';
+import type { ReconnectOptions } from './reconnect-options';
+import type { RetryOptions } from './retry-options';
+import type { Settings } from './settings';
+import type { TopicOptions } from './topic-options';
 
 export function settingsOf(options: KafkaEventBusOptions): Settings {
   return {

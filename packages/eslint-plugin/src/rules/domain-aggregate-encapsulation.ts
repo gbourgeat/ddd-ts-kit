@@ -1,13 +1,13 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { className } from '../support/classes/class-name.js';
-import { constructorOf } from '../support/classes/constructor-of.js';
-import { isCallable } from '../support/classes/is-callable.js';
-import { memberName } from '../support/classes/member-name.js';
-import { visibilityOf } from '../support/classes/visibility-of.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
-import { parameterName } from '../support/members/parameter-name.js';
-import { parameterProperties } from '../support/members/parameter-properties.js';
-import { startsAtThis } from '../support/members/starts-at-this.js';
+import { className } from '../support/classes/class-name';
+import { constructorOf } from '../support/classes/constructor-of';
+import { isCallable } from '../support/classes/is-callable';
+import { memberName } from '../support/classes/member-name';
+import { visibilityOf } from '../support/classes/visibility-of';
+import { defineRule, type Report } from '../support/rule/define-rule';
+import { parameterName } from '../support/members/parameter-name';
+import { parameterProperties } from '../support/members/parameter-properties';
+import { startsAtThis } from '../support/members/starts-at-this';
 
 type MessageId = 'publicConstructor' | 'missingConstructor' | 'publicMutableProperty' | 'setter';
 

@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
 import type { TenantDirectory } from '@ddd-ts-kit/kernel';
-import type { TenantDatabases } from './tenant-databases.js';
+import type { TenantDatabases } from './tenant-databases';
 
 /**
  * Applies `migrate` to the database of every tenant of the directory, one after the other, and

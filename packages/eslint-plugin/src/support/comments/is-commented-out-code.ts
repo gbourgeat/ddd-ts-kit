@@ -1,8 +1,8 @@
 import type { TSESLint } from '@typescript-eslint/utils';
-import { isRecord } from '../../project/is-record.js';
-import { PROSE_OPENING } from './prose-opening.js';
-import { isFragment } from './is-fragment.js';
-import { readsAsProse } from './reads-as-prose.js';
+import { isRecord } from '../../project/is-record';
+import { PROSE_OPENING } from './prose-opening';
+import { isFragment } from './is-fragment';
+import { readsAsProse } from './reads-as-prose';
 
 type LooseNode = Readonly<Record<string, unknown>>;
 

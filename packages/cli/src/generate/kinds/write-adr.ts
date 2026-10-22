@@ -1,10 +1,10 @@
-import type { Deviation } from '../../config/index.js';
-import { CliError } from '../../cli-error.js';
-import { toName } from '../../naming/index.js';
-import { renderTemplate } from '../../templating/index.js';
-import type { Workspace } from '../../workspace/index.js';
-import { ADR_DIRECTORY } from '../../check/governance/adr-directory.js';
-import { adrNumber } from './adr-number.js';
+import type { Deviation } from '../../config';
+import { CliError } from '../../cli-error';
+import { toName } from '../../naming';
+import { renderTemplate } from '../../templating';
+import type { Workspace } from '../../workspace';
+import { ADR_DIRECTORY } from '../../check/governance/adr-directory';
+import { adrNumber } from './adr-number';
 
 export interface AdrRequest {
   readonly title: string;

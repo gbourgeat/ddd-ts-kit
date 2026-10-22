@@ -1,8 +1,8 @@
 import { AssertionError } from 'node:assert';
 import type { IntegrationEvent, IntegrationEventSubscriber, Subscription } from '@ddd-ts-kit/kernel';
-import type { EventRecorder } from './event-recorder.js';
-import type { EventType } from './event-type.js';
-import { eventually, type EventuallyOptions } from './eventually.js';
+import type { EventRecorder } from './event-recorder';
+import type { EventType } from './event-type';
+import { eventually, type EventuallyOptions } from './eventually';
 
 /** Records what a subscriber delivers for the types it was given, from its creation until `stop`. */
 export class SubscribedRecorder implements EventRecorder {

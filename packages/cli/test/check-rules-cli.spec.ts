@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { CLEAN_RULE_IDS } from '../src/check/catalogue/clean-rule-ids.js';
-import { ESLINT_ONLY_RULES } from '../src/check/catalogue/eslint-only-rules.js';
-import { KNOWN_RULE_IDS } from '../src/check/catalogue/known-rule-ids.js';
-import { RULE_IDS } from '../src/check/catalogue/rule-ids.js';
-import { changeConfig, checkJsonOf, errorFixOf, isRecord } from './check-support.js';
-import { cli, scaffoldEverything, tempDir, write, type CliResult } from './helpers.js';
+import { CLEAN_RULE_IDS } from '../src/check/catalogue/clean-rule-ids';
+import { ESLINT_ONLY_RULES } from '../src/check/catalogue/eslint-only-rules';
+import { KNOWN_RULE_IDS } from '../src/check/catalogue/known-rule-ids';
+import { RULE_IDS } from '../src/check/catalogue/rule-ids';
+import { changeConfig, checkJsonOf, errorFixOf, isRecord } from './check-support';
+import { cli, scaffoldEverything, tempDir, write, type CliResult } from './helpers';
 
 interface Listed {
   readonly id: string;

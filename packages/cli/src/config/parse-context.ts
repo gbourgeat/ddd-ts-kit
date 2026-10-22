@@ -1,8 +1,8 @@
-import type { ContextConfig, ModuleConfig, Upstream } from './config.js';
-import { isRecord } from './values/is-record.js';
-import { posix } from './values/posix.js';
-import { strings } from './values/strings.js';
-import { text } from './values/text.js';
+import type { ContextConfig, ModuleConfig, Upstream } from './config';
+import { isRecord } from './values/is-record';
+import { posix } from './values/posix';
+import { strings } from './values/strings';
+import { text } from './values/text';
 
 export function parseContext(value: unknown): ContextConfig {
   const raw = isRecord(value) ? value : {};

@@ -1,5 +1,5 @@
 import type { FixedClock } from '@ddd-ts-kit/kernel';
-import type { JobTimers } from '../job-timers.js';
+import type { JobTimers } from '../job-timers';
 
 interface Sleeping {
   readonly dueAt: number;

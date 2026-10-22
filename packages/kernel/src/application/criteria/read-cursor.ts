@@ -1,11 +1,11 @@
-import type { CursorPosition } from '../pagination/cursor-position.js';
-import { decodeCursor } from '../pagination/decode-cursor.js';
-import { InvalidPageRequestError } from '../pagination/invalid-page-request-error.js';
-import type { Sort } from '../pagination/sort.js';
-import type { CursorValues } from './cursor-values.js';
-import type { FieldDeclaration } from './field-declaration.js';
-import type { FieldValue } from './field-value.js';
-import { isValueOf } from './is-value-of.js';
+import type { CursorPosition } from '../pagination/cursor-position';
+import { decodeCursor } from '../pagination/decode-cursor';
+import { InvalidPageRequestError } from '../pagination/invalid-page-request-error';
+import type { Sort } from '../pagination/sort';
+import type { CursorValues } from './cursor-values';
+import type { FieldDeclaration } from './field-declaration';
+import type { FieldValue } from './field-value';
+import { isValueOf } from './is-value-of';
 
 type Fields = Readonly<Record<string, FieldDeclaration>>;
 

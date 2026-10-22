@@ -1,9 +1,9 @@
-import { specifierOf } from '../../../alias/index.js';
-import { toName } from '../../../naming/index.js';
-import type { Scope } from '../../scope.js';
-import type { ControllerPlan } from './controller-plan.js';
-import { dtoClasses } from './dto-classes.js';
-import { sharesSchemas } from './shares-schemas.js';
+import { specifierOf } from '../../../alias';
+import { toName } from '../../../naming';
+import type { Scope } from '../../scope';
+import type { ControllerPlan } from './controller-plan';
+import { dtoClasses } from './dto-classes';
+import { sharesSchemas } from './shares-schemas';
 
 /** The files a controller stands with, each as the import of the class it exports. */
 export interface ControllerImports {

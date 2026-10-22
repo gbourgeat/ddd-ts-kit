@@ -1,8 +1,8 @@
 import { TSESLint } from '@typescript-eslint/utils';
 import { describe, expect, it } from 'vitest';
-import plugin from '../../src/index.js';
-import { governanceRecordedDeviation } from '../../src/rules/governance-recorded-deviation.js';
-import { ruleTester } from '../support/rule-tester.js';
+import plugin from '../../src';
+import { governanceRecordedDeviation } from '../../src/rules/governance-recorded-deviation';
+import { ruleTester } from '../support/rule-tester';
 
 ruleTester.run('governance-recorded-deviation', governanceRecordedDeviation, {
   valid: [

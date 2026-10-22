@@ -92,20 +92,13 @@ spécificateur : l'étape qui transforme déjà un alias en chemin relatif est d
 l'extension. Comme chaque import du projet est un alias (`imports/alias-only` refuse un import
 relatif), cette étape les voit tous.
 
-**Un import nomme un fichier, jamais un répertoire.** Sous `none`, le compilateur résoudrait
-`@/contexts/billing/published-language` vers son `index.ts`. Le kit ne le permet pas : l'import
-s'écrit `@/contexts/billing/published-language/index`, dans les deux graphies. Un spécificateur
-nomme alors un seul fichier, un fichier `x.ts` à côté d'un répertoire `x/` n'est jamais ambigu,
-et la construction n'a rien à deviner. `ddd-ts-kit check` signale un import de répertoire
-(`imports/extension` : c'est le seul cas qui a besoin du disque, ESLint ne le voit donc pas) et
-`build-aliases` le refuse.
+**Un répertoire s'écrit tel quel.** `@/contexts/billing/published-language` désigne l'`index.ts` de ce
+répertoire, comme le résout le compilateur, et son `index.js` dans la sortie compilée : `build-aliases`
+le complète. Un fichier `x.ts` à côté d'un répertoire `x/` l'emporte, comme pour le compilateur. Sous `js`,
+le compilateur résout comme Node et refuse un répertoire : l'import se termine alors par `/index.js`.
 
 ```ts
-// Au lieu de : un répertoire, que le compilateur résout vers son index.ts et que Node ne résout pas.
 import { InvoiceIssued } from '@/contexts/billing/published-language';
-
-// Écrivez : le fichier.
-import { InvoiceIssued } from '@/contexts/billing/published-language/index';
 ```
 
 **Un point n'est pas une extension.** `invoice.aggregate`, `issue-invoice.command` et `main`
@@ -227,8 +220,9 @@ import { Invoice } from '../../../domain/aggregates/invoice.aggregate.js'; // ap
 ```
 
 Le fichier que nomme un spécificateur est calculé, pas cherché : sous `none`, `@/x` est le `x.js`
-de la sortie ; sous `js`, c'est `@/x.js` qui l'est. Rien d'autre n'est essayé : pas de
-`index.js` derrière un répertoire, pas d'extension ajoutée à un spécificateur écrit dans l'autre
+de la sortie ; sous `js`, c'est `@/x.js` qui l'est. Rien d'autre n'est essayé que l'`index.js` d'un répertoire sous `none`, et aucune extension n'est
+ajoutée à un spécificateur écrit dans l'autre graphie, ni retirée.
+<<CUT>> ajoutée à un spécificateur écrit dans l'autre
 graphie, ni retirée.
 
 Ce qu'elle réécrit : le spécificateur de `import ... from`, de `export ... from`, d'un
@@ -249,8 +243,6 @@ Elle échoue, sort avec le code 2 et n'écrit rien quand :
 
 - un alias ne nomme aucun fichier émis (`"@/x" names no file the build emitted`) : une faute de
   frappe que le compilateur a déjà signalée, ou un module qui n'a qu'une déclaration ;
-- un alias nomme un répertoire (`"@/x" names a directory: an alias names one file, write
-  "@/x/index"`) ;
 - un alias est écrit dans la graphie que la configuration ne demande pas (`"@/x.js" has an
   extension although "importExtension" is "none": write "@/x"`, et l'inverse sous `js`) ;
 - `import()` ou `require()` reçoit un alias complété à l'exécution
@@ -262,7 +254,7 @@ Elle échoue, sort avec le code 2 et n'écrit rien quand :
 
 ```ts
 // Au lieu de : un alias complété à l'exécution ; build-aliases le refuse.
-const exported = await import(`@/contexts/${context}/published-language/index`);
+const exported = await import(`@/contexts/${context}/published-language`);
 
 // Écrivez : une URL calculée depuis l'emplacement de ce fichier, qui nomme le fichier compilé avec son .js.
 // Depuis scripts/events.ts, compilé en dist/scripts/events.js, ../src/ est dist/src/.

@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, EXPLICIT_STACK, exists, read, scaffoldEverything, tempDir } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
-import { readJson } from './support/read-json.js';
+import { cli, EXPLICIT_STACK, exists, read, scaffoldEverything, tempDir } from './helpers';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
+import { readJson } from './support/read-json';
 
 const HTTP = 'src/contexts/billing/presentation/http';
 const ISSUE = `${HTTP}/invoices/issue-invoice/issue-invoice`;

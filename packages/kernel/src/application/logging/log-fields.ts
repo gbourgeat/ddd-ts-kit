@@ -1,4 +1,4 @@
-import type { LogValue } from './log-value.js';
+import type { LogValue } from './log-value';
 
 /**
  * Structured fields of a log entry. The well-known keys are spelled once here so that every

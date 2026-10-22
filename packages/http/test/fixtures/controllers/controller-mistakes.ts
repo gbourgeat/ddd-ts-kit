@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
-import { Controller, Public, type HttpRequest } from '../../../src/index.js';
+import { Controller, Public, type HttpRequest } from '../../../src';
 
 /*
  * What the compiler refuses. Each case is a class the decorator must reject: the file compiles

@@ -9,4 +9,4 @@ export interface DomainEvent {
   readonly aggregateId: string;
 }
 
-export { NamedDomainEvent } from './named-domain-event.js';
+export { NamedDomainEvent } from './named-domain-event';

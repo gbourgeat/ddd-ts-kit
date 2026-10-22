@@ -1,23 +1,23 @@
-import { CliError } from '../../cli-error.js';
-import type { Name } from '../../naming/index.js';
-import type { RenderContext } from '../../templating/index.js';
-import { renderTemplate } from '../../templating/index.js';
-import { applyWiring } from '../apply-wiring.js';
-import { concept } from '../concept.js';
-import { emit } from '../emit.js';
-import type { Kind } from '../kind.js';
-import { learnTerms } from '../learn-terms.js';
-import { named } from '../named.js';
-import { openScope } from '../open-scope.js';
-import type { Scope } from '../scope.js';
-import { specVars } from '../spec-vars.js';
-import { vars } from '../vars.js';
-import { wire } from '../wire.js';
-import { jobVars } from './job/job-vars.js';
-import { readSentCommand } from './job/read-sent-command.js';
-import { requestedSchedule } from './job/requested-schedule.js';
-import { writtenSchedule } from './job/written-schedule.js';
-import { platformPath } from '../platform-path.js';
+import { CliError } from '../../cli-error';
+import type { Name } from '../../naming';
+import type { RenderContext } from '../../templating';
+import { renderTemplate } from '../../templating';
+import { applyWiring } from '../apply-wiring';
+import { concept } from '../concept';
+import { emit } from '../emit';
+import type { Kind } from '../kind';
+import { learnTerms } from '../learn-terms';
+import { named } from '../named';
+import { openScope } from '../open-scope';
+import type { Scope } from '../scope';
+import { specVars } from '../spec-vars';
+import { vars } from '../vars';
+import { wire } from '../wire';
+import { jobVars } from './job/job-vars';
+import { readSentCommand } from './job/read-sent-command';
+import { requestedSchedule } from './job/requested-schedule';
+import { writtenSchedule } from './job/written-schedule';
+import { platformPath } from '../platform-path';
 
 export const jobKind: Kind = {
   name: 'job',

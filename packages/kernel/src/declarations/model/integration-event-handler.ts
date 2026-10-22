@@ -1,4 +1,4 @@
-import type { IntegrationEvent } from '../../application/events/integration-event.js';
+import type { IntegrationEvent } from '../../application/events/integration-event';
 
 /**
  * A class of `application/integration/handlers/`. `handle` is declared as a property so that

@@ -1,5 +1,5 @@
-import { readScalar } from './read-scalar.js';
-import { YamlShapeError } from './yaml-shape-error.js';
+import { readScalar } from './read-scalar';
+import { YamlShapeError } from './yaml-shape-error';
 
 const INDENT = 2;
 const BLOCK_HEADER = /^\|(\d)?([-+])?$/;

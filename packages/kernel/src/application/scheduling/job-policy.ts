@@ -1,6 +1,6 @@
-import { InvalidJobScheduleError } from './invalid-job-schedule-error.js';
-import type { JobOptions } from './job-options.js';
-import { parseDuration } from './parse-duration.js';
+import { InvalidJobScheduleError } from './invalid-job-schedule-error';
+import type { JobOptions } from './job-options';
+import { parseDuration } from './parse-duration';
 
 /** The options with their defaults filled in. */
 export type JobPolicy = Required<Omit<JobOptions, 'timeoutMs'>> & Pick<JobOptions, 'timeoutMs'>;

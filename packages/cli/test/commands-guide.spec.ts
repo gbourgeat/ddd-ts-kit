@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { commandsGuideRegion } from '../src/help/commands-guide-region.js';
-import { referenceText } from '../src/help/reference-text.js';
-import { cli, REPO_ROOT } from './helpers.js';
+import { commandsGuideRegion } from '../src/help/commands-guide-region';
+import { referenceText } from '../src/help/reference-text';
+import { cli, REPO_ROOT } from './helpers';
 
 /** The English page, and its French page once written: the reference is the help of the CLI, in English on both. */
 const GUIDES = ['docs/guides/commands.md', 'docs/guides/commands.fr.md']

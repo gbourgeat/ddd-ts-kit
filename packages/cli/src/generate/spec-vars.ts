@@ -1,8 +1,8 @@
-import type { RenderContext } from '../templating/index.js';
-import { assembledContext } from './assembled-context.js';
-import { contextImports } from './context-imports.js';
-import { isDeclared } from './is-declared.js';
-import type { Scope } from './scope.js';
+import type { RenderContext } from '../templating';
+import { assembledContext } from './assembled-context';
+import { contextImports } from './context-imports';
+import { isDeclared } from './is-declared';
+import type { Scope } from './scope';
 
 /**
  * What a spec builds its test application from: the module file of the context, or its

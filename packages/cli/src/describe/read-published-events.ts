@@ -1,7 +1,7 @@
-import type { PublishedEventFact } from './context-description.js';
-import type { ContextSources } from './context-sources.js';
-import { readEventDefinitions, type EventDefinition } from './read-event-definitions.js';
-import { roleFilesOf } from '../model-modules/index.js';
+import type { PublishedEventFact } from './context-description';
+import type { ContextSources } from './context-sources';
+import { readEventDefinitions, type EventDefinition } from './read-event-definitions';
+import { roleFilesOf } from '../model-modules';
 
 const FOLDER = 'application/integration/publishers';
 

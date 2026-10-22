@@ -1,5 +1,5 @@
-import type { TenantRequest } from './tenant-request.js';
-import type { TenantResolver } from './tenant-resolver.js';
+import type { TenantRequest } from './tenant-request';
+import type { TenantResolver } from './tenant-resolver';
 
 /**
  * The value of a header, `x-tenant-id` by default; a header sent twice names none. A cached

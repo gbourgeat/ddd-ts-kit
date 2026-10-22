@@ -1,6 +1,6 @@
-import type { SourceFile } from '../model/source-file.js';
-import type { StringRecord } from '../scan/string-record.js';
-import { chainEnd } from '../text/chain-end.js';
+import type { SourceFile } from '../model/source-file';
+import type { StringRecord } from '../scan/string-record';
+import { chainEnd } from '../text/chain-end';
 
 const CALL = /(?:(\.)\s*|(?<![\w$.]))(on|consume|idempotent)\s*(?:<[^<>()]*>)?\s*\(/g;
 const CONSUMER_KEY = /(?<![\w$.])consumer\s*:\s*$/;

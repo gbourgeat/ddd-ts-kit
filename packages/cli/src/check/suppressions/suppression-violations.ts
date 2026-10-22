@@ -1,7 +1,7 @@
-import type { Project } from '../model/project.js';
-import type { Violation } from '../model/violation.js';
-import type { Suppression } from './find-suppressions.js';
-import { SUPPRESSION_RULE_ID } from './suppression-rule-id.js';
+import type { Project } from '../model/project';
+import type { Violation } from '../model/violation';
+import type { Suppression } from './find-suppressions';
+import { SUPPRESSION_RULE_ID } from './suppression-rule-id';
 
 const FIX =
   'Remove the comment and fix the violation; a deliberate exception is written `// ddd-ts-kit-disable-next-line <rule-id> -- ADR-NNNN: <why>` and recorded in docs/adr/.';

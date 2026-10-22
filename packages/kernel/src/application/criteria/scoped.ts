@@ -1,9 +1,9 @@
-import type { Criteria } from './criteria.js';
-import type { FilterCondition } from './filter-node.js';
-import type { ReadScopeMapping } from './read-scope-mapping.js';
-import type { ReadScope } from './read-scope.js';
-import { ScopedCriteria } from './scoped-criteria.js';
-import { UnmappedReadScopeError } from './unmapped-read-scope-error.js';
+import type { Criteria } from './criteria';
+import type { FilterCondition } from './filter-node';
+import type { ReadScopeMapping } from './read-scope-mapping';
+import type { ReadScope } from './read-scope';
+import { ScopedCriteria } from './scoped-criteria';
+import { UnmappedReadScopeError } from './unmapped-read-scope-error';
 
 /**
  * Joins what the actor may read to a criteria, by AND and apart from its filters: `all` adds

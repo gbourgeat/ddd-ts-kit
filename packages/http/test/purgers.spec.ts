@@ -5,8 +5,8 @@ import {
   FastlyCachePurger,
   VarnishCachePurger,
   VarnishPurgeMode,
-} from '../src/purgers.js';
-import { startRecordingCacheApi, type RecordingCacheApi } from './support/recording-cache-api.js';
+} from '../src/purgers';
+import { startRecordingCacheApi, type RecordingCacheApi } from './support/recording-cache-api';
 
 let api: RecordingCacheApi;
 

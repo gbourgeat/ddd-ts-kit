@@ -1,10 +1,10 @@
 import type { ExecutionScope } from '@ddd-ts-kit/kernel';
-import type { DeduplicationOptions } from './deduplication-options.js';
-import type { ReconnectOptions } from './reconnect-options.js';
-import type { RedisStreamsDelivery } from './redis-streams-delivery.js';
-import type { RedisStreamsFailure } from './redis-streams-failure.js';
-import type { RetentionOptions } from './retention-options.js';
-import type { RetryOptions } from './retry-options.js';
+import type { DeduplicationOptions } from './deduplication-options';
+import type { ReconnectOptions } from './reconnect-options';
+import type { RedisStreamsDelivery } from './redis-streams-delivery';
+import type { RedisStreamsFailure } from './redis-streams-failure';
+import type { RetentionOptions } from './retention-options';
+import type { RetryOptions } from './retry-options';
 
 /**
  * The options of a bus with their defaults applied. The connection is not among them: a URL

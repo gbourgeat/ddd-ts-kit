@@ -6,19 +6,19 @@ import {
   type Message,
   type MessageInfo,
 } from '@ddd-ts-kit/kernel';
-import type { Authorizer } from '../authorization/authorizer.js';
-import type { CheckRequest } from '../authorization/check-request.js';
-import { deny, type Decision } from '../authorization/decision.js';
-import { decisionRecordOf } from '../authorization/decision-record-of.js';
-import { DenialReason } from '../authorization/denial-reason.js';
-import type { OnDecision } from '../authorization/on-decision.js';
-import { workTenantOf } from '../authorization/work-tenant-of.js';
-import { ForbiddenError } from '../errors/forbidden-error.js';
-import { MissingActorError } from '../errors/missing-actor-error.js';
-import { UnauthenticatedError } from '../errors/unauthenticated-error.js';
-import { UndeclaredUseCaseError } from '../errors/undeclared-use-case-error.js';
-import type { AuthorizationMap } from './authorization-map.js';
-import type { ProtectedUseCase } from './use-case-declaration.js';
+import type { Authorizer } from '../authorization/authorizer';
+import type { CheckRequest } from '../authorization/check-request';
+import { deny, type Decision } from '../authorization/decision';
+import { decisionRecordOf } from '../authorization/decision-record-of';
+import { DenialReason } from '../authorization/denial-reason';
+import type { OnDecision } from '../authorization/on-decision';
+import { workTenantOf } from '../authorization/work-tenant-of';
+import { ForbiddenError } from '../errors/forbidden-error';
+import { MissingActorError } from '../errors/missing-actor-error';
+import { UnauthenticatedError } from '../errors/unauthenticated-error';
+import { UndeclaredUseCaseError } from '../errors/undeclared-use-case-error';
+import type { AuthorizationMap } from './authorization-map';
+import type { ProtectedUseCase } from './use-case-declaration';
 
 export interface AuthorizationMiddlewareOptions {
   readonly authorizer: Authorizer;

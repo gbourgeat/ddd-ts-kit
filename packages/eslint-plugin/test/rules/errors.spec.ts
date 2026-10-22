@@ -1,7 +1,7 @@
-import { errorsConstructorNotPublic } from '../../src/rules/errors-constructor-not-public.js';
-import { errorsFactoryName } from '../../src/rules/errors-factory-name.js';
-import { errorsThroughFactory } from '../../src/rules/errors-through-factory.js';
-import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { errorsConstructorNotPublic } from '../../src/rules/errors-constructor-not-public';
+import { errorsFactoryName } from '../../src/rules/errors-factory-name';
+import { errorsThroughFactory } from '../../src/rules/errors-through-factory';
+import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const FACTORIES = { ...SAMPLE_CONFIG, stack: { refusals: 'factories' } };
 const ERROR = `${BILLING}/domain/errors/invoice.error.ts`;

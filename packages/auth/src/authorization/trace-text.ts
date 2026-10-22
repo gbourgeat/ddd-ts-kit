@@ -1,4 +1,4 @@
-import type { TraceStep } from './trace-step.js';
+import type { TraceStep } from './trace-step';
 
 const MARKS: Readonly<Record<TraceStep['answer'], string>> = { yes: ' ', no: 'x', cut: '!' };
 const INDENT = '  ';

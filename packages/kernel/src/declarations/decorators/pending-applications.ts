@@ -1,4 +1,4 @@
-import type { ProjectionApplication } from '../model/projection-application.js';
+import type { ProjectionApplication } from '../model/projection-application';
 
 /** An `@On` that ran, waiting for the `@Projection` of its class: method decorators run first. */
 export interface PendingApplication {

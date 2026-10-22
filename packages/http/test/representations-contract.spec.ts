@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
-import { Representations, defineRoute } from '../src/index.js';
-import { generateOpenApi } from '../src/openapi.js';
-import { catalogRoutes } from './support/catalog.js';
+import { Representations, defineRoute } from '../src';
+import { generateOpenApi } from '../src/openapi';
+import { catalogRoutes } from './support/catalog';
 
 const representations = Representations.standard();
 

@@ -1,5 +1,5 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import type { FieldRequirement } from '../field-access/field-requirement.js';
+import type { FieldRequirement } from '../field-access/field-requirement';
 
 /** How the form of a route asks its requirement about the values it is asked with. */
 interface FormAsking<Values> {

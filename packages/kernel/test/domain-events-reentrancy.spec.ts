@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { Command, InMemoryCommandBus, unitOfWorkMiddleware } from '../src/index.js';
-import { aBench } from './support/shop/a-bench.js';
-import { Cart } from './support/shop/cart.js';
-import { RecordingUnitOfWork } from './support/shop/recording-unit-of-work.js';
+import { Command, InMemoryCommandBus, unitOfWorkMiddleware } from '../src';
+import { aBench } from './support/shop/a-bench';
+import { Cart } from './support/shop/cart';
+import { RecordingUnitOfWork } from './support/shop/recording-unit-of-work';
 
 class OpenCart extends Command<undefined> {
   constructor(readonly id: string) {

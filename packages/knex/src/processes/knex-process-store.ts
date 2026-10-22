@@ -6,11 +6,11 @@ import {
   type ProcessStore,
   type StoredProcess,
 } from '@ddd-ts-kit/kernel';
-import { tenantRow } from '../columns/tenant-row.js';
-import { TENANT_COLUMN } from '../tenancy/where-tenant.js';
-import type { KnexContext } from '../unit-of-work/knex-context.js';
-import { PROCESS_TABLE } from './process-table-name.js';
-import type { ProcessTableOptions } from './process-table-options.js';
+import { tenantRow } from '../columns/tenant-row';
+import { TENANT_COLUMN } from '../tenancy/where-tenant';
+import type { KnexContext } from '../unit-of-work/knex-context';
+import { PROCESS_TABLE } from './process-table-name';
+import type { ProcessTableOptions } from './process-table-options';
 
 interface ProcessRow {
   name: string;

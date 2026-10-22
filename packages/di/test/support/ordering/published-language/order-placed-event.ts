@@ -1,5 +1,5 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { OrderPlaced } from './order-placed.js';
+import { OrderPlaced } from './order-placed';
 
 /** An order placed event as a broker would deliver it, whatever its payload. */
 export function orderPlaced(id: string, payload: unknown, version = 1): IntegrationEvent {

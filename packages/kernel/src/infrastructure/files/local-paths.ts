@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
-import { assertFileKey } from '../../application/files/assert-file-key.js';
+import { assertFileKey } from '../../application/files/assert-file-key';
 
 /** Where the local storage puts a key: its content, its metadata, and a private place for a write in progress. */
 export class LocalPaths {

@@ -1,6 +1,6 @@
 import { isSpanContextValid, trace } from '@opentelemetry/api';
 import type { ErrorReporter } from '@ddd-ts-kit/kernel';
-import { failedTraces } from '../span/failed-traces.js';
+import { failedTraces } from '../span/failed-traces';
 
 /**
  * Decorates an error reporter: a report that names no trace takes the one the failure

@@ -1,8 +1,8 @@
-import { matchingBracket } from '../check/text/matching-bracket.js';
-import { splitTopLevel } from '../check/text/split-top-level.js';
-import { toName } from '../naming/index.js';
-import { entriesOf } from './entries-of.js';
-import type { FunctionRoute } from './function-route.js';
+import { matchingBracket } from '../check/text/matching-bracket';
+import { splitTopLevel } from '../check/text/split-top-level';
+import { toName } from '../naming';
+import { entriesOf } from './entries-of';
+import type { FunctionRoute } from './function-route';
 
 const FACTORY = /export function (\w+)Route\((\w+): (\w+)\): Route \{\s*return defineRoute\(/;
 const IMPORT = /^import[\s\S]*?from '[^']+';\n/gm;

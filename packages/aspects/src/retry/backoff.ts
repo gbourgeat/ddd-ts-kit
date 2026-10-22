@@ -1,4 +1,4 @@
-import type { Jitter } from './jitter.js';
+import type { Jitter } from './jitter';
 
 export interface Backoff {
   /** Delay before the first retry. */

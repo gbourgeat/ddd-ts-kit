@@ -1,4 +1,4 @@
-import type { PrismaTransactionHost } from './prisma-transaction-host.js';
+import type { PrismaTransactionHost } from './prisma-transaction-host';
 
 /**
  * The transaction client of a client, for typing a context without naming the generated

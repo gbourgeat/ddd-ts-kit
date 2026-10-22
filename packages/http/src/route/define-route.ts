@@ -1,10 +1,10 @@
-import { assertCacheDeclaration } from '../cache/assert-cache-declaration.js';
-import type { RequestSchemas } from './request-schemas.js';
-import type { ResponsesSpec } from './responses-spec.js';
-import { ROUTE_PATH_PATTERN } from './route-path-pattern.js';
-import type { RouteHandler } from './route-handler.js';
-import type { RouteSpec } from './route-spec.js';
-import type { Route } from './route.js';
+import { assertCacheDeclaration } from '../cache/assert-cache-declaration';
+import type { RequestSchemas } from './request-schemas';
+import type { ResponsesSpec } from './responses-spec';
+import { ROUTE_PATH_PATTERN } from './route-path-pattern';
+import type { RouteHandler } from './route-handler';
+import type { RouteSpec } from './route-spec';
+import type { Route } from './route';
 
 export function defineRoute<const Request extends RequestSchemas, const Responses extends ResponsesSpec>(
   spec: RouteSpec<Request, Responses>,

@@ -1,5 +1,5 @@
-import { purityNoAmbientRandomness, purityNoEnvironment, purityNoSystemClock } from '../../src/rules/purity.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+import { purityNoAmbientRandomness, purityNoEnvironment, purityNoSystemClock } from '../../src/rules/purity';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const AGGREGATE = `${BILLING}/domain/aggregates/invoice.aggregate.ts`;
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;

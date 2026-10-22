@@ -6,7 +6,7 @@ import {
   type IntegrationEvent,
   type IntegrationEventPublisher,
 } from '@ddd-ts-kit/kernel';
-import { settled } from '../src/e2e.js';
+import { settled } from '../src/e2e';
 
 const invoiceIssued: IntegrationEvent = {
   id: 'event-invoice-1',

@@ -1,17 +1,17 @@
-import { CliError } from '../../cli-error.js';
-import type { Name } from '../../naming/index.js';
-import { renderTemplate } from '../../templating/index.js';
-import { emit } from '../emit.js';
-import type { Kind } from '../kind.js';
-import { label } from '../label.js';
-import { named } from '../named.js';
-import { openScope } from '../open-scope.js';
-import type { Scope } from '../scope.js';
-import { vars } from '../vars.js';
-import { wire } from '../wire.js';
-import { wiringFamily } from '../wiring-family.js';
-import { publishInIndex } from './publish-in-index.js';
-import { platformPath } from '../platform-path.js';
+import { CliError } from '../../cli-error';
+import type { Name } from '../../naming';
+import { renderTemplate } from '../../templating';
+import { emit } from '../emit';
+import type { Kind } from '../kind';
+import { label } from '../label';
+import { named } from '../named';
+import { openScope } from '../open-scope';
+import type { Scope } from '../scope';
+import { vars } from '../vars';
+import { wire } from '../wire';
+import { wiringFamily } from '../wiring-family';
+import { publishInIndex } from './publish-in-index';
+import { platformPath } from '../platform-path';
 
 export const gatewayKind: Kind = {
   name: 'gateway',

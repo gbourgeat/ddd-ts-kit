@@ -1,6 +1,6 @@
-import { sectionOf } from '../stories/section-of.js';
-import type { ReportMeasures } from './report-measures.js';
-import { subsectionOf } from './subsection-of.js';
+import { sectionOf } from '../stories/section-of';
+import type { ReportMeasures } from './report-measures';
+import { subsectionOf } from './subsection-of';
 
 const DECISION = /^\s*[-*]\s+\**D\d+\b/;
 const ITEM = /^\s*[-*]\s+\S/;

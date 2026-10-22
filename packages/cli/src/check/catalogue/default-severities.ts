@@ -1,4 +1,4 @@
-import type { Severity } from '../../config/index.js';
+import type { Severity } from '../../config';
 
 /** Rules that advise instead of blocking unless the config says otherwise (ARCHITECTURE.md section 3). */
 export const DEFAULT_SEVERITIES: Readonly<Record<string, Severity>> = {

@@ -1,5 +1,5 @@
 import { tenantReachOf, tenantScopeOf, type ExecutionScope, type Repository } from '@ddd-ts-kit/kernel';
-import { Order, type OrderSnapshot } from './order.js';
+import { Order, type OrderSnapshot } from './order';
 
 interface StoredOrder {
   readonly tenantId: string;

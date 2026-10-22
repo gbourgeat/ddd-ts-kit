@@ -1,4 +1,4 @@
-import type { MergeCheck } from './merge-check.js';
+import type { MergeCheck } from './merge-check';
 
 /** What `verify-merge` found, merge by merge. */
 export interface MergeVerification {

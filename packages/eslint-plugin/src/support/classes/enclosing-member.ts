@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { ancestors } from '../ancestors.js';
+import { ancestors } from '../ancestors';
 
 export interface MemberSite {
   readonly member: TSESTree.ClassElement;

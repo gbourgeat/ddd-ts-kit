@@ -1,5 +1,5 @@
 import { ASTUtils, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import type { FunctionNode } from './function-node.js';
+import type { FunctionNode } from './function-node';
 
 interface DescribedFunction {
   /** `Function 'charge'`, `Method 'execute'`, `Arrow function`: how a report names it. */

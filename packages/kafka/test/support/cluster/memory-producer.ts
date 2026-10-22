@@ -1,8 +1,8 @@
 import type { KafkaJS } from '@confluentinc/kafka-javascript';
-import { ClientState, silentLogger } from './client-basics.js';
-import type { ClusterState } from './cluster-state.js';
-import { Unsupported, kafkaError } from './errors.js';
-import type { Wire } from './wire.js';
+import { ClientState, silentLogger } from './client-basics';
+import type { ClusterState } from './cluster-state';
+import { Unsupported, kafkaError } from './errors';
+import type { Wire } from './wire';
 
 const DEFAULT_MESSAGE_TIMEOUT_MS = 300_000;
 

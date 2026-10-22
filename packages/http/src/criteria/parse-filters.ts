@@ -1,7 +1,7 @@
 import type { CriteriaDefinition, FilterNode } from '@ddd-ts-kit/kernel';
 import type { ValidationIssue } from '@ddd-ts-kit/validation';
-import type { FilterEntry } from './filter-entry.js';
-import { parseCondition } from './parse-condition.js';
+import type { FilterEntry } from './filter-entry';
+import { parseCondition } from './parse-condition';
 
 const GROUPS = ['and', 'or', 'not'] as const;
 const INDEX = /^\d+$/;

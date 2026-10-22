@@ -1,4 +1,4 @@
-import type { SourceFile } from '../model/source-file.js';
+import type { SourceFile } from '../model/source-file';
 
 /** The command that writes a value object where the file is: in its context, or by hand in the shared kernel. */
 export function generateHint(file: SourceFile, name = '<Name>'): string {

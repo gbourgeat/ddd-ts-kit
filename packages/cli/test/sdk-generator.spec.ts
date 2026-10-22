@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { clientFiles } from '../src/sdk/client-files.js';
-import { readClientDocument } from '../src/sdk/read-client-document.js';
-import { SchemaTypes } from '../src/sdk/schema-types.js';
-import { CLASHING_CONTRACT } from './support/clashing-contract.js';
-import { SHOP_CONTRACT } from './support/shop-contract.js';
+import { clientFiles } from '../src/sdk/client-files';
+import { readClientDocument } from '../src/sdk/read-client-document';
+import { SchemaTypes } from '../src/sdk/schema-types';
+import { CLASHING_CONTRACT } from './support/clashing-contract';
+import { SHOP_CONTRACT } from './support/shop-contract';
 
 const SHOP = readClientDocument({ name: 'api', source: 'openapi/openapi.yaml' }, SHOP_CONTRACT);
 

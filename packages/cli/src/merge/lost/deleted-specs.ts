@@ -1,6 +1,6 @@
-import type { MergeFinding } from './merge-finding.js';
-import type { MergeSides } from './merge-sides.js';
-import { SPEC_FILE } from './spec-file.js';
+import type { MergeFinding } from './merge-finding';
+import type { MergeSides } from './merge-sides';
+import { SPEC_FILE } from './spec-file';
 
 /** The spec files of a side the result deleted, when neither side deleted them. */
 export function deletedSpecs({ base, ours, theirs, result }: MergeSides): MergeFinding[] {

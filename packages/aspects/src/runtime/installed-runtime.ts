@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { AspectRuntime } from './aspect-runtime.js';
+import type { AspectRuntime } from './aspect-runtime';
 
 let installed: AspectRuntime = {};
 const scoped = new AsyncLocalStorage<AspectRuntime>();

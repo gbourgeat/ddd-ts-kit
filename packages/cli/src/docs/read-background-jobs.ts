@@ -1,7 +1,7 @@
-import { toName } from '../naming/index.js';
-import type { Workspace } from '../workspace/index.js';
-import type { BackgroundJobFacts } from './background-job-facts.js';
-import { type ContextTree, roleFilesOf } from '../model-modules/index.js';
+import { toName } from '../naming';
+import type { Workspace } from '../workspace';
+import type { BackgroundJobFacts } from './background-job-facts';
+import { type ContextTree, roleFilesOf } from '../model-modules';
 
 const FOLDER = 'application/background';
 const SUFFIX = '.background-job.ts';

@@ -1,6 +1,6 @@
-import { describeToken } from './describe-token.js';
-import { prototypeOf } from './prototype-of.js';
-import type { Token } from './token.js';
+import { describeToken } from './describe-token';
+import { prototypeOf } from './prototype-of';
+import type { Token } from './token';
 
 /**
  * Why `implementation` cannot be bound to `port`, or `undefined` when it can. A port is an

@@ -1,7 +1,7 @@
-import { CliError } from '../cli-error.js';
-import type { Config } from '../config/index.js';
-import { toName } from '../naming/index.js';
-import { declaredModules } from './declared-modules.js';
+import { CliError } from '../cli-error';
+import type { Config } from '../config';
+import { toName } from '../naming';
+import { declaredModules } from './declared-modules';
 
 /**
  * The module of the model a command was given, in kebab-case as the config names it; refused,

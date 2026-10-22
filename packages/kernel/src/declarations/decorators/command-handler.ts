@@ -1,12 +1,12 @@
-import type { CommandHandler as CommandHandlerPort } from '../../application/messaging/command-handler.js';
-import type { Command } from '../../application/messaging/command.js';
-import type { MessageType } from '../../application/messaging/message-type.js';
-import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
-import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature.js';
-import type { MessageHandler } from '../model/message-handler.js';
-import { record } from '../registry/record.js';
-import { handling } from './handling.js';
+import type { CommandHandler as CommandHandlerPort } from '../../application/messaging/command-handler';
+import type { Command } from '../../application/messaging/command';
+import type { MessageType } from '../../application/messaging/message-type';
+import type { ClassDeclarator } from '../dependencies/class-declarator';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies';
+import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature';
+import type { MessageHandler } from '../model/message-handler';
+import { record } from '../registry/record';
+import { handling } from './handling';
 
 /** The interface of the kernel under the name of its decorator, so one import serves both. */
 export type CommandHandler<C extends Command<unknown>> = CommandHandlerPort<C>;

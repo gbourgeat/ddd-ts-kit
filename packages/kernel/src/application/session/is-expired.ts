@@ -1,4 +1,4 @@
-import type { Session } from './session.js';
+import type { Session } from './session';
 
 /** A session without `expiresAt` never expires; one expires at the instant it names. */
 export function isExpired(session: Session, now: Date): boolean {

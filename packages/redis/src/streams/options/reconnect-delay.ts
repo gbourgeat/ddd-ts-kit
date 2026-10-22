@@ -1,4 +1,4 @@
-import type { ReconnectOptions } from './reconnect-options.js';
+import type { ReconnectOptions } from './reconnect-options';
 
 /** The delay before the given attempt, counted from 1: it grows by the factor up to the bound. */
 export function reconnectDelay(reconnect: Required<ReconnectOptions>, attempt: number): number {

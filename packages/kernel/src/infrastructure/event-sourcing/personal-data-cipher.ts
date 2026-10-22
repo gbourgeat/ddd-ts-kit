@@ -1,11 +1,11 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
-import { ERASED_PERSONAL_DATA } from '../../application/event-sourcing/erased-personal-data.js';
-import { isStoredData } from '../../application/event-sourcing/is-stored-data.js';
-import type { StoredData } from '../../application/event-sourcing/stored-data.js';
-import type { StoredJson } from '../../application/event-sourcing/stored-json.js';
-import type { SubjectKey } from '../../application/event-sourcing/subject-key.js';
-import type { SubjectKeyStore } from '../../application/ports/subject-key-store.js';
-import { rewriteObjects } from './rewrite-objects.js';
+import { ERASED_PERSONAL_DATA } from '../../application/event-sourcing/erased-personal-data';
+import { isStoredData } from '../../application/event-sourcing/is-stored-data';
+import type { StoredData } from '../../application/event-sourcing/stored-data';
+import type { StoredJson } from '../../application/event-sourcing/stored-json';
+import type { SubjectKey } from '../../application/event-sourcing/subject-key';
+import type { SubjectKeyStore } from '../../application/ports/subject-key-store';
+import { rewriteObjects } from './rewrite-objects';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_BYTES = 12;

@@ -1,4 +1,4 @@
-import { splitWords } from '../naming/index.js';
+import { splitWords } from '../naming';
 
 /** The longest aggregate name the words of a class per error start or end with; empty when none. */
 export function conceptNamed(className: string, aggregates: readonly string[]): string {

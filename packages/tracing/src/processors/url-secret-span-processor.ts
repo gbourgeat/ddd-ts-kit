@@ -1,4 +1,4 @@
-import type { EndedSpan } from './ended-span.js';
+import type { EndedSpan } from './ended-span';
 
 const REDACTED = 'REDACTED';
 const URL_ATTRIBUTES = ['url.full', 'http.url'];

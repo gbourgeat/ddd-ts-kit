@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { tempDir, write } from '../helpers.js';
-import { git } from './git.js';
+import { tempDir, write } from '../helpers';
+import { git } from './git';
 
 /** Files to write, by path; `null` deletes the file. */
 export type Files = Readonly<Record<string, string | null>>;

@@ -1,4 +1,4 @@
-import { BRACKETS } from '../text/brackets.js';
+import { BRACKETS } from '../text/brackets';
 
 /** Offset of the bracket opening the one that closes at `close`, read backwards, or -1. */
 export function openingBracket(code: string, close: number): number {

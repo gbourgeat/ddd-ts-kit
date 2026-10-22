@@ -1,10 +1,10 @@
-import { CliError } from '../cli-error.js';
-import { readConfig } from '../config/index.js';
-import { openStoryScope } from '../stories/open-story-scope.js';
-import { STORY_KINDS, type StoryKind } from '../stories/story-kind.js';
-import type { StoryScope } from '../stories/story-scope.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
+import { CliError } from '../cli-error';
+import { readConfig } from '../config';
+import { openStoryScope } from '../stories/open-story-scope';
+import { STORY_KINDS, type StoryKind } from '../stories/story-kind';
+import type { StoryScope } from '../stories/story-scope';
+import { Arguments } from './arguments';
+import type { Command } from './command';
 
 /** Opens the worktree of one story, or finds it again, and names the other stories open in the repository. */
 export const storyScopeCommand: Command = (argv, io) => {

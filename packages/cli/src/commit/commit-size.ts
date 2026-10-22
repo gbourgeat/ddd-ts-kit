@@ -1,4 +1,4 @@
-import type { CommitLimits } from '../config/index.js';
+import type { CommitLimits } from '../config';
 
 /** The size of the commit a `git commit` would make now, against the advised limits. */
 export interface CommitSize {

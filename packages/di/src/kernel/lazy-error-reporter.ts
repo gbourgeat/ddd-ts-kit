@@ -1,5 +1,5 @@
 import { ErrorReporter } from '@ddd-ts-kit/kernel';
-import type { Resolve } from '../wiring/resolve.js';
+import type { Resolve } from '../wiring/resolve';
 
 /**
  * The bound reporter, resolved at each failure: what is built when the application is created

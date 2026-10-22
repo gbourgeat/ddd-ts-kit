@@ -1,7 +1,7 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import { isRecord } from '../support/is-record.js';
-import type { SchemaType } from './schema-type.js';
-import type { XmlHints } from './xml-hints.js';
+import { isRecord } from '../support/is-record';
+import type { SchemaType } from './schema-type';
+import type { XmlHints } from './xml-hints';
 
 const SCALAR_TYPES: readonly SchemaType[] = ['string', 'number', 'integer', 'boolean'];
 const SCHEMA_TYPES: ReadonlySet<string> = new Set([...SCALAR_TYPES, 'object', 'array', 'null']);

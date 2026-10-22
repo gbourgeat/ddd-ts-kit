@@ -1,6 +1,6 @@
-import { AuthorizedCommand, type Actor } from '../../../../../../../../src/index.js';
-import { Requires } from '../../../../../../../../src/declarations.js';
-import { scheduleVisits } from '../../authorization/clinic.permissions.js';
+import { AuthorizedCommand, type Actor } from '../../../../../../../../src';
+import { Requires } from '../../../../../../../../src/declarations';
+import { scheduleVisits } from '../../authorization/clinic.permissions';
 
 @Requires(scheduleVisits, {
   resource: (command: ScheduleVisit) => ({ type: 'patient', id: command.patientId }),

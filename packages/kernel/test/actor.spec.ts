@@ -19,7 +19,7 @@ import {
   systemActor,
   type Actor,
   type ActorContext,
-} from '../src/index.js';
+} from '../src';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: ['author'], attributes: { team: 'core' } };
 const bob: Actor = { id: 'bob', type: 'user', roles: [], attributes: {} };

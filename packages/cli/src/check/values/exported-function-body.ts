@@ -1,8 +1,8 @@
-import type { Exported } from '../exports/exported.js';
-import { signatureAt } from '../structure/signature-at.js';
-import { arrowBody } from './arrow-body.js';
-import type { FunctionBody } from './function-body.js';
-import { initializerOf } from './initializer-of.js';
+import type { Exported } from '../exports/exported';
+import { signatureAt } from '../structure/signature-at';
+import { arrowBody } from './arrow-body';
+import type { FunctionBody } from './function-body';
+import { initializerOf } from './initializer-of';
 
 const FUNCTION_EXPRESSION = /^(?:async\s+)?function\b[\s*]*(?:[\w$]+)?\s*(?:<[^()]*>)?\s*\(/;
 

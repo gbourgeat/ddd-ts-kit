@@ -1,7 +1,7 @@
-import type { CriteriaPlan } from '../criteria/criteria-plan.js';
-import type { SearchedRows } from '../read-model/searched-rows.js';
-import type { TouchedKey } from '../read-model/touched-key.js';
-import { ReadModelRows } from './read-model-rows.js';
+import type { CriteriaPlan } from '../criteria/criteria-plan';
+import type { SearchedRows } from '../read-model/searched-rows';
+import type { TouchedKey } from '../read-model/touched-key';
+import { ReadModelRows } from './read-model-rows';
 
 /**
  * What a store adapter gives for the table of one read model: its rows, the query of a plan,

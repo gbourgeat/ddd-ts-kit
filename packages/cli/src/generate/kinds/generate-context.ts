@@ -5,14 +5,14 @@ import {
   isOneOf,
   type Config,
   type Upstream,
-} from '../../config/index.js';
-import { refreshContextDoc } from '../../docs/refresh-context-doc.js';
-import { CliError } from '../../cli-error.js';
-import { parseContextName, type Name } from '../../naming/index.js';
-import type { Workspace } from '../../workspace/index.js';
-import type { ContextRequest } from './context-request.js';
-import { declareContextEntries } from './declare-context-entries.js';
-import { writeContextFiles } from './write-context-files.js';
+} from '../../config';
+import { refreshContextDoc } from '../../docs/refresh-context-doc';
+import { CliError } from '../../cli-error';
+import { parseContextName, type Name } from '../../naming';
+import type { Workspace } from '../../workspace';
+import type { ContextRequest } from './context-request';
+import { declareContextEntries } from './declare-context-entries';
+import { writeContextFiles } from './write-context-files';
 
 /** Shared by `generate context` and `init`, so both create exactly the same context. */
 export function generateContext(ws: Workspace, config: Config, request: ContextRequest): Config {

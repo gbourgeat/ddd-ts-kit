@@ -1,5 +1,5 @@
-import { cli, tempDir } from '../helpers.js';
-import { jsonAt } from './json-at.js';
+import { cli, tempDir } from '../helpers';
+import { jsonAt } from './json-at';
 
 export interface InitFailure {
   readonly code: number;

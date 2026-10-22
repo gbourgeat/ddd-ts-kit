@@ -1,18 +1,18 @@
-import { CliError } from '../../cli-error.js';
-import type { Name } from '../../naming/index.js';
-import type { RenderContext } from '../../templating/index.js';
-import { emit } from '../emit.js';
-import { filesUnder } from '../files-under.js';
-import { isDeclared } from '../is-declared.js';
-import type { Kind } from '../kind.js';
-import { label } from '../label.js';
-import { named } from '../named.js';
-import { openScope } from '../open-scope.js';
-import { requireFile } from '../require-file.js';
-import type { Scope } from '../scope.js';
-import { vars } from '../vars.js';
-import { wire } from '../wire.js';
-import { writeOwnPolicy } from './write-own-policy.js';
+import { CliError } from '../../cli-error';
+import type { Name } from '../../naming';
+import type { RenderContext } from '../../templating';
+import { emit } from '../emit';
+import { filesUnder } from '../files-under';
+import { isDeclared } from '../is-declared';
+import type { Kind } from '../kind';
+import { label } from '../label';
+import { named } from '../named';
+import { openScope } from '../open-scope';
+import { requireFile } from '../require-file';
+import type { Scope } from '../scope';
+import { vars } from '../vars';
+import { wire } from '../wire';
+import { writeOwnPolicy } from './write-own-policy';
 
 const ADAPTER_KINDS = ['external', 'gateway'];
 

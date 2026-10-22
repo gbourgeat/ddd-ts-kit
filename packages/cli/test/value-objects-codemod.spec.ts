@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { cli, read, tempDir, write } from './helpers.js';
+import { cli, read, tempDir, write } from './helpers';
 
 const VOS = 'src/contexts/billing/domain/value-objects';
 const TESTS = 'src/contexts/billing/test/unit';

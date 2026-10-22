@@ -1,9 +1,9 @@
-import type { Finding } from '../model/finding.js';
-import type { Project } from '../model/project.js';
-import type { SourceFile } from '../model/source-file.js';
-import type { Violation } from '../model/violation.js';
-import { reporter } from './reporter.js';
-import { toViolations } from './to-violations.js';
+import type { Finding } from '../model/finding';
+import type { Project } from '../model/project';
+import type { SourceFile } from '../model/source-file';
+import type { Violation } from '../model/violation';
+import { reporter } from './reporter';
+import { toViolations } from './to-violations';
 
 /** Runs a judgment on each source of the project and reports what it finds under the rule `ruleId`. */
 export function perFile(

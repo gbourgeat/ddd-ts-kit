@@ -1,11 +1,12 @@
-import { aliasRoots, directoryAlias, FIXED_ALIAS_ROOTS, moduleNameMapper, specifierSuffix } from '../alias/index.js';
-import type { Config } from '../config/index.js';
-import type { RenderContext } from '../templating/index.js';
+import { aliasRoots, directoryAlias, FIXED_ALIAS_ROOTS, moduleNameMapper, specifierSuffix } from '../alias';
+import type { Config } from '../config';
+import type { RenderContext } from '../templating';
 
 /**
  * The alias of each tree and of each directory of the config, without a final slash: a template
  * writes the rest of the path after it, then `ext`: what a specifier ends with under
- * "importExtension". `jestMapper` is the lines of the mapping jest is given.
+ * "importExtension". `index` completes the alias of a directory: nothing under `none`, `/index.js`
+ * under `js`. `jestMapper` is the lines of the mapping jest is given.
  */
 export function aliasVars(config: Config): RenderContext {
   const roots = aliasRoots(config);
@@ -20,6 +21,7 @@ export function aliasVars(config: Config): RenderContext {
     scripts: scripts.prefix.slice(0, -1),
     generated: generated.prefix.slice(0, -1),
     ext: specifierSuffix(config.importExtension),
+    index: specifierSuffix(config.importExtension) === '' ? '' : '/index.js',
     extensionless: specifierSuffix(config.importExtension) === '',
     jestMapper: jestMapperLines(config),
   };

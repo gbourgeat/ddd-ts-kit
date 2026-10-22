@@ -1,8 +1,8 @@
 import { IsOptional } from 'class-validator';
-import type { DtoClass } from './dto-class.js';
-import { declaredProperties } from './declared-properties.js';
-import { derivedClass } from './derived-class.js';
-import { prototypeOf } from './prototype-of.js';
+import type { DtoClass } from './dto-class';
+import { declaredProperties } from './declared-properties';
+import { derivedClass } from './derived-class';
+import { prototypeOf } from './prototype-of';
 
 /**
  * Every property of a DTO class, each optional and checked by its constraints when present, as

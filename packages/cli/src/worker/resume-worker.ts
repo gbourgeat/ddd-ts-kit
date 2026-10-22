@@ -1,11 +1,11 @@
 import path from 'node:path';
-import { CliError } from '../cli-error.js';
-import { readConfig } from '../config/index.js';
-import { findWorker, type WorkerChoice } from './find-worker.js';
-import { progressOf } from './progress-of.js';
-import { resumeBriefing } from './resume-briefing.js';
-import { resumeMessage } from './resume-message.js';
-import type { AgentRecord, NextStep, WorkerProgress } from './worker-progress.js';
+import { CliError } from '../cli-error';
+import { readConfig } from '../config';
+import { findWorker, type WorkerChoice } from './find-worker';
+import { progressOf } from './progress-of';
+import { resumeBriefing } from './resume-briefing';
+import { resumeMessage } from './resume-message';
+import type { AgentRecord, NextStep, WorkerProgress } from './worker-progress';
 
 /** What `worker-scope <context> --resume` is asked. */
 export interface ResumeRequest extends WorkerChoice {

@@ -1,5 +1,5 @@
-import { DEFAULT_ALLOWED_ATTRIBUTES } from './default-allowed-attributes.js';
-import type { EndedSpan } from './ended-span.js';
+import { DEFAULT_ALLOWED_ATTRIBUTES } from './default-allowed-attributes';
+import type { EndedSpan } from './ended-span';
 
 export interface AttributeAllowListOptions {
   /** Replaces the default list. A name ending with a dot allows every attribute below it. */

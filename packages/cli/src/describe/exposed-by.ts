@@ -1,6 +1,6 @@
-import { wholeLiteral } from '../check/declarations/whole-literal.js';
-import type { Scan } from '../check/scan/scan.js';
-import { callArguments } from '../check/text/call-arguments.js';
+import { wholeLiteral } from '../check/declarations/whole-literal';
+import type { Scan } from '../check/scan/scan';
+import { callArguments } from '../check/text/call-arguments';
 
 const EXPOSING = /\.\s*exposing\s*\(/g;
 

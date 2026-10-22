@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { processStoreContract } from '@ddd-ts-kit/testing/contracts';
-import { DrizzleProcessStore, createDrizzleUnitOfWork, processesTable } from '../src/postgres.js';
-import { createStoreDatabase, type StoreDatabase } from './support/store-database.js';
+import { DrizzleProcessStore, createDrizzleUnitOfWork, processesTable } from '../src/postgres';
+import { createStoreDatabase, type StoreDatabase } from './support/store-database';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const processes = processesTable('billing');

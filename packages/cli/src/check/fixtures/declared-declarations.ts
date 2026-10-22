@@ -1,6 +1,6 @@
-import type { FixtureFiles } from './fixture-files.js';
-import { PATHS } from './paths.js';
-import { source } from './source.js';
+import type { FixtureFiles } from './fixture-files';
+import { PATHS } from './paths';
+import { source } from './source';
 
 const IN_BILLING = '@/contexts/billing';
 

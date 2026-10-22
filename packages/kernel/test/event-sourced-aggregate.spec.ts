@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { InMemoryEventStore, appendChanges } from '../src/index.js';
-import { AT, Account, AccountOpened, MoneyDeposited, Overdraft } from './support/bank/account.js';
+import { InMemoryEventStore, appendChanges } from '../src';
+import { AT, Account, AccountOpened, MoneyDeposited, Overdraft } from './support/bank/account';
 
 describe('EventSourcedAggregate', () => {
   it('changes its state through the apply method of each event it records, and keeps the events for the save', () => {

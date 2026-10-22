@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { STORED_EVENTS_LOCK } from './stored-events-lock-file.js';
+import { STORED_EVENTS_LOCK } from './stored-events-lock-file';
 
 /** The stored shapes a project has published: by event name, the fingerprint of each version. Written by `ddd-ts-kit docs --stored-events`, read by `event-sourcing/upcaster-required`. */
 export type StoredEventsLock = Readonly<Record<string, Readonly<Record<string, string>>>>;

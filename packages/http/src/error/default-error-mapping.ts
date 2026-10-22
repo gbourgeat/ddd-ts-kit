@@ -1,4 +1,4 @@
-import type { ErrorMapping } from './error-mapping.js';
+import type { ErrorMapping } from './error-mapping';
 
 export const DEFAULT_ERROR_MAPPING: ErrorMapping = {
   VALIDATION_FAILED: 422,

@@ -1,10 +1,10 @@
-import { toName } from '../naming/index.js';
-import { handleTypesOf, type HandleTypes } from './handle-types-of.js';
-import type { FunctionRoute } from './function-route.js';
-import { handleBody } from './handle-body.js';
-import type { MigratedGroup } from './migrated-group.js';
-import type { Migration } from './migration.js';
-import { readFunctionRoute } from './read-function-route.js';
+import { toName } from '../naming';
+import { handleTypesOf, type HandleTypes } from './handle-types-of';
+import type { FunctionRoute } from './function-route';
+import { handleBody } from './handle-body';
+import type { MigratedGroup } from './migrated-group';
+import type { Migration } from './migration';
+import { readFunctionRoute } from './read-function-route';
 
 export interface PlannedController {
   readonly route: FunctionRoute;

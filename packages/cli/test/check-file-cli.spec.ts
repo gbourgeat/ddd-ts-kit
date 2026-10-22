@@ -1,7 +1,7 @@
 import { performance } from 'node:perf_hooks';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { AGGREGATE, checkJsonOf, HANDLER } from './check-support.js';
-import { cli, read, scaffoldEverything, tempDir, write } from './helpers.js';
+import { AGGREGATE, checkJsonOf, HANDLER } from './check-support';
+import { cli, read, scaffoldEverything, tempDir, write } from './helpers';
 
 const ISSUED_INVOICE = 'src/contexts/billing/domain/aggregates/issued-invoice.aggregate.ts';
 

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { StdoutLogger } from '@ddd-ts-kit/aspects';
 import { InMemoryLogger, LOG_LEVELS, type LogFields, type LogLevel } from '@ddd-ts-kit/kernel';
-import { loggerContract, type LoggedLine } from '../src/contracts.js';
+import { loggerContract, type LoggedLine } from '../src/contracts';
 
 declare module '@ddd-ts-kit/kernel' {
   interface LogFields {

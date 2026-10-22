@@ -1,6 +1,6 @@
 import type { Socket } from 'node:net';
-import { type ClientFrame, FrameReader, messageFrame } from './frames.js';
-import { subjectMatches } from './subjects.js';
+import { type ClientFrame, FrameReader, messageFrame } from './frames';
+import { subjectMatches } from './subjects';
 
 /** What a client session needs of the server it is connected to. */
 export interface Router {

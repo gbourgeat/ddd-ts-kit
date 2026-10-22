@@ -1,11 +1,11 @@
-import { isRecord } from '../config/values/is-record.js';
-import { toName } from '../naming/index.js';
-import type { ClientOperation } from './client-operation.js';
-import type { ClientParameter } from './client-parameter.js';
-import { isJson } from './is-json.js';
-import type { OperationPlace } from './operation-place.js';
-import { readResponses } from './read-responses.js';
-import { readSecurity } from './read-security.js';
+import { isRecord } from '../config/values/is-record';
+import { toName } from '../naming';
+import type { ClientOperation } from './client-operation';
+import type { ClientParameter } from './client-parameter';
+import { isJson } from './is-json';
+import type { OperationPlace } from './operation-place';
+import { readResponses } from './read-responses';
+import { readSecurity } from './read-security';
 
 export function readOperation(place: OperationPlace, value: unknown): ClientOperation {
   const raw = isRecord(value) ? value : {};

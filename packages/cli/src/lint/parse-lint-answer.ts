@@ -1,4 +1,4 @@
-import { isRecord } from '../config/values/is-record.js';
+import { isRecord } from '../config/values/is-record';
 
 /** What the process that runs ESLint answers on its output: the report in the format asked, the messages, and the rules in transition. */
 export interface LintAnswer {

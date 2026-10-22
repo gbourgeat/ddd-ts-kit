@@ -4,9 +4,9 @@ import type { AddressInfo } from 'node:net';
 import { Readable } from 'node:stream';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { InMemoryFileStorage } from '@ddd-ts-kit/kernel';
-import { followServed, followWithFetch } from '../src/contracts.js';
-import { readAll } from '../src/contracts/file-storage/read-all.js';
-import { tampered } from '../src/contracts/file-storage/tampered.js';
+import { followServed, followWithFetch } from '../src/contracts';
+import { readAll } from '../src/contracts/file-storage/read-all';
+import { tampered } from '../src/contracts/file-storage/tampered';
 
 let server: Server;
 let base: string;

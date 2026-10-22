@@ -1,11 +1,11 @@
-import { eventNameResolver } from '../events/event-name-resolver.js';
-import { readStoredEventsLock, type StoredEventsLock } from '../event-sourcing/read-stored-events-lock.js';
-import type { StoredEventDeclaration } from '../event-sourcing/stored-event-declaration.js';
-import { storedEventDeclarations } from '../event-sourcing/stored-event-declarations.js';
-import { STORED_EVENTS_LOCK } from '../event-sourcing/stored-events-lock-file.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import { perFile } from '../support/per-file.js';
+import { eventNameResolver } from '../events/event-name-resolver';
+import { readStoredEventsLock, type StoredEventsLock } from '../event-sourcing/read-stored-events-lock';
+import type { StoredEventDeclaration } from '../event-sourcing/stored-event-declaration';
+import { storedEventDeclarations } from '../event-sourcing/stored-event-declarations';
+import { STORED_EVENTS_LOCK } from '../event-sourcing/stored-events-lock-file';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import { perFile } from '../support/per-file';
 
 const NEW_VERSION_FIX =
   'A stored event is never rewritten: keep the shape of the stored version as it is, declare the new shape under a new name, raise `version` by one and add the upcaster from the stored version, `upcasters: { <stored>: (data) => ({ ...data, <new field>: <value for the old events> }) }`, then `ddd-ts-kit docs --stored-events` records the new version once it is stored.';

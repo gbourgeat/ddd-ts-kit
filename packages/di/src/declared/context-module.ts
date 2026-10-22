@@ -1,6 +1,6 @@
-import type { ContextModule } from '../module/context-module.js';
-import { defineContextModule } from '../module/define-context-module.js';
-import type { DeclaredSource } from './declared-source.js';
+import type { ContextModule } from '../module/context-module';
+import { defineContextModule } from '../module/define-context-module';
+import type { DeclaredSource } from './declared-source';
 
 /**
  * The module of a bounded context made of classes that declare themselves:

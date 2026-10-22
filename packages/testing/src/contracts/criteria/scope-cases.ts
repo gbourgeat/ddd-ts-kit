@@ -1,4 +1,4 @@
-import type { CriteriaCase } from './criteria-case.js';
+import type { CriteriaCase } from './criteria-case';
 
 const HOSTILE = "'; drop table criteria_contract; --";
 

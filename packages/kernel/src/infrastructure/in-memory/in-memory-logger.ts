@@ -1,9 +1,9 @@
-import { describeErrorFields } from '../../application/logging/describe-error-fields.js';
-import type { LogFields } from '../../application/logging/log-fields.js';
-import { LOG_LEVELS, type LogLevel } from '../../application/logging/log-level.js';
-import type { LogValue } from '../../application/logging/log-value.js';
-import { UNWRITABLE_FIELDS } from '../../application/logging/unwritable-fields.js';
-import type { Logger } from '../../application/ports/logger.js';
+import { describeErrorFields } from '../../application/logging/describe-error-fields';
+import type { LogFields } from '../../application/logging/log-fields';
+import { LOG_LEVELS, type LogLevel } from '../../application/logging/log-level';
+import type { LogValue } from '../../application/logging/log-value';
+import { UNWRITABLE_FIELDS } from '../../application/logging/unwritable-fields';
+import type { Logger } from '../../application/ports/logger';
 
 export interface LogEntry {
   readonly level: LogLevel;

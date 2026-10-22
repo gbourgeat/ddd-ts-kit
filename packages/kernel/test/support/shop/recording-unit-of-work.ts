@@ -1,4 +1,4 @@
-import type { UnitOfWork } from '../../../src/index.js';
+import type { UnitOfWork } from '../../../src';
 
 /**
  * A unit of work written without `withinUnitOfWork`, as a project may have one: it notes its

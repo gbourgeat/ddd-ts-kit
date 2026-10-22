@@ -1,10 +1,10 @@
-import { CliError } from '../../cli-error.js';
-import { Arguments } from '../../commands/arguments.js';
-import { type Command } from '../../commands/command.js';
-import { DELEGATED_RULES } from '../catalogue/delegated-rules.js';
-import { KNOWN_RULE_IDS } from '../catalogue/known-rule-ids.js';
-import { type DocumentedRule, documentedRule } from '../explain/documented-rule.js';
-import { knownRules } from './known-rules.js';
+import { CliError } from '../../cli-error';
+import { Arguments } from '../../commands/arguments';
+import { type Command } from '../../commands/command';
+import { DELEGATED_RULES } from '../catalogue/delegated-rules';
+import { KNOWN_RULE_IDS } from '../catalogue/known-rule-ids';
+import { type DocumentedRule, documentedRule } from '../explain/documented-rule';
+import { knownRules } from './known-rules';
 
 export const explainCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {});

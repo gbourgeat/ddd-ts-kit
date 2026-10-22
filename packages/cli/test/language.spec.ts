@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { looksLikeCode } from '../src/check/comments/looks-like-code.js';
-import { restatesName } from '../src/check/comments/restates-name.js';
-import { addGlossaryRows } from '../src/check/language/add-glossary-rows.js';
-import { baseForms } from '../src/check/language/base-forms.js';
-import { parseGlossary } from '../src/check/language/parse-glossary.js';
-import { sameWord } from '../src/check/language/same-word.js';
-import { unknownWords } from '../src/check/language/unknown-words.js';
-import { scan } from '../src/check/scan/scan.js';
-import { readStructure } from '../src/check/structure/read-structure.js';
+import { looksLikeCode } from '../src/check/comments/looks-like-code';
+import { restatesName } from '../src/check/comments/restates-name';
+import { addGlossaryRows } from '../src/check/language/add-glossary-rows';
+import { baseForms } from '../src/check/language/base-forms';
+import { parseGlossary } from '../src/check/language/parse-glossary';
+import { sameWord } from '../src/check/language/same-word';
+import { unknownWords } from '../src/check/language/unknown-words';
+import { scan } from '../src/check/scan/scan';
+import { readStructure } from '../src/check/structure/read-structure';
 
 const DOC = [
   '# Billing',

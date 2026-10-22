@@ -2,7 +2,7 @@ import stylistic from '@stylistic/eslint-plugin';
 import { Linter } from 'eslint';
 import tseslint from 'typescript-eslint';
 import { describe, expect, it } from 'vitest';
-import { standardRules } from '../../src/index.js';
+import { standardRules } from '../../src';
 
 const linter = new Linter();
 

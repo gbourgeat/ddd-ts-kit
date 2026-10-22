@@ -1,7 +1,7 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { aliasDeclarations } from './alias-declarations.js';
-import { config } from './config.js';
-import type { Fixture } from './fixture.js';
+import { CONFIG_FILE } from '../../config';
+import { aliasDeclarations } from './alias-declarations';
+import { config } from './config';
+import type { Fixture } from './fixture';
 
 const RULE = 'imports/alias-declared';
 const PATHS = { '@/*': ['./src/*'], '$test/*': ['./test/*'], '$scripts/*': ['./scripts/*'] };

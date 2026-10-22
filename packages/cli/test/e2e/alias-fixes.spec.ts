@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { cli, DEFAULT_STACK, read, write } from '../helpers.js';
-import { eslintOn } from './analyzers.js';
-import { compiledProject, PROBE, rewriteAliases } from './compiled-project.js';
-import { bin, findingsOf, runIn } from './run-in.js';
-import { SLOW } from './stacks.js';
-import { NATIVE_COMPILER } from './type-errors.js';
+import { cli, DEFAULT_STACK, read, write } from '../helpers';
+import { eslintOn } from './analyzers';
+import { compiledProject, PROBE, rewriteAliases } from './compiled-project';
+import { bin, findingsOf, runIn } from './run-in';
+import { SLOW } from './stacks';
+import { NATIVE_COMPILER } from './type-errors';
 
 const HANDLER = 'src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts';
 const COMMAND = '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command';
@@ -80,7 +80,7 @@ describe.runIf(SLOW).each(SPELLINGS)(
     }, 240_000);
 
     it.runIf(suffix === '')(
-      'a directory is not a file: the checker reports the import the compiler would complete with an index, and the build refuses it',
+      'a directory is written as itself: the compiler completes it with its index, the checker lets it through and the build writes its index.js',
       () => {
         write(root, 'src/platform/shelf/index.ts', 'export const shelf = 1;\n');
         edit(PROBE, (text) => `${text}export { shelf } from '@/platform/shelf';\n`);
@@ -90,18 +90,10 @@ describe.runIf(SLOW).each(SPELLINGS)(
           args: [NATIVE_COMPILER, '-p', 'tsconfig.build.json'],
         });
 
-        const checked = cli(root, 'check', '--rule', 'imports/extension', '--json').json();
-
-        expect(
-          compiled,
-          'the bundler resolution completes a directory: nothing but the rule and the build refuse it',
-        ).toBe('');
-
-        expect(checked).toMatchObject({ ok: false, violations: [{ ruleId: 'imports/extension', file: PROBE }] });
-
-        expect(() => rewriteAliases(root)).toThrow(
-          /@\/platform\/shelf.{1,2} names a directory: an alias names one file/,
-        );
+        expect(compiled).toBe('');
+        expect(cli(root, 'check', '--rule', 'imports/extension', '--json').json()).toMatchObject({ ok: true });
+        runIn(root, { command: process.execPath, args: [NATIVE_COMPILER, '-p', 'tsconfig.build.json'] });
+        expect(() => rewriteAliases(root)).not.toThrow();
 
         fs.rmSync(path.join(root, 'src/platform/shelf'), { recursive: true });
         fs.rmSync(path.join(root, 'dist/src/platform/shelf'), { recursive: true });

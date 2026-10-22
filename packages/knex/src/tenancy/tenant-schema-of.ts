@@ -1,5 +1,5 @@
 import { isTenantId } from '@ddd-ts-kit/kernel';
-import { InvalidTenantIdentifierError } from './invalid-tenant-identifier-error.js';
+import { InvalidTenantIdentifierError } from './invalid-tenant-identifier-error';
 
 /** The longest identifier PostgreSQL keeps whole: a longer one is truncated, and two tenants could meet. */
 const LONGEST_IDENTIFIER = 63;

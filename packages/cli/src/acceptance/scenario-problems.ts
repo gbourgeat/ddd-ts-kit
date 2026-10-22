@@ -1,5 +1,5 @@
-import type { AcceptanceProblem } from './acceptance-problem.js';
-import type { Scenario } from './scenario.js';
+import type { AcceptanceProblem } from './acceptance-problem';
+import type { Scenario } from './scenario';
 
 /** What a scenario needs to be judged: the rows of slices.md, those done, the criteria of its story. */
 export interface ScenarioContext {

@@ -1,4 +1,4 @@
-import type { StateMachineFacts } from './state-machine-facts.js';
+import type { StateMachineFacts } from './state-machine-facts';
 
 /**
  * The diagram of each state machine of a context, as Mermaid `stateDiagram-v2`: the text

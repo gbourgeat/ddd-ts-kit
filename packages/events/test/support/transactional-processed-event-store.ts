@@ -1,5 +1,5 @@
 import type { ProcessedEventStore } from '@ddd-ts-kit/kernel';
-import type { TransactionalMemory } from './transactional-memory.js';
+import type { TransactionalMemory } from './transactional-memory';
 
 /** Writes on the current transaction, as a SQL adapter does: no way to take a mark back. */
 export class TransactionalProcessedEventStore implements ProcessedEventStore {

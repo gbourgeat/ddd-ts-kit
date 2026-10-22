@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { readJobs } from '../src/docs/read-jobs.js';
-import { readStateMachines } from '../src/docs/read-state-machines.js';
-import { Workspace } from '../src/workspace/index.js';
-import { tempDir, write } from './helpers.js';
+import { readJobs } from '../src/docs/read-jobs';
+import { readStateMachines } from '../src/docs/read-state-machines';
+import { Workspace } from '../src/workspace';
+import { tempDir, write } from './helpers';
 
 const BILLING = 'src/contexts/billing';
 const MACHINES = `${BILLING}/domain/state-machines`;

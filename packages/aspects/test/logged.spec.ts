@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryLogger } from '@ddd-ts-kit/kernel';
-import { AspectRuntimeError, compose, logged } from '../src/index.js';
-import { createAspectFakes, withAspectRuntime } from '../src/testing.js';
-import { lasting } from './support/lasting.js';
-import { PairNotQuoted } from './support/pair-not-quoted.js';
-import { QuoteGateway } from './support/quote-gateway.js';
-import { SECRETS } from './support/secrets.js';
-import { Unreachable } from './support/unreachable.js';
+import { AspectRuntimeError, compose, logged } from '../src';
+import { createAspectFakes, withAspectRuntime } from '../src/testing';
+import { lasting } from './support/lasting';
+import { PairNotQuoted } from './support/pair-not-quoted';
+import { QuoteGateway } from './support/quote-gateway';
+import { SECRETS } from './support/secrets';
+import { Unreachable } from './support/unreachable';
 
 describe('logged', () => {
   it('writes a start and a success entry with class, method, kind, context and duration', async () => {

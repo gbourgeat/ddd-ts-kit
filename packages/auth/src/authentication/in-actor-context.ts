@@ -1,5 +1,5 @@
 import type { ActorContext } from '@ddd-ts-kit/kernel';
-import { actorOf } from './actor-of.js';
+import { actorOf } from './actor-of';
 
 interface WithPrincipal {
   readonly context: { readonly principal?: unknown };

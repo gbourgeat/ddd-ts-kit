@@ -1,12 +1,12 @@
-import { eventSourcedClasses } from '../event-sourcing/event-sourced-classes.js';
-import { isApplyMethod } from '../event-sourcing/is-apply-method.js';
-import { stateWrites } from '../event-sourcing/state-writes.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import type { ClassShape } from '../structure/class-shape.js';
-import type { MethodShape } from '../structure/method-shape.js';
-import { perFile } from '../support/per-file.js';
+import { eventSourcedClasses } from '../event-sourcing/event-sourced-classes';
+import { isApplyMethod } from '../event-sourcing/is-apply-method';
+import { stateWrites } from '../event-sourcing/state-writes';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import type { ClassShape } from '../structure/class-shape';
+import type { MethodShape } from '../structure/method-shape';
+import { perFile } from '../support/per-file';
 
 const RECORD = /(?<![\w$.])this\s*\.\s*record\s*\(/g;
 

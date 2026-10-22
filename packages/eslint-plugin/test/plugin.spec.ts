@@ -2,9 +2,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import plugin, { dddTsKit, rules, standardRules, VERSION } from '../src/index.js';
-import { docsOf } from '../src/support/rule/docs-of.js';
-import { eslintName } from '../src/support/rule/define-rule.js';
+import plugin, { dddTsKit, rules, standardRules, VERSION } from '../src';
+import { docsOf } from '../src/support/rule/docs-of';
+import { eslintName } from '../src/support/rule/define-rule';
 
 const read = (file: string): string => fs.readFileSync(new URL(file, import.meta.url), 'utf8');
 const names = Object.keys(rules);

@@ -1,6 +1,6 @@
 import { errorReportOf } from '@ddd-ts-kit/kernel';
 import { afterEach, describe, expect, it } from 'vitest';
-import { aTracker, type Tracker } from './support/a-tracker.js';
+import { aTracker, type Tracker } from './support/a-tracker';
 
 let tracker: Tracker | undefined;
 

@@ -1,11 +1,11 @@
-import { candidatesOf } from './candidates-of.js';
-import type { Citing } from './citing.js';
-import type { Evidence } from './evidence.js';
-import { lineTime } from './line-time.js';
-import { removalNaming } from './removal-naming.js';
-import { removedByOf } from './removed-by-of.js';
-import { sameStemNames } from './same-stem-names.js';
-import type { Judgement } from './stale-citation.js';
+import { candidatesOf } from './candidates-of';
+import type { Citing } from './citing';
+import type { Evidence } from './evidence';
+import { lineTime } from './line-time';
+import { removalNaming } from './removal-naming';
+import { removedByOf } from './removed-by-of';
+import { sameStemNames } from './same-stem-names';
+import type { Judgement } from './stale-citation';
 
 const PLANNED: Judgement = { state: 'planned', candidates: [] };
 

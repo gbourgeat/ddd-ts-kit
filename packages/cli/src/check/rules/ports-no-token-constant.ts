@@ -1,11 +1,11 @@
 import path from 'node:path';
-import { bindingCalls } from '../declarations/binding-calls.js';
-import { dependencyLists } from '../declarations/dependency-lists.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { perFile } from '../support/per-file.js';
-import { escapeRegExp } from '../text/escape-reg-exp.js';
+import { bindingCalls } from '../declarations/binding-calls';
+import { dependencyLists } from '../declarations/dependency-lists';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { perFile } from '../support/per-file';
+import { escapeRegExp } from '../text/escape-reg-exp';
 
 const UPPER_SNAKE = /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$/;
 const TOKEN_CALL = /(?<![\w$.])token\s*(?:<[^<>()]*(?:<[^<>()]*>[^<>()]*)*>)?\s*\(/g;

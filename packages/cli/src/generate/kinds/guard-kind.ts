@@ -1,11 +1,11 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { CliError } from '../../cli-error.js';
-import { emit } from '../emit.js';
-import type { Kind } from '../kind.js';
-import { label } from '../label.js';
-import { named } from '../named.js';
-import { openScope } from '../open-scope.js';
-import { vars } from '../vars.js';
+import { CONFIG_FILE } from '../../config';
+import { CliError } from '../../cli-error';
+import { emit } from '../emit';
+import type { Kind } from '../kind';
+import { label } from '../label';
+import { named } from '../named';
+import { openScope } from '../open-scope';
+import { vars } from '../vars';
 
 export const guardKind: Kind = {
   name: 'guard',

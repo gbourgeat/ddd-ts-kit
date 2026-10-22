@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, tempDir, write } from './helpers.js';
-import { commitFiles } from './support/commit-files.js';
-import { git } from './support/git.js';
-import { jsonAt } from './support/json-at.js';
+import { cli, tempDir, write } from './helpers';
+import { commitFiles } from './support/commit-files';
+import { git } from './support/git';
+import { jsonAt } from './support/json-at';
 
 const CONFIG = JSON.stringify({
   contexts: {

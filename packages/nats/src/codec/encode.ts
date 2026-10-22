@@ -6,8 +6,8 @@ import {
   EVENT_VERSION_HEADER,
   TENANT_HEADER,
   TRACEPARENT_HEADER,
-} from './headers.js';
-import type { Publication } from './publication.js';
+} from './headers';
+import type { Publication } from './publication';
 
 /**
  * The body is the whole envelope as JSON, so any NATS client can consume it. The headers

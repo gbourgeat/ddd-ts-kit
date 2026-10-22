@@ -1,14 +1,14 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { CONTEXT_DOC_HEADINGS } from '../canonical/context-doc-headings.js';
-import { aggregate } from './aggregate.js';
-import { config } from './config.js';
-import { contextDoc } from './context-doc.js';
-import { errorsRoute as route } from './errors-route.js';
-import type { Fixture } from './fixture.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { SAMPLES } from './samples.js';
-import { source } from './source.js';
+import { CONFIG_FILE } from '../../config';
+import { CONTEXT_DOC_HEADINGS } from '../canonical/context-doc-headings';
+import { aggregate } from './aggregate';
+import { config } from './config';
+import { contextDoc } from './context-doc';
+import { errorsRoute as route } from './errors-route';
+import type { Fixture } from './fixture';
+import { PATHS } from './paths';
+import { project } from './project';
+import { SAMPLES } from './samples';
+import { source } from './source';
 
 const { BILLING, ROUTE } = PATHS;
 const NAMED = { [CONFIG_FILE]: config({ stack: { refusals: 'named' } }) };

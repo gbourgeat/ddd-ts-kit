@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, EXPLICIT_STACK, read, scaffoldEverything, tempDir, walk } from './helpers.js';
+import { cli, EXPLICIT_STACK, read, scaffoldEverything, tempDir, walk } from './helpers';
 
 const BILLING = 'src/contexts/billing';
 const SHIPPING = 'src/contexts/shipping';
@@ -67,7 +67,7 @@ describe('authorization and gateway kinds', () => {
     const adapter = read(root, `${SHIPPING}/infrastructure/external/in-process-invoice-status.gateway.ts`);
     const module = read(root, `${SHIPPING}/shipping.module.ts`);
 
-    expect(adapter).toContain("from '@/contexts/billing/published-language/index'");
+    expect(adapter).toContain("from '@/contexts/billing/published-language'");
     expect(adapter).toContain('TODO(platform): when billing runs as its own service');
 
     expect(read(root, `${BILLING}/published-language/invoice-status.contract.ts`)).toContain(

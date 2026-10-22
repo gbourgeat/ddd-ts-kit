@@ -1,5 +1,5 @@
-import { DomainError } from '../../domain/errors/domain-error.js';
-import type { CriteriaViolation } from './criteria-violation.js';
+import { DomainError } from '../../domain/errors/domain-error';
+import type { CriteriaViolation } from './criteria-violation';
 
 export const INVALID_CRITERIA = 'INVALID_CRITERIA';
 

@@ -1,11 +1,11 @@
 import path from 'node:path';
-import type { Config } from '../config/index.js';
-import { isRecord } from '../config/values/is-record.js';
-import type { Workspace } from '../workspace/index.js';
-import { clientPackageName } from './client-package-name.js';
-import { CLIENTS_DIRECTORY } from './clients-directory.js';
-import { contractDocuments } from './contract-documents.js';
-import type { PlannedClient } from './planned-client.js';
+import type { Config } from '../config';
+import { isRecord } from '../config/values/is-record';
+import type { Workspace } from '../workspace';
+import { clientPackageName } from './client-package-name';
+import { CLIENTS_DIRECTORY } from './clients-directory';
+import { contractDocuments } from './contract-documents';
+import type { PlannedClient } from './planned-client';
 
 /** One client per document of the contract, named by "sdk.name"; none while the config asks for no client. */
 export function plannedClients(ws: Workspace, config: Config): PlannedClient[] {

@@ -1,15 +1,15 @@
-import { toName } from '../naming/index.js';
-import type { ConceptErrorClass } from './concept-error-class.js';
-import type { LegacyError } from './legacy-error.js';
-import { legacyMove } from './legacy-move.js';
-import type { MigrationDraft } from './migration-draft.js';
-import type { NamedMove } from './named-move.js';
-import type { NamedPlan } from './named-plan.js';
-import { ownFactory } from './own-factory.js';
-import { pathFromContexts } from './path-from-contexts.js';
-import type { PlannedRefusal } from './planned-refusal.js';
-import type { RefusalSources } from './propose-named-plan.js';
-import { renderFactory } from './render-factory.js';
+import { toName } from '../naming';
+import type { ConceptErrorClass } from './concept-error-class';
+import type { LegacyError } from './legacy-error';
+import { legacyMove } from './legacy-move';
+import type { MigrationDraft } from './migration-draft';
+import type { NamedMove } from './named-move';
+import type { NamedPlan } from './named-plan';
+import { ownFactory } from './own-factory';
+import { pathFromContexts } from './path-from-contexts';
+import type { PlannedRefusal } from './planned-refusal';
+import type { RefusalSources } from './propose-named-plan';
+import { renderFactory } from './render-factory';
 
 const IMPORT = /^import [^;]+;\n/gm;
 

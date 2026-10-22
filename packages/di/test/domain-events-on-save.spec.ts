@@ -9,9 +9,9 @@ import {
   kernelModule,
   type Application,
   type BindingAspect,
-} from '../src/index.js';
-import { TransactionalJournal } from './support/fakes/transactional-journal.js';
-import { TransactionalUnitOfWork } from './support/fakes/transactional-unit-of-work.js';
+} from '../src';
+import { TransactionalJournal } from './support/fakes/transactional-journal';
+import { TransactionalUnitOfWork } from './support/fakes/transactional-unit-of-work';
 import {
   JournalLoanRepository,
   Loan,
@@ -19,7 +19,7 @@ import {
   LoanRepository,
   OpenLoan,
   OpenLoanHandler,
-} from './fixtures/contexts/lending/lending.js';
+} from './fixtures/contexts/lending/lending';
 
 const lending = [OpenLoanHandler, LoanOpenedPublisher, JournalLoanRepository];
 

@@ -6,10 +6,10 @@ import {
   JobInterruptedError,
   JobTimeoutError,
   reportFailedBackgroundJobs,
-} from '../src/index.js';
-import { aQueueBench } from './support/a-queue-bench.js';
-import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections.js';
-import { CompileStatementsJob } from './support/statements-job.js';
+} from '../src';
+import { aQueueBench } from './support/a-queue-bench';
+import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections';
+import { CompileStatementsJob } from './support/statements-job';
 
 refuseUnhandledRejections();
 

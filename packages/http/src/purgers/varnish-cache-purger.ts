@@ -1,7 +1,7 @@
 import type { CachePurger } from '@ddd-ts-kit/kernel';
-import { chunksOf } from './chunks-of.js';
-import { sendPurge } from './send-purge.js';
-import { VarnishPurgeMode } from './varnish-purge-mode.js';
+import { chunksOf } from './chunks-of';
+import { sendPurge } from './send-purge';
+import { VarnishPurgeMode } from './varnish-purge-mode';
 
 export interface VarnishCachePurgerOptions {
   /** Varnish as the application reaches it, `http://varnish:80`. */

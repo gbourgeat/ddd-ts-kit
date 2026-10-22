@@ -1,16 +1,16 @@
 import path from 'node:path';
-import type { ExportVerdict } from '../exports/export-verdict.js';
-import { judgeExports } from '../exports/judge-exports.js';
-import { kebabCaseOf } from '../exports/kebab-case-of.js';
-import { matchesGlob } from '../exports/matches-glob.js';
-import { namedAfter } from '../exports/named-after.js';
-import type { Finding } from '../model/finding.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { isGeneratedContextFile } from '../support/is-generated-context-file.js';
-import { perFile } from '../support/per-file.js';
-import { braceDepthAt } from '../text/brace-depth-at.js';
+import type { ExportVerdict } from '../exports/export-verdict';
+import { judgeExports } from '../exports/judge-exports';
+import { kebabCaseOf } from '../exports/kebab-case-of';
+import { matchesGlob } from '../exports/matches-glob';
+import { namedAfter } from '../exports/named-after';
+import type { Finding } from '../model/finding';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { isGeneratedContextFile } from '../support/is-generated-context-file';
+import { perFile } from '../support/per-file';
+import { braceDepthAt } from '../text/brace-depth-at';
 
 const STATEMENT =
   /^(?:export\b|import\b|(?:declare\s+)?(?:abstract\s+)?(?:async\s+)?(?:const|let|var|function|class|interface|type|enum)\s)/gm;

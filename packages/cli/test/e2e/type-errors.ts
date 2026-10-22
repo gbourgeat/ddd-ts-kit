@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { read, REPO_ROOT, write } from '../helpers.js';
+import { read, REPO_ROOT, write } from '../helpers';
 
 /** The compiler the generated scripts call by path: `npx tsc` would run the older one, kept for the tools. */
 export const NATIVE_COMPILER = path.join(REPO_ROOT, 'node_modules/@typescript/native/bin/tsc');

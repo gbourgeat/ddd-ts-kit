@@ -1,6 +1,6 @@
-import { declaredRoleOf } from './declared-role-of.js';
-import { laidOutCalls } from './injection/laid-out-calls.js';
-import type { RenderedInjections } from './injection/rendered-injections.js';
+import { declaredRoleOf } from './declared-role-of';
+import { laidOutCalls } from './injection/laid-out-calls';
+import type { RenderedInjections } from './injection/rendered-injections';
 
 const NOTHING: RenderedInjections = { imports: [], calls: [] };
 

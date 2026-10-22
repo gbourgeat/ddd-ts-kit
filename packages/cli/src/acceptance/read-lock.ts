@@ -1,7 +1,7 @@
-import { isRecord } from '../config/values/is-record.js';
-import type { Workspace } from '../workspace/index.js';
-import type { AcceptanceLock, Amendment, LockedScenario, LockedTest } from './acceptance-lock.js';
-import { lockFileOf } from './lock-file-of.js';
+import { isRecord } from '../config/values/is-record';
+import type { Workspace } from '../workspace';
+import type { AcceptanceLock, Amendment, LockedScenario, LockedTest } from './acceptance-lock';
+import { lockFileOf } from './lock-file-of';
 
 /** The lock of the story; undefined when it has none or the file is not a lock. */
 export function readLock(ws: Workspace, story: string): AcceptanceLock | undefined {

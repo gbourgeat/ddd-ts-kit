@@ -1,6 +1,6 @@
-import { fitDeclaration } from './fit-declaration.js';
-import { fitStatement } from './fit-statement.js';
-import { LINE_WIDTH } from './line-width.js';
+import { fitDeclaration } from './fit-declaration';
+import { fitStatement } from './fit-statement';
+import { LINE_WIDTH } from './line-width';
 
 /**
  * Lays out the lines of a rendered source file that the names of the project made longer than

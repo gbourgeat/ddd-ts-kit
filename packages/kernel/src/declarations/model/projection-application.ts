@@ -1,6 +1,6 @@
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { DomainEventType } from './domain-event-type.js';
-import type { EventContract } from './event-contract.js';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { DomainEventType } from './domain-event-type';
+import type { EventContract } from './event-contract';
 
 export interface IntegrationEventApplication {
   readonly kind: 'integration';

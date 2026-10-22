@@ -1,4 +1,4 @@
-import type { ClientDocument } from './client-document.js';
+import type { ClientDocument } from './client-document';
 
 /** The first line of every file of a client generated from a document. */
 export function generatedHeader(document: ClientDocument): string {

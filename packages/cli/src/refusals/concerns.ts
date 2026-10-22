@@ -1,4 +1,4 @@
-import type { Config } from '../config/index.js';
+import type { Config } from '../config';
 
 /** A move, by its context and the path of the file it leaves from the contexts directory, without extension. */
 interface Leaving {

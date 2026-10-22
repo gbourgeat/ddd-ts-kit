@@ -1,6 +1,6 @@
-import type { Fixture } from './fixture.js';
-import { project } from './project.js';
-import { source } from './source.js';
+import type { Fixture } from './fixture';
+import { project } from './project';
+import { source } from './source';
 
 const LOAD_CONFIG = 'src/platform/config/load-config.ts';
 const APP_CONFIG = 'src/platform/config/app-config.ts';

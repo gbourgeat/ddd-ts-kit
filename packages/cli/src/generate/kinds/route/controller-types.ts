@@ -1,6 +1,6 @@
-import type { Scope } from '../../scope.js';
-import type { ControllerPlan } from './controller-plan.js';
-import { sharesSchemas } from './shares-schemas.js';
+import type { Scope } from '../../scope';
+import type { ControllerPlan } from './controller-plan';
+import { sharesSchemas } from './shares-schemas';
 
 const WITH_BODY = ['POST', 'PUT', 'PATCH'];
 

@@ -5,8 +5,8 @@ import {
   type DomainEventDispatcher,
   type DomainEventPhase,
 } from '@ddd-ts-kit/kernel';
-import { admitDependencySpan } from '../local-root/admit-dependency-span.js';
-import { inSpan } from '../span/in-span.js';
+import { admitDependencySpan } from '../local-root/admit-dependency-span';
+import { inSpan } from '../span/in-span';
 
 /**
  * Decorates a dispatcher: each event is dispatched in a span `domain-event <name>`, and the

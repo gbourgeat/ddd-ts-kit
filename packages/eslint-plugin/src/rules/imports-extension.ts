@@ -1,9 +1,9 @@
 import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
-import { aliasRoots } from '../project/alias-roots.js';
-import { isJudged } from '../project/is-judged.js';
-import { specifierSuffix } from '../project/specifier-suffix.js';
-import { importListener } from '../support/imports/import-listener.js';
-import { defineRule } from '../support/rule/define-rule.js';
+import { aliasRoots } from '../project/alias-roots';
+import { isJudged } from '../project/is-judged';
+import { specifierSuffix } from '../project/specifier-suffix';
+import { importListener } from '../support/imports/import-listener';
+import { defineRule } from '../support/rule/define-rule';
 
 type MessageId = 'unexpected' | 'missing';
 

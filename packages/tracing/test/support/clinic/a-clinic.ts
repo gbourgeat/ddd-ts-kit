@@ -36,9 +36,9 @@ import {
 } from '@ddd-ts-kit/http';
 import { reportFailedRuns } from '@ddd-ts-kit/scheduling';
 import { ManualJobScheduler } from '@ddd-ts-kit/scheduling/testing';
-import { traceApplication, tracedPublisher, tracedRoutes, type ConsumerTrace } from '../../../src/index.js';
-import { analyticsModule, notificationModule } from './downstream.js';
-import { BookAppointment, GetAppointment, schedulingModule } from './scheduling.js';
+import { traceApplication, tracedPublisher, tracedRoutes, type ConsumerTrace } from '../../../src';
+import { analyticsModule, notificationModule } from './downstream';
+import { BookAppointment, GetAppointment, schedulingModule } from './scheduling';
 
 export interface ClinicOptions {
   /** Default: the in-memory bus of the kernel. */

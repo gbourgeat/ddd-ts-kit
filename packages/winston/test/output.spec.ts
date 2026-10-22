@@ -4,9 +4,9 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LOG_LEVELS } from '@ddd-ts-kit/kernel';
 import winston from 'winston';
-import { WinstonLogger, createWinstonLogger } from '../src/index.js';
-import { MemorySink } from './support/memory-sink.js';
-import { memoryTransport } from './support/memory-transport.js';
+import { WinstonLogger, createWinstonLogger } from '../src';
+import { MemorySink } from './support/memory-sink';
+import { memoryTransport } from './support/memory-transport';
 
 const ANSI_COLOURS = new RegExp(`${String.fromCharCode(27)}\\[\\d+m`, 'g');
 

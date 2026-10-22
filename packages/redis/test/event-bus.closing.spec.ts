@@ -1,9 +1,9 @@
 import { Redis } from 'ioredis';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { PLACED, anEvent, recorder, unique } from './support/events.js';
-import { REAL_SERVER, SERVER_URL } from './support/server.js';
-import { Server } from './support/streams.js';
-import { eventually, pause } from './support/waiting.js';
+import { PLACED, anEvent, recorder, unique } from './support/events';
+import { REAL_SERVER, SERVER_URL } from './support/server';
+import { Server } from './support/streams';
+import { eventually, pause } from './support/waiting';
 
 describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, closing', { timeout: 30_000 }, () => {
   let server: Server;

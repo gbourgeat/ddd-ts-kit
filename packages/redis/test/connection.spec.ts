@@ -1,7 +1,7 @@
 import { Redis } from 'ioredis';
 import { afterAll, describe, expect, it } from 'vitest';
-import { FAIL_FAST, connectRedis, redisHealth } from '../src/index.js';
-import { REAL_SERVER, SERVER_URL, closeAll, connect, connectToNothing } from './support/server.js';
+import { FAIL_FAST, connectRedis, redisHealth } from '../src';
+import { REAL_SERVER, SERVER_URL, closeAll, connect, connectToNothing } from './support/server';
 
 afterAll(closeAll);
 

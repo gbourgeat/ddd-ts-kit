@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { runCheck } from '../engine/run-check.js';
-import type { Violation } from '../model/violation.js';
-import { loadProject } from '../project/load-project.js';
-import type { Fixture } from './fixture.js';
+import { runCheck } from '../engine/run-check';
+import type { Violation } from '../model/violation';
+import { loadProject } from '../project/load-project';
+import type { Fixture } from './fixture';
 
 export interface FixtureOutcome {
   readonly fixture: Fixture;

@@ -1,8 +1,8 @@
-import { toName } from '../naming/index.js';
-import type { PortFact } from './context-description.js';
-import type { ContextSources } from './context-sources.js';
-import type { AdapterFact } from './read-adapters.js';
-import { roleFilesOf } from '../model-modules/index.js';
+import { toName } from '../naming';
+import type { PortFact } from './context-description';
+import type { ContextSources } from './context-sources';
+import type { AdapterFact } from './read-adapters';
+import { roleFilesOf } from '../model-modules';
 
 const FOLDERS = [
   ['domain/repositories', '.repository.ts'],

@@ -1,6 +1,6 @@
 import type { Readable } from 'node:stream';
 import type { ExecutionContext } from '@ddd-ts-kit/kernel';
-import type { RawHeaders } from './raw-headers.js';
+import type { RawHeaders } from './raw-headers';
 
 export interface RequestContext {
   readonly requestId: string;

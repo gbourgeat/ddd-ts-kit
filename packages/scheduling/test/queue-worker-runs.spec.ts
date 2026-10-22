@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { executionContext, type Actor, type ExecutionContext } from '@ddd-ts-kit/kernel';
-import { AttemptsExhaustedError, UnknownBackgroundJobError } from '../src/index.js';
-import { aQueueBench } from './support/a-queue-bench.js';
-import { CompileStatementsJob } from './support/statements-job.js';
+import { AttemptsExhaustedError, UnknownBackgroundJobError } from '../src';
+import { aQueueBench } from './support/a-queue-bench';
+import { CompileStatementsJob } from './support/statements-job';
 
 const ACCOUNTANT: Actor = { id: 'user-7', type: 'user', tenantId: 'tenant-3', roles: [], attributes: {} };
 

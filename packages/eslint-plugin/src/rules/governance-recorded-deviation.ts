@@ -1,5 +1,5 @@
 import type { TSESTree } from '@typescript-eslint/utils';
-import { defineRule } from '../support/rule/define-rule.js';
+import { defineRule } from '../support/rule/define-rule';
 
 interface Directive {
   /** `eslint-disable`, `eslint-disable-line`, `eslint-disable-next-line` or their `ddd-ts-kit-` twins. */

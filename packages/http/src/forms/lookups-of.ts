@@ -1,5 +1,5 @@
-import type { Route } from '../route/route.js';
-import type { FieldLookup } from './field-lookup.js';
+import type { Route } from '../route/route';
+import type { FieldLookup } from './field-lookup';
 
 /** The `GET` routes a field may take its options from, by operation id. */
 export function lookupsOf(routes: readonly Route[]): ReadonlyMap<string, FieldLookup> {

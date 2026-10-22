@@ -10,7 +10,7 @@ import {
   appointmentExpiredV1,
   appointmentMarkedNoShowV1,
   appointmentRescheduledV1,
-} from '@/contexts/scheduling/published-language/index';
+} from '@/contexts/scheduling/published-language';
 import { OutcomeRegister } from '@/contexts/analytics/application/ports/outcome-register.port';
 import * as analyticsDeclarations from '@/contexts/analytics/analytics.declarations';
 import { anAppointmentFact } from '@/contexts/analytics/test/builders/appointment-fact.builder';

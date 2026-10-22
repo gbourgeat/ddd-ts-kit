@@ -1,6 +1,6 @@
-import type { MeasuresSummary } from './measures-summary.js';
-import { median } from './median.js';
-import type { StoryMeasures } from './story-measures.js';
+import type { MeasuresSummary } from './measures-summary';
+import { median } from './median';
+import type { StoryMeasures } from './story-measures';
 
 /** The medians and the shares of the period, over the stories measured. */
 export function measuresSummaryOf(stories: readonly StoryMeasures[]): MeasuresSummary {

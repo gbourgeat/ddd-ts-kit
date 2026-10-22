@@ -1,4 +1,4 @@
-import type { StoredProcess } from '../process/stored-process.js';
+import type { StoredProcess } from '../process/stored-process';
 
 /** Where the instances of the process managers keep their state between two steps. */
 export abstract class ProcessStore {

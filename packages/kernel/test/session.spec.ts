@@ -9,7 +9,7 @@ import {
   systemSession,
   type Actor,
   type Session,
-} from '../src/index.js';
+} from '../src';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: ['author'], attributes: {} };
 const clock = new FixedClock(new Date('2026-03-01T10:00:00.000Z'));

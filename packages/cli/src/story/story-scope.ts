@@ -1,5 +1,5 @@
-import type { Slice } from '../progress/slice.js';
-import { storyOf } from './story-of.js';
+import type { Slice } from '../progress/slice';
+import { storyOf } from './story-of';
 
 /** A story or a milestone as its rows draw it. */
 export interface StoryScope {

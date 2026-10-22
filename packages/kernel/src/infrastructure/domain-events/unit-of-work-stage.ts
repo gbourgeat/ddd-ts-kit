@@ -1,4 +1,4 @@
-import { unitOfWorkScope } from './unit-of-work-scope.js';
+import { unitOfWorkScope } from './unit-of-work-scope';
 
 /**
  * Where the caller stands in a unit of work: `open` while its work runs, `before-commit` while

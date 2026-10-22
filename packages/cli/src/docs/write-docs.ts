@@ -1,16 +1,16 @@
-import type { Config } from '../config/index.js';
-import { CliError } from '../cli-error.js';
-import { refreshBarrels, type SingleFile } from '../generate/refresh-barrels.js';
-import { replaceRegion } from '../markers/index.js';
-import { readTemplate, renderTemplate } from '../templating/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { brokerStrategy } from './broker-strategy.js';
-import { CONTEXT_MAP } from './context-map-file.js';
-import { contextMapLines } from './context-map-lines.js';
-import { readContexts } from './read-contexts.js';
-import { refreshContextDoc } from './refresh-context-doc.js';
-import { writeCodeOwners } from './write-code-owners.js';
-import { writeOpenApiDocuments } from './write-open-api-documents.js';
+import type { Config } from '../config';
+import { CliError } from '../cli-error';
+import { refreshBarrels, type SingleFile } from '../generate/refresh-barrels';
+import { replaceRegion } from '../markers';
+import { readTemplate, renderTemplate } from '../templating';
+import type { Workspace } from '../workspace';
+import { brokerStrategy } from './broker-strategy';
+import { CONTEXT_MAP } from './context-map-file';
+import { contextMapLines } from './context-map-lines';
+import { readContexts } from './read-contexts';
+import { refreshContextDoc } from './refresh-context-doc';
+import { writeCodeOwners } from './write-code-owners';
+import { writeOpenApiDocuments } from './write-open-api-documents';
 
 const INTEGRATION_README = 'docs/integration/README.md';
 

@@ -1,6 +1,6 @@
 import { type CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { appointmentConfirmedV1, type AppointmentConfirmedV1 } from '@/contexts/scheduling/published-language/index';
+import { appointmentConfirmedV1, type AppointmentConfirmedV1 } from '@/contexts/scheduling/published-language';
 import { SendNotificationCommand } from '@/contexts/notification/application/commands/send-notification/send-notification.command';
 import { NotificationKindName } from '@/contexts/notification/domain/vocabularies/notification-kind-name.vocabulary';
 

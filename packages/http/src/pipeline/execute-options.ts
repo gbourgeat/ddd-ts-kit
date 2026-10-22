@@ -1,14 +1,14 @@
 import type { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
-import type { CacheTagHeader } from '../cache/cache-tag-header.js';
-import type { ErrorMapper } from '../error/error-mapper.js';
-import type { FieldDecider } from '../field-access/field-decider.js';
-import type { Representations } from '../representation/representations.js';
-import type { TenantResolver } from '../tenancy/tenant-resolver.js';
-import type { ErrorContext } from './error-context.js';
-import type { GuardRefusal } from './guard-refusal.js';
-import type { RawRequest } from './raw-request.js';
-import type { RouteAround } from './route-around.js';
-import type { UploadReader } from './upload-reader.js';
+import type { CacheTagHeader } from '../cache/cache-tag-header';
+import type { ErrorMapper } from '../error/error-mapper';
+import type { FieldDecider } from '../field-access/field-decider';
+import type { Representations } from '../representation/representations';
+import type { TenantResolver } from '../tenancy/tenant-resolver';
+import type { ErrorContext } from './error-context';
+import type { GuardRefusal } from './guard-refusal';
+import type { RawRequest } from './raw-request';
+import type { RouteAround } from './route-around';
+import type { UploadReader } from './upload-reader';
 
 export interface ExecuteOptions {
   readonly errorMapper?: ErrorMapper;

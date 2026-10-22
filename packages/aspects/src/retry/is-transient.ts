@@ -1,6 +1,6 @@
-import { BulkheadFullError } from '../errors/bulkhead-full-error.js';
-import { CircuitOpenError } from '../errors/circuit-open-error.js';
-import { isBusinessRefusal } from '../errors/is-business-refusal.js';
+import { BulkheadFullError } from '../errors/bulkhead-full-error';
+import { CircuitOpenError } from '../errors/circuit-open-error';
+import { isBusinessRefusal } from '../errors/is-business-refusal';
 
 /**
  * Worth another attempt: anything but a business refusal and the two refusals of this package

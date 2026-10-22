@@ -1,8 +1,8 @@
 import type { Redis } from 'ioredis';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { RedisLock } from '../src/index.js';
-import { lockContract } from '../src/testing.js';
-import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing, sleep } from './support/server.js';
+import { RedisLock } from '../src';
+import { lockContract } from '../src/testing';
+import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing, sleep } from './support/server';
 
 const runner = { describe, it, expect, beforeEach };
 

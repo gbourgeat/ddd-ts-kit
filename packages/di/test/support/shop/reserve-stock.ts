@@ -1,5 +1,5 @@
 import type { Clock } from '@ddd-ts-kit/kernel';
-import type { Stock } from './stock.port.js';
+import type { Stock } from './stock.port';
 
 /** No decorator anywhere: the class only knows its ports. */
 export class ReserveStock {

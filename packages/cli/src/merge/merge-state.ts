@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { isRecord } from '../config/values/is-record.js';
-import { jsonObject } from '../init/json-object.js';
-import type { MergeReport } from './merge-report.js';
+import { isRecord } from '../config/values/is-record';
+import { jsonObject } from '../init/json-object';
+import type { MergeReport } from './merge-report';
 
 /** Written while a merge of merge-trunk is in progress, next to the scope of a worker; never committed. */
 const MERGE_STATE_FILE = '.ddd-ts-kit/merge.json';

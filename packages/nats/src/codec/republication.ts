@@ -1,6 +1,6 @@
 import { headers as emptyHeaders, type MsgHdrs } from '@nats-io/transport-node';
-import { MESSAGE_ID_HEADER } from './headers.js';
-import type { Publication } from './publication.js';
+import { MESSAGE_ID_HEADER } from './headers';
+import type { Publication } from './publication';
 
 export interface Republished {
   readonly data: Uint8Array;

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { anonymousSession } from '@ddd-ts-kit/kernel';
 import type { JWTPayload } from 'jose';
-import { JwtAuthenticator } from '../src/jwt.js';
-import { AUDIENCE, ISSUER, authenticator, token, verifying } from './support/tokens.js';
+import { JwtAuthenticator } from '../src/jwt';
+import { AUDIENCE, ISSUER, authenticator, token, verifying } from './support/tokens';
 
 declare module '@ddd-ts-kit/kernel' {
   interface SessionExtensions {

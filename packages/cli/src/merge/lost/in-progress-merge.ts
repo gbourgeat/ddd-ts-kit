@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { runGit } from '../../commit/run-git.js';
-import { commitOf } from './commit-of.js';
-import { mergeBaseOf } from './merge-base-of.js';
-import type { MergeToVerify } from './merge-to-verify.js';
+import { runGit } from '../../commit/run-git';
+import { commitOf } from './commit-of';
+import { mergeBaseOf } from './merge-base-of';
+import type { MergeToVerify } from './merge-to-verify';
 
 /**
  * The merge in progress, when MERGE_HEAD is there: ours is HEAD, theirs MERGE_HEAD, the result

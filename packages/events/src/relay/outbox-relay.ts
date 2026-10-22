@@ -1,16 +1,16 @@
 import type { Clock, IntegrationEvent, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
-import type { OutboxRecord } from '../outbox/outbox-record.js';
-import type { OutboxStore } from '../outbox/outbox-store.js';
-import type { ClaimWindow } from './claim-window.js';
-import { errorCode } from './error-code.js';
-import type { EventKey } from './event-key.js';
-import type { HoldUntil } from './hold-until.js';
-import { KeyOrder } from './key-order.js';
-import type { OutboxBackoff } from './outbox-backoff.js';
-import type { OutboxOrdering } from './outbox-ordering.js';
-import type { OutboxRelayFailure } from './outbox-relay-failure.js';
-import type { RecordGroup } from './record-group.js';
-import type { RelaySignal } from './relay-signal.js';
+import type { OutboxRecord } from '../outbox/outbox-record';
+import type { OutboxStore } from '../outbox/outbox-store';
+import type { ClaimWindow } from './claim-window';
+import { errorCode } from './error-code';
+import type { EventKey } from './event-key';
+import type { HoldUntil } from './hold-until';
+import { KeyOrder } from './key-order';
+import type { OutboxBackoff } from './outbox-backoff';
+import type { OutboxOrdering } from './outbox-ordering';
+import type { OutboxRelayFailure } from './outbox-relay-failure';
+import type { RecordGroup } from './record-group';
+import type { RelaySignal } from './relay-signal';
 
 export interface OutboxRelayOptions {
   readonly store: OutboxStore;

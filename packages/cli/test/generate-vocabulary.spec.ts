@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, exists, read, tempDir } from './helpers.js';
-import { failure } from './reports.js';
+import { cli, exists, read, tempDir } from './helpers';
+import { failure } from './reports';
 
 const STATUS = 'src/contexts/billing/domain/vocabularies/invoice-status.vocabulary.ts';
 

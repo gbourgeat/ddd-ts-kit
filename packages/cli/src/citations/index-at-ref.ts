@@ -1,8 +1,8 @@
-import { runGit } from '../commit/run-git.js';
-import { linesOf } from './lines-of.js';
-import type { Declaration } from './declaration.js';
-import type { NameIndex } from './name-index.js';
-import { nameIndexOf } from './name-index-of.js';
+import { runGit } from '../commit/run-git';
+import { linesOf } from './lines-of';
+import type { Declaration } from './declaration';
+import type { NameIndex } from './name-index';
+import { nameIndexOf } from './name-index-of';
 
 /** A declaration of a PascalCase name, in the extended expressions git grep reads on every platform. */
 const DECLARATION = '(class|interface|type|enum|function|const)[[:space:]]+[A-Z][A-Za-z0-9_$]*';

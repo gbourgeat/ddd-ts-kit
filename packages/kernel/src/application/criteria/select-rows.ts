@@ -1,7 +1,7 @@
-import type { SearchedRows } from '../read-model/searched-rows.js';
-import { compareValues } from './compare-values.js';
-import type { CriteriaPlan } from './criteria-plan.js';
-import { holds } from './holds.js';
+import type { SearchedRows } from '../read-model/searched-rows';
+import { compareValues } from './compare-values';
+import type { CriteriaPlan } from './criteria-plan';
+import { holds } from './holds';
 
 /** What the query of a plan answers over rows held in memory: the rows to fetch, in order, and the total. */
 export function selectRows<Row extends object>(plan: CriteriaPlan, rows: readonly Row[]): Required<SearchedRows<Row>> {

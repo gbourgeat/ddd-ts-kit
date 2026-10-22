@@ -1,4 +1,4 @@
-import { BILLING, SAMPLE_CONFIG } from './rule-tester.js';
+import { BILLING, SAMPLE_CONFIG } from './rule-tester';
 
 export const DECLARED = { ...SAMPLE_CONFIG, stack: { style: 'declared', assembly: 'barrel' } };
 export const EXPLICIT = { ...SAMPLE_CONFIG, stack: { style: 'explicit' } };

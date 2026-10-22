@@ -1,5 +1,5 @@
 import { Clock, Metrics, type MetricLabels } from '@ddd-ts-kit/kernel';
-import type { Resolve } from '../wiring/resolve.js';
+import type { Resolve } from '../wiring/resolve';
 
 export interface ProjectedEvent {
   /** Name of the projection. */

@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  ConcurrencyError,
-  InMemoryProcessStore,
-  UnreadableProcessStateError,
-  type StoredProcess,
-} from '../src/index.js';
+import { ConcurrencyError, InMemoryProcessStore, UnreadableProcessStateError, type StoredProcess } from '../src';
 
 const instance = (version: number): StoredProcess => ({
   name: 'billing.dunning',

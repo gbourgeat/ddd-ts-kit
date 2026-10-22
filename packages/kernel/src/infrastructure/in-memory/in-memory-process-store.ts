@@ -1,6 +1,6 @@
-import type { ProcessStore } from '../../application/ports/process-store.js';
-import type { StoredProcess } from '../../application/process/stored-process.js';
-import { ConcurrencyError } from '../../domain/errors/concurrency-error.js';
+import type { ProcessStore } from '../../application/ports/process-store';
+import type { StoredProcess } from '../../application/process/stored-process';
+import { ConcurrencyError } from '../../domain/errors/concurrency-error';
 
 /** The instances of the process managers in the memory of the process, as JSON: for tests and one process. Not transactional. */
 export class InMemoryProcessStore implements ProcessStore {

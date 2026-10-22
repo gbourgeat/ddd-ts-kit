@@ -1,12 +1,12 @@
-import type { Finding } from '../model/finding.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { perFile } from '../support/per-file.js';
-import { isModelFile } from '../values/is-model-file.js';
-import { isValueObjectFile } from '../values/is-value-object-file.js';
-import { plainValueFunctions } from '../values/plain-value-functions.js';
-import { valueObjectFileFindings } from '../values/value-object-file-findings.js';
+import type { Finding } from '../model/finding';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { perFile } from '../support/per-file';
+import { isModelFile } from '../values/is-model-file';
+import { isValueObjectFile } from '../values/is-value-object-file';
+import { plainValueFunctions } from '../values/plain-value-functions';
+import { valueObjectFileFindings } from '../values/value-object-file-findings';
 
 export const domainValueObjectClass: Rule = {
   id: 'domain/value-object-class',

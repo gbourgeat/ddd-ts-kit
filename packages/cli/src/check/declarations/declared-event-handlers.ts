@@ -1,7 +1,7 @@
-import type { Scan } from '../scan/scan.js';
-import { argumentsOf } from './arguments-of.js';
-import { classesOf } from './classes-of.js';
-import { optionOf, type OptionValue } from './option-of.js';
+import type { Scan } from '../scan/scan';
+import { argumentsOf } from './arguments-of';
+import { classesOf } from './classes-of';
+import { optionOf, type OptionValue } from './option-of';
 
 export interface DeclaredEventHandler {
   readonly className: string;

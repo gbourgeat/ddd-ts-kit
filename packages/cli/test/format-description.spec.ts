@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ContextDescription, RouteFact } from '../src/describe/context-description.js';
-import { formatDescription } from '../src/describe/format-description.js';
+import type { ContextDescription, RouteFact } from '../src/describe/context-description';
+import { formatDescription } from '../src/describe/format-description';
 
 const ROUTE: RouteFact = {
   method: 'POST',

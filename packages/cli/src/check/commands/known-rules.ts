@@ -1,6 +1,6 @@
-import { CliError } from '../../cli-error.js';
-import { DELEGATED_RULES } from '../catalogue/delegated-rules.js';
-import { RULE_IDS } from '../catalogue/rule-ids.js';
+import { CliError } from '../../cli-error';
+import { DELEGATED_RULES } from '../catalogue/delegated-rules';
+import { RULE_IDS } from '../catalogue/rule-ids';
 
 /** The ids given, when this checker runs them all; an id it does not run is a mistake of the caller. */
 export function knownRules(ids: readonly string[]): readonly string[] {

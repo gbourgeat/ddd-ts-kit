@@ -1,5 +1,5 @@
-import type { JobProgress } from './job-progress.js';
-import type { QueuedJobStatus } from './queued-job-status.js';
+import type { JobProgress } from './job-progress';
+import type { QueuedJobStatus } from './queued-job-status';
 
 /** A background job as the queue holds it, for a screen or an operator. Never its payload. */
 export interface QueuedJob {

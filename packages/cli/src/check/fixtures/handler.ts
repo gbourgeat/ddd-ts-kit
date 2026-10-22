@@ -1,6 +1,6 @@
-import type { FixtureFiles } from './fixture-files.js';
-import { PATHS } from './paths.js';
-import { SAMPLES } from './samples.js';
+import type { FixtureFiles } from './fixture-files';
+import { PATHS } from './paths';
+import { SAMPLES } from './samples';
 
 /** The issue-invoice handler with the spec the other rules ask for. */
 export function handler(body: string): FixtureFiles {

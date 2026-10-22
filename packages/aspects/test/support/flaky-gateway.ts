@@ -1,5 +1,5 @@
-import { SlowGateway } from './slow-gateway.js';
-import { Unreachable } from './unreachable.js';
+import { SlowGateway } from './slow-gateway';
+import { Unreachable } from './unreachable';
 
 /** A slow gateway with one method that always fails and one that always answers. */
 export class FlakyGateway extends SlowGateway {

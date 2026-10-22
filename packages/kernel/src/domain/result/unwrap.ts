@@ -1,4 +1,4 @@
-import type { Result } from './result.js';
+import type { Result } from './result';
 
 export function unwrap<T, E>(result: Result<T, E>): T {
   if (result.ok) {

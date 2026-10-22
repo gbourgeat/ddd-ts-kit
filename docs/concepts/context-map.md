@@ -189,7 +189,7 @@ import what the upstream published for its consumers, and nothing else:
 
 ```ts
 // src/contexts/availability/application/...
-import { appointmentBookedV1, type AppointmentBookedV1 } from '@/contexts/appointments/published-language/index';
+import { appointmentBookedV1, type AppointmentBookedV1 } from '@/contexts/appointments/published-language';
 ```
 
 For a synchronous need, the downstream declares a port in its own words, and a gateway adapter

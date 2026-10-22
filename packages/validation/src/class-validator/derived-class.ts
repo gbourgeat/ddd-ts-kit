@@ -1,7 +1,7 @@
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
-import type { DtoClass } from './dto-class.js';
-import { copyClassMetadata } from './copy-class-metadata.js';
-import { declaredProperties } from './declared-properties.js';
+import type { DtoClass } from './dto-class';
+import { copyClassMetadata } from './copy-class-metadata';
+import { declaredProperties } from './declared-properties';
 
 /**
  * A new class, named `name`, that validates and documents the properties of `base` that `keeps`

@@ -1,5 +1,5 @@
 import type { QueuedJob } from '@ddd-ts-kit/kernel';
-import type { StoredJob } from './stored-job.js';
+import type { StoredJob } from './stored-job';
 
 /** What a stored job shows of itself: never its payload, its checkpoint or its actor. */
 export function queuedJobOf(job: StoredJob): QueuedJob {

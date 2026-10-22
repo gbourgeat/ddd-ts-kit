@@ -1,11 +1,11 @@
 import { cacheKey, type Cache, type CacheKey } from '@ddd-ts-kit/kernel';
-import type { AdviceFactory } from '../aspect/advice-factory.js';
-import type { AspectKind } from '../aspect/aspect-kind.js';
-import type { Aspect } from '../aspect/aspect.js';
-import { defineAspect } from '../aspect/define-aspect.js';
-import type { JoinPoint } from '../aspect/join-point.js';
-import { AspectNotAllowedError } from '../errors/aspect-not-allowed-error.js';
-import { cacheOr } from '../runtime/cache-or.js';
+import type { AdviceFactory } from '../aspect/advice-factory';
+import type { AspectKind } from '../aspect/aspect-kind';
+import type { Aspect } from '../aspect/aspect';
+import { defineAspect } from '../aspect/define-aspect';
+import type { JoinPoint } from '../aspect/join-point';
+import { AspectNotAllowedError } from '../errors/aspect-not-allowed-error';
+import { cacheOr } from '../runtime/cache-or';
 
 export interface CachedOptions {
   /**

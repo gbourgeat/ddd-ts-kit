@@ -1,4 +1,4 @@
-import { movedSpecifier, type Relocation } from './moved-specifier.js';
+import { movedSpecifier, type Relocation } from './moved-specifier';
 
 const SPECIFIER =
   /(\bfrom\s*|\bimport\s*\(\s*|\bimport\s+|\brequire\s*\(\s*|\bvi\.mock\s*\(\s*|\bnew URL\(\s*)(['"])([^'"\n]+)\2/g;

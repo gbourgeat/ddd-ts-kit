@@ -1,8 +1,8 @@
-import { matchingBracket } from '../text/matching-bracket.js';
-import { splitTopLevel } from '../text/split-top-level.js';
-import { identifierAt } from './identifier-at.js';
-import type { NamedBinding } from './named-binding.js';
-import { topLevelSeparator } from './top-level-separator.js';
+import { matchingBracket } from '../text/matching-bracket';
+import { splitTopLevel } from '../text/split-top-level';
+import { identifierAt } from './identifier-at';
+import type { NamedBinding } from './named-binding';
+import { topLevelSeparator } from './top-level-separator';
 
 /**
  * The names a destructuring pattern binds, the one opening at `open` (`{` or `[`): the alias of

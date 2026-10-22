@@ -9,7 +9,7 @@ import {
   type IntegrationEvent,
 } from '@ddd-ts-kit/kernel';
 import { defineContextModule, type ContextModule, type EventContract } from '@ddd-ts-kit/di';
-import { traceLogFields } from '../../../src/index.js';
+import { traceLogFields } from '../../../src';
 
 interface Booked {
   readonly appointmentId: string;

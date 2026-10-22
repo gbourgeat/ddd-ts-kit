@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { cli, exists, read, walk } from './helpers.js';
-import { initFailure } from './support/init-failure.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
-import { readJson } from './support/read-json.js';
-import { textsAt } from './support/texts-at.js';
-import { KIT_RANGE } from './support/kit-range.js';
+import { cli, exists, read, walk } from './helpers';
+import { initFailure } from './support/init-failure';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
+import { readJson } from './support/read-json';
+import { textsAt } from './support/texts-at';
+import { KIT_RANGE } from './support/kit-range';
 
 const SENTRY = ['--errors', 'sentry'];
 

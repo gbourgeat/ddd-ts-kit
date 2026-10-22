@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
-import { auditColumns, tenantColumn } from '../../../../../src/index.js';
-import { BILLING } from './billing-schema.js';
+import { auditColumns, tenantColumn } from '../../../../../src';
+import { BILLING } from './billing-schema';
 
 /** What the migration of the context would contain. */
 export async function createInvoicesTable(knex: Knex): Promise<void> {

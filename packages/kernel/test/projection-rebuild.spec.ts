@@ -15,7 +15,7 @@ import {
   type ProjectionRebuildReport,
   type ReadModelSource,
   type StampedRow,
-} from '../src/index.js';
+} from '../src';
 
 interface RoomRow {
   readonly id: string;

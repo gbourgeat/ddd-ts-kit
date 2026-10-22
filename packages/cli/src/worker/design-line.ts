@@ -1,4 +1,4 @@
-import type { BriefedSlice } from './briefed-slice.js';
+import type { BriefedSlice } from './briefed-slice';
 
 /** Under a row of the briefing, the documents that hold part of its design; nothing when the slices file holds it all. */
 export function designLine({ design }: BriefedSlice): string[] {

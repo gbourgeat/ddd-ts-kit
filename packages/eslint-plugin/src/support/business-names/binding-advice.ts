@@ -1,4 +1,4 @@
-import type { BindingKind } from './binding-kind.js';
+import type { BindingKind } from './binding-kind';
 
 /** What the message asks for: the name the code already gives to the concept, or how to find one. */
 export function bindingAdvice(kind: BindingKind, suggestion: string | undefined): string {

@@ -1,6 +1,6 @@
-import type { LintedFile } from '../project/linted-file.js';
-import { importListener } from '../support/imports/import-listener.js';
-import { defineRule } from '../support/rule/define-rule.js';
+import type { LintedFile } from '../project/linted-file';
+import { importListener } from '../support/imports/import-listener';
+import { defineRule } from '../support/rule/define-rule';
 
 /** The packages a schema of the HTTP contract is written with: whoever imports one declares a schema. */
 const VALIDATION_PACKAGES: readonly string[] = [

@@ -17,8 +17,8 @@ import type {
   SequentialIdGenerator,
 } from '@ddd-ts-kit/kernel';
 import type { StoredJobQueue } from '@ddd-ts-kit/scheduling';
-import type { TestBackgroundJobs } from './test-background-jobs.js';
-import type { TestJobs } from './test-jobs.js';
+import type { TestBackgroundJobs } from './test-background-jobs';
+import type { TestJobs } from './test-jobs';
 
 export interface TestKernel {
   readonly commandBus: InMemoryCommandBus;

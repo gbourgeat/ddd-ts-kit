@@ -1,5 +1,5 @@
-import type { Actor } from '../actor/actor.js';
-import type { ExecutionContext } from './execution-context.js';
+import type { Actor } from '../actor/actor';
+import type { ExecutionContext } from './execution-context';
 
 /**
  * The same unit of work seen as another actor. The session goes: it was the previous actor's.

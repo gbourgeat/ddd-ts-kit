@@ -1,6 +1,6 @@
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import type { ReadableSpan } from '@opentelemetry/sdk-trace-base';
-import type { SpanNode } from './span-node.js';
+import type { SpanNode } from './span-node';
 
 const KINDS: Readonly<Record<SpanKind, SpanNode['kind']>> = {
   [SpanKind.INTERNAL]: 'INTERNAL',

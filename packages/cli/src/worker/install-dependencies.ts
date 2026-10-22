@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
-import type { Stack } from '../config/index.js';
-import { inDialect } from '../package-manager/in-dialect.js';
+import type { Stack } from '../config';
+import { inDialect } from '../package-manager/in-dialect';
 
 /** Enough of a failed install to read its cause, little enough to keep a note short. */
 const TAIL_LINES = 15;

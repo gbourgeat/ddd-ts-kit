@@ -1,5 +1,5 @@
-import { InvalidCredentialError } from '../errors/invalid-credential-error.js';
-import type { HeaderValues } from './header-values.js';
+import { InvalidCredentialError } from '../errors/invalid-credential-error';
+import type { HeaderValues } from './header-values';
 
 const BEARER = /^Bearer +([A-Za-z0-9._~+/-]+=*)$/i;
 

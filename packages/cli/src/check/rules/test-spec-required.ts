@@ -1,11 +1,11 @@
 import path from 'node:path';
-import { roleOf } from '../canonical/role-of.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inContext } from '../support/in-context.js';
-import { isAbstractBase } from '../support/is-abstract-base.js';
-import { perFile } from '../support/per-file.js';
-import { roleDirectory } from '../support/role-directory.js';
+import { roleOf } from '../canonical/role-of';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { inContext } from '../support/in-context';
+import { isAbstractBase } from '../support/is-abstract-base';
+import { perFile } from '../support/per-file';
+import { roleDirectory } from '../support/role-directory';
 
 const SPEC = /\.(?:spec|test)\.ts$/;
 

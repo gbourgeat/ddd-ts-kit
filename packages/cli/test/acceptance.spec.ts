@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, exists, read, write } from './helpers.js';
-import { LOCK, SLICES, SPEC, SPECIFICATION, STORY, WRITTEN, BUILT } from './support/acceptance-story.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
+import { cli, exists, read, write } from './helpers';
+import { LOCK, SLICES, SPEC, SPECIFICATION, STORY, WRITTEN, BUILT } from './support/acceptance-story';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
 
 // One project for the whole file: each block takes the story where the previous one left it.
 let root: string;

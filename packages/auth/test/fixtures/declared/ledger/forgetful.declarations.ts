@@ -1,8 +1,8 @@
 import { injected } from '@ddd-ts-kit/kernel/declarations';
-import { ForgetfulReverseEntryHandler } from './application/commands/forgetful-reverse-entry/forgetful-reverse-entry.handler.js';
-import { EntryRepository } from './domain/repositories/entry.repository.js';
+import { ForgetfulReverseEntryHandler } from './application/commands/forgetful-reverse-entry/forgetful-reverse-entry.handler';
+import { EntryRepository } from './domain/repositories/entry.repository';
 
-export * from './application/commands/forgetful-reverse-entry/forgetful-reverse-entry.command.js';
-export * from './application/commands/forgetful-reverse-entry/forgetful-reverse-entry.handler.js';
+export * from './application/commands/forgetful-reverse-entry/forgetful-reverse-entry.command';
+export * from './application/commands/forgetful-reverse-entry/forgetful-reverse-entry.handler';
 
 injected(ForgetfulReverseEntryHandler, [EntryRepository]);

@@ -1,5 +1,5 @@
-import type { DomainEvent } from '../domain-event.js';
-import type { AggregateSnapshot } from './aggregate-snapshot.js';
+import type { DomainEvent } from '../domain-event';
+import type { AggregateSnapshot } from './aggregate-snapshot';
 
 /** What an event-sourced aggregate is rebuilt from: its stream, read from a snapshot when one was taken. */
 export interface AggregateHistory<E extends DomainEvent, S = never> {

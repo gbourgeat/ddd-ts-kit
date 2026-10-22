@@ -1,6 +1,6 @@
-export { listTemplates } from './list-templates.js';
-export { readTemplate } from './read-template.js';
-export { render } from './render.js';
-export type { RenderContext, RenderValue } from './render-context.js';
-export { renderTemplate } from './render-template.js';
-export { templateExists } from './template-exists.js';
+export { listTemplates } from './list-templates';
+export { readTemplate } from './read-template';
+export { render } from './render';
+export type { RenderContext, RenderValue } from './render-context';
+export { renderTemplate } from './render-template';
+export { templateExists } from './template-exists';

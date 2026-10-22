@@ -1,10 +1,10 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { className } from '../support/classes/class-name.js';
-import { constructorOf } from '../support/classes/constructor-of.js';
-import { exportedClasses } from '../support/classes/exported-classes.js';
-import { declarationReader, type Declaration } from '../support/declarations/declaration-reader.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
-import { parameterTypeName } from '../support/types/parameter-type-name.js';
+import { className } from '../support/classes/class-name';
+import { constructorOf } from '../support/classes/constructor-of';
+import { exportedClasses } from '../support/classes/exported-classes';
+import { declarationReader, type Declaration } from '../support/declarations/declaration-reader';
+import { defineRule, type Report } from '../support/rule/define-rule';
+import { parameterTypeName } from '../support/types/parameter-type-name';
 
 type MessageId = 'foreignDependency' | 'wrongBus' | 'missingBus';
 

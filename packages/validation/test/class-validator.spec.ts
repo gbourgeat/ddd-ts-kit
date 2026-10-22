@@ -12,7 +12,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { classSchema } from '../src/class-validator.js';
+import { classSchema } from '../src/class-validator';
 
 class OrderItemDto {
   @IsString()

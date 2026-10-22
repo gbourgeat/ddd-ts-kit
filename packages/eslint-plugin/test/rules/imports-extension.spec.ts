@@ -1,5 +1,5 @@
-import { importsExtension } from '../../src/rules/imports-extension.js';
-import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { importsExtension } from '../../src/rules/imports-extension';
+import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
 const AGGREGATE = '@/contexts/billing/domain/aggregates/invoice.aggregate';

@@ -1,4 +1,4 @@
-import type { Sort } from './sort.js';
+import type { Sort } from './sort';
 
 export interface OffsetPageRequest<Field extends string = string> {
   readonly kind: 'offset';

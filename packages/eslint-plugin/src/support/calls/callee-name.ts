@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { propertyName } from '../globals/property-name.js';
+import { propertyName } from '../globals/property-name';
 
 /** The name a call is made under: `resolve` for `resolve(x)`, `bind` for `builder.bind(x)`. */
 export function calleeName(node: TSESTree.CallExpression | TSESTree.NewExpression): string | undefined {

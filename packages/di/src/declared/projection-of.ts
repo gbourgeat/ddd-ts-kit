@@ -4,13 +4,13 @@ import type {
   IntegrationEventApplication,
   ProjectionDeclaration,
 } from '@ddd-ts-kit/kernel/declarations';
-import { observedProjection } from '../consumer/observed-projection.js';
-import { receive } from '../consumer/receive.js';
-import type { Declarer } from '../wiring/declarer.js';
-import type { DomainEventHandling } from '../wiring/domain-event-handling.js';
-import type { EventConsumption } from '../wiring/event-consumption.js';
-import type { ProjectionRegistration } from '../wiring/projection-registration.js';
-import { applyThrough } from './apply-through.js';
+import { observedProjection } from '../consumer/observed-projection';
+import { receive } from '../consumer/receive';
+import type { Declarer } from '../wiring/declarer';
+import type { DomainEventHandling } from '../wiring/domain-event-handling';
+import type { EventConsumption } from '../wiring/event-consumption';
+import type { ProjectionRegistration } from '../wiring/projection-registration';
+import { applyThrough } from './apply-through';
 
 interface Declared {
   readonly declaration: ProjectionDeclaration;

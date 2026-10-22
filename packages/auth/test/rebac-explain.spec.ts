@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { anonymousActor } from '@ddd-ts-kit/kernel';
-import { traceText } from '../src/rebac.js';
-import { ada, authorizerWith, docsPermissions, document, fact } from './support/documents.js';
+import { traceText } from '../src/rebac';
+import { ada, authorizerWith, docsPermissions, document, fact } from './support/documents';
 
 const edit = docsPermissions['document.edit'];
 const view = docsPermissions['document.view'];

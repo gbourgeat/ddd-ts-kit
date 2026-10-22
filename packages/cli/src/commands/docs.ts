@@ -1,19 +1,19 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { readConfig, type Config } from '../config/index.js';
-import { barrelFile, generatedDrift, singleFileNotice } from '../declared/index.js';
-import { readContexts } from '../docs/read-contexts.js';
-import { writeDocs } from '../docs/write-docs.js';
-import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file.js';
-import { formerlyRecordedStoredEvents } from '../docs/formerly-recorded-stored-events.js';
-import { unrecordedStoredEvents } from '../docs/unrecorded-stored-events.js';
-import { writeStoredEventsLock } from '../docs/write-stored-events-lock.js';
-import { stopIgnoringValidation } from '../generate/stop-ignoring-validation.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
-import type { Io } from './io.js';
-import { printReport } from './print-report.js';
+import { readConfig, type Config } from '../config';
+import { barrelFile, generatedDrift, singleFileNotice } from '../declared';
+import { readContexts } from '../docs/read-contexts';
+import { writeDocs } from '../docs/write-docs';
+import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file';
+import { formerlyRecordedStoredEvents } from '../docs/formerly-recorded-stored-events';
+import { unrecordedStoredEvents } from '../docs/unrecorded-stored-events';
+import { writeStoredEventsLock } from '../docs/write-stored-events-lock';
+import { stopIgnoringValidation } from '../generate/stop-ignoring-validation';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import type { Command } from './command';
+import type { Io } from './io';
+import { printReport } from './print-report';
 
 export const docsCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {

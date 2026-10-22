@@ -1,16 +1,16 @@
 import path from 'node:path';
-import { isDeclarationsFile, routesFile } from '../../declared/index.js';
-import { roleOf } from '../canonical/role-of.js';
-import type { ContextLocation } from '../model/context-location.js';
-import type { Flaw } from '../model/flaw.js';
-import type { Rule } from '../model/rule.js';
-import { inContext } from '../support/in-context.js';
-import { isDeclaredStyle } from '../support/is-declared-style.js';
-import { KEBAB_SEGMENT } from '../support/kebab-segment.js';
-import { pathInContext } from '../support/path-in-context.js';
-import { perFile } from '../support/per-file.js';
-import { roleDirectory } from '../support/role-directory.js';
-import { WITHOUT_MODULE } from '../../model-modules/index.js';
+import { isDeclarationsFile, routesFile } from '../../declared';
+import { roleOf } from '../canonical/role-of';
+import type { ContextLocation } from '../model/context-location';
+import type { Flaw } from '../model/flaw';
+import type { Rule } from '../model/rule';
+import { inContext } from '../support/in-context';
+import { isDeclaredStyle } from '../support/is-declared-style';
+import { KEBAB_SEGMENT } from '../support/kebab-segment';
+import { pathInContext } from '../support/path-in-context';
+import { perFile } from '../support/per-file';
+import { roleDirectory } from '../support/role-directory';
+import { WITHOUT_MODULE } from '../../model-modules';
 
 export const namingSuffix: Rule = {
   id: 'naming/suffix',

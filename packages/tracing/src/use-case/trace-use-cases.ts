@@ -1,9 +1,9 @@
 import { SpanKind, type Span } from '@opentelemetry/api';
 import { isUnexpectedError, type BusMiddleware } from '@ddd-ts-kit/kernel';
-import { inSpan } from '../span/in-span.js';
-import { markSpanFailed } from '../span/mark-span-failed.js';
-import { OUTCOME_ATTRIBUTE } from '../span/outcome-attribute.js';
-import { refusalCode } from '../span/refusal-code.js';
+import { inSpan } from '../span/in-span';
+import { markSpanFailed } from '../span/mark-span-failed';
+import { OUTCOME_ATTRIBUTE } from '../span/outcome-attribute';
+import { refusalCode } from '../span/refusal-code';
 
 /**
  * The bus middleware that makes one span per use case: `command PlaceOrder`, `query GetOrder`,

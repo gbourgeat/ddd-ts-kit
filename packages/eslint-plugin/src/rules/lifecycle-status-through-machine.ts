@@ -1,8 +1,8 @@
 import { AST_NODE_TYPES, ASTUtils, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../project/linted-file.js';
-import { className } from '../support/classes/class-name.js';
-import { enclosingMember } from '../support/classes/enclosing-member.js';
-import { defineRule } from '../support/rule/define-rule.js';
+import type { LintedFile } from '../project/linted-file';
+import { className } from '../support/classes/class-name';
+import { enclosingMember } from '../support/classes/enclosing-member';
+import { defineRule } from '../support/rule/define-rule';
 
 const STATUS = 'status';
 const MACHINE_FILE = /(?:^|\/)state-machines\/[^/]+\.state-machine(?:\.[cm]?[jt]s)?$/;

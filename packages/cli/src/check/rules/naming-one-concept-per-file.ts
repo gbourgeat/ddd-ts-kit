@@ -1,16 +1,16 @@
-import { declaredRoleOf } from '../../declared/index.js';
-import { roleOf } from '../canonical/role-of.js';
-import { classesOf } from '../declarations/classes-of.js';
-import type { Finding } from '../model/finding.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inContext } from '../support/in-context.js';
-import { isDeclaredStyle } from '../support/is-declared-style.js';
-import { pathInContext } from '../support/path-in-context.js';
-import { perFile } from '../support/per-file.js';
-import { roleDirectory } from '../support/role-directory.js';
-import { WITHOUT_MODULE } from '../../model-modules/index.js';
+import { declaredRoleOf } from '../../declared';
+import { roleOf } from '../canonical/role-of';
+import { classesOf } from '../declarations/classes-of';
+import type { Finding } from '../model/finding';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { inContext } from '../support/in-context';
+import { isDeclaredStyle } from '../support/is-declared-style';
+import { pathInContext } from '../support/path-in-context';
+import { perFile } from '../support/per-file';
+import { roleDirectory } from '../support/role-directory';
+import { WITHOUT_MODULE } from '../../model-modules';
 
 const EXPORTED_CLASS = /(?<![\w$.])export\s+(?:default\s+)?(?:abstract\s+)?class\s+([\w$]+)/g;
 

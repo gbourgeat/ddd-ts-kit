@@ -1,8 +1,8 @@
-import type { CheckpointStore } from '../../../application/ports/checkpoint-store.js';
-import { ConcurrencyError } from '../../../domain/errors/concurrency-error.js';
-import type { SqlRun } from '../../read-model/sql-run.js';
-import type { EventStoreTablesOptions } from './event-store-tables-options.js';
-import { qualifiedTable } from './qualified-table.js';
+import type { CheckpointStore } from '../../../application/ports/checkpoint-store';
+import { ConcurrencyError } from '../../../domain/errors/concurrency-error';
+import type { SqlRun } from '../../read-model/sql-run';
+import type { EventStoreTablesOptions } from './event-store-tables-options';
+import { qualifiedTable } from './qualified-table';
 
 /** The checkpoints of the subscriptions on PostgreSQL, moved by a statement guarded by the position it starts from. */
 export class PostgresCheckpointStore implements CheckpointStore {

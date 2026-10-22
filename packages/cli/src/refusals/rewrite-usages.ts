@@ -1,6 +1,6 @@
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
-import type { Move } from './move.js';
-import { replaceInCode, type CodeMatch } from './replace-in-code.js';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
+import type { Move } from './move';
+import { replaceInCode, type CodeMatch } from './replace-in-code';
 
 const NOT_IN_A_NAME = '(?<![\\w$.])';
 

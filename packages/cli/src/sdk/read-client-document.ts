@@ -1,11 +1,11 @@
-import { isRecord } from '../config/values/is-record.js';
-import type { ClientDocument } from './client-document.js';
-import type { ClientOperation } from './client-operation.js';
-import type { DocumentSource } from './document-source.js';
-import { readOperation } from './read-operation.js';
-import { readSchemes } from './read-schemes.js';
-import { operationNames } from './operation-names.js';
-import { schemaTypeName } from './schema-type-name.js';
+import { isRecord } from '../config/values/is-record';
+import type { ClientDocument } from './client-document';
+import type { ClientOperation } from './client-operation';
+import type { DocumentSource } from './document-source';
+import { readOperation } from './read-operation';
+import { readSchemes } from './read-schemes';
+import { operationNames } from './operation-names';
+import { schemaTypeName } from './schema-type-name';
 
 const METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
 

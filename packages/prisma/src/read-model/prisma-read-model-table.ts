@@ -8,13 +8,13 @@ import {
   type StampedRow,
   type TouchedKey,
 } from '@ddd-ts-kit/kernel';
-import type { PrismaRawQueries } from '../outbox/prisma-raw-queries.js';
-import type { PrismaContext } from '../unit-of-work/prisma-context.js';
-import { criteriaToPrisma } from './criteria-to-prisma.js';
-import { PrismaModelRows } from './prisma-model-rows.js';
-import type { PrismaReadModelOptions } from './prisma-read-model-options.js';
-import { PrismaTableRows } from './prisma-table-rows.js';
-import { RowMapper } from './row.mapper.js';
+import type { PrismaRawQueries } from '../outbox/prisma-raw-queries';
+import type { PrismaContext } from '../unit-of-work/prisma-context';
+import { criteriaToPrisma } from './criteria-to-prisma';
+import { PrismaModelRows } from './prisma-model-rows';
+import type { PrismaReadModelOptions } from './prisma-read-model-options';
+import { PrismaTableRows } from './prisma-table-rows';
+import { RowMapper } from './row.mapper';
 
 const KEPT = { deleted: false };
 

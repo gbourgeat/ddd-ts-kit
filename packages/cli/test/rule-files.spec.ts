@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { runCheck } from '../src/check/engine/run-check.js';
-import { loadProject } from '../src/check/project/load-project.js';
-import { projectWith, reported } from './rules-support.js';
+import { runCheck } from '../src/check/engine/run-check';
+import { loadProject } from '../src/check/project/load-project';
+import { projectWith, reported } from './rules-support';
 
 const LEGACY = 'src/platform/legacy/ledger-import.ts';
 const CURRENT = 'src/platform/ledger-export.ts';

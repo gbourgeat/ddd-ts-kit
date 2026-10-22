@@ -1,4 +1,4 @@
-import type { StateMachineDescription } from './state-machine-description.js';
+import type { StateMachineDescription } from './state-machine-description';
 
 /** The diagram of a state machine, as Mermaid `stateDiagram-v2`: what `CONTEXT.md` shows. */
 export function mermaidOfStateMachine(machine: StateMachineDescription): string {

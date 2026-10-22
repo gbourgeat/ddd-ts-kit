@@ -19,12 +19,12 @@ import {
   override,
   type Instrumentation,
   type WiringError,
-} from '../src/index.js';
-import { Twice, Twin } from './fixtures/contexts/projection-mistakes.js';
-import * as reporting from './fixtures/contexts/reporting/reporting.declarations.js';
-import { TransactionalJournal } from './support/fakes/transactional-journal.js';
-import { TransactionalProcessedEvents } from './support/fakes/transactional-processed-events.js';
-import { TransactionalUnitOfWork, type Transactional } from './support/fakes/transactional-unit-of-work.js';
+} from '../src';
+import { Twice, Twin } from './fixtures/contexts/projection-mistakes';
+import * as reporting from './fixtures/contexts/reporting/reporting.declarations';
+import { TransactionalJournal } from './support/fakes/transactional-journal';
+import { TransactionalProcessedEvents } from './support/fakes/transactional-processed-events';
+import { TransactionalUnitOfWork, type Transactional } from './support/fakes/transactional-unit-of-work';
 
 const { CustomerForgotten, CustomerOrders, CustomerOrdersProjection, InMemoryCustomerOrders, customerOrdersCriteria } =
   reporting;

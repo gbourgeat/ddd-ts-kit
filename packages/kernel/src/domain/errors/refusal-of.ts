@@ -1,4 +1,4 @@
-import type { DomainError } from './domain-error.js';
+import type { DomainError } from './domain-error';
 
 // A static member typed `any` (`Error.prepareStackTrace`) is not a factory.
 type Built<R> = 0 extends 1 & R ? never : R extends DomainError ? R : never;

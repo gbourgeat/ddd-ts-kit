@@ -9,7 +9,7 @@ import {
   type PracticeMemberAddedV1Payload,
   practiceOpenedV1,
   type PracticeOpenedV1Payload,
-} from '@/contexts/identity/published-language/index';
+} from '@/contexts/identity/published-language';
 import { expectAnswer } from '$test/e2e/support/expect-answer';
 import { expectRefusal } from '$test/e2e/support/expect-refusal';
 import type { Listed } from '$test/e2e/support/listed';

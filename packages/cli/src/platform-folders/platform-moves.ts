@@ -1,8 +1,8 @@
 import path from 'node:path';
-import type { Config } from '../config/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { FLAT_FILES } from './flat-files.js';
-import type { FolderMove } from './folder-move.js';
+import type { Config } from '../config';
+import type { Workspace } from '../workspace';
+import { FLAT_FILES } from './flat-files';
+import type { FolderMove } from './folder-move';
 
 /**
  * The files the kit wrote flat, each with its folder, and the files of the team placed by their

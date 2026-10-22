@@ -6,9 +6,9 @@ import {
   criteriaContractRows,
   type CriteriaContractRow,
 } from '@ddd-ts-kit/testing/contracts';
-import { TypeOrmReadModelStore, createTypeOrmUnitOfWork, criteriaToTypeOrm } from '../src/index.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
-import { contractRows } from './support/read-model/criteria-contract-rows.js';
+import { TypeOrmReadModelStore, createTypeOrmUnitOfWork, criteriaToTypeOrm } from '../src';
+import { createDatabase, type TestDatabase } from './support/database';
+import { contractRows } from './support/read-model/criteria-contract-rows';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

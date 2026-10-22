@@ -1,8 +1,8 @@
 import { executionContext, isSession, withActor, type FixedExecutionScope } from '@ddd-ts-kit/kernel';
-import type { Application } from '../application/application.js';
-import { delegatingApplications } from '../application/delegating-applications.js';
-import type { TestApplication } from './test-application.js';
-import type { TestKernel } from './test-kernel.js';
+import type { Application } from '../application/application';
+import { delegatingApplications } from '../application/delegating-applications';
+import type { TestApplication } from './test-application';
+import type { TestKernel } from './test-kernel';
 
 /**
  * The test application as an object of its own, in front of the application: it calls the

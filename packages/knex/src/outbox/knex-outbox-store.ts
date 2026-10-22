@@ -1,10 +1,10 @@
 import type { Knex } from 'knex';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import type { OutboxRecord, OutboxStats, OutboxStatus, OutboxStore } from '@ddd-ts-kit/events';
-import { dialectOf } from '../sql/dialect-of.js';
-import type { SqlDialect } from '../sql/sql-dialect.js';
-import type { KnexContext } from '../unit-of-work/knex-context.js';
-import { OUTBOX_TABLE } from './table-names.js';
+import { dialectOf } from '../sql/dialect-of';
+import type { SqlDialect } from '../sql/sql-dialect';
+import type { KnexContext } from '../unit-of-work/knex-context';
+import { OUTBOX_TABLE } from './table-names';
 
 /**
  * How concurrent relays share the pending records.

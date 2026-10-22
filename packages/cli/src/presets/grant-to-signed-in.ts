@@ -1,10 +1,10 @@
-import { specifierOf } from '../alias/index.js';
-import { insertInRegion } from '../markers/index.js';
-import type { Scope } from '../generate/scope.js';
-import { withImport } from '../generate/with-import.js';
-import { renderTemplate } from '../templating/index.js';
-import { withAuthorizerImport } from './with-authorizer-import.js';
-import { platformPath } from '../generate/platform-path.js';
+import { specifierOf } from '../alias';
+import { insertInRegion } from '../markers';
+import type { Scope } from '../generate/scope';
+import { withImport } from '../generate/with-import';
+import { renderTemplate } from '../templating';
+import { withAuthorizerImport } from './with-authorizer-import';
+import { platformPath } from '../generate/platform-path';
 
 const REGION = 'signed-in-grants';
 const WRAPPED = 'SignedInGrantsAuthorizer';

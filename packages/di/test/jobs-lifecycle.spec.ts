@@ -17,9 +17,9 @@ import {
   fake,
   kernelModule,
   override,
-} from '../src/index.js';
-import * as billing from './fixtures/contexts/billing/billing.declarations.js';
-import { RecordingJobScheduler } from './support/fakes/recording-job-scheduler.js';
+} from '../src';
+import * as billing from './fixtures/contexts/billing/billing.declarations';
+import { RecordingJobScheduler } from './support/fakes/recording-job-scheduler';
 
 const { CustomerDirectory, InvoiceRepository, IssueMonthlyInvoicesJob, InMemoryInvoiceRepository } = billing;
 const MONTHLY = 'billing.issue-monthly-invoices';

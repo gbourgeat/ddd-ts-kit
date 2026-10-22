@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CliError } from '../cli-error.js';
+import { CliError } from '../cli-error';
 
 /** The entry file of the drizzle-kit installed in the project, run by the same node: no shell, on every platform. */
 export function drizzleKitBin(root: string): string {

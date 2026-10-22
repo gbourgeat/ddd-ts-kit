@@ -1,4 +1,4 @@
-import { wordsOf } from './words-of.js';
+import { wordsOf } from './words-of';
 
 /**
  * The words of the fact an event names, after the name of its aggregate: `InvoiceIssued` of

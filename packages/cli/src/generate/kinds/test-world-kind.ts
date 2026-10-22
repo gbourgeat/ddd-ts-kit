@@ -1,11 +1,11 @@
-import { CliError } from '../../cli-error.js';
-import { toName } from '../../naming/index.js';
-import { emit } from '../emit.js';
-import type { Kind } from '../kind.js';
-import { openScope } from '../open-scope.js';
-import { vars } from '../vars.js';
-import { contextFakes } from './world/context-fakes.js';
-import { worldVars } from './world/world-vars.js';
+import { CliError } from '../../cli-error';
+import { toName } from '../../naming';
+import { emit } from '../emit';
+import type { Kind } from '../kind';
+import { openScope } from '../open-scope';
+import { vars } from '../vars';
+import { contextFakes } from './world/context-fakes';
+import { worldVars } from './world/world-vars';
 
 export const testWorldKind: Kind = {
   name: 'test-world',

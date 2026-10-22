@@ -13,8 +13,8 @@ import {
   type JobQueue,
   type QueuedJob,
 } from '@ddd-ts-kit/kernel';
-import { InvalidEnqueueError } from './errors/invalid-enqueue-error.js';
-import type { JobStore } from './store/job-store.js';
+import { InvalidEnqueueError } from './errors/invalid-enqueue-error';
+import type { JobStore } from './store/job-store';
 
 export interface StoredJobQueueOptions {
   readonly store: JobStore;

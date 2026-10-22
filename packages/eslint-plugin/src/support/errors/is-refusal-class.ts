@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
-import type { ClassNode } from '../classes/class-name.js';
+import type { ClassNode } from '../classes/class-name';
 
 /** A class that extends `DomainRefusal` of the kernel: one refusal, named after what is refused. */
 export function isRefusalClass(node: ClassNode): boolean {

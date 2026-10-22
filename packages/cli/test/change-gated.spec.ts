@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { CHANGE_GATED } from '../src/story/change-gated.js';
-import { REPO_ROOT } from './helpers.js';
+import { CHANGE_GATED } from '../src/story/change-gated';
+import { REPO_ROOT } from './helpers';
 
 const HOOK_TEMPLATE = path.join(REPO_ROOT, 'packages/cli/templates/init/hooks/change-reference.mjs');
 

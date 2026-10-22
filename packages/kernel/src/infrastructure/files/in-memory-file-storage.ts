@@ -1,20 +1,20 @@
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
-import type { FileContent } from '../../application/files/file-content.js';
-import { FileError } from '../../application/files/file-error.js';
-import { assertFileKey } from '../../application/files/assert-file-key.js';
-import type { FileMetadata } from '../../application/files/file-metadata.js';
-import type { FileSource } from '../../application/files/file-source.js';
-import type { ListedFile } from '../../application/files/listed-file.js';
-import { mediaTypeOf } from '../../application/files/media-type-of.js';
-import type { PutOptions } from '../../application/files/put-options.js';
-import type { StoredFile } from '../../application/files/stored-file.js';
-import type { Clock } from '../../application/ports/clock.js';
-import { SystemClock } from '../clock/system-clock.js';
-import { collect } from './collect.js';
-import { FileInspection } from './file-inspection.js';
-import type { SignedLinkOptions } from './signed-link-options.js';
-import { SelfSignedFileStorage } from './self-signed-file-storage.js';
+import type { FileContent } from '../../application/files/file-content';
+import { FileError } from '../../application/files/file-error';
+import { assertFileKey } from '../../application/files/assert-file-key';
+import type { FileMetadata } from '../../application/files/file-metadata';
+import type { FileSource } from '../../application/files/file-source';
+import type { ListedFile } from '../../application/files/listed-file';
+import { mediaTypeOf } from '../../application/files/media-type-of';
+import type { PutOptions } from '../../application/files/put-options';
+import type { StoredFile } from '../../application/files/stored-file';
+import type { Clock } from '../../application/ports/clock';
+import { SystemClock } from '../clock/system-clock';
+import { collect } from './collect';
+import { FileInspection } from './file-inspection';
+import type { SignedLinkOptions } from './signed-link-options';
+import { SelfSignedFileStorage } from './self-signed-file-storage';
 
 interface Held {
   readonly bytes: Buffer;

@@ -1,4 +1,4 @@
-import { withEntry } from './with-entry.js';
+import { withEntry } from './with-entry';
 
 /** Keys of knip.json that apply to the whole repository, whatever the workspace. */
 const ROOT_KEYS = new Set([

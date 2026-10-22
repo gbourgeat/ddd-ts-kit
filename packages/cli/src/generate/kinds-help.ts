@@ -1,5 +1,5 @@
-import type { Kind } from './kind.js';
-import { SHARED_WRITES } from './shared-writes.js';
+import type { Kind } from './kind';
+import { SHARED_WRITES } from './shared-writes';
 
 /** One kind as `generate --help --json` lists it. */
 export interface KindHelp {

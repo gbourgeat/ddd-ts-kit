@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { className } from '../support/classes/class-name.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import { hashPrivateFix } from '../support/hash-private-fix.js';
+import { className } from '../support/classes/class-name';
+import { defineRule } from '../support/rule/define-rule';
+import { hashPrivateFix } from '../support/hash-private-fix';
 
 export const cleanNoHashPrivate = defineRule<'hash'>({
   id: 'clean/no-hash-private',

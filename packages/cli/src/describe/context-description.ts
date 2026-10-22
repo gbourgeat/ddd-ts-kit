@@ -1,8 +1,8 @@
-import type { Upstream } from '../config/index.js';
-import type { BackgroundJobFacts } from '../docs/background-job-facts.js';
-import type { JobFacts } from '../docs/context-facts.js';
-import type { ProcessFacts } from '../docs/process-facts.js';
-import type { StateMachineFacts } from '../docs/state-machine-facts.js';
+import type { Upstream } from '../config';
+import type { BackgroundJobFacts } from '../docs/background-job-facts';
+import type { JobFacts } from '../docs/context-facts';
+import type { ProcessFacts } from '../docs/process-facts';
+import type { StateMachineFacts } from '../docs/state-machine-facts';
 
 /**
  * One bounded context as facts, read from the config and from the source text: what `describe`

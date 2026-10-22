@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { rewriteUsages } from '../src/refusals/rewrite-usages.js';
-import { cli, read, tempDir, write } from './helpers.js';
+import { rewriteUsages } from '../src/refusals/rewrite-usages';
+import { cli, read, tempDir, write } from './helpers';
 
 const PLAN = 'error-factories.plan.json';
 

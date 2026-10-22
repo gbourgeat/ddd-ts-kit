@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { cli, read } from './helpers.js';
-import { initFailure } from './support/init-failure.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
-import { readJson } from './support/read-json.js';
+import { cli, read } from './helpers';
+import { initFailure } from './support/init-failure';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
+import { readJson } from './support/read-json';
 
 const CONFIG = 'ddd-ts-kit.config.json';
 const SHARED = ['--tenancy', 'shared-table', '--context', 'billing:core'];

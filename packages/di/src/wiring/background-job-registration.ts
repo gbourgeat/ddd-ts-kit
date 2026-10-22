@@ -1,6 +1,6 @@
 import type { BackgroundJob, BackgroundJobOptions } from '@ddd-ts-kit/kernel';
 import type { Token } from '@ddd-ts-kit/kernel/declarations';
-import type { Declarer } from './declarer.js';
+import type { Declarer } from './declarer';
 
 /** A background job a context declared, for the application to register on the queue worker. */
 export interface BackgroundJobRegistration {

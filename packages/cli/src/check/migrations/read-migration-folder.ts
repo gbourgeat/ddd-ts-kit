@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { OrmStack } from '../../config/index.js';
-import { drizzleOutFolder } from './drizzle-out-folder.js';
-import type { Migration, MigrationFolder } from './migration-folder.js';
+import type { OrmStack } from '../../config';
+import { drizzleOutFolder } from './drizzle-out-folder';
+import type { Migration, MigrationFolder } from './migration-folder';
 
 const SCRIPTS = ['.js', '.ts', '.mjs', '.cjs'];
 

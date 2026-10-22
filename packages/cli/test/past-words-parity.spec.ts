@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { REPO_ROOT } from './helpers.js';
+import { REPO_ROOT } from './helpers';
 
 const CLI = 'packages/cli/src/naming';
 const ESLINT = 'packages/eslint-plugin/src/support/event-sourcing';

@@ -1,6 +1,6 @@
-import { eventNames, type EventNames } from '../event-names.js';
-import type { Scope } from '../scope.js';
-import { writeDomainEvent } from './write-domain-event.js';
+import { eventNames, type EventNames } from '../event-names';
+import type { Scope } from '../scope';
+import { writeDomainEvent } from './write-domain-event';
 
 /** Kinds that react to a domain event create it when it is missing, so their output always compiles. */
 export function ensureDomainEvent(scope: Scope, aggregateInput: string, factInput: string): EventNames {

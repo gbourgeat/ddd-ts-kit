@@ -1,8 +1,8 @@
-import { isStoredData } from './is-stored-data.js';
-import { isStoredList } from './is-stored-list.js';
-import type { StoredData } from './stored-data.js';
-import type { StoredJson } from './stored-json.js';
-import { UnreadableEventError } from './unreadable-event-error.js';
+import { isStoredData } from './is-stored-data';
+import { isStoredList } from './is-stored-list';
+import type { StoredData } from './stored-data';
+import type { StoredJson } from './stored-json';
+import { UnreadableEventError } from './unreadable-event-error';
 
 /**
  * The data of a stored event as `decode` reads it. Each read names the field and the type it

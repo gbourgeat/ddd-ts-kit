@@ -1,10 +1,10 @@
 import { inspect } from 'node:util';
 import { describe, expect, it } from 'vitest';
 import { expectNoSecret } from '@ddd-ts-kit/testing';
-import { RabbitMqEventBus } from '../src/index.js';
-import { AMQP_URL } from './support/environment.js';
-import { PLACED } from './support/events.js';
-import { unique } from './support/unique.js';
+import { RabbitMqEventBus } from '../src';
+import { AMQP_URL } from './support/environment';
+import { PLACED } from './support/events';
+import { unique } from './support/unique';
 
 const PASSWORD = 'amqp-password-4be1';
 const URL_WITH_PASSWORD = `amqp://ordering:${PASSWORD}@127.0.0.1:1`;

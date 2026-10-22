@@ -1,10 +1,10 @@
 import fs from 'node:fs';
-import { CliError } from '../cli-error.js';
-import { continueMerge, type ContinueOptions } from './continue-merge.js';
-import { gitPath } from './git-path.js';
-import { mergeContextOf } from './merge-context.js';
-import type { MergeReport } from './merge-report.js';
-import { mergeState } from './merge-state.js';
+import { CliError } from '../cli-error';
+import { continueMerge, type ContinueOptions } from './continue-merge';
+import { gitPath } from './git-path';
+import { mergeContextOf } from './merge-context';
+import type { MergeReport } from './merge-report';
+import { mergeState } from './merge-state';
 
 /** `merge-trunk --continue`: goes on with the merge merge-trunk left in progress in the project at `root`. */
 export function resumeMerge(root: string, options: ContinueOptions): MergeReport {

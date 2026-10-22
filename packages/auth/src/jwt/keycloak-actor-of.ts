@@ -1,10 +1,10 @@
 import type { Actor, ActorAttribute } from '@ddd-ts-kit/kernel';
-import { InvalidCredentialError } from '../errors/invalid-credential-error.js';
-import type { Claims } from './claims.js';
-import { isServiceAccount } from './is-service-account.js';
-import type { KeycloakClaimOptions } from './keycloak-claim-options.js';
-import { profileAttributesOf } from './profile-attributes-of.js';
-import { tenancyOfClaim } from './tenancy-of-claim.js';
+import { InvalidCredentialError } from '../errors/invalid-credential-error';
+import type { Claims } from './claims';
+import { isServiceAccount } from './is-service-account';
+import type { KeycloakClaimOptions } from './keycloak-claim-options';
+import { profileAttributesOf } from './profile-attributes-of';
+import { tenancyOfClaim } from './tenancy-of-claim';
 
 const DEFAULT_TENANT_CLAIM = 'tenant_id';
 const DEFAULT_GROUPS_CLAIM = 'groups';

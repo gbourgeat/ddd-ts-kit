@@ -1,8 +1,8 @@
 import { NoSuchKey, NotFound, S3ServiceException } from '@aws-sdk/client-s3';
 import { describe, expect, it } from 'vitest';
-import { BucketKeys } from '../src/bucket-keys.js';
-import { isMissing } from '../src/is-missing.js';
-import { s3ClientOf } from '../src/s3-client-of.js';
+import { BucketKeys } from '../src/bucket-keys';
+import { isMissing } from '../src/is-missing';
+import { s3ClientOf } from '../src/s3-client-of';
 
 const METADATA = { $metadata: {} };
 

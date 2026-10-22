@@ -1,4 +1,4 @@
-import type { Location } from './location.js';
+import type { Location } from './location';
 
 export type ImportTarget =
   | { readonly kind: 'file'; readonly path: string; readonly location: Location }

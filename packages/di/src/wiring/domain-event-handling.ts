@@ -1,7 +1,7 @@
 import type { DomainEventDispatcher, DomainEventPhase } from '@ddd-ts-kit/kernel';
 import type { Token } from '@ddd-ts-kit/kernel/declarations';
-import type { Declarer } from './declarer.js';
-import type { Resolve } from './resolve.js';
+import type { Declarer } from './declarer';
+import type { Resolve } from './resolve';
 
 /** A handler of a domain event of its own context, attached to the dispatcher of the application. */
 export interface DomainEventHandling {

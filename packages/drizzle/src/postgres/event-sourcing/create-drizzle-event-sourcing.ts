@@ -1,8 +1,8 @@
 import type { ExtractTablesWithRelations, TablesRelationalConfig } from 'drizzle-orm';
 import type { PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { postgresEventSourcing, type EventSourcingStores, type EventStoreTablesOptions } from '@ddd-ts-kit/kernel';
-import type { DrizzleContext } from '../unit-of-work/drizzle-context.js';
-import { drizzleSqlRun } from './drizzle-sql-run.js';
+import type { DrizzleContext } from '../unit-of-work/drizzle-context';
+import { drizzleSqlRun } from './drizzle-sql-run';
 
 /**
  * The event store, the snapshots, the checkpoints and the keys of the data subjects on

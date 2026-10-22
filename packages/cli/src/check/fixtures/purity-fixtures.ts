@@ -1,8 +1,8 @@
-import { aggregate } from './aggregate.js';
-import type { Fixture } from './fixture.js';
-import { handler } from './handler.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
+import { aggregate } from './aggregate';
+import type { Fixture } from './fixture';
+import { handler } from './handler';
+import { PATHS } from './paths';
+import { project } from './project';
 
 const { AGGREGATE, HANDLER } = PATHS;
 

@@ -1,4 +1,4 @@
-import { DomainError } from './domain-error.js';
+import { DomainError } from './domain-error';
 
 /**
  * Whether what was caught is a business refusal and, when a code is given, this one; when the

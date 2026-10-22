@@ -1,4 +1,4 @@
-import { specifierOf } from '../../alias/index.js';
+import { specifierOf } from '../../alias';
 import path from 'node:path';
 import {
   barrelFile,
@@ -13,14 +13,14 @@ import {
   renderDependenciesFile,
   renderInjections,
   singleFileNotice,
-} from '../../declared/index.js';
-import { declaredModules } from '../../model-modules/index.js';
-import type { Flaw } from '../model/flaw.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import { sourceAt } from '../project/source-at.js';
-import { isDeclaredStyle } from '../support/is-declared-style.js';
-import { reporter } from '../support/reporter.js';
+} from '../../declared';
+import { declaredModules } from '../../model-modules';
+import type { Flaw } from '../model/flaw';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import { sourceAt } from '../project/source-at';
+import { isDeclaredStyle } from '../support/is-declared-style';
+import { reporter } from '../support/reporter';
 
 const REGENERATE =
   'Run `ddd-ts-kit docs`, or `ddd-ts-kit generate` again, which rewrite it: the file is derived from the role files of the context and from their constructor signatures, and never edited by hand.';

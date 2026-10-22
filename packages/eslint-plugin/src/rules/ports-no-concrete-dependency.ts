@@ -1,16 +1,16 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../project/linted-file.js';
-import type { ImportTarget } from '../project/resolve-import.js';
-import type { ClassNode } from '../support/classes/class-name.js';
-import { constructorOf } from '../support/classes/constructor-of.js';
-import { ACCESS_DECORATORS } from '../support/declarations/access-decorators.js';
-import { declarationReader } from '../support/declarations/declaration-reader.js';
-import { declaredRoleOf } from '../support/declarations/declared-role-of.js';
-import { isDeclaredStyle } from '../support/declarations/is-declared-style.js';
-import { dependencyListListener } from '../support/ports/dependency-list-listener.js';
-import type { ImportedBinding } from '../support/ports/imported-binding.js';
-import { importedBindings } from '../support/ports/imported-bindings.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
+import type { LintedFile } from '../project/linted-file';
+import type { ImportTarget } from '../project/resolve-import';
+import type { ClassNode } from '../support/classes/class-name';
+import { constructorOf } from '../support/classes/constructor-of';
+import { ACCESS_DECORATORS } from '../support/declarations/access-decorators';
+import { declarationReader } from '../support/declarations/declaration-reader';
+import { declaredRoleOf } from '../support/declarations/declared-role-of';
+import { isDeclaredStyle } from '../support/declarations/is-declared-style';
+import { dependencyListListener } from '../support/ports/dependency-list-listener';
+import type { ImportedBinding } from '../support/ports/imported-binding';
+import { importedBindings } from '../support/ports/imported-bindings';
+import { defineRule, type Report } from '../support/rule/define-rule';
 
 type MessageId = 'concrete' | 'typed';
 

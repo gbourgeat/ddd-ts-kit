@@ -1,4 +1,4 @@
-import type { CliResult } from './helpers.js';
+import type { CliResult } from './helpers';
 
 /** What `generate --json` prints. */
 export interface Report {

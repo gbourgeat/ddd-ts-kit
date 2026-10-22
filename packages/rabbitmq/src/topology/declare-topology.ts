@@ -1,5 +1,5 @@
 import type { Channel } from 'amqplib';
-import type { RabbitMqTopology } from './rabbit-mq-topology.js';
+import type { RabbitMqTopology } from './rabbit-mq-topology';
 
 /** Idempotent: declaring what already exists with the same arguments changes nothing. */
 export async function declareTopology(channel: Channel, topology: RabbitMqTopology): Promise<void> {

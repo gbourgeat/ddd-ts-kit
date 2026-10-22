@@ -1,10 +1,10 @@
-import { concept } from '../concept.js';
-import { emit } from '../emit.js';
-import type { Kind } from '../kind.js';
-import { learnTerms } from '../learn-terms.js';
-import { named } from '../named.js';
-import { openScope } from '../open-scope.js';
-import { vars } from '../vars.js';
+import { concept } from '../concept';
+import { emit } from '../emit';
+import type { Kind } from '../kind';
+import { learnTerms } from '../learn-terms';
+import { named } from '../named';
+import { openScope } from '../open-scope';
+import { vars } from '../vars';
 
 export const entityKind: Kind = {
   name: 'entity',

@@ -1,8 +1,8 @@
-import type { Config } from '../config/index.js';
-import type { GlossaryRow } from '../generate/parse-terms.js';
-import type { PresetFile } from './preset-file.js';
-import type { PresetRefusal } from './preset-refusal.js';
-import type { PresetStep } from './preset-step.js';
+import type { Config } from '../config';
+import type { GlossaryRow } from '../generate/parse-terms';
+import type { PresetFile } from './preset-file';
+import type { PresetRefusal } from './preset-refusal';
+import type { PresetStep } from './preset-step';
 
 /**
  * A bounded context written whole, in the conventions of the kit: its model, its use cases, its

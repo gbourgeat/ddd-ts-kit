@@ -1,6 +1,6 @@
 import { ValidationError, type ValidationIssue } from '@ddd-ts-kit/validation';
-import type { Route } from '../route/route.js';
-import type { RawRequest } from './raw-request.js';
+import type { Route } from '../route/route';
+import type { RawRequest } from './raw-request';
 
 type Part = 'params' | 'query' | 'headers' | 'body';
 

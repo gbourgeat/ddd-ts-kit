@@ -1,5 +1,5 @@
-import type { History, Removal } from './history.js';
-import { linesOf } from './lines-of.js';
+import type { History, Removal } from './history';
+import { linesOf } from './lines-of';
 
 /** The header `--format=@%h%x09%cs%x09%ct%x09%s` writes before the files of a commit. */
 const HEADER = /^@([^\t]+)\t([^\t]*)\t(\d+)\t(.*)$/;

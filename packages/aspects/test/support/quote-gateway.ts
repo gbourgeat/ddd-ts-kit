@@ -1,5 +1,5 @@
-import { PROBE } from './probe.js';
-import type { Quote } from './quote.js';
+import { PROBE } from './probe';
+import type { Quote } from './quote';
 
 /** A fake adapter of an outside system: answers quotes, fails on demand, counts its calls. */
 export class QuoteGateway {

@@ -1,8 +1,8 @@
-import { AuthorizationSetupError } from '../errors/authorization-setup-error.js';
-import type { Grant } from '../permissions/grant.js';
-import { grantCovers } from '../permissions/grant-covers.js';
-import { grantPattern } from '../permissions/grant-pattern.js';
-import type { Permission } from '../permissions/permission.js';
+import { AuthorizationSetupError } from '../errors/authorization-setup-error';
+import type { Grant } from '../permissions/grant';
+import { grantCovers } from '../permissions/grant-covers';
+import { grantPattern } from '../permissions/grant-pattern';
+import type { Permission } from '../permissions/permission';
 
 export interface RoleGrantsDefinition {
   /** What each role grants: permissions, `billing:*` for a whole context, `*` for everything. */

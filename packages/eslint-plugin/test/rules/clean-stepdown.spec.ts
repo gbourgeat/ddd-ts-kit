@@ -1,5 +1,5 @@
-import { cleanStepdown } from '../../src/rules/clean-stepdown.js';
-import { ruleTester } from '../support/rule-tester.js';
+import { cleanStepdown } from '../../src/rules/clean-stepdown';
+import { ruleTester } from '../support/rule-tester';
 
 ruleTester.run('clean-stepdown', cleanStepdown, {
   valid: [

@@ -13,8 +13,8 @@ import {
   type FileScanner,
   type FileStorage,
   type ScanVerdict,
-} from '../src/index.js';
-import { FailingFileStorage } from './support/failing-file-storage.js';
+} from '../src';
+import { FailingFileStorage } from './support/failing-file-storage';
 
 const NOW = new Date('2026-03-01T10:00:00.000Z');
 const PDF = new Uint8Array(Buffer.from('%PDF-1.7\n%%EOF\n'));

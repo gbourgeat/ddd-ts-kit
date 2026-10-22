@@ -1,9 +1,9 @@
 import { randomBytes, randomUUID } from 'node:crypto';
-import type { SubjectKey } from '../../../application/event-sourcing/subject-key.js';
-import type { SubjectKeyStore } from '../../../application/ports/subject-key-store.js';
-import type { SqlRun } from '../../read-model/sql-run.js';
-import type { EventStoreTablesOptions } from './event-store-tables-options.js';
-import { qualifiedTable } from './qualified-table.js';
+import type { SubjectKey } from '../../../application/event-sourcing/subject-key';
+import type { SubjectKeyStore } from '../../../application/ports/subject-key-store';
+import type { SqlRun } from '../../read-model/sql-run';
+import type { EventStoreTablesOptions } from './event-store-tables-options';
+import { qualifiedTable } from './qualified-table';
 
 type Row = Readonly<Record<string, unknown>>;
 

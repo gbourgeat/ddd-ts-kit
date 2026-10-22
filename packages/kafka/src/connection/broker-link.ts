@@ -1,13 +1,13 @@
 import { inspect } from 'node:util';
 import { KafkaJS } from '@confluentinc/kafka-javascript';
-import { BrokerUnavailableError } from '../errors/broker-unavailable-error.js';
-import { EventBusClosedError } from '../errors/event-bus-closed-error.js';
-import { failureCode } from '../errors/failure-code.js';
-import { within } from '../errors/within.js';
-import { ignore } from '../ignore.js';
-import { conceal } from '../secrecy/conceal.js';
-import type { TopicDescription } from '../topology/topic-description.js';
-import type { Rebalance } from './rebalance.js';
+import { BrokerUnavailableError } from '../errors/broker-unavailable-error';
+import { EventBusClosedError } from '../errors/event-bus-closed-error';
+import { failureCode } from '../errors/failure-code';
+import { within } from '../errors/within';
+import { ignore } from '../ignore';
+import { conceal } from '../secrecy/conceal';
+import type { TopicDescription } from '../topology/topic-description';
+import type { Rebalance } from './rebalance';
 
 export interface LinkSettings {
   readonly createTopics: boolean;

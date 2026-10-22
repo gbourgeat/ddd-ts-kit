@@ -1,4 +1,4 @@
-import { read, write } from '../helpers.js';
+import { read, write } from '../helpers';
 
 const HTTP = 'src/contexts/billing/presentation/http';
 const MONEY = `${HTTP}/shared/money.schema.ts`;

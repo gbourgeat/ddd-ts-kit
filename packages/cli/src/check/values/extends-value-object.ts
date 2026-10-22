@@ -1,7 +1,7 @@
-import type { SourceFile } from '../model/source-file.js';
-import type { ClassShape } from '../structure/class-shape.js';
-import { importedFrom } from '../support/imported-from.js';
-import { isValueObjectFile } from './is-value-object-file.js';
+import type { SourceFile } from '../model/source-file';
+import type { ClassShape } from '../structure/class-shape';
+import { importedFrom } from '../support/imported-from';
+import { isValueObjectFile } from './is-value-object-file';
 
 /**
  * Whether a class is a value object: it extends `ValueObject` of the kernel, a class of its own

@@ -11,7 +11,7 @@ import {
   identifyError,
   type LogFields,
   type Logger,
-} from '../src/index.js';
+} from '../src';
 
 declare module '../src/index.js' {
   interface LogFields {

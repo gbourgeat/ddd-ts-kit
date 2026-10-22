@@ -1,6 +1,6 @@
-import type { BasePoint } from './base-point.js';
-import type { MergeFinding } from './lost/merge-finding.js';
-import type { Resolution } from './resolution.js';
+import type { BasePoint } from './base-point';
+import type { MergeFinding } from './lost/merge-finding';
+import type { Resolution } from './resolution';
 
 /**
  * What `merge-trunk` did or would do, as its text and `--json` report it:

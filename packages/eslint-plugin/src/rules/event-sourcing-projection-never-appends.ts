@@ -1,8 +1,8 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../project/linted-file.js';
-import { kernelNamesListener } from '../support/event-sourcing/kernel-names-listener.js';
-import { importListener, type ImportedName } from '../support/imports/import-listener.js';
-import { defineRule } from '../support/rule/define-rule.js';
+import type { LintedFile } from '../project/linted-file';
+import { kernelNamesListener } from '../support/event-sourcing/kernel-names-listener';
+import { importListener, type ImportedName } from '../support/imports/import-listener';
+import { defineRule } from '../support/rule/define-rule';
 
 const APPENDING = new Set(['EventStore', 'EventSourcedRepository']);
 

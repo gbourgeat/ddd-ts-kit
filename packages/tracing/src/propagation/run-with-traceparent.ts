@@ -1,5 +1,5 @@
 import { context } from '@opentelemetry/api';
-import { contextWithTraceparent } from './context-with-traceparent.js';
+import { contextWithTraceparent } from './context-with-traceparent';
 
 /**
  * Runs `fn` so that spans it starts continue the trace named by `traceparent`. With a

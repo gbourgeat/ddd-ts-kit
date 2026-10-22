@@ -1,7 +1,7 @@
-import type { RenderContext } from '../../templating/index.js';
-import { renderTemplate } from '../../templating/index.js';
-import { applyWiring } from '../apply-wiring.js';
-import type { Scope } from '../scope.js';
+import type { RenderContext } from '../../templating';
+import { renderTemplate } from '../../templating';
+import { applyWiring } from '../apply-wiring';
+import type { Scope } from '../scope';
 
 /** Where each ORM declares the tables of a context: the file its migration tooling reads, and the template that starts it. */
 const TABLES_FILES: Readonly<Record<string, (context: string) => string>> = {

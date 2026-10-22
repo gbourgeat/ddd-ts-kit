@@ -1,5 +1,5 @@
 import type { TSESTree } from '@typescript-eslint/utils';
-import type { ImportTarget } from '../../project/resolve-import.js';
+import type { ImportTarget } from '../../project/resolve-import';
 
 /** A name of the file that an import declares, with where it comes from. */
 export interface ImportedBinding {

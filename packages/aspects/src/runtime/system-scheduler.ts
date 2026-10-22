@@ -1,4 +1,4 @@
-import type { Scheduler } from './scheduler.js';
+import type { Scheduler } from './scheduler';
 
 export const systemScheduler: Scheduler = Object.freeze({
   schedule(work: () => void, delayMs: number): () => void {

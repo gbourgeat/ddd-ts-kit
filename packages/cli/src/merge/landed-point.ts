@@ -1,13 +1,13 @@
-import { CliError } from '../cli-error.js';
-import { runGit } from '../commit/run-git.js';
-import type { BasePoint } from './base-point.js';
-import type { BaseQuery } from './base-query.js';
-import { landedCommit } from './landed-commit.js';
-import { commitOf } from './lost/commit-of.js';
-import { mergeExclusions } from './merge-exclusions.js';
-import { patchIdsOf } from './patch-ids-of.js';
-import { recordedBase } from './recorded-base.js';
-import { type SharingBranch, sharingBranches } from './sharing-branches.js';
+import { CliError } from '../cli-error';
+import { runGit } from '../commit/run-git';
+import type { BasePoint } from './base-point';
+import type { BaseQuery } from './base-query';
+import { landedCommit } from './landed-commit';
+import { commitOf } from './lost/commit-of';
+import { mergeExclusions } from './merge-exclusions';
+import { patchIdsOf } from './patch-ids-of';
+import { recordedBase } from './recorded-base';
+import { type SharingBranch, sharingBranches } from './sharing-branches';
 
 /**
  * The landed point: `--since`; else the newest commit of the branch, or of a branch it shares

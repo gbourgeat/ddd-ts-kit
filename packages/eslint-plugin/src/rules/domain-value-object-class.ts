@@ -1,17 +1,17 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../project/linted-file.js';
-import { className } from '../support/classes/class-name.js';
-import { constructorOf } from '../support/classes/constructor-of.js';
-import { exportedClasses } from '../support/classes/exported-classes.js';
-import { visibilityOf } from '../support/classes/visibility-of.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
-import { answeredObjects } from '../support/values/answered-objects.js';
-import { exportedBindings } from '../support/values/exported-bindings.js';
-import { extendsValueObject } from '../support/values/extends-value-object.js';
-import { isModelPath } from '../support/values/is-model-path.js';
-import { isValueObjectPath } from '../support/values/is-value-object-path.js';
-import { returnsPackageType } from '../support/values/returns-package-type.js';
-import { standsForAValue } from '../support/values/stands-for-a-value.js';
+import type { LintedFile } from '../project/linted-file';
+import { className } from '../support/classes/class-name';
+import { constructorOf } from '../support/classes/constructor-of';
+import { exportedClasses } from '../support/classes/exported-classes';
+import { visibilityOf } from '../support/classes/visibility-of';
+import { defineRule, type Report } from '../support/rule/define-rule';
+import { answeredObjects } from '../support/values/answered-objects';
+import { exportedBindings } from '../support/values/exported-bindings';
+import { extendsValueObject } from '../support/values/extends-value-object';
+import { isModelPath } from '../support/values/is-model-path';
+import { isValueObjectPath } from '../support/values/is-value-object-path';
+import { returnsPackageType } from '../support/values/returns-package-type';
+import { standsForAValue } from '../support/values/stands-for-a-value';
 
 type MessageId =
   | 'noClass'

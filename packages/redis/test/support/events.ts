@@ -5,7 +5,7 @@ import {
   type RedisStreamsDelivery,
   type RedisStreamsFailure,
   type StreamNames,
-} from '../../src/event-bus.js';
+} from '../../src/event-bus';
 
 export const PLACED = 'ordering.order.placed';
 export const TRACEPARENT = '00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01';

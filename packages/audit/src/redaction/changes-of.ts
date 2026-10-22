@@ -1,8 +1,8 @@
 import type { AuditChange, AuditChanges, AuditScalar } from '@ddd-ts-kit/kernel';
-import type { AuditMasker } from './audit-masker.js';
-import type { AuditProjection } from './audit-projection.js';
-import type { MaskingSubject } from './masking-subject.js';
-import { MissingMaskerError } from './missing-masker-error.js';
+import type { AuditMasker } from './audit-masker';
+import type { AuditProjection } from './audit-projection';
+import type { MaskingSubject } from './masking-subject';
+import { MissingMaskerError } from './missing-masker-error';
 
 export interface Redaction {
   readonly masker?: AuditMasker;

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, EXPLICIT_STACK, scaffoldEverything, tempDir } from './helpers.js';
-import { jsonAt } from './support/json-at.js';
+import { cli, EXPLICIT_STACK, scaffoldEverything, tempDir } from './helpers';
+import { jsonAt } from './support/json-at';
 
 const STYLES = [
   ['declared', undefined],

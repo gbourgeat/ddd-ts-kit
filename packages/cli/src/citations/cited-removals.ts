@@ -1,9 +1,9 @@
-import type { Project } from '../check/model/project.js';
-import { readSlices } from '../progress/read-slices.js';
-import { Workspace } from '../workspace/index.js';
-import { openRows } from './open-rows.js';
-import type { StaleCitation } from './stale-citation.js';
-import { staleNamesSince } from './stale-names-since.js';
+import type { Project } from '../check/model/project';
+import { readSlices } from '../progress/read-slices';
+import { Workspace } from '../workspace';
+import { openRows } from './open-rows';
+import type { StaleCitation } from './stale-citation';
+import { staleNamesSince } from './stale-names-since';
 
 /**
  * What `verify-slice` tells of the design: the names the slice removes that a part of a row not

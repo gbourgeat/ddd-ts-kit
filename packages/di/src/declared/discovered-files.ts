@@ -1,5 +1,5 @@
 import type { DeclaredClass } from '@ddd-ts-kit/kernel/declarations';
-import type { Declarer } from '../wiring/declarer.js';
+import type { Declarer } from '../wiring/declarer';
 
 const files = new WeakMap<DeclaredClass, string>();
 

@@ -1,11 +1,11 @@
 import { and, eq } from 'drizzle-orm';
 import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import { optimisticUpdate } from '../../../../../src/postgres.js';
-import type { Database } from '../../../platform/database/database.js';
-import { Invoice, type InvoiceState } from '../../domain/invoice.js';
-import type { InvoiceRepository } from '../../domain/repositories/invoice.repository.js';
-import { invoices } from './invoices.js';
-import { ownTenant } from './own-tenant.js';
+import { optimisticUpdate } from '../../../../../src/postgres';
+import type { Database } from '../../../platform/database/database';
+import { Invoice, type InvoiceState } from '../../domain/invoice';
+import type { InvoiceRepository } from '../../domain/repositories/invoice.repository';
+import { invoices } from './invoices';
+import { ownTenant } from './own-tenant';
 
 /** What the aggregate says of itself, plus the version to store: the rest of the row is the adapter's. */
 type VersionedInvoice = InvoiceState & { readonly version: number };

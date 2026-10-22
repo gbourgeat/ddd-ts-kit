@@ -1,7 +1,7 @@
-import { defineRule } from '../support/rule/define-rule.js';
-import { MemberUses } from '../support/stepdown/member-uses.js';
-import { misplacedMembers, type ClassMessageId } from '../support/stepdown/misplaced-members.js';
-import { misplacedFunctions } from '../support/stepdown/misplaced-functions.js';
+import { defineRule } from '../support/rule/define-rule';
+import { MemberUses } from '../support/stepdown/member-uses';
+import { misplacedMembers, type ClassMessageId } from '../support/stepdown/misplaced-members';
+import { misplacedFunctions } from '../support/stepdown/misplaced-functions';
 
 export const cleanStepdown = defineRule<ClassMessageId | 'functionAboveCaller'>({
   id: 'clean/stepdown',

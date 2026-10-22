@@ -1,9 +1,9 @@
-import type { AccessScope } from '../authorization/access-scope.js';
-import type { Authorizer } from '../authorization/authorizer.js';
-import type { CheckRequest } from '../authorization/check-request.js';
-import type { Decision } from '../authorization/decision.js';
-import type { ListRequest } from '../authorization/list-request.js';
-import { AllowAll } from './allow-all.js';
+import type { AccessScope } from '../authorization/access-scope';
+import type { Authorizer } from '../authorization/authorizer';
+import type { CheckRequest } from '../authorization/check-request';
+import type { Decision } from '../authorization/decision';
+import type { ListRequest } from '../authorization/list-request';
+import { AllowAll } from './allow-all';
 
 /** Keeps what it was asked, as data, and answers what the wrapped authorizer answers. */
 export class RecordingAuthorizer implements Authorizer {

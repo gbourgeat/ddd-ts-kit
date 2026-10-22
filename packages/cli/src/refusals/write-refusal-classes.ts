@@ -1,10 +1,10 @@
 import path from 'node:path';
-import { specifierOf } from '../alias/index.js';
-import type { Config } from '../config/index.js';
-import type { MigrationDraft } from './migration-draft.js';
-import type { NamedMove } from './named-move.js';
-import { refusalClassFile } from './refusal-class-file.js';
-import { withCodes } from './with-codes.js';
+import { specifierOf } from '../alias';
+import type { Config } from '../config';
+import type { MigrationDraft } from './migration-draft';
+import type { NamedMove } from './named-move';
+import { refusalClassFile } from './refusal-class-file';
+import { withCodes } from './with-codes';
 
 /**
  * Writes one file per refusal class, with the factories of its moves, and the list of the codes

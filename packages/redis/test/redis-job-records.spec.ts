@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { claimedJobOfRecord } from '../src/jobs/claimed-job-of-record.js';
-import { parseJobRecord } from '../src/jobs/parse-job-record.js';
-import { queuedJobOfRecord } from '../src/jobs/queued-job-of-record.js';
-import { RedisJobStore } from '../src/index.js';
-import { closeAll, connectToNothing } from './support/server.js';
+import { claimedJobOfRecord } from '../src/jobs/claimed-job-of-record';
+import { parseJobRecord } from '../src/jobs/parse-job-record';
+import { queuedJobOfRecord } from '../src/jobs/queued-job-of-record';
+import { RedisJobStore } from '../src';
+import { closeAll, connectToNothing } from './support/server';
 
 const actor = { id: 'user-7', type: 'user', roles: [], attributes: {} };
 

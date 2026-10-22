@@ -1,8 +1,8 @@
-import { aliasRoots } from '../alias/index.js';
-import { CliError } from '../cli-error.js';
-import type { Config } from '../config/index.js';
-import { declaredModule, declaredModules, modulePlacement, placedImports } from '../model-modules/index.js';
-import type { Workspace } from '../workspace/index.js';
+import { aliasRoots } from '../alias';
+import { CliError } from '../cli-error';
+import type { Config } from '../config';
+import { declaredModule, declaredModules, modulePlacement, placedImports } from '../model-modules';
+import type { Workspace } from '../workspace';
 
 /** What `generate` was asked: the context its kind writes in, the `--module` given, and the command as typed. */
 export interface ModuleRequest {

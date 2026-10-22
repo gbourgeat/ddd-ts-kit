@@ -1,5 +1,5 @@
-import { aspectOrigins } from './aspect-origins.js';
-import type { Aspect } from './aspect.js';
+import { aspectOrigins } from './aspect-origins';
+import type { Aspect } from './aspect';
 
 /**
  * One aspect out of several, the first outermost: `compose(retry(...), timeout(2000))` bounds

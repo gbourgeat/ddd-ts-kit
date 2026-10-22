@@ -1,6 +1,6 @@
-import type { Workspace } from '../workspace/index.js';
-import { copilotInstruction } from './copilot-instruction.js';
-import { LAYER_RULES } from './files/layer-rules.js';
+import type { Workspace } from '../workspace';
+import { copilotInstruction } from './copilot-instruction';
+import { LAYER_RULES } from './files/layer-rules';
 
 /**
  * The rules by layer for GitHub Copilot, from those of Claude Code as this run left them: its

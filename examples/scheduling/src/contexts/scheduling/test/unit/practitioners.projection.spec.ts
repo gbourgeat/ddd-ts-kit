@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { AllowAll } from '@ddd-ts-kit/auth/testing';
 import { Criteria, scoped } from '@ddd-ts-kit/kernel';
-import { practiceMemberAddedV1, practiceMemberRemovedV1 } from '@/contexts/identity/published-language/index';
+import { practiceMemberAddedV1, practiceMemberRemovedV1 } from '@/contexts/identity/published-language';
 import type { PractitionerEntry } from '@/contexts/scheduling/application/calendars/ports/practitioner-directory.port';
 import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 

@@ -1,6 +1,6 @@
-import type { HttpMethod } from '../route/http-method.js';
-import type { CachePolicy } from './cache-policy.js';
-import type { IfMatch } from './if-match.js';
+import type { HttpMethod } from '../route/http-method';
+import type { CachePolicy } from './cache-policy';
+import type { IfMatch } from './if-match';
 
 /** What the check of a cache policy reads of the route that declares it. */
 export interface CacheDeclaration {

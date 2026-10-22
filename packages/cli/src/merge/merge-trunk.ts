@@ -1,25 +1,25 @@
 import fs from 'node:fs';
-import { CliError } from '../cli-error.js';
-import { runGit } from '../commit/run-git.js';
-import { applyResolutions } from './apply-resolutions.js';
-import { conflictedPaths, type MergedFrom } from './conflicted-paths.js';
-import { continueMerge } from './continue-merge.js';
-import { ensureMergeable } from './ensure-mergeable.js';
-import { forYouEntry } from './for-you-entry.js';
-import { gitVersion } from './git-version.js';
-import { landedPoint } from './landed-point.js';
-import { commitOf } from './lost/commit-of.js';
-import { type MergeContext, mergeContextOf } from './merge-context.js';
-import { mergeMessage } from './merge-message.js';
-import type { MergeReport } from './merge-report.js';
-import { mergeState } from './merge-state.js';
-import { NEXT_STEPS } from './next-steps.js';
-import { plainGitMerge } from './plain-git-merge.js';
-import { type PreviewRequest, previewMerge, type StageEntry } from './preview-merge.js';
-import { resolveConflict } from './resolve-conflict.js';
-import type { Resolution } from './resolution.js';
-import { startMerge } from './start-merge.js';
-import { trunkOf } from './trunk-of.js';
+import { CliError } from '../cli-error';
+import { runGit } from '../commit/run-git';
+import { applyResolutions } from './apply-resolutions';
+import { conflictedPaths, type MergedFrom } from './conflicted-paths';
+import { continueMerge } from './continue-merge';
+import { ensureMergeable } from './ensure-mergeable';
+import { forYouEntry } from './for-you-entry';
+import { gitVersion } from './git-version';
+import { landedPoint } from './landed-point';
+import { commitOf } from './lost/commit-of';
+import { type MergeContext, mergeContextOf } from './merge-context';
+import { mergeMessage } from './merge-message';
+import type { MergeReport } from './merge-report';
+import { mergeState } from './merge-state';
+import { NEXT_STEPS } from './next-steps';
+import { plainGitMerge } from './plain-git-merge';
+import { type PreviewRequest, previewMerge, type StageEntry } from './preview-merge';
+import { resolveConflict } from './resolve-conflict';
+import type { Resolution } from './resolution';
+import { startMerge } from './start-merge';
+import { trunkOf } from './trunk-of';
 
 /** What the caller asks of `merge-trunk`, before any merge is in progress. */
 export interface MergeTrunkRequest {

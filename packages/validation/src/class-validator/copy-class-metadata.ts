@@ -2,8 +2,8 @@ import 'reflect-metadata';
 import { TransformationType, type TypeMetadata } from 'class-transformer';
 import { defaultMetadataStorage } from 'class-transformer/cjs/storage.js';
 import { getMetadataStorage } from 'class-validator';
-import type { DtoClass } from './dto-class.js';
-import { prototypeOf } from './prototype-of.js';
+import type { DtoClass } from './dto-class';
+import { prototypeOf } from './prototype-of';
 
 const TRANSFORMATIONS = [
   TransformationType.PLAIN_TO_CLASS,

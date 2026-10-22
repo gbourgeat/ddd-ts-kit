@@ -1,4 +1,4 @@
-import { WiringError } from '../../src/index.js';
+import { WiringError } from '../../src';
 
 /** The wiring error a block throws; anything else it throws goes through. */
 export function wiringFailure(run: () => unknown): WiringError {

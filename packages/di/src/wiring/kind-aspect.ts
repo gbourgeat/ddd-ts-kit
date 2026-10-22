@@ -1,6 +1,6 @@
 import type { DependencyKind } from '@ddd-ts-kit/kernel';
 import type { BindingAspect } from '@ddd-ts-kit/kernel/declarations';
-import type { Resolve } from './resolve.js';
+import type { Resolve } from './resolve';
 
 /** An aspect a module puts around every binding of some kinds, whichever module declares them. */
 export interface KindAspect {

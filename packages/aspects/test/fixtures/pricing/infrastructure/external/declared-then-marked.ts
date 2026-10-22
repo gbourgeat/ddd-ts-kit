@@ -1,8 +1,8 @@
 import { Adapter } from '@ddd-ts-kit/kernel/declarations';
-import { Retry } from '../../../../../src/decorators.js';
-import { Rates } from '../../application/ports/rates.port.js';
-import { FlakyRates } from './flaky-rates.js';
-import { Marked } from './marked.js';
+import { Retry } from '../../../../../src/decorators';
+import { Rates } from '../../application/ports/rates.port';
+import { FlakyRates } from './flaky-rates';
+import { Marked } from './marked';
 
 @Adapter(Rates)
 @Marked()

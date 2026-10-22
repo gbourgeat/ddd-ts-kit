@@ -10,9 +10,9 @@ import {
   definePolicy,
   isResourceRef,
   type DecisionRecord,
-} from '../src/index.js';
-import { AllowAll, DenyAll, RecordingAuthorizer } from '../src/testing.js';
-import { Article, author, onlyAuthorEditsDraft, publishingPermissions, reader } from './support/articles.js';
+} from '../src';
+import { AllowAll, DenyAll, RecordingAuthorizer } from '../src/testing';
+import { Article, author, onlyAuthorEditsDraft, publishingPermissions, reader } from './support/articles';
 
 const NOON = new Date('2026-05-01T12:00:00.000Z');
 const edit = publishingPermissions['article.edit'];

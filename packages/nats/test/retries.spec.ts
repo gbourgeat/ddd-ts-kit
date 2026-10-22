@@ -6,14 +6,14 @@ import {
   SOURCE_HEADER,
   type NatsDelivery,
   type NatsFailure,
-} from '../src/index.js';
-import type { Broker } from './support/broker.js';
-import { BROKERS } from './support/brokers.js';
-import { MAX_ATTEMPTS, RETRY_DELAY_MS } from './support/environment.js';
-import { PLACED, anEvent } from './support/events.js';
-import { deliveriesOf, failuresOf } from './support/hooks.js';
-import { recorder } from './support/recorder.js';
-import { unique } from './support/unique.js';
+} from '../src';
+import type { Broker } from './support/broker';
+import { BROKERS } from './support/brokers';
+import { MAX_ATTEMPTS, RETRY_DELAY_MS } from './support/environment';
+import { PLACED, anEvent } from './support/events';
+import { deliveriesOf, failuresOf } from './support/hooks';
+import { recorder } from './support/recorder';
+import { unique } from './support/unique';
 
 describe.each(BROKERS)('NatsEventBus: retries, %s', { timeout: 30_000 }, (_name, connect) => {
   let broker: Broker;

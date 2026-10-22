@@ -1,8 +1,8 @@
-import { authzDeclared } from '../../src/rules/authz-declared.js';
-import { authzInApplication } from '../../src/rules/authz-in-application.js';
-import { layerApplicationInward } from '../../src/rules/layer-application-inward.js';
-import { layerDomainPurity } from '../../src/rules/layer-domain-purity.js';
-import { inProject } from '../support/declared-project.js';
+import { authzDeclared } from '../../src/rules/authz-declared';
+import { authzInApplication } from '../../src/rules/authz-in-application';
+import { layerApplicationInward } from '../../src/rules/layer-application-inward';
+import { layerDomainPurity } from '../../src/rules/layer-domain-purity';
+import { inProject } from '../support/declared-project';
 import {
   DECLARED,
   EXPLICIT,
@@ -18,8 +18,8 @@ import {
   ROUTE,
   AGGREGATE,
   SPEC,
-} from '../support/declared-style.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+} from '../support/declared-style';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const REGISTERS_DECORATED =
   "import { IssueInvoiceCommand } from './application/commands/issue-invoice/issue-invoice.command.js';\nimport { SearchInvoicesQuery as SearchInvoices } from '@/contexts/billing/application/queries/search-invoices/search-invoices.query.js';\nbuilder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [INVOICES]);\nbuilder.query(SearchInvoices).handledBy(SearchInvoicesHandler, [INVOICES]);";

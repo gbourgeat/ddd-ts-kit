@@ -1,4 +1,4 @@
-import type { DomainEvent } from '../domain-event.js';
+import type { DomainEvent } from '../domain-event';
 
 /**
  * The events an event-sourced aggregate recorded since it was loaded or last stored, kept out of

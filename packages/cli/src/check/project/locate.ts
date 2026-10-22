@@ -1,8 +1,8 @@
-import type { Config } from '../../config/index.js';
-import type { Layer } from '../model/layer.js';
-import type { Location } from '../model/location.js';
-import { declaredModules, moduleSplit } from '../../model-modules/index.js';
-import { isUnder } from './is-under.js';
+import type { Config } from '../../config';
+import type { Layer } from '../model/layer';
+import type { Location } from '../model/location';
+import { declaredModules, moduleSplit } from '../../model-modules';
+import { isUnder } from './is-under';
 
 const LAYERS: readonly Layer[] = [
   'domain',

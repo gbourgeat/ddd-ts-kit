@@ -1,6 +1,6 @@
-import { DEFAULT_COMMIT_LIMITS } from './default-commit-limits.js';
-import { isPositiveInteger } from './is-positive-integer.js';
-import { isRecord } from './values/is-record.js';
+import { DEFAULT_COMMIT_LIMITS } from './default-commit-limits';
+import { isPositiveInteger } from './is-positive-integer';
+import { isRecord } from './values/is-record';
 
 /** Something written under `commit` that is not read as written. */
 export interface CommitLimitProblem {

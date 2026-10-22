@@ -1,18 +1,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { runGit } from '../commit/run-git.js';
-import { SLICES_FILE } from '../progress/read-slices.js';
-import { slicesIn } from '../progress/slices-in.js';
-import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
-import { type BranchStanding, branchStanding } from './branch-standing.js';
-import { changedFiles } from './changed-files.js';
-import { listWorktrees, type Worktree } from './list-worktrees.js';
-import { overlapsOf } from './overlaps-of.js';
-import { progressOf } from './progress-of.js';
-import { readWorkerFile } from './read-worker-file.js';
-import type { WorkerFile } from './worker-file.js';
-import { REPORT_FILE } from './report-file.js';
-import type { WorkerReport, WorkerStatus, WorkersStatus } from './workers-status.js';
+import { runGit } from '../commit/run-git';
+import { SLICES_FILE } from '../progress/read-slices';
+import { slicesIn } from '../progress/slices-in';
+import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file';
+import { type BranchStanding, branchStanding } from './branch-standing';
+import { changedFiles } from './changed-files';
+import { listWorktrees, type Worktree } from './list-worktrees';
+import { overlapsOf } from './overlaps-of';
+import { progressOf } from './progress-of';
+import { readWorkerFile } from './read-worker-file';
+import type { WorkerFile } from './worker-file';
+import { REPORT_FILE } from './report-file';
+import type { WorkerReport, WorkerStatus, WorkersStatus } from './workers-status';
 
 /**
  * The workers of a parallel build, read from the worktrees of the repository of the project at

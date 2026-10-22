@@ -1,6 +1,6 @@
-import type { CriteriaDefinition } from '../../application/criteria/criteria-definition.js';
-import { TableReadModelStore } from '../read-model/table-read-model-store.js';
-import { InMemoryReadModelTable } from './in-memory-read-model-table.js';
+import type { CriteriaDefinition } from '../../application/criteria/criteria-definition';
+import { TableReadModelStore } from '../read-model/table-read-model-store';
+import { InMemoryReadModelTable } from './in-memory-read-model-table';
 
 /**
  * The fake of any read model port: `new InMemoryReadModelStore(appointmentCriteria)`. It

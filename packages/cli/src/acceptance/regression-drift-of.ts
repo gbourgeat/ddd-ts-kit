@@ -1,6 +1,6 @@
-import type { LockedTest } from './acceptance-lock.js';
-import type { Drift, Judged } from './drift.js';
-import type { RegressionSpec } from './regression-spec.js';
+import type { LockedTest } from './acceptance-lock';
+import type { Drift, Judged } from './drift';
+import type { RegressionSpec } from './regression-spec';
 
 /** What a locked test became: its new fingerprint, or `removed`. */
 const REMOVED = 'removed';

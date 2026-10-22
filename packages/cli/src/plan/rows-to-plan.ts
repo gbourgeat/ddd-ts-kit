@@ -1,4 +1,4 @@
-import type { Slice } from '../progress/slice.js';
+import type { Slice } from '../progress/slice';
 
 /**
  * The rows a plan orders, in the order of the file: those not done, of the context when one is

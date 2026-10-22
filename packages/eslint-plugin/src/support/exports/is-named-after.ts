@@ -1,4 +1,4 @@
-import { kebabCase } from '../kebab-case.js';
+import { kebabCase } from '../kebab-case';
 
 /**
  * The names an export allows its file to carry, without the extension: its own in kebab-case,

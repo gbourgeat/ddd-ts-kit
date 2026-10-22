@@ -1,4 +1,4 @@
-import type { Method } from './method.js';
+import type { Method } from './method';
 
 /** The instance itself, its traced methods defined over the ones it had or inherited. */
 export function shadowed<T extends object>(instance: T, wrappers: ReadonlyMap<string, Method>): T {

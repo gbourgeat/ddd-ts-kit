@@ -1,9 +1,9 @@
-import { CONFIG_FILE, parseConfig } from '../../config/index.js';
-import { declaredModules } from '../../model-modules/index.js';
-import { renderDeclarations } from '../../declared/index.js';
-import { config } from './config.js';
-import type { FixtureFiles } from './fixture-files.js';
-import { project } from './project.js';
+import { CONFIG_FILE, parseConfig } from '../../config';
+import { declaredModules } from '../../model-modules';
+import { renderDeclarations } from '../../declared';
+import { config } from './config';
+import type { FixtureFiles } from './fixture-files';
+import { project } from './project';
 
 const NOTHING_INJECTED = { imports: [], calls: [] };
 

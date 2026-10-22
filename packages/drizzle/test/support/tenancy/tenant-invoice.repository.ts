@@ -1,10 +1,10 @@
 import { and, eq } from 'drizzle-orm';
 import { FixedClock, stampCreation, stampUpdate, tenantScopeOf, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import { optimisticUpdate, ownTenantCondition, tenantCondition } from '../../../src/postgres.js';
-import type { Database } from '../platform/database/database.js';
-import { Invoice, type InvoiceState } from '../billing-core/domain/invoice.js';
-import type { InvoiceRepository } from '../billing-core/domain/repositories/invoice.repository.js';
-import { invoices } from '../billing-core/infrastructure/persistence/invoices.js';
+import { optimisticUpdate, ownTenantCondition, tenantCondition } from '../../../src/postgres';
+import type { Database } from '../platform/database/database';
+import { Invoice, type InvoiceState } from '../billing-core/domain/invoice';
+import type { InvoiceRepository } from '../billing-core/domain/repositories/invoice.repository';
+import { invoices } from '../billing-core/infrastructure/persistence/invoices';
 
 type VersionedInvoice = InvoiceState & { readonly version: number };
 

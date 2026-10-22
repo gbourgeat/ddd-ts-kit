@@ -1,4 +1,4 @@
-import { defineCriteria } from '../../src/index.js';
+import { defineCriteria } from '../../src';
 
 export interface AppointmentRow {
   readonly id: string;

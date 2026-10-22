@@ -1,10 +1,10 @@
 import { inspect } from 'node:util';
 import { describe, expect, it } from 'vitest';
 import { expectNoSecret } from '@ddd-ts-kit/testing';
-import { NatsEventBus } from '../src/index.js';
-import { NATS_URL } from './support/environment.js';
-import { PLACED } from './support/events.js';
-import { unique } from './support/unique.js';
+import { NatsEventBus } from '../src';
+import { NATS_URL } from './support/environment';
+import { PLACED } from './support/events';
+import { unique } from './support/unique';
 
 const PASSWORD = 'nats-password-c07e';
 const TOKEN = 'nats-token-2d94';

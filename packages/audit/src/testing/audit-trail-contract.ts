@@ -8,15 +8,15 @@ import {
   type Sort,
 } from '@ddd-ts-kit/kernel';
 import { ContractSuite, type Awaitable, type ContractRunner } from '@ddd-ts-kit/testing/contracts';
-import { GENESIS_HASH } from '../chain/genesis-hash.js';
-import { hashOf } from '../chain/hash-of.js';
-import { verifyChain } from '../verify/verify-chain.js';
-import type { AuditTrailUnderContract } from './audit-trail-under-contract.js';
-import { aRecord } from './records/a-record.js';
-import { fullRecord } from './records/full-record.js';
-import { inTenant } from './records/in-tenant.js';
-import { JOURNAL } from './records/journal.js';
-import { later } from './records/later.js';
+import { GENESIS_HASH } from '../chain/genesis-hash';
+import { hashOf } from '../chain/hash-of';
+import { verifyChain } from '../verify/verify-chain';
+import type { AuditTrailUnderContract } from './audit-trail-under-contract';
+import { aRecord } from './records/a-record';
+import { fullRecord } from './records/full-record';
+import { inTenant } from './records/in-tenant';
+import { JOURNAL } from './records/journal';
+import { later } from './records/later';
 
 export interface AuditTrailContractOptions {
   readonly name: string;

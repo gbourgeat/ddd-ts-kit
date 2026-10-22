@@ -1,5 +1,5 @@
-import { isDeclared } from './is-declared.js';
-import type { Scope } from './scope.js';
+import { isDeclared } from './is-declared';
+import type { Scope } from './scope';
 
 /**
  * The module of the context as the style of the project assembles it; `toContext` is the path

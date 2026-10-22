@@ -1,12 +1,12 @@
-import type { BusMiddleware } from '../../application/messaging/bus-middleware.js';
-import { DuplicateHandlerError } from '../../application/messaging/duplicate-handler-error.js';
-import { HandlerNotFoundError } from '../../application/messaging/handler-not-found-error.js';
-import type { HandlerRegistration } from '../../application/messaging/handler-registration.js';
-import type { MessageInfo } from '../../application/messaging/message-info.js';
-import type { MessageType } from '../../application/messaging/message-type.js';
-import type { Message } from '../../application/messaging/message.js';
-import type { ResultOf } from '../../application/messaging/result-of.js';
-import type { AnyHandler } from './any-handler.js';
+import type { BusMiddleware } from '../../application/messaging/bus-middleware';
+import { DuplicateHandlerError } from '../../application/messaging/duplicate-handler-error';
+import { HandlerNotFoundError } from '../../application/messaging/handler-not-found-error';
+import type { HandlerRegistration } from '../../application/messaging/handler-registration';
+import type { MessageInfo } from '../../application/messaging/message-info';
+import type { MessageType } from '../../application/messaging/message-type';
+import type { Message } from '../../application/messaging/message';
+import type { ResultOf } from '../../application/messaging/result-of';
+import type { AnyHandler } from './any-handler';
 
 export class InProcessBus {
   private readonly handlers = new Map<unknown, AnyHandler>();

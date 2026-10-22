@@ -1,4 +1,4 @@
-import type { TokenReference } from './token-reference.js';
+import type { TokenReference } from './token-reference';
 
 /**
  * The names a generated file binds its imports under. A class keeps its own name; a second

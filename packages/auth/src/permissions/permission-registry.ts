@@ -1,5 +1,5 @@
-import { AuthorizationSetupError } from '../errors/authorization-setup-error.js';
-import type { Permission } from './permission.js';
+import { AuthorizationSetupError } from '../errors/authorization-setup-error';
+import type { Permission } from './permission';
 
 /** Every permission of the application, for generated documentation and administration screens. */
 export class PermissionRegistry {

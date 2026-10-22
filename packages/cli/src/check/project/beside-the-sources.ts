@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { FIXED_ALIAS_ROOTS } from '../../alias/index.js';
-import type { Project } from '../model/project.js';
-import type { SourceFile } from '../model/source-file.js';
-import { isSource } from './is-source.js';
-import { loadSourceFile } from './load-source-file.js';
-import { walkDirectory } from './walk-directory.js';
+import { FIXED_ALIAS_ROOTS } from '../../alias';
+import type { Project } from '../model/project';
+import type { SourceFile } from '../model/source-file';
+import { isSource } from './is-source';
+import { loadSourceFile } from './load-source-file';
+import { walkDirectory } from './walk-directory';
 
 /** The trees `check` does not walk for the other rules: their files are read for their imports only. */
 const BESIDE_THE_SOURCES = [FIXED_ALIAS_ROOTS.test.directory, FIXED_ALIAS_ROOTS.scripts.directory];

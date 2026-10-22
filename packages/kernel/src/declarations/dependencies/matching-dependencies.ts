@@ -1,7 +1,7 @@
-import type { ConcreteDependency } from './concrete-dependency.js';
-import type { DependencyMismatch } from './dependency-mismatch.js';
-import type { DependencyTokens } from './dependency-tokens.js';
-import type { StandIns } from './stand-ins.js';
+import type { ConcreteDependency } from './concrete-dependency';
+import type { DependencyMismatch } from './dependency-mismatch';
+import type { DependencyTokens } from './dependency-tokens';
+import type { StandIns } from './stand-ins';
 
 /**
  * `unknown` when `List` names the parameters `Args` in order, by their ports, or when there is

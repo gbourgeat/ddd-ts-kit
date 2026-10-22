@@ -9,14 +9,14 @@ import {
   PolicyNotAskedError,
   RoleBasedAuthorizer,
   UnauthenticatedError,
-} from '../src/index.js';
-import { authorizationModule } from '../src/di.js';
-import { AnybodyAudits } from './fixtures/declared/ledger/application/authorization/anybody-audits.policy.js';
-import { ledgerPermissions } from './fixtures/declared/ledger/application/authorization/ledger.permissions.js';
-import { EntryRepository } from './fixtures/declared/ledger/domain/repositories/entry.repository.js';
-import * as forgetfulDeclared from './fixtures/declared/ledger/forgetful.declarations.js';
-import * as declared from './fixtures/declared/ledger/ledger.declarations.js';
-import { ada, bob } from './support/billing.js';
+} from '../src';
+import { authorizationModule } from '../src/di';
+import { AnybodyAudits } from './fixtures/declared/ledger/application/authorization/anybody-audits.policy';
+import { ledgerPermissions } from './fixtures/declared/ledger/application/authorization/ledger.permissions';
+import { EntryRepository } from './fixtures/declared/ledger/domain/repositories/entry.repository';
+import * as forgetfulDeclared from './fixtures/declared/ledger/forgetful.declarations';
+import * as declared from './fixtures/declared/ledger/ledger.declarations';
+import { ada, bob } from './support/billing';
 
 const { CountEntries, OnlyPosterReverses, PostEntry, ReverseEntry } = declared;
 const { ForgetfulReverseEntry } = forgetfulDeclared;

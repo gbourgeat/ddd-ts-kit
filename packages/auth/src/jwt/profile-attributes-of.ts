@@ -1,5 +1,5 @@
 import type { ActorAttribute } from '@ddd-ts-kit/kernel';
-import type { Claims } from './claims.js';
+import type { Claims } from './claims';
 
 /**
  * What the standard claims of OpenID Connect say of the person: `username` (`preferred_username`),

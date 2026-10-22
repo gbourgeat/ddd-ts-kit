@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Config } from '../config/index.js';
-import { inDialect } from '../package-manager/in-dialect.js';
-import type { DependencyInstall } from './install-dependencies.js';
-import { WORKTREES_DIR } from './worktree-home.js';
+import type { Config } from '../config';
+import { inDialect } from '../package-manager/in-dialect';
+import type { DependencyInstall } from './install-dependencies';
+import { WORKTREES_DIR } from './worktree-home';
 
 /**
  * What to say of the dependencies of a worktree: installed, or the command to install them. A

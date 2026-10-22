@@ -1,7 +1,7 @@
-import type { Clock } from '../ports/clock.js';
-import type { ExecutionScope } from '../ports/execution-scope.js';
-import type { AuditStamp } from './audit-stamp.js';
-import type { UpdateStamp } from './update-stamp.js';
+import type { Clock } from '../ports/clock';
+import type { ExecutionScope } from '../ports/execution-scope';
+import type { AuditStamp } from './audit-stamp';
+import type { UpdateStamp } from './update-stamp';
 
 /**
  * For a repository adapter updating a row. Given the stored stamp, answers it whole with the

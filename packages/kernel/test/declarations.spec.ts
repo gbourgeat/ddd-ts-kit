@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { Clock, CommandBus, type Actor } from '../src/index.js';
+import { Clock, CommandBus, type Actor } from '../src';
 import {
   declarationOf,
   injectedDependencies,
@@ -8,11 +8,11 @@ import {
   tokenIdentity,
   type Declaration,
   type Token,
-} from '../src/declarations.js';
-import type { HandlerOfAnotherMessage } from './fixtures/declarations/declaration-mistakes.js';
-import { decoratorModes, removeCompiled } from './support/decorator-modes.js';
+} from '../src/declarations';
+import type { HandlerOfAnotherMessage } from './fixtures/declarations/declaration-mistakes';
+import { decoratorModes, removeCompiled } from './support/decorator-modes';
 
-type Clinic = typeof import('./fixtures/declarations/declared-clinic.js');
+type Clinic = typeof import('./fixtures/declarations/declared-clinic');
 /** The mistakes are compiled with the clinic, in every mode: each one must still be refused. */
 type Mistakes = { readonly refused: HandlerOfAnotherMessage };
 
@@ -307,7 +307,7 @@ function whatDeclaringLeavesAndRefuses(clinic: () => Clinic): void {
 
 describeTheClinic(
   'as the test runner transforms it (experimentalDecorators, no plugin)',
-  () => import('./fixtures/declarations/declared-clinic.js'),
+  () => import('./fixtures/declarations/declared-clinic'),
 );
 
 for (const mode of decoratorModes(FIXTURES)) {
@@ -336,7 +336,7 @@ describe('declarations', () => {
   });
 
   it('are not inherited: a subclass declares itself or nothing', async () => {
-    const { InMemoryVisitRepository } = await import('./fixtures/declarations/declared-clinic.js');
+    const { InMemoryVisitRepository } = await import('./fixtures/declarations/declared-clinic');
 
     class AuditedVisitRepository extends InMemoryVisitRepository {}
 

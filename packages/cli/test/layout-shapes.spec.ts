@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fitBlock, fitSource, fitStatement } from '../src/layout/index.js';
+import { fitBlock, fitSource, fitStatement } from '../src/layout';
 
 const LONG = 'InternationalPurchaseOrder';
 

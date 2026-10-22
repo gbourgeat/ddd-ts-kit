@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { resetTracingConfiguration, withSpan } from '../../src/index.js';
-import { expectSpanTree, installTestTracing, type ExpectedSpan, type TestTracing } from '../../src/testing.js';
-import { aClinic } from '../support/clinic/a-clinic.js';
-import { RedeliveringBus } from '../support/clinic/redelivering-bus.js';
-import { MailGateway, RecordingMailGateway } from '../support/clinic/downstream.js';
-import { bookingTree, confirmationTree, recordingTree } from '../support/clinic/trees.js';
+import { resetTracingConfiguration, withSpan } from '../../src';
+import { expectSpanTree, installTestTracing, type ExpectedSpan, type TestTracing } from '../../src/testing';
+import { aClinic } from '../support/clinic/a-clinic';
+import { RedeliveringBus } from '../support/clinic/redelivering-bus';
+import { MailGateway, RecordingMailGateway } from '../support/clinic/downstream';
+import { bookingTree, confirmationTree, recordingTree } from '../support/clinic/trees';
 
 let tracing: TestTracing;
 

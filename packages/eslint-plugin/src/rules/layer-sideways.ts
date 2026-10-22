@@ -1,7 +1,7 @@
-import type { Layer } from '../project/layer.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import { importListener } from '../support/imports/import-listener.js';
-import { inLayer } from '../support/imports/in-layer.js';
+import type { Layer } from '../project/layer';
+import { defineRule } from '../support/rule/define-rule';
+import { importListener } from '../support/imports/import-listener';
+import { inLayer } from '../support/imports/in-layer';
 
 interface Sideways {
   readonly id: string;

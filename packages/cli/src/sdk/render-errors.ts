@@ -1,8 +1,8 @@
-import { renderTemplate } from '../templating/index.js';
-import type { ClientDocument } from './client-document.js';
-import { errorCodes } from './error-codes.js';
-import { generatedHeader } from './generated-header.js';
-import { schemaTypeName } from './schema-type-name.js';
+import { renderTemplate } from '../templating';
+import type { ClientDocument } from './client-document';
+import { errorCodes } from './error-codes';
+import { generatedHeader } from './generated-header';
+import { schemaTypeName } from './schema-type-name';
 
 const PROBLEM = 'Problem';
 

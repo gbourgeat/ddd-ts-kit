@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { Actor } from '../../application/actor/actor.js';
-import type { ActorContext } from '../../application/ports/actor-context.js';
-import { requiredActor } from './required-actor.js';
+import type { Actor } from '../../application/actor/actor';
+import type { ActorContext } from '../../application/ports/actor-context';
+import { requiredActor } from './required-actor';
 
 /** Follows the asynchronous call chain started by `run`, so concurrent requests never mix. */
 export class AsyncLocalStorageActorContext implements ActorContext {

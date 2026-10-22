@@ -1,7 +1,7 @@
 import type { AuditChanges } from '@ddd-ts-kit/kernel';
 import { bigint, index, jsonb, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
-import { AUDIT_ENTRIES_TABLE } from '../sql/audit-entries-table-name.js';
-import { tableIn } from './table-in.js';
+import { AUDIT_ENTRIES_TABLE } from '../sql/audit-entries-table-name';
+import { tableIn } from './table-in';
 
 const ENTRY_COLUMNS = {
   id: text('id').notNull().unique(),

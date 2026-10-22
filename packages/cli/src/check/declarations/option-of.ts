@@ -1,5 +1,5 @@
-import type { Scan } from '../scan/scan.js';
-import type { Decoration } from './decoration.js';
+import type { Scan } from '../scan/scan';
+import type { Decoration } from './decoration';
 
 /** What an option of a decorator holds. */
 export interface OptionValue {

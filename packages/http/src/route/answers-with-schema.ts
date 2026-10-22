@@ -1,5 +1,5 @@
-import type { ResponseSpec } from './response-spec.js';
-import type { Route } from './route.js';
+import type { ResponseSpec } from './response-spec';
+import type { Route } from './route';
 
 /**
  * Whether a representation writes what the route answers: a route that declares no body schema

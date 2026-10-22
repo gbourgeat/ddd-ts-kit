@@ -1,9 +1,9 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { cli } from '../helpers.js';
-import { EditedProject } from './edited-project.js';
-import { bin, runIn } from './run-in.js';
-import { SLOW } from './stacks.js';
-import { NATIVE_COMPILER } from './type-errors.js';
+import { cli } from '../helpers';
+import { EditedProject } from './edited-project';
+import { bin, runIn } from './run-in';
+import { SLOW } from './stacks';
+import { NATIVE_COMPILER } from './type-errors';
 
 const BILLING = 'src/contexts/billing';
 const AGGREGATE = `${BILLING}/domain/aggregates/ledger.aggregate.ts`;

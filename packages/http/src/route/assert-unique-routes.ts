@@ -1,6 +1,6 @@
-import { DuplicateRouteError } from './duplicate-route-error.js';
-import type { RouteSpec } from './route-spec.js';
-import type { Route } from './route.js';
+import { DuplicateRouteError } from './duplicate-route-error';
+import type { RouteSpec } from './route-spec';
+import type { Route } from './route';
 
 export function assertUniqueRoutes(routes: readonly Route[]): void {
   const operationIds = new Set<string>();

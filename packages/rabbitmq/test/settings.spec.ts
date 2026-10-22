@@ -1,8 +1,8 @@
 import type { ChannelModel, Options } from 'amqplib';
 import { describe, expect, it } from 'vitest';
-import type { RabbitMqDelivery } from '../src/options/rabbit-mq-delivery.js';
-import type { RabbitMqFailure } from '../src/options/rabbit-mq-failure.js';
-import { settingsOf } from '../src/options/settings-of.js';
+import type { RabbitMqDelivery } from '../src/options/rabbit-mq-delivery';
+import type { RabbitMqFailure } from '../src/options/rabbit-mq-failure';
+import { settingsOf } from '../src/options/settings-of';
 
 const URL = 'amqp://kit:kit@127.0.0.1:5672';
 

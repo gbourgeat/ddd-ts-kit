@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { isRecord } from '../config/values/is-record.js';
-import type { StoryPlace } from './story-place.js';
-import { STORY_SCOPE_FILE } from './story-scope-file.js';
+import { isRecord } from '../config/values/is-record';
+import type { StoryPlace } from './story-place';
+import { STORY_SCOPE_FILE } from './story-scope-file';
 
 /** The story of the worktree at `root`; undefined outside the worktree of a story or when its file is not one. */
 export function readStoryPlace(root: string): StoryPlace | undefined {

@@ -1,4 +1,4 @@
-import { TENANT_SETTINGS } from './tenant-settings.js';
+import { TENANT_SETTINGS } from './tenant-settings';
 
 /**
  * The expressions of the row-level security policies on a column, quoted as SQL. `read`: the row

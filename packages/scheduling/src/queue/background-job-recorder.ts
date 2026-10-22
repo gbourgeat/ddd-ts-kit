@@ -1,8 +1,8 @@
 import type { LogFields, LogLevel, Logger, Metrics } from '@ddd-ts-kit/kernel';
-import { BACKGROUND_DURATION_HISTOGRAM, BACKGROUND_RUNS_COUNTER } from '../metric-names.js';
-import type { BackgroundJobObserver } from './background-job-observer.js';
-import type { BackgroundJobOutcome } from './background-job-outcome.js';
-import type { BackgroundJobRun } from './background-job-run.js';
+import { BACKGROUND_DURATION_HISTOGRAM, BACKGROUND_RUNS_COUNTER } from '../metric-names';
+import type { BackgroundJobObserver } from './background-job-observer';
+import type { BackgroundJobOutcome } from './background-job-outcome';
+import type { BackgroundJobRun } from './background-job-run';
 
 export interface BackgroundJobRecorderOptions {
   readonly logger: Logger;

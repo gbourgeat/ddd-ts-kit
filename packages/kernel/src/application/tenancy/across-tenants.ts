@@ -1,9 +1,9 @@
-import type { AuditRecord } from '../audit/audit-record.js';
-import type { ExecutionContext } from '../execution/execution-context.js';
-import type { ElevationOptions } from './elevation-options.js';
-import { InvalidTenantElevationError } from './invalid-tenant-elevation-error.js';
-import { isTenantId } from './is-tenant-id.js';
-import type { TenantElevation } from './tenant-elevation.js';
+import type { AuditRecord } from '../audit/audit-record';
+import type { ExecutionContext } from '../execution/execution-context';
+import type { ElevationOptions } from './elevation-options';
+import { InvalidTenantElevationError } from './invalid-tenant-elevation-error';
+import { isTenantId } from './is-tenant-id';
+import type { TenantElevation } from './tenant-elevation';
 
 /** The action of the audit entry an elevation writes. */
 export const TENANT_ELEVATION_ACTION = 'tenancy:elevate';

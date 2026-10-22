@@ -1,6 +1,6 @@
-import type { Exported } from './exported.js';
-import type { LocalType } from './local-types.js';
-import { typeClosure } from './type-closure.js';
+import type { Exported } from './exported';
+import type { LocalType } from './local-types';
+import { typeClosure } from './type-closure';
 
 /** The type a family of exported functions all return, and the export that declares it when the file does. */
 export interface TypeFamily {

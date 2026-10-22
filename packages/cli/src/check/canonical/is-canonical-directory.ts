@@ -1,6 +1,6 @@
-import { matchesDirectory } from './matches-directory.js';
-import { OPEN_DIRECTORIES } from './open-directories.js';
-import { ROLES } from './roles.js';
+import { matchesDirectory } from './matches-directory';
+import { OPEN_DIRECTORIES } from './open-directories';
+import { ROLES } from './roles';
 
 export function isCanonicalDirectory(directory: string): boolean {
   if (OPEN_DIRECTORIES.some((open) => directory === open || directory.startsWith(`${open}/`))) {

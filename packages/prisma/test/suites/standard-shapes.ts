@@ -8,12 +8,12 @@ import {
   offsetPage,
   type ExecutionScope,
 } from '@ddd-ts-kit/kernel';
-import { createPrismaUnitOfWork } from '../../src/index.js';
-import { createDatabase, type TestDatabase } from '../support/database.js';
-import { Invoice } from '../support/billing-core/domain/invoice.js';
-import { PrismaInvoiceQueries } from '../support/billing-core/infrastructure/persistence/prisma-invoice.queries.js';
-import { PrismaInvoiceRepository } from '../support/billing-core/infrastructure/persistence/prisma-invoice.repository.js';
-import { ada, bob, eve, nobody, scopeOf } from '../support/scopes.js';
+import { createPrismaUnitOfWork } from '../../src';
+import { createDatabase, type TestDatabase } from '../support/database';
+import { Invoice } from '../support/billing-core/domain/invoice';
+import { PrismaInvoiceQueries } from '../support/billing-core/infrastructure/persistence/prisma-invoice.queries';
+import { PrismaInvoiceRepository } from '../support/billing-core/infrastructure/persistence/prisma-invoice.repository';
+import { ada, bob, eve, nobody, scopeOf } from '../support/scopes';
 
 const MORNING = new Date('2026-03-01T10:00:00.000Z');
 

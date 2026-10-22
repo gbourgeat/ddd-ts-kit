@@ -1,4 +1,4 @@
-import type { TodoLocation } from './todo-location.js';
+import type { TodoLocation } from './todo-location';
 
 /** What a command wrote, or would write, and what is left to decide. */
 export interface WorkspaceReport {

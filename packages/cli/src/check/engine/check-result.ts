@@ -1,4 +1,4 @@
-import type { Violation } from '../model/violation.js';
+import type { Violation } from '../model/violation';
 
 export interface CheckResult {
   readonly violations: Violation[];

@@ -10,7 +10,7 @@ import {
   ok,
   unwrap,
   type IntegrationEvent,
-} from '../src/index.js';
+} from '../src';
 
 class Money extends ValueObject<{ amount: number; currency: string }> {
   static of(amount: number, currency: string): Money {

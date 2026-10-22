@@ -1,6 +1,6 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import type { AsyncApiInfo } from './async-api-info.js';
-import type { AsyncApiServer } from './async-api-server.js';
+import type { AsyncApiInfo } from './async-api-info';
+import type { AsyncApiServer } from './async-api-server';
 
 export interface AsyncApiDocument {
   readonly asyncapi: '3.0.0';

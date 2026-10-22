@@ -1,5 +1,5 @@
-import type { Query } from '../messaging/query.js';
-import type { ResultOf } from '../messaging/result-of.js';
+import type { Query } from '../messaging/query';
+import type { ResultOf } from '../messaging/result-of';
 
 export abstract class QueryBus {
   static {

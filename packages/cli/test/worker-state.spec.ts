@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { formatResume } from '../src/worker/format-resume.js';
-import { namedPaths } from '../src/worker/named-paths.js';
-import { nextStepOf } from '../src/worker/next-step-of.js';
-import { resumeMessage } from '../src/worker/resume-message.js';
-import type { WorkerResume } from '../src/worker/resume-worker.js';
-import { stateLineOf } from '../src/worker/state-line-of.js';
-import type { AgentRecord, WorkerProgress } from '../src/worker/worker-progress.js';
-import type { WorkerStatus } from '../src/worker/workers-status.js';
+import { formatResume } from '../src/worker/format-resume';
+import { namedPaths } from '../src/worker/named-paths';
+import { nextStepOf } from '../src/worker/next-step-of';
+import { resumeMessage } from '../src/worker/resume-message';
+import type { WorkerResume } from '../src/worker/resume-worker';
+import { stateLineOf } from '../src/worker/state-line-of';
+import type { AgentRecord, WorkerProgress } from '../src/worker/worker-progress';
+import type { WorkerStatus } from '../src/worker/workers-status';
 
 const AGENT: AgentRecord = {
   agentId: 'a7',

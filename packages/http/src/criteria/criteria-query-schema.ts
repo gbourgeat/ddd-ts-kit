@@ -1,8 +1,8 @@
 import type { Criteria, CriteriaDefinition } from '@ddd-ts-kit/kernel';
 import { customSchema, type Schema } from '@ddd-ts-kit/validation';
-import { criteriaParameters } from './criteria-parameters.js';
-import type { CriteriaQueryOptions } from './criteria-query-options.js';
-import { parseCriteriaQuery } from './parse-criteria-query.js';
+import { criteriaParameters } from './criteria-parameters';
+import type { CriteriaQueryOptions } from './criteria-query-options';
+import { parseCriteriaQuery } from './parse-criteria-query';
 
 /**
  * The query of a search route as a `Schema`: `request: { query: criteriaQuerySchema(definition) }`

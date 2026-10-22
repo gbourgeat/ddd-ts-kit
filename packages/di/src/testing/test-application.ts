@@ -1,7 +1,7 @@
 import type { Actor, Session } from '@ddd-ts-kit/kernel';
-import type { Application } from '../application/application.js';
-import type { Resolve } from '../wiring/resolve.js';
-import type { TestKernel } from './test-kernel.js';
+import type { Application } from '../application/application';
+import type { Resolve } from '../wiring/resolve';
+import type { TestKernel } from './test-kernel';
 
 export interface TestApplication extends Application, TestKernel {
   /** `resolve` under the name a test reads better with: `app.get(OrderRepository)`. */

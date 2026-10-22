@@ -1,5 +1,5 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import type { OutboxStatus } from './outbox-status.js';
+import type { OutboxStatus } from './outbox-status';
 
 export interface OutboxRecord {
   readonly event: IntegrationEvent;

@@ -22,8 +22,8 @@ import {
   fake,
   kernelModule,
   override,
-} from '../src/index.js';
-import { wiringFailure } from './support/failure.js';
+} from '../src';
+import { wiringFailure } from './support/failure';
 
 const issueInvoice = { id: 'billing:invoice.issue' };
 const readInvoices = { id: 'billing:invoice.read' };

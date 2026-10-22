@@ -5,7 +5,7 @@ import {
   defineStateMachine,
   mermaidOfStateMachine,
   type ForbiddenTransition,
-} from '../src/index.js';
+} from '../src';
 
 const ParcelStatus = {
   registered: 'registered',

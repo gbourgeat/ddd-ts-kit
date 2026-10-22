@@ -1,4 +1,4 @@
-import type { SourceFile } from '../model/source-file.js';
+import type { SourceFile } from '../model/source-file';
 
 /** True when the file imports something from `packageName`, by its main entry or by any other. */
 export function importsPackage(file: SourceFile, packageName: string): boolean {

@@ -1,7 +1,7 @@
-import { cacheControlOf } from '../cache/cache-control-of.js';
-import { CacheScope } from '../cache/cache-scope.js';
-import { varyOf } from '../cache/vary-of.js';
-import type { Route } from '../route/route.js';
+import { cacheControlOf } from '../cache/cache-control-of';
+import { CacheScope } from '../cache/cache-scope';
+import { varyOf } from '../cache/vary-of';
+import type { Route } from '../route/route';
 
 const NO_STORE = { 'cache-control': CacheScope.noStore };
 const SUCCESS_FROM = 200;

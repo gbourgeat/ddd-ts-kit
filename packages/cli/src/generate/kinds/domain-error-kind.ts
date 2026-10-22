@@ -1,12 +1,12 @@
-import { CliError } from '../../cli-error.js';
-import type { Config } from '../../config/index.js';
-import { concept } from '../concept.js';
-import { emit } from '../emit.js';
-import { ERROR_CODE } from '../errors/error-code-pattern.js';
-import type { Kind } from '../kind.js';
-import { named } from '../named.js';
-import { openScope } from '../open-scope.js';
-import { vars } from '../vars.js';
+import { CliError } from '../../cli-error';
+import type { Config } from '../../config';
+import { concept } from '../concept';
+import { emit } from '../emit';
+import { ERROR_CODE } from '../errors/error-code-pattern';
+import type { Kind } from '../kind';
+import { named } from '../named';
+import { openScope } from '../open-scope';
+import { vars } from '../vars';
 
 export const domainErrorKind: Kind = {
   name: 'domain-error',

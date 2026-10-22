@@ -1,4 +1,4 @@
-import { defineAspect, type Aspect } from '../../src/index.js';
+import { defineAspect, type Aspect } from '../../src';
 
 /** An aspect that writes what it sees around each call: enough to observe the weaving. */
 export function recording(journal: string[], label = 'around'): Aspect {

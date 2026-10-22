@@ -1,7 +1,7 @@
-import type { Change } from './injection.js';
-import { PATHS } from './paths.js';
-import { SOURCE_ALIAS } from './source-alias.js';
-import { SOURCE_SUFFIX } from './source-suffix.js';
+import type { Change } from './injection';
+import { PATHS } from './paths';
+import { SOURCE_ALIAS } from './source-alias';
+import { SOURCE_SUFFIX } from './source-suffix';
 
 const { HANDLER_SPEC, NOTIFICATION, ROUTE } = PATHS;
 const SERVICE = 'src/contexts/analytics/domain/services/occupancy-measure.service.ts';

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { refreshDeclarations } from '../src/dev/refresh-declarations.js';
-import { cli, read, scaffoldEverything, tempDir, write } from './helpers.js';
-import { checkJsonOf } from './check-support.js';
+import { refreshDeclarations } from '../src/dev/refresh-declarations';
+import { cli, read, scaffoldEverything, tempDir, write } from './helpers';
+import { checkJsonOf } from './check-support';
 
 const BILLING = 'src/contexts/billing';
 /** The declarations of the folder the handler sits in, where its list is registered. */

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { read, write } from './helpers.js';
-import { failure, report } from './reports.js';
-import { billingProject as project, generateError as generate } from './support/billing-error-project.js';
+import { read, write } from './helpers';
+import { failure, report } from './reports';
+import { billingProject as project, generateError as generate } from './support/billing-error-project';
 
 const ERRORS = 'src/contexts/billing/domain/errors';
 const UNIT = 'src/contexts/billing/test/unit';

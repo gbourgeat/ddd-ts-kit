@@ -1,7 +1,7 @@
-import type { ClassInjection } from './class-injection.js';
-import { LocalNames } from './local-names.js';
-import type { RenderedInjections } from './rendered-injections.js';
-import type { TokenReference } from './token-reference.js';
+import type { ClassInjection } from './class-injection';
+import { LocalNames } from './local-names';
+import type { RenderedInjections } from './rendered-injections';
+import type { TokenReference } from './token-reference';
 
 const KERNEL = { name: 'injected', from: { kind: 'package', specifier: '@ddd-ts-kit/kernel/declarations' } } as const;
 /** The width the formatter of a generated project breaks at: what is written here is what it would write. */

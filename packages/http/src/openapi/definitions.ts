@@ -1,6 +1,6 @@
 import type { JsonSchema, Schema } from '@ddd-ts-kit/validation';
-import { isRecord } from '../support/is-record.js';
-import { compare } from './compare.js';
+import { isRecord } from '../support/is-record';
+import { compare } from './compare';
 
 const COMPONENT = /^#\/components\/schemas\/(.+)$/;
 

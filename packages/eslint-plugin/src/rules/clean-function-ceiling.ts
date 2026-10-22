@@ -1,8 +1,8 @@
-import { FUNCTION_LINES_CEILING } from '../project/parse-config.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import { codeLines } from '../support/functions/code-lines.js';
-import { describedFunction } from '../support/functions/described-function.js';
-import type { FunctionNode } from '../support/functions/function-node.js';
+import { FUNCTION_LINES_CEILING } from '../project/parse-config';
+import { defineRule } from '../support/rule/define-rule';
+import { codeLines } from '../support/functions/code-lines';
+import { describedFunction } from '../support/functions/described-function';
+import type { FunctionNode } from '../support/functions/function-node';
 
 /**
  * The hard ceiling of clean/function-size. ESLint gives one severity to a rule name, so the

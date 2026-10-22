@@ -1,5 +1,5 @@
-import { PROSE_OPENING } from './prose-opening.js';
-import { readsAsProse } from './reads-as-prose.js';
+import { PROSE_OPENING } from './prose-opening';
+import { readsAsProse } from './reads-as-prose';
 
 const FRAGMENTS: readonly RegExp[] = [
   /^(?:if|for|while|switch)\s*\(.*\)\s*\{$/,

@@ -1,5 +1,5 @@
-import { AuthorizationSetupError } from '../errors/authorization-setup-error.js';
-import type { Grant } from './grant.js';
+import { AuthorizationSetupError } from '../errors/authorization-setup-error';
+import type { Grant } from './grant';
 
 /** The pattern that grants every permission of every context. */
 export const EVERYTHING = '*';

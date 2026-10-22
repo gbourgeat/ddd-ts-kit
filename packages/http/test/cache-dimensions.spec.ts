@@ -14,8 +14,8 @@ import {
   type ExecuteOptions,
   type RawRequest,
   type Route,
-} from '../src/index.js';
-import { mountExpress } from '../src/express.js';
+} from '../src';
+import { mountExpress } from '../src/express';
 
 const hours = zodSchema(z.object({ opens: z.string() }));
 const kept: CachePolicy = { scope: CacheScope.public, maxAge: '1m', sMaxAge: '1h' };

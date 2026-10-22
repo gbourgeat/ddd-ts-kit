@@ -1,7 +1,7 @@
-import type { Declaration } from '../model/declaration.js';
-import type { DeclaredClass } from '../model/declared-class.js';
-import { DeclarationError } from './declaration-error.js';
-import { registry } from './registry.js';
+import type { Declaration } from '../model/declaration';
+import type { DeclaredClass } from '../model/declared-class';
+import { DeclarationError } from './declaration-error';
+import { registry } from './registry';
 
 export function record(target: DeclaredClass, declaration: Declaration): void {
   const { byClass, classes } = registry();

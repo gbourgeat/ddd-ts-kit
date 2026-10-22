@@ -1,6 +1,6 @@
-import { kernelNames } from '../event-sourcing/kernel-names.js';
-import type { Rule } from '../model/rule.js';
-import { perFile } from '../support/per-file.js';
+import { kernelNames } from '../event-sourcing/kernel-names';
+import type { Rule } from '../model/rule';
+import { perFile } from '../support/per-file';
 
 /** What reads or writes a stream directly: only infrastructure and the composition root hold them. */
 const STORE_NAMES = new Set([

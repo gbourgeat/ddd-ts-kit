@@ -1,6 +1,6 @@
-import type { Project } from '../model/project.js';
-import { importedFrom } from '../support/imported-from.js';
-import { inLayer } from '../support/in-layer.js';
+import type { Project } from '../model/project';
+import { importedFrom } from '../support/imported-from';
+import { inLayer } from '../support/in-layer';
 
 /** A port of a context: the name of its class and the file that declares it. */
 interface Port {

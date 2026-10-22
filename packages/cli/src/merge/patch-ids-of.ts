@@ -1,4 +1,4 @@
-import { gitProcess } from './git-process.js';
+import { gitProcess } from './git-process';
 
 /** How a patch is written to be compared: no context, no rename, no colour, whatever the user's config says. */
 const PATCH = ['-p', '-U0', '--no-renames', '--no-color', '--no-ext-diff'];

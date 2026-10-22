@@ -1,4 +1,4 @@
-import { NOW } from './job-fixtures.js';
+import { NOW } from './job-fixtures';
 
 /** That many milliseconds after `NOW`. */
 export function later(ms: number): Date {

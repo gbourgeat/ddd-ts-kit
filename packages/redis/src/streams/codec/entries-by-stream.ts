@@ -1,6 +1,6 @@
-import { listOf } from '../../replies/list-of.js';
-import { entriesOf } from './entries-of.js';
-import type { Entry } from './entry.js';
+import { listOf } from '../../replies/list-of';
+import { entriesOf } from './entries-of';
+import type { Entry } from './entry';
 
 /** The reply of `XREADGROUP`: the entries read, stream by stream. Nothing to read is `null`. */
 export function entriesByStream(reply: unknown): Map<string, Entry[]> {
