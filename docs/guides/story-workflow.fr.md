@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:a358a00edb76ba7a -->
+<!-- translation-of: story-workflow.md sha256:b8a3268660141a2d -->
 
 # Parcours d'une story : une session par user story
 
@@ -216,6 +216,30 @@ l'autre, chacune sur un tronc vert.
 | deux *stories* qui changent le même fichier | `stories` ; la garde, au démarrage de la session et à la première écriture d'un tel fichier |
 | une session qui finit avant son rapport | la garde, qui refuse le premier arrêt de chaque étape |
 | la *pull request* : chaque ligne faite, aucun scénario en attente, le tronc fusionné, l'origine consignée, le rapport écrit avec sa vérification | `story --gate close` |
+
+## L'état final optionnel : la spécification comme un job
+
+L'état final du playbook déclenche la passe de conception à la fusion de l'intention, comme un
+*job* qui livre la spécification en *pull request*. Le kit l'a sous la forme
+`/ddd-ts-kit:story <code> --headless <intention>` : les phases 1 à 4 sans responsable, chaque
+question dont la réponse change un artefact écrite sous `## Open questions` du fichier de la
+*story* avec son option recommandée prise provisoirement et marquée `(provisional, headless)`,
+les lignes, la revue de conception et l'acceptation écrites et verrouillées, la barrière de
+construction laissée fermée, et une *pull request* dont le corps est la liste des questions. Le
+responsable du projet répond à la revue ; la *pull request* fusionne avec les réponses écrites
+dans le fichier de la *story*, et la phase de construction part d'elles dans une session qui
+relance la *story*. Une frontière, un nouveau contexte ou un patron de relation est écrit comme
+une question sans option prise : les lignes qui en dépendent attendent le responsable.
+
+`pipeline/github/workflows/intent-to-spec.yml` est le *template* de *workflow* qui l'exécute :
+sur une *pull request* fusionnée dans la branche par défaut qui passe une intention de
+`docs/architecture/intents/` à `Status: accepted`, il installe le projet, Claude Code et le
+plugin, et lance `claude -p` avec le secret `ANTHROPIC_API_KEY`, une *story* par intention
+acceptée, sous le jeton du *workflow* ou un jeton de l'équipe (`INTENT_TO_SPEC_TOKEN`, pour que
+les vérifications de la *story* tournent sur la *pull request* qu'elle ouvre). C'est optionnel
+et payant : `init` ne l'écrit pas dans cette version, une équipe le copie dans
+`.github/workflows/` et ajoute le secret, et chaque intention acceptée consomme des jetons
+d'API. Le *template* a été analysé et non exécuté sur GitHub.
 
 ## Hôtes
 

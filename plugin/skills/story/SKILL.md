@@ -8,7 +8,7 @@ description: >-
   review, the verification, the pull request and a report of every provisional decision and
   compromise. Run by the user, with /ddd-ts-kit:story, once per story; several terminals take
   several stories at once.
-argument-hint: "<story code> [the story in plain words, a file, or a tracker key]"
+argument-hint: "<story code> [--headless] [the story in plain words, a file, an intent, or a tracker key]"
 disable-model-invocation: true
 allowed-tools:
   - Read
@@ -185,6 +185,21 @@ trunk links back to the intent, the ticket or the incident. Give the owner the l
 report, then stop. When the owner asks for the pull request to be taken to green, the next step
 is `/ddd-ts-kit:pull-request <number>` from this worktree: it sweeps the review comments and
 the failing checks under the rules of this story, and never force-pushes.
+
+## `--headless`: the specification without an owner
+
+With `--headless` in `$ARGUMENTS` (a job on the merge of an accepted intent, or a session
+nobody attends), nobody answers at phase 1. Run phases 0 to 4 as above, with these
+differences: every question that changes an artefact is written under `## Open questions` of
+the story file, each with its recommended option, taken provisionally and marked
+`(provisional, headless)` where it lands (a criterion, a row, a line of the design, a decision
+`D<n>`); a boundary, a new context or a relationship pattern is written there too, with no
+option taken, and the rows that depend on it wait. The acceptance is written and locked as at
+phase 4; the build gate stays closed: no phase 5, no code. Commit, push, and `gh pr create`
+with the list of `## Open questions` as the body, `## Origin` at its top. The owner answers in
+the review, the pull request merges with the answers written into the story file, and the
+build phase starts from them in a session that runs `/ddd-ts-kit:story $0` again, which finds
+the worktree and the answers. Then stop.
 
 ## While working
 

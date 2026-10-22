@@ -201,6 +201,28 @@ share. The pull requests merge one after the other, each on a green trunk.
 | a session that ends before its report | the guard, which refuses the first stop of each step |
 | the pull request: every row done, no scenario pending, the trunk merged in, the origin recorded, the report written with its verification | `story --gate close` |
 
+## The optional end state: the specification as a job
+
+The playbook's end state fires the design pass on the merge of the intent, as a job that
+commits the specification as a pull request. The kit has it as `/ddd-ts-kit:story <code>
+--headless <intent>`: phases 1 to 4 without an owner, every question that changes an artefact
+written under `## Open questions` of the story file with its recommended option taken
+provisionally and marked `(provisional, headless)`, the rows, the design review and the
+acceptance written and locked, the build gate left closed, and a pull request whose body is the
+list of questions. The owner answers in the review; the pull request merges with the answers
+written into the story file, and the build phase starts from them in a session that runs the
+story again. A boundary, a new context or a relationship pattern is written as a question with
+no option taken: the rows that depend on it wait for the owner.
+
+`pipeline/github/workflows/intent-to-spec.yml` is the workflow template that runs it: on a pull
+request merged into the default branch that turns an intent of `docs/architecture/intents/` to
+`Status: accepted`, it installs the project, Claude Code and the plugin, and runs `claude -p`
+with the `ANTHROPIC_API_KEY` secret, one story per accepted intent, under the token of the
+workflow or a token of the team (`INTENT_TO_SPEC_TOKEN`, so that the checks of the story run on
+the pull request it opens). It is opt-in and paid: `init` does not write it in this version, a
+team copies it into `.github/workflows/` and adds the secret, and each accepted intent consumes
+API tokens. The template was parsed and not executed on GitHub.
+
 ## Hosts
 
 Claude Code runs the whole workflow: the skill, the agents and the guard. Codex and Copilot run
