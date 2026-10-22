@@ -108,7 +108,7 @@ limits, and a recommendation by situation.
 | [Methodology](guides/methodology.md) | the end-to-end path from a statement of needs to running code, step by step: the supported path |
 | [Which command, when](guides/commands.md) | the command or skill for each moment of a project, a first feature from zero, and the reference of every command and flag |
 | [One slice, end to end](guides/first-slice.md) | the request `POST /orders` through the four layers of a generated slice, and its domain and application code once filled |
-| [The plugin for coding agents](guides/coding-agents.md) | installing the plugin in Claude Code, Codex and Copilot, its twenty-four skills, five agents and hook, and what each host runs |
+| [The plugin for coding agents](guides/coding-agents.md) | installing the plugin in Claude Code, Codex and Copilot, its twenty-five skills, five agents and hook, and what each host runs |
 | [Team workflow](guides/team-workflow.md) | ownership per context, the glossary, contracts first, review, decisions, onboarding |
 | [Parallel work](guides/parallel-work.md) | several people or agents at once: what is safe, what is sequenced, a concrete plan |
 | [Story workflow](guides/story-workflow.md) | one session per user story, one story per terminal: questions first, design review and acceptance tests before the code, a report of every provisional decision |

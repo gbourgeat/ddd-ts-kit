@@ -12,7 +12,7 @@ for the three agents:
 | Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, then `copilot plugin install ddd-ts-kit@ddd-ts-kit` | by its name, `start` |
 | Copilot cloud agent, VS Code | declared by the `.github/copilot/settings.json` that `init` writes: the cloud agent installs it, VS Code recommends it | by its name, `start` |
 
-Twenty-four skills, in the order a project meets them:
+Twenty-five skills, in the order a project meets them:
 
 | Skill | Use |
 |---|---|
@@ -26,6 +26,7 @@ Twenty-four skills, in the order a project meets them:
 | `parallel-work` | split the slices between several agents or people without collision |
 | `intent` | capture an idea as an intent before any story, in the words of whoever has it, for the product owner to accept in a pull request (run by the user; [story workflow](story-workflow.md#where-a-story-comes-from)) |
 | `story` | take one user story from its questions to a green pull request in one session, one story per terminal (run by the user; [story workflow](story-workflow.md)) |
+| `pull-request` | take the pull request of a story to green: sweep its review comments and failing checks under the rules of the story, push, wait, repeat; then report what changed and what was declined (run by the user) |
 | `scaffold` | one file of any role, from a template |
 | `use-case` | one feature end to end, test first |
 | `integration-event` | make two contexts collaborate through a versioned event |

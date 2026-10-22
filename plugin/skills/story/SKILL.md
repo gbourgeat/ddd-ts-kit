@@ -176,7 +176,9 @@ the commits of the branch made by an agent (`git log <base>..HEAD --format=%B | 
 '^Agent:'`) against those made by hand. `npx ddd-ts-kit story $0 --gate close` passes. Commit, push the branch, and
 `gh pr create` with the report as its body, `## Origin` repeated at its top: the record on the
 trunk links back to the intent, the ticket or the incident. Give the owner the link and the
-report, then stop.
+report, then stop. When the owner asks for the pull request to be taken to green, the next step
+is `/ddd-ts-kit:pull-request <number>` from this worktree: it sweeps the review comments and
+the failing checks under the rules of this story, and never force-pushes.
 
 ## While working
 

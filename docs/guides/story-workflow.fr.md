@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:f291435a5179a7c2 -->
+<!-- translation-of: story-workflow.md sha256:b73907fded4827c7 -->
 
 # Parcours d'une story : une session par user story
 
@@ -161,6 +161,17 @@ faits par un agent face à ceux faits à la main. C'est désactivé par défaut 
 refusent les lignes d'attribution dans les *commits*, et la séparation qu'un audit veut
 vraiment passe par l'identité de l'exécution (son propre compte, son propre jeton), qu'un
 *trailer* ne fait qu'approcher.
+
+Une fois la *pull request* ouverte, la revue et les vérifications de la plateforme répondent.
+Quand le responsable du projet le demande, `/ddd-ts-kit:pull-request <number>`, lancée depuis
+le *worktree* de la *story*, mène la *pull request* au vert : elle balaie les commentaires de
+revue non résolus et les vérifications en échec, traite chacun sous les règles de la *story*
+(un changement que la revue de conception n'avait pas prévu devient une décision `D<n>`, une
+demande d'affaiblir une vérification passe par la *skill* `deviation`, une vérification en
+échec est corrigée dans le code et jamais dans la vérification, pas de *force-push*), répond à
+chaque fil, pousse, attend les vérifications et recommence jusqu'à ce que la *pull request*
+n'attende plus que le responsable du code ; puis elle rend compte de ce qui a changé et de ce
+qui a été refusé, et pourquoi.
 
 ## Plusieurs stories, plusieurs terminaux
 

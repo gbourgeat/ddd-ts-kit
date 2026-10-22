@@ -152,6 +152,15 @@ by an agent against those made by hand. It is off by default: many teams refuse 
 lines in commits, and the separation an audit really wants is by the identity of the run (its
 own account, its own token), which a trailer only approximates.
 
+After the pull request is opened, the review and the checks of the platform answer. When the
+owner asks for it, `/ddd-ts-kit:pull-request <number>`, run from the worktree of the story,
+takes the pull request to green: it sweeps the unresolved review comments and the failing
+checks, addresses each under the rules of the story (a change the design review did not
+foresee becomes a `D<n>` decision, a request to weaken a check goes through the `deviation`
+skill, a failing check is fixed in the code and never in the check, no force-push), replies to
+each thread, pushes, waits for the checks and repeats until the pull request waits only on the
+code owner; then it reports what was changed and what was declined and why.
+
 ## Several stories, several terminals
 
 `story-scope` refuses a story already open in another worktree, and cuts the branch from the one

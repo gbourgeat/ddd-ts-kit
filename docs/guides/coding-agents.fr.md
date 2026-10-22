@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:e0f5eb2d8b57e483 -->
+<!-- translation-of: coding-agents.md sha256:84911c6c23692f9f -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -13,7 +13,7 @@ les trois agents :
 | Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, puis `copilot plugin install ddd-ts-kit@ddd-ts-kit` | par son nom, `start` |
 | Agent cloud de Copilot, VS Code | déclaré par le `.github/copilot/settings.json` qu'écrit `init` : l'agent cloud l'installe, VS Code le recommande | par son nom, `start` |
 
-Vingt-quatre skills, dans l'ordre où un projet les rencontre :
+Vingt-cinq skills, dans l'ordre où un projet les rencontre :
 
 | Skill | Usage |
 |---|---|
@@ -27,6 +27,7 @@ Vingt-quatre skills, dans l'ordre où un projet les rencontre :
 | `parallel-work` | répartir les tranches entre plusieurs agents ou personnes sans collision |
 | `intent` | saisir une idée comme une intention avant toute *story*, dans les mots de celui qui l'a, pour que le responsable du produit l'accepte dans une *pull request* (lancée par l'utilisateur ; [parcours d'une story](story-workflow.fr.md#doù-vient-une-story)) |
 | `story` | mener une *user story* de ses questions à une *pull request* verte en une session, une *story* par terminal (lancée par l'utilisateur ; [parcours d'une story](story-workflow.fr.md)) |
+| `pull-request` | mener la *pull request* d'une *story* au vert : balayer ses commentaires de revue et ses vérifications en échec sous les règles de la *story*, pousser, attendre, recommencer ; puis rendre compte de ce qui a changé et de ce qui a été refusé (lancée par l'utilisateur) |
 | `scaffold` | un fichier de n'importe quel rôle, à partir d'un template |
 | `use-case` | une fonctionnalité de bout en bout, test d'abord |
 | `integration-event` | faire collaborer deux contextes par un événement versionné |
