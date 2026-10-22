@@ -137,7 +137,11 @@ plugin builds each row itself with skill `ddd-ts-kit:use-case`.
    the kit derives and leaves the rest to you, as skill `ddd-ts-kit:parallel-work` says; settle
    it, then `npx ddd-ts-kit merge-trunk --continue`.
 2. The `architecture-reviewer` agent on the branch (`--changed-since <base>`): blocking findings
-   fixed, the others settled or written as `TODO(review): #<row> ...`.
+   fixed, the others settled or written as `TODO(review): #<row> ...`. The rule of two: a
+   finding that repeats one already recorded for the project (the same rule id or the same
+   remark in an earlier file of `docs/architecture/reviews/`, or a `TODO(review)` marker) is
+   written in this branch as a line under `## Mistakes seen here` of `AGENTS.md`, or as a rule
+   of `ddd-ts-kit.config.json` when the kit has one for it.
 3. `npm run verify`, `npx ddd-ts-kit acceptance $0 --gate passing`, `npx ddd-ts-kit todo`, and
    `npx ddd-ts-kit story-check $0`: every row done, no marker of its own left.
 

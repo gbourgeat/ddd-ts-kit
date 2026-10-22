@@ -110,6 +110,15 @@ The agents run one after the other in the one worktree: the rows of a story most
 each other (contract, producer, consumer), and the parallelism is between stories, one per
 terminal.
 
+## At the close of a story
+
+The trunk is merged in, the `architecture-reviewer` agent reads the branch, and its findings are
+fixed or written as `TODO(review)` markers tied to their row. The rule of two applies there: a
+finding that repeats one already recorded for the project (the same rule id or the same remark
+in an earlier review file, or a `TODO(review)` marker) is written in the same branch as a line
+under `## Mistakes seen here` of `AGENTS.md`, or as a rule of `ddd-ts-kit.config.json` when the
+kit has one for it, so that the next session does not make it a third time.
+
 ## Several stories, several terminals
 
 `story-scope` refuses a story already open in another worktree, and cuts the branch from the one

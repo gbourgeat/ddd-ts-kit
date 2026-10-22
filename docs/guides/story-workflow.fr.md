@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:e478911510da01b7 -->
+<!-- translation-of: story-workflow.md sha256:5c94d43333430ff0 -->
 
 # Parcours d'une story : une session par user story
 
@@ -115,6 +115,16 @@ un droit, une migration) reviennent à la session, qui les réalise sur la branc
 tournent l'un après l'autre dans l'unique *worktree* : les lignes d'une *story* dépendent le plus
 souvent les unes des autres (contrat, producteur, consommateur), et le parallélisme est entre
 les *stories*, une par terminal.
+
+## À la clôture d'une story
+
+Le tronc est fusionné dans la branche, l'agent `architecture-reviewer` lit la branche, et ses
+constats sont corrigés ou écrits en marqueurs `TODO(review)` rattachés à leur ligne. La règle de
+deux s'applique là : un constat qui répète un constat déjà consigné pour le projet (le même
+identifiant de règle ou la même remarque dans un fichier de revue antérieur, ou un marqueur
+`TODO(review)`) est écrit dans la même branche comme une ligne sous `## Mistakes seen here` de
+`AGENTS.md`, ou comme une règle de `ddd-ts-kit.config.json` quand le kit en a une pour lui, pour
+que la session suivante ne le fasse pas une troisième fois.
 
 ## Plusieurs stories, plusieurs terminaux
 
