@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:5c94d43333430ff0 -->
+<!-- translation-of: story-workflow.md sha256:22399a38ae7fe4c1 -->
 
 # Parcours d'une story : une session par user story
 
@@ -124,7 +124,21 @@ deux s'applique là : un constat qui répète un constat déjà consigné pour l
 identifiant de règle ou la même remarque dans un fichier de revue antérieur, ou un marqueur
 `TODO(review)`) est écrit dans la même branche comme une ligne sous `## Mistakes seen here` de
 `AGENTS.md`, ou comme une règle de `ddd-ts-kit.config.json` quand le kit en a une pour lui, pour
-que la session suivante ne le fasse pas une troisième fois.
+que la session suivante ne le fasse pas une troisième fois. La revue elle-même est gardée : la
+session l'ajoute à `docs/architecture/reviews/<code>.md` sous `## Findings`, une ligne par
+constat avec sa passe, son `file:line` et son issue (`fixed in <commit>`,
+`written as TODO(review)`, `dismissed by ADR-<n>`), si bien que la trace survit à la *pull
+request* et à un passage de GitHub à GitLab, et nourrit la règle de deux.
+
+Une équipe qui veut distinguer les *commits* d'un agent de ceux d'une personne pose
+`commit.agentTrailer` à `true` dans `ddd-ts-kit.config.json`
+([configuration](../CONFIG.fr.md)) : la *skill* story, l'agent `context-builder` qu'elle
+instruit et la *skill* fix terminent alors chaque *commit* qu'ils font par le *trailer*
+`Agent: <host> ddd-ts-kit@<plugin version> <agent name>`, et le rapport compte les *commits*
+faits par un agent face à ceux faits à la main. C'est désactivé par défaut : beaucoup d'équipes
+refusent les lignes d'attribution dans les *commits*, et la séparation qu'un audit veut
+vraiment passe par l'identité de l'exécution (son propre compte, son propre jeton), qu'un
+*trailer* ne fait qu'approcher.
 
 ## Plusieurs stories, plusieurs terminaux
 

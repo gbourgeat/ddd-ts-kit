@@ -121,7 +121,11 @@ tell the owner when no open story carries it.
   `npx ddd-ts-kit verify-slice <context> --since <base>` and its commit;
 - a `slice` row: `npx ddd-ts-kit worker-scope <context> --here --rows <id>` in the worktree, then
   one `ddd-ts-kit:context-builder` agent with the briefing it prints, the worktree path and
-  this line: "Commit on the current branch; do not merge, do not push." Read its report.
+  this line: "Commit on the current branch; do not merge, do not push." When `commit.agentTrailer`
+  of `ddd-ts-kit.config.json` is `true`, add: "End each commit message with the trailer
+  `Agent: <host> ddd-ts-kit@<plugin version> context-builder`" (the host as it names itself,
+  `claude-code`; the version from `## Origin`), and end your own commits with the same trailer,
+  `story` as the agent name. Read its report.
   A blocking need (a contract field, a dependency, a grant, a migration) is yours: do it, commit
   it, launch the next agent on the same row. A scenario it says is wrong is compared with its
   criterion (skill `ddd-ts-kit:testing`): never changed to make code pass.
@@ -141,7 +145,10 @@ plugin builds each row itself with skill `ddd-ts-kit:use-case`.
    finding that repeats one already recorded for the project (the same rule id or the same
    remark in an earlier file of `docs/architecture/reviews/`, or a `TODO(review)` marker) is
    written in this branch as a line under `## Mistakes seen here` of `AGENTS.md`, or as a rule
-   of `ddd-ts-kit.config.json` when the kit has one for it.
+   of `ddd-ts-kit.config.json` when the kit has one for it. Keep the review: append `## Findings`
+   to `docs/architecture/reviews/$0.md`, one line per finding with its pass (the rule id or the
+   principle the reviewer named), its `file:line` and its outcome, `fixed in <commit>`,
+   `written as TODO(review)` or `dismissed by ADR-<n>`; the record outlives the pull request.
 3. `npm run verify`, `npx ddd-ts-kit acceptance $0 --gate passing`, `npx ddd-ts-kit todo`, and
    `npx ddd-ts-kit story-check $0`: every row done, no marker of its own left.
 
@@ -155,7 +162,9 @@ with its verdict (`npx ddd-ts-kit acceptance $0` lists them); each `TODO(review)
 `### Verification`, the evidence from the toolchain and not your word: the last lines of
 `npm run verify`, of `npm run test:e2e -- test/acceptance/$0` and of `npx ddd-ts-kit
 story-check $0`, pasted as they were printed, and `not verified:` for what could not run here
-(a broker, a provider, a platform) and why. `npx ddd-ts-kit story $0 --gate close` passes. Commit, push the branch, and
+(a broker, a provider, a platform) and why; with `commit.agentTrailer` on, one line counting
+the commits of the branch made by an agent (`git log <base>..HEAD --format=%B | grep -c
+'^Agent:'`) against those made by hand. `npx ddd-ts-kit story $0 --gate close` passes. Commit, push the branch, and
 `gh pr create` with the report as its body, `## Origin` repeated at its top: the record on the
 trunk links back to the intent, the ticket or the incident. Give the owner the link and the
 report, then stop.

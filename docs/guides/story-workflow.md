@@ -117,7 +117,20 @@ fixed or written as `TODO(review)` markers tied to their row. The rule of two ap
 finding that repeats one already recorded for the project (the same rule id or the same remark
 in an earlier review file, or a `TODO(review)` marker) is written in the same branch as a line
 under `## Mistakes seen here` of `AGENTS.md`, or as a rule of `ddd-ts-kit.config.json` when the
-kit has one for it, so that the next session does not make it a third time.
+kit has one for it, so that the next session does not make it a third time. The review itself is
+kept: the session appends it to `docs/architecture/reviews/<code>.md` under `## Findings`, one
+line per finding with its pass, its `file:line` and its outcome (`fixed in <commit>`,
+`written as TODO(review)`, `dismissed by ADR-<n>`), so that the record outlives the pull
+request, survives a move between GitHub and GitLab, and feeds the rule of two.
+
+A team that wants the commits of an agent told apart from those of a person sets
+`commit.agentTrailer` to `true` in `ddd-ts-kit.config.json`
+([configuration](../CONFIG.md)): the story skill, the `context-builder` agent it briefs and the
+fix skill then end each commit they make with the trailer
+`Agent: <host> ddd-ts-kit@<plugin version> <agent name>`, and the report counts the commits made
+by an agent against those made by hand. It is off by default: many teams refuse attribution
+lines in commits, and the separation an audit really wants is by the identity of the run (its
+own account, its own token), which a trailer only approximates.
 
 ## Several stories, several terminals
 
