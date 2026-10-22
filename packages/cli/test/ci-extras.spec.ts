@@ -114,7 +114,7 @@ describe('init --ci-extras: the jobs that need a paid plan are opt-in', () => {
 describe('init --ci-extras claude-review, claude-triage: Claude Code in the pipeline, on request', () => {
   it('writes the Claude review and triage jobs for both platforms, never required by the gate, as YAML every parser reads', () => {
     const root = initProject('--ci', 'both', '--ci-extras', 'claude-review,claude-triage');
-    const [review, triage] = CLAUDE_GITHUB.map((file) => read(root, file));
+    const [review = '', triage = ''] = CLAUDE_GITHUB.map((file) => read(root, file));
     const gitlab = read(root, CLAUDE_GITLAB);
 
     expect(review).toContain(MARKS.claudeAction);
