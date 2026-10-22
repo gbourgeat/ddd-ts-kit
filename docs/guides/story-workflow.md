@@ -226,6 +226,7 @@ share. The pull requests merge one after the other, each on a green trunk.
 | two stories that change the same file | `stories`; the guard, at session start and on the first write of such a file |
 | a session that ends before its report | the guard, which refuses the first stop of each step |
 | a done row that departed from its design review, no compromise listed | `story-check`, which blocks on each name the section cites that the tree lacks; the guard, once at the stop of the session, without blocking |
+| a commit of the story that changes a migration or a container without its `Change: <id>` trailer | `story-check`, which lists it with its files, and blocks on it under `agents.profile: regulated` or with `--strict` |
 | the pull request: every row done, no scenario pending, the trunk merged in, the origin recorded, the report written with its verification | `story --gate close` |
 
 ## The optional end state: the specification as a job

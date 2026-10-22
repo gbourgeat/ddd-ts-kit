@@ -1382,18 +1382,35 @@ section d'une ligne faite cite un nom. `--strict` n'y change rien. La garde du p
 fois à l'arrêt d'une session dans le *worktree* d'une story, sans bloquer. La comparaison du code
 construit avec sa conception vient du [*playbook* du cycle de vie natif à l'IA d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf).
 
+Un *commit* de la story porte aussi sa référence de changement. Chaque *commit* de la branche
+courante qui change une migration ou un fichier de conteneur (les mêmes chemins que surveille le
+*hook* `change-reference` du profil réglementé : `migrations/`, `prisma/migrations/`, `docker/`,
+`Dockerfile`, `docker-compose.yml` ; les deux listes sont tenues alignées dans le kit) et qui
+appartient à la story (son *trailer* `Slice: <id de ligne>`, sinon son message qui nomme une de
+ses lignes, sinon son sujet qui nomme la story, en mot entier) doit porter un *trailer*
+`Change: <id>`, l'identifiant que donne le processus de changement de l'équipe. Un *commit* qui
+en manque est listé avec son sha court, son sujet et les fichiers, sous « Without a change
+reference » ; il bloque la story quand la configuration dit `agents.profile: regulated` ou avec
+`--strict`, et il est listé sans bloquer sinon. La correction : ajouter le *trailer* avant la
+*pull request*, `git commit --amend` pour le dernier *commit*, un *rebase* interactif de la
+branche pour un plus ancien. Trois appels git au plus, sur les *commits* qui touchent un tel
+fichier.
+
 Elle ne lit que les fichiers et git. Elle sort avec 0 quand la story peut être close (une ligne,
 puis les marqueurs listés sans bloquer, s'il y en a), 1 quand quelque chose la garde ouverte,
 chaque marqueur bloquant avec la raison pour laquelle il est à elle (`names #M1.01`,
 `written by a782a19 Slice: M1.02`, `no other open story in payments`), son `file:line` et sa
 correction (le traiter, ou l'écarter par un enregistrement de décision,
 `npx ddd-ts-kit generate adr "<title>"`, puis supprimer le marqueur), chaque nom de sa conception
-que le code n'a pas avec son `fichier:ligne` dans la revue, et 2 sur un code qu'aucune
-ligne ne porte ou sans tableau des tranches. `--json` affiche
-`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, design, canClose }`,
+que le code n'a pas avec son `fichier:ligne` dans la revue, chaque *commit* sans sa référence de
+changement, et 2 sur un code qu'aucune ligne ne porte ou sans tableau des tranches. `--json`
+affiche
+`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, design, unreferenced, regulated, canClose }`,
 chaque marqueur valant `{ kind, context, file, line, text, attribution: { by, rows, commit? } }`,
 avec `why`, `sharedWith` et `fix` dans `markers` et `unattributed` ; `by` vaut `text`, `commit`,
-`worker` ou `none` ; chaque nom de `design` valant `{ row, document, line, cited, kind, why, fix }`.
+`worker` ou `none` ; chaque nom de `design` valant `{ row, document, line, cited, kind, why, fix }` ;
+chaque *commit* de `unreferenced` valant `{ sha, subject, files, rows, fix }`, et `regulated`
+vrai sous le profil réglementé.
 
 ```
 $ npx ddd-ts-kit story-check M1
@@ -1426,6 +1443,18 @@ Departed from its design (1): update the section of the row in docs/architecture
   docs/architecture/reviews/US5.md:12  `OrderNumberTaken`  (#US5.02, no class, interface, type or function OrderNumberTaken is declared or imported under the source root)
 
 Once each is settled: npx ddd-ts-kit story-check US5
+```
+
+Un *commit* de migration de la story sans sa référence de changement, sous le profil réglementé :
+
+```
+$ npx ddd-ts-kit story-check M1
+M1 cannot close: every row done, 0 markers of its own left, 1 commit without a change reference.
+
+Without a change reference (1, agents.profile regulated): add the trailer `Change: <id>` to the commit, with the id the change process of the team gives (`git commit --amend` for the last commit, an interactive rebase of the branch for an earlier one), before the pull request
+  a782a19  feat(billing): add the paid_at column to invoices  (Slice: M1.02; src/platform/database/migrations/0002_paid_at.sql)
+
+Once each is settled: npx ddd-ts-kit story-check M1
 ```
 
 Une fois les trois réglés :

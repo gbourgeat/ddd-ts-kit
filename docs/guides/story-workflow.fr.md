@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:1997ff3b9dec0f17 -->
+<!-- translation-of: story-workflow.md sha256:1831557d67fd6c10 -->
 
 # Parcours d'une story : une session par user story
 
@@ -244,6 +244,7 @@ l'autre, chacune sur un tronc vert.
 | deux *stories* qui changent le même fichier | `stories` ; la garde, au démarrage de la session et à la première écriture d'un tel fichier |
 | une session qui finit avant son rapport | la garde, qui refuse le premier arrêt de chaque étape |
 | une ligne faite qui s'est écartée de sa revue de conception, sans compromis listé | `story-check`, qui bloque sur chaque nom que la section cite et que l'arbre n'a pas ; la garde, une fois à l'arrêt de la session, sans bloquer |
+| un *commit* de la *story* qui change une migration ou un conteneur sans son *trailer* `Change: <id>` | `story-check`, qui le liste avec ses fichiers, et bloque dessus sous `agents.profile: regulated` ou avec `--strict` |
 | la *pull request* : chaque ligne faite, aucun scénario en attente, le tronc fusionné, l'origine consignée, le rapport écrit avec sa vérification | `story --gate close` |
 
 ## L'état final optionnel : la spécification comme un job

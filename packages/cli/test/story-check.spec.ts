@@ -201,3 +201,119 @@ describe('story-check', () => {
     expect(open.stdout).toContain('log the reason of a cancellation.  (written by');
   });
 });
+
+const MIGRATION = 'src/platform/database/migrations/0002_paid_at.sql';
+
+/** The commits of M1 that change a migration or a container, with and without their change reference. */
+function changeCommits(): { root: string; unreferenced: string; named: string; container: string } {
+  const root = tempDir('story-check-change');
+
+  git(root, 'init', '--quiet');
+
+  commitFiles(root, {
+    message: 'chore: plan the slices',
+    files: { 'ddd-ts-kit.config.json': CONFIG, 'docs/architecture/slices.md': SLICES },
+  });
+
+  const unreferenced = commitFiles(root, {
+    message: 'feat(billing): paid_at column\n\nSlice: M1.02',
+    files: {
+      [MIGRATION]: 'alter table invoices add paid_at timestamp;\n',
+      [ISSUE]: 'export class IssueInvoiceHandler {}\n',
+    },
+  });
+
+  commitFiles(root, {
+    message: 'feat(payments): record payment, row M1.03\n\nChange: CHG-7',
+    files: { 'prisma/migrations/0003_payments/migration.sql': 'create table payments ();\n' },
+  });
+
+  const container = commitFiles(root, {
+    message: 'build: the container of US2.01',
+    files: { Dockerfile: 'FROM node:22\n' },
+  });
+
+  const named = commitFiles(root, {
+    message: 'build(M1): the compose file of the milestone',
+    files: { 'docker-compose.yml': 'services: {}\n' },
+  });
+
+  commitFiles(root, { message: 'chore: tidy the entrypoint', files: { 'docker/api/entrypoint.sh': '#!/bin/sh\n' } });
+
+  return { root, unreferenced, named, container };
+}
+
+describe('story-check, the change reference of a migration commit', () => {
+  let root: string;
+  let unreferenced: string;
+  let named: string;
+  let container: string;
+
+  beforeAll(() => {
+    ({ root, unreferenced, named, container } = changeCommits());
+  });
+
+  it('lists each commit of the story that changes a migration or a container without a Change: trailer, without blocking', () => {
+    const check = cli(root, 'story-check', 'M1');
+
+    expect(check.code).toBe(0);
+    expect(check.stdout).toContain('M1 can close: its 3 rows done, no marker of its own left in billing, payments.');
+
+    expect(check.stdout).toContain(
+      'Not blocking, without a change reference (2; blocks under agents.profile regulated, or with --strict): add the trailer `Change: <id>` to the commit, with the id the change process of the team gives (`git commit --amend` for the last commit, an interactive rebase of the branch for an earlier one), before the pull request',
+    );
+
+    expect(check.stdout).toContain(
+      `  ${named}  build(M1): the compose file of the milestone  (names the story; docker-compose.yml)`,
+    );
+
+    expect(check.stdout).toContain(`  ${unreferenced}  feat(billing): paid_at column  (Slice: M1.02; ${MIGRATION})`);
+    expect(check.stdout).not.toContain('record payment');
+    expect(check.stdout).not.toContain('US2.01');
+    expect(check.stdout).not.toContain('entrypoint');
+
+    expect(jsonAt(cli(root, 'story-check', 'M1', '--json').json(), 'unreferenced')).toEqual([
+      {
+        sha: named,
+        subject: 'build(M1): the compose file of the milestone',
+        files: ['docker-compose.yml'],
+        rows: [],
+        fix: expect.stringContaining('Change: <id>'),
+      },
+      {
+        sha: unreferenced,
+        subject: 'feat(billing): paid_at column',
+        files: [MIGRATION],
+        rows: ['M1.02'],
+        fix: expect.stringContaining('git commit --amend'),
+      },
+    ]);
+
+    expect(jsonAt(cli(root, 'story-check', 'M1', '--json').json(), 'regulated')).toBe(false);
+
+    expect(jsonAt(cli(root, 'story-check', 'US2', '--json').json(), 'unreferenced')).toEqual([
+      expect.objectContaining({ sha: container, files: ['Dockerfile'], rows: ['US2.01'] }),
+    ]);
+  });
+
+  it('blocks on them with --strict, and under the regulated profile', () => {
+    const strict = cli(root, 'story-check', 'M1', '--strict');
+
+    expect(strict.code).toBe(1);
+
+    expect(strict.stdout).toContain(
+      'M1 cannot close: every row done, 0 markers of its own left, 2 commits without a change reference.',
+    );
+
+    expect(strict.stdout).toContain('Without a change reference (2, --strict): add the trailer `Change: <id>`');
+
+    write(root, 'ddd-ts-kit.config.json', JSON.stringify({ ...JSON.parse(CONFIG), agents: { profile: 'regulated' } }));
+
+    const regulated = cli(root, 'story-check', 'M1');
+
+    expect(regulated.code).toBe(1);
+    expect(regulated.stdout).toContain('Without a change reference (2, agents.profile regulated): add the trailer');
+    expect(jsonAt(cli(root, 'story-check', 'M1', '--json').json(), 'regulated')).toBe(true);
+    expect(jsonAt(cli(root, 'story-check', 'M1', '--json').json(), 'canClose')).toBe(false);
+  });
+});

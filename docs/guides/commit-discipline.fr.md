@@ -121,8 +121,14 @@ Change: CHG-1234
 ```
 
 Le *trailer* est lu par des personnes, dans l'historique
-(`git log --format='%h %(trailers:key=Change,valueonly)' -- migrations/`) ; aucune commande du kit
-ne le lit encore, et `story-check` ne signale pas un *commit* de migration qui en manque.
+(`git log --format='%h %(trailers:key=Change,valueonly)' -- migrations/`), et par
+`npx ddd-ts-kit story-check <code>` : un *commit* de la *story* (son *trailer* `Slice:`, sinon son
+message qui nomme une ligne ou la *story*) qui change une migration ou un fichier de conteneur
+sans ce *trailer* est listé avec ses fichiers, et bloque la *story* sous
+`agents.profile: regulated` ou avec `--strict` ; les chemins qu'il surveille sont ceux du *hook*
+`change-reference`, tenus alignés dans le kit. Ajoutez le *trailer* avant la *pull request* :
+`git commit --amend` pour le dernier *commit*, un *rebase* interactif de la branche pour un plus
+ancien.
 
 ## Des tailles cibles, et pourquoi
 
