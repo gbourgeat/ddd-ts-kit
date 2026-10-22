@@ -7,6 +7,7 @@ import type { ModuleMove } from './module-move.js';
 import { movesIntoModule, type MoveRequest } from './moves-into-module.js';
 
 const EXTENSION = /\.(?:ts|tsx|mts)$/;
+const SOURCE = /\.(?:ts|tsx|mts|js|mjs|cjs)$/;
 
 /** What taking files into a module changed. */
 export interface ModuleMoves {
@@ -22,26 +23,38 @@ export interface ModuleMoves {
  */
 export function moveToModule(ws: Workspace, config: Config, request: MoveRequest): ModuleMoves {
   const moved = movesIntoModule(ws, config, request);
+  const from = new Set(moved.map((move) => move.from));
 
   const relocation = {
     roots: aliasRoots(config),
-    moved: new Map(moved.map(({ from, to }) => [from.replace(EXTENSION, ''), to.replace(EXTENSION, '')])),
+    moved: new Map(moved.map((move) => [move.from.replace(EXTENSION, ''), move.to.replace(EXTENSION, '')])),
   };
 
-  const rewritten = projectSources(ws, config, ['scripts']).flatMap((file) => {
-    const source = ws.read(file) ?? '';
-    const next = withMovedImports(source, file, relocation);
-    const target = moved.find(({ from }) => from === file)?.to ?? file;
+  // Every file named moves, whatever its kind; only a source has imports to follow.
+  const rewrittenMoved = moved.flatMap((move) => {
+    const content = ws.read(move.from) ?? '';
+    const next = SOURCE.test(move.from) ? withMovedImports(content, move.from, relocation) : content;
 
-    if (target !== file) {
-      ws.delete(file);
-      ws.create(target, next);
-    } else if (next !== source) {
-      ws.update(file, next);
-    }
+    ws.delete(move.from);
+    ws.create(move.to, next);
 
-    return next === source ? [] : [target];
+    return next === content ? [] : [move.to];
   });
 
-  return { moved, rewritten };
+  const rewrittenOthers = projectSources(ws, config, ['scripts'])
+    .filter((file) => !from.has(file))
+    .flatMap((file) => {
+      const source = ws.read(file) ?? '';
+      const next = withMovedImports(source, file, relocation);
+
+      if (next === source) {
+        return [];
+      }
+
+      ws.update(file, next);
+
+      return [file];
+    });
+
+  return { moved, rewritten: [...rewrittenMoved, ...rewrittenOthers] };
 }

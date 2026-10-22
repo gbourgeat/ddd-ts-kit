@@ -3,7 +3,7 @@ import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { ROLE_FOLDERS } from '../src/model-modules/index.js';
 import { checkJsonOf } from './check-support.js';
-import { cli, exists, read, scaffoldEverything, tempDir } from './helpers.js';
+import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers.js';
 
 const BILLING = 'src/contexts/billing';
 const PURPOSE = 'The invoices from their draft to their payment.';
@@ -131,5 +131,43 @@ describe('generating into a module of the model', () => {
 
     expect(refused.code).not.toBe(0);
     expect(refused.stderr).toContain('ddd-ts-kit generate module billing payments');
+  });
+
+  it('reads the module the way the config writes it, whatever the case it is typed in', () => {
+    const generated = cli(
+      root,
+      'generate',
+      'value-object',
+      'billing',
+      'Rebate',
+      '--term',
+      'Rebate=An amount given back',
+      '--module',
+      'Invoices',
+    );
+
+    expect(generated.code).toBe(0);
+    expect(exists(root, `${BILLING}/domain/invoices/value-objects/rebate.vo.ts`)).toBe(true);
+  });
+
+  it('moves nothing when a file of the same name is in the module already, and loses nothing', () => {
+    const flat = `${BILLING}/domain/value-objects/rebate.vo.ts`;
+
+    write(root, flat, 'export const kept = 1;\n');
+
+    const refused = cli(root, 'move-to-module', 'billing', 'invoices', 'domain/value-objects/rebate.vo.ts');
+
+    expect(refused.code).not.toBe(0);
+    expect(refused.stderr).toContain('Nothing was moved');
+    expect(read(root, flat)).toBe('export const kept = 1;\n');
+    expect(read(root, `${BILLING}/domain/invoices/value-objects/rebate.vo.ts`)).not.toContain('kept');
+  });
+
+  it('moves every file of a folder, not only its sources, and leaves no empty folder behind', () => {
+    write(root, `${BILLING}/application/commands/cancel-invoice/NOTES.md`, 'Why a paid invoice cannot be cancelled.\n');
+
+    expect(cli(root, 'move-to-module', 'billing', 'invoices', 'application/commands/cancel-invoice').code).toBe(0);
+    expect(read(root, `${BILLING}/application/invoices/commands/cancel-invoice/NOTES.md`)).toContain('paid invoice');
+    expect(exists(root, `${BILLING}/application/commands/cancel-invoice`)).toBe(false);
   });
 });

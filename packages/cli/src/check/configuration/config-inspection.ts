@@ -37,7 +37,9 @@ export class ConfigInspection {
       ...this.classification(name, context),
       ...context.upstreams.flatMap((upstream) => this.upstream(name, upstream)),
       ...this.presence(name, context),
-      ...moduleProblems(name, context).map(({ needle, message, fix }) => this.inConfig(needle, message, fix)),
+      ...moduleProblems(name, context, this.writtenModules(name)).map(({ needle, message, fix }) =>
+        this.inConfig(needle, message, fix),
+      ),
     ];
   }
 
@@ -284,6 +286,14 @@ export class ConfigInspection {
         `Create it with ${create}, or remove it from the config.`,
       ),
     ];
+  }
+
+  /** `contexts.<name>.modules` as the file holds it, before parsing drops what it cannot read. */
+  private writtenModules(name: string): unknown {
+    const contexts = rawConfig(this.project)['contexts'];
+    const context = isRecord(contexts) ? contexts[name] : undefined;
+
+    return isRecord(context) ? context['modules'] : undefined;
   }
 
   /** A violation located on the line of the config file that first quotes `needle`. */

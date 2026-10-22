@@ -1,5 +1,5 @@
 [English](modules.md) · **Français**
-<!-- translation-of: modules.md sha256:9837a7e06fdaa97c -->
+<!-- translation-of: modules.md sha256:59967778aac3fee0 -->
 
 # Modules du modèle
 
@@ -189,16 +189,20 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
 - `move-to-module` prend des chemins relatifs au contexte, des fichiers ou des dossiers sous
   `domain/` ou `application/`, les déplace dans un module déclaré et réécrit chacun de leurs
   imports sous la racine des sources, `test/` et `scripts/` ; les déclarations générées suivent
-  dans le même passage. Un chemin déjà dans un module passe dans l'autre. `--dry-run` montre le
-  plan ; viennent ensuite les vérifications et les tests.
+  dans le même passage. Un chemin déjà dans un module passe dans l'autre, et tous les fichiers
+  d'un dossier sont déplacés, pas seulement ses sources. Rien n'est déplacé quand un fichier du
+  même nom est déjà dans le module, ou quand un fichier n'est pas du texte. `--dry-run` montre
+  le plan ; viennent ensuite les vérifications et les tests.
 
 ### Ce qui lit les modules
 
 - `ddd-ts-kit check` et le plugin ESLint lisent un dossier sous `domain/` ou `application/` comme
   un module quand la configuration le déclare.
-- `ddd-ts-kit docs` et `describe` lisent les dossiers de rôle de chaque module : la référence de
-  `CONTEXT.md` liste les agrégats, cas d'usage, ports, refus et *jobs* des modules comme ceux du
-  contexte.
+- `ddd-ts-kit docs`, `describe`, `error-factories` et les générateurs lisent les dossiers de rôle
+  de chaque module que la configuration déclare, comme `check` : la référence de `CONTEXT.md`
+  liste les agrégats, cas d'usage, ports, refus et *jobs* des modules comme ceux du contexte. Un
+  dossier que la configuration ne déclare pas n'est lu par aucun d'eux, et `tree/closed` le
+  signale.
 - Dans le style déclaré assemblé par barrel, chaque dossier de rôle d'un module a son
   `<folder>.declarations.ts` généré, réexporté par `<context>.declarations.ts`.
 - `discoverContext` de `@ddd-ts-kit/di` s'exécute sans la configuration : il reconnaît un module

@@ -1,5 +1,6 @@
 import { CLASSIFICATIONS, isOneOf, type ContextConfig } from '../../config/index.js';
-import { isRoleFolder, MODULE_LAYERS } from '../../model-modules/index.js';
+import { moduleNameFlaw } from '../../model-modules/index.js';
+import { isRecord } from '../support/is-record.js';
 
 /** What is wrong with one module of the model a context declares: the text to place the finding on, and what to say. */
 export interface ModuleProblem {
@@ -8,20 +9,52 @@ export interface ModuleProblem {
   readonly fix: string;
 }
 
-const KEBAB = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
+const SHAPE =
+  'Write it as an object of the modules by name, each an object: "modules": { "calendars": {}, "waitlist": { "classification": "supporting" } }.';
 
-/** The modules of `contexts.<name>.modules` that cannot be a folder of the tree, or carry an unknown classification. */
-export function moduleProblems(context: string, { modules }: ContextConfig): ModuleProblem[] {
+/**
+ * What `contexts.<name>.modules` says wrongly: written in another shape than the one read (the
+ * modules would be silently missed), a module that cannot be a folder of the tree, or an unknown
+ * classification. `written` is the key as the file holds it.
+ */
+export function moduleProblems(context: string, { modules }: ContextConfig, written: unknown): ModuleProblem[] {
+  if (written === undefined) {
+    return [];
+  }
+
+  if (!isRecord(written)) {
+    return [
+      {
+        needle: 'modules',
+        message: `contexts.${context}.modules is not an object: no module of "${context}" is read.`,
+        fix: SHAPE,
+      },
+    ];
+  }
+
+  const shapes = Object.entries(written)
+    .filter(([, value]) => !isRecord(value))
+    .map(([name]) => ({
+      needle: name,
+      message: `The module "${name}" of "${context}" is not written as an object.`,
+      fix: SHAPE,
+    }));
+
+  return [...shapes, ...namingProblems(context, modules)];
+}
+
+function namingProblems(context: string, modules: ContextConfig['modules']): ModuleProblem[] {
   return modules.flatMap(({ name, classification }) => {
+    const reason = moduleNameFlaw(name)?.reason;
     const problems: ModuleProblem[] = [];
 
-    if (!KEBAB.test(name)) {
+    if (reason === 'format') {
       problems.push({
         needle: name,
         message: `The module "${name}" of "${context}" is not written in kebab-case.`,
         fix: `Name it as its folder is named, in kebab-case: domain/<module>/ and application/<module>/.`,
       });
-    } else if (MODULE_LAYERS.some((layer) => isRoleFolder(layer, name))) {
+    } else if (reason === 'role-folder') {
       problems.push({
         needle: name,
         message: `The module "${name}" of "${context}" has the name of a role folder.`,

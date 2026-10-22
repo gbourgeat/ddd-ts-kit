@@ -39,7 +39,35 @@ export function movesIntoModule(ws: Workspace, config: Config, request: MoveRequ
     return files.flatMap((file) => moveOf(directory, request, file));
   });
 
-  return [...new Map(moves.map((move) => [move.from, move])).values()];
+  const unique = [...new Map(moves.map((move) => [move.from, move])).values()];
+
+  refuseLosses(ws, unique);
+
+  return unique;
+}
+
+/**
+ * Nothing is written when a move would lose a file: a target that exists already (two files of
+ * one name in two modules), or a file the workspace cannot carry as text.
+ */
+function refuseLosses(ws: Workspace, moves: readonly ModuleMove[]): void {
+  const taken = moves.filter((move) => ws.exists(move.to)).map((move) => move.to);
+
+  if (taken.length > 0) {
+    throw new CliError(
+      `Nothing was moved: ${taken.join(', ')} exist(s) already.`,
+      'Two files of one name cannot share a module: rename one after the concept it holds, or merge them by hand, then run the command again.',
+    );
+  }
+
+  const binary = moves.filter((move) => (ws.read(move.from) ?? '').includes('\u0000')).map((move) => move.from);
+
+  if (binary.length > 0) {
+    throw new CliError(
+      `Nothing was moved: ${binary.join(', ')} is not a text file.`,
+      'Move it by hand with git mv, then run the command again without it.',
+    );
+  }
 }
 
 function moveOf(directory: string, { context, module }: MoveRequest, file: string): ModuleMove[] {

@@ -106,8 +106,11 @@ describe('the jobs of a context, as the documentation reads them', () => {
 });
 
 describe('a context divided into modules of its model, as the documentation reads it', () => {
-  it('reads the role folders of every module next to those of the context', () => {
+  it('reads the role folders of every module the config declares next to those of the context', () => {
     const ws = workspaceWith({
+      'ddd-ts-kit.config.json': JSON.stringify({
+        contexts: { billing: { classification: 'core', upstreams: [], modules: { reminders: {} } } },
+      }),
       [`${BILLING}/domain/reminders/state-machines/reminder.state-machine.ts`]:
         "export const reminderLifecycle = defineStateMachine({ initial: 'due', transitions: {} });\n",
       [`${MACHINES}/invoice.state-machine.ts`]:
@@ -121,5 +124,13 @@ describe('a context divided into modules of its model, as the documentation read
     ]);
 
     expect(readJobs(ws, BILLING, 'billing')).toEqual([{ name: 'RemindPayersJob', schedule: '', command: '' }]);
+  });
+
+  it('reads no folder the config does not declare as a module: check reports it, the documentation does not invent it', () => {
+    const ws = workspaceWith({
+      [`${BILLING}/application/legacy/scheduling/remind-payers.job.ts`]: 'export class RemindPayersJob {}\n',
+    });
+
+    expect(readJobs(ws, BILLING, 'billing')).toEqual([]);
   });
 });

@@ -108,6 +108,22 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'config/valid',
+    name: 'modules written as a list, which no tool would read',
+    expect: { file: CONFIG_FILE },
+    files: project(
+      {},
+      {
+        [CONFIG_FILE]: config({
+          contexts: {
+            billing: { classification: 'core', upstreams: ['catalog'], modules: ['invoices'] },
+            catalog: { classification: 'supporting', upstreams: [] },
+          },
+        }),
+      },
+    ),
+  },
+  {
+    ruleId: 'config/valid',
     name: 'a module named like a role folder',
     expect: { file: CONFIG_FILE },
     also: ['module/declared'],

@@ -180,16 +180,19 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
 - `move-to-module` takes paths relative to the context, files or folders under `domain/` or
   `application/`, moves them into a declared module and rewrites every import of them under the
   source root, `test/` and `scripts/`; the generated declarations follow in the same run. A path
-  already in a module moves to the other one. `--dry-run` shows the plan; the checks and the
+  already in a module moves to the other one, and every file of a folder moves, not only its
+  sources. Nothing is moved when a file of the same name is in the module already, or when a
+  file is not text. `--dry-run` shows the plan; the checks and the
   tests come next.
 
 ### What reads the modules
 
 - `ddd-ts-kit check` and the ESLint plugin read a folder under `domain/` or `application/` as a
   module when the config declares it.
-- `ddd-ts-kit docs` and `describe` read the role folders of every module: the reference of
-  `CONTEXT.md` lists the aggregates, use cases, ports, refusals and jobs of the modules as those
-  of the context.
+- `ddd-ts-kit docs`, `describe`, `error-factories` and the generators read the role folders of
+  every module the config declares, as `check` does: the reference of `CONTEXT.md` lists the
+  aggregates, use cases, ports, refusals and jobs of the modules as those of the context. A
+  folder the config does not declare is read by none of them, and `tree/closed` reports it.
 - In the declared style assembled by barrel, each role folder of a module has its generated
   `<folder>.declarations.ts`, re-exported by `<context>.declarations.ts`.
 - `discoverContext` of `@ddd-ts-kit/di` runs without the config: it recognises a module by

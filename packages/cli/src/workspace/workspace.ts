@@ -35,6 +35,8 @@ export class Workspace {
 
   private placement: ((file: string, writing: boolean) => string) | undefined;
 
+  private pruning = false;
+
   constructor(
     readonly root: string,
     private readonly force: boolean,
@@ -50,7 +52,7 @@ export class Workspace {
   existsAsIs(file: string): boolean {
     return (
       this.pending.has(file) ||
-      [...this.pending.keys()].some((planned) => planned.startsWith(`${file}/`)) ||
+      this.plannedBelow(file) ||
       (!this.removed.has(file) && fs.existsSync(this.absolute(file)))
     );
   }
@@ -177,6 +179,11 @@ export class Workspace {
     this.placement = place;
   }
 
+  /** A command that moves files asks for it: a folder a removed file leaves empty goes too, then its emptied parents. */
+  pruneEmptiedFolders(): void {
+    this.pruning = true;
+  }
+
   /** A text written for npm, as the package manager of the project says it: what is compared with a file is compared in its dialect. */
   spoken(text: string): string {
     return inDialect(text, packageManagerOf(this.read(CONFIG_FILE)));
@@ -209,7 +216,10 @@ export class Workspace {
 
       this.removed.forEach((file) => {
         fs.rmSync(this.absolute(file), { force: true });
-        this.pruneEmptied(path.posix.dirname(file));
+
+        if (this.pruning) {
+          this.pruneEmptied(path.posix.dirname(file));
+        }
       });
     }
 
@@ -243,6 +253,16 @@ export class Workspace {
       // A directory that does not exist yet simply holds nothing on disk.
       return [];
     }
+  }
+
+  private plannedBelow(directory: string): boolean {
+    for (const planned of this.pending.keys()) {
+      if (planned.startsWith(`${directory}/`)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /** A folder a removed file leaves empty goes with it, and so does its parent once empty: a moved use case leaves no folder behind. */

@@ -1,10 +1,9 @@
 import { CLASSIFICATIONS, CONFIG_FILE, editConfigText, isOneOf } from '../../config/index.js';
 import { isRecord } from '../../config/values/is-record.js';
-import { MODULE_TECHNICAL_WORDS } from '../../check/modules/module-naming-words.js';
 import { withModuleRow } from '../../check/modules/with-module-row.js';
 import { CliError } from '../../cli-error.js';
-import { isRoleFolder, MODULE_LAYERS } from '../../model-modules/index.js';
-import { splitWords, toName, type Name } from '../../naming/index.js';
+import { moduleNameFlaw } from '../../model-modules/index.js';
+import { toName, type Name } from '../../naming/index.js';
 import type { Kind } from '../kind.js';
 import { learnTerms } from '../learn-terms.js';
 import { openScope } from '../open-scope.js';
@@ -40,19 +39,18 @@ export const moduleKind: Kind = {
 /** A part of the model, named in the language of its context: never a role folder, never a technical grouping. */
 function moduleName(scope: Scope, input: string): Name {
   const name = toName(input);
+  const flaw = moduleNameFlaw(name.kebab);
 
-  if (name.kebab === '' || MODULE_LAYERS.some((layer) => isRoleFolder(layer, name.kebab))) {
+  if (flaw?.reason === 'format' || flaw?.reason === 'role-folder') {
     throw new CliError(
       `"${input}" cannot name a module of the model.`,
       'A module is one folder level under domain/ and application/, named after the cluster of concepts it holds, never after a role folder.',
     );
   }
 
-  const technical = splitWords(name.pascal).find((word) => MODULE_TECHNICAL_WORDS.includes(word));
-
-  if (technical !== undefined) {
+  if (flaw?.reason === 'technical') {
     throw new CliError(
-      `"${name.kebab}" names a grouping of code ("${technical}"), not a part of the model.`,
+      `"${name.kebab}" names a grouping of code ("${flaw.word}"), not a part of the model.`,
       'Name the module after the concepts it holds, with terms of the glossary; what several modules share belongs to one of them, or to a module named after that shared concept (rule module/declared).',
     );
   }

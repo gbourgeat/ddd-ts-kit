@@ -1,13 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { CONFIG_FILE, type ModuleConfig } from '../../config/index.js';
-import { splitWords } from '../../naming/index.js';
+import { moduleNameFlaw } from '../../model-modules/index.js';
 import { Glossaries } from '../language/glossaries.js';
 import { unknownWords } from '../language/unknown-words.js';
 import type { Report } from '../model/report.js';
 import type { Rule } from '../model/rule.js';
 import type { Violation } from '../model/violation.js';
-import { MODULE_TECHNICAL_WORDS } from '../modules/module-naming-words.js';
 import { MODULES_HEADING, modulesSection } from '../modules/modules-section.js';
 import { lineOf } from '../support/line-of.js';
 import { reporter } from '../support/reporter.js';
@@ -49,7 +48,8 @@ interface NamingFlaw {
 }
 
 function namingFlaw(module: ModuleConfig, unknown: readonly string[]): NamingFlaw | undefined {
-  const technical = splitWords(module.name).find((word) => MODULE_TECHNICAL_WORDS.includes(word));
+  const flaw = moduleNameFlaw(module.name);
+  const technical = flaw?.reason === 'technical' ? flaw.word : undefined;
 
   if (technical !== undefined) {
     return {

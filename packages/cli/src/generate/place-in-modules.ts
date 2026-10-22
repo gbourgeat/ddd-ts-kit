@@ -1,7 +1,7 @@
 import { aliasRoots } from '../alias/index.js';
 import { CliError } from '../cli-error.js';
 import type { Config } from '../config/index.js';
-import { declaredModules, modulePlacement, modulesOnDisk, placedImports } from '../model-modules/index.js';
+import { declaredModule, declaredModules, modulePlacement, placedImports } from '../model-modules/index.js';
 import type { Workspace } from '../workspace/index.js';
 
 /** What `generate` was asked: the context its kind writes in, the `--module` given, and the command as typed. */
@@ -25,9 +25,7 @@ export function placeInModules(ws: Workspace, config: Config, request: ModuleReq
     return () => undefined;
   }
 
-  const modulesOf = (context: string): string[] => [
-    ...new Set([...declaredModules(config, context), ...modulesOnDisk(ws, `${config.contextsDir}/${context}`)]),
-  ];
+  const modulesOf = (context: string): string[] => declaredModules(config, context);
 
   const place = modulePlacement({
     config,
@@ -61,16 +59,7 @@ function askedModule(
     return undefined;
   }
 
-  const declared = declaredModules(config, context);
-
-  if (!declared.includes(module)) {
-    throw new CliError(
-      `The context "${context}" declares no module "${module}".`,
-      `Declare it first with \`ddd-ts-kit generate module ${context} ${module} --purpose "<which concepts it holds>"\`${declared.length > 0 ? `, or use one of: ${declared.join(', ')}` : ''}.`,
-    );
-  }
-
-  return { context, module };
+  return { context, module: declaredModule(config, context, module) };
 }
 
 interface Unplaced {

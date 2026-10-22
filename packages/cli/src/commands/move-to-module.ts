@@ -1,7 +1,7 @@
 import { CliError } from '../cli-error.js';
 import { readConfig, type Config } from '../config/index.js';
 import { refreshDocs } from '../generate/refresh-docs.js';
-import { declaredModules } from '../model-modules/index.js';
+import { declaredModule } from '../model-modules/index.js';
 import { type ModuleMoves, moveToModule } from '../move-to-module/index.js';
 import { toName } from '../naming/index.js';
 import { Workspace } from '../workspace/index.js';
@@ -29,6 +29,9 @@ export const moveToModuleCommand: Command = (argv, io) => {
 
   const outcome = moveToModule(ws, config, { context, module, paths });
 
+  // A moved use case leaves no empty folder behind, which would still read as a use case.
+  ws.pruneEmptiedFolders();
+
   // The generated declarations follow the files: those of each folder of the module are written, the emptied ones go.
   refreshDocs(ws, 'move');
 
@@ -45,14 +48,7 @@ function assertDeclared(config: Config, context: string, module: string): void {
     throw new CliError(`Unknown context "${context}".`, `Use one of: ${Object.keys(config.contexts).join(', ')}.`);
   }
 
-  const declared = declaredModules(config, context);
-
-  if (!declared.includes(module)) {
-    throw new CliError(
-      `The context "${context}" declares no module "${module}".`,
-      `Declare it first with \`ddd-ts-kit generate module ${context} ${module} --purpose "<which concepts it holds>"\`${declared.length > 0 ? `, or move into one of: ${declared.join(', ')}` : ''}.`,
-    );
-  }
+  declaredModule(config, context, module);
 }
 
 const LEFT = [

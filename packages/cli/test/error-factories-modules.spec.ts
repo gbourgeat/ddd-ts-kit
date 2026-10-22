@@ -1,0 +1,54 @@
+import { beforeAll, describe, expect, it } from 'vitest';
+import { cli, exists, read, tempDir, write } from './helpers.js';
+
+const BILLING = 'src/contexts/billing';
+const ERRORS = `${BILLING}/domain/invoices/errors`;
+const TERMS = ['--term', 'Invoice=A request for payment', '--term', 'Issue=To make an invoice final'];
+
+const AGGREGATE = [
+  "import { AggregateRoot } from '@ddd-ts-kit/kernel';",
+  "import { InvoiceNotFoundError } from '@/contexts/billing/domain/invoices/errors/invoice-not-found.error';",
+  '',
+  'export class Invoice extends AggregateRoot {',
+  '  find(): never {',
+  '    throw new InvoiceNotFoundError(this.id);',
+  '  }',
+  '}',
+  '',
+].join('\n');
+
+describe('error-factories, on errors kept in a module of the model', () => {
+  let root: string;
+
+  beforeAll(() => {
+    root = tempDir('error-factories-modules');
+
+    expect(cli(root, 'init', '--refusals', 'classes').code).toBe(0);
+    expect(cli(root, 'generate', 'context', 'billing', '--classification', 'core', ...TERMS).code).toBe(0);
+    expect(cli(root, 'generate', 'module', 'billing', 'invoices', '--purpose', 'The invoices.').code).toBe(0);
+    expect(cli(root, 'generate', 'aggregate', 'billing', 'Invoice', '--module', 'invoices').code).toBe(0);
+    write(root, `${BILLING}/domain/invoices/aggregates/invoice.aggregate.ts`, AGGREGATE);
+
+    write(
+      root,
+      `${ERRORS}/invoice-not-found.error.ts`,
+      "import { DomainError } from '@ddd-ts-kit/kernel';\n\nexport class InvoiceNotFoundError extends DomainError {\n  readonly code = 'INVOICE_NOT_FOUND';\n\n  constructor(id: string) {\n    super(`Invoice ${id} does not exist.`);\n  }\n}\n",
+    );
+  }, 120_000);
+
+  it('reads the errors of the module, and writes the class of their concept next to them', () => {
+    expect(cli(root, 'error-factories', '--plan', '--to', 'factories').code).toBe(0);
+    expect(read(root, 'error-factories.plan.json')).toContain('InvoiceNotFoundError');
+
+    const applied = cli(root, 'error-factories', '--apply', '--json').json() as { moved: string[] };
+
+    expect(applied.moved).toEqual(['InvoiceNotFoundError -> InvoiceError.notFound']);
+    expect(exists(root, `${ERRORS}/invoice.error.ts`)).toBe(true);
+    expect(exists(root, `${ERRORS}/invoice-not-found.error.ts`)).toBe(false);
+    expect(exists(root, `${BILLING}/domain/errors/invoice.error.ts`)).toBe(false);
+
+    expect(read(root, `${BILLING}/domain/invoices/aggregates/invoice.aggregate.ts`)).toContain(
+      "import { InvoiceError } from '@/contexts/billing/domain/invoices/errors/invoice.error';",
+    );
+  });
+});
