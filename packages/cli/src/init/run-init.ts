@@ -83,13 +83,14 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
 }
 
 /**
- * A new project gets its config whole, its code written in worktrees only; one that is
+ * A new project gets its config whole, its code written in worktrees only and each written file
+ * laid out by the editor hook; one that is
  * initialised again with --force keeps what its team wrote around the stack. Both record the
  * version of the CLI that wrote the files.
  */
 function configText(ws: Workspace, config: Config): string {
   const recorded = ws.read(CONFIG_FILE);
-  const fresh = serializeConfig({ ...config, worktrees: 'required' });
+  const fresh = serializeConfig({ ...config, worktrees: 'required', formatOnWrite: true });
 
   try {
     return recorded === undefined ? fresh : restackConfigText(recorded, config);
