@@ -12,7 +12,7 @@ for the three agents:
 | Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, then `copilot plugin install ddd-ts-kit@ddd-ts-kit` | by its name, `start` |
 | Copilot cloud agent, VS Code | declared by the `.github/copilot/settings.json` that `init` writes: the cloud agent installs it, VS Code recommends it | by its name, `start` |
 
-Twenty-five skills, in the order a project meets them:
+Twenty-six skills, in the order a project meets them:
 
 | Skill | Use |
 |---|---|
@@ -26,6 +26,7 @@ Twenty-five skills, in the order a project meets them:
 | `parallel-work` | split the slices between several agents or people without collision |
 | `intent` | capture an idea as an intent before any story, in the words of whoever has it, for the product owner to accept in a pull request (run by the user; [story workflow](story-workflow.md#where-a-story-comes-from)) |
 | `story` | take one user story from its questions to a green pull request in one session, one story per terminal (run by the user; [story workflow](story-workflow.md)) |
+| `fix` | repair one defect in its own worktree, its regression spec written and locked before any code (run by the user; [a fix](story-workflow.md#a-fix-the-regression-spec-first-locked)) |
 | `pull-request` | take the pull request of a story to green: sweep its review comments and failing checks under the rules of the story, push, wait, repeat; then report what changed and what was declined (run by the user) |
 | `scaffold` | one file of any role, from a template |
 | `use-case` | one feature end to end, test first |
@@ -57,7 +58,10 @@ when the installed packages are not the version the skills describe, refuses
 a hand-written file where a generator exists and any edit of a generated contract, asks the
 project owner before a suppression, a skipped test or a change of the rules is written, checks
 every written file and returns the violations with their fix, and refuses to finish while
-architecture errors remain. It reminds, without blocking, when the uncommitted changes exceed
+architecture errors remain. With `"formatOnWrite": true` in the config, it first runs the Biome
+the project installed on the written file (`node_modules/.bin/biome format --write`, one file,
+never another formatter), so that the layout is settled at the write and the lint findings
+that follow a wrapped line come back in the same output; a run that fails changes nothing. It reminds, without blocking, when the uncommitted changes exceed
 the advised size of a commit, and in a worker's worktree (`.ddd-ts-kit/worker.json`) it
 refuses a write outside the worker's context, by the editor tools or by the shell (`sed -i`, a
 redirection, `tee`, `cp`, `mv`, `rm`), stops the worker when its inline code (`node -e`, a heredoc)
@@ -76,7 +80,9 @@ worktree of a story (`.ddd-ts-kit/story.json`), it refuses any code of a context
 has its design review and the acceptance is written and locked, says the phase of the story at
 session start with where it meets the other open stories, says once per file when the session
 writes a file another open story changes, and refuses once to end the session before its report
-([story workflow](story-workflow.md)). No hook
+([story workflow](story-workflow.md)). In the worktree of a fix (`"kind": "fix"` in that file),
+it opens the code once the regression spec is locked, and refuses every edit of a locked spec,
+by the editor tools and by the shell, to the session and to its sub-agents. No hook
 runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 

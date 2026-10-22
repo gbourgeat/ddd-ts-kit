@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:663695abdf24f1e7 -->
+<!-- translation-of: commands.md sha256:6e485ce9ef3a8744 -->
 
 # Quelle commande, quand
 
@@ -395,7 +395,11 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    otherwise (settle it or name its row in it); a marker of other stories' rows does not
                    block. --strict: every marker of its contexts blocks. Each blocker comes with why it
                    is its own, its file:line and its fix: handle it, or dismiss it by a decision record
-                   (generate adr), then delete the marker. Reads only: exits 0 when it can close, 1
+                   (generate adr), then delete the marker. A done row also holds to its design: every
+                   name the ## #<id> section of docs/architecture/reviews/<code>.md cites (a path, a
+                   PascalCase name, a Class.member, as cited reads them) exists in the tree, or is
+                   listed under ### Compromises of ## Report in the story file; a name that is neither
+                   blocks, with its file:line in the review. Reads only: exits 0 when it can close, 1
                    listing what keeps it open, 2 on a code no row carries or without slices.md
   acceptance       the acceptance scenarios of each story (test/acceptance/<story>.acceptance.spec.ts) against
                    its rows in slices.md and the criteria of docs/architecture/stories/<story>.md: the rows and
@@ -413,7 +417,10 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    criteria did not, without a verdict "amend" of the acceptance-judge agent on that very
                    version (test/acceptance/verdicts/*.md, lines Story:, Subject:, Fingerprint:,
                    Verdict:, Reason:); a refusal wins; the verdicts become amendments of the lock,
-                   listed for the owner to validate
+                   listed for the owner to validate. A fix is a story file with a ## Regression section
+                   listing the spec files that prove it (- test/unit/<name>.spec.ts): held to the tests of
+                   those files instead of rows and scenarios, locked and judged the same way, the statement
+                   of the fix being the criterion
   worker-scope     a git worktree on the branch build/<context> (by default .worktrees/<context>, see worktree),
                    cut from --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>

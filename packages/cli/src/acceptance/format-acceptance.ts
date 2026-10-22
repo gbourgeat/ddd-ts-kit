@@ -1,5 +1,6 @@
 import type { AcceptanceGate } from './acceptance-gate.js';
 import { countsFor } from './counts-for.js';
+import type { RegressionSpec } from './regression-spec.js';
 import type { RowAcceptance, StoryAcceptance } from './story-acceptance.js';
 
 /** The acceptance of each story as text: its spec, each row with its scenarios, then what keeps it from the gate. */
@@ -20,9 +21,10 @@ function formatStory(story: StoryAcceptance, gate: AcceptanceGate | undefined): 
       : [problems.length === 0 ? `  gate ${gate}: met` : `  gate ${gate}: ${problems.length} left`];
 
   return [
-    `${story.story}  ${story.file ?? '(no acceptance spec)'}${story.lock === undefined ? '' : ', locked'}`,
+    `${story.story}  ${headOf(story)}${story.lock === undefined ? '' : ', locked'}`,
     ...(story.specification === undefined ? [] : [`  specification ${story.specification}: ${criteriaOf(story)}`]),
     ...story.rows.map((row) => `  #${row.id} ${row.kind} "${row.slice}" (${row.status}): ${scenariosOf(row)}`),
+    ...(story.regression ?? []).map((spec) => `  ${spec.file}: ${testsOf(spec)}`),
     ...story.amendments.map(
       (amendment) =>
         `  amended on ${amendment.on}, for the owner to validate: ${amendment.subject} (${amendment.verdict}): ${amendment.reason}`,
@@ -30,6 +32,29 @@ function formatStory(story: StoryAcceptance, gate: AcceptanceGate | undefined): 
     ...problems.map((problem) => `  ${problem.at}  ${problem.message}`),
     ...verdict,
   ].join('\n');
+}
+
+/** The acceptance spec of a story; a fix is named by its regression specs instead. */
+function headOf(story: StoryAcceptance): string {
+  if (story.regression !== undefined) {
+    return `fix, ${story.regression.length} regression spec${story.regression.length === 1 ? '' : 's'}`;
+  }
+
+  return story.file ?? '(no acceptance spec)';
+}
+
+function testsOf({ found, tests }: RegressionSpec): string {
+  if (!found) {
+    return 'missing';
+  }
+
+  const states = ['active', 'pending', 'todo', 'skipped'].flatMap((state) => {
+    const count = tests.filter((test) => test.state === state).length;
+
+    return count === 0 ? [] : [`${count} ${state}`];
+  });
+
+  return tests.length === 0 ? 'no test' : `${tests.length} test${tests.length === 1 ? '' : 's'}, ${states.join(', ')}`;
 }
 
 function criteriaOf({ criteria, scenarios }: StoryAcceptance): string {

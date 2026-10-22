@@ -14,26 +14,43 @@ const ORDER: readonly Remaining['kind'][] = ['review', 'domain', 'platform', 'te
 /**
  * `story-check` for a reader: a first line that says whether the story can close; then the rows
  * and the markers of its own that keep it open, each with why it is its own and the fix; then the
- * markers that may be its own, listed without blocking.
+ * names of its design the code lacks; then the markers that may be its own, listed without blocking.
  */
 export function formatStoryClosing(closing: StoryClosing): string {
   return [
     verdictLine(closing),
     ...openLines(closing),
     ...ownLines(closing),
+    ...designLines(closing),
     ...notBlocking(closing),
     ...notes(closing),
   ].join('\n');
 }
 
-function verdictLine({ story, rows, open, markers, contexts, canClose }: StoryClosing): string {
+function verdictLine({ story, rows, open, markers, design, contexts, canClose }: StoryClosing): string {
   if (canClose) {
     return `${story} can close: its ${plural(rows.length, 'row')} done, no marker of its own left${contexts.length === 0 ? '' : ` in ${contexts.join(', ')}`}.`;
   }
 
   const left = open.length === 0 ? 'every row done' : `${plural(open.length, 'row')} not done`;
+  const departed = design.length === 0 ? '' : `, ${plural(design.length, 'name')} of its design not in the code`;
 
-  return `${story} cannot close: ${left}, ${plural(markers.length, 'marker')} of its own left.`;
+  return `${story} cannot close: ${left}, ${plural(markers.length, 'marker')} of its own left${departed}.`;
+}
+
+/** The names the design review of the done rows cites that the code lacks: the row departed from its design, unsaid. */
+function designLines({ story, design }: StoryClosing): string[] {
+  const [first] = design;
+
+  if (first === undefined) {
+    return [];
+  }
+
+  return [
+    '',
+    `Departed from its design (${design.length}): update the section of the row in ${first.document} to what it built, or list the name under \`### Compromises\` of \`## Report\` in docs/architecture/stories/${story}.md with why`,
+    ...design.map((name) => `  ${name.document}:${name.line}  \`${name.cited}\`  (#${name.row}, ${name.why})`),
+  ];
 }
 
 function plural(count: number, noun: string): string {

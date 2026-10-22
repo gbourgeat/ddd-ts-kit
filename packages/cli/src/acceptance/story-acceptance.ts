@@ -1,6 +1,7 @@
 import type { Amendment } from './acceptance-lock.js';
 import type { AcceptanceProblem } from './acceptance-problem.js';
 import type { Criterion } from './criteria-in.js';
+import type { RegressionSpec } from './regression-spec.js';
 import type { Scenario } from './scenario.js';
 
 /** One row of a story and the scenarios that name it. */
@@ -22,6 +23,8 @@ export interface StoryAcceptance {
   readonly rows: readonly RowAcceptance[];
   readonly criteria: readonly Criterion[];
   readonly scenarios: readonly Scenario[];
+  /** The regression specs of a fix, those `## Regression` of its story file lists; undefined for a story. */
+  readonly regression?: readonly RegressionSpec[];
   /** The lock file, when the acceptance is locked. */
   readonly lock?: string;
   /** The changes since a lock the acceptance-judge agent let through, with its verdicts: for the owner to validate. */

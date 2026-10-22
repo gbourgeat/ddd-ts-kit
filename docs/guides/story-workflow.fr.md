@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:b8a3268660141a2d -->
+<!-- translation-of: story-workflow.md sha256:1997ff3b9dec0f17 -->
 
 # Parcours d'une story : une session par user story
 
@@ -110,7 +110,12 @@ sous `.claude/skills/` : la session liste celles qu'elle a chargées sur la lign
 ligne que le relecteur lit avec le reste ; deux politiques qui se contredisent deviennent une
 décision pour le responsable du projet. `npx ddd-ts-kit cited --rows <ids>` liste les noms que la
 conception cite et que le tronc a remplacés entre-temps. `worker-scope` nomme la section d'une
-ligne dans la consigne de son agent.
+ligne dans la consigne de son agent. Une fois une ligne faite, sa section reste vraie :
+`npx ddd-ts-kit story-check US5` tient chaque nom qu'elle cite à l'arbre (un chemin, une classe,
+un `Classe.membre`), sauf si `### Compromises` du `## Report` du fichier de la *story* liste le
+nom avec la raison pour laquelle on a construit autrement ; la garde le dit une fois à l'arrêt
+de la session, sans bloquer. La comparaison du code construit avec sa conception vient du
+[*playbook* du cycle de vie natif à l'IA d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf).
 
 ## L'acceptation avant le code, et verrouillée
 
@@ -127,6 +132,28 @@ amendement que le rapport liste pour que le responsable du projet le valide. Auc
 passer un test en le réécrivant : la garde ne laisse un sous-agent que retirer `pending(...)`, et
 seul le juge écrit un verdict. Voir la [stratégie de test](../concepts/testing-strategy.fr.md)
 et `ddd-ts-kit acceptance` dans les [commandes](commands.fr.md).
+
+## Un correctif : la spec de régression d'abord, verrouillée
+
+Un défaut trouvé en production ou à l'usage se répare de la même façon, avec une seule ligne et
+sans revue de conception. `/ddd-ts-kit:fix <code>` ouvre son *worktree*
+(`npx ddd-ts-kit story-scope <code> --kind fix`), trouve la couche du défaut et écrit la *spec*
+qui le reproduit à ce niveau (une *spec* d'agrégat, une *spec* de gestionnaire par l'application
+de test, un cas d'une suite de contrat, un scénario de bout en bout), nommée d'après le défaut
+et exécutée une fois pour échouer sur une assertion. Le fichier de la *story* tient le défaut
+sous `## Statement` et liste chaque *spec* sous `## Regression`, un chemin par élément ;
+`npx ddd-ts-kit acceptance <code> --lock` enregistre l'empreinte de chaque test de ces fichiers
+dans `test/acceptance/<code>.acceptance.lock.json`, et ce *commit* vient avant tout code. La
+garde ouvre le code des contextes dès que le verrou existe, et refuse dès lors toute
+modification d'une *spec* verrouillée, par les outils d'édition comme par le *shell*, à la
+session comme à ses sous-agents : la preuve du correctif précède le correctif et reste hors de
+portée de qui le fait. Une *spec* qui se révèle fausse est jugée comme l'est un scénario, par
+l'agent `acceptance-judge`, l'énoncé du défaut étant le critère. `acceptance <code> --gate passing`
+tient que chaque test verrouillé est là, inchangé et plus en attente ; le lanceur de tests
+prouve qu'il passe (`npm run verify`). Le correctif se clôt comme une *story* : la revue du
+diff, le rapport avec son origine et sa vérification, la *pull request*. Le test qui échoue
+d'abord, *commité*, et un *hook* qui empêche l'agent de le modifier pendant le correctif
+viennent du [*playbook* du cycle de vie natif à l'IA d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf).
 
 ## Des agents confinés à un contexte, l'un après l'autre
 
@@ -211,10 +238,12 @@ l'autre, chacune sur un tronc vert.
 |---|---|
 | aucun code d'un contexte avant que chaque ligne soit conçue et l'acceptation écrite et verrouillée | la garde, dans le *worktree* d'une *story* (`story --gate build`, relu à chaque changement de ses entrées) |
 | un scénario verrouillé changé alors que son critère ne l'est pas, ou un critère changé | `ddd-ts-kit acceptance` et `--lock`, jusqu'à un verdict de l'agent `acceptance-judge` ; la garde, qui ne laisse que le juge écrire un verdict |
+| la *spec* de régression d'un correctif, une fois verrouillée | `ddd-ts-kit acceptance <code> --lock` ; la garde, dans le *worktree* d'un correctif (`"kind": "fix"` dans `.ddd-ts-kit/story.json`), qui refuse toute modification d'une *spec* verrouillée et ouvre le code dès que le verrou existe |
 | un agent hors de son contexte | la garde, d'après `.ddd-ts-kit/worker.json` |
 | la même *story* dans deux sessions | `story-scope` |
 | deux *stories* qui changent le même fichier | `stories` ; la garde, au démarrage de la session et à la première écriture d'un tel fichier |
 | une session qui finit avant son rapport | la garde, qui refuse le premier arrêt de chaque étape |
+| une ligne faite qui s'est écartée de sa revue de conception, sans compromis listé | `story-check`, qui bloque sur chaque nom que la section cite et que l'arbre n'a pas ; la garde, une fois à l'arrêt de la session, sans bloquer |
 | la *pull request* : chaque ligne faite, aucun scénario en attente, le tronc fusionné, l'origine consignée, le rapport écrit avec sa vérification | `story --gate close` |
 
 ## L'état final optionnel : la spécification comme un job

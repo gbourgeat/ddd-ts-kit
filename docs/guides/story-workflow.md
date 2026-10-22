@@ -104,7 +104,12 @@ in the section of a row `Policies: <skill>: <what it imposed here>` when a polic
 design, a line the reviewer reads with the rest; two policies that contradict each other become
 a decision for the owner. `npx ddd-ts-kit cited --rows <ids>` lists the names the design cites
 that the trunk replaced in the meantime. `worker-scope` names the section of a row in the
-briefing of its agent.
+briefing of its agent. Once a row is done, its section stays true:
+`npx ddd-ts-kit story-check US5` holds every name it cites to the tree (a path, a class, a
+`Class.member`), unless `### Compromises` of `## Report` in the story file lists the name with why
+it was built otherwise; the guard says it once at the stop of the session, without blocking. The
+comparison of the built code with its design comes from
+[the AI-native SDLC playbook of Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf).
 
 ## The acceptance before the code, and locked
 
@@ -120,6 +125,26 @@ Each verdict is an amendment the report lists for the owner to validate. No agen
 pass by rewriting it: the guard lets a sub-agent only remove `pending(...)`, and only the judge
 writes a verdict. See [testing strategy](../concepts/testing-strategy.md) and
 `ddd-ts-kit acceptance` in the [commands](commands.md).
+
+## A fix: the regression spec first, locked
+
+A defect found in production or in use is repaired the same way, with one row and no design
+review. `/ddd-ts-kit:fix <code>` opens its worktree (`npx ddd-ts-kit story-scope <code> --kind fix`),
+finds the layer of the defect and writes the spec that reproduces it at that level (an aggregate
+spec, a handler spec through the test application, a case of a contract suite, an end-to-end
+scenario), named after the defect and run once to fail on an assertion. The story file holds the
+defect under `## Statement` and lists each spec under `## Regression`, one path per item;
+`npx ddd-ts-kit acceptance <code> --lock` records the fingerprint of each test of those files in
+`test/acceptance/<code>.acceptance.lock.json`, and that commit comes before any code. The guard
+opens the code of the contexts once the lock exists, and from then on refuses every edit of a
+locked spec, by the editor tools and by the shell, to the session and to its sub-agents: the
+proof of the fix predates the fix and stays out of the fixer's reach. A spec that turns out wrong
+is judged as a scenario is, by the `acceptance-judge` agent, the statement of the defect being
+the criterion. `acceptance <code> --gate passing` holds that each locked test is there, unchanged
+and no longer pending; the test runner proves it passes (`npm run verify`). The fix closes as a
+story does: the review of the diff, the report with its origin and its verification, the pull
+request. The failing test first, committed, and a hook that stops the agent editing it during
+the fix come from [the AI-native SDLC playbook of Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf).
 
 ## Agents confined to one context, one after the other
 
@@ -195,10 +220,12 @@ share. The pull requests merge one after the other, each on a green trunk.
 |---|---|
 | no code of a context before each row is designed and the acceptance written and locked | the guard, in the worktree of a story (`story --gate build`, read once per change of its inputs) |
 | a locked scenario changed while its criterion was not, or a criterion changed | `ddd-ts-kit acceptance` and `--lock`, until a verdict of the `acceptance-judge` agent; the guard, which lets only the judge write a verdict |
+| the regression spec of a fix, once locked | `ddd-ts-kit acceptance <code> --lock`; the guard, in the worktree of a fix (`"kind": "fix"` in `.ddd-ts-kit/story.json`), which refuses every edit of a locked spec and opens the code once the lock exists |
 | an agent outside its context | the guard, from `.ddd-ts-kit/worker.json` |
 | the same story in two sessions | `story-scope` |
 | two stories that change the same file | `stories`; the guard, at session start and on the first write of such a file |
 | a session that ends before its report | the guard, which refuses the first stop of each step |
+| a done row that departed from its design review, no compromise listed | `story-check`, which blocks on each name the section cites that the tree lacks; the guard, once at the stop of the session, without blocking |
 | the pull request: every row done, no scenario pending, the trunk merged in, the origin recorded, the report written with its verification | `story --gate close` |
 
 ## The optional end state: the specification as a job

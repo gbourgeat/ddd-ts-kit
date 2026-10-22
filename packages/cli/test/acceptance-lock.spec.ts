@@ -69,7 +69,9 @@ describe('the lock of an acceptance', () => {
       `Changed since the lock without a verdict that lets it through: scenario "${PLACES}"`,
     );
 
-    expect(refused.stderr).toContain('Never change an acceptance test to make code pass.');
+    expect(refused.stderr).toContain(
+      'Never change an acceptance test, nor the regression test of a fix, to make code pass.',
+    );
   });
 
   it('keeps the drift when the judge refused the change', () => {

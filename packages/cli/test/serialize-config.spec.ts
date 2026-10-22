@@ -38,4 +38,10 @@ describe('the config written back to disk', () => {
       'onePerFile',
     );
   });
+
+  it('writes formatOnWrite only when the project set it to true', () => {
+    expect(rewritten({ formatOnWrite: true })['formatOnWrite']).toBe(true);
+    expect(rewritten({ formatOnWrite: 'yes' })).not.toHaveProperty('formatOnWrite');
+    expect(rewritten({})).not.toHaveProperty('formatOnWrite');
+  });
 });
