@@ -40,7 +40,7 @@ describe('npm run erase:patient', () => {
 
     expect(report.erased).toBe(true);
 
-    expect(await erasures()).toEqual([
+    expect(await erasures('patient-1')).toEqual([
       expect.objectContaining({
         chain: 'global',
         occurredAt: NOW,
@@ -57,11 +57,14 @@ describe('npm run erase:patient', () => {
   });
 
   it('records a run again as an erasure that found no key, under the operator who ran it again', async () => {
-    const report = await erase('patient-1', 'operator-9');
+    await database.persistence.eventSourcing.subjectKeys.keyFor('patient-2');
+    await erase('patient-2', 'operator-7');
+
+    const report = await erase('patient-2', 'operator-9');
 
     expect(report.erased).toBe(false);
 
-    expect((await erasures()).map(({ actor, changes }) => ({ actor: actor.id, changes }))).toEqual([
+    expect((await erasures('patient-2')).map(({ actor, changes }) => ({ actor: actor.id, changes }))).toEqual([
       { actor: 'operator-7', changes: { keyDestroyed: true } },
       { actor: 'operator-9', changes: { keyDestroyed: false } },
     ]);
@@ -79,9 +82,9 @@ function erase(patientId: string, operator: string) {
   return eraseOnTheCommandLine(patientId, parts, { source, operator });
 }
 
-async function erasures() {
+async function erasures(patientId: string) {
   const page = await audit.trail.search(
-    { action: SUBJECT_ERASURE_ACTION },
+    { action: SUBJECT_ERASURE_ACTION, resource: { type: 'data-subject', id: patientId } },
     offsetPage({ offset: 0, limit: 10, sort: [{ field: 'sequence', direction: 'asc' }] }),
   );
 

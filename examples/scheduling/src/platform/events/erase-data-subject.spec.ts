@@ -36,7 +36,29 @@ describe('eraseDataSubject', () => {
     expect(erasure).toEqual({ erased: false, rebuilt: { 'scheduling.history': 0 } });
     expect(order).toEqual(['scheduling.history']);
   });
+
+  it('rebuilds even when the erasure fails, since its key may be gone already, then throws its failure', async () => {
+    const order: string[] = [];
+
+    await expect(
+      eraseDataSubject('patient-3', {
+        keys: new UnrecordedErasureKeyStore(),
+        projections: [projection('scheduling.history', 0, order)],
+      }),
+    ).rejects.toThrow('audit database unreachable');
+
+    expect(order).toEqual(['scheduling.history']);
+  });
 });
+
+/** A key store that destroys the key, then fails, as the audited store does when its entry cannot be written. */
+class UnrecordedErasureKeyStore extends InMemorySubjectKeyStore {
+  override async erase(subject: string): Promise<boolean> {
+    await super.erase(subject);
+
+    throw new Error('audit database unreachable');
+  }
+}
 
 function projection(name: string, replayed: number, order: string[]): StoreFedProjection {
   return {
