@@ -143,7 +143,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | Command | Does | When | Produces | Then |
 |---|---|---|---|---|
 | `npm run build`, `npm start` | compiles, rewrites the aliases of `dist/`, runs it with plain Node | to ship | `dist/` | the image |
-| `docker build .` | the image of the `Dockerfile` that `init` wrote (the pipeline builds it without pushing) | to ship | an image | `npm run db:migrate` against the target database, then the deployment |
+| `docker build --pull .` | the image of the `Dockerfile` that `init` wrote, on the newest `node` base image rather than the one the machine already holds (the pipeline builds it without pushing) | to ship | an image | `npm run db:migrate` against the target database, then the deployment |
 | `npx ddd-ts-kit sdk` (or `init --sdk`) | generates the typed client of each document of the contract under `clients/<document>`, wires its scripts, and keeps it current (`docs:generate` runs it, `docs:check` compares it) | when another team, a front end or a test calls the API | one workspace package per document, built by `npm run sdk:build` | `npm publish --workspace clients/<document>` by hand, see [the client SDK](../tools/client-sdk.md) |
 | `npx ddd-ts-kit generate worker`, `generate service <context>` | a process for the jobs, or one context run alone | when the jobs or one context must scale apart | `src/apps/<name>/main.ts` | `/ddd-ts-kit:extract-service` |
 

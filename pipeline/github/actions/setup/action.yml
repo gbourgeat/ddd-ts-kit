@@ -12,6 +12,9 @@ runs:
     - uses: actions/setup-node@v7
       with:
         node-version: ${{ inputs.node-version }}
+        # The newest patch of the release line, not the one the image of the runner holds: a security
+        # release of Node reaches the next run.
+        check-latest: true
     # One install per lockfile, shared by every job and every run. The key holds the lockfile and
     # package.json: a hit is what a fresh install of that lockfile gives, and a manifest that left
     # its lockfile behind is installed again, which refuses it.

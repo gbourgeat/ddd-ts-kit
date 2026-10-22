@@ -12,6 +12,9 @@ runs:
     - uses: actions/setup-node@v7
       with:
         node-version: ${{ inputs.node-version }}
+        # The newest patch of the release line, not the one the image of the runner holds: a security
+        # release of Node reaches the next run.
+        check-latest: true
 {{#if pm.corepack}}
     - name: The package manager package.json pins
       shell: bash
