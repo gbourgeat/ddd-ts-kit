@@ -556,8 +556,10 @@ The attendance record of a patient is kept as its events; its history
   or from a use case, writes an entry: action `personal-data:erase`, the patient as a
   `data-subject` resource, `keyDestroyed: true` or `false`, the operator as actor, origin
   `cli`. The operator is required: without one, the script refuses to run and touches nothing,
-  since a proof that names the script and not a person does not say who erased. Its date plus
-  the retention of the backups of the keys is the day the erasure is complete.
+  since a proof that names the script and not a person does not say who erased; its id is taken
+  as typed, the access to the script being the credential. The entry is in the global chain,
+  which platform staff read: the keys are outside the networks (ADR-0004). Its date plus the
+  retention of the backups of the keys is the day the erasure is complete.
 - **The keys.** `PostgresSubjectKeyStore`, in the `scheduling` schema of the one database, next
   to the events, so that the example runs with one PostgreSQL. A backup of that database taken
   before an erasure still holds the key and the sealed words until it expires. A deployment

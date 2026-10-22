@@ -100,7 +100,11 @@ export function platformModule(persistence: Persistence, options: PlatformOption
   });
 }
 
-/** The stores of the event-sourced aggregates, in the transaction of the unit of work, and the cipher of their personal data. */
+/**
+ * The stores of the event-sourced aggregates, in the transaction of the unit of work, and the
+ * cipher of their personal data. The cipher resolves the key store by its port: the audit module
+ * rebinds it to the keys it wraps, so that an erasure is recorded whoever holds them.
+ */
 function bindEventSourcing(builder: ModuleBuilder, persistence: Persistence): void {
   const { events, snapshots, checkpoints, subjectKeys } = persistence.eventSourcing;
 
@@ -108,7 +112,7 @@ function bindEventSourcing(builder: ModuleBuilder, persistence: Persistence): vo
   builder.bind(SnapshotStore).toValue(snapshots);
   builder.bind(CheckpointStore).toValue(checkpoints);
   builder.bind(SubjectKeyStore).toValue(subjectKeys);
-  builder.bind(PersonalDataCipher).toValue(new PersonalDataCipher(subjectKeys));
+  builder.bind(PersonalDataCipher).toFactory((resolve) => new PersonalDataCipher(resolve(SubjectKeyStore)));
 }
 
 /** One server for the cache, the limiter in front of HTTP and the lock that keeps a scheduled job to one instance. */

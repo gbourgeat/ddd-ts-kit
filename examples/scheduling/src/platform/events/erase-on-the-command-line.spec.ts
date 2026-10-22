@@ -17,11 +17,9 @@ const NOW = new Date('2026-10-22T09:00:00.000Z');
 let database: TestDatabase;
 let audit: Audit;
 
-const source = {
-  scope: new AsyncLocalStorageExecutionScope(),
-  clock: new FixedClock(NOW),
-  ids: new SequentialIdGenerator('erasure'),
-};
+const scope = new AsyncLocalStorageExecutionScope();
+const ids = new SequentialIdGenerator('erasure');
+const source = { scope, clock: new FixedClock(NOW), ids };
 
 beforeAll(async () => {
   database = await openTestDatabase();
@@ -40,6 +38,7 @@ describe('npm run erase:patient', () => {
 
     expect(report.erased).toBe(true);
 
+    // The keys are outside the networks (ADR-0004): the proof is in the chain platform staff read.
     expect(await erasures('patient-1')).toEqual([
       expect.objectContaining({
         chain: 'global',
@@ -79,7 +78,7 @@ function erase(patientId: string, operator: string) {
     projections: storeFedProjections(database.persistence, new PersonalDataCipher(audit.subjectKeys)),
   };
 
-  return eraseOnTheCommandLine(patientId, parts, { source, operator });
+  return eraseOnTheCommandLine(patientId, parts, { scope, ids, operator });
 }
 
 async function erasures(patientId: string) {

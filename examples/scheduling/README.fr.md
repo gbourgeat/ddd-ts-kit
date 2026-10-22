@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f06f2d716c83fc22 -->
+<!-- translation-of: README.md sha256:38863b2b4ccca303 -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -577,7 +577,9 @@ Le registre de présence d'un patient est gardé sous forme de ses événements 
   script ou depuis un cas d'usage, écrit une entrée : action `personal-data:erase`, le patient
   comme ressource `data-subject`, `keyDestroyed: true` ou `false`, l'opérateur comme acteur,
   origine `cli`. L'opérateur est obligatoire : sans lui, le script refuse de tourner et ne touche
-  à rien, puisqu'une preuve qui nomme le script et non une personne ne dit pas qui a effacé. Sa
+  à rien, puisqu'une preuve qui nomme le script et non une personne ne dit pas qui a effacé ; son
+  id est pris tel que saisi, l'accès au script étant le justificatif. L'entrée est dans la chaîne
+  globale, que lit le personnel de la plateforme : les clés sont hors des réseaux (ADR-0004). Sa
   date plus la rétention des sauvegardes des clés donne le jour où l'effacement est complet.
 - **Les clés.** `PostgresSubjectKeyStore`, dans le schéma `scheduling` de l'unique base, à côté des
   événements, pour que l'exemple tourne avec un seul PostgreSQL. Une sauvegarde de cette base prise

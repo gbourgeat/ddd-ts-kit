@@ -1,5 +1,5 @@
-import { AsyncLocalStorageExecutionScope, PersonalDataCipher, SystemClock, UuidGenerator } from '@ddd-ts-kit/kernel';
-import { createAudit } from '@/platform/audit/create-audit';
+import { PersonalDataCipher } from '@ddd-ts-kit/kernel';
+import { layFoundations } from '@/platform/composition/lay-foundations';
 import { openPersistence } from '@/platform/database/open-persistence';
 import { eraseOnTheCommandLine } from '@/platform/events/erase-on-the-command-line';
 import { storeFedProjections } from '@/platform/events/store-fed-projections';
@@ -23,13 +23,14 @@ if (patientId === '' || operator === '' || databaseUrl === '') {
 const persistence = openPersistence({ databaseUrl });
 
 try {
-  const source = { scope: new AsyncLocalStorageExecutionScope(), clock: new SystemClock(), ids: new UuidGenerator() };
-  const { subjectKeys } = createAudit(persistence, source);
+  // The scope, the ids and the audited keys of the application itself, so that the entry is the one a use case would write.
+  const { scope, ids, audit } = layFoundations(persistence, {});
+  const { subjectKeys } = audit;
 
   const report = await eraseOnTheCommandLine(
     patientId,
     { keys: subjectKeys, projections: storeFedProjections(persistence, new PersonalDataCipher(subjectKeys)) },
-    { source, operator },
+    { scope, ids, operator },
   );
 
   console.log(JSON.stringify({ patientId, ...report }));
