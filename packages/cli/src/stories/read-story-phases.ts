@@ -7,6 +7,7 @@ import type { StoryAcceptance } from '../acceptance/story-acceptance.js';
 import type { Slice } from '../progress/slice.js';
 import type { Workspace } from '../workspace/index.js';
 import { readStoryClosing } from '../story/read-story-closing.js';
+import { originPhase } from './origin-phase.js';
 import { reviewFileOf } from './review-file-of.js';
 import { sectionOf } from './section-of.js';
 import { trunkPhase } from './trunk-phase.js';
@@ -27,7 +28,8 @@ interface StoryFacts {
 /**
  * The phases of a story, in order: its specification and criteria, its rows, the design review of
  * each row, its acceptance written and locked (the `build` gate: the code may start), then its rows
- * done, its acceptance passing, its trunk merged in and its report (the `close` gate).
+ * done, its acceptance passing, its trunk merged in, its origin recorded and its report (the
+ * `close` gate).
  */
 export function readStoryPhases(ws: Workspace, story: string, slices: readonly Slice[]): StoryPhase[] {
   const rows = slices.filter((row) => storyOfRow(row.id).toLowerCase() === story.toLowerCase());
@@ -43,6 +45,7 @@ export function readStoryPhases(ws: Workspace, story: string, slices: readonly S
     builtPhase(facts),
     acceptancePhase(facts, 'passing'),
     trunkPhase(ws, story),
+    originPhase(ws, story, specification),
     reportPhase(facts),
   ];
 }

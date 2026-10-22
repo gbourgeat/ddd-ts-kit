@@ -18,6 +18,12 @@ const SLICES = `# Slices
 
 const SPECIFICATION = `# US5 Place an order
 
+## Origin
+
+- From: ticket \`SHOP-412\`
+- Built with: ddd-ts-kit 0.85.0, plugin 0.85.0, on \`main\` at \`0000000\`
+- Policies in force: \`ddd-ts-kit:access-control\`
+
 ## Questions
 
 - Who may place an order? A customer (answered by the owner).
@@ -229,6 +235,34 @@ describe('story', () => {
 
     expect(closed.code).toBe(0);
     expect(closed.stdout).toContain('Next: nothing, the story is ready for its pull request.');
+  });
+
+  it('holds the close gate until `## Origin` says where the story comes from and what built it', () => {
+    const report = '\n## Report\n\n- D1 (provisional): the number is a sequence.\n';
+
+    write(story, 'docs/architecture/stories/US5.md', `${SPECIFICATION.replace(/^- From:.*\n/m, '')}${report}`);
+
+    const unsourced = cli(story, 'story', '--gate', 'close');
+
+    expect(unsourced.code).toBe(1);
+    expect(unsourced.stdout).toMatch(/\[ \] origin recorded +`## Origin` has no `From:` line/);
+    expect(unsourced.stdout).toContain('Next: Write `## Origin` in docs/architecture/stories/US5.md');
+
+    write(
+      story,
+      'docs/architecture/stories/US5.md',
+      `${SPECIFICATION.replace(/## Origin[^]*?\n(?=## )/, '')}${report}`,
+    );
+
+    expect(cli(story, 'story', '--json').json()).toMatchObject({
+      phases: expect.arrayContaining([
+        expect.objectContaining({ id: 'origin', met: false, detail: 'no `## Origin` in the specification' }),
+      ]),
+    });
+
+    write(story, 'docs/architecture/stories/US5.md', `${SPECIFICATION}${report}`);
+
+    expect(cli(story, 'story', '--gate', 'close').code).toBe(0);
   });
 
   it('asks which story outside the worktree of one, and refuses an unknown gate', () => {

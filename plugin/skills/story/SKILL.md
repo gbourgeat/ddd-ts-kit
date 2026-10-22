@@ -57,7 +57,13 @@ boundary or a relationship between contexts. Ask them in one go with AskUserQues
 call, your recommended option first, its cost said); none that changes nothing. Then copy
 [story-template.md](story-template.md) to `docs/architecture/stories/$0.md` and fill it: the
 statement, each question with its answer, the acceptance criteria (`- AC1: <what a client
-observes>`, each one observable through the API).
+observes>`, each one observable through the API), and `## Origin`, the record an auditor reads
+first: `From:` where the story comes from (the intent path, the ticket key or the incident id
+of `$ARGUMENTS`, with who accepted it when the file says); `Built with:` the kit version
+(`npx ddd-ts-kit --version`, or the one the guard printed at session start), the plugin version
+(`version` of `../../.claude-plugin/plugin.json`, next to this skill), the base and its commit
+(`base` and `baseCommit` of `.ddd-ts-kit/story.json`); `Policies in force:` filled at phase 3.
+`story $0 --gate close` refuses a story without its `From:` and `Built with:` lines.
 
 A boundary, a new context or a relationship pattern is a strategic decision of the owner:
 asked here, never decided later. If one appears after this phase and no reversible option
@@ -137,7 +143,9 @@ alternatives, where in the code); each compromise (what was left simpler than th
 why); each amendment of the acceptance and each criterion changed after the lock
 with its verdict (`npx ddd-ts-kit acceptance $0` lists them); each `TODO(review)` left; what was
 not verified. `npx ddd-ts-kit story $0 --gate close` passes. Commit, push the branch, and
-`gh pr create` with the report as its body. Give the owner the link and the report, then stop.
+`gh pr create` with the report as its body, `## Origin` repeated at its top: the record on the
+trunk links back to the intent, the ticket or the incident. Give the owner the link and the
+report, then stop.
 
 ## While working
 

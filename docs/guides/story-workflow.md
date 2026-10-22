@@ -30,7 +30,7 @@ terminal 2: /ddd-ts-kit:story US6 docs/backlog/us6.md
 | # | Phase | Artefact | Who decides |
 |---|---|---|---|
 | 0 | its worktree: `npx ddd-ts-kit story-scope US5` | `.worktrees/us5` on `story/us5`, `.ddd-ts-kit/story.json` | |
-| 1 | every question, at once | `## Questions` of `docs/architecture/stories/US5.md` | the owner, once |
+| 1 | every question, at once | `## Origin` and `## Questions` of `docs/architecture/stories/US5.md` | the owner, once |
 | 2 | specification and rows | `## Acceptance criteria` (`- AC1: ...`), the rows `US5.01`, ... of `slices.md` | the session |
 | 3 | a design review of each row | `docs/architecture/reviews/US5.md`, one `## #US5.02 ...` section per row, read by `architecture-reviewer` | the session |
 | 4 | the acceptance, before any code | `test/acceptance/us5.acceptance.spec.ts` and its lock | the session |
@@ -52,6 +52,20 @@ with its reason, its alternatives and where it lives in the code, and goes on. T
 each one back to the owner. A boundary, a new context or a relationship pattern is never
 decided this way: asked in phase 1, or, when it appears later and nothing reversible exists, the
 one reason to stop, with a report that says so.
+
+## The record of the story
+
+The story file is the record an auditor reads: who asked (`## Origin`), who answered
+(`## Questions`), what the session decided alone (`D<n>`), under which rules, and who approved
+(the merge of the pull request). `## Origin`, written at phase 1, holds three lines: `From:`,
+the intent, the ticket or the incident the story comes from; `Built with:`, the version of the
+kit and of the plugin, the base and its commit; `Policies in force:`, the skills loaded at
+phase 3. `story --gate close` refuses a story without its `From:` and `Built with:` lines, and
+the body of the pull request repeats the block, so that the trunk links back to where the story
+came from. The block is what the
+[AI-native SDLC playbook of Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
+asks as governance evidence: the spec, what produced it and the policies in force, logged with
+it.
 
 ## The design before the code
 
@@ -114,7 +128,7 @@ share. The pull requests merge one after the other, each on a green trunk.
 | the same story in two sessions | `story-scope` |
 | two stories that change the same file | `stories`; the guard, at session start and on the first write of such a file |
 | a session that ends before its report | the guard, which refuses the first stop of each step |
-| the pull request: every row done, no scenario pending, the trunk merged in, the report written | `story --gate close` |
+| the pull request: every row done, no scenario pending, the trunk merged in, the origin recorded, the report written | `story --gate close` |
 
 ## Hosts
 

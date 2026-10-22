@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:baac573619f2b92a -->
+<!-- translation-of: story-workflow.md sha256:20b118bc97d545f5 -->
 
 # Parcours d'une story : une session par user story
 
@@ -32,7 +32,7 @@ terminal 2 : /ddd-ts-kit:story US6 docs/backlog/us6.md
 | # | Phase | Artefact | Qui décide |
 |---|---|---|---|
 | 0 | son *worktree* : `npx ddd-ts-kit story-scope US5` | `.worktrees/us5` sur `story/us5`, `.ddd-ts-kit/story.json` | |
-| 1 | toutes les questions, d'un coup | `## Questions` de `docs/architecture/stories/US5.md` | le responsable du projet, une fois |
+| 1 | toutes les questions, d'un coup | `## Origin` et `## Questions` de `docs/architecture/stories/US5.md` | le responsable du projet, une fois |
 | 2 | spécification et lignes | `## Acceptance criteria` (`- AC1: ...`), les lignes `US5.01`, ... de `slices.md` | la session |
 | 3 | une revue de conception de chaque ligne | `docs/architecture/reviews/US5.md`, une section `## #US5.02 ...` par ligne, lue par `architecture-reviewer` | la session |
 | 4 | l'acceptation, avant tout code | `test/acceptance/us5.acceptance.spec.ts` et son verrou | la session |
@@ -55,6 +55,20 @@ l'endroit du code où elle vit, et continue. Le rapport soumet chacune au respon
 Une frontière, un nouveau contexte ou un patron de relation ne se décide jamais ainsi : demandé en
 phase 1, ou, quand il apparaît plus tard et que rien de réversible n'existe, la seule raison de
 s'arrêter, avec un rapport qui le dit.
+
+## La trace de la story
+
+Le fichier de la *story* est la trace qu'un auditeur lit : qui a demandé (`## Origin`), qui a
+répondu (`## Questions`), ce que la session a décidé seule (`D<n>`), sous quelles règles, et
+qui a approuvé (la fusion de la *pull request*). `## Origin`, écrit en phase 1, tient en trois
+lignes : `From:`, l'intention, le ticket ou l'incident d'où vient la *story* ; `Built with:`, la
+version du kit et du plugin, la base et son *commit* ; `Policies in force:`, les *skills*
+chargées en phase 3. `story --gate close` refuse une *story* sans ses lignes `From:` et
+`Built with:`, et le corps de la *pull request* répète le bloc, si bien que le tronc renvoie à
+l'origine de la *story*. Le bloc est ce que le
+[playbook du cycle de vie natif de l'IA d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
+demande comme preuve de gouvernance : la spécification, ce qui l'a produite et les politiques
+en vigueur, consignées avec elle.
 
 ## La conception avant le code
 
@@ -123,7 +137,7 @@ l'autre, chacune sur un tronc vert.
 | la même *story* dans deux sessions | `story-scope` |
 | deux *stories* qui changent le même fichier | `stories` ; la garde, au démarrage de la session et à la première écriture d'un tel fichier |
 | une session qui finit avant son rapport | la garde, qui refuse le premier arrêt de chaque étape |
-| la *pull request* : chaque ligne faite, aucun scénario en attente, le tronc fusionné, le rapport écrit | `story --gate close` |
+| la *pull request* : chaque ligne faite, aucun scénario en attente, le tronc fusionné, l'origine consignée, le rapport écrit | `story --gate close` |
 
 ## Hôtes
 
