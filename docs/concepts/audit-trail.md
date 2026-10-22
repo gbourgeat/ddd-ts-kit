@@ -5,8 +5,8 @@
 **Summary.** An audit trail answers "who did what, on what, when, with what outcome, on whose
 behalf" to somebody who does not trust the application: an auditor, a customer, a regulator.
 In this kit it is recorded around the use cases, never by them: authorization decisions,
-executed commands and integration events already pass through three places, and the entries
-are written there. Entries are append-only and hash-chained, so a change, a removal or a
+executed commands, integration events and erasures of personal data already pass through a few
+places, and the entries are written there. Entries are append-only and hash-chained, so a change, a removal or a
 reordering is detectable; they hold identifiers and codes, never content, which is also what
 lets an append-only chain coexist with the right to erasure. The chain proves that what was
 recorded was not rewritten. It does not prove that everything was recorded.
@@ -41,8 +41,8 @@ unit of work already crosses, wired once in the platform:
 A request a guard refuses at the HTTP edge (a role, a scope, a tenant the caller does not
 belong to) never reaches the bus: the HTTP pipeline reports it to `auditGuardRefusals`, which
 records it as an `authorization` entry, `denied`, for authenticated callers only (a caller
-without a credential belongs to the access log and to rate limiting). A fourth, exceptional
-source exists for what none of these can see: an explicit record written by infrastructure,
+without a credential belongs to the access log and to rate limiting). One more source,
+exceptional, exists for what none of these can see: an explicit record written by infrastructure,
 such as a bulk export. A call to the trail from `domain/` or
 `application/` is the defect the design exists to prevent.
 

@@ -23,7 +23,8 @@ if (patientId === '' || operator === '' || databaseUrl === '') {
 const persistence = openPersistence({ databaseUrl });
 
 try {
-  // The scope, the ids and the audited keys of the application itself, so that the entry is the one a use case would write.
+  // The scope, the ids and the audited keys of the application itself: the entry is the one a
+  // use case would write.
   const { scope, ids, audit } = layFoundations(persistence, {});
   const { subjectKeys } = audit;
 

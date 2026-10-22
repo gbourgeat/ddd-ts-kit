@@ -1,13 +1,14 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:2c2ed6f95cc0fcba -->
+<!-- translation-of: audit-trail.md sha256:ae1660fac213b619 -->
 
 # Journal d'audit
 
 **Résumé.** Un journal d'audit (audit trail) répond à « qui a fait quoi, sur quoi, quand, avec
 quelle issue, pour le compte de qui » à quelqu'un qui ne fait pas confiance à l'application : un
 auditeur, un client, un régulateur. Dans ce kit, il est enregistré autour des cas d'usage,
-jamais par eux : les décisions d'autorisation, les commandes exécutées et les événements
-d'intégration passent déjà par trois endroits, et les entrées y sont écrites. Les entrées sont
+jamais par eux : les décisions d'autorisation, les commandes exécutées, les événements
+d'intégration et les effacements de données personnelles passent déjà par quelques endroits,
+et les entrées y sont écrites. Les entrées sont
 en ajout seul et chaînées par hachage, si bien qu'une modification, une suppression ou un
 réordonnancement se détecte ; elles contiennent des identifiants et des codes, jamais de
 contenu, et c'est aussi ce qui permet à une chaîne en ajout seul de coexister avec le droit à
@@ -46,7 +47,7 @@ Une requête qu'une garde refuse à la frontière HTTP (un rôle, un périmètre
 auquel l'appelant n'appartient pas) n'atteint jamais le bus : le *pipeline* HTTP la signale à
 `auditGuardRefusals`, qui l'enregistre comme une entrée `authorization`, `denied`, pour les
 appelants authentifiés seulement (un appelant sans justificatif relève du journal d'accès et de
-la limitation de débit). Une quatrième source, exceptionnelle, existe pour ce qu'aucune de
+la limitation de débit). Une source de plus, exceptionnelle, existe pour ce qu'aucune de
 celles-ci ne voit : un enregistrement explicite écrit par l'infrastructure, comme un export en
 masse. Un appel au journal depuis `domain/` ou `application/` est le défaut que la conception
 existe pour empêcher.

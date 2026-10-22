@@ -8,8 +8,9 @@ export const SUBJECT_ERASURE_ACTION = 'personal-data:erase';
 
 export interface AuditedSubjectKeysOptions extends AuditSource {
   /**
-   * Told when the entry of a failed erasure could not be written. The caller receives the
-   * failure of the erasure, never the failure of its audit.
+   * Told when the entry of a failed erasure could not be written: the caller receives the
+   * failure of the erasure, not the one of its audit. The entry of an erasure that succeeded is
+   * not optional: when it cannot be written, `erase` rejects with that error.
    */
   readonly onLostRecord?: (error: unknown, record: AuditRecord | undefined) => void;
 }
