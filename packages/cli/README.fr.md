@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:55f5465a41dd3c58 -->
+<!-- translation-of: README.md sha256:051cec19352aa27e -->
 
 # ddd-ts-kit
 
@@ -1343,6 +1343,70 @@ Not blocking, unattributed (1): settle each, or name its row in the marker (`TOD
   src/contexts/billing/test/unit/invoice.aggregate.spec.ts:1  it.todo  refuses an invoice without lines  (unattributed, may belong to open US2: settle it or name the row in the marker)
 
 Not blocking: 1 marker of these contexts belongs to rows of US2.
+```
+
+## measures
+
+```
+ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
+```
+
+Ce que la boucle d'une *story* coûte et laisse, lu dans l'historique git de la branche courante
+(`git log`, rien d'autre) et dans les fichiers de `docs/architecture/` (les *stories*, les revues,
+les intentions sous `intents/`, les incidents sous `incidents/`, `slices.md`) et de
+`test/acceptance/` (les verrous et les verdicts) : les indicateurs que le
+[playbook du cycle de vie AI-native d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
+nomme pour chacune de ses pratiques, dans les termes du kit. Une ligne par *story* de
+`docs/architecture/stories/`, puis les médianes et les parts de la période. La commande lit,
+n'écrit rien et ne demande rien à la plateforme.
+
+| Mesure | D'où |
+|---|---|
+| temps de conception | du premier *commit* de `docs/architecture/stories/<code>.md` au *commit* de `test/acceptance/<code>.acceptance.lock.json` |
+| temps de construction | du *commit* du verrou au premier *commit* dont le `## Report` contient du texte |
+| délai de livraison | du premier *commit* du fichier de la *story* au *commit* de la branche courante dont le sujet nomme `story/<code>` (un *commit* de fusion d'abord, sinon un *commit* de *squash* qui nomme la branche) ; `open` sans lui |
+| retravail des exigences | les *commits* qui ont changé `## Acceptance criteria` après le premier *commit* portant un *trailer* `Slice: <code>.<n>` ; les amendements du verrou (chacun un verdict `amend`) ; les verdicts `refuse` de `test/acceptance/verdicts/` |
+| décisions provisoires | les lignes `D<n>` du fichier de la *story* |
+| compromis | les éléments sous `### Compromises` du rapport |
+| revue | les lignes `TODO(review)` que les *commits* de la *story* ont retirées (réglées) et écrites (ouvertes), lues par `git log -S` ; les éléments sous `## Findings` de `docs/architecture/reviews/<code>.md` par passe (un titre `### <passe>`, sinon le mot avant les deux-points de l'élément, sinon `unsorted`) ; les répétitions : un identifiant de règle ou un texte de remarque vu dans deux *stories*, l'erreur que le guide de l'équipe aurait dû attraper |
+| vérification | si le rapport a un bloc `### Verification` qui nomme `npm run verify` |
+| parallélisme | les autres *stories* dont le premier et le dernier *commit* chevauchent celle-ci dans le temps |
+| origine | si `## Origin` nomme une intention (`intents/<name>.md`), un ticket (`SHOP-12`, `#12`, une URL) ou un incident (`incidents/<name>.md`) |
+| incidents répétés | une *story* dont l'origine nomme un incident dont la fiche porte le même `message` ou le même `error_code` (une ligne de son en-tête ou d'une liste) qu'une fiche antérieure de `docs/architecture/incidents/` |
+
+Un *commit* appartient à une *story* quand il porte un *trailer* `Slice: <code>.<n>` ou touche un
+de ses fichiers. Les temps sont en heures (`5h`, `1d 2h`) ; le résumé donne la médiane de chacun
+sur les *stories* qui l'ont, le délai de livraison sur les *stories* closes. Sur un tronc où
+chaque *pull request* est écrasée (*squash*), les phases d'une *story* se replient en un seul
+*commit* et ses temps de conception et de construction se lisent à zéro : lancez la commande sur
+la branche de la *story* (son *worktree*) avant qu'elle atterrisse, ou gardez des *commits* de
+fusion.
+
+- `--since <date>` garde les *stories* dont le premier *commit* est ce jour-là ou après
+  (ISO 8601).
+- `--story <code>` garde une *story*, quelle que soit la casse de son code.
+- `--by-author` ajoute qui a ouvert chaque *story* et une table par auteur (*stories*, closes,
+  délai médian). Désactivé par défaut : une mesure lue par personne change ce que les gens font,
+  et les mesures du playbook sont celles de la boucle, pas de ses personnes. Demandez-la quand
+  l'équipe en a convenu.
+- `--format json` (ou `--json`) donne la même chose en données pour un tableau de bord :
+  `{ branch, since?, stories: [{ story, file, author?, opened?, designHours?, buildHours?, leadHours?, merged?, rework: { criteriaChanges, amendments, refusals }, decisions, compromises, verification, origin?, review: { settled, opened, findings, repeats }, overlaps, repeatIncident? }], summary, byAuthor?, notComputed }`.
+
+Non calculés dans cette version, parce qu'ils viennent de la plateforme et que son API n'est pas
+lue : le délai jusqu'à la première revue d'une *pull request* et si sa CI était verte au premier
+passage. Une version ultérieure pourra les lire avec `gh` ou `glab` ; rien n'est envoyé nulle
+part.
+
+```
+$ npx ddd-ts-kit measures --since 2026-03-01
+Measures of main since 2026-03-01: 2 stories, 1 closed (merged on this branch).
+
+  US5  opened 2026-03-01  design 1d  build 3d  lead 5d (merged 991050c)  rework 1 criteria change(s), 1 amendment(s), 0 refusal(s)  decisions 2  compromises 2  review 1 settled, 1 opened, repeats language/glossary-term  verification yes  origin ticket  overlaps US6
+  US6  opened 2026-03-03  design open  build open  lead open  rework 0 criteria change(s), 0 amendment(s), 0 refusal(s)  decisions 0  compromises 0  review 0 settled, 0 opened, findings 2 bugs, 1 security, repeats language/glossary-term  verification no  origin incident (repeats docs/architecture/incidents/inc-1.md)  overlaps US5
+
+Medians: design 1d, build 3d, lead 5d over 1 closed; 0.5 criteria change(s), 1 decision(s), 1 compromise(s), 0.5 marker(s) settled per story.
+Verification: 1 of 2 report(s) name `npm run verify`. Origin: 2 of 2 name an intent, a ticket or an incident. Parallel: 2 built while another one was. Repeats across stories: 1 (language/glossary-term). Repeat incidents: 1.
+Not computed: time to first review and first-run CI status come from the platform (its API is not read).
 ```
 
 ## doctor

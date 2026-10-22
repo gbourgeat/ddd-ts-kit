@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:bfde44bfd1abfc20 -->
+<!-- translation-of: commands.md sha256:e6d1374d48aab300 -->
 
 # Quelle commande, quand
 
@@ -100,6 +100,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 | `npx ddd-ts-kit generate <kind> ...` | un fichier d'un rôle avec sa *spec*, son *fake* et son enregistrement (liste ci-dessous) | chaque fois qu'il faut un fichier d'un rôle, jamais à la main | le fichier et les endroits `TODO(domain)`, `--json` pour la liste | remplir les endroits, puis `todo` |
 | `npx ddd-ts-kit todo [<context>]` | chaque `TODO(domain)`, `TODO(platform)`, `it.todo` et `TODO(review)` restant | avant de clore une tranche, une story ou un jalon | des entrées `file:line` | les écrire, puis `npm test` ; régler chaque `TODO(review)` ou l'écarter par `generate adr` avant de clore la story ou le jalon |
 | `npx ddd-ts-kit story-check <code> [--strict]` | si une story ou un jalon (`M1` pour les lignes `M1.*`) peut être clos : chaque ligne `done`, aucun marqueur qui lui appartient, un marqueur lui appartenant quand son texte, le *commit* qui l'a écrit ou le *worker* qui le porte nomme une de ses lignes, ou quand il n'appartient à aucune ligne dans un contexte où aucune autre story ouverte ne travaille | avant de déclarer clos une story ou un jalon ; `status` nomme celui dont les lignes sont faites mais que des marqueurs gardent ouvert | une ligne quand il peut être clos ; sinon chaque marqueur bloquant avec la raison pour laquelle il est à lui, son `file:line` et sa correction, puis les marqueurs non attribués listés sans bloquer ; sort avec 0, 1, ou 2 sur un code inconnu | traiter chaque marqueur bloquant ou l'écarter par `generate adr`, puis supprimer le marqueur ; nommer la ligne dans un marqueur non attribué (`TODO(review): #M1.03 ...`) |
+| `npx ddd-ts-kit measures [--since <date>] [--story <code>]` | ce que la boucle de chaque *story* a coûté et laissé, depuis git et `docs/architecture/` : temps de conception, de construction et de livraison, les exigences changées après le début de la construction, les décisions provisoires, les compromis, les marqueurs de revue réglés et les constats répétés d'une *story* à l'autre, la vérification, les *stories* construites en même temps, l'origine, les incidents répétés ; puis les médianes de la période ; `--by-author` seulement quand l'équipe en a convenu | une fois par mois, par qui règle l'installation ; avant une rétrospective | une ligne par *story* et les médianes, `--json` pour un tableau de bord ; sort avec 0 | une remarque répétée devient une ligne d'`AGENTS.md` ou une règle de la config ; un long temps de conception, une question posée plus tôt |
 | `/ddd-ts-kit:parallel-work` | répartit les tranches entre des *workers*, un contexte chacun | quand plusieurs agents ou personnes construisent en même temps | une consigne par *worker*, des *worktrees* `npx ddd-ts-kit worker-scope <context>`, avec les documents de la conception de chaque ligne et les noms qu'ils citent que le tronc n'a pas | le `use-case` de chaque *worker* |
 | `npx ddd-ts-kit status --workers` | le *worktree*, la branche, le contexte, les lignes et l'avance de chaque *worker*, son état (lignes commitées, ligne en cours, dernier verify-slice), les fichiers qu'il a changés, et ceux que deux *workers* changent | avant de confier une consigne à un second *worker* dans un contexte, avant chaque fusion | un texte court, `--json` pour des données | d'autres lignes pour le nouveau *worker*, l'ordre des fusions, ou `--resume` pour un *worker* arrêté |
 | `npx ddd-ts-kit worker-scope <context> --resume` | où en est un *worker* arrêté (lignes d'après leur *trailer* `Slice:`, fichiers de la ligne en cours, marqueurs, dernier verify-slice, rapport, agent), lu sans rien changer | sur une notification d'arrêt d'un `context-builder` (limite de tours, erreur, une personne) | le texte du SendMessage pour son agent, ou la consigne d'un nouvel agent | l'envoyer tel quel |
@@ -267,6 +268,7 @@ Usage
   ddd-ts-kit story-scope <story> [--base <ref>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit story [<story>] [--gate build|close]
   ddd-ts-kit stories
+  ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
   ddd-ts-kit worktree <name> [--base <ref>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]

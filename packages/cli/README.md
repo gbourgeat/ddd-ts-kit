@@ -1274,6 +1274,65 @@ Not blocking, unattributed (1): settle each, or name its row in the marker (`TOD
 Not blocking: 1 marker of these contexts belongs to rows of US2.
 ```
 
+## measures
+
+```
+ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
+```
+
+What the loop of a story costs and leaves, read from the git history of the current branch
+(`git log`, nothing else) and the files of `docs/architecture/` (the stories, the reviews, the
+intents under `intents/`, the incidents under `incidents/`, `slices.md`) and of
+`test/acceptance/` (the locks and the verdicts): the indicators the
+[AI-native SDLC playbook of Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
+names for each of its plays, in the terms of the kit. One line per story of
+`docs/architecture/stories/`, then the medians and the shares of the period. It reads, writes
+nothing and asks nothing of the platform.
+
+| Measure | From |
+|---|---|
+| design time | the first commit of `docs/architecture/stories/<code>.md` to the commit of `test/acceptance/<code>.acceptance.lock.json` |
+| build time | the lock commit to the first commit whose `## Report` holds text |
+| lead time | the first commit of the story file to the commit of the current branch whose subject names `story/<code>` (a merge commit first, else a squash commit that names the branch); `open` without one |
+| requirements rework | the commits that changed `## Acceptance criteria` after the first commit carrying a `Slice: <code>.<n>` trailer; the amendments of the lock (each an `amend` verdict); the `refuse` verdicts of `test/acceptance/verdicts/` |
+| provisional decisions | the `D<n>` lines of the story file |
+| compromises | the items under `### Compromises` of the report |
+| review | the `TODO(review)` lines the commits of the story removed (settled) and wrote (opened), from `git log -S`; the items under `## Findings` of `docs/architecture/reviews/<code>.md` by pass (a `### <pass>` heading, else the word before the colon of the item, else `unsorted`); the repeats: a rule id or a remark text seen in two stories, the mistake the guide of the team should have caught |
+| verification | whether the report has a `### Verification` block naming `npm run verify` |
+| parallelism | the other stories whose first and last commits overlap this one in time |
+| origin | whether `## Origin` names an intent (`intents/<name>.md`), a ticket (`SHOP-12`, `#12`, a URL) or an incident (`incidents/<name>.md`) |
+| repeat incidents | a story whose origin names an incident whose record carries the same `message` or `error_code` (a line of its front matter or of a list) as an earlier record of `docs/architecture/incidents/` |
+
+A commit belongs to a story when it carries a `Slice: <code>.<n>` trailer or touches one of its
+files. Times are in hours (`5h`, `1d 2h`); the summary gives the median of each over the stories
+that have it, lead time over the closed ones. On a trunk where every pull request is squashed,
+the phases of a story collapse into one commit and its design and build times read as zero: run
+the command on the branch of the story (its worktree) before it lands, or keep merge commits.
+
+- `--since <date>` keeps the stories whose first commit is on or after that day (ISO 8601).
+- `--story <code>` keeps one story, whatever the case of its code.
+- `--by-author` adds who opened each story and a table per author (stories, closed, median lead
+  time). Off by default: a measure read per person changes what people do, and the playbook's
+  measures are of the loop, not of its people. Ask for it when the team agreed on it.
+- `--format json` (or `--json`) gives the same as data for a dashboard:
+  `{ branch, since?, stories: [{ story, file, author?, opened?, designHours?, buildHours?, leadHours?, merged?, rework: { criteriaChanges, amendments, refusals }, decisions, compromises, verification, origin?, review: { settled, opened, findings, repeats }, overlaps, repeatIncident? }], summary, byAuthor?, notComputed }`.
+
+Not computed in this version, because they come from the platform and its API is not read: the
+time to the first review of a pull request and whether its CI was green on the first run. A
+later version may read them with `gh` or `glab`; nothing is sent anywhere.
+
+```
+$ npx ddd-ts-kit measures --since 2026-03-01
+Measures of main since 2026-03-01: 2 stories, 1 closed (merged on this branch).
+
+  US5  opened 2026-03-01  design 1d  build 3d  lead 5d (merged 991050c)  rework 1 criteria change(s), 1 amendment(s), 0 refusal(s)  decisions 2  compromises 2  review 1 settled, 1 opened, repeats language/glossary-term  verification yes  origin ticket  overlaps US6
+  US6  opened 2026-03-03  design open  build open  lead open  rework 0 criteria change(s), 0 amendment(s), 0 refusal(s)  decisions 0  compromises 0  review 0 settled, 0 opened, findings 2 bugs, 1 security, repeats language/glossary-term  verification no  origin incident (repeats docs/architecture/incidents/inc-1.md)  overlaps US5
+
+Medians: design 1d, build 3d, lead 5d over 1 closed; 0.5 criteria change(s), 1 decision(s), 1 compromise(s), 0.5 marker(s) settled per story.
+Verification: 1 of 2 report(s) name `npm run verify`. Origin: 2 of 2 name an intent, a ticket or an incident. Parallel: 2 built while another one was. Repeats across stories: 1 (language/glossary-term). Repeat incidents: 1.
+Not computed: time to first review and first-run CI status come from the platform (its API is not read).
+```
+
 ## doctor
 
 ```
