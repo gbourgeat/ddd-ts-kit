@@ -8,6 +8,9 @@ import type { Slice } from '../progress/slice.js';
 import type { Workspace } from '../workspace/index.js';
 import { readStoryClosing } from '../story/read-story-closing.js';
 import { originPhase } from './origin-phase.js';
+import { readStoryPlace } from './read-story-place.js';
+import { regressionPhase } from './regression-phase.js';
+import { regressionSpecsIn } from './regression-specs-in.js';
 import { reviewFileOf } from './review-file-of.js';
 import { sectionOf } from './section-of.js';
 import { trunkPhase } from './trunk-phase.js';
@@ -23,6 +26,8 @@ interface StoryFacts {
   readonly rows: readonly Slice[];
   readonly specification: string | undefined;
   readonly acceptance: StoryAcceptance | undefined;
+  /** A fix: its rows and their design are optional, and `## Regression` stands for its acceptance. */
+  readonly fix: boolean;
 }
 
 /**
@@ -35,49 +40,64 @@ export function readStoryPhases(ws: Workspace, story: string, slices: readonly S
   const rows = slices.filter((row) => storyOfRow(row.id).toLowerCase() === story.toLowerCase());
   const specification = storyFileOf(ws, story);
   const [acceptance] = readAcceptance(ws, slices, story);
-  const facts: StoryFacts = { ws, story, rows, specification, acceptance };
+  const fix = isFix(ws, story, specification);
+  const facts: StoryFacts = { ws, story, rows, specification, acceptance, fix };
 
   return [
     specificationPhase(facts),
     rowsPhase(facts),
     designPhase(facts),
-    acceptancePhase(facts, 'written'),
+    fix ? regressionPhase(ws, story, specification) : acceptancePhase(facts, 'written'),
     builtPhase(facts),
-    acceptancePhase(facts, 'passing'),
+    ...(fix ? [] : [acceptancePhase(facts, 'passing')]),
     trunkPhase(ws, story),
     originPhase(ws, story, specification),
     reportPhase(facts),
   ];
 }
 
-function specificationPhase({ ws, story, specification }: StoryFacts): StoryPhase {
+/** A fix: opened with `story-scope --kind fix` (read in its worktree), or a specification with a `## Regression` section. */
+function isFix(ws: Workspace, story: string, specification: string | undefined): boolean {
+  const place = readStoryPlace(ws.root);
+
+  if (place !== undefined && place.story.toLowerCase() === story.toLowerCase()) {
+    return place.kind === 'fix';
+  }
+
+  return specification !== undefined && regressionSpecsIn(ws.read(specification) ?? '') !== undefined;
+}
+
+function specificationPhase({ ws, story, specification, fix }: StoryFacts): StoryPhase {
   const criteria = specification === undefined ? [] : criteriaIn(ws.read(specification) ?? '');
 
   return {
     id: 'specification',
     title: 'specification',
-    met: criteria.length > 0,
+    met: criteria.length > 0 || (fix && specification !== undefined),
     detail:
       specification === undefined
         ? `no docs/architecture/stories/${story}.md`
-        : `${specification}, ${criteria.length} acceptance criteria`,
+        : `${specification}, ${criteria.length} acceptance criteria${fix ? ', a fix' : ''}`,
     next: `Write docs/architecture/stories/${story}.md: the statement, the questions asked and their answers, and \`## Acceptance criteria\`, one \`- AC1: <what a client observes>\` each.`,
     gate: 'build',
   };
 }
 
-function rowsPhase({ story, rows }: StoryFacts): StoryPhase {
+function rowsPhase({ story, rows, fix }: StoryFacts): StoryPhase {
   return {
     id: 'rows',
     title: 'rows',
-    met: rows.length > 0,
-    detail: `${rows.length} row${rows.length === 1 ? '' : 's'} in docs/architecture/slices.md`,
+    met: rows.length > 0 || fix,
+    detail:
+      fix && rows.length === 0
+        ? 'no row, optional for a fix'
+        : `${rows.length} row${rows.length === 1 ? '' : 's'} in docs/architecture/slices.md`,
     next: `Plan the rows of ${story} in docs/architecture/slices.md (skill ddd-ts-kit:plan-slices), numbered ${story}.01, ${story}.02.`,
     gate: 'build',
   };
 }
 
-function designPhase({ ws, story, rows }: StoryFacts): StoryPhase {
+function designPhase({ ws, story, rows, fix }: StoryFacts): StoryPhase {
   const file = reviewFileOf(ws, story);
   const reviewed = new Set([...(ws.read(file ?? '') ?? '').matchAll(ROW_HEADING)].map(([, id]) => id));
   const missing = rows.filter((row) => row.status !== 'done' && !reviewed.has(row.id)).map((row) => `#${row.id}`);
@@ -85,13 +105,15 @@ function designPhase({ ws, story, rows }: StoryFacts): StoryPhase {
   return {
     id: 'design',
     title: 'design review',
-    met: rows.length > 0 && missing.length === 0,
+    met: (rows.length > 0 || fix) && missing.length === 0,
     detail:
-      file === undefined
-        ? `no docs/architecture/reviews/${story}.md`
-        : missing.length === 0
-          ? `${file}, a section per row`
-          : `${file} has no section for ${missing.join(', ')}`,
+      fix && rows.length === 0
+        ? 'no row to design, optional for a fix'
+        : file === undefined
+          ? `no docs/architecture/reviews/${story}.md`
+          : missing.length === 0
+            ? `${file}, a section per row`
+            : `${file} has no section for ${missing.join(', ')}`,
     next: `Write the design of each row in docs/architecture/reviews/${story}.md, one \`## #<id> <slice>\` section each, have the architecture-reviewer agent read it as a design review, and settle its findings.`,
     gate: 'build',
   };
@@ -130,8 +152,17 @@ function acceptancePhase({ story, acceptance }: StoryFacts, gate: 'written' | 'p
 }
 
 /** Its rows done and no marker of its own left, as `story-check` says. */
-function builtPhase({ ws, story, rows }: StoryFacts): StoryPhase {
+function builtPhase({ ws, story, rows, fix }: StoryFacts): StoryPhase {
   const [next] = rows.filter((row) => row.status !== 'done');
+
+  if (fix && rows.length === 0) {
+    return {
+      ...BUILT,
+      met: true,
+      detail: 'no row, optional for a fix: the fix is built in its commits',
+      next: 'Build the fix behind its regression specs, one commit, then mark nothing: a fix without rows has no row to mark done.',
+    };
+  }
 
   if (next !== undefined) {
     const done = rows.filter((row) => row.status === 'done').length;

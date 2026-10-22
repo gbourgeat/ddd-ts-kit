@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7f7fe3fe2a615f20 -->
+<!-- translation-of: README.md sha256:a8914c35b99994b2 -->
 
 # ddd-ts-kit
 
@@ -1442,6 +1442,52 @@ que rien ne reste. Elle refuse un contexte qu'aucun *worktree* ne construit, et 
 *worktrees* d'un contexte que deux *workers* construisent : choisissez-en un avec `--worktree` ou
 `--branch`. `--json` affiche `{ context, worktree, root, branch, base, progress, next,
 sendMessage, briefing, notes }`.
+
+## story-scope
+
+```
+ddd-ts-kit story-scope <story> [--from <file>] [--kind story|fix] [--base <ref>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
+```
+
+Ouvre le *worktree* d'une story, où une session la mène de ses questions à sa *pull request*
+pendant que d'autres sessions mènent d'autres stories : `.worktrees/<story>` du *checkout*
+principal sur la branche `story/<story>`, coupée de `--base` (par défaut la branche que suit la
+branche courante, `origin/main` depuis le tronc ; refusé depuis le *worktree* d'une autre story,
+dont la branche deviendrait la base), son installation propre sauf `--no-install`, et
+`.ddd-ts-kit/story.json` (`{ story, base, baseCommit, branch, kind, from }`). Un *worktree*
+existant de la story est gardé et la story y reprend ; une story ouverte dans un autre *worktree*
+est refusée : deux sessions ne prennent jamais la même. Les autres stories ouvertes sont nommées
+avec les contextes que changent leurs lignes. `--dry-run` ne crée, n'écrit et n'installe rien.
+
+`--kind` dit ce qu'est la story : `story` (par défaut), ou `fix`, une story construite derrière
+les *specs* de régression listées sous `## Regression` de son fichier et verrouillées, telles que
+la *skill* `fix` les écrit. `--from <file>` consigne d'où vient la story : une intention,
+`docs/architecture/intents/<slug>.md`, refusée sauf si son en-tête dit `Status: accepted`, ou un
+compte rendu d'incident, `docs/architecture/incidents/<id>.md`, accepté tel quel. Les deux sont
+écrits dans `story.json`, relativement à la racine du projet, et gardés quand la story reprend
+sans eux. Tant que `docs/architecture/stories/<story>.md` n'existe pas, la ligne `Next:` dit que la
+*skill* story amorce son énoncé depuis l'origine. `--json` imprime `{ story, kind, from, seeds,
+dryRun, worktree, branch, base, created, install, others, notes }`.
+
+## story
+
+```
+ddd-ts-kit story [<story>] [--gate build|close]
+```
+
+Où en est une story, phase par phase, et l'étape suivante : sa spécification et ses critères
+(`docs/architecture/stories/<story>.md`), ses lignes dans `slices.md`, une section de revue de
+conception par ligne non faite (`docs/architecture/reviews/<story>.md`, `## #<id>`), son
+acceptation écrite et verrouillée, ses lignes faites sans marqueur à elle, son acceptation qui
+passe, son tronc fusionné, son `## Origin` (`From:` et `Built with:`), son `## Report` avec
+`### Verification` nommant `npm run verify`. Dans le *worktree* d'une story, la story est la
+sienne. `--gate build` sort en 1 tant que les quatre premières phases ne sont pas franchies (le
+code peut commencer : la garde du plugin ouvre les contextes) ; `--gate close` tant que toutes ne
+le sont pas. Pour une story de type `fix` (son `story.json`, ou une section `## Regression` dans
+son fichier), les lignes et leur conception sont facultatives, la phase d'acceptation lit les
+*specs* listées sous `## Regression` au lieu de `test/acceptance/`, chacune devant exister, et
+aucune phase « passe » n'est lue : les *specs* de régression tournent avec les tests du projet.
+`--json` imprime `{ story, gate, met, next, phases }`.
 
 ## cited
 

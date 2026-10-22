@@ -1,9 +1,16 @@
 import type { DependencyInstall } from '../worker/install-dependencies.js';
 import type { OpenStory } from './open-story.js';
+import type { StoryKind } from './story-kind.js';
 
 /** What `story-scope` prepared, or would prepare in a dry run. */
 export interface StoryScope {
   readonly story: string;
+  /** `story`, or `fix` for a story built behind locked regression specs. */
+  readonly kind: StoryKind;
+  /** Where the story comes from, relative to the project root: an accepted intent or an incident record. */
+  readonly from?: string;
+  /** True while the story has an origin and no file yet: the story skill seeds its statement from the origin. */
+  readonly seeds: boolean;
   readonly dryRun: boolean;
   readonly worktree: string;
   readonly branch: string;
