@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:0da5c9af7ce65635 -->
+<!-- translation-of: README.md sha256:34b3663eb7ab3537 -->
 
 # ddd-ts-kit
 
@@ -897,7 +897,17 @@ Régénère ce qui dérive de la configuration et du code, et rien d'autre :
   `## Reference`, entre des marqueurs `ddd-ts-kit:reference` ; un `CONTEXT.md` qui n'a pas cette
   section la reçoit après sa dernière liste générée ;
 - `docs/integration/README.md`, créé une fois et jamais réécrit ; sa section Provider commence par
-  la stratégie du *broker* choisi.
+  la stratégie du *broker* choisi ;
+- `CODEOWNERS` à la racine (GitHub et GitLab le lisent tous deux là), entre des marqueurs
+  `# ddd-ts-kit:code-owners`, dès que `contexts.<name>.owners` ou `owners.platform` nomme un
+  propriétaire dans la configuration : l'arborescence de chaque contexte et son
+  `published-language/` à ses propriétaires, avec les consommateurs de ce langage nommés dans un
+  commentaire pour les solliciter comme relecteurs ; `src/shared-kernel/` aux propriétaires de
+  chaque contexte qui l'importe (aux propriétaires de la plateforme tant qu'aucun ne le fait) ;
+  `src/platform/`, `src/main.ts`, `ddd-ts-kit.config.json`, les fichiers du *pipeline*,
+  `REVIEW.md`, `AGENTS.md` et `docs/adr/` aux propriétaires de la plateforme. Un fichier écrit
+  par l'équipe garde ses lignes, le bloc ajouté à leur suite ; sans aucun propriétaire, rien
+  n'est écrit.
 
 `--stored-events` enregistre aussi dans `stored-events.lock.json` la forme de chaque version d'un
 événement stocké déclarée dans les codecs de `infrastructure/persistence/`, sans jamais réécrire

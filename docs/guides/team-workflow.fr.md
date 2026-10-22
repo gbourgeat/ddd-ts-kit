@@ -1,5 +1,5 @@
 [English](team-workflow.md) · **Français**
-<!-- translation-of: team-workflow.md sha256:5e8660c3c4525106 -->
+<!-- translation-of: team-workflow.md sha256:91ec093935670778 -->
 
 # Travailler en équipe sur un projet DDD
 
@@ -28,28 +28,65 @@ request* ; cela veut dire que personne n'en fusionne une sans le propriétaire.
 | `src/platform/`, `src/main.ts`, `ddd-ts-kit.config.json`, les fichiers du *pipeline* | un propriétaire de la plateforme désigné (souvent le responsable technique) | proposer ; ces fichiers portent les règles |
 | les sections rédigées de `docs/context-map.md`, `docs/adr/` | le responsable technique, avec les propriétaires concernés | proposer |
 
-Sur GitHub ou GitLab, un fichier de propriétaires du code exprime ce tableau mécaniquement. Le
-kit n'en génère pas : écrivez-le à la main à partir de la liste des contextes
-(`npx ddd-ts-kit list`). Pour un projet avec un contexte `appointments` et un contexte
-`analytics` :
+Sur GitHub ou GitLab, un fichier de propriétaires du code exprime ce tableau mécaniquement, et
+le kit l'écrit d'après la configuration : `contexts.<name>.owners` nomme les propriétaires d'un
+contexte, `owners.platform` le propriétaire de la plateforme
+([`ddd-ts-kit.config.json`](../CONFIG.fr.md#propriétaires)), et `npx ddd-ts-kit docs` écrit
+`CODEOWNERS` à la racine du projet, où les deux plateformes le lisent, entre des marqueurs
+`# ddd-ts-kit:code-owners` ; `docs --check` le signale périmé quand un propriétaire, un contexte
+ou un import du noyau partagé a changé, et un fichier écrit à la main par l'équipe garde ses
+lignes, le bloc généré ajouté à leur suite. Pour un projet avec un contexte `appointments` et un
+contexte `analytics`, `analytics` en aval d'`appointments` :
 
-```text
-# .github/CODEOWNERS (GitHub) ou CODEOWNERS (GitLab) : la dernière ligne qui correspond l'emporte
-src/contexts/appointments/      @clinic/appointments-team
-src/contexts/analytics/         @clinic/data-team
-src/shared-kernel/              @clinic/appointments-team @clinic/data-team
-src/platform/                   @clinic/tech-lead
-src/main.ts                     @clinic/tech-lead
-ddd-ts-kit.config.json          @clinic/tech-lead
-.github/workflows/              @clinic/tech-lead
-docs/adr/                       @clinic/tech-lead
+```json
+{
+  "contexts": {
+    "appointments": { "classification": "core", "upstreams": [], "owners": ["@clinic/appointments-team"] },
+    "analytics": {
+      "classification": "supporting",
+      "upstreams": [{ "context": "appointments", "relationship": "conformist" }],
+      "owners": ["@clinic/data-team"]
+    }
+  },
+  "owners": { "platform": ["@clinic/tech-lead"] }
+}
 ```
 
-Avec une protection de branche qui exige la revue d'un propriétaire du code, un changement sous
+```text
+# ddd-ts-kit:code-owners
+src/contexts/analytics/                      @clinic/data-team
+src/contexts/analytics/published-language/   @clinic/data-team
+src/contexts/appointments/                   @clinic/appointments-team
+# The consumers of the published language of appointments, to ask as reviewers: analytics (@clinic/data-team).
+src/contexts/appointments/published-language/ @clinic/appointments-team
+src/shared-kernel/                           @clinic/data-team
+src/platform/                                @clinic/tech-lead
+src/main.ts                                  @clinic/tech-lead
+ddd-ts-kit.config.json                       @clinic/tech-lead
+lefthook.yml                                 @clinic/tech-lead
+commitlint.config.mjs                        @clinic/tech-lead
+.github/workflows/                           @clinic/tech-lead
+.github/actions/                             @clinic/tech-lead
+REVIEW.md                                    @clinic/tech-lead
+AGENTS.md                                    @clinic/tech-lead
+docs/adr/                                    @clinic/tech-lead
+# /ddd-ts-kit:code-owners
+```
+
+L'arborescence de chaque contexte et son `published-language/` vont à ses propriétaires ;
+`src/shared-kernel/` aux propriétaires de chaque contexte dont les fichiers l'importent (ici
+`analytics` seul le fait ; tant qu'aucun ne le fait, au propriétaire de la plateforme) ; la
+plateforme, la racine de composition, la configuration, les fichiers du *pipeline*, la politique
+de revue, le guide et les enregistrements au propriétaire de la plateforme. Avec une protection
+de branche qui exige la revue d'un propriétaire du code, un changement sous
 `src/contexts/appointments/` ne peut pas être fusionné sans l'équipe appointments. Une ligne à
 deux propriétaires demande l'un des deux, pas les deux : l'approbation conjointe du noyau partagé
 est une règle que l'équipe tient, et que le fichier seul n'impose pas. Les consommateurs d'un
-`published-language/` sont sollicités nommément sur ses *pull requests*, comme relecteurs.
+`published-language/` n'en sont pas les propriétaires : le commentaire au-dessus de sa ligne les
+nomme, d'après les relations déclarées, avec leurs propriétaires, et ils sont sollicités
+nommément sur ses *pull requests*, comme relecteurs. Le fichier généré avec la protection de
+branche de `branch-protection.md` est ce qui répond à la question de qui a approuvé, la
+séparation des responsabilités sur laquelle repose le *playbook* AI-native SDLC d'Anthropic.
 
 Pourquoi un seul propriétaire : un modèle ne reste cohérent que si quelqu'un peut dire non. La
 loi de Conway joue dans les deux sens (Skelton et Pais appellent son usage délibéré la manœuvre

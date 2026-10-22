@@ -855,7 +855,15 @@ Regenerates what is derived from the config and the code, and nothing else:
   between `ddd-ts-kit:reference` markers; a `CONTEXT.md` that has no such section gets it after its
   last generated list;
 - `docs/integration/README.md`, created once and never rewritten; its Provider section starts with
-  the strategy of the chosen broker.
+  the strategy of the chosen broker;
+- `CODEOWNERS` at the root (GitHub and GitLab both read it there), between `# ddd-ts-kit:code-owners`
+  markers, once `contexts.<name>.owners` or `owners.platform` names an owner in the config: each
+  context's tree and its `published-language/` to its owners, with the consumers of that language
+  named in a comment to ask as reviewers; `src/shared-kernel/` to the owners of every context
+  that imports it (to the platform owners while none does); `src/platform/`, `src/main.ts`,
+  `ddd-ts-kit.config.json`, the pipeline files, `REVIEW.md`, `AGENTS.md` and `docs/adr/` to the
+  platform owners. A file the team wrote keeps its lines, the block appended after them; without
+  any owner nothing is written.
 
 `--stored-events` also records in `stored-events.lock.json` the shape of each version of a stored
 event declared in the codecs of `infrastructure/persistence/`, never rewriting a recorded version:

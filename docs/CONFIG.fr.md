@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:4afccb36f8ac0bd6 -->
+<!-- translation-of: CONFIG.md sha256:792d27ed12dfe8e9 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -87,7 +87,7 @@ aucune dérogation.
 `init` écrit chaque valeur par défaut en toutes lettres, pour que le fichier documente le projet.
 Trois clés ne sont écrites que lorsqu'elles disent quelque chose : `stack.assembly` et
 `stack.dependencies` dans le style déclaré seulement, `stack.tenancy` quand elle ne vaut pas
-`none`. Les clés facultatives (`coverage`, `deviations`, `commit`, `worker`, `ci`, `openapi`,
+`none`. Les clés facultatives (`coverage`, `deviations`, `commit`, `worker`, `ci`, `owners`, `openapi`,
 `sdk`, ...) apparaissent dès qu'un projet les pose.
 
 `initVersion` est la version de la CLI dont l'`init` a écrit les fichiers de la plateforme.
@@ -551,6 +551,7 @@ Tant que ce n'est pas fait, la règle peut rester à `warn` sous `rules`, enregi
 | `contexts.<name>.upstreams[].relationship` | `published-language`, `customer-supplier`, `conformist`, `anti-corruption-layer`, `open-host-service`, `shared-kernel` | `published-language` |
 | `contexts.<name>.extraDirectories[]` | un chemin dans le contexte, ou `{ "path", "reason" }` : un répertoire ajouté à l'arborescence canonique. Chacun est une dérogation | `[]` |
 | `contexts.<name>.deployable` | `true`, `false` : le contexte a son propre point d'entrée `src/apps/<name>/main.ts` ; `generate service <name>` la pose | `false` |
+| `contexts.<name>.owners[]` | les identifiants de qui possède le contexte, tels que la plateforme du dépôt les connaît (`@org/equipe`, `@personne`, un courriel) : `ddd-ts-kit docs` les écrit dans `CODEOWNERS` pour l'arborescence du contexte et son `published-language/` ([Propriétaires](#propriétaires)) | `[]` : aucune ligne pour le contexte |
 
 Les contextes de la configuration et les répertoires de `contextsDir` doivent former le même
 ensemble.
@@ -561,6 +562,20 @@ pièce, puis le déclarent ici comme n'importe quel autre (`generic`, sauf si `-
 `--context <name>:<classification>` dit autre chose) ; dès lors, ses fichiers sont le code du
 projet, et une configuration sans *preset* se comporte comme avant. Voir
 [Démarrer avec des contextes bien conçus](guides/bootstrap-with-well-designed-contexts.fr.md).
+
+## Propriétaires
+
+| Clé | Valeurs | Défaut |
+|---|---|---|
+| `owners.platform[]` | les identifiants de qui possède ce qui n'est pas un contexte : `src/platform/`, `src/main.ts`, `ddd-ts-kit.config.json`, les fichiers du *pipeline* (`lefthook.yml`, `commitlint.config.mjs`, `.github/workflows/` et `.github/actions/` ou `.gitlab-ci.yml` et `.gitlab/`, selon `stack.ci`), `REVIEW.md`, `AGENTS.md` et `docs/adr/` ; et `src/shared-kernel/` tant qu'aucun contexte ne l'importe | `[]` : aucune ligne pour eux, la clé est omise |
+
+Dès qu'une de ces clés nomme un propriétaire, `ddd-ts-kit docs` écrit `CODEOWNERS` à la racine du
+projet (où GitHub et GitLab le lisent tous deux) entre des marqueurs `# ddd-ts-kit:code-owners`,
+d'après le tableau des propriétaires de
+[Travailler en équipe](guides/team-workflow.fr.md#un-propriétaire-par-contexte-délimité), et
+`docs --check` le signale périmé. Un `CODEOWNERS` écrit par l'équipe reçoit le bloc à la suite de
+ses lignes. Sans aucun propriétaire, rien n'est écrit. Les identifiants sont gardés tels quels :
+la plateforme du dépôt les juge.
 
 ## Règles et limites
 

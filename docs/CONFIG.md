@@ -85,7 +85,7 @@ deviation.
 `init` spells every default out, so that the file documents the project. Three keys are written
 only when they say something: `stack.assembly` and `stack.dependencies` in the declared style
 only, `stack.tenancy` when it is not `none`. The optional keys (`coverage`, `deviations`,
-`commit`, `worker`, `ci`, `openapi`, `sdk`, ...) appear once a project sets them.
+`commit`, `worker`, `ci`, `owners`, `openapi`, `sdk`, ...) appear once a project sets them.
 
 `initVersion` is the version of the CLI whose `init` wrote the files of the platform. `init`
 writes it first in the file and `init --force` rewrites it, since it rewrote those files; `init`
@@ -529,6 +529,7 @@ ADR that says when it goes, as any other relaxed rule (`governance/recorded-devi
 | `contexts.<name>.upstreams[].relationship` | `published-language`, `customer-supplier`, `conformist`, `anti-corruption-layer`, `open-host-service`, `shared-kernel` | `published-language` |
 | `contexts.<name>.extraDirectories[]` | a path inside the context, or `{ "path", "reason" }`: a directory added to the canonical tree. Each one is a deviation | `[]` |
 | `contexts.<name>.deployable` | `true`, `false`: the context has its own entry point `src/apps/<name>/main.ts`; `generate service <name>` sets it | `false` |
+| `contexts.<name>.owners[]` | the handles of who owns the context, as the platform of the repository knows them (`@org/team`, `@person`, an email): `ddd-ts-kit docs` writes them to `CODEOWNERS` for the tree of the context and its `published-language/` ([Owners](#owners)) | `[]`: no line for the context |
 
 The contexts of the config and the directories of `contextsDir` must be the same set.
 
@@ -538,6 +539,19 @@ here like any other (`generic` unless `--classification` or `--context <name>:<c
 says otherwise); from then on its files are the code of the project, and a config without a
 preset behaves as before. See
 [Bootstrap with well-designed contexts](guides/bootstrap-with-well-designed-contexts.md).
+
+## Owners
+
+| Key | Values | Default |
+|---|---|---|
+| `owners.platform[]` | the handles of who owns what is not a context: `src/platform/`, `src/main.ts`, `ddd-ts-kit.config.json`, the pipeline files (`lefthook.yml`, `commitlint.config.mjs`, `.github/workflows/` and `.github/actions/` or `.gitlab-ci.yml` and `.gitlab/`, as `stack.ci` says), `REVIEW.md`, `AGENTS.md` and `docs/adr/`; and `src/shared-kernel/` while no context imports it | `[]`: no line for them, the key is left out |
+
+Once one of these keys names an owner, `ddd-ts-kit docs` writes `CODEOWNERS` at the root of the
+project (where GitHub and GitLab both read it) between `# ddd-ts-kit:code-owners` markers, from
+the ownership table of [Working as a team](guides/team-workflow.md#ownership-per-bounded-context),
+and `docs --check` reports it stale. A `CODEOWNERS` the team wrote gets the block appended after
+its lines. Without any owner nothing is written. The handles are kept as written: the platform of
+the repository judges them.
 
 ## Rules and limits
 

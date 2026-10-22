@@ -45,6 +45,7 @@ function writtenContexts(config: Config): Record<string, unknown> {
       upstreams: context.upstreams,
       ...(context.extraDirectories.length > 0 ? { extraDirectories: context.extraDirectories } : {}),
       ...(context.deployable ? { deployable: true } : {}),
+      ...(context.owners.length > 0 ? { owners: context.owners } : {}),
     },
   ]);
 
@@ -66,6 +67,7 @@ function optionalKeys(config: Config): Record<string, unknown> {
     ...(sized ? { commit } : {}),
     ...(worker ? { worker } : {}),
     ...(config.worktrees === 'advised' ? {} : { worktrees: config.worktrees }),
+    ...(config.owners.platform.length > 0 ? { owners: config.owners } : {}),
     ...pipelineKeys(config),
   };
 }

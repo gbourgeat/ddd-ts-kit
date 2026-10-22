@@ -1,5 +1,5 @@
 import { CliError } from '../cli-error.js';
-import type { Config, Deviation } from './config.js';
+import type { Config, Deviation, OwnersConfig } from './config.js';
 import { CONFIG_FILE } from './config-file.js';
 import { defaultAllowedPackages } from './default-allowed-packages.js';
 import { DEFAULT_IMPORT_ALIAS } from './default-import-alias.js';
@@ -81,6 +81,7 @@ type Governance = Pick<
   | 'businessNames'
   | 'worker'
   | 'ci'
+  | 'owners'
   | 'openapi'
   | 'sdk'
 >;
@@ -98,9 +99,15 @@ function parseGovernance(raw: Record<string, unknown>): Governance {
     businessNames: parseBusinessNames(raw['businessNames']),
     worker: raw['worker'] === true,
     ci: parseCi(raw['ci']),
+    owners: parseOwners(raw['owners']),
     openapi: parseOpenApi(raw['openapi']),
     sdk: parseSdk(raw['sdk']),
   };
+}
+
+/** Tolerant: a handle is kept as written, for the platform of the repository to judge. */
+function parseOwners(value: unknown): OwnersConfig {
+  return { platform: isRecord(value) ? strings(value['platform'], []) : [] };
 }
 
 function parseDeviations(value: unknown): Deviation[] {
