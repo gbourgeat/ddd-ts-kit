@@ -3,10 +3,11 @@
 # @ddd-ts-kit/audit
 
 A tamper-evident audit trail that the use cases never write to. Who was allowed or refused
-what, which command ran and how it ended, which integration event occurred: each fact is an
-append-only entry, hash-chained to the one before it, recorded by a bus middleware, the
-authorization hook, the HTTP pipeline when a guard refuses, or an event subscription. No
-handler and no aggregate contains an audit call.
+what, which command ran and how it ended, which integration event occurred, which data subject
+was erased: each fact is an append-only entry, hash-chained to the one before it, recorded by a
+bus middleware, the authorization hook, the HTTP pipeline when a guard refuses, an event
+subscription, or the key store of the data subjects. No handler and no aggregate contains an
+audit call.
 
 ```
 npm i @ddd-ts-kit/audit
@@ -16,7 +17,7 @@ npm i drizzle-orm      # only for @ddd-ts-kit/audit/drizzle
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`) and `auditRecordOf`, `auditedFields`, `auditedProjection` and `masked`, the `AuditMasker` port and `hmacMasker`, `verifyChain`, `TenantAuditReader`, the chain primitives (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`); re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`) and `auditRecordOf`, `auditedFields`, `auditedProjection` and `masked`, the `AuditMasker` port and `hmacMasker`, `verifyChain`, `TenantAuditReader`, the chain primitives (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`); re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (optional peer) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (optional peer) |
 | `@ddd-ts-kit/audit/testing` | `auditTrailContract` | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
@@ -401,6 +402,56 @@ export const cancelAppointmentAudit = auditedFields(CancelAppointmentCommand, []
 });
 ```
 
+### e. Erasures of data subjects
+
+Crypto-shredding erases a person by destroying the key their personal values were sealed with,
+in the `SubjectKeyStore` of the kernel
+([Event sourcing](../../docs/concepts/event-sourcing.md#personal-data-crypto-shredding)). The
+date of that destruction is what the erasure is measured from: add the retention of the backups
+of the keys, and you have the day it is complete. `auditedSubjectKeys(keys, trail, { scope,
+clock, ids })` wraps the store, so that every `erase`, whoever calls it (a script, a command
+handler, a job), writes an entry:
+
+| Field | Value |
+|---|---|
+| `category` | `data-access` |
+| `action` | `personal-data:erase` (`SUBJECT_ERASURE_ACTION`) |
+| `outcome` | `succeeded`, or `failed` with reason `UNEXPECTED_ERROR` when the store threw |
+| `resource` | `{ type: 'data-subject', id: <subject> }` |
+| `changes` | `{ keyDestroyed: true }`, or `{ keyDestroyed: false }` when the subject had no key left |
+| actor, tenant, session, correlation, origin | the execution scope |
+
+The subject is the id the keys are stored under: an opaque identifier, never a name or an
+email, like every resource id. `keyFor` and `find` pass through and write nothing.
+
+```ts
+// src/platform/audit/audit.module.ts
+const subjectKeys = auditedSubjectKeys(eventSourcing.subjectKeys, trail, { scope, clock, ids });
+
+builder.rebind(SubjectKeyStore).toValue(subjectKeys); // an erasure from a use case is recorded too
+```
+
+The keys and the trail are better kept apart (the keys in a store of their own, with a shorter
+backup retention), so the two writes share no transaction. The order is chosen so that the
+trail never says more than what happened:
+
+1. The execution context is read first: an erasure outside `ExecutionScope.run` throws
+   `NoExecutionContextError` before any key is touched. A script opens one, with the operator
+   as actor and the origin `cli`.
+2. The key is destroyed.
+3. The entry is written; its `occurredAt` is after the destruction, never before.
+
+When step 3 fails, `erase` rejects with that error: the key is gone, no entry says so yet, and
+the caller knows the erasure is not finished. Running it again finds no key and records
+`keyDestroyed: false`, at a later date: a completion date computed from that entry can be late,
+never early. An erasure has to be safe to run again anyway, since what follows it (rebuilding
+the projections that hold a clear copy) can fail too. The opposite order would write "erased"
+before knowing it, and leave a false proof when the destruction then fails.
+
+When step 2 fails, the store may or may not have destroyed the key: the entry says `failed`,
+and the caller receives the error of the store. If that entry cannot be written either,
+`onLostRecord(error, record)` is told, as with `auditMiddleware`.
+
 ### In an application of `@ddd-ts-kit/di`
 
 The store is bound to both ports, and the masker to its own, each under its class:
@@ -541,6 +592,8 @@ personal data be erased. The two coexist as long as the chain never holds the da
 
 What stays after erasure is "an actor with this opaque id did this at that time". Whether that
 is acceptable is a legal question for the project, to answer before the first entry is written.
+The erasure itself leaves a dated entry when the key store is wrapped by `auditedSubjectKeys`:
+see [e. Erasures of data subjects](#e-erasures-of-data-subjects).
 
 ## Verification and anchoring
 

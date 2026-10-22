@@ -1,14 +1,15 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:bb7b82bc2fa855a3 -->
+<!-- translation-of: README.md sha256:a27f7f6b84828a64 -->
 
 # @ddd-ts-kit/audit
 
 Un journal d'audit (audit trail) inviolable de manière démontrable, dans lequel les cas d'usage
 n'écrivent jamais. Qui a été autorisé ou refusé à faire quoi, quelle commande s'est exécutée et
-comment elle s'est terminée, quel événement d'intégration est survenu : chaque fait est une
-entrée en ajout seul, chaînée par hachage à celle qui la précède, enregistrée par un *middleware*
-de bus, le *hook* d'autorisation, le *pipeline* HTTP quand une garde refuse, ou un abonnement aux
-événements. Aucun gestionnaire (handler) et aucun agrégat ne contient d'appel d'audit.
+comment elle s'est terminée, quel événement d'intégration est survenu, quelle personne concernée
+a été effacée : chaque fait est une entrée en ajout seul, chaînée par hachage à celle qui la
+précède, enregistrée par un *middleware* de bus, le *hook* d'autorisation, le *pipeline* HTTP
+quand une garde refuse, un abonnement aux événements, ou le stockage des clés des personnes
+concernées. Aucun gestionnaire (handler) et aucun agrégat ne contient d'appel d'audit.
 
 ```
 npm i @ddd-ts-kit/audit
@@ -18,7 +19,7 @@ npm i drizzle-orm      # seulement pour @ddd-ts-kit/audit/drizzle
 
 | Point d'entrée | Contient | Importe |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`) et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`) et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (pair optionnel) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (pair optionnel) |
 | `@ddd-ts-kit/audit/testing` | `auditTrailContract` | `@ddd-ts-kit/testing` (pair optionnel), le *runner* que vous passez |
@@ -412,6 +413,58 @@ export const cancelAppointmentAudit = auditedFields(CancelAppointmentCommand, []
 });
 ```
 
+### e. Effacements de personnes concernées
+
+L'effacement cryptographique (crypto-shredding) efface une personne en détruisant la clé avec
+laquelle ses valeurs personnelles ont été scellées, dans le `SubjectKeyStore` du noyau
+([Event sourcing](../../docs/concepts/event-sourcing.fr.md#données-personnelles--crypto-shredding)).
+La date de cette destruction est le point de départ de l'effacement : ajoutez-y la durée de
+conservation des sauvegardes des clés, et vous obtenez le jour où il est complet.
+`auditedSubjectKeys(keys, trail, { scope, clock, ids })` décore le stockage, de sorte que chaque
+`erase`, quel que soit l'appelant (un script, un gestionnaire de commande, un *job*), écrive une
+entrée :
+
+| Champ | Valeur |
+|---|---|
+| `category` | `data-access` |
+| `action` | `personal-data:erase` (`SUBJECT_ERASURE_ACTION`) |
+| `outcome` | `succeeded`, ou `failed` avec la raison `UNEXPECTED_ERROR` quand le stockage a levé une erreur |
+| `resource` | `{ type: 'data-subject', id: <personne> }` |
+| `changes` | `{ keyDestroyed: true }`, ou `{ keyDestroyed: false }` quand la personne n'avait plus de clé |
+| acteur, *tenant*, session, corrélation, origine | le scope d'exécution |
+
+La personne est l'id sous lequel ses clés sont rangées : un identifiant opaque, jamais un nom ni
+un email, comme tout id de ressource. `keyFor` et `find` passent tels quels et n'écrivent rien.
+
+```ts
+// src/platform/audit/audit.module.ts
+const subjectKeys = auditedSubjectKeys(eventSourcing.subjectKeys, trail, { scope, clock, ids });
+
+builder.rebind(SubjectKeyStore).toValue(subjectKeys); // un effacement depuis un cas d'usage est enregistré aussi
+```
+
+Les clés et le journal gagnent à être séparés (les clés dans un stockage à elles, avec une
+conservation des sauvegardes plus courte), donc les deux écritures ne partagent aucune
+transaction. L'ordre est choisi pour que le journal ne dise jamais plus que ce qui s'est passé :
+
+1. Le contexte d'exécution est lu d'abord : un effacement hors de `ExecutionScope.run` lève
+   `NoExecutionContextError` avant qu'aucune clé ne soit touchée. Un script en ouvre un, avec
+   l'opérateur comme acteur et l'origine `cli`.
+2. La clé est détruite.
+3. L'entrée est écrite ; son `occurredAt` est postérieur à la destruction, jamais antérieur.
+
+Quand l'étape 3 échoue, `erase` est rejeté avec cette erreur : la clé n'existe plus, aucune
+entrée ne le dit encore, et l'appelant sait que l'effacement n'est pas terminé. Le relancer ne
+trouve plus de clé et enregistre `keyDestroyed: false`, à une date ultérieure : une date
+d'achèvement calculée depuis cette entrée peut être tardive, jamais précoce. Un effacement doit
+de toute façon pouvoir être relancé, puisque ce qui le suit (reconstruire les projections qui en
+gardent une copie en clair) peut échouer aussi. L'ordre inverse écrirait « effacé » avant de le
+savoir, et laisserait une preuve fausse si la destruction échouait ensuite.
+
+Quand l'étape 2 échoue, le stockage a pu détruire la clé ou non : l'entrée dit `failed`, et
+l'appelant reçoit l'erreur du stockage. Si cette entrée ne peut pas être écrite non plus,
+`onLostRecord(error, record)` en est informé, comme avec `auditMiddleware`.
+
 ### Dans une application de `@ddd-ts-kit/di`
 
 Le store est lié aux deux ports, et le *masker* au sien, chacun sous sa classe :
@@ -562,7 +615,9 @@ jamais les données :
 
 Ce qui reste après l'effacement, c'est « un acteur avec cet id opaque a fait ceci à ce moment ».
 Savoir si c'est acceptable est une question juridique pour le projet, à trancher avant que la
-première entrée ne soit écrite.
+première entrée ne soit écrite. L'effacement lui-même laisse une entrée datée quand le stockage
+des clés est décoré par `auditedSubjectKeys` : voir
+[e. Effacements de personnes concernées](#e-effacements-de-personnes-concernées).
 
 ## Vérification et ancrage
 

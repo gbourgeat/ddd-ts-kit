@@ -50,5 +50,10 @@ export { auditRecordOf } from './sources/audit-record-of.js';
 export type { AuditSource } from './sources/audit-source.js';
 export type { AuditSubscription } from './sources/audit-subscription.js';
 export type { AuditedEvents } from './sources/audited-events.js';
+export {
+  SUBJECT_ERASURE_ACTION,
+  auditedSubjectKeys,
+  type AuditedSubjectKeysOptions,
+} from './sources/audited-subject-keys.js';
 export type { AuthorizationDecision } from './sources/authorization-decision.js';
 export { TenantAuditReader } from './tenancy/tenant-audit-reader.js';
