@@ -61,6 +61,11 @@ name, the route, the ports, the contract read from another context. The `archite
 agent reads it as a design review of rows still to build; its blocking findings change the
 design. `npx ddd-ts-kit cited --rows <ids>` lists the names the design cites that the trunk
 replaced in the meantime. `worker-scope` names the section of a row in the briefing of its agent.
+Once a row is done, its section stays true: `npx ddd-ts-kit story-check US5` holds every name it
+cites to the tree (a path, a class, a `Class.member`), unless `### Compromises` of `## Report` in
+the story file lists the name with why it was built otherwise; the guard says it once at the stop
+of the session, without blocking. The comparison of the built code with its design comes from
+[the AI-native SDLC playbook of Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf).
 
 ## The acceptance before the code, and locked
 
@@ -135,6 +140,7 @@ share. The pull requests merge one after the other, each on a green trunk.
 | the same story in two sessions | `story-scope` |
 | two stories that change the same file | `stories`; the guard, at session start and on the first write of such a file |
 | a session that ends before its report | the guard, which refuses the first stop of each step |
+| a done row that departed from its design review, no compromise listed | `story-check`, which blocks on each name the section cites that the tree lacks; the guard, once at the stop of the session, without blocking |
 | the pull request: every row done, no scenario pending, the trunk merged in, the report written | `story --gate close` |
 
 ## Hosts

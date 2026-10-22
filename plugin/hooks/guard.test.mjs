@@ -911,6 +911,36 @@ test('the shell runs and versions a locked regression spec of a fix, and never r
   );
 });
 
+test('at stop in the worktree of a story, a done row that departed from its design is said once, without blocking', () => {
+  const root = storyWorktree();
+  openTheBuildGate(root);
+  put(root, 'docs/architecture/slices.md', STORY_SLICES.replace('| todo |', '| done |'));
+  put(
+    root,
+    'docs/architecture/stories/US5.md',
+    '# US5\n\n## Acceptance criteria\n\n- AC1: a customer places an order\n\n## Report\n\nDelivered.\n',
+  );
+  const session = { cwd: root, session_id: `design-${root}`, stop_hook_active: false };
+  const first = run('stop', session);
+  assert.equal(first.status, 0);
+  assert.equal(first.output.decision, undefined);
+  assert.match(
+    first.output.systemMessage,
+    /a row departed from its design: update its review section or list the compromise/,
+  );
+  assert.match(first.output.systemMessage, /`PlaceOrderCommand` \(#US5\.01, docs\/architecture\/reviews\/US5\.md:5\)/);
+  assert.match(first.output.systemMessage, /npx ddd-ts-kit story-check US5/);
+  assert.equal(run('stop', session).output, undefined);
+  assert.match(run('stop', { ...session, session_id: 'another' }).output.systemMessage, /departed from its design/);
+  put(
+    root,
+    'docs/architecture/stories/US5.md',
+    '# US5\n\n## Acceptance criteria\n\n- AC1: a customer places an order\n\n## Report\n\nDelivered.\n\n### Compromises\n\n- `PlaceOrderCommand` is a plain function for now.\n',
+  );
+  assert.equal(run('stop', { ...session, session_id: 'settled' }).output, undefined);
+  assert.equal(run('stop', { ...session, stop_hook_active: true }).output, undefined);
+});
+
 test('a sub-agent only removes pending(...) from an acceptance scenario, by edit or by rewrite', () => {
   const root = project();
   const agent = worker(root);

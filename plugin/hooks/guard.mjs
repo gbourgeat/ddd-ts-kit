@@ -500,11 +500,38 @@ function stop(input) {
   if (unfinished) {
     return emit({ decision: 'block', reason: unfinished });
   }
-  const reminder = commitReminder(project, input, { repeat: false });
-  // A warning shown to the user, never a block: the size of a commit is advice.
-  if (reminder) {
-    emit({ systemMessage: reminder });
+  const reminders = [commitReminder(project, input, { repeat: false }), designReminder(project, input)].filter(Boolean);
+  // Warnings shown to the user, never a block: the size of a commit and a design departed from are advice.
+  if (reminders.length > 0) {
+    emit({ systemMessage: reminders.join('\n') });
   }
+}
+
+// In the worktree of a story, a done row whose design review cites a name the code does not have,
+// with no compromise listed in the report: said once per session for the same names, never blocking.
+function designReminder(project, input) {
+  const story = readJson(join(project.root, STORY_SCOPE))?.story;
+  if (typeof story !== 'string' || !project.cli || fixOf(project) !== undefined) {
+    return undefined;
+  }
+  const design = runCli(project, ['story-check', story, '--json'], 20000)?.design ?? [];
+  if (design.length === 0) {
+    return undefined;
+  }
+  const key = createHash('sha256')
+    .update(
+      `${project.root}\n${sessionOf(input)}\n${design.map(({ document, line, cited }) => `${document}:${line}:${cited}`).join('\n')}`,
+    )
+    .digest('hex')
+    .slice(0, 24);
+  if (alreadyRemembered(join(tmpdir(), `ddd-ts-kit-design-${key}`))) {
+    return undefined;
+  }
+  const named = design
+    .slice(0, 5)
+    .map(({ cited, row, document, line }) => `\`${cited}\` (#${row}, ${document}:${line})`)
+    .join(', ');
+  return `ddd-ts-kit: a row departed from its design: update its review section or list the compromise. ${design.length} name(s) of the design of story ${story} are not in the code: ${named}. \`npx ddd-ts-kit story-check ${story}\` lists them, and \`### Compromises\` of \`## Report\` in docs/architecture/stories/${story}.md records what was built otherwise.`;
 }
 
 // The session of a story ends on its report: written once the pull request is open, or with what

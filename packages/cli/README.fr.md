@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c57162db7046bd8e -->
+<!-- translation-of: README.md sha256:086fa86731252292 -->
 
 # ddd-ts-kit
 
@@ -1364,17 +1364,32 @@ pas, et il est compté. Une cellule Context qui ne nomme aucun contexte du proje
 `platform`) n'en ajoute aucun : hors des contextes, seul un marqueur attribué à une de ses lignes
 compte. `--strict` fait bloquer chaque marqueur de ses contextes, à qui qu'il soit.
 
+Une ligne faite tient aussi à sa conception. Chaque nom que la section `## #<id>` de la revue de
+conception de la story (`docs/architecture/reviews/<code>.md`) cite en code en ligne, lu comme
+`cited` les lit (un chemin sous la racine des sources ou relatif au contexte, un
+`Classe.membre`, un nom en PascalCase ; un nom dont la phrase dit qu'il a été supprimé ou renommé
+est de l'histoire et n'est pas lu), doit exister dans l'arbre : le chemin existe ; la classe,
+l'interface, le type ou la fonction est déclaré par une source sous la racine des sources, ou
+importé par une (`Clock` du noyau) ; le membre est nommé dans un fichier qui déclare la classe.
+Un nom qui ne l'est pas est listé sous `### Compromises` du `## Report` de
+`docs/architecture/stories/<code>.md`, en code en ligne, avec la raison ; un nom qui n'existe pas
+et n'est pas listé bloque, avec son `fichier:ligne` dans la revue. L'arbre n'est lu que si une
+section d'une ligne faite cite un nom. `--strict` n'y change rien. La garde du plugin le dit une
+fois à l'arrêt d'une session dans le *worktree* d'une story, sans bloquer. La comparaison du code
+construit avec sa conception vient du [*playbook* du cycle de vie natif à l'IA d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf).
+
 Elle ne lit que les fichiers et git. Elle sort avec 0 quand la story peut être close (une ligne,
 puis les marqueurs listés sans bloquer, s'il y en a), 1 quand quelque chose la garde ouverte,
 chaque marqueur bloquant avec la raison pour laquelle il est à elle (`names #M1.01`,
 `written by a782a19 Slice: M1.02`, `no other open story in payments`), son `file:line` et sa
 correction (le traiter, ou l'écarter par un enregistrement de décision,
-`npx ddd-ts-kit generate adr "<title>"`, puis supprimer le marqueur), et 2 sur un code qu'aucune
+`npx ddd-ts-kit generate adr "<title>"`, puis supprimer le marqueur), chaque nom de sa conception
+que le code n'a pas avec son `fichier:ligne` dans la revue, et 2 sur un code qu'aucune
 ligne ne porte ou sans tableau des tranches. `--json` affiche
-`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, canClose }`,
+`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, design, canClose }`,
 chaque marqueur valant `{ kind, context, file, line, text, attribution: { by, rows, commit? } }`,
 avec `why`, `sharedWith` et `fix` dans `markers` et `unattributed` ; `by` vaut `text`, `commit`,
-`worker` ou `none`.
+`worker` ou `none` ; chaque nom de `design` valant `{ row, document, line, cited, kind, why, fix }`.
 
 ```
 $ npx ddd-ts-kit story-check M1
@@ -1395,6 +1410,18 @@ Not blocking, unattributed (1): settle each, or name its row in the marker (`TOD
 Not blocking: 1 marker of these contexts belongs to rows of US2.
 
 Once each is settled: npx ddd-ts-kit story-check M1
+```
+
+Une ligne faite dont la section cite ce qui n'a pas été construit :
+
+```
+$ npx ddd-ts-kit story-check US5
+US5 cannot close: every row done, 0 markers of its own left, 1 name of its design not in the code.
+
+Departed from its design (1): update the section of the row in docs/architecture/reviews/US5.md to what it built, or list the name under `### Compromises` of `## Report` in docs/architecture/stories/US5.md with why
+  docs/architecture/reviews/US5.md:12  `OrderNumberTaken`  (#US5.02, no class, interface, type or function OrderNumberTaken is declared or imported under the source root)
+
+Once each is settled: npx ddd-ts-kit story-check US5
 ```
 
 Une fois les trois réglés :

@@ -5,9 +5,10 @@ import { Arguments } from './arguments.js';
 import type { Command } from './command.js';
 
 /**
- * Says whether a story or a milestone can close: every row of it done in the slices file, and no
+ * Says whether a story or a milestone can close: every row of it done in the slices file, no
  * marker of its own left (named by its text, written by a commit of one of its rows, or alone in
- * a context no other open story works in); with `--strict`, no marker at all in its contexts.
+ * a context no other open story works in), and no done row departed from its design review
+ * without the report listing the compromise; with `--strict`, no marker at all in its contexts.
  * Reads only. Exits 1 while something keeps it open, 2 on a code no row carries or without slices file.
  */
 export const storyCheckCommand: Command = (argv, io) => {

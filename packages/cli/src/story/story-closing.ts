@@ -1,4 +1,5 @@
 import type { AttributedMarker } from './attributed-marker.js';
+import type { DesignDeparture } from './design-departure.js';
 
 /** Whether a story or a milestone can close, and what keeps it open. */
 export interface StoryClosing {
@@ -20,7 +21,9 @@ export interface StoryClosing {
   readonly unattributed: readonly StoryMarker[];
   /** The markers of its contexts that belong to rows of other stories: not blocking. */
   readonly others: readonly AttributedMarker[];
-  /** True when every row is done and no marker of its own is left. */
+  /** The names the design review of its done rows cites that the code lacks, no compromise listed: blocking. */
+  readonly design: readonly DesignDeparture[];
+  /** True when every row is done, no marker of its own is left and no done row departed from its design unsaid. */
   readonly canClose: boolean;
 }
 

@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:c4f8002148c1ff3d -->
+<!-- translation-of: story-workflow.md sha256:02c9024b4d30ff60 -->
 
 # Parcours d'une story : une session par user story
 
@@ -64,7 +64,12 @@ erreurs par leur nom métier, la route, les ports, le contrat lu dans un autre c
 `architecture-reviewer` la lit comme une revue de conception de lignes à construire ; ses
 remarques bloquantes changent la conception. `npx ddd-ts-kit cited --rows <ids>` liste les noms
 que la conception cite et que le tronc a remplacés entre-temps. `worker-scope` nomme la section
-d'une ligne dans la consigne de son agent.
+d'une ligne dans la consigne de son agent. Une fois une ligne faite, sa section reste vraie :
+`npx ddd-ts-kit story-check US5` tient chaque nom qu'elle cite à l'arbre (un chemin, une classe,
+un `Classe.membre`), sauf si `### Compromises` du `## Report` du fichier de la *story* liste le
+nom avec la raison pour laquelle on a construit autrement ; la garde le dit une fois à l'arrêt
+de la session, sans bloquer. La comparaison du code construit avec sa conception vient du
+[*playbook* du cycle de vie natif à l'IA d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf).
 
 ## L'acceptation avant le code, et verrouillée
 
@@ -146,6 +151,7 @@ l'autre, chacune sur un tronc vert.
 | la même *story* dans deux sessions | `story-scope` |
 | deux *stories* qui changent le même fichier | `stories` ; la garde, au démarrage de la session et à la première écriture d'un tel fichier |
 | une session qui finit avant son rapport | la garde, qui refuse le premier arrêt de chaque étape |
+| une ligne faite qui s'est écartée de sa revue de conception, sans compromis listé | `story-check`, qui bloque sur chaque nom que la section cite et que l'arbre n'a pas ; la garde, une fois à l'arrêt de la session, sans bloquer |
 | la *pull request* : chaque ligne faite, aucun scénario en attente, le tronc fusionné, le rapport écrit | `story --gate close` |
 
 ## Hôtes

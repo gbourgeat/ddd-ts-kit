@@ -1290,16 +1290,30 @@ of other stories does not block, and is counted. A Context cell that names no co
 project (`all`, `platform`) adds none: outside the contexts, only a marker attributed to one of its
 rows counts. `--strict` makes every marker of its contexts block, whoever it belongs to.
 
+A done row also holds to its design. Every name the `## #<id>` section of the design review of
+the story (`docs/architecture/reviews/<code>.md`) cites as inline code, read as `cited` reads them
+(a path under the source root or relative to the context, a `Class.member`, a PascalCase name;
+a name whose sentence records that it was removed or renamed is history and is left out), must
+exist in the tree: the path exists; the class, interface, type or function is declared by a source
+under the source root, or imported by one (`Clock` of the kernel); the member is named in a file
+declaring the class. A name that does not is listed under `### Compromises` of `## Report` in
+`docs/architecture/stories/<code>.md`, as inline code, with why; a name that neither exists nor
+is listed blocks, with its `file:line` in the review. The tree is read only when a section of a
+done row cites a name. `--strict` changes nothing here. The guard of the plugin says it once at
+the stop of a session in the worktree of a story, without blocking. The comparison of the built
+code with its design comes from [the AI-native SDLC playbook of Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf).
+
 It reads the files and git only. It exits 0 when the story can close (one line, then the markers
 listed without blocking, if any), 1 when something keeps it open, each blocker with why it is its
 own (`names #M1.01`, `written by a782a19 Slice: M1.02`, `no other open story in payments`), its
 `file:line` and its fix (handle it, or dismiss it by a decision record,
-`npx ddd-ts-kit generate adr "<title>"`, then delete the marker), and 2 on a code no row carries or
+`npx ddd-ts-kit generate adr "<title>"`, then delete the marker), each name of its design the
+code lacks with its `file:line` in the review, and 2 on a code no row carries or
 without a slices table. `--json` prints
-`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, canClose }`,
+`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, design, canClose }`,
 each marker being `{ kind, context, file, line, text, attribution: { by, rows, commit? } }`, with
 `why`, `sharedWith` and `fix` in `markers` and `unattributed`; `by` is `text`, `commit`, `worker`
-or `none`.
+or `none`; each name of `design` being `{ row, document, line, cited, kind, why, fix }`.
 
 ```
 $ npx ddd-ts-kit story-check M1
@@ -1320,6 +1334,18 @@ Not blocking, unattributed (1): settle each, or name its row in the marker (`TOD
 Not blocking: 1 marker of these contexts belongs to rows of US2.
 
 Once each is settled: npx ddd-ts-kit story-check M1
+```
+
+A done row whose section cites what was not built:
+
+```
+$ npx ddd-ts-kit story-check US5
+US5 cannot close: every row done, 0 markers of its own left, 1 name of its design not in the code.
+
+Departed from its design (1): update the section of the row in docs/architecture/reviews/US5.md to what it built, or list the name under `### Compromises` of `## Report` in docs/architecture/stories/US5.md with why
+  docs/architecture/reviews/US5.md:12  `OrderNumberTaken`  (#US5.02, no class, interface, type or function OrderNumberTaken is declared or imported under the source root)
+
+Once each is settled: npx ddd-ts-kit story-check US5
 ```
 
 Once the three are settled:

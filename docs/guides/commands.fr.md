@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:269c5549fe456e24 -->
+<!-- translation-of: commands.md sha256:eabf3f7c831436e6 -->
 
 # Quelle commande, quand
 
@@ -395,7 +395,11 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    otherwise (settle it or name its row in it); a marker of other stories' rows does not
                    block. --strict: every marker of its contexts blocks. Each blocker comes with why it
                    is its own, its file:line and its fix: handle it, or dismiss it by a decision record
-                   (generate adr), then delete the marker. Reads only: exits 0 when it can close, 1
+                   (generate adr), then delete the marker. A done row also holds to its design: every
+                   name the ## #<id> section of docs/architecture/reviews/<code>.md cites (a path, a
+                   PascalCase name, a Class.member, as cited reads them) exists in the tree, or is
+                   listed under ### Compromises of ## Report in the story file; a name that is neither
+                   blocks, with its file:line in the review. Reads only: exits 0 when it can close, 1
                    listing what keeps it open, 2 on a code no row carries or without slices.md
   acceptance       the acceptance scenarios of each story (test/acceptance/<story>.acceptance.spec.ts) against
                    its rows in slices.md and the criteria of docs/architecture/stories/<story>.md: the rows and
