@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:b62b67aadf8abe18 -->
+<!-- translation-of: CONTRIBUTING.md sha256:cf444f4ec466c099 -->
 
 # Contribuer
 
@@ -113,6 +113,65 @@ node --test plugin/hooks/guard.test.mjs
   `claude plugin validate . --strict`. Deux pull requests n'écrivent alors jamais la même ligne :
   l'une fusionnée laisse les autres fusionnables telles quelles, leurs vérifications toujours
   valables. Le *job* docs de la CI le tient (`node pipeline/monorepo/changes.mjs --check --base <ref>`).
+
+## La suite d'évaluation du plugin
+
+Le plugin est une configuration d'agent : des *skills*, des agents, un *hook*. Un changement de
+formulation peut casser sans bruit ce qu'une *skill* promet, et aucun test unitaire ne lit une
+*skill*. La suite sous `plugin/evals/` est son test de régression, lancée par
+`claude plugin eval` (Claude Code 2.1.269 ou ultérieur) : chaque cas est un *prompt* soumis à
+une session sur un projet de référence, et des évaluateurs qui lisent ce que la session a fait.
+Le [playbook du cycle de vie AI-native d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
+demande exactement cela de toute configuration qui pilote un agent.
+
+Un cas est un répertoire de `plugin/evals/` :
+
+- `case.yaml` le nomme et nomme son script de préparation, `fixture.sh`, qui charge
+  `plugin/evals/lib/scheduling-example.sh` (l'exemple scheduling copié dans l'espace de travail
+  vide de l'exécution, le `node_modules` de ce dépôt lié pour que `npx ddd-ts-kit` soit la CLI
+  construite, un *commit* git) et plante ce dont le cas a besoin : une violation, une *story*,
+  un verrou ;
+- `prompt.md` tient le *prompt*, avec `max_turns`, `timeout_seconds` et `allowed_tools` dans
+  son en-tête (`Bash`, `Edit` et `Write` sont accordés à l'exécution par `--allow-tools`) ;
+- `graders/*.md`, un évaluateur par fichier : les déterministes d'abord (`tool_used` avec un
+  `input_match`, `regex` sur le dernier message ou sur un fichier, `file_exists`), puis un juge
+  `llm` pour ce que seule une lecture peut dire. Un cas passe quand son score atteint le seuil.
+
+Trois règles tiennent la suite. Chaque régression qu'un utilisateur signale sur une *skill*, un
+agent ou le *hook* devient un cas avant d'être corrigée, nommé d'après la promesse qu'il tient.
+Chaque exécution a deux bras, avec le plugin et sans lui (la base sans plugin) : un cas que le
+bras sans plugin passe aussi ne mesure rien, et il est retiré ou affûté jusqu'à distinguer les
+deux. Un cas reste peu coûteux : un *prompt* précis, un nombre de tours borné, l'exemple comme
+projet de référence plutôt qu'un projet à générer.
+
+**La suite est désactivée par défaut.** Elle dépense des crédits d'API : chaque cas est une
+session complète de Claude Code, lancée dans les deux bras et `--runs` fois (3 par défaut), si
+bien que les douze cas font 24 sessions avec `--runs 1` et 72 avec le défaut, et qu'une
+exécution nocturne de vingt cas ferait soixante sessions par nuit. Rien ne tourne sur une *pull
+request*, à heure fixe, ni dans `npm test`. Un mainteneur la lance à la main depuis l'onglet
+Actions (le *workflow* `agent-evals.yml`, `workflow_dispatch` seulement) une fois le secret
+`ANTHROPIC_API_KEY` ajouté au dépôt ; sans le secret, le *job* le dit et se termine au vert.
+Cette exécution utilise `--runs 1`, `--threshold 0.8` et un plafond de 10 USD, publie le rapport
+comme artefact et écrit les scores dans son résumé ; les déclencheurs `pull_request` et
+`schedule` en commentaire dans le fichier montrent comment l'activer, le coût indiqué à côté.
+
+Pour lancer un cas en local, sur vos propres identifiants, la CLI construite (`npm run build`) :
+
+```bash
+claude plugin eval plugin --runs 1 --no-publish --max-cost-usd 5 --case describe-not-tree-walk \
+  --scaffold --allow-tools Bash Write Edit --trust-plugin --output-dir /tmp/ddd-ts-kit-evals
+```
+
+`--scaffold` lance le `fixture.sh` du cas (ne le passez jamais pour une suite que vous n'avez pas
+lue), `--max-cost-usd` est un plafond ferme, et `--output-dir` garde les résultats hors de
+l'arbre (`plugin/evals/results/`, le défaut, est ignoré par git mais lu par
+`npm run check:dashes`). Accorder le *shell* demande le bac à sable de Claude Code, `bubblewrap`
+et `socat` sous Linux : sans eux l'exécution est refusée plutôt que lancée sans confinement, et
+un cas qui n'accorde aucun outil (`deviation-refused`) tourne quand même. Un cas, une fois,
+pendant que vous l'écrivez : la suite entière est l'exécution du mainteneur. La forme d'un cas se
+vérifie sans rien lancer : `claude plugin eval` n'a pas d'exécution à blanc, donc analysez chaque
+`case.yaml`, l'en-tête de chaque `prompt.md` et de chaque évaluateur avec un analyseur YAML, et
+comparez avec le modèle qu'écrit `claude plugin eval init --bare <name>`.
 
 ## Comment un changement atteint `main`
 

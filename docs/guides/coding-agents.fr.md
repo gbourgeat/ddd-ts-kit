@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:dd40b38269696179 -->
+<!-- translation-of: coding-agents.md sha256:12b8a3b231d6d0ac -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -139,3 +139,14 @@ ligne.
 Deux manques n'appartiennent à aucune *skill* : un secret dans un *diff* n'est attrapé que par
 gitleaks dans le *pipeline*, et la mise en page d'un fichier est réglée au *commit*, pas à
 l'écriture.
+
+## Évaluer vos propres skills
+
+Un projet qui écrit ses propres *skills* (une politique de l'organisation, une convention d'une
+équipe) peut les tenir au même test : un répertoire `evals/` à côté d'elles, lancé par
+`claude plugin eval`, un cas par promesse, avec les vraies tâches du projet comme *prompts* et
+des évaluateurs qui lisent le résultat. Le kit ne génère rien pour cela : la suite du playbook se
+construit à partir des tâches du projet, qu'aucun *template* ne connaît. La suite du plugin
+lui-même, sous `plugin/evals/` du dépôt, est un exemple travaillé, et
+[CONTRIBUTING.fr.md](../../CONTRIBUTING.fr.md#la-suite-dévaluation-du-plugin) dit comment un cas
+s'écrit, quand on en ajoute un et ce qu'il coûte.

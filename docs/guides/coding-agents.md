@@ -129,3 +129,13 @@ rule id named here is unknown to the CLI, or when a skill has no row.
 
 Two gaps belong to no skill: a secret in a diff is caught by gitleaks in the pipeline only, and
 the layout of a file is settled at the commit, not at the write.
+
+## Evals of your own skills
+
+A project that writes skills of its own (a policy of the organisation, a convention of a team)
+can hold them to the same test: an `evals/` directory next to them, run by `claude plugin eval`,
+one case per promise, with the project's real tasks as prompts and graders that read the result.
+The kit generates nothing for it: the playbook's suite is built from the tasks of the project,
+which no template knows. The suite of the plugin itself, under `plugin/evals/` of the
+repository, is a worked example, and [CONTRIBUTING.md](../../CONTRIBUTING.md#the-eval-suite-of-the-plugin)
+says how a case is written, when one is added and what it costs.
