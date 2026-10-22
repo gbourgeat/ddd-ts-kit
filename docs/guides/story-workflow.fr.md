@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:b73907fded4827c7 -->
+<!-- translation-of: story-workflow.md sha256:ad5ad3cc9123b91b -->
 
 # Parcours d'une story : une session par user story
 
@@ -152,6 +152,17 @@ constat avec sa passe, son `file:line` et son issue (`fixed in <commit>`,
 `written as TODO(review)`, `dismissed by ADR-<n>`), si bien que la trace survit à la *pull
 request* et à un passage de GitHub à GitLab, et nourrit la règle de deux.
 
+Une seconde lecture vient alors d'un contexte qui n'a pas construit le code : l'agent
+`story-verifier`, en lecture seule, démarre l'application comme le font les tests de bout en
+bout, exécute l'acceptation de la *story* et les *specs* de bout en bout des deux flux les plus
+proches, appelle les routes que les *specs* laissent de côté quand le projet démarre sans
+service, lit la revue de conception et le rapport, et rend compte de ce qu'il a exécuté, de ce
+qu'il a vu, et de chaque comportement qui ne correspond pas à la conception ou à une décision
+`D<n>`. Il ne corrige rien ; la session règle chaque écart comme un constat. Les tests
+d'acceptation restent la vérification la plus forte, puisqu'ils échouent avant le code et que
+l'agent qui construit ne peut pas les réécrire ; le vérificateur ajoute les flux voisins et une
+lecture des compromis.
+
 Une équipe qui veut distinguer les *commits* d'un agent de ceux d'une personne pose
 `commit.agentTrailer` à `true` dans `ddd-ts-kit.config.json`
 ([configuration](../CONFIG.fr.md)) : la *skill* story, l'agent `context-builder` qu'elle
@@ -209,8 +220,8 @@ l'autre, chacune sur un tronc vert.
 
 Claude Code exécute tout le parcours : la *skill*, les agents et la garde. Codex et Copilot
 exécutent la *skill* et la garde ; sans les agents du plugin, la session construit chaque ligne
-elle-même avec la *skill* `use-case`, et rien ne la confine à un contexte sinon la consigne et la
-revue.
+elle-même avec la *skill* `use-case`, rien ne la confine à un contexte sinon la consigne et la
+revue, et la vérification par un contexte neuf est sautée, ce que dit le rapport.
 
 ## Limites
 

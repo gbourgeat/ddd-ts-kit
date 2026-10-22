@@ -143,6 +143,16 @@ line per finding with its pass, its `file:line` and its outcome (`fixed in <comm
 `written as TODO(review)`, `dismissed by ADR-<n>`), so that the record outlives the pull
 request, survives a move between GitHub and GitLab, and feeds the rule of two.
 
+A second reading then comes from a context that did not build the code: the `story-verifier`
+agent, read-only, starts the application the way the end-to-end tests do, runs the acceptance of
+the story and the end-to-end specs of the two nearest flows, calls the routes the specs leave
+unexercised when the project starts without a service, reads the design review and the report,
+and reports what it ran, what it saw, and every behaviour that does not match the design or a
+`D<n>` decision. It fixes nothing; the session settles each mismatch as a finding. The
+acceptance tests remain the stronger check, since they fail before the code and cannot be
+rewritten by the agent that builds; the verifier adds the neighbouring flows and a reading of
+the compromises.
+
 A team that wants the commits of an agent told apart from those of a person sets
 `commit.agentTrailer` to `true` in `ddd-ts-kit.config.json`
 ([configuration](../CONFIG.md)): the story skill, the `context-builder` agent it briefs and the
@@ -194,8 +204,8 @@ share. The pull requests merge one after the other, each on a green trunk.
 
 Claude Code runs the whole workflow: the skill, the agents and the guard. Codex and Copilot run
 the skill and the guard; without the agents of the plugin the session builds each row itself
-with the `use-case` skill, and nothing confines it to one context but the briefing and the
-review.
+with the `use-case` skill, nothing confines it to one context but the briefing and the
+review, and the verification by a fresh context is skipped, which the report says.
 
 ## Limits
 

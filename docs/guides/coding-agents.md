@@ -42,11 +42,14 @@ Twenty-five skills, in the order a project meets them:
 | `quality-gate` | run the checks at the right scope and fix at the root cause |
 | `commit-discipline` | one slice per commit, generated files with what generated them |
 
-Five agents: `domain-explorer` (read-only answers about what exists and where),
+Six agents: `domain-explorer` (read-only answers about what exists and where),
 `context-builder` (builds the slices of one context in its own worktree),
 `domain-test-writer` (turns `it.todo` entries into specs) and `architecture-reviewer`
-(read-only review of a diff, a branch or a context), and `acceptance-judge` (judges a change to a
-locked acceptance test, independently of the session that made it, and writes its verdict).
+(read-only review of a diff, a branch or a context), `acceptance-judge` (judges a change to a
+locked acceptance test, independently of the session that made it, and writes its verdict), and
+`story-verifier` (read-only verification of a story at its close, in a fresh context: it starts
+the application as the end-to-end tests do, exercises the routes of the story and the two nearest
+flows, and reports what does not match the design or a decision).
 
 The hook is the part that makes the rest binding. In a project that has a
 `ddd-ts-kit.config.json` it reminds the workflow and the context map at session start, says
@@ -77,7 +80,7 @@ writes a file another open story changes, and refuses once to end the session be
 runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 
-Each agent gets what its host runs. The skills work in all three. The five agents are sub-agents
+Each agent gets what its host runs. The skills work in all three. The six agents are sub-agents
 of Claude Code; Codex loads no agent from a plugin, and one session per worktree takes the place
 of `context-builder`. The hook runs wherever the host runs the hooks of a plugin: it reads the
 patches of Codex and the tool calls of Copilot as well as those of Claude Code. Codex cannot put

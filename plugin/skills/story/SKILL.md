@@ -158,6 +158,12 @@ plugin builds each row itself with skill `ddd-ts-kit:use-case`.
    to `docs/architecture/reviews/$0.md`, one line per finding with its pass (the rule id or the
    principle the reviewer named), its `file:line` and its outcome, `fixed in <commit>`,
    `written as TODO(review)` or `dismissed by ADR-<n>`; the record outlives the pull request.
+   Then the `story-verifier` agent, in a fresh context, with the story code, the worktree path
+   and the base: it starts the application as the end-to-end tests do, exercises the routes of
+   the rows and the two nearest flows, reads the design review and the report, and reports what
+   does not match the design or a `D<n>`; it fixes nothing. Settle each mismatch it reports as
+   a finding above: fixed, or a decision. A host without the agents of the plugin skips it, and
+   the report says "not verified: the story-verifier agent, not available on this host".
 3. `npm run verify`, `npx ddd-ts-kit acceptance $0 --gate passing`, `npx ddd-ts-kit todo`, and
    `npx ddd-ts-kit story-check $0`: every row done, no marker of its own left.
 
