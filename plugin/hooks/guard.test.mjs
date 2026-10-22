@@ -800,7 +800,7 @@ test('a session of a story starts on its phase and ends on its report, refused o
   put(
     root,
     'docs/architecture/stories/US5.md',
-    '# US5\n\n## Report\n\n- Blocked: the owner has not said who places an order.\n',
+    '# US5\n\n## Report\n\n- Blocked: the owner has not said who places an order.\n\n### Verification\n\n- not verified: npm run verify, the story is blocked at phase 1.\n',
   );
   assert.equal(run('stop', stopping).output, undefined);
 });
@@ -918,7 +918,7 @@ test('at stop in the worktree of a story, a done row that departed from its desi
   put(
     root,
     'docs/architecture/stories/US5.md',
-    '# US5\n\n## Acceptance criteria\n\n- AC1: a customer places an order\n\n## Report\n\nDelivered.\n',
+    '# US5\n\n## Acceptance criteria\n\n- AC1: a customer places an order\n\n## Report\n\nDelivered.\n\n### Verification\n\n- npm run verify: ok\n',
   );
   const session = { cwd: root, session_id: `design-${root}`, stop_hook_active: false };
   const first = run('stop', session);
@@ -935,7 +935,7 @@ test('at stop in the worktree of a story, a done row that departed from its desi
   put(
     root,
     'docs/architecture/stories/US5.md',
-    '# US5\n\n## Acceptance criteria\n\n- AC1: a customer places an order\n\n## Report\n\nDelivered.\n\n### Compromises\n\n- `PlaceOrderCommand` is a plain function for now.\n',
+    '# US5\n\n## Acceptance criteria\n\n- AC1: a customer places an order\n\n## Report\n\nDelivered.\n\n### Compromises\n\n- `PlaceOrderCommand` is a plain function for now.\n\n### Verification\n\n- npm run verify: ok\n',
   );
   assert.equal(run('stop', { ...session, session_id: 'settled' }).output, undefined);
   assert.equal(run('stop', { ...session, stop_hook_active: true }).output, undefined);
