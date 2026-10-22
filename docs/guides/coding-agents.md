@@ -85,7 +85,14 @@ a question to the user, so what Claude Code asks the project owner is said to th
 and left to the checks of the pipeline.
 
 Without any plugin, a project still guides every agent: `init` writes `AGENTS.md`, the guide
-Codex, Copilot and most agents read (`CLAUDE.md` imports it), the rules by layer for Claude Code
+Codex, Copilot and most agents read (`CLAUDE.md` imports it; its `## Verifying your work`
+section gives each verification command with the lines it prints when it passes, to run before
+reporting done and to paste, a failing check fixed in the code and never in the check, and its
+`## Mistakes seen here` section is the team's: a review finding or a `TODO(review)` made twice
+becomes a line there, or a rule of the config, the rule of two the `architecture-reviewer`
+agent and the `quality-gate` skill apply, after the AI-native SDLC playbook of Anthropic,
+[PDF](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)),
+the rules by layer for Claude Code
 in `.claude/rules/` and the same rules for Copilot in `.github/instructions/`, scoped by
 `applyTo`, `REVIEW.md`, the review policy every reviewer reads, written once and owned by the
 team ([Working as a team](team-workflow.md#review-focus-per-layer)), and, with the GitHub

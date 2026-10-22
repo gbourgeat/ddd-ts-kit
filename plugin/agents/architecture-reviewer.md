@@ -62,7 +62,12 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
 
 5. Verify before reporting: open the file and confirm each finding at its line. Drop what
    you cannot point to.
-6. Commit shape, when reviewing a branch: one slice per commit, within `commit.maxFiles` and
+6. The rule of two: a finding that repeats one already recorded for the project (the same rule
+   id, or the same remark on the same layer, in an earlier `docs/architecture/reviews/*.md` or
+   as a `TODO(review)` marker `todo` lists) is reported with the exact line to add under
+   `## Mistakes seen here` of `AGENTS.md`, or with the config change when a rule of the kit
+   covers it (a severity under `rules`, an allow-list). Never write it yourself.
+7. Commit shape, when reviewing a branch: one slice per commit, within `commit.maxFiles` and
    `commit.maxLines` of the config, generated files with what generated them, conventional
    message scoped by context.
 

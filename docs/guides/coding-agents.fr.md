@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:37a656dd9ef7667d -->
+<!-- translation-of: coding-agents.md sha256:007cfba43fb1a6d7 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -92,7 +92,15 @@ soumet au propriétaire du projet y est signalé à l'utilisateur, et laissé au
 pipeline.
 
 Même sans plugin, un projet guide chaque agent : `init` écrit `AGENTS.md`, le guide que lisent
-Codex, Copilot et la plupart des agents (`CLAUDE.md` l'importe), les règles par couche pour
+Codex, Copilot et la plupart des agents (`CLAUDE.md` l'importe ; sa section `## Verifying your
+work` donne chaque commande de vérification avec les lignes qu'elle affiche quand elle passe, à
+lancer avant de se dire fini et à coller, une vérification qui échoue corrigée dans le code et
+jamais dans la vérification, et sa section `## Mistakes seen here` est celle de l'équipe : un
+constat de revue ou un `TODO(review)` fait deux fois y devient une ligne, ou une règle de la
+configuration, la règle de deux qu'appliquent l'agent `architecture-reviewer` et le *skill*
+`quality-gate`, d'après le *playbook* AI-native SDLC d'Anthropic,
+[PDF](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)),
+les règles par couche pour
 Claude Code dans `.claude/rules/` et les mêmes règles pour Copilot dans `.github/instructions/`,
 ciblées par `applyTo`, `REVIEW.md`, la politique de revue que lit chaque relecteur, écrite une
 fois et possédée par l'équipe ([Travailler en équipe](team-workflow.fr.md#ce-que-la-revue-regarde-dans-chaque-couche)),
