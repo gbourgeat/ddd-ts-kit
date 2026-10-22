@@ -1,5 +1,6 @@
 import type { Config } from '../config/index.js';
 import { filesUnder } from '../generate/files-under.js';
+import { roleDirectoriesOf } from '../model-modules/index.js';
 import type { Workspace } from '../workspace/index.js';
 import type { Remaining } from './remaining.js';
 import { remainingIn } from './remaining-in.js';
@@ -29,7 +30,7 @@ function drives(ws: Workspace, directory: string, spec: string): boolean {
   const useCase = spec.slice(0, -'.e2e.spec.ts'.length);
 
   return ['commands', 'queries'].some((folder) =>
-    ws.directories(`${directory}/application/${folder}`).includes(useCase),
+    roleDirectoriesOf(ws, directory, `application/${folder}`).some(({ name }) => name === useCase),
   );
 }
 

@@ -1,4 +1,4 @@
-import type { Config } from './config.js';
+import type { Config, ContextConfig } from './config.js';
 import { DEFAULT_COMMIT_LIMITS } from './default-commit-limits.js';
 import { isReferenceCoverage } from './is-reference-coverage.js';
 import { writtenStack } from './written-stack.js';
@@ -45,10 +45,17 @@ function writtenContexts(config: Config): Record<string, unknown> {
       upstreams: context.upstreams,
       ...(context.extraDirectories.length > 0 ? { extraDirectories: context.extraDirectories } : {}),
       ...(context.deployable ? { deployable: true } : {}),
+      ...(context.modules.length > 0 ? { modules: writtenModules(context.modules) } : {}),
     },
   ]);
 
   return Object.fromEntries(contexts);
+}
+
+function writtenModules(modules: ContextConfig['modules']): Record<string, unknown> {
+  return Object.fromEntries(
+    modules.map(({ name, classification }) => [name, classification === undefined ? {} : { classification }]),
+  );
 }
 
 function optionalKeys(config: Config): Record<string, unknown> {

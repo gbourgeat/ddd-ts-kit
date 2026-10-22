@@ -210,8 +210,12 @@ function innerLayerFiles(config: Config): string[] {
   return [`${config.contextsDir}/*/domain/**/*.ts`, `${config.contextsDir}/*/application/**/*.ts`];
 }
 
+/** The aggregates and entities of a context, at its level or in a module of its model (`domain/<module>/aggregates/`). */
 function aggregateFiles(config: Config): string[] {
-  return [`${config.contextsDir}/*/domain/aggregates/**/*.ts`, `${config.contextsDir}/*/domain/entities/**/*.ts`];
+  return ['aggregates', 'entities'].flatMap((folder) => [
+    `${config.contextsDir}/*/domain/${folder}/**/*.ts`,
+    `${config.contextsDir}/*/domain/*/${folder}/**/*.ts`,
+  ]);
 }
 
 function testFiles(config: Config): string[] {

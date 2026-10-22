@@ -2,11 +2,15 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { createApplication, kernelModule } from '../src/index.js';
+import type { Actor } from '@ddd-ts-kit/kernel';
+import { createApplication, createTestApplication, fake, kernelModule } from '../src/index.js';
 import { discoverContext } from '../src/discovery.js';
 // What `ddd-ts-kit docs` generates next to the role files of a discovered context: here the stubbed loader answers the classes themselves, so their lists are registered the same way.
 import './fixtures/contexts/billing/billing.dependencies.js';
 import { InvoiceIssuedPublisher } from './fixtures/contexts/billing/application/integration/publishers/invoice-issued.publisher.js';
+import { IssueInvoice } from './fixtures/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';
+import { IssueInvoiceHandler } from './fixtures/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js';
+import { CustomerDirectory } from './fixtures/contexts/billing/application/ports/customer-directory.port.js';
 import { IssueMonthlyInvoicesJob } from './fixtures/contexts/billing/application/scheduling/issue-monthly-invoices.job.js';
 import { InMemoryInvoiceRepository } from './fixtures/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';
 import { wiringRejection } from './support/rejection.js';
@@ -31,6 +35,7 @@ function contextWith(files: Readonly<Record<string, string>>): string {
 }
 
 const HANDLER = 'application/commands/issue-invoice/issue-invoice.handler.mjs';
+const ada: Actor = { id: 'ada', type: 'user', roles: [], attributes: {} };
 const declaredRepository = async (): Promise<unknown> => ({ InMemoryInvoiceRepository, somethingElse: 42 });
 
 describe('discovery', () => {
@@ -128,7 +133,7 @@ describe('discovery', () => {
     expect(failure.code).toBe('MISPLACED_DECLARATION');
 
     expect(failure.message).toBe(
-      'infrastructure/external/issue-invoice.handler.mjs of context "billing" is outside its canonical folder: a *.handler file belongs in application/commands/ or application/queries/.',
+      'infrastructure/external/issue-invoice.handler.mjs of context "billing" is outside its canonical folder: a *.handler file belongs in application/commands/ or application/queries/, at the level of the context or of a module of its model (application/<module>/...).',
     );
   });
 
@@ -181,7 +186,7 @@ describe('a discovered job', () => {
     expect(misplaced).toMatchObject({
       code: 'MISPLACED_DECLARATION',
       message:
-        'application/commands/issue-monthly-invoices.job.mjs of context "billing" is outside its canonical folder: a *.job file belongs in application/scheduling/.',
+        'application/commands/issue-monthly-invoices.job.mjs of context "billing" is outside its canonical folder: a *.job file belongs in application/scheduling/, at the level of the context or of a module of its model (application/<module>/...).',
     });
 
     expect(wrongRole.code).toBe('MISPLACED_DECLARATION');
@@ -235,8 +240,49 @@ describe('a discovered publisher', () => {
     expect(failure.code).toBe('MISPLACED_DECLARATION');
 
     expect(failure.message).toBe(
-      `${misplaced} of context "billing" is outside its canonical folder: a *.publisher file belongs in application/integration/publishers/.`,
+      `${misplaced} of context "billing" is outside its canonical folder: a *.publisher file belongs in application/integration/publishers/, at the level of the context or of a module of its model (application/<module>/...).`,
     );
+  });
+});
+
+describe('discovery of a context divided into modules of its model', () => {
+  const IN_MODULE = 'application/invoicing/commands/issue-invoice';
+
+  it('finds the role files of a module, read by structure without the config', async () => {
+    const classes: Readonly<Record<string, unknown>> = {
+      [`${IN_MODULE}/issue-invoice.command.mjs`]: { IssueInvoice },
+      [`${IN_MODULE}/issue-invoice.handler.mjs`]: { IssueInvoiceHandler },
+      'infrastructure/persistence/in-memory-invoice.repository.mjs': { InMemoryInvoiceRepository },
+    };
+
+    const directory = contextWith(Object.fromEntries(Object.keys(classes).map((file) => [file, ''])));
+
+    const module = await discoverContext('billing', directory, {
+      load: async (file) => classes[path.relative(directory, file.pathname)],
+    });
+
+    const app = createTestApplication({
+      modules: [module],
+      fakes: [fake(CustomerDirectory, { exists: async () => true })],
+    });
+
+    await app.start();
+
+    expect(await app.commandBus.execute(new IssueInvoice(ada, 'customer-1'))).toEqual(expect.any(String));
+
+    expect(app.describe().commands).toMatchObject([
+      { message: 'IssueInvoice', file: path.join(directory, `${IN_MODULE}/issue-invoice.handler.mjs`) },
+    ]);
+  });
+
+  it('refuses a role file in the wrong role folder of a module, and says where it belongs', async () => {
+    const misplaced = 'application/invoicing/ports/issue-invoice.handler.mjs';
+    const directory = contextWith({ [misplaced]: "throw new Error('never loaded');" });
+
+    const failure = await wiringRejection(discoverContext('billing', directory));
+
+    expect(failure.code).toBe('MISPLACED_DECLARATION');
+    expect(failure.message).toContain('application/<module>/');
   });
 });
 

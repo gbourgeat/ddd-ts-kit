@@ -1,5 +1,6 @@
 import { parseGlossary } from '../check/language/parse-glossary.js';
 import type { Config, Upstream } from '../config/index.js';
+import { roleDirectoriesOf, roleFilesOf } from '../model-modules/index.js';
 import { toName } from '../naming/index.js';
 import type { Workspace } from '../workspace/index.js';
 import type { ContextFacts, PublishedEvent } from './context-facts.js';
@@ -54,12 +55,12 @@ type TreeFacts = Pick<
 /** What the folders of the context hold, whatever the style of the project. */
 function treeFacts(ws: Workspace, directory: string, name: string): TreeFacts {
   return {
-    aggregates: namesBySuffix(ws, `${directory}/domain/aggregates`, '.aggregate.ts'),
-    eventSourced: eventSourcedOf(ws, `${directory}/domain/aggregates`),
-    domainEvents: namesBySuffix(ws, `${directory}/domain/events`, '.event.ts'),
+    aggregates: namesBySuffix(ws, directory, { folder: 'domain/aggregates', suffix: '.aggregate.ts' }),
+    eventSourced: eventSourcedOf(ws, directory),
+    domainEvents: namesBySuffix(ws, directory, { folder: 'domain/events', suffix: '.event.ts' }),
     publishedEvents: publishedEventsOf(ws, `${directory}/published-language`),
-    builders: namesBySuffix(ws, `${directory}/test/builders`, '.builder.ts'),
-    worlds: namesBySuffix(ws, `${directory}/test/worlds`, '.world.ts'),
+    builders: namesBySuffix(ws, directory, { folder: 'test/builders', suffix: '.builder.ts' }),
+    worlds: namesBySuffix(ws, directory, { folder: 'test/worlds', suffix: '.world.ts' }),
     permissions: permissionsOf(ws.read(`${directory}/application/authorization/${name}.permissions.ts`) ?? ''),
     jobs: readJobs(ws, directory, name),
     backgroundJobs: readBackgroundJobs(ws, directory),
@@ -71,15 +72,14 @@ function treeFacts(ws: Workspace, directory: string, name: string): TreeFacts {
 /** The explicit style names nothing in its classes: the folders and the file names are what can be read. */
 function namesByConvention(ws: Workspace, directory: string): RoleNames {
   return {
-    commands: ws.directories(`${directory}/application/commands`).map((folder) => toName(folder).pascal),
-    queries: ws.directories(`${directory}/application/queries`).map((folder) => toName(folder).pascal),
-    policies: namesBySuffix(ws, `${directory}/application/authorization`, '.policy.ts'),
-    gateways: namesBySuffix(ws, `${directory}/application/ports`, '-gateway.port.ts'),
-    integrationEventHandlers: namesBySuffix(
-      ws,
-      `${directory}/application/integration/handlers`,
-      '.integration-handler.ts',
-    ),
+    commands: roleDirectoriesOf(ws, directory, 'application/commands').map((folder) => toName(folder.name).pascal),
+    queries: roleDirectoriesOf(ws, directory, 'application/queries').map((folder) => toName(folder.name).pascal),
+    policies: namesBySuffix(ws, directory, { folder: 'application/authorization', suffix: '.policy.ts' }),
+    gateways: namesBySuffix(ws, directory, { folder: 'application/ports', suffix: '-gateway.port.ts' }),
+    integrationEventHandlers: namesBySuffix(ws, directory, {
+      folder: 'application/integration/handlers',
+      suffix: '.integration-handler.ts',
+    }),
   };
 }
 
@@ -137,20 +137,25 @@ function downstreamsOf(config: Config, name: string): Upstream[] {
 
 /** The aggregates whose class extends `EventSourcedAggregate`, read from their files. */
 function eventSourcedOf(ws: Workspace, directory: string): string[] {
-  return ws
-    .list(directory)
-    .filter((file) => file.endsWith(AGGREGATE) && EVENT_SOURCED.test(ws.read(`${directory}/${file}`) ?? ''))
-    .map((file) => toName(file.slice(0, -AGGREGATE.length)).pascal);
+  return roleFilesOf(ws, directory, 'domain/aggregates')
+    .filter(({ name, path }) => name.endsWith(AGGREGATE) && EVENT_SOURCED.test(ws.read(path) ?? ''))
+    .map(({ name }) => toName(name.slice(0, -AGGREGATE.length)).pascal);
 }
 
 const AGGREGATE = '.aggregate.ts';
 const EVENT_SOURCED = /\bextends\s+EventSourcedAggregate\b/;
 
-function namesBySuffix(ws: Workspace, directory: string, suffix: string): string[] {
-  return ws
-    .list(directory)
-    .filter((file) => file.endsWith(suffix))
-    .map((file) => toName(file.slice(0, -suffix.length)).pascal);
+/** The files of one role, by the folder of the role and the suffix of their names. */
+interface RoleSuffix {
+  readonly folder: string;
+  readonly suffix: string;
+}
+
+/** The names of the files of a role folder, of the context and its modules, by their suffix. */
+function namesBySuffix(ws: Workspace, directory: string, { folder, suffix }: RoleSuffix): string[] {
+  return roleFilesOf(ws, directory, folder)
+    .filter(({ name }) => name.endsWith(suffix))
+    .map(({ name }) => toName(name.slice(0, -suffix.length)).pascal);
 }
 
 const DECLARED_EVENT = /\btype:\s*'([a-z0-9-]+\.[a-z0-9-]+\.[a-z0-9-]+)',\s*version:\s*(\d+)/g;

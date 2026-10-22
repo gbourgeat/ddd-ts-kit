@@ -1,6 +1,7 @@
 import { toName } from '../naming/index.js';
 import type { UseCaseFact } from './context-description.js';
 import type { ContextSources } from './context-sources.js';
+import { roleDirectoriesOf } from '../model-modules/index.js';
 
 const FOLDERS = [
   ['command', 'commands', 'Command'],
@@ -12,8 +13,8 @@ export function readUseCases(sources: ContextSources): UseCaseFact[] {
   const { ws, directory } = sources;
 
   return FOLDERS.flatMap(([kind, folder, suffix]) =>
-    ws.directories(`${directory}/application/${folder}`).map((useCase) => {
-      const name = toName(useCase).pascal;
+    roleDirectoriesOf(ws, directory, `application/${folder}`).map((useCase) => {
+      const name = toName(useCase.name).pascal;
 
       const declared = sources.declarations?.useCases.find(
         (candidate) => candidate.kind === kind && candidate.name === name,
@@ -23,7 +24,7 @@ export function readUseCases(sources: ContextSources): UseCaseFact[] {
         kind,
         name,
         permission: declared?.requires ?? boundPermission(sources.module, `${name}${suffix}`),
-        file: `${directory}/application/${folder}/${useCase}`,
+        file: useCase.path,
       };
     }),
   ).sort((left, right) => left.name.localeCompare(right.name));

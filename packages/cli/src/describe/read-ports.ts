@@ -2,6 +2,7 @@ import { toName } from '../naming/index.js';
 import type { PortFact } from './context-description.js';
 import type { ContextSources } from './context-sources.js';
 import type { AdapterFact } from './read-adapters.js';
+import { roleFilesOf } from '../model-modules/index.js';
 
 const FOLDERS = [
   ['domain/repositories', '.repository.ts'],
@@ -13,12 +14,9 @@ export function readPorts(sources: ContextSources, adapters: readonly AdapterFac
   const { ws, directory } = sources;
 
   return FOLDERS.flatMap(([folder, suffix]) =>
-    ws
-      .list(`${directory}/${folder}`)
-      .filter((file) => file.endsWith(suffix))
-      .map((file) => {
-        const path = `${directory}/${folder}/${file}`;
-
+    roleFilesOf(ws, directory, folder)
+      .filter(({ name: file }) => file.endsWith(suffix))
+      .map(({ name: file, path }) => {
         const name =
           /\bexport (?:abstract class|interface) (\w+)/.exec(ws.read(path) ?? '')?.[1] ??
           toName(

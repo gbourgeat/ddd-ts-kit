@@ -2,6 +2,7 @@ import { toName } from '../naming/index.js';
 import type { ConsumedEventFact } from './context-description.js';
 import type { ContextSources } from './context-sources.js';
 import { readEventDefinitions, type EventDefinition } from './read-event-definitions.js';
+import { roleFilesOf, type RoleFile } from '../model-modules/index.js';
 
 const FOLDER = 'application/integration/handlers';
 const SUFFIX = '.integration-handler.ts';
@@ -10,15 +11,13 @@ const SUFFIX = '.integration-handler.ts';
 export function readConsumedEvents(sources: ContextSources): ConsumedEventFact[] {
   const { ws, directory } = sources;
 
-  return ws
-    .list(`${directory}/${FOLDER}`)
-    .filter((file) => file.endsWith(SUFFIX))
+  return roleFilesOf(ws, directory, FOLDER)
+    .filter(({ name }) => name.endsWith(SUFFIX))
     .map((file) => consumedBy(sources, file))
     .sort((left, right) => left.type.localeCompare(right.type) || left.handler.localeCompare(right.handler));
 }
 
-function consumedBy(sources: ContextSources, file: string): ConsumedEventFact {
-  const path = `${sources.directory}/${FOLDER}/${file}`;
+function consumedBy(sources: ContextSources, { name: file, path }: RoleFile): ConsumedEventFact {
   const source = sources.ws.read(path) ?? '';
 
   const handler =

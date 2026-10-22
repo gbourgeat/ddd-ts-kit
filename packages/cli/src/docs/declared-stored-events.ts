@@ -5,6 +5,7 @@ import type { SourceFile } from '../check/model/source-file.js';
 import type { Config } from '../config/index.js';
 import { workspaceSources } from '../generate/workspace-sources.js';
 import type { Workspace } from '../workspace/index.js';
+import { roleFoldersOf } from '../model-modules/index.js';
 
 /**
  * The stored events the codecs of `infrastructure/persistence/` of these contexts declare, a key
@@ -19,7 +20,10 @@ export function declaredStoredEvents(
 
   return contexts.flatMap((context) => {
     const root = `${config.contextsDir}/${context}`;
-    const eventNameOf = eventNameResolver(sourcesIn(ws, `${root}/domain/events`, sources));
+
+    const eventNameOf = eventNameResolver(
+      roleFoldersOf(ws, root, 'domain/events').flatMap((folder) => sourcesIn(ws, folder, sources)),
+    );
 
     return sourcesIn(ws, `${root}/infrastructure/persistence`, sources).flatMap((file) =>
       storedEventDeclarations(file, eventNameOf),

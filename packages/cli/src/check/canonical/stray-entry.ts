@@ -1,6 +1,7 @@
 import path from 'node:path';
 import type { Config } from '../../config/index.js';
 import { barrelFile, dependenciesFile, isDeclarationsFile } from '../../declared/index.js';
+import { declaredModules, MODULE_LAYERS } from '../../model-modules/index.js';
 import type { Flaw } from '../model/flaw.js';
 import { isCanonicalDirectory } from './is-canonical-directory.js';
 import { OPEN_DIRECTORIES } from './open-directories.js';
@@ -29,7 +30,9 @@ export function strayEntry(entry: string, config: Config): Flaw | undefined {
   return entry.endsWith('/') ? strayDirectory(placed) : straySource(placed);
 }
 
-function place(entry: string, { contextsDir, contexts, stack }: Config): Placed | undefined {
+function place(entry: string, config: Config): Placed | undefined {
+  const { contextsDir, contexts, stack } = config;
+
   const [context = '', ...rest] = entry
     .slice(contextsDir.length + 1)
     .replace(/\/$/, '')
@@ -39,10 +42,17 @@ function place(entry: string, { contextsDir, contexts, stack }: Config): Placed 
     return undefined;
   }
 
+  const [layer = '', module, ...below] = rest;
+
+  const inModule =
+    module !== undefined && MODULE_LAYERS.includes(layer) && declaredModules(config, context).includes(module);
+
+  const inside = inModule ? [layer, ...below].join('/') : rest.join('/');
+
   return {
     context,
     declared: stack.style === 'declared',
-    inside: rest.join('/'),
+    inside,
     extras: contexts[context]?.extraDirectories ?? [],
   };
 }
@@ -50,6 +60,15 @@ function place(entry: string, { contextsDir, contexts, stack }: Config): Placed 
 function strayDirectory({ context, inside, extras }: Placed): Flaw | undefined {
   if (isCanonicalDirectory(inside) || coveredByExtra(extras, inside)) {
     return undefined;
+  }
+
+  const [layer = '', folder, ...below] = inside.split('/');
+
+  if (folder !== undefined && below.length === 0 && MODULE_LAYERS.includes(layer)) {
+    return {
+      message: `"${inside}" is not a directory of the canonical tree.`,
+      fix: `If ${folder} is a part of the model of ${context}, declare it as a module with \`ddd-ts-kit generate module ${context} ${folder}\`; otherwise move its files to the canonical directory of their role (see \`ddd-ts-kit explain tree/closed\`).`,
+    };
   }
 
   return {

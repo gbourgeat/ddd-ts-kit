@@ -22,6 +22,7 @@ import type { Violation } from '../model/violation.js';
 import { isRecord } from '../support/is-record.js';
 import { lineOf } from '../support/line-of.js';
 import { lineOfSequence } from '../support/line-of-sequence.js';
+import { moduleProblems } from './module-problems.js';
 import { rawConfig } from './raw-config.js';
 
 /** What `config/valid` looks at in one project, each finding placed on a line of the config file. */
@@ -36,6 +37,7 @@ export class ConfigInspection {
       ...this.classification(name, context),
       ...context.upstreams.flatMap((upstream) => this.upstream(name, upstream)),
       ...this.presence(name, context),
+      ...moduleProblems(name, context).map(({ needle, message, fix }) => this.inConfig(needle, message, fix)),
     ];
   }
 
