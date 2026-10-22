@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:91c5d743f5a4f701 -->
+<!-- translation-of: event-sourcing.md sha256:d4fc487dcc6657ec -->
 
 # Event sourcing, par agrégat
 
@@ -451,6 +451,18 @@ donc), ou un adaptateur à vous sur un service de gestion de clés, derrière le
 sauvegardes des événements ne portent jamais les clés, et la rétention des sauvegardes des clés
 est le délai que promet l'effacement.
 
+Cette promesse a besoin d'une date de départ, et l'effacement doit la laisser là où elle ne peut
+pas être réécrite. `auditedSubjectKeys(keys, trail, { scope, clock, ids })` de
+`@ddd-ts-kit/audit` décore le stockage des clés : chaque `erase`, depuis un script, une commande
+ou un *job*, écrit une entrée d'audit (catégorie `data-access`, action `personal-data:erase`, la
+personne comme ressource `data-subject`, `keyDestroyed: true` ou `false`) avec l'acteur et la
+date, dans la chaîne de hachage. La date de cette entrée plus la rétention des sauvegardes des
+clés donne le jour où l'effacement est complet. La clé est détruite d'abord et l'entrée écrite
+ensuite, puisque les deux stockages ne partagent aucune transaction : quand l'entrée ne peut pas
+être écrite, l'effacement échoue, et le relancer enregistre qu'il ne restait aucune clé, à une
+date ultérieure, de sorte que la date d'achèvement n'est jamais précoce
+([`@ddd-ts-kit/audit`](../../packages/audit/README.fr.md#e-effacements-de-personnes-concernées)).
+
 Ce qu'il ne fait pas : les identifiants ne sont pas scellés. Un flux nommé d'après un patient
 (`scheduling.attendance-record-<practice>.<patient>`) garde cet identifiant dans le store.
 Utilisez des identifiants qui ne signifient rien en dehors de l'application.
@@ -458,8 +470,9 @@ Utilisez des identifiants qui ne signifient rien en dehors de l'application.
 L'exemple garde les clés dans la table `subject_keys` du schéma `scheduling` de sa propre base de
 données, à côté des événements, pour rester exécutable avec un seul PostgreSQL ; son README le
 dit et nomme ce que change un déploiement. Son effacement (`npm run erase:patient`) détruit la clé
-d'un patient et reconstruit les projections alimentées par le store, afin que le modèle de lecture
-de l'historique perde aussi le motif en clair.
+d'un patient, écrit l'effacement dans le journal d'audit avec l'opérateur comme acteur, et
+reconstruit les projections alimentées par le store, afin que le modèle de lecture de
+l'historique perde aussi le motif en clair.
 
 ## Projections alimentées par le store
 

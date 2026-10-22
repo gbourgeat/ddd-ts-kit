@@ -439,15 +439,26 @@ have a shorter retention than those of the events (`new PostgresSubjectKeyStore(
 service, behind the same port. Then the backups of the events never carry the keys, and the
 retention of the key backups is the delay the erasure promises.
 
+That promise needs a date to start from, and the erasure has to leave it somewhere that cannot
+be rewritten. `auditedSubjectKeys(keys, trail, { scope, clock, ids })` of `@ddd-ts-kit/audit`
+wraps the key store: every `erase`, from a script, a command or a job, writes an audit entry
+(category `data-access`, action `personal-data:erase`, the subject as a `data-subject`
+resource, `keyDestroyed: true` or `false`) with the actor and the date, in the hash chain. The
+date of that entry plus the retention of the key backups is the day the erasure is complete.
+The key is destroyed first and the entry written after, since the two stores share no
+transaction: when the entry cannot be written the erasure fails, and running it again records
+that no key was left, at a later date, so the completion date is never early
+([`@ddd-ts-kit/audit`](../../packages/audit/README.md#e-erasures-of-data-subjects)).
+
 What it does not do: identifiers are not sealed. A stream named after a patient
 (`scheduling.attendance-record-<practice>.<patient>`) keeps that identifier in the store. Use
 identifiers that mean nothing outside the application.
 
 The example keeps the keys in the table `subject_keys` of the `scheduling` schema of its own
 database, next to the events, to stay runnable with one PostgreSQL; its README says so and names
-what a deployment changes. Its erasure (`npm run erase:patient`) destroys the key of a patient
-and rebuilds the projections fed by the store, so that the history read model loses the clear
-reason too.
+what a deployment changes. Its erasure (`npm run erase:patient`) destroys the key of a patient,
+writes the erasure to the audit trail with the operator as actor, and rebuilds the projections
+fed by the store, so that the history read model loses the clear reason too.
 
 ## Projections fed by the store
 

@@ -42,7 +42,9 @@ belong to) never reaches the bus: the HTTP pipeline reports it to `auditGuardRef
 records it as an `authorization` entry, `denied`, for authenticated callers only (a caller
 without a credential belongs to the access log and to rate limiting). A fourth, exceptional
 source exists for what none of these can see: an explicit record written by infrastructure,
-such as a bulk export. A call to the trail from `domain/` or
+such as a bulk export. The erasure of a data subject is recorded by the key store itself,
+wrapped by `auditedSubjectKeys`, whoever asks for it: the entry dates the destruction of the
+key that crypto-shredding relies on. A call to the trail from `domain/` or
 `application/` is the defect the design exists to prevent.
 
 Who acted, in which session, impersonated by whom, for which tenant, with which correlation id
@@ -172,6 +174,7 @@ correlation and causation ids, the origin, and its place in a chain. For the run
 | command | `CancelAppointment` | failed | `CANCELLATION_WINDOW_PASSED` | appointment 8f2 |
 | command | `RescheduleAppointment` | succeeded | | appointment 8f2 |
 | integration-event | `appointments.appointment.rescheduled` | succeeded | | |
+| data-access | `personal-data:erase` | succeeded | | data subject 41c |
 
 ## Redaction: identifiers and codes, never content
 
@@ -266,6 +269,9 @@ holds the data:
 3. **Crypto-shredding for erasure.** Derive one masking key per data subject from a key store.
    Erasing a person is deleting their key: the masks become tokens nobody can recompute, the
    entries stay, the hashes stay valid.
+4. **Record the erasure itself.** The erasure leaves an entry with its actor and its date,
+   which, plus the retention of the backups of the keys, is the day it is complete
+   ([`@ddd-ts-kit/audit`](../../packages/audit/README.md#e-erasures-of-data-subjects)).
 
 What remains after erasure is "an actor with this opaque id did this at that time". Whether
 that is acceptable is a legal question for the project, to be answered before the first entry

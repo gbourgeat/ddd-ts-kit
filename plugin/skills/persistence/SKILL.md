@@ -74,6 +74,11 @@ lookups of the port, the columns, the mapper.
   `<aggregate>-events.mapper.ts` with a named data type, and a change of that type is a new
   version with its upcaster (`event-sourcing/*`; `ddd-ts-kit docs --stored-events` records a
   version once its shape is final, and `docs --check` fails while one is unrecorded). When to choose it: `docs/concepts/event-sourcing.md` of the kit.
+  Personal values are sealed per data subject (`personalData`, `PersonalDataCipher`); erasing
+  one destroys its key in the `SubjectKeyStore`, bound wrapped by `auditedSubjectKeys` of
+  `@ddd-ts-kit/audit` so that every erasure leaves a dated audit entry, then rebuilds the
+  projections that hold a clear copy. Keep the keys in a store of their own, with a shorter
+  backup retention than the events.
 - **Searches** use the kernel `Page` and `PageRequest`; a cursor ends on a unique tie-breaker.
 - **Queries may skip aggregates**: `generate query` writes a read port and an in-memory
   reader; replace the reader by an adapter that queries the tables and returns the shape of

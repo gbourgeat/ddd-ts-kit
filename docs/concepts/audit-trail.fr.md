@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:98e98815f3d4fe26 -->
+<!-- translation-of: audit-trail.md sha256:4b221969c4f14350 -->
 
 # Journal d'audit
 
@@ -47,8 +47,10 @@ auquel l'appelant n'appartient pas) n'atteint jamais le bus : le *pipeline* HTTP
 appelants authentifiés seulement (un appelant sans justificatif relève du journal d'accès et de
 la limitation de débit). Une quatrième source, exceptionnelle, existe pour ce qu'aucune de
 celles-ci ne voit : un enregistrement explicite écrit par l'infrastructure, comme un export en
-masse. Un appel au journal depuis `domain/` ou `application/` est le défaut que la
-conception existe pour empêcher.
+masse. L'effacement d'une personne concernée est enregistré par le stockage des clés lui-même,
+décoré par `auditedSubjectKeys`, quel que soit le demandeur : l'entrée date la destruction de la
+clé sur laquelle repose le crypto-shredding. Un appel au journal depuis `domain/` ou
+`application/` est le défaut que la conception existe pour empêcher.
 
 Qui a agi, dans quelle session, sous l'identité empruntée par qui, pour quel *tenant*, avec quel
 identifiant de corrélation et depuis quelle origine : tout cela vient de la portée d'exécution
@@ -181,6 +183,7 @@ et sa place dans une chaîne. Pour le domaine qui sert d'exemple :
 | command | `CancelAppointment` | failed | `CANCELLATION_WINDOW_PASSED` | rendez-vous 8f2 |
 | command | `RescheduleAppointment` | succeeded | | rendez-vous 8f2 |
 | integration-event | `appointments.appointment.rescheduled` | succeeded | | |
+| data-access | `personal-data:erase` | succeeded | | personne concernée 41c |
 
 ## Caviardage : des identifiants et des codes, jamais de contenu
 
@@ -284,6 +287,9 @@ chaîne ne contient jamais les données :
    masquage par personne concernée, depuis un stockage de clés. Effacer une personne, c'est
    supprimer sa clé : les masques deviennent des jetons que personne ne peut recalculer, les
    entrées restent, les hachages restent valides.
+4. **Enregistrer l'effacement lui-même.** L'effacement laisse une entrée avec son acteur et sa
+   date, qui, plus la rétention des sauvegardes des clés, donne le jour où il est complet
+   ([`@ddd-ts-kit/audit`](../../packages/audit/README.fr.md#e-effacements-de-personnes-concernées)).
 
 Ce qui reste après l'effacement, c'est « un acteur avec cet identifiant opaque a fait ceci à ce
 moment-là ». Que ce soit acceptable est une question juridique pour le projet, à trancher avant
