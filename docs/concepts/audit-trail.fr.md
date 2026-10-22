@@ -1,13 +1,14 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:98e98815f3d4fe26 -->
+<!-- translation-of: audit-trail.md sha256:ae1660fac213b619 -->
 
 # Journal d'audit
 
 **Résumé.** Un journal d'audit (audit trail) répond à « qui a fait quoi, sur quoi, quand, avec
 quelle issue, pour le compte de qui » à quelqu'un qui ne fait pas confiance à l'application : un
 auditeur, un client, un régulateur. Dans ce kit, il est enregistré autour des cas d'usage,
-jamais par eux : les décisions d'autorisation, les commandes exécutées et les événements
-d'intégration passent déjà par trois endroits, et les entrées y sont écrites. Les entrées sont
+jamais par eux : les décisions d'autorisation, les commandes exécutées, les événements
+d'intégration et les effacements de données personnelles passent déjà par quelques endroits,
+et les entrées y sont écrites. Les entrées sont
 en ajout seul et chaînées par hachage, si bien qu'une modification, une suppression ou un
 réordonnancement se détecte ; elles contiennent des identifiants et des codes, jamais de
 contenu, et c'est aussi ce qui permet à une chaîne en ajout seul de coexister avec le droit à
@@ -31,13 +32,14 @@ ou qu'un journal d'audit devient illisible.
 
 Un gestionnaire (handler) qui doit penser à appeler l'audit l'oubliera un jour, et rien
 n'échouera. Un agrégat qui l'appelle a cessé d'être un modèle. Le kit enregistre donc depuis
-trois endroits que chaque unité de travail traverse déjà, câblés une fois dans la plateforme :
+les endroits que chaque unité de travail traverse déjà, câblés une fois dans la plateforme :
 
 | Source | Enregistre | Mécanisme |
 |---|---|---|
 | décisions d'autorisation | chaque refus ; chaque action autorisée qui n'est pas une lecture ; les lectures autorisées que vous déclarez sensibles | le *hook* de décision du *middleware* d'autorisation |
 | commandes | chaque commande avec `succeeded` ou `failed` et le code de l'erreur | un *middleware* de bus placé avant l'unité de travail |
 | événements d'intégration | qu'un événement d'un type donné a eu lieu, d'après sa seule enveloppe | un abonnement idempotent |
+| effacements de personnes concernées | que la clé d'une personne a été détruite, ou qu'il n'en restait aucune, par qui et quand | le stockage des clés, décoré par `auditedSubjectKeys` |
 
 ![Une commande traverse le middleware d'autorisation, le middleware d'audit et l'unité de travail avant le cas d'usage, qui ne contient aucun appel d'audit ; le hook de décision, le middleware d'audit et un abonnement aux événements ajoutent au journal d'audit et lisent qui a agi dans la portée d'exécution](../assets/diagrams/audit-trail-sources.fr.svg)
 
@@ -45,10 +47,10 @@ Une requête qu'une garde refuse à la frontière HTTP (un rôle, un périmètre
 auquel l'appelant n'appartient pas) n'atteint jamais le bus : le *pipeline* HTTP la signale à
 `auditGuardRefusals`, qui l'enregistre comme une entrée `authorization`, `denied`, pour les
 appelants authentifiés seulement (un appelant sans justificatif relève du journal d'accès et de
-la limitation de débit). Une quatrième source, exceptionnelle, existe pour ce qu'aucune de
+la limitation de débit). Une source de plus, exceptionnelle, existe pour ce qu'aucune de
 celles-ci ne voit : un enregistrement explicite écrit par l'infrastructure, comme un export en
-masse. Un appel au journal depuis `domain/` ou `application/` est le défaut que la
-conception existe pour empêcher.
+masse. Un appel au journal depuis `domain/` ou `application/` est le défaut que la conception
+existe pour empêcher.
 
 Qui a agi, dans quelle session, sous l'identité empruntée par qui, pour quel *tenant*, avec quel
 identifiant de corrélation et depuis quelle origine : tout cela vient de la portée d'exécution
@@ -181,6 +183,7 @@ et sa place dans une chaîne. Pour le domaine qui sert d'exemple :
 | command | `CancelAppointment` | failed | `CANCELLATION_WINDOW_PASSED` | rendez-vous 8f2 |
 | command | `RescheduleAppointment` | succeeded | | rendez-vous 8f2 |
 | integration-event | `appointments.appointment.rescheduled` | succeeded | | |
+| data-access | `personal-data:erase` | succeeded | | personne concernée 41c |
 
 ## Caviardage : des identifiants et des codes, jamais de contenu
 
@@ -284,6 +287,9 @@ chaîne ne contient jamais les données :
    masquage par personne concernée, depuis un stockage de clés. Effacer une personne, c'est
    supprimer sa clé : les masques deviennent des jetons que personne ne peut recalculer, les
    entrées restent, les hachages restent valides.
+4. **Enregistrer l'effacement lui-même.** L'effacement laisse une entrée avec son acteur et sa
+   date, qui, plus la rétention des sauvegardes des clés, donne le jour où il est complet
+   ([`@ddd-ts-kit/audit`](../../packages/audit/README.fr.md#e-effacements-de-personnes-concernées)).
 
 Ce qui reste après l'effacement, c'est « un acteur avec cet identifiant opaque a fait ceci à ce
 moment-là ». Que ce soit acceptable est une question juridique pour le projet, à trancher avant

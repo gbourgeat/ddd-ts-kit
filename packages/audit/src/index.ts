@@ -45,10 +45,16 @@ export { auditGuardRefusals } from './sources/audit-guard-refusals.js';
 export type { GuardRefusalOfARoute } from './sources/guard-refusal-of-a-route.js';
 export type { AuditFact } from './sources/audit-fact.js';
 export { auditIntegrationEvents, type AuditIntegrationEventsOptions } from './sources/audit-integration-events.js';
-export { UNEXPECTED_ERROR, auditMiddleware, type AuditMiddlewareOptions } from './sources/audit-middleware.js';
+export { auditMiddleware, type AuditMiddlewareOptions } from './sources/audit-middleware.js';
+export { UNEXPECTED_ERROR } from './sources/failure-reason.js';
 export { auditRecordOf } from './sources/audit-record-of.js';
 export type { AuditSource } from './sources/audit-source.js';
 export type { AuditSubscription } from './sources/audit-subscription.js';
 export type { AuditedEvents } from './sources/audited-events.js';
+export {
+  SUBJECT_ERASURE_ACTION,
+  auditedSubjectKeys,
+  type AuditedSubjectKeysOptions,
+} from './sources/audited-subject-keys.js';
 export type { AuthorizationDecision } from './sources/authorization-decision.js';
 export { TenantAuditReader } from './tenancy/tenant-audit-reader.js';

@@ -5,8 +5,8 @@
 **Summary.** An audit trail answers "who did what, on what, when, with what outcome, on whose
 behalf" to somebody who does not trust the application: an auditor, a customer, a regulator.
 In this kit it is recorded around the use cases, never by them: authorization decisions,
-executed commands and integration events already pass through three places, and the entries
-are written there. Entries are append-only and hash-chained, so a change, a removal or a
+executed commands, integration events and erasures of personal data already pass through a few
+places, and the entries are written there. Entries are append-only and hash-chained, so a change, a removal or a
 reordering is detectable; they hold identifiers and codes, never content, which is also what
 lets an append-only chain coexist with the right to erasure. The chain proves that what was
 recorded was not rewritten. It does not prove that everything was recorded.
@@ -26,7 +26,7 @@ up holding personal data for ten years, or an audit trail ends up unreadable.
 ## Why handlers never write it
 
 A handler that must remember to call the audit will one day forget, and nothing will fail. An
-aggregate that calls it has stopped being a model. So the kit records from three places every
+aggregate that calls it has stopped being a model. So the kit records from the places every
 unit of work already crosses, wired once in the platform:
 
 | Source | Records | Mechanism |
@@ -34,14 +34,15 @@ unit of work already crosses, wired once in the platform:
 | authorization decisions | every denial; every allowed action that is not a read; the allowed reads you declare sensitive | the decision hook of the authorization middleware |
 | commands | each command with `succeeded` or `failed` and the code of the error | a bus middleware placed before the unit of work |
 | integration events | that an event of a given type occurred, from its envelope only | one idempotent subscription |
+| erasures of data subjects | that the key of a subject was destroyed, or that none was left, by whom and when | the key store, wrapped by `auditedSubjectKeys` |
 
 ![A command crosses the authorization middleware, the audit middleware and the unit of work before the use case, which holds no audit call; the decision hook, the audit middleware and an event subscription append to the audit trail and read who acted from the execution scope](../assets/diagrams/audit-trail-sources.svg)
 
 A request a guard refuses at the HTTP edge (a role, a scope, a tenant the caller does not
 belong to) never reaches the bus: the HTTP pipeline reports it to `auditGuardRefusals`, which
 records it as an `authorization` entry, `denied`, for authenticated callers only (a caller
-without a credential belongs to the access log and to rate limiting). A fourth, exceptional
-source exists for what none of these can see: an explicit record written by infrastructure,
+without a credential belongs to the access log and to rate limiting). One more source,
+exceptional, exists for what none of these can see: an explicit record written by infrastructure,
 such as a bulk export. A call to the trail from `domain/` or
 `application/` is the defect the design exists to prevent.
 
@@ -172,6 +173,7 @@ correlation and causation ids, the origin, and its place in a chain. For the run
 | command | `CancelAppointment` | failed | `CANCELLATION_WINDOW_PASSED` | appointment 8f2 |
 | command | `RescheduleAppointment` | succeeded | | appointment 8f2 |
 | integration-event | `appointments.appointment.rescheduled` | succeeded | | |
+| data-access | `personal-data:erase` | succeeded | | data subject 41c |
 
 ## Redaction: identifiers and codes, never content
 
@@ -266,6 +268,9 @@ holds the data:
 3. **Crypto-shredding for erasure.** Derive one masking key per data subject from a key store.
    Erasing a person is deleting their key: the masks become tokens nobody can recompute, the
    entries stay, the hashes stay valid.
+4. **Record the erasure itself.** The erasure leaves an entry with its actor and its date,
+   which, plus the retention of the backups of the keys, is the day it is complete
+   ([`@ddd-ts-kit/audit`](../../packages/audit/README.md#e-erasures-of-data-subjects)).
 
 What remains after erasure is "an actor with this opaque id did this at that time". Whether
 that is acceptable is a legal question for the project, to be answered before the first entry
