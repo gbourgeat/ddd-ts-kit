@@ -67,8 +67,16 @@ function optionalKeys(config: Config): Record<string, unknown> {
     ...(sized ? { commit } : {}),
     ...(worker ? { worker } : {}),
     ...(config.worktrees === 'advised' ? {} : { worktrees: config.worktrees }),
-    ...(config.owners.platform.length > 0 ? { owners: config.owners } : {}),
+    ...teamKeys(config),
     ...pipelineKeys(config),
+  };
+}
+
+/** How the team holds its agents and who owns what, once a project says it. */
+function teamKeys({ agents, owners }: Config): Record<string, unknown> {
+  return {
+    ...(agents.profile === undefined ? {} : { agents: { profile: agents.profile } }),
+    ...(owners.platform.length > 0 ? { owners } : {}),
   };
 }
 

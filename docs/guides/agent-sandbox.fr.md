@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:ba6b544a5a15d269 -->
+<!-- translation-of: agent-sandbox.md sha256:be1a99cf6bbb42e4 -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -66,6 +66,61 @@ ddd-ts-kit). Les *hooks*, les outils de fichiers et les serveurs MCP tournent en
 ne limite ni le processeur ni la mémoire : associez-le au niveau 1. Voir
 [Configure the sandboxed Bash tool](https://code.claude.com/docs/en/sandboxing). Codex a ses
 propres modes de bac à sable.
+
+#### Le profil réglementé
+
+`npx ddd-ts-kit init --agent-profile regulated` écrit ce niveau dans le projet, tel que l'exemple
+du *playbook* AI-native SDLC d'Anthropic
+([PDF](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf))
+le déroule pour une organisation réglementée, et l'enregistre sous `agents.profile` dans
+`ddd-ts-kit.config.json` ([`ddd-ts-kit.config.json`](../CONFIG.fr.md#accords-de-travail)). Il
+s'applique à un projet déjà initialisé, sans `--force`, et `--agent-profile none` le retire. Avec
+le profil, `.claude/settings.json` gagne un bloc `sandbox` à côté des permissions (une clé que le
+projet avait déjà posée est gardée), et `init` affiche le bloc de réglages gérés qu'un fichier de
+projet ne peut pas poser, pour que l'équipe plateforme le colle ; `ddd-ts-kit doctor` signale un
+projet dont les réglages manquent d'une ligne du bloc (`--strict` échoue dessus). Ce que chaque
+ligne apporte, en termes de contrôle :
+
+| Ligne | Où | Ce qu'elle apporte |
+|---|---|---|
+| `sandbox.enabled: true` | `.claude/settings.json` | chaque commande *shell* de l'agent tourne dans le bac à sable (bubblewrap et socat sous Linux) : elle écrit où le bac à sable l'autorise et joint le réseau par son *proxy* |
+| `sandbox.failIfUnavailable: true` | projet | sur une machine sans bac à sable, la session s'arrête au démarrage au lieu de lancer les commandes hors bac à sable : aucune dégradation silencieuse |
+| `sandbox.allowUnsandboxedCommands: false` | projet | l'agent ne peut pas lancer une commande hors du bac à sable (la demande `dangerouslyDisableSandbox` est ignorée) : aucune nouvelle tentative en contournant le contrôle |
+| `sandbox.network.allowedDomains: ["registry.npmjs.org", "<hôte git>"]` | projet | une commande joint le registre des paquets et l'hôte git du projet (lu dans `repository` de `package.json`, sinon dans le *remote* `origin` ; ajoutez votre miroir si vous en tenez un) et rien d'autre : aucune exfiltration par `curl`, aucun paquet d'un hôte inconnu |
+| `sandbox.credentials.files` : `~/.ssh`, `~/.aws`, `~/.config/gcloud`, `~/.azure` refusés | projet | une commande ne peut pas lire les clés du développeur : une injection de *prompt* ne peut pas les envoyer |
+| `sandbox.credentials.envVars` : `GITHUB_TOKEN`, `GH_TOKEN`, `GITLAB_TOKEN`, `NPM_TOKEN`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, `GOOGLE_APPLICATION_CREDENTIALS`, `AZURE_CLIENT_SECRET` refusées | projet | les variables sont retirées avant chaque commande en bac à sable : un jeton dans le *shell* du développeur n'est pas dans celui de l'agent |
+| `permissions.deny: Read(./.env)`, `Read(./.env.*)` | projet, écrit aussi sans le profil | les secrets du projet restent hors du contexte de l'agent : le bac à sable ne couvre que les commandes *shell*, pas l'outil Read, donc une règle de permission tient celui-ci |
+| `allowManagedPermissionRulesOnly: true` | réglages gérés | les règles de permission de l'organisation sont les seules : un fichier de projet ou d'utilisateur ne peut pas les élargir |
+| `permissions.disableBypassPermissionsMode: "disable"` | gérés | le mode qui saute chaque demande de permission est refusé : aucune session ne tourne sans les portes |
+| `allowManagedHooksOnly: true` | gérés | seuls les *hooks* de l'organisation tournent ; copiez-y les *hooks* du profil, sinon un fichier de projet ne peut pas les garder. Un projet ne peut pas retirer la porte de production |
+| `strictKnownMarketplaces: [{ "source": "github", "repo": "gbourgeat/ddd-ts-kit" }]` | gérés | les *plugins* viennent des *marketplaces* que l'organisation nomme (celle du kit, ou votre miroir) : aucun *skill* non relu |
+| `requiredMinimumVersion: "<version>"` | gérés | un Claude Code plus ancien que la version nommée ne démarre pas : chaque session a les contrôles de cette version |
+
+Les réglages gérés vivent hors du dépôt (`managed-settings.json`, déployé par l'équipe
+plateforme) : `init` les affiche comme un bloc à coller, la version laissée à l'équipe. Associez
+le profil au niveau 1 pour la charge de la machine.
+
+Les noms et les formes des clés ci-dessus ont été vérifiés le 2026-10-23 dans la documentation de
+Claude Code : [settings](https://code.claude.com/docs/en/settings),
+[sandboxing](https://code.claude.com/docs/en/sandboxing),
+[permissions](https://code.claude.com/docs/en/permissions) et
+[managed settings](https://code.claude.com/docs/en/managed-settings). Ce qui n'a pas été
+vérifié : la forme de la valeur de `requiredMinimumVersion`, que la page des réglages gérés nomme
+sans exemple (une chaîne de version est ce pour quoi `init` laisse une place), et la portée de
+`disableBypassPermissionsMode`, que la référence des réglages donne comme posable depuis
+n'importe quel fichier mais qui ne tient que dans les réglages gérés, la valeur la plus stricte
+l'emportant.
+
+**Codex et Copilot.** Le profil est écrit pour Claude Code. Codex a son propre bac à sable,
+configuré hors du dépôt (`sandbox_mode` et `approval_policy` de son `config.toml` :
+`workspace-write` garde le réseau fermé sauf si son `network_access` dit autrement), l'équivalent
+de `sandbox.enabled` et du bloc réseau sans liste par domaine ; les refus d'identifiants, les
+*hooks* gérés, les *marketplaces* et la version minimale n'ont pas d'équivalent que le kit
+connaisse, et ces noms n'ont pas été revérifiés pour cette page. L'agent cloud de Copilot tourne
+dans un environnement hébergé par GitHub dont la liste d'hôtes autorisés se règle dans les
+réglages du dépôt sur GitHub, pas dans un fichier du projet ; `.github/copilot/settings.json` n'a
+pas de clé de bac à sable, donc le profil n'écrit rien pour Copilot. Les deux *hooks* du profil
+tournent partout où l'hôte lance les *hooks* d'un projet ; voir plus bas.
 
 ### 3. NVIDIA OpenShell
 
@@ -157,14 +212,21 @@ refusées : n'y autorisez un hôte que quand le travail en a besoin.
 - Un agent travaille sans surveillance, ou sur du code ou des *prompts* que vous n'avez pas
   écrits (un ticket, une dépendance, une *pull request* venue de l'extérieur) : OpenShell, avec
   son `--cpu` et son `--memory`.
-- Entre les deux : le niveau 2 avec le niveau 1.
+- Entre les deux : le niveau 2 avec le niveau 1 ; dans une organisation réglementée, le niveau 2
+  tel que `init --agent-profile regulated` l'écrit, avec ses réglages gérés.
 
 ## Sources
 
 - [Documentation de NVIDIA OpenShell](https://docs.nvidia.com/openshell/) : matrice de support,
   bacs à sable, politiques et leur schéma, lue le 2026-10-19 (version 0.1.4).
 - [NVIDIA OpenShell sur GitHub](https://github.com/NVIDIA/OpenShell).
-- [Claude Code : configure the sandboxed Bash tool](https://code.claude.com/docs/en/sandboxing).
+- [Claude Code : configure the sandboxed Bash tool](https://code.claude.com/docs/en/sandboxing),
+  [settings](https://code.claude.com/docs/en/settings),
+  [permissions](https://code.claude.com/docs/en/permissions),
+  [managed settings](https://code.claude.com/docs/en/managed-settings), lus le 2026-10-23.
+- Anthropic, *AI-Native SDLC Playbook*
+  ([PDF](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)) :
+  l'exemple d'une organisation réglementée que suit le profil.
 
 ## Voir aussi
 

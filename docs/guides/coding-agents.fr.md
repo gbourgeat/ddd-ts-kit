@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:ed2fb79f5b56f7e1 -->
+<!-- translation-of: coding-agents.md sha256:b03a92c6cd77afb5 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -109,6 +109,9 @@ s'exécutent sans demander ; `.env` et les contrats générés ne sont jamais lu
 `git push`, `npm publish`, les fichiers qui portent les règles et le pipeline, les migrations de
 l'ORM, `Dockerfile`, `docker-compose.yml` et `docker/` demandent d'abord : la liste est dans le
 [README de la CLI](../../packages/cli/README.fr.md#init), et `ddd-ts-kit doctor` dit ce qu'un
-projet en manque), et, avec le pipeline GitHub, `copilot-setup-steps.yml`, qui installe le
+projet en manque ; `init --agent-profile regulated` ajoute le bloc de bac à sable et les deux
+*hooks* d'une organisation réglementée,
+[Mettre les agents de code en bac à sable](agent-sandbox.fr.md#le-profil-réglementé)), et, avec le
+pipeline GitHub, `copilot-setup-steps.yml`, qui installe le
 projet avant le démarrage de l'agent cloud de Copilot. `npm run verify` et le pipeline tiennent
 chaque agent aux mêmes règles.

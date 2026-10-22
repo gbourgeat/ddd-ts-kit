@@ -1,5 +1,5 @@
 import { CliError } from '../cli-error.js';
-import type { Config, Deviation, OwnersConfig } from './config.js';
+import type { AgentsConfig, Config, Deviation, OwnersConfig } from './config.js';
 import { CONFIG_FILE } from './config-file.js';
 import { defaultAllowedPackages } from './default-allowed-packages.js';
 import { DEFAULT_IMPORT_ALIAS } from './default-import-alias.js';
@@ -81,6 +81,7 @@ type Governance = Pick<
   | 'businessNames'
   | 'worker'
   | 'ci'
+  | 'agents'
   | 'owners'
   | 'openapi'
   | 'sdk'
@@ -99,10 +100,18 @@ function parseGovernance(raw: Record<string, unknown>): Governance {
     businessNames: parseBusinessNames(raw['businessNames']),
     worker: raw['worker'] === true,
     ci: parseCi(raw['ci']),
+    agents: parseAgents(raw['agents']),
     owners: parseOwners(raw['owners']),
     openapi: parseOpenApi(raw['openapi']),
     sdk: parseSdk(raw['sdk']),
   };
+}
+
+/** Tolerant: an unknown profile is kept as written, and `config/valid` reports it. */
+function parseAgents(value: unknown): AgentsConfig {
+  const profile = isRecord(value) ? value['profile'] : undefined;
+
+  return { profile: typeof profile === 'string' && profile !== '' ? profile : undefined };
 }
 
 /** Tolerant: a handle is kept as written, for the platform of the repository to judge. */

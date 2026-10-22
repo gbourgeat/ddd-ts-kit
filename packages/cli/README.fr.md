@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:34b3663eb7ab3537 -->
+<!-- translation-of: README.md sha256:bec3df5f686154bc -->
 
 # ddd-ts-kit
 
@@ -73,7 +73,7 @@ ddd-ts-kit init [--http express|fastify|hono|nest|none]
                 [--schemas shared|per-route]
                 [--package-manager npm|pnpm]
                 [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
-                [--import-extension none|js] [--sdk]
+                [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                 [--context <name>:<core|supporting|generic>]...
                 [--preset identity]...
                 [--dry-run] [--force]
@@ -574,13 +574,27 @@ choix sont enregistrés sous `stack` dans la configuration, `docsUi`, `ci` et `l
 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | comment le lancer ; un guide léger dans `AGENTS.md`, que lisent Codex, Copilot et la plupart des agents de code et qu'importe `CLAUDE.md` (commandes, comment lire moins, la carte des règles, fichiers générés, les commandes de vérification avec les lignes que chacune affiche quand elle passe, à lancer avant de se dire fini, les erreurs vues ici, une section que l'équipe possède sous la règle de deux, note sur le compilateur, les *skills* du *plugin* : `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) et les invariants dans sept fichiers de règles, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` et `tests.md`, chacun délimité par un frontmatter `paths`, et les mêmes sept pour GitHub Copilot, chacun délimité par `applyTo` |
 | `REVIEW.md` | la politique de revue du projet : les passes d'une revue (bugs, sécurité, conformité face à la revue de conception de la ligne, l'acceptation de la *story*, les enregistrements de `docs/adr/` et les règles), ce qu'Important veut dire, au plus cinq *nits* (un *nit* récurrent devient une ligne de `AGENTS.md` sous `## Mistakes seen here` ou une règle de la configuration), ce qui n'est pas signalé (les fichiers générés, ce que `npm run verify` refuse). Lu par l'agent `architecture-reviewer` par-dessus sa méthode, par un relecteur humain et par tout robot de revue. Écrit une fois, pour que l'équipe le modifie : `--force` le laisse tel quel, `doctor` dit quand il manque |
 | `.github/copilot/settings.json` | le *plugin* du kit, déclaré pour GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`) : son agent cloud l'installe, la CLI Copilot et VS Code le recommandent ; un fichier existant garde ce qu'il contient et reçoit les deux entrées |
-| `.claude/settings.json` | des permissions seulement : les vérifications et les générateurs s'exécutent sans demander, les fichiers `.env` sont illisibles (`.env.example` reste lisible), les trois documents générés ne sont pas modifiés à la main, `git push`, `npm publish` et toute modification des fichiers qui portent les règles et le *pipeline* (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) demandent d'abord, comme une modification de ce qui atteint la production autrement que par le code : les migrations de l'ORM (`migrations/**` avec drizzle, knex et typeorm, `prisma/migrations/**` avec prisma, rien avec une persistance *custom* ou sans ORM), `Dockerfile`, `docker-compose.yml` et `docker/**`. Le fichier compose lit `.env` à la racine, que la liste de refus couvre déjà ; rien sous `docker/` ne porte de secret |
+| `.claude/settings.json` | des permissions (et, avec `--agent-profile regulated`, le bloc de bac à sable ci-dessous) : les vérifications et les générateurs s'exécutent sans demander, les fichiers `.env` sont illisibles (`.env.example` reste lisible), les trois documents générés ne sont pas modifiés à la main, `git push`, `npm publish` et toute modification des fichiers qui portent les règles et le *pipeline* (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) demandent d'abord, comme une modification de ce qui atteint la production autrement que par le code : les migrations de l'ORM (`migrations/**` avec drizzle, knex et typeorm, `prisma/migrations/**` avec prisma, rien avec une persistance *custom* ou sans ORM), `Dockerfile`, `docker-compose.yml` et `docker/**`. Le fichier compose lit `.env` à la racine, que la liste de refus couvre déjà ; rien sous `docker/` ne porte de secret |
 | `.gitignore` | `node_modules`, `dist`, `coverage`, `.env`, `*.tsbuildinfo`, `.ddd-ts-kit/`, où écrit `worker-scope`, et `.worktrees/`, où vivent les *worktrees* |
 
 `--ci both` écrit les deux *pipelines*, `--ci none` aucun (et pas de `renovate.json`). Les
 fichiers de *pipeline* sont des copies des fichiers du répertoire `pipeline/` du dépôt, livrées
 dans `templates/pipeline/` ; un test échoue quand une copie diffère de sa source au-delà de ses
 emplacements à remplacer documentés.
+
+`--agent-profile regulated` enregistre `agents.profile` dans la configuration, avec ou sans
+`--force` (`--agent-profile none` le retire), et écrit le bloc `sandbox` de Claude Code à côté des
+permissions : activé, échouant quand le bac à sable est indisponible, aucune nouvelle tentative
+hors bac à sable, le registre npm et l'hôte git du projet (lu dans `repository` de
+`package.json`, sinon dans le *remote* `origin`) comme seuls hôtes, les fichiers d'identifiants
+(`~/.ssh`, `~/.aws`, `~/.config/gcloud`, `~/.azure`) et les variables secrètes usuelles refusés à
+chaque commande en bac à sable ; une clé que le projet avait déjà posée est gardée. Elle affiche
+aussi, en note, le bloc de réglages gérés qu'un fichier de projet ne peut pas poser
+(`allowManagedHooksOnly`, `allowManagedPermissionRulesOnly`,
+`permissions.disableBypassPermissionsMode`, `strictKnownMarketplaces` avec la *marketplace* du
+kit, `requiredMinimumVersion`), pour que l'équipe plateforme le colle, et écrit les deux *hooks*
+du profil sous `.claude/hooks/`
+([Mettre les agents de code en bac à sable](../../docs/guides/agent-sandbox.fr.md#le-profil-réglementé)).
 
 Un `.claude/settings.json` existant n'est jamais écrasé : les permissions manquantes sont ajoutées
 à ses listes, tout le reste est gardé, et les notes de la commande listent ce qui a été ajouté. La
@@ -1360,7 +1374,8 @@ ddd-ts-kit doctor [--strict]
 
 Ce qu'une montée de version a laissé à faire : les scripts, les paquets du kit (aux plages de
 cette version) et les permissions des agents que cette version écrit et que le projet n'a pas ou
-écrit autrement, puis les *hooks* git. `lefthook.yml` doit porter
+écrit autrement (sous `agents.profile: "regulated"`, chaque ligne du bloc de bac à sable aussi,
+comme `permission sandbox.<key>`), puis les *hooks* git. `lefthook.yml` doit porter
 `lefthook: node_modules/.bin/lefthook`, qui fait lancer à chaque *checkout* et à chaque
 *worktree* son propre lefthook, et fait échouer un *commit*, bruyamment, quand ses dépendances
 manquent ; le correctif est cette ligne, ou `init --force` pour le fichier entier. Le *hook*

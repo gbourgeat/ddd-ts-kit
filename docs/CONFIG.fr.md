@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:792d27ed12dfe8e9 -->
+<!-- translation-of: CONFIG.md sha256:2d1c883bc7964a81 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -603,6 +603,7 @@ même listés dans une liste d'autorisation.
 | `guard` | `enforce`, `advise`, `off` : comment le *hook* d'éditeur du *plugin* réagit à une violation. La variable d'environnement `DDD_TS_KIT_GUARD` l'emporte sur elle | `enforce` |
 | `worktrees` | `required`, `advised` : où la garde du *plugin* laisse une session écrire le code d'un contexte. `required` : dans un *worktree* seulement (`npx ddd-ts-kit worktree <name>`, `story-scope`, `worker-scope`, tous sous `.worktrees/`) ; dans le *checkout* principal, sur la branche du tronc, le code des contextes et les générateurs qui l'écrivent sont refusés. `advised` : partout, avec un avis au démarrage de la session, ce que garde un projet démarré avant cette clé tant qu'elle n'est pas posée | `required` dans un projet que crée `init`, `advised` quand la clé est absente |
 | `worker` | `true`, `false` : le projet a `src/apps/worker/main.ts` ; les *jobs* planifiés tournent alors là et non dans le processus de l'API. `generate worker` la pose | `false` |
+| `agents.profile` | `regulated` : le bac à sable de Claude Code et les deux *hooks* d'une organisation réglementée, écrits dans `.claude/settings.json` par `init --agent-profile regulated` (avec ou sans `--force`), signalés par `doctor` quand les réglages en manquent ; `init --agent-profile none` retire la clé. `config/valid` signale une autre valeur. Voir [Mettre les agents de code en bac à sable](guides/agent-sandbox.fr.md#le-profil-réglementé) | aucun, la clé est omise |
 | `deviations[]` | `{ "what", "adr", "reason" }` : une exception enregistrée ; `adr` nomme un `docs/adr/<number>-*.md` existant | `[]` |
 
 ## Dérogations

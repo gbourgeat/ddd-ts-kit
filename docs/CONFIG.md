@@ -579,6 +579,7 @@ even when listed in an allow-list.
 | `guard` | `enforce`, `advise`, `off`: how the editor hook of the plugin reacts to a violation. The environment variable `DDD_TS_KIT_GUARD` takes precedence over it | `enforce` |
 | `worktrees` | `required`, `advised`: where the guard of the plugin lets a session write the code of a context. `required`: in a worktree only (`npx ddd-ts-kit worktree <name>`, `story-scope`, `worker-scope`, all under `.worktrees/`); in the main checkout, on the branch of the trunk, the code of the contexts and the generators that write it are refused. `advised`: anywhere, with a notice at session start, what a project started before this key keeps until it is set | `required` in a project `init` creates, `advised` when the key is absent |
 | `worker` | `true`, `false`: the project has `src/apps/worker/main.ts`; scheduled jobs then run there and not in the API process. `generate worker` sets it | `false` |
+| `agents.profile` | `regulated`: the sandbox of Claude Code and the two hooks of a regulated organisation, written in `.claude/settings.json` by `init --agent-profile regulated` (with or without `--force`), reported by `doctor` when the settings lack them; `init --agent-profile none` removes the key. `config/valid` reports another value. See [Sandboxing coding agents](guides/agent-sandbox.md#the-regulated-profile) | none, the key is left out |
 | `deviations[]` | `{ "what", "adr", "reason" }`: a recorded exception; `adr` names an existing `docs/adr/<number>-*.md` | `[]` |
 
 ## Deviations

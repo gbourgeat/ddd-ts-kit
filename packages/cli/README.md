@@ -68,7 +68,7 @@ ddd-ts-kit init [--http express|fastify|hono|nest|none]
                 [--schemas shared|per-route]
                 [--package-manager npm|pnpm]
                 [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
-                [--import-extension none|js] [--sdk]
+                [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                 [--context <name>:<core|supporting|generic>]...
                 [--preset identity]...
                 [--dry-run] [--force]
@@ -555,13 +555,25 @@ config, `docsUi`, `ci` and `logger` included.
 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | how to run it; a slim guide in `AGENTS.md`, which Codex, Copilot and most coding agents read and `CLAUDE.md` imports (commands, how to read less, the map of the rules, generated files, the verification commands with the lines each prints when it passes, to run before reporting done, the mistakes seen here, a section the team owns under the rule of two, compiler note, the skills of the plugin: `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) and the invariants in seven rule files, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` and `tests.md`, each scoped by a `paths` frontmatter, and the same seven for GitHub Copilot, each scoped by `applyTo` |
 | `REVIEW.md` | the review policy of the project: the passes of a review (bugs, security, compliance against the design review of the row, the acceptance of the story, the records of `docs/adr/` and the rules), what Important means, at most five nits (a recurring one becomes a line of `AGENTS.md` under `## Mistakes seen here` or a rule of the config), what is not reported (generated files, what `npm run verify` refuses). Read by the `architecture-reviewer` agent on top of its method, by a human reviewer and by any review bot. Written once, for the team to edit: `--force` leaves it alone, `doctor` says when it is missing |
 | `.github/copilot/settings.json` | the plugin of the kit, declared for GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`): its cloud agent installs it, the Copilot CLI and VS Code recommend it; an existing file keeps what it holds and gains the two entries |
-| `.claude/settings.json` | permissions only: the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), the three generated documents are not edited by hand, `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) ask first, and so does an edit of what reaches production otherwise than through the code: the migrations of the ORM (`migrations/**` with drizzle, knex and typeorm, `prisma/migrations/**` with prisma, nothing with a custom persistence or none), `Dockerfile`, `docker-compose.yml` and `docker/**`. The compose file reads `.env` at the root, which the deny list already covers; nothing under `docker/` holds a secret |
+| `.claude/settings.json` | permissions (and, with `--agent-profile regulated`, the sandbox block below): the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), the three generated documents are not edited by hand, `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) ask first, and so does an edit of what reaches production otherwise than through the code: the migrations of the ORM (`migrations/**` with drizzle, knex and typeorm, `prisma/migrations/**` with prisma, nothing with a custom persistence or none), `Dockerfile`, `docker-compose.yml` and `docker/**`. The compose file reads `.env` at the root, which the deny list already covers; nothing under `docker/` holds a secret |
 | `.gitignore` | `node_modules`, `dist`, `coverage`, `.env`, `*.tsbuildinfo`, `.ddd-ts-kit/`, where `worker-scope` writes, and `.worktrees/`, where the worktrees live |
 
 `--ci both` writes the two pipelines, `--ci none` neither (and no `renovate.json`). The pipeline
 files are copies of the assets of the repository's `pipeline/` directory, shipped in
 `templates/pipeline/`; a test fails when a copy differs from its source by more than its
 documented placeholders.
+
+`--agent-profile regulated` records `agents.profile` in the config, with or without `--force`
+(`--agent-profile none` removes it), and writes the `sandbox` block of Claude Code next to the
+permissions: enabled, failing when the sandbox is unavailable, no unsandboxed retry, the npm
+registry and the git host of the project (from `repository` of `package.json`, else the `origin`
+remote) as the only hosts, the credential files (`~/.ssh`, `~/.aws`, `~/.config/gcloud`,
+`~/.azure`) and the usual secret variables denied to every sandboxed command; a key the project
+already set is kept. It also prints, as a note, the block of managed settings a project file
+cannot set (`allowManagedHooksOnly`, `allowManagedPermissionRulesOnly`,
+`permissions.disableBypassPermissionsMode`, `strictKnownMarketplaces` with the marketplace of
+the kit, `requiredMinimumVersion`), for the platform team to paste, and writes the two hooks of
+the profile under `.claude/hooks/` ([Sandboxing coding agents](../../docs/guides/agent-sandbox.md#the-regulated-profile)).
 
 An existing `.claude/settings.json` is never overwritten: the missing permissions are appended
 to its lists, everything else is kept, and the notes of the command list what was added. The
@@ -1288,7 +1300,8 @@ ddd-ts-kit doctor [--strict]
 
 What an upgrade left to do: the scripts, the packages of the kit (at the ranges of this version)
 and the permissions of the agents that this version writes and the project lacks or writes
-otherwise, then the git hooks. `lefthook.yml` must hold `lefthook: node_modules/.bin/lefthook`,
+otherwise (under `agents.profile: "regulated"`, each line of the sandbox block too, as
+`permission sandbox.<key>`), then the git hooks. `lefthook.yml` must hold `lefthook: node_modules/.bin/lefthook`,
 which makes each checkout and each worktree run its own lefthook and fail a commit, loudly,
 when its dependencies are missing; the fix is that line, or `init --force` for the whole file.
 The pre-commit hook under `git rev-parse --git-path hooks` must exist and come from lefthook;

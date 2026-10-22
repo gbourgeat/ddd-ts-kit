@@ -101,7 +101,8 @@ generated contracts are never read or edited; `git push`, `npm publish`, the fil
 the rules and the pipeline, the migrations of the ORM, `Dockerfile`, `docker-compose.yml` and
 `docker/` ask first: the list is in the
 [README of the CLI](../../packages/cli/README.md#init), and `ddd-ts-kit doctor` says what a
-project lacks of it), and, with the GitHub
+project lacks of it; `init --agent-profile regulated` adds the sandbox block and the two hooks of
+a regulated organisation, [Sandboxing coding agents](agent-sandbox.md#the-regulated-profile)), and, with the GitHub
 pipeline, `copilot-setup-steps.yml`, which installs the project
 before the Copilot cloud agent starts. `npm run verify` and the pipeline hold every agent to
 the same rules.

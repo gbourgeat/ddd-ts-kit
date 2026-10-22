@@ -21,6 +21,7 @@ import { REVIEW_POLICY } from './files/guidance-files.js';
 import { keepFlatPlatform } from '../platform-folders/index.js';
 import { ignoreWorktrees } from './ignore-worktrees.js';
 import { writeManifest } from './manifest/write-manifest.js';
+import { recordAgentProfile } from './record-agent-profile.js';
 import { recordNoOutbox } from './record-no-outbox.js';
 import { resolveStack, type StackOptions } from './stack/resolve-stack.js';
 import { templateVars } from './template-vars.js';
@@ -52,6 +53,7 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   const flat = keepFlatPlatform(ws, config);
 
   ws.create(CONFIG_FILE, configText(ws, config));
+  recordAgentProfile(ws, config);
   writeManifest(ws, { config, projectName, force: options.force });
   writeTypeScriptConfigs(ws, config);
   writeFiles(ws, { config, projectName, flat });

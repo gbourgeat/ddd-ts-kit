@@ -1,4 +1,5 @@
 export { addContextToConfigText } from './add-context-to-config-text.js';
+export { AGENT_PROFILES } from './agent-profiles.js';
 export { CI_EXTRAS } from './ci-extras.js';
 export { ciExtraProblems } from './ci-extra-problems.js';
 export { CLASSIFICATIONS } from './classifications.js';
@@ -8,6 +9,7 @@ export { COVERAGE_LAYERS } from './coverage-layers.js';
 export { COVERAGE_METRICS } from './coverage-metrics.js';
 export { coverageProblems } from './coverage-problems.js';
 export type {
+  AgentsConfig,
   Config,
   ContextConfig,
   OpenApiDocumentConfig,
