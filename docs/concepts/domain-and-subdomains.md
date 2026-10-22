@@ -25,6 +25,12 @@ Bounded contexts are designed. The usual target is one context per subdomain, an
 are kept apart because the target is sometimes missed (a legacy system covering three
 subdomains, or one subdomain split between two teams).
 
+One context may also hold several subdomains on purpose, when they share one language: Evans
+places them in modules of the model (Generic Subdomains: "Factor out generic models of these
+subdomains and place them in separate modules"; Abstract Core: "modules defined by subdomain").
+The kit does that with [modules of the model](modules.md), each of which may carry its own
+classification.
+
 ![The six subdomains of the scheduling domain on the left, each modelled by one bounded context under src/contexts on the right, except identity, a generic subdomain bought as an OIDC provider that gets no folder](../assets/diagrams/domain-and-subdomains-problem-and-solution.svg)
 
 ## The three kinds
@@ -158,6 +164,8 @@ Every context is classified, and the value is required:
   in the running example is an OIDC provider; the platform maps its tokens to an `Actor` at the
   boundary, and no folder models users. A generic context exists in the tree only when the
   project keeps some state or translation of its own for it.
+- A subdomain held by a module of a context, rather than by a context of its own, is classified
+  on the module: `contexts.<name>.modules.<module>.classification` ([Modules of the model](modules.md)).
 
 ```bash
 npx ddd-ts-kit generate context appointments --classification core \
@@ -194,6 +202,7 @@ npx ddd-ts-kit generate context appointments --classification core \
 ## See also
 
 - [Bounded context](bounded-context.md)
+- [Modules of the model](modules.md)
 - [Ubiquitous language](ubiquitous-language.md)
 - [Context map](context-map.md)
 - [A worked example: the context map of the scheduling application](context-map-worked-example.md)

@@ -43,6 +43,8 @@ of tools.
 1. [Domain and subdomains](domain-and-subdomains.md): core, supporting, generic, and how to
    classify.
 2. [Bounded context](bounded-context.md): what a boundary is and the tests that find one.
+   [Modules of the model](modules.md) come with it: a context too large to read, divided into
+   parts of one model with one language, and why that is not a sub-context.
 3. [Ubiquitous language](ubiquitous-language.md): the glossary, and why it is written before
    the code.
 4. [Context map](context-map.md): the relationship patterns between contexts, when each fits

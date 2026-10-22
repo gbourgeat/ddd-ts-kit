@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:92c44ceb5b71fe4c -->
+<!-- translation-of: ARCHITECTURE.md sha256:9cd20b0d83d0204a -->
 
 # Référence de l'architecture
 
@@ -35,6 +35,10 @@ modèle, un vocabulaire et ses données.
   un contrat publié, ou par sa propre projection alimentée par des événements d'intégration.
 - Le noyau partagé ne contient que ce qu'au moins deux contextes utilisent. Un fichier lu par un
   seul contexte appartient à ce contexte.
+- Un contexte trop grand pour être lu, dont le langage reste un seul, se divise en **modules du
+  modèle** (Evans, Modules), jamais en sous-contextes : un dossier par partie du modèle, déclaré
+  dans `contexts.<name>.modules`, nommé avec des termes de son glossaire. Voir la section 2 et
+  [Modules du modèle](concepts/modules.fr.md).
 
 ![Deux contextes délimités qui collaborent : le contexte aval n'importe que le langage publié de son amont, et réagit à ses événements d'intégration, qui sortent par l'outbox et un relais](assets/diagrams/architecture-contexts-collaboration.fr.svg)
 
@@ -130,11 +134,30 @@ src/
                                  l'application de test ou les bus avec les fakes du contexte)
 ```
 
+**Modules du modèle.** Un contexte peut diviser son modèle en modules, déclarés dans
+`contexts.<name>.modules` de la configuration. Un module est un dossier placé directement sous
+`domain/` et `application/`, et contient les dossiers de rôle de l'arborescence ci-dessus,
+inchangés : `domain/<module>/aggregates/`, `application/<module>/commands/<use-case>/`.
+`infrastructure/`, `presentation/`, `test/` et `published-language/` gardent leur disposition.
+Ces fichiers restent au niveau du contexte, hors de tout module : `domain/errors/codes.ts`,
+`application/authorization/<context>.permissions.ts`, `<context>.module.ts`,
+`<context>.declarations.ts`, `<context>.dependencies.ts` et `CONTEXT.md`, qui gagne une section
+`## Modules` (une ligne par module : son nom et son but). Un module n'a jamais de glossaire, de
+schéma, de langage publié ni de fichier de module à lui ; une partie qui en a besoin est un
+contexte. Chaque règle lit un fichier d'un module comme le même fichier hors module : son rôle est
+son chemin, dossier du module retiré. `generate <kind> <context> ... --module <module>` écrit dans
+un module, `generate module <context> <module>` en déclare un, et
+`move-to-module <context> <module> <path>...` y déplace des fichiers existants avec leurs
+imports. Dans un contexte qui déclare des modules, le générateur refuse d'écrire un fichier de
+`domain/` ou `application/` sans `--module`, et nomme les modules. Pourquoi et quand :
+[Modules du modèle](concepts/modules.fr.md).
+
 **Déclarations générées.** Dans le style déclaré assemblé par barrel, chaque dossier de rôle
 d'un contexte qui contient un fichier de rôle déclaré a un `<folder>.declarations.ts` généré,
 dans ce dossier : `application/commands/commands.declarations.ts`,
 `application/queries/queries.declarations.ts`,
-`infrastructure/persistence/persistence.declarations.ts`, `presentation/http/http.declarations.ts`.
+`infrastructure/persistence/persistence.declarations.ts`, `presentation/http/http.declarations.ts` ;
+dans un module, `application/<module>/commands/commands.declarations.ts`.
 Un dossier de rôle est le dossier `<layer>/<folder>/` sous le contexte : les fichiers d'un cas
 d'utilisation (`application/commands/<use-case>/`) ou d'une route
 (`presentation/http/<resource>/<use-case>/`) y remontent, et un fichier de rôle posé directement
@@ -289,9 +312,12 @@ et la plateforme le lie au démarrage. Pourquoi, et ce que contient chaque couch
 | `context/declared-relationship` | Un tel import exige que la relation soit déclarée dans la config. |
 | `context/published-language-is-a-contract` | `published-language/` n'importe que le noyau, `@ddd-ts-kit/events`, `@ddd-ts-kit/validation`, la bibliothèque de schémas du projet et d'autres langages publiés (`publishedLanguageAllowedPackages`). |
 | `context/no-cycle` | Les relations déclarées ne forment aucun cycle. |
-| `tree/closed` | Un contexte ne contient que les répertoires canoniques, plus ses `extraDirectories` déclarés, et aucun fichier source hors d'un répertoire de rôle. |
+| `tree/closed` | Un contexte ne contient que les répertoires canoniques, plus ses `extraDirectories` déclarés et les dossiers de ses modules déclarés, et aucun fichier source hors d'un répertoire de rôle. Un dossier sous `domain/` ou `application/` qui n'est ni un dossier de rôle ni un module déclaré est signalé ; si c'est un module du modèle, `generate module <context> <module>` le déclare. |
 | `tree/context-doc` | Chaque contexte a un `CONTEXT.md` avec les sections requises (`Purpose`, `Classification`, `Ubiquitous language`, `Aggregates`, `Published events`, `Relationships`) et la classification déclarée dans la config. |
 | `tree/documented-paths` | Un chemin d'un contexte borné écrit comme du code dans un fichier Markdown de `docs/architecture/` (un plan, une note de conception, une revue) est un emplacement que l'arborescence canonique accepte, jugé comme `tree/closed` juge un fichier : ses répertoires et le fichier lui-même. Un chemin écrit relativement à son contexte (il commence par `domain/`, `application/`, `infrastructure/`, `presentation/` ou `published-language/`) ne nomme aucun contexte : il n'est signalé que quand chaque contexte déclaré le refuse, ses répertoires supplémentaires compris. Un chemin qui n'existe pas encore n'est pas signalé, un plan nomme des fichiers à créer ; un chemin que l'arborescence refuse (`application/services/`) décrit une conception que le code n'a plus. Sévérité par défaut `warn`. |
+| `module/declared` | Chaque module de `contexts.<name>.modules` est nommé avec des termes de la table `## Ubiquitous language` du `CONTEXT.md` de son contexte, chaque mot de son nom, et jamais avec un mot technique (`shared`, `common`, `core`, `misc`, `utils` et les autres mots techniques de `language/no-technical-name`), et a une ligne dans la section `## Modules` de ce `CONTEXT.md`. Son nom est en kebab-case, unique dans le contexte et n'est pas un dossier de rôle. Correctif : `generate module <context> <module> --purpose "..." [--term "<Term>=<meaning>"]`. |
+| `module/complete` | Dès qu'un contexte déclare des modules, un fichier de son `domain/` ou de son `application/` hors de tout module est signalé, les fichiers du niveau du contexte mis à part (`domain/errors/codes.ts`, `application/authorization/<context>.permissions.ts`, les déclarations générées). Correctif : `move-to-module <context> <module> <path>`. Sévérité par défaut `warn`, pour qu'un contexte passe en modules un commit à la fois. |
+| `module/no-cycle` | Les imports entre les modules d'un même contexte ne forment aucun cycle. Sévérité par défaut `warn` : le couplage entre modules est un signal pour changer le modèle (Evans, Modules), pas un refus. |
 | `naming/suffix` | Un fichier d'un répertoire de rôle porte le suffixe du rôle, en kebab-case. `domain/errors/codes.ts`, la liste des codes d'un contexte, est le seul fichier nommé autrement. |
 | `naming/one-concept-per-file` | Un seul agrégat, entité, objet-valeur, événement, gestionnaire, *job* ou projection exporté par fichier, et une seule classe déclarée par fichier de rôle. |
 | `naming/search-not-list` | Une lecture qui prend des critères, un périmètre ou une page est une recherche. Dans un contexte, aucune méthode ne s'appelle `list`, ou `list` suivi d'une majuscule (`listByCustomer`), ni dans un port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) ni dans une classe de `infrastructure/` ou de `test/fakes/` : elle s'appelle `search...`. Sous `application/queries/`, aucun dossier ni fichier ne s'appelle `list` ni ne commence par `list-` ou `list.`, et aucune classe ne s'appelle `List` ni ne commence par `List` suivi d'une majuscule : la requête est `Search<Things>Query` dans `search-<things>/`. Une propriété n'est pas jugée, ni `listAccessible`, que le port `Authorizer` du kit exige ; une lecture d'un seul élément ou d'aucun reste `findById` ou `findBy...`. |
@@ -424,7 +450,7 @@ moment où il coûte assez peu pour tourner :
 
 | Analyseur | Tient | Quand |
 |---|---|---|
-| `ddd-ts-kit check` (sans dépendance, au niveau du texte) | seul, la structure et les faits à l'échelle du projet : `tree/*`, `naming/*`, `language/*`, `config/*`, `persistence/migration-history`, `persistence/primary-key-order`, `tenancy/scoped-statement`, `context/no-cycle`, `authz/policy-asked`, `authz/granted`, `authz/scope-narrows`, `test/spec-required`, `test/builder-required`, `test/helper-placed`, `test/acceptance-black-box`, `test/coverage-governed`, `events/defined-in-published-language`, `events/name-declared-once`, `composition/only-in-module`, `declarations/barrel-current`, `declarations/port-adapter-wired`, `imports/alias-declared`, `imports/alias-only` et `imports/extension` dans `test/` et `scripts/` comme sous la racine des sources, l'import qui nomme un répertoire, le côté config de `events/outbox-required` et de `governance/recorded-deviation` (les enregistrements de décision existent), et ce qui doit être unique dans le projet (noms de consommateurs, noms de *jobs*) ou dans un contexte (codes d'erreur, `errors/code-unique`), la liste des codes d'un contexte (`errors/code-listed`), `errors/known-code` et `schema/no-duplicate-shape`, le verrou de `event-sourcing/upcaster-required`. Il tient aussi une approximation rapide de chaque règle de code ci-dessous sauf `domain/*` (hormis `domain/value-object-class`, qu'il lit dans le texte des fichiers), `application/*` et les trois règles de code de `errors/*` ; de `clean/blank-lines` il ne tient que le `return` et les lignes vides aux bords d'un bloc, et il ne tient rien de `clean/formatted` | à chaque écriture d'un fichier (*hook* de l'éditeur), sur les fichiers indexés, en CI |
+| `ddd-ts-kit check` (sans dépendance, au niveau du texte) | seul, la structure et les faits à l'échelle du projet : `tree/*`, `naming/*`, `language/*`, `config/*`, `persistence/migration-history`, `persistence/primary-key-order`, `tenancy/scoped-statement`, `context/no-cycle`, `module/*`, `authz/policy-asked`, `authz/granted`, `authz/scope-narrows`, `test/spec-required`, `test/builder-required`, `test/helper-placed`, `test/acceptance-black-box`, `test/coverage-governed`, `events/defined-in-published-language`, `events/name-declared-once`, `composition/only-in-module`, `declarations/barrel-current`, `declarations/port-adapter-wired`, `imports/alias-declared`, `imports/alias-only` et `imports/extension` dans `test/` et `scripts/` comme sous la racine des sources, l'import qui nomme un répertoire, le côté config de `events/outbox-required` et de `governance/recorded-deviation` (les enregistrements de décision existent), et ce qui doit être unique dans le projet (noms de consommateurs, noms de *jobs*) ou dans un contexte (codes d'erreur, `errors/code-unique`), la liste des codes d'un contexte (`errors/code-listed`), `errors/known-code` et `schema/no-duplicate-shape`, le verrou de `event-sourcing/upcaster-required`. Il tient aussi une approximation rapide de chaque règle de code ci-dessous sauf `domain/*` (hormis `domain/value-object-class`, qu'il lit dans le texte des fichiers), `application/*` et les trois règles de code de `errors/*` ; de `clean/blank-lines` il ne tient que le `return` et les lignes vides aux bords d'un bloc, et il ne tient rien de `clean/formatted` | à chaque écriture d'un fichier (*hook* de l'éditeur), sur les fichiers indexés, en CI |
 | `@ddd-ts-kit/eslint-plugin` (arbre syntaxique) | le code : `layer/*`, les imports de `context/*` et `context/extractable`, `purity/*`, `clean/*` sauf `clean/formatted` (`clean/blank-lines` par deux règles de `@stylistic/eslint-plugin` et `clean/braces` par `curly`, que ses préréglages activent), `domain/*`, `application/*`, `errors/through-factory`, `errors/constructor-not-public`, `errors/factory-name`, `authz/*` sauf `authz/policy-asked`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `aspects/*`, `tracing/*`, `domain-events/*`, `event-sourcing/*` sauf le verrou de `event-sourcing/upcaster-required`, `schema/presentation-only`, `standard/*`, `ports/*`, `scheduling/*`, `lifecycle/*` (de `lifecycle/status-through-machine`, les écritures que montre un fichier ; la machine restée non importée n'est lue que par `ddd-ts-kit check`), `process/*`, `declarations/role-declared`, `declarations/constructor-injection` (qu'il corrige aussi, en retirant une liste redondante), `test/no-mocks`, `imports/alias-only` et `imports/extension` (qu'il corrige aussi), `naming/business-name` (qu'il corrige aussi là où le nom est connu), et le côté commentaire de `governance/recorded-deviation`. `domain/*` sauf `domain/value-object-class`, `application/*` et ces trois règles de `errors/*` ne sont tenus que par lui. De `declarations/constructor-injection` et du côté constructeur de `ports/no-concrete-dependency`, il tient ce que montre un fichier : une interface ou un alias de type déclaré dans un autre fichier et un constructeur hérité d'une autre classe sont lus par `ddd-ts-kit check`. De `domain-events/transactional-before-commit`, il tient ce que montre une classe déclarée ; où vivent les adaptateurs d'un port de `application/ports/` et la phase dans laquelle un fichier de module du style explicite enregistre un gestionnaire ne sont tenus que par `ddd-ts-kit check`. Fait foi quand les deux divergent | sur les fichiers indexés, en CI |
 | Biome (formateur seulement : son linter et son organisateur d'imports sont désactivés) | `clean/formatted` : où va chaque jeton du code, à une largeur de ligne de 120, avec le `biome.json` qu'écrit `init` ; il retire aussi les lignes vides aux bords d'un bloc et ne laisse jamais un corps sur la ligne de ses accolades, ce qui complète `clean/blank-lines` et `clean/braces`. ESLint n'active aucune règle qui décide la même chose | sur les fichiers indexés, en CI |
 | dependency-cruiser (graphe des imports résolu) | les mêmes frontières à travers les barrels et les réexportations, les cycles entre fichiers, les orphelins, les dépendances non déclarées ; sa configuration est générée à partir de la config par `ddd-ts-kit depcruise-config` | en CI |
