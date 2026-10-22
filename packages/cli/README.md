@@ -95,10 +95,13 @@ value of a gateway, the settings of a job) is not, and a note says so. A config 
 read is replaced.
 
 The pipeline uses free tools only. `--ci-extras` adds jobs that need a paid plan on a private
-repository, or report into a merge request only in a paid tier: `codeql`, `dependency-review`
-(GitHub), `gitlab-sast`, `gitlab-secret-detection`, `gitlab-dependency-scanning` (GitLab). The
-list is recorded as `ci.extras` in the config; an unknown name, or a job of a platform `--ci` does
-not cover, is refused. The table of every tool and its conditions:
+repository, report into a merge request only in a paid tier, or spend API tokens on every run:
+`codeql`, `dependency-review` (GitHub), `gitlab-sast`, `gitlab-secret-detection`,
+`gitlab-dependency-scanning` (GitLab), `claude-review` and `claude-triage` (both platforms: Claude
+Code reviews each pull or merge request and posts one comment that neither approves nor blocks,
+and triages a failed run in three lines, read-only; the `gate` job never needs them). The list is
+recorded as `ci.extras` in the config; an unknown name, or a job of a platform `--ci` does not
+cover, is refused. The table of every tool, its cost and its conditions:
 [pipeline/README.md](../../pipeline/README.md#free-by-default-paid-on-request).
 
 An import of a file of the project is written without an extension
@@ -550,8 +553,8 @@ config, `docsUi`, `ci` and `logger` included.
 | `knip.json` | dead code: entry points are `main.ts` and `apps/*/main.ts`, the scripts, the specs and the fakes, the module files in the explicit style, the role files under discovery (jobs and publishers included) |
 | `vitest.config.ts` | unit and integration projects, the coverage thresholds read from `ddd-ts-kit.config.json` (`governedCoverage`), per context and layer, in the standard decorator mode `decorators()` of `@ddd-ts-kit/testing/vitest`, which compiles the files holding a decorator with the compiler of the project (Vitest does not lower standard decorators; it lowers legacy ones itself, so a project with `experimentalDecorators` gets no plugin), and under `--assembly discovery` `server.deps.inline: ['@ddd-ts-kit/di']` |
 | `lefthook.yml`, `commitlint.config.mjs` | pre-commit (ESLint, the format check and `check` on the staged files, `check --commit-size --staged`, which never blocks), pre-push (types, unit tests) and commit-msg hooks (`npm run hooks:install`), each run by the lefthook of the checkout it fires in (`lefthook: node_modules/.bin/lefthook`: a worktree without its dependencies fails the commit instead of skipping the checks), conventional commits |
-| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node and the dependencies, installed before the Copilot cloud agent starts), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json`; `codeql.yml` with `--ci-extras codeql` |
-| `--ci gitlab` | `.gitlab-ci.yml` (architecture findings as a Code Quality report through `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` |
+| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node and the dependencies, installed before the Copilot cloud agent starts), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json`; `codeql.yml` with `--ci-extras codeql`, `claude-review.yml` and `claude-triage.yml` with `--ci-extras claude-review,claude-triage` |
+| `--ci gitlab` | `.gitlab-ci.yml` (architecture findings as a Code Quality report through `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json`; `.gitlab/claude-review.gitlab-ci.yml` with `--ci-extras claude-review,claude-triage` |
 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | how to run it; a slim guide in `AGENTS.md`, which Codex, Copilot and most coding agents read and `CLAUDE.md` imports (commands, how to read less, the map of the rules, generated files, compiler note, the skills of the plugin: `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) and the invariants in seven rule files, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` and `tests.md`, each scoped by a `paths` frontmatter, and the same seven for GitHub Copilot, each scoped by `applyTo` |
 | `.github/copilot/settings.json` | the plugin of the kit, declared for GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`): its cloud agent installs it, the Copilot CLI and VS Code recommend it; an existing file keeps what it holds and gains the two entries |
 | `.claude/settings.json` | permissions only: the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), the three generated documents are not edited by hand, `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) ask first |

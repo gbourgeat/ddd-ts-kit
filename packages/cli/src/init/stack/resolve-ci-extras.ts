@@ -35,7 +35,7 @@ function refuseUnknown(name: string, ci: string): void {
     );
   }
 
-  if (ci !== platform && ci !== 'both') {
+  if (platform !== 'any' && ci !== platform && ci !== 'both') {
     throw new CliError(
       `--ci-extras ${name} is a job of the ${platform === 'github' ? 'GitHub' : 'GitLab'} pipeline, and --ci is ${ci}.`,
       `Add it with --ci ${platform} or --ci both, or leave it out.`,

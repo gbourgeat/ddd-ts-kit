@@ -1,0 +1,91 @@
+name: Claude review
+
+# Opt-in (--ci-extras claude-review): Claude Code reviews each pull request of the repository's
+# own branches and posts its findings as one comment, which neither approves nor blocks: the gate
+# job of ci.yml never needs this workflow, and branch protection still asks a person. It spends
+# API tokens on every run. The model is reached with ANTHROPIC_API_KEY, a secret of the repository,
+# or through Amazon Bedrock, Google Vertex AI or Microsoft Foundry: uncomment the matching input
+# below and add the credential step of the provider before the action, as its documentation
+# (docs/cloud-providers.md of anthropics/claude-code-action) shows.
+on:
+  pull_request:
+    types: [opened, ready_for_review, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  # A newer commit of the pull request supersedes the review in progress.
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    name: Review by Claude
+    # The repository's own branches only: a fork does not read the secret, and a prompt written in a
+    # fork must not run with it. A draft is reviewed once it is ready.
+    if: ${{ !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The whole history: the diff with the base and the story the branch names.
+          fetch-depth: 0
+      - name: The review policy and the story the branch names, when they exist
+        id: inputs
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          policy=""
+          if [ -f REVIEW.md ]; then policy="REVIEW.md"; fi
+          story=""
+          design=""
+          case "$BRANCH" in
+            story/*)
+              code="${BRANCH#story/}"
+              for file in docs/architecture/stories/*.md; do
+                [ -f "$file" ] || continue
+                name="$(basename "$file" .md)"
+                if [ "$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]')" = "$(printf '%s' "$code" | tr '[:upper:]' '[:lower:]')" ]; then
+                  story="$file"
+                  [ -f "docs/architecture/reviews/$name.md" ] && design="docs/architecture/reviews/$name.md"
+                fi
+              done
+              ;;
+          esac
+          {
+            echo "policy=$policy"
+            echo "story=$story"
+            echo "design=$design"
+          } >> "$GITHUB_OUTPUT"
+      - uses: anthropics/claude-code-action@ae68417a745a5df4b2124873632bd73a2255e6f6 # v1.0.259
+        env:
+          # For `gh pr diff` and `gh pr comment`, run by Claude as shell commands.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # use_bedrock: "true"
+          # use_vertex: "true"
+          # use_foundry: "true"
+          # Read-only tools, the diff and the log of the branch, and the one command that posts the
+          # comment. `--model <id>` here pins a model; the action's default otherwise.
+          claude_args: |
+            --max-turns 40
+            --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"
+          prompt: |
+            Review pull request #${{ github.event.pull_request.number }} of ${{ github.repository }}: read its diff with `gh pr diff ${{ github.event.pull_request.number }}` and the files it touches.
+
+            Policy. When "${{ steps.inputs.outputs.policy }}" names a file, read it first and follow it: its passes, what it calls Important, its cap on nits, the paths it excludes. Without it, the passes are bugs (a wrong business rule, a state an aggregate can reach that it should not, a replay that is not idempotent, a failure path without a test), security (a search not narrowed by the access scope, a field reserved to a permission that leaks in a representation, personal data in a log or an error, an error code not declared on its route) and compliance with the architecture of the project; what `npm run verify` and `npx ddd-ts-kit check` already refuse is reported by the CI, not by you.
+
+            Story. When "${{ steps.inputs.outputs.story }}" names a file, read it: the diff is held to its acceptance criteria and to its decisions. When "${{ steps.inputs.outputs.design }}" names a file, read the section of each row the diff builds: a name of the design that the code does not carry, or a behaviour the design did not foresee, is a finding. A scenario of test/acceptance/ changed without its criterion is Important.
+
+            Do not report generated files: openapi/, docs/integration/, *.declarations.ts, .dependency-cruiser.cjs, clients/, the generated sections of a CONTEXT.md. At most five nits; the rest as a count.
+
+            Post exactly one comment with `gh pr comment ${{ github.event.pull_request.number }} --edit-last --create-if-none --body "<the review>"`. The comment starts with the line `<!-- ddd-ts-kit:claude-review -->`, then the findings, Important ones first, each with its file and line, the pass it belongs to and what to do; then the nits; then one line saying what you could not verify. When nothing is wrong, say so in one line. Never approve, request changes or merge, and never edit a file: a person decides.

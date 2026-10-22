@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7f7fe3fe2a615f20 -->
+<!-- translation-of: README.md sha256:55f5465a41dd3c58 -->
 
 # ddd-ts-kit
 
@@ -100,11 +100,15 @@ qu'un autre générateur avait ajouté à un fichier de la plateforme (la valeur
 réglages d'un *job*) ne l'est pas, et une note le dit. Une configuration illisible est remplacée.
 
 Le *pipeline* n'utilise que des outils gratuits. `--ci-extras` ajoute des *jobs* qui demandent
-une offre payante sur un dépôt privé, ou qui ne remontent dans une *merge request* qu'avec une
-offre payante : `codeql`, `dependency-review` (GitHub), `gitlab-sast`, `gitlab-secret-detection`,
-`gitlab-dependency-scanning` (GitLab). La liste est enregistrée comme `ci.extras` dans la
+une offre payante sur un dépôt privé, qui ne remontent dans une *merge request* qu'avec une
+offre payante, ou qui dépensent des jetons d'API à chaque exécution : `codeql`,
+`dependency-review` (GitHub), `gitlab-sast`, `gitlab-secret-detection`,
+`gitlab-dependency-scanning` (GitLab), `claude-review` et `claude-triage` (les deux plateformes :
+Claude Code relit chaque *pull request* ou *merge request* et publie un commentaire qui
+n'approuve ni ne bloque, et trie une exécution en échec en trois lignes, en lecture seule ; le
+*job* `gate` n'en a jamais besoin). La liste est enregistrée comme `ci.extras` dans la
 configuration ; un nom inconnu, ou un *job* d'une plateforme que `--ci` ne couvre pas, est
-refusé. Le tableau de chaque outil et de ses conditions :
+refusé. Le tableau de chaque outil, de son coût et de ses conditions :
 [pipeline/README.md](../../pipeline/README.md#free-by-default-paid-on-request).
 
 Un import d'un fichier du projet s'écrit sans extension
@@ -569,8 +573,8 @@ choix sont enregistrés sous `stack` dans la configuration, `docsUi`, `ci` et `l
 | `knip.json` | code mort : les points d'entrée sont `main.ts` et `apps/*/main.ts`, les scripts, les *specs* et les *fakes*, les fichiers de module dans le style explicite, les fichiers de rôle sous discovery (*jobs* et *publishers* compris) |
 | `vitest.config.ts` | projets unitaires et d'intégration, les seuils de couverture lus dans `ddd-ts-kit.config.json` (`governedCoverage`), par contexte et par couche, dans le mode des décorateurs standard `decorators()` de `@ddd-ts-kit/testing/vitest`, qui compile les fichiers contenant un décorateur avec le compilateur du projet (Vitest ne transforme pas les décorateurs standard ; il transforme lui-même les anciens, si bien qu'un projet avec `experimentalDecorators` ne reçoit pas de *plugin*), et sous `--assembly discovery` `server.deps.inline: ['@ddd-ts-kit/di']` |
 | `lefthook.yml`, `commitlint.config.mjs` | *hooks* pre-commit (ESLint, la vérification du format et `check` sur les fichiers indexés, `check --commit-size --staged`, qui ne bloque jamais), pre-push (types, tests unitaires) et commit-msg (`npm run hooks:install`), chacun lancé par le lefthook du *checkout* où il se déclenche (`lefthook: node_modules/.bin/lefthook` : un *worktree* sans ses dépendances fait échouer le *commit* au lieu de sauter les vérifications), *commits* conventionnels |
-| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node et les dépendances, installés avant le démarrage de l'agent cloud de Copilot), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json` ; `codeql.yml` avec `--ci-extras codeql` |
-| `--ci gitlab` | `.gitlab-ci.yml` (les constats d'architecture comme rapport Code Quality au moyen de `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` |
+| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node et les dépendances, installés avant le démarrage de l'agent cloud de Copilot), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json` ; `codeql.yml` avec `--ci-extras codeql`, `claude-review.yml` et `claude-triage.yml` avec `--ci-extras claude-review,claude-triage` |
+| `--ci gitlab` | `.gitlab-ci.yml` (les constats d'architecture comme rapport Code Quality au moyen de `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` ; `.gitlab/claude-review.gitlab-ci.yml` avec `--ci-extras claude-review,claude-triage` |
 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | comment le lancer ; un guide léger dans `AGENTS.md`, que lisent Codex, Copilot et la plupart des agents de code et qu'importe `CLAUDE.md` (commandes, comment lire moins, la carte des règles, fichiers générés, note sur le compilateur, les *skills* du *plugin* : `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) et les invariants dans sept fichiers de règles, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` et `tests.md`, chacun délimité par un frontmatter `paths`, et les mêmes sept pour GitHub Copilot, chacun délimité par `applyTo` |
 | `.github/copilot/settings.json` | le *plugin* du kit, déclaré pour GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`) : son agent cloud l'installe, la CLI Copilot et VS Code le recommandent ; un fichier existant garde ce qu'il contient et reçoit les deux entrées |
 | `.claude/settings.json` | des permissions seulement : les vérifications et les générateurs s'exécutent sans demander, les fichiers `.env` sont illisibles (`.env.example` reste lisible), les trois documents générés ne sont pas modifiés à la main, `git push`, `npm publish` et toute modification des fichiers qui portent les règles et le *pipeline* (`ddd-ts-kit.config.json`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) demandent d'abord |

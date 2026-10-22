@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:48b600d5cc9a0239 -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:28cd991d90f3cb64 -->
 
 # L'analyse statique et le pipeline
 
@@ -327,13 +327,17 @@ et sur un poste de travail, `npm run ci:arch`, qui lance les deux.
 | Ce qui la rend obligatoire | un *job* `gate` comme contrôle obligatoire | « pipelines must succeed » |
 | Mises à jour des dépendances | Renovate ou Dependabot | Renovate |
 
-Les *pipelines* qu'écrit `init` n'utilisent que des outils gratuits. Ce qui dépend d'une offre
-est à activer (`init --ci-extras`, `ci.extras` dans la config) : CodeQL et la revue des
-dépendances, gratuits sur les dépôts GitHub publics et payants sur les privés ; le SAST, Secret
-Detection (constats dans la *merge request* sur Ultimate seulement) et Dependency Scanning
-(Ultimate) de GitLab. Sur les deux plateformes, les deux contrôles qui bloquent quelle que soit
-l'offre sont `npm audit` et gitleaks. La table de chaque outil, de sa catégorie et des pages des
-éditeurs où elle a été lue est dans
+Les *pipelines* qu'écrit `init` n'utilisent que des outils gratuits. Ce qui dépend d'une offre,
+ou dépense des jetons d'API, est à activer (`init --ci-extras`, `ci.extras` dans la config) :
+CodeQL et la revue des dépendances, gratuits sur les dépôts GitHub publics et payants sur les
+privés ; le SAST, Secret Detection (constats dans la *merge request* sur Ultimate seulement) et
+Dependency Scanning (Ultimate) de GitLab ; et deux *jobs* qui lancent Claude Code sur les deux
+plateformes, `claude-review` (une revue de chaque *pull request* ou *merge request*, publiée en
+commentaire qui n'approuve ni ne bloque) et `claude-triage` (un triage en trois lignes d'une
+exécution en échec, en lecture seule, dans le résumé du *job* et sur la demande). Aucun des deux
+n'est exigé par le *job* `gate` : une personne approuve toujours. Sur les deux plateformes, les
+deux contrôles qui bloquent quelle que soit l'offre sont `npm audit` et gitleaks. La table de
+chaque outil, de sa catégorie, de son coût et des pages des éditeurs où elle a été lue est dans
 [pipeline/README.md](../../pipeline/README.md#free-by-default-paid-on-request).
 
 Le choix entre les deux est rarement libre : il suit l'endroit où le code est hébergé. Le but de
