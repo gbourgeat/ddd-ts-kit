@@ -112,6 +112,7 @@ limits, and a recommendation by situation.
 | [Team workflow](guides/team-workflow.md) | ownership per context, the glossary, contracts first, review, decisions, onboarding |
 | [Parallel work](guides/parallel-work.md) | several people or agents at once: what is safe, what is sequenced, a concrete plan |
 | [Story workflow](guides/story-workflow.md) | one session per user story, one story per terminal: questions first, design review and acceptance tests before the code, a report of every provisional decision |
+| [Closing the loop](guides/closing-the-loop.md) | from a metric out of its band to the next story: the queries on the metrics the kit emits, a `bands.yaml` with three tiers, what a stateless run needs, the incident record a fix story starts from, what arrives from a chat channel |
 | [Commit discipline](guides/commit-discipline.md) | commit and pull request size, generated files, what hooks and CI enforce |
 | [When to extract microservices](guides/when-to-extract-microservices.md) | the signals, the costs, a readiness checklist, the steps, when to merge back |
 | [Bootstrap with well-designed contexts](guides/bootstrap-with-well-designed-contexts.md) | a generic context written whole with `--preset identity`: what it writes, what it asks of the stack, how it composes with each access model and with tenants |

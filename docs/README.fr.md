@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:39495abc1a2a08c4 -->
+<!-- translation-of: README.md sha256:e2282bb14142f145 -->
 
 # Documentation
 
@@ -116,6 +116,7 @@ a vérifié, les limites, et une recommandation selon la situation.
 | [Travail en équipe](guides/team-workflow.fr.md) | la propriété par contexte, le glossaire, les contrats d'abord, la revue, les décisions, l'arrivée d'un nouveau membre |
 | [Travail en parallèle](guides/parallel-work.fr.md) | plusieurs personnes ou agents à la fois : ce qui est sûr, ce qui est séquencé, un plan concret |
 | [Parcours d'une story](guides/story-workflow.fr.md) | une session par *user story*, une *story* par terminal : les questions d'abord, la revue de conception et les tests d'acceptation avant le code, un rapport de chaque décision provisoire |
+| [Boucler la boucle](guides/closing-the-loop.fr.md) | d'une métrique sortie de sa bande à la prochaine *story* : les requêtes sur les métriques que le kit émet, un `bands.yaml` à trois paliers, ce qu'il faut à une exécution sans état, le compte rendu d'incident d'où part une *story* de correction, ce qui arrive d'un canal de discussion |
 | [Discipline de commit](guides/commit-discipline.fr.md) | la taille d'un *commit* et d'une *pull request*, les fichiers générés, ce que les *hooks* et la CI imposent |
 | [Quand extraire des microservices](guides/when-to-extract-microservices.fr.md) | les signaux, les coûts, une liste de préparation, les étapes, quand refusionner |
 | [Démarrer avec des contextes bien conçus](guides/bootstrap-with-well-designed-contexts.fr.md) | un contexte générique écrit en entier avec `--preset identity` : ce qu'il écrit, ce qu'il demande à la *stack*, comment il se compose avec chaque modèle d'accès et avec les *tenants* |

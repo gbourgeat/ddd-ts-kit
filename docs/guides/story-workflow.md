@@ -42,7 +42,8 @@ docs/architecture/intents/faster-checkout.md` (refused while the intent is not a
 `## Problem` and `## Proposed outcome` seed `## Statement`, each constraint is a question
 answered "by the intent", the open questions join phase 1, and each line of the acceptance the
 author wrote is the first draft of a criterion. An incident record
-(`docs/architecture/incidents/<id>.md`) is accepted the same way, as it is. An intent is not a ticket: a project whose tracker is the source of truth
+(`docs/architecture/incidents/<id>.md`, [closing the loop](closing-the-loop.md)) is accepted the
+same way, as it is. An intent is not a ticket: a project whose tracker is the source of truth
 writes the key in the intent and the path in the ticket, and `## Origin` carries both.
 
 ## The phases

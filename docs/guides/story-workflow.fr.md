@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:ad5ad3cc9123b91b -->
+<!-- translation-of: story-workflow.md sha256:a358a00edb76ba7a -->
 
 # Parcours d'une story : une session par user story
 
@@ -45,7 +45,8 @@ la lit ensuite, `npx ddd-ts-kit story-scope US7 --from docs/architecture/intents
 amorcent `## Statement`, chaque contrainte est une question répondue « par l'intention », les
 questions ouvertes rejoignent la phase 1, et chaque ligne de l'acceptation écrite par l'auteur
 est le premier jet d'un critère. Un compte rendu d'incident
-(`docs/architecture/incidents/<id>.md`) est accepté de la même façon, tel quel. Une intention
+(`docs/architecture/incidents/<id>.md`, [boucler la boucle](closing-the-loop.fr.md)) est accepté
+de la même façon, tel quel. Une intention
 n'est pas un ticket : un projet dont le *tracker* est la source de vérité écrit la clé dans
 l'intention et le chemin dans le ticket, et `## Origin` porte les deux.
 
