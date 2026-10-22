@@ -545,12 +545,16 @@ The attendance record of a patient is kept as its events; its history
   the checkpoint lets one of them apply each batch; the others skip that round (a debug line,
   not an error). A tick that comes while a round runs is skipped.
 - **An erasure.** `DATABASE_URL=<url> npm run erase:patient -- <patientId> <operatorId>`
-  destroys the key the words of the patient were sealed with, writes the erasure to the audit
-  trail, then rebuilds every projection fed by the store (`src/platform/events/erase-data-subject.ts`,
+  checks that the id names a person of some network, destroys the key the words of the patient
+  were sealed with, writes the erasure to the audit trail, then rebuilds every projection fed
+  by the store (`src/platform/events/erase-data-subject.ts`,
   `src/platform/events/erase-on-the-command-line.ts`, `scripts/erase-patient.ts`): the stream and
   the snapshots read `[erased]` at once, and so does the history once rebuilt. A rebuild never
   stops the catch-up, so the API may keep running. Running it again completes an erasure whose
-  entry or rebuild failed.
+  entry or rebuild failed. An id that names nobody is refused before anything is touched (exit
+  code 2): a person belongs to one network and the script to none, so the lookup runs under an
+  elevation over every network, which the trail records (`tenancy:elevate`, reason
+  `PATIENT_ERASURE`) just before the erasure.
 - **The proof of an erasure.** The key store bound by the platform is wrapped by
   `auditedSubjectKeys` (`src/platform/audit/create-audit.ts`), so every erasure, from this script
   or from a use case, writes an entry: action `personal-data:erase`, the patient as a

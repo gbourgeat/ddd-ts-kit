@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:38863b2b4ccca303 -->
+<!-- translation-of: README.md sha256:5ca583e0ce3d52c6 -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -565,13 +565,17 @@ Le registre de présence d'un patient est gardé sous forme de ses événements 
   sautent ce tour (une ligne de débogage, pas une erreur). Un déclenchement qui arrive pendant
   qu'un tour s'exécute est sauté.
 - **Un effacement.** `DATABASE_URL=<url> npm run erase:patient -- <patientId> <operatorId>`
-  détruit la clé avec laquelle les paroles du patient ont été scellées, écrit l'effacement dans le
-  journal d'audit, puis reconstruit chaque projection alimentée par le store
-  (`src/platform/events/erase-data-subject.ts`, `src/platform/events/erase-on-the-command-line.ts`,
-  `scripts/erase-patient.ts`) : le flux et les *snapshots* affichent `[erased]` immédiatement, et
-  l'historique aussi une fois reconstruit. Une reconstruction n'arrête jamais le rattrapage, donc
-  l'API peut continuer de tourner. Le relancer achève un effacement dont l'entrée ou la
-  reconstruction a échoué.
+  vérifie que l'id nomme une personne d'un réseau, détruit la clé avec laquelle les paroles du
+  patient ont été scellées, écrit l'effacement dans le journal d'audit, puis reconstruit chaque
+  projection alimentée par le store (`src/platform/events/erase-data-subject.ts`,
+  `src/platform/events/erase-on-the-command-line.ts`, `scripts/erase-patient.ts`) : le flux et
+  les *snapshots* affichent `[erased]` immédiatement, et l'historique aussi une fois reconstruit.
+  Une reconstruction n'arrête jamais le rattrapage, donc l'API peut continuer de tourner. Le
+  relancer achève un effacement dont l'entrée ou la reconstruction a échoué. Un id qui ne nomme
+  personne est refusé avant que quoi que ce soit ne soit touché (code de sortie 2) : une personne
+  appartient à un réseau et le script à aucun, donc la recherche tourne sous une élévation sur
+  tous les réseaux, que le journal enregistre (`tenancy:elevate`, raison `PATIENT_ERASURE`) juste
+  avant l'effacement.
 - **La preuve d'un effacement.** Le stockage des clés lié par la plateforme est décoré par
   `auditedSubjectKeys` (`src/platform/audit/create-audit.ts`), donc chaque effacement, depuis ce
   script ou depuis un cas d'usage, écrit une entrée : action `personal-data:erase`, le patient
