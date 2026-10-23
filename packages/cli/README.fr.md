@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4274a8d0abcf48c0 -->
+<!-- translation-of: README.md sha256:ec64bfaca496b3c2 -->
 
 # ddd-ts-kit
 
@@ -2341,7 +2341,7 @@ projet est ignoré.
 ## lint
 
 ```
-ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix]
+ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix] [--no-cache]
 ```
 
 Ce que lancent `lint` et `ci:lint` d'un projet généré : l'ESLint du projet, par son API, sur les
@@ -2353,6 +2353,17 @@ nomme la version où elle devient une erreur. Ceux-là sont affichés dans le ra
 après lui, une ligne par règle, sans échouer : une mise à jour du kit ne fait jamais passer au
 rouge un lint vert. Sans ESLint installé, il sort en 2 et nomme l'installation. Voir
 [Base de qualité](../../docs/tools/quality-baseline.fr.md#un-avertissement-fait-échouer-le-lint).
+
+La commande linte avec le cache d'ESLint, indexé par le contenu de chaque fichier
+(`.eslintcache/`, ignoré par git) : une seconde exécution sur un arbre qui n'a pas changé ne
+linte que les fichiers changés depuis. Le cache est indexé par les fichiers et la config, pas
+par les règles telles qu'installées, donc la commande l'abandonne quand le *lockfile*,
+`eslint.config.mjs` ou `ddd-ts-kit.config.json` ont changé depuis son écriture. Le job de lint du
+*pipeline* généré restaure, sur une *pull request* ou une *merge request*, le cache que la branche
+par défaut a écrit en dernier pour les mêmes *lockfile* et config ; la branche par défaut et la
+nuit lintent tout, ce qui voit aussi un type changé dans un autre fichier, et l'écrivent.
+`--no-cache` relinte chaque fichier, comme avant une *pull request* quand un type a changé : le
+cache est laissé tel quel.
 
 ## rules, explain
 
