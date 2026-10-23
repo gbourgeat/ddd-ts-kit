@@ -19,7 +19,7 @@ export interface ModuleRequest {
  * Where the generators read and write the files of a context, named as they are without modules
  * and at their place of today: the workspace reads each where it is and writes it in the module
  * `--module` names, writes the code list and the permission set of a context at its root unless
- * the project still holds them where 0.86 wrote them (`contextFilePlacement`), and the imports
+ * the project still holds them where 0.86 and 0.87 wrote them (`contextFilePlacement`), and the imports
  * written follow. Answers what stops it, before the generated declarations are derived from the
  * tree.
  */

@@ -13,7 +13,7 @@ export type CodeTypesIgnored = 'rewritten' | 'unchanged' | 'absent' | 'unreadabl
 
 /**
  * The code types knip is told to leave alone, named where the code lists are: at the root of each
- * context, and where 0.86 kept them as long as one context still holds a list there. Only a config
+ * context, and where 0.86 and 0.87 kept them as long as one context still holds a list there. Only a config
  * that already ignores the code types is touched, the patterns kept where they were among the others.
  */
 export function ignoreCodeTypesWhereTheyAre(ws: Workspace, config: Config): CodeTypesIgnored {

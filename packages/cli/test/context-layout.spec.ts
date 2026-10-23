@@ -31,7 +31,7 @@ describe('the code list and the permission set of a context', () => {
   });
 });
 
-describe('a project that keeps them where 0.86 wrote them', () => {
+describe('a project that keeps them where 0.86 and 0.87 wrote them', () => {
   beforeAll(() => toEarlierLayout());
 
   it('is warned about by tree/closed, which passes, and names the command that moves them', () => {
@@ -50,7 +50,7 @@ describe('a project that keeps them where 0.86 wrote them', () => {
     expect(cli(root, 'check', '--rule', 'tree/closed').stdout).toContain('npx ddd-ts-kit context-layout');
   });
 
-  it('is generated into where it is: a new permission joins the set of 0.86, and its import names it there', () => {
+  it('is generated into where it is: a new permission joins the set of 0.86 and 0.87, and its import names it there', () => {
     const generated = cli(
       root,
       'generate',
@@ -144,7 +144,7 @@ describe('a project that keeps them where 0.86 wrote them', () => {
   });
 });
 
-/** The project of the spec as 0.86 laid it out: the files of billing in their role folders, knip told of them there. */
+/** The project of the spec as 0.86 and 0.87 laid it out: the files of billing in their role folders, knip told of them there. */
 function toEarlierLayout(): void {
   toEarlierPlaces(root, ['billing']);
 

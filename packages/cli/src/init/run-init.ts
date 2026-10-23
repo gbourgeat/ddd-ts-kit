@@ -114,7 +114,7 @@ function configText(ws: Workspace, config: Config): string {
  * value a gateway is given, the settings of a job) is not known here, and is said.
  */
 function rewireContexts(ws: Workspace, config: Config): void {
-  // A project initialised again may keep its code lists and permission sets where 0.86 wrote them.
+  // A project initialised again may keep its code lists and permission sets where 0.86 and 0.87 wrote them.
   placeContextFiles(ws, config);
 
   const present = Object.entries(config.contexts).filter(([name]) => ws.exists(`${config.contextsDir}/${name}`));
@@ -174,7 +174,7 @@ function writeFiles(ws: Workspace, { config, projectName, flat }: Written): void
     ws.create(kept === undefined ? target : `${kept}.ts`, target === KNIP_FILE ? laidOut(content) : content);
   }
 
-  // Initialised again, a project may keep code lists where 0.86 wrote them: knip is told of both places.
+  // Initialised again, a project may keep code lists where 0.86 and 0.87 wrote them: knip is told of both places.
   ignoreCodeTypesWhereTheyAre(ws, config);
 
   if (flat.moved.size > 0) {

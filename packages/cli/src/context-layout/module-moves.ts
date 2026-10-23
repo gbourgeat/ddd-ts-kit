@@ -33,7 +33,7 @@ interface Placed {
 }
 
 /**
- * The moves that give each module of a context its folder: what 0.86 put under `domain/<module>/`
+ * The moves that give each module of a context its folder: what 0.86 and 0.87 put under `domain/<module>/`
  * and `application/<module>/` goes to `<module>/domain/` and `<module>/application/`; an adapter,
  * a route or a spec left at the level of the context goes to the module of what it imports (or,
  * for a spec, of the file it is named after), or of what imports it when it imports nothing of a
