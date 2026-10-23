@@ -3,8 +3,8 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
-import { MarkAppointmentNoShowCommand } from '@/contexts/scheduling/application/commands/mark-appointment-no-show/mark-appointment-no-show.command';
-import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
+import { MarkAppointmentNoShowCommand } from '@/contexts/scheduling/application/calendars/commands/mark-appointment-no-show/mark-appointment-no-show.command';
+import type { Appointment } from '@/contexts/scheduling/domain/calendars/aggregates/appointment.aggregate';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 

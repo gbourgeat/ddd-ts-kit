@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { CacheTagHeader, controllerRoute, createErrorMapper, executeRoute, type RawHeaders } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus } from '@ddd-ts-kit/kernel';
 import { errorStatuses } from '@/platform/http/error-statuses';
-import { UnknownCalendar } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
-import { GetOpeningHoursQuery } from '@/contexts/scheduling/application/queries/get-opening-hours/get-opening-hours.query';
+import { UnknownCalendar } from '@/contexts/scheduling/domain/calendars/errors/unknown-calendar.error';
+import { GetOpeningHoursQuery } from '@/contexts/scheduling/application/calendars/queries/get-opening-hours/get-opening-hours.query';
 import { GetOpeningHoursController } from '@/contexts/scheduling/presentation/http/calendars/get-opening-hours/get-opening-hours.controller';
 
 const errorMapper = createErrorMapper(errorStatuses);

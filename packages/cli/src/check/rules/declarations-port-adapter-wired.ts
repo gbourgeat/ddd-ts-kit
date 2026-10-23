@@ -12,6 +12,7 @@ import { isDeclaredStyle } from '../support/is-declared-style.js';
 import { isPortFile } from '../support/is-port-file.js';
 import { pathInContext } from '../support/path-in-context.js';
 import { perFile } from '../support/per-file.js';
+import { WITHOUT_MODULE } from '../../model-modules/index.js';
 
 /** The decorators that declare a class of infrastructure/: `@Repository`, `@Gateway`, `@Adapter`. */
 const ADAPTER_DECORATORS = [
@@ -128,7 +129,7 @@ function isDeclared(file: SourceFile, project: Project, shape: ClassShape): bool
     return true;
   }
 
-  return shape.isExported && declaredRoleOf(pathInContext(project, file) ?? '') !== undefined;
+  return shape.isExported && declaredRoleOf(pathInContext(project, file) ?? '', WITHOUT_MODULE) !== undefined;
 }
 
 function unwired({ shape, port, repository }: Implementation, project: Project, context: string): Finding {

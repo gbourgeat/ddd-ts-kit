@@ -1,11 +1,11 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { anExecutionContext } from '@ddd-ts-kit/testing';
 import { Criteria, offsetPage, scoped, FixedExecutionScope } from '@ddd-ts-kit/kernel';
-import type { AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
-import { AgendaProjection } from '@/contexts/scheduling/application/projections/agenda.projection';
-import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
-import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
-import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
+import type { AgendaEntry } from '@/contexts/scheduling/application/calendars/ports/agenda.port';
+import { AgendaProjection } from '@/contexts/scheduling/application/calendars/projections/agenda.projection';
+import { AppointmentBooked } from '@/contexts/scheduling/domain/calendars/events/appointment-booked.event';
+import { AppointmentCancelled } from '@/contexts/scheduling/domain/calendars/events/appointment-cancelled.event';
+import { Cancellation } from '@/contexts/scheduling/domain/calendars/value-objects/cancellation.vo';
 import { KnexAgenda } from '@/contexts/scheduling/infrastructure/persistence/knex-agenda.repository';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder';

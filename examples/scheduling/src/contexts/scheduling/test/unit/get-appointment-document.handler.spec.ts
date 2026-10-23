@@ -8,9 +8,9 @@ import { FileStorage, FixedClock, InMemoryFileStorage } from '@ddd-ts-kit/kernel
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
-import { GetAppointmentDocumentQuery } from '@/contexts/scheduling/application/queries/get-appointment-document/get-appointment-document.query';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
-import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
+import { GetAppointmentDocumentQuery } from '@/contexts/scheduling/application/calendars/queries/get-appointment-document/get-appointment-document.query';
+import { AppointmentRepository } from '@/contexts/scheduling/domain/calendars/repositories/appointment.repository';
+import type { Appointment } from '@/contexts/scheduling/domain/calendars/aggregates/appointment.aggregate';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 import { anAttachedDocument } from '@/contexts/scheduling/test/builders/attached-document.builder';
 import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';

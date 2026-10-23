@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { WaitlistSlotOffered } from '@/contexts/scheduling/domain/events/waitlist-slot-offered.event';
-import { Offer } from '@/contexts/scheduling/domain/value-objects/offer.vo';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
-import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
+import { WaitlistSlotOffered } from '@/contexts/scheduling/domain/waitlist/events/waitlist-slot-offered.event';
+import { Offer } from '@/contexts/scheduling/domain/waitlist/value-objects/offer.vo';
+import { Slot } from '@/contexts/scheduling/domain/calendars/value-objects/slot.vo';
+import { Waiter } from '@/contexts/scheduling/domain/waitlist/value-objects/waiter.vo';
 
 describe('WaitlistSlotOffered', () => {
   it('is named after the context, the aggregate and the fact', () => {

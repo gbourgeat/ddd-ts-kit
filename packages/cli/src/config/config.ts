@@ -12,8 +12,20 @@ export interface ContextConfig {
   readonly classification: string;
   readonly upstreams: readonly Upstream[];
   readonly extraDirectories: readonly string[];
+  /** The modules of the model the context is divided into, `contexts.<name>.modules`; empty while it is one piece. */
+  readonly modules: readonly ModuleConfig[];
   /** True once the context has its own entry point under `apps/<context>/main.ts`. */
   readonly deployable: boolean;
+}
+
+/**
+ * A module of the model of a context (Evans, Modules): one folder level under `domain/` and
+ * `application/`, named in the ubiquitous language of the context.
+ */
+export interface ModuleConfig {
+  readonly name: string;
+  /** The classification of the subdomain the module holds; undefined when it is that of its context. */
+  readonly classification?: string;
 }
 
 /** A recorded departure from the defaults: what it relaxes, the decision record that allows it, and why. */

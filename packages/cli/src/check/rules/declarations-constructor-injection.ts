@@ -9,6 +9,7 @@ import { inContext } from '../support/in-context.js';
 import { isDeclaredStyle } from '../support/is-declared-style.js';
 import { pathInContext } from '../support/path-in-context.js';
 import { perFile } from '../support/per-file.js';
+import { WITHOUT_MODULE } from '../../model-modules/index.js';
 
 export const declarationsConstructorInjection: Rule = {
   id: 'declarations/constructor-injection',
@@ -24,7 +25,7 @@ export const declarationsConstructorInjection: Rule = {
       if (
         !inContext(file.location) ||
         file.isTest ||
-        declaredRoleOf(pathInContext(project, file) ?? '') === undefined
+        declaredRoleOf(pathInContext(project, file) ?? '', WITHOUT_MODULE) === undefined
       ) {
         return [];
       }

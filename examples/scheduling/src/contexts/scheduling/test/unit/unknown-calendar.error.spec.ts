@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { UnknownCalendar } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
+import { UnknownCalendar } from '@/contexts/scheduling/domain/calendars/errors/unknown-calendar.error';
 
 describe('UnknownCalendar', () => {
   it('refuses with the code UNKNOWN_CALENDAR, its message and its facts', () => {

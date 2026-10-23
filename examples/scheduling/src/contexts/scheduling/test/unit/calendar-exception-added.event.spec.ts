@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CalendarExceptionAdded } from '@/contexts/scheduling/domain/events/calendar-exception-added.event';
+import { CalendarExceptionAdded } from '@/contexts/scheduling/domain/calendars/events/calendar-exception-added.event';
 
 describe('CalendarExceptionAdded', () => {
   it('is named after the context, the aggregate and the fact', () => {

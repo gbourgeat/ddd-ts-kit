@@ -18,7 +18,7 @@ export const USAGE = `Usage
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk]
                   [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
-  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
+  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--module <module>] [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
   ddd-ts-kit generate --help --json
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
@@ -50,6 +50,7 @@ export const USAGE = `Usage
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]
   ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]
+  ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
   ddd-ts-kit affected --base <git-ref> --run <script>
   ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--explain] [--self]

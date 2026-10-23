@@ -9,8 +9,10 @@ import { renderFolderDeclarations } from './render-folder-declarations.js';
  * the imports and the `injected(Class, [Tokens])` of every class of the context that takes
  * something. Only `keepsSingleFile` reads it, to recognise a project that has not moved yet.
  */
-export function singleFileDeclarations({ directory, entries, sources, specifierOf }: DeclaredContext): string {
-  const injected = renderInjections(contextInjections(sources, directory, entries), specifierOf);
+export function singleFileDeclarations({ directory, entries, sources, modules, specifierOf }: DeclaredContext): string {
+  const injected = renderInjections(contextInjections(sources, { directory, entries, modules }), specifierOf);
 
-  return renderFolderDeclarations(entries, (entry) => specifierOf(`${directory}/${entry}`), injected);
+  const naming = { specifierOf: (entry: string) => specifierOf(`${directory}/${entry}`), modules };
+
+  return renderFolderDeclarations(entries, naming, injected);
 }

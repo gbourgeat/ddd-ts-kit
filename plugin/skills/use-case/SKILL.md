@@ -69,6 +69,17 @@ npx ddd-ts-kit generate domain-event <ctx> <Aggregate> <Fact> --json  # the fact
 npx ddd-ts-kit generate route <ctx> <UseCase> --method POST --path /<resource> --json   # [--group <Name>] [--mapper] [--serializer]
 ```
 
+In a context divided into modules of the model (a `## Modules` section in its `CONTEXT.md`),
+add `--module <module>` to every `generate` of the slice: the module whose terms the use case
+speaks. The generator refuses without it and names the modules; it finds the aggregate, events
+and ports in whatever module holds them. The code list and the permission set stay at the level
+of the context. A use case that needs two modules belongs to the one that decides.
+
+A handler whose constructor grows long is a smell, not a limit: walk the table of
+`docs/guides/many-dependencies.md` (a middleware, an event handler, a projection, a process
+manager, one port named in the language, a domain service, or two use cases) before adding a
+dependency.
+
 Decide who holds the permission before you generate: in a project whose rights are roles
 (`stack.authz` `rbac`), `--grant <role>` writes the grant in `platform/auth/roles/roles.ts` and adds
 the role to `role.ts` when it is new. Without it, only the super-admin `*` reaches the use case,

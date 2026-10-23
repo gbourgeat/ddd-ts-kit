@@ -6,8 +6,8 @@ import {
   announceDomainEvents,
   unitOfWorkStage,
 } from '@ddd-ts-kit/kernel';
-import { CalendarTimeOffAddedEventHandler } from '@/contexts/scheduling/application/event-handlers/calendar-time-off-added.event-handler';
-import { CalendarTimeOffAdded } from '@/contexts/scheduling/domain/events/calendar-time-off-added.event';
+import { CalendarTimeOffAddedEventHandler } from '@/contexts/scheduling/application/calendars/event-handlers/calendar-time-off-added.event-handler';
+import { CalendarTimeOffAdded } from '@/contexts/scheduling/domain/calendars/events/calendar-time-off-added.event';
 
 describe('When time off is added to a calendar', () => {
   it('asks, before the commit, for the answers filed under the calendar to be purged after it', async () => {

@@ -11,6 +11,7 @@ import type { Scope } from '../scope.js';
 import { vars } from '../vars.js';
 import { reactionOf } from './e2e/reaction-of.js';
 import { tracedCommand } from './traced-command.js';
+import { declaredModules } from '../../model-modules/index.js';
 
 export const e2eKind: Kind = {
   name: 'e2e',
@@ -122,7 +123,16 @@ function functionRoute(route: string): Declared | undefined {
 /** The controller of the use case, wherever its folder is, read with the prefix and the guards of its groups. */
 function controllerOf(scope: Scope, name: Name): Declared | undefined {
   const { ws, config, context, dir } = scope;
-  const sources = { ws, config, name: context.kebab, directory: dir, module: '' };
+
+  const sources = {
+    ws,
+    config,
+    name: context.kebab,
+    directory: dir,
+    modules: declaredModules(config, context.kebab),
+    module: '',
+  };
+
   const route = readControllers(sources, []).find(({ file }) => file.endsWith(`/${name.kebab}.controller.ts`));
   const [response] = route?.responses ?? [];
 

@@ -10,6 +10,7 @@ import { KEBAB_SEGMENT } from '../support/kebab-segment.js';
 import { pathInContext } from '../support/path-in-context.js';
 import { perFile } from '../support/per-file.js';
 import { roleDirectory } from '../support/role-directory.js';
+import { WITHOUT_MODULE } from '../../model-modules/index.js';
 
 export const namingSuffix: Rule = {
   id: 'naming/suffix',
@@ -28,7 +29,7 @@ export const namingSuffix: Rule = {
       }
 
       const relative = pathInContext(project, file) ?? '';
-      const generated = isDeclaredStyle(project) && isDeclarationsFile(file.location.context, relative);
+      const generated = isDeclaredStyle(project) && isDeclarationsFile(file.location.context, relative, WITHOUT_MODULE);
 
       // The routes of a context are one list named after it instead of a role, in either style;
       // the generated declarations of a role folder are named after the folder.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { OpeningHours } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo';
-import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
+import { OpeningHours } from '@/contexts/scheduling/domain/calendars/value-objects/opening-hours.vo';
+import { Range } from '@/contexts/scheduling/domain/calendars/value-objects/range.vo';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 
 const morning = range('09:00', '12:00');

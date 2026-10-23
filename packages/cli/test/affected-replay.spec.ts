@@ -10,7 +10,7 @@ const example = readConfig(EXAMPLE).config;
 const KNOWN_CHANGE_SETS: readonly (readonly [string, readonly string[], readonly string[]])[] = [
   [
     'a rule of the booking aggregate',
-    ['src/contexts/scheduling/domain/aggregates/appointment.aggregate.ts'],
+    ['src/contexts/scheduling/domain/calendars/aggregates/appointment.aggregate.ts'],
     ['scheduling', 'notification', 'analytics'],
   ],
   [

@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:7bdf314bc7d8d695 -->
+<!-- translation-of: CONFIG.md sha256:9c845f1ce5229f44 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -551,6 +551,8 @@ Tant que ce n'est pas fait, la règle peut rester à `warn` sous `rules`, enregi
 | `contexts.<name>.upstreams[].relationship` | `published-language`, `customer-supplier`, `conformist`, `anti-corruption-layer`, `open-host-service`, `shared-kernel` | `published-language` |
 | `contexts.<name>.extraDirectories[]` | un chemin dans le contexte, ou `{ "path", "reason" }` : un répertoire ajouté à l'arborescence canonique. Chacun est une dérogation | `[]` |
 | `contexts.<name>.deployable` | `true`, `false` : le contexte a son propre point d'entrée `src/apps/<name>/main.ts` ; `generate service <name>` la pose | `false` |
+| `contexts.<name>.modules` | `{ "<module>": {} }` : les modules du modèle du contexte, chacun un dossier placé directement sous `domain/` et `application/` ([Modules du modèle](concepts/modules.fr.md)). Un nom est en kebab-case, unique dans le contexte, et jamais le nom d'un dossier de rôle (`aggregates`, `commands`...) ; `generate module <context> <module>` l'écrit | aucun |
+| `contexts.<name>.modules.<module>.classification` | `core`, `supporting`, `generic` : le sous-domaine que le module porte, quand il diffère de la classification de son contexte | la classification du contexte |
 
 Les contextes de la configuration et les répertoires de `contextsDir` doivent former le même
 ensemble.

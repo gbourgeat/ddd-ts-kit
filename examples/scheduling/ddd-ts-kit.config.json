@@ -50,7 +50,11 @@
           "context": "identity",
           "relationship": "customer-supplier"
         }
-      ]
+      ],
+      "modules": {
+        "calendars": {},
+        "waitlist": {}
+      }
     },
     "notification": {
       "classification": "supporting",

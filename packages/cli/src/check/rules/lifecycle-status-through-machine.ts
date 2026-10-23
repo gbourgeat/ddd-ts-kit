@@ -44,11 +44,12 @@ function byHand(file: SourceFile): Finding[] {
 
 /**
  * `domain/aggregates/appointment.aggregate.ts` and `domain/state-machines/appointment.state-machine.ts`
- * go together once the aggregate writes a status: a machine just generated waits for its field.
+ * go together once the aggregate writes a status, in the same module of the model when there is one: a
+ * machine just generated waits for its field.
  */
 function machineUnused(file: SourceFile, project: Project): Finding[] {
   const machine = file.path
-    .replace('/domain/aggregates/', '/domain/state-machines/')
+    .replace(/(\/domain\/(?:[^/]+\/)?)aggregates\//, '$1state-machines/')
     .replace(/\.aggregate\.ts$/, '.state-machine.ts');
 
   if (

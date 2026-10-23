@@ -4,7 +4,7 @@ import {
   AttendanceHistory,
   attendanceHistoryCriteria,
   type AttendanceEntry,
-} from '@/contexts/scheduling/application/ports/attendance-history.port';
+} from '@/contexts/scheduling/application/calendars/ports/attendance-history.port';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
 
 @Repository(AttendanceHistory)

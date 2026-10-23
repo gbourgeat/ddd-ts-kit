@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { TimeOffCoversAppointments } from '@/contexts/scheduling/domain/errors/time-off-covers-appointments.error';
+import { TimeOffCoversAppointments } from '@/contexts/scheduling/domain/calendars/errors/time-off-covers-appointments.error';
 
 describe('TimeOffCoversAppointments', () => {
   it('refuses with the code TIME_OFF_OVER_APPOINTMENTS, its message and its facts', () => {

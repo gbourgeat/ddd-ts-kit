@@ -17,6 +17,7 @@ import { perFile } from '../support/per-file.js';
 import { reporter } from '../support/reporter.js';
 import { toViolations } from '../support/to-violations.js';
 import { braceDepthAt } from '../text/brace-depth-at.js';
+import { WITHOUT_MODULE } from '../../model-modules/index.js';
 
 const SCHEMA_CALL = /(?<![\w$])(?:schemaNameOf|contextSchema|pgSchema|withSchema)\s*\(\s*$/;
 
@@ -44,7 +45,9 @@ export const contextExtractable: Rule = {
         return [];
       }
 
-      const declares = isDeclaredStyle(project) && declaredRoleOf(pathInContext(project, file) ?? '') !== undefined;
+      const declares =
+        isDeclaredStyle(project) && declaredRoleOf(pathInContext(project, file) ?? '', WITHOUT_MODULE) !== undefined;
+
       const ties = file.imports.flatMap((module) => foreignTie(module, here, declares));
 
       return [...ties, ...foreignSchemas(file, here, contexts), ...sharedState(file)];

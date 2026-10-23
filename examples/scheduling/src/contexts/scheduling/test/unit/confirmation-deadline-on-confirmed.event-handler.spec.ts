@@ -6,10 +6,10 @@ import { ProcessRunner } from '@ddd-ts-kit/kernel';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
-import { ConfirmationDeadlineOnBookedEventHandler } from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-booked.event-handler';
-import { ConfirmationDeadlineOnConfirmedEventHandler } from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-confirmed.event-handler';
-import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
-import { AppointmentConfirmed } from '@/contexts/scheduling/domain/events/appointment-confirmed.event';
+import { ConfirmationDeadlineOnBookedEventHandler } from '@/contexts/scheduling/application/calendars/event-handlers/confirmation-deadline-on-booked.event-handler';
+import { ConfirmationDeadlineOnConfirmedEventHandler } from '@/contexts/scheduling/application/calendars/event-handlers/confirmation-deadline-on-confirmed.event-handler';
+import { AppointmentBooked } from '@/contexts/scheduling/domain/calendars/events/appointment-booked.event';
+import { AppointmentConfirmed } from '@/contexts/scheduling/domain/calendars/events/appointment-confirmed.event';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 const deadline = new Date('2026-03-01T12:00:00.000Z');

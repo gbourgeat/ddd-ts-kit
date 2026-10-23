@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute, type Route } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus, type QueryBus } from '@ddd-ts-kit/kernel';
-import { GetCalendarDayQuery } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query';
-import type { GetCalendarDayResult } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.result';
-import { UnknownCalendar } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
+import { GetCalendarDayQuery } from '@/contexts/scheduling/application/calendars/queries/get-calendar-day/get-calendar-day.query';
+import type { GetCalendarDayResult } from '@/contexts/scheduling/application/calendars/queries/get-calendar-day/get-calendar-day.result';
+import { UnknownCalendar } from '@/contexts/scheduling/domain/calendars/errors/unknown-calendar.error';
 import { GetCalendarDayController } from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.controller';
 import { GetCalendarDaySerializer } from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.serializer';
 

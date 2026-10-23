@@ -860,6 +860,72 @@ test('the shell only reads, versions or checks the lock and the verdicts of an a
   assert.equal(decision(run('pre-bash', bash(root, 'npx ddd-ts-kit acceptance US5 --lock', judge))), 'deny');
 });
 
+test('the declarations of a module of the model are generated too, and a module is declared by the conductor', () => {
+  const root = project();
+  const declared = spawnSync(
+    'node',
+    [
+      cli,
+      'generate',
+      'module',
+      'ordering',
+      'orders',
+      '--purpose',
+      'The orders.',
+      '--term',
+      'Order=What a customer asks for',
+    ],
+    { cwd: root, encoding: 'utf8' },
+  );
+  assert.equal(declared.status, 0, declared.stderr);
+  for (const folder of [
+    'application/orders/commands/commands.declarations.ts',
+    'application/orders/orders.declarations.ts',
+  ]) {
+    const declarations = run('pre-write', write(join(root, `src/contexts/ordering/${folder}`)));
+    assert.equal(decision(declarations), 'deny', folder);
+    assert.match(reason(declarations), /generated declarations .* ddd-ts-kit docs/, folder);
+  }
+  const undeclared = run(
+    'pre-write',
+    write(join(root, 'src/contexts/ordering/application/legacy/commands/commands.declarations.ts')),
+  );
+  assert.doesNotMatch(undeclared.output === undefined ? '' : reason(undeclared), /generated declarations/);
+  const service = run(
+    'pre-write',
+    write(join(root, 'src/contexts/ordering/domain/orders/services/pricing.service.ts')),
+  );
+  assert.equal(decision(service), 'deny');
+  assert.match(reason(service), /generate domain-service /);
+  const agent = worker(root);
+  const declaring = run(
+    'pre-bash',
+    bash(root, 'npx ddd-ts-kit generate module ordering orders --purpose "Orders."', agent),
+  );
+  assert.equal(decision(declaring), 'deny');
+  assert.match(reason(declaring), /conductor runs it on the trunk/);
+  // Committed once, with a low commit size, so that the files written next are what the stop hook counts as uncommitted.
+  patchConfig(root, { commit: { maxFiles: 3, maxLines: 1000 } });
+  writeFileSync(join(root, '.gitignore'), 'node_modules\n');
+  git(root, 'init', '--quiet');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
+  const session = { cwd: root, session_id: `s-${root}` };
+  assert.equal(run('stop', session).output, undefined);
+  for (const file of [
+    'application/orders/commands/book-order/book-order.notes.md',
+    'application/orders/commands/book-order/book-order.more.md',
+    'application/orders/commands/cancel-order/cancel-order.notes.md',
+    'domain/orders/value-objects/money.notes.md',
+  ]) {
+    put(root, join('src/contexts/ordering', file), 'one\ntwo\n');
+  }
+  const uncommitted = run('stop', session).output.systemMessage;
+  assert.match(uncommitted, /ordering: book-order \(2 files\)/);
+  assert.match(uncommitted, /ordering: cancel-order \(1 files\)/);
+  assert.match(uncommitted, /ordering: domain \(1 files\)/);
+});
+
 test('a context worker does not run a generator that writes shared files or another context', () => {
   const root = project();
   const agent = worker(root);

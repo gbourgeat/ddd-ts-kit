@@ -1,7 +1,7 @@
 import { acceptedSchema, Controller, IfMatch, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { SetOpeningHoursCommand } from '@/contexts/scheduling/application/commands/set-opening-hours/set-opening-hours.command';
+import { SetOpeningHoursCommand } from '@/contexts/scheduling/application/calendars/commands/set-opening-hours/set-opening-hours.command';
 import { SetOpeningHoursParams } from '@/contexts/scheduling/presentation/http/calendars/set-opening-hours/set-opening-hours.params';
 import { SetOpeningHoursBody } from '@/contexts/scheduling/presentation/http/calendars/set-opening-hours/set-opening-hours.body';
 import { CalendarsRoutes } from '@/contexts/scheduling/presentation/http/calendars.routes';

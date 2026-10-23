@@ -20,7 +20,11 @@ export interface Persistence {
   readonly processes: (scope: ExecutionScope) => ProcessStore;
   /** What repositories query through: the transaction of the current unit of work, or the database. */
   readonly database: KnexContext;
-  /** The streams of the event-sourced aggregates, their snapshots, the checkpoints of the subscriptions and the keys of the data subjects. */
+  /**
+   * The streams of the event-sourced aggregates, their snapshots, the checkpoints of the
+   * subscriptions and the keys of the data subjects, as stored: `createAudit` wraps the keys so
+   * that every erasure is recorded, and the application and the scripts erase through that wrapper.
+   */
   readonly eventSourcing: EventSourcingStores;
 
   close(): Promise<void>;

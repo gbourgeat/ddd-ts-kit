@@ -4,8 +4,8 @@ import { InMemoryQueryBus, planCriteria, scoped } from '@ddd-ts-kit/kernel';
 import {
   attendanceHistoryCriteria,
   type AttendanceEntry,
-} from '@/contexts/scheduling/application/ports/attendance-history.port';
-import { SearchAttendanceHistoryQuery } from '@/contexts/scheduling/application/queries/search-attendance-history/search-attendance-history.query';
+} from '@/contexts/scheduling/application/calendars/ports/attendance-history.port';
+import { SearchAttendanceHistoryQuery } from '@/contexts/scheduling/application/calendars/queries/search-attendance-history/search-attendance-history.query';
 import { SearchAttendanceHistoryController } from '@/contexts/scheduling/presentation/http/practices/search-attendance-history/search-attendance-history.controller';
 
 const at = new Date('2026-03-02T09:00:00.000Z');

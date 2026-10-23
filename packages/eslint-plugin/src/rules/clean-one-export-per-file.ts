@@ -113,10 +113,12 @@ function isGenerated(file: LintedFile): boolean {
     return true;
   }
 
-  const [, layer = '', ...inside] = file.path.startsWith(`${contextsDir}/`)
-    ? file.path.slice(contextsDir.length + 1).split('/')
-    : [];
+  // The location leaves the module of the model out: a role folder of a module reads as one of the context.
+  if (file.location.area !== 'context') {
+    return false;
+  }
 
+  const { layer, inside } = file.location;
   const folder = inside.length === 2 ? inside[0] : layer;
 
   return ROLE_LAYERS.includes(layer) && inside.length <= 2 && inside.at(-1) === `${folder}.declarations.ts`;

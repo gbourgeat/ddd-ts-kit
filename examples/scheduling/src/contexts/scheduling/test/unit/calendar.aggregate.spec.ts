@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { given } from '@ddd-ts-kit/testing';
-import { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
-import { AppointmentType } from '@/contexts/scheduling/domain/value-objects/appointment-type.vo';
-import { Exception } from '@/contexts/scheduling/domain/value-objects/exception.vo';
-import { OpeningHours } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo';
-import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
-import { TimeOff } from '@/contexts/scheduling/domain/value-objects/time-off.vo';
-import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';
+import { Calendar } from '@/contexts/scheduling/domain/calendars/aggregates/calendar.aggregate';
+import { AppointmentType } from '@/contexts/scheduling/domain/calendars/value-objects/appointment-type.vo';
+import { Exception } from '@/contexts/scheduling/domain/calendars/value-objects/exception.vo';
+import { OpeningHours } from '@/contexts/scheduling/domain/calendars/value-objects/opening-hours.vo';
+import { Range } from '@/contexts/scheduling/domain/calendars/value-objects/range.vo';
+import { Slot } from '@/contexts/scheduling/domain/calendars/value-objects/slot.vo';
+import { TimeOff } from '@/contexts/scheduling/domain/calendars/value-objects/time-off.vo';
+import { TimeZone } from '@/contexts/scheduling/domain/calendars/value-objects/time-zone.vo';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 
 const paris = TimeZone.create('Europe/Paris');

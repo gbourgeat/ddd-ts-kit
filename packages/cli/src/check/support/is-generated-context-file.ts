@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { dependenciesFile, isDeclarationsFile } from '../../declared/index.js';
+import { WITHOUT_MODULE } from '../../model-modules/index.js';
 import type { SourceFile } from '../model/source-file.js';
 
 /**
@@ -19,5 +20,7 @@ export function isGeneratedContextFile(file: SourceFile): boolean {
       ? path.posix.basename(file.path)
       : [location.layer, ...location.inside].join('/');
 
-  return isDeclarationsFile(location.context, inContext) || inContext === dependenciesFile(location.context);
+  return (
+    isDeclarationsFile(location.context, inContext, WITHOUT_MODULE) || inContext === dependenciesFile(location.context)
+  );
 }

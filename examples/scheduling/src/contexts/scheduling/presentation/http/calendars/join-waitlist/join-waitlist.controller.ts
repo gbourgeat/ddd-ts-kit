@@ -1,7 +1,7 @@
 import { acceptedSchema, Controller, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { JoinWaitlistCommand } from '@/contexts/scheduling/application/commands/join-waitlist/join-waitlist.command';
+import { JoinWaitlistCommand } from '@/contexts/scheduling/application/waitlist/commands/join-waitlist/join-waitlist.command';
 import { JoinWaitlistParams } from '@/contexts/scheduling/presentation/http/calendars/join-waitlist/join-waitlist.params';
 import { JoinWaitlistBody } from '@/contexts/scheduling/presentation/http/calendars/join-waitlist/join-waitlist.body';
 import { CalendarsRoutes } from '@/contexts/scheduling/presentation/http/calendars.routes';

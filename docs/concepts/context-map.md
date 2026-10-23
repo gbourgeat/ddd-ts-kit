@@ -159,6 +159,12 @@ Said plainly:
   and `context/no-cycle` refuses mutual dependence. Two contexts in partnership must still
   choose a direction in the config, or express one direction as an event, and describe the
   partnership in the written part of the context map. The tool has no notion of it.
+  Refusing the cycle is a choice of this kit, so that every context stays extractable, not a
+  rule of Domain-Driven Design: Evans accepts mutual dependence between teams. When two contexts
+  need each other, [A cycle between two contexts](../guides/cycle-between-contexts.md) asks three
+  questions before merging them: one language or two, an event for one direction, a missing
+  concept. Merged contexts that share one language stay readable as
+  [modules of the model](modules.md).
 - The value is a **label with one mechanical effect**: it authorises the import of the
   upstream's published language and appears on the arrow of the generated diagram. The kit does
   not enforce the behaviour a pattern implies. Declaring `anti-corruption-layer` does not check
@@ -279,6 +285,7 @@ the generated part is stale, so the map cannot drift from the config.
 - [A worked example: the context map of the scheduling application](context-map-worked-example.md)
 - [Bounded context](bounded-context.md)
 - [Domain and subdomains](domain-and-subdomains.md)
+- [A cycle between two contexts](../guides/cycle-between-contexts.md)
 - [Domain and integration events](domain-and-integration-events.md)
 - [Event versioning](event-versioning.md)
 - [Team workflow](../guides/team-workflow.md)

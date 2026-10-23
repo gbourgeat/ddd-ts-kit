@@ -6,6 +6,7 @@ import type { MigrationDraft } from './migration-draft.js';
 import type { NamedMove } from './named-move.js';
 import type { NamedPlan } from './named-plan.js';
 import { ownFactory } from './own-factory.js';
+import { pathFromContexts } from './path-from-contexts.js';
 import type { PlannedRefusal } from './planned-refusal.js';
 import type { RefusalSources } from './propose-named-plan.js';
 import { renderFactory } from './render-factory.js';
@@ -98,7 +99,7 @@ function movedFrom(origin: { file: string; context: string }, entry: PlannedRefu
     context: origin.context,
     from: entry.from,
     oldFile: origin.file,
-    oldPath: `${origin.context}/domain/errors/${origin.file.slice(origin.file.lastIndexOf('/') + 1).replace(/\.ts$/, '')}`,
+    oldPath: pathFromContexts(origin.file, origin.context),
     className: entry.class,
     classFile: `${toName(entry.class).kebab}.error`,
     factory: entry.factory,

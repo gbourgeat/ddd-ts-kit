@@ -136,6 +136,7 @@ in the French column is kept in English, because French developers say it that w
 | statement of needs | expression des besoins |
 | domain discovery, event storming | découverte du domaine, *event storming* |
 | modular monolith | monolithe modulaire |
+| module (of the model), sub-context | module (du modèle), sous-contexte |
 | microservice, extraction | microservice, extraction |
 
 ### Tactical design
