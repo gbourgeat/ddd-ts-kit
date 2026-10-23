@@ -59,29 +59,24 @@ function fileStorageFiles(config: Config): InitFile[] {
   ];
 }
 
-const TSYRINGE = [
-  'composition/platform.module.ts',
-  'composition/platform-test.module.ts',
-  'composition/lay-foundations.ts',
-];
+const TSYRINGE = ['composition/platform.module.ts', 'composition/platform-test.module.ts'];
 
-const MANUAL = ['composition/platform.ts', 'composition/create-platform.ts'];
+const MANUAL = ['composition/platform.ts', 'composition/platform-options.ts', 'composition/create-platform.ts'];
+
+/** The same map in both families: what exists before anything else, and the chain around each bus. */
+const BOTH = ['composition/lay-foundations.ts', 'buses/create-command-bus.ts', 'buses/create-query-bus.ts'];
 
 /** What turns the platform and the contexts into an application: modules of `@ddd-ts-kit/di` on tsyringe, a `Platform` handed to each context otherwise. */
 function compositionFiles(config: Config): InitFile[] {
   const family = familyOf(config);
   const file = (name: string, variant?: string): InitFile => platformFile(config, name, variant);
-  const shared = [file('composition/compose-application.ts', family)];
-
-  if (family === 'manual') {
-    return [...shared, ...MANUAL.map((name) => file(name, family)), file('jobs/configured-job-scheduler.ts')];
-  }
+  const own = family === 'manual' ? MANUAL : TSYRINGE;
 
   return [
-    ...shared,
-    ...TSYRINGE.map((name) => file(name, family)),
-    file('buses/create-command-bus.ts'),
-    file('buses/create-query-bus.ts'),
+    file('composition/compose-application.ts', family),
+    ...BOTH.map((name) => file(name, family)),
+    ...own.map((name) => file(name, family)),
+    ...when(family === 'manual', [file('events/platform-events.ts'), file('jobs/configured-job-scheduler.ts')]),
   ];
 }
 

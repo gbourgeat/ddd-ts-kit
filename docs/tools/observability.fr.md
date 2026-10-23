@@ -1,5 +1,5 @@
 [English](observability.md) · **Français**
-<!-- translation-of: observability.md sha256:23874695f88725f8 -->
+<!-- translation-of: observability.md sha256:a3184460588f04af -->
 
 # Observabilité : backends de traçage, *loggers* et suivi des erreurs
 
@@ -307,7 +307,9 @@ identifiant, jamais une saisie d'utilisateur, si bien que le nombre de séries r
 L'exemple ci-dessous condense ce que l'application d'exemple répartit entre
 `src/platform/composition/lay-foundations.ts` (le logger pino et les métriques),
 `src/platform/composition/platform.module.ts` (les liaisons) et `src/platform/observability/errors.ts` (Sentry). Un projet
-généré a ces fichiers sur la famille tsyringe, `errors.ts` seulement avec `--errors sentry`.
+généré a `lay-foundations.ts` dans les deux familles, `platform.module.ts` avec tsyringe (une plateforme
+câblée à la main assemble les mêmes fondations dans `create-platform.ts`) et `errors.ts` seulement avec
+`--errors sentry`.
 L'amorçage du traçage
 (`initTracing` de `@ddd-ts-kit/tracing/node`) n'y figure pas : il vit dans son propre module,
 `src/platform/observability/tracing.ts`, importé en premier par `main.ts`, parce que les instrumentations

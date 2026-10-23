@@ -295,8 +295,9 @@ never user input, so the number of series stays bounded.
 
 The sample condenses what the example application spreads over
 `src/platform/composition/lay-foundations.ts` (the pino logger and the metrics), `src/platform/composition/platform.module.ts`
-(the bindings) and `src/platform/observability/errors.ts` (Sentry). A generated project has these files on the
-tsyringe family, `errors.ts` only with `--errors sentry`. The tracing bootstrap
+(the bindings) and `src/platform/observability/errors.ts` (Sentry). A generated project has
+`lay-foundations.ts` in both families, `platform.module.ts` on tsyringe (a platform wired by hand
+assembles the same foundations in `create-platform.ts`) and `errors.ts` only with `--errors sentry`. The tracing bootstrap
 (`initTracing` of `@ddd-ts-kit/tracing/node`) is not in it: it lives in its own module,
 `src/platform/observability/tracing.ts`, imported first by `main.ts`, because the instrumentations patch
 `http` and the drivers when they are loaded.

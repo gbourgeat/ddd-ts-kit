@@ -95,7 +95,7 @@ describe('init --http-cache', () => {
       'readonly cacheInvalidation: CacheInvalidation;',
     );
 
-    expect(read(byHand, 'src/platform/composition/create-platform.ts')).toContain(
+    expect(read(byHand, 'src/platform/events/platform-events.ts')).toContain(
       'cacheInvalidation: new PublishedCacheInvalidation({ publisher, ids, clock, scope, perTenant: true }),',
     );
 
@@ -103,8 +103,8 @@ describe('init --http-cache', () => {
       'resolveTenant: tenantFromHeader(),',
     );
 
-    expect(read(nest, 'src/platform/composition/create-platform.ts')).toContain(
-      'return { ...events, cacheInvalidation: new PublishedCacheInvalidation({ publisher, ids, clock, scope }) };',
+    expect(read(nest, 'src/platform/events/platform-events.ts')).toContain(
+      'cacheInvalidation: new PublishedCacheInvalidation({ publisher, ids, clock, scope }),',
     );
 
     expect(read(without, 'src/platform/composition/platform.ts')).not.toContain('CacheInvalidation');
