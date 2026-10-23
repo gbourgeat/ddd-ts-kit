@@ -73,18 +73,12 @@ export function writeBusinessDecisions(root: string): void {
     ],
   ]);
 
+  // The schema knows the invoice and who views it: the derived relation named after the search permission grants it.
   edit(root, 'src/platform/auth/relationships/relationship-schema.ts', [
-    [
-      "    permissions: { operate: union('operator') },\n  },",
-      "    permissions: { operate: union('operator') },\n  },\n  invoice: {\n    relations: { viewer: ['user'] },\n    permissions: { view: union('viewer') },\n  },",
-    ],
-  ]);
-
-  edit(root, 'src/platform/auth/relationships/permission-mapping.ts', [
     [/^import \{ permissions \}.*$/m, `$&\n${importOfBillingPermissions(root)}`],
     [
-      "  return { context: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operate'])) };",
-      "  return {\n    context: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operate'])),\n    invoice: { [billingPermissions['invoice.search'].id]: 'view' },\n  };",
+      "    derived: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operator'])),\n  },",
+      "    derived: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operator'])),\n  },\n  invoice: {\n    relations: { viewer: ['user'] },\n    derived: { [billingPermissions['invoice.search'].id]: 'viewer' },\n  },",
     ],
   ]);
 
