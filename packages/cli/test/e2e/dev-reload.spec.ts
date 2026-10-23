@@ -9,7 +9,7 @@ import { SLOW } from './stacks';
 
 const BILLING = 'src/contexts/billing';
 /** The generated declarations of the role folder the handler sits in, where its list is registered. */
-const BARREL = `${BILLING}/application/commands/commands.declarations.ts`;
+const BARREL = `${BILLING}/application/application.declarations.ts`;
 const HANDLER = `${BILLING}/application/commands/cancel-invoice/cancel-invoice.handler.ts`;
 const HANDLER_ALIAS = '@/contexts/billing/application/commands/cancel-invoice/cancel-invoice.handler';
 

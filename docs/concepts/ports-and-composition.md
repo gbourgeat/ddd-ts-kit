@@ -152,7 +152,7 @@ its tests and fail under `npm run dev`, or work for a project on class-validator
 one on zod. The kit therefore reads the signatures itself, statically, and writes them down:
 
 ```ts
-// contexts/scheduling/application/commands/commands.declarations.ts, generated: never edited (an excerpt)
+// contexts/scheduling/application/application.declarations.ts, generated: never edited (an excerpt)
 import { injected } from '@ddd-ts-kit/kernel/declarations';
 import { BookAppointmentHandler } from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.handler';
 import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
@@ -165,8 +165,8 @@ export * from '@/contexts/scheduling/application/commands/book-appointment/book-
 injected(BookAppointmentHandler, [AppointmentRepository, CalendarRepository, IdGenerator, Clock]);
 ```
 
-One such file sits in each role folder of the context, next to the classes it registers;
-`scheduling.declarations.ts`, at the root of the context, only re-exports them, and is what the
+One such file sits in each layer of the context, above the role folders whose classes it
+registers; `scheduling.declarations.ts`, at the root of the context, only re-exports them, and is what the
 composition root imports
 (generated declarations, in [the canonical tree](../ARCHITECTURE.md#2-canonical-tree)).
 
@@ -404,12 +404,12 @@ A declared context reaches the root in one of two ways (`stack.assembly` in
 
 | | Generated barrel | Discovery |
 |---|---|---|
-| Mechanism | one generated file per role folder re-exporting its role files, gathered by `<context>.declarations.ts` | a scan of the context's folders at startup |
-| Where the constructor lists are | in the declarations of each role folder, after its exports | in a generated `<context>.dependencies.ts`, which the scan loads with the role files; never compiler metadata |
+| Mechanism | one generated file per layer re-exporting its role files, gathered by `<context>.declarations.ts` | a scan of the context's folders at startup |
+| Where the constructor lists are | in the declarations of each layer, after its exports | in a generated `<context>.dependencies.ts`, which the scan loads with the role files; never compiler metadata |
 | Static analysis | bundlers, knip and dependency-cruiser follow it | the loaded files are imported by nothing: the analyzers must be told they are entries |
 | Startup | nothing to read | reads directories and imports sequentially |
 | Bundled or serverless | fits | a bundler cannot follow it |
-| A file written by hand | must be in the declarations of its folder: `declarations/barrel-current` reports stale ones | picked up by itself; its constructor still has to be in the dependencies file, which the same rule holds |
+| A file written by hand | must be in the declarations of its layer: `declarations/barrel-current` reports stale ones | picked up by itself; its constructor still has to be in the dependencies file, which the same rule holds |
 | Under Vitest | nothing to configure | `@ddd-ts-kit/di` must be inlined (`server.deps.inline`), which the generated config does |
 
 ### What a decorator cannot express

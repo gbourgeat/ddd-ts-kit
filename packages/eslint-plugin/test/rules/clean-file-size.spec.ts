@@ -12,6 +12,8 @@ ruleTester.run('clean-file-size', cleanFileSize, {
     `${lines(350)}\n`,
     at('src/platform/database/generated/client.ts', lines(400)),
     at('src/types.d.ts', lines(400)),
+    at(`${BILLING}/application/application.declarations.ts`, lines(400)),
+    at(`${BILLING}/billing.declarations.ts`, lines(400)),
     at('src/a.ts', lines(400), { rules: { 'clean/file-size': 'off' } }),
   ],
   invalid: [
@@ -19,6 +21,10 @@ ruleTester.run('clean-file-size', cleanFileSize, {
     { code: `${lines(351)}\n`, errors: [{ messageId: 'tooLong', data: { count: 351, limit: 350 } }] },
     { ...at(`${BILLING}/test/unit/invoice.spec.ts`, lines(360)), errors: [{ messageId: 'tooLong' }] },
     { ...at('src/generated-client.ts', lines(351)), errors: [{ messageId: 'tooLong' }] },
+    {
+      ...at(`${BILLING}/application/application.declarations.spec.ts`, lines(351)),
+      errors: [{ messageId: 'tooLong' }],
+    },
     {
       ...at(`${BILLING}/domain/aggregates/invoice.aggregate.ts`, lines(351)),
       errors: [{ messageId: 'aggregateTooLong', data: { count: 351, limit: 350 } }],

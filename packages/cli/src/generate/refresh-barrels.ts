@@ -5,13 +5,15 @@ import {
   contextDeclarations,
   contextInjections,
   dependenciesFile,
+  earlierLayoutNotice,
+  earlierShapeOf,
   isDeclarationsFile,
-  keepsSingleFile,
   renderDependenciesFile,
   renderInjections,
-  singleFileNotice,
+  singleFileDeclarations,
   type ClassInjection,
   type DeclaredContext,
+  type EarlierLayout,
   type Sources,
 } from '../declared';
 import { declaredModules } from '../model-modules';
@@ -22,46 +24,53 @@ import { workspaceSources } from './workspace-sources';
 
 /**
  * Rewrites the generated files of every declared context from its tree: with a barrel, the
- * declarations of each role folder, which export its role files and register what each
- * constructor receives, and the summary at the root of the context, deleting the declarations of
- * a folder that holds no role file any more; under discovery `<context>.dependencies.ts`, which
- * registers the lists alone. Called at the end of every `generate` and by `docs`: these files are
- * derived, like the documentation, and `declarations/barrel-current` reports one left behind.
- * A context still declared in the single file of 0.84 (`keepsSingleFile`) is moved to the files
- * of its role folders, unless `singleFile` is `keep`: `docs --check` and `generate --local-only`
- * write nothing outside what they are asked, and say it instead. Answers the contexts kept so.
+ * declarations of each layer, which export its role files and register what each constructor
+ * receives, and the summary at the root of the context, deleting the declarations nothing derives
+ * any more; under discovery `<context>.dependencies.ts`, which registers the lists alone. Called
+ * at the end of every `generate` and by `docs`: these files are derived, like the documentation,
+ * and `declarations/barrel-current` reports one left behind. A context still declared as an
+ * earlier version wrote it (`earlierShapeOf`) is moved to the files of its layers, unless
+ * `earlier` is `keep`: `docs --check` and `generate --local-only` keep it in that layout, move
+ * nothing outside what they are asked, and say it instead. Answers the contexts kept so.
  */
-export function refreshBarrels(ws: Workspace, config: Config, singleFile: SingleFile = 'move'): string[] {
+export function refreshBarrels(ws: Workspace, config: Config, earlier: EarlierDeclarations = 'move'): KeptContext[] {
   if (!isDeclared(config)) {
     return [];
   }
 
   const sources = workspaceSources(ws, config);
-  const kept: string[] = [];
+  const kept: KeptContext[] = [];
 
   for (const context of ws.directories(config.contextsDir)) {
-    if (
-      config.contexts[context] !== undefined &&
-      refreshContext(ws, { config, sources, context, singleFile }) === 'kept'
-    ) {
-      kept.push(context);
+    const layout =
+      config.contexts[context] === undefined ? undefined : refreshContext(ws, { config, sources, context, earlier });
+
+    if (layout !== undefined) {
+      kept.push({ context, layout });
     }
   }
 
   return kept;
 }
 
-/** What a refresh does with a context still declared in the single file of 0.84: move it, or keep it as it is. */
-export type SingleFile = 'move' | 'keep';
+/** What a refresh does with a context still declared as an earlier version wrote it: move it, or keep it as it is. */
+export type EarlierDeclarations = 'move' | 'keep';
+
+/** A context a refresh kept in an earlier layout of its declarations. */
+export interface KeptContext {
+  readonly context: string;
+  readonly layout: EarlierLayout;
+}
 
 interface Refreshed {
   readonly config: Config;
   readonly sources: Sources;
   readonly context: string;
-  readonly singleFile: SingleFile;
+  readonly earlier: EarlierDeclarations;
 }
 
-function refreshContext(ws: Workspace, { config, sources, context, singleFile }: Refreshed): 'kept' | 'refreshed' {
+/** Refreshes one context, and answers the earlier layout it kept, if it kept one. */
+function refreshContext(ws: Workspace, { config, sources, context, earlier }: Refreshed): EarlierLayout | undefined {
   const directory = `${config.contextsDir}/${context}`;
   const entries = filesUnder(ws, directory);
   const modules = declaredModules(config, context);
@@ -70,7 +79,7 @@ function refreshContext(ws: Workspace, { config, sources, context, singleFile }:
   if (config.stack.assembly === 'barrel') {
     const declared = { context, directory, entries, sources, modules, specifierOf: specifierOfFile };
 
-    return refreshDeclarations(ws, declared, singleFile);
+    return refreshDeclarations(ws, declared, earlier);
   }
 
   const injections = contextInjections(sources, { directory, entries, modules });
@@ -82,32 +91,45 @@ function refreshContext(ws: Workspace, { config, sources, context, singleFile }:
     write(ws, `${directory}/${dependenciesFile(context)}`, renderDependenciesFile(injected, modules));
   }
 
-  return 'refreshed';
+  return undefined;
 }
 
-/** The declarations of each role folder and their summary, the ones of an emptied folder deleted. */
-function refreshDeclarations(ws: Workspace, declared: DeclaredContext, singleFile: SingleFile): 'kept' | 'refreshed' {
+/**
+ * The declarations of each layer and their summary, the ones nothing derives any more deleted.
+ * Asked to keep an earlier layout, a context laid out in one (`earlierShapeOf`) is declared again
+ * in it, so that a role file written there is registered as that version would register it.
+ */
+function refreshDeclarations(
+  ws: Workspace,
+  declared: DeclaredContext,
+  earlier: EarlierDeclarations,
+): EarlierLayout | undefined {
   const { context, directory, entries, modules } = declared;
 
-  if (singleFile === 'keep' && keepsSingleFile(declared, ws.read(`${directory}/${barrelFile(context)}`))) {
-    const { message, fix } = singleFileNotice(context);
+  const layout = earlier === 'keep' ? earlierShapeOf(declared, (entry) => ws.read(`${directory}/${entry}`)) : undefined;
 
-    ws.note(`${message} ${fix}`);
+  const { files: grouped, injections } = contextDeclarations(
+    declared,
+    layout === 'role-folders' ? 'role-folder' : 'layer',
+  );
 
-    return 'kept';
-  }
-
-  const { files, injections } = contextDeclarations(declared);
+  const files = layout === 'single-file' ? new Map([[barrelFile(context), singleFileDeclarations(declared)]]) : grouped;
 
   noteUnread(ws, injections);
   files.forEach((content, file) => write(ws, `${directory}/${file}`, content));
 
-  // The declarations of a folder that holds no role file any more: nothing derives them now.
+  // The declarations of a layer that holds no role file any more, or of a role folder an earlier version wrote.
   entries
     .filter((entry) => isDeclarationsFile(context, entry, modules) && !files.has(entry))
     .forEach((entry) => ws.delete(`${directory}/${entry}`));
 
-  return 'refreshed';
+  if (layout !== undefined) {
+    const { message, fix } = earlierLayoutNotice(context, layout);
+
+    ws.note(`${message} ${fix}`);
+  }
+
+  return layout;
 }
 
 /** A class whose constructor cannot be read is given no list: said here, reported by `check`, refused at startup. */

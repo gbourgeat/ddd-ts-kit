@@ -9,6 +9,7 @@ import type { ExportExplanation } from '../support/exports/export-explanation';
 import { isNamedAfter } from '../support/exports/is-named-after';
 import { moduleShapeOf } from '../support/exports/module-shape-of';
 import type { ModuleShape } from '../support/exports/module-shape';
+import { isGeneratedContextFile } from '../support/declarations/is-generated-context-file';
 import { globMatcher } from '../support/glob-matcher';
 import { kebabCase } from '../support/kebab-case';
 
@@ -56,7 +57,7 @@ export const cleanOneExportPerFile = defineRule<'several' | 'fileName' | 'entry'
   ],
   defaultOptions: [{}],
   create({ file, sourceCode, options: [options], report }) {
-    if (!isJudged(file) || isGenerated(file)) {
+    if (!isJudged(file) || isGeneratedContextFile(file)) {
       return {};
     }
 
@@ -95,33 +96,6 @@ export const cleanOneExportPerFile = defineRule<'several' | 'fileName' | 'entry'
 
 function isEntryFile(file: LintedFile, options: Options): boolean {
   return isIndex(file) || globMatcher(options.entries ?? [])(file.path);
-}
-
-/** The layers whose role folders hold generated declarations, as `declaredRoleOf` of the CLI places role files. */
-const ROLE_LAYERS = ['application', 'infrastructure', 'presentation'];
-
-/**
- * The generated files of a declared context: at its root, `<context>.declarations.ts` and
- * `<context>.dependencies.ts`; in a role folder, `<layer>/<folder>/<folder>.declarations.ts` or
- * `<layer>/<layer>.declarations.ts`. `declarations/barrel-current` of `ddd-ts-kit check` holds
- * every line of them.
- */
-function isGenerated(file: LintedFile): boolean {
-  const { contextsDir } = file.config;
-
-  if (globMatcher([`${contextsDir}/*/*.declarations.ts`, `${contextsDir}/*/*.dependencies.ts`])(file.path)) {
-    return true;
-  }
-
-  // The location leaves the module of the model out: a role folder of a module reads as one of the context.
-  if (file.location.area !== 'context') {
-    return false;
-  }
-
-  const { layer, inside } = file.location;
-  const folder = inside.length === 2 ? inside[0] : layer;
-
-  return ROLE_LAYERS.includes(layer) && inside.length <= 2 && inside.at(-1) === `${folder}.declarations.ts`;
 }
 
 function isIndex(file: LintedFile): boolean {

@@ -9,10 +9,31 @@ const exporting = (...files: string[]): string =>
   source(...files.map((file) => `export * from '${IN_BILLING}/${file}.js';`));
 
 /**
- * The declarations of `DECLARED_CONTEXT`, one file per role folder and the summary at the root of
- * the context, written out so that the fixtures do not prove the rule with its own code.
+ * The declarations of `DECLARED_CONTEXT`, one file per layer and the summary at the root of the
+ * context, written out so that the fixtures do not prove the rule with its own code.
  */
 export const DECLARED_DECLARATIONS: FixtureFiles = {
+  [PATHS.BARREL]: exporting('application/application.declarations', 'infrastructure/infrastructure.declarations'),
+  [PATHS.APPLICATION_DECLARATIONS]: exporting(
+    'application/authorization/only-issuer-voids.policy',
+    'application/commands/issue-invoice/issue-invoice.command',
+    'application/commands/issue-invoice/issue-invoice.handler',
+    'application/event-handlers/invoice-issued.event-handler',
+    'application/integration/handlers/product-listed.integration-handler',
+    'application/integration/publishers/invoice-issued.publisher',
+    'application/queries/invoices-issued/invoices-issued.handler',
+    'application/queries/invoices-issued/invoices-issued.query',
+    'application/scheduling/send-reminders.job',
+  ),
+  [`${PATHS.BILLING}/infrastructure/infrastructure.declarations.ts`]: exporting(
+    'infrastructure/external/in-process-price-catalog.gateway',
+    'infrastructure/external/remote-payment-gateway.adapter',
+    'infrastructure/persistence/in-memory-invoice.repository',
+  ),
+};
+
+/** The same declarations, one file per role folder, as 0.85 and 0.86 wrote them. */
+export const ROLE_FOLDER_DECLARATIONS: FixtureFiles = {
   [PATHS.BARREL]: exporting(
     'application/authorization/authorization.declarations',
     'application/commands/commands.declarations',
@@ -26,7 +47,7 @@ export const DECLARED_DECLARATIONS: FixtureFiles = {
   [`${PATHS.BILLING}/application/authorization/authorization.declarations.ts`]: exporting(
     'application/authorization/only-issuer-voids.policy',
   ),
-  [PATHS.COMMANDS_DECLARATIONS]: exporting(
+  [`${PATHS.BILLING}/application/commands/commands.declarations.ts`]: exporting(
     'application/commands/issue-invoice/issue-invoice.command',
     'application/commands/issue-invoice/issue-invoice.handler',
   ),

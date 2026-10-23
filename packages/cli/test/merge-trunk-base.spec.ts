@@ -18,7 +18,7 @@ import {
 const OPENAPI = 'openapi/openapi.yaml';
 const INVOICE = 'src/contexts/billing/invoice.ts';
 /** The generated declarations of a role folder: derived, so left out of the patch a branch is recognised by. */
-const DECLARATIONS = 'src/contexts/billing/application/commands/commands.declarations.ts';
+const DECLARATIONS = 'src/contexts/billing/application/application.declarations.ts';
 const HANDLER = 'src/contexts/billing/pay/handler.ts';
 
 const openapi = (...paths: string[]): string =>

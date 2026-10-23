@@ -142,7 +142,7 @@ describe('generate route with a mapper or a serializer', () => {
 
     expect(exists(root, `${at}/void-invoice/void-invoice.params.ts`)).toBe(true);
 
-    expect(read(root, 'src/contexts/billing/presentation/http/http.declarations.ts')).toContain(
+    expect(read(root, 'src/contexts/billing/presentation/presentation.declarations.ts')).toContain(
       'injected(VoidInvoiceController, [CommandBus, VoidInvoiceMapper]);',
     );
   });

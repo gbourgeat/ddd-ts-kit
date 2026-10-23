@@ -8,11 +8,11 @@ import {
   dependenciesFile,
   generatedDrift,
   type DeclaredContext,
+  earlierLayoutNotice,
+  earlierLayoutOf,
   isDeclarationsFile,
-  keepsSingleFile,
   renderDependenciesFile,
   renderInjections,
-  singleFileNotice,
 } from '../../declared';
 import { declaredModules } from '../../model-modules';
 import type { Flaw } from '../model/flaw';
@@ -28,14 +28,14 @@ const REGENERATE =
 interface Judged {
   readonly file: string;
   readonly flaw: Flaw | undefined;
-  /** Set on the single file of 0.84, current but not moved yet: a warning whatever the severity of the rule. */
+  /** Set on a layout an earlier version wrote, current but not moved yet: a warning whatever the severity of the rule. */
   readonly severity?: 'warn';
 }
 
 export const declarationsBarrelCurrent: Rule = {
   id: 'declarations/barrel-current',
   description:
-    'In the declared style, the generated files of a context are what its tree says: with a barrel, the <folder>.declarations.ts of each role folder lists exactly its role files and registers the dependency list read from each constructor, and <context>.declarations.ts re-exports those files; under discovery <context>.dependencies.ts registers the lists alone.',
+    'In the declared style, the generated files of a context are what its tree says: with a barrel, the <layer>.declarations.ts of each layer lists exactly its role files and registers the dependency list read from each constructor, and <context>.declarations.ts re-exports those files; under discovery <context>.dependencies.ts registers the lists alone.',
   scope: 'project',
   run(project) {
     if (!isDeclaredStyle(project)) {
@@ -83,7 +83,7 @@ function judge(project: Project, context: string): Judged[] {
   return judgeDeclarations(project, { context, directory, entries, sources, modules, specifierOf: specifierOfFile });
 }
 
-/** With a barrel: the declarations of each role folder and their summary, or the single file of 0.84 while it is current. */
+/** With a barrel: the declarations of each layer and their summary, or a layout an earlier version wrote while it is current. */
 function judgeDeclarations(project: Project, declared: DeclaredContext): Judged[] {
   const { context, directory, entries, modules } = declared;
   const { files } = contextDeclarations(declared);
@@ -95,17 +95,21 @@ function judgeDeclarations(project: Project, declared: DeclaredContext): Judged[
     })),
     ...entries
       .filter((entry) => isDeclarationsFile(context, entry, modules) && !files.has(entry))
-      .map((entry) => ({ file: `${directory}/${entry}`, flaw: emptied(context, entry) })),
+      .map((entry) => ({ file: `${directory}/${entry}`, flaw: underived(context, entry) })),
     ...twins(declared),
   ];
 
-  const barrel = `${directory}/${barrelFile(context)}`;
+  const layout = judged.some(({ flaw }) => flaw !== undefined)
+    ? earlierLayoutOf(declared, (entry) => writtenIn(project, `${directory}/${entry}`))
+    : undefined;
 
-  if (judged.some(({ flaw }) => flaw !== undefined) && keepsSingleFile(declared, writtenIn(project, barrel))) {
-    return [{ file: barrel, flaw: singleFileNotice(context), severity: 'warn' }];
-  }
-
-  return judged;
+  // Two role files of one name stay an error in any layout: the summary would not compile.
+  return layout === undefined
+    ? judged
+    : [
+        { file: `${directory}/${barrelFile(context)}`, flaw: earlierLayoutNotice(context, layout), severity: 'warn' },
+        ...twins(declared),
+      ];
 }
 
 /**
@@ -169,9 +173,9 @@ function writtenIn(project: Project, file: string): string | undefined {
   return project.files.find((candidate) => candidate.path === file)?.text.replaceAll('\r\n', '\n');
 }
 
-function emptied(context: string, entry: string): Flaw {
+function underived(context: string, entry: string): Flaw {
   return {
-    message: `${entry} of "${context}" is generated for a folder that holds no declared role file any more: nothing keeps it up to date.`,
+    message: `${entry} of "${context}" is generated for a folder that holds no declarations any more (a layer without declared role file, or a role folder, which an earlier version declared on its own): nothing keeps it up to date.`,
     fix: 'Run `ddd-ts-kit docs`, or `ddd-ts-kit generate` again, which delete it, and commit the deletion.',
   };
 }

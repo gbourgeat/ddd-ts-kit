@@ -14,9 +14,9 @@ interface CheckJson {
 const BILLING = [
   'CONTEXT.md',
   'billing.declarations.ts',
-  'application/commands/commands.declarations.ts',
-  'infrastructure/persistence/persistence.declarations.ts',
-  'presentation/http/http.declarations.ts',
+  'application/application.declarations.ts',
+  'infrastructure/infrastructure.declarations.ts',
+  'presentation/presentation.declarations.ts',
   'application/authorization/billing.permissions.ts',
   'application/authorization/only-issuer-cancels.policy.ts',
   'application/commands/issue-invoice/issue-invoice.command.ts',

@@ -76,7 +76,7 @@ describe('a class whose constructor states its dependencies', () => {
     expect(failure.code).toBe('MISSING_DEPENDENCIES');
 
     expect(failure.message).toBe(
-      'Class GetInvoiceWithoutList of module "stamps" takes 1 constructor parameter and no dependency list is known for it: its decorator names none, and no generated file that was loaded registered one. Run `ddd-ts-kit docs`, which reads the constructors and rewrites the generated files of the context (the <folder>.declarations.ts of each role folder, which <context>.declarations.ts re-exports, or <context>.dependencies.ts under discovery), and assemble the context from <context>.declarations.ts or by discovery; the composition root then injects each parameter by its type.',
+      'Class GetInvoiceWithoutList of module "stamps" takes 1 constructor parameter and no dependency list is known for it: its decorator names none, and no generated file that was loaded registered one. Run `ddd-ts-kit docs`, which reads the constructors and rewrites the generated files of the context (the <layer>.declarations.ts of each layer, which <context>.declarations.ts re-exports, or <context>.dependencies.ts under discovery), and assemble the context from <context>.declarations.ts or by discovery; the composition root then injects each parameter by its type.',
     );
   });
 
@@ -91,7 +91,7 @@ describe('a class whose constructor states its dependencies', () => {
     expect(short.code).toBe('DEPENDENCY_ARITY');
 
     expect(short.message).toBe(
-      'Class ClockedStamp of module "stamps" takes 2 constructor parameters and the generated file of its context registered 1 ([Clock]): a parameter would be left undefined. The generated file is stale. Run `ddd-ts-kit docs`, which reads the constructors and rewrites the generated files of the context (the <folder>.declarations.ts of each role folder, which <context>.declarations.ts re-exports, or <context>.dependencies.ts under discovery), and assemble the context from <context>.declarations.ts or by discovery.',
+      'Class ClockedStamp of module "stamps" takes 2 constructor parameters and the generated file of its context registered 1 ([Clock]): a parameter would be left undefined. The generated file is stale. Run `ddd-ts-kit docs`, which reads the constructors and rewrites the generated files of the context (the <layer>.declarations.ts of each layer, which <context>.declarations.ts re-exports, or <context>.dependencies.ts under discovery), and assemble the context from <context>.declarations.ts or by discovery.',
     );
 
     expect(wiringFailure(composing([Long])).code).toBe('DEPENDENCY_ARITY');

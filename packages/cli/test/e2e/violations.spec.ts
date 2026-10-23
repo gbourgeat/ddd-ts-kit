@@ -12,7 +12,7 @@ const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.han
 const EVENT_HANDLER = `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`;
 const BARREL = `${BILLING}/billing.declarations.ts`;
 /** The generated declarations of the role folder the commands of billing sit in. */
-const COMMANDS_DECLARATIONS = `${BILLING}/application/commands/commands.declarations.ts`;
+const APPLICATION_DECLARATIONS = `${BILLING}/application/application.declarations.ts`;
 
 /** Slow, opt-in (DDD_TS_KIT_E2E=1): one deliberate violation at a time, caught by the analyzer that holds the rule. */
 describe.runIf(SLOW)('a violation written into a generated project', () => {
@@ -27,7 +27,7 @@ describe.runIf(SLOW)('a violation written into a generated project', () => {
   });
 
   it('is absent from the files these tests edit, as generated', () => {
-    expect(project.linted(SERVICE, COMMAND, HANDLER, EVENT_HANDLER, BARREL, COMMANDS_DECLARATIONS)).toBe('');
+    expect(project.linted(SERVICE, COMMAND, HANDLER, EVENT_HANDLER, BARREL, APPLICATION_DECLARATIONS)).toBe('');
     expect(project.checkedRules()).toEqual([]);
   }, 120_000);
 
@@ -66,13 +66,13 @@ describe.runIf(SLOW)('a violation written into a generated project', () => {
 
   it('the checker catches declarations that a role file written by hand left behind, and so does the documentation check', () => {
     project.edit(
-      COMMANDS_DECLARATIONS,
+      APPLICATION_DECLARATIONS,
       "export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler';\n",
       '',
     );
 
     expect(project.checkedRules()).toContain('declarations/barrel-current');
-    expect(cli(project.root, 'docs', '--check').stdout).toContain(`stale  ${COMMANDS_DECLARATIONS}`);
+    expect(cli(project.root, 'docs', '--check').stdout).toContain(`stale  ${APPLICATION_DECLARATIONS}`);
   }, 120_000);
 
   it('knip catches an export nothing uses', () => {

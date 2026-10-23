@@ -233,7 +233,7 @@ describe('the declarations of a role folder, and how a written one drifts', () =
         injectedIn: () => given,
       });
 
-    const barrel = render(files).get('application/commands/commands.declarations.ts') ?? '';
+    const barrel = render(files).get('application/application.declarations.ts') ?? '';
 
     expect(barrel).toBe(
       "import { injected } from 'k';\n\nexport * from '@/application/commands/issue/issue.handler.ts';\n\ninjected(Issue, [Clock, Ids]);\n",
@@ -241,11 +241,8 @@ describe('the declarations of a role folder, and how a written one drifts', () =
 
     expect(render(files, { imports: [], calls: [] })).toEqual(
       new Map([
-        [
-          'application/commands/commands.declarations.ts',
-          "export * from '@/application/commands/issue/issue.handler.ts';\n",
-        ],
-        ['billing.declarations.ts', "export * from '@/application/commands/commands.declarations.ts';\n"],
+        ['application/application.declarations.ts', "export * from '@/application/commands/issue/issue.handler.ts';\n"],
+        ['billing.declarations.ts', "export * from '@/application/application.declarations.ts';\n"],
       ]),
     );
 

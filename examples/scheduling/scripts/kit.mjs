@@ -115,11 +115,18 @@ function regeneratedByDocs() {
   ];
 }
 
-/** The declarations the generator writes in each role folder of a context: `<layer>/<folder>/<folder>.declarations.ts`. */
+/**
+ * The declarations the generator writes in each layer of a context, `<layer>/<layer>.declarations.ts`,
+ * and in each module of the model, `<layer>/<module>/<layer>.declarations.ts`, with those of a role
+ * folder that 0.85 and 0.86 wrote and `docs` deletes, `<layer>/<folder>/<folder>.declarations.ts`.
+ */
 function folderDeclarations(context) {
   return ['application', 'infrastructure', 'presentation'].flatMap((layer) => [
     `${context}/${layer}/${layer}.declarations.ts`,
-    ...subdirectories(`${context}/${layer}`).map((folder) => `${context}/${layer}/${folder}/${folder}.declarations.ts`),
+    ...subdirectories(`${context}/${layer}`).flatMap((folder) => [
+      `${context}/${layer}/${folder}/${layer}.declarations.ts`,
+      `${context}/${layer}/${folder}/${folder}.declarations.ts`,
+    ]),
   ]);
 }
 

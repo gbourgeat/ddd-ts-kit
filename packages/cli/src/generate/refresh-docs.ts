@@ -4,10 +4,10 @@ import { renderCruiseFile } from '../depcruise/render-cruise-file';
 import { CONTEXT_MAP } from '../docs/context-map-file';
 import { writeDocs } from '../docs/write-docs';
 import type { Workspace } from '../workspace';
-import { refreshBarrels, type SingleFile } from './refresh-barrels';
+import { type EarlierDeclarations, refreshBarrels } from './refresh-barrels';
 
 /** Keeps what is derived from the config and the tree in step with what was just scaffolded, once the project has it. */
-export function refreshDocs(ws: Workspace, singleFile: SingleFile): void {
+export function refreshDocs(ws: Workspace, earlier: EarlierDeclarations): void {
   const config = ws.read(CONFIG_FILE);
 
   if (config === undefined) {
@@ -16,10 +16,10 @@ export function refreshDocs(ws: Workspace, singleFile: SingleFile): void {
 
   const current = parseConfig(JSON.parse(config));
 
-  refreshBarrels(ws, current, singleFile);
+  refreshBarrels(ws, current, earlier);
 
   if (ws.exists(CONTEXT_MAP)) {
-    writeDocs(ws, current, singleFile);
+    writeDocs(ws, current, earlier);
   }
 
   // The import graph rules are derived from the config: a new context or upstream changes them.

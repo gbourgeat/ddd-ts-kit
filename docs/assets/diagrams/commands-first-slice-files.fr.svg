@@ -92,7 +92,7 @@
   <circle cx="370" cy="563" r="9" fill="#3d4449"/>
   <text x="370" y="568" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
   <text x="386" y="568" font-size="13" fill="#1f2328">unit/place-order.controller.spec.ts</text>
-  <text x="44" y="616" font-size="13" fill="#1f2328">Mis à jour au passage : CONTEXT.md (le glossaire et les listes générées) et les déclarations générées des dossiers de rôle (le câblage).</text>
+  <text x="44" y="616" font-size="13" fill="#1f2328">Mis à jour au passage : CONTEXT.md (le glossaire et les listes générées) et les déclarations générées des couches (le câblage).</text>
   <!-- outside the context -->
   <text x="32" y="672" font-size="14" font-weight="600" fill="#5f6b73">hors du contexte</text>
   <circle cx="200" cy="667" r="9" fill="#3d4449"/>

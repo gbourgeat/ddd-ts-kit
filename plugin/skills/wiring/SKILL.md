@@ -4,7 +4,7 @@ description: >-
   Explains how the classes of a bounded context reach the composition root in a ddd-ts-kit
   project. Ports as abstract classes used as injection tokens, the declared style
   (decorators of the kernel, dependencies stated by the constructor signature, generated
-  declarations per role folder) or the explicit module file, values bound in the platform, fakes in tests. Use
+  declarations per layer) or the explicit module file, values bound in the platform, fakes in tests. Use
   when binding an adapter to a port, adding a dependency to a handler, replacing an adapter
   by a fake, composing main.ts, or when a WiringError, DeclarationError, ports/*,
   declarations/* or composition/only-in-module is reported.
@@ -66,21 +66,22 @@ A class says what it is on its own file, and that is its registration. There is 
 - To add a dependency to a handler: add the constructor parameter. Then `npx ddd-ts-kit docs`
   (`npm run dev` does it by itself on every reload). Nothing else, and no list in the
   decorator.
-- Each role folder holds a generated `<folder>.declarations.ts`
-  (`application/commands/commands.declarations.ts`; a use case or a route rolls up to the folder
-  at `<layer>/<folder>/`): one `export *` per role file of the folder, then one
+- Each layer holds a generated `<layer>.declarations.ts`
+  (`application/application.declarations.ts`; a role folder holds its role files and nothing
+  else): one `export *` per role file of the layer, then one
   `injected(Class, [Tokens])` per class whose constructor takes something, read from the source.
   `<context>.declarations.ts` only re-exports these files; the composition root imports it.
   After adding, moving or deleting a role file, or changing a constructor, by hand:
-  `npx ddd-ts-kit docs`, which also deletes the declarations of an emptied folder
+  `npx ddd-ts-kit docs`, which also deletes the declarations of an emptied layer
   (`declarations/barrel-current` names the file and the class whose list is stale). Never edit
-  them. A context still declared in the single `<context>.declarations.ts` of 0.84 is a warning
-  of that rule in this version and an error in a later one: `npx ddd-ts-kit docs` moves it, and
+  them. A context still declared as an earlier version wrote it (the single
+  `<context>.declarations.ts` of 0.84, or one `<folder>.declarations.ts` per role folder as 0.85 and
+  0.86 wrote them) is a warning of that rule in this version and an error in a later one: `npx ddd-ts-kit docs` moves it, and
   the moved files are committed together. With `stack.assembly: discovery` the composition root reads the role files
   itself (`discoverContext`) and the lists from the generated `<context>.dependencies.ts`.
 - A context divided into modules of the model (`contexts.<name>.modules`) wires the same way:
-  each role folder of a module has its own declarations,
-  `application/<module>/commands/commands.declarations.ts`, re-exported by
+  each layer of a module has its own declarations,
+  `application/<module>/application.declarations.ts`, re-exported by
   `<context>.declarations.ts` like the others; `discoverContext` reads the modules in the
   generated `<context>.dependencies.ts`, which names them, without the config. Infrastructure and presentation keep their folders; a module never has a module file
   of its own. `npx ddd-ts-kit move-to-module` rewrites the declarations it moves.

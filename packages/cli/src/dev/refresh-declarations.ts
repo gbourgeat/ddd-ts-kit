@@ -21,7 +21,13 @@ export function refreshDeclarations(start: string, tell: (line: string) => void)
     const rewritten = [...created, ...updated];
 
     rewritten.forEach((file) => tell(`ddd-ts-kit: rewrote ${file} from the role files and their constructors`));
-    deleted.forEach((file) => tell(`ddd-ts-kit: deleted ${file}: its folder holds no declared class any more`));
+
+    deleted.forEach((file) =>
+      tell(
+        `ddd-ts-kit: deleted ${file}: its folder holds no declared class any more, or the declarations of its layer replace it`,
+      ),
+    );
+
     notes.forEach((note) => tell(`ddd-ts-kit: ${note}`));
 
     return [...rewritten, ...deleted];

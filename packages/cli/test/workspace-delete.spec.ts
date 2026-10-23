@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { Workspace } from '../src/workspace';
 import { tempDir, write } from './helpers';
 
-const FILE = 'src/contexts/billing/application/commands/commands.declarations.ts';
+const FILE = 'src/contexts/billing/application/application.declarations.ts';
 
 function workspace(files: Readonly<Record<string, string>>): Workspace {
   const root = tempDir('workspace-delete');

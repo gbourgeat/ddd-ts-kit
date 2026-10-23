@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:988cd4dd7ec44dd8 -->
+<!-- translation-of: parallel-work.md sha256:2a45dfa033e09ff8 -->
 
 # Travailler en parallèle sans collisions
 
@@ -23,7 +23,7 @@ des répertoires disjoints.
 **Par cas d'usage vertical, à l'intérieur d'un contexte.** Une commande ou une requête, de bout en
 bout : son dossier sous `application/commands/` ou `application/queries/`, sa route, ses *specs*.
 Deux cas d'usage d'un même contexte partagent le fichier de l'agrégat et les déclarations
-générées de leur dossier de rôle (`application/commands/commands.declarations.ts`), ils entrent donc en conflit plus souvent que deux contextes. Ne parallélisez à
+générées de leur couche (`application/application.declarations.ts`), ils entrent donc en conflit plus souvent que deux contextes. Ne parallélisez à
 l'intérieur d'un contexte qu'une fois la forme de l'agrégat stabilisée.
 
 Ne découpez pas par couche (« tu écris le domaine, j'écris les gestionnaires ») : chaque moitié
@@ -34,13 +34,13 @@ est intestable tant que l'autre n'existe pas, et les deux se rencontrent dans ch
 | Fichier ou zone | Écrit par | En parallèle ? | Comment s'y prendre |
 |---|---|---|---|
 | `src/contexts/<A>/**` et `src/contexts/<B>/**` | des *workers* différents | oui | disjoints par construction |
-| deux dossiers de cas d'usage d'un même contexte | des *workers* différents | en grande partie | ils se rencontrent dans l'agrégat, les déclarations de leur dossier de rôle et le fichier des routes : fusionnez souvent |
+| deux dossiers de cas d'usage d'un même contexte | des *workers* différents | en grande partie | ils se rencontrent dans l'agrégat, les déclarations de leur couche et le fichier des routes : fusionnez souvent |
 | `ddd-ts-kit.config.json` | `init`, `generate context`, `generate service`, `generate worker`, `generate adr --deviation` | **non** | créez tous les contextes et toutes les relations à l'amorçage ; les changements ultérieurs un par un, par le propriétaire de la plateforme |
 | `src/platform/composition/compose-application.ts`, `src/platform/composition/platform.module.ts`, `src/platform/composition/platform-test.module.ts` | `generate context` (la racine de composition), `generate gateway` (les deux modules, dans le style déclaré), des modifications à la main | **non** | les régions d'enregistrement sont écrites entre des marqueurs ; deux branches qui ajoutent chacune un contexte les touchent toutes les deux |
 | les registres de la plateforme : `src/platform/database/schema.ts` (avec Prisma, `prisma/schema.prisma`), `src/platform/auth/authorization/permissions.ts`, `src/platform/auth/authorization/role.ts`, `src/platform/auth/authorization/access-policies.ts` (style explicite), `src/platform/audit/audited-events.ts`, `src/platform/jobs/job-settings.ts`, les attributions sous `src/platform/auth/`, et l'utilitaire `src/platform/resilience/own-policy.ts` | `generate context`, `generate repository` (le premier d'un contexte ; chacun avec Prisma), `generate command --aggregate` sur un agrégat qui n'a pas encore de *repository*, `generate route-group --role` avec un nouveau rôle, `generate policy` (style explicite), `generate integration-event`, `generate job`, `generate adapter` (le premier d'un projet câblé sur tsyringe) | **non** | lancez ces générateurs sur le tronc avant que les *workers* ne commencent ; `generate --help --json` dit quelles sortes écrivent des fichiers partagés (`writesShared`) et lesquels |
 | `src/main.ts` | des modifications à la main | **non** | le propriétaire de la plateforme |
 | `test/architecture/extractable.spec.ts`, `knip.json` (le premier contexte) | `init`, `generate context` | **non** | de même : écrits avec chaque contexte |
-| `<context>.declarations.ts` et le `<folder>.declarations.ts` de chaque dossier de rôle (ce qui est injecté dans chaque constructeur), `<context>.dependencies.ts` en mode découverte | chaque `generate` dans ce contexte, `docs`, et `npm run dev` | par contexte | dérivés : ne jamais fusionner à la main, régénérer (ci-dessous) |
+| `<context>.declarations.ts` et le `<layer>.declarations.ts` de chaque couche (ce qui est injecté dans chaque constructeur), `<context>.dependencies.ts` en mode découverte | chaque `generate` dans ce contexte, `docs`, et `npm run dev` | par contexte | dérivés : ne jamais fusionner à la main, régénérer (ci-dessous) |
 | `docs/context-map.md`, les listes générées de chaque `CONTEXT.md` | `ddd-ts-kit docs`, chaque `generate` | **non**, mais peu coûteux | dérivés : régénérer après la fusion |
 | `openapi/*.yaml`, `docs/integration/asyncapi.yaml`, `docs/integration/event-catalog.md` | `npm run docs:generate` | **non**, mais peu coûteux | dérivés et déterministes : régénérer après la fusion |
 | `.dependency-cruiser.cjs` | `depcruise-config --write`, `generate context` | **non**, mais peu coûteux | dérivé de la configuration : régénérer |

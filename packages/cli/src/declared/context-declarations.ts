@@ -2,6 +2,7 @@ import type { ClassInjection } from './injection/class-injection';
 import { contextInjections } from './injection/context-injections';
 import { renderInjections } from './injection/render-injections';
 import type { Sources } from './injection/sources';
+import type { DeclarationsGrouping } from './declarations-folder-of';
 import { renderDeclarations } from './render-declarations';
 
 /** A declared context, read where its files are. */
@@ -26,22 +27,20 @@ export interface ContextDeclarations {
 
 /**
  * What the generator writes for a context assembled by barrel, and what `declarations/barrel-current`
- * compares the tree with: one declarations file per role folder and the summary at the root.
+ * compares the tree with: one declarations file per layer and the summary at the root, or, for
+ * `keepsRoleFolderFiles`, one per role folder as 0.85 and 0.86 wrote them.
  */
-export function contextDeclarations({
-  context,
-  directory,
-  entries,
-  sources,
-  modules,
-  specifierOf,
-}: DeclaredContext): ContextDeclarations {
+export function contextDeclarations(
+  { context, directory, entries, sources, modules, specifierOf }: DeclaredContext,
+  grouping: DeclarationsGrouping = 'layer',
+): ContextDeclarations {
   const injections: ClassInjection[] = [];
 
   const files = renderDeclarations({
     context,
     files: entries,
     modules,
+    grouping,
     specifierOf: (entry) => specifierOf(`${directory}/${entry}`),
     injectedIn: (roleFiles) => {
       const read = contextInjections(sources, { directory, entries: roleFiles, modules });

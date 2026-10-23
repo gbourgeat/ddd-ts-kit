@@ -24,9 +24,9 @@ describe('a context generated in the declared style', () => {
     expect(billing).toEqual(
       expect.arrayContaining([
         'billing.declarations.ts',
-        'application/commands/commands.declarations.ts',
-        'infrastructure/persistence/persistence.declarations.ts',
-        'presentation/http/http.declarations.ts',
+        'application/application.declarations.ts',
+        'infrastructure/infrastructure.declarations.ts',
+        'presentation/presentation.declarations.ts',
         'presentation/http/invoices.routes.ts',
         'presentation/http/invoices/issue-invoice/issue-invoice.controller.ts',
       ]),
@@ -156,7 +156,7 @@ describe('a context generated in the declared style, towards the outside', () =>
 
     expect(gateway).toContain("import type { InvoiceStatusContract } from '@/contexts/billing/published-language';");
 
-    expect(read(root, `${SHIPPING}/infrastructure/external/external.declarations.ts`)).toContain(
+    expect(read(root, `${SHIPPING}/infrastructure/infrastructure.declarations.ts`)).toContain(
       'injected(InProcessInvoiceStatusGateway, [InvoiceStatusContract]);',
     );
 

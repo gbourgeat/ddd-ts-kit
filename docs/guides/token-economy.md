@@ -101,7 +101,7 @@ answers, abbreviated (`todos` repeats each place of `next` with the decision to 
     "src/contexts/ordering/application/commands/place-order/place-order.command.ts",
     "src/contexts/ordering/application/commands/place-order/place-order.handler.ts",
     "src/contexts/ordering/test/unit/place-order.handler.spec.ts",
-    "src/contexts/ordering/application/commands/commands.declarations.ts"
+    "src/contexts/ordering/application/application.declarations.ts"
   ],
   "updated": [
     "src/platform/auth/authorization/role.ts",

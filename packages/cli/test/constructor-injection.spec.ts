@@ -5,7 +5,7 @@ import { checkJsonOf } from './check-support';
 
 const BILLING = 'src/contexts/billing';
 /** The declarations of the folder the handler sits in, where its list is registered. */
-const BARREL = `${BILLING}/application/commands/commands.declarations.ts`;
+const BARREL = `${BILLING}/application/application.declarations.ts`;
 const HANDLER = `${BILLING}/application/commands/cancel-invoice/cancel-invoice.handler.ts`;
 const RULE = 'declarations/constructor-injection';
 
@@ -52,7 +52,7 @@ describe('the generated list of a constructor follows the code, and a gate says 
     const documented = cli(root, 'docs', '--check');
 
     expect(checked?.message).toBe(
-      'The declarations of "billing" in application/commands/ are stale: it registers no dependency list for CancelInvoiceHandler, whose constructor takes [InvoiceRepository, Clock].',
+      'The declarations of "billing" in application/ are stale: it registers no dependency list for CancelInvoiceHandler, whose constructor takes [InvoiceRepository, Clock].',
     );
 
     expect(checked?.fix).toContain('Run `ddd-ts-kit docs`');
@@ -72,7 +72,7 @@ describe('the generated list of a constructor follows the code, and a gate says 
     write(root, HANDLER, taking('private readonly ids: IdGenerator', 'private readonly clock: Clock'));
 
     expect(stale()[0]?.message).toBe(
-      'The declarations of "billing" in application/commands/ are stale: the dependency list of CancelInvoiceHandler is stale: its constructor takes [IdGenerator, Clock] and the file says [InvoiceRepository, Clock].',
+      'The declarations of "billing" in application/ are stale: the dependency list of CancelInvoiceHandler is stale: its constructor takes [IdGenerator, Clock] and the file says [InvoiceRepository, Clock].',
     );
 
     write(root, HANDLER, before);

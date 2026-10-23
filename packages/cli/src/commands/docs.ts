@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { readConfig, type Config } from '../config';
-import { barrelFile, generatedDrift, singleFileNotice } from '../declared';
+import { barrelFile, earlierLayoutNotice, generatedDrift } from '../declared';
 import { readContexts } from '../docs/read-contexts';
 import { writeDocs } from '../docs/write-docs';
+import type { KeptContext } from '../generate/refresh-barrels';
 import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file';
 import { formerlyRecordedStoredEvents } from '../docs/formerly-recorded-stored-events';
 import { unrecordedStoredEvents } from '../docs/unrecorded-stored-events';
@@ -27,8 +28,8 @@ export const docsCommand: Command = (argv, io) => {
   const { config } = readConfig(args.projectRoot);
   const check = args.flag('check');
 
-  // A check writes nothing: a context still declared in the single file of 0.84 is only warned about.
-  const singleFile = writeDocs(ws, config, check ? 'keep' : 'move');
+  // A check writes nothing: a context still declared as an earlier version wrote it is only warned about.
+  const kept = writeDocs(ws, config, check ? 'keep' : 'move');
 
   if (args.flag('stored-events')) {
     recordStoredEvents(ws, config);
@@ -41,18 +42,18 @@ export const docsCommand: Command = (argv, io) => {
     return 0;
   }
 
-  return reportCheck(io, args, { ws, config, singleFile });
+  return reportCheck(io, args, { ws, config, kept });
 };
 
 interface DocsRun {
   readonly ws: Workspace;
   readonly config: Config;
   /** The contexts still declared in the single file of 0.84: a warning, not a failure, in this version. */
-  readonly singleFile: readonly string[];
+  readonly kept: readonly KeptContext[];
 }
 
 /** `docs --check`: the generated files that would change, and the stored-event versions not recorded yet or recorded by 0.82.0 or earlier; 0 when there is none. */
-function reportCheck(io: Io, args: Arguments, { ws, config, singleFile }: DocsRun): number {
+function reportCheck(io: Io, args: Arguments, { ws, config, kept }: DocsRun): number {
   const report = ws.commit(true);
   const stale = [...report.created, ...report.updated, ...report.deleted];
   const drift = Object.fromEntries(stale.flatMap((file) => driftOf(ws.root, ws, file)));
@@ -60,7 +61,7 @@ function reportCheck(io: Io, args: Arguments, { ws, config, singleFile }: DocsRu
   const unrecorded = recording ? [] : unrecordedStoredEvents(ws, config, contextsOnDisk(ws, config));
   const formerlyRecorded = recording ? [] : formerlyRecordedStoredEvents(ws, config, contextsOnDisk(ws, config));
   const ok = stale.length === 0 && unrecorded.length === 0 && formerlyRecorded.length === 0;
-  const warnings = singleFile.map((context) => singleFileWarning(config, context));
+  const warnings = kept.map((context) => earlierLayoutWarning(config, context));
 
   if (args.json) {
     io.out(JSON.stringify({ ok, stale, drift, unrecorded, formerlyRecorded, warnings }, null, 2));
@@ -73,18 +74,18 @@ function reportCheck(io: Io, args: Arguments, { ws, config, singleFile }: DocsRu
   return ok ? 0 : 1;
 }
 
-/** A context still declared in the single file of 0.84, as `docs --check` warns about it. */
-interface SingleFileWarning {
+/** A context still declared as an earlier version wrote it, as `docs --check` warns about it. */
+interface EarlierLayoutWarning {
   readonly file: string;
   readonly message: string;
   readonly fix: string;
 }
 
-function singleFileWarning(config: Config, context: string): SingleFileWarning {
-  return { file: `${config.contextsDir}/${context}/${barrelFile(context)}`, ...singleFileNotice(context) };
+function earlierLayoutWarning(config: Config, { context, layout }: KeptContext): EarlierLayoutWarning {
+  return { file: `${config.contextsDir}/${context}/${barrelFile(context)}`, ...earlierLayoutNotice(context, layout) };
 }
 
-function warningLines(warnings: readonly SingleFileWarning[]): string[] {
+function warningLines(warnings: readonly EarlierLayoutWarning[]): string[] {
   return warnings.flatMap(({ file, message, fix }) => ['', `warning  ${file}: ${message}`, `  ${fix}`]);
 }
 
@@ -147,7 +148,12 @@ function driftOf(root: string, ws: Workspace, file: string): [string, string][] 
   const expected = ws.read(file);
 
   if (expected === undefined) {
-    return [[file, 'it is no longer generated: its folder holds no declared class']];
+    return [
+      [
+        file,
+        'it is no longer generated: its folder holds no declared class, or the declarations of its layer replace it',
+      ],
+    ];
   }
 
   const written = fs.existsSync(path.join(root, file)) ? fs.readFileSync(path.join(root, file), 'utf8') : '';
