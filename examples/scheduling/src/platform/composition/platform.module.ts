@@ -28,8 +28,8 @@ import type { Persistence } from '@/platform/database/persistence';
 import type { EventProvider } from '@/platform/events/event-provider';
 import type { LogSettings } from '@/platform/observability/create-logger';
 import type { RedisServices } from '@/platform/redis/open-redis';
-import { adapterAspects } from '@/platform/resilience/adapter-aspects';
-import { defaultResilience } from '@/platform/resilience/default-resilience';
+import { defaultPolicy } from '@/platform/resilience/default-policy';
+import { defaultResilienceSettings } from '@/platform/resilience/default-resilience-settings';
 import type { ResilienceSettings } from '@/platform/resilience/resilience-settings';
 import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persistence/knex-person-directory.reader';
 import { KnexAppointmentExport } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment-export.repository';
@@ -47,7 +47,7 @@ export interface PlatformOptions {
   readonly authenticator: Authenticator;
   /** Where log entries go; left out, the application writes nothing. */
   readonly log?: LogSettings;
-  /** The policy around every adapter that leaves the process; left out, the defaults of `resilience/default-resilience.ts`. */
+  /** The policy around every adapter that leaves the process; left out, `resilience/default-resilience-settings.ts`. */
   readonly resilience?: ResilienceSettings;
   /** Whether a consumed event continues the trace of its publication (the default) or starts one linked to it. */
   readonly traceConsumers?: ConsumerTrace;
@@ -81,7 +81,7 @@ export function platformModule(persistence: Persistence, options: PlatformOption
       builder.rebind(EventSubscribers).toValue({ forContext: (name) => options.events.forConsumer(name) });
       builder.bind(ErrorMapper).toValue(createErrorMapper(errorStatuses));
       // Cross-cutting behaviour stays out of the contexts. Inside the span and the dispatch the kernel module puts around a binding, outside the aspects a binding states for itself (`ownPolicy`).
-      builder.around(['external', 'gateway'], () => adapterAspects(options.resilience ?? defaultResilience));
+      builder.around(['external', 'gateway'], () => defaultPolicy(options.resilience ?? defaultResilienceSettings));
 
       if (options.redis !== undefined) {
         bindRedis(builder, options.redis);

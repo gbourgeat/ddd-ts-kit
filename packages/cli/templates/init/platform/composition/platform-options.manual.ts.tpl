@@ -38,7 +38,7 @@ export interface PlatformOptions {
   /** Where unexpected failures are reported: the reporter of `errors.ts` in `main.ts`; left out (the tools, the tests), nowhere. */
   readonly errors?: ErrorReporter;
 {{/if}}
-  /** The policy around every adapter that leaves the process; left out, the defaults of `resilience/default-resilience.ts`. */
+  /** The policy around every adapter that leaves the process; left out, `resilience/default-resilience-settings.ts`. */
   readonly resilience?: ResilienceSettings;
   /** Whether this process runs the scheduled jobs, and their settings; left out (the tools, the tests), no job runs by time. */
   readonly jobs?: JobsOptions;

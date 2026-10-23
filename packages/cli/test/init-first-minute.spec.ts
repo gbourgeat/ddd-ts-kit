@@ -101,7 +101,10 @@ describe('the helper an adapter states its own policy with', () => {
     const root = initProject(...flags, '--context', 'billing:core');
 
     expect(stringsAt(adapter(root, 'PaymentGateway').json(), 'created')).toContain(OWN_POLICY);
-    expect(read(root, OWN_POLICY)).toContain("import { selfGoverned } from '@/platform/resilience/self-governed';");
+
+    expect(read(root, OWN_POLICY)).toContain(
+      "import { adaptersWithOwnPolicy } from '@/platform/resilience/adapters-with-own-policy';",
+    );
 
     write(root, OWN_POLICY, `${read(root, OWN_POLICY)}// kept\n`);
 

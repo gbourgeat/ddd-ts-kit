@@ -78,8 +78,8 @@ import type { LogSettings } from '{{alias.platform}}/observability/create-logger
 {{#if cache.redis}}
 import type { RedisServices } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
 {{/if}}
-import { adapterAspects } from '{{alias.platform}}/resilience/adapter-aspects{{alias.ext}}';
-import { defaultResilience } from '{{alias.platform}}/resilience/default-resilience{{alias.ext}}';
+import { defaultPolicy } from '{{alias.platform}}/resilience/default-policy{{alias.ext}}';
+import { defaultResilienceSettings } from '{{alias.platform}}/resilience/default-resilience-settings{{alias.ext}}';
 import type { ResilienceSettings } from '{{alias.platform}}/resilience/resilience-settings{{alias.ext}}';
 {{#if style.declared}}
 // ddd-ts-kit:imports
@@ -96,7 +96,7 @@ export interface PlatformOptions {
   {{/if}}
   /** Where log entries go; left out, the application writes nothing. */
   readonly log?: LogSettings;
-  /** The policy around every adapter that leaves the process; left out, the defaults of `resilience/default-resilience.ts`. */
+  /** The policy around every adapter that leaves the process; left out, `resilience/default-resilience-settings.ts`. */
   readonly resilience?: ResilienceSettings;
   /** Whether a consumed event continues the trace of its publication (the default) or starts one linked to it. */
   readonly traceConsumers?: ConsumerTrace;
@@ -150,7 +150,7 @@ export function platformModule(persistence: Persistence, options: PlatformOption
       builder.bind(ErrorMapper).toValue(createErrorMapper());
       {{/if}}
       // Cross-cutting behaviour stays out of the contexts. Inside the span and the dispatch the kernel module puts around a binding, outside the aspects a binding states for itself (`ownPolicy`).
-      builder.around(['external', 'gateway'], () => adapterAspects(options.resilience ?? defaultResilience));
+      builder.around(['external', 'gateway'], () => defaultPolicy(options.resilience ?? defaultResilienceSettings));
       {{#if cache.redis}}
 
       if (options.redis !== undefined) {
