@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { readModelStoreContract, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
-import { PrismaReadModelTable, createPrismaUnitOfWork } from '../../src';
+import { PrismaReadModelTable, createPrismaUnitOfWork, type PrismaReadModelOptions } from '../../src';
 import type { Prisma } from '../generated/client/client';
 import { createDatabase, type TestDatabase } from '../support/database';
 import { CONTRACT_MODEL } from '../support/read-model/contract-model';
@@ -85,6 +85,53 @@ describe('PrismaReadModelTable', () => {
 
     expect(database.queries.join('\n')).not.toContain('drop table');
     expect((await table.shadow().find('a1'))?.row).toEqual(row);
+    await table.abandonRebuild();
+  });
+});
+
+interface LedgerRow {
+  readonly id: string;
+  readonly balance: number;
+}
+
+const LEDGER_MODEL: PrismaReadModelOptions<LedgerRow, Prisma.TransactionClient> = {
+  delegate: (client) => client.ledgerRow,
+  table: 'ledger',
+  columns: { id: 'id', balance: 'balance' },
+};
+
+describe('PrismaReadModelTable of a model in the default schema', () => {
+  const stamp = { eventId: 'evt-1', occurredAt: new Date('2026-10-10T12:00:00.000Z'), version: 3 };
+  const account = { id: 'acct-1', balance: Number.MAX_SAFE_INTEGER };
+
+  const ledger = async () => {
+    await database.truncate();
+
+    return new PrismaReadModelTable<LedgerRow, Prisma.TransactionClient>(
+      createPrismaUnitOfWork(database.prisma),
+      LEDGER_MODEL,
+    );
+  };
+
+  it('reads a BigInt back as a number, from the model and from the copy of a rebuild', async () => {
+    const table = await ledger();
+
+    await table.insert({ key: 'acct-1', row: account, stamp });
+    await table.beginRebuild();
+    await table.shadow().insert({ key: 'acct-1', row: account, stamp });
+
+    expect(await table.find('acct-1')).toEqual({ key: 'acct-1', row: account, stamp });
+    expect(await table.shadow().find('acct-1')).toEqual({ key: 'acct-1', row: account, stamp });
+    await table.abandonRebuild();
+  });
+
+  it('writes nothing to the copy for a stamp that carries no row', async () => {
+    const table = await ledger();
+
+    await table.beginRebuild();
+
+    expect(await table.shadow().insert({ key: 'acct-2', row: undefined, stamp })).toBe(false);
+    expect(await table.shadow().find('acct-2')).toBeUndefined();
     await table.abandonRebuild();
   });
 });

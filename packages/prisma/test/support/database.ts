@@ -22,6 +22,7 @@ const TABLES = [
   'messaging.processed_events',
   'billing_core.invoices',
   'read_side.criteria_contract',
+  'public.ledger',
   'public.stored_events',
   'public.stored_events_head',
   'public.stream_snapshots',

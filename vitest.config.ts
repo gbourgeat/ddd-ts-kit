@@ -29,7 +29,7 @@ const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>
   nats: [98, 96, 98, 98],
   openfga: [99, 94, 97, 99],
   pino: [96, 88, 100, 96],
-  prisma: [97, 83, 100, 97],
+  prisma: [99, 93, 100, 99],
   rabbitmq: [97, 97, 97, 97],
   redis: [96, 90, 97, 97],
   s3: [98, 86, 100, 98],
