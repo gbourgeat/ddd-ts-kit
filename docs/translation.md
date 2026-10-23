@@ -258,6 +258,11 @@ in the French column is kept in English, because French developers say it that w
 | cache miss, rate limiter | défaut de cache, limiteur de débit |
 | flush, redaction | vidage (flush), masquage |
 | file storage, signed link | stockage de fichiers, lien signé |
+| personal data, data subject | données personnelles, personne concernée |
+| erasure, crypto-shredding | effacement, *crypto-shredding* |
+| pseudonymisation, masker | pseudonymisation, masqueur |
+| retention (how long data is kept), retention (of backups, of a broker) | conservation, rétention |
+| register of personal data, records of processing activities | registre des données personnelles, registre des traitements |
 | identity provider, token, claim | fournisseur d'identité, jeton, *claim* |
 | impersonation | emprunt d'identité (impersonation) |
 | authorizer | autorisateur |
