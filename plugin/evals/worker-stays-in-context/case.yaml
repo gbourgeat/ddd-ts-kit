@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: worker-stays-in-context
+tags: [plugin]
+context:
+  scaffold_script: fixture.sh

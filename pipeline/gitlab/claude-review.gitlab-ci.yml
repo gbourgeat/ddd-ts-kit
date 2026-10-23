@@ -1,0 +1,91 @@
+# Opt-in (--ci-extras claude-review, claude-triage), included by .gitlab-ci.yml. Both jobs run
+# Claude Code headless (`claude -p`) with read-only tools, spend API tokens on every run, and never
+# fail the pipeline (allow_failure): a person decides. The model is reached with ANTHROPIC_API_KEY,
+# a masked CI/CD variable of the project, or through Amazon Bedrock or Google Vertex AI with
+# CLAUDE_CODE_USE_BEDROCK=1 or CLAUDE_CODE_USE_VERTEX=1 and the credentials of the provider, as the
+# Claude Code documentation says. A note on the merge request is posted with CLAUDE_REVIEW_TOKEN,
+# a project access token with the `api` scope (Settings > Access tokens); without it the job token
+# is tried, which some GitLab versions refuse on the notes endpoint, and the text stays in the job log.
+
+.claude:
+  # The image with git: the diff of the merge request is read from the repository.
+  image: node:24-bookworm
+  interruptible: true
+  allow_failure: true
+  variables:
+    GIT_DEPTH: '0'
+  before_script:
+    - pnpm install --global --no-audit --no-fund @anthropic-ai/claude-code
+    - |
+      post_note() {
+        if [ -z "${CI_MERGE_REQUEST_IID:-}" ]; then echo "No merge request: the text stays in this log."; return 0; fi
+        if [ -n "${CLAUDE_REVIEW_TOKEN:-}" ]; then auth="PRIVATE-TOKEN: $CLAUDE_REVIEW_TOKEN"; else auth="JOB-TOKEN: $CI_JOB_TOKEN"; fi
+        curl --silent --show-error --fail --request POST --header "$auth" --data-urlencode "body@$1" \
+          "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes" > /dev/null \
+          || echo "The note was not posted (set CLAUDE_REVIEW_TOKEN, a project access token with the api scope): the text is above."
+      }
+
+# A review of the merge request, posted as a note that neither approves nor blocks.
+claude-review:
+  extends: .claude
+  stage: test
+  needs: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - git fetch --quiet origin "$CI_MERGE_REQUEST_DIFF_BASE_SHA"
+    - |
+      policy=""; [ -f REVIEW.md ] && policy="REVIEW.md"
+      story=""; design=""
+      case "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" in
+        story/*)
+          code="$(printf '%s' "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME#story/}" | tr '[:upper:]' '[:lower:]')"
+          for file in docs/architecture/stories/*.md; do
+            [ -f "$file" ] || continue
+            name="$(basename "$file" .md)"
+            if [ "$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]')" = "$code" ]; then
+              story="$file"; [ -f "docs/architecture/reviews/$name.md" ] && design="docs/architecture/reviews/$name.md"
+            fi
+          done ;;
+      esac
+      prompt="Review merge request !$CI_MERGE_REQUEST_IID of $CI_PROJECT_PATH: read its diff with \`git diff $CI_MERGE_REQUEST_DIFF_BASE_SHA\` and the files it touches.
+
+      Policy. When \"$policy\" names a file, read it first and follow it: its passes, what it calls Important, its cap on nits, the paths it excludes. Without it, the passes are bugs (a wrong business rule, a state an aggregate can reach that it should not, a replay that is not idempotent, a failure path without a test), security (a search not narrowed by the access scope, a field reserved to a permission that leaks in a representation, personal data in a log or an error, an error code not declared on its route) and compliance with the architecture of the project; what \`pnpm run verify\` and \`pnpm exec ddd-ts-kit check\` already refuse is reported by the pipeline, not by you.
+
+      Story. When \"$story\" names a file, read it: the diff is held to its acceptance criteria and to its decisions. When \"$design\" names a file, read the section of each row the diff builds: a name of the design that the code does not carry, or a behaviour the design did not foresee, is a finding. A scenario of test/acceptance/ changed without its criterion is Important.
+
+      Do not report generated files: openapi/, docs/integration/, *.declarations.ts, .dependency-cruiser.cjs, clients/, the generated sections of a CONTEXT.md. At most five nits; the rest as a count.
+
+      Answer with the review only, as Markdown, starting with the line <!-- ddd-ts-kit:claude-review -->: the findings, Important ones first, each with its file and line, the pass it belongs to and what to do; then the nits; then one line saying what you could not verify. When nothing is wrong, say so in one line. Never edit a file: a person decides."
+      claude -p "$prompt" --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*)" --max-turns 40 > review.md
+    - cat review.md
+    - post_note review.md
+
+# When a job of an earlier stage failed: a three-line triage in this log and on the merge request.
+claude-triage:
+  extends: .claude
+  stage: gate
+  when: on_failure
+  script:
+    - |
+      mkdir -p .triage
+      if [ -n "${CLAUDE_REVIEW_TOKEN:-}" ]; then auth="PRIVATE-TOKEN: $CLAUDE_REVIEW_TOKEN"; else auth="JOB-TOKEN: $CI_JOB_TOKEN"; fi
+      curl --silent --fail --header "$auth" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipelines/$CI_PIPELINE_ID/jobs?scope[]=failed&per_page=20" > .triage/jobs.json \
+        || echo '[]' > .triage/jobs.json
+      node -e 'const jobs=JSON.parse(require("fs").readFileSync(".triage/jobs.json","utf8"));console.log(jobs.map((j)=>`${j.id} ${j.name}`).join("\n"))' > .triage/failed-jobs.txt
+      : > .triage/log.txt
+      while read -r id name; do
+        [ -n "$id" ] || continue
+        printf '\n===== %s =====\n' "$name" >> .triage/log.txt
+        curl --silent --fail --header "$auth" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/jobs/$id/trace" | tail -c 100000 >> .triage/log.txt || true
+      done < .triage/failed-jobs.txt
+      cat .triage/failed-jobs.txt
+    - |
+      prompt="The pipeline $CI_PIPELINE_URL of commit $CI_COMMIT_SHA failed. The ids and names of its failed jobs are in .triage/failed-jobs.txt and their logs in .triage/log.txt (the last 100 kB of each). Read them, and the files of the repository they name, with Read, Grep and Glob only: change nothing, run nothing.
+
+      Answer with exactly three lines and nothing else. Most likely cause: <one line, naming the job and the file and line when the log gives one>. Flaky or real: <flaky when the same commit would most likely pass again: a timeout, a registry or network error, a port already in use, a service that did not become healthy, a test that depends on timing; real otherwise>. What to do: <one line: rerun the job, or the fix to make and where>."
+      claude -p "$prompt" --allowedTools "Read,Grep,Glob" --max-turns 15 > .triage/triage.md
+    - |
+      { printf '<!-- ddd-ts-kit:claude-triage -->\n**Triage of the failed pipeline** %s\n\n' "$CI_PIPELINE_URL"; cat .triage/triage.md; printf '\n\n_Written by Claude from the logs, read-only: a person decides._\n'; } > .triage/note.md
+      cat .triage/note.md
+    - post_note .triage/note.md

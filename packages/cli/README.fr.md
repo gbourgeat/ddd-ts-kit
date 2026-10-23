@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6d29da40523326e2 -->
+<!-- translation-of: README.md sha256:29b4ba8bf58a34fb -->
 
 # ddd-ts-kit
 
@@ -100,11 +100,15 @@ qu'un autre générateur avait ajouté à un fichier de la plateforme (la valeur
 réglages d'un *job*) ne l'est pas, et une note le dit. Une configuration illisible est remplacée.
 
 Le *pipeline* n'utilise que des outils gratuits. `--ci-extras` ajoute des *jobs* qui demandent
-une offre payante sur un dépôt privé, ou qui ne remontent dans une *merge request* qu'avec une
-offre payante : `codeql`, `dependency-review` (GitHub), `gitlab-sast`, `gitlab-secret-detection`,
-`gitlab-dependency-scanning` (GitLab). La liste est enregistrée comme `ci.extras` dans la
+une offre payante sur un dépôt privé, qui ne remontent dans une *merge request* qu'avec une
+offre payante, ou qui dépensent des jetons d'API à chaque exécution : `codeql`,
+`dependency-review` (GitHub), `gitlab-sast`, `gitlab-secret-detection`,
+`gitlab-dependency-scanning` (GitLab), `claude-review` et `claude-triage` (les deux plateformes :
+Claude Code relit chaque *pull request* ou *merge request* et publie un commentaire qui
+n'approuve ni ne bloque, et trie une exécution en échec en trois lignes, en lecture seule ; le
+*job* `gate` n'en a jamais besoin). La liste est enregistrée comme `ci.extras` dans la
 configuration ; un nom inconnu, ou un *job* d'une plateforme que `--ci` ne couvre pas, est
-refusé. Le tableau de chaque outil et de ses conditions :
+refusé. Le tableau de chaque outil, de son coût et de ses conditions :
 [pipeline/README.md](../../pipeline/README.md#free-by-default-paid-on-request).
 
 Un import d'un fichier du projet s'écrit sans extension
@@ -569,8 +573,8 @@ choix sont enregistrés sous `stack` dans la configuration, `docsUi`, `ci` et `l
 | `knip.json` | code mort : les points d'entrée sont `main.ts` et `apps/*/main.ts`, les scripts, les *specs* et les *fakes*, les fichiers de module dans le style explicite, les fichiers de rôle sous discovery (*jobs* et *publishers* compris) |
 | `vitest.config.ts` | projets unitaires et d'intégration, les seuils de couverture lus dans `ddd-ts-kit.config.json` (`governedCoverage`), par contexte et par couche, dans le mode des décorateurs standard `decorators()` de `@ddd-ts-kit/testing/vitest`, qui compile les fichiers contenant un décorateur avec le compilateur du projet (Vitest ne transforme pas les décorateurs standard ; il transforme lui-même les anciens, si bien qu'un projet avec `experimentalDecorators` ne reçoit pas de *plugin*), et sous `--assembly discovery` `server.deps.inline: ['@ddd-ts-kit/di']` |
 | `lefthook.yml`, `commitlint.config.mjs` | *hooks* pre-commit (ESLint, la vérification du format et `check` sur les fichiers indexés, `check --commit-size --staged`, qui ne bloque jamais), pre-push (types, tests unitaires) et commit-msg (`npm run hooks:install`), chacun lancé par le lefthook du *checkout* où il se déclenche (`lefthook: node_modules/.bin/lefthook` : un *worktree* sans ses dépendances fait échouer le *commit* au lieu de sauter les vérifications), *commits* conventionnels |
-| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node et les dépendances, installés avant le démarrage de l'agent cloud de Copilot), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json` ; `codeql.yml` avec `--ci-extras codeql` |
-| `--ci gitlab` | `.gitlab-ci.yml` (les constats d'architecture comme rapport Code Quality au moyen de `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` |
+| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node et les dépendances, installés avant le démarrage de l'agent cloud de Copilot), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json` ; `codeql.yml` avec `--ci-extras codeql`, `claude-review.yml` et `claude-triage.yml` avec `--ci-extras claude-review,claude-triage` |
+| `--ci gitlab` | `.gitlab-ci.yml` (les constats d'architecture comme rapport Code Quality au moyen de `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` ; `.gitlab/claude-review.gitlab-ci.yml` avec `--ci-extras claude-review,claude-triage` |
 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | comment le lancer ; un guide léger dans `AGENTS.md`, que lisent Codex, Copilot et la plupart des agents de code et qu'importe `CLAUDE.md` (commandes, comment lire moins, la carte des règles, fichiers générés, note sur le compilateur, les *skills* du *plugin* : `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) et les invariants dans sept fichiers de règles, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` et `tests.md`, chacun délimité par un frontmatter `paths`, et les mêmes sept pour GitHub Copilot, chacun délimité par `applyTo` |
 | `.github/copilot/settings.json` | le *plugin* du kit, déclaré pour GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`) : son agent cloud l'installe, la CLI Copilot et VS Code le recommandent ; un fichier existant garde ce qu'il contient et reçoit les deux entrées |
 | `.claude/settings.json` | des permissions seulement : les vérifications et les générateurs s'exécutent sans demander, les fichiers `.env` sont illisibles (`.env.example` reste lisible), les trois documents générés ne sont pas modifiés à la main, `git push`, `npm publish` et toute modification des fichiers qui portent les règles et le *pipeline* (`ddd-ts-kit.config.json`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) demandent d'abord |
@@ -1436,6 +1440,70 @@ Not blocking, unattributed (1): settle each, or name its row in the marker (`TOD
 Not blocking: 1 marker of these contexts belongs to rows of US2.
 ```
 
+## measures
+
+```
+ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
+```
+
+Ce que la boucle d'une *story* coûte et laisse, lu dans l'historique git de la branche courante
+(`git log`, rien d'autre) et dans les fichiers de `docs/architecture/` (les *stories*, les revues,
+les intentions sous `intents/`, les incidents sous `incidents/`, `slices.md`) et de
+`test/acceptance/` (les verrous et les verdicts) : les indicateurs que le
+[playbook du cycle de vie AI-native d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
+nomme pour chacune de ses pratiques, dans les termes du kit. Une ligne par *story* de
+`docs/architecture/stories/`, puis les médianes et les parts de la période. La commande lit,
+n'écrit rien et ne demande rien à la plateforme.
+
+| Mesure | D'où |
+|---|---|
+| temps de conception | du premier *commit* de `docs/architecture/stories/<code>.md` au *commit* de `test/acceptance/<code>.acceptance.lock.json` |
+| temps de construction | du *commit* du verrou au premier *commit* dont le `## Report` contient du texte |
+| délai de livraison | du premier *commit* du fichier de la *story* au *commit* de la branche courante dont le sujet nomme `story/<code>` (un *commit* de fusion d'abord, sinon un *commit* de *squash* qui nomme la branche) ; `open` sans lui |
+| retravail des exigences | les *commits* qui ont changé `## Acceptance criteria` après le premier *commit* portant un *trailer* `Slice: <code>.<n>` ; les amendements du verrou (chacun un verdict `amend`) ; les verdicts `refuse` de `test/acceptance/verdicts/` |
+| décisions provisoires | les lignes `D<n>` du fichier de la *story* |
+| compromis | les éléments sous `### Compromises` du rapport |
+| revue | les lignes `TODO(review)` que les *commits* de la *story* ont retirées (réglées) et écrites (ouvertes), lues par `git log -S` ; les éléments sous `## Findings` de `docs/architecture/reviews/<code>.md` par passe (un titre `### <passe>`, sinon le mot avant les deux-points de l'élément, sinon `unsorted`) ; les répétitions : un identifiant de règle ou un texte de remarque vu dans deux *stories*, l'erreur que le guide de l'équipe aurait dû attraper |
+| vérification | si le rapport a un bloc `### Verification` qui nomme `npm run verify` |
+| parallélisme | les autres *stories* dont le premier et le dernier *commit* chevauchent celle-ci dans le temps |
+| origine | si `## Origin` nomme une intention (`intents/<name>.md`), un ticket (`SHOP-12`, `#12`, une URL) ou un incident (`incidents/<name>.md`) |
+| incidents répétés | une *story* dont l'origine nomme un incident dont la fiche porte le même `message` ou le même `error_code` (une ligne de son en-tête ou d'une liste) qu'une fiche antérieure de `docs/architecture/incidents/` |
+
+Un *commit* appartient à une *story* quand il porte un *trailer* `Slice: <code>.<n>` ou touche un
+de ses fichiers. Les temps sont en heures (`5h`, `1d 2h`) ; le résumé donne la médiane de chacun
+sur les *stories* qui l'ont, le délai de livraison sur les *stories* closes. Sur un tronc où
+chaque *pull request* est écrasée (*squash*), les phases d'une *story* se replient en un seul
+*commit* et ses temps de conception et de construction se lisent à zéro : lancez la commande sur
+la branche de la *story* (son *worktree*) avant qu'elle atterrisse, ou gardez des *commits* de
+fusion.
+
+- `--since <date>` garde les *stories* dont le premier *commit* est ce jour-là ou après
+  (ISO 8601).
+- `--story <code>` garde une *story*, quelle que soit la casse de son code.
+- `--by-author` ajoute qui a ouvert chaque *story* et une table par auteur (*stories*, closes,
+  délai médian). Désactivé par défaut : une mesure lue par personne change ce que les gens font,
+  et les mesures du playbook sont celles de la boucle, pas de ses personnes. Demandez-la quand
+  l'équipe en a convenu.
+- `--format json` (ou `--json`) donne la même chose en données pour un tableau de bord :
+  `{ branch, since?, stories: [{ story, file, author?, opened?, designHours?, buildHours?, leadHours?, merged?, rework: { criteriaChanges, amendments, refusals }, decisions, compromises, verification, origin?, review: { settled, opened, findings, repeats }, overlaps, repeatIncident? }], summary, byAuthor?, notComputed }`.
+
+Non calculés dans cette version, parce qu'ils viennent de la plateforme et que son API n'est pas
+lue : le délai jusqu'à la première revue d'une *pull request* et si sa CI était verte au premier
+passage. Une version ultérieure pourra les lire avec `gh` ou `glab` ; rien n'est envoyé nulle
+part.
+
+```
+$ npx ddd-ts-kit measures --since 2026-03-01
+Measures of main since 2026-03-01: 2 stories, 1 closed (merged on this branch).
+
+  US5  opened 2026-03-01  design 1d  build 3d  lead 5d (merged 991050c)  rework 1 criteria change(s), 1 amendment(s), 0 refusal(s)  decisions 2  compromises 2  review 1 settled, 1 opened, repeats language/glossary-term  verification yes  origin ticket  overlaps US6
+  US6  opened 2026-03-03  design open  build open  lead open  rework 0 criteria change(s), 0 amendment(s), 0 refusal(s)  decisions 0  compromises 0  review 0 settled, 0 opened, findings 2 bugs, 1 security, repeats language/glossary-term  verification no  origin incident (repeats docs/architecture/incidents/inc-1.md)  overlaps US5
+
+Medians: design 1d, build 3d, lead 5d over 1 closed; 0.5 criteria change(s), 1 decision(s), 1 compromise(s), 0.5 marker(s) settled per story.
+Verification: 1 of 2 report(s) name `npm run verify`. Origin: 2 of 2 name an intent, a ticket or an incident. Parallel: 2 built while another one was. Repeats across stories: 1 (language/glossary-term). Repeat incidents: 1.
+Not computed: time to first review and first-run CI status come from the platform (its API is not read).
+```
+
 ## doctor
 
 ```
@@ -1537,6 +1605,52 @@ que rien ne reste. Elle refuse un contexte qu'aucun *worktree* ne construit, et 
 *worktrees* d'un contexte que deux *workers* construisent : choisissez-en un avec `--worktree` ou
 `--branch`. `--json` affiche `{ context, worktree, root, branch, base, progress, next,
 sendMessage, briefing, notes }`.
+
+## story-scope
+
+```
+ddd-ts-kit story-scope <story> [--from <file>] [--kind story|fix] [--base <ref>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
+```
+
+Ouvre le *worktree* d'une story, où une session la mène de ses questions à sa *pull request*
+pendant que d'autres sessions mènent d'autres stories : `.worktrees/<story>` du *checkout*
+principal sur la branche `story/<story>`, coupée de `--base` (par défaut la branche que suit la
+branche courante, `origin/main` depuis le tronc ; refusé depuis le *worktree* d'une autre story,
+dont la branche deviendrait la base), son installation propre sauf `--no-install`, et
+`.ddd-ts-kit/story.json` (`{ story, base, baseCommit, branch, kind, from }`). Un *worktree*
+existant de la story est gardé et la story y reprend ; une story ouverte dans un autre *worktree*
+est refusée : deux sessions ne prennent jamais la même. Les autres stories ouvertes sont nommées
+avec les contextes que changent leurs lignes. `--dry-run` ne crée, n'écrit et n'installe rien.
+
+`--kind` dit ce qu'est la story : `story` (par défaut), ou `fix`, une story construite derrière
+les *specs* de régression listées sous `## Regression` de son fichier et verrouillées, telles que
+la *skill* `fix` les écrit. `--from <file>` consigne d'où vient la story : une intention,
+`docs/architecture/intents/<slug>.md`, refusée sauf si son en-tête dit `Status: accepted`, ou un
+compte rendu d'incident, `docs/architecture/incidents/<id>.md`, accepté tel quel. Les deux sont
+écrits dans `story.json`, relativement à la racine du projet, et gardés quand la story reprend
+sans eux. Tant que `docs/architecture/stories/<story>.md` n'existe pas, la ligne `Next:` dit que la
+*skill* story amorce son énoncé depuis l'origine. `--json` imprime `{ story, kind, from, seeds,
+dryRun, worktree, branch, base, created, install, others, notes }`.
+
+## story
+
+```
+ddd-ts-kit story [<story>] [--gate build|close]
+```
+
+Où en est une story, phase par phase, et l'étape suivante : sa spécification et ses critères
+(`docs/architecture/stories/<story>.md`), ses lignes dans `slices.md`, une section de revue de
+conception par ligne non faite (`docs/architecture/reviews/<story>.md`, `## #<id>`), son
+acceptation écrite et verrouillée, ses lignes faites sans marqueur à elle, son acceptation qui
+passe, son tronc fusionné, son `## Origin` (`From:` et `Built with:`), son `## Report` avec
+`### Verification` nommant `npm run verify`. Dans le *worktree* d'une story, la story est la
+sienne. `--gate build` sort en 1 tant que les quatre premières phases ne sont pas franchies (le
+code peut commencer : la garde du plugin ouvre les contextes) ; `--gate close` tant que toutes ne
+le sont pas. Pour une story de type `fix` (son `story.json`, ou une section `## Regression` dans
+son fichier), les lignes et leur conception sont facultatives, la phase d'acceptation lit les
+*specs* listées sous `## Regression` au lieu de `test/acceptance/`, chacune devant exister, et
+aucune phase « passe » n'est lue : les *specs* de régression tournent avec les tests du projet.
+`--json` imprime `{ story, gate, met, next, phases }`.
 
 ## cited
 

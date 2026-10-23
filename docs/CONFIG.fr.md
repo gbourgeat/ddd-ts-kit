@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:6b026a14c5a14e7d -->
+<!-- translation-of: CONFIG.md sha256:7ca0cc04355d36c9 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -513,7 +513,7 @@ Tant que ce n'est pas fait, la règle peut rester à `warn` sous `rules`, enregi
 
 | Clé | Valeurs | Défaut |
 |---|---|---|
-| `ci.extras[]` | des *jobs* ajoutés au *pipeline* en plus des portes gratuites, chacun demandant une offre payante sur un dépôt privé ou ne remontant dans une *merge request* que dans une offre payante : `codeql` (`.github/workflows/codeql.yml` ; gratuit sur un dépôt public, GitHub Code Security sur un dépôt privé), `dependency-review` (une étape du *job* `security` ; gratuit sur un dépôt public, GitHub Code Security ou Advanced Security sur un dépôt privé), `gitlab-sast` et `gitlab-secret-detection` (les *templates* de GitLab : ils tournent dans toutes les offres, leurs constats n'atteignent une *merge request* que sous Ultimate), `gitlab-dependency-scanning` (Ultimate). `init --ci-extras codeql,dependency-review` les écrit et enregistre la liste ; `--ci-extras none` les retire lors d'un `init --force`. `init` refuse un nom inconnu, ou un *job* d'une plateforme que `stack.ci` ne couvre pas ; `config/valid` signale un nom inconnu écrit à la main. La table de chaque outil, de sa classe et de sa source est dans [pipeline/README.md](../pipeline/README.md#free-by-default-paid-on-request) | `[]` : aucun, la clé est omise |
+| `ci.extras[]` | des *jobs* ajoutés au *pipeline* en plus des portes gratuites, chacun demandant une offre payante sur un dépôt privé ou ne remontant dans une *merge request* que dans une offre payante : `codeql` (`.github/workflows/codeql.yml` ; gratuit sur un dépôt public, GitHub Code Security sur un dépôt privé), `dependency-review` (une étape du *job* `security` ; gratuit sur un dépôt public, GitHub Code Security ou Advanced Security sur un dépôt privé), `gitlab-sast` et `gitlab-secret-detection` (les *templates* de GitLab : ils tournent dans toutes les offres, leurs constats n'atteignent une *merge request* que sous Ultimate), `gitlab-dependency-scanning` (Ultimate), `claude-review` et `claude-triage` (les deux plateformes : une revue de chaque *pull request* ou *merge request* par Claude Code, publiée en commentaire qui n'approuve ni ne bloque, et un triage en trois lignes, en lecture seule, d'une exécution en échec ; des jetons d'API à chaque exécution, jamais exigés par le *job* `gate`). `init --ci-extras codeql,dependency-review` les écrit et enregistre la liste ; `--ci-extras none` les retire lors d'un `init --force`. `init` refuse un nom inconnu, ou un *job* d'une plateforme que `stack.ci` ne couvre pas ; `config/valid` signale un nom inconnu écrit à la main. La table de chaque outil, de sa classe et de sa source est dans [pipeline/README.md](../pipeline/README.md#free-by-default-paid-on-request) | `[]` : aucun, la clé est omise |
 
 ## Contrats
 

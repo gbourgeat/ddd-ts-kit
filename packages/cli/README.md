@@ -95,10 +95,13 @@ value of a gateway, the settings of a job) is not, and a note says so. A config 
 read is replaced.
 
 The pipeline uses free tools only. `--ci-extras` adds jobs that need a paid plan on a private
-repository, or report into a merge request only in a paid tier: `codeql`, `dependency-review`
-(GitHub), `gitlab-sast`, `gitlab-secret-detection`, `gitlab-dependency-scanning` (GitLab). The
-list is recorded as `ci.extras` in the config; an unknown name, or a job of a platform `--ci` does
-not cover, is refused. The table of every tool and its conditions:
+repository, report into a merge request only in a paid tier, or spend API tokens on every run:
+`codeql`, `dependency-review` (GitHub), `gitlab-sast`, `gitlab-secret-detection`,
+`gitlab-dependency-scanning` (GitLab), `claude-review` and `claude-triage` (both platforms: Claude
+Code reviews each pull or merge request and posts one comment that neither approves nor blocks,
+and triages a failed run in three lines, read-only; the `gate` job never needs them). The list is
+recorded as `ci.extras` in the config; an unknown name, or a job of a platform `--ci` does not
+cover, is refused. The table of every tool, its cost and its conditions:
 [pipeline/README.md](../../pipeline/README.md#free-by-default-paid-on-request).
 
 An import of a file of the project is written without an extension
@@ -550,8 +553,8 @@ config, `docsUi`, `ci` and `logger` included.
 | `knip.json` | dead code: entry points are `main.ts` and `apps/*/main.ts`, the scripts, the specs and the fakes, the module files in the explicit style, the role files under discovery (jobs and publishers included) |
 | `vitest.config.ts` | unit and integration projects, the coverage thresholds read from `ddd-ts-kit.config.json` (`governedCoverage`), per context and layer, in the standard decorator mode `decorators()` of `@ddd-ts-kit/testing/vitest`, which compiles the files holding a decorator with the compiler of the project (Vitest does not lower standard decorators; it lowers legacy ones itself, so a project with `experimentalDecorators` gets no plugin), and under `--assembly discovery` `server.deps.inline: ['@ddd-ts-kit/di']` |
 | `lefthook.yml`, `commitlint.config.mjs` | pre-commit (ESLint, the format check and `check` on the staged files, `check --commit-size --staged`, which never blocks, and `secrets`: gitleaks on the staged changes when its binary is on the path, one line and no refusal otherwise, the pipeline scanning the whole history anyway), pre-push (types, unit tests) and commit-msg hooks (`npm run hooks:install`), each run by the lefthook of the checkout it fires in (`lefthook: node_modules/.bin/lefthook`: a worktree without its dependencies fails the commit instead of skipping the checks), conventional commits |
-| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node and the dependencies, installed before the Copilot cloud agent starts), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json`; `codeql.yml` with `--ci-extras codeql` |
-| `--ci gitlab` | `.gitlab-ci.yml` (architecture findings as a Code Quality report through `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` |
+| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node and the dependencies, installed before the Copilot cloud agent starts), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json`; `codeql.yml` with `--ci-extras codeql`, `claude-review.yml` and `claude-triage.yml` with `--ci-extras claude-review,claude-triage` |
+| `--ci gitlab` | `.gitlab-ci.yml` (architecture findings as a Code Quality report through `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json`; `.gitlab/claude-review.gitlab-ci.yml` with `--ci-extras claude-review,claude-triage` |
 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | how to run it; a slim guide in `AGENTS.md`, which Codex, Copilot and most coding agents read and `CLAUDE.md` imports (commands, how to read less, the map of the rules, generated files, the verification commands with the lines each prints when it passes, to run before reporting done, the mistakes seen here, a section the team owns under the rule of two, compiler note, the skills of the plugin: `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) and the invariants in seven rule files, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` and `tests.md`, each scoped by a `paths` frontmatter, and the same seven for GitHub Copilot, each scoped by `applyTo` |
 | `REVIEW.md` | the review policy of the project: the passes of a review (bugs, security, compliance against the design review of the row, the acceptance of the story, the records of `docs/adr/` and the rules), what Important means, at most five nits (a recurring one becomes a line of `AGENTS.md` under `## Mistakes seen here` or a rule of the config), what is not reported (generated files, what `npm run verify` refuses). Read by the `architecture-reviewer` agent on top of its method, by a human reviewer and by any review bot. Written once, for the team to edit: `--force` leaves it alone, `doctor` says when it is missing |
 | `.github/copilot/settings.json` | the plugin of the kit, declared for GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`): its cloud agent installs it, the Copilot CLI and VS Code recommend it; an existing file keeps what it holds and gains the two entries |
@@ -1380,6 +1383,65 @@ Not blocking, unattributed (1): settle each, or name its row in the marker (`TOD
   src/contexts/billing/test/unit/invoice.aggregate.spec.ts:1  it.todo  refuses an invoice without lines  (unattributed, may belong to open US2: settle it or name the row in the marker)
 
 Not blocking: 1 marker of these contexts belongs to rows of US2.
+```
+
+## measures
+
+```
+ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
+```
+
+What the loop of a story costs and leaves, read from the git history of the current branch
+(`git log`, nothing else) and the files of `docs/architecture/` (the stories, the reviews, the
+intents under `intents/`, the incidents under `incidents/`, `slices.md`) and of
+`test/acceptance/` (the locks and the verdicts): the indicators the
+[AI-native SDLC playbook of Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
+names for each of its plays, in the terms of the kit. One line per story of
+`docs/architecture/stories/`, then the medians and the shares of the period. It reads, writes
+nothing and asks nothing of the platform.
+
+| Measure | From |
+|---|---|
+| design time | the first commit of `docs/architecture/stories/<code>.md` to the commit of `test/acceptance/<code>.acceptance.lock.json` |
+| build time | the lock commit to the first commit whose `## Report` holds text |
+| lead time | the first commit of the story file to the commit of the current branch whose subject names `story/<code>` (a merge commit first, else a squash commit that names the branch); `open` without one |
+| requirements rework | the commits that changed `## Acceptance criteria` after the first commit carrying a `Slice: <code>.<n>` trailer; the amendments of the lock (each an `amend` verdict); the `refuse` verdicts of `test/acceptance/verdicts/` |
+| provisional decisions | the `D<n>` lines of the story file |
+| compromises | the items under `### Compromises` of the report |
+| review | the `TODO(review)` lines the commits of the story removed (settled) and wrote (opened), from `git log -S`; the items under `## Findings` of `docs/architecture/reviews/<code>.md` by pass (a `### <pass>` heading, else the word before the colon of the item, else `unsorted`); the repeats: a rule id or a remark text seen in two stories, the mistake the guide of the team should have caught |
+| verification | whether the report has a `### Verification` block naming `npm run verify` |
+| parallelism | the other stories whose first and last commits overlap this one in time |
+| origin | whether `## Origin` names an intent (`intents/<name>.md`), a ticket (`SHOP-12`, `#12`, a URL) or an incident (`incidents/<name>.md`) |
+| repeat incidents | a story whose origin names an incident whose record carries the same `message` or `error_code` (a line of its front matter or of a list) as an earlier record of `docs/architecture/incidents/` |
+
+A commit belongs to a story when it carries a `Slice: <code>.<n>` trailer or touches one of its
+files. Times are in hours (`5h`, `1d 2h`); the summary gives the median of each over the stories
+that have it, lead time over the closed ones. On a trunk where every pull request is squashed,
+the phases of a story collapse into one commit and its design and build times read as zero: run
+the command on the branch of the story (its worktree) before it lands, or keep merge commits.
+
+- `--since <date>` keeps the stories whose first commit is on or after that day (ISO 8601).
+- `--story <code>` keeps one story, whatever the case of its code.
+- `--by-author` adds who opened each story and a table per author (stories, closed, median lead
+  time). Off by default: a measure read per person changes what people do, and the playbook's
+  measures are of the loop, not of its people. Ask for it when the team agreed on it.
+- `--format json` (or `--json`) gives the same as data for a dashboard:
+  `{ branch, since?, stories: [{ story, file, author?, opened?, designHours?, buildHours?, leadHours?, merged?, rework: { criteriaChanges, amendments, refusals }, decisions, compromises, verification, origin?, review: { settled, opened, findings, repeats }, overlaps, repeatIncident? }], summary, byAuthor?, notComputed }`.
+
+Not computed in this version, because they come from the platform and its API is not read: the
+time to the first review of a pull request and whether its CI was green on the first run. A
+later version may read them with `gh` or `glab`; nothing is sent anywhere.
+
+```
+$ npx ddd-ts-kit measures --since 2026-03-01
+Measures of main since 2026-03-01: 2 stories, 1 closed (merged on this branch).
+
+  US5  opened 2026-03-01  design 1d  build 3d  lead 5d (merged 991050c)  rework 1 criteria change(s), 1 amendment(s), 0 refusal(s)  decisions 2  compromises 2  review 1 settled, 1 opened, repeats language/glossary-term  verification yes  origin ticket  overlaps US6
+  US6  opened 2026-03-03  design open  build open  lead open  rework 0 criteria change(s), 0 amendment(s), 0 refusal(s)  decisions 0  compromises 0  review 0 settled, 0 opened, findings 2 bugs, 1 security, repeats language/glossary-term  verification no  origin incident (repeats docs/architecture/incidents/inc-1.md)  overlaps US5
+
+Medians: design 1d, build 3d, lead 5d over 1 closed; 0.5 criteria change(s), 1 decision(s), 1 compromise(s), 0.5 marker(s) settled per story.
+Verification: 1 of 2 report(s) name `npm run verify`. Origin: 2 of 2 name an intent, a ticket or an incident. Parallel: 2 built while another one was. Repeats across stories: 1 (language/glossary-term). Repeat incidents: 1.
+Not computed: time to first review and first-run CI status come from the platform (its API is not read).
 ```
 
 ## doctor

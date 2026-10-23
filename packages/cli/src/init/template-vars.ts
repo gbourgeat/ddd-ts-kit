@@ -53,6 +53,10 @@ function extrasVars(extras: readonly string[]): RenderContext {
     gitlabSecretDetection: extras.includes('gitlab-secret-detection'),
     gitlabDependencyScanning: extras.includes('gitlab-dependency-scanning'),
     gitlabSecurity: extras.some((extra) => gitlab.includes(extra)),
+    claudeReview: extras.includes('claude-review'),
+    claudeTriage: extras.includes('claude-triage'),
+    claude: extras.includes('claude-review') || extras.includes('claude-triage'),
+    gitlabInclude: extras.some((extra) => gitlab.includes(extra) || extra.startsWith('claude-')),
     none: extras.length === 0,
   };
 }
