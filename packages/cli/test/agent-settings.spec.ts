@@ -24,6 +24,7 @@ const ASKED = [
   'Bash(git push *)',
   'Bash(npm publish *)',
   'Edit(./ddd-ts-kit.config.json)',
+  'Edit(./REVIEW.md)',
   'Edit(./eslint.config.mjs)',
   'Edit(./biome.json)',
   'Edit(./.dependency-cruiser.cjs)',
@@ -33,6 +34,10 @@ const ASKED = [
   'Edit(./.github/workflows/**)',
   'Edit(./.claude/settings.json)',
   'Edit(./.github/copilot/settings.json)',
+  'Edit(./migrations/**)',
+  'Edit(./Dockerfile)',
+  'Edit(./docker-compose.yml)',
+  'Edit(./docker/**)',
 ];
 
 describe('agent settings', () => {
@@ -66,6 +71,18 @@ describe('agent settings', () => {
     expect(permissions(root, 'ask')).toEqual(ASKED);
   });
 
+  it('asks before a migration of the ORM of the project, and never names a folder the project has no migration in', () => {
+    const prisma = permissions(initProject(...NPM, '--orm', 'prisma'), 'ask');
+    const knex = permissions(initProject(...NPM, '--orm', 'knex'), 'ask');
+    const none = permissions(initProject(...NPM, '--orm', 'none'), 'ask');
+
+    expect(prisma).toContain('Edit(./prisma/migrations/**)');
+    expect(prisma).not.toContain('Edit(./migrations/**)');
+    expect(knex).toContain('Edit(./migrations/**)');
+    expect(none.filter((rule) => rule.includes('migrations'))).toEqual([]);
+    expect(none).toContain('Edit(./docker/**)');
+  });
+
   it('keeps the settings a project already has, adds what is missing and says what', () => {
     const root = tempDir('settings');
 
@@ -88,7 +105,7 @@ describe('agent settings', () => {
     expect(permissions(root, 'deny')).toContain('Edit(./openapi/**)');
 
     expect(stringsAt(report, 'notes').join('\n')).toMatch(
-      /\.claude\/settings\.json gained 49 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
+      /\.claude\/settings\.json gained 54 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
     );
 
     expect(stringsAt(cli(root, 'init', '--json').json(), 'updated')).not.toContain(SETTINGS);

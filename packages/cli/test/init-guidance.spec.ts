@@ -69,7 +69,8 @@ describe('the guidance init writes', () => {
       '/ddd-ts-kit:quality-gate',
     ];
 
-    expect(guide.split('\n').length).toBeLessThan(40);
+    // A page: the verification section and the mistakes of the team included.
+    expect(guide.split('\n').length).toBeLessThan(50);
 
     for (const text of [
       ...commands,

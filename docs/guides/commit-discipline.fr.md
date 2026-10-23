@@ -1,5 +1,5 @@
 [English](commit-discipline.md) · **Français**
-<!-- translation-of: commit-discipline.md sha256:c9e289e9eab01068 -->
+<!-- translation-of: commit-discipline.md sha256:6040090bd670a654 -->
 
 # La discipline des commits et des pull requests
 
@@ -106,6 +106,23 @@ of defence, not as the rule.
 Avec les fusions par *squash*, le titre de la *pull request* devient le *commit* sur la branche
 par défaut ; le titre suit donc le même format, et le *pipeline* le vérifie avec la même
 configuration.
+
+Deux *trailers* portent ce qu'un message ne peut pas dire. `Slice: <id de ligne>` nomme la ligne
+de `docs/architecture/slices.md` qu'un *commit* clôt ([Travail en parallèle](parallel-work.fr.md)) ;
+`story-check` le lit. `Change: <id>` nomme le ticket de changement, ou la *story*, auquel
+appartient une modification d'une migration ou des conteneurs : le *hook* `change-reference` du
+profil réglementé ([Mettre les agents de code en bac à sable](agent-sandbox.fr.md#le-profil-réglementé))
+le demande avant la modification, et la session l'écrit dans le *commit* qui porte le fichier :
+
+```
+feat(billing): add the paid_at column to invoices
+
+Change: CHG-1234
+```
+
+Le *trailer* est lu par des personnes, dans l'historique
+(`git log --format='%h %(trailers:key=Change,valueonly)' -- migrations/`) ; aucune commande du kit
+ne le lit encore, et `story-check` ne signale pas un *commit* de migration qui en manque.
 
 ## Des tailles cibles, et pourquoi
 
@@ -249,7 +266,7 @@ git stash pop
 | Moment | Ce qui tourne | Impose |
 |---|---|---|
 | chaque écriture de fichier dans une session d'agent | le *hook* du *plugin* | refuse un fichier écrit à la main là où un générateur existe, une modification d'un fichier généré (contrats, *barrels*, `.dependency-cruiser.cjs`) et, pour un *worker* d'un seul contexte, une écriture hors de ce contexte ; demande au propriétaire avant une désactivation, un test sauté ou un changement des fichiers gouvernés ; renvoie les violations du fichier écrit ; refuse de terminer tant que des erreurs d'architecture restent, puis rappelle la taille du *commit* sans bloquer |
-| `pre-commit` (lefthook) | ESLint et le formateur (`biome format`) sur les fichiers indexés ; `ddd-ts-kit check` sur les sources indexées sous `src/` ; `ddd-ts-kit check --commit-size --staged` | les règles de code, le format et la structure de ce qui est commité ; la taille du *commit*, à titre de conseil |
+| `pre-commit` (lefthook) | ESLint et le formateur (`biome format`) sur les fichiers indexés ; `ddd-ts-kit check` sur les sources indexées sous `src/` ; `ddd-ts-kit check --commit-size --staged` ; `secrets`, gitleaks sur les changements indexés quand son binaire est sur le chemin, une ligne sinon | les règles de code, le format et la structure de ce qui est commité ; la taille du *commit*, à titre de conseil ; un secret tenu hors du *commit* (le pipeline balaie tout l'historique de toute façon) |
 | `commit-msg` (lefthook) | commitlint | le format conventional commits |
 | `pre-push` (lefthook) | la vérification des types ; les *specs* unitaires des contextes que la branche atteint (`ddd-ts-kit affected --run`) ; `ddd-ts-kit verify-merge --warn` | le projet compile et les tests rapides de ce que la branche a changé passent ; ce qu'une fusion depuis le tronc a perdu (une ligne, une tranche terminée, un test) est affiché, en avertissement dans cette version |
 | *pull request* | la vérification du titre | le titre est un conventional commit |

@@ -103,6 +103,22 @@ of defence, not as the rule.
 With squash merges the pull request title becomes the commit on the default branch, so the
 title follows the same format and the pipeline checks it with the same configuration.
 
+Two trailers carry what a message cannot. `Slice: <row id>` names the row of
+`docs/architecture/slices.md` a commit closes ([Parallel work](parallel-work.md)); `story-check`
+reads it. `Change: <id>` names the change ticket, or the story, a change of a migration or of the
+containers belongs to: the `change-reference` hook of the regulated profile
+([Sandboxing coding agents](agent-sandbox.md#the-regulated-profile)) asks for it before the
+edit, and the session writes it in the commit that holds the file:
+
+```
+feat(billing): add the paid_at column to invoices
+
+Change: CHG-1234
+```
+
+The trailer is read by people, in the history (`git log --format='%h %(trailers:key=Change,valueonly)' -- migrations/`);
+no command of the kit reads it yet, and `story-check` does not report a migration commit without it.
+
 ## Target sizes, and why
 
 These are targets to steer by. The kit measures one of them, with a threshold a little above
@@ -236,7 +252,7 @@ Stated exactly, from [pipeline/lefthook.yml](../../pipeline/lefthook.yml), [pipe
 | Moment | What runs | Enforces |
 |---|---|---|
 | every file write in an agent session | the plugin's hook | refuses a hand-written file where a generator exists, an edit of a generated file (contracts, barrels, `.dependency-cruiser.cjs`) and, for a worker of one context, a write outside that context; asks the owner before a suppression, a skipped test or a change of the governed files; returns the violations of the written file; refuses to finish while architecture errors remain, then reminds of the commit size without blocking |
-| `pre-commit` (lefthook) | ESLint and the formatter (`biome format`) on staged files; `ddd-ts-kit check` on staged sources under `src/`; `ddd-ts-kit check --commit-size --staged` | code rules, format and structure on what is being committed; the size of the commit, as advice |
+| `pre-commit` (lefthook) | ESLint and the formatter (`biome format`) on staged files; `ddd-ts-kit check` on staged sources under `src/`; `ddd-ts-kit check --commit-size --staged`; `secrets`, gitleaks on the staged changes when its binary is on the path, one line otherwise | code rules, format and structure on what is being committed; the size of the commit, as advice; a secret kept out of the commit (the pipeline scans the whole history anyway) |
 | `commit-msg` (lefthook) | commitlint | the conventional commit format |
 | `pre-push` (lefthook) | type check; the unit specs of the contexts the branch reaches (`ddd-ts-kit affected --run`); `ddd-ts-kit verify-merge --warn` | the project compiles and the fast tests of what the branch changed pass; what a merge since the trunk lost (a line, a row done, a test) is shown, as a warning in this version |
 | pull request | the title check | the title is a conventional commit |

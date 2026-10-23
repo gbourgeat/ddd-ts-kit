@@ -119,6 +119,7 @@ fails the commit instead of skipping the checks.
 | pre-commit | `eslint` | staged sources |
 | pre-commit | `ddd-ts-kit check` | staged sources under `src/` |
 | pre-commit | `ddd-ts-kit check --commit-size --staged` | the index: advice on the size of the commit, never a refusal |
+| pre-commit | `secrets`: `gitleaks git --pre-commit --staged --redact --no-banner` when the `gitleaks` binary is on the path (`gitleaks protect --staged` before 8.19) | the staged changes: a secret refuses the commit before it exists. Without the binary the job prints one line saying the staged changes are not scanned here, and passes: the `secrets` job of the pipeline scans the whole history anyway. After the AI-native SDLC playbook of Anthropic ([PDF](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)): a credential is kept out of the diff at the commit, not found in CI |
 | pre-push | `ci:typecheck`, `ci:test:unit` | the project |
 | pre-push | `ddd-ts-kit verify-merge --warn` | the merges since the trunk: what each lost, shown without blocking in this version; silent without a merge |
 | commit-msg | `commitlint` | the message |
@@ -235,5 +236,5 @@ supports Vitest 5.
 | workflows | parsed with a YAML parser, checked with actionlint 1.7 (no finding); not executed on GitHub |
 | `.gitlab-ci.yml` | parsed with a YAML parser; stages, `needs` and `extends` resolved by a script; `glab ci lint` needs a GitLab project and was not run; not executed on GitLab |
 | `renovate.json` | `renovate-config-validator --strict` |
-| `lefthook.yml`, `commitlint.config.mjs` | `lefthook validate`; commitlint on a valid and an invalid message |
+| `lefthook.yml`, `commitlint.config.mjs` | `lefthook validate`; commitlint on a valid and an invalid message. The `secrets` job was run without the gitleaks binary (its line prints and the commit goes on); its gitleaks command is the one of the pipeline's image, 8.30.1, read from the gitleaks README, not executed here |
 | branch protection, merge request settings | written from the API documentation, not executed |
