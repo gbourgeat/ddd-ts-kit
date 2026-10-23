@@ -26,6 +26,7 @@ pull request of its own, measured against the indicators of this page before and
 | Fewer jobs per pipeline run, the heavy families narrowed on a pull request | **in progress** (the queue and the wall clock): the pull request #248 (2026-10-23) folds the five gates under three minutes into one job and, on a pull request, runs the alias suite on one Node line and the generated projects on npm: 24 jobs to 20 on the trunk, 23 to 17 on a pull request; the end-to-end shards held to the stacks a change reaches come next |
 | The compile matrix of five spec files run in parallel or split per file | **in progress** (the longest file, 84 s, capped every run): the pull request #250 (2026-10-23) compiles the modes of a file a few at a time from its first load, and the runner starts the six longest files first. Measured on the workstation of the method: the longest file 84 s to 27 s in a full run (4.5 s alone instead of 15 s), the run 88 to 104 s to 81 s on 20 cores and 203 s to 139 s at four workers; the two end-to-end files of the CLI, which generate every stack one after the other, now set the tail (65 to 70 s). The 4 vCPU figure is the unit job of the pipeline on that pull request |
 | Half the cores outside a pipeline, `related` tests before a push | **in progress** (the memory of a laptop): the pull request #252 (2026-10-23) gives the root `vitest.config.ts` `maxWorkers: '50%'` outside a pipeline, and the pre-push hook runs the unit specs of the packages the branch reaches and of the packages built on them, without coverage (`affected-packages.mjs --base origin/main --run test`), where it ran everything with coverage. Measured on the workstation of the method, before a push that reaches every package: 152 to 201 s and 9.3 to 11.5 GB with coverage on every core, to 101 to 110 s and 6.8 to 7.3 GB (two measures each, the second pair under a foreign load); a push that reaches one leaf package runs its specs alone, in seconds |
+| The heavy families run two files at a time, their one-file giants split (the sixth line, rewritten: the unit job stopped being the longest after the second) | **in progress**: the pull request `ci/two-files-at-a-time-in-the-heavy-jobs` (2026-10-23); its measures are in section 5 and on the pull request |
 | ESLint with its content cache, kept as an artifact of the pipeline | **recommended** (measured on this repository, section 5) |
 | The type check of the specs in parallel | **recommended** (measured, section 5) |
 | Oxlint with tsgolint, the rules of the kit loaded as a JS plugin | **beside ESLint only**: 2 to 4 s instead of 35, but the kit plugin breaks on 2,494 files under the alpha plugin API (section 5) |
@@ -366,7 +367,7 @@ organization-owned public repositories.
 | ESLint `--cache --cache-strategy content`, the cache an artifact of the pipeline | measured in section 5 | a change of types in another file is seen by the full run of the trunk only | **do** |
 | the type check of the specs in parallel | measured in section 5 | memory, 25 compilers at once: cap at the cores of the runner | **do** |
 | the key of the install cache on the lockfile, the OS, the architecture and the Node line | fewer 330 MB copies, fewer misses | none | **do** |
-| the unit job sharded in two with `--reporter=blob` and the floors on the merged report | the longest job of the trunk shortened | one more job against the limit of 20: after the merge of the small ones | **do, after the first line** |
+| the heavy families run two files at a time, their one-file giants split (first written as two shards of the unit job) | the longest jobs of the trunk shortened without a job added | two generated projects share a runner: installs overlap specs, memory doubles, ports must not meet | **do, after the second line** |
 | Oxlint with tsgolint, the kit rules as a JS plugin, beside ESLint and not blocking | a type-aware lint of 4 s instead of 35 s (section 5) | the kit plugin breaks on 2,494 files under the alpha plugin API and one native rule disagrees with TypeScript; two typed rules missing; findings to compare until the API carries what the rules read | **try, not as the gate** |
 | arm64 runners for the unit and end-to-end jobs | four physical cores instead of two | unknown until measured: ten runs on each, p50 compared | **try** |
 | pnpm for this repository | an install of 1 s instead of 8 s when its store is warm (section 5), and nothing to do when nothing changed | a migration of the lockfile, the layout and every spec that reads `node_modules`; in the pipeline the store would be restored from the cache as `node_modules` is today, for a gain of a few seconds per job; its supply-chain check costs 50 s the first time a lockfile is seen | **not now** |
@@ -403,8 +404,17 @@ before and after on the same runs.
    parity.
 5. **The install cache.** Its key on the lockfile, the OS, the architecture and the Node line;
    the built packages kept as they are. Indicator: cache hit rate and the size of the cache.
-6. **Two shards for the unit job**, once the first line has freed the queue. Indicator: wall
-   time of the longest job of the trunk.
+6. **The heavy families run two files at a time, and their one-file giants are split.** Written
+   first as two shards for the unit job, when that job took 9.5 min; after the second line it
+   takes 6 to 8 min, and the longest jobs of the trunk are the generated projects on npm (13 min:
+   four files one after the other), the end-to-end shards (11 to 13 min) and the alias runs
+   (12 min: 35 stacks in one file). A second shard of the unit job would add a job to the queue
+   and shorten nothing. Instead: `--maxWorkers=2` in place of `--no-file-parallelism` in those
+   jobs (a project installs from npm while another runs its specs on the other cores),
+   `alias-runtime.spec.ts` split in two files of half the stacks each, and any free port for an
+   application the specs start, so that two never meet on one. Indicator unchanged: wall time of
+   the longest job of the trunk, measured on a machine held to four cores (section 5) and on the
+   runs of the pipeline.
 7. **Two trials, non-blocking and measured for a month**: Oxlint with tsgolint and the kit
    rules as a JS plugin, its findings compared with ESLint's on every run, starting with the
    reason the plugin breaks under that API (a rule that reads something the alpha does not

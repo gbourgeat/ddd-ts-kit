@@ -110,7 +110,9 @@ function main(args) {
     [
       runner,
       'run',
-      '--no-file-parallelism',
+      // Two files at a time: a generated project installs and compiles while another runs its specs, and a
+      // runner of four cores is not idle while one project waits on npm (docs/proposals/build-and-test-velocity.md).
+      '--maxWorkers=2',
       '--hookTimeout=180000',
       ...files.map((file) => `${DIRECTORY}/${file}`),
       ...passed,

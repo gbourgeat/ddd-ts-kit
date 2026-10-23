@@ -3,8 +3,11 @@ import { spawnSync } from 'node:child_process';
 const RESOLUTION_FAILURE =
   /ERR_MODULE_NOT_FOUND|ERR_PACKAGE_IMPORT_NOT_DEFINED|ERR_PACKAGE_PATH_NOT_EXPORTED|ERR_INVALID_MODULE_SPECIFIER|ERR_UNSUPPORTED_DIR_IMPORT|Cannot find (?:module|package)/;
 
-/** No service, no configuration: an entry point either stops on what it misses or keeps running. */
-const BARE = { PATH: process.env['PATH'] ?? '', OTEL_SDK_DISABLED: 'true', NO_COLOR: '1' };
+/**
+ * No service, no configuration: an entry point either stops on what it misses or keeps running. Any
+ * free port: two projects started side by side by the files a job runs at once never meet on one.
+ */
+const BARE = { PATH: process.env['PATH'] ?? '', OTEL_SDK_DISABLED: 'true', NO_COLOR: '1', PORT: '0' };
 const PATIENCE_MS = 6000;
 
 export interface Started {
