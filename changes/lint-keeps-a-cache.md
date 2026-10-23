@@ -8,6 +8,13 @@ restores, on a pull request or a merge request, the cache the default branch wro
 same lockfile and config, and the default branch and the night lint everything and write it: a
 type changed in another file is seen there. `ddd-ts-kit lint --no-cache` lints every file again.
 
-To move: add `.eslintcache/` to `.gitignore`, and give the lint job of the pipeline the two cache
-steps of the template (`ddd-ts-kit init --force` rewrites `.github/workflows/ci.yml` or
-`.gitlab-ci.yml`).
+To move, by hand, not with `init --force`, which rewrites far more than the pipeline: add
+`.eslintcache/` to `.gitignore`; in `.github/workflows/ci.yml`, give the lint job the two steps of
+the template (`actions/cache/restore` of `.eslintcache/` before the lint, on a pull request only,
+keyed by the lockfile, `eslint.config.mjs` and `ddd-ts-kit.config.json` with a prefix fallback;
+`actions/cache/save` after it, on the default branch and the night only), as
+`node_modules/ddd-ts-kit/templates/pipeline/github/workflows/ci.yml.tpl` writes them; in
+`.gitlab-ci.yml`, add the second `cache:` entry of the lint job (`.eslintcache/`, keyed by the
+lockfile and `eslint.config.mjs`, `policy: $LINT_CACHE_POLICY`) and the `LINT_CACHE_POLICY` variable
+of each workflow rule (`pull` on a merge request, `pull-push` on the default branch and the night),
+as `templates/pipeline/gitlab/gitlab-ci.yml.tpl` writes them.
