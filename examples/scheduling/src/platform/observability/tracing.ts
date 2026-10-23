@@ -2,9 +2,9 @@ import { initTracing } from '@ddd-ts-kit/tracing/node';
 import { Environment } from '@/platform/config/environment';
 import { readTracing } from '@/platform/config/read-tracing';
 
-// Evaluated before the rest of the application (see main.ts): it validates the variables of its
-// own and reads the two names directly, so that no module an instrumentation patches is loaded
-// before it. The OTLP endpoint is read by the exporter itself, from the standard variable.
+// Loaded first (see main.ts), before any module an instrumentation patches: it cannot use
+// `loadConfig`, so it reads `OTEL_SERVICE_NAME` and `NODE_ENV` itself, with the defaults of
+// `loadConfig`. The OTLP endpoint is read by the exporter, from the standard variable.
 const env = new Environment(process.env);
 const settings = readTracing(env);
 

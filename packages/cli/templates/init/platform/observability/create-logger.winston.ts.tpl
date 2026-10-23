@@ -14,11 +14,11 @@ export interface LogSettings {
 }
 
 /**
- * winston on the console, the credential keys of the kernel redacted. Its flush is final:
- * what is logged after `stop()` of the application is dropped. Every line carries
- * what the execution scope knows of the work in progress (correlation id, origin, actor,
- * tenant) and the ids of the active trace, so a request is followed from its log lines to its
- * spans and to its audit entries. `stop()` of the application flushes it, last.
+ * winston on the console, the credential keys of the kernel redacted. Every line carries what
+ * the execution scope knows of the work in progress (correlation id, origin, actor, tenant) and
+ * the ids of the active trace, so a request is followed from its log lines to its spans and to
+ * its audit entries. `stop()` of the application flushes it, last: winston cannot reopen, so
+ * what is logged after is dropped.
  */
 export function createLogger(scope: ExecutionScope, settings: LogSettings | undefined): Logger {
   if (settings === undefined) {
