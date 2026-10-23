@@ -1,3 +1,4 @@
+import process from 'node:process';
 import { governedJestCoverage, unaffectedContexts } from '@ddd-ts-kit/testing/coverage';
 
 export default {
