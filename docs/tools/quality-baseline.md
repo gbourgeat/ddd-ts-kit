@@ -112,10 +112,10 @@ first and on what changed; the wider ones run later, on every file:
 | architecture | kit `check:self`, the fixtures of every rule, and the guard tests (in `ci:arch`); example and project `check:arch` | kit `ci:arch`; example and project `ci:arch:check` | project and example: staged files, before a commit; at every write through the editor hook |
 | every rule proven on the example | kit: `example:verify` runs `example:conformance` after the example's own gate | kit: the `example` job | no |
 | documents drift | kit `ci:docs` (no em dash or en dash, every French page in step with its English page); example and project `docs:check` | `ci:docs` | kit: the dash check (`check:dashes`), before a commit |
-| unit specs | kit `ci:test:unit`; example and project `test:coverage` | `ci:test:unit` | before a push (example and project: the contexts the branch reaches, `ddd-ts-kit affected --run`) |
+| unit specs | kit `ci:test:unit`; example and project `test:coverage` | `ci:test:unit` | before a push, on what the branch reaches: for the kit the packages and the packages built on them (`affected-packages.mjs --base origin/main --run test`, without coverage), for the example and a project the contexts (`ddd-ts-kit affected --run`) |
 | integration specs | kit: the pipeline only (they need servers); example and project `test:coverage` (PostgreSQL in process) | `ci:test:integration` | no |
 | end-to-end specs | kit: the pipeline only (`ci:test:e2e`, every stack generated and run); example and project `test:e2e` | `ci:test:e2e` | no |
-| coverage thresholds | kit: a floor per package in `vitest.config.ts`, in `ci:test:unit`; example and project: per context and layer, from `ddd-ts-kit.config.json`, in `test:coverage` | `ci:test:unit` and, for the example and a project, `ci:test:integration` | before a push (the unit run) |
+| coverage thresholds | kit: a floor per package in `vitest.config.ts`, in `ci:test:unit`; example and project: per context and layer, from `ddd-ts-kit.config.json`, in `test:coverage` | `ci:test:unit` and, for the example and a project, `ci:test:integration` | example and project: before a push (the unit run); kit: the pipeline only |
 | packages as published | kit `ci:build` (publint, Are the Types Wrong) | kit `ci:build`; example and project `ci:build` (the production build) | no |
 | secrets | no: not a gate of `verify` | the `secrets` job (gitleaks on the whole history) | kit, example and project: the staged changes, before a commit, when the `gitleaks` binary is on the path; one line and no refusal otherwise |
 

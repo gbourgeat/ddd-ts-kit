@@ -4,8 +4,12 @@
 // when a path is not listed here, or without `--base`.
 //
 //   node pipeline/monorepo/affected-packages.mjs --base <git-ref> [--format github|text]
+//   node pipeline/monorepo/affected-packages.mjs --base <git-ref> --run <npm script>
 //
-// The unit run takes `filters` as its path filters and `packages` as KIT_AFFECTED, which
+// `--base` names what the change is compared with: what differs between the merge base of that
+// ref and HEAD. `--run` runs an npm script on the selection, as the pipeline does on a pull
+// request (the pre-push hook: `--base origin/main --run test`). Without it, the selection is
+// printed. The unit run takes `filters` as its path filters and `packages` as KIT_AFFECTED, which
 // vitest.config.ts reads to hold the coverage floor of those packages only. The end-to-end
 // suite, the generated projects, the example, the conformance run and the alias runs integrate
 // every package: they are never narrowed, and skipped only when nothing but documents changed
@@ -52,7 +56,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 function main(args) {
   const base = valueOf(args, '--base');
   const format = valueOf(args, '--format') ?? 'text';
+  const script = valueOf(args, '--run');
   const selection = base === undefined || base === '' ? everything('no base to compare with') : sinceBase(base);
+
+  if (script !== undefined) {
+    process.exit(runOn(selection, script));
+  }
 
   console.log(format === 'github' ? asOutputs(selection) : asText(selection));
 }
@@ -63,8 +72,37 @@ function valueOf(args, flag) {
   return index === -1 ? undefined : args[index + 1];
 }
 
+/**
+ * Runs an npm script on the selection, as the pipeline does on a pull request: nothing when only
+ * documents changed, the specs of the packages reached when some are, everything otherwise. Its
+ * output goes to the terminal; its exit code is the answer.
+ */
+function runOn(selection, script) {
+  console.log(asText(selection));
+
+  if (selection.scope === 'none') {
+    return 0;
+  }
+
+  const { args, env } = commandOf(selection, script);
+  const run = spawnSync('npm', args, { cwd: ROOT, stdio: 'inherit', env: { ...process.env, ...env } });
+
+  return run.status ?? 1;
+}
+
+/** The npm command of a script on the selection: the packages reached as path filters, and KIT_AFFECTED as the unit run reads it. */
+export function commandOf({ scope, packages }, script) {
+  const partial = scope === 'packages';
+
+  return {
+    args: ['run', script, '--', ...(partial ? packages.map((name) => `packages/${name}/`) : [])],
+    env: { KIT_AFFECTED: partial ? packages.join(',') : '' },
+  };
+}
+
+/** The files that differ between the merge base of `base` and HEAD: what the branch changed, whether or not the base moved on. */
 function sinceBase(base) {
-  const diff = spawnSync('git', ['diff', '--name-only', '--no-renames', '-z', base, 'HEAD'], {
+  const diff = spawnSync('git', ['diff', '--name-only', '--no-renames', '-z', `${base}...HEAD`], {
     cwd: ROOT,
     encoding: 'utf8',
   });

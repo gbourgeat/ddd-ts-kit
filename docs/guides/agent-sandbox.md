@@ -17,7 +17,7 @@ security of a session matters. What it says about OpenShell was read in its docu
 | Load | When | What the kit does |
 |---|---|---|
 | unit specs and their coverage | before each push (lefthook) | the hook runs `ddd-ts-kit affected --base origin/HEAD --run ci:test:unit`: the specs of the contexts the branch reaches and of the ones downstream of them, as on a pull request; everything when git cannot tell; nothing when only documents changed. The pipeline still runs everything on the trunk and every night |
-| workers of the test runner | each run | outside a pipeline (no `CI` variable) Vitest and Jest take half of the cores (`maxWorkers: '50%'` in the generated config); `VITEST_MAX_WORKERS=2`, or `--maxWorkers=2` for Jest, sets the number |
+| workers of the test runner | each run | outside a pipeline (no `CI` variable) Vitest and Jest take half of the cores (`maxWorkers: '50%'` in the generated config, and in the kit's own `vitest.config.ts`); `VITEST_MAX_WORKERS=2`, or `--maxWorkers=2` for Jest, sets the number |
 | several agents at once | [parallel work](parallel-work.md) | each worker has its worktree with its own `node_modules`, compiler, linter and test runner: the load is multiplied by the number of workers. Run the waves of [Waves and batches](parallel-work.md#waves-and-batches) with as many workers as the machine holds, not one per context |
 | the architecture check at the end of a turn | the `Stop` hook, when changes are pending | one `ddd-ts-kit check` of the project, at most 60 seconds; nothing to tune |
 | the editor | always | an IDE indexes every worktree of `.worktrees/` with its `node_modules`: mark the folder excluded |
