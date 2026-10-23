@@ -75,7 +75,7 @@ export const MULTI_TENANT_BEHIND_VARNISH: readonly StackFlags[] = [
 ];
 
 /** Every combination the generator is held to: zero violation as generated, and a type check against the sources of the workspace. */
-export const STACKS: readonly StackFlags[] = [
+const EVERY_STACK: readonly StackFlags[] = [
   DEFAULT_STACK,
   { http: 'fastify', validation: 'class-validator', di: 'manual', tests: 'vitest', orm: 'drizzle', events: 'outbox' },
   { http: 'nest', validation: 'standard-schema', di: 'nest', tests: 'vitest', orm: 'drizzle', events: 'in-memory' },
@@ -205,6 +205,66 @@ export const STACKS: readonly StackFlags[] = [
   },
   { http: 'fastify', validation: 'typebox', di: 'manual', tests: 'vitest', orm: 'knex', events: 'outbox' },
 ];
+
+/** The flags whose value names a package of the kit a project installs for it: an orm, a broker, a cache, a queue, an error reporter, a logger, a file storage. */
+const NAMED_BY_A_FLAG: readonly (keyof StackFlags)[] = [
+  'orm',
+  'broker',
+  'cache',
+  'queue',
+  'errors',
+  'logger',
+  'storage',
+];
+
+/** The error reporter a flag names under another name than its package. */
+const PACKAGE_OF_VALUE: Readonly<Record<string, string>> = { glitchtip: 'sentry' };
+
+/** The packages every generated project installs or is built, checked and tested with: a change there reaches every stack. */
+const EVERYWHERE: readonly string[] = [
+  'cli',
+  'kernel',
+  'testing',
+  'eslint-plugin',
+  'http',
+  'validation',
+  'di',
+  'events',
+  'auth',
+  'audit',
+  'tracing',
+  'scheduling',
+  'aspects',
+];
+
+/**
+ * Whether a change of the packages `affected` reaches a stack: always when nothing is named
+ * (the trunk, the night, a laptop) or when a package every project is built with is; otherwise
+ * when a flag of the stack names one of them.
+ */
+export function reachedBy(affected: readonly string[], stack: StackFlags): boolean {
+  if (affected.length === 0 || affected.some((name) => EVERYWHERE.includes(name))) {
+    return true;
+  }
+
+  return NAMED_BY_A_FLAG.some((flag) => {
+    const value = stack[flag];
+
+    return typeof value === 'string' && affected.includes(PACKAGE_OF_VALUE[value] ?? value);
+  });
+}
+
+/** What a pull request reaches, handed over by the pipeline (`pipeline/monorepo/affected-packages.mjs`); empty elsewhere. */
+const AFFECTED = (process.env['KIT_AFFECTED'] ?? '').split(',').filter((name) => name !== '');
+
+/** The stacks of a run: every one on the trunk and at night, the ones a change reaches on a pull request, the first at least so that every file runs something. */
+function reached(stacks: readonly StackFlags[]): readonly StackFlags[] {
+  const kept = stacks.filter((stack) => reachedBy(AFFECTED, stack));
+
+  return kept.length === 0 ? stacks.slice(0, 1) : kept;
+}
+
+export const STACKS: readonly StackFlags[] = reached(EVERY_STACK);
 
 /** The stacks held to everything a project runs in its pipeline, as generated. */
 export const PROVEN: readonly (readonly [string, StackFlags])[] = [

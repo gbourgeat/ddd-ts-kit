@@ -228,7 +228,9 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           node-version: ${{ matrix.node }}
-      - name: Every stack built, run compiled with plain node, from sources under tsx and vitest
+      - name: Every stack built, run compiled with plain node, from sources under tsx and vitest (on a pull request, the stacks the change reaches)
+        env:
+          KIT_AFFECTED: ${{ needs.install.outputs.packages }}
         run: npm run ci:test:alias
 
   integration:
@@ -321,7 +323,9 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      - name: Every stack generated and held to its own pipeline, a quarter of the spec files on each runner
+      - name: Every stack generated and held to its own pipeline, a quarter of the spec files on each runner (on a pull request, the stacks the change reaches)
+        env:
+          KIT_AFFECTED: ${{ needs.install.outputs.packages }}
         run: npm run ci:test:e2e:stacks -- --shard=${{ matrix.shard }}/4
 
   managers:

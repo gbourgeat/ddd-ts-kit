@@ -1,5 +1,5 @@
 [English](build-and-test-velocity.md) · **Français**
-<!-- translation-of: build-and-test-velocity.md sha256:7b5f2c498f477258 -->
+<!-- translation-of: build-and-test-velocity.md sha256:5859acc4b26d01a5 -->
 
 # Proposition : vélocité du build, des contrôles et des tests
 
@@ -28,7 +28,7 @@ page française et celle-ci gardent l'étude telle qu'elle a été écrite, puis
 
 | Partie | Verdict |
 |---|---|
-| 1. Moins de jobs par exécution du *pipeline*, les familles lourdes réduites sur une *pull request* | **construit** (#248) : cinq portes repliées en un job, la suite de l'alias sur une ligne de Node et les projets générés sur npm sur une *pull request* ; 24 jobs à 20 sur le tronc, 23 à 17 sur une *pull request* ; les *shards* de bout en bout tenus aux *stacks* qu'un changement atteint restent à faire |
+| 1. Moins de jobs par exécution du *pipeline*, les familles lourdes réduites sur une *pull request* | **construit** (#248) : cinq portes repliées en un job, la suite de l'alias sur une ligne de Node et les projets générés sur npm sur une *pull request* ; 24 jobs à 20 sur le tronc, 23 à 17 sur une *pull request* ; les *shards* de bout en bout et les exécutions de l'alias tenus aux *stacks* qu'un changement atteint sont venus avec la *pull request* `ci/e2e-stacks-reached` : un indicateur d'une *stack* qui nomme un *package* changé (un ORM, un *broker*, un cache, une file, un rapporteur, un *logger*, un stockage) la garde, un changement d'un *package* avec lequel chaque projet est construit les garde toutes, la première *stack* reste pour que chaque fichier exécute quelque chose |
 | 2. La matrice de compilation de cinq fichiers de *spec* en parallèle | **construit** (#250) : les modes d'un fichier compilent quelques-uns à la fois, les six fichiers les plus longs démarrent en premier ; le fichier le plus long de 84 s à 27 s dans une exécution complète, le job unitaire du *pipeline* de 571 s à environ 490 s |
 | 3. La moitié des cœurs hors *pipeline*, les *specs* des *packages* qu'une branche atteint avant un *push* | **construit** (#252) : l'étape unitaire du *hook* de 152 à 201 s et 9,3 à 11,5 Go, à 101 à 110 s et 6,8 à 7,3 Go sur une branche qui atteint tout, quelques secondes sur une feuille |
 | 4. ESLint avec son cache par contenu, la vérification des types des *specs* en parallèle | **construit** (#253) : `npm run lint` de 36,5 s à 1,3 s quand rien n'a changé, le cache abandonné quand les règles du kit telles que construites, la config ou le *lockfile* ont changé (`pipeline/monorepo/lint.mjs`) ; le tronc écrit le cache du *pipeline*, une *pull request* le restaure ; `typecheck:tests` de 5,1 s à 3,3 s |
@@ -511,9 +511,7 @@ raisons ci-dessus.
 - Les constats d'Oxlint avec les règles du kit comme *plugin* JS contre ceux d'ESLint, sur cet
   arbre et sur un projet généré, sur plusieurs semaines de changements : le job d'essai de #256
   les écrit dans le résumé de chaque exécution du tronc et de la nuit.
-- Les *shards* de bout en bout tenus aux *stacks* qu'un changement atteint, la part de la
-  première ligne qui reste ; et le cache par contenu d'ESLint dans les *templates* d'un projet
-  généré.
+- Le cache par contenu d'ESLint dans les *templates* d'un projet généré.
 - Le p50 des jobs unitaires et de bout en bout sur des *runners* arm64 contre x64, sur dix
   exécutions de nuit.
 - Le rappel de la sélection de bout en bout par *stack* : un changement de *template* qui
