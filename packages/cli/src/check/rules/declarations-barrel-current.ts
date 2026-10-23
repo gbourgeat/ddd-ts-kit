@@ -103,9 +103,13 @@ function judgeDeclarations(project: Project, declared: DeclaredContext): Judged[
     ? earlierLayoutOf(declared, (entry) => writtenIn(project, `${directory}/${entry}`))
     : undefined;
 
+  // Two role files of one name stay an error in any layout: the summary would not compile.
   return layout === undefined
     ? judged
-    : [{ file: `${directory}/${barrelFile(context)}`, flaw: earlierLayoutNotice(context, layout), severity: 'warn' }];
+    : [
+        { file: `${directory}/${barrelFile(context)}`, flaw: earlierLayoutNotice(context, layout), severity: 'warn' },
+        ...twins(declared),
+      ];
 }
 
 /**

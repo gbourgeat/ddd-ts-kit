@@ -409,7 +409,7 @@ A declared context reaches the root in one of two ways (`stack.assembly` in
 | Static analysis | bundlers, knip and dependency-cruiser follow it | the loaded files are imported by nothing: the analyzers must be told they are entries |
 | Startup | nothing to read | reads directories and imports sequentially |
 | Bundled or serverless | fits | a bundler cannot follow it |
-| A file written by hand | must be in the declarations of its folder: `declarations/barrel-current` reports stale ones | picked up by itself; its constructor still has to be in the dependencies file, which the same rule holds |
+| A file written by hand | must be in the declarations of its layer: `declarations/barrel-current` reports stale ones | picked up by itself; its constructor still has to be in the dependencies file, which the same rule holds |
 | Under Vitest | nothing to configure | `@ddd-ts-kit/di` must be inlined (`server.deps.inline`), which the generated config does |
 
 ### What a decorator cannot express

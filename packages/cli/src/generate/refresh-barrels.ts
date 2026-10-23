@@ -1,14 +1,16 @@
 import { specifierOf } from '../alias';
 import type { Config } from '../config';
 import {
+  barrelFile,
   contextDeclarations,
   contextInjections,
   dependenciesFile,
   earlierLayoutNotice,
-  earlierLayoutOf,
+  earlierShapeOf,
   isDeclarationsFile,
   renderDependenciesFile,
   renderInjections,
+  singleFileDeclarations,
   type ClassInjection,
   type DeclaredContext,
   type EarlierLayout,
@@ -27,9 +29,9 @@ import { workspaceSources } from './workspace-sources';
  * any more; under discovery `<context>.dependencies.ts`, which registers the lists alone. Called
  * at the end of every `generate` and by `docs`: these files are derived, like the documentation,
  * and `declarations/barrel-current` reports one left behind. A context still declared as an
- * earlier version wrote it (`earlierLayoutOf`) is moved to the files of its layers, unless
- * `earlier` is `keep`: `docs --check` and `generate --local-only` write nothing outside what they
- * are asked, and say it instead. Answers the contexts kept so.
+ * earlier version wrote it (`earlierShapeOf`) is moved to the files of its layers, unless
+ * `earlier` is `keep`: `docs --check` and `generate --local-only` keep it in that layout, move
+ * nothing outside what they are asked, and say it instead. Answers the contexts kept so.
  */
 export function refreshBarrels(ws: Workspace, config: Config, earlier: EarlierDeclarations = 'move'): KeptContext[] {
   if (!isDeclared(config)) {
@@ -92,7 +94,11 @@ function refreshContext(ws: Workspace, { config, sources, context, earlier }: Re
   return undefined;
 }
 
-/** The declarations of each layer and their summary, the ones nothing derives any more deleted. */
+/**
+ * The declarations of each layer and their summary, the ones nothing derives any more deleted.
+ * Asked to keep an earlier layout, a context laid out in one (`earlierShapeOf`) is declared again
+ * in it, so that a role file written there is registered as that version would register it.
+ */
 function refreshDeclarations(
   ws: Workspace,
   declared: DeclaredContext,
@@ -100,18 +106,14 @@ function refreshDeclarations(
 ): EarlierLayout | undefined {
   const { context, directory, entries, modules } = declared;
 
-  const layout =
-    earlier === 'keep' ? earlierLayoutOf(declared, (entry) => ws.read(`${directory}/${entry}`)) : undefined;
+  const layout = earlier === 'keep' ? earlierShapeOf(declared, (entry) => ws.read(`${directory}/${entry}`)) : undefined;
 
-  if (layout !== undefined) {
-    const { message, fix } = earlierLayoutNotice(context, layout);
+  const { files: grouped, injections } = contextDeclarations(
+    declared,
+    layout === 'role-folders' ? 'role-folder' : 'layer',
+  );
 
-    ws.note(`${message} ${fix}`);
-
-    return layout;
-  }
-
-  const { files, injections } = contextDeclarations(declared);
+  const files = layout === 'single-file' ? new Map([[barrelFile(context), singleFileDeclarations(declared)]]) : grouped;
 
   noteUnread(ws, injections);
   files.forEach((content, file) => write(ws, `${directory}/${file}`, content));
@@ -121,7 +123,13 @@ function refreshDeclarations(
     .filter((entry) => isDeclarationsFile(context, entry, modules) && !files.has(entry))
     .forEach((entry) => ws.delete(`${directory}/${entry}`));
 
-  return undefined;
+  if (layout !== undefined) {
+    const { message, fix } = earlierLayoutNotice(context, layout);
+
+    ws.note(`${message} ${fix}`);
+  }
+
+  return layout;
 }
 
 /** A class whose constructor cannot be read is given no list: said here, reported by `check`, refused at startup. */

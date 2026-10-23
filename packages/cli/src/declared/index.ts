@@ -16,4 +16,5 @@ export { renderDependenciesFile } from './render-dependencies-file';
 export { singleFileDeclarations } from './single-file-declarations';
 export { earlierLayoutNotice, type EarlierLayout } from './earlier-layout-notice';
 export { earlierLayoutOf } from './earlier-layout-of';
+export { earlierShapeOf } from './earlier-shape-of';
 export { routesFile } from './routes-file';

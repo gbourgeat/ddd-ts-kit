@@ -75,7 +75,7 @@ Conventional commits, checked by commitlint at `commit-msg`:
 2. `npx ddd-ts-kit check --changed-since HEAD`, `npx ddd-ts-kit docs --check`, and
    `npx ddd-ts-kit todo <context>`: no marker left in the slice.
 3. Stage by path, never everything at once when several slices are pending:
-   `git add src/contexts/<context>/application/commands/<use-case> <its route> <its specs> <the declarations of their folders> <CONTEXT.md>`.
+   `git add src/contexts/<context>/application/commands/<use-case> <its route> <its specs> <the declarations of their layers> <CONTEXT.md>`.
 4. Read `git diff --cached --stat` and `npx ddd-ts-kit check --commit-size --staged`: one
    story, within the limits?
 5. Commit. The pre-commit hook runs the linter and the architecture check on the staged

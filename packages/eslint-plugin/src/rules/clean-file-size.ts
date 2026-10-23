@@ -1,3 +1,4 @@
+import { isGeneratedContextFile } from '../support/declarations/is-generated-context-file';
 import { defineRule } from '../support/rule/define-rule';
 
 const MAX_LINES = 350;
@@ -16,7 +17,7 @@ export const cleanFileSize = defineRule<'tooLong' | 'aggregateTooLong' | 'e2eSpe
       'This end-to-end spec is {{count}} lines long (limit {{limit}}). Split it by behaviour into parts named after it, beside it: test/e2e/<use-case>-<behaviour>.e2e.spec.ts next to test/e2e/<use-case>.e2e.spec.ts (the guard lets that name be written by hand), each part with its own describe. Move what the parts share (signing a person in, a world) to test/e2e/support/<context>/ instead of copying it.',
   },
   create({ file, sourceCode, report }) {
-    if (file.path.endsWith('.d.ts') || file.path.split('/').includes('generated')) {
+    if (file.path.endsWith('.d.ts') || file.path.split('/').includes('generated') || isGeneratedContextFile(file)) {
       return {};
     }
 

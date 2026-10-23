@@ -1,5 +1,5 @@
 [English](ports-and-composition.md) · **Français**
-<!-- translation-of: ports-and-composition.md sha256:fdb5e247d1050afc -->
+<!-- translation-of: ports-and-composition.md sha256:0d58803cd180edd8 -->
 
 # Ports et composition
 
@@ -421,7 +421,7 @@ Un contexte déclaré atteint la racine de l'une de deux façons (`stack.assembl
 | Analyse statique | les bundlers, knip et dependency-cruiser le suivent | les fichiers chargés ne sont importés par rien : il faut dire aux analyseurs que ce sont des points d'entrée |
 | Démarrage | rien à lire | lit des répertoires et importe séquentiellement |
 | Empaqueté (bundle) ou serverless | convient | un bundler ne peut pas le suivre |
-| Un fichier écrit à la main | doit être dans les déclarations de son dossier : `declarations/barrel-current` signale des déclarations périmées | pris en compte tout seul ; son constructeur doit tout de même être dans le fichier des dépendances, ce que tient la même règle |
+| Un fichier écrit à la main | doit être dans les déclarations de sa couche : `declarations/barrel-current` signale des déclarations périmées | pris en compte tout seul ; son constructeur doit tout de même être dans le fichier des dépendances, ce que tient la même règle |
 | Sous Vitest | rien à configurer | `@ddd-ts-kit/di` doit être intégré (`server.deps.inline`), ce que fait la config générée |
 
 ### Ce qu'un décorateur ne peut pas exprimer

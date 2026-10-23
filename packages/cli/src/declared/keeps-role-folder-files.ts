@@ -1,6 +1,7 @@
 import { barrelFile } from './barrel-file';
 import { contextDeclarations, type DeclaredContext } from './context-declarations';
 import { isDeclarationsFile } from './is-declarations-file';
+import { sameFiles } from './same-files';
 
 /** What every layout writes for a context that declares no role file: such a context is current either way. */
 const NOTHING_DECLARED = 'export {};\n';
@@ -26,8 +27,4 @@ export function keepsRoleFolderFiles(declared: DeclaredContext, read: (entry: st
     entries.every((entry) => !isDeclarationsFile(context, entry, modules) || files.has(entry)) &&
     [...files].every(([entry, expected]) => read(entry)?.replaceAll('\r\n', '\n') === expected)
   );
-}
-
-function sameFiles(left: ReadonlyMap<string, string>, right: ReadonlyMap<string, string>): boolean {
-  return left.size === right.size && [...left].every(([file, content]) => right.get(file) === content);
 }

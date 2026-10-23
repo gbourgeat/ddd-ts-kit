@@ -9,7 +9,7 @@ import { roleOf } from './role-of';
 
 interface Placed {
   readonly context: string;
-  /** True when the classes of the project declare themselves: the context then has generated declarations, at its root and in its role folders. */
+  /** True when the classes of the project declare themselves: the context then has generated declarations, at its root and in its layers. */
   readonly declared: boolean;
   /** Path of the entry inside its context, its module of the model left out. */
   readonly inside: string;

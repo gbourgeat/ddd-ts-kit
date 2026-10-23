@@ -32,7 +32,7 @@ export const namingSuffix: Rule = {
       const generated = isDeclaredStyle(project) && isDeclarationsFile(file.location.context, relative, WITHOUT_MODULE);
 
       // The routes of a context are one list named after it instead of a role, in either style;
-      // the generated declarations of a role folder are named after the folder.
+      // the generated declarations of a layer are named after the layer.
       if (relative === routesFile(file.location.context) || generated) {
         return [];
       }

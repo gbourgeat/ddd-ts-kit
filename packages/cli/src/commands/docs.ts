@@ -28,7 +28,7 @@ export const docsCommand: Command = (argv, io) => {
   const { config } = readConfig(args.projectRoot);
   const check = args.flag('check');
 
-  // A check writes nothing: a context still declared in the single file of 0.84 is only warned about.
+  // A check writes nothing: a context still declared as an earlier version wrote it is only warned about.
   const kept = writeDocs(ws, config, check ? 'keep' : 'move');
 
   if (args.flag('stored-events')) {
@@ -148,7 +148,12 @@ function driftOf(root: string, ws: Workspace, file: string): [string, string][] 
   const expected = ws.read(file);
 
   if (expected === undefined) {
-    return [[file, 'it is no longer generated: its folder holds no declared class']];
+    return [
+      [
+        file,
+        'it is no longer generated: its folder holds no declared class, or the declarations of its layer replace it',
+      ],
+    ];
   }
 
   const written = fs.existsSync(path.join(root, file)) ? fs.readFileSync(path.join(root, file), 'utf8') : '';

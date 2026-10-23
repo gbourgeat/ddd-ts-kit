@@ -98,7 +98,7 @@ install of its package manager), never an install that names a package.
    intention method, the handler spec then the handler, then the route. Replace every
    `it.todo`. Fakes and builders, never mocks. Do not change what the generator structured,
    and never edit a `*.declarations.ts` (the one at the root of the context, nor the one of a
-   role folder): they are regenerated. When the story has an
+   layer): they are regenerated. When the story has an
    acceptance spec, `npm run test:e2e -- test/acceptance/<story>` once the route answers: each
    scenario of your row that now passes asks to remove its `pending(...)`; one that still fails
    on what your row should do means the slice is not done.

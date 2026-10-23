@@ -18,6 +18,6 @@ export function earlierLayoutNotice(context: string, layout: EarlierLayout): Ear
 
   return {
     message: `"${context}" ${kept}: they are current, so this version accepts them, and a later minor version reports them as an error.`,
-    fix: `Run \`npx ddd-ts-kit docs\` (or any \`generate\`, or \`npm run dev\`), which writes the <layer>.declarations.ts of each layer, deletes the others and rewrites ${barrelFile(context)} as their summary, and commit the result.`,
+    fix: `Run \`npx ddd-ts-kit docs\` (or any \`generate\`, or \`npm run dev\`), which writes the <layer>.declarations.ts of each layer${layout === 'role-folders' ? ', deletes those of the role folders' : ''} and rewrites ${barrelFile(context)} as their summary, and commit the result.`,
   };
 }
