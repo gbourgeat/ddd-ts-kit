@@ -47,15 +47,15 @@ async function openInProcess(): Promise<TestDatabase> {
     await engine.close();
   };
 
-  return { persistence: persistenceOver(connection.db, close), reset: () => truncateAll(connection.db), close };
+  return { persistence: persistenceOver({ db: connection.db, close }), reset: () => emptyTables(connection.db), close };
 }
 
 async function openServer(url: string): Promise<TestDatabase> {
   const connection = connectToDatabase(url);
 
   return {
-    persistence: persistenceOver(connection.db, () => connection.close()),
-    reset: () => truncateAll(connection.db),
+    persistence: persistenceOver(connection),
+    reset: () => emptyTables(connection.db),
     close: () => connection.close(),
   };
 }
@@ -65,7 +65,7 @@ interface TableName {
   readonly table_name: string;
 }
 
-async function truncateAll(db: Knex): Promise<void> {
+async function emptyTables(db: Knex): Promise<void> {
   const tables = await db<TableName>('information_schema.tables')
     .select('table_schema', 'table_name')
     .where('table_type', 'BASE TABLE')

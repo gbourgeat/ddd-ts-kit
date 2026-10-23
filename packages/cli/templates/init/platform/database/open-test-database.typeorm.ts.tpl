@@ -27,7 +27,7 @@ export function openTestDatabase(url?: string): Promise<TestDatabase> {
 }
 
 async function openInProcess(): Promise<TestDatabase> {
-  const engine = await {{#if tests.vitest}}startedPostgres(){{/if}}{{#if tests.jest}}PGlite.create(){{/if}};
+  const engine = await {{#if tests.vitest}}inProcessPostgres(){{/if}}{{#if tests.jest}}PGlite.create(){{/if}};
   const server = new PGLiteSocketServer({ db: engine, host: '127.0.0.1', port: 0, maxConnections: 10 });
 
   await server.start();
@@ -48,17 +48,16 @@ async function openInProcess(): Promise<TestDatabase> {
     await engine.close();
   };
 
-  return { persistence, reset: () => truncateAll(dataSource), close };
+  return { persistence, reset: () => emptyTables(dataSource), close };
 }
 
 {{#if tests.vitest}}
 /**
- * PostgreSQL in process: a copy of the cluster the global setup of the run initialised once
- * (test/support/test-database-template.ts), which spares each spec the initdb of its own; without
- * one (a run that names no global setup), a cluster initialised here. The tables are created on it
- * by the caller, every time, as the first migration creates them.
+ * A copy of the cluster the global setup of the run initialised once (test/support/test-database-template.ts),
+ * which spares each spec the initdb of its own; a cluster initialised here when the run names no
+ * global setup. The tables are created on it by the caller, every time.
  */
-async function startedPostgres(): Promise<PGlite> {
+async function inProcessPostgres(): Promise<PGlite> {
   const template = process.env['TEST_DATABASE_TEMPLATE'];
 
   return PGlite.create(template === undefined ? {} : { loadDataDir: await openAsBlob(template) });
@@ -72,7 +71,7 @@ async function openServer(url: string): Promise<TestDatabase> {
 
   const persistence = persistenceOver(dataSource);
 
-  return { persistence, reset: () => truncateAll(dataSource), close: () => persistence.close() };
+  return { persistence, reset: () => emptyTables(dataSource), close: () => persistence.close() };
 }
 
 // TypeORM creates tables, not schemas.
@@ -86,7 +85,7 @@ async function createTables(dataSource: DataSource): Promise<void> {
   await dataSource.synchronize();
 }
 
-async function truncateAll(dataSource: DataSource): Promise<void> {
+async function emptyTables(dataSource: DataSource): Promise<void> {
   const names = dataSource.entityMetadatas.map(
     (table) => (table.schema === undefined ? '' : '"' + table.schema + '".') + '"' + table.tableName + '"',
   );
