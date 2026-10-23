@@ -6,8 +6,10 @@ const FOLDER = 'application/projections';
 const SUFFIX = '.projection.ts';
 
 /** The projectors of a context, one per `*.projection.ts` file, with the events each one applies. */
-export function readProjections({ ws, directory }: ContextSources): ProjectionFact[] {
-  return roleFilesOf(ws, directory, FOLDER)
+export function readProjections(sources: ContextSources): ProjectionFact[] {
+  const { ws } = sources;
+
+  return roleFilesOf(ws, sources, FOLDER)
     .filter(({ name }) => name.endsWith(SUFFIX))
     .map(({ path }) => {
       const text = ws.read(path) ?? '';

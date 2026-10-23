@@ -1,14 +1,14 @@
 import { toName } from '../naming/index.js';
 import type { Workspace } from '../workspace/index.js';
 import type { ProcessFacts } from './process-facts.js';
-import { roleFilesOf } from '../model-modules/index.js';
+import { type ContextTree, roleFilesOf } from '../model-modules/index.js';
 
 const FOLDER = 'application/processes';
 const SUFFIX = '.process.ts';
 
 /** The process managers of a context: one per `application/processes/*.process.ts`, named by its static `processName`. */
-export function readProcesses(ws: Workspace, directory: string): ProcessFacts[] {
-  return roleFilesOf(ws, directory, FOLDER)
+export function readProcesses(ws: Workspace, tree: ContextTree): ProcessFacts[] {
+  return roleFilesOf(ws, tree, FOLDER)
     .filter((file) => file.name.endsWith(SUFFIX))
     .map((file) => {
       const className = `${toName(file.name.slice(0, -SUFFIX.length)).pascal}Process`;

@@ -6,6 +6,7 @@ import { rememberFile } from '../declared/discovered-files.js';
 import { WiringError } from '../errors/wiring-error.js';
 import type { ContextModule } from '../module/context-module.js';
 import { loadDependencyLists } from './load-dependency-lists.js';
+import { modulesNamedIn } from './modules-named-in.js';
 import { withoutModule } from './without-module.js';
 import { roleFilesOf, type RoleFile } from './role-files-of.js';
 
@@ -51,12 +52,14 @@ export async function discoverContext(
   const load = options.load ?? ((file: URL): Promise<unknown> => import(file.href));
   const { ignore, extensions = DEFAULT_EXTENSIONS } = options;
   const declared: DeclaredClass[] = [];
-  const { modules } = await loadDependencyLists(root, name, { extensions, load });
+  const modules = await modulesNamedIn(root, name, extensions);
 
   for (const file of await roleFilesOf(root, { extensions, ...(ignore === undefined ? {} : { ignore }) })) {
     assertInItsFolder(file, name, modules);
     declared.push(...declaredIn(file, await loaded(file, load), name));
   }
+
+  await loadDependencyLists(root, name, { extensions, load });
 
   return contextModule(name, declared);
 }

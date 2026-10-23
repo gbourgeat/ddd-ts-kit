@@ -1,7 +1,7 @@
 import { toName } from '../naming/index.js';
 import type { Workspace } from '../workspace/index.js';
 import type { JobFacts } from './context-facts.js';
-import { roleFilesOf } from '../model-modules/index.js';
+import { type ContextTree, roleFilesOf } from '../model-modules/index.js';
 
 const FOLDER = 'application/scheduling';
 const SUFFIX = '.job.ts';
@@ -12,10 +12,10 @@ const SCHEDULE = String.raw`(\{[^}]*\})`;
  * registration writes, on the class (`@Scheduled`) or in the module file of the context
  * (`builder.job(...)`, `platform.jobs.register(...)`), and the command it sends.
  */
-export function readJobs(ws: Workspace, directory: string, context: string): JobFacts[] {
-  const module = ws.read(`${directory}/${context}.module.ts`) ?? '';
+export function readJobs(ws: Workspace, tree: ContextTree, context: string): JobFacts[] {
+  const module = ws.read(`${tree.directory}/${context}.module.ts`) ?? '';
 
-  return roleFilesOf(ws, directory, FOLDER)
+  return roleFilesOf(ws, tree, FOLDER)
     .filter(({ name }) => name.endsWith(SUFFIX) && !name.endsWith('.spec.ts'))
     .map((file) => {
       const source = ws.read(file.path) ?? '';

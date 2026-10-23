@@ -1,5 +1,5 @@
 import type { Scope } from '../../scope.js';
-import { roleFilesOf } from '../../../model-modules/index.js';
+import { roleFilesOf, treeOf } from '../../../model-modules/index.js';
 
 /** A port of a context: an abstract class of `domain/repositories/` or `application/ports/`. */
 export interface DeclaredPort {
@@ -20,7 +20,7 @@ const ABSTRACT_CLASS = /\bexport\s+abstract\s+class\s+(\w+)/g;
 /** The ports the context declares, by class name. */
 export function declaredPorts(scope: Scope): ReadonlyMap<string, DeclaredPort> {
   const ports = PLACES.flatMap(({ directory, suffix, repository }) =>
-    roleFilesOf(scope.ws, scope.dir, directory)
+    roleFilesOf(scope.ws, treeOf(scope.config, scope.context.kebab), directory)
       .filter(({ name }) => name.endsWith(suffix))
       .flatMap(({ path: file }) =>
         [...(scope.ws.read(file) ?? '').matchAll(ABSTRACT_CLASS)].map(

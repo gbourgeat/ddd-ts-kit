@@ -23,7 +23,7 @@ export interface ModuleMoves {
  */
 export function moveToModule(ws: Workspace, config: Config, request: MoveRequest): ModuleMoves {
   const moved = movesIntoModule(ws, config, request);
-  const from = new Set(moved.map((move) => move.from));
+  const touched = new Set(moved.flatMap((move) => [move.from, move.to]));
 
   const relocation = {
     roots: aliasRoots(config),
@@ -36,13 +36,13 @@ export function moveToModule(ws: Workspace, config: Config, request: MoveRequest
     const next = SOURCE.test(move.from) ? withMovedImports(content, move.from, relocation) : content;
 
     ws.delete(move.from);
-    ws.create(move.to, next);
+    ws.writeAsIs(move.to, next);
 
     return next === content ? [] : [move.to];
   });
 
   const rewrittenOthers = projectSources(ws, config, ['scripts'])
-    .filter((file) => !from.has(file))
+    .filter((file) => !touched.has(file))
     .flatMap((file) => {
       const source = ws.read(file) ?? '';
       const next = withMovedImports(source, file, relocation);
@@ -51,7 +51,7 @@ export function moveToModule(ws: Workspace, config: Config, request: MoveRequest
         return [];
       }
 
-      ws.update(file, next);
+      ws.writeAsIs(file, next);
 
       return [file];
     });

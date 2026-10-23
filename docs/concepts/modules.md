@@ -172,8 +172,10 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
 ```
 
 - With `--module`, the files a kind reads (an existing aggregate, an event, a port) are found in
-  whatever module holds them, and the imports it writes name where they are. Context-level files
-  (the code list, the permission set) stay at the context level.
+  whatever module holds them, and the imports it writes name where they are. A file of a use case
+  already in a module is written with it, `--module` or not; a `--module` naming another module
+  is refused, since it would split the use case. Context-level files (the code list, the
+  permission set) stay at the context level.
 - In a context that declares modules, a kind that would write a file of `domain/` or
   `application/` without `--module` is refused, with the list of the modules and the same
   command with `--module`: the generator guides, it never leaves the choice unsaid.
@@ -194,6 +196,9 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   every module the config declares, as `check` does: the reference of `CONTEXT.md` lists the
   aggregates, use cases, ports, refusals and jobs of the modules as those of the context. A
   folder the config does not declare is read by none of them, and `tree/closed` reports it.
+  `error-factories` writes the class of a concept next to the errors it replaces, in their
+  module; errors of one concept read from two folders are refused until `move-to-module` gathers
+  them.
 - In the declared style assembled by barrel, each role folder of a module has its generated
   `<folder>.declarations.ts`, re-exported by `<context>.declarations.ts`.
 - `discoverContext` of `@ddd-ts-kit/di` runs without the config: it reads the modules in the

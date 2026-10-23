@@ -36,9 +36,18 @@ export const moveToModuleCommand: Command = (argv, io) => {
   refreshDocs(ws, 'move');
 
   const dryRun = args.flag('dry-run');
+  const report = ws.commit(dryRun);
+  // A file the move rewrote and the refresh then deleted ends deleted; one it moved to is said moved.
+  const rewritten = outcome.rewritten.filter((file) => !report.deleted.includes(file));
+  const listed = new Set([...outcome.moved.map(({ to }) => to), ...rewritten]);
 
-  ws.commit(dryRun);
-  print(io, args.json, { dryRun, ...outcome });
+  print(io, args.json, {
+    dryRun,
+    moved: outcome.moved,
+    rewritten,
+    written: [...report.created, ...report.updated].filter((file) => !listed.has(file)),
+    deleted: report.deleted,
+  });
 
   return 0;
 };
@@ -58,6 +67,9 @@ const LEFT = [
 
 interface Outcome extends ModuleMoves {
   readonly dryRun: boolean;
+  /** The files the move derived besides the ones it moved and rewrote: the generated declarations, CONTEXT.md. */
+  readonly written: readonly string[];
+  readonly deleted: readonly string[];
 }
 
 function print(io: Io, json: boolean, outcome: Outcome): void {
@@ -72,6 +84,8 @@ function print(io: Io, json: boolean, outcome: Outcome): void {
   const lines = [
     ...outcome.moved.map(({ from, to }) => `${verb('move')}${from} -> ${to}`),
     ...outcome.rewritten.map((file) => `${verb('rewrite')}${file}`),
+    ...outcome.written.map((file) => `${verb('write')}${file}`),
+    ...outcome.deleted.map((file) => `${verb('delete')}${file}`),
     ...(outcome.moved.length > 0 ? ['', 'Left to you:', ...LEFT.map((line) => `  - ${line}`)] : []),
   ];
 

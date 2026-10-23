@@ -7,8 +7,10 @@ const FOLDER = 'application/authorization';
 const SUFFIX = '.policy.ts';
 
 /** The policies of a context, one per `*.policy.ts` file, with the permission each one decides. */
-export function readPolicies({ ws, directory }: ContextSources): PolicyFact[] {
-  return roleFilesOf(ws, directory, FOLDER)
+export function readPolicies(sources: ContextSources): PolicyFact[] {
+  const { ws } = sources;
+
+  return roleFilesOf(ws, sources, FOLDER)
     .filter(({ name }) => name.endsWith(SUFFIX))
     .map(({ name, path }) => ({
       name: toName(name.slice(0, -SUFFIX.length)).pascal,

@@ -52,3 +52,31 @@ describe('error-factories, on errors kept in a module of the model', () => {
     );
   });
 });
+
+describe('error-factories, on errors of one concept read from two folders', () => {
+  it('writes nothing, and says to gather them first', () => {
+    const root = tempDir('error-factories-scattered');
+
+    const legacy = (name: string, code: string): string =>
+      `import { DomainError } from '@ddd-ts-kit/kernel';\n\nexport class ${name} extends DomainError {\n  readonly code = '${code}';\n\n  constructor(id: string) {\n    super(\`Invoice ${'$'}{id}.\`);\n  }\n}\n`;
+
+    expect(cli(root, 'init', '--refusals', 'classes').code).toBe(0);
+    expect(cli(root, 'generate', 'context', 'billing', '--classification', 'core', ...TERMS).code).toBe(0);
+    expect(cli(root, 'generate', 'module', 'billing', 'invoices', '--purpose', 'The invoices.').code).toBe(0);
+    // The aggregate the plan names the concept of both errors after.
+    expect(cli(root, 'generate', 'aggregate', 'billing', 'Invoice', '--module', 'invoices').code).toBe(0);
+    write(root, `${ERRORS}/invoice-not-found.error.ts`, legacy('InvoiceNotFoundError', 'INVOICE_NOT_FOUND'));
+    write(root, `${BILLING}/domain/errors/invoice-paid.error.ts`, legacy('InvoicePaidError', 'INVOICE_PAID'));
+
+    expect(cli(root, 'error-factories', '--plan', '--to', 'factories').code).toBe(0);
+
+    const refused = cli(root, 'error-factories', '--apply');
+
+    expect(refused.code).not.toBe(0);
+    expect(refused.stderr).toContain('Nothing was written');
+    expect(refused.stderr).toContain('move-to-module');
+    expect(exists(root, `${ERRORS}/invoice-not-found.error.ts`)).toBe(true);
+    expect(exists(root, `${BILLING}/domain/errors/invoice-paid.error.ts`)).toBe(true);
+    expect(exists(root, `${ERRORS}/invoice.error.ts`)).toBe(false);
+  }, 120_000);
+});

@@ -60,8 +60,13 @@ interface Placement {
  * one name in two modules), or a file the workspace cannot carry as text.
  */
 function refuseLosses(ws: Workspace, moves: readonly ModuleMove[], placement: Placement): void {
-  const targets = new Set<string>();
-  const colliding = moves.filter((move) => targets.size === targets.add(move.to).size).map((move) => move.to);
+  const landing = new Map<string, number>();
+
+  for (const move of moves) {
+    landing.set(move.to, (landing.get(move.to) ?? 0) + 1);
+  }
+
+  const colliding = moves.filter((move) => (landing.get(move.to) ?? 0) > 1).map((move) => move.to);
   const taken = moves.filter((move) => ws.exists(move.to)).map((move) => move.to);
 
   if (colliding.length > 0 || taken.length > 0) {

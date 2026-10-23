@@ -150,10 +150,13 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'config/valid',
-    name: 'a module named like a role folder',
+    name: 'a module named like a role folder, which no other rule takes for one',
     expect: { file: CONFIG_FILE },
-    also: ['module/declared'],
-    files: project({}, withModules({ commands: {} })),
+    also: ['module/declared', 'module/complete'],
+    files: project(
+      { [HANDLER]: 'export class IssueInvoiceHandler {}\n', [HANDLER_SPEC]: SPEC },
+      withModules({ commands: {} }),
+    ),
   },
 ];
 

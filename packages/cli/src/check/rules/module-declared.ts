@@ -6,7 +6,7 @@ import type { Report } from '../model/report.js';
 import type { Rule } from '../model/rule.js';
 import type { Violation } from '../model/violation.js';
 import { MODULES_HEADING, modulesSection } from '../modules/modules-section.js';
-import { lineOf } from '../support/line-of.js';
+import { lineOfSequence } from '../support/line-of-sequence.js';
 import { reporter } from '../support/reporter.js';
 
 export const moduleDeclared: Rule = {
@@ -27,7 +27,11 @@ export const moduleDeclared: Rule = {
       const section = modulesSection(glossaries.textOf(context));
 
       return modules.flatMap((module): Violation[] => {
-        const where = { file: CONFIG_FILE, line: lineOf(project.configText, `"${module.name}"`) };
+        const where = {
+          file: CONFIG_FILE,
+          line: lineOfSequence(project.configText, moduleEntry(context, module.name)),
+        };
+
         const named = namingFlaw(module, unknownWords(module.name, glossaries.of(context)));
         const row = section.rows.some((candidate) => candidate.name === module.name);
 
@@ -83,4 +87,9 @@ function missingRow(report: Report, { doc, context, module, line }: Missing): Vi
     `The module "${module.name}" of "${context}" has no row in the "${MODULES_HEADING}" table of its CONTEXT.md.`,
     `Say what it holds, one sentence in the words of the domain: \`ddd-ts-kit generate module ${context} ${module.name} --purpose "<what it holds>"\` writes the row.`,
   );
+}
+
+/** The entry of a module of a context in the config file, searched in order: the context, its modules, the module. */
+function moduleEntry(context: string, module: string): string[] {
+  return ['"contexts"', `"${context}"`, '"modules"', `"${module}"`];
 }

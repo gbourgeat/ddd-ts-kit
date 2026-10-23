@@ -1,3 +1,4 @@
+import path from 'node:path';
 import type { Config } from '../config/index.js';
 import { intoModule } from './into-module.js';
 import { isContextLevel } from './is-context-level.js';
@@ -5,7 +6,7 @@ import { isRoleFolder } from './is-role-folder.js';
 import { MODULE_LAYERS } from './module-layers.js';
 
 /** The module of the model a command writes in: `--module <module>` for the context it was given. */
-export interface AskedModule {
+interface AskedModule {
   readonly context: string;
   readonly module: string;
 }
@@ -19,6 +20,8 @@ export interface PlacementSources {
   readonly modulesOf: (context: string) => readonly string[];
   /** Called when a file would be written outside every module of a context that declares modules: it throws. */
   readonly unplaced: (context: string, relative: string) => never;
+  /** Called when `--module` names another module than the one that holds the use case of the file: it throws. */
+  readonly split: (context: string, relative: string, holder: string) => never;
 }
 
 /** A path of a role folder of a context, split into the context and the path relative to it. */
@@ -40,7 +43,7 @@ export function modulePlacement(sources: PlacementSources): (file: string, writi
       return file;
     }
 
-    return inItsModule(sources, role) ?? (writing ? unplaced(sources, role, file) : file);
+    return inItsModule(sources, role, writing) ?? (writing ? unplaced(sources, role, file) : file);
   };
 }
 
@@ -59,17 +62,58 @@ function rolePathOf(config: Config, file: string): RolePath | undefined {
   return { context, relative: [layer, folder, ...rest].join('/') };
 }
 
-/** The file in the module that holds it, the asked module first; in the asked module when none does. */
-function inItsModule(sources: PlacementSources, { context, relative }: RolePath): string | undefined {
+/**
+ * The file in the module that holds it, the asked module first; else in the module that holds
+ * its use case (`application/commands/<use-case>/`); else in the asked module. A write that
+ * `--module` sends to another module than the one holding the file or its use case is refused:
+ * it would split the use case.
+ */
+function inItsModule(sources: PlacementSources, role: RolePath, writing: boolean): string | undefined {
+  const { context, relative } = role;
   const asked = sources.asked?.context === context ? sources.asked.module : undefined;
+  const candidates = candidatesOf(sources, role, asked);
+  const holder = holderOf(sources, candidates, relative);
+
+  if (writing && holder !== undefined && asked !== undefined && holder !== asked) {
+    return sources.split(context, relative, holder);
+  }
+
+  const chosen = holder ?? asked;
+
+  return chosen === undefined ? undefined : candidates.inModule(chosen);
+}
+
+/** The modules a file may sit in, the asked one first, and the path it has in each. */
+interface Candidates {
+  readonly ordered: readonly string[];
+  readonly inModule: (module: string) => string;
+}
+
+function candidatesOf(
+  sources: PlacementSources,
+  { context, relative }: RolePath,
+  asked: string | undefined,
+): Candidates {
   const others = sources.modulesOf(context).filter((module) => module !== asked);
 
-  const inModule = (module: string): string =>
-    `${sources.config.contextsDir}/${context}/${intoModule(module, relative)}`;
+  return {
+    ordered: [...(asked === undefined ? [] : [asked]), ...others],
+    inModule: (module) => `${sources.config.contextsDir}/${context}/${intoModule(module, relative)}`,
+  };
+}
 
-  const found = [...(asked === undefined ? [] : [asked]), ...others].map(inModule).find(sources.existsAsIs);
+/**
+ * The module that holds the file, or, for a file of a use case (`application/commands/<use-case>/<file>`),
+ * the one that holds the folder of the use case: the folder names what the file belongs to.
+ */
+function holderOf(sources: PlacementSources, { ordered, inModule }: Candidates, relative: string): string | undefined {
+  const holding = ordered.find((module) => sources.existsAsIs(inModule(module)));
 
-  return found ?? (asked === undefined ? undefined : inModule(asked));
+  if (holding !== undefined || relative.split('/').length <= 3) {
+    return holding;
+  }
+
+  return ordered.find((module) => sources.existsAsIs(path.posix.dirname(inModule(module))));
 }
 
 /** A file written in a context that declares modules, without saying which one: refused, with the way out. */

@@ -1,5 +1,5 @@
 [English](modules.md) · **Français**
-<!-- translation-of: modules.md sha256:6f7c7485c9d2f56b -->
+<!-- translation-of: modules.md sha256:e2e71f3b08012a78 -->
 
 # Modules du modèle
 
@@ -180,9 +180,11 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
 ```
 
 - Avec `--module`, les fichiers qu'un générateur lit (un agrégat existant, un événement, un port)
-  sont trouvés dans le module qui les tient, et les imports qu'il écrit les nomment là où ils
-  sont. Les fichiers du niveau du contexte (la liste des codes, l'ensemble des permissions)
-  restent au niveau du contexte.
+  sont trouvés dans le module qui les tient, et les imports qu'il écrit nomment leur emplacement.
+  Un fichier d'un cas d'usage déjà dans un module est écrit avec lui, `--module` ou non ; un
+  `--module` qui nomme un autre module est refusé, puisqu'il couperait le cas d'usage en deux.
+  Les fichiers de niveau contexte (la liste des codes, le jeu de permissions) restent au niveau du
+  contexte.
 - Dans un contexte qui déclare des modules, un générateur qui écrirait un fichier de `domain/` ou
   `application/` sans `--module` est refusé, avec la liste des modules et la même commande avec
   `--module` : le générateur guide, il ne laisse jamais le choix implicite.
@@ -205,6 +207,9 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   liste les agrégats, cas d'usage, ports, refus et *jobs* des modules comme ceux du contexte. Un
   dossier que la configuration ne déclare pas n'est lu par aucun d'eux, et `tree/closed` le
   signale.
+  `error-factories` écrit la classe d'un concept à côté des erreurs qu'elle remplace, dans leur
+  module ; les erreurs d'un concept lues dans deux dossiers sont refusées tant que
+  `move-to-module` ne les a pas rassemblées.
 - Dans le style déclaré assemblé par barrel, chaque dossier de rôle d'un module a son
   `<folder>.declarations.ts` généré, réexporté par `<context>.declarations.ts`.
 - `discoverContext` de `@ddd-ts-kit/di` s'exécute sans la configuration : il lit les modules dans

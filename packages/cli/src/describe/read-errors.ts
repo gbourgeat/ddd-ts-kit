@@ -21,10 +21,11 @@ const CLASS = /(?<![\w$.])class\s+([A-Za-z_$][\w$]*)[^{]*\{/g;
  * A class of one refusal (`"stack.refusals": "named"`) gives one row per factory, its code read
  * from `domain/errors/codes.ts`.
  */
-export function readErrors({ ws, directory, name: context }: ContextSources): ErrorFact[] {
+export function readErrors(sources: ContextSources): ErrorFact[] {
+  const { ws, directory, name: context } = sources;
   const list = codeListOf(ws.read(`${directory}/${FOLDER}/codes.ts`), context);
 
-  return roleFilesOf(ws, directory, FOLDER)
+  return roleFilesOf(ws, sources, FOLDER)
     .filter(({ name }) => name.endsWith('.error.ts'))
     .flatMap(({ path: file }) => {
       const scanned = scan(ws.read(file) ?? '');

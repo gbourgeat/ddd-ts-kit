@@ -13,6 +13,7 @@ import type { MigrationDraft } from './migration-draft.js';
 import type { MigrationPlan } from './migration-plan.js';
 import type { PlannedMove } from './planned-move.js';
 import { projectSources } from './project-sources.js';
+import { refuseScattered } from './refuse-scattered.js';
 import { concerns } from './concerns.js';
 import { sayRefusals } from './say-refusals.js';
 import { renderFactory } from './render-factory.js';
@@ -32,6 +33,10 @@ interface Tree {
  */
 export function applyPlan(tree: Tree, plan: MigrationPlan, draft: MigrationDraft): PlannedMove[] {
   const moves = plannedMoves(tree, plan, draft);
+
+  refuseScattered(
+    moves.map(({ error, move }) => ({ context: move.context, className: move.conceptClass, file: error.file })),
+  );
 
   for (const planned of moves) {
     moveClass(tree, planned, draft);

@@ -9,6 +9,8 @@ export interface ContextSources {
   readonly name: string;
   /** Directory of the context, relative to the project root. */
   readonly directory: string;
+  /** The modules of the model it declares. */
+  readonly modules: readonly string[];
   /** The text of the module file of an explicit context; empty in a declared one. */
   readonly module: string;
   /** What the decorators say, in a declared one. */

@@ -1,6 +1,6 @@
 import type { Config } from '../config/index.js';
 import { filesUnder } from '../generate/files-under.js';
-import { roleDirectoriesOf } from '../model-modules/index.js';
+import { type ContextTree, roleDirectoriesOf, treeOf } from '../model-modules/index.js';
 import type { Workspace } from '../workspace/index.js';
 import type { Remaining } from './remaining.js';
 import { remainingIn } from './remaining-in.js';
@@ -14,7 +14,7 @@ export function readRemaining(ws: Workspace, config: Config, only?: string): Rem
   const specs = ws.list(E2E).filter((file) => file.endsWith('.e2e.spec.ts'));
 
   const owner = (spec: string): string =>
-    ws.directories(config.contextsDir).find((name) => drives(ws, `${config.contextsDir}/${name}`, spec)) ?? '';
+    ws.directories(config.contextsDir).find((name) => drives(ws, treeOf(config, name), spec)) ?? '';
 
   return [
     ...contexts.flatMap((name) => scan(ws, name, `${config.contextsDir}/${name}`)),
@@ -26,11 +26,11 @@ export function readRemaining(ws: Workspace, config: Config, only?: string): Rem
 }
 
 /** True when the end-to-end spec is named after a use case of the context. */
-function drives(ws: Workspace, directory: string, spec: string): boolean {
+function drives(ws: Workspace, tree: ContextTree, spec: string): boolean {
   const useCase = spec.slice(0, -'.e2e.spec.ts'.length);
 
   return ['commands', 'queries'].some((folder) =>
-    roleDirectoriesOf(ws, directory, `application/${folder}`).some(({ name }) => name === useCase),
+    roleDirectoriesOf(ws, tree, `application/${folder}`).some(({ name }) => name === useCase),
   );
 }
 

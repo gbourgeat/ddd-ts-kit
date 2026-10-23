@@ -9,9 +9,9 @@ const SUFFIX = '.integration-handler.ts';
 
 /** The integration events a context reacts to, one per handler file, with what its declaration or its subscription says. */
 export function readConsumedEvents(sources: ContextSources): ConsumedEventFact[] {
-  const { ws, directory } = sources;
+  const { ws } = sources;
 
-  return roleFilesOf(ws, directory, FOLDER)
+  return roleFilesOf(ws, sources, FOLDER)
     .filter(({ name }) => name.endsWith(SUFFIX))
     .map((file) => consumedBy(sources, file))
     .sort((left, right) => left.type.localeCompare(right.type) || left.handler.localeCompare(right.handler));

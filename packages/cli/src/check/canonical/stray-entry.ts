@@ -1,7 +1,7 @@
 import path from 'node:path';
 import type { Config } from '../../config/index.js';
 import { barrelFile, dependenciesFile, isDeclarationsFile } from '../../declared/index.js';
-import { declaredModules, MODULE_LAYERS, WITHOUT_MODULE } from '../../model-modules/index.js';
+import { declaredModules, MODULE_LAYERS, moduleSplit, WITHOUT_MODULE } from '../../model-modules/index.js';
 import type { Flaw } from '../model/flaw.js';
 import { isCanonicalDirectory } from './is-canonical-directory.js';
 import { OPEN_DIRECTORIES } from './open-directories.js';
@@ -44,18 +44,13 @@ function place(entry: string, config: Config): Placed | undefined {
     return undefined;
   }
 
-  const [layer = '', module, ...below] = rest;
-
-  const inModule =
-    module !== undefined && MODULE_LAYERS.includes(layer) && declaredModules(config, context).includes(module);
-
-  const inside = inModule ? [layer, ...below].join('/') : rest.join('/');
+  const { module, path: inside } = moduleSplit(rest.join('/'), declaredModules(config, context));
 
   return {
     context,
     declared: stack.style === 'declared',
     inside,
-    ...(inModule ? { module } : {}),
+    ...(module === undefined ? {} : { module }),
     extras: contexts[context]?.extraDirectories ?? [],
   };
 }

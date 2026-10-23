@@ -5,6 +5,7 @@ import { literalIn } from '../check/declarations/literal-in.js';
 import { optionOf } from '../check/declarations/option-of.js';
 import { scan, type Scan } from '../check/scan/scan.js';
 import { declaredRoleOf } from '../declared/index.js';
+import type { ContextTree } from '../model-modules/index.js';
 import { filesUnder } from '../generate/files-under.js';
 import type { Workspace } from '../workspace/index.js';
 import type { DeclaredBinding, DeclaredFacts, DeclaredUseCase } from './declared-facts.js';
@@ -20,7 +21,7 @@ interface Declared {
 }
 
 /** What the decorators of the role files of a context say. */
-export function readDeclarations(ws: Workspace, directory: string, modules: readonly string[]): DeclaredFacts {
+export function readDeclarations(ws: Workspace, { directory, modules }: ContextTree): DeclaredFacts {
   const declared = declaredClasses(ws, directory, modules);
 
   const carrying = (...decorators: string[]): Declared[] =>

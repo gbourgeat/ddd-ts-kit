@@ -147,6 +147,29 @@ export class Workspace {
   }
 
   /**
+   * Writes a file as it is, no dialect of the package manager and no import rewrite applied:
+   * what a move carries from one place to another, which must lose nothing of the text.
+   */
+  writeAsIs(asked: string, content: string): void {
+    const file = this.placed(asked, true);
+    const pending = this.pending.get(file);
+
+    if (pending !== undefined) {
+      pending.content = content;
+
+      return;
+    }
+
+    this.removed.delete(file);
+
+    const existed = fs.existsSync(this.absolute(file));
+
+    if (!(existed && this.read(file) === content)) {
+      this.pending.set(file, { content, existed });
+    }
+  }
+
+  /**
    * Removes a file a command derives and that is no longer derived from anything, such as the
    * generated declarations of a folder that holds no declared class any more. A file only
    * planned is forgotten; one on disk is deleted at the commit, and reported.

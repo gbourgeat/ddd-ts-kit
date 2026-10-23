@@ -7,6 +7,10 @@ import { tempDir, write } from './helpers.js';
 const BILLING = 'src/contexts/billing';
 const MACHINES = `${BILLING}/domain/state-machines`;
 const JOBS = `${BILLING}/application/scheduling`;
+/** Billing as the config places it, divided into no module. */
+const FLAT = { directory: BILLING, modules: [] };
+/** Billing divided into the module reminders. */
+const WITH_REMINDERS = { directory: BILLING, modules: ['reminders'] };
 
 function workspaceWith(files: Readonly<Record<string, string>>): Workspace {
   const root = tempDir('docs-readers');
@@ -33,7 +37,7 @@ describe('the state machines of a context, as the documentation reads them', () 
       ].join('\n'),
     });
 
-    expect(readStateMachines(ws, BILLING)).toEqual([
+    expect(readStateMachines(ws, FLAT)).toEqual([
       {
         aggregate: 'invoice',
         file: `${MACHINES}/invoice.state-machine.ts`,
@@ -61,7 +65,7 @@ describe('the state machines of a context, as the documentation reads them', () 
       ].join('\n'),
     });
 
-    expect(readStateMachines(ws, BILLING)).toMatchObject([
+    expect(readStateMachines(ws, FLAT)).toMatchObject([
       { states: ['draft', 'on hold', 'Lost'], initial: ['draft'], transitions: [] },
     ]);
   });
@@ -79,7 +83,7 @@ describe('the state machines of a context, as the documentation reads them', () 
       [`${MACHINES}/README.md`]: 'Not a state machine.\n',
     });
 
-    expect(readStateMachines(ws, BILLING)).toMatchObject([
+    expect(readStateMachines(ws, FLAT)).toMatchObject([
       { aggregate: 'invoice', states: ['draft'], initial: ['draft'], transitions: [] },
     ]);
   });
@@ -98,7 +102,7 @@ describe('the jobs of a context, as the documentation reads them', () => {
       [`${JOBS}/remind-payers.job.spec.ts`]: "it('reminds');\n",
     });
 
-    expect(readJobs(ws, BILLING, 'billing')).toEqual([
+    expect(readJobs(ws, FLAT, 'billing')).toEqual([
       { name: 'billing.close-month', schedule: 'every 86400000ms', command: 'CloseMonth' },
       { name: 'RemindPayersJob', schedule: '', command: '' },
     ]);
@@ -106,11 +110,8 @@ describe('the jobs of a context, as the documentation reads them', () => {
 });
 
 describe('a context divided into modules of its model, as the documentation reads it', () => {
-  it('reads the role folders of every module the config declares next to those of the context', () => {
+  it('reads the role folders of every module it is given next to those of the context', () => {
     const ws = workspaceWith({
-      'ddd-ts-kit.config.json': JSON.stringify({
-        contexts: { billing: { classification: 'core', upstreams: [], modules: { reminders: {} } } },
-      }),
       [`${BILLING}/domain/reminders/state-machines/reminder.state-machine.ts`]:
         "export const reminderLifecycle = defineStateMachine({ initial: 'due', transitions: {} });\n",
       [`${MACHINES}/invoice.state-machine.ts`]:
@@ -118,19 +119,19 @@ describe('a context divided into modules of its model, as the documentation read
       [`${BILLING}/application/reminders/scheduling/remind-payers.job.ts`]: 'export class RemindPayersJob {}\n',
     });
 
-    expect(readStateMachines(ws, BILLING).map((machine) => machine.file)).toEqual([
+    expect(readStateMachines(ws, WITH_REMINDERS).map((machine) => machine.file)).toEqual([
       `${MACHINES}/invoice.state-machine.ts`,
       `${BILLING}/domain/reminders/state-machines/reminder.state-machine.ts`,
     ]);
 
-    expect(readJobs(ws, BILLING, 'billing')).toEqual([{ name: 'RemindPayersJob', schedule: '', command: '' }]);
+    expect(readJobs(ws, WITH_REMINDERS, 'billing')).toEqual([{ name: 'RemindPayersJob', schedule: '', command: '' }]);
   });
 
-  it('reads no folder the config does not declare as a module: check reports it, the documentation does not invent it', () => {
+  it('reads no folder it is not given as a module: check reports it, the documentation does not invent it', () => {
     const ws = workspaceWith({
       [`${BILLING}/application/legacy/scheduling/remind-payers.job.ts`]: 'export class RemindPayersJob {}\n',
     });
 
-    expect(readJobs(ws, BILLING, 'billing')).toEqual([]);
+    expect(readJobs(ws, FLAT, 'billing')).toEqual([]);
   });
 });

@@ -3,7 +3,7 @@ import { glossaryCells } from '../language/glossary-cells.js';
 export const MODULES_HEADING = '## Modules';
 
 /** One row of the `## Modules` table of a CONTEXT.md: the module it names, and its line, 1-based. */
-export interface ModuleRow {
+interface ModuleRow {
   readonly name: string;
   readonly line: number;
 }

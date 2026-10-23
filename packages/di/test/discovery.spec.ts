@@ -250,13 +250,15 @@ describe('discovery of a context divided into modules of its model', () => {
 
   it('finds the role files of a module the generated dependencies file names, without the config', async () => {
     const classes: Readonly<Record<string, unknown>> = {
-      'billing.dependencies.mjs': { modules: ['invoicing'] },
       [`${IN_MODULE}/issue-invoice.command.mjs`]: { IssueInvoice },
       [`${IN_MODULE}/issue-invoice.handler.mjs`]: { IssueInvoiceHandler },
       'infrastructure/persistence/in-memory-invoice.repository.mjs': { InMemoryInvoiceRepository },
     };
 
-    const directory = contextWith(Object.fromEntries(Object.keys(classes).map((file) => [file, ''])));
+    const directory = contextWith({
+      ...Object.fromEntries(Object.keys(classes).map((file) => [file, ''])),
+      'billing.dependencies.mjs': "export const modules = ['invoicing'];\n",
+    });
 
     const module = await discoverContext('billing', directory, {
       load: async (file) => classes[path.relative(directory, file.pathname)],
@@ -276,13 +278,41 @@ describe('discovery of a context divided into modules of its model', () => {
     ]);
   });
 
+  it('reads the modules as a bundler rewrites the generated file: double quotes, no spaces', async () => {
+    const classes: Readonly<Record<string, unknown>> = {
+      [`${IN_MODULE}/issue-invoice.command.mjs`]: { IssueInvoice },
+      [`${IN_MODULE}/issue-invoice.handler.mjs`]: { IssueInvoiceHandler },
+      'infrastructure/persistence/in-memory-invoice.repository.mjs': { InMemoryInvoiceRepository },
+    };
+
+    const directory = contextWith({
+      ...Object.fromEntries(Object.keys(classes).map((file) => [file, ''])),
+      'billing.dependencies.mjs': 'export const modules=["invoicing"];\n',
+    });
+
+    const module = await discoverContext('billing', directory, {
+      load: async (file) => classes[path.relative(directory, file.pathname)],
+    });
+
+    const app = createTestApplication({
+      modules: [module],
+      fakes: [fake(CustomerDirectory, { exists: async () => true })],
+    });
+
+    await app.start();
+
+    expect(app.describe().commands).toMatchObject([{ message: 'IssueInvoice' }]);
+  });
+
   it('refuses a role file in the wrong role folder of a module, and says where it belongs', async () => {
     const misplaced = 'application/invoicing/ports/issue-invoice.handler.mjs';
-    const directory = contextWith({ [misplaced]: "throw new Error('never loaded');", 'billing.dependencies.mjs': '' });
 
-    const failure = await wiringRejection(
-      discoverContext('billing', directory, { load: async () => ({ modules: ['invoicing'] }) }),
-    );
+    const directory = contextWith({
+      [misplaced]: "throw new Error('never loaded');",
+      'billing.dependencies.mjs': "export const modules = ['invoicing'];\n",
+    });
+
+    const failure = await wiringRejection(discoverContext('billing', directory));
 
     expect(failure.code).toBe('MISPLACED_DECLARATION');
     expect(failure.message).toContain('application/<module>/');

@@ -38,7 +38,7 @@ export class ConfigInspection {
       ...context.upstreams.flatMap((upstream) => this.upstream(name, upstream)),
       ...this.presence(name, context),
       ...moduleProblems(name, context, this.writtenModules(name)).map(({ needle, message, fix }) =>
-        this.inConfig(needle, message, fix),
+        this.report({ file: CONFIG_FILE, line: this.moduleLine(name, needle) }, message, fix),
       ),
     ];
   }
@@ -294,6 +294,11 @@ export class ConfigInspection {
     const context = isRecord(contexts) ? contexts[name] : undefined;
 
     return isRecord(context) ? context['modules'] : undefined;
+  }
+
+  /** The line of the entry of a module of a context: the context, then its modules, then `needle`. */
+  private moduleLine(context: string, needle: string): number {
+    return lineOfSequence(this.project.configText, ['"contexts"', `"${context}"`, '"modules"', `"${needle}"`]);
   }
 
   /** A violation located on the line of the config file that first quotes `needle`. */

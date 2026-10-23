@@ -10,10 +10,10 @@ const FOLDERS = [
 
 /** The commands and the queries of a context, one per folder, each with the permission its declaration or its binding names. */
 export function readUseCases(sources: ContextSources): UseCaseFact[] {
-  const { ws, directory } = sources;
+  const { ws } = sources;
 
   return FOLDERS.flatMap(([kind, folder, suffix]) =>
-    roleDirectoriesOf(ws, directory, `application/${folder}`).map((useCase) => {
+    roleDirectoriesOf(ws, sources, `application/${folder}`).map((useCase) => {
       const name = toName(useCase.name).pascal;
 
       const declared = sources.declarations?.useCases.find(

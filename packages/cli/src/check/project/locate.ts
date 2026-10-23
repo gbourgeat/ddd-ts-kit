@@ -1,7 +1,7 @@
 import type { Config } from '../../config/index.js';
 import type { Layer } from '../model/layer.js';
 import type { Location } from '../model/location.js';
-import { declaredModules, MODULE_LAYERS } from '../../model-modules/index.js';
+import { declaredModules, moduleSplit } from '../../model-modules/index.js';
 import { isUnder } from './is-under.js';
 
 const LAYERS: readonly Layer[] = [
@@ -67,15 +67,11 @@ interface Placed {
  * the path is what it would be without modules, so every role keeps its place.
  */
 function moduleLocation(config: Config, { context, layer, rest }: Placed): Location | undefined {
-  const [module, ...below] = rest;
+  const { module, path } = moduleSplit([layer, ...rest].join('/'), declaredModules(config, context));
 
-  if (!MODULE_LAYERS.includes(layer) || module === undefined || below.length === 0) {
-    return undefined;
-  }
-
-  return declaredModules(config, context).includes(module)
-    ? { area: 'context', context, layer, inside: below, module }
-    : undefined;
+  return module === undefined
+    ? undefined
+    : { area: 'context', context, layer, inside: path.split('/').slice(1), module };
 }
 
 function locateAtContextRoot(context: string, entry: string): Location {

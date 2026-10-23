@@ -29,8 +29,10 @@ interface Publisher {
   readonly source: string;
 }
 
-function publishersOf({ ws, directory }: ContextSources): Publisher[] {
-  return roleFilesOf(ws, directory, FOLDER)
+function publishersOf(sources: ContextSources): Publisher[] {
+  const { ws } = sources;
+
+  return roleFilesOf(ws, sources, FOLDER)
     .filter(({ name }) => name.endsWith('.publisher.ts'))
     .map(({ path }) => ws.read(path) ?? '')
     .map((source) => ({ name: /\bexport class (\w+)/.exec(source)?.[1] ?? '', source }))

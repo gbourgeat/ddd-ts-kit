@@ -2034,7 +2034,11 @@ function sliceOf(project, path) {
         ? path.split('/')[0]
         : 'project root';
   }
-  const [context, layer, kind, useCase] = inside;
+  const [context, layer, ...rest] = inside;
+  // A module of the model is one folder level under domain/ and application/: a use case sits below it.
+  const inModule =
+    (layer === 'application' || layer === 'domain') && (project.modules?.[context] ?? []).includes(rest[0]);
+  const [kind, useCase] = inModule ? rest.slice(1) : rest;
   if (layer === 'application' && (kind === 'commands' || kind === 'queries') && useCase) {
     return `${context}: ${useCase}`;
   }

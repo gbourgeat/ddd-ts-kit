@@ -35,6 +35,12 @@ export function placeInModules(ws: Workspace, config: Config, request: ModuleReq
     unplaced: (context, relative) => {
       throw unplacedError(context, relative, { modules: declaredModules(config, context), command: request.command });
     },
+    split: (context, relative, holder) => {
+      throw new CliError(
+        `The use case of ${relative} is in the module "${holder}" of "${context}": --module ${asked?.module ?? ''} would split it between two modules.`,
+        `Run it without --module, which places the file with its use case, or with \`--module ${holder}\`.`,
+      );
+    },
   });
 
   let active = true;
@@ -64,6 +70,11 @@ function askedModule(
       '--module applies to a kind that writes in a context.',
       'Give the module to the kinds that write the model or its use cases: `ddd-ts-kit generate <kind> <context> ... --module <module>`.',
     );
+  }
+
+  // An unknown context is refused by the kind, with the contexts the project has.
+  if (config.contexts[context] === undefined) {
+    return undefined;
   }
 
   return { context, module: declaredModule(config, context, module) };

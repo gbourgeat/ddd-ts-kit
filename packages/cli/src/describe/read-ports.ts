@@ -11,10 +11,10 @@ const FOLDERS = [
 
 /** The ports of a context: the repositories of its domain and the ports of its application layer, each with the adapters that implement it. */
 export function readPorts(sources: ContextSources, adapters: readonly AdapterFact[]): PortFact[] {
-  const { ws, directory } = sources;
+  const { ws } = sources;
 
   return FOLDERS.flatMap(([folder, suffix]) =>
-    roleFilesOf(ws, directory, folder)
+    roleFilesOf(ws, sources, folder)
       .filter(({ name: file }) => file.endsWith(suffix))
       .map(({ name: file, path }) => {
         const name =
