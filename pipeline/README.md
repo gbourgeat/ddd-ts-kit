@@ -231,7 +231,7 @@ supports Vitest 5.
 
 | Piece | Verification |
 |---|---|
-| ESLint preset and plugin | run on a generated project of three contexts, clean and with one deliberate violation per rule, when the plugin held 23 rules: all of them and the delegated typescript-eslint rules reported; also run under ESLint 9. The plugin holds 46 rules today (45 ids and the ceiling of `clean/function-size`); those added since were not run this way and are held by the plugin's own tests (`packages/eslint-plugin/test/rules`) |
+| ESLint preset and plugin | run on a generated project of three contexts, clean and with one deliberate violation per rule, when the plugin held 23 rules: all of them and the delegated typescript-eslint rules reported; also run under ESLint 9. The plugin holds 76 rules today (75 ids and the ceiling of `clean/function-size`); those added since were not run this way and are held by the plugin's own tests (`packages/eslint-plugin/test/rules`) |
 | `depcruise-config.mjs` | run with dependency-cruiser 18 on the same project with the TypeScript 6 parser, and on a second one with `@swc/core`: every rule of the config reported its deliberate violation. The generated `.dependency-cruiser.cjs` is exercised by the end-to-end test of the CLI |
 | `knip.json` | unused file, export, type and dependency reported |
 | `vitest.config.ts` | both projects run with coverage; a threshold failure reported; JUnit and Cobertura files written |
