@@ -360,6 +360,16 @@ the fakes the generator wrote, then the adapter and the route: see
 
 With several workers, one context per worker: see [Parallel work](parallel-work.md).
 
+A story enters the build from where its idea was written. Plain words, a file or a ticket are
+enough for `/ddd-ts-kit:story`; an idea that is not a story yet, held by someone who will never
+open a terminal, is written first as an intent, `docs/architecture/intents/<slug>.md`, in the
+words of its author (`/ddd-ts-kit:intent`, or the template by hand): the problem, the outcome,
+who and what it touches, the constraints, the open questions, the acceptance as the author
+would observe it. The product owner accepts it by setting `Status: accepted` in a pull request,
+and the story is opened from it (`npx ddd-ts-kit story-scope <code> --from <intent>`): its
+statement, its pre-answered questions and the first draft of its criteria come from the intent,
+and `## Origin` of the story keeps the link. See [Story workflow](story-workflow.md).
+
 **Done when** the slice has no `TODO(domain)` and no `it.todo` left
 (`npx ddd-ts-kit todo <context>` lists them as `file:line`); a marker that cannot be resolved
 is a question for the owner, listed as such.

@@ -18,6 +18,12 @@ const SLICES = `# Slices
 
 const SPECIFICATION = `# US5 Place an order
 
+## Origin
+
+- From: ticket \`SHOP-412\`
+- Built with: ddd-ts-kit 0.85.0, plugin 0.85.0, on \`main\` at \`0000000\`
+- Policies in force: \`ddd-ts-kit:access-control\`
+
 ## Questions
 
 - Who may place an order? A customer (answered by the owner).
@@ -44,6 +50,17 @@ import { expectStatus, pending } from '@ddd-ts-kit/testing/e2e';
 it('#US5.02 AC1 a customer places an order and reads its number', pending(async () => {
   expectStatus({ status: 404, headers: {}, body: undefined }, 201);
 }));
+`;
+
+const REPORT = `
+## Report
+
+- D1 (provisional): the number is a sequence.
+
+### Verification
+
+- \`npm run verify\`: verify: ok
+- not verified: the broker, which has no fake here.
 `;
 
 /** Deletes each line holding a marker `story-check` says keeps the story open: what the session settles before it closes. */
@@ -219,16 +236,45 @@ describe('story', () => {
 
     expect(cli(story, 'story').stdout).toContain('Next: Write `## Report` in docs/architecture/stories/US5.md');
 
-    write(
-      story,
-      'docs/architecture/stories/US5.md',
-      `${SPECIFICATION}\n## Report\n\n- D1 (provisional): the number is a sequence.\n`,
-    );
+    write(story, 'docs/architecture/stories/US5.md', `${SPECIFICATION}${REPORT.replace(/### Verification[^]*$/, '')}`);
+
+    const unverified = cli(story, 'story', '--gate', 'close');
+
+    expect(unverified.code).toBe(1);
+    expect(unverified.stdout).toMatch(/\[ \] report +written, without `### Verification` naming `npm run verify`/);
+
+    write(story, 'docs/architecture/stories/US5.md', `${SPECIFICATION}${REPORT}`);
 
     const closed = cli(story, 'story', '--gate', 'close');
 
     expect(closed.code).toBe(0);
     expect(closed.stdout).toContain('Next: nothing, the story is ready for its pull request.');
+  });
+
+  it('holds the close gate until `## Origin` says where the story comes from and what built it', () => {
+    write(story, 'docs/architecture/stories/US5.md', `${SPECIFICATION.replace(/^- From:.*\n/m, '')}${REPORT}`);
+
+    const unsourced = cli(story, 'story', '--gate', 'close');
+
+    expect(unsourced.code).toBe(1);
+    expect(unsourced.stdout).toMatch(/\[ \] origin recorded +`## Origin` has no `From:` line/);
+    expect(unsourced.stdout).toContain('Next: Write `## Origin` in docs/architecture/stories/US5.md');
+
+    write(
+      story,
+      'docs/architecture/stories/US5.md',
+      `${SPECIFICATION.replace(/## Origin[^]*?\n(?=## )/, '')}${REPORT}`,
+    );
+
+    expect(cli(story, 'story', '--json').json()).toMatchObject({
+      phases: expect.arrayContaining([
+        expect.objectContaining({ id: 'origin', met: false, detail: 'no `## Origin` in the specification' }),
+      ]),
+    });
+
+    write(story, 'docs/architecture/stories/US5.md', `${SPECIFICATION}${REPORT}`);
+
+    expect(cli(story, 'story', '--gate', 'close').code).toBe(0);
   });
 
   it('asks which story outside the worktree of one, and refuses an unknown gate', () => {

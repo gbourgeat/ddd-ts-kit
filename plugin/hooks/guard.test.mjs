@@ -744,7 +744,7 @@ test('a session of a story starts on its phase and ends on its report, refused o
   put(
     root,
     'docs/architecture/stories/US5.md',
-    '# US5\n\n## Report\n\n- Blocked: the owner has not said who places an order.\n',
+    '# US5\n\n## Report\n\n- Blocked: the owner has not said who places an order.\n\n### Verification\n\n- not verified: npm run verify, the story is blocked at phase 1.\n',
   );
   assert.equal(run('stop', stopping).output, undefined);
 });

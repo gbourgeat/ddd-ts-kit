@@ -61,20 +61,30 @@ function writtenModules(modules: ContextConfig['modules']): Record<string, unkno
 function optionalKeys(config: Config): Record<string, unknown> {
   const { deviations, standardInterfaces, businessNames, onePerFile, worker, commit, coverage } = config;
 
-  const sized =
-    commit.maxFiles !== DEFAULT_COMMIT_LIMITS.maxFiles || commit.maxLines !== DEFAULT_COMMIT_LIMITS.maxLines;
-
   return {
     ...(isReferenceCoverage(coverage) ? {} : { coverage }),
     ...(deviations.length > 0 ? { deviations } : {}),
     ...(Object.keys(standardInterfaces).length > 0 ? { standardInterfaces } : {}),
     ...(onePerFile.allow.length > 0 ? { onePerFile } : {}),
     ...writtenBusinessNames(businessNames),
-    ...(sized ? { commit } : {}),
+    ...writtenCommit(commit),
     ...(worker ? { worker } : {}),
     ...(config.worktrees === 'advised' ? {} : { worktrees: config.worktrees }),
     ...pipelineKeys(config),
   };
+}
+
+/** Written once a project sizes its commits otherwise than the default, or names the agent in its commits. */
+function writtenCommit(commit: Config['commit']): Record<string, unknown> {
+  const sized =
+    commit.maxFiles !== DEFAULT_COMMIT_LIMITS.maxFiles || commit.maxLines !== DEFAULT_COMMIT_LIMITS.maxLines;
+
+  const written = {
+    ...(sized ? { maxFiles: commit.maxFiles, maxLines: commit.maxLines } : {}),
+    ...(commit.agentTrailer ? { agentTrailer: true } : {}),
+  };
+
+  return Object.keys(written).length > 0 ? { commit: written } : {};
 }
 
 /** Written once a project changes the list of `naming/business-name`. */

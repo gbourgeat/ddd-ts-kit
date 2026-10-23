@@ -8,14 +8,29 @@ const CONFIG = 'ddd-ts-kit.config.json';
 
 describe('the commit key of the config', () => {
   it('defaults to 20 files and 600 lines, the numbers of the editor hook', () => {
-    expect(parseConfig({}).commit).toEqual({ maxFiles: 20, maxLines: 600 });
-    expect(parseConfig({ commit: { maxFiles: 8 } }).commit).toEqual({ maxFiles: 8, maxLines: 600 });
+    expect(parseConfig({}).commit).toEqual({ maxFiles: 20, maxLines: 600, agentTrailer: false });
+
+    expect(parseConfig({ commit: { maxFiles: 8 } }).commit).toEqual({
+      maxFiles: 8,
+      maxLines: 600,
+      agentTrailer: false,
+    });
   });
 
   it('reads a limit that is not a positive integer as its default', () => {
-    expect(parseConfig({ commit: { maxFiles: 0, maxLines: '300' } }).commit).toEqual({ maxFiles: 20, maxLines: 600 });
-    expect(parseConfig({ commit: { maxFiles: 2.5, maxLines: -1 } }).commit).toEqual({ maxFiles: 20, maxLines: 600 });
-    expect(parseConfig({ commit: 'small' }).commit).toEqual({ maxFiles: 20, maxLines: 600 });
+    expect(parseConfig({ commit: { maxFiles: 0, maxLines: '300' } }).commit).toEqual({
+      maxFiles: 20,
+      maxLines: 600,
+      agentTrailer: false,
+    });
+
+    expect(parseConfig({ commit: { maxFiles: 2.5, maxLines: -1 } }).commit).toEqual({
+      maxFiles: 20,
+      maxLines: 600,
+      agentTrailer: false,
+    });
+
+    expect(parseConfig({ commit: 'small' }).commit).toEqual({ maxFiles: 20, maxLines: 600, agentTrailer: false });
   });
 
   it('is written back only when it differs from the defaults, and read back the same', () => {
@@ -66,3 +81,34 @@ function configFindings(root: string): string[] {
 
   return Array.isArray(violations) ? violations.map((violation) => String(jsonAt(violation, 'message'))) : [];
 }
+
+describe('the commit.agentTrailer key of the config', () => {
+  it('is false unless written true, and written back only when true', () => {
+    expect(parseConfig({ commit: { maxFiles: 8 } }).commit.agentTrailer).toBe(false);
+    expect(parseConfig({ commit: { agentTrailer: 'yes' } }).commit.agentTrailer).toBe(false);
+
+    expect(parseConfig({ commit: { agentTrailer: true } }).commit).toEqual({
+      maxFiles: 20,
+      maxLines: 600,
+      agentTrailer: true,
+    });
+
+    const named = parseConfig({ commit: { agentTrailer: true } });
+
+    expect(JSON.parse(serializeConfig(named))).toMatchObject({ commit: { agentTrailer: true } });
+    expect(JSON.parse(serializeConfig(named))).not.toMatchObject({ commit: { maxFiles: 20 } });
+    expect(parseConfig(JSON.parse(serializeConfig(named))).commit).toEqual(named.commit);
+
+    expect(JSON.parse(serializeConfig(parseConfig({ commit: { maxFiles: 12 } })))).toEqual(
+      expect.objectContaining({ commit: { maxFiles: 12, maxLines: 600 } }),
+    );
+  });
+
+  it('passes config/valid as a boolean, and is reported otherwise', () => {
+    expect(configFindings(withCommit({ agentTrailer: true }))).toEqual([]);
+
+    expect(configFindings(withCommit({ agentTrailer: 'yes' }))).toEqual([
+      '"commit.agentTrailer" is "yes": it is read as false.',
+    ]);
+  });
+});

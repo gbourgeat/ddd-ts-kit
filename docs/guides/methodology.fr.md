@@ -1,5 +1,5 @@
 [English](methodology.md) · **Français**
-<!-- translation-of: methodology.md sha256:311a6726ceea21c8 -->
+<!-- translation-of: methodology.md sha256:da32ea62cd586b38 -->
 
 # Méthodologie : d'une expression des besoins au code qui tourne
 
@@ -373,6 +373,18 @@ l'application de test avec les *fakes* qu'a écrits le générateur, puis l'adap
 voir [Stratégie de test](../concepts/testing-strategy.fr.md).
 
 Avec plusieurs *workers*, un contexte par *worker* : voir [Travail en parallèle](parallel-work.fr.md).
+
+Une *story* entre dans la construction depuis l'endroit où son idée a été écrite. Des mots
+simples, un fichier ou un ticket suffisent à `/ddd-ts-kit:story` ; une idée qui n'est pas encore
+une *story*, portée par quelqu'un qui n'ouvrira jamais un terminal, s'écrit d'abord comme une
+intention, `docs/architecture/intents/<slug>.md`, dans les mots de son auteur
+(`/ddd-ts-kit:intent`, ou le *template* à la main) : le problème, le résultat attendu, qui et
+quoi elle touche, les contraintes, les questions ouvertes, l'acceptation telle que l'auteur
+l'observerait. Le responsable du produit l'accepte en posant `Status: accepted` dans une *pull
+request*, et la *story* s'ouvre depuis elle (`npx ddd-ts-kit story-scope <code> --from
+<intention>`) : son énoncé, ses questions déjà répondues et le premier jet de ses critères
+viennent de l'intention, et `## Origin` de la *story* garde le lien. Voir
+[Parcours d'une story](story-workflow.fr.md).
 
 **Finie quand** il ne reste dans la tranche aucun `TODO(domain)` ni aucun `it.todo`
 (`npx ddd-ts-kit todo <context>` les liste sous forme de `file:line`) ; un marqueur qui ne peut pas
