@@ -1,8 +1,15 @@
 import type { TSESTree } from '@typescript-eslint/utils';
 import { isRecord } from '../project/is-record';
 
-/** `node` and every node below it, in source order, without a visitor: for a tree read once. */
-export function* descendants(node: TSESTree.Node): Generator<TSESTree.Node> {
+/**
+ * `node` and every node below it, in source order, without a visitor: for a tree read once. Nothing
+ * for what is not a node: a body a parser leaves null, as the JS plugin API of Oxlint does.
+ */
+export function* descendants(node: TSESTree.Node | null | undefined): Generator<TSESTree.Node> {
+  if (node === null || node === undefined) {
+    return;
+  }
+
   yield node;
 
   const entries: [string, unknown][] = Object.entries(node);
