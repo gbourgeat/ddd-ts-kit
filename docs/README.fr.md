@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2dcd246451a18211 -->
+<!-- translation-of: README.md sha256:d3a55e2ccc7e8d49 -->
 
 # Documentation
 
@@ -136,6 +136,7 @@ a vérifié, les limites, et une recommandation selon la situation.
 | [Quels contextes méritent un *preset*](proposals/context-presets.fr.md) | les critères, puis notification ensuite, les demandes sur les données personnelles comme guide ; fichiers (une capacité de la plateforme), audit, facturation et réglages non |
 | [Des modules à l'intérieur d'un contexte délimité](proposals/modules.fr.md) | construit : les sous-contextes ne sont pas un concept des références, les modules du modèle le sont (Evans) ; le jugement de ses gains et de ses limites, et l'essai qui a mesuré le coût sur l'exemple |
 | [Le côté lecture](proposals/read-side.fr.md) | critères, représentations, formulaires, modèles de lecture et projections ; la page dit, partie par partie, ce qui est construit dans les *packages* d'exécution, ce que la CLI ne génère pas encore et ce qui n'est pas construit |
+| [Vélocité du build, des contrôles et des tests](proposals/build-and-test-velocity.fr.md) | étudié, non construit : où vont le temps et la mémoire de ce dépôt, sur une station de travail et dans le *pipeline* ; les leviers de Vitest, ESLint, Oxlint, du compilateur natif et des gestionnaires de *packages* mesurés sur cet arbre ; ce que d'autres équipes ont publié sur les orchestrateurs, la sélection de tests et GitHub Actions ; un plan dans l'ordre du gain par coût, et pourquoi aucun orchestrateur |
 
 ## Partir d'une question
 
