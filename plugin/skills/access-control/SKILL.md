@@ -170,6 +170,10 @@ stop at the first answer that changes the model (the guide
 | attributes (`abac`) | rights depend on attributes of actor, resource, moment | rules spread out; needs tests |
 | relationships (`rebac`) | rights follow relations: owner, member of, shared with | tuples to keep in sync; lists need care |
 
+**Why was it refused.** Every authorizer of the kit answers `explain(request)` with the same
+decision as `check` and a trace in words; `traceText(trace)` lays it out, `x` before what did
+not hold. Use it in a spec or a console when a decision surprises, never in an answer or a log.
+
 ## Refuse these shortcuts
 
 | Shortcut | Instead |

@@ -1,6 +1,6 @@
 export { defineSchema } from './rebac/define-schema.js';
 export type { DerivedRelation } from './rebac/derived-relation.js';
-export type { Explanation } from './rebac/explanation.js';
+export type { Explanation } from './authorization/explanation.js';
 export { InMemoryRelationTupleStore } from './rebac/in-memory-relation-tuple-store.js';
 export { InvalidTupleError } from './rebac/invalid-tuple-error.js';
 export { objectOf } from './rebac/object-of.js';
@@ -13,8 +13,8 @@ export { Schema } from './rebac/schema.js';
 export { SchemaCheckedTupleStore } from './rebac/schema-checked-tuple-store.js';
 export type { SchemaDefinition } from './rebac/schema-definition.js';
 export { SchemaError } from './rebac/schema-error.js';
-export type { TraceStep } from './rebac/trace-step.js';
-export { traceText } from './rebac/trace-text.js';
+export type { TraceStep } from './authorization/trace-step.js';
+export { traceText } from './authorization/trace-text.js';
 export { tupleKey } from './rebac/tuple-key.js';
 export type { TypeDefinition } from './rebac/type-definition.js';
 export { via, type Via, type Way } from './rebac/via.js';
