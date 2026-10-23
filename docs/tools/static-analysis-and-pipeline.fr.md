@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:28cd991d90f3cb64 -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:d192fb6e51d2fc36 -->
 
 # L'analyse statique et le pipeline
 
@@ -334,8 +334,10 @@ privés ; le SAST, Secret Detection (constats dans la *merge request* sur Ultima
 Dependency Scanning (Ultimate) de GitLab ; et deux *jobs* qui lancent Claude Code sur les deux
 plateformes, `claude-review` (une revue de chaque *pull request* ou *merge request*, publiée en
 commentaire qui n'approuve ni ne bloque) et `claude-triage` (un triage en trois lignes d'une
-exécution en échec, en lecture seule, dans le résumé du *job* et sur la demande). Aucun des deux
-n'est exigé par le *job* `gate` : une personne approuve toujours. Sur les deux plateformes, les
+exécution en échec, en lecture seule, dans le résumé du *job* et sur la demande) ; et, sur GitHub
+seulement, `intent-to-spec` (le skill de *story* lancé sans responsable sur chaque intention
+qu'une fusion accepte, sa spécification ouverte en *pull request*). Aucun des trois n'est exigé
+par le *job* `gate` : une personne approuve toujours. Sur les deux plateformes, les
 deux contrôles qui bloquent quelle que soit l'offre sont `npm audit` et gitleaks. La table de
 chaque outil, de sa catégorie, de son coût et des pages des éditeurs où elle a été lue est dans
 [pipeline/README.md](../../pipeline/README.md#free-by-default-paid-on-request).

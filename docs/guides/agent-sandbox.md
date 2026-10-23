@@ -121,7 +121,9 @@ itself to the agent:
   `Change: <id>` of the commit that holds the file (`git commit -m "<message>" -m "Change: <id>"`,
   [Commit discipline](commit-discipline.md#messages-conventional-commits)). It asks, it does
   not block, and it stays silent for any other file. The trailer is read by people in the
-  history; no command of the kit reads it yet.
+  history, and by `npx ddd-ts-kit story-check <code>`, which lists each commit of a story that
+  changes one of these files without it, and blocks on it under the regulated profile; the
+  paths the hook watches and those `story-check` reads are the same list, kept aligned in the kit.
 
 The input and the exit codes of a hook follow the
 [hooks reference](https://code.claude.com/docs/en/hooks) of Claude Code, read on 2026-10-23:

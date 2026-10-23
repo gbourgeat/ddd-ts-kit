@@ -226,6 +226,7 @@ share. The pull requests merge one after the other, each on a green trunk.
 | two stories that change the same file | `stories`; the guard, at session start and on the first write of such a file |
 | a session that ends before its report | the guard, which refuses the first stop of each step |
 | a done row that departed from its design review, no compromise listed | `story-check`, which blocks on each name the section cites that the tree lacks; the guard, once at the stop of the session, without blocking |
+| a commit of the story that changes a migration or a container without its `Change: <id>` trailer | `story-check`, which lists it with its files, and blocks on it under `agents.profile: regulated` or with `--strict` |
 | the pull request: every row done, no scenario pending, the trunk merged in, the origin recorded, the report written with its verification | `story --gate close` |
 
 ## The optional end state: the specification as a job
@@ -246,9 +247,9 @@ request merged into the default branch that turns an intent of `docs/architectur
 `Status: accepted`, it installs the project, Claude Code and the plugin, and runs `claude -p`
 with the `ANTHROPIC_API_KEY` secret, one story per accepted intent, under the token of the
 workflow or a token of the team (`INTENT_TO_SPEC_TOKEN`, so that the checks of the story run on
-the pull request it opens). It is opt-in and paid: `init` does not write it in this version, a
-team copies it into `.github/workflows/` and adds the secret, and each accepted intent consumes
-API tokens. The template was parsed and not executed on GitHub.
+the pull request it opens). It is opt-in and paid: `npx ddd-ts-kit init --ci-extras intent-to-spec`
+writes it (`ci.extras` of the config, GitHub only), the team adds the secret, and each accepted
+intent consumes API tokens. The template was parsed and not executed on GitHub.
 
 ## Hosts
 

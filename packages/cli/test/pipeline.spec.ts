@@ -36,6 +36,7 @@ describe('pipeline templates', () => {
     ['github/workflows/codeql.yml', 'github/workflows/codeql.yml'],
     ['github/workflows/pr-title.yml', 'github/workflows/pr-title.yml'],
     ['github/workflows/copilot-setup-steps.yml', 'github/workflows/copilot-setup-steps.yml'],
+    ['github/workflows/intent-to-spec.yml', 'github/workflows/intent-to-spec.yml'],
     ['github/dependabot.yml', 'github/dependabot.yml'],
     ['github/branch-protection.md', 'github/branch-protection.md'],
     ['gitlab/merge-request-settings.md', 'gitlab/merge-request-settings.md'],

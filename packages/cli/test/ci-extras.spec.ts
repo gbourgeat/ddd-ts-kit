@@ -7,7 +7,7 @@ import { readJson } from './support/read-json.js';
 import { readYaml } from './support/read-yaml.js';
 
 const EVERY_EXTRA =
-  'gitlab-sast,codeql,dependency-review,gitlab-secret-detection,gitlab-dependency-scanning,claude-review,claude-triage';
+  'gitlab-sast,codeql,dependency-review,gitlab-secret-detection,gitlab-dependency-scanning,claude-review,claude-triage,intent-to-spec';
 
 /** What each opt-in job leaves in the files `init` writes. */
 const MARKS = {
@@ -65,6 +65,7 @@ describe('init --ci-extras: the jobs that need a paid plan are opt-in', () => {
           'gitlab-dependency-scanning',
           'gitlab-sast',
           'gitlab-secret-detection',
+          'intent-to-spec',
         ],
       },
     });
@@ -160,5 +161,27 @@ describe('init --ci-extras claude-review, claude-triage: Claude Code in the pipe
     expect(read(gitlab, CLAUDE_GITLAB)).not.toMatch(/^claude-triage:$/m);
     expect(read(gitlab, '.gitlab-ci.yml')).toContain(`include:\n  - ${MARKS.claudeInclude}\n\n`);
     expect(exists(gitlab, '.github/workflows/claude-review.yml')).toBe(false);
+  });
+});
+
+describe('init --ci-extras intent-to-spec: the headless design pass of the story skill, on GitHub, on request', () => {
+  it('writes the workflow on GitHub only, outside the gate, and refuses it on a GitLab pipeline', () => {
+    const root = initProject('--ci', 'github', '--ci-extras', 'intent-to-spec');
+    const workflow = read(root, '.github/workflows/intent-to-spec.yml');
+
+    expect(workflow).toContain('types: [closed]');
+    expect(workflow).toContain("- 'docs/architecture/intents/*.md'");
+    expect(workflow).toContain('--headless');
+    expect(workflow).toContain('ANTHROPIC_API_KEY');
+    expect(read(root, '.github/workflows/ci.yml')).not.toMatch(/intent/i);
+    expect(readJson(root, 'ddd-ts-kit.config.json')).toMatchObject({ ci: { extras: ['intent-to-spec'] } });
+
+    const [parsed] = readYaml([workflow]).map((back) => back.yaml12 as Record<string, unknown>);
+
+    expect(Object.keys(parsed ?? {}).slice(0, 5)).toEqual(['name', 'on', 'concurrency', 'permissions', 'jobs']);
+
+    const elsewhere = initFailure('--ci', 'gitlab', '--ci-extras', 'intent-to-spec');
+
+    expect(elsewhere.message).toBe('--ci-extras intent-to-spec is a job of the GitHub pipeline, and --ci is gitlab.');
   });
 });

@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:1997ff3b9dec0f17 -->
+<!-- translation-of: story-workflow.md sha256:b4f3572c37712266 -->
 
 # Parcours d'une story : une session par user story
 
@@ -244,6 +244,7 @@ l'autre, chacune sur un tronc vert.
 | deux *stories* qui changent le même fichier | `stories` ; la garde, au démarrage de la session et à la première écriture d'un tel fichier |
 | une session qui finit avant son rapport | la garde, qui refuse le premier arrêt de chaque étape |
 | une ligne faite qui s'est écartée de sa revue de conception, sans compromis listé | `story-check`, qui bloque sur chaque nom que la section cite et que l'arbre n'a pas ; la garde, une fois à l'arrêt de la session, sans bloquer |
+| un *commit* de la *story* qui change une migration ou un conteneur sans son *trailer* `Change: <id>` | `story-check`, qui le liste avec ses fichiers, et bloque dessus sous `agents.profile: regulated` ou avec `--strict` |
 | la *pull request* : chaque ligne faite, aucun scénario en attente, le tronc fusionné, l'origine consignée, le rapport écrit avec sa vérification | `story --gate close` |
 
 ## L'état final optionnel : la spécification comme un job
@@ -266,9 +267,9 @@ sur une *pull request* fusionnée dans la branche par défaut qui passe une inte
 plugin, et lance `claude -p` avec le secret `ANTHROPIC_API_KEY`, une *story* par intention
 acceptée, sous le jeton du *workflow* ou un jeton de l'équipe (`INTENT_TO_SPEC_TOKEN`, pour que
 les vérifications de la *story* tournent sur la *pull request* qu'elle ouvre). C'est optionnel
-et payant : `init` ne l'écrit pas dans cette version, une équipe le copie dans
-`.github/workflows/` et ajoute le secret, et chaque intention acceptée consomme des jetons
-d'API. Le *template* a été analysé et non exécuté sur GitHub.
+et payant : `npx ddd-ts-kit init --ci-extras intent-to-spec` l'écrit (`ci.extras` de la
+configuration, GitHub seulement), l'équipe ajoute le secret, et chaque intention acceptée
+consomme des jetons d'API. Le *template* a été analysé et non exécuté sur GitHub.
 
 ## Hôtes
 

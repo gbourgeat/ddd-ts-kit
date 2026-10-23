@@ -12,4 +12,5 @@ export const CI_EXTRAS = {
   'gitlab-dependency-scanning': 'gitlab',
   'claude-review': 'any',
   'claude-triage': 'any',
+  'intent-to-spec': 'github',
 } as const;

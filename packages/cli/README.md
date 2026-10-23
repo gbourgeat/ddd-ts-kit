@@ -99,7 +99,8 @@ repository, report into a merge request only in a paid tier, or spend API tokens
 `codeql`, `dependency-review` (GitHub), `gitlab-sast`, `gitlab-secret-detection`,
 `gitlab-dependency-scanning` (GitLab), `claude-review` and `claude-triage` (both platforms: Claude
 Code reviews each pull or merge request and posts one comment that neither approves nor blocks,
-and triages a failed run in three lines, read-only; the `gate` job never needs them). The list is
+and triages a failed run in three lines, read-only; the `gate` job never needs them), and `intent-to-spec` (GitHub: the story skill run
+headless on each intent a merge accepts, its specification opened as a pull request). The list is
 recorded as `ci.extras` in the config; an unknown name, or a job of a platform `--ci` does not
 cover, is refused. The table of every tool, its cost and its conditions:
 [pipeline/README.md](../../pipeline/README.md#free-by-default-paid-on-request).
@@ -553,7 +554,7 @@ config, `docsUi`, `ci` and `logger` included.
 | `knip.json` | dead code: entry points are `main.ts` and `apps/*/main.ts`, the scripts, the specs and the fakes, the module files in the explicit style, the role files under discovery (jobs and publishers included) |
 | `vitest.config.ts` | unit and integration projects, the coverage thresholds read from `ddd-ts-kit.config.json` (`governedCoverage`), per context and layer, in the standard decorator mode `decorators()` of `@ddd-ts-kit/testing/vitest`, which compiles the files holding a decorator with the compiler of the project (Vitest does not lower standard decorators; it lowers legacy ones itself, so a project with `experimentalDecorators` gets no plugin), and under `--assembly discovery` `server.deps.inline: ['@ddd-ts-kit/di']` |
 | `lefthook.yml`, `commitlint.config.mjs` | pre-commit (ESLint, the format check and `check` on the staged files, `check --commit-size --staged`, which never blocks, and `secrets`: gitleaks on the staged changes when its binary is on the path, one line and no refusal otherwise, the pipeline scanning the whole history anyway), pre-push (types, unit tests) and commit-msg hooks (`npm run hooks:install`), each run by the lefthook of the checkout it fires in (`lefthook: node_modules/.bin/lefthook`: a worktree without its dependencies fails the commit instead of skipping the checks), conventional commits |
-| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node and the dependencies, installed before the Copilot cloud agent starts), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json`; `codeql.yml` with `--ci-extras codeql`, `claude-review.yml` and `claude-triage.yml` with `--ci-extras claude-review,claude-triage` |
+| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node and the dependencies, installed before the Copilot cloud agent starts), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json`; `codeql.yml` with `--ci-extras codeql`, `claude-review.yml` and `claude-triage.yml` with `--ci-extras claude-review,claude-triage`; `intent-to-spec.yml` with `--ci-extras intent-to-spec` |
 | `--ci gitlab` | `.gitlab-ci.yml` (architecture findings as a Code Quality report through `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json`; `.gitlab/claude-review.gitlab-ci.yml` with `--ci-extras claude-review,claude-triage` |
 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | how to run it; a slim guide in `AGENTS.md`, which Codex, Copilot and most coding agents read and `CLAUDE.md` imports (commands, how to read less, the map of the rules, generated files, the verification commands with the lines each prints when it passes, to run before reporting done, the mistakes seen here, a section the team owns under the rule of two, compiler note, the skills of the plugin: `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) and the invariants in seven rule files, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` and `tests.md`, each scoped by a `paths` frontmatter, and the same seven for GitHub Copilot, each scoped by `applyTo` |
 | `REVIEW.md` | the review policy of the project: the passes of a review (bugs, security, compliance against the design review of the row, the acceptance of the story, the records of `docs/adr/` and the rules), what Important means, at most five nits (a recurring one becomes a line of `AGENTS.md` under `## Mistakes seen here` or a rule of the config), what is not reported (generated files, what `npm run verify` refuses). Read by the `architecture-reviewer` agent on top of its method, by a human reviewer and by any review bot. Written once, for the team to edit: `--force` leaves it alone, `doctor` says when it is missing |
@@ -1328,17 +1329,31 @@ done row cites a name. `--strict` changes nothing here. The guard of the plugin 
 the stop of a session in the worktree of a story, without blocking. The comparison of the built
 code with its design comes from [the AI-native SDLC playbook of Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf).
 
+A commit of the story also carries its change reference. Each commit on the current branch that
+changes a migration or a container file (the same paths the `change-reference` hook of the
+regulated profile watches: `migrations/`, `prisma/migrations/`, `docker/`, `Dockerfile`,
+`docker-compose.yml`; the two lists are kept aligned in the kit) and belongs to the story (its
+`Slice: <row id>` trailer, else its message naming a row of it, else its subject naming the story,
+word-bounded) must carry a `Change: <id>` trailer, the id the change process of the team gives.
+One without it is listed with its short sha, its subject and the files, under "Without a change
+reference"; it blocks the story when the config says `agents.profile: regulated` or with
+`--strict`, and is listed without blocking otherwise. The fix: add the trailer before the pull
+request, `git commit --amend` for the last commit, an interactive rebase of the branch for an
+earlier one. Three git calls at most, on the commits that touch such a file.
+
 It reads the files and git only. It exits 0 when the story can close (one line, then the markers
 listed without blocking, if any), 1 when something keeps it open, each blocker with why it is its
 own (`names #M1.01`, `written by a782a19 Slice: M1.02`, `no other open story in payments`), its
 `file:line` and its fix (handle it, or dismiss it by a decision record,
 `npx ddd-ts-kit generate adr "<title>"`, then delete the marker), each name of its design the
-code lacks with its `file:line` in the review, and 2 on a code no row carries or
-without a slices table. `--json` prints
-`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, design, canClose }`,
+code lacks with its `file:line` in the review, each commit without its change reference, and 2
+on a code no row carries or without a slices table. `--json` prints
+`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, design, unreferenced, regulated, canClose }`,
 each marker being `{ kind, context, file, line, text, attribution: { by, rows, commit? } }`, with
 `why`, `sharedWith` and `fix` in `markers` and `unattributed`; `by` is `text`, `commit`, `worker`
-or `none`; each name of `design` being `{ row, document, line, cited, kind, why, fix }`.
+or `none`; each name of `design` being `{ row, document, line, cited, kind, why, fix }`; each
+commit of `unreferenced` being `{ sha, subject, files, rows, fix }`, and `regulated` true under
+the regulated profile.
 
 ```
 $ npx ddd-ts-kit story-check M1
@@ -1371,6 +1386,18 @@ Departed from its design (1): update the section of the row in docs/architecture
   docs/architecture/reviews/US5.md:12  `OrderNumberTaken`  (#US5.02, no class, interface, type or function OrderNumberTaken is declared or imported under the source root)
 
 Once each is settled: npx ddd-ts-kit story-check US5
+```
+
+A migration commit of the story without its change reference, under the regulated profile:
+
+```
+$ npx ddd-ts-kit story-check M1
+M1 cannot close: every row done, 0 markers of its own left, 1 commit without a change reference.
+
+Without a change reference (1, agents.profile regulated): add the trailer `Change: <id>` to the commit, with the id the change process of the team gives (`git commit --amend` for the last commit, an interactive rebase of the branch for an earlier one), before the pull request
+  a782a19  feat(billing): add the paid_at column to invoices  (Slice: M1.02; src/platform/database/migrations/0002_paid_at.sql)
+
+Once each is settled: npx ddd-ts-kit story-check M1
 ```
 
 Once the three are settled:

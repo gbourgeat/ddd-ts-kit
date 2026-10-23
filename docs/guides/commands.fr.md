@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:accc90b415ff9bc1 -->
+<!-- translation-of: commands.md sha256:d27ae0ebd7d29595 -->
 
 # Quelle commande, quand
 
@@ -409,8 +409,12 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    name the ## #<id> section of docs/architecture/reviews/<code>.md cites (a path, a
                    PascalCase name, a Class.member, as cited reads them) exists in the tree, or is
                    listed under ### Compromises of ## Report in the story file; a name that is neither
-                   blocks, with its file:line in the review. Reads only: exits 0 when it can close, 1
-                   listing what keeps it open, 2 on a code no row carries or without slices.md
+                   blocks, with its file:line in the review. A commit of the story on the current branch
+                   (its Slice: trailer, else its message naming a row or the story) that changes a
+                   migration or a container file (the paths the change-reference hook of the regulated
+                   profile watches) without a Change: <id> trailer is listed, with its files, and blocks
+                   under agents.profile regulated or with --strict. Reads only: exits 0 when it can
+                   close, 1 listing what keeps it open, 2 on a code no row carries or without slices.md
   acceptance       the acceptance scenarios of each story (test/acceptance/<story>.acceptance.spec.ts) against
                    its rows in slices.md and the criteria of docs/architecture/stories/<story>.md: the rows and
                    criteria each scenario names (#US5.02 AC1 in its title), the scenarios left to write
