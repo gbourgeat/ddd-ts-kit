@@ -63,6 +63,7 @@
   "devDependencies": {
     "ioredis": "^6.0.0",
     "@ddd-ts-kit/events": "0.86.0",
-    "@ddd-ts-kit/testing": "0.86.0"
+    "@ddd-ts-kit/testing": "0.86.0",
+    "wasmoon-lua5.1": "1.18.12"
   }
 }

@@ -3,7 +3,7 @@ import { claimedJobOfRecord } from '../src/jobs/claimed-job-of-record';
 import { parseJobRecord } from '../src/jobs/parse-job-record';
 import { queuedJobOfRecord } from '../src/jobs/queued-job-of-record';
 import { RedisJobStore } from '../src';
-import { closeAll, connectToNothing } from './support/server';
+import { closeAll, connectToNothing } from './support/servers';
 
 const actor = { id: 'user-7', type: 'user', roles: [], attributes: {} };
 

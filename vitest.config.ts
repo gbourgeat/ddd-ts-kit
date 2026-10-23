@@ -4,15 +4,14 @@ import { ON_A_SERVER } from './pipeline/monorepo/affected-packages.mjs';
 /**
  * The floor of each package, as [statements, branches, functions, lines]: what the unit run measured
  * on 2026-10-10 (2026-10-18 for cli, kernel, knex, prisma, sentry and testing, 2026-10-19 for
- * rabbitmq, nats and kafka, 2026-10-23 for s3), rounded down, so that the coverage of a package cannot fall without
- * the gate saying so. The statements and lines of sentry, measured at 100, are held at 99: a floor
- * of 100 would leave no line of margin. A floor is raised when the package gains tests, never
- * lowered to make a change pass.
- * redis is low on purpose of the measure, not of the code: most of its specs need a server
- * (Dragonfly) and run in the integration job, which this run skips. rabbitmq, nats, kafka and s3
- * run the same specs on a server the test holds itself (an AMQP broker in memory, a NATS server in
- * its own process, a Kafka cluster in memory, an S3 server in its own process), so this run
- * measures them whole.
+ * rabbitmq, nats and kafka, 2026-10-23 for s3 and redis), rounded down, so that the coverage of a
+ * package cannot fall without the gate saying so. The statements and lines of sentry, measured at
+ * 100, are held at 99: a floor of 100 would leave no line of margin. A floor is raised when the
+ * package gains tests, never lowered to make a change pass.
+ * rabbitmq, nats, kafka, s3 and redis run the same specs on a server the test holds itself (an AMQP
+ * broker in memory, a NATS server, an S3 server and a Redis server in their own process, a Kafka
+ * cluster in memory), so this run measures them whole; the integration job runs them on a real
+ * server too.
  */
 const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>> = {
   aspects: [97, 95, 97, 97],
@@ -32,7 +31,7 @@ const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>
   pino: [96, 88, 100, 96],
   prisma: [97, 83, 100, 97],
   rabbitmq: [97, 97, 97, 97],
-  redis: [57, 48, 60, 58],
+  redis: [96, 90, 97, 97],
   s3: [98, 86, 100, 98],
   scheduling: [98, 94, 98, 98],
   sentry: [99, 99, 100, 99],

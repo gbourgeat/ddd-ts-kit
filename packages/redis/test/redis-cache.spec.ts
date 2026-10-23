@@ -3,18 +3,20 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryMetrics, cacheKey } from '@ddd-ts-kit/kernel';
 import { RedisCache, RedisLock, type CacheCodec } from '../src';
 import { cacheContract } from '../src/testing';
-import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing, sleep } from './support/server';
+import { SERVERS, aNamespace, closeAll, connect, connectToNothing, serverOf, sleep } from './support/servers';
 
 const runner = { describe, it, expect, beforeEach };
 const price = (sku: string) => cacheKey<{ amount: number }>('price', sku);
 
 afterAll(closeAll);
 
-describe.skipIf(!REAL_SERVER)('RedisCache on a server', () => {
+describe.each(SERVERS)('RedisCache, %s', (_name, start) => {
+  const redis = serverOf(start);
+
   let client: Redis;
 
   beforeEach(() => {
-    client ??= connect();
+    client ??= connect(redis.url);
   });
 
   cacheContract(runner, {

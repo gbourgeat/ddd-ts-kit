@@ -1,13 +1,15 @@
 import { Redis } from 'ioredis';
 import { afterAll, describe, expect, it } from 'vitest';
 import { FAIL_FAST, connectRedis, redisHealth } from '../src';
-import { REAL_SERVER, SERVER_URL, closeAll, connect, connectToNothing } from './support/server';
+import { SERVERS, closeAll, connect, connectToNothing, serverOf } from './support/servers';
 
 afterAll(closeAll);
 
-describe.skipIf(!REAL_SERVER)('connectRedis on a server', () => {
+describe.each(SERVERS)('connectRedis, %s', (_name, start) => {
+  const redis = serverOf(start);
+
   it('opens a connection from a URL and closes it', async () => {
-    const connection = connectRedis(SERVER_URL);
+    const connection = connectRedis(redis.url);
 
     expect(await connection.client.ping()).toBe('PONG');
     expect(connection.client.options).toMatchObject(FAIL_FAST);
@@ -18,7 +20,7 @@ describe.skipIf(!REAL_SERVER)('connectRedis on a server', () => {
   });
 
   it('opens a connection from options, which win over its defaults', async () => {
-    const { hostname, port } = new URL(SERVER_URL);
+    const { hostname, port } = new URL(redis.url);
     const connection = connectRedis({ host: hostname, port: Number(port), commandTimeout: 750 });
 
     expect(await connection.client.ping()).toBe('PONG');
@@ -27,7 +29,7 @@ describe.skipIf(!REAL_SERVER)('connectRedis on a server', () => {
   });
 
   it('uses a client it is handed as it is, and leaves it open', async () => {
-    const client = connect();
+    const client = connect(redis.url);
     const connection = connectRedis(client);
 
     await connection.close();
@@ -37,7 +39,7 @@ describe.skipIf(!REAL_SERVER)('connectRedis on a server', () => {
   });
 
   it('reports a server that answers as up, with its latency', async () => {
-    const health = await redisHealth(connect());
+    const health = await redisHealth(connect(redis.url));
 
     expect(health.status).toBe('up');
     expect(health).toMatchObject({ latencyMs: expect.any(Number) });

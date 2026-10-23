@@ -1,18 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ATTEMPTS_EXHAUSTED, type RedisStreamsDelivery, type RedisStreamsFailure } from '../src/event-bus';
 import { PLACED, anEvent, deliveriesOf, failuresOf, recorder, streamsOf, unique } from './support/events';
-import { REAL_SERVER, SERVER_URL } from './support/server';
+import { SERVERS, serverOf } from './support/servers';
 import { MAX_ATTEMPTS, Server } from './support/streams';
 import { eventually } from './support/waiting';
 
-describe.skipIf(!REAL_SERVER)(
-  'RedisStreamsEventBus, taking over from an instance that died',
+describe.each(SERVERS)(
+  'RedisStreamsEventBus, taking over from an instance that died, %s',
   { timeout: 30_000 },
-  () => {
+  (_name, start) => {
+    const redis = serverOf(start);
+
     let server: Server;
 
     beforeEach(() => {
-      server = Server.connect(SERVER_URL);
+      server = Server.connect(redis.url);
     });
 
     afterEach(async () => {

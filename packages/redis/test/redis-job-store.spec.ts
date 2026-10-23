@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryErrorReporter, InMemoryLogger, InMemoryUnitOfWork } from '@ddd-ts-kit/kernel';
 import { jobStoreContract } from '@ddd-ts-kit/testing/contracts';
 import { RedisJobStore, reportLostJobs } from '../src';
-import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing } from './support/server';
+import { SERVERS, aNamespace, closeAll, connect, connectToNothing, serverOf } from './support/servers';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 
@@ -19,11 +19,13 @@ const job = {
   runAt: new Date('2026-03-01T10:00:00.000Z'),
 };
 
-describe.skipIf(!REAL_SERVER)('RedisJobStore on a server', () => {
+describe.each(SERVERS)('RedisJobStore, %s', (_name, start) => {
+  const redis = serverOf(start);
+
   let client: Redis;
 
   beforeEach(() => {
-    client ??= connect();
+    client ??= connect(redis.url);
   });
 
   jobStoreContract(runner, {

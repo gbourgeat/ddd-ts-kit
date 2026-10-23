@@ -1,15 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RedisStreamsDelivery, RedisStreamsFailure } from '../src/event-bus';
 import { InvoicingFailed, PLACED, anEvent, deliveriesOf, failuresOf, recorder, unique } from './support/events';
-import { REAL_SERVER, SERVER_URL } from './support/server';
+import { SERVERS, serverOf } from './support/servers';
 import { RETRY_DELAY_MS, Server } from './support/streams';
 import { pause } from './support/waiting';
 
-describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, retrying', { timeout: 30_000 }, () => {
+describe.each(SERVERS)('RedisStreamsEventBus, retrying, %s', { timeout: 30_000 }, (_name, start) => {
+  const redis = serverOf(start);
+
   let server: Server;
 
   beforeEach(() => {
-    server = Server.connect(SERVER_URL);
+    server = Server.connect(redis.url);
   });
 
   afterEach(async () => {
