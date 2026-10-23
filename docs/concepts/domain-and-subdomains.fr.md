@@ -1,5 +1,5 @@
 [English](domain-and-subdomains.md) · **Français**
-<!-- translation-of: domain-and-subdomains.md sha256:b70842443a4d1dc1 -->
+<!-- translation-of: domain-and-subdomains.md sha256:35dcded40a477d35 -->
 
 # Domaine et sous-domaines
 
@@ -26,6 +26,12 @@ logiciel existe ou non. Les contextes délimités se conçoivent. La cible habit
 contexte par sous-domaine, et l'on garde les deux termes distincts parce que la cible est parfois
 manquée (un système hérité qui couvre trois sous-domaines, ou un sous-domaine partagé entre deux
 équipes).
+
+Un contexte peut aussi tenir plusieurs sous-domaines à dessein, quand ils partagent un même
+langage : Evans les place dans des modules du modèle (Generic Subdomains : « Factor out generic
+models of these subdomains and place them in separate modules » ; Abstract Core : « modules
+defined by subdomain »). Le kit le fait avec les [modules du modèle](modules.fr.md), dont chacun
+peut porter sa propre classification.
 
 ![Les six sous-domaines du domaine de la prise de rendez-vous à gauche, chacun modélisé par un contexte délimité sous src/contexts à droite, sauf identity, un sous-domaine générique acheté sous forme de fournisseur OIDC, qui n'a pas de dossier](../assets/diagrams/domain-and-subdomains-problem-and-solution.fr.svg)
 
@@ -164,6 +170,8 @@ Chaque contexte est classé, et la valeur est obligatoire :
   jetons en `Actor` à la frontière, et aucun dossier ne modélise les utilisateurs. Un contexte
   générique n'existe dans l'arborescence que quand le projet garde pour lui un état ou une
   traduction qui lui sont propres.
+- Un sous-domaine tenu par un module d'un contexte, plutôt que par un contexte à lui, est classé
+  sur le module : `contexts.<name>.modules.<module>.classification` ([Modules du modèle](modules.fr.md)).
 
 ```bash
 npx ddd-ts-kit generate context appointments --classification core \
@@ -204,6 +212,7 @@ npx ddd-ts-kit generate context appointments --classification core \
 ## Voir aussi
 
 - [Contexte délimité](bounded-context.fr.md)
+- [Modules du modèle](modules.fr.md)
 - [Langage omniprésent](ubiquitous-language.fr.md)
 - [Carte des contextes](context-map.fr.md)
 - [Un exemple détaillé : la carte des contextes de l'application de prise de rendez-vous](context-map-worked-example.fr.md)

@@ -8,6 +8,7 @@ import { stringsAt } from './support/strings-at.js';
 const SHARED_KINDS = [
   'adapter',
   'context',
+  'module',
   'repository',
   'command',
   'query',

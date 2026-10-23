@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { UnknownClearance } from '@/contexts/scheduling/domain/errors/unknown-clearance.error';
+import { UnknownClearance } from '@/contexts/scheduling/domain/calendars/errors/unknown-clearance.error';
 
 describe('UnknownClearance', () => {
   it('refuses with the code UNKNOWN_CLEARANCE, its message and its facts', () => {

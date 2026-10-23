@@ -8,9 +8,9 @@ import { FileStorage, InMemoryFileStorage } from '@ddd-ts-kit/kernel';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
-import { AttachAppointmentDocumentCommand } from '@/contexts/scheduling/application/commands/attach-appointment-document/attach-appointment-document.command';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
-import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
+import { AttachAppointmentDocumentCommand } from '@/contexts/scheduling/application/calendars/commands/attach-appointment-document/attach-appointment-document.command';
+import { AppointmentRepository } from '@/contexts/scheduling/domain/calendars/repositories/appointment.repository';
+import type { Appointment } from '@/contexts/scheduling/domain/calendars/aggregates/appointment.aggregate';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';
 

@@ -4,6 +4,7 @@ import {
   auditGuardRefusals,
   auditIntegrationEvents,
   auditMiddleware,
+  auditedSubjectKeys,
   type AuditReader,
   type AuditSource,
   type AuditTrail,
@@ -12,7 +13,7 @@ import {
 import { KnexAuditTrail } from '@ddd-ts-kit/audit/knex';
 import type { OnDecision } from '@ddd-ts-kit/auth';
 import type { EventSubscription } from '@ddd-ts-kit/events';
-import { acrossTenants, type BusMiddleware, type TenantElevation } from '@ddd-ts-kit/kernel';
+import { acrossTenants, type BusMiddleware, type SubjectKeyStore, type TenantElevation } from '@ddd-ts-kit/kernel';
 import type { Persistence } from '@/platform/database/persistence';
 import { AUDIT_SCHEMA } from '@/platform/database/schema';
 import { auditPermissions } from '@/platform/audit/audit.permissions';
@@ -27,9 +28,10 @@ const SENSITIVE_READS = [auditPermissions['trail.read'].id, schedulingPermission
 const consumer = 'audit';
 
 /**
- * The audit trail and its three sources. No use case writes to it: the entries come from the
- * authorization hook, from the buses and from a subscription to every integration event, and
- * each one carries the correlation id, the actor and the tenant of the execution scope.
+ * The audit trail and its sources. No use case writes to it: the entries come from the
+ * authorization hook, from the buses, from a subscription to every integration event and from
+ * the key store of the data subjects, and each one carries the correlation id, the actor and the
+ * tenant of the execution scope.
  */
 export interface Audit {
   readonly trail: AuditTrail & AuditReader;
@@ -53,6 +55,8 @@ export interface Audit {
   readonly subscriptions: readonly EventSubscription[];
   /** The name those subscriptions listen under. */
   readonly consumer: string;
+  /** The keys of the data subjects: every erasure, whoever asks for it, leaves an entry with its date. */
+  readonly subjectKeys: SubjectKeyStore;
 }
 
 export function createAudit(persistence: Persistence, source: AuditSource): Audit {
@@ -78,6 +82,7 @@ export function createAudit(persistence: Persistence, source: AuditSource): Audi
       consumer,
     }),
     consumer,
+    subjectKeys: auditedSubjectKeys(persistence.eventSourcing.subjectKeys, trail, source),
   };
 }
 

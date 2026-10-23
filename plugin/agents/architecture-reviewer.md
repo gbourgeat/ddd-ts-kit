@@ -57,6 +57,9 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
    | weak tests | a mock; an assertion on a private field or a call; a failure path, a denial or an idempotent replay not covered; an `it.todo` left |
    | a hand-made registration | a token constant, a `*.ports.ts` file, a hand-edited barrel, an adapter instantiated outside the composition root, a handler calling `pullEvents()` or a dispatcher |
    | a deviation without a record | a suppression, a relaxed severity, a skipped test |
+   | a constructor with many dependencies | never count: walk the table of `docs/guides/many-dependencies.md` and name the remedy that applies, with its place (a bus middleware or a decorator, an event handler, a projection, a process manager, one port named in the language, a domain service, two use cases); a facade that names no concept of the glossary is not one |
+   | a module of the model that is not one | in a context with `contexts.<name>.modules`: a module named by technique (`shared`, `core`, `common`) or holding a second language (then it is a context); a module that would need its own glossary, schema or published language; a cycle between modules (`module/no-cycle`): say which concept is in the wrong module, or which one is missing |
+   | two contexts that need each other | the three questions of `docs/guides/cycle-between-contexts.md`, in order: one language (one context, in modules), one direction as an event, a missing concept |
 
 5. Verify before reporting: open the file and confirm each finding at its line. Drop what
    you cannot point to.

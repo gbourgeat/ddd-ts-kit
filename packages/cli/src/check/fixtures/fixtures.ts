@@ -28,6 +28,7 @@ import { OTHER_LANGUAGE_FIXTURES } from './other-language-fixtures.js';
 import { LAYER_FIXTURES } from './layer-fixtures.js';
 import { LAYOUT_FIXTURES } from './layout-fixtures.js';
 import { LIFECYCLE_FIXTURES } from './lifecycle-fixtures.js';
+import { MODULE_FIXTURES } from './module-fixtures.js';
 import { NAMED_REFUSAL_FIXTURES } from './named-refusal-fixtures.js';
 import { NAMING_FIXTURES } from './naming-fixtures.js';
 import { OUTBOX_FIXTURES } from './outbox-fixtures.js';
@@ -82,6 +83,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...LAYER_FIXTURES,
   ...LAYOUT_FIXTURES,
   ...LIFECYCLE_FIXTURES,
+  ...MODULE_FIXTURES,
   ...NAMING_FIXTURES,
   ...BUSINESS_NAME_FIXTURES,
   ...OUTBOX_FIXTURES,

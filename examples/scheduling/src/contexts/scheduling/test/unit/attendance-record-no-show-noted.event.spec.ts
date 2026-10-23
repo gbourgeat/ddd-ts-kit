@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AttendanceRecordNoShowNoted } from '@/contexts/scheduling/domain/events/attendance-record-no-show-noted.event';
+import { AttendanceRecordNoShowNoted } from '@/contexts/scheduling/domain/calendars/events/attendance-record-no-show-noted.event';
 
 describe('AttendanceRecordNoShowNoted', () => {
   it('is named after the context, the aggregate and the fact', () => {

@@ -79,6 +79,8 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | `/ddd-ts-kit:context-map` | upstream, downstream, pattern and contract of each pair | step 4, and when two contexts start depending on each other | `docs/architecture/context-map.md`, then the upstreams of the config | the bootstrap, or the slice that needs it |
 | `npx ddd-ts-kit generate context <name> --classification <c> --term ... --upstream ...` | declares a context with its language and relationships | after the bootstrap, one per row of `contexts.md`, upstreams first | the context directory, its `CONTEXT.md`, the config entry | `npx ddd-ts-kit docs` |
 | `npx ddd-ts-kit list`, `describe <context>` | what exists, per context or for one | before planning or changing a context | a map of the contexts, or one as facts (`--json`) | `/ddd-ts-kit:plan-slices` |
+| `npx ddd-ts-kit generate module <context> <module> --purpose "..." [--term ...]` | declares a [module of the model](../concepts/modules.md): the config entry, its row of `## Modules` in `CONTEXT.md`, its terms; re-runnable, it adds what is missing | when one context holds clusters of concepts of one language that a reader opens separately; never to hide a second language | the module, declared and documented | `move-to-module`, then `generate ... --module` |
+| `npx ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]` | moves files and folders of `domain/` and `application/` into a declared module, with every import of them in the project | one cluster per commit, until `module/complete` warns no more | the moved files and the rewritten imports | `npm run verify` |
 
 ## Build a slice
 
@@ -94,7 +96,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | `npx ddd-ts-kit generate acceptance <story>`, then `npx ddd-ts-kit acceptance <story> --lock` | the acceptance spec of a story, one `it.todo` per criterion of `docs/architecture/stories/<story>.md`, to write as scenarios wrapped in `pending(...)`; the lock records them, after which a scenario changes only with its criterion, and a criterion or a scenario whose criteria stayed only with a verdict of the `acceptance-judge` agent | before the first row of code of a story | `test/acceptance/<story>.acceptance.spec.ts` and its `.lock.json` | `npx ddd-ts-kit acceptance <story> --gate written`, then the rows |
 | `npx ddd-ts-kit acceptance [<story>] [--gate written\|passing]` | the scenarios of each story against its rows and criteria: left to write, pending, drifted from the lock, inconsistent, and the amendments to validate | before the code of a story (`written`), before closing it (`passing`) | a short text, `--json` for data; exits 1 while the gate is not met | write, lock, build, or report the amendments |
 | `/ddd-ts-kit:use-case <UseCase>` | one slice end to end, test first | for each row of the slices | domain, handler, route and specs, filled | `npm run verify` |
-| `npx ddd-ts-kit generate <kind> ...` | one file of a role with its spec, fake and registration (list below) | whenever a file of a role is needed, never by hand | the file and the `TODO(domain)` places, `--json` for the list | fill the places, then `todo` |
+| `npx ddd-ts-kit generate <kind> ...` | one file of a role with its spec, fake and registration (list below); `--module <module>` writes into a module of the model, and is required in a context that declares modules | whenever a file of a role is needed, never by hand | the file and the `TODO(domain)` places, `--json` for the list | fill the places, then `todo` |
 | `npx ddd-ts-kit todo [<context>]` | each `TODO(domain)`, `TODO(platform)`, `it.todo` and `TODO(review)` left | before closing a slice, a story or a milestone | `file:line` entries | write them, then `npm test`; settle each `TODO(review)` or dismiss it with `generate adr` before the story or milestone is closed |
 | `npx ddd-ts-kit story-check <code> [--strict]` | whether a story or a milestone (`M1` for the rows `M1.*`) can close: every row `done`, no marker of its own left, a marker being its own when its text, the commit that wrote it or the worker holding it names one of its rows, or when it belongs to no row in a context no other open story works in | before a story or a milestone is declared closed; `status` names one whose rows are done while markers keep it open | one line when it can close; else each blocker with why it is the story's, its `file:line` and its fix, then the unattributed markers it lists without blocking; exits 0, 1, or 2 on an unknown code | handle each blocker or dismiss it with `generate adr`, then delete the marker; name the row in an unattributed one (`TODO(review): #M1.03 ...`) |
 | `/ddd-ts-kit:parallel-work` | splits the slices between workers, one context each | when several agents or people build at once | a briefing per worker, `npx ddd-ts-kit worker-scope <context>` worktrees, with the documents of each row's design and the names they cite the trunk does not have | each worker's `use-case` |
@@ -188,7 +190,7 @@ The checker reports a violation with its rule id and a fix sentence. Here, a fil
 ```text
 $ npx ddd-ts-kit check-file src/contexts/notification/application/commands/probe.ts
 src/contexts/notification/application/commands/probe.ts:1  error  context/published-language-only
-  "notification" imports the internals of "scheduling" (src/contexts/scheduling/domain/aggregates/appointment.aggregate.ts).
+  "notification" imports the internals of "scheduling" (src/contexts/scheduling/domain/calendars/aggregates/appointment.aggregate.ts).
   fix: Import from src/contexts/scheduling/published-language only; if the type is missing there, publish it with `ddd-ts-kit generate integration-event scheduling <Aggregate> <Fact>` or react to an integration event.
 
 1 error, 0 warnings, 0 suppressions in 1 file.
@@ -246,7 +248,7 @@ Usage
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk]
                   [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
-  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
+  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--module <module>] [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
   ddd-ts-kit generate --help --json
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
@@ -278,6 +280,7 @@ Usage
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]
   ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]
+  ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
   ddd-ts-kit affected --base <git-ref> --run <script>
   ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--explain] [--self]
@@ -331,6 +334,11 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    the root of the platform or of auth/ stays where it is, named, unless --place
                    <file>=<folder> (both from the platform) gives it its folder; the generators and
                    init --force keep either layout until then
+  move-to-module   takes files of domain/ and application/ of a context into a module of its model, declared
+                   first with generate module: each <path> is a file or a folder of a role, relative to the
+                   context (domain/aggregates/waitlist.aggregate.ts, application/commands/join-waitlist);
+                   every import of them under the source root, test/ and scripts/ follows, and the
+                   generated declarations are rewritten; codes.ts and the permissions stay one per context
   controllers      moves the function routes of a project, or of one context, to controller classes: each
                    <name>.route.ts becomes <resource>/<name>/<name>.controller.ts behind the route group of
                    its resource, its schema files and its spec follow; a context is turned whole or not at all
@@ -536,9 +544,14 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   --sdk            init records "sdk" in the config and generates the clients with the project
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
                    "generate --help --json" says which kinds do
+  --module         generate writes the files of domain/ and application/ into that module of the model of the
+                   context (declared first with generate module), finds the files it reads in the module that
+                   holds them and writes the imports to where they are; required in a context that declares
+                   modules, the code list and the permission set staying one per context
 
 Kinds
   context <name> --classification <core|supporting|generic> [--purpose "<two sentences>"] [--term "<Term>=<meaning>"]... [--upstream <ctx>[:relationship]]... [--preset identity]
+  module <context> <module> [--purpose "<what it holds>"] [--classification <core|supporting|generic>] [--term "<Term>=<meaning>"]...
   aggregate <context> <Name> [--event-sourced] [--term "<Term>=<meaning>"]...
   builder <context> <Aggregate>
   test-world <context> [Name]

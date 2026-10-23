@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { OutsideAvailability } from '@/contexts/scheduling/domain/errors/outside-availability.error';
+import { OutsideAvailability } from '@/contexts/scheduling/domain/calendars/errors/outside-availability.error';
 
 const startsAt = new Date('2026-03-02T09:00:00.000Z');
 

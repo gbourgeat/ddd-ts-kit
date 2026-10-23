@@ -7,9 +7,9 @@ import {
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
 import { repositoryContract, tenantIsolationContract } from '@ddd-ts-kit/testing/contracts';
-import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
-import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
-import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
+import type { Appointment } from '@/contexts/scheduling/domain/calendars/aggregates/appointment.aggregate';
+import type { AppointmentRepository } from '@/contexts/scheduling/domain/calendars/repositories/appointment.repository';
+import { Cancellation } from '@/contexts/scheduling/domain/calendars/value-objects/cancellation.vo';
 import { KnexAppointmentRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment.repository';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';

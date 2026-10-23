@@ -66,6 +66,8 @@ export interface KindFlags {
   readonly cache?: string;
   /** An aggregate keeps its state as the stream of its events. */
   readonly eventSourced: boolean;
+  /** The module of the model of the context the files of domain/ and application/ are written in. */
+  readonly module?: string;
 }
 
 export interface KindRequest {

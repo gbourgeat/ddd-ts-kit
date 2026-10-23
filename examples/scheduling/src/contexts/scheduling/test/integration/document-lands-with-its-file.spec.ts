@@ -21,8 +21,8 @@ import {
   type BusMiddleware,
 } from '@ddd-ts-kit/kernel';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { AttachAppointmentDocumentCommand } from '@/contexts/scheduling/application/commands/attach-appointment-document/attach-appointment-document.command';
-import { AttachAppointmentDocumentHandler } from '@/contexts/scheduling/application/commands/attach-appointment-document/attach-appointment-document.handler';
+import { AttachAppointmentDocumentCommand } from '@/contexts/scheduling/application/calendars/commands/attach-appointment-document/attach-appointment-document.command';
+import { AttachAppointmentDocumentHandler } from '@/contexts/scheduling/application/calendars/commands/attach-appointment-document/attach-appointment-document.handler';
 import { KnexAppointmentRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment.repository';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';

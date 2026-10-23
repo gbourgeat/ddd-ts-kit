@@ -529,6 +529,8 @@ ADR that says when it goes, as any other relaxed rule (`governance/recorded-devi
 | `contexts.<name>.upstreams[].relationship` | `published-language`, `customer-supplier`, `conformist`, `anti-corruption-layer`, `open-host-service`, `shared-kernel` | `published-language` |
 | `contexts.<name>.extraDirectories[]` | a path inside the context, or `{ "path", "reason" }`: a directory added to the canonical tree. Each one is a deviation | `[]` |
 | `contexts.<name>.deployable` | `true`, `false`: the context has its own entry point `src/apps/<name>/main.ts`; `generate service <name>` sets it | `false` |
+| `contexts.<name>.modules` | `{ "<module>": {} }`: the modules of the model of the context, each one folder directly under `domain/` and `application/` ([Modules of the model](concepts/modules.md)). A name is in kebab-case, unique in the context, and never the name of a role folder (`aggregates`, `commands`...); `generate module <context> <module>` writes it | none |
+| `contexts.<name>.modules.<module>.classification` | `core`, `supporting`, `generic`: the subdomain the module holds, when it differs from the classification of its context | the classification of the context |
 
 The contexts of the config and the directories of `contextsDir` must be the same set.
 

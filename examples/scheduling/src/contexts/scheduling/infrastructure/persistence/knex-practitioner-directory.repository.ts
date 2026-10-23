@@ -5,7 +5,7 @@ import {
   PractitionerDirectory,
   practitionerCriteria,
   type PractitionerEntry,
-} from '@/contexts/scheduling/application/ports/practitioner-directory.port';
+} from '@/contexts/scheduling/application/calendars/ports/practitioner-directory.port';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
 
 @Repository(PractitionerDirectory)

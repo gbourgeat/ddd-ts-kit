@@ -8,7 +8,7 @@ import {
 } from '@/contexts/scheduling/published-language/appointment-export.contract';
 import type { AppointmentRow } from '@/contexts/scheduling/infrastructure/persistence/appointment-row.schema';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
-import { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
+import { AppointmentStatus } from '@/contexts/scheduling/domain/calendars/vocabularies/appointment-status.vocabulary';
 
 /** The appointments of one page of the export. */
 const PAGE_SIZE = 100;

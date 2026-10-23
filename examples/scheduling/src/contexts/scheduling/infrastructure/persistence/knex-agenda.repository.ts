@@ -1,7 +1,11 @@
 import type { ExecutionScope } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext, KnexReadModelStore } from '@ddd-ts-kit/knex';
-import { Agenda, agendaCriteria, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
+import {
+  Agenda,
+  agendaCriteria,
+  type AgendaEntry,
+} from '@/contexts/scheduling/application/calendars/ports/agenda.port';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
 
 @Repository(Agenda)

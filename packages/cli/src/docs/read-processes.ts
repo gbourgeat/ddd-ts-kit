@@ -1,18 +1,18 @@
 import { toName } from '../naming/index.js';
 import type { Workspace } from '../workspace/index.js';
 import type { ProcessFacts } from './process-facts.js';
+import { type ContextTree, roleFilesOf } from '../model-modules/index.js';
 
 const FOLDER = 'application/processes';
 const SUFFIX = '.process.ts';
 
 /** The process managers of a context: one per `application/processes/*.process.ts`, named by its static `processName`. */
-export function readProcesses(ws: Workspace, directory: string): ProcessFacts[] {
-  return ws
-    .list(`${directory}/${FOLDER}`)
-    .filter((file) => file.endsWith(SUFFIX))
+export function readProcesses(ws: Workspace, tree: ContextTree): ProcessFacts[] {
+  return roleFilesOf(ws, tree, FOLDER)
+    .filter((file) => file.name.endsWith(SUFFIX))
     .map((file) => {
-      const className = `${toName(file.slice(0, -SUFFIX.length)).pascal}Process`;
-      const source = ws.read(`${directory}/${FOLDER}/${file}`) ?? '';
+      const className = `${toName(file.name.slice(0, -SUFFIX.length)).pascal}Process`;
+      const source = ws.read(file.path) ?? '';
 
       return {
         name: staticText(source, 'processName') ?? className,

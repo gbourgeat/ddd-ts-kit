@@ -5,6 +5,7 @@ import { parseGlossary, type Glossary } from './parse-glossary.js';
 /** The glossary of each context, read once, and the contexts already reported as having none. */
 export class Glossaries {
   private readonly read = new Map<string, Glossary>();
+  private readonly texts = new Map<string, string>();
   private readonly reportedEmpty = new Set<string>();
 
   constructor(
@@ -23,11 +24,26 @@ export class Glossaries {
       return known;
     }
 
-    const glossary = parseGlossary(this.text(context));
+    const glossary = parseGlossary(this.textOf(context));
 
     this.read.set(context, glossary);
 
     return glossary;
+  }
+
+  /** The CONTEXT.md of a context as it is written, read once; empty when it is missing. */
+  textOf(context: string): string {
+    const known = this.texts.get(context);
+
+    if (known !== undefined) {
+      return known;
+    }
+
+    const text = this.readDoc(context);
+
+    this.texts.set(context, text);
+
+    return text;
   }
 
   /** True the first time only: an empty glossary is one finding, not one per class. */
@@ -41,7 +57,7 @@ export class Glossaries {
     return true;
   }
 
-  private text(context: string): string {
+  private readDoc(context: string): string {
     try {
       return fs.readFileSync(path.join(this.root, this.docOf(context)), 'utf8');
     } catch {

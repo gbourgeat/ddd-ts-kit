@@ -1,8 +1,7 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
+import { type ImportTarget, resolveImport } from '../project/resolve-import.js';
 import { isRefusalClass } from '../support/errors/is-refusal-class.js';
 import { defineRule } from '../support/rule/define-rule.js';
-
-const ERRORS_DIRECTORY = /(^|\/)domain\/errors\//;
 
 export const errorsThroughFactory = defineRule<'constructed' | 'constructedRefusal'>({
   id: 'errors/through-factory',
@@ -30,7 +29,7 @@ export const errorsThroughFactory = defineRule<'constructed' | 'constructedRefus
 
     return {
       ImportDeclaration(node) {
-        if (ERRORS_DIRECTORY.test(node.source.value)) {
+        if (isErrorsFolder(resolveImport(file.config, file.path, node.source.value))) {
           importedNames(node).forEach((name) => errors.add(name));
         }
       },
@@ -51,6 +50,16 @@ export const errorsThroughFactory = defineRule<'constructed' | 'constructedRefus
     };
   },
 });
+
+/** The `domain/errors/` of a context, at its level or in a module of its model: where the error classes live. */
+function isErrorsFolder(target: ImportTarget): boolean {
+  return (
+    target.kind === 'file' &&
+    target.location.area === 'context' &&
+    target.location.layer === 'domain' &&
+    target.location.inside[0] === 'errors'
+  );
+}
 
 function builds(node: TSESTree.NewExpression, errors: ReadonlySet<string>): boolean {
   return errors.has(calleeName(node));

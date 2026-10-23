@@ -7,9 +7,9 @@ import {
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
 import { repositoryContract, tenantIsolationContract } from '@ddd-ts-kit/testing/contracts';
-import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
-import { Exception } from '@/contexts/scheduling/domain/value-objects/exception.vo';
-import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
+import type { Calendar } from '@/contexts/scheduling/domain/calendars/aggregates/calendar.aggregate';
+import { Exception } from '@/contexts/scheduling/domain/calendars/value-objects/exception.vo';
+import { Range } from '@/contexts/scheduling/domain/calendars/value-objects/range.vo';
 import { KnexCalendarRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-calendar.repository';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';

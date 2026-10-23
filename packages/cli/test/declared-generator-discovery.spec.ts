@@ -82,4 +82,10 @@ describe('discovery in place of the barrel', () => {
       "await discoverContext('billing', new URL('../../contexts/billing/', import.meta.url)),",
     );
   });
+
+  it('names the modules of the model in the dependencies file, where discovery reads them', () => {
+    expect(cli(discovered, 'generate', 'module', 'billing', 'invoices', '--purpose', 'The invoices.').code).toBe(0);
+
+    expect(read(discovered, `${BILLING}/billing.dependencies.ts`)).toContain("export const modules = ['invoices'];");
+  });
 });

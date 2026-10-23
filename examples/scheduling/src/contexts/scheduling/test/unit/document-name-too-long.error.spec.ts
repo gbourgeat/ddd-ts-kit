@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { DocumentNameTooLong } from '@/contexts/scheduling/domain/errors/document-name-too-long.error';
+import { DocumentNameTooLong } from '@/contexts/scheduling/domain/calendars/errors/document-name-too-long.error';
 
 describe('DocumentNameTooLong', () => {
   it('refuses the name of a document longer than allowed, and says how long it may be', () => {

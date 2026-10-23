@@ -24,7 +24,8 @@ const LOCKFILES = new Set([
  * (a merge takes either side and regenerates them), the migrations (checked by description), the
  * lockfiles and the slices file (checked by rows).
  */
-export function isLineChecked(file: string, { prefix, contextsDir }: MergeRepository): boolean {
+export function isLineChecked(file: string, repo: MergeRepository): boolean {
+  const { prefix } = repo;
   const inProject = file.startsWith(prefix) ? file.slice(prefix.length) : undefined;
   const name = file.split('/').at(-1) ?? file;
 
@@ -32,6 +33,6 @@ export function isLineChecked(file: string, { prefix, contextsDir }: MergeReposi
     /(?:^|\/)\.ddd-ts-kit\//.test(file) ||
     /(?:^|\/)migrations\//.test(file) ||
     LOCKFILES.has(name) ||
-    (inProject !== undefined && (inProject === SLICES_FILE || isDerived(inProject, { contextsDir })))
+    (inProject !== undefined && (inProject === SLICES_FILE || isDerived(inProject, repo)))
   );
 }

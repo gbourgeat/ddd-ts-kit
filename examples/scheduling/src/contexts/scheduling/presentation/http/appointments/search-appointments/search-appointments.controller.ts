@@ -8,8 +8,8 @@ import {
 } from '@ddd-ts-kit/http';
 import type { QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { agendaCriteria } from '@/contexts/scheduling/application/ports/agenda.port';
-import { SearchAppointmentsQuery } from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.query';
+import { agendaCriteria } from '@/contexts/scheduling/application/calendars/ports/agenda.port';
+import { SearchAppointmentsQuery } from '@/contexts/scheduling/application/calendars/queries/search-appointments/search-appointments.query';
 import { AgendaLine } from '@/contexts/scheduling/presentation/http/shared/agenda-line.schema';
 import type { Infer } from '@ddd-ts-kit/validation';
 import type { AgendaEntrySerializer } from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';

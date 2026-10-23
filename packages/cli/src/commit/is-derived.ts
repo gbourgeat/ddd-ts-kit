@@ -1,6 +1,7 @@
 import type { Config } from '../config/index.js';
 import { dependenciesFile, isDeclarationsFile } from '../declared/index.js';
 import { DEPCRUISE_FILE } from '../depcruise/depcruise-file.js';
+import { declaredModules } from '../model-modules/index.js';
 import { CONTEXT_MAP } from '../docs/context-map-file.js';
 import { openApiDocumentsFile } from '../docs/open-api-documents-file.js';
 import { WORKER_SCOPE_FILE } from './worker-scope-file.js';
@@ -26,5 +27,8 @@ export function isDerived(config: Config, file: string): boolean {
     return false;
   }
 
-  return isDeclarationsFile(context, inside.join('/')) || inside.join('/') === dependenciesFile(context);
+  return (
+    isDeclarationsFile(context, inside.join('/'), declaredModules(config, context)) ||
+    inside.join('/') === dependenciesFile(context)
+  );
 }

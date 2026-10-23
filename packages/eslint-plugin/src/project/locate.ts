@@ -44,8 +44,36 @@ function locateInContexts(config: Config, file: string): Location {
   }
 
   const layer = LAYERS.find((candidate) => candidate === first) ?? 'root';
+  const inModule = moduleLocation(config, { context, layer, rest });
+
+  if (inModule !== undefined) {
+    return inModule;
+  }
 
   return { area: 'context', context, layer, inside: layer === 'root' ? [first, ...rest] : rest };
+}
+
+interface Placed {
+  readonly context: string;
+  readonly layer: Layer;
+  /** The path below the layer. */
+  readonly rest: readonly string[];
+}
+
+/**
+ * A module of the model is one folder level under domain/ and application/: left out, the rest of
+ * the path is what it would be without modules, so every role keeps its place.
+ */
+function moduleLocation(config: Config, { context, layer, rest }: Placed): Location | undefined {
+  const [module, ...below] = rest;
+
+  if (!(layer === 'domain' || layer === 'application') || module === undefined || below.length === 0) {
+    return undefined;
+  }
+
+  return config.contexts[context]?.modules.includes(module) === true
+    ? { area: 'context', context, layer, inside: below, module }
+    : undefined;
 }
 
 /** A directory import (`../billing/published-language`) names the layer without a file. */

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { ClearCalendarCommand } from '@/contexts/scheduling/application/commands/clear-calendar/clear-calendar.command';
-import { UnknownCalendar } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
+import { ClearCalendarCommand } from '@/contexts/scheduling/application/calendars/commands/clear-calendar/clear-calendar.command';
+import { UnknownCalendar } from '@/contexts/scheduling/domain/calendars/errors/unknown-calendar.error';
 import { ClearCalendarController } from '@/contexts/scheduling/presentation/http/calendars/clear-calendar/clear-calendar.controller';
 
 const valid = {

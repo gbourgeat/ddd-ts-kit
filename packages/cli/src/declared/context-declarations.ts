@@ -12,6 +12,8 @@ export interface DeclaredContext {
   /** Its files, relative to it. */
   readonly entries: readonly string[];
   readonly sources: Sources;
+  /** The modules of the model it declares, in which its role files may sit. */
+  readonly modules: readonly string[];
   /** How a generated import names a file given from the project root. */
   readonly specifierOf: (file: string) => string;
 }
@@ -31,6 +33,7 @@ export function contextDeclarations({
   directory,
   entries,
   sources,
+  modules,
   specifierOf,
 }: DeclaredContext): ContextDeclarations {
   const injections: ClassInjection[] = [];
@@ -38,9 +41,10 @@ export function contextDeclarations({
   const files = renderDeclarations({
     context,
     files: entries,
+    modules,
     specifierOf: (entry) => specifierOf(`${directory}/${entry}`),
     injectedIn: (roleFiles) => {
-      const read = contextInjections(sources, directory, roleFiles);
+      const read = contextInjections(sources, { directory, entries: roleFiles, modules });
 
       injections.push(...read);
 

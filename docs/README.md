@@ -38,6 +38,7 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 |---|---|
 | [Domain and subdomains](concepts/domain-and-subdomains.md) | core, supporting, generic: how to classify and what it changes |
 | [Bounded context](concepts/bounded-context.md) | what a boundary is, and the language, autonomy and consistency tests |
+| [Modules of the model](concepts/modules.md) | a context too large to read, divided into parts of one model (Evans), not into sub-contexts: the gains, the limits, how to adopt them |
 | [Ubiquitous language](concepts/ubiquitous-language.md) | the glossary-first rule and how a glossary is written |
 | [Context map](concepts/context-map.md) | the relationship patterns, when each fits and what it costs |
 | [Context map: a worked example](concepts/context-map-worked-example.md) | the scheduling application, from a statement of needs to its map |
@@ -114,6 +115,8 @@ limits, and a recommendation by situation.
 | [Story workflow](guides/story-workflow.md) | one session per user story, one story per terminal: questions first, design review and acceptance tests before the code, a report of every provisional decision |
 | [Closing the loop](guides/closing-the-loop.md) | from a metric out of its band to the next story: the queries on the metrics the kit emits, a `bands.yaml` with three tiers, what a stateless run needs, the incident record a fix story starts from, what arrives from a chat channel |
 | [Commit discipline](guides/commit-discipline.md) | commit and pull request size, generated files, what hooks and CI enforce |
+| [A handler with many dependencies](guides/many-dependencies.md) | constructor over-injection read as a smell: an order of diagnosis, each remedy with its place in the tree, no limit |
+| [A cycle between two contexts](guides/cycle-between-contexts.md) | three questions before merging: one language or two, an event for one direction, a missing concept |
 | [When to extract microservices](guides/when-to-extract-microservices.md) | the signals, the costs, a readiness checklist, the steps, when to merge back |
 | [Bootstrap with well-designed contexts](guides/bootstrap-with-well-designed-contexts.md) | a generic context written whole with `--preset identity`: what it writes, what it asks of the stack, how it composes with each access model and with tenants |
 | [Choosing access control](guides/choosing-access-control.md) | five questions that pick roles, attributes or relationships (Zanzibar), worked presets for each, the combined model of the example, scopes and refusals at the edge |
@@ -126,6 +129,7 @@ limits, and a recommendation by situation.
 | Page | Status |
 |---|---|
 | [Which contexts deserve a preset](proposals/context-presets.md) | the criteria, then notification next, personal data requests as a guide; files (a capability of the platform), audit, billing and settings no |
+| [Modules inside a bounded context](proposals/modules.md) | built: sub-contexts are not a concept of the references, modules of the model are (Evans); the judgement of its gains and limits, and the spike that measured the cost on the example |
 | [The read side](proposals/read-side.md) | criteria, representations, forms, read models and projections; the page says, part by part, what is built in the runtime packages, what the CLI does not generate yet and what is not built |
 
 ## Start from a question
