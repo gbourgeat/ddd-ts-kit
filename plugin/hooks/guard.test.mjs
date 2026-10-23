@@ -221,9 +221,10 @@ test('with formatOnWrite, the Biome of the project lays a written file out befor
   assert.equal(calls().length, 1);
 });
 
-test('without formatOnWrite, without the Biome of the project, or with a Biome that fails, the write is only checked', () => {
+test('with formatOnWrite off, without the Biome of the project, or with a Biome that fails, the write is only checked', () => {
   const note = 'src/platform/pricing/pricing-note.ts';
-  const silent = project();
+  // A new project has the key on: init writes it; a project turns it off, and the key is read as true only.
+  const silent = project({ formatOnWrite: false });
   const unasked = fakeBiome(silent);
   const file = join(silent, note);
   put(silent, note, 'const a=1\nexport const pricingNote = a;\n');
