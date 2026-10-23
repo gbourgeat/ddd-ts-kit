@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defineSchema } from '@ddd-ts-kit/auth/rebac';
-import {
-  OpenFgaModelError,
-  authorizationModelOf,
-  ensureAuthorizationModel,
-  modelDrift,
-  relationNameOf,
-} from '../src';
+import { OpenFgaModelError, authorizationModelOf, ensureAuthorizationModel, modelDrift, relationNameOf } from '../src';
 import { schema } from './support/documents';
 import { InMemoryOpenFga } from './support/in-memory-open-fga';
 

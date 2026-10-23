@@ -1,11 +1,6 @@
 import type { Schema } from '@ddd-ts-kit/auth/rebac';
 import { OpenFgaModelError } from './open-fga-model-error';
-import type {
-  OpenFgaModel,
-  OpenFgaRelationReference,
-  OpenFgaTypeDefinition,
-  OpenFgaUserset,
-} from './open-fga-model';
+import type { OpenFgaModel, OpenFgaRelationReference, OpenFgaTypeDefinition, OpenFgaUserset } from './open-fga-model';
 import { relationNameOf } from './relation-name-of';
 import { usersetOf } from './userset-of';
 
