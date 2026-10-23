@@ -29,7 +29,6 @@ export const PLATFORM_LAYOUT = [
       'auth/create-tuple-store.ts': 'auth/relationships/create-tuple-store.ts',
       'auth/create-tuple-store.contract.spec.ts': 'auth/relationships/create-tuple-store.contract.spec.ts',
       'auth/relate-system-actors.ts': 'auth/relationships/relate-system-actors.ts',
-      'auth/permission-mapping.ts': 'auth/relationships/permission-mapping.ts',
       'auth/custom-authorizer.ts': 'auth/custom/custom-authorizer.ts',
       'auth/custom-authorizer.contract.spec.ts': 'auth/custom/custom-authorizer.contract.spec.ts',
     },

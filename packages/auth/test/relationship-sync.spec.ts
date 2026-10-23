@@ -11,7 +11,6 @@ import { DocumentGrants } from './fixtures/docs/application/ports/document-grant
 import { GetDocument } from './fixtures/docs/application/queries/get-document/get-document.query.js';
 import { docsModule } from './fixtures/docs/docs.module.js';
 import { DocumentRepository } from './fixtures/docs/domain/repositories/document.repository.js';
-import { mapping } from './fixtures/docs/infrastructure/external/docs.mapping.js';
 import { schema } from './fixtures/docs/infrastructure/external/docs.schema.js';
 import { TupleDocumentGrants } from './fixtures/docs/infrastructure/external/tuple-document-grants.js';
 import { StagedDocumentRepository } from './fixtures/docs/infrastructure/persistence/staged-document.repository.js';
@@ -32,10 +31,7 @@ async function workspace() {
   const documents = new StagedDocumentRepository(unitOfWork);
 
   const app = createTestApplication({
-    modules: [
-      docsModule,
-      authorizationModule({ authorizer: new RelationBasedAuthorizer({ schema, store: tuples, mapping }) }),
-    ],
+    modules: [docsModule, authorizationModule({ authorizer: new RelationBasedAuthorizer({ schema, store: tuples }) })],
     fakes: [
       fake(UnitOfWork, unitOfWork),
       fake(DocumentRepository, documents),

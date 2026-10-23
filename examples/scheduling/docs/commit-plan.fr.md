@@ -1,5 +1,5 @@
 [English](commit-plan.md) · **Français**
-<!-- translation-of: commit-plan.md sha256:baade241a9e428c3 -->
+<!-- translation-of: commit-plan.md sha256:e21c7ac10e293110 -->
 
 # Plan des *commits*
 
@@ -188,14 +188,12 @@ examples/scheduling/src/platform/auth/relationships/knex-relation-tuple-store.co
 examples/scheduling/src/platform/auth/relationships/knex-relation-tuple-store.spec.ts
 examples/scheduling/src/platform/auth/relationships/knex-relation-tuple-store.ts
 examples/scheduling/src/platform/auth/authentication/offline-authenticator.ts
-examples/scheduling/src/platform/auth/relationships/permission-mapping.ts
 examples/scheduling/src/platform/auth/authorization/permissions.ts
 examples/scheduling/src/platform/auth/authentication/principal-of.ts
 examples/scheduling/src/platform/auth/relationships/relate-system-actors.ts
 examples/scheduling/src/platform/auth/relationships/relation-tuples-table.ts
 examples/scheduling/src/platform/auth/relationships/relationship-schema.ts
 examples/scheduling/src/platform/auth/relationships/resource-of.ts
-examples/scheduling/src/platform/auth/relationships/resource-permissions.ts
 examples/scheduling/src/platform/auth/authorization/role-grant.ts
 examples/scheduling/src/platform/auth/authorization/role-grants.ts
 examples/scheduling/src/platform/auth/authorization/roles-and-relationships.authorizer.spec.ts

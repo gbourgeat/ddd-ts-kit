@@ -603,8 +603,8 @@ The three authorizers implement the same `Authorizer` port and pass the same con
 
 **What changes when you switch.** The adapter given to `authorizationModule`, and the data it
 needs. From RBAC to ReBAC: add `resource:` to the `requires` of the use cases that did not name
-one (a relationship is always to something), map each permission to a schema permission, and
-start writing tuples. A search across many elements names an enclosing resource, the context
+one (a relationship is always to something), name each permission in the `derived` of the type
+of its element, and start writing tuples. A search across many elements names an enclosing resource, the context
 (`{ type: 'context', id: 'docs' }`, what the generator writes) or the tenant of the actor, and
 `Access.scope` on the type of the elements narrows what it reads. Permissions, commands, queries, handlers, policies, routes and tests of
 handlers do not change. Models can also be layered: `Access` asks the instance policies and
@@ -718,17 +718,15 @@ attributes, context, now }`.
 
 ### Relationships
 
+The schema says three things, in one place: who is what to which element (the stored relations),
+who counts as what (the derived relations), and which permission each one grants. A derived
+relation named after a permission id grants that permission on its type; there is no mapping to
+keep next to the schema.
+
 <!-- checked sample -->
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import {
-  InMemoryRelationTupleStore,
-  RelationBasedAuthorizer,
-  defineSchema,
-  exclusion,
-  from,
-  union,
-} from '@ddd-ts-kit/auth/rebac';
+import { InMemoryRelationTupleStore, RelationBasedAuthorizer, defineSchema, via } from '@ddd-ts-kit/auth/rebac';
 
 export const docsPermissions = definePermissions('docs', {
   'document.edit': { description: 'Change a document' },
@@ -736,46 +734,50 @@ export const docsPermissions = definePermissions('docs', {
   'folder.view': { description: 'Read a folder' },
 });
 
+const viewFolder = docsPermissions['folder.view'].id;
+const editDocument = docsPermissions['document.edit'].id;
+
 const schema = defineSchema({
   user: {},
   group: { relations: { member: ['user', 'group#member'] } },
   folder: {
     relations: { owner: ['user'], viewer: ['user', 'group#member'], parent: ['folder'] },
-    permissions: {
-      edit: union('owner', from('parent', 'edit')),
-      view: union('edit', 'viewer', from('parent', 'view')),
+    derived: {
+      edit: { anyOf: ['owner', via('parent', 'edit')] },
+      [viewFolder]: { anyOf: ['edit', 'viewer', via('parent', viewFolder)] },
     },
   },
   document: {
     relations: { owner: ['user'], editor: ['user', 'group#member'], banned: ['user'], parent: ['folder'] },
-    permissions: {
-      edit: exclusion(union('owner', 'editor', from('parent', 'edit')), 'banned'),
-      view: union('edit', from('parent', 'view')),
+    derived: {
+      [editDocument]: { anyOf: ['owner', 'editor', via('parent', 'edit')], butNot: ['banned'] },
+      [docsPermissions['document.view'].id]: { anyOf: [editDocument, via('parent', viewFolder)] },
     },
   },
 });
 
 export const tupleStore = new InMemoryRelationTupleStore(); // a SQL store in production
 
-export const authorizer = new RelationBasedAuthorizer({
-  schema,
-  store: tupleStore,
-  mapping: {
-    document: { [docsPermissions['document.edit'].id]: 'edit', [docsPermissions['document.view'].id]: 'view' },
-    folder: { [docsPermissions['folder.view'].id]: 'view' },
-  },
-});
+export const authorizer = new RelationBasedAuthorizer({ schema, store: tupleStore });
 ```
 
-| Zanzibar concept | Here |
+Each line reads as a sentence. A stored relation names what may stand at its other end: a type
+(`'user'`, `'folder'`), or `'group#member'`, a group standing for its members. A derived relation
+is held in one way (`edit: 'owner'`, `run: via('desk', 'run')`) or in several: one of `anyOf`,
+every one of `allOf`, none of `butNot`. A name is a relation or a derived relation of the same
+element; `via('parent', 'edit')` is whoever holds `edit` on the elements the relation `parent`
+leads to. These are the words of the modelling language of OpenFGA, `or`, `and`, `but not` and
+`from`, without nesting: an inner set gets a name of its own, as `edit` of a folder does.
+
+| Zanzibar and OpenFGA | Here |
 |---|---|
 | relation tuple `object#relation@subject` | `{ object: 'document:1', relation: 'editor', subject: 'user:ada' }` |
-| userset as a subject | `subject: 'group:eng#member'`, declared as `'group#member'` in the relation |
-| computed userset | a name in a rewrite: `union('owner', 'editor')`, `view: union('edit', ...)` |
-| tuple to userset | `from('parent', 'edit')`: whoever may edit the parent |
-| union, intersection, exclusion | `union(...)`, `intersection(...)`, `exclusion(base, subtract)` |
+| userset as a subject, `group:eng#member` | `subject: 'group:eng'`: the tuple names the group; the relation that accepts `'group#member'` says what it stands for |
+| computed userset | a name: `edit: 'owner'`, `anyOf: ['edit', 'viewer']` |
+| tuple to userset, `edit from parent` | `via('parent', 'edit')` |
+| union, intersection, exclusion | `anyOf`, `allOf`, `butNot` |
 | Check | `authorizer.check({ actor, permission, resource })` |
-| Expand | `authorizer.expand({ actor, permission, resource })` |
+| Expand | `authorizer.explain({ actor, permission, resource })`: the decision and a trace in words |
 | reverse lookup | `authorizer.listAccessible({ actor, permission, resourceType })` |
 
 Three stored facts are enough to see a derived right. Ada is a member of the group finance, the
@@ -796,7 +798,7 @@ const ada: Actor = { id: 'ada', type: 'user', roles: [], attributes: {} };
 
 await tupleStore.write([
   { object: 'group:finance', relation: 'member', subject: 'user:ada' },
-  { object: 'folder:reports', relation: 'viewer', subject: 'group:finance#member' },
+  { object: 'folder:reports', relation: 'viewer', subject: 'group:finance' },
   { object: 'document:q3', relation: 'parent', subject: 'folder:reports' },
 ]);
 
@@ -814,28 +816,58 @@ No tuple says "ada may view q3": the right is derived, so moving q3 to another f
 removing ada from finance changes it at once, with one tuple written or deleted.
 
 `defineSchema` validates when the schema is defined: an unknown type, a userset of a relation
-that does not exist, a rewrite naming something undeclared, a `from` over something that is not
-a relation to objects or towards a type lacking the permission, one name used for a relation
-and a permission, an empty union or intersection, and a rewrite that reads no tuple and could
-never terminate (`edit: 'view'`, `view: 'edit'`). A loop that goes through tuples (folders in
-folders, groups in groups) is legitimate: it is cut at run time by cycle protection and by
-`maxDepth` (default 16). When the depth limit cuts an evaluation the answer is `DEPTH_EXCEEDED`,
-never a guess.
+that does not exist, a relation accepting one type both as itself and as a userset (a tuple
+naming a group could not say which), a way naming something undeclared, a `via` over something
+that is not a relation to elements or towards a type lacking the name, one name used for a
+relation and a derived relation, a derived relation with no way of being held, and one that
+reads no tuple and could never terminate (`edit: 'view'`, `view: 'edit'`). A loop that goes
+through tuples (folders in folders, groups in groups) is legitimate: it is cut at run time by
+cycle protection and by `maxDepth` (default 16). When the depth limit cuts an evaluation the
+answer is `DEPTH_EXCEEDED`, never a guess.
 
 An actor is the subject `<type>:<id>` (`user:ada`, `service:billing-worker`); `subjectOf`
 changes that. `SchemaCheckedTupleStore` wraps a store and refuses, on write, a tuple the schema
-does not describe.
+does not describe: an unknown relation, a subject of a type the relation does not accept, a
+subject written with a userset (`group:eng#member`) where the element alone is expected.
 
-`expand` answers "why is this allowed" for debugging: the whole evaluation tree, every branch
-visited, each node saying which object and relation were evaluated, how (`relation`, `direct`,
-`userset`, `computed`, `union`, `intersection`, `exclusion`, `from`, `cycle`, `depth-limit`),
-with which tuple and with what answer.
+`explain` answers "why is this allowed, or not" for debugging: the decision, and one line per
+question asked on the way, in words. `traceText` lays the lines out; `x` marks what did not hold
+and `!` what a cycle or the depth limit cut. Why ada may not edit q3:
+
+```text
+  document:q3 docs:document.edit = any of: owner, editor, edit via parent; but not: banned
+x   nobody is owner of document:q3
+x   nobody is editor of document:q3
+    folder:reports edit (parent of document:q3) = any of: owner, edit via parent
+x     nobody is owner of folder:reports
+x     folder:reports has no parent
+```
+
+And why she may view it. A check stops at the first way that holds; an explanation visits every
+way, so that each reason is seen:
+
+```text
+  document:q3 docs:document.view = any of: docs:document.edit, docs:folder.view via parent
+    document:q3 docs:document.edit = any of: owner, editor, edit via parent; but not: banned
+x     nobody is owner of document:q3
+x     nobody is editor of document:q3
+      folder:reports edit (parent of document:q3) = any of: owner, edit via parent
+x       nobody is owner of folder:reports
+x       folder:reports has no parent
+    folder:reports docs:folder.view (parent of document:q3) = any of: edit, viewer, docs:folder.view via parent
+      folder:reports edit = any of: owner, edit via parent
+x       nobody is owner of folder:reports
+x       folder:reports has no parent
+      the members of group:finance are viewer of folder:reports
+        user:ada is member of group:finance: the actor
+x     folder:reports has no parent
+```
 
 **The cost of listing, honestly.** `listAccessible` returns `{ kind: 'ids' }` by reverse
 expansion: starting from the actor it reads the tuples of every subject it can reach (the
-actor, its groups, the objects those lead to, and their usersets), which costs one store read
-per reached subject, then runs one check per object of the requested type it met. That is fine
-for an actor reaching up to a few thousand tuples. It is not a search index: beyond `listLimit`
+actor, its groups, the elements those lead to), which costs one store read per reached
+subject, then runs one check per element of the requested type it met. That is fine for an
+actor reaching up to a few thousand tuples. It is not a search index: beyond `listLimit`
 reached subjects (default 10000) it throws `ReverseExpansionLimitError` rather than return a
 partial list. An application with large shared hierarchies should delegate listing to a
 dedicated service, or keep a projection of accessible ids.
@@ -850,7 +882,7 @@ dedicated service, or keep a projection of accessible ids.
   no parallel fan-out: the evaluation is sequential, in process, bounded by `maxDepth`.
 - No public wildcard subject (`user:*`), no namespace versioning or schema migration tooling,
   no watch API or changelog.
-- `expand` is the trace of one check for one actor, not the userset tree of Zanzibar's Expand.
+- `explain` is the trace of one check for one actor, not the userset tree of Zanzibar's Expand.
 
 **Delegating to a dedicated service.** OpenFGA and SpiceDB implement the full model.
 [`@ddd-ts-kit/openfga`](../openfga/README.md) answers the `RelationTupleStore` and `Authorizer`

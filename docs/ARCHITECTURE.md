@@ -1179,7 +1179,7 @@ a generated architecture test boots every context alone to prove it stays true.
 
 The authorization model is the project's choice, behind the one port: roles (RBAC), policies
 over attributes (ABAC), or relationships in the manner of Google Zanzibar (ReBAC: tuples
-`object#relation@subject`, permissions derived by rewriting, check and list operations), in
+`object#relation@subject`, permissions as relations derived from them, check and list operations), in
 process or delegated to a dedicated service. Changing model changes an adapter and the
 permission definitions, not the handlers.
 

@@ -13,8 +13,9 @@ export abstract class RelationTupleStore {
   /** Deleting a tuple that does not exist changes nothing. */
   abstract delete(tuples: readonly RelationTuple[]): Promise<void>;
 
+  /** Who is `relation` of `object`. */
   abstract readByObject(object: string, relation: string): Promise<readonly RelationTuple[]>;
 
-  /** Exact match on the subject, a userset included: the reverse lookup. */
+  /** Everything `subject` is something of, whatever the relation: the reverse lookup of a listing. */
   abstract readBySubject(subject: string): Promise<readonly RelationTuple[]>;
 }

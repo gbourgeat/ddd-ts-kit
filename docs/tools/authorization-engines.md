@@ -92,15 +92,16 @@ From [`@ddd-ts-kit/auth`](../../packages/auth/README.md):
 - **Layering.** The access facade asks the instance policies, then the authorizer: "roles for
   actions, policies for the few per-element rules" needs no tuple store, and the README calls
   it the place to start.
-- **Relationships.** A schema DSL with union, intersection, exclusion and tuple-to-userset, a
+- **Relationships.** A schema of stored and derived relations (`anyOf`, `allOf`, `butNot`,
+  `via`: the words of OpenFGA), a derived relation named after a permission granting it, a
   validating `defineSchema`, cycle protection and a depth limit (16 by default, answered
-  `DEPTH_EXCEEDED`, never a guess), an `expand` that traces one check for debugging, a store
-  wrapper that refuses tuples the schema does not describe. A reduced version of the schema of
+  `DEPTH_EXCEEDED`, never a guess), an `explain` that tells one decision in words for debugging,
+  a store wrapper that refuses tuples the schema does not describe. A reduced version of the schema of
   the example application, and one check:
 <!-- checked sample -->
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import { defineSchema, from, InMemoryRelationTupleStore, RelationBasedAuthorizer, union } from '@ddd-ts-kit/auth/rebac';
+import { defineSchema, InMemoryRelationTupleStore, RelationBasedAuthorizer, via } from '@ddd-ts-kit/auth/rebac';
 import type { Actor } from '@ddd-ts-kit/kernel';
 
 const schedulingPermissions = definePermissions('scheduling', {
@@ -110,23 +111,20 @@ const schedulingPermissions = definePermissions('scheduling', {
 // Who is what to which element: a practice has managers, a calendar its holder and assistants.
 const schema = defineSchema({
   user: {},
-  practice: { relations: { manager: ['user'] }, permissions: { manage: union('manager') } },
+  practice: { relations: { manager: ['user'] }, derived: { manage: 'manager' } },
   calendar: {
     relations: { holder: ['user'], assistant: ['user'], practice: ['practice'] },
-    permissions: { run: union('holder', 'assistant', from('practice', 'manage')) },
+    derived: { run: { anyOf: ['holder', 'assistant', via('practice', 'manage')] } },
   },
   appointment: {
     relations: { patient: ['user'], calendar: ['calendar'] },
-    permissions: { change: union('patient', from('calendar', 'run')) },
+    // The derived relation named after the permission grants it: to cancel is to hold `change`.
+    derived: { change: { anyOf: ['patient', via('calendar', 'run')] }, [schedulingPermissions['appointment.cancel'].id]: 'change' },
   },
 });
 
 const tuples = new InMemoryRelationTupleStore();
-const authorizer = new RelationBasedAuthorizer({
-  schema,
-  store: tuples,
-  mapping: { appointment: { [schedulingPermissions['appointment.cancel'].id]: 'change' } },
-});
+const authorizer = new RelationBasedAuthorizer({ schema, store: tuples });
 
 await tuples.write([
   { object: 'calendar:dr-grace', relation: 'assistant', subject: 'user:ada' },
@@ -157,7 +155,7 @@ What the README states is **not** implemented, compared with Zanzibar:
 - no distributed evaluation, no check caching, no parallel fan-out: evaluation is sequential,
   in process;
 - no public wildcard subject, no schema versioning or migration tooling, no watch API;
-- `expand` is the trace of one check, not Zanzibar's userset tree;
+- `explain` is the trace of one check, not Zanzibar's userset tree;
 - listing by reverse expansion costs one store read per reached subject and throws beyond a
   limit (10000 reached subjects by default) rather than return a partial list. It is not a
   search index.
@@ -172,12 +170,11 @@ wire it yet: bind the two adapters in the platform by hand, as the README of the
 
 <!-- checked sample -->
 ```ts
-import type { PermissionMapping, Schema } from '@ddd-ts-kit/auth/rebac';
+import type { Schema } from '@ddd-ts-kit/auth/rebac';
 import { ensureAuthorizationModel, OpenFgaAuthorizer, OpenFgaRelationTupleStore } from '@ddd-ts-kit/openfga';
 import { openFgaClient } from '@ddd-ts-kit/openfga/sdk';
 
-declare const relationshipSchema: Schema; // the defineSchema(...) the in-process authorizer read
-declare const permissionMapping: PermissionMapping; // unchanged too
+declare const relationshipSchema: Schema; // the defineSchema(...) the in-process authorizer read, unchanged
 declare const config: { readonly openfga: { readonly url: string; readonly storeId: string } };
 
 const client = openFgaClient({ apiUrl: config.openfga.url, storeId: config.openfga.storeId });
@@ -188,7 +185,7 @@ console.log(`authorization model ${modelId}`, changes);
 
 // The same two ports, bound to the server instead of the table of the project.
 export const tuples = new OpenFgaRelationTupleStore(client, relationshipSchema);
-export const authorizer = new OpenFgaAuthorizer({ client, mapping: permissionMapping, listObjectsLimit: 1000 });
+export const authorizer = new OpenFgaAuthorizer({ client, schema: relationshipSchema, listObjectsLimit: 1000 });
 ```
 
 **SpiceDB** maps to `CheckPermission`, `LookupResources` and `WriteRelationships` behind the

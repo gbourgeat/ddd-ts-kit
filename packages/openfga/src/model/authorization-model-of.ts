@@ -1,17 +1,20 @@
 import type { Schema } from '@ddd-ts-kit/auth/rebac';
+import { OpenFgaModelError } from './open-fga-model-error.js';
 import type {
   OpenFgaModel,
   OpenFgaRelationReference,
   OpenFgaTypeDefinition,
   OpenFgaUserset,
 } from './open-fga-model.js';
+import { relationNameOf } from './relation-name-of.js';
 import { usersetOf } from './userset-of.js';
 
 /**
  * The authorization model of OpenFGA for a relationship schema: one source of truth, the schema
  * the project declares with `defineSchema`, from which the model is generated and checked
- * (`modelDrift`), never written by hand next to it. A relation of the schema is directly
- * assignable to the subjects it lists; a permission is the rewrite that derives it.
+ * (`modelDrift`), never written by hand next to it. A stored relation of the schema is directly
+ * assignable to the subjects it lists; a derived relation is the rewrite that derives it, under
+ * the name `relationNameOf` gives it.
  */
 export function authorizationModelOf(schema: Schema): OpenFgaModel {
   return { schema_version: '1.1', type_definitions: schema.types().map((type) => typeDefinitionOf(schema, type)) };
@@ -19,14 +22,19 @@ export function authorizationModelOf(schema: Schema): OpenFgaModel {
 
 function typeDefinitionOf(schema: Schema, type: string): OpenFgaTypeDefinition {
   const relations = Object.entries(schema.relations(type));
-  const permissions = Object.entries(schema.permissions(type));
+  const derived = Object.entries(schema.derived(type));
 
-  if (relations.length === 0 && permissions.length === 0) {
+  if (relations.length === 0 && derived.length === 0) {
     return { type };
   }
 
-  const direct = relations.map(([name]): [string, OpenFgaUserset] => [name, { this: {} }]);
-  const derived = permissions.map(([name, rewrite]): [string, OpenFgaUserset] => [name, usersetOf(rewrite)]);
+  const stored = relations.map(([name]): [string, OpenFgaUserset] => [name, { this: {} }]);
+  const rewritten = derived.map(([name, ways]): [string, OpenFgaUserset] => [relationNameOf(name), usersetOf(ways)]);
+
+  assertDistinct(
+    type,
+    [...stored, ...rewritten].map(([name]) => name),
+  );
 
   const assignable = relations.map(([name, subjects]): [string, AssignableTo] => [
     name,
@@ -35,7 +43,7 @@ function typeDefinitionOf(schema: Schema, type: string): OpenFgaTypeDefinition {
 
   return {
     type,
-    relations: Object.fromEntries([...direct, ...derived]),
+    relations: Object.fromEntries([...stored, ...rewritten]),
     metadata: { relations: Object.fromEntries(assignable) },
   };
 }
@@ -49,4 +57,12 @@ function referenceOf(subject: string): OpenFgaRelationReference {
   const [type = subject, relation] = subject.split('#');
 
   return relation === undefined ? { type } : { type, relation };
+}
+
+function assertDistinct(type: string, names: readonly string[]): void {
+  const twice = names.find((name, index) => names.indexOf(name) !== index);
+
+  if (twice !== undefined) {
+    throw new OpenFgaModelError(`"${type}" has two relations that OpenFGA would both call "${twice}".`);
+  }
 }

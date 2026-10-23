@@ -1,5 +1,5 @@
 [English](authentication-and-authorization.md) · **Français**
-<!-- translation-of: authentication-and-authorization.md sha256:ae2374533bb86a4c -->
+<!-- translation-of: authentication-and-authorization.md sha256:d2f305d4352f1dda -->
 
 # Authentification et autorisation
 
@@ -321,7 +321,7 @@ n'est pas une question à laquelle un moteur ABAC pur répond.
 
 Les droits suivent des relations stockées entre sujets et objets, écrites sous forme de tuples
 `object#relation@subject` : `calendar:42#owner@user:ada`, `clinic:7#member@user:bob`,
-`calendar:42#parent@clinic:7`. Les permissions se déduisent par réécriture : « peut gérer un
+`calendar:42#parent@clinic:7`. Les permissions sont des relations qui en dérivent : « peut gérer un
 calendrier : son propriétaire, ou un membre de sa clinique parente ». Les deux opérations de base
 sont la vérification (existe-t-il un chemin de cet objet à cet acteur) et la liste (quels objets
 cet acteur peut-il atteindre).

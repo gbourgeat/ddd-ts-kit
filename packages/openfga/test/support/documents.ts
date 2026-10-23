@@ -1,5 +1,5 @@
 import { definePermissions } from '@ddd-ts-kit/auth';
-import { defineSchema, exclusion, from, intersection, union } from '@ddd-ts-kit/auth/rebac';
+import { defineSchema, via } from '@ddd-ts-kit/auth/rebac';
 
 export const docsPermissions = definePermissions('docs', {
   'document.edit': { description: 'Change a document' },
@@ -7,13 +7,15 @@ export const docsPermissions = definePermissions('docs', {
   'document.sign': { description: 'Sign a document' },
 });
 
-/** Every shape of rewrite, and the relations the tuple store contract writes (a document filed under a group). */
+const edit = docsPermissions['document.edit'].id;
+
+/** Every shape of derived relation, and the relations the tuple store contract writes (a document filed under a group). */
 export const schema = defineSchema({
   user: {},
   group: { relations: { member: ['user', 'group#member'] } },
   folder: {
     relations: { owner: ['user'], parent: ['folder'] },
-    permissions: { edit: union('owner', from('parent', 'edit')) },
+    derived: { edit: { anyOf: ['owner', via('parent', 'edit')] } },
   },
   document: {
     relations: {
@@ -25,18 +27,10 @@ export const schema = defineSchema({
       parent: ['group', 'folder'],
       folder: ['folder'],
     },
-    permissions: {
-      edit: exclusion(union('owner', 'editor', from('folder', 'edit')), 'banned'),
-      view: union('edit', 'viewer'),
-      sign: intersection('approver', 'edit'),
+    derived: {
+      [edit]: { anyOf: ['owner', 'editor', via('folder', 'edit')], butNot: ['banned'] },
+      [docsPermissions['document.view'].id]: { anyOf: [edit, 'viewer'] },
+      [docsPermissions['document.sign'].id]: { allOf: ['approver', edit] },
     },
   },
 });
-
-export const mapping = {
-  document: {
-    [docsPermissions['document.edit'].id]: 'edit',
-    [docsPermissions['document.view'].id]: 'view',
-    [docsPermissions['document.sign'].id]: 'sign',
-  },
-};

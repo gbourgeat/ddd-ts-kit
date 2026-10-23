@@ -4,7 +4,7 @@ import type { StagingUnitOfWork } from '../persistence/staging-unit-of-work.js';
 
 /**
  * The adapter that knows the model. With a SQL tuple store it writes in the transaction the
- * unit of work opened.
+ * unit of work opened. It names the group; the schema says a group stands for its members.
  */
 export class TupleDocumentGrants implements DocumentGrants {
   constructor(
@@ -17,7 +17,7 @@ export class TupleDocumentGrants implements DocumentGrants {
   }
 
   async sharedWithGroup(documentId: string, groupId: string): Promise<void> {
-    this.write(`document:${documentId}`, 'viewer', `group:${groupId}#member`);
+    this.write(`document:${documentId}`, 'viewer', `group:${groupId}`);
   }
 
   private write(object: string, relation: string, subject: string): void {

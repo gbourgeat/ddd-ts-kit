@@ -152,11 +152,12 @@ is no. There is no `listAccessible`: a predicate is not a query.
 
 ### Relationships
 
-A schema defines types, relations and rewrites (`union`, `intersection`, `exclusion`, `from`),
-a `RelationTupleStore` holds the tuples, and a `PermissionMapping` ties each permission of the
-kit to a permission of the schema. Because a relationship is always to something, a protected
-message that is checked this way must name its `resource`; without one the answer is
-`RESOURCE_REQUIRED`. The schema DSL is in the README of `@ddd-ts-kit/auth`, and
+A schema defines types, their stored relations and the relations derived from them (one way,
+or `anyOf`, `allOf`, `butNot` and `via`); a derived relation named after a permission grants it
+on its type; a `RelationTupleStore` holds the tuples. Because a relationship is always to
+something, a protected message that is checked this way must name its `resource`; without one
+the answer is `RESOURCE_REQUIRED`. `explain` answers why a decision was taken, as a trace in
+words. The schema is described in the README of `@ddd-ts-kit/auth`, and
 [`@ddd-ts-kit/openfga`](../../packages/openfga/README.md) runs the same schema on OpenFGA.
 
 Changing the model replaces the authorizer given to `authorizationModule` and the data it needs.

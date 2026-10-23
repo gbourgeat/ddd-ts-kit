@@ -103,9 +103,9 @@ A search across many elements asks two questions, under two permissions:
   resource (`RESOURCE_REQUIRED` otherwise): the enclosing one the generator writes,
   `{ resource: () => ({ type: 'context', id: '<context>' }) }`. When an actor who reaches no
   element must get 403 rather than an empty page, name the tenant of the actor instead,
-  `{ type: 'tenant', id: <its tenant> }`, with a schema permission such as
-  `browse: from('folder', 'view')` and a tuple `tenant:<id>#folder@folder:<id>` written with each
-  element. That check reads the elements of the tenant one by one for an actor who holds none.
+  `{ type: 'tenant', id: <its tenant> }`, with, on the type `tenant`, the derived relation
+  `[<ctx>Permissions['folder.search'].id]: via('folder', <ctx>Permissions['folder.view'].id)` and a
+  tuple `tenant:<id>#folder@folder:<id>` written with each element. That check reads the elements of the tenant one by one for an actor who holds none.
 - **Which elements?** `Access.scope(query.actor, <context>Permissions['folder.view'], 'folder')`,
   the permission of one element, mapped on its type: the relationships answer `ids`. An empty
   page for an actor who reaches nothing is the right answer, not a leak.

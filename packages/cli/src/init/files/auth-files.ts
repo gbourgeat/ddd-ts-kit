@@ -15,7 +15,6 @@ const AUTHORIZATION_MODEL: Readonly<Record<string, readonly PlatformFile[]>> = {
     'auth/relationships/create-tuple-store.contract.spec.ts',
     'auth/relationships/relation-tuples.ts',
     'auth/relationships/relate-system-actors.ts',
-    'auth/relationships/permission-mapping.ts',
     'auth/authorization/permissions.ts',
   ],
   custom: [

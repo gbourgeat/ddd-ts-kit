@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { defineSchema, union } from '@ddd-ts-kit/auth/rebac';
-import { authorizationModelOf, ensureAuthorizationModel, modelDrift } from '../src/index.js';
+import { defineSchema } from '@ddd-ts-kit/auth/rebac';
+import {
+  OpenFgaModelError,
+  authorizationModelOf,
+  ensureAuthorizationModel,
+  modelDrift,
+  relationNameOf,
+} from '../src/index.js';
 import { schema } from './support/documents.js';
 import { InMemoryOpenFga } from './support/in-memory-open-fga.js';
 
 describe('authorizationModelOf', () => {
-  it('writes each relation as directly assignable to the subjects it lists, and each permission as its rewrite', () => {
+  it('writes each relation as directly assignable to the subjects it lists, and each derived relation as its rewrite', () => {
     const model = authorizationModelOf(schema);
     const document = model.type_definitions.find(({ type }) => type === 'document');
 
@@ -18,7 +24,7 @@ describe('authorizationModelOf', () => {
       directly_related_user_types: [{ type: 'user' }, { type: 'group', relation: 'member' }],
     });
 
-    expect(document?.relations?.['edit']).toEqual({
+    expect(document?.relations?.['docs_document_edit']).toEqual({
       difference: {
         base: {
           union: {
@@ -33,11 +39,30 @@ describe('authorizationModelOf', () => {
       },
     });
 
-    expect(document?.relations?.['sign']).toEqual({
+    expect(document?.relations?.['docs_document_sign']).toEqual({
       intersection: {
-        child: [{ computedUserset: { relation: 'approver' } }, { computedUserset: { relation: 'edit' } }],
+        child: [{ computedUserset: { relation: 'approver' } }, { computedUserset: { relation: 'docs_document_edit' } }],
       },
     });
+  });
+
+  it('names a derived relation after its permission in the words OpenFGA admits', () => {
+    expect(relationNameOf('edit')).toBe('edit');
+    expect(relationNameOf('docs:document.edit')).toBe('docs_document_edit');
+
+    expect(() => relationNameOf(`docs:${'a'.repeat(50)}`)).toThrow(OpenFgaModelError);
+
+    expect(() =>
+      authorizationModelOf(
+        defineSchema({
+          user: {},
+          document: {
+            relations: { owner: ['user'], docs_document_edit: ['user'] },
+            derived: { 'docs:document.edit': 'owner' },
+          },
+        }),
+      ),
+    ).toThrow(new OpenFgaModelError('"document" has two relations that OpenFGA would both call "docs_document_edit".'));
   });
 });
 
@@ -84,8 +109,8 @@ describe('ensureAuthorizationModel', () => {
       client,
       defineSchema({
         user: {},
-        team: { permissions: {}, relations: { member: ['user'] } },
-        doc: { relations: { reader: ['team#member'] }, permissions: { read: union('reader') } },
+        team: { relations: { member: ['user'] } },
+        doc: { relations: { reader: ['team#member'] }, derived: { read: 'reader' } },
       }),
     );
 
