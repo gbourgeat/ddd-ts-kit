@@ -243,7 +243,7 @@ l'erreur sur les règles une version mineure plus tard.
 
 ## Ce qui n'est pas proposé
 
-- **Un contexte `privacy`.** [Quels contextes méritent un *preset*](context-presets.fr.md#les-demandes-sur-les-données-personnelles--un-guide)
+- **Un contexte `privacy`.** [Quels contextes méritent un *preset*](context-presets.fr.md#demandes-sur-les-données-personnelles--un-guide)
   l'a tranché : les demandes sur les données personnelles traversent chaque contexte, et un
   contexte qui y répondrait seul devrait lire les tables de tout le monde. Une capacité de la
   plateforme, comme le journal d'audit et les fichiers.
