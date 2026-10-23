@@ -50,7 +50,7 @@ async function onServer(serverUrl: string, logger: RecordingLogger): Promise<Con
   const name = `ddd_ts_kit_test_${randomBytes(6).toString('hex')}`;
   const url = new URL(serverUrl);
 
-  await admin(serverUrl, `create database ${name}`);
+  await asAdmin(serverUrl, (admin) => admin.query(`create database ${name}`));
   url.pathname = `/${name}`;
 
   const pool = new pg.Pool({ connectionString: url.toString(), max: 5 });
@@ -61,19 +61,45 @@ async function onServer(serverUrl: string, logger: RecordingLogger): Promise<Con
     logger,
     close: async () => {
       await pool.end();
-      await admin(serverUrl, `drop database if exists ${name} with (force)`);
+      await asAdmin(serverUrl, (admin) => dropOnceLeft(admin, name));
     },
   };
 }
 
-async function admin(serverUrl: string, statement: string): Promise<void> {
-  const client = new pg.Client({ connectionString: serverUrl });
+/**
+ * The `end()` of a pg pool resolves once it has asked its connections to close, before their
+ * backends have exited. Dropped with `force` at that moment, the database terminates them, and the
+ * error each one then receives reaches a pool with no listener for it: an uncaught exception that
+ * fails the run after every test passed. The database is dropped once no backend is left on it;
+ * `force` stays for a connection a spec kept open, after a few seconds.
+ */
+async function dropOnceLeft(admin: pg.Client, name: string): Promise<void> {
+  const deadline = Date.now() + 5_000;
 
-  await client.connect();
+  while (Date.now() < deadline && (await backendsOn(admin, name)) > 0) {
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+
+  await admin.query(`drop database if exists ${name} with (force)`);
+}
+
+async function backendsOn(admin: pg.Client, name: string): Promise<number> {
+  const { rows } = await admin.query<{ count: number }>(
+    'select count(*)::int as count from pg_stat_activity where datname = $1',
+    [name],
+  );
+
+  return rows[0]?.count ?? 0;
+}
+
+async function asAdmin(serverUrl: string, work: (admin: pg.Client) => Promise<unknown>): Promise<void> {
+  const admin = new pg.Client({ connectionString: serverUrl });
+
+  await admin.connect();
 
   try {
-    await client.query(statement);
+    await work(admin);
   } finally {
-    await client.end();
+    await admin.end();
   }
 }
