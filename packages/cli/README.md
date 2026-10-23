@@ -2195,7 +2195,7 @@ agent hook after each write. A file that is not a source of the project is ignor
 ## lint
 
 ```
-ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix]
+ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix] [--no-cache]
 ```
 
 What `lint` and `ci:lint` of a generated project run: the ESLint of the project, through its API,
@@ -2213,7 +2213,8 @@ The cache keys on the files and the config, not on the rules as installed, so th
 when the lockfile, `eslint.config.mjs` or `ddd-ts-kit.config.json` changed since it was written.
 The lint job of the generated pipeline restores, on a pull request or a merge request, the cache
 the default branch wrote last for the same lockfile and config; the default branch and the night
-lint everything, which also sees a type changed in another file, and write it.
+lint everything, which also sees a type changed in another file, and write it. `--no-cache` lints
+every file again, as before a pull request when a type changed: the cache is left as it was.
 
 ## rules, explain
 

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ec779d8b66dd117d -->
+<!-- translation-of: README.md sha256:ec64bfaca496b3c2 -->
 
 # ddd-ts-kit
 
@@ -2341,7 +2341,7 @@ projet est ignoré.
 ## lint
 
 ```
-ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix]
+ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix] [--no-cache]
 ```
 
 Ce que lancent `lint` et `ci:lint` d'un projet généré : l'ESLint du projet, par son API, sur les
@@ -2362,6 +2362,8 @@ par les règles telles qu'installées, donc la commande l'abandonne quand le *lo
 *pipeline* généré restaure, sur une *pull request* ou une *merge request*, le cache que la branche
 par défaut a écrit en dernier pour les mêmes *lockfile* et config ; la branche par défaut et la
 nuit lintent tout, ce qui voit aussi un type changé dans un autre fichier, et l'écrivent.
+`--no-cache` relinte chaque fichier, comme avant une *pull request* quand un type a changé : le
+cache est laissé tel quel.
 
 ## rules, explain
 

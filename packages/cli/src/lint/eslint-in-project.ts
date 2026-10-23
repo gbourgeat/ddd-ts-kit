@@ -14,7 +14,8 @@ import { pathToFileURL } from 'node:url';
 const { root, patterns, format, fix, cache } = JSON.parse(process.env.${LINT_RUN_VARIABLE});
 const entry = createRequire(path.join(root, 'package.json')).resolve('eslint');
 const { ESLint } = await import(pathToFileURL(entry).href);
-const eslint = new ESLint({ cwd: root, fix, cache: true, cacheLocation: cache, cacheStrategy: 'content' });
+const withCache = cache === undefined ? {} : { cache: true, cacheLocation: cache, cacheStrategy: 'content' };
+const eslint = new ESLint({ cwd: root, fix, ...withCache });
 const results = await eslint.lintFiles(patterns.length === 0 ? ['.'] : patterns);
 
 if (fix) {

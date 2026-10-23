@@ -4,6 +4,6 @@ export interface LintRun {
   readonly patterns: readonly string[];
   readonly format: string;
   readonly fix: boolean;
-  /** Where ESLint keeps its cache, a directory the command prepared (`lintCacheOf`). */
-  readonly cache: string;
+  /** Where ESLint keeps its cache, a directory the command prepared (`lintCacheOf`); none with `--no-cache`. */
+  readonly cache: string | undefined;
 }

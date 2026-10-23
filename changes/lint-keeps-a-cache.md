@@ -6,7 +6,7 @@ rules as installed, so the command drops it when the lockfile, `eslint.config.mj
 `ddd-ts-kit.config.json` changed since it was written. The lint job of the pipeline `init` writes
 restores, on a pull request or a merge request, the cache the default branch wrote last for the
 same lockfile and config, and the default branch and the night lint everything and write it: a
-type changed in another file is seen there.
+type changed in another file is seen there. `ddd-ts-kit lint --no-cache` lints every file again.
 
 To move: add `.eslintcache/` to `.gitignore`, and give the lint job of the pipeline the two cache
 steps of the template (`ddd-ts-kit init --force` rewrites `.github/workflows/ci.yml` or

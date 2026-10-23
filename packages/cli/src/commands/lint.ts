@@ -13,11 +13,17 @@ import type { Command } from './command';
 import type { Io } from './io';
 
 /**
- * `lint` and `ci:lint` of a generated project: the ESLint of the project, with its cache, failing on
- * an error or a warning, but on a warning of a rule of the kit in transition, which it reports apart.
+ * `lint` and `ci:lint` of a generated project: the ESLint of the project, with its cache unless
+ * `--no-cache` asks for every file again, failing on an error or a warning, but on a warning of a
+ * rule of the kit in transition, which it reports apart.
  */
 export const lintCommand: Command = (argv, io) => {
-  const args = Arguments.parse(argv, { format: { type: 'string' }, fix: { type: 'boolean', default: false } });
+  const args = Arguments.parse(argv, {
+    format: { type: 'string' },
+    fix: { type: 'boolean', default: false },
+    'no-cache': { type: 'boolean', default: false },
+  });
+
   const root = args.projectRoot;
 
   refuseWithoutEslint(root);
@@ -28,7 +34,7 @@ export const lintCommand: Command = (argv, io) => {
       patterns: args.positionals,
       format: args.text('format') ?? 'stylish',
       fix: args.flag('fix'),
-      cache: lintCacheOf(root),
+      cache: args.flag('no-cache') ? undefined : lintCacheOf(root),
     },
     io,
   );

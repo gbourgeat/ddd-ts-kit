@@ -125,6 +125,17 @@ describe('ddd-ts-kit lint', () => {
     expect(read(root, '.eslintcache/key')).not.toBe(key);
   });
 
+  it('lints every file again with --no-cache, and leaves the cache where it was', () => {
+    installEslint([]);
+
+    expect(cli(root, 'lint').code).toBe(0);
+    write(root, '.eslintcache/.cache_1', '{}');
+
+    expect(cli(root, 'lint', '--no-cache').code).toBe(0);
+    expect(JSON.parse(read(root, 'cache.json'))).toEqual({});
+    expect(exists(root, '.eslintcache/.cache_1')).toBe(true);
+  });
+
   it('refuses a project without ESLint, naming the install', () => {
     fs.rmSync(path.join(root, 'node_modules'), { recursive: true, force: true });
 
