@@ -42,14 +42,20 @@ The pipeline figures are medians over the runs of 2026-10-23, twelve runs of the
 pull requests before the first line merged (18:10 UTC), eight and eight after; a single day on
 shared runners, with other runs in the queue, so the differences under a fifth are noise, and
 the trials of the seventh line keep measuring. The workstation figures are those of the sections
-above, taken on a quiet machine.
+above, taken on a quiet machine. Two rows depend on what else ran: the queue of a job and the wall
+time of a run follow the traffic of the repository as much as the plan. That traffic was not
+lighter after: the runs launched per hour were 6 to 8 in the afternoon the figures of before come
+from and 10 to 12 in the evening of after, each run with fewer jobs (about 170 and about 215 jobs
+an hour), so the drop is not the traffic's; but one day cannot say how much of it is the plan's.
+Those two rows are to confirm over several days of equal traffic; the others do not depend on the
+queue.
 
 | Indicator | before | after lines 1 to 6 |
 |---|---|---|
 | jobs per run, trunk and pull request | 24 and 23 | 20 and 17 |
-| wall time of a pull request run, median and p95 | 1,073 s and 1,687 s | 800 s and 1,294 s |
-| queue of a job of a pull request, p95 and max | 461 s and 879 s | 162 s and 438 s |
-| wall time of a trunk run, median | 1,248 s | 1,069 s |
+| wall time of a pull request run, median and p95 (to confirm over several days) | 1,073 s and 1,687 s | 800 s and 1,294 s |
+| queue of a job of a pull request, p95 and max (to confirm over several days) | 461 s and 879 s | 162 s and 438 s |
+| wall time of a trunk run, median (to confirm over several days) | 1,248 s | 1,069 s |
 | the unit job of the trunk (Node 24, coverage) | 571 s | about 490 s |
 | the generated projects on npm (trunk) | 790 s | 648 s (one run) |
 | the alias suite on Node 24 (trunk) | 624 s | 276 to 441 s (two runs) |

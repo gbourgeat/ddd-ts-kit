@@ -1,5 +1,5 @@
 [English](build-and-test-velocity.md) · **Français**
-<!-- translation-of: build-and-test-velocity.md sha256:6dd340aaa4ecf31e -->
+<!-- translation-of: build-and-test-velocity.md sha256:7b5f2c498f477258 -->
 
 # Proposition : vélocité du build, des contrôles et des tests
 
@@ -46,14 +46,20 @@ du tronc et 38 de *pull requests* avant la fusion de la première ligne (18:10 U
 après ; une seule journée sur des *runners* partagés, avec d'autres exécutions dans la file, donc
 les écarts de moins d'un cinquième sont du bruit, et les essais de la septième ligne continuent
 de mesurer. Les chiffres de la station de travail sont ceux des sections ci-dessus, pris sur une
-machine calme.
+machine calme. Deux lignes dépendent de ce qui tournait d'autre : la file d'un job et le temps de
+mur d'une exécution suivent le trafic du dépôt autant que le plan. Ce trafic n'était pas plus
+léger après : les exécutions lancées par heure étaient de 6 à 8 l'après-midi d'où viennent les
+chiffres d'avant et de 10 à 12 le soir de l'après, chacune avec moins de jobs (environ 170 et
+environ 215 jobs par heure), donc la baisse n'est pas celle du trafic ; mais une journée ne peut
+pas dire quelle part en revient au plan. Ces deux lignes sont à confirmer sur plusieurs jours de
+trafic égal ; les autres ne dépendent pas de la file.
 
 | Indicateur | avant | après les lignes 1 à 6 |
 |---|---|---|
 | jobs par exécution, tronc et *pull request* | 24 et 23 | 20 et 17 |
-| temps de mur d'une exécution de *pull request*, médiane et p95 | 1 073 s et 1 687 s | 800 s et 1 294 s |
-| file d'un job d'une *pull request*, p95 et maximum | 461 s et 879 s | 162 s et 438 s |
-| temps de mur d'une exécution du tronc, médiane | 1 248 s | 1 069 s |
+| temps de mur d'une exécution de *pull request*, médiane et p95 (à confirmer sur plusieurs jours) | 1 073 s et 1 687 s | 800 s et 1 294 s |
+| file d'un job d'une *pull request*, p95 et maximum (à confirmer sur plusieurs jours) | 461 s et 879 s | 162 s et 438 s |
+| temps de mur d'une exécution du tronc, médiane (à confirmer sur plusieurs jours) | 1 248 s | 1 069 s |
 | le job unitaire du tronc (Node 24, couverture) | 571 s | environ 490 s |
 | les projets générés sur npm (tronc) | 790 s | 648 s (une exécution) |
 | la suite de l'alias sur Node 24 (tronc) | 624 s | 276 à 441 s (deux exécutions) |
