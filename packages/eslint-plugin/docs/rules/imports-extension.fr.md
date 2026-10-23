@@ -1,5 +1,5 @@
 [English](imports-extension.md) · **Français**
-<!-- translation-of: imports-extension.md sha256:be342085eaea68ee -->
+<!-- translation-of: imports-extension.md sha256:55e7cd0722a12793 -->
 
 # ddd-ts-kit/imports-extension
 

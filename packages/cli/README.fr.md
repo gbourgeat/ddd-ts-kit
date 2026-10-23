@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:5414d667d11f2f3c -->
+<!-- translation-of: README.md sha256:728619d7b2deb683 -->
 
 # ddd-ts-kit
 

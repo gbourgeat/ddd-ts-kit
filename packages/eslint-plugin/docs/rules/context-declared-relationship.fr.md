@@ -1,5 +1,5 @@
 [English](context-declared-relationship.md) · **Français**
-<!-- translation-of: context-declared-relationship.md sha256:87f6d7e6f1f3ab53 -->
+<!-- translation-of: context-declared-relationship.md sha256:4353014b18859313 -->
 
 # ddd-ts-kit/context-declared-relationship
 

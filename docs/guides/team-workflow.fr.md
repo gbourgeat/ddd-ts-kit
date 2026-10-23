@@ -1,5 +1,5 @@
 [English](team-workflow.md) · **Français**
-<!-- translation-of: team-workflow.md sha256:91ec093935670778 -->
+<!-- translation-of: team-workflow.md sha256:fc412c7c9517eb0e -->
 
 # Travailler en équipe sur un projet DDD
 
