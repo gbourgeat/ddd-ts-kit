@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers';
+import { cli, exists, read, write } from './helpers';
 import { initProject } from './support/init-project';
 
 interface Message {
@@ -27,7 +27,7 @@ function installEslint(messages: readonly Message[], meta: Readonly<Record<strin
       "import fs from 'node:fs';",
       "const { messages, meta } = JSON.parse(fs.readFileSync('answer.json', 'utf8'));",
       'export class ESLint {',
-      '  constructor(options) { this.options = options; }',
+      '  constructor(options) { this.options = options; const { cache, cacheLocation, cacheStrategy } = options; fs.writeFileSync("cache.json", JSON.stringify({ cache, cacheLocation, cacheStrategy })); }',
       '  static async outputFixes() {}',
       '  async lintFiles(patterns) {',
       "    fs.writeFileSync('asked.json', JSON.stringify({ patterns, fix: this.options.fix }));",
@@ -99,6 +99,30 @@ describe('ddd-ts-kit lint', () => {
     expect(result.stderr).toBe(
       'ddd-ts-kit/clean-new: 2 warning(s), not counted while the rule is new; it becomes an error in 0.28.0: fix them before upgrading to it.',
     );
+  });
+
+  it('keeps the cache of ESLint next to the project, keyed by content, and drops it when the lint changed', () => {
+    installEslint([]);
+
+    expect(cli(root, 'lint').code).toBe(0);
+
+    expect(JSON.parse(read(root, 'cache.json'))).toEqual({
+      cache: true,
+      cacheLocation: `${path.join(root, '.eslintcache')}${path.sep}`,
+      cacheStrategy: 'content',
+    });
+
+    const key = read(root, '.eslintcache/key');
+
+    write(root, '.eslintcache/.cache_1', '{}');
+    expect(cli(root, 'lint').code).toBe(0);
+    expect(exists(root, '.eslintcache/.cache_1')).toBe(true);
+    expect(read(root, '.eslintcache/key')).toBe(key);
+
+    write(root, 'eslint.config.mjs', `${read(root, 'eslint.config.mjs')}\n// a rule turned on\n`);
+    expect(cli(root, 'lint').code).toBe(0);
+    expect(exists(root, '.eslintcache/.cache_1')).toBe(false);
+    expect(read(root, '.eslintcache/key')).not.toBe(key);
   });
 
   it('refuses a project without ESLint, naming the install', () => {

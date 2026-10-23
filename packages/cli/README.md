@@ -2207,6 +2207,14 @@ an error. Those are shown in the report and listed after it, one line per rule, 
 an upgrade of the kit never turns a green lint red. Without ESLint installed it exits 2 and names
 the install. See [Quality baseline](../../docs/tools/quality-baseline.md#warnings-fail-the-lint).
 
+The command lints with the cache of ESLint, keyed by the content of each file (`.eslintcache/`,
+ignored by git): a second run on a tree that did not change lints the files that changed since.
+The cache keys on the files and the config, not on the rules as installed, so the command drops it
+when the lockfile, `eslint.config.mjs` or `ddd-ts-kit.config.json` changed since it was written.
+The lint job of the generated pipeline restores, on a pull request or a merge request, the cache
+the default branch wrote last for the same lockfile and config; the default branch and the night
+lint everything, which also sees a type changed in another file, and write it.
+
 ## rules, explain
 
 ```
