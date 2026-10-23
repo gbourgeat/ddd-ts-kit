@@ -122,7 +122,8 @@ const READING_PROGRAMS = new Set([
 // What a command may also do with the locked regression spec of a fix: run it, however the runner is launched.
 const RUNNING_PROGRAMS = new Set(['npm', 'yarn', 'bun', 'bunx', 'node', 'vitest', 'jest']);
 // A test or a spec, inside a context: the proof of a fix is written there before its code.
-const TEST_PATH = /(^|\/)test\/|\.spec\.ts$/;
+const TEST_DIRECTORY = /(^|\/)test\//;
+const SPEC_FILE = /\.spec\.ts$/;
 
 // A journey crosses use cases, and often contexts: no single route generates it, so it is written by hand.
 const JOURNEY = /^test\/e2e\/journey-[^/]+\.e2e\.spec\.ts$/;
@@ -253,6 +254,11 @@ let shell;
 let notice;
 
 main();
+
+/** A file under a test directory, or a spec next to the code: where the proof of a fix lives. */
+function isTestPath(path) {
+  return TEST_DIRECTORY.test(path) || SPEC_FILE.test(path);
+}
 
 function main() {
   try {
@@ -1162,7 +1168,7 @@ function storyCodeReason(project, file) {
     return undefined;
   }
   // The proof of a fix, a spec inside the context, is written before its code.
-  if (TEST_PATH.test(path) && fixOf(project) !== undefined) {
+  if (isTestPath(path) && fixOf(project) !== undefined) {
     return undefined;
   }
   return storyBuildReason(project);
