@@ -2,27 +2,24 @@ import type { JobDefinition, JobDescription, JobRun, JobScheduler, JobSettings }
 
 type Run = JobDefinition['run'];
 
-/** What is put around each run from outside (its span): told the job and the context its name starts with. */
-type Observe = (run: Run, job: { readonly name: string; readonly context: string }) => Run;
+/** Wraps one run in what observes it from outside (its span), named after the job and its context. */
+type ObserveRun = (run: Run, job: { readonly name: string; readonly context: string }) => Run;
 
 /**
- * The scheduler of the platform with the settings of the configuration applied: what
- * `job-settings.ts` says of a job wins over what its context registered, and a key left
- * undefined changes nothing. Each run goes through what observes the jobs from outside.
+ * The scheduler of the platform, with what `job-settings.ts` says of a job over what its context
+ * registered, and each run observed from outside.
  */
 export class ConfiguredJobScheduler implements JobScheduler {
   constructor(
     private readonly scheduler: JobScheduler,
     private readonly settings: Readonly<Record<string, JobSettings>>,
-    private readonly observe: Observe,
+    private readonly observe: ObserveRun,
   ) {}
 
   register(job: JobDefinition): void {
-    const written = Object.entries(this.settings[job.name] ?? {}).filter(([, value]) => value !== undefined);
+    const run = this.observe(job.run, { name: job.name, context: contextOf(job.name) });
 
-    const run = this.observe(job.run, { name: job.name, context: job.name.split('.')[0] ?? job.name });
-
-    this.scheduler.register({ ...job, ...Object.fromEntries(written), run });
+    this.scheduler.register({ ...job, ...this.overridesOf(job.name), run });
   }
 
   start(): Promise<void> {
@@ -40,4 +37,14 @@ export class ConfiguredJobScheduler implements JobScheduler {
   describe(): readonly JobDescription[] {
     return this.scheduler.describe();
   }
+
+  /** A key the configuration left undefined does not erase what the job declared. */
+  private overridesOf(name: string): JobSettings {
+    return Object.fromEntries(Object.entries(this.settings[name] ?? {}).filter(([, value]) => value !== undefined));
+  }
+}
+
+/** A job is named `<context>.<job>`. */
+function contextOf(jobName: string): string {
+  return jobName.split('.')[0] ?? jobName;
 }
