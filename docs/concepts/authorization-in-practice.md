@@ -89,6 +89,7 @@ of work: a refused command then opens no transaction.
 abstract class Authorizer {
   abstract check(request: CheckRequest): Promise<Decision>;
   abstract listAccessible?(request: ListRequest): Promise<AccessScope>;
+  abstract explain?(request: CheckRequest): Promise<Explanation>;
 }
 ```
 
@@ -104,6 +105,9 @@ The `reason` is a stable machine code, never a sentence and never data. The pack
 `DEPTH_EXCEEDED`, and an adapter may add its own. `listAccessible` is optional: a model that
 cannot enumerate leaves it out, and asking for a scope then fails with
 `ListingNotSupportedError` instead of returning a wrong answer.
+`explain` is optional too: the same decision as `check`, with a trace in words, one line per
+question the model asked, which `traceText` lays out. The three authorizers of the kit answer
+it; a model that cannot say more than its reason leaves it out.
 
 ## What each model does with the question
 
@@ -113,6 +117,7 @@ cannot enumerate leaves it out, and asking for a scope then fails with
 | Uses `resource` | only for the tenant check | to load the attributes of the element | as the object of the relationship |
 | Refusal codes | `NO_MATCHING_ROLE`, `TENANT_MISMATCH` | `EXPLICIT_DENY`, `NO_MATCHING_POLICY` | `NO_RELATION`, `DEPTH_EXCEEDED`, `UNMAPPED_PERMISSION` |
 | `listAccessible` | yes, in constant time | no | yes, by reverse expansion |
+| `explain` | the roles of the actor and what each grants, then the tenant check | each policy that bears on the permission, held or not | every question asked of the tuples |
 
 ### Roles
 
@@ -132,6 +137,8 @@ from the execution scope), unless one of its roles is in `crossTenantRoles`. Act
 runs in. The list is `none` without the right, `all` when tenants are not managed or the actor
 crosses them, `filter: { tenantId }` on the tenant of the work or the one tenant of the actor
 otherwise, and `none` for an actor of several tenants outside of a tenant's work.
+`explain` says the same in words: the roles of the actor, what each one grants and through
+which included role, then where the request may act.
 
 In a generated project, the roles live in `platform/auth/roles/roles.ts`, and the super-admin holds
 `*`. A new permission is therefore reached by administrators only until a role holds it by
@@ -149,6 +156,8 @@ a `when(input)` predicate. The input holds the actor, the permission, the resour
 attributes (supplied by a `ResourceAttributes` port), the context and `now` from the `Clock`.
 Among the rules that apply, one `forbid` wins over every `permit`; with no `permit` the answer
 is no. There is no `listAccessible`: a predicate is not a query.
+`explain` names what is known of the element, by attribute name, then each policy that bears
+on the permission and whether it held.
 
 ### Relationships
 

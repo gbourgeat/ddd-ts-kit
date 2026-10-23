@@ -7,8 +7,13 @@ workflow:
     # A pipeline schedule (Build > Pipeline schedules, every night on the default branch) runs everything.
     - if: $CI_PIPELINE_SOURCE == "schedule"
 
+{{#if extras.gitlabInclude}}
 {{#if extras.gitlabSecurity}}
 # Opt-in (--ci-extras): these run on every tier, but their findings reach a merge request on Ultimate only.
+{{/if}}
+{{#if extras.claude}}
+# Opt-in (--ci-extras claude-review, claude-triage): API tokens on every run, never required by the gate.
+{{/if}}
 include:
 {{#if extras.gitlabSast}}
   - template: Jobs/SAST.gitlab-ci.yml
@@ -20,6 +25,9 @@ include:
   - template: Jobs/Dependency-Scanning.v2.gitlab-ci.yml
     rules:
       - if: $GITLAB_FEATURES =~ /\bdependency_scanning\b/
+{{/if}}
+{{#if extras.claude}}
+  - local: .gitlab/claude-review.gitlab-ci.yml
 {{/if}}
 
 {{/if}}

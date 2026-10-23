@@ -1,7 +1,7 @@
 import { ACCEPTANCE_GATES, type AcceptanceGate } from '../acceptance/acceptance-gate.js';
 import { countsFor } from '../acceptance/counts-for.js';
 import { formatAcceptance } from '../acceptance/format-acceptance.js';
-import { lockAcceptance } from '../acceptance/lock-acceptance.js';
+import { type Locked, lockAcceptance } from '../acceptance/lock-acceptance.js';
 import { readAcceptance } from '../acceptance/read-acceptance.js';
 import type { StoryAcceptance } from '../acceptance/story-acceptance.js';
 import { CliError } from '../cli-error.js';
@@ -14,10 +14,12 @@ import type { Io } from './io.js';
 /**
  * The acceptance scenarios of each story against its rows in slices.md and the criteria of its
  * specification: which rows and criteria a scenario covers, which scenarios are left to write or
- * wait for their code, which changed since the lock, and what is inconsistent. `--gate written` is
- * what a story needs before the code of its rows, `--gate passing` before it closes; `--lock`
- * records the scenarios as agreed. Never runs a test; exits 1 while something keeps a story from
- * the gate asked, or, without one, while a scenario is inconsistent or drifted from its lock.
+ * wait for their code, which changed since the lock, and what is inconsistent. A fix (a story file
+ * with a `## Regression` section) is held the same way to the tests of the specs it lists.
+ * `--gate written` is what a story needs before the code of its rows, `--gate passing` before it
+ * closes; `--lock` records the scenarios, or the regression tests, as agreed. Never runs a test;
+ * exits 1 while something keeps a story from the gate asked, or, without one, while a scenario is
+ * inconsistent or drifted from its lock.
  */
 export const acceptanceCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
@@ -32,7 +34,7 @@ export const acceptanceCommand: Command = (argv, io) => {
 
   if (asked !== undefined && stories.length === 0) {
     throw new CliError(
-      `${asked} is neither a story of docs/architecture/slices.md nor the name of a spec of test/acceptance/.`,
+      `${asked} is neither a story of docs/architecture/slices.md, nor the name of a spec of test/acceptance/, nor a fix whose docs/architecture/stories/${asked}.md lists its specs under \`## Regression\`.`,
       'Pass the code of a story as its rows start (`US5` for `US5.03`); `npx ddd-ts-kit status` lists the rows.',
     );
   }
@@ -71,7 +73,7 @@ function lock(ws: Workspace, { asked, story, json }: LockRequest, io: Io): numbe
     json
       ? JSON.stringify({ story: story.story, ...locked }, null, 2)
       : [
-          `Locked ${locked.scenarios} scenario${locked.scenarios === 1 ? '' : 's'} of ${story.story} in ${locked.file}: commit it with them.`,
+          `Locked ${lockedWhat(locked)} of ${story.story} in ${locked.file}: commit it with them.`,
           ...locked.amendments.map(
             (amendment) =>
               `Amended by ${amendment.verdict}, for the owner to validate: ${amendment.subject}: ${amendment.reason}`,
@@ -80,6 +82,13 @@ function lock(ws: Workspace, { asked, story, json }: LockRequest, io: Io): numbe
   );
 
   return 0;
+}
+
+/** What a lock recorded: the regression tests of a fix, or the scenarios of a story. */
+function lockedWhat({ scenarios, tests }: Locked): string {
+  return tests > 0 && scenarios === 0
+    ? `${tests} regression test${tests === 1 ? '' : 's'}`
+    : `${scenarios} scenario${scenarios === 1 ? '' : 's'}`;
 }
 
 function gateOf(text: string | undefined): AcceptanceGate | undefined {

@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:9c270d8ee3282abf -->
+<!-- translation-of: agent-sandbox.md sha256:a3203bbb309ddced -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -125,7 +125,10 @@ manque. Chacun s'explique à l'agent :
   (`git commit -m "<message>" -m "Change: <id>"`,
   [Discipline de commit](commit-discipline.fr.md#les-messages--conventional-commits)). Il demande, il
   ne bloque pas, et il reste muet pour tout autre fichier. Le *trailer* est lu par des personnes,
-  dans l'historique ; aucune commande du kit ne le lit encore.
+  dans l'historique, et par `npx ddd-ts-kit story-check <code>`, qui liste chaque *commit* d'une
+  *story* qui change un de ces fichiers sans lui, et bloque dessus sous le profil réglementé ;
+  les chemins que surveille le *hook* et ceux que lit `story-check` sont la même liste, tenue
+  alignée dans le kit.
 
 L'entrée et les codes de sortie d'un *hook* suivent la
 [référence des hooks](https://code.claude.com/docs/en/hooks) de Claude Code, lue le 2026-10-23 :

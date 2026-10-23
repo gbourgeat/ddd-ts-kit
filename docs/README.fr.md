@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ff750835649d33d1 -->
+<!-- translation-of: README.md sha256:2dcd246451a18211 -->
 
 # Documentation
 
@@ -126,6 +126,7 @@ a vérifié, les limites, et une recommandation selon la situation.
 | [Choisir le contrôle d'accès](guides/choosing-access-control.fr.md) | cinq questions qui choisissent les rôles, les attributs ou les relations (Zanzibar), des préréglages commentés pour chacun, le modèle combiné de l'exemple, les périmètres et les refus en bordure |
 | [Économie de jetons](guides/token-economy.fr.md) | dépenser moins de jetons avec les agents de code, et des outils complémentaires |
 | [Isoler les agents de code](guides/agent-sandbox.fr.md) | ce qui charge une machine et ce que fait le kit ; plafonner un agent, le bac à sable de l'agent, NVIDIA OpenShell pour la sécurité d'une session |
+| [Déployer et revenir en arrière](guides/deploy-and-rollback.fr.md) | ce qu'un projet livre au-delà de son image, l'ordre d'une mise en production, ce que signifie revenir en arrière pour chaque pièce, trois niveaux d'autonomie d'un agent par environnement, déployer, lire l'état et revenir en arrière en un script chacun, la répétition en préproduction |
 | [La documentation en français](translation.fr.md) | contributeurs : comment chaque page garde sa traduction française à jour, le glossaire, le style des diagrammes, les exemples de code que le *pipeline* compile |
 
 ## Propositions

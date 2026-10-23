@@ -76,6 +76,7 @@ type Governance = Pick<
   | 'commit'
   | 'guard'
   | 'worktrees'
+  | 'formatOnWrite'
   | 'deviations'
   | 'standardInterfaces'
   | 'businessNames'
@@ -95,6 +96,7 @@ function parseGovernance(raw: Record<string, unknown>): Governance {
     commit: parseCommitConfig(raw['commit']),
     guard: text(raw['guard'], 'enforce'),
     worktrees: text(raw['worktrees'], 'advised'),
+    formatOnWrite: raw['formatOnWrite'] === true,
     deviations: parseDeviations(raw['deviations']),
     standardInterfaces: parseStandardInterfaces(raw['standardInterfaces']),
     businessNames: parseBusinessNames(raw['businessNames']),

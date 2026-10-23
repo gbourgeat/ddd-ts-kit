@@ -3,7 +3,9 @@ import type { AccessScope } from '../authorization/access-scope.js';
 import type { Authorizer } from '../authorization/authorizer.js';
 import type { CheckRequest } from '../authorization/check-request.js';
 import { ALLOWED, type Decision } from '../authorization/decision.js';
+import type { Explanation } from '../authorization/explanation.js';
 import type { ListRequest } from '../authorization/list-request.js';
+import { Trace } from '../authorization/trace.js';
 import { ListingNotSupportedError } from '../errors/listing-not-supported-error.js';
 import type { Grant } from '../permissions/grant.js';
 import { grantCovers } from '../permissions/grant-covers.js';
@@ -31,15 +33,38 @@ export class SignedInGrantsAuthorizer implements Authorizer {
   }
 
   check(request: CheckRequest): Promise<Decision> {
-    if (this.grants(request.actor, request.permission)) {
+    if (this.coveringGrantOf(request.actor, request.permission) !== undefined) {
       return Promise.resolve(ALLOWED);
     }
 
     return this.options.otherwise.check(request);
   }
 
+  /** Why: the grant of every signed-in person that covers the permission, or what the model said. */
+  async explain(request: CheckRequest): Promise<Explanation> {
+    const trace = new Trace();
+    const { actor, permission } = request;
+    const covering = this.coveringGrantOf(actor, permission);
+
+    if (covering !== undefined) {
+      trace.yes(
+        `every signed-in person holds ${covering}${covering === permission.id ? '' : `, which covers ${permission.id}`}`,
+      );
+
+      return { decision: ALLOWED, trace: trace.lines };
+    }
+
+    if (actor.type === 'user') {
+      trace.no(`no grant of every signed-in person covers ${permission.id}`);
+    } else {
+      trace.no(`the actor is a ${actor.type}, not a signed-in person`);
+    }
+
+    return { decision: await this.askTheModel(request, trace), trace: trace.lines };
+  }
+
   listAccessible(request: ListRequest): Promise<AccessScope> {
-    if (this.grants(request.actor, request.permission)) {
+    if (this.coveringGrantOf(request.actor, request.permission) !== undefined) {
       return Promise.resolve({ kind: 'all' });
     }
 
@@ -50,7 +75,31 @@ export class SignedInGrantsAuthorizer implements Authorizer {
     return this.options.otherwise.listAccessible(request);
   }
 
-  private grants(actor: Actor, permission: Permission): boolean {
-    return actor.type === 'user' && this.patterns.some((pattern) => grantCovers(pattern, permission));
+  private coveringGrantOf(actor: Actor, permission: Permission): string | undefined {
+    return actor.type === 'user' ? this.patterns.find((pattern) => grantCovers(pattern, permission)) : undefined;
+  }
+
+  /** The lines of the model, one level deeper, when it explains itself; its decision alone otherwise. */
+  private async askTheModel(request: CheckRequest, trace: Trace): Promise<Decision> {
+    const { otherwise } = this.options;
+
+    if (otherwise.explain !== undefined) {
+      const { decision, trace: lines } = await otherwise.explain(request);
+
+      trace.yes('the model decides');
+      trace.include(lines);
+
+      return decision;
+    }
+
+    const decision = await otherwise.check(request);
+
+    if (decision.allowed) {
+      trace.yes('the model allows');
+    } else {
+      trace.no(`the model refuses: ${decision.reason}`);
+    }
+
+    return decision;
   }
 }

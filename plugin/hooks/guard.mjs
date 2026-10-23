@@ -48,6 +48,9 @@ const WORKER_AGENT = 'context-builder';
 const SESSION_CONTEXT_LIMIT = 3000;
 const COMMIT_DEFAULTS = { maxFiles: 20, maxLines: 600 };
 const COUNTED_FILE_BYTES = 1_000_000;
+// The files Biome formats: with `formatOnWrite` in the config, the project's own Biome lays one out as it is written.
+const FORMATTED_FILE = /\.(?:[cm]?[jt]sx?|jsonc?)$/;
+const FORMAT_TIMEOUT = 5000;
 
 // The contracts in YAML or JSON (openapi/<document>, the AsyncAPI document), the event catalog
 // and the split of the contract that `ddd-ts-kit docs` writes in the platform.
@@ -116,6 +119,11 @@ const READING_PROGRAMS = new Set([
   'pnpm',
   'ddd-ts-kit',
 ]);
+// What a command may also do with the locked regression spec of a fix: run it, however the runner is launched.
+const RUNNING_PROGRAMS = new Set(['npm', 'yarn', 'bun', 'bunx', 'node', 'vitest', 'jest']);
+// A test or a spec, inside a context: the proof of a fix is written there before its code.
+const TEST_DIRECTORY = /(^|\/)test\//;
+const SPEC_FILE = /\.spec\.ts$/;
 
 // A journey crosses use cases, and often contexts: no single route generates it, so it is written by hand.
 const JOURNEY = /^test\/e2e\/journey-[^/]+\.e2e\.spec\.ts$/;
@@ -247,6 +255,11 @@ let notice;
 
 main();
 
+/** A file under a test directory, or a spec next to the code: where the proof of a fix lives. */
+function isTestPath(path) {
+  return TEST_DIRECTORY.test(path) || SPEC_FILE.test(path);
+}
+
 function main() {
   try {
     const run = MODES[process.argv[2]];
@@ -363,7 +376,7 @@ async function preBash(input) {
     (await landingReason(input, command)) ??
     oneSideMergeReason(project, input, command) ??
     (await acceptanceLockingReason(input, command)) ??
-    (await acceptanceFilesShellReason(input, command)) ??
+    (await acceptanceFilesShellReason(project, input, command)) ??
     (await generatorPlaceReason(project, input, command));
   if (preparing) {
     decide(input, project.mode === 'advise' ? 'ask' : 'deny', preparing);
@@ -401,7 +414,9 @@ function workerCommandReason(project, input, { context, command, commands }) {
 }
 
 function postWrite(input) {
-  const errors = writesOf(input)
+  const writes = writesOf(input);
+  formatWrites(writes);
+  const errors = writes
     .filter(({ file }) => isChecked(file))
     .flatMap(({ file }) => {
       const project = findProject(dirname(file));
@@ -419,6 +434,22 @@ function postWrite(input) {
   }
   process.stderr.write(`${feedback}\n`);
   process.exitCode = 2;
+}
+
+// With `formatOnWrite` in the config, the Biome the project installed lays out each written file
+// before it is checked, so that the layout is settled at the write and the lint findings that follow
+// a wrapped line come back in the same output. One file, the project's binary only, never `npx biome`.
+function formatWrites(writes) {
+  for (const { file } of writes) {
+    const project = findProject(dirname(file));
+    if (!project?.formatOnWrite || project.mode === 'off' || !FORMATTED_FILE.test(file) || !existsSync(file)) {
+      continue;
+    }
+    const biome = join(project.root, 'node_modules', '.bin', 'biome');
+    if (existsSync(biome)) {
+      spawnSync(biome, ['format', '--write', file], { cwd: project.root, encoding: 'utf8', timeout: FORMAT_TIMEOUT });
+    }
+  }
 }
 
 // A context-builder of Claude Code: its tool calls are counted, its runs and stops recorded.
@@ -477,11 +508,38 @@ function stop(input) {
   if (unfinished) {
     return emit({ decision: 'block', reason: unfinished });
   }
-  const reminder = commitReminder(project, input, { repeat: false });
-  // A warning shown to the user, never a block: the size of a commit is advice.
-  if (reminder) {
-    emit({ systemMessage: reminder });
+  const reminders = [commitReminder(project, input, { repeat: false }), designReminder(project, input)].filter(Boolean);
+  // Warnings shown to the user, never a block: the size of a commit and a design departed from are advice.
+  if (reminders.length > 0) {
+    emit({ systemMessage: reminders.join('\n') });
   }
+}
+
+// In the worktree of a story, a done row whose design review cites a name the code does not have,
+// with no compromise listed in the report: said once per session for the same names, never blocking.
+function designReminder(project, input) {
+  const story = readJson(join(project.root, STORY_SCOPE))?.story;
+  if (typeof story !== 'string' || !project.cli || fixOf(project) !== undefined) {
+    return undefined;
+  }
+  const design = runCli(project, ['story-check', story, '--json'], 20000)?.design ?? [];
+  if (design.length === 0) {
+    return undefined;
+  }
+  const key = createHash('sha256')
+    .update(
+      `${project.root}\n${sessionOf(input)}\n${design.map(({ document, line, cited }) => `${document}:${line}:${cited}`).join('\n')}`,
+    )
+    .digest('hex')
+    .slice(0, 24);
+  if (alreadyRemembered(join(tmpdir(), `ddd-ts-kit-design-${key}`))) {
+    return undefined;
+  }
+  const named = design
+    .slice(0, 5)
+    .map(({ cited, row, document, line }) => `\`${cited}\` (#${row}, ${document}:${line})`)
+    .join(', ');
+  return `ddd-ts-kit: a row departed from its design: update its review section or list the compromise. ${design.length} name(s) of the design of story ${story} are not in the code: ${named}. \`npx ddd-ts-kit story-check ${story}\` lists them, and \`### Compromises\` of \`## Report\` in docs/architecture/stories/${story}.md records what was built otherwise.`;
 }
 
 // The session of a story ends on its report: written once the pull request is open, or with what
@@ -649,6 +707,8 @@ function describeProject(root) {
     // required (what init writes in a new project): the code of a context is refused in the main checkout
     // of the trunk; advised (the key absent, a project started before): only said.
     worktrees: config.worktrees === 'required' ? 'required' : 'advised',
+    // The project's Biome runs on each written file before the check; absent, off.
+    formatOnWrite: config.formatOnWrite === true,
   };
 }
 
@@ -755,8 +815,9 @@ function storyNotice(project) {
     return [`Story ${story}: run \`npx ddd-ts-kit story ${story}\` for where it stands.`];
   }
   const done = phases.phases.filter(({ met }) => met).map(({ title }) => title);
+  const kind = fixOf(project) === undefined ? ['Story', 'story'] : ['Fix', 'fix'];
   return [
-    `Story ${story} (skill ddd-ts-kit:story): ${done.length === 0 ? 'nothing done yet' : `done: ${done.join(', ')}`}. Next: ${phases.next ?? 'its pull request'}`,
+    `${kind[0]} ${story} (skill ddd-ts-kit:${kind[1]}): ${done.length === 0 ? 'nothing done yet' : `done: ${done.join(', ')}`}. Next: ${phases.next ?? 'its pull request'}`,
     ...meetingNotice(project),
   ];
 }
@@ -992,6 +1053,10 @@ function acceptanceReason(project, input, { file, written, replaced }) {
   if (judging || path.startsWith('test/acceptance/verdicts/')) {
     return judging === ACCEPTANCE_VERDICT.test(path) ? undefined : verdictReason(judging, path);
   }
+  const held = lockedRegressionReason(project, path);
+  if (held) {
+    return held;
+  }
   if (ACCEPTANCE_LOCK.test(path)) {
     return `${path} is the lock of a story's acceptance: \`npx ddd-ts-kit acceptance <story> --lock\` writes it, and refuses a change since the lock that no verdict of the acceptance-judge agent lets through.`;
   }
@@ -1008,6 +1073,27 @@ function isJudge(input) {
   return String(input.agent_type ?? '').includes(JUDGE_AGENT);
 }
 
+// The fix of the worktree, when its story.json says `kind: 'fix'` (absent, a story): its code, whether
+// its lock is written, and the regression specs the lock lists, relative to the project.
+function fixOf(project) {
+  const scope = readJson(join(project.root, STORY_SCOPE));
+  if (typeof scope?.story !== 'string' || scope.kind !== 'fix') {
+    return undefined;
+  }
+  const lock = join(project.root, 'test/acceptance', `${scope.story.toLowerCase()}.acceptance.lock.json`);
+  const files = (readJson(lock)?.regression ?? []).map((test) => test?.file).filter((file) => typeof file === 'string');
+  return { story: scope.story, locked: existsSync(lock), files: [...new Set(files)] };
+}
+
+// The regression spec of a fix, once locked, is the proof of the fix: no one rewrites it while the fix
+// is built, neither the session nor a sub-agent; a spec that is wrong is judged, as a scenario is.
+function lockedRegressionReason(project, path) {
+  const fix = fixOf(project);
+  return fix?.files.includes(path)
+    ? `${path} is a regression spec of fix ${fix.story}, locked: it is the proof of the fix, written before its code, and it does not change while the fix is built, by this session or by a sub-agent. Fix the code instead. A spec that is wrong goes to the acceptance-judge agent with the statement of the fix (\`## Statement\` of docs/architecture/stories/${fix.story}.md) as the criterion: \`npx ddd-ts-kit acceptance ${fix.story}\` prints its subject and fingerprint, and a verdict \`amend\` lets \`--lock\` take the new version.`
+    : undefined;
+}
+
 function verdictReason(judging, path) {
   return judging
     ? `The acceptance judge writes its verdict and nothing else: test/acceptance/verdicts/<story>-<fingerprint>.md, not ${path}.`
@@ -1015,26 +1101,39 @@ function verdictReason(judging, path) {
 }
 
 // Outside the judge, a command that names the lock or a verdict only reads it, versions it or runs the kit;
-// the judge itself only reads, and writes its verdict with the editor tool.
-async function acceptanceFilesShellReason(input, command) {
+// the judge itself only reads, and writes its verdict with the editor tool. A command that names a locked
+// regression spec of a fix may also run it, with a test runner; never rewrite it.
+async function acceptanceFilesShellReason(project, input, command) {
   const judging = isJudge(input);
-  if (!judging && !/acceptance\/verdicts|\.acceptance\.lock\.json/.test(command)) {
+  const held = (fixOf(project)?.files ?? []).filter(
+    (file) => command.includes(file) || command.includes(file.split('/').pop()),
+  );
+  if (!judging && held.length === 0 && !/acceptance\/verdicts|\.acceptance\.lock\.json/.test(command)) {
     return undefined;
   }
   shell = await import('./shell-commands.mjs');
   const writing = shell
     .simpleCommands(command, input.cwd ?? process.cwd())
     .some(
-      ({ words, redirects }) =>
-        !READING_PROGRAMS.has(shell.commandName(words)) ||
-        redirects.some(({ operator, target }) => operator.includes('>') && target !== '/dev/null'),
+      (simple) =>
+        !(READING_PROGRAMS.has(shell.commandName(simple.words)) || (held.length > 0 && runsTests(simple))) ||
+        simple.redirects.some(({ operator, target }) => operator.includes('>') && target !== '/dev/null'),
     );
   if (!writing) {
     return undefined;
   }
-  return judging
-    ? 'The acceptance judge reads (git, cat, grep, the kit) and writes its verdict with the Write tool only.'
-    : 'The lock of an acceptance and its verdicts are written by `npx ddd-ts-kit acceptance <story> --lock` and by the acceptance-judge agent only; a command may read them, version them or run the kit.';
+  if (judging) {
+    return 'The acceptance judge reads (git, cat, grep, the kit) and writes its verdict with the Write tool only.';
+  }
+  const [spec] = held;
+  return spec === undefined
+    ? 'The lock of an acceptance and its verdicts are written by `npx ddd-ts-kit acceptance <story> --lock` and by the acceptance-judge agent only; a command may read them, version them or run the kit.'
+    : `${lockedRegressionReason(project, spec)} A command may read it, version it or run it (\`npm test -- ${spec}\`).`;
+}
+
+// A test runner, however it is launched, as long as it runs no inline code of its own.
+function runsTests(simple) {
+  return RUNNING_PROGRAMS.has(shell.commandName(simple.words)) && inlineCode(simple) === undefined;
 }
 
 // What a scenario asserts, the wrapper `pending(...)`, white space, parentheses and commas aside.
@@ -1068,11 +1167,18 @@ function storyCodeReason(project, file) {
   if (!insideContexts(project, path) || /(^|\/)CONTEXT\.md$/.test(path)) {
     return undefined;
   }
+  // The proof of a fix, a spec inside the context, is written before its code.
+  if (isTestPath(path) && fixOf(project) !== undefined) {
+    return undefined;
+  }
   return storyBuildReason(project);
 }
 
+// A fix writes its spec first: the generators of test files stay open before its lock.
 async function storyGeneratorReason(project, input, command) {
-  return (await writesCode(input, command, ['acceptance', 'adr'])) ? storyBuildReason(project) : undefined;
+  const aside =
+    fixOf(project) === undefined ? ['acceptance', 'adr'] : ['acceptance', 'adr', 'builder', 'test-world', 'e2e'];
+  return (await writesCode(input, command, aside)) ? storyBuildReason(project) : undefined;
 }
 
 // A command that runs a generator of the kit writing the code of a context: any kind but those
@@ -1231,7 +1337,14 @@ function storiesOf(project) {
 
 function storyBuildReason(project) {
   const story = readJson(join(project.root, STORY_SCOPE))?.story;
-  if (typeof story !== 'string' || !project.cli) {
+  if (typeof story !== 'string') {
+    return undefined;
+  }
+  const fix = fixOf(project);
+  if (fix !== undefined) {
+    return fixBuildReason(fix);
+  }
+  if (!project.cli) {
     return undefined;
   }
   const cache = join(project.root, GUARD_STATE, 'story-gate.json');
@@ -1247,6 +1360,13 @@ function storyBuildReason(project) {
     return undefined;
   }
   return `The code of story ${story} waits for its build gate: a design review section per row and the acceptance written and locked, before any code. Next: ${gate.next} (\`npx ddd-ts-kit story ${story}\` shows every phase).`;
+}
+
+// The build gate of a fix is its proof: the regression spec written, listed and locked; no row, no review.
+function fixBuildReason({ story, locked }) {
+  return locked
+    ? undefined
+    : `The code of fix ${story} waits for its regression spec, locked: write the spec that reproduces the defect, see it fail on an assertion, list it under \`## Regression\` of docs/architecture/stories/${story}.md next to its \`## Statement\`, then \`npx ddd-ts-kit acceptance ${story} --lock\` (skill ddd-ts-kit:fix).`;
 }
 
 // The size and the time of change of every file the build gate of a story reads.

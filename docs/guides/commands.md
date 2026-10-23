@@ -99,6 +99,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | `npx ddd-ts-kit generate <kind> ...` | one file of a role with its spec, fake and registration (list below); `--module <module>` writes into a module of the model, and is required in a context that declares modules | whenever a file of a role is needed, never by hand | the file and the `TODO(domain)` places, `--json` for the list | fill the places, then `todo` |
 | `npx ddd-ts-kit todo [<context>]` | each `TODO(domain)`, `TODO(platform)`, `it.todo` and `TODO(review)` left | before closing a slice, a story or a milestone | `file:line` entries | write them, then `npm test`; settle each `TODO(review)` or dismiss it with `generate adr` before the story or milestone is closed |
 | `npx ddd-ts-kit story-check <code> [--strict]` | whether a story or a milestone (`M1` for the rows `M1.*`) can close: every row `done`, no marker of its own left, a marker being its own when its text, the commit that wrote it or the worker holding it names one of its rows, or when it belongs to no row in a context no other open story works in | before a story or a milestone is declared closed; `status` names one whose rows are done while markers keep it open | one line when it can close; else each blocker with why it is the story's, its `file:line` and its fix, then the unattributed markers it lists without blocking; exits 0, 1, or 2 on an unknown code | handle each blocker or dismiss it with `generate adr`, then delete the marker; name the row in an unattributed one (`TODO(review): #M1.03 ...`) |
+| `npx ddd-ts-kit measures [--since <date>] [--story <code>]` | what the loop of each story cost and left, from git and `docs/architecture/`: design, build and lead time, the requirements changed after the build started, the provisional decisions, the compromises, the review markers settled and the findings repeated across stories, the verification, the stories built at the same time, the origin, the incidents repeated; then the medians of the period; `--by-author` only when the team agreed on it | once a month, by whoever tunes the setup; before a retrospective | one line per story and the medians, `--json` for a dashboard; exits 0 | a repeated remark becomes a line of `AGENTS.md` or a rule of the config; a long design time, a question asked earlier |
 | `/ddd-ts-kit:parallel-work` | splits the slices between workers, one context each | when several agents or people build at once | a briefing per worker, `npx ddd-ts-kit worker-scope <context>` worktrees, with the documents of each row's design and the names they cite the trunk does not have | each worker's `use-case` |
 | `npx ddd-ts-kit status --workers` | each worker's worktree, branch, context, rows and commits ahead, its state (rows committed, row under way, last verify-slice), the files it changed, and the files two workers change | before briefing a second worker in a context, before each merge | a short text, `--json` for data | other rows for the new worker, the merge order, or `--resume` for a stopped one |
 | `npx ddd-ts-kit worker-scope <context> --resume` | where a stopped worker stands (rows by their `Slice:` trailer, files of the row under way, markers, last verify-slice, report, agent), read without changing anything | on a stop notification of a `context-builder` (turn limit, error, a person) | the SendMessage text for its agent, or the briefing of a new one | send it as it is |
@@ -264,6 +265,7 @@ Usage
   ddd-ts-kit story-scope <story> [--from <file>] [--kind story|fix] [--base <ref>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit story [<story>] [--gate build|close]
   ddd-ts-kit stories
+  ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
   ddd-ts-kit worktree <name> [--base <ref>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]
@@ -398,8 +400,16 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    otherwise (settle it or name its row in it); a marker of other stories' rows does not
                    block. --strict: every marker of its contexts blocks. Each blocker comes with why it
                    is its own, its file:line and its fix: handle it, or dismiss it by a decision record
-                   (generate adr), then delete the marker. Reads only: exits 0 when it can close, 1
-                   listing what keeps it open, 2 on a code no row carries or without slices.md
+                   (generate adr), then delete the marker. A done row also holds to its design: every
+                   name the ## #<id> section of docs/architecture/reviews/<code>.md cites (a path, a
+                   PascalCase name, a Class.member, as cited reads them) exists in the tree, or is
+                   listed under ### Compromises of ## Report in the story file; a name that is neither
+                   blocks, with its file:line in the review. A commit of the story on the current branch
+                   (its Slice: trailer, else its message naming a row or the story) that changes a
+                   migration or a container file (the paths the change-reference hook of the regulated
+                   profile watches) without a Change: <id> trailer is listed, with its files, and blocks
+                   under agents.profile regulated or with --strict. Reads only: exits 0 when it can
+                   close, 1 listing what keeps it open, 2 on a code no row carries or without slices.md
   acceptance       the acceptance scenarios of each story (test/acceptance/<story>.acceptance.spec.ts) against
                    its rows in slices.md and the criteria of docs/architecture/stories/<story>.md: the rows and
                    criteria each scenario names (#US5.02 AC1 in its title), the scenarios left to write
@@ -416,7 +426,10 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    criteria did not, without a verdict "amend" of the acceptance-judge agent on that very
                    version (test/acceptance/verdicts/*.md, lines Story:, Subject:, Fingerprint:,
                    Verdict:, Reason:); a refusal wins; the verdicts become amendments of the lock,
-                   listed for the owner to validate
+                   listed for the owner to validate. A fix is a story file with a ## Regression section
+                   listing the spec files that prove it (- test/unit/<name>.spec.ts): held to the tests of
+                   those files instead of rows and scenarios, locked and judged the same way, the statement
+                   of the fix being the criterion
   worker-scope     a git worktree on the branch build/<context> (by default .worktrees/<context>, see worktree),
                    cut from --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>

@@ -100,6 +100,7 @@ describe('the worktrees setting', () => {
     const config = JSON.parse(read(root, 'ddd-ts-kit.config.json')) as Record<string, unknown>;
 
     expect(config['worktrees']).toBe('required');
+    expect(config['formatOnWrite']).toBe(true);
 
     write(root, 'ddd-ts-kit.config.json', JSON.stringify({ ...config, worktrees: 'sometimes' }));
 

@@ -6,8 +6,8 @@ type Environment = Readonly<Record<string, string | undefined>>;
  * What configuration changes of each scheduled job, by job name: a job is switched off in one
  * environment with `JOB_<CONTEXT>_<JOB>_ENABLED=false`, never by a code change.
  * `ddd-ts-kit generate job` adds a line; a schedule or a timeout read from the environment goes
- * on the same line. Given a context, only its jobs are kept: an application that hosts one
- * context is refused the settings of a job it does not declare.
+ * on the same line. Given a context, only its jobs are kept: the wiring refuses the settings of a
+ * job no module declares (`UNKNOWN_JOB`), and a service that hosts one context declares only its own.
  */
 export function jobSettings(environment: Environment, context?: string): Readonly<Record<string, JobSettings>> {
   const settings: Readonly<Record<string, JobSettings>> = {

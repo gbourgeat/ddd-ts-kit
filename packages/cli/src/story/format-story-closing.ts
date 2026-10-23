@@ -14,26 +14,79 @@ const ORDER: readonly Remaining['kind'][] = ['review', 'domain', 'platform', 'te
 /**
  * `story-check` for a reader: a first line that says whether the story can close; then the rows
  * and the markers of its own that keep it open, each with why it is its own and the fix; then the
- * markers that may be its own, listed without blocking.
+ * names of its design the code lacks; then its commits without a change reference, blocking under
+ * the regulated profile or `--strict`; then the markers that may be its own, listed without blocking.
  */
 export function formatStoryClosing(closing: StoryClosing): string {
   return [
     verdictLine(closing),
     ...openLines(closing),
     ...ownLines(closing),
+    ...designLines(closing),
+    ...unreferencedLines(closing),
     ...notBlocking(closing),
     ...notes(closing),
   ].join('\n');
 }
 
-function verdictLine({ story, rows, open, markers, contexts, canClose }: StoryClosing): string {
+function verdictLine(closing: StoryClosing): string {
+  const { story, rows, open, markers, design, contexts, canClose } = closing;
+
   if (canClose) {
     return `${story} can close: its ${plural(rows.length, 'row')} done, no marker of its own left${contexts.length === 0 ? '' : ` in ${contexts.join(', ')}`}.`;
   }
 
   const left = open.length === 0 ? 'every row done' : `${plural(open.length, 'row')} not done`;
+  const departed = design.length === 0 ? '' : `, ${plural(design.length, 'name')} of its design not in the code`;
 
-  return `${story} cannot close: ${left}, ${plural(markers.length, 'marker')} of its own left.`;
+  const unreferenced = holdsToChange(closing)
+    ? `, ${plural(closing.unreferenced.length, 'commit')} without a change reference`
+    : '';
+
+  return `${story} cannot close: ${left}, ${plural(markers.length, 'marker')} of its own left${departed}${unreferenced}.`;
+}
+
+/** True when the commits without a change reference keep the story open: the regulated profile, or `--strict`. */
+function holdsToChange({ unreferenced, regulated, strict }: StoryClosing): boolean {
+  return unreferenced.length > 0 && (regulated || strict);
+}
+
+/** The commits of the story that change a migration or a container without a `Change:` trailer. */
+function unreferencedLines(closing: StoryClosing): string[] {
+  const { unreferenced, regulated } = closing;
+  const [first] = unreferenced;
+
+  if (first === undefined) {
+    return [];
+  }
+
+  const heading = holdsToChange(closing)
+    ? `Without a change reference (${unreferenced.length}, ${regulated ? 'agents.profile regulated' : '--strict'}): ${first.fix}`
+    : `Not blocking, without a change reference (${unreferenced.length}; blocks under agents.profile regulated, or with --strict): ${first.fix}`;
+
+  return [
+    '',
+    heading,
+    ...unreferenced.map(
+      (commit) =>
+        `  ${commit.sha}  ${commit.subject}  (${commit.rows.length === 0 ? 'names the story' : `Slice: ${commit.rows.join(', ')}`}; ${commit.files.join(', ')})`,
+    ),
+  ];
+}
+
+/** The names the design review of the done rows cites that the code lacks: the row departed from its design, unsaid. */
+function designLines({ story, design }: StoryClosing): string[] {
+  const [first] = design;
+
+  if (first === undefined) {
+    return [];
+  }
+
+  return [
+    '',
+    `Departed from its design (${design.length}): update the section of the row in ${first.document} to what it built, or list the name under \`### Compromises\` of \`## Report\` in docs/architecture/stories/${story}.md with why`,
+    ...design.map((name) => `  ${name.document}:${name.line}  \`${name.cited}\`  (#${name.row}, ${name.why})`),
+  ];
 }
 
 function plural(count: number, noun: string): string {
