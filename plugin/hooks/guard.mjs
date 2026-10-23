@@ -985,7 +985,7 @@ function isBarrel(project, path) {
 /**
  * The path of a file inside its context, its module of the model left out, as the CLI reads it:
  * a module holds its layers (<module>/application/...) and a folder of the test folders of its specs
- * (test/unit/<module>/...); 0.86 put it under domain/ and application/ (application/<module>/...).
+ * (test/unit/<module>/...); 0.86 and 0.87 put it under domain/ and application/ (application/<module>/...).
  */
 function outsideItsModule(project, context, parts) {
   const modules = project.modules?.[context] ?? [];

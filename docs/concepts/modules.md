@@ -162,7 +162,7 @@ module:
 |---|---|---|
 | `tree/closed` | accepts the folder of a declared module at the root of the context, and still reports one the config does not declare; its fix names `generate module` | `error` |
 | `module/declared` | every module of `contexts.<name>.modules` is named with terms of the glossary of its context (every word of its name; technical words `shared`, `common`, `core`, `misc`, `utils` and the other technical words of `language/no-technical-name`) and has a row in `## Modules` of `CONTEXT.md` | `error` |
-| `module/complete` | once a context declares modules, a file of a layer outside every module, the files the context keeps aside, is reported, and so is a spec left in `test/unit/` while the file it is named after sits in a module, and a module still where 0.86 put it (`domain/<module>/`) | `warn`, so that a context moves into modules one commit at a time |
+| `module/complete` | once a context declares modules, a file of a layer outside every module, the files the context keeps aside, is reported, and so is a spec left in `test/unit/` while the file it is named after sits in a module, and a module still where 0.86 and 0.87 put it (`domain/<module>/`) | `warn`, so that a context moves into modules one commit at a time |
 | `module/no-cycle` | the imports between the modules of one context form no cycle | `warn`, because Evans makes coupling between modules a signal to change the model, not a refusal |
 
 Every other rule reads a file of a module as it reads the same file outside one: the role of a
@@ -194,7 +194,7 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   database, its route groups) stays at the level of the context.
 - In a context that declares modules, a kind that would write a file of a layer without
   `--module` is refused, with the list of the modules and the same command with `--module`: the
-  generator guides, it never leaves the choice unsaid. A context still in the layout of 0.86 is
+  generator guides, it never leaves the choice unsaid. A context still in the layout of 0.86 and 0.87 is
   refused too, with `context-layout` as the way out.
 - `move-to-module` takes paths relative to the context, files or folders of a role of any layer,
   or specs, moves them into a declared module (a spec into `test/<unit|integration>/<module>/`),
@@ -226,9 +226,9 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   `<module>/infrastructure/` and `<module>/presentation/`. A folder that file does not name is no
   module at boot either: a role file in it is refused, as `check` reports it.
 
-### From the layout of 0.86
+### From the layout of 0.86 and 0.87
 
-0.86 put a module under `domain/<module>/` and `application/<module>/`, and left its adapters,
+0.86 and 0.87 put a module under `domain/<module>/` and `application/<module>/`, and left its adapters,
 routes and specs organised by technique. This version still reads that layout, and
 `module/complete` warns about it; the generators refuse to write in such a context until it is
 moved. `npx ddd-ts-kit context-layout [<context>...] [--dry-run]` moves it: each module to its

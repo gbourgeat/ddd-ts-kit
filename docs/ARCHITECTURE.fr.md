@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:cafa9eb09a8028ed -->
+<!-- translation-of: ARCHITECTURE.md sha256:8f6c142890f9436f -->
 
 # Référence de l'architecture
 
@@ -158,7 +158,7 @@ sujet, `generate module <context> <module>` en déclare un, et
 `move-to-module <context> <module> <path>...` y déplace des fichiers existants avec leurs imports,
 les *specs* qui portent leur nom les suivant. Dans un contexte qui déclare des modules, le
 générateur refuse d'écrire un fichier d'une couche sans `--module`, les fichiers que le contexte
-garde à part exceptés, et nomme les modules. La disposition de 0.86, un module sous
+garde à part exceptés, et nomme les modules. La disposition de 0.86 et 0.87, un module sous
 `domain/<module>/` et `application/<module>/`, est lue pendant une version mineure, signalée par
 `module/complete`, et `ddd-ts-kit context-layout` la déplace, en reconnaissant le module de
 chaque adaptateur, route et *spec* à ce qu'il importe. Pourquoi et quand :
@@ -326,7 +326,7 @@ et la plateforme le lie au démarrage. Pourquoi, et ce que contient chaque couch
 | `tree/context-doc` | Chaque contexte a un `CONTEXT.md` avec les sections requises (`Purpose`, `Classification`, `Ubiquitous language`, `Aggregates`, `Published events`, `Relationships`) et la classification déclarée dans la config. |
 | `tree/documented-paths` | Un chemin d'un contexte borné écrit comme du code dans un fichier Markdown de `docs/architecture/` (un plan, une note de conception, une revue) est un emplacement que l'arborescence canonique accepte, jugé comme `tree/closed` juge un fichier : ses répertoires et le fichier lui-même. Un chemin écrit relativement à son contexte (il commence par `domain/`, `application/`, `infrastructure/`, `presentation/` ou `published-language/`) ne nomme aucun contexte : il n'est signalé que quand chaque contexte déclaré le refuse, ses répertoires supplémentaires compris. Un chemin qui n'existe pas encore n'est pas signalé, un plan nomme des fichiers à créer ; un chemin que l'arborescence refuse (`application/services/`) décrit une conception que le code n'a plus. Sévérité par défaut `warn`. |
 | `module/declared` | Chaque module de `contexts.<name>.modules` est nommé avec des termes de la table `## Ubiquitous language` du `CONTEXT.md` de son contexte, chaque mot de son nom, et jamais avec un mot technique (`shared`, `common`, `core`, `misc`, `utils` et les autres mots techniques de `language/no-technical-name`), et a une ligne dans la section `## Modules` de ce `CONTEXT.md`. Son nom est en kebab-case, unique dans le contexte, et n'est ni un dossier de rôle ni un dossier du contexte (`domain`, `test`, `published-language`...). Correctif : `generate module <context> <module> --purpose "..." [--term "<Term>=<meaning>"]`. |
-| `module/complete` | Dès qu'un contexte déclare des modules, un fichier d'une couche hors de tout module est signalé, comme une *spec* restée dans `test/unit/` ou `test/integration/` alors que le fichier dont elle porte le nom est dans un module, les fichiers que le contexte garde à part exceptés (section 2, modules du modèle). Un constat par dossier. Correctif : `move-to-module <context> <module> <path>`. Un module encore là où 0.86 le mettait, `domain/<module>/` ou `application/<module>/`, est signalé aussi, avec `ddd-ts-kit context-layout` pour correctif. Sévérité par défaut `warn`, pour qu'un contexte passe en modules un commit à la fois. |
+| `module/complete` | Dès qu'un contexte déclare des modules, un fichier d'une couche hors de tout module est signalé, comme une *spec* restée dans `test/unit/` ou `test/integration/` alors que le fichier dont elle porte le nom est dans un module, les fichiers que le contexte garde à part exceptés (section 2, modules du modèle). Un constat par dossier. Correctif : `move-to-module <context> <module> <path>`. Un module encore là où 0.86 et 0.87 le mettaient, `domain/<module>/` ou `application/<module>/`, est signalé aussi, avec `ddd-ts-kit context-layout` pour correctif. Sévérité par défaut `warn`, pour qu'un contexte passe en modules un commit à la fois. |
 | `module/no-cycle` | Les imports entre les modules d'un même contexte ne forment aucun cycle. Sévérité par défaut `warn` : le couplage entre modules est un signal pour changer le modèle (Evans, Modules), pas un refus. |
 | `naming/suffix` | Un fichier d'un répertoire de rôle porte le suffixe du rôle, en kebab-case. La liste des codes d'un contexte, `<context>.codes.ts` à sa racine, se lit comme `domain/errors/codes.ts`, le seul fichier d'un rôle nommé autrement. |
 | `naming/one-concept-per-file` | Un seul agrégat, entité, objet-valeur, événement, gestionnaire, *job* ou projection exporté par fichier, et une seule classe déclarée par fichier de rôle. |

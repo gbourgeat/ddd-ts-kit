@@ -1,5 +1,5 @@
 [English](modules.md) · **Français**
-<!-- translation-of: modules.md sha256:5fe25437a399756b -->
+<!-- translation-of: modules.md sha256:c73a40e2b8f63c26 -->
 
 # Modules du modèle
 
@@ -170,7 +170,7 @@ module :
 |---|---|---|
 | `tree/closed` | accepte le dossier d'un module déclaré à la racine du contexte, et signale toujours celui que la configuration ne déclare pas ; son correctif nomme `generate module` | `error` |
 | `module/declared` | chaque module de `contexts.<name>.modules` est nommé avec des termes du glossaire de son contexte (chaque mot de son nom ; les mots techniques sont refusés (`shared`, `common`, `core`, `misc`, `utils` et les autres mots techniques de `language/no-technical-name`)) et a une ligne dans `## Modules` de `CONTEXT.md` | `error` |
-| `module/complete` | dès qu'un contexte déclare des modules, un fichier d'une couche hors de tout module, les fichiers que le contexte garde à part exceptés, est signalé, comme une *spec* restée dans `test/unit/` alors que le fichier dont elle porte le nom est dans un module, et un module encore là où 0.86 le mettait (`domain/<module>/`) | `warn`, pour qu'un contexte passe en modules un commit à la fois |
+| `module/complete` | dès qu'un contexte déclare des modules, un fichier d'une couche hors de tout module, les fichiers que le contexte garde à part exceptés, est signalé, comme une *spec* restée dans `test/unit/` alors que le fichier dont elle porte le nom est dans un module, et un module encore là où 0.86 et 0.87 le mettaient (`domain/<module>/`) | `warn`, pour qu'un contexte passe en modules un commit à la fois |
 | `module/no-cycle` | les imports entre les modules d'un même contexte ne forment aucun cycle | `warn`, parce qu'Evans fait du couplage entre modules un signal pour changer le modèle, pas un refus |
 
 Toute autre règle lit un fichier d'un module comme elle lit le même fichier hors module : le rôle
@@ -204,7 +204,7 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
 - Dans un contexte qui déclare des modules, un générateur qui écrirait un fichier d'une couche
   sans `--module` est refusé, avec la liste des modules et la même commande avec `--module` : le
   générateur guide, il ne laisse jamais le choix implicite. Un contexte encore dans la disposition
-  de 0.86 est refusé aussi, avec `context-layout` pour issue.
+  de 0.86 et 0.87 est refusé aussi, avec `context-layout` pour issue.
 - `move-to-module` prend des chemins relatifs au contexte, des fichiers ou des dossiers d'un rôle
   de n'importe quelle couche, ou des *specs*, les déplace dans un module déclaré (une *spec* dans
   `test/<unit|integration>/<module>/`), emmène les *specs* qui portent le nom d'un fichier déplacé,
@@ -238,9 +238,9 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   n'est pas un module au démarrage non plus : un fichier de rôle qui s'y trouve est refusé, comme
   `check` le signale.
 
-### Depuis la disposition de 0.86
+### Depuis la disposition de 0.86 et 0.87
 
-0.86 mettait un module sous `domain/<module>/` et `application/<module>/`, et laissait ses
+0.86 et 0.87 mettaient un module sous `domain/<module>/` et `application/<module>/`, et laissaient ses
 adaptateurs, ses routes et ses *specs* organisés par technique. Cette version lit encore cette
 disposition, et `module/complete` la signale ; les générateurs refusent d'écrire dans un tel
 contexte tant qu'il n'est pas déplacé. `npx ddd-ts-kit context-layout [<context>...] [--dry-run]`

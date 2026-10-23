@@ -24,7 +24,7 @@ beforeAll(() => {
   toTheLayoutOf086();
 });
 
-describe('a context whose module sits where 0.86 put it', () => {
+describe('a context whose module sits where 0.86 and 0.87 put it', () => {
   it('is read, and module/complete warns about it, naming the command that moves it', () => {
     const checked = checkJsonOf(cli(root, 'check', '--rule', 'module/complete', '--json'));
 
@@ -35,7 +35,7 @@ describe('a context whose module sits where 0.86 put it', () => {
     expect(cli(root, 'check', '--rule', 'module/complete').stdout).toContain('npx ddd-ts-kit context-layout billing');
   });
 
-  it('is still read by describe, its use cases where 0.86 put them', () => {
+  it('is still read by describe, its use cases where 0.86 and 0.87 put them', () => {
     const described = cli(root, 'describe', 'billing', '--json').stdout;
 
     expect(described).toContain(`${BILLING}/application/invoices/commands/issue-invoice`);
@@ -88,7 +88,7 @@ describe('a context whose module sits where 0.86 put it', () => {
 });
 
 describe('context-layout, once the modules are in their folders', () => {
-  it('overwrites nothing: a file of 0.86 next to the same file in its module is left to a person', () => {
+  it('overwrites nothing: a file of 0.86 or 0.87 next to the same file in its module is left to a person', () => {
     const today = `${BILLING}/invoices/domain/aggregates/invoice.aggregate.ts`;
     const earlier = `${BILLING}/domain/invoices/aggregates/invoice.aggregate.ts`;
     const kept = read(root, today);
@@ -166,7 +166,7 @@ function roleFoldersOfBilling(): string[] {
 }
 
 /**
- * Lays the module out as 0.86 did: its model and its use cases under `domain/invoices/` and
+ * Lays the module out as 0.86 and 0.87 did: its model and its use cases under `domain/invoices/` and
  * `application/invoices/`, its adapters, routes and specs at the level of the context.
  */
 function toTheLayoutOf086(): void {

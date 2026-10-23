@@ -1,8 +1,8 @@
 /**
  * The path of a role file relative to its context, its module of the model left out:
  * `calendars/application/commands/x/x.handler.ts` is where `application/commands/x/x.handler.ts`
- * would be without modules, and so is `application/calendars/commands/x/x.handler.ts`, as 0.86
- * laid modules out. `modules` are the modules of the model the context declares, read from its
+ * would be without modules, and so is `application/calendars/commands/x/x.handler.ts`, as 0.86 and
+ * 0.87 laid modules out. `modules` are the modules of the model the context declares, read from its
  * generated `<context>.dependencies` file: a folder it does not name is no module.
  */
 export function withoutModule(relative: string, modules: readonly string[]): string {

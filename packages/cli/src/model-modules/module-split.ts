@@ -5,7 +5,7 @@ import { EARLIER_MODULE_LAYERS, MODULE_LAYERS, MODULE_TEST_FOLDERS } from './mod
 export interface ModuleSplit {
   readonly module: string | undefined;
   readonly path: string;
-  /** True when the module sits where 0.86 put it, under `domain/` or `application/`. */
+  /** True when the module sits where 0.86 and 0.87 put it, under `domain/` or `application/`. */
   readonly earlier?: boolean;
 }
 
@@ -14,7 +14,7 @@ export interface ModuleSplit {
  * declares (`declaredModules`): `calendars/domain/aggregates/calendar.aggregate.ts` is
  * `domain/aggregates/calendar.aggregate.ts` of the module `calendars`, and
  * `test/unit/calendars/calendar.aggregate.spec.ts` is `test/unit/calendar.aggregate.spec.ts` of it.
- * The layout of 0.86, `domain/calendars/aggregates/...`, is read too, and said so (`earlier`). A
+ * The layout of 0.86 and 0.87, `domain/calendars/aggregates/...`, is read too, and said so (`earlier`). A
  * folder the config does not declare is no module: `tree/closed` reports it, and no tool reads it
  * as one. The folder of the module itself (`calendars`) is the module with an empty path. A path
  * already read without its module (`pathInContext`) is given no module.
@@ -51,7 +51,7 @@ function inTestFolder(
     : undefined;
 }
 
-/** `<domain|application>/<module>/...`, as 0.86 laid modules out. */
+/** `<domain|application>/<module>/...`, as 0.86 and 0.87 laid modules out. */
 function inEarlierPlace(
   [first = '', second = '', ...rest]: readonly string[],
   modules: readonly string[],

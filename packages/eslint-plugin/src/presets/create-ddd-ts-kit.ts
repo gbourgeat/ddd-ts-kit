@@ -216,7 +216,7 @@ function innerLayerFiles(config: Config): string[] {
 
 /**
  * The aggregates and entities of a context, at its level or in a module of its model
- * (`<module>/domain/aggregates/`, or `domain/<module>/aggregates/` as 0.86 laid it out).
+ * (`<module>/domain/aggregates/`, or `domain/<module>/aggregates/` as 0.86 and 0.87 laid it out).
  */
 function aggregateFiles(config: Config): string[] {
   return ['aggregates', 'entities'].flatMap((folder) => [

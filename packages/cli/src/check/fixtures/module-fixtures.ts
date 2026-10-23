@@ -89,7 +89,7 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'module/complete',
-    name: 'a module where 0.86 put it, under domain/',
+    name: 'a module where 0.86 and 0.87 put it, under domain/',
     expect: { file: `${BILLING}/domain/invoices` },
     severity: 'warn',
     files: project(
