@@ -7,6 +7,7 @@ import type { Slice } from '../progress/slice.js';
 import { Workspace } from '../workspace/index.js';
 import { attributeMarkers } from './attribute-markers.js';
 import { closingOf } from './closing-of.js';
+import { designDepartures } from './design-departures.js';
 import { mayKeepOpen } from './may-keep-open.js';
 import { projectContexts } from './project-contexts.js';
 import type { StoryClosing } from './story-closing.js';
@@ -15,7 +16,9 @@ import { storyScope } from './story-scope.js';
 
 /**
  * Whether the story or milestone `asked` (`M1`, `#M1`) can close, read from the slices file, the
- * markers of the tree and, for the markers that may be its own, the commits that wrote them.
+ * markers of the tree and, for the markers that may be its own, the commits that wrote them; and
+ * from the design review of its done rows against the tree, each name cited there that the code
+ * lacks being a blocker unless the report lists it as a compromise.
  */
 export function readStoryClosing(root: string, asked: string, strict: boolean): StoryClosing {
   const ws = new Workspace(root, false);
@@ -40,8 +43,9 @@ export function readStoryClosing(root: string, asked: string, strict: boolean): 
   const candidates = readRemaining(ws, config).filter((marker) => mayKeepOpen(marker, scope));
   const ids = [...new Set(rows.map((row) => row.id))];
   const markers = attributeMarkers(root, candidates, { ids, git: runGit });
+  const design = designDepartures({ root, config }, story, rows);
 
-  return closingOf(story, { rows, markers, contexts }, strict);
+  return closingOf(story, { rows, markers, contexts, design }, strict);
 }
 
 function unknownStory(story: string, rows: readonly Slice[]): CliError {

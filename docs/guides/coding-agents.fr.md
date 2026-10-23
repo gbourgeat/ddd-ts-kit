@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:0d6f22536c0ddbb9 -->
+<!-- translation-of: coding-agents.md sha256:3d959c031efc7384 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -13,7 +13,7 @@ les trois agents :
 | Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, puis `copilot plugin install ddd-ts-kit@ddd-ts-kit` | par son nom, `start` |
 | Agent cloud de Copilot, VS Code | déclaré par le `.github/copilot/settings.json` qu'écrit `init` : l'agent cloud l'installe, VS Code le recommande | par son nom, `start` |
 
-Vingt-cinq skills, dans l'ordre où un projet les rencontre :
+Vingt-six skills, dans l'ordre où un projet les rencontre :
 
 | Skill | Usage |
 |---|---|
@@ -27,6 +27,7 @@ Vingt-cinq skills, dans l'ordre où un projet les rencontre :
 | `parallel-work` | répartir les tranches entre plusieurs agents ou personnes sans collision |
 | `intent` | saisir une idée comme une intention avant toute *story*, dans les mots de celui qui l'a, pour que le responsable du produit l'accepte dans une *pull request* (lancée par l'utilisateur ; [parcours d'une story](story-workflow.fr.md#doù-vient-une-story)) |
 | `story` | mener une *user story* de ses questions à une *pull request* verte en une session, une *story* par terminal (lancée par l'utilisateur ; [parcours d'une story](story-workflow.fr.md)) |
+| `fix` | réparer un défaut dans son propre *worktree*, sa *spec* de régression écrite et verrouillée avant tout code (lancée par l'utilisateur ; [un correctif](story-workflow.fr.md#un-correctif--la-spec-de-régression-dabord-verrouillée)) |
 | `pull-request` | mener la *pull request* d'une *story* au vert : balayer ses commentaires de revue et ses vérifications en échec sous les règles de la *story*, pousser, attendre, recommencer ; puis rendre compte de ce qui a changé et de ce qui a été refusé (lancée par l'utilisateur) |
 | `scaffold` | un fichier de n'importe quel rôle, à partir d'un template |
 | `use-case` | une fonctionnalité de bout en bout, test d'abord |
@@ -61,7 +62,11 @@ session, signale quand les packages installés ne sont pas la version que décri
 modification d'un contrat généré, demande l'avis du propriétaire du projet avant qu'une
 désactivation, un test sauté ou un changement des règles soit écrit, vérifie chaque fichier
 écrit et renvoie les violations avec leur correction, et refuse de terminer tant que des
-erreurs d'architecture restent. Il rappelle, sans bloquer, quand les changements non commités
+erreurs d'architecture restent. Avec `"formatOnWrite": true` dans la configuration (écrite par `init` pour un nouveau projet), il lance
+d'abord le Biome que le projet a installé sur le fichier écrit (`node_modules/.bin/biome format
+--write`, un fichier, jamais un autre formateur), pour que la mise en page soit réglée à
+l'écriture et que les constats du lint qui suivent une ligne repliée reviennent dans la même
+sortie ; une exécution qui échoue ne change rien. Il rappelle, sans bloquer, quand les changements non commités
 dépassent la taille conseillée d'un commit, et dans le worktree d'un worker
 (`.ddd-ts-kit/worker.json`), il refuse une écriture hors du contexte du worker, par les outils
 d'édition ou par le *shell* (`sed -i`, une redirection, `tee`, `cp`, `mv`, `rm`), arrête le
@@ -83,7 +88,10 @@ pas sa revue de conception et que l'acceptation n'est pas écrite et verrouillé
 la *story* au démarrage de session avec ses croisements avec les autres *stories* ouvertes, dit
 une fois par fichier quand la session écrit un fichier qu'une autre *story* ouverte change, et
 refuse une fois de finir la session avant son rapport
-([parcours d'une story](story-workflow.fr.md)). Aucun *hook* ne tourne sur
+([parcours d'une story](story-workflow.fr.md)). Dans le *worktree* d'un correctif
+(`"kind": "fix"` dans ce fichier), il ouvre le code dès que la *spec* de régression est
+verrouillée, et refuse toute modification d'une *spec* verrouillée, par les outils d'édition
+comme par le *shell*, à la session comme à ses sous-agents. Aucun *hook* ne tourne sur
 chaque appel d'outil : une session ordinaire ne lance pas plus de processus qu'avant. En cas de
 panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
 configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le faire taire.

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:350ddfcd1e91c0d6 -->
+<!-- translation-of: README.md sha256:6d29da40523326e2 -->
 
 # ddd-ts-kit
 
@@ -1260,6 +1260,74 @@ de tranches, ou un contexte qu'aucune ligne ne nomme, est refusé. `--json` affi
 `story` valant `null` pour une ligne dont l'identifiant n'en nomme aucune, et `batch` `null` pour
 une ligne que le contexte demandé ne montre pas.
 
+## acceptance
+
+```
+ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock]
+```
+
+Les scénarios d'acceptation de chaque story (`test/acceptance/<story>.acceptance.spec.ts`, écrits
+par `generate acceptance <story>`) face à ses lignes de `docs/architecture/slices.md` et aux
+critères de `docs/architecture/stories/<story>.md` : les lignes et les critères que chaque
+scénario nomme dans son titre (`#US5.02 AC1 ...`), les scénarios restant à écrire (`it.todo`),
+ceux enveloppés dans `pending(...)` jusqu'à ce que leur code soit construit, et ce qui est
+incohérent. `--gate written` tient une story avant le code de ses lignes : chaque ligne `slice`
+et chaque critère a un scénario écrit, et l'acceptation est verrouillée ; `--gate passing` avant
+sa clôture : aucun n'est plus en attente. `--lock` écrit
+`test/acceptance/<story>.acceptance.lock.json`, l'empreinte de chaque critère et de chaque
+scénario (`pending(...)`, mise en page et commentaires mis à part) ; ensuite un scénario ne
+change qu'avec son critère, et un critère, ou un scénario dont les critères n'ont pas bougé,
+seulement avec un `Verdict: amend` de l'agent `acceptance-judge` sur cette version précise
+(`test/acceptance/verdicts/*.md`), que le verrou garde comme amendement à valider par le
+responsable du projet. Elle ne lance jamais de test. Sort en 1 tant qu'une porte n'est pas
+franchie, ou, sans porte, sur une incohérence ou une dérive depuis le verrou. `--json` affiche
+`{ gate, met, stories: [{ story, file?, specification?, rows, criteria, scenarios, regression?, lock?, amendments, problems }] }`.
+
+### Les specs de régression d'un correctif
+
+Un correctif est un fichier de story dont la section `## Regression` liste les fichiers de spec
+qui le prouvent, un chemin par élément, relatif à la racine du projet, avec ou sans accents
+graves :
+
+```md
+# FIX-412 A cancelled order frees its slot
+
+## Statement
+
+A customer cancels an order after it was shipped, and the order is still marked cancelled.
+
+## Regression
+
+- src/contexts/ordering/test/unit/order.aggregate.spec.ts
+- test/unit/cancel-order.handler.spec.ts
+```
+
+Une telle story n'a besoin d'aucune ligne de `slices.md` ni de spec d'acceptation :
+`acceptance FIX-412` lit chaque fichier listé et prend l'empreinte de chacun de ses `it` ou
+`test` comme celle d'un scénario. `--gate written` tient que chaque fichier listé existe et
+contient au moins un test (un `it.todo` reste à écrire ; un test que le lanceur met de côté est
+signalé quelle que soit la porte), et que le verrou est écrit ; `--lock` enregistre les tests
+sous `regression` de `test/acceptance/fix-412.acceptance.lock.json` (`{ file, title, fingerprint }`
+chacun) et refuse tant qu'une spec listée manque ou ne contient aucun test. Un test verrouillé
+changé ou supprimé est signalé comme l'est un scénario changé, sous le sujet
+`test "<title>" of <file>` avec son empreinte, jusqu'à ce que l'agent `acceptance-judge` laisse
+passer cette version, le `## Statement` du correctif étant le critère ; un nouveau test n'a
+besoin que d'un nouveau verrou. `--gate passing` tient que chaque test verrouillé est là,
+inchangé et plus enveloppé dans `pending(...)` ; c'est le lanceur de tests, pas cette commande,
+qui prouve qu'il passe. La garde du plugin lit le même verrou dans le *worktree* d'un correctif
+(`"kind": "fix"` dans `.ddd-ts-kit/story.json`) : elle ouvre le code dès que le verrou existe
+et refuse toute modification d'une spec verrouillée (skill `fix`,
+[parcours d'une story](../../docs/guides/story-workflow.fr.md)).
+
+```
+$ npx ddd-ts-kit acceptance FIX-412 --gate written
+FIX-412  fix, 2 regression specs, locked
+  specification docs/architecture/stories/FIX-412.md: no acceptance criterion stated
+  src/contexts/ordering/test/unit/order.aggregate.spec.ts: 1 test, 1 active
+  test/unit/cancel-order.handler.spec.ts: 1 test, 1 active
+  gate written: met
+```
+
 ## story-check
 
 ```
@@ -1296,17 +1364,32 @@ pas, et il est compté. Une cellule Context qui ne nomme aucun contexte du proje
 `platform`) n'en ajoute aucun : hors des contextes, seul un marqueur attribué à une de ses lignes
 compte. `--strict` fait bloquer chaque marqueur de ses contextes, à qui qu'il soit.
 
+Une ligne faite tient aussi à sa conception. Chaque nom que la section `## #<id>` de la revue de
+conception de la story (`docs/architecture/reviews/<code>.md`) cite en code en ligne, lu comme
+`cited` les lit (un chemin sous la racine des sources ou relatif au contexte, un
+`Classe.membre`, un nom en PascalCase ; un nom dont la phrase dit qu'il a été supprimé ou renommé
+est de l'histoire et n'est pas lu), doit exister dans l'arbre : le chemin existe ; la classe,
+l'interface, le type ou la fonction est déclaré par une source sous la racine des sources, ou
+importé par une (`Clock` du noyau) ; le membre est nommé dans un fichier qui déclare la classe.
+Un nom qui ne l'est pas est listé sous `### Compromises` du `## Report` de
+`docs/architecture/stories/<code>.md`, en code en ligne, avec la raison ; un nom qui n'existe pas
+et n'est pas listé bloque, avec son `fichier:ligne` dans la revue. L'arbre n'est lu que si une
+section d'une ligne faite cite un nom. `--strict` n'y change rien. La garde du plugin le dit une
+fois à l'arrêt d'une session dans le *worktree* d'une story, sans bloquer. La comparaison du code
+construit avec sa conception vient du [*playbook* du cycle de vie natif à l'IA d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf).
+
 Elle ne lit que les fichiers et git. Elle sort avec 0 quand la story peut être close (une ligne,
 puis les marqueurs listés sans bloquer, s'il y en a), 1 quand quelque chose la garde ouverte,
 chaque marqueur bloquant avec la raison pour laquelle il est à elle (`names #M1.01`,
 `written by a782a19 Slice: M1.02`, `no other open story in payments`), son `file:line` et sa
 correction (le traiter, ou l'écarter par un enregistrement de décision,
-`npx ddd-ts-kit generate adr "<title>"`, puis supprimer le marqueur), et 2 sur un code qu'aucune
+`npx ddd-ts-kit generate adr "<title>"`, puis supprimer le marqueur), chaque nom de sa conception
+que le code n'a pas avec son `fichier:ligne` dans la revue, et 2 sur un code qu'aucune
 ligne ne porte ou sans tableau des tranches. `--json` affiche
-`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, canClose }`,
+`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, design, canClose }`,
 chaque marqueur valant `{ kind, context, file, line, text, attribution: { by, rows, commit? } }`,
 avec `why`, `sharedWith` et `fix` dans `markers` et `unattributed` ; `by` vaut `text`, `commit`,
-`worker` ou `none`.
+`worker` ou `none` ; chaque nom de `design` valant `{ row, document, line, cited, kind, why, fix }`.
 
 ```
 $ npx ddd-ts-kit story-check M1
@@ -1327,6 +1410,18 @@ Not blocking, unattributed (1): settle each, or name its row in the marker (`TOD
 Not blocking: 1 marker of these contexts belongs to rows of US2.
 
 Once each is settled: npx ddd-ts-kit story-check M1
+```
+
+Une ligne faite dont la section cite ce qui n'a pas été construit :
+
+```
+$ npx ddd-ts-kit story-check US5
+US5 cannot close: every row done, 0 markers of its own left, 1 name of its design not in the code.
+
+Departed from its design (1): update the section of the row in docs/architecture/reviews/US5.md to what it built, or list the name under `### Compromises` of `## Report` in docs/architecture/stories/US5.md with why
+  docs/architecture/reviews/US5.md:12  `OrderNumberTaken`  (#US5.02, no class, interface, type or function OrderNumberTaken is declared or imported under the source root)
+
+Once each is settled: npx ddd-ts-kit story-check US5
 ```
 
 Une fois les trois réglés :

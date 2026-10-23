@@ -183,6 +183,16 @@ every changed criterion, and every scenario changed while its criteria were not,
 changes a scenario nor locks: the guard refuses all three. A host without the agents of the
 plugin asks the owner to write the verdict.
 
+## A fix, before its code
+
+A defect is repaired by skill `ddd-ts-kit:fix` (`/ddd-ts-kit:fix <code>`), the proof first: the
+spec that reproduces it, at the level of the defect (an aggregate spec, a handler spec, a case
+of a contract suite, an end-to-end scenario), named after it (`'#FIX-412 refuses ...'`), run
+once to fail on an assertion, listed under `## Regression` of its story file and locked with
+`npx ddd-ts-kit acceptance <code> --lock` before any code. A locked regression spec is never
+changed to make the fix pass: the guard refuses it, and a spec that is wrong is judged against
+the `## Statement` of the fix, as a scenario is against its criterion.
+
 ## Shape
 
 - `describe` the unit, `it` states the rule: `refuses to pay an order twice`.

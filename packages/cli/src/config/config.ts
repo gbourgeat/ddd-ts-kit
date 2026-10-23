@@ -126,6 +126,8 @@ export interface Config {
    * written, `check` reports a wrong value.
    */
   readonly worktrees: string;
+  /** True when the guard of the plugin runs the Biome of the project on each file a session writes, before it checks it; absent, off. */
+  readonly formatOnWrite: boolean;
   readonly deviations: readonly Deviation[];
   /** Names reported by `standard/no-parallel-interface`, over its defaults: the kernel interface to use instead, or `false` to drop a default. */
   readonly standardInterfaces: Readonly<Record<string, string | false>>;
