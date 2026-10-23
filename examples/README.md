@@ -94,7 +94,7 @@ declare class Appointment {
   readonly slot: { readonly startsAt: Date };
 }
 
-// application/authorization/scheduling.permissions.ts
+// scheduling.permissions.ts
 export const schedulingPermissions = definePermissions('scheduling', {
   'appointment.cancel': { description: 'Patient cancels until notice' },
 });
@@ -170,7 +170,7 @@ const schedulingPermissions = definePermissions('scheduling', {
   'appointment.cancel': { description: 'Patient cancels until notice' },
 });
 
-// domain/errors/codes.ts: the codes of the context, the contract a client reads; the platform maps each to a status.
+// scheduling.codes.ts: the codes of the context, the contract a client reads; the platform maps each to a status.
 const SchedulingCodes = {
   UnknownAppointment: 'APPOINTMENT_NOT_FOUND',
   ReasonRequired: 'REASON_REQUIRED',

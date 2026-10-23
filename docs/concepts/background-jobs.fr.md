@@ -1,5 +1,5 @@
 [English](background-jobs.md) · **Français**
-<!-- translation-of: background-jobs.md sha256:e699f0fc242987d3 -->
+<!-- translation-of: background-jobs.md sha256:68cded80e620bb3c -->
 
 # Jobs en arrière-plan
 
@@ -367,7 +367,7 @@ import { QueryHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
 
 const permissions = definePermissions('scheduling', { 'calendar.clear': { description: 'Clear calendar' } });
 
-// scheduling/domain/errors/codes.ts
+// scheduling.codes.ts
 export const SchedulingCodes = { UnknownClearance: 'UNKNOWN_CLEARANCE' } as const;
 
 // scheduling/domain/errors/unknown-clearance.error.ts

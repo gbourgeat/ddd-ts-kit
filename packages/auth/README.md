@@ -119,7 +119,7 @@ example below puts each one there.
 
 <!-- checked sample -->
 ```ts
-// contexts/billing/application/authorization/billing.permissions.ts
+// contexts/billing/billing.permissions.ts
 import { definePermissions } from '@ddd-ts-kit/auth';
 
 export const billingPermissions = definePermissions('billing', {

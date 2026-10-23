@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1943e91157120782 -->
+<!-- translation-of: README.md sha256:4274a8d0abcf48c0 -->
 
 # ddd-ts-kit
 
@@ -180,7 +180,7 @@ declare class Invoice extends AggregateRoot {
 // domain/repositories/invoice.repository.ts
 export abstract class InvoiceRepository extends Repository<Invoice> {}
 
-// application/authorization/billing.permissions.ts
+// billing.permissions.ts
 export const billingPermissions = definePermissions('billing', {
   'invoice.issue': { description: 'Issue invoice' },
 });
@@ -366,7 +366,7 @@ et l'unique ligne de la racine de composition qui ajoute tout le contexte :
 **Un refus est une classe à lui.** `init` écrit `"stack.refusals": "named"` : chaque refus d'un
 contexte est une classe nommée d'après ce qui est refusé, qui étend `DomainRefusal` du kernel,
 construite par des fabriques (factories) statiques nommées d'après ce sur quoi porte le refus, et
-son code se lit dans la liste fermée des codes du contexte, `domain/errors/codes.ts`.
+son code se lit dans la liste fermée des codes du contexte, `<context>.codes.ts`.
 `generate error <context> <Refusal> <factory>` écrit la classe, son code et la fabrique. Les
 règles `errors/*` tiennent cette forme. Deux formes antérieures continuent de fonctionner :
 `--refusals factories`, une classe d'erreur par concept qui étend `ConceptError`, chaque refus une
@@ -380,7 +380,7 @@ La forme qu'écrit `init`, que commence `generate error scheduling SlotTaken for
 ```ts
 import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-// domain/errors/codes.ts : la liste fermée des codes du contexte
+// scheduling.codes.ts : la liste fermée des codes du contexte
 export const SchedulingCodes = {
   SlotTaken: 'SLOT_TAKEN',
 } as const;
@@ -691,7 +691,7 @@ would create src/contexts/notification/application/commands/archive-notification
 would create src/contexts/notification/application/commands/archive-notification/archive-notification.handler.ts
 would create src/contexts/notification/test/unit/archive-notification.handler.spec.ts
 would update src/contexts/notification/CONTEXT.md
-would update src/contexts/notification/application/authorization/notification.permissions.ts
+would update src/contexts/notification/notification.permissions.ts
 would update src/contexts/notification/application/application.declarations.ts
 
 Next, in this order: the language of the context first, then the business decisions only you can make
@@ -702,7 +702,7 @@ Next, in this order: the language of the context first, then the business decisi
 
 | Genre | Arguments | Écrit |
 |---|---|---|
-| `context` | `<name> --classification <c> [--purpose "<two sentences>"] [--term ...]... [--upstream <ctx>[:relationship]]... [--preset identity]` | `CONTEXT.md` avec son glossaire, `published-language/index.ts`, l'entrée de configuration, l'enregistrement dans `platform/composition/compose-application.ts` et dans `test/architecture/extractable.spec.ts` ; sur tsyringe, avec HTTP, `presentation/http/<name>.routes.ts` (une fonction des deux bus, dans les deux styles) ; déclaré : le barrel `<name>.declarations.ts` ; explicite et câblage manuel : `<name>.module.ts`. `application/authorization/<name>.permissions.ts` naît avec la première permission, ou tout de suite quand `platform/auth/authorization/permissions.ts` liste les ensembles de permissions (rebac, custom). Avec `--preset`, le contexte est ensuite écrit en entier depuis ce *preset*, sa classification et son objet étant ceux du *preset* sauf si les options disent autre chose ([Presets](#presets)) |
+| `context` | `<name> --classification <c> [--purpose "<two sentences>"] [--term ...]... [--upstream <ctx>[:relationship]]... [--preset identity]` | `CONTEXT.md` avec son glossaire, `published-language/index.ts`, l'entrée de configuration, l'enregistrement dans `platform/composition/compose-application.ts` et dans `test/architecture/extractable.spec.ts` ; sur tsyringe, avec HTTP, `presentation/http/<name>.routes.ts` (une fonction des deux bus, dans les deux styles) ; déclaré : le barrel `<name>.declarations.ts` ; explicite et câblage manuel : `<name>.module.ts`. `<name>.permissions.ts`, à la racine du contexte, naît avec la première permission, ou tout de suite quand `platform/auth/authorization/permissions.ts` liste les ensembles de permissions (rebac, custom). Avec `--preset`, le contexte est ensuite écrit en entier depuis ce *preset*, sa classification et son objet étant ceux du *preset* sauf si les options disent autre chose ([Presets](#presets)) |
 | `aggregate` | `<context> <Name> [--event-sourced]` | agrégat, *builder*, *spec* sur le modèle étant donné / quand / alors ; avec `--event-sourced`, un agrégat sur `EventSourcedAggregate` dont l'état est le rejeu de ses événements, né avec son événement du domaine `Created`, le codec de ses événements stockés dans `infrastructure/persistence/<name>-events.mapper.ts`, un *builder* qui rejoue un historique et une *spec* à partir d'événements donnés, et une note qui nomme le `EventSourcedRepository` auquel délègue son adaptateur de *repository* |
 | `builder` | `<context> <Aggregate>` | `test/builders/<name>.builder.ts`, une classe qui étend `Builder` |
 | `test-world` | `<context> [Name]` | `test/worlds/<name>.world.ts` (le nom est par défaut celui du contexte) : `a<Name>World({ now, idPrefix, given })`, la mise en place que partagent plusieurs *specs* du contexte. Il lit les *fakes* de `test/fakes/` et le port que chacun implémente, les construit, les passe à `given` pour que la *spec* enregistre ce dont elle part, puis à l'application de test (avec `modules`, l'autorisation de la *spec*) ou, câblé à la main, enveloppe les *repositories* des bus de `createTestBuses` par `dispatching` ; il rend chaque *fake* sous le nom de son port. Un *fake* qui attend des arguments de constructeur, ou, avec un conteneur, celui d'un port que rien ne lie ni n'utilise encore, est laissé de côté avec une note |
@@ -710,7 +710,7 @@ Next, in this order: the language of the context first, then the business decisi
 | `value-object` (`vo`) | `<context> <Name>` | objet-valeur, *spec* |
 | `vocabulary` | `<context> <Name> --value <value> [--value <value>]...` | `domain/vocabularies/<name>.vocabulary.ts` : un objet `as const` des valeurs, indexé par chaque valeur en PascalCase, et le type union du même nom ; relancé, ajoute les valeurs que le fichier ne contient pas |
 | `domain-event` | `<context> <Aggregate> <Fact>` | événement nommé `<context>.<aggregate>.<fact>`, *spec* |
-| `error` (`refusal`) | `<context> <Refusal> <factory> [--code CODE] [--term ...]...` | sous `"stack.refusals": "named"` : la classe `<Refusal>` dans `domain/errors/<refusal>.error.ts`, qui étend `DomainRefusal` et lit son code dans la liste, son entrée dans `domain/errors/codes.ts` (la liste `<Context>Codes` et son type `<Context>Code`, créés s'ils manquent ; l'entrée est ajoutée à la fin), la fabrique statique `<factory>` et son cas dans `test/unit/<refusal>.error.spec.ts`. Chacun est écrit s'il manque : relancée, la commande ne change rien ; avec une autre fabrique, elle l'ajoute à la classe. `<Refusal>` est en PascalCase (un `Error` final est retiré), nommé avec des termes du glossaire et les qualificatifs d'un refus, `invalid`, `unknown`, `already`, `too`, `no`, `missing` et `required` (`BookingTooLate`) : un mot que le glossaire ne définit pas est refusé, avec le `--term` qui l'ajoute ; `<factory>` commence par `for`, `with`, `because`, `on` ou `at` (`forAccountId`), sinon la commande refuse et propose `for<Factory>`. Le code est le refus en casse de constante (`InsufficientFunds` pose `INSUFFICIENT_FUNDS`), `--code` en donne un autre ; refusé : un code déjà posé dans le contexte. Sous `factories` et `classes`, `<context> <Concept> <refusal>` : une fabrique statique `<refusal>` sur `domain/errors/<concept>.error.ts`, la classe des erreurs de ce concept (créée si elle manque, qui étend `ConceptError`), et son cas dans `test/unit/<concept>.error.spec.ts`. La fabrique est ajoutée après la dernière ; relancée, la commande ne change rien. `<Concept>` est un terme du glossaire (`--term` l'ajoute). Le code est le nom du refus en casse de constante, précédé du concept quand le nom est un seul mot ou un code du kit (`Appointment notFound` pose `APPOINTMENT_NOT_FOUND`) ; `--code` prend l'une des formes qu'accepte `errors/factory-name`. Refusés : un nom comme `create` ou `error1`, et un code déjà posé dans le contexte |
+| `error` (`refusal`) | `<context> <Refusal> <factory> [--code CODE] [--term ...]...` | sous `"stack.refusals": "named"` : la classe `<Refusal>` dans `domain/errors/<refusal>.error.ts`, qui étend `DomainRefusal` et lit son code dans la liste, son entrée dans `<context>.codes.ts` (la liste `<Context>Codes` et son type `<Context>Code`, créés s'ils manquent ; l'entrée est ajoutée à la fin), la fabrique statique `<factory>` et son cas dans `test/unit/<refusal>.error.spec.ts`. Chacun est écrit s'il manque : relancée, la commande ne change rien ; avec une autre fabrique, elle l'ajoute à la classe. `<Refusal>` est en PascalCase (un `Error` final est retiré), nommé avec des termes du glossaire et les qualificatifs d'un refus, `invalid`, `unknown`, `already`, `too`, `no`, `missing` et `required` (`BookingTooLate`) : un mot que le glossaire ne définit pas est refusé, avec le `--term` qui l'ajoute ; `<factory>` commence par `for`, `with`, `because`, `on` ou `at` (`forAccountId`), sinon la commande refuse et propose `for<Factory>`. Le code est le refus en casse de constante (`InsufficientFunds` pose `INSUFFICIENT_FUNDS`), `--code` en donne un autre ; refusé : un code déjà posé dans le contexte. Sous `factories` et `classes`, `<context> <Concept> <refusal>` : une fabrique statique `<refusal>` sur `domain/errors/<concept>.error.ts`, la classe des erreurs de ce concept (créée si elle manque, qui étend `ConceptError`), et son cas dans `test/unit/<concept>.error.spec.ts`. La fabrique est ajoutée après la dernière ; relancée, la commande ne change rien. `<Concept>` est un terme du glossaire (`--term` l'ajoute). Le code est le nom du refus en casse de constante, précédé du concept quand le nom est un seul mot ou un code du kit (`Appointment notFound` pose `APPOINTMENT_NOT_FOUND`) ; `--code` prend l'une des formes qu'accepte `errors/factory-name`. Refusés : un nom comme `create` ou `error1`, et un code déjà posé dans le contexte |
 | `domain-error` | `<context> <Name> [--code CODE]` | une classe par erreur avec un code stable, *spec* : la forme d'un projet dont la configuration dit `"stack.refusals": "classes"` ou rien. Refusé sous `named` et `factories`, avec la commande `generate error` à lancer à la place |
 | `domain-service` | `<context> <Name>` | service, *spec* |
 | `state-machine` | `<context> <Aggregate> [--value <state>]... [--transition "<intention>:<from>[,<from>]...[><to>]"]...` | le vocabulaire `<Aggregate>Status` (créé depuis `--value`, deux états au moins, ou complété des valeurs qui lui manquent), `domain/state-machines/<aggregate>.state-machine.ts` (`<aggregate>Lifecycle` : chaque valeur un état, la première initiale, les transitions demandées, un `TODO(domain)` pour le refus de l'erreur du concept) et `test/unit/<aggregate>.state-machine.spec.ts` (chaque transition là où elle mène, un refus depuis un état qu'elle ne quitte pas) ; c'est à l'agrégat de l'utiliser |
@@ -1050,7 +1050,7 @@ définir, ou de renommer la classe dans le plan ; `--apply` le redit pour chaque
 fabrique qui ne commence pas par `for`, `with`, `because`, `on` ou `at` puis une majuscule, une
 classe à qui l'on donne deux codes et une fabrique prévue deux fois. Il :
 
-- écrit `domain/errors/codes.ts` dans chaque contexte, la liste `<Context>Codes` avec une entrée
+- écrit `<context>.codes.ts` dans chaque contexte, la liste `<Context>Codes` avec une entrée
   par classe, et un fichier par classe de refus, `domain/errors/<refusal>.error.ts`, qui étend
   `DomainRefusal` et lit son code dans la liste, avec ses fabriques : chacune garde les
   paramètres, le message et les faits qu'elle avait ;
@@ -1067,7 +1067,7 @@ classe à qui l'on donne deux codes et une fabrique prévue deux fois. Il :
 Il laisse, et le dit avec sa ligne, ce qui nomme encore une classe de concept disparue : un
 `AppointmentError.is(error)` sans code, qui désignait chaque refus du concept (écrivez les refus
 qu'il désigne, `AppointmentEnded.is(error) || ..`), et `CodeOf<typeof AppointmentError>` (écrivez
-l'union des codes qu'il désigne, ou le type des codes de `codes.ts`). Et toujours : lancer le
+l'union des codes qu'il désigne, ou le type des codes de `<context>.codes.ts`). Et toujours : lancer le
 formateur et les vérifications, décider quels faits un client peut lire là où aucune fabrique
 n'en expose encore, vérifier les faits dans les *specs*, et supprimer le fichier du plan.
 Relancé, il ne trouve plus rien à déplacer. `--json` répond
@@ -2118,7 +2118,7 @@ règle.
 | `events/name-format` | un nom d'événement qui n'est pas `<context>.<aggregate>.<fact>` en kebab-case avec le bon contexte |
 | `events/name-declared-once` | une classe de `domain/events/` sans `static readonly eventName`, ou dont le `readonly name` écrit le nom une seconde fois au lieu de le lire |
 | `events/defined-in-published-language` | `defineIntegrationEvent` hors d'un langage publié, sans charge utile, deux fois pour une même version ; un événement décrit à la main |
-| `language/glossary-term` | une classe du modèle nommée avec un mot que le glossaire de son contexte ne définit pas ; un glossaire vide ; sous `"stack.refusals": "factories"` ou `"named"`, une classe de `domain/errors/` aussi, une classe de refus de `named` ayant droit en plus aux qualificatifs `invalid`, `unknown`, `already`, `too`, `no`, `missing` et `required` (`codes.ts` n'est pas jugé) |
+| `language/glossary-term` | une classe du modèle nommée avec un mot que le glossaire de son contexte ne définit pas ; un glossaire vide ; sous `"stack.refusals": "factories"` ou `"named"`, une classe de `domain/errors/` aussi, une classe de refus de `named` ayant droit en plus aux qualificatifs `invalid`, `unknown`, `already`, `too`, `no`, `missing` et `required` (`<context>.codes.ts` n'est pas jugé) |
 | `language/declared-vocabulary` | une chaîne littérale dont la valeur est une valeur d'un vocabulaire fermé que le projet déclare (un objet `as const` exporté avec le type union de son nom, un ensemble de permissions de `definePermissions`), hors du fichier qui le déclare, à l'endroit qui parle son langage (son contexte ; la plateforme et les groupes de routes pour la plateforme ; partout pour un identifiant de permission ou le noyau partagé) ; les tests, les langages publiés et le schéma de relations ne sont pas jugés, ni, hors de `domain/`, un mot typé par un autre langage (une clé d'un `Record<T, ..>`, une valeur d'un `Record<.., T>`, `'x' satisfies T`, `T` un type d'un langage publié, d'un paquet ou de `infrastructure/anti-corruption/` ou `infrastructure/external/`) ; sous `"stack.literals": "named"` |
 | `language/no-technical-name` | `Manager`, `Helper`, `Util`, `Utils`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`, `Abstract`, `Dto`, `Entity`, `Model` dans un type déclaré sous `domain/` ou dans un dossier de cas d'usage |
 | `purity/no-system-clock` | `new Date()` sans argument, `Date.now()`, `performance.now()` dans `domain/` ou `application/` |
@@ -2173,11 +2173,11 @@ règle.
 | `ports/value-import` | une classe nommée dans une liste de dépendances, ou donnée à `bind` ou `rebind`, importée avec `import type` ou `import { type X }` |
 | `scheduling/job-triggers-use-case` | dans `application/scheduling/*.job.ts` : une classe exportée qui n'implémente pas `ScheduledJob` ; un `run` qui n'envoie aucune commande (pas d'appel `.execute(`) ; un *repository* dans la liste de dépendances ou le constructeur ; un import de `domain/aggregates/`, `domain/entities/`, `domain/services/` ou `infrastructure/`. Un enregistrement `builder.job(..)` d'une classe qui vit ailleurs |
 | `scheduling/job-name` | le premier argument de `@Scheduled(..)` ou de `.job(..)` qui n'est pas une chaîne littérale `<context>.<job-name>` en kebab-case minuscule avec le contexte de son fichier ; un `systemActor(..)` d'un fichier de *job* qui passe un autre nom ; un même nom de *job* utilisé deux fois dans le projet |
-| `errors/code-unique` | sous `"stack.refusals": "named"` ou `"factories"`, dans le `domain/errors/` d'un contexte : un code posé une seconde fois, par une valeur de `codes.ts`, une fabrique (`refusal('CODE', ..)`) ou une classe (`readonly code = 'CODE'`), avec le fichier et la ligne du premier. Le même code dans deux contextes n'est pas signalé |
-| `errors/code-listed` | sous `"stack.refusals": "named"`, dans le `domain/errors/` d'un contexte : une classe de refus (qui étend `DomainRefusal`) dont le code n'est pas `readonly code = <Context>Codes.<Class>` lu dans le `codes.ts` de son contexte, des classes de refus sans `codes.ts`, une classe que la liste ne contient pas ; dans `codes.ts`, pas de liste `<Context>Codes` ou une liste non déclarée `as const`, une clé qui ne nomme aucune classe de refus du contexte, une valeur qui n'est pas un littéral de chaîne en casse de constante |
+| `errors/code-unique` | sous `"stack.refusals": "named"` ou `"factories"`, dans le `domain/errors/` d'un contexte : un code posé une seconde fois, par une valeur de `<context>.codes.ts`, une fabrique (`refusal('CODE', ..)`) ou une classe (`readonly code = 'CODE'`), avec le fichier et la ligne du premier. Le même code dans deux contextes n'est pas signalé |
+| `errors/code-listed` | sous `"stack.refusals": "named"`, dans le `domain/errors/` d'un contexte : une classe de refus (qui étend `DomainRefusal`) dont le code n'est pas `readonly code = <Context>Codes.<Class>` lu dans le `<context>.codes.ts` de son contexte, des classes de refus sans `<context>.codes.ts`, une classe que la liste ne contient pas ; dans `<context>.codes.ts`, pas de liste `<Context>Codes` ou une liste non déclarée `as const`, une clé qui ne nomme aucune classe de refus du contexte, une valeur qui n'est pas un littéral de chaîne en casse de constante |
 | `schema/presentation-only` | sous `"stack.schemas": "shared"` : dans le noyau partagé hors de `presentation/`, un import d'une bibliothèque de validation ; dans `domain/`, `application/`, `infrastructure/`, `published-language/` et le noyau partagé hors de `presentation/`, un import d'un fichier de `presentation/` du noyau partagé |
 | `schema/no-duplicate-shape` | sous `"stack.schemas": "shared"`, dans la couche présentation d'un contexte, ou dans celle-ci et `presentation/` du noyau partagé : une classe DTO ou un schéma objet (`z.object`, `v.object`, `Type.Object`) qui déclare la forme d'un autre, avec l'endroit de l'original (le noyau partagé, puis `presentation/http/shared/`) ; deux contextes ne sont pas comparés, et les paramètres de requête HTTP et les formes qui portent encore un `TODO(domain)` du générateur ne sont pas jugés |
-| `errors/known-code` | sous `"stack.refusals": "named"` ou `"factories"`, dans un `*.route.ts` : un code de la liste `errors` que le `codes.ts` du contexte de la route ne liste pas, qu'aucun refus de ce contexte ne pose, qu'aucune classe hors des contextes ne pose, et qui n'est pas un code du kit |
+| `errors/known-code` | sous `"stack.refusals": "named"` ou `"factories"`, dans un `*.route.ts` : un code de la liste `errors` que le `<context>.codes.ts` du contexte de la route ne liste pas, qu'aucun refus de ce contexte ne pose, qu'aucune classe hors des contextes ne pose, et qui n'est pas un code du kit |
 | `domain/value-object-class` | sous `"stack.values": "classes"` : dans `domain/value-objects/` d'un contexte ou un `*.vo.ts` du noyau partagé hors de `presentation/`, aucune classe exportée ou une seconde, une classe qui n'étend ni `ValueObject` ni un autre objet-valeur du projet, un constructeur public, une classe concrète sans méthode statique, une fonction, une constante fléchée ou un objet littéral exporté (en ligne, par une liste ou par défaut) ; dans `domain/` et dans le noyau partagé hors de `presentation/`, une fonction exportée qui répond un enregistrement de données : des entrées de données, aucune décomposition, rien qu'un appel du modèle a construit |
 
 D'autres identifiants appartiennent à `@ddd-ts-kit/eslint-plugin`, qui lit l'arbre syntaxique là

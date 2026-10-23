@@ -1,7 +1,7 @@
 import { CliError } from '../cli-error';
 import { toName } from '../naming';
 
-/** One entry of `domain/errors/codes.ts`: the name of a refusal class and the code it sets. */
+/** One entry of `<context>.codes.ts`: the name of a refusal class and the code it sets. */
 export interface CodeEntry {
   readonly key: string;
   readonly code: string;
@@ -40,7 +40,7 @@ function boundsOf(text: string, list: string, context: string): { opened: number
   if (opened === null || closed === -1) {
     throw new CliError(
       `The codes of ${context} are not written as \`export const ${list} = { .. } as const\`.`,
-      'Write domain/errors/codes.ts in that form, then run `ddd-ts-kit error-factories --apply` again.',
+      'Write <context>.codes.ts in that form, then run `ddd-ts-kit error-factories --apply` again.',
     );
   }
 

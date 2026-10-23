@@ -1,6 +1,6 @@
 import type { SourceFile } from '../model/source-file';
 
-/** True for the `domain/errors/codes.ts` of a context, the closed list of its codes. */
+/** True for the code list of a context, `<context>.codes.ts` at its root (read as `domain/errors/codes.ts`, where 0.86 kept it). */
 export function isCodesFile(file: SourceFile): boolean {
   const { location } = file;
 

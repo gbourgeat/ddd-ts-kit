@@ -6,7 +6,7 @@ import { UnknownCalendar } from '@/contexts/scheduling/domain/calendars/errors/u
 import type { AppointmentRepository } from '@/contexts/scheduling/domain/calendars/repositories/appointment.repository';
 import type { CalendarRepository } from '@/contexts/scheduling/domain/calendars/repositories/calendar.repository';
 import { SchedulerService } from '@/contexts/scheduling/domain/calendars/services/scheduler.service';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 import { RescheduleAppointmentCommand } from '@/contexts/scheduling/application/calendars/commands/reschedule-appointment/reschedule-appointment.command';
 
 /** An appointment and its buffer never last a day: what could overlap a slot is held within a day of its start. */

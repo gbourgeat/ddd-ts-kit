@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { identityPermissions } from '@/contexts/identity/application/authorization/identity.permissions';
+import { identityPermissions } from '@/contexts/identity/identity.permissions';
 import { AddMemberCommand } from '@/contexts/identity/application/commands/add-member/add-member.command';
 import { aPerson } from '@/contexts/identity/test/builders/person.builder';
 import { aPractice } from '@/contexts/identity/test/builders/practice.builder';

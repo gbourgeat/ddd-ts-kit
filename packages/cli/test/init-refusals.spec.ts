@@ -17,7 +17,7 @@ describe('init, the form of the refusals', () => {
     expect(rules(named, 'domain')).toContain('ddd-ts-kit generate error <context> <Refusal> <factory> --json');
     expect(rules(named, 'domain')).toContain('(`throw InvalidEmail.forAddress(raw)`)');
     expect(rules(named, 'domain')).not.toContain('ConceptError');
-    expect(rules(named, 'presentation')).toContain('as the `codes.ts` of its context lists them');
+    expect(rules(named, 'presentation')).toContain('as the code list of its context, `<context>.codes.ts`, lists them');
     expect(rules(factories, 'domain')).toContain('`throw InvoiceError.alreadyIssued(this.id)`');
     expect(rules(factories, 'domain')).not.toContain('codes.ts');
     expect(rules(factories, 'presentation')).toContain('as their factories set them');
@@ -30,7 +30,7 @@ describe('init, the form of the refusals', () => {
 
     // The type of the codes of a context is there for the code that takes any of them, which a new context has none of.
     expect(jsonAt(readJson(named, 'knip.json'), 'ignoreIssues')).toEqual({
-      'src/contexts/*/domain/errors/codes.ts': ['types'],
+      'src/contexts/*/*.codes.ts': ['types'],
     });
 
     expect(jsonAt(readJson(factories, 'knip.json'), 'ignoreIssues')).toBeUndefined();

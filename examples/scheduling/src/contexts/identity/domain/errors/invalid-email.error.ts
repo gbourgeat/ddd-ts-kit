@@ -1,5 +1,5 @@
 import { DomainRefusal } from '@ddd-ts-kit/kernel';
-import { IdentityCodes } from '@/contexts/identity/domain/errors/codes';
+import { IdentityCodes } from '@/contexts/identity/identity.codes';
 
 export class InvalidEmail extends DomainRefusal {
   readonly code = IdentityCodes.InvalidEmail;

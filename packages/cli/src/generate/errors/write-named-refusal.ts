@@ -1,4 +1,5 @@
 import { REFUSAL_QUALIFIERS } from '../../check/language/refusal-qualifiers';
+import { CODES_FILE } from '../../context-files';
 import { CliError } from '../../cli-error';
 import type { Name } from '../../naming';
 import { renderTemplate, type RenderContext } from '../../templating';
@@ -33,7 +34,7 @@ interface CodesFile {
 
 /**
  * One refusal under `"stack.refusals": "named"`: its code in the closed list of the context
- * (`domain/errors/codes.ts`, created when absent), its class in a file of its own, the factory
+ * (`<context>.codes.ts`, created when absent), its class in a file of its own, the factory
  * asked on it, and the case of that factory in its spec. Each part is written only when missing.
  * The class is named in the ubiquitous language of the context, as every class of `domain/errors/`
  * (rule language/glossary-term), the qualifiers of a refusal aside (`Invalid`, `Too`, `Already`).
@@ -65,7 +66,7 @@ export function writeNamedRefusal(scope: Scope, asked: NamedRefusal): void {
 
 function codesFile(scope: Scope): CodesFile {
   const listName = `${scope.context.pascal}Codes`;
-  const path = `${scope.dir}/domain/errors/codes.ts`;
+  const path = `${scope.dir}/${CODES_FILE.root(scope.context.kebab)}`;
   const source = scope.ws.read(path);
   const list = source === undefined ? undefined : codesList(source, listName);
 

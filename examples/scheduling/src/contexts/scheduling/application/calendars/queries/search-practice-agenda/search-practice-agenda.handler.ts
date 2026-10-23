@@ -1,7 +1,7 @@
 import { Access } from '@ddd-ts-kit/auth';
 import { scoped } from '@ddd-ts-kit/kernel';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 import type { Agenda } from '@/contexts/scheduling/application/calendars/ports/agenda.port';
 import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/calendars/queries/search-practice-agenda/search-practice-agenda.query';
 import type { SearchPracticeAgendaResult } from '@/contexts/scheduling/application/calendars/queries/search-practice-agenda/search-practice-agenda.result';

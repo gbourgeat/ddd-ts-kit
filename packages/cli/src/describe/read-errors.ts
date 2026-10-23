@@ -10,6 +10,7 @@ import type { ErrorFact } from './context-description';
 import type { ContextSources } from './context-sources';
 import { exposedBy } from './exposed-by';
 import { readRefusals } from './read-refusals';
+import { CODES_FILE, contextFileAt } from '../context-files';
 import { roleFilesOf } from '../model-modules';
 
 const FOLDER = 'domain/errors';
@@ -19,11 +20,12 @@ const CLASS = /(?<![\w$.])class\s+([A-Za-z_$][\w$]*)[^{]*\{/g;
  * The refusals of a context: one row per static factory of an error class, with its code and
  * the facts it exposes, and one row per class that carries its code itself, as 0.2 wrote them.
  * A class of one refusal (`"stack.refusals": "named"`) gives one row per factory, its code read
- * from `domain/errors/codes.ts`.
+ * from `<context>.codes.ts`.
  */
 export function readErrors(sources: ContextSources): ErrorFact[] {
   const { ws, directory, name: context } = sources;
-  const list = codeListOf(ws.read(`${directory}/${FOLDER}/codes.ts`), context);
+  const codes = contextFileAt(CODES_FILE, context, (relative) => ws.exists(`${directory}/${relative}`));
+  const list = codeListOf(ws.read(`${directory}/${codes}`), context);
 
   return roleFilesOf(ws, sources, FOLDER)
     .filter(({ name }) => name.endsWith('.error.ts'))
@@ -39,7 +41,7 @@ export function readErrors(sources: ContextSources): ErrorFact[] {
     });
 }
 
-/** The code list of the context, `<Context>Codes` in `domain/errors/codes.ts`; undefined without one. */
+/** The code list of the context, `<Context>Codes` in `<context>.codes.ts`; undefined without one. */
 function codeListOf(text: string | undefined, context: string): CodeList | undefined {
   return text === undefined ? undefined : readCodeList(scan(text), codeListName(context));
 }

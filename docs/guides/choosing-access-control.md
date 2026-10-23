@@ -63,7 +63,7 @@ import { definePermissions } from '@ddd-ts-kit/auth';
 import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
 
-// contexts/billing/application/authorization/billing.permissions.ts
+// contexts/billing/billing.permissions.ts
 export const billingPermissions = definePermissions('billing', {
   'invoice.read': { description: 'See invoices and their lines' },
   'invoice.issue': { description: 'Make an invoice final and send it' },

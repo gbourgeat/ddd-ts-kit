@@ -4,7 +4,7 @@ import { contextModule, createTestApplication, fake, type TestApplication } from
 import { InMemoryOutboxStore, OutboxPublisher } from '@ddd-ts-kit/events';
 import { eventually } from '@ddd-ts-kit/testing/e2e';
 import { describe, expect, it } from 'vitest';
-import { billingPermissions } from '@/contexts/billing/application/authorization/billing.permissions';
+import { billingPermissions } from '@/contexts/billing/billing.permissions';
 import * as billing from '@/contexts/billing/billing.declarations';
 import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
 import { invoiceIssuedV2 } from '@/contexts/billing/published-language/invoice-issued.v2.integration-event';

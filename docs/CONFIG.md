@@ -235,7 +235,7 @@ outside the list stops every command with the list of accepted values.
 | `stack.style` | `declared`: each class declares what it is with a decorator and a context has no module file; `explicit`: every binding is written in `<context>.module.ts`. `init` accepts `declared` with `di: tsyringe` only | `declared` with `di: tsyringe`, `explicit` otherwise |
 | `stack.assembly` | `barrel`, `discovery`: how a declared context reaches the composition root, the generated `<context>.declarations.ts`, which re-exports the generated declarations of each layer (`application/application.declarations.ts`), or a scan at startup. `init` accepts the flag in the declared style only | `barrel` |
 | `stack.dependencies` | `signature`, `listed`: where a declared class states what it depends on. `signature`: in its constructor and nowhere else; `ddd-ts-kit docs` reads the signatures into the generated declarations of each context, and a list left in a decorator is reported (`declarations/constructor-injection`, which ESLint fixes). `listed`: in the last argument of its decorator, as 0.1 wrote it. Both forms run in either: a class that lists is given its list, a class that does not is given what its constructor takes. `init` accepts the flag in the declared style only | `signature` |
-| `stack.refusals` | `named`, `factories`, `classes`: how a domain error is written. `named`: one class per refusal, named after what is refused (`SlotTaken`), extending `DomainRefusal`, built by static factories named after what the refusal is about (`SlotTaken.forCalendar(..)`), its code read from the closed list of its context, `domain/errors/codes.ts`; held by the `errors/*` rules, and `generate error <context> <Refusal> <factory>` writes the class, its code and the factory. `factories`: one error class per concept of the model, extending `ConceptError`, each refusal a static factory named in the words of the business (`AppointmentError.slotTaken(..)`), as `init` wrote it before `named`; held by the `errors/*` rules, and `generate error <context> <Concept> <refusal>` adds one. `classes`: one class per error, built with `new`, as 0.1 and 0.2 wrote them; `generate domain-error` writes one, and no `errors/*` rule judges. The three forms run in any project: `DomainRefusal`, `ConceptError` and `DomainError` are one family | `named` |
+| `stack.refusals` | `named`, `factories`, `classes`: how a domain error is written. `named`: one class per refusal, named after what is refused (`SlotTaken`), extending `DomainRefusal`, built by static factories named after what the refusal is about (`SlotTaken.forCalendar(..)`), its code read from the closed list of its context, `<context>.codes.ts`; held by the `errors/*` rules, and `generate error <context> <Refusal> <factory>` writes the class, its code and the factory. `factories`: one error class per concept of the model, extending `ConceptError`, each refusal a static factory named in the words of the business (`AppointmentError.slotTaken(..)`), as `init` wrote it before `named`; held by the `errors/*` rules, and `generate error <context> <Concept> <refusal>` adds one. `classes`: one class per error, built with `new`, as 0.1 and 0.2 wrote them; `generate domain-error` writes one, and no `errors/*` rule judges. The three forms run in any project: `DomainRefusal`, `ConceptError` and `DomainError` are one family | `named` |
 | `stack.routes` | `controllers`, `functions`: how a route is written. `controllers`: one class per route carrying `@Controller` of `@ddd-ts-kit/http`, in a folder of its own under `presentation/http/<resource>/<use-case>/`, behind the guards of its `@RouteGroup`; `generate route` writes it, with `--mapper` and `--serializer` when asked. `functions`: one `defineRoute` function per route, listed in `<context>.routes.ts`, as 0.1 to 0.3 wrote them. Both forms run in either, and in one project during a migration: `generate controller` writes a controller whatever the key says, and `ddd-ts-kit controllers` turns the function routes of a context into controllers | `controllers` |
 | `stack.schemas` | `shared`, `per-route`: how the schemas of the HTTP contract are written. `shared`: a shape several routes use is declared once, `presentation/http/shared/<name>.schema.ts` of its context or `presentation/<name>.schema.ts` of the shared kernel (`generate schema`), shared (a zod `.meta({ id })`, `classSchema(Dto, { shared: true })`, `sharedSchema`), documented once in `components.schemas` and referenced by `$ref`; a command answers its identifier with `acceptedSchema` of `@ddd-ts-kit/http`; `schema/no-duplicate-shape` and `schema/presentation-only` judge. `per-route`: each route declares its own schemas, an identifier answer included (`<use-case>.accepted.ts` with class-validator), as 0.1 to 0.5 wrote them, and no `schema/*` rule judges | `shared` |
 | `stack.valueObjects` | `throwing`, `result`: how the factory of a value object refuses. `throwing`: `create` returns the value object or throws the refusal built by the static factory of its concept (`throw PersonError.invalidEmail(raw)`), as an aggregate refuses; a caller takes the value as it is, and a spec asserts `expectRefusal(() => Email.create(raw), 'INVALID_EMAIL')`. `result`: `create` returns a `Result` of the kernel, `err(PersonError.invalidEmail(raw))`, that a caller unwraps with `unwrap(..)`, as 0.1 to 0.5 wrote them. `generate value-object` writes the form the key says; `Result`, `ok`, `err` and `unwrap` stay in the kernel for a project that keeps them. Validation at the edge (the schema of a request) is not concerned: a value refused there never reaches the factory | `throwing` |
@@ -289,7 +289,7 @@ to `named` the same way. `npx ddd-ts-kit error-factories --plan` writes
 of its code, so that the code is kept, `Unknown<X>` for `X_NOT_FOUND`) and its factory (`for` and
 its first parameter);
 edit the names you want otherwise, then `npx ddd-ts-kit error-factories --apply` writes
-`domain/errors/codes.ts` in each context, one class file per refusal and its spec, rewrites
+`<context>.codes.ts` in each context, one class file per refusal and its spec, rewrites
 every usage (`AppointmentError.ended(a, b)` becomes `AppointmentEnded.forAppointment(a, b)`,
 `AppointmentError.is(error, 'APPOINTMENT_ENDED')` becomes `AppointmentEnded.is(error)`, `new`,
 `thenError`, `toThrow`, `expect.any`, `toBeInstanceOf`, `instanceof`, imports and types), removes
@@ -346,7 +346,7 @@ The two forms side by side, on the `Email` of a person. Under `result`, `create`
 ```ts
 import { DomainRefusal, err, ok, type Result, unwrap, ValueObject } from '@ddd-ts-kit/kernel';
 
-// domain/errors/codes.ts
+// identity.codes.ts
 export const IdentityCodes = {
   InvalidEmail: 'INVALID_EMAIL',
 } as const;
@@ -382,7 +382,7 @@ as an aggregate refuses, and a spec asserts it with `expectRefusal`:
 import { DomainRefusal, ValueObject } from '@ddd-ts-kit/kernel';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 
-// domain/errors/codes.ts
+// identity.codes.ts
 export const IdentityCodes = {
   InvalidEmail: 'INVALID_EMAIL',
 } as const;

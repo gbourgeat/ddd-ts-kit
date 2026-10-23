@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:208820872952fd73 -->
+<!-- translation-of: CONFIG.md sha256:082f33a1093cc93b -->
 
 # `ddd-ts-kit.config.json`
 
@@ -241,7 +241,7 @@ hors de la liste arrête toutes les commandes avec la liste des valeurs accepté
 | `stack.style` | `declared` : chaque classe déclare ce qu'elle est par un décorateur et un contexte n'a pas de fichier de module ; `explicit` : chaque liaison est écrite dans `<context>.module.ts`. `init` n'accepte `declared` qu'avec `di: tsyringe` | `declared` avec `di: tsyringe`, `explicit` sinon |
 | `stack.assembly` | `barrel`, `discovery` : comment un contexte déclaré atteint la racine de composition, par le `<context>.declarations.ts` généré, qui réexporte les déclarations générées de chaque couche (`application/application.declarations.ts`), ou par un parcours au démarrage. `init` n'accepte l'option que dans le style déclaré | `barrel` |
 | `stack.dependencies` | `signature`, `listed` : où une classe déclarée dit ce dont elle dépend. `signature` : dans son constructeur et nulle part ailleurs ; `ddd-ts-kit docs` lit les signatures dans les déclarations générées de chaque contexte, et une liste laissée dans un décorateur est signalée (`declarations/constructor-injection`, qu'ESLint corrige). `listed` : dans le dernier argument de son décorateur, comme l'écrivait la 0.1. Les deux formes fonctionnent sous l'une comme sous l'autre : une classe qui liste reçoit sa liste, une classe qui ne liste pas reçoit ce que prend son constructeur. `init` n'accepte l'option que dans le style déclaré | `signature` |
-| `stack.refusals` | `named`, `factories`, `classes` : comment s'écrit une erreur du domaine. `named` : une classe par refus, nommée d'après ce qui est refusé (`SlotTaken`), qui étend `DomainRefusal`, construite par des fabriques statiques nommées d'après ce sur quoi porte le refus (`SlotTaken.forCalendar(..)`), son code lu dans la liste fermée de son contexte, `domain/errors/codes.ts` ; tenue par les règles `errors/*`, et `generate error <context> <Refusal> <factory>` écrit la classe, son code et la fabrique. `factories` : une classe d'erreur par concept du modèle, qui étend `ConceptError`, chaque refus une fabrique statique nommée dans les mots du métier (`AppointmentError.slotTaken(..)`), comme l'écrivait `init` avant `named` ; tenue par les règles `errors/*`, et `generate error <context> <Concept> <refusal>` en ajoute une. `classes` : une classe par erreur, construite avec `new`, comme les écrivaient la 0.1 et la 0.2 ; `generate domain-error` en écrit une, et aucune règle `errors/*` ne juge. Les trois formes fonctionnent dans n'importe quel projet : `DomainRefusal`, `ConceptError` et `DomainError` forment une seule famille | `named` |
+| `stack.refusals` | `named`, `factories`, `classes` : comment s'écrit une erreur du domaine. `named` : une classe par refus, nommée d'après ce qui est refusé (`SlotTaken`), qui étend `DomainRefusal`, construite par des fabriques statiques nommées d'après ce sur quoi porte le refus (`SlotTaken.forCalendar(..)`), son code lu dans la liste fermée de son contexte, `<context>.codes.ts` ; tenue par les règles `errors/*`, et `generate error <context> <Refusal> <factory>` écrit la classe, son code et la fabrique. `factories` : une classe d'erreur par concept du modèle, qui étend `ConceptError`, chaque refus une fabrique statique nommée dans les mots du métier (`AppointmentError.slotTaken(..)`), comme l'écrivait `init` avant `named` ; tenue par les règles `errors/*`, et `generate error <context> <Concept> <refusal>` en ajoute une. `classes` : une classe par erreur, construite avec `new`, comme les écrivaient la 0.1 et la 0.2 ; `generate domain-error` en écrit une, et aucune règle `errors/*` ne juge. Les trois formes fonctionnent dans n'importe quel projet : `DomainRefusal`, `ConceptError` et `DomainError` forment une seule famille | `named` |
 | `stack.routes` | `controllers`, `functions` : comment s'écrit une route. `controllers` : une classe par route portant le `@Controller` de `@ddd-ts-kit/http`, dans un dossier à elle sous `presentation/http/<resource>/<use-case>/`, derrière les gardes de son `@RouteGroup` ; `generate route` l'écrit, avec `--mapper` et `--serializer` sur demande. `functions` : une fonction `defineRoute` par route, listée dans `<context>.routes.ts`, comme les écrivaient les versions 0.1 à 0.3. Les deux formes fonctionnent sous l'une comme sous l'autre, et dans un même projet pendant une migration : `generate controller` écrit un contrôleur quoi que dise la clé, et `ddd-ts-kit controllers` transforme les routes en fonctions d'un contexte en contrôleurs | `controllers` |
 | `stack.schemas` | `shared`, `per-route` : comment s'écrivent les schémas du contrat HTTP. `shared` : une forme qu'utilisent plusieurs routes est déclarée une fois, `presentation/http/shared/<name>.schema.ts` de son contexte ou `presentation/<name>.schema.ts` du noyau partagé (`generate schema`), partagée (un `.meta({ id })` de zod, `classSchema(Dto, { shared: true })`, `sharedSchema`), documentée une fois dans `components.schemas` et référencée par `$ref` ; une commande répond son identifiant avec `acceptedSchema` de `@ddd-ts-kit/http` ; `schema/no-duplicate-shape` et `schema/presentation-only` jugent. `per-route` : chaque route déclare ses propres schémas, réponse d'identifiant comprise (`<use-case>.accepted.ts` avec class-validator), comme les écrivaient les versions 0.1 à 0.5, et aucune règle `schema/*` ne juge | `shared` |
 | `stack.valueObjects` | `throwing`, `result` : comment refuse la fabrique d'un objet-valeur. `throwing` : `create` renvoie l'objet-valeur ou lève le refus construit par la fabrique statique de son concept (`throw PersonError.invalidEmail(raw)`), comme refuse un agrégat ; un appelant prend la valeur telle quelle, et une *spec* affirme `expectRefusal(() => Email.create(raw), 'INVALID_EMAIL')`. `result` : `create` renvoie un `Result` du kernel, `err(PersonError.invalidEmail(raw))`, qu'un appelant déballe avec `unwrap(..)`, comme les écrivaient les versions 0.1 à 0.5. `generate value-object` écrit la forme que dit la clé ; `Result`, `ok`, `err` et `unwrap` restent dans le kernel pour un projet qui les garde. La validation en bordure (le schéma d'une requête HTTP) n'est pas concernée : une valeur refusée là n'atteint jamais la fabrique | `throwing` |
@@ -295,7 +295,7 @@ selon les règles de cette forme. Les deux passent à `named` de la même façon
 `npx ddd-ts-kit error-factories --plan` écrit `error-factories.plan.json`, une entrée par refus
 avec la classe qui lui est proposée (le PascalCase de son code, pour que le code soit gardé,
 `Unknown<X>` pour `X_NOT_FOUND`) et sa fabrique (`for` et son premier paramètre) ; modifiez les noms que vous voulez
-autres, puis `npx ddd-ts-kit error-factories --apply` écrit `domain/errors/codes.ts` dans chaque
+autres, puis `npx ddd-ts-kit error-factories --apply` écrit `<context>.codes.ts` dans chaque
 contexte, un fichier de classe par refus et sa *spec*, réécrit chaque usage
 (`AppointmentError.ended(a, b)` devient `AppointmentEnded.forAppointment(a, b)`,
 `AppointmentError.is(error, 'APPOINTMENT_ENDED')` devient `AppointmentEnded.is(error)`, `new`,
@@ -359,7 +359,7 @@ Les deux formes côte à côte, sur l'`Email` d'une personne. Sous `result`, `cr
 ```ts
 import { DomainRefusal, err, ok, type Result, unwrap, ValueObject } from '@ddd-ts-kit/kernel';
 
-// domain/errors/codes.ts
+// identity.codes.ts
 export const IdentityCodes = {
   InvalidEmail: 'INVALID_EMAIL',
 } as const;
@@ -395,7 +395,7 @@ comme refuse un agrégat, et une *spec* l'affirme avec `expectRefusal` :
 import { DomainRefusal, ValueObject } from '@ddd-ts-kit/kernel';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 
-// domain/errors/codes.ts
+// identity.codes.ts
 export const IdentityCodes = {
   InvalidEmail: 'INVALID_EMAIL',
 } as const;

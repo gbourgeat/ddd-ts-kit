@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 import { ClearCalendarCommand } from '@/contexts/scheduling/application/calendars/commands/clear-calendar/clear-calendar.command';
 import { GetClearanceQuery } from '@/contexts/scheduling/application/calendars/queries/get-clearance/get-clearance.query';
 import { ConfirmationDeadlineTimeoutBackgroundJob } from '@/contexts/scheduling/application/calendars/background/confirmation-deadline-timeout.background-job';

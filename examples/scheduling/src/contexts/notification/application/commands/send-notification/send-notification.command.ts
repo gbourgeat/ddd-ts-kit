@@ -1,6 +1,6 @@
 import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
-import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
+import { notificationPermissions } from '@/contexts/notification/notification.permissions';
 
 @Requires(notificationPermissions['notification.send'], { resource: () => ({ type: 'context', id: 'notification' }) })
 export class SendNotificationCommand extends AuthorizedCommand<string> {

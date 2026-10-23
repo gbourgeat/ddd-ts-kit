@@ -4,6 +4,7 @@ import { cli, DEFAULT_STACK, read, scaffoldEverything, tempDir, write } from './
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
 import { readJson } from './support/read-json';
+import { toEarlierPlaces } from './support/to-earlier-places';
 import { VERSION } from '../src/version';
 
 const CONFIG = 'ddd-ts-kit.config.json';
@@ -77,6 +78,25 @@ describe('init --force on a project that is already initialised', () => {
     expect(read(root, 'src/platform/auth/authorization/permissions.ts')).toContain(
       '\n  billingPermissions,\n  shippingPermissions,',
     );
+  });
+
+  it('wires the permission set of a context again where the project keeps it, as 0.86 wrote it', () => {
+    const root = workedOn('--authz', 'rebac');
+
+    toEarlierPlaces(root, ['billing', 'shipping']);
+    expect(cli(root, 'init', '--force').stderr).toBe('');
+
+    const registry = read(root, 'src/platform/auth/authorization/permissions.ts');
+
+    expect(registry).toContain('\n  billingPermissions,\n  shippingPermissions,');
+    expect(registry).toContain("from '@/contexts/billing/application/authorization/billing.permissions';");
+    expect(registry).not.toContain('@/contexts/billing/billing.permissions');
+
+    // knip is told of the code lists where they are: at the root, and where 0.86 kept them.
+    expect(Object.keys(Object(readJson(root, 'knip.json')).ignoreIssues ?? {})).toEqual([
+      'src/contexts/*/*.codes.ts',
+      'src/contexts/*/domain/errors/codes.ts',
+    ]);
   });
 
   it('refuses a flag the recorded stack cannot take, as it would for a new project, and writes nothing', () => {

@@ -11,7 +11,7 @@ import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { BookAppointmentBody } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.body';
 import type { BookAppointmentMapper } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.mapper';
 import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 
 // The staff of the practice sees the internal note, the holder of the desk (or the manager) writes it: an assistant who
 // books on a delegated desk reads it; a patient neither sees nor sends it.

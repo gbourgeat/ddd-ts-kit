@@ -17,7 +17,7 @@ const DOMAIN_ROLES = new Set(['aggregates', 'entities', 'value-objects', 'servic
 export const languageGlossaryTerm: Rule = {
   id: 'language/glossary-term',
   description:
-    'Every aggregate, entity, value object, domain service, domain event, command and query is named with terms of the Ubiquitous language table of its context\'s CONTEXT.md, and under "stack.refusals": "factories" or "named" every class of domain/errors/ too. A refusal class (under "named", one that extends DomainRefusal) may also use the qualifiers invalid, unknown, already, too, no, missing and required; domain/errors/codes.ts holds no class and is not judged.',
+    'Every aggregate, entity, value object, domain service, domain event, command and query is named with terms of the Ubiquitous language table of its context\'s CONTEXT.md, and under "stack.refusals": "factories" or "named" every class of domain/errors/ too. A refusal class (under "named", one that extends DomainRefusal) may also use the qualifiers invalid, unknown, already, too, no, missing and required; <context>.codes.ts holds no class and is not judged.',
   scope: 'file',
   run(project) {
     const report = reporter(project, this.id);

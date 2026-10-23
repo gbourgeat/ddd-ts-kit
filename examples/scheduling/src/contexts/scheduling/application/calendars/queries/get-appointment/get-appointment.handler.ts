@@ -2,7 +2,7 @@ import { Access } from '@ddd-ts-kit/auth';
 import { Criteria, hydrate, scoped } from '@ddd-ts-kit/kernel';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
 import { UnknownAppointment } from '@/contexts/scheduling/domain/calendars/errors/unknown-appointment.error';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 import type { Agenda, AgendaEntry } from '@/contexts/scheduling/application/calendars/ports/agenda.port';
 import type { PersonDirectoryGateway } from '@/contexts/scheduling/application/calendars/ports/person-directory-gateway.port';
 import { GetAppointmentQuery } from '@/contexts/scheduling/application/calendars/queries/get-appointment/get-appointment.query';

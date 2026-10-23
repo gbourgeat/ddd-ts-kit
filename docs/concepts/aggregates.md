@@ -152,14 +152,14 @@ the shape guarantees:
   once the command handler has returned and before the commit.
 
 Each refusal is a class of its own, in `domain/errors/<refusal>.error.ts`, which reads its code
-from `domain/errors/codes.ts`, the closed list of the codes of the context. Its factories write
+from `<context>.codes.ts`, the closed list of the codes of the context. Its factories write
 the message, the facts, and the facts a client may read, once:
 
 <!-- checked sample -->
 ```ts
 import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-// domain/errors/codes.ts
+// appointments.codes.ts
 export const AppointmentsCodes = {
   AppointmentAlreadyCancelled: 'APPOINTMENT_ALREADY_CANCELLED',
   CancellationWindowPassed: 'CANCELLATION_WINDOW_PASSED',
@@ -449,7 +449,7 @@ driver error kept as its cause:
 ```ts
 import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-// domain/errors/codes.ts
+// appointments.codes.ts
 export const AppointmentsCodes = {
   SlotAlreadyTaken: 'SLOT_ALREADY_TAKEN',
 } as const;

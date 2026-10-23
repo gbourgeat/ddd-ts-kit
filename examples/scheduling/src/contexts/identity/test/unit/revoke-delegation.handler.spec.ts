@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { identityPermissions } from '@/contexts/identity/application/authorization/identity.permissions';
+import { identityPermissions } from '@/contexts/identity/identity.permissions';
 import { RevokeDelegationCommand } from '@/contexts/identity/application/commands/revoke-delegation/revoke-delegation.command';
 import { aDelegation } from '@/contexts/identity/test/builders/delegation.builder';
 import { anIdentityWorld, type IdentityWorldOptions } from '@/contexts/identity/test/worlds/identity.world';

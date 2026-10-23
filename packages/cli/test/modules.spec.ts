@@ -53,7 +53,7 @@ describe('a whole context moved into a module of its model', () => {
 
   it('keeps the files that are one per context at the level of the context', () => {
     expect(exists(root, `${BILLING}/domain/invoices/errors/codes.ts`)).toBe(false);
-    expect(exists(root, `${BILLING}/application/authorization/billing.permissions.ts`)).toBe(true);
+    expect(exists(root, `${BILLING}/billing.permissions.ts`)).toBe(true);
   });
 
   it('leaves the checks as they were, the module declared and every import following its file', () => {

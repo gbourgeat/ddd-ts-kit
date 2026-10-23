@@ -88,7 +88,7 @@ export class InvoicePaid extends NamedDomainEvent('billing.invoice.paid') {
   }
 }
 
-// domain/errors/codes.ts
+// billing.codes.ts
 export const BillingCodes = { InvoiceAlreadyPaid: 'INVOICE_ALREADY_PAID' } as const;
 
 // domain/errors/invoice-already-paid.error.ts

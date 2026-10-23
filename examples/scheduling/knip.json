@@ -21,7 +21,7 @@
   "ignoreBinaries": ["flock", "diff", "patch"],
   "ignoreExportsUsedInFile": true,
   "ignoreIssues": {
-    "src/contexts/*/domain/errors/codes.ts": ["types"]
+    "src/contexts/*/*.codes.ts": ["types"]
   },
   "ignoreWorkspaces": ["clients/*"]
 }

@@ -1,5 +1,5 @@
 [English](anemic-model.md) · **Français**
-<!-- translation-of: anemic-model.md sha256:1cde2f90a21c5d02 -->
+<!-- translation-of: anemic-model.md sha256:2756a1c906fe892f -->
 
 # Modèle anémique
 
@@ -258,7 +258,7 @@ est écrit pour cela, tout comme une revue humaine centrée sur la couche domain
    ```
 
    Elle écrit `AppointmentAlreadyCancelled.forAppointment()` dans
-   `domain/errors/appointment-already-cancelled.error.ts`, son code dans `domain/errors/codes.ts`
+   `domain/errors/appointment-already-cancelled.error.ts`, son code dans `<context>.codes.ts`
    et son cas dans la *spec*. Sans `--code`, le code est le nom du refus en majuscules séparées
    par des tirets bas, `APPOINTMENT_ALREADY_CANCELLED`.
 3. Remplacez les branches du gestionnaire par l'appel unique. Sa *spec* raccourcit : le chemin

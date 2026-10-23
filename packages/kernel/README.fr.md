@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:631fb2d21644d419 -->
+<!-- translation-of: README.md sha256:c138d885ebd7555a -->
 
 # @ddd-ts-kit/kernel
 
@@ -62,7 +62,7 @@ chacun son propre fichier, et `ddd-ts-kit generate` les écrit) :
 ```ts
 import { AggregateRoot, DomainRefusal, Entity, ValueObject, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
-// Les codes du contexte, dans domain/errors/codes.ts, et ses refus, une classe chacun (voir « Erreurs du domaine »).
+// Les codes du contexte, dans <context>.codes.ts, et ses refus, une classe chacun (voir « Erreurs du domaine »).
 export const OrderingCodes = {
   InvalidQuantity: 'INVALID_QUANTITY',
   OrderAlreadyPlaced: 'ORDER_ALREADY_PLACED',
@@ -211,7 +211,7 @@ Un refus métier est une `DomainError` : une réponse que le code a prévue, con
 `code`. Un contexte a une classe par refus, nommée d'après ce qui est refusé, qui étend
 `DomainRefusal` ; ses fabriques statiques sont nommées d'après ce sur quoi porte le refus, et le
 code de chaque refus du contexte est écrit une seule fois, dans la liste fermée
-`domain/errors/codes.ts` :
+`<context>.codes.ts` :
 
 <!-- checked sample -->
 ```ts
@@ -220,7 +220,7 @@ import { DomainRefusal } from '@ddd-ts-kit/kernel';
 declare const calendar: { readonly id: string };
 declare const slot: { readonly startsAt: Date };
 
-// domain/errors/codes.ts
+// scheduling.codes.ts
 export const SchedulingCodes = {
   SlotTaken: 'SLOT_TAKEN',
   UnknownAppointment: 'APPOINTMENT_NOT_FOUND',
@@ -363,7 +363,7 @@ import { AggregateRoot, DomainRefusal, defineStateMachine } from '@ddd-ts-kit/ke
 export const ParcelStatus = { Registered: 'registered', Shipped: 'shipped', Delivered: 'delivered' } as const;
 export type ParcelStatus = (typeof ParcelStatus)[keyof typeof ParcelStatus];
 
-// domain/errors/codes.ts, puis une classe par refus
+// shipping.codes.ts, puis une classe par refus
 export const ShippingCodes = {
   ParcelUnpaid: 'PARCEL_UNPAID',
   ParcelTransitionRefused: 'PARCEL_TRANSITION_REFUSED',

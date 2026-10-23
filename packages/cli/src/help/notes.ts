@@ -44,7 +44,15 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    first with generate module: each <path> is a file or a folder of a role, relative to the
                    context (domain/aggregates/waitlist.aggregate.ts, application/commands/join-waitlist);
                    every import of them under the source root, test/ and scripts/ follows, and the
-                   generated declarations are rewritten; codes.ts and the permissions stay one per context
+                   generated declarations are rewritten; the code list and the permission set stay one per
+                   context, at its root
+  context-layout   takes the files of the contexts, or of the ones named, that 0.86 wrote in a role folder
+                   to their place of today: domain/errors/codes.ts to <context>.codes.ts and
+                   application/authorization/<context>.permissions.ts to <context>.permissions.ts, at the
+                   root of the context; every import of them under the source root, test/ and scripts/
+                   follows, what derives from the tree is written again (.dependency-cruiser.cjs, the
+                   declarations) and knip is told of the code lists where they are; the generators keep
+                   either place until then
   controllers      moves the function routes of a project, or of one context, to controller classes: each
                    <name>.route.ts becomes <resource>/<name>/<name>.controller.ts behind the route group of
                    its resource, its schema files and its spec follow; a context is turned whole or not at all

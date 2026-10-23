@@ -8,7 +8,7 @@ import { anActor } from '@ddd-ts-kit/auth/testing';
 {{spec.contextImports}}
 import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
 {{#if access.protected}}
-import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions{{alias.ext}}';
+import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
 {{/if}}
 import { {{name.pascal}}Reader } from '{{alias.context}}/application/ports/{{name.kebab}}-reader.port{{alias.ext}}';
 import { {{name.pascal}}Query } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.query{{alias.ext}}';

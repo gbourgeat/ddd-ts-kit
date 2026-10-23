@@ -1657,14 +1657,14 @@ number.
 
 The kit's new default form, `"stack.refusals": "named"`, the one `init` now writes: a refusal is
 a class named after what is refused, extending `DomainRefusal`, which reads its code from the
-closed list of its context (`domain/errors/codes.ts`) and is built by static factories named
+closed list of its context (`<context>.codes.ts`) and is built by static factories named
 after what the refusal is about. `throw AppointmentError.slotTaken(calendar.id, slot.startsAt)`
 became `throw SlotTaken.forCalendar(calendar.id, slot.startsAt)`.
 
 | | Before | After |
 |---|---|---|
 | error classes (`domain/errors/*.error.ts`) | 10 files, 337 lines | 50 files, 566 lines |
-| closed lists of codes (`domain/errors/codes.ts`) | none | 4 files, 66 lines |
+| closed lists of codes (`<context>.codes.ts`) | none | 4 files, 66 lines |
 | their specs (`test/unit/*.error.spec.ts`) | 10 files, 512 lines | 50 files, 764 lines |
 | refusals | 50 factories on 10 classes | 50 classes of one factory each, the same 50 codes |
 | facts a client can read as data | 11 refusals expose one | the same 11, by the same name |
@@ -1679,7 +1679,7 @@ How it was done, in this order:
    `ReasonRequired.onCancellation()`, `UnknownPractitioner.atPractice(practiceId, practitionerId)`,
    `forRule(rule)` for the ten that take a sentence. No class name was changed in the plan, and
    none clashes with a domain event or another class of its context.
-2. `ddd-ts-kit error-factories --apply` wrote 147 files and removed 12: the 4 `codes.ts`, the 50
+2. `ddd-ts-kit error-factories --apply` wrote 147 files and removed 12: the 4 `<context>.codes.ts`, the 50
    classes, the specs of the two concepts whose cases stood alone (the attendance record,
    occupancy) split per class, every usage with its imports, and `"stack.refusals": "named"`.
    Then `npm run format` (17 files).
@@ -1692,14 +1692,14 @@ What the tools said:
 - `ddd-ts-kit check` refused `LastManager`, the class the plan proposed for `LAST_MANAGER`
   (`language/no-technical-name`: "manager"), though `Manager` is a term of the identity glossary.
   The class is `PracticeLeftUnmanaged`, the name it had before the factories
-  (`PracticeLeftUnmanagedError`), and it keeps its code: under `named` the key of `codes.ts` is
+  (`PracticeLeftUnmanagedError`), and it keeps its code: under `named` the key of `<context>.codes.ts` is
   the class and the value is the code, so the two may say different words.
 - The 8 specs written as one table per concept (`it.each`) were rewritten in place, not split:
   the command said so ("its cases share a setup or code around them"), and their `describe`
   still named the removed classes. They were split into one spec per class by a script (44
   specs), two cases written apart were moved by hand, and `UnknownClearance`, which had no case,
   got one. The case "gives each refusal a code of its own" is gone: `errors/code-unique` holds it.
-- `npm run deadcode` reported the 4 types `<Context>Code` of the `codes.ts` files as unused
+- `npm run deadcode` reported the 4 types `<Context>Code` of the `<context>.codes.ts` files as unused
   exports. `knip.json` gained the `ignoreIssues` entry that `init` writes under `named`; the
   migration does not touch the pipeline files.
 - The agent rules on refusals (`.claude/rules/domain.md`, `.claude/rules/presentation.md` and

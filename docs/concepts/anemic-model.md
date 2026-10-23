@@ -249,7 +249,7 @@ is written for it, and so is a human review focused on the domain layer
    ```
 
    It writes `AppointmentAlreadyCancelled.forAppointment()` in
-   `domain/errors/appointment-already-cancelled.error.ts`, its code in `domain/errors/codes.ts`
+   `domain/errors/appointment-already-cancelled.error.ts`, its code in `<context>.codes.ts`
    and its case to the spec. Without `--code`, the code is the name of the refusal in constant
    case, `APPOINTMENT_ALREADY_CANCELLED`.
 3. Replace the handler's branches by the single call. Its spec gets shorter: happy path, each

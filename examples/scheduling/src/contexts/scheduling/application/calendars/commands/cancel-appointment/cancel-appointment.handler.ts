@@ -4,7 +4,7 @@ import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { UnknownAppointment } from '@/contexts/scheduling/domain/calendars/errors/unknown-appointment.error';
 import type { AppointmentRepository } from '@/contexts/scheduling/domain/calendars/repositories/appointment.repository';
 import { Cancellation } from '@/contexts/scheduling/domain/calendars/value-objects/cancellation.vo';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 import { CancelAppointmentCommand } from '@/contexts/scheduling/application/calendars/commands/cancel-appointment/cancel-appointment.command';
 
 @CommandHandler(CancelAppointmentCommand)

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:5acb1ff30a3f6dc8 -->
+<!-- translation-of: README.md sha256:cdbb97f17b5005fd -->
 
 # @ddd-ts-kit/drizzle
 
@@ -181,7 +181,7 @@ Côté domaine, un agrégat qui ne sait rien des lignes, et son port :
 ```ts
 import { AggregateRoot, DomainRefusal, Repository } from '@ddd-ts-kit/kernel';
 
-// contexts/order-management/domain/errors/codes.ts
+// contexts/order-management/order-management.codes.ts
 export const OrderManagementCodes = {
   OrderAlreadyPlaced: 'ORDER_ALREADY_PLACED',
 } as const;

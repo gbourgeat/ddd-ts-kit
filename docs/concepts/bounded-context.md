@@ -199,7 +199,7 @@ after it, `SlotTaken`, which reads its code from the list of the codes of `appoi
 ```ts
 import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-// contexts/appointments/domain/errors/codes.ts
+// contexts/appointments/appointments.codes.ts
 export const AppointmentsCodes = {
   SlotTaken: 'SLOT_TAKEN',
 } as const;

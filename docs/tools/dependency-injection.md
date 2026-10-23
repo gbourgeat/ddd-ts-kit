@@ -41,7 +41,7 @@ export abstract class AppointmentRepository {
   abstract save(appointment: Appointment): Promise<void>;
 }
 
-// contexts/appointments/application/authorization/appointments.permissions.ts
+// contexts/appointments/appointments.permissions.ts
 export const appointmentsPermissions = definePermissions('appointments', {
   'appointment.book': { description: 'Book an appointment' },
 });

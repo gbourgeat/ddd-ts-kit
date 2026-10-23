@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 import { AgendaProjection } from '@/contexts/scheduling/application/calendars/projections/agenda.projection';
 import { AppointmentAnnotated } from '@/contexts/scheduling/domain/calendars/events/appointment-annotated.event';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/calendars/events/appointment-booked.event';

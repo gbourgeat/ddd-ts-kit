@@ -1,5 +1,5 @@
 [English](aggregates.md) · **Français**
-<!-- translation-of: aggregates.md sha256:70e5c3d3631fc98d -->
+<!-- translation-of: aggregates.md sha256:0a18a408be2c7ea9 -->
 
 # Agrégats
 
@@ -158,14 +158,14 @@ nomme `create` de façon générique ([ARCHITECTURE.md](../ARCHITECTURE.fr.md), 
   commande a rendu la main et avant la validation (commit).
 
 Chaque refus est une classe à part, dans `domain/errors/<refus>.error.ts`, qui lit son code dans
-`domain/errors/codes.ts`, la liste fermée des codes du contexte. Ses fabriques écrivent une seule
+`<context>.codes.ts`, la liste fermée des codes du contexte. Ses fabriques écrivent une seule
 fois le message, les faits, et les faits qu'un client peut lire :
 
 <!-- checked sample -->
 ```ts
 import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-// domain/errors/codes.ts
+// appointments.codes.ts
 export const AppointmentsCodes = {
   AppointmentAlreadyCancelled: 'APPOINTMENT_ALREADY_CANCELLED',
   CancellationWindowPassed: 'CANCELLATION_WINDOW_PASSED',
@@ -459,7 +459,7 @@ du pilote comme cause :
 ```ts
 import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-// domain/errors/codes.ts
+// appointments.codes.ts
 export const AppointmentsCodes = {
   SlotAlreadyTaken: 'SLOT_ALREADY_TAKEN',
 } as const;

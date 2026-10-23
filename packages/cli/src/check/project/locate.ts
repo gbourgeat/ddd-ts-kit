@@ -1,6 +1,7 @@
 import type { Config } from '../../config';
 import type { Layer } from '../model/layer';
 import type { Location } from '../model/location';
+import { earlierPlaceOf } from '../../context-files';
 import { declaredModules, moduleSplit } from '../../model-modules';
 import { isUnder } from './is-under';
 
@@ -77,6 +78,15 @@ function moduleLocation(config: Config, { context, layer, rest }: Placed): Locat
 function locateAtContextRoot(context: string, entry: string): Location {
   if (entry === `${context}.module.ts`) {
     return { area: 'context', context, layer: 'module', inside: [] };
+  }
+
+  // The code list and the permission set sit at the root, and are read as they were in their role folder;
+  // an import names them without an extension, or with `.js`.
+  const [layer, ...inside] = earlierPlaceOf(context, `${entry.replace(/\.(?:js|ts)$/, '')}.ts`)?.split('/') ?? [];
+  const placed = LAYERS.find((candidate) => candidate === layer);
+
+  if (placed !== undefined) {
+    return { area: 'context', context, layer: placed, inside };
   }
 
   // A directory import (`../billing/published-language`) names the layer without a file.

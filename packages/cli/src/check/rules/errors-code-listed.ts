@@ -38,7 +38,7 @@ interface Refusal {
 export const errorsCodeListed: Rule = {
   id: 'errors/code-listed',
   description:
-    'Under "stack.refusals": "named", every refusal class of domain/errors/ (a class extending DomainRefusal) reads its code from the code list of its context, `readonly code = <Context>Codes.<Class>`, which domain/errors/codes.ts declares `as const`; every key of the list is a refusal class of the context and every value a string literal in constant case.',
+    'Under "stack.refusals": "named", every refusal class of domain/errors/ (a class extending DomainRefusal) reads its code from the code list of its context, `readonly code = <Context>Codes.<Class>`, which <context>.codes.ts declares `as const`; every key of the list is a refusal class of the context and every value a string literal in constant case.',
   scope: 'project',
   run(project) {
     if (!namesRefusals(project)) {
@@ -101,9 +101,7 @@ function unlistedCode(refusal: Refusal, errors: ContextErrors): Finding | undefi
   const listed = errors.list?.entries.some((candidate) => candidate.key === name) === true;
   const entry = `${name}: '${toName(name).constant}'`;
 
-  const addEntry = listed
-    ? ''
-    : `, and add the entry \`${entry}\` to the domain/errors/codes.ts of "${errors.context}"`;
+  const addEntry = listed ? '' : `, and add the entry \`${entry}\` to ${errors.context}.codes.ts`;
 
   const field = codeField(refusal);
 
@@ -151,14 +149,14 @@ function missingFromList(name: string, errors: ContextErrors, entry: string): Om
 
   if (errors.codesFile === undefined) {
     return {
-      message: `${name} reads ${expected}, but the context "${errors.context}" has no domain/errors/codes.ts.`,
-      fix: `Create domain/errors/codes.ts with \`export const ${errors.listName} = { ${entry} } as const;\` and its type, or run \`ddd-ts-kit generate error ${errors.context} ${name} <factory>\`, which writes both.`,
+      message: `${name} reads ${expected}, but the context "${errors.context}" has no ${errors.context}.codes.ts.`,
+      fix: `Create ${errors.context}.codes.ts at the root of the context with \`export const ${errors.listName} = { ${entry} } as const;\` and its type, or run \`ddd-ts-kit generate error ${errors.context} ${name} <factory>\`, which writes both.`,
     };
   }
 
   return {
     message: `${errors.listName} has no entry ${name}: the code of the refusal is not listed.`,
-    fix: `Add \`${entry}\` to ${errors.listName} in the domain/errors/codes.ts of "${errors.context}": ${CONTRACT}`,
+    fix: `Add \`${entry}\` to ${errors.listName} in ${errors.context}.codes.ts: ${CONTRACT}`,
   };
 }
 
@@ -168,7 +166,7 @@ function listFlaws({ context, listName, list, refusals }: ContextErrors): Findin
     return [
       {
         line: 1,
-        message: `domain/errors/codes.ts of "${context}" declares no ${listName}.`,
+        message: `${context}.codes.ts declares no ${listName}.`,
         fix: `Declare \`export const ${listName} = { <Refusal>: '<CODE>' } as const;\`, one entry per refusal class of "${context}", and \`export type ${listName.replace(/s$/, '')} = (typeof ${listName})[keyof typeof ${listName}];\`.`,
       },
     ];

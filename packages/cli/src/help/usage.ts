@@ -52,6 +52,7 @@ export const USAGE = `Usage
   ddd-ts-kit value-objects [--dry-run]
   ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]
   ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]
+  ddd-ts-kit context-layout [<context>...] [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
   ddd-ts-kit affected --base <git-ref> --run <script>
   ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--explain] [--self]

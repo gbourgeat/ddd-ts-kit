@@ -1,6 +1,6 @@
 import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 
 /** Enters the waitlist of a calendar for a day. The patient who joins for themselves says so: that is what their role allows. */
 @Requires(schedulingPermissions['waitlist.join'], {

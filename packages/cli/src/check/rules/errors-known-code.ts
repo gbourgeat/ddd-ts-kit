@@ -15,7 +15,7 @@ const UNKEPT = 'A code declared and never raised is a promise the contract makes
 export const errorsKnownCode: Rule = {
   id: 'errors/known-code',
   description:
-    'Under "stack.refusals": "factories" or "named", every code a route or a controller declares in `errors` exists: a factory or an error class of its context sets it, or the domain/errors/codes.ts of its context lists it, a class outside the contexts does, or it is a code of the kit.',
+    'Under "stack.refusals": "factories" or "named", every code a route or a controller declares in `errors` exists: a factory or an error class of its context sets it, or the <context>.codes.ts of its context lists it, a class outside the contexts does, or it is a code of the kit.',
   scope: 'project',
   run(project) {
     if (!buildsThroughFactories(project)) {
@@ -79,5 +79,5 @@ function factoriesFix(context: string): string {
 function namedFix(context: string): string {
   const owner = context === '*' ? 'its context' : `"${context}"`;
 
-  return `Write the code as the domain/errors/codes.ts of ${owner} lists it, or add the refusal: \`ddd-ts-kit generate error ${context === '*' ? '<context>' : context} <Refusal> <factory>\`, for example \`generate error banking InsufficientFunds forAccountId\`. ${UNKEPT}`;
+  return `Write the code as the code list of ${owner} (<context>.codes.ts) lists it, or add the refusal: \`ddd-ts-kit generate error ${context === '*' ? '<context>' : context} <Refusal> <factory>\`, for example \`generate error banking InsufficientFunds forAccountId\`. ${UNKEPT}`;
 }

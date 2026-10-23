@@ -1,5 +1,5 @@
 [English](bounded-context.md) · **Français**
-<!-- translation-of: bounded-context.md sha256:406e6bed7c2491d4 -->
+<!-- translation-of: bounded-context.md sha256:bd57a39c1ee3b033 -->
 
 # Contexte délimité
 
@@ -210,7 +210,7 @@ classe nommée d'après lui, `SlotTaken`, qui lit son code dans la liste des cod
 ```ts
 import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-// contexts/appointments/domain/errors/codes.ts
+// contexts/appointments/appointments.codes.ts
 export const AppointmentsCodes = {
   SlotTaken: 'SLOT_TAKEN',
 } as const;

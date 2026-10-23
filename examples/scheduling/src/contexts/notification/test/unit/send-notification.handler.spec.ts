@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
+import { notificationPermissions } from '@/contexts/notification/notification.permissions';
 import { SendNotificationCommand } from '@/contexts/notification/application/commands/send-notification/send-notification.command';
 import { aNotificationWorld } from '@/contexts/notification/test/worlds/notification.world';
 

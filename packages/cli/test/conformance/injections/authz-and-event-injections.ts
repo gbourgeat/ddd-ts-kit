@@ -75,7 +75,7 @@ export const AUTHZ_AND_EVENT_INJECTIONS: readonly Injection[] = [
   {
     rule: 'authz/granted',
     what: 'the example moved to roles, with roles that hold every context but scheduling by name',
-    file: `${SCHEDULING}/application/authorization/scheduling.permissions.ts`,
+    file: `${SCHEDULING}/scheduling.permissions.ts`,
     changes: [
       { file: 'ddd-ts-kit.config.json', from: '"authz": "rebac"', to: '"authz": "rbac"' },
       {
@@ -92,7 +92,7 @@ export const AUTHZ_AND_EVENT_INJECTIONS: readonly Injection[] = [
     changes: [
       {
         file: 'src/platform/auth/authorization/signed-in-grants.ts',
-        to: "import type { Grant } from '@ddd-ts-kit/auth';\nimport { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';\n\n/** What every signed-in person may do, whatever the model decides: here, read every notification. */\nexport const signedInGrants: readonly Grant[] = [notificationPermissions['notification.read']];\n",
+        to: "import type { Grant } from '@ddd-ts-kit/auth';\nimport { notificationPermissions } from '@/contexts/notification/notification.permissions';\n\n/** What every signed-in person may do, whatever the model decides: here, read every notification. */\nexport const signedInGrants: readonly Grant[] = [notificationPermissions['notification.read']];\n",
       },
     ],
     checker: true,

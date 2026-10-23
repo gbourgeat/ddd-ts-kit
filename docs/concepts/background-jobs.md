@@ -349,7 +349,7 @@ import { QueryHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
 
 const permissions = definePermissions('scheduling', { 'calendar.clear': { description: 'Clear calendar' } });
 
-// scheduling/domain/errors/codes.ts
+// scheduling.codes.ts
 export const SchedulingCodes = { UnknownClearance: 'UNKNOWN_CLEARANCE' } as const;
 
 // scheduling/domain/errors/unknown-clearance.error.ts

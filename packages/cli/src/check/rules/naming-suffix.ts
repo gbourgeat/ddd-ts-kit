@@ -3,7 +3,9 @@ import { isDeclarationsFile, routesFile } from '../../declared';
 import { roleOf } from '../canonical/role-of';
 import type { ContextLocation } from '../model/context-location';
 import type { Flaw } from '../model/flaw';
+import type { Project } from '../model/project';
 import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
 import { inContext } from '../support/in-context';
 import { isDeclaredStyle } from '../support/is-declared-style';
 import { KEBAB_SEGMENT } from '../support/kebab-segment';
@@ -24,25 +26,30 @@ export const namingSuffix: Rule = {
 
       const name = path.posix.basename(file.path);
 
-      if (name === 'index.ts') {
+      if (name === 'index.ts' || namedByTheKit(project, file, file.location.context)) {
         return [];
       }
 
-      const relative = pathInContext(project, file) ?? '';
-      const generated = isDeclaredStyle(project) && isDeclarationsFile(file.location.context, relative, WITHOUT_MODULE);
-
-      // The routes of a context are one list named after it instead of a role, in either style;
-      // the generated declarations of a layer are named after the layer.
-      if (relative === routesFile(file.location.context) || generated) {
-        return [];
-      }
-
-      const flaw = notKebab(name) ?? withoutSuffix(name, file.location);
+      // A file of the context at its root (its code list) is named as it would be in its role folder.
+      const flaw = notKebab(name) ?? withoutSuffix(file.location.inside.at(-1) ?? name, file.location);
 
       return flaw === undefined ? [] : [{ line: 1, ...flaw }];
     });
   },
 };
+
+/**
+ * The routes of a context are one list named after it instead of a role, in either style; the
+ * generated declarations of a layer are named after the layer.
+ */
+function namedByTheKit(project: Project, file: SourceFile, context: string): boolean {
+  const relative = pathInContext(project, file) ?? '';
+
+  return (
+    relative === routesFile(context) ||
+    (isDeclaredStyle(project) && isDeclarationsFile(context, relative, WITHOUT_MODULE))
+  );
+}
 
 function notKebab(name: string): Flaw | undefined {
   if (name.split('.').every((segment) => KEBAB_SEGMENT.test(segment))) {

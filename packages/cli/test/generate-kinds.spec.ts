@@ -29,11 +29,7 @@ describe('authorization and gateway kinds', () => {
   });
 
   it('declares each permission once, carries the actor in the message and lets the route name its security scheme', () => {
-    expect(
-      read(root, `${BILLING}/application/authorization/billing.permissions.ts`).match(
-        /'invoice\.(issue|cancel|search)':/g,
-      ),
-    ).toHaveLength(3);
+    expect(read(root, `${BILLING}/billing.permissions.ts`).match(/'invoice\.(issue|cancel|search)':/g)).toHaveLength(3);
 
     expect(read(root, `${BILLING}/application/commands/issue-invoice/issue-invoice.command.ts`)).toContain(
       'extends AuthorizedCommand<string>',

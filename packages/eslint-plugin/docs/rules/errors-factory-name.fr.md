@@ -1,5 +1,5 @@
 [English](errors-factory-name.md) · **Français**
-<!-- translation-of: errors-factory-name.md sha256:258dda2c58b2caff -->
+<!-- translation-of: errors-factory-name.md sha256:605131b1f3540fac -->
 
 # ddd-ts-kit/errors-factory-name
 
@@ -21,7 +21,7 @@ Sous `named` :
 - une fabrique dont le nom ne commence pas par `for`, `with`, `because`, `on` ou `at` suivi d'une majuscule (`forAccountId`, `withNotice`, `becauseOf`, `onDate`, `atStart`) : `slotTaken`, `create`, `format` et `onboard` sont signalés, et le message propose `for` devant le nom
 - une fabrique dont le nom contient un chiffre (`forAccount2`)
 
-Le code n'est pas lu ici : sous `named`, une classe lit son code dans le `codes.ts` de son contexte, ce que tient `errors/code-listed` du *checker*.
+Le code n'est pas lu ici : sous `named`, une classe lit son code dans le `<context>.codes.ts` de son contexte, ce que tient `errors/code-listed` du *checker*.
 
 Incorrect, sous `named` :
 
@@ -75,7 +75,7 @@ Aucune.
 
 `rules."errors/factory-name"` à `off` dans `ddd-ts-kit.config.json` désactive la règle, et `// ddd-ts-kit-disable-next-line errors/factory-name -- <reason>` désactive une ligne, exactement comme pour `ddd-ts-kit check`.
 
-Un code déjà publié sous d'autres mots ne peut pas changer. Sous `named`, rien n'a à céder : le code est écrit dans `codes.ts`, à part des noms de la classe et de ses fabriques, et un projet migré y garde ses codes publiés. Sous `factories`, renommez la fabrique d'après le code, ou gardez le nom et désactivez cette ligne avec la raison.
+Un code déjà publié sous d'autres mots ne peut pas changer. Sous `named`, rien n'a à céder : le code est écrit dans `<context>.codes.ts`, à part des noms de la classe et de ses fabriques, et un projet migré y garde ses codes publiés. Sous `factories`, renommez la fabrique d'après le code, ou gardez le nom et désactivez cette ligne avec la raison.
 
 ## Limites
 
@@ -84,4 +84,4 @@ Un code déjà publié sous d'autres mots ne peut pas changer. Sous `named`, rie
 
 ## Avec le checker de la CLI
 
-Tenue par ce *plugin* seul. Qu'un code soit unique dans son contexte relève de `errors/code-unique`, et sous `named` qu'une classe lise son code dans le `codes.ts` de son contexte relève de `errors/code-listed`, toutes deux tenues par le *checker*.
+Tenue par ce *plugin* seul. Qu'un code soit unique dans son contexte relève de `errors/code-unique`, et sous `named` qu'une classe lise son code dans le `<context>.codes.ts` de son contexte relève de `errors/code-listed`, toutes deux tenues par le *checker*.

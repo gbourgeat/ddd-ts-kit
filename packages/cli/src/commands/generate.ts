@@ -3,7 +3,7 @@ import { CliError } from '../cli-error';
 import { findKind } from '../generate/find-kind';
 import type { Kind, KindFlags } from '../generate/kind';
 import { KINDS } from '../generate/kinds';
-import { placeInModules } from '../generate/place-in-modules';
+import { placeGeneratedFiles } from '../generate/place-generated-files';
 import { refreshDocs } from '../generate/refresh-docs';
 import { refuseSharedWrites } from '../generate/refuse-shared-writes';
 import { stopIgnoringValidation } from '../generate/stop-ignoring-validation';
@@ -28,7 +28,7 @@ export const generateCommand: Command = (argv, io) => {
   const flags = flagsOf(args);
   const context = kind.positionals[0] === 'context' ? toName(rest[0] ?? '').kebab : undefined;
 
-  const stopPlacing = placeInModules(ws, config, {
+  const stopPlacing = placeGeneratedFiles(ws, config, {
     context,
     module: flags.module,
     command: ['generate', ...argv].join(' '),

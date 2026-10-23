@@ -10,7 +10,7 @@ import * as notificationDeclarations from '@/contexts/notification/notification.
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { personRegisteredV1 } from '@/contexts/identity/published-language';
 import { appointmentBookedV1 } from '@/contexts/scheduling/published-language';
-import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
+import { notificationPermissions } from '@/contexts/notification/notification.permissions';
 import { PlanReminderCommand } from '@/contexts/notification/application/commands/plan-reminder/plan-reminder.command';
 import { SendDueRemindersCommand } from '@/contexts/notification/application/commands/send-due-reminders/send-due-reminders.command';
 import { Mailer } from '@/contexts/notification/application/ports/mailer.port';

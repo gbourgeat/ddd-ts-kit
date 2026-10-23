@@ -98,7 +98,7 @@ export interface Stack {
   /**
    * How a domain error is written: `named`, one class per refusal, named after it and extending
    * `DomainRefusal`, built by static factories named after what it is about
-   * (`SlotTaken.forCalendar(..)`), its code read from the closed list `domain/errors/codes.ts` of
+   * (`SlotTaken.forCalendar(..)`), its code read from the closed list `<context>.codes.ts` of
    * its context; `factories`, one error class per concept of the model, each refusal built by a
    * static factory named in the words of the business (`AppointmentError.slotTaken(..)`); both
    * are held by the `errors/*` rules. `classes`, one class per error, built with `new`. A config

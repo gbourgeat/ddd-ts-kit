@@ -1,5 +1,5 @@
 [English](entities-and-value-objects.md) · **Français**
-<!-- translation-of: entities-and-value-objects.md sha256:bacc9c4406b3d8ba -->
+<!-- translation-of: entities-and-value-objects.md sha256:c24fb54a4349879c -->
 
 # Entités et objets-valeurs
 
@@ -46,7 +46,7 @@ règles qui le rendent valide et les opérations qui lui appartiennent.
 ```ts
 import { DomainRefusal, ValueObject } from '@ddd-ts-kit/kernel';
 
-// contexts/appointments/domain/errors/codes.ts
+// contexts/appointments/appointments.codes.ts
 export const AppointmentsCodes = {
   InvalidTimeSlot: 'INVALID_TIME_SLOT',
 } as const;
@@ -388,7 +388,7 @@ Une entité est définie par un fil de continuité. Sa classe protège ce fil :
 ```ts
 import { DomainRefusal, Entity, ValueObject } from '@ddd-ts-kit/kernel';
 
-// contexts/calendars/domain/errors/codes.ts
+// contexts/calendars/calendars.codes.ts
 export const CalendarsCodes = {
   TimeOffCanOnlyShrink: 'TIME_OFF_CAN_ONLY_SHRINK',
 } as const;

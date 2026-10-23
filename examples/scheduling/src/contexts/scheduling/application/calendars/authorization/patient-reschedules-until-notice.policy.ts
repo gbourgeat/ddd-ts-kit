@@ -2,7 +2,7 @@ import type { PolicyContext } from '@ddd-ts-kit/auth';
 import { isAuthenticated, type Actor } from '@ddd-ts-kit/kernel';
 import { Policy } from '@ddd-ts-kit/kernel/declarations';
 import { Appointment } from '@/contexts/scheduling/domain/calendars/aggregates/appointment.aggregate';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 
 /** The notice a patient owes the practice, in hours before the start. */
 const NOTICE = 24;

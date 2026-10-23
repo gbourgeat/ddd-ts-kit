@@ -91,7 +91,7 @@ The full declaration is in [Designing the payload](#designing-the-payload).
      ) {}
    }
 
-   // contexts/scheduling/domain/errors/codes.ts
+   // contexts/scheduling/scheduling.codes.ts
    export const SchedulingCodes = { EmptySlot: 'EMPTY_SLOT' } as const;
 
    // contexts/scheduling/domain/errors/empty-slot.error.ts

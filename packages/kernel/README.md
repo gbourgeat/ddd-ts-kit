@@ -59,7 +59,7 @@ file, and `ddd-ts-kit generate` writes them):
 ```ts
 import { AggregateRoot, DomainRefusal, Entity, ValueObject, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
-// The codes of the context, in domain/errors/codes.ts, and its refusals, one class each (see "Domain errors").
+// The codes of the context, in <context>.codes.ts, and its refusals, one class each (see "Domain errors").
 export const OrderingCodes = {
   InvalidQuantity: 'INVALID_QUANTITY',
   OrderAlreadyPlaced: 'ORDER_ALREADY_PLACED',
@@ -206,7 +206,7 @@ refusal instead of throwing it (`"stack.valueObjects": "result"`). Why each bloc
 A business refusal is a `DomainError`: an answer the code planned for, known everywhere by its
 `code`. A context has one class per refusal, named after what is refused, which extends
 `DomainRefusal`; its static factories are named after what the refusal is about, and the code
-of every refusal of the context is written once, in the closed list `domain/errors/codes.ts`:
+of every refusal of the context is written once, in the closed list `<context>.codes.ts`:
 
 <!-- checked sample -->
 ```ts
@@ -215,7 +215,7 @@ import { DomainRefusal } from '@ddd-ts-kit/kernel';
 declare const calendar: { readonly id: string };
 declare const slot: { readonly startsAt: Date };
 
-// domain/errors/codes.ts
+// scheduling.codes.ts
 export const SchedulingCodes = {
   SlotTaken: 'SLOT_TAKEN',
   UnknownAppointment: 'APPOINTMENT_NOT_FOUND',
@@ -356,7 +356,7 @@ import { AggregateRoot, DomainRefusal, defineStateMachine } from '@ddd-ts-kit/ke
 export const ParcelStatus = { Registered: 'registered', Shipped: 'shipped', Delivered: 'delivered' } as const;
 export type ParcelStatus = (typeof ParcelStatus)[keyof typeof ParcelStatus];
 
-// domain/errors/codes.ts, then one class per refusal
+// shipping.codes.ts, then one class per refusal
 export const ShippingCodes = {
   ParcelUnpaid: 'PARCEL_UNPAID',
   ParcelTransitionRefused: 'PARCEL_TRANSITION_REFUSED',

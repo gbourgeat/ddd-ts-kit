@@ -1,5 +1,5 @@
 [English](invariants-permissions-validation.md) · **Français**
-<!-- translation-of: invariants-permissions-validation.md sha256:4b71222f75608b99 -->
+<!-- translation-of: invariants-permissions-validation.md sha256:570a58919dd6fe15 -->
 
 # Invariants, permissions et validation
 
@@ -66,7 +66,7 @@ import { definePermissions } from '@ddd-ts-kit/auth';
 import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
 
-// application/authorization/appointments.permissions.ts
+// appointments.permissions.ts
 export const permissions = definePermissions('appointments', {
   'appointment.cancel': { description: 'Cancel an appointment' },
 });
@@ -166,7 +166,7 @@ import { AggregateRoot, DomainRefusal } from '@ddd-ts-kit/kernel';
 
 const FREE_CANCELLATION_MS = 24 * 60 * 60_000;
 
-// domain/errors/codes.ts
+// scheduling.codes.ts
 export const SchedulingCodes = {
   AppointmentAlreadyCancelled: 'APPOINTMENT_ALREADY_CANCELLED',
   CancellationWindowPassed: 'CANCELLATION_WINDOW_PASSED',
@@ -337,7 +337,7 @@ import { DomainRefusal } from '@ddd-ts-kit/kernel';
 declare const calendar: { readonly id: string };
 declare const slot: { readonly startsAt: Date };
 
-// domain/errors/codes.ts
+// scheduling.codes.ts
 export const SchedulingCodes = {
   SlotTaken: 'SLOT_TAKEN',
 } as const;
@@ -363,7 +363,7 @@ throw SlotTaken.forCalendar(calendar.id, slot.startsAt);
 - **Le nom est celui du métier, deux fois.** La classe est ce que lit le développeur qui
   refuse ; le code, ce que lisent le client, le *mapper*, le journal d'audit et les tests. Ils
   disent les mêmes mots : `SlotTaken` et `SLOT_TAKEN`. Le code est écrit une seule fois, dans
-  `domain/errors/codes.ts`, et chaque classe y lit le sien (`errors/code-listed`). Un code nomme
+  `<context>.codes.ts`, et chaque classe y lit le sien (`errors/code-listed`). Un code nomme
   un seul refus d'un contexte (`errors/code-unique`).
 - **La fabrique (factory) dit sur quoi porte le refus.** Son nom commence par `for`, `with`,
   `because`, `on` ou `at` : `SlotTaken.forCalendar(calendar.id, startsAt)`,
@@ -385,7 +385,7 @@ throw SlotTaken.forCalendar(calendar.id, slot.startsAt);
   `expectProblem(response, { status: 409, code: 'SLOT_TAKEN' })` : le code est la clé.
 - **Un refus, un fichier.** `domain/errors/slot-taken.error.ts` contient `SlotTaken` et rien
   d'autre. `ddd-ts-kit generate error scheduling SlotTaken forCalendar` écrit la classe, son
-  entrée dans `codes.ts`, la fabrique et son cas de *spec*, chacun quand il manque.
+  entrée dans `<context>.codes.ts`, la fabrique et son cas de *spec*, chacun quand il manque.
 
 Cette forme est `"stack.refusals": "named"`, ce qu'écrit `init`. Les formes antérieures
 continuent de fonctionner : `factories`, une classe `ConceptError` par concept avec une

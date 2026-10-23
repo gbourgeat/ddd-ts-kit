@@ -1,5 +1,5 @@
 [English](domain-and-integration-events.md) · **Français**
-<!-- translation-of: domain-and-integration-events.md sha256:2fb661bbb5e837bc -->
+<!-- translation-of: domain-and-integration-events.md sha256:2c9c3f2a096dff10 -->
 
 # Événements du domaine et événements d'intégration
 
@@ -94,7 +94,7 @@ La déclaration complète est dans [Concevoir la charge utile](#concevoir-la-cha
      ) {}
    }
 
-   // contexts/scheduling/domain/errors/codes.ts
+   // contexts/scheduling/scheduling.codes.ts
    export const SchedulingCodes = { EmptySlot: 'EMPTY_SLOT' } as const;
 
    // contexts/scheduling/domain/errors/empty-slot.error.ts

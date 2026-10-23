@@ -64,7 +64,7 @@ describe('error-factories --apply to the named form, a refusal class already the
       [`${ERRORS}/codes.ts`]: lines('export const SchedulingCodes = {', "  SlotTaken: 'SLOT_TAKEN',", '} as const;'),
       [`${ERRORS}/slot-taken.error.ts`]: lines(
         "import { DomainRefusal } from '@ddd-ts-kit/kernel';",
-        "import { SchedulingCodes } from '@/contexts/scheduling/domain/errors/codes';",
+        "import { SchedulingCodes } from '@/contexts/scheduling/scheduling.codes';",
         '',
         'export class SlotTaken extends DomainRefusal {',
         '  readonly code = SchedulingCodes.SlotTaken;',

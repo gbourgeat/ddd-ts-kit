@@ -176,7 +176,7 @@ interface CapturePaymentCommand {
   readonly paymentId: string;
 }
 
-// domain/errors/codes.ts
+// payments.codes.ts
 export const PaymentsCodes = {
   PaymentDeclined: 'PAYMENT_DECLINED',
 } as const;

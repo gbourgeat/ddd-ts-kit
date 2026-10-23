@@ -165,9 +165,7 @@ describe('generate context --preset identity', () => {
     expect(result.code).toBe(0);
     expect(read(root, 'ddd-ts-kit.config.json')).toContain('"classification": "generic"');
 
-    expect(read(root, 'src/contexts/people/application/authorization/people.permissions.ts')).toContain(
-      "definePermissions('people'",
-    );
+    expect(read(root, 'src/contexts/people/people.permissions.ts')).toContain("definePermissions('people'");
 
     expect(read(root, 'src/contexts/people/domain/events/member-joined.event.ts')).toContain("'people.member.joined'");
     expect(cli(root, 'check').stdout).toContain('0 errors');
@@ -202,7 +200,7 @@ describe('init --preset identity, the form of its refusals', () => {
     const factories = initProject('--refusals', 'factories', '--preset', 'identity');
     const exists = (root: string, file: string) => fs.existsSync(path.join(root, errors, file));
 
-    expect(read(named, `${errors}/codes.ts`)).toContain("  DeactivatedAccount: 'ACCOUNT_DEACTIVATED',");
+    expect(read(named, `${CONTEXT}/identity.codes.ts`)).toContain("  DeactivatedAccount: 'ACCOUNT_DEACTIVATED',");
 
     expect(read(named, `${errors}/unknown-member.error.ts`)).toContain('readonly code = IdentityCodes.UnknownMember;');
 
@@ -219,7 +217,7 @@ describe('init --preset identity, the form of its refusals', () => {
       'throw MemberError.lastOwner(',
     );
 
-    expect(exists(factories, 'codes.ts')).toBe(false);
+    expect(fs.existsSync(path.join(factories, CONTEXT, 'identity.codes.ts'))).toBe(false);
     expect(exists(factories, 'unknown-member.error.ts')).toBe(false);
   });
 });

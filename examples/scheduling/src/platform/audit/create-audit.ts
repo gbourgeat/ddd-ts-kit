@@ -19,7 +19,7 @@ import { AUDIT_SCHEMA } from '@/platform/database/schema';
 import { auditPermissions } from '@/platform/audit/audit.permissions';
 import { auditedEvents } from '@/platform/audit/audited-events';
 import { SearchAuditEntriesQuery } from '@/platform/audit/search-audit-entries/search-audit-entries.query';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 
 /** Reading the trail, and reading a document that may hold health data: every allowed access is recorded. */
 const SENSITIVE_READS = [auditPermissions['trail.read'].id, schedulingPermissions['appointment.read-document'].id];

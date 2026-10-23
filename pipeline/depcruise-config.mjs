@@ -111,10 +111,16 @@ function domainPurity(project) {
     name: 'layer-domain-purity',
     severity: 'error',
     comment:
-      'domain/ imports only its own domain/, the shared kernel and the allowed kernel packages. Invert the dependency: declare the need as a port, an abstract class in domain/repositories or application/ports.',
+      'domain/ imports only its own domain/, the code list of its context, the shared kernel and the allowed kernel packages. Invert the dependency: declare the need as a port, an abstract class in domain/repositories or application/ports.',
     from: { path: `${own.context}/domain/`, pathNot: testFiles(project) },
     to: {
-      pathNot: [own.layer('domain'), own.sharedKernel, internalsOf(project), ...packages(project.domainPackages)],
+      pathNot: [
+        own.layer('domain'),
+        own.rootFile('codes'),
+        own.sharedKernel,
+        internalsOf(project),
+        ...packages(project.domainPackages),
+      ],
     },
   };
 }
@@ -126,12 +132,14 @@ function applicationInward(project) {
     name: 'layer-application-inward',
     severity: 'error',
     comment:
-      'application/ imports domain/, application/, published languages and the allowed kernel packages. Depend on a port and let the composition root bind the adapter.',
+      'application/ imports domain/, application/, the code list and the permission set of its context, published languages and the allowed kernel packages. Depend on a port and let the composition root bind the adapter.',
     from: { path: `${own.context}/application/`, pathNot: testFiles(project) },
     to: {
       pathNot: [
         own.layer('domain'),
         own.layer('application'),
+        own.rootFile('codes'),
+        own.rootFile('permissions'),
         own.layer('published-language'),
         own.sharedKernel,
         otherContexts,
@@ -146,6 +154,8 @@ function ownLayers(project) {
   return {
     context: `^${escape(project.contextsDir)}/([^/]+)`,
     layer: (layer) => `^${escape(project.contextsDir)}/$1/${layer}(/|\\.ts$)`,
+    // The code list (of the domain) and the permission set (of the application) sit at the root of the context.
+    rootFile: (kind) => `^${escape(project.contextsDir)}/$1/$1\\.${kind}\\.ts$`,
     sharedKernel: `^${escape(project.sharedKernelDir)}/`,
   };
 }

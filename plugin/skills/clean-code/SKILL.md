@@ -44,7 +44,7 @@ without fighting them. Reference: `docs/ARCHITECTURE.md` section 6.
   `unknown`, `already`, `too`, `no`, `missing`, `required` (`BookingTooLate`), never `...Error`, and a static factory named after what the
   refusal is about, `for`, `with`, `because`, `on` or `at` then a capital letter (`forCalendar`,
   `withNotice`, `becauseOf`). The class reads its code from the closed list of its context,
-  `readonly code = SchedulingCodes.SlotTaken` in `domain/errors/codes.ts`. Never
+  `readonly code = SchedulingCodes.SlotTaken` in `<context>.codes.ts`. Never
   `new SlotTaken(...)`, never a factory named `create` or `slotTaken` (`errors/through-factory`,
   `errors/factory-name`, `errors/code-listed`). Add one with
   `npx ddd-ts-kit generate error <context> <Refusal> <factory>`. Under

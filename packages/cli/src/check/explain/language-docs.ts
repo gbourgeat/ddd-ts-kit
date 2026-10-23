@@ -2,7 +2,7 @@ import type { RuleDoc } from '../model/rule-doc';
 
 export const LANGUAGE_DOCS: Readonly<Record<string, RuleDoc>> = {
   'language/glossary-term': {
-    why: 'The ubiquitous language is the contract between the domain experts and the code. A class named with a word nobody defined is either a concept the experts do not know, or a synonym that will split the vocabulary in two. Writing the term and its meaning first forces the conversation that the name needs. Under "stack.refusals": "factories" or "named" the classes of domain/errors/ are judged too: `AppointmentError` names `Appointment`, `SlotTaken` names `Slot` and `Take`; a refusal class may also use the qualifiers of a refusal, invalid, unknown, already, too, no, missing and required (`BookingTooLate`, `InvalidAppointment`), and domain/errors/codes.ts, which holds no class, is not judged.',
+    why: 'The ubiquitous language is the contract between the domain experts and the code. A class named with a word nobody defined is either a concept the experts do not know, or a synonym that will split the vocabulary in two. Writing the term and its meaning first forces the conversation that the name needs. Under "stack.refusals": "factories" or "named" the classes of domain/errors/ are judged too: `AppointmentError` names `Appointment`, `SlotTaken` names `Slot` and `Take`; a refusal class may also use the qualifiers of a refusal, invalid, unknown, already, too, no, missing and required (`BookingTooLate`, `InvalidAppointment`), and <context>.codes.ts, which holds no class, is not judged.',
     bad: `// CONTEXT.md glossary: Invoice, Issue
 export class BillDispatcher {}`,
     good: `// CONTEXT.md glossary: Invoice, Issue

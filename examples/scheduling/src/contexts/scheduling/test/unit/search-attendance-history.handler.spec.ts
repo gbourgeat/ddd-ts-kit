@@ -3,7 +3,7 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { Criteria } from '@ddd-ts-kit/kernel';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 import type { AttendanceEntry } from '@/contexts/scheduling/application/calendars/ports/attendance-history.port';
 import { SearchAttendanceHistoryQuery } from '@/contexts/scheduling/application/calendars/queries/search-attendance-history/search-attendance-history.query';
 import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';

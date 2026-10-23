@@ -1,5 +1,5 @@
 [English](first-slice.md) · **Français**
-<!-- translation-of: first-slice.md sha256:febc763c3889c213 -->
+<!-- translation-of: first-slice.md sha256:bdd479713b2d2e74 -->
 
 # Une tranche, de bout en bout
 
@@ -47,12 +47,12 @@ import { NamedDomainEvent,
 } from '@ddd-ts-kit/kernel';
 import { CommandHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
 
-// application/authorization/ordering.permissions.ts : `generate command` a déclaré la permission
+// ordering.permissions.ts : `generate command` a déclaré la permission
 export const orderingPermissions = definePermissions('ordering', {
   'order.place': { description: 'Place order' },
 });
 
-// domain/errors/codes.ts : les codes du contexte, une liste fermée
+// ordering.codes.ts : les codes du contexte, une liste fermée
 export const OrderingCodes = {
   OrderEmpty: 'ORDER_EMPTY',
 } as const;

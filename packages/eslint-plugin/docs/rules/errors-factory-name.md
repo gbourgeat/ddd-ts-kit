@@ -20,7 +20,7 @@ Under `named`:
 - a factory whose name does not start with `for`, `with`, `because`, `on` or `at` followed by an upper-case letter (`forAccountId`, `withNotice`, `becauseOf`, `onDate`, `atStart`): `slotTaken`, `create`, `format` and `onboard` are reported, and the message proposes `for` before the name
 - a factory whose name holds a digit (`forAccount2`)
 
-The code is not read here: under `named` a class reads its code from the `codes.ts` of its context, which `errors/code-listed` of the checker holds.
+The code is not read here: under `named` a class reads its code from the `<context>.codes.ts` of its context, which `errors/code-listed` of the checker holds.
 
 Incorrect, under `named`:
 
@@ -74,7 +74,7 @@ None.
 
 `rules."errors/factory-name"` in `ddd-ts-kit.config.json` set to `off` silences the rule, and `// ddd-ts-kit-disable-next-line errors/factory-name -- <reason>` silences one line, exactly as for `ddd-ts-kit check`.
 
-A code already published under other words cannot change. Under `named` nothing has to give: the code is written in `codes.ts`, apart from the names of the class and its factories, and a migrated project keeps its published codes there. Under `factories`, rename the factory after the code, or keep the name and silence that line with the reason.
+A code already published under other words cannot change. Under `named` nothing has to give: the code is written in `<context>.codes.ts`, apart from the names of the class and its factories, and a migrated project keeps its published codes there. Under `factories`, rename the factory after the code, or keep the name and silence that line with the reason.
 
 ## Limits
 
@@ -83,4 +83,4 @@ A code already published under other words cannot change. Under `named` nothing 
 
 ## With the CLI checker
 
-Held by this plugin alone. That a code is unique in its context is `errors/code-unique`, and under `named` that a class reads its code from the `codes.ts` of its context is `errors/code-listed`, both held by the checker.
+Held by this plugin alone. That a code is unique in its context is `errors/code-unique`, and under `named` that a class reads its code from the `<context>.codes.ts` of its context is `errors/code-listed`, both held by the checker.

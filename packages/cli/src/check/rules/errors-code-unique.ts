@@ -11,12 +11,12 @@ const WHY = 'the HTTP mapping, the OpenAPI document, the audit trail and the tes
 
 const FACTORIES_FIX = `Give each refusal of a context its own code, or call the factory that already sets this one: ${WHY}`;
 
-const NAMED_FIX = `Give each refusal class of the context its own value in domain/errors/codes.ts, or throw the refusal that already has this code from one of its factories: ${WHY}`;
+const NAMED_FIX = `Give each refusal class of the context its own value in <context>.codes.ts, or throw the refusal that already has this code from one of its factories: ${WHY}`;
 
 export const errorsCodeUnique: Rule = {
   id: 'errors/code-unique',
   description:
-    'Under "stack.refusals": "factories" or "named", a code is given to one refusal of a context: no two factories, no two error classes and no two entries of domain/errors/codes.ts, of the domain/errors/ of a context, set the same code.',
+    'Under "stack.refusals": "factories" or "named", a code is given to one refusal of a context: no two factories, no two error classes and no two entries of <context>.codes.ts, of the domain/errors/ of a context, set the same code.',
   scope: 'project',
   run(project) {
     if (!buildsThroughFactories(project)) {

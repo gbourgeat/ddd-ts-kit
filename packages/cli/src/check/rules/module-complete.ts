@@ -12,7 +12,7 @@ const NAMED = 5;
 export const moduleComplete: Rule = {
   id: 'module/complete',
   description:
-    'Once a context declares modules of its model, every file of its domain/ and application/ sits in one of them, the files that stay one per context aside (domain/errors/codes.ts, application/authorization/<context>.permissions.ts and the generated declarations). One finding per role folder still holding files at the level of the context. A warning, so that a context moves into its modules one commit at a time.',
+    'Once a context declares modules of its model, every file of its domain/ and application/ sits in one of them, the files that stay one per context aside (the generated declarations, and, still where 0.86 wrote them, domain/errors/codes.ts and application/authorization/<context>.permissions.ts, which belong at the root of the context). One finding per role folder still holding files at the level of the context. A warning, so that a context moves into its modules one commit at a time.',
   scope: 'project',
   run(project) {
     const report = reporter(project, this.id);

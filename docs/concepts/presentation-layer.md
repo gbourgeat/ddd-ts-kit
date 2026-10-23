@@ -381,7 +381,7 @@ import { definePermissions } from '@ddd-ts-kit/auth';
 import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
 
-// application/authorization/scheduling.permissions.ts
+// scheduling.permissions.ts
 export const schedulingPermissions = definePermissions('scheduling', {
   'appointment.cancel': { description: 'Patient cancels until notice' },
 });

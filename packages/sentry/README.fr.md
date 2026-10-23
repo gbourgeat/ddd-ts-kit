@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d3b6725c2c4de0c8 -->
+<!-- translation-of: README.md sha256:4cfe61cbcd2680cf -->
 
 # @ddd-ts-kit/sentry
 
@@ -185,7 +185,7 @@ interface CapturePaymentCommand {
   readonly paymentId: string;
 }
 
-// domain/errors/codes.ts
+// payments.codes.ts
 export const PaymentsCodes = {
   PaymentDeclined: 'PAYMENT_DECLINED',
 } as const;

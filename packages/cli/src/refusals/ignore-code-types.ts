@@ -1,19 +1,20 @@
 import type { Config } from '../config';
 import { isRecord } from '../config/values/is-record';
 import { formatJson } from '../json/format-json';
+import { codeTypesPattern } from './code-types-pattern';
 import type { MigrationDraft } from './migration-draft';
 
 const KNIP_FILE = 'knip.json';
 const ISSUES = 'ignoreIssues';
 
 /**
- * knip reports the type `<Ctx>Code` of each `codes.ts` that nothing imports yet, though it is the
+ * knip reports the type `<Ctx>Code` of each `<context>.codes.ts` that nothing imports yet, though it is the
  * contract a route or a client reads: `init` tells knip so under the named form, and the migration
  * says it as `init` does. A knip config the migration cannot edit (another file, or not plain
  * JSON) is left to a person.
  */
 export function ignoreCodeTypes(config: Config, draft: MigrationDraft): void {
-  const pattern = `${config.contextsDir}/*/domain/errors/codes.ts`;
+  const pattern = codeTypesPattern(config);
   const text = draft.read(KNIP_FILE);
   const knip = text === undefined ? undefined : parsed(text);
 

@@ -104,7 +104,7 @@ describe('error-factories --plan, to the named form', () => {
     expect(files).toContain(`would remove  ${UNIT}/appointment.error.spec.ts`);
     expect(new Set(files.map((line) => line.slice(14))).size).toBe(files.length);
 
-    expect(exists(root, `${ERRORS}/codes.ts`)).toBe(false);
+    expect(exists(root, `${SCHEDULING}/scheduling.codes.ts`)).toBe(false);
   });
 });
 
@@ -148,7 +148,7 @@ describe('error-factories --apply, from factories to the named form', () => {
   });
 
   it('writes the codes of each context, keyed by class, the codes kept', () => {
-    expect(read(root, `${ERRORS}/codes.ts`)).toBe(
+    expect(read(root, `${SCHEDULING}/scheduling.codes.ts`)).toBe(
       lines(
         'export const SchedulingCodes = {',
         "  AppointmentEnded: 'APPOINTMENT_ENDED',",
@@ -160,7 +160,7 @@ describe('error-factories --apply, from factories to the named form', () => {
       ),
     );
 
-    expect(read(root, `${BILLING}/domain/errors/codes.ts`)).toContain("  UnknownInvoice: 'INVOICE_NOT_FOUND',\n");
+    expect(read(root, `${BILLING}/billing.codes.ts`)).toContain("  UnknownInvoice: 'INVOICE_NOT_FOUND',\n");
   });
 
   it('writes one class per refusal, its code read from the list, its factory as written with what it chains', () => {
@@ -168,7 +168,7 @@ describe('error-factories --apply, from factories to the named form', () => {
       lines(
         "import { DomainRefusal } from '@ddd-ts-kit/kernel';",
         "import type { AppointmentId } from '@/contexts/scheduling/domain/value-objects/appointment-id';",
-        "import { SchedulingCodes } from '@/contexts/scheduling/domain/errors/codes';",
+        "import { SchedulingCodes } from '@/contexts/scheduling/scheduling.codes';",
         '',
         'export class AppointmentEnded extends DomainRefusal {',
         '  readonly code = SchedulingCodes.AppointmentEnded;',
@@ -297,7 +297,7 @@ describe('error-factories --apply, the usages of the refusals', () => {
     expect(applied.written).toContain('knip.json');
 
     expect(JSON.parse(read(root, 'knip.json'))).toMatchObject({
-      ignoreIssues: { 'src/contexts/*/domain/errors/codes.ts': ['types'] },
+      ignoreIssues: { 'src/contexts/*/*.codes.ts': ['types'] },
     });
   });
 

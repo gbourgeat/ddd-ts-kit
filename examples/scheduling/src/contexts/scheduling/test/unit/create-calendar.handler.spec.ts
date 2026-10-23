@@ -7,7 +7,7 @@ import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 import { CreateCalendarCommand } from '@/contexts/scheduling/application/calendars/commands/create-calendar/create-calendar.command';
 import { PractitionerDirectory } from '@/contexts/scheduling/application/calendars/ports/practitioner-directory.port';
 import { CalendarRepository } from '@/contexts/scheduling/domain/calendars/repositories/calendar.repository';
