@@ -40,17 +40,49 @@ jobs:
           BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }}
         run: node pipeline/monorepo/affected-packages.mjs --base "$BASE" --format github | tee -a "$GITHUB_OUTPUT"
 
-  typecheck:
-    name: Typecheck
+  # The gates that take under three minutes each, in one job: a run has fewer jobs to queue against the
+  # 20 the plan allows at a time, and a failure still names its step (docs/proposals/build-and-test-velocity.md).
+  checks:
+    name: Static checks
     needs: install
     runs-on: ubuntu-26.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # The merge commit of a pull request and its base, which the files of changes/ and the inputs of the website are judged against.
+          fetch-depth: 2
       - uses: ./.github/actions/setup
-      - run: npm run ci:typecheck
+      - name: No em dash or en dash, and the French documentation complete and current
+        run: npm run ci:docs
+      - name: What the change does for a user in a file of changes/, CHANGELOG.md and the plugin version left to the release
+        if: ${{ github.event_name == 'pull_request' }}
+        run: node pipeline/monorepo/changes.mjs --check --base HEAD^1
+      - name: Type check (the packages, the specs of each of them, the checked samples of the documentation)
+        run: npm run ci:typecheck
+      - name: Dead code
+        run: npm run ci:deadcode
+      - name: Pack, publint, arethetypeswrong
+        run: npm run ci:build
+      # A pull request that touches no page, no diagram, no file of the site and none of its inputs
+      # passes without building it; the default branch and the night always build it.
+      - name: Whether this run changes what the website is built from
+        id: changed
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" != "pull_request" ] \
+            || git diff --name-only HEAD^1 HEAD \
+              | grep -qE '(\.md$|^docs/|^site/|^pipeline/monorepo/translations\.mjs$|^package-lock\.json$|^\.github/workflows/(ci|pages)\.yml$|^\.github/actions/setup/)'; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            echo "No page, diagram or file of the website changed: nothing to build."
+          fi
+      - name: The pages assembled from the Markdown files, built by Astro, every link and anchor validated, every page in both languages at its route
+        if: ${{ steps.changed.outputs.build == 'true' }}
+        run: npm run site:build
 
   lint:
     name: Lint
@@ -77,38 +109,6 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Rule fixtures (check --self), dependency graph, the guard and the affected selection
         run: npm run ci:arch
-
-  deadcode:
-    name: Dead code
-    needs: install
-    runs-on: ubuntu-26.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/setup
-      - run: npm run ci:deadcode
-
-  docs:
-    name: Docs
-    runs-on: ubuntu-26.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          # The merge commit of a pull request and its base, which the files of changes/ are judged against.
-          fetch-depth: 2
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24
-          check-latest: true
-      - name: No em dash or en dash, and the French documentation complete and current (the scripts need no dependency)
-        run: npm run ci:docs
-      - name: What the change does for a user in a file of changes/, CHANGELOG.md and the plugin version left to the release
-        if: ${{ github.event_name == 'pull_request' }}
-        run: node pipeline/monorepo/changes.mjs --check --base HEAD^1
 
   unit:
     name: Unit tests (Node 24, coverage floors)
@@ -201,7 +201,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [22, 24]
+        # Both Node lines on the default branch and at night; a pull request runs the newest one, the trunk holds the oldest.
+        node: ${{ fromJSON(github.event_name == 'pull_request' && '[24]' || '[22, 24]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -315,7 +316,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        manager: [npm, pnpm]
+        # Both package managers on the default branch and at night; a pull request installs on npm, the dialect the templates are written in, the trunk holds pnpm.
+        manager: ${{ fromJSON(github.event_name == 'pull_request' && '["npm"]' || '["npm", "pnpm"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -397,57 +399,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: docker run --rm --volume "$GITHUB_WORKSPACE:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --redact --no-banner
 
-  package:
-    name: Packages
-    needs: install
-    runs-on: ubuntu-26.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/setup
-      - name: Pack, publint, arethetypeswrong
-        run: npm run ci:build
-
-  site:
-    name: Documentation website
-    needs: install
-    runs-on: ubuntu-26.04
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          # A pull request is checked out as its merge commit, whose first parent is the base it is compared with.
-          fetch-depth: 2
-      # A pull request that touches no page, no diagram, no file of the site and none of its inputs
-      # passes without building it; the default branch and the night always build it.
-      - name: Whether this run changes what the website is built from
-        id: changed
-        env:
-          EVENT: ${{ github.event_name }}
-        run: |
-          if [ "$EVENT" != "pull_request" ] \
-            || git diff --name-only HEAD^1 HEAD \
-              | grep -qE '(\.md$|^docs/|^site/|^pipeline/monorepo/translations\.mjs$|^package-lock\.json$|^\.github/workflows/(ci|pages)\.yml$|^\.github/actions/setup/)'; then
-            echo "build=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "build=false" >> "$GITHUB_OUTPUT"
-            echo "No page, diagram or file of the website changed: nothing to build."
-          fi
-      - uses: ./.github/actions/setup
-        if: ${{ steps.changed.outputs.build == 'true' }}
-        with:
-          build: 'false'
-      - name: The pages assembled from the Markdown files, built by Astro, every link and anchor validated, every page in both languages at its route
-        if: ${{ steps.changed.outputs.build == 'true' }}
-        run: npm run site:build
-
   gate:
     name: gate
     if: ${{ always() }}
-    needs: [install, typecheck, lint, architecture, deadcode, docs, site, unit, unit-oldest, alias, integration, e2e, managers, example, conformance, security, package]
+    needs: [install, checks, lint, architecture, unit, unit-oldest, alias, integration, e2e, managers, example, conformance, security]
     runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:

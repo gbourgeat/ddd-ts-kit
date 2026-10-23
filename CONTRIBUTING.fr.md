@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:cf444f4ec466c099 -->
+<!-- translation-of: CONTRIBUTING.md sha256:2936c2f2f124420a -->
 
 # Contribuer
 
@@ -112,7 +112,7 @@ node --test plugin/hooks/guard.test.mjs
   `version` de `plugin/.claude-plugin/plugin.json` tel quel, et passe
   `claude plugin validate . --strict`. Deux pull requests n'écrivent alors jamais la même ligne :
   l'une fusionnée laisse les autres fusionnables telles quelles, leurs vérifications toujours
-  valables. Le *job* docs de la CI le tient (`node pipeline/monorepo/changes.mjs --check --base <ref>`).
+  valables. Le *job* de contrôles statiques de la CI le tient (`node pipeline/monorepo/changes.mjs --check --base <ref>`).
 
 ## La suite d'évaluation du plugin
 
