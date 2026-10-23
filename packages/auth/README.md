@@ -600,6 +600,7 @@ The three authorizers implement the same `Authorizer` port and pass the same con
 | Cost of a check | constant, no I/O | one attribute read | several tuple reads, bounded by a depth limit |
 | Listing (`listAccessible`) | `all`, `none`, or a tenant `filter`: constant | not available: a predicate is not a query | `ids`, by reverse expansion: grows with what the actor can reach |
 | Typical denial reasons | `NO_MATCHING_ROLE`, `TENANT_MISMATCH` | `NO_MATCHING_POLICY`, `EXPLICIT_DENY` | `NO_RELATION`, `RESOURCE_REQUIRED`, `UNMAPPED_PERMISSION`, `DEPTH_EXCEEDED` |
+| Why, in words (`explain`) | the roles of the actor and what each one grants, then where the request may act | what is known of the element, then each policy that bears on the permission and whether it held | every question asked of the tuples, every way visited |
 
 **What changes when you switch.** The adapter given to `authorizationModule`, and the data it
 needs. From RBAC to ReBAC: add `resource:` to the `requires` of the use cases that did not name
@@ -613,6 +614,26 @@ tuple store at all, and is the place to start.
 
 Every authorizer refuses the anonymous actor (`ANONYMOUS`), and an actor of type `system` has no
 right unless the model gives it one.
+
+**Why was it refused.** Every authorizer of the kit answers `explain` with the same decision as
+`check` and a trace in words, one line per question it asked on the way; `traceText` lays the
+lines out, `x` before what did not hold. For a spec or a console, when a decision surprises;
+never in an answer or a log. `explain` is optional on the port, like `listAccessible`: an
+authorizer of your own adds it when it can say more than its reason.
+
+<!-- checked sample -->
+```ts
+import { traceText, type Authorizer, type CheckRequest } from '@ddd-ts-kit/auth';
+
+declare const authorizer: Authorizer;
+declare const request: CheckRequest;
+
+export async function why(): Promise<string> {
+  const explained = await authorizer.explain?.(request);
+
+  return explained === undefined ? 'this model does not explain itself' : traceText(explained.trace);
+}
+```
 
 **What every signed-in person may do.** Some permissions belong to everyone who signed in,
 whatever the model says of them: provisioning one's own account, opening an organisation,
@@ -677,6 +698,22 @@ A list is filtered on the tenant of the work, when the actor belongs to it, else
 tenant of an actor that has one; an actor of several tenants outside of a tenant's work lists
 nothing.
 
+`explain` says which role grants, and through which included role, then where the request may
+act. Why a clerk who also carries a role nobody declared may not void an invoice, and why a
+controller may read one in the tenant acme:
+
+```text
+  billing:invoice.void asked of the roles clerk, intern
+x   clerk grants billing:invoice.read
+x   intern is not a declared role
+```
+
+```text
+  billing:invoice.read asked of the roles controller
+    controller grants billing:*, which covers billing:invoice.read
+  the actor belongs to acme, the tenant the request targets
+```
+
 ### Attribute policies
 
 <!-- checked sample -->
@@ -715,6 +752,16 @@ export const authorizer = new PolicyBasedAuthorizer({
 A matching `forbid` wins over every `permit`; with no matching `permit` the answer is no.
 Conditions compose with `anyOf`, `allOf` and `not`, and see `{ actor, permission, resource?,
 attributes, context, now }`.
+
+`explain` names what is known of the element, by attribute name and never by value, then each
+policy that bears on the permission and whether it held. Why a manager may not void a large
+invoice:
+
+```text
+  invoice:inv-2 is known by department, amount, status
+  permit invoice.managers-void holds
+  forbid invoice.no-large-void holds, and refuses
+```
 
 ### Relationships
 

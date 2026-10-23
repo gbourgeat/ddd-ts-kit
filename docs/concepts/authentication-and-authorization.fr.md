@@ -1,5 +1,5 @@
 [English](authentication-and-authorization.md) · **Français**
-<!-- translation-of: authentication-and-authorization.md sha256:d2f305d4352f1dda -->
+<!-- translation-of: authentication-and-authorization.md sha256:26bbf6b0ff252948 -->
 
 # Authentification et autorisation
 
@@ -346,7 +346,9 @@ l'évaluation part dans un service dédié qui a son propre modèle de cohérenc
 
 Ces chiffres sont ceux des trois autorisateurs en processus du kit, tels que les énonce
 [`@ddd-ts-kit/auth`](../../packages/auth/README.fr.md) ; un service dédié change les coûts, pas
-la forme. Voir [Moteurs d'autorisation](../tools/authorization-engines.fr.md).
+la forme. Voir [Moteurs d'autorisation](../tools/authorization-engines.fr.md). La dernière ligne
+est ce que répond `explain` sur chacun d'eux : la même décision qu'un contrôle, avec une ligne
+par question posée, pour le débogage.
 
 ## Table de décision
 

@@ -5,7 +5,7 @@ import type { CheckRequest } from '../authorization/check-request.js';
 import { ALLOWED, deny, type Decision } from '../authorization/decision.js';
 import { DenialReason } from '../authorization/denial-reason.js';
 import type { ListRequest } from '../authorization/list-request.js';
-import type { Explanation } from './explanation.js';
+import type { Explanation } from '../authorization/explanation.js';
 import { objectOf } from './object-of.js';
 import { parseObject } from './parse-object.js';
 import { Question, type QuestionOptions } from './question.js';

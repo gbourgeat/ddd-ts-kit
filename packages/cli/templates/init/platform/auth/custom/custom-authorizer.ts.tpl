@@ -2,10 +2,12 @@ import {
   ALLOWED,
   DenialReason,
   deny,
+  Trace,
   type AccessScope,
   type Authorizer,
   type CheckRequest,
   type Decision,
+  type Explanation,
   type ListRequest,
 } from '@ddd-ts-kit/auth';
 import { isAnonymous, type Actor } from '@ddd-ts-kit/kernel';
@@ -22,16 +24,31 @@ const notGranted = 'NOT_GRANTED';
 export class CustomAuthorizer implements Authorizer {
   constructor(private readonly grants: Readonly<Record<string, readonly string[]>>) {}
 
-  async check({ actor, permission }: CheckRequest): Promise<Decision> {
+  async check(request: CheckRequest): Promise<Decision> {
+    return (await this.explain(request)).decision;
+  }
+
+  /** Why: one line per role of the actor, saying whether it holds the permission. For debugging. */
+  async explain({ actor, permission }: CheckRequest): Promise<Explanation> {
+    const trace = new Trace();
+
     if (isAnonymous(actor)) {
-      return deny(DenialReason.anonymous);
+      return { decision: deny(DenialReason.anonymous), trace: trace.lines };
     }
 
-    return this.granted(actor, permission.id) ? ALLOWED : deny(notGranted);
+    const granted = actor.roles.map((role) => this.roleGrants(role, permission.id, trace)).includes(true);
+
+    return { decision: granted ? ALLOWED : deny(notGranted), trace: trace.lines };
   }
 
   async listAccessible({ actor, permission }: ListRequest): Promise<AccessScope> {
     return !isAnonymous(actor) && this.granted(actor, permission.id) ? { kind: 'all' } : { kind: 'none' };
+  }
+
+  private roleGrants(role: string, permissionId: string, trace: Trace): boolean {
+    return this.grants[role]?.includes(permissionId) === true
+      ? trace.yes(`${role} grants ${permissionId}`)
+      : trace.no(`${role} does not grant ${permissionId}`);
   }
 
   private granted(actor: Actor, permissionId: string): boolean {

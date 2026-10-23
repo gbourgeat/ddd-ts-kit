@@ -333,7 +333,9 @@ evaluation moves to a dedicated service with its own consistency model.
 
 These figures are those of the kit's three in-process authorizers, as stated in
 [`@ddd-ts-kit/auth`](../../packages/auth/README.md); a dedicated service changes the costs, not
-the shape. See [Authorization engines](../tools/authorization-engines.md).
+the shape. See [Authorization engines](../tools/authorization-engines.md). The last row is what
+`explain` answers on each of them: the same decision as a check, with one line per question
+asked, for debugging.
 
 ## Decision table
 

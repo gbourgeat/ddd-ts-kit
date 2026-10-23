@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:50ea3a789ff2a09f -->
+<!-- translation-of: README.md sha256:9109aa1735057b07 -->
 
 # @ddd-ts-kit/auth
 
@@ -624,6 +624,7 @@ contrat.
 | Coût d'un contrôle | constant, aucune E/S | une lecture d'attributs | plusieurs lectures de tuples, bornées par une limite de profondeur |
 | Lister (`listAccessible`) | `all`, `none`, ou un `filter` sur le *tenant* : constant | non disponible : un prédicat n'est pas une requête | `ids`, par expansion inverse : croît avec ce que l'acteur peut atteindre |
 | Raisons de refus typiques | `NO_MATCHING_ROLE`, `TENANT_MISMATCH` | `NO_MATCHING_POLICY`, `EXPLICIT_DENY` | `NO_RELATION`, `RESOURCE_REQUIRED`, `UNMAPPED_PERMISSION`, `DEPTH_EXCEEDED` |
+| Le pourquoi, en mots (`explain`) | les rôles de l'acteur et ce que chacun accorde, puis où la demande peut agir | ce que l'on sait de l'élément, puis chaque politique qui porte sur la permission et si elle a tenu | chaque question posée aux tuples, chaque voie visitée |
 
 **Ce qui change quand vous passez de l'un à l'autre.** L'adaptateur donné à
 `authorizationModule`, et les données dont il a besoin. De RBAC à ReBAC : ajoutez `resource:`
@@ -639,6 +640,27 @@ faut commencer.
 
 Chaque autorisateur refuse l'acteur anonyme (`ANONYMOUS`), et un acteur de type `system` n'a
 aucun droit à moins que le modèle ne lui en donne un.
+
+**Pourquoi ce refus.** Chaque autorisateur du kit répond à `explain` par la même décision que
+`check` et une trace en mots, une ligne par question qu'il a posée en chemin ; `traceText` met
+les lignes en page, `x` devant ce qui n'a pas tenu. Pour une spec ou une console, quand une
+décision surprend ; jamais dans une réponse ni dans un journal. `explain` est facultatif sur le
+port, comme `listAccessible` : un autorisateur à vous l'ajoute quand il sait dire plus que sa
+raison.
+
+<!-- checked sample -->
+```ts
+import { traceText, type Authorizer, type CheckRequest } from '@ddd-ts-kit/auth';
+
+declare const authorizer: Authorizer;
+declare const request: CheckRequest;
+
+export async function why(): Promise<string> {
+  const explained = await authorizer.explain?.(request);
+
+  return explained === undefined ? 'this model does not explain itself' : traceText(explained.trace);
+}
+```
 
 **Ce que toute personne connectée peut faire.** Certaines permissions appartiennent à quiconque
 s'est connecté, quoi qu'en dise le modèle : provisionner son propre compte, ouvrir une
@@ -707,6 +729,22 @@ Une liste est filtrée sur le *tenant* du travail quand l'acteur y appartient, s
 *tenant* d'un acteur qui n'en a qu'un ; un acteur de plusieurs *tenants* hors du travail d'un
 *tenant* ne liste rien.
 
+`explain` dit quel rôle accorde, et à travers quel rôle inclus, puis où la demande peut agir.
+Pourquoi un commis qui porte aussi un rôle que personne n'a déclaré ne peut pas annuler une
+facture, et pourquoi un contrôleur peut en lire une dans le *tenant* acme :
+
+```text
+  billing:invoice.void asked of the roles clerk, intern
+x   clerk grants billing:invoice.read
+x   intern is not a declared role
+```
+
+```text
+  billing:invoice.read asked of the roles controller
+    controller grants billing:*, which covers billing:invoice.read
+  the actor belongs to acme, the tenant the request targets
+```
+
 ### Politiques sur des attributs
 
 <!-- checked sample -->
@@ -745,6 +783,16 @@ export const authorizer = new PolicyBasedAuthorizer({
 Un `forbid` qui correspond l'emporte sur tous les `permit` ; sans `permit` qui corresponde, la
 réponse est non. Les conditions se composent avec `anyOf`, `allOf` et `not`, et voient
 `{ actor, permission, resource?, attributes, context, now }`.
+
+`explain` nomme ce que l'on sait de l'élément, par nom d'attribut et jamais par valeur, puis
+chaque politique qui porte sur la permission et si elle a tenu. Pourquoi un responsable ne peut
+pas annuler une grosse facture :
+
+```text
+  invoice:inv-2 is known by department, amount, status
+  permit invoice.managers-void holds
+  forbid invoice.no-large-void holds, and refuses
+```
 
 ### Relations
 
