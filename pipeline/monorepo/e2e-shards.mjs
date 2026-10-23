@@ -26,34 +26,41 @@ export const ELSEWHERE = [
   /^first-minute(?:-proven|-js)?\.spec\.ts$/,
 ];
 
-/** One list per runner, with the seconds each file took on the machine that measured it (2026-10-12). */
+/**
+ * One list per runner, with the seconds each file took on a runner of the pipeline (run 40006101911
+ * of the trunk, 2026-10-23, four cores, the files one after the other), each file given, longest
+ * first, to the runner with the most room. The earlier table (2026-10-12) held the seconds of a
+ * workstation, which the runners took two to three times longer over; the third runner ended at
+ * 715 s against 352 s for the first.
+ */
 export const SHARDS = [
   {
-    'first-minute-no-context.spec.ts': 181,
-    // Measured (2026-10-13) with the client SDK of each pair: 44 s here; 53 s in CI before the SDK.
-    'contract-pairs.spec.ts': 44,
-    // Measured (2026-10-17): a copy of the example application, merge-trunk run in two of its worktrees.
-    'merge-trunk-example.spec.ts': 4,
-  },
-  {
-    'first-minute-two-contexts.spec.ts': 184,
-    'error-rule-violations.spec.ts': 20,
-    'preset-identity-generated.spec.ts': 20,
-  },
-  { 'proven-stacks.spec.ts': 106, 'first-class.spec.ts': 68, 'preset-identity.spec.ts': 60 },
-  {
-    'coverage-gate.spec.ts': 88,
-    'file-uploads.spec.ts': 30,
-    'new-rule-violations.spec.ts': 25,
-    'typecheck.spec.ts': 19,
+    'proven-stacks.spec.ts': 371,
+    'new-rule-violations.spec.ts': 65,
+    'zero-violation.spec.ts': 33,
     'event-sourced.spec.ts': 19,
-    'error-reporting.spec.ts': 10,
-    'dev-reload.spec.ts': 8,
-    'formatted.spec.ts': 8,
-    'client-sdk.spec.ts': 8,
-    'violations.spec.ts': 8,
-    'zero-violation.spec.ts': 8,
+    'violations.spec.ts': 15,
+    // A copy of the example application, merge-trunk run in two of its worktrees.
+    'merge-trunk-example.spec.ts': 2,
   },
+  {
+    'coverage-gate.spec.ts': 328,
+    'typecheck.spec.ts': 70,
+    // With the client SDK of each pair.
+    'contract-pairs.spec.ts': 38,
+    'formatted.spec.ts': 29,
+    'preset-identity-generated.spec.ts': 25,
+    'error-rule-violations.spec.ts': 11,
+    'client-sdk.spec.ts': 9,
+  },
+  {
+    'first-minute-two-contexts.spec.ts': 322,
+    'preset-identity.spec.ts': 135,
+    'file-uploads.spec.ts': 26,
+    'error-reporting.spec.ts': 17,
+    'dev-reload.spec.ts': 9,
+  },
+  { 'first-minute-no-context.spec.ts': 312, 'first-class.spec.ts': 209 },
 ];
 
 /** The spec files of the directory that a shard has to run. */
@@ -110,6 +117,9 @@ function main(args) {
     [
       runner,
       'run',
+      // One file at a time: these files run the specs of generated projects under coverage, which time out at
+      // five seconds when two projects share the four cores of a runner (seen on the second shard, 2026-10-23);
+      // the runners are balanced on measured seconds instead (SHARDS).
       '--no-file-parallelism',
       '--hookTimeout=180000',
       ...files.map((file) => `${DIRECTORY}/${file}`),

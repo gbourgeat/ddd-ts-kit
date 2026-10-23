@@ -1,5 +1,5 @@
 [English](build-and-test-velocity.md) · **Français**
-<!-- translation-of: build-and-test-velocity.md sha256:0e92dd208255eded -->
+<!-- translation-of: build-and-test-velocity.md sha256:1d73632ed35d36fe -->
 
 # Proposition : vélocité du build, des contrôles et des tests
 
@@ -29,6 +29,7 @@ est une *pull request* à part, mesurée sur les indicateurs de cette page avant
 | Moins de jobs par exécution du *pipeline*, les familles lourdes réduites sur une *pull request* | **en cours** (la file et le temps de mur) : la *pull request* #248 (2026-10-23) replie les cinq portes de moins de trois minutes en un job et, sur une *pull request*, exécute la suite de l'alias sur une ligne de Node et les projets générés sur npm : 24 jobs à 20 sur le tronc, 23 à 17 sur une *pull request* ; les *shards* de bout en bout tenus aux *stacks* qu'un changement atteint viennent ensuite |
 | La matrice de compilation de cinq fichiers de *spec* en parallèle ou découpée par fichier | **en cours** (le fichier le plus long, 84 s, plafonnait chaque exécution) : la *pull request* #250 (2026-10-23) compile les modes d'un fichier quelques-uns à la fois dès son premier chargement, et le *runner* démarre d'abord les six fichiers les plus longs. Mesuré sur la station de travail de la méthode : le fichier le plus long de 84 s à 27 s dans une exécution complète (4,5 s seul au lieu de 15 s), l'exécution de 88 à 104 s à 81 s sur 20 cœurs et de 203 s à 139 s à quatre *workers* ; les deux fichiers de bout en bout de la CLI, qui génèrent chaque *stack* l'une après l'autre, font maintenant la queue (65 à 70 s). Le chiffre à 4 vCPU est le job unitaire du *pipeline* sur cette *pull request* |
 | La moitié des cœurs hors *pipeline*, les tests `related` avant un *push* | **en cours** (la mémoire d'un portable) : la *pull request* #252 (2026-10-23) donne au `vitest.config.ts` racine `maxWorkers: '50%'` hors *pipeline*, et le *hook* de *pre-push* exécute les *specs* unitaires des *packages* que la branche atteint et des *packages* construits dessus, sans couverture (`affected-packages.mjs --base origin/main --run test`), là où il exécutait tout avec couverture. Mesuré sur la station de travail de la méthode, avant un *push* qui atteint tous les *packages* : 152 à 201 s et 9,3 à 11,5 Go avec couverture sur tous les cœurs, à 101 à 110 s et 6,8 à 7,3 Go (deux mesures chacun, la seconde paire sous une charge étrangère) ; un *push* qui atteint un *package* feuille exécute ses *specs* seules, en quelques secondes |
+| Les familles lourdes exécutent deux fichiers à la fois, leurs géants d'un seul fichier coupés (la sixième ligne, réécrite : le job unitaire a cessé d'être le plus long après la deuxième) | **en cours** : la *pull request* #255 (2026-10-23) ; ses mesures sont en section 5 et sur la *pull request* |
 | ESLint avec son cache par contenu, conservé comme artefact du *pipeline* | **recommandé** (mesuré sur ce dépôt, section 5) |
 | La vérification des types des *specs* en parallèle | **recommandé** (mesuré, section 5) |
 | Oxlint avec tsgolint, les règles du kit chargées comme *plugin* JS | **à côté d'ESLint seulement** : 2 à 4 s au lieu de 35, mais le *plugin* du kit casse sur 2 494 fichiers sous l'API de *plugins* en alpha (section 5) |
@@ -387,7 +388,7 @@ pour les dépôts publics d'une organisation.
 | ESLint `--cache --cache-strategy content`, le cache en artefact du *pipeline* | mesuré en section 5 | un changement de types dans un autre fichier n'est vu que par l'exécution complète du tronc | **faire** |
 | la vérification des types des *specs* en parallèle | mesuré en section 5 | la mémoire, 25 compilateurs à la fois : plafonner aux cœurs du *runner* | **faire** |
 | la clé du cache d'installation sur le *lockfile*, l'OS, l'architecture et la ligne de Node | moins de copies de 330 Mo, moins de manques | aucun | **faire** |
-| le job unitaire en deux *shards* avec `--reporter=blob` et les planchers sur le rapport fusionné | le job le plus long du tronc raccourci | un job de plus contre la limite de 20 : après la fusion des petits | **faire, après la première ligne** |
+| les familles lourdes exécutent deux fichiers à la fois, leurs géants d'un seul fichier coupés (écrit d'abord comme deux *shards* du job unitaire) | les jobs les plus longs du tronc raccourcis sans job ajouté | deux projets générés partagent un *runner* : les installations recouvrent les *specs*, la mémoire double, les ports ne doivent pas se rencontrer | **faire, après la deuxième ligne** |
 | Oxlint avec tsgolint, les règles du kit comme *plugin* JS, à côté d'ESLint et non bloquant | un lint typé de 4 s au lieu de 35 s (section 5) | le *plugin* du kit casse sur 2 494 fichiers sous l'API de *plugins* en alpha et une règle native contredit TypeScript ; deux règles typées manquantes ; constats à comparer jusqu'à ce que l'API porte ce que les règles lisent | **essayer, pas comme porte** |
 | des *runners* arm64 pour les jobs unitaires et de bout en bout | quatre cœurs physiques au lieu de deux | inconnu tant que non mesuré : dix exécutions sur chacun, p50 comparés | **essayer** |
 | pnpm pour ce dépôt | une installation de 1 s au lieu de 8 s quand son *store* est chaud (section 5), et rien à faire quand rien n'a changé | une migration du *lockfile*, de la disposition et de chaque *spec* qui lit `node_modules` ; dans le *pipeline* le *store* serait restauré depuis le cache comme `node_modules` l'est aujourd'hui, pour un gain de quelques secondes par job ; sa vérification de chaîne d'approvisionnement coûte 50 s la première fois qu'un *lockfile* est vu | **pas maintenant** |
@@ -427,8 +428,24 @@ description, mesuré avant et après sur les mêmes exécutions.
 5. **Le cache d'installation.** Sa clé sur le *lockfile*, l'OS, l'architecture et la ligne de
    Node ; les *packages* construits gardés tels quels. Indicateur : taux de succès du cache et
    taille du cache.
-6. **Deux *shards* pour le job unitaire**, une fois que la première ligne a libéré la file.
-   Indicateur : temps de mur du job le plus long du tronc.
+6. **Les familles lourdes exécutent deux fichiers à la fois, et leurs géants d'un seul fichier
+   sont coupés.** Écrite d'abord comme deux *shards* du job unitaire, quand ce job prenait
+   9,5 min ; après la deuxième ligne il prend 6 à 8 min, et les jobs les plus longs du tronc sont
+   les projets générés sur npm (13 min : quatre fichiers l'un après l'autre), les *shards* de
+   bout en bout (11 à 13 min) et les exécutions de l'alias (12 min : 35 *stacks* dans un seul
+   fichier). Un second *shard* du job unitaire ajouterait un job à la file sans rien raccourcir.
+   À la place : les projets générés et les exécutions de l'alias prennent deux fichiers à la
+   fois (`VITEST_MAX_WORKERS=2` pour l'exécution et pour les *specs* de chaque projet généré,
+   qui se partagent alors les quatre cœurs deux par deux ; un projet s'installe depuis npm
+   pendant qu'un autre exécute ses *specs*), `alias-runtime.spec.ts` coupé en deux fichiers de
+   la moitié des *stacks* chacun, et n'importe quel port libre pour une application que les
+   *specs* démarrent, pour que deux ne se rencontrent jamais sur le même. Les *shards* de bout
+   en bout restent à un fichier à la fois : leurs fichiers exécutent les *specs* de projets
+   générés sous couverture, qui expirent à cinq secondes quand deux projets se partagent quatre
+   cœurs (vu sur un *shard*) ; ils sont équilibrés sur les secondes mesurées par les *runners*
+   à la place (505 à 521 s par *shard* contre 352 à 715 s). Indicateur inchangé : temps de mur
+   du job le plus long du tronc, mesuré sur une machine tenue à quatre cœurs (section 5) et sur
+   les exécutions du *pipeline*.
 7. **Deux essais, non bloquants et mesurés pendant un mois** : Oxlint avec tsgolint et les
    règles du kit comme *plugin* JS, ses constats comparés à ceux d'ESLint à chaque exécution,
    en commençant par la raison pour laquelle le *plugin* casse sous cette API (une règle qui
