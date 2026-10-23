@@ -29,6 +29,7 @@ export function generateContext(ws: Workspace, config: Config, request: ContextR
     extraDirectories: [],
     modules: [],
     deployable: false,
+    owners: [],
   };
 
   const next: Config = { ...config, contexts: { ...config.contexts, [context.kebab]: entry } };

@@ -37,8 +37,10 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
    design of a row not done still cites. Report mechanical violations as they are, without
    commentary; each name `cited` lists is a non-blocking finding on that document line, with
    the marker `<!-- TODO(review): #<row id> <name> is gone, write <what replaced it> -->`.
-3. Read the `CONTEXT.md` of each touched context, then the touched files only. Do not read
-   generated files (barrels, contracts) beyond their diff.
+3. Read `REVIEW.md` at the root when the project has one: the policy of the team, applied on
+   top of this method (its passes, what Important means there, its cap on nits, what it does
+   not report). Then the `CONTEXT.md` of each touched context, then the touched files only. Do
+   not read generated files (barrels, contracts) beyond their diff.
 4. Judge what tools cannot see:
 
    | Look for | Sign |
@@ -63,7 +65,12 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
 
 5. Verify before reporting: open the file and confirm each finding at its line. Drop what
    you cannot point to.
-6. Commit shape, when reviewing a branch: one slice per commit, within `commit.maxFiles` and
+6. The rule of two: a finding that repeats one already recorded for the project (the same rule
+   id, or the same remark on the same layer, in an earlier `docs/architecture/reviews/*.md` or
+   as a `TODO(review)` marker `todo` lists) is reported with the exact line to add under
+   `## Mistakes seen here` of `AGENTS.md`, or with the config change when a rule of the kit
+   covers it (a severity under `rules`, an allow-list). Never write it yourself.
+7. Commit shape, when reviewing a branch: one slice per commit, within `commit.maxFiles` and
    `commit.maxLines` of the config, generated files with what generated them, conventional
    message scoped by context.
 
@@ -71,7 +78,8 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
 
 One line of verdict (`approve`, `approve with minor changes`, `changes required`), then the
 findings in two groups, each finding as `file:line`, the rule id or principle, what is wrong,
-what to do instead:
+what to do instead, and, when `REVIEW.md` names passes, the pass it belongs to (`bugs`,
+`security`, `compliance`, or one the team added):
 
 - **Blocking**: fixed before the merge. Every violation `check` reports, wrong behaviour, a
   broken boundary, design debt that will spread, an `it.todo` or a `TODO(domain)` left in the

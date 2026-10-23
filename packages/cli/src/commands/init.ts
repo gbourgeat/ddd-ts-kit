@@ -45,6 +45,7 @@ const OTHER_TEXT_FLAGS = [
   'import-extension',
   'package-manager',
   'value-objects',
+  'agent-profile',
 ];
 
 export const initCommand: Command = (argv, io) => {
@@ -106,6 +107,16 @@ function stackOptions(args: Arguments) {
     ...(importExtension === undefined ? {} : { importExtension }),
     ...(packageManager === undefined ? {} : { packageManager }),
     ...(valueObjects === undefined ? {} : { valueObjects }),
+    ...agentOptions(args),
+  };
+}
+
+/** What `init` records about the agents of the project: the typed clients they get, the profile that holds them. */
+function agentOptions(args: Arguments): Pick<InitOptions, 'sdk' | 'agentProfile'> {
+  const agentProfile = args.text('agent-profile');
+
+  return {
     ...(args.flag('sdk') ? { sdk: true } : {}),
+    ...(agentProfile === undefined ? {} : { agentProfile }),
   };
 }

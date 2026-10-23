@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:6d3ab8261cfb5286 -->
+<!-- translation-of: CONFIG.md sha256:6b026a14c5a14e7d -->
 
 # `ddd-ts-kit.config.json`
 
@@ -87,7 +87,7 @@ aucune dérogation.
 `init` écrit chaque valeur par défaut en toutes lettres, pour que le fichier documente le projet.
 Trois clés ne sont écrites que lorsqu'elles disent quelque chose : `stack.assembly` et
 `stack.dependencies` dans le style déclaré seulement, `stack.tenancy` quand elle ne vaut pas
-`none`. Les clés facultatives (`coverage`, `deviations`, `commit`, `worker`, `ci`, `openapi`,
+`none`. Les clés facultatives (`coverage`, `deviations`, `commit`, `worker`, `ci`, `owners`, `openapi`,
 `sdk`, ...) apparaissent dès qu'un projet les pose.
 
 `initVersion` est la version de la CLI dont l'`init` a écrit les fichiers de la plateforme.
@@ -551,6 +551,7 @@ Tant que ce n'est pas fait, la règle peut rester à `warn` sous `rules`, enregi
 | `contexts.<name>.upstreams[].relationship` | `published-language`, `customer-supplier`, `conformist`, `anti-corruption-layer`, `open-host-service`, `shared-kernel` | `published-language` |
 | `contexts.<name>.extraDirectories[]` | un chemin dans le contexte, ou `{ "path", "reason" }` : un répertoire ajouté à l'arborescence canonique. Chacun est une dérogation | `[]` |
 | `contexts.<name>.deployable` | `true`, `false` : le contexte a son propre point d'entrée `src/apps/<name>/main.ts` ; `generate service <name>` la pose | `false` |
+| `contexts.<name>.owners[]` | les identifiants de qui possède le contexte, tels que la plateforme du dépôt les connaît (`@org/equipe`, `@personne`, un courriel) : `ddd-ts-kit docs` les écrit dans `CODEOWNERS` pour l'arborescence du contexte et son `published-language/` ([Propriétaires](#propriétaires)) | `[]` : aucune ligne pour le contexte |
 | `contexts.<name>.modules` | `{ "<module>": {} }` : les modules du modèle du contexte, chacun un dossier placé directement sous `domain/` et `application/` ([Modules du modèle](concepts/modules.fr.md)). Un nom est en kebab-case, unique dans le contexte, et jamais le nom d'un dossier de rôle (`aggregates`, `commands`...) ; `generate module <context> <module>` l'écrit | aucun |
 | `contexts.<name>.modules.<module>.classification` | `core`, `supporting`, `generic` : le sous-domaine que le module porte, quand il diffère de la classification de son contexte | la classification du contexte |
 
@@ -563,6 +564,20 @@ pièce, puis le déclarent ici comme n'importe quel autre (`generic`, sauf si `-
 `--context <name>:<classification>` dit autre chose) ; dès lors, ses fichiers sont le code du
 projet, et une configuration sans *preset* se comporte comme avant. Voir
 [Démarrer avec des contextes bien conçus](guides/bootstrap-with-well-designed-contexts.fr.md).
+
+## Propriétaires
+
+| Clé | Valeurs | Défaut |
+|---|---|---|
+| `owners.platform[]` | les identifiants de qui possède ce qui n'est pas un contexte : `src/platform/`, `src/main.ts`, `ddd-ts-kit.config.json`, les fichiers du *pipeline* (`lefthook.yml`, `commitlint.config.mjs`, `.github/workflows/` et `.github/actions/` ou `.gitlab-ci.yml` et `.gitlab/`, selon `stack.ci`), `REVIEW.md`, `AGENTS.md` et `docs/adr/` ; et `src/shared-kernel/` tant qu'aucun contexte ne l'importe | `[]` : aucune ligne pour eux, la clé est omise |
+
+Dès qu'une de ces clés nomme un propriétaire, `ddd-ts-kit docs` écrit `CODEOWNERS` à la racine du
+projet (où GitHub et GitLab le lisent tous deux) entre des marqueurs `# ddd-ts-kit:code-owners`,
+d'après le tableau des propriétaires de
+[Travailler en équipe](guides/team-workflow.fr.md#un-propriétaire-par-contexte-délimité), et
+`docs --check` le signale périmé. Un `CODEOWNERS` écrit par l'équipe reçoit le bloc à la suite de
+ses lignes. Sans aucun propriétaire, rien n'est écrit. Les identifiants sont gardés tels quels :
+la plateforme du dépôt les juge.
 
 ## Règles et limites
 
@@ -592,6 +607,7 @@ même listés dans une liste d'autorisation.
 | `worktrees` | `required`, `advised` : où la garde du *plugin* laisse une session écrire le code d'un contexte. `required` : dans un *worktree* seulement (`npx ddd-ts-kit worktree <name>`, `story-scope`, `worker-scope`, tous sous `.worktrees/`) ; dans le *checkout* principal, sur la branche du tronc, le code des contextes et les générateurs qui l'écrivent sont refusés. `advised` : partout, avec un avis au démarrage de la session, ce que garde un projet démarré avant cette clé tant qu'elle n'est pas posée | `required` dans un projet que crée `init`, `advised` quand la clé est absente |
 | `formatOnWrite` | `true`, `false` (`init` écrit `true` pour un nouveau projet ; un projet qui a adopté le kit la pose) : si le *hook* d'éditeur du *plugin* lance le Biome du projet (`node_modules/.bin/biome format --write`) sur chaque fichier qu'une session écrit, avant de le vérifier, pour que la mise en page soit réglée à l'écriture et que les constats du lint qui suivent une ligne repliée reviennent dans la même sortie du *hook*. Un fichier, aucun autre formateur, rien quand Biome n'est pas installé dans le projet. C'est le projet qui la pose ; la clé n'est lue que comme `true`. Issu du [*playbook* du cycle de vie natif à l'IA d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf) | `false` |
 | `worker` | `true`, `false` : le projet a `src/apps/worker/main.ts` ; les *jobs* planifiés tournent alors là et non dans le processus de l'API. `generate worker` la pose | `false` |
+| `agents.profile` | `regulated` : le bac à sable de Claude Code et les deux *hooks* d'une organisation réglementée, écrits dans `.claude/settings.json` par `init --agent-profile regulated` (avec ou sans `--force`), signalés par `doctor` quand les réglages en manquent ; `init --agent-profile none` retire la clé. `config/valid` signale une autre valeur. Voir [Mettre les agents de code en bac à sable](guides/agent-sandbox.fr.md#le-profil-réglementé) | aucun, la clé est omise |
 | `deviations[]` | `{ "what", "adr", "reason" }` : une exception enregistrée ; `adr` nomme un `docs/adr/<number>-*.md` existant | `[]` |
 
 ## Dérogations

@@ -7,6 +7,7 @@ import {
   coverageProblems,
   CONFIG_FILE,
   FUNCTION_LINES_CEILING,
+  AGENT_PROFILES,
   GUARD_MODES,
   WORKTREE_MODES,
   IMPORT_EXTENSIONS,
@@ -118,6 +119,21 @@ export class ConfigInspection {
             'worktrees',
             `"worktrees" is "${worktrees}".`,
             `Use one of: ${WORKTREE_MODES.join(', ')} (whether the guard refuses the code of a context in the main checkout of the trunk, or only says to open a worktree).`,
+          ),
+        ];
+  }
+
+  /** `none` is never written: a config with the key names the profile `init` wrote. */
+  agentProfile(): Violation[] {
+    const { profile } = this.project.config.agents;
+
+    return profile === undefined || (profile !== 'none' && isOneOf(AGENT_PROFILES, profile))
+      ? []
+      : [
+          this.inConfig(
+            'agents',
+            `"agents.profile" is "${profile}".`,
+            'Use "regulated" (the sandbox and the hooks of a regulated organisation, `init --agent-profile regulated`), or remove the key (`init --agent-profile none`).',
           ),
         ];
   }

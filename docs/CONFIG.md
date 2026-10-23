@@ -85,7 +85,7 @@ deviation.
 `init` spells every default out, so that the file documents the project. Three keys are written
 only when they say something: `stack.assembly` and `stack.dependencies` in the declared style
 only, `stack.tenancy` when it is not `none`. The optional keys (`coverage`, `deviations`,
-`commit`, `worker`, `ci`, `openapi`, `sdk`, ...) appear once a project sets them.
+`commit`, `worker`, `ci`, `owners`, `openapi`, `sdk`, ...) appear once a project sets them.
 
 `initVersion` is the version of the CLI whose `init` wrote the files of the platform. `init`
 writes it first in the file and `init --force` rewrites it, since it rewrote those files; `init`
@@ -529,6 +529,7 @@ ADR that says when it goes, as any other relaxed rule (`governance/recorded-devi
 | `contexts.<name>.upstreams[].relationship` | `published-language`, `customer-supplier`, `conformist`, `anti-corruption-layer`, `open-host-service`, `shared-kernel` | `published-language` |
 | `contexts.<name>.extraDirectories[]` | a path inside the context, or `{ "path", "reason" }`: a directory added to the canonical tree. Each one is a deviation | `[]` |
 | `contexts.<name>.deployable` | `true`, `false`: the context has its own entry point `src/apps/<name>/main.ts`; `generate service <name>` sets it | `false` |
+| `contexts.<name>.owners[]` | the handles of who owns the context, as the platform of the repository knows them (`@org/team`, `@person`, an email): `ddd-ts-kit docs` writes them to `CODEOWNERS` for the tree of the context and its `published-language/` ([Owners](#owners)) | `[]`: no line for the context |
 | `contexts.<name>.modules` | `{ "<module>": {} }`: the modules of the model of the context, each one folder directly under `domain/` and `application/` ([Modules of the model](concepts/modules.md)). A name is in kebab-case, unique in the context, and never the name of a role folder (`aggregates`, `commands`...); `generate module <context> <module>` writes it | none |
 | `contexts.<name>.modules.<module>.classification` | `core`, `supporting`, `generic`: the subdomain the module holds, when it differs from the classification of its context | the classification of the context |
 
@@ -540,6 +541,19 @@ here like any other (`generic` unless `--classification` or `--context <name>:<c
 says otherwise); from then on its files are the code of the project, and a config without a
 preset behaves as before. See
 [Bootstrap with well-designed contexts](guides/bootstrap-with-well-designed-contexts.md).
+
+## Owners
+
+| Key | Values | Default |
+|---|---|---|
+| `owners.platform[]` | the handles of who owns what is not a context: `src/platform/`, `src/main.ts`, `ddd-ts-kit.config.json`, the pipeline files (`lefthook.yml`, `commitlint.config.mjs`, `.github/workflows/` and `.github/actions/` or `.gitlab-ci.yml` and `.gitlab/`, as `stack.ci` says), `REVIEW.md`, `AGENTS.md` and `docs/adr/`; and `src/shared-kernel/` while no context imports it | `[]`: no line for them, the key is left out |
+
+Once one of these keys names an owner, `ddd-ts-kit docs` writes `CODEOWNERS` at the root of the
+project (where GitHub and GitLab both read it) between `# ddd-ts-kit:code-owners` markers, from
+the ownership table of [Working as a team](guides/team-workflow.md#ownership-per-bounded-context),
+and `docs --check` reports it stale. A `CODEOWNERS` the team wrote gets the block appended after
+its lines. Without any owner nothing is written. The handles are kept as written: the platform of
+the repository judges them.
 
 ## Rules and limits
 
@@ -569,6 +583,7 @@ even when listed in an allow-list.
 | `worktrees` | `required`, `advised`: where the guard of the plugin lets a session write the code of a context. `required`: in a worktree only (`npx ddd-ts-kit worktree <name>`, `story-scope`, `worker-scope`, all under `.worktrees/`); in the main checkout, on the branch of the trunk, the code of the contexts and the generators that write it are refused. `advised`: anywhere, with a notice at session start, what a project started before this key keeps until it is set | `required` in a project `init` creates, `advised` when the key is absent |
 | `formatOnWrite` | `true`, `false` (`init` writes `true` for a new project; a project that adopted the kit sets it): whether the editor hook of the plugin runs the Biome of the project (`node_modules/.bin/biome format --write`) on each file a session writes, before it checks it, so that the layout is settled at the write and the lint findings that follow a wrapped line come back in the same hook output. One file, no other formatter, nothing when Biome is not installed in the project. A project sets it; the key is read as `true` only. From [the AI-native SDLC playbook of Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf) | `false` |
 | `worker` | `true`, `false`: the project has `src/apps/worker/main.ts`; scheduled jobs then run there and not in the API process. `generate worker` sets it | `false` |
+| `agents.profile` | `regulated`: the sandbox of Claude Code and the two hooks of a regulated organisation, written in `.claude/settings.json` by `init --agent-profile regulated` (with or without `--force`), reported by `doctor` when the settings lack them; `init --agent-profile none` removes the key. `config/valid` reports another value. See [Sandboxing coding agents](guides/agent-sandbox.md#the-regulated-profile) | none, the key is left out |
 | `deviations[]` | `{ "what", "adr", "reason" }`: a recorded exception; `adr` names an existing `docs/adr/<number>-*.md` | `[]` |
 
 ## Deviations

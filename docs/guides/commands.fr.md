@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:2785d48069a2ffbf -->
+<!-- translation-of: commands.md sha256:da4de680e6ceb7da -->
 
 # Quelle commande, quand
 
@@ -251,7 +251,7 @@ Usage
                   [--value-objects throwing|result] [--literals named|free] [--values classes|free] [--tenancy none|shared-table] [--queue database|redis|memory]
                   [--schemas shared|per-route]
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
-                  [--import-extension none|js] [--sdk]
+                  [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                   [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
   ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--module <module>] [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
   ddd-ts-kit generate --help --json

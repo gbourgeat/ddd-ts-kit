@@ -18,6 +18,7 @@ const STRICT_PROBLEMS: Readonly<Record<DoctorFinding['area'], ReadonlySet<Doctor
   package: new Set(['missing', 'other version']),
   permission: new Set(['missing']),
   hook: new Set(['missing']),
+  guidance: new Set(['missing']),
   folder: new Set(),
   node: new Set(['unsupported']),
   install: new Set(['missing', 'not installed', 'other version']),

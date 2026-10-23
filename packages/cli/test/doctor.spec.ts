@@ -68,6 +68,22 @@ describe('doctor', () => {
   });
 });
 
+describe('doctor, on the review policy', () => {
+  it('names a missing REVIEW.md, the file init writes once for the team, failing --strict', () => {
+    fs.rmSync(path.join(root, 'REVIEW.md'));
+
+    const result = cli(root, 'doctor');
+
+    expect(result.stdout).toContain('  guidance REVIEW.md: missing (the file init writes)');
+    expect(result.stdout).toContain('fix: `npx ddd-ts-kit init` adds what is missing');
+    expect(cli(root, 'doctor', '--strict').code).toBe(1);
+
+    cli(root, 'init');
+
+    expect(cli(root, 'doctor', '--strict').code).toBe(0);
+  });
+});
+
 describe('doctor, on the git hooks', () => {
   it('names a lefthook.yml without its lefthook line, and how to take it, failing --strict', () => {
     write(root, 'lefthook.yml', read(root, 'lefthook.yml').replace(/^lefthook: .*\n/m, ''));
@@ -82,6 +98,19 @@ describe('doctor, on the git hooks', () => {
 
     expect(result.stdout).toContain('`npx ddd-ts-kit init --force`');
     expect(result.stdout).not.toContain('fix: `npx ddd-ts-kit init` adds what is missing');
+    expect(cli(root, 'doctor', '--strict').code).toBe(1);
+  });
+
+  it('names a lefthook.yml without the secrets job, and how to take it, failing --strict', () => {
+    write(root, 'lefthook.yml', read(root, 'lefthook.yml').replace('    - name: secrets\n', '    - name: leaks\n'));
+
+    const result = cli(root, 'doctor');
+
+    expect(result.stdout).toContain(
+      '  hook lefthook.yml secrets: missing (the pre-commit job `secrets`: gitleaks on the staged changes when it is installed, one line otherwise)',
+    );
+
+    expect(result.stdout).toContain('fix: add the `secrets` job to the pre-commit jobs of lefthook.yml');
     expect(cli(root, 'doctor', '--strict').code).toBe(1);
   });
 

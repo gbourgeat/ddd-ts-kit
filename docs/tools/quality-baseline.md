@@ -117,6 +117,7 @@ first and on what changed; the wider ones run later, on every file:
 | end-to-end specs | kit: the pipeline only (`ci:test:e2e`, every stack generated and run); example and project `test:e2e` | `ci:test:e2e` | no |
 | coverage thresholds | kit: a floor per package in `vitest.config.ts`, in `ci:test:unit`; example and project: per context and layer, from `ddd-ts-kit.config.json`, in `test:coverage` | `ci:test:unit` and, for the example and a project, `ci:test:integration` | before a push (the unit run) |
 | packages as published | kit `ci:build` (publint, Are the Types Wrong) | kit `ci:build`; example and project `ci:build` (the production build) | no |
+| secrets | no: not a gate of `verify` | the `secrets` job (gitleaks on the whole history) | kit, example and project: the staged changes, before a commit, when the `gitleaks` binary is on the path; one line and no refusal otherwise |
 
 Without an HTTP boundary a project has no end-to-end script and its pipeline job says so; under
 jest the adapter specs run with the unit specs. The hooks never run coverage before a commit.
