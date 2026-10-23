@@ -2,8 +2,8 @@ import type { Injection } from '../injection.js';
 import { PATHS } from '../paths.js';
 
 const { SCHEDULING } = PATHS;
-const APPOINTMENT = `${SCHEDULING}/domain/aggregates/appointment.aggregate.ts`;
-const PROCESS = `${SCHEDULING}/application/processes/confirmation-deadline.process.ts`;
+const APPOINTMENT = `${SCHEDULING}/domain/calendars/aggregates/appointment.aggregate.ts`;
+const PROCESS = `${SCHEDULING}/application/calendars/processes/confirmation-deadline.process.ts`;
 
 /** The lifecycles: a status that changes only through its state machine, a process that only decides commands. */
 export const LIFECYCLE_INJECTIONS: readonly Injection[] = [
@@ -29,7 +29,7 @@ export const LIFECYCLE_INJECTIONS: readonly Injection[] = [
       {
         file: PROCESS,
         where: 'start',
-        to: "import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';\n",
+        to: "import type { AppointmentRepository } from '@/contexts/scheduling/domain/calendars/repositories/appointment.repository';\n",
       },
       {
         file: PROCESS,

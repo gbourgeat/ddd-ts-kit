@@ -4,8 +4,8 @@ import {
   InMemorySubjectKeyStore,
   PersonalDataCipher,
 } from '@ddd-ts-kit/kernel';
-import type { AttendanceRecord } from '@/contexts/scheduling/domain/aggregates/attendance-record.aggregate';
-import type { AttendanceRecordRepository } from '@/contexts/scheduling/domain/repositories/attendance-record.repository';
+import type { AttendanceRecord } from '@/contexts/scheduling/domain/calendars/aggregates/attendance-record.aggregate';
+import type { AttendanceRecordRepository } from '@/contexts/scheduling/domain/calendars/repositories/attendance-record.repository';
 import { EventStoreAttendanceRecordRepository } from '@/contexts/scheduling/infrastructure/persistence/event-store-attendance-record.repository';
 
 /** The adapter itself over the in-memory stores of the kernel: what a handler spec saves to, events and all. */

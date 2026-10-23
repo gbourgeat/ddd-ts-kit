@@ -51,8 +51,13 @@ see Z"), or from `npx ddd-ts-kit list --json`. For each: who knows a fact first 
 | `open-host-service` | the upstream serves many consumers through one protocol | a public contract, hard to change |
 | `shared-kernel` | two contexts co-own a small model | joint ownership of every change; justify it |
 
-No cycle. If A needs B and B needs A: they are one context, or one direction becomes an
-event, or a third context is missing. A `generic` context is upstream of the others, behind an
+No cycle. If A needs B and B needs A, ask in this order
+(`docs/guides/cycle-between-contexts.md`): 1. one language, one model? then one context,
+divided into modules of the model so that it stays readable (`generate module`,
+`move-to-module`); 2. can one direction become an event? 3. is a concept missing, often a third
+context? Refusing the cycle is a choice of the kit (every context stays extractable), not a
+rule of DDD: Evans's Partnership is between teams; describe it in the written part of the map,
+and still pick one direction in the config. A `generic` context is upstream of the others, behind an
 anti-corruption layer when its model is not yours.
 
 ## 3. Write it

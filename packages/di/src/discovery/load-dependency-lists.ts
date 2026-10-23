@@ -10,10 +10,11 @@ interface Loading {
 
 /**
  * Loads `<context>.dependencies`, the generated file of a discovered context that registers
- * what each constructor receives (`ddd-ts-kit docs` writes it from the constructor signatures),
+ * what each constructor receives (`ddd-ts-kit docs` writes it from the constructor signatures)
+ * and names the modules of the model (`modulesNamedIn` reads those before any file is loaded),
  * under the preferred extension it exists with. A context whose classes take nothing, or list
- * their dependencies in their decorators, has none: a class left without a list is refused
- * when the application is composed.
+ * their dependencies in their decorators, and that declares no module, has none: a class left
+ * without a list is refused when the application is composed.
  */
 export async function loadDependencyLists(root: string, context: string, loading: Loading): Promise<void> {
   const present = new Set(await readdir(root));

@@ -9,8 +9,8 @@ import {
   tenantRow,
   tenantTable,
 } from '@ddd-ts-kit/knex';
-import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
+import type { Calendar } from '@/contexts/scheduling/domain/calendars/aggregates/calendar.aggregate';
+import { CalendarRepository } from '@/contexts/scheduling/domain/calendars/repositories/calendar.repository';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
 import { CalendarMapper } from '@/contexts/scheduling/infrastructure/persistence/calendar.mapper';
 import type {

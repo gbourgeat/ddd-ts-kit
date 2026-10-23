@@ -1,5 +1,5 @@
 import { RequestMapper, type HttpRequest } from '@ddd-ts-kit/http';
-import { BookAppointmentCommand } from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.command';
+import { BookAppointmentCommand } from '@/contexts/scheduling/application/calendars/commands/book-appointment/book-appointment.command';
 import type { BookAppointmentBody } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.body';
 
 /** The one place that turns the request to book and its actor into the command. */

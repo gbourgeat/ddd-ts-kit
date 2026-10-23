@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { AppointmentEnded } from '@/contexts/scheduling/domain/errors/appointment-ended.error';
+import { AppointmentEnded } from '@/contexts/scheduling/domain/calendars/errors/appointment-ended.error';
 
 describe('AppointmentEnded', () => {
   it('refuses with the code APPOINTMENT_ENDED, its message and its facts', () => {

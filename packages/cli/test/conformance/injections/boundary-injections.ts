@@ -77,7 +77,7 @@ export const BOUNDARY_INJECTIONS: readonly Injection[] = [
       {
         file: DUE_HANDLER,
         where: 'start',
-        to: `import '${SOURCE_ALIAS}contexts/scheduling/domain/aggregates/appointment.aggregate${SOURCE_SUFFIX}';\n`,
+        to: `import '${SOURCE_ALIAS}contexts/scheduling/domain/calendars/aggregates/appointment.aggregate${SOURCE_SUFFIX}';\n`,
       },
     ],
     checker: true,
@@ -105,7 +105,7 @@ export const BOUNDARY_INJECTIONS: readonly Injection[] = [
       {
         file: PUBLISHED,
         where: 'start',
-        to: `import '${SOURCE_ALIAS}contexts/scheduling/domain/aggregates/appointment.aggregate${SOURCE_SUFFIX}';\n`,
+        to: `import '${SOURCE_ALIAS}contexts/scheduling/domain/calendars/aggregates/appointment.aggregate${SOURCE_SUFFIX}';\n`,
       },
     ],
     checker: true,

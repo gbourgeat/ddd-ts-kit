@@ -1,5 +1,5 @@
 [English](translation.md) · **Français**
-<!-- translation-of: translation.md sha256:13c12ca64cbd29c1 -->
+<!-- translation-of: translation.md sha256:6824d913963dfd50 -->
 
 # La documentation en français
 
@@ -150,6 +150,7 @@ disent ainsi.
 | statement of needs | expression des besoins |
 | domain discovery, event storming | découverte du domaine, *event storming* |
 | modular monolith | monolithe modulaire |
+| module (of the model), sub-context | module (du modèle), sous-contexte |
 | microservice, extraction | microservice, extraction |
 
 ### Conception tactique

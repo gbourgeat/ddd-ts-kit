@@ -1,4 +1,5 @@
 import type { Config } from '../config/index.js';
+import { declaredModules } from '../model-modules/index.js';
 import type { ContextFacts } from '../docs/context-facts.js';
 import type { Workspace } from '../workspace/index.js';
 import type { ContextDescription, Contracts, GatewayFact, PortFact } from './context-description.js';
@@ -20,17 +21,8 @@ const LEGACY_CONTRACT = 'openapi/openapi.json';
  * go through here, so the reference of a CONTEXT.md and the data an agent reads cannot disagree.
  */
 export function describeContext(ws: Workspace, config: Config, facts: ContextFacts): ContextDescription {
-  const directory = `${config.contextsDir}/${facts.name}`;
-  const module = ws.read(`${directory}/${facts.name}.module.ts`) ?? '';
-
-  const sources: ContextSources = {
-    ws,
-    config,
-    name: facts.name,
-    directory,
-    module,
-    ...(facts.declarations === undefined ? {} : { declarations: facts.declarations }),
-  };
+  const sources = sourcesOf(ws, config, facts);
+  const { directory } = sources;
 
   const useCases = readUseCases(sources);
   const adapters = readAdapters(sources);
@@ -52,6 +44,21 @@ export function describeContext(ws: Workspace, config: Config, facts: ContextFac
     stateMachines: facts.stateMachines,
     processes: facts.processes,
     contracts: contractsOf(ws, config),
+  };
+}
+
+/** Where the facts of the context are read from: its directory, its modules, its module file and its declarations. */
+function sourcesOf(ws: Workspace, config: Config, facts: ContextFacts): ContextSources {
+  const directory = `${config.contextsDir}/${facts.name}`;
+
+  return {
+    ws,
+    config,
+    name: facts.name,
+    directory,
+    modules: declaredModules(config, facts.name),
+    module: ws.read(`${directory}/${facts.name}.module.ts`) ?? '',
+    ...(facts.declarations === undefined ? {} : { declarations: facts.declarations }),
   };
 }
 

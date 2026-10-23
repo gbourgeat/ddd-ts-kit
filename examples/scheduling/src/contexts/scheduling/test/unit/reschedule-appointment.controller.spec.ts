@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { controllerRoute, createErrorMapper, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { errorStatuses } from '@/platform/http/error-statuses';
-import { RescheduleAppointmentCommand } from '@/contexts/scheduling/application/commands/reschedule-appointment/reschedule-appointment.command';
-import { AppointmentEnded } from '@/contexts/scheduling/domain/errors/appointment-ended.error';
-import { UnknownAppointment } from '@/contexts/scheduling/domain/errors/unknown-appointment.error';
-import { SlotTaken } from '@/contexts/scheduling/domain/errors/slot-taken.error';
+import { RescheduleAppointmentCommand } from '@/contexts/scheduling/application/calendars/commands/reschedule-appointment/reschedule-appointment.command';
+import { AppointmentEnded } from '@/contexts/scheduling/domain/calendars/errors/appointment-ended.error';
+import { UnknownAppointment } from '@/contexts/scheduling/domain/calendars/errors/unknown-appointment.error';
+import { SlotTaken } from '@/contexts/scheduling/domain/calendars/errors/slot-taken.error';
 import { RescheduleAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/reschedule-appointment/reschedule-appointment.controller';
 
 // The one table of the platform: a code it does not name answers 422.

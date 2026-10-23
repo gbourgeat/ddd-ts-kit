@@ -1,7 +1,7 @@
 import { acceptedSchema, Controller, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { RemoveAppointmentDocumentCommand } from '@/contexts/scheduling/application/commands/remove-appointment-document/remove-appointment-document.command';
+import { RemoveAppointmentDocumentCommand } from '@/contexts/scheduling/application/calendars/commands/remove-appointment-document/remove-appointment-document.command';
 import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
 import { RemoveAppointmentDocumentParams } from '@/contexts/scheduling/presentation/http/appointments/remove-appointment-document/remove-appointment-document.params';
 

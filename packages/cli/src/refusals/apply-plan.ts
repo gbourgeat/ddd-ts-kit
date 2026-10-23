@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { CliError } from '../cli-error.js';
 import { CONFIG_FILE, editConfigText, type Config } from '../config/index.js';
 import { addFactory } from '../generate/errors/add-factory.js';
@@ -7,10 +8,12 @@ import { toName } from '../naming/index.js';
 import type { Workspace } from '../workspace/index.js';
 import { legacyErrors } from './legacy-errors.js';
 import { nestedCases } from './nested-cases.js';
+import { pathFromContexts } from './path-from-contexts.js';
 import type { MigrationDraft } from './migration-draft.js';
 import type { MigrationPlan } from './migration-plan.js';
 import type { PlannedMove } from './planned-move.js';
 import { projectSources } from './project-sources.js';
+import { refuseScattered } from './refuse-scattered.js';
 import { concerns } from './concerns.js';
 import { sayRefusals } from './say-refusals.js';
 import { renderFactory } from './render-factory.js';
@@ -30,6 +33,10 @@ interface Tree {
  */
 export function applyPlan(tree: Tree, plan: MigrationPlan, draft: MigrationDraft): PlannedMove[] {
   const moves = plannedMoves(tree, plan, draft);
+
+  refuseScattered(
+    moves.map(({ error, move }) => ({ context: move.context, className: move.conceptClass, file: error.file })),
+  );
 
   for (const planned of moves) {
     moveClass(tree, planned, draft);
@@ -86,7 +93,7 @@ function plannedMoves({ ws, config }: Tree, plan: MigrationPlan, draft: Migratio
       factory: entry.factory,
       code: error.code,
       context: error.context,
-      legacyPath: `${error.context}/domain/errors/${baseName(error.file).replace(/\.ts$/, '')}`,
+      legacyPath: pathFromContexts(error.file, error.context),
     };
 
     return [{ error, move }];
@@ -94,8 +101,8 @@ function plannedMoves({ ws, config }: Tree, plan: MigrationPlan, draft: Migratio
 }
 
 function moveClass({ config }: Tree, { error, move }: PlannedMove, draft: MigrationDraft): void {
-  const context = `${config.contextsDir}/${error.context}`;
-  const target = `${context}/domain/errors/${move.conceptFile}.ts`;
+  // The class of the concept is written next to the error it replaces, in its module of the model when it has one.
+  const target = `${path.posix.dirname(error.file)}/${move.conceptFile}.ts`;
   const factory = renderFactory(error, move);
   const empty = `import { ConceptError } from '@ddd-ts-kit/kernel';\n\nexport class ${move.conceptClass} extends ConceptError {}\n`;
 
@@ -127,7 +134,7 @@ function moveClass({ config }: Tree, { error, move }: PlannedMove, draft: Migrat
 
   draft.remove(error.file);
   draft.write(target, fitSource(next));
-  moveSpec(context, { error, move }, draft);
+  moveSpec(`${config.contextsDir}/${error.context}`, { error, move }, draft);
 }
 
 /**

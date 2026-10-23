@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
+import { Slot } from '@/contexts/scheduling/domain/calendars/value-objects/slot.vo';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 
 describe('Slot', () => {

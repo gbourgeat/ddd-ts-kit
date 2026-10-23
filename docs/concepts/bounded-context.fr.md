@@ -1,5 +1,5 @@
 [English](bounded-context.md) · **Français**
-<!-- translation-of: bounded-context.md sha256:3ac5fd777b59ecc3 -->
+<!-- translation-of: bounded-context.md sha256:406e6bed7c2491d4 -->
 
 # Contexte délimité
 
@@ -60,7 +60,7 @@ terme](eventual-consistency.fr.md)).
 - Un noyau partagé qui ne cesse de grossir.
 - Deux contextes qui ont besoin l'un de l'autre : un cycle (`context/no-cycle`). Soit ils ne
   forment qu'un contexte, soit l'un des deux sens devient un événement, soit il manque un
-  troisième contexte.
+  troisième contexte ([Un cycle entre deux contextes](../guides/cycle-between-contexts.fr.md)).
 - Chaque changement touche ensemble les deux mêmes contextes : ils changent pour la même raison.
 - Un contexte dont le seul contenu est du stockage pour un autre.
 
@@ -68,6 +68,14 @@ Des frontières trop fines coûtent autant que des frontières trop grossières 
 contrats, des événements et de la cohérence à terme. Dans le doute, commencez avec moins de
 contextes et notez le doute sous « Known tensions » dans la carte des contextes ; fusionner deux
 contextes plus tard est plus difficile que d'en scinder un dont le modèle est resté propre.
+
+### Un contexte trop grand pour être lu n'est pas deux contextes
+
+Un contexte peut dépasser ce qu'une personne ou un agent tient en tête alors que son langage reste
+un seul : un glossaire, un schéma, des règles validées ensemble. Le scinder achèterait des contrats
+et de la cohérence à terme pour rien, et emboîter des contextes n'est pas un concept des
+références. Divisez-le plutôt en [modules du modèle](modules.fr.md) : un dossier par partie du
+modèle, nommé dans son langage, placé directement sous `domain/` et `application/`.
 
 ## Ce que le kit fait d'un contexte
 
@@ -93,6 +101,7 @@ Ce qui fait du dossier une frontière, c'est un ensemble de règles, chacune ave
 | et seulement quand la relation est déclarée dans la configuration | `context/declared-relationship` |
 | un langage publié est un contrat, libre de tout détail interne | `context/published-language-is-a-contract` |
 | les relations déclarées ne forment aucun cycle | `context/no-cycle` |
+| un module du modèle est déclaré, nommé dans le langage et documenté dans `CONTEXT.md` | `module/declared` |
 | le contexte peut tourner seul : ses propres données, aucune transaction partagée | `context/extractable` |
 
 `npx ddd-ts-kit explain <rule-id>` affiche la raison et un exemple pour chacune.
@@ -280,6 +289,7 @@ proposer à la place les créneaux libres les plus proches.
 - [Domaine et sous-domaines](domain-and-subdomains.fr.md)
 - [Langage omniprésent](ubiquitous-language.fr.md)
 - [Carte des contextes](context-map.fr.md)
+- [Modules du modèle](modules.fr.md)
 - [Un exemple détaillé : la carte des contextes de l'application de prise de rendez-vous](context-map-worked-example.fr.md)
 - [Agrégats](aggregates.fr.md)
 - [Monolithe modulaire](modular-monolith.fr.md)

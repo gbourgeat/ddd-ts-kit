@@ -1,5 +1,6 @@
 import { CONFIG_FILE, type Config } from '../../config/index.js';
 import type { Rule } from '../model/rule.js';
+import { cyclesIn } from '../support/cycles-in.js';
 import { lineOf } from '../support/line-of.js';
 import { reporter } from '../support/reporter.js';
 
@@ -27,37 +28,7 @@ export const contextNoCycle: Rule = {
 
 /** Each cycle of the declared upstreams, once, as the contexts met from its first one. */
 function cyclesOf(contexts: Config['contexts']): string[][] {
-  const cycles = new Map<string, string[]>();
-  const done = new Set<string>();
-
-  const visit = (name: string, trail: readonly string[]): void => {
-    const at = trail.indexOf(name);
-
-    if (at !== -1) {
-      const cycle = trail.slice(at);
-      const key = [...cycle].sort().join('|');
-
-      if (!cycles.has(key)) {
-        cycles.set(key, cycle);
-      }
-
-      return;
-    }
-
-    if (done.has(name)) {
-      return;
-    }
-
-    for (const upstream of contexts[name]?.upstreams ?? []) {
-      visit(upstream.context, [...trail, name]);
-    }
-
-    done.add(name);
-  };
-
-  for (const name of Object.keys(contexts)) {
-    visit(name, []);
-  }
-
-  return [...cycles.values()];
+  return cyclesIn(Object.keys(contexts), (name) =>
+    (contexts[name]?.upstreams ?? []).map((upstream) => upstream.context),
+  );
 }

@@ -2,9 +2,9 @@ import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
 import {
   AttendanceRecord,
   type AttendanceRecordEvent,
-} from '@/contexts/scheduling/domain/aggregates/attendance-record.aggregate';
-import { AttendanceRecordCreated } from '@/contexts/scheduling/domain/events/attendance-record-created.event';
-import { AttendanceRecordNoShowNoted } from '@/contexts/scheduling/domain/events/attendance-record-no-show-noted.event';
+} from '@/contexts/scheduling/domain/calendars/aggregates/attendance-record.aggregate';
+import { AttendanceRecordCreated } from '@/contexts/scheduling/domain/calendars/events/attendance-record-created.event';
+import { AttendanceRecordNoShowNoted } from '@/contexts/scheduling/domain/calendars/events/attendance-record-no-show-noted.event';
 
 interface AttendanceRecordIngredients {
   readonly practiceId: string;

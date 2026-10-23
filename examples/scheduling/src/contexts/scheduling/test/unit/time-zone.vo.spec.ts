@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';
+import { TimeZone } from '@/contexts/scheduling/domain/calendars/value-objects/time-zone.vo';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 
 const paris = TimeZone.create('Europe/Paris');

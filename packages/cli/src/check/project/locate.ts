@@ -1,6 +1,7 @@
 import type { Config } from '../../config/index.js';
 import type { Layer } from '../model/layer.js';
 import type { Location } from '../model/location.js';
+import { declaredModules, moduleSplit } from '../../model-modules/index.js';
 import { isUnder } from './is-under.js';
 
 const LAYERS: readonly Layer[] = [
@@ -15,7 +16,7 @@ const LAYERS: readonly Layer[] = [
 /** Classifies a file by its path alone. */
 export function locate(config: Config, file: string): Location {
   if (isUnder(file, config.contextsDir)) {
-    return locateInContexts(file.slice(config.contextsDir.length + 1));
+    return locateInContexts(config, file.slice(config.contextsDir.length + 1));
   }
 
   if (isUnder(file, config.sharedKernelDir)) {
@@ -33,7 +34,7 @@ export function locate(config: Config, file: string): Location {
   return { area: 'other' };
 }
 
-function locateInContexts(relative: string): Location {
+function locateInContexts(config: Config, relative: string): Location {
   const [context, first, ...rest] = relative.split('/');
 
   if (context === undefined || context === '' || first === undefined) {
@@ -45,8 +46,32 @@ function locateInContexts(relative: string): Location {
   }
 
   const layer = LAYERS.find((candidate) => candidate === first) ?? 'root';
+  const inModule = moduleLocation(config, { context, layer, rest });
+
+  if (inModule !== undefined) {
+    return inModule;
+  }
 
   return { area: 'context', context, layer, inside: layer === 'root' ? [first, ...rest] : rest };
+}
+
+interface Placed {
+  readonly context: string;
+  readonly layer: Layer;
+  /** The path below the layer. */
+  readonly rest: readonly string[];
+}
+
+/**
+ * A module of the model is one folder level under domain/ and application/: left out, the rest of
+ * the path is what it would be without modules, so every role keeps its place.
+ */
+function moduleLocation(config: Config, { context, layer, rest }: Placed): Location | undefined {
+  const { module, path } = moduleSplit([layer, ...rest].join('/'), declaredModules(config, context));
+
+  return module === undefined
+    ? undefined
+    : { area: 'context', context, layer, inside: path.split('/').slice(1), module };
 }
 
 function locateAtContextRoot(context: string, entry: string): Location {

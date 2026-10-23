@@ -6,15 +6,15 @@ import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declar
 import type { Message } from '@ddd-ts-kit/kernel';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
-import { ExpireUnconfirmedAppointmentsCommand } from '@/contexts/scheduling/application/commands/expire-unconfirmed-appointments/expire-unconfirmed-appointments.command';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
-import { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository';
+import { ExpireUnconfirmedAppointmentsCommand } from '@/contexts/scheduling/application/calendars/commands/expire-unconfirmed-appointments/expire-unconfirmed-appointments.command';
+import { AppointmentRepository } from '@/contexts/scheduling/domain/calendars/repositories/appointment.repository';
+import { CalendarRepository } from '@/contexts/scheduling/domain/calendars/repositories/calendar.repository';
+import { WaitlistRepository } from '@/contexts/scheduling/domain/waitlist/repositories/waitlist.repository';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';
 import { FakeWaitlistRepository } from '@/contexts/scheduling/test/fakes/waitlist.repository.fake';
-import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
+import { Agenda } from '@/contexts/scheduling/application/calendars/ports/agenda.port';
 import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
 
 const authorization = authorizationModule({

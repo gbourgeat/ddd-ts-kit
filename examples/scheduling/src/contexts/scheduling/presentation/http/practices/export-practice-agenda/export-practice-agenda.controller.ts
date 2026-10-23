@@ -1,8 +1,8 @@
 import { Controller, everyPage, streamSchemaOf, type HttpRequest } from '@ddd-ts-kit/http';
 import { Criteria, cursorPage, type QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import type { AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
-import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.query';
+import type { AgendaEntry } from '@/contexts/scheduling/application/calendars/ports/agenda.port';
+import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/calendars/queries/search-practice-agenda/search-practice-agenda.query';
 import { PracticesRoutes } from '@/contexts/scheduling/presentation/http/practices.routes';
 import { ExportPracticeAgendaParams } from '@/contexts/scheduling/presentation/http/practices/export-practice-agenda/export-practice-agenda.params';
 import type { AgendaEntrySerializer } from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';

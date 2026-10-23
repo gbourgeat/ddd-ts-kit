@@ -1,5 +1,5 @@
 import { IsISO8601, IsIn, IsOptional, IsString, Matches } from 'class-validator';
-import { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
+import { AppointmentStatus } from '@/contexts/scheduling/domain/calendars/vocabularies/appointment-status.vocabulary';
 
 /** One appointment as every search of the agenda answers it: declared once, documented once as AgendaLine. */
 export class AgendaLine {

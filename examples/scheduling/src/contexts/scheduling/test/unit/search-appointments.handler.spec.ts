@@ -3,8 +3,8 @@ import type { Authorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { Criteria, offsetPage } from '@ddd-ts-kit/kernel';
-import type { AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
-import { SearchAppointmentsQuery } from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.query';
+import type { AgendaEntry } from '@/contexts/scheduling/application/calendars/ports/agenda.port';
+import { SearchAppointmentsQuery } from '@/contexts/scheduling/application/calendars/queries/search-appointments/search-appointments.query';
 import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder';
 import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 

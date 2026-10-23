@@ -6,6 +6,8 @@ import { rememberFile } from '../declared/discovered-files.js';
 import { WiringError } from '../errors/wiring-error.js';
 import type { ContextModule } from '../module/context-module.js';
 import { loadDependencyLists } from './load-dependency-lists.js';
+import { modulesNamedIn } from './modules-named-in.js';
+import { withoutModule } from './without-module.js';
 import { roleFilesOf, type RoleFile } from './role-files-of.js';
 
 export interface DiscoveryOptions {
@@ -30,7 +32,9 @@ const DEFAULT_EXTENSIONS = ['.js', '.mjs', '.ts', '.mts'];
 /**
  * The module of a bounded context, found by loading every file of its `application/` and
  * `infrastructure/` folders that carries a role suffix (`*.handler`, `*.repository`, ...) and
- * keeping the classes that declare themselves:
+ * keeping the classes that declare themselves, in the role folders of the context and in those of
+ * the modules of its model (`application/<module>/commands/`), which the generated
+ * `<context>.dependencies` file names:
  * `await discoverContext('billing', new URL('.', import.meta.url))`. What each constructor
  * receives comes from the generated `<context>.dependencies` file of the same directory, loaded
  * with them; nothing is read from compiler metadata.
@@ -48,9 +52,10 @@ export async function discoverContext(
   const load = options.load ?? ((file: URL): Promise<unknown> => import(file.href));
   const { ignore, extensions = DEFAULT_EXTENSIONS } = options;
   const declared: DeclaredClass[] = [];
+  const modules = await modulesNamedIn(root, name, extensions);
 
   for (const file of await roleFilesOf(root, { extensions, ...(ignore === undefined ? {} : { ignore }) })) {
-    assertInItsFolder(file, name);
+    assertInItsFolder(file, name, modules);
     declared.push(...declaredIn(file, await loaded(file, load), name));
   }
 
@@ -59,14 +64,20 @@ export async function discoverContext(
   return contextModule(name, declared);
 }
 
-function assertInItsFolder({ relative, rule }: RoleFile, context: string): void {
-  if (rule.folders.some((folder) => relative.startsWith(`${folder}/`))) {
+function assertInItsFolder({ relative, rule }: RoleFile, context: string, modules: readonly string[]): void {
+  const placed = withoutModule(relative, modules);
+
+  if (rule.folders.some((folder) => placed.startsWith(`${folder}/`))) {
     return;
   }
 
+  const inModules = rule.folders.some((folder) => folder.startsWith('application/'))
+    ? ', at the level of the context or of a module of its model (application/<module>/...) named in the generated <context>.dependencies file'
+    : '';
+
   throw new WiringError(
     'MISPLACED_DECLARATION',
-    `${relative} of context "${context}" is outside its canonical folder: a *.${rule.suffix} file belongs in ${rule.folders.map((folder) => `${folder}/`).join(' or ')}.`,
+    `${relative} of context "${context}" is outside its canonical folder: a *.${rule.suffix} file belongs in ${rule.folders.map((folder) => `${folder}/`).join(' or ')}${inModules}.`,
   );
 }
 

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute, type RawHeaders } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus, expectVersion } from '@ddd-ts-kit/kernel';
-import { SetOpeningHoursCommand } from '@/contexts/scheduling/application/commands/set-opening-hours/set-opening-hours.command';
-import { InvalidRange } from '@/contexts/scheduling/domain/errors/invalid-range.error';
+import { SetOpeningHoursCommand } from '@/contexts/scheduling/application/calendars/commands/set-opening-hours/set-opening-hours.command';
+import { InvalidRange } from '@/contexts/scheduling/domain/calendars/errors/invalid-range.error';
 import { SetOpeningHoursController } from '@/contexts/scheduling/presentation/http/calendars/set-opening-hours/set-opening-hours.controller';
 
 const valid = { ranges: [{ weekday: 'monday', start: '09:00', end: '12:00' }] };

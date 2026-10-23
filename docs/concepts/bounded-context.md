@@ -52,7 +52,8 @@ one side decides, the other reacts ([Eventual consistency](eventual-consistency.
 - A context needs most fields of another context's aggregate.
 - A shared kernel that keeps growing.
 - Two contexts that need each other: a cycle (`context/no-cycle`). Either they are one context,
-  or one direction becomes an event, or a third context is missing.
+  or one direction becomes an event, or a third context is missing
+  ([A cycle between two contexts](../guides/cycle-between-contexts.md)).
 - Every change touches the same two contexts together: they change for the same reason.
 - A context whose only content is storage for another.
 
@@ -60,6 +61,14 @@ Boundaries drawn too fine cost as much as boundaries drawn too coarse: each one 
 events and eventual consistency. When in doubt, start with fewer contexts and write the doubt
 down under "Known tensions" in the context map; merging two contexts later is harder than
 splitting one whose model was kept clean.
+
+### A context too large to read is not two contexts
+
+A context can grow past what one person or one agent holds in mind while its language stays
+one: one glossary, one schema, rules that commit together. Splitting it would buy contracts and
+eventual consistency for nothing, and nesting contexts is not a concept of the references. Divide
+it into [modules of the model](modules.md) instead: one folder per part of the model, named in
+its language, directly under `domain/` and `application/`.
 
 ## What the kit makes of a context
 
@@ -85,6 +94,7 @@ folder into a boundary is a set of rules, each with an id:
 | and only when the relationship is declared in the config | `context/declared-relationship` |
 | a published language is a contract, free of internals | `context/published-language-is-a-contract` |
 | declared relationships form no cycle | `context/no-cycle` |
+| a module of the model is declared, named in the language and documented in `CONTEXT.md` | `module/declared` |
 | the context can run alone: own data, no shared transaction | `context/extractable` |
 
 `npx ddd-ts-kit explain <rule-id>` prints the reason and an example for each.
@@ -264,6 +274,7 @@ the nearest open slots instead.
 - [Domain and subdomains](domain-and-subdomains.md)
 - [Ubiquitous language](ubiquitous-language.md)
 - [Context map](context-map.md)
+- [Modules of the model](modules.md)
 - [A worked example: the context map of the scheduling application](context-map-worked-example.md)
 - [Aggregates](aggregates.md)
 - [Modular monolith](modular-monolith.md)

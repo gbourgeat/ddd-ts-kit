@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { AlreadyNoted } from '@/contexts/scheduling/domain/errors/already-noted.error';
+import { AlreadyNoted } from '@/contexts/scheduling/domain/calendars/errors/already-noted.error';
 
 describe('AlreadyNoted', () => {
   it('refuses "already noted" with the code ALREADY_NOTED and the appointment', () => {

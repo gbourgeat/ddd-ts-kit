@@ -1,8 +1,11 @@
-import { Appointment, type AppointmentState } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
-import { AttachedDocument } from '@/contexts/scheduling/domain/value-objects/attached-document.vo';
-import { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
-import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
+import {
+  Appointment,
+  type AppointmentState,
+} from '@/contexts/scheduling/domain/calendars/aggregates/appointment.aggregate';
+import { AttachedDocument } from '@/contexts/scheduling/domain/calendars/value-objects/attached-document.vo';
+import { Booking } from '@/contexts/scheduling/domain/calendars/value-objects/booking.vo';
+import { Cancellation } from '@/contexts/scheduling/domain/calendars/value-objects/cancellation.vo';
+import { Slot } from '@/contexts/scheduling/domain/calendars/value-objects/slot.vo';
 import type {
   AppointmentColumns,
   AppointmentRow,

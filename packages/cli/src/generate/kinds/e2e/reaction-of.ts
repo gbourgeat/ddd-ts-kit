@@ -7,6 +7,7 @@ import { readRoutes } from '../../../describe/read-routes.js';
 import { toName, type Name } from '../../../naming/index.js';
 import type { RenderContext } from '../../../templating/index.js';
 import type { Scope } from '../../scope.js';
+import { declaredModules } from '../../../model-modules/index.js';
 
 /** What an end-to-end spec publishes to start a use case no route reaches, and where a client reads what followed. */
 export interface Reaction {
@@ -51,6 +52,7 @@ function sourcesOf(scope: Scope): ContextSources {
     config,
     name: context.kebab,
     directory: dir,
+    modules: declaredModules(config, context.kebab),
     module: ws.read(`${dir}/${context.kebab}.module.ts`) ?? '',
   };
 }

@@ -13,13 +13,13 @@ import {
   scoped,
 } from '@ddd-ts-kit/kernel';
 import { applyingProjection } from '@ddd-ts-kit/kernel/declarations';
-import type { AttendanceEntry } from '@/contexts/scheduling/application/ports/attendance-history.port';
-import { AttendanceHistoryProjection } from '@/contexts/scheduling/application/projections/attendance-history.projection';
+import type { AttendanceEntry } from '@/contexts/scheduling/application/calendars/ports/attendance-history.port';
+import { AttendanceHistoryProjection } from '@/contexts/scheduling/application/calendars/projections/attendance-history.projection';
 import {
   AttendanceRecord,
   type AttendanceRecordEvent,
-} from '@/contexts/scheduling/domain/aggregates/attendance-record.aggregate';
-import { AttendanceRecordCreated } from '@/contexts/scheduling/domain/events/attendance-record-created.event';
+} from '@/contexts/scheduling/domain/calendars/aggregates/attendance-record.aggregate';
+import { AttendanceRecordCreated } from '@/contexts/scheduling/domain/calendars/events/attendance-record-created.event';
 import { attendanceRecordEvents } from '@/contexts/scheduling/infrastructure/persistence/attendance-record-events.mapper';
 import { EventStoreAttendanceRecordRepository } from '@/contexts/scheduling/infrastructure/persistence/event-store-attendance-record.repository';
 import { FakeAttendanceHistory } from '@/contexts/scheduling/test/fakes/attendance-history.fake';
