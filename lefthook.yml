@@ -24,7 +24,10 @@ pre-push:
     - name: typecheck
       run: npm run ci:typecheck
     - name: unit tests
-      run: npm run ci:test:unit
+      # The specs of the packages the branch reaches and of the packages that depend on them, as on a pull request,
+      # without coverage (the pipeline measures it); everything when a file shared by every package changed; nothing
+      # when only documents did (docs/proposals/build-and-test-velocity.md).
+      run: node pipeline/monorepo/affected-packages.mjs --base origin/main --run test
 
 commit-msg:
   jobs:

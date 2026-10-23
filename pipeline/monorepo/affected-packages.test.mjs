@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { asOutputs, dependentsOf, readGraph, select } from './affected-packages.mjs';
+import { asOutputs, commandOf, dependentsOf, readGraph, select } from './affected-packages.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const graph = readGraph(ROOT);
@@ -118,4 +118,18 @@ test('a package whose adapter specs need a server starts the integration job, th
 
   assert.equal(integration(['packages/pino/src/index.ts']), 'integration=false');
   assert.equal(integration(['README.md']), 'integration=false');
+});
+
+test('a script runs on the packages reached as path filters, on everything without a filter, and never on documents alone', () => {
+  const partial = commandOf(select(graph, ['packages/pino/src/index.ts']), 'test');
+
+  assert.deepEqual(partial.args, ['run', 'test', '--', 'packages/pino/']);
+  assert.deepEqual(partial.env, { KIT_AFFECTED: 'pino' });
+
+  const whole = commandOf(select(graph, ['package.json']), 'test');
+
+  assert.deepEqual(whole.args, ['run', 'test', '--']);
+  assert.deepEqual(whole.env, { KIT_AFFECTED: '' });
+
+  assert.equal(select(graph, ['README.md']).scope, 'none');
 });

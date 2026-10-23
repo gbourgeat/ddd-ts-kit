@@ -88,6 +88,14 @@ const INTEGRATION = process.env['KIT_COVERAGE'] === 'integration';
 const MEASURED_SOURCES = INTEGRATION ? ON_A_SERVER : AFFECTED;
 
 /**
+ * A developer machine shares its cores with the editor, the coding agents and their worktrees: the
+ * specs take half of them (VITEST_MAX_WORKERS, read by the runner, sets another number). A pipeline
+ * runner has its own. Measured in docs/proposals/build-and-test-velocity.md: half the workers cost
+ * 14 percent of wall time and saved 40 percent of memory on a 20-core workstation.
+ */
+const WORKERS = process.env['CI'] ? {} : { maxWorkers: '50%' };
+
+/**
  * Git hands its hooks the repository they run for: in a worktree, a pre-push hook gets GIT_DIR. Inherited
  * by the specs, every git command they run in a throwaway repository would act on this one instead.
  */
@@ -104,6 +112,7 @@ export default defineConfig({
     // spec slowed by its neighbours is not a failing one, and a spec that hangs still fails.
     testTimeout: 30_000,
     hookTimeout: 60_000,
+    ...WORKERS,
     sequence: { sequencer: SlowFirstSequencer },
     coverage: {
       provider: 'v8',

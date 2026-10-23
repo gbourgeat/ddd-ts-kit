@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:a3203bbb309ddced -->
+<!-- translation-of: agent-sandbox.md sha256:dd5e00a932614ab4 -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -19,7 +19,7 @@ sécurité d'une session compte. Ce qu'il dit d'OpenShell a été lu dans sa doc
 | Charge | Quand | Ce que fait le kit |
 |---|---|---|
 | les *specs* unitaires et leur couverture | avant chaque *push* (lefthook) | le *hook* lance `ddd-ts-kit affected --base origin/HEAD --run ci:test:unit` : les *specs* des contextes que la branche atteint et de ceux qui en dépendent, comme sur une *pull request* ; tout quand git ne sait pas le dire ; rien quand seuls des documents ont changé. Le *pipeline* lance toujours tout sur le tronc et chaque nuit |
-| les *workers* du lanceur de tests | à chaque exécution | hors *pipeline* (pas de variable `CI`), Vitest et Jest prennent la moitié des cœurs (`maxWorkers: '50%'` dans la configuration générée) ; `VITEST_MAX_WORKERS=2`, ou `--maxWorkers=2` pour Jest, fixe le nombre |
+| les *workers* du lanceur de tests | à chaque exécution | hors *pipeline* (pas de variable `CI`), Vitest et Jest prennent la moitié des cœurs (`maxWorkers: '50%'` dans la configuration générée, et dans le `vitest.config.ts` du kit lui-même) ; `VITEST_MAX_WORKERS=2`, ou `--maxWorkers=2` pour Jest, fixe le nombre |
 | plusieurs agents à la fois | [travail en parallèle](parallel-work.fr.md) | chaque *worker* a son *worktree* avec ses propres `node_modules`, compilateur, *linter* et lanceur de tests : la charge est multipliée par le nombre de *workers*. Lancez les vagues de [Vagues et lots](parallel-work.fr.md#vagues-et-lots) avec autant de *workers* que la machine en tient, pas un par contexte |
 | la vérification d'architecture en fin de tour | le *hook* `Stop`, quand des changements attendent | un `ddd-ts-kit check` du projet, 60 secondes au plus ; rien à régler |
 | l'éditeur | toujours | un IDE indexe chaque *worktree* de `.worktrees/` avec ses `node_modules` : marquez le dossier comme exclu |
