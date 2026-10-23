@@ -5,8 +5,8 @@ import { AttendanceRecord } from '@/contexts/scheduling/domain/calendars/aggrega
 import { EventStoreAttendanceRecordRepository } from '@/contexts/scheduling/infrastructure/persistence/event-store-attendance-record.repository';
 import { KnexAttendanceHistory } from '@/contexts/scheduling/infrastructure/persistence/knex-attendance-history.repository';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
-import { eraseDataSubject } from '@/platform/events/erase-data-subject';
-import { storeFedProjections } from '@/platform/events/store-fed-projections';
+import { eraseDataSubject } from '@/platform/erasure/erase-data-subject';
+import { storeFedProjections } from '@/platform/event-store/store-fed-projections';
 
 const at = new Date('2026-03-02T09:00:00.000Z');
 

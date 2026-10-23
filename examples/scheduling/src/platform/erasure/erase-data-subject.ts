@@ -1,8 +1,8 @@
 import type { SubjectKeyStore } from '@ddd-ts-kit/kernel';
-import { isSubjectId } from '@/platform/events/is-subject-id';
-import { NotASubjectIdError } from '@/platform/events/not-a-subject-id-error';
-import type { StoreFedProjection } from '@/platform/events/store-fed-projections';
-import { UnknownDataSubjectError } from '@/platform/events/unknown-data-subject-error';
+import { isSubjectId } from '@/platform/erasure/is-subject-id';
+import { NotASubjectIdError } from '@/platform/erasure/not-a-subject-id-error';
+import type { StoreFedProjection } from '@/platform/event-store/store-fed-projections';
+import { UnknownDataSubjectError } from '@/platform/erasure/unknown-data-subject-error';
 
 export interface ErasureParts {
   readonly keys: SubjectKeyStore;

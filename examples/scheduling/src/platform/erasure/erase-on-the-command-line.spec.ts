@@ -14,10 +14,10 @@ import {
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createAudit, type Audit } from '@/platform/audit/create-audit';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
-import { eraseOnTheCommandLine } from '@/platform/events/erase-on-the-command-line';
-import { NotASubjectIdError } from '@/platform/events/not-a-subject-id-error';
-import { storeFedProjections } from '@/platform/events/store-fed-projections';
-import { UnknownDataSubjectError } from '@/platform/events/unknown-data-subject-error';
+import { eraseOnTheCommandLine } from '@/platform/erasure/erase-on-the-command-line';
+import { NotASubjectIdError } from '@/platform/erasure/not-a-subject-id-error';
+import { storeFedProjections } from '@/platform/event-store/store-fed-projections';
+import { UnknownDataSubjectError } from '@/platform/erasure/unknown-data-subject-error';
 import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persistence/knex-person-directory.reader';
 import { KnexPersonRepository } from '@/contexts/identity/infrastructure/persistence/knex-person.repository';
 import { aPerson } from '@/contexts/identity/test/builders/person.builder';

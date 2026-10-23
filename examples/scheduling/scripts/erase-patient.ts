@@ -1,10 +1,10 @@
 import { PersonalDataCipher } from '@ddd-ts-kit/kernel';
 import { layFoundations } from '@/platform/composition/lay-foundations';
 import { openPersistence } from '@/platform/database/open-persistence';
-import { eraseOnTheCommandLine } from '@/platform/events/erase-on-the-command-line';
-import { NotASubjectIdError } from '@/platform/events/not-a-subject-id-error';
-import { storeFedProjections } from '@/platform/events/store-fed-projections';
-import { UnknownDataSubjectError } from '@/platform/events/unknown-data-subject-error';
+import { eraseOnTheCommandLine } from '@/platform/erasure/erase-on-the-command-line';
+import { NotASubjectIdError } from '@/platform/erasure/not-a-subject-id-error';
+import { storeFedProjections } from '@/platform/event-store/store-fed-projections';
+import { UnknownDataSubjectError } from '@/platform/erasure/unknown-data-subject-error';
 import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persistence/knex-person-directory.reader';
 
 // `npm run erase:patient -- <patientId> <operatorId>`: the right to erasure of a patient.
