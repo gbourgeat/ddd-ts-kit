@@ -21,7 +21,7 @@
  *   node pipeline/monorepo/translations.mjs --stale             the French pages whose English page changed
  *   node pipeline/monorepo/translations.mjs --add-switchers     the switcher line, on every English page lacking it
  *
- * The script needs no dependency: it runs in the docs job of the pipeline, before any install.
+ * The script needs no dependency: a checkout without its node_modules runs it.
  */
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';

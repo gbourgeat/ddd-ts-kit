@@ -100,7 +100,7 @@ node --test plugin/hooks/guard.test.mjs
   a pull request that changes the plugin (skills, agents, hooks) has one, leaves `version` of
   `plugin/.claude-plugin/plugin.json` alone, and passes `claude plugin validate . --strict`. Two
   pull requests then never write the same line: one merged leaves the others mergeable as they
-  are, with their checks still valid. The docs job of the CI holds it
+  are, with their checks still valid. The static checks job of the CI holds it
   (`node pipeline/monorepo/changes.mjs --check --base <ref>`).
 
 ## The eval suite of the plugin

@@ -1,5 +1,5 @@
 [English](build-and-test-velocity.md) · **Français**
-<!-- translation-of: build-and-test-velocity.md sha256:962a6d9f60ab79a2 -->
+<!-- translation-of: build-and-test-velocity.md sha256:f5c2a253a78377ff -->
 
 # Proposition : vélocité du build, des contrôles et des tests
 
@@ -26,7 +26,7 @@ est une *pull request* à part, mesurée sur les indicateurs de cette page avant
 
 | Partie | Verdict |
 |---|---|
-| Moins de jobs par exécution du *pipeline*, les familles lourdes réduites sur une *pull request* | **recommandé en premier** (la file et le temps de mur) |
+| Moins de jobs par exécution du *pipeline*, les familles lourdes réduites sur une *pull request* | **en cours** (la file et le temps de mur) : la *pull request* `ci/fewer-jobs-narrowed-families` (2026-10-23) replie les cinq portes de moins de trois minutes en un job et, sur une *pull request*, exécute la suite de l'alias sur une ligne de Node et les projets générés sur npm : 24 jobs à 20 sur le tronc, 23 à 17 sur une *pull request* ; les *shards* de bout en bout tenus aux *stacks* qu'un changement atteint viennent ensuite |
 | La matrice de compilation de cinq fichiers de *spec* en parallèle ou découpée par fichier | **recommandé** (le fichier le plus long, 84 s, plafonne chaque exécution) |
 | La moitié des cœurs hors *pipeline*, les tests `related` avant un *push* | **recommandé** (la mémoire d'un portable) |
 | ESLint avec son cache par contenu, conservé comme artefact du *pipeline* | **recommandé** (mesuré sur ce dépôt, section 5) |

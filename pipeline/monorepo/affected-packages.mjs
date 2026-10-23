@@ -23,7 +23,7 @@ const READ_BY_THE_CLI_SPECS = ['docs/', 'pipeline/', 'examples/', 'plugin/', '.c
 /** Read by no spec: only the gates that always run (dashes, plugin validation, the files of changes/) look at them. */
 const DOCUMENTS = /^[^/]+\.md$|^LICENSE$/;
 
-/** The documentation website, read by no spec of a package: the site job of the CI builds it. */
+/** The documentation website, read by no spec of a package: the static checks job of the CI builds it. */
 const SITE = 'site/';
 
 /** The documents the runs that integrate every package read: the quick start of the root README, the rule table of the reference. */
