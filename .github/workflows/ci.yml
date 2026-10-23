@@ -417,6 +417,75 @@ jobs:
         if: ${{ !cancelled() }}
         run: docker run --rm --volume "$GITHUB_WORKSPACE:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --redact --no-banner
 
+  # Two trials of docs/proposals/build-and-test-velocity.md (its seventh line), measured for a month and never a gate:
+  # the gate job does not need them, and a failure of theirs fails nothing. Each writes what the month compares.
+  oxlint:
+    name: Trial, Oxlint beside ESLint
+    needs: install
+    # The default branch and the night, not a pull request: nothing of this run is read before a merge.
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Oxlint with tsgolint and the rules of the kit as a JS plugin, its findings and its time kept
+        run: |
+          start=$(date +%s)
+          npm run -s lint:oxlint > oxlint.txt 2>&1 || true
+          end=$(date +%s)
+          findings=$(grep -cE '^\S+:[0-9]+:[0-9]+: (error|warning)' oxlint.txt || true)
+          {
+            echo "## Oxlint, type-aware, the rules of the kit as a JS plugin"
+            echo
+            echo "| wall | findings | ESLint on the same tree |"
+            echo "|---|---|---|"
+            echo "| $((end - start)) s | $findings | the lint job of this run |"
+            echo
+            echo '```'
+            grep -oE '(error|warning) [a-z@-]+\([a-z0-9/-]+\)' oxlint.txt | sed -E 's/.* //' | sort | uniq -c | sort -rn | head -20
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: oxlint-${{ github.run_id }}
+          path: oxlint.txt
+          retention-days: 30
+
+  unit-arm:
+    name: Trial, unit tests on arm64
+    needs: install
+    # The night only: ten runs give a p50 to compare with the x64 job of the same nights.
+    if: ${{ github.event_name == 'schedule' }}
+    runs-on: ubuntu-26.04-arm
+    timeout-minutes: 25
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: The same specs as the Node 22 job, on four physical cores instead of two with hyper-threading
+        run: npm test
+
+  e2e-arm:
+    name: Trial, end-to-end tests (3/4) on arm64
+    needs: install
+    if: ${{ github.event_name == 'schedule' }}
+    runs-on: ubuntu-26.04-arm
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: The third shard, the longest, as the x64 job runs it
+        run: npm run ci:test:e2e:stacks -- --shard=3/4
+
   gate:
     name: gate
     if: ${{ always() }}

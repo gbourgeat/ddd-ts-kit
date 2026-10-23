@@ -1,5 +1,5 @@
 [English](build-and-test-velocity.md) · **Français**
-<!-- translation-of: build-and-test-velocity.md sha256:0b4af853c1e80168 -->
+<!-- translation-of: build-and-test-velocity.md sha256:d0859950b1a1049c -->
 
 # Proposition : vélocité du build, des contrôles et des tests
 
@@ -32,8 +32,8 @@ est une *pull request* à part, mesurée sur les indicateurs de cette page avant
 | Les familles lourdes exécutent deux fichiers à la fois, leurs géants d'un seul fichier coupés (la sixième ligne, réécrite : le job unitaire a cessé d'être le plus long après la deuxième) | **en cours** : la *pull request* #255 (2026-10-23) ; ses mesures sont en section 5 et sur la *pull request* |
 | ESLint avec son cache par contenu, conservé comme artefact du *pipeline* | **en cours** (mesuré sur ce dépôt, section 5) : la *pull request* #253 (2026-10-23) linte avec `--cache --cache-strategy content` par `pipeline/monorepo/lint.mjs`, qui laisse tomber le cache quand les règles du kit telles que construites, la config ou le *lockfile* ont changé depuis son écriture (le cache d'ESLint est indexé par les fichiers lintés et la config, pas par le code des règles) ; dans le *pipeline* le tronc écrit le cache et une *pull request* le restaure |
 | La vérification des types des *specs* en parallèle | **en cours** (mesuré, section 5) : la même *pull request* exécute les 26 projets autant à la fois que la machine a de cœurs (`pipeline/monorepo/typecheck-tests.mjs`) |
-| Oxlint avec tsgolint, les règles du kit chargées comme *plugin* JS | **à côté d'ESLint seulement** : 2 à 4 s au lieu de 35, mais le *plugin* du kit casse sur 2 494 fichiers sous l'API de *plugins* en alpha (section 5) |
-| Des *runners* arm64 pour les jobs unitaires et de bout en bout | **à essayer**, dix exécutions comparées |
+| Oxlint avec tsgolint, les règles du kit chargées comme *plugin* JS | **à l'essai** : la *pull request* #256 (2026-10-23) corrige la seule règle qui cassait sous l'API de *plugins* en alpha (`clean/one-export-per-file` parcourait un corps que l'analyseur d'Oxlint laisse nul), linte l'arbre avec `npm run lint:oxlint` (la config dans `.oxlintrc.json`, 2 à 4 s au lieu de 35) et l'exécute sur le tronc et la nuit à côté d'ESLint, jamais comme porte, ses constats et son temps dans le résumé de chaque exécution pendant un mois ; elle a aussi trouvé 27 constats *stepdown* dans un script qu'ESLint n'a jamais rapportés (la règle lit une propriété de portée de typescript-eslint que l'analyseur des scripts n'a pas) : un bug du *plugin*, pour une *pull request* à part |
+| Des *runners* arm64 pour les jobs unitaires et de bout en bout | **à l'essai** : la même *pull request* exécute les *specs* unitaires et le troisième *shard* de bout en bout sur `ubuntu-26.04-arm` la nuit, jamais comme porte, pour un mois de p50 contre les jobs x64 des mêmes nuits |
 | pnpm pour ce dépôt | **pas maintenant** : 1 s au lieu de 8 s par installation, derrière la même restauration de cache ; le filtre qu'il offre existe déjà |
 | Nx, Turborepo, moon, Lage, Rush | **non** : plus rien à mettre en cache, la sélection des *packages* atteints existe, un cache distant coûte ou expose |
 | Biome comme *linter*, bun test ou node:test comme *runner* | **non** : les types, les modules natifs et la couverture |
