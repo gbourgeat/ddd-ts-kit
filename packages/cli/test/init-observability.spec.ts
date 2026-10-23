@@ -55,14 +55,12 @@ describe('init --logger', () => {
     const pino = platform(initProject('--logger', 'pino'), 'config/load-config.ts');
 
     expect(stdout).toContain(
-      "if (raw !== 'json') {\n    problems.push('LOG_FORMAT must be json: the stdout logger has no pretty format');\n  }",
+      "if ((env.optional('LOG_FORMAT') ?? 'json') !== 'json') {\n    env.problem('LOG_FORMAT must be json: the stdout logger has no pretty format');\n  }",
     );
 
-    expect(pino).toContain(
-      "if (raw !== 'json' && raw !== 'pretty') {\n    problems.push('LOG_FORMAT must be json or pretty');\n  }",
-    );
+    expect(pino).toContain("format: env.oneOf('LOG_FORMAT', ['json', 'pretty'], 'json'),");
 
-    expect(pino).toContain("scrubMessages: readFlag(env, { name: 'LOG_SCRUB_MESSAGES', fallback: false }, problems),");
+    expect(pino).toContain("scrubMessages: env.flag('LOG_SCRUB_MESSAGES', false),");
     expect(platform(initProject(), 'config/app-config.ts')).toContain("  readonly format: 'json';\n");
 
     expect(platform(initProject('--logger', 'winston'), 'config/app-config.ts')).toContain(
@@ -94,35 +92,51 @@ describe('the tracing configuration init writes', () => {
     expect(tracing.split('\n')[0]).toBe("import { initTracing } from '@ddd-ts-kit/tracing/node';");
 
     expect(tracing).toContain(
-      'const settings = readTracing(process.env, problems);\n\nif (problems.length > 0) {\n  throw new ConfigError(problems);\n}',
+      'const env = new Environment(process.env);\nconst settings = readTracing(env);\n\nenv.assertValid();',
     );
 
     expect(tracing).toContain('...(settings.sampleRatio === undefined ? {} : { sampleRatio: settings.sampleRatio }),');
-    expect(platform(root, 'config/read-tracing.ts')).not.toMatch(/^import /m);
-    expect(platform(root, 'config/load-config.ts')).toContain('tracing: readTracing(env, problems),');
+    expect(platform(root, 'config/read-tracing.ts')).not.toMatch(/^import (?!type )/m);
+    expect(platform(root, 'config/load-config.ts')).toContain('tracing: readTracing(env),');
   });
 
   it('reads the OTLP endpoint, the sampling ratio and the consumer mode, which continues the trace by default', async () => {
-    const loaded = await importGenerated(initProject(), 'src/platform/config/read-tracing.ts');
-    const readTracing = jsonAt(loaded, 'readTracing') as (env: Record<string, string>, problems: string[]) => unknown;
-    const problems: string[] = [];
+    const root = initProject();
 
-    expect(readTracing({}, problems)).toEqual({ consumers: 'continue' });
+    const Environment = jsonAt(
+      await importGenerated(root, 'src/platform/config/environment.ts'),
+      'Environment',
+    ) as new (
+      variables: Record<string, string>,
+    ) => { readonly problems: readonly string[] };
 
-    expect(
-      readTracing(
-        { OTEL_EXPORTER_OTLP_ENDPOINT: 'http://127.0.0.1:4318', TRACE_SAMPLE_RATIO: '0.25', TRACE_CONSUMERS: 'link' },
-        problems,
-      ),
-    ).toEqual({ endpoint: 'http://127.0.0.1:4318', sampleRatio: 0.25, consumers: 'link' });
+    const readTracing = jsonAt(await importGenerated(root, 'src/platform/config/read-tracing.ts'), 'readTracing') as (
+      env: InstanceType<typeof Environment>,
+    ) => unknown;
 
-    expect(problems).toEqual([]);
+    const empty = new Environment({});
 
-    readTracing({ OTEL_EXPORTER_OTLP_ENDPOINT: 'jaeger', TRACE_SAMPLE_RATIO: '2', TRACE_CONSUMERS: 'fork' }, problems);
+    const given = new Environment({
+      OTEL_EXPORTER_OTLP_ENDPOINT: 'http://127.0.0.1:4318',
+      TRACE_SAMPLE_RATIO: '0.25',
+      TRACE_CONSUMERS: 'link',
+    });
 
-    expect(problems).toEqual([
-      'TRACE_SAMPLE_RATIO must be a number between 0 and 1',
+    const wrong = new Environment({
+      OTEL_EXPORTER_OTLP_ENDPOINT: 'jaeger',
+      TRACE_SAMPLE_RATIO: '2',
+      TRACE_CONSUMERS: 'fork',
+    });
+
+    expect(readTracing(empty)).toEqual({ consumers: 'continue' });
+    expect(readTracing(given)).toEqual({ endpoint: 'http://127.0.0.1:4318', sampleRatio: 0.25, consumers: 'link' });
+    expect([...empty.problems, ...given.problems]).toEqual([]);
+
+    readTracing(wrong);
+
+    expect(wrong.problems).toEqual([
       'OTEL_EXPORTER_OTLP_ENDPOINT must be a URL, or empty to export nothing',
+      'TRACE_SAMPLE_RATIO must be a number between 0 and 1',
       'TRACE_CONSUMERS must be one of continue, link',
     ]);
   });

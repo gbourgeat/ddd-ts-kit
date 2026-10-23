@@ -1,4 +1,4 @@
-type Variables = Readonly<Record<string, string | undefined>>;
+import type { Environment } from '{{alias.platform}}/config/environment{{alias.ext}}';
 
 /** The bucket that holds the content of files, on any provider of the S3 protocol. */
 export interface FilesConfig {
@@ -13,30 +13,15 @@ export interface FilesConfig {
   readonly secretAccessKey: string;
 }
 
-/** The settings of the S3 file storage; a problem is reported by variable name only, never by value. */
-export function readFiles(env: Variables, problems: string[]): FilesConfig {
-  const endpoint = (env['S3_ENDPOINT'] ?? '').trim();
-  const region = (env['S3_REGION'] ?? '').trim();
-
-  if (endpoint !== '' && !URL.canParse(endpoint)) {
-    problems.push('S3_ENDPOINT must be a URL, or empty for AWS');
-  }
+/** The settings of the S3 file storage. */
+export function readFiles(env: Environment): FilesConfig {
+  const endpoint = env.optionalUrl('S3_ENDPOINT', 'for AWS');
 
   return {
-    ...(endpoint === '' ? {} : { endpoint }),
-    region: region === '' ? 'us-east-1' : region,
-    bucket: requiredText(env, 'S3_BUCKET', problems),
-    accessKeyId: requiredText(env, 'S3_ACCESS_KEY_ID', problems),
-    secretAccessKey: requiredText(env, 'S3_SECRET_ACCESS_KEY', problems),
+    ...(endpoint === undefined ? {} : { endpoint }),
+    region: env.optional('S3_REGION') ?? 'us-east-1',
+    bucket: env.text('S3_BUCKET'),
+    accessKeyId: env.text('S3_ACCESS_KEY_ID'),
+    secretAccessKey: env.text('S3_SECRET_ACCESS_KEY'),
   };
-}
-
-function requiredText(env: Variables, name: string, problems: string[]): string {
-  const value = (env[name] ?? '').trim();
-
-  if (value === '') {
-    problems.push(name + ' must be set');
-  }
-
-  return value;
 }

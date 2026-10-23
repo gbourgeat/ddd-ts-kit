@@ -21,7 +21,7 @@ describe('integration events', () => {
       'forConsumer: (name) => bus.forConsumer(name),',
     );
 
-    expect(platform(root, 'config/load-config.ts')).toContain("amqpUrl: readUrl(env, 'AMQP_URL', problems),");
+    expect(platform(root, 'config/load-config.ts')).toContain("amqpUrl: env.url('AMQP_URL'),");
     expect(read(root, 'docker-compose.yml')).toContain('image: rabbitmq:4-management-alpine');
 
     expect(textsAt(readJson(root, 'package.json'), 'dependencies')).toMatchObject({
@@ -214,7 +214,7 @@ describe('what the stack does not have', () => {
   it('validates the database URL at boot and mounts the documentation page that was chosen', () => {
     const root = initProject('--docs-ui', 'scalar');
 
-    expect(platform(root, 'config/load-config.ts')).toContain("databaseUrl: readUrl(env, 'DATABASE_URL', problems),");
+    expect(platform(root, 'config/load-config.ts')).toContain("databaseUrl: env.url('DATABASE_URL'),");
 
     expect(platform(root, 'http/with-documentation.ts')).toContain(
       "openApiDocumentsRoutes(documents, { ui: 'scalar', title: config.serviceName })",
