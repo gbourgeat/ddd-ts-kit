@@ -985,7 +985,15 @@ What differs between the servers, as far as the event bus is concerned, and is a
   about 100 ms more on Valkey.
 
 Tested against Dragonfly v2.0.2, Valkey 9.1.2 and Redis 8.10.2 with ioredis 6, same suite,
-same results. The suite needs a server and is skipped without `DDD_TS_KIT_TEST_REDIS_URL`:
+same results. Every spec also runs without a server, in the unit run: the adapters reach,
+through ioredis and its TCP transport, a Redis server the test starts in its own process on a
+free port (`test/support/server/`). It speaks RESP2 and RESP3 and answers what the adapters ask
+as Dragonfly answers, from a recording of the suite against it: strings with their expiries,
+hashes, sorted sets, streams with their consumer groups and blocking reads, `MULTI` and `EXEC`,
+channels, and the scripts of `EVAL` on Lua 5.1, the version Redis and Valkey embed
+(`wasmoon-lua5.1`, with the `cjson` of Redis), where Dragonfly runs Lua 5.4. With
+`DDD_TS_KIT_TEST_REDIS_URL`, the same specs run a second time against a real server, which is
+what keeps the in-memory one honest:
 
 ```
 docker run -d --rm --name ddd-ts-kit-test-redis -p 127.0.0.1:6390:6379 docker.dragonflydb.io/dragonflydb/dragonfly:v2.0.2

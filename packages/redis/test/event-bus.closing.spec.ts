@@ -1,15 +1,17 @@
 import { Redis } from 'ioredis';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PLACED, anEvent, recorder, unique } from './support/events';
-import { REAL_SERVER, SERVER_URL } from './support/server';
+import { SERVERS, serverOf } from './support/servers';
 import { Server } from './support/streams';
 import { eventually, pause } from './support/waiting';
 
-describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, closing', { timeout: 30_000 }, () => {
+describe.each(SERVERS)('RedisStreamsEventBus, closing, %s', { timeout: 30_000 }, (_name, start) => {
+  const redis = serverOf(start);
+
   let server: Server;
 
   beforeEach(() => {
-    server = Server.connect(SERVER_URL);
+    server = Server.connect(redis.url);
   });
 
   afterEach(async () => {
@@ -77,7 +79,7 @@ describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, closing', { timeout: 30_000
   });
 
   it('leaves open a client it was handed, and closes only the readers it duplicated from it', async () => {
-    const mine = new Redis(SERVER_URL, { maxRetriesPerRequest: 1 });
+    const mine = new Redis(redis.url, { maxRetriesPerRequest: 1 });
     const bus = server.bus({ connection: mine });
     const billing = recorder();
 

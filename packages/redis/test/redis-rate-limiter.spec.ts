@@ -3,19 +3,21 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { FixedClock } from '@ddd-ts-kit/kernel';
 import { RedisRateLimiter } from '../src';
 import { rateLimiterContract } from '../src/testing';
-import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing, sleep } from './support/server';
+import { SERVERS, aNamespace, closeAll, connect, connectToNothing, serverOf, sleep } from './support/servers';
 
 const runner = { describe, it, expect, beforeEach };
 const NOW = new Date('2026-03-01T10:00:00.000Z');
 
 afterAll(closeAll);
 
-describe.skipIf(!REAL_SERVER)('RedisRateLimiter on a server', () => {
+describe.each(SERVERS)('RedisRateLimiter, %s', (_name, start) => {
+  const redis = serverOf(start);
+
   let client: Redis;
   let clock: FixedClock;
 
   beforeEach(() => {
-    client ??= connect();
+    client ??= connect(redis.url);
   });
 
   rateLimiterContract(runner, {
@@ -32,7 +34,7 @@ describe.skipIf(!REAL_SERVER)('RedisRateLimiter on a server', () => {
     const namespace = aNamespace();
     const shared = new FixedClock(NOW);
 
-    const instances = [connect(), connect(), connect()].map(
+    const instances = [connect(redis.url), connect(redis.url), connect(redis.url)].map(
       (connection) => new RedisRateLimiter(connection, { namespace, clock: shared }),
     );
 

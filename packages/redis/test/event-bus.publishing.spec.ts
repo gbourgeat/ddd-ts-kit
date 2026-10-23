@@ -2,15 +2,17 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RedisStreamsFailure } from '../src/event-bus';
 import { PLACED, TRACEPARENT, anEvent, failuresOf, unique } from './support/events';
 import { FaultyNetwork } from './support/proxy';
-import { REAL_SERVER, SERVER_URL } from './support/server';
+import { SERVERS, serverOf } from './support/servers';
 import { Server } from './support/streams';
 import { eventually, pause } from './support/waiting';
 
-describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, publishing', { timeout: 30_000 }, () => {
+describe.each(SERVERS)('RedisStreamsEventBus, publishing, %s', { timeout: 30_000 }, (_name, start) => {
+  const redis = serverOf(start);
+
   let server: Server;
 
   beforeEach(() => {
-    server = Server.connect(SERVER_URL);
+    server = Server.connect(redis.url);
   });
 
   afterEach(async () => {
@@ -39,7 +41,7 @@ describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, publishing', { timeout: 30_
   });
 
   it('resolves only once the server acknowledged, and rejects a publication cut mid-flight', async () => {
-    const network = await FaultyNetwork.to(SERVER_URL);
+    const network = await FaultyNetwork.to(redis.url);
     const bus = server.bus({ connection: network.url });
 
     await bus.assertTopology();
@@ -63,7 +65,7 @@ describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, publishing', { timeout: 30_
   });
 
   it('fails with a code, never with the URL, when the server cannot be reached', async () => {
-    const network = await FaultyNetwork.to(SERVER_URL.replace('redis://', 'redis://kit:secret@'));
+    const network = await FaultyNetwork.to(redis.url.replace('redis://', 'redis://kit:secret@'));
     const unreachable = network.url;
 
     await network.close();

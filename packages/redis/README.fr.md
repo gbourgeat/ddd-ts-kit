@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:fbafa42f4edca08b -->
+<!-- translation-of: README.md sha256:07effe530968143e -->
 
 # @ddd-ts-kit/redis
 
@@ -1024,7 +1024,16 @@ Ce qui diffère entre les serveurs, pour ce qui concerne le bus d'événements, 
   à environ 100 ms de plus sur Valkey.
 
 Testé contre Dragonfly v2.0.2, Valkey 9.1.2 et Redis 8.10.2 avec ioredis 6 : même suite, mêmes
-résultats. La suite a besoin d'un serveur et elle est ignorée sans `DDD_TS_KIT_TEST_REDIS_URL` :
+résultats. Toutes les *specs* s'exécutent aussi sans serveur, dans le run unitaire : les
+adaptateurs atteignent, par ioredis et son transport TCP, un serveur Redis que le test démarre
+dans son propre processus sur un port libre (`test/support/server/`). Il parle RESP2 et RESP3 et
+répond à ce que les adaptateurs lui demandent comme le fait Dragonfly, d'après un enregistrement
+de la suite contre lui : chaînes avec leurs expirations, *hashes*, ensembles triés, *streams*
+avec leurs groupes de consommateurs et leurs lectures bloquantes, `MULTI` et `EXEC`, canaux, et
+les scripts d'`EVAL` sur Lua 5.1, la version qu'embarquent Redis et Valkey (`wasmoon-lua5.1`,
+avec le `cjson` de Redis), là où Dragonfly exécute Lua 5.4. Avec `DDD_TS_KIT_TEST_REDIS_URL`, les
+mêmes *specs* s'exécutent une seconde fois contre un vrai serveur, ce qui garde honnête celui en
+mémoire :
 
 ```
 docker run -d --rm --name ddd-ts-kit-test-redis -p 127.0.0.1:6390:6379 docker.dragonflydb.io/dragonflydb/dragonfly:v2.0.2

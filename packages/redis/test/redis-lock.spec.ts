@@ -2,17 +2,19 @@ import type { Redis } from 'ioredis';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { RedisLock } from '../src';
 import { lockContract } from '../src/testing';
-import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing, sleep } from './support/server';
+import { SERVERS, aNamespace, closeAll, connect, connectToNothing, serverOf, sleep } from './support/servers';
 
 const runner = { describe, it, expect, beforeEach };
 
 afterAll(closeAll);
 
-describe.skipIf(!REAL_SERVER)('RedisLock on a server', () => {
+describe.each(SERVERS)('RedisLock, %s', (_name, start) => {
+  const redis = serverOf(start);
+
   let client: Redis;
 
   beforeEach(() => {
-    client ??= connect();
+    client ??= connect(redis.url);
   });
 
   lockContract(runner, {
@@ -24,7 +26,7 @@ describe.skipIf(!REAL_SERVER)('RedisLock on a server', () => {
   it('excludes the holders of other connections, as other processes are', async () => {
     const namespace = aNamespace();
 
-    const processes = [connect(), connect(), connect(), connect()].map(
+    const processes = [connect(redis.url), connect(redis.url), connect(redis.url), connect(redis.url)].map(
       (connection) => new RedisLock(connection, { namespace }),
     );
 
@@ -82,7 +84,7 @@ describe.skipIf(!REAL_SERVER)('RedisLock on a server', () => {
     };
 
     const outcomes = await Promise.all(
-      [connect(), connect(), connect()].flatMap((connection) => [
+      [connect(redis.url), connect(redis.url), connect(redis.url)].flatMap((connection) => [
         work(new RedisLock(connection, { namespace })),
         work(new RedisLock(connection, { namespace })),
       ]),

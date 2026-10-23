@@ -2,15 +2,17 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RedisStreamsFailure } from '../src/event-bus';
 import { PLACED, anEvent, failuresOf, recorder, unique } from './support/events';
 import { FaultyNetwork } from './support/proxy';
-import { REAL_SERVER, SERVER_URL } from './support/server';
+import { SERVERS, serverOf } from './support/servers';
 import { Server } from './support/streams';
 import { eventually } from './support/waiting';
 
-describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, when the connection is lost', { timeout: 30_000 }, () => {
+describe.each(SERVERS)('RedisStreamsEventBus, when the connection is lost, %s', { timeout: 30_000 }, (_name, start) => {
+  const redis = serverOf(start);
+
   let server: Server;
 
   beforeEach(() => {
-    server = Server.connect(SERVER_URL);
+    server = Server.connect(redis.url);
   });
 
   afterEach(async () => {
@@ -18,7 +20,7 @@ describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, when the connection is lost
   });
 
   it('reconnects and resumes consuming', async () => {
-    const network = await FaultyNetwork.to(SERVER_URL);
+    const network = await FaultyNetwork.to(redis.url);
     const reported: RedisStreamsFailure[] = [];
     const bus = server.bus({ connection: network.url, onFailure: failuresOf(reported) });
     const billing = recorder();
@@ -48,7 +50,7 @@ describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, when the connection is lost
   });
 
   it('receives, once back, what was published while it was away', async () => {
-    const network = await FaultyNetwork.to(SERVER_URL);
+    const network = await FaultyNetwork.to(redis.url);
     const prefix = unique('test-events');
     const publisher = server.bus({ prefix });
     const consumerBus = server.bus({ prefix, connection: network.url });

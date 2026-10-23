@@ -2,17 +2,19 @@ import type { Redis } from 'ioredis';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { cacheKey } from '@ddd-ts-kit/kernel';
 import { RedisCache, RedisLock } from '../src';
-import { REAL_SERVER, aNamespace, closeAll, connect, sleep } from './support/server';
+import { SERVERS, aNamespace, closeAll, connect, serverOf, sleep } from './support/servers';
 
 const price = (sku: string) => cacheKey<{ amount: number }>('price', sku);
 
 afterAll(closeAll);
 
-describe.skipIf(!REAL_SERVER)('RedisCache.getOrLoad on a server', () => {
+describe.each(SERVERS)('RedisCache.getOrLoad, %s', (_name, start) => {
+  const redis = serverOf(start);
+
   let client: Redis;
 
   beforeEach(() => {
-    client ??= connect();
+    client ??= connect(redis.url);
   });
 
   it('computes a missing value once for the callers of one process, then answers from the cache', async () => {
@@ -40,7 +42,7 @@ describe.skipIf(!REAL_SERVER)('RedisCache.getOrLoad on a server', () => {
   it('computes it once across processes when given a lock', async () => {
     const namespace = aNamespace();
 
-    const processes = [connect(), connect(), connect()].map(
+    const processes = [connect(redis.url), connect(redis.url), connect(redis.url)].map(
       (connection) => new RedisCache(connection, { namespace, lock: new RedisLock(connection, { namespace }) }),
     );
 

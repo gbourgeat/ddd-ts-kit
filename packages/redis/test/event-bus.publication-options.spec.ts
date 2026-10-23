@@ -1,17 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PLACED, anEvent, unique } from './support/events';
-import { REAL_SERVER, SERVER_URL } from './support/server';
+import { SERVERS, serverOf } from './support/servers';
 import { Server } from './support/streams';
 import { pause } from './support/waiting';
 
-describe.skipIf(!REAL_SERVER)(
-  'RedisStreamsEventBus, publishing with the guard or with retention',
+describe.each(SERVERS)(
+  'RedisStreamsEventBus, publishing with the guard or with retention, %s',
   { timeout: 30_000 },
-  () => {
+  (_name, start) => {
+    const redis = serverOf(start);
+
     let server: Server;
 
     beforeEach(() => {
-      server = Server.connect(SERVER_URL);
+      server = Server.connect(redis.url);
     });
 
     afterEach(async () => {

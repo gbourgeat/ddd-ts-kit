@@ -9,15 +9,17 @@ import {
   type RedisStreamsFailure,
 } from '../src/event-bus';
 import { PLACED, anEvent, failuresOf, recorder, streamsOf, unique } from './support/events';
-import { REAL_SERVER, SERVER_URL } from './support/server';
+import { SERVERS, serverOf } from './support/servers';
 import { MAX_ATTEMPTS, Server } from './support/streams';
 import { eventually } from './support/waiting';
 
-describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, dead letters', { timeout: 30_000 }, () => {
+describe.each(SERVERS)('RedisStreamsEventBus, dead letters, %s', { timeout: 30_000 }, (_name, start) => {
+  const redis = serverOf(start);
+
   let server: Server;
 
   beforeEach(() => {
-    server = Server.connect(SERVER_URL);
+    server = Server.connect(redis.url);
   });
 
   afterEach(async () => {

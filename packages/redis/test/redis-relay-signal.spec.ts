@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { Command, InMemoryCommandBus, InMemoryEventBus, SystemClock, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { InMemoryOutboxStore, OutboxRelay, type RelaySignal } from '@ddd-ts-kit/events';
 import { RedisRelaySignal, relayWakeUpMiddleware } from '../src';
-import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing, sleep } from './support/server';
+import { SERVERS, aNamespace, closeAll, connect, connectToNothing, serverOf, sleep } from './support/servers';
 
 afterAll(closeAll);
 
@@ -16,14 +16,16 @@ const issued = (id: string): IntegrationEvent => ({
   payload: {},
 });
 
-describe.skipIf(!REAL_SERVER)('RedisRelaySignal on a server', () => {
+describe.each(SERVERS)('RedisRelaySignal, %s', (_name, start) => {
+  const redis = serverOf(start);
+
   it('wakes the listeners of another process, and only those of its channel', async () => {
     const channel = aNamespace();
 
     const [here, there, elsewhere] = [
-      new RedisRelaySignal(connect(), { channel }),
-      new RedisRelaySignal(connect(), { channel }),
-      new RedisRelaySignal(connect(), { channel: aNamespace() }),
+      new RedisRelaySignal(connect(redis.url), { channel }),
+      new RedisRelaySignal(connect(redis.url), { channel }),
+      new RedisRelaySignal(connect(redis.url), { channel: aNamespace() }),
     ];
 
     const woken: string[] = [];
@@ -41,7 +43,12 @@ describe.skipIf(!REAL_SERVER)('RedisRelaySignal on a server', () => {
 
   it('stops waking a listener that unsubscribed, and everybody once closed', async () => {
     const channel = aNamespace();
-    const [here, there] = [new RedisRelaySignal(connect(), { channel }), new RedisRelaySignal(connect(), { channel })];
+
+    const [here, there] = [
+      new RedisRelaySignal(connect(redis.url), { channel }),
+      new RedisRelaySignal(connect(redis.url), { channel }),
+    ];
+
     const woken: string[] = [];
     const first = there.subscribe(() => void woken.push('first'));
 
@@ -63,8 +70,8 @@ describe.skipIf(!REAL_SERVER)('RedisRelaySignal on a server', () => {
     const channel = aNamespace();
 
     const [inTheApi, inTheWorker] = [
-      new RedisRelaySignal(connect(), { channel }),
-      new RedisRelaySignal(connect(), { channel }),
+      new RedisRelaySignal(connect(redis.url), { channel }),
+      new RedisRelaySignal(connect(redis.url), { channel }),
     ];
 
     // Typed as the port of the events package: the structural type of this package must fit it.
