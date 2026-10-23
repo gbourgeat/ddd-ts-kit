@@ -1,4 +1,6 @@
 [English](README.md) · **Français**
+<!-- translation-of: README.md sha256:70801acc5f76f325 -->
+
 <!-- translation-of: README.md sha256:29b4ba8bf58a34fb -->
 
 # ddd-ts-kit
@@ -106,7 +108,9 @@ offre payante, ou qui dépensent des jetons d'API à chaque exécution : `codeql
 `gitlab-dependency-scanning` (GitLab), `claude-review` et `claude-triage` (les deux plateformes :
 Claude Code relit chaque *pull request* ou *merge request* et publie un commentaire qui
 n'approuve ni ne bloque, et trie une exécution en échec en trois lignes, en lecture seule ; le
-*job* `gate` n'en a jamais besoin). La liste est enregistrée comme `ci.extras` dans la
+*job* `gate` n'en a jamais besoin), et `intent-to-spec` (GitHub : le skill de *story* lancé sans
+responsable sur chaque intention qu'une fusion accepte, sa spécification ouverte en *pull request*).
+La liste est enregistrée comme `ci.extras` dans la
 configuration ; un nom inconnu, ou un *job* d'une plateforme que `--ci` ne couvre pas, est
 refusé. Le tableau de chaque outil, de son coût et de ses conditions :
 [pipeline/README.md](../../pipeline/README.md#free-by-default-paid-on-request).
@@ -572,8 +576,8 @@ choix sont enregistrés sous `stack` dans la configuration, `docsUi`, `ci` et `l
 | `biome.json` | le formateur : Biome avec son linter et son organisateur d'imports désactivés, largeur de ligne 120 ; `npm run format` écrit, `npm run format:check` vérifie, et ce que la CLI génère est déjà formaté |
 | `knip.json` | code mort : les points d'entrée sont `main.ts` et `apps/*/main.ts`, les scripts, les *specs* et les *fakes*, les fichiers de module dans le style explicite, les fichiers de rôle sous discovery (*jobs* et *publishers* compris) |
 | `vitest.config.ts` | projets unitaires et d'intégration, les seuils de couverture lus dans `ddd-ts-kit.config.json` (`governedCoverage`), par contexte et par couche, dans le mode des décorateurs standard `decorators()` de `@ddd-ts-kit/testing/vitest`, qui compile les fichiers contenant un décorateur avec le compilateur du projet (Vitest ne transforme pas les décorateurs standard ; il transforme lui-même les anciens, si bien qu'un projet avec `experimentalDecorators` ne reçoit pas de *plugin*), et sous `--assembly discovery` `server.deps.inline: ['@ddd-ts-kit/di']` |
-| `lefthook.yml`, `commitlint.config.mjs` | *hooks* pre-commit (ESLint, la vérification du format et `check` sur les fichiers indexés, `check --commit-size --staged`, qui ne bloque jamais), pre-push (types, tests unitaires) et commit-msg (`npm run hooks:install`), chacun lancé par le lefthook du *checkout* où il se déclenche (`lefthook: node_modules/.bin/lefthook` : un *worktree* sans ses dépendances fait échouer le *commit* au lieu de sauter les vérifications), *commits* conventionnels |
-| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node et les dépendances, installés avant le démarrage de l'agent cloud de Copilot), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json` ; `codeql.yml` avec `--ci-extras codeql`, `claude-review.yml` et `claude-triage.yml` avec `--ci-extras claude-review,claude-triage` |
+| `lefthook.yml`, `commitlint.config.mjs` | *hooks* pre-commit (ESLint, la vérification du format et `check` sur les fichiers indexés, `check --commit-size --staged`, qui ne bloque jamais, et `secrets` : gitleaks sur les changements indexés quand son binaire est sur le chemin, une ligne et aucun refus sinon, le pipeline balayant tout l'historique de toute façon), pre-push (types, tests unitaires) et commit-msg (`npm run hooks:install`), chacun lancé par le lefthook du *checkout* où il se déclenche (`lefthook: node_modules/.bin/lefthook` : un *worktree* sans ses dépendances fait échouer le *commit* au lieu de sauter les vérifications), *commits* conventionnels |
+| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node et les dépendances, installés avant le démarrage de l'agent cloud de Copilot), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json` ; `codeql.yml` avec `--ci-extras codeql`, `claude-review.yml` et `claude-triage.yml` avec `--ci-extras claude-review,claude-triage` ; `intent-to-spec.yml` avec `--ci-extras intent-to-spec` |
 | `--ci gitlab` | `.gitlab-ci.yml` (les constats d'architecture comme rapport Code Quality au moyen de `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` ; `.gitlab/claude-review.gitlab-ci.yml` avec `--ci-extras claude-review,claude-triage` |
 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | comment le lancer ; un guide léger dans `AGENTS.md`, que lisent Codex, Copilot et la plupart des agents de code et qu'importe `CLAUDE.md` (commandes, comment lire moins, la carte des règles, fichiers générés, note sur le compilateur, les *skills* du *plugin* : `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) et les invariants dans sept fichiers de règles, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` et `tests.md`, chacun délimité par un frontmatter `paths`, et les mêmes sept pour GitHub Copilot, chacun délimité par `applyTo` |
 | `.github/copilot/settings.json` | le *plugin* du kit, déclaré pour GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`) : son agent cloud l'installe, la CLI Copilot et VS Code le recommandent ; un fichier existant garde ce qu'il contient et reçoit les deux entrées |

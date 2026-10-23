@@ -323,8 +323,9 @@ public GitHub repositories and paid on private ones; GitLab's SAST, Secret Detec
 the merge request on Ultimate only) and Dependency Scanning (Ultimate); and two jobs that run
 Claude Code on both platforms, `claude-review` (a review of each pull or merge request, posted as
 a comment that neither approves nor blocks) and `claude-triage` (a three-line triage of a failed
-run, read-only, on the job summary and the request). Neither is required by the `gate` job: a
-person still approves. On both platforms the two checks that block on every plan are `npm audit`
+run, read-only, on the job summary and the request); and, on GitHub only, `intent-to-spec` (the
+story skill run headless on each intent a merge accepts, its specification opened as a pull
+request). None is required by the `gate` job: a person still approves. On both platforms the two checks that block on every plan are `npm audit`
 and gitleaks. The table of every tool, its class, its cost and the vendors' pages it was read
 from is in [pipeline/README.md](../../pipeline/README.md#free-by-default-paid-on-request).
 

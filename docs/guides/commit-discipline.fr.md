@@ -1,5 +1,5 @@
 [English](commit-discipline.md) · **Français**
-<!-- translation-of: commit-discipline.md sha256:6040090bd670a654 -->
+<!-- translation-of: commit-discipline.md sha256:1fd13ba7f38a5fbb -->
 
 # La discipline des commits et des pull requests
 

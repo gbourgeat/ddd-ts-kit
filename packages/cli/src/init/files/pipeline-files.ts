@@ -33,6 +33,11 @@ const CLAUDE_TRIAGE: readonly InitFile[] = [
   ['.github/workflows/claude-triage.yml', 'pipeline/github/workflows/claude-triage.yml'],
 ];
 
+/** Opt-in (`--ci-extras intent-to-spec`): the headless design pass of the story skill on each intent a merge accepts; API tokens per accepted intent. */
+const INTENT_TO_SPEC: readonly InitFile[] = [
+  ['.github/workflows/intent-to-spec.yml', 'pipeline/github/workflows/intent-to-spec.yml'],
+];
+
 /** The same two jobs for GitLab, in one file `.gitlab-ci.yml` includes; each job written when its extra is asked for. */
 const CLAUDE_GITLAB: readonly InitFile[] = [
   ['.gitlab/claude-review.gitlab-ci.yml', 'pipeline/gitlab/claude-review.gitlab-ci.yml.tpl'],
@@ -52,6 +57,7 @@ export function pipelineFiles(config: Config): InitFile[] {
     ...when(ci !== 'gitlab' && config.ci.extras.includes('codeql'), CODEQL),
     ...when(ci !== 'gitlab' && config.ci.extras.includes('claude-review'), CLAUDE_REVIEW),
     ...when(ci !== 'gitlab' && config.ci.extras.includes('claude-triage'), CLAUDE_TRIAGE),
+    ...when(ci !== 'gitlab' && config.ci.extras.includes('intent-to-spec'), INTENT_TO_SPEC),
     ...when(ci !== 'github', GITLAB),
     ...when(ci !== 'github' && hasClaudeExtra(config), CLAUDE_GITLAB),
   ];

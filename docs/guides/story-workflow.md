@@ -247,9 +247,9 @@ request merged into the default branch that turns an intent of `docs/architectur
 `Status: accepted`, it installs the project, Claude Code and the plugin, and runs `claude -p`
 with the `ANTHROPIC_API_KEY` secret, one story per accepted intent, under the token of the
 workflow or a token of the team (`INTENT_TO_SPEC_TOKEN`, so that the checks of the story run on
-the pull request it opens). It is opt-in and paid: `init` does not write it in this version, a
-team copies it into `.github/workflows/` and adds the secret, and each accepted intent consumes
-API tokens. The template was parsed and not executed on GitHub.
+the pull request it opens). It is opt-in and paid: `npx ddd-ts-kit init --ci-extras intent-to-spec`
+writes it (`ci.extras` of the config, GitHub only), the team adds the secret, and each accepted
+intent consumes API tokens. The template was parsed and not executed on GitHub.
 
 ## Hosts
 

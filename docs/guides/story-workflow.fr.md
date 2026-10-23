@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:1831557d67fd6c10 -->
+<!-- translation-of: story-workflow.md sha256:b4f3572c37712266 -->
 
 # Parcours d'une story : une session par user story
 
@@ -267,9 +267,9 @@ sur une *pull request* fusionnée dans la branche par défaut qui passe une inte
 plugin, et lance `claude -p` avec le secret `ANTHROPIC_API_KEY`, une *story* par intention
 acceptée, sous le jeton du *workflow* ou un jeton de l'équipe (`INTENT_TO_SPEC_TOKEN`, pour que
 les vérifications de la *story* tournent sur la *pull request* qu'elle ouvre). C'est optionnel
-et payant : `init` ne l'écrit pas dans cette version, une équipe le copie dans
-`.github/workflows/` et ajoute le secret, et chaque intention acceptée consomme des jetons
-d'API. Le *template* a été analysé et non exécuté sur GitHub.
+et payant : `npx ddd-ts-kit init --ci-extras intent-to-spec` l'écrit (`ci.extras` de la
+configuration, GitHub seulement), l'équipe ajoute le secret, et chaque intention acceptée
+consomme des jetons d'API. Le *template* a été analysé et non exécuté sur GitHub.
 
 ## Hôtes
 
