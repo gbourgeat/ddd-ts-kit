@@ -61,4 +61,34 @@ export const ESLINT_ONLY_RULES: readonly { readonly id: string; readonly descrip
     description:
       'A *.guard.ts file imports nothing from domain/ or infrastructure/, no repository, no unit of work and no command bus.',
   },
+  {
+    id: 'test/no-only-no-skip',
+    description:
+      'No .only or .skip on a test or a group, no fit, xit or xdescribe, no .skipIf or .runIf on a constant: every test runs, or runs wherever its condition holds; a behaviour not proven yet is an it.todo.',
+  },
+  {
+    id: 'test/title-states-a-rule',
+    description:
+      'The title of a test states the rule it proves, in lower case, after the rows and the criterion it cites; never should, test, works, nor the name of a method or a class. A describe names the unit.',
+  },
+  {
+    id: 'test/no-logic',
+    description:
+      'A test holds no if, switch, ternary, loop or try: a case per row is an it.each, a decision belongs to a builder, a fake or a helper.',
+  },
+  {
+    id: 'test/assertion-present',
+    description:
+      'Every test asserts something: an expect, an expect... or assert... helper, or the outcome of a scenario (thenEvents, thenError); a test without a body is an it.todo.',
+  },
+  {
+    id: 'test/refusal-by-code',
+    description:
+      'A refusal of the model or of the application is asserted by its code and its facts (thenError, expectRefusal, rejects.toMatchObject({ code }), expectProblem), never by toThrow with a message, a class or nothing; the specs of the adapters and of the platform are not judged.',
+  },
+  {
+    id: 'test/no-snapshot',
+    description:
+      'No snapshot matcher in a test: a snapshot records whatever the code produced; a test asserts the fields the rule depends on.',
+  },
 ];
