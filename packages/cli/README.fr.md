@@ -73,7 +73,7 @@ ddd-ts-kit init [--http express|fastify|hono|nest|none]
                 [--schemas shared|per-route]
                 [--package-manager npm|pnpm]
                 [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
-                [--import-extension none|js] [--sdk]
+                [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                 [--context <name>:<core|supporting|generic>]...
                 [--preset identity]...
                 [--dry-run] [--force]
@@ -100,11 +100,17 @@ qu'un autre générateur avait ajouté à un fichier de la plateforme (la valeur
 réglages d'un *job*) ne l'est pas, et une note le dit. Une configuration illisible est remplacée.
 
 Le *pipeline* n'utilise que des outils gratuits. `--ci-extras` ajoute des *jobs* qui demandent
-une offre payante sur un dépôt privé, ou qui ne remontent dans une *merge request* qu'avec une
-offre payante : `codeql`, `dependency-review` (GitHub), `gitlab-sast`, `gitlab-secret-detection`,
-`gitlab-dependency-scanning` (GitLab). La liste est enregistrée comme `ci.extras` dans la
+une offre payante sur un dépôt privé, qui ne remontent dans une *merge request* qu'avec une
+offre payante, ou qui dépensent des jetons d'API à chaque exécution : `codeql`,
+`dependency-review` (GitHub), `gitlab-sast`, `gitlab-secret-detection`,
+`gitlab-dependency-scanning` (GitLab), `claude-review` et `claude-triage` (les deux plateformes :
+Claude Code relit chaque *pull request* ou *merge request* et publie un commentaire qui
+n'approuve ni ne bloque, et trie une exécution en échec en trois lignes, en lecture seule ; le
+*job* `gate` n'en a jamais besoin), et `intent-to-spec` (GitHub : le skill de *story* lancé sans
+responsable sur chaque intention qu'une fusion accepte, sa spécification ouverte en *pull request*).
+La liste est enregistrée comme `ci.extras` dans la
 configuration ; un nom inconnu, ou un *job* d'une plateforme que `--ci` ne couvre pas, est
-refusé. Le tableau de chaque outil et de ses conditions :
+refusé. Le tableau de chaque outil, de son coût et de ses conditions :
 [pipeline/README.md](../../pipeline/README.md#free-by-default-paid-on-request).
 
 Un import d'un fichier du projet s'écrit sans extension
@@ -545,7 +551,7 @@ choix sont enregistrés sous `stack` dans la configuration, `docsUi`, `ci` et `l
 | `src/platform/auth/` | un dossier par question : `authentication/` (qui appelle), `authorization/` (ce qu'il peut faire, quel que soit le modèle) et le dossier du modèle que nomme `stack.authz` (`roles/`, `attributes/`, `relationships/` ou `custom/`). Un projet généré avant les dossiers garde ses fichiers à plat : les générateurs les y lisent, `npx ddd-ts-kit doctor` le signale et `npx ddd-ts-kit platform-folders` les déplace avec chaque import |
 | `src/platform/auth/authentication/` | `create-authenticator.ts` (`--authn jwt` : `JwtAuthenticator` sur `AUTH_ISSUER`, `AUTH_AUDIENCE`, `AUTH_JWKS_URI` ; `--authn keycloak` : `keycloakAuthenticator` sur `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_AUDIENCE` et l'optionnel `KEYCLOAK_CLIENT_ID` ; `--authn none` : `development-header-authenticator.ts` et `development-actor-header.ts`, qui lisent `x-development-actor` et lèvent une erreur en production), `principal-of.ts`, `security-schemes.ts`, `offline-authenticator.ts`, `http-boundary.ts` (`resolvePrincipal` qui répond une `Session`, `executionScope`, `errorMapper` et `onError`, étalés dans les options de montage : chaque requête HTTP s'exécute dans la portée d'exécution, avec son identifiant de corrélation). Sans *stack* HTTP, il n'y a ni authentificateur ni frontière, ni dossier |
 | `src/platform/auth/authorization/` | `create-authorizer.ts`, `authorization.ts` (`authorizationModule` avec tsyringe) ou `use-case-protection.ts` (la garde des bus câblés à la main), `access-policies.ts`, `role.ts` (les rôles que porte un identifiant, avec des rôles ou des attributs, ou dès qu'une garde en nomme un), `permissions.ts` (le registre de toutes les permissions, avec des relations ou un authorizer à vous), `signed-in-grants.ts` dès qu'un *preset* de contexte accorde à toute personne connectée, et avec `--audit off` `log-decisions.ts` (une entrée de journal par décision, identifiants et codes seulement) |
-| `src/platform/auth/<modèle>/` | `roles/roles.ts` (avec le rôle `system` que détient chaque acteur système) ; `attributes/attribute-policies.ts` ; `relationships/` : `relationship-schema.ts`, `create-tuple-store.ts` et sa *spec* de contrat, `relation-tuples.ts`, `relate-system-actors.ts`, `permission-mapping.ts` ; `custom/` : `custom-authorizer.ts` et sa *spec* `authorizerContract` |
+| `src/platform/auth/<modèle>/` | `roles/roles.ts` (avec le rôle `system` que détient chaque acteur système) ; `attributes/attribute-policies.ts` ; `relationships/` : `relationship-schema.ts`, `create-tuple-store.ts` et sa *spec* de contrat, `relation-tuples.ts`, `relate-system-actors.ts` ; `custom/` : `custom-authorizer.ts` et sa *spec* `authorizerContract` |
 | `--representations negotiated`, `--forms on` | `src/platform/http/presentation-of.ts` (`Representations.standard()` avec `negotiated`, et `fieldDeciderOf` sur l'`Access` de l'application), décomposé dans la frontière HTTP et donné au script du contrat ; avec `--forms on`, `src/platform/http/with-forms.ts` ajoute `formRoutes` aux routes et `scripts/openapi.ts` écrit `openapi/forms/<operationId>.json`. Les deux sont la valeur par défaut avec une *stack* HTTP ; `json` et `off` les laissent de côté ([docs/CONFIG.fr.md](../../docs/CONFIG.fr.md)) |
 | `--audit on` | `src/platform/audit/` : `create-audit.ts` (le journal, le `onDecision` de l'autorisation, les refus des gardes à la frontière remis à la frontière HTTP comme `onGuardRefusal`, le *middleware* avant l'unité de travail, les événements d'intégration abonnés sous le nom de consommateur `audit`), `audited-events.ts` (le registre auquel `generate integration-event` ajoute), `audit.module.ts`, et avec une *stack* HTTP le côté lecture : `audit.permissions.ts` (`audit:trail.read`), puis dans `search-audit-entries/` : `search-audit-entries.query.ts`, son gestionnaire, `search-audit-entries.route.ts` (`GET /audit/entries` : pages par curseur, filtres `actorId`, `action`, `outcome`, `correlationId`). C'est une capacité de la plateforme, pas un contexte délimité : pas de modèle, une requête protégée sur le port `AuditReader`, bornée par le *tenant* de l'acteur (avec `--tenancy shared-table`, par le *tenant* du travail au moyen de `TenantAuditReader` : le personnel de la plateforme ne lit à travers les *tenants* qu'à l'intérieur de `acrossTenants`). Les refus d'un appelant sans identifiant de connexion ne sont pas enregistrés. Un *job* planifié est audité comme une requête HTTP : origine `schedule`, acteur `system:<context>.<job>`. Avec knex, les deux tables et leurs déclencheurs en ajout seul sont créés par la première migration ; avec drizzle, les tables sont dans `schema.ts` et `npm run db:audit-guard` affiche les instructions des déclencheurs pour une migration personnalisée ; avec prisma, typeorm, `custom` ou sans ORM, le journal est un `InMemoryAuditTrail` derrière un `TODO(platform)`. Les bases de test laissent le schéma d'audit hors de `reset()` |
 | `--tenancy shared-table` | enregistré comme `stack.tenancy` ; Knex ou Drizzle seulement. Chaque `generate repository` est cloisonné par *tenant* (comme `--tenant-scoped`), au moyen de `tenantTable` et `ownTenantTable` ou de `tenantCondition` et `ownTenantCondition` ; l'outbox garde le *tenant* de chaque événement (`createOutboxTables(knex, { tenant: true })` et le `tenant: true` de `KnexOutboxStore`, ou `tenantOutboxTable`), si bien que les consommateurs s'exécutent dans ce *tenant* ; `tenancy/scoped-statement` juge les adaptateurs. La sécurité au niveau des lignes, un schéma par *tenant* et une base par *tenant* sont refusés, avec ce qu'il faut câbler à la main ([Multitenance](../../docs/concepts/multitenancy.fr.md)) |
@@ -568,18 +574,34 @@ choix sont enregistrés sous `stack` dans la configuration, `docsUi`, `ci` et `l
 | `biome.json` | le formateur : Biome avec son linter et son organisateur d'imports désactivés, largeur de ligne 120 ; `npm run format` écrit, `npm run format:check` vérifie, et ce que la CLI génère est déjà formaté |
 | `knip.json` | code mort : les points d'entrée sont `main.ts` et `apps/*/main.ts`, les scripts, les *specs* et les *fakes*, les fichiers de module dans le style explicite, les fichiers de rôle sous discovery (*jobs* et *publishers* compris) |
 | `vitest.config.ts` | projets unitaires et d'intégration, les seuils de couverture lus dans `ddd-ts-kit.config.json` (`governedCoverage`), par contexte et par couche, dans le mode des décorateurs standard `decorators()` de `@ddd-ts-kit/testing/vitest`, qui compile les fichiers contenant un décorateur avec le compilateur du projet (Vitest ne transforme pas les décorateurs standard ; il transforme lui-même les anciens, si bien qu'un projet avec `experimentalDecorators` ne reçoit pas de *plugin*), et sous `--assembly discovery` `server.deps.inline: ['@ddd-ts-kit/di']` |
-| `lefthook.yml`, `commitlint.config.mjs` | *hooks* pre-commit (ESLint, la vérification du format et `check` sur les fichiers indexés, `check --commit-size --staged`, qui ne bloque jamais), pre-push (types, tests unitaires) et commit-msg (`npm run hooks:install`), chacun lancé par le lefthook du *checkout* où il se déclenche (`lefthook: node_modules/.bin/lefthook` : un *worktree* sans ses dépendances fait échouer le *commit* au lieu de sauter les vérifications), *commits* conventionnels |
-| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node et les dépendances, installés avant le démarrage de l'agent cloud de Copilot), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json` ; `codeql.yml` avec `--ci-extras codeql` |
-| `--ci gitlab` | `.gitlab-ci.yml` (les constats d'architecture comme rapport Code Quality au moyen de `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` |
-| `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | comment le lancer ; un guide léger dans `AGENTS.md`, que lisent Codex, Copilot et la plupart des agents de code et qu'importe `CLAUDE.md` (commandes, comment lire moins, la carte des règles, fichiers générés, note sur le compilateur, les *skills* du *plugin* : `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) et les invariants dans sept fichiers de règles, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` et `tests.md`, chacun délimité par un frontmatter `paths`, et les mêmes sept pour GitHub Copilot, chacun délimité par `applyTo` |
+| `lefthook.yml`, `commitlint.config.mjs` | *hooks* pre-commit (ESLint, la vérification du format et `check` sur les fichiers indexés, `check --commit-size --staged`, qui ne bloque jamais, et `secrets` : gitleaks sur les changements indexés quand son binaire est sur le chemin, une ligne et aucun refus sinon, le pipeline balayant tout l'historique de toute façon), pre-push (types, tests unitaires) et commit-msg (`npm run hooks:install`), chacun lancé par le lefthook du *checkout* où il se déclenche (`lefthook: node_modules/.bin/lefthook` : un *worktree* sans ses dépendances fait échouer le *commit* au lieu de sauter les vérifications), *commits* conventionnels |
+| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node et les dépendances, installés avant le démarrage de l'agent cloud de Copilot), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json` ; `codeql.yml` avec `--ci-extras codeql`, `claude-review.yml` et `claude-triage.yml` avec `--ci-extras claude-review,claude-triage` ; `intent-to-spec.yml` avec `--ci-extras intent-to-spec` |
+| `--ci gitlab` | `.gitlab-ci.yml` (les constats d'architecture comme rapport Code Quality au moyen de `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` ; `.gitlab/claude-review.gitlab-ci.yml` avec `--ci-extras claude-review,claude-triage` |
+| `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | comment le lancer ; un guide léger dans `AGENTS.md`, que lisent Codex, Copilot et la plupart des agents de code et qu'importe `CLAUDE.md` (commandes, comment lire moins, la carte des règles, fichiers générés, les commandes de vérification avec les lignes que chacune affiche quand elle passe, à lancer avant de se dire fini, les erreurs vues ici, une section que l'équipe possède sous la règle de deux, note sur le compilateur, les *skills* du *plugin* : `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) et les invariants dans sept fichiers de règles, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` et `tests.md`, chacun délimité par un frontmatter `paths`, et les mêmes sept pour GitHub Copilot, chacun délimité par `applyTo` |
+| `REVIEW.md` | la politique de revue du projet : les passes d'une revue (bugs, sécurité, conformité face à la revue de conception de la ligne, l'acceptation de la *story*, les enregistrements de `docs/adr/` et les règles), ce qu'Important veut dire, au plus cinq *nits* (un *nit* récurrent devient une ligne de `AGENTS.md` sous `## Mistakes seen here` ou une règle de la configuration), ce qui n'est pas signalé (les fichiers générés, ce que `npm run verify` refuse). Lu par l'agent `architecture-reviewer` par-dessus sa méthode, par un relecteur humain et par tout robot de revue. Écrit une fois, pour que l'équipe le modifie : `--force` le laisse tel quel, `doctor` dit quand il manque |
 | `.github/copilot/settings.json` | le *plugin* du kit, déclaré pour GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`) : son agent cloud l'installe, la CLI Copilot et VS Code le recommandent ; un fichier existant garde ce qu'il contient et reçoit les deux entrées |
-| `.claude/settings.json` | des permissions seulement : les vérifications et les générateurs s'exécutent sans demander, les fichiers `.env` sont illisibles (`.env.example` reste lisible), les trois documents générés ne sont pas modifiés à la main, `git push`, `npm publish` et toute modification des fichiers qui portent les règles et le *pipeline* (`ddd-ts-kit.config.json`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) demandent d'abord |
+| `.claude/hooks/production-gate.mjs`, `.claude/hooks/change-reference.mjs` | avec `--agent-profile regulated` : les deux *hooks* du profil, enregistrés sous `hooks.PreToolUse` de `.claude/settings.json`, écrits une fois pour que l'équipe les modifie (`--force` les réécrit). La porte bloque une commande qui nomme l'environnement de production avec une action de mise en production sauf si `RELEASE_APPROVAL` nomme un approbateur et un changement ; la référence demande avant une modification d'une migration ou des conteneurs, pour le *trailer* `Change: <id>` du *commit* ([Mettre les agents de code en bac à sable](../../docs/guides/agent-sandbox.fr.md#le-profil-réglementé)) |
+| `.claude/settings.json` | des permissions (et, avec `--agent-profile regulated`, le bloc de bac à sable ci-dessous) : les vérifications et les générateurs s'exécutent sans demander, les fichiers `.env` sont illisibles (`.env.example` reste lisible), les trois documents générés ne sont pas modifiés à la main, `git push`, `npm publish` et toute modification des fichiers qui portent les règles et le *pipeline* (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) demandent d'abord, comme une modification de ce qui atteint la production autrement que par le code : les migrations de l'ORM (`migrations/**` avec drizzle, knex et typeorm, `prisma/migrations/**` avec prisma, rien avec une persistance *custom* ou sans ORM), `Dockerfile`, `docker-compose.yml` et `docker/**`. Le fichier compose lit `.env` à la racine, que la liste de refus couvre déjà ; rien sous `docker/` ne porte de secret |
 | `.gitignore` | `node_modules`, `dist`, `coverage`, `.env`, `*.tsbuildinfo`, `.ddd-ts-kit/`, où écrit `worker-scope`, et `.worktrees/`, où vivent les *worktrees* |
 
 `--ci both` écrit les deux *pipelines*, `--ci none` aucun (et pas de `renovate.json`). Les
 fichiers de *pipeline* sont des copies des fichiers du répertoire `pipeline/` du dépôt, livrées
 dans `templates/pipeline/` ; un test échoue quand une copie diffère de sa source au-delà de ses
 emplacements à remplacer documentés.
+
+`--agent-profile regulated` enregistre `agents.profile` dans la configuration, avec ou sans
+`--force` (`--agent-profile none` le retire), et écrit le bloc `sandbox` de Claude Code à côté des
+permissions : activé, échouant quand le bac à sable est indisponible, aucune nouvelle tentative
+hors bac à sable, le registre npm et l'hôte git du projet (lu dans `repository` de
+`package.json`, sinon dans le *remote* `origin`) comme seuls hôtes, les fichiers d'identifiants
+(`~/.ssh`, `~/.aws`, `~/.config/gcloud`, `~/.azure`) et les variables secrètes usuelles refusés à
+chaque commande en bac à sable ; une clé que le projet avait déjà posée est gardée. Elle affiche
+aussi, en note, le bloc de réglages gérés qu'un fichier de projet ne peut pas poser
+(`allowManagedHooksOnly`, `allowManagedPermissionRulesOnly`,
+`permissions.disableBypassPermissionsMode`, `strictKnownMarketplaces` avec la *marketplace* du
+kit, `requiredMinimumVersion`), pour que l'équipe plateforme le colle, et écrit les deux *hooks*
+du profil sous `.claude/hooks/`
+([Mettre les agents de code en bac à sable](../../docs/guides/agent-sandbox.fr.md#le-profil-réglementé)).
 
 Un `.claude/settings.json` existant n'est jamais écrasé : les permissions manquantes sont ajoutées
 à ses listes, tout le reste est gardé, et les notes de la commande listent ce qui a été ajouté. La
@@ -896,7 +918,17 @@ Régénère ce qui dérive de la configuration et du code, et rien d'autre :
   `## Reference`, entre des marqueurs `ddd-ts-kit:reference` ; un `CONTEXT.md` qui n'a pas cette
   section la reçoit après sa dernière liste générée ;
 - `docs/integration/README.md`, créé une fois et jamais réécrit ; sa section Provider commence par
-  la stratégie du *broker* choisi.
+  la stratégie du *broker* choisi ;
+- `CODEOWNERS` à la racine (GitHub et GitLab le lisent tous deux là), entre des marqueurs
+  `# ddd-ts-kit:code-owners`, dès que `contexts.<name>.owners` ou `owners.platform` nomme un
+  propriétaire dans la configuration : l'arborescence de chaque contexte et son
+  `published-language/` à ses propriétaires, avec les consommateurs de ce langage nommés dans un
+  commentaire pour les solliciter comme relecteurs ; `src/shared-kernel/` aux propriétaires de
+  chaque contexte qui l'importe (aux propriétaires de la plateforme tant qu'aucun ne le fait) ;
+  `src/platform/`, `src/main.ts`, `ddd-ts-kit.config.json`, les fichiers du *pipeline*,
+  `REVIEW.md`, `AGENTS.md` et `docs/adr/` aux propriétaires de la plateforme. Un fichier écrit
+  par l'équipe garde ses lignes, le bloc ajouté à leur suite ; sans aucun propriétaire, rien
+  n'est écrit.
 
 `--stored-events` enregistre aussi dans `stored-events.lock.json` la forme de chaque version d'un
 événement stocké déclarée dans les codecs de `infrastructure/persistence/`, sans jamais réécrire
@@ -1260,6 +1292,74 @@ de tranches, ou un contexte qu'aucune ligne ne nomme, est refusé. `--json` affi
 `story` valant `null` pour une ligne dont l'identifiant n'en nomme aucune, et `batch` `null` pour
 une ligne que le contexte demandé ne montre pas.
 
+## acceptance
+
+```
+ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock]
+```
+
+Les scénarios d'acceptation de chaque story (`test/acceptance/<story>.acceptance.spec.ts`, écrits
+par `generate acceptance <story>`) face à ses lignes de `docs/architecture/slices.md` et aux
+critères de `docs/architecture/stories/<story>.md` : les lignes et les critères que chaque
+scénario nomme dans son titre (`#US5.02 AC1 ...`), les scénarios restant à écrire (`it.todo`),
+ceux enveloppés dans `pending(...)` jusqu'à ce que leur code soit construit, et ce qui est
+incohérent. `--gate written` tient une story avant le code de ses lignes : chaque ligne `slice`
+et chaque critère a un scénario écrit, et l'acceptation est verrouillée ; `--gate passing` avant
+sa clôture : aucun n'est plus en attente. `--lock` écrit
+`test/acceptance/<story>.acceptance.lock.json`, l'empreinte de chaque critère et de chaque
+scénario (`pending(...)`, mise en page et commentaires mis à part) ; ensuite un scénario ne
+change qu'avec son critère, et un critère, ou un scénario dont les critères n'ont pas bougé,
+seulement avec un `Verdict: amend` de l'agent `acceptance-judge` sur cette version précise
+(`test/acceptance/verdicts/*.md`), que le verrou garde comme amendement à valider par le
+responsable du projet. Elle ne lance jamais de test. Sort en 1 tant qu'une porte n'est pas
+franchie, ou, sans porte, sur une incohérence ou une dérive depuis le verrou. `--json` affiche
+`{ gate, met, stories: [{ story, file?, specification?, rows, criteria, scenarios, regression?, lock?, amendments, problems }] }`.
+
+### Les specs de régression d'un correctif
+
+Un correctif est un fichier de story dont la section `## Regression` liste les fichiers de spec
+qui le prouvent, un chemin par élément, relatif à la racine du projet, avec ou sans accents
+graves :
+
+```md
+# FIX-412 A cancelled order frees its slot
+
+## Statement
+
+A customer cancels an order after it was shipped, and the order is still marked cancelled.
+
+## Regression
+
+- src/contexts/ordering/test/unit/order.aggregate.spec.ts
+- test/unit/cancel-order.handler.spec.ts
+```
+
+Une telle story n'a besoin d'aucune ligne de `slices.md` ni de spec d'acceptation :
+`acceptance FIX-412` lit chaque fichier listé et prend l'empreinte de chacun de ses `it` ou
+`test` comme celle d'un scénario. `--gate written` tient que chaque fichier listé existe et
+contient au moins un test (un `it.todo` reste à écrire ; un test que le lanceur met de côté est
+signalé quelle que soit la porte), et que le verrou est écrit ; `--lock` enregistre les tests
+sous `regression` de `test/acceptance/fix-412.acceptance.lock.json` (`{ file, title, fingerprint }`
+chacun) et refuse tant qu'une spec listée manque ou ne contient aucun test. Un test verrouillé
+changé ou supprimé est signalé comme l'est un scénario changé, sous le sujet
+`test "<title>" of <file>` avec son empreinte, jusqu'à ce que l'agent `acceptance-judge` laisse
+passer cette version, le `## Statement` du correctif étant le critère ; un nouveau test n'a
+besoin que d'un nouveau verrou. `--gate passing` tient que chaque test verrouillé est là,
+inchangé et plus enveloppé dans `pending(...)` ; c'est le lanceur de tests, pas cette commande,
+qui prouve qu'il passe. La garde du plugin lit le même verrou dans le *worktree* d'un correctif
+(`"kind": "fix"` dans `.ddd-ts-kit/story.json`) : elle ouvre le code dès que le verrou existe
+et refuse toute modification d'une spec verrouillée (skill `fix`,
+[parcours d'une story](../../docs/guides/story-workflow.fr.md)).
+
+```
+$ npx ddd-ts-kit acceptance FIX-412 --gate written
+FIX-412  fix, 2 regression specs, locked
+  specification docs/architecture/stories/FIX-412.md: no acceptance criterion stated
+  src/contexts/ordering/test/unit/order.aggregate.spec.ts: 1 test, 1 active
+  test/unit/cancel-order.handler.spec.ts: 1 test, 1 active
+  gate written: met
+```
+
 ## story-check
 
 ```
@@ -1296,17 +1396,49 @@ pas, et il est compté. Une cellule Context qui ne nomme aucun contexte du proje
 `platform`) n'en ajoute aucun : hors des contextes, seul un marqueur attribué à une de ses lignes
 compte. `--strict` fait bloquer chaque marqueur de ses contextes, à qui qu'il soit.
 
+Une ligne faite tient aussi à sa conception. Chaque nom que la section `## #<id>` de la revue de
+conception de la story (`docs/architecture/reviews/<code>.md`) cite en code en ligne, lu comme
+`cited` les lit (un chemin sous la racine des sources ou relatif au contexte, un
+`Classe.membre`, un nom en PascalCase ; un nom dont la phrase dit qu'il a été supprimé ou renommé
+est de l'histoire et n'est pas lu), doit exister dans l'arbre : le chemin existe ; la classe,
+l'interface, le type ou la fonction est déclaré par une source sous la racine des sources, ou
+importé par une (`Clock` du noyau) ; le membre est nommé dans un fichier qui déclare la classe.
+Un nom qui ne l'est pas est listé sous `### Compromises` du `## Report` de
+`docs/architecture/stories/<code>.md`, en code en ligne, avec la raison ; un nom qui n'existe pas
+et n'est pas listé bloque, avec son `fichier:ligne` dans la revue. L'arbre n'est lu que si une
+section d'une ligne faite cite un nom. `--strict` n'y change rien. La garde du plugin le dit une
+fois à l'arrêt d'une session dans le *worktree* d'une story, sans bloquer. La comparaison du code
+construit avec sa conception vient du [*playbook* du cycle de vie natif à l'IA d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf).
+
+Un *commit* de la story porte aussi sa référence de changement. Chaque *commit* de la branche
+courante qui change une migration ou un fichier de conteneur (les mêmes chemins que surveille le
+*hook* `change-reference` du profil réglementé : `migrations/`, `prisma/migrations/`, `docker/`,
+`Dockerfile`, `docker-compose.yml` ; les deux listes sont tenues alignées dans le kit) et qui
+appartient à la story (son *trailer* `Slice: <id de ligne>`, sinon son message qui nomme une de
+ses lignes, sinon son sujet qui nomme la story, en mot entier) doit porter un *trailer*
+`Change: <id>`, l'identifiant que donne le processus de changement de l'équipe. Un *commit* qui
+en manque est listé avec son sha court, son sujet et les fichiers, sous « Without a change
+reference » ; il bloque la story quand la configuration dit `agents.profile: regulated` ou avec
+`--strict`, et il est listé sans bloquer sinon. La correction : ajouter le *trailer* avant la
+*pull request*, `git commit --amend` pour le dernier *commit*, un *rebase* interactif de la
+branche pour un plus ancien. Trois appels git au plus, sur les *commits* qui touchent un tel
+fichier.
+
 Elle ne lit que les fichiers et git. Elle sort avec 0 quand la story peut être close (une ligne,
 puis les marqueurs listés sans bloquer, s'il y en a), 1 quand quelque chose la garde ouverte,
 chaque marqueur bloquant avec la raison pour laquelle il est à elle (`names #M1.01`,
 `written by a782a19 Slice: M1.02`, `no other open story in payments`), son `file:line` et sa
 correction (le traiter, ou l'écarter par un enregistrement de décision,
-`npx ddd-ts-kit generate adr "<title>"`, puis supprimer le marqueur), et 2 sur un code qu'aucune
-ligne ne porte ou sans tableau des tranches. `--json` affiche
-`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, canClose }`,
+`npx ddd-ts-kit generate adr "<title>"`, puis supprimer le marqueur), chaque nom de sa conception
+que le code n'a pas avec son `fichier:ligne` dans la revue, chaque *commit* sans sa référence de
+changement, et 2 sur un code qu'aucune ligne ne porte ou sans tableau des tranches. `--json`
+affiche
+`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, design, unreferenced, regulated, canClose }`,
 chaque marqueur valant `{ kind, context, file, line, text, attribution: { by, rows, commit? } }`,
 avec `why`, `sharedWith` et `fix` dans `markers` et `unattributed` ; `by` vaut `text`, `commit`,
-`worker` ou `none`.
+`worker` ou `none` ; chaque nom de `design` valant `{ row, document, line, cited, kind, why, fix }` ;
+chaque *commit* de `unreferenced` valant `{ sha, subject, files, rows, fix }`, et `regulated`
+vrai sous le profil réglementé.
 
 ```
 $ npx ddd-ts-kit story-check M1
@@ -1329,6 +1461,30 @@ Not blocking: 1 marker of these contexts belongs to rows of US2.
 Once each is settled: npx ddd-ts-kit story-check M1
 ```
 
+Une ligne faite dont la section cite ce qui n'a pas été construit :
+
+```
+$ npx ddd-ts-kit story-check US5
+US5 cannot close: every row done, 0 markers of its own left, 1 name of its design not in the code.
+
+Departed from its design (1): update the section of the row in docs/architecture/reviews/US5.md to what it built, or list the name under `### Compromises` of `## Report` in docs/architecture/stories/US5.md with why
+  docs/architecture/reviews/US5.md:12  `OrderNumberTaken`  (#US5.02, no class, interface, type or function OrderNumberTaken is declared or imported under the source root)
+
+Once each is settled: npx ddd-ts-kit story-check US5
+```
+
+Un *commit* de migration de la story sans sa référence de changement, sous le profil réglementé :
+
+```
+$ npx ddd-ts-kit story-check M1
+M1 cannot close: every row done, 0 markers of its own left, 1 commit without a change reference.
+
+Without a change reference (1, agents.profile regulated): add the trailer `Change: <id>` to the commit, with the id the change process of the team gives (`git commit --amend` for the last commit, an interactive rebase of the branch for an earlier one), before the pull request
+  a782a19  feat(billing): add the paid_at column to invoices  (Slice: M1.02; src/platform/database/migrations/0002_paid_at.sql)
+
+Once each is settled: npx ddd-ts-kit story-check M1
+```
+
 Une fois les trois réglés :
 
 ```
@@ -1341,6 +1497,70 @@ Not blocking, unattributed (1): settle each, or name its row in the marker (`TOD
 Not blocking: 1 marker of these contexts belongs to rows of US2.
 ```
 
+## measures
+
+```
+ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
+```
+
+Ce que la boucle d'une *story* coûte et laisse, lu dans l'historique git de la branche courante
+(`git log`, rien d'autre) et dans les fichiers de `docs/architecture/` (les *stories*, les revues,
+les intentions sous `intents/`, les incidents sous `incidents/`, `slices.md`) et de
+`test/acceptance/` (les verrous et les verdicts) : les indicateurs que le
+[playbook du cycle de vie AI-native d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
+nomme pour chacune de ses pratiques, dans les termes du kit. Une ligne par *story* de
+`docs/architecture/stories/`, puis les médianes et les parts de la période. La commande lit,
+n'écrit rien et ne demande rien à la plateforme.
+
+| Mesure | D'où |
+|---|---|
+| temps de conception | du premier *commit* de `docs/architecture/stories/<code>.md` au *commit* de `test/acceptance/<code>.acceptance.lock.json` |
+| temps de construction | du *commit* du verrou au premier *commit* dont le `## Report` contient du texte |
+| délai de livraison | du premier *commit* du fichier de la *story* au *commit* de la branche courante dont le sujet nomme `story/<code>` (un *commit* de fusion d'abord, sinon un *commit* de *squash* qui nomme la branche) ; `open` sans lui |
+| retravail des exigences | les *commits* qui ont changé `## Acceptance criteria` après le premier *commit* portant un *trailer* `Slice: <code>.<n>` ; les amendements du verrou (chacun un verdict `amend`) ; les verdicts `refuse` de `test/acceptance/verdicts/` |
+| décisions provisoires | les lignes `D<n>` du fichier de la *story* |
+| compromis | les éléments sous `### Compromises` du rapport |
+| revue | les lignes `TODO(review)` que les *commits* de la *story* ont retirées (réglées) et écrites (ouvertes), lues par `git log -S` ; les éléments sous `## Findings` de `docs/architecture/reviews/<code>.md` par passe (un titre `### <passe>`, sinon le mot avant les deux-points de l'élément, sinon `unsorted`) ; les répétitions : un identifiant de règle ou un texte de remarque vu dans deux *stories*, l'erreur que le guide de l'équipe aurait dû attraper |
+| vérification | si le rapport a un bloc `### Verification` qui nomme `npm run verify` |
+| parallélisme | les autres *stories* dont le premier et le dernier *commit* chevauchent celle-ci dans le temps |
+| origine | si `## Origin` nomme une intention (`intents/<name>.md`), un ticket (`SHOP-12`, `#12`, une URL) ou un incident (`incidents/<name>.md`) |
+| incidents répétés | une *story* dont l'origine nomme un incident dont la fiche porte le même `message` ou le même `error_code` (une ligne de son en-tête ou d'une liste) qu'une fiche antérieure de `docs/architecture/incidents/` |
+
+Un *commit* appartient à une *story* quand il porte un *trailer* `Slice: <code>.<n>` ou touche un
+de ses fichiers. Les temps sont en heures (`5h`, `1d 2h`) ; le résumé donne la médiane de chacun
+sur les *stories* qui l'ont, le délai de livraison sur les *stories* closes. Sur un tronc où
+chaque *pull request* est écrasée (*squash*), les phases d'une *story* se replient en un seul
+*commit* et ses temps de conception et de construction se lisent à zéro : lancez la commande sur
+la branche de la *story* (son *worktree*) avant qu'elle atterrisse, ou gardez des *commits* de
+fusion.
+
+- `--since <date>` garde les *stories* dont le premier *commit* est ce jour-là ou après
+  (ISO 8601).
+- `--story <code>` garde une *story*, quelle que soit la casse de son code.
+- `--by-author` ajoute qui a ouvert chaque *story* et une table par auteur (*stories*, closes,
+  délai médian). Désactivé par défaut : une mesure lue par personne change ce que les gens font,
+  et les mesures du playbook sont celles de la boucle, pas de ses personnes. Demandez-la quand
+  l'équipe en a convenu.
+- `--format json` (ou `--json`) donne la même chose en données pour un tableau de bord :
+  `{ branch, since?, stories: [{ story, file, author?, opened?, designHours?, buildHours?, leadHours?, merged?, rework: { criteriaChanges, amendments, refusals }, decisions, compromises, verification, origin?, review: { settled, opened, findings, repeats }, overlaps, repeatIncident? }], summary, byAuthor?, notComputed }`.
+
+Non calculés dans cette version, parce qu'ils viennent de la plateforme et que son API n'est pas
+lue : le délai jusqu'à la première revue d'une *pull request* et si sa CI était verte au premier
+passage. Une version ultérieure pourra les lire avec `gh` ou `glab` ; rien n'est envoyé nulle
+part.
+
+```
+$ npx ddd-ts-kit measures --since 2026-03-01
+Measures of main since 2026-03-01: 2 stories, 1 closed (merged on this branch).
+
+  US5  opened 2026-03-01  design 1d  build 3d  lead 5d (merged 991050c)  rework 1 criteria change(s), 1 amendment(s), 0 refusal(s)  decisions 2  compromises 2  review 1 settled, 1 opened, repeats language/glossary-term  verification yes  origin ticket  overlaps US6
+  US6  opened 2026-03-03  design open  build open  lead open  rework 0 criteria change(s), 0 amendment(s), 0 refusal(s)  decisions 0  compromises 0  review 0 settled, 0 opened, findings 2 bugs, 1 security, repeats language/glossary-term  verification no  origin incident (repeats docs/architecture/incidents/inc-1.md)  overlaps US5
+
+Medians: design 1d, build 3d, lead 5d over 1 closed; 0.5 criteria change(s), 1 decision(s), 1 compromise(s), 0.5 marker(s) settled per story.
+Verification: 1 of 2 report(s) name `npm run verify`. Origin: 2 of 2 name an intent, a ticket or an incident. Parallel: 2 built while another one was. Repeats across stories: 1 (language/glossary-term). Repeat incidents: 1.
+Not computed: time to first review and first-run CI status come from the platform (its API is not read).
+```
+
 ## doctor
 
 ```
@@ -1349,12 +1569,17 @@ ddd-ts-kit doctor [--strict]
 
 Ce qu'une montée de version a laissé à faire : les scripts, les paquets du kit (aux plages de
 cette version) et les permissions des agents que cette version écrit et que le projet n'a pas ou
-écrit autrement, puis les *hooks* git. `lefthook.yml` doit porter
+écrit autrement (sous `agents.profile: "regulated"`, chaque ligne du bloc de bac à sable aussi,
+comme `permission sandbox.<key>`, et chaque *hook* du profil que les réglages n'enregistrent pas,
+comme `permission hooks.<name>`), puis les *hooks* git. `lefthook.yml` doit porter
 `lefthook: node_modules/.bin/lefthook`, qui fait lancer à chaque *checkout* et à chaque
 *worktree* son propre lefthook, et fait échouer un *commit*, bruyamment, quand ses dépendances
 manquent ; le correctif est cette ligne, ou `init --force` pour le fichier entier. Le *hook*
 pre-commit sous `git rev-parse --git-path hooks` doit exister et venir de lefthook ; le correctif
-est `npm run hooks:install`, une fois par clone.
+est `npm run hooks:install`, une fois par clone. Puis la consigne écrite une fois pour que
+l'équipe la possède : `REVIEW.md`, la politique de revue, et sous le profil réglementé les deux
+*hooks* de `.claude/hooks/`, sont signalés manquants (`guidance`) et `init` les écrit de nouveau
+sans toucher à rien d'autre.
 
 Puis ce qui manque à ce *checkout* pour faire tourner le projet, l'état d'un clone ou d'un
 nouveau *worktree* plutôt que du projet, lu dans ses fichiers sans réseau : le Node qui tourne
@@ -1378,8 +1603,8 @@ initialisé. Un script écrit autrement, un *hook* que ce clone n'a pas install�
 `.nvmrc` ne nomme pas quand `engines.node` l'accepte, et un *lockfile* modifié depuis
 l'installation (un *checkout* peut le réécrire avec ce que `node_modules` contient déjà) sont
 signalés sans le faire échouer. `--json` affiche `{ version, findings: [{ area, name, problem,
-expected, found }] }`, `area` valant `script`, `package`, `permission`, `hook`, `node`,
-`install` ou `submodule`.
+expected, found }] }`, `area` valant `script`, `package`, `permission`, `hook`, `guidance`,
+`node`, `install` ou `submodule`.
 
 ## worker-scope
 
