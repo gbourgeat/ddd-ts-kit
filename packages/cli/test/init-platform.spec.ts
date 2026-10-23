@@ -41,10 +41,24 @@ const TSYRINGE: readonly Export[] = [
 const MANUAL: readonly Export[] = [
   ['resilience/own-policy.ts', 'export function ownPolicy('],
   ['composition/platform.ts', 'export interface Platform'],
+  ['composition/platform-options.ts', 'export interface PlatformOptions'],
+  [
+    'composition/lay-foundations.ts',
+    'export function layFoundations(persistence: Persistence, options: PlatformOptions): Foundations',
+  ],
   [
     'composition/create-platform.ts',
     'export function createPlatform(persistence: Persistence, options: PlatformOptions): Platform',
   ],
+  [
+    'buses/create-command-bus.ts',
+    'export function createCommandBus(foundations: Foundations, around: AroundCommands): InMemoryCommandBus',
+  ],
+  [
+    'buses/create-query-bus.ts',
+    'export function createQueryBus(foundations: Foundations, guard: BusMiddleware): InMemoryQueryBus',
+  ],
+  ['events/platform-events.ts', 'export function platformEvents('],
   ['jobs/configured-job-scheduler.ts', 'export class ConfiguredJobScheduler implements JobScheduler'],
   ['auth/authorization/use-case-protection.ts', 'export class UseCaseProtection'],
 ];

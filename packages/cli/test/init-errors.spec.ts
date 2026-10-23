@@ -122,19 +122,14 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
     'wires it by hand the same way, and flushes it when the application stops (%j)',
     (flags) => {
       const root = reported(...flags);
-      const create = platform(root, 'composition/create-platform.ts');
+      const foundations = platform(root, 'composition/lay-foundations.ts');
       const compose = platform(root, 'composition/compose-application.ts');
 
-      expect(create).toContain('  const errors = traced.errorReporter(options.errors ?? new NoopErrorReporter());\n');
+      expect(foundations).toContain('const errors = traced.errorReporter(options.errors ?? new NoopErrorReporter());');
+      expect(foundations).toContain('{ clock, lock, scope, ids, logger, metrics, onRun: reportFailedRuns(errors) }');
 
-      expect(create).toContain('const observed = observing(foundations, protection.guard, traced.useCase);');
-
-      expect(create).toContain(
-        'return [\n    errorReportingMiddleware(foundations.errors, foundations.scope),\n    loggingMiddleware(foundations.logger),',
-      );
-
-      expect(create).toContain(
-        'new InProcessJobScheduler({ clock, lock, scope, ids, logger, metrics, onRun: reportFailedRuns(errors) })',
+      expect(platform(root, 'buses/create-command-bus.ts')).toContain(
+        '    .use(errorReportingMiddleware(foundations.errors, foundations.scope))\n    .use(loggingMiddleware(foundations.logger))',
       );
 
       expect(platform(root, 'composition/platform.ts')).toContain('  readonly errors: ErrorReporter;\n');

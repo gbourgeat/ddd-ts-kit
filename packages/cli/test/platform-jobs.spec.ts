@@ -114,11 +114,11 @@ describe('the lock that keeps a job to one instance', () => {
   it('reaches the scheduler of a hand-wired platform the same way', () => {
     const byHand = initProject('--di', 'manual', '--cache', 'redis');
 
-    expect(platform(byHand, 'composition/create-platform.ts')).toContain(
+    expect(platform(byHand, 'composition/lay-foundations.ts')).toContain(
       'const lock = options.redis?.lock ?? new InMemoryLock(clock);',
     );
 
-    expect(platform(initProject('--di', 'manual'), 'composition/create-platform.ts')).toContain(
+    expect(platform(initProject('--di', 'manual'), 'composition/lay-foundations.ts')).toContain(
       '// TODO(platform): this lock excludes inside one process only.',
     );
   });
