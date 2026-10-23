@@ -4,6 +4,310 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.86.0
+
+**An erasure of a data subject leaves a dated entry in the audit trail.** `auditedSubjectKeys(keys, trail, { scope, clock, ids })` of `@ddd-ts-kit/audit` wraps a `SubjectKeyStore`: every `erase`, from a script, a command or a job, writes an entry with category `data-access`, action `personal-data:erase` (`SUBJECT_ERASURE_ACTION`), the subject as a `data-subject` resource, `keyDestroyed: true` or `false` in `changes`, and the actor and date of the execution scope; `keyFor` and `find` pass through. The key is destroyed first and the entry written after: an entry never states an erasure that did not happen, and when it cannot be written the erasure fails and is run again, which records that no key was left at a later date. An erasure outside an execution context is refused before any key is touched; a failure of the store is recorded as `failed`, with the `code` of a `DomainError` or `UNEXPECTED_ERROR`, and `onLostRecord` is told when that entry is lost too. The example binds the wrapped store and `npm run erase:patient -- <patientId> <operatorId>` writes the entry, with the operator as actor and the origin `cli`; the operator is required, so that the proof names a person, and an id that destroys no key and that no person of any network has is a mistyped one, refused before the rebuilds after a lookup under an elevation the trail records; the key comes first, the record after; a value that is not an opaque identifier (a name, an email) is refused before any key is touched or any entry written.
+
+To move: bind the key store wrapped by `auditedSubjectKeys` where the platform binds `SubjectKeyStore`, and run a script that erases inside `ExecutionScope.run`, with the operator as actor.
+
+**`generate module <context> <module>` declares a module of the model, and `--module <module>` makes every `generate` write into it.** `generate module` writes the module in `contexts.<context>.modules` of the config, its row in the `## Modules` section of `CONTEXT.md` (the section is created when absent) with `--purpose "<one sentence>"`, the `--term` rows of the glossary, and `--classification` when the subdomain it holds differs from its context; run again, it adds what is missing. With `--module`, the files a kind writes under `domain/` and `application/` land in the module, the files it reads (an existing aggregate, an event, a port) are found in whatever module holds them, a file of a use case already in a module is written with it, and the imports it writes name where they are; a `--module` that would split a use case between two modules is refused; the code list and the permission set stay at the level of the context. In a context that declares modules, a kind that would write a file of `domain/` or `application/` without `--module` writes nothing and answers with the list of the modules and the same command with `--module`.
+
+To move: nothing for a context without modules. In a context that declares some, add `--module <module>` to the `generate` commands of scripts and slice plans.
+
+**Two guides: a handler with many dependencies, and a cycle between two contexts.** `docs/guides/many-dependencies.md` reads constructor over-injection as a smell, not a rule (Seemann): an order of diagnosis where each remedy has its place in the tree (a bus middleware or a decorator, a domain event handler, a projection, a process manager, one port named in the language, a domain service, or two use cases), and why the kit adds neither a maximum of dependencies nor an `application/services/` role. `docs/guides/cycle-between-contexts.md` asks three questions before merging two contexts that need each other: one language (then one context divided into modules of the model), one direction as an integration event, a missing concept; it says that refusing the cycle is a choice of the kit and that Partnership is a relationship between teams. The `architecture-reviewer` agent walks both: for a constructor with many dependencies it names the remedy that applies, never a count, and in a context with modules it checks that each module is named in the language and holds no second one. The skills `bounded-contexts`, `context-map`, `scaffold`, `use-case` and `wiring` say when to divide a context into modules and how to generate into them.
+
+**A bounded context can be divided into modules of the model: one folder directly under `domain/` and `application/`, declared in `contexts.<name>.modules`.** A context too large to read whose language stays one is divided into parts of one model (Evans, Modules), never into sub-contexts, which no reference publication defines. A module holds the role folders of the canonical tree, unchanged: `domain/<module>/aggregates/`, `application/<module>/commands/<use-case>/`; `infrastructure/`, `presentation/`, `test/` and `published-language/` keep their layout, and `domain/errors/codes.ts`, `application/authorization/<context>.permissions.ts`, the generated `<context>.declarations.ts` and `CONTEXT.md` stay at the level of the context. The config may give a module the classification of the subdomain it holds (`"modules": { "waitlist": { "classification": "supporting" } }`). `ddd-ts-kit check` and the ESLint plugin read a file of a declared module as the same file outside one, so every rule keeps its meaning; `tree/closed` still reports a folder that is neither a role folder nor a declared module, and its fix names `generate module`. Three rules join: `module/declared` (error: a module is named with terms of the glossary of its context, never a technical word, and has a row in a new `## Modules` section of `CONTEXT.md`), `module/complete` (warning: a file of `domain/` or `application/` left outside every module once a context declares some) and `module/no-cycle` (warning: the imports between the modules of one context form no cycle). `ddd-ts-kit docs`, `describe` and `error-factories` read the role folders of every declared module, as `check` does, the generated declarations get one `<folder>.declarations.ts` per role folder of a module, and `discoverContext` of `@ddd-ts-kit/di` reads the modules in the generated `<context>.dependencies.ts`, which names them under discovery. A context that declares no module sees no change. See `docs/concepts/modules.md`.
+
+To move: nothing for a context without modules. To divide one, follow "Adopting modules, step by step" of `docs/concepts/modules.md`: `generate module`, then `move-to-module` one cluster per commit, and `npm run verify` after each.
+
+**`ddd-ts-kit move-to-module <context> <module> <path>...` moves files of a context into a module of the model, with every import of them.** The paths are relative to the context, files or folders under `domain/` or `application/` (an aggregate, a use case folder); the module must be declared first (`generate module`, which the command names when it is not). Every import of a moved file is rewritten under the source root, `test/` and `scripts/`, by alias or relative path, the extension kept as written. `--dry-run` prints the plan, `--json` gives it as data, both with the generated files the move derived or deleted. The text of a moved file is carried as it is. The generated declarations are rewritten in the same run, every file of a folder moves (not only its sources), a path already in a module moves to the other one, and the folders the move empties go. Nothing is moved when a file of the same name is in the module already, when two files would land on one path, when another module holds a file of the same role and name, or when a file is not text. The checks and the tests come next.
+
+To move: nothing; use it to divide a context into modules one cluster per commit, until `module/complete` warns no more.
+
+**A guide closes the loop from a metric out of its band to the next story, and an incident
+record becomes the origin of a fix.** `docs/guides/closing-the-loop.md` applies the last stage
+of the AI-native SDLC playbook to a ddd-ts-kit project: the detection stays the team's
+(deterministic, tested, outside the kit); the page gives the queries on the metrics the kit emits
+for three breaches (the failure ratio of a use case per message from `use_case_total`, the age
+of the oldest pending outbox record read from the `outbox` table, the absence of a successful run
+of a job for two intervals from `scheduled_job_runs_total`), a `bands.yaml` on them with three
+tiers (log; diagnose read-only with named tools; propose through an intent pull request or a
+pre-approved runbook), what a stateless run needs, how a request from a chat channel enters the
+loop, and what the kit does not do. A new template of the story skill, `incident-template.md`,
+is written to `docs/architecture/incidents/<id>.md` (what was observed, the evidence, the cause
+by business name, what was done, what is next); `story-scope <code> --kind fix --from` accepts
+it as it is, and the locked regression spec of the fix story is the permanent test of the
+incident.
+
+**A story can write its specification without an owner, from an accepted intent, and a workflow
+template runs it on the merge of the intent.** `/ddd-ts-kit:story <code> --headless <intent>`
+runs phases 1 to 4 alone: every question that changes an artefact is written under
+`## Open questions` of the story file with its recommended option taken provisionally and marked
+`(provisional, headless)`, the rows, the design review and the acceptance are written and locked,
+the build gate stays closed, and the pull request whose body is the list of questions is opened;
+the owner answers in the review, and the build phase starts from the merged answers. A new
+template, `pipeline/github/workflows/intent-to-spec.yml`, runs it on GitHub when a pull request
+merged into the default branch turns an intent to `Status: accepted`: it installs the project,
+Claude Code and the plugin, and runs `claude -p` with the `ANTHROPIC_API_KEY` secret, one story
+per accepted intent. `init --ci-extras intent-to-spec` writes it (GitHub only, `ci.extras` of the config); the
+team adds the secret. It was parsed, not executed on GitHub; opt-in and paid.
+
+**An idea enters the kit as an intent, before any story.** A new skill, `/ddd-ts-kit:intent`,
+brainstorms with whoever has the idea until it is concrete (the problem, the outcome, who and
+what it touches, the constraints, what the author would observe), maps the affected systems on
+`npx ddd-ts-kit list` when it runs inside the project, and writes
+`docs/architecture/intents/<slug>.md` from a new template of the story skill
+(`intent-template.md`) with `Status: draft`. It runs from Claude Code, Cowork or claude.ai with a
+git connector, and the template is also filled by hand. The product owner accepts the intent by
+setting `Status: accepted` in a pull request. The story skill reads it:
+`story-scope <code> --from <intent>` records the origin, the `## Problem` and `## Proposed
+outcome` of the intent seed `## Statement`, each constraint is listed as a question answered "by
+the intent", the open questions join the owner's batch, and the acceptance lines are the first
+draft of the criteria. The story workflow guide says where a story comes from, and the
+methodology says it at step 7.
+
+**A pull request is taken to green by `/ddd-ts-kit:pull-request <number>`.** From the worktree of
+the story, the new skill sweeps the unresolved review comments and the failing checks of the
+pull request, addresses each under the rules of the story (a change the design review did not
+foresee becomes a `D<n>` decision, a request to weaken a check goes through the `deviation`
+skill, a failing check is fixed in the code and never in the check, no force-push), replies to
+each thread, pushes, waits for the checks, and repeats until the pull request is green and waits
+only on the code owner; it then reports what was changed and what was declined and why. The
+story skill names it as the step after `gh pr create`, when the owner asks for it.
+
+**A review finding made twice becomes a line of `AGENTS.md`, at the close of a story.** The close
+phase of the story skill applies the rule of two: a finding of the review of the branch that
+repeats one already recorded for the project (the same rule id or the same remark in an earlier
+file of `docs/architecture/reviews/`, or a `TODO(review)` marker) is written in the same branch as a
+line under `## Mistakes seen here` of `AGENTS.md`, or as a rule of `ddd-ts-kit.config.json` when
+the kit has one for it, so that the next session does not make it a third time.
+
+**The findings of the review of a story are kept in its design review, and a commit made by an
+agent can say so.** At the close of a story, the review of the branch is appended to
+`docs/architecture/reviews/<code>.md` under `## Findings`, each finding with its pass, its
+`file:line` and its outcome: fixed in `<commit>`, written as `TODO(review)`, or dismissed by
+`ADR-<n>`. The record survives the pull request and a move between GitHub and GitLab, and the
+rule of two reads it. A new key of the config, `commit.agentTrailer` (`false` by default): when
+`true`, the story skill, the `context-builder` agent it briefs and the fix skill end each commit
+they make with the trailer `Agent: <host> ddd-ts-kit@<plugin version> <agent name>`, and the
+report of a story counts the commits made by an agent against those made by hand. Off by
+default because many teams refuse attribution lines in commits; `config/valid` reports a value
+that is not a boolean.
+
+**A story records where it comes from and what built it, in `## Origin` of its file.** The story
+template gains the block, three lines: `From:` (the intent, the ticket or the incident the story
+comes from), `Built with:` (the version of the kit and of the plugin, the base and its commit) and
+`Policies in force:` (the skills loaded at the design phase). The story skill fills it at phase 1
+and repeats it at the top of the body of the pull request, so that the trunk links back to the
+origin of each story. `npx ddd-ts-kit story <code> --gate close` has a new phase, `origin
+recorded`: it exits 1 until the block holds its `From:` and `Built with:` lines.
+
+To move: a story opened before this version adds `## Origin` to `docs/architecture/stories/<code>.md`
+before its pull request; `npx ddd-ts-kit story <code>` says what the block lacks.
+
+**The policies a story was designed under are named in its record.** At the design phase, the
+story skill lists the policy skills it loaded (those of the plugin and the project's own under
+`.claude/skills/`) on the `Policies in force:` line of `## Origin`, and writes in the section of a
+row of the design review a line `Policies: <skill>: <what it imposed here>` when a policy changed
+the design; two policies that contradict each other become a decision for the owner. The
+`architecture-reviewer` agent reads those lines as part of its design review. Nothing new runs:
+the skills already load; the record now says which ones did.
+
+**The report of a story carries the evidence of its verification.** The story template gains
+`### Verification` under `## Report`: the story skill pastes there the last lines of
+`npm run verify`, of the acceptance run and of `story-check`, and writes `not verified:` for what
+it could not run (a broker, a provider, a platform), so that the pull request shows what the
+toolchain said and not only that it was run. `npx ddd-ts-kit story <code> --gate close` reads it:
+the `report` phase is met only when the block names `npm run verify`.
+
+To move: a story opened before this version adds `### Verification` under `## Report` before its
+pull request; `npx ddd-ts-kit story <code>` says when it is missing.
+
+**`story-scope` records what a story is and where it comes from.** `npx ddd-ts-kit story-scope
+<code> --kind story|fix --from <file>`: `--kind` is `story` by default, or `fix` for a story built
+behind the regression specs listed under `## Regression` of its file (the `fix` skill); `--from`
+names an intent, `docs/architecture/intents/<slug>.md`, refused unless its header says
+`Status: accepted`, or an incident record, `docs/architecture/incidents/<id>.md`, accepted as it
+is. `.ddd-ts-kit/story.json` gains `kind` and, when given, `from` (relative to the project root),
+both kept when the story resumes without them; while the story file does not exist, the `Next:`
+line says that the story skill seeds its statement from the origin. `npx ddd-ts-kit story <code>`
+reads a fix as one: its rows and their design are optional, its acceptance phase reads
+`## Regression` (each spec listed must exist) instead of `test/acceptance/`, and no passing phase
+is read.
+
+**A fresh context verifies the behaviour of a story at its close.** A sixth agent,
+`story-verifier`, read-only, is launched by the story skill at its close phase, after the
+`architecture-reviewer`: it reads the design review and the report of the story, starts the
+application the way the end-to-end tests do (the acceptance of the story, then the end-to-end
+specs of the two nearest flows), calls the routes the specs leave unexercised when the project
+starts without a service, and reports what it ran, what it saw, and every behaviour that does not
+match the design or a `D<n>` decision. It fixes nothing: the session settles each mismatch before
+the report. A host without the agents of the plugin skips it, and the report says so.
+
+**`AGENTS.md` gains `## Verifying your work` and `## Mistakes seen here`, and the reviewer applies the rule of two.** The first section gives each verification command of the project with the lines it prints when it passes (`npm run verify` prints no line of its own; `0 errors, 0 warnings, 0 suppressions in N files.`; `Test Files N passed (N)`; `gate passing: met`; what prints nothing and exits 0), to run before reporting a task done, their last lines pasted, a failing check fixed in the code and never in the check, the threshold or the test. The second is the team's: a review finding or a `TODO(review)` made twice becomes one line there, or a rule of `ddd-ts-kit.config.json` when the kit has one. The `architecture-reviewer` agent reports a finding already recorded for the project (the same rule id, or the same remark on the same layer, in an earlier design review or as a marker) with the exact line to add there, or the config change; the `quality-gate` skill says the same. After the AI-native SDLC playbook of Anthropic.
+
+To move: `npx ddd-ts-kit init --force` rewrites `AGENTS.md` from its template; or copy the two sections from a new project.
+
+**An agent asks before editing a migration, the `Dockerfile`, `docker-compose.yml` or `docker/`.** The `ask` list `init` writes in `.claude/settings.json` gains the migrations of the ORM of the project (`Edit(./migrations/**)` with drizzle, knex and typeorm, `Edit(./prisma/migrations/**)` with prisma, nothing with a custom persistence or without one), `Edit(./Dockerfile)`, `Edit(./docker-compose.yml)` and `Edit(./docker/**)`: what reaches production otherwise than through the code is a decision of the project owner, the weak form of the change ticket the AI-native SDLC playbook of Anthropic asks for on a migration. The compose file reads `.env` at the root, which the deny list already covers, so no rule on `docker/.env*` is written. `ddd-ts-kit doctor` reports the missing ones as it does the others.
+
+To move: `npx ddd-ts-kit init` adds them to an existing `.claude/settings.json`.
+
+**`ddd-ts-kit docs` writes `CODEOWNERS` from the owners of the config.** `contexts.<name>.owners` names the owners of a context and `owners.platform` the platform owners in `ddd-ts-kit.config.json`; once one is set, `docs` writes `CODEOWNERS` at the root of the project (GitHub and GitLab both read it there) between `# ddd-ts-kit:code-owners` markers, from the ownership table of the team workflow guide: each context's tree and its `published-language/` to its owners, the consumers of that language named in a comment to ask as reviewers, `src/shared-kernel/` to the owners of every context that imports it, `src/platform/`, `src/main.ts`, the config, the pipeline files, `REVIEW.md`, `AGENTS.md` and `docs/adr/` to the platform owners. `docs --check` reports a stale file; a file the team wrote keeps its lines, the block appended after them; without any owner nothing is written. The separation of duties of the AI-native SDLC playbook of Anthropic, with the branch protection the pipeline documents.
+
+To move: add the owners to the config, then `npx ddd-ts-kit docs` and commit `CODEOWNERS`.
+
+**The regulated profile writes two hooks: a production gate and a change reference.** With `init --agent-profile regulated`, two small Node scripts under `.claude/hooks/`, registered under `hooks.PreToolUse` of `.claude/settings.json` and owned by the team: `production-gate.mjs` blocks, before it runs, a shell command that names the production environment of the project (`production`, a list at the top of the file) with a release action (`deploy`, `migrate`, `rollback`), exit code 2 with the reason to the agent, unless `RELEASE_APPROVAL="<approver> <change id>"` names who approved the release and the change it belongs to; `change-reference.mjs` asks, without blocking, before an edit of a migration (`migrations/`, `prisma/migrations/`) or of the containers (`docker/`, `Dockerfile`, `docker-compose.yml`), for a change reference the session then records as the trailer `Change: <id>` of the commit. Both explain themselves; `doctor` reports a missing file or registration. The trailer is read by people in the history; no command of the kit reads it yet. The two gates the AI-native SDLC playbook of Anthropic names for a regulated build, following the hooks reference of Claude Code read on 2026-10-23.
+
+To move: `npx ddd-ts-kit init --agent-profile regulated` writes and registers them; edit the lists at the top of each file to your environments.
+
+**`ddd-ts-kit init --agent-profile regulated` writes the permission profile of a regulated organisation.** Recorded as `agents.profile` in `ddd-ts-kit.config.json` (with or without `--force`; `--agent-profile none` removes it), the profile adds to `.claude/settings.json` the `sandbox` block of Claude Code: enabled, failing when the sandbox is unavailable, no unsandboxed retry, the npm registry and the git host of the project (read from `repository` of `package.json`, else from the `origin` remote) as the only hosts, the credential files (`~/.ssh`, `~/.aws`, `~/.config/gcloud`, `~/.azure`) and the usual secret variables denied to every sandboxed command; a key the project set is kept. `init` prints the block of managed settings a project file cannot set (`allowManagedHooksOnly`, `allowManagedPermissionRulesOnly`, `permissions.disableBypassPermissionsMode`, `strictKnownMarketplaces` with the marketplace of the kit, `requiredMinimumVersion`), for the platform team to paste, and `ddd-ts-kit doctor` reports a line of the block the settings lack. The key names were verified against the Claude Code documentation on 2026-10-23; the sandbox guide says what each line buys, in control terms, after the worked example of the AI-native SDLC playbook of Anthropic, and which lines Codex and Copilot have an equivalent for.
+
+To move: `npx ddd-ts-kit init --agent-profile regulated`, then paste the printed block in the managed settings of Claude Code.
+
+**`ddd-ts-kit init` writes `REVIEW.md`, the review policy every reviewer reads.** At the root of the project: the passes of a review (bugs, security with the kit's own list, compliance against the design review of the row, the acceptance of the story, the records of `docs/adr/` and the rules), what Important means, at most five nits (a recurring one becomes a line of `AGENTS.md` or a rule of the config), what is not reported (generated files, what `npm run verify` refuses). Written once, for the team to edit: `init --force` leaves it alone, `Edit(./REVIEW.md)` joins the `ask` list of `.claude/settings.json`, and `ddd-ts-kit doctor` reports a project without it (`guidance REVIEW.md: missing`, which `--strict` fails on). The `architecture-reviewer` agent reads it on top of its method and tags each finding with its pass. The file is the review policy of the AI-native SDLC playbook of Anthropic, with the kit's lists.
+
+To move: `npx ddd-ts-kit init` writes `REVIEW.md` and adds the permission; edit the file to your policy.
+
+**The pre-commit hook scans the staged changes for a secret.** The `lefthook.yml` of a project gains a `secrets` job: `gitleaks git --pre-commit --staged --redact --no-banner` when the `gitleaks` binary is on the path (`gitleaks protect --staged` before 8.19), so a credential is refused before the commit exists; without the binary the job prints one line saying the staged changes are not scanned here, and passes, the `secrets` job of the pipeline scanning the whole history anyway. `ddd-ts-kit doctor` reports a `lefthook.yml` without the job (`hook lefthook.yml secrets: missing`, which `--strict` fails on). The kit's own hooks run the same job. After the AI-native SDLC playbook of Anthropic.
+
+To move: add the job to the pre-commit jobs of `lefthook.yml`, or `npx ddd-ts-kit init --force` writes the kit's file; install gitleaks on the machines that commit.
+
+**The relationship schema reads as sentences, and a decision explains itself.** A type declares its stored `relations` and its `derived` relations: one way (`'owner'`, `via('parent', 'edit')`) or several (`anyOf`, `allOf`, `butNot`), the words of the modelling language of OpenFGA, without nesting. A derived relation named after a permission id (`[docsPermissions['document.edit'].id]: 'edit'`) grants that permission on its type: the permission mapping is gone, from `RelationBasedAuthorizer`, from `OpenFgaAuthorizer` and from the platform of a generated project. A tuple names its subject alone (`group:eng`): the relation that accepts `'group#member'` says what a group stands for, and `OpenFgaRelationTupleStore` adds the userset on the server. `explain` replaces `expand`: the decision and a trace in words, one line per question asked, laid out by `traceText`, for a refusal as for an allowed decision. The evaluator reads the same way: one class, `Question`, whose methods are named after what they ask.
+
+To move: in `defineSchema`, rename `permissions` to `derived`; write `union(a, b)` as `{ anyOf: [a, b] }`, `intersection(a, b)` as `{ allOf: [a, b] }`, `exclusion(base, subtract)` as `{ anyOf: [base], butNot: [subtract] }` and `from(relation, name)` as `via(relation, name)`; move each entry of the mapping into the `derived` of its type, keyed by the permission id (`[docsPermissions['document.edit'].id]: 'edit'`), delete `permission-mapping.ts` of the platform and drop the `mapping` option of `RelationBasedAuthorizer` and `OpenFgaAuthorizer`, which takes `schema` instead. Write `group:eng` where a tuple said `group:eng#member`, in the adapters and in the stored tuples (`UPDATE relation_tuples SET subject = split_part(subject, '#', 1) WHERE subject LIKE '%#%'`); the tuples of an OpenFGA store stay as they are. Replace `expand` by `explain` and `ExpandNode` by `TraceStep`; `parseSubject` and `SubjectRef` are gone, a subject is parsed by `parseObject`. In the model of an OpenFGA store, a derived relation named after a permission is called `docs_document_edit` (`relationNameOf`): `ensureAuthorizationModel` writes the new model, and a `Check` or `Expand` run by hand names the relation that way.
+
+**A defect is repaired with its proof first: `/ddd-ts-kit:fix <code>` writes the spec that reproduces it, locks it with `ddd-ts-kit acceptance <code> --lock`, and the guard holds that spec while the fix is built.** A fix is a story file whose `## Regression` section lists the spec files that prove it, one path per item (`- test/unit/appointment.aggregate.spec.ts`, or the spec next to the code): `ddd-ts-kit acceptance <code>` reads them, fingerprints each `it` or `test` of them as it fingerprints the scenarios of an acceptance, holds `--gate written` to each listed file existing with at least one test, `--lock` records them in `test/acceptance/<code>.acceptance.lock.json` under `regression`, a locked test changed or removed is a drift that only a verdict of the `acceptance-judge` agent lets through (subject `test "<title>" of <file>`, the `## Statement` of the fix being the criterion), and `--gate passing` holds each locked test present, unchanged and no longer pending; the command still runs no test. In a worktree whose `.ddd-ts-kit/story.json` says `"kind": "fix"`, the guard opens the code of the contexts once the lock exists (no row, no design review), lets the specs of a context be written before it, and refuses every edit of a locked spec, by the editor tools and by the shell (a runner may run it, git may version it), to the session and to its sub-agents, saying that the spec is the proof of the fix and that a wrong spec goes to the judge. The new skill `fix` runs the four phases, reproduce, lock, fix, close; the `testing` skill points at it. From the AI-native SDLC playbook of Anthropic (the failing test first, committed, and a hook that stops the agent editing it).
+
+To move: nothing; a story without a `## Regression` section is read as before.
+
+**The guard of the plugin lays out each written file with the Biome of the project before it checks it, when the config says `"formatOnWrite": true`.** The `PostToolUse` hook runs `node_modules/.bin/biome format --write <file>` on the file a session just wrote (TypeScript, JavaScript, JSON; the binary of the project only, never `npx biome` nor another formatter), then the per-file check as before, so that the layout is settled at the write and the lint findings that follow a wrapped line come back in the same hook output. A Biome that is not installed, or that fails, changes nothing. The key is read as `true` only; absent, the hook formats nothing, as before (`docs/CONFIG.md`, "Working agreements"); `init` writes it as `true` in the config of a new project. From the AI-native SDLC playbook of Anthropic (hooks as build-time guardrails).
+
+To move: nothing for a project `init` creates from this version; set `"formatOnWrite": true` in `ddd-ts-kit.config.json` of an existing project whose `format` script runs Biome.
+
+**`ddd-ts-kit story-check <code>` holds each done row to its design review: a name its section cites that the code does not have blocks, unless the report lists it as a compromise.** For each row `done`, every name the `## #<id>` section of `docs/architecture/reviews/<code>.md` cites as inline code, read as `cited` reads them (a path under the source root or relative to the context, a PascalCase name, a `Class.member`; a name whose sentence records its removal is history), must exist in the tree: the path exists, the class or type is declared by a source under the source root or imported by one, the member is named in a file declaring the class. A name that does not is listed under `### Compromises` of `## Report` in `docs/architecture/stories/<code>.md`, as inline code, with why; a name neither there nor listed is a blocker with its `file:line` in the review, under "Departed from its design" of the output and `design` of `--json`, and `canClose` is false while one remains. `--strict` is unchanged, and the tree is read only when a section of a done row cites a name. In the worktree of a story, the guard of the plugin says it once at the stop of a session, without blocking: "a row departed from its design: update its review section or list the compromise". From the AI-native SDLC playbook of Anthropic (the merged diff checked against the committed plan).
+
+To move: nothing; a story whose review file has no section for a done row, or whose sections cite nothing, closes as before.
+
+**`init --ci-extras claude-review` and `claude-triage` put Claude Code in the pipeline, on request.**
+Two opt-in extras, on both platforms and never installed by default, as the AI-native SDLC
+playbook of Anthropic places them: `claude-review` writes `.github/workflows/claude-review.yml`
+(`anthropics/claude-code-action` on `pull_request`, pinned to a commit) or a `claude-review` job
+of `.gitlab/claude-review.gitlab-ci.yml` (`claude -p`, a note posted through the API), which reads
+`REVIEW.md` at the root when it exists and the story file the branch `story/<code>` names, and
+posts its findings as one comment that neither approves nor blocks; `claude-triage` writes
+`.github/workflows/claude-triage.yml` (on `workflow_run` of `CI` ended in failure) or a
+`claude-triage` job `when: on_failure`, which reads the logs of the failed jobs with read-only
+tools and writes a three-line triage (the most likely cause, flaky or real, what to do) to the job
+summary and on the pull or merge request. Both spend API tokens on every run, through
+`ANTHROPIC_API_KEY` or Amazon Bedrock, Google Vertex AI or Microsoft Foundry, and the `gate` job
+never needs them: a person still approves. The list is recorded in `ci.extras`; the workflows
+were parsed, not executed on the platforms (`pipeline/README.md`).
+
+**A guide says how a ddd-ts-kit project is deployed and rolled back.** `docs/guides/deploy-and-rollback.md`
+names what a project ships beyond the image the pipeline builds (the migrations, the API with its
+outbox relay, the worker, a context as a service, the readiness route written with `--cache redis`
+only, the OpenTelemetry export), the order of a release (migrate forward compatibly, deploy, relay),
+what a rollback of each piece means, the three tiers of autonomy of an agent mapped on the
+environments with the production gate of the regulated profile, deploy, status and rollback as one
+script each reached through an MCP server of the platform team or through the `allow` list and
+never both, the rollback rehearsed in staging, and what the kit does not do: no deployment tool, no
+MCP server. Indexed in `docs/README.md`.
+
+**The plugin has an eval suite, off by default.** `plugin/evals/` holds twelve cases for
+`claude plugin eval`, one per promise of the skills, the agents and the guard (the generator rather
+than the hand, the glossary before a name, a deviation refused, a worker that stays in its context,
+the reviewer that finds planted violations with `file:line`, wiring without a token, cross-cutting
+out of the handler, `describe` instead of a tree walk, no code before the design review and the
+lock of a story, an acceptance scenario never rewritten, commits split by context, a violation
+fixed at the root cause): each a prompt on the scheduling example and graders that read what the
+session did, as the AI-native SDLC playbook of Anthropic asks of agent configuration. Nothing runs
+by default: each case is a full Claude Code session in two arms (24 sessions for a run of the
+suite with `--runs 1`, 72 with the default of 3). A maintainer runs it by hand from the Actions tab
+(`agent-evals.yml`, `workflow_dispatch` only, green and idle until the secret `ANTHROPIC_API_KEY`
+exists, a ceiling of 10 USD, threshold 0.8), or one case locally on their own credential with
+`claude plugin eval plugin --runs 1 --no-publish --max-cost-usd <n> --case <name>`. `CONTRIBUTING.md`
+says how a case is written, that every reported regression becomes a case before its fix, and what
+a run costs; the coding-agents guide says a project can hold its own skills to the same test.
+
+**`ddd-ts-kit measures` reads what the loop of each story cost and left.** From the git history of
+the current branch and the files of `docs/architecture/` and `test/acceptance/`, per story and as
+medians over the period: design time (the first commit of the story file to its acceptance lock),
+build time (the lock to the report), lead time (to the commit that carries the branch of the story,
+else open), the requirements changed after the build started and the amendments and refusals of the
+lock, the provisional decisions, the compromises, the `TODO(review)` markers settled and the
+findings of the review file by pass with the repeats across stories, the verification block of the
+report, the stories built at the same time, the origin (an intent, a ticket, an incident) and the
+incidents repeated: the indicators of the AI-native SDLC playbook of Anthropic in the terms of the
+kit. `--since <date>`, `--story <code>`, `--format text|json`; `--by-author` is off by default and
+the README says why. Nothing is sent anywhere, and the measures that come from the platform (time to
+first review, first-run CI status) are named as not computed.
+
+**The guide of the plugin says what holds each skill.** A new section of
+`docs/guides/coding-agents.md`, "What holds each skill", names for each of the twenty-three skills
+the deterministic control behind it (the rule ids of `ddd-ts-kit rules`, the gates of the guard,
+the checks of the pipeline) and the gap where there is one, as the AI-native SDLC playbook of
+Anthropic asks of advisory skills. A test of the plugin, `node --test plugin/skills/controls.test.mjs`
+(run by `npm run ci:arch`), fails when a rule id of the table is unknown to the CLI or when a skill
+has no row, so the table cannot drift.
+
+**`ddd-ts-kit init --ci-extras intent-to-spec` writes the workflow that runs the headless design pass of the story skill on each intent a merge accepts.** GitHub only (`.github/workflows/intent-to-spec.yml`, recorded in `ci.extras` of the config): on a pull request merged into the default branch that turns an intent of `docs/architecture/intents/` to `Status: accepted`, it installs the project, Claude Code and the plugin, and runs `/ddd-ts-kit:story <code> --headless` with the `ANTHROPIC_API_KEY` secret, one story per accepted intent, whose specification is opened as a pull request. Opt-in and paid: API tokens per accepted intent; nothing runs without the secret. The template was parsed and not executed on GitHub.
+
+To move: nothing; add `intent-to-spec` to `--ci-extras` (or to `ci.extras` of the config, then `init --force`) and the secret to turn it on.
+
+**`ddd-ts-kit story-check <code>` lists each commit of the story that changes a migration or a container file without a `Change: <id>` trailer, and blocks on it under the regulated profile or with `--strict`.** A commit of the current branch belongs to the story as a marker does (its `Slice: <row id>` trailer, else its message naming a row of it, else its subject naming the story); one that changes a file the `change-reference` hook of the regulated profile watches (`migrations/`, `prisma/migrations/`, `docker/`, `Dockerfile`, `docker-compose.yml`, the same list, kept aligned in the kit) without the trailer is listed with its short sha, its subject and the files, under "Without a change reference" of the output and `unreferenced` of `--json` (`{ sha, subject, files, rows, fix }`, with `regulated` saying whether the config holds the story to it). It blocks the story when `agents.profile` is `regulated` or with `--strict`, and is listed without blocking otherwise, like an unattributed marker. The fix: add the trailer before the pull request, `git commit --amend` for the last commit, an interactive rebase of the branch for an earlier one, with the id the change process of the team gives. Three git calls at most, on the commits that touch such a file.
+
+To move: nothing; a project without the regulated profile sees the list and closes as before.
+
+**Every authorizer of the kit explains its decision.** `explain`, which the relationship model answered alone, is now a method of the `Authorizer` port, optional like `listAccessible`, and `RoleBasedAuthorizer`, `PolicyBasedAuthorizer` and `SignedInGrantsAuthorizer` answer it: the same decision as `check`, with a trace in words, one line per question the model asked. Roles: the roles of the actor, what each one grants and through which included role, then where the request may act when tenants are checked. Attribute policies: what is known of the element (by attribute name, never by value), then each policy that bears on the permission and whether it held. Signed-in grants: the grant that covers the permission, or the lines of the model one level deeper. `traceText`, `Explanation`, `TraceStep` and the `Trace` writer are exported from `@ddd-ts-kit/auth` (`@ddd-ts-kit/auth/rebac` still exports the first three), so an authorizer of a project explains itself the same way: the custom authorizer `init` writes does, and so does the combined authorizer of the example. The authorizer contract suite checks that an authorizer that explains decides as it checks. Inside `RoleBasedAuthorizer`, the resolved hierarchy of roles is a class of its own, `RoleGrants`, and the tenant check a function of its own, each answering in one sentence.
+
+To move: nothing. An authorizer of your own may add `explain`; the port does not require it.
+
+**The configured scheduler of a platform wired by hand reads as its two steps.** `jobs/configured-job-scheduler.ts` registers a job in two named moves: the run is wrapped in what observes it (`ObserveRun`, the span named after the job and its context, `contextOf`), and the settings of `job-settings.ts` are laid over what the context registered (`overridesOf`, with the sentence of the runtime: a key the configuration left undefined does not erase what the job declared). `jobSettings` says what filtering by context prevents, in the words of the wiring (`UNKNOWN_JOB`), instead of describing it backwards.
+
+To move: nothing; a project that keeps its `configured-job-scheduler.ts` behaves the same.
+
+**The French reference and CLI README hold again what three pull requests had added.** `docs/ARCHITECTURE.fr.md` lost the modules of the model (#213) and `packages/cli/README.fr.md` the regulated profile, `REVIEW.md` and the verification sections (#215) when later merges resolved their translation stamp by taking one whole side of the page; both pages translate their English page in full again.
+
+**The events folder of a platform says why it does what it does.** With Kafka, `events/aggregate-key-of.ts` reads as two steps: the field that names the aggregate (`aggregateIdFieldOf`, `scheduling.time-slot.booked` names it in `timeSlotId`) and the id read from the payload, and its comment keeps the two reasons, the order of the events of one aggregate and the relay given the same key. The hook of a broker provider says why it writes a JSON line by hand: the provider is built before the application has a logger. In the example, the erasure of a data subject moves to `platform/erasure/` and the catch-up of the projections fed by the event store to `platform/event-store/`: `platform/events/` keeps the provider, the in-process events and the relay, what a reader opens to change the broker.
+
+To move: nothing in a generated project. In the example, the imports follow the files; a project that copied `erase-data-subject.ts` or `start-catch-up.ts` keeps them where they are.
+
+**The configuration of a generated project reads as sentences.** `platform/config/environment.ts` is new: `Environment`, the reader of the variables of the process, `env.url('DATABASE_URL')`, `env.text('KEYCLOAK_REALM')`, `env.integer('PORT', { fallback: 3000, min: 0, max: 65535 })`, `env.flag('RUN_JOBS', true)`, `env.oneOf('LOG_LEVEL', LOG_LEVELS, 'info')`, `env.optional`, `env.optionalUrl`. It keeps every problem by variable name and `env.assertValid()` reports them at once, as `loadConfig` always did; the `problems` array that every reader took as a parameter is gone, and so are the private `readInteger`, `readFlag`, `readUrl` and `readText` of `load-config.ts`. `readTracing`, `readFiles` and `tracing.ts` read through it; a reader of the project (`readNetworks` of the example) takes the `Environment` and says its problem with `env.problem(...)`. A blank variable counts as left out everywhere, and a value is trimmed.
+
+To move: nothing for a project that keeps its `config/`. To adopt the reader, write `environment.ts` from a fresh `init` (the file has no marker and no variant), replace `(env: Variables, problems: string[])` by `(env: Environment)` in the readers of the project, `problems.push(text)` by `env.problem(text)`, and the readers of `load-config.ts` by the methods of `Environment`.
+
+**The platform wired by hand has the same map as the one on tsyringe.** With `--di manual` or `nest`, `composition/create-platform.ts` held everything in one file: the foundations, the chains of both buses, the event ports, the purges and what wraps every adapter, through eight helpers and five local types. It is now the assembly alone, and each part lives where the tsyringe family keeps it: `composition/lay-foundations.ts` (`layFoundations`, one execution scope, clock and generator, the logger, the metrics, the cache, the lock, the scheduler, the instrumentation, and the log of the decisions or the audit sources), `buses/create-command-bus.ts` and `buses/create-query-bus.ts` (each chain written as the list of what it puts around a handler, outermost first, given the guard and the storage), `events/platform-events.ts` (the publisher, the subscribers, the event bus and, behind Varnish, the purges), and `composition/platform-options.ts` (`PlatformOptions`, which `compose-application.ts` extends). A helper that returned an empty list when nothing applied is no longer written.
+
+To move: nothing for a project that keeps its `create-platform.ts`. To adopt the map, generate the five files from a fresh `init` of the same stack and move into them what your `create-platform.ts` had added to `lay`, `observing`, `beforeTheTransaction` and `eventsOn`; `createPlatform(persistence, options)` and `Platform` do not change, nor does `compose-application.ts` beyond importing `PlatformOptions` from `platform-options.ts`.
+
+**The observability files of a generated project keep their reasons and drop their narration.** `tracing.ts` and `errors.ts` said in which order they were evaluated, which `main.ts` already states where it decides it; they now say why they do what they do: `tracing.ts` cannot use `loadConfig` without loading modules an instrumentation patches, so it reads `OTEL_SERVICE_NAME` and `NODE_ENV` itself with the same defaults; `errors.ts` loads the configuration before `main.ts` does, so an invalid one fails there first, reported nowhere but stderr. The winston logger says once that its final flush drops what is logged after `stop()`.
+
+To move: nothing.
+
+**The database folder of a generated project tells the same story in every ORM.** `persistenceOver` takes one argument in every variant, the handle that knows how to close itself (`DatabaseConnection` with knex and drizzle, as the client of Prisma and the data source of TypeORM already were), so `openPersistence` reads `persistenceOver(connectToDatabase(url))`. `schema.ts` names its schema `MESSAGING_SCHEMA` and says what it holds, with drizzle and TypeORM as with knex; the test database empties its tables with `emptyTables` and starts the in-process cluster with `inProcessPostgres`, with the same words in the four variants; `inertPersistence` names its address `NO_DATABASE` and says who composes the application without serving it; the `Persistence` interface says that the composition root binds its members. With drizzle, the SQL the in-process database of the tests runs lives in `database/table-statements.ts` (`TableStatements`, `creating()` and `emptying()`), out of `open-test-database.ts`, which now reads like the other three. The example follows, and its migration `keep-the-network-of-every-row` reads as four named steps.
+
+To move: nothing for a project that keeps its `database/`. To adopt the vocabulary, rename `MESSAGING` to `MESSAGING_SCHEMA` in `schema.ts` and its importers, and give `persistenceOver` of knex or drizzle the connection (`persistenceOver(connection)`, `persistenceOver({ db, close })`) instead of `(db, close)`.
+
+**The HTTP server of a generated project says what it serves, in which order, and the Hono server serves the signed file links.** `startHttpServer` opens with the order it serves in: the readiness probe and the limit of each caller, the signed file links before any body parser, the routes of the contexts, then the pages of the contract. What guarded the door under a metaphor is two functions named after what they do, `answerReadiness` and `limitEachCaller` (`answeringReadiness` and `limitingEachCaller` on NestJS, which return the middleware, so its `Door` and `Exchange` are gone), in the four frameworks alike. The refusal of a caller over the limit is `http/too-many-requests-for.ts`, `tooManyRequestsFor`, since the kit already says refusal of a business rule, of a guard and of the audit trail: it answers the status, the headers and the body the server writes as they are. On NestJS the routes are named once before the module is created. With Hono and a storage the application serves itself (`--storage local`), the server mounts `fileRoutes`, which Express, Fastify and NestJS already did: the signed links of the files answered 404 there.
+
+To move: a project that keeps its `start-http-server.ts` behaves the same, Hono with local files apart: mount `served.fileRoutes` before the routes, as the new template does. `refusal-for.ts` keeps working; to adopt the name, rename it and its import.
+
+**The endpoint of the audit trail starts with the endpoint.** `search-audit-entries.controller.ts` and `search-audit-entries.route.ts` held, before the endpoint, a hundred lines of schema: the query string, the view of an entry written four times (its interface, the required fields, the properties, the mapping), and the same lines in both variants. What the endpoint receives and answers now lives next to it, in files named after it: `audit-entries-parameters.ts` (the query string and the page limits), `audit-entries-filter-of.ts` (the filter of the query, from what a reader wrote), `audit-entry-view.ts` (the view and its schema, which says why its check is partial), `audit-entry-view-of.ts` (an entry as the endpoint answers it) and `audit-outcomes.ts` (the outcomes, held to the `AuditOutcome` of the kit). The controller and the route are thirty lines each and read as the endpoint; the example, which adds the network of practices to the filter and the impersonator to the view, follows. On tsyringe, `compose-application.ts` no longer rebuilds the hook that writes the refusals of the guards to the trail: `running` receives what the application is assembled from (`Composed`: the container, the foundations, the options, the contexts) and gives the HTTP boundary `foundations.audit.refusals`, the hook `create-audit.ts` already built.
+
+To move: nothing; a project that keeps its endpoint in one file behaves the same.
+
+**The resilience folder of a generated project speaks of the default policy and the own policy.** `resilience/default-policy.ts` (`defaultPolicy`, once `adapter-aspects.ts`) is what goes around every adapter that leaves the process and states no policy of its own; `default-resilience-settings.ts` holds its settings; `own-policy.ts` keeps its name; and the set the default policy leaves alone is `adapters-with-own-policy.ts` (`adaptersWithOwnPolicy`, once `self-governed.ts`), whose comment says who fills it, who reads it and why the order of the two policies makes it work. The composition root and the example call them by these names.
+
+To move: nothing for a project that keeps its files. To adopt the names, rename the three files and their imports: `adapterAspects` to `defaultPolicy`, `defaultResilience` to `defaultResilienceSettings`, `selfGoverned` to `adaptersWithOwnPolicy`.
+
+**The Jest configuration of a generated project passes its own lint.** `jest.config.js` read `process.env.CI` without importing `process`, which the lint of the project (`no-undef`, since a JavaScript file has no type information) reported as soon as the file was linted; `knexfile.js` already imported it from `node:process`. The configuration now imports it the same way.
+
+To move: add `import process from 'node:process';` at the top of `jest.config.js`, or run `ddd-ts-kit init --force`.
+
+**An import names a directory as itself: `@/contexts/billing/published-language`, no `/index`.** Under `importExtension: "none"` the generators write the alias of a published language without `/index`, `ddd-ts-kit check` (`imports/extension`) no longer reports an alias that names a directory, and `ddd-ts-kit build-aliases` completes it with `/index.js` in the compiled output (a file `x.ts` next to a directory `x/` still wins, as for the compiler). Under `js` the import still ends with `/index.js`. The sources of the kit itself import files without `.js` and folders without `/index`: the packages are compiled with `moduleResolution: Bundler`, then `pipeline/monorepo/add-extensions.mjs` writes the extension the emitted `.js` and `.d.ts` files need, so a published package still runs on Node and resolves its types under `NodeNext`.
+
+To move: nothing is required, an import written with `/index` keeps compiling. Drop the `/index` of the aliases that end with `published-language/index` to match what the generators write now.
+
 ## 0.85.0
 
 **The `biome.json` that `init` writes leaves out `.ddd-ts-kit/`, so `npm run format:check` and `verify` pass while the guard keeps its state there.** The guard and the workers write their state in `.ddd-ts-kit/` (git-ignored) as JSON on one line, and the formatter, which formats every `.json` file, reported each of them: `verify` failed in a project where an agent had run. The template now has `"!**/.ddd-ts-kit"` in `files.includes`, as the kit has.

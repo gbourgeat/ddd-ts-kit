@@ -1,3 +1,0 @@
-**The configured scheduler of a platform wired by hand reads as its two steps.** `jobs/configured-job-scheduler.ts` registers a job in two named moves: the run is wrapped in what observes it (`ObserveRun`, the span named after the job and its context, `contextOf`), and the settings of `job-settings.ts` are laid over what the context registered (`overridesOf`, with the sentence of the runtime: a key the configuration left undefined does not erase what the job declared). `jobSettings` says what filtering by context prevents, in the words of the wiring (`UNKNOWN_JOB`), instead of describing it backwards.
-
-To move: nothing; a project that keeps its `configured-job-scheduler.ts` behaves the same.
