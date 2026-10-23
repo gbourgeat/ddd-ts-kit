@@ -116,8 +116,13 @@ feat(billing): add the paid_at column to invoices
 Change: CHG-1234
 ```
 
-The trailer is read by people, in the history (`git log --format='%h %(trailers:key=Change,valueonly)' -- migrations/`);
-no command of the kit reads it yet, and `story-check` does not report a migration commit without it.
+The trailer is read by people, in the history (`git log --format='%h %(trailers:key=Change,valueonly)' -- migrations/`),
+and by `npx ddd-ts-kit story-check <code>`: a commit of the story (its `Slice:` trailer, else its
+message naming a row or the story) that changes a migration or a container file without it is
+listed with its files, and blocks the story under `agents.profile: regulated` or with `--strict`;
+the paths it watches are those of the `change-reference` hook, kept aligned in the kit. Add the
+trailer before the pull request: `git commit --amend` for the last commit, an interactive rebase
+of the branch for an earlier one.
 
 ## Target sizes, and why
 

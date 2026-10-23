@@ -3,7 +3,7 @@ import { derivedText } from './derived-text.js';
 import { parseObject } from './parse-object.js';
 import type { RelationTupleStore } from './relation-tuple-store.js';
 import type { Schema } from './schema.js';
-import type { TraceStep } from './trace-step.js';
+import type { TraceStep } from '../authorization/trace-step.js';
 import type { Way } from './via.js';
 import { waysOf } from './ways-of.js';
 

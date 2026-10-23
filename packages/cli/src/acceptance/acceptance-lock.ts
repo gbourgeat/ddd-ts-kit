@@ -5,6 +5,13 @@ export interface LockedScenario {
   readonly fingerprint: string;
 }
 
+/** A regression test of a fix as the lock recorded it: its file, its title and what it asserts. */
+export interface LockedTest {
+  readonly file: string;
+  readonly title: string;
+  readonly fingerprint: string;
+}
+
 /**
  * A change since the previous lock that the acceptance-judge agent let through: a scenario changed
  * while its criteria were not, or a criterion changed; with the verdict, for the owner to validate.
@@ -23,11 +30,14 @@ export interface Amendment {
  * The acceptance of a story once agreed, `test/acceptance/<story>.acceptance.lock.json`, written by
  * `ddd-ts-kit acceptance <story> --lock` only: the fingerprint of each criterion and of each
  * scenario. A scenario may then change only with its criterion; a criterion, or a scenario whose
- * criteria stayed, only with a verdict of the acceptance-judge agent, which the lock keeps.
+ * criteria stayed, only with a verdict of the acceptance-judge agent, which the lock keeps. The
+ * lock of a fix records its regression tests the same way, under `regression`.
  */
 export interface AcceptanceLock {
   readonly story: string;
   readonly criteria: Readonly<Record<string, string>>;
   readonly scenarios: readonly LockedScenario[];
+  /** The tests of the specs `## Regression` of the story file lists; none for a story. */
+  readonly regression: readonly LockedTest[];
   readonly amendments: readonly Amendment[];
 }

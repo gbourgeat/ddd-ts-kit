@@ -1,6 +1,6 @@
 import { isRecord } from '../config/values/is-record.js';
 import type { Workspace } from '../workspace/index.js';
-import type { AcceptanceLock, Amendment, LockedScenario } from './acceptance-lock.js';
+import type { AcceptanceLock, Amendment, LockedScenario, LockedTest } from './acceptance-lock.js';
 import { lockFileOf } from './lock-file-of.js';
 
 /** The lock of the story; undefined when it has none or the file is not a lock. */
@@ -33,6 +33,13 @@ function lockOf(raw: Record<string, unknown>, story: string): AcceptanceLock {
         title: text(scenario['title']),
         criteria: texts(scenario['criteria']),
         fingerprint: text(scenario['fingerprint']),
+      }),
+    ),
+    regression: records(raw['regression']).map(
+      (test): LockedTest => ({
+        file: text(test['file']),
+        title: text(test['title']),
+        fingerprint: text(test['fingerprint']),
       }),
     ),
     amendments: records(raw['amendments']).map(

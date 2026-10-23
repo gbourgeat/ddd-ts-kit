@@ -22,10 +22,11 @@ equivalent and cannot drift, and every gate runs on a laptop with the same comma
 | `commitlint.config.mjs` | `commitlint.config.mjs` | conventional commits, shared by the hook and both CI title checks |
 | `renovate.json` | `renovate.json` | dependency updates, on either platform |
 | `package-scripts.json` | merged into `package.json` | the `ci:*` scripts and the dev dependencies they need. In a project `ci:arch:graph` is `npm run depcruise`, that is `ddd-ts-kit depcruise-config --check && depcruise src --config .dependency-cruiser.cjs`; this file still names `depcruise-config.mjs` |
-| `github/workflows/*.yml` | `.github/workflows/` | `ci.yml`, `pr-title.yml` and `copilot-setup-steps.yml` (the environment of the Copilot cloud agent); `codeql.yml` with `--ci-extras codeql` only. `ci.yml` here is the default: the CLI's template adds the dependency review step under `--ci-extras dependency-review` |
+| `github/workflows/*.yml` | `.github/workflows/` | `ci.yml`, `pr-title.yml` and `copilot-setup-steps.yml` (the environment of the Copilot cloud agent); `codeql.yml` with `--ci-extras codeql` only; `claude-review.yml` and `claude-triage.yml` with `--ci-extras claude-review` and `claude-triage` only; `intent-to-spec.yml` with `--ci-extras intent-to-spec` only (the headless design pass of the story skill on each intent a merge accepts, see the [story workflow](../docs/guides/story-workflow.md)). `ci.yml` here is the default: the CLI's template adds the dependency review step under `--ci-extras dependency-review` |
 | `github/dependabot.yml` | `.github/dependabot.yml` | GitHub-native alternative to Renovate |
 | `github/branch-protection.md` | read once | the settings that make the workflow binding |
 | `gitlab/.gitlab-ci.yml` | `.gitlab-ci.yml` | the same pipeline for GitLab, without the opt-in templates of GitLab's scanners (`--ci-extras gitlab-sast,...` adds them). The installed file writes the architecture report with `ddd-ts-kit check --format gitlab`; the file here still converts a JSON report in two steps |
+| `gitlab/claude-review.gitlab-ci.yml` | `.gitlab/claude-review.gitlab-ci.yml` | with `--ci-extras claude-review` or `claude-triage` only: the two jobs that run Claude Code headless, included by `.gitlab-ci.yml`; the file here holds both, the CLI's template writes the ones asked for |
 | `gitlab/arch-to-codequality.mjs` | not installed | converts a saved `ddd-ts-kit check --format json` report to a Code Quality report; `check --format gitlab` makes it unnecessary in a pipeline |
 | `gitlab/merge-request-settings.md` | read once | the settings that make the pipeline binding |
 | `monorepo/` | not templated | scripts of this repository's own pipeline |
@@ -174,6 +175,9 @@ cost nothing there.
 | opt-in `gitlab-sast` | `Jobs/SAST.gitlab-ci.yml` | runs on every tier, report only in Free and Premium | Free and Premium: open-source analyzers and a downloadable JSON report; findings in the merge request and vulnerability management are Ultimate [9]. Its jobs never fail a pipeline |
 | opt-in `gitlab-secret-detection` | `Jobs/Secret-Detection.gitlab-ci.yml` | runs on every tier, report only in Free and Premium | JSON artifact on every tier; merge request reports and vulnerability management are Ultimate [10]. The `secrets` job (gitleaks) already blocks a leak on every tier |
 | opt-in `gitlab-dependency-scanning` | `Jobs/Dependency-Scanning.v2.gitlab-ci.yml` | Ultimate | the feature is Ultimate only [11]; the include is skipped where `GITLAB_FEATURES` lacks it |
+| opt-in `claude-review` | `anthropics/claude-code-action` on `pull_request` (`.github/workflows/claude-review.yml`); a `claude-review` job calling `claude -p` on a merge request (`.gitlab/claude-review.gitlab-ci.yml`) | API tokens on every run | the review of each pull or merge request by Claude Code, posted as one comment that neither approves nor blocks: the `gate` job never needs it, and a person still approves. The model is paid per token, through `ANTHROPIC_API_KEY` or through Amazon Bedrock, Google Vertex AI or Microsoft Foundry by the inputs the action documents [12]; the workflow runs for the repository's own branches only, since a fork cannot read the secret. It reads `REVIEW.md` at the root when it exists, and the story file the branch `story/<code>` names |
+| opt-in `claude-triage` | `anthropics/claude-code-action` on `workflow_run` of `CI` ended in failure (`.github/workflows/claude-triage.yml`); a `claude-triage` job `when: on_failure` in the same GitLab file | API tokens on every failed run | a three-line triage (the most likely cause, flaky or real, what to do) written to the job summary and as a comment on the pull or merge request of the run, from the logs of the failed jobs, with read-only tools: nothing is changed and nothing is rerun by it. Never required by the `gate` job |
+| opt-in `intent-to-spec` | the story skill of the plugin run headless by `claude -p` on a pull request merged into the default branch that accepts an intent of `docs/architecture/intents/` (`.github/workflows/intent-to-spec.yml`, GitHub only) | API tokens per accepted intent | the specification of a story (the questions with a provisional option, the rows, the design review, the acceptance locked) opened as a pull request whose body is the questions; the owner answers in the review and a person still approves; needs the `ANTHROPIC_API_KEY` secret and does nothing without it |
 | not used | Codecov, Snyk, SonarQube Cloud, Chromatic and other hosted services | hosted services | none of them is installed or proposed by `init`; their terms were not read for this page |
 
 What stands in the place of each opt-in by default: committed secrets are blocked by gitleaks
@@ -196,7 +200,8 @@ Sources, read on 2026-10-12:
 [8] dependency review: https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/about-dependency-review ;
 [9] GitLab SAST: https://docs.gitlab.com/user/application_security/sast/ ;
 [10] GitLab pipeline secret detection: https://docs.gitlab.com/user/application_security/secret_detection/pipeline/ ;
-[11] GitLab dependency scanning: https://docs.gitlab.com/user/application_security/dependency_scanning/ .
+[11] GitLab dependency scanning: https://docs.gitlab.com/user/application_security/dependency_scanning/ ;
+[12] Claude Code GitHub Action, its `action.yml`, `docs/usage.md` and `docs/cloud-providers.md`, read on 2026-10-23: https://github.com/anthropics/claude-code-action .
 
 On one platform only, whatever the plan:
 
@@ -234,6 +239,8 @@ supports Vitest 5.
 | `check --format gitlab` | what the installed `.gitlab-ci.yml` runs; not executed on GitLab |
 | eslint-formatter-gitlab | run under ESLint 10: report written to `ESLINT_CODE_QUALITY_REPORT` |
 | workflows | parsed with a YAML parser, checked with actionlint 1.7 (no finding); not executed on GitHub |
+| `claude-review.yml`, `claude-triage.yml`, `claude-review.gitlab-ci.yml` | parsed with a YAML parser as the CLI writes them, every shell block checked with `bash -n`; actionlint was not installed on the machine of that change and did not run on them; the inputs of the action were read from its `action.yml` on 2026-10-23 and it is pinned to the commit of v1.0.259; not executed on GitHub or GitLab, and never run against the API |
+| `intent-to-spec.yml` | parsed with a YAML parser as the CLI writes it; its `claude plugin marketplace add`, `claude plugin install` and `claude -p --permission-mode acceptEdits` lines were not executed anywhere; not executed on GitHub |
 | `.gitlab-ci.yml` | parsed with a YAML parser; stages, `needs` and `extends` resolved by a script; `glab ci lint` needs a GitLab project and was not run; not executed on GitLab |
 | `renovate.json` | `renovate-config-validator --strict` |
 | `lefthook.yml`, `commitlint.config.mjs` | `lefthook validate`; commitlint on a valid and an invalid message. The `secrets` job was run without the gitleaks binary (its line prints and the commit goes on); its gitleaks command is the one of the pipeline's image, 8.30.1, read from the gitleaks README, not executed here |

@@ -3,7 +3,11 @@ import type { Authorizer } from '../authorization/authorizer.js';
 import type { CheckRequest } from '../authorization/check-request.js';
 import { ALLOWED, deny, type Decision } from '../authorization/decision.js';
 import { DenialReason } from '../authorization/denial-reason.js';
+import type { Explanation } from '../authorization/explanation.js';
+import type { ResourceRef } from '../authorization/resource-ref.js';
+import { Trace } from '../authorization/trace.js';
 import { grantCovers } from '../permissions/grant-covers.js';
+import type { Permission } from '../permissions/permission.js';
 import type { AttributePolicy } from './attribute-policy.js';
 import type { PolicyInput } from './policy-input.js';
 import type { ResourceAttributes } from './resource-attributes.js';
@@ -23,34 +27,83 @@ export class PolicyBasedAuthorizer implements Authorizer {
   constructor(private readonly options: PolicyBasedAuthorizerOptions) {}
 
   async check(request: CheckRequest): Promise<Decision> {
-    if (isAnonymous(request.actor)) {
-      return deny(DenialReason.anonymous);
-    }
-
-    const input = await this.inputOf(request);
-
-    const applying = this.options.policies.filter(
-      (policy) => policy.grants.some((pattern) => grantCovers(pattern, request.permission)) && policy.when(input),
-    );
-
-    if (applying.some((policy) => policy.effect === 'forbid')) {
-      return deny(DenialReason.explicitDeny);
-    }
-
-    return applying.length > 0 ? ALLOWED : deny(DenialReason.noMatchingPolicy);
+    return (await this.explain(request)).decision;
   }
 
-  private async inputOf(request: CheckRequest): Promise<PolicyInput> {
+  /** Why: what is known of the element, then each policy that bears on the permission and whether it holds. */
+  async explain(request: CheckRequest): Promise<Explanation> {
+    const trace = new Trace();
+
+    if (isAnonymous(request.actor)) {
+      return { decision: deny(DenialReason.anonymous), trace: trace.lines };
+    }
+
+    const input = await this.inputOf(request, trace);
+    const holding = this.policiesHolding(input, trace);
+
+    if (holding.some((policy) => policy.effect === 'forbid')) {
+      return { decision: deny(DenialReason.explicitDeny), trace: trace.lines };
+    }
+
+    return { decision: holding.length > 0 ? ALLOWED : deny(DenialReason.noMatchingPolicy), trace: trace.lines };
+  }
+
+  /** Every policy that bears on the permission is asked, one line each: a refusal says what each one answered. */
+  private policiesHolding(input: PolicyInput, trace: Trace): readonly AttributePolicy[] {
+    const bearing = this.options.policies.filter((policy) => coveringGrantOf(policy, input.permission) !== undefined);
+
+    if (bearing.length === 0) {
+      trace.no(`no policy bears on ${input.permission.id}`);
+
+      return [];
+    }
+
+    return bearing.filter((policy) => {
+      const text = `${policy.effect} ${policy.name}${coveringNote(policy, input.permission)}`;
+
+      return policy.when(input)
+        ? trace.yes(`${text} holds${policy.effect === 'forbid' ? ', and refuses' : ''}`)
+        : trace.no(`${text} does not hold`);
+    });
+  }
+
+  private async inputOf(request: CheckRequest, trace: Trace): Promise<PolicyInput> {
     const { resource } = request;
-    const attributes = resource === undefined ? undefined : await this.options.attributes?.of(resource);
+    const attributes = resource === undefined ? {} : await this.attributesOf(resource, trace);
 
     return {
       actor: request.actor,
       permission: request.permission,
       ...(resource === undefined ? {} : { resource }),
-      attributes: attributes ?? {},
+      attributes,
       context: request.context ?? {},
       now: this.options.clock.now(),
     };
   }
+
+  /** What the port knows of the element, named by attribute, never by value. */
+  private async attributesOf(resource: ResourceRef, trace: Trace): Promise<PolicyInput['attributes']> {
+    const known = (await this.options.attributes?.of(resource)) ?? {};
+    const names = Object.keys(known);
+    const element = `${resource.type}:${resource.id}`;
+
+    if (names.length === 0) {
+      trace.no(`nothing is known of ${element}`);
+    } else {
+      trace.yes(`${element} is known by ${names.join(', ')}`);
+    }
+
+    return known;
+  }
+}
+
+function coveringGrantOf(policy: AttributePolicy, permission: Permission): string | undefined {
+  return policy.grants.find((pattern) => grantCovers(pattern, permission));
+}
+
+/** ` (billing:*)` when the policy bears on the permission through a wider grant; nothing when it names it. */
+function coveringNote(policy: AttributePolicy, permission: Permission): string {
+  const pattern = coveringGrantOf(policy, permission);
+
+  return pattern === undefined || pattern === permission.id ? '' : ` (${pattern})`;
 }

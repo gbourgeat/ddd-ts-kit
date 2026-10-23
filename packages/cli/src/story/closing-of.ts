@@ -22,7 +22,10 @@ interface Verdict {
 }
 
 /**
- * Whether a story or a milestone can close: every row of it done, and no marker of its own left.
+ * Whether a story or a milestone can close: every row of it done, no marker of its own left, no
+ * done row departed from its design review without the report saying so (`plan.design`), and,
+ * under the regulated profile or with `strict`, no commit of it changing a migration or a
+ * container without its `Change:` trailer (`plan.unreferenced`, listed without blocking otherwise).
  * A marker is its own when the rows it belongs to (its text, the commit that wrote it, the worker
  * that holds it uncommitted) include one of its rows, wherever it is; a marker of its contexts that
  * belongs to no row is its own when no other open story has a row in that context, and is listed
@@ -41,6 +44,10 @@ export function closingOf(story: string, plan: StoryPlan, strict = false): Story
     judged.filter(({ verdict }) => verdict.kind === kind).map(({ marker, verdict }) => storyMarker(marker, verdict));
 
   const markers = of('own');
+  const design = plan.design ?? [];
+  const unreferenced = plan.unreferenced ?? [];
+  const regulated = plan.regulated === true;
+  const closable = open.length === 0 && markers.length === 0 && design.length === 0;
 
   return {
     story,
@@ -52,7 +59,10 @@ export function closingOf(story: string, plan: StoryPlan, strict = false): Story
     markers,
     unattributed: of('unattributed'),
     others: judged.filter(({ verdict }) => verdict.kind === 'other').map(({ marker }) => marker),
-    canClose: open.length === 0 && markers.length === 0,
+    design,
+    unreferenced,
+    regulated,
+    canClose: closable && (unreferenced.length === 0 || !(strict || regulated)),
   };
 }
 

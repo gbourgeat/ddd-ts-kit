@@ -103,6 +103,60 @@ node --test plugin/hooks/guard.test.mjs
   are, with their checks still valid. The docs job of the CI holds it
   (`node pipeline/monorepo/changes.mjs --check --base <ref>`).
 
+## The eval suite of the plugin
+
+The plugin is agent configuration: skills, agents, a hook. A change of wording can silently
+break what a skill promises, and no unit test reads a skill. The suite under `plugin/evals/` is
+its regression test, run by `claude plugin eval` (Claude Code 2.1.269 or later): each case is a
+prompt put to a session on a fixture project, and graders that read what the session did. The
+[AI-native SDLC playbook of Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
+asks for exactly this of any configuration that steers an agent.
+
+A case is a directory of `plugin/evals/`:
+
+- `case.yaml` names it and its scaffold script, `fixture.sh`, which sources
+  `plugin/evals/lib/scheduling-example.sh` (the scheduling example copied into the empty
+  workspace of the run, the `node_modules` of this repository linked so that `npx ddd-ts-kit` is
+  the built CLI, one git commit) and plants what the case needs: a violation, a story, a lock;
+- `prompt.md` holds the prompt, with `max_turns`, `timeout_seconds` and `allowed_tools` in its
+  front matter (`Bash`, `Edit` and `Write` are granted at run time with `--allow-tools`);
+- `graders/*.md`, one grader per file: deterministic ones first (`tool_used` with an
+  `input_match`, `regex` on the last message or on a file, `file_exists`), then one `llm` judge
+  for what only a reading can tell. A case passes when its score reaches the threshold.
+
+Three rules hold the suite. Every regression a user reports on a skill, an agent or the hook
+becomes a case before it is fixed, named after the promise it holds. Each run has two arms, with
+the plugin and without it (the no-plugin baseline): a case the baseline arm also passes measures
+nothing, and is retired or sharpened until it tells the two apart. A case stays cheap: a precise
+prompt, a bounded number of turns, the example as the fixture rather than a project to generate.
+
+**The suite is off by default.** It spends API credits: each case is a full Claude Code session,
+run in both arms and `--runs` times (3 by default), so the twelve cases are 24 sessions with
+`--runs 1` and 72 with the default, and a nightly run of twenty cases would be sixty sessions a
+night. Nothing runs on a pull request, on a schedule, or in `npm test`. A maintainer runs it by
+hand from the Actions tab (the workflow `agent-evals.yml`, `workflow_dispatch` only) once the
+secret `ANTHROPIC_API_KEY` exists in the repository; without the secret the job says so and ends
+green. That run uses `--runs 1`, `--threshold 0.8` and a ceiling of 10 USD, uploads the report as
+an artifact and writes the scores in its summary; the commented `pull_request` and `schedule`
+triggers in the file show how to turn it on, with the cost stated next to them.
+
+To run one case locally, on your own credential, with the CLI built (`npm run build`):
+
+```bash
+claude plugin eval plugin --runs 1 --no-publish --max-cost-usd 5 --case describe-not-tree-walk \
+  --scaffold --allow-tools Bash Write Edit --trust-plugin --output-dir /tmp/ddd-ts-kit-evals
+```
+
+`--scaffold` runs the `fixture.sh` of the case (never pass it for a suite you did not read),
+`--max-cost-usd` is a hard ceiling, and `--output-dir` keeps the results out of the tree
+(`plugin/evals/results/`, the default, is ignored by git but read by `npm run check:dashes`).
+A shell grant needs the sandbox of Claude Code, `bubblewrap` and `socat` on Linux: without them
+the run is refused rather than run unconfined, and a case that grants no tool (`deviation-refused`)
+still runs. One case, once, while writing it: the whole suite is the maintainer's run. The
+format of a case is checked without running anything: `claude plugin eval` has no dry run, so
+parse each `case.yaml`, the front matter of each `prompt.md` and of each grader with a YAML
+parser, and compare with the template `claude plugin eval init --bare <name>` writes.
+
 ## How a change reaches `main`
 
 `main` is protected: no direct push, no force push, a linear history. A change arrives through

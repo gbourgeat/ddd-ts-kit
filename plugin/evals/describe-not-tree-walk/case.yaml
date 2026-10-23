@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: describe-not-tree-walk
+tags: [plugin]
+context:
+  scaffold_script: fixture.sh

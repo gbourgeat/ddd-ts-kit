@@ -1,11 +1,13 @@
 import { CliError } from '../cli-error.js';
 import type { Workspace } from '../workspace/index.js';
-import type { AcceptanceLock, Amendment } from './acceptance-lock.js';
+import type { AcceptanceLock, Amendment, LockedTest } from './acceptance-lock.js';
+import type { AcceptanceProblem } from './acceptance-problem.js';
 import { countsFor } from './counts-for.js';
 import { driftOf } from './drift.js';
 import { lockFileOf } from './lock-file-of.js';
 import { readLock } from './read-lock.js';
 import { readVerdicts } from './read-verdicts.js';
+import { regressionDriftOf } from './regression-drift-of.js';
 import type { StoryAcceptance } from './story-acceptance.js';
 import { verdictOn } from './verdict-on.js';
 
@@ -19,19 +21,22 @@ export interface LockRequest {
   readonly on: string;
 }
 
-/** What a lock wrote: the file and the amendments this lock added. */
+/** What a lock wrote: the file, how many scenarios and regression tests, and the amendments this lock added. */
 export interface Locked {
   readonly file: string;
   readonly scenarios: number;
+  readonly tests: number;
   readonly amendments: readonly Amendment[];
 }
 
 /**
- * Records the scenarios and the criteria of a story as agreed. Refused while the scenarios are not
- * written (an it.todo, a slice row or a criterion without a scenario), and while a change since the
- * previous lock that only a verdict lets through (a criterion changed, a scenario changed while its
- * criteria were not) has no `amend` verdict of the acceptance-judge agent for its very version: the
- * verdicts become amendments of the lock, which `acceptance` lists for the owner to validate.
+ * Records the scenarios and the criteria of a story as agreed, or the regression tests of a fix.
+ * Refused while the scenarios are not written (an it.todo, a slice row or a criterion without a
+ * scenario; for a fix, a listed spec missing or without a test), and while a change since the
+ * previous lock that only a verdict lets through (a criterion changed, a scenario or a regression
+ * test changed while its criteria were not) has no `amend` verdict of the acceptance-judge agent
+ * for its very version: the verdicts become amendments of the lock, which `acceptance` lists for
+ * the owner to validate.
  */
 export function lockAcceptance(ws: Workspace, request: LockRequest): Locked {
   const { story } = request;
@@ -41,11 +46,13 @@ export function lockAcceptance(ws: Workspace, request: LockRequest): Locked {
   const previous = readLock(ws, story.story);
   const amendments = amendmentsOf(ws, previous, request);
   const written = story.scenarios.filter(({ state }) => state === 'pending' || state === 'active');
+  const tests = lockedTests(story);
 
   const lock: AcceptanceLock = {
     story: story.story,
     criteria: Object.fromEntries(story.criteria.map(({ id, fingerprint }) => [id, fingerprint])),
     scenarios: written.map(({ title, criteria, fingerprint }) => ({ title, criteria, fingerprint })),
+    regression: tests,
     amendments: [...(previous?.amendments ?? []), ...amendments],
   };
 
@@ -53,13 +60,28 @@ export function lockAcceptance(ws: Workspace, request: LockRequest): Locked {
 
   ws.update(file, `${JSON.stringify(lock, null, 2)}\n`);
 
-  return { file, scenarios: written.length, amendments };
+  return { file, scenarios: written.length, tests: tests.length, amendments };
+}
+
+/** The regression tests of a fix as the lock records them: each written test of each listed spec. */
+function lockedTests(story: StoryAcceptance): LockedTest[] {
+  return (story.regression ?? []).flatMap((spec) =>
+    spec.tests
+      .filter(({ state }) => state === 'pending' || state === 'active')
+      .map(({ title, fingerprint }) => ({ file: spec.file, title, fingerprint })),
+  );
 }
 
 function requireWritten(story: StoryAcceptance): void {
   const blocking = story.problems.filter(
     (problem) => countsFor(problem, 'written') && !LEFT_TO_THE_LOCK.has(problem.kind),
   );
+
+  if (story.regression !== undefined) {
+    requireRegression(story, blocking);
+
+    return;
+  }
 
   if (story.file === undefined || blocking.length > 0) {
     throw new CliError(
@@ -69,16 +91,40 @@ function requireWritten(story: StoryAcceptance): void {
   }
 }
 
+/** A fix locks its regression tests: each listed spec there, with a test, none left to write. */
+function requireRegression(story: StoryAcceptance, blocking: readonly AcceptanceProblem[]): void {
+  if (lockedTests(story).length > 0 && blocking.length === 0) {
+    return;
+  }
+
+  const left =
+    blocking.length === 0
+      ? `  docs/architecture/stories/${story.story}.md  \`## Regression\` lists no spec file.`
+      : blocking.map((problem) => `  ${problem.at}  ${problem.message}`).join('\n');
+
+  throw new CliError(
+    `The regression of ${story.story} is not written yet:\n${left}`,
+    `Write the failing spec, list it under \`## Regression\` of its story file, then lock: \`npx ddd-ts-kit acceptance ${story.story} --gate written\` lists what is left.`,
+  );
+}
+
 /** The changes since the previous lock with their `amend` verdicts; refused while one has none. */
 function amendmentsOf(ws: Workspace, previous: AcceptanceLock | undefined, { story, on }: LockRequest): Amendment[] {
-  const changes = previous === undefined ? [] : driftOf(previous, story.scenarios, story.criteria).toJudge;
+  const changes =
+    previous === undefined
+      ? []
+      : [
+          ...driftOf(previous, story.scenarios, story.criteria).toJudge,
+          ...regressionDriftOf(previous.regression, story.regression ?? []).toJudge,
+        ];
+
   const verdicts = readVerdicts(ws, story.story);
   const unjudged = changes.filter((change) => verdictOn(change, verdicts)?.verdict !== 'amend');
 
   if (unjudged.length > 0) {
     throw new CliError(
       `Changed since the lock without a verdict that lets it through: ${unjudged.map((change) => `${change.subject} (fingerprint ${change.fingerprint})`).join(', ')}.`,
-      'Restore each as locked; or launch the acceptance-judge agent on each, with its subject and fingerprint, and lock again once it wrote `Verdict: amend`. Never change an acceptance test to make code pass.',
+      'Restore each as locked; or launch the acceptance-judge agent on each, with its subject and fingerprint, and lock again once it wrote `Verdict: amend`. Never change an acceptance test, nor the regression test of a fix, to make code pass.',
     );
   }
 
