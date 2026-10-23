@@ -6,10 +6,10 @@ import {
   InMemorySubjectKeyStore,
   InMemoryUnitOfWork,
 } from '@ddd-ts-kit/kernel';
-import { eraseDataSubject } from '@/platform/events/erase-data-subject';
-import { NotASubjectIdError } from '@/platform/events/not-a-subject-id-error';
-import { UnknownDataSubjectError } from '@/platform/events/unknown-data-subject-error';
-import type { StoreFedProjection } from '@/platform/events/store-fed-projections';
+import { eraseDataSubject } from '@/platform/erasure/erase-data-subject';
+import { NotASubjectIdError } from '@/platform/erasure/not-a-subject-id-error';
+import { UnknownDataSubjectError } from '@/platform/erasure/unknown-data-subject-error';
+import type { StoreFedProjection } from '@/platform/event-store/store-fed-projections';
 
 describe('eraseDataSubject', () => {
   it('destroys the key of the subject, then rebuilds every projection fed by the store', async () => {

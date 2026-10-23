@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:029a313ecc939ed9 -->
+<!-- translation-of: README.md sha256:97f80842613379f3 -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -103,7 +103,7 @@ et le mot de passe de chacun est son nom d'utilisateur.
 | Un service du domaine sur deux agrégats | `scheduling/domain/services/scheduler.service.ts` |
 | Un chevauchement décidé par le domaine et par une contrainte d'exclusion de PostgreSQL | `scheduling/infrastructure/persistence/create-scheduling-tables.schema.ts`, `knex-appointment.repository.ts`, `test/integration/concurrent-booking.spec.ts` |
 | Des permissions sur chaque cas d'usage, des politiques sur l'élément chargé | `scheduling/application/authorization/` |
-| Des relations (à la Zanzibar) combinées aux rôles | `src/platform/auth/relationships/relationship-schema.ts`, `role-grants.ts`, `roles-and-relationships.authorizer.ts`, [ADR 0001](docs/adr/0001-combine-token-roles-with-relationships-in-one-authorizer.fr.md) |
+| Des relations (à la Zanzibar) combinées aux rôles | `src/platform/auth/relationships/relationship-schema.ts`, `resource-permissions.ts`, `role-grants.ts`, `roles-and-relationships.authorizer.ts`, [ADR 0001](docs/adr/0001-combine-token-roles-with-relationships-in-one-authorizer.fr.md) |
 | Des tuples de relation persistants, écrits dans l'unité de travail | `src/platform/auth/relationships/knex-relation-tuple-store.ts` ; `*/application/ports/*-relationships.port.ts` et leurs adaptateurs |
 | Des recherches restreintes dans la requête SQL par le périmètre d'accès, avec des critères | `scheduling/application/queries/search-appointments/`, `search-practice-agenda/`, `analytics/application/queries/search-occupancy/` |
 | Une différence au niveau des champs : occupé sans le nom | `scheduling/application/queries/get-calendar-day/` |
@@ -117,7 +117,7 @@ et le mot de passe de chacun est son nom d'utilisateur.
 | Une projection des propres événements du contexte | `scheduling/application/projections/agenda.projection.ts` |
 | Des modèles de lecture et leur reconstruction | `analytics/application/projections/`, `analytics/test/integration/outcome-register.rebuild.spec.ts` |
 | Un agrégat gardé sous forme de ses événements, à côté d'agrégats gardés en lignes : son historique est le métier | `scheduling/domain/aggregates/attendance-record.aggregate.ts` (méthodes apply), `infrastructure/persistence/attendance-record-events.mapper.ts` (formes stockées, un motif scellé par patient), `event-store-attendance-record.repository.ts` (*snapshots* tous les 20 événements), `stored-events.lock.json` |
-| Une projection alimentée par l'event store : rattrapage avec un point de reprise, reconstruction depuis la position zéro, un patient effacé | `scheduling/application/projections/attendance-history.projection.ts`, `src/platform/events/store-fed-projections.ts`, `test/integration/attendance-history.rebuild.spec.ts`, `test/integration/appointment-journey.spec.ts` ; un effacement par `npm run erase:patient` |
+| Une projection alimentée par l'event store : rattrapage avec un point de reprise, reconstruction depuis la position zéro, un patient effacé | `scheduling/application/projections/attendance-history.projection.ts`, `src/platform/event-store/store-fed-projections.ts`, `test/integration/attendance-history.rebuild.spec.ts`, `test/integration/appointment-journey.spec.ts` ; un effacement par `npm run erase:patient` |
 | Une ligne par fait, calculée à la lecture : des chiffres groupés dans une seule requête SQL au moment où on les lit, au lieu de compteurs tenus par des événements (rien qui dérive, rien à vérifier la nuit) | `analytics/CONTEXT.md` (« How occupancy is measured »), `analytics/infrastructure/persistence/knex-occupancy-reader.repository.ts` |
 | Une définition métier et son SQL gardés égaux par un seul contrat | `analytics/domain/services/occupancy-measure.service.ts`, `analytics/test/integration/occupancy-reader.contract.spec.ts` |
 | Un consommateur avec un port sortant, nouvelle tentative (retry) puis file de rejet (dead letter) | `notification/application/integration/handlers/`, `infrastructure/external/remote-mailer.adapter.ts`, `test/integration/mailer-outage.spec.ts` |
@@ -224,7 +224,7 @@ chaque *repository*.
 Trois questions, trois endroits. Qui appelle : Keycloak, vérifié à la frontière. A-t-il le droit de
 faire ceci, sur cela : décidé avant le gestionnaire par un seul autorisateur, qui regarde d'abord
 les rôles du jeton (`network-admin`, `platform-admin` ; `patient` pour le libre-service ; rien pour `support`), puis
-les relations stockées en tuples `object#relation@subject` et dérivées comme le fait Zanzibar. Est-ce
+les relations stockées en tuples `object#relation@subject` et réécrites à la Zanzibar. Est-ce
 valide tout court : le domaine. Les contextes ne nomment jamais un rôle ni une relation : ils
 nomment des permissions, et écrivent des relations par un port à eux quand un fait se produit.
 
@@ -245,7 +245,7 @@ dans le contexte, sous forme de politique (second cas ci-dessous).
 
 **Un assistant réserve sur un calendrier délégué.** `POST /appointments` pour un autre patient
 exige `scheduling:appointment.book` sur `calendar:<id>`. L'assistant n'a aucun rôle qui l'accorde,
-donc les relations décident : la permission est `run` sur un calendrier, qui est `run`
+donc les relations décident : la permission correspond à `run` sur un calendrier, qui est `run`
 sur son poste (`calendar:<id>#desk@desk:<practice>.<practitioner>`, écrit par `scheduling` à la
 création du calendrier), qui vaut pour le `holder`, un `delegate`, ou un responsable du cabinet.
 Le tuple `desk:<practice>.<practitioner>#delegate@user:<assistant>` a été écrit par `identity` dans
@@ -262,7 +262,7 @@ PostgreSQL, `knex-relation-tuple-store.ts`, derrière le même port) :
 <!-- checked sample -->
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import { defineSchema, InMemoryRelationTupleStore, RelationBasedAuthorizer, via } from '@ddd-ts-kit/auth/rebac';
+import { defineSchema, from, InMemoryRelationTupleStore, RelationBasedAuthorizer, union } from '@ddd-ts-kit/auth/rebac';
 import type { Actor } from '@ddd-ts-kit/kernel';
 
 const schedulingPermissions = definePermissions('scheduling', {
@@ -274,21 +274,25 @@ const schema = defineSchema({
   user: {},
   practice: {
     relations: { manager: ['user'] },
-    derived: { manage: 'manager' },
+    permissions: { manage: union('manager') },
   },
   desk: {
     relations: { holder: ['user'], delegate: ['user'], practice: ['practice'] },
-    derived: { run: { anyOf: ['holder', 'delegate', via('practice', 'manage')] } },
+    permissions: { run: union('holder', 'delegate', from('practice', 'manage')) },
   },
   calendar: {
     relations: { desk: ['desk'] },
-    // Réserver sur un calendrier, c'est `run` sur ce calendrier : la relation dérivée nommée d'après la permission l'accorde.
-    derived: { run: via('desk', 'run'), [schedulingPermissions['appointment.book'].id]: 'run' },
+    permissions: { run: from('desk', 'run') },
   },
 });
 
 const store = new InMemoryRelationTupleStore();
-const relationships = new RelationBasedAuthorizer({ schema, store });
+const relationships = new RelationBasedAuthorizer({
+  schema,
+  store,
+  // Tiré de resource-permissions.ts : réserver sur un calendrier, c'est `run` sur ce calendrier.
+  mapping: { calendar: { [schedulingPermissions['appointment.book'].id]: 'run' } },
+});
 
 const linus: Actor = { id: 'linus', type: 'user', roles: [], attributes: {} };
 const booking = {
@@ -563,8 +567,8 @@ Le registre de présence d'un patient est gardé sous forme de ses événements 
 - **Un effacement.** `DATABASE_URL=<url> npm run erase:patient -- <patientId> <operatorId>`
   vérifie que l'id nomme une personne d'un réseau, détruit la clé avec laquelle les paroles du
   patient ont été scellées, écrit l'effacement dans le journal d'audit, puis reconstruit chaque
-  projection alimentée par le store (`src/platform/events/erase-data-subject.ts`,
-  `src/platform/events/erase-on-the-command-line.ts`, `scripts/erase-patient.ts`) : le flux et
+  projection alimentée par le store (`src/platform/erasure/erase-data-subject.ts`,
+  `src/platform/erasure/erase-on-the-command-line.ts`, `scripts/erase-patient.ts`) : le flux et
   les *snapshots* affichent `[erased]` immédiatement, et l'historique aussi une fois reconstruit.
   Une reconstruction n'arrête jamais le rattrapage, donc l'API peut continuer de tourner. Le
   relancer achève un effacement dont l'entrée ou la reconstruction a échoué. La clé est détruite
@@ -585,7 +589,7 @@ Le registre de présence d'un patient est gardé sous forme de ses événements 
   globale, que lit le personnel de la plateforme : les clés sont hors des réseaux (ADR-0004). Sa
   date plus la rétention des sauvegardes des clés donne le jour où l'effacement est complet.
 - **Limites de l'effacement.** L'id doit être fait de ce dont un slug ou un UUID est fait
-  (`src/platform/events/is-subject-id.ts`) : un fournisseur d'identité dont les sujets portent un
+  (`src/platform/erasure/is-subject-id.ts`) : un fournisseur d'identité dont les sujets portent un
   autre caractère (`auth0|abc`) demande d'élargir cette grammaire, en connaissance de cause,
   puisque ce qu'elle laisse passer peut atteindre le journal. Une faute de frappe qui respecte
   cette grammaire laisse une entrée `keyDestroyed: false` définitive : un identifiant, pas une

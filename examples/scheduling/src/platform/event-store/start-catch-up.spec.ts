@@ -9,7 +9,7 @@ import {
   type StoredEvent,
   type UnitOfWork,
 } from '@ddd-ts-kit/kernel';
-import { startCatchUp } from '@/platform/events/start-catch-up';
+import { startCatchUp } from '@/platform/event-store/start-catch-up';
 
 const at = new Date('2026-03-02T09:00:00.000Z');
 

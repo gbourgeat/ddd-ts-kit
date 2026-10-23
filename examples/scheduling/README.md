@@ -111,7 +111,7 @@ of each is its user name.
 | A projection of the context's own events | `scheduling/application/projections/agenda.projection.ts` |
 | Read models and their rebuild | `analytics/application/projections/`, `analytics/test/integration/outcome-register.rebuild.spec.ts` |
 | One aggregate kept as its events, beside aggregates kept as rows: its history is the business | `scheduling/domain/aggregates/attendance-record.aggregate.ts` (apply methods), `infrastructure/persistence/attendance-record-events.mapper.ts` (stored shapes, a reason sealed per patient), `event-store-attendance-record.repository.ts` (snapshots every 20 events), `stored-events.lock.json` |
-| A projection fed by the event store: catch-up with a checkpoint, rebuild from position zero, an erased patient | `scheduling/application/projections/attendance-history.projection.ts`, `src/platform/events/store-fed-projections.ts`, `test/integration/attendance-history.rebuild.spec.ts`, `test/integration/appointment-journey.spec.ts`; an erasure by `npm run erase:patient` |
+| A projection fed by the event store: catch-up with a checkpoint, rebuild from position zero, an erased patient | `scheduling/application/projections/attendance-history.projection.ts`, `src/platform/event-store/store-fed-projections.ts`, `test/integration/attendance-history.rebuild.spec.ts`, `test/integration/appointment-journey.spec.ts`; an erasure by `npm run erase:patient` |
 | One row per fact, computed at read time: figures grouped in one statement when they are read, instead of counters kept by events (nothing to drift, nothing to verify at night) | `analytics/CONTEXT.md` ("How occupancy is measured"), `analytics/infrastructure/persistence/knex-occupancy-reader.repository.ts` |
 | A business definition and its SQL held equal by one contract | `analytics/domain/services/occupancy-measure.service.ts`, `analytics/test/integration/occupancy-reader.contract.spec.ts` |
 | A consumer with an outbound port, retry then dead letter | `notification/application/integration/handlers/`, `infrastructure/external/remote-mailer.adapter.ts`, `test/integration/mailer-outage.spec.ts` |
@@ -543,8 +543,8 @@ The attendance record of a patient is kept as its events; its history
 - **An erasure.** `DATABASE_URL=<url> npm run erase:patient -- <patientId> <operatorId>`
   checks that the id names a person of some network, destroys the key the words of the patient
   were sealed with, writes the erasure to the audit trail, then rebuilds every projection fed
-  by the store (`src/platform/events/erase-data-subject.ts`,
-  `src/platform/events/erase-on-the-command-line.ts`, `scripts/erase-patient.ts`): the stream and
+  by the store (`src/platform/erasure/erase-data-subject.ts`,
+  `src/platform/erasure/erase-on-the-command-line.ts`, `scripts/erase-patient.ts`): the stream and
   the snapshots read `[erased]` at once, and so does the history once rebuilt. A rebuild never
   stops the catch-up, so the API may keep running. Running it again completes an erasure whose
   entry or rebuild failed. The key is destroyed whether identity still knows the patient or
@@ -564,7 +564,7 @@ The attendance record of a patient is kept as its events; its history
   which platform staff read: the keys are outside the networks (ADR-0004). Its date plus the
   retention of the backups of the keys is the day the erasure is complete.
 - **Limits of the erasure.** The id has to be what a slug or a UUID is made of
-  (`src/platform/events/is-subject-id.ts`): an identity provider whose subjects carry another
+  (`src/platform/erasure/is-subject-id.ts`): an identity provider whose subjects carry another
   character (`auth0|abc`) needs that grammar widened, knowingly, since whatever it lets through
   can reach the trail. A mistyped id of that grammar leaves a permanent `keyDestroyed: false`
   entry: an identifier, not personal data, and a faithful trace of the attempt. A run again for

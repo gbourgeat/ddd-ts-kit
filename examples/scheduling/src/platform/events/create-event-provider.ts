@@ -15,7 +15,7 @@ export function createEventProvider(config: AppConfig, errors: ErrorReporter = n
 
   const bus = new RedisStreamsEventBus({
     connection: config.redisUrl,
-    // Codes only reach this hook, never messages: it is safe to log as is.
+    // Built before the application has a logger: one JSON line in the shape of its log lines. Codes only reach this hook, never messages: it is safe to log as is.
     onFailure: (failure) => {
       console.error(JSON.stringify({ level: 'error', message: 'event bus failure', ...failure }));
       deadLetters.onFailure(failure);
