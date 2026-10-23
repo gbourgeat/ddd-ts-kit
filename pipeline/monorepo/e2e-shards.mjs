@@ -117,9 +117,10 @@ function main(args) {
     [
       runner,
       'run',
-      // Two files at a time: a generated project installs and compiles while another runs its specs, and a
-      // runner of four cores is not idle while one project waits on npm (docs/proposals/build-and-test-velocity.md).
-      '--maxWorkers=2',
+      // One file at a time: these files run the specs of generated projects under coverage, which time out at
+      // five seconds when two projects share the four cores of a runner (seen on the second shard, 2026-10-23);
+      // the runners are balanced on measured seconds instead (SHARDS).
+      '--no-file-parallelism',
       '--hookTimeout=180000',
       ...files.map((file) => `${DIRECTORY}/${file}`),
       ...passed,

@@ -409,12 +409,16 @@ before and after on the same runs.
    takes 6 to 8 min, and the longest jobs of the trunk are the generated projects on npm (13 min:
    four files one after the other), the end-to-end shards (11 to 13 min) and the alias runs
    (12 min: 35 stacks in one file). A second shard of the unit job would add a job to the queue
-   and shorten nothing. Instead: `--maxWorkers=2` in place of `--no-file-parallelism` in those
-   jobs (a project installs from npm while another runs its specs on the other cores),
-   `alias-runtime.spec.ts` split in two files of half the stacks each, and any free port for an
-   application the specs start, so that two never meet on one. Indicator unchanged: wall time of
-   the longest job of the trunk, measured on a machine held to four cores (section 5) and on the
-   runs of the pipeline.
+   and shorten nothing. Instead: the generated projects and the alias runs take two files at a
+   time (`VITEST_MAX_WORKERS=2` for the run and for the specs of each generated project, which
+   then share the four cores two by two; a project installs from npm while another runs its
+   specs), `alias-runtime.spec.ts` split in two files of half the stacks each, and any free port
+   for an application the specs start, so that two never meet on one. The end-to-end shards stay
+   one file at a time: their files run the specs of generated projects under coverage, which
+   time out at five seconds when two projects share four cores (seen on one shard); they are
+   balanced on the seconds the runners measured instead (505 to 521 s per shard against 352 to
+   715 s). Indicator unchanged: wall time of the longest job of the trunk, measured on a machine
+   held to four cores (section 5) and on the runs of the pipeline.
 7. **Two trials, non-blocking and measured for a month**: Oxlint with tsgolint and the kit
    rules as a JS plugin, its findings compared with ESLint's on every run, starting with the
    reason the plugin breaks under that API (a rule that reads something the alpha does not

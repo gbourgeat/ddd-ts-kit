@@ -1,5 +1,5 @@
 [English](build-and-test-velocity.md) · **Français**
-<!-- translation-of: build-and-test-velocity.md sha256:8a7cebcc6634a212 -->
+<!-- translation-of: build-and-test-velocity.md sha256:1d73632ed35d36fe -->
 
 # Proposition : vélocité du build, des contrôles et des tests
 
@@ -434,13 +434,18 @@ description, mesuré avant et après sur les mêmes exécutions.
    les projets générés sur npm (13 min : quatre fichiers l'un après l'autre), les *shards* de
    bout en bout (11 à 13 min) et les exécutions de l'alias (12 min : 35 *stacks* dans un seul
    fichier). Un second *shard* du job unitaire ajouterait un job à la file sans rien raccourcir.
-   À la place : `--maxWorkers=2` au lieu de `--no-file-parallelism` dans ces jobs (un projet
-   s'installe depuis npm pendant qu'un autre exécute ses *specs* sur les autres cœurs),
-   `alias-runtime.spec.ts` coupé en deux fichiers de la moitié des *stacks* chacun, et n'importe
-   quel port libre pour une application que les *specs* démarrent, pour que deux ne se
-   rencontrent jamais sur le même. Indicateur inchangé : temps de mur du job le plus long du
-   tronc, mesuré sur une machine tenue à quatre cœurs (section 5) et sur les exécutions du
-   *pipeline*.
+   À la place : les projets générés et les exécutions de l'alias prennent deux fichiers à la
+   fois (`VITEST_MAX_WORKERS=2` pour l'exécution et pour les *specs* de chaque projet généré,
+   qui se partagent alors les quatre cœurs deux par deux ; un projet s'installe depuis npm
+   pendant qu'un autre exécute ses *specs*), `alias-runtime.spec.ts` coupé en deux fichiers de
+   la moitié des *stacks* chacun, et n'importe quel port libre pour une application que les
+   *specs* démarrent, pour que deux ne se rencontrent jamais sur le même. Les *shards* de bout
+   en bout restent à un fichier à la fois : leurs fichiers exécutent les *specs* de projets
+   générés sous couverture, qui expirent à cinq secondes quand deux projets se partagent quatre
+   cœurs (vu sur un *shard*) ; ils sont équilibrés sur les secondes mesurées par les *runners*
+   à la place (505 à 521 s par *shard* contre 352 à 715 s). Indicateur inchangé : temps de mur
+   du job le plus long du tronc, mesuré sur une machine tenue à quatre cœurs (section 5) et sur
+   les exécutions du *pipeline*.
 7. **Deux essais, non bloquants et mesurés pendant un mois** : Oxlint avec tsgolint et les
    règles du kit comme *plugin* JS, ses constats comparés à ceux d'ESLint à chaque exécution,
    en commençant par la raison pour laquelle le *plugin* casse sous cette API (une règle qui
