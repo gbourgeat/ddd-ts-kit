@@ -3,25 +3,31 @@ import { auditChainsTable, auditEntriesTable } from '@ddd-ts-kit/audit/drizzle';
 {{/if}}
 {{#if tenancy.any}}
 import { {{#if queue.database}}jobsTable, {{/if}}processedEventsTable{{#if queue.processTable}}, processesTable{{/if}}, tenantOutboxTable } from '@ddd-ts-kit/drizzle/postgres';
-
-/** It keeps the tenant of each event, so that its consumers run in that tenant. */
-export const outbox = tenantOutboxTable('messaging');
 {{/if}}
 {{#unless tenancy.any}}
 import { {{#if queue.database}}jobsTable, {{/if}}outboxTable, processedEventsTable{{#if queue.processTable}}, processesTable{{/if}} } from '@ddd-ts-kit/drizzle/postgres';
-
-export const outbox = outboxTable('messaging');
 {{/unless}}
-export const processedEvents = processedEventsTable('messaging');
+
+/** The schema of what the kit stores for the application: the outbox and the processed events{{#if queue.database}}, the background jobs{{/if}}{{#if queue.processTable}}, the process instances{{/if}}. */
+export const MESSAGING_SCHEMA = 'messaging';
+
+{{#if tenancy.any}}
+/** It keeps the tenant of each event, so that its consumers run in that tenant. */
+export const outbox = tenantOutboxTable(MESSAGING_SCHEMA);
+{{/if}}
+{{#unless tenancy.any}}
+export const outbox = outboxTable(MESSAGING_SCHEMA);
+{{/unless}}
+export const processedEvents = processedEventsTable(MESSAGING_SCHEMA);
 {{#if queue.database}}
 
-/** The background jobs, in the schema of the messaging of the application. */
-export const jobs = jobsTable('messaging');
+/** The background jobs, enqueued in the transaction of the command that asks for them. */
+export const jobs = jobsTable(MESSAGING_SCHEMA);
 {{/if}}
 {{#if queue.processTable}}
 
-/** The instances of the process managers. */
-export const processes = processesTable('messaging');
+/** The instances of the process managers, saved in the transaction of each step. */
+export const processes = processesTable(MESSAGING_SCHEMA);
 {{/if}}
 {{#if audit.on}}
 

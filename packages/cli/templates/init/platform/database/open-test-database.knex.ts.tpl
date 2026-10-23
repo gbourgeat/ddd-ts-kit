@@ -33,7 +33,7 @@ export function openTestDatabase(url?: string): Promise<TestDatabase> {
 }
 
 async function openInProcess(): Promise<TestDatabase> {
-  const engine = await {{#if tests.vitest}}startedPostgres(){{/if}}{{#if tests.jest}}PGlite.create(){{/if}};
+  const engine = await {{#if tests.vitest}}inProcessPostgres(){{/if}}{{#if tests.jest}}PGlite.create(){{/if}};
   const server = new PGLiteSocketServer({ db: engine, host: '127.0.0.1', port: 0, maxConnections: 10 });
 
   await server.start();
@@ -51,17 +51,16 @@ async function openInProcess(): Promise<TestDatabase> {
     await engine.close();
   };
 
-  return { persistence: persistenceOver(connection.db, close), reset: () => truncateAll(connection.db), close };
+  return { persistence: persistenceOver({ db: connection.db, close }), reset: () => emptyTables(connection.db), close };
 }
 
 {{#if tests.vitest}}
 /**
- * PostgreSQL in process: a copy of the cluster the global setup of the run initialised once
- * (test/support/test-database-template.ts), which spares each spec the initdb of its own; without
- * one (a run that names no global setup), a cluster initialised here. The tables are created on it
- * by the caller, every time, as the first migration creates them.
+ * A copy of the cluster the global setup of the run initialised once (test/support/test-database-template.ts),
+ * which spares each spec the initdb of its own; a cluster initialised here when the run names no
+ * global setup. The tables are created on it by the caller, every time.
  */
-async function startedPostgres(): Promise<PGlite> {
+async function inProcessPostgres(): Promise<PGlite> {
   const template = process.env['TEST_DATABASE_TEMPLATE'];
 
   return PGlite.create(template === undefined ? {} : { loadDataDir: await openAsBlob(template) });
@@ -72,8 +71,8 @@ async function openServer(url: string): Promise<TestDatabase> {
   const connection = connectToDatabase(url);
 
   return {
-    persistence: persistenceOver(connection.db, () => connection.close()),
-    reset: () => truncateAll(connection.db),
+    persistence: persistenceOver(connection),
+    reset: () => emptyTables(connection.db),
     close: () => connection.close(),
   };
 }
@@ -83,7 +82,7 @@ interface TableName {
   readonly table_name: string;
 }
 
-async function truncateAll(db: Knex): Promise<void> {
+async function emptyTables(db: Knex): Promise<void> {
   const tables = await db<TableName>('information_schema.tables')
     .select('table_schema', 'table_name')
     .where('table_type', 'BASE TABLE')

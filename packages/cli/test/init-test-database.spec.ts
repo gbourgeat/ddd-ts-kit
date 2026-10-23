@@ -21,7 +21,7 @@ describe('the test database of a project on an ORM', () => {
         'return PGlite.create(template === undefined ? {} : { loadDataDir: await openAsBlob(template) });',
       );
 
-      expect(read(root, OPEN)).toContain('= await startedPostgres();');
+      expect(read(root, OPEN)).toContain('= await inProcessPostgres();');
     },
   );
 

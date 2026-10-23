@@ -30,7 +30,7 @@ export function openTestDatabase(url?: string): Promise<TestDatabase> {
 }
 
 async function openInProcess(): Promise<TestDatabase> {
-  const engine = await {{#if tests.vitest}}startedPostgres(){{/if}}{{#if tests.jest}}PGlite.create(){{/if}};
+  const engine = await {{#if tests.vitest}}inProcessPostgres(){{/if}}{{#if tests.jest}}PGlite.create(){{/if}};
   const server = new PGLiteSocketServer({ db: engine, host: '127.0.0.1', port: 0, maxConnections: 10 });
 
   await server.start();
@@ -48,17 +48,16 @@ async function openInProcess(): Promise<TestDatabase> {
     await engine.close();
   };
 
-  return { persistence: persistenceOver(client), reset: () => truncateAll(client), close };
+  return { persistence: persistenceOver(client), reset: () => emptyTables(client), close };
 }
 
 {{#if tests.vitest}}
 /**
- * PostgreSQL in process: a copy of the cluster the global setup of the run initialised once
- * (test/support/test-database-template.ts), which spares each spec the initdb of its own; without
- * one (a run that names no global setup), a cluster initialised here. The tables are created on it
- * by the caller, every time, as the first migration creates them.
+ * A copy of the cluster the global setup of the run initialised once (test/support/test-database-template.ts),
+ * which spares each spec the initdb of its own; a cluster initialised here when the run names no
+ * global setup. The tables are created on it by the caller, every time.
  */
-async function startedPostgres(): Promise<PGlite> {
+async function inProcessPostgres(): Promise<PGlite> {
   const template = process.env['TEST_DATABASE_TEMPLATE'];
 
   return PGlite.create(template === undefined ? {} : { loadDataDir: await openAsBlob(template) });
@@ -68,7 +67,7 @@ async function startedPostgres(): Promise<PGlite> {
 async function openServer(url: string): Promise<TestDatabase> {
   const client = createClient(url);
 
-  return { persistence: persistenceOver(client), reset: () => truncateAll(client), close: () => client.$disconnect() };
+  return { persistence: persistenceOver(client), reset: () => emptyTables(client), close: () => client.$disconnect() };
 }
 
 async function createTables(url: string): Promise<void> {
@@ -84,7 +83,7 @@ interface TableName {
   readonly table_name: string;
 }
 
-async function truncateAll(client: PrismaClient): Promise<void> {
+async function emptyTables(client: PrismaClient): Promise<void> {
   const tables = await client.$queryRaw<TableName[]>`
     select table_schema, table_name from information_schema.tables
     where table_type = 'BASE TABLE' and table_schema not in ('pg_catalog', 'information_schema') and table_name <> '_prisma_migrations'`;

@@ -23,6 +23,8 @@ const PERSISTENCE: Readonly<Record<string, Variants>> = {
     ['database.ts', 'drizzle'],
     ['connect-to-database.ts', 'drizzle'],
     ['schema.ts', 'drizzle'],
+    // The SQL the in-process database of the tests runs, from the Drizzle definitions: drizzle-kit writes migrations, not tables.
+    ['table-statements.ts', 'drizzle'],
   ],
   knex: [...onDatabase('knex', 'pooled'), ['connect-to-database.ts', 'knex'], ['schema.ts', 'knex']],
   prisma: [...onDatabase('prisma', 'prisma'), ['database.ts', 'prisma'], ['create-client.ts', 'prisma']],

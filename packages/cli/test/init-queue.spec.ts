@@ -23,8 +23,8 @@ describe('init --queue', () => {
   it('binds the jobs table and the processes table of Drizzle in the transaction of the command', () => {
     const root = initProject();
 
-    expect(read(root, SCHEMA)).toContain("export const jobs = jobsTable('messaging');");
-    expect(read(root, SCHEMA)).toContain("export const processes = processesTable('messaging');");
+    expect(read(root, SCHEMA)).toContain('export const jobs = jobsTable(MESSAGING_SCHEMA);');
+    expect(read(root, SCHEMA)).toContain('export const processes = processesTable(MESSAGING_SCHEMA);');
     expect(read(root, PERSISTENCE)).toContain('jobs: new DrizzleJobStore(unitOfWork, jobs),');
     expect(read(root, PLATFORM)).toContain('builder.rebind(JobStore).toValue(persistence.jobs);');
     expect(read(root, PLATFORM)).toContain('builder.rebind(ProcessStore).toValue(persistence.processes);');
@@ -34,9 +34,12 @@ describe('init --queue', () => {
   it('creates both tables of Knex with the first migration', () => {
     const root = initProject('--orm', 'knex');
 
-    expect(read(root, SCHEMA)).toContain('await createJobTable(knex, { schema: MESSAGING });');
-    expect(read(root, SCHEMA)).toContain('await createProcessTable(knex, { schema: MESSAGING });');
-    expect(read(root, PERSISTENCE)).toContain('processes: new KnexProcessStore(unitOfWork, { schema: MESSAGING }),');
+    expect(read(root, SCHEMA)).toContain('await createJobTable(knex, { schema: MESSAGING_SCHEMA });');
+    expect(read(root, SCHEMA)).toContain('await createProcessTable(knex, { schema: MESSAGING_SCHEMA });');
+
+    expect(read(root, PERSISTENCE)).toContain(
+      'processes: new KnexProcessStore(unitOfWork, { schema: MESSAGING_SCHEMA }),',
+    );
   });
 
   it('puts the jobs on the server of the cache with redis, the processes staying in the database', () => {

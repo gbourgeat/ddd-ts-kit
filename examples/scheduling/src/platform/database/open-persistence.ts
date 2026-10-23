@@ -3,7 +3,5 @@ import { persistenceOver } from '@/platform/database/persistence-over';
 import type { Persistence } from '@/platform/database/persistence';
 
 export function openPersistence(config: { readonly databaseUrl: string }): Persistence {
-  const connection = connectToDatabase(config.databaseUrl);
-
-  return persistenceOver(connection.db, () => connection.close());
+  return persistenceOver(connectToDatabase(config.databaseUrl));
 }
