@@ -1,10 +1,10 @@
-import type { ClientDocument } from './client-document.js';
-import type { ClientOperation } from './client-operation.js';
-import { generatedHeader } from './generated-header.js';
-import { isInputOptional } from './is-input-optional.js';
-import { operationDescription } from './operation-description.js';
-import { docComment } from './doc-comment.js';
-import { typeName } from './type-name.js';
+import type { ClientDocument } from './client-document';
+import type { ClientOperation } from './client-operation';
+import { generatedHeader } from './generated-header';
+import { isInputOptional } from './is-input-optional';
+import { operationDescription } from './operation-description';
+import { docComment } from './doc-comment';
+import { typeName } from './type-name';
 
 const IMPORTS = [
   "import * as operations from './operations.js';",

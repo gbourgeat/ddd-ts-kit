@@ -1,7 +1,7 @@
-import type { Slice } from '../../progress/slice.js';
-import { slicesIn } from '../../progress/slices-in.js';
-import type { MergeFinding } from './merge-finding.js';
-import type { MergeSides } from './merge-sides.js';
+import type { Slice } from '../../progress/slice';
+import { slicesIn } from '../../progress/slices-in';
+import type { MergeFinding } from './merge-finding';
+import type { MergeSides } from './merge-sides';
 
 type Rows = ReadonlyMap<string, Slice>;
 type AllRows = Readonly<Record<'base' | 'ours' | 'theirs' | 'result', Rows>>;

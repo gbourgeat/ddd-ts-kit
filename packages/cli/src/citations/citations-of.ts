@@ -1,5 +1,5 @@
-import type { CitedName } from './cited-name.js';
-import type { CitedPart } from './cited-parts.js';
+import type { CitedName } from './cited-name';
+import type { CitedPart } from './cited-parts';
 
 /** One cited name of one line of a document, with every row and context of the parts it lies in. */
 export interface Citation {

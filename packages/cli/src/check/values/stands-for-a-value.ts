@@ -1,6 +1,6 @@
-import { matchingBracket } from '../text/matching-bracket.js';
-import { splitTopLevel } from '../text/split-top-level.js';
-import { expressionRole } from './entry-role.js';
+import { matchingBracket } from '../text/matching-bracket';
+import { splitTopLevel } from '../text/split-top-level';
+import { expressionRole } from './entry-role';
 
 /** `name(..) {`, `get name() {`, `async [key](..) {`: a method of the literal. */
 const METHOD = /^(?:async\s+)?(?:get\s+|set\s+)?\*?\s*(?:[\w$]+|'[^']*'|"[^"]*"|\[[^\]]*\])\s*(?:<[^()]*>)?\s*\(/;

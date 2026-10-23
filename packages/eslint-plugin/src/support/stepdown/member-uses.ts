@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { enclosingMember } from '../classes/enclosing-member.js';
-import { keyName } from '../classes/key-name.js';
-import type { MemberUse } from './member-use.js';
+import { enclosingMember } from '../classes/enclosing-member';
+import { keyName } from '../classes/key-name';
+import type { MemberUse } from './member-use';
 
 /** Remembers every `this.x`, `this.#x` and `ClassName.x` met during the traversal, per class. */
 export class MemberUses {

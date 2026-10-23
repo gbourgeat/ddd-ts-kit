@@ -1,6 +1,6 @@
-import type { Remaining } from '../progress/remaining.js';
-import { storyOf } from './story-of.js';
-import type { StoryClosing, StoryMarker } from './story-closing.js';
+import type { Remaining } from '../progress/remaining';
+import { storyOf } from './story-of';
+import type { StoryClosing, StoryMarker } from './story-closing';
 
 const MARK: Readonly<Record<Remaining['kind'], string>> = {
   review: 'TODO(review)',

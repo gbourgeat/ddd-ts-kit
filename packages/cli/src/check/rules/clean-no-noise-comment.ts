@@ -1,10 +1,10 @@
-import { commentLines, type CommentLine } from '../comments/comment-lines.js';
-import { isDirective } from '../comments/is-directive.js';
-import { restatesName } from '../comments/restates-name.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { perFile } from '../support/per-file.js';
+import { commentLines, type CommentLine } from '../comments/comment-lines';
+import { isDirective } from '../comments/is-directive';
+import { restatesName } from '../comments/restates-name';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { perFile } from '../support/per-file';
 
 const BANNER = /^(?:[-=*#~_+/\\]\s?){4,}|^[-=*#~]{2,}.*[-=*#~]{3,}$/;
 

@@ -10,14 +10,14 @@ import {
   type StampedRow,
   type TouchedKey,
 } from '@ddd-ts-kit/kernel';
-import type { DrizzleContext } from '../unit-of-work/drizzle-context.js';
-import { tenantCondition } from '../tenancy/tenant-condition.js';
-import { criteriaToDrizzle } from './criteria-to-drizzle.js';
-import type { DrizzleReadModelOptions } from './drizzle-read-model-options.js';
-import { DrizzleStampedRows, type StampedTable } from './drizzle-stamped-rows.js';
-import { RowMapper } from './row.mapper.js';
-import { rowsOf } from './rows-of.js';
-import { stampColumns } from './stamp-columns.js';
+import type { DrizzleContext } from '../unit-of-work/drizzle-context';
+import { tenantCondition } from '../tenancy/tenant-condition';
+import { criteriaToDrizzle } from './criteria-to-drizzle';
+import type { DrizzleReadModelOptions } from './drizzle-read-model-options';
+import { DrizzleStampedRows, type StampedTable } from './drizzle-stamped-rows';
+import { RowMapper } from './row.mapper';
+import { rowsOf } from './rows-of';
+import { stampColumns } from './stamp-columns';
 
 /**
  * The table of one read model on drizzle: what `TableReadModelStore` and `ProjectionRebuild`

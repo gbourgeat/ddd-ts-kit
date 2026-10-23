@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Clock } from '../src/index.js';
-import { DeclarationError, injected, injectedDependencies } from '../src/declarations.js';
+import { Clock } from '../src';
+import { DeclarationError, injected, injectedDependencies } from '../src/declarations';
 
 describe('a dependency list registered for a class', () => {
   abstract class Ledger {

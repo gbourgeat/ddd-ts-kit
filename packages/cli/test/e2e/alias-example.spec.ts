@@ -1,10 +1,10 @@
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { read, REPO_ROOT } from '../helpers.js';
-import { buildSteps, compiledEntries, DEV_RUNNER, linkCompiled, resolvedBy } from './compiled-project.js';
-import { runIn } from './run-in.js';
-import { SLOW } from './stacks.js';
-import { started } from './started.js';
+import { read, REPO_ROOT } from '../helpers';
+import { buildSteps, compiledEntries, DEV_RUNNER, linkCompiled, resolvedBy } from './compiled-project';
+import { runIn } from './run-in';
+import { SLOW } from './stacks';
+import { started } from './started';
 
 const EXAMPLE = path.join(REPO_ROOT, 'examples/scheduling');
 const ENTRIES = ['dist/src/main.js', 'dist/src/apps/worker/main.js'];

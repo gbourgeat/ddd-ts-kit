@@ -1,6 +1,6 @@
-import type { Config } from '../config/index.js';
-import { PLATFORM_LAYOUT } from './platform-layout.js';
-import type { PlatformFile } from './platform-file.js';
+import type { Config } from '../config';
+import { PLATFORM_LAYOUT } from './platform-layout';
+import type { PlatformFile } from './platform-file';
 
 /** Both paths a file of the platform may have, in its folder and flat: a rule reads it at either. */
 export function platformFilePaths(config: Config, file: PlatformFile): string[] {

@@ -1,17 +1,17 @@
-import { CliError } from '../../cli-error.js';
-import { renderTemplate } from '../../templating/index.js';
-import { applyWiring } from '../apply-wiring.js';
-import { declarePermission } from '../declare-permission.js';
-import { emit } from '../emit.js';
-import { isDeclared } from '../is-declared.js';
-import type { Kind } from '../kind.js';
-import { label } from '../label.js';
-import { markPolicyQuestions } from '../mark-policy-questions.js';
-import { named } from '../named.js';
-import { openScope } from '../open-scope.js';
-import { permissionNamed } from '../permission-named.js';
-import { vars } from '../vars.js';
-import { platformPath } from '../platform-path.js';
+import { CliError } from '../../cli-error';
+import { renderTemplate } from '../../templating';
+import { applyWiring } from '../apply-wiring';
+import { declarePermission } from '../declare-permission';
+import { emit } from '../emit';
+import { isDeclared } from '../is-declared';
+import type { Kind } from '../kind';
+import { label } from '../label';
+import { markPolicyQuestions } from '../mark-policy-questions';
+import { named } from '../named';
+import { openScope } from '../open-scope';
+import { permissionNamed } from '../permission-named';
+import { vars } from '../vars';
+import { platformPath } from '../platform-path';
 
 export const policyKind: Kind = {
   name: 'policy',

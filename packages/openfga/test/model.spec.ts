@@ -1,14 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { defineSchema } from '@ddd-ts-kit/auth/rebac';
-import {
-  OpenFgaModelError,
-  authorizationModelOf,
-  ensureAuthorizationModel,
-  modelDrift,
-  relationNameOf,
-} from '../src/index.js';
-import { schema } from './support/documents.js';
-import { InMemoryOpenFga } from './support/in-memory-open-fga.js';
+import { OpenFgaModelError, authorizationModelOf, ensureAuthorizationModel, modelDrift, relationNameOf } from '../src';
+import { schema } from './support/documents';
+import { InMemoryOpenFga } from './support/in-memory-open-fga';
 
 describe('authorizationModelOf', () => {
   it('writes each relation as directly assignable to the subjects it lists, and each derived relation as its rewrite', () => {

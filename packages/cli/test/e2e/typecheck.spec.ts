@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { scaffoldEverything, tempDir } from '../helpers.js';
-import { label, SLOW, STACKS } from './stacks.js';
-import { typeErrors } from './type-errors.js';
+import { scaffoldEverything, tempDir } from '../helpers';
+import { label, SLOW, STACKS } from './stacks';
+import { typeErrors } from './type-errors';
 
 // Left out: jest (its types are not installed in this workspace), prisma (its client has to be
 // generated first) and typeorm (not installed at the workspace root).

@@ -1,5 +1,5 @@
-import { CliError } from '../cli-error.js';
-import { runGit } from '../commit/run-git.js';
+import { CliError } from '../cli-error';
+import { runGit } from '../commit/run-git';
 
 /**
  * Refuses a branch that does not contain the base: a worker on it would build on a stale

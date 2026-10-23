@@ -1,4 +1,4 @@
-import type { OpenFgaApi, OpenFgaTupleKey } from '../../src/index.js';
+import type { OpenFgaApi, OpenFgaTupleKey } from '../../src';
 
 const keyOf = ({ user, relation, object }: OpenFgaTupleKey): string => `${object}#${relation}@${user}`;
 

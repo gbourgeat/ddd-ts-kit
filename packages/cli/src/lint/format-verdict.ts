@@ -1,4 +1,4 @@
-import type { LintVerdict } from './lint-verdict.js';
+import type { LintVerdict } from './lint-verdict';
 
 /** The lines `ddd-ts-kit lint` adds after the report of ESLint: why it fails, and what is left to fix before an upgrade. */
 export function formatVerdict({ errors, warnings, inTransition }: LintVerdict): string[] {

@@ -1,4 +1,4 @@
-import { glossaryCells } from './glossary-cells.js';
+import { glossaryCells } from './glossary-cells';
 
 const GLOSSARY_HEADING = '## Ubiquitous language';
 

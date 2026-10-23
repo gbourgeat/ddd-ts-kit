@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Project } from '../model/project.js';
-import type { SourceFile } from '../model/source-file.js';
-import { loadSourceFile } from './load-source-file.js';
+import type { Project } from '../model/project';
+import type { SourceFile } from '../model/source-file';
+import { loadSourceFile } from './load-source-file';
 
 const readFromDisk = new WeakMap<Project, Map<string, SourceFile | undefined>>();
 

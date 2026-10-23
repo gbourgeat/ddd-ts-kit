@@ -1,12 +1,12 @@
-import { genericWordsOf } from '../business-names/generic-words-of.js';
-import { judgesNames } from '../business-names/judges-names.js';
-import type { NamedBinding } from '../business-names/named-binding.js';
-import { namedBindings } from '../business-names/named-bindings.js';
-import { suggestedName } from '../business-names/suggested-name.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { perFile } from '../support/per-file.js';
+import { genericWordsOf } from '../business-names/generic-words-of';
+import { judgesNames } from '../business-names/judges-names';
+import type { NamedBinding } from '../business-names/named-binding';
+import { namedBindings } from '../business-names/named-bindings';
+import { suggestedName } from '../business-names/suggested-name';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { perFile } from '../support/per-file';
 
 const WHY =
   'the code of the model speaks the ubiquitous language of its context, and a generic word hides which concept the value is';

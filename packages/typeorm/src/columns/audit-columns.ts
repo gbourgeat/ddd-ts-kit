@@ -1,8 +1,8 @@
 import type { EntitySchemaColumnOptions } from 'typeorm';
 import type { AuditStamp } from '@ddd-ts-kit/kernel';
-import { INDEXABLE_LENGTH } from './indexable-length.js';
-import { INSTANT } from './instant.js';
-import type { TypeOrmDialect } from './type-orm-dialect.js';
+import { INDEXABLE_LENGTH } from './indexable-length';
+import { INSTANT } from './instant';
+import type { TypeOrmDialect } from './type-orm-dialect';
 
 /**
  * The four audit columns, to spread into the `columns` of an `EntitySchema`. Their properties

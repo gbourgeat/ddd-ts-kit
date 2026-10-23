@@ -1,7 +1,7 @@
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { DomainEventCallback } from '../events/domain-event-callback.js';
-import type { DomainEventPhase } from '../events/domain-event-phase.js';
-import type { DomainEventSubscription } from '../events/domain-event-subscription.js';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { DomainEventCallback } from '../events/domain-event-callback';
+import type { DomainEventPhase } from '../events/domain-event-phase';
+import type { DomainEventSubscription } from '../events/domain-event-subscription';
 
 /**
  * In-context reactions to what the aggregates recorded. Cross-context reactions use

@@ -1,4 +1,4 @@
-import type { HandlerDependency } from './handler-dependency.js';
+import type { HandlerDependency } from './handler-dependency';
 
 const KERNEL = '@ddd-ts-kit/kernel';
 const TRUSTED_PACKAGES = [KERNEL, '@ddd-ts-kit/auth'];

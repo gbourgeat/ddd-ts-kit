@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { stringifyContract } from '../src/contracts/stringify-contract.js';
-import { toYaml } from '../src/yaml/to-yaml.js';
-import { readYaml } from './support/read-yaml.js';
-import { AWKWARD, MISREAD, SHAPES, TEXTS } from './support/yaml-samples.js';
+import { stringifyContract } from '../src/contracts/stringify-contract';
+import { toYaml } from '../src/yaml/to-yaml';
+import { readYaml } from './support/read-yaml';
+import { AWKWARD, MISREAD, SHAPES, TEXTS } from './support/yaml-samples';
 
 describe('toYaml', () => {
   it('writes maps and lists in block style, two spaces per level, a map in a list after its dash', () => {

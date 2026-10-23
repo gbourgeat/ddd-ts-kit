@@ -1,5 +1,5 @@
-import { citationLine } from './citation-line.js';
-import type { CitationsAtRef } from './stale-names-at.js';
+import { citationLine } from './citation-line';
+import type { CitationsAtRef } from './stale-names-at';
 
 /** Past this many rows, the report counts them instead of naming them. */
 const NAMED_ROWS = 5;

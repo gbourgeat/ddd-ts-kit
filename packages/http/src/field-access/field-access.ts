@@ -1,5 +1,5 @@
 import { schemaBehind, type Schema } from '@ddd-ts-kit/validation';
-import type { FieldAccessEntry } from './field-access-entry.js';
+import type { FieldAccessEntry } from './field-access-entry';
 
 interface Registry {
   readonly fields: WeakMap<Schema<unknown>, readonly FieldAccessEntry[]>;

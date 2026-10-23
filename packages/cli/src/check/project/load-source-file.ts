@@ -1,10 +1,10 @@
-import type { Config } from '../../config/index.js';
-import type { SourceFile } from '../model/source-file.js';
-import { scan } from '../scan/scan.js';
-import { readStructure, type Structure } from '../structure/read-structure.js';
-import { isTestFile } from './is-test-file.js';
-import { locate } from './locate.js';
-import { resolveImport } from './resolve-import.js';
+import type { Config } from '../../config';
+import type { SourceFile } from '../model/source-file';
+import { scan } from '../scan/scan';
+import { readStructure, type Structure } from '../structure/read-structure';
+import { isTestFile } from './is-test-file';
+import { locate } from './locate';
+import { resolveImport } from './resolve-import';
 
 /** What the rules read of one source: where it is, its blanked code, its imports and, on first use, its declarations. */
 export function loadSourceFile(config: Config, file: string, text: string): SourceFile {

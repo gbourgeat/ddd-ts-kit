@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { typeRootName } from './type-root-name.js';
+import { typeRootName } from './type-root-name';
 
 const WRAPPERS = new Set(['Readonly', 'Partial', 'Required']);
 

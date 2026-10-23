@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { methodChain } from '../calls/method-chain.js';
+import { methodChain } from '../calls/method-chain';
 
 interface RegisteredJob {
   /** The `job(name, ..)` call of the statement. */

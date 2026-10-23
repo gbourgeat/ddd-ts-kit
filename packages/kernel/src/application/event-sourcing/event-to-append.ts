@@ -1,4 +1,4 @@
-import type { StoredData } from './stored-data.js';
+import type { StoredData } from './stored-data';
 
 /** An event as the store is handed it: serialized, not yet placed in its stream. */
 export interface EventToAppend {

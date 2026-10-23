@@ -1,10 +1,10 @@
-import { CONTEXT_DOC_HEADINGS } from '../canonical/context-doc-headings.js';
-import { aggregate } from './aggregate.js';
-import { contextDoc } from './context-doc.js';
-import type { Fixture } from './fixture.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { SAMPLES } from './samples.js';
+import { CONTEXT_DOC_HEADINGS } from '../canonical/context-doc-headings';
+import { aggregate } from './aggregate';
+import { contextDoc } from './context-doc';
+import type { Fixture } from './fixture';
+import { PATHS } from './paths';
+import { project } from './project';
+import { SAMPLES } from './samples';
 
 const { AGGREGATE, BILLING, EVENT } = PATHS;
 const { SPEC } = SAMPLES;

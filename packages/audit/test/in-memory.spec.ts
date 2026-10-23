@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { InMemoryAuditTrail } from '../src/index.js';
-import { auditTrailContract } from '../src/testing.js';
+import { InMemoryAuditTrail } from '../src';
+import { auditTrailContract } from '../src/testing';
 
 const runner = { describe, it, expect, beforeEach };
 

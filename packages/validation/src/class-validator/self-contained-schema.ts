@@ -1,8 +1,8 @@
 import { defaultMetadataStorage } from 'class-transformer/cjs/storage.js';
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
-import type { JsonSchema } from '../json-schema.js';
-import { DEFINITIONS_POINTER } from '../shared/definitions-pointer.js';
-import type { DtoClass } from './dto-class.js';
+import type { JsonSchema } from '../json-schema';
+import { DEFINITIONS_POINTER } from '../shared/definitions-pointer';
+import type { DtoClass } from './dto-class';
 
 type SchemasByName = Record<string, JsonSchema>;
 

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { cli, read, tempDir } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { NPM } from './support/npm.js';
-import { jsonAt } from './support/json-at.js';
-import { readJson } from './support/read-json.js';
-import { stringsAt } from './support/strings-at.js';
-import { textsAt } from './support/texts-at.js';
-import { KIT_RANGE } from './support/kit-range.js';
+import { cli, read, tempDir } from './helpers';
+import { initProject } from './support/init-project';
+import { NPM } from './support/npm';
+import { jsonAt } from './support/json-at';
+import { readJson } from './support/read-json';
+import { stringsAt } from './support/strings-at';
+import { textsAt } from './support/texts-at';
+import { KIT_RANGE } from './support/kit-range';
 
 const manifest = (root: string): unknown => readJson(root, 'package.json');
 

@@ -1,18 +1,18 @@
 import { describeToken } from '@ddd-ts-kit/kernel/declarations';
-import { WiringError } from '../errors/wiring-error.js';
-import { TokenMap } from '../token/token-map.js';
-import type { BackgroundJobRegistration } from './background-job-registration.js';
-import type { Binding } from './binding.js';
-import type { DomainEventHandling } from './domain-event-handling.js';
-import type { EdgeBinding } from './edge-binding.js';
-import type { EventConsumption } from './event-consumption.js';
-import type { JobRegistration } from './job-registration.js';
-import type { KindAspect } from './kind-aspect.js';
-import type { MessageHandling } from './message-handling.js';
-import type { PolicyBinding } from './policy-binding.js';
-import type { ProjectionRegistration } from './projection-registration.js';
-import { whereOf } from './where-of.js';
-import type { Wiring } from './wiring.js';
+import { WiringError } from '../errors/wiring-error';
+import { TokenMap } from '../token/token-map';
+import type { BackgroundJobRegistration } from './background-job-registration';
+import type { Binding } from './binding';
+import type { DomainEventHandling } from './domain-event-handling';
+import type { EdgeBinding } from './edge-binding';
+import type { EventConsumption } from './event-consumption';
+import type { JobRegistration } from './job-registration';
+import type { KindAspect } from './kind-aspect';
+import type { MessageHandling } from './message-handling';
+import type { PolicyBinding } from './policy-binding';
+import type { ProjectionRegistration } from './projection-registration';
+import { whereOf } from './where-of';
+import type { Wiring } from './wiring';
 
 /** The wiring while the modules declare it: every addition is checked against what is already there. */
 export class WiringDraft {

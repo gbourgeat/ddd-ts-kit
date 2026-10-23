@@ -7,10 +7,10 @@ import {
   type Sampler,
   type SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
-import { LocalRootTracker } from '../local-root/local-root-tracker.js';
-import type { SpanNode } from './span-node.js';
-import { spanTreeOf } from './span-tree-of.js';
-import { StartOrder } from './start-order.js';
+import { LocalRootTracker } from '../local-root/local-root-tracker';
+import type { SpanNode } from './span-node';
+import { spanTreeOf } from './span-tree-of';
+import { StartOrder } from './start-order';
 
 export interface TestTracingOptions {
   /** Run after the local root tracker and before the spans are collected, as `extraSpanProcessors` of `initTracing` are. */

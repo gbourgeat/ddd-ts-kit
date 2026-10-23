@@ -1,4 +1,4 @@
-import { NOISE_PATHS } from './noise-paths.js';
+import { NOISE_PATHS } from './noise-paths';
 
 /** Whether the path, without its query string, is one of the noise paths or below one of them. */
 export function isNoisePath(url: string, paths: readonly string[] = NOISE_PATHS): boolean {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { executeRoute, type RawRequest, type Route } from '../src/index.js';
-import { generateOpenApi } from '../src/openapi.js';
-import { openApiDocsRoutes } from '../src/docs.js';
+import { executeRoute, type RawRequest, type Route } from '../src';
+import { generateOpenApi } from '../src/openapi';
+import { openApiDocsRoutes } from '../src/docs';
 
 const request: RawRequest = { params: {}, query: {}, headers: {}, body: undefined, raw: undefined };
 const document = generateOpenApi({ info: { title: 'Orders <API>', version: '1.0.0' }, routes: [] });

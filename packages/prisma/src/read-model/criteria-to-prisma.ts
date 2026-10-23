@@ -1,6 +1,6 @@
 import type { CriteriaPlan } from '@ddd-ts-kit/kernel';
-import { predicateToPrisma } from './predicate-to-prisma.js';
-import type { PrismaCriteria } from './prisma-criteria.js';
+import { predicateToPrisma } from './predicate-to-prisma';
+import type { PrismaCriteria } from './prisma-criteria';
 
 /**
  * Turns a criteria plan into the arguments of a `findMany` on the model of a read model:

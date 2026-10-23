@@ -1,15 +1,15 @@
-import type { FieldJudge } from '../field-access/field-judge.js';
-import type { FieldTree } from '../field-access/field-tree.js';
-import type { SchemaNode } from '../schema/schema-node.js';
-import { isRecord } from '../support/is-record.js';
-import { constraintsOf } from './constraints-of.js';
-import type { FieldBlock } from './field-block.js';
-import type { FieldHint } from './field-hint.js';
-import type { FormBlock } from './form-block.js';
-import type { FormGroupHint } from './form-group-hint.js';
-import type { FormHints } from './form-hints.js';
-import type { FieldLookup } from './field-lookup.js';
-import { widgetOf } from './widget-of.js';
+import type { FieldJudge } from '../field-access/field-judge';
+import type { FieldTree } from '../field-access/field-tree';
+import type { SchemaNode } from '../schema/schema-node';
+import { isRecord } from '../support/is-record';
+import { constraintsOf } from './constraints-of';
+import type { FieldBlock } from './field-block';
+import type { FieldHint } from './field-hint';
+import type { FormBlock } from './form-block';
+import type { FormGroupHint } from './form-group-hint';
+import type { FormHints } from './form-hints';
+import type { FieldLookup } from './field-lookup';
+import { widgetOf } from './widget-of';
 
 const MAX_DEPTH = 8;
 

@@ -1,6 +1,6 @@
-import { contextAlias, specifierSuffix } from '../../alias/index.js';
-import type { EventNames } from '../event-names.js';
-import type { Scope } from '../scope.js';
+import { contextAlias, specifierSuffix } from '../../alias';
+import type { EventNames } from '../event-names';
+import type { Scope } from '../scope';
 
 const EVENT_SOURCED = /\bextends\s+EventSourcedAggregate\b/;
 

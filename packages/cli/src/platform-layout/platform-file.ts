@@ -1,4 +1,4 @@
-import type { PLATFORM_LAYOUT } from './platform-layout.js';
+import type { PLATFORM_LAYOUT } from './platform-layout';
 
 type Placed<Files> = Files extends Readonly<Record<string, infer Path>> ? Path : never;
 

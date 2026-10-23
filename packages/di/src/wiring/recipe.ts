@@ -1,6 +1,6 @@
 import type { Token } from '@ddd-ts-kit/kernel/declarations';
-import type { Binding } from './binding.js';
-import type { Resolve } from './resolve.js';
+import type { Binding } from './binding';
+import type { Resolve } from './resolve';
 
 /** How a binding makes what it is asked for: the part of a binding its source decides. */
 export type Recipe = Pick<Binding, 'source' | 'implementation' | 'dependencies' | 'create'>;

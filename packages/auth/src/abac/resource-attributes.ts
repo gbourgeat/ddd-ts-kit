@@ -1,5 +1,5 @@
-import type { ResourceRef } from '../authorization/resource-ref.js';
-import type { ResourceAttributeValues } from './resource-attribute-values.js';
+import type { ResourceRef } from '../authorization/resource-ref';
+import type { ResourceAttributeValues } from './resource-attribute-values';
 
 /** Where the attributes of an element come from: a projection, a cache, the owning context. */
 export abstract class ResourceAttributes {

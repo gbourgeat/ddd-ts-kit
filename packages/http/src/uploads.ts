@@ -1,2 +1,2 @@
-export type { MultipartLimits } from './uploads/multipart-limits.js';
-export { multipartUploads } from './uploads/multipart-uploads.js';
+export type { MultipartLimits } from './uploads/multipart-limits';
+export { multipartUploads } from './uploads/multipart-uploads';

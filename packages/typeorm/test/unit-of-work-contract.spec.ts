@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { unitOfWorkContract } from '@ddd-ts-kit/testing/contracts';
-import { TypeOrmOutboxStore, createTypeOrmUnitOfWork, outboxEntity } from '../src/index.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
+import { TypeOrmOutboxStore, createTypeOrmUnitOfWork, outboxEntity } from '../src';
+import { createDatabase, type TestDatabase } from './support/database';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const outbox = outboxEntity();

@@ -1,7 +1,7 @@
-import type { BackgroundJobType } from '../background/background-job-type.js';
-import type { EnqueueOptions } from '../background/enqueue-options.js';
-import type { EnqueuedJob } from '../background/enqueued-job.js';
-import type { QueuedJob } from '../background/queued-job.js';
+import type { BackgroundJobType } from '../background/background-job-type';
+import type { EnqueueOptions } from '../background/enqueue-options';
+import type { EnqueuedJob } from '../background/enqueued-job';
+import type { QueuedJob } from '../background/queued-job';
 
 /**
  * Hands work to a worker. Called inside the unit of work of a command, the job is added with

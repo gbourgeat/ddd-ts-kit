@@ -1,6 +1,6 @@
-import { CliError } from '../../../cli-error.js';
-import type { Name } from '../../../naming/index.js';
-import type { CommandInput } from '../job/command-input.js';
+import { CliError } from '../../../cli-error';
+import type { Name } from '../../../naming';
+import type { CommandInput } from '../job/command-input';
 
 /** A field of the payload of a background job, and how the job hands it to its command. */
 export interface PayloadField {

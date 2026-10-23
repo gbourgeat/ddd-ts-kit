@@ -1,5 +1,5 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import { definePermissions, type Decision, type Permission, type ResourceRef } from '../../src/index.js';
+import { definePermissions, type Decision, type Permission, type ResourceRef } from '../../src';
 import {
   InMemoryRelationTupleStore,
   RelationBasedAuthorizer,
@@ -7,7 +7,7 @@ import {
   via,
   type RelationBasedAuthorizerOptions,
   type RelationTuple,
-} from '../../src/rebac.js';
+} from '../../src/rebac';
 
 export const docsPermissions = definePermissions('docs', {
   'document.edit': { description: 'Change a document' },

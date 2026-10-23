@@ -1,5 +1,5 @@
-import { FileError } from './file-error.js';
-import { isFileKey } from './is-file-key.js';
+import { FileError } from './file-error';
+import { isFileKey } from './is-file-key';
 
 /** For a connector: refuses a key `isFileKey` refuses, before anything is touched. */
 export function assertFileKey(key: string): string {

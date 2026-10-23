@@ -1,8 +1,8 @@
-import { AUDIT_CHAINS_TABLE } from './audit-chains-table-name.js';
-import { AUDIT_ENTRIES_TABLE } from './audit-entries-table-name.js';
-import { auditGuardSql } from './audit-guard-sql.js';
-import type { AuditTablesOptions } from './audit-tables-options.js';
-import { named } from './named.js';
+import { AUDIT_CHAINS_TABLE } from './audit-chains-table-name';
+import { AUDIT_ENTRIES_TABLE } from './audit-entries-table-name';
+import { auditGuardSql } from './audit-guard-sql';
+import type { AuditTablesOptions } from './audit-tables-options';
+import { named } from './named';
 
 const ENTRY_COLUMNS = [
   '"id" text not null unique',

@@ -1,6 +1,6 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { FunctionNode } from '../functions/function-node.js';
-import { localBinding } from './local-binding.js';
+import type { FunctionNode } from '../functions/function-node';
+import { localBinding } from './local-binding';
 
 /** A function or a constant a module exports, with the node it is reported on. */
 export type ExportedBinding =

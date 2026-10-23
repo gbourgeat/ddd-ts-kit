@@ -1,5 +1,5 @@
-import { InMemoryDomainEventDispatcher, dispatchingOnSave, type DomainEvent } from '../../../src/index.js';
-import { InMemoryCarts } from './in-memory-carts.js';
+import { InMemoryDomainEventDispatcher, dispatchingOnSave, type DomainEvent } from '../../../src';
+import { InMemoryCarts } from './in-memory-carts';
 
 export interface Bench {
   readonly dispatcher: InMemoryDomainEventDispatcher;

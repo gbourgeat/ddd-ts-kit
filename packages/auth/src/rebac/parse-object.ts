@@ -1,5 +1,5 @@
-import type { ResourceRef } from '../authorization/resource-ref.js';
-import { InvalidTupleError } from './invalid-tuple-error.js';
+import type { ResourceRef } from '../authorization/resource-ref';
+import { InvalidTupleError } from './invalid-tuple-error';
 
 const OBJECT_PATTERN = /^([a-z][a-z0-9_-]*):([^#@\s]+)$/;
 

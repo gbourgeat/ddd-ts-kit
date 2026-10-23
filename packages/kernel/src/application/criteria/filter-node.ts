@@ -1,5 +1,5 @@
-import type { FieldValue } from './field-value.js';
-import type { FilterOperator } from './filter-operator.js';
+import type { FieldValue } from './field-value';
+import type { FilterOperator } from './filter-operator';
 
 export type FilterOperand = FieldValue | readonly FieldValue[];
 

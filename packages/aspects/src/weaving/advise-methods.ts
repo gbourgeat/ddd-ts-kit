@@ -1,14 +1,14 @@
-import type { AdviceFactory } from '../aspect/advice-factory.js';
-import type { AspectInfo } from '../aspect/aspect-info.js';
-import { advised } from './advised.js';
-import { fromOutside } from './from-outside.js';
-import { isWrappable } from './is-wrappable.js';
-import { knownAsync } from './known-async.js';
-import { LIFECYCLE_HOOKS } from './lifecycle-hooks.js';
-import type { Method } from './method.js';
-import { named } from './named.js';
-import { shadowed } from './shadowed.js';
-import { siteOf } from './site-of.js';
+import type { AdviceFactory } from '../aspect/advice-factory';
+import type { AspectInfo } from '../aspect/aspect-info';
+import { advised } from './advised';
+import { fromOutside } from './from-outside';
+import { isWrappable } from './is-wrappable';
+import { knownAsync } from './known-async';
+import { LIFECYCLE_HOOKS } from './lifecycle-hooks';
+import type { Method } from './method';
+import { named } from './named';
+import { shadowed } from './shadowed';
+import { siteOf } from './site-of';
 
 // A function standing in for another is asynchronous when the other is.
 const standsFor = new WeakMap<Method, Method>();

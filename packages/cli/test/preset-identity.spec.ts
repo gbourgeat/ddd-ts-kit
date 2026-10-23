@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { cli, read } from './helpers.js';
-import { initFailure } from './support/init-failure.js';
-import { initProject } from './support/init-project.js';
+import { cli, read } from './helpers';
+import { initFailure } from './support/init-failure';
+import { initProject } from './support/init-project';
 
 const CONTEXT = 'src/contexts/identity';
 

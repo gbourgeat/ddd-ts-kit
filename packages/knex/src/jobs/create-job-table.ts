@@ -1,9 +1,9 @@
 import type { Knex } from 'knex';
-import { INDEXABLE_LENGTH } from '../columns/indexable-length.js';
-import { INSTANT } from '../columns/instant.js';
-import { builderIn } from '../outbox/builder-in.js';
-import { JOB_TABLE } from './job-table-name.js';
-import type { JobTableOptions } from './job-table-options.js';
+import { INDEXABLE_LENGTH } from '../columns/indexable-length';
+import { INSTANT } from '../columns/instant';
+import { builderIn } from '../outbox/builder-in';
+import { JOB_TABLE } from './job-table-name';
+import type { JobTableOptions } from './job-table-options';
 
 /**
  * Creates the table of the background jobs, on PostgreSQL. Call it from a migration of the

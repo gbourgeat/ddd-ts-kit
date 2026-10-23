@@ -1,15 +1,15 @@
 import { whenCommitted, type EnqueuedJob, type QueuedJob } from '@ddd-ts-kit/kernel';
-import type { ClaimRequest } from './claim-request.js';
-import type { ClaimedJob } from './claimed-job.js';
-import type { JobFailure } from './job-failure.js';
-import type { JobLease } from './job-lease.js';
-import type { JobStoreStats } from './job-store-stats.js';
-import type { JobStore } from './job-store.js';
-import type { JobUpdate } from './job-update.js';
-import type { NewJob } from './new-job.js';
-import { plainJson } from './plain-json.js';
-import { queuedJobOf } from './queued-job-of.js';
-import type { StoredJob } from './stored-job.js';
+import type { ClaimRequest } from './claim-request';
+import type { ClaimedJob } from './claimed-job';
+import type { JobFailure } from './job-failure';
+import type { JobLease } from './job-lease';
+import type { JobStoreStats } from './job-store-stats';
+import type { JobStore } from './job-store';
+import type { JobUpdate } from './job-update';
+import type { NewJob } from './new-job';
+import { plainJson } from './plain-json';
+import { queuedJobOf } from './queued-job-of';
+import type { StoredJob } from './stored-job';
 
 const FINISHED: readonly string[] = ['succeeded', 'cancelled'];
 

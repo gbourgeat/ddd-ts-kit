@@ -1,14 +1,7 @@
 import { z } from 'zod';
 import type { Actor } from '@ddd-ts-kit/kernel';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
-import {
-  defineForm,
-  defineRoute,
-  formRoutes,
-  withFieldAccess,
-  type FieldDecider,
-  type RawRequest,
-} from '../../src/index.js';
+import { defineForm, defineRoute, formRoutes, withFieldAccess, type FieldDecider, type RawRequest } from '../../src';
 
 export const AppointmentKind = { consultation: 'consultation', followUp: 'follow-up' } as const;
 

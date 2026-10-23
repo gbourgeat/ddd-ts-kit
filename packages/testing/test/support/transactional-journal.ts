@@ -9,7 +9,7 @@ import {
   type StoredEvent,
   type UnitOfWork,
 } from '@ddd-ts-kit/kernel';
-import type { EventStoreUnderContract } from '../../src/contracts.js';
+import type { EventStoreUnderContract } from '../../src/contracts';
 
 interface Written {
   readonly events: StoredEvent[];

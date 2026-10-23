@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  declarationsFolderOf,
-  folderDeclarationsFile,
-  isDeclarationsFile,
-  renderDeclarations,
-} from '../src/declared/index.js';
+import { declarationsFolderOf, folderDeclarationsFile, isDeclarationsFile, renderDeclarations } from '../src/declared';
 
 describe('the role folder a role file rolls up to', () => {
   it('is the folder at <layer>/<folder>/, whatever the use case or the route below it', () => {

@@ -1,7 +1,7 @@
 import { isAnonymous } from '@ddd-ts-kit/kernel';
-import { UnauthorizedError } from '../../error/unauthorized-error.js';
-import type { GuardAdmission } from '../guard-admission.js';
-import type { Guard } from '../guard.js';
+import { UnauthorizedError } from '../../error/unauthorized-error';
+import type { GuardAdmission } from '../guard-admission';
+import type { Guard } from '../guard';
 
 /**
  * Lets through every caller the application authenticated, whoever it is; answers 401 to the

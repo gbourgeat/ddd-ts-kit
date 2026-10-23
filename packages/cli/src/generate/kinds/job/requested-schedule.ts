@@ -1,7 +1,7 @@
-import { CliError } from '../../../cli-error.js';
-import type { KindFlags } from '../../kind.js';
-import type { JobSchedule } from '../../schedule/job-schedule.js';
-import { jobScheduleProblem } from '../../schedule/job-schedule-problem.js';
+import { CliError } from '../../../cli-error';
+import type { KindFlags } from '../../kind';
+import type { JobSchedule } from '../../schedule/job-schedule';
+import { jobScheduleProblem } from '../../schedule/job-schedule-problem';
 
 const SAMPLE = '--every 15m, or --cron "0 7 * * 1-5" --time-zone Europe/Paris';
 

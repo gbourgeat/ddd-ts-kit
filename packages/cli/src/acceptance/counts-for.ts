@@ -1,5 +1,5 @@
-import type { AcceptanceGate } from './acceptance-gate.js';
-import type { AcceptanceProblem } from './acceptance-problem.js';
+import type { AcceptanceGate } from './acceptance-gate';
+import type { AcceptanceProblem } from './acceptance-problem';
 
 /** True when the problem keeps a story from the gate; without a gate, only the inconsistencies count. */
 export function countsFor(problem: AcceptanceProblem, gate: AcceptanceGate | undefined): boolean {

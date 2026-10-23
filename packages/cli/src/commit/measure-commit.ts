@@ -1,8 +1,8 @@
-import type { Config } from '../config/index.js';
-import type { CommitSize, SliceSize } from './commit-size.js';
-import { isDerived } from './is-derived.js';
-import { readChanges } from './read-changes.js';
-import { sliceOf } from './slice-of.js';
+import type { Config } from '../config';
+import type { CommitSize, SliceSize } from './commit-size';
+import { isDerived } from './is-derived';
+import { readChanges } from './read-changes';
+import { sliceOf } from './slice-of';
 
 /** Measures what is about to be committed in the project at `root`, with the counting rules of the editor hook of the plugin. */
 export function measureCommit(root: string, config: Config, staged: boolean): CommitSize {

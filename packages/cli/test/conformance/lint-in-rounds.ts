@@ -1,7 +1,7 @@
-import type { ExampleCopy } from './example-copy.js';
-import type { Finding } from './finding.js';
-import type { Injection } from './injection.js';
-import { PATHS } from './paths.js';
+import type { ExampleCopy } from './example-copy';
+import type { Finding } from './finding';
+import type { Injection } from './injection';
+import { PATHS } from './paths';
 
 /**
  * What ESLint says of each injection, by rule id. One ESLint run costs seconds whatever the number

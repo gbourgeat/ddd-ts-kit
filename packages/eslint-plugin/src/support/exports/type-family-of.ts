@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { ModuleShape } from './module-shape.js';
+import type { ModuleShape } from './module-shape';
 
 /**
  * The one type every exported function of the module returns, when there is one: a type with

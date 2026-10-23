@@ -1,5 +1,5 @@
 import type { AuditEntry } from '@ddd-ts-kit/kernel';
-import { identifier, joined, sql, type Sql } from './sql.js';
+import { identifier, joined, sql, type Sql } from './sql';
 
 const COLUMNS = [
   'id',

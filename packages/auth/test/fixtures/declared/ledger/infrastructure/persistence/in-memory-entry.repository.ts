@@ -1,6 +1,6 @@
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import type { Entry } from '../../domain/entry.js';
-import { EntryRepository } from '../../domain/repositories/entry.repository.js';
+import type { Entry } from '../../domain/entry';
+import { EntryRepository } from '../../domain/repositories/entry.repository';
 
 @Repository(EntryRepository)
 export class InMemoryEntryRepository implements EntryRepository {

@@ -1,6 +1,6 @@
-import { headerOf } from './headers.js';
-import { type Json, millisecondsOf, numberIn } from './json.js';
-import { subjectMatches } from './subjects.js';
+import { headerOf } from './headers';
+import { type Json, millisecondsOf, numberIn } from './json';
+import { subjectMatches } from './subjects';
 
 export interface StoredMessage {
   readonly seq: number;

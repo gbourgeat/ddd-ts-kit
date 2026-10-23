@@ -1,24 +1,24 @@
-import type { Slice } from '../progress/slice.js';
-import type { Workspace } from '../workspace/index.js';
-import { ACCEPTANCE_DIR, acceptanceFileOf } from './acceptance-file-of.js';
-import type { AcceptanceProblem } from './acceptance-problem.js';
-import { type Criterion, criteriaIn } from './criteria-in.js';
-import { lockFileOf } from './lock-file-of.js';
-import { readLock } from './read-lock.js';
-import { readVerdicts } from './read-verdicts.js';
-import { lockProblems } from './lock-problems.js';
-import { readRegression } from './read-regression.js';
-import { regressionFilesIn } from './regression-files-in.js';
-import { regressionProblems } from './regression-problems.js';
-import type { RegressionSpec } from './regression-spec.js';
-import type { Scenario } from './scenario.js';
-import { scenarioProblems } from './scenario-problems.js';
-import { scenariosIn } from './scenarios-in.js';
-import type { RowAcceptance, StoryAcceptance } from './story-acceptance.js';
-import { STORIES_DIR, storyFileOf } from './story-file-of.js';
-import { storyOfFile } from './story-of-file.js';
-import { storyOfRow } from './story-of-row.js';
-import { type StoryParts, storyProblems } from './story-problems.js';
+import type { Slice } from '../progress/slice';
+import type { Workspace } from '../workspace';
+import { ACCEPTANCE_DIR, acceptanceFileOf } from './acceptance-file-of';
+import type { AcceptanceProblem } from './acceptance-problem';
+import { type Criterion, criteriaIn } from './criteria-in';
+import { lockFileOf } from './lock-file-of';
+import { readLock } from './read-lock';
+import { readVerdicts } from './read-verdicts';
+import { lockProblems } from './lock-problems';
+import { readRegression } from './read-regression';
+import { regressionFilesIn } from './regression-files-in';
+import { regressionProblems } from './regression-problems';
+import type { RegressionSpec } from './regression-spec';
+import type { Scenario } from './scenario';
+import { scenarioProblems } from './scenario-problems';
+import { scenariosIn } from './scenarios-in';
+import type { RowAcceptance, StoryAcceptance } from './story-acceptance';
+import { STORIES_DIR, storyFileOf } from './story-file-of';
+import { storyOfFile } from './story-of-file';
+import { storyOfRow } from './story-of-row';
+import { type StoryParts, storyProblems } from './story-problems';
 
 /**
  * The acceptance of every story of slices.md, of every acceptance spec and of every fix (a story

@@ -1,4 +1,4 @@
-import type { ExecuteOptions, Route } from '../../src/index.js';
+import type { ExecuteOptions, Route } from '../../src';
 
 export interface RunningServer {
   readonly url: string;

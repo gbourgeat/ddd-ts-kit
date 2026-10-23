@@ -8,8 +8,8 @@ import {
   whenCommitted,
   type BackgroundJob,
   type BackgroundJobOptions,
-} from '../src/index.js';
-import { Background, DeclarationError, declarationOf } from '../src/declarations.js';
+} from '../src';
+import { Background, DeclarationError, declarationOf } from '../src/declarations';
 
 describe('the options of a background job', () => {
   it('fill in five attempts, an exponential backoff from one second to five minutes and a lease of thirty seconds', () => {

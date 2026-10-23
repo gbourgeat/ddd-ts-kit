@@ -1,5 +1,5 @@
 import { deepStrictEqual } from 'node:assert';
-import type { HttpResponse } from './http-response.js';
+import type { HttpResponse } from './http-response';
 
 export interface ExpectedProblem {
   readonly status: number;

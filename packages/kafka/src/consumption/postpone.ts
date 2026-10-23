@@ -1,6 +1,6 @@
 import type { KafkaJS } from '@confluentinc/kafka-javascript';
-import { ignore } from '../ignore.js';
-import { DeliveryPostponed } from './delivery-postponed.js';
+import { ignore } from '../ignore';
+import { DeliveryPostponed } from './delivery-postponed';
 
 type Delivery = KafkaJS.EachMessagePayload;
 

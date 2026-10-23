@@ -1,4 +1,4 @@
-import type { BindingAspectInfo } from './binding-aspect-info.js';
+import type { BindingAspectInfo } from './binding-aspect-info';
 
 /**
  * Cross-cutting behaviour put around one binding: it answers the instance or a stand-in of the

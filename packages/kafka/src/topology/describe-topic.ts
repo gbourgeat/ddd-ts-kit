@@ -1,5 +1,5 @@
-import type { TopicDescription } from './topic-description.js';
-import type { TopologySettings } from './topology-settings.js';
+import type { TopicDescription } from './topic-description';
+import type { TopologySettings } from './topology-settings';
 
 /** A topic with the partitions and the replication the bus creates its topics with. */
 export function describeTopic(

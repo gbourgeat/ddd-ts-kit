@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler, declarationOf } from '@ddd-ts-kit/kernel/declarations';
-import type { PayloadOf } from '../src/index.js';
-import { orderPlacedV1 } from './support/events.js';
+import type { PayloadOf } from '../src';
+import { orderPlacedV1 } from './support/events';
 
 type OrderPlaced = PayloadOf<typeof orderPlacedV1>;
 

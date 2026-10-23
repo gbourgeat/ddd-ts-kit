@@ -1,10 +1,10 @@
 import { SCRUBBED_MESSAGE, errorReportOf } from '@ddd-ts-kit/kernel';
 import { addBreadcrumb, getIsolationScope, type ErrorEvent } from '@sentry/node';
 import { afterEach, describe, expect, it } from 'vitest';
-import { scrubEvent, scrubRequest } from '../src/index.js';
-import { aTracker, type Tracker } from './support/a-tracker.js';
-import { LedgerUnavailable } from './support/ledger-unavailable.js';
-import { UniqueViolation } from './support/unique-violation.js';
+import { scrubEvent, scrubRequest } from '../src';
+import { aTracker, type Tracker } from './support/a-tracker';
+import { LedgerUnavailable } from './support/ledger-unavailable';
+import { UniqueViolation } from './support/unique-violation';
 
 const report = errorReportOf(undefined, { origin: 'http', operation: 'PlaceOrder' });
 const leaking = (): UniqueViolation => new UniqueViolation('Key (email)=(ada@example.org) already exists');

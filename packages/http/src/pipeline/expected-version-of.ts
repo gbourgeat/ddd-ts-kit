@@ -1,9 +1,9 @@
 import { PreconditionFailedError } from '@ddd-ts-kit/kernel';
-import { IfMatch } from '../cache/if-match.js';
-import { PreconditionRequiredError } from '../error/precondition-required-error.js';
-import type { RawHeaders } from '../route/raw-headers.js';
-import type { Route } from '../route/route.js';
-import { headerText } from '../support/header-text.js';
+import { IfMatch } from '../cache/if-match';
+import { PreconditionRequiredError } from '../error/precondition-required-error';
+import type { RawHeaders } from '../route/raw-headers';
+import type { Route } from '../route/route';
+import { headerText } from '../support/header-text';
 
 const ANY = '*';
 const VERSION_TAG = /^(?:W\/)?"(\d{1,15})"$/;

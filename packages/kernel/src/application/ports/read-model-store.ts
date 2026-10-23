@@ -1,7 +1,7 @@
-import type { ScopedCriteria } from '../criteria/scoped-criteria.js';
-import type { Page } from '../pagination/page.js';
-import type { EventStamp } from '../read-model/event-stamp.js';
-import type { ReadModelWrite } from '../read-model/read-model-write.js';
+import type { ScopedCriteria } from '../criteria/scoped-criteria';
+import type { Page } from '../pagination/page';
+import type { EventStamp } from '../read-model/event-stamp';
+import type { ReadModelWrite } from '../read-model/read-model-write';
 
 /**
  * The read model of one projection: rows by key, each remembering the event that last changed

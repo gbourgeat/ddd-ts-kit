@@ -1,5 +1,5 @@
-import type { CitationsAtRef } from '../citations/stale-names-at.js';
-import type { BriefedSlice } from './briefed-slice.js';
+import type { CitationsAtRef } from '../citations/stale-names-at';
+import type { BriefedSlice } from './briefed-slice';
 
 /** The place one worker builds one context in, and what to tell that worker. */
 export interface WorkerScope {

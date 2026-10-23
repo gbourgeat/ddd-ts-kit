@@ -1,4 +1,4 @@
-import type { UseCaseDeclaration } from './use-case-declaration.js';
+import type { UseCaseDeclaration } from './use-case-declaration';
 
 /** What every module declared about the access to its commands and queries, as data. */
 export abstract class UseCaseDeclarations {

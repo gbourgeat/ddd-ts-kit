@@ -1,6 +1,6 @@
-import type { StoredData } from '../../../application/event-sourcing/stored-data.js';
-import type { StoredJson } from '../../../application/event-sourcing/stored-json.js';
-import { UnreadableEventError } from '../../../application/event-sourcing/unreadable-event-error.js';
+import type { StoredData } from '../../../application/event-sourcing/stored-data';
+import type { StoredJson } from '../../../application/event-sourcing/stored-json';
+import { UnreadableEventError } from '../../../application/event-sourcing/unreadable-event-error';
 
 /** A `jsonb` column as the driver answered it, parsed when it came back as text, checked to be a JSON object. */
 export function storedDataFrom(value: unknown, where: string): StoredData {

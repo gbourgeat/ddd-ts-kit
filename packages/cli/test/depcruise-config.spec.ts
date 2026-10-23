@@ -2,12 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { parseConfig } from '../src/config/index.js';
-import { cruiseConfiguration } from '../src/depcruise/cruise-configuration.js';
-import { cli, read, REPO_ROOT, scaffoldEverything, tempDir, write } from './helpers.js';
-import { jsonAt } from './support/json-at.js';
-import { readJson } from './support/read-json.js';
-import { stringsAt } from './support/strings-at.js';
+import { parseConfig } from '../src/config';
+import { cruiseConfiguration } from '../src/depcruise/cruise-configuration';
+import { cli, read, REPO_ROOT, scaffoldEverything, tempDir, write } from './helpers';
+import { jsonAt } from './support/json-at';
+import { readJson } from './support/read-json';
+import { stringsAt } from './support/strings-at';
 
 const FILE = '.dependency-cruiser.cjs';
 

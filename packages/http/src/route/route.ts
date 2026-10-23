@@ -1,7 +1,7 @@
-import type { RouteAdmission } from './route-admission.js';
-import type { RouteInput } from './route-input.js';
-import type { RouteOutput } from './route-output.js';
-import type { RouteSpec } from './route-spec.js';
+import type { RouteAdmission } from './route-admission';
+import type { RouteInput } from './route-input';
+import type { RouteOutput } from './route-output';
+import type { RouteSpec } from './route-spec';
 
 /**
  * A declared route with its handler. The schema types are erased here so that routes of any

@@ -1,7 +1,7 @@
-import type { JobSchedule } from './job-schedule.js';
-import { parseCron } from './parse-cron.js';
-import { parseDuration } from './parse-duration.js';
-import type { ParsedJobSchedule } from './parsed-job-schedule.js';
+import type { JobSchedule } from './job-schedule';
+import { parseCron } from './parse-cron';
+import { parseDuration } from './parse-duration';
+import type { ParsedJobSchedule } from './parsed-job-schedule';
 
 /** Validates a schedule and answers it in the form occurrences are computed from. */
 export function parseJobSchedule(schedule: JobSchedule): ParsedJobSchedule {

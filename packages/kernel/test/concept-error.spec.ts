@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import { ConceptError, DomainError, InvariantViolation, isRefusal, unwrap, err, type CodeOf } from '../src/index.js';
-import { BookingError } from './support/booking-error.js';
+import { ConceptError, DomainError, InvariantViolation, isRefusal, unwrap, err, type CodeOf } from '../src';
+import { BookingError } from './support/booking-error';
 
 class WaitlistError extends ConceptError {
   static alreadyWaiting(patientId: string) {

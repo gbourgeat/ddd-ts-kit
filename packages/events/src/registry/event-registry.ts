@@ -1,6 +1,6 @@
-import type { AnyIntegrationEventDefinition } from '../definition/any-integration-event-definition.js';
-import { compareText } from '../internal/json-schema/compare-text.js';
-import { DuplicateEventDefinitionError } from './duplicate-event-definition-error.js';
+import type { AnyIntegrationEventDefinition } from '../definition/any-integration-event-definition';
+import { compareText } from '../internal/json-schema/compare-text';
+import { DuplicateEventDefinitionError } from './duplicate-event-definition-error';
 
 /** Every event a system publishes. Feeds validation, the AsyncAPI document and the catalog. */
 export class EventRegistry {

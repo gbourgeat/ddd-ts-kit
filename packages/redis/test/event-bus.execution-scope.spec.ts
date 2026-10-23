@@ -7,9 +7,9 @@ import {
   systemActor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
-import { InvoicingFailed, PLACED, anEvent, unique } from './support/events.js';
-import { REAL_SERVER, SERVER_URL } from './support/server.js';
-import { Server } from './support/streams.js';
+import { InvoicingFailed, PLACED, anEvent, unique } from './support/events';
+import { REAL_SERVER, SERVER_URL } from './support/server';
+import { Server } from './support/streams';
 
 describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, the execution scope of a handler', { timeout: 30_000 }, () => {
   let server: Server;

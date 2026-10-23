@@ -1,19 +1,19 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import { createErrorMapper } from '../error/create-error-mapper.js';
-import type { ErrorMapper } from '../error/error-mapper.js';
-import type { Representations } from '../representation/representations.js';
-import { assertUniqueRoutes } from '../route/assert-unique-routes.js';
-import type { HttpMethod } from '../route/http-method.js';
-import type { Route } from '../route/route.js';
-import { compare } from './compare.js';
-import { Definitions } from './definitions.js';
-import type { OpenApiDocument } from './open-api-document.js';
-import type { OpenApiInfo } from './open-api-info.js';
-import { openApiPath } from './open-api-path.js';
-import type { OpenApiServer } from './open-api-server.js';
-import { pathItems } from './path-items.js';
-import { PROBLEM_SCHEMA } from './problem-schema.js';
-import { requirement } from './requirement.js';
+import { createErrorMapper } from '../error/create-error-mapper';
+import type { ErrorMapper } from '../error/error-mapper';
+import type { Representations } from '../representation/representations';
+import { assertUniqueRoutes } from '../route/assert-unique-routes';
+import type { HttpMethod } from '../route/http-method';
+import type { Route } from '../route/route';
+import { compare } from './compare';
+import { Definitions } from './definitions';
+import type { OpenApiDocument } from './open-api-document';
+import type { OpenApiInfo } from './open-api-info';
+import { openApiPath } from './open-api-path';
+import type { OpenApiServer } from './open-api-server';
+import { pathItems } from './path-items';
+import { PROBLEM_SCHEMA } from './problem-schema';
+import { requirement } from './requirement';
 
 export interface GenerateOpenApiOptions {
   readonly info: OpenApiInfo;

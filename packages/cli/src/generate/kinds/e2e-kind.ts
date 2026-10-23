@@ -1,17 +1,17 @@
-import { readControllers } from '../../describe/read-controllers.js';
-import { fitStatement } from '../../layout/index.js';
-import { toName, type Name } from '../../naming/index.js';
-import type { RenderContext } from '../../templating/index.js';
-import { renderTemplate } from '../../templating/index.js';
-import type { Kind } from '../kind.js';
-import { label } from '../label.js';
-import { named } from '../named.js';
-import { openScope } from '../open-scope.js';
-import type { Scope } from '../scope.js';
-import { vars } from '../vars.js';
-import { reactionOf } from './e2e/reaction-of.js';
-import { tracedCommand } from './traced-command.js';
-import { declaredModules } from '../../model-modules/index.js';
+import { readControllers } from '../../describe/read-controllers';
+import { fitStatement } from '../../layout';
+import { toName, type Name } from '../../naming';
+import type { RenderContext } from '../../templating';
+import { renderTemplate } from '../../templating';
+import type { Kind } from '../kind';
+import { label } from '../label';
+import { named } from '../named';
+import { openScope } from '../open-scope';
+import type { Scope } from '../scope';
+import { vars } from '../vars';
+import { reactionOf } from './e2e/reaction-of';
+import { tracedCommand } from './traced-command';
+import { declaredModules } from '../../model-modules';
 
 export const e2eKind: Kind = {
   name: 'e2e',

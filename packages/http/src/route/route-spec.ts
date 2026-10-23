@@ -1,10 +1,10 @@
-import type { FormHints } from '../forms/form-hints.js';
-import type { CachePolicy } from '../cache/cache-policy.js';
-import type { IfMatch } from '../cache/if-match.js';
-import type { HttpMethod } from './http-method.js';
-import type { RequestSchemas } from './request-schemas.js';
-import type { ResponsesSpec } from './responses-spec.js';
-import type { UploadSpec } from './upload-spec.js';
+import type { FormHints } from '../forms/form-hints';
+import type { CachePolicy } from '../cache/cache-policy';
+import type { IfMatch } from '../cache/if-match';
+import type { HttpMethod } from './http-method';
+import type { RequestSchemas } from './request-schemas';
+import type { ResponsesSpec } from './responses-spec';
+import type { UploadSpec } from './upload-spec';
 
 export interface RouteSpec<
   Request extends RequestSchemas = RequestSchemas,

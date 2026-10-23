@@ -1,4 +1,4 @@
-import type { RelaySignal } from './relay-signal.js';
+import type { RelaySignal } from './relay-signal';
 
 export class InMemoryRelaySignal implements RelaySignal {
   private readonly listeners = new Set<() => void>();

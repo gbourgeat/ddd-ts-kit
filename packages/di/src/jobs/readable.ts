@@ -1,5 +1,5 @@
 import { InvalidJobScheduleError } from '@ddd-ts-kit/kernel';
-import { WiringError } from '../errors/wiring-error.js';
+import { WiringError } from '../errors/wiring-error';
 
 /** Reads a schedule or a policy of the job, and says which job when it cannot be read. */
 export function readable<T>(job: string, read: () => T): T {

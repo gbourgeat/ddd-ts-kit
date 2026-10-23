@@ -1,5 +1,5 @@
-import type { SourceFile } from '../../check/model/source-file.js';
-import { escapeRegExp } from '../../check/text/escape-reg-exp.js';
+import type { SourceFile } from '../../check/model/source-file';
+import { escapeRegExp } from '../../check/text/escape-reg-exp';
 
 export interface DeclaredKind {
   readonly kind: 'class' | 'interface' | 'type' | 'enum' | 'const' | 'function';

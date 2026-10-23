@@ -1,6 +1,6 @@
 import type { Clock } from '@ddd-ts-kit/kernel';
-import type { StateScope } from '../state/state-scope.js';
-import type { CircuitStateChange } from './circuit-state-change.js';
+import type { StateScope } from '../state/state-scope';
+import type { CircuitStateChange } from './circuit-state-change';
 
 export interface CircuitBreakerOptions {
   /** Consecutive failures that open the circuit. */

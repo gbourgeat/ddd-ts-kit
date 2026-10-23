@@ -1,6 +1,6 @@
-import { assertPastFact, eventName, toName, type Name } from '../naming/index.js';
-import { concept } from './concept.js';
-import type { Scope } from './scope.js';
+import { assertPastFact, eventName, toName, type Name } from '../naming';
+import { concept } from './concept';
+import type { Scope } from './scope';
 
 export interface EventNames {
   readonly aggregate: Name;

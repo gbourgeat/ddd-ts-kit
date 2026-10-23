@@ -1,5 +1,5 @@
 import path from 'node:path';
-import type { Candidate, RemovedBy, StaleCitation } from './stale-citation.js';
+import type { Candidate, RemovedBy, StaleCitation } from './stale-citation';
 
 const EVIDENCE: Readonly<Record<Candidate['evidence'], string>> = {
   renamed: 'renamed',

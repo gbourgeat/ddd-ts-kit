@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parseConfig } from '../src/config/index.js';
-import { planStaging } from '../src/slice/plan-staging.js';
+import { parseConfig } from '../src/config';
+import { planStaging } from '../src/slice/plan-staging';
 
 const config = parseConfig({
   contexts: { billing: { classification: 'core' }, shipping: { classification: 'supporting' } },

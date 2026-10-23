@@ -1,4 +1,4 @@
-import type { ProcessDecision } from './process-decision.js';
+import type { ProcessDecision } from './process-decision';
 
 /**
  * A class of `application/processes/`: a long-running process that reacts to events, keeps a

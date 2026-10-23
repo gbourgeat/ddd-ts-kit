@@ -1,4 +1,4 @@
-import { jsonAt } from './json-at.js';
+import { jsonAt } from './json-at';
 
 /** The keys a JSON object holds under a path of keys, in the order they were written. */
 export function keysAt(value: unknown, ...keys: readonly string[]): string[] {

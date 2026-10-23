@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { keysAt } from './support/keys-at.js';
-import { readJson } from './support/read-json.js';
-import { stringsAt } from './support/strings-at.js';
+import { cli, read, write } from './helpers';
+import { initProject } from './support/init-project';
+import { keysAt } from './support/keys-at';
+import { readJson } from './support/read-json';
+import { stringsAt } from './support/strings-at';
 
 const VALIDATION = '@ddd-ts-kit/validation';
 const BILLING = ['--context', 'billing:core'];

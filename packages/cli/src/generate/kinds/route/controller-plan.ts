@@ -1,5 +1,5 @@
-import type { RouteGroup } from './route-group.js';
-import type { RouteParts } from './route-vars.js';
+import type { RouteGroup } from './route-group';
+import type { RouteParts } from './route-vars';
 
 /** A controller about to be written: its route, its group, where it goes and what stands next to it. */
 export interface ControllerPlan extends RouteParts {

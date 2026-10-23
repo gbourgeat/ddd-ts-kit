@@ -1,12 +1,12 @@
-import type { Config } from '../config/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { CLIENTS_DIRECTORY } from './clients-directory.js';
-import { editJsonFile } from './edit-json-file.js';
-import type { PlannedClient } from './planned-client.js';
-import { sdkScripts } from './sdk-scripts.js';
-import { withClientPaths } from './with-client-paths.js';
-import { withEntry } from './with-entry.js';
-import { withKnipWorkspaces } from './with-knip-workspaces.js';
+import type { Config } from '../config';
+import type { Workspace } from '../workspace';
+import { CLIENTS_DIRECTORY } from './clients-directory';
+import { editJsonFile } from './edit-json-file';
+import type { PlannedClient } from './planned-client';
+import { sdkScripts } from './sdk-scripts';
+import { withClientPaths } from './with-client-paths';
+import { withEntry } from './with-entry';
+import { withKnipWorkspaces } from './with-knip-workspaces';
 
 const PACKAGES = `${CLIENTS_DIRECTORY}/*`;
 const PNPM_WORKSPACE = 'pnpm-workspace.yaml';

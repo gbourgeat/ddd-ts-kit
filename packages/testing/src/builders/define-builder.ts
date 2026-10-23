@@ -1,5 +1,5 @@
-import type { Defaults } from './defaults.js';
-import { GenericBuilder } from './generic-builder.js';
+import type { Defaults } from './defaults';
+import { GenericBuilder } from './generic-builder';
 
 /**
  * Functional form, for plain data (DTOs, payloads, value objects) that does not deserve a

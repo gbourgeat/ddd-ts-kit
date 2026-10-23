@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { searchedElements } from '../src/generate/searched-elements.js';
-import { plural, singular, toName } from '../src/naming/index.js';
+import { searchedElements } from '../src/generate/searched-elements';
+import { plural, singular, toName } from '../src/naming';
 
 describe('the names a generated search gives to its lines', () => {
   it('are the business words of the search, never item and items', () => {

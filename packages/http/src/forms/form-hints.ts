@@ -1,6 +1,6 @@
-import type { FieldHint } from './field-hint.js';
-import type { FormGroupHint } from './form-group-hint.js';
-import type { FormRequirement } from './form-requirement.js';
+import type { FieldHint } from './field-hint';
+import type { FormGroupHint } from './form-group-hint';
+import type { FormRequirement } from './form-requirement';
 
 /**
  * What a route adds to its request schema to be described as a form: `form` of `@Controller` or

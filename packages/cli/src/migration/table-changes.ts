@@ -1,5 +1,5 @@
-import type { SqlStatement } from './sql-statement.js';
-import type { TableChange } from './table-change.js';
+import type { SqlStatement } from './sql-statement';
+import type { TableChange } from './table-change';
 
 const NAME = String.raw`(?:"(?:[^"]|"")+"|[A-Za-z_][\w$]*)`;
 

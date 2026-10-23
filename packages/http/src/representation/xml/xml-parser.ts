@@ -1,6 +1,6 @@
-import { decodeEntities } from './decode-entities.js';
-import type { XmlElement } from './xml-element.js';
-import { XmlSyntaxError } from './xml-syntax-error.js';
+import { decodeEntities } from './decode-entities';
+import type { XmlElement } from './xml-element';
+import { XmlSyntaxError } from './xml-syntax-error';
 
 const NAME = /[\p{L}_:][\p{L}\p{N}._:-]*/uy;
 const SPACE = /\s*/y;

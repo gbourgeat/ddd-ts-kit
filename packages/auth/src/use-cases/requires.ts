@@ -1,8 +1,8 @@
 import type { Actored, Message, MessageType } from '@ddd-ts-kit/kernel';
-import type { AuthorizationContext } from '../authorization/authorization-context.js';
-import type { ResourceRef } from '../authorization/resource-ref.js';
-import type { Permission } from '../permissions/permission.js';
-import type { ProtectedUseCase } from './use-case-declaration.js';
+import type { AuthorizationContext } from '../authorization/authorization-context';
+import type { ResourceRef } from '../authorization/resource-ref';
+import type { Permission } from '../permissions/permission';
+import type { ProtectedUseCase } from './use-case-declaration';
 
 export interface RequirementOptions<M> {
   /** The element the message is about, when the right depends on it. */

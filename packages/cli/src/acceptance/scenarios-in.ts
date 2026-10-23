@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
-import { scan } from '../check/scan/scan.js';
-import type { StringRecord } from '../check/scan/string-record.js';
-import { commentless } from './commentless.js';
-import type { Scenario, ScenarioState } from './scenario.js';
+import { scan } from '../check/scan/scan';
+import type { StringRecord } from '../check/scan/string-record';
+import { commentless } from './commentless';
+import type { Scenario, ScenarioState } from './scenario';
 
 /** An `it` or `test` call up to the quote of its title, read in the code, where comments and literals are blanked. */
 const CALL = /\b(?:it|test)(?:\.(todo|skip|only|fails|failing|concurrent))?\(\s*['"`]/g;

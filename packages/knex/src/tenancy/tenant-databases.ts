@@ -1,6 +1,6 @@
 import knex, { type Knex } from 'knex';
 import { assertTenantId } from '@ddd-ts-kit/kernel';
-import type { TenantDatabasesOptions } from './tenant-databases-options.js';
+import type { TenantDatabasesOptions } from './tenant-databases-options';
 
 const DEFAULT_MAX_TENANTS = 20;
 

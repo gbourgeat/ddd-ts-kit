@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Change } from './change.js';
-import { runGit } from './run-git.js';
+import type { Change } from './change';
+import { runGit } from './run-git';
 
 const NUMSTAT = ['--numstat', '--no-renames', '--relative', '-z'];
 const COUNTED_FILE_BYTES = 1_000_000;

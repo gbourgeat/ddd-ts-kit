@@ -1,6 +1,6 @@
 import type { ParsedCron } from '@ddd-ts-kit/kernel';
-import { instantsOfWallTime } from './instants-of-wall-time.js';
-import { offsetAt } from './offset-at.js';
+import { instantsOfWallTime } from './instants-of-wall-time';
+import { offsetAt } from './offset-at';
 
 const MINUTE_MS = 60_000;
 const HOUR_MS = 3_600_000;

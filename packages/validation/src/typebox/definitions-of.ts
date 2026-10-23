@@ -1,7 +1,7 @@
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
-import type { JsonSchema } from '../json-schema.js';
-import { DEFINITIONS_POINTER } from '../shared/definitions-pointer.js';
-import { isRecord } from '../shared/is-record.js';
+import type { JsonSchema } from '../json-schema';
+import { DEFINITIONS_POINTER } from '../shared/definitions-pointer';
+import { isRecord } from '../shared/is-record';
 
 type Definitions = Record<string, JsonSchema>;
 

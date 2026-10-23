@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { Clock } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, describeToken, override, overrideForTests } from '../src/index.js';
-import { wiringFailure } from './support/failure.js';
-import { EpochClock } from './support/shop/epoch-clock.js';
-import { platform } from './support/shop/platform.module.js';
-import { ReserveStock } from './support/shop/reserve-stock.js';
-import { shop } from './support/shop/shop.module.js';
+import { createApplication, defineContextModule, describeToken, override, overrideForTests } from '../src';
+import { wiringFailure } from './support/failure';
+import { EpochClock } from './support/shop/epoch-clock';
+import { platform } from './support/shop/platform.module';
+import { ReserveStock } from './support/shop/reserve-stock';
+import { shop } from './support/shop/shop.module';
 
 describe('wiring errors', () => {
   it('rejects a port bound twice and names both modules', () => {

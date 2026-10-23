@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { cli, exists, read, write } from './helpers.js';
-import { git } from './support/git.js';
-import { BOTH_KEPT, INVOICE, PAY_AND_CANCEL, ROUTES, SLICES, SPEC, invoice, PAY } from './support/invoicing-merge.js';
-import { mergeRepository } from './support/merge-repository.js';
-import { goOn, lastMessage, mergeTrunk, merging, parents } from './support/trunk-history.js';
+import { cli, exists, read, write } from './helpers';
+import { git } from './support/git';
+import { BOTH_KEPT, INVOICE, PAY_AND_CANCEL, ROUTES, SLICES, SPEC, invoice, PAY } from './support/invoicing-merge';
+import { mergeRepository } from './support/merge-repository';
+import { goOn, lastMessage, mergeTrunk, merging, parents } from './support/trunk-history';
 
 const STATE = '.ddd-ts-kit/merge.json';
 

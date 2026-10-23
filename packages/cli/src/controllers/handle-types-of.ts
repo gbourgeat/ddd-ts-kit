@@ -1,5 +1,5 @@
-import { entriesOf } from './entries-of.js';
-import type { FunctionRoute } from './function-route.js';
+import { entriesOf } from './entries-of';
+import type { FunctionRoute } from './function-route';
 
 const PARTS = ['params', 'query', 'headers', 'body'];
 

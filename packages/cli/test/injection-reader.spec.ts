@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { loadSourceFile } from '../src/check/project/load-source-file.js';
-import { parseConfig } from '../src/config/index.js';
-import { generatedDrift, renderDeclarations, renderDependenciesFile, renderInjections } from '../src/declared/index.js';
-import { readInjections } from '../src/declared/injection/read-injections.js';
+import { loadSourceFile } from '../src/check/project/load-source-file';
+import { parseConfig } from '../src/config';
+import { generatedDrift, renderDeclarations, renderDependenciesFile, renderInjections } from '../src/declared';
+import { readInjections } from '../src/declared/injection/read-injections';
 
 const config = parseConfig({ contexts: { billing: { classification: 'core', upstreams: [] } } });
 const BILLING = 'src/contexts/billing';

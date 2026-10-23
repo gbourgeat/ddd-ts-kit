@@ -1,8 +1,8 @@
-import type { CodeOf } from './code-of.js';
-import { FactualRefusal } from './factual-refusal.js';
-import type { RefusalFacts } from './refusal-facts.js';
-import type { RefusalOf } from './refusal-of.js';
-import type { Refusal } from './refusal.js';
+import type { CodeOf } from './code-of';
+import { FactualRefusal } from './factual-refusal';
+import type { RefusalFacts } from './refusal-facts';
+import type { RefusalOf } from './refusal-of';
+import type { Refusal } from './refusal';
 
 /**
  * The errors of one concept of the model, each built by a static factory named in the words of

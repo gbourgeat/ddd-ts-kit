@@ -1,6 +1,6 @@
 import path from 'node:path';
-import type { Upstream } from '../config/index.js';
-import type { ContextDescription, ErrorFact, RouteFact } from './context-description.js';
+import type { Upstream } from '../config';
+import type { ContextDescription, ErrorFact, RouteFact } from './context-description';
 
 interface Table {
   readonly title: string;

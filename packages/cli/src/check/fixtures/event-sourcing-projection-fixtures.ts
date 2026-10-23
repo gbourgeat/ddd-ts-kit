@@ -1,8 +1,8 @@
-import type { Fixture } from './fixture.js';
-import type { FixtureFiles } from './fixture-files.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { source } from './source.js';
+import type { Fixture } from './fixture';
+import type { FixtureFiles } from './fixture-files';
+import { PATHS } from './paths';
+import { project } from './project';
+import { source } from './source';
 
 const { BILLING } = PATHS;
 

@@ -1,8 +1,8 @@
 import path from 'node:path';
-import { barrelFile } from './barrel-file.js';
-import { DECLARED_ROLES } from './declared-role.js';
-import { folderDeclarationsFile } from './folder-declarations-file.js';
-import { moduleSplit } from '../model-modules/index.js';
+import { barrelFile } from './barrel-file';
+import { DECLARED_ROLES } from './declared-role';
+import { folderDeclarationsFile } from './folder-declarations-file';
+import { moduleSplit } from '../model-modules';
 
 /** The layers role files live in: `application`, `infrastructure`, `presentation`. */
 const ROLE_LAYERS = new Set(DECLARED_ROLES.flatMap((role) => role.folders.map((folder) => folder.split('/')[0])));

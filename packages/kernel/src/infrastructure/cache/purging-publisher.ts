@@ -1,8 +1,8 @@
-import { CachePurgeRequest } from '../../application/cache/cache-purge-request.js';
-import type { IntegrationEvent } from '../../application/events/integration-event.js';
-import { messagingSystemOf } from '../../application/events/messaging-system-of.js';
-import type { CachePurger } from '../../application/ports/cache-purger.js';
-import type { IntegrationEventPublisher } from '../../application/ports/integration-event-publisher.js';
+import { CachePurgeRequest } from '../../application/cache/cache-purge-request';
+import type { IntegrationEvent } from '../../application/events/integration-event';
+import { messagingSystemOf } from '../../application/events/messaging-system-of';
+import type { CachePurger } from '../../application/ports/cache-purger';
+import type { IntegrationEventPublisher } from '../../application/ports/integration-event-publisher';
 
 /**
  * What the outbox relay publishes through: the purge requests go to the `CachePurger`, every

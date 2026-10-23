@@ -1,12 +1,12 @@
-import { eventDeclarations, type EventDeclaration } from '../events/event-declarations.js';
-import { inDeclaration } from '../events/in-declaration.js';
-import { isTypeLiteral } from '../events/is-type-literal.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inContext } from '../support/in-context.js';
-import { KEBAB_SEGMENT } from '../support/kebab-segment.js';
-import { perFile } from '../support/per-file.js';
+import { eventDeclarations, type EventDeclaration } from '../events/event-declarations';
+import { inDeclaration } from '../events/in-declaration';
+import { isTypeLiteral } from '../events/is-type-literal';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { inContext } from '../support/in-context';
+import { KEBAB_SEGMENT } from '../support/kebab-segment';
+import { perFile } from '../support/per-file';
 
 const MISPLACED_FIX =
   'Move the declaration to the published-language/ folder of the context that produces the event (`ddd-ts-kit generate integration-event <context> <Aggregate> <Fact>` creates it) and import it from there.';

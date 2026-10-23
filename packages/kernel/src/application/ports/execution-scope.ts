@@ -1,4 +1,4 @@
-import type { ExecutionContext } from '../execution/execution-context.js';
+import type { ExecutionContext } from '../execution/execution-context';
 
 /**
  * The execution context of the work in progress, for infrastructure and cross-cutting code

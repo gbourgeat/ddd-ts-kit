@@ -1,4 +1,4 @@
-import type { Config } from '../config/index.js';
+import type { Config } from '../config';
 
 /** The names of the modules of the model of every context, by context: what a tool without the config at hand is given. */
 export type ModulesByContext = Readonly<Record<string, readonly string[]>>;

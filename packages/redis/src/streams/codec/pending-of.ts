@@ -1,5 +1,5 @@
-import { listOf } from '../../replies/list-of.js';
-import type { PendingEntry } from './pending-entry.js';
+import { listOf } from '../../replies/list-of';
+import type { PendingEntry } from './pending-entry';
 
 /** The reply of the extended `XPENDING`: id, owner, idle time, delivery counter. */
 export function pendingOf(reply: unknown): PendingEntry[] {

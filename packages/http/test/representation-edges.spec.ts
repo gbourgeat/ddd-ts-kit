@@ -10,11 +10,11 @@ import {
   streamSchemaOf,
   type RawRequest,
   type Route,
-} from '../src/index.js';
+} from '../src';
 import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
-import { iteratedWithin } from '../src/pipeline/iterated-within.js';
-import { writeStream } from '../src/pipeline/write-stream.js';
-import { SchemaNode } from '../src/schema/schema-node.js';
+import { iteratedWithin } from '../src/pipeline/iterated-within';
+import { writeStream } from '../src/pipeline/write-stream';
+import { SchemaNode } from '../src/schema/schema-node';
 
 const representations = Representations.standard();
 

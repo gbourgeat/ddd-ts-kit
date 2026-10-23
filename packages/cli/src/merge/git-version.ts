@@ -1,4 +1,4 @@
-import { runGit } from '../commit/run-git.js';
+import { runGit } from '../commit/run-git';
 
 /** The first version of git whose `merge-tree --write-tree` takes `--merge-base`. */
 const MERGE_BASE_SINCE = [2, 40] as const;

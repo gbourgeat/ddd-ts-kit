@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { EventBus, EventSubscribers, IntegrationEventSubscriber, type IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { createApplication, createTestApplication, defineContextModule, kernelModule } from '../src/index.js';
-import { RecordingSubscriber } from './support/fakes/recording-subscriber.js';
-import { SubscribersByContext } from './support/fakes/subscribers-by-context.js';
-import { twiceListening } from './support/twice-listening.js';
-import { orderPlaced } from './support/ordering/published-language/order-placed-event.js';
+import { createApplication, createTestApplication, defineContextModule, kernelModule } from '../src';
+import { RecordingSubscriber } from './support/fakes/recording-subscriber';
+import { SubscribersByContext } from './support/fakes/subscribers-by-context';
+import { twiceListening } from './support/twice-listening';
+import { orderPlaced } from './support/ordering/published-language/order-placed-event';
 
 const TYPE = 'ordering.order.placed';
 const placed = (id: string): IntegrationEvent => orderPlaced(id, { orderId: 'order-1', sku: 'book' });

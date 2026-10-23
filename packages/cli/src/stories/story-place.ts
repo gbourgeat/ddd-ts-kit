@@ -1,4 +1,4 @@
-import type { StoryKind } from './story-kind.js';
+import type { StoryKind } from './story-kind';
 
 /**
  * What `.ddd-ts-kit/story.json` holds in the worktree of a story: the story one session takes from

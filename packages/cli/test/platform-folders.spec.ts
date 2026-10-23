@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { PLATFORM_LAYOUT } from '../src/platform-layout/index.js';
-import { cli, exists, read, walk, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
+import { PLATFORM_LAYOUT } from '../src/platform-layout';
+import { cli, exists, read, walk, write } from './helpers';
+import { initProject } from './support/init-project';
 
 const PLATFORM = 'src/platform';
 const AUTH = `${PLATFORM}/auth`;

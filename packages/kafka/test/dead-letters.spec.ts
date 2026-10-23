@@ -6,13 +6,13 @@ import {
   REPLAY_FOR_HEADER,
   deadTopicOf,
   type KafkaFailure,
-} from '../src/index.js';
-import type { Broker } from './support/broker.js';
-import { BROKERS } from './support/brokers.js';
-import { MAX_ATTEMPTS } from './support/environment.js';
-import { PLACED, anEvent } from './support/events.js';
-import { failuresOf } from './support/hooks.js';
-import { recorder } from './support/recorder.js';
+} from '../src';
+import type { Broker } from './support/broker';
+import { BROKERS } from './support/brokers';
+import { MAX_ATTEMPTS } from './support/environment';
+import { PLACED, anEvent } from './support/events';
+import { failuresOf } from './support/hooks';
+import { recorder } from './support/recorder';
 
 describe.each(BROKERS)('KafkaEventBus: dead letters, %s', { timeout: 60_000 }, (_name, connect) => {
   let broker: Broker;

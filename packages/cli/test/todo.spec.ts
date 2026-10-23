@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
+import { cli, read, write } from './helpers';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
 
 const HANDLER_SPEC = 'src/contexts/billing/test/unit/issue-invoice.handler.spec.ts';
 

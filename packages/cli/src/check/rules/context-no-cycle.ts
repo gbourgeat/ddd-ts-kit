@@ -1,8 +1,8 @@
-import { CONFIG_FILE, type Config } from '../../config/index.js';
-import type { Rule } from '../model/rule.js';
-import { cyclesIn } from '../support/cycles-in.js';
-import { lineOf } from '../support/line-of.js';
-import { reporter } from '../support/reporter.js';
+import { CONFIG_FILE, type Config } from '../../config';
+import type { Rule } from '../model/rule';
+import { cyclesIn } from '../support/cycles-in';
+import { lineOf } from '../support/line-of';
+import { reporter } from '../support/reporter';
 
 const FIX =
   'Decide which context is upstream and remove the opposite upstream entry; the downstream reacts to integration events instead of being imported.';

@@ -1,6 +1,6 @@
-import type { FunctionBody } from './function-body.js';
-import { literalAt } from './literal-at.js';
-import { nestedBodies } from './nested-bodies.js';
+import type { FunctionBody } from './function-body';
+import { literalAt } from './literal-at';
+import { nestedBodies } from './nested-bodies';
 
 const RETURN = /(?<![\w$.])return\b/g;
 

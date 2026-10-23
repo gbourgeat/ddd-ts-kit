@@ -1,8 +1,8 @@
-import type { StoredEvent } from '../../application/event-sourcing/stored-event.js';
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { EventSerializer } from '../../infrastructure/event-sourcing/event-serializer.js';
-import { DeclarationError } from '../registry/declaration-error.js';
-import { declarationOf } from '../registry/declaration-of.js';
+import type { StoredEvent } from '../../application/event-sourcing/stored-event';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { EventSerializer } from '../../infrastructure/event-sourcing/event-serializer';
+import { DeclarationError } from '../registry/declaration-error';
+import { declarationOf } from '../registry/declaration-of';
 
 /**
  * How a declared projection applies the events of an event store: an event whose name one of its

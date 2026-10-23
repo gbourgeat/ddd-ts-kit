@@ -1,7 +1,7 @@
 import type { IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
-import type { EventRecorder } from './event-recorder.js';
-import type { EventType } from './event-type.js';
-import { SubscribedRecorder } from './subscribed-recorder.js';
+import type { EventRecorder } from './event-recorder';
+import type { EventType } from './event-type';
+import { SubscribedRecorder } from './subscribed-recorder';
 
 /**
  * Subscribes to the given types and records what is published, to assert integration events

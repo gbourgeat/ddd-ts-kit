@@ -1,4 +1,4 @@
-import type { FunctionRoute } from './function-route.js';
+import type { FunctionRoute } from './function-route';
 
 const ANSWER = /return \{\s*status: \d{3},\s*body: ([\s\S]*?),?\s*\};(?=\s*(?:\}|$))/g;
 const EMPTY_ANSWER = /\n?[ \t]*return \{\s*status: \d{3},?\s*\};/g;

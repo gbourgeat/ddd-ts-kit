@@ -1,9 +1,9 @@
 import type { ChannelModel, Options } from 'amqplib';
-import type { QueueType } from './queue-type.js';
-import type { RabbitMqDelivery } from './rabbit-mq-delivery.js';
-import type { RabbitMqFailure } from './rabbit-mq-failure.js';
-import type { ReconnectOptions } from './reconnect-options.js';
-import type { RetryOptions } from './retry-options.js';
+import type { QueueType } from './queue-type';
+import type { RabbitMqDelivery } from './rabbit-mq-delivery';
+import type { RabbitMqFailure } from './rabbit-mq-failure';
+import type { ReconnectOptions } from './reconnect-options';
+import type { RetryOptions } from './retry-options';
 
 export const DEFAULT_EXCHANGE = 'integration-events';
 

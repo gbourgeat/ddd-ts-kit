@@ -1,5 +1,5 @@
-import type { MergeFinding } from './merge-finding.js';
-import type { MergeToVerify } from './merge-to-verify.js';
+import type { MergeFinding } from './merge-finding';
+import type { MergeToVerify } from './merge-to-verify';
 
 /** What `verify-merge` found in one merge. */
 export interface MergeCheck extends Omit<MergeToVerify, 'accepted'> {

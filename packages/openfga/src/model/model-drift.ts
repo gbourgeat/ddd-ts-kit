@@ -1,5 +1,5 @@
-import { canonicalModel } from './canonical-model.js';
-import type { OpenFgaModel } from './open-fga-model.js';
+import { canonicalModel } from './canonical-model';
+import type { OpenFgaModel } from './open-fga-model';
 
 /**
  * What differs between the model the schema generates and the one a store holds: one line per

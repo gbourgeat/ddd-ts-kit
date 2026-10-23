@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { exists, read } from './helpers.js';
-import { git } from './support/git.js';
-import { commitFiles, lastMessage, mergeTrunk, onBranch, trunkRepository } from './support/trunk-history.js';
+import { exists, read } from './helpers';
+import { git } from './support/git';
+import { commitFiles, lastMessage, mergeTrunk, onBranch, trunkRepository } from './support/trunk-history';
 
 describe('merge-trunk: lockfile and decision records, end to end', () => {
   const manifest = (dependencies: Record<string, string>): string =>

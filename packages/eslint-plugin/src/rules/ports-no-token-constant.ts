@@ -1,10 +1,10 @@
 import path from 'node:path';
 import { ASTUtils, AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
-import { propertyName } from '../support/globals/property-name.js';
-import { inSourceRoot } from '../support/imports/in-source-root.js';
-import { bindingCallReader } from '../support/ports/binding-call-reader.js';
-import { dependencyListListener } from '../support/ports/dependency-list-listener.js';
+import { defineRule, type Report } from '../support/rule/define-rule';
+import { propertyName } from '../support/globals/property-name';
+import { inSourceRoot } from '../support/imports/in-source-root';
+import { bindingCallReader } from '../support/ports/binding-call-reader';
+import { dependencyListListener } from '../support/ports/dependency-list-listener';
 
 type MessageId = 'tokenCall' | 'madeToken' | 'literalToken' | 'constant' | 'tokenFile';
 type Source = Readonly<TSESLint.SourceCode>;

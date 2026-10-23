@@ -1,11 +1,11 @@
-import { criteriaIn } from '../acceptance/criteria-in.js';
-import { readLock } from '../acceptance/read-lock.js';
-import { readVerdicts } from '../acceptance/read-verdicts.js';
-import type { Workspace } from '../workspace/index.js';
-import { fileAt } from './file-at.js';
-import type { Repository } from './repository.js';
-import type { Rework } from './rework.js';
-import type { StoryHistory } from './story-history.js';
+import { criteriaIn } from '../acceptance/criteria-in';
+import { readLock } from '../acceptance/read-lock';
+import { readVerdicts } from '../acceptance/read-verdicts';
+import type { Workspace } from '../workspace';
+import { fileAt } from './file-at';
+import type { Repository } from './repository';
+import type { Rework } from './rework';
+import type { StoryHistory } from './story-history';
 
 /**
  * The commits that changed the acceptance criteria of the story after its build started (the

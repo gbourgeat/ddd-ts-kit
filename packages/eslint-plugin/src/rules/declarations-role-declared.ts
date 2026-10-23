@@ -1,21 +1,21 @@
 import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
-import { className, type ClassNode } from '../support/classes/class-name.js';
-import { exportedClasses } from '../support/classes/exported-classes.js';
-import { topLevelClasses } from '../support/classes/top-level-classes.js';
-import { ACCESS_DECORATORS } from '../support/declarations/access-decorators.js';
+import { className, type ClassNode } from '../support/classes/class-name';
+import { exportedClasses } from '../support/classes/exported-classes';
+import { topLevelClasses } from '../support/classes/top-level-classes';
+import { ACCESS_DECORATORS } from '../support/declarations/access-decorators';
 import {
   DECLARATIONS_ENTRY,
   declarationReader,
   type Declaration,
   type DeclarationReader,
-} from '../support/declarations/declaration-reader.js';
-import { WRITTEN_NAMES } from '../support/declarations/written-names.js';
-import { declaredRoleOf } from '../support/declarations/declared-role-of.js';
-import { isDeclaredStyle } from '../support/declarations/is-declared-style.js';
-import { writtenName } from '../support/declarations/written-name.js';
-import type { DeclaredRole } from '../support/declarations/declared-role.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
-import { inContext } from '../support/imports/in-context.js';
+} from '../support/declarations/declaration-reader';
+import { WRITTEN_NAMES } from '../support/declarations/written-names';
+import { declaredRoleOf } from '../support/declarations/declared-role-of';
+import { isDeclaredStyle } from '../support/declarations/is-declared-style';
+import { writtenName } from '../support/declarations/written-name';
+import type { DeclaredRole } from '../support/declarations/declared-role';
+import { defineRule, type Report } from '../support/rule/define-rule';
+import { inContext } from '../support/imports/in-context';
 
 type MessageId = 'undeclared' | 'wrongRole' | 'name' | 'inDomain';
 type Finding = TSESLint.ReportDescriptor<MessageId>;

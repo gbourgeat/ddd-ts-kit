@@ -1,8 +1,8 @@
 import path from 'node:path';
-import { cellsOf } from '../progress/cells-of.js';
-import { SLICES_FILE } from '../progress/read-slices.js';
-import { RULE_LINE } from '../progress/rule-line.js';
-import type { DocumentPart, PartText } from './document-part.js';
+import { cellsOf } from '../progress/cells-of';
+import { SLICES_FILE } from '../progress/read-slices';
+import { RULE_LINE } from '../progress/rule-line';
+import type { DocumentPart, PartText } from './document-part';
 
 /** The design each row has in the slices file, and the documents its rule lines link to, by document. */
 export interface SlicesParts {

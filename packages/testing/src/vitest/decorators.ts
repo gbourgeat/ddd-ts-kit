@@ -1,6 +1,6 @@
 import path from 'node:path';
-import { compilerScript } from './compiler-script.js';
-import { DecoratorCompiler } from './decorator-compiler.js';
+import { compilerScript } from './compiler-script';
+import { DecoratorCompiler } from './decorator-compiler';
 
 export interface DecoratorsOptions {
   /**

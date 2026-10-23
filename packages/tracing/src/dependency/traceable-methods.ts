@@ -1,4 +1,4 @@
-import type { Method } from './method.js';
+import type { Method } from './method';
 
 const UNTRACEABLE_CONSTRUCTORS = new Set(['GeneratorFunction', 'AsyncGeneratorFunction']);
 

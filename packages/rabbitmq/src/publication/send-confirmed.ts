@@ -1,6 +1,6 @@
 import type { ConfirmChannel } from 'amqplib';
-import type { Publication } from '../codec/publication.js';
-import { PublishNotConfirmedError } from '../errors/publish-not-confirmed-error.js';
+import type { Publication } from '../codec/publication';
+import { PublishNotConfirmedError } from '../errors/publish-not-confirmed-error';
 
 /** Sends a message to a queue through the default exchange and waits for its confirmation. */
 export function sendConfirmed(channel: ConfirmChannel, queue: string, publication: Publication): Promise<void> {

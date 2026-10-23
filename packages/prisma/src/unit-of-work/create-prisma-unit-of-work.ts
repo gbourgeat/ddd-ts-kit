@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { withinUnitOfWork, type UnitOfWork } from '@ddd-ts-kit/kernel';
-import type { PrismaContext } from './prisma-context.js';
-import type { PrismaTransactionHost } from './prisma-transaction-host.js';
+import type { PrismaContext } from './prisma-context';
+import type { PrismaTransactionHost } from './prisma-transaction-host';
 
 /** One object for both ports: bind it to `UnitOfWork` and to the `PrismaContext` of the project. */
 export interface PrismaUnitOfWork<Tx> extends UnitOfWork, PrismaContext<Tx> {}

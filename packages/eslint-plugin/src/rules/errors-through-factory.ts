@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { type ImportTarget, resolveImport } from '../project/resolve-import.js';
-import { isRefusalClass } from '../support/errors/is-refusal-class.js';
-import { defineRule } from '../support/rule/define-rule.js';
+import { type ImportTarget, resolveImport } from '../project/resolve-import';
+import { isRefusalClass } from '../support/errors/is-refusal-class';
+import { defineRule } from '../support/rule/define-rule';
 
 export const errorsThroughFactory = defineRule<'constructed' | 'constructedRefusal'>({
   id: 'errors/through-factory',

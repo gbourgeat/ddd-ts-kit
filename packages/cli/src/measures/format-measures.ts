@@ -1,7 +1,7 @@
-import { durationText } from './duration-text.js';
-import type { MeasuresSummary } from './measures-summary.js';
-import type { MeasuresView } from './measures-view.js';
-import { storyLineOf } from './story-line-of.js';
+import { durationText } from './duration-text';
+import type { MeasuresSummary } from './measures-summary';
+import type { MeasuresView } from './measures-view';
+import { storyLineOf } from './story-line-of';
 
 /** The measures as text: one line per story, then the medians and the shares of the period. */
 export function formatMeasures(view: MeasuresView): string {

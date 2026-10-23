@@ -1,8 +1,8 @@
-import { stampOf, type IntegrationEvent, type ReadModelWrite } from '../../../../../../../src/index.js';
-import { On, Projection } from '../../../../../../../src/declarations.js';
-import { VisitScheduled } from '../../domain/events/visit-scheduled.event.js';
-import { PatientRegistered, type PatientRegisteredPayload } from '../../published-language/patient-registered.js';
-import { PatientList } from '../ports/patient-list.port.js';
+import { stampOf, type IntegrationEvent, type ReadModelWrite } from '../../../../../../../src';
+import { On, Projection } from '../../../../../../../src/declarations';
+import { VisitScheduled } from '../../domain/events/visit-scheduled.event';
+import { PatientRegistered, type PatientRegisteredPayload } from '../../published-language/patient-registered';
+import { PatientList } from '../ports/patient-list.port';
 
 @Projection('clinic.patient-list', [PatientList])
 export class PatientListProjection {

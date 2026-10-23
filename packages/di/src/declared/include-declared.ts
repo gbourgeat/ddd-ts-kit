@@ -19,20 +19,20 @@ import {
   type ProjectionDeclaration,
   type Token,
 } from '@ddd-ts-kit/kernel/declarations';
-import { declaredRequirement } from '../authorization/declared-requirement.js';
-import type { ConsumerOptions } from '../consumer/consumer-options.js';
-import { WiringError } from '../errors/wiring-error.js';
-import { assertPort } from '../wiring/assert-port.js';
-import type { Binding } from '../wiring/binding.js';
-import type { Declarer } from '../wiring/declarer.js';
-import type { DomainEventHandling } from '../wiring/domain-event-handling.js';
-import { classRecipe } from '../wiring/recipe.js';
-import type { WiringDraft } from '../wiring/wiring-draft.js';
-import { consumptionOf } from './consumption-of.js';
-import type { DeclaredSource } from './declared-source.js';
-import { dependenciesOf } from './dependencies-of.js';
-import { declarerOf } from './discovered-files.js';
-import { projectionOf } from './projection-of.js';
+import { declaredRequirement } from '../authorization/declared-requirement';
+import type { ConsumerOptions } from '../consumer/consumer-options';
+import { WiringError } from '../errors/wiring-error';
+import { assertPort } from '../wiring/assert-port';
+import type { Binding } from '../wiring/binding';
+import type { Declarer } from '../wiring/declarer';
+import type { DomainEventHandling } from '../wiring/domain-event-handling';
+import { classRecipe } from '../wiring/recipe';
+import type { WiringDraft } from '../wiring/wiring-draft';
+import { consumptionOf } from './consumption-of';
+import type { DeclaredSource } from './declared-source';
+import { dependenciesOf } from './dependencies-of';
+import { declarerOf } from './discovered-files';
+import { projectionOf } from './projection-of';
 
 interface Inclusion {
   readonly draft: WiringDraft;

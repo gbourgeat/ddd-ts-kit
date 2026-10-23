@@ -1,14 +1,14 @@
 import type { KafkaJS } from '@confluentinc/kafka-javascript';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { encode } from '../codec/encode.js';
-import type { OutgoingRecord } from '../codec/outgoing-record.js';
-import type { Routing } from '../codec/routing.js';
-import type { BrokerLink } from '../connection/broker-link.js';
-import { failureCode } from '../errors/failure-code.js';
-import { PublishNotAcknowledgedError } from '../errors/publish-not-acknowledged-error.js';
-import { reasonOf } from '../errors/reason-of.js';
-import { ignore } from '../ignore.js';
-import type { TopicDescription } from '../topology/topic-description.js';
+import { encode } from '../codec/encode';
+import type { OutgoingRecord } from '../codec/outgoing-record';
+import type { Routing } from '../codec/routing';
+import type { BrokerLink } from '../connection/broker-link';
+import { failureCode } from '../errors/failure-code';
+import { PublishNotAcknowledgedError } from '../errors/publish-not-acknowledged-error';
+import { reasonOf } from '../errors/reason-of';
+import { ignore } from '../ignore';
+import type { TopicDescription } from '../topology/topic-description';
 
 export interface PublicationSettings {
   readonly routing: Routing;

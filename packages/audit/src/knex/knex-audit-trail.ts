@@ -1,12 +1,12 @@
 import type { Knex } from 'knex';
-import { auditTables } from '../sql/audit-tables.js';
-import type { AuditTablesOptions } from '../sql/audit-tables-options.js';
-import { PostgresAuditTrail } from '../sql/postgres-audit-trail.js';
-import { rowsOf } from '../sql/rows-of.js';
-import type { SqlSession } from '../sql/sql-session.js';
-import type { Sql } from '../sql/sql.js';
-import type { AuditTrailOptions } from '../trail/audit-trail-options.js';
-import type { KnexAuditContext } from './knex-audit-context.js';
+import { auditTables } from '../sql/audit-tables';
+import type { AuditTablesOptions } from '../sql/audit-tables-options';
+import { PostgresAuditTrail } from '../sql/postgres-audit-trail';
+import { rowsOf } from '../sql/rows-of';
+import type { SqlSession } from '../sql/sql-session';
+import type { Sql } from '../sql/sql';
+import type { AuditTrailOptions } from '../trail/audit-trail-options';
+import type { KnexAuditContext } from './knex-audit-context';
 
 export interface KnexAuditTrailOptions extends AuditTrailOptions, AuditTablesOptions {}
 

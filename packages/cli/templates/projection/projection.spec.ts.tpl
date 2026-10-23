@@ -1,5 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { {{event.definition}} } from '{{alias.contexts}}/{{publisher.kebab}}/published-language/index{{alias.ext}}';
+import { {{event.definition}} } from '{{alias.contexts}}/{{publisher.kebab}}/published-language{{alias.index}}';
 import { {{name.pascal}}Projection } from '{{alias.context}}/application/projections/{{name.kebab}}.projection{{alias.ext}}';
 
 describe('{{name.title}}, kept from what {{publisher.kebab}} announces', () => {

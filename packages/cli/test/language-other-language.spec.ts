@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { OTHER_LANGUAGE_FIXTURES } from '../src/check/fixtures/other-language-fixtures.js';
-import { typeDeclarations } from '../src/check/language/type-declarations.js';
-import { typeRoot } from '../src/check/language/type-root.js';
-import { typedByOtherLanguage } from '../src/check/language/typed-by-other-language.js';
-import { scan } from '../src/check/scan/scan.js';
-import { checkJsonOf } from './check-support.js';
-import { cli, tempDir, write } from './helpers.js';
+import { OTHER_LANGUAGE_FIXTURES } from '../src/check/fixtures/other-language-fixtures';
+import { typeDeclarations } from '../src/check/language/type-declarations';
+import { typeRoot } from '../src/check/language/type-root';
+import { typedByOtherLanguage } from '../src/check/language/typed-by-other-language';
+import { scan } from '../src/check/scan/scan';
+import { checkJsonOf } from './check-support';
+import { cli, tempDir, write } from './helpers';
 
 const OTHER = new Map([
   ['Payload', 'catalog/published-language'],

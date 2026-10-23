@@ -1,4 +1,4 @@
-import { BRACKETS } from '../text/brackets.js';
+import { BRACKETS } from '../text/brackets';
 
 /** Offset of the first `separator` met outside brackets, or -1: the `:` of `key: alias`, the `=` of a default. */
 export function topLevelSeparator(text: string, separator: ':' | '='): number {

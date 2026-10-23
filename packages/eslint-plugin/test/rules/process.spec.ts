@@ -1,5 +1,5 @@
-import { processSendsCommandsOnly } from '../../src/rules/process-sends-commands-only.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+import { processSendsCommandsOnly } from '../../src/rules/process-sends-commands-only';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const PROCESS = `${BILLING}/application/processes/dunning.process.ts`;
 const CLASS = 'export class DunningProcess {}';

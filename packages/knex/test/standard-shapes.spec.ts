@@ -8,15 +8,15 @@ import {
   offsetPage,
   type ExecutionScope,
 } from '@ddd-ts-kit/kernel';
-import { createKnexUnitOfWork } from '../src/index.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
-import { Invoice } from './support/billing-core/domain/invoice.js';
-import { BILLING } from './support/billing-core/infrastructure/persistence/billing-schema.js';
-import { createInvoicesTable } from './support/billing-core/infrastructure/persistence/create-invoices-table.js';
-import type { InvoiceRow } from './support/billing-core/infrastructure/persistence/invoice-row.js';
-import { KnexInvoiceQueries } from './support/billing-core/infrastructure/persistence/knex-invoice.queries.js';
-import { KnexInvoiceRepository } from './support/billing-core/infrastructure/persistence/knex-invoice.repository.js';
-import { ada, bob, eve, nobody, scopeOf } from './support/scopes.js';
+import { createKnexUnitOfWork } from '../src';
+import { createDatabase, type TestDatabase } from './support/database';
+import { Invoice } from './support/billing-core/domain/invoice';
+import { BILLING } from './support/billing-core/infrastructure/persistence/billing-schema';
+import { createInvoicesTable } from './support/billing-core/infrastructure/persistence/create-invoices-table';
+import type { InvoiceRow } from './support/billing-core/infrastructure/persistence/invoice-row';
+import { KnexInvoiceQueries } from './support/billing-core/infrastructure/persistence/knex-invoice.queries';
+import { KnexInvoiceRepository } from './support/billing-core/infrastructure/persistence/knex-invoice.repository';
+import { ada, bob, eve, nobody, scopeOf } from './support/scopes';
 
 const MORNING = new Date('2026-03-01T10:00:00.000Z');
 

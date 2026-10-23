@@ -1,4 +1,4 @@
-import { ExecutionContextBuilder } from './execution-context-builder.js';
+import { ExecutionContextBuilder } from './execution-context-builder';
 
 const executionContextBuilder = new ExecutionContextBuilder();
 

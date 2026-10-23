@@ -1,9 +1,9 @@
-import type { ReadModelTable } from '../../application/ports/read-model-table.js';
-import type { UnitOfWork } from '../../application/ports/unit-of-work.js';
-import type { ProjectionRebuildReport } from '../../application/read-model/projection-rebuild-report.js';
-import type { ReadModelSource } from '../../application/read-model/read-model-source.js';
-import type { TouchedKey } from '../../application/read-model/touched-key.js';
-import { writeIfNewer } from './write-if-newer.js';
+import type { ReadModelTable } from '../../application/ports/read-model-table';
+import type { UnitOfWork } from '../../application/ports/unit-of-work';
+import type { ProjectionRebuildReport } from '../../application/read-model/projection-rebuild-report';
+import type { ReadModelSource } from '../../application/read-model/read-model-source';
+import type { TouchedKey } from '../../application/read-model/touched-key';
+import { writeIfNewer } from './write-if-newer';
 
 export interface ProjectionRebuildParts<Row> {
   readonly table: ReadModelTable<Row>;

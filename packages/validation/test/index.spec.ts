@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError, err, ok } from '@ddd-ts-kit/kernel';
-import { ValidationError, customSchema, formatPath, parseOrThrow, type Infer } from '../src/index.js';
+import { ValidationError, customSchema, formatPath, parseOrThrow, type Infer } from '../src';
 
 const positive = customSchema<number>(
   (input) =>

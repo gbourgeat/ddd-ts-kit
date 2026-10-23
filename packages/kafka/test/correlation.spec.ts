@@ -7,10 +7,10 @@ import {
   systemActor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
-import type { Broker } from './support/broker.js';
-import { BROKERS } from './support/brokers.js';
-import { PLACED, anEvent } from './support/events.js';
-import { InvoicingFailed } from './support/invoicing-failed.js';
+import type { Broker } from './support/broker';
+import { BROKERS } from './support/brokers';
+import { PLACED, anEvent } from './support/events';
+import { InvoicingFailed } from './support/invoicing-failed';
 
 describe.each(BROKERS)('KafkaEventBus: correlation, %s', { timeout: 60_000 }, (_name, connect) => {
   let broker: Broker;

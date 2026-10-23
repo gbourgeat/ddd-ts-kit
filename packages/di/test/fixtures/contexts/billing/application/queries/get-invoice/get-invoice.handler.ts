@@ -1,7 +1,7 @@
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
-import type { Invoice } from '../../../domain/invoice.js';
-import { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';
-import { GetInvoice } from './get-invoice.query.js';
+import type { Invoice } from '../../../domain/invoice';
+import { InvoiceRepository } from '../../../domain/repositories/invoice.repository';
+import { GetInvoice } from './get-invoice.query';
 
 @QueryHandler(GetInvoice, [InvoiceRepository])
 export class GetInvoiceHandler implements QueryHandler<GetInvoice> {

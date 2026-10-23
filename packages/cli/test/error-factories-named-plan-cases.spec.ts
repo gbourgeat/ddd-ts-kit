@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, exists, read, tempDir, write } from './helpers.js';
-import { failure } from './reports.js';
+import { cli, exists, read, tempDir, write } from './helpers';
+import { failure } from './reports';
 
 const ERRORS = 'src/contexts/scheduling/domain/errors';
 const APPLICATION = 'src/contexts/scheduling/application';

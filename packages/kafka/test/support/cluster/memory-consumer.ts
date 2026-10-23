@@ -1,10 +1,10 @@
 import { KafkaJS } from '@confluentinc/kafka-javascript';
-import { ClientState, silentLogger } from './client-basics.js';
-import type { ClusterState, TopicListener } from './cluster-state.js';
-import { Unsupported, kafkaError } from './errors.js';
-import { type Group, type GroupMember, positionKey } from './group.js';
-import type { StoredRecord } from './log.js';
-import type { Wire } from './wire.js';
+import { ClientState, silentLogger } from './client-basics';
+import type { ClusterState, TopicListener } from './cluster-state';
+import { Unsupported, kafkaError } from './errors';
+import { type Group, type GroupMember, positionKey } from './group';
+import type { StoredRecord } from './log';
+import type { Wire } from './wire';
 
 type Pausable = { topic: string; partitions?: number[] };
 

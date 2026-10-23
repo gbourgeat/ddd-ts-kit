@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { DeclarationKind, TopLevelDeclaration } from './top-level-declaration.js';
+import type { DeclarationKind, TopLevelDeclaration } from './top-level-declaration';
 
 type Found = Omit<TopLevelDeclaration, 'exported'>;
 

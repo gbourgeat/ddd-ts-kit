@@ -2,8 +2,8 @@ import { trace } from '@opentelemetry/api';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { initTracing } from '@ddd-ts-kit/tracing/node';
 import { expect } from 'vitest';
-import { aTracker, type Tracker } from './a-tracker.js';
-import { failingRequest } from './failing-request.js';
+import { aTracker, type Tracker } from './a-tracker';
+import { failingRequest } from './failing-request';
 
 type Setup = 'tracing' | 'sentry';
 

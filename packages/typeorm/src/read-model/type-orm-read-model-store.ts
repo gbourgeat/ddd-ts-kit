@@ -1,8 +1,8 @@
 import type { ObjectLiteral } from 'typeorm';
 import { TableReadModelStore, type CriteriaDefinition } from '@ddd-ts-kit/kernel';
-import type { TypeOrmContext } from '../unit-of-work/type-orm-context.js';
-import type { TypeOrmReadModelOptions } from './type-orm-read-model-options.js';
-import { TypeOrmReadModelTable } from './type-orm-read-model-table.js';
+import type { TypeOrmContext } from '../unit-of-work/type-orm-context';
+import type { TypeOrmReadModelOptions } from './type-orm-read-model-options';
+import { TypeOrmReadModelTable } from './type-orm-read-model-table';
 
 export interface TypeOrmReadModel<Row> extends TypeOrmReadModelOptions<Row> {
   /** What a read of the read model may filter and sort by. */

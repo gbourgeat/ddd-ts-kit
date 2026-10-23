@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, exists, read, write } from './helpers.js';
-import { failure, report } from './reports.js';
-import { billingProject as project, generateError as generate } from './support/billing-error-project.js';
+import { cli, exists, read, write } from './helpers';
+import { failure, report } from './reports';
+import { billingProject as project, generateError as generate } from './support/billing-error-project';
 
 const CODES = 'src/contexts/billing/domain/errors/codes.ts';
 const ISSUED = 'src/contexts/billing/domain/errors/invoice-already-issued.error.ts';

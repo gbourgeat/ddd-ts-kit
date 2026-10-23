@@ -1,12 +1,12 @@
-import { emit, type Output } from '../../emit.js';
-import { named } from '../../named.js';
-import type { Scope } from '../../scope.js';
-import { vars } from '../../vars.js';
-import { wire } from '../../wire.js';
-import { controllerImports } from '../route/controller-imports.js';
-import type { ControllerPlan } from '../route/controller-plan.js';
-import { controllerVars } from '../route/controller-vars.js';
-import { groupVars } from '../route/group-vars.js';
+import { emit, type Output } from '../../emit';
+import { named } from '../../named';
+import type { Scope } from '../../scope';
+import { vars } from '../../vars';
+import { wire } from '../../wire';
+import { controllerImports } from '../route/controller-imports';
+import type { ControllerPlan } from '../route/controller-plan';
+import { controllerVars } from '../route/controller-vars';
+import { groupVars } from '../route/group-vars';
 
 /** Writes the controller of an upload in its folder, its group when it is new, and its spec; registers it where controllers are listed. */
 export function writeUploadController(scope: Scope, plan: ControllerPlan): void {

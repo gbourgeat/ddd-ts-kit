@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
 import type { CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
-import { readModelColumns, type KnexReadModelOptions } from '../../../src/index.js';
+import { readModelColumns, type KnexReadModelOptions } from '../../../src';
 
 export const READ_SIDE = 'read_side';
 

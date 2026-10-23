@@ -1,6 +1,6 @@
-import type { BuildLayout } from '../../alias/index.js';
-import type { Project } from '../model/project.js';
-import { compilerOptionsOf } from './compiler-options-of.js';
+import type { BuildLayout } from '../../alias';
+import type { Project } from '../model/project';
+import { compilerOptionsOf } from './compiler-options-of';
 
 /** Where a tsconfig of the project reads and writes; nothing when the file is absent or unreadable. */
 export function buildLayoutOf(project: Pick<Project, 'root'>, file: string): BuildLayout | undefined {

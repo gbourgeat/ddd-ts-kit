@@ -1,4 +1,4 @@
-import type { SourceFile } from '../../check/model/source-file.js';
+import type { SourceFile } from '../../check/model/source-file';
 
 /** The constructor a class is built by: its own, or the nearest one it inherits inside the project. */
 export interface ReadConstructor {

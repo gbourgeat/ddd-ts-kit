@@ -1,6 +1,6 @@
-import type { Workspace } from '../workspace/index.js';
-import type { RegressionSpec } from './regression-spec.js';
-import { scenariosIn } from './scenarios-in.js';
+import type { Workspace } from '../workspace';
+import type { RegressionSpec } from './regression-spec';
+import { scenariosIn } from './scenarios-in';
 
 /** Each listed spec with its tests, read as the scenarios of an acceptance are; a missing file has none. */
 export function readRegression(ws: Workspace, files: readonly string[]): RegressionSpec[] {

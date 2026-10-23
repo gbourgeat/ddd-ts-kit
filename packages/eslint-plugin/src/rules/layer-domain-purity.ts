@@ -1,13 +1,13 @@
-import type { ContextLocation } from '../project/location.js';
-import type { ImportTarget } from '../project/resolve-import.js';
-import { DECLARATIONS_ENTRY } from '../support/declarations/declaration-reader.js';
-import { isDeclaredStyle } from '../support/declarations/is-declared-style.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import { describeTarget } from '../support/imports/describe-target.js';
-import { importListener } from '../support/imports/import-listener.js';
-import { inLayer } from '../support/imports/in-layer.js';
-import { OUTSIDE_CONCERN_MESSAGE } from '../support/outside-concerns/outside-concern-message.js';
-import { outsideConcern } from '../support/outside-concerns/outside-concern.js';
+import type { ContextLocation } from '../project/location';
+import type { ImportTarget } from '../project/resolve-import';
+import { DECLARATIONS_ENTRY } from '../support/declarations/declaration-reader';
+import { isDeclaredStyle } from '../support/declarations/is-declared-style';
+import { defineRule } from '../support/rule/define-rule';
+import { describeTarget } from '../support/imports/describe-target';
+import { importListener } from '../support/imports/import-listener';
+import { inLayer } from '../support/imports/in-layer';
+import { OUTSIDE_CONCERN_MESSAGE } from '../support/outside-concerns/outside-concern-message';
+import { outsideConcern } from '../support/outside-concerns/outside-concern';
 
 type MessageId = 'package' | 'declarations' | 'outsideConcern' | 'builtin' | 'upstreamContract' | 'outerLayer';
 

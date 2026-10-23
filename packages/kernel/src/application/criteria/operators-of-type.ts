@@ -1,5 +1,5 @@
-import type { FieldType } from './field-type.js';
-import type { FilterOperator } from './filter-operator.js';
+import type { FieldType } from './field-type';
+import type { FilterOperator } from './filter-operator';
 
 const ANY: readonly FilterOperator[] = ['eq', 'ne', 'in', 'isNull'];
 const ORDERED: readonly FilterOperator[] = [...ANY, 'gt', 'gte', 'lt', 'lte', 'between'];

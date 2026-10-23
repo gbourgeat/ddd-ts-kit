@@ -1,4 +1,4 @@
-import type { RefusalFacts } from './refusal-facts.js';
+import type { RefusalFacts } from './refusal-facts';
 
 /** A refusal as plain data: its class, its code, its message and the facts it exposes. */
 export interface DomainErrorJson {

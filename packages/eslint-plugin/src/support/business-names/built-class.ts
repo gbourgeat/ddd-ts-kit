@@ -1,5 +1,5 @@
 import { ASTUtils, AST_NODE_TYPES, TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../../project/linted-file.js';
+import type { LintedFile } from '../../project/linted-file';
 
 const PASCAL = /^[A-Z][A-Za-z\d]*$/;
 

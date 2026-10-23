@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasScope, type Session } from '../src/index.js';
+import { hasScope, type Session } from '../src';
 
 const granted: Session = {
   id: 'session-1',

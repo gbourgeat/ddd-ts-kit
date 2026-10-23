@@ -1,9 +1,9 @@
-import { commentLines } from '../comments/comment-lines.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import type { Violation } from '../model/violation.js';
-import type { Report } from '../model/report.js';
-import { reporter } from '../support/reporter.js';
+import { commentLines } from '../comments/comment-lines';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import type { Violation } from '../model/violation';
+import type { Report } from '../model/report';
+import { reporter } from '../support/reporter';
 
 const ANY = /:\s*any(?![\w$])|(?<![\w$.])as\s+any(?![\w$])|<\s*any\s*[>,]|,\s*any\s*>|(?<![\w$.])any\s*\[\]/g;
 const NON_NULL = /(?<=[\w$)\]])!(?=\s*(?:[.;,)\]}:]|\[|$))(?!\s*==?)/gm;

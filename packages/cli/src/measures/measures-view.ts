@@ -1,6 +1,6 @@
-import type { AuthorMeasures } from './author-measures.js';
-import type { MeasuresSummary } from './measures-summary.js';
-import type { StoryMeasures } from './story-measures.js';
+import type { AuthorMeasures } from './author-measures';
+import type { MeasuresSummary } from './measures-summary';
+import type { StoryMeasures } from './story-measures';
 
 /** What `ddd-ts-kit measures` prints. */
 export interface MeasuresView {

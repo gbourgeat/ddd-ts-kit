@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers.js';
-import { importGenerated } from './support/import-generated.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
+import { cli, read, write } from './helpers';
+import { importGenerated } from './support/import-generated';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
 
 const platform = (root: string, file: string): string => read(root, `src/platform/${file}`);
 

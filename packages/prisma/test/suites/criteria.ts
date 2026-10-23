@@ -6,9 +6,9 @@ import {
   criteriaContractRows,
   type CriteriaContractRow,
 } from '@ddd-ts-kit/testing/contracts';
-import { PrismaReadModelStore, createPrismaUnitOfWork, criteriaToPrisma } from '../../src/index.js';
-import { createDatabase, type TestDatabase } from '../support/database.js';
-import { CONTRACT_MODEL } from '../support/read-model/contract-model.js';
+import { PrismaReadModelStore, createPrismaUnitOfWork, criteriaToPrisma } from '../../src';
+import { createDatabase, type TestDatabase } from '../support/database';
+import { CONTRACT_MODEL } from '../support/read-model/contract-model';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const STAMP = { lastEventId: 'evt-1', lastEventAt: new Date('2026-10-10T12:00:00Z') };

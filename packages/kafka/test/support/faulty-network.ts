@@ -1,5 +1,5 @@
 import { createConnection, createServer, type Server, type Socket } from 'node:net';
-import type { Network, NetworkConnection } from './network.js';
+import type { Network, NetworkConnection } from './network';
 
 interface Address {
   readonly host: string;

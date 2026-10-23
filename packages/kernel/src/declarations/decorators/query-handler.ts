@@ -1,12 +1,12 @@
-import type { MessageType } from '../../application/messaging/message-type.js';
-import type { QueryHandler as QueryHandlerPort } from '../../application/messaging/query-handler.js';
-import type { Query } from '../../application/messaging/query.js';
-import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
-import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature.js';
-import type { MessageHandler } from '../model/message-handler.js';
-import { record } from '../registry/record.js';
-import { handling } from './handling.js';
+import type { MessageType } from '../../application/messaging/message-type';
+import type { QueryHandler as QueryHandlerPort } from '../../application/messaging/query-handler';
+import type { Query } from '../../application/messaging/query';
+import type { ClassDeclarator } from '../dependencies/class-declarator';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies';
+import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature';
+import type { MessageHandler } from '../model/message-handler';
+import { record } from '../registry/record';
+import { handling } from './handling';
 
 /** The interface of the kernel under the name of its decorator, so one import serves both. */
 export type QueryHandler<Q extends Query<unknown>> = QueryHandlerPort<Q>;

@@ -86,19 +86,14 @@ the sources can leave the extension out, because every tool that reads them reso
 turns an alias into a relative path is the one that writes the extension. Since every import of
 the project is an alias (`imports/alias-only` refuses a relative one), that step sees them all.
 
-**An import names a file, never a directory.** Under `none` the compiler would resolve
-`@/contexts/billing/published-language` to its `index.ts`. The kit does not allow it: the import
-is written `@/contexts/billing/published-language/index`, in both spellings. One specifier then
-names one file, a file `x.ts` next to a directory `x/` is never ambiguous, and the build has
-nothing to guess. `ddd-ts-kit check` reports a directory import (`imports/extension`: it is the
-one case that needs the disk, so ESLint does not see it) and `build-aliases` refuses it.
+**A directory is written as itself.** `@/contexts/billing/published-language` stands for the `index.ts` of that
+directory, as the compiler resolves it, and for its `index.js` in the compiled output: `build-aliases`
+completes it. A file `x.ts` next to a directory `x/` wins, as it does for the compiler. Under `js`
+the compiler resolves as Node does and refuses a directory, so there the import ends with
+`/index.js`.
 
 ```ts
-// Instead of: a directory, which the compiler resolves to its index.ts and Node does not.
 import { InvoiceIssued } from '@/contexts/billing/published-language';
-
-// Write: the file.
-import { InvoiceIssued } from '@/contexts/billing/published-language/index';
 ```
 
 **A dot is not an extension.** `invoice.aggregate`, `issue-invoice.command` and `main` are all
@@ -218,8 +213,8 @@ import { Invoice } from '../../../domain/aggregates/invoice.aggregate.js'; // af
 ```
 
 The file a specifier names is computed, not searched: under `none`, `@/x` is `x.js` of the
-output; under `js`, `@/x.js` is. Nothing else is tried: no `index.js` behind a directory, no
-extension added to or removed from a specifier written the other way.
+output; under `js`, `@/x.js` is. Nothing else is tried but the `index.js` of a directory under `none`, and no
+extension is added to or removed from a specifier written the other way.
 
 What it rewrites: the specifier of `import ... from`, `export ... from`, a bare `import '...'`,
 `import('...')` with a string literal (attributes included), `require('...')`,
@@ -238,8 +233,6 @@ It fails, exits 2 and writes nothing when:
 
 - an alias names no emitted file (`"@/x" names no file the build emitted`): a typo the
   compiler already reported, or a module that only has a declaration;
-- an alias names a directory (`"@/x" names a directory: an alias names one file, write
-  "@/x/index"`);
 - an alias is written in the spelling the config does not ask for (`"@/x.js" has an extension
   although "importExtension" is "none": write "@/x"`, and the reverse under `js`);
 - `import()` or `require()` is given an alias completed at run time
@@ -250,7 +243,7 @@ It fails, exits 2 and writes nothing when:
 
 ```ts
 // Instead of: an alias completed at run time; build-aliases refuses it.
-const exported = await import(`@/contexts/${context}/published-language/index`);
+const exported = await import(`@/contexts/${context}/published-language`);
 
 // Write: a URL computed from the place of this file, naming the compiled file with its .js.
 // From scripts/events.ts, compiled to dist/scripts/events.js, ../src/ is dist/src/.

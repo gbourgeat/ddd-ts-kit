@@ -6,10 +6,10 @@ import {
   tenantRow,
   type KnexContext,
   type TenantRow,
-} from '../../../../../src/index.js';
-import { Invoice, type InvoiceState } from '../../domain/invoice.js';
-import type { InvoiceRepository } from '../../domain/repositories/invoice.repository.js';
-import { invoicesOf } from './invoices-of.js';
+} from '../../../../../src';
+import { Invoice, type InvoiceState } from '../../domain/invoice';
+import type { InvoiceRepository } from '../../domain/repositories/invoice.repository';
+import { invoicesOf } from './invoices-of';
 
 type VersionedInvoice = InvoiceState & { version: number };
 

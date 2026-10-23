@@ -1,4 +1,4 @@
-import { ConcurrencyError } from '../../domain/errors/concurrency-error.js';
+import { ConcurrencyError } from '../../domain/errors/concurrency-error';
 
 export interface VersionStep {
   /** The version the row must still have: 0 means the aggregate was never saved. */

@@ -1,8 +1,8 @@
 import type { Redis } from 'ioredis';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { cacheKey } from '@ddd-ts-kit/kernel';
-import { RedisCache, RedisLock } from '../src/index.js';
-import { REAL_SERVER, aNamespace, closeAll, connect, sleep } from './support/server.js';
+import { RedisCache, RedisLock } from '../src';
+import { REAL_SERVER, aNamespace, closeAll, connect, sleep } from './support/server';
 
 const price = (sku: string) => cacheKey<{ amount: number }>('price', sku);
 

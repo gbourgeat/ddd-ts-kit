@@ -1,4 +1,4 @@
-import type { Slice } from '../progress/slice.js';
+import type { Slice } from '../progress/slice';
 
 /**
  * The wave of each planned row, by id: 1 when every dependency is done, else one past the latest

@@ -1,6 +1,6 @@
-import { CLASSIFICATIONS, isOneOf, type ContextConfig } from '../../config/index.js';
-import { moduleNameFlaw } from '../../model-modules/index.js';
-import { isRecord } from '../support/is-record.js';
+import { CLASSIFICATIONS, isOneOf, type ContextConfig } from '../../config';
+import { moduleNameFlaw } from '../../model-modules';
+import { isRecord } from '../support/is-record';
 
 /** What is wrong with one module of the model a context declares: the text to place the finding on, and what to say. */
 export interface ModuleProblem {

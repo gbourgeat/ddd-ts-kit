@@ -1,6 +1,6 @@
-import { errorReportOf } from '../../application/error-reporting/error-report-of.js';
-import { reportOnce } from '../../application/error-reporting/report-once.js';
-import type { ErrorReporter } from '../../application/ports/error-reporter.js';
+import { errorReportOf } from '../../application/error-reporting/error-report-of';
+import { reportOnce } from '../../application/error-reporting/report-once';
+import type { ErrorReporter } from '../../application/ports/error-reporter';
 
 type ProcessFailure = 'uncaughtException' | 'unhandledRejection';
 

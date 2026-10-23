@@ -1,6 +1,6 @@
-import { isRecord } from '../config/values/is-record.js';
-import type { ClientResponse } from './client-response.js';
-import { isJson } from './is-json.js';
+import { isRecord } from '../config/values/is-record';
+import type { ClientResponse } from './client-response';
+import { isJson } from './is-json';
 
 const PROBLEM = 'application/problem+json';
 

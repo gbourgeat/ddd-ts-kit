@@ -1,10 +1,10 @@
-import type { Name } from '../../naming/index.js';
-import { emit } from '../emit.js';
-import { eventNames } from '../event-names.js';
-import { named } from '../named.js';
-import type { Scope } from '../scope.js';
-import { vars } from '../vars.js';
-import { writeDomainEvent } from './write-domain-event.js';
+import type { Name } from '../../naming';
+import { emit } from '../emit';
+import { eventNames } from '../event-names';
+import { named } from '../named';
+import type { Scope } from '../scope';
+import { vars } from '../vars';
+import { writeDomainEvent } from './write-domain-event';
 
 /** The fact every event-sourced aggregate is born with: its stream starts with it. */
 const BIRTH = 'Created';

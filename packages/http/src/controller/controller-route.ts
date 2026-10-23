@@ -1,8 +1,8 @@
-import type { Route } from '../route/route.js';
-import type { ControllerClass } from './controller-class.js';
-import type { ErasedController } from './erased-controller.js';
-import type { ControllerRoutesOptions } from './controller-routes-options.js';
-import { controllerRoutes } from './controller-routes.js';
+import type { Route } from '../route/route';
+import type { ControllerClass } from './controller-class';
+import type { ErasedController } from './erased-controller';
+import type { ControllerRoutesOptions } from './controller-routes-options';
+import { controllerRoutes } from './controller-routes';
 
 /** The route of one controller: what a spec hands to `executeRoute`. */
 export function controllerRoute(

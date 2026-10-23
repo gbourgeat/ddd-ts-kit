@@ -1,7 +1,7 @@
-import type { RenderContext } from '../templating/index.js';
-import { applyWiring } from './apply-wiring.js';
-import type { Scope } from './scope.js';
-import { wirings } from './wirings.js';
+import type { RenderContext } from '../templating';
+import { applyWiring } from './apply-wiring';
+import type { Scope } from './scope';
+import { wirings } from './wirings';
 
 /**
  * Registers a new element where the wiring of the project is written. A kind says what each

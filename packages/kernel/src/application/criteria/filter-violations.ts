@@ -1,8 +1,8 @@
-import type { CriteriaDefinition } from './criteria-definition.js';
-import type { CriteriaViolation, CriteriaViolationCode } from './criteria-violation.js';
-import type { FieldDeclaration } from './field-declaration.js';
-import type { FilterCondition, FilterNode } from './filter-node.js';
-import { isValueOf } from './is-value-of.js';
+import type { CriteriaDefinition } from './criteria-definition';
+import type { CriteriaViolation, CriteriaViolationCode } from './criteria-violation';
+import type { FieldDeclaration } from './field-declaration';
+import type { FilterCondition, FilterNode } from './filter-node';
+import { isValueOf } from './is-value-of';
 
 export function filterViolations<Row>(
   definition: CriteriaDefinition<Row>,

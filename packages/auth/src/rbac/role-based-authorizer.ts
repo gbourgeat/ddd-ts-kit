@@ -1,16 +1,16 @@
 import { isAnonymous, isSystem, isTenantId, isTenantMember, tenantsOf, type Actor } from '@ddd-ts-kit/kernel';
-import type { AccessScope } from '../authorization/access-scope.js';
-import type { Authorizer } from '../authorization/authorizer.js';
-import type { CheckRequest } from '../authorization/check-request.js';
-import { ALLOWED, deny, type Decision } from '../authorization/decision.js';
-import { DenialReason } from '../authorization/denial-reason.js';
-import type { Explanation } from '../authorization/explanation.js';
-import type { ListRequest } from '../authorization/list-request.js';
-import { Trace } from '../authorization/trace.js';
-import { AuthorizationSetupError } from '../errors/authorization-setup-error.js';
-import type { Permission } from '../permissions/permission.js';
-import { RoleGrants, type CoveringGrant, type RoleGrantsDefinition } from './role-grants.js';
-import { tenantCheck, type TenantOf } from './tenant-check.js';
+import type { AccessScope } from '../authorization/access-scope';
+import type { Authorizer } from '../authorization/authorizer';
+import type { CheckRequest } from '../authorization/check-request';
+import { ALLOWED, deny, type Decision } from '../authorization/decision';
+import { DenialReason } from '../authorization/denial-reason';
+import type { Explanation } from '../authorization/explanation';
+import type { ListRequest } from '../authorization/list-request';
+import { Trace } from '../authorization/trace';
+import { AuthorizationSetupError } from '../errors/authorization-setup-error';
+import type { Permission } from '../permissions/permission';
+import { RoleGrants, type CoveringGrant, type RoleGrantsDefinition } from './role-grants';
+import { tenantCheck, type TenantOf } from './tenant-check';
 
 export interface RoleBasedAuthorizerOptions extends RoleGrantsDefinition {
   /**

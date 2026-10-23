@@ -1,14 +1,14 @@
 import path from 'node:path';
-import { isTestFile } from './is-test-file.js';
-import { locate } from './locate.js';
-import { toPosix } from './to-posix.js';
-import { isRecord } from './is-record.js';
-import { parseConfig } from './parse-config.js';
-import type { Config } from './config.js';
-import type { Project, LintedFile } from './linted-file.js';
-import type { LintHost } from './lint-host.js';
-import type { PluginSettings } from './plugin-settings.js';
-import { findProject } from './find-project.js';
+import { isTestFile } from './is-test-file';
+import { locate } from './locate';
+import { toPosix } from './to-posix';
+import { isRecord } from './is-record';
+import { parseConfig } from './parse-config';
+import type { Config } from './config';
+import type { Project, LintedFile } from './linted-file';
+import type { LintHost } from './lint-host';
+import type { PluginSettings } from './plugin-settings';
+import { findProject } from './find-project';
 
 const SETTINGS_KEY = 'ddd-ts-kit';
 

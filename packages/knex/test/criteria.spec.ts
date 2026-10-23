@@ -6,9 +6,9 @@ import {
   criteriaContractRows,
   type CriteriaContractRow,
 } from '@ddd-ts-kit/testing/contracts';
-import { KnexReadModelStore, createKnexUnitOfWork, criteriaToKnex } from '../src/index.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
-import { CONTRACT_TABLE, READ_SIDE, createContractTable } from './support/read-model/criteria-contract-table.js';
+import { KnexReadModelStore, createKnexUnitOfWork, criteriaToKnex } from '../src';
+import { createDatabase, type TestDatabase } from './support/database';
+import { CONTRACT_TABLE, READ_SIDE, createContractTable } from './support/read-model/criteria-contract-table';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const TABLE = `${READ_SIDE}.${CONTRACT_TABLE.table}`;

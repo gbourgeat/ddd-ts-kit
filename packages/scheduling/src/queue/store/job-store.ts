@@ -1,11 +1,11 @@
 import type { EnqueuedJob, QueuedJob } from '@ddd-ts-kit/kernel';
-import type { ClaimRequest } from './claim-request.js';
-import type { ClaimedJob } from './claimed-job.js';
-import type { JobFailure } from './job-failure.js';
-import type { JobLease } from './job-lease.js';
-import type { JobStoreStats } from './job-store-stats.js';
-import type { JobUpdate } from './job-update.js';
-import type { NewJob } from './new-job.js';
+import type { ClaimRequest } from './claim-request';
+import type { ClaimedJob } from './claimed-job';
+import type { JobFailure } from './job-failure';
+import type { JobLease } from './job-lease';
+import type { JobStoreStats } from './job-store-stats';
+import type { JobUpdate } from './job-update';
+import type { NewJob } from './new-job';
 
 /**
  * Where background jobs wait between `enqueue` and their run, and what a worker reports of them.

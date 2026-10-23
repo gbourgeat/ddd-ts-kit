@@ -1,8 +1,8 @@
-import type { Amendment } from './acceptance-lock.js';
-import type { AcceptanceProblem } from './acceptance-problem.js';
-import type { Criterion } from './criteria-in.js';
-import type { RegressionSpec } from './regression-spec.js';
-import type { Scenario } from './scenario.js';
+import type { Amendment } from './acceptance-lock';
+import type { AcceptanceProblem } from './acceptance-problem';
+import type { Criterion } from './criteria-in';
+import type { RegressionSpec } from './regression-spec';
+import type { Scenario } from './scenario';
 
 /** One row of a story and the scenarios that name it. */
 export interface RowAcceptance {

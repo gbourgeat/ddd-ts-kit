@@ -1,5 +1,5 @@
-import type { DtoClass } from './dto-class.js';
-import { derivedClass } from './derived-class.js';
+import type { DtoClass } from './dto-class';
+import { derivedClass } from './derived-class';
 
 /** Every property of a DTO class but `keys`, with their constraints, as a class to extend. */
 export function omitClass<T extends object, K extends keyof T & string>(

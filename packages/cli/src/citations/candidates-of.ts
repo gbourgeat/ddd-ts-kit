@@ -1,11 +1,11 @@
 import path from 'node:path';
-import { splitWords } from '../naming/split-words.js';
-import type { Evidence } from './evidence.js';
-import type { Removal } from './history.js';
-import { namesOfFile } from './names-of-file.js';
-import { sameStemNames } from './same-stem-names.js';
-import type { Candidate } from './stale-citation.js';
-import { isTestFile } from './is-test-file.js';
+import { splitWords } from '../naming/split-words';
+import type { Evidence } from './evidence';
+import type { Removal } from './history';
+import { namesOfFile } from './names-of-file';
+import { sameStemNames } from './same-stem-names';
+import type { Candidate } from './stale-citation';
+import { isTestFile } from './is-test-file';
 
 /** A removed name, the removal that gave it, and the contexts its successors are looked for in. */
 export interface Removed {

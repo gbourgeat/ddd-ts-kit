@@ -1,6 +1,6 @@
-import { Repository } from '../../../../../../../src/declarations.js';
-import { VisitRepository } from '../../domain/repositories/visit.repository.js';
-import type { Visit } from '../../domain/visit.js';
+import { Repository } from '../../../../../../../src/declarations';
+import { VisitRepository } from '../../domain/repositories/visit.repository';
+import type { Visit } from '../../domain/visit';
 
 @Repository(VisitRepository)
 export class InMemoryVisitRepository implements VisitRepository {

@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { RedisStreamsFailure } from '../src/event-bus.js';
-import { PLACED, TRACEPARENT, anEvent, failuresOf, unique } from './support/events.js';
-import { FaultyNetwork } from './support/proxy.js';
-import { REAL_SERVER, SERVER_URL } from './support/server.js';
-import { Server } from './support/streams.js';
-import { eventually, pause } from './support/waiting.js';
+import type { RedisStreamsFailure } from '../src/event-bus';
+import { PLACED, TRACEPARENT, anEvent, failuresOf, unique } from './support/events';
+import { FaultyNetwork } from './support/proxy';
+import { REAL_SERVER, SERVER_URL } from './support/server';
+import { Server } from './support/streams';
+import { eventually, pause } from './support/waiting';
 
 describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, publishing', { timeout: 30_000 }, () => {
   let server: Server;

@@ -1,4 +1,4 @@
-import type { LintedFile } from '../../project/linted-file.js';
+import type { LintedFile } from '../../project/linted-file';
 
 /** A production file of `domain/aggregates/` of a context. */
 export function isAggregateFile(file: LintedFile): boolean {

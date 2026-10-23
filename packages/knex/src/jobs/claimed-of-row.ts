@@ -1,5 +1,5 @@
 import type { ClaimedJob } from '@ddd-ts-kit/scheduling';
-import type { JobRow } from './job-row.js';
+import type { JobRow } from './job-row';
 
 /** A row as the worker receives it, the attempt of this claim counted. */
 export function claimedOfRow(row: JobRow): ClaimedJob {

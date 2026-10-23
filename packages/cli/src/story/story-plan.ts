@@ -1,7 +1,7 @@
-import type { Slice } from '../progress/slice.js';
-import type { AttributedMarker } from './attributed-marker.js';
-import type { DesignDeparture } from './design-departure.js';
-import type { UnreferencedCommit } from './unreferenced-commit.js';
+import type { Slice } from '../progress/slice';
+import type { AttributedMarker } from './attributed-marker';
+import type { DesignDeparture } from './design-departure';
+import type { UnreferencedCommit } from './unreferenced-commit';
 
 /** What a story is judged against. */
 export interface StoryPlan {

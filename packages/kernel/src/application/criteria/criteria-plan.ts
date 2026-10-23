@@ -1,6 +1,6 @@
-import type { Sort } from '../pagination/sort.js';
-import type { FieldDeclaration } from './field-declaration.js';
-import type { Predicate } from './predicate.js';
+import type { Sort } from '../pagination/sort';
+import type { FieldDeclaration } from './field-declaration';
+import type { Predicate } from './predicate';
 
 /**
  * A validated read, ready for a store: what a translator renders. Everything a caller wrote

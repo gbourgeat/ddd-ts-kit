@@ -2,8 +2,8 @@ import {
   contextDeclaredRelationship,
   contextPublishedLanguageIsAContract,
   contextPublishedLanguageOnly,
-} from '../../src/rules/context-boundaries.js';
-import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+} from '../../src/rules/context-boundaries';
+import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
 const CONTRACT = `${BILLING}/published-language/invoice-issued.v1.integration-event.ts`;

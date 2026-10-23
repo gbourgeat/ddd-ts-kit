@@ -9,8 +9,8 @@ import {
   parseObject,
   via,
   type SchemaDefinition,
-} from '../src/rebac.js';
-import { docsPermissions, fact, schema } from './support/documents.js';
+} from '../src/rebac';
+import { docsPermissions, fact, schema } from './support/documents';
 
 const failure = (definition: SchemaDefinition): string => {
   try {

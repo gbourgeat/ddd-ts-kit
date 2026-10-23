@@ -14,8 +14,8 @@ import {
   auditRecordOf,
   auditedSubjectKeys,
   verifyChain,
-} from '../src/index.js';
-import { NOW, aSource } from './support/fixtures.js';
+} from '../src';
+import { NOW, aSource } from './support/fixtures';
 
 /** A trail whose store is down: every record is refused. */
 class UnreachableAuditTrail implements AuditTrail {

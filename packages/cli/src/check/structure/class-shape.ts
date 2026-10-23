@@ -1,4 +1,4 @@
-import type { MethodShape } from './method-shape.js';
+import type { MethodShape } from './method-shape';
 
 export interface ClassShape {
   readonly name: string;

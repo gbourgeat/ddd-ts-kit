@@ -1,12 +1,12 @@
 import { pipeline } from 'node:stream/promises';
 import busboy, { type FileInfo } from 'busboy';
 import { FileError, FileInspection, mediaTypeOf } from '@ddd-ts-kit/kernel';
-import type { RawRequest } from '../pipeline/raw-request.js';
-import type { ReceivedUpload } from '../pipeline/received-upload.js';
-import type { UploadSpec } from '../route/upload-spec.js';
-import { headerOf } from '../route/header-of.js';
-import { missingFile } from './missing-file.js';
-import type { MultipartLimits } from './multipart-limits.js';
+import type { RawRequest } from '../pipeline/raw-request';
+import type { ReceivedUpload } from '../pipeline/received-upload';
+import type { UploadSpec } from '../route/upload-spec';
+import { headerOf } from '../route/header-of';
+import { missingFile } from './missing-file';
+import type { MultipartLimits } from './multipart-limits';
 
 /** Room for the boundaries, the part headers and the text fields over the declared size of the file. */
 const ENVELOPE_BYTES = 1_048_576;

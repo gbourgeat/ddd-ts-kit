@@ -1,6 +1,6 @@
-import { filesUnder } from '../../files-under.js';
-import type { Scope } from '../../scope.js';
-import type { DeclaredPort } from './declared-ports.js';
+import { filesUnder } from '../../files-under';
+import type { Scope } from '../../scope';
+import type { DeclaredPort } from './declared-ports';
 
 /**
  * The ports some source of the context names outside its own file and the tests: an adapter

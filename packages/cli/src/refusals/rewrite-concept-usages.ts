@@ -1,12 +1,12 @@
-import type { AppliedMoves } from './applied-moves.js';
-import { wholeLiteral } from '../check/declarations/whole-literal.js';
-import { callArguments } from '../check/text/call-arguments.js';
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
-import { matchingBracket } from '../check/text/matching-bracket.js';
-import { conceptImports } from './concept-imports.js';
-import { conceptLeftovers, type OnLeft } from './concept-leftovers.js';
-import type { NamedMove } from './named-move.js';
-import { replaceInCode, type CodeMatch } from './replace-in-code.js';
+import type { AppliedMoves } from './applied-moves';
+import { wholeLiteral } from '../check/declarations/whole-literal';
+import { callArguments } from '../check/text/call-arguments';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
+import { matchingBracket } from '../check/text/matching-bracket';
+import { conceptImports } from './concept-imports';
+import { conceptLeftovers, type OnLeft } from './concept-leftovers';
+import type { NamedMove } from './named-move';
+import { replaceInCode, type CodeMatch } from './replace-in-code';
 
 type Pass = (source: string, concept: string, moves: readonly NamedMove[]) => string;
 

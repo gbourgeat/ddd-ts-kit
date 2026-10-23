@@ -1,5 +1,5 @@
-import type { SourceFile } from '../model/source-file.js';
-import type { StringRecord } from '../scan/string-record.js';
+import type { SourceFile } from '../model/source-file';
+import type { StringRecord } from '../scan/string-record';
 
 /** `name = '...'`, `name: '...'`, `name: string = '...'`, and the same of `eventName`. */
 const NAME_PROPERTY =

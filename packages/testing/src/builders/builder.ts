@@ -1,7 +1,7 @@
-import type { Buildable } from './buildable.js';
-import type { Defaults } from './defaults.js';
-import { isResolvable } from './is-resolvable.js';
-import { RESOLVE, type Resolvable } from './resolvable.js';
+import type { Buildable } from './buildable';
+import type { Defaults } from './defaults';
+import { isResolvable } from './is-resolvable';
+import { RESOLVE, type Resolvable } from './resolvable';
 
 /**
  * Base class of hand-written test data builders.

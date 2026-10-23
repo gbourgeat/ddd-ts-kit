@@ -1,7 +1,7 @@
-import type { Workspace } from '../workspace/index.js';
-import { decoratorOptions } from './decorator-options.js';
-import { listedIn } from './listed-in.js';
-import type { RouteGroupFact } from './route-group-fact.js';
+import type { Workspace } from '../workspace';
+import { decoratorOptions } from './decorator-options';
+import { listedIn } from './listed-in';
+import type { RouteGroupFact } from './route-group-fact';
 
 const FOLDER = 'presentation/http';
 

@@ -1,11 +1,11 @@
 import { inspect } from 'node:util';
 import type { ChannelModel } from 'amqplib';
-import { BrokerUnavailableError } from '../errors/broker-unavailable-error.js';
-import { EventBusClosedError } from '../errors/event-bus-closed-error.js';
-import { failureCode } from '../errors/failure-code.js';
-import { ignore } from '../ignore.js';
-import type { ReconnectOptions } from '../options/reconnect-options.js';
-import { conceal } from '../secrecy/conceal.js';
+import { BrokerUnavailableError } from '../errors/broker-unavailable-error';
+import { EventBusClosedError } from '../errors/event-bus-closed-error';
+import { failureCode } from '../errors/failure-code';
+import { ignore } from '../ignore';
+import type { ReconnectOptions } from '../options/reconnect-options';
+import { conceal } from '../secrecy/conceal';
 
 export interface LinkHooks {
   /** Sets channels, topology and consumers up on a fresh connection. A failure retries. */

@@ -1,9 +1,9 @@
 import type { Knex } from 'knex';
 import { assertTenantId } from '@ddd-ts-kit/kernel';
-import { builderIn } from './builder-in.js';
-import type { OutboxTablesOptions } from './outbox-tables-options.js';
-import { INDEXABLE_LENGTH } from '../columns/indexable-length.js';
-import { OUTBOX_TABLE } from './table-names.js';
+import { builderIn } from './builder-in';
+import type { OutboxTablesOptions } from './outbox-tables-options';
+import { INDEXABLE_LENGTH } from '../columns/indexable-length';
+import { OUTBOX_TABLE } from './table-names';
 
 export interface AddOutboxTenantColumnOptions extends OutboxTablesOptions {
   /**

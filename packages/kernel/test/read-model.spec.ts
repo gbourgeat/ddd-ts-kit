@@ -14,7 +14,7 @@ import {
   type ReadModelRows,
   type SqlRun,
   type StampedRow,
-} from '../src/index.js';
+} from '../src';
 
 interface PatientRow {
   readonly id: string;

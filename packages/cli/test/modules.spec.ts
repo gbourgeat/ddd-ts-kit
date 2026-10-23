@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { ROLE_FOLDERS } from '../src/model-modules/index.js';
-import { checkJsonOf } from './check-support.js';
-import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers.js';
-import { BILLING, projectWithModule, PURPOSE } from './support/project-with-module.js';
+import { ROLE_FOLDERS } from '../src/model-modules';
+import { checkJsonOf } from './check-support';
+import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers';
+import { BILLING, projectWithModule, PURPOSE } from './support/project-with-module';
 
 /** The same text with the module level left out of every path of billing: what it would say without modules. */
 function withoutModule(text: string): string {

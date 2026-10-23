@@ -1,13 +1,13 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import type { OutboxRecord, OutboxStats, OutboxStore } from '@ddd-ts-kit/events';
-import type { PrismaUnitOfWork } from '../unit-of-work/create-prisma-unit-of-work.js';
-import { lockedIdOf } from './locked-id-of.js';
-import { lockingSelect } from './locking-select.js';
-import { payloadField } from './payload-field.js';
-import type { PrismaOutboxClaim } from './prisma-outbox-claim.js';
-import type { PrismaOutboxDelegate, PrismaOutboxRow, PrismaOutboxUpdate } from './prisma-outbox-delegate.js';
-import type { PrismaRawQueries } from './prisma-raw-queries.js';
-import { toOutboxRecord } from './to-outbox-record.js';
+import type { PrismaUnitOfWork } from '../unit-of-work/create-prisma-unit-of-work';
+import { lockedIdOf } from './locked-id-of';
+import { lockingSelect } from './locking-select';
+import { payloadField } from './payload-field';
+import type { PrismaOutboxClaim } from './prisma-outbox-claim';
+import type { PrismaOutboxDelegate, PrismaOutboxRow, PrismaOutboxUpdate } from './prisma-outbox-delegate';
+import type { PrismaRawQueries } from './prisma-raw-queries';
+import { toOutboxRecord } from './to-outbox-record';
 
 export interface PrismaOutboxStoreOptions<Tx> {
   /** How to reach the outbox model from a client: `(client) => client.outboxRecord`. */

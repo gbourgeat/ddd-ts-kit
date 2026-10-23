@@ -1,6 +1,6 @@
-import { specifierSuffix } from '../../src/alias/index.js';
-import { CONFIG_FILE, parseConfig } from '../../src/config/index.js';
-import { read, REPO_ROOT } from '../helpers.js';
+import { specifierSuffix } from '../../src/alias';
+import { CONFIG_FILE, parseConfig } from '../../src/config';
+import { read, REPO_ROOT } from '../helpers';
 
 /** What an import of the example ends with, as its config says (`importExtension`): the suite spells none of its own. */
 export const SOURCE_SUFFIX = specifierSuffix(

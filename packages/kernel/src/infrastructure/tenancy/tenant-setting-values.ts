@@ -1,5 +1,5 @@
-import type { ExecutionContext } from '../../application/execution/execution-context.js';
-import { assertTenantId } from '../../application/tenancy/assert-tenant-id.js';
+import type { ExecutionContext } from '../../application/execution/execution-context';
+import { assertTenantId } from '../../application/tenancy/assert-tenant-id';
 
 /**
  * The values of `TENANT_SETTINGS` for the work in progress, which a unit of work under

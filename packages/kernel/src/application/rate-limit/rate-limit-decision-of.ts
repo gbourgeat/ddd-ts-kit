@@ -1,5 +1,5 @@
-import type { RateLimitDecision } from './rate-limit-decision.js';
-import type { RateLimit } from './rate-limit.js';
+import type { RateLimitDecision } from './rate-limit-decision';
+import type { RateLimit } from './rate-limit';
 
 /** What an adapter of `RateLimiter` counted: the calls in the window, this one included when allowed, and the oldest of them. */
 export interface RateLimitWindowCount {

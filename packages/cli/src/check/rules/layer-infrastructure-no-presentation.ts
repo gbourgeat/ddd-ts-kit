@@ -1,6 +1,6 @@
-import type { Rule } from '../model/rule.js';
-import { inLayer } from '../support/in-layer.js';
-import { perFile } from '../support/per-file.js';
+import type { Rule } from '../model/rule';
+import { inLayer } from '../support/in-layer';
+import { perFile } from '../support/per-file';
 
 const FIX =
   'Move the shared type to application/ (a port or a use case result) and let both sides import it from there.';

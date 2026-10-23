@@ -1,18 +1,18 @@
-import { aggregate } from './aggregate.js';
-import { DECLARED } from './declared.js';
-import { DECLARED_CONTEXT } from './declared-context.js';
-import { DECLARED_DECLARATIONS } from './declared-declarations.js';
-import { declaredProject } from './declared-project.js';
-import { discoveredProject } from './discovered-project.js';
-import type { Fixture } from './fixture.js';
-import type { FixtureFiles } from './fixture-files.js';
-import { handler } from './handler.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { SAMPLES } from './samples.js';
-import { SINGLE_FILE_DECLARATIONS } from './single-file-declarations.js';
-import { source } from './source.js';
-import { withoutFile } from './without-file.js';
+import { aggregate } from './aggregate';
+import { DECLARED } from './declared';
+import { DECLARED_CONTEXT } from './declared-context';
+import { DECLARED_DECLARATIONS } from './declared-declarations';
+import { declaredProject } from './declared-project';
+import { discoveredProject } from './discovered-project';
+import type { Fixture } from './fixture';
+import type { FixtureFiles } from './fixture-files';
+import { handler } from './handler';
+import { PATHS } from './paths';
+import { project } from './project';
+import { SAMPLES } from './samples';
+import { SINGLE_FILE_DECLARATIONS } from './single-file-declarations';
+import { source } from './source';
+import { withoutFile } from './without-file';
 
 const {
   ADAPTER,

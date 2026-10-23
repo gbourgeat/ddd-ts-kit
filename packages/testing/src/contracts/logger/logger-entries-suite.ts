@@ -1,9 +1,9 @@
 import { LOG_LEVELS, type LogFields, type LogValue } from '@ddd-ts-kit/kernel';
-import type { ContractRunner } from '../contract-runner.js';
-import { ContractSuite } from '../contract-suite.js';
-import type { CreateLogger } from './create-logger.js';
-import type { LoggerUnderContract } from './logger-under-contract.js';
-import { unreadableTotal } from './unreadable-total.js';
+import type { ContractRunner } from '../contract-runner';
+import { ContractSuite } from '../contract-suite';
+import type { CreateLogger } from './create-logger';
+import type { LoggerUnderContract } from './logger-under-contract';
+import { unreadableTotal } from './unreadable-total';
 
 /** The fields the default subject reads at each entry; a test changes them between two entries. */
 interface WorkInProgress {

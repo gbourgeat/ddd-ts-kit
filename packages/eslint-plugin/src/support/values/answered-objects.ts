@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { descendants } from '../descendants.js';
-import type { FunctionNode } from '../functions/function-node.js';
-import { unwrapped } from './unwrapped.js';
+import { descendants } from '../descendants';
+import type { FunctionNode } from '../functions/function-node';
+import { unwrapped } from './unwrapped';
 
 const FUNCTIONS = new Set<string>([
   AST_NODE_TYPES.ArrowFunctionExpression,

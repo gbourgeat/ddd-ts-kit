@@ -1,4 +1,4 @@
-import { ActorBuilder } from './actor-builder.js';
+import { ActorBuilder } from './actor-builder';
 
 const builder = new ActorBuilder();
 

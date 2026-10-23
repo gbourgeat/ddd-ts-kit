@@ -1,15 +1,15 @@
 import type { EventDelivery, IntegrationEventCallback } from '@ddd-ts-kit/kernel';
 import { describe, expect, it } from 'vitest';
-import { failureOf } from '../src/consumption/failure-of.js';
-import { track } from '../src/consumption/track.js';
-import { BrokerUnavailableError } from '../src/errors/broker-unavailable-error.js';
-import { ConsumerNameRequiredError } from '../src/errors/consumer-name-required-error.js';
-import { EventBusClosedError } from '../src/errors/event-bus-closed-error.js';
-import { failureCode } from '../src/errors/failure-code.js';
-import { PublishNotConfirmedError } from '../src/errors/publish-not-confirmed-error.js';
-import { UnroutableEventError } from '../src/errors/unroutable-event-error.js';
-import { conceal } from '../src/secrecy/conceal.js';
-import { anEvent, PLACED } from './support/events.js';
+import { failureOf } from '../src/consumption/failure-of';
+import { track } from '../src/consumption/track';
+import { BrokerUnavailableError } from '../src/errors/broker-unavailable-error';
+import { ConsumerNameRequiredError } from '../src/errors/consumer-name-required-error';
+import { EventBusClosedError } from '../src/errors/event-bus-closed-error';
+import { failureCode } from '../src/errors/failure-code';
+import { PublishNotConfirmedError } from '../src/errors/publish-not-confirmed-error';
+import { UnroutableEventError } from '../src/errors/unroutable-event-error';
+import { conceal } from '../src/secrecy/conceal';
+import { anEvent, PLACED } from './support/events';
 
 class InvoiceRejected extends Error {}
 

@@ -1,4 +1,4 @@
-import type { StoredSnapshot } from '../event-sourcing/stored-snapshot.js';
+import type { StoredSnapshot } from '../event-sourcing/stored-snapshot';
 
 /** The last snapshot of each stream. Only the event-sourced repository uses it. */
 export abstract class SnapshotStore {

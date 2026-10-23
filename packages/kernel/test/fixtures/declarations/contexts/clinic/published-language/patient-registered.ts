@@ -1,5 +1,5 @@
-import { err, ok } from '../../../../../../src/index.js';
-import type { EventContract } from '../../../../../../src/declarations.js';
+import { err, ok } from '../../../../../../src';
+import type { EventContract } from '../../../../../../src/declarations';
 
 export interface PatientRegisteredPayload {
   readonly patientId: string;

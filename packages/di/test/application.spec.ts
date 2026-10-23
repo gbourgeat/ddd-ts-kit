@@ -1,18 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { Clock } from '@ddd-ts-kit/kernel';
-import {
-  createApplication,
-  defineContextModule,
-  tokenIdentity,
-  type BindingInfo,
-  type ContextModule,
-} from '../src/index.js';
-import { EpochClock } from './support/shop/epoch-clock.js';
-import { InMemoryStock } from './support/shop/in-memory-stock.js';
-import { platform } from './support/shop/platform.module.js';
-import { ReserveStock } from './support/shop/reserve-stock.js';
-import { shop } from './support/shop/shop.module.js';
-import { Stock } from './support/shop/stock.port.js';
+import { createApplication, defineContextModule, tokenIdentity, type BindingInfo, type ContextModule } from '../src';
+import { EpochClock } from './support/shop/epoch-clock';
+import { InMemoryStock } from './support/shop/in-memory-stock';
+import { platform } from './support/shop/platform.module';
+import { ReserveStock } from './support/shop/reserve-stock';
+import { shop } from './support/shop/shop.module';
+import { Stock } from './support/shop/stock.port';
 
 describe('createApplication', () => {
   it('resolves a class with its constructor arguments taken from the listed ports, in order', async () => {

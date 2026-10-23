@@ -1,10 +1,10 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { parseJsonc } from '../alias/parse-jsonc.js';
-import { readProjectFile } from '../alias/read-project-file.js';
-import type { Finding } from '../model/finding.js';
-import type { Project } from '../model/project.js';
-import { isRecord } from '../support/is-record.js';
-import { lineOf } from '../support/line-of.js';
+import { CONFIG_FILE } from '../../config';
+import { parseJsonc } from '../alias/parse-jsonc';
+import { readProjectFile } from '../alias/read-project-file';
+import type { Finding } from '../model/finding';
+import type { Project } from '../model/project';
+import { isRecord } from '../support/is-record';
+import { lineOf } from '../support/line-of';
 
 const MANIFEST = 'package.json';
 

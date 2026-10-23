@@ -1,5 +1,5 @@
-import { typeBrackets } from '../text/type-brackets.js';
-import { typeClosing } from '../text/type-closing.js';
+import { typeBrackets } from '../text/type-brackets';
+import { typeClosing } from '../text/type-closing';
 
 const KEYOF = /^keyof\s+/;
 /** `Name`, `ns.Name`, `Name<..>`, `typeof value`, `typeof ns.value`: the root is the first name. */

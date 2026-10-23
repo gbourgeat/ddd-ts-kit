@@ -1,6 +1,6 @@
 import { cacheTag, tenantCacheTags } from '@ddd-ts-kit/kernel';
-import type { CacheTagSource } from '../cache/cache-tag-source.js';
-import { valuesAt } from '../support/values-at.js';
+import type { CacheTagSource } from '../cache/cache-tag-source';
+import { valuesAt } from '../support/values-at';
 
 /** What the tags of an answer are read from. */
 export interface TaggedParts {

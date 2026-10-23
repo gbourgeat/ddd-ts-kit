@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect } from 'vitest';
-import type { MeasuresView } from '../../src/measures/measures-view.js';
-import type { StoryMeasures } from '../../src/measures/story-measures.js';
-import { cli, tempDir } from '../helpers.js';
-import { commitFiles } from './commit-files.js';
-import { git } from './git.js';
+import type { MeasuresView } from '../../src/measures/measures-view';
+import type { StoryMeasures } from '../../src/measures/story-measures';
+import { cli, tempDir } from '../helpers';
+import { commitFiles } from './commit-files';
+import { git } from './git';
 
 export const US5 = 'docs/architecture/stories/US5.md';
 const US6 = 'docs/architecture/stories/US6.md';

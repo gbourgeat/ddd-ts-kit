@@ -1,4 +1,4 @@
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
 
 const MENTIONS = new Map<string, RegExp>();
 

@@ -1,8 +1,8 @@
 import type { Actor, EventBusFailures, ExecutionContext, Session } from '@ddd-ts-kit/kernel';
-import type { Override } from '../application/override.js';
-import type { AuthorizationMode } from '../authorization/authorization-mode.js';
-import type { JobsOptions } from '../jobs/jobs-options.js';
-import type { ContextModule } from '../module/context-module.js';
+import type { Override } from '../application/override';
+import type { AuthorizationMode } from '../authorization/authorization-mode';
+import type { JobsOptions } from '../jobs/jobs-options';
+import type { ContextModule } from '../module/context-module';
 
 export interface TestApplicationOptions {
   /** The context modules under test. `kernelModule()` may be listed or left out. */

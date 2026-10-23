@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { traceDependency } from '../src/index.js';
-import { Ledger } from './support/ledger.js';
-import { setupTracing, type TestTracing } from './support/setup-tracing.js';
+import { traceDependency } from '../src';
+import { Ledger } from './support/ledger';
+import { setupTracing, type TestTracing } from './support/setup-tracing';
 
 describe('traceDependency, a class with private members', () => {
   let tracing: TestTracing;

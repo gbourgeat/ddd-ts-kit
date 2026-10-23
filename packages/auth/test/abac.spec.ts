@@ -11,9 +11,9 @@ import {
   type ResourceAttributes,
   type ResourceAttributeValues,
   type ResourceRef,
-} from '../src/index.js';
-import { authorizerContract } from '../src/testing.js';
-import { billingPermissions } from './support/billing.js';
+} from '../src';
+import { authorizerContract } from '../src/testing';
+import { billingPermissions } from './support/billing';
 
 const read = billingPermissions['invoice.read'];
 const issue = billingPermissions['invoice.issue'];

@@ -7,10 +7,10 @@ import {
   type Schema,
   type ValidationIssue,
 } from '@ddd-ts-kit/validation';
-import { fieldAccess } from '../field-access/field-access.js';
-import { isRecord } from '../support/is-record.js';
-import { issue } from './issue.js';
-import type { PageBody } from './page-body.js';
+import { fieldAccess } from '../field-access/field-access';
+import { isRecord } from '../support/is-record';
+import { issue } from './issue';
+import type { PageBody } from './page-body';
 
 /**
  * The schema of a page of items, from the schema of one item: validates the envelope and each

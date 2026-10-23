@@ -1,6 +1,6 @@
-import { CliError } from '../cli-error.js';
-import { CONFIG_FILE } from './config-file.js';
-import { isOneOf } from './is-one-of.js';
+import { CliError } from '../cli-error';
+import { CONFIG_FILE } from './config-file';
+import { isOneOf } from './is-one-of';
 import {
   ASSEMBLIES,
   AUDIT_MODES,
@@ -35,7 +35,7 @@ import {
   LITERAL_FORMS,
   VALUE_FORMS,
   type Stack,
-} from './stack.js';
+} from './stack';
 
 type Choose = <T extends string>(key: string, values: readonly T[], fallback: T) => T;
 

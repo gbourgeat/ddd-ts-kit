@@ -1,16 +1,16 @@
-import { readStoredShape } from '../event-sourcing/read-stored-shape.js';
-import { STORED_EVENTS_LOCK } from '../event-sourcing/stored-events-lock-file.js';
-import { scan } from '../scan/scan.js';
-import { aggregate } from './aggregate.js';
-import { contextDoc } from './context-doc.js';
-import { EVENT_SOURCING_PROJECTION_FIXTURES } from './event-sourcing-projection-fixtures.js';
-import type { Fixture } from './fixture.js';
-import type { FixtureFiles } from './fixture-files.js';
-import { handler } from './handler.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { SAMPLES } from './samples.js';
-import { source } from './source.js';
+import { readStoredShape } from '../event-sourcing/read-stored-shape';
+import { STORED_EVENTS_LOCK } from '../event-sourcing/stored-events-lock-file';
+import { scan } from '../scan/scan';
+import { aggregate } from './aggregate';
+import { contextDoc } from './context-doc';
+import { EVENT_SOURCING_PROJECTION_FIXTURES } from './event-sourcing-projection-fixtures';
+import type { Fixture } from './fixture';
+import type { FixtureFiles } from './fixture-files';
+import { handler } from './handler';
+import { PATHS } from './paths';
+import { project } from './project';
+import { SAMPLES } from './samples';
+import { source } from './source';
 
 const { AGGREGATE, BILLING, EVENT, HANDLER } = PATHS;
 

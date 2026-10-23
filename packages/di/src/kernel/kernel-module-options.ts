@@ -26,8 +26,8 @@ import type {
   UnitOfWork,
 } from '@ddd-ts-kit/kernel';
 import type { JobStore, QueueWorker, QueueWorkerOptions } from '@ddd-ts-kit/scheduling';
-import type { Instrumentation } from './instrumentation.js';
-import type { Provided } from './provided.js';
+import type { Instrumentation } from './instrumentation';
+import type { Provided } from './provided';
 
 export interface KernelModuleOptions {
   readonly clock?: Provided<Clock>;

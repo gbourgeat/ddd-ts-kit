@@ -1,7 +1,7 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { config } from './config.js';
-import type { FixtureFiles } from './fixture-files.js';
-import { project } from './project.js';
+import { CONFIG_FILE } from '../../config';
+import { config } from './config';
+import type { FixtureFiles } from './fixture-files';
+import { project } from './project';
 
 /** The declared style assembled by discovery: the role files are found at startup, no barrel lists them. */
 export function discoveredProject(files: FixtureFiles, overrides: FixtureFiles = {}): FixtureFiles {

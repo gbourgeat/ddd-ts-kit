@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { InMemoryUnitOfWork, afterCommit, atCommit, withinUnitOfWork, type CommitStep } from '../src/index.js';
+import { InMemoryUnitOfWork, afterCommit, atCommit, withinUnitOfWork, type CommitStep } from '../src';
 
 function journaled(journal: string[], name: string, fails = false): CommitStep {
   return {

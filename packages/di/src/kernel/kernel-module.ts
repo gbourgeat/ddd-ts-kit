@@ -54,17 +54,17 @@ import {
   reportFailedBackgroundJobs,
   reportFailedRuns,
 } from '@ddd-ts-kit/scheduling';
-import type { ContextModule } from '../module/context-module.js';
-import { defineContextModule } from '../module/define-context-module.js';
-import type { ModuleBuilder } from '../module/module-builder.js';
-import type { Resolve } from '../wiring/resolve.js';
-import { guardedQueryBus } from './guarded-query-bus.js';
-import { Instrumentation } from './instrumentation.js';
-import type { KernelModuleOptions } from './kernel-module-options.js';
-import { lazyErrorReporter } from './lazy-error-reporter.js';
-import { lazyJobStore } from './lazy-job-store.js';
-import type { Provided } from './provided.js';
-import { transactionalCommandBus } from './transactional-command-bus.js';
+import type { ContextModule } from '../module/context-module';
+import { defineContextModule } from '../module/define-context-module';
+import type { ModuleBuilder } from '../module/module-builder';
+import type { Resolve } from '../wiring/resolve';
+import { guardedQueryBus } from './guarded-query-bus';
+import { Instrumentation } from './instrumentation';
+import type { KernelModuleOptions } from './kernel-module-options';
+import { lazyErrorReporter } from './lazy-error-reporter';
+import { lazyJobStore } from './lazy-job-store';
+import type { Provided } from './provided';
+import { transactionalCommandBus } from './transactional-command-bus';
 
 const EVERY_KIND: readonly DependencyKind[] = [
   'repository',

@@ -1,15 +1,15 @@
-import type { EventToAppend } from '../../application/event-sourcing/event-to-append.js';
-import type { StoredData } from '../../application/event-sourcing/stored-data.js';
-import { StoredEventData } from '../../application/event-sourcing/stored-event-data.js';
-import type { StoredEventType } from '../../application/event-sourcing/stored-event-type.js';
-import type { StoredEventTypes } from '../../application/event-sourcing/stored-event-types.js';
-import type { StoredEvent } from '../../application/event-sourcing/stored-event.js';
-import { UnreadableEventError } from '../../application/event-sourcing/unreadable-event-error.js';
-import type { IdGenerator } from '../../application/ports/id-generator.js';
-import type { DomainEvent } from '../../domain/domain-event.js';
-import { UuidGenerator } from '../id/uuid-generator.js';
-import { PersonalDataCipher } from './personal-data-cipher.js';
-import { storedOrigins } from './stored-origins.js';
+import type { EventToAppend } from '../../application/event-sourcing/event-to-append';
+import type { StoredData } from '../../application/event-sourcing/stored-data';
+import { StoredEventData } from '../../application/event-sourcing/stored-event-data';
+import type { StoredEventType } from '../../application/event-sourcing/stored-event-type';
+import type { StoredEventTypes } from '../../application/event-sourcing/stored-event-types';
+import type { StoredEvent } from '../../application/event-sourcing/stored-event';
+import { UnreadableEventError } from '../../application/event-sourcing/unreadable-event-error';
+import type { IdGenerator } from '../../application/ports/id-generator';
+import type { DomainEvent } from '../../domain/domain-event';
+import { UuidGenerator } from '../id/uuid-generator';
+import { PersonalDataCipher } from './personal-data-cipher';
+import { storedOrigins } from './stored-origins';
 
 export interface EventSerializerOptions {
   /** Seals and opens the personal values; without one, data holding a personal value is refused. */

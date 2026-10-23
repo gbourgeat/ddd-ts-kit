@@ -1,5 +1,5 @@
-import { specifierOf } from '../alias/index.js';
-import type { Config } from '../config/index.js';
+import { specifierOf } from '../alias';
+import type { Config } from '../config';
 import {
   barrelFile,
   contextDeclarations,
@@ -13,12 +13,12 @@ import {
   type ClassInjection,
   type DeclaredContext,
   type Sources,
-} from '../declared/index.js';
-import { declaredModules } from '../model-modules/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { filesUnder } from './files-under.js';
-import { isDeclared } from './is-declared.js';
-import { workspaceSources } from './workspace-sources.js';
+} from '../declared';
+import { declaredModules } from '../model-modules';
+import type { Workspace } from '../workspace';
+import { filesUnder } from './files-under';
+import { isDeclared } from './is-declared';
+import { workspaceSources } from './workspace-sources';
 
 /**
  * Rewrites the generated files of every declared context from its tree: with a barrel, the

@@ -1,7 +1,7 @@
-import type { ClientDocument } from './client-document.js';
-import type { ClientOperation } from './client-operation.js';
-import { errorCodes } from './error-codes.js';
-import { isInputOptional } from './is-input-optional.js';
+import type { ClientDocument } from './client-document';
+import type { ClientOperation } from './client-operation';
+import { errorCodes } from './error-codes';
+import { isInputOptional } from './is-input-optional';
 
 /** What a README needs besides the document: the package name and where the client sits in its project. */
 export interface ReadmePlace {

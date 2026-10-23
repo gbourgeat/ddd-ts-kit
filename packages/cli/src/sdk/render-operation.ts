@@ -1,10 +1,10 @@
-import type { ClientOperation } from './client-operation.js';
-import { docComment } from './doc-comment.js';
-import { isInputOptional } from './is-input-optional.js';
-import { operationDescription } from './operation-description.js';
-import { renderInput } from './render-input.js';
-import { renderResult } from './render-result.js';
-import { typeName } from './type-name.js';
+import type { ClientOperation } from './client-operation';
+import { docComment } from './doc-comment';
+import { isInputOptional } from './is-input-optional';
+import { operationDescription } from './operation-description';
+import { renderInput } from './render-input';
+import { renderResult } from './render-result';
+import { typeName } from './type-name';
 
 /**
  * The types of one operation and its function, which holds what the client knows of it: no name

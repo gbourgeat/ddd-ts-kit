@@ -1,8 +1,8 @@
-import type { AdviceFactory } from '../aspect/advice-factory.js';
-import { advised } from './advised.js';
-import { isWrappable } from './is-wrappable.js';
-import { shadowed } from './shadowed.js';
-import { siteOf } from './site-of.js';
+import type { AdviceFactory } from '../aspect/advice-factory';
+import { advised } from './advised';
+import { isWrappable } from './is-wrappable';
+import { shadowed } from './shadowed';
+import { siteOf } from './site-of';
 
 /**
  * Puts the advice around one method that is known to answer a promise, from its first call:

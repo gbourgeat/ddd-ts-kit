@@ -1,6 +1,6 @@
-import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
-import { stateLineOf } from './state-line-of.js';
-import type { WorkerStatus, WorkersStatus } from './workers-status.js';
+import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file';
+import { stateLineOf } from './state-line-of';
+import type { WorkerStatus, WorkersStatus } from './workers-status';
 
 /** `status --workers` for a reader: each worker and what it changed, then where two workers meet. */
 export function formatWorkers(status: WorkersStatus): string {

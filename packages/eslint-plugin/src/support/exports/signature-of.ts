@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { isConstructor } from '../classes/is-constructor.js';
-import { isFunction } from '../classes/is-function.js';
-import { visibilityOf } from '../classes/visibility-of.js';
+import { isConstructor } from '../classes/is-constructor';
+import { isFunction } from '../classes/is-function';
+import { visibilityOf } from '../classes/visibility-of';
 
 type Callable =
   | TSESTree.FunctionDeclaration

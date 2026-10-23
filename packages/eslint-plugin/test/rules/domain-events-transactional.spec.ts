@@ -1,5 +1,5 @@
-import { domainEventsTransactionalBeforeCommit } from '../../src/rules/domain-events-transactional-before-commit.js';
-import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { domainEventsTransactionalBeforeCommit } from '../../src/rules/domain-events-transactional-before-commit';
+import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const RULE = 'domain-events/transactional-before-commit';
 const EVENT_HANDLER = `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`;

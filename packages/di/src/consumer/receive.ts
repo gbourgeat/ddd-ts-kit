@@ -5,9 +5,9 @@ import {
   type IntegrationEventCallback,
 } from '@ddd-ts-kit/kernel';
 import type { EventContract } from '@ddd-ts-kit/kernel/declarations';
-import type { ConsumerOptions } from './consumer-options.js';
-import type { ConsumerRuntime } from './consumer-runtime.js';
-import { UnreadableEventError } from './unreadable-event-error.js';
+import type { ConsumerOptions } from './consumer-options';
+import type { ConsumerRuntime } from './consumer-runtime';
+import { UnreadableEventError } from './unreadable-event-error';
 
 interface Reception<Payload> {
   readonly contract: EventContract<Payload>;

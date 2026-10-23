@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { PLACED, TRACEPARENT, anEvent, recorder, unique } from './support/events.js';
-import { REAL_SERVER, SERVER_URL } from './support/server.js';
-import { Server } from './support/streams.js';
+import { PLACED, TRACEPARENT, anEvent, recorder, unique } from './support/events';
+import { REAL_SERVER, SERVER_URL } from './support/server';
+import { Server } from './support/streams';
 
 describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, delivering', { timeout: 30_000 }, () => {
   let server: Server;

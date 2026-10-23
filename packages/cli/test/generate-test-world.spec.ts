@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, tempDir, write } from './helpers.js';
-import { failure, report } from './reports.js';
+import { cli, read, tempDir, write } from './helpers';
+import { failure, report } from './reports';
 
 const BILLING = 'src/contexts/billing';
 const WORLD = `${BILLING}/test/worlds/billing.world.ts`;

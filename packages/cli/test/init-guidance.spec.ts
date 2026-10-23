@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { cli, read, tempDir, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { NPM } from './support/npm.js';
-import { parseFrontmatter } from './support/parse-frontmatter.js';
+import { cli, read, tempDir, write } from './helpers';
+import { initProject } from './support/init-project';
+import { NPM } from './support/npm';
+import { parseFrontmatter } from './support/parse-frontmatter';
 
 const RULE_FILES = [
   'domain',

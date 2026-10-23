@@ -1,6 +1,6 @@
-import { isTestFile } from '../../project/is-test-file.js';
-import { locate } from '../../project/locate.js';
-import type { Config } from '../../project/config.js';
+import { isTestFile } from '../../project/is-test-file';
+import { locate } from '../../project/locate';
+import type { Config } from '../../project/config';
 
 /** `application/scheduling/*.job.ts` of a context: the one place a job lives. */
 export function isJobFile(config: Config, file: string): boolean {

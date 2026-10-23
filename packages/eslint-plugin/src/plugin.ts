@@ -1,11 +1,11 @@
 import stylistic from '@stylistic/eslint-plugin';
 import type { TSESLint } from '@typescript-eslint/utils';
 import tseslint from 'typescript-eslint';
-import { TYPESCRIPT_FILES } from './presets/create-ddd-ts-kit.js';
-import { pluginRuleLevels } from './presets/plugin-rule-levels.js';
-import { ESCAPE_HATCH_RULES } from './presets/standard-rules.js';
-import { rules } from './rules/rules.js';
-import { VERSION } from './version.js';
+import { TYPESCRIPT_FILES } from './presets/create-ddd-ts-kit';
+import { pluginRuleLevels } from './presets/plugin-rule-levels';
+import { ESCAPE_HATCH_RULES } from './presets/standard-rules';
+import { rules } from './rules/rules';
+import { VERSION } from './version';
 
 type ConfigArray = TSESLint.FlatConfig.ConfigArray;
 

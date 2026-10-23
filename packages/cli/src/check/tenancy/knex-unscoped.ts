@@ -1,7 +1,7 @@
-import type { SourceFile } from '../model/source-file.js';
-import { executorUses } from './executor-uses.js';
-import { rawReachesRows } from './raw-reaches-rows.js';
-import { rawSqlText } from './raw-sql-text.js';
+import type { SourceFile } from '../model/source-file';
+import { executorUses } from './executor-uses';
+import { rawReachesRows } from './raw-reaches-rows';
+import { rawSqlText } from './raw-sql-text';
 
 /** Raw SQL, which no helper confines. */
 const RAW = /\.raw\s*\(/g;

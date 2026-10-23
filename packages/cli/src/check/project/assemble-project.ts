@@ -1,8 +1,8 @@
-import { isOneOf, projectSeverity, SEVERITIES, type Config, type Severity } from '../../config/index.js';
-import { DEFAULT_SEVERITIES } from '../catalogue/default-severities.js';
-import { matchesGlob } from '../exports/matches-glob.js';
-import type { Project } from '../model/project.js';
-import { locate } from './locate.js';
+import { isOneOf, projectSeverity, SEVERITIES, type Config, type Severity } from '../../config';
+import { DEFAULT_SEVERITIES } from '../catalogue/default-severities';
+import { matchesGlob } from '../exports/matches-glob';
+import type { Project } from '../model/project';
+import { locate } from './locate';
 
 /** Gives what was loaded the questions every rule asks: the severity of a rule, on a file or not, and the place of a file. */
 export function assembleProject(loaded: Omit<Project, 'severity' | 'fileSeverity' | 'locate'>): Project {

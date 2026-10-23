@@ -1,7 +1,7 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import type { Permission } from '../permissions/permission.js';
-import type { AuthorizationContext } from './authorization-context.js';
-import type { ResourceRef } from './resource-ref.js';
+import type { Permission } from '../permissions/permission';
+import type { AuthorizationContext } from './authorization-context';
+import type { ResourceRef } from './resource-ref';
 
 export interface CheckRequest {
   readonly actor: Actor;

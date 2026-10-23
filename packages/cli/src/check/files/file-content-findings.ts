@@ -1,5 +1,5 @@
-import type { Finding } from '../model/finding.js';
-import { FILE_CONTENT_PATTERNS } from './file-content-pattern.js';
+import type { Finding } from '../model/finding';
+import { FILE_CONTENT_PATTERNS } from './file-content-pattern';
 
 const COMMENT = /^\s*(?:\/\/|\/\*|\*|--|#)/;
 /** A comment that ends a line of code: `//` not part of a URL, or `--` of SQL. */

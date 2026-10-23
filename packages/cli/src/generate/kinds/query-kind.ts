@@ -1,15 +1,15 @@
-import { CliError } from '../../cli-error.js';
-import { concept } from '../concept.js';
-import { emit } from '../emit.js';
-import type { Kind } from '../kind.js';
-import { learnTerms } from '../learn-terms.js';
-import { markPolicyQuestions } from '../mark-policy-questions.js';
-import { refinedByPolicy } from '../refined-by-policy.js';
-import { openScope } from '../open-scope.js';
-import type { Scope } from '../scope.js';
-import { wire } from '../wire.js';
-import { queryContext } from './query-context.js';
-import { queryOutputs, type QueryVariant } from './query-outputs.js';
+import { CliError } from '../../cli-error';
+import { concept } from '../concept';
+import { emit } from '../emit';
+import type { Kind } from '../kind';
+import { learnTerms } from '../learn-terms';
+import { markPolicyQuestions } from '../mark-policy-questions';
+import { refinedByPolicy } from '../refined-by-policy';
+import { openScope } from '../open-scope';
+import type { Scope } from '../scope';
+import { wire } from '../wire';
+import { queryContext } from './query-context';
+import { queryOutputs, type QueryVariant } from './query-outputs';
 
 export const queryKind: Kind = {
   name: 'query',

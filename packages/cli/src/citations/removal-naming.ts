@@ -1,8 +1,8 @@
-import { runGit } from '../commit/run-git.js';
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
-import type { Evidence } from './evidence.js';
-import type { History, Removal } from './history.js';
-import { namesOfFile } from './names-of-file.js';
+import { runGit } from '../commit/run-git';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
+import type { Evidence } from './evidence';
+import type { History, Removal } from './history';
+import { namesOfFile } from './names-of-file';
 
 const BY_NAME = new WeakMap<History, ReadonlyMap<string, readonly Removal[]>>();
 

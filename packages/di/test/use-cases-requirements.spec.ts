@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CommandBus } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, kernelModule, override } from '../src/index.js';
-import { wiringFailure } from './support/failure.js';
-import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command.js';
-import { PlaceOrderHandler } from './support/ordering/application/commands/place-order/place-order.handler.js';
-import { GetOrder } from './support/ordering/application/queries/get-order/get-order.query.js';
-import { GetOrderHandler } from './support/ordering/application/queries/get-order/get-order.handler.js';
-import { OrderRepository } from './support/ordering/domain/repositories/order.repository.js';
-import { InMemoryOrderRepository } from './support/ordering/infrastructure/persistence/in-memory-order.repository.js';
-import { orderingModule } from './support/ordering/ordering.module.js';
-import { deterministicKernel } from './support/deterministic-kernel.js';
+import { createApplication, defineContextModule, kernelModule, override } from '../src';
+import { wiringFailure } from './support/failure';
+import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command';
+import { PlaceOrderHandler } from './support/ordering/application/commands/place-order/place-order.handler';
+import { GetOrder } from './support/ordering/application/queries/get-order/get-order.query';
+import { GetOrderHandler } from './support/ordering/application/queries/get-order/get-order.handler';
+import { OrderRepository } from './support/ordering/domain/repositories/order.repository';
+import { InMemoryOrderRepository } from './support/ordering/infrastructure/persistence/in-memory-order.repository';
+import { orderingModule } from './support/ordering/ordering.module';
+import { deterministicKernel } from './support/deterministic-kernel';
 
 beforeEach(() => {
   PlaceOrderHandler.built = 0;

@@ -1,5 +1,5 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { InvoicingFailed } from './invoicing-failed.js';
+import { InvoicingFailed } from './invoicing-failed';
 
 /** A handler that records what it receives and fails its first `failures` deliveries. */
 export const recorder = (failures = 0) => {

@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config';
-import { decorators } from '../../../src/vitest.js';
+import { decorators } from '../../../src/vitest';
 
 const { DECORATORS_COMPILER: compiler, DECORATORS_CACHE: cacheDir, DECORATORS_PLUGIN: plugin } = process.env;
 

@@ -2,12 +2,12 @@ import type { Static, TSchema } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { Value } from 'typebox/value';
 import { err, ok } from '@ddd-ts-kit/kernel';
-import { formatPath } from '../format-path.js';
-import { isRecord } from '../shared/is-record.js';
-import type { Schema } from '../schema.js';
-import type { ValidationIssue } from '../validation-issue.js';
-import { definitionsOf } from './definitions-of.js';
-import type { TypeboxSchemaOptions } from './typebox-schema-options.js';
+import { formatPath } from '../format-path';
+import { isRecord } from '../shared/is-record';
+import type { Schema } from '../schema';
+import type { ValidationIssue } from '../validation-issue';
+import { definitionsOf } from './definitions-of';
+import type { TypeboxSchemaOptions } from './typebox-schema-options';
 
 interface TypeBoxError {
   readonly keyword: string;

@@ -1,5 +1,5 @@
 import { FixedClock, InMemoryCache, InMemoryLogger, InMemoryMetrics } from '@ddd-ts-kit/kernel';
-import { ManualScheduler } from './manual-scheduler.js';
+import { ManualScheduler } from './manual-scheduler';
 
 export interface AspectFakes {
   readonly logger: InMemoryLogger;

@@ -1,18 +1,18 @@
-import { argumentsOf } from '../../check/declarations/arguments-of.js';
-import { declaredAs } from '../../check/declarations/declared-as.js';
-import type { Decoration } from '../../check/declarations/decoration.js';
-import type { Finding } from '../../check/model/finding.js';
-import type { SourceFile } from '../../check/model/source-file.js';
-import { splitTopLevel } from '../../check/text/split-top-level.js';
-import { DECLARATION_DECORATORS } from '../declared-role.js';
-import type { ClassInjection } from './class-injection.js';
-import { constructorOf } from './constructor-of.js';
-import { parameterShape } from './parameter-shape.js';
-import { rawClassName } from './raw-class-name.js';
-import type { ReadConstructor } from './read-constructor.js';
-import { resolveToken } from './resolve-token.js';
-import type { ResolvedToken } from './resolved-token.js';
-import type { Sources } from './sources.js';
+import { argumentsOf } from '../../check/declarations/arguments-of';
+import { declaredAs } from '../../check/declarations/declared-as';
+import type { Decoration } from '../../check/declarations/decoration';
+import type { Finding } from '../../check/model/finding';
+import type { SourceFile } from '../../check/model/source-file';
+import { splitTopLevel } from '../../check/text/split-top-level';
+import { DECLARATION_DECORATORS } from '../declared-role';
+import type { ClassInjection } from './class-injection';
+import { constructorOf } from './constructor-of';
+import { parameterShape } from './parameter-shape';
+import { rawClassName } from './raw-class-name';
+import type { ReadConstructor } from './read-constructor';
+import { resolveToken } from './resolve-token';
+import type { ResolvedToken } from './resolved-token';
+import type { Sources } from './sources';
 
 /** The decorators of a message say who may send it: a message is built by its sender and is injected nothing. */
 const MESSAGE_DECORATORS = ['Requires', 'Public'];

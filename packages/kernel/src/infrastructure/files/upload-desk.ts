@@ -1,5 +1,5 @@
-import type { FileKeys } from '../../application/ports/file-keys.js';
-import type { FileStaging } from './file-staging.js';
+import type { FileKeys } from '../../application/ports/file-keys';
+import type { FileStaging } from './file-staging';
 
 /** What `fileUploadsMiddleware` stages a file upload with: the keys of the server and the staging. */
 export interface UploadDesk {

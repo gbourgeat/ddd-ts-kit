@@ -1,6 +1,6 @@
-import type { EventNames } from '../event-names.js';
-import type { Scope } from '../scope.js';
-import { eventFileOf } from './event-file-of.js';
+import type { EventNames } from '../event-names';
+import type { Scope } from '../scope';
+import { eventFileOf } from './event-file-of';
 
 const DECLARES_ITS_NAME = /\bstatic\s+readonly\s+eventName\s*=|\bextends\s+NamedDomainEvent\s*\(/;
 

@@ -1,12 +1,12 @@
-import { adapterFolders } from '../domain-events/adapter-folders.js';
-import type { EventHandler } from '../domain-events/event-handler.js';
-import { eventHandlersOf } from '../domain-events/event-handlers-of.js';
-import type { HandlerDependency } from '../domain-events/handler-dependency.js';
-import { refusedBeforeCommit } from '../domain-events/refused-before-commit.js';
-import type { Finding } from '../model/finding.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import { perFile } from '../support/per-file.js';
+import { adapterFolders } from '../domain-events/adapter-folders';
+import type { EventHandler } from '../domain-events/event-handler';
+import { eventHandlersOf } from '../domain-events/event-handlers-of';
+import type { HandlerDependency } from '../domain-events/handler-dependency';
+import { refusedBeforeCommit } from '../domain-events/refused-before-commit';
+import type { Finding } from '../model/finding';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import { perFile } from '../support/per-file';
 
 const KERNEL = '@ddd-ts-kit/kernel';
 const PUBLISHER = 'IntegrationEventPublisher';

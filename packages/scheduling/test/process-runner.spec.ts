@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ConcurrencyError, InMemoryUnitOfWork, UnreadableProcessStateError } from '@ddd-ts-kit/kernel';
-import { NoTimeoutJobError, StoredProcessRunner } from '../src/index.js';
-import { aProcessBench } from './support/a-process-bench.js';
-import { CloseDunning, DunningProcess, SendPaymentReminder } from './support/dunning-process.js';
+import { NoTimeoutJobError, StoredProcessRunner } from '../src';
+import { aProcessBench } from './support/a-process-bench';
+import { CloseDunning, DunningProcess, SendPaymentReminder } from './support/dunning-process';
 
 const DUE = new Date('2026-03-02T12:00:00.000Z');
 const LATER = new Date('2026-03-03T12:00:00.000Z');

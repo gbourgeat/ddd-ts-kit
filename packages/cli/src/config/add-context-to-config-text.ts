@@ -1,6 +1,6 @@
-import type { ContextConfig } from './config.js';
-import { editConfigText } from './edit-config-text.js';
-import { isRecord } from './values/is-record.js';
+import type { ContextConfig } from './config';
+import { editConfigText } from './edit-config-text';
+import { isRecord } from './values/is-record';
 
 /**
  * Adds a context to the config text without reformatting what the user wrote

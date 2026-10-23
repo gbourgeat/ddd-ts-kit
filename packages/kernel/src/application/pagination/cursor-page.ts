@@ -1,8 +1,8 @@
-import { InvalidPageRequestError } from './invalid-page-request-error.js';
-import { DEFAULT_PAGE_LIMITS, type PageLimits } from './page-limits.js';
-import type { CursorPageRequest } from './page-request.js';
-import { sizeWithin } from './size-within.js';
-import type { Sort } from './sort.js';
+import { InvalidPageRequestError } from './invalid-page-request-error';
+import { DEFAULT_PAGE_LIMITS, type PageLimits } from './page-limits';
+import type { CursorPageRequest } from './page-request';
+import { sizeWithin } from './size-within';
+import type { Sort } from './sort';
 
 export interface CursorPageInput<Field extends string = string> {
   readonly cursor?: string;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { Fixture } from '../src/check/fixtures/fixture.js';
-import { FIXTURES } from '../src/check/fixtures/fixtures.js';
-import { runFixture } from '../src/check/fixtures/run-fixture.js';
+import type { Fixture } from '../src/check/fixtures/fixture';
+import { FIXTURES } from '../src/check/fixtures/fixtures';
+import { runFixture } from '../src/check/fixtures/run-fixture';
 
 function fixtureNamed(name: string): Fixture {
   const found = FIXTURES.find((fixture) => fixture.name === name);

@@ -1,5 +1,5 @@
 import type { TSESLint } from '@typescript-eslint/utils';
-import type { RuleDocs } from './rule-docs.js';
+import type { RuleDocs } from './rule-docs';
 
 export type DddRule = TSESLint.RuleModule<string, readonly unknown[], RuleDocs>;
 

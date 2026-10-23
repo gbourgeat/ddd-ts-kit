@@ -1,14 +1,14 @@
-import type { Project } from '../check/model/project.js';
-import { readSlices } from '../progress/read-slices.js';
-import { Workspace } from '../workspace/index.js';
-import { citationsOf } from './citations-of.js';
-import { citedParts } from './cited-parts.js';
-import { indexOfProject } from './index-of-project.js';
-import { judgedCitations } from './judged-citations.js';
-import { removalsSince } from './removals-since.js';
-import { rowDocuments } from './row-documents.js';
-import { type PartSelection, selectParts } from './select-parts.js';
-import type { StaleCitation } from './stale-citation.js';
+import type { Project } from '../check/model/project';
+import { readSlices } from '../progress/read-slices';
+import { Workspace } from '../workspace';
+import { citationsOf } from './citations-of';
+import { citedParts } from './cited-parts';
+import { indexOfProject } from './index-of-project';
+import { judgedCitations } from './judged-citations';
+import { removalsSince } from './removals-since';
+import { rowDocuments } from './row-documents';
+import { type PartSelection, selectParts } from './select-parts';
+import type { StaleCitation } from './stale-citation';
 
 /**
  * The names a change removes or renames, since it left `since`, that the design of the parts of

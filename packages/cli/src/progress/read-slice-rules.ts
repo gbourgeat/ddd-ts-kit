@@ -1,6 +1,6 @@
-import type { Workspace } from '../workspace/index.js';
-import { SLICES_FILE } from './read-slices.js';
-import { RULE_LINE } from './rule-line.js';
+import type { Workspace } from '../workspace';
+import { SLICES_FILE } from './read-slices';
+import { RULE_LINE } from './rule-line';
 
 /**
  * The rules written for each row of the slices file, by row id, as the plan-slices skill writes

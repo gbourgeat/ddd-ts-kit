@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { NPM } from './support/npm.js';
+import { cli, read, write } from './helpers';
+import { initProject } from './support/init-project';
+import { NPM } from './support/npm';
 
 describe('the verification section of the guide', () => {
   it('gives each command with the lines it prints when it passes, as the project prints them, and the rule that a failing check is fixed in the code', () => {

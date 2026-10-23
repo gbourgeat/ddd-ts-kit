@@ -1,4 +1,4 @@
-import type { RuleDoc } from '../model/rule-doc.js';
+import type { RuleDoc } from '../model/rule-doc';
 
 export const CONTEXT_DOCS: Readonly<Record<string, RuleDoc>> = {
   'context/published-language-only': {
@@ -6,7 +6,7 @@ export const CONTEXT_DOCS: Readonly<Record<string, RuleDoc>> = {
     bad: `// contexts/shipping/application/...
 import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate';`,
     good: `// contexts/shipping/application/...
-import type { InvoiceIssuedV1 } from '@/contexts/billing/published-language/index';`,
+import type { InvoiceIssuedV1 } from '@/contexts/billing/published-language';`,
   },
   'context/declared-relationship': {
     why: 'The context map is a strategic decision, not a side effect of an import. Declaring the upstream and the pattern keeps the map reviewable and lets the cycle check work.',
@@ -38,7 +38,7 @@ import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoic
     good: `// contexts/shipping/application/ports/invoice-status.gateway.port.ts
 export abstract class InvoiceStatusGateway { abstract isPaid(invoiceId: string): Promise<boolean>; }
 // contexts/shipping/infrastructure/external/in-process-invoice-status.gateway.ts
-import type { InvoiceStatus } from '@/contexts/billing/published-language/index';
+import type { InvoiceStatus } from '@/contexts/billing/published-language';
 // contexts/shipping/application/commands/ship-parcel/ship-parcel.handler.ts, declared style
 import { InvoiceStatusGateway } from '@/contexts/shipping/application/ports/invoice-status.gateway.port';`,
   },

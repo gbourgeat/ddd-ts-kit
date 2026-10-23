@@ -1,12 +1,12 @@
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
-import type { ControllerClass } from './controller-class.js';
-import type { ErasedController } from './erased-controller.js';
-import type { ControllerRoutesOptions } from './controller-routes-options.js';
-import type { ControllerSpec } from './controller-spec.js';
-import { declaredRoute, type DeclaredRoute } from './declared-route.js';
-import type { GuardReference } from './guard-reference.js';
-import type { Guard } from './guard.js';
-import { presentationRegistry } from './presentation-registry.js';
+import type { ControllerClass } from './controller-class';
+import type { ErasedController } from './erased-controller';
+import type { ControllerRoutesOptions } from './controller-routes-options';
+import type { ControllerSpec } from './controller-spec';
+import { declaredRoute, type DeclaredRoute } from './declared-route';
+import type { GuardReference } from './guard-reference';
+import type { Guard } from './guard';
+import { presentationRegistry } from './presentation-registry';
 
 /** A controller ready to answer: its instance, its declaration and the guards before it, built. */
 export interface ResolvedController {

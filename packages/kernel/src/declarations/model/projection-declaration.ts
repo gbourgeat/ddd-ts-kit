@@ -1,6 +1,6 @@
-import type { Token } from '../token/token.js';
-import type { ProjectionApplication } from './projection-application.js';
-import type { ProjectionFeed } from './projection-feed.js';
+import type { Token } from '../token/token';
+import type { ProjectionApplication } from './projection-application';
+import type { ProjectionFeed } from './projection-feed';
 
 export interface ProjectionDeclaration {
   readonly role: 'projection';

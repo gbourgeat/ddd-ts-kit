@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError, FixedClock, LOG_LEVELS, SCRUBBED_MESSAGE } from '@ddd-ts-kit/kernel';
-import { StdoutLogger } from '../src/index.js';
+import { StdoutLogger } from '../src';
 
 class OrderAlreadyPaid extends DomainError {
   readonly code = 'ORDER_ALREADY_PAID';

@@ -1,6 +1,6 @@
-import type { AuthorMeasures } from './author-measures.js';
-import { median } from './median.js';
-import type { StoryMeasures } from './story-measures.js';
+import type { AuthorMeasures } from './author-measures';
+import { median } from './median';
+import type { StoryMeasures } from './story-measures';
 
 /** The stories of each author: how many, how many closed, the median lead time. */
 export function byAuthorOf(stories: readonly StoryMeasures[]): Record<string, AuthorMeasures> {

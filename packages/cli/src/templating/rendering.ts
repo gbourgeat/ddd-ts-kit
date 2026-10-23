@@ -1,5 +1,5 @@
-import { CliError } from '../cli-error.js';
-import type { RenderContext, RenderValue } from './render-context.js';
+import { CliError } from '../cli-error';
+import type { RenderContext, RenderValue } from './render-context';
 
 /** One rendering in progress: the text kept so far and the blocks that are open. */
 export class Rendering {

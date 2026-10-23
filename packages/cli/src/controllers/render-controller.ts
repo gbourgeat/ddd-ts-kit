@@ -1,6 +1,6 @@
-import type { HandleTypes } from './handle-types-of.js';
-import type { FunctionRoute } from './function-route.js';
-import type { MigratedGroup } from './migrated-group.js';
+import type { HandleTypes } from './handle-types-of';
+import type { FunctionRoute } from './function-route';
+import type { MigratedGroup } from './migrated-group';
 
 export interface ControllerParts {
   readonly route: FunctionRoute;

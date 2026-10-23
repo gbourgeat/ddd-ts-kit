@@ -1,4 +1,4 @@
-import type { ExecutionOrigin } from '../execution/execution-origin.js';
+import type { ExecutionOrigin } from '../execution/execution-origin';
 
 /**
  * What started the unit of work that failed: the origin of its execution context. Outside of

@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CliError } from '../cli-error.js';
-import { runGit } from '../commit/run-git.js';
-import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
-import { listWorktrees } from './list-worktrees.js';
-import { readWorkerFile } from './read-worker-file.js';
-import type { WorkerFile } from './worker-file.js';
+import { CliError } from '../cli-error';
+import { runGit } from '../commit/run-git';
+import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file';
+import { listWorktrees } from './list-worktrees';
+import { readWorkerFile } from './read-worker-file';
+import type { WorkerFile } from './worker-file';
 
 /** Which worker of a context: the only one, or the one of a worktree or a branch. */
 export interface WorkerChoice {

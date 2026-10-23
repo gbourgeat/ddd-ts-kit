@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { ADR_DIRECTORY } from './adr-directory.js';
-import { recordNumber } from './record-number.js';
+import { ADR_DIRECTORY } from './adr-directory';
+import { recordNumber } from './record-number';
 
 const RECORD_FILE = /^(\d+)-.+\.md$/;
 

@@ -1,6 +1,6 @@
-import type { Buildable } from './buildable.js';
-import { Builder } from './builder.js';
-import type { Defaults } from './defaults.js';
+import type { Buildable } from './buildable';
+import { Builder } from './builder';
+import type { Defaults } from './defaults';
 
 /** The builder `defineBuilder` gives: the generic `with` and `withMany`, made public. */
 export class GenericBuilder<Props extends object, Output> extends Builder<Props, Output> {

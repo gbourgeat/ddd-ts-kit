@@ -1,6 +1,6 @@
-import type { SourceFile } from '../model/source-file.js';
-import { callEnd } from '../text/call-end.js';
-import { isTypeLiteral } from './is-type-literal.js';
+import type { SourceFile } from '../model/source-file';
+import { callEnd } from '../text/call-end';
+import { isTypeLiteral } from './is-type-literal';
 
 const DECLARATION = /(?<![\w$.])defineIntegrationEvent\s*(?:<[^<>()]*>)?\s*\(/g;
 const PAYLOAD_KEY = /(?<![\w$.])payload\s*[:,}]/;

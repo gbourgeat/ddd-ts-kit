@@ -1,8 +1,8 @@
-import { LineCounts } from './line-counts.js';
-import type { MergeFinding } from './merge-finding.js';
-import type { MergeSides } from './merge-sides.js';
-import { rankedPlaces } from './ranked-places.js';
-import { threeWayCount } from './three-way-count.js';
+import { LineCounts } from './line-counts';
+import type { MergeFinding } from './merge-finding';
+import type { MergeSides } from './merge-sides';
+import { rankedPlaces } from './ranked-places';
+import { threeWayCount } from './three-way-count';
 
 /** The four counts of a merge, and the result flattened for the reflow filter. */
 interface Counted {

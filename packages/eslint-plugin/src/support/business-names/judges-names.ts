@@ -1,4 +1,4 @@
-import type { LintedFile } from '../../project/linted-file.js';
+import type { LintedFile } from '../../project/linted-file';
 
 /**
  * Where the language of the model lives: `domain/` and `application/` of a context, and the

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { negotiate } from '../src/index.js';
+import { negotiate } from '../src';
 
 const OFFERED = ['application/json', 'application/xml', 'text/csv'];
 

@@ -1,4 +1,4 @@
-import type { Overlaps, WorkerStatus } from './workers-status.js';
+import type { Overlaps, WorkerStatus } from './workers-status';
 
 /** The contexts and the files that more than one worker holds, each with the worktrees that hold it. */
 export function overlapsOf(workers: readonly WorkerStatus[]): Overlaps {

@@ -1,9 +1,9 @@
-import { errorReportOf } from '../../application/error-reporting/error-report-of.js';
-import { isUnexpectedError } from '../../application/error-reporting/is-unexpected-error.js';
-import { reportOnce } from '../../application/error-reporting/report-once.js';
-import type { BusMiddleware } from '../../application/messaging/bus-middleware.js';
-import type { ErrorReporter } from '../../application/ports/error-reporter.js';
-import type { ExecutionScope } from '../../application/ports/execution-scope.js';
+import { errorReportOf } from '../../application/error-reporting/error-report-of';
+import { isUnexpectedError } from '../../application/error-reporting/is-unexpected-error';
+import { reportOnce } from '../../application/error-reporting/report-once';
+import type { BusMiddleware } from '../../application/messaging/bus-middleware';
+import type { ErrorReporter } from '../../application/ports/error-reporter';
+import type { ExecutionScope } from '../../application/ports/execution-scope';
 
 /**
  * Reports the command or query that fails with something else than a `DomainError`, named

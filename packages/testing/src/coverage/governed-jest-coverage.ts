@@ -1,9 +1,9 @@
-import type { CoverageRates } from './coverage-rates.js';
-import { generatedDeclarations } from './generated-declarations.js';
-import { governedSettings } from './governed-settings.js';
-import { heldLayers } from './held-layers.js';
-import { measuredFiles } from './measured-files.js';
-import { measuredLayers } from './measured-layers.js';
+import type { CoverageRates } from './coverage-rates';
+import { generatedDeclarations } from './generated-declarations';
+import { governedSettings } from './governed-settings';
+import { heldLayers } from './held-layers';
+import { measuredFiles } from './measured-files';
+import { measuredLayers } from './measured-layers';
 
 /** The part of a Jest config that the config file of a project governs. */
 export interface GovernedJestCoverage {

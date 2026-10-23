@@ -1,7 +1,7 @@
 import type { Metrics } from '@ddd-ts-kit/kernel';
-import { metricsOr } from '../runtime/metrics-or.js';
-import type { CircuitStateChange } from './circuit-state-change.js';
-import type { CircuitState } from './circuit-state.js';
+import { metricsOr } from '../runtime/metrics-or';
+import type { CircuitStateChange } from './circuit-state-change';
+import type { CircuitState } from './circuit-state';
 
 const STATE_VALUES: Readonly<Record<CircuitState, number>> = { closed: 0, 'half-open': 1, open: 2 };
 

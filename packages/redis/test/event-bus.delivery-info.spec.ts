@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { EventDelivery } from '@ddd-ts-kit/kernel';
-import { InvoicingFailed, PLACED, TRACEPARENT, anEvent, unique } from './support/events.js';
-import { REAL_SERVER, SERVER_URL } from './support/server.js';
-import { MAX_ATTEMPTS, Server } from './support/streams.js';
+import { InvoicingFailed, PLACED, TRACEPARENT, anEvent, unique } from './support/events';
+import { REAL_SERVER, SERVER_URL } from './support/server';
+import { MAX_ATTEMPTS, Server } from './support/streams';
 
 describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, what a handler is told of a delivery', { timeout: 30_000 }, () => {
   let server: Server;

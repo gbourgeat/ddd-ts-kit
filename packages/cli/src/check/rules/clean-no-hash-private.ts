@@ -1,5 +1,5 @@
-import type { Rule } from '../model/rule.js';
-import { perFile } from '../support/per-file.js';
+import type { Rule } from '../model/rule';
+import { perFile } from '../support/per-file';
 
 const HASH_MEMBER =
   /^[ \t]*(?:(?:static|readonly|async|get|set|declare|override|accessor)\s+)*\*?\s*#([A-Za-z_$][\w$]*)/gm;

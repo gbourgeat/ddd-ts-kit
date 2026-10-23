@@ -1,6 +1,6 @@
-import type { Name } from '../../naming/index.js';
-import { isDeclared } from '../is-declared.js';
-import type { Scope } from '../scope.js';
+import type { Name } from '../../naming';
+import { isDeclared } from '../is-declared';
+import type { Scope } from '../scope';
 
 /**
  * The in-memory adapter of the read port. Declared, it is a role file bound by its own

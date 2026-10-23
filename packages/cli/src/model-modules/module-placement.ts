@@ -1,9 +1,9 @@
 import path from 'node:path';
-import type { Config } from '../config/index.js';
-import { intoModule } from './into-module.js';
-import { isContextLevel } from './is-context-level.js';
-import { isRoleFolder } from './is-role-folder.js';
-import { MODULE_LAYERS } from './module-layers.js';
+import type { Config } from '../config';
+import { intoModule } from './into-module';
+import { isContextLevel } from './is-context-level';
+import { isRoleFolder } from './is-role-folder';
+import { MODULE_LAYERS } from './module-layers';
 
 /** The module of the model a command writes in: `--module <module>` for the context it was given. */
 interface AskedModule {

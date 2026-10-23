@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { TEMPLATES_ROOT } from './templates-root.js';
+import { TEMPLATES_ROOT } from './templates-root';
 
 const known = new Map<string, boolean>();
 

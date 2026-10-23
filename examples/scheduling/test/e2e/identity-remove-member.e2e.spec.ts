@@ -7,7 +7,7 @@ import {
   type DelegationRevokedV1Payload,
   practiceMemberRemovedV1,
   type PracticeMemberRemovedV1Payload,
-} from '@/contexts/identity/published-language/index';
+} from '@/contexts/identity/published-language';
 import { startApplication, type RunningApplication } from '$test/e2e/support/start-application';
 import { storyOf } from '$test/e2e/support/story-of';
 

@@ -1,11 +1,11 @@
-import type { Remaining } from '../progress/remaining.js';
-import type { Slice } from '../progress/slice.js';
-import type { UnclosedStory } from '../progress/progress.js';
-import { closingOf } from './closing-of.js';
-import type { AttributedMarker } from './attributed-marker.js';
-import { mayKeepOpen } from './may-keep-open.js';
-import { storyOf } from './story-of.js';
-import { storyScope } from './story-scope.js';
+import type { Remaining } from '../progress/remaining';
+import type { Slice } from '../progress/slice';
+import type { UnclosedStory } from '../progress/progress';
+import { closingOf } from './closing-of';
+import type { AttributedMarker } from './attributed-marker';
+import { mayKeepOpen } from './may-keep-open';
+import { storyOf } from './story-of';
+import { storyScope } from './story-scope';
 
 /** The rows, markers and contexts of the project, and how to tell whose markers are. */
 interface Project {

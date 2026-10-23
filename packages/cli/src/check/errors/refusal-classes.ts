@@ -1,6 +1,6 @@
-import type { Scan } from '../scan/scan.js';
-import { readStructure } from '../structure/read-structure.js';
-import type { ClassShape } from '../structure/class-shape.js';
+import type { Scan } from '../scan/scan';
+import { readStructure } from '../structure/read-structure';
+import type { ClassShape } from '../structure/class-shape';
 
 /**
  * The classes of a source that are one refusal each: they extend `DomainRefusal` of the kernel,

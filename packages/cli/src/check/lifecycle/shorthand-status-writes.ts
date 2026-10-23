@@ -1,5 +1,5 @@
-import type { SourceFile } from '../model/source-file.js';
-import { BRACKETS } from '../text/brackets.js';
+import type { SourceFile } from '../model/source-file';
+import { BRACKETS } from '../text/brackets';
 
 const SHORTHAND = /(?<![\w$.'"])status\s*(?=[,}])/g;
 const DECLARED_BEFORE = /\b(?:const|let|var)\s*$/;

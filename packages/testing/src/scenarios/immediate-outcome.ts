@@ -1,14 +1,14 @@
 import { AssertionError } from 'node:assert';
 import { isDeepStrictEqual } from 'node:util';
-import type { ExpectedFacts } from '../refusals/expected-facts.js';
-import { factMismatches } from '../refusals/fact-mismatches.js';
-import { describeEvent } from './describe-event.js';
-import type { ErrorClass } from './error-class.js';
-import type { EventMatcher } from './event-matcher.js';
-import { eventMismatches } from './event-mismatches.js';
-import type { Outcome } from './outcome.js';
-import type { Recorded } from './recorded.js';
-import { show } from './show.js';
+import type { ExpectedFacts } from '../refusals/expected-facts';
+import { factMismatches } from '../refusals/fact-mismatches';
+import { describeEvent } from './describe-event';
+import type { ErrorClass } from './error-class';
+import type { EventMatcher } from './event-matcher';
+import { eventMismatches } from './event-mismatches';
+import type { Outcome } from './outcome';
+import type { Recorded } from './recorded';
+import { show } from './show';
 
 /** The assertions about an action that already ran: each one throws at once. */
 export class ImmediateOutcome<A> implements Outcome<A> {

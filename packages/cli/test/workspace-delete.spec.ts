@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { Workspace } from '../src/workspace/index.js';
-import { tempDir, write } from './helpers.js';
+import { Workspace } from '../src/workspace';
+import { tempDir, write } from './helpers';
 
 const FILE = 'src/contexts/billing/application/commands/commands.declarations.ts';
 

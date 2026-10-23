@@ -1,18 +1,11 @@
-import { CliError } from '../cli-error.js';
-import {
-  CONFIG_FILE,
-  DEFAULT_SDK_NAME,
-  editConfigText,
-  parseConfig,
-  readConfig,
-  type Config,
-} from '../config/index.js';
-import { instructAgents, setUpSdk } from '../sdk/index.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
-import type { Io } from './io.js';
-import { printReport } from './print-report.js';
+import { CliError } from '../cli-error';
+import { CONFIG_FILE, DEFAULT_SDK_NAME, editConfigText, parseConfig, readConfig, type Config } from '../config';
+import { instructAgents, setUpSdk } from '../sdk';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import type { Command } from './command';
+import type { Io } from './io';
+import { printReport } from './print-report';
 
 /**
  * Generates the typed client of each document of the contract under `clients/<document>`, and

@@ -1,6 +1,6 @@
-import { formatJson } from '../json/format-json.js';
-import { manifestJson } from './manifest-json.js';
-import type { Workspace } from '../workspace/index.js';
+import { formatJson } from '../json/format-json';
+import { manifestJson } from './manifest-json';
+import type { Workspace } from '../workspace';
 
 /**
  * Rewrites a JSON file of the project through `edit`, laid out as the formatter would (a

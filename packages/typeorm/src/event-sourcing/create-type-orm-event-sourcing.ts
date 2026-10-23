@@ -1,5 +1,5 @@
 import { postgresEventSourcing, type EventSourcingStores, type EventStoreTablesOptions } from '@ddd-ts-kit/kernel';
-import type { TypeOrmContext } from '../unit-of-work/type-orm-context.js';
+import type { TypeOrmContext } from '../unit-of-work/type-orm-context';
 
 /**
  * The event store, the snapshots, the checkpoints and the keys of the data subjects on

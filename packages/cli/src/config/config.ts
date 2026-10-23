@@ -1,7 +1,7 @@
-import type { CommitConfig } from './commit-config.js';
-import type { Coverage } from './coverage.js';
-import type { RuleSetting } from './rule-setting.js';
-import type { Stack } from './stack.js';
+import type { CommitConfig } from './commit-config';
+import type { Coverage } from './coverage';
+import type { RuleSetting } from './rule-setting';
+import type { Stack } from './stack';
 
 export interface Upstream {
   readonly context: string;

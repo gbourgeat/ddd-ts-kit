@@ -11,7 +11,7 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { Background } from '@ddd-ts-kit/kernel/declarations';
 import { InMemoryJobStore, JobStore, QueueWorker } from '@ddd-ts-kit/scheduling';
-import { lazyJobStore } from '../src/kernel/lazy-job-store.js';
+import { lazyJobStore } from '../src/kernel/lazy-job-store';
 import {
   createApplication,
   createTestApplication,
@@ -19,8 +19,8 @@ import {
   kernelModule,
   overrideForTests,
   type ModuleBuilder,
-} from '../src/index.js';
-import { wiringFailure } from './support/failure.js';
+} from '../src';
+import { wiringFailure } from './support/failure';
 
 interface Statements {
   readonly month: string;

@@ -1,5 +1,5 @@
-import { authzFieldsBySchema } from '../../src/rules/authz-fields-by-schema.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+import { authzFieldsBySchema } from '../../src/rules/authz-fields-by-schema';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const QUERY_HANDLER = `${BILLING}/application/queries/invoices-issued/invoices-issued.handler.ts`;
 const COMMAND_HANDLER = `${BILLING}/application/commands/void-invoice/void-invoice.handler.ts`;

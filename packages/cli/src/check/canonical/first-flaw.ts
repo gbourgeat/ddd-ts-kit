@@ -1,6 +1,6 @@
-import type { Config } from '../../config/index.js';
-import type { Flaw } from '../model/flaw.js';
-import { strayEntry } from './stray-entry.js';
+import type { Config } from '../../config';
+import type { Flaw } from '../model/flaw';
+import { strayEntry } from './stray-entry';
 
 /**
  * Why the canonical tree refuses a path of a context (`src/contexts/<context>/...`): the flaw of

@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { isFunction } from './is-function.js';
+import { isFunction } from './is-function';
 
 /** A method with a body, or a property holding a function: what a reader calls a method. */
 export function isCallable(

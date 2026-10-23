@@ -1,5 +1,5 @@
-import type { Config } from '../config/index.js';
-import type { PresetRefusal } from './preset-refusal.js';
+import type { Config } from '../config';
+import type { PresetRefusal } from './preset-refusal';
 
 /** What the identity preset is written for, each with the value it needs and the flag of `init` that gives it. */
 const NEEDED: readonly {

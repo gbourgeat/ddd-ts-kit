@@ -1,5 +1,5 @@
-import type { TouchedKey } from '../../application/read-model/touched-key.js';
-import type { SqlRun } from './sql-run.js';
+import type { TouchedKey } from '../../application/read-model/touched-key';
+import type { SqlRun } from './sql-run';
 
 export interface RebuiltTable {
   readonly schema?: string;

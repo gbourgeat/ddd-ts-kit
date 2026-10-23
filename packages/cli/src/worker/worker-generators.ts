@@ -1,5 +1,5 @@
-import type { Kind } from '../generate/kind.js';
-import { SHARED_WRITES } from '../generate/shared-writes.js';
+import type { Kind } from '../generate/kind';
+import { SHARED_WRITES } from '../generate/shared-writes';
 
 /**
  * The kinds a worker confined to one context may run: those of a context that write nothing

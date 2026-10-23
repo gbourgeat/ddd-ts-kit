@@ -1,8 +1,8 @@
-import type { CheckResult } from '../check/engine/check-result.js';
-import type { StaleCitation } from '../citations/stale-citation.js';
-import type { MergeVerification } from '../merge/lost/merge-verification.js';
-import type { ScriptRun } from './script-run.js';
-import type { SizedFile } from './sized-file.js';
+import type { CheckResult } from '../check/engine/check-result';
+import type { StaleCitation } from '../citations/stale-citation';
+import type { MergeVerification } from '../merge/lost/merge-verification';
+import type { ScriptRun } from './script-run';
+import type { SizedFile } from './sized-file';
 
 /** What `verify-slice` found for one slice, step by step, and what is left to commit. */
 export interface SliceVerification {

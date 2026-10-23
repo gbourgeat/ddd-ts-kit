@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { InMemoryRelationTupleStore } from '../src/rebac.js';
-import { authorizerContract, relationTupleStoreContract } from '../src/testing.js';
-import { ada, authorizerWith, docsPermissions, document, fact } from './support/documents.js';
+import { InMemoryRelationTupleStore } from '../src/rebac';
+import { authorizerContract, relationTupleStoreContract } from '../src/testing';
+import { ada, authorizerWith, docsPermissions, document, fact } from './support/documents';
 
 const edit = docsPermissions['document.edit'];
 

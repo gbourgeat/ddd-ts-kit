@@ -1,4 +1,4 @@
-import type { ErrorReport } from '../error-reporting/error-report.js';
+import type { ErrorReport } from '../error-reporting/error-report';
 
 /**
  * Where unexpected failures go to be looked at: an error tracker. Called by what stands around

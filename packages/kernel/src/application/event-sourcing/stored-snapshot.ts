@@ -1,4 +1,4 @@
-import type { StoredData } from './stored-data.js';
+import type { StoredData } from './stored-data';
 
 /** The state of a stream at a version, kept to shorten its replay. A snapshot can always be thrown away. */
 export interface StoredSnapshot {

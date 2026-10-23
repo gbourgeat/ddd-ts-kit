@@ -1,5 +1,5 @@
-import { citationLine } from './citation-line.js';
-import type { StaleCitation } from './stale-citation.js';
+import { citationLine } from './citation-line';
+import type { StaleCitation } from './stale-citation';
 
 /** `cited --removed-since` for a reader: the names a change removes that the design of rows not done still cites. */
 export function formatRemovals(citations: readonly StaleCitation[], since: string): string {

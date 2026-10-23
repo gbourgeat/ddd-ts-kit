@@ -1,13 +1,13 @@
-import { domainEventNames } from '../events/domain-event-names.js';
-import { eventDeclarations } from '../events/event-declarations.js';
-import { inDeclaration } from '../events/in-declaration.js';
-import { isTypeLiteral } from '../events/is-type-literal.js';
-import type { ContextLocation } from '../model/context-location.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inContext } from '../support/in-context.js';
-import { KEBAB_SEGMENT } from '../support/kebab-segment.js';
-import { perFile } from '../support/per-file.js';
+import { domainEventNames } from '../events/domain-event-names';
+import { eventDeclarations } from '../events/event-declarations';
+import { inDeclaration } from '../events/in-declaration';
+import { isTypeLiteral } from '../events/is-type-literal';
+import type { ContextLocation } from '../model/context-location';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { inContext } from '../support/in-context';
+import { KEBAB_SEGMENT } from '../support/kebab-segment';
+import { perFile } from '../support/per-file';
 
 interface Named {
   readonly line: number;

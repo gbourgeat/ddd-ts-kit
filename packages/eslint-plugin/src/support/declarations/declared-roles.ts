@@ -1,4 +1,4 @@
-import type { DeclaredRole } from './declared-role.js';
+import type { DeclaredRole } from './declared-role';
 
 /** Same table as `DECLARED_ROLES` of the CLI, which this plugin does not depend on. */
 export const DECLARED_ROLES: readonly DeclaredRole[] = [

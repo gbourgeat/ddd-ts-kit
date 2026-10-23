@@ -5,9 +5,9 @@ import {
   streamNamesOf,
   type RedisStreamsEventBusOptions,
   type RedisStreamsFailure,
-} from '../src/event-bus.js';
-import { PLACED, anEvent, failuresOf } from './support/events.js';
-import { eventually, pause } from './support/waiting.js';
+} from '../src/event-bus';
+import { PLACED, anEvent, failuresOf } from './support/events';
+import { eventually, pause } from './support/waiting';
 
 describe('RedisStreamsEventBus while the server is away', () => {
   const nowhere = 'redis://kit:secret@127.0.0.1:1';

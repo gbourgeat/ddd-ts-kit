@@ -1,9 +1,9 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { config } from './config.js';
-import type { FixtureFiles } from './fixture-files.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { SAMPLES } from './samples.js';
+import { CONFIG_FILE } from '../../config';
+import { config } from './config';
+import type { FixtureFiles } from './fixture-files';
+import { PATHS } from './paths';
+import { project } from './project';
+import { SAMPLES } from './samples';
 
 const { BILLING } = PATHS;
 

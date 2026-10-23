@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { InMemoryFileStorage } from '@ddd-ts-kit/kernel';
-import { executeRoute, type Route } from '../src/index.js';
-import { multipartUploads } from '../src/uploads.js';
-import type { RunningServer } from './support/running-server.js';
-import { onExpress, onFastify, onHono, uploadRoutes } from './support/upload-desk.js';
+import { executeRoute, type Route } from '../src';
+import { multipartUploads } from '../src/uploads';
+import type { RunningServer } from './support/running-server';
+import { onExpress, onFastify, onHono, uploadRoutes } from './support/upload-desk';
 
 const PDF = '%PDF-1.7\n%%EOF\n';
 

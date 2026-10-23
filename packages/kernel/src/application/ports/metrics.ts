@@ -1,6 +1,6 @@
-import type { Counter } from '../metrics/counter.js';
-import type { Gauge } from '../metrics/gauge.js';
-import type { Histogram } from '../metrics/histogram.js';
+import type { Counter } from '../metrics/counter';
+import type { Gauge } from '../metrics/gauge';
+import type { Histogram } from '../metrics/histogram';
 
 /** Asking twice for the same name feeds the same series. */
 export abstract class Metrics {

@@ -1,6 +1,6 @@
-import type { Declaration } from './declaration.js';
-import type { NameIndex } from './name-index.js';
-import { namesOfFile } from './names-of-file.js';
+import type { Declaration } from './declaration';
+import type { NameIndex } from './name-index';
+import { namesOfFile } from './names-of-file';
 
 /** The index of some files and of what they declare: each declared name, then the names their file names give. */
 export function nameIndexOf(declarations: readonly Declaration[], files: readonly string[]): NameIndex {

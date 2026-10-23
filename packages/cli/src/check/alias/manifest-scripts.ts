@@ -1,8 +1,8 @@
-import { isRecord } from '../support/is-record.js';
-import type { Inspected } from './inspected.js';
-import { ALIAS_FILES } from './alias-files.js';
-import { parseJsonc } from './parse-jsonc.js';
-import { readProjectFile } from './read-project-file.js';
+import { isRecord } from '../support/is-record';
+import type { Inspected } from './inspected';
+import { ALIAS_FILES } from './alias-files';
+import { parseJsonc } from './parse-jsonc';
+import { readProjectFile } from './read-project-file';
 
 export interface ManifestScripts {
   /** The text of package.json, to place a finding on its line. */

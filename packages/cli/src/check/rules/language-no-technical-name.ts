@@ -1,9 +1,9 @@
-import { splitWords } from '../../naming/index.js';
-import { TECHNICAL_WORDS } from '../language/technical-words.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inContext } from '../support/in-context.js';
-import { perFile } from '../support/per-file.js';
+import { splitWords } from '../../naming';
+import { TECHNICAL_WORDS } from '../language/technical-words';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { inContext } from '../support/in-context';
+import { perFile } from '../support/per-file';
 
 const DECLARATION = /(?<![\w$.])(?:class|interface|enum|type)\s+([A-Za-z_$][\w$]*)/g;
 

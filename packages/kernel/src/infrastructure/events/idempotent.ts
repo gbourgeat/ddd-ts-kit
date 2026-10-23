@@ -1,5 +1,5 @@
-import type { IntegrationEventCallback } from '../../application/events/integration-event-callback.js';
-import type { ProcessedEventStore } from '../../application/ports/processed-event-store.js';
+import type { IntegrationEventCallback } from '../../application/events/integration-event-callback';
+import type { ProcessedEventStore } from '../../application/ports/processed-event-store';
 
 /**
  * Wraps a handler so a redelivered event is processed once per consumer. A failed handler

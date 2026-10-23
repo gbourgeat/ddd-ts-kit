@@ -1,8 +1,8 @@
-import { aliasProblem } from '../../alias/index.js';
-import { CONFIG_FILE, DEFAULT_IMPORT_ALIAS } from '../../config/index.js';
-import type { Violation } from '../model/violation.js';
-import { lineOf } from '../support/line-of.js';
-import type { Inspected } from './inspected.js';
+import { aliasProblem } from '../../alias';
+import { CONFIG_FILE, DEFAULT_IMPORT_ALIAS } from '../../config';
+import type { Violation } from '../model/violation';
+import { lineOf } from '../support/line-of';
+import type { Inspected } from './inspected';
 
 /** An alias the kit cannot hold every tool to: nothing else is worth comparing until it is fixed. */
 export function configuredAlias({ project, report }: Inspected): Violation[] {

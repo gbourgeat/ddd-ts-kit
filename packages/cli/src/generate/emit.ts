@@ -1,6 +1,6 @@
-import type { RenderContext } from '../templating/index.js';
-import { rendered } from './rendered.js';
-import type { Scope } from './scope.js';
+import type { RenderContext } from '../templating';
+import { rendered } from './rendered';
+import type { Scope } from './scope';
 
 /** One generated file: the template it comes from and its path inside the context. */
 export type Output = readonly [template: string, target: string];

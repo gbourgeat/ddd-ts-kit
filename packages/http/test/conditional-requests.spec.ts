@@ -11,8 +11,8 @@ import {
   type RawHeaders,
   type RawRequest,
   type Route,
-} from '../src/index.js';
-import { generateOpenApi } from '../src/openapi.js';
+} from '../src';
+import { generateOpenApi } from '../src/openapi';
 
 const calendarShape = z.object({ id: z.string(), version: z.number(), changedAt: z.string() });
 const calendar = zodSchema(calendarShape);

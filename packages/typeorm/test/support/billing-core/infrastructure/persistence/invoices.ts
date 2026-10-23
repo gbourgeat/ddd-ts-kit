@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm';
-import { auditColumns, schemaNameOf, tenantColumn } from '../../../../../src/index.js';
-import type { InvoiceRow } from './invoice-row.js';
+import { auditColumns, schemaNameOf, tenantColumn } from '../../../../../src';
+import type { InvoiceRow } from './invoice-row';
 
 /** One schema per bounded context: `billing-core` owns `billing_core.invoices`. */
 export const invoices = new EntitySchema<InvoiceRow>({

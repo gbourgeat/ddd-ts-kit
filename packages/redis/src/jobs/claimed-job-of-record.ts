@@ -1,6 +1,6 @@
 import type { ClaimedJob } from '@ddd-ts-kit/scheduling';
-import { parseEnqueuedBy } from './parse-enqueued-by.js';
-import type { RedisJobRecord } from './redis-job-record.js';
+import { parseEnqueuedBy } from './parse-enqueued-by';
+import type { RedisJobRecord } from './redis-job-record';
 
 /** A record as the worker receives it. */
 export function claimedJobOfRecord(record: RedisJobRecord): ClaimedJob {

@@ -1,7 +1,7 @@
-import type { CommandBus, IntegrationEvent } from '../../../../../../../../src/index.js';
-import { IntegrationEventHandler } from '../../../../../../../../src/declarations.js';
-import { PatientRegistered, type PatientRegisteredPayload } from '../../../published-language/patient-registered.js';
-import { RequestCallback } from '../../commands/request-callback/request-callback.command.js';
+import type { CommandBus, IntegrationEvent } from '../../../../../../../../src';
+import { IntegrationEventHandler } from '../../../../../../../../src/declarations';
+import { PatientRegistered, type PatientRegisteredPayload } from '../../../published-language/patient-registered';
+import { RequestCallback } from '../../commands/request-callback/request-callback.command';
 
 @IntegrationEventHandler(PatientRegistered, { consumer: 'clinic.welcome-on-patient-registered' })
 export class WelcomeOnPatientRegistered implements IntegrationEventHandler<PatientRegisteredPayload> {

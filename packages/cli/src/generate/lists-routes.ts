@@ -1,5 +1,5 @@
-import type { Config } from '../config/index.js';
-import { isDeclared } from './is-declared.js';
+import type { Config } from '../config';
+import { isDeclared } from './is-declared';
 
 /**
  * Whether the routes of a context are a list written by hand in `<context>.routes.ts`: always

@@ -1,12 +1,12 @@
 import { describe } from 'vitest';
-import { adapterClient } from './adapter-client.js';
-import { answersAsDeclared } from './behaviour-answers.js';
-import { mountsControllers } from './behaviour-controllers.js';
-import { refusesDuplicates } from './behaviour-duplicates.js';
-import { carriesIdentifiers } from './behaviour-identifiers.js';
-import { answersProblems } from './behaviour-problems.js';
-import { answersInSeveralMediaTypes } from './behaviour-representations.js';
-import type { ReadAuthorization, StartServer } from './running-server.js';
+import { adapterClient } from './adapter-client';
+import { answersAsDeclared } from './behaviour-answers';
+import { mountsControllers } from './behaviour-controllers';
+import { refusesDuplicates } from './behaviour-duplicates';
+import { carriesIdentifiers } from './behaviour-identifiers';
+import { answersProblems } from './behaviour-problems';
+import { answersInSeveralMediaTypes } from './behaviour-representations';
+import type { ReadAuthorization, StartServer } from './running-server';
 
 /** The one suite every adapter must pass: the behaviour belongs to the pipeline, not the framework. */
 export function describeAdapter(name: string, start: StartServer, readAuthorization: ReadAuthorization): void {

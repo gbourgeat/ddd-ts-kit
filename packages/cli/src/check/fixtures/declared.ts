@@ -1,4 +1,4 @@
-import { source } from './source.js';
+import { source } from './source';
 
 const DECLARATIONS = "'@ddd-ts-kit/kernel/declarations'";
 

@@ -1,8 +1,8 @@
-import { compilerResolutionOf, specifierSuffix } from '../../alias/index.js';
-import type { Violation } from '../model/violation.js';
-import { ALIAS_FILES } from './alias-files.js';
-import { compilerOptionsOf } from './compiler-options-of.js';
-import type { Inspected } from './inspected.js';
+import { compilerResolutionOf, specifierSuffix } from '../../alias';
+import type { Violation } from '../model/violation';
+import { ALIAS_FILES } from './alias-files';
+import { compilerOptionsOf } from './compiler-options-of';
+import type { Inspected } from './inspected';
 
 const { build: BUILD, typeCheck: TYPE_CHECK } = ALIAS_FILES;
 /** The resolutions of the compiler that read a specifier as Node does: the extension is required. */

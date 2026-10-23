@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import type { Remaining } from '../src/progress/remaining.js';
-import type { Slice } from '../src/progress/slice.js';
-import { closingOf } from '../src/story/closing-of.js';
-import { formatStoryClosing } from '../src/story/format-story-closing.js';
-import type { AttributedMarker, MarkerAttribution } from '../src/story/attributed-marker.js';
-import { storyOf } from '../src/story/story-of.js';
-import { unclosedStories } from '../src/story/unclosed-stories.js';
+import type { Remaining } from '../src/progress/remaining';
+import type { Slice } from '../src/progress/slice';
+import { closingOf } from '../src/story/closing-of';
+import { formatStoryClosing } from '../src/story/format-story-closing';
+import type { AttributedMarker, MarkerAttribution } from '../src/story/attributed-marker';
+import { storyOf } from '../src/story/story-of';
+import { unclosedStories } from '../src/story/unclosed-stories';
 
 const row = (id: string, context: string, status: string): Slice => ({
   id,

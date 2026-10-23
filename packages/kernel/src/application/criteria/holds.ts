@@ -1,7 +1,7 @@
-import { compareValues } from './compare-values.js';
-import type { FieldDeclaration } from './field-declaration.js';
-import type { FieldType } from './field-type.js';
-import type { Predicate, PredicateTest } from './predicate.js';
+import { compareValues } from './compare-values';
+import type { FieldDeclaration } from './field-declaration';
+import type { FieldType } from './field-type';
+import type { Predicate, PredicateTest } from './predicate';
 
 type Fields = Readonly<Record<string, FieldDeclaration>>;
 

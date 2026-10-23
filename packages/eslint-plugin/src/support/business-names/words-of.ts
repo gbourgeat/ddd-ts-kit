@@ -1,5 +1,5 @@
-import type { Config } from '../../project/config.js';
-import { GENERIC_WORDS } from './generic-words.js';
+import type { Config } from '../../project/config';
+import { GENERIC_WORDS } from './generic-words';
 
 /** The `words` and `allow` options of the rule, which come over `businessNames` of the config. */
 export interface BusinessNameOptions {

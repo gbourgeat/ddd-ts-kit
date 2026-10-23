@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
-import { governedCoverage, governedJestCoverage, REFERENCE_COVERAGE, unaffectedContexts } from '../src/coverage.js';
+import { governedCoverage, governedJestCoverage, REFERENCE_COVERAGE, unaffectedContexts } from '../src/coverage';
 
 const workspace = mkdtempSync(path.join(os.tmpdir(), 'ddd-ts-kit-coverage-'));
 

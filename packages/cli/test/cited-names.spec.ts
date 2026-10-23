@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { citedNames } from '../src/citations/cited-names.js';
-import { textUnits } from '../src/citations/text-units.js';
+import { citedNames } from '../src/citations/cited-names';
+import { textUnits } from '../src/citations/text-units';
 
 const VOCABULARY = { sourceRoot: 'src', terms: new Set(['invoice']) };
 

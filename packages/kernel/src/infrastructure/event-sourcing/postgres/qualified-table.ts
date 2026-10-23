@@ -1,4 +1,4 @@
-import { EVENT_STORE_TABLES } from './event-store-tables.js';
+import { EVENT_STORE_TABLES } from './event-store-tables';
 
 /** A table of the event store, quoted and in its schema when it has one. */
 export function qualifiedTable(schema: string | undefined, table: keyof typeof EVENT_STORE_TABLES): string {

@@ -1,4 +1,4 @@
-import type { Config } from '../../project/config.js';
+import type { Config } from '../../project/config';
 
 /**
  * Names a project gives to a home-made copy of a standard interface of the kernel

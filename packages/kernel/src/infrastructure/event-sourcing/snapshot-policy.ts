@@ -1,5 +1,5 @@
-import type { StoredEventData } from '../../application/event-sourcing/stored-event-data.js';
-import type { SnapshotStore } from '../../application/ports/snapshot-store.js';
+import type { StoredEventData } from '../../application/event-sourcing/stored-event-data';
+import type { SnapshotStore } from '../../application/ports/snapshot-store';
 
 /** When and how an event-sourced repository keeps snapshots of its aggregates: a choice per aggregate. */
 export interface SnapshotPolicy<A, S> {

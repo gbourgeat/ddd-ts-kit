@@ -1,6 +1,6 @@
-import type { Config } from '../../config/index.js';
-import type { InitFile } from './init-file.js';
-import { when } from './when.js';
+import type { Config } from '../../config';
+import type { InitFile } from './init-file';
+import { when } from './when';
 
 const GITHUB: readonly InitFile[] = [
   ['.github/workflows/ci.yml', 'pipeline/github/workflows/ci.yml.tpl'],

@@ -1,9 +1,9 @@
-import type { Awaitable } from './awaitable.js';
-import type { ContractRunner } from './contract-runner.js';
-import { AfterCommitSuite } from './unit-of-work/after-commit-suite.js';
-import { DispatchSuite } from './unit-of-work/dispatch-suite.js';
-import { FailureSuite } from './unit-of-work/failure-suite.js';
-import type { UnitOfWorkUnderContract } from './unit-of-work/unit-of-work-under-contract.js';
+import type { Awaitable } from './awaitable';
+import type { ContractRunner } from './contract-runner';
+import { AfterCommitSuite } from './unit-of-work/after-commit-suite';
+import { DispatchSuite } from './unit-of-work/dispatch-suite';
+import { FailureSuite } from './unit-of-work/failure-suite';
+import type { UnitOfWorkUnderContract } from './unit-of-work/unit-of-work-under-contract';
 
 export interface UnitOfWorkContractOptions {
   readonly name: string;

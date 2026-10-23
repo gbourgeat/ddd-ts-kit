@@ -1,12 +1,12 @@
-import { DECLARED } from './declared.js';
-import { DECLARED_CONTEXT } from './declared-context.js';
-import { declaredProject } from './declared-project.js';
-import type { Fixture } from './fixture.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { SAMPLES } from './samples.js';
-import { source } from './source.js';
-import { withoutFile } from './without-file.js';
+import { DECLARED } from './declared';
+import { DECLARED_CONTEXT } from './declared-context';
+import { declaredProject } from './declared-project';
+import type { Fixture } from './fixture';
+import { PATHS } from './paths';
+import { project } from './project';
+import { SAMPLES } from './samples';
+import { source } from './source';
+import { withoutFile } from './without-file';
 
 const { ADAPTER, AGGREGATE_SPEC, BILLING, EVENT, EVENT_HANDLER, EVENT_HANDLER_SPEC, HANDLER, MODULE, PAYMENT_ADAPTER } =
   PATHS;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { formatPlan } from '../src/plan/format-plan.js';
-import type { Batch, PlannedRow, WavePlan } from '../src/plan/wave-plan.js';
+import { formatPlan } from '../src/plan/format-plan';
+import type { Batch, PlannedRow, WavePlan } from '../src/plan/wave-plan';
 
 const BATCH: Batch = {
   id: 'W1-B1',

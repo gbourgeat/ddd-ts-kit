@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { EventDelivery } from '@ddd-ts-kit/kernel';
-import type { Broker } from './support/broker.js';
-import { BROKERS } from './support/brokers.js';
-import { MAX_ATTEMPTS } from './support/environment.js';
-import { PLACED, TRACEPARENT, anEvent } from './support/events.js';
-import { InvoicingFailed } from './support/invoicing-failed.js';
-import { unique } from './support/unique.js';
+import type { Broker } from './support/broker';
+import { BROKERS } from './support/brokers';
+import { MAX_ATTEMPTS } from './support/environment';
+import { PLACED, TRACEPARENT, anEvent } from './support/events';
+import { InvoicingFailed } from './support/invoicing-failed';
+import { unique } from './support/unique';
 
 describe.each(BROKERS)(
   'NatsEventBus: what a handler is told of a delivery, %s',

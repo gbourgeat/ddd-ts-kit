@@ -1,8 +1,8 @@
 import { DomainError, type ExecutionContext } from '@ddd-ts-kit/kernel';
-import { guardRefusals } from '../controller/guard-refusals.js';
-import type { RawHeaders } from '../route/raw-headers.js';
-import type { Route } from '../route/route.js';
-import { executionOfRequest } from './execution-of-request.js';
+import { guardRefusals } from '../controller/guard-refusals';
+import type { RawHeaders } from '../route/raw-headers';
+import type { Route } from '../route/route';
+import { executionOfRequest } from './execution-of-request';
 
 export interface CallerAdmission {
   readonly route: Route;

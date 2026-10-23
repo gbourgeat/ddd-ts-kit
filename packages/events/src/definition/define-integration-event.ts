@@ -1,10 +1,10 @@
 import { err, ok, type IntegrationEvent, type Result } from '@ddd-ts-kit/kernel';
 import type { Schema } from '@ddd-ts-kit/validation';
-import type { EventMeta } from './event-meta.js';
-import type { EventParseError } from './event-parse-error.js';
-import type { IntegrationEventDefinition } from './integration-event-definition.js';
-import { InvalidEventDefinitionError } from './invalid-event-definition-error.js';
-import { InvalidEventPayloadError } from './invalid-event-payload-error.js';
+import type { EventMeta } from './event-meta';
+import type { EventParseError } from './event-parse-error';
+import type { IntegrationEventDefinition } from './integration-event-definition';
+import { InvalidEventDefinitionError } from './invalid-event-definition-error';
+import { InvalidEventPayloadError } from './invalid-event-payload-error';
 
 export interface DefineIntegrationEventOptions<P> {
   /** Routing key, `<context>.<aggregate>.<fact>`, each segment in kebab-case. */

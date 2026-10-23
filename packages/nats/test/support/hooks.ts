@@ -1,4 +1,4 @@
-import type { NatsDelivery, NatsFailure } from '../../src/index.js';
+import type { NatsDelivery, NatsFailure } from '../../src';
 
 export const deliveriesOf = (settled: NatsDelivery[]) => (delivery: NatsDelivery) => void settled.push(delivery);
 

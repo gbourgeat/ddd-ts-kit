@@ -9,7 +9,7 @@ import {
   type StoredData,
   type StoredJson,
 } from '@ddd-ts-kit/kernel';
-import type { SnapshotEquivalence } from './snapshot-equivalence.js';
+import type { SnapshotEquivalence } from './snapshot-equivalence';
 
 /**
  * Proves that the snapshots of an aggregate give the state a full replay gives. For every version

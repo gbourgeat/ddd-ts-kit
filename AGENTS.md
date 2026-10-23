@@ -12,6 +12,7 @@ TypeScript. Public repository.
 - `tsc` is TypeScript 7 (native). Do not use the TypeScript compiler JS API.
 - Optional peers (zod, class-validator, express, fastify, nest, OpenTelemetry SDK) are imported
   only from their subpath entry file.
+- Relative imports carry no `.js` and no `/index` (`'../config'`, `moduleResolution: Bundler`); the build writes them in `dist` (`pipeline/monorepo/add-extensions.mjs`).
 - English only, no em dash or en dash, no `any`, no non-null assertion.
 - What a change does for a user goes in a file of its own under `changes/` (see `changes/README.md`), never in `CHANGELOG.md`, and a change under `plugin/` leaves `version` of `plugin/.claude-plugin/plugin.json` alone: the release writes both, the plugin under the version of the packages; `claude plugin validate . --strict`, `claude plugin validate plugin --strict` and `claude plugin validate plugin/skills --strict` must pass.
 - Details: `CONTRIBUTING.md`.

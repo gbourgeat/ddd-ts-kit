@@ -14,8 +14,8 @@ import {
   prefixRoutes,
   toProblem,
   type RawRequest,
-} from '../src/index.js';
-import { getOrder, placeOrder } from './support/orders.js';
+} from '../src';
+import { getOrder, placeOrder } from './support/orders';
 
 const request = (overrides: Partial<RawRequest> = {}): RawRequest => ({
   params: {},

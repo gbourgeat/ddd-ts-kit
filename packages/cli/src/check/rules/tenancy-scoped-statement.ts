@@ -1,11 +1,11 @@
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inLayers } from '../support/in-layers.js';
-import { perFile } from '../support/per-file.js';
-import { drizzleUnscoped } from '../tenancy/drizzle-unscoped.js';
-import { knexUnscoped } from '../tenancy/knex-unscoped.js';
-import { unscopedReadModels } from '../tenancy/unscoped-read-models.js';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { inLayers } from '../support/in-layers';
+import { perFile } from '../support/per-file';
+import { drizzleUnscoped } from '../tenancy/drizzle-unscoped';
+import { knexUnscoped } from '../tenancy/knex-unscoped';
+import { unscopedReadModels } from '../tenancy/unscoped-read-models';
 
 const FIX =
   'Reach tenant data through the helpers of the ORM package: `tenantTable` to read and `ownTenantTable` to write (Knex), `tenantCondition` and `ownTenantCondition` in the where of each statement and `tenantScopeOf` in each inserted row (Drizzle), the `tenant` option of a read model store. A table that holds no tenant data is a deviation: `// ddd-ts-kit-disable-next-line tenancy/scoped-statement -- ADR-NNNN: <why>`.';

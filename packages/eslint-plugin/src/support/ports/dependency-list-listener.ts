@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { calleeName } from '../calls/callee-name.js';
-import type { ClassNode } from '../classes/class-name.js';
-import { declarationReader } from '../declarations/declaration-reader.js';
+import { calleeName } from '../calls/callee-name';
+import type { ClassNode } from '../classes/class-name';
+import { declarationReader } from '../declarations/declaration-reader';
 
 type Visit = (dependency: TSESTree.Identifier) => void;
 

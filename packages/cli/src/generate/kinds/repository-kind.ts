@@ -1,7 +1,7 @@
-import type { Kind } from '../kind.js';
-import { openScope } from '../open-scope.js';
-import { existingAggregate } from './existing-aggregate.js';
-import { generateRepository } from './generate-repository.js';
+import type { Kind } from '../kind';
+import { openScope } from '../open-scope';
+import { existingAggregate } from './existing-aggregate';
+import { generateRepository } from './generate-repository';
 
 export const repositoryKind: Kind = {
   name: 'repository',

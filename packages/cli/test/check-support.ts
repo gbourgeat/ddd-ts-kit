@@ -1,4 +1,4 @@
-import { read, write, type CliResult } from './helpers.js';
+import { read, write, type CliResult } from './helpers';
 
 export const AGGREGATE = 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts';
 export const HANDLER = 'src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts';

@@ -1,10 +1,10 @@
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Actor } from '@ddd-ts-kit/kernel';
-import { executeRoute, type RawRequest, type Route, type RouteResponse } from '../src/index.js';
-import { generateOpenApi } from '../src/openapi.js';
-import { decoratorModes, removeCompiled } from './support/decorator-modes.js';
-import { frontDeskRoutes, manager, nurse, RecordingDesk, type FrontDesk } from './support/front-desk.js';
+import { executeRoute, type RawRequest, type Route, type RouteResponse } from '../src';
+import { generateOpenApi } from '../src/openapi';
+import { decoratorModes, removeCompiled } from './support/decorator-modes';
+import { frontDeskRoutes, manager, nurse, RecordingDesk, type FrontDesk } from './support/front-desk';
 
 const FIXTURES = path.join(import.meta.dirname, 'fixtures/controllers');
 
@@ -128,7 +128,7 @@ function describeTheFrontDesk(label: string, load: () => Promise<FrontDesk>): vo
   });
 }
 
-describeTheFrontDesk('as the test runner transforms them', () => import('./fixtures/controllers/front-desk.js'));
+describeTheFrontDesk('as the test runner transforms them', () => import('./fixtures/controllers/front-desk'));
 
 for (const mode of decoratorModes(FIXTURES)) {
   describeTheFrontDesk(`compiled by ${mode.label}`, async () => {

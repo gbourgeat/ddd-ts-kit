@@ -1,5 +1,5 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import { sequence } from '../builders/sequence.js';
+import { sequence } from '../builders/sequence';
 
 /** A user of its own at each build, without tenant, role or attribute: `user-1`, `user-2`... */
 export const aTestUser = sequence(

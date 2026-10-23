@@ -1,14 +1,14 @@
-import { aliasRoots } from '../../alias/index.js';
-import { buildScripts } from '../alias/build-scripts.js';
-import { compilerPaths } from '../alias/compiler-paths.js';
-import { compilerResolution } from '../alias/compiler-resolution.js';
-import { configuredAlias } from '../alias/configured-alias.js';
-import { graphTools } from '../alias/graph-tools.js';
-import type { Inspected } from '../alias/inspected.js';
-import { sourceRunners } from '../alias/source-runners.js';
-import { testRunners } from '../alias/test-runners.js';
-import type { Rule } from '../model/rule.js';
-import { reporter } from '../support/reporter.js';
+import { aliasRoots } from '../../alias';
+import { buildScripts } from '../alias/build-scripts';
+import { compilerPaths } from '../alias/compiler-paths';
+import { compilerResolution } from '../alias/compiler-resolution';
+import { configuredAlias } from '../alias/configured-alias';
+import { graphTools } from '../alias/graph-tools';
+import type { Inspected } from '../alias/inspected';
+import { sourceRunners } from '../alias/source-runners';
+import { testRunners } from '../alias/test-runners';
+import type { Rule } from '../model/rule';
+import { reporter } from '../support/reporter';
 
 export const importsAliasDeclared: Rule = {
   id: 'imports/alias-declared',

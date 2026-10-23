@@ -1,11 +1,11 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { aggregate } from './aggregate.js';
-import { config } from './config.js';
-import type { Fixture } from './fixture.js';
-import type { FixtureFiles } from './fixture-files.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { SAMPLES } from './samples.js';
+import { CONFIG_FILE } from '../../config';
+import { aggregate } from './aggregate';
+import { config } from './config';
+import type { Fixture } from './fixture';
+import type { FixtureFiles } from './fixture-files';
+import { PATHS } from './paths';
+import { project } from './project';
+import { SAMPLES } from './samples';
 
 const { AGGREGATE, BILLING, CATALOG, INTEGRATION_HANDLER, INTEGRATION_HANDLER_SPEC, PUBLISHER } = PATHS;
 const STATUS = `${BILLING}/domain/vocabularies/invoice-status.vocabulary.ts`;

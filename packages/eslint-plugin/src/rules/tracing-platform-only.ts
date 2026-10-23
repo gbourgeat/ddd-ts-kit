@@ -1,7 +1,7 @@
-import type { LintedFile } from '../project/linted-file.js';
-import { importListener } from '../support/imports/import-listener.js';
-import { inSourceRoot } from '../support/imports/in-source-root.js';
-import { defineRule } from '../support/rule/define-rule.js';
+import type { LintedFile } from '../project/linted-file';
+import { importListener } from '../support/imports/import-listener';
+import { inSourceRoot } from '../support/imports/in-source-root';
+import { defineRule } from '../support/rule/define-rule';
 
 const TRACING_PACKAGE = '@ddd-ts-kit/tracing';
 const OPEN_TELEMETRY_SCOPE = '@opentelemetry/';

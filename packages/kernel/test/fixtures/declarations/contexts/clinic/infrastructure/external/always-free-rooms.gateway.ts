@@ -1,5 +1,5 @@
-import { Gateway } from '../../../../../../../src/declarations.js';
-import { Rooms } from '../../application/ports/rooms.port.js';
+import { Gateway } from '../../../../../../../src/declarations';
+import { Rooms } from '../../application/ports/rooms.port';
 
 @Gateway(Rooms, { replaces: true })
 export class AlwaysFreeRooms implements Rooms {

@@ -1,10 +1,10 @@
-import { readConfig } from '../config/index.js';
-import { MigrationDraft } from '../refusals/migration-draft.js';
-import { throwingValueObjects } from '../value-objects/throwing-value-objects.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
-import type { Io } from './io.js';
+import { readConfig } from '../config';
+import { MigrationDraft } from '../refusals/migration-draft';
+import { throwingValueObjects } from '../value-objects/throwing-value-objects';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import type { Command } from './command';
+import type { Io } from './io';
 
 const MANUAL = [
   'Run the formatter, then the checks and the tests: a caller that branched on `.ok` or read `.error` now catches, or lets the refusal go up.',

@@ -1,6 +1,6 @@
-import { domainValueObjectClass } from '../../src/rules/domain-value-object-class.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
-import { classes, KERNEL, MONEY, PLAIN, PROPS, VALUE_OBJECT } from '../support/value-object-samples.js';
+import { domainValueObjectClass } from '../../src/rules/domain-value-object-class';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
+import { classes, KERNEL, MONEY, PLAIN, PROPS, VALUE_OBJECT } from '../support/value-object-samples';
 
 const INVOICE_MONEY = `${BILLING}/domain/value-objects/invoice-money.vo.ts`;
 const SHARED = 'src/shared-kernel/money.vo.ts';

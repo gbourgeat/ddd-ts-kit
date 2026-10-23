@@ -1,5 +1,5 @@
-import type { ErrorReporter } from '../ports/error-reporter.js';
-import type { ErrorReport } from './error-report.js';
+import type { ErrorReporter } from '../ports/error-reporter';
+import type { ErrorReport } from './error-report';
 
 const REPORTED = new WeakSet<object>();
 const DEEPEST_CAUSE = 8;

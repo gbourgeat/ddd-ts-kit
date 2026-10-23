@@ -1,6 +1,6 @@
-import { CliError } from '../cli-error.js';
-import { runGit } from '../commit/run-git.js';
-import { branchExists } from './branch-exists.js';
+import { CliError } from '../cli-error';
+import { runGit } from '../commit/run-git';
+import { branchExists } from './branch-exists';
 
 /** Adds the worktree on its branch: an existing branch is checked out, a new one is cut from the base. */
 export function addWorktree(root: string, place: { worktree: string; branch: string; base: string }): void {

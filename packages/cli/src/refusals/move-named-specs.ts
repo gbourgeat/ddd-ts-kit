@@ -1,18 +1,18 @@
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
-import type { Config } from '../config/index.js';
-import { addSpecCase } from '../generate/errors/add-spec-case.js';
-import type { ConceptErrorClass } from './concept-error-class.js';
-import { importsUsedBy } from './imports-used-by.js';
-import { legacyMove } from './legacy-move.js';
-import type { MigrationDraft } from './migration-draft.js';
-import type { NamedMove } from './named-move.js';
-import type { RefusalSources } from './propose-named-plan.js';
-import { renameConcept } from './rename-concept.js';
-import { rewriteNamedUsages } from './rewrite-named-usages.js';
-import { rewriteUsages } from './rewrite-usages.js';
-import { specParts } from './spec-parts.js';
-import { type SplitSpec, splitConceptSpec } from './split-concept-spec.js';
-import { withImports } from './with-imports.js';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
+import type { Config } from '../config';
+import { addSpecCase } from '../generate/errors/add-spec-case';
+import type { ConceptErrorClass } from './concept-error-class';
+import { importsUsedBy } from './imports-used-by';
+import { legacyMove } from './legacy-move';
+import type { MigrationDraft } from './migration-draft';
+import type { NamedMove } from './named-move';
+import type { RefusalSources } from './propose-named-plan';
+import { renameConcept } from './rename-concept';
+import { rewriteNamedUsages } from './rewrite-named-usages';
+import { rewriteUsages } from './rewrite-usages';
+import { specParts } from './spec-parts';
+import { type SplitSpec, splitConceptSpec } from './split-concept-spec';
+import { withImports } from './with-imports';
 
 const IMPORT = /^import [^;]+;\n/gm;
 

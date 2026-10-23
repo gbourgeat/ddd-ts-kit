@@ -1,4 +1,4 @@
-import type { LockHandle } from './lock-handle.js';
+import type { LockHandle } from './lock-handle';
 
 export interface WaitingOptions {
   /** Pause between two attempts while waiting. Default 25. */

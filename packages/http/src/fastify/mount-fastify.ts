@@ -1,13 +1,13 @@
 import { Readable } from 'node:stream';
 import type { FastifyInstance } from 'fastify';
-import { assertCachedRoutes } from '../pipeline/assert-cached-routes.js';
-import { executeRoute } from '../pipeline/execute-route.js';
-import type { RouteResponse } from '../pipeline/route-response.js';
-import { serializeBody } from '../pipeline/serialize-body.js';
-import { assertServed } from '../representation/assert-served.js';
-import { assertUniqueRoutes } from '../route/assert-unique-routes.js';
-import type { Route } from '../route/route.js';
-import type { FastifyMountOptions } from './fastify-mount-options.js';
+import { assertCachedRoutes } from '../pipeline/assert-cached-routes';
+import { executeRoute } from '../pipeline/execute-route';
+import type { RouteResponse } from '../pipeline/route-response';
+import { serializeBody } from '../pipeline/serialize-body';
+import { assertServed } from '../representation/assert-served';
+import { assertUniqueRoutes } from '../route/assert-unique-routes';
+import type { Route } from '../route/route';
+import type { FastifyMountOptions } from './fastify-mount-options';
 
 /**
  * Registers the routes on a Fastify 5 instance. Validation stays in the shared pipeline. The

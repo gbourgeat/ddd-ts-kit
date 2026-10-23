@@ -1,15 +1,15 @@
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import express, { type IRouter, type Request, type RequestHandler, type Response } from 'express';
-import type { ExecuteOptions } from '../pipeline/execute-options.js';
-import { assertCachedRoutes } from '../pipeline/assert-cached-routes.js';
-import { executeRoute } from '../pipeline/execute-route.js';
-import { serializeBody } from '../pipeline/serialize-body.js';
-import { writeStream } from '../pipeline/write-stream.js';
-import { assertServed } from '../representation/assert-served.js';
-import { assertUniqueRoutes } from '../route/assert-unique-routes.js';
-import type { HttpMethod } from '../route/http-method.js';
-import type { Route } from '../route/route.js';
+import type { ExecuteOptions } from '../pipeline/execute-options';
+import { assertCachedRoutes } from '../pipeline/assert-cached-routes';
+import { executeRoute } from '../pipeline/execute-route';
+import { serializeBody } from '../pipeline/serialize-body';
+import { writeStream } from '../pipeline/write-stream';
+import { assertServed } from '../representation/assert-served';
+import { assertUniqueRoutes } from '../route/assert-unique-routes';
+import type { HttpMethod } from '../route/http-method';
+import type { Route } from '../route/route';
 
 export type ExpressMountOptions = ExecuteOptions;
 

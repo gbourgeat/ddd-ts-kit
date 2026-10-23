@@ -1,4 +1,4 @@
-import type { Stack } from '../config/index.js';
+import type { Stack } from '../config';
 
 /**
  * The release `packageManager` pins in package.json, which corepack then provides to every

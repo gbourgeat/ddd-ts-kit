@@ -1,10 +1,10 @@
-import type { ExecutionOrigin } from '../execution/execution-origin.js';
-import type { AuditActor } from './audit-actor.js';
-import type { AuditCategory } from './audit-category.js';
-import type { AuditChanges } from './audit-changes.js';
-import type { AuditEntryExtensionValues } from './audit-entry-extension-values.js';
-import type { AuditOutcome } from './audit-outcome.js';
-import type { AuditResource } from './audit-resource.js';
+import type { ExecutionOrigin } from '../execution/execution-origin';
+import type { AuditActor } from './audit-actor';
+import type { AuditCategory } from './audit-category';
+import type { AuditChanges } from './audit-changes';
+import type { AuditEntryExtensionValues } from './audit-entry-extension-values';
+import type { AuditOutcome } from './audit-outcome';
+import type { AuditResource } from './audit-resource';
 
 /**
  * One fact of the audit trail, as plain data. Identifiers and stable codes only: no message,

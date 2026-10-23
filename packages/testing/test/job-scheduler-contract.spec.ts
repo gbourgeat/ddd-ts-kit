@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AsyncLocalStorageExecutionScope, FixedClock, InMemoryLock, SequentialIdGenerator } from '@ddd-ts-kit/kernel';
 import { ManualJobScheduler } from '@ddd-ts-kit/scheduling/testing';
-import { jobSchedulerContract } from '../src/contracts.js';
+import { jobSchedulerContract } from '../src/contracts';
 
 // The in-process scheduler on manual timers, held to the contract as every adapter is.
 jobSchedulerContract(

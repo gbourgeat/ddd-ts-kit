@@ -1,4 +1,4 @@
-import type { ErrorIdentity } from './error-identity.js';
+import type { ErrorIdentity } from './error-identity';
 
 const SHORT_CODE = /^[A-Za-z0-9_.:-]{1,64}$/;
 

@@ -1,7 +1,7 @@
 import type { AddressInfo } from 'node:net';
 import express, { type Request } from 'express';
-import { mountExpress } from '../src/express.js';
-import { describeAdapter } from './support/behaviour.js';
+import { mountExpress } from '../src/express';
+import { describeAdapter } from './support/behaviour';
 
 describeAdapter(
   'Express',

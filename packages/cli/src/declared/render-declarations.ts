@@ -1,9 +1,9 @@
-import { barrelFile } from './barrel-file.js';
-import { declaredRoleOf } from './declared-role-of.js';
-import { declarationsFolderOf } from './declarations-folder-of.js';
-import { folderDeclarationsFile } from './folder-declarations-file.js';
-import type { RenderedInjections } from './injection/rendered-injections.js';
-import { renderFolderDeclarations } from './render-folder-declarations.js';
+import { barrelFile } from './barrel-file';
+import { declaredRoleOf } from './declared-role-of';
+import { declarationsFolderOf } from './declarations-folder-of';
+import { folderDeclarationsFile } from './folder-declarations-file';
+import type { RenderedInjections } from './injection/rendered-injections';
+import { renderFolderDeclarations } from './render-folder-declarations';
 
 /** What the declarations of a context are rendered from; every file is relative to the context. */
 export interface DeclarationsSource {

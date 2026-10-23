@@ -1,4 +1,4 @@
-import { source } from './source.js';
+import { source } from './source';
 
 /**
  * The declarations of `DECLARED_CONTEXT` as the generator wrote them up to 0.84, all in

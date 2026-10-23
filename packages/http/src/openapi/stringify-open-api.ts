@@ -1,4 +1,4 @@
-import type { OpenApiDocument } from './open-api-document.js';
+import type { OpenApiDocument } from './open-api-document';
 
 /** The exact bytes to commit: two-space JSON and a trailing newline. */
 export function stringifyOpenApi(document: OpenApiDocument): string {

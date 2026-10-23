@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { MeasuresView } from '../src/measures/measures-view.js';
-import { cli, tempDir, write } from './helpers.js';
-import { commitFiles } from './support/commit-files.js';
-import { git } from './support/git.js';
-import { measuredStories, STATEMENT_OF_US5 } from './support/measured-stories.js';
+import type { MeasuresView } from '../src/measures/measures-view';
+import { cli, tempDir, write } from './helpers';
+import { commitFiles } from './support/commit-files';
+import { git } from './support/git';
+import { measuredStories, STATEMENT_OF_US5 } from './support/measured-stories';
 
 let root: string;
 

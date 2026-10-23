@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESLint } from '@typescript-eslint/utils';
-import type { FunctionNode } from './function-node.js';
+import type { FunctionNode } from './function-node';
 
 /** Lines of the body that hold code: blank lines and comment lines carry no token. */
 export function codeLines(node: FunctionNode, sourceCode: Readonly<TSESLint.SourceCode>): number {

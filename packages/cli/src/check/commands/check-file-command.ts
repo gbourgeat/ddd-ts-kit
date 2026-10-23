@@ -1,16 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CliError } from '../../cli-error.js';
-import { Arguments } from '../../commands/arguments.js';
-import { findRoot } from '../../commands/find-root.js';
-import { type Command } from '../../commands/command.js';
-import { readConfig } from '../../config/index.js';
-import { formatCheck } from '../engine/format-check.js';
-import { runCheck } from '../engine/run-check.js';
-import { summarize } from '../engine/summarize.js';
-import { isSource } from '../project/is-source.js';
-import { loadProject } from '../project/load-project.js';
-import { toPosix } from '../project/to-posix.js';
+import { CliError } from '../../cli-error';
+import { Arguments } from '../../commands/arguments';
+import { findRoot } from '../../commands/find-root';
+import { type Command } from '../../commands/command';
+import { readConfig } from '../../config';
+import { formatCheck } from '../engine/format-check';
+import { runCheck } from '../engine/run-check';
+import { summarize } from '../engine/summarize';
+import { isSource } from '../project/is-source';
+import { loadProject } from '../project/load-project';
+import { toPosix } from '../project/to-posix';
 
 export const checkFileCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {});

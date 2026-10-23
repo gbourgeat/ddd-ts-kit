@@ -1,10 +1,10 @@
 import { expect } from 'vitest';
-import { cli, exists, type StackFlags, tempDir } from '../helpers.js';
-import { initFlags } from '../support/init-flags.js';
-import { expectNoFinding } from './expect-no-finding.js';
-import { installAsPublished } from './install-as-published.js';
-import { bin, runIn } from './run-in.js';
-import { NATIVE_COMPILER } from './type-errors.js';
+import { cli, exists, type StackFlags, tempDir } from '../helpers';
+import { initFlags } from '../support/init-flags';
+import { expectNoFinding } from './expect-no-finding';
+import { installAsPublished } from './install-as-published';
+import { bin, runIn } from './run-in';
+import { NATIVE_COMPILER } from './type-errors';
 
 /**
  * What `init` alone leaves on a stack, with the contexts it was asked for and nothing generated,

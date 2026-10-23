@@ -1,9 +1,9 @@
 import type { TSESLint } from '@typescript-eslint/utils';
-import { isCommentedOutCode } from '../support/comments/is-commented-out-code.js';
-import { isFragment } from '../support/comments/is-fragment.js';
-import { commentLines, type CommentLine } from '../support/comments/comment-lines.js';
-import { isDirective } from '../support/comments/is-directive.js';
-import { defineRule } from '../support/rule/define-rule.js';
+import { isCommentedOutCode } from '../support/comments/is-commented-out-code';
+import { isFragment } from '../support/comments/is-fragment';
+import { commentLines, type CommentLine } from '../support/comments/comment-lines';
+import { isDirective } from '../support/comments/is-directive';
+import { defineRule } from '../support/rule/define-rule';
 
 export const cleanNoCommentedOutCode = defineRule<'code'>({
   id: 'clean/no-commented-out-code',

@@ -1,10 +1,10 @@
 import path from 'node:path';
 import { ESLintUtils, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../../project/linted-file.js';
-import { locate } from '../../project/locate.js';
-import { toPosix } from '../../project/to-posix.js';
-import { camel } from './camel.js';
-import type { ProposedName } from './proposed-name.js';
+import type { LintedFile } from '../../project/linted-file';
+import { locate } from '../../project/locate';
+import { toPosix } from '../../project/to-posix';
+import { camel } from './camel';
+import type { ProposedName } from './proposed-name';
 
 /** What the type checker tells of the project: which concept of the model an expression holds, and whether it is a repository. */
 export interface TypedNames {

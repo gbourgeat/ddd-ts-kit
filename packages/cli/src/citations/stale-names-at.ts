@@ -1,16 +1,16 @@
-import { runGit } from '../commit/run-git.js';
-import type { Config } from '../config/index.js';
-import { readSlices } from '../progress/read-slices.js';
-import { Workspace } from '../workspace/index.js';
-import { citationsOf } from './citations-of.js';
-import { citedParts } from './cited-parts.js';
-import { indexAtRef } from './index-at-ref.js';
-import { judgedCitations } from './judged-citations.js';
-import { refNotes } from './ref-notes.js';
-import { removalsAtRef } from './removals-at-ref.js';
-import { rowDocuments } from './row-documents.js';
-import { selectParts } from './select-parts.js';
-import type { StaleCitation } from './stale-citation.js';
+import { runGit } from '../commit/run-git';
+import type { Config } from '../config';
+import { readSlices } from '../progress/read-slices';
+import { Workspace } from '../workspace';
+import { citationsOf } from './citations-of';
+import { citedParts } from './cited-parts';
+import { indexAtRef } from './index-at-ref';
+import { judgedCitations } from './judged-citations';
+import { refNotes } from './ref-notes';
+import { removalsAtRef } from './removals-at-ref';
+import { rowDocuments } from './row-documents';
+import { selectParts } from './select-parts';
+import type { StaleCitation } from './stale-citation';
 
 /** The names the design of some rows cites that a ref does not have: what `cited` and `worker-scope` report. */
 export interface CitationsAtRef {

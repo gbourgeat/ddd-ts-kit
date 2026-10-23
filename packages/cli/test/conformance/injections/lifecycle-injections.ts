@@ -1,5 +1,5 @@
-import type { Injection } from '../injection.js';
-import { PATHS } from '../paths.js';
+import type { Injection } from '../injection';
+import { PATHS } from '../paths';
 
 const { SCHEDULING } = PATHS;
 const APPOINTMENT = `${SCHEDULING}/domain/calendars/aggregates/appointment.aggregate.ts`;

@@ -1,1 +1,1 @@
-export { mountExpress, type ExpressMountOptions } from './express/mount-express.js';
+export { mountExpress, type ExpressMountOptions } from './express/mount-express';

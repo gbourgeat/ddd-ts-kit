@@ -1,8 +1,8 @@
 import type { Message, MessageInfo, MessageType } from '@ddd-ts-kit/kernel';
 import type { Token } from '@ddd-ts-kit/kernel/declarations';
-import type { Requirement } from '../authorization/requirement.js';
-import type { AnyMessageHandler } from './any-message-handler.js';
-import type { Declarer } from './declarer.js';
+import type { Requirement } from '../authorization/requirement';
+import type { AnyMessageHandler } from './any-message-handler';
+import type { Declarer } from './declarer';
 
 export interface MessageHandling {
   readonly kind: MessageInfo['kind'];

@@ -1,4 +1,4 @@
-import type { Config } from '../../config/index.js';
+import type { Config } from '../../config';
 
 const AUDIT_ENTRY = 'AuditEntry of @ddd-ts-kit/audit (AuditStamp for audit columns)';
 

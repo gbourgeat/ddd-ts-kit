@@ -1,4 +1,4 @@
-import type { IntegrationEventSubscriber } from './integration-event-subscriber.js';
+import type { IntegrationEventSubscriber } from './integration-event-subscriber';
 
 /**
  * The subscriber of each bounded context. One bus serves them all by default; a broker gives

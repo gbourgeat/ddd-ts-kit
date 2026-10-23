@@ -1,4 +1,4 @@
-import type { Config } from '../config/index.js';
+import type { Config } from '../config';
 
 /** What the generated block of `CODEOWNERS` needs to know: who owns each context, who owns the platform, who imports the shared kernel. */
 export interface Ownership {

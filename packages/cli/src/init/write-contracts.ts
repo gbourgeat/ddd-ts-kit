@@ -1,9 +1,9 @@
-import type { Config } from '../config/index.js';
-import { stringifyContract } from '../contracts/stringify-contract.js';
-import { stackVars } from '../stack/stack-vars.js';
-import { readTemplate, renderTemplate, type RenderContext } from '../templating/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { isRecord } from './is-record.js';
+import type { Config } from '../config';
+import { stringifyContract } from '../contracts/stringify-contract';
+import { stackVars } from '../stack/stack-vars';
+import { readTemplate, renderTemplate, type RenderContext } from '../templating';
+import type { Workspace } from '../workspace';
+import { isRecord } from './is-record';
 
 const INTEGRATION = 'docs/integration';
 

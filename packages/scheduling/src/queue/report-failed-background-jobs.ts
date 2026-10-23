@@ -1,5 +1,5 @@
 import { errorReportOf, isUnexpectedError, reportOnce, type ErrorReporter } from '@ddd-ts-kit/kernel';
-import type { BackgroundJobObserver } from './background-job-observer.js';
+import type { BackgroundJobObserver } from './background-job-observer';
 
 /**
  * The observer that reports every attempt that failed with something else than a `DomainError`:

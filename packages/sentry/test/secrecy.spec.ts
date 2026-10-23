@@ -1,8 +1,8 @@
 import { inspect } from 'node:util';
 import { afterEach, expect, it } from 'vitest';
-import { SentryErrorReporter } from '../src/index.js';
-import { aTracker, type Tracker } from './support/a-tracker.js';
-import { expectNoSecret } from './support/expect-no-secret.js';
+import { SentryErrorReporter } from '../src';
+import { aTracker, type Tracker } from './support/a-tracker';
+import { expectNoSecret } from './support/expect-no-secret';
 
 let tracker: Tracker | undefined;
 

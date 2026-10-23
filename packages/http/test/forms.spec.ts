@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
-import { defineRoute, executeRoute, formDocumentsOf, formRoutes, type Route } from '../src/index.js';
-import { generateOpenApi } from '../src/openapi.js';
-import { as, book, bookingForm, types } from './support/booking.js';
+import { defineRoute, executeRoute, formDocumentsOf, formRoutes, type Route } from '../src';
+import { generateOpenApi } from '../src/openapi';
+import { as, book, bookingForm, types } from './support/booking';
 
 async function formFor(id: string | undefined, query: Record<string, string> = {}): Promise<Record<string, unknown>> {
   if (bookingForm === undefined) {

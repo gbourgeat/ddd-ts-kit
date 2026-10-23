@@ -1,14 +1,14 @@
-import { CONFIG_FILE, editConfigText, type Config } from '../config/index.js';
-import { isRecord } from '../config/values/is-record.js';
-import type { MigrationDraft } from '../refusals/migration-draft.js';
-import { projectSources } from '../refusals/project-sources.js';
-import type { Workspace } from '../workspace/index.js';
-import { scan } from '../check/scan/scan.js';
-import { leftovers } from './leftovers.js';
-import { resultMethodDeclarations } from './result-method-declarations.js';
-import type { ResultMethods } from './result-methods.js';
-import { throwingSource } from './throwing-source.js';
-import { rewriteUsages } from './rewrite-usages.js';
+import { CONFIG_FILE, editConfigText, type Config } from '../config';
+import { isRecord } from '../config/values/is-record';
+import type { MigrationDraft } from '../refusals/migration-draft';
+import { projectSources } from '../refusals/project-sources';
+import type { Workspace } from '../workspace';
+import { scan } from '../check/scan/scan';
+import { leftovers } from './leftovers';
+import { resultMethodDeclarations } from './result-method-declarations';
+import type { ResultMethods } from './result-methods';
+import { throwingSource } from './throwing-source';
+import { rewriteUsages } from './rewrite-usages';
 
 /** What moving the value objects of a project to throwing factories changed. */
 export interface ValueObjectMigration {

@@ -19,13 +19,13 @@ import {
   forceRowLevelSecurity,
   tenantPolicies,
   tenantSession,
-} from '../src/postgres.js';
-import { Invoice } from './support/billing-core/domain/invoice.js';
-import type { InvoiceRepository } from './support/billing-core/domain/repositories/invoice.repository.js';
-import { invoices } from './support/billing-core/infrastructure/persistence/invoices.js';
-import { createTableSql } from './support/create-table-sql.js';
-import { CONTRACT_TABLE, contractRows } from './support/read-model/criteria-contract-table.js';
-import { TenantInvoiceRepository } from './support/tenancy/tenant-invoice.repository.js';
+} from '../src/postgres';
+import { Invoice } from './support/billing-core/domain/invoice';
+import type { InvoiceRepository } from './support/billing-core/domain/repositories/invoice.repository';
+import { invoices } from './support/billing-core/infrastructure/persistence/invoices';
+import { createTableSql } from './support/create-table-sql';
+import { CONTRACT_TABLE, contractRows } from './support/read-model/criteria-contract-table';
+import { TenantInvoiceRepository } from './support/tenancy/tenant-invoice.repository';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const dialect = new PgDialect();

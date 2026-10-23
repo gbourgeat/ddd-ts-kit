@@ -1,6 +1,6 @@
 import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
-import { permissions } from '../../authorization/billing.permissions.js';
+import { permissions } from '../../authorization/billing.permissions';
 
 @Requires(permissions['invoice.issue'], {
   resource: (command: IssueInvoice) => ({ type: 'customer', id: command.customerId }),

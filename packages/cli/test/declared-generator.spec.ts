@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, scaffoldEverything, tempDir, walk } from './helpers.js';
-import { failure } from './reports.js';
+import { cli, read, scaffoldEverything, tempDir, walk } from './helpers';
+import { failure } from './reports';
 
 const BILLING = 'src/contexts/billing';
 const SHIPPING = 'src/contexts/shipping';
@@ -154,9 +154,7 @@ describe('a context generated in the declared style, towards the outside', () =>
       '@Gateway(InvoiceStatusGateway)\nexport class InProcessInvoiceStatusGateway implements InvoiceStatusGateway {\n  constructor(readonly upstream: InvoiceStatusContract) {}',
     );
 
-    expect(gateway).toContain(
-      "import type { InvoiceStatusContract } from '@/contexts/billing/published-language/index';",
-    );
+    expect(gateway).toContain("import type { InvoiceStatusContract } from '@/contexts/billing/published-language';");
 
     expect(read(root, `${SHIPPING}/infrastructure/external/external.declarations.ts`)).toContain(
       'injected(InProcessInvoiceStatusGateway, [InvoiceStatusContract]);',

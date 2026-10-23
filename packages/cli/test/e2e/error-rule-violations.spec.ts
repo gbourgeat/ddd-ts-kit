@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { cli } from '../helpers.js';
-import { EditedProject } from './edited-project.js';
-import { SLOW } from './stacks.js';
+import { cli } from '../helpers';
+import { EditedProject } from './edited-project';
+import { SLOW } from './stacks';
 
 const BILLING = 'src/contexts/billing';
 const CODES = `${BILLING}/domain/errors/codes.ts`;

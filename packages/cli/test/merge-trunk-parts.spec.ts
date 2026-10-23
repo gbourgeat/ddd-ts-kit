@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { CliError } from '../src/cli-error.js';
-import { classifyConflict } from '../src/merge/classify-conflict.js';
-import { conflictBlocks } from '../src/merge/conflict-blocks.js';
-import { gitVersion } from '../src/merge/git-version.js';
-import { mentionedTables } from '../src/merge/mentioned-tables.js';
-import { mergeSlicesRows } from '../src/merge/merge-slices-rows.js';
-import { mergeStoredEventsLock } from '../src/merge/merge-stored-events-lock.js';
-import { nextMigrationNumber } from '../src/merge/next-migration-number.js';
-import { previewMerge } from '../src/merge/preview-merge.js';
-import { registryUnion } from '../src/merge/registry-union.js';
-import { trunkRepository } from './support/trunk-history.js';
+import { CliError } from '../src/cli-error';
+import { classifyConflict } from '../src/merge/classify-conflict';
+import { conflictBlocks } from '../src/merge/conflict-blocks';
+import { gitVersion } from '../src/merge/git-version';
+import { mentionedTables } from '../src/merge/mentioned-tables';
+import { mergeSlicesRows } from '../src/merge/merge-slices-rows';
+import { mergeStoredEventsLock } from '../src/merge/merge-stored-events-lock';
+import { nextMigrationNumber } from '../src/merge/next-migration-number';
+import { previewMerge } from '../src/merge/preview-merge';
+import { registryUnion } from '../src/merge/registry-union';
+import { trunkRepository } from './support/trunk-history';
 
 const NOW = new Date('2026-10-17T10:00:00Z');
 

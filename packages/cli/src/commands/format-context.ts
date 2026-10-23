@@ -1,5 +1,5 @@
-import type { ContextFacts } from '../docs/context-facts.js';
-import type { DeclaredFacts, DeclaredUseCase } from '../docs/declared-facts.js';
+import type { ContextFacts } from '../docs/context-facts';
+import type { DeclaredFacts, DeclaredUseCase } from '../docs/declared-facts';
 
 export interface ContextSummary
   extends Omit<ContextFacts, 'publishedEvents' | 'glossaryTerms' | 'purpose' | 'downstreams'> {

@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { CoverageLayer } from './coverage-layer.js';
-import type { CoverageRates } from './coverage-rates.js';
-import { isRecord } from '../vitest/is-record.js';
-import { REFERENCE_COVERAGE } from './reference-coverage.js';
+import type { CoverageLayer } from './coverage-layer';
+import type { CoverageRates } from './coverage-rates';
+import { isRecord } from '../vitest/is-record';
+import { REFERENCE_COVERAGE } from './reference-coverage';
 
 const CONFIG_FILE = 'ddd-ts-kit.config.json';
 

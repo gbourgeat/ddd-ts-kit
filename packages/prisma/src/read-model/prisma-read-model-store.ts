@@ -1,8 +1,8 @@
 import { TableReadModelStore, type CriteriaDefinition } from '@ddd-ts-kit/kernel';
-import type { PrismaRawQueries } from '../outbox/prisma-raw-queries.js';
-import type { PrismaContext } from '../unit-of-work/prisma-context.js';
-import type { PrismaReadModelOptions } from './prisma-read-model-options.js';
-import { PrismaReadModelTable } from './prisma-read-model-table.js';
+import type { PrismaRawQueries } from '../outbox/prisma-raw-queries';
+import type { PrismaContext } from '../unit-of-work/prisma-context';
+import type { PrismaReadModelOptions } from './prisma-read-model-options';
+import { PrismaReadModelTable } from './prisma-read-model-table';
 
 export interface PrismaReadModel<Row, Tx> extends PrismaReadModelOptions<Row, Tx> {
   /** What a read of the read model may filter and sort by. */

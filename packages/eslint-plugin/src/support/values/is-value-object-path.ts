@@ -1,5 +1,5 @@
-import { isTestFile } from '../../project/is-test-file.js';
-import type { Location } from '../../project/location.js';
+import { isTestFile } from '../../project/is-test-file';
+import type { Location } from '../../project/location';
 
 /**
  * Where a value object is declared: `domain/value-objects/` of a context, or a `*.vo.ts` of the

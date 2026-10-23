@@ -1,19 +1,19 @@
-import { CONFIG_FILE, parseConfig, type Config } from '../config/index.js';
-import { CliError } from '../cli-error.js';
-import type { KindFlags } from '../generate/kind.js';
-import { learnTerms } from '../generate/learn-terms.js';
-import type { Scope } from '../generate/scope.js';
-import { vars } from '../generate/vars.js';
-import { parseContextName } from '../naming/index.js';
-import type { RenderContext } from '../templating/index.js';
-import { renderTemplate } from '../templating/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { grantToSignedIn } from './grant-to-signed-in.js';
-import { NO_FLAGS } from './no-flags.js';
-import { organisationsAsTenants } from './organisations-as-tenants.js';
-import type { PresetFile } from './preset-file.js';
-import type { Preset } from './preset.js';
-import { presetDecision } from './preset-decision.js';
+import { CONFIG_FILE, parseConfig, type Config } from '../config';
+import { CliError } from '../cli-error';
+import type { KindFlags } from '../generate/kind';
+import { learnTerms } from '../generate/learn-terms';
+import type { Scope } from '../generate/scope';
+import { vars } from '../generate/vars';
+import { parseContextName } from '../naming';
+import type { RenderContext } from '../templating';
+import { renderTemplate } from '../templating';
+import type { Workspace } from '../workspace';
+import { grantToSignedIn } from './grant-to-signed-in';
+import { NO_FLAGS } from './no-flags';
+import { organisationsAsTenants } from './organisations-as-tenants';
+import type { PresetFile } from './preset-file';
+import type { Preset } from './preset';
+import { presetDecision } from './preset-decision';
 
 /** The context a preset is written into, which `generate context` or `init` declared just before. */
 export interface PresetRequest {

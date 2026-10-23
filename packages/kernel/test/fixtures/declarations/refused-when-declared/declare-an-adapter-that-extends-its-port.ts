@@ -1,5 +1,5 @@
-import { Adapter } from '../../../../src/declarations.js';
-import { Pharmacy } from '../contexts/clinic/application/ports/pharmacy.port.js';
+import { Adapter } from '../../../../src/declarations';
+import { Pharmacy } from '../contexts/clinic/application/ports/pharmacy.port';
 
 export function declareAnAdapterThatExtendsItsPort(): void {
   @Adapter(Pharmacy)

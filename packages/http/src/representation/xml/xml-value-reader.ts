@@ -1,6 +1,6 @@
-import { SchemaNode } from '../../schema/schema-node.js';
-import { ENTRY_ELEMENT, KEY_ATTRIBUTE } from './xml-convention.js';
-import type { XmlElement } from './xml-element.js';
+import { SchemaNode } from '../../schema/schema-node';
+import { ENTRY_ELEMENT, KEY_ATTRIBUTE } from './xml-convention';
+import type { XmlElement } from './xml-element';
 
 const NUMBER = /^\s*-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?\s*$/;
 

@@ -1,7 +1,7 @@
 import type { TSESTree } from '@typescript-eslint/utils';
-import type { ModuleShape } from './module-shape.js';
-import type { DeclarationKind } from './top-level-declaration.js';
-import { topLevelDeclarations } from './top-level-declarations.js';
+import type { ModuleShape } from './module-shape';
+import type { DeclarationKind } from './top-level-declaration';
+import { topLevelDeclarations } from './top-level-declarations';
 
 const COUNTED: readonly DeclarationKind[] = ['class', 'interface', 'function'];
 

@@ -3,10 +3,10 @@ import os from 'node:os';
 import path from 'node:path';
 import tseslint from 'typescript-eslint';
 import { afterAll, describe, expect, it } from 'vitest';
-import { parseConfig } from '../../src/project/parse-config.js';
-import { languageDeclaredVocabulary } from '../../src/rules/language-declared-vocabulary.js';
-import { projectVocabularies } from '../../src/support/vocabularies/project-vocabularies.js';
-import { BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { parseConfig } from '../../src/project/parse-config';
+import { languageDeclaredVocabulary } from '../../src/rules/language-declared-vocabulary';
+import { projectVocabularies } from '../../src/support/vocabularies/project-vocabularies';
+import { BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ddd-ts-kit-vocabulary-'));
 const STATUS = `${BILLING}/domain/vocabularies/invoice-status.vocabulary.ts`;

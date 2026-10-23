@@ -1,6 +1,6 @@
 import { SQL, is } from 'drizzle-orm';
 import { PgDialect, getTableConfig, type PgTable } from 'drizzle-orm/pg-core';
-import { quote } from './quote.js';
+import { quote } from './quote';
 
 const dialect = new PgDialect();
 const render = (fragment: SQL): string => dialect.sqlToQuery(fragment.inlineParams()).sql;

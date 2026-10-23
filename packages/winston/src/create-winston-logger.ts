@@ -1,11 +1,11 @@
 import { CREDENTIAL_KEYS, type LogFields, type LogLevel } from '@ddd-ts-kit/kernel';
 import winston from 'winston';
-import { correlationFields } from './formats/correlation-fields.js';
-import { isoTime } from './formats/iso-time.js';
-import { readableLine } from './formats/readable-line.js';
-import { redactCredentials } from './formats/redact-credentials.js';
-import { unbreakable } from './formats/unbreakable.js';
-import { WinstonLogger, type WinstonLoggerOptions } from './winston-logger.js';
+import { correlationFields } from './formats/correlation-fields';
+import { isoTime } from './formats/iso-time';
+import { readableLine } from './formats/readable-line';
+import { redactCredentials } from './formats/redact-credentials';
+import { unbreakable } from './formats/unbreakable';
+import { WinstonLogger, type WinstonLoggerOptions } from './winston-logger';
 
 export interface CreateWinstonLoggerOptions extends Pick<WinstonLoggerOptions, 'scrubMessages'> {
   /** Entries below it are not written. Default `info`. */

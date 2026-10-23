@@ -1,7 +1,7 @@
-import { cleanFunctionSize } from '../../src/rules/clean-function-size.js';
-import { cleanNoEscapeHatch } from '../../src/rules/clean-no-escape-hatch.js';
-import { cleanNoFlagArgument } from '../../src/rules/clean-no-flag-argument.js';
-import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { cleanFunctionSize } from '../../src/rules/clean-function-size';
+import { cleanNoEscapeHatch } from '../../src/rules/clean-no-escape-hatch';
+import { cleanNoFlagArgument } from '../../src/rules/clean-no-flag-argument';
+import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const AGGREGATE = `${BILLING}/domain/aggregates/invoice.aggregate.ts`;
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;

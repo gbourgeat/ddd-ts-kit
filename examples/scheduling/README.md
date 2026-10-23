@@ -595,8 +595,8 @@ sub-directory, and the root pipeline has an `example` job instead. The rules for
 Every file is imported by an alias from the project root, never by a relative path, and
 without an extension: `@/contexts/scheduling/domain/aggregates/appointment.aggregate`,
 `$test/e2e/support/...`, `$scripts/...` (`"importExtension": "none"` in
-`ddd-ts-kit.config.json`). An import names a file, never a directory:
-`.../published-language/index`.
+`ddd-ts-kit.config.json`). A directory is written as itself:
+`.../published-language`.
 
 ```ts
 // Instead of: a relative path, an extension, a directory
@@ -605,7 +605,7 @@ import { appointmentBookedV1 } from '../../published-language';
 
 // write: the alias from the project root, a file, no extension
 import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
-import { appointmentBookedV1 } from '@/contexts/scheduling/published-language/index';
+import { appointmentBookedV1 } from '@/contexts/scheduling/published-language';
 ```
 
 The alias is declared once, under `paths` in `tsconfig.json`,

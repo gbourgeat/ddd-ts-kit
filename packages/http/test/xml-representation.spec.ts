@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { XmlRepresentation, type BodyShape } from '../src/index.js';
+import { XmlRepresentation, type BodyShape } from '../src';
 
 const xml = new XmlRepresentation();
 const DECLARATION = '<?xml version="1.0" encoding="UTF-8"?>';

@@ -1,4 +1,4 @@
-import type { Resolvable } from './resolvable.js';
+import type { Resolvable } from './resolvable';
 
 /**
  * What a builder accepts wherever a value of type `T` is expected: the value, something that

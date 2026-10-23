@@ -1,18 +1,18 @@
-import { DECLARED_ROLES, declaredRoleOf } from '../../declared/index.js';
-import { classesOf } from '../declarations/classes-of.js';
-import { DECLARATIONS_ENTRY } from '../declarations/declarations-entry.js';
-import type { Finding } from '../model/finding.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import type { ClassShape } from '../structure/class-shape.js';
-import { importedFrom } from '../support/imported-from.js';
-import { inLayer } from '../support/in-layer.js';
-import { isDeclaredStyle } from '../support/is-declared-style.js';
-import { isPortFile } from '../support/is-port-file.js';
-import { pathInContext } from '../support/path-in-context.js';
-import { perFile } from '../support/per-file.js';
-import { WITHOUT_MODULE } from '../../model-modules/index.js';
+import { DECLARED_ROLES, declaredRoleOf } from '../../declared';
+import { classesOf } from '../declarations/classes-of';
+import { DECLARATIONS_ENTRY } from '../declarations/declarations-entry';
+import type { Finding } from '../model/finding';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import type { ClassShape } from '../structure/class-shape';
+import { importedFrom } from '../support/imported-from';
+import { inLayer } from '../support/in-layer';
+import { isDeclaredStyle } from '../support/is-declared-style';
+import { isPortFile } from '../support/is-port-file';
+import { pathInContext } from '../support/path-in-context';
+import { perFile } from '../support/per-file';
+import { WITHOUT_MODULE } from '../../model-modules';
 
 /** The decorators that declare a class of infrastructure/: `@Repository`, `@Gateway`, `@Adapter`. */
 const ADAPTER_DECORATORS = [

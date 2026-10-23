@@ -1,8 +1,8 @@
-import { parseGlossary } from '../check/language/parse-glossary.js';
-import { REFUSAL_QUALIFIERS } from '../check/language/refusal-qualifiers.js';
-import { unknownWords } from '../check/language/unknown-words.js';
-import type { Config } from '../config/index.js';
-import type { MigrationDraft } from './migration-draft.js';
+import { parseGlossary } from '../check/language/parse-glossary';
+import { REFUSAL_QUALIFIERS } from '../check/language/refusal-qualifiers';
+import { unknownWords } from '../check/language/unknown-words';
+import type { Config } from '../config';
+import type { MigrationDraft } from './migration-draft';
 
 /** A refusal class the migration proposes or writes, in its context. */
 export interface ClassInContext {

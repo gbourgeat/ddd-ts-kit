@@ -1,4 +1,4 @@
-import type { Document } from '../document.js';
+import type { Document } from '../document';
 
 export abstract class DocumentRepository {
   abstract findById(id: string): Promise<Document | undefined>;

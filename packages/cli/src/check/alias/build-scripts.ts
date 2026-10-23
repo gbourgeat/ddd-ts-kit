@@ -1,8 +1,8 @@
-import type { Violation } from '../model/violation.js';
-import { lineOf } from '../support/line-of.js';
-import { ALIAS_FILES } from './alias-files.js';
-import type { Inspected } from './inspected.js';
-import { manifestScripts } from './manifest-scripts.js';
+import type { Violation } from '../model/violation';
+import { lineOf } from '../support/line-of';
+import { ALIAS_FILES } from './alias-files';
+import type { Inspected } from './inspected';
+import { manifestScripts } from './manifest-scripts';
 
 /** The compiler, called by its name, by its path or through a wrapper script named after it. */
 const COMPILES = /(?:^|[\s/])tsc(?:\.[cm]?js)?(?=\s|$)/;

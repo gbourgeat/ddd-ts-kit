@@ -1,5 +1,5 @@
-import { cleanNoHashPrivate } from '../../src/rules/clean-no-hash-private.js';
-import { ruleTester } from '../support/rule-tester.js';
+import { cleanNoHashPrivate } from '../../src/rules/clean-no-hash-private';
+import { ruleTester } from '../support/rule-tester';
 
 ruleTester.run('clean-no-hash-private', cleanNoHashPrivate, {
   valid: [

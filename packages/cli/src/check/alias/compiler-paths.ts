@@ -1,9 +1,9 @@
-import { compilerPaths as expectedPaths } from '../../alias/index.js';
-import type { Violation } from '../model/violation.js';
-import { isRecord } from '../support/is-record.js';
-import { ALIAS_FILES } from './alias-files.js';
-import { compilerOptionsOf } from './compiler-options-of.js';
-import type { Inspected } from './inspected.js';
+import { compilerPaths as expectedPaths } from '../../alias';
+import type { Violation } from '../model/violation';
+import { isRecord } from '../support/is-record';
+import { ALIAS_FILES } from './alias-files';
+import { compilerOptionsOf } from './compiler-options-of';
+import type { Inspected } from './inspected';
 
 const { build: BUILD, typeCheck: TYPE_CHECK } = ALIAS_FILES;
 

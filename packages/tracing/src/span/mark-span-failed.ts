@@ -1,7 +1,7 @@
 import { SpanStatusCode, isSpanContextValid, type Attributes, type Span } from '@opentelemetry/api';
-import { constructorName } from './constructor-name.js';
-import { failedTraces } from './failed-traces.js';
-import { refusalCode } from './refusal-code.js';
+import { constructorName } from './constructor-name';
+import { failedTraces } from './failed-traces';
+import { refusalCode } from './refusal-code';
 
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 

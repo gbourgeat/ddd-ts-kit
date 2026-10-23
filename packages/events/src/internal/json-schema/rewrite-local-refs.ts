@@ -1,5 +1,5 @@
-import { isRecord } from './is-record.js';
-import { localRefName } from './local-ref-name.js';
+import { isRecord } from './is-record';
+import { localRefName } from './local-ref-name';
 
 export function rewriteLocalRefs(node: unknown, rename: (name: string) => string | undefined): unknown {
   if (Array.isArray(node)) {

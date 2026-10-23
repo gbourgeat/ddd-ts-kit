@@ -1,4 +1,4 @@
-import type { RuleDoc } from '../model/rule-doc.js';
+import type { RuleDoc } from '../model/rule-doc';
 
 export const LIFECYCLE_DOCS: Readonly<Record<string, RuleDoc>> = {
   'lifecycle/status-through-machine': {

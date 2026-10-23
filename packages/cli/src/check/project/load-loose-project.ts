@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseConfig } from '../../config/index.js';
-import type { Project } from '../model/project.js';
-import type { SourceFile } from '../model/source-file.js';
-import { assembleProject } from './assemble-project.js';
-import { isSource } from './is-source.js';
-import { loadSourceFile } from './load-source-file.js';
-import { walkDirectory } from './walk-directory.js';
+import { parseConfig } from '../../config';
+import type { Project } from '../model/project';
+import type { SourceFile } from '../model/source-file';
+import { assembleProject } from './assemble-project';
+import { isSource } from './is-source';
+import { loadSourceFile } from './load-source-file';
+import { walkDirectory } from './walk-directory';
 
 /** Sources of arbitrary directories, without a project around them: for the rules that judge a file alone. */
 export function loadLooseProject(root: string, directories: readonly string[]): Project {

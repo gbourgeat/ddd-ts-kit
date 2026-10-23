@@ -1,7 +1,7 @@
-import { scan } from '../check/scan/scan.js';
-import { classBody } from '../generate/errors/class-body.js';
-import type { ConceptFactory } from './concept-error-class.js';
-import { importsUsedBy } from './imports-used-by.js';
+import { scan } from '../check/scan/scan';
+import { classBody } from '../generate/errors/class-body';
+import type { ConceptFactory } from './concept-error-class';
+import { importsUsedBy } from './imports-used-by';
 
 const IMPORT = /^import [^;]+;\n/gm;
 

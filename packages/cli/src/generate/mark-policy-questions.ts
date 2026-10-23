@@ -1,9 +1,9 @@
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
-import { filesUnder } from './files-under.js';
-import { askPolicyInGeneratedUseCase } from './kinds/ask-policy-in-generated-use-case.js';
-import { permissionPattern } from './permission-pattern.js';
-import { refinedByPolicy } from './refined-by-policy.js';
-import type { Scope } from './scope.js';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
+import { filesUnder } from './files-under';
+import { askPolicyInGeneratedUseCase } from './kinds/ask-policy-in-generated-use-case';
+import { permissionPattern } from './permission-pattern';
+import { refinedByPolicy } from './refined-by-policy';
+import type { Scope } from './scope';
 
 const MESSAGE_FILE = /^(application\/(?:commands|queries)\/([^/]+))\/\2\.(command|query)\.ts$/;
 const MESSAGE_CLASS = /(?<![\w$.])export\s+class\s+([\w$]+)/;

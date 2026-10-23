@@ -1,4 +1,4 @@
-import type { SourceFile } from '../model/source-file.js';
+import type { SourceFile } from '../model/source-file';
 
 /** A regular expression literal as the scanner leaves it: its delimiters, its content blanked. */
 const BLANKED_PATTERN = /\/ +\//g;

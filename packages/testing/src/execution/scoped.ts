@@ -1,6 +1,6 @@
 import type { ExecutionContext, ExecutionScope } from '@ddd-ts-kit/kernel';
-import type { Resolvable } from '../builders/resolvable.js';
-import { resolve } from '../builders/resolve.js';
+import type { Resolvable } from '../builders/resolvable';
+import { resolve } from '../builders/resolve';
 
 /**
  * Runs a block inside an execution context, given as a value or as a builder:

@@ -1,4 +1,4 @@
-import type { CitedKind } from './cited-name.js';
+import type { CitedKind } from './cited-name';
 
 /**
  * What a cited name is to the code: `removed` (the history had it), `refused` (a place the

@@ -1,5 +1,5 @@
 import type { Readable } from 'node:stream';
-import type { RawHeaders } from '../route/raw-headers.js';
+import type { RawHeaders } from '../route/raw-headers';
 
 /** What an adapter extracts from its framework before handing over to `executeRoute`. */
 export interface RawRequest {

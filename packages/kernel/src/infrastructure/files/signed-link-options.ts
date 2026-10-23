@@ -1,4 +1,4 @@
-import type { Clock } from '../../application/ports/clock.js';
+import type { Clock } from '../../application/ports/clock';
 
 export interface SignedLinkOptions {
   /** Where `signedFileRoutes` of `@ddd-ts-kit/http` answers, as a client reaches it: `http://localhost:3000/files`. A link is `<baseUrl>?token=<token>`. */

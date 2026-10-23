@@ -9,8 +9,8 @@ import {
   specifierOf,
   specifierSuffix,
   toAlias,
-} from '../src/alias/index.js';
-import { parseConfig } from '../src/config/index.js';
+} from '../src/alias';
+import { parseConfig } from '../src/config';
 
 const DEFAULT = parseConfig({});
 const ROOTS = aliasRoots(DEFAULT);

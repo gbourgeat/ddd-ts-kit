@@ -1,7 +1,7 @@
-import type { HandlerInput } from './handler-input.js';
-import type { HandlerResult } from './handler-result.js';
-import type { RequestSchemas } from './request-schemas.js';
-import type { ResponsesSpec } from './responses-spec.js';
+import type { HandlerInput } from './handler-input';
+import type { HandlerResult } from './handler-result';
+import type { RequestSchemas } from './request-schemas';
+import type { ResponsesSpec } from './responses-spec';
 
 export type RouteHandler<
   Request extends RequestSchemas = RequestSchemas,

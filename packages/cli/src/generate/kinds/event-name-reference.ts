@@ -1,6 +1,6 @@
-import type { EventNames } from '../event-names.js';
-import type { Scope } from '../scope.js';
-import { declaresItsName } from './declares-its-name.js';
+import type { EventNames } from '../event-names';
+import type { Scope } from '../scope';
+import { declaresItsName } from './declares-its-name';
 
 /**
  * How a reaction wired by a module file names the domain event it is attached to:

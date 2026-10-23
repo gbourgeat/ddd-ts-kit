@@ -6,22 +6,22 @@ import {
   REFERENCE_COVERAGE,
   type Config,
   type Deviation,
-} from '../../config/index.js';
-import { DEFAULT_SEVERITIES } from '../catalogue/default-severities.js';
-import { commentLines } from '../comments/comment-lines.js';
-import { ADR_DIRECTORY } from '../governance/adr-directory.js';
-import { DecisionRecords } from '../governance/decision-records.js';
-import { recordNumber } from '../governance/record-number.js';
-import { referencedRecord } from '../governance/referenced-record.js';
-import type { Finding } from '../model/finding.js';
-import type { Flaw } from '../model/flaw.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { findSuppressions } from '../suppressions/find-suppressions.js';
-import { lineOfSequence } from '../support/line-of-sequence.js';
-import { perFile } from '../support/per-file.js';
-import { reporter } from '../support/reporter.js';
-import { toViolations } from '../support/to-violations.js';
+} from '../../config';
+import { DEFAULT_SEVERITIES } from '../catalogue/default-severities';
+import { commentLines } from '../comments/comment-lines';
+import { ADR_DIRECTORY } from '../governance/adr-directory';
+import { DecisionRecords } from '../governance/decision-records';
+import { recordNumber } from '../governance/record-number';
+import { referencedRecord } from '../governance/referenced-record';
+import type { Finding } from '../model/finding';
+import type { Flaw } from '../model/flaw';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { findSuppressions } from '../suppressions/find-suppressions';
+import { lineOfSequence } from '../support/line-of-sequence';
+import { perFile } from '../support/per-file';
+import { reporter } from '../support/reporter';
+import { toViolations } from '../support/to-violations';
 
 const DIRECTIVE = /^((?:ddd-ts-kit|eslint)-disable(?:-next-line|-line)?)(?![\w-])(.*)$/;
 const RECORD_SHAPE = `${ADR_DIRECTORY}/NNNN-<slug>.md (context, what is deviated from, why, scope, condition for removing it)`;

@@ -1,9 +1,9 @@
 import type { TSESTree } from '@typescript-eslint/utils';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
-import { importListener } from '../support/imports/import-listener.js';
-import { innerLayer } from '../support/imports/inner-layer.js';
-import type { LintedFile } from '../project/linted-file.js';
-import { parameterTypeName } from '../support/types/parameter-type-name.js';
+import { defineRule, type Report } from '../support/rule/define-rule';
+import { importListener } from '../support/imports/import-listener';
+import { innerLayer } from '../support/imports/inner-layer';
+import type { LintedFile } from '../project/linted-file';
+import { parameterTypeName } from '../support/types/parameter-type-name';
 
 interface Options {
   readonly brokerPackages?: readonly string[];

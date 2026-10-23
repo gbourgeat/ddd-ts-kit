@@ -1,8 +1,8 @@
-import type { Config } from '../../config/index.js';
-import { familyOf } from './family-of.js';
-import type { InitFile } from './init-file.js';
-import { platformFile } from './platform-file.js';
-import { when } from './when.js';
+import type { Config } from '../../config';
+import { familyOf } from './family-of';
+import type { InitFile } from './init-file';
+import { platformFile } from './platform-file';
+import { when } from './when';
 
 /** The composition root and the technical capabilities every context receives, apart from the storage, the authorization and the audit trail. */
 export function platformFiles(config: Config): InitFile[] {

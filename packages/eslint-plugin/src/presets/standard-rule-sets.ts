@@ -1,6 +1,6 @@
-import { bracesRules } from './braces-rules.js';
-import { layoutRules } from './layout-rules.js';
-import { CLEAN_CODE_RULES, ESCAPE_HATCH_RULES, KIT_CONVENTIONS, TYPED_CLEAN_CODE_RULES } from './standard-rules.js';
+import { bracesRules } from './braces-rules';
+import { layoutRules } from './layout-rules';
+import { CLEAN_CODE_RULES, ESCAPE_HATCH_RULES, KIT_CONVENTIONS, TYPED_CLEAN_CODE_RULES } from './standard-rules';
 
 /** The standard rules the helper adds, for a config composed by hand. */
 export const standardRules = {

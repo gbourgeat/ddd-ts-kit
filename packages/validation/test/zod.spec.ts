@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { zodSchema } from '../src/zod.js';
+import { zodSchema } from '../src/zod';
 
 const order = zodSchema(
   z.object({

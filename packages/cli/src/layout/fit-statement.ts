@@ -1,7 +1,7 @@
-import { chainLinks } from './chain-links.js';
-import { LINE_WIDTH } from './line-width.js';
-import { nesting } from './nesting.js';
-import { splitTopLevel } from './split-top-level.js';
+import { chainLinks } from './chain-links';
+import { LINE_WIDTH } from './line-width';
+import { nesting } from './nesting';
+import { splitTopLevel } from './split-top-level';
 
 const STEP = '  ';
 const CLOSERS = ')]}';

@@ -1,6 +1,6 @@
 import { systemActor, type CommandBus } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { {{upstream.definition}}, type {{upstream.eventType}} } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index{{alias.ext}}';
+import { {{upstream.definition}}, type {{upstream.eventType}} } from '{{alias.contexts}}/{{upstream.kebab}}/published-language{{alias.index}}';
 
 @IntegrationEventHandler({{upstream.definition}}, { consumer: '{{context.kebab}}.{{name.kebab}}' })
 export class {{name.pascal}}IntegrationHandler {

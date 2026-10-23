@@ -1,5 +1,5 @@
 import { index, integer, text } from 'drizzle-orm/pg-core';
-import { auditColumns, contextSchema, tenantColumn } from '../../../../../src/postgres.js';
+import { auditColumns, contextSchema, tenantColumn } from '../../../../../src/postgres';
 
 /** One schema per bounded context: `billing-core` owns `billing_core.invoices`. */
 const billing = contextSchema('billing-core');

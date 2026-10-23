@@ -1,9 +1,9 @@
 import { AssertionError } from 'node:assert';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { given, resetSequences, scenario } from '../src/index.js';
-import { aLine, anOrder } from './support/builders.js';
-import { EmptyOrder, Order, OrderAlreadyPaid, OrderPaid, at } from './support/order.js';
+import { given, resetSequences, scenario } from '../src';
+import { aLine, anOrder } from './support/builders';
+import { EmptyOrder, Order, OrderAlreadyPaid, OrderPaid, at } from './support/order';
 
 beforeEach(() => {
   resetSequences();

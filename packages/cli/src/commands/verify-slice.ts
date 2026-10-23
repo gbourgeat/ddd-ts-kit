@@ -1,10 +1,10 @@
-import { CliError } from '../cli-error.js';
-import { readConfig } from '../config/index.js';
-import { formatSliceVerification } from '../slice/format-slice-verification.js';
-import { verifySlice } from '../slice/verify-slice.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
-import { knownContext } from './known-context.js';
+import { CliError } from '../cli-error';
+import { readConfig } from '../config';
+import { formatSliceVerification } from '../slice/format-slice-verification';
+import { verifySlice } from '../slice/verify-slice';
+import { Arguments } from './arguments';
+import type { Command } from './command';
+import { knownContext } from './known-context';
 
 /** Closes a slice before its commit in one command: regenerate, check the changed files, test the context. */
 export const verifySliceCommand: Command = (argv, io) => {

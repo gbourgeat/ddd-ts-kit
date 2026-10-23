@@ -1,9 +1,9 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { readModelStoreContract, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
-import { PrismaReadModelTable, createPrismaUnitOfWork } from '../../src/index.js';
-import type { Prisma } from '../generated/client/client.js';
-import { createDatabase, type TestDatabase } from '../support/database.js';
-import { CONTRACT_MODEL } from '../support/read-model/contract-model.js';
+import { PrismaReadModelTable, createPrismaUnitOfWork } from '../../src';
+import type { Prisma } from '../generated/client/client';
+import { createDatabase, type TestDatabase } from '../support/database';
+import { CONTRACT_MODEL } from '../support/read-model/contract-model';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

@@ -1,11 +1,11 @@
 import { SpanKind, SpanStatusCode, context, trace, type Span } from '@opentelemetry/api';
-import { CORRELATION_ID_ATTRIBUTE, ORIGIN_ATTRIBUTE } from '../local-root/correlate.js';
-import { localRoots } from '../local-root/local-roots.js';
-import { markSpanFailed } from '../span/mark-span-failed.js';
-import { OUTCOME_ATTRIBUTE } from '../span/outcome-attribute.js';
-import { refusalCode } from '../span/refusal-code.js';
-import { tracer } from '../span/tracer.js';
-import { isNoiseRoute } from './is-noise-route.js';
+import { CORRELATION_ID_ATTRIBUTE, ORIGIN_ATTRIBUTE } from '../local-root/correlate';
+import { localRoots } from '../local-root/local-roots';
+import { markSpanFailed } from '../span/mark-span-failed';
+import { OUTCOME_ATTRIBUTE } from '../span/outcome-attribute';
+import { refusalCode } from '../span/refusal-code';
+import { tracer } from '../span/tracer';
+import { isNoiseRoute } from './is-noise-route';
 
 /** The route a request was matched to, as the HTTP pipeline of the kit describes it. */
 export interface TracedRoute {

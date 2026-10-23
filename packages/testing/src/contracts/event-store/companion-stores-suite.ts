@@ -1,6 +1,6 @@
 import { CONCURRENCY_CONFLICT, type EventSourcingStores } from '@ddd-ts-kit/kernel';
-import { ContractSuite } from '../contract-suite.js';
-import { failureOf } from '../failure-of.js';
+import { ContractSuite } from '../contract-suite';
+import { failureOf } from '../failure-of';
 
 type Companions = Pick<EventSourcingStores, 'snapshots' | 'checkpoints' | 'subjectKeys'>;
 

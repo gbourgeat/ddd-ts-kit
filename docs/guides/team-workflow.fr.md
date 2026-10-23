@@ -1,5 +1,5 @@
 [English](team-workflow.md) · **Français**
-<!-- translation-of: team-workflow.md sha256:91ec093935670778 -->
+<!-- translation-of: team-workflow.md sha256:fc412c7c9517eb0e -->
 
 # Travailler en équipe sur un projet DDD
 
@@ -219,7 +219,7 @@ et l'import qui va avec nomme le langage publié, jamais ce qu'il y a derrière 
 import { Appointment } from '@/contexts/appointments/domain/aggregates/appointment.aggregate';
 
 // écrivez : ce qu'appointments publie pour ses consommateurs
-import { appointmentCancelledV1 } from '@/contexts/appointments/published-language/index';
+import { appointmentCancelledV1 } from '@/contexts/appointments/published-language';
 ```
 
 Ainsi, « mon contexte peut-il utiliser quelque chose du vôtre ? » a une réponse mécanique, et

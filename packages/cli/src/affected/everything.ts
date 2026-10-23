@@ -1,5 +1,5 @@
-import type { Config } from '../config/index.js';
-import type { Selection } from './selection.js';
+import type { Config } from '../config';
+import type { Selection } from './selection';
 
 /** The whole project: no context left out, which is what the default branch and the nightly run always get. */
 export function everything(config: Config, reason: string): Selection {

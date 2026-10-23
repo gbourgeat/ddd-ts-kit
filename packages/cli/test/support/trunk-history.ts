@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { type CliResult, cli, tempDir, write } from '../helpers.js';
-import { git } from './git.js';
-import { withGitIdentity } from './git-identity.js';
-import { commit, type Files } from './merge-repository.js';
+import { type CliResult, cli, tempDir, write } from '../helpers';
+import { git } from './git';
+import { withGitIdentity } from './git-identity';
+import { commit, type Files } from './merge-repository';
 
-export type { Files } from './merge-repository.js';
+export type { Files } from './merge-repository';
 
 // merge-trunk commits through the git the CLI runs: it needs an identity on a runner without one.
 withGitIdentity();

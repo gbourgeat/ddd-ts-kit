@@ -1,7 +1,7 @@
-import type { Sort } from '../pagination/sort.js';
-import type { CriteriaLimits } from './criteria-limits.js';
-import type { FieldOf } from './field-of.js';
-import type { FieldRule } from './field-rule.js';
+import type { Sort } from '../pagination/sort';
+import type { CriteriaLimits } from './criteria-limits';
+import type { FieldOf } from './field-of';
+import type { FieldRule } from './field-rule';
 
 /** What a read port writes to say which reads of its read model it accepts. */
 export interface CriteriaDeclaration<Row> {

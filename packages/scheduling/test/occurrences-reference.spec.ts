@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseJobSchedule } from '@ddd-ts-kit/kernel';
-import { latestOccurrence, nextOccurrence } from '../src/index.js';
+import { latestOccurrence, nextOccurrence } from '../src';
 
 /*
  * The reference: every minute of a window, one by one, each asked to Intl for the wall time it

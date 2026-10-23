@@ -1,4 +1,4 @@
-import { normalizedLines } from './normalized-lines.js';
+import { normalizedLines } from './normalized-lines';
 
 type Place = { readonly file: string; readonly line: number };
 

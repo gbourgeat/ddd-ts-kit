@@ -1,7 +1,7 @@
 import { EntitySchema, type EntitySchemaColumnOptions } from 'typeorm';
 import { EVENT_STORE_TABLES, type EventStoreTablesOptions } from '@ddd-ts-kit/kernel';
-import { INSTANT } from '../columns/instant.js';
-import { RIGHT_NOW } from '../columns/right-now.js';
+import { INSTANT } from '../columns/instant';
+import { RIGHT_NOW } from '../columns/right-now';
 
 type Columns = Record<string, EntitySchemaColumnOptions>;
 

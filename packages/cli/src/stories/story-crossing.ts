@@ -1,4 +1,4 @@
-import type { MergeForecast } from './merge-forecast.js';
+import type { MergeForecast } from './merge-forecast';
 
 /** Where two open stories meet: a context both change, a file both change, a conflict the second to land settles. */
 export interface StoryCrossing {

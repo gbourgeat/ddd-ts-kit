@@ -1,6 +1,6 @@
 import { primaryKey, text } from 'drizzle-orm/pg-core';
-import { instant } from '../columns/instant.js';
-import { tableIn } from '../schema/table-in.js';
+import { instant } from '../columns/instant';
+import { tableIn } from '../schema/table-in';
 
 export type ProcessedEventsTable = ReturnType<typeof processedEventsTable>;
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Page } from '@ddd-ts-kit/kernel';
-import { everyPage } from '../src/index.js';
+import { everyPage } from '../src';
 
 /** Three pages of two rows, the cursor of each naming the next one, and every page asked recorded. */
 function pagesOf(asked: (string | undefined)[]): (cursor: string | undefined) => Promise<Page<number>> {

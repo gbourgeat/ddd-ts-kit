@@ -1,5 +1,5 @@
 import { KafkaJS } from '@confluentinc/kafka-javascript';
-import type { KafkaEventBusOptions } from '../options/kafka-event-bus-options.js';
+import type { KafkaEventBusOptions } from '../options/kafka-event-bus-options';
 
 /**
  * The factory of the clients of a bus: the one the options give, or one made of the brokers and

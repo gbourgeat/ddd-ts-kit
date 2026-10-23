@@ -1,16 +1,16 @@
 import path from 'node:path';
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { parseAllowedFile } from '../project/parse-allowed-file.js';
-import type { AllowedFile } from '../project/config.js';
-import type { LintedFile } from '../project/linted-file.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import { explainExports } from '../support/exports/explain-exports.js';
-import type { ExportExplanation } from '../support/exports/export-explanation.js';
-import { isNamedAfter } from '../support/exports/is-named-after.js';
-import { moduleShapeOf } from '../support/exports/module-shape-of.js';
-import type { ModuleShape } from '../support/exports/module-shape.js';
-import { globMatcher } from '../support/glob-matcher.js';
-import { kebabCase } from '../support/kebab-case.js';
+import { parseAllowedFile } from '../project/parse-allowed-file';
+import type { AllowedFile } from '../project/config';
+import type { LintedFile } from '../project/linted-file';
+import { defineRule } from '../support/rule/define-rule';
+import { explainExports } from '../support/exports/explain-exports';
+import type { ExportExplanation } from '../support/exports/export-explanation';
+import { isNamedAfter } from '../support/exports/is-named-after';
+import { moduleShapeOf } from '../support/exports/module-shape-of';
+import type { ModuleShape } from '../support/exports/module-shape';
+import { globMatcher } from '../support/glob-matcher';
+import { kebabCase } from '../support/kebab-case';
 
 interface Options {
   /** Files whose several exports are one thing, each with the sentence that says why; added to `onePerFile.allow` of the config. */

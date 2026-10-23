@@ -1,5 +1,5 @@
-import type { Workspace } from '../workspace/index.js';
-import { type ContextTree, roleFilesOf } from '../model-modules/index.js';
+import type { Workspace } from '../workspace';
+import { type ContextTree, roleFilesOf } from '../model-modules';
 
 const FOLDER = 'domain/vocabularies';
 const DECLARED = /export\s+const\s+([A-Za-z_$][\w$]*)\s*=\s*\{([^}]*)\}\s*as\s+const/g;

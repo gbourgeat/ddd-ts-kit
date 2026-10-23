@@ -1,2 +1,2 @@
-export { Workspace } from './workspace.js';
-export type { WorkspaceReport } from './workspace-report.js';
+export { Workspace } from './workspace';
+export type { WorkspaceReport } from './workspace-report';

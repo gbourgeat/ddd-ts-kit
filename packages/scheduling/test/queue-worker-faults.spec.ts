@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryErrorReporter, InMemoryLogger, InMemoryUnitOfWork, NotFoundError } from '@ddd-ts-kit/kernel';
-import { reportFailedBackgroundJobs, type BackgroundJobRun } from '../src/index.js';
-import { aQueueBench } from './support/a-queue-bench.js';
-import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections.js';
-import { CompileStatementsJob } from './support/statements-job.js';
+import { reportFailedBackgroundJobs, type BackgroundJobRun } from '../src';
+import { aQueueBench } from './support/a-queue-bench';
+import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections';
+import { CompileStatementsJob } from './support/statements-job';
 
 refuseUnhandledRejections();
 

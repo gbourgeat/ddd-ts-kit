@@ -1,4 +1,4 @@
-import type { Guard } from '../guard.js';
+import type { Guard } from '../guard';
 
 /**
  * Lets everybody through, the anonymous caller included. Said, never implied: a controller

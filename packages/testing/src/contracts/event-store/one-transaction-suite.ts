@@ -4,11 +4,11 @@ import {
   type DomainEvent,
   type IntegrationEvent,
 } from '@ddd-ts-kit/kernel';
-import { ContractSuite } from '../contract-suite.js';
-import { failureOf } from '../failure-of.js';
-import { Consignment } from './consignment.js';
-import { Consignments } from './consignments.js';
-import type { EventStoreUnderContract } from './event-store-under-contract.js';
+import { ContractSuite } from '../contract-suite';
+import { failureOf } from '../failure-of';
+import { Consignment } from './consignment';
+import { Consignments } from './consignments';
+import type { EventStoreUnderContract } from './event-store-under-contract';
 
 const LATER = new Date('2100-01-01T00:00:00.000Z');
 

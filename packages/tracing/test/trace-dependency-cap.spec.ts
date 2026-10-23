@@ -5,9 +5,9 @@ import {
   configureTracing,
   resetTracingConfiguration,
   withSpan,
-} from '../src/index.js';
-import { setupTracing, type TestTracing } from './support/setup-tracing.js';
-import { tracedRepository as repository } from './support/traced-repository.js';
+} from '../src';
+import { setupTracing, type TestTracing } from './support/setup-tracing';
+import { tracedRepository as repository } from './support/traced-repository';
 
 describe('traceDependency, the per-root cap', () => {
   let tracing: TestTracing;

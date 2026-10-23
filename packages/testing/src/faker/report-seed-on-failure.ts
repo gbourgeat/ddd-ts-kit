@@ -1,5 +1,5 @@
-import { dataGenerator } from './current-data-generator.js';
-import { replayHint } from './replay-hint.js';
+import { dataGenerator } from './current-data-generator';
+import { replayHint } from './replay-hint';
 
 /** What `reportSeedOnFailure` needs from the runner; `beforeEach` and `onTestFailed` of vitest fit. */
 export interface FailureReportingRunner {

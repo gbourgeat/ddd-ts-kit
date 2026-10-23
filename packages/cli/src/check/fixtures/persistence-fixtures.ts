@@ -1,8 +1,8 @@
-import { WORKER_SCOPE_FILE } from '../../commit/worker-scope-file.js';
-import { CONFIG_FILE } from '../../config/index.js';
-import { config } from './config.js';
-import type { Fixture } from './fixture.js';
-import { project } from './project.js';
+import { WORKER_SCOPE_FILE } from '../../commit/worker-scope-file';
+import { CONFIG_FILE } from '../../config';
+import { config } from './config';
+import type { Fixture } from './fixture';
+import { project } from './project';
 
 const JOURNAL = 'migrations/meta/_journal.json';
 const INITIAL = '20261010120000_initial';

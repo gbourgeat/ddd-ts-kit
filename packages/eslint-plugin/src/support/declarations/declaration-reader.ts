@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { ClassNode } from '../classes/class-name.js';
-import { propertyName } from '../globals/property-name.js';
-import { DECLARED_ROLES } from './declared-roles.js';
+import type { ClassNode } from '../classes/class-name';
+import { propertyName } from '../globals/property-name';
+import { DECLARED_ROLES } from './declared-roles';
 
 /** The entry of the kernel that holds the declaration decorators. */
 export const DECLARATIONS_ENTRY = '@ddd-ts-kit/kernel/declarations';

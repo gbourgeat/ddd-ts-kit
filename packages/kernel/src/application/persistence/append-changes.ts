@@ -1,6 +1,6 @@
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { EventSourcedAggregate } from '../../domain/event-sourcing/event-sourced-aggregate.js';
-import { unstoredEvents } from '../../domain/event-sourcing/unstored-events.js';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { EventSourcedAggregate } from '../../domain/event-sourcing/event-sourced-aggregate';
+import { unstoredEvents } from '../../domain/event-sourcing/unstored-events';
 
 export interface StreamChanges {
   /** The version the stream must still have. */

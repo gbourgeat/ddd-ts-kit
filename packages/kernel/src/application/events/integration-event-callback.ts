@@ -1,5 +1,5 @@
-import type { EventDelivery } from './event-delivery.js';
-import type { IntegrationEvent } from './integration-event.js';
+import type { EventDelivery } from './event-delivery';
+import type { IntegrationEvent } from './integration-event';
 
 /**
  * What a subscriber is given for one event type: the function a provider calls with each

@@ -1,8 +1,8 @@
-import type { Coverage, CoverageRates } from './coverage.js';
-import type { COVERAGE_METRICS } from './coverage-metrics.js';
-import { isRate } from './is-rate.js';
-import { REFERENCE_COVERAGE } from './reference-coverage.js';
-import { isRecord } from './values/is-record.js';
+import type { Coverage, CoverageRates } from './coverage';
+import type { COVERAGE_METRICS } from './coverage-metrics';
+import { isRate } from './is-rate';
+import { REFERENCE_COVERAGE } from './reference-coverage';
+import { isRecord } from './values/is-record';
 
 /** Tolerant like the rest of the config: a rate that is not a percentage is read as the reference, and `check` says so. */
 export function parseCoverage(value: unknown): Coverage {

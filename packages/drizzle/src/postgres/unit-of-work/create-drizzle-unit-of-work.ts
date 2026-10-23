@@ -2,8 +2,8 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import type { ExtractTablesWithRelations, TablesRelationalConfig } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT, PgTransaction, PgTransactionConfig } from 'drizzle-orm/pg-core';
 import { withinUnitOfWork, type UnitOfWork } from '@ddd-ts-kit/kernel';
-import type { SqlExecutor } from '../tenancy/sql-executor.js';
-import type { DrizzleContext } from './drizzle-context.js';
+import type { SqlExecutor } from '../tenancy/sql-executor';
+import type { DrizzleContext } from './drizzle-context';
 
 /** One object for both ports: bind it to `UnitOfWork` and to the `DrizzleContext` of the project. */
 export interface DrizzleUnitOfWork<

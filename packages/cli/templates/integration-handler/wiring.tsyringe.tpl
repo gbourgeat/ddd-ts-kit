@@ -1,7 +1,7 @@
 @@imports
 {{#if upstream.known}}
 import { CommandBus } from '@ddd-ts-kit/kernel';
-import { {{upstream.definition}} as {{name.camel}}Definition } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index{{alias.ext}}';
+import { {{upstream.definition}} as {{name.camel}}Definition } from '{{alias.contexts}}/{{upstream.kebab}}/published-language{{alias.index}}';
 {{/if}}
 {{#unless upstream.known}}
 import { CommandBus, EventSubscribers, ExecutionScope, ProcessedEventStore, idempotent, inEventScope } from '@ddd-ts-kit/kernel';

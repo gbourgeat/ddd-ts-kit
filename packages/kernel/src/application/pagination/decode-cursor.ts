@@ -1,5 +1,5 @@
-import type { CursorPosition } from './cursor-position.js';
-import { InvalidPageRequestError } from './invalid-page-request-error.js';
+import type { CursorPosition } from './cursor-position';
+import { InvalidPageRequestError } from './invalid-page-request-error';
 
 /** The position a cursor stands for. A cursor this function did not write is refused. */
 export function decodeCursor(cursor: string): CursorPosition {

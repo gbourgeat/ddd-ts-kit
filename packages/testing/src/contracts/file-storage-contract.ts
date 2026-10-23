@@ -1,8 +1,8 @@
-import type { ContractRunner } from './contract-runner.js';
-import { ArrangementSuite } from './file-storage/arrangement-suite.js';
-import { ContentSuite } from './file-storage/content-suite.js';
-import type { FileStorageContractOptions } from './file-storage/file-storage-contract-options.js';
-import { SignedLinksSuite } from './file-storage/signed-links-suite.js';
+import type { ContractRunner } from './contract-runner';
+import { ArrangementSuite } from './file-storage/arrangement-suite';
+import { ContentSuite } from './file-storage/content-suite';
+import type { FileStorageContractOptions } from './file-storage/file-storage-contract-options';
+import { SignedLinksSuite } from './file-storage/signed-links-suite';
 
 /**
  * What every connector of the kernel `FileStorage` port guarantees, the in-memory one included:

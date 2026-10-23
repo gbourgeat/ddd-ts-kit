@@ -1,7 +1,7 @@
-import { ASSEMBLIES, DEPENDENCY_STATEMENTS, STYLES } from '../../config/index.js';
-import { CliError } from '../../cli-error.js';
-import { choose } from './choose.js';
-import type { StackOptions } from './stack-options.js';
+import { ASSEMBLIES, DEPENDENCY_STATEMENTS, STYLES } from '../../config';
+import { CliError } from '../../cli-error';
+import { choose } from './choose';
+import type { StackOptions } from './stack-options';
 
 /**
  * A class declares what it is wherever something reads the declarations: `@ddd-ts-kit/di`, on

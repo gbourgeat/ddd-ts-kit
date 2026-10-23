@@ -1,6 +1,6 @@
 import { Brackets, NotBrackets, type WhereExpressionBuilder } from 'typeorm';
 import type { FieldValue, Predicate, PredicateTest } from '@ddd-ts-kit/kernel';
-import { likePattern } from './like-pattern.js';
+import { likePattern } from './like-pattern';
 
 export interface TypeOrmCriteriaOptions {
   /** The alias of the read model in the query. */

@@ -1,6 +1,6 @@
 import type { ParsedJobSchedule } from '@ddd-ts-kit/kernel';
-import { localDayOf } from './local-day-of.js';
-import { occurrencesOfDay } from './occurrences-of-day.js';
+import { localDayOf } from './local-day-of';
+import { occurrencesOfDay } from './occurrences-of-day';
 
 /** Two 29ths of February are at most eight years apart. */
 const HORIZON_DAYS = 366 * 8 + 2;

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import * as kernel from '@ddd-ts-kit/kernel';
 import * as contracts from '@ddd-ts-kit/testing/contracts';
-import * as redis from '../src/index.js';
-import * as redisTesting from '../src/testing.js';
+import * as redis from '../src';
+import * as redisTesting from '../src/testing';
 
 describe('the names this package had before the ports moved to the kernel', () => {
   it('still gives the in-memory lock and rate limiter, which are those of the kernel', () => {

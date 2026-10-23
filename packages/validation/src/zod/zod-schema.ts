@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { err, ok } from '@ddd-ts-kit/kernel';
-import { formatPath } from '../format-path.js';
-import type { JsonSchema } from '../json-schema.js';
-import type { Schema } from '../schema.js';
+import { formatPath } from '../format-path';
+import type { JsonSchema } from '../json-schema';
+import type { Schema } from '../schema';
 
 export interface ZodSchemaOptions {
   /**

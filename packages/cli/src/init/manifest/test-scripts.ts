@@ -1,4 +1,4 @@
-import type { Config } from '../../config/index.js';
+import type { Config } from '../../config';
 
 const JEST = 'node --experimental-vm-modules node_modules/jest/bin/jest.js';
 const NO_END_TO_END = { 'ci:test:e2e': 'echo "No HTTP stack: nothing to drive end to end."' };

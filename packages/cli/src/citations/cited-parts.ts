@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseGlossary } from '../check/language/parse-glossary.js';
-import type { Config } from '../config/index.js';
-import type { Slice } from '../progress/slice.js';
-import type { CitedName } from './cited-name.js';
-import { citedNames } from './cited-names.js';
-import type { DocumentPart } from './document-part.js';
+import { parseGlossary } from '../check/language/parse-glossary';
+import type { Config } from '../config';
+import type { Slice } from '../progress/slice';
+import type { CitedName } from './cited-name';
+import { citedNames } from './cited-names';
+import type { DocumentPart } from './document-part';
 
 /** A part of a design with the contexts it is read in and the names it cites. */
 export interface CitedPart {

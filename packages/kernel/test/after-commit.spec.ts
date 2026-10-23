@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { InMemoryUnitOfWork, afterCommit } from '../src/index.js';
+import { InMemoryUnitOfWork, afterCommit } from '../src';
 
 describe('afterCommit', () => {
   it('waits for the outermost unit of work, runs in the order given, and drops a rejection', async () => {

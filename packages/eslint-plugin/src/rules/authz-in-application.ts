@@ -1,15 +1,15 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { ancestors } from '../support/ancestors.js';
-import { accessedName } from '../support/calls/accessed-name.js';
-import { DECLARATIONS_ENTRY } from '../support/declarations/declaration-reader.js';
-import { isDeclaredStyle } from '../support/declarations/is-declared-style.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
-import { propertyName } from '../support/globals/property-name.js';
-import { importListener, type ImportedName, type ImportSite } from '../support/imports/import-listener.js';
-import { inContext } from '../support/imports/in-context.js';
-import type { LintedFile } from '../project/linted-file.js';
-import { declaredTypeName } from '../support/types/declared-type-name.js';
-import { startsAtThis } from '../support/members/starts-at-this.js';
+import { ancestors } from '../support/ancestors';
+import { accessedName } from '../support/calls/accessed-name';
+import { DECLARATIONS_ENTRY } from '../support/declarations/declaration-reader';
+import { isDeclaredStyle } from '../support/declarations/is-declared-style';
+import { defineRule, type Report } from '../support/rule/define-rule';
+import { propertyName } from '../support/globals/property-name';
+import { importListener, type ImportedName, type ImportSite } from '../support/imports/import-listener';
+import { inContext } from '../support/imports/in-context';
+import type { LintedFile } from '../project/linted-file';
+import { declaredTypeName } from '../support/types/declared-type-name';
+import { startsAtThis } from '../support/members/starts-at-this';
 
 type MessageId =
   | 'declaredOutside'

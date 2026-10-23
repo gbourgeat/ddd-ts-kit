@@ -1,8 +1,8 @@
-import { bindingCalls } from '../declarations/binding-calls.js';
-import { dependencyLists } from '../declarations/dependency-lists.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { perFile } from '../support/per-file.js';
+import { bindingCalls } from '../declarations/binding-calls';
+import { dependencyLists } from '../declarations/dependency-lists';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { perFile } from '../support/per-file';
 
 const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
 

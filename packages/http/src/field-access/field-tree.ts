@@ -1,5 +1,5 @@
-import type { FieldAccessEntry } from './field-access-entry.js';
-import type { FieldRule } from './field-rule.js';
+import type { FieldAccessEntry } from './field-access-entry';
+import type { FieldRule } from './field-rule';
 
 /** The restricted fields seen from one object: those it holds itself, and those further down, by the name that leads to them. */
 export class FieldTree {

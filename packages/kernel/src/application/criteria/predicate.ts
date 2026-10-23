@@ -1,5 +1,5 @@
-import type { FilterOperand } from './filter-node.js';
-import type { FilterOperator } from './filter-operator.js';
+import type { FilterOperand } from './filter-node';
+import type { FilterOperator } from './filter-operator';
 
 /**
  * One comparison of a field. It never holds on a `null`, `isNull` apart; `negated` holds when

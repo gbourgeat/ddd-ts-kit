@@ -1,4 +1,4 @@
-import type { Config } from '../config/index.js';
+import type { Config } from '../config';
 
 const BROKER_STRATEGIES: Readonly<Record<string, string>> = {
   none: 'Same process, no broker: handlers write to the transactional outbox, a relay publishes to the in-memory bus, and each consumer deduplicates in a processed-event store.',

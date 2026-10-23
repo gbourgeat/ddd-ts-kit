@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import type { RawHeaders } from '../route/raw-headers.js';
+import type { RawHeaders } from '../route/raw-headers';
 
 /**
  * What `resolvePrincipal` and the hooks receive as the request on Hono: the headers as a plain

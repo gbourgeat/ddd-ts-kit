@@ -1,5 +1,5 @@
 import type { Knex } from 'knex';
-import { tenantSchemaOf } from './tenant-schema-of.js';
+import { tenantSchemaOf } from './tenant-schema-of';
 
 /** Where the migrations of each tenant are recorded: `migrations__<tenant>`. */
 const BOOKKEEPING_SCHEMA = 'migrations';

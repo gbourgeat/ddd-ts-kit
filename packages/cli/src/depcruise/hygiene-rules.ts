@@ -1,8 +1,8 @@
-import type { Config } from '../config/index.js';
-import { DISCOVERED_SUFFIXES, EDGE_SUFFIXES } from '../declared/index.js';
-import type { CruiseRule } from './cruise-rule.js';
-import { escapePattern } from './escape-pattern.js';
-import { testFiles } from './test-files.js';
+import type { Config } from '../config';
+import { DISCOVERED_SUFFIXES, EDGE_SUFFIXES } from '../declared';
+import type { CruiseRule } from './cruise-rule';
+import { escapePattern } from './escape-pattern';
+import { testFiles } from './test-files';
 
 export function hygieneRules(config: Config): CruiseRule[] {
   return [

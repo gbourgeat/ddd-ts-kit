@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { TIMEOUT, TimeoutError, compose, retry, timeout } from '../src/index.js';
-import { ManualScheduler, createAspectFakes, withAspectRuntime } from '../src/testing.js';
-import { settled } from './support/settled.js';
-import { SlowGateway } from './support/slow-gateway.js';
+import { TIMEOUT, TimeoutError, compose, retry, timeout } from '../src';
+import { ManualScheduler, createAspectFakes, withAspectRuntime } from '../src/testing';
+import { settled } from './support/settled';
+import { SlowGateway } from './support/slow-gateway';
 
 describe('timeout', () => {
   it('lets a call that answers in time through and forgets its timer', async () => {

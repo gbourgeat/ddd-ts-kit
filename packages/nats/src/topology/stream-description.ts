@@ -1,4 +1,4 @@
-import type { StreamStorage } from '../options/stream-storage.js';
+import type { StreamStorage } from '../options/stream-storage';
 
 export interface StreamDescription {
   readonly name: string;

@@ -1,8 +1,8 @@
-import type { Config } from '../config/index.js';
-import { CliError } from '../cli-error.js';
-import { toName, type Name } from '../naming/index.js';
-import type { KindRequest } from './kind.js';
-import type { Scope } from './scope.js';
+import type { Config } from '../config';
+import { CliError } from '../cli-error';
+import { toName, type Name } from '../naming';
+import type { KindRequest } from './kind';
+import type { Scope } from './scope';
 
 /** Opens the context named by the first positional argument of a request. */
 export function openScope(request: KindRequest): Scope {

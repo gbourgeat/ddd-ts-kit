@@ -1,7 +1,7 @@
 import { jobScheduleOf, type ScheduledJob } from '@ddd-ts-kit/kernel';
 import type { ScheduledOptions, Token } from '@ddd-ts-kit/kernel/declarations';
-import type { JobRegistration } from '../wiring/job-registration.js';
-import { readable } from './readable.js';
+import type { JobRegistration } from '../wiring/job-registration';
+import { readable } from './readable';
 
 interface Located {
   readonly module: string;

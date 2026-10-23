@@ -1,4 +1,4 @@
-import type { ChainBreakKind } from './chain-break-kind.js';
+import type { ChainBreakKind } from './chain-break-kind';
 
 export interface ChainBreak {
   readonly kind: ChainBreakKind;

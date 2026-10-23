@@ -1,12 +1,12 @@
-import type { PageRequest } from '../pagination/page-request.js';
-import type { SortDirection } from '../pagination/sort-direction.js';
-import type { Sort } from '../pagination/sort.js';
-import type { FieldOf } from './field-of.js';
-import type { FilterNode, FilterOperand } from './filter-node.js';
-import type { FilterOperator } from './filter-operator.js';
-import { Filters } from './filters.js';
-import type { OperandOf } from './operand-of.js';
-import type { OperatorOf } from './operator-of.js';
+import type { PageRequest } from '../pagination/page-request';
+import type { SortDirection } from '../pagination/sort-direction';
+import type { Sort } from '../pagination/sort';
+import type { FieldOf } from './field-of';
+import type { FilterNode, FilterOperand } from './filter-node';
+import type { FilterOperator } from './filter-operator';
+import { Filters } from './filters';
+import type { OperandOf } from './operand-of';
+import type { OperatorOf } from './operator-of';
 
 interface State<Row> {
   readonly filters: Filters<Row>;

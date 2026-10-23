@@ -1,4 +1,4 @@
-import type { Token } from '../token/token.js';
+import type { Token } from '../token/token';
 
 /**
  * A class of the edge of a context that the composition root builds like any declared class: a

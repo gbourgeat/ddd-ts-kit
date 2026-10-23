@@ -1,6 +1,6 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import type { Permission } from '../permissions/permission.js';
-import type { AuthorizationContext } from './authorization-context.js';
+import type { Permission } from '../permissions/permission';
+import type { AuthorizationContext } from './authorization-context';
 
 /** One question to `Access.decideOn`: more than `decide` says, a context and whether to record the decision. */
 export interface AccessQuestion {

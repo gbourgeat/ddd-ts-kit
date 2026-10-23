@@ -1,8 +1,8 @@
-import { CliError } from '../cli-error.js';
-import { CONFIG_FILE, type Config } from '../config/index.js';
-import { aliasRoots } from './alias-roots.js';
-import { specifierSuffix } from './specifier-suffix.js';
-import { toAlias } from './to-alias.js';
+import { CliError } from '../cli-error';
+import { CONFIG_FILE, type Config } from '../config';
+import { aliasRoots } from './alias-roots';
+import { specifierSuffix } from './specifier-suffix';
+import { toAlias } from './to-alias';
 
 /**
  * How a generated import names a file of the project, given from the project root with or

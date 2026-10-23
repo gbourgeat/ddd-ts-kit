@@ -1,5 +1,5 @@
-import { createDataGenerator } from './create-data-generator.js';
-import type { DataGenerator } from './data-generator.js';
+import { createDataGenerator } from './create-data-generator';
+import type { DataGenerator } from './data-generator';
 
 let current: DataGenerator | undefined;
 

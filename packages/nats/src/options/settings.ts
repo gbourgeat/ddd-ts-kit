@@ -1,9 +1,9 @@
 import type { NatsConnection } from '@nats-io/transport-node';
-import type { NatsDelivery } from './nats-delivery.js';
-import type { NatsFailure } from './nats-failure.js';
-import type { ReconnectOptions } from './reconnect-options.js';
-import type { RetryOptions } from './retry-options.js';
-import type { StreamStorage } from './stream-storage.js';
+import type { NatsDelivery } from './nats-delivery';
+import type { NatsFailure } from './nats-failure';
+import type { ReconnectOptions } from './reconnect-options';
+import type { RetryOptions } from './retry-options';
+import type { StreamStorage } from './stream-storage';
 
 export interface Settings {
   readonly open: () => Promise<NatsConnection>;

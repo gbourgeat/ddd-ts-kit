@@ -1,4 +1,4 @@
-import { CONTEXT_LAYERS } from './context-layers.js';
+import { CONTEXT_LAYERS } from './context-layers';
 
 /** A plain path of a file or a directory, with no placeholder (`<name>`, `*`). */
 const PLAIN_PATH = /^[\w$@.-]+(?:\/[\w$@.-]+)*\/?$/;

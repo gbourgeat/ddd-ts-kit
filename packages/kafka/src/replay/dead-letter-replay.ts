@@ -1,11 +1,11 @@
 import type { KafkaJS } from '@confluentinc/kafka-javascript';
-import { REPLAY_FOR_HEADER } from '../codec/headers.js';
-import { republication } from '../codec/republication.js';
-import type { BrokerLink } from '../connection/broker-link.js';
-import { ignore } from '../ignore.js';
-import type { Publications } from '../publication/publications.js';
-import { deadTopicOf } from '../topology/dead-topic-of.js';
-import { replayGroupOf } from '../topology/replay-group-of.js';
+import { REPLAY_FOR_HEADER } from '../codec/headers';
+import { republication } from '../codec/republication';
+import type { BrokerLink } from '../connection/broker-link';
+import { ignore } from '../ignore';
+import type { Publications } from '../publication/publications';
+import { deadTopicOf } from '../topology/dead-topic-of';
+import { replayGroupOf } from '../topology/replay-group-of';
 
 export interface ReplayPlan {
   readonly consumer: string;

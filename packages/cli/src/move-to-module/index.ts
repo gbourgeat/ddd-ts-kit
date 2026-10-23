@@ -1,1 +1,1 @@
-export { moveToModule, type ModuleMoves } from './move-to-module.js';
+export { moveToModule, type ModuleMoves } from './move-to-module';

@@ -1,6 +1,6 @@
-import { AUDIT_ENTRIES_TABLE } from './audit-entries-table-name.js';
-import type { AuditTablesOptions } from './audit-tables-options.js';
-import { named } from './named.js';
+import { AUDIT_ENTRIES_TABLE } from './audit-entries-table-name';
+import type { AuditTablesOptions } from './audit-tables-options';
+import { named } from './named';
 
 /**
  * The guard of `audit_entries`: triggers that refuse UPDATE, DELETE and TRUNCATE, whoever

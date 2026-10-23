@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { read, REPO_ROOT, type StackFlags, walk, write } from '../helpers.js';
+import { read, REPO_ROOT, type StackFlags, walk, write } from '../helpers';
 import {
   buildSteps,
   compiledEntries,
@@ -14,10 +14,10 @@ import {
   type Rewritten,
   rewriteAliases,
   spelled,
-} from './compiled-project.js';
-import { bin, findingsOf, runIn } from './run-in.js';
-import { FIRST_CLASS, label, SLOW, STACKS } from './stacks.js';
-import { type Started, started } from './started.js';
+} from './compiled-project';
+import { bin, findingsOf, runIn } from './run-in';
+import { FIRST_CLASS, label, SLOW, STACKS } from './stacks';
+import { type Started, started } from './started';
 
 const installed = (name: string): boolean => fs.existsSync(path.join(REPO_ROOT, 'node_modules', name));
 

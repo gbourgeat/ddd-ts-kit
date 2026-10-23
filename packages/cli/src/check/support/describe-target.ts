@@ -1,4 +1,4 @@
-import type { ImportTarget } from '../model/import-target.js';
+import type { ImportTarget } from '../model/import-target';
 
 export function describeTarget(target: ImportTarget): string {
   if (target.kind !== 'file') {

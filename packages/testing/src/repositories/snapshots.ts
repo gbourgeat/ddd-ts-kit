@@ -1,5 +1,5 @@
-import type { InMemoryRepositoryOptions } from './in-memory-repository.js';
-import type { SnapshotCodec } from './snapshot-codec.js';
+import type { InMemoryRepositoryOptions } from './in-memory-repository';
+import type { SnapshotCodec } from './snapshot-codec';
 
 /** Infers the snapshot type so `toSnapshot` and `fromSnapshot` are checked against each other. */
 export function snapshots<A, Snapshot>(codec: SnapshotCodec<A, Snapshot>): InMemoryRepositoryOptions<A> {

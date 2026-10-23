@@ -1,7 +1,7 @@
 import type { Dependencies, DependencyList, DependencyTokens } from '@ddd-ts-kit/kernel/declarations';
-import type { Resolve } from '../wiring/resolve.js';
-import type { BindingOptions } from './binding-options.js';
-import type { ValueBindingOptions } from './value-binding-options.js';
+import type { Resolve } from '../wiring/resolve';
+import type { BindingOptions } from './binding-options';
+import type { ValueBindingOptions } from './value-binding-options';
 
 export interface BindingTarget<T> {
   /**

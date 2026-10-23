@@ -1,6 +1,6 @@
-import type { AttributedMarker } from './attributed-marker.js';
-import type { DesignDeparture } from './design-departure.js';
-import type { UnreferencedCommit } from './unreferenced-commit.js';
+import type { AttributedMarker } from './attributed-marker';
+import type { DesignDeparture } from './design-departure';
+import type { UnreferencedCommit } from './unreferenced-commit';
 
 /** Whether a story or a milestone can close, and what keeps it open. */
 export interface StoryClosing {

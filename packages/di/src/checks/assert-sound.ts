@@ -7,12 +7,12 @@ import {
   QueryBus,
 } from '@ddd-ts-kit/kernel';
 import { describeToken, type Token } from '@ddd-ts-kit/kernel/declarations';
-import { WiringError } from '../errors/wiring-error.js';
-import { sameToken } from '../token/same-token.js';
-import { TokenSet } from '../token/token-set.js';
-import { whereOf } from '../wiring/where-of.js';
-import type { Wiring } from '../wiring/wiring.js';
-import { cycleError } from './cycle-error.js';
+import { WiringError } from '../errors/wiring-error';
+import { sameToken } from '../token/same-token';
+import { TokenSet } from '../token/token-set';
+import { whereOf } from '../wiring/where-of';
+import type { Wiring } from '../wiring/wiring';
+import { cycleError } from './cycle-error';
 
 /** Everything that can be known wrong before a single instance is created. */
 export function assertSound(wiring: Wiring, overridden: TokenSet): void {

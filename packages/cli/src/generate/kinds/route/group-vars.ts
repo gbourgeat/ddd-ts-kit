@@ -1,5 +1,5 @@
-import type { Name } from '../../../naming/index.js';
-import type { RenderContext } from '../../../templating/index.js';
+import type { Name } from '../../../naming';
+import type { RenderContext } from '../../../templating';
 
 export interface GroupDeclaration {
   readonly name: Name;

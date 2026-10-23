@@ -1,5 +1,5 @@
-import type { ConsumerDescription } from './consumer-description.js';
-import type { StreamDescription } from './stream-description.js';
+import type { ConsumerDescription } from './consumer-description';
+import type { StreamDescription } from './stream-description';
 
 /** Everything the bus creates on the server, as data: for documentation and reviews. */
 export interface NatsTopology {

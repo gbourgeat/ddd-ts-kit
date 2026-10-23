@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { CREDENTIAL_KEYS, REDACTED, SCRUBBED_MESSAGE } from '@ddd-ts-kit/kernel';
 import winston from 'winston';
-import { WinstonLogger, createWinstonLogger, redactCredentials } from '../src/index.js';
-import { MemorySink } from './support/memory-sink.js';
-import { memoryTransport } from './support/memory-transport.js';
-import { OrderAlreadyPaid } from './support/order-already-paid.js';
+import { WinstonLogger, createWinstonLogger, redactCredentials } from '../src';
+import { MemorySink } from './support/memory-sink';
+import { memoryTransport } from './support/memory-transport';
+import { OrderAlreadyPaid } from './support/order-already-paid';
 
 describe('redaction', () => {
   it('hides every credential key at the top of a line and one level below', () => {

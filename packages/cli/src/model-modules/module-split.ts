@@ -1,5 +1,5 @@
-import { isRoleFolder } from './is-role-folder.js';
-import { MODULE_LAYERS } from './module-layers.js';
+import { isRoleFolder } from './is-role-folder';
+import { MODULE_LAYERS } from './module-layers';
 
 /** A path relative to its context, split into the module it sits in and the path it would have without modules. */
 export interface ModuleSplit {

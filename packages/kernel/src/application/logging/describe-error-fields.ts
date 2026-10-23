@@ -1,6 +1,6 @@
-import { describeError, type DescribeErrorOptions } from './describe-error.js';
-import type { LogFields } from './log-fields.js';
-import type { LogValue } from './log-value.js';
+import { describeError, type DescribeErrorOptions } from './describe-error';
+import type { LogFields } from './log-fields';
+import type { LogValue } from './log-value';
 
 /**
  * The fields as a logger writes them: a copy it may change, where every `Error` directly under

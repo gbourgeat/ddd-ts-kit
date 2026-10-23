@@ -1,16 +1,16 @@
-import { parseGlossary } from '../check/language/parse-glossary.js';
-import type { Config, Upstream } from '../config/index.js';
-import { type ContextTree, roleDirectoriesOf, roleFilesOf, treeOf } from '../model-modules/index.js';
-import { toName } from '../naming/index.js';
-import type { Workspace } from '../workspace/index.js';
-import type { ContextFacts, PublishedEvent } from './context-facts.js';
-import type { DeclaredFacts, DeclaredUseCase } from './declared-facts.js';
-import { readDeclarations } from './read-declarations.js';
-import { readBackgroundJobs } from './read-background-jobs.js';
-import { readJobs } from './read-jobs.js';
-import { readProcesses } from './read-processes.js';
-import { readStateMachines } from './read-state-machines.js';
-import { withoutComments } from './without-comments.js';
+import { parseGlossary } from '../check/language/parse-glossary';
+import type { Config, Upstream } from '../config';
+import { type ContextTree, roleDirectoriesOf, roleFilesOf, treeOf } from '../model-modules';
+import { toName } from '../naming';
+import type { Workspace } from '../workspace';
+import type { ContextFacts, PublishedEvent } from './context-facts';
+import type { DeclaredFacts, DeclaredUseCase } from './declared-facts';
+import { readDeclarations } from './read-declarations';
+import { readBackgroundJobs } from './read-background-jobs';
+import { readJobs } from './read-jobs';
+import { readProcesses } from './read-processes';
+import { readStateMachines } from './read-state-machines';
+import { withoutComments } from './without-comments';
 
 type RoleNames = Pick<ContextFacts, 'commands' | 'queries' | 'policies' | 'gateways' | 'integrationEventHandlers'>;
 

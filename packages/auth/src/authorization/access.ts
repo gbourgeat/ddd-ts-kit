@@ -1,8 +1,8 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import type { Permission } from '../permissions/permission.js';
-import type { AccessQuestion } from './access-question.js';
-import type { AccessScope } from './access-scope.js';
-import type { Decision } from './decision.js';
+import type { Permission } from '../permissions/permission';
+import type { AccessQuestion } from './access-question';
+import type { AccessScope } from './access-scope';
+import type { Decision } from './decision';
 
 /**
  * What a handler asks once it has loaded the element:

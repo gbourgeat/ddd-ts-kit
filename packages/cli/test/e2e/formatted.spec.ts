@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { scaffoldEverything, tempDir } from '../helpers.js';
-import { bin, findingsOf } from './run-in.js';
-import { label, STACKS } from './stacks.js';
+import { scaffoldEverything, tempDir } from '../helpers';
+import { bin, findingsOf } from './run-in';
+import { label, STACKS } from './stacks';
 
 /**
  * What the generator writes is already laid out the way the formatter of the project wants it:

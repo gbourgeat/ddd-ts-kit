@@ -1,15 +1,15 @@
 import { DuplicateJobError, NoopLogger, NoopMetrics } from '@ddd-ts-kit/kernel';
-import { systemJobTimers } from '../system-job-timers.js';
-import type { BackgroundJobDefinition } from './background-job-definition.js';
-import { BackgroundJobRecorder } from './background-job-recorder.js';
-import type { BackgroundJobRun } from './background-job-run.js';
-import { ClaimedJobRunner } from './claimed-job-runner.js';
-import { AttemptsExhaustedError } from './errors/attempts-exhausted-error.js';
-import { UnknownBackgroundJobError } from './errors/unknown-background-job-error.js';
-import type { QueueState } from './queue-state.js';
-import type { QueueWorkerOptions } from './queue-worker-options.js';
-import { RegisteredBackgroundJob } from './registered-background-job.js';
-import type { ClaimedJob } from './store/claimed-job.js';
+import { systemJobTimers } from '../system-job-timers';
+import type { BackgroundJobDefinition } from './background-job-definition';
+import { BackgroundJobRecorder } from './background-job-recorder';
+import type { BackgroundJobRun } from './background-job-run';
+import { ClaimedJobRunner } from './claimed-job-runner';
+import { AttemptsExhaustedError } from './errors/attempts-exhausted-error';
+import { UnknownBackgroundJobError } from './errors/unknown-background-job-error';
+import type { QueueState } from './queue-state';
+import type { QueueWorkerOptions } from './queue-worker-options';
+import { RegisteredBackgroundJob } from './registered-background-job';
+import type { ClaimedJob } from './store/claimed-job';
 
 /**
  * Runs the background jobs of the queues it has jobs for, in this process: each queue is the

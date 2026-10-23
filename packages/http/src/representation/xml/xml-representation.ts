@@ -1,13 +1,13 @@
-import { SchemaNode } from '../../schema/schema-node.js';
-import { isAsyncIterable } from '../../support/is-async-iterable.js';
-import type { BodyShape } from '../body-shape.js';
-import { malformedBody } from '../malformed-body.js';
-import type { RepresentedBody } from '../represented-body.js';
-import type { Representation } from '../representation.js';
-import { ITEM_ELEMENT, XML_DECLARATION, XSI_NAMESPACE } from './xml-convention.js';
-import { XmlElementWriter } from './xml-element-writer.js';
-import { XmlParser } from './xml-parser.js';
-import { XmlValueReader } from './xml-value-reader.js';
+import { SchemaNode } from '../../schema/schema-node';
+import { isAsyncIterable } from '../../support/is-async-iterable';
+import type { BodyShape } from '../body-shape';
+import { malformedBody } from '../malformed-body';
+import type { RepresentedBody } from '../represented-body';
+import type { Representation } from '../representation';
+import { ITEM_ELEMENT, XML_DECLARATION, XSI_NAMESPACE } from './xml-convention';
+import { XmlElementWriter } from './xml-element-writer';
+import { XmlParser } from './xml-parser';
+import { XmlValueReader } from './xml-value-reader';
 
 const MEDIA_TYPE = 'application/xml';
 

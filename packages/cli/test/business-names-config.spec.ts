@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { genericWordsOf } from '../src/check/business-names/generic-words-of.js';
-import { GENERIC_WORDS } from '../src/check/business-names/generic-words.js';
-import { parseConfig, serializeConfig } from '../src/config/index.js';
+import { genericWordsOf } from '../src/check/business-names/generic-words-of';
+import { GENERIC_WORDS } from '../src/check/business-names/generic-words';
+import { parseConfig, serializeConfig } from '../src/config';
 
 describe('the generic words of naming/business-name in the config', () => {
   it('are the defaults of the rule when the config does not say, and are not written back', () => {

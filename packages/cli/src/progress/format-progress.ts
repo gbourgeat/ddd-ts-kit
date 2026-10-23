@@ -1,4 +1,4 @@
-import type { Progress, RemainingCount, SlicesProgress, StatusRow, UnclosedStory } from './progress.js';
+import type { Progress, RemainingCount, SlicesProgress, StatusRow, UnclosedStory } from './progress';
 
 const STATUS_ORDER = ['in progress', 'todo', 'done'];
 

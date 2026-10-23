@@ -1,5 +1,5 @@
 import type { FixedClock } from '@ddd-ts-kit/kernel';
-import { defineAspect, type Aspect } from '../../src/index.js';
+import { defineAspect, type Aspect } from '../../src';
 
 /** Makes the call inside last a known time on the fake clock. */
 export function lasting(clock: FixedClock, durationMs: number): Aspect {

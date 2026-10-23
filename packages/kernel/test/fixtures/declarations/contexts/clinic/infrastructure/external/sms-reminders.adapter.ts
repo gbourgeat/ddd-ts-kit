@@ -1,7 +1,7 @@
-import { Clock } from '../../../../../../../src/index.js';
-import { Adapter } from '../../../../../../../src/declarations.js';
-import { ReminderSettings } from '../../application/ports/reminder-settings.port.js';
-import { Reminders } from '../../application/ports/reminders.port.js';
+import { Clock } from '../../../../../../../src';
+import { Adapter } from '../../../../../../../src/declarations';
+import { ReminderSettings } from '../../application/ports/reminder-settings.port';
+import { Reminders } from '../../application/ports/reminders.port';
 
 const untouched = <T extends object>(instance: T): T => instance;
 

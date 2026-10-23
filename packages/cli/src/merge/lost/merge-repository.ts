@@ -1,4 +1,4 @@
-import type { ModulesByContext } from '../../model-modules/index.js';
+import type { ModulesByContext } from '../../model-modules';
 
 /** Where a merge is read: the repository, and the project inside it. */
 export interface MergeRepository {

@@ -1,8 +1,8 @@
-import { ADR_DIRECTORY } from '../check/governance/adr-directory.js';
-import { adrNumber } from '../generate/kinds/adr-number.js';
-import type { Scope } from '../generate/scope.js';
-import { vars } from '../generate/vars.js';
-import { renderTemplate } from '../templating/index.js';
+import { ADR_DIRECTORY } from '../check/governance/adr-directory';
+import { adrNumber } from '../generate/kinds/adr-number';
+import type { Scope } from '../generate/scope';
+import { vars } from '../generate/vars';
+import { renderTemplate } from '../templating';
 
 /**
  * The decision record a preset writes when the project has tenants: why the tables of its context

@@ -1,10 +1,10 @@
-import { scan } from '../check/scan/scan.js';
-import { matchingBracket } from '../check/text/matching-bracket.js';
-import { isConvertedCall } from './is-converted-call.js';
-import { applyEdits } from './apply-edits.js';
-import type { Edit } from './edit.js';
-import type { ResultMethods } from './result-methods.js';
-import type { Rewrite } from './rewrite.js';
+import { scan } from '../check/scan/scan';
+import { matchingBracket } from '../check/text/matching-bracket';
+import { isConvertedCall } from './is-converted-call';
+import { applyEdits } from './apply-edits';
+import type { Edit } from './edit';
+import type { ResultMethods } from './result-methods';
+import type { Rewrite } from './rewrite';
 
 const UNWRAP = /(?<![\w$.])unwrap\s*\(/g;
 

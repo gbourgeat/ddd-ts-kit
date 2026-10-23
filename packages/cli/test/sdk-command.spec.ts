@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { toYaml } from '../src/yaml/to-yaml.js';
-import { changeConfig } from './check-support.js';
-import { cli, exists, read, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
-import { SHOP_CONTRACT } from './support/shop-contract.js';
+import { toYaml } from '../src/yaml/to-yaml';
+import { changeConfig } from './check-support';
+import { cli, exists, read, write } from './helpers';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
+import { SHOP_CONTRACT } from './support/shop-contract';
 
 const CONFIG = 'ddd-ts-kit.config.json';
 const AGENT_RULE = 'Never edit the clients under `clients/`';

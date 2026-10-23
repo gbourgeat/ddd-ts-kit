@@ -1,5 +1,5 @@
 import { expect } from 'vitest';
-import { cli, tempDir } from '../helpers.js';
+import { cli, tempDir } from '../helpers';
 
 /** A project in the explicit style: a billing context that knows two terms, and a shipping context. */
 export function explicitProject(label: string): string {

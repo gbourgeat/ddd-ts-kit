@@ -1,8 +1,8 @@
-import type { Scan } from '../scan/scan.js';
-import { BRACKETS } from '../text/brackets.js';
-import { matchingBracket } from '../text/matching-bracket.js';
-import type { MethodShape } from './method-shape.js';
-import { signatureAt } from './signature-at.js';
+import type { Scan } from '../scan/scan';
+import { BRACKETS } from '../text/brackets';
+import { matchingBracket } from '../text/matching-bracket';
+import type { MethodShape } from './method-shape';
+import { signatureAt } from './signature-at';
 
 const MEMBER =
   /((?:(?:public|private|protected|static|readonly|async|override|abstract|declare|get|set)\s+)*)(\*?\s*#?[A-Za-z_$][\w$]*)\s*\??\s*(?:<[^<>(){}]*(?:<[^<>(){}]*>[^<>(){}]*)*>)?\s*\(/y;

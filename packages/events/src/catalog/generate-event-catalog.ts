@@ -1,8 +1,8 @@
-import type { AnyIntegrationEventDefinition } from '../definition/any-integration-event-definition.js';
-import { compareText } from '../internal/json-schema/compare-text.js';
-import type { EventRegistry } from '../registry/event-registry.js';
-import type { PayloadField } from './payload-field.js';
-import { payloadFields } from './payload-fields.js';
+import type { AnyIntegrationEventDefinition } from '../definition/any-integration-event-definition';
+import { compareText } from '../internal/json-schema/compare-text';
+import type { EventRegistry } from '../registry/event-registry';
+import type { PayloadField } from './payload-field';
+import { payloadFields } from './payload-fields';
 
 export interface EventCatalogOptions {
   readonly title?: string;

@@ -1,4 +1,4 @@
-import type { DomainEvent } from '../domain-event.js';
+import type { DomainEvent } from '../domain-event';
 
 /**
  * The apply method of each event an event-sourced aggregate records, by the name the event

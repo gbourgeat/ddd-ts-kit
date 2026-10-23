@@ -1,4 +1,4 @@
-import type { BackgroundJobPolicy } from './background-job-policy.js';
+import type { BackgroundJobPolicy } from './background-job-policy';
 
 /** How long to wait before the attempt that follows `attempt`: exponential, capped. */
 export function retryDelayMs({ backoff }: BackgroundJobPolicy, attempt: number): number {

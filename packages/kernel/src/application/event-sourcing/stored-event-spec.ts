@@ -1,7 +1,7 @@
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { EventEnvelope } from './event-envelope.js';
-import type { StoredEventData } from './stored-event-data.js';
-import type { Upcaster } from './upcaster.js';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { EventEnvelope } from './event-envelope';
+import type { StoredEventData } from './stored-event-data';
+import type { Upcaster } from './upcaster';
 
 /**
  * How one domain event is kept in a stream. `encode` answers the data of the current `version`

@@ -1,9 +1,9 @@
-import type { DerivedRelation } from './derived-relation.js';
-import { Schema } from './schema.js';
-import type { SchemaDefinition } from './schema-definition.js';
-import { SchemaError } from './schema-error.js';
-import type { Via, Way } from './via.js';
-import { waysOf } from './ways-of.js';
+import type { DerivedRelation } from './derived-relation';
+import { Schema } from './schema';
+import type { SchemaDefinition } from './schema-definition';
+import { SchemaError } from './schema-error';
+import type { Via, Way } from './via';
+import { waysOf } from './ways-of';
 
 /**
  * The types, their stored relations and the relations derived from them. Validated here, so an

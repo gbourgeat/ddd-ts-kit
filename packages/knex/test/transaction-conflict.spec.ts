@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { TransactionConflictError, type EventToAppend } from '@ddd-ts-kit/kernel';
-import { createEventStoreTables, createKnexEventSourcing, createKnexUnitOfWork } from '../src/index.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
+import { createEventStoreTables, createKnexEventSourcing, createKnexUnitOfWork } from '../src';
+import { createDatabase, type TestDatabase } from './support/database';
 
 const REAL_SERVER = (process.env['DDD_TS_KIT_TEST_DATABASE_URL'] ?? '') !== '';
 

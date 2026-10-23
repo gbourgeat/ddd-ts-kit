@@ -1,7 +1,7 @@
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { isNoisePath } from '../http/is-noise-path.js';
-import { NOISE_PATHS } from '../http/noise-paths.js';
-import { INSTRUMENTATIONS_OFF } from './instrumentations-off.js';
+import { isNoisePath } from '../http/is-noise-path';
+import { NOISE_PATHS } from '../http/noise-paths';
+import { INSTRUMENTATIONS_OFF } from './instrumentations-off';
 
 export type AutoInstrumentationSettings = NonNullable<Parameters<typeof getNodeAutoInstrumentations>[0]>;
 

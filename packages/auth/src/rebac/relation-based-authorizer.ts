@@ -1,17 +1,17 @@
 import { isAnonymous, type Actor } from '@ddd-ts-kit/kernel';
-import type { AccessScope } from '../authorization/access-scope.js';
-import type { Authorizer } from '../authorization/authorizer.js';
-import type { CheckRequest } from '../authorization/check-request.js';
-import { ALLOWED, deny, type Decision } from '../authorization/decision.js';
-import { DenialReason } from '../authorization/denial-reason.js';
-import type { ListRequest } from '../authorization/list-request.js';
-import type { Explanation } from '../authorization/explanation.js';
-import { objectOf } from './object-of.js';
-import { parseObject } from './parse-object.js';
-import { Question, type QuestionOptions } from './question.js';
-import type { RelationTupleStore } from './relation-tuple-store.js';
-import { ReverseExpansionLimitError } from './reverse-expansion-limit-error.js';
-import type { Schema } from './schema.js';
+import type { AccessScope } from '../authorization/access-scope';
+import type { Authorizer } from '../authorization/authorizer';
+import type { CheckRequest } from '../authorization/check-request';
+import { ALLOWED, deny, type Decision } from '../authorization/decision';
+import { DenialReason } from '../authorization/denial-reason';
+import type { ListRequest } from '../authorization/list-request';
+import type { Explanation } from '../authorization/explanation';
+import { objectOf } from './object-of';
+import { parseObject } from './parse-object';
+import { Question, type QuestionOptions } from './question';
+import type { RelationTupleStore } from './relation-tuple-store';
+import { ReverseExpansionLimitError } from './reverse-expansion-limit-error';
+import type { Schema } from './schema';
 
 export interface RelationBasedAuthorizerOptions {
   readonly schema: Schema;

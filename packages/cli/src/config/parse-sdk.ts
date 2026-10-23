@@ -1,7 +1,7 @@
-import type { SdkConfig } from './config.js';
-import { DEFAULT_SDK_NAME } from './default-sdk-name.js';
-import { isRecord } from './values/is-record.js';
-import { text } from './values/text.js';
+import type { SdkConfig } from './config';
+import { DEFAULT_SDK_NAME } from './default-sdk-name';
+import { isRecord } from './values/is-record';
+import { text } from './values/text';
 
 /** Tolerant: a key that is not an object generates no client, a wrong access is kept as written, and `config/valid` reports both. */
 export function parseSdk(value: unknown): SdkConfig | undefined {

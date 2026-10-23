@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { DuplicateRouteError, type Route } from '../../src/index.js';
-import { getOrder, placeOrder } from './orders.js';
-import type { StartServer } from './running-server.js';
+import { DuplicateRouteError, type Route } from '../../src';
+import { getOrder, placeOrder } from './orders';
+import type { StartServer } from './running-server';
 
 export function refusesDuplicates(start: StartServer): void {
   describe('duplicates', () => {

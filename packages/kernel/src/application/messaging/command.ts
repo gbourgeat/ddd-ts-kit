@@ -1,4 +1,4 @@
-import type { KIND, RESULT } from './message-brands.js';
+import type { KIND, RESULT } from './message-brands';
 
 /** An intention to change state. `R` is what the handler answers: nothing or an identifier. */
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- R is a phantom type: it only exists so that ResultOf<C> can infer what the handler answers

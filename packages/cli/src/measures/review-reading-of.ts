@@ -1,8 +1,8 @@
-import type { BranchCommit } from './branch-commit.js';
-import { findingsOf } from './findings-of.js';
-import { markerLinesOf } from './marker-lines-of.js';
-import type { Repository } from './repository.js';
-import type { ReviewReading } from './review-reading.js';
+import type { BranchCommit } from './branch-commit';
+import { findingsOf } from './findings-of';
+import { markerLinesOf } from './marker-lines-of';
+import type { Repository } from './repository';
+import type { ReviewReading } from './review-reading';
 
 /**
  * The `TODO(review)` lines the commits of the story removed (settled) and wrote (opened), read

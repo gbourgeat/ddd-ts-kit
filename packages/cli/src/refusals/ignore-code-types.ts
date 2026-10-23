@@ -1,7 +1,7 @@
-import type { Config } from '../config/index.js';
-import { isRecord } from '../config/values/is-record.js';
-import { formatJson } from '../json/format-json.js';
-import type { MigrationDraft } from './migration-draft.js';
+import type { Config } from '../config';
+import { isRecord } from '../config/values/is-record';
+import { formatJson } from '../json/format-json';
+import type { MigrationDraft } from './migration-draft';
 
 const KNIP_FILE = 'knip.json';
 const ISSUES = 'ignoreIssues';

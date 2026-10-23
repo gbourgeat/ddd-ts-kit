@@ -1,4 +1,4 @@
-import type { Slice } from '../progress/slice.js';
+import type { Slice } from '../progress/slice';
 
 /**
  * The cycles of `Depends on` among the rows, each as the ids it goes through, the first one

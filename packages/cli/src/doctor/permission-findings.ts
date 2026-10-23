@@ -1,12 +1,12 @@
-import type { Config } from '../config/index.js';
-import { agentPermissions } from '../init/agent-permissions.js';
-import { hookCommand } from '../init/hook-command.js';
-import { PROFILE_HOOKS } from '../init/profile-hooks.js';
-import { registeredHookCommands } from '../init/registered-hook-commands.js';
-import { regulatedSandbox } from '../init/regulated-sandbox.js';
-import { isRecord } from '../config/values/is-record.js';
-import { inDialect } from '../package-manager/in-dialect.js';
-import type { DoctorFinding } from './doctor-finding.js';
+import type { Config } from '../config';
+import { agentPermissions } from '../init/agent-permissions';
+import { hookCommand } from '../init/hook-command';
+import { PROFILE_HOOKS } from '../init/profile-hooks';
+import { registeredHookCommands } from '../init/registered-hook-commands';
+import { regulatedSandbox } from '../init/regulated-sandbox';
+import { isRecord } from '../config/values/is-record';
+import { inDialect } from '../package-manager/in-dialect';
+import type { DoctorFinding } from './doctor-finding';
 
 /** The permissions of `.claude/settings.json` this version writes that the project's settings lack, and the sandbox and the hooks of the regulated profile when the config asks for it. */
 export function permissionFindings(config: Config, settings: unknown): DoctorFinding[] {

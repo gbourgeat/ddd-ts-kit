@@ -1,4 +1,4 @@
-import { nesting } from './nesting.js';
+import { nesting } from './nesting';
 
 /** The elements of a list written on one line, split at the commas no bracket encloses. */
 export function splitTopLevel(list: string): string[] {

@@ -1,4 +1,4 @@
-import type { BackgroundJob } from './background-job.js';
+import type { BackgroundJob } from './background-job';
 
 /**
  * The class of a background job, as `enqueue` takes it: its static `jobName` names it, and its

@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
-import { canonicalize } from '../chain/canonicalize.js';
-import type { AuditMasker } from './audit-masker.js';
+import { canonicalize } from '../chain/canonicalize';
+import type { AuditMasker } from './audit-masker';
 
 export interface HmacMaskerOptions {
   /** Written before the hash (`<keyId>:<hex>`), so that a rotated key can be told apart. */

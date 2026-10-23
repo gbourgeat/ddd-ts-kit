@@ -1,4 +1,4 @@
-import type { Stock } from './stock.port.js';
+import type { Stock } from './stock.port';
 
 export class InMemoryStock implements Stock {
   private readonly skus: string[] = [];

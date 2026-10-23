@@ -1,7 +1,7 @@
-import type { DurationText } from './duration-text.js';
-import { InvalidJobScheduleError } from './invalid-job-schedule-error.js';
-import type { JobSchedule } from './job-schedule.js';
-import { parseJobSchedule } from './parse-job-schedule.js';
+import type { DurationText } from './duration-text';
+import { InvalidJobScheduleError } from './invalid-job-schedule-error';
+import type { JobSchedule } from './job-schedule';
+import { parseJobSchedule } from './parse-job-schedule';
 
 /** The keys of a schedule as they are written next to other options, before they are known to be one schedule. */
 export interface WrittenSchedule {

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { summarize } from '../src/check/engine/summarize.js';
-import type { Violation } from '../src/check/model/violation.js';
-import { formatSliceVerification } from '../src/slice/format-slice-verification.js';
-import type { SliceVerification } from '../src/slice/slice-verification.js';
+import { summarize } from '../src/check/engine/summarize';
+import type { Violation } from '../src/check/model/violation';
+import { formatSliceVerification } from '../src/slice/format-slice-verification';
+import type { SliceVerification } from '../src/slice/slice-verification';
 
 const PASSED = { ok: true, output: '' };
 

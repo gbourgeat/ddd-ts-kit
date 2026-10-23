@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { DataSource, EntityManager } from 'typeorm';
 import { withinUnitOfWork, type UnitOfWork } from '@ddd-ts-kit/kernel';
-import type { TypeOrmContext } from './type-orm-context.js';
+import type { TypeOrmContext } from './type-orm-context';
 
 /** The isolation levels TypeORM accepts, restated so the signature reads without a deep import. */
 export type TypeOrmIsolationLevel = Parameters<DataSource['transaction']>[0];

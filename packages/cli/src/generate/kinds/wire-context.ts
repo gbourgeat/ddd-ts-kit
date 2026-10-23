@@ -1,13 +1,13 @@
 import { posix } from 'node:path';
-import { renderTemplate } from '../../templating/index.js';
-import type { Workspace } from '../../workspace/index.js';
-import { applyWiring } from '../apply-wiring.js';
-import { permissionsFile } from '../permissions-file.js';
-import { wiringFamily } from '../wiring-family.js';
-import type { ContextPlan } from './context-plan.js';
-import { importAssembler } from './import-assembler.js';
-import { planVars } from './plan-vars.js';
-import { platformFileIn } from '../../platform-layout/index.js';
+import { renderTemplate } from '../../templating';
+import type { Workspace } from '../../workspace';
+import { applyWiring } from '../apply-wiring';
+import { permissionsFile } from '../permissions-file';
+import { wiringFamily } from '../wiring-family';
+import type { ContextPlan } from './context-plan';
+import { importAssembler } from './import-assembler';
+import { planVars } from './plan-vars';
+import { platformFileIn } from '../../platform-layout';
 
 const PROOF = 'test/architecture/extractable.spec.ts';
 

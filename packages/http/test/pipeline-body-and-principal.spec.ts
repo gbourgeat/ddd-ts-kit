@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
-import { defineRoute, executeRoute, serializeBody } from '../src/index.js';
+import { defineRoute, executeRoute, serializeBody } from '../src';
 
 describe('serializeBody', () => {
   it('writes nothing when there is no body', () => {

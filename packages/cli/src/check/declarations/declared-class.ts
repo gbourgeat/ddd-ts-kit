@@ -1,4 +1,4 @@
-import type { Decoration } from './decoration.js';
+import type { Decoration } from './decoration';
 
 export interface DeclaredClass {
   readonly name: string;

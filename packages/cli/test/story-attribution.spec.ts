@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { Remaining } from '../src/progress/remaining.js';
-import { attributeMarkers } from '../src/story/attribute-markers.js';
-import { tempDir, write } from './helpers.js';
+import type { Remaining } from '../src/progress/remaining';
+import { attributeMarkers } from '../src/story/attribute-markers';
+import { tempDir, write } from './helpers';
 
 const IDS = ['M1.01', 'M1.02', 'US2.01'];
 const INVOICE = 'src/contexts/billing/domain/invoice.aggregate.ts';

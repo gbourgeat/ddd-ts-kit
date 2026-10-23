@@ -1,7 +1,7 @@
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inContext } from '../support/in-context.js';
-import { perFile } from '../support/per-file.js';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { inContext } from '../support/in-context';
+import { perFile } from '../support/per-file';
 
 /** The folders of a context that hold specs, and nothing else. */
 const SPEC_FOLDERS = new Set(['unit', 'integration']);

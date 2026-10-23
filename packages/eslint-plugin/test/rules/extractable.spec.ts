@@ -1,5 +1,5 @@
-import { contextExtractable } from '../../src/rules/context-extractable.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+import { contextExtractable } from '../../src/rules/context-extractable';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const SCHEMA = `${BILLING}/infrastructure/persistence/billing.schema.ts`;
 const REPOSITORY = `${BILLING}/infrastructure/persistence/knex-invoice.repository.ts`;

@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { resolveImport } from '../../project/resolve-import.js';
-import type { LintedFile } from '../../project/linted-file.js';
-import { parseSource } from '../parse/parse-source.js';
-import { topLevelClasses } from './top-level-classes.js';
+import { resolveImport } from '../../project/resolve-import';
+import type { LintedFile } from '../../project/linted-file';
+import { parseSource } from '../parse/parse-source';
+import { topLevelClasses } from './top-level-classes';
 
 type Parser = TSESLint.FlatConfig.Parser;
 

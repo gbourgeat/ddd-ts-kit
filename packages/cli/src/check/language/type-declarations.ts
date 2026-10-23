@@ -1,6 +1,6 @@
-import { depthAt } from '../text/depth-at.js';
-import { matchingBracket } from '../text/matching-bracket.js';
-import { typeBrackets } from '../text/type-brackets.js';
+import { depthAt } from '../text/depth-at';
+import { matchingBracket } from '../text/matching-bracket';
+import { typeBrackets } from '../text/type-brackets';
 
 /** An interface or a type alias of a file: its name, the text it spans, and whether it is declared at the top of the file. */
 export interface TypeDeclaration {

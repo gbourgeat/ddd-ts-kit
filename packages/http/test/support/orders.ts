@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ConflictError, DomainError, NotFoundError } from '@ddd-ts-kit/kernel';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
-import { defineRoute, type Route } from '../../src/index.js';
+import { defineRoute, type Route } from '../../src';
 
 export class OrderAlreadyShipped extends DomainError {
   readonly code = 'ORDER_ALREADY_SHIPPED';

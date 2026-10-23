@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { projectWith, reported } from './rules-support.js';
+import { projectWith, reported } from './rules-support';
 
 describe('config/valid on the contexts and the rules a team wrote', () => {
   it('reports a context upstream of itself, an unknown relationship, a missing classification and folder, and unknown severities', () => {

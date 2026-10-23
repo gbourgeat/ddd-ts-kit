@@ -8,17 +8,17 @@ import type {
   IntegrationEventPublisher,
   JobExecution,
 } from '@ddd-ts-kit/kernel';
-import { configureTracing } from '../configuration/configure-tracing.js';
-import { tracedErrorReporter } from '../correlation/traced-error-reporter.js';
-import { traceBindings, type TracedBinding } from '../dependency/trace-bindings.js';
-import { tracedDomainEvents } from '../domain-events/traced-domain-events.js';
-import type { ConsumerTrace } from '../events/consumer-trace.js';
-import { tracedConsumer } from '../events/traced-consumer.js';
-import { tracedPublisher } from '../events/traced-publisher.js';
-import { tracedBackgroundJob } from '../jobs/traced-background-job.js';
-import { tracedJob } from '../jobs/traced-job.js';
-import { captureTraceparent } from '../propagation/capture-traceparent.js';
-import { traceUseCases } from '../use-case/trace-use-cases.js';
+import { configureTracing } from '../configuration/configure-tracing';
+import { tracedErrorReporter } from '../correlation/traced-error-reporter';
+import { traceBindings, type TracedBinding } from '../dependency/trace-bindings';
+import { tracedDomainEvents } from '../domain-events/traced-domain-events';
+import type { ConsumerTrace } from '../events/consumer-trace';
+import { tracedConsumer } from '../events/traced-consumer';
+import { tracedPublisher } from '../events/traced-publisher';
+import { tracedBackgroundJob } from '../jobs/traced-background-job';
+import { tracedJob } from '../jobs/traced-job';
+import { captureTraceparent } from '../propagation/capture-traceparent';
+import { traceUseCases } from '../use-case/trace-use-cases';
 
 export interface TraceApplicationOptions {
   /**

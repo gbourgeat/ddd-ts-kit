@@ -1,5 +1,5 @@
-import type { IntegrationEvent } from '../events/integration-event.js';
-import type { CachePurgePayload } from './cache-purge-payload.js';
+import type { IntegrationEvent } from '../events/integration-event';
+import type { CachePurgePayload } from './cache-purge-payload';
 
 const TYPE = 'kit.cache.purge-requested';
 const VERSION = 1;

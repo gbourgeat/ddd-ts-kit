@@ -255,8 +255,8 @@ native version does not ship: do not use `npx tsc`, it would run version 6.
 Every file of the project is imported by an alias from the project root, never by a relative
 path: `{{alias.platform}}/config/load-config{{alias.ext}}` for `{{config.platformDir}}/config/load-config.ts`,
 `{{alias.test}}/...` for `test/`, `{{alias.scripts}}/...` for `scripts/`.{{#if alias.extensionless}} An import names its
-file without an extension (`"importExtension": "none"` in `ddd-ts-kit.config.json`), and never a
-directory: `.../published-language/index`.{{/if}}{{#unless alias.extensionless}} An import ends with the `.js` of the file the
+file without an extension (`"importExtension": "none"` in `ddd-ts-kit.config.json`), a
+directory as itself: `.../published-language`.{{/if}}{{#unless alias.extensionless}} An import ends with the `.js` of the file the
 compiler emits (`"importExtension": "js"` in `ddd-ts-kit.config.json`).{{/unless}} The alias is declared
 once, under `paths` in `tsconfig.json`, which the compiler, `npm run dev`, the tests, knip and
 the import graph read. Node reads no alias and needs the extension: `npm run build` compiles,

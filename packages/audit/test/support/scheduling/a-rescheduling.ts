@@ -1,4 +1,4 @@
-import type { Rescheduling } from './application/commands/reschedule-appointment.command.js';
+import type { Rescheduling } from './application/commands/reschedule-appointment.command';
 
 export function aRescheduling(more: Partial<Rescheduling> = {}): Rescheduling {
   return {

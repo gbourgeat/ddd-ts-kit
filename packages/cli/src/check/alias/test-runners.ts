@@ -1,10 +1,10 @@
 import fs from 'node:fs';
-import { moduleNameMapper, specifierSuffix } from '../../alias/index.js';
-import type { Violation } from '../model/violation.js';
-import { escapeRegExp } from '../text/escape-reg-exp.js';
-import { ALIAS_FILES } from './alias-files.js';
-import type { Inspected } from './inspected.js';
-import { readProjectFile } from './read-project-file.js';
+import { moduleNameMapper, specifierSuffix } from '../../alias';
+import type { Violation } from '../model/violation';
+import { escapeRegExp } from '../text/escape-reg-exp';
+import { ALIAS_FILES } from './alias-files';
+import type { Inspected } from './inspected';
+import { readProjectFile } from './read-project-file';
 
 const RUNNER_CONFIG = /^(vitest|jest)(?:\.[\w-]+)*\.(?:config|workspace)\.[cm]?[jt]s$/;
 /** A config that extends another one of the project carries what that one sets. */

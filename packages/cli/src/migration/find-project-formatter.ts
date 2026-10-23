@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { isRecord } from '../check/support/is-record.js';
-import type { ProjectFormatter } from './project-formatter.js';
+import { isRecord } from '../check/support/is-record';
+import type { ProjectFormatter } from './project-formatter';
 
 interface KnownFormatter {
   readonly name: ProjectFormatter['name'];

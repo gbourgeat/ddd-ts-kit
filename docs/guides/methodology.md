@@ -174,7 +174,7 @@ booking of `scheduling`:
 import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 
 // Write: notification imports what scheduling publishes, and reacts to it
-import { appointmentBookedV1, type AppointmentBookedV1 } from '@/contexts/scheduling/published-language/index';
+import { appointmentBookedV1, type AppointmentBookedV1 } from '@/contexts/scheduling/published-language';
 
 @IntegrationEventHandler(appointmentBookedV1, { consumer: 'notification.scheduling-appointment-booked' })
 export class SchedulingAppointmentBookedIntegrationHandler {

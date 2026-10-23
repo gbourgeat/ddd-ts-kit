@@ -1,11 +1,11 @@
 @@imports
 {{#if consumer.declarative}}
 import { on, subscribeAll } from '@ddd-ts-kit/events';
-import { {{upstream.definition}} as {{name.camel}}Definition } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index{{alias.ext}}';
+import { {{upstream.definition}} as {{name.camel}}Definition } from '{{alias.contexts}}/{{upstream.kebab}}/published-language{{alias.index}}';
 {{/if}}
 {{#if consumer.transactional}}
 import { consume, subscribeAll } from '@ddd-ts-kit/events';
-import { {{upstream.definition}} as {{name.camel}}Definition } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index{{alias.ext}}';
+import { {{upstream.definition}} as {{name.camel}}Definition } from '{{alias.contexts}}/{{upstream.kebab}}/published-language{{alias.index}}';
 {{/if}}
 {{#if consumer.untyped}}
 import { idempotent, inEventScope } from '@ddd-ts-kit/kernel';

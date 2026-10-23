@@ -1,5 +1,5 @@
-import { type ExecutionContext, executionContext } from '../execution/execution-context.js';
-import type { EnqueuedBy } from './enqueued-by.js';
+import { type ExecutionContext, executionContext } from '../execution/execution-context';
+import type { EnqueuedBy } from './enqueued-by';
 
 export interface BackgroundJobStart {
   readonly jobId: string;

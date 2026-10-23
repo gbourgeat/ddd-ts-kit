@@ -1,11 +1,11 @@
-import type { StoredEventDeclaration } from '../check/event-sourcing/stored-event-declaration.js';
-import { storedEventDeclarations } from '../check/event-sourcing/stored-event-declarations.js';
-import { eventNameResolver } from '../check/events/event-name-resolver.js';
-import type { SourceFile } from '../check/model/source-file.js';
-import type { Config } from '../config/index.js';
-import { workspaceSources } from '../generate/workspace-sources.js';
-import type { Workspace } from '../workspace/index.js';
-import { roleFoldersOf, treeOf } from '../model-modules/index.js';
+import type { StoredEventDeclaration } from '../check/event-sourcing/stored-event-declaration';
+import { storedEventDeclarations } from '../check/event-sourcing/stored-event-declarations';
+import { eventNameResolver } from '../check/events/event-name-resolver';
+import type { SourceFile } from '../check/model/source-file';
+import type { Config } from '../config';
+import { workspaceSources } from '../generate/workspace-sources';
+import type { Workspace } from '../workspace';
+import { roleFoldersOf, treeOf } from '../model-modules';
 
 /**
  * The stored events the codecs of `infrastructure/persistence/` of these contexts declare, a key

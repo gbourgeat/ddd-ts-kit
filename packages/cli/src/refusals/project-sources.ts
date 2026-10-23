@@ -1,5 +1,5 @@
-import type { Config } from '../config/index.js';
-import type { Workspace } from '../workspace/index.js';
+import type { Config } from '../config';
+import type { Workspace } from '../workspace';
 
 /** Every TypeScript file under the source root, under `test/` at the root of the project, and under the other directories named. */
 export function projectSources(ws: Workspace, config: Config, others: readonly string[] = []): string[] {

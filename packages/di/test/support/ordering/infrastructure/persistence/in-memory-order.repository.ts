@@ -1,5 +1,5 @@
-import type { Order } from '../../domain/order.js';
-import type { OrderRepository } from '../../domain/repositories/order.repository.js';
+import type { Order } from '../../domain/order';
+import type { OrderRepository } from '../../domain/repositories/order.repository';
 
 export class InMemoryOrderRepository implements OrderRepository {
   readonly orders = new Map<string, Order>();

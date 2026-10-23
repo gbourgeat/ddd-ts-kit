@@ -1,6 +1,6 @@
 import { identifyError, type Clock, type ErrorIdentity } from '@ddd-ts-kit/kernel';
-import { isBusinessRefusal } from '../errors/is-business-refusal.js';
-import { safely } from './safely.js';
+import { isBusinessRefusal } from '../errors/is-business-refusal';
+import { safely } from './safely';
 
 export interface CallOutcome {
   readonly durationMs: number;

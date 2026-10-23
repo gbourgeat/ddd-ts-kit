@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CONFIG_FILE } from '../config/index.js';
-import { inDialect } from '../package-manager/in-dialect.js';
-import { packageManagerOf } from '../package-manager/package-manager-of.js';
-import type { NextStep } from './next-step.js';
-import type { TodoLocation } from './todo-location.js';
-import { todosIn } from './todos-in.js';
-import type { WorkspaceReport } from './workspace-report.js';
+import { CONFIG_FILE } from '../config';
+import { inDialect } from '../package-manager/in-dialect';
+import { packageManagerOf } from '../package-manager/package-manager-of';
+import type { NextStep } from './next-step';
+import type { TodoLocation } from './todo-location';
+import { todosIn } from './todos-in';
+import type { WorkspaceReport } from './workspace-report';
 
 interface Pending {
   content: string;

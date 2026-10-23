@@ -1,9 +1,9 @@
 import { FileError, type FileStorage } from '@ddd-ts-kit/kernel';
-import { ContractSuite } from '../contract-suite.js';
-import type { ContractRunner } from '../contract-runner.js';
-import { chunksOf } from './chunks-of.js';
-import type { FileStorageContractOptions } from './file-storage-contract-options.js';
-import { readAll } from './read-all.js';
+import { ContractSuite } from '../contract-suite';
+import type { ContractRunner } from '../contract-runner';
+import { chunksOf } from './chunks-of';
+import type { FileStorageContractOptions } from './file-storage-contract-options';
+import { readAll } from './read-all';
 
 /** What the suites of the file storage contract share: the options, and reading back what was written. */
 export abstract class FileStorageSuite extends ContractSuite<FileStorage> {

@@ -1,6 +1,6 @@
-import { CliError } from '../cli-error.js';
-import { CONFIG_FILE } from '../config/index.js';
-import type { AliasRoot } from './alias-root.js';
+import { CliError } from '../cli-error';
+import { CONFIG_FILE } from '../config';
+import type { AliasRoot } from './alias-root';
 
 /** The alias of a directory of the project, without a final slash: what a template puts before the rest of a path. */
 export function directoryAlias(roots: readonly AliasRoot[], directory: string): string {

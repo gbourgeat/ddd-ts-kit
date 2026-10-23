@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll } from 'vitest';
-import { languageDeclaredVocabulary } from '../../src/rules/language-declared-vocabulary.js';
-import { BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { languageDeclaredVocabulary } from '../../src/rules/language-declared-vocabulary';
+import { BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 // The cases of the checker's fixtures `other-language-fixtures.ts`, by the same names.
 

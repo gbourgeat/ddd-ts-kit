@@ -1,6 +1,6 @@
-import type { RelationTupleStore } from '../../../../../src/rebac.js';
-import type { DocumentGrants } from '../../application/ports/document-grants.port.js';
-import type { StagingUnitOfWork } from '../persistence/staging-unit-of-work.js';
+import type { RelationTupleStore } from '../../../../../src/rebac';
+import type { DocumentGrants } from '../../application/ports/document-grants.port';
+import type { StagingUnitOfWork } from '../persistence/staging-unit-of-work';
 
 /**
  * The adapter that knows the model. With a SQL tuple store it writes in the transaction the

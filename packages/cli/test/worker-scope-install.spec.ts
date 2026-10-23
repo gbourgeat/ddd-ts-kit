@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { cli, exists } from './helpers.js';
-import { committedProject } from './support/committed-project.js';
-import { jsonAt } from './support/json-at.js';
-import { NPM } from './support/npm.js';
-import { type StubInstallers, stubInstallers } from './support/stub-installers.js';
+import { cli, exists } from './helpers';
+import { committedProject } from './support/committed-project';
+import { jsonAt } from './support/json-at';
+import { NPM } from './support/npm';
+import { type StubInstallers, stubInstallers } from './support/stub-installers';
 
 let installers: StubInstallers;
 let root: string;

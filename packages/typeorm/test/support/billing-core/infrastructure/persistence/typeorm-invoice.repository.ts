@@ -1,8 +1,8 @@
 import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import { insertIgnoringConflict, optimisticUpdate, type TypeOrmContext } from '../../../../../src/index.js';
-import { Invoice, type InvoiceState } from '../../domain/invoice.js';
-import type { InvoiceRepository } from '../../domain/repositories/invoice.repository.js';
-import { invoices } from './invoices.js';
+import { insertIgnoringConflict, optimisticUpdate, type TypeOrmContext } from '../../../../../src';
+import { Invoice, type InvoiceState } from '../../domain/invoice';
+import type { InvoiceRepository } from '../../domain/repositories/invoice.repository';
+import { invoices } from './invoices';
 
 type VersionedInvoice = InvoiceState & { version: number };
 

@@ -1,7 +1,7 @@
-import type { ExecutionScope } from '../ports/execution-scope.js';
-import { assertTenantId } from '../tenancy/assert-tenant-id.js';
-import { NoCurrentTenantError } from './no-current-tenant-error.js';
-import type { TenantScoped } from './tenant-scoped.js';
+import type { ExecutionScope } from '../ports/execution-scope';
+import { assertTenantId } from '../tenancy/assert-tenant-id';
+import { NoCurrentTenantError } from './no-current-tenant-error';
+import type { TenantScoped } from './tenant-scoped';
 
 /**
  * For a repository adapter scoping a statement: the tenant of the work in progress, checked

@@ -1,9 +1,9 @@
-import { KIT_ERROR_CODES } from '../../check/errors/kit-error-codes.js';
-import { CliError } from '../../cli-error.js';
-import type { Name } from '../../naming/index.js';
-import type { Scope } from '../scope.js';
-import { codesOfContext } from './codes-of-context.js';
-import { ERROR_CODE } from './error-code-pattern.js';
+import { KIT_ERROR_CODES } from '../../check/errors/kit-error-codes';
+import { CliError } from '../../cli-error';
+import type { Name } from '../../naming';
+import type { Scope } from '../scope';
+import { codesOfContext } from './codes-of-context';
+import { ERROR_CODE } from './error-code-pattern';
 
 export interface CodeRequest {
   readonly refusal: Name;

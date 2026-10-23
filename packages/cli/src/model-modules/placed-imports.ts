@@ -1,4 +1,4 @@
-import type { AliasRoot } from '../alias/index.js';
+import type { AliasRoot } from '../alias';
 
 const SPECIFIER = /(\bfrom\s*|\bimport\s*\(\s*|\bimport\s+)(['"])([^'"\n]+)\2/g;
 const SUFFIX = /\.(?:js|ts)$/;

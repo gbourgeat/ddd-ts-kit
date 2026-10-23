@@ -1,7 +1,7 @@
 import type { IntegrationEvent, Result } from '@ddd-ts-kit/kernel';
 import type { Schema } from '@ddd-ts-kit/validation';
-import type { EventMeta } from './event-meta.js';
-import type { EventParseError } from './event-parse-error.js';
+import type { EventMeta } from './event-meta';
+import type { EventParseError } from './event-parse-error';
 
 /** The single declaration of an integration event: its type, its version and its payload contract. */
 export interface IntegrationEventDefinition<P> {

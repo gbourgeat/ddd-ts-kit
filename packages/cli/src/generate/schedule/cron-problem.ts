@@ -1,5 +1,5 @@
-import type { CronField } from './cron-field.js';
-import { cronFieldValues } from './cron-field-values.js';
+import type { CronField } from './cron-field';
+import { cronFieldValues } from './cron-field-values';
 
 const MONTH_NAMES = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 const DAY_NAMES = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];

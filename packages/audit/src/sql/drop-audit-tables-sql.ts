@@ -1,7 +1,7 @@
-import { AUDIT_CHAINS_TABLE } from './audit-chains-table-name.js';
-import { AUDIT_ENTRIES_TABLE } from './audit-entries-table-name.js';
-import type { AuditTablesOptions } from './audit-tables-options.js';
-import { named } from './named.js';
+import { AUDIT_CHAINS_TABLE } from './audit-chains-table-name';
+import { AUDIT_ENTRIES_TABLE } from './audit-entries-table-name';
+import type { AuditTablesOptions } from './audit-tables-options';
+import { named } from './named';
 
 /** The `down` of `auditTablesSql`. The schema itself is left in place. */
 export function dropAuditTablesSql(options: AuditTablesOptions = {}): string[] {

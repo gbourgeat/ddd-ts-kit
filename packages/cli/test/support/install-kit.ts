@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { VERSION } from '../../src/version.js';
+import { VERSION } from '../../src/version';
 
 /**
  * node_modules as an install leaves it, without running one: each package of the kit

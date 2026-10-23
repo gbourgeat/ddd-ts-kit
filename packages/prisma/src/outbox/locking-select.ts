@@ -1,4 +1,4 @@
-import type { PrismaSkipLockedClaim } from './prisma-outbox-claim.js';
+import type { PrismaSkipLockedClaim } from './prisma-outbox-claim';
 
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 

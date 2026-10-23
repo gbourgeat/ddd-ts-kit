@@ -1,7 +1,7 @@
 import { isAnonymous, type AuditTrail } from '@ddd-ts-kit/kernel';
-import type { AuditSource } from './audit-source.js';
-import type { GuardRefusalOfARoute } from './guard-refusal-of-a-route.js';
-import { recordIn } from './record-in.js';
+import type { AuditSource } from './audit-source';
+import type { GuardRefusalOfARoute } from './guard-refusal-of-a-route';
+import { recordIn } from './record-in';
 
 /**
  * The `onGuardRefusal` hook of the HTTP pipeline: a request a guard refused at the edge

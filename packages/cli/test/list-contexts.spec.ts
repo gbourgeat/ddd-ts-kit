@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
+import { cli, read, write } from './helpers';
+import { initProject } from './support/init-project';
 
 describe('list, on contexts the config and the disk do not agree on', () => {
   it('says which context is missing on disk and which is missing from the config', () => {

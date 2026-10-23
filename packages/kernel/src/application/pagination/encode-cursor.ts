@@ -1,4 +1,4 @@
-import type { CursorPosition } from './cursor-position.js';
+import type { CursorPosition } from './cursor-position';
 
 /**
  * The opaque `nextCursor` of a position. Opaque means that a client sends it back untouched;

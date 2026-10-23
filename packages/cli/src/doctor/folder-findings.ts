@@ -1,7 +1,7 @@
-import type { Config } from '../config/index.js';
-import { platformMoves } from '../platform-folders/index.js';
-import { Workspace } from '../workspace/index.js';
-import type { DoctorFinding } from './doctor-finding.js';
+import type { Config } from '../config';
+import { platformMoves } from '../platform-folders';
+import { Workspace } from '../workspace';
+import type { DoctorFinding } from './doctor-finding';
 
 /** The files of the platform a project generated flat, where this version gives each the folder of what it answers. */
 export function folderFindings(root: string, config: Config): DoctorFinding[] {

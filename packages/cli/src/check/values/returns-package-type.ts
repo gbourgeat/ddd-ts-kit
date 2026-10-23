@@ -1,7 +1,7 @@
-import type { Exported } from '../exports/exported.js';
-import type { SourceFile } from '../model/source-file.js';
-import { importedFrom } from '../support/imported-from.js';
-import type { FunctionBody } from './function-body.js';
+import type { Exported } from '../exports/exported';
+import type { SourceFile } from '../model/source-file';
+import { importedFrom } from '../support/imported-from';
+import type { FunctionBody } from './function-body';
 
 /** `): EventStamp {` or `): EventStamp =>`: the return type a function declares, by the name it starts with. */
 const RETURN_TYPE = /\)\s*:\s*([A-Za-z_$][\w$]*)[^()]*$/;

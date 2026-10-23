@@ -1,6 +1,6 @@
-import type { RelationTuple } from './relation-tuple.js';
-import type { RelationTupleStore } from './relation-tuple-store.js';
-import type { Schema } from './schema.js';
+import type { RelationTuple } from './relation-tuple';
+import type { RelationTupleStore } from './relation-tuple-store';
+import type { Schema } from './schema';
 
 /** Refuses, on write, a tuple the schema does not describe. Reads and deletions pass through. */
 export class SchemaCheckedTupleStore implements RelationTupleStore {

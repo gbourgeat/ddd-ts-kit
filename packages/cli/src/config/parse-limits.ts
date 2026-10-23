@@ -1,6 +1,6 @@
-import type { Limits } from './config.js';
-import { FUNCTION_LINES_CEILING } from './function-lines-ceiling.js';
-import { isRecord } from './values/is-record.js';
+import type { Limits } from './config';
+import { FUNCTION_LINES_CEILING } from './function-lines-ceiling';
+import { isRecord } from './values/is-record';
 
 const DEFAULT_LIMITS: Limits = { maxParameters: 3, maxFunctionLines: 30 };
 

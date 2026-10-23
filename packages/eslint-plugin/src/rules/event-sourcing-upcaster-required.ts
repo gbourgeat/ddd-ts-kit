@@ -1,6 +1,6 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { unresolvedTypes } from '../support/event-sourcing/unresolved-types.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
+import { unresolvedTypes } from '../support/event-sourcing/unresolved-types';
+import { defineRule, type Report } from '../support/rule/define-rule';
 
 type MessageId = 'unnamed' | 'undeclared' | 'unresolved' | 'missingUpcaster';
 

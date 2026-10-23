@@ -1,4 +1,4 @@
-import type { BackgroundJobOutcome } from './background-job-outcome.js';
+import type { BackgroundJobOutcome } from './background-job-outcome';
 
 /** One attempt of a background job and what became of it, as data. Never a payload, never a message. */
 export interface BackgroundJobRun {

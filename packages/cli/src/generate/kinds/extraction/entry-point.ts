@@ -1,8 +1,8 @@
-import type { Config } from '../../../config/index.js';
-import type { Workspace } from '../../../workspace/index.js';
-import { editJson } from './edit-json.js';
-import { recordOf } from './record-of.js';
-import { knipProject } from '../knip-project.js';
+import type { Config } from '../../../config';
+import type { Workspace } from '../../../workspace';
+import { editJson } from './edit-json';
+import { recordOf } from './record-of';
+import { knipProject } from '../knip-project';
 
 /** An entry point under `apps/`: the source file, and the compiled one a start script and an image run. */
 export class EntryPoint {

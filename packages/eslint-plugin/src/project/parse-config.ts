@@ -10,10 +10,10 @@ import type {
   Config,
   RuleSetting,
   SdkConfig,
-} from './config.js';
-import { parseAllowedFile } from './parse-allowed-file.js';
-import { posix } from './posix.js';
-import { isRecord } from './is-record.js';
+} from './config';
+import { parseAllowedFile } from './parse-allowed-file';
+import { posix } from './posix';
+import { isRecord } from './is-record';
 
 const DEFAULT_LIMITS: Limits = { maxParameters: 3, maxFunctionLines: 30 };
 

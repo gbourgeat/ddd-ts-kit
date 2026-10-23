@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { formatStories } from '../src/stories/format-stories.js';
-import { readStories } from '../src/stories/read-stories.js';
-import { trunkPhase } from '../src/stories/trunk-phase.js';
-import { Workspace } from '../src/workspace/index.js';
-import { cli, tempDir, write } from './helpers.js';
-import { git } from './support/git.js';
+import { formatStories } from '../src/stories/format-stories';
+import { readStories } from '../src/stories/read-stories';
+import { trunkPhase } from '../src/stories/trunk-phase';
+import { Workspace } from '../src/workspace';
+import { cli, tempDir, write } from './helpers';
+import { git } from './support/git';
 
 const SLICES = `# Slices
 

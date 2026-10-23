@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { SHOP_CONTRACT } from './support/shop-contract.js';
-import { writtenClient } from './support/written-client.js';
+import { SHOP_CONTRACT } from './support/shop-contract';
+import { writtenClient } from './support/written-client';
 
 interface Sent {
   readonly method: string;

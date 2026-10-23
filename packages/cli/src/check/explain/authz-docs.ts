@@ -1,4 +1,4 @@
-import type { RuleDoc } from '../model/rule-doc.js';
+import type { RuleDoc } from '../model/rule-doc';
 
 export const AUTHZ_DOCS: Readonly<Record<string, RuleDoc>> = {
   'authz/declared': {

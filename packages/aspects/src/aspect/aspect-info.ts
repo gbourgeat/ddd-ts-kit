@@ -1,4 +1,4 @@
-import type { AspectKind } from './aspect-kind.js';
+import type { AspectKind } from './aspect-kind';
 
 /** What the composition root knows about the instance it wraps. Everything is optional. */
 export interface AspectInfo {

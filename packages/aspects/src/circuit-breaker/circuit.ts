@@ -1,10 +1,10 @@
 import type { Clock } from '@ddd-ts-kit/kernel';
-import { CircuitOpenError } from '../errors/circuit-open-error.js';
-import { isBusinessRefusal } from '../errors/is-business-refusal.js';
-import { safely } from '../observability/safely.js';
-import type { CircuitBreakerOptions } from './circuit-breaker-options.js';
-import type { CircuitStateChange } from './circuit-state-change.js';
-import type { CircuitState } from './circuit-state.js';
+import { CircuitOpenError } from '../errors/circuit-open-error';
+import { isBusinessRefusal } from '../errors/is-business-refusal';
+import { safely } from '../observability/safely';
+import type { CircuitBreakerOptions } from './circuit-breaker-options';
+import type { CircuitStateChange } from './circuit-state-change';
+import type { CircuitState } from './circuit-state';
 
 /** What a circuit protects, as its transitions name it. */
 export type CircuitSubject = Omit<CircuitStateChange, 'from' | 'to'>;

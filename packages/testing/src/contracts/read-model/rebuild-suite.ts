@@ -1,9 +1,9 @@
 import { ProjectionRebuild, type ProjectionRebuildReport } from '@ddd-ts-kit/kernel';
-import type { CriteriaContractRow } from '../criteria/criteria-contract-row.js';
-import { ReadModelStoreSuite } from './read-model-store-suite.js';
-import { rowOf as row } from './row-of.js';
-import { SourceOfTruth } from './source-of-truth.js';
-import { stampedAt as at } from './stamped-at.js';
+import type { CriteriaContractRow } from '../criteria/criteria-contract-row';
+import { ReadModelStoreSuite } from './read-model-store-suite';
+import { rowOf as row } from './row-of';
+import { SourceOfTruth } from './source-of-truth';
+import { stampedAt as at } from './stamped-at';
 
 type Row = CriteriaContractRow;
 

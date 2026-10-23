@@ -1,14 +1,14 @@
-import { CLASSIFICATIONS, CONFIG_FILE, editConfigText, isOneOf } from '../../config/index.js';
-import { isRecord } from '../../config/values/is-record.js';
-import { withModuleRow } from '../../check/modules/with-module-row.js';
-import { CliError } from '../../cli-error.js';
-import { moduleNameFlaw } from '../../model-modules/index.js';
-import { toName, type Name } from '../../naming/index.js';
-import type { Kind } from '../kind.js';
-import { learnTerms } from '../learn-terms.js';
-import { openScope } from '../open-scope.js';
-import type { Scope } from '../scope.js';
-import { spokenInLanguage } from '../spoken-in-language.js';
+import { CLASSIFICATIONS, CONFIG_FILE, editConfigText, isOneOf } from '../../config';
+import { isRecord } from '../../config/values/is-record';
+import { withModuleRow } from '../../check/modules/with-module-row';
+import { CliError } from '../../cli-error';
+import { moduleNameFlaw } from '../../model-modules';
+import { toName, type Name } from '../../naming';
+import type { Kind } from '../kind';
+import { learnTerms } from '../learn-terms';
+import { openScope } from '../open-scope';
+import type { Scope } from '../scope';
+import { spokenInLanguage } from '../spoken-in-language';
 
 export const moduleKind: Kind = {
   name: 'module',

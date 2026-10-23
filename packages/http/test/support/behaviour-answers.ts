@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { AdapterClient } from './adapter-client.js';
-import { KNOWN_ORDER } from './orders.js';
+import type { AdapterClient } from './adapter-client';
+import { KNOWN_ORDER } from './orders';
 
 export function answersAsDeclared({ call, post }: AdapterClient): void {
   describe('answers', () => {

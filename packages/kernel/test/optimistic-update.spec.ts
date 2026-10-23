@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ConcurrencyError, optimisticUpdate, schemaNameOf, type VersionStep } from '../src/index.js';
+import { ConcurrencyError, optimisticUpdate, schemaNameOf, type VersionStep } from '../src';
 
 describe('optimisticUpdate', () => {
   it('asks for an insert at version 0 and gives the aggregate version 1', async () => {

@@ -1,13 +1,13 @@
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
 import type { Schema } from '@ddd-ts-kit/validation';
-import type { ResponseSpec } from '../route/response-spec.js';
-import type { Route } from '../route/route.js';
-import type { BodyShape } from './body-shape.js';
-import { isJsonMediaType } from './is-json-media-type.js';
-import { CsvRepresentation } from './csv/csv-representation.js';
-import { JsonRepresentation } from './json-representation.js';
-import type { Representation } from './representation.js';
-import { XmlRepresentation } from './xml/xml-representation.js';
+import type { ResponseSpec } from '../route/response-spec';
+import type { Route } from '../route/route';
+import type { BodyShape } from './body-shape';
+import { isJsonMediaType } from './is-json-media-type';
+import { CsvRepresentation } from './csv/csv-representation';
+import { JsonRepresentation } from './json-representation';
+import type { Representation } from './representation';
+import { XmlRepresentation } from './xml/xml-representation';
 
 /** A representation chosen for a body, with the media type it is written under. */
 export interface Chosen {

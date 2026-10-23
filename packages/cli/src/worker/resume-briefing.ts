@@ -1,17 +1,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { staleNamesAt } from '../citations/stale-names-at.js';
-import type { Config } from '../config/index.js';
-import { KINDS } from '../generate/kinds.js';
-import { Workspace } from '../workspace/index.js';
-import { briefedRows } from './briefed-rows.js';
-import type { BriefedSlice } from './briefed-slice.js';
-import { briefingOf } from './briefing-of.js';
-import type { FoundWorker } from './find-worker.js';
-import { namedPaths } from './named-paths.js';
-import { REPORT_FILE } from './report-file.js';
-import { workerGenerators } from './worker-generators.js';
-import type { WorkerProgress } from './worker-progress.js';
+import { staleNamesAt } from '../citations/stale-names-at';
+import type { Config } from '../config';
+import { KINDS } from '../generate/kinds';
+import { Workspace } from '../workspace';
+import { briefedRows } from './briefed-rows';
+import type { BriefedSlice } from './briefed-slice';
+import { briefingOf } from './briefing-of';
+import type { FoundWorker } from './find-worker';
+import { namedPaths } from './named-paths';
+import { REPORT_FILE } from './report-file';
+import { workerGenerators } from './worker-generators';
+import type { WorkerProgress } from './worker-progress';
 
 /** What a new agent of a stopped worker is briefed from. */
 export interface ResumedWorker {

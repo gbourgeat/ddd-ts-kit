@@ -1,5 +1,5 @@
-import type { Upstream } from '../config/index.js';
-import type { StateMachineFacts } from '../docs/state-machine-facts.js';
+import type { Upstream } from '../config';
+import type { StateMachineFacts } from '../docs/state-machine-facts';
 import type {
   ConsumedEventFact,
   ContextDescription,
@@ -8,7 +8,7 @@ import type {
   PortFact,
   PublishedEventFact,
   RouteFact,
-} from './context-description.js';
+} from './context-description';
 
 /** One context as `describe` prints it for a reader: a heading, then one block per kind of element. */
 export function formatDescription(context: ContextDescription): string {

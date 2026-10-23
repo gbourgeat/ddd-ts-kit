@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import knex, { type Knex } from 'knex';
-import type { TestDatabase } from '../database.js';
+import type { TestDatabase } from '../database';
 
 /**
  * A role of its own for the application, which row-level security applies to (a superuser

@@ -1,5 +1,5 @@
 import { isDeepStrictEqual } from 'node:util';
-import { show } from './show.js';
+import { show } from './show';
 
 /** Where `actual` differs from the properties `expected` names, one line each: a plain object of `expected` is a subset. */
 export function subsetDifferences(actual: unknown, expected: unknown, path: string): string[] {

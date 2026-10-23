@@ -1,6 +1,6 @@
-import type { Workspace } from '../workspace/index.js';
-import type { Slice } from './slice.js';
-import { slicesIn } from './slices-in.js';
+import type { Workspace } from '../workspace';
+import type { Slice } from './slice';
+import { slicesIn } from './slices-in';
 
 export const SLICES_FILE = 'docs/architecture/slices.md';
 

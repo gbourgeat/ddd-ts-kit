@@ -1,11 +1,11 @@
-import type { Project } from '../model/project.js';
-import type { SourceFile } from '../model/source-file.js';
-import { type Scan, scan } from '../scan/scan.js';
-import { escapeRegExp } from '../text/escape-reg-exp.js';
-import { callArguments } from '../text/call-arguments.js';
-import type { ListPart } from '../text/list-part.js';
-import { matchingBracket } from '../text/matching-bracket.js';
-import { signedInGrants } from './signed-in-grants.js';
+import type { Project } from '../model/project';
+import type { SourceFile } from '../model/source-file';
+import { type Scan, scan } from '../scan/scan';
+import { escapeRegExp } from '../text/escape-reg-exp';
+import { callArguments } from '../text/call-arguments';
+import type { ListPart } from '../text/list-part';
+import { matchingBracket } from '../text/matching-bracket';
+import { signedInGrants } from './signed-in-grants';
 
 const CONSTRUCTION = /\bnew\s+SignedInGrantsAuthorizer\s*\(/g;
 const GRANTS_PROPERTY = /^grants\b\s*(?::\s*)?/;

@@ -1,4 +1,4 @@
-import type { Layer } from './layer.js';
+import type { Layer } from './layer';
 
 export interface ContextLocation {
   readonly area: 'context';

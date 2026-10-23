@@ -1,13 +1,13 @@
-import type { BackgroundJobOptions } from '../../application/background/background-job-options.js';
-import { backgroundJobPolicy } from '../../application/background/background-job-policy.js';
-import type { BackgroundJob } from '../../application/background/background-job.js';
-import { InvalidJobScheduleError } from '../../application/scheduling/invalid-job-schedule-error.js';
-import { isJobName } from '../../application/scheduling/is-job-name.js';
-import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
-import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature.js';
-import { DeclarationError } from '../registry/declaration-error.js';
-import { record } from '../registry/record.js';
+import type { BackgroundJobOptions } from '../../application/background/background-job-options';
+import { backgroundJobPolicy } from '../../application/background/background-job-policy';
+import type { BackgroundJob } from '../../application/background/background-job';
+import { InvalidJobScheduleError } from '../../application/scheduling/invalid-job-schedule-error';
+import { isJobName } from '../../application/scheduling/is-job-name';
+import type { ClassDeclarator } from '../dependencies/class-declarator';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies';
+import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature';
+import { DeclarationError } from '../registry/declaration-error';
+import { record } from '../registry/record';
 
 /**
  * A background job, run by a worker after a use case enqueued it, named by the static `jobName`

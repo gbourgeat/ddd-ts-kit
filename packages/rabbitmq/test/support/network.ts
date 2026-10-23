@@ -1,4 +1,4 @@
-import type { RabbitMqEventBusOptions } from '../../src/index.js';
+import type { RabbitMqEventBusOptions } from '../../src';
 
 /**
  * Between a bus and the broker, what a test sabotages: the replies of the broker stop (the

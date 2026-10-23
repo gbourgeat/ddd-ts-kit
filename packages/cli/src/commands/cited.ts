@@ -1,19 +1,19 @@
-import { loadProject } from '../check/project/load-project.js';
-import { formatCitations } from '../citations/format-citations.js';
-import { formatRemovals } from '../citations/format-removals.js';
-import { openRows } from '../citations/open-rows.js';
-import { staleNamesAt } from '../citations/stale-names-at.js';
-import { staleNamesSince } from '../citations/stale-names-since.js';
-import { CliError } from '../cli-error.js';
-import { runGit } from '../commit/run-git.js';
-import { readConfig } from '../config/index.js';
-import { readSlices, SLICES_FILE } from '../progress/read-slices.js';
-import type { Slice } from '../progress/slice.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
-import { knownContext } from './known-context.js';
-import { rowsOption } from './rows-option.js';
+import { loadProject } from '../check/project/load-project';
+import { formatCitations } from '../citations/format-citations';
+import { formatRemovals } from '../citations/format-removals';
+import { openRows } from '../citations/open-rows';
+import { staleNamesAt } from '../citations/stale-names-at';
+import { staleNamesSince } from '../citations/stale-names-since';
+import { CliError } from '../cli-error';
+import { runGit } from '../commit/run-git';
+import { readConfig } from '../config';
+import { readSlices, SLICES_FILE } from '../progress/read-slices';
+import type { Slice } from '../progress/slice';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import type { Command } from './command';
+import { knownContext } from './known-context';
+import { rowsOption } from './rows-option';
 
 /**
  * The names the design of rows not done cites that the code does not have: against a ref before

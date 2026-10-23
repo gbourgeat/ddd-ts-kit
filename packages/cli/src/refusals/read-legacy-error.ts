@@ -1,9 +1,9 @@
-import { errorCodes } from '../check/errors/error-codes.js';
-import { scan, type Scan } from '../check/scan/scan.js';
-import { callArguments } from '../check/text/call-arguments.js';
-import { matchingBracket } from '../check/text/matching-bracket.js';
-import { splitTopLevel } from '../check/text/split-top-level.js';
-import type { LegacyError, LegacyParameter } from './legacy-error.js';
+import { errorCodes } from '../check/errors/error-codes';
+import { scan, type Scan } from '../check/scan/scan';
+import { callArguments } from '../check/text/call-arguments';
+import { matchingBracket } from '../check/text/matching-bracket';
+import { splitTopLevel } from '../check/text/split-top-level';
+import type { LegacyError, LegacyParameter } from './legacy-error';
 
 const CLASS = /export\s+class\s+([A-Za-z_$][\w$]*)\s+extends\s+DomainError\b/;
 const CONSTRUCTOR = /(?<![\w$.])constructor\s*\(/;

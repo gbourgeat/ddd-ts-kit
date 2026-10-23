@@ -1,4 +1,4 @@
-import type { IncomingFile } from '../route/incoming-file.js';
+import type { IncomingFile } from '../route/incoming-file';
 
 /** What an upload reader found in a request: the text fields sent before the file, and the file. */
 export interface ReceivedUpload {

@@ -1,15 +1,15 @@
-import { ACCEPTANCE_GATES, type AcceptanceGate } from '../acceptance/acceptance-gate.js';
-import { countsFor } from '../acceptance/counts-for.js';
-import { formatAcceptance } from '../acceptance/format-acceptance.js';
-import { type Locked, lockAcceptance } from '../acceptance/lock-acceptance.js';
-import { readAcceptance } from '../acceptance/read-acceptance.js';
-import type { StoryAcceptance } from '../acceptance/story-acceptance.js';
-import { CliError } from '../cli-error.js';
-import { readSlices } from '../progress/read-slices.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
-import type { Io } from './io.js';
+import { ACCEPTANCE_GATES, type AcceptanceGate } from '../acceptance/acceptance-gate';
+import { countsFor } from '../acceptance/counts-for';
+import { formatAcceptance } from '../acceptance/format-acceptance';
+import { type Locked, lockAcceptance } from '../acceptance/lock-acceptance';
+import { readAcceptance } from '../acceptance/read-acceptance';
+import type { StoryAcceptance } from '../acceptance/story-acceptance';
+import { CliError } from '../cli-error';
+import { readSlices } from '../progress/read-slices';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import type { Command } from './command';
+import type { Io } from './io';
 
 /**
  * The acceptance scenarios of each story against its rows in slices.md and the criteria of its

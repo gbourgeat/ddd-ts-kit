@@ -1,9 +1,9 @@
 import type { UseCaseDeclaration as DeclaredUseCase } from '@ddd-ts-kit/di';
-import { AuthorizationSetupError } from '../errors/authorization-setup-error.js';
-import { isPermission } from '../permissions/is-permission.js';
-import { AuthorizationMap } from '../use-cases/authorization-map.js';
-import { publicUseCase } from '../use-cases/public-use-case.js';
-import type { UseCaseDeclaration } from '../use-cases/use-case-declaration.js';
+import { AuthorizationSetupError } from '../errors/authorization-setup-error';
+import { isPermission } from '../permissions/is-permission';
+import { AuthorizationMap } from '../use-cases/authorization-map';
+import { publicUseCase } from '../use-cases/public-use-case';
+import type { UseCaseDeclaration } from '../use-cases/use-case-declaration';
 
 /** A use case that declared nothing is left out, hence refused when it is sent. */
 export function authorizationMapOf(declared: readonly DeclaredUseCase[]): AuthorizationMap {

@@ -1,4 +1,4 @@
-import type { ScenarioState } from './scenario.js';
+import type { ScenarioState } from './scenario';
 
 /** One `it` or `test` of a regression spec of a fix, fingerprinted as a scenario of an acceptance is. */
 export interface RegressionTest {

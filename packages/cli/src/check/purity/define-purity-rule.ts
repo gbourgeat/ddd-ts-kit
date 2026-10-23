@@ -1,9 +1,9 @@
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inLayers } from '../support/in-layers.js';
-import { perFile } from '../support/per-file.js';
-import type { PurityRule } from './purity-rule.js';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { inLayers } from '../support/in-layers';
+import { perFile } from '../support/per-file';
+import type { PurityRule } from './purity-rule';
 
 /** The three purity/* rules share one mechanism: forbidden tokens and modules in domain/ and application/. */
 export function definePurityRule(rule: PurityRule): Rule {

@@ -1,6 +1,6 @@
-import type { SourceFile } from '../model/source-file.js';
-import { declaredWith } from './declared-with.js';
-import { executorUses, type ExecutorUse } from './executor-uses.js';
+import type { SourceFile } from '../model/source-file';
+import { declaredWith } from './declared-with';
+import { executorUses, type ExecutorUse } from './executor-uses';
 
 /** What confines a read, an update or a delete to the tenant. */
 const CONDITION = /(?<![\w$])(?:tenantCondition|ownTenantCondition)\s*\(/;

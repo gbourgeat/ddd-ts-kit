@@ -1,5 +1,5 @@
-import { SLICES_FILE } from '../progress/read-slices.js';
-import type { DocumentPart } from './document-part.js';
+import { SLICES_FILE } from '../progress/read-slices';
+import type { DocumentPart } from './document-part';
 
 /** A document, or one section of it, that holds part of the design of a row. */
 export interface DesignDocument {

@@ -1,8 +1,8 @@
-import type { Config } from '../config/index.js';
-import { isDerived } from '../derived/is-derived.js';
-import type { ChangedEntry } from './changed-entry.js';
-import type { StagingPlan } from './staging-plan.js';
-import { modulesByContext } from '../model-modules/index.js';
+import type { Config } from '../config';
+import { isDerived } from '../derived/is-derived';
+import type { ChangedEntry } from './changed-entry';
+import type { StagingPlan } from './staging-plan';
+import { modulesByContext } from '../model-modules';
 
 /** The kit's own working files: never committed, never listed. */
 const KIT_FILES = '.ddd-ts-kit/';

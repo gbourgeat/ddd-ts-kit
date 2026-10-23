@@ -1,6 +1,6 @@
-import { findingSections } from './finding-sections.js';
-import type { MergeCheck } from './merge-check.js';
-import type { MergeVerification } from './merge-verification.js';
+import { findingSections } from './finding-sections';
+import type { MergeCheck } from './merge-check';
+import type { MergeVerification } from './merge-verification';
 
 /**
  * The verification of the merges as a short report: each merge with what it lost, then what to

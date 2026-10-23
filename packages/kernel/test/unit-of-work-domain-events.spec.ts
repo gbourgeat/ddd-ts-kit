@@ -11,11 +11,11 @@ import {
   reportAfterCommitFailures,
   unitOfWorkMiddleware,
   unitOfWorkStage,
-} from '../src/index.js';
-import { aBench } from './support/shop/a-bench.js';
-import { Cart } from './support/shop/cart.js';
-import { InMemoryCarts } from './support/shop/in-memory-carts.js';
-import { RecordingUnitOfWork } from './support/shop/recording-unit-of-work.js';
+} from '../src';
+import { aBench } from './support/shop/a-bench';
+import { Cart } from './support/shop/cart';
+import { InMemoryCarts } from './support/shop/in-memory-carts';
+import { RecordingUnitOfWork } from './support/shop/recording-unit-of-work';
 
 class OpenCarts extends Command<undefined> {
   constructor(

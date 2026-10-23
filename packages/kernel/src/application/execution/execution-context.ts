@@ -1,9 +1,9 @@
-import type { Actor } from '../actor/actor.js';
-import type { Session } from '../session/session.js';
-import { assertTenantId } from '../tenancy/assert-tenant-id.js';
-import type { TenantElevation } from '../tenancy/tenant-elevation.js';
-import type { ExecutionContextExtensionValues } from './execution-context-extension-values.js';
-import type { ExecutionOrigin } from './execution-origin.js';
+import type { Actor } from '../actor/actor';
+import type { Session } from '../session/session';
+import { assertTenantId } from '../tenancy/assert-tenant-id';
+import type { TenantElevation } from '../tenancy/tenant-elevation';
+import type { ExecutionContextExtensionValues } from './execution-context-extension-values';
+import type { ExecutionOrigin } from './execution-origin';
 
 /**
  * What every unit of work carries, whatever started it: an HTTP request, a consumed event, a

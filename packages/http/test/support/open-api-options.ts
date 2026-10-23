@@ -1,5 +1,5 @@
-import { createErrorMapper, type Route } from '../../src/index.js';
-import type { GenerateOpenApiOptions } from '../../src/openapi.js';
+import { createErrorMapper, type Route } from '../../src';
+import type { GenerateOpenApiOptions } from '../../src/openapi';
 
 export const openApiOptions = (routes: readonly Route[]): GenerateOpenApiOptions => ({
   info: { title: 'Orders', version: '1.2.0', description: 'Ordering context.' },

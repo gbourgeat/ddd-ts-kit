@@ -1,9 +1,9 @@
 import path from 'node:path';
-import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
-import { readSlices } from '../progress/read-slices.js';
-import { readWorkerFile } from '../worker/read-worker-file.js';
-import { rowCommits } from '../worker/row-commits.js';
-import { Workspace } from '../workspace/index.js';
+import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file';
+import { readSlices } from '../progress/read-slices';
+import { readWorkerFile } from '../worker/read-worker-file';
+import { rowCommits } from '../worker/row-commits';
+import { Workspace } from '../workspace';
 
 /** The row a worker is closing, and the commit command that names it; neither once every row is committed. */
 export interface WorkerSlice {

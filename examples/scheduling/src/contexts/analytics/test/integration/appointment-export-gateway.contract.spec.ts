@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ExportedAppointment } from '@/contexts/scheduling/published-language/index';
+import type { ExportedAppointment } from '@/contexts/scheduling/published-language';
 import type { AppointmentExportGateway } from '@/contexts/analytics/application/ports/appointment-export-gateway.port';
 import type { Outcome } from '@/contexts/analytics/application/ports/outcome-register.port';
 import { InProcessAppointmentExportGateway } from '@/contexts/analytics/infrastructure/external/in-process-appointment-export.gateway';

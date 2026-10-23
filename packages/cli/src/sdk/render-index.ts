@@ -1,5 +1,5 @@
-import type { ClientDocument } from './client-document.js';
-import { generatedHeader } from './generated-header.js';
+import type { ClientDocument } from './client-document';
+import { generatedHeader } from './generated-header';
 
 /** `index.ts`: what the package exports. */
 export function renderIndex(document: ClientDocument): string {

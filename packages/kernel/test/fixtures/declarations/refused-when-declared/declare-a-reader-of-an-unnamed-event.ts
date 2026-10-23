@@ -1,5 +1,5 @@
-import type { DomainEvent } from '../../../../src/index.js';
-import { DomainEventHandler, On } from '../../../../src/declarations.js';
+import type { DomainEvent } from '../../../../src';
+import { DomainEventHandler, On } from '../../../../src/declarations';
 
 /** A name typed `string` and empty when it is read: the compiler cannot see it, the decorator refuses it. */
 class VisitWithoutAName implements DomainEvent {

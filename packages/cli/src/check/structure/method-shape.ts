@@ -1,4 +1,4 @@
-import type { FunctionShape } from './function-shape.js';
+import type { FunctionShape } from './function-shape';
 
 export interface MethodShape extends FunctionShape {
   readonly visibility: 'public' | 'protected' | 'private';

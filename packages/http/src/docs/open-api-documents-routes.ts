@@ -1,12 +1,12 @@
-import type { OpenApiDocument } from '../openapi/open-api-document.js';
-import { stringifyOpenApi } from '../openapi/stringify-open-api.js';
-import type { Route } from '../route/route.js';
-import { DEFAULT_ASSETS } from './default-assets.js';
-import { docsPage } from './docs-page.js';
-import { documentsPage, type ListedDocument } from './documents-page.js';
-import type { DocsUi } from './docs-ui.js';
-import { openApiDocsRoutes } from './open-api-docs-routes.js';
-import { textRoute } from './text-route.js';
+import type { OpenApiDocument } from '../openapi/open-api-document';
+import { stringifyOpenApi } from '../openapi/stringify-open-api';
+import type { Route } from '../route/route';
+import { DEFAULT_ASSETS } from './default-assets';
+import { docsPage } from './docs-page';
+import { documentsPage, type ListedDocument } from './documents-page';
+import type { DocsUi } from './docs-ui';
+import { openApiDocsRoutes } from './open-api-docs-routes';
+import { textRoute } from './text-route';
 
 /** One document of the contract and the name it is served under. */
 export interface NamedOpenApiDocument {

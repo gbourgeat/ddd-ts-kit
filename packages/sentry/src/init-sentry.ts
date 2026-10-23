@@ -5,9 +5,9 @@ import {
   linkedErrorsIntegration,
   type NodeOptions,
 } from '@sentry/node';
-import type { InitSentryOptions } from './init-sentry-options.js';
-import { scrubEvent } from './scrubbing/scrub-event.js';
-import { SentryErrorReporter } from './sentry-error-reporter.js';
+import type { InitSentryOptions } from './init-sentry-options';
+import { scrubEvent } from './scrubbing/scrub-event';
+import { SentryErrorReporter } from './sentry-error-reporter';
 
 /*
  * The SDK collects all of this unless told not to (`dataCollection` replaced `sendDefaultPii`

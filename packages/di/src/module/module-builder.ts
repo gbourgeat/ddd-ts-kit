@@ -15,13 +15,13 @@ import type {
   ScheduledOptions,
   Token,
 } from '@ddd-ts-kit/kernel/declarations';
-import type { ConsumerOptions } from '../consumer/consumer-options.js';
-import type { DeclaredSource } from '../declared/declared-source.js';
-import type { Resolve } from '../wiring/resolve.js';
-import type { BindingTarget } from './binding-target.js';
-import type { HandlerTarget } from './handler-target.js';
-import type { ProtectedUseCaseTarget } from './protected-use-case-target.js';
-import type { UseCaseTarget } from './use-case-target.js';
+import type { ConsumerOptions } from '../consumer/consumer-options';
+import type { DeclaredSource } from '../declared/declared-source';
+import type { Resolve } from '../wiring/resolve';
+import type { BindingTarget } from './binding-target';
+import type { HandlerTarget } from './handler-target';
+import type { ProtectedUseCaseTarget } from './protected-use-case-target';
+import type { UseCaseTarget } from './use-case-target';
 
 export interface ModuleBuilder {
   /** Binds a port, or the abstract class that types a value: `builder.bind(OrderRepository)`. */

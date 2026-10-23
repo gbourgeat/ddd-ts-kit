@@ -1,8 +1,8 @@
 import { AssertionError } from 'node:assert';
-import { isPromiseLike } from '../scenarios/is-promise-like.js';
-import { show } from '../scenarios/show.js';
-import type { ExpectedFacts } from './expected-facts.js';
-import { factMismatches } from './fact-mismatches.js';
+import { isPromiseLike } from '../scenarios/is-promise-like';
+import { show } from '../scenarios/show';
+import type { ExpectedFacts } from './expected-facts';
+import { factMismatches } from './fact-mismatches';
 
 interface Attempt {
   readonly refused: boolean;

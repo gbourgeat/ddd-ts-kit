@@ -1,13 +1,8 @@
 import type { Schema } from '@ddd-ts-kit/auth/rebac';
-import { OpenFgaModelError } from './open-fga-model-error.js';
-import type {
-  OpenFgaModel,
-  OpenFgaRelationReference,
-  OpenFgaTypeDefinition,
-  OpenFgaUserset,
-} from './open-fga-model.js';
-import { relationNameOf } from './relation-name-of.js';
-import { usersetOf } from './userset-of.js';
+import { OpenFgaModelError } from './open-fga-model-error';
+import type { OpenFgaModel, OpenFgaRelationReference, OpenFgaTypeDefinition, OpenFgaUserset } from './open-fga-model';
+import { relationNameOf } from './relation-name-of';
+import { usersetOf } from './userset-of';
 
 /**
  * The authorization model of OpenFGA for a relationship schema: one source of truth, the schema

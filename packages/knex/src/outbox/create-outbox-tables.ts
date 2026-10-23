@@ -1,11 +1,11 @@
 import type { Knex } from 'knex';
-import { INDEXABLE_LENGTH } from '../columns/indexable-length.js';
-import { INSTANT } from '../columns/instant.js';
-import { dialectOf } from '../sql/dialect-of.js';
-import type { SqlDialect } from '../sql/sql-dialect.js';
-import { builderIn } from './builder-in.js';
-import type { OutboxTablesOptions } from './outbox-tables-options.js';
-import { OUTBOX_TABLE, PROCESSED_EVENTS_TABLE } from './table-names.js';
+import { INDEXABLE_LENGTH } from '../columns/indexable-length';
+import { INSTANT } from '../columns/instant';
+import { dialectOf } from '../sql/dialect-of';
+import type { SqlDialect } from '../sql/sql-dialect';
+import { builderIn } from './builder-in';
+import type { OutboxTablesOptions } from './outbox-tables-options';
+import { OUTBOX_TABLE, PROCESSED_EVENTS_TABLE } from './table-names';
 
 /**
  * Creates the outbox and processed-event tables. Call it from a migration of the consuming

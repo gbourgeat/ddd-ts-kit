@@ -1,7 +1,7 @@
-import { FileUpload } from '../../application/files/file-upload.js';
-import type { BusMiddleware } from '../../application/messaging/bus-middleware.js';
-import type { Message } from '../../application/messaging/message.js';
-import type { UploadDesk } from './upload-desk.js';
+import { FileUpload } from '../../application/files/file-upload';
+import type { BusMiddleware } from '../../application/messaging/bus-middleware';
+import type { Message } from '../../application/messaging/message';
+import type { UploadDesk } from './upload-desk';
 
 /**
  * Stages the `FileUpload` fields of a command, each under a new key of its area, scanned, then

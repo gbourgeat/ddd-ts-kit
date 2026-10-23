@@ -1,5 +1,5 @@
-import type { SourceFile } from '../model/source-file.js';
-import type { ClassShape } from '../structure/class-shape.js';
+import type { SourceFile } from '../model/source-file';
+import type { ClassShape } from '../structure/class-shape';
 
 const BASE = 'EventSourcedAggregate';
 

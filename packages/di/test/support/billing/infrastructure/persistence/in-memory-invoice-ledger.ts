@@ -1,4 +1,4 @@
-import type { InvoiceLedger } from '../../application/ports/invoice-ledger.port.js';
+import type { InvoiceLedger } from '../../application/ports/invoice-ledger.port';
 
 export class InMemoryInvoiceLedger implements InvoiceLedger {
   readonly invoicedOrders: string[] = [];

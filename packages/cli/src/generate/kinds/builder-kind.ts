@@ -1,9 +1,9 @@
-import { emit } from '../emit.js';
-import type { Kind } from '../kind.js';
-import { named } from '../named.js';
-import { openScope } from '../open-scope.js';
-import { vars } from '../vars.js';
-import { existingAggregate } from './existing-aggregate.js';
+import { emit } from '../emit';
+import type { Kind } from '../kind';
+import { named } from '../named';
+import { openScope } from '../open-scope';
+import { vars } from '../vars';
+import { existingAggregate } from './existing-aggregate';
 
 export const builderKind: Kind = {
   name: 'builder',

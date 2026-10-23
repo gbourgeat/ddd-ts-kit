@@ -1,4 +1,4 @@
-import { DomainRefusal } from '../../src/index.js';
+import { DomainRefusal } from '../../src';
 
 export const SchedulingCodes = {
   SlotTaken: 'SLOT_TAKEN',

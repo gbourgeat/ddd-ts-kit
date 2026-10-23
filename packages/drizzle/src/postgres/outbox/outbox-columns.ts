@@ -1,6 +1,6 @@
 import { bigint, integer, jsonb, text } from 'drizzle-orm/pg-core';
 import type { OutboxStatus } from '@ddd-ts-kit/events';
-import { instant } from '../columns/instant.js';
+import { instant } from '../columns/instant';
 
 /** The columns of every outbox, with or without the tenant. */
 export function outboxColumns() {

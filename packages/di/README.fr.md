@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:20aca4a1e68e6226 -->
+<!-- translation-of: README.md sha256:9079b25e8493a279 -->
 
 # @ddd-ts-kit/di
 
@@ -225,7 +225,7 @@ export class GetInvoiceHandler implements QueryHandler<GetInvoice> { /* ... */ }
 // contexts/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.ts
 import { CommandBus, systemActor, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { OrderPlaced, type OrderPlacedPayload } from '@/contexts/ordering/published-language/index';
+import { OrderPlaced, type OrderPlacedPayload } from '@/contexts/ordering/published-language';
 
 @IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' })
 export class InvoiceOnOrderPlaced implements IntegrationEventHandler<OrderPlacedPayload> {
@@ -746,7 +746,7 @@ mêmes classes abstraites, dans les mêmes fichiers.
 // contexts/ordering/ordering.module.ts
 import { Clock, CommandBus, IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { defineContextModule } from '@ddd-ts-kit/di';
-import { PaymentCaptured } from '@/contexts/billing/published-language/index';
+import { PaymentCaptured } from '@/contexts/billing/published-language';
 
 export const orderingModule = defineContextModule({
   name: 'ordering',

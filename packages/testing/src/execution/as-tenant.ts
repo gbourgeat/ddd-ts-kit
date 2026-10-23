@@ -1,5 +1,5 @@
 import type { ExecutionScope } from '@ddd-ts-kit/kernel';
-import { anExecutionContext } from './an-execution-context.js';
+import { anExecutionContext } from './an-execution-context';
 
 /**
  * Runs a block as the work of a member of a tenant: `await asTenant(scope, 'acme', () =>

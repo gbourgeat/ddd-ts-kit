@@ -1,9 +1,9 @@
-import { CliError } from '../cli-error.js';
-import type { Config } from '../config/index.js';
-import { fromYaml } from '../yaml/from-yaml.js';
-import type { Workspace } from '../workspace/index.js';
-import type { ClientDocument } from './client-document.js';
-import { readClientDocument } from './read-client-document.js';
+import { CliError } from '../cli-error';
+import type { Config } from '../config';
+import { fromYaml } from '../yaml/from-yaml';
+import type { Workspace } from '../workspace';
+import type { ClientDocument } from './client-document';
+import { readClientDocument } from './read-client-document';
 
 const DIRECTORY = 'openapi';
 /** The file of the whole contract; its client is named `api`. */

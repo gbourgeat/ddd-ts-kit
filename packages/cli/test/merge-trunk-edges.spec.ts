@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { cli, write } from './helpers.js';
-import { DRIZZLE_KIT_STUB } from './support/drizzle-kit-stub.js';
-import { git } from './support/git.js';
-import { IDENTITY_VARIABLES } from './support/git-identity.js';
-import { commitFiles, goOn, mergeTrunk, merging, onBranch, trunkRepository } from './support/trunk-history.js';
+import { cli, write } from './helpers';
+import { DRIZZLE_KIT_STUB } from './support/drizzle-kit-stub';
+import { git } from './support/git';
+import { IDENTITY_VARIABLES } from './support/git-identity';
+import { commitFiles, goOn, mergeTrunk, merging, onBranch, trunkRepository } from './support/trunk-history';
 
 const INVOICE = 'src/contexts/billing/invoice.ts';
 const manifest = (regenerate: string): string => JSON.stringify({ name: 'billing', scripts: { regenerate } });

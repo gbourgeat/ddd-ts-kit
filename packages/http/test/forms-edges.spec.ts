@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { executionContext } from '@ddd-ts-kit/kernel';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
-import { defineRoute, executeRoute, formDocumentsOf, formRoutes, type Route } from '../src/index.js';
-import { as, bookingForm } from './support/booking.js';
+import { defineRoute, executeRoute, formDocumentsOf, formRoutes, type Route } from '../src';
+import { as, bookingForm } from './support/booking';
 
 describe('the edges of a form', () => {
   it('takes options, a widget and a format from its hints, and a condition on several values', async () => {

@@ -1,4 +1,4 @@
-import type { DomainErrorJson } from './domain-error-json.js';
+import type { DomainErrorJson } from './domain-error-json';
 
 /**
  * A violated business rule. The `code` is the stable, machine-readable contract

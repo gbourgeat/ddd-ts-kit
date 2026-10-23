@@ -1,8 +1,8 @@
-import type { Scan } from '../scan/scan.js';
-import { braceDepthAt } from '../text/brace-depth-at.js';
-import { BRACKETS } from '../text/brackets.js';
-import { matchingBracket } from '../text/matching-bracket.js';
-import { signatureAt } from './signature-at.js';
+import type { Scan } from '../scan/scan';
+import { braceDepthAt } from '../text/brace-depth-at';
+import { BRACKETS } from '../text/brackets';
+import { matchingBracket } from '../text/matching-bracket';
+import { signatureAt } from './signature-at';
 
 /** A function `readStructure` does not list: an arrow, a function expression, a function declared inside another. */
 export interface InlineFunction {

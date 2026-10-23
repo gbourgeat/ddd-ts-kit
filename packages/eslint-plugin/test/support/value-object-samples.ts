@@ -1,4 +1,4 @@
-import { at, BILLING, SAMPLE_CONFIG } from './rule-tester.js';
+import { at, BILLING, SAMPLE_CONFIG } from './rule-tester';
 
 /** A project that writes its values as classes, as `init` writes it. */
 export const CLASSES = { ...SAMPLE_CONFIG, stack: { values: 'classes' } };

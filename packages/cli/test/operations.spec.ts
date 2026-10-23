@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { cli, exists, read, tempDir } from './helpers.js';
-import { KIT_RANGE } from './support/kit-range.js';
+import { cli, exists, read, tempDir } from './helpers';
+import { KIT_RANGE } from './support/kit-range';
 
 const manifest = (root: string): { dependencies: Record<string, string>; scripts: Record<string, string> } =>
   JSON.parse(read(root, 'package.json')) as { dependencies: Record<string, string>; scripts: Record<string, string> };

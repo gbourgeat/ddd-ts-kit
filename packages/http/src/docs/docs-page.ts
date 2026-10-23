@@ -1,5 +1,5 @@
-import type { DocsUi } from './docs-ui.js';
-import { escapeHtml } from './escape-html.js';
+import type { DocsUi } from './docs-ui';
+import { escapeHtml } from './escape-html';
 
 interface DocsPage {
   readonly ui: DocsUi;

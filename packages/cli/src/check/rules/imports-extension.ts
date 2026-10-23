@@ -1,16 +1,14 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { aliasRoots, specifierSuffix, type AliasRoot } from '../../alias/index.js';
-import { CONFIG_FILE } from '../../config/index.js';
-import type { Finding } from '../model/finding.js';
-import type { Flaw } from '../model/flaw.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { besideTheSources } from '../project/beside-the-sources.js';
-import { perFile } from '../support/per-file.js';
-import { reporter } from '../support/reporter.js';
-import { toViolations } from '../support/to-violations.js';
+import { aliasRoots, specifierSuffix } from '../../alias';
+import { CONFIG_FILE } from '../../config';
+import type { Finding } from '../model/finding';
+import type { Flaw } from '../model/flaw';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { besideTheSources } from '../project/beside-the-sources';
+import { perFile } from '../support/per-file';
+import { reporter } from '../support/reporter';
+import { toViolations } from '../support/to-violations';
 
 /** The extensions a module of the project or the file emitted for it can bear. */
 const EXTENSION = /\.(?:[cm]?js|[cm]?ts)$/;
@@ -19,7 +17,7 @@ const EMITTED = /\.[cm]?js$/;
 export const importsExtension: Rule = {
   id: 'imports/extension',
   description:
-    'An import of a file of the project ends as "importExtension" says: with no extension under `none`, where it names a file and never a directory, with `.js` under `js`. Holds under the source root, `test/` and `scripts/`.',
+    'An import of a file of the project ends as "importExtension" says: with no extension under `none`, with `.js` under `js`. Holds under the source root, `test/` and `scripts/`.',
   scope: 'file',
   run(project) {
     return perFile(project, this.id, (file) => findingsIn(project, file));
@@ -37,18 +35,13 @@ function findingsIn(project: Project, file: SourceFile): Finding[] {
 
   return file.imports.flatMap(({ specifier, line }) => {
     const root = roots.find(({ prefix }) => specifier.startsWith(prefix));
-    const flaw = root === undefined ? undefined : judge(specifier, { project, root });
+    const flaw = root === undefined ? undefined : judge(specifier);
 
     return flaw === undefined ? [] : [{ line, ...flaw }];
   });
 }
 
-interface Named {
-  readonly project: Project;
-  readonly root: AliasRoot;
-}
-
-function withoutExtension(specifier: string, named: Named): Flaw | undefined {
+function withoutExtension(specifier: string): Flaw | undefined {
   const extension = EXTENSION.exec(specifier)?.[0];
 
   if (extension !== undefined) {
@@ -58,22 +51,7 @@ function withoutExtension(specifier: string, named: Named): Flaw | undefined {
     };
   }
 
-  if (!namesDirectory(specifier, named)) {
-    return undefined;
-  }
-
-  return {
-    message: `"${specifier}" names a directory, not a file.`,
-    fix: `Write '${specifier.replace(/\/$/, '')}/index': an alias names one file, so that an import has one spelling and the build never has to choose between a file and a directory of the same name.`,
-  };
-}
-
-/** A directory that holds an `index.ts`, next to no file of the same name: the only case the compiler would resolve to it. */
-function namesDirectory(specifier: string, { project, root }: Named): boolean {
-  const named = path.join(project.root, root.directory, specifier.slice(root.prefix.length));
-  const isFile = (file: string): boolean => fs.statSync(file, { throwIfNoEntry: false })?.isFile() === true;
-
-  return !isFile(`${named}.ts`) && isFile(path.join(named, 'index.ts'));
+  return undefined;
 }
 
 function withExtension(specifier: string): Flaw | undefined {

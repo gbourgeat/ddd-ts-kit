@@ -1,7 +1,7 @@
 import type { AuditResource, Message, MessageType } from '@ddd-ts-kit/kernel';
-import type { AuditProjection } from './audit-projection.js';
-import type { AuditedField } from './audited-field.js';
-import type { AuditedMessage } from './audited-message.js';
+import type { AuditProjection } from './audit-projection';
+import type { AuditedField } from './audited-field';
+import type { AuditedMessage } from './audited-message';
 
 export interface AuditedFieldsOptions<M> {
   /** The element the message is about. */

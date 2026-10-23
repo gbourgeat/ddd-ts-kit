@@ -1,15 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SEVERITIES } from '../src/check/catalogue/default-severities.js';
-import { ESLINT_ONLY_RULES } from '../src/check/catalogue/eslint-only-rules.js';
-import { KNOWN_RULE_IDS } from '../src/check/catalogue/known-rule-ids.js';
-import { RULE_IDS } from '../src/check/catalogue/rule-ids.js';
-import { RULES } from '../src/check/catalogue/rules.js';
-import { RULE_DOCS } from '../src/check/explain/rule-docs.js';
-import { FIXTURES } from '../src/check/fixtures/fixtures.js';
-import { runFixture } from '../src/check/fixtures/run-fixture.js';
-import { REPO_ROOT } from './helpers.js';
+import { DEFAULT_SEVERITIES } from '../src/check/catalogue/default-severities';
+import { ESLINT_ONLY_RULES } from '../src/check/catalogue/eslint-only-rules';
+import { KNOWN_RULE_IDS } from '../src/check/catalogue/known-rule-ids';
+import { RULE_IDS } from '../src/check/catalogue/rule-ids';
+import { RULES } from '../src/check/catalogue/rules';
+import { RULE_DOCS } from '../src/check/explain/rule-docs';
+import { FIXTURES } from '../src/check/fixtures/fixtures';
+import { runFixture } from '../src/check/fixtures/run-fixture';
+import { REPO_ROOT } from './helpers';
 
 describe('rule fixtures', () => {
   for (const fixture of FIXTURES) {

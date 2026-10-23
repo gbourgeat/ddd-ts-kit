@@ -1,8 +1,8 @@
 import { sql } from 'drizzle-orm';
 import { bigint, index, integer, jsonb, text, uniqueIndex } from 'drizzle-orm/pg-core';
 import type { EnqueuedBy, JobProgress, QueuedJobStatus } from '@ddd-ts-kit/kernel';
-import { instant } from '../columns/instant.js';
-import { tableIn } from '../schema/table-in.js';
+import { instant } from '../columns/instant';
+import { tableIn } from '../schema/table-in';
 
 export type JobsTable = ReturnType<typeof jobsTable>;
 

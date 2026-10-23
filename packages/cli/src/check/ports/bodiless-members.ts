@@ -1,8 +1,8 @@
-import type { SourceFile } from '../model/source-file.js';
-import { blank } from '../scan/blank.js';
-import type { ClassShape } from '../structure/class-shape.js';
-import { BRACKETS } from '../text/brackets.js';
-import { matchingBracket } from '../text/matching-bracket.js';
+import type { SourceFile } from '../model/source-file';
+import { blank } from '../scan/blank';
+import type { ClassShape } from '../structure/class-shape';
+import { BRACKETS } from '../text/brackets';
+import { matchingBracket } from '../text/matching-bracket';
 
 /** A member of a class that has no body: a property or a signature, as its blanked text and its line. */
 export interface BodilessMember {

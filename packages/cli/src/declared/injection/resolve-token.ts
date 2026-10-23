@@ -1,10 +1,10 @@
-import type { SourceFile } from '../../check/model/source-file.js';
-import { importedFrom } from '../../check/support/imported-from.js';
-import { declaredKindOf, type DeclaredKind } from './declared-kind-of.js';
-import { exportedNameOf } from './exported-name-of.js';
-import { LANGUAGE_TYPES } from './language-types.js';
-import type { ResolvedToken } from './resolved-token.js';
-import type { Sources } from './sources.js';
+import type { SourceFile } from '../../check/model/source-file';
+import { importedFrom } from '../../check/support/imported-from';
+import { declaredKindOf, type DeclaredKind } from './declared-kind-of';
+import { exportedNameOf } from './exported-name-of';
+import { LANGUAGE_TYPES } from './language-types';
+import type { ResolvedToken } from './resolved-token';
+import type { Sources } from './sources';
 
 interface Named {
   readonly sources: Sources;

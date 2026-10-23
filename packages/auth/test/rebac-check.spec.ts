@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { anonymousActor, systemActor } from '@ddd-ts-kit/kernel';
-import { RelationBasedAuthorizer, type RelationTupleStore } from '../src/rebac.js';
-import { ada, allowed, authorizerWith, bob, docsPermissions, document, fact, schema } from './support/documents.js';
+import { RelationBasedAuthorizer, type RelationTupleStore } from '../src/rebac';
+import { ada, allowed, authorizerWith, bob, docsPermissions, document, fact, schema } from './support/documents';
 
 const edit = docsPermissions['document.edit'];
 const view = docsPermissions['document.view'];

@@ -1,6 +1,6 @@
-import type { JobDefinition } from '../scheduling/job-definition.js';
-import type { JobDescription } from '../scheduling/job-description.js';
-import type { JobRun } from '../scheduling/job-run.js';
+import type { JobDefinition } from '../scheduling/job-definition';
+import type { JobDescription } from '../scheduling/job-description';
+import type { JobRun } from '../scheduling/job-run';
 
 /**
  * Runs jobs when they are due. Not the timer of `@ddd-ts-kit/aspects`: this one knows jobs,

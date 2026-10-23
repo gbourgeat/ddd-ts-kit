@@ -1,4 +1,4 @@
-import type { MatchingDependencies } from './matching-dependencies.js';
+import type { MatchingDependencies } from './matching-dependencies';
 
 /**
  * A class decorator that accepts only a class whose instances are `Instance` and whose

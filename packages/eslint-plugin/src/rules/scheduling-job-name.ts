@@ -1,12 +1,12 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { calleeName } from '../support/calls/callee-name.js';
-import type { ClassNode } from '../support/classes/class-name.js';
-import { declarationReader } from '../support/declarations/declaration-reader.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
-import { descendants } from '../support/descendants.js';
-import { inContext } from '../support/imports/in-context.js';
-import { staticString } from '../support/imports/static-string.js';
-import { registeredJob } from '../support/scheduling/registered-job.js';
+import { calleeName } from '../support/calls/callee-name';
+import type { ClassNode } from '../support/classes/class-name';
+import { declarationReader } from '../support/declarations/declaration-reader';
+import { defineRule, type Report } from '../support/rule/define-rule';
+import { descendants } from '../support/descendants';
+import { inContext } from '../support/imports/in-context';
+import { staticString } from '../support/imports/static-string';
+import { registeredJob } from '../support/scheduling/registered-job';
 
 type MessageId = 'notLiteral' | 'format' | 'context' | 'actor';
 type Finding = TSESLint.ReportDescriptor<MessageId>;

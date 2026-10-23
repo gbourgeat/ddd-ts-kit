@@ -1,6 +1,6 @@
 import type { Message } from 'amqplib';
-import { headersOf } from './headers-of.js';
-import type { Publication } from './publication.js';
+import { headersOf } from './headers-of';
+import type { Publication } from './publication';
 
 /** The same message, to send to another queue with `headers` added or replaced. */
 export function republication(message: Message, headers: Record<string, string | number>): Publication {

@@ -8,12 +8,12 @@ import {
   isTransient,
   noJitter,
   retry,
-} from '../src/index.js';
-import { createAspectFakes, withAspectRuntime } from '../src/testing.js';
-import { PairNotQuoted } from './support/pair-not-quoted.js';
-import { QuoteGateway } from './support/quote-gateway.js';
-import { settled } from './support/settled.js';
-import { Unreachable } from './support/unreachable.js';
+} from '../src';
+import { createAspectFakes, withAspectRuntime } from '../src/testing';
+import { PairNotQuoted } from './support/pair-not-quoted';
+import { QuoteGateway } from './support/quote-gateway';
+import { settled } from './support/settled';
+import { Unreachable } from './support/unreachable';
 
 function recordingSleep(): { delays: number[]; sleep: (delayMs: number) => Promise<void> } {
   const delays: number[] = [];

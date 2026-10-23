@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CONFIG_FILE } from '../config/index.js';
+import { CONFIG_FILE } from '../config';
 
 /** The closest directory, upward from `start`, holding the config file; `start` itself when none does. */
 export function findRoot(start: string): string {

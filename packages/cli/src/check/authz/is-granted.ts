@@ -1,6 +1,6 @@
-import type { Scan } from '../scan/scan.js';
-import { escapeRegExp } from '../text/escape-reg-exp.js';
-import type { PermissionSet } from './permission-sets.js';
+import type { Scan } from '../scan/scan';
+import { escapeRegExp } from '../text/escape-reg-exp';
+import type { PermissionSet } from './permission-sets';
 
 /**
  * Whether code grants a permission by name: by the entry of its set, `billingPermissions['invoice.issue']`;

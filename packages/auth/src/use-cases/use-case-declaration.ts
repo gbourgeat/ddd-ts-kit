@@ -1,7 +1,7 @@
 import type { Message, MessageType } from '@ddd-ts-kit/kernel';
-import type { AuthorizationContext } from '../authorization/authorization-context.js';
-import type { ResourceRef } from '../authorization/resource-ref.js';
-import type { Permission } from '../permissions/permission.js';
+import type { AuthorizationContext } from '../authorization/authorization-context';
+import type { ResourceRef } from '../authorization/resource-ref';
+import type { Permission } from '../permissions/permission';
 
 export interface PublicUseCase {
   readonly access: 'public';

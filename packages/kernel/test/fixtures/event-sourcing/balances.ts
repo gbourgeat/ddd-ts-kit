@@ -1,6 +1,6 @@
-import { ReadModelStore, defineCriteria, stampOf, storedStampOf, type ReadModelWrite } from '../../../src/index.js';
-import { On, Projection } from '../../../src/declarations.js';
-import { MoneyDeposited, MoneyWithdrawn } from '../../support/bank/account.js';
+import { ReadModelStore, defineCriteria, stampOf, storedStampOf, type ReadModelWrite } from '../../../src';
+import { On, Projection } from '../../../src/declarations';
+import { MoneyDeposited, MoneyWithdrawn } from '../../support/bank/account';
 
 export interface BalanceRow {
   readonly accountId: string;

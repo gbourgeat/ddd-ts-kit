@@ -1,21 +1,21 @@
 import type { KafkaJS } from '@confluentinc/kafka-javascript';
 import type { IntegrationEventCallback, Subscription } from '@ddd-ts-kit/kernel';
-import type { BrokerLink } from '../connection/broker-link.js';
-import type { Rebalance } from '../connection/rebalance.js';
-import { reasonOf } from '../errors/reason-of.js';
-import { ignore } from '../ignore.js';
-import type { KafkaDelivery } from '../options/kafka-delivery.js';
-import type { KafkaFailure } from '../options/kafka-failure.js';
-import type { ReconnectOptions } from '../options/reconnect-options.js';
-import type { RetryOptions } from '../options/retry-options.js';
-import type { Publications } from '../publication/publications.js';
-import type { KafkaTopology } from '../topology/kafka-topology.js';
-import { topologyOf } from '../topology/topology-of.js';
-import type { TopologySettings } from '../topology/topology-settings.js';
-import { Backoff } from './backoff.js';
-import { postpone } from './postpone.js';
-import { RecordHandling } from './record-handling.js';
-import { Timers } from './timers.js';
+import type { BrokerLink } from '../connection/broker-link';
+import type { Rebalance } from '../connection/rebalance';
+import { reasonOf } from '../errors/reason-of';
+import { ignore } from '../ignore';
+import type { KafkaDelivery } from '../options/kafka-delivery';
+import type { KafkaFailure } from '../options/kafka-failure';
+import type { ReconnectOptions } from '../options/reconnect-options';
+import type { RetryOptions } from '../options/retry-options';
+import type { Publications } from '../publication/publications';
+import type { KafkaTopology } from '../topology/kafka-topology';
+import { topologyOf } from '../topology/topology-of';
+import type { TopologySettings } from '../topology/topology-settings';
+import { Backoff } from './backoff';
+import { postpone } from './postpone';
+import { RecordHandling } from './record-handling';
+import { Timers } from './timers';
 
 interface GroupSettings {
   readonly topology: TopologySettings;

@@ -1,7 +1,7 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
 import { Policy } from '@ddd-ts-kit/kernel/declarations';
-import type { Entry } from '../../domain/entry.js';
-import { ledgerPermissions } from './ledger.permissions.js';
+import type { Entry } from '../../domain/entry';
+import { ledgerPermissions } from './ledger.permissions';
 
 @Policy(ledgerPermissions['entry.reverse'], { name: 'ledger.only-poster-reverses' })
 export class OnlyPosterReverses {

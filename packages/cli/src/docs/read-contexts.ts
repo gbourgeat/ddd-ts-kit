@@ -1,7 +1,7 @@
-import type { Config } from '../config/index.js';
-import type { Workspace } from '../workspace/index.js';
-import type { ContextFacts } from './context-facts.js';
-import { readContext } from './read-context.js';
+import type { Config } from '../config';
+import type { Workspace } from '../workspace';
+import type { ContextFacts } from './context-facts';
+import { readContext } from './read-context';
 
 /** Every context of the config or of the disk, by name. */
 export function readContexts(ws: Workspace, config: Config): ContextFacts[] {

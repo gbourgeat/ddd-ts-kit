@@ -1,5 +1,5 @@
-import { kernelNamesListener } from '../support/event-sourcing/kernel-names-listener.js';
-import { defineRule } from '../support/rule/define-rule.js';
+import { kernelNamesListener } from '../support/event-sourcing/kernel-names-listener';
+import { defineRule } from '../support/rule/define-rule';
 
 const STORE_NAMES = new Set([
   'EventStore',

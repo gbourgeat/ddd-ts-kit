@@ -1,6 +1,6 @@
 import type { ProcessedEventStore } from '@ddd-ts-kit/kernel';
-import type { PrismaContext } from '../unit-of-work/prisma-context.js';
-import type { PrismaProcessedEventDelegate } from './prisma-processed-event-delegate.js';
+import type { PrismaContext } from '../unit-of-work/prisma-context';
+import type { PrismaProcessedEventDelegate } from './prisma-processed-event-delegate';
 
 export interface PrismaProcessedEventStoreOptions<Tx> {
   /** How to reach the model from a client: `(client) => client.processedEvent`. */

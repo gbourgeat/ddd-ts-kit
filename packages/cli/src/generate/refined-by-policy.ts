@@ -1,6 +1,6 @@
-import { filesUnder } from './files-under.js';
-import { permissionPattern } from './permission-pattern.js';
-import type { Scope } from './scope.js';
+import { filesUnder } from './files-under';
+import { permissionPattern } from './permission-pattern';
+import type { Scope } from './scope';
 
 const POLICY_FILE = /^application\/authorization\/[^/]+\.policy\.ts$/;
 

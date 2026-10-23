@@ -1,5 +1,5 @@
 import { bigint, boolean, text } from 'drizzle-orm/pg-core';
-import { instant } from '../columns/instant.js';
+import { instant } from '../columns/instant';
 
 /**
  * The columns a projection orders its events by, to spread into the table of a read model,

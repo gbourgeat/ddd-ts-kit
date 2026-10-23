@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CliError } from '../../cli-error.js';
-import { runGit } from '../../commit/run-git.js';
-import { CONFIG_FILE, readConfig } from '../../config/index.js';
-import { modulesByContext } from '../../model-modules/index.js';
-import type { MergeRepository } from './merge-repository.js';
+import { CliError } from '../../cli-error';
+import { runGit } from '../../commit/run-git';
+import { CONFIG_FILE, readConfig } from '../../config';
+import { modulesByContext } from '../../model-modules';
+import type { MergeRepository } from './merge-repository';
 
 /** Where the contexts live when the directory holds no config: a repository checked without a project. */
 const DEFAULT_CONTEXTS_DIR = 'src/contexts';

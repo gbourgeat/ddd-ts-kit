@@ -1,4 +1,4 @@
-import type { GlossaryRow } from '../generate/parse-terms.js';
+import type { GlossaryRow } from '../generate/parse-terms';
 
 /** The ubiquitous language of the identity preset, written into the glossary of its CONTEXT.md. */
 export const IDENTITY_TERMS: readonly GlossaryRow[] = [

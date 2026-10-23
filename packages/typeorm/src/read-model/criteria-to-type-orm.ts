@@ -1,6 +1,6 @@
 import type { ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 import type { CriteriaPlan, Sort } from '@ddd-ts-kit/kernel';
-import { predicateToTypeOrm, type TypeOrmCriteriaOptions } from './predicate-to-type-orm.js';
+import { predicateToTypeOrm, type TypeOrmCriteriaOptions } from './predicate-to-type-orm';
 
 /**
  * Adds a criteria plan to a query builder on the entity of a read model: its filters and the

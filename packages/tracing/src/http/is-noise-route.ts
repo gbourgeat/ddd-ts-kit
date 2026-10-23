@@ -1,4 +1,4 @@
-import { isNoisePath } from './is-noise-path.js';
+import { isNoisePath } from './is-noise-path';
 
 /** The operations of the documentation routes of `@ddd-ts-kit/http`, one per document of a split contract (`getOpenApiUi_backOffice`). */
 const DOCUMENTATION_OPERATION = /^(?:getOpenApiDocument|getOpenApiUi)(?:_\w+)?$/;

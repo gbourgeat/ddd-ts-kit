@@ -1,14 +1,14 @@
-import { concept } from '../concept.js';
-import { emit } from '../emit.js';
-import type { Kind } from '../kind.js';
-import { learnTerms } from '../learn-terms.js';
-import { refinedByPolicy } from '../refined-by-policy.js';
-import { openScope } from '../open-scope.js';
-import { wire } from '../wire.js';
-import { commandContext } from './command-context.js';
-import { commandOutputs } from './command-outputs.js';
-import { existingAggregate } from './existing-aggregate.js';
-import { generateRepository } from './generate-repository.js';
+import { concept } from '../concept';
+import { emit } from '../emit';
+import type { Kind } from '../kind';
+import { learnTerms } from '../learn-terms';
+import { refinedByPolicy } from '../refined-by-policy';
+import { openScope } from '../open-scope';
+import { wire } from '../wire';
+import { commandContext } from './command-context';
+import { commandOutputs } from './command-outputs';
+import { existingAggregate } from './existing-aggregate';
+import { generateRepository } from './generate-repository';
 
 export const commandKind: Kind = {
   name: 'command',

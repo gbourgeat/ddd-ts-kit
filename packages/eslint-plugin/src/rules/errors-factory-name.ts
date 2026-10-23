@@ -1,14 +1,14 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { type ClassNode, className } from '../support/classes/class-name.js';
-import { memberName } from '../support/classes/member-name.js';
-import { visibilityOf } from '../support/classes/visibility-of.js';
-import { descendants } from '../support/descendants.js';
-import { constantCase } from '../support/errors/constant-case.js';
-import { hasFactoryPrefix } from '../support/errors/has-factory-prefix.js';
-import { prefixedName } from '../support/errors/prefixed-name.js';
-import { isErrorClass } from '../support/errors/is-error-class.js';
-import { isErrorFile } from '../support/errors/is-error-file.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
+import { type ClassNode, className } from '../support/classes/class-name';
+import { memberName } from '../support/classes/member-name';
+import { visibilityOf } from '../support/classes/visibility-of';
+import { descendants } from '../support/descendants';
+import { constantCase } from '../support/errors/constant-case';
+import { hasFactoryPrefix } from '../support/errors/has-factory-prefix';
+import { prefixedName } from '../support/errors/prefixed-name';
+import { isErrorClass } from '../support/errors/is-error-class';
+import { isErrorFile } from '../support/errors/is-error-file';
+import { defineRule, type Report } from '../support/rule/define-rule';
 
 type MessageId = 'vagueName' | 'codeNotLiteral' | 'codeFormat' | 'mismatch' | NamedMessageId;
 type NamedMessageId = 'unprefixed' | 'digitInName' | 'errorSuffix';

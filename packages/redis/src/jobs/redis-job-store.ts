@@ -12,14 +12,14 @@ import {
   type JobUpdate,
   type NewJob,
 } from '@ddd-ts-kit/scheduling';
-import { listOf } from '../replies/list-of.js';
-import { conceal } from '../secrecy/conceal.js';
-import { claimedJobOfRecord } from './claimed-job-of-record.js';
-import { ADD_JOB, CLAIM_JOBS, PURGE_JOBS, TRANSITION_JOB } from './job-scripts.js';
-import { parseJobRecord } from './parse-job-record.js';
-import { queuedJobOfRecord } from './queued-job-of-record.js';
-import type { RedisJobRecord } from './redis-job-record.js';
-import type { RedisJobStoreOptions } from './redis-job-store-options.js';
+import { listOf } from '../replies/list-of';
+import { conceal } from '../secrecy/conceal';
+import { claimedJobOfRecord } from './claimed-job-of-record';
+import { ADD_JOB, CLAIM_JOBS, PURGE_JOBS, TRANSITION_JOB } from './job-scripts';
+import { parseJobRecord } from './parse-job-record';
+import { queuedJobOfRecord } from './queued-job-of-record';
+import type { RedisJobRecord } from './redis-job-record';
+import type { RedisJobStoreOptions } from './redis-job-store-options';
 
 const DESCRIPTION = 'RedisJobStore [client concealed]';
 

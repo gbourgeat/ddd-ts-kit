@@ -1,10 +1,10 @@
-import type { Config } from '../config/index.js';
-import { dependenciesFile, isDeclarationsFile } from '../declared/index.js';
-import { DEPCRUISE_FILE } from '../depcruise/depcruise-file.js';
-import { declaredModules } from '../model-modules/index.js';
-import { CONTEXT_MAP } from '../docs/context-map-file.js';
-import { openApiDocumentsFile } from '../docs/open-api-documents-file.js';
-import { WORKER_SCOPE_FILE } from './worker-scope-file.js';
+import type { Config } from '../config';
+import { dependenciesFile, isDeclarationsFile } from '../declared';
+import { DEPCRUISE_FILE } from '../depcruise/depcruise-file';
+import { declaredModules } from '../model-modules';
+import { CONTEXT_MAP } from '../docs/context-map-file';
+import { openApiDocumentsFile } from '../docs/open-api-documents-file';
+import { WORKER_SCOPE_FILE } from './worker-scope-file';
 
 /** The contracts in YAML or JSON (`openapi/<document>`, the AsyncAPI document) and the event catalog. */
 const GENERATED_DOCUMENT =

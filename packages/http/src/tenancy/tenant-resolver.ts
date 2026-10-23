@@ -1,4 +1,4 @@
-import type { TenantRequest } from './tenant-request.js';
+import type { TenantRequest } from './tenant-request';
 
 /**
  * Names the tenant of a request, or `undefined` when the request names none: the subdomain, a

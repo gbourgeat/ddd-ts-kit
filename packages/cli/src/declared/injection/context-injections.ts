@@ -1,8 +1,8 @@
-import type { SourceFile } from '../../check/model/source-file.js';
-import { declaredRoleOf } from '../declared-role-of.js';
-import type { ClassInjection } from './class-injection.js';
-import { readInjections } from './read-injections.js';
-import type { Sources } from './sources.js';
+import type { SourceFile } from '../../check/model/source-file';
+import { declaredRoleOf } from '../declared-role-of';
+import type { ClassInjection } from './class-injection';
+import { readInjections } from './read-injections';
+import type { Sources } from './sources';
 
 /** The files of a context: its directory from the project root, its files relative to it, the modules of its model. */
 export interface ContextFiles {

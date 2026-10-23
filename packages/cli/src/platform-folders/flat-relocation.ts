@@ -1,8 +1,8 @@
-import { aliasRoots } from '../alias/index.js';
-import type { Config } from '../config/index.js';
-import { PLATFORM_LAYOUT, platformFileIn } from '../platform-layout/index.js';
-import type { Workspace } from '../workspace/index.js';
-import type { Relocation } from './moved-specifier.js';
+import { aliasRoots } from '../alias';
+import type { Config } from '../config';
+import { PLATFORM_LAYOUT, platformFileIn } from '../platform-layout';
+import type { Workspace } from '../workspace';
+import type { Relocation } from './moved-specifier';
 
 const EXTENSION = /\.ts$/;
 

@@ -1,9 +1,9 @@
 import { DomainError, SCRUBBED_MESSAGE } from '@ddd-ts-kit/kernel';
-import type { ContractRunner } from '../contract-runner.js';
-import { ContractSuite } from '../contract-suite.js';
-import type { CreateLogger } from './create-logger.js';
-import { errorOutlineOf } from './error-outline-of.js';
-import type { LoggerUnderContract } from './logger-under-contract.js';
+import type { ContractRunner } from '../contract-runner';
+import { ContractSuite } from '../contract-suite';
+import type { CreateLogger } from './create-logger';
+import { errorOutlineOf } from './error-outline-of';
+import type { LoggerUnderContract } from './logger-under-contract';
 
 /** How many errors of a chain of causes a logger writes: the first and seven causes. */
 const DEEPEST_CAUSE = 8;

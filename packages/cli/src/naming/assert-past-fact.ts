@@ -1,6 +1,6 @@
-import { CliError } from '../cli-error.js';
-import { looksLikePastFact } from './looks-like-past-fact.js';
-import type { Name } from './name.js';
+import { CliError } from '../cli-error';
+import { looksLikePastFact } from './looks-like-past-fact';
+import type { Name } from './name';
 
 export function assertPastFact(fact: Name, allowName: boolean): void {
   if (allowName || looksLikePastFact(fact)) {

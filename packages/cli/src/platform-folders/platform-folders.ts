@@ -1,12 +1,12 @@
-import { aliasRoots } from '../alias/index.js';
-import type { Config } from '../config/index.js';
-import type { MigrationDraft } from '../refusals/migration-draft.js';
-import { projectSources } from '../refusals/project-sources.js';
-import type { Workspace } from '../workspace/index.js';
-import type { FolderMove } from './folder-move.js';
-import { platformMoves } from './platform-moves.js';
-import { unknownFlatFiles } from './unknown-flat-files.js';
-import { withMovedImports } from './with-moved-imports.js';
+import { aliasRoots } from '../alias';
+import type { Config } from '../config';
+import type { MigrationDraft } from '../refusals/migration-draft';
+import { projectSources } from '../refusals/project-sources';
+import type { Workspace } from '../workspace';
+import type { FolderMove } from './folder-move';
+import { platformMoves } from './platform-moves';
+import { unknownFlatFiles } from './unknown-flat-files';
+import { withMovedImports } from './with-moved-imports';
 
 const EXTENSION = /\.(?:ts|js)$/;
 

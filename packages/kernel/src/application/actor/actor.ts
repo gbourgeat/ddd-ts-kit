@@ -1,6 +1,6 @@
-import type { ActorAttribute } from './actor-attribute.js';
-import type { ActorType } from './actor-type.js';
-import type { KnownActorAttributes } from './known-actor-attributes.js';
+import type { ActorAttribute } from './actor-attribute';
+import type { ActorType } from './actor-type';
+import type { KnownActorAttributes } from './known-actor-attributes';
 
 /**
  * Who acts: the outcome of authentication, as plain data. It never holds the credential it

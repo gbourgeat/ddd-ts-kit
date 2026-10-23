@@ -1,8 +1,8 @@
-import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
-import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature.js';
-import { DeclarationError } from '../registry/declaration-error.js';
-import { record } from '../registry/record.js';
+import type { ClassDeclarator } from '../dependencies/class-declarator';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies';
+import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature';
+import { DeclarationError } from '../registry/declaration-error';
+import { record } from '../registry/record';
 
 /**
  * Declares a class of the edge, for the decorators of a transport package to build on:

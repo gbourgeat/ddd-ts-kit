@@ -9,13 +9,13 @@ import {
   type SpanOptions,
 } from '@opentelemetry/api';
 import type { EventDelivery, IntegrationEvent, IntegrationEventCallback } from '@ddd-ts-kit/kernel';
-import { CORRELATION_ID_ATTRIBUTE, ORIGIN_ATTRIBUTE } from '../local-root/correlate.js';
-import { spanContextFromTraceparent } from '../propagation/span-context-from-traceparent.js';
-import { inSpan, type SpanStart } from '../span/in-span.js';
-import { markSpanFailed } from '../span/mark-span-failed.js';
-import { OUTCOME_ATTRIBUTE } from '../span/outcome-attribute.js';
-import type { ConsumerTrace } from './consumer-trace.js';
-import { messagingAttributes } from './messaging-attributes.js';
+import { CORRELATION_ID_ATTRIBUTE, ORIGIN_ATTRIBUTE } from '../local-root/correlate';
+import { spanContextFromTraceparent } from '../propagation/span-context-from-traceparent';
+import { inSpan, type SpanStart } from '../span/in-span';
+import { markSpanFailed } from '../span/mark-span-failed';
+import { OUTCOME_ATTRIBUTE } from '../span/outcome-attribute';
+import type { ConsumerTrace } from './consumer-trace';
+import { messagingAttributes } from './messaging-attributes';
 
 export interface TracedConsumerOptions {
   /** Stable name of the consumer: the span is `process <consumer>`. Without it, `process <type>`. */

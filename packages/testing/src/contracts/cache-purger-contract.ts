@@ -1,7 +1,7 @@
 import { cacheTag, tenantCacheTags, type CachePurger } from '@ddd-ts-kit/kernel';
-import type { Awaitable } from './awaitable.js';
-import type { ContractRunner } from './contract-runner.js';
-import { ContractSuite } from './contract-suite.js';
+import type { Awaitable } from './awaitable';
+import type { ContractRunner } from './contract-runner';
+import { ContractSuite } from './contract-suite';
 
 /** A shared cache with its purger: answers are filed under tags through the cache itself, then purged. */
 export interface CachePurgerUnderContract {

@@ -1,5 +1,5 @@
-import type { UnitOfWork } from '../../application/ports/unit-of-work.js';
-import { withinUnitOfWork } from '../domain-events/within-unit-of-work.js';
+import type { UnitOfWork } from '../../application/ports/unit-of-work';
+import { withinUnitOfWork } from '../domain-events/within-unit-of-work';
 
 /**
  * No transaction to open: runs the work as is, and nothing is undone when it fails. The domain

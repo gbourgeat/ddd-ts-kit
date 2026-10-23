@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { rewriteSpecifiers } from '../src/build/index.js';
+import { rewriteSpecifiers } from '../src/build';
 
 const PREFIXES = ['@/', '$test/', '$scripts/'];
 

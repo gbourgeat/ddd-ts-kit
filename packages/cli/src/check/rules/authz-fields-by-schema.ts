@@ -1,8 +1,8 @@
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inLayer } from '../support/in-layer.js';
-import { perFile } from '../support/per-file.js';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { inLayer } from '../support/in-layer';
+import { perFile } from '../support/per-file';
 
 /** What tells one caller from another by hand: a test on the roles, a comparison with a role, an `isAdmin`. */
 const ROLE_TESTS: readonly { readonly pattern: RegExp; readonly what: string }[] = [

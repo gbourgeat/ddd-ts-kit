@@ -1,4 +1,4 @@
-import type { IncomingRecord } from './incoming-record.js';
+import type { IncomingRecord } from './incoming-record';
 
 /** The first value of a header of a record, as text. */
 export function textHeader({ message }: IncomingRecord, name: string): string | undefined {

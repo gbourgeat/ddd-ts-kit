@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, tempDir, write, type CliResult } from './helpers.js';
-import { failure as refusal, report } from './reports.js';
-import { jsonAt } from './support/json-at.js';
+import { cli, read, tempDir, write, type CliResult } from './helpers';
+import { failure as refusal, report } from './reports';
+import { jsonAt } from './support/json-at';
 
 const SHIPPING = 'src/contexts/shipping';
 const HANDLERS = `${SHIPPING}/application/integration/handlers`;
@@ -107,7 +107,7 @@ describe('generate e2e for a use case an integration event starts', () => {
     const spec = read(root, SPEC);
 
     expect(result.code).toBe(0);
-    expect(spec).toContain("import { invoiceIssuedV1 } from '@/contexts/billing/published-language/index';");
+    expect(spec).toContain("import { invoiceIssuedV1 } from '@/contexts/billing/published-language';");
     expect(spec).toContain("const event = invoiceIssuedV1.create({ invoiceId: 'invoice-1' }, meta);");
 
     expect(spec).toContain(

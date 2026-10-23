@@ -1,6 +1,6 @@
-import { ADR_DIRECTORY } from '../../check/governance/adr-directory.js';
-import { CliError } from '../../cli-error.js';
-import type { Workspace } from '../../workspace/index.js';
+import { ADR_DIRECTORY } from '../../check/governance/adr-directory';
+import { CliError } from '../../cli-error';
+import type { Workspace } from '../../workspace';
 
 /**
  * The number of the new decision record of the project, on four digits: the one asked with

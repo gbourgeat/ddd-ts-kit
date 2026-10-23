@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { runGit } from '../commit/run-git.js';
-import { ensureIgnored } from './ensure-ignored.js';
-import { WORKTREES_DIR, worktreeHome } from './worktree-home.js';
+import { runGit } from '../commit/run-git';
+import { ensureIgnored } from './ensure-ignored';
+import { WORKTREES_DIR, worktreeHome } from './worktree-home';
 
 /** Where a command opens or finds a worktree, and what to say when it is not where it should be. */
 export interface WorktreePlace {

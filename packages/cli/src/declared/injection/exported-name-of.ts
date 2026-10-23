@@ -1,4 +1,4 @@
-import type { SourceFile } from '../../check/model/source-file.js';
+import type { SourceFile } from '../../check/model/source-file';
 
 const NAMED_IMPORTS = /(?<![\w$.])import\s+(?:type\s+)?(?:[\w$]+\s*,\s*)?\{([^}]*)\}/g;
 

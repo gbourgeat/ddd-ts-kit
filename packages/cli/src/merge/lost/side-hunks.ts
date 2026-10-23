@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
-import type { Hunk } from './hunk.js';
-import { hunksOf } from './hunks-of.js';
-import { WORKTREE } from './revision-files.js';
+import type { Hunk } from './hunk';
+import { hunksOf } from './hunks-of';
+import { WORKTREE } from './revision-files';
 
 /**
  * The hunks of each file changed from one commit to another, or to the working tree for

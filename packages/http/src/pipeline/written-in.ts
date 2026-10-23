@@ -1,8 +1,8 @@
-import type { BodyShape } from '../representation/body-shape.js';
-import { JsonRepresentation } from '../representation/json-representation.js';
-import type { Chosen } from '../representation/representations.js';
-import { isAsyncIterable } from '../support/is-async-iterable.js';
-import type { RepresentedAnswer } from './represented-answer.js';
+import type { BodyShape } from '../representation/body-shape';
+import { JsonRepresentation } from '../representation/json-representation';
+import type { Chosen } from '../representation/representations';
+import { isAsyncIterable } from '../support/is-async-iterable';
+import type { RepresentedAnswer } from './represented-answer';
 
 const encoder = new TextEncoder();
 

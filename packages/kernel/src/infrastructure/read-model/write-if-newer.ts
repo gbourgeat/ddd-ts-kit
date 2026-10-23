@@ -1,9 +1,9 @@
-import type { ReadModelRows } from '../../application/ports/read-model-rows.js';
-import type { EventStamp } from '../../application/read-model/event-stamp.js';
-import { isNewer } from '../../application/read-model/is-newer.js';
-import type { ReadModelWrite } from '../../application/read-model/read-model-write.js';
-import type { StampedRow } from '../../application/read-model/stamped-row.js';
-import { ConcurrencyError } from '../../domain/errors/concurrency-error.js';
+import type { ReadModelRows } from '../../application/ports/read-model-rows';
+import type { EventStamp } from '../../application/read-model/event-stamp';
+import { isNewer } from '../../application/read-model/is-newer';
+import type { ReadModelWrite } from '../../application/read-model/read-model-write';
+import type { StampedRow } from '../../application/read-model/stamped-row';
+import { ConcurrencyError } from '../../domain/errors/concurrency-error';
 
 export interface StampedChange<Row> {
   readonly key: string;

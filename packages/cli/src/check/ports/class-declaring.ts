@@ -1,8 +1,8 @@
-import type { Project } from '../model/project.js';
-import type { SourceFile } from '../model/source-file.js';
-import { sourceAt } from '../project/source-at.js';
-import type { ClassShape } from '../structure/class-shape.js';
-import { importedFrom } from '../support/imported-from.js';
+import type { Project } from '../model/project';
+import type { SourceFile } from '../model/source-file';
+import { sourceAt } from '../project/source-at';
+import type { ClassShape } from '../structure/class-shape';
+import { importedFrom } from '../support/imported-from';
 
 /**
  * The class `name` used in `file`: declared there, or in the file a direct relative or alias

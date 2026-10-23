@@ -1,6 +1,6 @@
 import type { Message } from '@ddd-ts-kit/kernel';
-import { AuthorizationSetupError } from '../errors/authorization-setup-error.js';
-import type { UseCaseDeclaration } from './use-case-declaration.js';
+import { AuthorizationSetupError } from '../errors/authorization-setup-error';
+import type { UseCaseDeclaration } from './use-case-declaration';
 
 /**
  * What each command and query requires. A message absent from it is refused: deny by default.

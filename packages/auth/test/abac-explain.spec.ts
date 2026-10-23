@@ -9,8 +9,8 @@ import {
   type ResourceAttributes,
   type ResourceAttributeValues,
   type ResourceRef,
-} from '../src/index.js';
-import { billingPermissions } from './support/billing.js';
+} from '../src';
+import { billingPermissions } from './support/billing';
 
 const read = billingPermissions['invoice.read'];
 const voiding = billingPermissions['invoice.void'];

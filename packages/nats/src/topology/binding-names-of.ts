@@ -1,5 +1,5 @@
-import type { BindingNames } from './binding-names.js';
-import type { ConsumerBinding } from './consumer-binding.js';
+import type { BindingNames } from './binding-names';
+import type { ConsumerBinding } from './consumer-binding';
 
 /** A durable name holds neither dot nor wildcard: every other character becomes `_`. */
 export function bindingNamesOf({ consumer, type }: ConsumerBinding, subjectPrefix: string): BindingNames {

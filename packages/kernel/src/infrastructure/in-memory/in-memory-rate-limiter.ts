@@ -1,8 +1,8 @@
-import type { Clock } from '../../application/ports/clock.js';
-import type { RateLimiter } from '../../application/ports/rate-limiter.js';
-import { rateLimitDecisionOf } from '../../application/rate-limit/rate-limit-decision-of.js';
-import type { RateLimitDecision } from '../../application/rate-limit/rate-limit-decision.js';
-import type { RateLimit } from '../../application/rate-limit/rate-limit.js';
+import type { Clock } from '../../application/ports/clock';
+import type { RateLimiter } from '../../application/ports/rate-limiter';
+import { rateLimitDecisionOf } from '../../application/rate-limit/rate-limit-decision-of';
+import type { RateLimitDecision } from '../../application/rate-limit/rate-limit-decision';
+import type { RateLimit } from '../../application/rate-limit/rate-limit';
 
 /** The limiter inside one process: the fake, and enough for a single instance. */
 export class InMemoryRateLimiter implements RateLimiter {

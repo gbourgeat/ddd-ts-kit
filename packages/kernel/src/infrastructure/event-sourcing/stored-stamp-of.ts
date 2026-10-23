@@ -1,6 +1,6 @@
-import type { EventStamp } from '../../application/read-model/event-stamp.js';
-import type { DomainEvent } from '../../domain/domain-event.js';
-import { storedOrigins } from './stored-origins.js';
+import type { EventStamp } from '../../application/read-model/event-stamp';
+import type { DomainEvent } from '../../domain/domain-event';
+import { storedOrigins } from './stored-origins';
 
 /**
  * The stamp of a domain event read from an event store, for the row of a read model it changes:

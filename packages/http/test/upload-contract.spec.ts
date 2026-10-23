@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryFileStorage } from '@ddd-ts-kit/kernel';
-import { generateOpenApi } from '../src/openapi.js';
-import { openApiOptions } from './support/open-api-options.js';
-import { UPLOAD, uploadRoutes } from './support/upload-desk.js';
+import { generateOpenApi } from '../src/openapi';
+import { openApiOptions } from './support/open-api-options';
+import { UPLOAD, uploadRoutes } from './support/upload-desk';
 
 const document = generateOpenApi(openApiOptions(uploadRoutes(new InMemoryFileStorage())));
 const operation = document.paths['/documents']?.['post'];

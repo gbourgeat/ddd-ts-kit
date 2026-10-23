@@ -1,2 +1,2 @@
-export { JwtAuthenticator, type JwtAuthenticatorOptions } from './jwt/jwt-authenticator.js';
-export { keycloakAuthenticator, type KeycloakAuthenticatorOptions } from './jwt/keycloak-authenticator.js';
+export { JwtAuthenticator, type JwtAuthenticatorOptions } from './jwt/jwt-authenticator';
+export { keycloakAuthenticator, type KeycloakAuthenticatorOptions } from './jwt/keycloak-authenticator';

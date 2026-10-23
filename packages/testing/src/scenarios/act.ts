@@ -1,6 +1,6 @@
-import type { EventSource } from './event-source.js';
-import { isPromiseLike } from './is-promise-like.js';
-import type { Recorded } from './recorded.js';
+import type { EventSource } from './event-source';
+import { isPromiseLike } from './is-promise-like';
+import type { Recorded } from './recorded';
 
 /** Runs the action on the aggregate and records its events, the ones of the arrangement discarded. */
 export function act<A extends EventSource>(

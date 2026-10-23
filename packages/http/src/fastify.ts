@@ -1,3 +1,3 @@
-export type { FastifyMountOptions } from './fastify/fastify-mount-options.js';
-export { fastifyRoutes } from './fastify/fastify-routes.js';
-export { mountFastify } from './fastify/mount-fastify.js';
+export type { FastifyMountOptions } from './fastify/fastify-mount-options';
+export { fastifyRoutes } from './fastify/fastify-routes';
+export { mountFastify } from './fastify/mount-fastify';

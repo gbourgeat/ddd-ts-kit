@@ -1,5 +1,5 @@
-import type { OrderRepository } from '../../../domain/repositories/order.repository.js';
-import type { CancelOrder } from './cancel-order.command.js';
+import type { OrderRepository } from '../../../domain/repositories/order.repository';
+import type { CancelOrder } from './cancel-order.command';
 
 export class CancelOrderHandler {
   constructor(private readonly orders: OrderRepository) {}

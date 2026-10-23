@@ -1,10 +1,10 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { config } from './config.js';
-import { DECLARED } from './declared.js';
-import { declaredProject } from './declared-project.js';
-import type { FixtureFiles } from './fixture-files.js';
-import { handler } from './handler.js';
-import { PATHS } from './paths.js';
+import { CONFIG_FILE } from '../../config';
+import { config } from './config';
+import { DECLARED } from './declared';
+import { declaredProject } from './declared-project';
+import type { FixtureFiles } from './fixture-files';
+import { handler } from './handler';
+import { PATHS } from './paths';
 
 type Assembly = 'barrel' | 'discovery';
 

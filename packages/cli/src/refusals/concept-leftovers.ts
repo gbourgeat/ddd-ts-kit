@@ -1,5 +1,5 @@
-import { scan } from '../check/scan/scan.js';
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
+import { scan } from '../check/scan/scan';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
 
 /** Told what still names a concept class that is gone, with its line: what to write there is a decision. */
 export type OnLeft = (line: number, note: string) => void;

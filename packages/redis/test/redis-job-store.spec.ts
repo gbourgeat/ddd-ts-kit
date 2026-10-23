@@ -2,8 +2,8 @@ import type { Redis } from 'ioredis';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryErrorReporter, InMemoryLogger, InMemoryUnitOfWork } from '@ddd-ts-kit/kernel';
 import { jobStoreContract } from '@ddd-ts-kit/testing/contracts';
-import { RedisJobStore, reportLostJobs } from '../src/index.js';
-import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing } from './support/server.js';
+import { RedisJobStore, reportLostJobs } from '../src';
+import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing } from './support/server';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

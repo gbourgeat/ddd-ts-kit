@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
-import { defineRule } from '../support/rule/define-rule.js';
+import { defineRule } from '../support/rule/define-rule';
 
 type MessageId = 'reachesInside' | 'reachesName';
 

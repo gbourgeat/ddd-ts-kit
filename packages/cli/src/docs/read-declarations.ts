@@ -1,14 +1,14 @@
-import { argumentsOf } from '../check/declarations/arguments-of.js';
-import { declaredAs } from '../check/declarations/declared-as.js';
-import type { Decoration } from '../check/declarations/decoration.js';
-import { literalIn } from '../check/declarations/literal-in.js';
-import { optionOf } from '../check/declarations/option-of.js';
-import { scan, type Scan } from '../check/scan/scan.js';
-import { declaredRoleOf } from '../declared/index.js';
-import type { ContextTree } from '../model-modules/index.js';
-import { filesUnder } from '../generate/files-under.js';
-import type { Workspace } from '../workspace/index.js';
-import type { DeclaredBinding, DeclaredFacts, DeclaredUseCase } from './declared-facts.js';
+import { argumentsOf } from '../check/declarations/arguments-of';
+import { declaredAs } from '../check/declarations/declared-as';
+import type { Decoration } from '../check/declarations/decoration';
+import { literalIn } from '../check/declarations/literal-in';
+import { optionOf } from '../check/declarations/option-of';
+import { scan, type Scan } from '../check/scan/scan';
+import { declaredRoleOf } from '../declared';
+import type { ContextTree } from '../model-modules';
+import { filesUnder } from '../generate/files-under';
+import type { Workspace } from '../workspace';
+import type { DeclaredBinding, DeclaredFacts, DeclaredUseCase } from './declared-facts';
 
 /** One exported class of a role file, with the declaration that gives it its role. */
 interface Declared {

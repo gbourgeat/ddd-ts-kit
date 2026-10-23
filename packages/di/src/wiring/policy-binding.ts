@@ -1,5 +1,5 @@
 import type { DeclaredPolicy, PermissionRef, Token } from '@ddd-ts-kit/kernel/declarations';
-import type { Declarer } from './declarer.js';
+import type { Declarer } from './declarer';
 
 /** A policy class a context declared, for the authorization module to evaluate. */
 export interface PolicyBinding {

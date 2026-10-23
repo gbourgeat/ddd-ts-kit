@@ -1,11 +1,11 @@
 import { CommandBus } from '@ddd-ts-kit/kernel';
-import { defineContextModule } from '../../../src/index.js';
-import { OrderPlaced } from '../ordering/published-language/order-placed.js';
-import { IssueInvoice } from './application/commands/issue-invoice/issue-invoice.command.js';
-import { IssueInvoiceHandler } from './application/commands/issue-invoice/issue-invoice.handler.js';
-import { InvoiceOnOrderPlaced } from './application/integration/handlers/invoice-on-order-placed.integration-handler.js';
-import { InvoiceLedger } from './application/ports/invoice-ledger.port.js';
-import { InMemoryInvoiceLedger } from './infrastructure/persistence/in-memory-invoice-ledger.js';
+import { defineContextModule } from '../../../src';
+import { OrderPlaced } from '../ordering/published-language/order-placed';
+import { IssueInvoice } from './application/commands/issue-invoice/issue-invoice.command';
+import { IssueInvoiceHandler } from './application/commands/issue-invoice/issue-invoice.handler';
+import { InvoiceOnOrderPlaced } from './application/integration/handlers/invoice-on-order-placed.integration-handler';
+import { InvoiceLedger } from './application/ports/invoice-ledger.port';
+import { InMemoryInvoiceLedger } from './infrastructure/persistence/in-memory-invoice-ledger';
 
 /** The explicit module of a context that consumes the events of ordering. */
 export const billingModule = defineContextModule({

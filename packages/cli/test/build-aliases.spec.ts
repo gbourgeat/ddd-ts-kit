@@ -1,7 +1,7 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
-import { cli, read, REPO_ROOT, tempDir, walk, write } from './helpers.js';
-import { jsonAt } from './support/json-at.js';
+import { cli, read, REPO_ROOT, tempDir, walk, write } from './helpers';
+import { jsonAt } from './support/json-at';
 
 const NATIVE_COMPILER = `${REPO_ROOT}/node_modules/@typescript/native/bin/tsc`;
 
@@ -258,19 +258,31 @@ describe('ddd-ts-kit build-aliases, in a project that writes its imports without
     expect(read(root, 'dist/src/main.js')).toBe(`${packages}import './platform/place.js';\n`);
   });
 
-  it('refuses a directory, an extension the config does not write, and a missing file, and says what to write instead', () => {
+  it('completes a directory with its index.js, and a file of the same name wins over the directory', () => {
+    const root = tempDir('build-aliases');
+
+    write(root, 'ddd-ts-kit.config.json', JSON.stringify({ importExtension: 'none', contexts: {} }));
+    write(root, 'tsconfig.build.json', JSON.stringify({ compilerOptions: { rootDir: '.', outDir: 'dist' } }));
+    write(root, 'dist/src/main.js', "import '@/contexts/billing/published-language';\nimport '@/platform/shelf';\n");
+    write(root, 'dist/src/contexts/billing/published-language/index.js', 'export {};\n');
+    write(root, 'dist/src/platform/shelf.js', 'export {};\n');
+    write(root, 'dist/src/platform/shelf/index.js', 'export {};\n');
+
+    expect(cli(root, 'build-aliases').code).toBe(0);
+
+    expect(read(root, 'dist/src/main.js')).toBe(
+      "import './contexts/billing/published-language/index.js';\nimport './platform/shelf.js';\n",
+    );
+  });
+
+  it('refuses an extension the config does not write, and a missing file, and says what to write instead', () => {
     const root = tempDir('build-aliases');
 
     write(root, 'ddd-ts-kit.config.json', JSON.stringify({ importExtension: 'none', contexts: {} }));
     write(root, 'tsconfig.build.json', JSON.stringify({ compilerOptions: { rootDir: '.', outDir: 'dist' } }));
 
-    write(
-      root,
-      'dist/src/main.js',
-      "import '@/contexts/billing/published-language';\nimport '@/platform/place.js';\nimport '@/platform/absent';\n",
-    );
+    write(root, 'dist/src/main.js', "import '@/platform/place.js';\nimport '@/platform/absent';\n");
 
-    write(root, 'dist/src/contexts/billing/published-language/index.js', 'export {};\n');
     write(root, 'dist/src/platform/place.js', 'export {};\n');
 
     const before = read(root, 'dist/src/main.js');
@@ -279,14 +291,10 @@ describe('ddd-ts-kit build-aliases, in a project that writes its imports without
     expect(result.code).toBe(2);
 
     expect(result.stderr).toContain(
-      'line 1: "@/contexts/billing/published-language" names a directory: an alias names one file, write "@/contexts/billing/published-language/index"',
+      'line 1: "@/platform/place.js" has an extension although "importExtension" is "none": write "@/platform/place" (`eslint --fix` does)',
     );
 
-    expect(result.stderr).toContain(
-      'line 2: "@/platform/place.js" has an extension although "importExtension" is "none": write "@/platform/place" (`eslint --fix` does)',
-    );
-
-    expect(result.stderr).toContain('line 3: "@/platform/absent" names no file the build emitted');
+    expect(result.stderr).toContain('line 2: "@/platform/absent" names no file the build emitted');
     expect(read(root, 'dist/src/main.js')).toBe(before);
   });
 

@@ -1,14 +1,14 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import type { Route } from '../route/route.js';
-import type { Documenting } from './documenting.js';
-import { cacheTagsExtension } from './cache-tags-extension.js';
-import { conditionalParameters } from './conditional-parameters.js';
-import { openApiPath } from './open-api-path.js';
-import { pathParameters } from './path-parameters.js';
-import { requestBody } from './request-body.js';
-import { requirement } from './requirement.js';
-import { responses } from './responses.js';
-import { schemaParameters } from './schema-parameters.js';
+import type { Route } from '../route/route';
+import type { Documenting } from './documenting';
+import { cacheTagsExtension } from './cache-tags-extension';
+import { conditionalParameters } from './conditional-parameters';
+import { openApiPath } from './open-api-path';
+import { pathParameters } from './path-parameters';
+import { requestBody } from './request-body';
+import { requirement } from './requirement';
+import { responses } from './responses';
+import { schemaParameters } from './schema-parameters';
 
 /** The `paths` of the document: one item per path, one operation per method. */
 export function pathItems(

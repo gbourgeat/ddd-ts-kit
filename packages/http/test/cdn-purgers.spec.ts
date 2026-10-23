@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cachePurgerContract } from '@ddd-ts-kit/testing/contracts';
-import { CloudflareCachePurger, FastlyCachePurger } from '../src/purgers.js';
-import { CDN_TOKEN, CLOUDFLARE, FASTLY, startFakeCdnApi, type FakeCdnApi } from './support/fake-cdn-api.js';
+import { CloudflareCachePurger, FastlyCachePurger } from '../src/purgers';
+import { CDN_TOKEN, CLOUDFLARE, FASTLY, startFakeCdnApi, type FakeCdnApi } from './support/fake-cdn-api';
 
 const runner = { describe, it, expect, beforeEach };
 const opened: FakeCdnApi[] = [];

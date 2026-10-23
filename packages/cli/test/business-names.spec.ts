@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { namedBindings } from '../src/check/business-names/named-bindings.js';
-import { suggestedName } from '../src/check/business-names/suggested-name.js';
-import { scan } from '../src/check/scan/scan.js';
+import { namedBindings } from '../src/check/business-names/named-bindings';
+import { suggestedName } from '../src/check/business-names/suggested-name';
+import { scan } from '../src/check/scan/scan';
 
 function bindings(source: string): string[] {
   return namedBindings(scan(source).code).map((binding) => `${binding.kind} ${binding.name}`);

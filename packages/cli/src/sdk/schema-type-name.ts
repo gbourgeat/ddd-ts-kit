@@ -1,4 +1,4 @@
-import { CLIENT_NAMES } from './client-names.js';
+import { CLIENT_NAMES } from './client-names';
 
 /** Names the file of the schemas uses for itself, and those of the rest of the client: a component named so would hide them, or clash with them. */
 const RESERVED: ReadonlySet<string> = new Set(['Array', 'Record', ...CLIENT_NAMES]);

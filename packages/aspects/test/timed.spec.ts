@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { compose, timed } from '../src/index.js';
-import { createAspectFakes, withAspectRuntime } from '../src/testing.js';
-import { lasting } from './support/lasting.js';
-import { PairNotQuoted } from './support/pair-not-quoted.js';
-import { QuoteGateway } from './support/quote-gateway.js';
-import { SECRETS } from './support/secrets.js';
+import { compose, timed } from '../src';
+import { createAspectFakes, withAspectRuntime } from '../src/testing';
+import { lasting } from './support/lasting';
+import { PairNotQuoted } from './support/pair-not-quoted';
+import { QuoteGateway } from './support/quote-gateway';
+import { SECRETS } from './support/secrets';
 
 describe('timed', () => {
   it('records the duration and counts the outcome, labelled by what was called', async () => {

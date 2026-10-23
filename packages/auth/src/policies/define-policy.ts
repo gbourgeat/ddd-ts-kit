@@ -1,5 +1,5 @@
-import { AuthorizationSetupError } from '../errors/authorization-setup-error.js';
-import type { Policy } from './policy.js';
+import { AuthorizationSetupError } from '../errors/authorization-setup-error';
+import type { Policy } from './policy';
 
 const POLICY_NAME_PATTERN = /^[a-z][a-z0-9]*([.-][a-z0-9]+)*$/;
 

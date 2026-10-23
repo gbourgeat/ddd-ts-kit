@@ -1,8 +1,8 @@
-import type { FieldOf } from './field-of.js';
-import type { FilterNode, FilterOperand } from './filter-node.js';
-import type { FilterOperator } from './filter-operator.js';
-import type { OperandOf } from './operand-of.js';
-import type { OperatorOf } from './operator-of.js';
+import type { FieldOf } from './field-of';
+import type { FilterNode, FilterOperand } from './filter-node';
+import type { FilterOperator } from './filter-operator';
+import type { OperandOf } from './operand-of';
+import type { OperatorOf } from './operator-of';
 
 /** The filters of one group, built fluently and never changed: every method answers a new list. */
 export class Filters<Row> {

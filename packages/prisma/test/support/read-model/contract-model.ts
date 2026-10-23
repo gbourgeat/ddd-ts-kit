@@ -1,6 +1,6 @@
 import type { CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
-import type { PrismaReadModelOptions } from '../../../src/index.js';
-import type { Prisma } from '../../generated/client/client.js';
+import type { PrismaReadModelOptions } from '../../../src';
+import type { Prisma } from '../../generated/client/client';
 
 export const CONTRACT_MODEL: PrismaReadModelOptions<CriteriaContractRow, Prisma.TransactionClient> = {
   delegate: (client) => client.criteriaContractRow,

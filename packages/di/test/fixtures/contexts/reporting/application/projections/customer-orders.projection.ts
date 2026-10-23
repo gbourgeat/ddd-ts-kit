@@ -1,8 +1,8 @@
 import { stampOf, type IntegrationEvent, type ReadModelWrite } from '@ddd-ts-kit/kernel';
 import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
-import { OrderPlaced, type OrderPlacedPayload } from '../../../billing/published-language/order-placed.js';
-import { CustomerForgotten } from '../../domain/events/customer-forgotten.event.js';
-import { CustomerOrders } from '../ports/customer-orders.port.js';
+import { OrderPlaced, type OrderPlacedPayload } from '../../../billing/published-language/order-placed';
+import { CustomerForgotten } from '../../domain/events/customer-forgotten.event';
+import { CustomerOrders } from '../ports/customer-orders.port';
 
 @Projection('reporting.customer-orders', [CustomerOrders])
 export class CustomerOrdersProjection {

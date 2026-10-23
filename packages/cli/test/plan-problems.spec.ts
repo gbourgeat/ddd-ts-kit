@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { planProblems } from '../src/plan/plan-problems.js';
-import type { Slice } from '../src/progress/slice.js';
+import { planProblems } from '../src/plan/plan-problems';
+import type { Slice } from '../src/progress/slice';
 
 const row = (id: string, dependsOn: readonly string[] = [], owner = 'billing'): Slice => ({
   id,

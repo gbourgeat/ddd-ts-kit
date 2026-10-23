@@ -1,8 +1,8 @@
 import fs from 'node:fs';
-import { CliError } from '../cli-error.js';
-import { gitPath } from './git-path.js';
-import { gitProcess } from './git-process.js';
-import type { MergePreview } from './preview-merge.js';
+import { CliError } from '../cli-error';
+import { gitPath } from './git-path';
+import { gitProcess } from './git-process';
+import type { MergePreview } from './preview-merge';
 
 /** The merge to start: what merge-tree computed, the commit of the trunk, and the message of its commit. */
 export interface MergeToStart {

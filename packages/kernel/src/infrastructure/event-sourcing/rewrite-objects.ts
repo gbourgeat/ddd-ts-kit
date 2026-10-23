@@ -1,6 +1,6 @@
-import { isStoredData } from '../../application/event-sourcing/is-stored-data.js';
-import type { StoredData } from '../../application/event-sourcing/stored-data.js';
-import type { StoredJson } from '../../application/event-sourcing/stored-json.js';
+import { isStoredData } from '../../application/event-sourcing/is-stored-data';
+import type { StoredData } from '../../application/event-sourcing/stored-data';
+import type { StoredJson } from '../../application/event-sourcing/stored-json';
 
 /** Answers what replaces an object of the data, or `undefined` to keep it and look inside. */
 type Rewrite = (object: StoredData) => Promise<StoredJson> | undefined;

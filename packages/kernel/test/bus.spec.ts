@@ -7,7 +7,7 @@ import {
   InMemoryQueryBus,
   Query,
   unitOfWorkMiddleware,
-} from '../src/index.js';
+} from '../src';
 
 class PlaceOrder extends Command<string> {
   constructor(readonly sku: string) {

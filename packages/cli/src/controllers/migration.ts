@@ -1,6 +1,6 @@
-import type { Config } from '../config/index.js';
-import type { MigrationDraft } from '../refusals/migration-draft.js';
-import type { Workspace } from '../workspace/index.js';
+import type { Config } from '../config';
+import type { MigrationDraft } from '../refusals/migration-draft';
+import type { Workspace } from '../workspace';
 
 /** What a migration to controllers works on, and what it found on the way. */
 export interface Migration {

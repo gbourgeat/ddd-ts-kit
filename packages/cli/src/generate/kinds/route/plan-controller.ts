@@ -1,9 +1,9 @@
-import type { Scope } from '../../scope.js';
-import { cachePolicyText } from './cache-policy-text.js';
-import type { ControllerPlan } from './controller-plan.js';
-import { resolveGroup } from './resolve-group.js';
-import { resourceOf } from './resource-of.js';
-import type { RouteParts } from './route-vars.js';
+import type { Scope } from '../../scope';
+import { cachePolicyText } from './cache-policy-text';
+import type { ControllerPlan } from './controller-plan';
+import { resolveGroup } from './resolve-group';
+import { resourceOf } from './resource-of';
+import type { RouteParts } from './route-vars';
 
 /** Decides where a controller goes and what it stands with, from its route and the flags. */
 export function planController(scope: Scope, parts: RouteParts): ControllerPlan {

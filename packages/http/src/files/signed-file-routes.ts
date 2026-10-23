@@ -1,11 +1,11 @@
 import { contentDisposition, type ServedFileStorage, type SignedDownload } from '@ddd-ts-kit/kernel';
-import { ForbiddenError } from '../error/forbidden-error.js';
-import { headerOf } from '../route/header-of.js';
-import type { RouteInput } from '../route/route-input.js';
-import type { RouteOutput } from '../route/route-output.js';
-import type { Route } from '../route/route.js';
-import { withoutTrailingSlashes } from '../route/without-trailing-slashes.js';
-import type { SignedFileRoutesOptions } from './signed-file-routes-options.js';
+import { ForbiddenError } from '../error/forbidden-error';
+import { headerOf } from '../route/header-of';
+import type { RouteInput } from '../route/route-input';
+import type { RouteOutput } from '../route/route-output';
+import type { Route } from '../route/route';
+import { withoutTrailingSlashes } from '../route/without-trailing-slashes';
+import type { SignedFileRoutesOptions } from './signed-file-routes-options';
 
 /**
  * The two routes that answer the signed links of a storage the application serves, the local

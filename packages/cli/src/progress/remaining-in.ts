@@ -1,5 +1,5 @@
-import { todosIn } from '../workspace/todos-in.js';
-import type { Remaining } from './remaining.js';
+import { todosIn } from '../workspace/todos-in';
+import type { Remaining } from './remaining';
 
 /** The markers written by hand next to `TODO(domain)`: a choice of the platform, a remark of a review. */
 const MARKS: ReadonlyArray<readonly ['platform' | 'review', string]> = [

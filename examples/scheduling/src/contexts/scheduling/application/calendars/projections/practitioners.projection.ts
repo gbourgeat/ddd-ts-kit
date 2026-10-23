@@ -5,7 +5,7 @@ import {
   practiceMemberRemovedV1,
   type PracticeMemberAddedV1,
   type PracticeMemberRemovedV1,
-} from '@/contexts/identity/published-language/index';
+} from '@/contexts/identity/published-language';
 import { storableStamp } from '@/shared-kernel/storable-stamp';
 import type { PractitionerDirectory } from '@/contexts/scheduling/application/calendars/ports/practitioner-directory.port';
 

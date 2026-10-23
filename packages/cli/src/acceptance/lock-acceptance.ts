@@ -1,15 +1,15 @@
-import { CliError } from '../cli-error.js';
-import type { Workspace } from '../workspace/index.js';
-import type { AcceptanceLock, Amendment, LockedTest } from './acceptance-lock.js';
-import type { AcceptanceProblem } from './acceptance-problem.js';
-import { countsFor } from './counts-for.js';
-import { driftOf } from './drift.js';
-import { lockFileOf } from './lock-file-of.js';
-import { readLock } from './read-lock.js';
-import { readVerdicts } from './read-verdicts.js';
-import { regressionDriftOf } from './regression-drift-of.js';
-import type { StoryAcceptance } from './story-acceptance.js';
-import { verdictOn } from './verdict-on.js';
+import { CliError } from '../cli-error';
+import type { Workspace } from '../workspace';
+import type { AcceptanceLock, Amendment, LockedTest } from './acceptance-lock';
+import type { AcceptanceProblem } from './acceptance-problem';
+import { countsFor } from './counts-for';
+import { driftOf } from './drift';
+import { lockFileOf } from './lock-file-of';
+import { readLock } from './read-lock';
+import { readVerdicts } from './read-verdicts';
+import { regressionDriftOf } from './regression-drift-of';
+import type { StoryAcceptance } from './story-acceptance';
+import { verdictOn } from './verdict-on';
 
 /** What locking judges again itself, or lets through: the lock is what it writes. */
 const LEFT_TO_THE_LOCK = new Set(['unlocked', 'drift', 'done-pending']);

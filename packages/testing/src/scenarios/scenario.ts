@@ -1,11 +1,11 @@
-import { act } from './act.js';
-import type { AsyncOutcome } from './async-outcome.js';
-import type { AsyncScenario } from './async-scenario.js';
-import { DeferredOutcome } from './deferred-outcome.js';
-import type { EventSource } from './event-source.js';
-import { ImmediateOutcome } from './immediate-outcome.js';
-import { isPromiseLike } from './is-promise-like.js';
-import type { Outcome } from './outcome.js';
+import { act } from './act';
+import type { AsyncOutcome } from './async-outcome';
+import type { AsyncScenario } from './async-scenario';
+import { DeferredOutcome } from './deferred-outcome';
+import type { EventSource } from './event-source';
+import { ImmediateOutcome } from './immediate-outcome';
+import { isPromiseLike } from './is-promise-like';
+import type { Outcome } from './outcome';
 
 export interface Scenario<A> {
   /**

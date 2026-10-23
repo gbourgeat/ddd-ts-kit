@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { withinUnitOfWork, type IntegrationEvent, type UnitOfWork } from '@ddd-ts-kit/kernel';
-import type { UnitOfWorkUnderContract } from '../../src/contracts.js';
+import type { UnitOfWorkUnderContract } from '../../src/contracts';
 
 interface Written {
   readonly rows: string[];

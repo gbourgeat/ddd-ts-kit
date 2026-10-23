@@ -1,7 +1,7 @@
-import type { Coverage } from './coverage.js';
-import { COVERAGE_LAYERS } from './coverage-layers.js';
-import { COVERAGE_METRICS } from './coverage-metrics.js';
-import { REFERENCE_COVERAGE } from './reference-coverage.js';
+import type { Coverage } from './coverage';
+import { COVERAGE_LAYERS } from './coverage-layers';
+import { COVERAGE_METRICS } from './coverage-metrics';
+import { REFERENCE_COVERAGE } from './reference-coverage';
 
 /** True when no threshold departs from the reference: the config file then has nothing to say about coverage. */
 export function isReferenceCoverage(coverage: Coverage): boolean {

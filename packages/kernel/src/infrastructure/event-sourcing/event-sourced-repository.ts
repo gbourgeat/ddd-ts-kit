@@ -1,14 +1,14 @@
-import { storedDataOf } from '../../application/event-sourcing/stored-data-of.js';
-import { StoredEventData } from '../../application/event-sourcing/stored-event-data.js';
-import type { EventToAppend } from '../../application/event-sourcing/event-to-append.js';
-import { appendChanges } from '../../application/persistence/append-changes.js';
-import type { EventStore } from '../../application/ports/event-store.js';
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { AggregateHistory } from '../../domain/event-sourcing/aggregate-history.js';
-import type { AggregateSnapshot } from '../../domain/event-sourcing/aggregate-snapshot.js';
-import type { EventSourcedAggregate } from '../../domain/event-sourcing/event-sourced-aggregate.js';
-import type { EventSerializer } from './event-serializer.js';
-import type { SnapshotPolicy } from './snapshot-policy.js';
+import { storedDataOf } from '../../application/event-sourcing/stored-data-of';
+import { StoredEventData } from '../../application/event-sourcing/stored-event-data';
+import type { EventToAppend } from '../../application/event-sourcing/event-to-append';
+import { appendChanges } from '../../application/persistence/append-changes';
+import type { EventStore } from '../../application/ports/event-store';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { AggregateHistory } from '../../domain/event-sourcing/aggregate-history';
+import type { AggregateSnapshot } from '../../domain/event-sourcing/aggregate-snapshot';
+import type { EventSourcedAggregate } from '../../domain/event-sourcing/event-sourced-aggregate';
+import type { EventSerializer } from './event-serializer';
+import type { SnapshotPolicy } from './snapshot-policy';
 
 export interface EventSourcedRepositoryParts<A extends EventSourcedAggregate<E, S>, E extends DomainEvent, S> {
   readonly store: EventStore;

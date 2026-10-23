@@ -1,9 +1,9 @@
-import type { IntegrationEvent } from '../../../../src/index.js';
-import { On, Projection } from '../../../../src/declarations.js';
+import type { IntegrationEvent } from '../../../../src';
+import { On, Projection } from '../../../../src/declarations';
 import {
   PatientRegistered,
   type PatientRegisteredPayload,
-} from '../contexts/clinic/published-language/patient-registered.js';
+} from '../contexts/clinic/published-language/patient-registered';
 
 export function declareAProjectionOfNothing(): void {
   @Projection('clinic.of-nothing')

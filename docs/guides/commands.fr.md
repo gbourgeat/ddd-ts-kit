@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:d27ae0ebd7d29595 -->
+<!-- translation-of: commands.md sha256:ef874be1a874ef7d -->
 
 # Quelle commande, quand
 
@@ -217,7 +217,7 @@ Bad:
 
 Good:
     // contexts/shipping/application/...
-    import type { InvoiceIssuedV1 } from '@/contexts/billing/published-language/index';
+    import type { InvoiceIssuedV1 } from '@/contexts/billing/published-language';
 
 Suppress one line (with a reason): // ddd-ts-kit-disable-next-line context/published-language-only -- <reason>
 ```

@@ -6,20 +6,20 @@ import {
   type ExecutionScope,
   type JobProgress,
 } from '@ddd-ts-kit/kernel';
-import { errorCodeOf } from '../errors/error-code-of.js';
-import { JobAbortedError } from '../errors/job-aborted-error.js';
-import { JobTimeoutError } from '../errors/job-timeout-error.js';
-import type { JobTimers } from '../job-timers.js';
-import { unlessAborted } from '../unless-aborted.js';
-import type { BackgroundJobOutcome } from './background-job-outcome.js';
-import type { BackgroundJobRecorder } from './background-job-recorder.js';
-import type { BackgroundJobRun } from './background-job-run.js';
-import { JobInterruptedError } from './errors/job-interrupted-error.js';
-import type { RegisteredBackgroundJob } from './registered-background-job.js';
-import type { RunningJob } from './running-job.js';
-import type { ClaimedJob } from './store/claimed-job.js';
-import type { JobStore } from './store/job-store.js';
-import type { JobUpdate } from './store/job-update.js';
+import { errorCodeOf } from '../errors/error-code-of';
+import { JobAbortedError } from '../errors/job-aborted-error';
+import { JobTimeoutError } from '../errors/job-timeout-error';
+import type { JobTimers } from '../job-timers';
+import { unlessAborted } from '../unless-aborted';
+import type { BackgroundJobOutcome } from './background-job-outcome';
+import type { BackgroundJobRecorder } from './background-job-recorder';
+import type { BackgroundJobRun } from './background-job-run';
+import { JobInterruptedError } from './errors/job-interrupted-error';
+import type { RegisteredBackgroundJob } from './registered-background-job';
+import type { RunningJob } from './running-job';
+import type { ClaimedJob } from './store/claimed-job';
+import type { JobStore } from './store/job-store';
+import type { JobUpdate } from './store/job-update';
 
 interface Refusal {
   readonly error: Error;

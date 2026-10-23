@@ -1,11 +1,11 @@
 import { connect, type Channel, type ChannelModel, type GetMessage } from 'amqplib';
-import { RabbitMqEventBus, type RabbitMqEventBusOptions, type RabbitMqTopology } from '../../src/index.js';
-import { MAX_ATTEMPTS, RETRY_DELAY_MS } from './environment.js';
-import { FaultyNetwork } from './faulty-network.js';
-import { InMemoryAmqp } from './amqp/in-memory-amqp.js';
-import type { Network } from './network.js';
-import { unique } from './unique.js';
-import { eventually } from './waiting.js';
+import { RabbitMqEventBus, type RabbitMqEventBusOptions, type RabbitMqTopology } from '../../src';
+import { MAX_ATTEMPTS, RETRY_DELAY_MS } from './environment';
+import { FaultyNetwork } from './faulty-network';
+import { InMemoryAmqp } from './amqp/in-memory-amqp';
+import type { Network } from './network';
+import { unique } from './unique';
+import { eventually } from './waiting';
 
 /**
  * A second, plain AMQP client next to the buses under test: it looks into the queues, drops

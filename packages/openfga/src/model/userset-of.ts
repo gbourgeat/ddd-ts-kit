@@ -1,6 +1,6 @@
 import { waysOf, type DerivedRelation, type Way } from '@ddd-ts-kit/auth/rebac';
-import type { OpenFgaUserset } from './open-fga-model.js';
-import { relationNameOf } from './relation-name-of.js';
+import type { OpenFgaUserset } from './open-fga-model';
+import { relationNameOf } from './relation-name-of';
 
 /**
  * A derived relation of the schema in the words of OpenFGA: a name is a computed userset, `via`

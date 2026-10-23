@@ -1,7 +1,7 @@
-import { ASPECTS_PACKAGE } from '../layers/aspects-package.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { perFile } from '../support/per-file.js';
+import { ASPECTS_PACKAGE } from '../layers/aspects-package';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { perFile } from '../support/per-file';
 
 const DECORATORS = `${ASPECTS_PACKAGE}/decorators`;
 

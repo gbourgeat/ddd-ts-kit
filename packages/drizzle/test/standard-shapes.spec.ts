@@ -9,13 +9,13 @@ import {
   offsetPage,
   type ExecutionScope,
 } from '@ddd-ts-kit/kernel';
-import { createDrizzleUnitOfWork } from '../src/postgres.js';
-import { createDatabase } from './support/database.js';
-import { Invoice } from './support/billing-core/domain/invoice.js';
-import { DrizzleInvoiceQueries } from './support/billing-core/infrastructure/persistence/drizzle-invoice.queries.js';
-import { DrizzleInvoiceRepository } from './support/billing-core/infrastructure/persistence/drizzle-invoice.repository.js';
-import { invoices } from './support/billing-core/infrastructure/persistence/invoices.js';
-import { ada, bob, eve, nobody, scopeOf } from './support/scopes.js';
+import { createDrizzleUnitOfWork } from '../src/postgres';
+import { createDatabase } from './support/database';
+import { Invoice } from './support/billing-core/domain/invoice';
+import { DrizzleInvoiceQueries } from './support/billing-core/infrastructure/persistence/drizzle-invoice.queries';
+import { DrizzleInvoiceRepository } from './support/billing-core/infrastructure/persistence/drizzle-invoice.repository';
+import { invoices } from './support/billing-core/infrastructure/persistence/invoices';
+import { ada, bob, eve, nobody, scopeOf } from './support/scopes';
 
 const MORNING = new Date('2026-03-01T10:00:00.000Z');
 

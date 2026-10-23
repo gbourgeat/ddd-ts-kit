@@ -1,6 +1,6 @@
 import { pageOf, type Page, type StampedRow } from '@ddd-ts-kit/kernel';
 import { Gateway } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentExportContract, type ExportedAppointment } from '@/contexts/scheduling/published-language/index';
+import { AppointmentExportContract, type ExportedAppointment } from '@/contexts/scheduling/published-language';
 import { AppointmentExportGateway } from '@/contexts/analytics/application/ports/appointment-export-gateway.port';
 import type { Outcome } from '@/contexts/analytics/application/ports/outcome-register.port';
 

@@ -1,7 +1,7 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { ESLINT_AUTHORITY } from './eslint-authority.js';
-import { ESLINT_ONLY_RULES } from './eslint-only-rules.js';
-import { FORMATTER_RULE } from './formatter-rule.js';
+import { CONFIG_FILE } from '../../config';
+import { ESLINT_AUTHORITY } from './eslint-authority';
+import { ESLINT_ONLY_RULES } from './eslint-only-rules';
+import { FORMATTER_RULE } from './formatter-rule';
 
 /** A rule of the architecture reference another tool decides: this checker lists and explains it, and judges nothing. */
 export interface DelegatedRule {

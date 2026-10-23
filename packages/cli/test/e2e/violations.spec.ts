@@ -1,9 +1,9 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { cli } from '../helpers.js';
-import { DEPCRUISE, KNIP } from './analyzers.js';
-import { EditedProject } from './edited-project.js';
-import { findingsOf } from './run-in.js';
-import { SLOW } from './stacks.js';
+import { cli } from '../helpers';
+import { DEPCRUISE, KNIP } from './analyzers';
+import { EditedProject } from './edited-project';
+import { findingsOf } from './run-in';
+import { SLOW } from './stacks';
 
 const BILLING = 'src/contexts/billing';
 const SERVICE = `${BILLING}/domain/services/pricing.service.ts`;

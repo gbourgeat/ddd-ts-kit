@@ -1,4 +1,4 @@
-import type { Claims } from './claims.js';
+import type { Claims } from './claims';
 
 /** Keycloak names the user that stands for a client `service-account-<client id>`. */
 const SERVICE_ACCOUNT_PREFIX = 'service-account-';

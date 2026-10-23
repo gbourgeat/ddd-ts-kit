@@ -1,5 +1,5 @@
-import { cellsOf } from './cells-of.js';
-import type { Slice } from './slice.js';
+import { cellsOf } from './cells-of';
+import type { Slice } from './slice';
 
 const COLUMNS = ['#', 'context', 'kind', 'slice', 'start with', 'depends on', 'owner', 'status'];
 

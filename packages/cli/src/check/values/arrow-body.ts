@@ -1,6 +1,6 @@
-import { BRACKETS } from '../text/brackets.js';
-import { matchingBracket } from '../text/matching-bracket.js';
-import type { FunctionBody } from './function-body.js';
+import { BRACKETS } from '../text/brackets';
+import { matchingBracket } from '../text/matching-bracket';
+import type { FunctionBody } from './function-body';
 
 /** What may stand before the arrow of an arrow function: its type parameters, its parameters and its return type. */
 const PARAMETERS = /^(?:async\s*)?(?:<[\s\S]*>\s*)?(?:\([\s\S]*\)|[\w$]+)(?:\s*:[\s\S]*)?$/;

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { FixedClock, InMemoryCache, type Cache } from '@ddd-ts-kit/kernel';
-import { AspectNotAllowedError, cached, forKinds, forMethods, when, type CachedOptions } from '../src/index.js';
-import { createAspectFakes, withAspectRuntime } from '../src/testing.js';
-import { QuoteGateway } from './support/quote-gateway.js';
-import { SlowGateway } from './support/slow-gateway.js';
-import { Unreachable } from './support/unreachable.js';
+import { AspectNotAllowedError, cached, forKinds, forMethods, when, type CachedOptions } from '../src';
+import { createAspectFakes, withAspectRuntime } from '../src/testing';
+import { QuoteGateway } from './support/quote-gateway';
+import { SlowGateway } from './support/slow-gateway';
+import { Unreachable } from './support/unreachable';
 
 const byFirstArgument: CachedOptions['key'] = (_method, [first]) => (typeof first === 'string' ? first : undefined);
 

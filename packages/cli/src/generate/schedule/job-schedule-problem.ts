@@ -1,6 +1,6 @@
-import { cronProblem } from './cron-problem.js';
-import { durationProblem } from './duration-problem.js';
-import type { JobSchedule } from './job-schedule.js';
+import { cronProblem } from './cron-problem';
+import { durationProblem } from './duration-problem';
+import type { JobSchedule } from './job-schedule';
 
 /**
  * Why a schedule cannot be written in a job, or undefined. The CLI has no dependency, so this is

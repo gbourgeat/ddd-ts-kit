@@ -1,4 +1,4 @@
-import { isPastWord } from './is-past-word.js';
+import { isPastWord } from './is-past-word';
 
 /**
  * Past participles spelled like the imperative of their verb: at the head of a name they read as

@@ -1,8 +1,8 @@
-import type { Appended } from '../../application/event-sourcing/appended.js';
-import type { EventToAppend } from '../../application/event-sourcing/event-to-append.js';
-import type { StoredEvent } from '../../application/event-sourcing/stored-event.js';
-import type { EventStore } from '../../application/ports/event-store.js';
-import { ConcurrencyError } from '../../domain/errors/concurrency-error.js';
+import type { Appended } from '../../application/event-sourcing/appended';
+import type { EventToAppend } from '../../application/event-sourcing/event-to-append';
+import type { StoredEvent } from '../../application/event-sourcing/stored-event';
+import type { EventStore } from '../../application/ports/event-store';
+import { ConcurrencyError } from '../../domain/errors/concurrency-error';
 
 /** Reference implementation, for tests and single-process apps. Not transactional: a failed unit of work keeps what it appended. */
 export class InMemoryEventStore implements EventStore {

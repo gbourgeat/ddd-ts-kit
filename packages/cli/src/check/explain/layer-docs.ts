@@ -1,4 +1,4 @@
-import type { RuleDoc } from '../model/rule-doc.js';
+import type { RuleDoc } from '../model/rule-doc';
 
 export const LAYER_DOCS: Readonly<Record<string, RuleDoc>> = {
   'layer/domain-purity': {

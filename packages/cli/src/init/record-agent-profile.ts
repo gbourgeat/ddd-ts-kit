@@ -1,5 +1,5 @@
-import { CONFIG_FILE, editConfigText, parseConfig, type Config } from '../config/index.js';
-import type { Workspace } from '../workspace/index.js';
+import { CONFIG_FILE, editConfigText, parseConfig, type Config } from '../config';
+import type { Workspace } from '../workspace';
 
 /**
  * Records `agents.profile` in the config of a project `init` runs again on: the flag applies

@@ -1,5 +1,5 @@
-import { readTemplate } from '../../templating/index.js';
-import { isRecord } from '../is-record.js';
+import { readTemplate } from '../../templating';
+import { isRecord } from '../is-record';
 
 /** The `ci:*` scripts and the analyzers they need, as the pipeline ships them. */
 export interface PipelineManifest {

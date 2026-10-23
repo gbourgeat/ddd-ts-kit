@@ -1,5 +1,5 @@
-import type { SourceFile } from '../model/source-file.js';
-import type { BlockCommentRecord } from '../scan/block-comment-record.js';
+import type { SourceFile } from '../model/source-file';
+import type { BlockCommentRecord } from '../scan/block-comment-record';
 
 /** One line of comment text, whatever the comment syntax, with what the comment rules need to know. */
 export interface CommentLine {

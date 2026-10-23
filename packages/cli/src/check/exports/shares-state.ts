@@ -1,8 +1,8 @@
-import { braceDepthAt } from '../text/brace-depth-at.js';
-import { identifier } from '../text/identifier.js';
-import type { Exported } from './exported.js';
-import type { LocalType } from './local-types.js';
-import { typeClosure } from './type-closure.js';
+import { braceDepthAt } from '../text/brace-depth-at';
+import { identifier } from '../text/identifier';
+import type { Exported } from './exported';
+import type { LocalType } from './local-types';
+import { typeClosure } from './type-closure';
 
 const STATE =
   /(?<![\w$.])(?<!export\s+)(?:(?:let|var)\s+([A-Za-z_$][\w$]*)|const\s+([A-Za-z_$][\w$]*)\s*(?::[^=;]+)?=\s*new\s)/g;

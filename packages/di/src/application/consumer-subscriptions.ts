@@ -7,11 +7,11 @@ import {
   type Subscription,
 } from '@ddd-ts-kit/kernel';
 import type { Token } from '@ddd-ts-kit/kernel/declarations';
-import type { ConsumerRuntime } from '../consumer/consumer-runtime.js';
-import { Instrumentation, type InstrumentedConsumer } from '../kernel/instrumentation.js';
-import type { EventConsumption } from '../wiring/event-consumption.js';
-import type { BoundPorts } from './bound-ports.js';
-import { failuresOf } from './failures-of.js';
+import type { ConsumerRuntime } from '../consumer/consumer-runtime';
+import { Instrumentation, type InstrumentedConsumer } from '../kernel/instrumentation';
+import type { EventConsumption } from '../wiring/event-consumption';
+import type { BoundPorts } from './bound-ports';
+import { failuresOf } from './failures-of';
 
 /** The integration event handlers of the modules, subscribed while the application runs. */
 export class ConsumerSubscriptions {

@@ -1,9 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { KINDS } from '../src/generate/kinds.js';
-import { SHARED_WRITES } from '../src/generate/shared-writes.js';
-import { cli, exists, EXPLICIT_STACK, scaffoldEverything, tempDir } from './helpers.js';
-import { jsonAt } from './support/json-at.js';
-import { stringsAt } from './support/strings-at.js';
+import { KINDS } from '../src/generate/kinds';
+import { SHARED_WRITES } from '../src/generate/shared-writes';
+import { cli, exists, EXPLICIT_STACK, scaffoldEverything, tempDir } from './helpers';
+import { jsonAt } from './support/json-at';
+import { stringsAt } from './support/strings-at';
 
 const SHARED_KINDS = [
   'adapter',

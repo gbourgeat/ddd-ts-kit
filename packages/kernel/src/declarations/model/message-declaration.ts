@@ -1,6 +1,6 @@
-import type { MessageInfo } from '../../application/messaging/message-info.js';
-import type { AccessDeclaration } from './access-declaration.js';
-import type { AuditedFieldHint } from './audited-field-hint.js';
+import type { MessageInfo } from '../../application/messaging/message-info';
+import type { AccessDeclaration } from './access-declaration';
+import type { AuditedFieldHint } from './audited-field-hint';
 
 export interface MessageDeclaration extends AccessDeclaration {
   readonly role: 'message';

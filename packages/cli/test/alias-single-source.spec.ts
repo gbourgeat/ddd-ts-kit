@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers.js';
-import { checkJsonOf } from './check-support.js';
-import { initProject } from './support/init-project.js';
+import { cli, read, write } from './helpers';
+import { checkJsonOf } from './check-support';
+import { initProject } from './support/init-project';
 
 const RULE = 'imports/alias-declared';
 const READS_TSCONFIG = /\n\s*resolve: \{ tsconfigPaths: true \},/;

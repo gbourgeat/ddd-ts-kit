@@ -1,4 +1,4 @@
-import type { RuleDoc } from '../model/rule-doc.js';
+import type { RuleDoc } from '../model/rule-doc';
 
 export const ERRORS_DOCS: Readonly<Record<string, RuleDoc>> = {
   'errors/code-unique': {

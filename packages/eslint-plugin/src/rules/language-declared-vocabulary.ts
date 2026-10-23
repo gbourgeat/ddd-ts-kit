@@ -1,11 +1,11 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../project/linted-file.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import type { DeclaredValue } from '../support/vocabularies/declared-value.js';
-import { inOutsideRecord } from '../support/vocabularies/in-outside-record.js';
-import { otherLanguageOf } from '../support/vocabularies/other-language-of.js';
-import { projectVocabularies } from '../support/vocabularies/project-vocabularies.js';
-import { typedByOtherLanguage } from '../support/vocabularies/typed-by-other-language.js';
+import type { LintedFile } from '../project/linted-file';
+import { defineRule } from '../support/rule/define-rule';
+import type { DeclaredValue } from '../support/vocabularies/declared-value';
+import { inOutsideRecord } from '../support/vocabularies/in-outside-record';
+import { otherLanguageOf } from '../support/vocabularies/other-language-of';
+import { projectVocabularies } from '../support/vocabularies/project-vocabularies';
+import { typedByOtherLanguage } from '../support/vocabularies/typed-by-other-language';
 
 type MessageId = 'raw' | 'rawBesideOtherLanguage';
 

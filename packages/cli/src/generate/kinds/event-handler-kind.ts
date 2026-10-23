@@ -1,15 +1,15 @@
-import { CliError } from '../../cli-error.js';
-import { emit } from '../emit.js';
-import { givenName } from '../given-name.js';
-import type { Kind } from '../kind.js';
-import { learnTerms } from '../learn-terms.js';
-import { named } from '../named.js';
-import { openScope } from '../open-scope.js';
-import type { Scope } from '../scope.js';
-import { wire } from '../wire.js';
-import { ensureDomainEvent } from './ensure-domain-event.js';
-import { assertDeclaresItsName } from './assert-declares-its-name.js';
-import { eventVars } from './event-vars.js';
+import { CliError } from '../../cli-error';
+import { emit } from '../emit';
+import { givenName } from '../given-name';
+import type { Kind } from '../kind';
+import { learnTerms } from '../learn-terms';
+import { named } from '../named';
+import { openScope } from '../open-scope';
+import type { Scope } from '../scope';
+import { wire } from '../wire';
+import { ensureDomainEvent } from './ensure-domain-event';
+import { assertDeclaresItsName } from './assert-declares-its-name';
+import { eventVars } from './event-vars';
 
 export const eventHandlerKind: Kind = {
   name: 'event-handler',

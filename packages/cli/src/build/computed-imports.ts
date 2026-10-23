@@ -1,4 +1,4 @@
-import type { Scan } from '../check/scan/scan.js';
+import type { Scan } from '../check/scan/scan';
 
 const CALL = /(?<![\w$.])(?:import|require)\s*\(\s*/g;
 

@@ -1,4 +1,4 @@
-import type { FileGrant } from './file-grant.js';
+import type { FileGrant } from './file-grant';
 
 export function isFileGrant(value: unknown): value is FileGrant {
   if (typeof value !== 'object' || value === null) {

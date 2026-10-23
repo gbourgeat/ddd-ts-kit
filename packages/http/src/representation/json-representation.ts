@@ -1,7 +1,7 @@
-import { isAsyncIterable } from '../support/is-async-iterable.js';
-import type { RepresentedBody } from './represented-body.js';
-import { malformedBody } from './malformed-body.js';
-import type { Representation } from './representation.js';
+import { isAsyncIterable } from '../support/is-async-iterable';
+import type { RepresentedBody } from './represented-body';
+import { malformedBody } from './malformed-body';
+import type { Representation } from './representation';
 
 const MEDIA_TYPE = 'application/json';
 

@@ -1,9 +1,9 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { defineRule } from '../support/rule/define-rule.js';
-import { bindingCallReader } from '../support/ports/binding-call-reader.js';
-import { dependencyListListener } from '../support/ports/dependency-list-listener.js';
-import type { ImportedBinding } from '../support/ports/imported-binding.js';
-import { importedBindings } from '../support/ports/imported-bindings.js';
+import { defineRule } from '../support/rule/define-rule';
+import { bindingCallReader } from '../support/ports/binding-call-reader';
+import { dependencyListListener } from '../support/ports/dependency-list-listener';
+import type { ImportedBinding } from '../support/ports/imported-binding';
+import { importedBindings } from '../support/ports/imported-bindings';
 
 type Source = Readonly<TSESLint.SourceCode>;
 

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Workspace } from '../workspace/index.js';
+import type { Workspace } from '../workspace';
 
 /** The files a migration writes and removes, kept in memory until it is committed: a dry run commits nothing. */
 export class MigrationDraft {

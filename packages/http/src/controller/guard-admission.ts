@@ -1,6 +1,6 @@
 import type { Actor, Session } from '@ddd-ts-kit/kernel';
-import type { HttpMethod } from '../route/http-method.js';
-import type { RawHeaders } from '../route/raw-headers.js';
+import type { HttpMethod } from '../route/http-method';
+import type { RawHeaders } from '../route/raw-headers';
 
 /** What a guard reads to decide on the caller alone, before the request is read: who calls, and which route. */
 export interface GuardAdmission {

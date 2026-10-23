@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { errorCodes } from '../src/check/errors/error-codes.js';
-import { readCodeList } from '../src/check/errors/read-code-list.js';
-import { NAMED_REFUSAL_FIXTURES } from '../src/check/fixtures/named-refusal-fixtures.js';
-import { runFixture } from '../src/check/fixtures/run-fixture.js';
-import { scan } from '../src/check/scan/scan.js';
+import { errorCodes } from '../src/check/errors/error-codes';
+import { readCodeList } from '../src/check/errors/read-code-list';
+import { NAMED_REFUSAL_FIXTURES } from '../src/check/fixtures/named-refusal-fixtures';
+import { runFixture } from '../src/check/fixtures/run-fixture';
+import { scan } from '../src/check/scan/scan';
 
 const SLOT_TAKEN = `import { DomainRefusal } from '@ddd-ts-kit/kernel';
 import { SchedulingCodes } from './codes.js';

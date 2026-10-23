@@ -1,5 +1,5 @@
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { Ledger } from '../../domain/repositories/ledger.repository.js';
+import { Ledger } from '../../domain/repositories/ledger.repository';
 
 @Repository(Ledger)
 export class InMemoryLedger implements Ledger {

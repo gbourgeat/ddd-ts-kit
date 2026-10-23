@@ -1,6 +1,6 @@
-import type { Config } from '../../config/index.js';
-import type { Workspace } from '../../workspace/index.js';
-import { applyWiring } from '../apply-wiring.js';
+import type { Config } from '../../config';
+import type { Workspace } from '../../workspace';
+import { applyWiring } from '../apply-wiring';
 
 const DI = '@ddd-ts-kit/di';
 const DI_IMPORT = /import \{(\s*)([^}]*)\} from '@ddd-ts-kit\/di';\n/;

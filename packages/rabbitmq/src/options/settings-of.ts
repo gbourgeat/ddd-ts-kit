@@ -1,8 +1,8 @@
 import type { ChannelModel, Options } from 'amqplib';
-import { DEFAULT_EXCHANGE, type RabbitMqEventBusOptions } from './rabbit-mq-event-bus-options.js';
-import type { ReconnectOptions } from './reconnect-options.js';
-import type { RetryOptions } from './retry-options.js';
-import type { Settings } from './settings.js';
+import { DEFAULT_EXCHANGE, type RabbitMqEventBusOptions } from './rabbit-mq-event-bus-options';
+import type { ReconnectOptions } from './reconnect-options';
+import type { RetryOptions } from './retry-options';
+import type { Settings } from './settings';
 
 export function settingsOf(
   options: RabbitMqEventBusOptions,

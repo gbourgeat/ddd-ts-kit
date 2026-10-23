@@ -1,16 +1,16 @@
-import { REFUSAL_QUALIFIERS } from '../../check/language/refusal-qualifiers.js';
-import { CliError } from '../../cli-error.js';
-import type { Name } from '../../naming/index.js';
-import { renderTemplate, type RenderContext } from '../../templating/index.js';
-import { spokenInLanguage } from '../spoken-in-language.js';
-import { named } from '../named.js';
-import type { Scope } from '../scope.js';
-import { vars } from '../vars.js';
-import { addCode, type CodeEntry } from './add-code.js';
-import { addFactory } from './add-factory.js';
-import { addSpecCase } from './add-spec-case.js';
-import { codesList, type CodesList } from './codes-list.js';
-import { namedRefusalCode } from './named-refusal-code.js';
+import { REFUSAL_QUALIFIERS } from '../../check/language/refusal-qualifiers';
+import { CliError } from '../../cli-error';
+import type { Name } from '../../naming';
+import { renderTemplate, type RenderContext } from '../../templating';
+import { spokenInLanguage } from '../spoken-in-language';
+import { named } from '../named';
+import type { Scope } from '../scope';
+import { vars } from '../vars';
+import { addCode, type CodeEntry } from './add-code';
+import { addFactory } from './add-factory';
+import { addSpecCase } from './add-spec-case';
+import { codesList, type CodesList } from './codes-list';
+import { namedRefusalCode } from './named-refusal-code';
 
 export interface NamedRefusal {
   readonly refusal: Name;

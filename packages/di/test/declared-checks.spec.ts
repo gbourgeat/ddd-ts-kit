@@ -8,12 +8,12 @@ import {
   createTestApplication,
   defineContextModule,
   kernelModule,
-} from '../src/index.js';
-import * as billing from './fixtures/contexts/billing/billing.declarations.js';
-import * as mistakes from './fixtures/contexts/wiring-mistakes.js';
-import { permissions } from './fixtures/contexts/billing/application/authorization/billing.permissions.js';
-import { Outbox } from './support/fakes/outbox.js';
-import { wiringFailure } from './support/failure.js';
+} from '../src';
+import * as billing from './fixtures/contexts/billing/billing.declarations';
+import * as mistakes from './fixtures/contexts/wiring-mistakes';
+import { permissions } from './fixtures/contexts/billing/application/authorization/billing.permissions';
+import { Outbox } from './support/fakes/outbox';
+import { wiringFailure } from './support/failure';
 
 const {
   GetInvoice,

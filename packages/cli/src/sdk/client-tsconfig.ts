@@ -1,4 +1,4 @@
-import { formatJson } from '../json/format-json.js';
+import { formatJson } from '../json/format-json';
 
 /**
  * The compiler options of a client, built on its own to `dist/`: ECMAScript modules with their

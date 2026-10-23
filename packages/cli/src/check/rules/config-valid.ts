@@ -1,7 +1,7 @@
-import { KNOWN_RULE_IDS } from '../catalogue/known-rule-ids.js';
-import { ConfigInspection } from '../configuration/config-inspection.js';
-import type { Rule } from '../model/rule.js';
-import { reporter } from '../support/reporter.js';
+import { KNOWN_RULE_IDS } from '../catalogue/known-rule-ids';
+import { ConfigInspection } from '../configuration/config-inspection';
+import type { Rule } from '../model/rule';
+import { reporter } from '../support/reporter';
 
 export const configValid: Rule = {
   id: 'config/valid',

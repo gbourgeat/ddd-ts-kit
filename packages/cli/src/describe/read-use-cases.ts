@@ -1,7 +1,7 @@
-import { toName } from '../naming/index.js';
-import type { UseCaseFact } from './context-description.js';
-import type { ContextSources } from './context-sources.js';
-import { roleDirectoriesOf } from '../model-modules/index.js';
+import { toName } from '../naming';
+import type { UseCaseFact } from './context-description';
+import type { ContextSources } from './context-sources';
+import { roleDirectoriesOf } from '../model-modules';
 
 const FOLDERS = [
   ['command', 'commands', 'Command'],

@@ -1,5 +1,5 @@
 import type { ProcessDecision } from '@ddd-ts-kit/kernel';
-import { ProcessOutcome } from './process-outcome.js';
+import { ProcessOutcome } from './process-outcome';
 
 /** A step of a process, from the state it starts in. */
 export interface ProcessScenario<State> {

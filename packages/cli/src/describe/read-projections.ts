@@ -1,6 +1,6 @@
-import type { ProjectionFact } from './context-description.js';
-import type { ContextSources } from './context-sources.js';
-import { roleFilesOf } from '../model-modules/index.js';
+import type { ProjectionFact } from './context-description';
+import type { ContextSources } from './context-sources';
+import { roleFilesOf } from '../model-modules';
 
 const FOLDER = 'application/projections';
 const SUFFIX = '.projection.ts';

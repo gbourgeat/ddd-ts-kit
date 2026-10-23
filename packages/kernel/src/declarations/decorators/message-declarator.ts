@@ -1,5 +1,5 @@
-import type { MessageType } from '../../application/messaging/message-type.js';
-import type { Message } from '../../application/messaging/message.js';
+import type { MessageType } from '../../application/messaging/message-type';
+import type { Message } from '../../application/messaging/message';
 
 /**
  * A class decorator of a command or a query, for both decorator modes of the compiler: the

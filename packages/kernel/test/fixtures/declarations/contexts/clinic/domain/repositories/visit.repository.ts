@@ -1,4 +1,4 @@
-import type { Visit } from '../visit.js';
+import type { Visit } from '../visit';
 
 export abstract class VisitRepository {
   abstract save(visit: Visit): Promise<void>;

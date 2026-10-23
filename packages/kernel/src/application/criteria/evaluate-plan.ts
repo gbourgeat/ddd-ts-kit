@@ -1,7 +1,7 @@
-import type { Page } from '../pagination/page.js';
-import type { CriteriaPlan } from './criteria-plan.js';
-import { pageOfPlan } from './page-of-plan.js';
-import { selectRows } from './select-rows.js';
+import type { Page } from '../pagination/page';
+import type { CriteriaPlan } from './criteria-plan';
+import { pageOfPlan } from './page-of-plan';
+import { selectRows } from './select-rows';
 
 /** Runs a plan over rows held in memory, with the semantics every store translator matches. */
 export function evaluatePlan<Row extends object>(plan: CriteriaPlan, rows: readonly Row[]): Page<Row> {

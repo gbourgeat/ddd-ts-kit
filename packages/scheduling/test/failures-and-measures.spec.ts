@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryLogger } from '@ddd-ts-kit/kernel';
-import { DURATION_HISTOGRAM, RUNS_COUNTER } from '../src/index.js';
-import { aBench } from './support/a-bench.js';
-import { MINUTE } from './support/durations.js';
-import { EXPORT, REMINDERS } from './support/job-names.js';
-import { LedgerClosed } from './support/ledger-closed.js';
-import { QUARTERLY } from './support/quarterly.js';
-import { RecordingJob } from './support/recording-job.js';
-import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections.js';
+import { DURATION_HISTOGRAM, RUNS_COUNTER } from '../src';
+import { aBench } from './support/a-bench';
+import { MINUTE } from './support/durations';
+import { EXPORT, REMINDERS } from './support/job-names';
+import { LedgerClosed } from './support/ledger-closed';
+import { QUARTERLY } from './support/quarterly';
+import { RecordingJob } from './support/recording-job';
+import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections';
 
 refuseUnhandledRejections();
 

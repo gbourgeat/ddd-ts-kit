@@ -1,7 +1,7 @@
 import { messagingSystemOf, type IntegrationEvent, type IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
-import { InvalidEventPayloadError } from '../definition/invalid-event-payload-error.js';
-import type { EventRegistry } from '../registry/event-registry.js';
-import { UnknownEventError } from './unknown-event-error.js';
+import { InvalidEventPayloadError } from '../definition/invalid-event-payload-error';
+import type { EventRegistry } from '../registry/event-registry';
+import { UnknownEventError } from './unknown-event-error';
 
 export interface ValidatingPublisherOptions {
   /** What to do with an event whose type and version are not in the registry. */

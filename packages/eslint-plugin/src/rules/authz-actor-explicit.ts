@@ -1,11 +1,11 @@
 import { ASTUtils, AST_NODE_TYPES, TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { accessedName } from '../support/calls/accessed-name.js';
-import { declaredTypeName } from '../support/types/declared-type-name.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
-import { propertyName } from '../support/globals/property-name.js';
-import { importListener, type ImportedName } from '../support/imports/import-listener.js';
-import { innerLayer } from '../support/imports/inner-layer.js';
-import { parameterTypeName } from '../support/types/parameter-type-name.js';
+import { accessedName } from '../support/calls/accessed-name';
+import { declaredTypeName } from '../support/types/declared-type-name';
+import { defineRule, type Report } from '../support/rule/define-rule';
+import { propertyName } from '../support/globals/property-name';
+import { importListener, type ImportedName } from '../support/imports/import-listener';
+import { innerLayer } from '../support/imports/inner-layer';
+import { parameterTypeName } from '../support/types/parameter-type-name';
 
 type MessageId = 'imported' | 'used' | 'helper' | 'injected' | 'read';
 type Source = Readonly<TSESLint.SourceCode>;

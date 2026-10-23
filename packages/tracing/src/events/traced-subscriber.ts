@@ -4,8 +4,8 @@ import {
   type IntegrationEventSubscriber,
   type Subscription,
 } from '@ddd-ts-kit/kernel';
-import type { ConsumerTrace } from './consumer-trace.js';
-import { tracedConsumer } from './traced-consumer.js';
+import type { ConsumerTrace } from './consumer-trace';
+import { tracedConsumer } from './traced-consumer';
 
 export interface TracedSubscriberOptions {
   /** Default `continue`. */

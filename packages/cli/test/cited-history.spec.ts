@@ -1,10 +1,10 @@
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, write } from './helpers.js';
-import { commitFiles } from './support/commit-files.js';
-import { committedProject } from './support/committed-project.js';
-import { jsonAt } from './support/json-at.js';
+import { cli, write } from './helpers';
+import { commitFiles } from './support/commit-files';
+import { committedProject } from './support/committed-project';
+import { jsonAt } from './support/json-at';
 
 const BILLING = 'src/contexts/billing';
 const REGISTER = `${BILLING}/application/ports/payment-register.port.ts`;

@@ -1,5 +1,5 @@
-import type { JobSchedule } from './job-schedule.js';
-import { parseJobSchedule } from './parse-job-schedule.js';
+import type { JobSchedule } from './job-schedule';
+import { parseJobSchedule } from './parse-job-schedule';
 
 /** `every 15m`, or `cron 0 7 * * 1-5 (Europe/Paris)`: the schedule as a diagnostic shows it. */
 export function describeJobSchedule(schedule: JobSchedule): string {

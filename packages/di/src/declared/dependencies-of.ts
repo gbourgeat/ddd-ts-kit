@@ -1,6 +1,6 @@
 import { describeToken, injectedDependencies, type Dependencies } from '@ddd-ts-kit/kernel/declarations';
-import { WiringError } from '../errors/wiring-error.js';
-import type { Declarer } from '../wiring/declarer.js';
+import { WiringError } from '../errors/wiring-error';
+import type { Declarer } from '../wiring/declarer';
 
 const REGENERATE =
   'Run `ddd-ts-kit docs`, which reads the constructors and rewrites the generated files of the context (the <folder>.declarations.ts of each role folder, which <context>.declarations.ts re-exports, or <context>.dependencies.ts under discovery), and assemble the context from <context>.declarations.ts or by discovery';

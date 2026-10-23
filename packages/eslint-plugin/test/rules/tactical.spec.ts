@@ -1,11 +1,11 @@
-import { applicationCommandQuerySeparation } from '../../src/rules/application-command-query-separation.js';
-import { applicationHandlerShape } from '../../src/rules/application-handler-shape.js';
-import { domainAggregateEncapsulation } from '../../src/rules/domain-aggregate-encapsulation.js';
-import { domainNoGenericError } from '../../src/rules/domain-no-generic-error.js';
-import { domainValueObjectImmutability } from '../../src/rules/domain-value-object-immutability.js';
-import { eventsNameFormat } from '../../src/rules/events-name-format.js';
-import { testNoMocks } from '../../src/rules/test-no-mocks.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+import { applicationCommandQuerySeparation } from '../../src/rules/application-command-query-separation';
+import { applicationHandlerShape } from '../../src/rules/application-handler-shape';
+import { domainAggregateEncapsulation } from '../../src/rules/domain-aggregate-encapsulation';
+import { domainNoGenericError } from '../../src/rules/domain-no-generic-error';
+import { domainValueObjectImmutability } from '../../src/rules/domain-value-object-immutability';
+import { eventsNameFormat } from '../../src/rules/events-name-format';
+import { testNoMocks } from '../../src/rules/test-no-mocks';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const AGGREGATE = `${BILLING}/domain/aggregates/invoice.aggregate.ts`;
 const ENTITY = `${BILLING}/domain/entities/invoice-line.entity.ts`;

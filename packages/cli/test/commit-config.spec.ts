@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { parseConfig, serializeConfig } from '../src/config/index.js';
-import { cli, read, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
+import { parseConfig, serializeConfig } from '../src/config';
+import { cli, read, write } from './helpers';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
 
 const CONFIG = 'ddd-ts-kit.config.json';
 

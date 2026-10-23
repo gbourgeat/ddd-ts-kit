@@ -1,9 +1,9 @@
-import { parseGlossary } from '../check/language/parse-glossary.js';
-import { TECHNICAL_WORDS } from '../check/language/technical-words.js';
-import { unknownWords } from '../check/language/unknown-words.js';
-import { CliError } from '../cli-error.js';
-import { splitWords, toName, type Name } from '../naming/index.js';
-import type { Scope } from './scope.js';
+import { parseGlossary } from '../check/language/parse-glossary';
+import { TECHNICAL_WORDS } from '../check/language/technical-words';
+import { unknownWords } from '../check/language/unknown-words';
+import { CliError } from '../cli-error';
+import { splitWords, toName, type Name } from '../naming';
+import type { Scope } from './scope';
 
 /**
  * Refuses a name that carries a technical word, or a word the glossary of the context does not

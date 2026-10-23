@@ -1,4 +1,4 @@
-import type { ContextFacts } from './context-facts.js';
+import type { ContextFacts } from './context-facts';
 
 /** The generated block of docs/context-map.md: a Mermaid diagram, then the table of contexts. */
 export function contextMapLines(contexts: readonly ContextFacts[]): string[] {

@@ -1,9 +1,9 @@
 import { EventEmitter } from 'node:events';
 import type { Channel, ChannelModel, ConfirmChannel, Connection } from 'amqplib';
-import { IllegalOperation, Unsupported } from './errors.js';
-import { MemoryChannel } from './memory-channel.js';
-import { SERVER_PROPERTIES } from './messages.js';
-import type { BrokerState, ChannelOwner, Closable, Severable, Wire } from './model.js';
+import { IllegalOperation, Unsupported } from './errors';
+import { MemoryChannel } from './memory-channel';
+import { SERVER_PROPERTIES } from './messages';
+import type { BrokerState, ChannelOwner, Closable, Severable, Wire } from './model';
 
 /** A connection to the in-memory broker: its channels close with it. */
 export class MemoryConnection extends EventEmitter implements ChannelModel, Severable, ChannelOwner {

@@ -1,9 +1,9 @@
-import { SchemaNode } from '../../schema/schema-node.js';
-import { isRecord } from '../../support/is-record.js';
-import { wireText } from '../wire-text.js';
-import { ENTRY_ELEMENT, ITEM_ELEMENT, KEY_ATTRIBUTE, NIL_ATTRIBUTE } from './xml-convention.js';
-import { isXmlName } from './is-xml-name.js';
-import { xmlText } from './xml-text.js';
+import { SchemaNode } from '../../schema/schema-node';
+import { isRecord } from '../../support/is-record';
+import { wireText } from '../wire-text';
+import { ENTRY_ELEMENT, ITEM_ELEMENT, KEY_ATTRIBUTE, NIL_ATTRIBUTE } from './xml-convention';
+import { isXmlName } from './is-xml-name';
+import { xmlText } from './xml-text';
 
 const ANY = SchemaNode.of({});
 

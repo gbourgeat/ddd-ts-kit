@@ -1,6 +1,6 @@
 import { bigint, integer, jsonb, smallint, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { EVENT_STORE_TABLES } from '@ddd-ts-kit/kernel';
-import { tableIn } from '../schema/table-in.js';
+import { tableIn } from '../schema/table-in';
 
 /**
  * The tables of the event store, to include in the schema files drizzle-kit reads so that the

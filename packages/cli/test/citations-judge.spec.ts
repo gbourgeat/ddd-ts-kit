@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { config } from '../src/check/fixtures/config.js';
-import { citationLine } from '../src/citations/citation-line.js';
-import type { Evidence } from '../src/citations/evidence.js';
-import { formatCitations } from '../src/citations/format-citations.js';
-import { formatRemovals } from '../src/citations/format-removals.js';
-import { historyOf } from '../src/citations/history-of.js';
-import { judgePath } from '../src/citations/judge-path.js';
-import { nameIndexOf } from '../src/citations/name-index-of.js';
-import type { StaleCitation } from '../src/citations/stale-citation.js';
-import { parseConfig } from '../src/config/index.js';
-import { designLine } from '../src/worker/design-line.js';
+import { config } from '../src/check/fixtures/config';
+import { citationLine } from '../src/citations/citation-line';
+import type { Evidence } from '../src/citations/evidence';
+import { formatCitations } from '../src/citations/format-citations';
+import { formatRemovals } from '../src/citations/format-removals';
+import { historyOf } from '../src/citations/history-of';
+import { judgePath } from '../src/citations/judge-path';
+import { nameIndexOf } from '../src/citations/name-index-of';
+import type { StaleCitation } from '../src/citations/stale-citation';
+import { parseConfig } from '../src/config';
+import { designLine } from '../src/worker/design-line';
 
 const BILLING = 'src/contexts/billing';
 const PORTS = `${BILLING}/application/ports`;

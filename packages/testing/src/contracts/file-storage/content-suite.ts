@@ -1,8 +1,8 @@
-import { checksumOf } from './checksum-of.js';
-import { chunksOf } from './chunks-of.js';
-import { LARGE_SIZE, PDF, TEXT } from './contents.js';
-import { largeContent } from './large-content.js';
-import { FileStorageSuite } from './file-storage-suite.js';
+import { checksumOf } from './checksum-of';
+import { chunksOf } from './chunks-of';
+import { LARGE_SIZE, PDF, TEXT } from './contents';
+import { largeContent } from './large-content';
+import { FileStorageSuite } from './file-storage-suite';
 
 const INVALID_KEYS = ['', '../escape', '/absolute', 'a//b', '.hidden', 'a/../b', 'a/./b', 'with space', 'tail/'];
 

@@ -1,5 +1,5 @@
-import type { ExpectedSpan } from './expected-span.js';
-import type { SpanNode } from './span-node.js';
+import type { ExpectedSpan } from './expected-span';
+import type { SpanNode } from './span-node';
 
 /** What differs between the spans found under one parent and the ones expected there, as sentences. */
 export function spanMismatches(

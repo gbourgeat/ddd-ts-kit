@@ -9,12 +9,12 @@ import {
   type Lock,
   type Metrics,
 } from '@ddd-ts-kit/kernel';
-import { namespaced } from '../keys/namespaced.js';
-import { prefixPattern } from '../keys/prefix-pattern.js';
-import { conceal } from '../secrecy/conceal.js';
-import type { CacheCodec } from './cache-codec.js';
-import type { CacheOperation } from './cache-operation.js';
-import { jsonCodec } from './json-codec.js';
+import { namespaced } from '../keys/namespaced';
+import { prefixPattern } from '../keys/prefix-pattern';
+import { conceal } from '../secrecy/conceal';
+import type { CacheCodec } from './cache-codec';
+import type { CacheOperation } from './cache-operation';
+import { jsonCodec } from './json-codec';
 
 export interface RedisCacheOptions {
   /** Prefix of every key, typically the bounded context: two contexts never read each other's entries. */

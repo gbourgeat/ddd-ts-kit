@@ -1,8 +1,8 @@
 import type { IntegrationEvent, ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
-import type { IntegrationEventDefinition } from '../definition/integration-event-definition.js';
-import type { EventScopeOptions } from './event-scope-options.js';
-import type { EventSubscription } from './event-subscription.js';
-import { on } from './on.js';
+import type { IntegrationEventDefinition } from '../definition/integration-event-definition';
+import type { EventScopeOptions } from './event-scope-options';
+import type { EventSubscription } from './event-subscription';
+import { on } from './on';
 
 export interface ConsumeOptions extends EventScopeOptions {
   /** Name of the consuming context or handler: the idempotency scope. */

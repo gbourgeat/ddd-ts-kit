@@ -29,23 +29,23 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { describeToken } from '@ddd-ts-kit/kernel/declarations';
 import { JobStore, QueueWorker, StoredProcessRunner } from '@ddd-ts-kit/scheduling';
-import type { Application } from '../application/application.js';
-import { assemble } from '../application/assemble.js';
-import { override, type Override } from '../application/override.js';
-import { passEveryMessage } from '../authorization/pass-every-message.js';
-import { UseCaseGuard } from '../authorization/use-case-guard.js';
-import { WiringError } from '../errors/wiring-error.js';
-import { KERNEL_PORTS } from '../kernel/kernel-ports.js';
-import { collectWiring } from '../module/collect-wiring.js';
-import { TokenSet } from '../token/token-set.js';
-import type { KindAspect } from '../wiring/kind-aspect.js';
-import { naturalKind } from '../wiring/natural-kind.js';
-import type { Wiring } from '../wiring/wiring.js';
-import { createTestKernel } from './create-test-kernel.js';
-import type { TestApplicationOptions } from './test-application-options.js';
-import { testApplicationOf } from './test-application-of.js';
-import type { TestApplication } from './test-application.js';
-import type { TestKernel } from './test-kernel.js';
+import type { Application } from '../application/application';
+import { assemble } from '../application/assemble';
+import { override, type Override } from '../application/override';
+import { passEveryMessage } from '../authorization/pass-every-message';
+import { UseCaseGuard } from '../authorization/use-case-guard';
+import { WiringError } from '../errors/wiring-error';
+import { KERNEL_PORTS } from '../kernel/kernel-ports';
+import { collectWiring } from '../module/collect-wiring';
+import { TokenSet } from '../token/token-set';
+import type { KindAspect } from '../wiring/kind-aspect';
+import { naturalKind } from '../wiring/natural-kind';
+import type { Wiring } from '../wiring/wiring';
+import { createTestKernel } from './create-test-kernel';
+import type { TestApplicationOptions } from './test-application-options';
+import { testApplicationOf } from './test-application-of';
+import type { TestApplication } from './test-application';
+import type { TestKernel } from './test-kernel';
 
 /**
  * The modules on a deterministic, in-memory kernel (frozen clock, sequential identifiers,

@@ -1,5 +1,5 @@
-import type { Page } from '../pagination/page.js';
-import { Hydration } from './hydration.js';
+import type { Page } from '../pagination/page';
+import { Hydration } from './hydration';
 
 /**
  * Completes the rows of a read with data of other bounded contexts, one call per relation for

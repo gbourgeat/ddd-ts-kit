@@ -1,6 +1,6 @@
-import type { Config } from '../config/index.js';
-import { writeAdr } from '../generate/kinds/write-adr.js';
-import type { Workspace } from '../workspace/index.js';
+import type { Config } from '../config';
+import { writeAdr } from '../generate/kinds/write-adr';
+import type { Workspace } from '../workspace';
 
 /** `--allow-no-outbox`: the choice is kept, with the decision record and the config entry that make it a recorded deviation. */
 export function recordNoOutbox(ws: Workspace, config: Config, allowNoOutbox: string | undefined): Config {

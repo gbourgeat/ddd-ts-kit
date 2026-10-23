@@ -20,8 +20,8 @@ import {
   publicUseCase,
   requires,
   type DecisionRecord,
-} from '../src/index.js';
-import { DenyAll, RecordingAuthorizer } from '../src/testing.js';
+} from '../src';
+import { DenyAll, RecordingAuthorizer } from '../src/testing';
 import {
   ArchiveInvoices,
   GetCatalog,
@@ -30,7 +30,7 @@ import {
   VoidInvoice,
   ada,
   billingPermissions,
-} from './support/billing.js';
+} from './support/billing';
 
 const map = AuthorizationMap.of(
   requires(IssueInvoice, billingPermissions['invoice.issue']),

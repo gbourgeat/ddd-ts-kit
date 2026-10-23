@@ -1,4 +1,4 @@
-import type { BindingInfo } from './binding-info.js';
+import type { BindingInfo } from './binding-info';
 
 /**
  * Applied to every instance a binding creates, once per creation. This is where a

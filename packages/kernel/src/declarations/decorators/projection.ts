@@ -1,14 +1,14 @@
-import { isJobName } from '../../application/scheduling/is-job-name.js';
-import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
-import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature.js';
-import type { DeclaredClass } from '../model/declared-class.js';
-import type { ProjectionApplication } from '../model/projection-application.js';
-import type { ProjectionFeed } from '../model/projection-feed.js';
-import { DeclarationError } from '../registry/declaration-error.js';
-import { record } from '../registry/record.js';
-import { pendingApplications } from './pending-applications.js';
-import type { ProjectionOptions } from './projection-options.js';
+import { isJobName } from '../../application/scheduling/is-job-name';
+import type { ClassDeclarator } from '../dependencies/class-declarator';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies';
+import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature';
+import type { DeclaredClass } from '../model/declared-class';
+import type { ProjectionApplication } from '../model/projection-application';
+import type { ProjectionFeed } from '../model/projection-feed';
+import { DeclarationError } from '../registry/declaration-error';
+import { record } from '../registry/record';
+import { pendingApplications } from './pending-applications';
+import type { ProjectionOptions } from './projection-options';
 
 /**
  * A projector: the class that keeps one read model up to date, each of its `@On` methods

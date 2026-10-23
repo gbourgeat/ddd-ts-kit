@@ -1,4 +1,4 @@
-import { scan, type Scan } from '../check/scan/scan.js';
+import { scan, type Scan } from '../check/scan/scan';
 
 export interface CodeMatch {
   readonly match: RegExpExecArray;

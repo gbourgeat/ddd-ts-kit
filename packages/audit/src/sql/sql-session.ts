@@ -1,5 +1,5 @@
-import type { SqlRow } from './sql-row.js';
-import type { Sql } from './sql.js';
+import type { SqlRow } from './sql-row';
+import type { Sql } from './sql';
 
 /** Where a store runs its statements: the ambient transaction, or the database itself. */
 export interface SqlSession {

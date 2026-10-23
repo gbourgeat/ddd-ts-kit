@@ -1,4 +1,4 @@
-import { runGit } from '../commit/run-git.js';
+import { runGit } from '../commit/run-git';
 
 /** True when the repository has a local branch of that name. */
 export function branchExists(root: string, branch: string): boolean {

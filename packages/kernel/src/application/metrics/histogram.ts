@@ -1,4 +1,4 @@
-import type { MetricLabels } from './metric-labels.js';
+import type { MetricLabels } from './metric-labels';
 
 /** A distribution of observed values: durations, sizes. */
 export interface Histogram {

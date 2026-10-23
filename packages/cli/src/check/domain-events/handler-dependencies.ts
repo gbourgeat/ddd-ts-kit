@@ -1,9 +1,9 @@
-import { classesOf } from '../declarations/classes-of.js';
-import { dependencyLists } from '../declarations/dependency-lists.js';
-import type { SourceFile } from '../model/source-file.js';
-import { importedFrom } from '../support/imported-from.js';
-import { callArguments } from '../text/call-arguments.js';
-import type { HandlerDependency } from './handler-dependency.js';
+import { classesOf } from '../declarations/classes-of';
+import { dependencyLists } from '../declarations/dependency-lists';
+import type { SourceFile } from '../model/source-file';
+import { importedFrom } from '../support/imported-from';
+import { callArguments } from '../text/call-arguments';
+import type { HandlerDependency } from './handler-dependency';
 
 const TO_CLASS = /\.\s*toClass\s*\(/g;
 const TYPE = /:\s*((?:[A-Za-z_$][\w$]*\s*\.\s*)*[A-Za-z_$][\w$]*)/;

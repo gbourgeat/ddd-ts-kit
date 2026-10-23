@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryErrorReporter, InMemoryLogger, Logger, NoopLogger } from '@ddd-ts-kit/kernel';
-import { createApplication, createTestApplication, defineContextModule, fake, kernelModule } from '../src/index.js';
+import { createApplication, createTestApplication, defineContextModule, fake, kernelModule } from '../src';
 
 /** What happened while the application stopped, in order. */
 type Journal = string[];

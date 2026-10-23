@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { REPO_ROOT, write } from '../helpers.js';
+import { REPO_ROOT, write } from '../helpers';
 
 const WORKSPACE_MODULES = path.join(REPO_ROOT, 'node_modules');
 const PUBLISHED_PARTS = ['package.json', 'dist', 'templates', 'prisma'];

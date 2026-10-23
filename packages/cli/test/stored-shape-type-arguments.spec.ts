@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { declaredShape } from '../src/check/event-sourcing/declared-shape.js';
-import { readStoredShape } from '../src/check/event-sourcing/read-stored-shape.js';
-import { scan } from '../src/check/scan/scan.js';
+import { declaredShape } from '../src/check/event-sourcing/declared-shape';
+import { readStoredShape } from '../src/check/event-sourcing/read-stored-shape';
+import { scan } from '../src/check/scan/scan';
 
 const shapeOf = (data: string) => readStoredShape(scan(`export interface Data { ${data} }\n`), 'Data');
 

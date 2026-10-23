@@ -1,4 +1,4 @@
-import type { OpenApiDocumentConfig } from '../config/index.js';
+import type { OpenApiDocumentConfig } from '../config';
 
 const WIDTH = 120;
 

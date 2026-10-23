@@ -1,12 +1,12 @@
-import { specifierOf } from '../../../alias/index.js';
-import { barrelFile, routesFile } from '../../../declared/index.js';
-import { fitStatement } from '../../../layout/index.js';
-import { assembledContext } from '../../assembled-context.js';
-import { hostImports } from '../../host-imports.js';
-import { isDeclared } from '../../is-declared.js';
-import { listsRoutes } from '../../lists-routes.js';
-import { relativeTo } from '../../relative-to.js';
-import type { Scope } from '../../scope.js';
+import { specifierOf } from '../../../alias';
+import { barrelFile, routesFile } from '../../../declared';
+import { fitStatement } from '../../../layout';
+import { assembledContext } from '../../assembled-context';
+import { hostImports } from '../../host-imports';
+import { isDeclared } from '../../is-declared';
+import { listsRoutes } from '../../lists-routes';
+import { relativeTo } from '../../relative-to';
+import type { Scope } from '../../scope';
 
 /** What the entry point of a context hands to `composeApplication` so that it hosts this context only, and what it imports for it. */
 export interface ServiceSelection {

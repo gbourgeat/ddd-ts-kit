@@ -1,8 +1,8 @@
-import type { AuthorizationMode } from '../authorization/authorization-mode.js';
-import type { JobsOptions } from '../jobs/jobs-options.js';
-import type { ContextModule } from '../module/context-module.js';
-import type { Decorate } from './decorate.js';
-import type { Override } from './override.js';
+import type { AuthorizationMode } from '../authorization/authorization-mode';
+import type { JobsOptions } from '../jobs/jobs-options';
+import type { ContextModule } from '../module/context-module';
+import type { Decorate } from './decorate';
+import type { Override } from './override';
 
 export interface ApplicationOptions {
   readonly modules: readonly ContextModule[];

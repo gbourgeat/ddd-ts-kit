@@ -1,6 +1,6 @@
 import type { Redis } from 'ioredis';
-import { failureCode } from '../errors/failure-code.js';
-import type { GroupDescription } from './group-description.js';
+import { failureCode } from '../errors/failure-code';
+import type { GroupDescription } from './group-description';
 
 const GROUP_EXISTS = 'REDIS_BUSYGROUP';
 

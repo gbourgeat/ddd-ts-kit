@@ -1,5 +1,5 @@
-import { matchingBracket } from '../check/text/matching-bracket.js';
-import { splitTopLevel } from '../check/text/split-top-level.js';
+import { matchingBracket } from '../check/text/matching-bracket';
+import { splitTopLevel } from '../check/text/split-top-level';
 
 const NAMED = /^(?:\.\.\.)?([A-Za-z_$][\w$]*)/;
 

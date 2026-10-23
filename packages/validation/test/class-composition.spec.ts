@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { describe, expect, it } from 'vitest';
 import { Transform, Type } from 'class-transformer';
 import { IsISO8601, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
-import { classSchema, omitClass, partialClass, pickClass } from '../src/class-validator.js';
+import { classSchema, omitClass, partialClass, pickClass } from '../src/class-validator';
 
 class PlaceDto {
   @IsString()

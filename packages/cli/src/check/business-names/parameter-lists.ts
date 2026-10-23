@@ -1,5 +1,5 @@
-import { matchingBracket } from '../text/matching-bracket.js';
-import { openingBracket } from './opening-bracket.js';
+import { matchingBracket } from '../text/matching-bracket';
+import { openingBracket } from './opening-bracket';
 
 /** A parameter list, by the offsets of its parentheses, or the one parameter of `name =>`. */
 export type ParameterList = { readonly open: number; readonly close: number } | { readonly single: number };

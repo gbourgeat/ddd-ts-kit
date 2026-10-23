@@ -1,6 +1,6 @@
-import type { Scan } from '../scan/scan.js';
-import { matchingBracket } from '../text/matching-bracket.js';
-import { splitTopLevel } from '../text/split-top-level.js';
+import type { Scan } from '../scan/scan';
+import { matchingBracket } from '../text/matching-bracket';
+import { splitTopLevel } from '../text/split-top-level';
 
 /** One type of a file as a stored shape reads it: its members, and the named types they use. */
 export interface DeclaredShape {

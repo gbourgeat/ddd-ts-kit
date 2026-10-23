@@ -1,5 +1,5 @@
-import { specifierOf } from '../../alias/index.js';
-import type { Scope } from '../scope.js';
+import { specifierOf } from '../../alias';
+import type { Scope } from '../scope';
 
 /** Exports a file of a published language from its index, once. */
 export function publishInIndex({ ws, config }: Pick<Scope, 'ws' | 'config'>, directory: string, file: string): void {

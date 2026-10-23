@@ -1,4 +1,4 @@
-import type { Entry } from '../entry.js';
+import type { Entry } from '../entry';
 
 export abstract class EntryRepository {
   abstract nextId(): Promise<string>;

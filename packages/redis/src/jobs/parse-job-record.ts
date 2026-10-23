@@ -1,4 +1,4 @@
-import type { RedisJobRecord } from './redis-job-record.js';
+import type { RedisJobRecord } from './redis-job-record';
 
 /** Reads a record the scripts wrote. Throws on anything else: the keys of the namespace belong to the store. */
 export function parseJobRecord(raw: string): RedisJobRecord {

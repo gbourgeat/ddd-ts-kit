@@ -17,7 +17,7 @@ import {
   tenantSettingValues,
   type Actor,
   type ExecutionContext,
-} from '../src/index.js';
+} from '../src';
 
 const WIDENING = ['*', 'acme,globex', 'acme:products', '', ' acme', 'acme;drop', "acme'", 'a'.repeat(64)];
 const visitor: Actor = { id: 'anonymous', type: 'anonymous', roles: [], attributes: {} };

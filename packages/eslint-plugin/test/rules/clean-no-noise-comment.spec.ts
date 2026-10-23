@@ -1,5 +1,5 @@
-import { cleanNoNoiseComment } from '../../src/rules/clean-no-noise-comment.js';
-import { ruleTester } from '../support/rule-tester.js';
+import { cleanNoNoiseComment } from '../../src/rules/clean-no-noise-comment';
+import { ruleTester } from '../support/rule-tester';
 
 ruleTester.run('clean-no-noise-comment', cleanNoNoiseComment, {
   valid: [

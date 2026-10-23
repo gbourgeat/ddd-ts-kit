@@ -14,12 +14,12 @@ import {
   ShadowReadModelStore,
   TableReadModelStore,
   type StoredEvent,
-} from '../src/index.js';
-import { applyingProjection, declarationOf } from '../src/declarations.js';
-import { Account, type AccountEvent, type AccountState } from './support/bank/account.js';
-import { accountEvents } from './support/bank/account-events.js';
-import { BalancesProjection, balanceCriteria, type BalanceRow } from './fixtures/event-sourcing/balances.js';
-import { TwoAggregatesProjection } from './fixtures/event-sourcing/two-aggregates.js';
+} from '../src';
+import { applyingProjection, declarationOf } from '../src/declarations';
+import { Account, type AccountEvent, type AccountState } from './support/bank/account';
+import { accountEvents } from './support/bank/account-events';
+import { BalancesProjection, balanceCriteria, type BalanceRow } from './fixtures/event-sourcing/balances';
+import { TwoAggregatesProjection } from './fixtures/event-sourcing/two-aggregates';
 
 const serializer = new EventSerializer<AccountEvent>(accountEvents, {
   cipher: new PersonalDataCipher(new InMemorySubjectKeyStore()),

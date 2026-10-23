@@ -1,14 +1,14 @@
 import path from 'node:path';
-import { CONFIG_FILE, type Config } from '../../config/index.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inLayers } from '../support/in-layers.js';
-import { lineOfSequence } from '../support/line-of-sequence.js';
-import { perFile } from '../support/per-file.js';
-import { reporter } from '../support/reporter.js';
-import { identifier } from '../text/identifier.js';
-import { platformFilePaths } from '../../platform-layout/index.js';
+import { CONFIG_FILE, type Config } from '../../config';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { inLayers } from '../support/in-layers';
+import { lineOfSequence } from '../support/line-of-sequence';
+import { perFile } from '../support/per-file';
+import { reporter } from '../support/reporter';
+import { identifier } from '../text/identifier';
+import { platformFilePaths } from '../../platform-layout';
 
 const BROKER_CLIENTS = [
   'amqplib',

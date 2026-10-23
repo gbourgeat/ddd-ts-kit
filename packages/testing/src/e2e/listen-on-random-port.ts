@@ -1,4 +1,4 @@
-import type { RunningServer } from './running-server.js';
+import type { RunningServer } from './running-server';
 
 /** The part of a Node `http.Server` that `listenOnRandomPort` uses. */
 export interface NodeServer {

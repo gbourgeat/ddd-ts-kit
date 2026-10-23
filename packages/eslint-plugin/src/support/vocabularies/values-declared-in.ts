@@ -1,6 +1,6 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { Location } from '../../project/location.js';
-import type { DeclaredValue } from './declared-value.js';
+import type { Location } from '../../project/location';
+import type { DeclaredValue } from './declared-value';
 
 /** A source of the project: its path from the root, and where it stands. */
 export interface Declaring {

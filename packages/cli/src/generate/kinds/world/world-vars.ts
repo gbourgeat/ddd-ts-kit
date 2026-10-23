@@ -1,12 +1,12 @@
-import { specifierOf } from '../../../alias/index.js';
-import { LINE_WIDTH } from '../../../layout/line-width.js';
-import type { Name } from '../../../naming/index.js';
-import type { RenderContext } from '../../../templating/index.js';
-import { assembledContext } from '../../assembled-context.js';
-import { contextImports } from '../../context-imports.js';
-import { isDeclared } from '../../is-declared.js';
-import type { Scope } from '../../scope.js';
-import type { ContextFake } from './context-fakes.js';
+import { specifierOf } from '../../../alias';
+import { LINE_WIDTH } from '../../../layout/line-width';
+import type { Name } from '../../../naming';
+import type { RenderContext } from '../../../templating';
+import { assembledContext } from '../../assembled-context';
+import { contextImports } from '../../context-imports';
+import { isDeclared } from '../../is-declared';
+import type { Scope } from '../../scope';
+import type { ContextFake } from './context-fakes';
 
 /**
  * What a world template reads: its name, the imports of the fakes and of the ports they stand

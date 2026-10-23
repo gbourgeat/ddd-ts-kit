@@ -7,12 +7,12 @@ import {
   type Session,
   type TenantElevation,
 } from '@ddd-ts-kit/kernel';
-import type { Buildable } from '../builders/buildable.js';
-import { Builder } from '../builders/builder.js';
-import type { Defaults } from '../builders/defaults.js';
-import { resolve } from '../builders/resolve.js';
-import { sequence } from '../builders/sequence.js';
-import { aTestUser } from './a-test-user.js';
+import type { Buildable } from '../builders/buildable';
+import { Builder } from '../builders/builder';
+import type { Defaults } from '../builders/defaults';
+import { resolve } from '../builders/resolve';
+import { sequence } from '../builders/sequence';
+import { aTestUser } from './a-test-user';
 
 interface ExecutionContextProps {
   correlationId: string;

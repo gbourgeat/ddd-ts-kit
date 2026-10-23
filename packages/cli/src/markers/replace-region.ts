@@ -1,4 +1,4 @@
-import { marker } from './marker.js';
+import { marker } from './marker';
 
 /** Replaces the whole content of a region. Returns undefined when the file has no such region. */
 export function replaceRegion(content: string, region: string, body: readonly string[]): string | undefined {

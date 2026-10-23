@@ -1,4 +1,4 @@
-import type { Actor } from '../actor/actor.js';
+import type { Actor } from '../actor/actor';
 
 /**
  * The actor of the request or message being processed, for infrastructure that is not handed

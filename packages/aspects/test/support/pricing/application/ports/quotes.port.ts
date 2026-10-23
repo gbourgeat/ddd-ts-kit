@@ -1,4 +1,4 @@
-import type { Quote } from '../../../quote.js';
+import type { Quote } from '../../../quote';
 
 export abstract class Quotes {
   abstract readonly calls: string[];

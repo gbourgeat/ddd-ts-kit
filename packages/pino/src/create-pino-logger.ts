@@ -1,8 +1,8 @@
 import { CREDENTIAL_KEYS, type LogFields, type LogLevel } from '@ddd-ts-kit/kernel';
 import { pino, type DestinationStream, type LoggerOptions } from 'pino';
-import { correlationMixin } from './correlation/correlation-mixin.js';
-import { PinoLogger, type PinoLoggerOptions } from './pino-logger.js';
-import { credentialRedaction } from './redaction/credential-redaction.js';
+import { correlationMixin } from './correlation/correlation-mixin';
+import { PinoLogger, type PinoLoggerOptions } from './pino-logger';
+import { credentialRedaction } from './redaction/credential-redaction';
 
 export interface CreatePinoLoggerOptions extends PinoLoggerOptions {
   /** Entries below it are not written. Default `info`. */

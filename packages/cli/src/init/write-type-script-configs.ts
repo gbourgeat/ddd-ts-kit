@@ -1,8 +1,8 @@
-import { aliasRoots, compilerPaths, compilerResolutionOf, DEFAULT_BUILD_LAYOUT } from '../alias/index.js';
-import type { Config } from '../config/index.js';
-import { usesLegacyDecorators } from '../stack/uses-legacy-decorators.js';
-import type { Workspace } from '../workspace/index.js';
-import { formatJson } from '../json/format-json.js';
+import { aliasRoots, compilerPaths, compilerResolutionOf, DEFAULT_BUILD_LAYOUT } from '../alias';
+import type { Config } from '../config';
+import { usesLegacyDecorators } from '../stack/uses-legacy-decorators';
+import type { Workspace } from '../workspace';
+import { formatJson } from '../json/format-json';
 
 /**
  * `tsconfig.json` for the editor and the type check, `tsconfig.build.json` for what ships: no test,

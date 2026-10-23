@@ -1,1 +1,1 @@
-export * from './only-poster-reverses.policy.js';
+export * from './only-poster-reverses.policy';

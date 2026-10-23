@@ -1,7 +1,7 @@
 import { context, trace } from '@opentelemetry/api';
-import { tracingConfiguration } from '../configuration/configure-tracing.js';
-import { correlate } from './correlate.js';
-import { localRoots } from './local-roots.js';
+import { tracingConfiguration } from '../configuration/configure-tracing';
+import { correlate } from './correlate';
+import { localRoots } from './local-roots';
 
 export const DROPPED_SPANS_ATTRIBUTE = 'app.dependency_spans.dropped';
 

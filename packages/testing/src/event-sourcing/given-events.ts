@@ -1,6 +1,6 @@
 import type { AggregateHistory, DomainEvent } from '@ddd-ts-kit/kernel';
-import type { EventSource } from '../scenarios/event-source.js';
-import { scenario, type Scenario } from '../scenarios/scenario.js';
+import type { EventSource } from '../scenarios/event-source';
+import { scenario, type Scenario } from '../scenarios/scenario';
 
 /**
  * Starts a scenario of an event-sourced aggregate from its history, without a database: the

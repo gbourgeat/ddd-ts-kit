@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
-import type { ScriptCall } from './script-call.js';
-import type { ScriptRun } from './script-run.js';
+import type { ScriptCall } from './script-call';
+import type { ScriptRun } from './script-run';
 
 /** Enough of a failing run to read the cause, little enough to keep an agent's context. */
 const TAIL_LINES = 40;

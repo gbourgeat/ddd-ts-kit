@@ -1,6 +1,6 @@
 import type { Message } from 'amqplib';
-import { ATTEMPT_HEADER } from './headers.js';
-import { headersOf } from './headers-of.js';
+import { ATTEMPT_HEADER } from './headers';
+import { headersOf } from './headers-of';
 
 /** Which delivery this is, starting at 1: the header is set when the bus schedules a retry. */
 export function attemptOf(message: Message): number {

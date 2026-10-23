@@ -1,6 +1,6 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import type { EventType } from './event-type.js';
-import type { EventuallyOptions } from './eventually.js';
+import type { EventType } from './event-type';
+import type { EventuallyOptions } from './eventually';
 
 export interface EventRecorder {
   /** The events received so far, in order, optionally of one type. */

@@ -1,7 +1,7 @@
-import type { Config } from '../config/index.js';
-import { isRecord } from '../config/values/is-record.js';
-import type { Workspace } from '../workspace/index.js';
-import type { PlannedClient } from './planned-client.js';
+import type { Config } from '../config';
+import { isRecord } from '../config/values/is-record';
+import type { Workspace } from '../workspace';
+import type { PlannedClient } from './planned-client';
 
 /** The lockfile npm writes, which `npm ci` refuses while a workspace package is missing from it. */
 const NPM_LOCKFILE = 'package-lock.json';

@@ -1,5 +1,5 @@
-import { domainEventRuns } from './domain-event-runs.js';
-import type { UnitOfWorkScope } from './unit-of-work-scope.js';
+import { domainEventRuns } from './domain-event-runs';
+import type { UnitOfWorkScope } from './unit-of-work-scope';
 
 /**
  * Dispatches what waits in the scope, before the commit: the events queued so far in one go,

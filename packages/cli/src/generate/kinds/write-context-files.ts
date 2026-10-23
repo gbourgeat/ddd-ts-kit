@@ -1,14 +1,14 @@
-import { routesFile } from '../../declared/index.js';
-import type { RenderContext } from '../../templating/index.js';
-import { renderTemplate } from '../../templating/index.js';
-import type { Workspace } from '../../workspace/index.js';
-import { listsRoutes } from '../lists-routes.js';
-import { permissionsFile } from '../permissions-file.js';
-import { wiringFamily } from '../wiring-family.js';
-import type { ContextPlan } from './context-plan.js';
-import { planVars } from './plan-vars.js';
-import { wireContext } from './wire-context.js';
-import { platformFileIn } from '../../platform-layout/index.js';
+import { routesFile } from '../../declared';
+import type { RenderContext } from '../../templating';
+import { renderTemplate } from '../../templating';
+import type { Workspace } from '../../workspace';
+import { listsRoutes } from '../lists-routes';
+import { permissionsFile } from '../permissions-file';
+import { wiringFamily } from '../wiring-family';
+import type { ContextPlan } from './context-plan';
+import { planVars } from './plan-vars';
+import { wireContext } from './wire-context';
+import { platformFileIn } from '../../platform-layout';
 
 /** The files of a new context, the document first: the language is defined before the code that speaks it. */
 export function writeContextFiles(ws: Workspace, plan: ContextPlan): void {

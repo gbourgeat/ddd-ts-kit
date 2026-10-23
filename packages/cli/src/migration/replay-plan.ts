@@ -1,4 +1,4 @@
-import type { BranchMigration } from './branch-migration.js';
+import type { BranchMigration } from './branch-migration';
 
 /** What a replay deletes and generates again, read before anything is touched. */
 export interface ReplayPlan {

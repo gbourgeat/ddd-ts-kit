@@ -2,20 +2,20 @@ import { createReadStream, createWriteStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pipeline } from 'node:stream/promises';
-import type { FileContent } from '../../application/files/file-content.js';
-import { FileError } from '../../application/files/file-error.js';
-import type { FileMetadata } from '../../application/files/file-metadata.js';
-import type { FileSource } from '../../application/files/file-source.js';
-import type { ListedFile } from '../../application/files/listed-file.js';
-import { mediaTypeOf } from '../../application/files/media-type-of.js';
-import type { PutOptions } from '../../application/files/put-options.js';
-import type { StoredFile } from '../../application/files/stored-file.js';
-import { FileInspection } from './file-inspection.js';
-import type { LocalFileStorageOptions } from './local-file-storage-options.js';
-import { LocalPaths } from './local-paths.js';
-import { isStoredMetadata } from './is-stored-metadata.js';
-import type { StoredMetadata } from './stored-metadata.js';
-import { SelfSignedFileStorage } from './self-signed-file-storage.js';
+import type { FileContent } from '../../application/files/file-content';
+import { FileError } from '../../application/files/file-error';
+import type { FileMetadata } from '../../application/files/file-metadata';
+import type { FileSource } from '../../application/files/file-source';
+import type { ListedFile } from '../../application/files/listed-file';
+import { mediaTypeOf } from '../../application/files/media-type-of';
+import type { PutOptions } from '../../application/files/put-options';
+import type { StoredFile } from '../../application/files/stored-file';
+import { FileInspection } from './file-inspection';
+import type { LocalFileStorageOptions } from './local-file-storage-options';
+import { LocalPaths } from './local-paths';
+import { isStoredMetadata } from './is-stored-metadata';
+import type { StoredMetadata } from './stored-metadata';
+import { SelfSignedFileStorage } from './self-signed-file-storage';
 
 /**
  * The storage of development: a directory, each file under its key and what the file system does

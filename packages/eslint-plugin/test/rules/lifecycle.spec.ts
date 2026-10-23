@@ -1,5 +1,5 @@
-import { lifecycleStatusThroughMachine } from '../../src/rules/lifecycle-status-through-machine.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+import { lifecycleStatusThroughMachine } from '../../src/rules/lifecycle-status-through-machine';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const AGGREGATE = `${BILLING}/domain/aggregates/invoice.aggregate.ts`;
 const MACHINE = "import { invoiceLifecycle } from '../state-machines/invoice.state-machine.js';\n";

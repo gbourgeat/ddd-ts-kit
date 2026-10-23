@@ -1,4 +1,4 @@
-import type { AggregateRoot } from '../../domain/aggregate-root.js';
+import type { AggregateRoot } from '../../domain/aggregate-root';
 
 type EventSource = Pick<AggregateRoot<string | number>, 'pullEvents'>;
 

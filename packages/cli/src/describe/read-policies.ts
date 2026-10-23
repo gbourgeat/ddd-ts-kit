@@ -1,7 +1,7 @@
-import { toName } from '../naming/index.js';
-import type { PolicyFact } from './context-description.js';
-import type { ContextSources } from './context-sources.js';
-import { roleFilesOf } from '../model-modules/index.js';
+import { toName } from '../naming';
+import type { PolicyFact } from './context-description';
+import type { ContextSources } from './context-sources';
+import { roleFilesOf } from '../model-modules';
 
 const FOLDER = 'application/authorization';
 const SUFFIX = '.policy.ts';

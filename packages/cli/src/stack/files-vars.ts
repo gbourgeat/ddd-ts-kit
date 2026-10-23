@@ -1,6 +1,6 @@
-import type { Config } from '../config/index.js';
-import type { RenderContext } from '../templating/index.js';
-import { one } from './one.js';
+import type { Config } from '../config';
+import type { RenderContext } from '../templating';
+import { one } from './one';
 
 /** Where the content of files lives, and whether the routes that receive and serve them exist. */
 export function filesVars(config: Config): RenderContext {

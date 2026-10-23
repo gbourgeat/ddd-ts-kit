@@ -1,9 +1,9 @@
-import { routesFile } from '../declared/index.js';
-import type { RenderContext } from '../templating/index.js';
-import { renderTemplate, templateExists } from '../templating/index.js';
-import type { Scope } from './scope.js';
-import { wiringFamily, type WiringFamily } from './wiring-family.js';
-import { platformPath } from './platform-path.js';
+import { routesFile } from '../declared';
+import type { RenderContext } from '../templating';
+import { renderTemplate, templateExists } from '../templating';
+import type { Scope } from './scope';
+import { wiringFamily, type WiringFamily } from './wiring-family';
+import { platformPath } from './platform-path';
 
 /** What `wire` adds, file by file, without adding it. */
 export function wirings(scope: Scope, kind: string, context: RenderContext): { file: string; wiring: string }[] {

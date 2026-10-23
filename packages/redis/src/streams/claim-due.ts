@@ -1,8 +1,8 @@
 import type { Redis } from 'ioredis';
-import { entriesOf } from './codec/entries-of.js';
-import type { PendingEntry } from './codec/pending-entry.js';
-import { pendingOf } from './codec/pending-of.js';
-import type { Delivery } from './delivery.js';
+import { entriesOf } from './codec/entries-of';
+import type { PendingEntry } from './codec/pending-entry';
+import { pendingOf } from './codec/pending-of';
+import type { Delivery } from './delivery';
 
 export interface RedeliverySettings {
   /** The consumer name, which is the name of its group. */

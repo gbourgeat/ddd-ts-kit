@@ -1,4 +1,4 @@
-import { BRACKETS } from './brackets.js';
+import { BRACKETS } from './brackets';
 
 /** Offset of the first `terminator` met outside any bracket from `from`, or of the bracket closing the block around it. */
 export function endAtDepthZero(code: string, from: number, terminator: string): number {

@@ -408,7 +408,7 @@ handler by hand:
 // contexts/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.ts
 import { CommandBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { orderPlaced, type OrderPlaced } from '@/contexts/ordering/published-language/index';
+import { orderPlaced, type OrderPlaced } from '@/contexts/ordering/published-language';
 
 @IntegrationEventHandler(orderPlaced, { consumer: 'billing.invoice-on-order-placed' })
 export class InvoiceOnOrderPlaced {

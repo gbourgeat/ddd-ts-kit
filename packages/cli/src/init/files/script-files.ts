@@ -1,6 +1,6 @@
-import type { Config } from '../../config/index.js';
-import type { InitFile } from './init-file.js';
-import { when } from './when.js';
+import type { Config } from '../../config';
+import type { InitFile } from './init-file';
+import { when } from './when';
 
 export function scriptFiles(config: Config): InitFile[] {
   return [

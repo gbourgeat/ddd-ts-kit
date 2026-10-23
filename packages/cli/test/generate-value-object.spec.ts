@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, tempDir, write } from './helpers.js';
+import { cli, read, tempDir, write } from './helpers';
 
 const VO = 'src/contexts/billing/domain/value-objects/money.vo.ts';
 const SPEC = 'src/contexts/billing/test/unit/money.vo.spec.ts';

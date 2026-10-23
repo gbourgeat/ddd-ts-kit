@@ -1,14 +1,14 @@
-import { outsideConcern } from '../layers/outside-concern.js';
-import type { Flaw } from '../model/flaw.js';
-import type { Layer } from '../model/layer.js';
-import type { Location } from '../model/location.js';
-import type { ResolvedImport } from '../model/resolved-import.js';
-import type { Rule } from '../model/rule.js';
-import { bindingPlace } from '../support/binding-place.js';
-import { describeTarget } from '../support/describe-target.js';
-import { inLayer } from '../support/in-layer.js';
-import { isDeclaredStyle } from '../support/is-declared-style.js';
-import { perFile } from '../support/per-file.js';
+import { outsideConcern } from '../layers/outside-concern';
+import type { Flaw } from '../model/flaw';
+import type { Layer } from '../model/layer';
+import type { Location } from '../model/location';
+import type { ResolvedImport } from '../model/resolved-import';
+import type { Rule } from '../model/rule';
+import { bindingPlace } from '../support/binding-place';
+import { describeTarget } from '../support/describe-target';
+import { inLayer } from '../support/in-layer';
+import { isDeclaredStyle } from '../support/is-declared-style';
+import { perFile } from '../support/per-file';
 
 const INWARD: readonly Layer[] = ['domain', 'application', 'published-language'];
 const BUILTIN_FIX = 'Hide the I/O behind a port in application/ports and implement it in infrastructure/external.';

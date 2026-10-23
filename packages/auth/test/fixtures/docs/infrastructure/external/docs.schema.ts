@@ -1,5 +1,5 @@
-import { defineSchema } from '../../../../../src/rebac.js';
-import { docsPermissions } from '../../application/authorization/docs.permissions.js';
+import { defineSchema } from '../../../../../src/rebac';
+import { docsPermissions } from '../../application/authorization/docs.permissions';
 
 /** Who is what to a workspace and a document, and which permission each relation grants there. */
 export const schema = defineSchema({

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { queueNamesOf } from '../src/topology/queue-names-of.js';
-import { topologyOf } from '../src/topology/topology-of.js';
-import type { TopologySettings } from '../src/topology/topology-settings.js';
-import { PLACED } from './support/events.js';
+import { queueNamesOf } from '../src/topology/queue-names-of';
+import { topologyOf } from '../src/topology/topology-of';
+import type { TopologySettings } from '../src/topology/topology-settings';
+import { PLACED } from './support/events';
 
 const SHIPPED = 'shipping.parcel.shipped';
 

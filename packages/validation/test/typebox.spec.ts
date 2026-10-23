@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import Type from 'typebox';
-import { sharedNameOf } from '../src/index.js';
-import { typeboxSchema } from '../src/typebox.js';
+import { sharedNameOf } from '../src';
+import { typeboxSchema } from '../src/typebox';
 
 const slot = Type.Object(
   { startsAt: Type.String({ format: 'date-time' }), length: Type.Integer({ minimum: 5, default: 30 }) },

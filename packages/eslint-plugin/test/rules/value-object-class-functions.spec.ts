@@ -1,6 +1,6 @@
-import { domainValueObjectClass } from '../../src/rules/domain-value-object-class.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
-import { classes, IMPORT_MONEY, PLAIN, SERVICE } from '../support/value-object-samples.js';
+import { domainValueObjectClass } from '../../src/rules/domain-value-object-class';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
+import { classes, IMPORT_MONEY, PLAIN, SERVICE } from '../support/value-object-samples';
 
 const MACHINE = `${BILLING}/domain/state-machines/invoice.state-machine.ts`;
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;

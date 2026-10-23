@@ -1,9 +1,9 @@
 import { ConceptError, DomainError, err, ok } from '@ddd-ts-kit/kernel';
 import { describe, expect, it } from 'vitest';
-import { expectProblem } from '../src/e2e.js';
-import { expectRefusal, given } from '../src/index.js';
-import { anOrder } from './support/builders.js';
-import { at } from './support/order.js';
+import { expectProblem } from '../src/e2e';
+import { expectRefusal, given } from '../src';
+import { anOrder } from './support/builders';
+import { at } from './support/order';
 
 class OrderError extends ConceptError {
   static alreadyPaid(orderId: string, paidAt: Date) {

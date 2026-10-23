@@ -1,7 +1,7 @@
 import { boolean, customType, integer, numeric, pgSchema, text } from 'drizzle-orm/pg-core';
 import type { CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
-import { readModelColumns, type DrizzleReadModelOptions } from '../../../src/postgres.js';
-import { instant } from '../../../src/postgres/columns/instant.js';
+import { readModelColumns, type DrizzleReadModelOptions } from '../../../src/postgres';
+import { instant } from '../../../src/postgres/columns/instant';
 
 /** A text column ordered by code point, as criteria order strings. */
 const binaryText = customType<{ data: string }>({ dataType: () => 'text collate "C"' });

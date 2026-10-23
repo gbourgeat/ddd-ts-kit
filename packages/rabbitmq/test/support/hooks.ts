@@ -1,4 +1,4 @@
-import type { RabbitMqDelivery, RabbitMqFailure } from '../../src/index.js';
+import type { RabbitMqDelivery, RabbitMqFailure } from '../../src';
 
 export const deliveriesOf = (settled: RabbitMqDelivery[]) => (delivery: RabbitMqDelivery) =>
   void settled.push(delivery);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseLintAnswer } from '../src/lint/parse-lint-answer.js';
+import { parseLintAnswer } from '../src/lint/parse-lint-answer';
 
 describe('the answer of the process that runs ESLint', () => {
   it('is not one without a report or a list of messages', () => {

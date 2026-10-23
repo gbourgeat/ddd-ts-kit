@@ -1,7 +1,7 @@
 import { NotFoundError } from '@ddd-ts-kit/kernel';
-import type { Document } from '../../../domain/document.js';
-import type { DocumentRepository } from '../../../domain/repositories/document.repository.js';
-import type { GetDocument } from './get-document.query.js';
+import type { Document } from '../../../domain/document';
+import type { DocumentRepository } from '../../../domain/repositories/document.repository';
+import type { GetDocument } from './get-document.query';
 
 export class GetDocumentHandler {
   constructor(private readonly documents: DocumentRepository) {}

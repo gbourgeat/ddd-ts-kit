@@ -8,25 +8,25 @@ import type {
   IntegrationEventSubscriber,
   Subscription,
 } from '@ddd-ts-kit/kernel';
-import { REPLAY_FOR_HEADER } from './codec/headers.js';
-import { republication } from './codec/republication.js';
-import { BrokerLink } from './connection/broker-link.js';
-import { Consumption } from './consumption/consumption.js';
-import { ConsumerNameRequiredError } from './errors/consumer-name-required-error.js';
-import { MESSAGING_SYSTEM } from './messaging-system.js';
-import { EventBusClosedError } from './errors/event-bus-closed-error.js';
-import type { NatsEventBusOptions } from './options/nats-event-bus-options.js';
-import type { Settings } from './options/settings.js';
-import { settingsOf } from './options/settings-of.js';
-import { Publications } from './publication/publications.js';
-import { conceal } from './secrecy/conceal.js';
-import { bindingNamesOf } from './topology/binding-names-of.js';
-import type { ConsumerBinding } from './topology/consumer-binding.js';
-import { deadStreamOf } from './topology/dead-stream-of.js';
-import { declareTopology } from './topology/declare-topology.js';
-import type { NatsTopology } from './topology/nats-topology.js';
-import { topologyOf } from './topology/topology-of.js';
-import type { TopologySettings } from './topology/topology-settings.js';
+import { REPLAY_FOR_HEADER } from './codec/headers';
+import { republication } from './codec/republication';
+import { BrokerLink } from './connection/broker-link';
+import { Consumption } from './consumption/consumption';
+import { ConsumerNameRequiredError } from './errors/consumer-name-required-error';
+import { MESSAGING_SYSTEM } from './messaging-system';
+import { EventBusClosedError } from './errors/event-bus-closed-error';
+import type { NatsEventBusOptions } from './options/nats-event-bus-options';
+import type { Settings } from './options/settings';
+import { settingsOf } from './options/settings-of';
+import { Publications } from './publication/publications';
+import { conceal } from './secrecy/conceal';
+import { bindingNamesOf } from './topology/binding-names-of';
+import type { ConsumerBinding } from './topology/consumer-binding';
+import { deadStreamOf } from './topology/dead-stream-of';
+import { declareTopology } from './topology/declare-topology';
+import type { NatsTopology } from './topology/nats-topology';
+import { topologyOf } from './topology/topology-of';
+import type { TopologySettings } from './topology/topology-settings';
 
 const DESCRIPTION = 'NatsEventBus [connection concealed]';
 

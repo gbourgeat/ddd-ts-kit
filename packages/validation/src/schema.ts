@@ -1,6 +1,6 @@
 import type { Result } from '@ddd-ts-kit/kernel';
-import type { JsonSchema } from './json-schema.js';
-import type { ValidationIssue } from './validation-issue.js';
+import type { JsonSchema } from './json-schema';
+import type { ValidationIssue } from './validation-issue';
 
 /**
  * The contract every validation library is adapted to. Presentation code depends on this

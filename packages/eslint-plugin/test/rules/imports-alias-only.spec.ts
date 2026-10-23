@@ -1,5 +1,5 @@
-import { importsAliasOnly } from '../../src/rules/imports-alias-only.js';
-import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { importsAliasOnly } from '../../src/rules/imports-alias-only';
+import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
 const COMMAND = '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';

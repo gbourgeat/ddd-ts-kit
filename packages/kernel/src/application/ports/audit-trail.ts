@@ -1,4 +1,4 @@
-import type { AuditRecord } from '../audit/audit-record.js';
+import type { AuditRecord } from '../audit/audit-record';
 
 /**
  * The write side of the audit trail: append only. There is no update and no delete, here or

@@ -1,11 +1,11 @@
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { read, REPO_ROOT, tempDir } from '../helpers.js';
-import { installForReal, type Manager } from './install-for-real.js';
-import { quickStart } from './quick-start.js';
-import { runIn } from './run-in.js';
-import { SLOW } from './stacks.js';
-import { verified } from './verified.js';
+import { read, REPO_ROOT, tempDir } from '../helpers';
+import { installForReal, type Manager } from './install-for-real';
+import { quickStart } from './quick-start';
+import { runIn } from './run-in';
+import { SLOW } from './stacks';
+import { verified } from './verified';
 
 const BUILT_CLI = `node ${path.join(REPO_ROOT, 'packages/cli/dist/bin.js')}`;
 

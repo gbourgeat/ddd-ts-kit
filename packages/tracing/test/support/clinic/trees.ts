@@ -1,4 +1,4 @@
-import type { ExpectedSpan } from '../../../src/testing.js';
+import type { ExpectedSpan } from '../../../src/testing';
 
 /** What booking an appointment looks like up to the outbox, with what follows the append given as its children. */
 export function bookingTree(afterAppend: readonly ExpectedSpan[] = []): ExpectedSpan {

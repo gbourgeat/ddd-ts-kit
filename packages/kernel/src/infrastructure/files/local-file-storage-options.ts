@@ -1,4 +1,4 @@
-import type { SignedLinkOptions } from './signed-link-options.js';
+import type { SignedLinkOptions } from './signed-link-options';
 
 export interface LocalFileStorageOptions extends SignedLinkOptions {
   /** The directory that holds the files, created when missing. Keep it out of version control. */

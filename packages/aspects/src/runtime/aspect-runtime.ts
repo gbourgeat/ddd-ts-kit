@@ -1,5 +1,5 @@
 import type { Cache, Clock, Logger, Metrics } from '@ddd-ts-kit/kernel';
-import type { Scheduler } from './scheduler.js';
+import type { Scheduler } from './scheduler';
 
 /**
  * The collaborators aspects resolve when a call is made, not when a class is decorated or an

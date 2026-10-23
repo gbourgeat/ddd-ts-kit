@@ -1,9 +1,9 @@
-import type { Name } from '../../../naming/index.js';
-import type { RenderContext } from '../../../templating/index.js';
-import type { Scope } from '../../scope.js';
-import { grantSystemActor } from './grant-system-actor.js';
-import { grantedInSpec } from './granted-in-spec.js';
-import type { SentCommand } from './sent-command.js';
+import type { Name } from '../../../naming';
+import type { RenderContext } from '../../../templating';
+import type { Scope } from '../../scope';
+import { grantSystemActor } from './grant-system-actor';
+import { grantedInSpec } from './granted-in-spec';
+import type { SentCommand } from './sent-command';
 
 const PERIOD =
   'which period the work is for is said by `execution.scheduledAt`, never by the clock: an occurrence may run late, or twice';

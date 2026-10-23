@@ -1,8 +1,8 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import type { Rule } from '../model/rule.js';
-import { lineOfSequence } from '../support/line-of-sequence.js';
-import { reporter } from '../support/reporter.js';
-import { toViolations } from '../support/to-violations.js';
+import { CONFIG_FILE } from '../../config';
+import type { Rule } from '../model/rule';
+import { lineOfSequence } from '../support/line-of-sequence';
+import { reporter } from '../support/reporter';
+import { toViolations } from '../support/to-violations';
 
 export const configRuleOffEverywhere: Rule = {
   id: 'config/rule-off-everywhere',

@@ -1,5 +1,5 @@
-import { matchingBracket } from '../../check/text/matching-bracket.js';
-import type { ClassBody } from './class-body.js';
+import { matchingBracket } from '../../check/text/matching-bracket';
+import type { ClassBody } from './class-body';
 
 const STATIC_METHOD = /^[ \t]*(?:public\s+)?static\s+(?:async\s+)?([A-Za-z_$][\w$]*)\s*(?:<[^(]*>)?\(/gm;
 

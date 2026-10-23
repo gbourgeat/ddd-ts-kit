@@ -1,14 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { WORKER_SCOPE_FILE } from '../../commit/worker-scope-file.js';
-import { drizzleHistoryFindings } from '../migrations/drizzle-history-findings.js';
-import { migrationNameFindings } from '../migrations/migration-name-findings.js';
-import { readDrizzleMigrations } from '../migrations/read-drizzle-migrations.js';
-import { readMigrationFolder } from '../migrations/read-migration-folder.js';
-import { workingMigrationFindings } from '../migrations/working-migration-findings.js';
-import type { Rule } from '../model/rule.js';
-import { reporter } from '../support/reporter.js';
-import { toViolations } from '../support/to-violations.js';
+import { WORKER_SCOPE_FILE } from '../../commit/worker-scope-file';
+import { drizzleHistoryFindings } from '../migrations/drizzle-history-findings';
+import { migrationNameFindings } from '../migrations/migration-name-findings';
+import { readDrizzleMigrations } from '../migrations/read-drizzle-migrations';
+import { readMigrationFolder } from '../migrations/read-migration-folder';
+import { workingMigrationFindings } from '../migrations/working-migration-findings';
+import type { Rule } from '../model/rule';
+import { reporter } from '../support/reporter';
+import { toViolations } from '../support/to-violations';
 
 export const persistenceMigrationHistory: Rule = {
   id: 'persistence/migration-history',

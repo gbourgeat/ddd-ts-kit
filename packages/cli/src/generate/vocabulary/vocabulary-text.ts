@@ -1,5 +1,5 @@
-import { heldEntries } from './held-entries.js';
-import type { VocabularyEntry } from './vocabulary-entry.js';
+import { heldEntries } from './held-entries';
+import type { VocabularyEntry } from './vocabulary-entry';
 
 /**
  * The file of a closed vocabulary: an object `as const` of its values and the union type of the

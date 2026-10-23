@@ -1,5 +1,5 @@
 import type { AuditRecord } from '@ddd-ts-kit/kernel';
-import { NOW } from './later.js';
+import { NOW } from './later';
 
 export function aRecord(id: string): AuditRecord {
   return {

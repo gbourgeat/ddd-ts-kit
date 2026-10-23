@@ -1,10 +1,10 @@
 import type { ChainableCommander, Redis } from 'ioredis';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { encode } from './codec/encode.js';
-import { failureCode } from './errors/failure-code.js';
-import { PublishNotConfirmedError } from './errors/publish-not-confirmed-error.js';
-import type { DeduplicationOptions } from './options/deduplication-options.js';
-import type { RetentionOptions } from './options/retention-options.js';
+import { encode } from './codec/encode';
+import { failureCode } from './errors/failure-code';
+import { PublishNotConfirmedError } from './errors/publish-not-confirmed-error';
+import type { DeduplicationOptions } from './options/deduplication-options';
+import type { RetentionOptions } from './options/retention-options';
 
 export interface PublicationSettings {
   readonly streamOf: (type: string) => string;

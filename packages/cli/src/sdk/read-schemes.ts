@@ -1,5 +1,5 @@
-import { isRecord } from '../config/values/is-record.js';
-import type { SchemeCarrier } from './scheme-carrier.js';
+import { isRecord } from '../config/values/is-record';
+import type { SchemeCarrier } from './scheme-carrier';
 
 /**
  * How each security scheme carries its credential. An HTTP scheme is the `Authorization` header

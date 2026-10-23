@@ -1,4 +1,4 @@
-import type { RuleDoc } from '../model/rule-doc.js';
+import type { RuleDoc } from '../model/rule-doc';
 
 export const DOMAIN_DOCS: Readonly<Record<string, RuleDoc>> = {
   'domain/value-object-class': {

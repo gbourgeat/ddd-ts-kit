@@ -1,4 +1,4 @@
-import type { Config } from '../../config/index.js';
+import type { Config } from '../../config';
 
 /** The pipelines call `db:migrate` before the adapter specs whatever the stack: without a database it says so and succeeds. */
 const DATABASE_SCRIPTS: Readonly<Record<string, Record<string, string>>> = {

@@ -10,12 +10,12 @@ import {
   type PageRequest,
   type SortDirection,
 } from '@ddd-ts-kit/kernel';
-import { tenantRow, type KnexContext } from '../../../../../src/index.js';
-import type { InvoiceQueries, InvoiceSort, InvoiceSummary } from '../../application/ports/invoice-queries.port.js';
-import { directionOf } from './direction-of.js';
-import type { InvoiceRow } from './invoice-row.js';
-import { invoicesOf } from './invoices-of.js';
-import { positionOf, type InvoicePosition } from './position-of.js';
+import { tenantRow, type KnexContext } from '../../../../../src';
+import type { InvoiceQueries, InvoiceSort, InvoiceSummary } from '../../application/ports/invoice-queries.port';
+import { directionOf } from './direction-of';
+import type { InvoiceRow } from './invoice-row';
+import { invoicesOf } from './invoices-of';
+import { positionOf, type InvoicePosition } from './position-of';
 
 /**
  * The list query of a read port, in both variants of `PageRequest`. The order is total: the

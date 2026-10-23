@@ -1,4 +1,4 @@
-import type { Coverage } from './coverage.js';
+import type { Coverage } from './coverage';
 
 /**
  * The floors of the reference. The domain is the highest: it is pure, needs no double and holds the

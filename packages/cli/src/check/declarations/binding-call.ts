@@ -1,4 +1,4 @@
-import type { ListPart } from '../text/list-part.js';
+import type { ListPart } from '../text/list-part';
 
 /** A call that names an injection token: `bind(X)`, `rebind(X)`, `resolve(X)`, `fake(X, ..)` or `override(X, ..)`. */
 export interface BindingCall {

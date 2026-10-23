@@ -1,8 +1,8 @@
-import type { Config } from '../config/index.js';
-import { contextRules } from './context-rules.js';
-import type { CruiseRule } from './cruise-rule.js';
-import { hygieneRules } from './hygiene-rules.js';
-import { layerRules } from './layer-rules.js';
+import type { Config } from '../config';
+import { contextRules } from './context-rules';
+import type { CruiseRule } from './cruise-rule';
+import { hygieneRules } from './hygiene-rules';
+import { layerRules } from './layer-rules';
 
 export interface CruiseConfiguration {
   readonly forbidden: readonly CruiseRule[];

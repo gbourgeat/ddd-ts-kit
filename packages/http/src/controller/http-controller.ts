@@ -1,6 +1,6 @@
 import type { Schema } from '@ddd-ts-kit/validation';
-import type { ControllerRequest } from './controller-request.js';
-import type { ControllerSpec } from './controller-spec.js';
+import type { ControllerRequest } from './controller-request';
+import type { ControllerSpec } from './controller-spec';
 
 /**
  * The shape `@Controller(spec)` requires of the class it decorates. `handle` is a function

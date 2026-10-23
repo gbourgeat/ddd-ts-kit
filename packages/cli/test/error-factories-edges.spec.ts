@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { errorCodes } from '../src/check/errors/error-codes.js';
-import { scan } from '../src/check/scan/scan.js';
-import { addFactory } from '../src/generate/errors/add-factory.js';
-import { addSpecCase } from '../src/generate/errors/add-spec-case.js';
-import { factoryNameFor } from '../src/refusals/factory-name-for.js';
-import { readLegacyError } from '../src/refusals/read-legacy-error.js';
-import { readPlan } from '../src/refusals/read-plan.js';
-import { renderFactory } from '../src/refusals/render-factory.js';
-import { replaceInCode } from '../src/refusals/replace-in-code.js';
-import { specParts } from '../src/refusals/spec-parts.js';
-import { cli, read, tempDir, write } from './helpers.js';
-import { failure } from './reports.js';
+import { errorCodes } from '../src/check/errors/error-codes';
+import { scan } from '../src/check/scan/scan';
+import { addFactory } from '../src/generate/errors/add-factory';
+import { addSpecCase } from '../src/generate/errors/add-spec-case';
+import { factoryNameFor } from '../src/refusals/factory-name-for';
+import { readLegacyError } from '../src/refusals/read-legacy-error';
+import { readPlan } from '../src/refusals/read-plan';
+import { renderFactory } from '../src/refusals/render-factory';
+import { replaceInCode } from '../src/refusals/replace-in-code';
+import { specParts } from '../src/refusals/spec-parts';
+import { cli, read, tempDir, write } from './helpers';
+import { failure } from './reports';
 
 const ORIGIN = { file: 'src/contexts/billing/domain/errors/ledger.error.ts', context: 'billing' };
 

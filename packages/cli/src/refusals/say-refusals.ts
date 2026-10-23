@@ -1,4 +1,4 @@
-import { isRecord } from '../check/support/is-record.js';
+import { isRecord } from '../check/support/is-record';
 
 /** The edit of the config that says the form the refusals of the project are written in now. */
 export function sayRefusals(form: 'named' | 'factories'): (raw: Record<string, unknown>) => void {

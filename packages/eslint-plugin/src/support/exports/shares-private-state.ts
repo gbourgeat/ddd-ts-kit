@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import type { ModuleShape } from './module-shape.js';
+import type { ModuleShape } from './module-shape';
 
 type Source = Readonly<TSESLint.SourceCode>;
 

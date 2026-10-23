@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { Knex } from 'knex';
 import { withinUnitOfWork, type UnitOfWork } from '@ddd-ts-kit/kernel';
-import type { KnexContext } from './knex-context.js';
+import type { KnexContext } from './knex-context';
 
 /** One object for both ports: bind it to `UnitOfWork` and to `KnexContext`. */
 export interface KnexUnitOfWork extends UnitOfWork, KnexContext {}

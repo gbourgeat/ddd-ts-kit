@@ -1,8 +1,8 @@
-import type { RenderContext } from '../../templating/index.js';
-import { assembledContext } from '../assembled-context.js';
-import { contextVars } from '../context-vars.js';
-import { relativeTo } from '../relative-to.js';
-import type { ContextPlan } from './context-plan.js';
+import type { RenderContext } from '../../templating';
+import { assembledContext } from '../assembled-context';
+import { contextVars } from '../context-vars';
+import { relativeTo } from '../relative-to';
+import type { ContextPlan } from './context-plan';
 
 const GLOSSARY_TODO =
   'TODO(domain): define the ubiquitous language first: one row per term the domain experts use here, with the meaning it has in this context only. Every class, method and event is then named after these terms.';

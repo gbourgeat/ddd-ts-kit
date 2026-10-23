@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { read, write } from '../helpers.js';
+import { read, write } from '../helpers';
 
 export const REPORTED_FAILURES_PROOF = 'src/reported-failures.spec.ts';
 

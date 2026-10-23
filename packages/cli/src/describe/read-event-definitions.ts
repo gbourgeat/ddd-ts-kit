@@ -1,4 +1,4 @@
-import type { Workspace } from '../workspace/index.js';
+import type { Workspace } from '../workspace';
 
 /** One `defineIntegrationEvent` of a published language. */
 export interface EventDefinition {

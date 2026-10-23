@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { withSpan } from '../src/index.js';
-import { expectSpanTree, installTestTracing, renderSpanTree, type TestTracing } from '../src/testing.js';
+import { withSpan } from '../src';
+import { expectSpanTree, installTestTracing, renderSpanTree, type TestTracing } from '../src/testing';
 
 let tracing: TestTracing;
 

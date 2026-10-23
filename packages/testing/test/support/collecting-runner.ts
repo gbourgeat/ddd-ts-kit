@@ -1,5 +1,5 @@
 import { expect } from 'vitest';
-import type { ContractRunner } from '../../src/contracts.js';
+import type { ContractRunner } from '../../src/contracts';
 
 interface Group {
   readonly setups: (() => Promise<void>)[];

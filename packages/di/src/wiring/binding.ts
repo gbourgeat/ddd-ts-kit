@@ -1,9 +1,9 @@
 import type { DependencyKind } from '@ddd-ts-kit/kernel';
 import type { BindingAspect, Token } from '@ddd-ts-kit/kernel/declarations';
-import type { BindingSource } from './binding-source.js';
-import type { Declarer } from './declarer.js';
-import type { Lifetime } from './lifetime.js';
-import type { Resolve } from './resolve.js';
+import type { BindingSource } from './binding-source';
+import type { Declarer } from './declarer';
+import type { Lifetime } from './lifetime';
+import type { Resolve } from './resolve';
 
 export interface Binding {
   readonly token: Token<unknown>;

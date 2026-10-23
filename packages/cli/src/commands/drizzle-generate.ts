@@ -1,7 +1,7 @@
-import { CliError } from '../cli-error.js';
-import { generateAndRead, replayDrizzleMigrations, tidyWrittenMigration } from '../migration/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
+import { CliError } from '../cli-error';
+import { generateAndRead, replayDrizzleMigrations, tidyWrittenMigration } from '../migration';
+import { Arguments } from './arguments';
+import type { Command } from './command';
 
 /** The trunk a branch merged, when `--replay` is not given another. */
 const DEFAULT_BASE = 'origin/main';

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { aBench, type Bench } from './support/a-bench.js';
-import { MINUTE } from './support/durations.js';
-import { REMINDERS } from './support/job-names.js';
-import { QUARTERLY } from './support/quarterly.js';
-import { RecordingJob } from './support/recording-job.js';
-import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections.js';
+import { aBench, type Bench } from './support/a-bench';
+import { MINUTE } from './support/durations';
+import { REMINDERS } from './support/job-names';
+import { QUARTERLY } from './support/quarterly';
+import { RecordingJob } from './support/recording-job';
+import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections';
 
 refuseUnhandledRejections();
 

@@ -1,4 +1,4 @@
-import { LARGE_CHUNK, LARGE_SIZE } from './contents.js';
+import { LARGE_CHUNK, LARGE_SIZE } from './contents';
 
 /** Six mebibytes in chunks of 64 KiB, each filled with its rank: never held whole. */
 export async function* largeContent(): AsyncIterable<Uint8Array> {

@@ -1,5 +1,5 @@
-import type { Sort } from '../pagination/sort.js';
-import type { CriteriaDefinition } from './criteria-definition.js';
+import type { Sort } from '../pagination/sort';
+import type { CriteriaDefinition } from './criteria-definition';
 
 /**
  * The sort a read really runs with: the one asked, or the default of the definition, ended by

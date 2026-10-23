@@ -1,4 +1,4 @@
-import { jsonAt } from './json-at.js';
+import { jsonAt } from './json-at';
 
 /** The texts a JSON object holds under a path of keys, by key: the scripts or the dependencies of a manifest. */
 export function textsAt(value: unknown, ...keys: readonly string[]): Record<string, string> {

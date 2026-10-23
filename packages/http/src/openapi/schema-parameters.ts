@@ -1,6 +1,6 @@
 import type { JsonSchema, Schema } from '@ddd-ts-kit/validation';
-import { isRecord } from '../support/is-record.js';
-import type { Definitions } from './definitions.js';
+import { isRecord } from '../support/is-record';
+import type { Definitions } from './definitions';
 
 /** One OpenAPI parameter per property of the schema of a request part. */
 export function schemaParameters(

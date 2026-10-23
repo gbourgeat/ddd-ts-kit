@@ -1,4 +1,4 @@
-import { glossaryCells } from '../language/glossary-cells.js';
+import { glossaryCells } from '../language/glossary-cells';
 
 export const MODULES_HEADING = '## Modules';
 

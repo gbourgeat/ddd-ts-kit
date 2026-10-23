@@ -1,8 +1,8 @@
-import type { ImportTarget } from '../model/import-target.js';
-import type { Rule } from '../model/rule.js';
-import { describeTarget } from '../support/describe-target.js';
-import { inLayer } from '../support/in-layer.js';
-import { perFile } from '../support/per-file.js';
+import type { ImportTarget } from '../model/import-target';
+import type { Rule } from '../model/rule';
+import { describeTarget } from '../support/describe-target';
+import { inLayer } from '../support/in-layer';
+import { perFile } from '../support/per-file';
 
 const FIX =
   'Declare the contract with plain serializable types written in this folder: copy the few fields other contexts need instead of exposing an internal model.';

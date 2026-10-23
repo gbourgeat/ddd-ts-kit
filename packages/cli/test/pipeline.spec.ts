@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { cli, exists, read, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
-import { keysAt } from './support/keys-at.js';
-import { pipelineAsset } from './support/pipeline-asset.js';
-import { readJson } from './support/read-json.js';
-import { stringsAt } from './support/strings-at.js';
-import { textsAt } from './support/texts-at.js';
+import { cli, exists, read, write } from './helpers';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
+import { keysAt } from './support/keys-at';
+import { pipelineAsset } from './support/pipeline-asset';
+import { readJson } from './support/read-json';
+import { stringsAt } from './support/strings-at';
+import { textsAt } from './support/texts-at';
 
 const source = (file: string): string => pipelineAsset('source', file);
 const template = (file: string): string => pipelineAsset('template', file);

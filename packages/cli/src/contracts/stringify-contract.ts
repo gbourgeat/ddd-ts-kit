@@ -1,4 +1,4 @@
-import { toYaml } from '../yaml/to-yaml.js';
+import { toYaml } from '../yaml/to-yaml';
 
 /** The exact bytes of a generated contract: YAML, or two-space JSON; both end with one line break. */
 export function stringifyContract(document: unknown, format: string): string {

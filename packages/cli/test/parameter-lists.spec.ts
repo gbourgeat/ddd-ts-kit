@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parameterLists } from '../src/check/business-names/parameter-lists.js';
+import { parameterLists } from '../src/check/business-names/parameter-lists';
 
 /** Each parameter list found, as the code it covers: `(a: A)`, or the name of the one parameter of `a =>`. */
 function listsIn(code: string): string[] {

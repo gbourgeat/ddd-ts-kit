@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { personalData, type StoredEventData } from '@ddd-ts-kit/kernel';
-import { expectSnapshotEquivalence, givenEvents } from '../src/index.js';
-import { Tally, TallyClosed, TallyClosedError, closed, counted } from './support/tally.js';
+import { expectSnapshotEquivalence, givenEvents } from '../src';
+import { Tally, TallyClosed, TallyClosedError, closed, counted } from './support/tally';
 
 const rehydrate = (id: string, history: Parameters<typeof Tally.rehydrate>[1]): Tally => Tally.rehydrate(id, history);
 

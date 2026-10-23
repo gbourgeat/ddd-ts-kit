@@ -1,7 +1,7 @@
-import type { DeclaredContext } from './context-declarations.js';
-import { contextInjections } from './injection/context-injections.js';
-import { renderInjections } from './injection/render-injections.js';
-import { renderFolderDeclarations } from './render-folder-declarations.js';
+import type { DeclaredContext } from './context-declarations';
+import { contextInjections } from './injection/context-injections';
+import { renderInjections } from './injection/render-injections';
+import { renderFolderDeclarations } from './render-folder-declarations';
 
 /**
  * The declarations of a context as the generator wrote them up to 0.84, all in

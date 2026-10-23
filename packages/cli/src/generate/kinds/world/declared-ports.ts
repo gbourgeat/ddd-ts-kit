@@ -1,5 +1,5 @@
-import type { Scope } from '../../scope.js';
-import { roleFilesOf, treeOf } from '../../../model-modules/index.js';
+import type { Scope } from '../../scope';
+import { roleFilesOf, treeOf } from '../../../model-modules';
 
 /** A port of a context: an abstract class of `domain/repositories/` or `application/ports/`. */
 export interface DeclaredPort {

@@ -1,14 +1,14 @@
-import { specifierOf } from '../alias/index.js';
-import { isGranted } from '../check/authz/is-granted.js';
-import { scan } from '../check/scan/scan.js';
-import { matchingBracket } from '../check/text/matching-bracket.js';
-import { CliError } from '../cli-error.js';
-import { fitStatement } from '../layout/index.js';
-import { permissionsFile } from './permissions-file.js';
-import type { Scope } from './scope.js';
-import { declareRole } from './vocabulary/declare-role.js';
-import { withImport } from './with-import.js';
-import { platformPath } from './platform-path.js';
+import { specifierOf } from '../alias';
+import { isGranted } from '../check/authz/is-granted';
+import { scan } from '../check/scan/scan';
+import { matchingBracket } from '../check/text/matching-bracket';
+import { CliError } from '../cli-error';
+import { fitStatement } from '../layout';
+import { permissionsFile } from './permissions-file';
+import type { Scope } from './scope';
+import { declareRole } from './vocabulary/declare-role';
+import { withImport } from './with-import';
+import { platformPath } from './platform-path';
 
 const ROLES = /export\s+const\s+roles\b[^=]*=\s*\{/;
 const IMPORTS_ROLE = /import\s*\{[^}]*\bRole\b[^}]*\}\s*from/;

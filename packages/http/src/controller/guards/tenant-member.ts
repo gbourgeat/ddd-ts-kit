@@ -1,8 +1,8 @@
 import { isAnonymous, isTenantMember } from '@ddd-ts-kit/kernel';
-import { ForbiddenError } from '../../error/forbidden-error.js';
-import { UnauthorizedError } from '../../error/unauthorized-error.js';
-import type { GuardAdmission } from '../guard-admission.js';
-import type { Guard } from '../guard.js';
+import { ForbiddenError } from '../../error/forbidden-error';
+import { UnauthorizedError } from '../../error/unauthorized-error';
+import type { GuardAdmission } from '../guard-admission';
+import type { Guard } from '../guard';
 
 /**
  * Lets through a caller that belongs to the tenant of the request: 401 to the anonymous caller,

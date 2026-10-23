@@ -1,5 +1,5 @@
-import type { Slice } from '../progress/slice.js';
-import type { Batch, Wave } from './wave-plan.js';
+import type { Slice } from '../progress/slice';
+import type { Batch, Wave } from './wave-plan';
 
 /**
  * The ids of the batches in the order they merge: by wave, and in a wave, the batch the most

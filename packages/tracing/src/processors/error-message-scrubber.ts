@@ -1,4 +1,4 @@
-import type { EndedSpan } from './ended-span.js';
+import type { EndedSpan } from './ended-span';
 
 /**
  * Removes what `recordException` and instrumentations copy from an error: the

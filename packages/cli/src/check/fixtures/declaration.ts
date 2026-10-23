@@ -1,4 +1,4 @@
-import { SAMPLES } from './samples.js';
+import { SAMPLES } from './samples';
 
 /** The declaration of one version of the invoice-issued integration event, under the event type given. */
 export function declaration(type: string, version = 1, payload: string = SAMPLES.PAYLOAD): string {

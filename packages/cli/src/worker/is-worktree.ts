@@ -1,6 +1,6 @@
 import fs from 'node:fs';
-import { CliError } from '../cli-error.js';
-import { listWorktrees } from './list-worktrees.js';
+import { CliError } from '../cli-error';
+import { listWorktrees } from './list-worktrees';
 
 /** True when the directory is a worktree of the repository; false when it does not exist; refused when it is anything else. */
 export function isWorktree(root: string, worktree: string): boolean {

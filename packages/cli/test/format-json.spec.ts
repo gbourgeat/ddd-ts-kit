@@ -1,8 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { formatJson } from '../src/json/format-json.js';
-import { REPO_ROOT } from './helpers.js';
+import { formatJson } from '../src/json/format-json';
+import { REPO_ROOT } from './helpers';
 
 const LONG = Array.from({ length: 12 }, (_, index) => `src/contexts/*/test/integration/${index}.spec.ts`);
 

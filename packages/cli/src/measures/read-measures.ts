@@ -1,14 +1,14 @@
-import { runGit } from '../commit/run-git.js';
-import type { GitRunner } from '../story/attributed-marker.js';
-import { Workspace } from '../workspace/index.js';
-import { branchCommits } from './branch-commits.js';
-import { byAuthorOf } from './by-author-of.js';
-import { currentBranch } from './current-branch.js';
-import type { MeasuresRequest } from './measures-request.js';
-import { measuresSummaryOf } from './measures-summary-of.js';
-import type { MeasuresView } from './measures-view.js';
-import { storyMeasuresOf } from './story-measures-of.js';
-import { STORIES_DIR, storyReadingOf } from './story-reading-of.js';
+import { runGit } from '../commit/run-git';
+import type { GitRunner } from '../story/attributed-marker';
+import { Workspace } from '../workspace';
+import { branchCommits } from './branch-commits';
+import { byAuthorOf } from './by-author-of';
+import { currentBranch } from './current-branch';
+import type { MeasuresRequest } from './measures-request';
+import { measuresSummaryOf } from './measures-summary-of';
+import type { MeasuresView } from './measures-view';
+import { storyMeasuresOf } from './story-measures-of';
+import { STORIES_DIR, storyReadingOf } from './story-reading-of';
 
 /** What this version leaves to the platform, said in every output. */
 const NOT_COMPUTED = ['time to first review and first-run CI status come from the platform (its API is not read)'];

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lines, projectWith, reported } from './rules-support.js';
+import { lines, projectWith, reported } from './rules-support';
 
 const FILE = 'src/platform/sample.ts';
 

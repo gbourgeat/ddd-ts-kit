@@ -8,13 +8,13 @@ import {
   type StampedRow,
   type TouchedKey,
 } from '@ddd-ts-kit/kernel';
-import type { KnexContext } from '../unit-of-work/knex-context.js';
-import { criteriaToKnex } from './criteria-to-knex.js';
-import type { KnexReadModelOptions } from './knex-read-model-options.js';
-import { KnexStampedRows } from './knex-stamped-rows.js';
-import { predicateToKnex } from './predicate-to-knex.js';
-import { recordsOf } from './records-of.js';
-import { RowMapper } from './row.mapper.js';
+import type { KnexContext } from '../unit-of-work/knex-context';
+import { criteriaToKnex } from './criteria-to-knex';
+import type { KnexReadModelOptions } from './knex-read-model-options';
+import { KnexStampedRows } from './knex-stamped-rows';
+import { predicateToKnex } from './predicate-to-knex';
+import { recordsOf } from './records-of';
+import { RowMapper } from './row.mapper';
 
 /**
  * The table of one read model on knex: what `TableReadModelStore` and `ProjectionRebuild` are

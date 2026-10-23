@@ -14,11 +14,11 @@ import {
   type HttpRequest,
   type IncomingFile,
   type Route,
-} from '../../src/index.js';
-import { mountExpress } from '../../src/express.js';
-import { mountFastify } from '../../src/fastify.js';
-import { mountHono, type HonoMountOptions } from '../../src/hono.js';
-import type { RunningServer } from './running-server.js';
+} from '../../src';
+import { mountExpress } from '../../src/express';
+import { mountFastify } from '../../src/fastify';
+import { mountHono, type HonoMountOptions } from '../../src/hono';
+import type { RunningServer } from './running-server';
 
 const fields = zodSchema(z.object({ title: z.string().min(1) }));
 

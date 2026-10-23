@@ -1,8 +1,8 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { descendants } from '../descendants.js';
-import { JAVASCRIPT_GLOBALS } from './javascript-globals.js';
-import { rootName } from './root-name.js';
-import { unwrapped } from './unwrapped.js';
+import { descendants } from '../descendants';
+import { JAVASCRIPT_GLOBALS } from './javascript-globals';
+import { rootName } from './root-name';
+import { unwrapped } from './unwrapped';
 
 /**
  * What an entry of an object literal holds: `behaviour`, a function; `built`, what a call or

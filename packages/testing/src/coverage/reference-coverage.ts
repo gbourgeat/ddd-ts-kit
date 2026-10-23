@@ -1,4 +1,4 @@
-import type { CoverageRates } from './coverage-rates.js';
+import type { CoverageRates } from './coverage-rates';
 
 /**
  * The floors a project is held to when its config file says nothing, the same ones

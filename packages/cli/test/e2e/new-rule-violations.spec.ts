@@ -1,8 +1,8 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { read } from '../helpers.js';
-import { EditedProject } from './edited-project.js';
-import { bin, runIn } from './run-in.js';
-import { SLOW } from './stacks.js';
+import { read } from '../helpers';
+import { EditedProject } from './edited-project';
+import { bin, runIn } from './run-in';
+import { SLOW } from './stacks';
 
 const BILLING = 'src/contexts/billing';
 const PORT = `${BILLING}/application/ports/payment-gateway.port.ts`;

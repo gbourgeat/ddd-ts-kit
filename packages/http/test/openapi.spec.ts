@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { generateOpenApi } from '../src/openapi.js';
-import { openApiOptions } from './support/open-api-options.js';
-import { orderRoutes } from './support/orders.js';
+import { generateOpenApi } from '../src/openapi';
+import { openApiOptions } from './support/open-api-options';
+import { orderRoutes } from './support/orders';
 
 const document = generateOpenApi(openApiOptions(orderRoutes));
 const operation = (path: string, method: string) => document.paths[path]?.[method];

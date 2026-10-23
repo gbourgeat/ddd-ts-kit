@@ -1,5 +1,5 @@
-import { editConfigText } from '../../../config/index.js';
-import type { Workspace } from '../../../workspace/index.js';
+import { editConfigText } from '../../../config';
+import type { Workspace } from '../../../workspace';
 
 type Json = Record<string, unknown>;
 

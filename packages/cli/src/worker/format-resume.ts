@@ -1,6 +1,6 @@
-import { namedPaths } from './named-paths.js';
-import type { WorkerResume } from './resume-worker.js';
-import type { WorkerProgress } from './worker-progress.js';
+import { namedPaths } from './named-paths';
+import type { WorkerResume } from './resume-worker';
+import type { WorkerProgress } from './worker-progress';
 
 /** `worker-scope --resume` for the conductor: where the worker stands, then the message or the briefing to send as it is. */
 export function formatResume(resume: WorkerResume): string {

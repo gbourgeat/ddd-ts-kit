@@ -1,4 +1,4 @@
-import type { SourceFile } from '../model/source-file.js';
+import type { SourceFile } from '../model/source-file';
 
 /** True for the `domain/errors/codes.ts` of a context, the closed list of its codes. */
 export function isCodesFile(file: SourceFile): boolean {

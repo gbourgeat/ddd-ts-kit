@@ -1,4 +1,4 @@
-import type { LintedFile } from '../../project/linted-file.js';
+import type { LintedFile } from '../../project/linted-file';
 
 /**
  * A production file of `domain/errors/` of a context, in a project that builds its refusals through

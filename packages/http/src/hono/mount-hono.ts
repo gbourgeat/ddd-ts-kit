@@ -1,17 +1,17 @@
 import { Readable } from 'node:stream';
 import type { Context, Hono } from 'hono';
-import { assertCachedRoutes } from '../pipeline/assert-cached-routes.js';
-import { executeRoute } from '../pipeline/execute-route.js';
-import type { RawRequest } from '../pipeline/raw-request.js';
-import type { RouteResponse } from '../pipeline/route-response.js';
-import { serializeBody } from '../pipeline/serialize-body.js';
-import { assertServed } from '../representation/assert-served.js';
-import { assertUniqueRoutes } from '../route/assert-unique-routes.js';
-import type { Route } from '../route/route.js';
-import { edgeProblem } from './edge-problem.js';
-import type { HonoMountOptions } from './hono-mount-options.js';
-import type { HonoRaw } from './hono-raw.js';
-import { readBody } from './read-body.js';
+import { assertCachedRoutes } from '../pipeline/assert-cached-routes';
+import { executeRoute } from '../pipeline/execute-route';
+import type { RawRequest } from '../pipeline/raw-request';
+import type { RouteResponse } from '../pipeline/route-response';
+import { serializeBody } from '../pipeline/serialize-body';
+import { assertServed } from '../representation/assert-served';
+import { assertUniqueRoutes } from '../route/assert-unique-routes';
+import type { Route } from '../route/route';
+import { edgeProblem } from './edge-problem';
+import type { HonoMountOptions } from './hono-mount-options';
+import type { HonoRaw } from './hono-raw';
+import { readBody } from './read-body';
 
 type HonoHandler = (context: Context) => Promise<Response>;
 

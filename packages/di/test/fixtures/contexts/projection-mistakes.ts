@@ -1,7 +1,7 @@
 import type { IntegrationEvent, ReadModelStore } from '@ddd-ts-kit/kernel';
 import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
-import { OrderPlaced, type OrderPlacedPayload } from './billing/published-language/order-placed.js';
-import { CustomerOrders, type CustomerOrdersRow } from './reporting/application/ports/customer-orders.port.js';
+import { OrderPlaced, type OrderPlacedPayload } from './billing/published-language/order-placed';
+import { CustomerOrders, type CustomerOrdersRow } from './reporting/application/ports/customer-orders.port';
 
 /** Carries the name of the projection of the reporting context. */
 @Projection('reporting.customer-orders', [CustomerOrders])

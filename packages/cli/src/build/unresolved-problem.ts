@@ -1,5 +1,5 @@
-import type { EmittedPlace } from './emitted-place.js';
-import { emittedTarget } from './emitted-target.js';
+import type { EmittedPlace } from './emitted-place';
+import { emittedTarget } from './emitted-target';
 
 const EXTENSION = /\.(?:[cm]?js|[cm]?ts)$/;
 
@@ -9,7 +9,7 @@ export function unresolvedProblem(place: EmittedPlace, specifier: string): strin
   const stem = (emittedTarget({ ...place, suffix: '' }, bare) ?? '').replace(/\.js$/, '');
   const written = bare === specifier ? 'no extension' : 'an extension';
 
-  if (place.isFile(`${stem}/index.js`)) {
+  if (place.suffix !== '' && place.isFile(`${stem}/index.js`)) {
     return `"${specifier}" names a directory: an alias names one file, write "${bare}/index${place.suffix}"`;
   }
 

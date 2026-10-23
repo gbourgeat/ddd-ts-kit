@@ -3,7 +3,7 @@ import { collectEvents, expectProblem } from '@ddd-ts-kit/testing/e2e';
 import { unwrap } from 'scheduling-api-client';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';
-import { personRegisteredV1, type PersonRegisteredV1Payload } from '@/contexts/identity/published-language/index';
+import { personRegisteredV1, type PersonRegisteredV1Payload } from '@/contexts/identity/published-language';
 import { expectAnswer } from '$test/e2e/support/expect-answer';
 import { expectRefusal } from '$test/e2e/support/expect-refusal';
 import { startApplication, type RunningApplication } from '$test/e2e/support/start-application';

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, walk } from './helpers.js';
-import { report } from './reports.js';
-import { explicitProject } from './support/explicit-project.js';
+import { cli, read, walk } from './helpers';
+import { report } from './reports';
+import { explicitProject } from './support/explicit-project';
 
 describe('generate adr', () => {
   let root: string;

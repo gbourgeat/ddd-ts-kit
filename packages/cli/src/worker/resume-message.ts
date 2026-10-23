@@ -1,6 +1,6 @@
-import { namedPaths } from './named-paths.js';
-import { REPORT_FILE } from './report-file.js';
-import type { WorkerProgress } from './worker-progress.js';
+import { namedPaths } from './named-paths';
+import { REPORT_FILE } from './report-file';
+import type { WorkerProgress } from './worker-progress';
 
 /** Where the resumed worker works and what it checks against. */
 export interface ResumedPlace {

@@ -1,7 +1,7 @@
 import type { PageRequest } from '@ddd-ts-kit/kernel';
 import { ValidationError } from '@ddd-ts-kit/validation';
-import type { PageQueryOptions } from './page-query-options.js';
-import { parsePageQuery } from './parse-page-query.js';
+import type { PageQueryOptions } from './page-query-options';
+import { parsePageQuery } from './parse-page-query';
 
 /**
  * Reads `limit`, `offset`, `cursor` and `sort` (`placedAt,-total`: a leading `-` is

@@ -1,4 +1,4 @@
-import { definePermissions } from '../../../../../../src/index.js';
+import { definePermissions } from '../../../../../../src';
 
 export const ledgerPermissions = definePermissions('ledger', {
   'entry.post': { description: 'Post an entry to the ledger' },

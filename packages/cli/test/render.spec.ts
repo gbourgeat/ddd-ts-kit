@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { toName } from '../src/naming/index.js';
-import { listTemplates, readTemplate, render } from '../src/templating/index.js';
+import { toName } from '../src/naming';
+import { listTemplates, readTemplate, render } from '../src/templating';
 
 describe('template renderer', () => {
   const context = {

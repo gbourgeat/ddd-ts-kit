@@ -6,9 +6,9 @@ import {
   PrismaProcessedEventStore,
   createPrismaUnitOfWork,
   type PrismaOutboxClaim,
-} from '../../src/index.js';
-import type { Prisma } from '../generated/client/client.js';
-import { createDatabase, type TestDatabase } from '../support/database.js';
+} from '../../src';
+import type { Prisma } from '../generated/client/client';
+import { createDatabase, type TestDatabase } from '../support/database';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

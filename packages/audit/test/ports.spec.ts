@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as kernel from '@ddd-ts-kit/kernel';
 import { describeToken, tokenIdentity } from '@ddd-ts-kit/kernel/declarations';
-import { AuditMasker, AuditReader, AuditTrail, InMemoryAuditTrail, hmacMasker } from '../src/index.js';
+import { AuditMasker, AuditReader, AuditTrail, InMemoryAuditTrail, hmacMasker } from '../src';
 
 describe('the ports of the audit trail', () => {
   it('gives the trail and the reader as the classes of the kernel, which are their injection tokens', () => {

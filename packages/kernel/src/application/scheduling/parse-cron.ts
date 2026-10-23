@@ -1,5 +1,5 @@
-import { InvalidJobScheduleError } from './invalid-job-schedule-error.js';
-import type { ParsedCron } from './parsed-job-schedule.js';
+import { InvalidJobScheduleError } from './invalid-job-schedule-error';
+import type { ParsedCron } from './parsed-job-schedule';
 
 interface CronField {
   readonly label: string;

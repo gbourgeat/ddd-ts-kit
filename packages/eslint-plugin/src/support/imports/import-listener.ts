@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { resolveImport, type ImportTarget } from '../../project/resolve-import.js';
-import type { LintedFile } from '../../project/linted-file.js';
-import { staticString } from './static-string.js';
+import { resolveImport, type ImportTarget } from '../../project/resolve-import';
+import type { LintedFile } from '../../project/linted-file';
+import { staticString } from './static-string';
 
 export interface ImportedName {
   /** The name exported by the module, whatever it is renamed to locally. */

@@ -6,8 +6,8 @@ import {
   evaluateCriteria,
   offsetPage,
   validateCriteria,
-} from '../src/index.js';
-import { catalogue, p1, p6, products, type ProductRow } from './support/products.js';
+} from '../src';
+import { catalogue, p1, p6, products, type ProductRow } from './support/products';
 
 const all = Criteria.of<ProductRow>();
 

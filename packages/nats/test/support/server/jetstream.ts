@@ -7,12 +7,12 @@ import {
   streamInfo,
   streamNotFound,
   success,
-} from './api-replies.js';
-import { decodeHeaders, encodeHeaders, statusHeaders } from './headers.js';
-import { type Json, bodyOf, numberIn, recordIn, sameJson, stringIn } from './json.js';
-import type { Outbox } from './outbox.js';
-import { PullConsumer } from './pull-consumer.js';
-import { type Appended, Stream } from './stream.js';
+} from './api-replies';
+import { decodeHeaders, encodeHeaders, statusHeaders } from './headers';
+import { type Json, bodyOf, numberIn, recordIn, sameJson, stringIn } from './json';
+import type { Outbox } from './outbox';
+import { PullConsumer } from './pull-consumer';
+import { type Appended, Stream } from './stream';
 
 /**
  * The JetStream of the server: the API under `$JS.API`, the acknowledgements under `$JS.ACK`,

@@ -1,5 +1,5 @@
-import type { AuditRecord, AuditTrail } from '../../src/index.js';
-import type { StagingUnitOfWork } from './staging-unit-of-work.js';
+import type { AuditRecord, AuditTrail } from '../../src';
+import type { StagingUnitOfWork } from './staging-unit-of-work';
 
 /** A trail whose writes share the fate of the unit of work in progress, as a SQL store does. */
 export class TransactionalAuditTrail implements AuditTrail {

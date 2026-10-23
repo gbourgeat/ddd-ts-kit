@@ -1,4 +1,4 @@
-import type { Workspace } from '../workspace/index.js';
+import type { Workspace } from '../workspace';
 
 /** Directories of installed, built or measured files: nothing a person wrote. */
 const SKIPPED = new Set(['node_modules', 'dist', 'coverage', 'generated', '.git']);

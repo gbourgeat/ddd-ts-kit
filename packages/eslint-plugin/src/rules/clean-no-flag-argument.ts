@@ -1,11 +1,11 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../project/linted-file.js';
-import { className } from '../support/classes/class-name.js';
-import { isCallable } from '../support/classes/is-callable.js';
-import { isFunction } from '../support/classes/is-function.js';
-import { memberName } from '../support/classes/member-name.js';
-import { visibilityOf } from '../support/classes/visibility-of.js';
-import { defineRule } from '../support/rule/define-rule.js';
+import type { LintedFile } from '../project/linted-file';
+import { className } from '../support/classes/class-name';
+import { isCallable } from '../support/classes/is-callable';
+import { isFunction } from '../support/classes/is-function';
+import { memberName } from '../support/classes/member-name';
+import { visibilityOf } from '../support/classes/visibility-of';
+import { defineRule } from '../support/rule/define-rule';
 
 export const cleanNoFlagArgument = defineRule<'flag'>({
   id: 'clean/no-flag-argument',

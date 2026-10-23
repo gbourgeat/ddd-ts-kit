@@ -1,4 +1,4 @@
-import type { MergeFinding } from './lost/merge-finding.js';
+import type { MergeFinding } from './lost/merge-finding';
 
 /**
  * The commit a merge of the trunk is computed from: the newest commit of the branch the trunk

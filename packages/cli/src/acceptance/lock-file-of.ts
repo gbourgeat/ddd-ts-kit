@@ -1,4 +1,4 @@
-import { ACCEPTANCE_DIR } from './acceptance-file-of.js';
+import { ACCEPTANCE_DIR } from './acceptance-file-of';
 
 /** The lock of a story's acceptance, next to its spec. */
 export function lockFileOf(story: string): string {

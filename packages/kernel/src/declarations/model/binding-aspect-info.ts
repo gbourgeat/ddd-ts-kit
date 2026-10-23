@@ -1,4 +1,4 @@
-import type { DependencyKind } from '../../application/dependency-kind.js';
+import type { DependencyKind } from '../../application/dependency-kind';
 
 /** What an aspect is told about the instance it wraps. */
 export interface BindingAspectInfo {

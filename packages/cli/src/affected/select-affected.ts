@@ -1,9 +1,9 @@
-import type { Config } from '../config/index.js';
-import { downstreamsOf } from './downstreams-of.js';
-import { everything } from './everything.js';
-import type { PathReach } from './path-reach.js';
-import { reachOf } from './reach-of.js';
-import type { Selection } from './selection.js';
+import type { Config } from '../config';
+import { downstreamsOf } from './downstreams-of';
+import { everything } from './everything';
+import type { PathReach } from './path-reach';
+import { reachOf } from './reach-of';
+import type { Selection } from './selection';
 
 /**
  * What a change set has to run. A context whose sources changed is selected with every context

@@ -1,13 +1,13 @@
-import { readConfig } from '../config/index.js';
-import { formatProgress } from '../progress/format-progress.js';
-import { readProgress } from '../progress/read-progress.js';
-import { formatWorkers } from '../worker/format-workers.js';
-import { landedRows } from '../worker/landed-rows.js';
-import { readWorkers } from '../worker/read-workers.js';
-import { rowsOnBranches } from '../worker/rows-on-branches.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
+import { readConfig } from '../config';
+import { formatProgress } from '../progress/format-progress';
+import { readProgress } from '../progress/read-progress';
+import { formatWorkers } from '../worker/format-workers';
+import { landedRows } from '../worker/landed-rows';
+import { readWorkers } from '../worker/read-workers';
+import { rowsOnBranches } from '../worker/rows-on-branches';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import type { Command } from './command';
 
 /**
  * Prints where the work stands: the next step of the plan, the slices by status and by owner, the markers left in each context.

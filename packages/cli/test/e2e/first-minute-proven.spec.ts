@@ -1,10 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, tempDir } from '../helpers.js';
-import { grantOf } from '../support/grant-of.js';
-import { initFlags } from '../support/init-flags.js';
-import { installForReal, type Manager } from './install-for-real.js';
-import { PROVEN, SLOW } from './stacks.js';
-import { verified } from './verified.js';
+import { cli, tempDir } from '../helpers';
+import { grantOf } from '../support/grant-of';
+import { initFlags } from '../support/init-flags';
+import { installForReal, type Manager } from './install-for-real';
+import { PROVEN, SLOW } from './stacks';
+import { verified } from './verified';
 
 const only = process.env['DDD_TS_KIT_PACKAGE_MANAGER'];
 

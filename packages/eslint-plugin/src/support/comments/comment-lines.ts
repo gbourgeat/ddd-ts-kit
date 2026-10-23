@@ -1,6 +1,6 @@
 import { AST_TOKEN_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { sharesLineWithCode } from '../suppressions/shares-line-with-code.js';
-import { isJsdoc } from './is-jsdoc.js';
+import { sharesLineWithCode } from '../suppressions/shares-line-with-code';
+import { isJsdoc } from './is-jsdoc';
 
 /** One line of comment text, whatever the comment syntax, with what the comment rules need to know. */
 export interface CommentLine {

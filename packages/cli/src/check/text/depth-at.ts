@@ -1,4 +1,4 @@
-import { BRACKETS } from './brackets.js';
+import { BRACKETS } from './brackets';
 
 /** How many brackets are open at an offset, counted from the one at `from`. */
 export function depthAt(code: string, from: number, offset: number): number {

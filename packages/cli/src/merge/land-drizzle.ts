@@ -1,9 +1,9 @@
-import { drizzleOutFolder } from '../check/migrations/drizzle-out-folder.js';
-import { readMigrationFolder } from '../check/migrations/read-migration-folder.js';
-import { CliError } from '../cli-error.js';
-import { replayDrizzleMigrations } from '../migration/index.js';
-import { migrationsAt } from './migrations-at.js';
-import type { MigrationsLanded } from './renumber-migrations.js';
+import { drizzleOutFolder } from '../check/migrations/drizzle-out-folder';
+import { readMigrationFolder } from '../check/migrations/read-migration-folder';
+import { CliError } from '../cli-error';
+import { replayDrizzleMigrations } from '../migration';
+import { migrationsAt } from './migrations-at';
+import type { MigrationsLanded } from './renumber-migrations';
 
 /** The commits a drizzle replay of a merge is decided on. */
 export interface DrizzleLanding {

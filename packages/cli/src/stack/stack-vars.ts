@@ -1,17 +1,17 @@
-import type { Config } from '../config/index.js';
-import type { RenderContext } from '../templating/index.js';
-import { aliasVars } from './alias-vars.js';
-import { auditVars } from './audit-vars.js';
-import { authenticationVars } from './authentication-vars.js';
-import { brokerVars } from './broker-vars.js';
-import { cacheVars } from './cache-vars.js';
-import { errorVars } from './error-vars.js';
-import { eventVars } from './event-vars.js';
-import { one } from './one.js';
-import { persistenceVars } from './persistence-vars.js';
-import { redisVars } from './redis-vars.js';
-import { filesVars } from './files-vars.js';
-import { usesLegacyDecorators } from './uses-legacy-decorators.js';
+import type { Config } from '../config';
+import type { RenderContext } from '../templating';
+import { aliasVars } from './alias-vars';
+import { auditVars } from './audit-vars';
+import { authenticationVars } from './authentication-vars';
+import { brokerVars } from './broker-vars';
+import { cacheVars } from './cache-vars';
+import { errorVars } from './error-vars';
+import { eventVars } from './event-vars';
+import { one } from './one';
+import { persistenceVars } from './persistence-vars';
+import { redisVars } from './redis-vars';
+import { filesVars } from './files-vars';
+import { usesLegacyDecorators } from './uses-legacy-decorators';
 
 /** The choices of the stack as template variables: what every template of `init` and of `generate` reads. */
 export function stackVars(config: Config): RenderContext {

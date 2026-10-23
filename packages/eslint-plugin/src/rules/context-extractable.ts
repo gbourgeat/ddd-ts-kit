@@ -1,15 +1,15 @@
 import { ASTUtils, AST_NODE_TYPES, TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { resolveImport } from '../project/resolve-import.js';
-import type { ContextLocation } from '../project/location.js';
-import type { LintedFile } from '../project/linted-file.js';
-import { calleeName } from '../support/calls/callee-name.js';
-import { declaredRoleOf } from '../support/declarations/declared-role-of.js';
-import { isDeclaredStyle } from '../support/declarations/is-declared-style.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
-import { propertyName } from '../support/globals/property-name.js';
-import { inContext } from '../support/imports/in-context.js';
-import { staticString } from '../support/imports/static-string.js';
-import { isPortFile } from '../support/ports/is-port-file.js';
+import { resolveImport } from '../project/resolve-import';
+import type { ContextLocation } from '../project/location';
+import type { LintedFile } from '../project/linted-file';
+import { calleeName } from '../support/calls/callee-name';
+import { declaredRoleOf } from '../support/declarations/declared-role-of';
+import { isDeclaredStyle } from '../support/declarations/is-declared-style';
+import { defineRule, type Report } from '../support/rule/define-rule';
+import { propertyName } from '../support/globals/property-name';
+import { inContext } from '../support/imports/in-context';
+import { staticString } from '../support/imports/static-string';
+import { isPortFile } from '../support/ports/is-port-file';
 
 type MessageId = 'foreignSchema' | 'foreignTable' | 'mutableBinding' | 'mutableState' | 'foreignWiring' | 'foreignPort';
 type Tell = Report<MessageId>;

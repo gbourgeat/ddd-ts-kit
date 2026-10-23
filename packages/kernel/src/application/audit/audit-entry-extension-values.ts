@@ -1,5 +1,5 @@
-import type { AuditEntryExtensions } from './audit-entry-extensions.js';
-import type { AuditJson } from './audit-json.js';
+import type { AuditEntryExtensions } from './audit-entry-extensions';
+import type { AuditJson } from './audit-json';
 
 /** The extensions as an entry carries them: each one optional, and `never` when it is not JSON. */
 export type AuditEntryExtensionValues = {

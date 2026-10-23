@@ -1,5 +1,5 @@
-import { ensureGeneratedClient } from './support/generate.js';
+import { ensureGeneratedClient } from './support/generate';
 
 // The suite imports the generated Prisma client, which must exist before it is loaded.
 await ensureGeneratedClient();
-await import('./suites/criteria.js');
+await import('./suites/criteria');

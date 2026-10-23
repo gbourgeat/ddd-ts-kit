@@ -1,5 +1,5 @@
-import type { Config } from '../config/index.js';
-import { declaredModules } from './declared-modules.js';
+import type { Config } from '../config';
+import { declaredModules } from './declared-modules';
 
 /** Where the files of a context are read: its directory from the project root, and the modules of its model. */
 export interface ContextTree {

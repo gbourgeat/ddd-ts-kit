@@ -1,11 +1,11 @@
-import type { SourceFile } from '../model/source-file.js';
-import { explainedMains } from './explained-mains.js';
-import type { ExportVerdict } from './export-verdict.js';
-import type { Exported } from './exported.js';
-import { fileExports } from './file-exports.js';
-import { localTypes } from './local-types.js';
-import { sharesState } from './shares-state.js';
-import { typeFamily } from './type-family.js';
+import type { SourceFile } from '../model/source-file';
+import { explainedMains } from './explained-mains';
+import type { ExportVerdict } from './export-verdict';
+import type { Exported } from './exported';
+import { fileExports } from './file-exports';
+import { localTypes } from './local-types';
+import { sharesState } from './shares-state';
+import { typeFamily } from './type-family';
 
 const COUNTED: readonly Exported['kind'][] = ['class', 'function', 'interface'];
 

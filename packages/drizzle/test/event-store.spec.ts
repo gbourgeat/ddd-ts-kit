@@ -6,8 +6,8 @@ import {
   createDrizzleUnitOfWork,
   eventStoreTables,
   outboxTable,
-} from '../src/postgres.js';
-import { createDatabase } from './support/database.js';
+} from '../src/postgres';
+import { createDatabase } from './support/database';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const store = eventStoreTables('scheduling');

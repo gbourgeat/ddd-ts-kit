@@ -1,5 +1,5 @@
 import knex, { type Knex } from 'knex';
-import { startPostgres } from './postgres.js';
+import { startPostgres } from './postgres';
 
 export interface TestDatabase {
   readonly knex: Knex;

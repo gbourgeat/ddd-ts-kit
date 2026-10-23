@@ -1,8 +1,8 @@
-import type { Actor } from '../actor/actor.js';
-import type { AuthenticationMethod } from './authentication-method.js';
-import type { AuthenticationStrength } from './authentication-strength.js';
-import type { SessionClient } from './session-client.js';
-import type { SessionExtensionValues } from './session-extension-values.js';
+import type { Actor } from '../actor/actor';
+import type { AuthenticationMethod } from './authentication-method';
+import type { AuthenticationStrength } from './authentication-strength';
+import type { SessionClient } from './session-client';
+import type { SessionExtensionValues } from './session-extension-values';
 
 /**
  * The authenticated session of an actor, as plain data: never the credential it came from.

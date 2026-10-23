@@ -1,6 +1,6 @@
-import type { Config } from '../config/index.js';
-import { scriptsFor } from '../init/manifest/scripts-for.js';
-import type { DoctorFinding } from './doctor-finding.js';
+import type { Config } from '../config';
+import { scriptsFor } from '../init/manifest/scripts-for';
+import type { DoctorFinding } from './doctor-finding';
 
 /** The scripts this version writes that package.json lacks, then the ones it writes otherwise, `dev` preloading `tracing` where the project keeps it. */
 export function scriptFindings(

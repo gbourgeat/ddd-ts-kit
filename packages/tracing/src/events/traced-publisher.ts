@@ -1,11 +1,11 @@
 import { SpanKind, context, trace, type Context, type Span } from '@opentelemetry/api';
 import { messagingSystemOf, type IntegrationEvent, type IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
-import { admitDependencySpan } from '../local-root/admit-dependency-span.js';
-import { contextWithTraceparent } from '../propagation/context-with-traceparent.js';
-import { traceparentFromContext } from '../propagation/traceparent-from-context.js';
-import { markSpanFailed } from '../span/mark-span-failed.js';
-import { tracer } from '../span/tracer.js';
-import { messagingAttributes, type MessagingOperation } from './messaging-attributes.js';
+import { admitDependencySpan } from '../local-root/admit-dependency-span';
+import { contextWithTraceparent } from '../propagation/context-with-traceparent';
+import { traceparentFromContext } from '../propagation/traceparent-from-context';
+import { markSpanFailed } from '../span/mark-span-failed';
+import { tracer } from '../span/tracer';
+import { messagingAttributes, type MessagingOperation } from './messaging-attributes';
 
 export interface TracedPublisherOptions {
   /** The transport, when the publisher does not name it itself (`messagingSystem`). `outbox` for one that only stores. */

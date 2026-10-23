@@ -10,8 +10,8 @@ import {
   parseJobSchedule,
   type JobOptions,
   type JobSchedule,
-} from '../src/index.js';
-import { DeclarationError, Scheduled, declarationOf, type ScheduledOptions } from '../src/declarations.js';
+} from '../src';
+import { DeclarationError, Scheduled, declarationOf, type ScheduledOptions } from '../src/declarations';
 
 /** What refuses a schedule, as the text of its error. */
 function refusal(attempt: () => unknown): string {

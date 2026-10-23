@@ -1,4 +1,4 @@
-import type { SourceFile } from '../model/source-file.js';
+import type { SourceFile } from '../model/source-file';
 
 const TYPE_KEY = /(?<![\w$.])type\s*\??\s*:\s*$/;
 

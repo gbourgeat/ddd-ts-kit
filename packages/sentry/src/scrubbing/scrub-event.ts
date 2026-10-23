@@ -1,6 +1,6 @@
 import { DomainError, SCRUBBED_MESSAGE } from '@ddd-ts-kit/kernel';
 import type { ErrorEvent, EventHint } from '@sentry/node';
-import { scrubRequest } from './scrub-request.js';
+import { scrubRequest } from './scrub-request';
 
 export interface ScrubOptions {
   /** Replaces the message of every error that is not a `DomainError`. */

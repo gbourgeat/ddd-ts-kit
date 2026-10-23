@@ -1,8 +1,8 @@
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { EventEnvelope } from './event-envelope.js';
-import type { StoredData } from './stored-data.js';
-import type { StoredEventData } from './stored-event-data.js';
-import type { Upcaster } from './upcaster.js';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { EventEnvelope } from './event-envelope';
+import type { StoredData } from './stored-data';
+import type { StoredEventData } from './stored-event-data';
+import type { Upcaster } from './upcaster';
 
 /** One stored event as `defineStoredEvent` declared it, ready for the serializer. */
 export interface StoredEventType<E extends DomainEvent> {

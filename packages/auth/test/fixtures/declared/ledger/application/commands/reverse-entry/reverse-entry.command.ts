@@ -1,6 +1,6 @@
 import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
-import { ledgerPermissions } from '../../authorization/ledger.permissions.js';
+import { ledgerPermissions } from '../../authorization/ledger.permissions';
 
 @Requires(ledgerPermissions['entry.reverse'])
 export class ReverseEntry extends AuthorizedCommand {

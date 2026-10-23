@@ -1,4 +1,4 @@
-import type { SpanNode } from '../../src/testing.js';
+import type { SpanNode } from '../../src/testing';
 
 interface OtlpValue {
   readonly stringValue?: string;

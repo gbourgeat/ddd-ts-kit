@@ -1,6 +1,6 @@
-import type { Config } from '../../config/index.js';
-import type { Name } from '../../naming/index.js';
-import type { ContextRequest } from './context-request.js';
+import type { Config } from '../../config';
+import type { Name } from '../../naming';
+import type { ContextRequest } from './context-request';
 
 /** One context to write or to wire, in the project its config describes. */
 export interface ContextPlan {

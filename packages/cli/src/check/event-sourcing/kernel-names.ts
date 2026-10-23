@@ -1,4 +1,4 @@
-import type { SourceFile } from '../model/source-file.js';
+import type { SourceFile } from '../model/source-file';
 
 export interface NamedImport {
   readonly name: string;

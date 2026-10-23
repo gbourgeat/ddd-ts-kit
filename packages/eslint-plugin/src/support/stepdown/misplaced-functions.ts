@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { ancestors } from '../ancestors.js';
-import { CallGraph } from './call-graph.js';
-import { isFunction } from '../classes/is-function.js';
+import { ancestors } from '../ancestors';
+import { CallGraph } from './call-graph';
+import { isFunction } from '../classes/is-function';
 
 export interface ModuleFinding {
   readonly node: TSESTree.Identifier;

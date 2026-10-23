@@ -1,7 +1,7 @@
-import { BRACKETS } from '../check/text/brackets.js';
-import { matchingBracket } from '../check/text/matching-bracket.js';
-import type { Edit } from './edit.js';
-import { statementEnd } from './statement-end.js';
+import { BRACKETS } from '../check/text/brackets';
+import { matchingBracket } from '../check/text/matching-bracket';
+import type { Edit } from './edit';
+import { statementEnd } from './statement-end';
 
 const RETURN = /(?<=^|\n)([ \t]*)return\s+/g;
 const BRANCH = /^\s*(ok|err)\s*\(/;

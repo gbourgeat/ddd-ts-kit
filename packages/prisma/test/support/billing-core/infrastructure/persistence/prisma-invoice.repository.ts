@@ -1,10 +1,10 @@
 import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import { optimisticUpdate } from '../../../../../src/index.js';
-import type { Prisma } from '../../../../generated/client/client.js';
-import type { Database } from '../../../platform/database/database.js';
-import { Invoice, type InvoiceState } from '../../domain/invoice.js';
-import type { InvoiceRepository } from '../../domain/repositories/invoice.repository.js';
-import { statusOf } from './status-of.js';
+import { optimisticUpdate } from '../../../../../src';
+import type { Prisma } from '../../../../generated/client/client';
+import type { Database } from '../../../platform/database/database';
+import { Invoice, type InvoiceState } from '../../domain/invoice';
+import type { InvoiceRepository } from '../../domain/repositories/invoice.repository';
+import { statusOf } from './status-of';
 
 type VersionedInvoice = InvoiceState & { version: number };
 

@@ -1,4 +1,4 @@
-import type { ExecuteOptions } from './execute-options.js';
+import type { ExecuteOptions } from './execute-options';
 
 /** When the request must be answered by, from the moment it arrived: none when the options set no timeout. */
 export function deadlineOf(options: ExecuteOptions): Date | undefined {

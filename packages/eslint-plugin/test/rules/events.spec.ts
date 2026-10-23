@@ -1,6 +1,6 @@
-import { eventsConsumerIdempotent } from '../../src/rules/events-consumer-idempotent.js';
-import { eventsOutboxRequired } from '../../src/rules/events-outbox-required.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+import { eventsConsumerIdempotent } from '../../src/rules/events-consumer-idempotent';
+import { eventsOutboxRequired } from '../../src/rules/events-outbox-required';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const MODULE = `${BILLING}/billing.module.ts`;
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;

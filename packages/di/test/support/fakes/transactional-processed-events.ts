@@ -1,5 +1,5 @@
 import type { ProcessedEventStore } from '@ddd-ts-kit/kernel';
-import { TransactionalJournal } from './transactional-journal.js';
+import { TransactionalJournal } from './transactional-journal';
 
 /**
  * A processed-event store whose mark shares the transaction of the handler, as a table of the

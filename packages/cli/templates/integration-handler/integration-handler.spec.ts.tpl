@@ -1,7 +1,7 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 {{#if upstream.known}}
-import { {{upstream.definition}} } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index{{alias.ext}}';
+import { {{upstream.definition}} } from '{{alias.contexts}}/{{upstream.kebab}}/published-language{{alias.index}}';
 {{/if}}
 import { {{name.pascal}}IntegrationHandler } from '{{alias.context}}/application/integration/handlers/{{name.kebab}}.integration-handler{{alias.ext}}';
 

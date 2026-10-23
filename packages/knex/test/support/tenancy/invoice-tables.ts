@@ -1,8 +1,8 @@
 import type { Knex } from 'knex';
 import type { ExecutionScope } from '@ddd-ts-kit/kernel';
-import { ownTenantTable, tenantSchemaTable, tenantTable, type KnexContext } from '../../../src/index.js';
-import { BILLING } from '../billing-core/infrastructure/persistence/billing-schema.js';
-import type { InvoiceRow } from '../billing-core/infrastructure/persistence/invoice-row.js';
+import { ownTenantTable, tenantSchemaTable, tenantTable, type KnexContext } from '../../../src';
+import { BILLING } from '../billing-core/infrastructure/persistence/billing-schema';
+import type { InvoiceRow } from '../billing-core/infrastructure/persistence/invoice-row';
 
 /** How a repository reaches its table under one strategy: to read, and to write. */
 export interface InvoiceTables {

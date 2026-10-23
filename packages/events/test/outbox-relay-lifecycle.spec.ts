@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { FixedClock } from '@ddd-ts-kit/kernel';
-import { InMemoryOutboxStore, OutboxRelay, type OutboxRelayFailure } from '../src/index.js';
-import { at } from './support/events.js';
-import { eventually } from './support/eventually.js';
-import { FlakyPublisher } from './support/flaky-publisher.js';
-import { GatedPublisher } from './support/gated-publisher.js';
-import { invoiceIssuedEvent as event } from './support/invoice-issued-event.js';
-import { setupRelay } from './support/setup-relay.js';
-import { UnstableStore } from './support/unstable-store.js';
+import { InMemoryOutboxStore, OutboxRelay, type OutboxRelayFailure } from '../src';
+import { at } from './support/events';
+import { eventually } from './support/eventually';
+import { FlakyPublisher } from './support/flaky-publisher';
+import { GatedPublisher } from './support/gated-publisher';
+import { invoiceIssuedEvent as event } from './support/invoice-issued-event';
+import { setupRelay } from './support/setup-relay';
+import { UnstableStore } from './support/unstable-store';
 
 describe('OutboxRelay.start and stop', () => {
   it('relays in the background until stopped', async () => {

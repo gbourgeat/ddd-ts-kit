@@ -1,6 +1,6 @@
 import type { UnitOfWork } from '@ddd-ts-kit/kernel';
-import type { Awaitable } from '../awaitable.js';
-import type { OutboxStoreUnderContract } from '../outbox-store-contract.js';
+import type { Awaitable } from '../awaitable';
+import type { OutboxStoreUnderContract } from '../outbox-store-contract';
 
 /**
  * A unit of work with one table of its database, empty, and the outbox store of that database

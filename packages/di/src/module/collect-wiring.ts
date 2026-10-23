@@ -1,7 +1,7 @@
-import { WiringDraft } from '../wiring/wiring-draft.js';
-import type { Wiring } from '../wiring/wiring.js';
-import type { ContextModule } from './context-module.js';
-import { ModuleRecorder } from './module-recorder.js';
+import { WiringDraft } from '../wiring/wiring-draft';
+import type { Wiring } from '../wiring/wiring';
+import type { ContextModule } from './context-module';
+import { ModuleRecorder } from './module-recorder';
 
 /** Runs the `register` function of every module and returns what they declared. */
 export function collectWiring(modules: readonly ContextModule[]): Wiring {

@@ -1,6 +1,6 @@
 import type { ReadModelTable, UnitOfWork } from '@ddd-ts-kit/kernel';
-import type { Awaitable } from '../awaitable.js';
-import type { CriteriaContractRow } from '../criteria/criteria-contract-row.js';
+import type { Awaitable } from '../awaitable';
+import type { CriteriaContractRow } from '../criteria/criteria-contract-row';
 
 export interface ReadModelStoreUnderContract {
   /** The table of `CriteriaContractRow`, empty. */

@@ -1,5 +1,5 @@
-import { read } from '../helpers.js';
-import { readYaml } from './read-yaml.js';
+import { read } from '../helpers';
+import { readYaml } from './read-yaml';
 
 /** A generated contract as data, whether it is written in YAML or in JSON. */
 export function readContract(root: string, file: string): unknown {

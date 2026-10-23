@@ -1,4 +1,4 @@
-import type { CachePurger } from '../../application/ports/cache-purger.js';
+import type { CachePurger } from '../../application/ports/cache-purger';
 
 export interface RepeatedCachePurgerOptions {
   /** How long after a purge the same tags are purged again: longer than the slowest read of the application. */

@@ -1,5 +1,5 @@
-import { Adapter } from '../../../../src/declarations.js';
-import { TalkativePharmacy } from '../contexts/clinic/application/ports/talkative-pharmacy.port.js';
+import { Adapter } from '../../../../src/declarations';
+import { TalkativePharmacy } from '../contexts/clinic/application/ports/talkative-pharmacy.port';
 
 export function declareAnAdapterOfAPortWithABody(): void {
   @Adapter(TalkativePharmacy)

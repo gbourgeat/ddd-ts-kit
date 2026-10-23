@@ -1,10 +1,10 @@
-import type { Page } from '../pagination/page.js';
-import type { HydratedPage } from './hydrated-page.js';
-import type { HydrationPolicy } from './hydration-policy.js';
-import type { HydrationRun } from './hydration-run.js';
-import { HydrationTimeoutError } from './hydration-timeout-error.js';
-import { loadRelation } from './load-relation.js';
-import { property } from './property.js';
+import type { Page } from '../pagination/page';
+import type { HydratedPage } from './hydrated-page';
+import type { HydrationPolicy } from './hydration-policy';
+import type { HydrationRun } from './hydration-run';
+import { HydrationTimeoutError } from './hydration-timeout-error';
+import { loadRelation } from './load-relation';
+import { property } from './property';
 
 type Completing<Row, Extra> = (rows: readonly Row[], run: HydrationRun) => Promise<readonly Extra[]>;
 

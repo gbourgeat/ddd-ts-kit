@@ -1,10 +1,10 @@
 import { EntitySchema } from 'typeorm';
-import { INDEXABLE_LENGTH } from '../columns/indexable-length.js';
-import { INSTANT } from '../columns/instant.js';
-import { RIGHT_NOW } from '../columns/right-now.js';
-import { entityName } from './entity-name.js';
-import type { EntityOptions } from './entity-options.js';
-import type { ProcessedEventRow } from './processed-event-row.js';
+import { INDEXABLE_LENGTH } from '../columns/indexable-length';
+import { INSTANT } from '../columns/instant';
+import { RIGHT_NOW } from '../columns/right-now';
+import { entityName } from './entity-name';
+import type { EntityOptions } from './entity-options';
+import type { ProcessedEventRow } from './processed-event-row';
 
 /** The idempotency table of the consumers, to register and migrate like the outbox. */
 export function processedEventEntity(options: EntityOptions = {}): EntitySchema<ProcessedEventRow> {

@@ -10,9 +10,9 @@ import {
   contentDisposition,
   type ServedFileStorage,
 } from '@ddd-ts-kit/kernel';
-import { listenOnRandomPort, type RunningServer } from '../src/e2e.js';
-import { fileStorageContract, followServed, type SignedRequest } from '../src/contracts.js';
-import { readAll } from '../src/contracts/file-storage/read-all.js';
+import { listenOnRandomPort, type RunningServer } from '../src/e2e';
+import { fileStorageContract, followServed, type SignedRequest } from '../src/contracts';
+import { readAll } from '../src/contracts/file-storage/read-all';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const NOW = new Date('2026-03-01T10:00:00.000Z');

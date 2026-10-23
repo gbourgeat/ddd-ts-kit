@@ -1,8 +1,8 @@
-import { specifierOf } from '../../alias/index.js';
-import type { Scope } from '../scope.js';
-import { entriesOf } from './entries-of.js';
-import { vocabularyText } from './vocabulary-text.js';
-import { platformPath } from '../platform-path.js';
+import { specifierOf } from '../../alias';
+import type { Scope } from '../scope';
+import { entriesOf } from './entries-of';
+import { vocabularyText } from './vocabulary-text';
+import { platformPath } from '../platform-path';
 
 /** The key of a role in the role vocabulary of the platform, and the specifier that imports it. */
 export interface DeclaredRole {

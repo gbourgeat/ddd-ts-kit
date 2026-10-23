@@ -1,6 +1,6 @@
-import type { DomainEvent } from '../../domain/domain-event.js';
-import type { NamedDomainEventType } from '../model/named-domain-event-type.js';
-import { DeclarationError } from '../registry/declaration-error.js';
+import type { DomainEvent } from '../../domain/domain-event';
+import type { NamedDomainEventType } from '../model/named-domain-event-type';
+import { DeclarationError } from '../registry/declaration-error';
 
 /** The name the event class declares, read once by the decorator that attaches a reader to its events. */
 export function eventNameOf(event: NamedDomainEventType<DomainEvent>, reader: string): string {

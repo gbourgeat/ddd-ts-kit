@@ -1,7 +1,7 @@
-import type { CircuitBreakerOptions } from '../circuit-breaker/circuit-breaker-options.js';
-import { circuitBreakerAdvice } from '../circuit-breaker/circuit-breaker.js';
-import type { AsyncMethodDecorator } from './async-method-decorator.js';
-import { decoratorOf } from './decorator-of.js';
+import type { CircuitBreakerOptions } from '../circuit-breaker/circuit-breaker-options';
+import { circuitBreakerAdvice } from '../circuit-breaker/circuit-breaker';
+import type { AsyncMethodDecorator } from './async-method-decorator';
+import { decoratorOf } from './decorator-of';
 
 /** See `circuitBreaker`. One circuit per instance and method, or per instance with `scope`. */
 export function CircuitBreaker(options: CircuitBreakerOptions): AsyncMethodDecorator {

@@ -1,9 +1,9 @@
 import { createHash, type Hash } from 'node:crypto';
 import { Transform, type TransformCallback } from 'node:stream';
-import { acceptsMediaType } from '../../application/files/accepts-media-type.js';
-import { contentMatches } from '../../application/files/content-matches.js';
-import { FileError } from '../../application/files/file-error.js';
-import type { InspectionLimits } from '../../application/files/inspection-limits.js';
+import { acceptsMediaType } from '../../application/files/accepts-media-type';
+import { contentMatches } from '../../application/files/content-matches';
+import { FileError } from '../../application/files/file-error';
+import type { InspectionLimits } from '../../application/files/inspection-limits';
 
 /** Enough bytes for every signature, and for a fair judgement of text. */
 const HEAD_BYTES = 4_096;

@@ -2,15 +2,15 @@ import js from '@eslint/js';
 import stylistic from '@stylistic/eslint-plugin';
 import type { TSESLint } from '@typescript-eslint/utils';
 import tseslint from 'typescript-eslint';
-import { configuredSeverity } from '../project/configured-severity.js';
-import { parseConfig } from '../project/parse-config.js';
-import type { Config, Severity } from '../project/config.js';
-import { findProject } from '../project/find-project.js';
-import { rules as pluginRules } from '../rules/rules.js';
-import { docsOf, type DddRule } from '../support/rule/docs-of.js';
-import { eslintName } from '../support/rule/define-rule.js';
-import { bracesRules } from './braces-rules.js';
-import { layoutRules } from './layout-rules.js';
+import { configuredSeverity } from '../project/configured-severity';
+import { parseConfig } from '../project/parse-config';
+import type { Config, Severity } from '../project/config';
+import { findProject } from '../project/find-project';
+import { rules as pluginRules } from '../rules/rules';
+import { docsOf, type DddRule } from '../support/rule/docs-of';
+import { eslintName } from '../support/rule/define-rule';
+import { bracesRules } from './braces-rules';
+import { layoutRules } from './layout-rules';
 import {
   AGGREGATE_RULES,
   CLEAN_CODE_RULES,
@@ -19,8 +19,8 @@ import {
   KIT_CONVENTIONS,
   TEST_RULES,
   TYPED_CLEAN_CODE_RULES,
-} from './standard-rules.js';
-import type { Rules } from './flat-rules.js';
+} from './standard-rules';
+import type { Rules } from './flat-rules';
 
 type ConfigArray = TSESLint.FlatConfig.ConfigArray;
 

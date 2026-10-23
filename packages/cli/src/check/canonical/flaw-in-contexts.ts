@@ -1,6 +1,6 @@
-import type { Config } from '../../config/index.js';
-import type { Flaw } from '../model/flaw.js';
-import { firstFlaw } from './first-flaw.js';
+import type { Config } from '../../config';
+import type { Flaw } from '../model/flaw';
+import { firstFlaw } from './first-flaw';
 
 /**
  * Why the canonical tree refuses a path given relative to a context (`application/services/`),

@@ -1,12 +1,12 @@
-import { DECLARATIONS_ENTRY } from '../declarations/declarations-entry.js';
-import { outsideConcern } from '../layers/outside-concern.js';
-import type { Flaw } from '../model/flaw.js';
-import type { ImportTarget } from '../model/import-target.js';
-import type { ResolvedImport } from '../model/resolved-import.js';
-import type { Rule } from '../model/rule.js';
-import { describeTarget } from '../support/describe-target.js';
-import { inLayer } from '../support/in-layer.js';
-import { perFile } from '../support/per-file.js';
+import { DECLARATIONS_ENTRY } from '../declarations/declarations-entry';
+import { outsideConcern } from '../layers/outside-concern';
+import type { Flaw } from '../model/flaw';
+import type { ImportTarget } from '../model/import-target';
+import type { ResolvedImport } from '../model/resolved-import';
+import type { Rule } from '../model/rule';
+import { describeTarget } from '../support/describe-target';
+import { inLayer } from '../support/in-layer';
+import { perFile } from '../support/per-file';
 
 type ImportedFile = Extract<ImportTarget, { kind: 'file' }>;
 

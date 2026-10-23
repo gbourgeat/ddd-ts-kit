@@ -1,8 +1,8 @@
 import { inspect } from 'node:util';
 import { Redis } from 'ioredis';
-import { closeRedis } from './close-redis.js';
-import { FAIL_FAST } from './fail-fast.js';
-import type { RedisSource } from './redis-source.js';
+import { closeRedis } from './close-redis';
+import { FAIL_FAST } from './fail-fast';
+import type { RedisSource } from './redis-source';
 
 export interface RedisConnection {
   readonly client: Redis;

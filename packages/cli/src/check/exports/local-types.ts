@@ -1,7 +1,7 @@
-import { afterTypeParameters } from '../text/after-type-parameters.js';
-import { braceDepthAt } from '../text/brace-depth-at.js';
-import { endAtDepthZero } from '../text/end-at-depth-zero.js';
-import { matchingBracket } from '../text/matching-bracket.js';
+import { afterTypeParameters } from '../text/after-type-parameters';
+import { braceDepthAt } from '../text/brace-depth-at';
+import { endAtDepthZero } from '../text/end-at-depth-zero';
+import { matchingBracket } from '../text/matching-bracket';
 
 /** An interface or a type alias declared at the top level of a file, exported or not. */
 export interface LocalType {

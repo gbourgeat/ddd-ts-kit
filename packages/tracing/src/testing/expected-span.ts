@@ -1,4 +1,4 @@
-import type { SpanNode } from './span-node.js';
+import type { SpanNode } from './span-node';
 
 /**
  * What a spec says of one span. The name and the children are exact: a span that is not

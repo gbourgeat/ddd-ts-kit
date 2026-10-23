@@ -1,4 +1,4 @@
-import type { Project } from '../model/project.js';
+import type { Project } from '../model/project';
 
 /**
  * The `errors/*` rules judge a project that says it builds its refusals through factories, of a

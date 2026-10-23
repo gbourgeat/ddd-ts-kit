@@ -1,10 +1,10 @@
-import type { CachePolicy } from '../cache/cache-policy.js';
-import type { RawHeaders } from '../route/raw-headers.js';
-import type { Route } from '../route/route.js';
-import { entityTagOf } from './entity-tag-of.js';
-import { isNotModified } from './is-not-modified.js';
-import { lastModifiedOf } from './last-modified-of.js';
-import type { RouteResponse } from './route-response.js';
+import type { CachePolicy } from '../cache/cache-policy';
+import type { RawHeaders } from '../route/raw-headers';
+import type { Route } from '../route/route';
+import { entityTagOf } from './entity-tag-of';
+import { isNotModified } from './is-not-modified';
+import { lastModifiedOf } from './last-modified-of';
+import type { RouteResponse } from './route-response';
 
 const NOT_MODIFIED = 304;
 const SUCCESS_FROM = 200;

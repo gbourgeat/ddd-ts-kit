@@ -1,8 +1,8 @@
 import { spawnSync } from 'node:child_process';
-import { CliError } from '../cli-error.js';
-import type { Io } from '../commands/io.js';
-import { drizzleKitBin } from './drizzle-kit-bin.js';
-import { DRIZZLE_SILENT_FAILURES } from './drizzle-silent-failures.js';
+import { CliError } from '../cli-error';
+import type { Io } from '../commands/io';
+import { drizzleKitBin } from './drizzle-kit-bin';
+import { DRIZZLE_SILENT_FAILURES } from './drizzle-silent-failures';
 
 export interface DrizzleMigration {
   readonly root: string;

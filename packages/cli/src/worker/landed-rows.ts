@@ -1,4 +1,4 @@
-import type { WorkersStatus } from './workers-status.js';
+import type { WorkersStatus } from './workers-status';
 
 /**
  * The rows that landed on the trunk with a worker's branch, by id, with the commit of the trunk

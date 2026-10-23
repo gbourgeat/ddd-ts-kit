@@ -1,7 +1,7 @@
-import { statusHeaders } from './headers.js';
-import { type Json, millisecondsOf, numberIn, stringIn } from './json.js';
-import type { Outbox } from './outbox.js';
-import type { Stream } from './stream.js';
+import { statusHeaders } from './headers';
+import { type Json, millisecondsOf, numberIn, stringIn } from './json';
+import type { Outbox } from './outbox';
+import type { Stream } from './stream';
 
 type Timer = ReturnType<typeof setTimeout>;
 

@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { toName } from '../naming/to-name.js';
+import { toName } from '../naming/to-name';
 
 /** Parts of a file name that make it a test, a declaration file or a fake, never a role. */
 const NOT_A_ROLE = new Set(['spec', 'test', 'fake', 'e2e', 'd']);

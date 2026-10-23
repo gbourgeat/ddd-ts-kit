@@ -1,9 +1,9 @@
-import { bindingNamesOf } from './binding-names-of.js';
-import type { ConsumerBinding } from './consumer-binding.js';
-import type { ConsumerDescription } from './consumer-description.js';
-import { deadStreamOf } from './dead-stream-of.js';
-import type { NatsTopology } from './nats-topology.js';
-import type { TopologySettings } from './topology-settings.js';
+import { bindingNamesOf } from './binding-names-of';
+import type { ConsumerBinding } from './consumer-binding';
+import type { ConsumerDescription } from './consumer-description';
+import { deadStreamOf } from './dead-stream-of';
+import type { NatsTopology } from './nats-topology';
+import type { TopologySettings } from './topology-settings';
 
 export function topologyOf(settings: TopologySettings, bindings: readonly ConsumerBinding[]): NatsTopology {
   const { stream, subjectPrefix, storage, replicas, duplicateWindowMs } = settings;

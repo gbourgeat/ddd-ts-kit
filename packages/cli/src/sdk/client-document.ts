@@ -1,5 +1,5 @@
-import type { ClientOperation } from './client-operation.js';
-import type { SchemeCarrier } from './scheme-carrier.js';
+import type { ClientOperation } from './client-operation';
+import type { SchemeCarrier } from './scheme-carrier';
 
 /** One document of the contract, read as what its client needs. */
 export interface ClientDocument {

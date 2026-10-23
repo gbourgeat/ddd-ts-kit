@@ -1,12 +1,12 @@
 import type { Attributes } from '@opentelemetry/api';
 import type { DependencyKind } from '@ddd-ts-kit/kernel';
-import { tracingConfiguration } from '../configuration/configure-tracing.js';
-import { constructorName } from '../span/constructor-name.js';
-import type { Method } from './method.js';
-import { proxied } from './proxied.js';
-import { shadowed } from './shadowed.js';
-import { traceableMethods } from './traceable-methods.js';
-import { traced } from './traced.js';
+import { tracingConfiguration } from '../configuration/configure-tracing';
+import { constructorName } from '../span/constructor-name';
+import type { Method } from './method';
+import { proxied } from './proxied';
+import { shadowed } from './shadowed';
+import { traceableMethods } from './traceable-methods';
+import { traced } from './traced';
 
 export interface TraceDependencyOptions {
   readonly kind: DependencyKind;

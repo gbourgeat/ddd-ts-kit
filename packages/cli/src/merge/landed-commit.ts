@@ -1,5 +1,5 @@
-import { runGit } from '../commit/run-git.js';
-import { patchIdsOf } from './patch-ids-of.js';
+import { runGit } from '../commit/run-git';
+import { patchIdsOf } from './patch-ids-of';
 
 /** The commits to try, newest first, and the trunk's patch ids to find them in. */
 export interface LandedSearch {

@@ -1,7 +1,7 @@
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import { perFile } from '../support/per-file.js';
-import { matchingBracket } from '../text/matching-bracket.js';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import { perFile } from '../support/per-file';
+import { matchingBracket } from '../text/matching-bracket';
 
 const CONTROL = /(?<![\w$.])(?:(if|while|for(?:\s+await)?)\s*\(|(else|do)(?![\w$]))/g;
 /** What follows `else` or `do` when the word is a property name or a method, not a statement. */

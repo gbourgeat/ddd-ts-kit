@@ -1,6 +1,6 @@
-import type { AccessScope } from '../authorization/access-scope.js';
-import type { Authorizer } from '../authorization/authorizer.js';
-import { deny, type Decision } from '../authorization/decision.js';
+import type { AccessScope } from '../authorization/access-scope';
+import type { Authorizer } from '../authorization/authorizer';
+import { deny, type Decision } from '../authorization/decision';
 
 export class DenyAll implements Authorizer {
   constructor(private readonly reason = 'DENIED_BY_TEST') {}

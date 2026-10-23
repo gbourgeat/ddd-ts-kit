@@ -1,8 +1,8 @@
 import { Readable } from 'node:stream';
 import { contentDisposition, type ServedFileStorage } from '@ddd-ts-kit/kernel';
-import type { FollowedResponse } from './followed-response.js';
-import { readAll } from './read-all.js';
-import type { SignedRequest } from './signed-request.js';
+import type { FollowedResponse } from './followed-response';
+import { readAll } from './read-all';
+import type { SignedRequest } from './signed-request';
 
 /**
  * Follows a link of a storage the application serves, without a server: the token is the `token`

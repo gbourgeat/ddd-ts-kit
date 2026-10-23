@@ -1,5 +1,5 @@
-import { signatureAt } from '../structure/signature-at.js';
-import { matchingBracket } from '../text/matching-bracket.js';
+import { signatureAt } from '../structure/signature-at';
+import { matchingBracket } from '../text/matching-bracket';
 
 /** A stretch of code between two braces. */
 export type Span = readonly [open: number, close: number];

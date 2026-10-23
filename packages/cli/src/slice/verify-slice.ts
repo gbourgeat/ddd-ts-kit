@@ -1,21 +1,21 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { changedFiles } from '../check/commands/changed-files.js';
-import { citedRemovals } from '../citations/cited-removals.js';
-import { runCheck } from '../check/engine/run-check.js';
-import { summarize } from '../check/engine/summarize.js';
-import { loadProject } from '../check/project/load-project.js';
-import { CliError } from '../cli-error.js';
-import { isRecord } from '../config/values/is-record.js';
-import { verifyMerges } from '../merge/lost/verify-merges.js';
-import { nearTheLimit } from './near-the-limit.js';
-import { changedEntries } from './changed-entries.js';
-import { planStaging } from './plan-staging.js';
-import { recordVerification } from './record-verification.js';
-import { runScript } from './run-script.js';
-import type { SliceToVerify } from './slice-to-verify.js';
-import type { SliceVerification } from './slice-verification.js';
-import { workerSliceOf } from './worker-slice-of.js';
+import { changedFiles } from '../check/commands/changed-files';
+import { citedRemovals } from '../citations/cited-removals';
+import { runCheck } from '../check/engine/run-check';
+import { summarize } from '../check/engine/summarize';
+import { loadProject } from '../check/project/load-project';
+import { CliError } from '../cli-error';
+import { isRecord } from '../config/values/is-record';
+import { verifyMerges } from '../merge/lost/verify-merges';
+import { nearTheLimit } from './near-the-limit';
+import { changedEntries } from './changed-entries';
+import { planStaging } from './plan-staging';
+import { recordVerification } from './record-verification';
+import { runScript } from './run-script';
+import type { SliceToVerify } from './slice-to-verify';
+import type { SliceVerification } from './slice-verification';
+import { workerSliceOf } from './worker-slice-of';
 
 /** The scripts a slice runs; `regenerate` arrived in 0.21. */
 const SCRIPTS = ['regenerate', 'test'];

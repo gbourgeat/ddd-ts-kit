@@ -1,7 +1,7 @@
-import { resolve } from '../builders/resolve.js';
-import type { Resolvable } from '../builders/resolvable.js';
-import type { EventSource } from './event-source.js';
-import { scenario, type Scenario } from './scenario.js';
+import { resolve } from '../builders/resolve';
+import type { Resolvable } from '../builders/resolvable';
+import type { EventSource } from './event-source';
+import { scenario, type Scenario } from './scenario';
 
 /**
  * Starts a scenario from an aggregate (or its builder) in its "given" state. The events

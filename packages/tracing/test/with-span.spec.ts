@@ -1,7 +1,7 @@
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { withSpan } from '../src/index.js';
-import { setupTracing, type TestTracing } from './support/setup-tracing.js';
+import { withSpan } from '../src';
+import { setupTracing, type TestTracing } from './support/setup-tracing';
 
 describe('withSpan', () => {
   let tracing: TestTracing;

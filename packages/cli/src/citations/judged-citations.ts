@@ -1,7 +1,7 @@
-import type { Citation } from './citations-of.js';
-import type { Evidence } from './evidence.js';
-import { judgeCitation } from './judge-citation.js';
-import type { Candidate, StaleCitation } from './stale-citation.js';
+import type { Citation } from './citations-of';
+import type { Evidence } from './evidence';
+import { judgeCitation } from './judge-citation';
+import type { Candidate, StaleCitation } from './stale-citation';
 
 /** The names to report, and how many cited names the code has or are still to build. */
 export interface JudgedCitations {

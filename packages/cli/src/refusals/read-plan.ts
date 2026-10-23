@@ -1,11 +1,11 @@
-import { isRecord } from '../check/support/is-record.js';
-import { CliError } from '../cli-error.js';
-import { refusalCode } from '../generate/errors/refusal-code.js';
-import { refusalName } from '../generate/errors/refusal-name.js';
-import { toName } from '../naming/index.js';
-import type { MigrationPlan } from './migration-plan.js';
-import { PLAN_FILE } from './plan-file.js';
-import type { PlannedFactory } from './planned-factory.js';
+import { isRecord } from '../check/support/is-record';
+import { CliError } from '../cli-error';
+import { refusalCode } from '../generate/errors/refusal-code';
+import { refusalName } from '../generate/errors/refusal-name';
+import { toName } from '../naming';
+import type { MigrationPlan } from './migration-plan';
+import { PLAN_FILE } from './plan-file';
+import type { PlannedFactory } from './planned-factory';
 
 const FIX = `Run \`ddd-ts-kit error-factories --plan\` to write ${PLAN_FILE} again, then give each entry its concept.`;
 

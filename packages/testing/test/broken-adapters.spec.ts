@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FixedClock, type Lock, type LockHandle, type Repository } from '@ddd-ts-kit/kernel';
-import { resetSequences } from '../src/index.js';
-import { lockContract, repositoryContract } from '../src/contracts.js';
-import { anOrder } from './support/builders.js';
-import { CollectingRunner } from './support/collecting-runner.js';
-import { Order, at, type OrderSnapshot } from './support/order.js';
+import { resetSequences } from '../src';
+import { lockContract, repositoryContract } from '../src/contracts';
+import { anOrder } from './support/builders';
+import { CollectingRunner } from './support/collecting-runner';
+import { Order, at, type OrderSnapshot } from './support/order';
 
 beforeEach(() => {
   resetSequences();

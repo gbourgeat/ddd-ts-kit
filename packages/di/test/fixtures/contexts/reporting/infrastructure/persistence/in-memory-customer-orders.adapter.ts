@@ -4,7 +4,7 @@ import {
   CustomerOrders,
   customerOrdersCriteria,
   type CustomerOrdersRow,
-} from '../../application/ports/customer-orders.port.js';
+} from '../../application/ports/customer-orders.port';
 
 @Adapter(CustomerOrders)
 export class InMemoryCustomerOrders extends InMemoryReadModelStore<CustomerOrdersRow> implements CustomerOrders {

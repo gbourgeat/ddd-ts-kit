@@ -1,6 +1,6 @@
-import type { JobExecution } from './job-execution.js';
-import type { JobOptions } from './job-options.js';
-import type { JobSchedule } from './job-schedule.js';
+import type { JobExecution } from './job-execution';
+import type { JobOptions } from './job-options';
+import type { JobSchedule } from './job-schedule';
 
 /** A job as a scheduler receives it. */
 export interface JobDefinition extends JobOptions {

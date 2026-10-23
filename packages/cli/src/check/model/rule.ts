@@ -1,5 +1,5 @@
-import type { Project } from './project.js';
-import type { Violation } from './violation.js';
+import type { Project } from './project';
+import type { Violation } from './violation';
 
 export interface Rule {
   readonly id: string;

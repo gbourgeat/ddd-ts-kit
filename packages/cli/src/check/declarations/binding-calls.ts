@@ -1,8 +1,8 @@
-import type { SourceFile } from '../model/source-file.js';
-import { importsPackage } from '../support/imports-package.js';
-import { callArguments } from '../text/call-arguments.js';
-import { matchingBracket } from '../text/matching-bracket.js';
-import type { BindingCall } from './binding-call.js';
+import type { SourceFile } from '../model/source-file';
+import { importsPackage } from '../support/imports-package';
+import { callArguments } from '../text/call-arguments';
+import { matchingBracket } from '../text/matching-bracket';
+import type { BindingCall } from './binding-call';
 
 const DI_PACKAGE = '@ddd-ts-kit/di';
 const CALL = /(?:([\w$]+(?:\s*\.\s*[\w$]+)*)\s*\.\s*|\.\s*|(?<![\w$.]))(bind|rebind|resolve|fake|override)\s*\(/g;

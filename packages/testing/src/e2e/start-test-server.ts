@@ -1,7 +1,7 @@
-import { createHttpClient } from './create-http-client.js';
-import type { HttpClient } from './http-client.js';
-import type { HttpHeaders } from './http-headers.js';
-import type { RunningServer } from './running-server.js';
+import { createHttpClient } from './create-http-client';
+import type { HttpClient } from './http-client';
+import type { HttpHeaders } from './http-headers';
+import type { RunningServer } from './running-server';
 
 export interface TestServerOptions {
   /** Starts the whole application, real adapters included, on a free port. */

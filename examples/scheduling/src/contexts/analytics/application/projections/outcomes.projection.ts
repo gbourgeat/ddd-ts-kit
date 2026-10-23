@@ -15,7 +15,7 @@ import {
   type AppointmentExpiredV1,
   type AppointmentMarkedNoShowV1,
   type AppointmentRescheduledV1,
-} from '@/contexts/scheduling/published-language/index';
+} from '@/contexts/scheduling/published-language';
 import { storableStamp } from '@/shared-kernel/storable-stamp';
 import type { OutcomeRegister } from '@/contexts/analytics/application/ports/outcome-register.port';
 import { OutcomeState } from '@/contexts/analytics/domain/vocabularies/outcome-state.vocabulary';

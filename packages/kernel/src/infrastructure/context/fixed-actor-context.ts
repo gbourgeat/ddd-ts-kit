@@ -1,7 +1,7 @@
-import type { Actor } from '../../application/actor/actor.js';
-import type { ActorContext } from '../../application/ports/actor-context.js';
-import { requiredActor } from './required-actor.js';
-import { restoring } from './restoring.js';
+import type { Actor } from '../../application/actor/actor';
+import type { ActorContext } from '../../application/ports/actor-context';
+import { requiredActor } from './required-actor';
+import { restoring } from './restoring';
 
 /**
  * The test double: answers the actor it was given. `run` switches to another actor until the

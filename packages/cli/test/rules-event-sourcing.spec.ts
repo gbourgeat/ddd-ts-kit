@@ -1,14 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { readStoredShape } from '../src/check/event-sourcing/read-stored-shape.js';
-import { scan } from '../src/check/scan/scan.js';
-import { isPastWord } from '../src/naming/index.js';
-import { parseConfig } from '../src/config/index.js';
-import { writeStoredEventsLock } from '../src/docs/write-stored-events-lock.js';
-import { Workspace } from '../src/workspace/index.js';
-import { cli } from './helpers.js';
-import { lines, projectWith, reported } from './rules-support.js';
+import { readStoredShape } from '../src/check/event-sourcing/read-stored-shape';
+import { scan } from '../src/check/scan/scan';
+import { isPastWord } from '../src/naming';
+import { parseConfig } from '../src/config';
+import { writeStoredEventsLock } from '../src/docs/write-stored-events-lock';
+import { Workspace } from '../src/workspace';
+import { cli } from './helpers';
+import { lines, projectWith, reported } from './rules-support';
 
 const BILLING = 'src/contexts/billing';
 const AGGREGATE = `${BILLING}/domain/aggregates/invoice.aggregate.ts`;

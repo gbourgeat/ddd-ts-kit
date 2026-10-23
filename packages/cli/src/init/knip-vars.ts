@@ -1,7 +1,7 @@
-import type { Config } from '../config/index.js';
-import { WITH_DATABASE } from '../stack/with-database.js';
-import type { RenderContext } from '../templating/index.js';
-import { validationDependencies } from './validation-dependencies.js';
+import type { Config } from '../config';
+import { WITH_DATABASE } from '../stack/with-database';
+import type { RenderContext } from '../templating';
+import { validationDependencies } from './validation-dependencies';
 
 /**
  * What knip is told beyond the sources when the project is created: the entry point of a worker,

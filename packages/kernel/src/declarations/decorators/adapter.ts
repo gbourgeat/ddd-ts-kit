@@ -1,11 +1,11 @@
-import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
-import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature.js';
-import type { Token } from '../token/token.js';
-import { declaring } from './declaring.js';
-import { isDependencies } from './is-dependencies.js';
-import type { PortOptions } from './port-options.js';
-import type { Settings } from './settings.js';
+import type { ClassDeclarator } from '../dependencies/class-declarator';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies';
+import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature';
+import type { Token } from '../token/token';
+import { declaring } from './declaring';
+import { isDependencies } from './is-dependencies';
+import type { PortOptions } from './port-options';
+import type { Settings } from './settings';
 
 export interface AdapterOptions extends PortOptions {
   /** What the adapter reaches: an outside system (the default) or the event transport. */

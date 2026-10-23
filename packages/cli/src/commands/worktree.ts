@@ -1,8 +1,8 @@
-import { readConfig } from '../config/index.js';
-import { openWorktree } from '../worktree/open-worktree.js';
-import type { WorktreeScope } from '../worktree/worktree-scope.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
+import { readConfig } from '../config';
+import { openWorktree } from '../worktree/open-worktree';
+import type { WorktreeScope } from '../worktree/worktree-scope';
+import { Arguments } from './arguments';
+import type { Command } from './command';
 
 /**
  * The worktree of one piece of work, `.worktrees/<name>` on `work/<name>`: where a session writes

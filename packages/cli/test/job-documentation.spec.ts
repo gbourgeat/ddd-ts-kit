@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, tempDir, write } from './helpers.js';
-import { jobProject } from './support/job-project.js';
+import { cli, read, tempDir, write } from './helpers';
+import { jobProject } from './support/job-project';
 
 const BILLING = 'src/contexts/billing';
 const JOB = `${BILLING}/application/scheduling/cancel-stale-invoices.job.ts`;

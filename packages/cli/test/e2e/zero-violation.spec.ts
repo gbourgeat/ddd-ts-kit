@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { cli, scaffoldEverything, tempDir, walk } from '../helpers.js';
-import { runnerConfigFindings } from './runner-config-findings.js';
-import { label, STACKS } from './stacks.js';
+import { cli, scaffoldEverything, tempDir, walk } from '../helpers';
+import { runnerConfigFindings } from './runner-config-findings';
+import { label, STACKS } from './stacks';
 
 interface CheckJson {
   ok: boolean;

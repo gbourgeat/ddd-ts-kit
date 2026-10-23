@@ -1,5 +1,5 @@
-import { isRecord } from '../support/is-record.js';
-import type { FilterEntry } from './filter-entry.js';
+import { isRecord } from '../support/is-record';
+import type { FilterEntry } from './filter-entry';
 
 const FLAT = /^filter((?:\[[^[\]]*\])+)$/;
 

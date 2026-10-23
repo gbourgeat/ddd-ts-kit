@@ -1,5 +1,5 @@
 import type { EntitySchemaColumnOptions } from 'typeorm';
-import type { TypeOrmDialect } from './type-orm-dialect.js';
+import type { TypeOrmDialect } from './type-orm-dialect';
 
 /** How every instant is stored, per database family. */
 export const INSTANT: Record<TypeOrmDialect, EntitySchemaColumnOptions> = {

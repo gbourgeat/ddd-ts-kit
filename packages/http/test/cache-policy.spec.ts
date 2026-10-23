@@ -14,8 +14,8 @@ import {
   type CachePolicy,
   type RawRequest,
   type Route,
-} from '../src/index.js';
-import { generateOpenApi } from '../src/openapi.js';
+} from '../src';
+import { generateOpenApi } from '../src/openapi';
 
 const ada: Actor = { id: 'ada', type: 'user', roles: [], attributes: {} };
 const hours = zodSchema(z.object({ opens: z.string() }));

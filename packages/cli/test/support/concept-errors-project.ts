@@ -1,5 +1,5 @@
 import { expect } from 'vitest';
-import { cli, tempDir, write } from '../helpers.js';
+import { cli, tempDir, write } from '../helpers';
 
 /** Where the files of the scheduling context of the fixture are. */
 export const SCHEDULING = 'src/contexts/scheduling';

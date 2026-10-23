@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { CREDENTIAL_KEYS, REDACTED, SCRUBBED_MESSAGE } from '@ddd-ts-kit/kernel';
 import { pino } from 'pino';
-import { PinoLogger, createPinoLogger, credentialRedaction } from '../src/index.js';
-import { MemorySink } from './support/memory-sink.js';
-import { OrderAlreadyPaid } from './support/order-already-paid.js';
+import { PinoLogger, createPinoLogger, credentialRedaction } from '../src';
+import { MemorySink } from './support/memory-sink';
+import { OrderAlreadyPaid } from './support/order-already-paid';
 
 describe('redaction', () => {
   it('hides every credential key at the top of a line and one level below', () => {

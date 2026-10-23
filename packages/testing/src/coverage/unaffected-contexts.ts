@@ -1,7 +1,7 @@
 import path from 'node:path';
-import { affectedContexts } from './affected-contexts.js';
-import { contextsIn } from './contexts-in.js';
-import { governedSettings } from './governed-settings.js';
+import { affectedContexts } from './affected-contexts';
+import { contextsIn } from './contexts-in';
+import { governedSettings } from './governed-settings';
 
 /**
  * The directories of the contexts a partial run leaves out, from the root of the project and

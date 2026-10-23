@@ -1,6 +1,6 @@
 import { UNWRITABLE_FIELDS, describeErrorFields, type LogFields, type LogLevel, type Logger } from '@ddd-ts-kit/kernel';
 import type winston from 'winston';
-import { endOf } from './end-of.js';
+import { endOf } from './end-of';
 
 export interface WinstonLoggerOptions {
   /**

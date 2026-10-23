@@ -2,7 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } f
 import { collectEvents, expectProblem, expectStatus } from '@ddd-ts-kit/testing/e2e';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';
-import { practiceMemberAddedV1, type PracticeMemberAddedV1Payload } from '@/contexts/identity/published-language/index';
+import { practiceMemberAddedV1, type PracticeMemberAddedV1Payload } from '@/contexts/identity/published-language';
 import { startApplication, type RunningApplication } from '$test/e2e/support/start-application';
 import { storyOf } from '$test/e2e/support/story-of';
 

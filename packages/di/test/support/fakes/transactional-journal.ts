@@ -1,4 +1,4 @@
-import type { Transactional } from './transactional-unit-of-work.js';
+import type { Transactional } from './transactional-unit-of-work';
 
 /** Lines written in a transaction: kept on commit, forgotten on roll back, refused outside one. */
 export class TransactionalJournal implements Transactional {

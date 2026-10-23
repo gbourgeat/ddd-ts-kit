@@ -1,5 +1,5 @@
-import type { FieldType } from './field-type.js';
-import type { FilterOperator } from './filter-operator.js';
+import type { FieldType } from './field-type';
+import type { FilterOperator } from './filter-operator';
 
 /** A `FieldRule` once read: every member is there. */
 export interface FieldDeclaration {

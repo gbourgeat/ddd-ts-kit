@@ -1,5 +1,5 @@
-import { Query } from '../../../../../../../../src/index.js';
-import { Public } from '../../../../../../../../src/declarations.js';
+import { Query } from '../../../../../../../../src';
+import { Public } from '../../../../../../../../src/declarations';
 
 @Public()
 export class SearchOpeningHours extends Query<readonly string[]> {}

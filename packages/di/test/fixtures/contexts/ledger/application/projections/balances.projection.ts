@@ -1,7 +1,7 @@
 import { stampOf, storedStampOf, type ReadModelWrite } from '@ddd-ts-kit/kernel';
 import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
-import { MoneyMoved } from '../../domain/events/money-moved.event.js';
-import { Balances } from '../ports/balances.port.js';
+import { MoneyMoved } from '../../domain/events/money-moved.event';
+import { Balances } from '../ports/balances.port';
 
 @Projection('ledger.balances', { feed: 'event-store' }, [Balances])
 export class BalancesProjection {

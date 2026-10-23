@@ -1,6 +1,6 @@
 import type { AuditSortField } from '@ddd-ts-kit/kernel';
-import type { CursorPosition } from './cursor-position.js';
-import type { SearchOrder } from './search-order.js';
+import type { CursorPosition } from './cursor-position';
+import type { SearchOrder } from './search-order';
 
 type SortKey = readonly (string | number)[];
 

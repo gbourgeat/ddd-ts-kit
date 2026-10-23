@@ -1,7 +1,7 @@
-import { toName } from '../naming/index.js';
-import type { Workspace } from '../workspace/index.js';
-import type { ProcessFacts } from './process-facts.js';
-import { type ContextTree, roleFilesOf } from '../model-modules/index.js';
+import { toName } from '../naming';
+import type { Workspace } from '../workspace';
+import type { ProcessFacts } from './process-facts';
+import { type ContextTree, roleFilesOf } from '../model-modules';
 
 const FOLDER = 'application/processes';
 const SUFFIX = '.process.ts';

@@ -10,8 +10,8 @@ import {
   derivedTable,
   tenantColumn,
   tenantTable,
-} from '../src/index.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
+} from '../src';
+import { createDatabase, type TestDatabase } from './support/database';
 
 const SCHEMA = 'clinic';
 const VISITS = 'visits';

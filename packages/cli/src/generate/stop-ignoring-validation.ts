@@ -1,8 +1,8 @@
-import type { Config } from '../config/index.js';
-import { validationDependencies } from '../init/validation-dependencies.js';
-import type { Workspace } from '../workspace/index.js';
-import { filesUnder } from './files-under.js';
-import { editJson } from './kinds/extraction/edit-json.js';
+import type { Config } from '../config';
+import { validationDependencies } from '../init/validation-dependencies';
+import type { Workspace } from '../workspace';
+import { filesUnder } from './files-under';
+import { editJson } from './kinds/extraction/edit-json';
 
 const KNIP_FILE = 'knip.json';
 const IGNORED = 'ignoreDependencies';

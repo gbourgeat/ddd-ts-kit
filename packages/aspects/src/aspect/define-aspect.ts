@@ -1,7 +1,7 @@
-import { adviseMethods } from '../weaving/advise-methods.js';
-import type { AdviceFactory } from './advice-factory.js';
-import { aspectOrigins } from './aspect-origins.js';
-import type { Aspect } from './aspect.js';
+import { adviseMethods } from '../weaving/advise-methods';
+import type { AdviceFactory } from './advice-factory';
+import { aspectOrigins } from './aspect-origins';
+import type { Aspect } from './aspect';
 
 /** Makes an aspect out of an advice factory. Every aspect of this package is made this way. */
 export function defineAspect(advise: AdviceFactory): Aspect {

@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { eventBusContract } from '@ddd-ts-kit/testing/contracts';
-import type { RedisStreamsEventBusOptions } from '../src/event-bus.js';
-import { REAL_SERVER, SERVER_URL } from './support/server.js';
-import { Server } from './support/streams.js';
+import type { RedisStreamsEventBusOptions } from '../src/event-bus';
+import { REAL_SERVER, SERVER_URL } from './support/server';
+import { Server } from './support/streams';
 
 const runner = { describe, it, beforeEach, afterEach, expect };
 

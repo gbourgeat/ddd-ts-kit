@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
-import { PrismaClient } from '../generated/client/client.js';
-import { DDL_PATH } from './generate.js';
-import { startPostgres } from './postgres.js';
+import { PrismaClient } from '../generated/client/client';
+import { DDL_PATH } from './generate';
+import { startPostgres } from './postgres';
 
 export interface TestDatabase {
   readonly prisma: PrismaClient;

@@ -1,4 +1,4 @@
-import type { CriteriaCase } from './criteria-case.js';
+import type { CriteriaCase } from './criteria-case';
 
 /** Conditions joined, alternatives, negations, and what a negation does to a null. */
 export const GROUP_CASES: readonly CriteriaCase[] = [

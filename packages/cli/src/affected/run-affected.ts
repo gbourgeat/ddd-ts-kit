@@ -1,10 +1,10 @@
 import { spawnSync } from 'node:child_process';
-import { CliError } from '../cli-error.js';
-import type { Stack } from '../config/index.js';
-import type { Io } from '../commands/io.js';
-import { inDialect } from '../package-manager/in-dialect.js';
-import { PARTIAL_RUN } from './format-selection.js';
-import type { Selection } from './selection.js';
+import { CliError } from '../cli-error';
+import type { Stack } from '../config';
+import type { Io } from '../commands/io';
+import { inDialect } from '../package-manager/in-dialect';
+import { PARTIAL_RUN } from './format-selection';
+import type { Selection } from './selection';
 
 /** The variable the test runner config reads (`unaffectedContexts()` of @ddd-ts-kit/testing). */
 const AFFECTED = 'DDD_TS_KIT_AFFECTED';

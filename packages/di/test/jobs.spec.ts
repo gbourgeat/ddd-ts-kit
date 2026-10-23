@@ -10,10 +10,10 @@ import {
   kernelModule,
   override,
   type BindingInfo,
-} from '../src/index.js';
-import * as billing from './fixtures/contexts/billing/billing.declarations.js';
-import { RecordingJobScheduler } from './support/fakes/recording-job-scheduler.js';
-import { wiringFailure } from './support/failure.js';
+} from '../src';
+import * as billing from './fixtures/contexts/billing/billing.declarations';
+import { RecordingJobScheduler } from './support/fakes/recording-job-scheduler';
+import { wiringFailure } from './support/failure';
 
 const { CustomerDirectory, InMemoryInvoiceRepository, InvoiceRepository } = billing;
 const MONTHLY = 'billing.issue-monthly-invoices';

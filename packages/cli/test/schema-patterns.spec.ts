@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { CONFIG_FILE } from '../src/config/index.js';
-import { config } from '../src/check/fixtures/config.js';
-import { PATHS } from '../src/check/fixtures/paths.js';
-import { project } from '../src/check/fixtures/project.js';
-import { tempDir, write } from './helpers.js';
-import { reported } from './rules-support.js';
+import { CONFIG_FILE } from '../src/config';
+import { config } from '../src/check/fixtures/config';
+import { PATHS } from '../src/check/fixtures/paths';
+import { project } from '../src/check/fixtures/project';
+import { tempDir, write } from './helpers';
+import { reported } from './rules-support';
 
 const HTTP = `${PATHS.BILLING}/presentation/http/invoices`;
 const ISSUE = `${HTTP}/issue-invoice/issue-invoice.controller.ts`;

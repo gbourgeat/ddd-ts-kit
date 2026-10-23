@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { cli } from './helpers.js';
-import { jsonAt } from './support/json-at.js';
-import { type Histories, mergeRepository, mergeWith } from './support/merge-repository.js';
+import { cli } from './helpers';
+import { jsonAt } from './support/json-at';
+import { type Histories, mergeRepository, mergeWith } from './support/merge-repository';
 
 const MANIFEST = 'package.json';
 const PRICING = 'src/contexts/billing/pricing.ts';

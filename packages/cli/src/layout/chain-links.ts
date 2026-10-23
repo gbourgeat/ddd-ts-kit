@@ -1,4 +1,4 @@
-import { nesting } from './nesting.js';
+import { nesting } from './nesting';
 
 /**
  * The links of a call chain written on one line: what the chain starts from, then each call made

@@ -6,24 +6,24 @@ import type {
   IntegrationEventSubscriber,
   Subscription,
 } from '@ddd-ts-kit/kernel';
-import { BrokerLink } from './connection/broker-link.js';
-import { clusterOf } from './connection/cluster-of.js';
-import { Consumption } from './consumption/consumption.js';
-import { GroupConsumer } from './consumption/group-consumer.js';
-import { ConsumerNameRequiredError } from './errors/consumer-name-required-error.js';
-import { MESSAGING_SYSTEM } from './messaging-system.js';
-import { EventBusClosedError } from './errors/event-bus-closed-error.js';
-import type { KafkaEventBusOptions } from './options/kafka-event-bus-options.js';
-import type { Settings } from './options/settings.js';
-import { settingsOf } from './options/settings-of.js';
-import { Publications } from './publication/publications.js';
-import { DeadLetterReplay } from './replay/dead-letter-replay.js';
-import { conceal } from './secrecy/conceal.js';
-import type { ConsumerBinding } from './topology/consumer-binding.js';
-import { describeTopic } from './topology/describe-topic.js';
-import type { KafkaTopology } from './topology/kafka-topology.js';
-import { topologyOf } from './topology/topology-of.js';
-import type { TopologySettings } from './topology/topology-settings.js';
+import { BrokerLink } from './connection/broker-link';
+import { clusterOf } from './connection/cluster-of';
+import { Consumption } from './consumption/consumption';
+import { GroupConsumer } from './consumption/group-consumer';
+import { ConsumerNameRequiredError } from './errors/consumer-name-required-error';
+import { MESSAGING_SYSTEM } from './messaging-system';
+import { EventBusClosedError } from './errors/event-bus-closed-error';
+import type { KafkaEventBusOptions } from './options/kafka-event-bus-options';
+import type { Settings } from './options/settings';
+import { settingsOf } from './options/settings-of';
+import { Publications } from './publication/publications';
+import { DeadLetterReplay } from './replay/dead-letter-replay';
+import { conceal } from './secrecy/conceal';
+import type { ConsumerBinding } from './topology/consumer-binding';
+import { describeTopic } from './topology/describe-topic';
+import type { KafkaTopology } from './topology/kafka-topology';
+import { topologyOf } from './topology/topology-of';
+import type { TopologySettings } from './topology/topology-settings';
 
 const DESCRIPTION = 'KafkaEventBus [clients concealed]';
 

@@ -1,10 +1,10 @@
 import type { Knex } from 'knex';
-import { INDEXABLE_LENGTH } from '../columns/indexable-length.js';
-import { INSTANT } from '../columns/instant.js';
-import { tenantColumn } from '../columns/tenant-column.js';
-import { builderIn } from '../outbox/builder-in.js';
-import { PROCESS_TABLE } from './process-table-name.js';
-import type { ProcessTableOptions } from './process-table-options.js';
+import { INDEXABLE_LENGTH } from '../columns/indexable-length';
+import { INSTANT } from '../columns/instant';
+import { tenantColumn } from '../columns/tenant-column';
+import { builderIn } from '../outbox/builder-in';
+import { PROCESS_TABLE } from './process-table-name';
+import type { ProcessTableOptions } from './process-table-options';
 
 /**
  * Creates the table of the process managers' instances, on PostgreSQL, from a migration of the

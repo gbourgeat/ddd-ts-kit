@@ -1,5 +1,5 @@
 import type { EntitySchema } from 'typeorm';
-import type { ReadModelStamps } from './read-model-stamps.js';
+import type { ReadModelStamps } from './read-model-stamps';
 
 export interface TypeOrmReadModelOptions<Row> {
   /** The entity of the read model: the fields of the row and `...readModelColumns()`. */

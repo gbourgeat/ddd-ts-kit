@@ -1,4 +1,4 @@
-import type { SourceFile } from '../model/source-file.js';
+import type { SourceFile } from '../model/source-file';
 
 /** A production file of `domain/aggregates/` of a context. */
 export function isAggregateFile(file: SourceFile): boolean {

@@ -1,5 +1,5 @@
-import type { Actor } from '../actor/actor.js';
-import type { IntegrationEvent } from './integration-event.js';
+import type { Actor } from '../actor/actor';
+import type { IntegrationEvent } from './integration-event';
 
 export interface EventExecutionOptions {
   /** Stable name of the consumer: the handler runs as `systemActor(consumer)`. */

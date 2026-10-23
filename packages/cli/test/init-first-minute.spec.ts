@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { cli, exists, EXPLICIT_STACK, read, tempDir, walk, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
-import { readJson } from './support/read-json.js';
-import { stringsAt } from './support/strings-at.js';
+import { cli, exists, EXPLICIT_STACK, read, tempDir, walk, write } from './helpers';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
+import { readJson } from './support/read-json';
+import { stringsAt } from './support/strings-at';
 
 const COMPOSITION = 'src/platform/composition/compose-application.ts';
 const PROOF = 'test/architecture/extractable.spec.ts';

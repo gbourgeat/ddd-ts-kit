@@ -1,7 +1,7 @@
-import type { Config } from '../config/index.js';
-import { one } from '../stack/one.js';
-import type { RenderContext } from '../templating/index.js';
-import { LOCKFILES } from './lockfiles.js';
+import type { Config } from '../config';
+import { one } from '../stack/one';
+import type { RenderContext } from '../templating';
+import { LOCKFILES } from './lockfiles';
 
 /** The package manager as template variables: which one, whether corepack provides it, and the lockfile it writes. */
 export function packageManagerVars(config: Config): RenderContext {

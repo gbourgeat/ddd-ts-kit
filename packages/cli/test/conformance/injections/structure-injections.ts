@@ -1,7 +1,7 @@
-import type { Injection } from '../injection.js';
-import { PATHS } from '../paths.js';
-import { SOURCE_ALIAS } from '../source-alias.js';
-import { SOURCE_SUFFIX } from '../source-suffix.js';
+import type { Injection } from '../injection';
+import { PATHS } from '../paths';
+import { SOURCE_ALIAS } from '../source-alias';
+import { SOURCE_SUFFIX } from '../source-suffix';
 
 const { AGGREGATE, BUILDER, COMMANDS_DECLARATIONS, CONFIG, CONTEXT_DOC, EVENT, HANDLER, NOTIFICATION, READER } = PATHS;
 const { ROUTE, SEARCH_READER, VALUE_OBJECT, VALUE_OBJECT_SPEC } = PATHS;

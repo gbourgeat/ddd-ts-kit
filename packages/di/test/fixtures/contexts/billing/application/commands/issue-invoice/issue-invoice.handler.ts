@@ -1,9 +1,9 @@
 import type { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { Invoice } from '../../../domain/invoice.js';
-import type { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';
-import type { CustomerDirectory } from '../../ports/customer-directory.port.js';
-import { IssueInvoice } from './issue-invoice.command.js';
+import { Invoice } from '../../../domain/invoice';
+import type { InvoiceRepository } from '../../../domain/repositories/invoice.repository';
+import type { CustomerDirectory } from '../../ports/customer-directory.port';
+import { IssueInvoice } from './issue-invoice.command';
 
 @CommandHandler(IssueInvoice)
 export class IssueInvoiceHandler implements CommandHandler<IssueInvoice> {

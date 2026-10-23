@@ -1,4 +1,4 @@
-import type { AliasRoot } from './alias-root.js';
+import type { AliasRoot } from './alias-root';
 
 /**
  * The `paths` of tsconfig.json for these roots: the declaration the compiler, the dev runner, the

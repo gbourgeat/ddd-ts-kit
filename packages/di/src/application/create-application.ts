@@ -1,7 +1,7 @@
-import { collectWiring } from '../module/collect-wiring.js';
-import type { ApplicationOptions } from './application-options.js';
-import type { Application } from './application.js';
-import { assemble } from './assemble.js';
+import { collectWiring } from '../module/collect-wiring';
+import type { ApplicationOptions } from './application-options';
+import type { Application } from './application';
+import { assemble } from './assemble';
 
 /**
  * Wires the modules into a tsyringe child container (so two applications, or two tests,

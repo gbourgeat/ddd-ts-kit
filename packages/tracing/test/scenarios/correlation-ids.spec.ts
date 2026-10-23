@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { resetTracingConfiguration } from '../../src/index.js';
-import { installTestTracing, type SpanNode, type TestTracing } from '../../src/testing.js';
-import { aClinic } from '../support/clinic/a-clinic.js';
+import { resetTracingConfiguration } from '../../src';
+import { installTestTracing, type SpanNode, type TestTracing } from '../../src/testing';
+import { aClinic } from '../support/clinic/a-clinic';
 
 let tracing: TestTracing;
 

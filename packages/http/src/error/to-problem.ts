@@ -1,9 +1,9 @@
 import { DomainError, FactualRefusal, type RefusalFacts } from '@ddd-ts-kit/kernel';
 import { ValidationError } from '@ddd-ts-kit/validation';
-import type { ErrorMapper } from './error-mapper.js';
-import { INTERNAL_ERROR_CODE } from './internal-error-code.js';
-import type { Problem } from './problem.js';
-import { statusTitle } from './status-title.js';
+import type { ErrorMapper } from './error-mapper';
+import { INTERNAL_ERROR_CODE } from './internal-error-code';
+import type { Problem } from './problem';
+import { statusTitle } from './status-title';
 
 export function toProblem(error: unknown, mapper: ErrorMapper, requestId: string): Problem {
   if (!(error instanceof DomainError)) {

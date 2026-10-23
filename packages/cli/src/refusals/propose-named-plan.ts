@@ -1,13 +1,13 @@
-import type { Config } from '../config/index.js';
-import { toName } from '../naming/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { aggregatesOf } from './aggregates-of.js';
-import type { ConceptErrorClass } from './concept-error-class.js';
-import { conceptNamed } from './concept-named.js';
-import { factoryForParameter } from './factory-for-parameter.js';
-import type { LegacyError } from './legacy-error.js';
-import type { NamedPlan } from './named-plan.js';
-import type { PlannedRefusal } from './planned-refusal.js';
+import type { Config } from '../config';
+import { toName } from '../naming';
+import type { Workspace } from '../workspace';
+import { aggregatesOf } from './aggregates-of';
+import type { ConceptErrorClass } from './concept-error-class';
+import { conceptNamed } from './concept-named';
+import { factoryForParameter } from './factory-for-parameter';
+import type { LegacyError } from './legacy-error';
+import type { NamedPlan } from './named-plan';
+import type { PlannedRefusal } from './planned-refusal';
 
 const NOT_FOUND = /^(?:([A-Z0-9_]+?)_NOT_FOUND|NOT_FOUND_([A-Z0-9_]+))$/;
 

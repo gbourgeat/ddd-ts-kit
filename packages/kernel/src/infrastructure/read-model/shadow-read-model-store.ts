@@ -1,10 +1,10 @@
-import type { ScopedCriteria } from '../../application/criteria/scoped-criteria.js';
-import type { Page } from '../../application/pagination/page.js';
-import type { ReadModelRows } from '../../application/ports/read-model-rows.js';
-import type { ReadModelStore } from '../../application/ports/read-model-store.js';
-import type { EventStamp } from '../../application/read-model/event-stamp.js';
-import type { ReadModelWrite } from '../../application/read-model/read-model-write.js';
-import { writeIfNewer } from './write-if-newer.js';
+import type { ScopedCriteria } from '../../application/criteria/scoped-criteria';
+import type { Page } from '../../application/pagination/page';
+import type { ReadModelRows } from '../../application/ports/read-model-rows';
+import type { ReadModelStore } from '../../application/ports/read-model-store';
+import type { EventStamp } from '../../application/read-model/event-stamp';
+import type { ReadModelWrite } from '../../application/read-model/read-model-write';
+import { writeIfNewer } from './write-if-newer';
 
 /**
  * The copy a rebuild fills, as the store of a projection: the same writes as the live store,

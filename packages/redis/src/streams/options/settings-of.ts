@@ -1,10 +1,10 @@
 import { hostname } from 'node:os';
 import { randomBytes } from 'node:crypto';
-import { DEFAULT_PREFIX } from './default-prefix.js';
-import type { ReconnectOptions } from './reconnect-options.js';
-import type { RedisStreamsEventBusOptions } from './redis-streams-event-bus-options.js';
-import type { RetryOptions } from './retry-options.js';
-import type { Settings } from './settings.js';
+import { DEFAULT_PREFIX } from './default-prefix';
+import type { ReconnectOptions } from './reconnect-options';
+import type { RedisStreamsEventBusOptions } from './redis-streams-event-bus-options';
+import type { RetryOptions } from './retry-options';
+import type { Settings } from './settings';
 
 export function settingsOf(options: RedisStreamsEventBusOptions): Settings {
   const prefix = options.prefix ?? DEFAULT_PREFIX;

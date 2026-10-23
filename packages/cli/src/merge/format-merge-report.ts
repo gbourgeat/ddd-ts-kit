@@ -1,7 +1,7 @@
-import type { BasePoint } from './base-point.js';
-import { findingSections } from './lost/finding-sections.js';
-import type { ForYou, MergeReport } from './merge-report.js';
-import { NEXT_STEPS } from './next-steps.js';
+import type { BasePoint } from './base-point';
+import { findingSections } from './lost/finding-sections';
+import type { ForYou, MergeReport } from './merge-report';
+import { NEXT_STEPS } from './next-steps';
 
 /** Past this many commits of the trunk on one file, the rest is counted. */
 const COMMITS_SHOWN = 3;

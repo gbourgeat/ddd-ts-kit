@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers.js';
-import { committedProject } from './support/committed-project.js';
-import { git } from './support/git.js';
-import { initProject } from './support/init-project.js';
+import { cli, read, write } from './helpers';
+import { committedProject } from './support/committed-project';
+import { git } from './support/git';
+import { initProject } from './support/init-project';
 
 const CONFIG = 'ddd-ts-kit.config.json';
 

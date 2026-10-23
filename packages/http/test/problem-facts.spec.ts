@@ -1,7 +1,7 @@
 import { ConceptError, DomainRefusal } from '@ddd-ts-kit/kernel';
 import { describe, expect, it } from 'vitest';
-import { createErrorMapper, toProblem } from '../src/index.js';
-import { PROBLEM_SCHEMA } from '../src/openapi/problem-schema.js';
+import { createErrorMapper, toProblem } from '../src';
+import { PROBLEM_SCHEMA } from '../src/openapi/problem-schema';
 
 class BookingError extends ConceptError {
   static slotTaken(patientId: string, startsAt: Date) {

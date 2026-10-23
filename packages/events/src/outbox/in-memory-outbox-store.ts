@@ -1,10 +1,10 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import type { InMemoryRelaySignal } from '../relay/in-memory-relay-signal.js';
-import { DuplicateOutboxEventError } from './duplicate-outbox-event-error.js';
-import type { OutboxRecord } from './outbox-record.js';
-import type { OutboxStats } from './outbox-stats.js';
-import type { OutboxStatus } from './outbox-status.js';
-import type { OutboxStore } from './outbox-store.js';
+import type { InMemoryRelaySignal } from '../relay/in-memory-relay-signal';
+import { DuplicateOutboxEventError } from './duplicate-outbox-event-error';
+import type { OutboxRecord } from './outbox-record';
+import type { OutboxStats } from './outbox-stats';
+import type { OutboxStatus } from './outbox-status';
+import type { OutboxStore } from './outbox-store';
 
 export interface InMemoryOutboxStoreOptions {
   /** How long a claimed record stays invisible to other claims. Default 30000. */

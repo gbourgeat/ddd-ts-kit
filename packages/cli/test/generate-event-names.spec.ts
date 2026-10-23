@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, tempDir, write } from './helpers.js';
+import { cli, read, tempDir, write } from './helpers';
 
 const BILLING = 'src/contexts/billing';
 const SHIPPING = 'src/contexts/shipping';

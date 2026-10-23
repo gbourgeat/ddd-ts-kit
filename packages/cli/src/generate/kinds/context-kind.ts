@@ -1,11 +1,11 @@
-import { isOneOf, RELATIONSHIPS, type Upstream } from '../../config/index.js';
-import { CliError } from '../../cli-error.js';
-import { parseContextName } from '../../naming/index.js';
-import type { Kind } from '../kind.js';
-import { parseTerms } from '../parse-terms.js';
-import { applyPreset } from '../../presets/apply-preset.js';
-import { presetNamed } from '../../presets/preset-named.js';
-import { generateContext } from './generate-context.js';
+import { isOneOf, RELATIONSHIPS, type Upstream } from '../../config';
+import { CliError } from '../../cli-error';
+import { parseContextName } from '../../naming';
+import type { Kind } from '../kind';
+import { parseTerms } from '../parse-terms';
+import { applyPreset } from '../../presets/apply-preset';
+import { presetNamed } from '../../presets/preset-named';
+import { generateContext } from './generate-context';
 
 export const contextKind: Kind = {
   name: 'context',

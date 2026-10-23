@@ -1,11 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, tempDir } from '../helpers.js';
-import { expectNoFinding } from './expect-no-finding.js';
-import { installAsPublished } from './install-as-published.js';
-import { bin, runIn } from './run-in.js';
-import { SLOW } from './stacks.js';
-import { NATIVE_COMPILER } from './type-errors.js';
-import { REPORTED_FAILURES_PROOF, writeReportedFailuresProof } from './write-reported-failures-proof.js';
+import { cli, read, tempDir } from '../helpers';
+import { expectNoFinding } from './expect-no-finding';
+import { installAsPublished } from './install-as-published';
+import { bin, runIn } from './run-in';
+import { SLOW } from './stacks';
+import { NATIVE_COMPILER } from './type-errors';
+import { REPORTED_FAILURES_PROOF, writeReportedFailuresProof } from './write-reported-failures-proof';
 
 const REPORTED: readonly (readonly [string, readonly string[]])[] = [
   ['on tsyringe, declared, behind RabbitMQ and the outbox', ['--orm', 'custom', '--broker', 'rabbitmq']],

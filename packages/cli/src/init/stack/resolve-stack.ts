@@ -34,20 +34,20 @@ import {
   LITERAL_FORMS,
   VALUE_FORMS,
   type Config,
-} from '../../config/index.js';
-import { aliasProblem } from '../../alias/index.js';
-import { DEFAULT_PACKAGE_MANAGER } from '../../package-manager/default-package-manager.js';
-import { CliError } from '../../cli-error.js';
-import { choose } from './choose.js';
-import { recordedOptions } from './recorded-options.js';
-import { resolveCiExtras } from './resolve-ci-extras.js';
-import { resolvePersistence } from './resolve-persistence.js';
-import { resolveQueue } from './resolve-queue.js';
-import { resolveStyle } from './resolve-style.js';
-import { resolveTenancy } from './resolve-tenancy.js';
-import type { StackOptions } from './stack-options.js';
+} from '../../config';
+import { aliasProblem } from '../../alias';
+import { DEFAULT_PACKAGE_MANAGER } from '../../package-manager/default-package-manager';
+import { CliError } from '../../cli-error';
+import { choose } from './choose';
+import { recordedOptions } from './recorded-options';
+import { resolveCiExtras } from './resolve-ci-extras';
+import { resolvePersistence } from './resolve-persistence';
+import { resolveQueue } from './resolve-queue';
+import { resolveStyle } from './resolve-style';
+import { resolveTenancy } from './resolve-tenancy';
+import type { StackOptions } from './stack-options';
 
-export type { StackOptions } from './stack-options.js';
+export type { StackOptions } from './stack-options';
 
 /**
  * The config of the project. Already initialised, it is the one on disk: `init` run again keeps

@@ -1,5 +1,5 @@
-import type { BusMiddleware } from '../../application/messaging/bus-middleware.js';
-import { withinUnitOfWork } from '../domain-events/within-unit-of-work.js';
+import type { BusMiddleware } from '../../application/messaging/bus-middleware';
+import { withinUnitOfWork } from '../domain-events/within-unit-of-work';
 
 /**
  * Runs every command inside one unit of work. Queries are left alone: they do not write. The

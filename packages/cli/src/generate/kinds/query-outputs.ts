@@ -1,7 +1,7 @@
-import type { Name } from '../../naming/index.js';
-import type { Output } from '../emit.js';
-import type { Scope } from '../scope.js';
-import { readerFile } from './reader-file.js';
+import type { Name } from '../../naming';
+import type { Output } from '../emit';
+import type { Scope } from '../scope';
+import { readerFile } from './reader-file';
 
 /** `search.` for a paginated search narrowed by the access scope of its actor, nothing for a plain query. */
 export type QueryVariant = '' | 'search.';

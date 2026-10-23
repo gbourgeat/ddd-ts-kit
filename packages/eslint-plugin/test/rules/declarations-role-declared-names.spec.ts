@@ -1,4 +1,4 @@
-import { declarationsRoleDeclared } from '../../src/rules/declarations-role-declared.js';
+import { declarationsRoleDeclared } from '../../src/rules/declarations-role-declared';
 import {
   DECLARED,
   DECLARATIONS,
@@ -8,8 +8,8 @@ import {
   POLICY,
   MAPPER,
   AGGREGATE,
-} from '../support/declared-style.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+} from '../support/declared-style';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 ruleTester.run('declarations-role-declared, the names of a declaration and the domain', declarationsRoleDeclared, {
   valid: [

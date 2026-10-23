@@ -1,6 +1,6 @@
-import type { Grant } from '../permissions/grant.js';
-import { grantPattern } from '../permissions/grant-pattern.js';
-import type { Condition } from './condition.js';
+import type { Grant } from '../permissions/grant';
+import { grantPattern } from '../permissions/grant-pattern';
+import type { Condition } from './condition';
 
 export interface AttributePolicy {
   readonly name: string;

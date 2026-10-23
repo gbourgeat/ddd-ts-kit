@@ -1,5 +1,5 @@
 import type { OutboxStatus } from '@ddd-ts-kit/events';
-import type { PrismaJsonInput } from './prisma-json-input.js';
+import type { PrismaJsonInput } from './prisma-json-input';
 
 /**
  * The methods the store calls on the outbox model, typed structurally so the package does not

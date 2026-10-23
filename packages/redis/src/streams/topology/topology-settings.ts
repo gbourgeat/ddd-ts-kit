@@ -1,4 +1,4 @@
-import type { RetentionOptions } from '../options/retention-options.js';
+import type { RetentionOptions } from '../options/retention-options';
 
 export interface TopologySettings {
   readonly streamOf: (type: string) => string;

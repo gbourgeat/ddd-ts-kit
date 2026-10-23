@@ -1,13 +1,13 @@
-import type { Appended } from '../../../application/event-sourcing/appended.js';
-import type { EventToAppend } from '../../../application/event-sourcing/event-to-append.js';
-import type { StoredEvent } from '../../../application/event-sourcing/stored-event.js';
-import type { EventStore } from '../../../application/ports/event-store.js';
-import { ConcurrencyError } from '../../../domain/errors/concurrency-error.js';
-import type { SqlRun } from '../../read-model/sql-run.js';
-import type { EventStoreTablesOptions } from './event-store-tables-options.js';
-import { isAppendConflict } from './is-append-conflict.js';
-import { qualifiedTable } from './qualified-table.js';
-import { storedDataFrom } from './stored-data-from.js';
+import type { Appended } from '../../../application/event-sourcing/appended';
+import type { EventToAppend } from '../../../application/event-sourcing/event-to-append';
+import type { StoredEvent } from '../../../application/event-sourcing/stored-event';
+import type { EventStore } from '../../../application/ports/event-store';
+import { ConcurrencyError } from '../../../domain/errors/concurrency-error';
+import type { SqlRun } from '../../read-model/sql-run';
+import type { EventStoreTablesOptions } from './event-store-tables-options';
+import { isAppendConflict } from './is-append-conflict';
+import { qualifiedTable } from './qualified-table';
+import { storedDataFrom } from './stored-data-from';
 
 type Row = Readonly<Record<string, unknown>>;
 

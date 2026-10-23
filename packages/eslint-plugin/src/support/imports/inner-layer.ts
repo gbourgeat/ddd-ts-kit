@@ -1,4 +1,4 @@
-import type { LintedFile } from '../../project/linted-file.js';
+import type { LintedFile } from '../../project/linted-file';
 
 /** `domain` or `application` for a production file of one of the two layers that hold the model and the use cases. */
 export function innerLayer(file: LintedFile): 'domain' | 'application' | undefined {

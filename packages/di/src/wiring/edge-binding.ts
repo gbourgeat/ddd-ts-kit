@@ -1,5 +1,5 @@
 import type { Token } from '@ddd-ts-kit/kernel/declarations';
-import type { Declarer } from './declarer.js';
+import type { Declarer } from './declarer';
 
 /** A class of the edge a context declared (a controller, a guard, a mapper, a serializer), bound under itself. */
 export interface EdgeBinding {

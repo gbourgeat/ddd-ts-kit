@@ -28,13 +28,13 @@ import {
   type BackgroundJobRun,
 } from '@ddd-ts-kit/scheduling';
 import { ManualJobScheduler, ManualJobTimers, type ManualJobSchedulerOptions } from '@ddd-ts-kit/scheduling/testing';
-import { guardedQueryBus } from '../kernel/guarded-query-bus.js';
-import { transactionalCommandBus } from '../kernel/transactional-command-bus.js';
-import type { Resolve } from '../wiring/resolve.js';
-import type { TestApplicationOptions } from './test-application-options.js';
-import type { TestBackgroundJobs } from './test-background-jobs.js';
-import type { TestJobs } from './test-jobs.js';
-import type { TestKernel } from './test-kernel.js';
+import { guardedQueryBus } from '../kernel/guarded-query-bus';
+import { transactionalCommandBus } from '../kernel/transactional-command-bus';
+import type { Resolve } from '../wiring/resolve';
+import type { TestApplicationOptions } from './test-application-options';
+import type { TestBackgroundJobs } from './test-background-jobs';
+import type { TestJobs } from './test-jobs';
+import type { TestKernel } from './test-kernel';
 
 const DEFAULT_NOW = new Date('2026-01-01T00:00:00.000Z');
 const DEFAULT_ACTOR: Actor = { id: 'test-user', type: 'user', roles: [], attributes: {} };

@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { getTableConfig, type PgTable } from 'drizzle-orm/pg-core';
-import { quote } from './quote.js';
-import { createContractDatabase, type ContractDatabase } from './read-model/contract-database.js';
+import { quote } from './quote';
+import { createContractDatabase, type ContractDatabase } from './read-model/contract-database';
 
 export interface StoreDatabase extends ContractDatabase {
   /** Empties the tables, between two tests. */

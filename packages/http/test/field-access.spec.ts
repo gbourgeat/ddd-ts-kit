@@ -16,8 +16,8 @@ import {
   serializeBody,
   type RawRequest,
   type RouteResponse,
-} from '../src/index.js';
-import { generateOpenApi } from '../src/openapi.js';
+} from '../src';
+import { generateOpenApi } from '../src/openapi';
 
 const readNotes = { id: 'care:note.read' };
 

@@ -1,6 +1,6 @@
-import { BRACKETS } from './brackets.js';
-import type { ListPart } from './list-part.js';
-import { splitAtCommas } from './split-at-commas.js';
+import { BRACKETS } from './brackets';
+import type { ListPart } from './list-part';
+import { splitAtCommas } from './split-at-commas';
 
 /** Splits a list of expressions on the commas that are not nested in brackets. */
 export function splitTopLevel(text: string): ListPart[] {

@@ -1,9 +1,9 @@
-import type { SourceFile } from '../model/source-file.js';
-import type { ClassShape } from '../structure/class-shape.js';
-import { matchingBracket } from '../text/matching-bracket.js';
-import type { DeclaredShape } from './declared-shape.js';
-import { stillGenerated } from './still-generated.js';
-import { topLevelStatements } from './top-level-statements.js';
+import type { SourceFile } from '../model/source-file';
+import type { ClassShape } from '../structure/class-shape';
+import { matchingBracket } from '../text/matching-bracket';
+import type { DeclaredShape } from './declared-shape';
+import { stillGenerated } from './still-generated';
+import { topLevelStatements } from './top-level-statements';
 
 const DECORATOR_NAME = /@[A-Za-z_$][\w$]*\s*/y;
 const PROPERTY = /^(?:(?:readonly|public|declare)\s+)*([A-Za-z_$][\w$]*)\s*([?!])?/;

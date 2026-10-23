@@ -1,4 +1,4 @@
-import { isRecord } from './is-record.js';
+import { isRecord } from './is-record';
 
 /** The emitted map, naming the real file and holding its text, for stack traces and coverage. */
 export function sourceMapOf(emitted: string, file: string, code: string): string {

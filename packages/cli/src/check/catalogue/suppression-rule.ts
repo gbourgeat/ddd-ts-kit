@@ -1,4 +1,4 @@
-import { SUPPRESSION_RULE_ID } from '../suppressions/suppression-rule-id.js';
+import { SUPPRESSION_RULE_ID } from '../suppressions/suppression-rule-id';
 
 /**
  * The suppression check is run by the engine (it needs every directive), but is listed like a rule.

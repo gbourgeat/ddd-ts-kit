@@ -3,18 +3,18 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { Actor } from '@ddd-ts-kit/kernel';
-import { createApplication, createTestApplication, fake, kernelModule } from '../src/index.js';
-import { discoverContext } from '../src/discovery.js';
+import { createApplication, createTestApplication, fake, kernelModule } from '../src';
+import { discoverContext } from '../src/discovery';
 // What `ddd-ts-kit docs` generates next to the role files of a discovered context: here the stubbed loader answers the classes themselves, so their lists are registered the same way.
-import './fixtures/contexts/billing/billing.dependencies.js';
-import { InvoiceIssuedPublisher } from './fixtures/contexts/billing/application/integration/publishers/invoice-issued.publisher.js';
-import { IssueInvoice } from './fixtures/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';
-import { IssueInvoiceHandler } from './fixtures/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js';
-import { CustomerDirectory } from './fixtures/contexts/billing/application/ports/customer-directory.port.js';
-import { IssueMonthlyInvoicesJob } from './fixtures/contexts/billing/application/scheduling/issue-monthly-invoices.job.js';
-import { InMemoryInvoiceRepository } from './fixtures/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';
-import { wiringRejection } from './support/rejection.js';
-import { CompileStatementsJob } from './support/compile-statements.background-job.js';
+import './fixtures/contexts/billing/billing.dependencies';
+import { InvoiceIssuedPublisher } from './fixtures/contexts/billing/application/integration/publishers/invoice-issued.publisher';
+import { IssueInvoice } from './fixtures/contexts/billing/application/commands/issue-invoice/issue-invoice.command';
+import { IssueInvoiceHandler } from './fixtures/contexts/billing/application/commands/issue-invoice/issue-invoice.handler';
+import { CustomerDirectory } from './fixtures/contexts/billing/application/ports/customer-directory.port';
+import { IssueMonthlyInvoicesJob } from './fixtures/contexts/billing/application/scheduling/issue-monthly-invoices.job';
+import { InMemoryInvoiceRepository } from './fixtures/contexts/billing/infrastructure/persistence/in-memory-invoice.repository';
+import { wiringRejection } from './support/rejection';
+import { CompileStatementsJob } from './support/compile-statements.background-job';
 
 const workspace = mkdtempSync(path.join(os.tmpdir(), 'discovery-'));
 

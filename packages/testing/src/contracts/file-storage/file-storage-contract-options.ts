@@ -1,7 +1,7 @@
 import type { FileStorage } from '@ddd-ts-kit/kernel';
-import type { Awaitable } from '../awaitable.js';
-import type { FollowedResponse } from './followed-response.js';
-import type { SignedRequest } from './signed-request.js';
+import type { Awaitable } from '../awaitable';
+import type { FollowedResponse } from './followed-response';
+import type { SignedRequest } from './signed-request';
 
 export interface FileStorageContractOptions {
   readonly name: string;

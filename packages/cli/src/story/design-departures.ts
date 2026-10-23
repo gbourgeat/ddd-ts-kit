@@ -1,20 +1,20 @@
-import { storyFileOf } from '../acceptance/story-file-of.js';
-import type { Project } from '../check/model/project.js';
-import { loadProject } from '../check/project/load-project.js';
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
-import type { CitedName } from '../citations/cited-name.js';
-import { type DesignedProject, citedParts } from '../citations/cited-parts.js';
-import type { DocumentPart } from '../citations/document-part.js';
-import { indexOfProject } from '../citations/index-of-project.js';
-import type { NameIndex } from '../citations/name-index.js';
-import { partsOfDocument } from '../citations/parts-of-document.js';
-import type { Config } from '../config/index.js';
-import type { Slice } from '../progress/slice.js';
-import { reviewFileOf } from '../stories/review-file-of.js';
-import { Workspace } from '../workspace/index.js';
-import { compromisesIn } from './compromises-in.js';
-import type { DesignDeparture } from './design-departure.js';
-import { storyOf } from './story-of.js';
+import { storyFileOf } from '../acceptance/story-file-of';
+import type { Project } from '../check/model/project';
+import { loadProject } from '../check/project/load-project';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
+import type { CitedName } from '../citations/cited-name';
+import { type DesignedProject, citedParts } from '../citations/cited-parts';
+import type { DocumentPart } from '../citations/document-part';
+import { indexOfProject } from '../citations/index-of-project';
+import type { NameIndex } from '../citations/name-index';
+import { partsOfDocument } from '../citations/parts-of-document';
+import type { Config } from '../config';
+import type { Slice } from '../progress/slice';
+import { reviewFileOf } from '../stories/review-file-of';
+import { Workspace } from '../workspace';
+import { compromisesIn } from './compromises-in';
+import type { DesignDeparture } from './design-departure';
+import { storyOf } from './story-of';
 
 /** A name cited by the section of a done row, with the row and the contexts it is read in. */
 interface Cited {

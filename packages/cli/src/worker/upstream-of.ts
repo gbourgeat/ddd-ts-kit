@@ -1,4 +1,4 @@
-import { runGit } from '../commit/run-git.js';
+import { runGit } from '../commit/run-git';
 
 /**
  * The remote branch of the trunk when the current branch is the trunk (the branch origin/HEAD

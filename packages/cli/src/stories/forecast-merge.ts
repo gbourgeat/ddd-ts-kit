@@ -1,11 +1,11 @@
-import { CliError } from '../cli-error.js';
-import { runGit } from '../commit/run-git.js';
-import { conflictedPaths } from '../merge/conflicted-paths.js';
-import type { MergeRepository } from '../merge/lost/merge-repository.js';
-import { previewMerge } from '../merge/preview-merge.js';
-import type { Resolution } from '../merge/resolution.js';
-import { resolveConflict } from '../merge/resolve-conflict.js';
-import type { ForecastPath, MergeForecast } from './merge-forecast.js';
+import { CliError } from '../cli-error';
+import { runGit } from '../commit/run-git';
+import { conflictedPaths } from '../merge/conflicted-paths';
+import type { MergeRepository } from '../merge/lost/merge-repository';
+import { previewMerge } from '../merge/preview-merge';
+import type { Resolution } from '../merge/resolution';
+import { resolveConflict } from '../merge/resolve-conflict';
+import type { ForecastPath, MergeForecast } from './merge-forecast';
 
 /** The two branches of a forecast: `theirs` merged into `ours`. */
 export interface ForecastSides {

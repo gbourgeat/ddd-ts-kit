@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect } from 'vitest';
-import { cli, read, walk } from '../helpers.js';
-import { runIn } from './run-in.js';
-import { NATIVE_COMPILER } from './type-errors.js';
+import { cli, read, walk } from '../helpers';
+import { runIn } from './run-in';
+import { NATIVE_COMPILER } from './type-errors';
 
 const INTEGRATION = [
   'docs/integration/README.md',

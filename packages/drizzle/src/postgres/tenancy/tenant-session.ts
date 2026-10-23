@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { TENANT_SETTINGS, tenantSettingValues, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import type { SqlExecutor } from './sql-executor.js';
+import type { SqlExecutor } from './sql-executor';
 
 /**
  * The `begin` of a unit of work under row-level security: sets the tenant settings for the

@@ -1,6 +1,6 @@
-import type { HttpHeaders } from './http-headers.js';
-import type { HttpResponse } from './http-response.js';
-import type { RequestOptions } from './request-options.js';
+import type { HttpHeaders } from './http-headers';
+import type { HttpResponse } from './http-response';
+import type { RequestOptions } from './request-options';
 
 /**
  * A JSON client on the global `fetch`. It never throws on a status: a 4xx or 5xx answer is a

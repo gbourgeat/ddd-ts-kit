@@ -1,6 +1,6 @@
 import type { TSESTree } from '@typescript-eslint/utils';
-import type { ModuleShape } from './module-shape.js';
-import { typeNamesIn } from './type-names-in.js';
+import type { ModuleShape } from './module-shape';
+import { typeNamesIn } from './type-names-in';
 
 /** The type names `roots` refer to, followed through the interfaces and the type aliases the module declares. */
 export function typeClosure(shape: ModuleShape, roots: readonly TSESTree.Node[]): ReadonlySet<string> {

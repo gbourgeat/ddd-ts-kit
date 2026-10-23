@@ -11,8 +11,8 @@ import {
   type ExecuteOptions,
   type RawRequest,
   type Route,
-} from '../src/index.js';
-import { generateOpenApi } from '../src/openapi.js';
+} from '../src';
+import { generateOpenApi } from '../src/openapi';
 
 const day = zodSchema(z.object({ calendarId: z.string(), items: z.array(z.object({ id: z.string() })) }));
 const ofAcme: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: [], attributes: {} };

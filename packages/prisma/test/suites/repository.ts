@@ -8,13 +8,13 @@ import {
   createPrismaUnitOfWork,
   optimisticUpdate,
   schemaNameOf,
-} from '../../src/index.js';
-import { createDatabase, type TestDatabase } from '../support/database.js';
-import { Invoice } from '../support/billing-core/domain/invoice.js';
-import { InvoiceRepository } from '../support/billing-core/domain/repositories/invoice.repository.js';
-import { PrismaInvoiceRepository } from '../support/billing-core/infrastructure/persistence/prisma-invoice.repository.js';
-import { Database } from '../support/platform/database/database.js';
-import { ada, scopeOf } from '../support/scopes.js';
+} from '../../src';
+import { createDatabase, type TestDatabase } from '../support/database';
+import { Invoice } from '../support/billing-core/domain/invoice';
+import { InvoiceRepository } from '../support/billing-core/domain/repositories/invoice.repository';
+import { PrismaInvoiceRepository } from '../support/billing-core/infrastructure/persistence/prisma-invoice.repository';
+import { Database } from '../support/platform/database/database';
+import { ada, scopeOf } from '../support/scopes';
 
 let database: TestDatabase;
 

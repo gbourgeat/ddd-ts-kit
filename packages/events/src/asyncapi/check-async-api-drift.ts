@@ -1,5 +1,5 @@
-import type { AsyncApiDocument } from './async-api-document.js';
-import { stringifyAsyncApi } from './stringify-async-api.js';
+import type { AsyncApiDocument } from './async-api-document';
+import { stringifyAsyncApi } from './stringify-async-api';
 
 /** Compares the generated document with the committed one, ignoring line-ending style. */
 export function checkAsyncApiDrift(document: AsyncApiDocument, existingFileContent: string): { drift: boolean } {

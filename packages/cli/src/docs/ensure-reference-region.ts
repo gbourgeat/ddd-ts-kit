@@ -1,4 +1,4 @@
-import { marker } from '../markers/marker.js';
+import { marker } from '../markers/marker';
 
 const CLOSING_MARKER = /^\s*<!--\s*\/ddd-ts-kit:[\w-]+\s*-->\s*$/;
 const SECTION = ['', '## Reference', '', '<!-- ddd-ts-kit:reference -->', '<!-- /ddd-ts-kit:reference -->'];

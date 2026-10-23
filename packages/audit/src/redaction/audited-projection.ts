@@ -1,6 +1,6 @@
 import type { Message, MessageType } from '@ddd-ts-kit/kernel';
-import type { AuditProjection } from './audit-projection.js';
-import type { AuditedMessage } from './audited-message.js';
+import type { AuditProjection } from './audit-projection';
+import type { AuditedMessage } from './audited-message';
 
 /**
  * The same declaration for a message whose audited values are not its own fields: the

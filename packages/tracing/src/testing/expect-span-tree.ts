@@ -1,7 +1,7 @@
-import type { ExpectedSpan } from './expected-span.js';
-import { renderSpanTree } from './render-span-tree.js';
-import { spanMismatches } from './span-mismatches.js';
-import type { SpanNode } from './span-node.js';
+import type { ExpectedSpan } from './expected-span';
+import { renderSpanTree } from './render-span-tree';
+import { spanMismatches } from './span-mismatches';
+import type { SpanNode } from './span-node';
 
 /**
  * Asserts that a trace is exactly the tree described: the same spans, under the same parents,

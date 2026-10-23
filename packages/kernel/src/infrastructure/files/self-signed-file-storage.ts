@@ -1,19 +1,19 @@
 import { randomBytes } from 'node:crypto';
-import { assertExpiry } from '../../application/files/assert-expiry.js';
-import type { DownloadUrlOptions } from '../../application/files/download-url-options.js';
-import { assertFileKey } from '../../application/files/assert-file-key.js';
-import type { FileSource } from '../../application/files/file-source.js';
-import { mediaTypeOf } from '../../application/files/media-type-of.js';
-import type { SignedDownload } from '../../application/files/signed-download.js';
-import type { SignedUpload } from '../../application/files/signed-upload.js';
-import type { SignedUrl } from '../../application/files/signed-url.js';
-import type { StoredFile } from '../../application/files/stored-file.js';
-import type { UploadUrlOptions } from '../../application/files/upload-url-options.js';
-import { ServedFileStorage } from '../../application/ports/served-file-storage.js';
-import { SystemClock } from '../clock/system-clock.js';
-import type { SignedLinkOptions } from './signed-link-options.js';
-import { SignedFileTokens } from './signed-file-tokens.js';
-import { withoutTrailingSlashes } from './without-trailing-slashes.js';
+import { assertExpiry } from '../../application/files/assert-expiry';
+import type { DownloadUrlOptions } from '../../application/files/download-url-options';
+import { assertFileKey } from '../../application/files/assert-file-key';
+import type { FileSource } from '../../application/files/file-source';
+import { mediaTypeOf } from '../../application/files/media-type-of';
+import type { SignedDownload } from '../../application/files/signed-download';
+import type { SignedUpload } from '../../application/files/signed-upload';
+import type { SignedUrl } from '../../application/files/signed-url';
+import type { StoredFile } from '../../application/files/stored-file';
+import type { UploadUrlOptions } from '../../application/files/upload-url-options';
+import { ServedFileStorage } from '../../application/ports/served-file-storage';
+import { SystemClock } from '../clock/system-clock';
+import type { SignedLinkOptions } from './signed-link-options';
+import { SignedFileTokens } from './signed-file-tokens';
+import { withoutTrailingSlashes } from './without-trailing-slashes';
 
 /** The signed links of the storages the application serves itself: one token per link, under `baseUrl`. */
 export abstract class SelfSignedFileStorage extends ServedFileStorage {

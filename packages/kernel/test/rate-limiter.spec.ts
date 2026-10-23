@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FixedClock, InMemoryRateLimiter, rateLimitDecisionOf } from '../src/index.js';
+import { FixedClock, InMemoryRateLimiter, rateLimitDecisionOf } from '../src';
 
 const NOW = new Date('2026-03-01T10:00:00.000Z');
 const TWO_PER_SECOND = { limit: 2, windowMs: 1_000 };

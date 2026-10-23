@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AsyncLocalStorageExecutionScope, NoCurrentTenantError, type Repository } from '@ddd-ts-kit/kernel';
-import { anExecutionContext, asTenant } from '../src/index.js';
-import { tenantIsolationContract } from '../src/contracts.js';
-import { CollectingRunner } from './support/collecting-runner.js';
-import { Order, at } from './support/order.js';
-import { TenantOrders } from './support/tenant-orders.js';
+import { anExecutionContext, asTenant } from '../src';
+import { tenantIsolationContract } from '../src/contracts';
+import { CollectingRunner } from './support/collecting-runner';
+import { Order, at } from './support/order';
+import { TenantOrders } from './support/tenant-orders';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 let next = 0;

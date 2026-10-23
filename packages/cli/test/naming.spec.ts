@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CliError } from '../src/cli-error.js';
+import { CliError } from '../src/cli-error';
 import {
   assertPastFact,
   eventName,
@@ -7,7 +7,7 @@ import {
   parseConceptName,
   parseContextName,
   toName,
-} from '../src/naming/index.js';
+} from '../src/naming';
 
 describe('names', () => {
   it('normalizes any input case', () => {

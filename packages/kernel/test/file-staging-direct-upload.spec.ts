@@ -7,7 +7,7 @@ import {
   InMemoryFileStorage,
   stagedKeyOf,
   type PendingUpload,
-} from '../src/index.js';
+} from '../src';
 
 const PDF = new Uint8Array(Buffer.from('%PDF-1.7\n%%EOF\n'));
 const KEY = 'appointment-documents/2026/03/doc-1';

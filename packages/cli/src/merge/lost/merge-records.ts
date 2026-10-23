@@ -1,4 +1,4 @@
-import { runGit } from '../../commit/run-git.js';
+import { runGit } from '../../commit/run-git';
 
 /** A commit as `git log` describes it, with the trailers a merge carries. */
 export interface MergeRecord {

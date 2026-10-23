@@ -1,4 +1,4 @@
-import type { JobSchedule } from '../../schedule/job-schedule.js';
+import type { JobSchedule } from '../../schedule/job-schedule';
 
 /** The schedule as the source of a job writes it: `{ every: '15m' }`, `{ every: 900000 }`, `{ cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }`. */
 export function writtenSchedule({ every, cron, timeZone }: JobSchedule): string {

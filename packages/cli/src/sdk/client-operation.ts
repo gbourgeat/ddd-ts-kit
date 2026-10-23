@@ -1,5 +1,5 @@
-import type { ClientParameter } from './client-parameter.js';
-import type { ClientResponse } from './client-response.js';
+import type { ClientParameter } from './client-parameter';
+import type { ClientResponse } from './client-response';
 
 /** One operation of a document: how it is called and what it answers. */
 export interface ClientOperation {

@@ -1,4 +1,4 @@
-import { isRecord } from './is-record.js';
+import { isRecord } from './is-record';
 
 /**
  * The keys of the block a project already has win, key by key, one level down: a project that

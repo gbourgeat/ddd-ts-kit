@@ -1,6 +1,6 @@
-import { CliError } from '../../../cli-error.js';
-import { toName } from '../../../naming/index.js';
-import type { ControllerPlan } from './controller-plan.js';
+import { CliError } from '../../../cli-error';
+import { toName } from '../../../naming';
+import type { ControllerPlan } from './controller-plan';
 
 const SCOPES = ['public', 'private', 'no-store'] as const;
 const IDENTIFIER = /^(.+)Id$/;

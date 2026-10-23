@@ -30,11 +30,11 @@ import {
   type StoredFile,
   type UploadUrlOptions,
 } from '@ddd-ts-kit/kernel';
-import { BucketKeys } from './bucket-keys.js';
-import { isMissing } from './is-missing.js';
-import { listObjects } from './list-objects.js';
-import type { S3FileStorageOptions } from './s3-file-storage-options.js';
-import { settledFirst } from './settled-first.js';
+import { BucketKeys } from './bucket-keys';
+import { isMissing } from './is-missing';
+import { listObjects } from './list-objects';
+import type { S3FileStorageOptions } from './s3-file-storage-options';
+import { settledFirst } from './settled-first';
 
 const MEBIBYTE = 1_024 * 1_024;
 

@@ -1,5 +1,5 @@
-import type { BranchCommit } from './branch-commit.js';
-import type { Repository } from './repository.js';
+import type { BranchCommit } from './branch-commit';
+import type { Repository } from './repository';
 
 const MARKER = /TODO\(review\)\s*:?\s*(.*)$/;
 const ROW = /#?[A-Za-z]*\d+(?:\.\d+)+\s*/g;

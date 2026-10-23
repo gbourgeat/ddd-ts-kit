@@ -1,4 +1,4 @@
-import { CliError } from '../cli-error.js';
+import { CliError } from '../cli-error';
 
 export interface GlossaryRow {
   readonly term: string;

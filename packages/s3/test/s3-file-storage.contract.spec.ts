@@ -2,9 +2,9 @@ import { Readable } from 'node:stream';
 import { ListMultipartUploadsCommand, type S3Client } from '@aws-sdk/client-s3';
 import { FileError } from '@ddd-ts-kit/kernel';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { S3FileStorage } from '../src/index.js';
-import { fileStorageContract } from '../src/testing.js';
-import { BUCKET, REAL_SERVER, aPrefix, connect, ensureBucket, sleep } from './support/server.js';
+import { S3FileStorage } from '../src';
+import { fileStorageContract } from '../src/testing';
+import { BUCKET, REAL_SERVER, aPrefix, connect, ensureBucket, sleep } from './support/server';
 
 const runner = { describe, it, expect, beforeEach };
 

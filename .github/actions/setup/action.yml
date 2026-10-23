@@ -46,7 +46,7 @@ runs:
         path: |
           packages/*/dist
           packages/*/tsconfig.tsbuildinfo
-        key: dist-${{ runner.os }}-${{ hashFiles('packages/*/src/**', 'packages/*/tsconfig.json', 'packages/*/package.json', 'tsconfig.base.json', 'package-lock.json') }}
+        key: dist-${{ runner.os }}-${{ hashFiles('packages/*/src/**', 'packages/*/tsconfig.json', 'packages/*/package.json', 'tsconfig.base.json', 'pipeline/monorepo/add-extensions.mjs', 'package-lock.json') }}
     - name: Build (no run built these sources yet, or the cache was evicted)
       if: inputs.build == 'true' && steps.dist.outputs.cache-hit != 'true'
       shell: bash

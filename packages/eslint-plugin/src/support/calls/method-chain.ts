@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { propertyName } from '../globals/property-name.js';
+import { propertyName } from '../globals/property-name';
 
 export interface ChainLink {
   readonly name: string;

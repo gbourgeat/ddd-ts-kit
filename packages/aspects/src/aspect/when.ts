@@ -1,8 +1,8 @@
-import { aspectOrigins } from './aspect-origins.js';
-import type { Aspect } from './aspect.js';
-import { compose } from './compose.js';
-import { defineAspect } from './define-aspect.js';
-import type { Selector } from './selector.js';
+import { aspectOrigins } from './aspect-origins';
+import type { Aspect } from './aspect';
+import { compose } from './compose';
+import { defineAspect } from './define-aspect';
+import type { Selector } from './selector';
 
 /**
  * The aspects, for the methods the selector picks only:

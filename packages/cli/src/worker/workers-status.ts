@@ -1,4 +1,4 @@
-import type { WorkerProgress } from './worker-progress.js';
+import type { WorkerProgress } from './worker-progress';
 
 /** Who builds what, in which worktree, and where two workers meet: what `status --workers` says. */
 export interface WorkersStatus {

@@ -1,5 +1,5 @@
 import type { Schema } from '@ddd-ts-kit/validation';
-import type { ResponsesSpec } from './responses-spec.js';
+import type { ResponsesSpec } from './responses-spec';
 
 type StatusOf<Key> = Key extends number ? Key : Key extends `${infer Status extends number}` ? Status : never;
 

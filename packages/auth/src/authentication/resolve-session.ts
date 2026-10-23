@@ -1,7 +1,7 @@
 import type { Session } from '@ddd-ts-kit/kernel';
-import type { Authenticator } from './authenticator.js';
-import type { SessionAuthenticator } from './session-authenticator.js';
-import { sessionOf } from './session-of.js';
+import type { Authenticator } from './authenticator';
+import type { SessionAuthenticator } from './session-authenticator';
+import { sessionOf } from './session-of';
 
 /**
  * The session of a credential, whatever the authenticator: its own when it is a

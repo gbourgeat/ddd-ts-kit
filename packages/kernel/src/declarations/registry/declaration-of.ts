@@ -1,6 +1,6 @@
-import type { Declaration } from '../model/declaration.js';
-import type { DeclaredClass } from '../model/declared-class.js';
-import { registry } from './registry.js';
+import type { Declaration } from '../model/declaration';
+import type { DeclaredClass } from '../model/declared-class';
+import { registry } from './registry';
 
 /** What the class said about itself, or `undefined` for a class that carries no declaration. */
 export function declarationOf(target: unknown): Declaration | undefined {

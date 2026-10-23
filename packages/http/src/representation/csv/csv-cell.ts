@@ -1,4 +1,4 @@
-import { wireText } from '../wire-text.js';
+import { wireText } from '../wire-text';
 
 const NEEDS_QUOTES = /[",\r\n]|^\s|\s$/;
 /** What a spreadsheet would run as a formula when the cell starts with it (CSV injection). */

@@ -1,5 +1,5 @@
-import { gitProcess } from './git-process.js';
-import type { StageEntry } from './preview-merge.js';
+import { gitProcess } from './git-process';
+import type { StageEntry } from './preview-merge';
 
 /** The stages of each path the index holds unmerged, from the top of the repository. */
 export function unmergedEntries(top: string): Map<string, StageEntry[]> {

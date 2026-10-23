@@ -1,6 +1,6 @@
-import { CliError } from '../cli-error.js';
-import { identityPreset } from './identity-preset.js';
-import type { Preset } from './preset.js';
+import { CliError } from '../cli-error';
+import { identityPreset } from './identity-preset';
+import type { Preset } from './preset';
 
 /** Every preset of the kit, by name. */
 const PRESETS: readonly Preset[] = [identityPreset];

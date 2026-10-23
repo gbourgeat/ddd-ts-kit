@@ -1,5 +1,5 @@
-import { systemActor } from '../actor/system-actor.js';
-import { type ExecutionContext, executionContext } from '../execution/execution-context.js';
+import { systemActor } from '../actor/system-actor';
+import { type ExecutionContext, executionContext } from '../execution/execution-context';
 
 export interface JobExecutionStart {
   readonly correlationId: string;

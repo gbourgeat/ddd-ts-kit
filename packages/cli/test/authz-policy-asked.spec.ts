@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { PATHS } from '../src/check/fixtures/paths.js';
-import { project } from '../src/check/fixtures/project.js';
-import { tempDir, write } from './helpers.js';
-import { reported } from './rules-support.js';
+import { PATHS } from '../src/check/fixtures/paths';
+import { project } from '../src/check/fixtures/project';
+import { tempDir, write } from './helpers';
+import { reported } from './rules-support';
 
 const { BILLING, COMMAND, HANDLER, MODULE, POLICY, QUERY, QUERY_HANDLER } = PATHS;
 const MAP = `${BILLING}/application/authorization/billing.requirements.ts`;

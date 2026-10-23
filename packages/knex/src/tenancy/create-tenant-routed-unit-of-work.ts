@@ -1,10 +1,10 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { Knex } from 'knex';
 import { tenantScopeOf, withinUnitOfWork, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import type { KnexUnitOfWork } from '../unit-of-work/create-knex-unit-of-work.js';
-import { CrossTenantUnitOfWorkError } from './cross-tenant-unit-of-work-error.js';
-import { StatementOutsideUnitOfWorkError } from './statement-outside-unit-of-work-error.js';
-import type { TenantDatabases } from './tenant-databases.js';
+import type { KnexUnitOfWork } from '../unit-of-work/create-knex-unit-of-work';
+import { CrossTenantUnitOfWorkError } from './cross-tenant-unit-of-work-error';
+import { StatementOutsideUnitOfWorkError } from './statement-outside-unit-of-work-error';
+import type { TenantDatabases } from './tenant-databases';
 
 /** The transaction open on the asynchronous call chain, and the tenant whose database it is on. */
 interface OpenTransaction {

@@ -1,11 +1,11 @@
 import { Criteria, err, ok, validateCriteria, type CriteriaDefinition, type Result } from '@ddd-ts-kit/kernel';
 import type { ValidationIssue } from '@ddd-ts-kit/validation';
-import { parsePageQuery } from '../pagination/parse-page-query.js';
-import { isRecord } from '../support/is-record.js';
-import type { CriteriaQueryOptions } from './criteria-query-options.js';
-import { filterEntries } from './filter-entries.js';
-import { parseFilters } from './parse-filters.js';
-import { sortableFields } from './sortable-fields.js';
+import { parsePageQuery } from '../pagination/parse-page-query';
+import { isRecord } from '../support/is-record';
+import type { CriteriaQueryOptions } from './criteria-query-options';
+import { filterEntries } from './filter-entries';
+import { parseFilters } from './parse-filters';
+import { sortableFields } from './sortable-fields';
 
 /** `page.limit` of a criteria is the `limit` parameter of the query, and so on. */
 const PARAMETERS: Readonly<Record<string, string>> = { 'page.limit': 'limit', 'page.cursor': 'cursor' };

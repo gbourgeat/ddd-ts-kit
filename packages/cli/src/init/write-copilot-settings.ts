@@ -1,7 +1,7 @@
-import { formatJson } from '../json/format-json.js';
-import type { Workspace } from '../workspace/index.js';
-import { isRecord } from './is-record.js';
-import { jsonObject } from './json-object.js';
+import { formatJson } from '../json/format-json';
+import type { Workspace } from '../workspace';
+import { isRecord } from './is-record';
+import { jsonObject } from './json-object';
 
 const COPILOT_SETTINGS = '.github/copilot/settings.json';
 const MARKETPLACE = 'ddd-ts-kit';

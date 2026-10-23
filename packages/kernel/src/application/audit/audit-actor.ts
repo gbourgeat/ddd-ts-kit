@@ -1,4 +1,4 @@
-import type { ActorType } from '../actor/actor-type.js';
+import type { ActorType } from '../actor/actor-type';
 
 /** Who acted, as identifiers only: never a name, an email or a role list. */
 export interface AuditActor {

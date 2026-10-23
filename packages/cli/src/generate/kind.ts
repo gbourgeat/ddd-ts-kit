@@ -1,5 +1,5 @@
-import type { Config } from '../config/index.js';
-import type { Workspace } from '../workspace/index.js';
+import type { Config } from '../config';
+import type { Workspace } from '../workspace';
 
 export interface KindFlags {
   readonly classification?: string;

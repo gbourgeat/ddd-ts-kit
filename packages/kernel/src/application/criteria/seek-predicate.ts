@@ -1,8 +1,8 @@
-import type { Sort } from '../pagination/sort.js';
-import type { CursorValues } from './cursor-values.js';
-import type { FieldDeclaration } from './field-declaration.js';
-import type { FieldValue } from './field-value.js';
-import type { Predicate } from './predicate.js';
+import type { Sort } from '../pagination/sort';
+import type { CursorValues } from './cursor-values';
+import type { FieldDeclaration } from './field-declaration';
+import type { FieldValue } from './field-value';
+import type { Predicate } from './predicate';
 
 /**
  * The rows that come after a position in a total order, as a predicate: the keyset of a cursor

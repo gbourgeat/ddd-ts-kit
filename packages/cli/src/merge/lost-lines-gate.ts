@@ -1,9 +1,9 @@
-import { CliError } from '../cli-error.js';
-import { acceptInMergeMessage } from './accept-in-merge-message.js';
-import { inProgressMerge } from './lost/in-progress-merge.js';
-import type { MergeRepository } from './lost/merge-repository.js';
-import { verifyMerge } from './lost/verify-merge.js';
-import type { LostLines } from './merge-report.js';
+import { CliError } from '../cli-error';
+import { acceptInMergeMessage } from './accept-in-merge-message';
+import { inProgressMerge } from './lost/in-progress-merge';
+import type { MergeRepository } from './lost/merge-repository';
+import { verifyMerge } from './lost/verify-merge';
+import type { LostLines } from './merge-report';
 
 /**
  * verify-merge on the merge in progress, its result the index plus the working tree, judged on the

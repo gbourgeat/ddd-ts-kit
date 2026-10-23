@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { AuditEntry } from '@ddd-ts-kit/kernel';
-import { canonicalize } from './canonicalize.js';
+import { canonicalize } from './canonicalize';
 
 export type UnsealedEntry = Omit<AuditEntry, 'hash'>;
 

@@ -1,7 +1,7 @@
 import type { Knex } from 'knex';
 import type { FieldValue, Predicate, PredicateTest } from '@ddd-ts-kit/kernel';
-import { columnOf } from './column-of.js';
-import { likePattern } from './like-pattern.js';
+import { columnOf } from './column-of';
+import { likePattern } from './like-pattern';
 
 type Columns = Readonly<Record<string, string>>;
 

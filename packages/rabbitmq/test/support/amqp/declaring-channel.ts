@@ -1,8 +1,8 @@
 import { EventEmitter } from 'node:events';
 import type { Connection, Options, Replies } from 'amqplib';
-import { AmqpError, IllegalOperation, Unsupported } from './errors.js';
-import { SERVER_PROPERTIES, argumentsOf } from './messages.js';
-import type { BrokerState, Exchange, QueueState } from './model.js';
+import { AmqpError, IllegalOperation, Unsupported } from './errors';
+import { SERVER_PROPERTIES, argumentsOf } from './messages';
+import type { BrokerState, Exchange, QueueState } from './model';
 
 /**
  * The half of a channel that declares: exchanges, queues and their bindings. A refusal closes

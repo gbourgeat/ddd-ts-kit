@@ -1,8 +1,8 @@
-import { AggregateRoot } from '../aggregate-root.js';
-import type { DomainEvent } from '../domain-event.js';
-import type { AggregateHistory } from './aggregate-history.js';
-import type { Appliers } from './appliers.js';
-import { unstoredEvents } from './unstored-events.js';
+import { AggregateRoot } from '../aggregate-root';
+import type { DomainEvent } from '../domain-event';
+import type { AggregateHistory } from './aggregate-history';
+import type { Appliers } from './appliers';
+import { unstoredEvents } from './unstored-events';
 
 /**
  * An aggregate whose state is the sum of its events. A command checks the invariants, then

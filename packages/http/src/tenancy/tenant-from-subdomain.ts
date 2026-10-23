@@ -1,4 +1,4 @@
-import type { TenantResolver } from './tenant-resolver.js';
+import type { TenantResolver } from './tenant-resolver';
 
 /**
  * The label left of the base domain: with `app.example.com`, `acme.app.example.com` is the tenant

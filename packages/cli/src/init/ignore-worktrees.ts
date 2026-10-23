@@ -1,5 +1,5 @@
-import type { Workspace } from '../workspace/index.js';
-import { WORKTREES_DIR } from '../worker/worktree-home.js';
+import type { Workspace } from '../workspace';
+import { WORKTREES_DIR } from '../worker/worktree-home';
 
 const GITIGNORE = '.gitignore';
 

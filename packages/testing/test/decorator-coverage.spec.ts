@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decoratorCoverage } from '../src/vitest.js';
+import { decoratorCoverage } from '../src/vitest';
 
 const HINT = '/* v8 ignore next */';
 

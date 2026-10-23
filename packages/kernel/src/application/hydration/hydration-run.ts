@@ -1,5 +1,5 @@
-import type { HydrationPolicy } from './hydration-policy.js';
-import type { HydrationWarning } from './hydration-warning.js';
+import type { HydrationPolicy } from './hydration-policy';
+import type { HydrationWarning } from './hydration-warning';
 
 /** One execution of a hydration: what its relations share while they load. */
 export interface HydrationRun {

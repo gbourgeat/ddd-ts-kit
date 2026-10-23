@@ -1,4 +1,4 @@
-import { typeBrackets } from './type-brackets.js';
+import { typeBrackets } from './type-brackets';
 
 /** Offset of the bracket or angle bracket closing the one at `open` in a type read as text, or -1. */
 export function typeClosing(type: string, open: number): number {

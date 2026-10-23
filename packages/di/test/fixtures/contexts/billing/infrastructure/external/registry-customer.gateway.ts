@@ -1,5 +1,5 @@
 import { Gateway } from '@ddd-ts-kit/kernel/declarations';
-import { CustomerDirectory } from '../../application/ports/customer-directory.port.js';
+import { CustomerDirectory } from '../../application/ports/customer-directory.port';
 
 @Gateway(CustomerDirectory)
 export class RegistryCustomerGateway implements CustomerDirectory {

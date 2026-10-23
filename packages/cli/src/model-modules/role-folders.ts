@@ -1,5 +1,5 @@
-import { ROLES } from '../check/canonical/roles.js';
-import { MODULE_LAYERS } from './module-layers.js';
+import { ROLES } from '../check/canonical/roles';
+import { MODULE_LAYERS } from './module-layers';
 
 /**
  * The folders a role owns directly under each layer a module divides, read from the canonical

@@ -1,10 +1,10 @@
-import { specifierOf } from '../alias/index.js';
-import { CONFIG_FILE, editConfigText } from '../config/index.js';
-import { isDeclared } from '../generate/is-declared.js';
-import { toName } from '../naming/index.js';
-import { projectSources } from '../refusals/project-sources.js';
-import { platformFileIn } from '../platform-layout/index.js';
-import type { Migration } from './migration.js';
+import { specifierOf } from '../alias';
+import { CONFIG_FILE, editConfigText } from '../config';
+import { isDeclared } from '../generate/is-declared';
+import { toName } from '../naming';
+import { projectSources } from '../refusals/project-sources';
+import { platformFileIn } from '../platform-layout';
+import type { Migration } from './migration';
 
 const MOUNTS = "controllerRoutes(container.resolve(DeclaredEdges).of('controller'), { resolve: container.resolve })";
 

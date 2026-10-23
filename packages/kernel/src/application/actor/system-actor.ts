@@ -1,4 +1,4 @@
-import type { Actor } from './actor.js';
+import type { Actor } from './actor';
 
 /** The system acting on its own behalf: a scheduled job, a consumer, a migration. */
 export function systemActor(name: string): Actor {

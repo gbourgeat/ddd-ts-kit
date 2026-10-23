@@ -1,9 +1,9 @@
-import type { Config } from '../../config/index.js';
-import type { PlatformFile } from '../../platform-layout/index.js';
-import { familyOf } from './family-of.js';
-import type { InitFile } from './init-file.js';
-import { platformFile } from './platform-file.js';
-import { when } from './when.js';
+import type { Config } from '../../config';
+import type { PlatformFile } from '../../platform-layout';
+import { familyOf } from './family-of';
+import type { InitFile } from './init-file';
+import { platformFile } from './platform-file';
+import { when } from './when';
 
 /** What each authorization model needs next to its adapter of the `Authorizer` port. */
 const AUTHORIZATION_MODEL: Readonly<Record<string, readonly PlatformFile[]>> = {

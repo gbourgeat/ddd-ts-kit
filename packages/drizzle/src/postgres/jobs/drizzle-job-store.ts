@@ -12,8 +12,8 @@ import {
   type JobUpdate,
   type NewJob,
 } from '@ddd-ts-kit/scheduling';
-import type { DrizzleContext } from '../unit-of-work/drizzle-context.js';
-import { jobsTable, type JobsTable } from './jobs-table.js';
+import type { DrizzleContext } from '../unit-of-work/drizzle-context';
+import { jobsTable, type JobsTable } from './jobs-table';
 
 type JobRow = JobsTable['$inferSelect'];
 

@@ -1,10 +1,10 @@
 import type { ChannelModel, ConfirmChannel } from 'amqplib';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { encode } from '../codec/encode.js';
-import { BrokerUnavailableError } from '../errors/broker-unavailable-error.js';
-import { PublishNotConfirmedError } from '../errors/publish-not-confirmed-error.js';
-import { UnroutableEventError } from '../errors/unroutable-event-error.js';
-import { ignore } from '../ignore.js';
+import { encode } from '../codec/encode';
+import { BrokerUnavailableError } from '../errors/broker-unavailable-error';
+import { PublishNotConfirmedError } from '../errors/publish-not-confirmed-error';
+import { UnroutableEventError } from '../errors/unroutable-event-error';
+import { ignore } from '../ignore';
 
 export interface PublicationSettings {
   readonly exchange: string;

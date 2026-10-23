@@ -1,8 +1,8 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { Command, InMemoryCommandBus, InMemoryEventBus, SystemClock, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { InMemoryOutboxStore, OutboxRelay, type RelaySignal } from '@ddd-ts-kit/events';
-import { RedisRelaySignal, relayWakeUpMiddleware } from '../src/index.js';
-import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing, sleep } from './support/server.js';
+import { RedisRelaySignal, relayWakeUpMiddleware } from '../src';
+import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing, sleep } from './support/server';
 
 afterAll(closeAll);
 

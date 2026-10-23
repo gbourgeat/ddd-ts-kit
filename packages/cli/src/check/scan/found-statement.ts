@@ -1,4 +1,4 @@
-import type { ImportRecord } from './import-record.js';
+import type { ImportRecord } from './import-record';
 
 /** The statement a module specifier belongs to. */
 export interface FoundStatement {

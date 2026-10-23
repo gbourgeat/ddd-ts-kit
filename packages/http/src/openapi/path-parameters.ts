@@ -1,6 +1,6 @@
 import type { JsonSchema, Schema } from '@ddd-ts-kit/validation';
-import type { Definitions } from './definitions.js';
-import { schemaParameters } from './schema-parameters.js';
+import type { Definitions } from './definitions';
+import { schemaParameters } from './schema-parameters';
 
 export function pathParameters(
   path: string,

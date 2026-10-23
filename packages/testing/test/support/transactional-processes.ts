@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { ConcurrencyError, type StoredProcess } from '@ddd-ts-kit/kernel';
-import type { ProcessStoreUnderContract } from '../../src/contracts.js';
+import type { ProcessStoreUnderContract } from '../../src/contracts';
 
 /**
  * A process store in memory with real transactions: what a unit of work saves is its own until it

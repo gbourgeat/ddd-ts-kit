@@ -1,6 +1,6 @@
-import type { Config } from '../../config/index.js';
-import { pipelineManifest } from './pipeline-manifest.js';
-import { VERSIONS } from './versions.js';
+import type { Config } from '../../config';
+import { pipelineManifest } from './pipeline-manifest';
+import { VERSIONS } from './versions';
 
 export interface Packages {
   readonly dependencies: Record<string, string>;

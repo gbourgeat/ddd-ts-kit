@@ -1,7 +1,7 @@
-import { TECHNICAL_WORDS } from '../check/language/technical-words.js';
-import { splitWords } from '../naming/index.js';
-import { isRoleFolder } from './is-role-folder.js';
-import { MODULE_LAYERS } from './module-layers.js';
+import { TECHNICAL_WORDS } from '../check/language/technical-words';
+import { splitWords } from '../naming';
+import { isRoleFolder } from './is-role-folder';
+import { MODULE_LAYERS } from './module-layers';
 
 /**
  * Words that name a bag, not a part of the model: a module called `shared`, `common` or `core`

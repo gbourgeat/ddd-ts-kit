@@ -1,5 +1,5 @@
-import type { LogFields } from '../logging/log-fields.js';
-import type { LogLevel } from '../logging/log-level.js';
+import type { LogFields } from '../logging/log-fields';
+import type { LogLevel } from '../logging/log-level';
 
 /**
  * Structured logging, for infrastructure, presentation and cross-cutting code. The domain and

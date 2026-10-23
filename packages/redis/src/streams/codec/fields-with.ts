@@ -1,4 +1,4 @@
-import type { Entry } from './entry.js';
+import type { Entry } from './entry';
 
 /** The fields of an entry, flat, with `added` put last: where a field is repeated, the last one is read. */
 export function fieldsWith(entry: Entry, added: Readonly<Record<string, string>>): string[] {

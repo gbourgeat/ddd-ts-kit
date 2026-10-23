@@ -1,11 +1,11 @@
-import { readConfig } from '../config/index.js';
-import { describeContext } from '../describe/describe-context.js';
-import { formatDescription } from '../describe/format-description.js';
-import { readContext } from '../docs/read-context.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
-import { knownContext } from './known-context.js';
+import { readConfig } from '../config';
+import { describeContext } from '../describe/describe-context';
+import { formatDescription } from '../describe/format-description';
+import { readContext } from '../docs/read-context';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import type { Command } from './command';
+import { knownContext } from './known-context';
 
 /** Prints what one context holds, read from the config and the source text: the facts an agent needs before it opens a file. */
 export const describeCommand: Command = (argv, io) => {

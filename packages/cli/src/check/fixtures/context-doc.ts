@@ -1,5 +1,5 @@
-import { CONTEXT_DOC_HEADINGS } from '../canonical/context-doc-headings.js';
-import { SAMPLES } from './samples.js';
+import { CONTEXT_DOC_HEADINGS } from '../canonical/context-doc-headings';
+import { SAMPLES } from './samples';
 
 /** A CONTEXT.md holding the given sections, with the classification and the glossary given. */
 export function contextDoc(

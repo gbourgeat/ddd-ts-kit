@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { migrationFiles } from './migration-files.js';
-import type { ReplayPlan } from './replay-plan.js';
+import { migrationFiles } from './migration-files';
+import type { ReplayPlan } from './replay-plan';
 
 /** Puts the migrations folder and its `meta/` back as the replay found them: what it wrote is deleted, what it deleted written again. */
 export function restoreMigrationFolder({ root, folder, found }: ReplayPlan): void {

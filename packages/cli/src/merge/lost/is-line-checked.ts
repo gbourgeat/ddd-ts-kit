@@ -1,6 +1,6 @@
-import { isDerived } from '../../derived/is-derived.js';
-import { SLICES_FILE } from '../../progress/read-slices.js';
-import type { MergeRepository } from './merge-repository.js';
+import { isDerived } from '../../derived/is-derived';
+import { SLICES_FILE } from '../../progress/read-slices';
+import type { MergeRepository } from './merge-repository';
 
 const LOCKFILES = new Set([
   'package-lock.json',

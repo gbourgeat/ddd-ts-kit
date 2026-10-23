@@ -1,5 +1,5 @@
-import { decimalText } from './decimal-text.js';
-import type { MoneyBody } from './money-body.js';
+import { decimalText } from './decimal-text';
+import type { MoneyBody } from './money-body';
 
 const CURRENCY = /^[A-Z]{3}$/;
 

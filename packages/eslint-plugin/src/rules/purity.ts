@@ -1,4 +1,4 @@
-import { purityRule } from '../support/purity-rule.js';
+import { purityRule } from '../support/purity-rule';
 
 export const purityNoSystemClock = purityRule({
   id: 'purity/no-system-clock',

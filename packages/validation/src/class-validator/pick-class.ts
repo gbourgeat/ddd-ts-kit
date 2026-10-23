@@ -1,7 +1,7 @@
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
-import type { DtoClass } from './dto-class.js';
-import { declaredProperties } from './declared-properties.js';
-import { derivedClass } from './derived-class.js';
+import type { DtoClass } from './dto-class';
+import { declaredProperties } from './declared-properties';
+import { derivedClass } from './derived-class';
 
 /**
  * The properties `keys` of a DTO class, with their constraints, as a class to extend:

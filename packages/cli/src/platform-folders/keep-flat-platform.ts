@@ -1,8 +1,8 @@
-import type { Config } from '../config/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { flatRelocation } from './flat-relocation.js';
-import type { Relocation } from './moved-specifier.js';
-import { withMovedImports } from './with-moved-imports.js';
+import type { Config } from '../config';
+import type { Workspace } from '../workspace';
+import { flatRelocation } from './flat-relocation';
+import type { Relocation } from './moved-specifier';
+import { withMovedImports } from './with-moved-imports';
 
 /**
  * In a project that keeps files of its platform flat, every module the command writes imports

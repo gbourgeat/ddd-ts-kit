@@ -1,5 +1,5 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { InvoiceAlreadyIssued } from './errors/invoice-already-issued.js';
+import { InvoiceAlreadyIssued } from './errors/invoice-already-issued';
 
 export interface InvoiceState {
   id: string;

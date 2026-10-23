@@ -1,5 +1,5 @@
-import { read, REPO_ROOT } from '../helpers.js';
-import type { Manager } from './install-for-real.js';
+import { read, REPO_ROOT } from '../helpers';
+import type { Manager } from './install-for-real';
 
 /** What the README says of npm: the same lines, in its words. */
 const ON_NPM: readonly (readonly [RegExp, string])[] = [

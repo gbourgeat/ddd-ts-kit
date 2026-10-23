@@ -1,5 +1,5 @@
-import type { WorkerProgress } from './worker-progress.js';
-import type { WorkerStatus } from './workers-status.js';
+import type { WorkerProgress } from './worker-progress';
+import type { WorkerStatus } from './workers-status';
 
 /**
  * The state of a worker in one line, and the command that resumes it:

@@ -17,14 +17,14 @@ import {
   kernelModule,
   overrideForTests,
   type ContextModule,
-} from '../src/index.js';
-import { RecordingSubscriber } from './support/fakes/recording-subscriber.js';
-import { ReleasingProcessedEvents } from './support/fakes/releasing-processed-events.js';
-import { TransactionalJournal } from './support/fakes/transactional-journal.js';
-import { TransactionalProcessedEvents } from './support/fakes/transactional-processed-events.js';
-import { TransactionalUnitOfWork } from './support/fakes/transactional-unit-of-work.js';
-import { orderPlaced } from './support/ordering/published-language/order-placed-event.js';
-import { OrderPlaced } from './support/ordering/published-language/order-placed.js';
+} from '../src';
+import { RecordingSubscriber } from './support/fakes/recording-subscriber';
+import { ReleasingProcessedEvents } from './support/fakes/releasing-processed-events';
+import { TransactionalJournal } from './support/fakes/transactional-journal';
+import { TransactionalProcessedEvents } from './support/fakes/transactional-processed-events';
+import { TransactionalUnitOfWork } from './support/fakes/transactional-unit-of-work';
+import { orderPlaced } from './support/ordering/published-language/order-placed-event';
+import { OrderPlaced } from './support/ordering/published-language/order-placed';
 
 const CONSUMER = 'billing.invoice-on-order-placed';
 const placed = (id: string, orderId = 'order-1'): IntegrationEvent => orderPlaced(id, { orderId, sku: 'book' });

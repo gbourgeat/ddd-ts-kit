@@ -1,11 +1,11 @@
 import { jetstream, type JetStreamClient } from '@nats-io/jetstream';
 import type { NatsConnection } from '@nats-io/transport-node';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { encode } from '../codec/encode.js';
-import type { Publication } from '../codec/publication.js';
-import { BrokerUnavailableError } from '../errors/broker-unavailable-error.js';
-import { failureCode } from '../errors/failure-code.js';
-import { PublishNotAcknowledgedError } from '../errors/publish-not-acknowledged-error.js';
+import { encode } from '../codec/encode';
+import type { Publication } from '../codec/publication';
+import { BrokerUnavailableError } from '../errors/broker-unavailable-error';
+import { failureCode } from '../errors/failure-code';
+import { PublishNotAcknowledgedError } from '../errors/publish-not-acknowledged-error';
 
 export interface PublicationSettings {
   readonly subjectPrefix: string;

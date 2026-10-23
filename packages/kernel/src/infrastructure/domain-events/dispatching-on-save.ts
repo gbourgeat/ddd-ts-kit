@@ -1,8 +1,8 @@
-import type { DomainEventDispatcher } from '../../application/ports/domain-event-dispatcher.js';
-import { announceDomainEvents } from './announce-domain-events.js';
-import { recordedAggregates } from './recorded-aggregates.js';
-import { SaveAfterCommitError } from './save-after-commit-error.js';
-import { unitOfWorkScope } from './unit-of-work-scope.js';
+import type { DomainEventDispatcher } from '../../application/ports/domain-event-dispatcher';
+import { announceDomainEvents } from './announce-domain-events';
+import { recordedAggregates } from './recorded-aggregates';
+import { SaveAfterCommitError } from './save-after-commit-error';
+import { unitOfWorkScope } from './unit-of-work-scope';
 
 type Method = (this: unknown, ...args: unknown[]) => unknown;
 

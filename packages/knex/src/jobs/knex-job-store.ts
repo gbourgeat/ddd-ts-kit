@@ -11,12 +11,12 @@ import {
   type JobUpdate,
   type NewJob,
 } from '@ddd-ts-kit/scheduling';
-import type { KnexContext } from '../unit-of-work/knex-context.js';
-import { claimedOfRow } from './claimed-of-row.js';
-import { jobOfRow } from './job-of-row.js';
-import type { JobRow } from './job-row.js';
-import { JOB_TABLE } from './job-table-name.js';
-import type { JobTableOptions } from './job-table-options.js';
+import type { KnexContext } from '../unit-of-work/knex-context';
+import { claimedOfRow } from './claimed-of-row';
+import { jobOfRow } from './job-of-row';
+import type { JobRow } from './job-row';
+import { JOB_TABLE } from './job-table-name';
+import type { JobTableOptions } from './job-table-options';
 
 type Rows = Knex.QueryBuilder<JobRow, JobRow[]>;
 

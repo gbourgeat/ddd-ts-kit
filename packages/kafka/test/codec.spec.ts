@@ -1,13 +1,13 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { describe, expect, it } from 'vitest';
-import { decode } from '../src/codec/decode.js';
-import { encode } from '../src/codec/encode.js';
-import type { IncomingRecord } from '../src/codec/incoming-record.js';
-import { republication } from '../src/codec/republication.js';
-import type { Routing } from '../src/codec/routing.js';
-import { sourceOf } from '../src/codec/source-of.js';
-import { textHeader } from '../src/codec/text-header.js';
-import { anEvent, PLACED, TRACEPARENT } from './support/events.js';
+import { decode } from '../src/codec/decode';
+import { encode } from '../src/codec/encode';
+import type { IncomingRecord } from '../src/codec/incoming-record';
+import { republication } from '../src/codec/republication';
+import type { Routing } from '../src/codec/routing';
+import { sourceOf } from '../src/codec/source-of';
+import { textHeader } from '../src/codec/text-header';
+import { anEvent, PLACED, TRACEPARENT } from './support/events';
 
 const byType: Routing = { topicOf: (type) => `topic.${type}`, keyOf: (event) => event.id };
 

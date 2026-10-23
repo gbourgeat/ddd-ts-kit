@@ -1,7 +1,7 @@
-import { formatMergeVerification } from '../merge/lost/format-merge-verification.js';
-import { verifyMerges } from '../merge/lost/verify-merges.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
+import { formatMergeVerification } from '../merge/lost/format-merge-verification';
+import { verifyMerges } from '../merge/lost/verify-merges';
+import { Arguments } from './arguments';
+import type { Command } from './command';
 
 /** What `--warn` adds under the findings, while the check reaches projects as a warning first. */
 const WARN_ONLY_NOTE =

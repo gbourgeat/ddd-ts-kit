@@ -1,10 +1,10 @@
 import path from 'node:path';
-import { storyOfRow } from '../acceptance/story-of-row.js';
-import { readSlices } from '../progress/read-slices.js';
-import { listWorktrees } from '../worker/list-worktrees.js';
-import { Workspace } from '../workspace/index.js';
-import type { OpenStory } from './open-story.js';
-import { readStoryPlace } from './read-story-place.js';
+import { storyOfRow } from '../acceptance/story-of-row';
+import { readSlices } from '../progress/read-slices';
+import { listWorktrees } from '../worker/list-worktrees';
+import { Workspace } from '../workspace';
+import type { OpenStory } from './open-story';
+import { readStoryPlace } from './read-story-place';
 
 /**
  * Each story open in a worktree of the repository, with the contexts its rows name in that

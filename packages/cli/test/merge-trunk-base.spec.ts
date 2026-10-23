@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { CliError } from '../src/cli-error.js';
-import { mergeTrunk as mergeTrunkIn } from '../src/merge/merge-trunk.js';
-import { exists, read } from './helpers.js';
-import { git } from './support/git.js';
+import { CliError } from '../src/cli-error';
+import { mergeTrunk as mergeTrunkIn } from '../src/merge/merge-trunk';
+import { exists, read } from './helpers';
+import { git } from './support/git';
 import {
   commitFiles,
   lastMessage,
@@ -13,7 +13,7 @@ import {
   squashInto,
   trunkRepository,
   workerFile,
-} from './support/trunk-history.js';
+} from './support/trunk-history';
 
 const OPENAPI = 'openapi/openapi.yaml';
 const INVOICE = 'src/contexts/billing/invoice.ts';

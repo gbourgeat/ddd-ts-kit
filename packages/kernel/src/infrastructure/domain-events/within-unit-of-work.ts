@@ -1,9 +1,9 @@
-import { TransactionConflictError } from '../../domain/errors/transaction-conflict-error.js';
-import { isTransactionConflict } from '../persistence/is-transaction-conflict.js';
-import { dispatchAfterCommit } from './dispatch-after-commit.js';
-import { dispatchBeforeCommit } from './dispatch-before-commit.js';
-import type { CommitStep } from './commit-step.js';
-import { unitOfWorkScope, type UnitOfWorkScope } from './unit-of-work-scope.js';
+import { TransactionConflictError } from '../../domain/errors/transaction-conflict-error';
+import { isTransactionConflict } from '../persistence/is-transaction-conflict';
+import { dispatchAfterCommit } from './dispatch-after-commit';
+import { dispatchBeforeCommit } from './dispatch-before-commit';
+import type { CommitStep } from './commit-step';
+import { unitOfWorkScope, type UnitOfWorkScope } from './unit-of-work-scope';
 
 /**
  * What every `UnitOfWork.run` is made of. `transaction` runs what it is given atomically: it

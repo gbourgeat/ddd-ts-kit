@@ -1,5 +1,5 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { fullEnvelope } from './full-envelope.js';
+import { fullEnvelope } from './full-envelope';
 
 /** The full envelope of a fact that belongs to a tenant: what a transport of a multi-tenant project carries. */
 export function tenantEnvelope(event: IntegrationEvent): IntegrationEvent {

@@ -1,4 +1,4 @@
-import { InMemoryFileStorage } from '../../src/index.js';
+import { InMemoryFileStorage } from '../../src';
 
 /** Where a storage away fails: every deletion, or the moves into a prefix. */
 export interface Failures {

@@ -1,12 +1,12 @@
-import type { Config } from '../config/index.js';
-import { describeContext } from '../describe/describe-context.js';
-import { referenceLines } from '../describe/reference-lines.js';
-import { replaceRegion } from '../markers/index.js';
-import type { Workspace } from '../workspace/index.js';
-import type { ContextFacts } from './context-facts.js';
-import { ensureReferenceRegion } from './ensure-reference-region.js';
-import { readContext } from './read-context.js';
-import { stateMachineLines } from './state-machine-lines.js';
+import type { Config } from '../config';
+import { describeContext } from '../describe/describe-context';
+import { referenceLines } from '../describe/reference-lines';
+import { replaceRegion } from '../markers';
+import type { Workspace } from '../workspace';
+import type { ContextFacts } from './context-facts';
+import { ensureReferenceRegion } from './ensure-reference-region';
+import { readContext } from './read-context';
+import { stateMachineLines } from './state-machine-lines';
 
 /** The regions a CONTEXT.md written before the kit knew them may lack without being told: they are refreshed when present. */
 const LATER_REGIONS: Readonly<Record<string, (facts: ContextFacts) => number>> = {

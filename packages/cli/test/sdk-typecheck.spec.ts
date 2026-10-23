@@ -1,10 +1,10 @@
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { fromYaml } from '../src/yaml/from-yaml.js';
-import { read, REPO_ROOT, write } from './helpers.js';
-import { CLASHING_CONTRACT } from './support/clashing-contract.js';
-import { writtenClient } from './support/written-client.js';
+import { fromYaml } from '../src/yaml/from-yaml';
+import { read, REPO_ROOT, write } from './helpers';
+import { CLASHING_CONTRACT } from './support/clashing-contract';
+import { writtenClient } from './support/written-client';
 
 const COMPILER = path.join(REPO_ROOT, 'node_modules/@typescript/native/bin/tsc');
 

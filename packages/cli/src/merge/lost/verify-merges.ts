@@ -1,15 +1,15 @@
-import { CliError } from '../../cli-error.js';
-import { inProgressMerge } from './in-progress-merge.js';
-import type { MergeCheck } from './merge-check.js';
-import { mergeOfRecord } from './merge-of-record.js';
-import { mergeRecords } from './merge-records.js';
-import type { MergeRepository } from './merge-repository.js';
-import { mergeRepositoryOf } from './merge-repository-of.js';
-import type { MergeToVerify } from './merge-to-verify.js';
-import type { MergeVerification } from './merge-verification.js';
-import { mergesSince } from './merges-since.js';
-import { sinceOf } from './since-of.js';
-import { verifyMerge } from './verify-merge.js';
+import { CliError } from '../../cli-error';
+import { inProgressMerge } from './in-progress-merge';
+import type { MergeCheck } from './merge-check';
+import { mergeOfRecord } from './merge-of-record';
+import { mergeRecords } from './merge-records';
+import type { MergeRepository } from './merge-repository';
+import { mergeRepositoryOf } from './merge-repository-of';
+import type { MergeToVerify } from './merge-to-verify';
+import type { MergeVerification } from './merge-verification';
+import { mergesSince } from './merges-since';
+import { sinceOf } from './since-of';
+import { verifyMerge } from './verify-merge';
 
 /** What the caller asks `verify-merge` to check. */
 export interface MergesToVerify {

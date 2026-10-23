@@ -1,6 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
-import { show } from '../scenarios/show.js';
-import type { ExpectedFacts } from './expected-facts.js';
+import { show } from '../scenarios/show';
+import type { ExpectedFacts } from './expected-facts';
 
 /** One sentence per expected fact the error does not carry with that value. */
 export function factMismatches(error: unknown, expected: ExpectedFacts): string[] {

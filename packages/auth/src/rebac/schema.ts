@@ -1,8 +1,8 @@
-import type { DerivedRelation } from './derived-relation.js';
-import { InvalidTupleError } from './invalid-tuple-error.js';
-import { parseObject } from './parse-object.js';
-import type { RelationTuple } from './relation-tuple.js';
-import type { SchemaDefinition } from './schema-definition.js';
+import type { DerivedRelation } from './derived-relation';
+import { InvalidTupleError } from './invalid-tuple-error';
+import { parseObject } from './parse-object';
+import type { RelationTuple } from './relation-tuple';
+import type { SchemaDefinition } from './schema-definition';
 
 /** The types, their stored relations and their derived relations. Built by `defineSchema`. */
 export class Schema {

@@ -1,9 +1,9 @@
 import { builtinModules } from 'node:module';
 import path from 'node:path';
-import { aliasRoots } from './alias-roots.js';
-import type { Config } from './config.js';
-import type { Location } from './location.js';
-import { locate } from './locate.js';
+import { aliasRoots } from './alias-roots';
+import type { Config } from './config';
+import type { Location } from './location';
+import { locate } from './locate';
 
 export type ImportTarget =
   | { readonly kind: 'file'; readonly path: string; readonly location: Location }

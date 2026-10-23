@@ -1,4 +1,4 @@
-import type { Config } from '../config/index.js';
+import type { Config } from '../config';
 
 /** The classes of the project say what they are with a decorator, and are their own registration. */
 export function isDeclared(config: Config): boolean {

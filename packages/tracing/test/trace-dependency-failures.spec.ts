@@ -1,9 +1,9 @@
 import { SpanStatusCode } from '@opentelemetry/api';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { LocalRootTracker, resetTracingConfiguration, traceDependency } from '../src/index.js';
-import { InsufficientFunds } from './support/insufficient-funds.js';
-import { setupTracing, type TestTracing } from './support/setup-tracing.js';
-import { tracedRepository as repository } from './support/traced-repository.js';
+import { LocalRootTracker, resetTracingConfiguration, traceDependency } from '../src';
+import { InsufficientFunds } from './support/insufficient-funds';
+import { setupTracing, type TestTracing } from './support/setup-tracing';
+import { tracedRepository as repository } from './support/traced-repository';
 
 describe('traceDependency, a failing call', () => {
   let tracing: TestTracing;

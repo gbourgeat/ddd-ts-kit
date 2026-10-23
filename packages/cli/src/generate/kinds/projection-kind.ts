@@ -1,17 +1,17 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { CliError } from '../../cli-error.js';
-import { parseConceptName, parseContextName, toName, type Name } from '../../naming/index.js';
-import type { RenderContext } from '../../templating/index.js';
-import { emit } from '../emit.js';
-import { isDeclared } from '../is-declared.js';
-import type { Kind } from '../kind.js';
-import { learnTerms } from '../learn-terms.js';
-import { named } from '../named.js';
-import { openScope } from '../open-scope.js';
-import type { Scope } from '../scope.js';
-import { vars } from '../vars.js';
-import type { EventDeclaration } from './event-declaration.js';
-import { findEventDeclaration } from './find-event-declaration.js';
+import { CONFIG_FILE } from '../../config';
+import { CliError } from '../../cli-error';
+import { parseConceptName, parseContextName, toName, type Name } from '../../naming';
+import type { RenderContext } from '../../templating';
+import { emit } from '../emit';
+import { isDeclared } from '../is-declared';
+import type { Kind } from '../kind';
+import { learnTerms } from '../learn-terms';
+import { named } from '../named';
+import { openScope } from '../open-scope';
+import type { Scope } from '../scope';
+import { vars } from '../vars';
+import type { EventDeclaration } from './event-declaration';
+import { findEventDeclaration } from './find-event-declaration';
 
 export const projectionKind: Kind = {
   name: 'projection',

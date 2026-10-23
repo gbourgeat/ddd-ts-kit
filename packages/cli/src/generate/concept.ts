@@ -1,7 +1,7 @@
-import { parseConceptName, type Name } from '../naming/index.js';
-import type { ConceptRole } from './concept-role.js';
-import type { Scope } from './scope.js';
-import { spokenInLanguage } from './spoken-in-language.js';
+import { parseConceptName, type Name } from '../naming';
+import type { ConceptRole } from './concept-role';
+import type { Scope } from './scope';
+import { spokenInLanguage } from './spoken-in-language';
 
 /**
  * The name of a concept of the model: normalized, free of technical words, and spoken in the

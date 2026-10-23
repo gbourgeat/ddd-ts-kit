@@ -1,4 +1,4 @@
-import type { Logger } from '../../application/ports/logger.js';
+import type { Logger } from '../../application/ports/logger';
 
 /** Writes nothing. The default until the platform binds a real adapter. */
 export class NoopLogger implements Logger {

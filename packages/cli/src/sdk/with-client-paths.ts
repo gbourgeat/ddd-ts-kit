@@ -1,5 +1,5 @@
-import { CLIENTS_DIRECTORY } from './clients-directory.js';
-import type { PlannedClient } from './planned-client.js';
+import { CLIENTS_DIRECTORY } from './clients-directory';
+import type { PlannedClient } from './planned-client';
 
 /**
  * The compiler options with one `paths` entry per client, its package name resolved to its

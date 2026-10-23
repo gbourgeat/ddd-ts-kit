@@ -1,4 +1,4 @@
-import { mediaTypeOf } from './media-type-of.js';
+import { mediaTypeOf } from './media-type-of';
 
 /** Whether a declared media type is in the accepted list, which may hold `type/*`. */
 export function acceptsMediaType(accepted: readonly string[], declared: string): boolean {

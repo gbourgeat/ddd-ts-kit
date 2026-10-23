@@ -1,7 +1,7 @@
-import { Clock } from '../../../../../../../../src/index.js';
-import { CommandHandler } from '../../../../../../../../src/declarations.js';
-import { VisitRepository } from '../../../domain/repositories/visit.repository.js';
-import { ScheduleVisit } from './schedule-visit.command.js';
+import { Clock } from '../../../../../../../../src';
+import { CommandHandler } from '../../../../../../../../src/declarations';
+import { VisitRepository } from '../../../domain/repositories/visit.repository';
+import { ScheduleVisit } from './schedule-visit.command';
 
 @CommandHandler(ScheduleVisit, [VisitRepository, Clock])
 export class ScheduleVisitHandler implements CommandHandler<ScheduleVisit> {

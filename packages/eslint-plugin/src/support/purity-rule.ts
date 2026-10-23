@@ -1,9 +1,9 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { defineRule, type Report } from './rule/define-rule.js';
-import { ambientName } from './globals/ambient-name.js';
-import { propertyName } from './globals/property-name.js';
-import { importListener } from './imports/import-listener.js';
-import { innerLayer } from './imports/inner-layer.js';
+import { defineRule, type Report } from './rule/define-rule';
+import { ambientName } from './globals/ambient-name';
+import { propertyName } from './globals/property-name';
+import { importListener } from './imports/import-listener';
+import { innerLayer } from './imports/inner-layer';
 
 export interface Purity {
   readonly id: string;

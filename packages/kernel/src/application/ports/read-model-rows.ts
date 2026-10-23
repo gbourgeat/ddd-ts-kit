@@ -1,5 +1,5 @@
-import type { EventStamp } from '../read-model/event-stamp.js';
-import type { StampedRow } from '../read-model/stamped-row.js';
+import type { EventStamp } from '../read-model/event-stamp';
+import type { StampedRow } from '../read-model/stamped-row';
 
 /**
  * The three statements a store adapter gives for one table of stamped rows. The rule "apply

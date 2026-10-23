@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { cli, write } from './helpers.js';
-import { committedProject } from './support/committed-project.js';
-import { jsonAt } from './support/json-at.js';
-import { type StubInstallers, stubInstallers } from './support/stub-installers.js';
+import { cli, write } from './helpers';
+import { committedProject } from './support/committed-project';
+import { jsonAt } from './support/json-at';
+import { type StubInstallers, stubInstallers } from './support/stub-installers';
 
 let root: string;
 let installers: StubInstallers;

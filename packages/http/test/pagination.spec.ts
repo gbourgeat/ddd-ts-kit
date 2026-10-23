@@ -12,8 +12,8 @@ import {
   pageResponse,
   pageSchemaOf,
   type RawRequest,
-} from '../src/index.js';
-import { generateOpenApi } from '../src/openapi.js';
+} from '../src';
+import { generateOpenApi } from '../src/openapi';
 
 const SORTABLE = ['placedAt', 'total'] as const;
 

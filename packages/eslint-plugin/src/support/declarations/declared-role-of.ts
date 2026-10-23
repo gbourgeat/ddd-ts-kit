@@ -1,6 +1,6 @@
-import type { LintedFile } from '../../project/linted-file.js';
-import type { DeclaredRole } from './declared-role.js';
-import { DECLARED_ROLES } from './declared-roles.js';
+import type { LintedFile } from '../../project/linted-file';
+import type { DeclaredRole } from './declared-role';
+import { DECLARED_ROLES } from './declared-roles';
 
 /** The role a production file of a context plays by its suffix and folder, whatever the style of the project. */
 export function declaredRoleOf(file: LintedFile): DeclaredRole | undefined {

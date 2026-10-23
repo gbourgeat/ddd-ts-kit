@@ -1,9 +1,9 @@
 import type { KafkaJS } from '@confluentinc/kafka-javascript';
-import { ClusterState } from './cluster-state.js';
-import { MemoryAdmin } from './memory-admin.js';
-import { MemoryConsumer } from './memory-consumer.js';
-import { MemoryProducer } from './memory-producer.js';
-import { RELIABLE, type Wire } from './wire.js';
+import { ClusterState } from './cluster-state';
+import { MemoryAdmin } from './memory-admin';
+import { MemoryConsumer } from './memory-consumer';
+import { MemoryProducer } from './memory-producer';
+import { RELIABLE, type Wire } from './wire';
 
 /**
  * A Kafka cluster in the memory of the test, behind the KafkaJS interfaces of

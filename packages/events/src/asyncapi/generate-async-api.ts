@@ -1,14 +1,14 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import type { AnyIntegrationEventDefinition } from '../definition/any-integration-event-definition.js';
-import { asSchema } from '../internal/json-schema/as-schema.js';
-import { compareText } from '../internal/json-schema/compare-text.js';
-import { rewriteLocalRefs } from '../internal/json-schema/rewrite-local-refs.js';
-import { sortKeys } from '../internal/json-schema/sort-keys.js';
-import { splitDefinitions } from '../internal/json-schema/split-definitions.js';
-import type { EventRegistry } from '../registry/event-registry.js';
-import type { AsyncApiDocument } from './async-api-document.js';
-import type { AsyncApiInfo } from './async-api-info.js';
-import type { AsyncApiServer } from './async-api-server.js';
+import type { AnyIntegrationEventDefinition } from '../definition/any-integration-event-definition';
+import { asSchema } from '../internal/json-schema/as-schema';
+import { compareText } from '../internal/json-schema/compare-text';
+import { rewriteLocalRefs } from '../internal/json-schema/rewrite-local-refs';
+import { sortKeys } from '../internal/json-schema/sort-keys';
+import { splitDefinitions } from '../internal/json-schema/split-definitions';
+import type { EventRegistry } from '../registry/event-registry';
+import type { AsyncApiDocument } from './async-api-document';
+import type { AsyncApiInfo } from './async-api-info';
+import type { AsyncApiServer } from './async-api-server';
 
 export interface GenerateAsyncApiOptions {
   readonly info: AsyncApiInfo;

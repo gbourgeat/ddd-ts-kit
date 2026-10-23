@@ -1,10 +1,10 @@
-import { wholeLiteral } from '../declarations/whole-literal.js';
-import type { Scan } from '../scan/scan.js';
-import { escapeRegExp } from '../text/escape-reg-exp.js';
-import { matchingBracket } from '../text/matching-bracket.js';
-import { splitTopLevel } from '../text/split-top-level.js';
-import type { CodeEntry } from './code-entry.js';
-import type { CodeList } from './code-list.js';
+import { wholeLiteral } from '../declarations/whole-literal';
+import type { Scan } from '../scan/scan';
+import { escapeRegExp } from '../text/escape-reg-exp';
+import { matchingBracket } from '../text/matching-bracket';
+import { splitTopLevel } from '../text/split-top-level';
+import type { CodeEntry } from './code-entry';
+import type { CodeList } from './code-list';
 
 const KEY = /^([A-Za-z_$][\w$]*)\s*:\s*/;
 

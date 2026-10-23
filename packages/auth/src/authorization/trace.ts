@@ -1,4 +1,4 @@
-import type { TraceStep } from './trace-step.js';
+import type { TraceStep } from './trace-step';
 
 /**
  * The lines of an explanation, written as the questions are asked: `yes` answers true and `no`

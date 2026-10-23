@@ -1,9 +1,9 @@
-import type { CoverageRates } from './coverage-rates.js';
-import { generatedDeclarations } from './generated-declarations.js';
-import { measuredFiles } from './measured-files.js';
-import { governedSettings } from './governed-settings.js';
-import { heldLayers } from './held-layers.js';
-import { measuredLayers } from './measured-layers.js';
+import type { CoverageRates } from './coverage-rates';
+import { generatedDeclarations } from './generated-declarations';
+import { measuredFiles } from './measured-files';
+import { governedSettings } from './governed-settings';
+import { heldLayers } from './held-layers';
+import { measuredLayers } from './measured-layers';
 
 /** The part of the `coverage` options of Vitest that the config file of a project governs. */
 export interface GovernedCoverage {

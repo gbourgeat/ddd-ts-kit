@@ -1,7 +1,7 @@
-import type { SourceFile } from '../model/source-file.js';
-import type { StringRecord } from '../scan/string-record.js';
-import { depthAt } from '../text/depth-at.js';
-import { matchingBracket } from '../text/matching-bracket.js';
+import type { SourceFile } from '../model/source-file';
+import type { StringRecord } from '../scan/string-record';
+import { depthAt } from '../text/depth-at';
+import { matchingBracket } from '../text/matching-bracket';
 
 const PERMISSION_SET = /export\s+const\s+([a-z][\w$]*)\s*=\s*definePermissions\(\s*/g;
 

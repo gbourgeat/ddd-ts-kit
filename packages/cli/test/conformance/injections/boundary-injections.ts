@@ -1,7 +1,7 @@
-import type { Injection } from '../injection.js';
-import { PATHS } from '../paths.js';
-import { SOURCE_ALIAS } from '../source-alias.js';
-import { SOURCE_SUFFIX } from '../source-suffix.js';
+import type { Injection } from '../injection';
+import { PATHS } from '../paths';
+import { SOURCE_ALIAS } from '../source-alias';
+import { SOURCE_SUFFIX } from '../source-suffix';
 
 const { ADAPTER, ANALYTICS, CONFIG, DUE_HANDLER, NOTIFICATION, OCCUPANCY_ROUTE, PLAN_HANDLER, PUBLISHED } = PATHS;
 const { AGGREGATE, SENT_AGGREGATE } = PATHS;
@@ -91,7 +91,7 @@ export const BOUNDARY_INJECTIONS: readonly Injection[] = [
       {
         file: OCCUPANCY_HANDLER,
         where: 'start',
-        to: `import '${SOURCE_ALIAS}contexts/identity/published-language/index${SOURCE_SUFFIX}';\n`,
+        to: `import '${SOURCE_ALIAS}contexts/identity/published-language${SOURCE_SUFFIX === '' ? '' : '/index.js'}';\n`,
       },
     ],
     checker: true,

@@ -1,5 +1,5 @@
 import type { IntegrationEvent, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
-import type { OutboxStore } from './outbox-store.js';
+import type { OutboxStore } from './outbox-store';
 
 /**
  * The publisher handlers use when a database is involved: it only stores. Called inside the

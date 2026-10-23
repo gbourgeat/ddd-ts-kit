@@ -1,5 +1,5 @@
-import type { StoryCrossing } from './story-crossing.js';
-import type { StoryState } from './story-state.js';
+import type { StoryCrossing } from './story-crossing';
+import type { StoryState } from './story-state';
 
 /** What `stories` says: the stories open in the worktrees of the repository, and where they meet. */
 export interface StoriesView {

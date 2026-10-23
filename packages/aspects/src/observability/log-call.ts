@@ -1,6 +1,6 @@
 import type { Clock, LogFields, LogLevel, Logger } from '@ddd-ts-kit/kernel';
-import { observed } from './observed.js';
-import { safely } from './safely.js';
+import { observed } from './observed';
+import { safely } from './safely';
 
 export interface LoggedCall {
   readonly logger: Logger;

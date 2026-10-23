@@ -1,8 +1,8 @@
-import type { AuditEntry } from '../audit/audit-entry.js';
-import type { AuditFilter } from '../audit/audit-filter.js';
-import type { AuditSortField } from '../audit/audit-sort-field.js';
-import type { PageRequest } from '../pagination/page-request.js';
-import type { Page } from '../pagination/page.js';
+import type { AuditEntry } from '../audit/audit-entry';
+import type { AuditFilter } from '../audit/audit-filter';
+import type { AuditSortField } from '../audit/audit-sort-field';
+import type { PageRequest } from '../pagination/page-request';
+import type { Page } from '../pagination/page';
 
 /**
  * The read side, a port of its own: who may read the trail is a decision of the application,

@@ -1,6 +1,6 @@
 import type { FixedClock, JobRun } from '@ddd-ts-kit/kernel';
-import { InProcessJobScheduler, type InProcessJobSchedulerOptions } from '../in-process-job-scheduler.js';
-import { ManualJobTimers } from './manual-job-timers.js';
+import { InProcessJobScheduler, type InProcessJobSchedulerOptions } from '../in-process-job-scheduler';
+import { ManualJobTimers } from './manual-job-timers';
 
 export interface ManualJobSchedulerOptions extends Omit<InProcessJobSchedulerOptions, 'timers' | 'clock' | 'random'> {
   /** The clock `advance` moves. */

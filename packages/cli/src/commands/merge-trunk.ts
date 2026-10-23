@@ -1,11 +1,11 @@
-import { CliError } from '../cli-error.js';
-import { abortMerge } from '../merge/abort-merge.js';
-import { formatMergeReport } from '../merge/format-merge-report.js';
-import { mergeTrunk } from '../merge/merge-trunk.js';
-import type { MergeReport } from '../merge/merge-report.js';
-import { resumeMerge } from '../merge/resume-merge.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
+import { CliError } from '../cli-error';
+import { abortMerge } from '../merge/abort-merge';
+import { formatMergeReport } from '../merge/format-merge-report';
+import { mergeTrunk } from '../merge/merge-trunk';
+import type { MergeReport } from '../merge/merge-report';
+import { resumeMerge } from '../merge/resume-merge';
+import { Arguments } from './arguments';
+import type { Command } from './command';
 
 /** The options that start a merge, refused with `--continue` or `--abort`. */
 const STARTING = ['trunk', 'since', 'to-land', 'dry-run'];

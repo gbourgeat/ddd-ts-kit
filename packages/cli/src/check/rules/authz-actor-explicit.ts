@@ -1,8 +1,8 @@
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inLayers } from '../support/in-layers.js';
-import { perFile } from '../support/per-file.js';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { inLayers } from '../support/in-layers';
+import { perFile } from '../support/per-file';
 
 /** The ports and the classes that give the ambient execution context: named as a type or as a value, in a signature or in a dependency list. */
 const AMBIENT_NAME =

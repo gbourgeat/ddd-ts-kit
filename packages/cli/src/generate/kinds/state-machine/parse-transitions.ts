@@ -1,6 +1,6 @@
-import { CliError } from '../../../cli-error.js';
-import { toName } from '../../../naming/index.js';
-import type { RequestedTransition } from './requested-transition.js';
+import { CliError } from '../../../cli-error';
+import { toName } from '../../../naming';
+import type { RequestedTransition } from './requested-transition';
 
 const WRITTEN = /^\s*([A-Za-z][\w-]*)\s*:\s*([^>]+?)\s*(?:>\s*(\S+)\s*)?$/;
 

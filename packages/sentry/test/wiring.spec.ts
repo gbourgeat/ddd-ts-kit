@@ -1,8 +1,8 @@
 import { Command, CommandBus, ErrorReporter } from '@ddd-ts-kit/kernel';
 import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
 import { afterEach, expect, it } from 'vitest';
-import { SentryErrorReporter } from '../src/index.js';
-import { aTracker, type Tracker } from './support/a-tracker.js';
+import { SentryErrorReporter } from '../src';
+import { aTracker, type Tracker } from './support/a-tracker';
 
 class CloseLedger extends Command<void> {}
 

@@ -1,4 +1,4 @@
-import type { CronField } from './cron-field.js';
+import type { CronField } from './cron-field';
 
 const EVERY_VALUE = /^\*(?:\/(\d+))?$/;
 const VALUE_OR_RANGE = /^([a-z0-9]+)(?:-([a-z0-9]+)(?:\/(\d+))?)?$/;

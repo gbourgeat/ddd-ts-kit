@@ -1,6 +1,6 @@
 import type { ExecutionContext } from '@ddd-ts-kit/kernel';
-import type { Problem } from '../error/problem.js';
-import type { HttpMethod } from '../route/http-method.js';
+import type { Problem } from '../error/problem';
+import type { HttpMethod } from '../route/http-method';
 
 export interface ErrorContext {
   readonly requestId: string;

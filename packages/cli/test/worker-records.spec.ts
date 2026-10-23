@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { readAgentRecord } from '../src/worker/read-agent-record.js';
-import { readVerification } from '../src/worker/read-verification.js';
-import { tempDir, write } from './helpers.js';
+import { readAgentRecord } from '../src/worker/read-agent-record';
+import { readVerification } from '../src/worker/read-verification';
+import { tempDir, write } from './helpers';
 
 function projectWith(file: string, json: unknown): string {
   const root = tempDir('worker-records');

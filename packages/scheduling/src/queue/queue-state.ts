@@ -1,4 +1,4 @@
-import type { BackgroundJobRun } from './background-job-run.js';
+import type { BackgroundJobRun } from './background-job-run';
 
 /** What a worker follows of one queue. */
 export interface QueueState {

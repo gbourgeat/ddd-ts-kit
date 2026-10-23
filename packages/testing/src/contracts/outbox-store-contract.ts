@@ -1,10 +1,10 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import type { Awaitable } from './awaitable.js';
-import type { ContractRunner } from './contract-runner.js';
-import { ContractSuite } from './contract-suite.js';
-import { failureOf } from './failure-of.js';
-import { fullEnvelope } from './full-envelope.js';
-import { tenantEnvelope } from './tenant-envelope.js';
+import type { Awaitable } from './awaitable';
+import type { ContractRunner } from './contract-runner';
+import { ContractSuite } from './contract-suite';
+import { failureOf } from './failure-of';
+import { fullEnvelope } from './full-envelope';
+import { tenantEnvelope } from './tenant-envelope';
 
 /**
  * The outbox store port of `@ddd-ts-kit/events`, restated structurally so that this package

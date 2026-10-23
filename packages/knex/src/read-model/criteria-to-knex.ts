@@ -1,7 +1,7 @@
 import type { Knex } from 'knex';
 import type { CriteriaPlan } from '@ddd-ts-kit/kernel';
-import { columnOf } from './column-of.js';
-import { predicateToKnex } from './predicate-to-knex.js';
+import { columnOf } from './column-of';
+import { predicateToKnex } from './predicate-to-knex';
 
 /**
  * Adds a criteria plan to a query on the table of a read model: its filters and the scope of

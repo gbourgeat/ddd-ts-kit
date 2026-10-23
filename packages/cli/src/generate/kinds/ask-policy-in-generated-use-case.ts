@@ -1,14 +1,14 @@
-import { insertInRegion, parseWiring, replaceInRegion } from '../../markers/index.js';
-import { toName, type Name } from '../../naming/index.js';
-import type { RenderContext } from '../../templating/index.js';
-import type { Output } from '../emit.js';
-import { rendered } from '../rendered.js';
-import type { Scope } from '../scope.js';
-import { wirings } from '../wirings.js';
-import { commandContext } from './command-context.js';
-import { commandOutputs } from './command-outputs.js';
-import { queryContext } from './query-context.js';
-import { queryOutputs } from './query-outputs.js';
+import { insertInRegion, parseWiring, replaceInRegion } from '../../markers';
+import { toName, type Name } from '../../naming';
+import type { RenderContext } from '../../templating';
+import type { Output } from '../emit';
+import { rendered } from '../rendered';
+import type { Scope } from '../scope';
+import { wirings } from '../wirings';
+import { commandContext } from './command-context';
+import { commandOutputs } from './command-outputs';
+import { queryContext } from './query-context';
+import { queryOutputs } from './query-outputs';
 
 const AGGREGATE_IMPORT = /\/domain\/aggregates\/([a-z0-9-]+)\.aggregate/;
 

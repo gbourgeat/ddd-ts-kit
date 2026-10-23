@@ -1,5 +1,5 @@
-import type { Scan } from '../scan/scan.js';
-import type { ListPart } from '../text/list-part.js';
+import type { Scan } from '../scan/scan';
+import type { ListPart } from '../text/list-part';
 
 /** The value of an argument that is one string literal and nothing else; undefined for anything else. */
 export function wholeLiteral(scan: Scan, argument: ListPart): string | undefined {

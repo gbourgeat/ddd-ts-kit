@@ -1,5 +1,5 @@
-import type { Config } from '../../config/index.js';
-import type { InitFile } from './init-file.js';
+import type { Config } from '../../config';
+import type { InitFile } from './init-file';
 
 /**
  * A file of the platform and its template under `templates/init/platform/`: the same relative

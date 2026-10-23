@@ -1,13 +1,13 @@
-import { type ConflictClass, classifyConflict } from './classify-conflict.js';
-import { mergeClientManifest } from './merge-client-manifest.js';
-import { type ConflictBlock, conflictBlocks, type Segment } from './conflict-blocks.js';
-import type { ConflictedPath } from './conflicted-path.js';
-import type { MergeRepository } from './lost/merge-repository.js';
-import { mergeSlicesRows } from './merge-slices-rows.js';
-import { mergeStoredEventsLock } from './merge-stored-events-lock.js';
-import { registryUnion } from './registry-union.js';
-import type { Resolution } from './resolution.js';
-import { settleRegions } from './settle-regions.js';
+import { type ConflictClass, classifyConflict } from './classify-conflict';
+import { mergeClientManifest } from './merge-client-manifest';
+import { type ConflictBlock, conflictBlocks, type Segment } from './conflict-blocks';
+import type { ConflictedPath } from './conflicted-path';
+import type { MergeRepository } from './lost/merge-repository';
+import { mergeSlicesRows } from './merge-slices-rows';
+import { mergeStoredEventsLock } from './merge-stored-events-lock';
+import { registryUnion } from './registry-union';
+import type { Resolution } from './resolution';
+import { settleRegions } from './settle-regions';
 
 const DERIVED = 'derived: trunk side, regenerated at the end';
 

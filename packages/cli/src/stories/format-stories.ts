@@ -1,8 +1,8 @@
 import path from 'node:path';
-import type { MergeForecast } from './merge-forecast.js';
-import type { StoriesView } from './stories-view.js';
-import type { StoryCrossing } from './story-crossing.js';
-import type { StoryState } from './story-state.js';
+import type { MergeForecast } from './merge-forecast';
+import type { StoriesView } from './stories-view';
+import type { StoryCrossing } from './story-crossing';
+import type { StoryState } from './story-state';
 
 /** The open stories as text: one line each, where they meet, and what to do about it. */
 export function formatStories(view: StoriesView, cwd: string): string {

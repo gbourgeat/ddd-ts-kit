@@ -8,7 +8,7 @@ import {
   type CommandBus,
   type DomainEvent,
   type IntegrationEvent,
-} from '../../../src/index.js';
+} from '../../../src';
 import {
   Adapter,
   CommandHandler,
@@ -23,7 +23,7 @@ import {
   Repository,
   Requires,
   Scheduled,
-} from '../../../src/declarations.js';
+} from '../../../src/declarations';
 import {
   PatientRegistered,
   InMemoryVisitRepository,
@@ -33,7 +33,7 @@ import {
   VisitScheduled,
   scheduleVisits,
   type Visit,
-} from './declared-clinic.js';
+} from './declared-clinic';
 
 /*
  * What the compiler refuses. Each case is a class the decorator must reject: the file compiles

@@ -1,4 +1,4 @@
-import type { DurationText } from './duration-text.js';
+import type { DurationText } from './duration-text';
 
 /**
  * Every so often, as milliseconds or a duration text. Occurrences are aligned on the Unix epoch

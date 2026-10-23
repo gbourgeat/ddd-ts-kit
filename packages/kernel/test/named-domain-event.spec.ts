@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NamedDomainEvent, type Appliers, type DomainEvent } from '../src/index.js';
+import { NamedDomainEvent, type Appliers, type DomainEvent } from '../src';
 
 class InvoiceIssued extends NamedDomainEvent('billing.invoice.issued') {
   constructor(

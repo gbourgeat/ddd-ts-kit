@@ -1,14 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { AliasRoot } from '../alias/index.js';
-import { buildLayoutOf } from '../check/alias/build-layout-of.js';
-import { walkDirectory } from '../check/project/walk-directory.js';
-import { CliError } from '../cli-error.js';
-import type { EmittedPlace } from './emitted-place.js';
-import { emittedSpecifier } from './emitted-specifier.js';
-import type { RewriteReport } from './rewrite-report.js';
-import { rewriteSpecifiers } from './rewrite-specifiers.js';
-import { unresolvedProblem } from './unresolved-problem.js';
+import type { AliasRoot } from '../alias';
+import { buildLayoutOf } from '../check/alias/build-layout-of';
+import { walkDirectory } from '../check/project/walk-directory';
+import { CliError } from '../cli-error';
+import type { EmittedPlace } from './emitted-place';
+import { emittedSpecifier } from './emitted-specifier';
+import type { RewriteReport } from './rewrite-report';
+import { rewriteSpecifiers } from './rewrite-specifiers';
+import { unresolvedProblem } from './unresolved-problem';
 
 const EMITTED = /\.(?:[cm]?js|d\.[cm]?ts)$/;
 const SHOWN = 20;

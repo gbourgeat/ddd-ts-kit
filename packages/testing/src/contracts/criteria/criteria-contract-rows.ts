@@ -1,4 +1,4 @@
-import type { CriteriaContractRow } from './criteria-contract-row.js';
+import type { CriteriaContractRow } from './criteria-contract-row';
 
 type Written = readonly [
   id: string,

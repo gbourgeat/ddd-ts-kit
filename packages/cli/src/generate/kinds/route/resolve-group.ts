@@ -1,12 +1,12 @@
-import { CliError } from '../../../cli-error.js';
-import { toName } from '../../../naming/index.js';
-import type { Scope } from '../../scope.js';
-import type { Endpoint } from './endpoint.js';
-import { groupFile } from './group-file.js';
-import { groupPrefix } from './group-prefix.js';
-import { resourceOf } from './resource-of.js';
-import type { RouteGroup } from './route-group.js';
-import type { UseCase } from './use-case.js';
+import { CliError } from '../../../cli-error';
+import { toName } from '../../../naming';
+import type { Scope } from '../../scope';
+import type { Endpoint } from './endpoint';
+import { groupFile } from './group-file';
+import { groupPrefix } from './group-prefix';
+import { resourceOf } from './resource-of';
+import type { RouteGroup } from './route-group';
+import type { UseCase } from './use-case';
 
 /**
  * The group of a new controller: the one `--group` names, which must exist; otherwise the group

@@ -15,7 +15,7 @@ import {
   Serializer,
   type GuardRequest,
   type HttpRequest,
-} from '../../../src/index.js';
+} from '../../../src';
 
 /** A port of the fixture: what the composition root injects by its class. */
 export abstract class Desk {

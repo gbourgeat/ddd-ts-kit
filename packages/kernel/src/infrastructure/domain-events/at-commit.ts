@@ -1,5 +1,5 @@
-import type { CommitStep } from './commit-step.js';
-import { unitOfWorkScope } from './unit-of-work-scope.js';
+import type { CommitStep } from './commit-step';
+import { unitOfWorkScope } from './unit-of-work-scope';
 
 /**
  * Runs `step.apply` as the last step of the unit of work in progress: after its work and its

@@ -1,4 +1,4 @@
-import type { RuleDoc } from '../model/rule-doc.js';
+import type { RuleDoc } from '../model/rule-doc';
 
 export const TENANCY_DOCS: Readonly<Record<string, RuleDoc>> = {
   'tenancy/scoped-statement': {

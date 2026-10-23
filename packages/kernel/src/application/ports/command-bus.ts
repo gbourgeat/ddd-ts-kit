@@ -1,5 +1,5 @@
-import type { Command } from '../messaging/command.js';
-import type { ResultOf } from '../messaging/result-of.js';
+import type { Command } from '../messaging/command';
+import type { ResultOf } from '../messaging/result-of';
 
 /**
  * Driving ports of the application layer. Presentation and consumers depend on these,

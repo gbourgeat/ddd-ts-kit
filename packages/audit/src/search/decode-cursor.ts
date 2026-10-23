@@ -1,5 +1,5 @@
 import { InvalidPageRequestError } from '@ddd-ts-kit/kernel';
-import type { CursorPosition } from './cursor-position.js';
+import type { CursorPosition } from './cursor-position';
 
 export function decodeCursor(cursor: string): CursorPosition {
   const [occurredAt, chain, sequence] = parsed(Buffer.from(cursor, 'base64url').toString('utf8'));

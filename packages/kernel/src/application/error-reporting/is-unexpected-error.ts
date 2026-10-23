@@ -1,4 +1,4 @@
-import { DomainError } from '../../domain/errors/domain-error.js';
+import { DomainError } from '../../domain/errors/domain-error';
 
 /**
  * A `DomainError` is a business refusal the code planned for: an answer, not an incident.

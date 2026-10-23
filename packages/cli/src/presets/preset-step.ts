@@ -1,4 +1,4 @@
-import type { Kind, KindFlags } from '../generate/kind.js';
+import type { Kind, KindFlags } from '../generate/kind';
 
 /** One generator a preset runs on its context, as `ddd-ts-kit generate <kind> <context> <args...>` would. */
 export interface PresetStep {

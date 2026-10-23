@@ -1,4 +1,4 @@
-import { endAtDepthZero } from './end-at-depth-zero.js';
+import { endAtDepthZero } from './end-at-depth-zero';
 
 /** The first argument of the call whose arguments start at `open`. */
 export function firstArgument(code: string, open: number): string {

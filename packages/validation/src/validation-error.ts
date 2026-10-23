@@ -1,5 +1,5 @@
 import { DomainError } from '@ddd-ts-kit/kernel';
-import type { ValidationIssue } from './validation-issue.js';
+import type { ValidationIssue } from './validation-issue';
 
 export class ValidationError extends DomainError {
   readonly code = 'VALIDATION_FAILED';

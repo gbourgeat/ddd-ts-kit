@@ -1,7 +1,7 @@
-import type { OpenApiConfig, OpenApiDocumentConfig } from './config.js';
-import { isRecord } from './values/is-record.js';
-import { strings } from './values/strings.js';
-import { text } from './values/text.js';
+import type { OpenApiConfig, OpenApiDocumentConfig } from './config';
+import { isRecord } from './values/is-record';
+import { strings } from './values/strings';
+import { text } from './values/text';
 
 /** Tolerant: a wrong format or a document without a name is kept as written, and `config/valid` reports it. */
 export function parseOpenApi(value: unknown): OpenApiConfig {

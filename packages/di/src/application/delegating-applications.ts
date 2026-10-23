@@ -1,4 +1,4 @@
-import type { Application } from './application.js';
+import type { Application } from './application';
 
 /**
  * The application behind each object that stands in front of one, as the test application

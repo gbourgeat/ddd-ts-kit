@@ -1,7 +1,7 @@
 import { CommandBus, InMemoryProcessStore, InMemoryUnitOfWork, type Command, type ResultOf } from '@ddd-ts-kit/kernel';
-import { StoredProcessRunner } from '../../src/index.js';
-import { aQueueBench, type QueueBench } from './a-queue-bench.js';
-import { DunningProcess } from './dunning-process.js';
+import { StoredProcessRunner } from '../../src';
+import { aQueueBench, type QueueBench } from './a-queue-bench';
+import { DunningProcess } from './dunning-process';
 
 /** A command bus that records what it is sent, and refuses what a spec tells it to. */
 export class RecordingCommandBus extends CommandBus {

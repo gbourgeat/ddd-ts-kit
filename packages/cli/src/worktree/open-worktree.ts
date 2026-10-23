@@ -1,17 +1,17 @@
 import path from 'node:path';
-import { CliError } from '../cli-error.js';
-import { runGit } from '../commit/run-git.js';
-import type { Config } from '../config/index.js';
-import { addWorktree } from '../worker/add-worktree.js';
-import { baseOf } from '../worker/base-of.js';
-import { ensureContainsBase } from '../worker/ensure-contains-base.js';
-import { type DependencyInstall, installDependencies } from '../worker/install-dependencies.js';
-import { installNotes } from '../worker/install-notes.js';
-import { isWorktree } from '../worker/is-worktree.js';
-import { repositoryPrefix } from '../worker/repository-prefix.js';
-import { upstreamOf } from '../worker/upstream-of.js';
-import { worktreeOf } from '../worker/worktree-of.js';
-import type { WorktreeScope } from './worktree-scope.js';
+import { CliError } from '../cli-error';
+import { runGit } from '../commit/run-git';
+import type { Config } from '../config';
+import { addWorktree } from '../worker/add-worktree';
+import { baseOf } from '../worker/base-of';
+import { ensureContainsBase } from '../worker/ensure-contains-base';
+import { type DependencyInstall, installDependencies } from '../worker/install-dependencies';
+import { installNotes } from '../worker/install-notes';
+import { isWorktree } from '../worker/is-worktree';
+import { repositoryPrefix } from '../worker/repository-prefix';
+import { upstreamOf } from '../worker/upstream-of';
+import { worktreeOf } from '../worker/worktree-of';
+import type { WorktreeScope } from './worktree-scope';
 
 /** What the caller asks: a name, and how to cut and prepare its worktree. */
 export interface WorktreeRequest {

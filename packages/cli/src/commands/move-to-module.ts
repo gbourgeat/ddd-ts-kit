@@ -1,13 +1,13 @@
-import { CliError } from '../cli-error.js';
-import { readConfig, type Config } from '../config/index.js';
-import { refreshDocs } from '../generate/refresh-docs.js';
-import { declaredModule } from '../model-modules/index.js';
-import { type ModuleMoves, moveToModule } from '../move-to-module/index.js';
-import { toName } from '../naming/index.js';
-import { Workspace } from '../workspace/index.js';
-import { Arguments } from './arguments.js';
-import type { Command } from './command.js';
-import type { Io } from './io.js';
+import { CliError } from '../cli-error';
+import { readConfig, type Config } from '../config';
+import { refreshDocs } from '../generate/refresh-docs';
+import { declaredModule } from '../model-modules';
+import { type ModuleMoves, moveToModule } from '../move-to-module';
+import { toName } from '../naming';
+import { Workspace } from '../workspace';
+import { Arguments } from './arguments';
+import type { Command } from './command';
+import type { Io } from './io';
 
 /** Takes files of the model and of the use cases of a context into a module of its model, their imports with them. */
 export const moveToModuleCommand: Command = (argv, io) => {

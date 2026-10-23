@@ -1,6 +1,6 @@
 import { AssertionError } from 'node:assert';
 import { inspect } from 'node:util';
-import type { HttpResponse } from './http-response.js';
+import type { HttpResponse } from './http-response';
 
 /**
  * Asserts the status and hands the response back. On a mismatch the failure shows the body,

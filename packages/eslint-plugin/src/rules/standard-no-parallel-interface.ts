@@ -1,10 +1,10 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../project/linted-file.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import { inSourceRoot } from '../support/imports/in-source-root.js';
-import { BOUNDARY_NAMES } from '../support/standard-interfaces/boundary-names.js';
-import { parallelNames } from '../support/standard-interfaces/parallel-names.js';
-import { standardNamesIn } from '../support/standard-interfaces/standard-names-in.js';
+import type { LintedFile } from '../project/linted-file';
+import { defineRule } from '../support/rule/define-rule';
+import { inSourceRoot } from '../support/imports/in-source-root';
+import { BOUNDARY_NAMES } from '../support/standard-interfaces/boundary-names';
+import { parallelNames } from '../support/standard-interfaces/parallel-names';
+import { standardNamesIn } from '../support/standard-interfaces/standard-names-in';
 
 type Declaration = TSESTree.ClassDeclaration | TSESTree.TSInterfaceDeclaration | TSESTree.TSTypeAliasDeclaration;
 

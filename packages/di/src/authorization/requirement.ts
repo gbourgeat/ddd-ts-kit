@@ -1,4 +1,4 @@
-import type { UseCaseDeclaration } from './use-case-declaration.js';
+import type { UseCaseDeclaration } from './use-case-declaration';
 
 /** What a use case asks of whoever reaches it. Empty when nothing was declared. */
 export type Requirement = Pick<UseCaseDeclaration, 'access' | 'permission' | 'resourceOf' | 'contextOf'>;

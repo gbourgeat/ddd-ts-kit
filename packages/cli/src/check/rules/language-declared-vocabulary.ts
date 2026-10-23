@@ -1,14 +1,14 @@
-import { declaredVocabularies } from '../language/declared-vocabularies.js';
-import type { DeclaredValue } from '../language/declared-value.js';
-import { inOutsideRecord } from '../language/in-outside-record.js';
-import { otherLanguageOf } from '../language/other-language-of.js';
-import { typedByOtherLanguage } from '../language/typed-by-other-language.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import type { StringRecord } from '../scan/string-record.js';
-import { inContext } from '../support/in-context.js';
-import { perFile } from '../support/per-file.js';
+import { declaredVocabularies } from '../language/declared-vocabularies';
+import type { DeclaredValue } from '../language/declared-value';
+import { inOutsideRecord } from '../language/in-outside-record';
+import { otherLanguageOf } from '../language/other-language-of';
+import { typedByOtherLanguage } from '../language/typed-by-other-language';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import type { StringRecord } from '../scan/string-record';
+import { inContext } from '../support/in-context';
+import { perFile } from '../support/per-file';
 
 const RELATIONSHIP_SCHEMA = /(?<![\w$.])defineSchema\s*\(/;
 const MODULE_SPECIFIER = /\b(?:from|import)\s*$/;

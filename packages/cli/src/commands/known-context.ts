@@ -1,5 +1,5 @@
-import { CliError } from '../cli-error.js';
-import type { Config } from '../config/index.js';
+import { CliError } from '../cli-error';
+import type { Config } from '../config';
 
 /** The name of a declared context, or the error every command gives for a name the config does not know. */
 export function knownContext(config: Config, name: string | undefined): string {

@@ -7,8 +7,8 @@ import {
   type IntegrationEventPublisher,
   type QueryHandler,
 } from '@ddd-ts-kit/kernel';
-import { ConcurrencyError, InMemoryRepository, createTestBuses, snapshots, type TestBuses } from '../src/index.js';
-import { Order, at, type OrderSnapshot } from './support/order.js';
+import { ConcurrencyError, InMemoryRepository, createTestBuses, snapshots, type TestBuses } from '../src';
+import { Order, at, type OrderSnapshot } from './support/order';
 
 class PlaceOrder extends Command<string> {
   constructor(readonly sku: string) {

@@ -1,5 +1,5 @@
-import type { Config } from '../config/index.js';
-import type { RenderContext } from '../templating/index.js';
+import type { Config } from '../config';
+import type { RenderContext } from '../templating';
 
 /** What a Redis protocol server brings: the cache, the lock between processes, the limiter in front of HTTP, and the wake-up of the outbox relay. */
 export function cacheVars(config: Config): RenderContext {

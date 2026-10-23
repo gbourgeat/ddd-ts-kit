@@ -1,10 +1,10 @@
-import type { Finding } from '../model/finding.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { bindingPlace } from '../support/binding-place.js';
-import { perFile } from '../support/per-file.js';
-import { escapeRegExp } from '../text/escape-reg-exp.js';
+import type { Finding } from '../model/finding';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { bindingPlace } from '../support/binding-place';
+import { perFile } from '../support/per-file';
+import { escapeRegExp } from '../text/escape-reg-exp';
 
 const DI_PACKAGE = '@ddd-ts-kit/di';
 /** The functions of the container package that turn declared classes into a module. */

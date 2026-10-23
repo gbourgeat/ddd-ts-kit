@@ -1,8 +1,8 @@
 import type { BusMiddleware } from '@ddd-ts-kit/kernel';
-import { recordingAskedPermissions } from '../authorization/asked-permissions.js';
-import { PolicyNotAskedError } from '../errors/policy-not-asked-error.js';
-import type { Permission } from '../permissions/permission.js';
-import type { AuthorizationMap } from './authorization-map.js';
+import { recordingAskedPermissions } from '../authorization/asked-permissions';
+import { PolicyNotAskedError } from '../errors/policy-not-asked-error';
+import type { Permission } from '../permissions/permission';
+import type { AuthorizationMap } from './authorization-map';
 
 export interface PoliciesAskedMiddlewareOptions {
   readonly map: AuthorizationMap;

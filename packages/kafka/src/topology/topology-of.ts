@@ -1,10 +1,10 @@
-import type { ConsumerBinding } from './consumer-binding.js';
-import { deadTopicOf } from './dead-topic-of.js';
-import { describeTopic } from './describe-topic.js';
-import type { GroupDescription } from './group-description.js';
-import type { KafkaTopology } from './kafka-topology.js';
-import type { TopicDescription } from './topic-description.js';
-import type { TopologySettings } from './topology-settings.js';
+import type { ConsumerBinding } from './consumer-binding';
+import { deadTopicOf } from './dead-topic-of';
+import { describeTopic } from './describe-topic';
+import type { GroupDescription } from './group-description';
+import type { KafkaTopology } from './kafka-topology';
+import type { TopicDescription } from './topic-description';
+import type { TopologySettings } from './topology-settings';
 
 export function topologyOf(settings: TopologySettings, bindings: readonly ConsumerBinding[]): KafkaTopology {
   const consumed = bindings.map(({ consumer, type }) => ({ consumer, topic: settings.topicOf(type) }));

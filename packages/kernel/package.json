@@ -43,6 +43,6 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b && node ../../pipeline/monorepo/add-extensions.mjs dist"
   }
 }

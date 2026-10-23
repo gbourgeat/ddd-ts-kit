@@ -1,5 +1,5 @@
-import { assertUniqueRoutes } from './assert-unique-routes.js';
-import type { Route } from './route.js';
+import { assertUniqueRoutes } from './assert-unique-routes';
+import type { Route } from './route';
 
 /** Gathers routes (or groups of routes) into one list and refuses duplicates. */
 export function defineRoutes(...routes: readonly (Route | readonly Route[])[]): readonly Route[] {

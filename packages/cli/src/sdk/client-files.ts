@@ -1,12 +1,12 @@
-import { readTemplate } from '../templating/index.js';
-import type { ClientDocument } from './client-document.js';
-import { CLIENT_TSCONFIG } from './client-tsconfig.js';
-import { renderClient } from './render-client.js';
-import { renderErrors } from './render-errors.js';
-import { renderIndex } from './render-index.js';
-import { renderOperations } from './render-operations.js';
-import { renderReadme } from './render-readme.js';
-import { renderSchemas } from './render-schemas.js';
+import { readTemplate } from '../templating';
+import type { ClientDocument } from './client-document';
+import { CLIENT_TSCONFIG } from './client-tsconfig';
+import { renderClient } from './render-client';
+import { renderErrors } from './render-errors';
+import { renderIndex } from './render-index';
+import { renderOperations } from './render-operations';
+import { renderReadme } from './render-readme';
+import { renderSchemas } from './render-schemas';
 
 /**
  * Every file of a client the generator owns, relative to its directory: its sources, its README

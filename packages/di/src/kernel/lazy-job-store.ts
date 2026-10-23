@@ -1,5 +1,5 @@
 import { JobStore } from '@ddd-ts-kit/scheduling';
-import type { Resolve } from '../wiring/resolve.js';
+import type { Resolve } from '../wiring/resolve';
 
 /**
  * The bound job store, resolved at each call: the worker is built when the application registers

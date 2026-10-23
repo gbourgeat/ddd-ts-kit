@@ -1,4 +1,4 @@
-import { kebabCaseOf } from './kebab-case-of.js';
+import { kebabCaseOf } from './kebab-case-of';
 
 /**
  * True when a file whose base name, extension aside, is `stem` is named after `name`: the stem with

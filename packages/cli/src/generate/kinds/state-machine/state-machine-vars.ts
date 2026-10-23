@@ -1,7 +1,7 @@
-import type { Name } from '../../../naming/index.js';
-import type { RenderContext } from '../../../templating/index.js';
-import type { VocabularyEntry } from '../../vocabulary/vocabulary-entry.js';
-import type { RequestedTransition } from './requested-transition.js';
+import type { Name } from '../../../naming';
+import type { RenderContext } from '../../../templating';
+import type { VocabularyEntry } from '../../vocabulary/vocabulary-entry';
+import type { RequestedTransition } from './requested-transition';
 
 export interface MachineParts {
   readonly aggregate: Name;

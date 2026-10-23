@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { ADR_DIRECTORY } from '../check/governance/adr-directory.js';
-import { runGit } from '../commit/run-git.js';
-import type { Settled } from './merge-report.js';
+import { ADR_DIRECTORY } from '../check/governance/adr-directory';
+import { runGit } from '../commit/run-git';
+import type { Settled } from './merge-report';
 
 /** What renumbering did: the records renamed, and the lines it rewrote (their titles, the links between translations), as `file:line` of the branch's files. */
 export interface Renumbered {

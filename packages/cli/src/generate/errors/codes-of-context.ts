@@ -1,7 +1,7 @@
-import { errorCodes } from '../../check/errors/error-codes.js';
-import { scan } from '../../check/scan/scan.js';
-import type { Scope } from '../scope.js';
-import { roleFilesOf, treeOf } from '../../model-modules/index.js';
+import { errorCodes } from '../../check/errors/error-codes';
+import { scan } from '../../check/scan/scan';
+import type { Scope } from '../scope';
+import { roleFilesOf, treeOf } from '../../model-modules';
 
 /** Where each code of the error files of a context is set, as `file:line`. */
 export function codesOfContext(scope: Scope): Map<string, string> {

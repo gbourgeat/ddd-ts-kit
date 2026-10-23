@@ -1,7 +1,7 @@
-import { hookCommand } from './hook-command.js';
-import { isRecord } from './is-record.js';
-import { PROFILE_HOOKS } from './profile-hooks.js';
-import { registeredHookCommands } from './registered-hook-commands.js';
+import { hookCommand } from './hook-command';
+import { isRecord } from './is-record';
+import { PROFILE_HOOKS } from './profile-hooks';
+import { registeredHookCommands } from './registered-hook-commands';
 
 /** The `hooks` of the settings with the two hooks of the profile under `PreToolUse`, each added once, next to what the project registered. */
 export function mergeHooks(existing: unknown): Record<string, unknown> {

@@ -1,8 +1,8 @@
-import { defineRule } from '../support/rule/define-rule.js';
-import { describeTarget } from '../support/imports/describe-target.js';
-import { importListener } from '../support/imports/import-listener.js';
-import { inContext } from '../support/imports/in-context.js';
-import { inLayer } from '../support/imports/in-layer.js';
+import { defineRule } from '../support/rule/define-rule';
+import { describeTarget } from '../support/imports/describe-target';
+import { importListener } from '../support/imports/import-listener';
+import { inContext } from '../support/imports/in-context';
+import { inLayer } from '../support/imports/in-layer';
 
 export const contextPublishedLanguageOnly = defineRule<'internals'>({
   id: 'context/published-language-only',

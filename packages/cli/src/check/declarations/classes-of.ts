@@ -1,10 +1,10 @@
-import { DECLARATION_DECORATORS, DECORATOR_ENTRIES } from '../../declared/declared-role.js';
-import type { Scan } from '../scan/scan.js';
-import { braceDepthAt } from '../text/brace-depth-at.js';
-import { BRACKETS } from '../text/brackets.js';
-import { DECLARATIONS_ENTRY } from './declarations-entry.js';
-import type { DeclaredClass } from './declared-class.js';
-import type { Decoration } from './decoration.js';
+import { DECLARATION_DECORATORS, DECORATOR_ENTRIES } from '../../declared/declared-role';
+import type { Scan } from '../scan/scan';
+import { braceDepthAt } from '../text/brace-depth-at';
+import { BRACKETS } from '../text/brackets';
+import { DECLARATIONS_ENTRY } from './declarations-entry';
+import type { DeclaredClass } from './declared-class';
+import type { Decoration } from './decoration';
 
 const CLASS = /(?<![\w$.])(?:(export)\s+(?:default\s+)?)?(?:abstract\s+)?class\s+([A-Za-z_$][\w$]*)/g;
 const DECORATOR_NAME = /@([\w$]+(?:\s*\.\s*[\w$]+)*)\s*$/;

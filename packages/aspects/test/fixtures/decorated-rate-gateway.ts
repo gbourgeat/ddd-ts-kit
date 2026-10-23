@@ -1,4 +1,4 @@
-import { Bulkhead, Cached, CircuitBreaker, Logged, Retry, Timed, Timeout } from '../../src/decorators.js';
+import { Bulkhead, Cached, CircuitBreaker, Logged, Retry, Timed, Timeout } from '../../src/decorators';
 
 /**
  * An adapter whose resilience policy is part of its definition. It has no constructor

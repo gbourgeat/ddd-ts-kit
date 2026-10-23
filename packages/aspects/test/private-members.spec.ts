@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { compose, retry, type Aspect } from '../src/index.js';
-import { LedgerGateway } from './support/ledger-gateway.js';
-import { QuoteGateway } from './support/quote-gateway.js';
-import { recording } from './support/recording.js';
-import { Unreachable } from './support/unreachable.js';
+import { compose, retry, type Aspect } from '../src';
+import { LedgerGateway } from './support/ledger-gateway';
+import { QuoteGateway } from './support/quote-gateway';
+import { recording } from './support/recording';
+import { Unreachable } from './support/unreachable';
 
 /*
  * The classes of the kit keep their state in TypeScript `private` members, which are ordinary

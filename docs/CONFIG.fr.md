@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:ac9d5b4893b7a6f9 -->
+<!-- translation-of: CONFIG.md sha256:d4a28b929dc36c00 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -208,10 +208,9 @@ Pour faire passer un projet existant aux imports sans extension :
 4. lancez `ddd-ts-kit docs`, qui réécrit les barrels de déclarations, puis `npm run verify`.
 
 `init --force --import-extension none` fait les étapes 1 et 2 et réécrit les fichiers dont
-`init` est propriétaire ; les étapes 3 et 4 restent à faire. Sous `none`, un import nomme un
-fichier, jamais un répertoire : la résolution « bundler » du compilateur compléterait
-`.../published-language` avec son `index.ts`, le build ne le fait pas, et `ddd-ts-kit check` le
-signale. Ce que le compilateur ne modélise plus sous `none` est dit dans
+`init` est propriétaire ; les étapes 3 et 4 restent à faire. Sous `none`, un import peut nommer un
+répertoire : la résolution « bundler » du compilateur complète
+`.../published-language` avec son `index.ts`, et le build avec son `index.js`. Ce que le compilateur ne modélise plus sous `none` est dit dans
 [tools/import-aliases.fr.md](tools/import-aliases.fr.md), « Limites ».
 
 ## Stack

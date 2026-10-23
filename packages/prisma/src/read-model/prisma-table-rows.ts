@@ -1,9 +1,9 @@
 import type { EventStamp, ReadModelRows, StampedRow } from '@ddd-ts-kit/kernel';
-import type { PrismaRawQueries } from '../outbox/prisma-raw-queries.js';
-import type { PrismaContext } from '../unit-of-work/prisma-context.js';
-import type { RowMapper } from './row.mapper.js';
-import { stampedRowOf } from './stamped-row-of.js';
-import { writtenOf } from './written-of.js';
+import type { PrismaRawQueries } from '../outbox/prisma-raw-queries';
+import type { PrismaContext } from '../unit-of-work/prisma-context';
+import type { RowMapper } from './row.mapper';
+import { stampedRowOf } from './stamped-row-of';
+import { writtenOf } from './written-of';
 
 export interface NamedTable<Row extends object> {
   /** The table, quoted and qualified. */

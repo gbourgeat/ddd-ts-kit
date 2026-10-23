@@ -1,15 +1,15 @@
-import { runGit } from '../commit/run-git.js';
-import type { Config } from '../config/index.js';
-import { attributeMarkers } from '../story/attribute-markers.js';
-import { projectContexts } from '../story/project-contexts.js';
-import { unclosedStories } from '../story/unclosed-stories.js';
-import type { Workspace } from '../workspace/index.js';
-import type { Progress, RemainingCount, SlicesProgress } from './progress.js';
-import { readRemaining } from './read-remaining.js';
-import { readSlices, SLICES_FILE } from './read-slices.js';
-import type { Remaining } from './remaining.js';
-import type { Slice } from './slice.js';
-import { statusRowOf } from './status-row-of.js';
+import { runGit } from '../commit/run-git';
+import type { Config } from '../config';
+import { attributeMarkers } from '../story/attribute-markers';
+import { projectContexts } from '../story/project-contexts';
+import { unclosedStories } from '../story/unclosed-stories';
+import type { Workspace } from '../workspace';
+import type { Progress, RemainingCount, SlicesProgress } from './progress';
+import { readRemaining } from './read-remaining';
+import { readSlices, SLICES_FILE } from './read-slices';
+import type { Remaining } from './remaining';
+import type { Slice } from './slice';
+import { statusRowOf } from './status-row-of';
 
 const PLAN_FILE = 'docs/architecture/plan.md';
 

@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CliError } from '../cli-error.js';
-import { gitProcess } from './git-process.js';
-import type { Resolution } from './resolution.js';
+import { CliError } from '../cli-error';
+import { gitProcess } from './git-process';
+import type { Resolution } from './resolution';
 
 /**
  * Writes what each resolution settled into the working tree of the merge in progress: a settled

@@ -1,15 +1,15 @@
-import { acceptanceFileOf } from '../../acceptance/acceptance-file-of.js';
-import { criteriaIn } from '../../acceptance/criteria-in.js';
-import { storyFileOf } from '../../acceptance/story-file-of.js';
-import { storyOfRow } from '../../acceptance/story-of-row.js';
-import { CliError } from '../../cli-error.js';
-import type { Config } from '../../config/index.js';
-import { readSlices, SLICES_FILE } from '../../progress/read-slices.js';
-import type { Slice } from '../../progress/slice.js';
-import { stackVars } from '../../stack/stack-vars.js';
-import { renderTemplate } from '../../templating/index.js';
-import type { Workspace } from '../../workspace/index.js';
-import type { Kind } from '../kind.js';
+import { acceptanceFileOf } from '../../acceptance/acceptance-file-of';
+import { criteriaIn } from '../../acceptance/criteria-in';
+import { storyFileOf } from '../../acceptance/story-file-of';
+import { storyOfRow } from '../../acceptance/story-of-row';
+import { CliError } from '../../cli-error';
+import type { Config } from '../../config';
+import { readSlices, SLICES_FILE } from '../../progress/read-slices';
+import type { Slice } from '../../progress/slice';
+import { stackVars } from '../../stack/stack-vars';
+import { renderTemplate } from '../../templating';
+import type { Workspace } from '../../workspace';
+import type { Kind } from '../kind';
 
 const STORY = /^[A-Za-z0-9][A-Za-z0-9-]*$/;
 

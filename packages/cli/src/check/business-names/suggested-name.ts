@@ -1,5 +1,5 @@
-import { plural, singular } from '../../naming/index.js';
-import type { NamedBinding } from './named-binding.js';
+import { plural, singular } from '../../naming';
+import type { NamedBinding } from './named-binding';
 
 const BUILT = /(?:^|\?\?\s*)(?:await\s+)?(?:new\s+([A-Z][\w$]*)\s*[(<]|([A-Z][\w$]*)\.create\s*[(<])/;
 const READ = /^\(?(?:await\s+)?(?:this\s*\.\s*)?([a-z][\w$]*)Repository\s*\.\s*[\w$]+\s*\(/;

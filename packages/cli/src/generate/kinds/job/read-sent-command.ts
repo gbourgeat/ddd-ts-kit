@@ -1,11 +1,11 @@
-import { CliError } from '../../../cli-error.js';
-import type { Name } from '../../../naming/index.js';
-import { concept } from '../../concept.js';
-import { requireFile } from '../../require-file.js';
-import type { Scope } from '../../scope.js';
-import { commandInputOf } from './command-input.js';
-import { constructorParameters } from './constructor-parameters.js';
-import type { SentCommand } from './sent-command.js';
+import { CliError } from '../../../cli-error';
+import type { Name } from '../../../naming';
+import { concept } from '../../concept';
+import { requireFile } from '../../require-file';
+import type { Scope } from '../../scope';
+import { commandInputOf } from './command-input';
+import { constructorParameters } from './constructor-parameters';
+import type { SentCommand } from './sent-command';
 
 const OPTIONAL = /^[^:=]*\?\s*:|=/;
 const INSTANT = /:\s*Date\b/;

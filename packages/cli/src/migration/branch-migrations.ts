@@ -1,5 +1,5 @@
-import { isRecord } from '../check/support/is-record.js';
-import type { BranchMigration } from './branch-migration.js';
+import { isRecord } from '../check/support/is-record';
+import type { BranchMigration } from './branch-migration';
 
 interface BranchFiles {
   /** The files of the migrations folder and of its `meta/`, by path. */

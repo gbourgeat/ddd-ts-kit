@@ -1,11 +1,11 @@
-import { assertAuthorizationDeclared } from '../authorization/assert-authorization-declared.js';
-import { assertSound } from '../checks/assert-sound.js';
-import { effectiveJobs } from '../jobs/effective-jobs.js';
-import { TokenSet } from '../token/token-set.js';
-import type { Wiring } from '../wiring/wiring.js';
-import type { ApplicationOptions } from './application-options.js';
-import type { Application } from './application.js';
-import { ContainerApplication } from './container-application.js';
+import { assertAuthorizationDeclared } from '../authorization/assert-authorization-declared';
+import { assertSound } from '../checks/assert-sound';
+import { effectiveJobs } from '../jobs/effective-jobs';
+import { TokenSet } from '../token/token-set';
+import type { Wiring } from '../wiring/wiring';
+import type { ApplicationOptions } from './application-options';
+import type { Application } from './application';
+import { ContainerApplication } from './container-application';
 
 /** `createApplication` for callers that already collected the wiring to inspect it. */
 export function assemble(wiring: Wiring, options: ApplicationOptions): Application {

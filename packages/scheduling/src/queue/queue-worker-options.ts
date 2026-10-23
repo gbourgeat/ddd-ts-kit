@@ -1,7 +1,7 @@
 import type { Clock, ExecutionScope, Logger, Metrics } from '@ddd-ts-kit/kernel';
-import type { JobTimers } from '../job-timers.js';
-import type { BackgroundJobObserver } from './background-job-observer.js';
-import type { JobStore } from './store/job-store.js';
+import type { JobTimers } from '../job-timers';
+import type { BackgroundJobObserver } from './background-job-observer';
+import type { JobStore } from './store/job-store';
 
 export interface QueueWorkerOptions {
   readonly store: JobStore;

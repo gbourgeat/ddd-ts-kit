@@ -1,6 +1,6 @@
-import type { MergeFinding } from './merge-finding.js';
-import type { MergeSides } from './merge-sides.js';
-import type { Hunk } from './hunk.js';
+import type { MergeFinding } from './merge-finding';
+import type { MergeSides } from './merge-sides';
+import type { Hunk } from './hunk';
 
 /** The hunks of each side against the base, file by file. */
 export interface SideChanges {

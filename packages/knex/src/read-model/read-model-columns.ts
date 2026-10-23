@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
-import { INDEXABLE_LENGTH } from '../columns/indexable-length.js';
-import { INSTANT } from '../columns/instant.js';
+import { INDEXABLE_LENGTH } from '../columns/indexable-length';
+import { INSTANT } from '../columns/instant';
 
 /**
  * Adds to a read model table the columns a projection orders its events by, under the same

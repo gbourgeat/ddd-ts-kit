@@ -2,10 +2,10 @@ import 'reflect-metadata';
 import { plainToInstance, type ClassTransformOptions } from 'class-transformer';
 import { validateSync, type ValidationError as ClassValidatorError, type ValidatorOptions } from 'class-validator';
 import { err, ok } from '@ddd-ts-kit/kernel';
-import type { Schema } from '../schema.js';
-import type { ValidationIssue } from '../validation-issue.js';
-import type { DtoClass } from './dto-class.js';
-import { selfContainedSchema } from './self-contained-schema.js';
+import type { Schema } from '../schema';
+import type { ValidationIssue } from '../validation-issue';
+import type { DtoClass } from './dto-class';
+import { selfContainedSchema } from './self-contained-schema';
 
 export interface ClassSchemaOptions {
   /** Merged over the defaults `{ whitelist: true, forbidNonWhitelisted: true }`. */

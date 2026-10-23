@@ -1,4 +1,4 @@
-import type { TenantResolver } from './tenant-resolver.js';
+import type { TenantResolver } from './tenant-resolver';
 
 /** A path parameter, `tenantId` by default: `/tenants/:tenantId/invoices`. A route without it names none. */
 export function tenantFromPath(parameter = 'tenantId'): TenantResolver {

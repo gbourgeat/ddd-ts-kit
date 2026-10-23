@@ -7,7 +7,7 @@ import {
   type ExecutionContext,
   type Session,
 } from '@ddd-ts-kit/kernel';
-import type { RawHeaders } from '../route/raw-headers.js';
+import type { RawHeaders } from '../route/raw-headers';
 
 export interface RequestExecution {
   readonly correlationId: string;

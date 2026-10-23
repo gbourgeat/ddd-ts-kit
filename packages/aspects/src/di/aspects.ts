@@ -1,7 +1,7 @@
 import { describeToken, type Token } from '@ddd-ts-kit/kernel/declarations';
-import type { AspectKind } from '../aspect/aspect-kind.js';
-import type { Aspect } from '../aspect/aspect.js';
-import { compose } from '../aspect/compose.js';
+import type { AspectKind } from '../aspect/aspect-kind';
+import type { Aspect } from '../aspect/aspect';
+import { compose } from '../aspect/compose';
 
 /** What the `decorate` hook of `createApplication` is told about a binding. */
 export interface DecoratedBinding {

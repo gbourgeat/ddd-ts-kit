@@ -1,9 +1,9 @@
 import { err, ok } from '@ddd-ts-kit/kernel';
 import { customSchema, type JsonSchema, type Schema, type ValidationIssue } from '@ddd-ts-kit/validation';
-import type { SchemaNode } from '../schema/schema-node.js';
-import { isRecord } from '../support/is-record.js';
-import { FormFormat } from './form-format.js';
-import type { FormQuery } from './form-query.js';
+import type { SchemaNode } from '../schema/schema-node';
+import { isRecord } from '../support/is-record';
+import { FormFormat } from './form-format';
+import type { FormQuery } from './form-query';
 
 const FORMATS: readonly string[] = Object.values(FormFormat);
 

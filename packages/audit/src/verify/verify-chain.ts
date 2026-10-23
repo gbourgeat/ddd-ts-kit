@@ -5,11 +5,11 @@ import {
   type AuditReader,
   type AuditSortField,
 } from '@ddd-ts-kit/kernel';
-import type { AuditCheckpoint } from '../chain/audit-checkpoint.js';
-import { GENESIS_HASH } from '../chain/genesis-hash.js';
-import { hashOf } from '../chain/hash-of.js';
-import type { ChainBreakKind } from './chain-break-kind.js';
-import type { ChainVerification } from './chain-verification.js';
+import type { AuditCheckpoint } from '../chain/audit-checkpoint';
+import { GENESIS_HASH } from '../chain/genesis-hash';
+import { hashOf } from '../chain/hash-of';
+import type { ChainBreakKind } from './chain-break-kind';
+import type { ChainVerification } from './chain-verification';
 
 export interface VerifyChainOptions {
   /** Required with a reader. With entries: the one chain to verify, every chain found otherwise. */

@@ -1,7 +1,7 @@
 import { InMemoryJobStore, JobStore, QueueWorker, type BackgroundJobDefinition } from '@ddd-ts-kit/scheduling';
-import { Instrumentation } from '../kernel/instrumentation.js';
-import type { BackgroundJobRegistration } from '../wiring/background-job-registration.js';
-import type { BoundPorts } from './bound-ports.js';
+import { Instrumentation } from '../kernel/instrumentation';
+import type { BackgroundJobRegistration } from '../wiring/background-job-registration';
+import type { BoundPorts } from './bound-ports';
 
 /**
  * The declared background jobs on the queue worker: registered at creation, consumed while the

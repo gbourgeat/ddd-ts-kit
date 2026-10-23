@@ -1,10 +1,10 @@
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
-import type { JsonSchema } from '../json-schema.js';
-import type { Schema } from '../schema.js';
-import { DEFINITIONS_POINTER } from './definitions-pointer.js';
-import { isRecord } from './is-record.js';
-import { schemaBehind } from './schema-behind.js';
-import { sharedNameOf } from './shared-name-of.js';
+import type { JsonSchema } from '../json-schema';
+import type { Schema } from '../schema';
+import { DEFINITIONS_POINTER } from './definitions-pointer';
+import { isRecord } from './is-record';
+import { schemaBehind } from './schema-behind';
+import { sharedNameOf } from './shared-name-of';
 
 /** What OpenAPI accepts as the key of a component, starting with a letter. */
 const COMPONENT_NAME = /^[A-Za-z][A-Za-z0-9._-]*$/;

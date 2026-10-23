@@ -1,8 +1,8 @@
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { cli, tempDir, write } from './helpers.js';
-import { git } from './support/git.js';
-import { installKit } from './support/install-kit.js';
+import { cli, tempDir, write } from './helpers';
+import { git } from './support/git';
+import { installKit } from './support/install-kit';
 
 /** A project whose repository records a submodule at `vendor/rates`, cloned without it. */
 function projectWithSubmodule(): { root: string; commit: string } {

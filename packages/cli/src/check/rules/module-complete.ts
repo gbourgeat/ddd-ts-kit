@@ -1,10 +1,10 @@
-import { isDeclarationsFile } from '../../declared/index.js';
-import { declaredModules, isContextLevel, isRoleFolder, WITHOUT_MODULE } from '../../model-modules/index.js';
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { pathInContext } from '../support/path-in-context.js';
-import { reporter } from '../support/reporter.js';
+import { isDeclarationsFile } from '../../declared';
+import { declaredModules, isContextLevel, isRoleFolder, WITHOUT_MODULE } from '../../model-modules';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { pathInContext } from '../support/path-in-context';
+import { reporter } from '../support/reporter';
 
 /** How many files a finding names before it counts the rest. */
 const NAMED = 5;

@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import type { Clock } from '../../application/ports/clock.js';
-import type { FileGrant } from './file-grant.js';
-import { isFileGrant } from './is-file-grant.js';
+import type { Clock } from '../../application/ports/clock';
+import type { FileGrant } from './file-grant';
+import { isFileGrant } from './is-file-grant';
 
 /**
  * The tokens of the links a `ServedFileStorage` signs: the grant in base64url, a dot, and its

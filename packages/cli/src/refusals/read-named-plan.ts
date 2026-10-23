@@ -1,10 +1,10 @@
-import { isRecord } from '../check/support/is-record.js';
-import { CliError } from '../cli-error.js';
-import { FACTORY_PREFIX } from '../generate/errors/factory-prefix.js';
-import { toName } from '../naming/index.js';
-import type { NamedPlan } from './named-plan.js';
-import { PLAN_FILE } from './plan-file.js';
-import type { PlannedRefusal } from './planned-refusal.js';
+import { isRecord } from '../check/support/is-record';
+import { CliError } from '../cli-error';
+import { FACTORY_PREFIX } from '../generate/errors/factory-prefix';
+import { toName } from '../naming';
+import type { NamedPlan } from './named-plan';
+import { PLAN_FILE } from './plan-file';
+import type { PlannedRefusal } from './planned-refusal';
 
 const FIX = `Run \`ddd-ts-kit error-factories --plan\` to write ${PLAN_FILE} again, then edit the names of each entry.`;
 const CLASS = /^[A-Z][A-Za-z0-9]*$/;

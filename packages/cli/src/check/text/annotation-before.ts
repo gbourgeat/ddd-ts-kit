@@ -1,4 +1,4 @@
-import { typeBrackets } from './type-brackets.js';
+import { typeBrackets } from './type-brackets';
 
 /** A `=` that assigns, at the end of the text before an initializer: not `==`, `!=`, `<=`, `>=`, `+=` and the like. */
 const ASSIGNS = /(?<![=!<>+\-*/%&|^?])=\s*$/;

@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { KINDS } from '../src/generate/kinds.js';
-import { cli, exists, read, write } from './helpers.js';
-import { failure, report } from './reports.js';
-import { explicitProject } from './support/explicit-project.js';
+import { KINDS } from '../src/generate/kinds';
+import { cli, exists, read, write } from './helpers';
+import { failure, report } from './reports';
+import { explicitProject } from './support/explicit-project';
 
 describe('generate, plans and refusals', () => {
   let root: string;

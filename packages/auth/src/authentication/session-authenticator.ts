@@ -1,5 +1,5 @@
 import type { Session } from '@ddd-ts-kit/kernel';
-import { Authenticator } from './authenticator.js';
+import { Authenticator } from './authenticator';
 
 /**
  * An authenticator that also knows the session the credential stands for: since when, until

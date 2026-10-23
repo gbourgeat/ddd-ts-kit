@@ -1,6 +1,6 @@
 import { Query } from '@ddd-ts-kit/kernel';
 import { Public } from '@ddd-ts-kit/kernel/declarations';
-import type { Invoice } from '../../../domain/invoice.js';
+import type { Invoice } from '../../../domain/invoice';
 
 @Public()
 export class GetInvoice extends Query<Invoice | undefined> {

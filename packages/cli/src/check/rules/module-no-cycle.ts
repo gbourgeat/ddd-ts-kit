@@ -1,8 +1,8 @@
-import type { Project } from '../model/project.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { cyclesIn } from '../support/cycles-in.js';
-import { reporter } from '../support/reporter.js';
+import type { Project } from '../model/project';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { cyclesIn } from '../support/cycles-in';
+import { reporter } from '../support/reporter';
 
 const FIX =
   'Look for a way to change the model to disentangle the concepts (Evans, Modules): an effect that follows a decision of one module becomes a domain event the other handles; a concept both reach for may be an overlooked module of its own, which both import; reads of the other module can go through a projection of its events. Coupling between modules is a signal about the model, which is why this is a warning.';

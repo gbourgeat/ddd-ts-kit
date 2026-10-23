@@ -1,5 +1,5 @@
-import { CliError } from '../cli-error.js';
-import { toName } from '../naming/index.js';
+import { CliError } from '../cli-error';
+import { toName } from '../naming';
 
 /** One entry of `domain/errors/codes.ts`: the name of a refusal class and the code it sets. */
 export interface CodeEntry {

@@ -1,4 +1,4 @@
-import type { Message } from '../../application/messaging/message.js';
+import type { Message } from '../../application/messaging/message';
 
 /**
  * Declared with method syntax on purpose: a method parameter is compared bivariantly, so a

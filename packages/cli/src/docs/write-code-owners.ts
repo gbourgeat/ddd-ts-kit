@@ -1,8 +1,8 @@
-import type { Config } from '../config/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { codeOwnersLines, type OwnedContext } from './code-owners-lines.js';
-import type { ContextFacts } from './context-facts.js';
-import { sharedKernelImporters } from './shared-kernel-importers.js';
+import type { Config } from '../config';
+import type { Workspace } from '../workspace';
+import { codeOwnersLines, type OwnedContext } from './code-owners-lines';
+import type { ContextFacts } from './context-facts';
+import { sharedKernelImporters } from './shared-kernel-importers';
 
 /** At the root, where GitHub and GitLab both read it. */
 const CODE_OWNERS = 'CODEOWNERS';

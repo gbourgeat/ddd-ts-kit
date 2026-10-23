@@ -2,9 +2,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll } from 'vitest';
-import { portsAbstractClass } from '../../src/rules/ports-abstract-class.js';
-import { portsImplementsNeverExtends } from '../../src/rules/ports-implements-never-extends.js';
-import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { portsAbstractClass } from '../../src/rules/ports-abstract-class';
+import { portsImplementsNeverExtends } from '../../src/rules/ports-implements-never-extends';
+import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const DECLARATIONS = '@ddd-ts-kit/kernel/declarations';
 const PORT = `${BILLING}/application/ports/payment-gateway.port.ts`;

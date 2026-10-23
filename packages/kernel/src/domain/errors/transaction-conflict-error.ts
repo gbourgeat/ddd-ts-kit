@@ -1,4 +1,4 @@
-import { ConcurrencyError } from './concurrency-error.js';
+import { ConcurrencyError } from './concurrency-error';
 
 /**
  * The database gave the transaction of a unit of work up for a concurrent one: a deadlock or a

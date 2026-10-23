@@ -1,11 +1,11 @@
-import type { Scan } from '../scan/scan.js';
-import { braceDepthAt } from '../text/brace-depth-at.js';
-import { classBodyBrace } from './class-body-brace.js';
-import { matchingBracket } from '../text/matching-bracket.js';
-import type { ClassShape } from './class-shape.js';
-import { methodsOf } from './methods-of.js';
-import { signatureAt } from './signature-at.js';
-import type { TopLevelFunction } from './top-level-function.js';
+import type { Scan } from '../scan/scan';
+import { braceDepthAt } from '../text/brace-depth-at';
+import { classBodyBrace } from './class-body-brace';
+import { matchingBracket } from '../text/matching-bracket';
+import type { ClassShape } from './class-shape';
+import { methodsOf } from './methods-of';
+import { signatureAt } from './signature-at';
+import type { TopLevelFunction } from './top-level-function';
 
 export interface Structure {
   readonly classes: readonly ClassShape[];

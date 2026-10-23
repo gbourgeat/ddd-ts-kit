@@ -1,9 +1,9 @@
 import type { Redis } from 'ioredis';
 import type { IntegrationEventCallback, Subscription } from '@ddd-ts-kit/kernel';
-import { GroupReader } from './group-reader.js';
-import type { Settings } from './options/settings.js';
-import type { ServerLink } from './server-link.js';
-import type { ConsumerBinding } from './topology/consumer-binding.js';
+import { GroupReader } from './group-reader';
+import type { Settings } from './options/settings';
+import type { ServerLink } from './server-link';
+import type { ConsumerBinding } from './topology/consumer-binding';
 
 /** The consuming side: one reader per consumer name, started with its first subscription. */
 export class Consumption {

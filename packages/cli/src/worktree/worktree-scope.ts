@@ -1,4 +1,4 @@
-import type { DependencyInstall } from '../worker/install-dependencies.js';
+import type { DependencyInstall } from '../worker/install-dependencies';
 
 /** What `worktree` prepared, or would prepare in a dry run. */
 export interface WorktreeScope {

@@ -1,5 +1,5 @@
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
-import type { ReadModelTenant } from './read-model-tenant.js';
+import type { ReadModelTenant } from './read-model-tenant';
 
 export interface DrizzleReadModelOptions<Row> {
   /** The table of the read model, declared with `...readModelColumns()`. */

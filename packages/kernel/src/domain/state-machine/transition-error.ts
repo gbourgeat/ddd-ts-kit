@@ -1,4 +1,4 @@
-import { ConceptError } from '../errors/concept-error.js';
+import { ConceptError } from '../errors/concept-error';
 
 /**
  * The refusal of a transition a state does not allow, when the declaration of the machine names

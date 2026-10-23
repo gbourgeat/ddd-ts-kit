@@ -1,6 +1,6 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import type { RawHeaders } from '../route/raw-headers.js';
-import type { RequestContext } from '../route/request-context.js';
+import type { RawHeaders } from '../route/raw-headers';
+import type { RequestContext } from '../route/request-context';
 
 interface Parts {
   readonly params?: unknown;

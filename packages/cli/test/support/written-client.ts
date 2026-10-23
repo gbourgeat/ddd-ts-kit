@@ -1,7 +1,7 @@
-import { clientFiles } from '../../src/sdk/client-files.js';
-import { clientManifest } from '../../src/sdk/client-manifest.js';
-import { readClientDocument } from '../../src/sdk/read-client-document.js';
-import { tempDir, write } from '../helpers.js';
+import { clientFiles } from '../../src/sdk/client-files';
+import { clientManifest } from '../../src/sdk/client-manifest';
+import { readClientDocument } from '../../src/sdk/read-client-document';
+import { tempDir, write } from '../helpers';
 
 /** The client of a contract written to a temporary directory as `ddd-ts-kit sdk` writes it: the directory. */
 export function writtenClient(contract: unknown, packageName: string): string {

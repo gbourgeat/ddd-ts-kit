@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { checkJsonOf } from './check-support.js';
-import { cli, exists, read, scaffoldEverything, tempDir } from './helpers.js';
+import { checkJsonOf } from './check-support';
+import { cli, exists, read, scaffoldEverything, tempDir } from './helpers';
 
 const BILLING = 'src/contexts/billing';
 const SHIPPING = 'src/contexts/shipping';

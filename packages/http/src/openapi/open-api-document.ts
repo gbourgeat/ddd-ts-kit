@@ -1,6 +1,6 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import type { OpenApiInfo } from './open-api-info.js';
-import type { OpenApiServer } from './open-api-server.js';
+import type { OpenApiInfo } from './open-api-info';
+import type { OpenApiServer } from './open-api-server';
 
 export interface OpenApiDocument {
   readonly openapi: '3.1.0';

@@ -1,5 +1,5 @@
-import { CliError } from '../../cli-error.js';
-import { CI_EXTRAS, type Config } from '../../config/index.js';
+import { CliError } from '../../cli-error';
+import { CI_EXTRAS, type Config } from '../../config';
 
 const KNOWN = Object.keys(CI_EXTRAS);
 

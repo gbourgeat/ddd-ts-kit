@@ -1,9 +1,9 @@
-import { overlapsOf } from './overlaps-of.js';
-import { repeatsAcross } from './repeats-across.js';
-import { signaturesOf } from './signatures-of.js';
-import type { Span } from './span.js';
-import type { StoryMeasures } from './story-measures.js';
-import type { StoryReading } from './story-reading.js';
+import { overlapsOf } from './overlaps-of';
+import { repeatsAcross } from './repeats-across';
+import { signaturesOf } from './signatures-of';
+import type { Span } from './span';
+import type { StoryMeasures } from './story-measures';
+import type { StoryReading } from './story-reading';
 
 /** The stories with what compares them: the overlaps in time and the repeats of a remark. Authors only when asked. */
 export function storyMeasuresOf(readings: readonly StoryReading[], byAuthor: boolean): StoryMeasures[] {

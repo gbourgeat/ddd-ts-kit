@@ -1,6 +1,6 @@
-import type { OrmStack } from '../../config/index.js';
-import type { Name } from '../../naming/index.js';
-import type { Output } from '../emit.js';
+import type { OrmStack } from '../../config';
+import type { Name } from '../../naming';
+import type { Output } from '../emit';
 
 /** The adapter each ORM of the stack gets: its class prefix and the files written next to the port. */
 export interface RepositoryAdapter {

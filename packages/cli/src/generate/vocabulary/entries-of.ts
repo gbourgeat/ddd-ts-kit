@@ -1,6 +1,6 @@
-import { CliError } from '../../cli-error.js';
-import { toName } from '../../naming/index.js';
-import type { VocabularyEntry } from './vocabulary-entry.js';
+import { CliError } from '../../cli-error';
+import { toName } from '../../naming';
+import type { VocabularyEntry } from './vocabulary-entry';
 
 const VALUE = /^[A-Za-z][A-Za-z0-9 _.:/-]*$/;
 const KEY = /^[A-Za-z][\w$]*$/;

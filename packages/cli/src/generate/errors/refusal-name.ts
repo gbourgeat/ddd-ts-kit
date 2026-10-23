@@ -1,6 +1,6 @@
-import { CliError } from '../../cli-error.js';
-import { toName, type Name } from '../../naming/index.js';
-import { VAGUE_REFUSAL_NAMES } from './vague-refusal-names.js';
+import { CliError } from '../../cli-error';
+import { toName, type Name } from '../../naming';
+import { VAGUE_REFUSAL_NAMES } from './vague-refusal-names';
 
 /** The name of a factory, from `slotTaken`, `slot-taken` or "slot taken": a phrase of the business, never `create` or `error1`. */
 export function refusalName(input: string): Name {

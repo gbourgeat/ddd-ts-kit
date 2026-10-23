@@ -1,8 +1,8 @@
-import { DATABASE_STACKS, ORM_STACKS } from '../../config/index.js';
-import { CliError } from '../../cli-error.js';
-import { WITH_DATABASE } from '../../stack/with-database.js';
-import { choose } from './choose.js';
-import type { StackOptions } from './stack-options.js';
+import { DATABASE_STACKS, ORM_STACKS } from '../../config';
+import { CliError } from '../../cli-error';
+import { WITH_DATABASE } from '../../stack/with-database';
+import { choose } from './choose';
+import type { StackOptions } from './stack-options';
 
 const EVENT_CHOICES = ['in-memory', 'outbox'] as const;
 

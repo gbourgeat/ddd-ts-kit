@@ -1,21 +1,21 @@
-import { refreshContextDoc } from '../../docs/refresh-context-doc.js';
-import { CliError } from '../../cli-error.js';
-import { toName } from '../../naming/index.js';
-import type { RenderContext } from '../../templating/index.js';
-import { renderTemplate } from '../../templating/index.js';
-import { applyWiring } from '../apply-wiring.js';
-import { emit, type Output } from '../emit.js';
-import type { Kind } from '../kind.js';
-import { learnTerms } from '../learn-terms.js';
-import { named } from '../named.js';
-import { openScope } from '../open-scope.js';
-import type { Scope } from '../scope.js';
-import { vars } from '../vars.js';
-import { wire } from '../wire.js';
-import { ensureDomainEvent } from './ensure-domain-event.js';
-import { assertDeclaresItsName } from './assert-declares-its-name.js';
-import { eventNameReference } from './event-name-reference.js';
-import { publishInIndex } from './publish-in-index.js';
+import { refreshContextDoc } from '../../docs/refresh-context-doc';
+import { CliError } from '../../cli-error';
+import { toName } from '../../naming';
+import type { RenderContext } from '../../templating';
+import { renderTemplate } from '../../templating';
+import { applyWiring } from '../apply-wiring';
+import { emit, type Output } from '../emit';
+import type { Kind } from '../kind';
+import { learnTerms } from '../learn-terms';
+import { named } from '../named';
+import { openScope } from '../open-scope';
+import type { Scope } from '../scope';
+import { vars } from '../vars';
+import { wire } from '../wire';
+import { ensureDomainEvent } from './ensure-domain-event';
+import { assertDeclaresItsName } from './assert-declares-its-name';
+import { eventNameReference } from './event-name-reference';
+import { publishInIndex } from './publish-in-index';
 
 export const integrationEventKind: Kind = {
   name: 'integration-event',

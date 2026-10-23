@@ -11,11 +11,11 @@ import {
   startTestServer,
   type DatabaseReset,
   type TestServer,
-} from '../src/e2e.js';
-import { createDataGenerator, generated, useDataGenerator } from '../src/faker.js';
-import { resetSequences } from '../src/index.js';
-import { aLine, anOrder, type PlaceOrderRequest } from './support/builders.js';
-import { orderPlaced } from './support/order-placed.js';
+} from '../src/e2e';
+import { createDataGenerator, generated, useDataGenerator } from '../src/faker';
+import { resetSequences } from '../src';
+import { aLine, anOrder, type PlaceOrderRequest } from './support/builders';
+import { orderPlaced } from './support/order-placed';
 
 interface OrderView {
   readonly id: string;

@@ -1,5 +1,5 @@
-import type { FormBlock } from './form-block.js';
-import type { HttpMethod } from '../route/http-method.js';
+import type { FormBlock } from './form-block';
+import type { HttpMethod } from '../route/http-method';
 
 /**
  * A form described by the server, as a neutral tree of blocks for a front end with its own

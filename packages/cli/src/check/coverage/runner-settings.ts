@@ -1,10 +1,10 @@
 import fs from 'node:fs';
-import { CONFIG_FILE } from '../../config/index.js';
-import { readProjectFile } from '../alias/read-project-file.js';
-import type { Finding } from '../model/finding.js';
-import type { Project } from '../model/project.js';
-import { scan } from '../scan/scan.js';
-import { matchingBracket } from '../text/matching-bracket.js';
+import { CONFIG_FILE } from '../../config';
+import { readProjectFile } from '../alias/read-project-file';
+import type { Finding } from '../model/finding';
+import type { Project } from '../model/project';
+import { scan } from '../scan/scan';
+import { matchingBracket } from '../text/matching-bracket';
 
 /** The config of the unit and integration specs: the one a coverage run reads. */
 const MAIN_CONFIG = /^(vitest|jest)\.config\.[cm]?[jt]s$/;

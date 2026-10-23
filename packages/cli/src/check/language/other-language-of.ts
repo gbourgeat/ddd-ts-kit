@@ -1,8 +1,8 @@
-import type { ImportTarget } from '../model/import-target.js';
-import type { SourceFile } from '../model/source-file.js';
-import { inLayer } from '../support/in-layer.js';
-import { isOutsidePlace } from './is-outside-place.js';
-import { typeDeclarations } from './type-declarations.js';
+import type { ImportTarget } from '../model/import-target';
+import type { SourceFile } from '../model/source-file';
+import { inLayer } from '../support/in-layer';
+import { isOutsidePlace } from './is-outside-place';
+import { typeDeclarations } from './type-declarations';
 
 /**
  * The names a file reads from another language, with where they come from

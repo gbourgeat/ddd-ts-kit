@@ -1,4 +1,4 @@
-import type { SourceFile } from '../model/source-file.js';
+import type { SourceFile } from '../model/source-file';
 
 /** True for a source of the `domain/errors/` of a context, the code list included. */
 export function isErrorFile(file: SourceFile): boolean {

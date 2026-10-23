@@ -1,4 +1,4 @@
-import type { CoverageLayer } from './coverage-layer.js';
+import type { CoverageLayer } from './coverage-layer';
 
 const INNER: readonly CoverageLayer[] = ['domain', 'application', 'presentation'];
 const ADAPTERS: readonly CoverageLayer[] = ['infrastructure'];

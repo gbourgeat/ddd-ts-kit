@@ -202,9 +202,9 @@ To move an existing project to imports without an extension:
 4. run `ddd-ts-kit docs`, which rewrites the declarations barrels, then `npm run verify`.
 
 `init --force --import-extension none` does steps 1 and 2 and rewrites the files `init` owns;
-steps 3 and 4 remain. Under `none` an import names a file, never a directory: the bundler
-resolution of the compiler would complete `.../published-language` with its `index.ts`, the
-build does not, and `ddd-ts-kit check` reports it. What the compiler no longer models under
+steps 3 and 4 remain. Under `none` an import may name a directory: the bundler resolution of the
+compiler completes `.../published-language` with its `index.ts`, and the build with its
+`index.js`. What the compiler no longer models under
 `none` is said in [tools/import-aliases.md](tools/import-aliases.md), "Limits".
 
 ## Stack

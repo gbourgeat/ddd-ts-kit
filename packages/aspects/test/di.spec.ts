@@ -19,13 +19,13 @@ import {
   timed,
   when,
   type Aspect,
-} from '../src/index.js';
-import { withAspectRuntime } from '../src/testing.js';
-import { ArchivedQuotes } from './support/pricing/application/ports/archived-quotes.port.js';
-import { Now } from './support/pricing/application/ports/now.port.js';
-import { Quotes } from './support/pricing/application/ports/quotes.port.js';
-import { QuoteGateway } from './support/quote-gateway.js';
-import { Unreachable } from './support/unreachable.js';
+} from '../src';
+import { withAspectRuntime } from '../src/testing';
+import { ArchivedQuotes } from './support/pricing/application/ports/archived-quotes.port';
+import { Now } from './support/pricing/application/ports/now.port';
+import { Quotes } from './support/pricing/application/ports/quotes.port';
+import { QuoteGateway } from './support/quote-gateway';
+import { Unreachable } from './support/unreachable';
 
 function recording(journal: string[], label: string): Aspect {
   return defineAspect((joinPoint) => async ({ proceed }) => {

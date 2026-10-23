@@ -1,10 +1,10 @@
-import { kernelNames, type NamedImport } from '../event-sourcing/kernel-names.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { callArguments } from '../text/call-arguments.js';
-import type { ListPart } from '../text/list-part.js';
-import { perFile } from '../support/per-file.js';
+import { kernelNames, type NamedImport } from '../event-sourcing/kernel-names';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { callArguments } from '../text/call-arguments';
+import type { ListPart } from '../text/list-part';
+import { perFile } from '../support/per-file';
 
 const APPENDING = new Set(['EventStore', 'EventSourcedRepository']);
 const DECLARED = /(?<![\w$.])@Projection\s*\(/;

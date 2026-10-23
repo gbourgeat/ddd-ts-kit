@@ -1,6 +1,6 @@
-import { mentionedRows } from '../citations/mentioned-rows.js';
-import type { Remaining } from '../progress/remaining.js';
-import type { StoryScope } from './story-scope.js';
+import { mentionedRows } from '../citations/mentioned-rows';
+import type { Remaining } from '../progress/remaining';
+import type { StoryScope } from './story-scope';
 
 /**
  * True for a marker that may keep the story open, before git says whose it is: in a context of

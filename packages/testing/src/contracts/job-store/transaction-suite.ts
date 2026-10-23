@@ -1,8 +1,8 @@
-import { ContractSuite } from '../contract-suite.js';
-import { failureOf } from '../failure-of.js';
-import { aJob } from './a-job.js';
-import { LEASE_MS, NOW, QUEUE } from './job-fixtures.js';
-import type { JobStoreUnderContract } from './job-store-under-contract.js';
+import { ContractSuite } from '../contract-suite';
+import { failureOf } from '../failure-of';
+import { aJob } from './a-job';
+import { LEASE_MS, NOW, QUEUE } from './job-fixtures';
+import type { JobStoreUnderContract } from './job-store-under-contract';
 
 /** The unit of work the store is used in, as the kernel port states it. */
 export interface UnitOfWorkOfTheStore {

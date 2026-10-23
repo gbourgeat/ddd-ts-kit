@@ -9,19 +9,19 @@ import {
   type Resolve,
 } from '@ddd-ts-kit/di';
 import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
-import { Authenticator } from '../authentication/authenticator.js';
-import { Access } from '../authorization/access.js';
-import { Authorizer } from '../authorization/authorizer.js';
-import type { OnDecision } from '../authorization/on-decision.js';
-import { AuthorizationSetupError } from '../errors/authorization-setup-error.js';
-import { isPermission } from '../permissions/is-permission.js';
-import { definePolicy } from '../policies/define-policy.js';
-import type { Policy } from '../policies/policy.js';
-import { PolicyAccess, type PolicyAccessOptions } from '../policies/policy-access.js';
-import { AuthorizationMap } from '../use-cases/authorization-map.js';
-import { authorizationMiddleware } from '../use-cases/authorization-middleware.js';
-import { policiesAskedMiddleware } from '../use-cases/policies-asked-middleware.js';
-import { authorizationMapOf } from './authorization-map-of.js';
+import { Authenticator } from '../authentication/authenticator';
+import { Access } from '../authorization/access';
+import { Authorizer } from '../authorization/authorizer';
+import type { OnDecision } from '../authorization/on-decision';
+import { AuthorizationSetupError } from '../errors/authorization-setup-error';
+import { isPermission } from '../permissions/is-permission';
+import { definePolicy } from '../policies/define-policy';
+import type { Policy } from '../policies/policy';
+import { PolicyAccess, type PolicyAccessOptions } from '../policies/policy-access';
+import { AuthorizationMap } from '../use-cases/authorization-map';
+import { authorizationMiddleware } from '../use-cases/authorization-middleware';
+import { policiesAskedMiddleware } from '../use-cases/policies-asked-middleware';
+import { authorizationMapOf } from './authorization-map-of';
 
 export interface AuthorizationModuleOptions {
   /** The model: role based, policy based, relation based, or an adapter of a dedicated service. */

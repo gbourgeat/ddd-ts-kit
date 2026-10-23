@@ -2,13 +2,13 @@ import type { DynamicModule, ModuleMetadata } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import type { IRouter } from 'express';
 import type { FastifyInstance } from 'fastify';
-import { mountExpress } from '../express/mount-express.js';
-import { mountFastify } from '../fastify/mount-fastify.js';
-import type { ExecuteOptions } from '../pipeline/execute-options.js';
-import { assertUniqueRoutes } from '../route/assert-unique-routes.js';
-import type { Route } from '../route/route.js';
-import type { RoutesFactory } from './routes-factory.js';
-import { RoutesMounter } from './routes-mounter.js';
+import { mountExpress } from '../express/mount-express';
+import { mountFastify } from '../fastify/mount-fastify';
+import type { ExecuteOptions } from '../pipeline/execute-options';
+import { assertUniqueRoutes } from '../route/assert-unique-routes';
+import type { Route } from '../route/route';
+import type { RoutesFactory } from './routes-factory';
+import { RoutesMounter } from './routes-mounter';
 
 export interface RoutesModuleOptions extends ExecuteOptions {
   /** Modules exporting the tokens listed in `inject`. */

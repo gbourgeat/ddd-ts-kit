@@ -3,8 +3,8 @@ import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { decorators, type DecoratorsOptions, type DecoratorsPlugin } from '../src/vitest.js';
-import { sourceMapOf } from '../src/vitest/source-map-of.js';
+import { decorators, type DecoratorsOptions, type DecoratorsPlugin } from '../src/vitest';
+import { sourceMapOf } from '../src/vitest/source-map-of';
 
 const ROOT = path.resolve(import.meta.dirname, '../../..');
 const PROJECT = path.join(import.meta.dirname, 'fixtures/standard-decorators');

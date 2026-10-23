@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { BASELINE } from '../src/init/manifest/baseline.js';
-import { exists, read, REPO_ROOT } from './helpers.js';
-import { initProject } from './support/init-project.js';
+import { BASELINE } from '../src/init/manifest/baseline';
+import { exists, read, REPO_ROOT } from './helpers';
+import { initProject } from './support/init-project';
 
 const EXAMPLE = `${REPO_ROOT}/examples/scheduling`;
 

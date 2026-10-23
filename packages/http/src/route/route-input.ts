@@ -1,5 +1,5 @@
-import type { IncomingFile } from './incoming-file.js';
-import type { RequestContext } from './request-context.js';
+import type { IncomingFile } from './incoming-file';
+import type { RequestContext } from './request-context';
 
 /** The handler input once the schema types are erased, as the pipeline sees it. */
 export interface RouteInput {

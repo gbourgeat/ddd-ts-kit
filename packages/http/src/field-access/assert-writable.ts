@@ -1,7 +1,7 @@
-import { ForbiddenError } from '../error/forbidden-error.js';
-import { isRecord } from '../support/is-record.js';
-import type { FieldJudge } from './field-judge.js';
-import type { FieldTree } from './field-tree.js';
+import { ForbiddenError } from '../error/forbidden-error';
+import { isRecord } from '../support/is-record';
+import type { FieldJudge } from './field-judge';
+import type { FieldTree } from './field-tree';
 
 /** A value of the body, with the path that names it in a refusal. */
 interface Located {

@@ -1,7 +1,7 @@
-import { defineRule } from '../support/rule/define-rule.js';
-import { ambientName } from '../support/globals/ambient-name.js';
-import { propertyName } from '../support/globals/property-name.js';
-import { importListener } from '../support/imports/import-listener.js';
+import { defineRule } from '../support/rule/define-rule';
+import { ambientName } from '../support/globals/ambient-name';
+import { propertyName } from '../support/globals/property-name';
+import { importListener } from '../support/imports/import-listener';
 
 const MOCKING_MEMBERS = new Set(['mock', 'doMock', 'unstable_mockModule', 'fn', 'spyOn', 'mocked']);
 const MOCKING_GLOBALS = new Set(['vi', 'jest']);

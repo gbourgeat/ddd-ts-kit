@@ -1,9 +1,9 @@
-import { DECLARED } from './declared.js';
-import { declaredProject } from './declared-project.js';
-import type { Fixture } from './fixture.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
-import { SAMPLES } from './samples.js';
+import { DECLARED } from './declared';
+import { declaredProject } from './declared-project';
+import type { Fixture } from './fixture';
+import { PATHS } from './paths';
+import { project } from './project';
+import { SAMPLES } from './samples';
 
 const { BILLING, CATALOG, CATALOG_INTEGRATION_HANDLER, INTEGRATION_HANDLER, INTEGRATION_HANDLER_SPEC, MODULE } = PATHS;
 const { SPEC } = SAMPLES;

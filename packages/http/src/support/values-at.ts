@@ -1,4 +1,4 @@
-import { isRecord } from './is-record.js';
+import { isRecord } from './is-record';
 
 /**
  * The values found at a dotted path of a body: `id` of an object, `items.id` of each item of a

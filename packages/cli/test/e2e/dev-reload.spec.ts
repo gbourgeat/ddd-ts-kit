@@ -3,9 +3,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { read, scaffoldEverything, tempDir, write } from '../helpers.js';
-import { installAsPublished } from './install-as-published.js';
-import { SLOW } from './stacks.js';
+import { read, scaffoldEverything, tempDir, write } from '../helpers';
+import { installAsPublished } from './install-as-published';
+import { SLOW } from './stacks';
 
 const BILLING = 'src/contexts/billing';
 /** The generated declarations of the role folder the handler sits in, where its list is registered. */

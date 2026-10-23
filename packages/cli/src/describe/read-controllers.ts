@@ -1,11 +1,11 @@
-import { filesUnder } from '../generate/files-under.js';
-import type { RequestPart, RouteFact, RouteResponse, UseCaseFact } from './context-description.js';
-import type { ContextSources } from './context-sources.js';
-import { decoratorOptions } from './decorator-options.js';
-import { listedIn } from './listed-in.js';
-import { presentationOfRoute } from './presentation-of-route.js';
-import { readRouteGroups } from './read-route-groups.js';
-import type { RouteGroupFact } from './route-group-fact.js';
+import { filesUnder } from '../generate/files-under';
+import type { RequestPart, RouteFact, RouteResponse, UseCaseFact } from './context-description';
+import type { ContextSources } from './context-sources';
+import { decoratorOptions } from './decorator-options';
+import { listedIn } from './listed-in';
+import { presentationOfRoute } from './presentation-of-route';
+import { readRouteGroups } from './read-route-groups';
+import type { RouteGroupFact } from './route-group-fact';
 
 const FOLDER = 'presentation/http';
 const PARTS = ['params', 'query', 'headers', 'body'];

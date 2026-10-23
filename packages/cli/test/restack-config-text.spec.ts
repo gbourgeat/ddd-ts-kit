@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseConfig, restackConfigText } from '../src/config/index.js';
+import { parseConfig, restackConfigText } from '../src/config';
 
 const DEVIATION = { what: 'a hand-written mapper', adr: 'docs/adr/0003.md', reason: 'legacy schema' };
 

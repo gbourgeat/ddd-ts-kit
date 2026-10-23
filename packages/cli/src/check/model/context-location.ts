@@ -1,4 +1,4 @@
-import type { Layer } from './layer.js';
+import type { Layer } from './layer';
 
 /** A place inside a bounded context: its layer and the path below it. */
 export interface ContextLocation {

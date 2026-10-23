@@ -1,6 +1,6 @@
-import type { CacheKey } from '../../application/cache/cache-key.js';
-import type { Cache, CacheEntryOptions } from '../../application/ports/cache.js';
-import type { Clock } from '../../application/ports/clock.js';
+import type { CacheKey } from '../../application/cache/cache-key';
+import type { Cache, CacheEntryOptions } from '../../application/ports/cache';
+import type { Clock } from '../../application/ports/clock';
 
 export interface InMemoryCacheOptions {
   /** Beyond it the oldest entry goes. Default 1000. */

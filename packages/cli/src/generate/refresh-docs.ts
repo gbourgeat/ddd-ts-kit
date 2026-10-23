@@ -1,10 +1,10 @@
-import { CONFIG_FILE, parseConfig } from '../config/index.js';
-import { DEPCRUISE_FILE } from '../depcruise/depcruise-file.js';
-import { renderCruiseFile } from '../depcruise/render-cruise-file.js';
-import { CONTEXT_MAP } from '../docs/context-map-file.js';
-import { writeDocs } from '../docs/write-docs.js';
-import type { Workspace } from '../workspace/index.js';
-import { refreshBarrels, type SingleFile } from './refresh-barrels.js';
+import { CONFIG_FILE, parseConfig } from '../config';
+import { DEPCRUISE_FILE } from '../depcruise/depcruise-file';
+import { renderCruiseFile } from '../depcruise/render-cruise-file';
+import { CONTEXT_MAP } from '../docs/context-map-file';
+import { writeDocs } from '../docs/write-docs';
+import type { Workspace } from '../workspace';
+import { refreshBarrels, type SingleFile } from './refresh-barrels';
 
 /** Keeps what is derived from the config and the tree in step with what was just scaffolded, once the project has it. */
 export function refreshDocs(ws: Workspace, singleFile: SingleFile): void {

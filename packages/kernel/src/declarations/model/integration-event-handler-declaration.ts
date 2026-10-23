@@ -1,8 +1,8 @@
-import type { Actor } from '../../application/actor/actor.js';
-import type { IntegrationEvent } from '../../application/events/integration-event.js';
-import type { Token } from '../token/token.js';
-import type { EventContract } from './event-contract.js';
-import type { IntegrationEventHandlerUse } from './integration-event-handler-use.js';
+import type { Actor } from '../../application/actor/actor';
+import type { IntegrationEvent } from '../../application/events/integration-event';
+import type { Token } from '../token/token';
+import type { EventContract } from './event-contract';
+import type { IntegrationEventHandlerUse } from './integration-event-handler-use';
 
 export interface IntegrationEventHandlerDeclaration {
   readonly role: 'integration-event-handler';

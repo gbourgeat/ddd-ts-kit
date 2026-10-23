@@ -1,5 +1,5 @@
 import { ASTUtils, AST_NODE_TYPES, TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { propertyName } from './property-name.js';
+import { propertyName } from './property-name';
 
 const GLOBAL_OBJECTS = new Set(['globalThis', 'window', 'self', 'global']);
 

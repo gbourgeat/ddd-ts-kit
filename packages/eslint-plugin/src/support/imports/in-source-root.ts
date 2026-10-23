@@ -1,4 +1,4 @@
-import type { LintedFile } from '../../project/linted-file.js';
+import type { LintedFile } from '../../project/linted-file';
 
 /** A production or test source of the project itself, as opposed to a script or a config file next to it. */
 export function inSourceRoot(file: LintedFile): boolean {

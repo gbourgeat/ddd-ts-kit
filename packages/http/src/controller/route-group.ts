@@ -1,7 +1,7 @@
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
-import { presentationRegistry } from './presentation-registry.js';
-import type { RouteGroupClass } from './route-group-class.js';
-import type { RouteGroupOptions } from './route-group-options.js';
+import { presentationRegistry } from './presentation-registry';
+import type { RouteGroupClass } from './route-group-class';
+import type { RouteGroupOptions } from './route-group-options';
 
 const PREFIX_PATTERN = /^(\/(:[A-Za-z_][A-Za-z0-9_]*|[A-Za-z0-9._~-]+))*$/;
 

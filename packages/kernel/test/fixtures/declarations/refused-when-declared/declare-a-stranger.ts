@@ -1,4 +1,4 @@
-import { Public } from '../../../../src/declarations.js';
+import { Public } from '../../../../src/declarations';
 
 export function declareAStranger(): void {
   const decorate = Public();

@@ -1,4 +1,4 @@
-import { read, walk } from '../helpers.js';
+import { read, walk } from '../helpers';
 
 export interface SourceFile {
   readonly path: string;

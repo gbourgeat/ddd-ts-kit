@@ -1,6 +1,6 @@
-import type { DerivedRelation } from './derived-relation.js';
-import type { Way } from './via.js';
-import type { Ways } from './ways.js';
+import type { DerivedRelation } from './derived-relation';
+import type { Way } from './via';
+import type { Ways } from './ways';
 
 /** The ways of a derived relation, every list present: a single way is `anyOf` it alone. */
 export function waysOf(derived: DerivedRelation): Required<Ways> {

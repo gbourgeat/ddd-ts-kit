@@ -7,12 +7,12 @@ import {
   createTypeOrmUnitOfWork,
   outboxEntity,
   processedEventEntity,
-} from '../src/index.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
-import { Invoice } from './support/billing-core/domain/invoice.js';
-import { invoices } from './support/billing-core/infrastructure/persistence/invoices.js';
-import { TypeOrmInvoiceRepository } from './support/billing-core/infrastructure/persistence/typeorm-invoice.repository.js';
-import { ada, scopeOf } from './support/scopes.js';
+} from '../src';
+import { createDatabase, type TestDatabase } from './support/database';
+import { Invoice } from './support/billing-core/domain/invoice';
+import { invoices } from './support/billing-core/infrastructure/persistence/invoices';
+import { TypeOrmInvoiceRepository } from './support/billing-core/infrastructure/persistence/typeorm-invoice.repository';
+import { ada, scopeOf } from './support/scopes';
 
 const outbox = outboxEntity();
 const processed = processedEventEntity();

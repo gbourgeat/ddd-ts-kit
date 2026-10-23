@@ -1,6 +1,6 @@
-import { CI_EXTRAS } from './ci-extras.js';
-import type { CommitLimitProblem } from './commit-limit-problems.js';
-import { isRecord } from './values/is-record.js';
+import { CI_EXTRAS } from './ci-extras';
+import type { CommitLimitProblem } from './commit-limit-problems';
+import { isRecord } from './values/is-record';
 
 const KNOWN = Object.keys(CI_EXTRAS);
 

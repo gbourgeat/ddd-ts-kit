@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1681f692e40d51af -->
+<!-- translation-of: README.md sha256:d6dececf74c0163f -->
 
 # @ddd-ts-kit/events
 
@@ -421,7 +421,7 @@ racine de composition ne construit aucun gestionnaire à la main :
 // contexts/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.ts
 import { CommandBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { orderPlaced, type OrderPlaced } from '@/contexts/ordering/published-language/index';
+import { orderPlaced, type OrderPlaced } from '@/contexts/ordering/published-language';
 
 @IntegrationEventHandler(orderPlaced, { consumer: 'billing.invoice-on-order-placed' })
 export class InvoiceOnOrderPlaced {

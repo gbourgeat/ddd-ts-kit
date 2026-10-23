@@ -1,4 +1,4 @@
-import type { Method } from './method.js';
+import type { Method } from './method';
 
 const UNWRAPPABLE_CONSTRUCTORS = new Set(['GeneratorFunction', 'AsyncGeneratorFunction']);
 

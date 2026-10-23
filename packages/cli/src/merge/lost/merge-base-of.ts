@@ -1,7 +1,7 @@
-import { CliError } from '../../cli-error.js';
-import { runGit } from '../../commit/run-git.js';
-import { commitOf } from './commit-of.js';
-import type { MergeToVerify } from './merge-to-verify.js';
+import { CliError } from '../../cli-error';
+import { runGit } from '../../commit/run-git';
+import { commitOf } from './commit-of';
+import type { MergeToVerify } from './merge-to-verify';
 
 /** The two sides of a merge, and what names its base when git should not compute it. */
 export interface BaseCandidates {

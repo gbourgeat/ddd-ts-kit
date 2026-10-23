@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { runGit } from '../commit/run-git.js';
-import type { SliceVerification } from './slice-verification.js';
-import { VERIFICATION_FILE } from './verification-file.js';
+import { runGit } from '../commit/run-git';
+import type { SliceVerification } from './slice-verification';
+import { VERIFICATION_FILE } from './verification-file';
 
 /**
  * Keeps the last verification of a worker in its worktree, ignored by git: when it ran, at which

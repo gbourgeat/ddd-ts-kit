@@ -1,10 +1,10 @@
 import { systemActor } from '@ddd-ts-kit/kernel';
-import { FieldJudge } from '../field-access/field-judge.js';
-import type { Route } from '../route/route.js';
-import type { FormDocument } from './form-document.js';
-import { FormOfRoute } from './form-of-route.js';
-import { jsonFormsOf } from './json-forms-of.js';
-import { lookupsOf } from './lookups-of.js';
+import { FieldJudge } from '../field-access/field-judge';
+import type { Route } from '../route/route';
+import type { FormDocument } from './form-document';
+import { FormOfRoute } from './form-of-route';
+import { jsonFormsOf } from './json-forms-of';
+import { lookupsOf } from './lookups-of';
 
 /**
  * Every form of the routes, whole, in both formats, sorted by operation: what a contract script

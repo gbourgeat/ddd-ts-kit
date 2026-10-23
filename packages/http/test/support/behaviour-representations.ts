@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { Representations, type ErrorContext } from '../../src/index.js';
-import { catalogRoutes, failingExportRoute } from './catalog.js';
-import type { RunningServer, StartServer } from './running-server.js';
+import { Representations, type ErrorContext } from '../../src';
+import { catalogRoutes, failingExportRoute } from './catalog';
+import type { RunningServer, StartServer } from './running-server';
 
 /** Negotiation, streaming and XML bodies over a real connection: what each framework must not get in the way of. */
 export function answersInSeveralMediaTypes(start: StartServer): void {

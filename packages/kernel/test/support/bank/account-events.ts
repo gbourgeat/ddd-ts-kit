@@ -1,5 +1,5 @@
-import { defineStoredEvent, personalData, type PersonalValue, type StoredEventTypes } from '../../../src/index.js';
-import { AccountOpened, MoneyDeposited, MoneyWithdrawn, type AccountEvent } from './account.js';
+import { defineStoredEvent, personalData, type PersonalValue, type StoredEventTypes } from '../../../src';
+import { AccountOpened, MoneyDeposited, MoneyWithdrawn, type AccountEvent } from './account';
 
 interface AccountOpenedData {
   readonly holder: PersonalValue;

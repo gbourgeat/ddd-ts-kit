@@ -1,7 +1,7 @@
-import { scan } from '../check/scan/scan.js';
-import { computedImports } from './computed-imports.js';
-import type { Rewritten } from './rewritten.js';
-import { specifierLiterals } from './specifier-literals.js';
+import { scan } from '../check/scan/scan';
+import { computedImports } from './computed-imports';
+import type { Rewritten } from './rewritten';
+import { specifierLiterals } from './specifier-literals';
 
 export interface Rewrite {
   /** What an alias specifier starts with. */

@@ -1,4 +1,4 @@
-import { SessionBuilder } from './session-builder.js';
+import { SessionBuilder } from './session-builder';
 
 const sessionBuilder = new SessionBuilder();
 

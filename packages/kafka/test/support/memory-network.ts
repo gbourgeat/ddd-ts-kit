@@ -1,6 +1,6 @@
-import type { InMemoryKafka } from './cluster/in-memory-kafka.js';
-import { InMemoryWire } from './cluster/wire.js';
-import type { Network, NetworkConnection } from './network.js';
+import type { InMemoryKafka } from './cluster/in-memory-kafka';
+import { InMemoryWire } from './cluster/wire';
+import type { Network, NetworkConnection } from './network';
 
 /** A network in front of the in-memory cluster: its clients go through a wire the test sabotages. */
 export class MemoryNetwork implements Network {

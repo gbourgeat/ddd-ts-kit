@@ -1,5 +1,5 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import { definePermissions, definePolicy } from '../../src/index.js';
+import { definePermissions, definePolicy } from '../../src';
 
 export const publishingPermissions = definePermissions('publishing', {
   'article.edit': { description: 'Change the text of an article' },

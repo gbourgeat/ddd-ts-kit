@@ -7,12 +7,12 @@ import {
   createPrismaUnitOfWork,
   type PrismaContext,
   type PrismaTransactionClient,
-} from '../../src/index.js';
-import type { Prisma } from '../generated/client/client.js';
-import { createDatabase, type TestDatabase } from '../support/database.js';
-import { Invoice } from '../support/billing-core/domain/invoice.js';
-import { PrismaInvoiceRepository } from '../support/billing-core/infrastructure/persistence/prisma-invoice.repository.js';
-import { ada, scopeOf } from '../support/scopes.js';
+} from '../../src';
+import type { Prisma } from '../generated/client/client';
+import { createDatabase, type TestDatabase } from '../support/database';
+import { Invoice } from '../support/billing-core/domain/invoice';
+import { PrismaInvoiceRepository } from '../support/billing-core/infrastructure/persistence/prisma-invoice.repository';
+import { ada, scopeOf } from '../support/scopes';
 
 const now = new Date('2026-03-01T10:00:00.000Z');
 

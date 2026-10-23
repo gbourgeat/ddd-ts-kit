@@ -1,9 +1,9 @@
-import type { PageRequest } from '../pagination/page-request.js';
-import type { Sort } from '../pagination/sort.js';
-import type { CriteriaDefinition } from './criteria-definition.js';
-import type { CriteriaViolation } from './criteria-violation.js';
-import { readCursor } from './read-cursor.js';
-import { totalSort } from './total-sort.js';
+import type { PageRequest } from '../pagination/page-request';
+import type { Sort } from '../pagination/sort';
+import type { CriteriaDefinition } from './criteria-definition';
+import type { CriteriaViolation } from './criteria-violation';
+import { readCursor } from './read-cursor';
+import { totalSort } from './total-sort';
 
 interface Asked {
   readonly sort: readonly Sort[];

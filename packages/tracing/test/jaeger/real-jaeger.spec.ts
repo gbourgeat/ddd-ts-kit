@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { initTracing, type TracingHandle } from '../../src/node.js';
-import { expectSpanTree, type SpanNode } from '../../src/testing.js';
-import { aClinic } from '../support/clinic/a-clinic.js';
-import { bookingTree, confirmationTree, recordingTree } from '../support/clinic/trees.js';
-import { tracesOfService } from './jaeger-trace.js';
-import { startThrowawayJaeger, type ThrowawayJaeger } from './throwaway-jaeger.js';
+import { initTracing, type TracingHandle } from '../../src/node';
+import { expectSpanTree, type SpanNode } from '../../src/testing';
+import { aClinic } from '../support/clinic/a-clinic';
+import { bookingTree, confirmationTree, recordingTree } from '../support/clinic/trees';
+import { tracesOfService } from './jaeger-trace';
+import { startThrowawayJaeger, type ThrowawayJaeger } from './throwaway-jaeger';
 
 /** Set it to the image to run, `jaegertracing/jaeger:2.22.0`, to run this spec against a real Jaeger. */
 const IMAGE = process.env['DDD_TS_KIT_TEST_JAEGER_IMAGE'];

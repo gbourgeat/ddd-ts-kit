@@ -1,5 +1,5 @@
 import { AST_TOKEN_TYPES, type TSESLint } from '@typescript-eslint/utils';
-import { sharesLineWithCode } from './shares-line-with-code.js';
+import { sharesLineWithCode } from './shares-line-with-code';
 
 const DIRECTIVE = /^ddd-ts-kit-disable-next-line\s+(\S+)\s+--\s*\S/;
 

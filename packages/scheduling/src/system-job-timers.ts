@@ -1,4 +1,4 @@
-import type { JobTimers } from './job-timers.js';
+import type { JobTimers } from './job-timers';
 
 export const systemJobTimers: JobTimers = Object.freeze({
   schedule(delayMs: number, task: () => void): () => void {

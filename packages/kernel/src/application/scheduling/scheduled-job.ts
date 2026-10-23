@@ -1,4 +1,4 @@
-import type { JobExecution } from './job-execution.js';
+import type { JobExecution } from './job-execution';
 
 /**
  * A class of `application/scheduling/`. A job decides nothing: it triggers use cases, typically

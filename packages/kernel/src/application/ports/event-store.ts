@@ -1,6 +1,6 @@
-import type { Appended } from '../event-sourcing/appended.js';
-import type { EventToAppend } from '../event-sourcing/event-to-append.js';
-import type { StoredEvent } from '../event-sourcing/stored-event.js';
+import type { Appended } from '../event-sourcing/appended';
+import type { EventToAppend } from '../event-sourcing/event-to-append';
+import type { StoredEvent } from '../event-sourcing/stored-event';
 
 /**
  * Where event-sourced aggregates keep their streams: one stream per aggregate, read in order,

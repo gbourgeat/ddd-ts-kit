@@ -7,9 +7,9 @@ import {
   type OutboxOrdering,
   type OutboxRecord,
   type OutboxRelayFailure,
-} from '../src/index.js';
-import { at, invoiceIssued } from './support/events.js';
-import { RecoveringPublisher } from './support/recovering-publisher.js';
+} from '../src';
+import { at, invoiceIssued } from './support/events';
+import { RecoveringPublisher } from './support/recovering-publisher';
 
 /** `a-1` is the first event of order `a`: the id says the key and the position. */
 const event = (id: string): IntegrationEvent =>

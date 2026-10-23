@@ -1,6 +1,6 @@
 import path from 'node:path';
-import { isRecord } from '../check/support/is-record.js';
-import type { KnownPrimaryKeys } from './known-primary-keys.js';
+import { isRecord } from '../check/support/is-record';
+import type { KnownPrimaryKeys } from './known-primary-keys';
 
 /**
  * The primary keys recorded by the snapshot a migration was generated from (the one its own

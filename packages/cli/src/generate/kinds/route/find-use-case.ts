@@ -1,9 +1,9 @@
-import { CliError } from '../../../cli-error.js';
-import type { Name } from '../../../naming/index.js';
-import type { KindFlags } from '../../kind.js';
-import { requireFile } from '../../require-file.js';
-import type { Scope } from '../../scope.js';
-import type { UseCase } from './use-case.js';
+import { CliError } from '../../../cli-error';
+import type { Name } from '../../../naming';
+import type { KindFlags } from '../../kind';
+import { requireFile } from '../../require-file';
+import type { Scope } from '../../scope';
+import type { UseCase } from './use-case';
 
 type MessageKind = 'command' | 'query';
 

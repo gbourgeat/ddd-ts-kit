@@ -1,15 +1,15 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { ImportTarget } from '../project/resolve-import.js';
-import { propertyOf } from '../support/calls/property-of.js';
-import { className, type ClassNode } from '../support/classes/class-name.js';
-import { constructorOf } from '../support/classes/constructor-of.js';
-import { declarationReader, type Declaration } from '../support/declarations/declaration-reader.js';
-import { inContext } from '../support/imports/in-context.js';
-import { staticString } from '../support/imports/static-string.js';
-import type { ImportedBinding } from '../support/ports/imported-binding.js';
-import { importedBindings } from '../support/ports/imported-bindings.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import { parameterTypeName } from '../support/types/parameter-type-name.js';
+import type { ImportTarget } from '../project/resolve-import';
+import { propertyOf } from '../support/calls/property-of';
+import { className, type ClassNode } from '../support/classes/class-name';
+import { constructorOf } from '../support/classes/constructor-of';
+import { declarationReader, type Declaration } from '../support/declarations/declaration-reader';
+import { inContext } from '../support/imports/in-context';
+import { staticString } from '../support/imports/static-string';
+import type { ImportedBinding } from '../support/ports/imported-binding';
+import { importedBindings } from '../support/ports/imported-bindings';
+import { defineRule } from '../support/rule/define-rule';
+import { parameterTypeName } from '../support/types/parameter-type-name';
 
 type MessageId = 'beforeCommit' | 'afterCommit';
 

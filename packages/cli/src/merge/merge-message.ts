@@ -1,4 +1,4 @@
-import type { BasePoint } from './base-point.js';
+import type { BasePoint } from './base-point';
 
 /** What the message of a merge of the trunk names. */
 export interface MergeNames {

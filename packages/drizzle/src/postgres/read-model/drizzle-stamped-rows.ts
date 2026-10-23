@@ -1,12 +1,12 @@
 import { sql, type SQL, type TablesRelationalConfig } from 'drizzle-orm';
 import type { PgColumn, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { tenantScopeOf, type EventStamp, type ReadModelRows, type StampedRow } from '@ddd-ts-kit/kernel';
-import { reachCondition } from '../tenancy/reach-condition.js';
-import type { ReadModelTenant } from './read-model-tenant.js';
-import type { DrizzleContext } from '../unit-of-work/drizzle-context.js';
-import { RowMapper } from './row.mapper.js';
-import { rowsOf } from './rows-of.js';
-import type { StampColumns } from './stamp-columns.js';
+import { reachCondition } from '../tenancy/reach-condition';
+import type { ReadModelTenant } from './read-model-tenant';
+import type { DrizzleContext } from '../unit-of-work/drizzle-context';
+import { RowMapper } from './row.mapper';
+import { rowsOf } from './rows-of';
+import type { StampColumns } from './stamp-columns';
 
 export interface StampedTable {
   readonly schema: string | undefined;

@@ -1,20 +1,20 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CliError } from '../cli-error.js';
-import type { Io } from '../commands/io.js';
-import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
-import type { BranchMigration } from './branch-migration.js';
-import { deleteBranchMigrations } from './delete-branch-migrations.js';
-import { generateAndRead } from './generate-and-read.js';
-import { migrationFiles } from './migration-files.js';
-import { planReplay } from './plan-replay.js';
-import { renameBranchMigrations } from './rename-branch-migrations.js';
-import type { ReplayPlan } from './replay-plan.js';
-import { replayedName } from './replayed-name.js';
-import { restoreMigrationFolder } from './restore-migration-folder.js';
-import { sqlStatements } from './sql-statements.js';
-import { tidyWrittenMigration } from './tidy-written-migration.js';
-import { waitForNextSecond } from './wait-for-next-second.js';
+import { CliError } from '../cli-error';
+import type { Io } from '../commands/io';
+import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file';
+import type { BranchMigration } from './branch-migration';
+import { deleteBranchMigrations } from './delete-branch-migrations';
+import { generateAndRead } from './generate-and-read';
+import { migrationFiles } from './migration-files';
+import { planReplay } from './plan-replay';
+import { renameBranchMigrations } from './rename-branch-migrations';
+import type { ReplayPlan } from './replay-plan';
+import { replayedName } from './replayed-name';
+import { restoreMigrationFolder } from './restore-migration-folder';
+import { sqlStatements } from './sql-statements';
+import { tidyWrittenMigration } from './tidy-written-migration';
+import { waitForNextSecond } from './wait-for-next-second';
 
 export interface DrizzleReplay {
   readonly root: string;

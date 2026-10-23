@@ -1,5 +1,5 @@
-import type { Flaw } from '../model/flaw.js';
-import { ASPECTS_PACKAGE } from './aspects-package.js';
+import type { Flaw } from '../model/flaw';
+import { ASPECTS_PACKAGE } from './aspects-package';
 
 interface Concern {
   readonly why: string;

@@ -1,4 +1,4 @@
-import type { RelationTuple } from './relation-tuple.js';
+import type { RelationTuple } from './relation-tuple';
 
 /**
  * Where relation tuples live. A SQL adapter writes in the transaction of the current unit of

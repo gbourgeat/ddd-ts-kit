@@ -1,4 +1,4 @@
-import type { SqlStatement } from './sql-statement.js';
+import type { SqlStatement } from './sql-statement';
 
 /** Two statements of one migration that change a primary key in an order PostgreSQL refuses. */
 export interface PrimaryKeyOrderFinding {

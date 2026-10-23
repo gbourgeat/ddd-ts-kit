@@ -1,7 +1,7 @@
 import type { DurationText } from '@ddd-ts-kit/kernel';
-import { cacheSeconds } from './cache-seconds.js';
-import type { CachePolicy } from './cache-policy.js';
-import { CacheScope } from './cache-scope.js';
+import { cacheSeconds } from './cache-seconds';
+import type { CachePolicy } from './cache-policy';
+import { CacheScope } from './cache-scope';
 
 /** The `Cache-Control` header a policy answers with, its directives in a fixed order. */
 export function cacheControlOf(policy: CachePolicy): string {

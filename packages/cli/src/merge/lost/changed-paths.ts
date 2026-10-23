@@ -1,6 +1,6 @@
-import { CliError } from '../../cli-error.js';
-import { runGit } from '../../commit/run-git.js';
-import { WORKTREE } from './revision-files.js';
+import { CliError } from '../../cli-error';
+import { runGit } from '../../commit/run-git';
+import { WORKTREE } from './revision-files';
 
 /**
  * The paths that differ between each pair of revisions, from the top of the repository, sorted;

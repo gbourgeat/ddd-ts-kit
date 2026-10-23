@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { read, scaffoldEverything, tempDir } from '../helpers.js';
-import { installAsPublished } from './install-as-published.js';
-import { bin, findingsOf, runIn } from './run-in.js';
-import { FIRST_CLASS, PROVEN, SLOW } from './stacks.js';
+import { read, scaffoldEverything, tempDir } from '../helpers';
+import { installAsPublished } from './install-as-published';
+import { bin, findingsOf, runIn } from './run-in';
+import { FIRST_CLASS, PROVEN, SLOW } from './stacks';
 
 /** The only spec that runs the value object: without it the domain of billing falls under its floor. */
 const REMOVED_SPEC = 'src/contexts/billing/test/unit/money.vo.spec.ts';

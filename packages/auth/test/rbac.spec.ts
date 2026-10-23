@@ -1,8 +1,8 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { anonymousActor, systemActor, type Actor } from '@ddd-ts-kit/kernel';
-import { AuthorizationSetupError, RoleBasedAuthorizer, tenantOfContext, type Permission } from '../src/index.js';
-import { authorizerContract } from '../src/testing.js';
-import { ada, billingPermissions, bob, catalogPermissions, root } from './support/billing.js';
+import { AuthorizationSetupError, RoleBasedAuthorizer, tenantOfContext, type Permission } from '../src';
+import { authorizerContract } from '../src/testing';
+import { ada, billingPermissions, bob, catalogPermissions, root } from './support/billing';
 
 const issue = billingPermissions['invoice.issue'];
 const read = billingPermissions['invoice.read'];

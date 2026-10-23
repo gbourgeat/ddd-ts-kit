@@ -5,7 +5,7 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import { text } from 'node:stream/consumers';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { FileError, FixedClock, LocalFileStorage, type FileContent } from '../src/index.js';
+import { FileError, FixedClock, LocalFileStorage, type FileContent } from '../src';
 
 const PDF = Buffer.from('%PDF-1.7\n%%EOF\n');
 

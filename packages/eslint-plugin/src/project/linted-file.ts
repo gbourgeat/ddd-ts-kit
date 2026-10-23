@@ -1,5 +1,5 @@
-import type { Location } from './location.js';
-import type { Config } from './config.js';
+import type { Location } from './location';
+import type { Config } from './config';
 
 export interface Project {
   readonly root: string;

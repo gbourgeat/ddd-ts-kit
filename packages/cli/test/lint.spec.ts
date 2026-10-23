@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers.js';
-import { initProject } from './support/init-project.js';
+import { cli, read, write } from './helpers';
+import { initProject } from './support/init-project';
 
 interface Message {
   readonly ruleId: string | null;

@@ -1,4 +1,4 @@
-import { XmlSyntaxError } from './xml-syntax-error.js';
+import { XmlSyntaxError } from './xml-syntax-error';
 
 // A map, not an object: `&constructor;` names no entity, whatever an object inherits.
 const PREDEFINED: ReadonlyMap<string, string> = new Map([

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { AuthorizationSetupError, PermissionRegistry, definePermissions, isPermission } from '../src/index.js';
-import { billingPermissions, catalogPermissions } from './support/billing.js';
+import { AuthorizationSetupError, PermissionRegistry, definePermissions, isPermission } from '../src';
+import { billingPermissions, catalogPermissions } from './support/billing';
 
 describe('definePermissions', () => {
   it('gives each permission a stable id made of its context and its name', () => {

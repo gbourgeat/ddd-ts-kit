@@ -1,13 +1,13 @@
-import { CONFIG_FILE, type ModuleConfig } from '../../config/index.js';
-import { moduleNameFlaw } from '../../model-modules/index.js';
-import { Glossaries } from '../language/glossaries.js';
-import { unknownWords } from '../language/unknown-words.js';
-import type { Report } from '../model/report.js';
-import type { Rule } from '../model/rule.js';
-import type { Violation } from '../model/violation.js';
-import { MODULES_HEADING, modulesSection } from '../modules/modules-section.js';
-import { lineOfSequence } from '../support/line-of-sequence.js';
-import { reporter } from '../support/reporter.js';
+import { CONFIG_FILE, type ModuleConfig } from '../../config';
+import { moduleNameFlaw } from '../../model-modules';
+import { Glossaries } from '../language/glossaries';
+import { unknownWords } from '../language/unknown-words';
+import type { Report } from '../model/report';
+import type { Rule } from '../model/rule';
+import type { Violation } from '../model/violation';
+import { MODULES_HEADING, modulesSection } from '../modules/modules-section';
+import { lineOfSequence } from '../support/line-of-sequence';
+import { reporter } from '../support/reporter';
 
 export const moduleDeclared: Rule = {
   id: 'module/declared',

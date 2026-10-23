@@ -1,12 +1,12 @@
-import { SLICES_FILE } from '../progress/read-slices.js';
-import type { Slice } from '../progress/slice.js';
-import { batchedWaves } from './batched-waves.js';
-import { mergeOrder } from './merge-order.js';
-import { otherStories } from './other-stories.js';
-import { planProblems } from './plan-problems.js';
-import { rowsToPlan } from './rows-to-plan.js';
-import type { WavePlan } from './wave-plan.js';
-import { waveNumbers } from './wave-numbers.js';
+import { SLICES_FILE } from '../progress/read-slices';
+import type { Slice } from '../progress/slice';
+import { batchedWaves } from './batched-waves';
+import { mergeOrder } from './merge-order';
+import { otherStories } from './other-stories';
+import { planProblems } from './plan-problems';
+import { rowsToPlan } from './rows-to-plan';
+import type { WavePlan } from './wave-plan';
+import { waveNumbers } from './wave-numbers';
 
 /** What `planWaves` plans. */
 export interface PlanRequest {

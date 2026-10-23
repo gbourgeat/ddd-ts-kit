@@ -1,5 +1,5 @@
-import type { Finding } from '../../check/model/finding.js';
-import type { TokenReference } from './token-reference.js';
+import type { Finding } from '../../check/model/finding';
+import type { TokenReference } from './token-reference';
 
 /** What a declared class is given, read from its source: the list of its decorator, and its constructor. */
 export interface ClassInjection {

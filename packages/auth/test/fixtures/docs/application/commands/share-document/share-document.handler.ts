@@ -1,5 +1,5 @@
-import type { DocumentGrants } from '../../ports/document-grants.port.js';
-import type { ShareDocument } from './share-document.command.js';
+import type { DocumentGrants } from '../../ports/document-grants.port';
+import type { ShareDocument } from './share-document.command';
 
 export class ShareDocumentHandler {
   constructor(private readonly grants: DocumentGrants) {}

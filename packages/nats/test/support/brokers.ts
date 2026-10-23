@@ -1,5 +1,5 @@
-import { Broker } from './broker.js';
-import { NATS_URL } from './environment.js';
+import { Broker } from './broker';
+import { NATS_URL } from './environment';
 
 type BrokerRow = readonly [name: string, connect: () => Promise<Broker>];
 

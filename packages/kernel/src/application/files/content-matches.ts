@@ -1,5 +1,5 @@
-import { signatureOf } from './signature-of.js';
-import { mediaTypeOf } from './media-type-of.js';
+import { signatureOf } from './signature-of';
+import { mediaTypeOf } from './media-type-of';
 
 /** Office and e-book documents are zip archives: their signature is the one of a zip. */
 const ZIP_CONTAINERS = new Set([

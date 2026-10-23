@@ -10,8 +10,8 @@ import {
   subscribeAll,
   validatingPublisher,
   type PayloadOf,
-} from '../src/index.js';
-import { at, invoiceIssued, orderPlacedV1, orderPlacedV2, shipmentSent } from './support/events.js';
+} from '../src';
+import { at, invoiceIssued, orderPlacedV1, orderPlacedV2, shipmentSent } from './support/events';
 
 const placedV1 = (id: string): IntegrationEvent<PayloadOf<typeof orderPlacedV1>> =>
   orderPlacedV1.create({ orderId: 'order-1', total: 30 }, { id, occurredAt: at });

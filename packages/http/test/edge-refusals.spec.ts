@@ -11,7 +11,7 @@ import {
   tenantFromHeader,
   type GuardRefusal,
   type RawRequest,
-} from '../src/index.js';
+} from '../src';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: ['clerk'], attributes: {} };
 

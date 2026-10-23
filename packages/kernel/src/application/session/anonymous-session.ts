@@ -1,6 +1,6 @@
-import { anonymousActor } from '../actor/anonymous-actor.js';
-import { NEVER_ISSUED } from './never-issued.js';
-import type { Session } from './session.js';
+import { anonymousActor } from '../actor/anonymous-actor';
+import { NEVER_ISSUED } from './never-issued';
+import type { Session } from './session';
 
 const ANONYMOUS_SESSION: Session = Object.freeze({
   id: 'anonymous',

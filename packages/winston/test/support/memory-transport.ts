@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { MemorySink } from './memory-sink.js';
+import { MemorySink } from './memory-sink';
 
 /** A winston stream transport over a sink kept in memory. */
 export function memoryTransport(sink: MemorySink): winston.transport {

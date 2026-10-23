@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../../project/linted-file.js';
-import type { FunctionNode } from '../functions/function-node.js';
-import { importedBindings } from '../ports/imported-bindings.js';
+import type { LintedFile } from '../../project/linted-file';
+import type { FunctionNode } from '../functions/function-node';
+import { importedBindings } from '../ports/imported-bindings';
 
 /**
  * Whether a function declares that it returns a type of a package (`): EventStamp` of the kernel):

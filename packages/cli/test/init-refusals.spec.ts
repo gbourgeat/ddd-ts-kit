@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { read } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
-import { readJson } from './support/read-json.js';
+import { read } from './helpers';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
+import { readJson } from './support/read-json';
 
 describe('init, the form of the refusals', () => {
   it('names each refusal by default, and tells the agents how, the other forms as they were', () => {

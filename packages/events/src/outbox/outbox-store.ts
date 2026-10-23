@@ -1,6 +1,6 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import type { OutboxRecord } from './outbox-record.js';
-import type { OutboxStats } from './outbox-stats.js';
+import type { OutboxRecord } from './outbox-record';
+import type { OutboxStats } from './outbox-stats';
 
 /**
  * Where events wait between the commit of the command and their publication.

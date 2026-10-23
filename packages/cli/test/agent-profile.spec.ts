@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { parseConfig, serializeConfig } from '../src/config/index.js';
-import { cli, read, tempDir, write } from './helpers.js';
-import { git } from './support/git.js';
-import { initProject } from './support/init-project.js';
-import { installKit } from './support/install-kit.js';
-import { jsonAt } from './support/json-at.js';
-import { NPM } from './support/npm.js';
-import { readJson } from './support/read-json.js';
-import { stringsAt } from './support/strings-at.js';
+import { parseConfig, serializeConfig } from '../src/config';
+import { cli, read, tempDir, write } from './helpers';
+import { git } from './support/git';
+import { initProject } from './support/init-project';
+import { installKit } from './support/install-kit';
+import { jsonAt } from './support/json-at';
+import { NPM } from './support/npm';
+import { readJson } from './support/read-json';
+import { stringsAt } from './support/strings-at';
 
 const SETTINGS = '.claude/settings.json';
 const CONFIG = 'ddd-ts-kit.config.json';

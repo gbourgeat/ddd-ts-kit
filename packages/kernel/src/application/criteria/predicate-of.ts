@@ -1,6 +1,6 @@
-import type { FieldDeclaration } from './field-declaration.js';
-import type { FilterCondition, FilterNode } from './filter-node.js';
-import type { Predicate } from './predicate.js';
+import type { FieldDeclaration } from './field-declaration';
+import type { FilterCondition, FilterNode } from './filter-node';
+import type { Predicate } from './predicate';
 
 type Fields = Readonly<Record<string, FieldDeclaration>>;
 

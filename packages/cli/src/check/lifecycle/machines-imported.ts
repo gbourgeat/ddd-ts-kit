@@ -1,4 +1,4 @@
-import type { SourceFile } from '../model/source-file.js';
+import type { SourceFile } from '../model/source-file';
 
 /** The names a file binds from the state machines of `domain/state-machines/`. */
 export function machinesImported(file: SourceFile): string[] {

@@ -1,6 +1,6 @@
-import { isRecord } from '../config/values/is-record.js';
-import { manifestJson } from '../sdk/manifest-json.js';
-import { higherVersion } from './higher-version.js';
+import { isRecord } from '../config/values/is-record';
+import { manifestJson } from '../sdk/manifest-json';
+import { higherVersion } from './higher-version';
 
 /** What a conflict on the package.json of a client settles to: the trunk's file at the kept version, or why a person decides. */
 export type ClientManifestMerge =

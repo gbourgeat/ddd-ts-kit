@@ -1,5 +1,5 @@
-import type { IncomingRecord } from './incoming-record.js';
-import type { OutgoingRecord } from './outgoing-record.js';
+import type { IncomingRecord } from './incoming-record';
+import type { OutgoingRecord } from './outgoing-record';
 
 /** The same record, key and value untouched, for another topic with `headers` added or replaced. */
 export function republication(

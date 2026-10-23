@@ -1,9 +1,9 @@
-import { authzDeclared } from '../../src/rules/authz-declared.js';
-import { presentationControllerDelegates } from '../../src/rules/presentation-controller-delegates.js';
-import { presentationControllerShape } from '../../src/rules/presentation-controller-shape.js';
-import { presentationGuardAtTheEdge } from '../../src/rules/presentation-guard-at-the-edge.js';
-import { presentationSharedCacheVaries } from '../../src/rules/presentation-shared-cache-varies.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+import { authzDeclared } from '../../src/rules/authz-declared';
+import { presentationControllerDelegates } from '../../src/rules/presentation-controller-delegates';
+import { presentationControllerShape } from '../../src/rules/presentation-controller-shape';
+import { presentationGuardAtTheEdge } from '../../src/rules/presentation-guard-at-the-edge';
+import { presentationSharedCacheVaries } from '../../src/rules/presentation-shared-cache-varies';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const CONTROLLER = `${BILLING}/presentation/http/invoices/issue-invoice/issue-invoice.controller.ts`;
 const GUARD = `${BILLING}/presentation/http/guards/office-hours.guard.ts`;

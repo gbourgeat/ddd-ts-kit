@@ -1,5 +1,5 @@
-import { VAGUE_REFUSAL_NAMES } from '../generate/errors/vague-refusal-names.js';
-import { toName } from '../naming/index.js';
+import { VAGUE_REFUSAL_NAMES } from '../generate/errors/vague-refusal-names';
+import { toName } from '../naming';
 
 /**
  * The factory name whose code is `code` on the error class of `concept`: the code without the

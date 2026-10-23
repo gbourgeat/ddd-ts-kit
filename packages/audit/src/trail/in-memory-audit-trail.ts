@@ -9,19 +9,19 @@ import {
   type Page,
   type PageRequest,
 } from '@ddd-ts-kit/kernel';
-import type { ChainHead } from '../chain/chain-head.js';
-import { chainOfTenant } from '../chain/chain-of-tenant.js';
-import { emptyChain } from '../chain/empty-chain.js';
-import { headAfter } from '../chain/head-after.js';
-import { seal } from '../chain/seal.js';
-import { sealCheckpoint } from '../chain/seal-checkpoint.js';
-import { comparing } from '../search/comparing.js';
-import { decodeCursor } from '../search/decode-cursor.js';
-import { encodeCursor } from '../search/encode-cursor.js';
-import type { SearchOrder } from '../search/search-order.js';
-import { matches } from '../search/matches.js';
-import { orderOf } from '../search/order-of.js';
-import type { AuditTrailOptions } from './audit-trail-options.js';
+import type { ChainHead } from '../chain/chain-head';
+import { chainOfTenant } from '../chain/chain-of-tenant';
+import { emptyChain } from '../chain/empty-chain';
+import { headAfter } from '../chain/head-after';
+import { seal } from '../chain/seal';
+import { sealCheckpoint } from '../chain/seal-checkpoint';
+import { comparing } from '../search/comparing';
+import { decodeCursor } from '../search/decode-cursor';
+import { encodeCursor } from '../search/encode-cursor';
+import type { SearchOrder } from '../search/search-order';
+import { matches } from '../search/matches';
+import { orderOf } from '../search/order-of';
+import type { AuditTrailOptions } from './audit-trail-options';
 
 /**
  * The trail in the memory of the process: the fake of both ports, and enough for an

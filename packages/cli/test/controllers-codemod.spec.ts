@@ -1,9 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, EXPLICIT_STACK, exists, read, scaffoldEverything, tempDir, write, type CliResult } from './helpers.js';
-import { initProject } from './support/init-project.js';
-import { jsonAt } from './support/json-at.js';
-import { readJson } from './support/read-json.js';
-import { stringsAt } from './support/strings-at.js';
+import { cli, EXPLICIT_STACK, exists, read, scaffoldEverything, tempDir, write, type CliResult } from './helpers';
+import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
+import { readJson } from './support/read-json';
+import { stringsAt } from './support/strings-at';
 
 const HTTP = 'src/contexts/billing/presentation/http';
 const FUNCTIONS = ['--routes', 'functions'];

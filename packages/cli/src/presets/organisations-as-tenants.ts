@@ -1,5 +1,5 @@
-import type { Scope } from '../generate/scope.js';
-import { platformPath } from '../generate/platform-path.js';
+import type { Scope } from '../generate/scope';
+import { platformPath } from '../generate/platform-path';
 
 const KEYCLOAK_CALL =
   'return keycloakAuthenticator({ baseUrl, realm, audience, ...(clientId === undefined ? {} : { clientId }) });';

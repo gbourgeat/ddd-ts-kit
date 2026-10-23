@@ -1,5 +1,5 @@
-import { matchingBracket } from '../check/text/matching-bracket.js';
-import { refusalCode } from './refusal-code.js';
+import { matchingBracket } from '../check/text/matching-bracket';
+import { refusalCode } from './refusal-code';
 
 const BEFORE_EXPECT = /(?<![\w$.])expect\(\s*$/;
 const BEFORE_REFUSAL = /(?<![\w$.])expectRefusal\(\s*$/;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { cli, exists, read } from './helpers.js';
-import { initProject } from './support/init-project.js';
+import { cli, exists, read } from './helpers';
+import { initProject } from './support/init-project';
 
 const BILLING = 'src/contexts/billing';
 

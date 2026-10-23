@@ -1,4 +1,4 @@
-import { MODULES_HEADING, modulesSection } from './modules-section.js';
+import { MODULES_HEADING, modulesSection } from './modules-section';
 
 const TABLE = ['| Module | Purpose |', '|---|---|'];
 

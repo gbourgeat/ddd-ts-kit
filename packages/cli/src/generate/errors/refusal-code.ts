@@ -1,6 +1,6 @@
-import { KIT_ERROR_CODES } from '../../check/errors/kit-error-codes.js';
-import { CliError } from '../../cli-error.js';
-import { toName, type Name } from '../../naming/index.js';
+import { KIT_ERROR_CODES } from '../../check/errors/kit-error-codes';
+import { CliError } from '../../cli-error';
+import { toName, type Name } from '../../naming';
 
 interface Naming {
   readonly concept: Name;

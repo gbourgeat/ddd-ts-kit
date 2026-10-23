@@ -1,8 +1,8 @@
-import { CliError } from '../../cli-error.js';
-import { commitOf } from './commit-of.js';
-import { mergeBaseOf } from './merge-base-of.js';
-import type { MergeRecord } from './merge-records.js';
-import type { MergeToVerify } from './merge-to-verify.js';
+import { CliError } from '../../cli-error';
+import { commitOf } from './commit-of';
+import { mergeBaseOf } from './merge-base-of';
+import type { MergeRecord } from './merge-records';
+import type { MergeToVerify } from './merge-to-verify';
 
 /** What the caller names instead of what the commit says. */
 export interface MergeOptions {

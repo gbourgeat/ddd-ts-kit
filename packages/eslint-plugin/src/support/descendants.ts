@@ -1,5 +1,5 @@
 import type { TSESTree } from '@typescript-eslint/utils';
-import { isRecord } from '../project/is-record.js';
+import { isRecord } from '../project/is-record';
 
 /** `node` and every node below it, in source order, without a visitor: for a tree read once. */
 export function* descendants(node: TSESTree.Node): Generator<TSESTree.Node> {

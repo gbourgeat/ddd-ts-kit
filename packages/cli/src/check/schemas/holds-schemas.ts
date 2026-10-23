@@ -1,6 +1,6 @@
-import type { Project } from '../model/project.js';
-import type { SourceFile } from '../model/source-file.js';
-import { sharedPresentation } from './shared-presentation.js';
+import type { Project } from '../model/project';
+import type { SourceFile } from '../model/source-file';
+import { sharedPresentation } from './shared-presentation';
 
 /** A production source where the schemas of the HTTP contract live: presentation/ of a context, or of the shared kernel. */
 export function holdsSchemas(project: Project, file: SourceFile): boolean {

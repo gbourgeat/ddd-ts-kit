@@ -7,7 +7,7 @@ import {
   SequentialIdGenerator,
   type Lock,
 } from '@ddd-ts-kit/kernel';
-import { ManualJobScheduler, type ManualJobSchedulerOptions } from '../../src/testing.js';
+import { ManualJobScheduler, type ManualJobSchedulerOptions } from '../../src/testing';
 
 export interface Bench {
   readonly scheduler: ManualJobScheduler;

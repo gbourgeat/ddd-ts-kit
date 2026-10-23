@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { cli, read, tempDir, write } from './helpers.js';
+import { cli, read, tempDir, write } from './helpers';
 
 const ERRORS = 'src/contexts/scheduling/domain/errors';
 const APPLICATION = 'src/contexts/scheduling/application';

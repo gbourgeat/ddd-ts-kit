@@ -1,7 +1,7 @@
-import type { Config } from '../config/index.js';
-import type { RenderContext } from '../templating/index.js';
-import { one } from './one.js';
-import { PROVIDED_BROKERS } from './provided-brokers.js';
+import type { Config } from '../config';
+import type { RenderContext } from '../templating';
+import { one } from './one';
+import { PROVIDED_BROKERS } from './provided-brokers';
 
 interface BrokerAddress {
   readonly variable: string;

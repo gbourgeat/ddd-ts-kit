@@ -1,4 +1,4 @@
-import type { CommitSize } from './commit-size.js';
+import type { CommitSize } from './commit-size';
 
 const SHOWN_SLICES = 8;
 

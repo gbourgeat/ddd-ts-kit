@@ -1,5 +1,5 @@
 import type { Knex } from 'knex';
-import { INDEXABLE_LENGTH } from './indexable-length.js';
+import { INDEXABLE_LENGTH } from './indexable-length';
 
 /** Adds the tenant column, `tenant_id`. Fill it and filter on it with `tenantRow`. */
 export function tenantColumn(table: Knex.CreateTableBuilder): void {

@@ -1,4 +1,4 @@
-import type { Actor } from './actor.js';
+import type { Actor } from './actor';
 
 const ANONYMOUS: Actor = Object.freeze({
   id: 'anonymous',

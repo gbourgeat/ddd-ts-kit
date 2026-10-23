@@ -1,10 +1,10 @@
-import type { RenderContext } from '../../../templating/index.js';
-import type { Scope } from '../../scope.js';
-import { controllerImports, type ControllerImports } from './controller-imports.js';
-import type { ControllerPlan } from './controller-plan.js';
-import { controllerTypes, type ControllerTypes } from './controller-types.js';
-import { routeVars } from './route-vars.js';
-import { sharesSchemas } from './shares-schemas.js';
+import type { RenderContext } from '../../../templating';
+import type { Scope } from '../../scope';
+import { controllerImports, type ControllerImports } from './controller-imports';
+import type { ControllerPlan } from './controller-plan';
+import { controllerTypes, type ControllerTypes } from './controller-types';
+import { routeVars } from './route-vars';
+import { sharesSchemas } from './shares-schemas';
 
 /** What the templates of a controller read, over what the templates of a route read: its group, its types and its neighbours. */
 export function controllerVars(scope: Scope, plan: ControllerPlan): RenderContext {

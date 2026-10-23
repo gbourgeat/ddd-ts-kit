@@ -1,4 +1,4 @@
-import type { RuleDoc } from '../model/rule-doc.js';
+import type { RuleDoc } from '../model/rule-doc';
 
 export const WIRING_DOCS: Readonly<Record<string, RuleDoc>> = {
   'composition/only-in-module': {

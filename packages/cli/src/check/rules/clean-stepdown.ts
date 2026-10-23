@@ -1,11 +1,11 @@
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import type { ClassShape } from '../structure/class-shape.js';
-import type { MethodShape } from '../structure/method-shape.js';
-import type { TopLevelFunction } from '../structure/top-level-function.js';
-import { perFile } from '../support/per-file.js';
-import { escapeRegExp } from '../text/escape-reg-exp.js';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import type { ClassShape } from '../structure/class-shape';
+import type { MethodShape } from '../structure/method-shape';
+import type { TopLevelFunction } from '../structure/top-level-function';
+import { perFile } from '../support/per-file';
+import { escapeRegExp } from '../text/escape-reg-exp';
 
 /** Not part of a longer name, and not a property access; a spread (`...helper()`) is a plain use. */
 const NOT_A_MEMBER = '(?<![\\w$])(?<!(?:^|[^.])\\.)';

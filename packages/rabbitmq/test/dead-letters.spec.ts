@@ -1,19 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  DEAD_REASON_HEADER,
-  ERROR_CODE_HEADER,
-  POISON_MESSAGE,
-  queueNamesOf,
-  type RabbitMqFailure,
-} from '../src/index.js';
-import type { Broker } from './support/broker.js';
-import { BROKERS } from './support/brokers.js';
-import { MAX_ATTEMPTS } from './support/environment.js';
-import { PLACED, anEvent } from './support/events.js';
-import { failuresOf } from './support/hooks.js';
-import { recorder } from './support/recorder.js';
-import { unique } from './support/unique.js';
-import { eventually } from './support/waiting.js';
+import { DEAD_REASON_HEADER, ERROR_CODE_HEADER, POISON_MESSAGE, queueNamesOf, type RabbitMqFailure } from '../src';
+import type { Broker } from './support/broker';
+import { BROKERS } from './support/brokers';
+import { MAX_ATTEMPTS } from './support/environment';
+import { PLACED, anEvent } from './support/events';
+import { failuresOf } from './support/hooks';
+import { recorder } from './support/recorder';
+import { unique } from './support/unique';
+import { eventually } from './support/waiting';
 
 describe.each(BROKERS)('RabbitMqEventBus: dead letters, %s', { timeout: 30_000 }, (_name, connect) => {
   let broker: Broker;

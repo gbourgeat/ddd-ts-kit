@@ -1,4 +1,4 @@
-import { read } from '../helpers.js';
+import { read } from '../helpers';
 
 /** A JSON file of a generated project, as the unknown value it is: read it with `jsonAt` or match it. */
 export function readJson(root: string, file: string): unknown {

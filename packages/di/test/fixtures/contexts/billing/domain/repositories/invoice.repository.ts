@@ -1,4 +1,4 @@
-import type { Invoice } from '../invoice.js';
+import type { Invoice } from '../invoice';
 
 export abstract class InvoiceRepository {
   abstract save(invoice: Invoice): Promise<void>;

@@ -1,6 +1,6 @@
-import type { Config } from '../config/index.js';
-import { PLATFORM_LAYOUT } from './platform-layout.js';
-import type { PlatformFile } from './platform-file.js';
+import type { Config } from '../config';
+import { PLATFORM_LAYOUT } from './platform-layout';
+import type { PlatformFile } from './platform-file';
 
 /**
  * The path of a file of the platform in this project. A project generated before the folders

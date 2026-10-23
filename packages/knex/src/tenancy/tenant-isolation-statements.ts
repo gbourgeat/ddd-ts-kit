@@ -1,6 +1,6 @@
 import { TENANT_ISOLATION_POLICIES, tenantPolicyExpressions } from '@ddd-ts-kit/kernel';
-import type { TenantTableTarget } from './tenant-table-target.js';
-import { TENANT_COLUMN } from './where-tenant.js';
+import type { TenantTableTarget } from './tenant-table-target';
+import { TENANT_COLUMN } from './where-tenant';
 
 /**
  * The PostgreSQL statements that make the database itself refuse a row of another tenant, the

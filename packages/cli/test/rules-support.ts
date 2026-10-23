@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { runCheck } from '../src/check/engine/run-check.js';
-import { loadProject } from '../src/check/project/load-project.js';
-import { tempDir } from './helpers.js';
+import { runCheck } from '../src/check/engine/run-check';
+import { loadProject } from '../src/check/project/load-project';
+import { tempDir } from './helpers';
 
 export interface Reported {
   readonly file: string;

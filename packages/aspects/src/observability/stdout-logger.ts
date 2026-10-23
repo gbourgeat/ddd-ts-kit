@@ -7,7 +7,7 @@ import {
   type LogLevel,
   type Logger,
 } from '@ddd-ts-kit/kernel';
-import { clockOr } from '../runtime/clock-or.js';
+import { clockOr } from '../runtime/clock-or';
 
 export interface StdoutLoggerOptions {
   /** Entries below it are not written. Default `info`. */

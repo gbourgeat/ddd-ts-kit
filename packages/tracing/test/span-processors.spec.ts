@@ -1,7 +1,7 @@
 import { trace } from '@opentelemetry/api';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ErrorMessageScrubber, UrlSecretSpanProcessor } from '../src/index.js';
-import { setupTracing, type TestTracing } from './support/setup-tracing.js';
+import { ErrorMessageScrubber, UrlSecretSpanProcessor } from '../src';
+import { setupTracing, type TestTracing } from './support/setup-tracing';
 
 let tracing: TestTracing;
 

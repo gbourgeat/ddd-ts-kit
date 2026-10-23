@@ -1,4 +1,4 @@
-import type { CitationsAtRef } from '../citations/stale-names-at.js';
+import type { CitationsAtRef } from '../citations/stale-names-at';
 
 /** What the conductor reads before launching a worker whose design cites names the trunk does not have. */
 export function designNote({ base, citations }: CitationsAtRef): string[] {

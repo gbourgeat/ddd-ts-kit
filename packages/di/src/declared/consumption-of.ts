@@ -1,8 +1,8 @@
 import type { EventContract, IntegrationEventHandler, Token } from '@ddd-ts-kit/kernel/declarations';
-import type { ConsumerOptions } from '../consumer/consumer-options.js';
-import { receive } from '../consumer/receive.js';
-import type { Declarer } from '../wiring/declarer.js';
-import type { EventConsumption } from '../wiring/event-consumption.js';
+import type { ConsumerOptions } from '../consumer/consumer-options';
+import { receive } from '../consumer/receive';
+import type { Declarer } from '../wiring/declarer';
+import type { EventConsumption } from '../wiring/event-consumption';
 
 interface Subscribing<Payload> {
   readonly contract: EventContract<Payload>;

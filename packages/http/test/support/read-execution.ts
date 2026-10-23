@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
-import { defineRoute } from '../../src/index.js';
+import { defineRoute } from '../../src';
 
 export const executionScope = new AsyncLocalStorageExecutionScope();
 

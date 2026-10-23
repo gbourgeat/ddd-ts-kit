@@ -1,4 +1,4 @@
-import { splitTopLevel } from '../check/text/split-top-level.js';
+import { splitTopLevel } from '../check/text/split-top-level';
 
 /** The entries of an object literal, by key; a shorthand entry is its own value. Comments between entries are dropped. */
 export function entriesOf(literal: string): Map<string, string> {

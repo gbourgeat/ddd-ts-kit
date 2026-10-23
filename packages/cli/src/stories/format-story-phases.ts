@@ -1,5 +1,5 @@
-import type { StoryGate } from './story-gate.js';
-import type { StoryPhase } from './story-phase.js';
+import type { StoryGate } from './story-gate';
+import type { StoryPhase } from './story-phase';
 
 /** The phases of a story as text: one line each, then the next step and, when asked, the gate. */
 export function formatStoryPhases(story: string, phases: readonly StoryPhase[], gate: StoryGate | undefined): string {

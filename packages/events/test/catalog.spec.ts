@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { customSchema } from '@ddd-ts-kit/validation';
 import { ok } from '@ddd-ts-kit/kernel';
-import { createEventRegistry, defineIntegrationEvent, generateEventCatalog, payloadFields } from '../src/index.js';
-import { invoiceIssued, orderPlacedV1, orderPlacedV2, shipmentSent } from './support/events.js';
+import { createEventRegistry, defineIntegrationEvent, generateEventCatalog, payloadFields } from '../src';
+import { invoiceIssued, orderPlacedV1, orderPlacedV2, shipmentSent } from './support/events';
 
 const definitions = [orderPlacedV2, shipmentSent, invoiceIssued, orderPlacedV1];
 

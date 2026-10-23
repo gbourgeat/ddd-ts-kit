@@ -1,9 +1,9 @@
 import { ESLintUtils, type JSONSchema, type TSESLint } from '@typescript-eslint/utils';
-import { configuredSeverity } from '../../project/configured-severity.js';
-import { describeLintedFile } from '../../project/describe-linted-file.js';
-import type { LintedFile } from '../../project/linted-file.js';
-import { suppressedLines } from '../suppressions/suppressed-lines.js';
-import type { RuleDocs } from './rule-docs.js';
+import { configuredSeverity } from '../../project/configured-severity';
+import { describeLintedFile } from '../../project/describe-linted-file';
+import type { LintedFile } from '../../project/linted-file';
+import { suppressedLines } from '../suppressions/suppressed-lines';
+import type { RuleDocs } from './rule-docs';
 
 const DOCS = 'https://github.com/gbourgeat/ddd-ts-kit/blob/main/packages/eslint-plugin/docs/rules';
 

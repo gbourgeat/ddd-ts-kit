@@ -1,4 +1,4 @@
-import type { CriteriaCase } from './criteria-case.js';
+import type { CriteriaCase } from './criteria-case';
 
 /** Every operator on every type it applies to. The default sort is `startsAt`, then `id`. */
 export const OPERATOR_CASES: readonly CriteriaCase[] = [

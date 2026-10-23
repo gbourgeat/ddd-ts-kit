@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { BackgroundJobExecution } from '@ddd-ts-kit/kernel';
-import { traceApplication, withSpan } from '../src/index.js';
-import { setupTracing, type TestTracing } from './support/setup-tracing.js';
+import { traceApplication, withSpan } from '../src';
+import { setupTracing, type TestTracing } from './support/setup-tracing';
 
 const execution = (traceparent: string | undefined): BackgroundJobExecution => ({
   jobId: 'job-1',

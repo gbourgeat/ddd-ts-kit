@@ -17,11 +17,11 @@ import {
   type Representation,
   type Route,
   type RouteResponse,
-} from '../src/index.js';
-import { mountExpress } from '../src/express.js';
-import { mountFastify } from '../src/fastify.js';
-import { mountHono } from '../src/hono.js';
-import { catalogRoutes } from './support/catalog.js';
+} from '../src';
+import { mountExpress } from '../src/express';
+import { mountFastify } from '../src/fastify';
+import { mountHono } from '../src/hono';
+import { catalogRoutes } from './support/catalog';
 
 const representations = Representations.standard();
 

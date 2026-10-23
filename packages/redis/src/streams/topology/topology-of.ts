@@ -1,9 +1,9 @@
-import type { ConsumerBinding } from './consumer-binding.js';
-import { groupOf } from './group-of.js';
-import type { RedisStreamsTopology } from './redis-streams-topology.js';
-import type { StreamDescription } from './stream-description.js';
-import { streamNamesOf } from './stream-names-of.js';
-import type { TopologySettings } from './topology-settings.js';
+import type { ConsumerBinding } from './consumer-binding';
+import { groupOf } from './group-of';
+import type { RedisStreamsTopology } from './redis-streams-topology';
+import type { StreamDescription } from './stream-description';
+import { streamNamesOf } from './stream-names-of';
+import type { TopologySettings } from './topology-settings';
 
 export function topologyOf(settings: TopologySettings, bindings: readonly ConsumerBinding[]): RedisStreamsTopology {
   const types = [...new Set(bindings.map((binding) => binding.type))];

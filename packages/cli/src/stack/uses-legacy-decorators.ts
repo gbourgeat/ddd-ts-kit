@@ -1,4 +1,4 @@
-import type { Config } from '../config/index.js';
+import type { Config } from '../config';
 
 /**
  * One program has one decorator mode: the legacy one wherever a library of the stack only has

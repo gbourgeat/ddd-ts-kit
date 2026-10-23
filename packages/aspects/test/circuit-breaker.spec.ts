@@ -1,16 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { FixedClock, InMemoryMetrics } from '@ddd-ts-kit/kernel';
-import {
-  CIRCUIT_OPEN,
-  CircuitOpenError,
-  circuitBreaker,
-  circuitStateGauge,
-  type CircuitStateChange,
-} from '../src/index.js';
-import { FlakyGateway } from './support/flaky-gateway.js';
-import { PairNotQuoted } from './support/pair-not-quoted.js';
-import { QuoteGateway } from './support/quote-gateway.js';
-import { Unreachable } from './support/unreachable.js';
+import { CIRCUIT_OPEN, CircuitOpenError, circuitBreaker, circuitStateGauge, type CircuitStateChange } from '../src';
+import { FlakyGateway } from './support/flaky-gateway';
+import { PairNotQuoted } from './support/pair-not-quoted';
+import { QuoteGateway } from './support/quote-gateway';
+import { Unreachable } from './support/unreachable';
 
 const start = new Date('2026-03-01T10:00:00.000Z');
 

@@ -1,5 +1,5 @@
 import { errorReportOf, isUnexpectedError, reportOnce, systemActor, type ErrorReporter } from '@ddd-ts-kit/kernel';
-import type { JobRunObserver } from './job-run-observer.js';
+import type { JobRunObserver } from './job-run-observer';
 
 /**
  * The observer that reports every run that failed with something else than a `DomainError`:

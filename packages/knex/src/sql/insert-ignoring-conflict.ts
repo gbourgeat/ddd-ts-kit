@@ -1,5 +1,5 @@
 import type { Knex } from 'knex';
-import { dialectOf } from './dialect-of.js';
+import { dialectOf } from './dialect-of';
 
 export interface IgnoringInsert {
   readonly row: Readonly<Record<string, unknown>>;

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { commentless } from '../src/acceptance/commentless.js';
-import { readLock } from '../src/acceptance/read-lock.js';
-import { readVerdicts } from '../src/acceptance/read-verdicts.js';
-import { scan } from '../src/check/scan/scan.js';
-import { Workspace } from '../src/workspace/index.js';
-import { tempDir, write } from './helpers.js';
+import { commentless } from '../src/acceptance/commentless';
+import { readLock } from '../src/acceptance/read-lock';
+import { readVerdicts } from '../src/acceptance/read-verdicts';
+import { scan } from '../src/check/scan/scan';
+import { Workspace } from '../src/workspace';
+import { tempDir, write } from './helpers';
 
 const LOCK = 'test/acceptance/us5.acceptance.lock.json';
 const VERDICTS = 'test/acceptance/verdicts';

@@ -1,5 +1,5 @@
-import type { DeclaredClass } from '../model/declared-class.js';
-import type { Token } from '../token/token.js';
+import type { DeclaredClass } from '../model/declared-class';
+import type { Token } from '../token/token';
 
 /*
  * One map per process, whatever the number of copies of this package it loaded, as the

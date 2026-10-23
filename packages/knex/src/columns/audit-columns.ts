@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
-import { INDEXABLE_LENGTH } from './indexable-length.js';
-import { INSTANT } from './instant.js';
+import { INDEXABLE_LENGTH } from './indexable-length';
+import { INSTANT } from './instant';
 
 /**
  * Adds the four audit columns to a table being created, under the same names in every project:

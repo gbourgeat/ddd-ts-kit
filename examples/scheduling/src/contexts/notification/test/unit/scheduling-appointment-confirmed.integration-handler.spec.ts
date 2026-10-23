@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { appointmentConfirmedV1 } from '@/contexts/scheduling/published-language/index';
+import { appointmentConfirmedV1 } from '@/contexts/scheduling/published-language';
 import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
 import { SchedulingAppointmentConfirmedIntegrationHandler } from '@/contexts/notification/application/integration/handlers/scheduling-appointment-confirmed.integration-handler';
 import { aNotificationWorld } from '@/contexts/notification/test/worlds/notification.world';

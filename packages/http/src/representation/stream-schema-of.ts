@@ -1,7 +1,7 @@
 import { err, ok } from '@ddd-ts-kit/kernel';
 import { customSchema, parseOrThrow, type Schema } from '@ddd-ts-kit/validation';
-import { fieldAccess } from '../field-access/field-access.js';
-import { isAsyncIterable } from '../support/is-async-iterable.js';
+import { fieldAccess } from '../field-access/field-access';
+import { isAsyncIterable } from '../support/is-async-iterable';
 
 /**
  * The schema of a list a route answers as it reads it (an export), from the schema of one item:

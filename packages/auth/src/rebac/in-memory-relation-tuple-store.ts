@@ -1,6 +1,6 @@
-import type { RelationTuple } from './relation-tuple.js';
-import type { RelationTupleStore } from './relation-tuple-store.js';
-import { tupleKey } from './tuple-key.js';
+import type { RelationTuple } from './relation-tuple';
+import type { RelationTupleStore } from './relation-tuple-store';
+import { tupleKey } from './tuple-key';
 
 export class InMemoryRelationTupleStore implements RelationTupleStore {
   private readonly tuples = new Map<string, RelationTuple>();

@@ -1,9 +1,9 @@
-import type { Dependencies } from '../dependencies/dependencies.js';
-import type { DependencyList } from '../dependencies/dependency-list.js';
-import type { DependencyTokens } from '../dependencies/dependency-tokens.js';
-import { DeclarationError } from '../registry/declaration-error.js';
-import { describeToken } from '../token/describe-token.js';
-import { injectedRegistry } from './injected-registry.js';
+import type { Dependencies } from '../dependencies/dependencies';
+import type { DependencyList } from '../dependencies/dependency-list';
+import type { DependencyTokens } from '../dependencies/dependency-tokens';
+import { DeclarationError } from '../registry/declaration-error';
+import { describeToken } from '../token/describe-token';
+import { injectedRegistry } from './injected-registry';
 
 /**
  * Says what the constructor of a class receives, one token per parameter, in order:

@@ -1,5 +1,5 @@
 import type { OutboxRecord, OutboxStatus } from '@ddd-ts-kit/events';
-import type { PrismaOutboxRow } from './prisma-outbox-delegate.js';
+import type { PrismaOutboxRow } from './prisma-outbox-delegate';
 
 export function toOutboxRecord(row: PrismaOutboxRow): OutboxRecord {
   return {

@@ -1,6 +1,6 @@
-import { splitAtCommas } from '../text/split-at-commas.js';
-import { typeBrackets } from '../text/type-brackets.js';
-import { typeClosing } from '../text/type-closing.js';
+import { splitAtCommas } from '../text/split-at-commas';
+import { typeBrackets } from '../text/type-brackets';
+import { typeClosing } from '../text/type-closing';
 
 const WRAPPER = /^(?:Readonly|Partial|Required)\s*</;
 const RECORD = /^Record\s*</;

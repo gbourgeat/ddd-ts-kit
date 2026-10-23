@@ -1,9 +1,9 @@
 import { Criteria, TableReadModelStore, scoped, type EventStamp } from '@ddd-ts-kit/kernel';
-import { ContractSuite } from '../contract-suite.js';
-import { criteriaContractDefinition } from '../criteria/criteria-contract-definition.js';
-import type { CriteriaContractRow } from '../criteria/criteria-contract-row.js';
-import { everything } from './everything.js';
-import type { ReadModelStoreUnderContract } from './read-model-store-under-contract.js';
+import { ContractSuite } from '../contract-suite';
+import { criteriaContractDefinition } from '../criteria/criteria-contract-definition';
+import type { CriteriaContractRow } from '../criteria/criteria-contract-row';
+import { everything } from './everything';
+import type { ReadModelStoreUnderContract } from './read-model-store-under-contract';
 
 type Row = CriteriaContractRow;
 

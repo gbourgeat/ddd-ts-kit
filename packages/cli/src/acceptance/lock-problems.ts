@@ -1,13 +1,13 @@
-import type { AcceptanceLock } from './acceptance-lock.js';
-import type { AcceptanceProblem } from './acceptance-problem.js';
-import type { Criterion } from './criteria-in.js';
-import { driftOf, type Judged } from './drift.js';
-import { lockFileOf } from './lock-file-of.js';
-import { regressionDriftOf } from './regression-drift-of.js';
-import type { RegressionSpec } from './regression-spec.js';
-import type { Scenario } from './scenario.js';
-import type { Verdict } from './verdict.js';
-import { verdictOn } from './verdict-on.js';
+import type { AcceptanceLock } from './acceptance-lock';
+import type { AcceptanceProblem } from './acceptance-problem';
+import type { Criterion } from './criteria-in';
+import { driftOf, type Judged } from './drift';
+import { lockFileOf } from './lock-file-of';
+import { regressionDriftOf } from './regression-drift-of';
+import type { RegressionSpec } from './regression-spec';
+import type { Scenario } from './scenario';
+import type { Verdict } from './verdict';
+import { verdictOn } from './verdict-on';
 
 /** A story's scenarios and criteria as read, with its lock when it has one and the verdicts on its changes. */
 export interface LockedStory {

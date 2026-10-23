@@ -1,4 +1,4 @@
-import type { ContentExpectation } from './content-expectation.js';
+import type { ContentExpectation } from './content-expectation';
 
 /**
  * What the server granted when it signed a link to upload a file straight to the storage: the

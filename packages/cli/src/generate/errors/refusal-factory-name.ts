@@ -1,6 +1,6 @@
-import { CliError } from '../../cli-error.js';
-import { toName, type Name } from '../../naming/index.js';
-import { FACTORY_PREFIX } from './factory-prefix.js';
+import { CliError } from '../../cli-error';
+import { toName, type Name } from '../../naming';
+import { FACTORY_PREFIX } from './factory-prefix';
 
 /** The name of a factory of a refusal class, from `forAccountId`, `for-account-id` or "for account id"; letters only. */
 export function refusalFactoryName(input: string): Name {

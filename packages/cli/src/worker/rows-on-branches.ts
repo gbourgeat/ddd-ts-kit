@@ -1,4 +1,4 @@
-import type { WorkersStatus } from './workers-status.js';
+import type { WorkersStatus } from './workers-status';
 
 /**
  * The ids of the rows briefed to a worker whose branch has commits its base does not have: they

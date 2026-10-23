@@ -1,7 +1,7 @@
-import { InvalidJobScheduleError } from '../scheduling/invalid-job-schedule-error.js';
-import { parseDuration } from '../scheduling/parse-duration.js';
-import type { BackgroundJobOptions } from './background-job-options.js';
-import type { JobBackoff } from './job-backoff.js';
+import { InvalidJobScheduleError } from '../scheduling/invalid-job-schedule-error';
+import { parseDuration } from '../scheduling/parse-duration';
+import type { BackgroundJobOptions } from './background-job-options';
+import type { JobBackoff } from './job-backoff';
 
 /** The options of a background job with their defaults filled in, durations in milliseconds. */
 export interface BackgroundJobPolicy {

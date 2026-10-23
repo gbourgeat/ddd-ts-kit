@@ -1,11 +1,11 @@
-import type { AdviceFactory } from '../aspect/advice-factory.js';
-import type { Aspect } from '../aspect/aspect.js';
-import { defineAspect } from '../aspect/define-aspect.js';
-import type { Invocation } from '../aspect/invocation.js';
-import type { JoinPoint } from '../aspect/join-point.js';
-import { TimeoutError } from '../errors/timeout-error.js';
-import { schedulerOr } from '../runtime/scheduler-or.js';
-import type { Scheduler } from '../runtime/scheduler.js';
+import type { AdviceFactory } from '../aspect/advice-factory';
+import type { Aspect } from '../aspect/aspect';
+import { defineAspect } from '../aspect/define-aspect';
+import type { Invocation } from '../aspect/invocation';
+import type { JoinPoint } from '../aspect/join-point';
+import { TimeoutError } from '../errors/timeout-error';
+import { schedulerOr } from '../runtime/scheduler-or';
+import type { Scheduler } from '../runtime/scheduler';
 
 export interface TimeoutOptions {
   /**

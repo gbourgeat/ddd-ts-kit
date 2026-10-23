@@ -1,4 +1,4 @@
-import type { Config } from '../config/index.js';
+import type { Config } from '../config';
 
 /** The slice `verify-slice` closes: the project, its context, and the trunk its changes are measured from. */
 export interface SliceToVerify {

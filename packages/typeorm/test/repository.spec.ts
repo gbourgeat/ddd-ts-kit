@@ -9,13 +9,13 @@ import {
   createTypeOrmUnitOfWork,
   optimisticUpdate,
   schemaNameOf,
-} from '../src/index.js';
-import { createDatabase, type TestDatabase } from './support/database.js';
-import { Invoice } from './support/billing-core/domain/invoice.js';
-import { InvoiceRepository } from './support/billing-core/domain/repositories/invoice.repository.js';
-import { invoices } from './support/billing-core/infrastructure/persistence/invoices.js';
-import { TypeOrmInvoiceRepository } from './support/billing-core/infrastructure/persistence/typeorm-invoice.repository.js';
-import { ada, scopeOf } from './support/scopes.js';
+} from '../src';
+import { createDatabase, type TestDatabase } from './support/database';
+import { Invoice } from './support/billing-core/domain/invoice';
+import { InvoiceRepository } from './support/billing-core/domain/repositories/invoice.repository';
+import { invoices } from './support/billing-core/infrastructure/persistence/invoices';
+import { TypeOrmInvoiceRepository } from './support/billing-core/infrastructure/persistence/typeorm-invoice.repository';
+import { ada, scopeOf } from './support/scopes';
 
 let database: TestDatabase;
 

@@ -6,13 +6,13 @@ import {
   type JobSchedule,
   type JobSettings,
 } from '@ddd-ts-kit/kernel';
-import { WiringError } from '../errors/wiring-error.js';
-import type { JobRegistration } from '../wiring/job-registration.js';
-import { whereOf } from '../wiring/where-of.js';
-import type { Wiring } from '../wiring/wiring.js';
-import type { EffectiveJob } from './effective-job.js';
-import type { JobsOptions } from './jobs-options.js';
-import { readable } from './readable.js';
+import { WiringError } from '../errors/wiring-error';
+import type { JobRegistration } from '../wiring/job-registration';
+import { whereOf } from '../wiring/where-of';
+import type { Wiring } from '../wiring/wiring';
+import type { EffectiveJob } from './effective-job';
+import type { JobsOptions } from './jobs-options';
+import { readable } from './readable';
 
 /** Every declared job as it will run. Throws before anything is instantiated. */
 export function effectiveJobs(wiring: Wiring, options: JobsOptions = {}): EffectiveJob[] {

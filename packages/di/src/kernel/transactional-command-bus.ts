@@ -7,10 +7,10 @@ import {
   unitOfWorkMiddleware,
   type BusMiddleware,
 } from '@ddd-ts-kit/kernel';
-import { useCaseGuardMiddleware } from '../authorization/use-case-guard-middleware.js';
-import { useCaseGuardWithinMiddleware } from '../authorization/use-case-guard-within-middleware.js';
-import type { Resolve } from '../wiring/resolve.js';
-import { reportedFailures } from './reported-failures.js';
+import { useCaseGuardMiddleware } from '../authorization/use-case-guard-middleware';
+import { useCaseGuardWithinMiddleware } from '../authorization/use-case-guard-within-middleware';
+import type { Resolve } from '../wiring/resolve';
+import { reportedFailures } from './reported-failures';
 
 /**
  * The unit of work is resolved at each command, not when the bus is built: the application

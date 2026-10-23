@@ -1,6 +1,6 @@
-import type { SourceFile } from '../model/source-file.js';
-import { endAtDepthZero } from '../text/end-at-depth-zero.js';
-import { shorthandStatusWrites } from './shorthand-status-writes.js';
+import type { SourceFile } from '../model/source-file';
+import { endAtDepthZero } from '../text/end-at-depth-zero';
+import { shorthandStatusWrites } from './shorthand-status-writes';
 
 /**
  * One place a member writes the status: `status: <value>` in an object, `<target>.status =

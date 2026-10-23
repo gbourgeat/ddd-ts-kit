@@ -1,8 +1,8 @@
-import { negotiate } from '../representation/negotiate.js';
-import type { Chosen, Representations } from '../representation/representations.js';
-import type { RawHeaders } from '../route/raw-headers.js';
-import { answersWithSchema } from '../route/answers-with-schema.js';
-import type { Route } from '../route/route.js';
+import { negotiate } from '../representation/negotiate';
+import type { Chosen, Representations } from '../representation/representations';
+import type { RawHeaders } from '../route/raw-headers';
+import { answersWithSchema } from '../route/answers-with-schema';
+import type { Route } from '../route/route';
 
 /** What the `Accept` header of a request chose: the representation of the answer, if any fits, and the one of a refusal. */
 export interface Negotiation {

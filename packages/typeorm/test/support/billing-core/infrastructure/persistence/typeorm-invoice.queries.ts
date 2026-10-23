@@ -11,12 +11,12 @@ import {
   type SortDirection,
   type TenantScoped,
 } from '@ddd-ts-kit/kernel';
-import type { TypeOrmContext } from '../../../../../src/index.js';
-import type { InvoiceQueries, InvoiceSort, InvoiceSummary } from '../../application/ports/invoice-queries.port.js';
-import { directionOf } from './direction-of.js';
-import type { InvoiceRow } from './invoice-row.js';
-import { invoices } from './invoices.js';
-import { positionOf, type InvoicePosition } from './position-of.js';
+import type { TypeOrmContext } from '../../../../../src';
+import type { InvoiceQueries, InvoiceSort, InvoiceSummary } from '../../application/ports/invoice-queries.port';
+import { directionOf } from './direction-of';
+import type { InvoiceRow } from './invoice-row';
+import { invoices } from './invoices';
+import { positionOf, type InvoicePosition } from './position-of';
 
 /**
  * The list query of a read port, in both variants of `PageRequest`. The order is total: the

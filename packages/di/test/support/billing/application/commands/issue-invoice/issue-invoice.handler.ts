@@ -1,5 +1,5 @@
-import type { InvoiceLedger } from '../../ports/invoice-ledger.port.js';
-import type { IssueInvoice } from './issue-invoice.command.js';
+import type { InvoiceLedger } from '../../ports/invoice-ledger.port';
+import type { IssueInvoice } from './issue-invoice.command';
 
 export class IssueInvoiceHandler {
   constructor(private readonly ledger: InvoiceLedger) {}

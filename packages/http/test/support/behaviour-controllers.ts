@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import * as fixture from '../fixtures/controllers/front-desk.js';
-import { frontDeskRoutes, manager, nurse, RecordingDesk } from './front-desk.js';
-import type { ReadAuthorization, RunningServer, StartServer } from './running-server.js';
+import * as fixture from '../fixtures/controllers/front-desk';
+import { frontDeskRoutes, manager, nurse, RecordingDesk } from './front-desk';
+import type { ReadAuthorization, RunningServer, StartServer } from './running-server';
 
 const CALLERS = new Map([
   ['Bearer manager', manager],

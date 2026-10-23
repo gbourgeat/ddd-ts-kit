@@ -1,8 +1,8 @@
-import { CliError } from '../cli-error.js';
-import type { Config } from '../config/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { FLAT_FILES } from './flat-files.js';
-import { PLATFORM_FOLDER_NAMES } from './platform-folder-names.js';
+import { CliError } from '../cli-error';
+import type { Config } from '../config';
+import type { Workspace } from '../workspace';
+import { FLAT_FILES } from './flat-files';
+import { PLATFORM_FOLDER_NAMES } from './platform-folder-names';
 
 /**
  * The folder of each file of the team, from `--place <file>=<folder>`, both by their path from the

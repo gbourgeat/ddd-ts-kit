@@ -1,6 +1,6 @@
-import type { Fixture } from './fixture.js';
-import { PATHS } from './paths.js';
-import { project } from './project.js';
+import type { Fixture } from './fixture';
+import { PATHS } from './paths';
+import { project } from './project';
 
 const { BILLING, PORT, REPOSITORY_PORT } = PATHS;
 const SCHEMA = `${BILLING}/infrastructure/persistence/invoice.schema.ts`;

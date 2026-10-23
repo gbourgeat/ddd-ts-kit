@@ -1,10 +1,10 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
-import { isAggregateFile } from '../support/event-sourcing/is-aggregate-file.js';
-import { isEventSourcedClass } from '../support/event-sourcing/is-event-sourced-class.js';
-import { factWords } from '../support/event-sourcing/fact-words.js';
-import { isPastFact } from '../support/event-sourcing/is-past-fact.js';
-import { importListener, type ImportedName } from '../support/imports/import-listener.js';
-import { defineRule } from '../support/rule/define-rule.js';
+import { isAggregateFile } from '../support/event-sourcing/is-aggregate-file';
+import { isEventSourcedClass } from '../support/event-sourcing/is-event-sourced-class';
+import { factWords } from '../support/event-sourcing/fact-words';
+import { isPastFact } from '../support/event-sourcing/is-past-fact';
+import { importListener, type ImportedName } from '../support/imports/import-listener';
+import { defineRule } from '../support/rule/define-rule';
 
 export const eventSourcingPastTense = defineRule<'presentTense'>({
   id: 'event-sourcing/past-tense',

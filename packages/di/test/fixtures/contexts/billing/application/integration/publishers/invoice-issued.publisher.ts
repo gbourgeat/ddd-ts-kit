@@ -1,6 +1,6 @@
 import type { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { InvoiceIssued } from '../../../domain/events/invoice-issued.event.js';
+import { InvoiceIssued } from '../../../domain/events/invoice-issued.event';
 
 @DomainEventHandler(InvoiceIssued)
 export class InvoiceIssuedPublisher implements DomainEventHandler<InvoiceIssued> {

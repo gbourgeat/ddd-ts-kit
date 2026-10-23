@@ -1,11 +1,11 @@
-import type { DerivedRelation } from './derived-relation.js';
-import { derivedText } from './derived-text.js';
-import { parseObject } from './parse-object.js';
-import type { RelationTupleStore } from './relation-tuple-store.js';
-import type { Schema } from './schema.js';
-import type { TraceStep } from '../authorization/trace-step.js';
-import type { Way } from './via.js';
-import { waysOf } from './ways-of.js';
+import type { DerivedRelation } from './derived-relation';
+import { derivedText } from './derived-text';
+import { parseObject } from './parse-object';
+import type { RelationTupleStore } from './relation-tuple-store';
+import type { Schema } from './schema';
+import type { TraceStep } from '../authorization/trace-step';
+import type { Way } from './via';
+import { waysOf } from './ways-of';
 
 export interface QuestionOptions {
   readonly schema: Schema;

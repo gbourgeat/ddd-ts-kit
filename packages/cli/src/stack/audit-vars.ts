@@ -1,5 +1,5 @@
-import type { Config } from '../config/index.js';
-import type { RenderContext } from '../templating/index.js';
+import type { Config } from '../config';
+import type { RenderContext } from '../templating';
 
 const WITH_AUDIT_STORE = ['knex', 'drizzle'];
 

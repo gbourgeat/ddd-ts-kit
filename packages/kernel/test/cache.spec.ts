@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FixedClock, InMemoryCache, cacheKey } from '../src/index.js';
+import { FixedClock, InMemoryCache, cacheKey } from '../src';
 
 interface Quote {
   readonly pair: string;

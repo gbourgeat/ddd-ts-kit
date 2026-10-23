@@ -1,7 +1,7 @@
 import type { Token } from '@ddd-ts-kit/kernel/declarations';
-import type { Application } from './application.js';
-import { ContainerApplication } from './container-application.js';
-import { delegatingApplications } from './delegating-applications.js';
+import type { Application } from './application';
+import { ContainerApplication } from './container-application';
+import { delegatingApplications } from './delegating-applications';
 
 /**
  * Swaps a binding for a fake after the application was created. Call it before the

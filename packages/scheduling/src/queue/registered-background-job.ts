@@ -1,5 +1,5 @@
 import { backgroundJobPolicy, type BackgroundJobPolicy } from '@ddd-ts-kit/kernel';
-import type { BackgroundJobDefinition } from './background-job-definition.js';
+import type { BackgroundJobDefinition } from './background-job-definition';
 
 /** A background job a worker knows, its options read once. */
 export class RegisteredBackgroundJob {

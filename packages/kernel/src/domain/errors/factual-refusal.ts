@@ -1,6 +1,6 @@
-import type { DomainErrorJson } from './domain-error-json.js';
-import { DomainError } from './domain-error.js';
-import type { RefusalFacts } from './refusal-facts.js';
+import type { DomainErrorJson } from './domain-error-json';
+import { DomainError } from './domain-error';
+import type { RefusalFacts } from './refusal-facts';
 
 /**
  * A refusal built by a static factory, whichever form the project writes (`DomainRefusal`, one

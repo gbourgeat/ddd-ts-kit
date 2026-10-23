@@ -1,9 +1,9 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../project/linted-file.js';
-import { propertyName } from '../support/globals/property-name.js';
-import { dependencyListListener } from '../support/ports/dependency-list-listener.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import { parameterTypeName } from '../support/types/parameter-type-name.js';
+import type { LintedFile } from '../project/linted-file';
+import { propertyName } from '../support/globals/property-name';
+import { dependencyListListener } from '../support/ports/dependency-list-listener';
+import { defineRule } from '../support/rule/define-rule';
+import { parameterTypeName } from '../support/types/parameter-type-name';
 
 const DISPATCHER = 'DomainEventDispatcher';
 const PULL = 'pullEvents';

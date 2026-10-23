@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ATTEMPTS_EXHAUSTED, type RedisStreamsDelivery, type RedisStreamsFailure } from '../src/event-bus.js';
-import { PLACED, anEvent, deliveriesOf, failuresOf, recorder, streamsOf, unique } from './support/events.js';
-import { REAL_SERVER, SERVER_URL } from './support/server.js';
-import { MAX_ATTEMPTS, Server } from './support/streams.js';
-import { eventually } from './support/waiting.js';
+import { ATTEMPTS_EXHAUSTED, type RedisStreamsDelivery, type RedisStreamsFailure } from '../src/event-bus';
+import { PLACED, anEvent, deliveriesOf, failuresOf, recorder, streamsOf, unique } from './support/events';
+import { REAL_SERVER, SERVER_URL } from './support/server';
+import { MAX_ATTEMPTS, Server } from './support/streams';
+import { eventually } from './support/waiting';
 
 describe.skipIf(!REAL_SERVER)(
   'RedisStreamsEventBus, taking over from an instance that died',

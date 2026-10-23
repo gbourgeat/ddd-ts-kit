@@ -1,5 +1,5 @@
 import type { UnitOfWork } from '@ddd-ts-kit/kernel';
-import type { InvoiceRepository } from '../billing-core/domain/repositories/invoice.repository.js';
+import type { InvoiceRepository } from '../billing-core/domain/repositories/invoice.repository';
 
 /**
  * Each call in a transaction of the unit of work, as the bus middleware runs commands and

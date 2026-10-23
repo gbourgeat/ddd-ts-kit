@@ -1,4 +1,4 @@
-import type { SqlRow } from './sql-row.js';
+import type { SqlRow } from './sql-row';
 
 /** The rows of a driver result: an array (postgres-js) or an object holding `rows` (node-postgres, PGlite). */
 export function rowsOf(result: unknown): readonly SqlRow[] {

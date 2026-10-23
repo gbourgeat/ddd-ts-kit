@@ -1,5 +1,5 @@
-import { isOneOf } from '../../config/index.js';
-import { CliError } from '../../cli-error.js';
+import { isOneOf } from '../../config';
+import { CliError } from '../../cli-error';
 
 /** The value of a stack flag, checked against what the flag accepts; `undefined` when the flag was not given. */
 export function choose<T extends string>(values: readonly T[], value: string | undefined, flag: string): T | undefined {

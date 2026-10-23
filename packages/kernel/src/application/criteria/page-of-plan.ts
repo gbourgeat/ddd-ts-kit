@@ -1,8 +1,8 @@
-import type { CursorPosition } from '../pagination/cursor-position.js';
-import { encodeCursor } from '../pagination/encode-cursor.js';
-import { pageOf } from '../pagination/page-of.js';
-import type { Page } from '../pagination/page.js';
-import type { CriteriaPlan } from './criteria-plan.js';
+import type { CursorPosition } from '../pagination/cursor-position';
+import { encodeCursor } from '../pagination/encode-cursor';
+import { pageOf } from '../pagination/page-of';
+import type { Page } from '../pagination/page';
+import type { CriteriaPlan } from './criteria-plan';
 
 /**
  * The page of a plan from the rows its query answered, in order. An offset page carries the

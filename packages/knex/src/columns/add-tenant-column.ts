@@ -1,9 +1,9 @@
 import type { Knex } from 'knex';
 import { assertTenantId } from '@ddd-ts-kit/kernel';
-import { builderIn } from '../outbox/builder-in.js';
-import { TENANT_COLUMN } from '../tenancy/where-tenant.js';
-import type { AddTenantColumnOptions } from './add-tenant-column-options.js';
-import { INDEXABLE_LENGTH } from './indexable-length.js';
+import { builderIn } from '../outbox/builder-in';
+import { TENANT_COLUMN } from '../tenancy/where-tenant';
+import type { AddTenantColumnOptions } from './add-tenant-column-options';
+import { INDEXABLE_LENGTH } from './indexable-length';
 
 /**
  * Adds `tenant_id` to a table of tenant data created without it: the migration of a project that

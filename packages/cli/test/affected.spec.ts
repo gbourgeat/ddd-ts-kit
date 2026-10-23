@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { selectAffected } from '../src/affected/select-affected.js';
-import { parseConfig } from '../src/config/index.js';
-import { cli, tempDir, write } from './helpers.js';
-import { committedProject } from './support/committed-project.js';
-import { git } from './support/git.js';
+import { selectAffected } from '../src/affected/select-affected';
+import { parseConfig } from '../src/config';
+import { cli, tempDir, write } from './helpers';
+import { committedProject } from './support/committed-project';
+import { git } from './support/git';
 
 /** identity <- scheduling <- notification, analytics; billing stands alone. */
 const CONFIG = parseConfig({

@@ -1,5 +1,5 @@
-import { fitBlock } from '../layout/index.js';
-import { marker } from './marker.js';
+import { fitBlock } from '../layout';
+import { marker } from './marker';
 
 /**
  * Replaces, inside a region, the lines a block was added as by the lines another block is added

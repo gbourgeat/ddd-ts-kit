@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { fromYaml } from '../src/yaml/from-yaml.js';
-import { toYaml } from '../src/yaml/to-yaml.js';
-import { YamlShapeError } from '../src/yaml/yaml-shape-error.js';
-import { read, REPO_ROOT } from './helpers.js';
-import { readYaml } from './support/read-yaml.js';
-import { AWKWARD, SHAPES, TEXTS } from './support/yaml-samples.js';
+import { fromYaml } from '../src/yaml/from-yaml';
+import { toYaml } from '../src/yaml/to-yaml';
+import { YamlShapeError } from '../src/yaml/yaml-shape-error';
+import { read, REPO_ROOT } from './helpers';
+import { readYaml } from './support/read-yaml';
+import { AWKWARD, SHAPES, TEXTS } from './support/yaml-samples';
 
 describe('fromYaml', () => {
   it('reads back every value toYaml writes', () => {

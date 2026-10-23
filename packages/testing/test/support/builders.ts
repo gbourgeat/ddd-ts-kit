@@ -1,5 +1,5 @@
-import { Builder, defineBuilder, sequence, type Buildable, type Defaults } from '../../src/index.js';
-import { Order, at, type Customer, type Line } from './order.js';
+import { Builder, defineBuilder, sequence, type Buildable, type Defaults } from '../../src';
+import { Order, at, type Customer, type Line } from './order';
 
 export const aLine = defineBuilder<Line>({ defaults: { sku: sequence('sku'), quantity: 1 } });
 

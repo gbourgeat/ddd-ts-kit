@@ -1,5 +1,5 @@
-import { cleanOneExportPerFile } from '../../src/rules/clean-one-export-per-file.js';
-import { at, BILLING, ruleTester } from '../support/rule-tester.js';
+import { cleanOneExportPerFile } from '../../src/rules/clean-one-export-per-file';
+import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const RETRY =
   'export interface RetryOptions { readonly attempts: number }\nexport function retry(options: RetryOptions): Aspect { return defineAspect(retryAdvice(options)); }\nexport function retryAdvice(options: RetryOptions): AdviceFactory { return make(options); }';

@@ -1,8 +1,8 @@
-import type { Config } from '../config/index.js';
-import { roleFilesOf, treeOf } from '../model-modules/index.js';
-import type { Workspace } from '../workspace/index.js';
-import type { LegacyError } from './legacy-error.js';
-import { readLegacyError } from './read-legacy-error.js';
+import type { Config } from '../config';
+import { roleFilesOf, treeOf } from '../model-modules';
+import type { Workspace } from '../workspace';
+import type { LegacyError } from './legacy-error';
+import { readLegacyError } from './read-legacy-error';
 
 /** Every class per error of the `domain/errors/` of every context and of its modules, in the order of their files. */
 export function legacyErrors(ws: Workspace, config: Config): LegacyError[] {

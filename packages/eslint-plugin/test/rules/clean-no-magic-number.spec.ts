@@ -1,5 +1,5 @@
-import { cleanNoMagicNumber } from '../../src/rules/clean-no-magic-number.js';
-import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
+import { cleanNoMagicNumber } from '../../src/rules/clean-no-magic-number';
+import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const DOMAIN = `${BILLING}/domain/value-objects/range.vo.ts`;
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;

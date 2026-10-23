@@ -1,4 +1,4 @@
-import { BRACKETS } from '../text/brackets.js';
+import { BRACKETS } from '../text/brackets';
 
 /** Where the value of `export const name: Type = value` starts: after the first `=` outside brackets that is not `=>`. */
 export function initializerOf(text: string): number | undefined {

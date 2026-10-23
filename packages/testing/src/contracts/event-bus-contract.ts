@@ -1,9 +1,9 @@
 import type { EventBus, IntegrationEvent } from '@ddd-ts-kit/kernel';
-import type { Awaitable } from './awaitable.js';
-import type { ContractRunner } from './contract-runner.js';
-import { ContractSuite } from './contract-suite.js';
-import { failureOf } from './failure-of.js';
-import { tenantEnvelope } from './tenant-envelope.js';
+import type { Awaitable } from './awaitable';
+import type { ContractRunner } from './contract-runner';
+import { ContractSuite } from './contract-suite';
+import { failureOf } from './failure-of';
+import { tenantEnvelope } from './tenant-envelope';
 
 export interface EventBusUnderContract {
   readonly bus: EventBus;

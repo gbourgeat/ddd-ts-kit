@@ -1,6 +1,6 @@
-import type { Config } from '../config/index.js';
-import type { Workspace } from '../workspace/index.js';
-import { FLAT_FILES } from './flat-files.js';
+import type { Config } from '../config';
+import type { Workspace } from '../workspace';
+import { FLAT_FILES } from './flat-files';
 
 /** The directories of the platform that hold folders only, once the files the kit writes are in them. */
 const TIDIED = ['', 'auth'];

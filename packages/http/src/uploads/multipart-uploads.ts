@@ -1,6 +1,6 @@
-import type { UploadReader } from '../pipeline/upload-reader.js';
-import type { MultipartLimits } from './multipart-limits.js';
-import { readMultipart } from './read-multipart.js';
+import type { UploadReader } from '../pipeline/upload-reader';
+import type { MultipartLimits } from './multipart-limits';
+import { readMultipart } from './read-multipart';
 
 /**
  * The upload reader of the kit, on busboy: pass it as `uploads` to the mount options. The file

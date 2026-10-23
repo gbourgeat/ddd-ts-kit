@@ -1,6 +1,6 @@
-import type { Config } from '../config/index.js';
-import { listTemplates } from '../templating/index.js';
-import type { PresetFile } from './preset-file.js';
+import type { Config } from '../config';
+import { listTemplates } from '../templating';
+import type { PresetFile } from './preset-file';
 
 /**
  * The variants a template is written for, by the segments before its extension:

@@ -11,9 +11,9 @@ import {
   type ProcessedEventStore,
   type UnitOfWork,
 } from '@ddd-ts-kit/kernel';
-import type { AuditSubscription } from './audit-subscription.js';
-import type { AuditedEvents } from './audited-events.js';
-import { recordIn } from './record-in.js';
+import type { AuditSubscription } from './audit-subscription';
+import type { AuditedEvents } from './audited-events';
+import { recordIn } from './record-in';
 
 export interface AuditIntegrationEventsOptions {
   readonly registry: AuditedEvents;

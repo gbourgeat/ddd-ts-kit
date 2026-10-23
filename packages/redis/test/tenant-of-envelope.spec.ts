@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { decode } from '../src/streams/codec/decode.js';
-import { ENVELOPE_FIELD } from '../src/streams/codec/entry-fields.js';
+import { decode } from '../src/streams/codec/decode';
+import { ENVELOPE_FIELD } from '../src/streams/codec/entry-fields';
 
 const envelope = { id: 'evt-1', type: 'billing.invoice-issued', version: 1, occurredAt: '2026-03-01T10:00:00.000Z' };
 

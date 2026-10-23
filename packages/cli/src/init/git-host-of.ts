@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { runGit } from '../commit/run-git.js';
-import { isRecord } from './is-record.js';
+import { runGit } from '../commit/run-git';
+import { isRecord } from './is-record';
 
 /** The hosts the shorthands of `package.json` stand for. */
 const SHORTHANDS: Readonly<Record<string, string>> = {

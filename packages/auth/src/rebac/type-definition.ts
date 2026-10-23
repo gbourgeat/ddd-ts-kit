@@ -1,4 +1,4 @@
-import type { DerivedRelation } from './derived-relation.js';
+import type { DerivedRelation } from './derived-relation';
 
 export interface TypeDefinition {
   /**

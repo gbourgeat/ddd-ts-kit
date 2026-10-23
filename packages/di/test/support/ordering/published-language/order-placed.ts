@@ -1,5 +1,5 @@
 import { err, ok } from '@ddd-ts-kit/kernel';
-import type { EventContract } from '../../../../src/index.js';
+import type { EventContract } from '../../../../src';
 
 export interface OrderPlacedPayload {
   readonly orderId: string;

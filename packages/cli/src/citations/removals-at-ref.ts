@@ -1,6 +1,6 @@
-import { runGit } from '../commit/run-git.js';
-import type { History } from './history.js';
-import { historyOf } from './history-of.js';
+import { runGit } from '../commit/run-git';
+import type { History } from './history';
+import { historyOf } from './history-of';
 
 /** A commit as `historyOf` reads it: abbreviated hash, day, commit time, subject. */
 const FORMAT = '--format=@%h%x09%cs%x09%ct%x09%s';

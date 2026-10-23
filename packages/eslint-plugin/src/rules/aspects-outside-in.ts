@@ -1,8 +1,8 @@
-import type { LintedFile } from '../project/linted-file.js';
-import { defineRule } from '../support/rule/define-rule.js';
-import { importListener } from '../support/imports/import-listener.js';
-import { inSourceRoot } from '../support/imports/in-source-root.js';
-import { ASPECTS_PACKAGE } from '../support/outside-concerns/outside-concern.js';
+import type { LintedFile } from '../project/linted-file';
+import { defineRule } from '../support/rule/define-rule';
+import { importListener } from '../support/imports/import-listener';
+import { inSourceRoot } from '../support/imports/in-source-root';
+import { ASPECTS_PACKAGE } from '../support/outside-concerns/outside-concern';
 
 const DECORATORS = `${ASPECTS_PACKAGE}/decorators`;
 

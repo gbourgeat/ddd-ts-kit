@@ -1,4 +1,4 @@
-import type { PartText } from './document-part.js';
+import type { PartText } from './document-part';
 
 const FENCE = /^\s{0,3}(?:```|~~~)/;
 /** A heading or a table row: a piece of its own, that nothing continues. */

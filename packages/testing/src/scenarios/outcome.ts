@@ -1,6 +1,6 @@
-import type { ExpectedFacts } from '../refusals/expected-facts.js';
-import type { ErrorClass } from './error-class.js';
-import type { EventMatcher } from './event-matcher.js';
+import type { ExpectedFacts } from '../refusals/expected-facts';
+import type { ErrorClass } from './error-class';
+import type { EventMatcher } from './event-matcher';
 
 /** The assertions available once `when` ran. Each returns the outcome, so they chain. */
 export interface Outcome<A> {

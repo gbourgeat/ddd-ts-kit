@@ -1,8 +1,8 @@
-import type { Finding } from '../model/finding.js';
-import type { Location } from '../model/location.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { perFile } from '../support/per-file.js';
+import type { Finding } from '../model/finding';
+import type { Location } from '../model/location';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { perFile } from '../support/per-file';
 
 const WRITERS: Readonly<Record<string, readonly string[]>> = {
   domain: ['aggregates', 'entities', 'repositories', 'services'],

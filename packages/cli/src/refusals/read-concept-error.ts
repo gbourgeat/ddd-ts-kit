@@ -1,11 +1,11 @@
-import { wholeLiteral } from '../check/declarations/whole-literal.js';
-import { scan, type Scan } from '../check/scan/scan.js';
-import { callArguments } from '../check/text/call-arguments.js';
-import { classBody } from '../generate/errors/class-body.js';
-import { staticMethods, type StaticMethod } from '../generate/errors/static-methods.js';
-import type { ConceptErrorClass, ConceptFactory } from './concept-error-class.js';
-import { firstParameter } from './first-parameter.js';
-import { memberStart } from './member-start.js';
+import { wholeLiteral } from '../check/declarations/whole-literal';
+import { scan, type Scan } from '../check/scan/scan';
+import { callArguments } from '../check/text/call-arguments';
+import { classBody } from '../generate/errors/class-body';
+import { staticMethods, type StaticMethod } from '../generate/errors/static-methods';
+import type { ConceptErrorClass, ConceptFactory } from './concept-error-class';
+import { firstParameter } from './first-parameter';
+import { memberStart } from './member-start';
 
 const CLASS = /export\s+class\s+([A-Za-z_$][\w$]*)\s+extends\s+ConceptError\b/;
 const REFUSAL_CALL = /(?<![\w$])([A-Za-z_$][\w$]*)\s*\.\s*refusal\s*\(/g;

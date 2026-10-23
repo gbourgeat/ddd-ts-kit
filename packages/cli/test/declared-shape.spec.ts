@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { declaredShape } from '../src/check/event-sourcing/declared-shape.js';
-import { readStoredShape } from '../src/check/event-sourcing/read-stored-shape.js';
-import { scan } from '../src/check/scan/scan.js';
+import { declaredShape } from '../src/check/event-sourcing/declared-shape';
+import { readStoredShape } from '../src/check/event-sourcing/read-stored-shape';
+import { scan } from '../src/check/scan/scan';
 
 describe('the declared shape of a stored type', () => {
   it('is undefined when the file declares no type of that name, an import of it aside', () => {

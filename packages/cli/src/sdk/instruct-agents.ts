@@ -1,5 +1,5 @@
-import type { Workspace } from '../workspace/index.js';
-import { AGENT_INSTRUCTION } from './agent-instruction.js';
+import type { Workspace } from '../workspace';
+import { AGENT_INSTRUCTION } from './agent-instruction';
 
 /** The guide of every agent; a project written before it kept its instructions in CLAUDE.md. */
 const GUIDES = ['AGENTS.md', 'CLAUDE.md'];

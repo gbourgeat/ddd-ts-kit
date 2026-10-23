@@ -1,8 +1,8 @@
-import { fileContentFindings } from '../files/file-content-findings.js';
-import { schemaSources } from '../files/schema-sources.js';
-import type { Rule } from '../model/rule.js';
-import { reporter } from '../support/reporter.js';
-import { toViolations } from '../support/to-violations.js';
+import { fileContentFindings } from '../files/file-content-findings';
+import { schemaSources } from '../files/schema-sources';
+import type { Rule } from '../model/rule';
+import { reporter } from '../support/reporter';
+import { toViolations } from '../support/to-violations';
 
 export const persistenceNoFileContent: Rule = {
   id: 'persistence/no-file-content',

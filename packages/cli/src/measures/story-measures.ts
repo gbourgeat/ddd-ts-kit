@@ -1,5 +1,5 @@
-import type { ReviewMeasures } from './review-measures.js';
-import type { Rework } from './rework.js';
+import type { ReviewMeasures } from './review-measures';
+import type { Rework } from './rework';
 
 /** What was asked of one story at its design review, its build and its close, read from git and `docs/architecture/`. */
 export interface StoryMeasures {

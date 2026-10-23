@@ -1,5 +1,5 @@
-import { filesUnder } from '../generate/files-under.js';
-import type { ContextSources } from './context-sources.js';
+import { filesUnder } from '../generate/files-under';
+import type { ContextSources } from './context-sources';
 
 /** A class of the infrastructure of a context that implements one or several of its ports. */
 export interface AdapterFact {
@@ -35,7 +35,7 @@ export function readAdapters(sources: ContextSources): AdapterFact[] {
           name,
           ports,
           kind: declaredKind(source) ?? boundKind(module, name) ?? kindOfFile(file),
-          upstream: /([a-z0-9-]+)\/published-language\//.exec(source)?.[1] ?? '',
+          upstream: /([a-z0-9-]+)\/published-language(?:\/|')/.exec(source)?.[1] ?? '',
         },
       ];
     })

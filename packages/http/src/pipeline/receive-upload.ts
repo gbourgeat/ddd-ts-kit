@@ -1,7 +1,7 @@
-import type { IncomingFile } from '../route/incoming-file.js';
-import type { Route } from '../route/route.js';
-import type { ExecuteOptions } from './execute-options.js';
-import type { RawRequest } from './raw-request.js';
+import type { IncomingFile } from '../route/incoming-file';
+import type { Route } from '../route/route';
+import type { ExecuteOptions } from './execute-options';
+import type { RawRequest } from './raw-request';
 
 interface Received {
   readonly request: RawRequest;

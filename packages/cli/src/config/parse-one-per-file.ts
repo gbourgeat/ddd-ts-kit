@@ -1,7 +1,7 @@
-import type { OnePerFile, OnePerFileAllowance } from './config.js';
-import { isRecord } from './values/is-record.js';
-import { posix } from './values/posix.js';
-import { text } from './values/text.js';
+import type { OnePerFile, OnePerFileAllowance } from './config';
+import { isRecord } from './values/is-record';
+import { posix } from './values/posix';
+import { text } from './values/text';
 
 /** An entry without a file or without a reason allows nothing: `config/valid` reports it. */
 export function parseOnePerFile(value: unknown): OnePerFile {

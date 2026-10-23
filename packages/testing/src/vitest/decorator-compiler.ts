@@ -2,10 +2,10 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { isRecord } from './is-record.js';
-import type { ProjectOptions } from './project-options.js';
-import { singleFileProject } from './single-file-project.js';
-import { sourceMapOf } from './source-map-of.js';
+import { isRecord } from './is-record';
+import type { ProjectOptions } from './project-options';
+import { singleFileProject } from './single-file-project';
+import { sourceMapOf } from './source-map-of';
 
 export interface CompilerSetup {
   readonly script: string;

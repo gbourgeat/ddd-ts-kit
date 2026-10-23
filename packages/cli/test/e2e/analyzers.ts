@@ -1,4 +1,4 @@
-import { bin, type Invocation } from './run-in.js';
+import { bin, type Invocation } from './run-in';
 
 /** The three analyzers of the generated pipeline next to `ddd-ts-kit check`, as its scripts call them. */
 export const ESLINT: Invocation = { command: bin('eslint'), args: ['.', '--max-warnings', '0'] };

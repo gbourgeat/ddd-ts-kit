@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CommandBus, InMemoryErrorReporter, InMemoryLogger } from '@ddd-ts-kit/kernel';
-import { contextModule, createApplication, createTestApplication, fake, kernelModule } from '../src/index.js';
-import { TransactionalJournal } from './support/fakes/transactional-journal.js';
-import { TransactionalUnitOfWork } from './support/fakes/transactional-unit-of-work.js';
+import { contextModule, createApplication, createTestApplication, fake, kernelModule } from '../src';
+import { TransactionalJournal } from './support/fakes/transactional-journal';
+import { TransactionalUnitOfWork } from './support/fakes/transactional-unit-of-work';
 import {
   JournalLoanRepository,
   LoanOpenedNotice,
@@ -10,7 +10,7 @@ import {
   LoanRepository,
   OpenLoan,
   OpenLoanHandler,
-} from './fixtures/contexts/lending/lending.js';
+} from './fixtures/contexts/lending/lending';
 
 const lending = [OpenLoanHandler, LoanOpenedPublisher, LoanOpenedNotice, JournalLoanRepository];
 

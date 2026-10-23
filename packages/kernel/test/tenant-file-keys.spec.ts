@@ -9,7 +9,7 @@ import {
   executionContext,
   isFileKey,
   systemActor,
-} from '../src/index.js';
+} from '../src';
 
 const clock = new FixedClock(new Date('2026-03-01T10:00:00.000Z'));
 

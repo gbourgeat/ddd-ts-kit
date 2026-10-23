@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cli, exists, read, tempDir } from './helpers.js';
+import { cli, exists, read, tempDir } from './helpers';
 
 const BILLING = 'src/contexts/billing';
 

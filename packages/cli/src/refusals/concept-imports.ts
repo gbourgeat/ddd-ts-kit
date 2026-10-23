@@ -1,7 +1,7 @@
-import { escapeRegExp } from '../check/text/escape-reg-exp.js';
-import { codeWithoutImports } from './code-without-imports.js';
-import type { NamedMove } from './named-move.js';
-import { replaceInCode, type CodeMatch } from './replace-in-code.js';
+import { escapeRegExp } from '../check/text/escape-reg-exp';
+import { codeWithoutImports } from './code-without-imports';
+import type { NamedMove } from './named-move';
+import { replaceInCode, type CodeMatch } from './replace-in-code';
 
 /**
  * The import of a concept class becomes the imports of the classes of their own the file reads,

@@ -1,9 +1,9 @@
-import { inDialect } from '../package-manager/in-dialect.js';
-import type { BriefedSlice } from './briefed-slice.js';
-import { designLine } from './design-line.js';
-import { REPORT_FILE } from './report-file.js';
-import { staleNamesBlock } from './stale-names-block.js';
-import type { WorkerPlace } from './worker-place.js';
+import { inDialect } from '../package-manager/in-dialect';
+import type { BriefedSlice } from './briefed-slice';
+import { designLine } from './design-line';
+import { REPORT_FILE } from './report-file';
+import { staleNamesBlock } from './stale-names-block';
+import type { WorkerPlace } from './worker-place';
 
 /**
  * A need marked blocking stops the row until the conductor does it; a note waits for the merge

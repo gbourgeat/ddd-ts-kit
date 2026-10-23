@@ -1,5 +1,5 @@
 import { expect } from 'vitest';
-import { cli, tempDir } from '../helpers.js';
+import { cli, tempDir } from '../helpers';
 
 /** A project with a billing context, its terms, and the two commands a job of the specs sends. */
 export function jobProject(...flags: string[]): string {

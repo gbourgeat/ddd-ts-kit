@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, exists, read, scaffoldEverything, tempDir } from './helpers.js';
+import { cli, exists, read, scaffoldEverything, tempDir } from './helpers';
 
 const BILLING = 'src/contexts/billing';
 

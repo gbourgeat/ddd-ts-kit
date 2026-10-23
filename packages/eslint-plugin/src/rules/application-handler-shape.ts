@@ -1,10 +1,10 @@
 import type { TSESTree } from '@typescript-eslint/utils';
-import { className } from '../support/classes/class-name.js';
-import { exportedClasses } from '../support/classes/exported-classes.js';
-import { isCallable } from '../support/classes/is-callable.js';
-import { memberName } from '../support/classes/member-name.js';
-import { visibilityOf } from '../support/classes/visibility-of.js';
-import { defineRule, type Report } from '../support/rule/define-rule.js';
+import { className } from '../support/classes/class-name';
+import { exportedClasses } from '../support/classes/exported-classes';
+import { isCallable } from '../support/classes/is-callable';
+import { memberName } from '../support/classes/member-name';
+import { visibilityOf } from '../support/classes/visibility-of';
+import { defineRule, type Report } from '../support/rule/define-rule';
 
 type MessageId = 'noHandler' | 'severalClasses' | 'missingExecute' | 'extraPublicMethod';
 

@@ -1,7 +1,7 @@
-import { CONFIG_FILE } from '../../config/index.js';
-import { config } from './config.js';
-import type { FixtureFiles } from './fixture-files.js';
-import { project } from './project.js';
+import { CONFIG_FILE } from '../../config';
+import { config } from './config';
+import type { FixtureFiles } from './fixture-files';
+import { project } from './project';
 
 /** Written out, not derived: the fixtures do not prove the rule with its own code. */
 const MANIFEST = {

@@ -1,4 +1,4 @@
-import { isRecord } from '../config/values/is-record.js';
+import { isRecord } from '../config/values/is-record';
 
 /** The merged lock, or the versions both sides recorded with another shape, as `<event> v<version>`. */
 export type LockMerge = { readonly text: string } | { readonly conflicts: readonly string[] };

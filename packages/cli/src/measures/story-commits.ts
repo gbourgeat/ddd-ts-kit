@@ -1,4 +1,4 @@
-import type { BranchCommit } from './branch-commit.js';
+import type { BranchCommit } from './branch-commit';
 
 /** The commits of one story on the branch, oldest first, and the ones of its files. */
 export interface StoryCommits {

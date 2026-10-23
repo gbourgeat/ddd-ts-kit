@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { generateDrizzleMigration } from '../src/migration/index.js';
-import { cli, exists, read, tempDir, write } from './helpers.js';
-import { DRIZZLE_KIT_STUB } from './support/drizzle-kit-stub.js';
+import { generateDrizzleMigration } from '../src/migration';
+import { cli, exists, read, tempDir, write } from './helpers';
+import { DRIZZLE_KIT_STUB } from './support/drizzle-kit-stub';
 
 const BIN = 'node_modules/drizzle-kit/bin.cjs';
 

@@ -1,10 +1,10 @@
-import type { EventNameResolver } from '../events/event-name-resolver.js';
-import type { SourceFile } from '../model/source-file.js';
-import { callArguments } from '../text/call-arguments.js';
-import type { ListPart } from '../text/list-part.js';
-import { splitTopLevel } from '../text/split-top-level.js';
-import { readStoredShape } from './read-stored-shape.js';
-import type { StoredEventDeclaration } from './stored-event-declaration.js';
+import type { EventNameResolver } from '../events/event-name-resolver';
+import type { SourceFile } from '../model/source-file';
+import { callArguments } from '../text/call-arguments';
+import type { ListPart } from '../text/list-part';
+import { splitTopLevel } from '../text/split-top-level';
+import { readStoredShape } from './read-stored-shape';
+import type { StoredEventDeclaration } from './stored-event-declaration';
 
 const CALL = /(?<![\w$.])defineStoredEvent\s*(?:<[^()]*>)?\s*\(/g;
 const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;

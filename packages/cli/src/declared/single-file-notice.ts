@@ -1,4 +1,4 @@
-import { barrelFile } from './barrel-file.js';
+import { barrelFile } from './barrel-file';
 
 /** What a finding, a note or a warning says of a context that `keepsSingleFile`. */
 export interface SingleFileNotice {

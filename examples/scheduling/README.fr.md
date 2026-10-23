@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:97f80842613379f3 -->
+<!-- translation-of: README.md sha256:2186df7b8b867e20 -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -618,8 +618,8 @@ les agents de code sont les fichiers qu'`init` a générés à la racine de l'ex
 Chaque fichier est importé par un alias depuis la racine du projet, jamais par un chemin relatif,
 et sans extension : `@/contexts/scheduling/domain/aggregates/appointment.aggregate`,
 `$test/e2e/support/...`, `$scripts/...` (`"importExtension": "none"` dans
-`ddd-ts-kit.config.json`). Un import nomme un fichier, jamais un répertoire :
-`.../published-language/index`.
+`ddd-ts-kit.config.json`). Un répertoire s'écrit tel quel :
+`.../published-language`.
 
 ```ts
 // Au lieu de : un chemin relatif, une extension, un répertoire
@@ -628,7 +628,7 @@ import { appointmentBookedV1 } from '../../published-language';
 
 // écrivez : l'alias depuis la racine du projet, un fichier, sans extension
 import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
-import { appointmentBookedV1 } from '@/contexts/scheduling/published-language/index';
+import { appointmentBookedV1 } from '@/contexts/scheduling/published-language';
 ```
 
 L'alias est déclaré une seule fois, sous `paths` dans `tsconfig.json`, que lisent le compilateur,

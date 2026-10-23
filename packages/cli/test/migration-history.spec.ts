@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { drizzleHistoryFindings } from '../src/check/migrations/drizzle-history-findings.js';
-import { migrationNameFindings } from '../src/check/migrations/migration-name-findings.js';
-import { readDrizzleMigrations } from '../src/check/migrations/read-drizzle-migrations.js';
-import { readMigrationFolder } from '../src/check/migrations/read-migration-folder.js';
-import { workingMigrationFindings } from '../src/check/migrations/working-migration-findings.js';
-import { tempDir, write } from './helpers.js';
+import { drizzleHistoryFindings } from '../src/check/migrations/drizzle-history-findings';
+import { migrationNameFindings } from '../src/check/migrations/migration-name-findings';
+import { readDrizzleMigrations } from '../src/check/migrations/read-drizzle-migrations';
+import { readMigrationFolder } from '../src/check/migrations/read-migration-folder';
+import { workingMigrationFindings } from '../src/check/migrations/working-migration-findings';
+import { tempDir, write } from './helpers';
 
 const ORIGIN = '00000000-0000-0000-0000-000000000000';
 

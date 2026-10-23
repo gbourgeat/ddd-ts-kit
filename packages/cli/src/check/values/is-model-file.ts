@@ -1,4 +1,4 @@
-import type { Location } from '../model/location.js';
+import type { Location } from '../model/location';
 
 /**
  * Where a value of the model may be written as a function and is looked for: `domain/` of a

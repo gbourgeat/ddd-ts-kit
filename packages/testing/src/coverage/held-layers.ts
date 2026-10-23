@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { affectedContexts } from './affected-contexts.js';
-import { contextsIn } from './contexts-in.js';
-import type { CoverageLayer } from './coverage-layer.js';
+import { affectedContexts } from './affected-contexts';
+import { contextsIn } from './contexts-in';
+import type { CoverageLayer } from './coverage-layer';
 
 const SOURCE = /(?<!\.d)\.[cm]?ts$/;
 const SPEC = /\.(?:spec|test)\.[cm]?ts$/;

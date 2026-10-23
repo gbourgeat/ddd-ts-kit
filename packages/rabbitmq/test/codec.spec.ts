@@ -1,12 +1,12 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import type { Message, MessageProperties } from 'amqplib';
 import { describe, expect, it } from 'vitest';
-import { attemptOf } from '../src/codec/attempt-of.js';
-import { decode } from '../src/codec/decode.js';
-import { encode } from '../src/codec/encode.js';
-import { headersOf } from '../src/codec/headers-of.js';
-import { republication } from '../src/codec/republication.js';
-import { anEvent, PLACED, TRACEPARENT } from './support/events.js';
+import { attemptOf } from '../src/codec/attempt-of';
+import { decode } from '../src/codec/decode';
+import { encode } from '../src/codec/encode';
+import { headersOf } from '../src/codec/headers-of';
+import { republication } from '../src/codec/republication';
+import { anEvent, PLACED, TRACEPARENT } from './support/events';
 
 const traced: IntegrationEvent = {
   ...anEvent('evt-1'),

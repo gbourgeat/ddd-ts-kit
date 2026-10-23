@@ -1,7 +1,7 @@
-import { specifierOf } from '../alias/index.js';
-import { barrelFile } from '../declared/index.js';
-import { isDeclared } from './is-declared.js';
-import type { Scope } from './scope.js';
+import { specifierOf } from '../alias';
+import { barrelFile } from '../declared';
+import { isDeclared } from './is-declared';
+import type { Scope } from './scope';
 
 /** The import a test file assembles the context from: its module file, its barrel, or discovery. */
 export function contextImports(scope: Scope): string {

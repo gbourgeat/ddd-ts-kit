@@ -1,16 +1,16 @@
-import type { PageRequest } from '../pagination/page-request.js';
-import type { CriteriaDefinition } from './criteria-definition.js';
-import type { CriteriaPlan } from './criteria-plan.js';
-import type { Criteria } from './criteria.js';
-import { InvalidCriteriaError } from './invalid-criteria-error.js';
-import { predicateOf } from './predicate-of.js';
-import type { Predicate } from './predicate.js';
-import { readCursor } from './read-cursor.js';
-import type { ScopedCriteria, ScopeRestriction } from './scoped-criteria.js';
-import { seekPredicate } from './seek-predicate.js';
-import { totalSort } from './total-sort.js';
-import { UnmappedReadScopeError } from './unmapped-read-scope-error.js';
-import { validateCriteria } from './validate-criteria.js';
+import type { PageRequest } from '../pagination/page-request';
+import type { CriteriaDefinition } from './criteria-definition';
+import type { CriteriaPlan } from './criteria-plan';
+import type { Criteria } from './criteria';
+import { InvalidCriteriaError } from './invalid-criteria-error';
+import { predicateOf } from './predicate-of';
+import type { Predicate } from './predicate';
+import { readCursor } from './read-cursor';
+import type { ScopedCriteria, ScopeRestriction } from './scoped-criteria';
+import { seekPredicate } from './seek-predicate';
+import { totalSort } from './total-sort';
+import { UnmappedReadScopeError } from './unmapped-read-scope-error';
+import { validateCriteria } from './validate-criteria';
 
 const UNRESTRICTED: ScopeRestriction = { conditions: [], empty: false };
 

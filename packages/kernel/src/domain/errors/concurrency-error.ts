@@ -1,4 +1,4 @@
-import { DomainError } from './domain-error.js';
+import { DomainError } from './domain-error';
 
 /** The code every repository adapter raises on a lost update, whatever the storage. */
 export const CONCURRENCY_CONFLICT = 'CONCURRENCY_CONFLICT';

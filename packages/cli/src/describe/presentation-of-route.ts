@@ -1,5 +1,5 @@
-import type { RouteFact } from './context-description.js';
-import { listedIn } from './listed-in.js';
+import type { RouteFact } from './context-description';
+import { listedIn } from './listed-in';
 
 /** What a route says of its presentation, in the options of its declaration: the media types it answers and reads in, and its form. */
 export function presentationOfRoute(

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
-import type { RuleExplanation } from '../model/rule-explanation.js';
-import type { Violation } from '../model/violation.js';
-import type { CheckResult } from './check-result.js';
+import type { RuleExplanation } from '../model/rule-explanation';
+import type { Violation } from '../model/violation';
+import type { CheckResult } from './check-result';
 
 export type CheckFormat = 'text' | 'json' | 'github' | 'gitlab';
 

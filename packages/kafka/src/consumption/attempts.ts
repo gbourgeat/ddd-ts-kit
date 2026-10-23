@@ -1,4 +1,4 @@
-import type { IncomingRecord } from '../codec/incoming-record.js';
+import type { IncomingRecord } from '../codec/incoming-record';
 
 interface FailedRecord {
   readonly offset: string;

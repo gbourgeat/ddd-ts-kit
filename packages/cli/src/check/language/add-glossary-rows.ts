@@ -1,5 +1,5 @@
-import { glossaryCells } from './glossary-cells.js';
-import { parseGlossary } from './parse-glossary.js';
+import { glossaryCells } from './glossary-cells';
+import { parseGlossary } from './parse-glossary';
 
 /** Appends rows to the glossary table. Returns undefined when the document has no table to extend. */
 export function addGlossaryRows(

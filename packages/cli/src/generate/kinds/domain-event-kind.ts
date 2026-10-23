@@ -1,9 +1,9 @@
-import { eventNames } from '../event-names.js';
-import type { Kind } from '../kind.js';
-import { learnTerms } from '../learn-terms.js';
-import { openScope } from '../open-scope.js';
-import { extendEventSourcedAggregate } from './extend-event-sourced-aggregate.js';
-import { writeDomainEvent } from './write-domain-event.js';
+import { eventNames } from '../event-names';
+import type { Kind } from '../kind';
+import { learnTerms } from '../learn-terms';
+import { openScope } from '../open-scope';
+import { extendEventSourcedAggregate } from './extend-event-sourced-aggregate';
+import { writeDomainEvent } from './write-domain-event';
 
 export const domainEventKind: Kind = {
   name: 'domain-event',

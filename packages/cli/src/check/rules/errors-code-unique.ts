@@ -1,11 +1,11 @@
-import { buildsThroughFactories } from '../errors/builds-through-factories.js';
-import { codesSetIn } from '../errors/codes-set-in.js';
-import { isErrorFile } from '../errors/is-error-file.js';
-import { namesRefusals } from '../errors/names-refusals.js';
-import type { Finding } from '../model/finding.js';
-import type { Rule } from '../model/rule.js';
-import type { SourceFile } from '../model/source-file.js';
-import { perFile } from '../support/per-file.js';
+import { buildsThroughFactories } from '../errors/builds-through-factories';
+import { codesSetIn } from '../errors/codes-set-in';
+import { isErrorFile } from '../errors/is-error-file';
+import { namesRefusals } from '../errors/names-refusals';
+import type { Finding } from '../model/finding';
+import type { Rule } from '../model/rule';
+import type { SourceFile } from '../model/source-file';
+import { perFile } from '../support/per-file';
 
 const WHY = 'the HTTP mapping, the OpenAPI document, the audit trail and the tests know a refusal by its code alone.';
 

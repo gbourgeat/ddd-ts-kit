@@ -1,10 +1,10 @@
-import { runGit } from '../commit/run-git.js';
-import type { LandedAs } from '../merge/base-point.js';
-import { gitVersion } from '../merge/git-version.js';
-import { landedPoint } from '../merge/landed-point.js';
-import { commitOf } from '../merge/lost/commit-of.js';
-import { mergeRepositoryOf } from '../merge/lost/merge-repository-of.js';
-import { previewMerge } from '../merge/preview-merge.js';
+import { runGit } from '../commit/run-git';
+import type { LandedAs } from '../merge/base-point';
+import { gitVersion } from '../merge/git-version';
+import { landedPoint } from '../merge/landed-point';
+import { commitOf } from '../merge/lost/commit-of';
+import { mergeRepositoryOf } from '../merge/lost/merge-repository-of';
+import { previewMerge } from '../merge/preview-merge';
 
 /** Where a worker's branch stands against its base, counted from what of it the base already holds. */
 export interface BranchStanding {

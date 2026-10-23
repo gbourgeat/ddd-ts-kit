@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseConfig, serializeConfig } from '../src/config/index.js';
+import { parseConfig, serializeConfig } from '../src/config';
 
 function rewritten(raw: Record<string, unknown>): Record<string, unknown> {
   return JSON.parse(serializeConfig(parseConfig(raw))) as Record<string, unknown>;

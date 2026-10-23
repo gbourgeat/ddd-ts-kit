@@ -1,6 +1,6 @@
 import { DataSource, type EntitySchema } from 'typeorm';
-import { startPostgres } from './postgres.js';
-import { RecordingLogger } from './recording-logger.js';
+import { startPostgres } from './postgres';
+import { RecordingLogger } from './recording-logger';
 
 export interface TestDatabase {
   readonly dataSource: DataSource;

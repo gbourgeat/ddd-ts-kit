@@ -1,9 +1,9 @@
-import { collapsedFiles } from './collapsed-files.js';
-import { lostLines } from './lost-lines.js';
-import type { MergeFinding } from './merge-finding.js';
-import type { MergeSides } from './merge-sides.js';
-import { rewrittenInPlace } from './rewritten-in-place.js';
-import { type SideChanges, supersededLines } from './superseded-lines.js';
+import { collapsedFiles } from './collapsed-files';
+import { lostLines } from './lost-lines';
+import type { MergeFinding } from './merge-finding';
+import type { MergeSides } from './merge-sides';
+import { rewrittenInPlace } from './rewritten-in-place';
+import { type SideChanges, supersededLines } from './superseded-lines';
 
 /** The hunks of each side against the base, and from each side to the result. */
 export interface MergeChanges {

@@ -1,6 +1,6 @@
-import type { DomainError } from '../errors/domain-error.js';
-import type { ForbiddenTransition } from './forbidden-transition.js';
-import type { TransitionDeclaration } from './transition-declaration.js';
+import type { DomainError } from '../errors/domain-error';
+import type { ForbiddenTransition } from './forbidden-transition';
+import type { TransitionDeclaration } from './transition-declaration';
 
 /**
  * The lifecycle of an aggregate, written once: `defineStateMachine` reads it. Its states are the

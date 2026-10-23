@@ -1,4 +1,4 @@
-import type { Config } from '../config/index.js';
+import type { Config } from '../config';
 
 /** Every context that declares `context` as an upstream, directly or through another: the context map read as a dependency graph. */
 export function downstreamsOf(config: Config, context: string): string[] {

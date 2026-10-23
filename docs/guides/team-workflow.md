@@ -208,7 +208,7 @@ and the import that goes with it names the published language, never what is beh
 import { Appointment } from '@/contexts/appointments/domain/aggregates/appointment.aggregate';
 
 // write: what appointments publishes for its consumers
-import { appointmentCancelledV1 } from '@/contexts/appointments/published-language/index';
+import { appointmentCancelledV1 } from '@/contexts/appointments/published-language';
 ```
 
 So "may my context use something of yours?" has a mechanical answer, and adding a dependency

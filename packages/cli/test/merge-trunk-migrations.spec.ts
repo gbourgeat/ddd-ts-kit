@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers.js';
-import { DRIZZLE_KIT_STUB } from './support/drizzle-kit-stub.js';
-import { git } from './support/git.js';
+import { cli, read, write } from './helpers';
+import { DRIZZLE_KIT_STUB } from './support/drizzle-kit-stub';
+import { git } from './support/git';
 import {
   commitFiles,
   type Files,
@@ -12,7 +12,7 @@ import {
   onBranch,
   trunkRepository,
   workerFile,
-} from './support/trunk-history.js';
+} from './support/trunk-history';
 
 /** Generating again waits for the next second between two migrations, as drizzle-kit numbers them to the second. */
 const REPLAY_TIMEOUT = 30_000;

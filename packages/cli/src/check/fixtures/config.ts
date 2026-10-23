@@ -1,4 +1,4 @@
-import { parseConfig } from '../../config/index.js';
+import { parseConfig } from '../../config';
 
 /** The config of the two contexts of the fixtures, with what a fixture changes over it. */
 export function config(overrides: Record<string, unknown> = {}): string {

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { KafkaDelivery } from '../src/options/kafka-delivery.js';
-import type { KafkaFailure } from '../src/options/kafka-failure.js';
-import { settingsOf } from '../src/options/settings-of.js';
-import { anEvent, PLACED } from './support/events.js';
+import type { KafkaDelivery } from '../src/options/kafka-delivery';
+import type { KafkaFailure } from '../src/options/kafka-failure';
+import { settingsOf } from '../src/options/settings-of';
+import { anEvent, PLACED } from './support/events';
 
 const failure: KafkaFailure = { kind: 'connection', code: 'ERR__TRANSPORT' };
 

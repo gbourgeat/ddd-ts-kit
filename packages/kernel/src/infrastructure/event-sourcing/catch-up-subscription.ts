@@ -1,7 +1,7 @@
-import type { StoredEvent } from '../../application/event-sourcing/stored-event.js';
-import type { CheckpointStore } from '../../application/ports/checkpoint-store.js';
-import type { EventStore } from '../../application/ports/event-store.js';
-import type { UnitOfWork } from '../../application/ports/unit-of-work.js';
+import type { StoredEvent } from '../../application/event-sourcing/stored-event';
+import type { CheckpointStore } from '../../application/ports/checkpoint-store';
+import type { EventStore } from '../../application/ports/event-store';
+import type { UnitOfWork } from '../../application/ports/unit-of-work';
 
 export interface CatchUpSubscriptionParts {
   /** The subscriber, `<context>.<name>`: the name of the projection it feeds, and of its checkpoint. */
