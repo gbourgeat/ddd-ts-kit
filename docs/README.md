@@ -132,6 +132,7 @@ limits, and a recommendation by situation.
 | [Which contexts deserve a preset](proposals/context-presets.md) | the criteria, then notification next, personal data requests as a guide; files (a capability of the platform), audit, billing and settings no |
 | [Modules inside a bounded context](proposals/modules.md) | built: sub-contexts are not a concept of the references, modules of the model are (Evans); the judgement of its gains and limits, and the spike that measured the cost on the example |
 | [The read side](proposals/read-side.md) | criteria, representations, forms, read models and projections; the page says, part by part, what is built in the runtime packages, what the CLI does not generate yet and what is not built |
+| [Velocity of the build, the checks and the tests](proposals/build-and-test-velocity.md) | studied, not built: where the time and the memory of this repository go, on a workstation and in the pipeline; the levers of Vitest, ESLint, Oxlint, the native compiler and the package managers measured on this tree; what other teams published about orchestrators, test selection and GitHub Actions; a plan in order of gain per cost, and why no orchestrator |
 
 ## Start from a question
 
