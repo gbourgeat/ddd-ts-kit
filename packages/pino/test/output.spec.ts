@@ -1,15 +1,40 @@
-import { stripVTControlCharacters } from 'node:util';
+import { execFile } from 'node:child_process';
+import { promisify, stripVTControlCharacters } from 'node:util';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { fileURLToPath } from 'node:url';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LOG_LEVELS } from '@ddd-ts-kit/kernel';
 import { pino } from 'pino';
 import pretty from 'pino-pretty';
 import { PinoLogger, createPinoLogger } from '../src';
 import { MemorySink } from './support/memory-sink';
 
+const run = promisify(execFile);
+const packageRoot = fileURLToPath(new URL('..', import.meta.url));
+
 let directory: string;
+
+/**
+ * A process with nothing else to do that logs one warning with a logger built from `options`,
+ * flushes it, then says so on its standard error: what it wrote on each.
+ */
+async function processLogging(options: string): Promise<{ readonly stdout: string; readonly stderr: string }> {
+  const program = [
+    "const { createPinoLogger } = await import('./src/index.ts');",
+    `const logger = createPinoLogger(${options});`,
+    "logger.warn('carrier slow');",
+    'await logger.flush();',
+    "process.stderr.write('flushed');",
+  ].join(' ');
+
+  const { stdout, stderr } = await run(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', program], {
+    cwd: packageRoot,
+  });
+
+  return { stdout: stripVTControlCharacters(stdout), stderr };
+}
 
 beforeEach(() => {
   directory = mkdtempSync(join(tmpdir(), 'ddd-ts-kit-pino-'));
@@ -152,6 +177,35 @@ describe('createPinoLogger, asynchronous and pretty destinations', () => {
     expect(text).not.toContain('never-shown');
   });
 
+  it('writes each line to its file at once when it writes synchronously, the default', () => {
+    const file = join(directory, 'app.log');
+    const logger = createPinoLogger({ destination: file });
+
+    logger.info('order shipped');
+
+    expect(JSON.parse(readFileSync(file, 'utf8'))).toMatchObject({ level: 'info', message: 'order shipped' });
+  });
+
+  it('writes to the standard output when it is given no destination, in JSON and in the pretty format', async () => {
+    const [json, pretty] = await Promise.all([
+      processLogging("{ service: 'shop' }"),
+      processLogging("{ format: 'pretty' }"),
+    ]);
+
+    expect(JSON.parse(json.stdout)).toMatchObject({ level: 'warn', service: 'shop', message: 'carrier slow' });
+    expect(pretty.stdout).toMatch(/^\[\d{2}:\d{2}:\d{2}\.\d{3}\] WARN: carrier slow$/m);
+  });
+
+  it('resolves its flush in a process with nothing else pending, the worker of the pretty format included', async () => {
+    const flushes = await Promise.all(
+      ["{ format: 'pretty' }", "{ format: 'pretty', asynchronous: true }", '{ asynchronous: true }'].map(
+        processLogging,
+      ),
+    );
+
+    expect(flushes.map(({ stderr }) => stderr)).toEqual(['flushed', 'flushed', 'flushed']);
+  });
+
   it('refuses a stream as the destination of the pretty format', () => {
     expect(() => createPinoLogger({ format: 'pretty', destination: new MemorySink().stream })).toThrow(TypeError);
   });
@@ -216,6 +270,41 @@ describe('PinoLogger', () => {
     const logger = createPinoLogger({ destination: new MemorySink().stream });
 
     await expect(logger.flush()).resolves.toBeUndefined();
+  });
+
+  it('never fails the code that logs, nor its flush, when its destination throws', async () => {
+    const failing = {
+      write(): never {
+        throw new Error('disk gone');
+      },
+      flush(): never {
+        throw new Error('disk gone');
+      },
+    };
+
+    const logger = new PinoLogger(pino({}, failing));
+
+    expect(() => {
+      logger.info('order shipped', { orderId: 'o-1' });
+    }).not.toThrow();
+
+    await expect(logger.flush()).resolves.toBeUndefined();
+  });
+
+  it('holds the process ten seconds at most for a flush that never answers', () => {
+    vi.useFakeTimers();
+
+    try {
+      const silent = { write: () => true, flush: () => undefined };
+
+      void new PinoLogger(pino({}, silent)).flush();
+
+      expect(vi.getTimerCount()).toBe(1);
+      vi.advanceTimersByTime(10_000);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('says which levels it writes, for a child too', () => {
