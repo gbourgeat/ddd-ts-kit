@@ -1,5 +1,5 @@
 [English](quality-baseline.md) · **Français**
-<!-- translation-of: quality-baseline.md sha256:0d4f5ae4cca4d882 -->
+<!-- translation-of: quality-baseline.md sha256:ec54ae79cbde1d6f -->
 
 # Base de qualité
 
@@ -120,6 +120,7 @@ d'abord et sur ce qui a changé ; les plus larges tournent plus tard, sur tous l
 | *specs* de bout en bout | kit : le *pipeline* seulement (`ci:test:e2e`, chaque *stack* générée et exécutée) ; exemple et projet `test:e2e` | `ci:test:e2e` | non |
 | seuils de couverture | kit : un plancher par *package* dans `vitest.config.ts`, dans `ci:test:unit` ; exemple et projet : par contexte et par couche, depuis `ddd-ts-kit.config.json`, dans `test:coverage` | `ci:test:unit` et, pour l'exemple et un projet, `ci:test:integration` | avant un *push* (l'exécution unitaire) |
 | *packages* tels que publiés | kit `ci:build` (publint, Are the Types Wrong) | kit `ci:build` ; exemple et projet `ci:build` (le build de production) | non |
+| secrets | non : pas une porte de `verify` | le job `secrets` (gitleaks sur tout l'historique) | kit, exemple et projet : les changements indexés, avant un *commit*, quand le binaire `gitleaks` est sur le chemin ; une ligne et aucun refus sinon |
 
 Sans frontière HTTP, un projet n'a pas de script de bout en bout et son *job* de *pipeline* le
 dit ; sous jest, les *specs* des adaptateurs tournent avec les *specs* unitaires. Les *hooks* ne

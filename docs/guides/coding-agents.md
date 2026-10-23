@@ -45,7 +45,9 @@ Twenty-five skills, in the order a project meets them:
 Six agents: `domain-explorer` (read-only answers about what exists and where),
 `context-builder` (builds the slices of one context in its own worktree),
 `domain-test-writer` (turns `it.todo` entries into specs) and `architecture-reviewer`
-(read-only review of a diff, a branch or a context), `acceptance-judge` (judges a change to a
+(read-only review of a diff, a branch or a context, under the `REVIEW.md` of the project when it
+has one: the passes of the team on top of the agent's method, each finding tagged with its pass),
+`acceptance-judge` (judges a change to a
 locked acceptance test, independently of the session that made it, and writes its verdict), and
 `story-verifier` (read-only verification of a story at its close, in a fresh context: it starts
 the application as the end-to-end tests do, exercises the routes of the story and the two nearest
@@ -88,8 +90,24 @@ a question to the user, so what Claude Code asks the project owner is said to th
 and left to the checks of the pipeline.
 
 Without any plugin, a project still guides every agent: `init` writes `AGENTS.md`, the guide
-Codex, Copilot and most agents read (`CLAUDE.md` imports it), the rules by layer for Claude Code
+Codex, Copilot and most agents read (`CLAUDE.md` imports it; its `## Verifying your work`
+section gives each verification command with the lines it prints when it passes, to run before
+reporting done and to paste, a failing check fixed in the code and never in the check, and its
+`## Mistakes seen here` section is the team's: a review finding or a `TODO(review)` made twice
+becomes a line there, or a rule of the config, the rule of two the `architecture-reviewer`
+agent and the `quality-gate` skill apply, after the AI-native SDLC playbook of Anthropic,
+[PDF](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)),
+the rules by layer for Claude Code
 in `.claude/rules/` and the same rules for Copilot in `.github/instructions/`, scoped by
-`applyTo`, and, with the GitHub pipeline, `copilot-setup-steps.yml`, which installs the project
+`applyTo`, `REVIEW.md`, the review policy every reviewer reads, written once and owned by the
+team ([Working as a team](team-workflow.md#review-focus-per-layer)), `.claude/settings.json`,
+the permissions of Claude Code (the checks and generators run without asking; `.env` and the
+generated contracts are never read or edited; `git push`, `npm publish`, the files that hold
+the rules and the pipeline, the migrations of the ORM, `Dockerfile`, `docker-compose.yml` and
+`docker/` ask first: the list is in the
+[README of the CLI](../../packages/cli/README.md#init), and `ddd-ts-kit doctor` says what a
+project lacks of it; `init --agent-profile regulated` adds the sandbox block and the two hooks of
+a regulated organisation, [Sandboxing coding agents](agent-sandbox.md#the-regulated-profile)), and, with the GitHub
+pipeline, `copilot-setup-steps.yml`, which installs the project
 before the Copilot cloud agent starts. `npm run verify` and the pipeline hold every agent to
 the same rules.

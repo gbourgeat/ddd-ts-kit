@@ -33,3 +33,17 @@ describe('config/valid on the contexts and the rules a team wrote', () => {
     ]);
   });
 });
+
+describe('config/valid on the profile of the agents', () => {
+  const aboutProfile = (root: string): string[] =>
+    reported(root, 'config/valid')
+      .map(({ message }) => message)
+      .filter((message) => message.includes('agents.profile'));
+
+  it('reports a profile init does not write, and accepts the regulated one or none', () => {
+    expect(aboutProfile(projectWith({}, { agents: { profile: 'lax' } }))).toEqual(['"agents.profile" is "lax".']);
+    expect(aboutProfile(projectWith({}, { agents: { profile: 'none' } }))).toEqual(['"agents.profile" is "none".']);
+    expect(aboutProfile(projectWith({}, { agents: { profile: 'regulated' } }))).toEqual([]);
+    expect(aboutProfile(projectWith({}, {}))).toEqual([]);
+  });
+});

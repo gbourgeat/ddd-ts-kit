@@ -26,27 +26,62 @@ owner.
 | `src/platform/`, `src/main.ts`, `ddd-ts-kit.config.json`, the pipeline files | a named platform owner (often the tech lead) | propose; these files hold the rules |
 | `docs/context-map.md` written sections, `docs/adr/` | the tech lead, with the owners concerned | propose |
 
-On GitHub or GitLab, a code owners file expresses this table mechanically. The kit does not
-generate one: write it by hand from the context list (`npx ddd-ts-kit list`). For a project
-with an `appointments` and an `analytics` context:
+On GitHub or GitLab, a code owners file expresses this table mechanically, and the kit writes
+it from the config: `contexts.<name>.owners` names the owners of a context, `owners.platform`
+the platform owner ([`ddd-ts-kit.config.json`](../CONFIG.md#owners)), and `npx ddd-ts-kit docs`
+writes `CODEOWNERS` at the root of the project, where both platforms read it, between
+`# ddd-ts-kit:code-owners` markers; `docs --check` reports it stale when an owner, a context or
+an import of the shared kernel changed, and a file the team wrote by hand keeps its lines, the
+generated block appended after them. For a project with an `appointments` and an `analytics`
+context, `analytics` downstream of `appointments`:
 
-```text
-# .github/CODEOWNERS (GitHub) or CODEOWNERS (GitLab): the last matching line wins
-src/contexts/appointments/      @clinic/appointments-team
-src/contexts/analytics/         @clinic/data-team
-src/shared-kernel/              @clinic/appointments-team @clinic/data-team
-src/platform/                   @clinic/tech-lead
-src/main.ts                     @clinic/tech-lead
-ddd-ts-kit.config.json          @clinic/tech-lead
-.github/workflows/              @clinic/tech-lead
-docs/adr/                       @clinic/tech-lead
+```json
+{
+  "contexts": {
+    "appointments": { "classification": "core", "upstreams": [], "owners": ["@clinic/appointments-team"] },
+    "analytics": {
+      "classification": "supporting",
+      "upstreams": [{ "context": "appointments", "relationship": "conformist" }],
+      "owners": ["@clinic/data-team"]
+    }
+  },
+  "owners": { "platform": ["@clinic/tech-lead"] }
+}
 ```
 
-With branch protection asking for a code owner's review, a change under
-`src/contexts/appointments/` cannot merge without the appointments team. A line with two
-owners asks for one of them, not both: the joint approval of the shared kernel is a rule the
-team keeps, which the file alone does not enforce. The consumers of a `published-language/`
-are asked by name on its pull requests, as reviewers.
+```text
+# ddd-ts-kit:code-owners
+src/contexts/analytics/                      @clinic/data-team
+src/contexts/analytics/published-language/   @clinic/data-team
+src/contexts/appointments/                   @clinic/appointments-team
+# The consumers of the published language of appointments, to ask as reviewers: analytics (@clinic/data-team).
+src/contexts/appointments/published-language/ @clinic/appointments-team
+src/shared-kernel/                           @clinic/data-team
+src/platform/                                @clinic/tech-lead
+src/main.ts                                  @clinic/tech-lead
+ddd-ts-kit.config.json                       @clinic/tech-lead
+lefthook.yml                                 @clinic/tech-lead
+commitlint.config.mjs                        @clinic/tech-lead
+.github/workflows/                           @clinic/tech-lead
+.github/actions/                             @clinic/tech-lead
+REVIEW.md                                    @clinic/tech-lead
+AGENTS.md                                    @clinic/tech-lead
+docs/adr/                                    @clinic/tech-lead
+# /ddd-ts-kit:code-owners
+```
+
+Each context's tree and its `published-language/` go to its owners; `src/shared-kernel/` to the
+owners of every context whose files import it (here `analytics` alone does; while none does, to
+the platform owner); the platform, the composition root, the config, the pipeline files, the
+review policy, the guide and the records to the platform owner. With branch protection asking
+for a code owner's review, a change under `src/contexts/appointments/` cannot merge without the
+appointments team. A line with two owners asks for one of them, not both: the joint approval of
+the shared kernel is a rule the team keeps, which the file alone does not enforce. The consumers
+of a `published-language/` are not its owners: the comment above its line names them, from the
+declared relationships, with their owners, and they are asked by name on its pull requests, as
+reviewers. The generated file with the branch protection of `branch-protection.md` is what
+answers who approved, the separation of duties the AI-native SDLC playbook of Anthropic rests
+on.
 
 Why one owner: a model stays coherent only if somebody can say no. Conway's law works in both
 directions (Skelton and Pais call the deliberate use the inverse Conway manoeuvre): boundaries
@@ -197,8 +232,26 @@ cannot judge. What to look for differs by layer:
 | `published-language/` | Would a consumer understand this payload without asking? Is anything internal or personal leaking? Is this additive, or a new version? | importing outside the allow-list |
 | tests | Does the name read as a business rule? Does it assert an outcome through the public API? | mocks, a missing spec file, a missing builder |
 
+The policy a review applies is a file at the root of the project, `REVIEW.md`, written once by
+`ddd-ts-kit init` and owned by the team from then on (`init --force` leaves it alone, and
+`ddd-ts-kit doctor` says when a project has none). It names the passes of a review, each finding
+tagged with its pass: bugs (a wrong business rule, a state the aggregate should not reach, a
+replay that is not idempotent, a failure path without a test), security (a search not narrowed
+by the access scope, a field reserved to a permission that leaks, personal data in a log or an
+error, an error code not declared on its route, a tenant read outside the scope) and
+compliance (the diff against the design review of its row, the acceptance of its story, the
+records of `docs/adr/` and the rules); what Important means in this project; a cap of five
+nits per review, a recurring nit becoming a line of `AGENTS.md` under `## Mistakes seen here`
+or a rule of the config; and what is not reported (generated files, anything `npm run verify`
+already refuses). A team adds its own pass there (a data classification rule, a brand rule),
+and the `architecture-reviewer` agent, a human reviewer and any review bot read the same file.
+The file is the review policy of the AI-native SDLC playbook of Anthropic
+([PDF](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)),
+with the kit's own lists.
+
 The plugin offers the same split as a tool: the `architecture-reviewer` agent reviews a diff
-or a whole context read-only, starting from the checker's output and then judging what tools
+or a whole context read-only, starting from the checker's output, then `REVIEW.md` on top of
+its own method, then judging what tools
 cannot. It sorts its findings: a blocking one is fixed before the merge; a non-blocking one
 comes with the `TODO(review): #<row id> <remark>` line to write at its `file:line`, so that the
 remark lives in the code rather than in a pull request that is soon closed, tied to the row it is

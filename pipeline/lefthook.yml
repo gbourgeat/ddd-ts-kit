@@ -17,6 +17,10 @@ pre-commit:
       run: npx --no -- ddd-ts-kit check {staged_files}
     - name: commit size
       run: npx --no -- ddd-ts-kit check --commit-size --staged
+    - name: secrets
+      # The staged changes, before they are committed, when gitleaks is installed (`gitleaks protect --staged` before
+      # 8.19); otherwise one line, and the pipeline scans the whole history anyway.
+      run: 'if command -v gitleaks >/dev/null 2>&1; then gitleaks git --pre-commit --staged --redact --no-banner; else echo "secrets: gitleaks is not installed, the staged changes are not scanned here; the pipeline scans the whole history."; fi'
 
 pre-push:
   jobs:

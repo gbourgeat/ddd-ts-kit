@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:ccccdf927d42c122 -->
+<!-- translation-of: coding-agents.md sha256:0d6f22536c0ddbb9 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -46,7 +46,9 @@ Vingt-cinq skills, dans l'ordre où un projet les rencontre :
 Six agents : `domain-explorer` (réponses en lecture seule sur ce qui existe et où),
 `context-builder` (construit les tranches d'un contexte dans son propre worktree),
 `domain-test-writer` (transforme les entrées `it.todo` en specs), `architecture-reviewer`
-(revue en lecture seule d'un diff, d'une branche ou d'un contexte), `acceptance-judge` (juge un
+(revue en lecture seule d'un diff, d'une branche ou d'un contexte, sous le `REVIEW.md` du projet
+quand il en a un : les passes de l'équipe par-dessus la méthode de l'agent, chaque constat
+étiqueté de sa passe), `acceptance-judge` (juge un
 changement d'un test d'acceptation verrouillé, indépendamment de la session qui l'a fait, et écrit
 son verdict) et `story-verifier` (vérification en lecture seule d'une *story* à sa clôture, dans
 un contexte neuf : il démarre l'application comme le font les tests de bout en bout, exerce les
@@ -95,8 +97,26 @@ soumet au propriétaire du projet y est signalé à l'utilisateur, et laissé au
 pipeline.
 
 Même sans plugin, un projet guide chaque agent : `init` écrit `AGENTS.md`, le guide que lisent
-Codex, Copilot et la plupart des agents (`CLAUDE.md` l'importe), les règles par couche pour
+Codex, Copilot et la plupart des agents (`CLAUDE.md` l'importe ; sa section `## Verifying your
+work` donne chaque commande de vérification avec les lignes qu'elle affiche quand elle passe, à
+lancer avant de se dire fini et à coller, une vérification qui échoue corrigée dans le code et
+jamais dans la vérification, et sa section `## Mistakes seen here` est celle de l'équipe : un
+constat de revue ou un `TODO(review)` fait deux fois y devient une ligne, ou une règle de la
+configuration, la règle de deux qu'appliquent l'agent `architecture-reviewer` et le *skill*
+`quality-gate`, d'après le *playbook* AI-native SDLC d'Anthropic,
+[PDF](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)),
+les règles par couche pour
 Claude Code dans `.claude/rules/` et les mêmes règles pour Copilot dans `.github/instructions/`,
-ciblées par `applyTo`, et, avec le pipeline GitHub, `copilot-setup-steps.yml`, qui installe le
+ciblées par `applyTo`, `REVIEW.md`, la politique de revue que lit chaque relecteur, écrite une
+fois et possédée par l'équipe ([Travailler en équipe](team-workflow.fr.md#ce-que-la-revue-regarde-dans-chaque-couche)),
+`.claude/settings.json`, les permissions de Claude Code (les vérifications et les générateurs
+s'exécutent sans demander ; `.env` et les contrats générés ne sont jamais lus ni modifiés ;
+`git push`, `npm publish`, les fichiers qui portent les règles et le pipeline, les migrations de
+l'ORM, `Dockerfile`, `docker-compose.yml` et `docker/` demandent d'abord : la liste est dans le
+[README de la CLI](../../packages/cli/README.fr.md#init), et `ddd-ts-kit doctor` dit ce qu'un
+projet en manque ; `init --agent-profile regulated` ajoute le bloc de bac à sable et les deux
+*hooks* d'une organisation réglementée,
+[Mettre les agents de code en bac à sable](agent-sandbox.fr.md#le-profil-réglementé)), et, avec le
+pipeline GitHub, `copilot-setup-steps.yml`, qui installe le
 projet avant le démarrage de l'agent cloud de Copilot. `npm run verify` et le pipeline tiennent
 chaque agent aux mêmes règles.

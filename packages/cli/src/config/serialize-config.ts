@@ -45,6 +45,7 @@ function writtenContexts(config: Config): Record<string, unknown> {
       upstreams: context.upstreams,
       ...(context.extraDirectories.length > 0 ? { extraDirectories: context.extraDirectories } : {}),
       ...(context.deployable ? { deployable: true } : {}),
+      ...(context.owners.length > 0 ? { owners: context.owners } : {}),
       ...(context.modules.length > 0 ? { modules: writtenModules(context.modules) } : {}),
     },
   ]);
@@ -70,7 +71,16 @@ function optionalKeys(config: Config): Record<string, unknown> {
     ...writtenCommit(commit),
     ...(worker ? { worker } : {}),
     ...(config.worktrees === 'advised' ? {} : { worktrees: config.worktrees }),
+    ...teamKeys(config),
     ...pipelineKeys(config),
+  };
+}
+
+/** How the team holds its agents and who owns what, once a project says it. */
+function teamKeys({ agents, owners }: Config): Record<string, unknown> {
+  return {
+    ...(agents.profile === undefined ? {} : { agents: { profile: agents.profile } }),
+    ...(owners.platform.length > 0 ? { owners } : {}),
   };
 }
 

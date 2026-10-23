@@ -9,7 +9,7 @@ import { formatJson } from '../json/format-json.js';
 import { parseContextName, toName } from '../naming/index.js';
 import { inDialect } from '../package-manager/in-dialect.js';
 import { setUpSdk } from '../sdk/index.js';
-import { readTemplate, renderTemplate } from '../templating/index.js';
+import { readTemplate, renderTemplate, type RenderContext } from '../templating/index.js';
 import { VERSION } from '../version.js';
 import { Workspace, type WorkspaceReport } from '../workspace/index.js';
 import { applyPreset } from '../presets/apply-preset.js';
@@ -17,13 +17,16 @@ import { presetNamed } from '../presets/preset-named.js';
 import { addContext } from './add-context.js';
 import { existingName } from './existing-name.js';
 import { initFiles } from './files/init-files.js';
+import { REVIEW_POLICY } from './files/guidance-files.js';
 import { keepFlatPlatform } from '../platform-folders/index.js';
 import { ignoreWorktrees } from './ignore-worktrees.js';
 import { writeManifest } from './manifest/write-manifest.js';
+import { recordAgentProfile } from './record-agent-profile.js';
 import { recordNoOutbox } from './record-no-outbox.js';
 import { resolveStack, type StackOptions } from './stack/resolve-stack.js';
 import { templateVars } from './template-vars.js';
 import { writeAgentSettings } from './write-agent-settings.js';
+import { writeProfileHooks } from './write-profile-hooks.js';
 import { writeContracts } from './write-contracts.js';
 import { writeCopilotInstructions } from './write-copilot-instructions.js';
 import { writeCopilotSettings } from './write-copilot-settings.js';
@@ -51,13 +54,15 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   const flat = keepFlatPlatform(ws, config);
 
   ws.create(CONFIG_FILE, configText(ws, config));
+  recordAgentProfile(ws, config);
   writeManifest(ws, { config, projectName, force: options.force });
   writeTypeScriptConfigs(ws, config);
   writeFiles(ws, { config, projectName, flat });
   ignoreWorktrees(ws);
   writeCopilotInstructions(ws);
   ws.create(DEPCRUISE_FILE, renderCruiseFile(config));
-  writeAgentSettings(ws);
+  writeAgentSettings(ws, config);
+  writeProfileHooks(ws, config);
   writeCopilotSettings(ws);
   ws.create(`${config.sharedKernelDir}/.gitkeep`, '');
 
@@ -166,6 +171,17 @@ function writeFiles(ws: Workspace, { config, projectName, flat }: Written): void
     ws.note(
       `Files of ${config.platformDir} are flat, as a version before their folders wrote them: --force rewrote them there. \`npx ddd-ts-kit platform-folders\` moves them to their folders, with every import.`,
     );
+  }
+
+  writeReviewPolicy(ws, context);
+}
+
+/** The review policy is the team's once written: created when missing, never replaced, not even with --force. */
+function writeReviewPolicy(ws: Workspace, context: RenderContext): void {
+  const [target, template] = REVIEW_POLICY;
+
+  if (!ws.exists(target)) {
+    ws.create(target, renderTemplate(template, context));
   }
 }
 

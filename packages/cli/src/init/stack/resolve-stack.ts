@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
+  AGENT_PROFILES,
   AUDIT_MODES,
   AUTHN_STACKS,
   AUTHZ_STACKS,
@@ -58,7 +59,7 @@ export function resolveStack(root: string, options: StackOptions): Config {
   const recorded = recordedConfig(root, options.force);
 
   if (recorded !== undefined && !options.force) {
-    return supportedAlias(recorded);
+    return supportedAlias({ ...recorded, agents: agentsOf(options, recorded) });
   }
 
   const asked = recorded === undefined ? options : { ...recordedOptions(recorded), ...options };
@@ -70,7 +71,23 @@ export function resolveStack(root: string, options: StackOptions): Config {
   const ci = { extras: resolveCiExtras(options.ciExtras, recorded, stack.ci) };
   const config = supportedAlias({ ...(recorded ?? fresh), importAlias, importExtension, stack, ci });
 
-  return { ...config, worker: config.worker || hasWorker(root, config), sdk: sdkOf(options, config) };
+  return {
+    ...config,
+    worker: config.worker || hasWorker(root, config),
+    sdk: sdkOf(options, config),
+    agents: agentsOf(options, config),
+  };
+}
+
+/** `--agent-profile` sets the profile of the agents or removes it (`none`), with or without `--force`; without the flag the config keeps its own. */
+function agentsOf(options: StackOptions, config: Config): Config['agents'] {
+  const asked = choose(AGENT_PROFILES, options.agentProfile, 'agent-profile');
+
+  if (asked === undefined) {
+    return config.agents;
+  }
+
+  return { profile: asked === 'none' ? undefined : asked };
 }
 
 /** `--sdk` records the clients with their default name; a config that has them keeps its own. */

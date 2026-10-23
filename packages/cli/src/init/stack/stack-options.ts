@@ -45,5 +45,7 @@ export interface StackOptions {
   readonly allowNoOutbox?: string;
   /** `--sdk`: the typed clients of the contract are generated with the project. */
   readonly sdk?: boolean;
+  /** `regulated` or `none`: the profile of the coding agents, recorded under `agents.profile`. */
+  readonly agentProfile?: string;
   readonly force: boolean;
 }
