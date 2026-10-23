@@ -1,4 +1,4 @@
-import type { ContextConfig, Upstream } from './config.js';
+import type { ContextConfig, ModuleConfig, Upstream } from './config.js';
 import { isRecord } from './values/is-record.js';
 import { posix } from './values/posix.js';
 import { strings } from './values/strings.js';
@@ -15,7 +15,16 @@ export function parseContext(value: unknown): ContextConfig {
     extraDirectories: extra.map(parseExtraDirectory).filter((directory) => directory !== undefined),
     deployable: raw['deployable'] === true,
     owners: strings(raw['owners'], []),
+    modules: isRecord(raw['modules']) ? Object.entries(raw['modules']).map(parseModule) : [],
   };
+}
+
+/** `"<module>": {}`, or `"<module>": { "classification": ... }` when its subdomain is not classified as its context. */
+function parseModule([name, value]: [string, unknown]): ModuleConfig {
+  const classification =
+    isRecord(value) && typeof value['classification'] === 'string' ? value['classification'] : undefined;
+
+  return classification === undefined ? { name } : { name, classification };
 }
 
 function parseUpstream(value: unknown): Upstream | undefined {

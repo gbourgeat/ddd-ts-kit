@@ -19,6 +19,8 @@ export interface ContextConfig {
   readonly classification: string;
   readonly upstreams: readonly Upstream[];
   readonly extraDirectories: readonly string[];
+  /** The names of the modules of the model of the context, `contexts.<name>.modules`: one folder level under `domain/` and `application/`. */
+  readonly modules: readonly string[];
 }
 
 export type Style = 'declared' | 'explicit';

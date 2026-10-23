@@ -9,6 +9,8 @@ import { renderFolderDeclarations } from './render-folder-declarations.js';
 export interface DeclarationsSource {
   readonly context: string;
   readonly files: readonly string[];
+  /** The modules of the model the context declares. */
+  readonly modules: readonly string[];
   /** How a generated import names a file of the context: its alias, ending as the project writes its imports. */
   readonly specifierOf: (file: string) => string;
   /** The registrations of what the classes of these role files are given, all of one folder. */
@@ -24,13 +26,15 @@ export interface DeclarationsSource {
 export function renderDeclarations({
   context,
   files,
+  modules,
   specifierOf,
   injectedIn,
 }: DeclarationsSource): Map<string, string> {
   const byFolder = new Map<string, string[]>();
+  const roleFiles = [...new Set(files)].filter((candidate) => declaredRoleOf(candidate, modules) !== undefined);
 
-  for (const file of [...new Set(files)].filter((candidate) => declaredRoleOf(candidate) !== undefined).sort()) {
-    const folder = folderDeclarationsFile(declarationsFolderOf(file));
+  for (const file of roleFiles.sort()) {
+    const folder = folderDeclarationsFile(declarationsFolderOf(file, modules));
 
     byFolder.set(folder, [...(byFolder.get(folder) ?? []), file]);
   }
@@ -38,7 +42,7 @@ export function renderDeclarations({
   const rendered = new Map<string, string>();
 
   for (const [folderFile, roleFiles] of [...byFolder].sort(([left], [right]) => byPath(left, right))) {
-    rendered.set(folderFile, renderFolderDeclarations(roleFiles, specifierOf, injectedIn(roleFiles)));
+    rendered.set(folderFile, renderFolderDeclarations(roleFiles, { specifierOf, modules }, injectedIn(roleFiles)));
   }
 
   rendered.set(barrelFile(context), summaryOf([...rendered.keys()], specifierOf));

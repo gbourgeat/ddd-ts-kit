@@ -5,7 +5,7 @@ import { mergeSlicesRows } from '../src/merge/merge-slices-rows.js';
 import { mergeStoredEventsLock } from '../src/merge/merge-stored-events-lock.js';
 import { resolveConflict } from '../src/merge/resolve-conflict.js';
 
-const REPO: MergeRepository = { top: '/repository', prefix: '', contextsDir: 'src/contexts' };
+const REPO: MergeRepository = { top: '/repository', prefix: '', contextsDir: 'src/contexts', modules: {} };
 
 /** A conflict as diff3 markers write it, between settled lines. */
 function conflict(ours: readonly string[], base: readonly string[], theirs: readonly string[]): string[] {

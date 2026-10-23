@@ -2,7 +2,7 @@ import { Readable } from 'node:stream';
 import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus, type Actor } from '@ddd-ts-kit/kernel';
-import { AttachAppointmentDocumentCommand } from '@/contexts/scheduling/application/commands/attach-appointment-document/attach-appointment-document.command';
+import { AttachAppointmentDocumentCommand } from '@/contexts/scheduling/application/calendars/commands/attach-appointment-document/attach-appointment-document.command';
 import { AttachAppointmentDocumentController } from '@/contexts/scheduling/presentation/http/appointments/attach-appointment-document/attach-appointment-document.controller';
 
 const caller: Actor = { id: 'user-1', type: 'user', roles: [], attributes: {} };

@@ -1,5 +1,5 @@
 [English](file-storage.md) · **Français**
-<!-- translation-of: file-storage.md sha256:e6e1eb0862c51c32 -->
+<!-- translation-of: file-storage.md sha256:2ed1b2ae92ef8ea2 -->
 
 # Stockage de fichiers
 
@@ -269,7 +269,7 @@ export class AttachDocumentHandler implements CommandHandler<AttachDocumentComma
 
 L'application d'exemple porte ce cas d'usage de bout en bout, avec une *spec* qui valide et
 annule contre une vraie base de données et un vrai répertoire :
-[`attach-appointment-document`](../../examples/scheduling/src/contexts/scheduling/application/commands/attach-appointment-document/attach-appointment-document.handler.ts)
+[`attach-appointment-document`](../../examples/scheduling/src/contexts/scheduling/application/calendars/commands/attach-appointment-document/attach-appointment-document.handler.ts)
 et
 [`document-lands-with-its-file.spec.ts`](../../examples/scheduling/src/contexts/scheduling/test/integration/document-lands-with-its-file.spec.ts).
 

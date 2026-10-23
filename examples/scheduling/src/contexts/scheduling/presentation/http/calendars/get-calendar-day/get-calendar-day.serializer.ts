@@ -1,5 +1,5 @@
 import { Serializer } from '@ddd-ts-kit/http';
-import type { GetCalendarDayResult } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.result';
+import type { GetCalendarDayResult } from '@/contexts/scheduling/application/calendars/queries/get-calendar-day/get-calendar-day.result';
 import type { GetCalendarDayAnswer } from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.answer';
 
 /** The one place that turns the day of a calendar into what a client reads: instants as ISO 8601 text. */

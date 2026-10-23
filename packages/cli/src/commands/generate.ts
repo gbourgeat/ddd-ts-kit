@@ -1,13 +1,10 @@
-import { CONFIG_FILE, parseConfig, readConfig } from '../config/index.js';
-import { DEPCRUISE_FILE } from '../depcruise/depcruise-file.js';
-import { renderCruiseFile } from '../depcruise/render-cruise-file.js';
-import { CONTEXT_MAP } from '../docs/context-map-file.js';
-import { writeDocs } from '../docs/write-docs.js';
+import { readConfig } from '../config/index.js';
 import { CliError } from '../cli-error.js';
 import { findKind } from '../generate/find-kind.js';
 import type { Kind, KindFlags } from '../generate/kind.js';
 import { KINDS } from '../generate/kinds.js';
-import { refreshBarrels, type SingleFile } from '../generate/refresh-barrels.js';
+import { placeInModules } from '../generate/place-in-modules.js';
+import { refreshDocs } from '../generate/refresh-docs.js';
 import { refuseSharedWrites } from '../generate/refuse-shared-writes.js';
 import { stopIgnoringValidation } from '../generate/stop-ignoring-validation.js';
 import { toName } from '../naming/index.js';
@@ -27,7 +24,18 @@ export const generateCommand: Command = (argv, io) => {
   const { config } = readConfig(root);
 
   keepFlatPlatform(ws, config);
-  kind.run({ ws, config, args: rest, flags: flagsOf(args) });
+
+  const flags = flagsOf(args);
+  const context = kind.positionals[0] === 'context' ? toName(rest[0] ?? '').kebab : undefined;
+
+  const stopPlacing = placeInModules(ws, config, {
+    context,
+    module: flags.module,
+    command: ['generate', ...argv].join(' '),
+  });
+
+  kind.run({ ws, config, args: rest, flags });
+  stopPlacing();
   // A worker confined to its context leaves another context in the single declarations file of 0.84: the trunk moves it.
   refreshDocs(ws, args.flag('local-only') ? 'keep' : 'move');
 
@@ -80,6 +88,7 @@ const OPTIONS = {
   mapper: SWITCH,
   serializer: SWITCH,
   cache: TEXT,
+  module: TEXT,
   'event-sourced': SWITCH,
   reason: TEXT,
   number: TEXT,
@@ -95,28 +104,6 @@ const OPTIONS = {
 /** One flag may be a switch for a kind and a text for another: `--command` of a route, `--command <UseCase>` of a job. */
 function optionsOf(kind: Kind | undefined): Record<string, typeof TEXT | typeof SWITCH | typeof TEXTS> {
   return { ...OPTIONS, ...Object.fromEntries((kind?.textFlags ?? []).map((flag) => [flag, TEXT])) };
-}
-
-/** Keeps what is derived from the config and the tree in step with what was just scaffolded, once the project has it. */
-function refreshDocs(ws: Workspace, singleFile: SingleFile): void {
-  const config = ws.read(CONFIG_FILE);
-
-  if (config === undefined) {
-    return;
-  }
-
-  const current = parseConfig(JSON.parse(config));
-
-  refreshBarrels(ws, current, singleFile);
-
-  if (ws.exists(CONTEXT_MAP)) {
-    writeDocs(ws, current, singleFile);
-  }
-
-  // The import graph rules are derived from the config: a new context or upstream changes them.
-  if (ws.exists(DEPCRUISE_FILE)) {
-    ws.update(DEPCRUISE_FILE, renderCruiseFile(current));
-  }
 }
 
 function requestedKind(name: string | undefined, rest: readonly string[]): Kind {
@@ -174,6 +161,7 @@ const TEXT_FLAGS = [
   'prefix',
   'role',
   'cache',
+  'module',
 ] as const;
 
 function flagsOf(args: Arguments): KindFlags {

@@ -6,8 +6,8 @@ import {
   announceDomainEvents,
   unitOfWorkStage,
 } from '@ddd-ts-kit/kernel';
-import { CalendarAppointmentTypeDefinedEventHandler } from '@/contexts/scheduling/application/event-handlers/calendar-appointment-type-defined.event-handler';
-import { CalendarAppointmentTypeDefined } from '@/contexts/scheduling/domain/events/calendar-appointment-type-defined.event';
+import { CalendarAppointmentTypeDefinedEventHandler } from '@/contexts/scheduling/application/calendars/event-handlers/calendar-appointment-type-defined.event-handler';
+import { CalendarAppointmentTypeDefined } from '@/contexts/scheduling/domain/calendars/events/calendar-appointment-type-defined.event';
 
 describe('When an appointment type is defined on a calendar', () => {
   it('asks, before the commit, for the answers filed under the calendar to be purged after it', async () => {

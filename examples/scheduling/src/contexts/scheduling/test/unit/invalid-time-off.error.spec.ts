@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { InvalidTimeOff } from '@/contexts/scheduling/domain/errors/invalid-time-off.error';
+import { InvalidTimeOff } from '@/contexts/scheduling/domain/calendars/errors/invalid-time-off.error';
 
 describe('InvalidTimeOff', () => {
   it('refuses with the code INVALID_TIME_OFF, its message and its facts', () => {

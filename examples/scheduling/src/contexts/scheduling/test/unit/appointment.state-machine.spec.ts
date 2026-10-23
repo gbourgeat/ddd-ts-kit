@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mermaidOfStateMachine } from '@ddd-ts-kit/kernel';
-import { appointmentLifecycle } from '@/contexts/scheduling/domain/state-machines/appointment.state-machine';
-import { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
+import { appointmentLifecycle } from '@/contexts/scheduling/domain/calendars/state-machines/appointment.state-machine';
+import { AppointmentStatus } from '@/contexts/scheduling/domain/calendars/vocabularies/appointment-status.vocabulary';
 
 const startsAt = new Date('2026-03-02T09:00:00.000Z');
 const before = { appointmentId: 'appointment-1', at: new Date('2026-03-02T08:00:00.000Z'), startsAt };

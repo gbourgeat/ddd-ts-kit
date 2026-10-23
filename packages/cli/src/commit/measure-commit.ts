@@ -15,7 +15,7 @@ export function measureCommit(root: string, config: Config, staged: boolean): Co
     staged,
     files: counted.length,
     lines,
-    limits: config.commit,
+    limits: { maxFiles: config.commit.maxFiles, maxLines: config.commit.maxLines },
     over: counted.length > config.commit.maxFiles || lines > config.commit.maxLines,
     slices: slicesOf(
       config,

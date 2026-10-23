@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus, type Actor } from '@ddd-ts-kit/kernel';
-import { GetAppointmentDocumentQuery } from '@/contexts/scheduling/application/queries/get-appointment-document/get-appointment-document.query';
+import { GetAppointmentDocumentQuery } from '@/contexts/scheduling/application/calendars/queries/get-appointment-document/get-appointment-document.query';
 import { GetAppointmentDocumentController } from '@/contexts/scheduling/presentation/http/appointments/get-appointment-document/get-appointment-document.controller';
 
 const caller: Actor = { id: 'user-1', type: 'user', roles: [], attributes: {} };

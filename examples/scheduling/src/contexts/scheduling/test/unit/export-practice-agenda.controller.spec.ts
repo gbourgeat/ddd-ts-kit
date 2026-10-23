@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Representations, controllerRoute, executeRoute, type RouteResponse } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus, type Actor } from '@ddd-ts-kit/kernel';
-import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.query';
+import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/calendars/queries/search-practice-agenda/search-practice-agenda.query';
 import { ExportPracticeAgendaController } from '@/contexts/scheduling/presentation/http/practices/export-practice-agenda/export-practice-agenda.controller';
 import { AgendaEntrySerializer } from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';
 import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder';

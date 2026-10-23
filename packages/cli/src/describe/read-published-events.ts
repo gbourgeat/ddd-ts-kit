@@ -1,6 +1,7 @@
 import type { PublishedEventFact } from './context-description.js';
 import type { ContextSources } from './context-sources.js';
 import { readEventDefinitions, type EventDefinition } from './read-event-definitions.js';
+import { roleFilesOf } from '../model-modules/index.js';
 
 const FOLDER = 'application/integration/publishers';
 
@@ -28,11 +29,12 @@ interface Publisher {
   readonly source: string;
 }
 
-function publishersOf({ ws, directory }: ContextSources): Publisher[] {
-  return ws
-    .list(`${directory}/${FOLDER}`)
-    .filter((file) => file.endsWith('.publisher.ts'))
-    .map((file) => ws.read(`${directory}/${FOLDER}/${file}`) ?? '')
+function publishersOf(sources: ContextSources): Publisher[] {
+  const { ws } = sources;
+
+  return roleFilesOf(ws, sources, FOLDER)
+    .filter(({ name }) => name.endsWith('.publisher.ts'))
+    .map(({ path }) => ws.read(path) ?? '')
     .map((source) => ({ name: /\bexport class (\w+)/.exec(source)?.[1] ?? '', source }))
     .filter((publisher) => publisher.name !== '')
     .sort((left, right) => left.name.localeCompare(right.name));

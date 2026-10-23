@@ -3,7 +3,7 @@ import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { AllowAll } from '@ddd-ts-kit/auth/testing';
 import { Criteria, scoped } from '@ddd-ts-kit/kernel';
 import { practiceMemberAddedV1, practiceMemberRemovedV1 } from '@/contexts/identity/published-language/index';
-import type { PractitionerEntry } from '@/contexts/scheduling/application/ports/practitioner-directory.port';
+import type { PractitionerEntry } from '@/contexts/scheduling/application/calendars/ports/practitioner-directory.port';
 import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 type Role = 'manager' | 'practitioner' | 'assistant';

@@ -8,7 +8,7 @@ description: >-
   review, the verification, the pull request and a report of every provisional decision and
   compromise. Run by the user, with /ddd-ts-kit:story, once per story; several terminals take
   several stories at once.
-argument-hint: "<story code> [the story in plain words, a file, or a tracker key]"
+argument-hint: "<story code> [--headless] [the story in plain words, a file, an intent, or a tracker key]"
 disable-model-invocation: true
 allowed-tools:
   - Read
@@ -38,10 +38,14 @@ until phase 5 is met. Reading costs: [../start/token-economy.md](../start/token-
 
 ## 0. Its worktree
 
-From the checkout of the trunk, after `git fetch`: `npx ddd-ts-kit story-scope $0`. It opens
+From the checkout of the trunk, after `git fetch`: `npx ddd-ts-kit story-scope $0`, with
+`--from <file>` when `$ARGUMENTS` names an intent (`docs/architecture/intents/<slug>.md`,
+written by the `intent` skill and accepted by the owner: `story-scope` refuses one whose header
+is not `Status: accepted`) or an incident record (`docs/architecture/incidents/<id>.md`). It opens
 `.worktrees/<story>` on `story/<story>`, cut from the branch the trunk follows (`origin/main`)
-when it has one (or finds it again: the story resumes where it was left), installs it, and
-names the other stories open in the repository with the contexts they change. From now on every
+when it has one (or finds it again: the story resumes where it was left), installs it, records
+the origin in `.ddd-ts-kit/story.json`, and names the other stories open in the repository with
+the contexts they change. From now on every
 command is `cd <worktree> && ...` and every file is written by its absolute path under the
 worktree. A story it names on the same contexts is being built in another terminal: read its
 rows before you cut yours, and keep yours off its aggregates when you can.
@@ -49,15 +53,26 @@ rows before you cut yours, and keep yours off its aggregates when you can.
 ## 1. Every question, at once
 
 The statement is `$ARGUMENTS`: plain words, a file to read, or the key of a ticket a connector
-of the session can read. Read `docs/architecture/plan.md`, the `CONTEXT.md` of each context the
-story touches and `npx ddd-ts-kit describe <context> --json`, once each. List every question
+of the session can read. An intent seeds the story: its `## Problem` and `## Proposed outcome`
+become `## Statement`, word for word; each line of its `## Constraints` is listed under
+`## Questions` as answered "by the intent"; its `## Open questions` join the questions below;
+each line of its `## Acceptance, as the author would observe it` is the first draft of a
+criterion, rewritten as what a client observes through the API; its author and status go on
+the `From:` line of `## Origin`. Read `docs/architecture/plan.md`, the `CONTEXT.md` of each
+context the story touches and `npx ddd-ts-kit describe <context> --json`, once each. List every question
 whose answer changes an artefact of the story: a business rule you would have to guess, who
 holds a permission, a word missing from a glossary, a criterion that cannot be observed, a
 boundary or a relationship between contexts. Ask them in one go with AskUserQuestion (four per
 call, your recommended option first, its cost said); none that changes nothing. Then copy
 [story-template.md](story-template.md) to `docs/architecture/stories/$0.md` and fill it: the
 statement, each question with its answer, the acceptance criteria (`- AC1: <what a client
-observes>`, each one observable through the API).
+observes>`, each one observable through the API), and `## Origin`, the record an auditor reads
+first: `From:` where the story comes from (the intent path, the ticket key or the incident id
+of `$ARGUMENTS`, with who accepted it when the file says); `Built with:` the kit version
+(`npx ddd-ts-kit --version`, or the one the guard printed at session start), the plugin version
+(`version` of `../../.claude-plugin/plugin.json`, next to this skill), the base and its commit
+(`base` and `baseCommit` of `.ddd-ts-kit/story.json`); `Policies in force:` filled at phase 3.
+`story $0 --gate close` refuses a story without its `From:` and `Built with:` lines.
 
 A boundary, a new context or a relationship pattern is a strategic decision of the owner:
 asked here, never decided later. If one appears after this phase and no reversible option
@@ -78,10 +93,16 @@ otherwise record which story lands first as a decision.
 In `docs/architecture/reviews/$0.md`, one `## #<id> <slice>` section per row: the aggregate and
 its invariants, the command or query and its permission, the events, the errors by business
 name, the route, the ports, what it reads from another context and through which contract, the
-specs it changes; every class, method and path in backticks. Then launch the
-`architecture-reviewer` agent on that file as a design review of rows still to build. Its
-blocking findings change the design; a non-blocking one is settled at once or becomes a
-decision `D<n>`. `npx ddd-ts-kit cited --rows <ids> --base <base>` lists the names the design
+specs it changes; every class, method and path in backticks. The policies of the project are
+skills: those of the plugin (`ddd-ts-kit:access-control`, `ddd-ts-kit:persistence`,
+`ddd-ts-kit:cross-cutting`, `ddd-ts-kit:testing`) and the project's own under `.claude/skills/`.
+Load the ones the rows need, list them on the `Policies in force:` line of `## Origin`, and in
+the section of a row write `Policies: <skill>: <what it imposed here>` whenever a policy changed
+the design (a permission it required, a port it moved, a field it masked); when two policies
+contradict each other, write both and the choice as a decision `D<n>`. Then launch the
+`architecture-reviewer` agent on that file as a design review of rows still to build; it reads
+the `Policies:` lines as part of the design. Its blocking findings change the design; a
+non-blocking one is settled at once or becomes a decision `D<n>`. `npx ddd-ts-kit cited --rows <ids> --base <base>` lists the names the design
 cites that the trunk replaced: write the name the trunk has.
 
 ## 4. The acceptance, before any code
@@ -109,7 +130,11 @@ tell the owner when no open story carries it.
   `npx ddd-ts-kit verify-slice <context> --since <base>` and its commit;
 - a `slice` row: `npx ddd-ts-kit worker-scope <context> --here --rows <id>` in the worktree, then
   one `ddd-ts-kit:context-builder` agent with the briefing it prints, the worktree path and
-  this line: "Commit on the current branch; do not merge, do not push." Read its report.
+  this line: "Commit on the current branch; do not merge, do not push." When `commit.agentTrailer`
+  of `ddd-ts-kit.config.json` is `true`, add: "End each commit message with the trailer
+  `Agent: <host> ddd-ts-kit@<plugin version> context-builder`" (the host as it names itself,
+  `claude-code`; the version from `## Origin`), and end your own commits with the same trailer,
+  `story` as the agent name. Read its report.
   A blocking need (a contract field, a dependency, a grant, a migration) is yours: do it, commit
   it, launch the next agent on the same row. A scenario it says is wrong is compared with its
   criterion (skill `ddd-ts-kit:testing`): never changed to make code pass.
@@ -125,7 +150,20 @@ plugin builds each row itself with skill `ddd-ts-kit:use-case`.
    the kit derives and leaves the rest to you, as skill `ddd-ts-kit:parallel-work` says; settle
    it, then `npx ddd-ts-kit merge-trunk --continue`.
 2. The `architecture-reviewer` agent on the branch (`--changed-since <base>`): blocking findings
-   fixed, the others settled or written as `TODO(review): #<row> ...`.
+   fixed, the others settled or written as `TODO(review): #<row> ...`. The rule of two: a
+   finding that repeats one already recorded for the project (the same rule id or the same
+   remark in an earlier file of `docs/architecture/reviews/`, or a `TODO(review)` marker) is
+   written in this branch as a line under `## Mistakes seen here` of `AGENTS.md`, or as a rule
+   of `ddd-ts-kit.config.json` when the kit has one for it. Keep the review: append `## Findings`
+   to `docs/architecture/reviews/$0.md`, one line per finding with its pass (the rule id or the
+   principle the reviewer named), its `file:line` and its outcome, `fixed in <commit>`,
+   `written as TODO(review)` or `dismissed by ADR-<n>`; the record outlives the pull request.
+   Then the `story-verifier` agent, in a fresh context, with the story code, the worktree path
+   and the base: it starts the application as the end-to-end tests do, exercises the routes of
+   the rows and the two nearest flows, reads the design review and the report, and reports what
+   does not match the design or a `D<n>`; it fixes nothing. Settle each mismatch it reports as
+   a finding above: fixed, or a decision. A host without the agents of the plugin skips it, and
+   the report says "not verified: the story-verifier agent, not available on this host".
 3. `npm run verify`, `npx ddd-ts-kit acceptance $0 --gate passing`, `npx ddd-ts-kit todo`, and
    `npx ddd-ts-kit story-check $0`: every row done, no marker of its own left.
 
@@ -135,9 +173,33 @@ Write `## Report` in `docs/architecture/stories/$0.md`, short and in this order:
 delivers; each decision taken without the owner (`D<n>`, provisional: what, why, the
 alternatives, where in the code); each compromise (what was left simpler than the design, and
 why); each amendment of the acceptance and each criterion changed after the lock
-with its verdict (`npx ddd-ts-kit acceptance $0` lists them); each `TODO(review)` left; what was
-not verified. `npx ddd-ts-kit story $0 --gate close` passes. Commit, push the branch, and
-`gh pr create` with the report as its body. Give the owner the link and the report, then stop.
+with its verdict (`npx ddd-ts-kit acceptance $0` lists them); each `TODO(review)` left; then
+`### Verification`, the evidence from the toolchain and not your word: the last lines of
+`npm run verify`, of `npm run test:e2e -- test/acceptance/$0` and of `npx ddd-ts-kit
+story-check $0`, pasted as they were printed, and `not verified:` for what could not run here
+(a broker, a provider, a platform) and why; with `commit.agentTrailer` on, one line counting
+the commits of the branch made by an agent (`git log <base>..HEAD --format=%B | grep -c
+'^Agent:'`) against those made by hand. `npx ddd-ts-kit story $0 --gate close` passes. Commit, push the branch, and
+`gh pr create` with the report as its body, `## Origin` repeated at its top: the record on the
+trunk links back to the intent, the ticket or the incident. Give the owner the link and the
+report, then stop. When the owner asks for the pull request to be taken to green, the next step
+is `/ddd-ts-kit:pull-request <number>` from this worktree: it sweeps the review comments and
+the failing checks under the rules of this story, and never force-pushes.
+
+## `--headless`: the specification without an owner
+
+With `--headless` in `$ARGUMENTS` (a job on the merge of an accepted intent, or a session
+nobody attends), nobody answers at phase 1. Run phases 0 to 4 as above, with these
+differences: every question that changes an artefact is written under `## Open questions` of
+the story file, each with its recommended option, taken provisionally and marked
+`(provisional, headless)` where it lands (a criterion, a row, a line of the design, a decision
+`D<n>`); a boundary, a new context or a relationship pattern is written there too, with no
+option taken, and the rows that depend on it wait. The acceptance is written and locked as at
+phase 4; the build gate stays closed: no phase 5, no code. Commit, push, and `gh pr create`
+with the list of `## Open questions` as the body, `## Origin` at its top. The owner answers in
+the review, the pull request merges with the answers written into the story file, and the
+build phase starts from them in a session that runs `/ddd-ts-kit:story $0` again, which finds
+the worktree and the answers. Then stop.
 
 ## While working
 

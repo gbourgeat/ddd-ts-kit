@@ -23,21 +23,42 @@ once. The guard of the plugin holds the order: no code before the design and the
 ```text
 terminal 1: /ddd-ts-kit:story US5 "A customer places an order and is invoiced"
 terminal 2: /ddd-ts-kit:story US6 docs/backlog/us6.md
+terminal 3: /ddd-ts-kit:story US7 docs/architecture/intents/faster-checkout.md
 ```
+
+## Where a story comes from
+
+A story starts from plain words, a file, a ticket, or an intent. An intent is the idea written
+by whoever has it, in their own words, before anyone designs anything: `/ddd-ts-kit:intent`
+brainstorms with the originator until the idea is concrete (what is wrong, what would be true
+once it is solved, who and what it touches, the constraints, what the author would observe),
+maps the affected systems on `npx ddd-ts-kit list` when it runs inside the project, and writes
+`docs/architecture/intents/<slug>.md` from the template of the story skill with
+`Status: draft`. The person runs it from Claude Code, from Cowork or claude.ai with a git
+connector, or fills the template by hand. The product owner corrects the intent in a pull
+request and accepts it by setting `Status: accepted`: the merge is the acceptance, and nothing
+is decided for the owner. The story then reads it, `npx ddd-ts-kit story-scope US7 --from
+docs/architecture/intents/faster-checkout.md` (refused while the intent is not accepted):
+`## Problem` and `## Proposed outcome` seed `## Statement`, each constraint is a question
+answered "by the intent", the open questions join phase 1, and each line of the acceptance the
+author wrote is the first draft of a criterion. An incident record
+(`docs/architecture/incidents/<id>.md`, [closing the loop](closing-the-loop.md)) is accepted the
+same way, as it is. An intent is not a ticket: a project whose tracker is the source of truth
+writes the key in the intent and the path in the ticket, and `## Origin` carries both.
 
 ## The phases
 
 | # | Phase | Artefact | Who decides |
 |---|---|---|---|
-| 0 | its worktree: `npx ddd-ts-kit story-scope US5` | `.worktrees/us5` on `story/us5`, `.ddd-ts-kit/story.json` | |
-| 1 | every question, at once | `## Questions` of `docs/architecture/stories/US5.md` | the owner, once |
+| 0 | its worktree: `npx ddd-ts-kit story-scope US5 [--from <intent or incident>]` | `.worktrees/us5` on `story/us5`, `.ddd-ts-kit/story.json` (`kind`, `from`) | |
+| 1 | every question, at once | `## Origin` and `## Questions` of `docs/architecture/stories/US5.md` | the owner, once |
 | 2 | specification and rows | `## Acceptance criteria` (`- AC1: ...`), the rows `US5.01`, ... of `slices.md` | the session |
 | 3 | a design review of each row | `docs/architecture/reviews/US5.md`, one `## #US5.02 ...` section per row, read by `architecture-reviewer` | the session |
 | 4 | the acceptance, before any code | `test/acceptance/us5.acceptance.spec.ts` and its lock | the session |
 | 5 | the build gate: `npx ddd-ts-kit story US5 --gate build` | the guard opens the code of the contexts | |
 | 6 | build, row by row | one commit per row, one `context-builder` agent per slice row | the session |
 | 7 | close: trunk merged in, review, `npm run verify`, `acceptance US5 --gate passing` | a green branch | |
-| 8 | the report, then the pull request | `## Report`, the body of the pull request | the owner, at the review |
+| 8 | the report, then the pull request | `## Report` with `### Verification`, the body of the pull request | the owner, at the review |
 
 `npx ddd-ts-kit story US5` prints the phases with what each one holds and the next step; a
 session that starts in the worktree of a story is told the same by the guard.
@@ -53,14 +74,37 @@ each one back to the owner. A boundary, a new context or a relationship pattern 
 decided this way: asked in phase 1, or, when it appears later and nothing reversible exists, the
 one reason to stop, with a report that says so.
 
+## The record of the story
+
+The story file is the record an auditor reads: who asked (`## Origin`), who answered
+(`## Questions`), what the session decided alone (`D<n>`), under which rules, and who approved
+(the merge of the pull request). `## Origin`, written at phase 1, holds three lines: `From:`,
+the intent, the ticket or the incident the story comes from; `Built with:`, the version of the
+kit and of the plugin, the base and its commit; `Policies in force:`, the skills loaded at
+phase 3. `story --gate close` refuses a story without its `From:` and `Built with:` lines, and
+the body of the pull request repeats the block, so that the trunk links back to where the story
+came from. The report ends the record with `### Verification`: the last lines of
+`npm run verify`, of the acceptance run and of `story-check`, pasted as the toolchain printed
+them, and `not verified:` for what could not run (a broker, a provider, a platform); the close
+gate reads it too. The block is what the
+[AI-native SDLC playbook of Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
+asks as governance evidence: the spec, what produced it and the policies in force, logged with
+it.
+
 ## The design before the code
 
 Each row gets a section of the design review before anything is generated: the aggregate and
 its invariants, the command or query and its permission, the events, the errors by business
 name, the route, the ports, the contract read from another context. The `architecture-reviewer`
 agent reads it as a design review of rows still to build; its blocking findings change the
-design. `npx ddd-ts-kit cited --rows <ids>` lists the names the design cites that the trunk
-replaced in the meantime. `worker-scope` names the section of a row in the briefing of its agent.
+design. The policies of the project are skills, those of the plugin (access control,
+persistence, cross-cutting concerns, testing) and the project's own under `.claude/skills/`:
+the session lists the ones it loaded on the `Policies in force:` line of `## Origin`, and writes
+in the section of a row `Policies: <skill>: <what it imposed here>` when a policy changed the
+design, a line the reviewer reads with the rest; two policies that contradict each other become
+a decision for the owner. `npx ddd-ts-kit cited --rows <ids>` lists the names the design cites
+that the trunk replaced in the meantime. `worker-scope` names the section of a row in the
+briefing of its agent.
 
 ## The acceptance before the code, and locked
 
@@ -86,6 +130,47 @@ a dependency, a grant, a migration) come back to the session, which does them on
 The agents run one after the other in the one worktree: the rows of a story mostly depend on
 each other (contract, producer, consumer), and the parallelism is between stories, one per
 terminal.
+
+## At the close of a story
+
+The trunk is merged in, the `architecture-reviewer` agent reads the branch, and its findings are
+fixed or written as `TODO(review)` markers tied to their row. The rule of two applies there: a
+finding that repeats one already recorded for the project (the same rule id or the same remark
+in an earlier review file, or a `TODO(review)` marker) is written in the same branch as a line
+under `## Mistakes seen here` of `AGENTS.md`, or as a rule of `ddd-ts-kit.config.json` when the
+kit has one for it, so that the next session does not make it a third time. The review itself is
+kept: the session appends it to `docs/architecture/reviews/<code>.md` under `## Findings`, one
+line per finding with its pass, its `file:line` and its outcome (`fixed in <commit>`,
+`written as TODO(review)`, `dismissed by ADR-<n>`), so that the record outlives the pull
+request, survives a move between GitHub and GitLab, and feeds the rule of two.
+
+A second reading then comes from a context that did not build the code: the `story-verifier`
+agent, read-only, starts the application the way the end-to-end tests do, runs the acceptance of
+the story and the end-to-end specs of the two nearest flows, calls the routes the specs leave
+unexercised when the project starts without a service, reads the design review and the report,
+and reports what it ran, what it saw, and every behaviour that does not match the design or a
+`D<n>` decision. It fixes nothing; the session settles each mismatch as a finding. The
+acceptance tests remain the stronger check, since they fail before the code and cannot be
+rewritten by the agent that builds; the verifier adds the neighbouring flows and a reading of
+the compromises.
+
+A team that wants the commits of an agent told apart from those of a person sets
+`commit.agentTrailer` to `true` in `ddd-ts-kit.config.json`
+([configuration](../CONFIG.md)): the story skill, the `context-builder` agent it briefs and the
+fix skill then end each commit they make with the trailer
+`Agent: <host> ddd-ts-kit@<plugin version> <agent name>`, and the report counts the commits made
+by an agent against those made by hand. It is off by default: many teams refuse attribution
+lines in commits, and the separation an audit really wants is by the identity of the run (its
+own account, its own token), which a trailer only approximates.
+
+After the pull request is opened, the review and the checks of the platform answer. When the
+owner asks for it, `/ddd-ts-kit:pull-request <number>`, run from the worktree of the story,
+takes the pull request to green: it sweeps the unresolved review comments and the failing
+checks, addresses each under the rules of the story (a change the design review did not
+foresee becomes a `D<n>` decision, a request to weaken a check goes through the `deviation`
+skill, a failing check is fixed in the code and never in the check, no force-push), replies to
+each thread, pushes, waits for the checks and repeats until the pull request waits only on the
+code owner; then it reports what was changed and what was declined and why.
 
 ## Several stories, several terminals
 
@@ -114,14 +199,36 @@ share. The pull requests merge one after the other, each on a green trunk.
 | the same story in two sessions | `story-scope` |
 | two stories that change the same file | `stories`; the guard, at session start and on the first write of such a file |
 | a session that ends before its report | the guard, which refuses the first stop of each step |
-| the pull request: every row done, no scenario pending, the trunk merged in, the report written | `story --gate close` |
+| the pull request: every row done, no scenario pending, the trunk merged in, the origin recorded, the report written with its verification | `story --gate close` |
+
+## The optional end state: the specification as a job
+
+The playbook's end state fires the design pass on the merge of the intent, as a job that
+commits the specification as a pull request. The kit has it as `/ddd-ts-kit:story <code>
+--headless <intent>`: phases 1 to 4 without an owner, every question that changes an artefact
+written under `## Open questions` of the story file with its recommended option taken
+provisionally and marked `(provisional, headless)`, the rows, the design review and the
+acceptance written and locked, the build gate left closed, and a pull request whose body is the
+list of questions. The owner answers in the review; the pull request merges with the answers
+written into the story file, and the build phase starts from them in a session that runs the
+story again. A boundary, a new context or a relationship pattern is written as a question with
+no option taken: the rows that depend on it wait for the owner.
+
+`pipeline/github/workflows/intent-to-spec.yml` is the workflow template that runs it: on a pull
+request merged into the default branch that turns an intent of `docs/architecture/intents/` to
+`Status: accepted`, it installs the project, Claude Code and the plugin, and runs `claude -p`
+with the `ANTHROPIC_API_KEY` secret, one story per accepted intent, under the token of the
+workflow or a token of the team (`INTENT_TO_SPEC_TOKEN`, so that the checks of the story run on
+the pull request it opens). It is opt-in and paid: `init` does not write it in this version, a
+team copies it into `.github/workflows/` and adds the secret, and each accepted intent consumes
+API tokens. The template was parsed and not executed on GitHub.
 
 ## Hosts
 
 Claude Code runs the whole workflow: the skill, the agents and the guard. Codex and Copilot run
 the skill and the guard; without the agents of the plugin the session builds each row itself
-with the `use-case` skill, and nothing confines it to one context but the briefing and the
-review.
+with the `use-case` skill, nothing confines it to one context but the briefing and the
+review, and the verification by a fresh context is skipped, which the report says.
 
 ## Limits
 

@@ -220,16 +220,16 @@ changes stay in the working tree) and recommit in pieces for a branch nobody els
 git reset "$(git merge-base HEAD origin/main)"
 
 # the refactoring first, hunk by hunk
-git add -p src/contexts/scheduling/domain/aggregates/calendar.aggregate.ts
-git add src/contexts/scheduling/domain/value-objects/booking-window.vo.ts
+git add -p src/contexts/scheduling/domain/calendars/aggregates/calendar.aggregate.ts
+git add src/contexts/scheduling/domain/calendars/value-objects/booking-window.vo.ts
 git commit -m "refactor(scheduling): extract BookingWindow from Calendar"
 
 # then one use case with everything its generator and docs:generate wrote:
 # command and handler, route, their specs, the regenerated declarations of their folders and the contract
-git add src/contexts/scheduling/application/commands/reschedule-appointment/ \
+git add src/contexts/scheduling/application/calendars/commands/reschedule-appointment/ \
         src/contexts/scheduling/presentation/http/appointments/reschedule-appointment/ \
         src/contexts/scheduling/test/unit/reschedule-appointment.*.spec.ts \
-        src/contexts/scheduling/application/commands/commands.declarations.ts \
+        src/contexts/scheduling/application/calendars/commands/commands.declarations.ts \
         src/contexts/scheduling/presentation/http/http.declarations.ts \
         openapi/openapi.yaml
 npx ddd-ts-kit check --commit-size --staged

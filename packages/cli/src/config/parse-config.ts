@@ -5,7 +5,7 @@ import { defaultAllowedPackages } from './default-allowed-packages.js';
 import { DEFAULT_IMPORT_ALIAS } from './default-import-alias.js';
 import { parseBusinessNames } from './parse-business-names.js';
 import { parseCi } from './parse-ci.js';
-import { parseCommitLimits } from './parse-commit-limits.js';
+import { parseCommitConfig } from './parse-commit-config.js';
 import { parseContext } from './parse-context.js';
 import { parseCoverage } from './parse-coverage.js';
 import { parseLimits } from './parse-limits.js';
@@ -92,7 +92,7 @@ function parseGovernance(raw: Record<string, unknown>): Governance {
     limits: parseLimits(raw['limits']),
     onePerFile: parseOnePerFile(raw['onePerFile']),
     coverage: parseCoverage(raw['coverage']),
-    commit: parseCommitLimits(raw['commit']),
+    commit: parseCommitConfig(raw['commit']),
     guard: text(raw['guard'], 'enforce'),
     worktrees: text(raw['worktrees'], 'advised'),
     deviations: parseDeviations(raw['deviations']),

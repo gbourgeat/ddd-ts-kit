@@ -60,7 +60,7 @@ describe('merge-trunk: its parts', () => {
   });
 
   it('classifies by the path in the project, a path outside it being a source', () => {
-    const repo = { top: '/repository', prefix: 'apps/billing/', contextsDir: 'src/contexts' };
+    const repo = { top: '/repository', prefix: 'apps/billing/', contextsDir: 'src/contexts', modules: {} };
 
     expect(classifyConflict('apps/billing/stored-events.lock.json', repo)).toBe('stored-events');
     expect(classifyConflict('apps/billing/pnpm-lock.yaml', repo)).toBe('lockfile');

@@ -13,6 +13,7 @@ import type { NamedMove } from './named-move.js';
 import { namedMoves } from './named-moves.js';
 import type { NamedPlan } from './named-plan.js';
 import { projectSources } from './project-sources.js';
+import { refuseScattered } from './refuse-scattered.js';
 import { rewriteNamedUsages } from './rewrite-named-usages.js';
 import { sayRefusals } from './say-refusals.js';
 import { staleMentions } from './stale-mentions.js';
@@ -33,6 +34,9 @@ interface Tree {
 export function applyNamedPlan(tree: Tree, plan: NamedPlan, draft: MigrationDraft): NamedMove[] {
   const sources = { legacy: legacyErrors(tree.ws, tree.config), concepts: conceptErrors(tree.ws, tree.config) };
   const moves = namedMoves(plan, sources, draft);
+
+  refuseScattered(moves.map((move) => ({ context: move.context, className: move.className, file: move.oldFile })));
+
   const gone = leaveOrigins(moves, sources, draft);
 
   writeRefusalClasses(tree.config, moves, draft);

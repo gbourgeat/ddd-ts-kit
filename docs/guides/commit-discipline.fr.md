@@ -1,5 +1,5 @@
 [English](commit-discipline.md) · **Français**
-<!-- translation-of: commit-discipline.md sha256:fffab3587303faf0 -->
+<!-- translation-of: commit-discipline.md sha256:6040090bd670a654 -->
 
 # La discipline des commits et des pull requests
 
@@ -232,16 +232,16 @@ branche que quelqu'un d'autre a récupérée ; ajoutez plutôt des *commits*.
 git reset "$(git merge-base HEAD origin/main)"
 
 # la refonte d'abord, morceau par morceau
-git add -p src/contexts/scheduling/domain/aggregates/calendar.aggregate.ts
-git add src/contexts/scheduling/domain/value-objects/booking-window.vo.ts
+git add -p src/contexts/scheduling/domain/calendars/aggregates/calendar.aggregate.ts
+git add src/contexts/scheduling/domain/calendars/value-objects/booking-window.vo.ts
 git commit -m "refactor(scheduling): extract BookingWindow from Calendar"
 
 # puis un cas d'usage avec tout ce que son générateur et docs:generate ont écrit :
 # commande et gestionnaire, route, leurs specs, les déclarations régénérées de leurs dossiers et le contrat
-git add src/contexts/scheduling/application/commands/reschedule-appointment/ \
+git add src/contexts/scheduling/application/calendars/commands/reschedule-appointment/ \
         src/contexts/scheduling/presentation/http/appointments/reschedule-appointment/ \
         src/contexts/scheduling/test/unit/reschedule-appointment.*.spec.ts \
-        src/contexts/scheduling/application/commands/commands.declarations.ts \
+        src/contexts/scheduling/application/calendars/commands/commands.declarations.ts \
         src/contexts/scheduling/presentation/http/http.declarations.ts \
         openapi/openapi.yaml
 npx ddd-ts-kit check --commit-size --staged

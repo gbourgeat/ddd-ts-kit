@@ -14,6 +14,7 @@ export type {
   OpenApiDocumentConfig,
   Deviation,
   Limits,
+  ModuleConfig,
   Upstream,
 } from './config.js';
 export { CONFIG_FILE } from './config-file.js';

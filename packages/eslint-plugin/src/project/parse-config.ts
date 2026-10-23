@@ -129,6 +129,7 @@ function parseContext(value: unknown): ContextConfig {
     classification: text(raw['classification'], ''),
     upstreams: upstreams.map(parseUpstream).filter((upstream) => upstream !== undefined),
     extraDirectories: extra.map(parseExtraDirectory).filter((directory) => directory !== undefined),
+    modules: isRecord(raw['modules']) ? Object.keys(raw['modules']) : [],
   };
 }
 

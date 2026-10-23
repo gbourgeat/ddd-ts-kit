@@ -1393,6 +1393,51 @@ the worktrees of a context two workers build: choose one with `--worktree` or `-
 `--json` prints `{ context, worktree, root, branch, base, progress, next, sendMessage, briefing,
 notes }`.
 
+## story-scope
+
+```
+ddd-ts-kit story-scope <story> [--from <file>] [--kind story|fix] [--base <ref>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
+```
+
+Opens the worktree of one story, where one session takes it from its questions to its pull
+request while other sessions take other stories: `.worktrees/<story>` of the main checkout on the
+branch `story/<story>`, cut from `--base` (by default the branch the current one follows,
+`origin/main` from the trunk; refused from the worktree of another story, whose branch would
+become the base), its clean install unless `--no-install`, and `.ddd-ts-kit/story.json`
+(`{ story, base, baseCommit, branch, kind, from }`). An existing worktree of the story is kept
+and the story resumes there; a story open in another worktree is refused: two sessions never take
+the same one. The other open stories are named with the contexts their rows change. `--dry-run`
+creates, writes and installs nothing.
+
+`--kind` says what the story is: `story` (the default), or `fix`, a story built behind the
+regression specs listed under `## Regression` of its file and locked, as the `fix` skill writes
+it. `--from <file>` records where the story comes from: an intent,
+`docs/architecture/intents/<slug>.md`, refused unless its header says `Status: accepted`, or an
+incident record, `docs/architecture/incidents/<id>.md`, accepted as it is. Both are written to
+`story.json`, relative to the project root, and kept when the story resumes without them. While
+`docs/architecture/stories/<story>.md` does not exist, the `Next:` line says that the story skill
+seeds its statement from the origin. `--json` prints `{ story, kind, from, seeds, dryRun,
+worktree, branch, base, created, install, others, notes }`.
+
+## story
+
+```
+ddd-ts-kit story [<story>] [--gate build|close]
+```
+
+Where a story stands, phase by phase, and the next step: its specification and criteria
+(`docs/architecture/stories/<story>.md`), its rows in `slices.md`, a design review section per
+row not done (`docs/architecture/reviews/<story>.md`, `## #<id>`), its acceptance written and
+locked, its rows done with no marker of its own left, its acceptance passing, its trunk merged
+in, its `## Origin` (`From:` and `Built with:`), its `## Report` with `### Verification` naming
+`npm run verify`. In the worktree of a story, the story is its own. `--gate build` exits 1 until
+the first four phases are met (the code may start: the guard of the plugin opens the contexts);
+`--gate close` until all are. For a story of kind `fix` (its `story.json`, or a `## Regression`
+section in its file), the rows and their design are optional, the acceptance phase reads the
+specs listed under `## Regression` instead of `test/acceptance/`, each of which must exist, and
+no passing phase is read: the regression specs run with the tests of the project. `--json`
+prints `{ story, gate, met, next, phases }`.
+
 ## cited
 
 ```

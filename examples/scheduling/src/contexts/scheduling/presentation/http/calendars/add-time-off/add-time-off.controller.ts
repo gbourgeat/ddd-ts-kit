@@ -1,7 +1,7 @@
 import { acceptedSchema, Controller, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { AddTimeOffCommand } from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.command';
+import { AddTimeOffCommand } from '@/contexts/scheduling/application/calendars/commands/add-time-off/add-time-off.command';
 import { AddTimeOffParams } from '@/contexts/scheduling/presentation/http/calendars/add-time-off/add-time-off.params';
 import { CalendarsRoutes } from '@/contexts/scheduling/presentation/http/calendars.routes';
 import { TimeSpan } from '@/contexts/scheduling/presentation/http/shared/time-span.schema';

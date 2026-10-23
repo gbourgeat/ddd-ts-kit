@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { BookingTooFar } from '@/contexts/scheduling/domain/errors/booking-too-far.error';
+import { BookingTooFar } from '@/contexts/scheduling/domain/calendars/errors/booking-too-far.error';
 
 describe('BookingTooFar', () => {
   it('refuses with the code BOOKING_TOO_FAR, its message and its facts', () => {

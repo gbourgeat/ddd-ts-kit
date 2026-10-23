@@ -18,6 +18,8 @@ export function readStoryPlace(root: string): StoryPlace | undefined {
       base: raw['base'],
       ...(typeof raw['baseCommit'] === 'string' ? { baseCommit: raw['baseCommit'] } : {}),
       branch: typeof raw['branch'] === 'string' ? raw['branch'] : '',
+      kind: raw['kind'] === 'fix' ? 'fix' : 'story',
+      ...(typeof raw['from'] === 'string' ? { from: raw['from'] } : {}),
     };
   } catch {
     return undefined;

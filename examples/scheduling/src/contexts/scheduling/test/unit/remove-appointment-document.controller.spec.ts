@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus, type Actor } from '@ddd-ts-kit/kernel';
-import { RemoveAppointmentDocumentCommand } from '@/contexts/scheduling/application/commands/remove-appointment-document/remove-appointment-document.command';
+import { RemoveAppointmentDocumentCommand } from '@/contexts/scheduling/application/calendars/commands/remove-appointment-document/remove-appointment-document.command';
 import { RemoveAppointmentDocumentController } from '@/contexts/scheduling/presentation/http/appointments/remove-appointment-document/remove-appointment-document.controller';
 
 const caller: Actor = { id: 'user-1', type: 'user', roles: [], attributes: {} };

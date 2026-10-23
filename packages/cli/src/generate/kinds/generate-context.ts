@@ -27,6 +27,7 @@ export function generateContext(ws: Workspace, config: Config, request: ContextR
     classification,
     upstreams: request.upstreams,
     extraDirectories: [],
+    modules: [],
     deployable: false,
     owners: [],
   };

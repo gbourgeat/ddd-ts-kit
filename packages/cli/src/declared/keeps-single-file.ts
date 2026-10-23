@@ -15,8 +15,8 @@ const NOTHING_DECLARED = 'export {};\n';
  * is not this case.
  */
 export function keepsSingleFile(declared: DeclaredContext, written: string | undefined): boolean {
-  const { context, entries } = declared;
-  const moving = entries.some((entry) => entry !== barrelFile(context) && isDeclarationsFile(context, entry));
+  const { context, entries, modules } = declared;
+  const moving = entries.some((entry) => entry !== barrelFile(context) && isDeclarationsFile(context, entry, modules));
 
   if (written === undefined || moving) {
     return false;

@@ -6,8 +6,8 @@ import {
   announceDomainEvents,
   unitOfWorkStage,
 } from '@ddd-ts-kit/kernel';
-import { CalendarExceptionAddedEventHandler } from '@/contexts/scheduling/application/event-handlers/calendar-exception-added.event-handler';
-import { CalendarExceptionAdded } from '@/contexts/scheduling/domain/events/calendar-exception-added.event';
+import { CalendarExceptionAddedEventHandler } from '@/contexts/scheduling/application/calendars/event-handlers/calendar-exception-added.event-handler';
+import { CalendarExceptionAdded } from '@/contexts/scheduling/domain/calendars/events/calendar-exception-added.event';
 
 describe('When an exception is added to a calendar', () => {
   it('asks, before the commit, for the answers filed under the calendar to be purged after it', async () => {

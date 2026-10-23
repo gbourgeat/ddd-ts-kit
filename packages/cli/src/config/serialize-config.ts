@@ -1,4 +1,4 @@
-import type { Config } from './config.js';
+import type { Config, ContextConfig } from './config.js';
 import { DEFAULT_COMMIT_LIMITS } from './default-commit-limits.js';
 import { isReferenceCoverage } from './is-reference-coverage.js';
 import { writtenStack } from './written-stack.js';
@@ -46,17 +46,21 @@ function writtenContexts(config: Config): Record<string, unknown> {
       ...(context.extraDirectories.length > 0 ? { extraDirectories: context.extraDirectories } : {}),
       ...(context.deployable ? { deployable: true } : {}),
       ...(context.owners.length > 0 ? { owners: context.owners } : {}),
+      ...(context.modules.length > 0 ? { modules: writtenModules(context.modules) } : {}),
     },
   ]);
 
   return Object.fromEntries(contexts);
 }
 
+function writtenModules(modules: ContextConfig['modules']): Record<string, unknown> {
+  return Object.fromEntries(
+    modules.map(({ name, classification }) => [name, classification === undefined ? {} : { classification }]),
+  );
+}
+
 function optionalKeys(config: Config): Record<string, unknown> {
   const { deviations, standardInterfaces, businessNames, onePerFile, worker, commit, coverage } = config;
-
-  const sized =
-    commit.maxFiles !== DEFAULT_COMMIT_LIMITS.maxFiles || commit.maxLines !== DEFAULT_COMMIT_LIMITS.maxLines;
 
   return {
     ...(isReferenceCoverage(coverage) ? {} : { coverage }),
@@ -64,7 +68,7 @@ function optionalKeys(config: Config): Record<string, unknown> {
     ...(Object.keys(standardInterfaces).length > 0 ? { standardInterfaces } : {}),
     ...(onePerFile.allow.length > 0 ? { onePerFile } : {}),
     ...writtenBusinessNames(businessNames),
-    ...(sized ? { commit } : {}),
+    ...writtenCommit(commit),
     ...(worker ? { worker } : {}),
     ...(config.worktrees === 'advised' ? {} : { worktrees: config.worktrees }),
     ...teamKeys(config),
@@ -78,6 +82,19 @@ function teamKeys({ agents, owners }: Config): Record<string, unknown> {
     ...(agents.profile === undefined ? {} : { agents: { profile: agents.profile } }),
     ...(owners.platform.length > 0 ? { owners } : {}),
   };
+}
+
+/** Written once a project sizes its commits otherwise than the default, or names the agent in its commits. */
+function writtenCommit(commit: Config['commit']): Record<string, unknown> {
+  const sized =
+    commit.maxFiles !== DEFAULT_COMMIT_LIMITS.maxFiles || commit.maxLines !== DEFAULT_COMMIT_LIMITS.maxLines;
+
+  const written = {
+    ...(sized ? { maxFiles: commit.maxFiles, maxLines: commit.maxLines } : {}),
+    ...(commit.agentTrailer ? { agentTrailer: true } : {}),
+  };
+
+  return Object.keys(written).length > 0 ? { commit: written } : {};
 }
 
 /** Written once a project changes the list of `naming/business-name`. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AttachedDocument } from '@/contexts/scheduling/domain/value-objects/attached-document.vo';
+import { AttachedDocument } from '@/contexts/scheduling/domain/calendars/value-objects/attached-document.vo';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 
 const FILE = {

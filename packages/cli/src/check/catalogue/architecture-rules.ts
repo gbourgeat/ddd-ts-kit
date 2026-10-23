@@ -23,6 +23,9 @@ import { configRuleOffEverywhere } from '../rules/config-rule-off-everywhere.js'
 import { contextDeclaredRelationship } from '../rules/context-declared-relationship.js';
 import { contextExtractable } from '../rules/context-extractable.js';
 import { contextNoCycle } from '../rules/context-no-cycle.js';
+import { moduleComplete } from '../rules/module-complete.js';
+import { moduleDeclared } from '../rules/module-declared.js';
+import { moduleNoCycle } from '../rules/module-no-cycle.js';
 import { contextPublishedLanguageIsAContract } from '../rules/context-published-language-is-a-contract.js';
 import { contextPublishedLanguageOnly } from '../rules/context-published-language-only.js';
 import { declarationsBarrelCurrent } from '../rules/declarations-barrel-current.js';
@@ -101,6 +104,9 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   contextDeclaredRelationship,
   contextPublishedLanguageIsAContract,
   contextNoCycle,
+  moduleDeclared,
+  moduleComplete,
+  moduleNoCycle,
   treeClosed,
   treeContextDoc,
   treeDocumentedPaths,

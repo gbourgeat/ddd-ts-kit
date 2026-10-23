@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { AppointmentBookedEventHandler } from '@/contexts/scheduling/application/event-handlers/appointment-booked.event-handler';
-import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
+import { AppointmentBookedEventHandler } from '@/contexts/scheduling/application/calendars/event-handlers/appointment-booked.event-handler';
+import { AppointmentBooked } from '@/contexts/scheduling/domain/calendars/events/appointment-booked.event';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 import { FakeSchedulingRelationships } from '@/contexts/scheduling/test/fakes/scheduling-relationships.fake';
 

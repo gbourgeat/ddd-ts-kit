@@ -1,8 +1,8 @@
 import { defineStoredEvent, personalData, type PersonalValue, type StoredEventTypes } from '@ddd-ts-kit/kernel';
-import type { AttendanceRecordEvent } from '@/contexts/scheduling/domain/aggregates/attendance-record.aggregate';
-import { AttendanceRecordCancellationNoted } from '@/contexts/scheduling/domain/events/attendance-record-cancellation-noted.event';
-import { AttendanceRecordCreated } from '@/contexts/scheduling/domain/events/attendance-record-created.event';
-import { AttendanceRecordNoShowNoted } from '@/contexts/scheduling/domain/events/attendance-record-no-show-noted.event';
+import type { AttendanceRecordEvent } from '@/contexts/scheduling/domain/calendars/aggregates/attendance-record.aggregate';
+import { AttendanceRecordCancellationNoted } from '@/contexts/scheduling/domain/calendars/events/attendance-record-cancellation-noted.event';
+import { AttendanceRecordCreated } from '@/contexts/scheduling/domain/calendars/events/attendance-record-created.event';
+import { AttendanceRecordNoShowNoted } from '@/contexts/scheduling/domain/calendars/events/attendance-record-no-show-noted.event';
 
 interface AttendanceRecordCreatedData {
   readonly practiceId: string;

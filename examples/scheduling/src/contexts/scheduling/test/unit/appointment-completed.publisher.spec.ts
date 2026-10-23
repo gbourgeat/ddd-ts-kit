@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryEventBus, SequentialIdGenerator } from '@ddd-ts-kit/kernel';
-import { AppointmentCompletedPublisher } from '@/contexts/scheduling/application/integration/publishers/appointment-completed.publisher';
-import { AppointmentCompleted } from '@/contexts/scheduling/domain/events/appointment-completed.event';
+import { AppointmentCompletedPublisher } from '@/contexts/scheduling/application/calendars/integration/publishers/appointment-completed.publisher';
+import { AppointmentCompleted } from '@/contexts/scheduling/domain/calendars/events/appointment-completed.event';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 const held = anAppointment()

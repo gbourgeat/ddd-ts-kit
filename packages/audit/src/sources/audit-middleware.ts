@@ -1,5 +1,4 @@
 import {
-  DomainError,
   type AuditOutcome,
   type AuditRecord,
   type AuditTrail,
@@ -15,9 +14,7 @@ import { changesOf } from '../redaction/changes-of.js';
 import { MissingMaskerError } from '../redaction/missing-masker-error.js';
 import { auditRecordOf } from './audit-record-of.js';
 import type { AuditSource } from './audit-source.js';
-
-/** The reason of a failure that is not a `DomainError`: its class and message stay out of the trail. */
-export const UNEXPECTED_ERROR = 'UNEXPECTED_ERROR';
+import { failureReason } from './failure-reason.js';
 
 export interface AuditMiddlewareOptions extends AuditSource {
   /**
@@ -129,11 +126,10 @@ class MessageAudit {
   }
 
   private async recordFailure(failure: unknown): Promise<void> {
-    const reason = failure instanceof DomainError ? failure.code : UNEXPECTED_ERROR;
     let record: AuditRecord | undefined;
 
     try {
-      record = await this.recordOf('failed', reason);
+      record = await this.recordOf('failed', failureReason(failure));
       await this.trail.record(record);
     } catch (error) {
       this.options.onLostRecord?.(error, record);

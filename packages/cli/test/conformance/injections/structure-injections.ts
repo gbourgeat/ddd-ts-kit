@@ -10,7 +10,7 @@ const CHANNEL = `${NOTIFICATION}/domain/value-objects/channel.vo.ts`;
 const CHANNEL_SPEC = `${NOTIFICATION}/test/unit/channel.vo.spec.ts`;
 const MANAGER = `${NOTIFICATION}/domain/services/reminder-manager.service.ts`;
 const SECOND = `${PATHS.SCHEDULING}/published-language/appointment-expired.v1.second.integration-event.ts`;
-const DOCUMENT_HANDLER = `${PATHS.SCHEDULING}/application/queries/get-appointment-document/get-appointment-document.handler.ts`;
+const DOCUMENT_HANDLER = `${PATHS.SCHEDULING}/application/calendars/queries/get-appointment-document/get-appointment-document.handler.ts`;
 const TWO_EXPORTS = 'Two exported classes in one file break the rule of the role and the rule of every file at once.';
 
 const DECLARED_TWICE = `import { defineIntegrationEvent } from '@ddd-ts-kit/events';

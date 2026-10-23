@@ -12,6 +12,7 @@ allowed-tools:
   - Read
   - Edit
   - Bash(npx ddd-ts-kit generate *)
+  - Bash(npx ddd-ts-kit move-to-module *)
   - Bash(npx ddd-ts-kit check *)
   - Bash(npx ddd-ts-kit list *)
 ---
@@ -31,6 +32,10 @@ the tree, so a generated file conforms by construction and costs no tokens.
    find the business word; `--allow-name` only when the word really is the business term.
    A generator that derives its name from another argument (`event-handler`,
    `integration-handler`) takes `--name <Name>` when the design names it otherwise.
+   In a context that declares modules of the model (`## Modules` of its `CONTEXT.md`), add
+   `--module <module>`, the module whose glossary terms the name uses; the generator refuses
+   without it and lists the modules. A new module: `generate module <ctx> <module> --purpose
+   "..."`, after the owner agreed (`docs/concepts/modules.md`).
 2. **Run with `--json`** (`--dry-run` first when unsure):
    ```bash
    npx ddd-ts-kit generate <kind> ... --json

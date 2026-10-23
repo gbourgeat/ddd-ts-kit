@@ -1,4 +1,4 @@
-import { AttachedDocument } from '@/contexts/scheduling/domain/value-objects/attached-document.vo';
+import { AttachedDocument } from '@/contexts/scheduling/domain/calendars/value-objects/attached-document.vo';
 
 /** A referral attached on Monday 2 March 2026, its file stored under the key the test names. */
 export function anAttachedDocument(key = 'appointment-documents/2026/03/document-1'): AttachedDocument {

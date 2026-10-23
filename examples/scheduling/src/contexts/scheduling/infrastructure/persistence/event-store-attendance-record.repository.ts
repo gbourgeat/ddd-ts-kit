@@ -10,8 +10,8 @@ import {
   AttendanceRecord,
   type AttendanceRecordEvent,
   type AttendanceRecordState,
-} from '@/contexts/scheduling/domain/aggregates/attendance-record.aggregate';
-import { AttendanceRecordRepository } from '@/contexts/scheduling/domain/repositories/attendance-record.repository';
+} from '@/contexts/scheduling/domain/calendars/aggregates/attendance-record.aggregate';
+import { AttendanceRecordRepository } from '@/contexts/scheduling/domain/calendars/repositories/attendance-record.repository';
 import { attendanceRecordEvents } from '@/contexts/scheduling/infrastructure/persistence/attendance-record-events.mapper';
 import { attendanceRecordSnapshots } from '@/contexts/scheduling/infrastructure/persistence/attendance-record-snapshots.mapper';
 

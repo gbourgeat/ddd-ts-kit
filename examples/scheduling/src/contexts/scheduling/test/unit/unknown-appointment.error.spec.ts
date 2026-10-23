@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { UnknownAppointment } from '@/contexts/scheduling/domain/errors/unknown-appointment.error';
+import { UnknownAppointment } from '@/contexts/scheduling/domain/calendars/errors/unknown-appointment.error';
 
 describe('UnknownAppointment', () => {
   it('refuses with the code APPOINTMENT_NOT_FOUND, its message and its facts', () => {

@@ -23,6 +23,7 @@ import type { Violation } from '../model/violation.js';
 import { isRecord } from '../support/is-record.js';
 import { lineOf } from '../support/line-of.js';
 import { lineOfSequence } from '../support/line-of-sequence.js';
+import { moduleProblems } from './module-problems.js';
 import { rawConfig } from './raw-config.js';
 
 /** What `config/valid` looks at in one project, each finding placed on a line of the config file. */
@@ -37,6 +38,9 @@ export class ConfigInspection {
       ...this.classification(name, context),
       ...context.upstreams.flatMap((upstream) => this.upstream(name, upstream)),
       ...this.presence(name, context),
+      ...moduleProblems(name, context, this.writtenModules(name)).map(({ needle, message, fix }) =>
+        this.report({ file: CONFIG_FILE, line: this.moduleLine(name, needle) }, message, fix),
+      ),
     ];
   }
 
@@ -298,6 +302,19 @@ export class ConfigInspection {
         `Create it with ${create}, or remove it from the config.`,
       ),
     ];
+  }
+
+  /** `contexts.<name>.modules` as the file holds it, before parsing drops what it cannot read. */
+  private writtenModules(name: string): unknown {
+    const contexts = rawConfig(this.project)['contexts'];
+    const context = isRecord(contexts) ? contexts[name] : undefined;
+
+    return isRecord(context) ? context['modules'] : undefined;
+  }
+
+  /** The line of the entry of a module of a context: the context, then its modules, then `needle`. */
+  private moduleLine(context: string, needle: string): number {
+    return lineOfSequence(this.project.configText, ['"contexts"', `"${context}"`, '"modules"', `"${needle}"`]);
   }
 
   /** A violation located on the line of the config file that first quotes `needle`. */

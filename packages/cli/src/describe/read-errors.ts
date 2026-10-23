@@ -10,6 +10,7 @@ import type { ErrorFact } from './context-description.js';
 import type { ContextSources } from './context-sources.js';
 import { exposedBy } from './exposed-by.js';
 import { readRefusals } from './read-refusals.js';
+import { roleFilesOf } from '../model-modules/index.js';
 
 const FOLDER = 'domain/errors';
 const CLASS = /(?<![\w$.])class\s+([A-Za-z_$][\w$]*)[^{]*\{/g;
@@ -20,14 +21,13 @@ const CLASS = /(?<![\w$.])class\s+([A-Za-z_$][\w$]*)[^{]*\{/g;
  * A class of one refusal (`"stack.refusals": "named"`) gives one row per factory, its code read
  * from `domain/errors/codes.ts`.
  */
-export function readErrors({ ws, directory, name: context }: ContextSources): ErrorFact[] {
+export function readErrors(sources: ContextSources): ErrorFact[] {
+  const { ws, directory, name: context } = sources;
   const list = codeListOf(ws.read(`${directory}/${FOLDER}/codes.ts`), context);
 
-  return ws
-    .list(`${directory}/${FOLDER}`)
-    .filter((name) => name.endsWith('.error.ts'))
-    .flatMap((name) => {
-      const file = `${directory}/${FOLDER}/${name}`;
+  return roleFilesOf(ws, sources, FOLDER)
+    .filter(({ name }) => name.endsWith('.error.ts'))
+    .flatMap(({ path: file }) => {
       const scanned = scan(ws.read(file) ?? '');
       const named = new Set(refusalClasses(scanned).map((shape) => shape.name));
 

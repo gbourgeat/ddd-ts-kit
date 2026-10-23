@@ -139,8 +139,20 @@ describe('what the generated file of a context holds', () => {
 
     expect(injected.calls).toEqual(['injected(Issue, [IdGenerator, Clock]);', 'injected(Void, [Clock]);']);
     expect(renderInjections([injection('Cancel', [])], specifier)).toEqual({ imports: [], calls: [] });
-    expect(renderDependenciesFile({ imports: [], calls: [] })).toBe('export {};\n');
-    expect(renderDependenciesFile(injected)).toBe(`${injected.imports.join('\n')}\n\n${injected.calls.join('\n')}\n`);
+    expect(renderDependenciesFile({ imports: [], calls: [] }, [])).toBe('export {};\n');
+
+    expect(renderDependenciesFile(injected, [])).toBe(
+      `${injected.imports.join('\n')}\n\n${injected.calls.join('\n')}\n`,
+    );
+
+    // The modules of the model the context declares, where discovery reads them, between the imports and the calls.
+    expect(renderDependenciesFile({ imports: [], calls: [] }, ['invoices'])).toBe(
+      "/** The modules of the model, as ddd-ts-kit.config.json declares them: discovery reads the role files of each. */\nexport const modules = ['invoices'];\n",
+    );
+
+    expect(renderDependenciesFile(injected, ['invoices', 'reminders'])).toBe(
+      `${injected.imports.join('\n')}\n\n/** The modules of the model, as ddd-ts-kit.config.json declares them: discovery reads the role files of each. */\nexport const modules = ['invoices', 'reminders'];\n\n${injected.calls.join('\n')}\n`,
+    );
   });
 
   it('leaves out a class whose decorator lists its dependencies, and one whose constructor could not be read', () => {
@@ -196,7 +208,7 @@ describe('what the generated file of a context holds', () => {
       calls: ['injected(Accept, [Clock]);', broken, 'injected(Open, [Ids]);'],
     };
 
-    expect(renderDependenciesFile(injected)).toBe(
+    expect(renderDependenciesFile(injected, [])).toBe(
       `import { injected } from 'k';\n\ninjected(Accept, [Clock]);\n\n${broken}\n\ninjected(Open, [Ids]);\n`,
     );
   });
@@ -216,6 +228,7 @@ describe('the declarations of a role folder, and how a written one drifts', () =
       renderDeclarations({
         context: 'billing',
         files: from,
+        modules: [],
         specifierOf: (file) => `@/${file}`,
         injectedIn: () => given,
       });

@@ -1,4 +1,4 @@
-import type { CommitLimits } from './commit-limits.js';
+import type { CommitConfig } from './commit-config.js';
 import type { Coverage } from './coverage.js';
 import type { RuleSetting } from './rule-setting.js';
 import type { Stack } from './stack.js';
@@ -12,6 +12,8 @@ export interface ContextConfig {
   readonly classification: string;
   readonly upstreams: readonly Upstream[];
   readonly extraDirectories: readonly string[];
+  /** The modules of the model the context is divided into, `contexts.<name>.modules`; empty while it is one piece. */
+  readonly modules: readonly ModuleConfig[];
   /** True once the context has its own entry point under `apps/<context>/main.ts`. */
   readonly deployable: boolean;
   /** The handles of who owns the context (`@team`, `@person`, an email), written to `CODEOWNERS` by `docs`; none: no line for it. */
@@ -27,6 +29,16 @@ export interface AgentsConfig {
 /** Who owns what is not a context: the platform, the composition root, the config, the pipeline, the review policy, the guide, the records. */
 export interface OwnersConfig {
   readonly platform: readonly string[];
+}
+
+/**
+ * A module of the model of a context (Evans, Modules): one folder level under `domain/` and
+ * `application/`, named in the ubiquitous language of the context.
+ */
+export interface ModuleConfig {
+  readonly name: string;
+  /** The classification of the subdomain the module holds; undefined when it is that of its context. */
+  readonly classification?: string;
 }
 
 /** A recorded departure from the defaults: what it relaxes, the decision record that allows it, and why. */
@@ -104,7 +116,7 @@ export interface Config {
   /** The minimum test coverage of each layer, per context: read by the test runner config, lowered only by a recorded deviation. */
   readonly coverage: Coverage;
   /** The advised size of one commit, generated files not counted. */
-  readonly commit: CommitLimits;
+  readonly commit: CommitConfig;
   /** How the editor hook of the plugin reacts to a violation: `enforce`, `advise` or `off`. Kept as written, `check` reports a wrong value. */
   readonly guard: string;
   /**

@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:2d1c883bc7964a81 -->
+<!-- translation-of: CONFIG.md sha256:2c700eaeea36ad2b -->
 
 # `ddd-ts-kit.config.json`
 
@@ -552,6 +552,8 @@ Tant que ce n'est pas fait, la règle peut rester à `warn` sous `rules`, enregi
 | `contexts.<name>.extraDirectories[]` | un chemin dans le contexte, ou `{ "path", "reason" }` : un répertoire ajouté à l'arborescence canonique. Chacun est une dérogation | `[]` |
 | `contexts.<name>.deployable` | `true`, `false` : le contexte a son propre point d'entrée `src/apps/<name>/main.ts` ; `generate service <name>` la pose | `false` |
 | `contexts.<name>.owners[]` | les identifiants de qui possède le contexte, tels que la plateforme du dépôt les connaît (`@org/equipe`, `@personne`, un courriel) : `ddd-ts-kit docs` les écrit dans `CODEOWNERS` pour l'arborescence du contexte et son `published-language/` ([Propriétaires](#propriétaires)) | `[]` : aucune ligne pour le contexte |
+| `contexts.<name>.modules` | `{ "<module>": {} }` : les modules du modèle du contexte, chacun un dossier placé directement sous `domain/` et `application/` ([Modules du modèle](concepts/modules.fr.md)). Un nom est en kebab-case, unique dans le contexte, et jamais le nom d'un dossier de rôle (`aggregates`, `commands`...) ; `generate module <context> <module>` l'écrit | aucun |
+| `contexts.<name>.modules.<module>.classification` | `core`, `supporting`, `generic` : le sous-domaine que le module porte, quand il diffère de la classification de son contexte | la classification du contexte |
 
 Les contextes de la configuration et les répertoires de `contextsDir` doivent former le même
 ensemble.
@@ -600,6 +602,7 @@ même listés dans une liste d'autorisation.
 | Clé | Valeurs | Défaut |
 |---|---|---|
 | `commit` | `{ "maxFiles": 20, "maxLines": 600 }` : taille conseillée d'un *commit*, lue par `ddd-ts-kit check --commit-size` (indicatif, `--strict` sort en 1) et par le *hook* d'éditeur (un rappel, jamais bloquant). Les fichiers générés ne sont pas comptés. Une limite qui n'est pas un entier positif est lue comme sa valeur par défaut et signalée | comme montré |
+| `commit.agentTrailer` | `true`, `false` : si un *commit* fait par un agent du *plugin* le dit. À `true`, la *skill* story, l'agent `context-builder` qu'elle instruit et la *skill* fix terminent chaque *commit* qu'ils font par le *trailer* `Agent: <host> ddd-ts-kit@<plugin version> <agent name>` (`Agent: claude-code ddd-ts-kit@0.85.0 context-builder`), et le rapport d'une *story* compte les *commits* faits par un agent face à ceux faits à la main. Désactivé par défaut : beaucoup d'équipes refusent les lignes d'attribution dans les *commits*, et la séparation que veut vraiment le journal d'audit du cycle de vie passe par l'identité de l'exécution, qu'un *trailer* ne fait qu'approcher. Une valeur qui n'est pas un booléen est lue comme `false` et signalée | `false` |
 | `guard` | `enforce`, `advise`, `off` : comment le *hook* d'éditeur du *plugin* réagit à une violation. La variable d'environnement `DDD_TS_KIT_GUARD` l'emporte sur elle | `enforce` |
 | `worktrees` | `required`, `advised` : où la garde du *plugin* laisse une session écrire le code d'un contexte. `required` : dans un *worktree* seulement (`npx ddd-ts-kit worktree <name>`, `story-scope`, `worker-scope`, tous sous `.worktrees/`) ; dans le *checkout* principal, sur la branche du tronc, le code des contextes et les générateurs qui l'écrivent sont refusés. `advised` : partout, avec un avis au démarrage de la session, ce que garde un projet démarré avant cette clé tant qu'elle n'est pas posée | `required` dans un projet que crée `init`, `advised` quand la clé est absente |
 | `worker` | `true`, `false` : le projet a `src/apps/worker/main.ts` ; les *jobs* planifiés tournent alors là et non dans le processus de l'API. `generate worker` la pose | `false` |

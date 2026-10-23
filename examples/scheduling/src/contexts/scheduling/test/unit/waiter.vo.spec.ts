@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
+import { Waiter } from '@/contexts/scheduling/domain/waitlist/value-objects/waiter.vo';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 
 const joinedAt = new Date('2026-03-01T08:00:00.000Z');

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { givenProcess } from '@ddd-ts-kit/testing';
-import { ExpireUnconfirmedAppointmentsCommand } from '@/contexts/scheduling/application/commands/expire-unconfirmed-appointments/expire-unconfirmed-appointments.command';
+import { ExpireUnconfirmedAppointmentsCommand } from '@/contexts/scheduling/application/calendars/commands/expire-unconfirmed-appointments/expire-unconfirmed-appointments.command';
 import {
   ConfirmationDeadlineProcess,
   type ConfirmationDeadlineState,
-} from '@/contexts/scheduling/application/processes/confirmation-deadline.process';
-import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
+} from '@/contexts/scheduling/application/calendars/processes/confirmation-deadline.process';
+import { AppointmentBooked } from '@/contexts/scheduling/domain/calendars/events/appointment-booked.event';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 const deadline = new Date('2026-03-01T12:00:00.000Z');
