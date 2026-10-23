@@ -25,7 +25,7 @@ describe('init --cache', () => {
     );
 
     expect(read(root, 'src/main.ts')).toContain('wakeOn: redis.relaySignal');
-    expect(read(root, 'src/platform/http/refusal-for.ts')).toContain("'retry-after'");
+    expect(read(root, 'src/platform/http/too-many-requests-for.ts')).toContain("'retry-after'");
     expect(read(root, 'src/platform/http/start-http-server.ts')).toContain("app.get(\n    '/health/ready',");
     expect(read(root, 'src/platform/config/load-config.ts')).toContain("redisUrl: env.url('REDIS_URL')");
 

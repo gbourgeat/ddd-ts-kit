@@ -5,7 +5,7 @@ import { mountExpress } from '@ddd-ts-kit/http/express';
 import type { Application } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 {{#if cache.rateLimit}}
-import { refusalFor } from '{{alias.platform}}/http/refusal-for{{alias.ext}}';
+import { tooManyRequestsFor } from '{{alias.platform}}/http/too-many-requests-for{{alias.ext}}';
 {{/if}}
 {{#if docs.any}}
 import { withDocumentation } from '{{alias.platform}}/http/with-documentation{{alias.ext}}';
@@ -21,12 +21,18 @@ export interface HttpServer {
 /** What the server needs of the application: its routes and what stands at its edge. */
 type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
 
+/**
+ * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
+ * server), the signed file links before any body parser (with a storage the application serves),
+ * the routes of the contexts, then the pages of the contract (with documentation on).
+ */
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
   const app = express();
 
   app.disable('x-powered-by');
 {{#if cache.rateLimit}}
-  guardTheDoor(app, served, config);
+  answerReadiness(app, served);
+  limitEachCaller(app, served, config);
 {{/if}}
 {{#if files.http}}
   // Before the JSON parser, which would read first a JSON file sent through a signed link.
@@ -46,20 +52,23 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 }
 {{#if cache.rateLimit}}
 
-/** The readiness probe, then the limiter, before any route. */
-function guardTheDoor(app: express.Express, served: Served, config: AppConfig): void {
+/** Whether the Redis protocol server answers, for the load balancer; never limited, since it is polled. */
+function answerReadiness(app: express.Express, served: Served): void {
   app.get(
     '/health/ready',
     (_request, response) =>
       void served.ready().then((ready) => response.status(ready ? 200 : 503).json({ status: ready ? 'up' : 'down' })),
   );
+}
 
+/** One sliding window per caller address, before authentication costs anything. */
+function limitEachCaller(app: express.Express, served: Served, config: AppConfig): void {
   app.use((request, response, next) => {
-    void refusalFor(served.rateLimiter, config.rateLimit, request.ip).then((refusal) => {
-      if (refusal === undefined) {
+    void tooManyRequestsFor(served.rateLimiter, config.rateLimit, request.ip).then((tooMany) => {
+      if (tooMany === undefined) {
         next();
       } else {
-        response.status(refusal.problem.status).set(refusal.headers).send(JSON.stringify(refusal.problem));
+        response.status(tooMany.status).set(tooMany.headers).send(tooMany.body);
       }
     }, next);
   });
