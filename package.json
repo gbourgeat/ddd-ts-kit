@@ -18,7 +18,7 @@
     "verify": "npm run ci:typecheck && npm run ci:lint && npm run ci:format && npm run ci:test:unit && npm run ci:arch && npm run ci:deadcode && npm run ci:docs && npm run ci:build",
     "example:verify": "npm run verify --workspace examples/scheduling && npm run example:conformance",
     "example:conformance": "DDD_TS_KIT_CONFORMANCE=1 vitest run --no-file-parallelism --hookTimeout=240000 packages/cli/test/conformance",
-    "lint": "eslint --config eslint.config.mjs .",
+    "lint": "node pipeline/monorepo/lint.mjs",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "knip": "knip",
@@ -34,9 +34,9 @@
     "site:preview": "npm run preview --workspace site",
     "quality": "npm run format:check && npm run lint && npm run knip && npm run depcruise && npm run package:check",
     "ci:typecheck": "npm run build && npm run typecheck:tests && npm run docs:samples",
-    "ci:lint": "eslint --config eslint.config.mjs .",
+    "ci:lint": "node pipeline/monorepo/lint.mjs",
     "ci:format": "npm run format:check",
-    "ci:arch": "npm run release:version && npm run check:self && npm run depcruise && node --test plugin/hooks/guard.test.mjs plugin/skills/controls.test.mjs pipeline/monorepo/affected-packages.test.mjs pipeline/monorepo/changes.test.mjs pipeline/monorepo/e2e-shards.test.mjs pipeline/monorepo/translations.test.mjs pipeline/monorepo/add-extensions.test.mjs pipeline/monorepo/doc-samples.test.mjs site/scripts/assemble.test.mjs",
+    "ci:arch": "npm run release:version && npm run check:self && npm run depcruise && node --test plugin/hooks/guard.test.mjs plugin/skills/controls.test.mjs pipeline/monorepo/affected-packages.test.mjs pipeline/monorepo/changes.test.mjs pipeline/monorepo/e2e-shards.test.mjs pipeline/monorepo/translations.test.mjs pipeline/monorepo/add-extensions.test.mjs pipeline/monorepo/doc-samples.test.mjs pipeline/monorepo/typecheck-tests.test.mjs pipeline/monorepo/lint.test.mjs site/scripts/assemble.test.mjs",
     "ci:deadcode": "knip",
     "ci:test:unit": "vitest run --coverage",
     "ci:test:integration": "vitest run packages/drizzle packages/knex packages/prisma packages/typeorm packages/audit packages/openfga packages/s3 packages/nats packages/rabbitmq packages/kafka packages/http/test/varnish-cache-purger.spec.ts packages/redis",
@@ -47,7 +47,7 @@
     "ci:docs": "npm run check:dashes && npm run docs:translations",
     "ci:audit": "npm audit --omit=dev --audit-level=high",
     "ci:build": "npm run package:check",
-    "typecheck:tests": "tsx packages/prisma/test/support/generate-client.ts && for p in kernel di kafka redis rabbitmq nats s3 events auth openfga aspects tracing audit drizzle knex prisma typeorm sentry scheduling http testing eslint-plugin pino winston; do node node_modules/@typescript/native/bin/tsc -p packages/$p/tsconfig.test.json || exit 1; done && for p in cli validation; do node node_modules/@typescript/native/bin/tsc -p packages/$p/test/tsconfig.json || exit 1; done"
+    "typecheck:tests": "tsx packages/prisma/test/support/generate-client.ts && node pipeline/monorepo/typecheck-tests.mjs"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",

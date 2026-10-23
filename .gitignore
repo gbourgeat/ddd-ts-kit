@@ -14,3 +14,5 @@ dist
 .worktrees/
 # The results of the eval suite of the plugin (`claude plugin eval plugin`), written at each run.
 /plugin/evals/results/
+# The cache of ESLint and the key it was written for (pipeline/monorepo/lint.mjs).
+.eslintcache/

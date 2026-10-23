@@ -94,8 +94,26 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
+      # A pull request restores the cache the trunk wrote last for this lockfile and this config, and lints the files
+      # that changed since (docs/proposals/build-and-test-velocity.md); the lint script drops it when the rules as built,
+      # the config or the lockfile differ from what it was written for. The trunk and the night restore nothing: they
+      # lint everything, which also sees a type changed in another file, and write the cache the pull requests read.
+      - name: The cache of ESLint, as the trunk wrote it last
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .eslintcache/
+          # One cache per lockfile and lint config (the rules of the kit included), keyed by the content of each file.
+          key: eslint-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs', 'packages/eslint-plugin/src/**') }}-${{ github.sha }}
+          restore-keys: eslint-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs', 'packages/eslint-plugin/src/**') }}-
       - run: npm run ci:format
       - run: npm run ci:lint
+      - name: The cache of ESLint, for the pull requests that follow
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .eslintcache/
+          key: eslint-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs', 'packages/eslint-plugin/src/**') }}-${{ github.sha }}
 
   architecture:
     name: Architecture
