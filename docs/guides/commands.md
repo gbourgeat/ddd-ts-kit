@@ -346,8 +346,8 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    and the generated declarations are rewritten; what the modules share stays at the level
                    of the context: the code list and the permission set at its root, the schema of its
                    database, its route groups, guards and shared shapes, its fakes, builders and worlds
-  context-layout   takes the files of the contexts, or of the ones named, that 0.86 wrote elsewhere to their
-                   place of today: domain/errors/codes.ts to <context>.codes.ts and
+  context-layout   takes the files of the contexts, or of the ones named, that 0.86 or 0.87 wrote elsewhere to
+                   their place of today: domain/errors/codes.ts to <context>.codes.ts and
                    application/authorization/<context>.permissions.ts to <context>.permissions.ts, at the
                    root of the context, and each module of the model from domain/<module>/ and
                    application/<module>/ to <module>/domain/ and <module>/application/, with the adapters,

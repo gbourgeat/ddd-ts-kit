@@ -77,7 +77,7 @@ export function moduleMoves(ws: Workspace, config: Config, context: string): Mod
   };
 }
 
-/** A file of a module where 0.86 put it, with its place of today. */
+/** A file of a module where 0.86 and 0.87 put it, with its place of today. */
 function earlierMove(file: string, modules: readonly string[]): { from: string; to: string }[] {
   const { module, path, earlier } = moduleSplit(file, modules);
 

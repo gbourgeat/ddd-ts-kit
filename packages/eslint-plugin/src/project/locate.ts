@@ -60,7 +60,7 @@ const MODULE_TEST_FOLDERS: readonly string[] = ['unit', 'integration'];
 
 /**
  * A module of the model is one folder of the context holding its layers (`<module>/domain/...`),
- * one folder of the test folders of its specs (`test/unit/<module>/...`), or, as 0.86 laid it out,
+ * one folder of the test folders of its specs (`test/unit/<module>/...`), or, as 0.86 and 0.87 laid it out,
  * one folder under domain/ and application/: left out, the rest of the path is what it would be
  * without modules, so every role keeps its place.
  */
@@ -97,7 +97,7 @@ function inTestFolder(
     : undefined;
 }
 
-/** `<domain|application>/<module>/...`, as 0.86 laid modules out. */
+/** `<domain|application>/<module>/...`, as 0.86 and 0.87 laid modules out. */
 function inEarlierPlace(
   modules: readonly string[],
   [first = '', second = '', ...rest]: readonly string[],

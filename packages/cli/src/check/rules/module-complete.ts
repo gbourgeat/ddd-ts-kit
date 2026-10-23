@@ -21,7 +21,7 @@ const NAMED = 5;
 export const moduleComplete: Rule = {
   id: 'module/complete',
   description:
-    'Once a context declares modules of its model, every file of its layers sits in one of them (<module>/domain/, <module>/application/, <module>/infrastructure/, <module>/presentation/), and every spec of one of their files in the module folder of its test folder (test/unit/<module>/), the files the context keeps at its own level aside: the code list and the permission set at its root, the schema, tables and migrations of its database, its route groups, guards and shared shapes, the fakes, builders and worlds of its specs, and the generated declarations. A module still where 0.86 put it (domain/<module>/, application/<module>/) is reported too. One finding per folder. A warning, so that a context moves into its modules one commit at a time.',
+    'Once a context declares modules of its model, every file of its layers sits in one of them (<module>/domain/, <module>/application/, <module>/infrastructure/, <module>/presentation/), and every spec of one of their files in the module folder of its test folder (test/unit/<module>/), the files the context keeps at its own level aside: the code list and the permission set at its root, the schema, tables and migrations of its database, its route groups, guards and shared shapes, the fakes, builders and worlds of its specs, and the generated declarations. A module still where 0.86 and 0.87 put it (domain/<module>/, application/<module>/) is reported too. One finding per folder. A warning, so that a context moves into its modules one commit at a time.',
   scope: 'project',
   run(project) {
     const report = reporter(project, this.id);
@@ -38,7 +38,7 @@ export const moduleComplete: Rule = {
       const earlier = [...earlierByFolder(project, context, modules)].map(([folder, module]) =>
         report(
           at(folder),
-          `${folder}/ of "${context}" is the module ${module} where 0.86 put it: a module now holds its layers, ${module}/domain/, ${module}/application/...`,
+          `${folder}/ of "${context}" is the module ${module} where 0.86 and 0.87 put it: a module now holds its layers, ${module}/domain/, ${module}/application/...`,
           `Run \`npx ddd-ts-kit context-layout ${context}\`, which moves each module to its folder with its adapters, routes and specs, and every import of them.`,
         ),
       );
@@ -62,7 +62,7 @@ function listed(files: readonly string[]): string {
   return `${files.slice(0, NAMED).join(', ')}${more}`;
 }
 
-/** The folders of the modules of a context laid out as 0.86 laid them, `domain/<module>`, with the module each is. */
+/** The folders of the modules of a context laid out as 0.86 and 0.87 laid them, `domain/<module>`, with the module each is. */
 function earlierByFolder(project: Project, context: string, modules: readonly string[]): Map<string, string> {
   const prefix = `${project.config.contextsDir}/${context}/`;
   const byFolder = new Map<string, string>();

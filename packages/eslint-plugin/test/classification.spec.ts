@@ -162,7 +162,7 @@ describe('the plugin classifies files exactly like the CLI checker', () => {
     expect(names.get('ILogger')).toBe('Logger');
   });
 
-  it('locates the files of the modules of a context the same way, in their folder and where 0.86 put them', () => {
+  it('locates the files of the modules of a context the same way, in their folder and where 0.86 and 0.87 put them', () => {
     const raw = { contexts: { scheduling: { classification: 'core', modules: { calendars: {}, waitlist: {} } } } };
 
     for (const file of PATHS) {
