@@ -121,7 +121,7 @@ ruleTester.run('clean-one-export-per-file: entry files', cleanOneExportPerFile, 
     ),
     at(`${BILLING}/billing.dependencies.ts`, "import { A } from './application/a.handler.js';\ninjected(A, [B]);"),
     at(
-      `${BILLING}/application/commands/commands.declarations.ts`,
+      `${BILLING}/application/application.declarations.ts`,
       "import { injected } from '@ddd-ts-kit/kernel/declarations';\nimport { A } from './a/a.handler.js';\nexport * from './a/a.command.js';\nexport * from './a/a.handler.js';\ninjected(A, [B]);",
     ),
     at(

@@ -5,12 +5,10 @@ import { DECLARED_DECLARATIONS } from './declared-declarations';
 import { declaredProject } from './declared-project';
 import { discoveredProject } from './discovered-project';
 import type { Fixture } from './fixture';
-import type { FixtureFiles } from './fixture-files';
 import { handler } from './handler';
 import { PATHS } from './paths';
 import { project } from './project';
 import { SAMPLES } from './samples';
-import { SINGLE_FILE_DECLARATIONS } from './single-file-declarations';
 import { source } from './source';
 import { withoutFile } from './without-file';
 
@@ -20,7 +18,7 @@ const {
   BARREL,
   BILLING,
   COMMAND,
-  COMMANDS_DECLARATIONS,
+  APPLICATION_DECLARATIONS,
   EVENT,
   EVENT_HANDLER,
   EVENT_HANDLER_SPEC,
@@ -47,14 +45,6 @@ const PORT_IMPORT = "import { PaymentGateway } from '@/contexts/billing/applicat
 
 const stripeGateway = (...before: string[]): string =>
   source(PORT_IMPORT, '', ...before, 'export class StripePaymentGateway implements PaymentGateway {}');
-
-/** The billing context declared in the single file of 0.84: no declarations file in a role folder. */
-const singleFile = (declarations: string): FixtureFiles =>
-  Object.fromEntries(
-    Object.entries(declaredProject(DECLARED_CONTEXT, { [BARREL]: declarations })).filter(
-      ([file]) => file === BARREL || !file.startsWith(`${BILLING}/`) || !file.endsWith('.declarations.ts'),
-    ),
-  );
 
 const explicitModule = (...statements: string[]): string =>
   source("import type { ModuleBuilder } from '@ddd-ts-kit/di';", PORT_IMPORT, ...statements);
@@ -145,7 +135,7 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'declarations/barrel-current',
-    name: 'the declarations of each role folder list its role files, sorted by path, and the summary at the root re-exports them',
+    name: 'the declarations of each layer list its role files, sorted by path, and the summary at the root re-exports them',
     expect: 'pass',
     files: declaredProject(DECLARED_CONTEXT, DECLARED_DECLARATIONS),
   },
@@ -172,52 +162,29 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'declarations/barrel-current',
-    name: 'a role folder without its declarations',
-    expect: { file: COMMANDS_DECLARATIONS },
-    files: withoutFile(declaredProject(DECLARED_CONTEXT), COMMANDS_DECLARATIONS),
+    name: 'a layer without its declarations',
+    expect: { file: APPLICATION_DECLARATIONS },
+    files: withoutFile(declaredProject(DECLARED_CONTEXT), APPLICATION_DECLARATIONS),
   },
   {
     ruleId: 'declarations/barrel-current',
-    name: 'a role file added by hand that the declarations of its folder do not list',
-    expect: { file: COMMANDS_DECLARATIONS },
+    name: 'a role file added by hand that the declarations of its layer do not list',
+    expect: { file: APPLICATION_DECLARATIONS },
     files: declaredProject(DECLARED_CONTEXT, {
       ...DECLARED_DECLARATIONS,
-      [COMMANDS_DECLARATIONS]: source(
+      [APPLICATION_DECLARATIONS]: source(
         "export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js';",
       ),
     }),
   },
   {
     ruleId: 'declarations/barrel-current',
-    name: 'the declarations of a folder that holds no role file any more, left behind',
-    expect: { file: `${BILLING}/application/background/background.declarations.ts` },
+    name: 'the declarations of a layer that holds no role file any more, left behind',
+    expect: { file: `${BILLING}/presentation/presentation.declarations.ts` },
     files: declaredProject(DECLARED_CONTEXT, {
-      [`${BILLING}/application/background/background.declarations.ts`]: 'export {};\n',
+      ...DECLARED_DECLARATIONS,
+      [`${BILLING}/presentation/presentation.declarations.ts`]: 'export {};\n',
     }),
-  },
-  {
-    ruleId: 'declarations/barrel-current',
-    name: 'the single declarations file of 0.84, current and not moved yet: a warning, until a later minor version',
-    expect: { file: BARREL },
-    severity: 'warn',
-    files: singleFile(SINGLE_FILE_DECLARATIONS),
-  },
-  {
-    ruleId: 'declarations/barrel-current',
-    name: 'the single declarations file of 0.84 that misses a role file: stale, an error',
-    expect: { file: BARREL },
-    files: singleFile(
-      SINGLE_FILE_DECLARATIONS.replace(
-        "export * from '@/contexts/billing/application/scheduling/send-reminders.job.js';\n",
-        '',
-      ),
-    ),
-  },
-  {
-    ruleId: 'declarations/barrel-current',
-    name: 'a context half moved, the single declarations file of 0.84 next to the declarations of its role folders: an error',
-    expect: { file: BARREL },
-    files: declaredProject(DECLARED_CONTEXT, { [BARREL]: SINGLE_FILE_DECLARATIONS }),
   },
   {
     ruleId: 'declarations/barrel-current',
@@ -227,10 +194,10 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'declarations/barrel-current',
-    name: 'assembly by discovery: the declarations of a role folder left behind',
-    expect: { file: COMMANDS_DECLARATIONS },
+    name: 'assembly by discovery: the declarations of a layer left behind',
+    expect: { file: APPLICATION_DECLARATIONS },
     files: discoveredProject(DECLARED_CONTEXT, {
-      [COMMANDS_DECLARATIONS]: DECLARED_DECLARATIONS[COMMANDS_DECLARATIONS] ?? '',
+      [APPLICATION_DECLARATIONS]: DECLARED_DECLARATIONS[APPLICATION_DECLARATIONS] ?? '',
     }),
   },
   {

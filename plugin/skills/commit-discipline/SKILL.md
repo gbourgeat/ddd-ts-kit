@@ -34,7 +34,7 @@ that thing has a natural size: **one slice**.
 
 Always in the same commit as what caused them: the files the generator wrote and updated
 (the `created`, `updated` and `deleted` lists of its output), the regenerated declarations
-(`<context>.declarations.ts` and the `<folder>.declarations.ts` of each role folder it touched),
+(`<context>.declarations.ts` and the `<layer>.declarations.ts` of each layer it touched),
 the generated lists of `CONTEXT.md`, the glossary row a new
 name needed, the contracts under `openapi/`, the event catalog, `docs/context-map.md`. A generated
 file committed alone, or left for later, breaks `docs --check` on one side of the history.

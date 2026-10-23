@@ -10,7 +10,7 @@ const NOTHING_DECLARED = 'export {};\n';
  * True while a context keeps its declarations in the single file the generator wrote up to 0.84:
  * no role folder holds a declarations file yet, and `<context>.declarations.ts` (`written`) is
  * exactly what that generator would write for the role files and constructors of today. This
- * version accepts it with a warning (`singleFileNotice`), so that upgrading the kit fails no gate;
+ * version accepts it with a warning (`earlierLayoutNotice`), so that upgrading the kit fails no gate;
  * a later minor version refuses it. A single file that is itself stale, or a context half moved,
  * is not this case.
  */

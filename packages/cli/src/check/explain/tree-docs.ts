@@ -2,11 +2,11 @@ import type { RuleDoc } from '../model/rule-doc';
 
 export const TREE_DOCS: Readonly<Record<string, RuleDoc>> = {
   'tree/closed': {
-    why: 'A fixed tree means every concept has one obvious place, so people and tools find it without reading the code. An ad hoc folder (utils, helpers, common, types, functions) is where unnamed concepts go to hide: a function that reads a value is a method of that value object, a decision over several objects a domain service, a shared shape of data a value object, an interchangeable rule an abstract class of domain/services with one service per variant (docs/ARCHITECTURE.md, a concept with no role of its own). A real new need is declared in extraDirectories with its reason. In the declared style the generated summary <context>.declarations.ts lives at the root of the context, next to CONTEXT.md, and the generated <folder>.declarations.ts of each role folder in that folder; a module file may stay at the root when the wiring of a context is unusual.',
+    why: 'A fixed tree means every concept has one obvious place, so people and tools find it without reading the code. An ad hoc folder (utils, helpers, common, types, functions) is where unnamed concepts go to hide: a function that reads a value is a method of that value object, a decision over several objects a domain service, a shared shape of data a value object, an interchangeable rule an abstract class of domain/services with one service per variant (docs/ARCHITECTURE.md, a concept with no role of its own). A real new need is declared in extraDirectories with its reason. In the declared style the generated summary <context>.declarations.ts lives at the root of the context, next to CONTEXT.md, and the generated <layer>.declarations.ts of each layer in that layer; a module file may stay at the root when the wiring of a context is unusual.',
     bad: `contexts/billing/domain/utils/rounding.ts`,
     good: `contexts/billing/domain/value-objects/money.vo.ts
 contexts/billing/billing.declarations.ts                          // declared style only
-contexts/billing/application/commands/commands.declarations.ts    // declared style only`,
+contexts/billing/application/application.declarations.ts          // declared style only`,
   },
   'tree/context-doc': {
     why: 'CONTEXT.md is where the vocabulary and the boundaries are agreed with the domain experts. Without it, names drift and nobody can tell whether a concept belongs here. The classification says how much design effort the context deserves.',

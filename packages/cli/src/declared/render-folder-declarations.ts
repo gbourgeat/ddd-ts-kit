@@ -5,8 +5,8 @@ import type { RenderedInjections } from './injection/rendered-injections';
 const NOTHING: RenderedInjections = { imports: [], calls: [] };
 
 /**
- * The declarations of one role folder: the imports the registrations need, one `export *` per
- * role file of the folder, named by the specifier `specifierOf` gives it and sorted by path, then
+ * The declarations of one folder, a layer or a role folder: the imports the registrations need,
+ * one `export *` per role file of the folder, named by the specifier `specifierOf` gives it and sorted by path, then
  * one `injected(Class, [Tokens])` per class of the folder whose constructor takes something its
  * decorator does not list, read from the constructor signatures. `files` are relative to the
  * context, `modules` are the modules of the model it declares. It is derived from the tree, never edited by hand: `ddd-ts-kit check` reports a file

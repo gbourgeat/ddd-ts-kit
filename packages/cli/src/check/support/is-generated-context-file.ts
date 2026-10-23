@@ -4,7 +4,7 @@ import { WITHOUT_MODULE } from '../../model-modules';
 import type { SourceFile } from '../model/source-file';
 
 /**
- * The generated files of a declared context: the declarations of each role folder and their
+ * The generated files of a declared context: the declarations of each layer and their
  * summary at its root, or `<context>.dependencies.ts`; `declarations/barrel-current` holds every
  * line of them.
  */

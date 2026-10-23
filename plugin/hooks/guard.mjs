@@ -963,9 +963,10 @@ function generatedFileReason(project, file) {
 }
 
 /**
- * The summary at the root of a context, or the declarations of a role folder, named after the
- * folder: the folder of the context, or the same folder in a module of its model that the config
- * declares (application/<module>/commands/commands.declarations.ts).
+ * The summary at the root of a context, the declarations of a layer, named after it
+ * (application/application.declarations.ts), or those of a role folder an earlier version wrote,
+ * named after the folder (application/commands/commands.declarations.ts): in the context, or in a
+ * module of its model that the config declares.
  */
 function isBarrel(project, path) {
   const [context, layer, ...rest] = insideContexts(project, path) ?? [];
@@ -974,7 +975,7 @@ function isBarrel(project, path) {
   }
   const module = layer === 'application' && rest.length >= 2 && (project.modules?.[context] ?? []).includes(rest[0]);
   const below = module ? rest.slice(1) : rest;
-  const folder = below.length === 2 ? below[0] : module ? rest[0] : layer;
+  const folder = below.length === 2 ? below[0] : layer;
   return (
     ['application', 'infrastructure', 'presentation'].includes(layer) &&
     below.length <= 2 &&

@@ -99,7 +99,7 @@ describe('merge-trunk: what is settled without a person', () => {
     for (const [file, kind] of [
       ['openapi/openapi.yaml', 'derived'],
       ['src/contexts/billing/billing.declarations.ts', 'derived'],
-      ['src/contexts/billing/application/commands/commands.declarations.ts', 'derived'],
+      ['src/contexts/billing/application/application.declarations.ts', 'derived'],
       ['src/contexts/billing/infrastructure/infrastructure.declarations.ts', 'derived'],
       ['migrations/meta/_journal.json', 'drizzle-meta'],
       ['migrations/meta/20261015101500_snapshot.json', 'drizzle-meta'],

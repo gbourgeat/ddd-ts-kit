@@ -105,7 +105,7 @@ src/contexts/appointments/
     authorization/appointments.permissions.ts  the permission set of the context
     booking/
       commands/book-appointment/...
-      commands/commands.declarations.ts        generated, per role folder of the module
+      application.declarations.ts              generated, per layer of the module
     waitlist/
       commands/join-waitlist/...
       event-handlers/offer-freed-slot.event-handler.ts
@@ -199,8 +199,8 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   `error-factories` writes the class of a concept next to the errors it replaces, in their
   module; errors of one concept read from two folders are refused until `move-to-module` gathers
   them.
-- In the declared style assembled by barrel, each role folder of a module has its generated
-  `<folder>.declarations.ts`, re-exported by `<context>.declarations.ts`.
+- In the declared style assembled by barrel, each layer of a module has its generated
+  `<layer>.declarations.ts`, re-exported by `<context>.declarations.ts`.
 - `discoverContext` of `@ddd-ts-kit/di` runs without the config: it reads the modules in the
   generated `<context>.dependencies.ts`, which `ddd-ts-kit docs` writes with them
   (`export const modules = [...]`). A folder that file does not name is no module at boot either:

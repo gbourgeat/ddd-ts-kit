@@ -271,7 +271,7 @@ describe('clean/file-size', () => {
   it('does not judge the generated declarations, at the root of a context and in its role folders, nor its dependency file', () => {
     const root = projectWith({
       'src/contexts/billing/billing.declarations.ts': long,
-      'src/contexts/billing/application/commands/commands.declarations.ts': long,
+      'src/contexts/billing/application/application.declarations.ts': long,
       'src/contexts/billing/infrastructure/infrastructure.declarations.ts': long,
       'src/contexts/shipping/shipping.dependencies.ts': long,
     });

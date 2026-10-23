@@ -42,19 +42,20 @@ describe('generate background-job, in the declared style', () => {
     generated = report(cli(root, ...COMPILE, '--json'));
   });
 
-  it('writes the job named by its static jobName, its spec, and lists it in the declarations of its folder and in CONTEXT.md', () => {
-    expect(generated.created).toEqual([JOB, JOB_SPEC, `${BILLING}/application/background/background.declarations.ts`]);
+  it('writes the job named by its static jobName, its spec, and lists it in the declarations of its layer and in CONTEXT.md', () => {
+    expect(generated.created).toEqual([JOB, JOB_SPEC]);
+    expect(generated.updated).toContain(`${BILLING}/application/application.declarations.ts`);
 
-    expect(read(root, `${BILLING}/application/background/background.declarations.ts`)).toContain(
+    expect(read(root, `${BILLING}/application/application.declarations.ts`)).toContain(
       "export * from '@/contexts/billing/application/background/compile-statements.background-job';",
     );
 
-    expect(read(root, `${BILLING}/application/background/background.declarations.ts`)).toContain(
+    expect(read(root, `${BILLING}/application/application.declarations.ts`)).toContain(
       'injected(CompileStatementsBackgroundJob, [CommandBus]);',
     );
 
     expect(read(root, `${BILLING}/billing.declarations.ts`)).toContain(
-      "export * from '@/contexts/billing/application/background/background.declarations';",
+      "export * from '@/contexts/billing/application/application.declarations';",
     );
 
     expect(read(root, `${BILLING}/CONTEXT.md`)).toContain('billing.compile-statements');
@@ -193,14 +194,10 @@ describe('generate process', () => {
     generated = report(cli(root, ...DUNNING, '--json'));
   });
 
-  it('writes the process, the job of its timeouts, their specs and the declarations of the folder of the job', () => {
-    expect(generated.created).toEqual([
-      PROCESS,
-      TIMEOUT_JOB,
-      PROCESS_SPEC,
-      TIMEOUT_SPEC,
-      `${BILLING}/application/background/background.declarations.ts`,
-    ]);
+  it('writes the process, the job of its timeouts, their specs and the declarations of the layer of the job', () => {
+    expect(generated.created).toEqual([PROCESS, TIMEOUT_JOB, PROCESS_SPEC, TIMEOUT_SPEC]);
+
+    expect(generated.updated).toContain(`${BILLING}/application/application.declarations.ts`);
   });
 
   it('names the process and its timeout job after the context, and decides only data', () => {

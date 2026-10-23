@@ -1,5 +1,5 @@
 [English](dependency-injection.md) · **Français**
-<!-- translation-of: dependency-injection.md sha256:ad7599faafd63f35 -->
+<!-- translation-of: dependency-injection.md sha256:28b4eb9e7f3c96fa -->
 
 # Injection de dépendances : tsyringe avec déclarations, NestJS, câblage manuel
 
@@ -164,7 +164,7 @@ class InMemoryAppointmentRepository implements AppointmentRepository {
   }
 }
 
-// contexts/appointments/application/commands/commands.declarations.ts, généré : jamais écrit à la main
+// contexts/appointments/application/application.declarations.ts, généré : jamais écrit à la main
 injected(BookAppointmentHandler, [AppointmentRepository, Clock, IdGenerator]);
 
 // main.ts
@@ -179,9 +179,9 @@ export async function main(): Promise<void> {
 Dans un projet, la racine de composition importe le *barrel* généré entier au lieu de nommer
 les classes : `contextModule('appointments', appointments)` après
 `import * as appointments from '@/contexts/appointments/appointments.declarations'`. Ce fichier
-ne fait que réexporter les déclarations générées de chaque dossier de rôle du contexte, où se
-trouvent les instructions `injected`, un fichier par dossier
-(`application/commands/commands.declarations.ts`).
+ne fait que réexporter les déclarations générées de chaque couche du contexte, où se
+trouvent les instructions `injected`, un fichier par couche
+(`application/application.declarations.ts`).
 
 **Explicite (tsyringe et `@ddd-ts-kit/di`).** Chaque liaison est une instruction de
 `<context>.module.ts`, avec la liste de ce que prend chaque constructeur. Aucun décorateur n'est

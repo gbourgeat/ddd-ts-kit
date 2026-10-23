@@ -1,6 +1,6 @@
 import type { Config } from '../config';
 import { CliError } from '../cli-error';
-import { refreshBarrels, type SingleFile } from '../generate/refresh-barrels';
+import { type EarlierDeclarations, type KeptContext, refreshBarrels } from '../generate/refresh-barrels';
 import { replaceRegion } from '../markers';
 import { readTemplate, renderTemplate } from '../templating';
 import type { Workspace } from '../workspace';
@@ -18,9 +18,9 @@ const INTEGRATION_README = 'docs/integration/README.md';
  * Plans every generated part of the documentation: the lists of each CONTEXT.md, the block
  * of the context map, the barrel of each declared context, the code owners once an owner is
  * configured, and, once, the skeleton of what only people can write. The caller commits the workspace, or reads what it would change to detect drift.
- * Answers the contexts left in the single declarations file of 0.84, which `singleFile` keeps.
+ * Answers the contexts left in a layout of their declarations an earlier version wrote, which `earlier` keeps.
  */
-export function writeDocs(ws: Workspace, config: Config, singleFile: SingleFile = 'move'): string[] {
+export function writeDocs(ws: Workspace, config: Config, earlier: EarlierDeclarations = 'move'): KeptContext[] {
   const contexts = readContexts(ws, config);
 
   for (const context of contexts) {
@@ -31,7 +31,7 @@ export function writeDocs(ws: Workspace, config: Config, singleFile: SingleFile 
 
   writeContextMap(ws, contextMapLines(contexts));
 
-  const kept = refreshBarrels(ws, config, singleFile);
+  const kept = refreshBarrels(ws, config, earlier);
 
   writeOpenApiDocuments(ws, config);
   writeCodeOwners(ws, config, contexts);

@@ -1,5 +1,5 @@
 [English](modules.md) · **Français**
-<!-- translation-of: modules.md sha256:e2e71f3b08012a78 -->
+<!-- translation-of: modules.md sha256:160f75a4ea096eaa -->
 
 # Modules du modèle
 
@@ -112,7 +112,7 @@ src/contexts/appointments/
     authorization/appointments.permissions.ts  l'ensemble des permissions du contexte
     booking/
       commands/book-appointment/...
-      commands/commands.declarations.ts        généré, par dossier de rôle du module
+      application.declarations.ts              généré, par couche du module
     waitlist/
       commands/join-waitlist/...
       event-handlers/offer-freed-slot.event-handler.ts
@@ -210,8 +210,8 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   `error-factories` écrit la classe d'un concept à côté des erreurs qu'elle remplace, dans leur
   module ; les erreurs d'un concept lues dans deux dossiers sont refusées tant que
   `move-to-module` ne les a pas rassemblées.
-- Dans le style déclaré assemblé par barrel, chaque dossier de rôle d'un module a son
-  `<folder>.declarations.ts` généré, réexporté par `<context>.declarations.ts`.
+- Dans le style déclaré assemblé par barrel, chaque couche d'un module a son
+  `<layer>.declarations.ts` généré, réexporté par `<context>.declarations.ts`.
 - `discoverContext` de `@ddd-ts-kit/di` s'exécute sans la configuration : il lit les modules dans
   le `<context>.dependencies.ts` généré, que `ddd-ts-kit docs` écrit avec eux
   (`export const modules = [...]`). Un dossier que ce fichier ne nomme pas n'est pas un module au

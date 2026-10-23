@@ -31,7 +31,7 @@ describe('init and the extension of an import', () => {
     expect(imports.filter((specifier) => EXTENSION.test(specifier))).toEqual([]);
     expect(read(root, 'src/main.ts')).toContain("from '@/platform/composition/compose-application';");
 
-    expect(read(root, 'src/contexts/billing/application/commands/commands.declarations.ts')).toMatch(
+    expect(read(root, 'src/contexts/billing/application/application.declarations.ts')).toMatch(
       /^export \* from '@\/[^']*[^s]';$/m,
     );
 
@@ -95,11 +95,11 @@ describe('init and the extension of an import', () => {
     expect(read(root, CONFIG)).not.toContain('importExtension');
     expect(projectImports(root).filter((specifier) => !specifier.endsWith('.js'))).toEqual([]);
 
-    expect(read(root, 'src/contexts/billing/application/commands/commands.declarations.ts')).toContain(
+    expect(read(root, 'src/contexts/billing/application/application.declarations.ts')).toContain(
       'refund-invoice.handler.js',
     );
 
-    expect(read(root, 'src/contexts/billing/billing.declarations.ts')).toContain('commands.declarations.js');
+    expect(read(root, 'src/contexts/billing/billing.declarations.ts')).toContain('application.declarations.js');
     expect(checkJsonOf(cli(root, 'check', '--json')).violations).toEqual([]);
   });
 

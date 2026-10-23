@@ -191,10 +191,7 @@ describe('what the generator and the move say, in a context with modules', () =>
 
     expect(moved.code).toBe(0);
 
-    expect(report.written.some((file) => file.endsWith('application/invoices/commands/commands.declarations.ts'))).toBe(
-      true,
-    );
-
-    expect(report.deleted).toContain(`${BILLING}/application/commands/commands.declarations.ts`);
+    expect(report.written).toContain(`${BILLING}/application/invoices/application.declarations.ts`);
+    expect(report.written).toContain(`${BILLING}/CONTEXT.md`);
   });
 });

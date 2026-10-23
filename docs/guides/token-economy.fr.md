@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:955c17956764640d -->
+<!-- translation-of: token-economy.md sha256:17cb83be0b2753e8 -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 
@@ -105,7 +105,7 @@ répond, en abrégé (`todos` reprend chaque endroit de `next` avec la décision
     "src/contexts/ordering/application/commands/place-order/place-order.command.ts",
     "src/contexts/ordering/application/commands/place-order/place-order.handler.ts",
     "src/contexts/ordering/test/unit/place-order.handler.spec.ts",
-    "src/contexts/ordering/application/commands/commands.declarations.ts"
+    "src/contexts/ordering/application/application.declarations.ts"
   ],
   "updated": [
     "src/platform/auth/authorization/role.ts",

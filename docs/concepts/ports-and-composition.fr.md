@@ -1,5 +1,5 @@
 [English](ports-and-composition.md) · **Français**
-<!-- translation-of: ports-and-composition.md sha256:8ed2bf6d84a01845 -->
+<!-- translation-of: ports-and-composition.md sha256:fdb5e247d1050afc -->
 
 # Ports et composition
 
@@ -157,7 +157,7 @@ class-validator et pas pour un projet sur zod. Le kit lit donc les signatures lu
 statiquement, et les écrit :
 
 ```ts
-// contexts/scheduling/application/commands/commands.declarations.ts, généré : jamais modifié (un extrait)
+// contexts/scheduling/application/application.declarations.ts, généré : jamais modifié (un extrait)
 import { injected } from '@ddd-ts-kit/kernel/declarations';
 import { BookAppointmentHandler } from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.handler';
 import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
@@ -170,8 +170,8 @@ export * from '@/contexts/scheduling/application/commands/book-appointment/book-
 injected(BookAppointmentHandler, [AppointmentRepository, CalendarRepository, IdGenerator, Clock]);
 ```
 
-Un tel fichier se trouve dans chaque dossier de rôle du contexte, à côté des classes qu'il
-enregistre ; `scheduling.declarations.ts`, à la racine du contexte, ne fait que les réexporter,
+Un tel fichier se trouve dans chaque couche du contexte, au-dessus des dossiers de rôle dont il
+enregistre les classes ; `scheduling.declarations.ts`, à la racine du contexte, ne fait que les réexporter,
 et c'est lui que la racine de composition importe
 (déclarations générées, dans [l'arborescence canonique](../ARCHITECTURE.fr.md#2-arborescence-canonique)).
 
@@ -416,8 +416,8 @@ Un contexte déclaré atteint la racine de l'une de deux façons (`stack.assembl
 
 | | *Barrel* généré | Découverte |
 |---|---|---|
-| Mécanisme | un fichier généré par dossier de rôle qui réexporte ses fichiers de rôle, rassemblés par `<context>.declarations.ts` | un parcours des dossiers du contexte au démarrage |
-| Où sont les listes des constructeurs | dans les déclarations de chaque dossier de rôle, après ses exports | dans un `<context>.dependencies.ts` généré, que le parcours charge avec les fichiers de rôle ; jamais les métadonnées du compilateur |
+| Mécanisme | un fichier généré par couche qui réexporte ses fichiers de rôle, rassemblés par `<context>.declarations.ts` | un parcours des dossiers du contexte au démarrage |
+| Où sont les listes des constructeurs | dans les déclarations de chaque couche, après ses exports | dans un `<context>.dependencies.ts` généré, que le parcours charge avec les fichiers de rôle ; jamais les métadonnées du compilateur |
 | Analyse statique | les bundlers, knip et dependency-cruiser le suivent | les fichiers chargés ne sont importés par rien : il faut dire aux analyseurs que ce sont des points d'entrée |
 | Démarrage | rien à lire | lit des répertoires et importe séquentiellement |
 | Empaqueté (bundle) ou serverless | convient | un bundler ne peut pas le suivre |

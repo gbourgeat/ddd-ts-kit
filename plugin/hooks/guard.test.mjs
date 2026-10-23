@@ -441,9 +441,9 @@ test('the generated barrel and the generated import graph rules are never edited
   assert.equal(decision(barrel), 'deny');
   assert.match(reason(barrel), /ddd-ts-kit docs/);
   for (const folder of [
-    'application/commands/commands.declarations.ts',
-    'infrastructure/persistence/persistence.declarations.ts',
+    'application/application.declarations.ts',
     'infrastructure/infrastructure.declarations.ts',
+    'application/commands/commands.declarations.ts',
   ]) {
     const declarations = run('pre-write', write(join(root, `src/contexts/ordering/${folder}`)));
     assert.equal(decision(declarations), 'deny', folder);
@@ -1073,7 +1073,7 @@ test('the declarations of a module of the model are generated too, and a module 
   assert.equal(declared.status, 0, declared.stderr);
   for (const folder of [
     'application/orders/commands/commands.declarations.ts',
-    'application/orders/orders.declarations.ts',
+    'application/orders/application.declarations.ts',
   ]) {
     const declarations = run('pre-write', write(join(root, `src/contexts/ordering/${folder}`)));
     assert.equal(decision(declarations), 'deny', folder);
@@ -1635,7 +1635,7 @@ test('generated files are not counted in the size of a commit', () => {
   put(root, 'docs/a.md', 'a\n');
   for (const path of [
     'src/contexts/ordering/ordering.declarations.ts',
-    'src/contexts/ordering/application/commands/commands.declarations.ts',
+    'src/contexts/ordering/application/application.declarations.ts',
     'openapi/openapi.yaml',
     'openapi/back-office.yaml',
     'docs/integration/asyncapi.yaml',

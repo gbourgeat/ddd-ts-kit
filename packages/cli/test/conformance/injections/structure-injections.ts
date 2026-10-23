@@ -3,7 +3,9 @@ import { PATHS } from '../paths';
 import { SOURCE_ALIAS } from '../source-alias';
 import { SOURCE_SUFFIX } from '../source-suffix';
 
-const { AGGREGATE, BUILDER, COMMANDS_DECLARATIONS, CONFIG, CONTEXT_DOC, EVENT, HANDLER, NOTIFICATION, READER } = PATHS;
+const { AGGREGATE, BUILDER, APPLICATION_DECLARATIONS, CONFIG, CONTEXT_DOC, EVENT, HANDLER, NOTIFICATION, READER } =
+  PATHS;
+
 const { ROUTE, SEARCH_READER, VALUE_OBJECT, VALUE_OBJECT_SPEC } = PATHS;
 const ERROR = `${NOTIFICATION}/domain/errors/contact.ts`;
 const CHANNEL = `${NOTIFICATION}/domain/value-objects/channel.vo.ts`;
@@ -171,10 +173,10 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
   {
     rule: 'declarations/barrel-current',
     what: 'the declarations of a role folder that no longer list a handler of that folder',
-    file: COMMANDS_DECLARATIONS,
+    file: APPLICATION_DECLARATIONS,
     changes: [
       {
-        file: COMMANDS_DECLARATIONS,
+        file: APPLICATION_DECLARATIONS,
         from: `export * from '${SOURCE_ALIAS}contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.handler${SOURCE_SUFFIX}';\n`,
         to: '',
       },
