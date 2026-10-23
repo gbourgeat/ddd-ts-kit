@@ -4,7 +4,6 @@ export { ciExtraProblems } from './ci-extra-problems.js';
 export { CLASSIFICATIONS } from './classifications.js';
 export { commitLimitProblems } from './commit-limit-problems.js';
 export type { CommitLimits } from './commit-limits.js';
-export type { CommitConfig } from './commit-config.js';
 export { COVERAGE_LAYERS } from './coverage-layers.js';
 export { COVERAGE_METRICS } from './coverage-metrics.js';
 export { coverageProblems } from './coverage-problems.js';
