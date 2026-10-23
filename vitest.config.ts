@@ -1,5 +1,32 @@
 import { defineConfig } from 'vitest/config';
+import { BaseSequencer, type TestSpecification } from 'vitest/node';
 import { ON_A_SERVER } from './pipeline/monorepo/affected-packages.mjs';
+
+/**
+ * The spec files measured over twenty seconds in a full run (2026-10-23, longest first): started
+ * first, so that a run does not end waiting on one of them. The runner orders the others by the
+ * durations it cached, or by their size when it has none, as on a runner of the pipeline.
+ */
+const SLOW_FIRST = [
+  'packages/kernel/test/declarations.spec.ts',
+  'packages/cli/test/e2e/zero-violation.spec.ts',
+  'packages/aspects/test/decorators.spec.ts',
+  'packages/cli/test/e2e/formatted.spec.ts',
+  'packages/http/test/controllers.spec.ts',
+  'packages/di/test/discovered-context.spec.ts',
+];
+
+class SlowFirstSequencer extends BaseSequencer {
+  override async sort(files: TestSpecification[]): Promise<TestSpecification[]> {
+    const rank = (spec: TestSpecification): number => {
+      const index = SLOW_FIRST.findIndex((file) => spec.moduleId.endsWith(file));
+
+      return index === -1 ? SLOW_FIRST.length : index;
+    };
+
+    return [...(await super.sort(files))].sort((a, b) => rank(a) - rank(b));
+  }
+}
 
 /**
  * The floor of each package, as [statements, branches, functions, lines]: what the unit run measured
@@ -77,6 +104,7 @@ export default defineConfig({
     // spec slowed by its neighbours is not a failing one, and a spec that hangs still fails.
     testTimeout: 30_000,
     hookTimeout: 60_000,
+    sequence: { sequencer: SlowFirstSequencer },
     coverage: {
       provider: 'v8',
       include:
