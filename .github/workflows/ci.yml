@@ -98,13 +98,14 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup
       # A pull request restores the cache the trunk wrote last for this lockfile and this config, and lints the files
-      # that changed since (docs/proposals/build-and-test-velocity.md). The trunk and the night restore nothing: they
+      # that changed since (docs/proposals/build-and-test-velocity.md); the lint script drops it when the rules as built,
+      # the config or the lockfile differ from what it was written for. The trunk and the night restore nothing: they
       # lint everything, which also sees a type changed in another file, and write the cache the pull requests read.
       - name: The cache of ESLint, as the trunk wrote it last
         if: ${{ github.event_name == 'pull_request' }}
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: .eslintcache
+          path: .eslintcache/
           key: ${{ env.ESLINT_CACHE_KEY }}-${{ github.sha }}
           restore-keys: ${{ env.ESLINT_CACHE_KEY }}-
       - run: npm run ci:format
@@ -113,7 +114,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: .eslintcache
+          path: .eslintcache/
           key: ${{ env.ESLINT_CACHE_KEY }}-${{ github.sha }}
 
   architecture:
