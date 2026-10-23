@@ -20,7 +20,6 @@ import {
   EventBus,
   ExecutionScope,
   FileStorage,
-  IdGenerator,
   InMemoryFileStorage,
   InMemoryTenantDirectory,
   Logger,
@@ -33,7 +32,6 @@ import {
   type IntegrationEventSubscriber,
 } from '@ddd-ts-kit/kernel';
 import { tracedPublisher } from '@ddd-ts-kit/tracing';
-import { AuditTrail, auditGuardRefusals } from '@ddd-ts-kit/audit';
 import { auditModule } from '@/platform/audit/audit.module';
 import { SearchAuditEntriesController } from '@/platform/audit/search-audit-entries/search-audit-entries.controller';
 import { authorization } from '@/platform/auth/authorization/authorization';
@@ -138,7 +136,7 @@ export function composeApplication(
     clock: container.resolve(Clock),
   });
 
-  return running(container, options, contexts);
+  return running({ container, foundations, options, contexts });
 }
 
 /**
@@ -179,14 +177,24 @@ function kernel(foundations: Foundations, persistence: Persistence, options: App
   });
 }
 
-function running(container: Container, options: ApplicationOptions, contexts: ContextSelection): Application {
+/** What the application is assembled from, once the container is built. */
+interface Composed {
+  readonly container: Container;
+  /** The audit sources, built before the container: the HTTP boundary writes the refusals of the guards to them. */
+  readonly foundations: Foundations;
+  readonly options: ApplicationOptions;
+  readonly contexts: ContextSelection;
+}
+
+function running(composed: Composed): Application {
+  const { container, options, contexts } = composed;
   const logger = container.resolve(Logger);
   // What the server answers in and which fields each caller sees: the forms and the contract are given the same.
   const presentation = presentationOf(container.resolve(Access), container.resolve(Clock));
 
   return {
     routes: withForms(routesOf(container, contexts), presentation),
-    boundary: boundaryOf(container, options, presentation),
+    boundary: boundaryOf(composed, presentation),
     fileRoutes: fileRoutes(container.resolve(FileStorage)),
     // What the outbox relay delivers with: each publication continues the trace stored with its event.
     eventBus: tracedPublisher(container.resolve(EventBus)),
@@ -206,17 +214,14 @@ function running(container: Container, options: ApplicationOptions, contexts: Co
 }
 
 /** The edge of every request: who calls, in which network, what is refused and how the answers are presented. */
-function boundaryOf(container: Container, options: ApplicationOptions, presentation: Presentation): HttpBoundary {
+function boundaryOf({ container, foundations, options }: Composed, presentation: Presentation): HttpBoundary {
   return httpBoundary({
     authenticator: container.resolve(Authenticator),
     executionScope: container.resolve(ExecutionScope),
     errorMapper: container.resolve(ErrorMapper),
     clock: container.resolve(Clock),
     logger: container.resolve(Logger),
-    refusals: auditGuardRefusals(container.resolve(AuditTrail), {
-      clock: container.resolve(Clock),
-      ids: container.resolve(IdGenerator),
-    }),
+    refusals: foundations.audit.refusals,
     errors: container.resolve(ErrorReporter),
     networks: options.networks,
     presentation,
