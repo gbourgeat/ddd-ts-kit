@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:dc04c87e16453666 -->
+<!-- translation-of: README.md sha256:ff750835649d33d1 -->
 
 # Documentation
 
@@ -113,10 +113,11 @@ a vérifié, les limites, et une recommandation selon la situation.
 | [Méthodologie](guides/methodology.fr.md) | le chemin complet d'une expression des besoins jusqu'au code qui tourne, étape par étape : le chemin pris en charge |
 | [Quelle commande, quand](guides/commands.fr.md) | la commande ou la *skill* de chaque moment d'un projet, une première fonctionnalité en partant de zéro, et la référence de chaque commande et de chaque option |
 | [Une tranche, de bout en bout](guides/first-slice.fr.md) | la requête HTTP `POST /orders` à travers les quatre couches d'une tranche générée, et son code de domaine et d'application une fois rempli |
-| [Le plugin pour agents de code](guides/coding-agents.fr.md) | installer le plugin dans Claude Code, Codex et Copilot, ses vingt-trois *skills*, ses cinq agents et son *hook*, et ce que chaque hôte exécute |
+| [Le plugin pour agents de code](guides/coding-agents.fr.md) | installer le plugin dans Claude Code, Codex et Copilot, ses vingt-cinq *skills*, ses six agents et son *hook*, et ce que chaque hôte exécute |
 | [Travail en équipe](guides/team-workflow.fr.md) | la propriété par contexte, le glossaire, les contrats d'abord, la revue, les décisions, l'arrivée d'un nouveau membre |
 | [Travail en parallèle](guides/parallel-work.fr.md) | plusieurs personnes ou agents à la fois : ce qui est sûr, ce qui est séquencé, un plan concret |
 | [Parcours d'une story](guides/story-workflow.fr.md) | une session par *user story*, une *story* par terminal : les questions d'abord, la revue de conception et les tests d'acceptation avant le code, un rapport de chaque décision provisoire |
+| [Boucler la boucle](guides/closing-the-loop.fr.md) | d'une métrique sortie de sa bande à la prochaine *story* : les requêtes sur les métriques que le kit émet, un `bands.yaml` à trois paliers, ce qu'il faut à une exécution sans état, le compte rendu d'incident d'où part une *story* de correction, ce qui arrive d'un canal de discussion |
 | [Discipline de commit](guides/commit-discipline.fr.md) | la taille d'un *commit* et d'une *pull request*, les fichiers générés, ce que les *hooks* et la CI imposent |
 | [Un gestionnaire aux nombreuses dépendances](guides/many-dependencies.fr.md) | la surinjection par le constructeur lue comme une odeur : un ordre de diagnostic, chaque remède avec sa place dans l'arborescence, aucune limite |
 | [Un cycle entre deux contextes](guides/cycle-between-contexts.fr.md) | trois questions avant de fusionner : un langage ou deux, un événement pour un sens, un concept manquant |

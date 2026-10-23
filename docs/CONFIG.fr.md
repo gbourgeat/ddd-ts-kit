@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:aad956666298a5d1 -->
+<!-- translation-of: CONFIG.md sha256:9c845f1ce5229f44 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -587,6 +587,7 @@ même listés dans une liste d'autorisation.
 | Clé | Valeurs | Défaut |
 |---|---|---|
 | `commit` | `{ "maxFiles": 20, "maxLines": 600 }` : taille conseillée d'un *commit*, lue par `ddd-ts-kit check --commit-size` (indicatif, `--strict` sort en 1) et par le *hook* d'éditeur (un rappel, jamais bloquant). Les fichiers générés ne sont pas comptés. Une limite qui n'est pas un entier positif est lue comme sa valeur par défaut et signalée | comme montré |
+| `commit.agentTrailer` | `true`, `false` : si un *commit* fait par un agent du *plugin* le dit. À `true`, la *skill* story, l'agent `context-builder` qu'elle instruit et la *skill* fix terminent chaque *commit* qu'ils font par le *trailer* `Agent: <host> ddd-ts-kit@<plugin version> <agent name>` (`Agent: claude-code ddd-ts-kit@0.85.0 context-builder`), et le rapport d'une *story* compte les *commits* faits par un agent face à ceux faits à la main. Désactivé par défaut : beaucoup d'équipes refusent les lignes d'attribution dans les *commits*, et la séparation que veut vraiment le journal d'audit du cycle de vie passe par l'identité de l'exécution, qu'un *trailer* ne fait qu'approcher. Une valeur qui n'est pas un booléen est lue comme `false` et signalée | `false` |
 | `guard` | `enforce`, `advise`, `off` : comment le *hook* d'éditeur du *plugin* réagit à une violation. La variable d'environnement `DDD_TS_KIT_GUARD` l'emporte sur elle | `enforce` |
 | `worktrees` | `required`, `advised` : où la garde du *plugin* laisse une session écrire le code d'un contexte. `required` : dans un *worktree* seulement (`npx ddd-ts-kit worktree <name>`, `story-scope`, `worker-scope`, tous sous `.worktrees/`) ; dans le *checkout* principal, sur la branche du tronc, le code des contextes et les générateurs qui l'écrivent sont refusés. `advised` : partout, avec un avis au démarrage de la session, ce que garde un projet démarré avant cette clé tant qu'elle n'est pas posée | `required` dans un projet que crée `init`, `advised` quand la clé est absente |
 | `worker` | `true`, `false` : le projet a `src/apps/worker/main.ts` ; les *jobs* planifiés tournent alors là et non dans le processus de l'API. `generate worker` la pose | `false` |

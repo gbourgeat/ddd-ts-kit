@@ -31,7 +31,7 @@ export const USAGE = `Usage
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit worker-scope <context> --resume [--worktree <path> | --branch <name>] [--fresh]
   ddd-ts-kit worker-scope <context> --here [--rows <id,...>] [--base <ref>] [--dry-run]
-  ddd-ts-kit story-scope <story> [--base <ref>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
+  ddd-ts-kit story-scope <story> [--from <file>] [--kind story|fix] [--base <ref>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit story [<story>] [--gate build|close]
   ddd-ts-kit stories
   ddd-ts-kit worktree <name> [--base <ref>] [--branch <name>] [--no-install] [--dry-run]

@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:baac573619f2b92a -->
+<!-- translation-of: story-workflow.md sha256:b8a3268660141a2d -->
 
 # Parcours d'une story : une session par user story
 
@@ -25,21 +25,44 @@ garde du plugin tient l'ordre : pas de code avant la conception et l'acceptation
 ```text
 terminal 1 : /ddd-ts-kit:story US5 "Un client passe une commande et reçoit sa facture"
 terminal 2 : /ddd-ts-kit:story US6 docs/backlog/us6.md
+terminal 3 : /ddd-ts-kit:story US7 docs/architecture/intents/faster-checkout.md
 ```
+
+## D'où vient une story
+
+Une *story* part de mots simples, d'un fichier, d'un ticket ou d'une intention. Une intention
+est l'idée écrite par celui qui l'a, dans ses propres mots, avant que quiconque ne conçoive
+quoi que ce soit : `/ddd-ts-kit:intent` réfléchit avec son auteur jusqu'à ce que l'idée soit
+concrète (ce qui ne va pas, ce qui serait vrai une fois résolu, qui et quoi elle touche, les
+contraintes, ce que l'auteur observerait), place les systèmes touchés sur `npx ddd-ts-kit list`
+quand elle tourne dans le projet, et écrit `docs/architecture/intents/<slug>.md` depuis le
+*template* de la *skill* story avec `Status: draft`. La personne la lance depuis Claude Code,
+depuis Cowork ou claude.ai avec un connecteur git, ou remplit le *template* à la main. Le
+responsable du produit corrige l'intention dans une *pull request* et l'accepte en posant
+`Status: accepted` : la fusion est l'acceptation, et rien n'est décidé à sa place. La *story*
+la lit ensuite, `npx ddd-ts-kit story-scope US7 --from docs/architecture/intents/faster-checkout.md`
+(refusé tant que l'intention n'est pas acceptée) : `## Problem` et `## Proposed outcome`
+amorcent `## Statement`, chaque contrainte est une question répondue « par l'intention », les
+questions ouvertes rejoignent la phase 1, et chaque ligne de l'acceptation écrite par l'auteur
+est le premier jet d'un critère. Un compte rendu d'incident
+(`docs/architecture/incidents/<id>.md`, [boucler la boucle](closing-the-loop.fr.md)) est accepté
+de la même façon, tel quel. Une intention
+n'est pas un ticket : un projet dont le *tracker* est la source de vérité écrit la clé dans
+l'intention et le chemin dans le ticket, et `## Origin` porte les deux.
 
 ## Les phases
 
 | # | Phase | Artefact | Qui décide |
 |---|---|---|---|
-| 0 | son *worktree* : `npx ddd-ts-kit story-scope US5` | `.worktrees/us5` sur `story/us5`, `.ddd-ts-kit/story.json` | |
-| 1 | toutes les questions, d'un coup | `## Questions` de `docs/architecture/stories/US5.md` | le responsable du projet, une fois |
+| 0 | son *worktree* : `npx ddd-ts-kit story-scope US5 [--from <intention ou incident>]` | `.worktrees/us5` sur `story/us5`, `.ddd-ts-kit/story.json` (`kind`, `from`) | |
+| 1 | toutes les questions, d'un coup | `## Origin` et `## Questions` de `docs/architecture/stories/US5.md` | le responsable du projet, une fois |
 | 2 | spécification et lignes | `## Acceptance criteria` (`- AC1: ...`), les lignes `US5.01`, ... de `slices.md` | la session |
 | 3 | une revue de conception de chaque ligne | `docs/architecture/reviews/US5.md`, une section `## #US5.02 ...` par ligne, lue par `architecture-reviewer` | la session |
 | 4 | l'acceptation, avant tout code | `test/acceptance/us5.acceptance.spec.ts` et son verrou | la session |
 | 5 | la barrière de construction : `npx ddd-ts-kit story US5 --gate build` | la garde ouvre le code des contextes | |
 | 6 | construire, ligne par ligne | un commit par ligne, un agent `context-builder` par ligne `slice` | la session |
 | 7 | clore : tronc fusionné dans la branche, revue, `npm run verify`, `acceptance US5 --gate passing` | une branche verte | |
-| 8 | le rapport, puis la *pull request* | `## Report`, le corps de la *pull request* | le responsable du projet, à la revue |
+| 8 | le rapport, puis la *pull request* | `## Report` avec `### Verification`, le corps de la *pull request* | le responsable du projet, à la revue |
 
 `npx ddd-ts-kit story US5` affiche les phases, ce que chacune contient et l'étape suivante ; une
 session qui démarre dans le *worktree* d'une *story* reçoit la même chose de la garde.
@@ -56,15 +79,38 @@ Une frontière, un nouveau contexte ou un patron de relation ne se décide jamai
 phase 1, ou, quand il apparaît plus tard et que rien de réversible n'existe, la seule raison de
 s'arrêter, avec un rapport qui le dit.
 
+## La trace de la story
+
+Le fichier de la *story* est la trace qu'un auditeur lit : qui a demandé (`## Origin`), qui a
+répondu (`## Questions`), ce que la session a décidé seule (`D<n>`), sous quelles règles, et
+qui a approuvé (la fusion de la *pull request*). `## Origin`, écrit en phase 1, tient en trois
+lignes : `From:`, l'intention, le ticket ou l'incident d'où vient la *story* ; `Built with:`, la
+version du kit et du plugin, la base et son *commit* ; `Policies in force:`, les *skills*
+chargées en phase 3. `story --gate close` refuse une *story* sans ses lignes `From:` et
+`Built with:`, et le corps de la *pull request* répète le bloc, si bien que le tronc renvoie à
+l'origine de la *story*. Le rapport clôt la trace par `### Verification` : les dernières lignes
+de `npm run verify`, de l'exécution de l'acceptation et de `story-check`, collées telles que
+l'outillage les a imprimées, et `not verified:` pour ce qui n'a pas pu tourner (un *broker*, un
+fournisseur, une plateforme) ; la barrière de clôture le lit aussi. Le bloc est ce que le
+[playbook du cycle de vie natif de l'IA d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
+demande comme preuve de gouvernance : la spécification, ce qui l'a produite et les politiques
+en vigueur, consignées avec elle.
+
 ## La conception avant le code
 
 Chaque ligne reçoit une section de la revue de conception avant que rien ne soit généré :
 l'agrégat et ses invariants, la commande ou la requête et sa permission, les événements, les
 erreurs par leur nom métier, la route, les ports, le contrat lu dans un autre contexte. L'agent
 `architecture-reviewer` la lit comme une revue de conception de lignes à construire ; ses
-remarques bloquantes changent la conception. `npx ddd-ts-kit cited --rows <ids>` liste les noms
-que la conception cite et que le tronc a remplacés entre-temps. `worker-scope` nomme la section
-d'une ligne dans la consigne de son agent.
+remarques bloquantes changent la conception. Les politiques du projet sont des *skills*, celles
+du plugin (contrôle d'accès, persistance, préoccupations transverses, tests) et celles du projet
+sous `.claude/skills/` : la session liste celles qu'elle a chargées sur la ligne
+`Policies in force:` de `## Origin`, et écrit dans la section d'une ligne
+`Policies: <skill>: <ce qu'elle a imposé ici>` quand une politique a changé la conception, une
+ligne que le relecteur lit avec le reste ; deux politiques qui se contredisent deviennent une
+décision pour le responsable du projet. `npx ddd-ts-kit cited --rows <ids>` liste les noms que la
+conception cite et que le tronc a remplacés entre-temps. `worker-scope` nomme la section d'une
+ligne dans la consigne de son agent.
 
 ## L'acceptation avant le code, et verrouillée
 
@@ -92,6 +138,52 @@ un droit, une migration) reviennent à la session, qui les réalise sur la branc
 tournent l'un après l'autre dans l'unique *worktree* : les lignes d'une *story* dépendent le plus
 souvent les unes des autres (contrat, producteur, consommateur), et le parallélisme est entre
 les *stories*, une par terminal.
+
+## À la clôture d'une story
+
+Le tronc est fusionné dans la branche, l'agent `architecture-reviewer` lit la branche, et ses
+constats sont corrigés ou écrits en marqueurs `TODO(review)` rattachés à leur ligne. La règle de
+deux s'applique là : un constat qui répète un constat déjà consigné pour le projet (le même
+identifiant de règle ou la même remarque dans un fichier de revue antérieur, ou un marqueur
+`TODO(review)`) est écrit dans la même branche comme une ligne sous `## Mistakes seen here` de
+`AGENTS.md`, ou comme une règle de `ddd-ts-kit.config.json` quand le kit en a une pour lui, pour
+que la session suivante ne le fasse pas une troisième fois. La revue elle-même est gardée : la
+session l'ajoute à `docs/architecture/reviews/<code>.md` sous `## Findings`, une ligne par
+constat avec sa passe, son `file:line` et son issue (`fixed in <commit>`,
+`written as TODO(review)`, `dismissed by ADR-<n>`), si bien que la trace survit à la *pull
+request* et à un passage de GitHub à GitLab, et nourrit la règle de deux.
+
+Une seconde lecture vient alors d'un contexte qui n'a pas construit le code : l'agent
+`story-verifier`, en lecture seule, démarre l'application comme le font les tests de bout en
+bout, exécute l'acceptation de la *story* et les *specs* de bout en bout des deux flux les plus
+proches, appelle les routes que les *specs* laissent de côté quand le projet démarre sans
+service, lit la revue de conception et le rapport, et rend compte de ce qu'il a exécuté, de ce
+qu'il a vu, et de chaque comportement qui ne correspond pas à la conception ou à une décision
+`D<n>`. Il ne corrige rien ; la session règle chaque écart comme un constat. Les tests
+d'acceptation restent la vérification la plus forte, puisqu'ils échouent avant le code et que
+l'agent qui construit ne peut pas les réécrire ; le vérificateur ajoute les flux voisins et une
+lecture des compromis.
+
+Une équipe qui veut distinguer les *commits* d'un agent de ceux d'une personne pose
+`commit.agentTrailer` à `true` dans `ddd-ts-kit.config.json`
+([configuration](../CONFIG.fr.md)) : la *skill* story, l'agent `context-builder` qu'elle
+instruit et la *skill* fix terminent alors chaque *commit* qu'ils font par le *trailer*
+`Agent: <host> ddd-ts-kit@<plugin version> <agent name>`, et le rapport compte les *commits*
+faits par un agent face à ceux faits à la main. C'est désactivé par défaut : beaucoup d'équipes
+refusent les lignes d'attribution dans les *commits*, et la séparation qu'un audit veut
+vraiment passe par l'identité de l'exécution (son propre compte, son propre jeton), qu'un
+*trailer* ne fait qu'approcher.
+
+Une fois la *pull request* ouverte, la revue et les vérifications de la plateforme répondent.
+Quand le responsable du projet le demande, `/ddd-ts-kit:pull-request <number>`, lancée depuis
+le *worktree* de la *story*, mène la *pull request* au vert : elle balaie les commentaires de
+revue non résolus et les vérifications en échec, traite chacun sous les règles de la *story*
+(un changement que la revue de conception n'avait pas prévu devient une décision `D<n>`, une
+demande d'affaiblir une vérification passe par la *skill* `deviation`, une vérification en
+échec est corrigée dans le code et jamais dans la vérification, pas de *force-push*), répond à
+chaque fil, pousse, attend les vérifications et recommence jusqu'à ce que la *pull request*
+n'attende plus que le responsable du code ; puis elle rend compte de ce qui a changé et de ce
+qui a été refusé, et pourquoi.
 
 ## Plusieurs stories, plusieurs terminaux
 
@@ -123,14 +215,38 @@ l'autre, chacune sur un tronc vert.
 | la même *story* dans deux sessions | `story-scope` |
 | deux *stories* qui changent le même fichier | `stories` ; la garde, au démarrage de la session et à la première écriture d'un tel fichier |
 | une session qui finit avant son rapport | la garde, qui refuse le premier arrêt de chaque étape |
-| la *pull request* : chaque ligne faite, aucun scénario en attente, le tronc fusionné, le rapport écrit | `story --gate close` |
+| la *pull request* : chaque ligne faite, aucun scénario en attente, le tronc fusionné, l'origine consignée, le rapport écrit avec sa vérification | `story --gate close` |
+
+## L'état final optionnel : la spécification comme un job
+
+L'état final du playbook déclenche la passe de conception à la fusion de l'intention, comme un
+*job* qui livre la spécification en *pull request*. Le kit l'a sous la forme
+`/ddd-ts-kit:story <code> --headless <intention>` : les phases 1 à 4 sans responsable, chaque
+question dont la réponse change un artefact écrite sous `## Open questions` du fichier de la
+*story* avec son option recommandée prise provisoirement et marquée `(provisional, headless)`,
+les lignes, la revue de conception et l'acceptation écrites et verrouillées, la barrière de
+construction laissée fermée, et une *pull request* dont le corps est la liste des questions. Le
+responsable du projet répond à la revue ; la *pull request* fusionne avec les réponses écrites
+dans le fichier de la *story*, et la phase de construction part d'elles dans une session qui
+relance la *story*. Une frontière, un nouveau contexte ou un patron de relation est écrit comme
+une question sans option prise : les lignes qui en dépendent attendent le responsable.
+
+`pipeline/github/workflows/intent-to-spec.yml` est le *template* de *workflow* qui l'exécute :
+sur une *pull request* fusionnée dans la branche par défaut qui passe une intention de
+`docs/architecture/intents/` à `Status: accepted`, il installe le projet, Claude Code et le
+plugin, et lance `claude -p` avec le secret `ANTHROPIC_API_KEY`, une *story* par intention
+acceptée, sous le jeton du *workflow* ou un jeton de l'équipe (`INTENT_TO_SPEC_TOKEN`, pour que
+les vérifications de la *story* tournent sur la *pull request* qu'elle ouvre). C'est optionnel
+et payant : `init` ne l'écrit pas dans cette version, une équipe le copie dans
+`.github/workflows/` et ajoute le secret, et chaque intention acceptée consomme des jetons
+d'API. Le *template* a été analysé et non exécuté sur GitHub.
 
 ## Hôtes
 
 Claude Code exécute tout le parcours : la *skill*, les agents et la garde. Codex et Copilot
 exécutent la *skill* et la garde ; sans les agents du plugin, la session construit chaque ligne
-elle-même avec la *skill* `use-case`, et rien ne la confine à un contexte sinon la consigne et la
-revue.
+elle-même avec la *skill* `use-case`, rien ne la confine à un contexte sinon la consigne et la
+revue, et la vérification par un contexte neuf est sautée, ce que dit le rapport.
 
 ## Limites
 

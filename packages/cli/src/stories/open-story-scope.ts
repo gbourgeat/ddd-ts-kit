@@ -12,8 +12,12 @@ import { installNotes } from '../worker/install-notes.js';
 import { repositoryPrefix } from '../worker/repository-prefix.js';
 import { upstreamOf } from '../worker/upstream-of.js';
 import { worktreeOf } from '../worker/worktree-of.js';
+import { storyFileOf } from '../acceptance/story-file-of.js';
+import { Workspace } from '../workspace/index.js';
 import { openStories } from './open-stories.js';
+import { originOf } from './origin-of.js';
 import { readStoryPlace } from './read-story-place.js';
+import type { StoryKind } from './story-kind.js';
 import type { StoryPlace } from './story-place.js';
 import type { StoryScope } from './story-scope.js';
 import { STORY_SCOPE_FILE } from './story-scope-file.js';
@@ -29,8 +33,18 @@ export interface StoryRequest {
   readonly branch?: string;
   /** The ref the branch is cut from and merges back into; by default the branch the current one follows, else the current one. */
   readonly base?: string;
+  /** `story` by default; `fix` for a story built behind locked regression specs. Kept from the file when the story resumes without it. */
+  readonly kind?: StoryKind;
+  /** Where the story comes from: an accepted intent or an incident record of the project. Kept from the file when the story resumes without it. */
+  readonly from?: string;
   readonly dryRun: boolean;
   readonly install: boolean;
+}
+
+/** What the story is and where it comes from, as `story.json` records them. */
+interface StoryIdentity {
+  readonly kind: StoryKind;
+  readonly from?: string;
 }
 
 /**
@@ -57,12 +71,16 @@ export function openStoryScope(root: string, config: Config, request: StoryReque
     ensureContainsBase(worktree, runGit(worktree, ['branch', '--show-current'])?.trim() || 'HEAD', base);
   }
 
+  const { seeds, ...identity } = identityOf(root, request, { inside, created });
+
   const install = request.dryRun
     ? undefined
-    : prepare(root, { worktree, inside, created, install: request.install, story, base, branch, config });
+    : prepare(root, { worktree, inside, created, install: request.install, story, base, branch, config, ...identity });
 
   return {
     story,
+    ...identity,
+    seeds,
     dryRun: request.dryRun,
     worktree: inside,
     branch,
@@ -83,6 +101,27 @@ function storyNamed(story: string): string {
   }
 
   return story;
+}
+
+/**
+ * The kind and the origin asked, else those the story resumes with, else a plain story; an origin
+ * asked is read now, and refused when not an accepted intent nor an incident. `seeds` while the
+ * story has an origin and no file yet (read on the trunk before the worktree exists).
+ */
+function identityOf(
+  root: string,
+  request: StoryRequest,
+  place: { readonly inside: string; readonly created: boolean },
+): StoryIdentity & { readonly seeds: boolean } {
+  const existing = place.created ? undefined : readStoryPlace(place.inside);
+  const from = request.from === undefined ? existing?.from : originOf(root, request.from);
+  const ws = new Workspace(place.created ? root : place.inside, false);
+
+  return {
+    kind: request.kind ?? existing?.kind ?? 'story',
+    ...(from === undefined ? {} : { from }),
+    seeds: from !== undefined && storyFileOf(ws, request.story) === undefined,
+  };
 }
 
 /** The base, which is never the branch of another story: a story is cut from the trunk. */
@@ -117,8 +156,8 @@ function refuseOpenElsewhere(
   }
 }
 
-/** What `prepare` needs: where, for which story, and whether to install. */
-interface PreparedStory {
+/** What `prepare` needs: where, for which story, what it is and where it comes from, and whether to install. */
+interface PreparedStory extends StoryIdentity {
   readonly worktree: string;
   readonly inside: string;
   readonly created: boolean;
@@ -131,14 +170,23 @@ interface PreparedStory {
 
 /** The worktree it creates, the story file, then the clean install of a worktree it created, unless refused. */
 function prepare(root: string, place: PreparedStory): ReturnType<typeof installDependencies> | undefined {
-  const { worktree, inside, created, story, base, branch, config } = place;
+  const { worktree, inside, created, story, base, branch, config, kind, from } = place;
 
   if (created) {
     addWorktree(root, { worktree, branch, base });
   }
 
   const baseCommit = runGit(root, ['rev-parse', '--verify', '--quiet', `${base}^{commit}`])?.trim();
-  const written: StoryPlace = { story, base, ...(baseCommit === undefined ? {} : { baseCommit }), branch };
+
+  const written: StoryPlace = {
+    story,
+    base,
+    ...(baseCommit === undefined ? {} : { baseCommit }),
+    branch,
+    kind,
+    ...(from === undefined ? {} : { from }),
+  };
+
   const file = path.join(inside, STORY_SCOPE_FILE);
 
   fs.mkdirSync(path.dirname(file), { recursive: true });

@@ -1,6 +1,6 @@
 /** One step of a story, in the order a session takes them. */
 export interface StoryPhase {
-  readonly id: 'specification' | 'rows' | 'design' | 'acceptance' | 'built' | 'passing' | 'trunk' | 'report';
+  readonly id: 'specification' | 'rows' | 'design' | 'acceptance' | 'built' | 'passing' | 'trunk' | 'origin' | 'report';
   readonly title: string;
   readonly met: boolean;
   /** What stands, or what is missing. */

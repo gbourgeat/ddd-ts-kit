@@ -1,8 +1,15 @@
 # <code> <title of the story>
 
-<!-- Written by the story skill: the statement, the questions asked before any work and their
-answers, the acceptance criteria the tests of test/acceptance/ prove, the decisions taken
-without the owner, and the report that becomes the body of the pull request. -->
+<!-- Written by the story skill: where the story comes from and under which versions it is
+built, the statement, the questions asked before any work and their answers, the acceptance
+criteria the tests of test/acceptance/ prove, the decisions taken without the owner, and the
+report that becomes the body of the pull request. -->
+
+## Origin
+
+- From: `docs/architecture/intents/<slug>.md` (accepted <date> by <name>) | ticket `<KEY-123>` | incident `docs/architecture/incidents/<id>.md`
+- Built with: ddd-ts-kit <kit version>, plugin <plugin version>, on `<base>` at `<base commit>`
+- Policies in force: <the skills loaded at phase 3: `ddd-ts-kit:access-control`, `.claude/skills/<name>`>
 
 ## Statement
 
@@ -21,3 +28,13 @@ without the owner, and the report that becomes the body of the pull request. -->
 - D1 (provisional): <what>. Why: <...>. Alternatives: <...>. Where: `<file>`.
 
 ## Report
+
+<what the story delivers; each D<n>; each compromise; each amendment of the acceptance with its
+verdict; each TODO(review) left>
+
+### Verification
+
+- `npm run verify`: <its last lines, pasted>
+- `npm run test:e2e -- test/acceptance/<code>`: <its last lines, pasted>
+- `npx ddd-ts-kit story-check <code>`: <its first line, pasted>
+- not verified: <what could not run here (a broker, a provider, a platform), and why>
