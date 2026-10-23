@@ -283,7 +283,10 @@ so that no field forges the header of a line.
 ## Flush
 
 `flush(): Promise<void>` resolves once what pino buffered was handed to its destination: the
-worker of a transport, or the buffer of an asynchronous destination. It never rejects.
+worker of a transport, or the buffer of an asynchronous destination. It never rejects. While it
+runs, it keeps the process alive, ten seconds at most: pino does not let the worker of a
+transport hold a process, so the answer of that worker would otherwise come too late in a
+process with nothing else to do, and what the shutdown does after the flush would never run.
 `app.stop()` calls it, last, after the modules stopped and the error reporter was flushed:
 stopping logs too. Without the application of the di package, call it yourself at that place.
 

@@ -1,6 +1,7 @@
 import { UNWRITABLE_FIELDS, type LogFields, type LogLevel, type Logger } from '@ddd-ts-kit/kernel';
 import type { Logger as Pino } from 'pino';
 import { lineFields } from './fields/line-fields';
+import { holdWhileFlushing } from './hold-while-flushing';
 
 export interface PinoLoggerOptions {
   /**
@@ -63,7 +64,9 @@ export class PinoLogger implements Logger {
    * logger stays usable: an entry logged afterwards is written like the others.
    */
   flush(): Promise<void> {
-    return new Promise((resolve) => {
+    const release = holdWhileFlushing();
+
+    return new Promise<void>((resolve) => {
       try {
         this.pino.flush(() => {
           resolve();
@@ -71,7 +74,7 @@ export class PinoLogger implements Logger {
       } catch {
         resolve();
       }
-    });
+    }).finally(release);
   }
 
   private nativeChild(fields: LogFields): Pino {

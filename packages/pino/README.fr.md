@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:e4ef16161db84adc -->
+<!-- translation-of: README.md sha256:8fe829429d03f69b -->
 
 # @ddd-ts-kit/pino
 
@@ -296,7 +296,10 @@ l'en-tête d'une ligne.
 
 `flush(): Promise<void>` se résout une fois que ce que pino avait mis en tampon a été confié à sa
 destination : le *worker* d'un transport, ou le tampon d'une destination asynchrone. Il ne rejette
-jamais. `app.stop()` l'appelle, en dernier, après l'arrêt des modules et le vidage du rapporteur
+jamais. Pendant qu'il s'exécute, il garde le processus en vie, dix secondes au plus : pino ne
+laisse pas le *worker* d'un transport retenir un processus, si bien que la réponse de ce *worker*
+arriverait sinon trop tard dans un processus qui n'a rien d'autre à faire, et ce que l'arrêt fait
+après le vidage ne s'exécuterait jamais. `app.stop()` l'appelle, en dernier, après l'arrêt des modules et le vidage du rapporteur
 d'erreurs : l'arrêt journalise lui aussi. Sans l'application du *package* di, appelez-le
 vous-même à cet endroit.
 
