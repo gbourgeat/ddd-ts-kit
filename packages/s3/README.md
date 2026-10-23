@@ -156,11 +156,16 @@ export async function sendFile(link: SignedUpload, file: Blob): Promise<void> {
 
 ## Tests
 
-The contract of the port is held against a real server: `fileStorageContract` of
-`@ddd-ts-kit/testing/contracts` (re-exported by `@ddd-ts-kit/s3/testing`) runs on MinIO in the
-integration job of the pipeline, with `DDD_TS_KIT_TEST_S3_ENDPOINT` set; without it the specs
-that need a server are skipped. The upstream MinIO project stopped publishing images in 2025:
-the pipeline runs `pgsty/minio`, built from the same sources, pinned by digest
+Every spec runs in the unit run: the storage reaches, through the real SDK, its signer and its
+HTTP transport, an S3 server the test starts in its own process on a free port
+(`test/support/server/`). It checks Signature Version 4, in a header and in a signed link, and
+answers what the storage asks as MinIO does: objects, copies, listings by prefix page after page,
+multipart uploads, the name a signed download is saved under, the expiry of a link (its clock
+moves on without waiting). `fileStorageContract` of `@ddd-ts-kit/testing/contracts` (re-exported
+by `@ddd-ts-kit/s3/testing`) runs on it. With `DDD_TS_KIT_TEST_S3_ENDPOINT`, as in the
+integration job of the pipeline, the same specs run a second time against a real server, which
+is what keeps the in-memory one honest. The upstream MinIO project stopped publishing images in
+2025: the pipeline runs `pgsty/minio`, built from the same sources, pinned by digest
 (`pipeline/github/scripts/start-minio.sh`).
 
 ```

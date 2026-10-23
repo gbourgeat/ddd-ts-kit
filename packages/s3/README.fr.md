@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:648595bec5f485e4 -->
+<!-- translation-of: README.md sha256:850ad6c6eab8788c -->
 
 # @ddd-ts-kit/s3
 
@@ -161,12 +161,18 @@ export async function sendFile(link: SignedUpload, file: Blob): Promise<void> {
 
 ## Tests
 
-Le contrat du port est tenu contre un vrai serveur : `fileStorageContract` de
-`@ddd-ts-kit/testing/contracts` (réexporté par `@ddd-ts-kit/s3/testing`) s'exécute sur MinIO dans
-le *job* d'intégration du *pipeline*, avec la variable `DDD_TS_KIT_TEST_S3_ENDPOINT` définie ;
-sans elle, les *specs* qui ont besoin d'un serveur sont ignorées. Le projet MinIO amont a cessé
-de publier des images en 2025 : le *pipeline* exécute `pgsty/minio`, construit à partir des
-mêmes sources, épinglé par *digest* (`pipeline/github/scripts/start-minio.sh`).
+Toutes les *specs* s'exécutent dans le run unitaire : le stockage atteint, par le vrai SDK, son
+signataire et son transport HTTP, un serveur S3 que le test démarre dans son propre processus sur
+un port libre (`test/support/server/`). Il vérifie la *Signature Version 4*, dans un en-tête et
+dans un lien signé, et répond à ce que le stockage lui demande comme le fait MinIO : objets,
+copies, listes par préfixe page après page, envois en plusieurs parties, nom sous lequel un
+téléchargement signé est enregistré, expiration d'un lien (son horloge avance sans attendre).
+`fileStorageContract` de `@ddd-ts-kit/testing/contracts` (réexporté par `@ddd-ts-kit/s3/testing`)
+s'exécute sur lui. Avec `DDD_TS_KIT_TEST_S3_ENDPOINT`, comme dans le *job* d'intégration du
+*pipeline*, les mêmes *specs* s'exécutent une seconde fois contre un vrai serveur, ce qui garde
+honnête celui en mémoire. Le projet MinIO amont a cessé de publier des images en 2025 : le
+*pipeline* exécute `pgsty/minio`, construit à partir des mêmes sources, épinglé par *digest*
+(`pipeline/github/scripts/start-minio.sh`).
 
 ```
 docker run -d --name minio -p 127.0.0.1:9000:9000 -e MINIO_ROOT_USER=ddd-ts-kit -e MINIO_ROOT_PASSWORD=ddd-ts-kit-secret pgsty/minio:RELEASE.2026-08-04T00-00-00Z server /data

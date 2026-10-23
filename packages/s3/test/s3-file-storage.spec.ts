@@ -29,6 +29,14 @@ describe('S3FileStorage without a server', () => {
     );
   });
 
+  it('signs the key at the root of the bucket for a storage without a prefix', async () => {
+    const link = await new S3FileStorage({ client, bucket: 'documents' }).signedDownloadUrl('reports/march.pdf', {
+      expiresInSeconds: 300,
+    });
+
+    expect(new URL(link.url).pathname).toBe('/documents/reports/march.pdf');
+  });
+
   it('signs a download link without a name as an attachment all the same', async () => {
     const link = await storage.signedDownloadUrl('reports/march.pdf', { expiresInSeconds: 300 });
 
