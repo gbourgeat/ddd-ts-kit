@@ -73,6 +73,24 @@ model CriteriaContractRow {
 }
 `;
 
+/**
+ * A read model in the default schema, with a whole number too large for an `Int`: the table of
+ * a read model that names no schema, and a `BigInt` read back as a number.
+ */
+const LEDGER = `
+model LedgerRow {
+  id               String   @id
+  balance          BigInt
+  lastEventId      String   @map("last_event_id")
+  lastEventAt      DateTime @map("last_event_at") @db.Timestamptz(3)
+  lastEventVersion BigInt?  @map("last_event_version")
+  deleted          Boolean  @default(false)
+
+  @@map("ledger")
+  @@schema("public")
+}
+`;
+
 const inSchema = (models: string, schema: string): string => models.replaceAll(/^}$/gm, `  @@schema("${schema}")\n}`);
 
 /**
@@ -95,6 +113,7 @@ async function composeSchema(): Promise<string> {
     inSchema(eventStore, 'public'),
     INVOICE,
     READ_MODEL,
+    LEDGER,
   ].join('\n');
 }
 

@@ -134,6 +134,24 @@ describe('entity schemas', () => {
     expect(types('mysql')).toEqual(['json', 'datetime', true, undefined]);
     expect(types('sqlite')).toEqual(['simple-json', 'datetime', undefined, true]);
   });
+
+  it('stamp the creation of a row with the clock of the dialect', () => {
+    const clocks = (['postgres', 'mysql', 'sqlite'] as const).map((dialect) => {
+      const created = outboxEntity({ dialect }).options.columns.createdAt?.default;
+      const processedAt = processedEventEntity({ dialect }).options.columns.processedAt?.default;
+
+      return [
+        typeof created === 'function' ? created() : created,
+        typeof processedAt === 'function' ? processedAt() : processedAt,
+      ];
+    });
+
+    expect(clocks).toEqual([
+      ['now()', 'now()'],
+      ['CURRENT_TIMESTAMP(3)', 'CURRENT_TIMESTAMP(3)'],
+      ['CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP'],
+    ]);
+  });
 });
 
 describe('TypeOrmOutboxStore.claimBatch', () => {
@@ -225,6 +243,29 @@ describe('TypeOrmOutboxStore.claimBatch', () => {
 
     expect(claimed.map((record) => record.event.id)).toEqual(['evt-3']);
     expect((await store.claimBatch(10, now)).map((record) => record.event.id)).toEqual(['evt-1', 'evt-2']);
+  });
+});
+
+describe('TypeOrmOutboxStore with nothing to do', () => {
+  beforeEach(async () => {
+    await database.truncate();
+  });
+
+  it('sends no query for an empty batch, nor for a claim of nothing', async () => {
+    const store = new TypeOrmOutboxStore(context(), { entity: outbox });
+
+    await store.append([event('evt-1')]);
+    database.queries.length = 0;
+
+    await store.append([]);
+    const claimed = await store.claimBatch(0, now);
+
+    await store.markPublished([], now);
+    const revived = await store.retryDead([], now);
+
+    expect([claimed, revived]).toEqual([[], 0]);
+    expect(database.queries).toEqual([]);
+    expect(await store.stats()).toEqual({ pending: 1, failed: 0, dead: 0 });
   });
 });
 

@@ -1,15 +1,28 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { readModelStoreContract, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
-import { TypeOrmReadModelTable, createTypeOrmUnitOfWork } from '../src';
+import { EntitySchema } from 'typeorm';
+import { TypeOrmReadModelTable, createTypeOrmUnitOfWork, readModelColumns, type ReadModelStamps } from '../src';
 import { createDatabase, type TestDatabase } from './support/database';
 import { contractRows } from './support/read-model/criteria-contract-rows';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 
+interface LedgerRow {
+  readonly id: string;
+  readonly holder: string;
+}
+
+/** A read model in the default schema: its table and the copy of its rebuild are named without a schema. */
+const ledgerRows = new EntitySchema<LedgerRow & ReadModelStamps>({
+  name: 'LedgerRow',
+  tableName: 'ledger',
+  columns: { id: { type: 'text', primary: true }, holder: { type: 'text' }, ...readModelColumns() },
+});
+
 let database: TestDatabase;
 
 beforeAll(async () => {
-  database = await createDatabase([contractRows]);
+  database = await createDatabase([contractRows, ledgerRows]);
 });
 
 afterAll(async () => {
@@ -70,5 +83,27 @@ describe('TypeOrmReadModelTable', () => {
     expect(await table.replace({ key: 'a1', row: { ...row, seats: 2 }, stamp: later }, stamp)).toBe(true);
     expect(await table.replace({ key: 'a1', row: { ...row, seats: 3 }, stamp: later }, stamp)).toBe(false);
     expect((await table.find('a1'))?.row).toEqual({ ...row, seats: 2 });
+  });
+});
+
+describe('TypeOrmReadModelTable of an entity in the default schema', () => {
+  const stamp = { eventId: 'evt-1', occurredAt: new Date('2026-10-10T12:00:00.000Z') };
+  const account = { id: 'acct-1', holder: 'Jane Doe' };
+
+  it('writes and reads its rows, and those of the copy of a rebuild, in the default schema', async () => {
+    await database.truncate();
+
+    const table = new TypeOrmReadModelTable<LedgerRow>(createTypeOrmUnitOfWork(database.dataSource), {
+      entity: ledgerRows,
+    });
+
+    await table.insert({ key: 'acct-1', row: account, stamp });
+    await table.beginRebuild();
+    await table.shadow().insert({ key: 'acct-1', row: { ...account, holder: 'J. Doe' }, stamp });
+
+    expect((await table.find('acct-1'))?.row).toEqual(account);
+    expect((await table.shadow().find('acct-1'))?.row).toEqual({ ...account, holder: 'J. Doe' });
+    expect(await database.dataSource.query('select count(*)::int as count from public.ledger')).toEqual([{ count: 1 }]);
+    await table.abandonRebuild();
   });
 });

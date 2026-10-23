@@ -107,6 +107,51 @@ describe('an outbox that becomes tenanted', () => {
   });
 });
 
+describe('the tables of the default schema', () => {
+  const scope = new AsyncLocalStorageExecutionScope();
+  const LEDGER = 'ledger_visits';
+
+  beforeEach(async () => {
+    await database.knex.schema.dropTableIfExists(LEDGER);
+    await database.knex.schema.dropTableIfExists('outbox');
+    await database.knex.schema.dropTableIfExists('processed_events');
+
+    await database.knex.schema.createTable(LEDGER, (columns) => {
+      columns.text('id').primary();
+      columns.text('desk').notNullable();
+    });
+
+    await createOutboxTables(database.knex);
+  });
+
+  it('become tenant data and are read for the tenant alone, when no schema is named', async () => {
+    await database.knex(LEDGER).insert({ id: 'v-1', desk: 'north' });
+    await addTenantColumn(database.knex, { table: LEDGER, tenantOfExistingRows: 'acme' });
+    await database.knex(LEDGER).insert({ id: 'v-2', desk: 'south', tenant_id: 'globex' });
+
+    const seen = await asTenant(scope, 'acme', () =>
+      tenantTable(createKnexUnitOfWork(database.knex), scope, { table: LEDGER }).select('id', 'tenant_id'),
+    );
+
+    expect(seen).toEqual([{ id: 'v-1', tenant_id: 'acme' }]);
+  });
+
+  it('give the events of the outbox not published yet to the tenant named, when no schema is named', async () => {
+    await database.knex('outbox').insert({
+      id: 'e-1',
+      type: 'clinic.visit.booked',
+      version: 1,
+      occurred_at: '2026-03-01T10:00:00.000Z',
+      status: 'pending',
+      next_attempt_at: new Date('2026-03-01T10:00:00.000Z'),
+    });
+
+    await addOutboxTenantColumn(database.knex, { tenantOfUnpublished: 'acme' });
+
+    expect(await database.knex('outbox').select('id', 'tenant_id')).toEqual([{ id: 'e-1', tenant_id: 'acme' }]);
+  });
+});
+
 describe('a derived table', () => {
   const scope = new AsyncLocalStorageExecutionScope();
   const context = () => createKnexUnitOfWork(database.knex);

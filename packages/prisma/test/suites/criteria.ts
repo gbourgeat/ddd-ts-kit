@@ -124,4 +124,16 @@ describe('criteriaToPrisma', () => {
     expect(page.items).toEqual([{ id: 'a2', seats: 4, startsAt: new Date('2026-10-01T09:00:00.000Z') }]);
     expect(page.nextCursor).toBeTypeOf('string');
   });
+
+  it('renames the fields of the read model whose model field differs, in the filter and the order, and no other', () => {
+    const plan = planCriteria(
+      criteriaContractDefinition,
+      all.where('seats', 'gte', 4).where('status', 'eq', 'booked').orderBy('seats', 'desc'),
+    );
+
+    const { where, orderBy } = criteriaToPrisma(plan, { seats: 'capacity' });
+
+    expect(where).toEqual({ AND: [{ capacity: { gte: 4 } }, { status: { equals: 'booked' } }] });
+    expect(orderBy).toEqual([{ capacity: 'desc' }, { id: 'desc' }]);
+  });
 });
