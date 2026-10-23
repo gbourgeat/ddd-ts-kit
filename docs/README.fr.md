@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:40d286c0354ac24a -->
+<!-- translation-of: README.md sha256:2dcd246451a18211 -->
 
 # Documentation
 
@@ -42,6 +42,7 @@ Ordonnées en parcours de lecture dans [concepts/README.fr.md](concepts/README.f
 |---|---|
 | [Domaine et sous-domaines](concepts/domain-and-subdomains.fr.md) | cœur, de soutien, générique : comment classer et ce que cela change |
 | [Contexte délimité](concepts/bounded-context.fr.md) | ce qu'est une frontière, et les tests du langage, de l'autonomie et de la cohérence |
+| [Modules du modèle](concepts/modules.fr.md) | un contexte trop grand pour être lu, divisé en parties d'un seul modèle (Evans), pas en sous-contextes : les gains, les limites, comment les adopter |
 | [Langage omniprésent](concepts/ubiquitous-language.fr.md) | la règle du glossaire d'abord, et comment s'écrit un glossaire |
 | [Carte des contextes](concepts/context-map.fr.md) | les patrons de relation, quand chacun convient et ce qu'il coûte |
 | [Carte des contextes : un exemple complet](concepts/context-map-worked-example.fr.md) | l'application de planification, de l'expression des besoins à sa carte |
@@ -118,6 +119,8 @@ a vérifié, les limites, et une recommandation selon la situation.
 | [Parcours d'une story](guides/story-workflow.fr.md) | une session par *user story*, une *story* par terminal : les questions d'abord, la revue de conception et les tests d'acceptation avant le code, un rapport de chaque décision provisoire |
 | [Boucler la boucle](guides/closing-the-loop.fr.md) | d'une métrique sortie de sa bande à la prochaine *story* : les requêtes sur les métriques que le kit émet, un `bands.yaml` à trois paliers, ce qu'il faut à une exécution sans état, le compte rendu d'incident d'où part une *story* de correction, ce qui arrive d'un canal de discussion |
 | [Discipline de commit](guides/commit-discipline.fr.md) | la taille d'un *commit* et d'une *pull request*, les fichiers générés, ce que les *hooks* et la CI imposent |
+| [Un gestionnaire aux nombreuses dépendances](guides/many-dependencies.fr.md) | la surinjection par le constructeur lue comme une odeur : un ordre de diagnostic, chaque remède avec sa place dans l'arborescence, aucune limite |
+| [Un cycle entre deux contextes](guides/cycle-between-contexts.fr.md) | trois questions avant de fusionner : un langage ou deux, un événement pour un sens, un concept manquant |
 | [Quand extraire des microservices](guides/when-to-extract-microservices.fr.md) | les signaux, les coûts, une liste de préparation, les étapes, quand refusionner |
 | [Démarrer avec des contextes bien conçus](guides/bootstrap-with-well-designed-contexts.fr.md) | un contexte générique écrit en entier avec `--preset identity` : ce qu'il écrit, ce qu'il demande à la *stack*, comment il se compose avec chaque modèle d'accès et avec les *tenants* |
 | [Choisir le contrôle d'accès](guides/choosing-access-control.fr.md) | cinq questions qui choisissent les rôles, les attributs ou les relations (Zanzibar), des préréglages commentés pour chacun, le modèle combiné de l'exemple, les périmètres et les refus en bordure |
@@ -131,6 +134,7 @@ a vérifié, les limites, et une recommandation selon la situation.
 | Page | Statut |
 |---|---|
 | [Quels contextes méritent un *preset*](proposals/context-presets.fr.md) | les critères, puis notification ensuite, les demandes sur les données personnelles comme guide ; fichiers (une capacité de la plateforme), audit, facturation et réglages non |
+| [Des modules à l'intérieur d'un contexte délimité](proposals/modules.fr.md) | construit : les sous-contextes ne sont pas un concept des références, les modules du modèle le sont (Evans) ; le jugement de ses gains et de ses limites, et l'essai qui a mesuré le coût sur l'exemple |
 | [Le côté lecture](proposals/read-side.fr.md) | critères, représentations, formulaires, modèles de lecture et projections ; la page dit, partie par partie, ce qui est construit dans les *packages* d'exécution, ce que la CLI ne génère pas encore et ce qui n'est pas construit |
 
 ## Partir d'une question

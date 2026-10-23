@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { controllerRoute, createErrorMapper, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { errorStatuses } from '@/platform/http/error-statuses';
-import { MarkAppointmentNoShowCommand } from '@/contexts/scheduling/application/commands/mark-appointment-no-show/mark-appointment-no-show.command';
-import { AppointmentEnded } from '@/contexts/scheduling/domain/errors/appointment-ended.error';
-import { UnknownAppointment } from '@/contexts/scheduling/domain/errors/unknown-appointment.error';
-import { AppointmentNotStarted } from '@/contexts/scheduling/domain/errors/appointment-not-started.error';
+import { MarkAppointmentNoShowCommand } from '@/contexts/scheduling/application/calendars/commands/mark-appointment-no-show/mark-appointment-no-show.command';
+import { AppointmentEnded } from '@/contexts/scheduling/domain/calendars/errors/appointment-ended.error';
+import { UnknownAppointment } from '@/contexts/scheduling/domain/calendars/errors/unknown-appointment.error';
+import { AppointmentNotStarted } from '@/contexts/scheduling/domain/calendars/errors/appointment-not-started.error';
 import { MarkAppointmentNoShowController } from '@/contexts/scheduling/presentation/http/appointments/mark-appointment-no-show/mark-appointment-no-show.controller';
 
 // The one table of the platform: a code it does not name answers 422.

@@ -5,22 +5,18 @@ import type { CheckRequest } from '../authorization/check-request.js';
 import { ALLOWED, deny, type Decision } from '../authorization/decision.js';
 import { DenialReason } from '../authorization/denial-reason.js';
 import type { ListRequest } from '../authorization/list-request.js';
-import type { Permission } from '../permissions/permission.js';
-import { Evaluation } from './evaluation.js';
-import type { ExpandNode } from './expand-node.js';
+import type { Explanation } from './explanation.js';
 import { objectOf } from './object-of.js';
 import { parseObject } from './parse-object.js';
-import type { PermissionMapping } from './permission-mapping.js';
+import { Question, type QuestionOptions } from './question.js';
 import type { RelationTupleStore } from './relation-tuple-store.js';
 import { ReverseExpansionLimitError } from './reverse-expansion-limit-error.js';
 import type { Schema } from './schema.js';
-import { SchemaError } from './schema-error.js';
 
 export interface RelationBasedAuthorizerOptions {
   readonly schema: Schema;
   readonly store: RelationTupleStore;
-  readonly mapping: PermissionMapping;
-  /** How many `object#relation` hops one check may chain. Default 16. Beyond it the answer is no. */
+  /** How many `element relation` questions one check may chain. Default 16. Beyond it the answer is no. */
   readonly maxDepth?: number;
   /** How many subjects a listing may walk through before giving up loudly. Default 10000. */
   readonly listLimit?: number;
@@ -30,135 +26,111 @@ export interface RelationBasedAuthorizerOptions {
 
 const DEFAULT_MAX_DEPTH = 16;
 const DEFAULT_LIST_LIMIT = 10_000;
+const NO_TRACE: Explanation['trace'] = [];
 
 /**
- * ReBAC in the manner of Zanzibar, evaluated in process: a permission holds when the rewrites
- * of the schema find a path of stored tuples from the object to the actor.
+ * ReBAC in the manner of Zanzibar, evaluated in process: a permission holds on an element when
+ * the actor holds the derived relation named after it, by a path of stored tuples.
  */
 export class RelationBasedAuthorizer implements Authorizer {
-  constructor(private readonly options: RelationBasedAuthorizerOptions) {
-    assertMappingResolves(options);
-  }
+  constructor(private readonly options: RelationBasedAuthorizerOptions) {}
 
   async check(request: CheckRequest): Promise<Decision> {
-    if (isAnonymous(request.actor)) {
-      return deny(DenialReason.anonymous);
-    }
+    return (await this.decide(request, 'first-way')).decision;
+  }
 
-    if (request.resource === undefined) {
-      return deny(DenialReason.resourceRequired);
-    }
-
-    const name = this.mapped(request.resource.type, request.permission);
-
-    if (name === undefined) {
-      return deny(DenialReason.unmappedPermission);
-    }
-
-    const evaluation = this.evaluation(request.actor, { exhaustive: false });
-    const { allowed } = await evaluation.evaluate(objectOf(request.resource), name);
-
-    if (evaluation.depthExceeded) {
-      return deny(DenialReason.depthExceeded);
-    }
-
-    return allowed ? ALLOWED : deny(DenialReason.noRelation);
+  /** Why is this allowed, or not: the decision and every question asked, every way visited. For debugging. */
+  explain(request: CheckRequest): Promise<Explanation> {
+    return this.decide(request, 'every-way');
   }
 
   /**
-   * By reverse expansion: walks every tuple reachable from the actor, then checks each object
-   * of the type it met. Cost: one read per reachable subject and userset, plus one check per
-   * candidate. Fine for thousands of tuples per actor, not for a search index.
+   * By reverse expansion: walks every tuple reachable from the actor, then checks each element
+   * of the type it met. Cost: one read per reachable subject, plus one check per candidate.
+   * Fine for thousands of tuples per actor, not for a search index.
    */
   async listAccessible({ actor, permission, resourceType }: ListRequest): Promise<AccessScope> {
-    const name = this.mapped(resourceType, permission);
-
-    if (isAnonymous(actor) || name === undefined) {
+    if (isAnonymous(actor) || !this.grants(resourceType, permission.id)) {
       return { kind: 'none' };
     }
 
     const ids: string[] = [];
 
-    for (const object of await this.reachable(this.subjectOf(actor), resourceType)) {
-      const evaluation = this.evaluation(actor, { exhaustive: false });
-      const { allowed } = await evaluation.evaluate(object, name);
+    for (const element of await this.reachable(this.subjectOf(actor), resourceType)) {
+      const question = this.question(actor, 'first-way');
 
-      if (allowed && !evaluation.depthExceeded) {
-        ids.push(parseObject(object).id);
+      if ((await question.holds(element, permission.id)) && !question.depthExceeded) {
+        ids.push(parseObject(element).id);
       }
     }
 
     return { kind: 'ids', ids: ids.sort() };
   }
 
-  /** Why is this allowed, or not: the whole evaluation tree, every branch visited. For debugging. */
-  async expand(request: Required<Pick<CheckRequest, 'actor' | 'permission' | 'resource'>>): Promise<ExpandNode> {
-    const name = this.mapped(request.resource.type, request.permission);
-
-    if (name === undefined) {
-      throw new SchemaError(
-        `No schema permission is mapped to "${request.permission.id}" for "${request.resource.type}".`,
-      );
+  private async decide(request: CheckRequest, visit: QuestionOptions['visit']): Promise<Explanation> {
+    if (isAnonymous(request.actor)) {
+      return { decision: deny(DenialReason.anonymous), trace: NO_TRACE };
     }
 
-    return this.evaluation(request.actor, { exhaustive: true }).evaluate(objectOf(request.resource), name);
+    if (request.resource === undefined) {
+      return { decision: deny(DenialReason.resourceRequired), trace: NO_TRACE };
+    }
+
+    if (!this.grants(request.resource.type, request.permission.id)) {
+      return { decision: deny(DenialReason.unmappedPermission), trace: NO_TRACE };
+    }
+
+    const question = this.question(request.actor, visit);
+    const holds = await question.holds(objectOf(request.resource), request.permission.id);
+
+    if (question.depthExceeded) {
+      return { decision: deny(DenialReason.depthExceeded), trace: question.trace };
+    }
+
+    return { decision: holds ? ALLOWED : deny(DenialReason.noRelation), trace: question.trace };
   }
 
-  private mapped(resourceType: string, permission: Permission): string | undefined {
-    return this.options.mapping[resourceType]?.[permission.id];
+  /** Whether the type derives a relation named after the permission. */
+  private grants(resourceType: string, permissionId: string): boolean {
+    return this.options.schema.derived(resourceType)[permissionId] !== undefined;
   }
 
-  private evaluation(actor: Actor, { exhaustive }: { readonly exhaustive: boolean }): Evaluation {
+  private question(actor: Actor, visit: QuestionOptions['visit']): Question {
     const { schema, store, maxDepth = DEFAULT_MAX_DEPTH } = this.options;
 
-    return new Evaluation({ schema, store, subject: this.subjectOf(actor), maxDepth, exhaustive });
+    return new Question({ schema, store, subject: this.subjectOf(actor), maxDepth, visit });
   }
 
   private subjectOf(actor: Actor): string {
     return this.options.subjectOf?.(actor) ?? `${actor.type}:${actor.id}`;
   }
 
-  private async reachable(subject: string, resourceType: string): Promise<readonly string[]> {
+  /** Breadth first from the actor: every element the actor is something of, then every element those are something of. */
+  private async reachable(start: string, resourceType: string): Promise<readonly string[]> {
     const { store, listLimit = DEFAULT_LIST_LIMIT } = this.options;
-    const seen = new Set([subject]);
+    const seen = new Set([start]);
+    const queue = [start];
     const candidates = new Set<string>();
 
-    // A set also iterates over what is added while iterating: `seen` is the queue of the walk.
-    for (const current of seen) {
-      if (seen.size > listLimit) {
-        throw new ReverseExpansionLimitError(listLimit);
-      }
+    while (queue.length > 0) {
+      const current = queue.shift() ?? '';
 
       for (const { object } of await store.readBySubject(current)) {
         if (parseObject(object).type === resourceType) {
           candidates.add(object);
         }
 
-        for (const next of this.subjectFormsOf(object)) {
-          seen.add(next);
+        if (!seen.has(object)) {
+          seen.add(object);
+          queue.push(object);
+        }
+
+        if (seen.size > listLimit) {
+          throw new ReverseExpansionLimitError(listLimit);
         }
       }
     }
 
     return [...candidates];
-  }
-
-  /** How an object may itself be the subject of a tuple: as such, or as one of its usersets. */
-  private subjectFormsOf(object: string): readonly string[] {
-    const { type } = parseObject(object);
-
-    return [object, ...this.options.schema.usersetsOf(type).map((relation) => `${object}#${relation}`)];
-  }
-}
-
-function assertMappingResolves({ schema, mapping }: RelationBasedAuthorizerOptions): void {
-  for (const [type, names] of Object.entries(mapping)) {
-    for (const [permissionId, name] of Object.entries(names)) {
-      if (schema.resolve(type, name) !== undefined) {
-        continue;
-      }
-
-      throw new SchemaError(`"${permissionId}" is mapped to "${type}#${name}", which the schema does not declare.`);
-    }
   }
 }

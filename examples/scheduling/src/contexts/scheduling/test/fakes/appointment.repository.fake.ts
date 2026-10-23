@@ -1,8 +1,8 @@
 import { InMemoryRepository } from '@ddd-ts-kit/testing';
-import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
-import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
-import { SlotTaken } from '@/contexts/scheduling/domain/errors/slot-taken.error';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
+import { Appointment } from '@/contexts/scheduling/domain/calendars/aggregates/appointment.aggregate';
+import type { AppointmentRepository } from '@/contexts/scheduling/domain/calendars/repositories/appointment.repository';
+import { SlotTaken } from '@/contexts/scheduling/domain/calendars/errors/slot-taken.error';
+import { Slot } from '@/contexts/scheduling/domain/calendars/value-objects/slot.vo';
 
 export class FakeAppointmentRepository extends InMemoryRepository<Appointment> implements AppointmentRepository {
   constructor() {

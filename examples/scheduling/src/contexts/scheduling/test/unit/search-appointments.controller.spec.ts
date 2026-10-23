@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus, planCriteria, scoped } from '@ddd-ts-kit/kernel';
-import { agendaCriteria } from '@/contexts/scheduling/application/ports/agenda.port';
-import { SearchAppointmentsQuery } from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.query';
+import { agendaCriteria } from '@/contexts/scheduling/application/calendars/ports/agenda.port';
+import { SearchAppointmentsQuery } from '@/contexts/scheduling/application/calendars/queries/search-appointments/search-appointments.query';
 import { SearchAppointmentsController } from '@/contexts/scheduling/presentation/http/appointments/search-appointments/search-appointments.controller';
 import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder';
 import { AgendaEntrySerializer } from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';

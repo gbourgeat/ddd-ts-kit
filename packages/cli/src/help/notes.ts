@@ -40,6 +40,11 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    the root of the platform or of auth/ stays where it is, named, unless --place
                    <file>=<folder> (both from the platform) gives it its folder; the generators and
                    init --force keep either layout until then
+  move-to-module   takes files of domain/ and application/ of a context into a module of its model, declared
+                   first with generate module: each <path> is a file or a folder of a role, relative to the
+                   context (domain/aggregates/waitlist.aggregate.ts, application/commands/join-waitlist);
+                   every import of them under the source root, test/ and scripts/ follows, and the
+                   generated declarations are rewritten; codes.ts and the permissions stay one per context
   controllers      moves the function routes of a project, or of one context, to controller classes: each
                    <name>.route.ts becomes <resource>/<name>/<name>.controller.ts behind the route group of
                    its resource, its schema files and its spec follow; a context is turned whole or not at all
@@ -244,4 +249,8 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    fails while a declared version is not recorded, or recorded by 0.82.0 or earlier
   --sdk            init records "sdk" in the config and generates the clients with the project
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
-                   "generate --help --json" says which kinds do`;
+                   "generate --help --json" says which kinds do
+  --module         generate writes the files of domain/ and application/ into that module of the model of the
+                   context (declared first with generate module), finds the files it reads in the module that
+                   holds them and writes the imports to where they are; required in a context that declares
+                   modules, the code list and the permission set staying one per context`;

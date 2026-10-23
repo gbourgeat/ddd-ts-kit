@@ -1,10 +1,19 @@
 /**
  * One thing a project lacks, or writes otherwise, compared with what this version of the kit
  * writes; or one its environment lacks to run it: `node`, `install` and `submodule` are the state
- * of one checkout, not of the project.
+ * of one checkout, not of the project. `guidance` is a file written once for the team to own.
  */
 export interface DoctorFinding {
-  readonly area: 'script' | 'package' | 'permission' | 'hook' | 'folder' | 'node' | 'install' | 'submodule';
+  readonly area:
+    | 'script'
+    | 'package'
+    | 'permission'
+    | 'hook'
+    | 'guidance'
+    | 'folder'
+    | 'node'
+    | 'install'
+    | 'submodule';
   readonly name: string;
   /**
    * `not installed`: a git hook this clone lacks, or a package of the kit node_modules lacks.

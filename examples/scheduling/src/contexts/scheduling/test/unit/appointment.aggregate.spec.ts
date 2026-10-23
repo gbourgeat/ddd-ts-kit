@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { given } from '@ddd-ts-kit/testing';
-import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
-import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
+import { Appointment } from '@/contexts/scheduling/domain/calendars/aggregates/appointment.aggregate';
+import { Cancellation } from '@/contexts/scheduling/domain/calendars/value-objects/cancellation.vo';
+import { Slot } from '@/contexts/scheduling/domain/calendars/value-objects/slot.vo';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 const bornAt = new Date('2026-03-01T00:00:00.000Z');

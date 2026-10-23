@@ -9,8 +9,8 @@ import {
   tenantRow,
   tenantTable,
 } from '@ddd-ts-kit/knex';
-import type { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate';
-import { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository';
+import type { Waitlist } from '@/contexts/scheduling/domain/waitlist/aggregates/waitlist.aggregate';
+import { WaitlistRepository } from '@/contexts/scheduling/domain/waitlist/repositories/waitlist.repository';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
 import { WaitlistMapper } from '@/contexts/scheduling/infrastructure/persistence/waitlist.mapper';
 import type {

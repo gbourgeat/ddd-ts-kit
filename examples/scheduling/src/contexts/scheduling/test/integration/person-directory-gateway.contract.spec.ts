@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { PersonDirectoryGateway } from '@/contexts/scheduling/application/ports/person-directory-gateway.port';
+import type { PersonDirectoryGateway } from '@/contexts/scheduling/application/calendars/ports/person-directory-gateway.port';
 import { InProcessPersonDirectoryGateway } from '@/contexts/scheduling/infrastructure/external/in-process-person-directory.gateway';
 import { FakePersonDirectoryGateway } from '@/contexts/scheduling/test/fakes/person-directory-gateway.fake';
 

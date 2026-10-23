@@ -1,5 +1,5 @@
 [English](choosing-access-control.md) · **Français**
-<!-- translation-of: choosing-access-control.md sha256:2842c04985ffd66b -->
+<!-- translation-of: choosing-access-control.md sha256:2784d12ba61cb688 -->
 
 # Choisir le contrôle d'accès, avec des préréglages commentés
 
@@ -346,14 +346,14 @@ politiques.
 
 ## Préréglage 3 : des relations (Zanzibar)
 
-Le schéma dit qui est quoi pour quel élément, et en dérive les permissions par réécriture : le
-propriétaire, un membre d'un groupe avec lequel l'élément est partagé, quiconque peut modifier le
-dossier parent.
+Le schéma dit qui est quoi pour quel élément, et qui compte comme quoi : le propriétaire, un
+membre d'une équipe avec laquelle l'élément est partagé, quiconque peut modifier le dossier
+parent. Une relation dérivée nommée d'après une permission l'accorde sur son type.
 
 <!-- checked sample -->
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import { InMemoryRelationTupleStore, RelationBasedAuthorizer, defineSchema, from, union } from '@ddd-ts-kit/auth/rebac';
+import { InMemoryRelationTupleStore, RelationBasedAuthorizer, defineSchema, via } from '@ddd-ts-kit/auth/rebac';
 import type { Actor } from '@ddd-ts-kit/kernel';
 
 export const docsPermissions = definePermissions('docs', {
@@ -362,38 +362,38 @@ export const docsPermissions = definePermissions('docs', {
   'folder.view': { description: 'Read a folder and list what it holds' },
 });
 
-// platform/auth/relationships/relationship-schema.ts
+const viewFolder = docsPermissions['folder.view'].id;
+const editDocument = docsPermissions['document.edit'].id;
+
+// platform/auth/relationships/relationship-schema.ts : les relations stockées, les dérivées, et la permission que chacune accorde
 export const relationshipSchema = defineSchema({
   user: {},
   system: {},
   team: { relations: { member: ['user', 'team#member'] } },
   folder: {
     relations: { owner: ['user'], viewer: ['user', 'team#member'], parent: ['folder'] },
-    permissions: { edit: union('owner', from('parent', 'edit')), view: union('edit', 'viewer', from('parent', 'view')) },
+    derived: {
+      edit: { anyOf: ['owner', via('parent', 'edit')] },
+      [viewFolder]: { anyOf: ['edit', 'viewer', via('parent', viewFolder)] },
+    },
   },
   document: {
     relations: { owner: ['user'], editor: ['user', 'team#member'], delegate: ['user'], parent: ['folder'] },
-    permissions: {
-      edit: union('owner', 'editor', 'delegate', from('parent', 'edit')),
-      view: union('edit', from('parent', 'view')),
+    derived: {
+      [editDocument]: { anyOf: ['owner', 'editor', 'delegate', via('parent', 'edit')] },
+      [docsPermissions['document.view'].id]: { anyOf: [editDocument, via('parent', viewFolder)] },
     },
   },
 });
 
-// platform/auth/relationships/permission-mapping.ts : quelle permission du schéma chaque permission de cas d'usage représente
-export const mapping = {
-  document: { [docsPermissions['document.edit'].id]: 'edit', [docsPermissions['document.view'].id]: 'view' },
-  folder: { [docsPermissions['folder.view'].id]: 'view' },
-};
-
 // Le magasin PostgreSQL du projet en production ; celui en mémoire ici et dans les tests.
 const store = new InMemoryRelationTupleStore();
-export const authorizer = new RelationBasedAuthorizer({ schema: relationshipSchema, store, mapping });
+export const authorizer = new RelationBasedAuthorizer({ schema: relationshipSchema, store });
 
 export async function adaReadsTheQuarterlyReport(): Promise<void> {
   await store.write([
     { object: 'team:finance', relation: 'member', subject: 'user:ada' },
-    { object: 'folder:reports', relation: 'viewer', subject: 'team:finance#member' },
+    { object: 'folder:reports', relation: 'viewer', subject: 'team:finance' },
     { object: 'document:q3', relation: 'parent', subject: 'folder:reports' },
   ]);
 

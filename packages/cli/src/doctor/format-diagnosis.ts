@@ -25,7 +25,7 @@ export function formatDiagnosis(
 function projectLines(findings: readonly DoctorFinding[], version: string, manager: Stack['packageManager']): string[] {
   if (findings.length === 0) {
     return [
-      `The project has what ddd-ts-kit ${version} writes: scripts, packages of the kit, permissions and git hooks.`,
+      `The project has what ddd-ts-kit ${version} writes: scripts, packages of the kit, permissions, git hooks and review policy.`,
     ];
   }
 
@@ -107,6 +107,12 @@ function hookFixesOf(findings: readonly DoctorFinding[]): string[] {
   if (hooks.some((finding) => finding.name === 'lefthook.yml lefthook')) {
     fixes.push(
       "fix: add the line `lefthook: node_modules/.bin/lefthook` at the top of lefthook.yml (or `npx ddd-ts-kit init --force` writes the kit's lefthook.yml over yours), then `npm run hooks:install`: each checkout then runs its own lefthook, and one without its dependencies fails the commit instead of skipping the checks.",
+    );
+  }
+
+  if (hooks.some((finding) => finding.name === 'lefthook.yml secrets')) {
+    fixes.push(
+      'fix: add the `secrets` job to the pre-commit jobs of lefthook.yml, as `npx ddd-ts-kit init --force` writes it (it runs `gitleaks git --pre-commit --staged` when gitleaks is installed, prints one line otherwise, and the pipeline scans the whole history anyway).',
     );
   }
 

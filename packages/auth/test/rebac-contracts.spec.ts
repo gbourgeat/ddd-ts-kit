@@ -11,7 +11,7 @@ authorizerContract(
     name: 'RelationBasedAuthorizer',
     create: async () => ({
       authorizer: await authorizerWith([
-        fact('document:1', 'editor', 'group:eng#member'),
+        fact('document:1', 'editor', 'group:eng'),
         fact('group:eng', 'member', 'user:ada'),
         fact('document:2', 'owner', 'user:bob'),
       ]),

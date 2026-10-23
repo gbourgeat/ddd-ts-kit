@@ -8,25 +8,38 @@ import {
 
 describe('the role folder a role file rolls up to', () => {
   it('is the folder at <layer>/<folder>/, whatever the use case or the route below it', () => {
-    expect(declarationsFolderOf('application/commands/book-appointment/book-appointment.handler.ts')).toBe(
+    expect(declarationsFolderOf('application/commands/book-appointment/book-appointment.handler.ts', [])).toBe(
       'application/commands',
     );
 
-    expect(declarationsFolderOf('application/integration/publishers/appointment-booked.publisher.ts')).toBe(
+    expect(declarationsFolderOf('application/integration/publishers/appointment-booked.publisher.ts', [])).toBe(
       'application/integration',
     );
 
-    expect(declarationsFolderOf('presentation/http/appointments/book-appointment/book-appointment.controller.ts')).toBe(
-      'presentation/http',
-    );
+    expect(
+      declarationsFolderOf('presentation/http/appointments/book-appointment/book-appointment.controller.ts', []),
+    ).toBe('presentation/http');
 
-    expect(declarationsFolderOf('infrastructure/persistence/knex-appointment.repository.ts')).toBe(
+    expect(declarationsFolderOf('infrastructure/persistence/knex-appointment.repository.ts', [])).toBe(
       'infrastructure/persistence',
     );
   });
 
   it('is the layer for a role file sitting directly in it, and its declarations are named after it', () => {
-    expect(declarationsFolderOf('infrastructure/practitioner-directory.gateway.ts')).toBe('infrastructure');
+    expect(declarationsFolderOf('infrastructure/practitioner-directory.gateway.ts', [])).toBe('infrastructure');
+  });
+
+  it('is the same folder of a module of the model the config declares, and no folder of one it does not', () => {
+    const inModule = 'application/waitlist/commands/join-waitlist/join-waitlist.handler.ts';
+
+    expect(declarationsFolderOf(inModule, ['waitlist'])).toBe('application/waitlist/commands');
+    expect(declarationsFolderOf(inModule, [])).toBe('application/waitlist');
+
+    expect(
+      isDeclarationsFile('scheduling', 'application/waitlist/commands/commands.declarations.ts', ['waitlist']),
+    ).toBe(true);
+
+    expect(isDeclarationsFile('scheduling', 'application/waitlist/commands/commands.declarations.ts', [])).toBe(false);
     expect(folderDeclarationsFile('infrastructure')).toBe('infrastructure/infrastructure.declarations.ts');
     expect(folderDeclarationsFile('application/queries')).toBe('application/queries/queries.declarations.ts');
   });
@@ -34,18 +47,18 @@ describe('the role folder a role file rolls up to', () => {
 
 describe('a generated declarations file, told from the others', () => {
   it('is the summary at the root of the context, or the file named after its role folder', () => {
-    expect(isDeclarationsFile('scheduling', 'scheduling.declarations.ts')).toBe(true);
-    expect(isDeclarationsFile('scheduling', 'application/commands/commands.declarations.ts')).toBe(true);
-    expect(isDeclarationsFile('scheduling', 'presentation/http/http.declarations.ts')).toBe(true);
-    expect(isDeclarationsFile('scheduling', 'infrastructure/infrastructure.declarations.ts')).toBe(true);
+    expect(isDeclarationsFile('scheduling', 'scheduling.declarations.ts', [])).toBe(true);
+    expect(isDeclarationsFile('scheduling', 'application/commands/commands.declarations.ts', [])).toBe(true);
+    expect(isDeclarationsFile('scheduling', 'presentation/http/http.declarations.ts', [])).toBe(true);
+    expect(isDeclarationsFile('scheduling', 'infrastructure/infrastructure.declarations.ts', [])).toBe(true);
   });
 
   it('is not a file named otherwise, deeper than a role folder, or in a layer that holds no role file', () => {
-    expect(isDeclarationsFile('scheduling', 'billing.declarations.ts')).toBe(false);
-    expect(isDeclarationsFile('scheduling', 'application/commands/queries.declarations.ts')).toBe(false);
-    expect(isDeclarationsFile('scheduling', 'application/commands/book/book.declarations.ts')).toBe(false);
-    expect(isDeclarationsFile('scheduling', 'domain/events/events.declarations.ts')).toBe(false);
-    expect(isDeclarationsFile('scheduling', 'application/commands/commands.declarations.spec.ts')).toBe(false);
+    expect(isDeclarationsFile('scheduling', 'billing.declarations.ts', [])).toBe(false);
+    expect(isDeclarationsFile('scheduling', 'application/commands/queries.declarations.ts', [])).toBe(false);
+    expect(isDeclarationsFile('scheduling', 'application/commands/book/book.declarations.ts', [])).toBe(false);
+    expect(isDeclarationsFile('scheduling', 'domain/events/events.declarations.ts', [])).toBe(false);
+    expect(isDeclarationsFile('scheduling', 'application/commands/commands.declarations.spec.ts', [])).toBe(false);
   });
 });
 
@@ -65,6 +78,7 @@ describe('the declarations of a context', () => {
     const rendered = renderDeclarations({
       context: 'scheduling',
       files,
+      modules: [],
       specifierOf: (file) => `@/contexts/scheduling/${file.replace(/\.ts$/, '')}`,
       injectedIn: (roleFiles) => {
         asked.push([...roleFiles]);

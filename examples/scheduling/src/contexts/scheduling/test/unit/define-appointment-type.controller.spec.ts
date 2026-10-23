@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { DefineAppointmentTypeCommand } from '@/contexts/scheduling/application/commands/define-appointment-type/define-appointment-type.command';
-import { InvalidAppointmentType } from '@/contexts/scheduling/domain/errors/invalid-appointment-type.error';
+import { DefineAppointmentTypeCommand } from '@/contexts/scheduling/application/calendars/commands/define-appointment-type/define-appointment-type.command';
+import { InvalidAppointmentType } from '@/contexts/scheduling/domain/calendars/errors/invalid-appointment-type.error';
 import { DefineAppointmentTypeController } from '@/contexts/scheduling/presentation/http/calendars/define-appointment-type/define-appointment-type.controller';
 
 const valid = { name: 'Consultation', duration: 30, grid: 15, buffer: 10, needsConfirmation: true };

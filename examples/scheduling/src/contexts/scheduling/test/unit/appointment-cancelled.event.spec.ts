@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
-import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
+import { Cancellation } from '@/contexts/scheduling/domain/calendars/value-objects/cancellation.vo';
+import { AppointmentCancelled } from '@/contexts/scheduling/domain/calendars/events/appointment-cancelled.event';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 const held = anAppointment().identifiedBy('appointment-1').build();

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { AppointmentNotStarted } from '@/contexts/scheduling/domain/errors/appointment-not-started.error';
+import { AppointmentNotStarted } from '@/contexts/scheduling/domain/calendars/errors/appointment-not-started.error';
 
 const startsAt = new Date('2026-03-02T09:00:00.000Z');
 

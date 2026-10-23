@@ -1,5 +1,5 @@
 [English](authorization-engines.md) · **Français**
-<!-- translation-of: authorization-engines.md sha256:fe336dfc2fc0ee64 -->
+<!-- translation-of: authorization-engines.md sha256:4045169e00b05dcf -->
 
 # Moteurs d'autorisation : dans le processus ou un service dédié
 
@@ -101,15 +101,16 @@ D'après [`@ddd-ts-kit/auth`](../../packages/auth/README.fr.md) :
 - **La superposition.** La façade d'accès interroge les politiques d'instance, puis
   l'*authorizer* : « des rôles pour les actions, des politiques pour les quelques règles par
   élément » ne demande aucun magasin de tuples, et le README en fait le point de départ.
-- **Les relations.** Un DSL de schéma avec union, intersection, exclusion et *tuple-to-userset*,
+- **Les relations.** Un schéma de relations stockées et dérivées (`anyOf`, `allOf`, `butNot`,
+  `via` : les mots d'OpenFGA), une relation dérivée nommée d'après une permission qui l'accorde,
   un `defineSchema` qui valide, une protection contre les cycles et une limite de profondeur (16
-  par défaut, avec la réponse `DEPTH_EXCEEDED`, jamais une supposition), un `expand` qui trace une
-  vérification pour le débogage, une enveloppe du magasin qui refuse les tuples que le schéma ne
-  décrit pas. Une version réduite du schéma de l'application d'exemple, et une vérification :
+  par défaut, avec la réponse `DEPTH_EXCEEDED`, jamais une supposition), un `explain` qui raconte
+  une décision en mots pour le débogage, une enveloppe du magasin qui refuse les tuples que le
+  schéma ne décrit pas. Une version réduite du schéma de l'application d'exemple, et une vérification :
 <!-- checked sample -->
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import { defineSchema, from, InMemoryRelationTupleStore, RelationBasedAuthorizer, union } from '@ddd-ts-kit/auth/rebac';
+import { defineSchema, InMemoryRelationTupleStore, RelationBasedAuthorizer, via } from '@ddd-ts-kit/auth/rebac';
 import type { Actor } from '@ddd-ts-kit/kernel';
 
 const schedulingPermissions = definePermissions('scheduling', {
@@ -119,23 +120,20 @@ const schedulingPermissions = definePermissions('scheduling', {
 // Qui est quoi pour quel élément : un cabinet a des responsables, un calendrier son titulaire et ses assistants.
 const schema = defineSchema({
   user: {},
-  practice: { relations: { manager: ['user'] }, permissions: { manage: union('manager') } },
+  practice: { relations: { manager: ['user'] }, derived: { manage: 'manager' } },
   calendar: {
     relations: { holder: ['user'], assistant: ['user'], practice: ['practice'] },
-    permissions: { run: union('holder', 'assistant', from('practice', 'manage')) },
+    derived: { run: { anyOf: ['holder', 'assistant', via('practice', 'manage')] } },
   },
   appointment: {
     relations: { patient: ['user'], calendar: ['calendar'] },
-    permissions: { change: union('patient', from('calendar', 'run')) },
+    // La relation dérivée nommée d'après la permission l'accorde : annuler, c'est détenir `change`.
+    derived: { change: { anyOf: ['patient', via('calendar', 'run')] }, [schedulingPermissions['appointment.cancel'].id]: 'change' },
   },
 });
 
 const tuples = new InMemoryRelationTupleStore();
-const authorizer = new RelationBasedAuthorizer({
-  schema,
-  store: tuples,
-  mapping: { appointment: { [schedulingPermissions['appointment.cancel'].id]: 'change' } },
-});
+const authorizer = new RelationBasedAuthorizer({ schema, store: tuples });
 
 await tuples.write([
   { object: 'calendar:dr-grace', relation: 'assistant', subject: 'user:ada' },
@@ -168,7 +166,7 @@ Ce que le README déclare **non** implémenté, par comparaison avec Zanzibar :
   séquentielle, dans le processus ;
 - ni sujet public générique (*wildcard*), ni versionnement du schéma ou outil de migration, ni API
   de surveillance (*watch*) ;
-- `expand` est la trace d'une vérification, pas l'arbre de *usersets* de Zanzibar ;
+- `explain` est la trace d'une vérification, pas l'arbre de *usersets* de Zanzibar ;
 - lister par expansion inverse coûte une lecture du magasin par sujet atteint et lève une erreur
   au-delà d'une limite (10000 sujets atteints par défaut) plutôt que de rendre une liste
   partielle. Ce n'est pas un index de recherche.
@@ -184,12 +182,11 @@ plateforme, comme le montre le README du *package* :
 
 <!-- checked sample -->
 ```ts
-import type { PermissionMapping, Schema } from '@ddd-ts-kit/auth/rebac';
+import type { Schema } from '@ddd-ts-kit/auth/rebac';
 import { ensureAuthorizationModel, OpenFgaAuthorizer, OpenFgaRelationTupleStore } from '@ddd-ts-kit/openfga';
 import { openFgaClient } from '@ddd-ts-kit/openfga/sdk';
 
-declare const relationshipSchema: Schema; // le defineSchema(...) que lisait l'authorizer dans le processus
-declare const permissionMapping: PermissionMapping; // inchangé lui aussi
+declare const relationshipSchema: Schema; // le defineSchema(...) que lisait l'authorizer dans le processus, inchangé
 declare const config: { readonly openfga: { readonly url: string; readonly storeId: string } };
 
 const client = openFgaClient({ apiUrl: config.openfga.url, storeId: config.openfga.storeId });
@@ -200,7 +197,7 @@ console.log(`authorization model ${modelId}`, changes);
 
 // Les deux mêmes ports, liés au serveur au lieu de la table du projet.
 export const tuples = new OpenFgaRelationTupleStore(client, relationshipSchema);
-export const authorizer = new OpenFgaAuthorizer({ client, mapping: permissionMapping, listObjectsLimit: 1000 });
+export const authorizer = new OpenFgaAuthorizer({ client, schema: relationshipSchema, listObjectsLimit: 1000 });
 ```
 
 **SpiceDB** correspond à `CheckPermission`, `LookupResources` et `WriteRelationships` derrière les

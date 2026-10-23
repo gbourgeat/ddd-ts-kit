@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TimeOff } from '@/contexts/scheduling/domain/value-objects/time-off.vo';
+import { TimeOff } from '@/contexts/scheduling/domain/calendars/value-objects/time-off.vo';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 
 describe('TimeOff', () => {

@@ -57,12 +57,13 @@ export function commitMerge(repo: MergeRepository): MergeCommit {
   return { leftOut, commit: runGit(top, ['rev-parse', 'HEAD'])?.trim() ?? '' };
 }
 
-function isMergePath(file: string, { prefix, contextsDir }: MergeRepository): boolean {
+function isMergePath(file: string, repo: MergeRepository): boolean {
+  const { prefix } = repo;
   const inProject = file.startsWith(prefix) ? file.slice(prefix.length) : undefined;
 
   return (
     inProject !== undefined &&
-    (isDerived(inProject, { contextsDir }) ||
+    (isDerived(inProject, repo) ||
       /(?:^|\/)migrations\//.test(inProject) ||
       inProject.startsWith(`${ADR_DIRECTORY}/`) ||
       LOCKFILES.has(inProject.split('/').at(-1) ?? '') ||

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { UnknownTimeZone } from '@/contexts/scheduling/domain/errors/unknown-time-zone.error';
+import { UnknownTimeZone } from '@/contexts/scheduling/domain/calendars/errors/unknown-time-zone.error';
 
 describe('UnknownTimeZone', () => {
   it('refuses with the code UNKNOWN_TIME_ZONE, its message and its facts', () => {

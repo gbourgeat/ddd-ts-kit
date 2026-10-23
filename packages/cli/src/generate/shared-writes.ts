@@ -34,6 +34,7 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
       'knip.json (the first context)',
     ],
   },
+  module: { files: ['ddd-ts-kit.config.json'] },
   repository: { files: STORAGE, when: STORED },
   command: {
     files: [...STORAGE, ...GRANTS],

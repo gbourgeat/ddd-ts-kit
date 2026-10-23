@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:92c44ceb5b71fe4c -->
+<!-- translation-of: ARCHITECTURE.md sha256:b174fe25ec4f5e01 -->
 
 # Référence de l'architecture
 
@@ -1199,7 +1199,7 @@ test d'architecture généré démarre chaque contexte seul pour prouver que cel
 
 Le modèle d'autorisation est le choix du projet, derrière ce seul port : des rôles (RBAC), des
 politiques sur des attributs (ABAC), ou des relations à la manière de Google Zanzibar (ReBAC :
-des tuples `object#relation@subject`, des permissions dérivées par réécriture, des opérations de
+des tuples `object#relation@subject`, des permissions comme relations qui en dérivent, des opérations de
 vérification et de liste), dans le processus ou délégué à un service dédié. Changer de modèle
 change un adaptateur et les définitions de permissions, pas les gestionnaires.
 

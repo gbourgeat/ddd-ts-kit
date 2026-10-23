@@ -1,5 +1,5 @@
 [English](team-workflow.md) · **Français**
-<!-- translation-of: team-workflow.md sha256:20961fdde37c30e3 -->
+<!-- translation-of: team-workflow.md sha256:91ec093935670778 -->
 
 # Travailler en équipe sur un projet DDD
 
@@ -28,28 +28,65 @@ request* ; cela veut dire que personne n'en fusionne une sans le propriétaire.
 | `src/platform/`, `src/main.ts`, `ddd-ts-kit.config.json`, les fichiers du *pipeline* | un propriétaire de la plateforme désigné (souvent le responsable technique) | proposer ; ces fichiers portent les règles |
 | les sections rédigées de `docs/context-map.md`, `docs/adr/` | le responsable technique, avec les propriétaires concernés | proposer |
 
-Sur GitHub ou GitLab, un fichier de propriétaires du code exprime ce tableau mécaniquement. Le
-kit n'en génère pas : écrivez-le à la main à partir de la liste des contextes
-(`npx ddd-ts-kit list`). Pour un projet avec un contexte `appointments` et un contexte
-`analytics` :
+Sur GitHub ou GitLab, un fichier de propriétaires du code exprime ce tableau mécaniquement, et
+le kit l'écrit d'après la configuration : `contexts.<name>.owners` nomme les propriétaires d'un
+contexte, `owners.platform` le propriétaire de la plateforme
+([`ddd-ts-kit.config.json`](../CONFIG.fr.md#propriétaires)), et `npx ddd-ts-kit docs` écrit
+`CODEOWNERS` à la racine du projet, où les deux plateformes le lisent, entre des marqueurs
+`# ddd-ts-kit:code-owners` ; `docs --check` le signale périmé quand un propriétaire, un contexte
+ou un import du noyau partagé a changé, et un fichier écrit à la main par l'équipe garde ses
+lignes, le bloc généré ajouté à leur suite. Pour un projet avec un contexte `appointments` et un
+contexte `analytics`, `analytics` en aval d'`appointments` :
 
-```text
-# .github/CODEOWNERS (GitHub) ou CODEOWNERS (GitLab) : la dernière ligne qui correspond l'emporte
-src/contexts/appointments/      @clinic/appointments-team
-src/contexts/analytics/         @clinic/data-team
-src/shared-kernel/              @clinic/appointments-team @clinic/data-team
-src/platform/                   @clinic/tech-lead
-src/main.ts                     @clinic/tech-lead
-ddd-ts-kit.config.json          @clinic/tech-lead
-.github/workflows/              @clinic/tech-lead
-docs/adr/                       @clinic/tech-lead
+```json
+{
+  "contexts": {
+    "appointments": { "classification": "core", "upstreams": [], "owners": ["@clinic/appointments-team"] },
+    "analytics": {
+      "classification": "supporting",
+      "upstreams": [{ "context": "appointments", "relationship": "conformist" }],
+      "owners": ["@clinic/data-team"]
+    }
+  },
+  "owners": { "platform": ["@clinic/tech-lead"] }
+}
 ```
 
-Avec une protection de branche qui exige la revue d'un propriétaire du code, un changement sous
+```text
+# ddd-ts-kit:code-owners
+src/contexts/analytics/                      @clinic/data-team
+src/contexts/analytics/published-language/   @clinic/data-team
+src/contexts/appointments/                   @clinic/appointments-team
+# The consumers of the published language of appointments, to ask as reviewers: analytics (@clinic/data-team).
+src/contexts/appointments/published-language/ @clinic/appointments-team
+src/shared-kernel/                           @clinic/data-team
+src/platform/                                @clinic/tech-lead
+src/main.ts                                  @clinic/tech-lead
+ddd-ts-kit.config.json                       @clinic/tech-lead
+lefthook.yml                                 @clinic/tech-lead
+commitlint.config.mjs                        @clinic/tech-lead
+.github/workflows/                           @clinic/tech-lead
+.github/actions/                             @clinic/tech-lead
+REVIEW.md                                    @clinic/tech-lead
+AGENTS.md                                    @clinic/tech-lead
+docs/adr/                                    @clinic/tech-lead
+# /ddd-ts-kit:code-owners
+```
+
+L'arborescence de chaque contexte et son `published-language/` vont à ses propriétaires ;
+`src/shared-kernel/` aux propriétaires de chaque contexte dont les fichiers l'importent (ici
+`analytics` seul le fait ; tant qu'aucun ne le fait, au propriétaire de la plateforme) ; la
+plateforme, la racine de composition, la configuration, les fichiers du *pipeline*, la politique
+de revue, le guide et les enregistrements au propriétaire de la plateforme. Avec une protection
+de branche qui exige la revue d'un propriétaire du code, un changement sous
 `src/contexts/appointments/` ne peut pas être fusionné sans l'équipe appointments. Une ligne à
 deux propriétaires demande l'un des deux, pas les deux : l'approbation conjointe du noyau partagé
 est une règle que l'équipe tient, et que le fichier seul n'impose pas. Les consommateurs d'un
-`published-language/` sont sollicités nommément sur ses *pull requests*, comme relecteurs.
+`published-language/` n'en sont pas les propriétaires : le commentaire au-dessus de sa ligne les
+nomme, d'après les relations déclarées, avec leurs propriétaires, et ils sont sollicités
+nommément sur ses *pull requests*, comme relecteurs. Le fichier généré avec la protection de
+branche de `branch-protection.md` est ce qui répond à la question de qui a approuvé, la
+séparation des responsabilités sur laquelle repose le *playbook* AI-native SDLC d'Anthropic.
 
 Pourquoi un seul propriétaire : un modèle ne reste cohérent que si quelqu'un peut dire non. La
 loi de Conway joue dans les deux sens (Skelton et Pais appellent son usage délibéré la manœuvre
@@ -207,8 +244,27 @@ son attention là où un outil ne peut pas juger. Ce qu'il faut regarder diffèr
 | `published-language/` | Un consommateur comprendrait-il ce contenu sans poser de question ? Quelque chose d'interne ou de personnel fuit-il ? Est-ce un ajout, ou une nouvelle version ? | un import hors de la liste autorisée |
 | tests | Le nom se lit-il comme une règle métier ? Vérifie-t-il un résultat par l'API publique ? | les *mocks*, un fichier de *spec* manquant, un *builder* manquant |
 
+La politique qu'une revue applique est un fichier à la racine du projet, `REVIEW.md`, écrit une
+fois par `ddd-ts-kit init` et possédé par l'équipe dès lors (`init --force` le laisse tel quel, et
+`ddd-ts-kit doctor` dit quand un projet n'en a pas). Il nomme les passes d'une revue, chaque
+constat étiqueté de sa passe : bugs (une règle métier fausse, un état que l'agrégat ne devrait pas
+atteindre, un rejeu qui n'est pas idempotent, un chemin d'échec sans test), sécurité (une
+recherche non restreinte par le périmètre d'accès, un champ réservé à une permission qui fuit,
+une donnée personnelle dans un journal ou une erreur, un code d'erreur non déclaré sur sa route,
+une lecture de *tenant* hors du périmètre) et conformité (le diff face à la revue de conception
+de sa ligne, l'acceptation de sa *story*, les enregistrements de `docs/adr/` et les règles) ; ce
+qu'Important veut dire dans ce projet ; un plafond de cinq *nits* par revue, un *nit* récurrent
+devenant une ligne de `AGENTS.md` sous `## Mistakes seen here` ou une règle de la configuration ;
+et ce qui n'est pas signalé (les fichiers générés, tout ce que `npm run verify` refuse déjà). Une
+équipe y ajoute sa propre passe (une règle de classification des données, une règle de marque),
+et l'agent `architecture-reviewer`, un relecteur humain et tout robot de revue lisent le même
+fichier. Le fichier est la politique de revue du *playbook* AI-native SDLC d'Anthropic
+([PDF](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)),
+avec les listes propres au kit.
+
 Le *plugin* offre le même découpage sous forme d'outil : l'agent `architecture-reviewer` relit un
-diff ou un contexte entier en lecture seule, en partant de la sortie du *checker* puis en jugeant
+diff ou un contexte entier en lecture seule, en partant de la sortie du *checker*, puis de
+`REVIEW.md` par-dessus sa propre méthode, puis en jugeant
 ce que les outils ne peuvent pas juger. Il trie ses constats : un constat bloquant se corrige
 avant la fusion ; un constat non bloquant vient avec la ligne
 `TODO(review): #<identifiant de ligne> <remarque>` à écrire à son `file:line`, pour que la remarque

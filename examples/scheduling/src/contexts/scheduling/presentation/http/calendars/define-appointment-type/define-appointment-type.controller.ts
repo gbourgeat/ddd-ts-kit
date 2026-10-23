@@ -1,7 +1,7 @@
 import { acceptedSchema, Controller, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { DefineAppointmentTypeCommand } from '@/contexts/scheduling/application/commands/define-appointment-type/define-appointment-type.command';
+import { DefineAppointmentTypeCommand } from '@/contexts/scheduling/application/calendars/commands/define-appointment-type/define-appointment-type.command';
 import { DefineAppointmentTypeParams } from '@/contexts/scheduling/presentation/http/calendars/define-appointment-type/define-appointment-type.params';
 import { DefineAppointmentTypeBody } from '@/contexts/scheduling/presentation/http/calendars/define-appointment-type/define-appointment-type.body';
 import { CalendarsRoutes } from '@/contexts/scheduling/presentation/http/calendars.routes';

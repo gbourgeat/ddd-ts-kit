@@ -1,4 +1,4 @@
-import type { Config } from './config.js';
+import type { Config, ContextConfig } from './config.js';
 import { DEFAULT_COMMIT_LIMITS } from './default-commit-limits.js';
 import { isReferenceCoverage } from './is-reference-coverage.js';
 import { writtenStack } from './written-stack.js';
@@ -45,10 +45,18 @@ function writtenContexts(config: Config): Record<string, unknown> {
       upstreams: context.upstreams,
       ...(context.extraDirectories.length > 0 ? { extraDirectories: context.extraDirectories } : {}),
       ...(context.deployable ? { deployable: true } : {}),
+      ...(context.owners.length > 0 ? { owners: context.owners } : {}),
+      ...(context.modules.length > 0 ? { modules: writtenModules(context.modules) } : {}),
     },
   ]);
 
   return Object.fromEntries(contexts);
+}
+
+function writtenModules(modules: ContextConfig['modules']): Record<string, unknown> {
+  return Object.fromEntries(
+    modules.map(({ name, classification }) => [name, classification === undefined ? {} : { classification }]),
+  );
 }
 
 function optionalKeys(config: Config): Record<string, unknown> {
@@ -64,7 +72,16 @@ function optionalKeys(config: Config): Record<string, unknown> {
     ...(worker ? { worker } : {}),
     ...(config.worktrees === 'advised' ? {} : { worktrees: config.worktrees }),
     ...(config.formatOnWrite ? { formatOnWrite: true } : {}),
+    ...teamKeys(config),
     ...pipelineKeys(config),
+  };
+}
+
+/** How the team holds its agents and who owns what, once a project says it. */
+function teamKeys({ agents, owners }: Config): Record<string, unknown> {
+  return {
+    ...(agents.profile === undefined ? {} : { agents: { profile: agents.profile } }),
+    ...(owners.platform.length > 0 ? { owners } : {}),
   };
 }
 

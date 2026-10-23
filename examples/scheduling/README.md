@@ -97,7 +97,7 @@ of each is its user name.
 | A domain service over two aggregates | `scheduling/domain/services/scheduler.service.ts` |
 | Overlap decided by the domain and by a PostgreSQL exclusion constraint | `scheduling/infrastructure/persistence/create-scheduling-tables.schema.ts`, `knex-appointment.repository.ts`, `test/integration/concurrent-booking.spec.ts` |
 | Permissions on every use case, policies on the loaded element | `scheduling/application/authorization/` |
-| Relationships (Zanzibar style) combined with roles | `src/platform/auth/relationships/relationship-schema.ts`, `resource-permissions.ts`, `role-grants.ts`, `roles-and-relationships.authorizer.ts`, [ADR 0001](docs/adr/0001-combine-token-roles-with-relationships-in-one-authorizer.md) |
+| Relationships (Zanzibar style) combined with roles | `src/platform/auth/relationships/relationship-schema.ts`, `role-grants.ts`, `roles-and-relationships.authorizer.ts`, [ADR 0001](docs/adr/0001-combine-token-roles-with-relationships-in-one-authorizer.md) |
 | Persistent relation tuples, written in the unit of work | `src/platform/auth/relationships/knex-relation-tuple-store.ts`; `*/application/ports/*-relationships.port.ts` and their adapters |
 | Searches narrowed in the statement by the access scope, with criteria | `scheduling/application/queries/search-appointments/`, `search-practice-agenda/`, `analytics/application/queries/search-occupancy/` |
 | Field-level difference: busy without the name | `scheduling/application/queries/get-calendar-day/` |
@@ -211,7 +211,7 @@ holds all of it; `tenantIsolationContract` holds it for every repository.
 Three questions, three places. Who is calling: Keycloak, verified at the boundary. May they do
 this, on this: decided before the handler by one authorizer that first looks at the roles of
 the token (`network-admin`, `platform-admin`; `patient` for self-service; nothing for `support`), then at
-relationships stored as tuples `object#relation@subject` and rewritten Zanzibar style. Is it
+relationships stored as tuples `object#relation@subject` and derived as Zanzibar does. Is it
 valid at all: the domain. The contexts never name a role or a relation: they name permissions,
 and write relationships through a port of their own when a fact happens.
 
@@ -232,7 +232,7 @@ the context, as a policy (second case below).
 
 **An assistant books on a delegated calendar.** `POST /appointments` for another patient
 requires `scheduling:appointment.book` on `calendar:<id>`. The assistant has no role that
-grants it, so the relationships decide: the permission maps to `run` on a calendar, which is
+grants it, so the relationships decide: the permission is `run` on a calendar, which is
 `run` on its desk (`calendar:<id>#desk@desk:<practice>.<practitioner>`, written by `scheduling`
 when the calendar was created), which holds for the `holder`, a `delegate`, or a manager of the
 practice. The tuple `desk:<practice>.<practitioner>#delegate@user:<assistant>` was written by
@@ -249,7 +249,7 @@ PostgreSQL, `knex-relation-tuple-store.ts`, behind the same port):
 <!-- checked sample -->
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import { defineSchema, from, InMemoryRelationTupleStore, RelationBasedAuthorizer, union } from '@ddd-ts-kit/auth/rebac';
+import { defineSchema, InMemoryRelationTupleStore, RelationBasedAuthorizer, via } from '@ddd-ts-kit/auth/rebac';
 import type { Actor } from '@ddd-ts-kit/kernel';
 
 const schedulingPermissions = definePermissions('scheduling', {
@@ -261,25 +261,21 @@ const schema = defineSchema({
   user: {},
   practice: {
     relations: { manager: ['user'] },
-    permissions: { manage: union('manager') },
+    derived: { manage: 'manager' },
   },
   desk: {
     relations: { holder: ['user'], delegate: ['user'], practice: ['practice'] },
-    permissions: { run: union('holder', 'delegate', from('practice', 'manage')) },
+    derived: { run: { anyOf: ['holder', 'delegate', via('practice', 'manage')] } },
   },
   calendar: {
     relations: { desk: ['desk'] },
-    permissions: { run: from('desk', 'run') },
+    // Booking on a calendar is `run` on that calendar: the derived relation named after the permission grants it.
+    derived: { run: via('desk', 'run'), [schedulingPermissions['appointment.book'].id]: 'run' },
   },
 });
 
 const store = new InMemoryRelationTupleStore();
-const relationships = new RelationBasedAuthorizer({
-  schema,
-  store,
-  // From resource-permissions.ts: booking on a calendar is `run` on that calendar.
-  mapping: { calendar: { [schedulingPermissions['appointment.book'].id]: 'run' } },
-});
+const relationships = new RelationBasedAuthorizer({ schema, store });
 
 const linus: Actor = { id: 'linus', type: 'user', roles: [], attributes: {} };
 const booking = {
@@ -544,12 +540,40 @@ The attendance record of a patient is kept as its events; its history
   within one relay interval. With several replicas, each one polls, and the compare-and-set of
   the checkpoint lets one of them apply each batch; the others skip that round (a debug line,
   not an error). A tick that comes while a round runs is skipped.
-- **An erasure.** `DATABASE_URL=<url> npm run erase:patient -- <patientId>` destroys the key the
-  words of the patient were sealed with, then rebuilds every projection fed by the store
-  (`src/platform/events/erase-data-subject.ts`, `scripts/erase-patient.ts`): the stream and the
-  snapshots read `[erased]` at once, and so does the history once rebuilt. A rebuild never stops
-  the catch-up, so the API may keep running. Running it again completes an erasure whose
-  rebuild failed.
+- **An erasure.** `DATABASE_URL=<url> npm run erase:patient -- <patientId> <operatorId>`
+  checks that the id names a person of some network, destroys the key the words of the patient
+  were sealed with, writes the erasure to the audit trail, then rebuilds every projection fed
+  by the store (`src/platform/events/erase-data-subject.ts`,
+  `src/platform/events/erase-on-the-command-line.ts`, `scripts/erase-patient.ts`): the stream and
+  the snapshots read `[erased]` at once, and so does the history once rebuilt. A rebuild never
+  stops the catch-up, so the API may keep running. Running it again completes an erasure whose
+  entry or rebuild failed. The key is destroyed whether identity still knows the patient or
+  not: the key comes first, the record after. When no key was destroyed, the id is looked up
+  among the persons of every network, under an elevation the trail records (`tenancy:elevate`,
+  reason `PATIENT_ERASURE`), to tell a run again from a mistyped id, which is refused before
+  the rebuilds (exit code 2). A value that is not an opaque identifier (letters, digits, `_`,
+  `-`), a name or an email pasted in place of the id, is refused before any key is touched or
+  any entry written: the entry would carry it into the append-only trail.
+- **The proof of an erasure.** The key store bound by the platform is wrapped by
+  `auditedSubjectKeys` (`src/platform/audit/create-audit.ts`), so every erasure, from this script
+  or from a use case, writes an entry: action `personal-data:erase`, the patient as a
+  `data-subject` resource, `keyDestroyed: true` or `false`, the operator as actor, origin
+  `cli`. The operator is required: without one, the script refuses to run and touches nothing,
+  since a proof that names the script and not a person does not say who erased; its id is taken
+  as typed, the access to the script being the credential. The entry is in the global chain,
+  which platform staff read: the keys are outside the networks (ADR-0004). Its date plus the
+  retention of the backups of the keys is the day the erasure is complete.
+- **Limits of the erasure.** The id has to be what a slug or a UUID is made of
+  (`src/platform/events/is-subject-id.ts`): an identity provider whose subjects carry another
+  character (`auth0|abc`) needs that grammar widened, knowingly, since whatever it lets through
+  can reach the trail. A mistyped id of that grammar leaves a permanent `keyDestroyed: false`
+  entry: an identifier, not personal data, and a faithful trace of the attempt. A run again for
+  a patient whose key is gone and whose person is gone from every network is refused as a
+  mistyped id; the projections it would have rebuilt are rebuilt by the next erasure of anyone,
+  since a rebuild replays the whole store. A patient that `identity` no longer knows is still
+  erasable as long as their key exists: the key comes first, the record after, the order to keep
+  the day identity erases persons. The operator id is taken as typed, and the entry names no
+  network, as said above.
 - **The keys.** `PostgresSubjectKeyStore`, in the `scheduling` schema of the one database, next
   to the events, so that the example runs with one PostgreSQL. A backup of that database taken
   before an erasure still holds the key and the sealed words until it expires. A deployment

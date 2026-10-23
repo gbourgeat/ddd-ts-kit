@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AppointmentAnnotated } from '@/contexts/scheduling/domain/events/appointment-annotated.event';
+import { AppointmentAnnotated } from '@/contexts/scheduling/domain/calendars/events/appointment-annotated.event';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 describe('AppointmentAnnotated', () => {

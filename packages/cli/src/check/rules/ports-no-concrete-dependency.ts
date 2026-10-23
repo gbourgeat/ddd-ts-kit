@@ -11,6 +11,7 @@ import { importedFrom } from '../support/imported-from.js';
 import { isDeclaredStyle } from '../support/is-declared-style.js';
 import { pathInContext } from '../support/path-in-context.js';
 import { perFile } from '../support/per-file.js';
+import { WITHOUT_MODULE } from '../../model-modules/index.js';
 
 const NAME_THE_PORT =
   'an abstract class of application/ports or domain/repositories, or a port of the kernel: the adapter, or the fake in a test, is bound to that port at the composition root.';
@@ -48,7 +49,11 @@ function listed(file: SourceFile): Finding[] {
 
 /** A declared class that lists nothing states its dependencies in its constructor: its parameter types are the list. */
 function typed(project: Project, file: SourceFile): Finding[] {
-  if (!isDeclaredStyle(project) || file.isTest || declaredRoleOf(pathInContext(project, file) ?? '') === undefined) {
+  if (
+    !isDeclaredStyle(project) ||
+    file.isTest ||
+    declaredRoleOf(pathInContext(project, file) ?? '', WITHOUT_MODULE) === undefined
+  ) {
     return [];
   }
 

@@ -37,8 +37,10 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
    design of a row not done still cites. Report mechanical violations as they are, without
    commentary; each name `cited` lists is a non-blocking finding on that document line, with
    the marker `<!-- TODO(review): #<row id> <name> is gone, write <what replaced it> -->`.
-3. Read the `CONTEXT.md` of each touched context, then the touched files only. Do not read
-   generated files (barrels, contracts) beyond their diff.
+3. Read `REVIEW.md` at the root when the project has one: the policy of the team, applied on
+   top of this method (its passes, what Important means there, its cap on nits, what it does
+   not report). Then the `CONTEXT.md` of each touched context, then the touched files only. Do
+   not read generated files (barrels, contracts) beyond their diff.
 4. Judge what tools cannot see:
 
    | Look for | Sign |
@@ -57,10 +59,18 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
    | weak tests | a mock; an assertion on a private field or a call; a failure path, a denial or an idempotent replay not covered; an `it.todo` left |
    | a hand-made registration | a token constant, a `*.ports.ts` file, a hand-edited barrel, an adapter instantiated outside the composition root, a handler calling `pullEvents()` or a dispatcher |
    | a deviation without a record | a suppression, a relaxed severity, a skipped test |
+   | a constructor with many dependencies | never count: walk the table of `docs/guides/many-dependencies.md` and name the remedy that applies, with its place (a bus middleware or a decorator, an event handler, a projection, a process manager, one port named in the language, a domain service, two use cases); a facade that names no concept of the glossary is not one |
+   | a module of the model that is not one | in a context with `contexts.<name>.modules`: a module named by technique (`shared`, `core`, `common`) or holding a second language (then it is a context); a module that would need its own glossary, schema or published language; a cycle between modules (`module/no-cycle`): say which concept is in the wrong module, or which one is missing |
+   | two contexts that need each other | the three questions of `docs/guides/cycle-between-contexts.md`, in order: one language (one context, in modules), one direction as an event, a missing concept |
 
 5. Verify before reporting: open the file and confirm each finding at its line. Drop what
    you cannot point to.
-6. Commit shape, when reviewing a branch: one slice per commit, within `commit.maxFiles` and
+6. The rule of two: a finding that repeats one already recorded for the project (the same rule
+   id, or the same remark on the same layer, in an earlier `docs/architecture/reviews/*.md` or
+   as a `TODO(review)` marker `todo` lists) is reported with the exact line to add under
+   `## Mistakes seen here` of `AGENTS.md`, or with the config change when a rule of the kit
+   covers it (a severity under `rules`, an allow-list). Never write it yourself.
+7. Commit shape, when reviewing a branch: one slice per commit, within `commit.maxFiles` and
    `commit.maxLines` of the config, generated files with what generated them, conventional
    message scoped by context.
 
@@ -68,7 +78,8 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
 
 One line of verdict (`approve`, `approve with minor changes`, `changes required`), then the
 findings in two groups, each finding as `file:line`, the rule id or principle, what is wrong,
-what to do instead:
+what to do instead, and, when `REVIEW.md` names passes, the pass it belongs to (`bugs`,
+`security`, `compliance`, or one the team added):
 
 - **Blocking**: fixed before the merge. Every violation `check` reports, wrong behaviour, a
   broken boundary, design debt that will spread, an `it.todo` or a `TODO(domain)` left in the

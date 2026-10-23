@@ -17,7 +17,7 @@ export function relationTupleStoreContract(runner: ContractRunner, options: Rela
 const adaEdits: RelationTuple = { object: 'document:1', relation: 'editor', subject: 'user:ada' };
 const adaViews: RelationTuple = { object: 'document:1', relation: 'viewer', subject: 'user:ada' };
 const adamEdits: RelationTuple = { object: 'document:1', relation: 'editor', subject: 'user:adam' };
-const teamEdits: RelationTuple = { object: 'document:1', relation: 'editor', subject: 'group:eng#member' };
+const teamEdits: RelationTuple = { object: 'document:1', relation: 'editor', subject: 'group:eng' };
 const adaEditsAnother: RelationTuple = { object: 'document:10', relation: 'editor', subject: 'user:ada' };
 const filedUnderTeam: RelationTuple = { object: 'document:1', relation: 'parent', subject: 'group:eng' };
 
@@ -56,12 +56,11 @@ class TupleStoreSuite extends ContractSuite<RelationTupleStore> {
       );
     });
 
-    this.it('matches the subject exactly, a userset being another subject than its object', async () => {
+    this.it('matches the subject exactly, whatever it is of: a user, or a group named as itself', async () => {
       await this.subject.write([adamEdits, teamEdits, filedUnderTeam]);
 
       this.expect(await this.subject.readBySubject('user:ada')).toEqual([]);
-      this.expect(await this.subject.readBySubject('group:eng#member')).toEqual([teamEdits]);
-      this.expect(await this.subject.readBySubject('group:eng')).toEqual([filedUnderTeam]);
+      this.expect(sorted(await this.subject.readBySubject('group:eng'))).toEqual(sorted([teamEdits, filedUnderTeam]));
     });
   }
 

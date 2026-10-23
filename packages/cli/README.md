@@ -68,7 +68,7 @@ ddd-ts-kit init [--http express|fastify|hono|nest|none]
                 [--schemas shared|per-route]
                 [--package-manager npm|pnpm]
                 [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
-                [--import-extension none|js] [--sdk]
+                [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                 [--context <name>:<core|supporting|generic>]...
                 [--preset identity]...
                 [--dry-run] [--force]
@@ -529,7 +529,7 @@ config, `docsUi`, `ci` and `logger` included.
 | `src/platform/auth/` | one folder per question: `authentication/` (who is calling), `authorization/` (what they may do, whatever the model) and the folder of the model `stack.authz` names (`roles/`, `attributes/`, `relationships/` or `custom/`). A project generated before the folders keeps its files flat: the generators read them there, `npx ddd-ts-kit doctor` says so and `npx ddd-ts-kit platform-folders` moves them with every import |
 | `src/platform/auth/authentication/` | `create-authenticator.ts` (`--authn jwt`: `JwtAuthenticator` on `AUTH_ISSUER`, `AUTH_AUDIENCE`, `AUTH_JWKS_URI`; `--authn keycloak`: `keycloakAuthenticator` on `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_AUDIENCE` and the optional `KEYCLOAK_CLIENT_ID`; `--authn none`: `development-header-authenticator.ts` and `development-actor-header.ts`, which read `x-development-actor` and throw in production), `principal-of.ts`, `security-schemes.ts`, `offline-authenticator.ts`, `http-boundary.ts` (`resolvePrincipal` answering a `Session`, `executionScope`, `errorMapper` and `onError`, spread into the mount options: every request runs inside the execution scope, with its correlation id). Without an HTTP stack there is no authenticator and no boundary, and no folder |
 | `src/platform/auth/authorization/` | `create-authorizer.ts`, `authorization.ts` (`authorizationModule` with tsyringe) or `use-case-protection.ts` (the guard of the hand-wired buses), `access-policies.ts`, `role.ts` (the roles a credential carries, with roles or attributes, or once a guard names one), `permissions.ts` (the registry of every permission, with relationships or an authorizer of your own), `signed-in-grants.ts` once a context preset grants every signed-in person, and with `--audit off` `log-decisions.ts` (one log entry per decision, ids and codes only) |
-| `src/platform/auth/<model>/` | `roles/roles.ts` (with the role `system` every system actor holds); `attributes/attribute-policies.ts`; `relationships/`: `relationship-schema.ts`, `create-tuple-store.ts` and its contract spec, `relation-tuples.ts`, `relate-system-actors.ts`, `permission-mapping.ts`; `custom/`: `custom-authorizer.ts` and its `authorizerContract` spec |
+| `src/platform/auth/<model>/` | `roles/roles.ts` (with the role `system` every system actor holds); `attributes/attribute-policies.ts`; `relationships/`: `relationship-schema.ts`, `create-tuple-store.ts` and its contract spec, `relation-tuples.ts`, `relate-system-actors.ts`; `custom/`: `custom-authorizer.ts` and its `authorizerContract` spec |
 | `--representations negotiated`, `--forms on` | `src/platform/http/presentation-of.ts` (`Representations.standard()` with `negotiated`, and `fieldDeciderOf` over the `Access` of the application), spread into the HTTP boundary and given to the contract script; with `--forms on`, `src/platform/http/with-forms.ts` adds `formRoutes` to the routes and `scripts/openapi.ts` writes `openapi/forms/<operationId>.json`. Both are the default with an HTTP stack; `json` and `off` leave them out ([docs/CONFIG.md](../../docs/CONFIG.md)) |
 | `--audit on` | `src/platform/audit/`: `create-audit.ts` (the trail, the `onDecision` of the authorization, the refusals of the guards at the edge given to the HTTP boundary as `onGuardRefusal`, the middleware before the unit of work, the integration events subscribed under the consumer name `audit`), `audited-events.ts` (the registry `generate integration-event` adds to), `audit.module.ts`, and with an HTTP stack the read side: `audit.permissions.ts` (`audit:trail.read`), then in `search-audit-entries/`: `search-audit-entries.query.ts`, its handler, `search-audit-entries.route.ts` (`GET /audit/entries`: cursor pages, filters `actorId`, `action`, `outcome`, `correlationId`). It is a capability of the platform, not a bounded context: no model, one protected query over the `AuditReader` port, bounded by the tenant of the actor (with `--tenancy shared-table`, by the tenant of the work through `TenantAuditReader`: platform staff read across tenants only inside `acrossTenants`). The refusals of a caller without a credential are not recorded. A scheduled job is audited like a request: origin `schedule`, actor `system:<context>.<job>`. With knex the two tables and their append-only triggers are created by the first migration; with drizzle the tables are in `schema.ts` and `npm run db:audit-guard` prints the trigger statements for a custom migration; with prisma, typeorm, `custom` or no ORM the trail is an `InMemoryAuditTrail` behind a `TODO(platform)`. The test databases leave the audit schema out of `reset()` |
 | `--tenancy shared-table` | recorded as `stack.tenancy`; Knex or Drizzle only. Every `generate repository` is tenant-scoped (as `--tenant-scoped`), through `tenantTable` and `ownTenantTable` or `tenantCondition` and `ownTenantCondition`; the outbox keeps the tenant of each event (`createOutboxTables(knex, { tenant: true })` and `KnexOutboxStore`'s `tenant: true`, or `tenantOutboxTable`), so consumers run in it; `tenancy/scoped-statement` judges the adapters. Row-level security, schema per tenant and database per tenant are refused, with what to wire by hand ([Multitenancy](../../docs/concepts/multitenancy.md)) |
@@ -552,18 +552,32 @@ config, `docsUi`, `ci` and `logger` included.
 | `biome.json` | the formatter: Biome with its linter and its import organiser off, line width 120; `npm run format` writes, `npm run format:check` checks, and what the CLI generates is already formatted |
 | `knip.json` | dead code: entry points are `main.ts` and `apps/*/main.ts`, the scripts, the specs and the fakes, the module files in the explicit style, the role files under discovery (jobs and publishers included) |
 | `vitest.config.ts` | unit and integration projects, the coverage thresholds read from `ddd-ts-kit.config.json` (`governedCoverage`), per context and layer, in the standard decorator mode `decorators()` of `@ddd-ts-kit/testing/vitest`, which compiles the files holding a decorator with the compiler of the project (Vitest does not lower standard decorators; it lowers legacy ones itself, so a project with `experimentalDecorators` gets no plugin), and under `--assembly discovery` `server.deps.inline: ['@ddd-ts-kit/di']` |
-| `lefthook.yml`, `commitlint.config.mjs` | pre-commit (ESLint, the format check and `check` on the staged files, `check --commit-size --staged`, which never blocks), pre-push (types, unit tests) and commit-msg hooks (`npm run hooks:install`), each run by the lefthook of the checkout it fires in (`lefthook: node_modules/.bin/lefthook`: a worktree without its dependencies fails the commit instead of skipping the checks), conventional commits |
+| `lefthook.yml`, `commitlint.config.mjs` | pre-commit (ESLint, the format check and `check` on the staged files, `check --commit-size --staged`, which never blocks, and `secrets`: gitleaks on the staged changes when its binary is on the path, one line and no refusal otherwise, the pipeline scanning the whole history anyway), pre-push (types, unit tests) and commit-msg hooks (`npm run hooks:install`), each run by the lefthook of the checkout it fires in (`lefthook: node_modules/.bin/lefthook`: a worktree without its dependencies fails the commit instead of skipping the checks), conventional commits |
 | `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node and the dependencies, installed before the Copilot cloud agent starts), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json`; `codeql.yml` with `--ci-extras codeql`, `claude-review.yml` and `claude-triage.yml` with `--ci-extras claude-review,claude-triage` |
 | `--ci gitlab` | `.gitlab-ci.yml` (architecture findings as a Code Quality report through `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json`; `.gitlab/claude-review.gitlab-ci.yml` with `--ci-extras claude-review,claude-triage` |
-| `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | how to run it; a slim guide in `AGENTS.md`, which Codex, Copilot and most coding agents read and `CLAUDE.md` imports (commands, how to read less, the map of the rules, generated files, compiler note, the skills of the plugin: `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) and the invariants in seven rule files, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` and `tests.md`, each scoped by a `paths` frontmatter, and the same seven for GitHub Copilot, each scoped by `applyTo` |
+| `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | how to run it; a slim guide in `AGENTS.md`, which Codex, Copilot and most coding agents read and `CLAUDE.md` imports (commands, how to read less, the map of the rules, generated files, the verification commands with the lines each prints when it passes, to run before reporting done, the mistakes seen here, a section the team owns under the rule of two, compiler note, the skills of the plugin: `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) and the invariants in seven rule files, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` and `tests.md`, each scoped by a `paths` frontmatter, and the same seven for GitHub Copilot, each scoped by `applyTo` |
+| `REVIEW.md` | the review policy of the project: the passes of a review (bugs, security, compliance against the design review of the row, the acceptance of the story, the records of `docs/adr/` and the rules), what Important means, at most five nits (a recurring one becomes a line of `AGENTS.md` under `## Mistakes seen here` or a rule of the config), what is not reported (generated files, what `npm run verify` refuses). Read by the `architecture-reviewer` agent on top of its method, by a human reviewer and by any review bot. Written once, for the team to edit: `--force` leaves it alone, `doctor` says when it is missing |
 | `.github/copilot/settings.json` | the plugin of the kit, declared for GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`): its cloud agent installs it, the Copilot CLI and VS Code recommend it; an existing file keeps what it holds and gains the two entries |
-| `.claude/settings.json` | permissions only: the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), the three generated documents are not edited by hand, `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) ask first |
+| `.claude/hooks/production-gate.mjs`, `.claude/hooks/change-reference.mjs` | with `--agent-profile regulated`: the two hooks of the profile, registered under `hooks.PreToolUse` of `.claude/settings.json`, written once for the team to edit (`--force` writes them again). The gate blocks a command that names the production environment with a release action unless `RELEASE_APPROVAL` names an approver and a change; the reference asks before an edit of a migration or of the containers, for the `Change: <id>` trailer of the commit ([Sandboxing coding agents](../../docs/guides/agent-sandbox.md#the-regulated-profile)) |
+| `.claude/settings.json` | permissions (and, with `--agent-profile regulated`, the sandbox block below): the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), the three generated documents are not edited by hand, `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) ask first, and so does an edit of what reaches production otherwise than through the code: the migrations of the ORM (`migrations/**` with drizzle, knex and typeorm, `prisma/migrations/**` with prisma, nothing with a custom persistence or none), `Dockerfile`, `docker-compose.yml` and `docker/**`. The compose file reads `.env` at the root, which the deny list already covers; nothing under `docker/` holds a secret |
 | `.gitignore` | `node_modules`, `dist`, `coverage`, `.env`, `*.tsbuildinfo`, `.ddd-ts-kit/`, where `worker-scope` writes, and `.worktrees/`, where the worktrees live |
 
 `--ci both` writes the two pipelines, `--ci none` neither (and no `renovate.json`). The pipeline
 files are copies of the assets of the repository's `pipeline/` directory, shipped in
 `templates/pipeline/`; a test fails when a copy differs from its source by more than its
 documented placeholders.
+
+`--agent-profile regulated` records `agents.profile` in the config, with or without `--force`
+(`--agent-profile none` removes it), and writes the `sandbox` block of Claude Code next to the
+permissions: enabled, failing when the sandbox is unavailable, no unsandboxed retry, the npm
+registry and the git host of the project (from `repository` of `package.json`, else the `origin`
+remote) as the only hosts, the credential files (`~/.ssh`, `~/.aws`, `~/.config/gcloud`,
+`~/.azure`) and the usual secret variables denied to every sandboxed command; a key the project
+already set is kept. It also prints, as a note, the block of managed settings a project file
+cannot set (`allowManagedHooksOnly`, `allowManagedPermissionRulesOnly`,
+`permissions.disableBypassPermissionsMode`, `strictKnownMarketplaces` with the marketplace of
+the kit, `requiredMinimumVersion`), for the platform team to paste, and writes the two hooks of
+the profile under `.claude/hooks/` ([Sandboxing coding agents](../../docs/guides/agent-sandbox.md#the-regulated-profile)).
 
 An existing `.claude/settings.json` is never overwritten: the missing permissions are appended
 to its lists, everything else is kept, and the notes of the command list what was added. The
@@ -857,7 +871,15 @@ Regenerates what is derived from the config and the code, and nothing else:
   between `ddd-ts-kit:reference` markers; a `CONTEXT.md` that has no such section gets it after its
   last generated list;
 - `docs/integration/README.md`, created once and never rewritten; its Provider section starts with
-  the strategy of the chosen broker.
+  the strategy of the chosen broker;
+- `CODEOWNERS` at the root (GitHub and GitLab both read it there), between `# ddd-ts-kit:code-owners`
+  markers, once `contexts.<name>.owners` or `owners.platform` names an owner in the config: each
+  context's tree and its `published-language/` to its owners, with the consumers of that language
+  named in a comment to ask as reviewers; `src/shared-kernel/` to the owners of every context
+  that imports it (to the platform owners while none does); `src/platform/`, `src/main.ts`,
+  `ddd-ts-kit.config.json`, the pipeline files, `REVIEW.md`, `AGENTS.md` and `docs/adr/` to the
+  platform owners. A file the team wrote keeps its lines, the block appended after them; without
+  any owner nothing is written.
 
 `--stored-events` also records in `stored-events.lock.json` the shape of each version of a stored
 event declared in the codecs of `infrastructure/persistence/`, never rewriting a recorded version:
@@ -1430,11 +1452,16 @@ ddd-ts-kit doctor [--strict]
 
 What an upgrade left to do: the scripts, the packages of the kit (at the ranges of this version)
 and the permissions of the agents that this version writes and the project lacks or writes
-otherwise, then the git hooks. `lefthook.yml` must hold `lefthook: node_modules/.bin/lefthook`,
+otherwise (under `agents.profile: "regulated"`, each line of the sandbox block too, as
+`permission sandbox.<key>`, and each hook of the profile the settings do not register, as
+`permission hooks.<name>`), then the git hooks. `lefthook.yml` must hold `lefthook: node_modules/.bin/lefthook`,
 which makes each checkout and each worktree run its own lefthook and fail a commit, loudly,
 when its dependencies are missing; the fix is that line, or `init --force` for the whole file.
 The pre-commit hook under `git rev-parse --git-path hooks` must exist and come from lefthook;
-the fix is `npm run hooks:install`, once per clone.
+the fix is `npm run hooks:install`, once per clone. Then the guidance written once for the team
+to own: `REVIEW.md`, the review policy, and under the regulated profile the two hooks of
+`.claude/hooks/`, are reported missing (`guidance`) and `init` writes them again without touching
+anything else.
 
 Then what this checkout lacks to run the project, the state of a clone or a new worktree rather
 than of the project, read from its files without network: the running Node against
@@ -1456,8 +1483,8 @@ installed or at another version, a submodule not initialised. A script written o
 this clone has not installed, a Node `.nvmrc` does not name while `engines.node` accepts it, and a
 lockfile changed since the install (a checkout may rewrite it with what `node_modules` already
 holds) are said without failing it. `--json` prints `{ version, findings: [{ area, name, problem,
-expected, found }] }`, `area` being `script`, `package`, `permission`, `hook`, `node`, `install`
-or `submodule`.
+expected, found }] }`, `area` being `script`, `package`, `permission`, `hook`, `guidance`, `node`,
+`install` or `submodule`.
 
 ## worker-scope
 

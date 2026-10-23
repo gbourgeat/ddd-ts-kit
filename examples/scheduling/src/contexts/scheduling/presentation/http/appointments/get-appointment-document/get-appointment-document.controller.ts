@@ -1,7 +1,7 @@
 import { Controller, type HttpRequest } from '@ddd-ts-kit/http';
 import type { QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { GetAppointmentDocumentQuery } from '@/contexts/scheduling/application/queries/get-appointment-document/get-appointment-document.query';
+import { GetAppointmentDocumentQuery } from '@/contexts/scheduling/application/calendars/queries/get-appointment-document/get-appointment-document.query';
 import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
 import { GetAppointmentDocumentAnswer } from '@/contexts/scheduling/presentation/http/appointments/get-appointment-document/get-appointment-document.answer';
 import { GetAppointmentDocumentParams } from '@/contexts/scheduling/presentation/http/appointments/get-appointment-document/get-appointment-document.params';

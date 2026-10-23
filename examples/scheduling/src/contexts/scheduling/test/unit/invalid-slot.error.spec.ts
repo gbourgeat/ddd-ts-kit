@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { InvalidSlot } from '@/contexts/scheduling/domain/errors/invalid-slot.error';
+import { InvalidSlot } from '@/contexts/scheduling/domain/calendars/errors/invalid-slot.error';
 
 describe('InvalidSlot', () => {
   it('refuses with the code INVALID_SLOT, its message and its facts', () => {

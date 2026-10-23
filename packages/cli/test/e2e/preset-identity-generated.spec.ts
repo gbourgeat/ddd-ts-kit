@@ -29,14 +29,14 @@ const STACK = [
 const OPEN_FGA_AUTHORIZER = `import type { Authorizer } from '@ddd-ts-kit/auth';
 import { OpenFgaAuthorizer } from '@ddd-ts-kit/openfga';
 import { openFgaClient } from '@ddd-ts-kit/openfga/sdk';
-import { permissionMapping } from '@/platform/auth/relationships/permission-mapping';
+import { relationshipSchema } from '@/platform/auth/relationships/relationship-schema';
 
 /** Where the OpenFGA server of the deployment answers, and the store that holds the tuples of this project. */
 const OPEN_FGA = { apiUrl: 'http://openfga:8080', storeId: '01JA0000000000000000000000' };
 
-/** Relationships, decided by the OpenFGA server of the deployment. */
+/** Relationships, decided by the OpenFGA server of the deployment over the model generated from the schema. */
 export function createAuthorizer(): Authorizer {
-  return new OpenFgaAuthorizer({ client: openFgaClient(OPEN_FGA), mapping: permissionMapping() });
+  return new OpenFgaAuthorizer({ client: openFgaClient(OPEN_FGA), schema: relationshipSchema });
 }
 `;
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/events/appointment-marked-no-show.event';
+import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/calendars/events/appointment-marked-no-show.event';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 const held = anAppointment().identifiedBy('appointment-1').build();

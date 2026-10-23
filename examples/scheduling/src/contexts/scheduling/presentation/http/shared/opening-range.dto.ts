@@ -1,5 +1,5 @@
 import { IsIn, Matches } from 'class-validator';
-import { Weekday } from '@/contexts/scheduling/domain/vocabularies/weekday.vocabulary';
+import { Weekday } from '@/contexts/scheduling/domain/calendars/vocabularies/weekday.vocabulary';
 
 /** One range of the week: its weekday and its two wall-clock times `HH:MM`. */
 export class OpeningRangeDto {

@@ -2,6 +2,7 @@ import type { Config } from '../config/index.js';
 import { isDerived } from '../derived/is-derived.js';
 import type { ChangedEntry } from './changed-entry.js';
 import type { StagingPlan } from './staging-plan.js';
+import { modulesByContext } from '../model-modules/index.js';
 
 /** The kit's own working files: never committed, never listed. */
 const KIT_FILES = '.ddd-ts-kit/';
@@ -29,7 +30,7 @@ export function planStaging(entries: readonly ChangedEntry[], config: Config, co
     END_TO_END_SPEC.test(entry.path) ||
     ACCEPTANCE_SPEC.test(entry.path) ||
     isWorkingMigration(entry.path, working) ||
-    (entry.tracked && isDerived(entry.path, config));
+    (entry.tracked && isDerived(entry.path, { contextsDir: config.contextsDir, modules: modulesByContext(config) }));
 
   return {
     toStage: listed.filter(inSlice).map(({ path }) => path),

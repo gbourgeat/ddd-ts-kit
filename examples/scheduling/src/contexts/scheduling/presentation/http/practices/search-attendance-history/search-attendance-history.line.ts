@@ -1,5 +1,5 @@
 import { IsIn, IsInt, IsISO8601, IsOptional, IsString } from 'class-validator';
-import { AttendanceFact } from '@/contexts/scheduling/domain/vocabularies/attendance-fact.vocabulary';
+import { AttendanceFact } from '@/contexts/scheduling/domain/calendars/vocabularies/attendance-fact.vocabulary';
 
 /** One fact of the attendance history of a patient: what was noted, when, and on which appointment. */
 export class SearchAttendanceHistoryLine {

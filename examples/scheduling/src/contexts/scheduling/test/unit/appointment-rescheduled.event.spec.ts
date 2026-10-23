@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event';
+import { AppointmentRescheduled } from '@/contexts/scheduling/domain/calendars/events/appointment-rescheduled.event';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 const held = anAppointment().identifiedBy('appointment-1').build();

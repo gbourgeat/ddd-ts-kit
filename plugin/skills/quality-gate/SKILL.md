@@ -88,7 +88,11 @@ wrote its line does (its `Slice: <row id>` trailer, else its message), else, not
 the worker whose worktree holds it was briefed on one of its rows. One that belongs to no row
 blocks only when no other open story has a row in its context; otherwise `story-check` lists it
 without blocking: settle it, or name its row in it. `--strict` blocks on every marker of the
-story's contexts.
+story's contexts. The rule of two: a finding that repeats one already recorded for the project
+(the same rule id, or the same remark on the same layer, in an earlier
+`docs/architecture/reviews/*.md` or as a `TODO(review)` marker) is written as one line under
+`## Mistakes seen here` of `AGENTS.md`, or as the config change when a rule of the kit covers
+it, in the commit that settles it; the reviewer gives the line.
 
 ## Coverage
 

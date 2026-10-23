@@ -12,8 +12,33 @@ export interface ContextConfig {
   readonly classification: string;
   readonly upstreams: readonly Upstream[];
   readonly extraDirectories: readonly string[];
+  /** The modules of the model the context is divided into, `contexts.<name>.modules`; empty while it is one piece. */
+  readonly modules: readonly ModuleConfig[];
   /** True once the context has its own entry point under `apps/<context>/main.ts`. */
   readonly deployable: boolean;
+  /** The handles of who owns the context (`@team`, `@person`, an email), written to `CODEOWNERS` by `docs`; none: no line for it. */
+  readonly owners: readonly string[];
+}
+
+/** How the coding agents of the project are held: a profile of permissions, or none. */
+export interface AgentsConfig {
+  /** `regulated`: the sandbox of Claude Code and the two hooks of a regulated organisation, written by `init --agent-profile regulated`; none: the permissions alone. Kept as written, `check` reports a wrong value. */
+  readonly profile: string | undefined;
+}
+
+/** Who owns what is not a context: the platform, the composition root, the config, the pipeline, the review policy, the guide, the records. */
+export interface OwnersConfig {
+  readonly platform: readonly string[];
+}
+
+/**
+ * A module of the model of a context (Evans, Modules): one folder level under `domain/` and
+ * `application/`, named in the ubiquitous language of the context.
+ */
+export interface ModuleConfig {
+  readonly name: string;
+  /** The classification of the subdomain the module holds; undefined when it is that of its context. */
+  readonly classification?: string;
 }
 
 /** A recorded departure from the defaults: what it relaxes, the decision record that allows it, and why. */
@@ -111,6 +136,10 @@ export interface Config {
   /** True once the project has a worker process under `apps/worker/main.ts`: the API then starts with its jobs off. */
   readonly worker: boolean;
   readonly ci: CiConfig;
+  /** The profile of the coding agents, `init --agent-profile`; none without the key. */
+  readonly agents: AgentsConfig;
+  /** The owners of the platform files, written to `CODEOWNERS` by `docs` with those of each context; none: no line for them. */
+  readonly owners: OwnersConfig;
   readonly openapi: OpenApiConfig;
   /** The typed clients generated from the contract (`ddd-ts-kit sdk`); none without the key. */
   readonly sdk: SdkConfig | undefined;

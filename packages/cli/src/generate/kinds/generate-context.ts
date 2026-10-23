@@ -22,7 +22,16 @@ export function generateContext(ws: Workspace, config: Config, request: ContextR
   assertUpstreamsExist(config, context, request.upstreams);
 
   const existing = config.contexts[context.kebab];
-  const entry = existing ?? { classification, upstreams: request.upstreams, extraDirectories: [], deployable: false };
+
+  const entry = existing ?? {
+    classification,
+    upstreams: request.upstreams,
+    extraDirectories: [],
+    modules: [],
+    deployable: false,
+    owners: [],
+  };
+
   const next: Config = { ...config, contexts: { ...config.contexts, [context.kebab]: entry } };
 
   if (existing === undefined) {
