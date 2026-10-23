@@ -80,7 +80,7 @@ describe('init --force on a project that is already initialised', () => {
     );
   });
 
-  it('wires the permission set of a context again where the project keeps it, as 0.86 wrote it', () => {
+  it('wires the permission set of a context again where the project keeps it, as 0.86 and 0.87 wrote it', () => {
     const root = workedOn('--authz', 'rebac');
 
     toEarlierPlaces(root, ['billing', 'shipping']);
@@ -92,7 +92,7 @@ describe('init --force on a project that is already initialised', () => {
     expect(registry).toContain("from '@/contexts/billing/application/authorization/billing.permissions';");
     expect(registry).not.toContain('@/contexts/billing/billing.permissions');
 
-    // knip is told of the code lists where they are: at the root, and where 0.86 kept them.
+    // knip is told of the code lists where they are: at the root, and where 0.86 and 0.87 kept them.
     expect(Object.keys(Object(readJson(root, 'knip.json')).ignoreIssues ?? {})).toEqual([
       'src/contexts/*/*.codes.ts',
       'src/contexts/*/domain/errors/codes.ts',

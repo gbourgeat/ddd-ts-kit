@@ -24,7 +24,7 @@ function aligned(lists: readonly string[], issues: unknown): { said: string; kni
 }
 
 describe('the code types knip is told of', () => {
-  it('are named at the root and where 0.86 kept them, as long as one context still holds a list there', () => {
+  it('are named at the root and where 0.86 and 0.87 kept them, as long as one context still holds a list there', () => {
     const { said, knip } = aligned(
       ['src/contexts/billing/domain/errors/codes.ts', 'src/contexts/sales/sales.codes.ts'],
       { project: ['src/**/*.ts'], ignoreIssues: { [EARLIER]: ['types'], 'src/a.ts': ['exports'] } },
@@ -35,7 +35,7 @@ describe('the code types knip is told of', () => {
     expect(Object.keys(JSON.parse(knip).ignoreIssues)).toEqual([ROOT, EARLIER, 'src/a.ts']);
   });
 
-  it('are named at the root alone once no context holds a list where 0.86 kept it', () => {
+  it('are named at the root alone once no context holds a list where 0.86 and 0.87 kept it', () => {
     const { said, knip } = aligned(['src/contexts/billing/billing.codes.ts'], {
       ignoreIssues: { 'src/a.ts': ['exports'], [EARLIER]: ['types'], [ROOT]: ['types'] },
     });

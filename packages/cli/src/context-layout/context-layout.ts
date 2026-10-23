@@ -18,7 +18,7 @@ export interface ContextLayout {
 
 /**
  * Brings the contexts named, or every context of the config, to the layout of this version: the
- * code list and the permission set that 0.86 wrote in a role folder move to the root of their
+ * code list and the permission set that 0.86 and 0.87 wrote in a role folder move to the root of their
  * context, each module of the model moves to its folder with its adapters, routes and specs
  * (`moduleMoves`), every import of them follows, and what derives from the tree is written again: the
  * import graph rules, the generated declarations, and the code types knip is told of, named where

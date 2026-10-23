@@ -1,11 +1,11 @@
 /**
  * A file a context holds once, whatever its modules: at the root of the context, named after it,
- * and, until a later minor version, still read where 0.86 wrote it, in a role folder.
+ * and, until a later minor version, still read where 0.86 and 0.87 wrote it, in a role folder.
  */
 export interface ContextFile {
   /** The file at the root of the context, relative to it: `billing.codes.ts`. */
   readonly root: (context: string) => string;
-  /** Where 0.86 wrote it, relative to the context: `domain/errors/codes.ts`. */
+  /** Where 0.86 and 0.87 wrote it, relative to the context: `domain/errors/codes.ts`. */
   readonly earlier: (context: string) => string;
 }
 
