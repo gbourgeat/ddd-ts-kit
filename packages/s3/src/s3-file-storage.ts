@@ -70,9 +70,13 @@ export class S3FileStorage extends FileStorage {
     const mediaType = mediaTypeOf(options.mediaType);
     const inspection = new FileInspection(options.maxBytes === undefined ? {} : { maxBytes: options.maxBytes });
 
+    // The SDK reads a `size` on the body as its whole length, and the inspection counts in its own
+    // the bytes read so far: handed as it is, a content of several parts was refused once sent.
+    const body = Readable.from(inspection, { objectMode: false });
+
     const upload = new Upload({
       client: this.client,
-      params: { Bucket: this.bucket, Key: objectKey, Body: inspection, ContentType: mediaType },
+      params: { Bucket: this.bucket, Key: objectKey, Body: body, ContentType: mediaType },
       partSize: this.partSize,
       queueSize: 1,
       leavePartsOnError: false,
