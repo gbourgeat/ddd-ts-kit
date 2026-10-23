@@ -4,6 +4,22 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.86.1
+
+**`S3FileStorage.put` stores a file larger than one part.** The SDK read the `size` of the
+inspection the content streams through, the bytes counted so far, as the length of the whole
+content: once every part was sent, a file larger than `partSize` (8 MiB by default) was refused
+with `Expected 0 part(s) but uploaded 3 part(s)` and its upload aborted. A smaller file, sent in
+one request, was not affected.
+
+**The flush of `PinoLogger` resolves with the pretty format, in a process with nothing else pending.**
+Pino does not let the worker thread of a transport (`pino-pretty`) keep a process alive, so its
+answer to a flush did not either: at shutdown, once everything else had closed, the process exited
+before `flush()` resolved, and what came after it never ran. `app.stop()` flushes the logger last,
+so it never resolved, and a program that awaited it at the top level ended with exit code 13. A
+flush now keeps the process alive while it runs, ten seconds at most. The JSON format was not
+affected.
+
 ## 0.86.0
 
 **An erasure of a data subject leaves a dated entry in the audit trail.** `auditedSubjectKeys(keys, trail, { scope, clock, ids })` of `@ddd-ts-kit/audit` wraps a `SubjectKeyStore`: every `erase`, from a script, a command or a job, writes an entry with category `data-access`, action `personal-data:erase` (`SUBJECT_ERASURE_ACTION`), the subject as a `data-subject` resource, `keyDestroyed: true` or `false` in `changes`, and the actor and date of the execution scope; `keyFor` and `find` pass through. The key is destroyed first and the entry written after: an entry never states an erasure that did not happen, and when it cannot be written the erasure fails and is run again, which records that no key was left at a later date. An erasure outside an execution context is refused before any key is touched; a failure of the store is recorded as `failed`, with the `code` of a `DomainError` or `UNEXPECTED_ERROR`, and `onLostRecord` is told when that entry is lost too. The example binds the wrapped store and `npm run erase:patient -- <patientId> <operatorId>` writes the entry, with the operator as actor and the origin `cli`; the operator is required, so that the proof names a person, and an id that destroys no key and that no person of any network has is a mistyped one, refused before the rebuilds after a lookup under an elevation the trail records; the key comes first, the record after; a value that is not an opaque identifier (a name, an email) is refused before any key is touched or any entry written.
