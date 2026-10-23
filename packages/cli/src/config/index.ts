@@ -9,13 +9,11 @@ export { COVERAGE_LAYERS } from './coverage-layers.js';
 export { COVERAGE_METRICS } from './coverage-metrics.js';
 export { coverageProblems } from './coverage-problems.js';
 export type {
-  AgentsConfig,
   Config,
   ContextConfig,
   OpenApiDocumentConfig,
   Deviation,
   Limits,
-  OwnersConfig,
   Upstream,
 } from './config.js';
 export { CONFIG_FILE } from './config-file.js';

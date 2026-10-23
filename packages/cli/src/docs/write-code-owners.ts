@@ -5,7 +5,7 @@ import type { ContextFacts } from './context-facts.js';
 import { sharedKernelImporters } from './shared-kernel-importers.js';
 
 /** At the root, where GitHub and GitLab both read it. */
-export const CODE_OWNERS = 'CODEOWNERS';
+const CODE_OWNERS = 'CODEOWNERS';
 const REGION = 'code-owners';
 const OPEN = `# ddd-ts-kit:${REGION}`;
 const CLOSE = `# /ddd-ts-kit:${REGION}`;
