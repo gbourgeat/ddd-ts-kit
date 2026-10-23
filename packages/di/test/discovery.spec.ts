@@ -133,7 +133,7 @@ describe('discovery', () => {
     expect(failure.code).toBe('MISPLACED_DECLARATION');
 
     expect(failure.message).toBe(
-      'infrastructure/external/issue-invoice.handler.mjs of context "billing" is outside its canonical folder: a *.handler file belongs in application/commands/ or application/queries/, at the level of the context or of a module of its model (application/<module>/...) named in the generated <context>.dependencies file.',
+      'infrastructure/external/issue-invoice.handler.mjs of context "billing" is outside its canonical folder: a *.handler file belongs in application/commands/ or application/queries/, at the level of the context or in a module of its model (<module>/application/...) named in the generated <context>.dependencies file.',
     );
   });
 
@@ -186,7 +186,7 @@ describe('a discovered job', () => {
     expect(misplaced).toMatchObject({
       code: 'MISPLACED_DECLARATION',
       message:
-        'application/commands/issue-monthly-invoices.job.mjs of context "billing" is outside its canonical folder: a *.job file belongs in application/scheduling/, at the level of the context or of a module of its model (application/<module>/...) named in the generated <context>.dependencies file.',
+        'application/commands/issue-monthly-invoices.job.mjs of context "billing" is outside its canonical folder: a *.job file belongs in application/scheduling/, at the level of the context or in a module of its model (<module>/application/...) named in the generated <context>.dependencies file.',
     });
 
     expect(wrongRole.code).toBe('MISPLACED_DECLARATION');
@@ -240,13 +240,13 @@ describe('a discovered publisher', () => {
     expect(failure.code).toBe('MISPLACED_DECLARATION');
 
     expect(failure.message).toBe(
-      `${misplaced} of context "billing" is outside its canonical folder: a *.publisher file belongs in application/integration/publishers/, at the level of the context or of a module of its model (application/<module>/...) named in the generated <context>.dependencies file.`,
+      `${misplaced} of context "billing" is outside its canonical folder: a *.publisher file belongs in application/integration/publishers/, at the level of the context or in a module of its model (<module>/application/...) named in the generated <context>.dependencies file.`,
     );
   });
 });
 
 describe('discovery of a context divided into modules of its model', () => {
-  const IN_MODULE = 'application/invoicing/commands/issue-invoice';
+  const IN_MODULE = 'invoicing/application/commands/issue-invoice';
 
   it('finds the role files of a module the generated dependencies file names, without the config', async () => {
     const classes: Readonly<Record<string, unknown>> = {
@@ -305,7 +305,7 @@ describe('discovery of a context divided into modules of its model', () => {
   });
 
   it('refuses a role file in the wrong role folder of a module, and says where it belongs', async () => {
-    const misplaced = 'application/invoicing/ports/issue-invoice.handler.mjs';
+    const misplaced = 'invoicing/application/ports/issue-invoice.handler.mjs';
 
     const directory = contextWith({
       [misplaced]: "throw new Error('never loaded');",
@@ -315,7 +315,7 @@ describe('discovery of a context divided into modules of its model', () => {
     const failure = await wiringRejection(discoverContext('billing', directory));
 
     expect(failure.code).toBe('MISPLACED_DECLARATION');
-    expect(failure.message).toContain('application/<module>/');
+    expect(failure.message).toContain('<module>/application/');
   });
 
   it('reads no folder as a module that the dependencies file does not name: check reports it, discovery does not wire it', async () => {

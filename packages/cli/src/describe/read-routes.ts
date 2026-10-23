@@ -2,6 +2,7 @@ import { presentationOfRoute } from './presentation-of-route';
 import type { RequestPart, RouteFact, RouteResponse, UseCaseFact } from './context-description';
 import type { ContextSources } from './context-sources';
 import { readControllers } from './read-controllers';
+import { roleFilesOf } from '../model-modules';
 
 const FOLDER = 'presentation/http';
 
@@ -10,14 +11,11 @@ const FOLDER = 'presentation/http';
  * one per `*.controller.ts` file, as its decorator and its groups say it.
  */
 export function readRoutes(sources: ContextSources, useCases: readonly UseCaseFact[]): RouteFact[] {
-  const { ws, directory } = sources;
+  const { ws } = sources;
 
-  const functions = ws
-    .list(`${directory}/${FOLDER}`)
-    .filter((file) => file.endsWith('.route.ts'))
-    .map((file) =>
-      routeOf(`${directory}/${FOLDER}/${file}`, ws.read(`${directory}/${FOLDER}/${file}`) ?? '', useCases),
-    );
+  const functions = roleFilesOf(ws, sources, FOLDER)
+    .filter(({ name }) => name.endsWith('.route.ts'))
+    .map(({ path }) => routeOf(path, ws.read(path) ?? '', useCases));
 
   return [...functions, ...readControllers(sources, useCases)].sort(
     (left, right) => left.path.localeCompare(right.path) || left.method.localeCompare(right.method),

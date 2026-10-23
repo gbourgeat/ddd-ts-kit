@@ -42,9 +42,13 @@ describe('governedCoverage(), what a Vitest run measures and is held to', () => 
 
     expect(include).toEqual([
       'src/contexts/*/domain/**/*.ts',
+      'src/contexts/*/*/domain/**/*.ts',
       'src/contexts/*/application/**/*.ts',
+      'src/contexts/*/*/application/**/*.ts',
       'src/contexts/*/presentation/**/*.ts',
+      'src/contexts/*/*/presentation/**/*.ts',
       'src/contexts/*/infrastructure/**/*.ts',
+      'src/contexts/*/*/infrastructure/**/*.ts',
     ]);
 
     expect(exclude).toEqual(['src/contexts/**/*.declarations.ts']);
@@ -57,6 +61,22 @@ describe('governedCoverage(), what a Vitest run measures and is held to', () => 
     });
   });
 
+  it('measures the layers of each module of a context and holds each of them on its own, the folders of the context aside', () => {
+    const root = projectWith({}, [
+      'src/contexts/scheduling/calendars/domain/aggregates/calendar.aggregate.ts',
+      'src/contexts/scheduling/waitlist/application/commands/join-waitlist/join-waitlist.handler.ts',
+      'src/contexts/scheduling/infrastructure/persistence/scheduling.schema.ts',
+      'src/contexts/scheduling/test/unit/calendars/calendar.aggregate.spec.ts',
+      'src/contexts/scheduling/published-language/index.ts',
+    ]);
+
+    expect(governedCoverage('test', root).thresholds).toEqual({
+      'src/contexts/scheduling/infrastructure/**/*.ts': REFERENCE_COVERAGE.infrastructure,
+      'src/contexts/scheduling/calendars/domain/**/*.ts': REFERENCE_COVERAGE.domain,
+      'src/contexts/scheduling/waitlist/application/**/*.ts': REFERENCE_COVERAGE.application,
+    });
+  });
+
   it('never holds a run to a layer it does not execute: the unit run leaves the adapters, the integration run keeps them alone', () => {
     const root = projectWith({}, BILLING);
 
@@ -66,7 +86,7 @@ describe('governedCoverage(), what a Vitest run measures and is held to', () => 
     ]);
 
     expect(governedCoverage('integration', root)).toEqual({
-      include: ['src/contexts/*/infrastructure/**/*.ts'],
+      include: ['src/contexts/*/infrastructure/**/*.ts', 'src/contexts/*/*/infrastructure/**/*.ts'],
       exclude: ['src/contexts/**/*.declarations.ts'],
       thresholds: { 'src/contexts/billing/infrastructure/**/*.ts': REFERENCE_COVERAGE.infrastructure },
     });
@@ -130,9 +150,13 @@ describe('governedJestCoverage(), the same in the options of Jest', () => {
     expect(governedJestCoverage(root)).toEqual({
       collectCoverageFrom: [
         '<rootDir>/src/contexts/*/domain/**/*.ts',
+        '<rootDir>/src/contexts/*/*/domain/**/*.ts',
         '<rootDir>/src/contexts/*/application/**/*.ts',
+        '<rootDir>/src/contexts/*/*/application/**/*.ts',
         '<rootDir>/src/contexts/*/presentation/**/*.ts',
+        '<rootDir>/src/contexts/*/*/presentation/**/*.ts',
         '<rootDir>/src/contexts/*/infrastructure/**/*.ts',
+        '<rootDir>/src/contexts/*/*/infrastructure/**/*.ts',
         '!<rootDir>/src/contexts/**/*.declarations.ts',
       ],
       coverageThreshold: {
@@ -185,7 +209,7 @@ describe('a partial run, which DDD_TS_KIT_AFFECTED narrows to the contexts a pul
     vi.stubEnv('DDD_TS_KIT_AFFECTED', 'shipping');
 
     expect(governedCoverage('integration', root)).toEqual({
-      include: ['src/contexts/shipping/infrastructure/**/*.ts'],
+      include: ['src/contexts/shipping/infrastructure/**/*.ts', 'src/contexts/shipping/*/infrastructure/**/*.ts'],
       exclude: ['src/contexts/**/*.declarations.ts'],
       thresholds: { 'src/contexts/shipping/infrastructure/**/*.ts': REFERENCE_COVERAGE.infrastructure },
     });

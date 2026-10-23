@@ -1,4 +1,5 @@
 import { filesUnder } from '../generate/files-under';
+import { roleFoldersOf } from '../model-modules';
 import type { RequestPart, RouteFact, RouteResponse, UseCaseFact } from './context-description';
 import type { ContextSources } from './context-sources';
 import { decoratorOptions } from './decorator-options';
@@ -29,10 +30,11 @@ export function readControllers(sources: ContextSources, useCases: readonly UseC
   const { ws, directory } = sources;
   const groups = readRouteGroups(ws, directory);
 
-  return filesUnder(ws, `${directory}/${FOLDER}`)
+  // The controllers of each module too: a route group of the context gives them their prefix.
+  return roleFoldersOf(ws, sources, FOLDER)
+    .flatMap((folder) => filesUnder(ws, folder).map((file) => `${folder}/${file}`))
     .filter((file) => file.endsWith('.controller.ts'))
-    .flatMap((file) => {
-      const path = `${directory}/${FOLDER}/${file}`;
+    .flatMap((path) => {
       const source = ws.read(path) ?? '';
       const options = decoratorOptions(source, 'Controller');
       const mapper = ws.read(path.replace(/\.controller\.ts$/, '.mapper.ts')) ?? '';

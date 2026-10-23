@@ -206,14 +206,22 @@ function levelOf(config: Config, rule: DddRule): Severity {
   return name === eslintName(ruleId) || configured === 'off' ? (configured ?? recommended) : recommended;
 }
 
+/** The domain and the application of every context, at its level and in each module of its model (`<module>/domain/`). */
 function innerLayerFiles(config: Config): string[] {
-  return [`${config.contextsDir}/*/domain/**/*.ts`, `${config.contextsDir}/*/application/**/*.ts`];
+  return ['domain', 'application'].flatMap((layer) => [
+    `${config.contextsDir}/*/${layer}/**/*.ts`,
+    `${config.contextsDir}/*/*/${layer}/**/*.ts`,
+  ]);
 }
 
-/** The aggregates and entities of a context, at its level or in a module of its model (`domain/<module>/aggregates/`). */
+/**
+ * The aggregates and entities of a context, at its level or in a module of its model
+ * (`<module>/domain/aggregates/`, or `domain/<module>/aggregates/` as 0.86 laid it out).
+ */
 function aggregateFiles(config: Config): string[] {
   return ['aggregates', 'entities'].flatMap((folder) => [
     `${config.contextsDir}/*/domain/${folder}/**/*.ts`,
+    `${config.contextsDir}/*/*/domain/${folder}/**/*.ts`,
     `${config.contextsDir}/*/domain/*/${folder}/**/*.ts`,
   ]);
 }

@@ -3,7 +3,7 @@ import {
   attendanceHistoryCriteria,
   type AttendanceEntry,
   type AttendanceHistory,
-} from '@/contexts/scheduling/application/calendars/ports/attendance-history.port';
+} from '@/contexts/scheduling/calendars/application/ports/attendance-history.port';
 
 export class FakeAttendanceHistory extends InMemoryReadModelStore<AttendanceEntry> implements AttendanceHistory {
   constructor() {

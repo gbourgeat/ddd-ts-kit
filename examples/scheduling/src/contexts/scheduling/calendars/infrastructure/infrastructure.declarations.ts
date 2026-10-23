@@ -1,0 +1,34 @@
+import { injected } from '@ddd-ts-kit/kernel/declarations';
+import { PersonDirectoryContract } from '@/contexts/identity/published-language';
+import { InProcessPersonDirectoryGateway } from '@/contexts/scheduling/calendars/infrastructure/external/in-process-person-directory.gateway';
+import { EventStoreAttendanceRecordRepository } from '@/contexts/scheduling/calendars/infrastructure/persistence/event-store-attendance-record.repository';
+import { KnexAgenda } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-agenda.repository';
+import { KnexAppointmentExport } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-appointment-export.repository';
+import { KnexAppointmentRepository } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-appointment.repository';
+import { KnexAttendanceHistory } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-attendance-history.repository';
+import { KnexCalendarRepository } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-calendar.repository';
+import { KnexPractitionerDirectory } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-practitioner-directory.repository';
+import { TupleSchedulingRelationships } from '@/contexts/scheduling/calendars/infrastructure/persistence/tuple-scheduling-relationships.repository';
+import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
+import { Clock, EventStore, ExecutionScope, PersonalDataCipher, SnapshotStore } from '@ddd-ts-kit/kernel';
+import { KnexContext } from '@ddd-ts-kit/knex';
+
+export * from '@/contexts/scheduling/calendars/infrastructure/external/in-process-person-directory.gateway';
+export * from '@/contexts/scheduling/calendars/infrastructure/persistence/event-store-attendance-record.repository';
+export * from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-agenda.repository';
+export * from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-appointment-export.repository';
+export * from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-appointment.repository';
+export * from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-attendance-history.repository';
+export * from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-calendar.repository';
+export * from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-practitioner-directory.repository';
+export * from '@/contexts/scheduling/calendars/infrastructure/persistence/tuple-scheduling-relationships.repository';
+
+injected(InProcessPersonDirectoryGateway, [PersonDirectoryContract]);
+injected(EventStoreAttendanceRecordRepository, [EventStore, SnapshotStore, PersonalDataCipher]);
+injected(KnexAgenda, [KnexContext, ExecutionScope]);
+injected(KnexAppointmentExport, [KnexContext, ExecutionScope]);
+injected(KnexAppointmentRepository, [KnexContext, ExecutionScope, Clock]);
+injected(KnexAttendanceHistory, [KnexContext]);
+injected(KnexCalendarRepository, [KnexContext, ExecutionScope, Clock]);
+injected(KnexPractitionerDirectory, [KnexContext, ExecutionScope]);
+injected(TupleSchedulingRelationships, [RelationTupleStore]);

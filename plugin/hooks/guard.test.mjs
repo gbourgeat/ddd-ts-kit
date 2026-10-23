@@ -1072,8 +1072,8 @@ test('the declarations of a module of the model are generated too, and a module 
   );
   assert.equal(declared.status, 0, declared.stderr);
   for (const folder of [
-    'application/orders/commands/commands.declarations.ts',
-    'application/orders/application.declarations.ts',
+    'orders/application/commands/commands.declarations.ts',
+    'orders/application/application.declarations.ts',
   ]) {
     const declarations = run('pre-write', write(join(root, `src/contexts/ordering/${folder}`)));
     assert.equal(decision(declarations), 'deny', folder);
@@ -1086,7 +1086,7 @@ test('the declarations of a module of the model are generated too, and a module 
   assert.doesNotMatch(undeclared.output === undefined ? '' : reason(undeclared), /generated declarations/);
   const service = run(
     'pre-write',
-    write(join(root, 'src/contexts/ordering/domain/orders/services/pricing.service.ts')),
+    write(join(root, 'src/contexts/ordering/orders/domain/services/pricing.service.ts')),
   );
   assert.equal(decision(service), 'deny');
   assert.match(reason(service), /generate domain-service /);
@@ -1106,10 +1106,10 @@ test('the declarations of a module of the model are generated too, and a module 
   const session = { cwd: root, session_id: `s-${root}` };
   assert.equal(run('stop', session).output, undefined);
   for (const file of [
-    'application/orders/commands/book-order/book-order.notes.md',
-    'application/orders/commands/book-order/book-order.more.md',
-    'application/orders/commands/cancel-order/cancel-order.notes.md',
-    'domain/orders/value-objects/money.notes.md',
+    'orders/application/commands/book-order/book-order.notes.md',
+    'orders/application/commands/book-order/book-order.more.md',
+    'orders/application/commands/cancel-order/cancel-order.notes.md',
+    'orders/domain/value-objects/money.notes.md',
   ]) {
     put(root, join('src/contexts/ordering', file), 'one\ntwo\n');
   }

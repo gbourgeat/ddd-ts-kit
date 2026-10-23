@@ -191,7 +191,7 @@ The checker reports a violation with its rule id and a fix sentence. Here, a fil
 ```text
 $ npx ddd-ts-kit check-file src/contexts/notification/application/commands/probe.ts
 src/contexts/notification/application/commands/probe.ts:1  error  context/published-language-only
-  "notification" imports the internals of "scheduling" (src/contexts/scheduling/domain/calendars/aggregates/appointment.aggregate.ts).
+  "notification" imports the internals of "scheduling" (src/contexts/scheduling/calendars/domain/aggregates/appointment.aggregate.ts).
   fix: Import from src/contexts/scheduling/published-language only; if the type is missing there, publish it with `ddd-ts-kit generate integration-event scheduling <Aggregate> <Fact>` or react to an integration event.
 
 1 error, 0 warnings, 0 suppressions in 1 file.
@@ -337,19 +337,25 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    the root of the platform or of auth/ stays where it is, named, unless --place
                    <file>=<folder> (both from the platform) gives it its folder; the generators and
                    init --force keep either layout until then
-  move-to-module   takes files of domain/ and application/ of a context into a module of its model, declared
-                   first with generate module: each <path> is a file or a folder of a role, relative to the
-                   context (domain/aggregates/waitlist.aggregate.ts, application/commands/join-waitlist);
-                   every import of them under the source root, test/ and scripts/ follows, and the
-                   generated declarations are rewritten; the code list and the permission set stay one per
-                   context, at its root
-  context-layout   takes the files of the contexts, or of the ones named, that 0.86 wrote in a role folder
-                   to their place of today: domain/errors/codes.ts to <context>.codes.ts and
+  move-to-module   takes files of a context into a module of its model, declared first with generate module,
+                   each to <module>/<layer>/ and each spec to test/<unit|integration>/<module>/: each <path>
+                   is a file or a folder of a role or a spec, relative to the context
+                   (domain/aggregates/waitlist.aggregate.ts, application/commands/join-waitlist,
+                   infrastructure/persistence/knex-waitlist.repository.ts); the specs named after a moved
+                   file follow it, every import of them under the source root, test/ and scripts/ follows,
+                   and the generated declarations are rewritten; what the modules share stays at the level
+                   of the context: the code list and the permission set at its root, the schema of its
+                   database, its route groups, guards and shared shapes, its fakes, builders and worlds
+  context-layout   takes the files of the contexts, or of the ones named, that 0.86 wrote elsewhere to their
+                   place of today: domain/errors/codes.ts to <context>.codes.ts and
                    application/authorization/<context>.permissions.ts to <context>.permissions.ts, at the
-                   root of the context; every import of them under the source root, test/ and scripts/
-                   follows, what derives from the tree is written again (.dependency-cruiser.cjs, the
-                   declarations) and knip is told of the code lists where they are; the generators keep
-                   either place until then
+                   root of the context, and each module of the model from domain/<module>/ and
+                   application/<module>/ to <module>/domain/ and <module>/application/, with the adapters,
+                   routes and specs it tells by their imports (a spec by the file it is named after); what
+                   names no module, or two, is listed and stays; every import of them under the source
+                   root, test/ and scripts/ follows, what derives from the tree is written again
+                   (.dependency-cruiser.cjs, the declarations) and knip is told of the code lists where they
+                   are; the generators keep the code lists and permission sets where they are until then
   controllers      moves the function routes of a project, or of one context, to controller classes: each
                    <name>.route.ts becomes <resource>/<name>/<name>.controller.ts behind the route group of
                    its resource, its schema files and its spec follow; a context is turned whole or not at all
@@ -559,10 +565,11 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   --sdk            init records "sdk" in the config and generates the clients with the project
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
                    "generate --help --json" says which kinds do
-  --module         generate writes the files of domain/ and application/ into that module of the model of the
-                   context (declared first with generate module), finds the files it reads in the module that
-                   holds them and writes the imports to where they are; required in a context that declares
-                   modules, the code list and the permission set staying one per context
+  --module         generate writes the files of the layers into that module of the model of the context
+                   (declared first with generate module), <module>/domain/ to <module>/presentation/, and
+                   their specs into test/unit/<module>/, finds the files it reads in the module that holds
+                   them and writes the imports to where they are; required in a context that declares
+                   modules, what the modules share staying at the level of the context
 
 Kinds
   context <name> --classification <core|supporting|generic> [--purpose "<two sentences>"] [--term "<Term>=<meaning>"]... [--upstream <ctx>[:relationship]]... [--preset identity]

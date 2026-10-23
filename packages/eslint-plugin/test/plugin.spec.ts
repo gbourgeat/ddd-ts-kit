@@ -107,7 +107,9 @@ describe('the dddTsKit helper', () => {
 
       expect(config.find((entry) => entry.name === 'ddd-ts-kit/inner-layers')?.files).toEqual([
         'modules/*/domain/**/*.ts',
+        'modules/*/*/domain/**/*.ts',
         'modules/*/application/**/*.ts',
+        'modules/*/*/application/**/*.ts',
       ]);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });

@@ -2,7 +2,7 @@ import path from 'node:path';
 import type { Config } from '../../config';
 import { CONTEXT_FILES } from '../../context-files';
 import { barrelFile, dependenciesFile, isDeclarationsFile } from '../../declared';
-import { declaredModules, MODULE_LAYERS, moduleSplit, WITHOUT_MODULE } from '../../model-modules';
+import { declaredModules, moduleSplit, WITHOUT_MODULE } from '../../model-modules';
 import type { Flaw } from '../model/flaw';
 import { isCanonicalDirectory } from './is-canonical-directory';
 import { OPEN_DIRECTORIES } from './open-directories';
@@ -26,7 +26,8 @@ interface Placed {
 export function strayEntry(entry: string, config: Config): Flaw | undefined {
   const placed = place(entry, config);
 
-  if (placed === undefined) {
+  // The folder of a declared module holds its layers: it is canonical as the context itself is.
+  if (placed === undefined || (placed.module !== undefined && placed.inside === '')) {
     return undefined;
   }
 
@@ -61,13 +62,11 @@ function strayDirectory({ context, inside, module, extras }: Placed): Flaw | und
     return undefined;
   }
 
-  const [layer = '', folder, ...below] = inside.split('/');
-
-  // A folder directly under the layer may be a module the config does not declare yet; one inside a module is not.
-  if (folder !== undefined && below.length === 0 && MODULE_LAYERS.includes(layer) && module === undefined) {
+  // A folder at the root of the context may be a module the config does not declare yet; one inside a module is not.
+  if (!inside.includes('/') && module === undefined) {
     return {
       message: `"${inside}" is not a directory of the canonical tree.`,
-      fix: `If ${folder} is a part of the model of ${context}, declare it as a module with \`ddd-ts-kit generate module ${context} ${folder}\`; otherwise move its files to the canonical directory of their role (see \`ddd-ts-kit explain tree/closed\`).`,
+      fix: `If ${inside} is a part of the model of ${context}, declare it as a module with \`ddd-ts-kit generate module ${context} ${inside}\`, which gives it its layers (${inside}/domain/, ${inside}/application/...); otherwise move its files to the canonical directory of their role (see \`ddd-ts-kit explain tree/closed\`).`,
     };
   }
 

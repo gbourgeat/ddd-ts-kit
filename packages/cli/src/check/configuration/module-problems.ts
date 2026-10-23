@@ -52,13 +52,13 @@ function namingProblems(context: string, modules: ContextConfig['modules']): Mod
       problems.push({
         needle: name,
         message: `The module "${name}" of "${context}" is not written in kebab-case.`,
-        fix: `Name it as its folder is named, in kebab-case: domain/<module>/ and application/<module>/.`,
+        fix: `Name it as its folder is named, in kebab-case: <module>/, holding <module>/domain/, <module>/application/...`,
       });
     } else if (reason === 'role-folder') {
       problems.push({
         needle: name,
         message: `The module "${name}" of "${context}" has the name of a role folder.`,
-        fix: 'A module is a part of the model, named in its language; domain/ and application/ keep their role folders under that name.',
+        fix: 'A module is a part of the model, named in its language; its layers keep their role folders under it (<module>/domain/aggregates/).',
       });
     }
 

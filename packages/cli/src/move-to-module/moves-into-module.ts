@@ -1,8 +1,17 @@
+import { posix } from 'node:path';
 import { CliError } from '../cli-error';
 import type { Config } from '../config';
 import { isDeclarationsFile } from '../declared';
 import { filesUnder } from '../generate/files-under';
-import { declaredModules, intoModule, isContextLevel, isRoleFolder, moduleSplit } from '../model-modules';
+import {
+  declaredModules,
+  intoModule,
+  isContextLevel,
+  isRoleFolder,
+  MODULE_LAYERS,
+  MODULE_TEST_FOLDERS,
+  moduleSplit,
+} from '../model-modules';
 import type { Workspace } from '../workspace';
 import type { ModuleMove } from './module-move';
 
@@ -14,7 +23,7 @@ export interface MoveRequest {
 }
 
 /**
- * The files the paths name, a file or a folder of a role of domain/ or application/, each with
+ * The files the paths name, a file or a folder of a role of a layer or a spec, each with
  * where it goes in the module: the files that stay one per context and the generated
  * declarations stay where they are.
  */
@@ -33,14 +42,16 @@ export function movesIntoModule(ws: Workspace, config: Config, request: MoveRequ
     if (files.length === 0) {
       throw new CliError(
         `${directory}/${relative} does not exist.`,
-        'Name a file or a folder of a role of domain/ or application/, relative to the context: domain/aggregates/waitlist.aggregate.ts, application/commands/join-waitlist.',
+        'Name a file or a folder of a role of a layer, or a spec, relative to the context: domain/aggregates/waitlist.aggregate.ts, application/commands/join-waitlist.',
       );
     }
 
     return files.flatMap((file) => moveOf(file, placement));
   });
 
-  const unique = [...new Map(moves.map((move) => [move.from, move])).values()];
+  // The specs of a moved file go with it, into the module folder of their test folder.
+  const specs = specsOf(ws, moves, placement).flatMap((file) => moveOf(file, placement));
+  const unique = [...new Map([...moves, ...specs].map((move) => [move.from, move])).values()];
 
   refuseLosses(ws, unique, placement);
 
@@ -95,6 +106,26 @@ function refuseLosses(ws: Workspace, moves: readonly ModuleMove[], placement: Pl
   }
 }
 
+/**
+ * The specs of the context named after a moved production file (`appointment.repository.contract.spec.ts`
+ * is of `appointment.repository.ts`), wherever they sit in `test/unit/` and `test/integration/`,
+ * relative to the context.
+ */
+function specsOf(ws: Workspace, moves: readonly ModuleMove[], { directory, modules }: Placement): string[] {
+  const names = moves
+    .filter((move) => !move.from.slice(directory.length + 1).startsWith('test/'))
+    .map((move) => posix.basename(move.from).replace(/\.ts$/, ''));
+
+  return MODULE_TEST_FOLDERS.flatMap((folder) =>
+    filesUnder(ws, `${directory}/test/${folder}`).map((file) => `test/${folder}/${file}`),
+  ).filter((file) => {
+    const stem = posix.basename(file).replace(/\.spec\.ts$/, '');
+    const inPlace = moduleSplit(file, modules).module === undefined;
+
+    return inPlace && file.endsWith('.spec.ts') && names.some((name) => stem === name || stem.startsWith(`${name}.`));
+  });
+}
+
 /** The same file of the role in another module, or at the level of the context, a move would make a twin of. */
 function twinsOf(ws: Workspace, move: ModuleMove, { directory, modules, module }: Placement): string[] {
   const inContext = move.to.slice(directory.length + 1);
@@ -109,11 +140,12 @@ function twinsOf(ws: Workspace, move: ModuleMove, { directory, modules, module }
 function moveOf(file: string, { context, directory, modules, module }: Placement): ModuleMove[] {
   const { path } = moduleSplit(file, modules);
   const [layer = '', folder = ''] = path.split('/');
+  const inLayer = MODULE_LAYERS.includes(layer) && isRoleFolder(layer, folder);
 
-  if (!isRoleFolder(layer, folder)) {
+  if (!inLayer && !(layer === 'test' && MODULE_TEST_FOLDERS.includes(folder))) {
     throw new CliError(
-      `${file} is not in a role folder of domain/ or application/ of "${context}".`,
-      'Only the model and its use cases are divided into modules: infrastructure/, presentation/, test/ and published-language/ keep their layout.',
+      `${file} is in no role folder of a layer of "${context}", and in no test/unit/ nor test/integration/.`,
+      'A module holds the files of the layers of its concepts and their specs: published-language/, the fakes, the builders and the worlds stay at the level of the context.',
     );
   }
 

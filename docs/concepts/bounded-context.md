@@ -68,7 +68,7 @@ A context can grow past what one person or one agent holds in mind while its lan
 one: one glossary, one schema, rules that commit together. Splitting it would buy contracts and
 eventual consistency for nothing, and nesting contexts is not a concept of the references. Divide
 it into [modules of the model](modules.md) instead: one folder per part of the model, named in
-its language, directly under `domain/` and `application/`.
+its language, holding its own layers (`<module>/domain/`, `<module>/application/`...).
 
 ## What the kit makes of a context
 

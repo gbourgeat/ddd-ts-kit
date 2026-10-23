@@ -7,7 +7,7 @@ module.exports = {
       "severity": "error",
       "comment": "domain/ imports only its own domain/, the code list of its context, the shared kernel and the allowed kernel packages. Invert the dependency: declare the need as a port, an abstract class in domain/repositories or application/ports.",
       "from": {
-        "path": "^src/contexts/([^/]+)/domain/",
+        "path": "^src/contexts/([^/]+)/(?:domain|[^/]+/domain)/",
         "pathNot": [
           "^src/contexts/[^/]+/test/",
           "\\.(spec|test)\\.[cm]?ts$",
@@ -17,7 +17,7 @@ module.exports = {
       },
       "to": {
         "pathNot": [
-          "^src/contexts/$1/domain(/|\\.ts$)",
+          "^src/contexts/$1/(?:domain|[^/]+/domain)(/|\\.ts$)",
           "^src/contexts/$1/$1\\.codes\\.ts$",
           "^src/shared-kernel/",
           "^src/contexts/(?!$1/)[^/]+/(?!published-language(/|\\.ts$))",
@@ -31,7 +31,7 @@ module.exports = {
       "severity": "error",
       "comment": "application/ imports domain/, application/, the code list and the permission set of its context, published languages and the allowed kernel packages. Depend on a port and let the composition root bind the adapter.",
       "from": {
-        "path": "^src/contexts/([^/]+)/application/",
+        "path": "^src/contexts/([^/]+)/(?:application|[^/]+/application)/",
         "pathNot": [
           "^src/contexts/[^/]+/test/",
           "\\.(spec|test)\\.[cm]?ts$",
@@ -41,11 +41,11 @@ module.exports = {
       },
       "to": {
         "pathNot": [
-          "^src/contexts/$1/domain(/|\\.ts$)",
-          "^src/contexts/$1/application(/|\\.ts$)",
+          "^src/contexts/$1/(?:domain|[^/]+/domain)(/|\\.ts$)",
+          "^src/contexts/$1/(?:application|[^/]+/application)(/|\\.ts$)",
           "^src/contexts/$1/$1\\.codes\\.ts$",
           "^src/contexts/$1/$1\\.permissions\\.ts$",
-          "^src/contexts/$1/published-language(/|\\.ts$)",
+          "^src/contexts/$1/(?:published-language|[^/]+/published-language)(/|\\.ts$)",
           "^src/shared-kernel/",
           "^src/contexts/(?!$1/)[^/]+/",
           "(^|/)node_modules/@ddd-ts-kit/kernel/",
@@ -60,7 +60,7 @@ module.exports = {
       "severity": "error",
       "comment": "presentation/ never imports infrastructure/. Go through the command or query bus; the adapter is bound in the module file.",
       "from": {
-        "path": "^src/contexts/([^/]+)/presentation/",
+        "path": "^src/contexts/([^/]+)/(?:presentation|[^/]+/presentation)/",
         "pathNot": [
           "^src/contexts/[^/]+/test/",
           "\\.(spec|test)\\.[cm]?ts$",
@@ -69,7 +69,7 @@ module.exports = {
         ]
       },
       "to": {
-        "path": "^src/contexts/$1/infrastructure(/|\\.ts$)"
+        "path": "^src/contexts/$1/(?:infrastructure|[^/]+/infrastructure)(/|\\.ts$)"
       }
     },
     {
@@ -77,7 +77,7 @@ module.exports = {
       "severity": "error",
       "comment": "infrastructure/ never imports presentation/. Move the shared type to application/ and let both sides import it from there.",
       "from": {
-        "path": "^src/contexts/([^/]+)/infrastructure/",
+        "path": "^src/contexts/([^/]+)/(?:infrastructure|[^/]+/infrastructure)/",
         "pathNot": [
           "^src/contexts/[^/]+/test/",
           "\\.(spec|test)\\.[cm]?ts$",
@@ -86,7 +86,7 @@ module.exports = {
         ]
       },
       "to": {
-        "path": "^src/contexts/$1/presentation(/|\\.ts$)"
+        "path": "^src/contexts/$1/(?:presentation|[^/]+/presentation)(/|\\.ts$)"
       }
     },
     {

@@ -19,8 +19,8 @@ const SENT = '    await this.notificationRepository.save(notification);\n';
 const CONSUMER =
   'The consumer name is held twice, as part of the declaration of the role and as the idempotency scope: both rules report its absence.';
 
-const AGENDA_HANDLER = `${SCHEDULING}/application/calendars/queries/search-practice-agenda/search-practice-agenda.handler.ts`;
-const CANCEL_HANDLER = `${SCHEDULING}/application/calendars/commands/cancel-appointment/cancel-appointment.handler.ts`;
+const AGENDA_HANDLER = `${SCHEDULING}/calendars/application/queries/search-practice-agenda/search-practice-agenda.handler.ts`;
+const CANCEL_HANDLER = `${SCHEDULING}/calendars/application/commands/cancel-appointment/cancel-appointment.handler.ts`;
 const SAVED = '    await this.reminderRepository.save(reminder);\n';
 const TAKEN = '  constructor(private readonly commands: CommandBus) {}';
 

@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:082f33a1093cc93b -->
+<!-- translation-of: CONFIG.md sha256:9879c1b0a48d0716 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -551,7 +551,7 @@ Tant que ce n'est pas fait, la règle peut rester à `warn` sous `rules`, enregi
 | `contexts.<name>.extraDirectories[]` | un chemin dans le contexte, ou `{ "path", "reason" }` : un répertoire ajouté à l'arborescence canonique. Chacun est une dérogation | `[]` |
 | `contexts.<name>.deployable` | `true`, `false` : le contexte a son propre point d'entrée `src/apps/<name>/main.ts` ; `generate service <name>` la pose | `false` |
 | `contexts.<name>.owners[]` | les identifiants de qui possède le contexte, tels que la plateforme du dépôt les connaît (`@org/equipe`, `@personne`, un courriel) : `ddd-ts-kit docs` les écrit dans `CODEOWNERS` pour l'arborescence du contexte et son `published-language/` ([Propriétaires](#propriétaires)) | `[]` : aucune ligne pour le contexte |
-| `contexts.<name>.modules` | `{ "<module>": {} }` : les modules du modèle du contexte, chacun un dossier placé directement sous `domain/` et `application/` ([Modules du modèle](concepts/modules.fr.md)). Un nom est en kebab-case, unique dans le contexte, et jamais le nom d'un dossier de rôle (`aggregates`, `commands`...) ; `generate module <context> <module>` l'écrit | aucun |
+| `contexts.<name>.modules` | `{ "<module>": {} }` : les modules du modèle du contexte, chacun un dossier du contexte qui contient ses propres couches, de `<module>/domain/` à `<module>/presentation/`, ses *specs* dans `test/unit/<module>/` ([Modules du modèle](concepts/modules.fr.md)). Un nom est en kebab-case, unique dans le contexte, et jamais le nom d'un dossier de rôle (`aggregates`, `commands`...) ni d'un dossier du contexte (`domain`, `test`...) ; `generate module <context> <module>` l'écrit | aucun |
 | `contexts.<name>.modules.<module>.classification` | `core`, `supporting`, `generic` : le sous-domaine que le module porte, quand il diffère de la classification de son contexte | la classification du contexte |
 
 Les contextes de la configuration et les répertoires de `contextsDir` doivent former le même

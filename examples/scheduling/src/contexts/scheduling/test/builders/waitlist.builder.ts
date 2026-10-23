@@ -1,6 +1,6 @@
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
-import { Waitlist } from '@/contexts/scheduling/domain/waitlist/aggregates/waitlist.aggregate';
-import { Waiter } from '@/contexts/scheduling/domain/waitlist/value-objects/waiter.vo';
+import { Waitlist } from '@/contexts/scheduling/waitlist/domain/aggregates/waitlist.aggregate';
+import { Waiter } from '@/contexts/scheduling/waitlist/domain/value-objects/waiter.vo';
 
 interface WaitlistIngredients {
   readonly bornAt: Date;

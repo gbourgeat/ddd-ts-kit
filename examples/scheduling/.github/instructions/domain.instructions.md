@@ -1,5 +1,5 @@
 ---
-applyTo: "src/contexts/*/domain/**,src/shared-kernel/**"
+applyTo: "src/contexts/*/domain/**,src/contexts/*/*/domain/**,src/shared-kernel/**"
 ---
 
 # Domain layer

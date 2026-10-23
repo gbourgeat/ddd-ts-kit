@@ -33,7 +33,7 @@ const DEFAULT_EXTENSIONS = ['.js', '.mjs', '.ts', '.mts'];
  * The module of a bounded context, found by loading every file of its `application/` and
  * `infrastructure/` folders that carries a role suffix (`*.handler`, `*.repository`, ...) and
  * keeping the classes that declare themselves, in the role folders of the context and in those of
- * the modules of its model (`application/<module>/commands/`), which the generated
+ * the modules of its model (`<module>/application/commands/`), which the generated
  * `<context>.dependencies` file names:
  * `await discoverContext('billing', new URL('.', import.meta.url))`. What each constructor
  * receives comes from the generated `<context>.dependencies` file of the same directory, loaded
@@ -54,7 +54,7 @@ export async function discoverContext(
   const declared: DeclaredClass[] = [];
   const modules = await modulesNamedIn(root, name, extensions);
 
-  for (const file of await roleFilesOf(root, { extensions, ...(ignore === undefined ? {} : { ignore }) })) {
+  for (const file of await roleFilesOf(root, { extensions, modules, ...(ignore === undefined ? {} : { ignore }) })) {
     assertInItsFolder(file, name, modules);
     declared.push(...declaredIn(file, await loaded(file, load), name));
   }
@@ -72,7 +72,7 @@ function assertInItsFolder({ relative, rule }: RoleFile, context: string, module
   }
 
   const inModules = rule.folders.some((folder) => folder.startsWith('application/'))
-    ? ', at the level of the context or of a module of its model (application/<module>/...) named in the generated <context>.dependencies file'
+    ? ', at the level of the context or in a module of its model (<module>/application/...) named in the generated <context>.dependencies file'
     : '';
 
   throw new WiringError(

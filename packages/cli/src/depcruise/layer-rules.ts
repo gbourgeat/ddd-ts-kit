@@ -27,7 +27,7 @@ function domainPurity(config: Config): CruiseRule {
     severity: 'error',
     comment:
       'domain/ imports only its own domain/, the code list of its context, the shared kernel and the allowed kernel packages. Invert the dependency: declare the need as a port, an abstract class in domain/repositories or application/ports.',
-    from: { path: `${contextOf(config)}/domain/`, pathNot: testFiles(config) },
+    from: { path: `${contextOf(config)}/${inAnyModule('domain')}/`, pathNot: testFiles(config) },
     to: {
       pathNot: [
         own(config, 'domain'),
@@ -58,7 +58,7 @@ function applicationInward(config: Config): CruiseRule {
     severity: 'error',
     comment:
       'application/ imports domain/, application/, the code list and the permission set of its context, published languages and the allowed kernel packages. Depend on a port and let the composition root bind the adapter.',
-    from: { path: `${contextOf(config)}/application/`, pathNot: testFiles(config) },
+    from: { path: `${contextOf(config)}/${inAnyModule('application')}/`, pathNot: testFiles(config) },
     to: { pathNot: [...allowed, ...packagePatterns(config.applicationAllowedPackages)] },
   };
 }
@@ -76,8 +76,8 @@ function sideways(config: Config, { from, to, instead }: Sideways): CruiseRule {
     name: `layer-${from}-no-${to}`,
     severity: 'error',
     comment: `${from}/ never imports ${to}/. ${instead}`,
-    from: { path: `${contexts}/([^/]+)/${from}/`, pathNot: testFiles(config) },
-    to: { path: `${contexts}/$1/${to}(/|\\.ts$)` },
+    from: { path: `${contexts}/([^/]+)/${inAnyModule(from)}/`, pathNot: testFiles(config) },
+    to: { path: `${contexts}/$1/${inAnyModule(to)}(/|\\.ts$)` },
   };
 }
 
@@ -91,7 +91,7 @@ function contextOf(config: Config): string {
 }
 
 function own(config: Config, layer: string): string {
-  return `^${escapePattern(config.contextsDir)}/$1/${layer}(/|\\.ts$)`;
+  return `^${escapePattern(config.contextsDir)}/$1/${inAnyModule(layer)}(/|\\.ts$)`;
 }
 
 /** A file of the context at its root, named after it: the code list is of its domain, the permission set of its application. */
@@ -101,4 +101,12 @@ function ownRootFile(config: Config, kind: 'codes' | 'permissions'): string {
 
 function sharedKernel(config: Config): string {
   return `^${escapePattern(config.sharedKernelDir)}/`;
+}
+
+/**
+ * A layer of a context, at its level or in a module of its model, one folder holding its layers:
+ * `domain` or `<module>/domain`, written as an alternative, which dependency-cruiser takes as safe.
+ */
+function inAnyModule(layer: string): string {
+  return `(?:${layer}|[^/]+/${layer})`;
 }

@@ -2,6 +2,12 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
+/**
+ * A layer of a context, at its level or in a module of its model, one folder holding its layers:
+ * `domain` or `<module>/domain`, written as an alternative, which dependency-cruiser takes as safe.
+ */
+const inAnyModule = (layer) => `(?:${layer}|[^/]+/${layer})`;
+
 const PROJECT_CONFIG = 'ddd-ts-kit.config.json';
 
 /** @type {import('dependency-cruiser').IConfiguration} */
@@ -112,7 +118,7 @@ function domainPurity(project) {
     severity: 'error',
     comment:
       'domain/ imports only its own domain/, the code list of its context, the shared kernel and the allowed kernel packages. Invert the dependency: declare the need as a port, an abstract class in domain/repositories or application/ports.',
-    from: { path: `${own.context}/domain/`, pathNot: testFiles(project) },
+    from: { path: `${own.context}/${inAnyModule('domain')}/`, pathNot: testFiles(project) },
     to: {
       pathNot: [
         own.layer('domain'),
@@ -133,7 +139,7 @@ function applicationInward(project) {
     severity: 'error',
     comment:
       'application/ imports domain/, application/, the code list and the permission set of its context, published languages and the allowed kernel packages. Depend on a port and let the composition root bind the adapter.',
-    from: { path: `${own.context}/application/`, pathNot: testFiles(project) },
+    from: { path: `${own.context}/${inAnyModule('application')}/`, pathNot: testFiles(project) },
     to: {
       pathNot: [
         own.layer('domain'),
@@ -153,7 +159,7 @@ function applicationInward(project) {
 function ownLayers(project) {
   return {
     context: `^${escape(project.contextsDir)}/([^/]+)`,
-    layer: (layer) => `^${escape(project.contextsDir)}/$1/${layer}(/|\\.ts$)`,
+    layer: (layer) => `^${escape(project.contextsDir)}/$1/${inAnyModule(layer)}(/|\\.ts$)`,
     // The code list (of the domain) and the permission set (of the application) sit at the root of the context.
     rootFile: (kind) => `^${escape(project.contextsDir)}/$1/$1\\.${kind}\\.ts$`,
     sharedKernel: `^${escape(project.sharedKernelDir)}/`,
@@ -166,8 +172,8 @@ function sideways({ project, from, to, instead }) {
     name: `layer-${from}-no-${to}`,
     severity: 'error',
     comment: `${from}/ never imports ${to}/. ${instead}`,
-    from: { path: `${contexts}/([^/]+)/${from}/`, pathNot: testFiles(project) },
-    to: { path: `${contexts}/$1/${to}(/|\\.ts$)` },
+    from: { path: `${contexts}/([^/]+)/${inAnyModule(from)}/`, pathNot: testFiles(project) },
+    to: { path: `${contexts}/$1/${inAnyModule(to)}(/|\\.ts$)` },
   };
 }
 

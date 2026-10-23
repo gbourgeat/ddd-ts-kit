@@ -32,7 +32,7 @@ import { defaultPolicy } from '@/platform/resilience/default-policy';
 import { defaultResilienceSettings } from '@/platform/resilience/default-resilience-settings';
 import type { ResilienceSettings } from '@/platform/resilience/resilience-settings';
 import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persistence/knex-person-directory.reader';
-import { KnexAppointmentExport } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment-export.repository';
+import { KnexAppointmentExport } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-appointment-export.repository';
 import { errorStatuses } from '@/platform/http/error-statuses';
 // ddd-ts-kit:imports
 import { PersonDirectoryContract } from '@/contexts/identity/published-language';

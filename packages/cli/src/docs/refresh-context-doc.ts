@@ -62,7 +62,7 @@ function generatedLists(facts: ContextFacts): Record<string, string[]> {
         : ['No permission declared.'],
     jobs: jobLines(facts),
     'background-jobs': backgroundJobLines(facts),
-    'state-machines': stateMachineLines(facts.stateMachines),
+    'state-machines': stateMachineLines(facts.stateMachines, facts.name),
     processes: processLines(facts),
     relationships: relationshipLines(facts),
   };

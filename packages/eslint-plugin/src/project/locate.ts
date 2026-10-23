@@ -43,36 +43,67 @@ function locateInContexts(config: Config, file: string): Location {
     return locateAtContextRoot(context, first);
   }
 
-  const layer = LAYERS.find((candidate) => candidate === first) ?? 'root';
-  const inModule = moduleLocation(config, { context, layer, rest });
+  const inModule = moduleLocation(config.contexts[context]?.modules ?? [], context, [first, ...rest]);
 
   if (inModule !== undefined) {
     return inModule;
   }
 
+  const layer = LAYERS.find((candidate) => candidate === first) ?? 'root';
+
   return { area: 'context', context, layer, inside: layer === 'root' ? [first, ...rest] : rest };
 }
 
-interface Placed {
-  readonly context: string;
-  readonly layer: Layer;
-  /** The path below the layer. */
-  readonly rest: readonly string[];
-}
+/** The layers a module holds, and the test folders of its specs, as `moduleSplit` of the CLI reads them. */
+const MODULE_LAYERS: readonly Layer[] = ['domain', 'application', 'infrastructure', 'presentation'];
+const MODULE_TEST_FOLDERS: readonly string[] = ['unit', 'integration'];
 
 /**
- * A module of the model is one folder level under domain/ and application/: left out, the rest of
- * the path is what it would be without modules, so every role keeps its place.
+ * A module of the model is one folder of the context holding its layers (`<module>/domain/...`),
+ * one folder of the test folders of its specs (`test/unit/<module>/...`), or, as 0.86 laid it out,
+ * one folder under domain/ and application/: left out, the rest of the path is what it would be
+ * without modules, so every role keeps its place.
  */
-function moduleLocation(config: Config, { context, layer, rest }: Placed): Location | undefined {
-  const [module, ...below] = rest;
+function moduleLocation(modules: readonly string[], context: string, parts: readonly string[]): Location | undefined {
+  const placed = inFolderOfModule(modules, parts) ?? inTestFolder(modules, parts) ?? inEarlierPlace(modules, parts);
 
-  if (!(layer === 'domain' || layer === 'application') || module === undefined || below.length === 0) {
-    return undefined;
-  }
+  return placed === undefined ? undefined : { area: 'context', context, ...placed };
+}
 
-  return config.contexts[context]?.modules.includes(module) === true
-    ? { area: 'context', context, layer, inside: below, module }
+/** Where a file sits in its module: its layer, the path below it, the module. */
+interface InModule {
+  readonly layer: Layer;
+  readonly inside: readonly string[];
+  readonly module: string;
+}
+
+/** `<module>/<layer>/...`. */
+function inFolderOfModule(
+  modules: readonly string[],
+  [first = '', second = '', ...rest]: readonly string[],
+): InModule | undefined {
+  const layer = MODULE_LAYERS.find((candidate) => candidate === second);
+
+  return modules.includes(first) && layer !== undefined ? { layer, inside: rest, module: first } : undefined;
+}
+
+/** `test/<unit|integration>/<module>/...`. */
+function inTestFolder(
+  modules: readonly string[],
+  [first, second = '', module = '', ...below]: readonly string[],
+): InModule | undefined {
+  return first === 'test' && MODULE_TEST_FOLDERS.includes(second) && modules.includes(module)
+    ? { layer: 'test', inside: [second, ...below], module }
+    : undefined;
+}
+
+/** `<domain|application>/<module>/...`, as 0.86 laid modules out. */
+function inEarlierPlace(
+  modules: readonly string[],
+  [first = '', second = '', ...rest]: readonly string[],
+): InModule | undefined {
+  return (first === 'domain' || first === 'application') && modules.includes(second)
+    ? { layer: first, inside: rest, module: second }
     : undefined;
 }
 

@@ -1,6 +1,7 @@
 ---
 paths:
   - "{{config.contextsDir}}/*/application/**"
+  - "{{config.contextsDir}}/*/*/application/**"
 ---
 
 # Application layer

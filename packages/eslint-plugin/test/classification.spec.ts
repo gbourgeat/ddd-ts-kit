@@ -87,6 +87,16 @@ const PATHS = [
   'src/contexts/billing/test/fakes/invoice.repository.fake.ts',
   'src/contexts/billing/jobs/nightly.ts',
   'src/contexts/billing/other.module.ts',
+  'src/contexts/scheduling/calendars/domain/aggregates/calendar.aggregate.ts',
+  'src/contexts/scheduling/waitlist/application/commands/join-waitlist/join-waitlist.handler.ts',
+  'src/contexts/scheduling/waitlist/presentation/http/calendars/join-waitlist/join-waitlist.controller.ts',
+  'src/contexts/scheduling/test/unit/calendars/calendar.aggregate.spec.ts',
+  'src/contexts/scheduling/test/integration/waitlist/waitlist.repository.contract.spec.ts',
+  'src/contexts/scheduling/test/fakes/calendar.repository.fake.ts',
+  'src/contexts/scheduling/domain/calendars/aggregates/calendar.aggregate.ts',
+  'src/contexts/scheduling/application/waitlist/commands/join-waitlist/join-waitlist.handler.ts',
+  'src/contexts/scheduling/presentation/http/calendars.routes.ts',
+  'src/contexts/scheduling/orders/domain/order.aggregate.ts',
   'src/contexts/billing/billing.codes.ts',
   'src/contexts/billing/billing.codes',
   'src/contexts/billing/billing.codes.js',
@@ -150,6 +160,22 @@ describe('the plugin classifies files exactly like the CLI checker', () => {
 
     expect([...names]).toEqual([...cliParallelNames(cliParseConfig(raw).standardInterfaces)]);
     expect(names.get('ILogger')).toBe('Logger');
+  });
+
+  it('locates the files of the modules of a context the same way, in their folder and where 0.86 put them', () => {
+    const raw = { contexts: { scheduling: { classification: 'core', modules: { calendars: {}, waitlist: {} } } } };
+
+    for (const file of PATHS) {
+      expect(locate(parseConfig(raw), file), file).toEqual(cliLocate(cliParseConfig(raw), file));
+    }
+
+    expect(locate(parseConfig(raw), 'src/contexts/scheduling/test/unit/calendars/calendar.aggregate.spec.ts')).toEqual({
+      area: 'context',
+      context: 'scheduling',
+      layer: 'test',
+      inside: ['unit', 'calendar.aggregate.spec.ts'],
+      module: 'calendars',
+    });
   });
 
   it.each(RAW_CONFIGS)('locates every sample path the same way under %j', (raw) => {

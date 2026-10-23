@@ -5,10 +5,10 @@ import { SOURCE_SUFFIX } from '../source-suffix';
 
 const { SCHEDULING } = PATHS;
 const ALIAS = `${SOURCE_ALIAS}contexts/scheduling`;
-const RECORD = `${SCHEDULING}/domain/calendars/aggregates/attendance-record.aggregate.ts`;
-const CODEC = `${SCHEDULING}/infrastructure/persistence/attendance-record-events.mapper.ts`;
-const NOTE_NO_SHOW = `${SCHEDULING}/application/calendars/commands/note-no-show/note-no-show.handler.ts`;
-const HISTORY = `${SCHEDULING}/application/calendars/projections/attendance-history.projection.ts`;
+const RECORD = `${SCHEDULING}/calendars/domain/aggregates/attendance-record.aggregate.ts`;
+const CODEC = `${SCHEDULING}/calendars/infrastructure/persistence/attendance-record-events.mapper.ts`;
+const NOTE_NO_SHOW = `${SCHEDULING}/calendars/application/commands/note-no-show/note-no-show.handler.ts`;
+const HISTORY = `${SCHEDULING}/calendars/application/projections/attendance-history.projection.ts`;
 const CREATED = 'AttendanceRecordCreated';
 const RENAMED = 'OpenAttendanceRecord';
 

@@ -1,4 +1,5 @@
 import { filesUnder } from '../generate/files-under';
+import { roleFoldersOf } from '../model-modules';
 import type { ContextSources } from './context-sources';
 
 /** A class of the infrastructure of a context that implements one or several of its ports. */
@@ -15,13 +16,14 @@ const ADAPTER = /\bexport class (\w+)(?:\s+extends\s+[\w.<>]+)?\s+implements\s+(
 
 /** The adapters of a context: every class under `infrastructure/` that implements something. */
 export function readAdapters(sources: ContextSources): AdapterFact[] {
-  const { ws, directory, module } = sources;
-  const folder = `${directory}/infrastructure`;
+  const { ws, module } = sources;
 
-  return filesUnder(ws, folder)
+  // The infrastructure of the context and that of each module of its model.
+  return roleFoldersOf(ws, sources, 'infrastructure')
+    .flatMap((folder) => filesUnder(ws, folder).map((file) => `${folder}/${file}`))
     .filter((file) => file.endsWith('.ts') && !file.endsWith('.spec.ts'))
     .flatMap((file) => {
-      const source = ws.read(`${folder}/${file}`) ?? '';
+      const source = ws.read(file) ?? '';
       const [, name, implemented] = ADAPTER.exec(source) ?? [];
 
       if (name === undefined || implemented === undefined) {

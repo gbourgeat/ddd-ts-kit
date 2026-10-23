@@ -1,7 +1,7 @@
 import { TECHNICAL_WORDS } from '../check/language/technical-words';
 import { splitWords } from '../naming';
 import { isRoleFolder } from './is-role-folder';
-import { MODULE_LAYERS } from './module-layers';
+import { CONTEXT_FOLDERS, MODULE_LAYERS } from './module-layers';
 
 /**
  * Words that name a bag, not a part of the model: a module called `shared`, `common` or `core`
@@ -31,15 +31,15 @@ export type ModuleNameFlaw =
 
 /**
  * The one judgement of a module name that the config check, the rule module/declared and
- * `generate module` share: a folder name in kebab-case, never the name of a role folder, never a
- * technical grouping. Whether its words are terms of the glossary depends on the context.
+ * `generate module` share: a folder name in kebab-case, never the name of a layer, of a folder of the
+ * root of a context or of a role folder, never a technical grouping. Whether its words are terms of the glossary depends on the context.
  */
 export function moduleNameFlaw(name: string): ModuleNameFlaw | undefined {
   if (!KEBAB.test(name)) {
     return { reason: 'format' };
   }
 
-  if (MODULE_LAYERS.some((layer) => isRoleFolder(layer, name))) {
+  if (CONTEXT_FOLDERS.includes(name) || MODULE_LAYERS.some((layer) => isRoleFolder(layer, name))) {
     return { reason: 'role-folder' };
   }
 

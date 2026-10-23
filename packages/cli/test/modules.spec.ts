@@ -1,21 +1,22 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { ROLE_FOLDERS } from '../src/model-modules';
+import { MODULE_LAYERS, ROLE_FOLDERS } from '../src/model-modules';
 import { checkJsonOf } from './check-support';
 import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers';
 import { BILLING, projectWithModule, PURPOSE } from './support/project-with-module';
 
 /** The same text with the module level left out of every path of billing: what it would say without modules. */
 function withoutModule(text: string): string {
-  return text
-    .replaceAll(`${BILLING}/domain/invoices/`, `${BILLING}/domain/`)
-    .replaceAll(`${BILLING}/application/invoices/`, `${BILLING}/application/`);
+  return MODULE_LAYERS.reduce(
+    (said, layer) => said.replaceAll(`${BILLING}/invoices/${layer}/`, `${BILLING}/${layer}/`),
+    text,
+  ).replaceAll(`${BILLING}/test/unit/invoices/`, `${BILLING}/test/unit/`);
 }
 
-/** Every role folder of the model and of the use cases of billing, relative to the context. */
+/** Every role folder of the layers of billing, relative to the context. */
 function roleFoldersOfBilling(root: string): string[] {
-  return ['domain', 'application'].flatMap((layer) =>
+  return MODULE_LAYERS.flatMap((layer) =>
     fs
       .readdirSync(path.join(root, BILLING, layer))
       .filter((folder) => ROLE_FOLDERS[layer]?.includes(folder) === true)
@@ -46,13 +47,14 @@ describe('a whole context moved into a module of its model', () => {
   it('is described as it was, every path in the module: nothing is lost from describe and CONTEXT.md', () => {
     const after = cli(root, 'describe', 'billing', '--json').stdout;
 
-    expect(after).toContain(`${BILLING}/application/invoices/commands/issue-invoice`);
-    expect(after).toContain(`${BILLING}/domain/invoices/repositories/invoice.repository.ts`);
+    expect(after).toContain(`${BILLING}/invoices/application/commands/issue-invoice`);
+    expect(after).toContain(`${BILLING}/invoices/domain/repositories/invoice.repository.ts`);
+    expect(after).toContain(`${BILLING}/invoices/presentation/http/invoices/issue-invoice/issue-invoice.controller.ts`);
     expect(withoutModule(after)).toBe(before.describe);
   });
 
   it('keeps the files that are one per context at the level of the context', () => {
-    expect(exists(root, `${BILLING}/domain/invoices/errors/codes.ts`)).toBe(false);
+    expect(exists(root, `${BILLING}/invoices/domain/errors/codes.ts`)).toBe(false);
     expect(exists(root, `${BILLING}/billing.permissions.ts`)).toBe(true);
   });
 
@@ -93,17 +95,17 @@ describe('generating into a module of the model', () => {
     );
 
     expect(command.code).toBe(0);
-    expect(exists(root, `${BILLING}/domain/invoices/aggregates/credit-note.aggregate.ts`)).toBe(true);
+    expect(exists(root, `${BILLING}/invoices/domain/aggregates/credit-note.aggregate.ts`)).toBe(true);
 
     const handler = read(
       root,
-      `${BILLING}/application/invoices/commands/issue-credit-note/issue-credit-note.handler.ts`,
+      `${BILLING}/invoices/application/commands/issue-credit-note/issue-credit-note.handler.ts`,
     );
 
-    expect(handler).toContain('@/contexts/billing/domain/invoices/aggregates/credit-note.aggregate');
+    expect(handler).toContain('@/contexts/billing/invoices/domain/aggregates/credit-note.aggregate');
 
     expect(read(root, `${BILLING}/test/builders/credit-note.builder.ts`)).toContain(
-      '/domain/invoices/aggregates/credit-note.aggregate',
+      '/invoices/domain/aggregates/credit-note.aggregate',
     );
   });
 
@@ -143,7 +145,7 @@ describe('generating into a module of the model', () => {
     );
 
     expect(generated.code).toBe(0);
-    expect(exists(root, `${BILLING}/domain/invoices/value-objects/rebate.vo.ts`)).toBe(true);
+    expect(exists(root, `${BILLING}/invoices/domain/value-objects/rebate.vo.ts`)).toBe(true);
   });
 
   it('moves nothing when a file of the same name is in the module already, and loses nothing', () => {
@@ -156,14 +158,14 @@ describe('generating into a module of the model', () => {
     expect(refused.code).not.toBe(0);
     expect(refused.stderr).toContain('Nothing was moved');
     expect(read(root, flat)).toBe('export const kept = 1;\n');
-    expect(read(root, `${BILLING}/domain/invoices/value-objects/rebate.vo.ts`)).not.toContain('kept');
+    expect(read(root, `${BILLING}/invoices/domain/value-objects/rebate.vo.ts`)).not.toContain('kept');
   });
 
   it('moves every file of a folder, not only its sources, and leaves no empty folder behind', () => {
     write(root, `${BILLING}/application/commands/cancel-invoice/NOTES.md`, 'Why a paid invoice cannot be cancelled.\n');
 
     expect(cli(root, 'move-to-module', 'billing', 'invoices', 'application/commands/cancel-invoice').code).toBe(0);
-    expect(read(root, `${BILLING}/application/invoices/commands/cancel-invoice/NOTES.md`)).toContain('paid invoice');
+    expect(read(root, `${BILLING}/invoices/application/commands/cancel-invoice/NOTES.md`)).toContain('paid invoice');
     expect(exists(root, `${BILLING}/application/commands/cancel-invoice`)).toBe(false);
   });
 });

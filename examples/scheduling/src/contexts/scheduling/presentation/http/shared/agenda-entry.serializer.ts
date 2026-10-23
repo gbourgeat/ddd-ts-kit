@@ -1,5 +1,5 @@
 import { Serializer } from '@ddd-ts-kit/http';
-import type { AgendaEntry } from '@/contexts/scheduling/application/calendars/ports/agenda.port';
+import type { AgendaEntry } from '@/contexts/scheduling/calendars/application/ports/agenda.port';
 import type { AgendaLine } from '@/contexts/scheduling/presentation/http/shared/agenda-line.schema';
 
 /** One appointment of the agenda as every search answers it: the public fields, instants as ISO 8601 text. */

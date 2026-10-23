@@ -1,5 +1,5 @@
 [English](modules.md) · **Français**
-<!-- translation-of: modules.md sha256:d3ee931eac10972e -->
+<!-- translation-of: modules.md sha256:5fe25437a399756b -->
 
 # Modules du modèle
 
@@ -7,9 +7,10 @@
 sous-contexte : une partie dotée de son propre langage est un [contexte délimité](bounded-context.fr.md) ;
 une partie d'un seul modèle, avec le même langage, le même schéma de base de données et les mêmes
 transactions, est un module (Evans, *Domain-Driven Design Reference*, « Modules »). Dans ce kit,
-un module est facultatif : un dossier placé directement sous `domain/` et `application/` d'un
-contexte, déclaré dans la configuration, nommé avec des termes du glossaire, avec les dossiers de
-rôle inchangés en dessous. Trois règles le gardent honnête (`module/declared`, `module/complete`,
+un module est facultatif : un dossier d'un contexte qui contient ses propres couches
+(`<module>/domain/`, `<module>/application/`, `<module>/infrastructure/`, `<module>/presentation/`),
+déclaré dans la configuration, nommé avec des termes du glossaire, avec les dossiers de rôle
+inchangés sous chaque couche, et ses *specs* dans `test/unit/<module>/`. Trois règles le gardent honnête (`module/declared`, `module/complete`,
 `module/no-cycle`), `generate --module` écrit dedans, et `move-to-module` fait passer un contexte
 existant en modules, un commit à la fois.
 
@@ -39,8 +40,9 @@ comment rompre leur cycle.
 **Les gains.**
 
 - **Lire par concept d'abord.** Un dossier tient une partie du modèle : tout ce qui concerne la
-  liste d'attente est sous `domain/waitlist/` et `application/waitlist/`, et non réparti dans dix
-  dossiers de rôle partagés avec tout le reste. Ce sont les « modules that tell the story of the
+  liste d'attente, son modèle, ses cas d'usage, ses adaptateurs et ses routes, est sous
+  `waitlist/`, et ses *specs* sous `test/unit/waitlist/`, et non réparti dans dix dossiers de rôle
+  partagés avec tout le reste. Ce sont les « modules that tell the story of the
   system ».
 - **Une étape entre un grand contexte et deux contextes.** Avant les modules, un contexte trop
   grand pour être tenu en tête avait deux issues : rester grand, ou se scinder en deux contextes
@@ -63,10 +65,11 @@ comment rompre leur cycle.
   la découpe suive le modèle reste un jugement des personnes, revu par l'agent
   `architecture-reviewer`.
 - **Un niveau de dossier de plus**, et des imports plus longs.
-- **`infrastructure/` et `presentation/` restent organisés par technique.** Un module fait partie
-  du modèle ; un adaptateur ou une route se regroupe déjà par cas d'usage. Les fichiers d'un
-  module sont donc à deux endroits : ses dossiers de `domain/` et `application/`, et les
-  adaptateurs et les routes de ses cas d'usage.
+- **Ce que partagent tous les modules reste au niveau du contexte**, et s'y lit : la liste des
+  codes et l'ensemble des permissions à sa racine, le schéma, les tables et les migrations de sa
+  base (une base par contexte), ses groupes de routes, ses gardes et ses formes partagées (un
+  groupe de routes donne un préfixe aux routes d'une ressource, quel que soit le module qui leur
+  répond), et les *fakes*, *builders* et mondes de ses *specs*.
 - **« Module » nomme déjà deux choses du kit** : `<context>.module.ts` (câblage explicite) et
   `ContextModule` de `@ddd-ts-kit/di`. Les pages disent « module du modèle » partout où les deux
   pourraient être confondus.
@@ -91,8 +94,8 @@ Ne le divisez pas :
 
 ### L'arborescence
 
-Un module est un niveau de dossier placé directement sous `domain/` et `application/` ; en
-dessous, les dossiers de rôle de [l'arborescence canonique](../ARCHITECTURE.fr.md#2-arborescence-canonique),
+Un module est un dossier du contexte qui contient ses propres couches ; sous chaque couche, les
+dossiers de rôle de [l'arborescence canonique](../ARCHITECTURE.fr.md#2-arborescence-canonique),
 inchangés.
 
 ```
@@ -102,27 +105,38 @@ src/contexts/appointments/
   appointments.permissions.ts                  l'ensemble des permissions du contexte
   appointments.declarations.ts                 généré, à la racine comme avant
   published-language/                          un par contexte
-  domain/
-    booking/
+  booking/
+    domain/
       aggregates/appointment.aggregate.ts
       errors/slot-taken.error.ts
-    waitlist/
+    application/
+      application.declarations.ts              généré, par couche du module
+      commands/book-appointment/...
+    infrastructure/persistence/knex-appointment.repository.ts
+    presentation/http/appointments/book-appointment/...
+  waitlist/
+    domain/
       aggregates/waitlist.aggregate.ts
       value-objects/offer.vo.ts
-  application/
-    booking/
-      commands/book-appointment/...
-      application.declarations.ts              généré, par couche du module
-    waitlist/
+    application/
       commands/join-waitlist/...
       event-handlers/offer-freed-slot.event-handler.ts
-  infrastructure/  presentation/  test/        inchangés : organisés par technique
+    infrastructure/persistence/knex-waitlist.repository.ts
+    presentation/http/appointments/join-waitlist/...
+  infrastructure/persistence/                  le schéma, les tables et les migrations du contexte
+  presentation/http/                           les groupes de routes, guards/ et shared/
+  test/
+    unit/booking/  unit/waitlist/              les specs de chaque module
+    integration/booking/  integration/waitlist/
+    fakes/  builders/  worlds/                 partagés par les specs de tous les modules
 ```
 
 Ce qui ne passe jamais dans un module : `<context>.codes.ts`,
 `<context>.permissions.ts`, `<context>.module.ts`, les fichiers générés
-`<context>.declarations.ts` et `<context>.dependencies.ts`, `CONTEXT.md` et
-`published-language/`. Un module n'a jamais de glossaire, de schéma de base de données, de langage
+`<context>.declarations.ts` et `<context>.dependencies.ts`, `CONTEXT.md`, `published-language/`,
+les `*.schema.ts` de `infrastructure/persistence/` qui ne sont pas un schéma de ligne, les groupes
+de routes (`presentation/http/*.routes.ts`), `presentation/http/guards/` et
+`presentation/http/shared/`, et `test/fakes/`, `test/builders/` et `test/worlds/`. Un module n'a jamais de glossaire, de schéma de base de données, de langage
 publié ni de fichier de module à lui, et deux modules d'un même contexte n'échangent jamais
 d'événements d'intégration : une partie qui a besoin de l'un d'eux est un contexte.
 
@@ -154,9 +168,9 @@ module :
 
 | Règle | Tient | Sévérité |
 |---|---|---|
-| `tree/closed` | accepte le dossier d'un module déclaré, et signale toujours celui que la configuration ne déclare pas ; son correctif nomme `generate module` | `error` |
+| `tree/closed` | accepte le dossier d'un module déclaré à la racine du contexte, et signale toujours celui que la configuration ne déclare pas ; son correctif nomme `generate module` | `error` |
 | `module/declared` | chaque module de `contexts.<name>.modules` est nommé avec des termes du glossaire de son contexte (chaque mot de son nom ; les mots techniques sont refusés (`shared`, `common`, `core`, `misc`, `utils` et les autres mots techniques de `language/no-technical-name`)) et a une ligne dans `## Modules` de `CONTEXT.md` | `error` |
-| `module/complete` | dès qu'un contexte déclare des modules, un fichier de `domain/` ou `application/` hors de tout module, fichiers du niveau du contexte mis à part, est signalé | `warn`, pour qu'un contexte passe en modules un commit à la fois |
+| `module/complete` | dès qu'un contexte déclare des modules, un fichier d'une couche hors de tout module, les fichiers que le contexte garde à part exceptés, est signalé, comme une *spec* restée dans `test/unit/` alors que le fichier dont elle porte le nom est dans un module, et un module encore là où 0.86 le mettait (`domain/<module>/`) | `warn`, pour qu'un contexte passe en modules un commit à la fois |
 | `module/no-cycle` | les imports entre les modules d'un même contexte ne forment aucun cycle | `warn`, parce qu'Evans fait du couplage entre modules un signal pour changer le modèle, pas un refus |
 
 Toute autre règle lit un fichier d'un module comme elle lit le même fichier hors module : le rôle
@@ -171,26 +185,30 @@ npx ddd-ts-kit generate module appointments waitlist \
   --purpose "Clients waiting for a taken slot, and the offer made to the first of them when it frees up." \
   --term "Waitlist=The clients waiting for a slot that is taken, in the order they asked"
 
-# Écrire dedans : chaque fichier de domain/ et application/ va dans le module.
+# Écrire dedans : chaque fichier d'une couche va dans le module, sa spec dans test/unit/<module>/.
 npx ddd-ts-kit generate aggregate appointments Waitlist --module waitlist
 npx ddd-ts-kit generate command appointments JoinWaitlist --aggregate Waitlist --permission waitlist.join --module waitlist
 
-# Déplacer l'existant, avec chacun de ses imports dans le projet.
-npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment.aggregate.ts application/commands/book-appointment
+# Déplacer l'existant, avec chacun de ses imports dans le projet et les specs qui portent son nom.
+npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment.aggregate.ts application/commands/book-appointment \
+  infrastructure/persistence/knex-appointment.repository.ts presentation/http/appointments/book-appointment
 ```
 
 - Avec `--module`, les fichiers qu'un générateur lit (un agrégat existant, un événement, un port)
   sont trouvés dans le module qui les tient, et les imports qu'il écrit nomment leur emplacement.
   Un fichier d'un cas d'usage déjà dans un module est écrit avec lui, `--module` ou non ; un
   `--module` qui nomme un autre module est refusé, puisqu'il couperait le cas d'usage en deux.
-  Les fichiers de niveau contexte (la liste des codes, le jeu de permissions) restent au niveau du
-  contexte.
-- Dans un contexte qui déclare des modules, un générateur qui écrirait un fichier de `domain/` ou
-  `application/` sans `--module` est refusé, avec la liste des modules et la même commande avec
-  `--module` : le générateur guide, il ne laisse jamais le choix implicite.
-- `move-to-module` prend des chemins relatifs au contexte, des fichiers ou des dossiers sous
-  `domain/` ou `application/`, les déplace dans un module déclaré et réécrit chacun de leurs
-  imports sous la racine des sources, `test/` et `scripts/` ; les déclarations générées suivent
+  Une *spec* va dans le module du fichier dont elle porte le nom. Ce que le contexte garde à part
+  (la liste des codes, l'ensemble des permissions, le schéma de sa base, ses groupes de routes)
+  reste au niveau du contexte.
+- Dans un contexte qui déclare des modules, un générateur qui écrirait un fichier d'une couche
+  sans `--module` est refusé, avec la liste des modules et la même commande avec `--module` : le
+  générateur guide, il ne laisse jamais le choix implicite. Un contexte encore dans la disposition
+  de 0.86 est refusé aussi, avec `context-layout` pour issue.
+- `move-to-module` prend des chemins relatifs au contexte, des fichiers ou des dossiers d'un rôle
+  de n'importe quelle couche, ou des *specs*, les déplace dans un module déclaré (une *spec* dans
+  `test/<unit|integration>/<module>/`), emmène les *specs* qui portent le nom d'un fichier déplacé,
+  et réécrit chacun de leurs imports sous la racine des sources, `test/` et `scripts/` ; les déclarations générées suivent
   dans le même passage. Un chemin déjà dans un module passe dans l'autre, et tous les fichiers
   d'un dossier sont déplacés, pas seulement ses sources. Rien n'est déplacé quand un fichier du
   même nom est déjà dans le module, quand deux fichiers atterriraient sur le même chemin, quand un
@@ -200,8 +218,9 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
 
 ### Ce qui lit les modules
 
-- `ddd-ts-kit check` et le plugin ESLint lisent un dossier sous `domain/` ou `application/` comme
-  un module quand la configuration le déclare.
+- `ddd-ts-kit check` et le plugin ESLint lisent un dossier d'un contexte comme un module quand la
+  configuration le déclare, comme le `.dependency-cruiser.cjs` généré et la couverture de
+  `@ddd-ts-kit/testing`, qui tient chaque couche de chaque module à son seuil.
 - `ddd-ts-kit docs`, `describe`, `error-factories` et les générateurs lisent les dossiers de rôle
   de chaque module que la configuration déclare, comme `check` : la référence de `CONTEXT.md`
   liste les agrégats, cas d'usage, ports, refus et *jobs* des modules comme ceux du contexte. Un
@@ -214,8 +233,23 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   `<layer>.declarations.ts` généré, réexporté par `<context>.declarations.ts`.
 - `discoverContext` de `@ddd-ts-kit/di` s'exécute sans la configuration : il lit les modules dans
   le `<context>.dependencies.ts` généré, que `ddd-ts-kit docs` écrit avec eux
-  (`export const modules = [...]`). Un dossier que ce fichier ne nomme pas n'est pas un module au
-  démarrage non plus : un fichier de rôle qui s'y trouve est refusé, comme `check` le signale.
+  (`export const modules = [...]`), et charge les fichiers de rôle de `<module>/application/`,
+  `<module>/infrastructure/` et `<module>/presentation/`. Un dossier que ce fichier ne nomme pas
+  n'est pas un module au démarrage non plus : un fichier de rôle qui s'y trouve est refusé, comme
+  `check` le signale.
+
+### Depuis la disposition de 0.86
+
+0.86 mettait un module sous `domain/<module>/` et `application/<module>/`, et laissait ses
+adaptateurs, ses routes et ses *specs* organisés par technique. Cette version lit encore cette
+disposition, et `module/complete` la signale ; les générateurs refusent d'écrire dans un tel
+contexte tant qu'il n'est pas déplacé. `npx ddd-ts-kit context-layout [<context>...] [--dry-run]`
+le déplace : chaque module dans son dossier, et chaque adaptateur, route et *spec* resté au niveau
+du contexte dans le module de ce qu'il importe (une *spec* dans le module du fichier dont elle
+porte le nom ; un fichier qui n'importe rien d'un module dans le module des fichiers qui
+l'importent), chacun de leurs imports suivant. Un fichier dont les imports nomment deux modules,
+ou aucun, est listé et reste où il est : déplacez-le avec `move-to-module`, ou laissez-le au niveau
+du contexte quand tous les modules s'en servent.
 
 ## Adopter les modules, pas à pas
 
@@ -225,9 +259,9 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
 2. **Déclarez les modules** : `generate module <context> <module> --purpose "..."`, une fois par
    module. `module/complete` avertit alors pour chaque fichier hors module : cette liste est le
    plan.
-3. **Déplacez un groupe par commit** : `move-to-module <context> <module> <paths>...`, puis
-   `npm run verify`. Les tests ne bougent pas : `test/` reste organisé
-   comme avant.
+3. **Déplacez un groupe par commit** : `move-to-module <context> <module> <paths>...`, son modèle,
+   ses cas d'usage, ses adaptateurs et ses routes, puis `npm run verify`. Les *specs* qui portent
+   le nom des fichiers déplacés les suivent dans `test/unit/<module>/`.
 4. **Lisez les avertissements de `module/no-cycle`.** Un cycle entre deux modules demande si un
    concept est dans le mauvais module, ou si un concept manque.
 5. **Dès lors, générez avec `--module`.**

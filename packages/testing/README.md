@@ -998,8 +998,9 @@ export default defineConfig(({ mode }) => ({
   measures `infrastructure`, any other mode the four.
 - `exclude`: the `<layer>.declarations.ts` the generator writes in the layers of a
   declared context, derived from the tree and never loaded by a spec of an adapter.
-- `thresholds`: one entry per context and layer that holds a source file, so a context cannot
-  hide behind another and an empty layer is held to nothing until its first file.
+- `thresholds`: one entry per context and layer that holds a source file, and one per layer of
+  each module of its model (`<module>/domain/`), so a context cannot hide behind another, nor a
+  module behind another, and an empty layer is held to nothing until its first file.
 - A partial run measures and holds only the contexts named in `DDD_TS_KIT_AFFECTED` (comma
   separated, as [`ddd-ts-kit affected`](../cli/README.md#affected) computes them for a pull
   request); unset, the run covers every context. `unaffectedContexts()` answers the directories

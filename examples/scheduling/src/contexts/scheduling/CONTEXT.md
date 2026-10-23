@@ -173,7 +173,7 @@ This is why practices come: a time on a calendar is held once, under rules of av
 ## State machines
 
 <!-- ddd-ts-kit:state-machines -->
-Lifecycle of `appointment` (`calendars/state-machines/appointment.state-machine.ts`):
+Lifecycle of `appointment` (`calendars/domain/state-machines/appointment.state-machine.ts`):
 
 ```mermaid
 stateDiagram-v2

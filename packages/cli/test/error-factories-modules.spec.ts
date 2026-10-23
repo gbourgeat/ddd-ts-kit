@@ -2,12 +2,12 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, exists, read, tempDir, write } from './helpers';
 
 const BILLING = 'src/contexts/billing';
-const ERRORS = `${BILLING}/domain/invoices/errors`;
+const ERRORS = `${BILLING}/invoices/domain/errors`;
 const TERMS = ['--term', 'Invoice=A request for payment', '--term', 'Issue=To make an invoice final'];
 
 const AGGREGATE = [
   "import { AggregateRoot } from '@ddd-ts-kit/kernel';",
-  "import { InvoiceNotFoundError } from '@/contexts/billing/domain/invoices/errors/invoice-not-found.error';",
+  "import { InvoiceNotFoundError } from '@/contexts/billing/invoices/domain/errors/invoice-not-found.error';",
   '',
   'export class Invoice extends AggregateRoot {',
   '  find(): never {',
@@ -27,7 +27,7 @@ describe('error-factories, on errors kept in a module of the model', () => {
     expect(cli(root, 'generate', 'context', 'billing', '--classification', 'core', ...TERMS).code).toBe(0);
     expect(cli(root, 'generate', 'module', 'billing', 'invoices', '--purpose', 'The invoices.').code).toBe(0);
     expect(cli(root, 'generate', 'aggregate', 'billing', 'Invoice', '--module', 'invoices').code).toBe(0);
-    write(root, `${BILLING}/domain/invoices/aggregates/invoice.aggregate.ts`, AGGREGATE);
+    write(root, `${BILLING}/invoices/domain/aggregates/invoice.aggregate.ts`, AGGREGATE);
 
     write(
       root,
@@ -47,8 +47,8 @@ describe('error-factories, on errors kept in a module of the model', () => {
     expect(exists(root, `${ERRORS}/invoice-not-found.error.ts`)).toBe(false);
     expect(exists(root, `${BILLING}/domain/errors/invoice.error.ts`)).toBe(false);
 
-    expect(read(root, `${BILLING}/domain/invoices/aggregates/invoice.aggregate.ts`)).toContain(
-      "import { InvoiceError } from '@/contexts/billing/domain/invoices/errors/invoice.error';",
+    expect(read(root, `${BILLING}/invoices/domain/aggregates/invoice.aggregate.ts`)).toContain(
+      "import { InvoiceError } from '@/contexts/billing/invoices/domain/errors/invoice.error';",
     );
   });
 });
