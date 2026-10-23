@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { Criteria, cursorPage, pageOfPlan, planCriteria, scoped } from '@ddd-ts-kit/kernel';
+import { Criteria, cursorPage, defineCriteria, pageOfPlan, planCriteria, scoped } from '@ddd-ts-kit/kernel';
 import {
   criteriaContract,
   criteriaContractDefinition,
@@ -134,5 +134,31 @@ describe('criteriaToTypeOrm', () => {
 
     expect(page.items).toEqual([{ id: 'a2', seats: 4, startsAt: new Date('2026-10-01T09:00:00.000Z') }]);
     expect(page.nextCursor).toBeTypeOf('string');
+  });
+
+  it('reads the fields of a port named otherwise than the properties of the entity, in the filter and the order', async () => {
+    interface Capacity {
+      readonly id: string;
+      readonly capacity: number;
+    }
+
+    const capacities = defineCriteria<Capacity>({
+      fields: { id: { type: 'string', filter: ['eq'] }, capacity: { type: 'number', filter: ['gte'], sortable: true } },
+      defaultSort: [{ field: 'capacity', direction: 'desc' }],
+      tieBreaker: 'id',
+    });
+
+    const plan = planCriteria(capacities, Criteria.of<Capacity>().where('capacity', 'gte', 3));
+
+    const entities = await criteriaToTypeOrm(database.dataSource.manager.createQueryBuilder(contractRows, 'r'), plan, {
+      alias: 'r',
+      properties: { capacity: 'seats' },
+    }).getMany();
+
+    expect(entities.map(({ id, seats }) => [id, seats])).toEqual([
+      ['a7', 5],
+      ['a2', 4],
+      ['a5', 3],
+    ]);
   });
 });

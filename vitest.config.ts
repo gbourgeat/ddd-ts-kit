@@ -37,7 +37,7 @@ const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>
   sentry: [99, 99, 100, 99],
   testing: [99, 96, 99, 99],
   tracing: [96, 90, 96, 96],
-  typeorm: [96, 88, 97, 96],
+  typeorm: [99, 94, 100, 99],
   validation: [98, 94, 96, 100],
   winston: [96, 95, 94, 97],
 };

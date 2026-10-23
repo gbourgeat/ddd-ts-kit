@@ -15,7 +15,7 @@ const outbox = outboxEntity();
 let database: TestDatabase;
 
 beforeAll(async () => {
-  database = await createDatabase([...eventStoreEntities({ schema: 'scheduling' }), outbox]);
+  database = await createDatabase([...eventStoreEntities({ schema: 'scheduling' }), ...eventStoreEntities(), outbox]);
 });
 
 afterAll(async () => {
@@ -51,6 +51,25 @@ eventStoreUnitOfWorkContract(runner, {
 });
 
 describe('createTypeOrmEventSourcing', () => {
+  it('keeps the streams of the default schema apart from those of a schema of its own', async () => {
+    await database.truncate();
+
+    const unitOfWork = createTypeOrmUnitOfWork(database.dataSource);
+    const inDefault = createTypeOrmEventSourcing(unitOfWork).events;
+    const inScheduling = createTypeOrmEventSourcing(unitOfWork, { schema: 'scheduling' }).events;
+
+    const occurredAt = new Date('2026-10-10T12:00:00.000Z');
+
+    await unitOfWork.run(() =>
+      inDefault.append('scheduling.slot-1', 0, [
+        { id: 'evt-1', type: 'scheduling.slot.opened', schemaVersion: 1, data: { slotId: 'slot-1' }, occurredAt },
+      ]),
+    );
+
+    expect((await inDefault.readStream('scheduling.slot-1')).map((stored) => stored.id)).toEqual(['evt-1']);
+    expect(await inScheduling.readStream('scheduling.slot-1')).toEqual([]);
+  });
+
   it('refuses a data source that is not PostgreSQL', async () => {
     const mysql = { manager: () => ({ dataSource: { options: { type: 'mysql' } } }), inTransaction: () => false };
     const { events } = createTypeOrmEventSourcing(mysql as never);
