@@ -9,7 +9,6 @@ import { anActor } from '@ddd-ts-kit/auth/testing';
 import { anonymousActor, systemActor } from '@ddd-ts-kit/kernel';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { relationshipSchema } from '@/platform/auth/relationships/relationship-schema';
-import { resourcePermissions } from '@/platform/auth/relationships/resource-permissions';
 import { roleGrants } from '@/platform/auth/authorization/role-grants';
 import { RolesAndRelationshipsAuthorizer } from '@/platform/auth/authorization/roles-and-relationships.authorizer';
 
@@ -36,7 +35,7 @@ beforeEach(() => {
   store = new SchemaCheckedTupleStore(relationshipSchema, new InMemoryRelationTupleStore());
 
   authorizer = new RolesAndRelationshipsAuthorizer(
-    new RelationBasedAuthorizer({ schema: relationshipSchema, store, mapping: resourcePermissions }),
+    new RelationBasedAuthorizer({ schema: relationshipSchema, store }),
     roleGrants,
   );
 });

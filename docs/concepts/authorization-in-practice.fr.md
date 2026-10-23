@@ -1,5 +1,5 @@
 [English](authorization-in-practice.md) · **Français**
-<!-- translation-of: authorization-in-practice.md sha256:afb2b3a9e2e390d4 -->
+<!-- translation-of: authorization-in-practice.md sha256:3df5e0f62f452ce6 -->
 
 # L'autorisation en pratique
 
@@ -160,11 +160,12 @@ prédicat n'est pas une requête.
 
 ### Relations
 
-Un schéma définit des types, des relations et des réécritures (`union`, `intersection`,
-`exclusion`, `from`), un `RelationTupleStore` contient les tuples, et une `PermissionMapping`
-relie chaque permission du kit à une permission du schéma. Parce qu'une relation porte toujours
-sur quelque chose, un message protégé vérifié de cette façon doit nommer sa `resource` ; sans
-elle, la réponse est `RESOURCE_REQUIRED`. Le langage du schéma est dans le README de
+Un schéma définit des types, leurs relations stockées et les relations qui en dérivent (une
+voie, ou `anyOf`, `allOf`, `butNot` et `via`) ; une relation dérivée nommée d'après une
+permission l'accorde sur son type ; un `RelationTupleStore` contient les tuples. Parce qu'une
+relation porte toujours sur quelque chose, un message protégé vérifié de cette façon doit nommer
+sa `resource` ; sans elle, la réponse est `RESOURCE_REQUIRED`. `explain` dit pourquoi une
+décision a été prise, en une trace en mots. Le schéma est décrit dans le README de
 `@ddd-ts-kit/auth`, et [`@ddd-ts-kit/openfga`](../../packages/openfga/README.fr.md) exécute le
 même schéma sur OpenFGA.
 

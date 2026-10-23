@@ -33,7 +33,7 @@
   <text x="479" y="106" font-size="13" fill="#1f2328" text-anchor="middle">viewer</text>
   <line x1="684" y1="116" x2="763" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
   <text x="724" y="106" font-size="13" fill="#1f2328" text-anchor="middle">parent</text>
-  <text x="357" y="170" font-size="13" fill="#1f2328" text-anchor="middle">its members, as a userset</text>
+  <text x="357" y="170" font-size="13" fill="#1f2328" text-anchor="middle">its members, as the relation says</text>
 
   <!-- derived permission -->
   <path d="M112,150 V200 H847 V152" fill="none" stroke="#2b5d8a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-application)"/>
@@ -42,9 +42,9 @@
   <!-- how the check walks -->
   <rect x="32" y="244" width="896" height="118" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
   <text x="52" y="270" font-size="14" font-weight="600" fill="#2b5d8a">How check(ada, document.view, document:q3) walks the tuples</text>
-  <text x="52" y="294" font-size="13" fill="#1f2328">1. document view = union('edit', from('parent', 'view')): the parent of q3 is folder:reports, ask its view</text>
-  <text x="52" y="316" font-size="13" fill="#1f2328">2. folder view = union('edit', 'viewer', from('parent', 'view')): a viewer of reports is team:finance#member</text>
-  <text x="52" y="338" font-size="13" fill="#1f2328">3. team:finance#member holds user:ada: allowed. Nothing leads to owner, editor or delegate, so edit is NO_RELATION</text>
+  <text x="52" y="294" font-size="13" fill="#1f2328">1. document view = any of: edit, view via parent: the parent of q3 is folder:reports, ask its view</text>
+  <text x="52" y="316" font-size="13" fill="#1f2328">2. folder view = any of: edit, viewer, view via parent: a viewer of reports is team:finance, so ask its members</text>
+  <text x="52" y="338" font-size="13" fill="#1f2328">3. user:ada is member of team:finance: allowed. Nothing leads to owner, editor or delegate, so edit is NO_RELATION</text>
 
   <!-- legend -->
   <line x1="40" y1="390" x2="84" y2="390" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>

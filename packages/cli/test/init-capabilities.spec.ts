@@ -113,7 +113,7 @@ describe('authentication and authorization', () => {
     [
       'rebac',
       'relationships/relationship-schema.ts',
-      'schema: relationshipSchema,\n    store: relationTuples,\n    mapping: permissionMapping(),',
+      'new RelationBasedAuthorizer({ schema: relationshipSchema, store: relationTuples })',
     ],
     ['custom', 'custom/custom-authorizer.contract.spec.ts', 'permissions.all()'],
   ])('writes the authorizer of the model %s behind the one port', (authz, file, expected) => {

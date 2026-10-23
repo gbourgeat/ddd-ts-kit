@@ -310,7 +310,7 @@ query, so listing "everything this actor may see" is not something a pure ABAC e
 
 Rights follow stored relationships between subjects and objects, written as tuples
 `object#relation@subject`: `calendar:42#owner@user:ada`, `clinic:7#member@user:bob`,
-`calendar:42#parent@clinic:7`. Permissions are derived by rewriting: "may manage a calendar:
+`calendar:42#parent@clinic:7`. Permissions are relations derived from them: "may manage a calendar:
 its owner, or a member of its parent clinic". The two core operations are check (is there a
 path from this object to this actor) and list (which objects can this actor reach).
 

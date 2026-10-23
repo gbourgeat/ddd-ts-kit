@@ -1,11 +1,14 @@
-import type { FromRewrite, Rewrite } from './rewrite.js';
+import type { DerivedRelation } from './derived-relation.js';
 import { Schema } from './schema.js';
 import type { SchemaDefinition } from './schema-definition.js';
 import { SchemaError } from './schema-error.js';
+import type { Via, Way } from './via.js';
+import { waysOf } from './ways-of.js';
 
 /**
- * The object types, their relations and how permissions derive from them. Validated here, so
- * an unknown type or relation, or a rewrite that could never terminate, never reaches a check.
+ * The types, their stored relations and the relations derived from them. Validated here, so an
+ * unknown type or name, a derived relation with no way of being held, or one that could never
+ * terminate, never reaches a check.
  */
 export function defineSchema(definition: SchemaDefinition): Schema {
   const schema = new Schema(definition);
@@ -13,9 +16,11 @@ export function defineSchema(definition: SchemaDefinition): Schema {
   for (const type of schema.types()) {
     assertNoNameClash(schema, type);
     assertSubjectsExist(schema, type);
+    assertOneKindPerSubjectType(schema, type);
 
-    for (const [name, rewrite] of Object.entries(schema.permissions(type))) {
-      assertResolves(schema, { type, name }, rewrite);
+    for (const [name, derived] of Object.entries(schema.derived(type))) {
+      assertHasWays({ type, name }, derived);
+      assertWaysResolve(schema, { type, name }, derived);
       assertTerminates(schema, type, [name]);
     }
   }
@@ -23,12 +28,17 @@ export function defineSchema(definition: SchemaDefinition): Schema {
   return schema;
 }
 
+interface Named {
+  readonly type: string;
+  readonly name: string;
+}
+
 function assertNoNameClash(schema: Schema, type: string): void {
   const relations = Object.keys(schema.relations(type));
-  const clash = Object.keys(schema.permissions(type)).find((name) => relations.includes(name));
+  const clash = Object.keys(schema.derived(type)).find((name) => relations.includes(name));
 
   if (clash !== undefined) {
-    throw new SchemaError(`"${type}" declares "${clash}" both as a relation and as a permission.`);
+    throw new SchemaError(`"${type}" declares "${clash}" both as a relation and as a derived relation.`);
   }
 }
 
@@ -41,95 +51,104 @@ function assertSubjectsExist(schema: Schema, type: string): void {
         throw new SchemaError(`"${type}#${name}" accepts the unknown type "${subjectType}".`);
       }
 
-      if (relation !== undefined && schema.resolve(subjectType, relation) === undefined) {
+      if (relation !== undefined && !schema.declares(subjectType, relation)) {
         throw new SchemaError(`"${type}#${name}" accepts "${subject}", but "${subjectType}" has no "${relation}".`);
       }
     }
   }
 }
 
-interface Named {
-  readonly type: string;
-  readonly name: string;
+/** A tuple names the element alone (`group:eng`): the relation has to say, once, what a group stands for there. */
+function assertOneKindPerSubjectType(schema: Schema, type: string): void {
+  for (const [name, subjects] of Object.entries(schema.relations(type))) {
+    const seen = new Map<string, string>();
+
+    for (const subject of subjects) {
+      const subjectType = subject.split('#')[0] ?? subject;
+      const other = seen.get(subjectType);
+
+      if (other !== undefined && other !== subject) {
+        throw new SchemaError(
+          `"${type}#${name}" accepts both "${other}" and "${subject}": a tuple naming a ${subjectType} could not say which. Accept one of them.`,
+        );
+      }
+
+      seen.set(subjectType, subject);
+    }
+  }
 }
 
-function assertResolves(schema: Schema, at: Named, rewrite: Rewrite): void {
-  if (typeof rewrite === 'string') {
-    if (schema.resolve(at.type, rewrite) !== undefined) {
-      return;
-    }
+function assertHasWays(at: Named, derived: DerivedRelation): void {
+  const { anyOf, allOf } = waysOf(derived);
 
-    throw new SchemaError(`"${at.type}#${at.name}" refers to "${rewrite}", which "${at.type}" does not declare.`);
+  if (anyOf.length === 0 && allOf.length === 0) {
+    throw new SchemaError(`"${at.type}#${at.name}" has no way of being held: give anyOf or allOf.`);
   }
+}
 
-  if (rewrite.kind === 'from') {
-    assertFollows(schema, at, rewrite);
+function assertWaysResolve(schema: Schema, at: Named, derived: DerivedRelation): void {
+  const { anyOf, allOf, butNot } = waysOf(derived);
+
+  for (const way of [...anyOf, ...allOf, ...butNot]) {
+    assertWayResolves(schema, at, way);
+  }
+}
+
+function assertWayResolves(schema: Schema, at: Named, way: Way): void {
+  if (typeof way !== 'string') {
+    assertFollows(schema, at, way);
 
     return;
   }
 
-  const children = rewrite.kind === 'exclusion' ? [rewrite.base, rewrite.subtract] : rewrite.children;
-
-  if (children.length === 0) {
-    throw new SchemaError(`"${at.type}#${at.name}" has an empty ${rewrite.kind}.`);
-  }
-
-  for (const child of children) {
-    assertResolves(schema, at, child);
+  if (!schema.declares(at.type, way)) {
+    throw new SchemaError(`"${at.type}#${at.name}" names "${way}", which "${at.type}" does not declare.`);
   }
 }
 
-function assertFollows(schema: Schema, at: Named, { relation, permission }: FromRewrite): void {
-  const followed = schema.resolve(at.type, relation);
+function assertFollows(schema: Schema, at: Named, { via, holds }: Via): void {
+  const followed = schema.relations(at.type)[via];
 
-  if (followed?.kind !== 'relation') {
-    throw new SchemaError(`"${at.type}#${at.name}" follows "${relation}", which is not a relation of "${at.type}".`);
+  if (followed === undefined) {
+    throw new SchemaError(`"${at.type}#${at.name}" follows "${via}", which is not a relation of "${at.type}".`);
   }
 
-  for (const target of followed.subjects) {
+  for (const target of followed) {
     if (target.includes('#')) {
       throw new SchemaError(
-        `"${at.type}#${at.name}" follows "${relation}", which accepts the userset "${target}": only objects can be followed.`,
+        `"${at.type}#${at.name}" follows "${via}", which accepts "${target}": only elements can be followed.`,
       );
     }
 
-    if (schema.resolve(target, permission) === undefined) {
-      throw new SchemaError(`"${at.type}#${at.name}" asks "${permission}" of "${target}", which does not declare it.`);
+    if (!schema.declares(target, holds)) {
+      throw new SchemaError(`"${at.type}#${at.name}" asks "${holds}" of "${target}", which does not declare it.`);
     }
   }
 }
 
 /**
- * A permission defined by itself through names alone (`edit: 'view'`, `view: 'edit'`) reads
- * no tuple and would loop for ever. A loop through `from` or a userset reads a tuple at each
- * turn: it depends on the data and is cut at run time by the cycle protection.
+ * A derived relation defined through names alone (`edit: 'view'`, `view: 'edit'`) reads no
+ * tuple and would loop for ever. A loop through `via` or a userset reads a tuple at each turn:
+ * it depends on the data and is cut at run time by the cycle protection.
  */
 function assertTerminates(schema: Schema, type: string, path: readonly string[]): void {
-  const rewrite = schema.permissions(type)[path.at(-1) ?? ''];
+  const derived = schema.derived(type)[path.at(-1) ?? ''];
 
-  if (rewrite === undefined) {
+  if (derived === undefined) {
     return;
   }
 
-  for (const name of namesIn(rewrite)) {
+  for (const name of namesIn(derived)) {
     if (path.includes(name)) {
-      throw new SchemaError(`"${type}" has a rewrite that cannot terminate: ${[...path, name].join(' -> ')}.`);
+      throw new SchemaError(`"${type}" has a derived relation that cannot terminate: ${[...path, name].join(' -> ')}.`);
     }
 
     assertTerminates(schema, type, [...path, name]);
   }
 }
 
-function namesIn(rewrite: Rewrite): readonly string[] {
-  if (typeof rewrite === 'string') {
-    return [rewrite];
-  }
+function namesIn(derived: DerivedRelation): readonly string[] {
+  const { anyOf, allOf, butNot } = waysOf(derived);
 
-  if (rewrite.kind === 'from') {
-    return [];
-  }
-
-  const children = rewrite.kind === 'exclusion' ? [rewrite.base, rewrite.subtract] : rewrite.children;
-
-  return children.flatMap(namesIn);
+  return [...anyOf, ...allOf, ...butNot].filter((way): way is string => typeof way === 'string');
 }

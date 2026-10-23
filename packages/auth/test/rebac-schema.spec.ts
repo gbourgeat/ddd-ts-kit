@@ -5,16 +5,12 @@ import {
   SchemaCheckedTupleStore,
   SchemaError,
   defineSchema,
-  exclusion,
-  from,
-  intersection,
   objectOf,
   parseObject,
-  parseSubject,
-  union,
+  via,
   type SchemaDefinition,
 } from '../src/rebac.js';
-import { fact, schema } from './support/documents.js';
+import { docsPermissions, fact, schema } from './support/documents.js';
 
 const failure = (definition: SchemaDefinition): string => {
   try {
@@ -31,21 +27,26 @@ const failure = (definition: SchemaDefinition): string => {
 };
 
 describe('defineSchema', () => {
-  it('resolves a name to a relation or to a permission', () => {
-    expect(schema.resolve('document', 'editor')).toEqual({ kind: 'relation', subjects: ['user', 'group#member'] });
+  it('tells a stored relation from a derived one', () => {
+    expect(schema.relations('document')['editor']).toEqual(['user', 'group#member']);
 
-    expect(schema.resolve('document', 'sign')).toEqual({
-      kind: 'permission',
-      rewrite: intersection('approver', 'edit'),
+    expect(schema.derived('document')[docsPermissions['document.sign'].id]).toEqual({
+      allOf: ['approver', docsPermissions['document.edit'].id],
     });
 
-    expect(schema.resolve('document', 'publish')).toBeUndefined();
-    expect(schema.resolve('invoice', 'edit')).toBeUndefined();
+    expect(schema.declares('document', 'editor')).toBe(true);
+    expect(schema.declares('document', 'publish')).toBe(false);
+    expect(schema.declares('invoice', 'edit')).toBe(false);
   });
 
-  it('knows which relations are used as usersets', () => {
-    expect(schema.usersetsOf('group')).toEqual(['member']);
-    expect(schema.usersetsOf('document')).toEqual([]);
+  it('knows what a subject stands for in a relation', () => {
+    expect(schema.acceptedKindOf('document', 'editor', 'group')).toBe('group#member');
+    expect(schema.acceptedKindOf('document', 'parent', 'folder')).toBe('folder');
+    expect(schema.acceptedKindOf('document', 'owner', 'group')).toBeUndefined();
+
+    expect(schema.standsFor('document', 'editor', 'group')).toBe('member');
+    expect(schema.standsFor('document', 'editor', 'user')).toBeUndefined();
+    expect(schema.standsFor('document', 'parent', 'folder')).toBeUndefined();
   });
 
   it('refuses a relation accepting an unknown type', () => {
@@ -60,19 +61,31 @@ describe('defineSchema', () => {
     );
   });
 
-  it('refuses a permission referring to an unknown relation', () => {
+  it('refuses a relation accepting one type in two ways, since a tuple names the element alone', () => {
+    const group = { relations: { member: ['user'], owner: ['user'] } };
+
+    expect(failure({ user: {}, group, document: { relations: { editor: ['group', 'group#member'] } } })).toBe(
+      '"document#editor" accepts both "group" and "group#member": a tuple naming a group could not say which. Accept one of them.',
+    );
+
+    expect(
+      failure({ user: {}, group, document: { relations: { editor: ['group#member', 'group#owner'] } } }),
+    ).toContain('accepts both "group#member" and "group#owner"');
+  });
+
+  it('refuses a way naming something the type does not declare', () => {
     expect(
       failure({
         user: {},
-        document: { relations: { owner: ['user'] }, permissions: { edit: union('owner', 'editor') } },
+        document: { relations: { owner: ['user'] }, derived: { edit: { anyOf: ['owner', 'editor'] } } },
       }),
-    ).toBe('"document#edit" refers to "editor", which "document" does not declare.');
+    ).toBe('"document#edit" names "editor", which "document" does not declare.');
   });
 
-  it('refuses to follow something that is not a relation to objects', () => {
-    const base = { user: {}, folder: { relations: { owner: ['user'] }, permissions: { edit: 'owner' } } };
+  it('refuses to follow something that is not a relation to elements', () => {
+    const base = { user: {}, folder: { relations: { owner: ['user'] }, derived: { edit: 'owner' } } };
 
-    expect(failure({ ...base, document: { permissions: { edit: from('parent', 'edit') } } })).toBe(
+    expect(failure({ ...base, document: { derived: { edit: via('parent', 'edit') } } })).toBe(
       '"document#edit" follows "parent", which is not a relation of "document".',
     );
 
@@ -80,71 +93,67 @@ describe('defineSchema', () => {
       failure({
         ...base,
         group: { relations: { member: ['user'] } },
-        document: { relations: { parent: ['group#member'] }, permissions: { edit: from('parent', 'edit') } },
+        document: { relations: { parent: ['group#member'] }, derived: { edit: via('parent', 'edit') } },
       }),
-    ).toContain('only objects can be followed');
+    ).toBe('"document#edit" follows "parent", which accepts "group#member": only elements can be followed.');
   });
 
-  it('refuses to ask a followed object for a permission it does not declare', () => {
+  it('refuses to ask a followed element for something it does not declare', () => {
     expect(
       failure({
         user: {},
         folder: { relations: { owner: ['user'] } },
-        document: { relations: { parent: ['folder'] }, permissions: { edit: from('parent', 'edit') } },
+        document: { relations: { parent: ['folder'] }, derived: { edit: via('parent', 'edit') } },
       }),
     ).toBe('"document#edit" asks "edit" of "folder", which does not declare it.');
   });
 
-  it('refuses one name for a relation and a permission', () => {
-    expect(failure({ user: {}, document: { relations: { edit: ['user'] }, permissions: { edit: 'edit' } } })).toBe(
-      '"document" declares "edit" both as a relation and as a permission.',
+  it('refuses one name for a relation and a derived relation', () => {
+    expect(failure({ user: {}, document: { relations: { edit: ['user'] }, derived: { edit: 'edit' } } })).toBe(
+      '"document" declares "edit" both as a relation and as a derived relation.',
     );
   });
 
-  it('refuses a rewrite that reads no tuple and could never terminate', () => {
+  it('refuses a derived relation that reads no tuple and could never terminate', () => {
     expect(
       failure({
-        document: { permissions: { edit: union('view'), view: exclusion('comment', 'edit'), comment: 'edit' } },
+        document: {
+          derived: { edit: { anyOf: ['view'] }, view: { anyOf: ['comment'], butNot: ['edit'] }, comment: 'edit' },
+        },
       }),
-    ).toBe('"document" has a rewrite that cannot terminate: edit -> view -> comment -> edit.');
+    ).toBe('"document" has a derived relation that cannot terminate: edit -> view -> comment -> edit.');
 
-    expect(failure({ document: { permissions: { edit: 'edit' } } })).toContain('edit -> edit');
+    expect(failure({ document: { derived: { edit: 'edit' } } })).toContain('edit -> edit');
   });
 
   it('accepts a loop that goes through tuples: folders in folders, groups in groups', () => {
-    expect(schema.resolve('folder', 'view')?.kind).toBe('permission');
-    expect(schema.resolve('group', 'member')?.kind).toBe('relation');
+    expect(schema.derived('folder')[docsPermissions['folder.view'].id]).toBeDefined();
+    expect(schema.relations('group')['member']).toEqual(['user', 'group#member']);
   });
 
-  it('refuses an empty union or intersection, which would grant nobody or everybody', () => {
-    expect(failure({ document: { permissions: { edit: union() } } })).toBe('"document#edit" has an empty union.');
+  it('refuses a derived relation with no way of being held, which would grant nobody or everybody', () => {
+    const message = '"document#edit" has no way of being held: give anyOf or allOf.';
 
-    expect(failure({ document: { permissions: { edit: intersection() } } })).toBe(
-      '"document#edit" has an empty intersection.',
-    );
+    expect(failure({ document: { derived: { edit: {} } } })).toBe(message);
+    expect(failure({ document: { derived: { edit: { anyOf: [] } } } })).toBe(message);
+
+    expect(
+      failure({ user: {}, document: { relations: { banned: ['user'] }, derived: { edit: { butNot: ['banned'] } } } }),
+    ).toBe(message);
   });
 });
 
 describe('tuples', () => {
-  it('reads objects and subjects', () => {
+  it('reads objects', () => {
     expect(parseObject('document:1')).toEqual({ type: 'document', id: '1' });
     expect(parseObject('system:system:nightly')).toEqual({ type: 'system', id: 'system:nightly' });
-    expect(parseSubject('user:ada')).toEqual({ type: 'user', id: 'ada' });
-    expect(parseSubject('group:eng#member')).toEqual({ type: 'group', id: 'eng', relation: 'member' });
     expect(objectOf({ type: 'document', id: '1' })).toBe('document:1');
   });
 
-  it.each(['document', ':1', 'Document:1', 'document:', 'document:a b', 'document:1@x'])(
+  it.each(['document', ':1', 'Document:1', 'document:', 'document:a b', 'document:1@x', 'group:eng#member'])(
     'refuses the object %j',
     (object) => {
       expect(() => parseObject(object)).toThrow(InvalidTupleError);
-    },
-  );
-
-  it.each(['group:eng#', 'group:eng#member#x', 'group#member', 'group:eng#Member'])(
-    'refuses the subject %j',
-    (subject) => {
-      expect(() => parseSubject(subject)).toThrow(InvalidTupleError);
     },
   );
 });
@@ -158,7 +167,7 @@ describe('SchemaCheckedTupleStore', () => {
 
   it('stores the tuples the schema describes', async () => {
     const { inner, store } = stores();
-    const tuples = [fact('document:1', 'editor', 'user:ada'), fact('document:1', 'editor', 'group:eng#member')];
+    const tuples = [fact('document:1', 'editor', 'user:ada'), fact('document:1', 'editor', 'group:eng')];
 
     await store.write(tuples);
 
@@ -173,12 +182,13 @@ describe('SchemaCheckedTupleStore', () => {
       fact('document:1', 'publisher', 'user:ada'),
       '"publisher" is not a relation of "document": only relations are written.',
     ],
-    [
-      fact('document:1', 'owner', 'group:eng#member'),
-      '"document#owner" does not accept a subject of kind "group#member".',
-    ],
-    [fact('document:1', 'parent', 'user:ada'), '"document#parent" does not accept a subject of kind "user".'],
+    [fact('document:1', 'owner', 'group:eng'), '"document#owner" does not accept a subject of type "group".'],
+    [fact('document:1', 'parent', 'user:ada'), '"document#parent" does not accept a subject of type "user".'],
     [fact('invoice:1', 'owner', 'user:ada'), '"owner" is not a relation of "invoice": only relations are written.'],
+    [
+      fact('document:1', 'editor', 'group:eng#member'),
+      '"group:eng#member" is not a subject: name the element, "group:eng", and let the schema say what it stands for.',
+    ],
   ])('refuses %j', async (tuple, message) => {
     const { inner, store } = stores();
 

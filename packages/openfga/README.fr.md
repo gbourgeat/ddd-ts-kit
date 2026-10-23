@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:903eebf3bd591305 -->
+<!-- translation-of: README.md sha256:7389dc2d40830bbe -->
 
 # @ddd-ts-kit/openfga
 
@@ -29,26 +29,33 @@ et un magasin de tuples dans votre propre base de données.
 ## Le modèle, à partir du schéma
 
 Le schéma est celui qu'évalue `RelationBasedAuthorizer` dans le processus : des types, les
-relations qu'un tuple peut porter, et les permissions qui en dérivent. `authorizationModelOf` le
+relations qu'un tuple peut porter, et les relations qui en dérivent, dont celles nommées d'après
+une permission. `authorizationModelOf` le
 transforme en corps de `WriteAuthorizationModel` (schéma 1.1). Voici un schéma simplifié, inspiré
 de celui de l'application d'exemple :
 
 <!-- checked sample -->
 ```ts
-import { defineSchema, from, union } from '@ddd-ts-kit/auth/rebac';
+import { definePermissions } from '@ddd-ts-kit/auth';
+import { defineSchema, via } from '@ddd-ts-kit/auth/rebac';
 import { authorizationModelOf } from '@ddd-ts-kit/openfga';
+
+export const schedulingPermissions = definePermissions('scheduling', {
+  'appointment.cancel': { description: 'Cancel an appointment' },
+});
 
 // Qui est quoi pour quel élément : un cabinet a des responsables, un agenda son titulaire et ses assistants.
 export const relationshipSchema = defineSchema({
   user: {},
-  practice: { relations: { manager: ['user'] }, permissions: { manage: union('manager') } },
+  practice: { relations: { manager: ['user'] }, derived: { manage: 'manager' } },
   calendar: {
     relations: { holder: ['user'], assistant: ['user'], practice: ['practice'] },
-    permissions: { run: union('holder', 'assistant', from('practice', 'manage')) },
+    derived: { run: { anyOf: ['holder', 'assistant', via('practice', 'manage')] } },
   },
   appointment: {
     relations: { patient: ['user'], calendar: ['calendar'] },
-    permissions: { change: union('patient', from('calendar', 'run')) },
+    // Annuler un rendez-vous, c'est détenir `change` sur lui : la relation dérivée nommée d'après la permission l'accorde.
+    derived: { change: { anyOf: ['patient', via('calendar', 'run')] }, [schedulingPermissions['appointment.cancel'].id]: 'change' },
   },
 });
 
@@ -82,15 +89,22 @@ type appointment
     define patient: [user]
     define calendar: [calendar]
     define change: patient or run from calendar
+    define scheduling_appointment_cancel: change
 ```
+
+Une relation dérivée nommée d'après l'identifiant d'une permission ne peut pas garder son nom :
+OpenFGA refuse `:` dans un nom de relation. `relationNameOf` écrit `scheduling:appointment.cancel`
+en `scheduling_appointment_cancel`, dans le modèle comme dans chaque `Check` et `ListObjects` ;
+aucun identifiant de permission ne contient `_`, deux ne deviennent donc jamais un même nom.
 
 | Schéma de `@ddd-ts-kit/auth/rebac` | OpenFGA |
 |---|---|
 | une relation et les sujets qu'elle énumère : `editor: ['user', 'group#member']` | une relation directement attribuable (`this`) avec `directly_related_user_types` |
-| un nom dans une réécriture : `union('owner', 'editor')` | un *userset* calculé (computed userset) |
-| `union(...)`, `intersection(...)` | `union`, `intersection` |
-| `exclusion(base, subtract)` | `difference` |
-| `from('parent', 'edit')` | un *tuple to userset* |
+| un nom parmi les voies : `edit: 'owner'`, `anyOf: ['owner', 'editor']` | un *userset* calculé (computed userset) |
+| `anyOf`, `allOf` | `union`, `intersection` |
+| `butNot` | `difference` |
+| `via('parent', 'edit')` | un *tuple to userset*, `edit from parent` |
+| une relation dérivée nommée `docs:document.edit` | la relation `docs_document_edit` |
 
 `ensureAuthorizationModel(client, schema)` écrit le modèle généré quand le dernier modèle du
 magasin en diffère, et renvoie l'identifiant en vigueur et les différences (OpenFGA garde chaque
@@ -145,42 +159,35 @@ calendar#run differs: the schema says union(holder, assistant, from(practice, ma
 
 ## Le magasin et l'*authorizer*
 
-Dans la racine de composition, un seul client lié à un seul magasin sert les deux adaptateurs. La
-correspondance (`mapping`) dit, par type de ressource, quelle relation du modèle représente
-chaque permission du kit, comme pour `RelationBasedAuthorizer` :
+Dans la racine de composition, un seul client lié à un seul magasin sert les deux adaptateurs.
+Tous deux lisent le schéma : le magasin pour donner à un sujet le *userset* que dit sa relation
+(`group:eng` s'écrit `group:eng#member`), l'*authorizer* pour demander une permission comme la
+relation dérivée nommée d'après elle, comme le fait `RelationBasedAuthorizer` :
 
 <!-- checked sample -->
 ```ts
-import { definePermissions } from '@ddd-ts-kit/auth';
-import type { PermissionMapping, Schema } from '@ddd-ts-kit/auth/rebac';
+import type { Schema } from '@ddd-ts-kit/auth/rebac';
 import { OpenFgaAuthorizer, OpenFgaRelationTupleStore } from '@ddd-ts-kit/openfga';
 import { openFgaClient } from '@ddd-ts-kit/openfga/sdk';
 
-declare const relationshipSchema: Schema;
+declare const relationshipSchema: Schema; // celui du bloc précédent, avec scheduling:appointment.cancel dérivée sur un rendez-vous
 declare const config: { readonly openfga: { readonly url: string; readonly storeId: string } };
-
-export const schedulingPermissions = definePermissions('scheduling', {
-  'appointment.cancel': { description: 'Cancel an appointment' },
-});
-
-// Annuler un rendez-vous, c'est détenir la relation `change` sur lui.
-const mapping: PermissionMapping = {
-  appointment: { [schedulingPermissions['appointment.cancel'].id]: 'change' },
-};
 
 const client = openFgaClient({ apiUrl: config.openfga.url, storeId: config.openfga.storeId });
 
 // Les deux mêmes ports que l'authorizer dans le processus et qu'un magasin de tuples dans votre base.
 export const tuples = new OpenFgaRelationTupleStore(client, relationshipSchema);
-export const authorizer = new OpenFgaAuthorizer({ client, mapping, listObjectsLimit: 1000 });
+export const authorizer = new OpenFgaAuthorizer({ client, schema: relationshipSchema, listObjectsLimit: 1000 });
 ```
 
 - `OpenFgaRelationTupleStore` passe `relationTupleStoreContract`, comme le magasin PostgreSQL :
   écrire deux fois un tuple et supprimer un tuple absent ne changent rien (les options de conflit
   d'OpenFGA 1.10 et des versions suivantes), les écritures et les suppressions vont par 100, les
-  lectures suivent chaque page. Une lecture par sujet fait une lecture par relation du schéma qui
-  accepte la sorte du sujet, puisqu'OpenFGA lit par utilisateur au sein d'un seul type d'objet.
-- `OpenFgaAuthorizer` passe `authorizerContract`, avec la correspondance et les codes de refus de
+  lectures suivent chaque page. Un tuple du kit nomme son sujet seul ; le magasin écrit le
+  *userset* que lui donne le schéma (`group:eng#member`) et le relit seul. Une lecture par sujet
+  fait une lecture par relation du schéma qui accepte le type du sujet, puisqu'OpenFGA lit par
+  utilisateur au sein d'un seul type d'objet.
+- `OpenFgaAuthorizer` passe `authorizerContract`, avec le schéma et les codes de refus de
   `RelationBasedAuthorizer` (`ANONYMOUS`, `RESOURCE_REQUIRED`, `UNMAPPED_PERMISSION`,
   `NO_RELATION`) : `Check` décide, `ListObjects` donne le périmètre d'une recherche
   (`{ kind: 'ids' }`). Un projet passe de l'un à l'autre par la liaison, rien d'autre ne change.
@@ -207,14 +214,14 @@ await tuples.write([
 
 const ada: Actor = { id: 'ada', type: 'user', roles: [], attributes: {} };
 
-// Check user:ada change appointment:42 : { allowed: true }
+// Check user:ada scheduling_appointment_cancel appointment:42 : { allowed: true }
 export const decision = await authorizer.check({
   actor: ada,
   permission: cancel,
   resource: { type: 'appointment', id: '42' },
 });
 
-// ListObjects user:ada change appointment : { kind: 'ids', ids: ['42'] }, les identifiants que la recherche peut lire
+// ListObjects user:ada scheduling_appointment_cancel appointment : { kind: 'ids', ids: ['42'] }, les identifiants que la recherche peut lire
 export const scope = await authorizer.listAccessible({ actor: ada, permission: cancel, resourceType: 'appointment' });
 ```
 
@@ -288,8 +295,9 @@ points d'accès des tuples, et contre un vrai serveur quand `DDD_TS_KIT_OPENFGA_
 le *job* d'intégration du dépôt démarre `openfga/openfga` v1.22.0, épinglé par *digest*. Un projet
 soumet ses propres adaptateurs aux mêmes suites, chaque test sur un magasin à lui (`createStore`,
 puis `ensureAuthorizationModel`). Les tuples qu'écrit le contrat du magasin portent sur des
-documents et des groupes (`document:1#editor@group:eng#member`, `document:1#parent@group:eng`) :
-le magasin sur lequel il s'exécute détient un modèle qui les décrit.
+documents et des groupes (`document:1#editor@group:eng`, que le serveur tient comme
+`group:eng#member`, et `document:1#parent@group:eng`) : le magasin sur lequel il s'exécute
+détient un modèle qui les décrit.
 
 <!-- checked sample -->
 ```ts
@@ -343,8 +351,9 @@ relationTupleStoreContract(
   non plus.
 - Le sujet d'un acteur est `<type>:<id>` ; un identifiant qui contient un caractère qu'OpenFGA
   refuse dans un identifiant d'objet demande `subjectOf`.
-- `expand` de `RelationBasedAuthorizer` n'a pas d'équivalent ici : utilisez l'API `Expand`
-  d'OpenFGA pour le débogage.
+- `explain` de `RelationBasedAuthorizer` n'a pas d'équivalent ici : utilisez l'API `Expand`
+  d'OpenFGA pour le débogage, où une relation dérivée nommée d'après une permission porte le nom
+  que lui donne `relationNameOf` (`docs_document_edit`).
 
 ## Voir aussi
 
