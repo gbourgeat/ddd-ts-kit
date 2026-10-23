@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:029a313ecc939ed9 -->
+<!-- translation-of: README.md sha256:97f80842613379f3 -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -117,7 +117,7 @@ et le mot de passe de chacun est son nom d'utilisateur.
 | Une projection des propres événements du contexte | `scheduling/application/projections/agenda.projection.ts` |
 | Des modèles de lecture et leur reconstruction | `analytics/application/projections/`, `analytics/test/integration/outcome-register.rebuild.spec.ts` |
 | Un agrégat gardé sous forme de ses événements, à côté d'agrégats gardés en lignes : son historique est le métier | `scheduling/domain/aggregates/attendance-record.aggregate.ts` (méthodes apply), `infrastructure/persistence/attendance-record-events.mapper.ts` (formes stockées, un motif scellé par patient), `event-store-attendance-record.repository.ts` (*snapshots* tous les 20 événements), `stored-events.lock.json` |
-| Une projection alimentée par l'event store : rattrapage avec un point de reprise, reconstruction depuis la position zéro, un patient effacé | `scheduling/application/projections/attendance-history.projection.ts`, `src/platform/events/store-fed-projections.ts`, `test/integration/attendance-history.rebuild.spec.ts`, `test/integration/appointment-journey.spec.ts` ; un effacement par `npm run erase:patient` |
+| Une projection alimentée par l'event store : rattrapage avec un point de reprise, reconstruction depuis la position zéro, un patient effacé | `scheduling/application/projections/attendance-history.projection.ts`, `src/platform/event-store/store-fed-projections.ts`, `test/integration/attendance-history.rebuild.spec.ts`, `test/integration/appointment-journey.spec.ts` ; un effacement par `npm run erase:patient` |
 | Une ligne par fait, calculée à la lecture : des chiffres groupés dans une seule requête SQL au moment où on les lit, au lieu de compteurs tenus par des événements (rien qui dérive, rien à vérifier la nuit) | `analytics/CONTEXT.md` (« How occupancy is measured »), `analytics/infrastructure/persistence/knex-occupancy-reader.repository.ts` |
 | Une définition métier et son SQL gardés égaux par un seul contrat | `analytics/domain/services/occupancy-measure.service.ts`, `analytics/test/integration/occupancy-reader.contract.spec.ts` |
 | Un consommateur avec un port sortant, nouvelle tentative (retry) puis file de rejet (dead letter) | `notification/application/integration/handlers/`, `infrastructure/external/remote-mailer.adapter.ts`, `test/integration/mailer-outage.spec.ts` |
@@ -563,8 +563,8 @@ Le registre de présence d'un patient est gardé sous forme de ses événements 
 - **Un effacement.** `DATABASE_URL=<url> npm run erase:patient -- <patientId> <operatorId>`
   vérifie que l'id nomme une personne d'un réseau, détruit la clé avec laquelle les paroles du
   patient ont été scellées, écrit l'effacement dans le journal d'audit, puis reconstruit chaque
-  projection alimentée par le store (`src/platform/events/erase-data-subject.ts`,
-  `src/platform/events/erase-on-the-command-line.ts`, `scripts/erase-patient.ts`) : le flux et
+  projection alimentée par le store (`src/platform/erasure/erase-data-subject.ts`,
+  `src/platform/erasure/erase-on-the-command-line.ts`, `scripts/erase-patient.ts`) : le flux et
   les *snapshots* affichent `[erased]` immédiatement, et l'historique aussi une fois reconstruit.
   Une reconstruction n'arrête jamais le rattrapage, donc l'API peut continuer de tourner. Le
   relancer achève un effacement dont l'entrée ou la reconstruction a échoué. La clé est détruite
@@ -585,7 +585,7 @@ Le registre de présence d'un patient est gardé sous forme de ses événements 
   globale, que lit le personnel de la plateforme : les clés sont hors des réseaux (ADR-0004). Sa
   date plus la rétention des sauvegardes des clés donne le jour où l'effacement est complet.
 - **Limites de l'effacement.** L'id doit être fait de ce dont un slug ou un UUID est fait
-  (`src/platform/events/is-subject-id.ts`) : un fournisseur d'identité dont les sujets portent un
+  (`src/platform/erasure/is-subject-id.ts`) : un fournisseur d'identité dont les sujets portent un
   autre caractère (`auth0|abc`) demande d'élargir cette grammaire, en connaissance de cause,
   puisque ce qu'elle laisse passer peut atteindre le journal. Une faute de frappe qui respecte
   cette grammaire laisse une entrée `keyDestroyed: false` définitive : un identifiant, pas une

@@ -45,9 +45,7 @@ describe('init --errors', () => {
     expect(read(root, 'src/main.ts')).toContain("import { errors } from '@/platform/observability/errors';");
     expect(platform(root, 'observability/errors.ts')).toContain('initSentry(');
 
-    expect(platform(root, 'config/load-config.ts')).toContain(
-      'errorReporting: readErrorReporting(env, environment, problems),',
-    );
+    expect(platform(root, 'config/load-config.ts')).toContain('errorReporting: readErrorReporting(env, environment),');
   });
 
   it('changes nothing of a project that reports nowhere', () => {
@@ -210,20 +208,14 @@ describe('the configuration of error reporting', () => {
     );
 
     expect(loader).toContain(
-      "  const dsn = (env['SENTRY_DSN'] ?? '').trim();\n  const named = (env['SENTRY_ENVIRONMENT'] ?? '').trim();\n  const release = (env['SENTRY_RELEASE'] ?? '').trim();",
+      "  const dsn = env.optionalUrl('SENTRY_DSN', 'to report nothing');\n  const release = env.optional('SENTRY_RELEASE');",
     );
 
     expect(loader).toContain(
-      "  if (dsn !== '' && !URL.canParse(dsn)) {\n    problems.push('SENTRY_DSN must be a URL, or empty to report nothing');\n  }",
+      "    ...(dsn === undefined ? {} : { dsn }),\n    environment: env.optional('SENTRY_ENVIRONMENT') ?? environment,\n    ...(release === undefined ? {} : { release }),",
     );
 
-    expect(loader).toContain(
-      "    ...(dsn === '' ? {} : { dsn }),\n    environment: named === '' ? environment : named,\n    ...(release === '' ? {} : { release }),",
-    );
-
-    expect(loader).toContain(
-      "scrubMessages: readFlag(env, { name: 'SENTRY_SCRUB_MESSAGES', fallback: false }, problems),",
-    );
+    expect(loader).toContain("scrubMessages: env.flag('SENTRY_SCRUB_MESSAGES', false),");
   });
 
   it('documents them in .env.example, commented out: a copied file reports nothing', () => {

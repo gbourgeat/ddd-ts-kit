@@ -17,17 +17,13 @@ describe('scheduled jobs in the platform', () => {
 
     expect(platform(root, 'config/app-config.ts')).toContain('readonly runJobs: boolean;');
 
-    expect(platform(root, 'config/load-config.ts')).toContain(
-      "runJobs: readFlag(env, { name: 'RUN_JOBS', fallback: runJobsByDefault }, problems),",
-    );
+    expect(platform(root, 'config/load-config.ts')).toContain("runJobs: env.flag('RUN_JOBS', runJobsByDefault),");
 
     expect(platform(root, 'config/load-config.ts')).toContain(
       '// ddd-ts-kit:run-jobs\nconst runJobsByDefault = true;\n// /ddd-ts-kit:run-jobs',
     );
 
-    expect(platform(root, 'config/load-config.ts')).toContain(
-      "problems.push(variable.name + ' must be true or false');",
-    );
+    expect(platform(root, 'config/environment.ts')).toContain('this.problem(`${name} must be true or false`);');
 
     expect(read(root, '.env.example')).toContain('# RUN_JOBS=true');
     expect(read(root, '.env.example')).toContain('JOB_<CONTEXT>_<JOB>_ENABLED=false');

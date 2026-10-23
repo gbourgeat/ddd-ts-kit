@@ -7,15 +7,16 @@ interface BrokerAddress {
   readonly variable: string;
   readonly key: string;
   readonly absent: string;
-  readonly reader: string;
+  /** The method of `Environment` that reads the variable: `url`, or `text` for a list of `host:port`. */
+  readonly reader: 'url' | 'text';
 }
 
 /** How the platform reaches a broker that has an address of its own: its environment variable, its key in the validated config, and what stands for "no broker" in the tests. */
 const BROKER_ADDRESS: Readonly<Record<string, BrokerAddress>> = {
-  rabbitmq: { variable: 'AMQP_URL', key: 'amqpUrl', absent: 'amqp://in-process/tests', reader: 'readUrl' },
+  rabbitmq: { variable: 'AMQP_URL', key: 'amqpUrl', absent: 'amqp://in-process/tests', reader: 'url' },
   // A list of `host:port`, which is not a URL.
-  kafka: { variable: 'KAFKA_BROKERS', key: 'kafkaBrokers', absent: 'in-process:0', reader: 'readText' },
-  nats: { variable: 'NATS_URL', key: 'natsUrl', absent: 'nats://in-process/tests', reader: 'readUrl' },
+  kafka: { variable: 'KAFKA_BROKERS', key: 'kafkaBrokers', absent: 'in-process:0', reader: 'text' },
+  nats: { variable: 'NATS_URL', key: 'natsUrl', absent: 'nats://in-process/tests', reader: 'url' },
 };
 
 export function brokerVars(config: Config): RenderContext {

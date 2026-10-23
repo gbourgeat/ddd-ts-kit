@@ -27,7 +27,7 @@ describe('init --cache', () => {
     expect(read(root, 'src/main.ts')).toContain('wakeOn: redis.relaySignal');
     expect(read(root, 'src/platform/http/refusal-for.ts')).toContain("'retry-after'");
     expect(read(root, 'src/platform/http/start-http-server.ts')).toContain("app.get(\n    '/health/ready',");
-    expect(read(root, 'src/platform/config/load-config.ts')).toContain("redisUrl: readUrl(env, 'REDIS_URL', problems)");
+    expect(read(root, 'src/platform/config/load-config.ts')).toContain("redisUrl: env.url('REDIS_URL')");
 
     expect(read(root, 'docker-compose.yml')).toMatch(
       /\n {2}cache:\n {4}image: docker\.dragonflydb\.io\/dragonflydb\/dragonfly:v2\.0\.2\n[\s\S]*healthcheck:\n {6}test: \["CMD", "redis-cli", "ping"\]/,
@@ -66,7 +66,7 @@ describe('init --authn keycloak', () => {
       'keycloakAuthenticator({ baseUrl, realm, audience',
     );
 
-    expect(read(root, 'src/platform/config/load-config.ts')).toContain("readUrl(env, 'KEYCLOAK_URL', problems)");
+    expect(read(root, 'src/platform/config/load-config.ts')).toContain("baseUrl: env.url('KEYCLOAK_URL')");
 
     expect(read(root, 'docker-compose.yml')).toMatch(
       /\n {2}keycloak:\n {4}image: quay\.io\/keycloak\/keycloak:26\.8\.0\n {4}profiles: \[identity\]\n {4}command: \["start-dev", "--import-realm"\]/,

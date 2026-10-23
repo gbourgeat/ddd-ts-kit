@@ -1,8 +1,8 @@
-type Variables = Readonly<Record<string, string | undefined>>;
+import type { Environment } from '@/platform/config/environment';
 
 const consumerModes = ['continue', 'link'] as const;
 
-/** What `tracing.ts` starts with and what the composition root traces by. Nothing is imported here: `tracing.ts` reads it before any other module is loaded. */
+/** What `tracing.ts` starts with and what the composition root traces by. Only a type is imported here: `tracing.ts` reads it before any other module is loaded. */
 export interface TracingConfig {
   /** `OTEL_EXPORTER_OTLP_ENDPOINT`, read by the exporter itself: left out, no span leaves the process. */
   readonly endpoint?: string;
@@ -12,42 +12,29 @@ export interface TracingConfig {
   readonly consumers: (typeof consumerModes)[number];
 }
 
-/** Collects every problem by variable name, like `loadConfig`. */
-export function readTracing(env: Variables, problems: string[]): TracingConfig {
-  const endpoint = (env['OTEL_EXPORTER_OTLP_ENDPOINT'] ?? '').trim();
-  const sampleRatio = readRatio(env['TRACE_SAMPLE_RATIO'], problems);
-
-  if (endpoint !== '' && !URL.canParse(endpoint)) {
-    problems.push('OTEL_EXPORTER_OTLP_ENDPOINT must be a URL, or empty to export nothing');
-  }
+export function readTracing(env: Environment): TracingConfig {
+  const endpoint = env.optionalUrl('OTEL_EXPORTER_OTLP_ENDPOINT', 'to export nothing');
+  const sampleRatio = readRatio(env);
 
   return {
-    ...(endpoint === '' ? {} : { endpoint }),
+    ...(endpoint === undefined ? {} : { endpoint }),
     ...(sampleRatio === undefined ? {} : { sampleRatio }),
-    consumers: readConsumers(env['TRACE_CONSUMERS'], problems),
+    consumers: env.oneOf('TRACE_CONSUMERS', consumerModes, 'continue'),
   };
 }
 
-function readRatio(raw: string | undefined, problems: string[]): number | undefined {
-  if (raw === undefined || raw.trim() === '') {
+function readRatio(env: Environment): number | undefined {
+  const written = env.optional('TRACE_SAMPLE_RATIO');
+
+  if (written === undefined) {
     return undefined;
   }
 
-  const ratio = Number(raw);
+  const ratio = Number(written);
 
   if (Number.isNaN(ratio) || ratio < 0 || ratio > 1) {
-    problems.push('TRACE_SAMPLE_RATIO must be a number between 0 and 1');
+    env.problem('TRACE_SAMPLE_RATIO must be a number between 0 and 1');
   }
 
   return ratio;
-}
-
-function readConsumers(raw: string | undefined, problems: string[]): TracingConfig['consumers'] {
-  const mode = consumerModes.find((candidate) => candidate === (raw ?? 'continue'));
-
-  if (mode === undefined) {
-    problems.push('TRACE_CONSUMERS must be one of ' + consumerModes.join(', '));
-  }
-
-  return mode ?? 'continue';
 }

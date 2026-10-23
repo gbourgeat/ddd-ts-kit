@@ -12,9 +12,13 @@ export function platformFiles(config: Config): InitFile[] {
     [`${config.sourceRoot}/main.ts`, 'init/main.ts.tpl'],
     file('observability/tracing.ts'),
     file('jobs/job-settings.ts'),
-    ...['config/app-config.ts', 'config/load-config.ts', 'config/read-tracing.ts', 'config/config-error.ts'].map(
-      (name) => file(name),
-    ),
+    ...[
+      'config/app-config.ts',
+      'config/environment.ts',
+      'config/load-config.ts',
+      'config/read-tracing.ts',
+      'config/config-error.ts',
+    ].map((name) => file(name)),
     file('observability/create-logger.ts', config.stack.logger),
     file('observability/create-metrics.ts'),
     ...['resilience-settings', 'default-resilience', 'self-governed', 'adapter-aspects'].map((name) =>
