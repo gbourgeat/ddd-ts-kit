@@ -12,3 +12,5 @@ dist
 # The notes of the repository, copied into the CLI package when it is packed.
 /packages/cli/CHANGELOG.md
 .worktrees/
+# The results of the eval suite of the plugin (`claude plugin eval plugin`), written at each run.
+/plugin/evals/results/

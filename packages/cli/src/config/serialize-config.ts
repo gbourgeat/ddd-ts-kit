@@ -71,6 +71,7 @@ function optionalKeys(config: Config): Record<string, unknown> {
     ...writtenCommit(commit),
     ...(worker ? { worker } : {}),
     ...(config.worktrees === 'advised' ? {} : { worktrees: config.worktrees }),
+    ...(config.formatOnWrite ? { formatOnWrite: true } : {}),
     ...teamKeys(config),
     ...pipelineKeys(config),
   };

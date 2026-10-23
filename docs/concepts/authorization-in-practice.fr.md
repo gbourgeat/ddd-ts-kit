@@ -1,5 +1,5 @@
 [English](authorization-in-practice.md) · **Français**
-<!-- translation-of: authorization-in-practice.md sha256:3df5e0f62f452ce6 -->
+<!-- translation-of: authorization-in-practice.md sha256:be286d8e917344d1 -->
 
 # L'autorisation en pratique
 
@@ -93,6 +93,7 @@ Installez-le avant l'unité de travail : une commande refusée n'ouvre alors auc
 abstract class Authorizer {
   abstract check(request: CheckRequest): Promise<Decision>;
   abstract listAccessible?(request: ListRequest): Promise<AccessScope>;
+  abstract explain?(request: CheckRequest): Promise<Explanation>;
 }
 ```
 
@@ -108,6 +109,9 @@ fournit `ANONYMOUS`, `NO_MATCHING_ROLE`, `TENANT_MISMATCH`, `EXPLICIT_DENY`, `NO
 `DEPTH_EXCEEDED`, et un adaptateur peut ajouter les siens. `listAccessible` est facultatif : un
 modèle qui ne sait pas énumérer le laisse de côté, et demander un périmètre échoue alors avec
 `ListingNotSupportedError` au lieu de renvoyer une mauvaise réponse.
+`explain` est facultatif aussi : la même décision que `check`, avec une trace en mots, une
+ligne par question que le modèle a posée, que `traceText` met en page. Les trois autorisateurs
+du kit y répondent ; un modèle qui ne sait pas dire plus que sa raison le laisse de côté.
 
 ## Ce que chaque modèle fait de la question
 
@@ -117,6 +121,7 @@ modèle qui ne sait pas énumérer le laisse de côté, et demander un périmèt
 | Utilise `resource` | seulement pour la vérification du *tenant* | pour charger les attributs de l'élément | comme objet de la relation |
 | Codes de refus | `NO_MATCHING_ROLE`, `TENANT_MISMATCH` | `EXPLICIT_DENY`, `NO_MATCHING_POLICY` | `NO_RELATION`, `DEPTH_EXCEEDED`, `UNMAPPED_PERMISSION` |
 | `listAccessible` | oui, en temps constant | non | oui, par expansion inverse |
+| `explain` | les rôles de l'acteur et ce que chacun accorde, puis le contrôle du *tenant* | chaque politique qui porte sur la permission, tenue ou non | chaque question posée aux tuples |
 
 ### Rôles
 
@@ -138,6 +143,8 @@ donne un, et ils appartiennent au *tenant* où s'exécute leur travail. La liste
 droit, `all` quand les *tenants* ne sont pas gérés ou que l'acteur les traverse,
 `filter: { tenantId }` sur le *tenant* du travail ou le seul *tenant* de l'acteur sinon, et
 `none` pour un acteur de plusieurs *tenants* hors du travail d'un *tenant*.
+`explain` dit la même chose en mots : les rôles de l'acteur, ce que chacun accorde et à travers
+quel rôle inclus, puis où la demande peut agir.
 
 Dans un projet généré, les rôles vivent dans `platform/auth/roles/roles.ts`, et le
 super-administrateur détient `*`. Une nouvelle permission n'est donc atteinte que par les
@@ -157,6 +164,8 @@ permission, la ressource, ses attributs (fournis par un port `ResourceAttributes
 et `now` tiré de la `Clock`. Parmi les règles qui s'appliquent, un seul `forbid` l'emporte sur
 tous les `permit` ; sans aucun `permit`, la réponse est non. Il n'y a pas de `listAccessible` : un
 prédicat n'est pas une requête.
+`explain` nomme ce que l'on sait de l'élément, par nom d'attribut, puis chaque politique qui
+porte sur la permission et si elle a tenu.
 
 ### Relations
 

@@ -4,8 +4,10 @@ import { checkJsonOf, changeConfig } from './check-support.js';
 import { initFailure } from './support/init-failure.js';
 import { initProject } from './support/init-project.js';
 import { readJson } from './support/read-json.js';
+import { readYaml } from './support/read-yaml.js';
 
-const EVERY_EXTRA = 'gitlab-sast,codeql,dependency-review,gitlab-secret-detection,gitlab-dependency-scanning';
+const EVERY_EXTRA =
+  'gitlab-sast,codeql,dependency-review,gitlab-secret-detection,gitlab-dependency-scanning,claude-review,claude-triage,intent-to-spec';
 
 /** What each opt-in job leaves in the files `init` writes. */
 const MARKS = {
@@ -14,7 +16,12 @@ const MARKS = {
   sast: 'template: Jobs/SAST.gitlab-ci.yml',
   secretDetection: 'template: Jobs/Secret-Detection.gitlab-ci.yml',
   dependencyScanning: 'template: Jobs/Dependency-Scanning.v2.gitlab-ci.yml',
+  claudeInclude: 'local: .gitlab/claude-review.gitlab-ci.yml',
+  claudeAction: 'anthropics/claude-code-action@',
 };
+
+const CLAUDE_GITHUB = ['.github/workflows/claude-review.yml', '.github/workflows/claude-triage.yml'];
+const CLAUDE_GITLAB = '.gitlab/claude-review.gitlab-ci.yml';
 
 describe('init --ci-extras: the jobs that need a paid plan are opt-in', () => {
   it('writes no paid or plan-dependent tool by default, on either platform, and records nothing', () => {
@@ -46,10 +53,20 @@ describe('init --ci-extras: the jobs that need a paid plan are opt-in', () => {
     );
 
     expect(gitlab).toContain("  AST_ENABLE_MR_PIPELINES: 'true'\n");
+    expect(gitlab).toContain(MARKS.claudeInclude);
 
     expect(readJson(root, 'ddd-ts-kit.config.json')).toMatchObject({
       ci: {
-        extras: ['codeql', 'dependency-review', 'gitlab-dependency-scanning', 'gitlab-sast', 'gitlab-secret-detection'],
+        extras: [
+          'claude-review',
+          'claude-triage',
+          'codeql',
+          'dependency-review',
+          'gitlab-dependency-scanning',
+          'gitlab-sast',
+          'gitlab-secret-detection',
+          'intent-to-spec',
+        ],
       },
     });
   });
@@ -92,5 +109,79 @@ describe('init --ci-extras: the jobs that need a paid plan are opt-in', () => {
     changeConfig(root, { ci: 'github' });
 
     expect(checkJsonOf(cli(root, 'check', '--rule', 'config/valid', '--json')).violations).toHaveLength(1);
+  });
+});
+
+describe('init --ci-extras claude-review, claude-triage: Claude Code in the pipeline, on request', () => {
+  it('writes the Claude review and triage jobs for both platforms, never required by the gate, as YAML every parser reads', () => {
+    const root = initProject('--ci', 'both', '--ci-extras', 'claude-review,claude-triage');
+    const [review = '', triage = ''] = CLAUDE_GITHUB.map((file) => read(root, file));
+    const gitlab = read(root, CLAUDE_GITLAB);
+
+    expect(review).toContain(MARKS.claudeAction);
+    expect(review).toContain('on:\n  pull_request:');
+    expect(review).toContain('gh pr comment');
+    expect(review).not.toMatch(/gh pr review|gh pr merge/);
+    expect(triage).toContain('workflow_run:');
+    expect(triage).toContain("conclusion == 'failure'");
+    expect(triage).toContain('--allowedTools "Read,Grep,Glob"');
+    expect(read(root, '.github/workflows/ci.yml')).not.toMatch(/claude/i);
+    expect(gitlab).toMatch(/^claude-review:$/m);
+    expect(gitlab).toMatch(/^claude-triage:$/m);
+    expect(gitlab).toContain('when: on_failure');
+    expect(read(root, '.gitlab-ci.yml')).toContain(`include:\n  - ${MARKS.claudeInclude}\n`);
+
+    const parsed = readYaml([review, triage, gitlab, read(root, '.gitlab-ci.yml')]).map(
+      (back) => back.yaml12 as Record<string, unknown>,
+    );
+
+    expect(parsed.map((document) => Object.keys(document).slice(0, 5))).toEqual([
+      ['name', 'on', 'concurrency', 'permissions', 'jobs'],
+      ['name', 'on', 'permissions', 'jobs'],
+      ['.claude', 'claude-review', 'claude-triage'],
+      ['workflow', 'include', 'stages', 'variables', 'default'],
+    ]);
+
+    expect(parsed[2]).toMatchObject({
+      '.claude': { allow_failure: true },
+      'claude-review': { extends: '.claude', stage: 'test' },
+      'claude-triage': { extends: '.claude', stage: 'gate', when: 'on_failure' },
+    });
+  });
+
+  it('writes one Claude job alone, on the one platform asked for, since both pipelines hold them', () => {
+    const github = initProject('--ci', 'github', '--ci-extras', 'claude-triage');
+    const gitlab = initProject('--ci', 'gitlab', '--ci-extras', 'claude-review');
+
+    expect(exists(github, '.github/workflows/claude-triage.yml')).toBe(true);
+    expect(exists(github, '.github/workflows/claude-review.yml')).toBe(false);
+    expect(exists(github, CLAUDE_GITLAB)).toBe(false);
+    expect(exists(gitlab, CLAUDE_GITLAB)).toBe(true);
+    expect(read(gitlab, CLAUDE_GITLAB)).toMatch(/^claude-review:$/m);
+    expect(read(gitlab, CLAUDE_GITLAB)).not.toMatch(/^claude-triage:$/m);
+    expect(read(gitlab, '.gitlab-ci.yml')).toContain(`include:\n  - ${MARKS.claudeInclude}\n\n`);
+    expect(exists(gitlab, '.github/workflows/claude-review.yml')).toBe(false);
+  });
+});
+
+describe('init --ci-extras intent-to-spec: the headless design pass of the story skill, on GitHub, on request', () => {
+  it('writes the workflow on GitHub only, outside the gate, and refuses it on a GitLab pipeline', () => {
+    const root = initProject('--ci', 'github', '--ci-extras', 'intent-to-spec');
+    const workflow = read(root, '.github/workflows/intent-to-spec.yml');
+
+    expect(workflow).toContain('types: [closed]');
+    expect(workflow).toContain("- 'docs/architecture/intents/*.md'");
+    expect(workflow).toContain('--headless');
+    expect(workflow).toContain('ANTHROPIC_API_KEY');
+    expect(read(root, '.github/workflows/ci.yml')).not.toMatch(/intent/i);
+    expect(readJson(root, 'ddd-ts-kit.config.json')).toMatchObject({ ci: { extras: ['intent-to-spec'] } });
+
+    const [parsed] = readYaml([workflow]).map((back) => back.yaml12 as Record<string, unknown>);
+
+    expect(Object.keys(parsed ?? {}).slice(0, 5)).toEqual(['name', 'on', 'concurrency', 'permissions', 'jobs']);
+
+    const elsewhere = initFailure('--ci', 'gitlab', '--ci-extras', 'intent-to-spec');
+
+    expect(elsewhere.message).toBe('--ci-extras intent-to-spec is a job of the GitHub pipeline, and --ci is gitlab.');
   });
 });

@@ -1,4 +1,4 @@
-import { DenialReason, type Permission } from '@ddd-ts-kit/auth';
+import { DenialReason, traceText, type Permission } from '@ddd-ts-kit/auth';
 import {
   InMemoryRelationTupleStore,
   RelationBasedAuthorizer,
@@ -216,3 +216,53 @@ function permission(id: string): Permission {
 
   return { id, context, name, description: id };
 }
+
+describe('The authorizer of roles and relationships, explaining itself', () => {
+  it('names the grant of the token that holds', async () => {
+    const { decision, trace } = await authorizer.explain({ actor: admin, permission: openPractice });
+
+    expect(decision).toEqual({ allowed: true });
+    expect(traceText(trace)).toBe('  the role network-admin grants it');
+  });
+
+  it('says that a condition the use case does not state leaves the decision to the relationships, whose lines follow', async () => {
+    await store.write([deskOfTheCalendar, docHoldsTheDesk]);
+
+    const { decision, trace } = await authorizer.explain({ actor: patient, permission: book, resource: calendar });
+
+    expect(decision).toEqual({ allowed: false, reason: DenialReason.noRelation });
+
+    const lines = traceText(trace).split('\n');
+
+    expect(lines.slice(0, 2)).toEqual([
+      'x the role patient grants it under a condition the use case does not state',
+      '  the relationships decide',
+    ]);
+
+    expect(lines[2]).toMatch(/^ {4}calendar:cal-1 scheduling:appointment\.book = /);
+  });
+
+  it('says that a role is missing when the relationships have no element to decide on', async () => {
+    const { decision, trace } = await authorizer.explain({ actor: doc, permission: openPractice });
+
+    expect(decision).toEqual({ allowed: false, reason: DenialReason.noMatchingRole });
+
+    expect(traceText(trace)).toBe(
+      [
+        'x no role of the token grants identity:practice.open',
+        '  the relationships decide',
+        'x   no relationship bears on identity:practice.open: a role is missing',
+      ].join('\n'),
+    );
+  });
+
+  it('says that a system operates its own context', async () => {
+    const { trace } = await authorizer.explain({
+      actor: systemActor('scheduling.job'),
+      permission: book,
+      resource: { type: 'context', id: 'scheduling' },
+    });
+
+    expect(traceText(trace)).toBe('  the system operates its own context, scheduling');
+  });
+});

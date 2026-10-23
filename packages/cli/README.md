@@ -95,10 +95,14 @@ value of a gateway, the settings of a job) is not, and a note says so. A config 
 read is replaced.
 
 The pipeline uses free tools only. `--ci-extras` adds jobs that need a paid plan on a private
-repository, or report into a merge request only in a paid tier: `codeql`, `dependency-review`
-(GitHub), `gitlab-sast`, `gitlab-secret-detection`, `gitlab-dependency-scanning` (GitLab). The
-list is recorded as `ci.extras` in the config; an unknown name, or a job of a platform `--ci` does
-not cover, is refused. The table of every tool and its conditions:
+repository, report into a merge request only in a paid tier, or spend API tokens on every run:
+`codeql`, `dependency-review` (GitHub), `gitlab-sast`, `gitlab-secret-detection`,
+`gitlab-dependency-scanning` (GitLab), `claude-review` and `claude-triage` (both platforms: Claude
+Code reviews each pull or merge request and posts one comment that neither approves nor blocks,
+and triages a failed run in three lines, read-only; the `gate` job never needs them), and `intent-to-spec` (GitHub: the story skill run
+headless on each intent a merge accepts, its specification opened as a pull request). The list is
+recorded as `ci.extras` in the config; an unknown name, or a job of a platform `--ci` does not
+cover, is refused. The table of every tool, its cost and its conditions:
 [pipeline/README.md](../../pipeline/README.md#free-by-default-paid-on-request).
 
 An import of a file of the project is written without an extension
@@ -550,8 +554,8 @@ config, `docsUi`, `ci` and `logger` included.
 | `knip.json` | dead code: entry points are `main.ts` and `apps/*/main.ts`, the scripts, the specs and the fakes, the module files in the explicit style, the role files under discovery (jobs and publishers included) |
 | `vitest.config.ts` | unit and integration projects, the coverage thresholds read from `ddd-ts-kit.config.json` (`governedCoverage`), per context and layer, in the standard decorator mode `decorators()` of `@ddd-ts-kit/testing/vitest`, which compiles the files holding a decorator with the compiler of the project (Vitest does not lower standard decorators; it lowers legacy ones itself, so a project with `experimentalDecorators` gets no plugin), and under `--assembly discovery` `server.deps.inline: ['@ddd-ts-kit/di']` |
 | `lefthook.yml`, `commitlint.config.mjs` | pre-commit (ESLint, the format check and `check` on the staged files, `check --commit-size --staged`, which never blocks, and `secrets`: gitleaks on the staged changes when its binary is on the path, one line and no refusal otherwise, the pipeline scanning the whole history anyway), pre-push (types, unit tests) and commit-msg hooks (`npm run hooks:install`), each run by the lefthook of the checkout it fires in (`lefthook: node_modules/.bin/lefthook`: a worktree without its dependencies fails the commit instead of skipping the checks), conventional commits |
-| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node and the dependencies, installed before the Copilot cloud agent starts), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json`; `codeql.yml` with `--ci-extras codeql` |
-| `--ci gitlab` | `.gitlab-ci.yml` (architecture findings as a Code Quality report through `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` |
+| `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node and the dependencies, installed before the Copilot cloud agent starts), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json`; `codeql.yml` with `--ci-extras codeql`, `claude-review.yml` and `claude-triage.yml` with `--ci-extras claude-review,claude-triage`; `intent-to-spec.yml` with `--ci-extras intent-to-spec` |
+| `--ci gitlab` | `.gitlab-ci.yml` (architecture findings as a Code Quality report through `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json`; `.gitlab/claude-review.gitlab-ci.yml` with `--ci-extras claude-review,claude-triage` |
 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | how to run it; a slim guide in `AGENTS.md`, which Codex, Copilot and most coding agents read and `CLAUDE.md` imports (commands, how to read less, the map of the rules, generated files, the verification commands with the lines each prints when it passes, to run before reporting done, the mistakes seen here, a section the team owns under the rule of two, compiler note, the skills of the plugin: `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) and the invariants in seven rule files, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` and `tests.md`, each scoped by a `paths` frontmatter, and the same seven for GitHub Copilot, each scoped by `applyTo` |
 | `REVIEW.md` | the review policy of the project: the passes of a review (bugs, security, compliance against the design review of the row, the acceptance of the story, the records of `docs/adr/` and the rules), what Important means, at most five nits (a recurring one becomes a line of `AGENTS.md` under `## Mistakes seen here` or a rule of the config), what is not reported (generated files, what `npm run verify` refuses). Read by the `architecture-reviewer` agent on top of its method, by a human reviewer and by any review bot. Written once, for the team to edit: `--force` leaves it alone, `doctor` says when it is missing |
 | `.github/copilot/settings.json` | the plugin of the kit, declared for GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`): its cloud agent installs it, the Copilot CLI and VS Code recommend it; an existing file keeps what it holds and gains the two entries |
@@ -1218,6 +1222,69 @@ prints
 `story` being `null` for a row whose id names none and `batch` `null` for a row the context asked
 for does not show.
 
+## acceptance
+
+```
+ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock]
+```
+
+The acceptance scenarios of each story (`test/acceptance/<story>.acceptance.spec.ts`, written by
+`generate acceptance <story>`) against its rows in `docs/architecture/slices.md` and the criteria
+of `docs/architecture/stories/<story>.md`: the rows and criteria each scenario names in its title
+(`#US5.02 AC1 ...`), the scenarios left to write (`it.todo`), those wrapped in `pending(...)` until
+their code is built, and what is inconsistent. `--gate written` holds a story before the code of
+its rows: every slice row and criterion has a written scenario, and the acceptance is locked;
+`--gate passing` before it closes: none is pending either. `--lock` writes
+`test/acceptance/<story>.acceptance.lock.json`, the fingerprint of each criterion and of each
+scenario (`pending(...)`, layout and comments aside); after it, a scenario changes only with its
+criterion, and a criterion, or a scenario whose criteria stayed, only with a `Verdict: amend` of
+the `acceptance-judge` agent on that very version (`test/acceptance/verdicts/*.md`), which the lock
+keeps as an amendment for the owner to validate. It never runs a test. Exits 1 while a gate is not
+met, or, without one, on an inconsistency or a drift from the lock. `--json` prints
+`{ gate, met, stories: [{ story, file?, specification?, rows, criteria, scenarios, regression?, lock?, amendments, problems }] }`.
+
+### The regression specs of a fix
+
+A fix is a story file whose `## Regression` section lists the spec files that prove it, one path
+per item, relative to the project root, with or without backticks:
+
+```md
+# FIX-412 A cancelled order frees its slot
+
+## Statement
+
+A customer cancels an order after it was shipped, and the order is still marked cancelled.
+
+## Regression
+
+- src/contexts/ordering/test/unit/order.aggregate.spec.ts
+- test/unit/cancel-order.handler.spec.ts
+```
+
+Such a story needs no row of `slices.md` and no acceptance spec: `acceptance FIX-412` reads each
+listed file and fingerprints each of its `it` or `test` as it fingerprints a scenario. `--gate
+written` holds that each listed file exists and holds at least one test (an `it.todo` is still to
+write; a test the runner puts aside is reported whatever the gate), and that the lock is written;
+`--lock` records the tests under `regression` of `test/acceptance/fix-412.acceptance.lock.json`
+(`{ file, title, fingerprint }` each) and refuses while a listed spec is missing or holds no test.
+A locked test changed or removed is reported as a changed scenario is, as the subject
+`test "<title>" of <file>` with its fingerprint, until the `acceptance-judge` agent lets that
+version through, the `## Statement` of the fix being the criterion; a new test only needs locking
+again. `--gate passing` holds that each locked test is there, unchanged and no longer wrapped in
+`pending(...)`; the test runner, not this command, proves it passes. The guard of the plugin reads
+the same lock in the worktree of a fix (`"kind": "fix"` in `.ddd-ts-kit/story.json`): it opens the
+code once the lock exists and refuses every edit of a locked spec (skill `fix`,
+[story workflow](../../docs/guides/story-workflow.md)).
+
+```
+$ npx ddd-ts-kit acceptance FIX-412 --gate written
+FIX-412  fix, 2 regression specs, locked
+  specification docs/architecture/stories/FIX-412.md: no acceptance criterion stated
+  src/contexts/ordering/test/unit/order.aggregate.spec.ts: 1 test, 1 active
+  test/unit/cancel-order.handler.spec.ts: 1 test, 1 active
+  gate written: met
+```
+
 ## story-check
 
 ```
@@ -1249,16 +1316,44 @@ of other stories does not block, and is counted. A Context cell that names no co
 project (`all`, `platform`) adds none: outside the contexts, only a marker attributed to one of its
 rows counts. `--strict` makes every marker of its contexts block, whoever it belongs to.
 
+A done row also holds to its design. Every name the `## #<id>` section of the design review of
+the story (`docs/architecture/reviews/<code>.md`) cites as inline code, read as `cited` reads them
+(a path under the source root or relative to the context, a `Class.member`, a PascalCase name;
+a name whose sentence records that it was removed or renamed is history and is left out), must
+exist in the tree: the path exists; the class, interface, type or function is declared by a source
+under the source root, or imported by one (`Clock` of the kernel); the member is named in a file
+declaring the class. A name that does not is listed under `### Compromises` of `## Report` in
+`docs/architecture/stories/<code>.md`, as inline code, with why; a name that neither exists nor
+is listed blocks, with its `file:line` in the review. The tree is read only when a section of a
+done row cites a name. `--strict` changes nothing here. The guard of the plugin says it once at
+the stop of a session in the worktree of a story, without blocking. The comparison of the built
+code with its design comes from [the AI-native SDLC playbook of Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf).
+
+A commit of the story also carries its change reference. Each commit on the current branch that
+changes a migration or a container file (the same paths the `change-reference` hook of the
+regulated profile watches: `migrations/`, `prisma/migrations/`, `docker/`, `Dockerfile`,
+`docker-compose.yml`; the two lists are kept aligned in the kit) and belongs to the story (its
+`Slice: <row id>` trailer, else its message naming a row of it, else its subject naming the story,
+word-bounded) must carry a `Change: <id>` trailer, the id the change process of the team gives.
+One without it is listed with its short sha, its subject and the files, under "Without a change
+reference"; it blocks the story when the config says `agents.profile: regulated` or with
+`--strict`, and is listed without blocking otherwise. The fix: add the trailer before the pull
+request, `git commit --amend` for the last commit, an interactive rebase of the branch for an
+earlier one. Three git calls at most, on the commits that touch such a file.
+
 It reads the files and git only. It exits 0 when the story can close (one line, then the markers
 listed without blocking, if any), 1 when something keeps it open, each blocker with why it is its
 own (`names #M1.01`, `written by a782a19 Slice: M1.02`, `no other open story in payments`), its
 `file:line` and its fix (handle it, or dismiss it by a decision record,
-`npx ddd-ts-kit generate adr "<title>"`, then delete the marker), and 2 on a code no row carries or
-without a slices table. `--json` prints
-`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, canClose }`,
+`npx ddd-ts-kit generate adr "<title>"`, then delete the marker), each name of its design the
+code lacks with its `file:line` in the review, each commit without its change reference, and 2
+on a code no row carries or without a slices table. `--json` prints
+`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, design, unreferenced, regulated, canClose }`,
 each marker being `{ kind, context, file, line, text, attribution: { by, rows, commit? } }`, with
 `why`, `sharedWith` and `fix` in `markers` and `unattributed`; `by` is `text`, `commit`, `worker`
-or `none`.
+or `none`; each name of `design` being `{ row, document, line, cited, kind, why, fix }`; each
+commit of `unreferenced` being `{ sha, subject, files, rows, fix }`, and `regulated` true under
+the regulated profile.
 
 ```
 $ npx ddd-ts-kit story-check M1
@@ -1281,6 +1376,30 @@ Not blocking: 1 marker of these contexts belongs to rows of US2.
 Once each is settled: npx ddd-ts-kit story-check M1
 ```
 
+A done row whose section cites what was not built:
+
+```
+$ npx ddd-ts-kit story-check US5
+US5 cannot close: every row done, 0 markers of its own left, 1 name of its design not in the code.
+
+Departed from its design (1): update the section of the row in docs/architecture/reviews/US5.md to what it built, or list the name under `### Compromises` of `## Report` in docs/architecture/stories/US5.md with why
+  docs/architecture/reviews/US5.md:12  `OrderNumberTaken`  (#US5.02, no class, interface, type or function OrderNumberTaken is declared or imported under the source root)
+
+Once each is settled: npx ddd-ts-kit story-check US5
+```
+
+A migration commit of the story without its change reference, under the regulated profile:
+
+```
+$ npx ddd-ts-kit story-check M1
+M1 cannot close: every row done, 0 markers of its own left, 1 commit without a change reference.
+
+Without a change reference (1, agents.profile regulated): add the trailer `Change: <id>` to the commit, with the id the change process of the team gives (`git commit --amend` for the last commit, an interactive rebase of the branch for an earlier one), before the pull request
+  a782a19  feat(billing): add the paid_at column to invoices  (Slice: M1.02; src/platform/database/migrations/0002_paid_at.sql)
+
+Once each is settled: npx ddd-ts-kit story-check M1
+```
+
 Once the three are settled:
 
 ```
@@ -1291,6 +1410,65 @@ Not blocking, unattributed (1): settle each, or name its row in the marker (`TOD
   src/contexts/billing/test/unit/invoice.aggregate.spec.ts:1  it.todo  refuses an invoice without lines  (unattributed, may belong to open US2: settle it or name the row in the marker)
 
 Not blocking: 1 marker of these contexts belongs to rows of US2.
+```
+
+## measures
+
+```
+ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
+```
+
+What the loop of a story costs and leaves, read from the git history of the current branch
+(`git log`, nothing else) and the files of `docs/architecture/` (the stories, the reviews, the
+intents under `intents/`, the incidents under `incidents/`, `slices.md`) and of
+`test/acceptance/` (the locks and the verdicts): the indicators the
+[AI-native SDLC playbook of Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
+names for each of its plays, in the terms of the kit. One line per story of
+`docs/architecture/stories/`, then the medians and the shares of the period. It reads, writes
+nothing and asks nothing of the platform.
+
+| Measure | From |
+|---|---|
+| design time | the first commit of `docs/architecture/stories/<code>.md` to the commit of `test/acceptance/<code>.acceptance.lock.json` |
+| build time | the lock commit to the first commit whose `## Report` holds text |
+| lead time | the first commit of the story file to the commit of the current branch whose subject names `story/<code>` (a merge commit first, else a squash commit that names the branch); `open` without one |
+| requirements rework | the commits that changed `## Acceptance criteria` after the first commit carrying a `Slice: <code>.<n>` trailer; the amendments of the lock (each an `amend` verdict); the `refuse` verdicts of `test/acceptance/verdicts/` |
+| provisional decisions | the `D<n>` lines of the story file |
+| compromises | the items under `### Compromises` of the report |
+| review | the `TODO(review)` lines the commits of the story removed (settled) and wrote (opened), from `git log -S`; the items under `## Findings` of `docs/architecture/reviews/<code>.md` by pass (a `### <pass>` heading, else the word before the colon of the item, else `unsorted`); the repeats: a rule id or a remark text seen in two stories, the mistake the guide of the team should have caught |
+| verification | whether the report has a `### Verification` block naming `npm run verify` |
+| parallelism | the other stories whose first and last commits overlap this one in time |
+| origin | whether `## Origin` names an intent (`intents/<name>.md`), a ticket (`SHOP-12`, `#12`, a URL) or an incident (`incidents/<name>.md`) |
+| repeat incidents | a story whose origin names an incident whose record carries the same `message` or `error_code` (a line of its front matter or of a list) as an earlier record of `docs/architecture/incidents/` |
+
+A commit belongs to a story when it carries a `Slice: <code>.<n>` trailer or touches one of its
+files. Times are in hours (`5h`, `1d 2h`); the summary gives the median of each over the stories
+that have it, lead time over the closed ones. On a trunk where every pull request is squashed,
+the phases of a story collapse into one commit and its design and build times read as zero: run
+the command on the branch of the story (its worktree) before it lands, or keep merge commits.
+
+- `--since <date>` keeps the stories whose first commit is on or after that day (ISO 8601).
+- `--story <code>` keeps one story, whatever the case of its code.
+- `--by-author` adds who opened each story and a table per author (stories, closed, median lead
+  time). Off by default: a measure read per person changes what people do, and the playbook's
+  measures are of the loop, not of its people. Ask for it when the team agreed on it.
+- `--format json` (or `--json`) gives the same as data for a dashboard:
+  `{ branch, since?, stories: [{ story, file, author?, opened?, designHours?, buildHours?, leadHours?, merged?, rework: { criteriaChanges, amendments, refusals }, decisions, compromises, verification, origin?, review: { settled, opened, findings, repeats }, overlaps, repeatIncident? }], summary, byAuthor?, notComputed }`.
+
+Not computed in this version, because they come from the platform and its API is not read: the
+time to the first review of a pull request and whether its CI was green on the first run. A
+later version may read them with `gh` or `glab`; nothing is sent anywhere.
+
+```
+$ npx ddd-ts-kit measures --since 2026-03-01
+Measures of main since 2026-03-01: 2 stories, 1 closed (merged on this branch).
+
+  US5  opened 2026-03-01  design 1d  build 3d  lead 5d (merged 991050c)  rework 1 criteria change(s), 1 amendment(s), 0 refusal(s)  decisions 2  compromises 2  review 1 settled, 1 opened, repeats language/glossary-term  verification yes  origin ticket  overlaps US6
+  US6  opened 2026-03-03  design open  build open  lead open  rework 0 criteria change(s), 0 amendment(s), 0 refusal(s)  decisions 0  compromises 0  review 0 settled, 0 opened, findings 2 bugs, 1 security, repeats language/glossary-term  verification no  origin incident (repeats docs/architecture/incidents/inc-1.md)  overlaps US5
+
+Medians: design 1d, build 3d, lead 5d over 1 closed; 0.5 criteria change(s), 1 decision(s), 1 compromise(s), 0.5 marker(s) settled per story.
+Verification: 1 of 2 report(s) name `npm run verify`. Origin: 2 of 2 name an intent, a ticket or an incident. Parallel: 2 built while another one was. Repeats across stories: 1 (language/glossary-term). Repeat incidents: 1.
+Not computed: time to first review and first-run CI status come from the platform (its API is not read).
 ```
 
 ## doctor

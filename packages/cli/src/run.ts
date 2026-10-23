@@ -17,6 +17,7 @@ import { errorFactoriesCommand } from './commands/error-factories.js';
 import { generateCommand } from './commands/generate.js';
 import { initCommand } from './commands/init.js';
 import { listCommand } from './commands/list.js';
+import { measuresCommand } from './commands/measures.js';
 import { mergeTrunkCommand } from './commands/merge-trunk.js';
 import { planWavesCommand } from './commands/plan-waves.js';
 import { moveToModuleCommand } from './commands/move-to-module.js';
@@ -54,6 +55,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   'story-scope': storyScopeCommand,
   story: storyCommand,
   stories: storiesCommand,
+  measures: measuresCommand,
   worktree: worktreeCommand,
   'worker-scope': workerScopeCommand,
   'verify-slice': verifySliceCommand,

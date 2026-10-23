@@ -1,4 +1,6 @@
 import type { AttributedMarker } from './attributed-marker.js';
+import type { DesignDeparture } from './design-departure.js';
+import type { UnreferencedCommit } from './unreferenced-commit.js';
 
 /** Whether a story or a milestone can close, and what keeps it open. */
 export interface StoryClosing {
@@ -20,7 +22,13 @@ export interface StoryClosing {
   readonly unattributed: readonly StoryMarker[];
   /** The markers of its contexts that belong to rows of other stories: not blocking. */
   readonly others: readonly AttributedMarker[];
-  /** True when every row is done and no marker of its own is left. */
+  /** The names the design review of its done rows cites that the code lacks, no compromise listed: blocking. */
+  readonly design: readonly DesignDeparture[];
+  /** Its commits that change a migration or a container file without a `Change:` trailer: blocking under the regulated profile or `--strict`, listed otherwise. */
+  readonly unreferenced: readonly UnreferencedCommit[];
+  /** True when the config says `agents.profile: regulated`: a migration commit without a change reference then blocks. */
+  readonly regulated: boolean;
+  /** True when every row is done, no marker of its own is left, no done row departed from its design unsaid, and, held to it, no commit lacks its change reference. */
   readonly canClose: boolean;
 }
 

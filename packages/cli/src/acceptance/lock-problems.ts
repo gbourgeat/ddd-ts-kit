@@ -3,6 +3,8 @@ import type { AcceptanceProblem } from './acceptance-problem.js';
 import type { Criterion } from './criteria-in.js';
 import { driftOf, type Judged } from './drift.js';
 import { lockFileOf } from './lock-file-of.js';
+import { regressionDriftOf } from './regression-drift-of.js';
+import type { RegressionSpec } from './regression-spec.js';
 import type { Scenario } from './scenario.js';
 import type { Verdict } from './verdict.js';
 import { verdictOn } from './verdict-on.js';
@@ -13,6 +15,8 @@ export interface LockedStory {
   readonly lock: AcceptanceLock | undefined;
   readonly scenarios: readonly Scenario[];
   readonly criteria: readonly Criterion[];
+  /** The regression specs of a fix; none for a story. */
+  readonly regression?: readonly RegressionSpec[] | undefined;
   readonly verdicts: readonly Verdict[];
 }
 
@@ -22,12 +26,18 @@ export interface LockedStory {
  * the test made easier, or the specification changed without being judged. What only needs
  * locking again counts from `written`.
  */
-export function lockProblems({ story, lock, scenarios, criteria, verdicts }: LockedStory): AcceptanceProblem[] {
+export function lockProblems(locked: LockedStory): AcceptanceProblem[] {
+  const { story, lock, scenarios, criteria, verdicts } = locked;
+  const regression = locked.regression ?? [];
+
   if (lock === undefined) {
-    return scenarios.some(({ state }) => state === 'pending' || state === 'active') ? [notLocked(story)] : [];
+    const written = [...scenarios, ...regression.flatMap((spec) => spec.tests)];
+
+    return written.some(({ state }) => state === 'pending' || state === 'active') ? [notLocked(story)] : [];
   }
 
-  const drift = driftOf(lock, scenarios, criteria);
+  const drifts = [driftOf(lock, scenarios, criteria), regressionDriftOf(lock.regression, regression)];
+  const drift = { toJudge: drifts.flatMap((each) => each.toJudge), toLock: drifts.flatMap((each) => each.toLock) };
   const at = lockFileOf(story);
 
   const amended = drift.toJudge

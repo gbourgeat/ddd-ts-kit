@@ -5,6 +5,7 @@ import {
   ListingNotSupportedError,
   RoleBasedAuthorizer,
   SignedInGrantsAuthorizer,
+  traceText,
   type Authorizer,
   type Decision,
 } from '../src/index.js';
@@ -77,6 +78,42 @@ describe('SignedInGrantsAuthorizer', () => {
   it('refuses a grant that names no permission when it is built', () => {
     expect(() => new SignedInGrantsAuthorizer({ grants: ['catalog'], otherwise: model })).toThrow(
       AuthorizationSetupError,
+    );
+  });
+});
+
+describe('SignedInGrantsAuthorizer.explain', () => {
+  it('names the grant of every signed-in person that covers the permission', async () => {
+    const { decision, trace } = await authorizer.explain({ actor: bob, permission: editProduct });
+
+    expect(decision).toEqual({ allowed: true });
+    expect(traceText(trace)).toBe('  every signed-in person holds catalog:*, which covers catalog:product.edit');
+  });
+
+  it('otherwise says what the model said, one level deeper', async () => {
+    const { decision, trace } = await authorizer.explain({ actor: bob, permission: read });
+
+    expect(decision).toEqual({ allowed: true });
+
+    expect(traceText(trace)).toBe(
+      [
+        'x no grant of every signed-in person covers billing:invoice.read',
+        '  the model decides',
+        '    billing:invoice.read asked of the roles clerk',
+        '      clerk grants billing:invoice.read',
+      ].join('\n'),
+    );
+  });
+
+  it('says that a system is not a signed-in person, and gives the decision of a model that does not explain', async () => {
+    const checking = new SignedInGrantsAuthorizer({ grants: ['catalog:*'], otherwise: new CheckOnly() });
+
+    const { decision, trace } = await checking.explain({ actor: service, permission: editProduct });
+
+    expect(decision).toEqual({ allowed: false, reason: 'DENIED_BY_TEST' });
+
+    expect(traceText(trace)).toBe(
+      ['x the actor is a service, not a signed-in person', 'x the model refuses: DENIED_BY_TEST'].join('\n'),
     );
   });
 });

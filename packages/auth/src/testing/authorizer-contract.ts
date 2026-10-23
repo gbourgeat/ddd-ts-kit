@@ -40,6 +40,7 @@ class AuthorizerSuite extends ContractSuite<AuthorizerFixture> {
     this.refusesWithAStableReason();
     this.deniesByDefault();
     this.listsWhatItAllows();
+    this.explainsWhatItDecides();
   }
 
   private allowsWhatWasGranted(): void {
@@ -117,6 +118,23 @@ class AuthorizerSuite extends ContractSuite<AuthorizerFixture> {
 
       this.expect(allowed === undefined || covers(allowed, granted.resource?.id) !== 'no').toBe(true);
       this.expect(denied === undefined || covers(denied, refused.resource?.id) !== 'yes').toBe(true);
+    });
+  }
+
+  private explainsWhatItDecides(): void {
+    this.it('explains the decision it takes, when it explains at all', async () => {
+      const { authorizer, granted, refused } = this.subject;
+
+      if (authorizer.explain === undefined) {
+        return;
+      }
+
+      const allowed = await authorizer.explain(granted);
+      const denied = await authorizer.explain(refused);
+
+      this.expect(allowed.decision).toEqual(await authorizer.check(granted));
+      this.expect(denied.decision).toEqual(await authorizer.check(refused));
+      this.expect([...allowed.trace, ...denied.trace].every((line) => line.text !== '' && line.depth >= 0)).toBe(true);
     });
   }
 

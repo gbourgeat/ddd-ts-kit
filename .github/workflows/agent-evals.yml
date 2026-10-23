@@ -1,0 +1,105 @@
+name: Agent evals
+
+# The eval suite of the plugin (plugin/evals/, run by `claude plugin eval`): each case is a prompt
+# on the scheduling example and graders that read what the session did. OFF BY DEFAULT: it runs
+# on request only (the Actions tab, "Run workflow"), and only once the secret ANTHROPIC_API_KEY
+# exists; without it the job says so and ends green. Each case is a full Claude Code session, run
+# twice (with the plugin and without, the baseline arm) and `--runs` times (3 by default, 1 here):
+# the twelve cases of the suite are 24 sessions per run, 72 with the default runs, and a nightly
+# run of twenty cases would be sixty sessions a night. CONTRIBUTING.md says how to write a case and
+# how a maintainer runs one locally on their own credential.
+on:
+  workflow_dispatch:
+  # To turn it on: a pull request of the repository's own branches that touches the plugin (a fork
+  # cannot read the secret), and a nightly run on main. Count the sessions above before doing so.
+  # pull_request:
+  #   paths:
+  #     - 'plugin/**'
+  # schedule:
+  #   - cron: '30 3 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  evals:
+    name: Eval suite of the plugin
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 90
+    steps:
+      - name: Whether the suite is on (the secret ANTHROPIC_API_KEY exists)
+        id: key
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "The eval suite is off until the secret ANTHROPIC_API_KEY exists in this repository: nothing was run."
+            echo "The eval suite is off until the secret ANTHROPIC_API_KEY exists: nothing was run." >> "$GITHUB_STEP_SUMMARY"
+            echo "on=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "on=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ steps.key.outputs.on == 'true' }}
+        with:
+          persist-credentials: false
+      # The dependencies and the built CLI: the fixture of each case links node_modules of the
+      # repository, and `npx ddd-ts-kit` in the fixture is packages/cli/dist/bin.js.
+      - uses: ./.github/actions/setup
+        if: ${{ steps.key.outputs.on == 'true' }}
+      - name: Claude Code, pinned, and the sandbox its shell tool needs on Linux
+        if: ${{ steps.key.outputs.on == 'true' }}
+        run: |
+          npm install --global --no-audit --no-fund @anthropic-ai/claude-code@2.1.309
+          sudo apt-get update -qq && sudo apt-get install -y -qq bubblewrap socat
+      - name: The suite, one run per case, both arms, a hard ceiling on the cost
+        if: ${{ steps.key.outputs.on == 'true' }}
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          claude plugin eval plugin \
+            --trust-plugin \
+            --no-publish \
+            --scaffold \
+            --allow-tools Bash Write Edit \
+            --runs 1 \
+            --model claude-opus-5-5 \
+            --judge-model claude-haiku-5-5 \
+            --max-cost-usd 10 \
+            --threshold 0.8 \
+            --json results.json \
+            --report report.html
+      - name: The scores, in the summary of the job
+        if: ${{ always() && steps.key.outputs.on == 'true' }}
+        run: |
+          if [ -f results.json ]; then
+            {
+              echo "## Eval suite of the plugin"
+              echo
+              node -e '
+                const result = require("./results.json");
+                const agg = result.aggregates ?? {};
+                console.log(`Overall ${agg.overallScore ?? "?"}, ${agg.casesPassed ?? "?"} of ${agg.casesTotal ?? "?"} cases at the threshold, delta with/without ${agg.meanDelta ?? "n/a"}, cost ${result.costUsd ?? "?"} USD${result.partial ? ` (partial: ${result.partialReason})` : ""}.`);
+                console.log();
+                console.log("| Case | Score | Delta |");
+                console.log("|---|---|---|");
+                for (const c of result.cases ?? []) console.log(`| ${c.name} | ${c.aggregates?.score ?? "?"} | ${c.aggregates?.delta ?? "n/a"} |`);
+              '
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No results.json: the run did not start (credentials, install)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ always() && steps.key.outputs.on == 'true' }}
+        with:
+          name: agent-evals
+          path: |
+            results.json
+            report.html
+          if-no-files-found: ignore
+          retention-days: 30
