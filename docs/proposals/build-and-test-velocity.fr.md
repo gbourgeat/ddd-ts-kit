@@ -1,5 +1,5 @@
 [English](build-and-test-velocity.md) · **Français**
-<!-- translation-of: build-and-test-velocity.md sha256:fc0f63d5140e9e4e -->
+<!-- translation-of: build-and-test-velocity.md sha256:6abf6bf6f13104f4 -->
 
 # Proposition : vélocité du build, des contrôles et des tests
 
@@ -27,7 +27,7 @@ est une *pull request* à part, mesurée sur les indicateurs de cette page avant
 | Partie | Verdict |
 |---|---|
 | Moins de jobs par exécution du *pipeline*, les familles lourdes réduites sur une *pull request* | **en cours** (la file et le temps de mur) : la *pull request* #248 (2026-10-23) replie les cinq portes de moins de trois minutes en un job et, sur une *pull request*, exécute la suite de l'alias sur une ligne de Node et les projets générés sur npm : 24 jobs à 20 sur le tronc, 23 à 17 sur une *pull request* ; les *shards* de bout en bout tenus aux *stacks* qu'un changement atteint viennent ensuite |
-| La matrice de compilation de cinq fichiers de *spec* en parallèle ou découpée par fichier | **recommandé** (le fichier le plus long, 84 s, plafonne chaque exécution) |
+| La matrice de compilation de cinq fichiers de *spec* en parallèle ou découpée par fichier | **en cours** (le fichier le plus long, 84 s, plafonnait chaque exécution) : la *pull request* `test/compile-matrix-in-parallel` (2026-10-23) compile les modes d'un fichier quelques-uns à la fois dès son premier chargement, et le *runner* démarre d'abord les six fichiers les plus longs. Mesuré sur la station de travail de la méthode : le fichier le plus long de 84 s à 27 s dans une exécution complète (4,5 s seul au lieu de 15 s), l'exécution de 88 à 104 s à 81 s sur 20 cœurs et de 203 s à 139 s à quatre *workers* ; les deux fichiers de bout en bout de la CLI, qui génèrent chaque *stack* l'une après l'autre, font maintenant la queue (65 à 70 s). Le chiffre à 4 vCPU est le job unitaire du *pipeline* sur cette *pull request* |
 | La moitié des cœurs hors *pipeline*, les tests `related` avant un *push* | **recommandé** (la mémoire d'un portable) |
 | ESLint avec son cache par contenu, conservé comme artefact du *pipeline* | **recommandé** (mesuré sur ce dépôt, section 5) |
 | La vérification des types des *specs* en parallèle | **recommandé** (mesuré, section 5) |

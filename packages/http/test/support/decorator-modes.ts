@@ -1,10 +1,13 @@
 import { execFile } from 'node:child_process';
 import { rmSync } from 'node:fs';
+import { availableParallelism } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 
 const run = promisify(execFile);
+/** How many compilations run at once: a quarter of the cores, two at least, so that several spec files compiling at the same time leave the runner its share. */
+const COMPILATIONS_AT_ONCE = Math.max(2, Math.floor(availableParallelism() / 4));
 const MODULES = path.resolve(import.meta.dirname, '../../../../node_modules');
 
 const COMPILERS = {
@@ -24,24 +27,66 @@ export interface DecoratorMode {
   load(emitted: string): Promise<unknown>;
 }
 
-/** Every compiler with every decorator setting, for a fixture project whose tsconfig is in `fixtures`. */
+/**
+ * Every compiler with every decorator setting, for a fixture project whose tsconfig is in `fixtures`.
+ * The first load starts every compilation, a few at a time: a mode does not wait for the ones
+ * declared before it, and the file that reads them all is as long as the slowest, not as their sum.
+ */
 export function decoratorModes(fixtures: string): DecoratorMode[] {
-  return Object.entries(COMPILERS).flatMap(([compiler, script], compilerIndex) =>
+  const compilations = new Map<string, Promise<unknown>>();
+
+  const modes = Object.entries(COMPILERS).flatMap(([compiler, script], compilerIndex) =>
     Object.entries(SETTINGS).map(([setting, flags], settingIndex) => {
       const output = path.join(fixtures, 'dist', `${compilerIndex}-${settingIndex}`);
-      let compiled: Promise<unknown> | undefined;
 
-      return {
-        label: `${compiler}, ${setting}`,
-        async load(emitted: string): Promise<unknown> {
-          compiled ??= run(process.execPath, [script, '-p', fixtures, '--outDir', output, ...flags]);
-          await compiled.catch(explained);
-
-          return import(/* @vite-ignore */ pathToFileURL(path.join(output, emitted)).href);
-        },
-      };
+      return { label: `${compiler}, ${setting}`, output, args: [script, '-p', fixtures, '--outDir', output, ...flags] };
     }),
   );
+
+  const compiled = (label: string): Promise<unknown> => {
+    if (compilations.size === 0) {
+      const slot = atMost(COMPILATIONS_AT_ONCE);
+
+      for (const mode of modes) {
+        compilations.set(
+          mode.label,
+          slot(() => run(process.execPath, mode.args)),
+        );
+      }
+    }
+
+    return compilations.get(label) ?? Promise.reject(new Error(`No compilation of ${label}`));
+  };
+
+  return modes.map(({ label, output }) => ({
+    label,
+    async load(emitted: string): Promise<unknown> {
+      await compiled(label).catch(explained);
+
+      return import(/* @vite-ignore */ pathToFileURL(path.join(output, emitted)).href);
+    },
+  }));
+}
+
+/** Runs the tasks it is given at most `count` at a time, in the order they come. */
+function atMost(count: number): <T>(task: () => Promise<T>) => Promise<T> {
+  let active = 0;
+  const waiting: (() => void)[] = [];
+
+  return async (task) => {
+    if (active >= count) {
+      await new Promise<void>((resolve) => waiting.push(resolve));
+    }
+
+    active += 1;
+
+    try {
+      return await task();
+    } finally {
+      active -= 1;
+      waiting.shift()?.();
+    }
+  };
 }
 
 export function removeCompiled(fixtures: string): void {
