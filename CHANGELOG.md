@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## 0.86.1
+## 0.87.0
 
 **`S3FileStorage.put` stores a file larger than one part.** The SDK read the `size` of the
 inspection the content streams through, the bytes counted so far, as the length of the whole
@@ -19,6 +19,10 @@ before `flush()` resolved, and what came after it never ran. `app.stop()` flushe
 so it never resolved, and a program that awaited it at the top level ended with exit code 13. A
 flush now keeps the process alive while it runs, ten seconds at most. The JSON format was not
 affected.
+
+**In the declared style, the declarations of a context are written per layer: a role folder holds its role files and nothing else.** With `"stack.assembly": "barrel"`, `generate`, `docs` and `npm run dev` write one `<layer>.declarations.ts` directly in each layer of a context that holds a declared role file, `application/application.declarations.ts`, `infrastructure/infrastructure.declarations.ts` and `presentation/presentation.declarations.ts`, and the same in each module of the model (`application/<module>/application.declarations.ts`), instead of one `<folder>.declarations.ts` in every role folder. A folder that held one job, one adapter or two use cases no longer holds a generated file beside them, and a context reads as its role files. `<context>.declarations.ts` still re-exports these files, so the composition root, `contextModule(...)` and the worlds of the tests import it as before. Each file keeps the same content, for its whole layer: the imports, one `export *` per role file sorted by path, then the `injected(Class, [Tokens])` of the classes that take something. `declarations/barrel-current` compares the files of the layers and reports the `<folder>.declarations.ts` of a role folder left next to them; the guard of the plugin, `tree/closed`, `clean/one-export-per-file`, `clean/file-size` (of `ddd-ts-kit check` and of the ESLint plugin, which now leaves out every generated declarations file of a context), the commit size and `merge-trunk` treat the layer files as generated, like the others. Under `"stack.assembly": "discovery"` nothing changes.
+
+To move: run `npx ddd-ts-kit docs` (or any `generate` without `--local-only`, or `npm run dev`), which writes the declarations of each layer, deletes the files of the role folders and rewrites `<context>.declarations.ts` as their summary, and commit the result. Upgrading alone fails nothing: for one minor version, a context still declared in one file per role folder, exactly as 0.85 and 0.86 would write them for the current role files and constructors, is accepted. `ddd-ts-kit check` reports it as a warning of `declarations/barrel-current` (exit 0) that says how to move, `docs --check` passes and prints the same warning, and `generate --local-only` keeps it in that layout, declaring there a role file it writes as 0.86 would, and says so in a note. The single `<context>.declarations.ts` of 0.84 is still accepted in the same way, and `generate --local-only` now keeps it as well when it writes a role file in its context, where it moved the context before. A later minor version reports both as errors.
 
 ## 0.86.0
 
