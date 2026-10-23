@@ -20,7 +20,7 @@ export function lintCacheOf(root: string): string {
   const location = path.join(root, LINT_CACHE);
   const keyFile = path.join(location, 'key');
   const key = cacheKey(root);
-  const written = fs.existsSync(keyFile) ? fs.readFileSync(keyFile, 'utf8') : '';
+  const written = contentOf(keyFile)?.toString('utf8') ?? '';
 
   if (written !== key) {
     fs.rmSync(location, { recursive: true, force: true });
@@ -35,12 +35,21 @@ function cacheKey(root: string): string {
   const hash = createHash('sha256');
 
   for (const input of INPUTS) {
-    const file = path.join(root, input);
+    const content = contentOf(path.join(root, input));
 
-    if (fs.existsSync(file)) {
-      hash.update(input).update('\0').update(fs.readFileSync(file)).update('\0');
+    if (content !== undefined) {
+      hash.update(input).update('\0').update(content).update('\0');
     }
   }
 
   return hash.digest('hex').slice(0, 16);
+}
+
+/** The content of a file, or nothing when there is none: read in one step, with no check a change could slip between. */
+function contentOf(file: string): Buffer | undefined {
+  try {
+    return fs.readFileSync(file);
+  } catch {
+    return undefined;
+  }
 }
