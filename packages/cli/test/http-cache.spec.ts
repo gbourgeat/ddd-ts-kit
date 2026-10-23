@@ -29,10 +29,8 @@ describe('init --http-cache', () => {
     expect(read(root, '.env.example')).toContain('VARNISH_PURGE_KEY=local-purge-key');
 
     expect(read(root, 'src/platform/config/load-config.ts')).toContain(
-      "varnishUrl: readUrl(env, 'VARNISH_URL', problems),\n    varnishPurgeKey: readText(env, 'VARNISH_PURGE_KEY', problems),",
+      "varnishUrl: env.url('VARNISH_URL'),\n    varnishPurgeKey: env.text('VARNISH_PURGE_KEY'),",
     );
-
-    expect(read(root, 'src/platform/config/load-config.ts')).toContain('...readVarnish(env, problems),');
 
     expect(read(root, 'src/platform/auth/authentication/http-boundary.ts')).toContain(
       'cacheTags: { header: CacheTagHeader.xkey },',
