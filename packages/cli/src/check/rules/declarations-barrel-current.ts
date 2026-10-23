@@ -1,8 +1,10 @@
 import { specifierOf } from '../../alias/index.js';
+import path from 'node:path';
 import {
   barrelFile,
   contextDeclarations,
   contextInjections,
+  declaredRoleOf,
   dependenciesFile,
   generatedDrift,
   type DeclaredContext,
@@ -12,6 +14,7 @@ import {
   renderInjections,
   singleFileNotice,
 } from '../../declared/index.js';
+import { declaredModules } from '../../model-modules/index.js';
 import type { Flaw } from '../model/flaw.js';
 import type { Project } from '../model/project.js';
 import type { Rule } from '../model/rule.js';
@@ -59,13 +62,14 @@ export const declarationsBarrelCurrent: Rule = {
 function judge(project: Project, context: string): Judged[] {
   const directory = `${project.config.contextsDir}/${context}`;
   const entries = entriesOf(project, context);
+  const modules = declaredModules(project.config, context);
   const specifierOfFile = (file: string): string => specifierOf(project.config, file);
   const sources = (file: string) => sourceAt(project, file);
 
   if (project.config.stack.assembly === 'discovery') {
-    const injected = renderInjections(contextInjections(sources, directory, entries), specifierOfFile);
-    const lists = { name: `dependency lists of "${context}"`, expected: renderDependenciesFile(injected) };
-    const generated = entries.filter((entry) => isDeclarationsFile(context, entry));
+    const injected = renderInjections(contextInjections(sources, { directory, entries, modules }), specifierOfFile);
+    const lists = { name: `dependency lists of "${context}"`, expected: renderDependenciesFile(injected, modules) };
+    const generated = entries.filter((entry) => isDeclarationsFile(context, entry, modules));
 
     return [
       ...generated.map((entry) => ({ file: `${directory}/${entry}`, flaw: leftBehind(context, entry) })),
@@ -76,12 +80,12 @@ function judge(project: Project, context: string): Judged[] {
     ];
   }
 
-  return judgeDeclarations(project, { context, directory, entries, sources, specifierOf: specifierOfFile });
+  return judgeDeclarations(project, { context, directory, entries, sources, modules, specifierOf: specifierOfFile });
 }
 
 /** With a barrel: the declarations of each role folder and their summary, or the single file of 0.84 while it is current. */
 function judgeDeclarations(project: Project, declared: DeclaredContext): Judged[] {
-  const { context, directory, entries } = declared;
+  const { context, directory, entries, modules } = declared;
   const { files } = contextDeclarations(declared);
 
   const judged = [
@@ -90,8 +94,9 @@ function judgeDeclarations(project: Project, declared: DeclaredContext): Judged[
       flaw: stale(project, context, { name: nameOf(context, entry), file: entry, expected, optional: false }),
     })),
     ...entries
-      .filter((entry) => isDeclarationsFile(context, entry) && !files.has(entry))
+      .filter((entry) => isDeclarationsFile(context, entry, modules) && !files.has(entry))
       .map((entry) => ({ file: `${directory}/${entry}`, flaw: emptied(context, entry) })),
+    ...twins(declared),
   ];
 
   const barrel = `${directory}/${barrelFile(context)}`;
@@ -101,6 +106,31 @@ function judgeDeclarations(project: Project, declared: DeclaredContext): Judged[
   }
 
   return judged;
+}
+
+/**
+ * Two role files of one name in two folders of a context, as two modules of the model may hold:
+ * the summary re-exports both folders with `export *`, and the compiler refuses the name they
+ * both export. One name is one concept in a context.
+ */
+function twins({ context, directory, entries, modules }: DeclaredContext): Judged[] {
+  const byName = new Map<string, string[]>();
+
+  for (const entry of entries.filter((candidate) => declaredRoleOf(candidate, modules) !== undefined).sort()) {
+    const name = path.posix.basename(entry);
+
+    byName.set(name, [...(byName.get(name) ?? []), entry]);
+  }
+
+  return [...byName.values()]
+    .filter((files) => files.length > 1)
+    .map(([first = '', second = '']) => ({
+      file: `${directory}/${second}`,
+      flaw: {
+        message: `${second} of "${context}" has the name of ${first}: the declarations of the context would export the same name twice.`,
+        fix: 'One name is one concept in a context: rename one after the concept it holds, or merge the two into the module that owns the concept.',
+      },
+    }));
 }
 
 interface Generated {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
-import { GetOpeningHoursQuery } from '@/contexts/scheduling/application/queries/get-opening-hours/get-opening-hours.query';
+import { GetOpeningHoursQuery } from '@/contexts/scheduling/application/calendars/queries/get-opening-hours/get-opening-hours.query';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 

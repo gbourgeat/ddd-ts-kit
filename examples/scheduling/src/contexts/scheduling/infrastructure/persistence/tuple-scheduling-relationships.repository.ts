@@ -1,6 +1,6 @@
 import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { SchedulingRelationships } from '@/contexts/scheduling/application/ports/scheduling-relationships.port';
+import { SchedulingRelationships } from '@/contexts/scheduling/application/calendars/ports/scheduling-relationships.port';
 
 type RecordedCalendar = Parameters<SchedulingRelationships['recordCalendar']>[0];
 type RecordedAppointment = Parameters<SchedulingRelationships['recordAppointment']>[0];

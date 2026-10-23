@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { PersonalDataCipher } from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
-import { AttendanceRecord } from '@/contexts/scheduling/domain/aggregates/attendance-record.aggregate';
+import { AttendanceRecord } from '@/contexts/scheduling/domain/calendars/aggregates/attendance-record.aggregate';
 import { EventStoreAttendanceRecordRepository } from '@/contexts/scheduling/infrastructure/persistence/event-store-attendance-record.repository';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { FakeAttendanceRecordRepository } from '@/contexts/scheduling/test/fakes/attendance-record.repository.fake';

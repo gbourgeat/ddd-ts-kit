@@ -3,6 +3,7 @@ import type { Workspace } from '../workspace/index.js';
 import { objectProperties, type PropertyValue } from './object-properties.js';
 import { readVocabularies } from './read-vocabularies.js';
 import type { StateMachineFacts, TransitionFacts } from './state-machine-facts.js';
+import { type ContextTree, roleFilesOf } from '../model-modules/index.js';
 
 const FOLDER = 'domain/state-machines';
 const SUFFIX = '.state-machine.ts';
@@ -14,14 +15,12 @@ const DEFINE = /(?<![\w$.])defineStateMachine\s*\(\s*\{/;
  * of a closed vocabulary (`AppointmentStatus.Booked`, `AppointmentStatus['no-show']`), whose value
  * is read from `domain/vocabularies/` of the context when it is declared there.
  */
-export function readStateMachines(ws: Workspace, directory: string): StateMachineFacts[] {
-  const vocabularies = readVocabularies(ws, directory);
+export function readStateMachines(ws: Workspace, tree: ContextTree): StateMachineFacts[] {
+  const vocabularies = readVocabularies(ws, tree);
 
-  return ws
-    .list(`${directory}/${FOLDER}`)
-    .filter((name) => name.endsWith(SUFFIX))
-    .flatMap((name) => {
-      const file = `${directory}/${FOLDER}/${name}`;
+  return roleFilesOf(ws, tree, FOLDER)
+    .filter(({ name }) => name.endsWith(SUFFIX))
+    .flatMap(({ name, path: file }) => {
       const facts = machineOf(ws.read(file) ?? '', vocabularies);
 
       return facts === undefined ? [] : [{ aggregate: name.slice(0, -SUFFIX.length), file, ...facts }];

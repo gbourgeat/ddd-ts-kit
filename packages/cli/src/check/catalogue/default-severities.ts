@@ -17,4 +17,6 @@ export const DEFAULT_SEVERITIES: Readonly<Record<string, Severity>> = {
   'test/acceptance-black-box': 'warn',
   'persistence/primary-key-order': 'warn',
   'declarations/port-adapter-wired': 'warn',
+  'module/complete': 'warn',
+  'module/no-cycle': 'warn',
 };

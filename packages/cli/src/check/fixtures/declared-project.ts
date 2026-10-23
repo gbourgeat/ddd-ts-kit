@@ -1,4 +1,5 @@
-import { CONFIG_FILE } from '../../config/index.js';
+import { CONFIG_FILE, parseConfig } from '../../config/index.js';
+import { declaredModules } from '../../model-modules/index.js';
 import { renderDeclarations } from '../../declared/index.js';
 import { config } from './config.js';
 import type { FixtureFiles } from './fixture-files.js';
@@ -12,7 +13,9 @@ const NOTHING_INJECTED = { imports: [], calls: [] };
  */
 export function declaredProject(files: FixtureFiles, overrides: FixtureFiles = {}): FixtureFiles {
   const written = project(files, { [CONFIG_FILE]: config({ stack: { style: 'declared' } }) });
-  const tree = Object.keys({ ...written, ...overrides });
+  const whole = { ...written, ...overrides };
+  const tree = Object.keys(whole);
+  const declared = parseConfig(JSON.parse(whole[CONFIG_FILE] ?? '{}'));
 
   const declarations = ['billing', 'catalog'].flatMap((context): [string, string][] => {
     const directory = `src/contexts/${context}/`;
@@ -21,6 +24,7 @@ export function declaredProject(files: FixtureFiles, overrides: FixtureFiles = {
     const rendered = renderDeclarations({
       context,
       files: inside,
+      modules: declaredModules(declared, context),
       specifierOf: (entry) => `@/contexts/${context}/${entry.replace(/\.ts$/, '.js')}`,
       injectedIn: () => NOTHING_INJECTED,
     });

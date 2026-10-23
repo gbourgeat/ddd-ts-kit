@@ -8,5 +8,8 @@ export function pathInContext(project: Project, file: SourceFile): string | unde
     return undefined;
   }
 
-  return file.path.slice(`${project.config.contextsDir}/${file.location.context}/`.length);
+  const relative = file.path.slice(`${project.config.contextsDir}/${file.location.context}/`.length);
+  const { layer, module } = file.location;
+
+  return module === undefined ? relative : relative.replace(`${layer}/${module}/`, `${layer}/`);
 }

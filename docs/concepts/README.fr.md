@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6dbf82a7ead22790 -->
+<!-- translation-of: README.md sha256:cde9e123afefb4a9 -->
 
 # Concepts : un parcours de lecture
 
@@ -46,6 +46,9 @@ personnes, pas d'outils.
    comment classer.
 2. [Contexte délimité](bounded-context.fr.md) : ce qu'est une frontière et les tests qui en
    trouvent une.
+   Les [modules du modèle](modules.fr.md) l'accompagnent : un contexte trop grand pour être lu,
+   divisé en parties d'un seul modèle et d'un seul langage, et pourquoi ce n'est pas un
+   sous-contexte.
 3. [Langage omniprésent](ubiquitous-language.fr.md) : le glossaire, et pourquoi il s'écrit avant
    le code.
 4. [Carte des contextes](context-map.fr.md) : les patrons de relation entre contextes, quand

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { InvalidOffer } from '@/contexts/scheduling/domain/errors/invalid-offer.error';
+import { InvalidOffer } from '@/contexts/scheduling/domain/waitlist/errors/invalid-offer.error';
 
 describe('InvalidOffer', () => {
   it('refuses with the code INVALID_OFFER, its message and its facts', () => {

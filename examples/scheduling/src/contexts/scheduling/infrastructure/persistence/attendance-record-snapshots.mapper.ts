@@ -2,7 +2,7 @@ import type { SnapshotPolicy } from '@ddd-ts-kit/kernel';
 import type {
   AttendanceRecord,
   AttendanceRecordState,
-} from '@/contexts/scheduling/domain/aggregates/attendance-record.aggregate';
+} from '@/contexts/scheduling/domain/calendars/aggregates/attendance-record.aggregate';
 
 /**
  * How a snapshot of an attendance record is kept: its whole state, which holds no personal value

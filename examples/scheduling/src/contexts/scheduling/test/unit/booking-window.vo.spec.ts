@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BookingWindow } from '@/contexts/scheduling/domain/value-objects/booking-window.vo';
+import { BookingWindow } from '@/contexts/scheduling/domain/calendars/value-objects/booking-window.vo';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 
 const now = new Date('2026-03-02T08:00:00.000Z');

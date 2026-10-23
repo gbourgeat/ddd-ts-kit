@@ -264,7 +264,7 @@ export class AttachDocumentHandler implements CommandHandler<AttachDocumentComma
 
 The example application holds this use case end to end, with a spec that commits and rolls back
 against a real database and a real directory:
-[`attach-appointment-document`](../../examples/scheduling/src/contexts/scheduling/application/commands/attach-appointment-document/attach-appointment-document.handler.ts)
+[`attach-appointment-document`](../../examples/scheduling/src/contexts/scheduling/application/calendars/commands/attach-appointment-document/attach-appointment-document.handler.ts)
 and
 [`document-lands-with-its-file.spec.ts`](../../examples/scheduling/src/contexts/scheduling/test/integration/document-lands-with-its-file.spec.ts).
 

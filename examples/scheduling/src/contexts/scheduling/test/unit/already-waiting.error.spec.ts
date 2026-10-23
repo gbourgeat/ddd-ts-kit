@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { AlreadyWaiting } from '@/contexts/scheduling/domain/errors/already-waiting.error';
+import { AlreadyWaiting } from '@/contexts/scheduling/domain/waitlist/errors/already-waiting.error';
 
 describe('AlreadyWaiting', () => {
   it('refuses with the code ALREADY_WAITING, its message and its facts', () => {

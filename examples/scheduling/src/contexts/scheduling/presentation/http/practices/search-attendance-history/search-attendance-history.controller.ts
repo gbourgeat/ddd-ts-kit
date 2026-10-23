@@ -12,8 +12,8 @@ import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import {
   attendanceHistoryCriteria,
   type AttendanceEntry,
-} from '@/contexts/scheduling/application/ports/attendance-history.port';
-import { SearchAttendanceHistoryQuery } from '@/contexts/scheduling/application/queries/search-attendance-history/search-attendance-history.query';
+} from '@/contexts/scheduling/application/calendars/ports/attendance-history.port';
+import { SearchAttendanceHistoryQuery } from '@/contexts/scheduling/application/calendars/queries/search-attendance-history/search-attendance-history.query';
 import { PracticesRoutes } from '@/contexts/scheduling/presentation/http/practices.routes';
 import { SearchAttendanceHistoryLine } from '@/contexts/scheduling/presentation/http/practices/search-attendance-history/search-attendance-history.line';
 import { SearchAttendanceHistoryParams } from '@/contexts/scheduling/presentation/http/practices/search-attendance-history/search-attendance-history.params';

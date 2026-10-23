@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { InvalidRange } from '@/contexts/scheduling/domain/errors/invalid-range.error';
+import { InvalidRange } from '@/contexts/scheduling/domain/calendars/errors/invalid-range.error';
 
 describe('InvalidRange', () => {
   it('refuses with the code INVALID_RANGE, its message and its facts', () => {

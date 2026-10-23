@@ -3,7 +3,7 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
-import { NoteNoShowCommand } from '@/contexts/scheduling/application/commands/note-no-show/note-no-show.command';
+import { NoteNoShowCommand } from '@/contexts/scheduling/application/calendars/commands/note-no-show/note-no-show.command';
 import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 const holders = authorizationModule({

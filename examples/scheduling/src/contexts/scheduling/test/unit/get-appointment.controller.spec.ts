@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { controllerRoute, createErrorMapper, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus } from '@ddd-ts-kit/kernel';
 import { errorStatuses } from '@/platform/http/error-statuses';
-import { GetAppointmentQuery } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.query';
-import { UnknownAppointment } from '@/contexts/scheduling/domain/errors/unknown-appointment.error';
+import { GetAppointmentQuery } from '@/contexts/scheduling/application/calendars/queries/get-appointment/get-appointment.query';
+import { UnknownAppointment } from '@/contexts/scheduling/domain/calendars/errors/unknown-appointment.error';
 import { GetAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/get-appointment/get-appointment.controller';
 import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder';
 

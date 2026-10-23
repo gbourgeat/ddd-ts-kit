@@ -1,16 +1,17 @@
 import type { ProjectionFact } from './context-description.js';
 import type { ContextSources } from './context-sources.js';
+import { roleFilesOf } from '../model-modules/index.js';
 
 const FOLDER = 'application/projections';
 const SUFFIX = '.projection.ts';
 
 /** The projectors of a context, one per `*.projection.ts` file, with the events each one applies. */
-export function readProjections({ ws, directory }: ContextSources): ProjectionFact[] {
-  return ws
-    .list(`${directory}/${FOLDER}`)
-    .filter((file) => file.endsWith(SUFFIX))
-    .map((file) => {
-      const path = `${directory}/${FOLDER}/${file}`;
+export function readProjections(sources: ContextSources): ProjectionFact[] {
+  const { ws } = sources;
+
+  return roleFilesOf(ws, sources, FOLDER)
+    .filter(({ name }) => name.endsWith(SUFFIX))
+    .map(({ path }) => {
       const text = ws.read(path) ?? '';
 
       return {

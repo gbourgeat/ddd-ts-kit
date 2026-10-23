@@ -1,5 +1,5 @@
 [English](context-map.md) · **Français**
-<!-- translation-of: context-map.md sha256:69d8c4a9a1b6e917 -->
+<!-- translation-of: context-map.md sha256:dfd7dbb8ed64ad7d -->
 
 # Carte des contextes
 
@@ -166,6 +166,12 @@ Pour le dire simplement :
   quand même choisir un sens dans la configuration, ou exprimer l'un des deux sens par un
   événement, et décrire le partenariat dans la partie écrite de la carte des contextes. L'outil
   n'en a aucune notion.
+  Refuser le cycle est un choix de ce kit, pour que chaque contexte reste extractible, pas une
+  règle du Domain-Driven Design : Evans accepte la dépendance mutuelle entre équipes. Quand deux
+  contextes ont besoin l'un de l'autre, [Un cycle entre deux contextes](../guides/cycle-between-contexts.fr.md)
+  pose trois questions avant de les fusionner : un langage ou deux, un événement pour un sens, un
+  concept manquant. Des contextes fusionnés qui partagent un même langage restent lisibles en
+  [modules du modèle](modules.fr.md).
 - La valeur est une **étiquette avec un seul effet mécanique** : elle autorise l'import du
   langage publié de l'amont et apparaît sur la flèche du diagramme généré. Le kit n'impose pas
   le comportement qu'implique un patron. Déclarer `anti-corruption-layer` ne vérifie pas qu'un
@@ -289,6 +295,7 @@ ne peut pas s'écarter de la configuration.
 - [Un exemple détaillé : la carte des contextes de l'application de prise de rendez-vous](context-map-worked-example.fr.md)
 - [Contexte délimité](bounded-context.fr.md)
 - [Domaine et sous-domaines](domain-and-subdomains.fr.md)
+- [Un cycle entre deux contextes](../guides/cycle-between-contexts.fr.md)
 - [Événements du domaine et d'intégration](domain-and-integration-events.fr.md)
 - [Versionnement des événements](event-versioning.fr.md)
 - [Travail en équipe](../guides/team-workflow.fr.md)

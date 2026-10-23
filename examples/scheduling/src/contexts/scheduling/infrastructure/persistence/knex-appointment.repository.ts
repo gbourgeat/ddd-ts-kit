@@ -9,17 +9,17 @@ import {
   tenantRow,
   tenantTable,
 } from '@ddd-ts-kit/knex';
-import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
+import type { Appointment } from '@/contexts/scheduling/domain/calendars/aggregates/appointment.aggregate';
+import { AppointmentRepository } from '@/contexts/scheduling/domain/calendars/repositories/appointment.repository';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
 import { AppointmentMapper } from '@/contexts/scheduling/infrastructure/persistence/appointment.mapper';
-import { SlotTaken } from '@/contexts/scheduling/domain/errors/slot-taken.error';
+import { SlotTaken } from '@/contexts/scheduling/domain/calendars/errors/slot-taken.error';
 import {
   APPOINTMENT_SLOT_HELD_ONCE,
   type AppointmentColumns,
   type AppointmentRow,
 } from '@/contexts/scheduling/infrastructure/persistence/appointment-row.schema';
-import { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
+import { AppointmentStatus } from '@/contexts/scheduling/domain/calendars/vocabularies/appointment-status.vocabulary';
 
 type VersionedAppointment = AppointmentColumns & { readonly version: number };
 

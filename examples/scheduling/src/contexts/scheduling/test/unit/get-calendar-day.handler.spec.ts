@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ALLOWED, deny, type AccessScope, type Authorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { GetCalendarDayQuery } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query';
+import { GetCalendarDayQuery } from '@/contexts/scheduling/application/calendars/queries/get-calendar-day/get-calendar-day.query';
 import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 import type { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';

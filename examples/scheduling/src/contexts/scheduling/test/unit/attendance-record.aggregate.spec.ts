@@ -3,10 +3,10 @@ import { expectSnapshotEquivalence, givenEvents } from '@ddd-ts-kit/testing';
 import {
   AttendanceRecord,
   type AttendanceRecordEvent,
-} from '@/contexts/scheduling/domain/aggregates/attendance-record.aggregate';
-import { AttendanceRecordCancellationNoted } from '@/contexts/scheduling/domain/events/attendance-record-cancellation-noted.event';
-import { AttendanceRecordCreated } from '@/contexts/scheduling/domain/events/attendance-record-created.event';
-import { AttendanceRecordNoShowNoted } from '@/contexts/scheduling/domain/events/attendance-record-no-show-noted.event';
+} from '@/contexts/scheduling/domain/calendars/aggregates/attendance-record.aggregate';
+import { AttendanceRecordCancellationNoted } from '@/contexts/scheduling/domain/calendars/events/attendance-record-cancellation-noted.event';
+import { AttendanceRecordCreated } from '@/contexts/scheduling/domain/calendars/events/attendance-record-created.event';
+import { AttendanceRecordNoShowNoted } from '@/contexts/scheduling/domain/calendars/events/attendance-record-no-show-noted.event';
 import { attendanceRecordSnapshots } from '@/contexts/scheduling/infrastructure/persistence/attendance-record-snapshots.mapper';
 import { anAttendanceRecord } from '@/contexts/scheduling/test/builders/attendance-record.builder';
 

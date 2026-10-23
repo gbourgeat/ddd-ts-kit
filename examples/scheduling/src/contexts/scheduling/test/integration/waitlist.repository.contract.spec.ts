@@ -7,8 +7,8 @@ import {
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
 import { repositoryContract, tenantIsolationContract } from '@ddd-ts-kit/testing/contracts';
-import type { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate';
-import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
+import type { Waitlist } from '@/contexts/scheduling/domain/waitlist/aggregates/waitlist.aggregate';
+import { Waiter } from '@/contexts/scheduling/domain/waitlist/value-objects/waiter.vo';
 import { KnexWaitlistRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-waitlist.repository';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { aWaitlist } from '@/contexts/scheduling/test/builders/waitlist.builder';

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { given } from '@ddd-ts-kit/testing';
-import { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
-import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
+import { Waitlist } from '@/contexts/scheduling/domain/waitlist/aggregates/waitlist.aggregate';
+import { Slot } from '@/contexts/scheduling/domain/calendars/value-objects/slot.vo';
+import { Waiter } from '@/contexts/scheduling/domain/waitlist/value-objects/waiter.vo';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 import { aWaitlist } from '@/contexts/scheduling/test/builders/waitlist.builder';
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CalendarCreatedEventHandler } from '@/contexts/scheduling/application/event-handlers/calendar-created.event-handler';
-import { CalendarCreated } from '@/contexts/scheduling/domain/events/calendar-created.event';
+import { CalendarCreatedEventHandler } from '@/contexts/scheduling/application/calendars/event-handlers/calendar-created.event-handler';
+import { CalendarCreated } from '@/contexts/scheduling/domain/calendars/events/calendar-created.event';
 import { FakeSchedulingRelationships } from '@/contexts/scheduling/test/fakes/scheduling-relationships.fake';
 
 const created = new CalendarCreated(

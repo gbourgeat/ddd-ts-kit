@@ -14,6 +14,7 @@ import {
   type DeclaredContext,
   type Sources,
 } from '../declared/index.js';
+import { declaredModules } from '../model-modules/index.js';
 import type { Workspace } from '../workspace/index.js';
 import { filesUnder } from './files-under.js';
 import { isDeclared } from './is-declared.js';
@@ -63,19 +64,22 @@ interface Refreshed {
 function refreshContext(ws: Workspace, { config, sources, context, singleFile }: Refreshed): 'kept' | 'refreshed' {
   const directory = `${config.contextsDir}/${context}`;
   const entries = filesUnder(ws, directory);
+  const modules = declaredModules(config, context);
   const specifierOfFile = (file: string): string => specifierOf(config, file);
 
   if (config.stack.assembly === 'barrel') {
-    return refreshDeclarations(ws, { context, directory, entries, sources, specifierOf: specifierOfFile }, singleFile);
+    const declared = { context, directory, entries, sources, modules, specifierOf: specifierOfFile };
+
+    return refreshDeclarations(ws, declared, singleFile);
   }
 
-  const injections = contextInjections(sources, directory, entries);
+  const injections = contextInjections(sources, { directory, entries, modules });
   const injected = renderInjections(injections, specifierOfFile);
 
   noteUnread(ws, injections);
 
-  if (injected.calls.length > 0 || ws.exists(`${directory}/${dependenciesFile(context)}`)) {
-    write(ws, `${directory}/${dependenciesFile(context)}`, renderDependenciesFile(injected));
+  if (injected.calls.length > 0 || modules.length > 0 || ws.exists(`${directory}/${dependenciesFile(context)}`)) {
+    write(ws, `${directory}/${dependenciesFile(context)}`, renderDependenciesFile(injected, modules));
   }
 
   return 'refreshed';
@@ -83,7 +87,7 @@ function refreshContext(ws: Workspace, { config, sources, context, singleFile }:
 
 /** The declarations of each role folder and their summary, the ones of an emptied folder deleted. */
 function refreshDeclarations(ws: Workspace, declared: DeclaredContext, singleFile: SingleFile): 'kept' | 'refreshed' {
-  const { context, directory, entries } = declared;
+  const { context, directory, entries, modules } = declared;
 
   if (singleFile === 'keep' && keepsSingleFile(declared, ws.read(`${directory}/${barrelFile(context)}`))) {
     const { message, fix } = singleFileNotice(context);
@@ -100,7 +104,7 @@ function refreshDeclarations(ws: Workspace, declared: DeclaredContext, singleFil
 
   // The declarations of a folder that holds no role file any more: nothing derives them now.
   entries
-    .filter((entry) => isDeclarationsFile(context, entry) && !files.has(entry))
+    .filter((entry) => isDeclarationsFile(context, entry, modules) && !files.has(entry))
     .forEach((entry) => ws.delete(`${directory}/${entry}`));
 
   return 'refreshed';

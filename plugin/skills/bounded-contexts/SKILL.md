@@ -5,8 +5,9 @@ description: >-
   from the domain discovery or from an existing model. Produces
   docs/architecture/contexts.md with the reason for every boundary. Use when cutting a
   system into contexts, when a concept has no obvious home, when a context grows two
-  vocabularies, or when the user asks about boundaries, subdomains, splitting or merging
-  contexts. For the terms of one context use glossary; for the relationships between
+  vocabularies, when a context grows too large to read, when two contexts need each other,
+  or when the user asks about boundaries, subdomains, sub-contexts, modules, splitting or
+  merging contexts. For the terms of one context use glossary; for the relationships between
   contexts use context-map.
 argument-hint: "[context or concept under discussion]"
 allowed-tools:
@@ -57,6 +58,26 @@ context needing most fields of another's aggregate, a shared kernel that grows.
 | `generic` | solved elsewhere (identity, payment, mail) | buy or wrap behind an anti-corruption layer |
 
 One or two cores at most: if everything is core, nothing is.
+
+## When a context grows too large, or two need each other
+
+There is no sub-context, child context or nested context in the references (Evans, *DDD
+Reference*). A part with a language of its own is a context; a part of one model, same
+language, same schema, same transaction, is a **module of the model**: one folder under
+`domain/` and `application/`, declared in `contexts.<name>.modules`, named with glossary terms
+(`docs/concepts/modules.md`).
+
+- **Too large to read, one language**: propose modules, each a cluster of glossary terms used
+  together, with one sentence of purpose. Never technical names (`shared`, `common`, `core`).
+- **Two contexts that need each other** (`context/no-cycle`): ask in this order
+  (`docs/guides/cycle-between-contexts.md`): 1. one language, one model? then one context
+  divided into modules; 2. can one direction become an integration event? 3. is a concept
+  missing, the one both fight over? Refusing the cycle is a choice of the kit, not of DDD.
+- **A handler with too many dependencies** is not a boundary question: see
+  `docs/guides/many-dependencies.md`.
+
+Once the owner agreed, `npx ddd-ts-kit generate module <context> <module> --purpose "..."` and
+`npx ddd-ts-kit move-to-module <context> <module> <path>...` (skill `ddd-ts-kit:scaffold`).
 
 ## 4. Write the artefact
 

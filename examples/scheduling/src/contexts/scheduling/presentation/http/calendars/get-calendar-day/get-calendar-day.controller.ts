@@ -1,7 +1,7 @@
 import { CacheScope, Controller, type HttpRequest } from '@ddd-ts-kit/http';
 import type { QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { GetCalendarDayQuery } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query';
+import { GetCalendarDayQuery } from '@/contexts/scheduling/application/calendars/queries/get-calendar-day/get-calendar-day.query';
 import { GetCalendarDayParams } from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.params';
 import { GetCalendarDayAnswer } from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.answer';
 import type { GetCalendarDaySerializer } from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.serializer';

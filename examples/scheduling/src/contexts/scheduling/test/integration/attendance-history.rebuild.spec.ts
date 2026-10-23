@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Criteria, PersonalDataCipher, scoped } from '@ddd-ts-kit/kernel';
-import type { AttendanceEntry } from '@/contexts/scheduling/application/ports/attendance-history.port';
-import { AttendanceRecord } from '@/contexts/scheduling/domain/aggregates/attendance-record.aggregate';
+import type { AttendanceEntry } from '@/contexts/scheduling/application/calendars/ports/attendance-history.port';
+import { AttendanceRecord } from '@/contexts/scheduling/domain/calendars/aggregates/attendance-record.aggregate';
 import { EventStoreAttendanceRecordRepository } from '@/contexts/scheduling/infrastructure/persistence/event-store-attendance-record.repository';
 import { KnexAttendanceHistory } from '@/contexts/scheduling/infrastructure/persistence/knex-attendance-history.repository';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';

@@ -16,9 +16,9 @@ import { composeApplication, type Application } from '@/platform/composition/com
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { inProcessEvents } from '@/platform/events/in-process-events';
 import { storeFedProjections } from '@/platform/events/store-fed-projections';
-import type { AttendanceEntry } from '@/contexts/scheduling/application/ports/attendance-history.port';
+import type { AttendanceEntry } from '@/contexts/scheduling/application/calendars/ports/attendance-history.port';
 import { KnexAttendanceHistory } from '@/contexts/scheduling/infrastructure/persistence/knex-attendance-history.repository';
-import { AgendaProjection } from '@/contexts/scheduling/application/projections/agenda.projection';
+import { AgendaProjection } from '@/contexts/scheduling/application/calendars/projections/agenda.projection';
 import { KnexCalendarRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-calendar.repository';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 

@@ -7,6 +7,8 @@ export interface Role {
   readonly files?: readonly string[];
   /** Counted by naming/one-concept-per-file when true. */
   readonly oneConcept?: boolean;
+  /** Files of the role that stay one per context once it is divided into modules of the model; `<context>` stands for its name. */
+  readonly perContext?: readonly string[];
   /** Suffixes whose files need a spec (test/spec-required). */
   readonly specFor?: readonly string[];
 }

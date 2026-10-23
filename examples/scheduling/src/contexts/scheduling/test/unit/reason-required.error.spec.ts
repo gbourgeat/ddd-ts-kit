@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { ReasonRequired } from '@/contexts/scheduling/domain/errors/reason-required.error';
+import { ReasonRequired } from '@/contexts/scheduling/domain/calendars/errors/reason-required.error';
 
 describe('ReasonRequired', () => {
   it('refuses with the code REASON_REQUIRED, its message and its facts', () => {

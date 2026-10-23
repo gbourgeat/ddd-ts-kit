@@ -67,8 +67,9 @@ const GENERATORS = [
     /\.error\.ts$/,
     'error <context> <Refusal> <factory> (under "stack.refusals": "factories": error <context> <Concept> <refusal>)',
   ],
-  [/\/domain\/services\/[^/]+\.service\.ts$/, 'domain-service <context> <Name>'],
-  [/\/domain\/repositories\/[^/]+\.repository\.ts$/, 'repository <context> <Aggregate>'],
+  // At the level of the context, or in a module of its model (domain/<module>/services/).
+  [/\/domain\/(?:[^/]+\/)?services\/[^/]+\.service\.ts$/, 'domain-service <context> <Name>'],
+  [/\/domain\/(?:[^/]+\/)?repositories\/[^/]+\.repository\.ts$/, 'repository <context> <Aggregate>'],
   [/\.command\.ts$/, 'command <context> <UseCase> (--permission <aggregate>.<action> [--grant <role>] | --public)'],
   [/\.query\.ts$/, 'query <context> <UseCase> (--permission <aggregate>.<action> [--grant <role>] | --public)'],
   [
@@ -152,6 +153,7 @@ const ESCAPES = [
 // Generators that write outside the context they are given: the config, registries of the platform, the schema.
 const SHARED_GENERATORS = [
   'context',
+  'module',
   'repository',
   'integration-event',
   'job',
@@ -637,6 +639,8 @@ function describeProject(root) {
     cli: existsSync(local) ? local : undefined,
     sourceRoot: config.sourceRoot ?? 'src',
     contextsDir: config.contextsDir ?? 'src/contexts',
+    // The modules of the model each context declares: one folder level under domain/ and application/.
+    modules: modulesByContext(config.contexts),
     platformDir: config.platformDir ?? 'src/platform',
     commit: commitLimits(config.commit),
     packageManager: config.stack?.packageManager === 'pnpm' ? 'pnpm' : 'npm',
@@ -897,18 +901,32 @@ function generatedFileReason(project, file) {
     : undefined;
 }
 
-/** The summary at the root of a context, or the declarations of a role folder, named after the folder. */
+/**
+ * The summary at the root of a context, or the declarations of a role folder, named after the
+ * folder: the folder of the context, or the same folder in a module of its model that the config
+ * declares (application/<module>/commands/commands.declarations.ts).
+ */
 function isBarrel(project, path) {
   const [context, layer, ...rest] = insideContexts(project, path) ?? [];
   if (rest.length === 0) {
     return layer === `${context}.declarations.ts`;
   }
-  const folder = rest.length === 2 ? rest[0] : layer;
+  const module = layer === 'application' && rest.length >= 2 && (project.modules?.[context] ?? []).includes(rest[0]);
+  const below = module ? rest.slice(1) : rest;
+  const folder = below.length === 2 ? below[0] : module ? rest[0] : layer;
   return (
     ['application', 'infrastructure', 'presentation'].includes(layer) &&
-    rest.length <= 2 &&
-    rest.at(-1) === `${folder}.declarations.ts`
+    below.length <= 2 &&
+    below.at(-1) === `${folder}.declarations.ts`
   );
+}
+
+function modulesByContext(contexts) {
+  const named = (context) => {
+    const modules = context?.modules;
+    return modules && typeof modules === 'object' && !Array.isArray(modules) ? Object.keys(modules) : [];
+  };
+  return Object.fromEntries(Object.entries(contexts ?? {}).map(([name, context]) => [name, named(context)]));
 }
 
 function insideContexts(project, path) {
@@ -2016,7 +2034,11 @@ function sliceOf(project, path) {
         ? path.split('/')[0]
         : 'project root';
   }
-  const [context, layer, kind, useCase] = inside;
+  const [context, layer, ...rest] = inside;
+  // A module of the model is one folder level under domain/ and application/: a use case sits below it.
+  const inModule =
+    (layer === 'application' || layer === 'domain') && (project.modules?.[context] ?? []).includes(rest[0]);
+  const [kind, useCase] = inModule ? rest.slice(1) : rest;
   if (layer === 'application' && (kind === 'commands' || kind === 'queries') && useCase) {
     return `${context}: ${useCase}`;
   }

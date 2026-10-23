@@ -1,7 +1,7 @@
 import { acceptedSchema, Controller, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { MarkAppointmentNoShowCommand } from '@/contexts/scheduling/application/commands/mark-appointment-no-show/mark-appointment-no-show.command';
+import { MarkAppointmentNoShowCommand } from '@/contexts/scheduling/application/calendars/commands/mark-appointment-no-show/mark-appointment-no-show.command';
 import { MarkAppointmentNoShowParams } from '@/contexts/scheduling/presentation/http/appointments/mark-appointment-no-show/mark-appointment-no-show.params';
 import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
 

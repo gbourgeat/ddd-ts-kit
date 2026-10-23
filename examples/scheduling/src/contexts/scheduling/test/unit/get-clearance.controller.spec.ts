@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus } from '@ddd-ts-kit/kernel';
-import { GetClearanceQuery } from '@/contexts/scheduling/application/queries/get-clearance/get-clearance.query';
-import { UnknownClearance } from '@/contexts/scheduling/domain/errors/unknown-clearance.error';
+import { GetClearanceQuery } from '@/contexts/scheduling/application/calendars/queries/get-clearance/get-clearance.query';
+import { UnknownClearance } from '@/contexts/scheduling/domain/calendars/errors/unknown-clearance.error';
 import { GetClearanceController } from '@/contexts/scheduling/presentation/http/calendars/get-clearance/get-clearance.controller';
 
 const PARAMS = { calendarId: 'calendar-1', clearanceId: 'clearance-1' };

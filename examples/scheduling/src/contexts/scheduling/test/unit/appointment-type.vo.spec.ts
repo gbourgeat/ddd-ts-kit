@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AppointmentType } from '@/contexts/scheduling/domain/value-objects/appointment-type.vo';
+import { AppointmentType } from '@/contexts/scheduling/domain/calendars/value-objects/appointment-type.vo';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 
 const consultation = {

@@ -13,6 +13,7 @@ import { inContext } from '../support/in-context.js';
 import { isDeclaredStyle } from '../support/is-declared-style.js';
 import { pathInContext } from '../support/path-in-context.js';
 import { perFile } from '../support/per-file.js';
+import { WITHOUT_MODULE } from '../../model-modules/index.js';
 
 /** The option of each decorator that names what it declares, written once and never derived. */
 const WRITTEN_NAMES: Readonly<Record<string, string>> = {
@@ -64,7 +65,7 @@ function decorated(file: SourceFile): Decorated[] {
 
 function outsideTheDomain(file: SourceFile, project: Project): Finding[] {
   const inside = pathInContext(project, file) ?? '';
-  const role = declaredRoleOf(inside);
+  const role = declaredRoleOf(inside, WITHOUT_MODULE);
   const place = role === undefined ? misplaced(file) : undeclaredRole(file, role, inside);
 
   return [...place, ...unwrittenNames(file)];

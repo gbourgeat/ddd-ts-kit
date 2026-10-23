@@ -8,7 +8,7 @@ export const ROLES: readonly Role[] = [
   { directory: 'domain/value-objects', suffixes: ['.vo.ts'], oneConcept: true, specFor: ['.vo.ts'] },
   { directory: 'domain/vocabularies', suffixes: ['.vocabulary.ts'], oneConcept: true },
   { directory: 'domain/events', suffixes: ['.event.ts'], oneConcept: true },
-  { directory: 'domain/errors', suffixes: ['.error.ts'], files: ['codes.ts'] },
+  { directory: 'domain/errors', suffixes: ['.error.ts'], files: ['codes.ts'], perContext: ['codes.ts'] },
   { directory: 'domain/repositories', suffixes: ['.repository.ts'] },
   { directory: 'domain/services', suffixes: ['.service.ts'], specFor: ['.service.ts'] },
   {
@@ -30,7 +30,11 @@ export const ROLES: readonly Role[] = [
     specFor: ['.handler.ts'],
   },
   { directory: 'application/ports', suffixes: ['.port.ts'] },
-  { directory: 'application/authorization', suffixes: ['.permissions.ts', '.policy.ts'] },
+  {
+    directory: 'application/authorization',
+    suffixes: ['.permissions.ts', '.policy.ts'],
+    perContext: ['<context>.permissions.ts'],
+  },
   {
     directory: 'application/event-handlers',
     suffixes: ['.event-handler.ts'],

@@ -6,11 +6,11 @@ import { ProcessRunner } from '@ddd-ts-kit/kernel';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
-import { ConfirmationDeadlineOnBookedEventHandler } from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-booked.event-handler';
-import { ConfirmationDeadlineOnCancelledEventHandler } from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-cancelled.event-handler';
-import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
-import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
-import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
+import { ConfirmationDeadlineOnBookedEventHandler } from '@/contexts/scheduling/application/calendars/event-handlers/confirmation-deadline-on-booked.event-handler';
+import { ConfirmationDeadlineOnCancelledEventHandler } from '@/contexts/scheduling/application/calendars/event-handlers/confirmation-deadline-on-cancelled.event-handler';
+import { AppointmentBooked } from '@/contexts/scheduling/domain/calendars/events/appointment-booked.event';
+import { AppointmentCancelled } from '@/contexts/scheduling/domain/calendars/events/appointment-cancelled.event';
+import { Cancellation } from '@/contexts/scheduling/domain/calendars/value-objects/cancellation.vo';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 const deadline = new Date('2026-03-01T12:00:00.000Z');
