@@ -9,7 +9,8 @@ import { createNotificationTables } from '@/contexts/notification/infrastructure
 import { createAnalyticsTables } from '@/contexts/analytics/infrastructure/persistence/create-analytics-tables.schema';
 // /ddd-ts-kit:imports
 
-export const MESSAGING = 'messaging';
+/** The schema of what the kit stores for the application: the outbox and the processed events, the background jobs, the process instances. */
+export const MESSAGING_SCHEMA = 'messaging';
 /** The schema of the audit trail: two tables, and the triggers that keep the entries append-only. */
 export const AUDIT_SCHEMA = 'audit';
 /** The schema of the relation tuples the authorizer reads. */
@@ -22,10 +23,10 @@ export const AUTHORIZATION_SCHEMA = 'authorization';
  */
 export const createTables = async (knex: Knex): Promise<void> => {
   // The tenant of each event, so that its consumers run in that tenant.
-  await createOutboxTables(knex, { schema: MESSAGING, tenant: true });
-  await createJobTable(knex, { schema: MESSAGING });
+  await createOutboxTables(knex, { schema: MESSAGING_SCHEMA, tenant: true });
+  await createJobTable(knex, { schema: MESSAGING_SCHEMA });
   // Each instance in the network of the work that started it.
-  await createProcessTable(knex, { schema: MESSAGING, tenant: true });
+  await createProcessTable(knex, { schema: MESSAGING_SCHEMA, tenant: true });
   await createAuditTables(knex, { schema: AUDIT_SCHEMA });
   await createRelationTupleTables(knex, { schema: AUTHORIZATION_SCHEMA });
   // ddd-ts-kit:schemas

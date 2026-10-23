@@ -5,7 +5,7 @@ import type { Application } from '{{alias.platform}}/composition/compose-applica
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 import { createAppModule } from '{{alias.platform}}/http/create-app-module{{alias.ext}}';
 {{#if cache.rateLimit}}
-import { refusalFor } from '{{alias.platform}}/http/refusal-for{{alias.ext}}';
+import { tooManyRequestsFor } from '{{alias.platform}}/http/too-many-requests-for{{alias.ext}}';
 {{/if}}
 {{#if docs.any}}
 import { withDocumentation } from '{{alias.platform}}/http/with-documentation{{alias.ext}}';
@@ -33,8 +33,15 @@ interface Outgoing {
 
   end(body: string): void;
 }
+
+type Middleware = (request: Incoming, response: Outgoing, next: () => void) => void;
 {{/if}}
 
+/**
+ * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
+ * server), then the routes of the contexts, the pages of the contract (with documentation on) and
+ * the signed file links (with a storage the application serves), all in one Nest module.
+ */
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
 {{#if files.http}}
 {{#if docs.any}}
@@ -43,24 +50,21 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 {{#unless docs.any}}
   const routes = [...served.routes, ...served.fileRoutes];
 {{/unless}}
-  const app = await NestFactory.create(createAppModule(routes, served.boundary), { logger: ['error', 'warn'] });
 {{/if}}
 {{#unless files.http}}
 {{#if docs.any}}
-  const app = await NestFactory.create(createAppModule(withDocumentation(served.routes, config, served.boundary), served.boundary), {
-    logger: ['error', 'warn'],
-  });
+  const routes = withDocumentation(served.routes, config, served.boundary);
 {{/if}}
 {{#unless docs.any}}
-  const app = await NestFactory.create(createAppModule(served.routes, served.boundary), { logger: ['error', 'warn'] });
+  const routes = served.routes;
 {{/unless}}
 {{/unless}}
 
+  const app = await NestFactory.create(createAppModule(routes, served.boundary), { logger: ['error', 'warn'] });
+
 {{#if cache.rateLimit}}
-  app.use(
-    (request: Incoming, response: Outgoing, next: () => void) =>
-      void guardTheDoor({ served, config }, { request, response, next }),
-  );
+  app.use(answeringReadiness(served));
+  app.use(limitingEachCaller(served, config));
 
 {{/if}}
   await app.listen(config.port);
@@ -69,36 +73,34 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 }
 {{#if cache.rateLimit}}
 
-interface Door {
-  readonly served: Served;
-  readonly config: AppConfig;
+/** Whether the Redis protocol server answers, for the load balancer; never limited, since it is polled. */
+function answeringReadiness(served: Served): Middleware {
+  return (request, response, next) => {
+    if (request.url !== '/health/ready') {
+      next();
+
+      return;
+    }
+
+    void served.ready().then((ready) => {
+      response
+        .writeHead(ready ? 200 : 503, { 'content-type': 'application/json' })
+        .end(JSON.stringify({ status: ready ? 'up' : 'down' }));
+    });
+  };
 }
 
-interface Exchange {
-  readonly request: Incoming;
-  readonly response: Outgoing;
-  readonly next: () => void;
-}
-
-/** The readiness probe, then the limiter, before any route. */
-async function guardTheDoor({ served, config }: Door, { request, response, next }: Exchange): Promise<void> {
-  if (request.url === '/health/ready') {
-    const ready = await served.ready();
-
-    response
-      .writeHead(ready ? 200 : 503, { 'content-type': 'application/json' })
-      .end(JSON.stringify({ status: ready ? 'up' : 'down' }));
-
-    return;
-  }
-
-  const refusal = await refusalFor(served.rateLimiter, config.rateLimit, request.socket.remoteAddress);
-
-  if (refusal === undefined) {
-    next();
-  } else {
-    response.writeHead(refusal.problem.status, refusal.headers).end(JSON.stringify(refusal.problem));
-  }
+/** One sliding window per caller address, before authentication costs anything. */
+function limitingEachCaller(served: Served, config: AppConfig): Middleware {
+  return (request, response, next) => {
+    void tooManyRequestsFor(served.rateLimiter, config.rateLimit, request.socket.remoteAddress).then((tooMany) => {
+      if (tooMany === undefined) {
+        next();
+      } else {
+        response.writeHead(tooMany.status, tooMany.headers).end(tooMany.body);
+      }
+    });
+  };
 }
 {{/if}}
 

@@ -9,7 +9,7 @@ import type {
 import type { JobStore } from '@ddd-ts-kit/scheduling';
 import type { KnexContext } from '@ddd-ts-kit/knex';
 
-/** Where state lives and how a command is made atomic. The platform module binds each member to its port. */
+/** Where state lives and how a command is made atomic. The composition root binds each member to its port. */
 export interface Persistence {
   readonly unitOfWork: UnitOfWork;
   readonly outbox: OutboxStore;
