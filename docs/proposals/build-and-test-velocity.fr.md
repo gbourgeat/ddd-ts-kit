@@ -1,5 +1,5 @@
 [English](build-and-test-velocity.md) · **Français**
-<!-- translation-of: build-and-test-velocity.md sha256:b0af772f1900bf50 -->
+<!-- translation-of: build-and-test-velocity.md sha256:7b5f2c498f477258 -->
 
 # Proposition : vélocité du build, des contrôles et des tests
 
@@ -21,22 +21,59 @@ le découpage, le cache du lint et moins de jobs par exécution.
 
 ## État (2026-10-23)
 
-**Étudié, non construit.** Les mesures et les sources sont conservées ici ; chaque ligne du plan
-est une *pull request* à part, mesurée sur les indicateurs de cette page avant et après.
+**Construit, lignes 1 à 7, en une journée ; deux essais courent pendant un mois.** Chaque ligne a
+été une *pull request* à part, mesurée avant et après sur les indicateurs ci-dessous ; les
+chiffres de la journée sont dans [Ce que la journée a mesuré](#ce-que-la-journée-a-mesuré). La
+page française et celle-ci gardent l'étude telle qu'elle a été écrite, puis ce qu'elle est devenue.
 
 | Partie | Verdict |
 |---|---|
-| Moins de jobs par exécution du *pipeline*, les familles lourdes réduites sur une *pull request* | **en cours** (la file et le temps de mur) : la *pull request* #248 (2026-10-23) replie les cinq portes de moins de trois minutes en un job et, sur une *pull request*, exécute la suite de l'alias sur une ligne de Node et les projets générés sur npm : 24 jobs à 20 sur le tronc, 23 à 17 sur une *pull request* ; les *shards* de bout en bout tenus aux *stacks* qu'un changement atteint viennent ensuite |
-| La matrice de compilation de cinq fichiers de *spec* en parallèle ou découpée par fichier | **en cours** (le fichier le plus long, 84 s, plafonnait chaque exécution) : la *pull request* #250 (2026-10-23) compile les modes d'un fichier quelques-uns à la fois dès son premier chargement, et le *runner* démarre d'abord les six fichiers les plus longs. Mesuré sur la station de travail de la méthode : le fichier le plus long de 84 s à 27 s dans une exécution complète (4,5 s seul au lieu de 15 s), l'exécution de 88 à 104 s à 81 s sur 20 cœurs et de 203 s à 139 s à quatre *workers* ; les deux fichiers de bout en bout de la CLI, qui génèrent chaque *stack* l'une après l'autre, font maintenant la queue (65 à 70 s). Le chiffre à 4 vCPU est le job unitaire du *pipeline* sur cette *pull request* |
-| La moitié des cœurs hors *pipeline*, les tests `related` avant un *push* | **en cours** (la mémoire d'un portable) : la *pull request* #252 (2026-10-23) donne au `vitest.config.ts` racine `maxWorkers: '50%'` hors *pipeline*, et le *hook* de *pre-push* exécute les *specs* unitaires des *packages* que la branche atteint et des *packages* construits dessus, sans couverture (`affected-packages.mjs --base origin/main --run test`), là où il exécutait tout avec couverture. Mesuré sur la station de travail de la méthode, avant un *push* qui atteint tous les *packages* : 152 à 201 s et 9,3 à 11,5 Go avec couverture sur tous les cœurs, à 101 à 110 s et 6,8 à 7,3 Go (deux mesures chacun, la seconde paire sous une charge étrangère) ; un *push* qui atteint un *package* feuille exécute ses *specs* seules, en quelques secondes |
-| Les familles lourdes exécutent deux fichiers à la fois, leurs géants d'un seul fichier coupés (la sixième ligne, réécrite : le job unitaire a cessé d'être le plus long après la deuxième) | **en cours** : la *pull request* #255 (2026-10-23) ; ses mesures sont en section 5 et sur la *pull request* |
-| ESLint avec son cache par contenu, conservé comme artefact du *pipeline* | **en cours** (mesuré sur ce dépôt, section 5) : la *pull request* #253 (2026-10-23) linte avec `--cache --cache-strategy content` par `pipeline/monorepo/lint.mjs`, qui laisse tomber le cache quand les règles du kit telles que construites, la config ou le *lockfile* ont changé depuis son écriture (le cache d'ESLint est indexé par les fichiers lintés et la config, pas par le code des règles) ; dans le *pipeline* le tronc écrit le cache et une *pull request* le restaure |
-| La vérification des types des *specs* en parallèle | **en cours** (mesuré, section 5) : la même *pull request* exécute les 26 projets autant à la fois que la machine a de cœurs (`pipeline/monorepo/typecheck-tests.mjs`) |
-| Oxlint avec tsgolint, les règles du kit chargées comme *plugin* JS | **à l'essai** : la *pull request* #256 (2026-10-23) corrige la seule règle qui cassait sous l'API de *plugins* en alpha (`clean/one-export-per-file` parcourait un corps que l'analyseur d'Oxlint laisse nul), linte l'arbre avec `npm run lint:oxlint` (la config dans `.oxlintrc.json`, 2 à 4 s au lieu de 35) et l'exécute sur le tronc et la nuit à côté d'ESLint, jamais comme porte, ses constats et son temps dans le résumé de chaque exécution pendant un mois ; elle a aussi trouvé 27 constats *stepdown* dans un script qu'ESLint n'a jamais rapportés (la règle lit une propriété de portée de typescript-eslint que l'analyseur des scripts n'a pas) : un bug du *plugin*, corrigé par la *pull request* #257 avec les douze scripts du dépôt réordonnés |
-| Des *runners* arm64 pour les jobs unitaires et de bout en bout | **à l'essai** : la même *pull request* exécute les *specs* unitaires et le troisième *shard* de bout en bout sur `ubuntu-26.04-arm` la nuit, jamais comme porte, pour un mois de p50 contre les jobs x64 des mêmes nuits |
+| 1. Moins de jobs par exécution du *pipeline*, les familles lourdes réduites sur une *pull request* | **construit** (#248) : cinq portes repliées en un job, la suite de l'alias sur une ligne de Node et les projets générés sur npm sur une *pull request* ; 24 jobs à 20 sur le tronc, 23 à 17 sur une *pull request* ; les *shards* de bout en bout tenus aux *stacks* qu'un changement atteint restent à faire |
+| 2. La matrice de compilation de cinq fichiers de *spec* en parallèle | **construit** (#250) : les modes d'un fichier compilent quelques-uns à la fois, les six fichiers les plus longs démarrent en premier ; le fichier le plus long de 84 s à 27 s dans une exécution complète, le job unitaire du *pipeline* de 571 s à environ 490 s |
+| 3. La moitié des cœurs hors *pipeline*, les *specs* des *packages* qu'une branche atteint avant un *push* | **construit** (#252) : l'étape unitaire du *hook* de 152 à 201 s et 9,3 à 11,5 Go, à 101 à 110 s et 6,8 à 7,3 Go sur une branche qui atteint tout, quelques secondes sur une feuille |
+| 4. ESLint avec son cache par contenu, la vérification des types des *specs* en parallèle | **construit** (#253) : `npm run lint` de 36,5 s à 1,3 s quand rien n'a changé, le cache abandonné quand les règles du kit telles que construites, la config ou le *lockfile* ont changé (`pipeline/monorepo/lint.mjs`) ; le tronc écrit le cache du *pipeline*, une *pull request* le restaure ; `typecheck:tests` de 5,1 s à 3,3 s |
+| 5. Le cache d'installation | **construit autrement** (#254) : la clé suivait déjà le *lockfile* et les manifestes qu'elle contient gardent le *lockfile*, donc la clé reste ; la moitié des 10 Go étaient les caches de *pull requests* fusionnées, supprimés désormais à la fermeture d'une *pull request* ; 10 052 Mo à 5 637 Mo le jour où le *workflow* est arrivé |
+| 6. Les familles lourdes exécutent deux fichiers à la fois, leur géant d'un seul fichier coupé (réécrite : le job unitaire a cessé d'être le plus long après la ligne 2) | **construit** (#255) : les projets générés et les exécutions de l'alias deux fichiers à la fois avec deux *workers* chacun, `alias-runtime.spec.ts` en deux moitiés, les *shards* de bout en bout équilibrés sur des secondes mesurées (505 à 521 s chacun, de 352 à 715 s) ; sur quatre cœurs la famille *managers* de 521 s à 308 s ; deux fichiers à la fois a été essayé sur les *shards* aussi et a fait expirer les *specs* d'un projet généré : ils restent à un à la fois |
+| 7. Oxlint avec tsgolint et les règles du kit comme *plugin* JS ; *runners* arm64 | **à l'essai** (#256) : la seule règle qui cassait sous l'API de *plugins* corrigée (#257 répare la règle *stepdown* sur les scripts, qu'Oxlint a révélée), `npm run lint:oxlint` 6 s et 1,0 Go contre 35 s et 3,0 Go, un job du tronc et de la nuit à côté d'ESLint ; les *specs* unitaires et le troisième *shard* de bout en bout sur `ubuntu-26.04-arm` la nuit ; verdicts après un mois |
 | pnpm pour ce dépôt | **pas maintenant** : 1 s au lieu de 8 s par installation, derrière la même restauration de cache ; le filtre qu'il offre existe déjà |
 | Nx, Turborepo, moon, Lage, Rush | **non** : plus rien à mettre en cache, la sélection des *packages* atteints existe, un cache distant coûte ou expose |
 | Biome comme *linter*, bun test ou node:test comme *runner* | **non** : les types, les modules natifs et la couverture |
+
+### Ce que la journée a mesuré
+
+Les chiffres du *pipeline* sont des médianes sur les exécutions du 2026-10-23, douze exécutions
+du tronc et 38 de *pull requests* avant la fusion de la première ligne (18:10 UTC), huit et huit
+après ; une seule journée sur des *runners* partagés, avec d'autres exécutions dans la file, donc
+les écarts de moins d'un cinquième sont du bruit, et les essais de la septième ligne continuent
+de mesurer. Les chiffres de la station de travail sont ceux des sections ci-dessus, pris sur une
+machine calme. Deux lignes dépendent de ce qui tournait d'autre : la file d'un job et le temps de
+mur d'une exécution suivent le trafic du dépôt autant que le plan. Ce trafic n'était pas plus
+léger après : les exécutions lancées par heure étaient de 6 à 8 l'après-midi d'où viennent les
+chiffres d'avant et de 10 à 12 le soir de l'après, chacune avec moins de jobs (environ 170 et
+environ 215 jobs par heure), donc la baisse n'est pas celle du trafic ; mais une journée ne peut
+pas dire quelle part en revient au plan. Ces deux lignes sont à confirmer sur plusieurs jours de
+trafic égal ; les autres ne dépendent pas de la file.
+
+| Indicateur | avant | après les lignes 1 à 6 |
+|---|---|---|
+| jobs par exécution, tronc et *pull request* | 24 et 23 | 20 et 17 |
+| temps de mur d'une exécution de *pull request*, médiane et p95 (à confirmer sur plusieurs jours) | 1 073 s et 1 687 s | 800 s et 1 294 s |
+| file d'un job d'une *pull request*, p95 et maximum (à confirmer sur plusieurs jours) | 461 s et 879 s | 162 s et 438 s |
+| temps de mur d'une exécution du tronc, médiane (à confirmer sur plusieurs jours) | 1 248 s | 1 069 s |
+| le job unitaire du tronc (Node 24, couverture) | 571 s | environ 490 s |
+| les projets générés sur npm (tronc) | 790 s | 648 s (une exécution) |
+| la suite de l'alias sur Node 24 (tronc) | 624 s | 276 à 441 s (deux exécutions) |
+| la suite unitaire sur la station, 20 cœurs et 4 *workers* | 88 à 104 s, 203 s | 81 s, 139 s |
+| le fichier de *spec* le plus long d'une exécution complète | 84 s | 27 s |
+| l'étape unitaire avant un *push*, mur et pic de mémoire | 152 à 201 s, 9,3 à 11,5 Go | 101 à 110 s, 6,8 à 7,3 Go |
+| `npm run lint` quand rien n'a changé | 36,5 s | 1,3 s |
+| la famille *managers* sur quatre cœurs | 521 s | 308 s |
+| le cache du *pipeline* | 10 052 Mo, plein | 5 637 Mo, les caches d'une *pull request* fermée supprimés |
+
+Ce qui n'a pas bougé : les quatre *shards* de bout en bout (450 à 720 s sur la seule exécution du
+tronc après la sixième ligne, contre 454 à 659 s avant : leur équilibre et les deux fichiers à la
+fois des autres familles n'ont pas changé leur somme), et le job de lint du tronc, qui écrit le
+cache plutôt qu'il ne le lit (les *pull requests* le lisent).
 
 ## La question
 
@@ -472,7 +509,11 @@ raisons ci-dessus.
 ## Reste à vérifier
 
 - Les constats d'Oxlint avec les règles du kit comme *plugin* JS contre ceux d'ESLint, sur cet
-  arbre et sur un projet généré, sur plusieurs semaines de changements.
+  arbre et sur un projet généré, sur plusieurs semaines de changements : le job d'essai de #256
+  les écrit dans le résumé de chaque exécution du tronc et de la nuit.
+- Les *shards* de bout en bout tenus aux *stacks* qu'un changement atteint, la part de la
+  première ligne qui reste ; et le cache par contenu d'ESLint dans les *templates* d'un projet
+  généré.
 - Le p50 des jobs unitaires et de bout en bout sur des *runners* arm64 contre x64, sur dix
   exécutions de nuit.
 - Le rappel de la sélection de bout en bout par *stack* : un changement de *template* qui

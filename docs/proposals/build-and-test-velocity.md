@@ -18,22 +18,58 @@ either; what helps is selection, splitting, caching the lint, and fewer jobs per
 
 ## Status (2026-10-23)
 
-**Studied, not built.** The measures and the sources are kept here; each line of the plan is a
-pull request of its own, measured against the indicators of this page before and after.
+**Built, lines 1 to 7, in one day; two trials run for a month.** Each line was a pull request of
+its own, measured before and after on the indicators below; the figures of the day are in
+[What the day measured](#what-the-day-measured). The French page and this one keep the study
+as it was written, then what it became.
 
 | Part | Verdict |
 |---|---|
-| Fewer jobs per pipeline run, the heavy families narrowed on a pull request | **in progress** (the queue and the wall clock): the pull request #248 (2026-10-23) folds the five gates under three minutes into one job and, on a pull request, runs the alias suite on one Node line and the generated projects on npm: 24 jobs to 20 on the trunk, 23 to 17 on a pull request; the end-to-end shards held to the stacks a change reaches come next |
-| The compile matrix of five spec files run in parallel or split per file | **in progress** (the longest file, 84 s, capped every run): the pull request #250 (2026-10-23) compiles the modes of a file a few at a time from its first load, and the runner starts the six longest files first. Measured on the workstation of the method: the longest file 84 s to 27 s in a full run (4.5 s alone instead of 15 s), the run 88 to 104 s to 81 s on 20 cores and 203 s to 139 s at four workers; the two end-to-end files of the CLI, which generate every stack one after the other, now set the tail (65 to 70 s). The 4 vCPU figure is the unit job of the pipeline on that pull request |
-| Half the cores outside a pipeline, `related` tests before a push | **in progress** (the memory of a laptop): the pull request #252 (2026-10-23) gives the root `vitest.config.ts` `maxWorkers: '50%'` outside a pipeline, and the pre-push hook runs the unit specs of the packages the branch reaches and of the packages built on them, without coverage (`affected-packages.mjs --base origin/main --run test`), where it ran everything with coverage. Measured on the workstation of the method, before a push that reaches every package: 152 to 201 s and 9.3 to 11.5 GB with coverage on every core, to 101 to 110 s and 6.8 to 7.3 GB (two measures each, the second pair under a foreign load); a push that reaches one leaf package runs its specs alone, in seconds |
-| The heavy families run two files at a time, their one-file giants split (the sixth line, rewritten: the unit job stopped being the longest after the second) | **in progress**: the pull request #255 (2026-10-23); its measures are in section 5 and on the pull request |
-| ESLint with its content cache, kept as an artifact of the pipeline | **in progress** (measured on this repository, section 5): the pull request #253 (2026-10-23) lints with `--cache --cache-strategy content` through `pipeline/monorepo/lint.mjs`, which drops the cache when the rules of the kit as built, the config or the lockfile changed since it was written (the cache of ESLint keys on the linted files and the config, not on the code of the rules); in the pipeline the trunk writes the cache and a pull request restores it |
-| The type check of the specs in parallel | **in progress** (measured, section 5): the same pull request runs the 26 projects as many at a time as the machine has cores (`pipeline/monorepo/typecheck-tests.mjs`) |
-| Oxlint with tsgolint, the rules of the kit loaded as a JS plugin | **in trial**: the pull request #256 (2026-10-23) fixes the one rule that broke under the alpha plugin API (`clean/one-export-per-file` walked a body the parser of Oxlint leaves null), lints the tree with `npm run lint:oxlint` (the config at `.oxlintrc.json`, 2 to 4 s instead of 35) and runs it on the trunk and at night beside ESLint, never as a gate, its findings and its time in the summary of each run for a month; it also found 27 stepdown findings in a script that ESLint never reported (the rule reads a scope property of typescript-eslint that the parser of scripts lacks): a bug of the plugin, fixed by the pull request #257 with the twelve scripts of the repository reordered |
-| arm64 runners for the unit and end-to-end jobs | **in trial**: the same pull request runs the unit specs and the third end-to-end shard on `ubuntu-26.04-arm` at night, never as a gate, for a month of p50 against the x64 jobs of the same nights |
+| 1. Fewer jobs per pipeline run, the heavy families narrowed on a pull request | **built** (#248): five gates folded into one job, the alias suite on one Node line and the generated projects on npm on a pull request; 24 jobs to 20 on the trunk, 23 to 17 on a pull request; the end-to-end shards held to the stacks a change reaches are still to do |
+| 2. The compile matrix of five spec files run in parallel | **built** (#250): the modes of a file compile a few at a time, the six longest files start first; the longest file 84 s to 27 s in a full run, the unit job of the pipeline 571 s to about 490 s |
+| 3. Half the cores outside a pipeline, the specs of the packages a branch reaches before a push | **built** (#252): the unit step of the hook 152 to 201 s and 9.3 to 11.5 GB, to 101 to 110 s and 6.8 to 7.3 GB on a branch that reaches everything, seconds on a leaf |
+| 4. ESLint with its content cache, the type check of the specs in parallel | **built** (#253): `npm run lint` 36.5 s to 1.3 s when nothing changed, the cache dropped when the rules of the kit as built, the config or the lockfile changed (`pipeline/monorepo/lint.mjs`); the trunk writes the cache of the pipeline, a pull request restores it; `typecheck:tests` 5.1 s to 3.3 s |
+| 5. The install cache | **built otherwise** (#254): the key already followed the lockfile and the manifests in it guard the lockfile, so the key stays; half the 10 GB were the caches of merged pull requests, now deleted when a pull request closes; 10,052 MB to 5,637 MB the day the workflow landed |
+| 6. The heavy families run two files at a time, their one-file giant split (rewritten: the unit job stopped being the longest after line 2) | **built** (#255): the generated projects and the alias runs two files at a time with two workers each, `alias-runtime.spec.ts` in two halves, the end-to-end shards balanced on measured seconds (505 to 521 s each, from 352 to 715 s); on four cores the managers family 521 s to 308 s; two files at a time was tried on the shards too and timed the specs of a generated project out: they stay one at a time |
+| 7. Oxlint with tsgolint and the rules of the kit as a JS plugin; arm64 runners | **in trial** (#256): the one rule that broke under the plugin API fixed (#257 repairs the stepdown rule on scripts, which Oxlint revealed), `npm run lint:oxlint` 6 s and 1.0 GB against 35 s and 3.0 GB, a job of the trunk and of the night beside ESLint; the unit specs and the third end-to-end shard on `ubuntu-26.04-arm` at night; verdicts after a month |
 | pnpm for this repository | **not now**: 1 s instead of 8 s per install, behind the same cache restore; the filter it offers exists already |
 | Nx, Turborepo, moon, Lage, Rush | **no**: nothing left to cache, the affected selection exists, a remote cache costs or exposes |
 | Biome as the linter, bun test or node:test as the runner | **no**: types, native modules and coverage |
+
+### What the day measured
+
+The pipeline figures are medians over the runs of 2026-10-23, twelve runs of the trunk and 38 of
+pull requests before the first line merged (18:10 UTC), eight and eight after; a single day on
+shared runners, with other runs in the queue, so the differences under a fifth are noise, and
+the trials of the seventh line keep measuring. The workstation figures are those of the sections
+above, taken on a quiet machine. Two rows depend on what else ran: the queue of a job and the wall
+time of a run follow the traffic of the repository as much as the plan. That traffic was not
+lighter after: the runs launched per hour were 6 to 8 in the afternoon the figures of before come
+from and 10 to 12 in the evening of after, each run with fewer jobs (about 170 and about 215 jobs
+an hour), so the drop is not the traffic's; but one day cannot say how much of it is the plan's.
+Those two rows are to confirm over several days of equal traffic; the others do not depend on the
+queue.
+
+| Indicator | before | after lines 1 to 6 |
+|---|---|---|
+| jobs per run, trunk and pull request | 24 and 23 | 20 and 17 |
+| wall time of a pull request run, median and p95 (to confirm over several days) | 1,073 s and 1,687 s | 800 s and 1,294 s |
+| queue of a job of a pull request, p95 and max (to confirm over several days) | 461 s and 879 s | 162 s and 438 s |
+| wall time of a trunk run, median (to confirm over several days) | 1,248 s | 1,069 s |
+| the unit job of the trunk (Node 24, coverage) | 571 s | about 490 s |
+| the generated projects on npm (trunk) | 790 s | 648 s (one run) |
+| the alias suite on Node 24 (trunk) | 624 s | 276 to 441 s (two runs) |
+| the unit suite on the workstation, 20 cores and 4 workers | 88 to 104 s, 203 s | 81 s, 139 s |
+| the longest spec file in a full run | 84 s | 27 s |
+| the unit step before a push, wall and peak memory | 152 to 201 s, 9.3 to 11.5 GB | 101 to 110 s, 6.8 to 7.3 GB |
+| `npm run lint` when nothing changed | 36.5 s | 1.3 s |
+| the managers family on four cores | 521 s | 308 s |
+| the cache of the pipeline | 10,052 MB, full | 5,637 MB, the caches of a closed pull request deleted |
+
+What did not move: the four end-to-end shards (450 to 720 s on the one trunk run after the
+sixth line, against 454 to 659 s before: their balance and the two-files-at-a-time of the other
+families did not change their sum), and the lint job of the trunk, which writes the cache rather
+than reading it (the pull requests read it).
 
 ## The question
 
@@ -443,7 +479,10 @@ templates for the reasons above.
 ## Still to verify
 
 - The findings of Oxlint with the kit rules as a JS plugin against ESLint's, on this tree and
-  on a generated project, over several weeks of changes.
+  on a generated project, over several weeks of changes: the trial job of #256 writes them to
+  the summary of each run of the trunk and of the night.
+- The end-to-end shards held to the stacks a change reaches, the part of the first line left to
+  do; and the ESLint content cache in the templates of a generated project.
 - The p50 of the unit and end-to-end jobs on arm64 runners against x64, over ten night runs.
 - The recall of the end-to-end selection by stack: a template change that reaches a stack the
   selection did not name is a bug of the selection, caught by the night run and recorded here.
