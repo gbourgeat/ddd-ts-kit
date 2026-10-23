@@ -1,10 +1,10 @@
 import { openPersistence } from '@/platform/database/open-persistence';
 import type { Persistence } from '@/platform/database/persistence';
 
-/**
- * For the script that only lists routes: the pool connects on the first query,
- * and none is ever sent, so no database has to be reachable to generate the contracts.
- */
+/** An address nothing listens on: the pool connects on the first query, and none is ever sent. */
+const NO_DATABASE = 'postgres://unused:unused@127.0.0.1:1/unused';
+
+/** For what composes the application without serving it (the script that lists the routes): no database has to be reachable. */
 export function inertPersistence(): Persistence {
-  return openPersistence({ databaseUrl: 'postgres://unused:unused@127.0.0.1:1/unused' });
+  return openPersistence({ databaseUrl: NO_DATABASE });
 }

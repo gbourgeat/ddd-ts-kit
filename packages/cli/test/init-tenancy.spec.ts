@@ -20,13 +20,15 @@ describe('init --tenancy', () => {
     const drizzle = initProject(...SHARED);
 
     expect(read(knex, 'src/platform/database/schema.ts')).toContain(
-      'createOutboxTables(knex, { schema: MESSAGING, tenant: true })',
+      'createOutboxTables(knex, { schema: MESSAGING_SCHEMA, tenant: true })',
     );
 
-    expect(read(knex, 'src/platform/database/persistence-over.ts')).toContain('{ schema: MESSAGING, tenant: true }');
+    expect(read(knex, 'src/platform/database/persistence-over.ts')).toContain(
+      '{ schema: MESSAGING_SCHEMA, tenant: true }',
+    );
 
     expect(read(drizzle, 'src/platform/database/schema.ts')).toContain(
-      "export const outbox = tenantOutboxTable('messaging');",
+      'export const outbox = tenantOutboxTable(MESSAGING_SCHEMA);',
     );
   });
 
