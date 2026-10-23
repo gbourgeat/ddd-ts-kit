@@ -32,10 +32,14 @@ describe('EnvironmentIdentityProviderConnection', () => {
   });
 
   it('names the variable that is missing, never a value', async () => {
-    for (const name of VARIABLES) {
-      Reflect.deleteProperty(process.env, name);
-    }
+    withoutTheVariables();
 
     await expect(new EnvironmentIdentityProviderConnection().settings()).rejects.toThrow('KEYCLOAK_URL is not set');
   });
 });
+
+function withoutTheVariables(): void {
+  for (const name of VARIABLES) {
+    Reflect.deleteProperty(process.env, name);
+  }
+}
