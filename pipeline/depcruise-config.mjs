@@ -2,12 +2,6 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
-/**
- * A layer of a context, at its level or in a module of its model, one folder holding its layers:
- * `domain` or `<module>/domain`, written as an alternative, which dependency-cruiser takes as safe.
- */
-const inAnyModule = (layer) => `(?:${layer}|[^/]+/${layer})`;
-
 const PROJECT_CONFIG = 'ddd-ts-kit.config.json';
 
 /** @type {import('dependency-cruiser').IConfiguration} */
@@ -129,6 +123,14 @@ function domainPurity(project) {
       ],
     },
   };
+}
+
+/**
+ * A layer of a context, at its level or in a module of its model, one folder holding its layers:
+ * `domain` or `<module>/domain`, written as an alternative, which dependency-cruiser takes as safe.
+ */
+function inAnyModule(layer) {
+  return `(?:${layer}|[^/]+/${layer})`;
 }
 
 function applicationInward(project) {

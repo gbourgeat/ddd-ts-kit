@@ -23,29 +23,6 @@ const REPOSITORY_ROOT = path.resolve(import.meta.dirname, '../..');
 const BLOB = 'https://github.com/gbourgeat/ddd-ts-kit/blob/main/';
 const RAW = 'https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/';
 
-/** A repository with the given files, in a temporary directory. */
-function repository(files) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'site-'));
-
-  for (const [file, content] of Object.entries(files)) {
-    fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-    fs.writeFileSync(path.join(root, file), content);
-  }
-
-  return root;
-}
-
-/** An English page and its French page, with their switchers: `[title, body]` for each. */
-function pair(english, [title, body], [frenchTitle, frenchBody]) {
-  const name = path.posix.basename(english, '.md');
-
-  return {
-    [english]: `**English** · [Français](${name}.fr.md)\n\n# ${title}\n\n${body}\n`,
-    [english.replace(/\.md$/, '.fr.md')]:
-      `[English](${name}.md) · **Français**\n<!-- translation-of: ${name}.md sha256:0123456789abcdef -->\n\n# ${frenchTitle}\n\n${frenchBody}\n`,
-  };
-}
-
 const SMALL = {
   ...pair(
     'README.md',
@@ -75,11 +52,15 @@ const SMALL = {
   'CHANGELOG.md': '# Changelog\n',
 };
 
-/** The body of a page of SMALL (or `body` in its place), its links rewritten for the site. */
-function rewritten(source, body = withoutHead(SMALL[source])) {
-  const root = repository(SMALL);
+/** An English page and its French page, with their switchers: `[title, body]` for each. */
+function pair(english, [title, body], [frenchTitle, frenchBody]) {
+  const name = path.posix.basename(english, '.md');
 
-  return rewriteLinks({ root, pages: sitePages(root) }, sitePages(root).get(source), body);
+  return {
+    [english]: `**English** · [Français](${name}.fr.md)\n\n# ${title}\n\n${body}\n`,
+    [english.replace(/\.md$/, '.fr.md')]:
+      `[English](${name}.md) · **Français**\n<!-- translation-of: ${name}.md sha256:0123456789abcdef -->\n\n# ${frenchTitle}\n\n${frenchBody}\n`,
+  };
 }
 
 test('each kind of page has its route, a README being the page of its directory', () => {
@@ -164,6 +145,25 @@ test('a link to a page leads to its route in the language of the page linked, it
   assert.match(french, /`\[x\]\(nowhere\.md\)`/);
   assert.match(rewritten('README.md', SMALL['README.md']), /\[Français\]\(\/ddd-ts-kit\/fr\/start\/\)/);
 });
+
+/** The body of a page of SMALL (or `body` in its place), its links rewritten for the site. */
+function rewritten(source, body = withoutHead(SMALL[source])) {
+  const root = repository(SMALL);
+
+  return rewriteLinks({ root, pages: sitePages(root) }, sitePages(root).get(source), body);
+}
+
+/** A repository with the given files, in a temporary directory. */
+function repository(files) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'site-'));
+
+  for (const [file, content] of Object.entries(files)) {
+    fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+    fs.writeFileSync(path.join(root, file), content);
+  }
+
+  return root;
+}
 
 test('a link to another file leads to GitHub, a diagram to its copy on the site, an external link stays', () => {
   assert.match(

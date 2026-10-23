@@ -27,29 +27,6 @@ const DIAGRAM = [
   '',
 ].join('\n');
 
-/** A repository with the given files, in a temporary directory. */
-function repository(files) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translations-'));
-
-  for (const [file, content] of Object.entries(files)) {
-    fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-    fs.writeFileSync(path.join(root, file), content);
-  }
-
-  return root;
-}
-
-function read(root, file) {
-  return fs.readFileSync(path.join(root, file), 'utf8');
-}
-
-/** A repository whose one page is translated and stamped. */
-function translated(english, french, extra = {}) {
-  const root = repository({ 'docs/guide.md': english, 'docs/guide.fr.md': french, ...extra });
-  stamp(root, 'docs/guide.md');
-  return root;
-}
-
 const ENGLISH = '**English** · [Français](guide.fr.md)\n\n# Guide\n\nRead [the other](other.md).\n';
 const OTHER = '**English** · [Français](other.fr.md)\n\n# Other\n';
 
@@ -96,6 +73,18 @@ test('lists the English pages in scope, without walking the skipped directories'
   assert.deepEqual(englishPages(root), ['README.md', 'docs/a.md']);
 });
 
+/** A repository with the given files, in a temporary directory. */
+function repository(files) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translations-'));
+
+  for (const [file, content] of Object.entries(files)) {
+    fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+    fs.writeFileSync(path.join(root, file), content);
+  }
+
+  return root;
+}
+
 test('adds the switcher once, as the first line followed by a blank line', () => {
   const root = repository({
     'docs/guide.md': '# Guide\n',
@@ -106,6 +95,10 @@ test('adds the switcher once, as the first line followed by a blank line', () =>
   assert.equal(read(root, 'docs/guide.md'), '**English** · [Français](guide.fr.md)\n\n# Guide\n');
   assert.deepEqual(addSwitchers(root), []);
 });
+
+function read(root, file) {
+  return fs.readFileSync(path.join(root, file), 'utf8');
+}
 
 test('the hash leaves out the switcher, so adding it does not make a translation stale', () => {
   const bare = Buffer.from('# Guide\n');
@@ -128,6 +121,13 @@ test('stamps the French page: switcher, translation-of line, blank line, then th
   assert.equal(read(root, 'docs/guide.fr.md').split('\n').length, lines.length);
   assert.throws(() => stamp(root, 'docs/other.md'), /does not exist/);
 });
+
+/** A repository whose one page is translated and stamped. */
+function translated(english, french, extra = {}) {
+  const root = repository({ 'docs/guide.md': english, 'docs/guide.fr.md': french, ...extra });
+  stamp(root, 'docs/guide.md');
+  return root;
+}
 
 test('a complete translation has no problem; a changed English page makes it stale', () => {
   const root = translated(ENGLISH, '# Guide\n\nLisez [l’autre](other.fr.md).\n', {

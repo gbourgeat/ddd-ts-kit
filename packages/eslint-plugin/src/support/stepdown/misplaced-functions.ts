@@ -73,12 +73,21 @@ function describe(declared: Omit<Declared, 'uses'>, sourceCode: Readonly<TSESLin
     .getDeclaredVariables(declared.extent)
     .find((candidate) => candidate.identifiers.includes(declared.id));
 
-  const references = variable?.references.filter((reference) => !reference.init && reference.isValueReference) ?? [];
+  const references = variable?.references.filter((reference) => !reference.init && isValue(reference)) ?? [];
 
   return {
     ...declared,
     uses: references.map((reference) => reference.identifier).filter((use) => !isInside(use, declared.extent)),
   };
+}
+
+/**
+ * A reference to the value of the function, not to its type. The scope manager of typescript-eslint
+ * says which is which; the one of the default parser of ESLint, which lints a script, says nothing,
+ * and a script has no types: every reference it holds is a value.
+ */
+function isValue(reference: TSESLint.Scope.Reference): boolean {
+  return Reflect.has(reference, 'isValueReference') ? reference.isValueReference : true;
 }
 
 function callGraph(declared: readonly Declared[]): CallGraph<Declared> {
