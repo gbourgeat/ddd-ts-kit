@@ -23,7 +23,7 @@ pull request of its own, measured against the indicators of this page before and
 
 | Part | Verdict |
 |---|---|
-| Fewer jobs per pipeline run, the heavy families narrowed on a pull request | **in progress** (the queue and the wall clock): the pull request `ci/fewer-jobs-narrowed-families` (2026-10-23) folds the five gates under three minutes into one job and, on a pull request, runs the alias suite on one Node line and the generated projects on npm: 24 jobs to 20 on the trunk, 23 to 17 on a pull request; the end-to-end shards held to the stacks a change reaches come next |
+| Fewer jobs per pipeline run, the heavy families narrowed on a pull request | **in progress** (the queue and the wall clock): the pull request #248 (2026-10-23) folds the five gates under three minutes into one job and, on a pull request, runs the alias suite on one Node line and the generated projects on npm: 24 jobs to 20 on the trunk, 23 to 17 on a pull request; the end-to-end shards held to the stacks a change reaches come next |
 | The compile matrix of five spec files run in parallel or split per file | **recommended** (the longest file, 84 s, caps every run) |
 | Half the cores outside a pipeline, `related` tests before a push | **recommended** (the memory of a laptop) |
 | ESLint with its content cache, kept as an artifact of the pipeline | **recommended** (measured on this repository, section 5) |
