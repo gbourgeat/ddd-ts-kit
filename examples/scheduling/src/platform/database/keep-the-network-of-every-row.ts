@@ -7,14 +7,14 @@ import {
   addTenantColumn,
   type AddTenantColumnOptions,
 } from '@ddd-ts-kit/knex';
-import { MESSAGING } from '@/platform/database/schema';
+import { MESSAGING_SCHEMA } from '@/platform/database/schema';
 import { ANALYTICS_SCHEMA } from '@/contexts/analytics/infrastructure/persistence/analytics.schema';
 import { IDENTITY_SCHEMA } from '@/contexts/identity/infrastructure/persistence/identity.schema';
 import { NOTIFICATION_SCHEMA } from '@/contexts/notification/infrastructure/persistence/notification.schema';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
 
 /** The tables of the contexts as they stood when the application became multi-tenant (ADR-0003). */
-const TABLES_OF_ONE_CUSTOMER: readonly AddTenantColumnOptions[] = [
+const TABLES_OF_ONE_NETWORK: readonly AddTenantColumnOptions[] = [
   { schema: IDENTITY_SCHEMA, table: 'persons' },
   { schema: IDENTITY_SCHEMA, table: 'practices' },
   { schema: IDENTITY_SCHEMA, table: 'delegations' },
@@ -30,31 +30,42 @@ const TABLES_OF_ONE_CUSTOMER: readonly AddTenantColumnOptions[] = [
 ];
 
 /**
- * What the migration `20261013120000_keep-the-network-of-every-row` does: every table of the
- * contexts gets the network of its rows, those already there going to `tenantOfExistingRows`,
- * the network the database served; the outbox keeps the network of each event, the events not
- * published yet going to that network too, so that their consumers run in it; so do the instances
- * of the process managers and the background jobs not finished yet, so that their next step runs
- * in it. A table that has the column already is left alone, so that the migration also runs on a
- * database the first migration built from the current schema.
+ * What the migration `20261013120000_keep-the-network-of-every-row` does (ADR-0003), so that the
+ * in-process database of the tests runs it too. A table that has the column already is left
+ * alone: the migration also runs on a database the first migration built from the current schema.
  */
-export async function keepTheNetworkOfEveryRow(knex: Knex, tenantOfExistingRows?: string): Promise<void> {
-  const existing = tenantOfExistingRows === undefined || tenantOfExistingRows === '' ? {} : { tenantOfExistingRows };
+export async function keepTheNetworkOfEveryRow(knex: Knex, networkOfExistingRows?: string): Promise<void> {
+  const network = networkOfExistingRows === '' ? undefined : networkOfExistingRows;
 
-  for (const table of TABLES_OF_ONE_CUSTOMER) {
-    await addTenantColumn(knex, { ...table, ...existing });
+  await giveTheTablesOfTheContextsANetwork(knex, network);
+  await giveTheOutboxANetwork(knex, network);
+  await giveTheProcessInstancesANetwork(knex, network);
+  await giveTheUnfinishedJobsANetwork(knex, network);
+}
+
+/** Every row of the contexts belongs to a network; those already there go to the network the database served. */
+async function giveTheTablesOfTheContextsANetwork(knex: Knex, network: string | undefined): Promise<void> {
+  for (const table of TABLES_OF_ONE_NETWORK) {
+    await addTenantColumn(knex, { ...table, ...existingRowsIn(network) });
+  }
+}
+
+/** The outbox keeps the network of each event; the events not published yet go to that network too, so that their consumers run in it. */
+async function giveTheOutboxANetwork(knex: Knex, network: string | undefined): Promise<void> {
+  if (await knex.schema.withSchema(MESSAGING_SCHEMA).hasColumn(OUTBOX_TABLE, 'tenant_id')) {
+    return;
   }
 
-  if (!(await knex.schema.withSchema(MESSAGING).hasColumn(OUTBOX_TABLE, 'tenant_id'))) {
-    await addOutboxTenantColumn(knex, { schema: MESSAGING, ...unpublishedOf(existing) });
-  }
+  await addOutboxTenantColumn(knex, {
+    schema: MESSAGING_SCHEMA,
+    ...(network === undefined ? {} : { tenantOfUnpublished: network }),
+  });
+}
 
-  if (await knex.schema.withSchema(MESSAGING).hasTable(PROCESS_TABLE)) {
-    await addTenantColumn(knex, { schema: MESSAGING, table: PROCESS_TABLE, ...existing });
-  }
-
-  if (existing.tenantOfExistingRows !== undefined && (await knex.schema.withSchema(MESSAGING).hasTable(JOB_TABLE))) {
-    await giveUnfinishedJobs(knex, existing.tenantOfExistingRows);
+/** The instances of the process managers keep the network of the work that started them, so that their next step runs in it. */
+async function giveTheProcessInstancesANetwork(knex: Knex, network: string | undefined): Promise<void> {
+  if (await knex.schema.withSchema(MESSAGING_SCHEMA).hasTable(PROCESS_TABLE)) {
+    await addTenantColumn(knex, { schema: MESSAGING_SCHEMA, table: PROCESS_TABLE, ...existingRowsIn(network) });
   }
 }
 
@@ -62,9 +73,13 @@ export async function keepTheNetworkOfEveryRow(knex: Knex, tenantOfExistingRows?
  * The jobs waiting or running, enqueued before any network was named: their next attempt runs in
  * the network of the database, read from who enqueued them, as a job enqueued now would.
  */
-async function giveUnfinishedJobs(knex: Knex, network: string): Promise<void> {
+async function giveTheUnfinishedJobsANetwork(knex: Knex, network: string | undefined): Promise<void> {
+  if (network === undefined || !(await knex.schema.withSchema(MESSAGING_SCHEMA).hasTable(JOB_TABLE))) {
+    return;
+  }
+
   await knex(JOB_TABLE)
-    .withSchema(MESSAGING)
+    .withSchema(MESSAGING_SCHEMA)
     .where({ tenant_id: '' })
     .whereIn('status', ['waiting', 'running'])
     .update({
@@ -73,8 +88,7 @@ async function giveUnfinishedJobs(knex: Knex, network: string): Promise<void> {
     });
 }
 
-function unpublishedOf(existing: { readonly tenantOfExistingRows?: string }): {
-  readonly tenantOfUnpublished?: string;
-} {
-  return existing.tenantOfExistingRows === undefined ? {} : { tenantOfUnpublished: existing.tenantOfExistingRows };
+/** What the kit calls the tenant of the rows already there, the example calls their network; nothing when the database served none. */
+function existingRowsIn(network: string | undefined): { readonly tenantOfExistingRows?: string } {
+  return network === undefined ? {} : { tenantOfExistingRows: network };
 }

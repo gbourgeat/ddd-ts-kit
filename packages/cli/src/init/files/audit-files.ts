@@ -8,6 +8,12 @@ const READ_SIDE = [
   'audit.permissions.ts',
   'search-audit-entries/search-audit-entries.query.ts',
   'search-audit-entries/search-audit-entries.handler.ts',
+  // What the endpoint receives and answers, out of the controller or the route, which starts with the endpoint.
+  'search-audit-entries/audit-outcomes.ts',
+  'search-audit-entries/audit-entries-parameters.ts',
+  'search-audit-entries/audit-entries-filter-of.ts',
+  'search-audit-entries/audit-entry-view.ts',
+  'search-audit-entries/audit-entry-view-of.ts',
 ];
 
 /**

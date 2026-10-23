@@ -1,11 +1,12 @@
 import type { RateLimit, RateLimiter } from '@ddd-ts-kit/kernel';
 
-const tooManyRequests = 429;
+const TOO_MANY_REQUESTS = 429;
 
-/** What a refused caller receives: RFC 9457 problem details, and how long to wait in `retry-after`. */
-export interface Refusal {
+/** What a caller over the limit receives: the status, the headers (`retry-after` says how long to wait) and the body, RFC 9457 problem details. */
+export interface TooManyRequests {
+  readonly status: number;
   readonly headers: Readonly<Record<string, string>>;
-  readonly problem: { readonly type: string; readonly title: string; readonly status: number; readonly code: string };
+  readonly body: string;
 }
 
 /**
@@ -13,27 +14,30 @@ export interface Refusal {
  * address. Answers nothing when the request may pass. Behind a proxy, make the HTTP server
  * trust it, or every caller shares the address of the proxy.
  */
-export async function refusalFor(
+export async function tooManyRequestsFor(
   limiter: RateLimiter,
   limit: RateLimit,
   address: string | undefined,
-): Promise<Refusal | undefined> {
+): Promise<TooManyRequests | undefined> {
   const decision = await limiter.consume('ip:' + (address ?? 'unknown'), limit);
 
   if (decision.allowed) {
     return undefined;
   }
 
+  const problem = {
+    type: 'urn:problem:rate-limited',
+    title: 'Too Many Requests',
+    status: TOO_MANY_REQUESTS,
+    code: 'RATE_LIMITED',
+  };
+
   return {
+    status: TOO_MANY_REQUESTS,
     headers: {
       'content-type': 'application/problem+json',
       'retry-after': String(Math.max(1, Math.ceil(decision.retryAfterMs / 1000))),
     },
-    problem: {
-      type: 'urn:problem:rate-limited',
-      title: 'Too Many Requests',
-      status: tooManyRequests,
-      code: 'RATE_LIMITED',
-    },
+    body: JSON.stringify(problem),
   };
 }

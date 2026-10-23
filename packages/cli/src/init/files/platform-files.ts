@@ -109,7 +109,7 @@ function httpFiles(config: Config): InitFile[] {
     file('http/start-http-server.ts', http),
     ...when(http === 'nest', [file('http/create-app-module.ts')]),
     ...when(docsUi !== 'none', [file('http/with-documentation.ts')]),
-    ...when(cache === 'redis', [file('http/refusal-for.ts')]),
+    ...when(cache === 'redis', [file('http/too-many-requests-for.ts')]),
     ...when(representations === 'negotiated' || forms === 'on', [file('http/presentation-of.ts')]),
     ...when(forms === 'on', [file('http/with-forms.ts')]),
   ];

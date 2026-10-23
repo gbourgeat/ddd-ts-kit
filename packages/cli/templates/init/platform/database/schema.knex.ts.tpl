@@ -6,7 +6,8 @@ import { {{#if queue.database}}createJobTable, {{/if}}createOutboxTables{{#if qu
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 
-export const MESSAGING = 'messaging';
+/** The schema of what the kit stores for the application: the outbox and the processed events{{#if queue.database}}, the background jobs{{/if}}{{#if queue.processTable}}, the process instances{{/if}}. */
+export const MESSAGING_SCHEMA = 'messaging';
 {{#if audit.on}}
 /** The schema of the audit trail: two tables, and the triggers that keep the entries append-only. */
 export const AUDIT_SCHEMA = 'audit';
@@ -20,16 +21,16 @@ export const AUDIT_SCHEMA = 'audit';
 export const createTables = async (knex: Knex): Promise<void> => {
 {{#if tenancy.any}}
   // The tenant of each event, so that its consumers run in that tenant.
-  await createOutboxTables(knex, { schema: MESSAGING, tenant: true });
+  await createOutboxTables(knex, { schema: MESSAGING_SCHEMA, tenant: true });
 {{/if}}
 {{#unless tenancy.any}}
-  await createOutboxTables(knex, { schema: MESSAGING });
+  await createOutboxTables(knex, { schema: MESSAGING_SCHEMA });
 {{/unless}}
   {{#if queue.database}}
-  await createJobTable(knex, { schema: MESSAGING });
+  await createJobTable(knex, { schema: MESSAGING_SCHEMA });
   {{/if}}
   {{#if queue.processTable}}
-  await createProcessTable(knex, { schema: MESSAGING });
+  await createProcessTable(knex, { schema: MESSAGING_SCHEMA });
   {{/if}}
   {{#if audit.on}}
   await createAuditTables(knex, { schema: AUDIT_SCHEMA });

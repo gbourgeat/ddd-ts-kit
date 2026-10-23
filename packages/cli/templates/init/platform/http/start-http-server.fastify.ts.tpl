@@ -3,7 +3,7 @@ import { mountFastify } from '@ddd-ts-kit/http/fastify';
 import type { Application } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 {{#if cache.rateLimit}}
-import { refusalFor } from '{{alias.platform}}/http/refusal-for{{alias.ext}}';
+import { tooManyRequestsFor } from '{{alias.platform}}/http/too-many-requests-for{{alias.ext}}';
 {{/if}}
 {{#if docs.any}}
 import { withDocumentation } from '{{alias.platform}}/http/with-documentation{{alias.ext}}';
@@ -19,11 +19,17 @@ export interface HttpServer {
 /** What the server needs of the application: its routes and what stands at its edge. */
 type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
 
+/**
+ * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
+ * server), the signed file links (with a storage the application serves), the routes of the
+ * contexts, then the pages of the contract (with documentation on).
+ */
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
   const app = Fastify();
 
 {{#if cache.rateLimit}}
-  guardTheDoor(app, served, config);
+  answerReadiness(app, served);
+  limitEachCaller(app, served, config);
 {{/if}}
 {{#if files.http}}
   mountFastify(app, served.fileRoutes, served.boundary);
@@ -42,20 +48,26 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 }
 {{#if cache.rateLimit}}
 
-/** The readiness probe, then the limiter, before any route. */
-function guardTheDoor(app: FastifyInstance, served: Served, config: AppConfig): void {
+/** Whether the Redis protocol server answers, for the load balancer; never limited, since it is polled. */
+function answerReadiness(app: FastifyInstance, served: Served): void {
   app.get('/health/ready', async (_request, reply) => {
     const ready = await served.ready();
 
     return reply.code(ready ? 200 : 503).send({ status: ready ? 'up' : 'down' });
   });
+}
 
+/** One sliding window per caller address, before authentication costs anything. */
+function limitEachCaller(app: FastifyInstance, served: Served, config: AppConfig): void {
   app.addHook('onRequest', async (request, reply) => {
-    const refusal =
-      request.url === '/health/ready' ? undefined : await refusalFor(served.rateLimiter, config.rateLimit, request.ip);
+    if (request.url === '/health/ready') {
+      return;
+    }
 
-    if (refusal !== undefined) {
-      await reply.code(refusal.problem.status).headers(refusal.headers).send(JSON.stringify(refusal.problem));
+    const tooMany = await tooManyRequestsFor(served.rateLimiter, config.rateLimit, request.ip);
+
+    if (tooMany !== undefined) {
+      await reply.code(tooMany.status).headers(tooMany.headers).send(tooMany.body);
     }
   });
 }
