@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:80d16bb20a9b689d -->
+<!-- translation-of: coding-agents.md sha256:6ecfaf66b9cb8060 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -108,3 +108,58 @@ Claude Code dans `.claude/rules/` et les mêmes règles pour Copilot dans `.gith
 ciblées par `applyTo`, et, avec le pipeline GitHub, `copilot-setup-steps.yml`, qui installe le
 projet avant le démarrage de l'agent cloud de Copilot. `npm run verify` et le pipeline tiennent
 chaque agent aux mêmes règles.
+
+## Ce qui tient chaque skill
+
+Une *skill* est un conseil : elle dit à un agent quoi lancer et quoi décider, et un agent peut
+l'ignorer. Le [playbook du cycle de vie AI-native d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
+dit ce qu'une équipe soumise à une réglementation demande avant d'accepter la moindre *skill* :
+une politique qui doit toujours tenir a besoin de quelque chose de déterministe derrière elle, un
+*hook* qui bloque l'action ou un contrôle qui l'attrape ensuite. Cette table nomme ce contrôle
+pour chaque *skill* du plugin : les identifiants de règle de `ddd-ts-kit rules` (tenus par le
+checker, le plugin ESLint ou dependency-cruiser, voir
+[qui vérifie quoi](../ARCHITECTURE.fr.md#qui-vérifie-quoi)), les gardes du *hook*, et les
+contrôles du *pipeline*. Un test du plugin (`node --test plugin/skills/controls.test.mjs`) échoue
+quand un identifiant de règle nommé ici est inconnu de la CLI, ou quand une *skill* n'a pas de
+ligne.
+
+| Skill | Contrôle déterministe derrière elle | Manque |
+|---|---|---|
+| `start` | `ddd-ts-kit status` lit `docs/architecture/plan.md` et `slices.md` et nomme la prochaine étape ; la garde rappelle la démarche au démarrage de session | la forme de `plan.md` est lue, pas vérifiée |
+| `discover-domain` | aucun en propre : `docs/architecture/discovery.md` est lu par les étapes suivantes, pas vérifié | la vérité stratégique ne se vérifie pas, comme le dit la [méthodologie](methodology.fr.md) |
+| `bounded-contexts` | `context/no-cycle`, `context/extractable`, `tree/context-doc` (chaque contexte a son `CONTEXT.md`), `docs --check` | la classification d'un contexte est lue, pas jugée |
+| `glossary` | le générateur refuse un nom que le glossaire ne tient pas ; `language/glossary-term`, `language/declared-vocabulary`, `language/no-technical-name` | |
+| `context-map` | `context/no-cycle`, `context/declared-relationship`, `context/published-language-only`, `context/published-language-is-a-contract`, la carte des contextes régénérée et comparée par `docs --check` | |
+| `bootstrap` | `init` écrit un projet vert sous `npm run verify` ; `config/valid` ; `doctor --strict` | |
+| `plan-slices` | `status`, `story-check` et `worker-scope --rows` lisent les lignes de `slices.md` et refusent une ligne inconnue ; `verify-slice` | l'ordre des lignes est conseillé (`plan-waves`), jamais refusé |
+| `parallel-work` | la garde du *worker* (`.ddd-ts-kit/worker.json` : une écriture hors du contexte est refusée, par les outils d'édition et par le *shell*), `verify-merge`, `merge-trunk`, `status --workers` | |
+| `story` | `story --gate build` et `--gate close`, la garde dans le *worktree* d'une *story* (pas de code avant la revue de conception et le verrou), `acceptance --lock`, `test/acceptance-black-box`, l'agent `acceptance-judge` | le code n'est pas comparé à sa revue de conception après la construction |
+| `scaffold` | la garde refuse un fichier de rôle écrit à la main ; `tree/closed`, `tree/documented-paths`, `naming/suffix`, `naming/one-concept-per-file`, `naming/business-name`, `naming/search-not-list`, `test/spec-required`, `test/builder-required`, `lifecycle/status-through-machine`, `process/sends-commands-only`, `scheduling/job-name`, `scheduling/job-triggers-use-case` | |
+| `use-case` | les contrôles de `scaffold`, puis `application/handler-shape`, `application/command-query-separation`, `domain/aggregate-encapsulation`, `domain/value-object-class`, `domain/value-object-immutability`, `domain/no-generic-error`, `domain-events/dispatched-on-save`, `domain-events/transactional-before-commit`, `errors/code-listed`, `errors/code-unique`, `errors/through-factory`, `presentation/controller-shape`, `presentation/controller-delegates`, `schema/presentation-only`, `schema/no-duplicate-shape`, les tests du contexte lancés par `verify-slice` | |
+| `integration-event` | `events/defined-in-published-language`, `events/name-declared-once`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `event-sourcing/upcaster-required` (le verrou des événements stockés), le catalogue d'événements et le document AsyncAPI comparés par `docs --check` | |
+| `wiring` | `ports/abstract-class`, `ports/no-token-constant`, `ports/no-concrete-dependency`, `ports/implements-never-extends`, `ports/value-import`, `declarations/role-declared`, `declarations/constructor-injection`, `declarations/barrel-current`, `declarations/port-adapter-wired`, `composition/only-in-module`, le *barrel* régénéré par `docs` | |
+| `persistence` | `layer/domain-purity`, `layer/application-inward`, `files/port-not-connector`, `persistence/migration-history`, `persistence/primary-key-order`, `persistence/no-file-content`, `tenancy/scoped-statement`, les suites de contrat, le seuil de couverture de `infrastructure/` (`test/coverage-governed`) | un adaptateur sans sa suite de contrat n'est signalé par `test/spec-required` que quand son fichier de spec manque |
+| `access-control` | `authz/declared`, `authz/granted`, `authz/in-application`, `authz/actor-explicit`, `authz/policy-asked`, `authz/scope-narrows`, `authz/fields-by-schema`, `presentation/guard-at-the-edge` | |
+| `cross-cutting` | `aspects/outside-in`, `tracing/platform-only`, `standard/no-parallel-interface`, `purity/no-system-clock`, `purity/no-ambient-randomness`, `purity/no-environment`, `presentation/shared-cache-varies` | |
+| `testing` | `test/no-mocks`, `test/spec-required`, `test/builder-required`, `test/helper-placed`, `test/coverage-governed`, `test/acceptance-black-box`, le verrou de l'acceptation | la spec de régression d'un correctif n'est pas verrouillée : seuls les scénarios d'acceptation d'une *story* le sont |
+| `clean-code` | `clean/stepdown`, `clean/function-size`, `clean/file-size`, `clean/blank-lines`, `clean/braces`, `clean/one-export-per-file`, `clean/no-escape-hatch`, `clean/no-commented-out-code`, `clean/no-noise-comment`, `clean/no-flag-argument`, `clean/no-hash-private`, `clean/no-magic-number`, `clean/formatted` (Biome dans le *hook* de *commit* et dans le *pipeline*), `language/no-technical-name` | le formateur tourne au *commit* et en CI, pas à l'écriture |
+| `document` | `docs --check` (`npm run docs:check`, la porte `docs` du *pipeline*), `declarations/barrel-current`, `tree/context-doc`, `sdk --check` | |
+| `extract-service` | `context/extractable`, `context/published-language-only`, `imports/alias-only`, le point d'entrée par contexte qu'écrit `generate service` et son test de démarrage | |
+| `deviation` | `governance/recorded-deviation`, `config/suppression-needs-reason`, `config/rule-off-everywhere`, la garde demande l'avis du propriétaire avant une désactivation, un test sauté ou un changement des règles | |
+| `quality-gate` | `npm run verify`, le *hook* `Stop` de la garde (il refuse de terminer tant que des erreurs d'architecture restent), le *job* `gate` du *pipeline* | |
+| `commit-discipline` | `check --commit-size` (un conseil), commitlint dans le *hook* `commit-msg` et le contrôle du titre du *pipeline* | la taille est conseillée, jamais refusée : un choix du kit, conservé |
+
+Deux manques n'appartiennent à aucune *skill* : un secret dans un *diff* n'est attrapé que par
+gitleaks dans le *pipeline*, et la mise en page d'un fichier est réglée au *commit*, pas à
+l'écriture.
+
+## Évaluer vos propres skills
+
+Un projet qui écrit ses propres *skills* (une politique de l'organisation, une convention d'une
+équipe) peut les tenir au même test : un répertoire `evals/` à côté d'elles, lancé par
+`claude plugin eval`, un cas par promesse, avec les vraies tâches du projet comme *prompts* et
+des évaluateurs qui lisent le résultat. Le kit ne génère rien pour cela : la suite du playbook se
+construit à partir des tâches du projet, qu'aucun *template* ne connaît. La suite du plugin
+lui-même, sous `plugin/evals/` du dépôt, est un exemple travaillé, et
+[CONTRIBUTING.fr.md](../../CONTRIBUTING.fr.md#la-suite-dévaluation-du-plugin) dit comment un cas
+s'écrit, quand on en ajoute un et ce qu'il coûte.

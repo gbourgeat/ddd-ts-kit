@@ -119,6 +119,7 @@ limits, and a recommendation by situation.
 | [Choosing access control](guides/choosing-access-control.md) | five questions that pick roles, attributes or relationships (Zanzibar), worked presets for each, the combined model of the example, scopes and refusals at the edge |
 | [Token economy](guides/token-economy.md) | spending fewer tokens with coding agents, and complementary tools |
 | [Sandboxing coding agents](guides/agent-sandbox.md) | what loads a machine and what the kit does about it; capping an agent, the sandbox of the agent, NVIDIA OpenShell for the security of a session |
+| [Deploy and rollback](guides/deploy-and-rollback.md) | what a project ships beyond its image, the order of a release, what a rollback of each piece means, three tiers of autonomy for an agent by environment, deploy, status and rollback as one script each, the rehearsal in staging |
 | [The French documentation](translation.md) | contributors: how every page keeps its French translation current, the glossary, the style of the diagrams, the code samples the pipeline compiles |
 
 ## Proposals

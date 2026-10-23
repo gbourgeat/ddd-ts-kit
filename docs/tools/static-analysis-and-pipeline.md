@@ -317,13 +317,16 @@ and on a laptop, `npm run ci:arch`, which runs both.
 | What makes it binding | one `gate` job as the required check | "pipelines must succeed" |
 | Dependency updates | Renovate or Dependabot | Renovate |
 
-The pipelines `init` writes use free tools only. What depends on a plan is opt-in
-(`init --ci-extras`, `ci.extras` in the config): CodeQL and dependency review, free on public
-GitHub repositories and paid on private ones; GitLab's SAST, Secret Detection (findings in the
-merge request on Ultimate only) and Dependency Scanning (Ultimate). On both platforms the two
-checks that block on every plan are `npm audit` and gitleaks. The table of every tool, its
-class and the vendors' pages it was read from is in
-[pipeline/README.md](../../pipeline/README.md#free-by-default-paid-on-request).
+The pipelines `init` writes use free tools only. What depends on a plan, or spends API tokens,
+is opt-in (`init --ci-extras`, `ci.extras` in the config): CodeQL and dependency review, free on
+public GitHub repositories and paid on private ones; GitLab's SAST, Secret Detection (findings in
+the merge request on Ultimate only) and Dependency Scanning (Ultimate); and two jobs that run
+Claude Code on both platforms, `claude-review` (a review of each pull or merge request, posted as
+a comment that neither approves nor blocks) and `claude-triage` (a three-line triage of a failed
+run, read-only, on the job summary and the request). Neither is required by the `gate` job: a
+person still approves. On both platforms the two checks that block on every plan are `npm audit`
+and gitleaks. The table of every tool, its class, its cost and the vendors' pages it was read
+from is in [pipeline/README.md](../../pipeline/README.md#free-by-default-paid-on-request).
 
 Selection between the two is rarely a free choice: it follows where the code is hosted. The
 point of the design is that the choice costs nothing in the gates themselves.
