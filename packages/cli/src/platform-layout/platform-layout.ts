@@ -54,6 +54,11 @@ export const PLATFORM_LAYOUT = [
       'audit/search-audit-entries.handler.ts': 'audit/search-audit-entries/search-audit-entries.handler.ts',
       'audit/search-audit-entries.controller.ts': 'audit/search-audit-entries/search-audit-entries.controller.ts',
       'audit/search-audit-entries.route.ts': 'audit/search-audit-entries/search-audit-entries.route.ts',
+      'audit/audit-outcomes.ts': 'audit/search-audit-entries/audit-outcomes.ts',
+      'audit/audit-entries-parameters.ts': 'audit/search-audit-entries/audit-entries-parameters.ts',
+      'audit/audit-entries-filter-of.ts': 'audit/search-audit-entries/audit-entries-filter-of.ts',
+      'audit/audit-entry-view.ts': 'audit/search-audit-entries/audit-entry-view.ts',
+      'audit/audit-entry-view-of.ts': 'audit/search-audit-entries/audit-entry-view-of.ts',
     },
   },
 ] as const;

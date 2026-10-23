@@ -46,11 +46,6 @@ import {
 {{#if files.http}}
   FileStorage,
 {{/if}}
-{{#if audit.on}}
-{{#if http.any}}
-  IdGenerator,
-{{/if}}
-{{/if}}
 {{#if files.any}}
   InMemoryFileStorage,
 {{/if}}
@@ -81,9 +76,6 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { tracedPublisher } from '@ddd-ts-kit/tracing';
 {{#if audit.on}}
-{{#if http.any}}
-import { AuditTrail, auditGuardRefusals } from '@ddd-ts-kit/audit';
-{{/if}}
 import { auditModule } from '{{alias.platform}}/audit/audit.module{{alias.ext}}';
 {{/if}}
 {{#if audit.functionRoute}}
@@ -226,7 +218,12 @@ export function composeApplication(
     clock: container.resolve(Clock),
   });
 
-  return running(container, options, contexts);
+{{#if audit.route}}
+  return running({ container, foundations, options, contexts });
+{{/if}}
+{{#unless audit.route}}
+  return running({ container, options, contexts });
+{{/unless}}
 }
 
 /**
@@ -280,7 +277,23 @@ function kernel(foundations: Foundations, persistence: Persistence, options: App
   });
 }
 
-function running(container: Container, options: ApplicationOptions, contexts: ContextSelection): Application {
+/** What the application is assembled from, once the container is built. */
+interface Composed {
+  readonly container: Container;
+{{#if audit.route}}
+  /** The audit sources, built before the container: the HTTP boundary writes the refusals of the guards to them. */
+  readonly foundations: Foundations;
+{{/if}}
+  readonly options: ApplicationOptions;
+  readonly contexts: ContextSelection;
+}
+
+{{#if audit.route}}
+function running({ container, foundations, options, contexts }: Composed): Application {
+{{/if}}
+{{#unless audit.route}}
+function running({ container, options, contexts }: Composed): Application {
+{{/unless}}
   const logger = container.resolve(Logger);
 {{#if presentation.any}}
   // What the server answers in and which fields each caller sees: the forms and the contract are given the same.
@@ -302,10 +315,7 @@ function running(container: Container, options: ApplicationOptions, contexts: Co
       clock: container.resolve(Clock),
       logger,
 {{#if audit.on}}
-      refusals: auditGuardRefusals(container.resolve(AuditTrail), {
-        clock: container.resolve(Clock),
-        ids: container.resolve(IdGenerator),
-      }),
+      refusals: foundations.audit.refusals,
 {{/if}}
 {{#if errors.sentry}}
       errors: container.resolve(ErrorReporter),
