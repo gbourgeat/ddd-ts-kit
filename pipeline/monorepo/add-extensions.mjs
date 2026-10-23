@@ -8,8 +8,6 @@ import { fileURLToPath } from 'node:url';
 const SPECIFIER = /(\bfrom\s*|\bimport\s*\(\s*|\bimport\s+)(['"])(\.{1,2}(?:\/[^'"\n]*)?)\2/g;
 const EXTENSION = /\.(?:js|mjs|cjs|json|node)$/;
 
-const isFile = (path) => existsSync(path) && statSync(path).isFile();
-
 /** The spelling a relative specifier needs in the emitted file `file` of kind `suffix` (`.js` or `.d.ts`). */
 export function spelled(file, specifier, suffix) {
   if (EXTENSION.test(specifier)) {
@@ -25,23 +23,16 @@ export function spelled(file, specifier, suffix) {
   return specifier;
 }
 
+function isFile(path) {
+  return existsSync(path) && statSync(path).isFile();
+}
+
 export function addExtensions(text, file, suffix) {
   return text.replace(SPECIFIER, (...found) => {
     const [match, head, quote, specifier] = found;
     const next = spelled(file, specifier, suffix);
     return next === specifier ? match : `${head}${quote}${next}${quote}`;
   });
-}
-
-function* emitted(dir) {
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      yield* emitted(path);
-    } else if (/\.(?:d\.ts|js)$/.test(entry.name)) {
-      yield path;
-    }
-  }
 }
 
 export function addExtensionsIn(dist) {
@@ -56,6 +47,17 @@ export function addExtensionsIn(dist) {
     }
   }
   return changed;
+}
+
+function* emitted(dir) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      yield* emitted(path);
+    } else if (/\.(?:d\.ts|js)$/.test(entry.name)) {
+      yield path;
+    }
+  }
 }
 
 if (argv[1] === fileURLToPath(import.meta.url)) {

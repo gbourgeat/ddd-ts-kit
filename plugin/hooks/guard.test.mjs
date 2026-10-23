@@ -19,9 +19,12 @@ const guardTemp = join(workspace, 'tmp');
 mkdirSync(guardTemp);
 after(() => rmSync(workspace, { recursive: true, force: true }));
 
-function directory(label) {
-  return mkdtempSync(join(workspace, `${label}-`));
-}
+test('session start hands the workflow and the context map over as additional context', () => {
+  const root = project();
+  const { output } = run('session', { cwd: root });
+  assert.equal(output.hookSpecificOutput.hookEventName, 'SessionStart');
+  assert.match(output.hookSpecificOutput.additionalContext, /ordering \[core\]/);
+});
 
 function project(config = {}, flags = []) {
   const root = directory('project');
@@ -35,6 +38,10 @@ function project(config = {}, flags = []) {
   }
   launcher(root);
   return root;
+}
+
+function directory(label) {
+  return mkdtempSync(join(workspace, `${label}-`));
 }
 
 // A launcher like the one npm writes: the compiled entry file itself is not executable.
@@ -64,46 +71,6 @@ function run(mode, input, env = {}) {
   };
 }
 
-function put(root, path, content = '') {
-  mkdirSync(dirname(join(root, path)), { recursive: true });
-  writeFileSync(join(root, path), content);
-}
-
-function git(root, ...args) {
-  const result = spawnSync(
-    'git',
-    ['-c', 'user.name=guard', '-c', 'user.email=guard@example.test', '-c', 'commit.gpgsign=false', ...args],
-    { cwd: root, encoding: 'utf8' },
-  );
-  assert.equal(result.status, 0, result.stderr);
-}
-
-function committed(config = {}) {
-  const root = project(config);
-  writeFileSync(join(root, '.gitignore'), 'node_modules\n');
-  git(root, 'init', '--quiet');
-  git(root, 'add', '--all');
-  git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
-  return root;
-}
-
-function worker(root, context = 'ordering') {
-  put(root, '.ddd-ts-kit/worker.json', JSON.stringify({ context }));
-  return { agent_type: 'ddd-ts-kit:context-builder' };
-}
-
-const reason = (result) => result.output.hookSpecificOutput.permissionDecisionReason;
-const decision = (result) => result.output?.hookSpecificOutput.permissionDecision;
-const bash = (root, command, extra = {}) => ({ cwd: root, tool_name: 'Bash', tool_input: { command }, ...extra });
-const write = (file, extra = {}) => ({ tool_name: 'Write', tool_input: { file_path: file, content: '' }, ...extra });
-
-test('session start hands the workflow and the context map over as additional context', () => {
-  const root = project();
-  const { output } = run('session', { cwd: root });
-  assert.equal(output.hookSpecificOutput.hookEventName, 'SessionStart');
-  assert.match(output.hookSpecificOutput.additionalContext, /ordering \[core\]/);
-});
-
 test('session start says when the installed packages are not the version the skills describe', () => {
   // The guard states the version of the CLI: `release-version.mjs` checks that they agree.
   const described = JSON.parse(readFileSync(join(here, '..', '..', 'packages', 'cli', 'package.json'), 'utf8')).version;
@@ -124,6 +91,11 @@ test('session start says when the installed packages are not the version the ski
   assert.match(briefing(breaking(-1)), /npx ddd-ts-kit doctor/);
 });
 
+function put(root, path, content = '') {
+  mkdirSync(dirname(join(root, path)), { recursive: true });
+  writeFileSync(join(root, path), content);
+}
+
 test('outside a ddd-ts-kit project every mode stays silent', () => {
   const elsewhere = directory('none');
   for (const mode of ['session', 'pre-write', 'post-write', 'stop']) {
@@ -132,6 +104,10 @@ test('outside a ddd-ts-kit project every mode stays silent', () => {
     assert.equal(result.output, undefined);
   }
 });
+
+function write(file, extra = {}) {
+  return { tool_name: 'Write', tool_input: { file_path: file, content: '' }, ...extra };
+}
 
 test('a new file of a generated role is refused with the generator command', () => {
   const root = project();
@@ -191,17 +167,6 @@ test('a written file that breaks a rule is reported to the model with the fix', 
   assert.match(result.stderr, /do instead/);
 });
 
-// A Biome like the one npm installs: it records how it was called, and lays the file out.
-function fakeBiome(root, { failing = false } = {}) {
-  const log = join(root, 'biome-calls.log');
-  const script = failing
-    ? `#!/bin/sh\necho "$@" >> "${log}"\nexit 1\n`
-    : `#!/bin/sh\necho "$@" >> "${log}"\nsed -i 's/const a=1/const a = 1;/' "$3"\n`;
-  mkdirSync(join(root, 'node_modules', '.bin'), { recursive: true });
-  writeFileSync(join(root, 'node_modules', '.bin', 'biome'), script, { mode: 0o755 });
-  return () => (existsSync(log) ? readFileSync(log, 'utf8').trim().split('\n') : []);
-}
-
 test('with formatOnWrite, the Biome of the project lays a written file out before the check, one file at a time', () => {
   const root = project({ formatOnWrite: true });
   const calls = fakeBiome(root);
@@ -220,6 +185,17 @@ test('with formatOnWrite, the Biome of the project lays a written file out befor
   assert.equal(run('post-write', write(glossary)).status, 0);
   assert.equal(calls().length, 1);
 });
+
+// A Biome like the one npm installs: it records how it was called, and lays the file out.
+function fakeBiome(root, { failing = false } = {}) {
+  const log = join(root, 'biome-calls.log');
+  const script = failing
+    ? `#!/bin/sh\necho "$@" >> "${log}"\nexit 1\n`
+    : `#!/bin/sh\necho "$@" >> "${log}"\nsed -i 's/const a=1/const a = 1;/' "$3"\n`;
+  mkdirSync(join(root, 'node_modules', '.bin'), { recursive: true });
+  writeFileSync(join(root, 'node_modules', '.bin', 'biome'), script, { mode: 0o755 });
+  return () => (existsSync(log) ? readFileSync(log, 'utf8').trim().split('\n') : []);
+}
 
 test('with formatOnWrite off, without the Biome of the project, or with a Biome that fails, the write is only checked', () => {
   const note = 'src/platform/pricing/pricing-note.ts';
@@ -299,13 +275,6 @@ test('skipping a test and relaxing the rules both need the owner', () => {
   assert.equal(pipeline.output.hookSpecificOutput.permissionDecision, 'ask');
 });
 
-const patch = (root, ...sections) => ({
-  cwd: root,
-  turn_id: 'turn-1',
-  tool_name: 'apply_patch',
-  tool_input: { command: ['*** Begin Patch', ...sections, '*** End Patch'].join('\n') },
-});
-
 test('Codex: a patch that adds a file of a generated role is refused with the generator command', () => {
   const root = project();
   const result = run(
@@ -321,6 +290,23 @@ test('Codex: a patch that adds a file of a generated role is refused with the ge
   assert.equal(decision(result), 'deny');
   assert.match(reason(result), /order\.aggregate\.ts is a new file of a generated role.*generate aggregate/);
 });
+
+function patch(root, ...sections) {
+  return {
+    cwd: root,
+    turn_id: 'turn-1',
+    tool_name: 'apply_patch',
+    tool_input: { command: ['*** Begin Patch', ...sections, '*** End Patch'].join('\n') },
+  };
+}
+
+function decision(result) {
+  return result.output?.hookSpecificOutput.permissionDecision;
+}
+
+function reason(result) {
+  return result.output.hookSpecificOutput.permissionDecisionReason;
+}
 
 test('Codex: what Claude Code asks the owner is said to the user, never a question Codex cannot put', () => {
   const root = project();
@@ -560,6 +546,11 @@ test('a context worker writes inside its bounded context and its end-to-end spec
   assert.match(reason(neighbour), /report the need to the conductor/);
 });
 
+function worker(root, context = 'ordering') {
+  put(root, '.ddd-ts-kit/worker.json', JSON.stringify({ context }));
+  return { agent_type: 'ddd-ts-kit:context-builder' };
+}
+
 test('a context worker keeps the support of its end-to-end specs in a folder named after its context', () => {
   const root = project();
   const agent = worker(root);
@@ -620,11 +611,6 @@ const SCENARIO = `it('#US5.02 AC1 a customer places an order', pending(async () 
   expectStatus(await client.post('/orders', {}), 201);
 }));
 `;
-const edit = (file, { from, to }, extra = {}) => ({
-  tool_name: 'Edit',
-  tool_input: { file_path: file, old_string: from, new_string: to },
-  ...extra,
-});
 
 const STORY_SLICES = `# Slices
 
@@ -632,30 +618,6 @@ const STORY_SLICES = `# Slices
 |---|---|---|---|---|---|---|---|
 | US5.01 | ordering | slice | Place order | \`generate command ordering PlaceOrder --public\` | | ordering | todo |
 `;
-
-function storyWorktree() {
-  const root = project();
-  put(root, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US5', base: 'main', branch: 'story/us5' }));
-  put(root, 'docs/architecture/slices.md', STORY_SLICES);
-  return root;
-}
-
-// Each row designed, the acceptance written and locked: what opens the code of a story.
-function openTheBuildGate(root) {
-  put(
-    root,
-    'docs/architecture/stories/US5.md',
-    '# US5\n\n## Acceptance criteria\n\n- AC1: a customer places an order\n',
-  );
-  put(root, 'docs/architecture/reviews/US5.md', '# US5\n\n## #US5.01 Place order\n\n`PlaceOrderCommand`.\n');
-  put(
-    root,
-    'test/acceptance/us5.acceptance.spec.ts',
-    "import { it } from 'vitest';\nimport { pending } from '@ddd-ts-kit/testing/e2e';\n\nit('#US5.01 AC1 a customer places an order', pending(async () => {}));\n",
-  );
-  const locked = spawnSync('node', [cli, 'acceptance', 'US5', '--lock'], { cwd: root, encoding: 'utf8' });
-  assert.equal(locked.status, 0, locked.stderr);
-}
 
 test('in the worktree of a story, the code waits for each row designed and the acceptance locked', () => {
   const root = storyWorktree();
@@ -687,14 +649,32 @@ test('in the worktree of a story, the code waits for each row designed and the a
   assert.ok(existsSync(join(root, '.ddd-ts-kit/guard/story-gate.json')));
 });
 
-// A project committed on main in the main checkout of its repository, its worktrees ignored.
-function trunkCheckout(config = {}) {
-  const root = project(config);
-  put(root, '.gitignore', 'node_modules\n.worktrees/\n');
-  git(root, 'init', '--quiet', '--initial-branch', 'main');
-  git(root, 'add', '--all');
-  git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
+// Each row designed, the acceptance written and locked: what opens the code of a story.
+function openTheBuildGate(root) {
+  put(
+    root,
+    'docs/architecture/stories/US5.md',
+    '# US5\n\n## Acceptance criteria\n\n- AC1: a customer places an order\n',
+  );
+  put(root, 'docs/architecture/reviews/US5.md', '# US5\n\n## #US5.01 Place order\n\n`PlaceOrderCommand`.\n');
+  put(
+    root,
+    'test/acceptance/us5.acceptance.spec.ts',
+    "import { it } from 'vitest';\nimport { pending } from '@ddd-ts-kit/testing/e2e';\n\nit('#US5.01 AC1 a customer places an order', pending(async () => {}));\n",
+  );
+  const locked = spawnSync('node', [cli, 'acceptance', 'US5', '--lock'], { cwd: root, encoding: 'utf8' });
+  assert.equal(locked.status, 0, locked.stderr);
+}
+
+function storyWorktree() {
+  const root = project();
+  put(root, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US5', base: 'main', branch: 'story/us5' }));
+  put(root, 'docs/architecture/slices.md', STORY_SLICES);
   return root;
+}
+
+function bash(root, command, extra = {}) {
+  return { cwd: root, tool_name: 'Bash', tool_input: { command }, ...extra };
 }
 
 test('in the main checkout of the trunk the code of a context waits for a worktree, and a worktree of .worktrees/ for its own install', () => {
@@ -722,6 +702,25 @@ test('in the main checkout of the trunk the code of a context waits for a worktr
   assert.equal(run('pre-write', write(code)).output, undefined);
 });
 
+function git(root, ...args) {
+  const result = spawnSync(
+    'git',
+    ['-c', 'user.name=guard', '-c', 'user.email=guard@example.test', '-c', 'commit.gpgsign=false', ...args],
+    { cwd: root, encoding: 'utf8' },
+  );
+  assert.equal(result.status, 0, result.stderr);
+}
+
+// A project committed on main in the main checkout of its repository, its worktrees ignored.
+function trunkCheckout(config = {}) {
+  const root = project(config);
+  put(root, '.gitignore', 'node_modules\n.worktrees/\n');
+  git(root, 'init', '--quiet', '--initial-branch', 'main');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
+  return root;
+}
+
 test('a project started before the worktrees setting, and one set to advised, only hear where the code goes', () => {
   const root = trunkCheckout();
   const path = join(root, 'ddd-ts-kit.config.json');
@@ -736,6 +735,26 @@ test('a project started before the worktrees setting, and one set to advised, on
     started,
     /Main checkout of the trunk \(branch main\): the code of the contexts is written in a worktree; open one/,
   );
+});
+
+test('in the worktree of a story, a write to a file another open story changes is said once, and so is where they meet at session start', () => {
+  const { us5, us6 } = twoStories();
+  put(us6, 'docs/notes.md', 'US6\n');
+  const first = run('pre-write', write(join(us5, 'docs/notes.md'), { session_id: 'crossing' }));
+  assert.match(
+    first.output.hookSpecificOutput.additionalContext,
+    /US6 \(story\/us6, .*\) changes docs\/notes\.md too\./,
+  );
+  assert.match(first.output.hookSpecificOutput.additionalContext, /npx ddd-ts-kit stories/);
+  assert.equal(run('pre-write', write(join(us5, 'docs/notes.md'), { session_id: 'crossing' })).output, undefined);
+  assert.equal(
+    run('pre-write', write(join(us5, 'docs/architecture/slices.md'), { session_id: 'crossing' })).output,
+    undefined,
+  );
+  put(us5, 'docs/notes.md', 'US5\n');
+  rmSync(join(us5, '.ddd-ts-kit/guard/stories.json'));
+  const started = run('session', { cwd: us5 }).output.hookSpecificOutput.additionalContext;
+  assert.match(started, /It meets story US6: 1 file\(s\) both change\./);
 });
 
 // Two stories open in two worktrees of one repository, the CLI of the kit installed in each.
@@ -765,26 +784,6 @@ function twoStories() {
   );
 }
 
-test('in the worktree of a story, a write to a file another open story changes is said once, and so is where they meet at session start', () => {
-  const { us5, us6 } = twoStories();
-  put(us6, 'docs/notes.md', 'US6\n');
-  const first = run('pre-write', write(join(us5, 'docs/notes.md'), { session_id: 'crossing' }));
-  assert.match(
-    first.output.hookSpecificOutput.additionalContext,
-    /US6 \(story\/us6, .*\) changes docs\/notes\.md too\./,
-  );
-  assert.match(first.output.hookSpecificOutput.additionalContext, /npx ddd-ts-kit stories/);
-  assert.equal(run('pre-write', write(join(us5, 'docs/notes.md'), { session_id: 'crossing' })).output, undefined);
-  assert.equal(
-    run('pre-write', write(join(us5, 'docs/architecture/slices.md'), { session_id: 'crossing' })).output,
-    undefined,
-  );
-  put(us5, 'docs/notes.md', 'US5\n');
-  rmSync(join(us5, '.ddd-ts-kit/guard/stories.json'));
-  const started = run('session', { cwd: us5 }).output.hookSpecificOutput.additionalContext;
-  assert.match(started, /It meets story US6: 1 file\(s\) both change\./);
-});
-
 test('a session of a story starts on its phase and ends on its report, refused once for the same step', () => {
   const root = storyWorktree();
   const started = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
@@ -811,27 +810,6 @@ const FIX_SPEC = 'src/contexts/ordering/test/unit/order.aggregate.spec.ts';
 const FIX_TEST =
   "import { it } from 'vitest';\n\nit('#FIX-412 refuses to cancel a shipped order', () => {\n  expect(cancel('order-1')).toBe('refused');\n});\n";
 
-function fixWorktree() {
-  const root = project();
-  put(
-    root,
-    '.ddd-ts-kit/story.json',
-    JSON.stringify({ story: 'FIX-412', base: 'main', branch: 'fix/fix-412', kind: 'fix' }),
-  );
-  put(
-    root,
-    'docs/architecture/stories/FIX-412.md',
-    `# FIX-412\n\n## Statement\n\nA shipped order is cancelled.\n\n## Regression\n\n- ${FIX_SPEC}\n`,
-  );
-  return root;
-}
-
-function lockTheFix(root) {
-  put(root, FIX_SPEC, FIX_TEST);
-  const locked = spawnSync('node', [cli, 'acceptance', 'FIX-412', '--lock'], { cwd: root, encoding: 'utf8' });
-  assert.equal(locked.status, 0, locked.stderr);
-}
-
 test('in the worktree of a fix, the code waits for the regression spec locked, which no one then edits', () => {
   const root = fixWorktree();
   const code = join(root, 'src/contexts/ordering/domain/order-number.ts');
@@ -850,6 +828,21 @@ test('in the worktree of a fix, the code waits for the regression spec locked, w
     /Fix FIX-412 \(skill ddd-ts-kit:fix\)/,
   );
 });
+
+function fixWorktree() {
+  const root = project();
+  put(
+    root,
+    '.ddd-ts-kit/story.json',
+    JSON.stringify({ story: 'FIX-412', base: 'main', branch: 'fix/fix-412', kind: 'fix' }),
+  );
+  put(
+    root,
+    'docs/architecture/stories/FIX-412.md',
+    `# FIX-412\n\n## Statement\n\nA shipped order is cancelled.\n\n## Regression\n\n- ${FIX_SPEC}\n`,
+  );
+  return root;
+}
 
 test('once the regression spec of a fix is locked, the code opens and no one edits the spec', () => {
   const root = fixWorktree();
@@ -880,6 +873,20 @@ test('once the regression spec of a fix is locked, the code opens and no one edi
   );
   assert.equal(decision(run('pre-write', write(join(root, 'test/acceptance/fix-412.acceptance.lock.json')))), 'deny');
 });
+
+function lockTheFix(root) {
+  put(root, FIX_SPEC, FIX_TEST);
+  const locked = spawnSync('node', [cli, 'acceptance', 'FIX-412', '--lock'], { cwd: root, encoding: 'utf8' });
+  assert.equal(locked.status, 0, locked.stderr);
+}
+
+function edit(file, { from, to }, extra = {}) {
+  return {
+    tool_name: 'Edit',
+    tool_input: { file_path: file, old_string: from, new_string: to },
+    ...extra,
+  };
+}
 
 test('the shell runs and versions a locked regression spec of a fix, and never rewrites it', () => {
   const root = fixWorktree();
@@ -1180,6 +1187,15 @@ test('a context worker records a decision of its slices, and no deviation', () =
   assert.equal(decision(trunk), 'deny');
   assert.equal(decision(run('pre-write', write(join(root, 'docs/adr/notes/draft.md'), agent))), 'deny');
 });
+
+function committed(config = {}) {
+  const root = project(config);
+  writeFileSync(join(root, '.gitignore'), 'node_modules\n');
+  git(root, 'init', '--quiet');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
+  return root;
+}
 
 test('a context worker writes its working migration, and no other migration', () => {
   const root = project();
@@ -1716,22 +1732,6 @@ const LIMIT = Number(
 // The calibration of builder-runs.mjs: a quarter of the calls uncounted for the first, a sixth for the second.
 const FIRST_NOTICE = Math.floor((LIMIT - 30) * 0.75);
 const SECOND_NOTICE = Math.floor((LIMIT - 12) * 0.85);
-const builder = (id, extra = {}) => ({
-  agent_type: 'ddd-ts-kit:context-builder',
-  agent_id: id,
-  session_id: 'conductor',
-  ...extra,
-});
-const noticeOf = (result) => result.output?.hookSpecificOutput?.additionalContext;
-const stateKey = (input) =>
-  createHash('sha256')
-    .update(`${input.session_id ?? ''}\0${input.agent_id ?? ''}`)
-    .digest('hex')
-    .slice(0, 16);
-const runState = (input) => `.ddd-ts-kit/guard/turns-${stateKey(input)}.json`;
-const seed = (root, input, state) => put(root, runState(input), JSON.stringify(state));
-const agentFile = (root) => JSON.parse(readFileSync(join(root, '.ddd-ts-kit', 'agent.json'), 'utf8'));
-const now = () => new Date().toISOString();
 
 test('a context-builder is warned once before its turn limit, counted from its shell and its writes', () => {
   const root = committed();
@@ -1753,6 +1753,19 @@ test('a context-builder is warned once before its turn limit, counted from its s
   assert.equal(noticeOf(run('pre-bash', bash(root, 'git status', agent))), undefined);
 });
 
+function noticeOf(result) {
+  return result.output?.hookSpecificOutput?.additionalContext;
+}
+
+function builder(id, extra = {}) {
+  return {
+    agent_type: 'ddd-ts-kit:context-builder',
+    agent_id: id,
+    session_id: 'conductor',
+    ...extra,
+  };
+}
+
 test('the second notice comes once at its threshold, and rides along a refusal', () => {
   const root = committed();
   worker(root);
@@ -1769,6 +1782,25 @@ test('the second notice comes once at its threshold, and rides along a refusal',
   assert.equal(noticeOf(run('pre-bash', bash(root, 'git status', late))), undefined);
 });
 
+function now() {
+  return new Date().toISOString();
+}
+
+function seed(root, input, state) {
+  return put(root, runState(input), JSON.stringify(state));
+}
+
+function runState(input) {
+  return `.ddd-ts-kit/guard/turns-${stateKey(input)}.json`;
+}
+
+function stateKey(input) {
+  return createHash('sha256')
+    .update(`${input.session_id ?? ''}\0${input.agent_id ?? ''}`)
+    .digest('hex')
+    .slice(0, 16);
+}
+
 test('two builders are counted apart, and a new run of one starts its count again', () => {
   const root = committed();
   worker(root);
@@ -1784,6 +1816,10 @@ test('two builders are counted apart, and a new run of one starts its count agai
   assert.equal(noticeOf(run('pre-bash', bash(root, 'git status', first))), undefined);
   assert.equal(agentFile(root).run, 2);
 });
+
+function agentFile(root) {
+  return JSON.parse(readFileSync(join(root, '.ddd-ts-kit', 'agent.json'), 'utf8'));
+}
 
 test('the main session and the other agents are neither counted nor warned', () => {
   const root = committed();

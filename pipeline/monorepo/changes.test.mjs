@@ -8,11 +8,6 @@ import { foldChanges, problemsOf } from './changes.mjs';
 
 const MANIFEST = 'plugin/.claude-plugin/plugin.json';
 
-/** The files of a pull request as `read` and `readAtBase` give them: the plugin manifest at 0.80.0 on the base. */
-function files(contents = {}, base = { [MANIFEST]: '{ "version": "0.80.0" }' }) {
-  return { read: (file) => contents[file] ?? '', readAtBase: (file) => base[file] };
-}
-
 test('a change of the plugin with its file of changes/ passes, without one it is asked for', () => {
   const fragment = { 'changes/lint-transition.md': '**The lint shows a rule in transition.** Detail.' };
 
@@ -25,6 +20,11 @@ test('a change of the plugin with its file of changes/ passes, without one it is
 
   assert.match(missing, /reaches the plugin: say what it changes for a user in changes\/<what-it-does>\.md/);
 });
+
+/** The files of a pull request as `read` and `readAtBase` give them: the plugin manifest at 0.80.0 on the base. */
+function files(contents = {}, base = { [MANIFEST]: '{ "version": "0.80.0" }' }) {
+  return { read: (file) => contents[file] ?? '', readAtBase: (file) => base[file] };
+}
 
 test('CHANGELOG.md and the version of the plugin are left to the release', () => {
   const bumped = { [MANIFEST]: '{ "version": "0.81.0" }', 'changes/a.md': '**A.**' };
@@ -52,6 +52,21 @@ test('a file of changes/ opens with its summary in bold; the README of the folde
 
   assert.match(plain, /changes\/plain\.md opens with its summary in bold/);
   assert.deepEqual(problemsOf(['changes/README.md'], files({ 'changes/README.md': '# changes' })), []);
+});
+
+test('the release folds the files in the order they reached the trunk, after what Unreleased held, and deletes them', () => {
+  const root = repositoryWithChanges();
+
+  try {
+    assert.equal(foldChanges(root, '0.28.0'), 2);
+    assert.equal(
+      fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8'),
+      '# Changelog\n\nIntro.\n\n## 0.28.0\n\n**Older.** Written before.\n\n**Second.** It landed after.\n\n**First.** Named first, landed last.\n\n## 0.27.0\n\n**Released.**\n',
+    );
+    assert.deepEqual(fs.readdirSync(path.join(root, 'changes')), ['README.md']);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
 
 /** A repository whose CHANGELOG.md has an Unreleased section, and two files of changes/ committed an hour apart, `second.md` first. */
@@ -82,18 +97,3 @@ function repositoryWithChanges() {
 
   return root;
 }
-
-test('the release folds the files in the order they reached the trunk, after what Unreleased held, and deletes them', () => {
-  const root = repositoryWithChanges();
-
-  try {
-    assert.equal(foldChanges(root, '0.28.0'), 2);
-    assert.equal(
-      fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8'),
-      '# Changelog\n\nIntro.\n\n## 0.28.0\n\n**Older.** Written before.\n\n**Second.** It landed after.\n\n**First.** Named first, landed last.\n\n## 0.27.0\n\n**Released.**\n',
-    );
-    assert.deepEqual(fs.readdirSync(path.join(root, 'changes')), ['README.md']);
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-  }
-});

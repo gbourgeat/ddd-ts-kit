@@ -21,6 +21,29 @@ const RULE_ID = /^[a-z][a-z-]*\/[a-z][a-z-]*$/;
 const FAMILY = /^([a-z][a-z-]*)\/\*$/;
 const ID_LITERAL = /'([a-z][a-z-]*\/[a-z][a-z-]*)'/g;
 
+test('every skill of the plugin has a row in the table of the guide', () => {
+  const skills = fs
+    .readdirSync(SKILLS, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+
+  const rows = tableRows();
+  const named = new Set(rows.map((row) => row.skill));
+
+  assert.ok(rows.length > 0, 'the table holds no row');
+  assert.deepEqual(
+    skills.filter((skill) => !named.has(skill)),
+    [],
+    'skills without a row in "What holds each skill" of docs/guides/coding-agents.md',
+  );
+  assert.deepEqual(
+    [...named].filter((skill) => skill !== undefined && !skills.includes(skill)),
+    [],
+    'rows of the table that name no skill of plugin/skills/',
+  );
+});
+
 /** The rows of the table under the heading: the skill of the first cell and the backticked words of the row. */
 function tableRows() {
   const page = fs.readFileSync(GUIDE, 'utf8');
@@ -41,6 +64,28 @@ function tableRows() {
       return { skill, words: [...line.matchAll(/`([^`]+)`/g)].map((match) => match[1]) };
     });
 }
+
+test('every rule id the table names is one the CLI knows', () => {
+  const known = knownRuleIds();
+
+  assert.ok(known.size > 50, `too few rule ids read (${known.size}): the checker sources or the built CLI moved`);
+
+  const unknown = [];
+
+  for (const { skill, words } of tableRows()) {
+    for (const word of words) {
+      const family = FAMILY.exec(word)?.[1];
+
+      if (family !== undefined && ![...known].some((id) => id.startsWith(`${family}/`))) {
+        unknown.push(`${skill}: ${word}`);
+      } else if (RULE_ID.test(word) && !known.has(word) && !looksLikeAPath(word)) {
+        unknown.push(`${skill}: ${word}`);
+      }
+    }
+  }
+
+  assert.deepEqual(unknown, [], 'rule ids of the table unknown to `ddd-ts-kit rules`');
+});
 
 /**
  * The rule ids the CLI knows: `rules --json` of the built CLI when it exists, else the ids written
@@ -80,51 +125,6 @@ function filesUnder(directory) {
     return entry.isFile() && file.endsWith('.ts') ? [file] : [];
   });
 }
-
-test('every skill of the plugin has a row in the table of the guide', () => {
-  const skills = fs
-    .readdirSync(SKILLS, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .sort();
-
-  const rows = tableRows();
-  const named = new Set(rows.map((row) => row.skill));
-
-  assert.ok(rows.length > 0, 'the table holds no row');
-  assert.deepEqual(
-    skills.filter((skill) => !named.has(skill)),
-    [],
-    'skills without a row in "What holds each skill" of docs/guides/coding-agents.md',
-  );
-  assert.deepEqual(
-    [...named].filter((skill) => skill !== undefined && !skills.includes(skill)),
-    [],
-    'rows of the table that name no skill of plugin/skills/',
-  );
-});
-
-test('every rule id the table names is one the CLI knows', () => {
-  const known = knownRuleIds();
-
-  assert.ok(known.size > 50, `too few rule ids read (${known.size}): the checker sources or the built CLI moved`);
-
-  const unknown = [];
-
-  for (const { skill, words } of tableRows()) {
-    for (const word of words) {
-      const family = FAMILY.exec(word)?.[1];
-
-      if (family !== undefined && ![...known].some((id) => id.startsWith(`${family}/`))) {
-        unknown.push(`${skill}: ${word}`);
-      } else if (RULE_ID.test(word) && !known.has(word) && !looksLikeAPath(word)) {
-        unknown.push(`${skill}: ${word}`);
-      }
-    }
-  }
-
-  assert.deepEqual(unknown, [], 'rule ids of the table unknown to `ddd-ts-kit rules`');
-});
 
 /** A word written like a rule id that is a path of the project (`docs/architecture`, `test/acceptance`): not a rule. */
 function looksLikeAPath(word) {

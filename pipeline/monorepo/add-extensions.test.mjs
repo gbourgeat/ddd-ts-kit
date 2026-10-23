@@ -5,15 +5,6 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { addExtensionsIn } from './add-extensions.mjs';
 
-function distWith(files) {
-  const dist = mkdtempSync(join(tmpdir(), 'add-extensions-'));
-  for (const [name, text] of Object.entries(files)) {
-    mkdirSync(join(dist, name, '..'), { recursive: true });
-    writeFileSync(join(dist, name), text);
-  }
-  return dist;
-}
-
 test('a file import gets .js and a folder import gets /index.js', () => {
   const dist = distWith({
     'index.js': "export * from './domain/errors';\nexport { x } from './x';\n",
@@ -26,6 +17,15 @@ test('a file import gets .js and a folder import gets /index.js', () => {
     "export * from './domain/errors/index.js';\nexport { x } from './x.js';\n",
   );
 });
+
+function distWith(files) {
+  const dist = mkdtempSync(join(tmpdir(), 'add-extensions-'));
+  for (const [name, text] of Object.entries(files)) {
+    mkdirSync(join(dist, name, '..'), { recursive: true });
+    writeFileSync(join(dist, name), text);
+  }
+  return dist;
+}
 
 test('a declaration file is resolved against declaration files and a package is left alone', () => {
   const dist = distWith({

@@ -43,6 +43,82 @@ const LIBRARIES = { zod: zodBody, typebox: typeboxBody, 'class-validator': class
 
 const FRAMEWORKS = ['express', 'fastify', 'hono', 'nest'];
 
+const SERVERS = {
+  express: {
+    kit: `import express from 'express'; import { mountExpress } from '@ddd-ts-kit/http/express';
+      const app = express(); app.use(express.json()); mountExpress(app, routes);
+      const server = app.listen(0, '127.0.0.1', () => console.log(server.address().port));`,
+    bare: `import express from 'express';
+      const app = express(); app.use(express.json());
+      app.post('/r0', (request, response) => { response.status(201).json({ id: 'a-1' }); });
+      const server = app.listen(0, '127.0.0.1', () => console.log(server.address().port));`,
+  },
+  fastify: {
+    kit: `import Fastify from 'fastify'; import { mountFastify } from '@ddd-ts-kit/http/fastify';
+      const app = Fastify(); mountFastify(app, routes);
+      await app.listen({ port: 0, host: '127.0.0.1' }); console.log(app.server.address().port);`,
+    bare: `import Fastify from 'fastify';
+      const app = Fastify(); app.post('/r0', async (request, reply) => reply.code(201).send({ id: 'a-1' }));
+      await app.listen({ port: 0, host: '127.0.0.1' }); console.log(app.server.address().port);`,
+  },
+  hono: {
+    kit: `import { serve } from '@hono/node-server'; import { Hono } from 'hono'; import { mountHono } from '@ddd-ts-kit/http/hono';
+      const app = new Hono(); mountHono(app, routes);
+      const server = serve({ fetch: app.fetch, port: 0, hostname: '127.0.0.1' }, (info) => console.log(info.port));`,
+    bare: `import { serve } from '@hono/node-server'; import { Hono } from 'hono';
+      const app = new Hono(); app.post('/r0', async (context) => { await context.req.json(); return context.json({ id: 'a-1' }, 201); });
+      serve({ fetch: app.fetch, port: 0, hostname: '127.0.0.1' }, (info) => console.log(info.port));`,
+  },
+  nest: {
+    kit: `import 'reflect-metadata'; import { Module } from '@nestjs/common'; import { NestFactory } from '@nestjs/core';
+      import { createRoutesModule } from '@ddd-ts-kit/http/nest';
+      class AppModule {} Module({ imports: [createRoutesModule(routes)] })(AppModule);
+      const app = await NestFactory.create(AppModule, { logger: false }); await app.listen(0, '127.0.0.1');
+      console.log(app.getHttpServer().address().port);`,
+  },
+};
+
+function zodBody() {
+  const slot = z.object({ startsAt: z.iso.datetime(), endsAt: z.iso.datetime() }).meta({ id: 'Slot' });
+
+  return zodSchema(z.object({ patientId: z.uuid(), reason: z.string().max(500).optional(), slot }));
+}
+
+function typeboxBody() {
+  const slot = Type.Object(
+    { startsAt: Type.String({ format: 'date-time' }), endsAt: Type.String({ format: 'date-time' }) },
+    { $id: 'Slot' },
+  );
+
+  return typeboxSchema(
+    Type.Object({
+      patientId: Type.String({ format: 'uuid' }),
+      reason: Type.Optional(Type.String({ maxLength: 500 })),
+      slot,
+    }),
+  );
+}
+
+/** The decorators applied by hand: this script is plain JavaScript. */
+function classBody() {
+  class SlotDto {}
+  class BookBody {}
+
+  IsISO8601()(SlotDto.prototype, 'startsAt');
+  IsISO8601()(SlotDto.prototype, 'endsAt');
+  IsUUID()(BookBody.prototype, 'patientId');
+  IsOptional()(BookBody.prototype, 'reason');
+  IsString()(BookBody.prototype, 'reason');
+  MaxLength(500)(BookBody.prototype, 'reason');
+  ValidateNested()(BookBody.prototype, 'slot');
+  Nested(() => SlotDto)(BookBody.prototype, 'slot');
+
+  return classSchema(BookBody, { shared: true });
+}
+
+// Last: the constants above are initialised by the time it runs.
+await main();
+
 async function main() {
   console.log(`Node ${process.version}, ${process.platform} ${process.arch}\n`);
   console.log(
@@ -63,63 +139,10 @@ async function main() {
   console.log(table('Cold start to the first answer', ['framework', `median of ${COLD_RUNS} (ms)`], await coldRows()));
 }
 
-function contractRows() {
-  return Object.entries(LIBRARIES).map(([name, body]) => {
-    const schema = body();
-    const routes = Array.from({ length: DOCUMENTED_ROUTES }, (_unused, index) => commandRoute(`/r${index}`, schema));
-    const generate = () => generateOpenApi({ info: { title: 'Measure', version: '1' }, routes });
-    const document = generate();
+function table(title, header, rows) {
+  const line = (cells) => `| ${cells.join(' | ')} |`;
 
-    return [
-      name,
-      median(repeat(7, () => timed(generate))).toFixed(1),
-      perParse(schema),
-      String(Object.keys(document.components.schemas).length),
-    ];
-  });
-}
-
-function perParse(schema) {
-  const elapsed = timed(() => {
-    for (let index = 0; index < PARSES; index += 1) {
-      schema.parse(VALID_BODY);
-    }
-  });
-
-  return ((elapsed * 1000) / PARSES).toFixed(2);
-}
-
-/** `executeRoute` alone, as every adapter calls it: principal, validation, handler, answer. */
-async function pipelineRows() {
-  const rows = [];
-  const bodies = [['none', undefined], ...Object.entries(LIBRARIES).map(([name, body]) => [name, body()])];
-
-  for (const [name, schema] of bodies) {
-    const route = commandRoute('/r0', schema);
-    const request = { params: {}, query: {}, headers: {}, body: VALID_BODY, raw: {} };
-    const started = performance.now();
-
-    for (let index = 0; index < EXECUTIONS; index += 1) {
-      await executeRoute(route, request, {});
-    }
-
-    rows.push([name, (((performance.now() - started) * 1000) / EXECUTIONS).toFixed(2)]);
-  }
-
-  return rows;
-}
-
-async function requestRows() {
-  const rows = [];
-
-  for (const framework of FRAMEWORKS) {
-    const kit = await load(framework, 'kit');
-    const bare = framework === 'nest' ? undefined : await load(framework, 'bare');
-
-    rows.push([framework, kit.rate.toFixed(0), bare === undefined ? 'n/a' : bare.rate.toFixed(0), kit.p99.toFixed(1)]);
-  }
-
-  return rows;
+  return [`### ${title}`, '', line(header), line(header.map(() => '---')), ...rows.map(line), ''].join('\n');
 }
 
 async function coldRows() {
@@ -138,46 +161,10 @@ async function coldRows() {
   return rows;
 }
 
-/** Starts one server in a process of its own, warms it and the client up, then measures a second round of requests. */
-async function load(framework, mode) {
-  const server = await startServer(framework, mode, 1);
+function median(values) {
+  const sorted = [...values].sort((a, b) => a - b);
 
-  await send(server.url, WARM_UP);
-
-  const started = performance.now();
-  const latencies = await send(server.url, REQUESTS);
-  const elapsed = performance.now() - started;
-
-  server.stop();
-  latencies.sort((a, b) => a - b);
-
-  return { rate: (REQUESTS * 1000) / elapsed, p99: latencies[Math.floor(latencies.length * 0.99)] ?? 0 };
-}
-
-/** `count` requests, `CONCURRENCY` at a time: the latency of each. */
-async function send(url, count) {
-  const latencies = [];
-  let sent = 0;
-
-  const worker = async () => {
-    while (sent < count) {
-      sent += 1;
-
-      const before = performance.now();
-      const response = await fetch(`${url}/r0`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(VALID_BODY),
-      });
-
-      await response.arrayBuffer();
-      latencies.push(performance.now() - before);
-    }
-  };
-
-  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
-
-  return latencies;
+  return sorted[Math.floor(sorted.length / 2)] ?? 0;
 }
 
 /** From the spawn of a process to the first answer of one of its routes. */
@@ -230,40 +217,80 @@ function serverSource(framework, mode, routes) {
   return `${mode === 'kit' ? kitRoutes : ''}\n${SERVERS[framework][mode]}`;
 }
 
-const SERVERS = {
-  express: {
-    kit: `import express from 'express'; import { mountExpress } from '@ddd-ts-kit/http/express';
-      const app = express(); app.use(express.json()); mountExpress(app, routes);
-      const server = app.listen(0, '127.0.0.1', () => console.log(server.address().port));`,
-    bare: `import express from 'express';
-      const app = express(); app.use(express.json());
-      app.post('/r0', (request, response) => { response.status(201).json({ id: 'a-1' }); });
-      const server = app.listen(0, '127.0.0.1', () => console.log(server.address().port));`,
-  },
-  fastify: {
-    kit: `import Fastify from 'fastify'; import { mountFastify } from '@ddd-ts-kit/http/fastify';
-      const app = Fastify(); mountFastify(app, routes);
-      await app.listen({ port: 0, host: '127.0.0.1' }); console.log(app.server.address().port);`,
-    bare: `import Fastify from 'fastify';
-      const app = Fastify(); app.post('/r0', async (request, reply) => reply.code(201).send({ id: 'a-1' }));
-      await app.listen({ port: 0, host: '127.0.0.1' }); console.log(app.server.address().port);`,
-  },
-  hono: {
-    kit: `import { serve } from '@hono/node-server'; import { Hono } from 'hono'; import { mountHono } from '@ddd-ts-kit/http/hono';
-      const app = new Hono(); mountHono(app, routes);
-      const server = serve({ fetch: app.fetch, port: 0, hostname: '127.0.0.1' }, (info) => console.log(info.port));`,
-    bare: `import { serve } from '@hono/node-server'; import { Hono } from 'hono';
-      const app = new Hono(); app.post('/r0', async (context) => { await context.req.json(); return context.json({ id: 'a-1' }, 201); });
-      serve({ fetch: app.fetch, port: 0, hostname: '127.0.0.1' }, (info) => console.log(info.port));`,
-  },
-  nest: {
-    kit: `import 'reflect-metadata'; import { Module } from '@nestjs/common'; import { NestFactory } from '@nestjs/core';
-      import { createRoutesModule } from '@ddd-ts-kit/http/nest';
-      class AppModule {} Module({ imports: [createRoutesModule(routes)] })(AppModule);
-      const app = await NestFactory.create(AppModule, { logger: false }); await app.listen(0, '127.0.0.1');
-      console.log(app.getHttpServer().address().port);`,
-  },
-};
+async function requestRows() {
+  const rows = [];
+
+  for (const framework of FRAMEWORKS) {
+    const kit = await load(framework, 'kit');
+    const bare = framework === 'nest' ? undefined : await load(framework, 'bare');
+
+    rows.push([framework, kit.rate.toFixed(0), bare === undefined ? 'n/a' : bare.rate.toFixed(0), kit.p99.toFixed(1)]);
+  }
+
+  return rows;
+}
+
+/** Starts one server in a process of its own, warms it and the client up, then measures a second round of requests. */
+async function load(framework, mode) {
+  const server = await startServer(framework, mode, 1);
+
+  await send(server.url, WARM_UP);
+
+  const started = performance.now();
+  const latencies = await send(server.url, REQUESTS);
+  const elapsed = performance.now() - started;
+
+  server.stop();
+  latencies.sort((a, b) => a - b);
+
+  return { rate: (REQUESTS * 1000) / elapsed, p99: latencies[Math.floor(latencies.length * 0.99)] ?? 0 };
+}
+
+/** `count` requests, `CONCURRENCY` at a time: the latency of each. */
+async function send(url, count) {
+  const latencies = [];
+  let sent = 0;
+
+  const worker = async () => {
+    while (sent < count) {
+      sent += 1;
+
+      const before = performance.now();
+      const response = await fetch(`${url}/r0`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(VALID_BODY),
+      });
+
+      await response.arrayBuffer();
+      latencies.push(performance.now() - before);
+    }
+  };
+
+  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+
+  return latencies;
+}
+
+/** `executeRoute` alone, as every adapter calls it: principal, validation, handler, answer. */
+async function pipelineRows() {
+  const rows = [];
+  const bodies = [['none', undefined], ...Object.entries(LIBRARIES).map(([name, body]) => [name, body()])];
+
+  for (const [name, schema] of bodies) {
+    const route = commandRoute('/r0', schema);
+    const request = { params: {}, query: {}, headers: {}, body: VALID_BODY, raw: {} };
+    const started = performance.now();
+
+    for (let index = 0; index < EXECUTIONS; index += 1) {
+      await executeRoute(route, request, {});
+    }
+
+    rows.push([name, (((performance.now() - started) * 1000) / EXECUTIONS).toFixed(2)]);
+  }
+
+  return rows;
+}
 
 function commandRoute(routePath, body) {
   return defineRoute(
@@ -280,42 +307,24 @@ function commandRoute(routePath, body) {
   );
 }
 
-function zodBody() {
-  const slot = z.object({ startsAt: z.iso.datetime(), endsAt: z.iso.datetime() }).meta({ id: 'Slot' });
+function contractRows() {
+  return Object.entries(LIBRARIES).map(([name, body]) => {
+    const schema = body();
+    const routes = Array.from({ length: DOCUMENTED_ROUTES }, (_unused, index) => commandRoute(`/r${index}`, schema));
+    const generate = () => generateOpenApi({ info: { title: 'Measure', version: '1' }, routes });
+    const document = generate();
 
-  return zodSchema(z.object({ patientId: z.uuid(), reason: z.string().max(500).optional(), slot }));
+    return [
+      name,
+      median(repeat(7, () => timed(generate))).toFixed(1),
+      perParse(schema),
+      String(Object.keys(document.components.schemas).length),
+    ];
+  });
 }
 
-function typeboxBody() {
-  const slot = Type.Object(
-    { startsAt: Type.String({ format: 'date-time' }), endsAt: Type.String({ format: 'date-time' }) },
-    { $id: 'Slot' },
-  );
-
-  return typeboxSchema(
-    Type.Object({
-      patientId: Type.String({ format: 'uuid' }),
-      reason: Type.Optional(Type.String({ maxLength: 500 })),
-      slot,
-    }),
-  );
-}
-
-/** The decorators applied by hand: this script is plain JavaScript. */
-function classBody() {
-  class SlotDto {}
-  class BookBody {}
-
-  IsISO8601()(SlotDto.prototype, 'startsAt');
-  IsISO8601()(SlotDto.prototype, 'endsAt');
-  IsUUID()(BookBody.prototype, 'patientId');
-  IsOptional()(BookBody.prototype, 'reason');
-  IsString()(BookBody.prototype, 'reason');
-  MaxLength(500)(BookBody.prototype, 'reason');
-  ValidateNested()(BookBody.prototype, 'slot');
-  Nested(() => SlotDto)(BookBody.prototype, 'slot');
-
-  return classSchema(BookBody, { shared: true });
+function repeat(times, work) {
+  return Array.from({ length: times }, work);
 }
 
 function timed(work) {
@@ -326,21 +335,12 @@ function timed(work) {
   return performance.now() - started;
 }
 
-function repeat(times, work) {
-  return Array.from({ length: times }, work);
+function perParse(schema) {
+  const elapsed = timed(() => {
+    for (let index = 0; index < PARSES; index += 1) {
+      schema.parse(VALID_BODY);
+    }
+  });
+
+  return ((elapsed * 1000) / PARSES).toFixed(2);
 }
-
-function median(values) {
-  const sorted = [...values].sort((a, b) => a - b);
-
-  return sorted[Math.floor(sorted.length / 2)] ?? 0;
-}
-
-function table(title, header, rows) {
-  const line = (cells) => `| ${cells.join(' | ')} |`;
-
-  return [`### ${title}`, '', line(header), line(header.map(() => '---')), ...rows.map(line), ''].join('\n');
-}
-
-// Last: the constants above are initialised by the time it runs.
-await main();

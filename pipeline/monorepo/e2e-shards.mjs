@@ -95,6 +95,10 @@ export function selected(args, shards = SHARDS) {
   return count === shards.length && index >= 1 && index <= count ? Object.keys(shards[index - 1]) : undefined;
 }
 
+if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === import.meta.filename) {
+  process.exit(main(process.argv.slice(2)));
+}
+
 function main(args) {
   const wrong = problems(specFiles());
   const files = selected(args);
@@ -129,8 +133,4 @@ function main(args) {
   );
 
   return run.status ?? 1;
-}
-
-if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === import.meta.filename) {
-  process.exit(main(process.argv.slice(2)));
 }

@@ -255,11 +255,6 @@ let notice;
 
 main();
 
-/** A file under a test directory, or a spec next to the code: where the proof of a fix lives. */
-function isTestPath(path) {
-  return TEST_DIRECTORY.test(path) || SPEC_FILE.test(path);
-}
-
 function main() {
   try {
     const run = MODES[process.argv[2]];
@@ -457,6 +452,14 @@ function isBuilder(input) {
   return hostOf(input) === 'claude' && String(input.agent_type ?? '').includes(WORKER_AGENT);
 }
 
+async function countBuilderCall(input, project, command) {
+  const places = isBuilder(input) && project?.mode !== 'off' ? builderPlaces(input, project) : undefined;
+  if (places) {
+    const runs = await import('./builder-runs.mjs');
+    notice = runs.countCall(input, places, command);
+  }
+}
+
 // The project of the session (the conductor's: a sub-agent keeps the working directory of its
 // session) holds the state of each builder's run in the guard's folder; the worktree of the builder,
 // shown by the call, holds what the conductor reads back.
@@ -467,14 +470,6 @@ function builderPlaces(input, project) {
   }
   const worker = project && existsSync(join(project.root, WORKER_SCOPE)) ? project.root : undefined;
   return { state: stateFile('turns', home, input), worker };
-}
-
-async function countBuilderCall(input, project, command) {
-  const places = isBuilder(input) && project?.mode !== 'off' ? builderPlaces(input, project) : undefined;
-  if (places) {
-    const runs = await import('./builder-runs.mjs');
-    notice = runs.countCall(input, places, command);
-  }
 }
 
 async function subagentStart(input) {
@@ -1191,6 +1186,30 @@ function storyCodeReason(project, file) {
   return storyBuildReason(project);
 }
 
+/** A file under a test directory, or a spec next to the code: where the proof of a fix lives. */
+function isTestPath(path) {
+  return TEST_DIRECTORY.test(path) || SPEC_FILE.test(path);
+}
+
+// The code of a context is written in a worktree: the main checkout of the trunk refuses it
+// (unless the config only advises it), and so does a worktree of .worktrees/ without its own
+// dependencies, whose Node would resolve the packages of the main checkout above it.
+function worktreeCodeReason(project, file) {
+  const path = projectPath(project, file);
+  if (!insideContexts(project, path) || /(^|\/)CONTEXT\.md$/.test(path)) {
+    return undefined;
+  }
+  return worktreePlaceReason(project);
+}
+
+// A generator of code run where the code may not be written yet: before the build gate of a
+// story, in the main checkout of the trunk, in a worktree without its own install.
+async function generatorPlaceReason(project, input, command) {
+  return (
+    (await storyGeneratorReason(project, input, command)) ?? (await worktreeGeneratorReason(project, input, command))
+  );
+}
+
 // A fix writes its spec first: the generators of test files stay open before its lock.
 async function storyGeneratorReason(project, input, command) {
   const aside =
@@ -1212,25 +1231,6 @@ async function writesCode(input, command, aside) {
       !aside.includes(args[0]) &&
       !args.includes('--help') &&
       !args.includes('--dry-run'),
-  );
-}
-
-// The code of a context is written in a worktree: the main checkout of the trunk refuses it
-// (unless the config only advises it), and so does a worktree of .worktrees/ without its own
-// dependencies, whose Node would resolve the packages of the main checkout above it.
-function worktreeCodeReason(project, file) {
-  const path = projectPath(project, file);
-  if (!insideContexts(project, path) || /(^|\/)CONTEXT\.md$/.test(path)) {
-    return undefined;
-  }
-  return worktreePlaceReason(project);
-}
-
-// A generator of code run where the code may not be written yet: before the build gate of a
-// story, in the main checkout of the trunk, in a worktree without its own install.
-async function generatorPlaceReason(project, input, command) {
-  return (
-    (await storyGeneratorReason(project, input, command)) ?? (await worktreeGeneratorReason(project, input, command))
   );
 }
 

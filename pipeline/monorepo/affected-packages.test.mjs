@@ -8,14 +8,6 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const graph = readGraph(ROOT);
 const names = Object.keys(graph);
 
-/** The oracle, written the other way round: a package depends on another when walking its dependencies reaches it. */
-function dependsOn(name, target, seen = []) {
-  return graph[name].some(
-    (dependency) =>
-      dependency === target || (!seen.includes(dependency) && dependsOn(dependency, target, [...seen, name])),
-  );
-}
-
 test('reads the dependency graph of the workspace from the manifests', () => {
   assert.ok(names.includes('cli') && names.includes('kernel'));
   assert.ok(graph.events.includes('kernel'));
@@ -41,6 +33,14 @@ test('a changed package is selected with every package that depends on it, which
     assert.deepEqual(new Set(dependentsOf(graph, name)), new Set(needed.filter((candidate) => candidate !== name)));
   }
 });
+
+/** The oracle, written the other way round: a package depends on another when walking its dependencies reaches it. */
+function dependsOn(name, target, seen = []) {
+  return graph[name].some(
+    (dependency) =>
+      dependency === target || (!seen.includes(dependency) && dependsOn(dependency, target, [...seen, name])),
+  );
+}
 
 test('a leaf is selected alone, the kernel selects every package that is built on it', () => {
   assert.deepEqual(select(graph, ['packages/winston/src/index.ts']), {
