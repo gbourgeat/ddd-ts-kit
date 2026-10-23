@@ -97,7 +97,7 @@ of each is its user name.
 | A domain service over two aggregates | `scheduling/domain/services/scheduler.service.ts` |
 | Overlap decided by the domain and by a PostgreSQL exclusion constraint | `scheduling/infrastructure/persistence/create-scheduling-tables.schema.ts`, `knex-appointment.repository.ts`, `test/integration/concurrent-booking.spec.ts` |
 | Permissions on every use case, policies on the loaded element | `scheduling/application/authorization/` |
-| Relationships (Zanzibar style) combined with roles | `src/platform/auth/relationships/relationship-schema.ts`, `resource-permissions.ts`, `role-grants.ts`, `roles-and-relationships.authorizer.ts`, [ADR 0001](docs/adr/0001-combine-token-roles-with-relationships-in-one-authorizer.md) |
+| Relationships (Zanzibar style) combined with roles | `src/platform/auth/relationships/relationship-schema.ts`, `role-grants.ts`, `roles-and-relationships.authorizer.ts`, [ADR 0001](docs/adr/0001-combine-token-roles-with-relationships-in-one-authorizer.md) |
 | Persistent relation tuples, written in the unit of work | `src/platform/auth/relationships/knex-relation-tuple-store.ts`; `*/application/ports/*-relationships.port.ts` and their adapters |
 | Searches narrowed in the statement by the access scope, with criteria | `scheduling/application/queries/search-appointments/`, `search-practice-agenda/`, `analytics/application/queries/search-occupancy/` |
 | Field-level difference: busy without the name | `scheduling/application/queries/get-calendar-day/` |
@@ -211,7 +211,7 @@ holds all of it; `tenantIsolationContract` holds it for every repository.
 Three questions, three places. Who is calling: Keycloak, verified at the boundary. May they do
 this, on this: decided before the handler by one authorizer that first looks at the roles of
 the token (`network-admin`, `platform-admin`; `patient` for self-service; nothing for `support`), then at
-relationships stored as tuples `object#relation@subject` and rewritten Zanzibar style. Is it
+relationships stored as tuples `object#relation@subject` and derived as Zanzibar does. Is it
 valid at all: the domain. The contexts never name a role or a relation: they name permissions,
 and write relationships through a port of their own when a fact happens.
 
@@ -232,7 +232,7 @@ the context, as a policy (second case below).
 
 **An assistant books on a delegated calendar.** `POST /appointments` for another patient
 requires `scheduling:appointment.book` on `calendar:<id>`. The assistant has no role that
-grants it, so the relationships decide: the permission maps to `run` on a calendar, which is
+grants it, so the relationships decide: the permission is `run` on a calendar, which is
 `run` on its desk (`calendar:<id>#desk@desk:<practice>.<practitioner>`, written by `scheduling`
 when the calendar was created), which holds for the `holder`, a `delegate`, or a manager of the
 practice. The tuple `desk:<practice>.<practitioner>#delegate@user:<assistant>` was written by
@@ -249,7 +249,7 @@ PostgreSQL, `knex-relation-tuple-store.ts`, behind the same port):
 <!-- checked sample -->
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import { defineSchema, from, InMemoryRelationTupleStore, RelationBasedAuthorizer, union } from '@ddd-ts-kit/auth/rebac';
+import { defineSchema, InMemoryRelationTupleStore, RelationBasedAuthorizer, via } from '@ddd-ts-kit/auth/rebac';
 import type { Actor } from '@ddd-ts-kit/kernel';
 
 const schedulingPermissions = definePermissions('scheduling', {
@@ -261,25 +261,21 @@ const schema = defineSchema({
   user: {},
   practice: {
     relations: { manager: ['user'] },
-    permissions: { manage: union('manager') },
+    derived: { manage: 'manager' },
   },
   desk: {
     relations: { holder: ['user'], delegate: ['user'], practice: ['practice'] },
-    permissions: { run: union('holder', 'delegate', from('practice', 'manage')) },
+    derived: { run: { anyOf: ['holder', 'delegate', via('practice', 'manage')] } },
   },
   calendar: {
     relations: { desk: ['desk'] },
-    permissions: { run: from('desk', 'run') },
+    // Booking on a calendar is `run` on that calendar: the derived relation named after the permission grants it.
+    derived: { run: via('desk', 'run'), [schedulingPermissions['appointment.book'].id]: 'run' },
   },
 });
 
 const store = new InMemoryRelationTupleStore();
-const relationships = new RelationBasedAuthorizer({
-  schema,
-  store,
-  // From resource-permissions.ts: booking on a calendar is `run` on that calendar.
-  mapping: { calendar: { [schedulingPermissions['appointment.book'].id]: 'run' } },
-});
+const relationships = new RelationBasedAuthorizer({ schema, store });
 
 const linus: Actor = { id: 'linus', type: 'user', roles: [], attributes: {} };
 const booking = {

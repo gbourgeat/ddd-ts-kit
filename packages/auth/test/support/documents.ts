@@ -4,10 +4,7 @@ import {
   InMemoryRelationTupleStore,
   RelationBasedAuthorizer,
   defineSchema,
-  exclusion,
-  from,
-  intersection,
-  union,
+  via,
   type RelationBasedAuthorizerOptions,
   type RelationTuple,
 } from '../../src/rebac.js';
@@ -19,14 +16,20 @@ export const docsPermissions = definePermissions('docs', {
   'folder.view': { description: 'See what a folder holds' },
 });
 
+const editDocument = docsPermissions['document.edit'].id;
+const viewDocument = docsPermissions['document.view'].id;
+const signDocument = docsPermissions['document.sign'].id;
+const viewFolder = docsPermissions['folder.view'].id;
+
+/** Every shape of derived relation: a name, `via`, `anyOf`, `allOf`, `butNot`, and a group standing for its members. */
 export const schema = defineSchema({
   user: {},
   group: { relations: { member: ['user', 'group#member'] } },
   folder: {
     relations: { owner: ['user'], viewer: ['user', 'group#member'], parent: ['folder'] },
-    permissions: {
-      edit: union('owner', from('parent', 'edit')),
-      view: union('edit', 'viewer', from('parent', 'view')),
+    derived: {
+      edit: { anyOf: ['owner', via('parent', 'edit')] },
+      [viewFolder]: { anyOf: ['edit', 'viewer', via('parent', viewFolder)] },
     },
   },
   document: {
@@ -38,22 +41,13 @@ export const schema = defineSchema({
       approver: ['user'],
       parent: ['folder'],
     },
-    permissions: {
-      edit: exclusion(union('owner', 'editor', from('parent', 'edit')), 'banned'),
-      view: exclusion(union('edit', 'viewer', from('parent', 'view')), 'banned'),
-      sign: intersection('approver', 'edit'),
+    derived: {
+      [editDocument]: { anyOf: ['owner', 'editor', via('parent', 'edit')], butNot: ['banned'] },
+      [viewDocument]: { anyOf: [editDocument, 'viewer', via('parent', viewFolder)], butNot: ['banned'] },
+      [signDocument]: { allOf: ['approver', editDocument] },
     },
   },
 });
-
-export const mapping = {
-  document: {
-    [docsPermissions['document.edit'].id]: 'edit',
-    [docsPermissions['document.view'].id]: 'view',
-    [docsPermissions['document.sign'].id]: 'sign',
-  },
-  folder: { [docsPermissions['folder.view'].id]: 'view' },
-};
 
 export function user(id: string): Actor {
   return { id, type: 'user', roles: [], attributes: {} };
@@ -71,7 +65,7 @@ export async function authorizerWith(
 
   await store.write(tuples);
 
-  return new RelationBasedAuthorizer({ schema, store, mapping, ...options });
+  return new RelationBasedAuthorizer({ schema, store, ...options });
 }
 
 export const ada = user('ada');

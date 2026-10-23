@@ -1,28 +1,36 @@
-import type { Rewrite } from '@ddd-ts-kit/auth/rebac';
+import { waysOf, type DerivedRelation, type Way } from '@ddd-ts-kit/auth/rebac';
 import type { OpenFgaUserset } from './open-fga-model.js';
+import { relationNameOf } from './relation-name-of.js';
 
 /**
- * A rewrite of the relationship schema in the words of OpenFGA: a name is a computed userset,
- * `from` a tuple to userset, `exclusion` a difference; union and intersection keep their name.
+ * A derived relation of the schema in the words of OpenFGA: a name is a computed userset, `via`
+ * a tuple to userset, `anyOf` a union, `allOf` an intersection, `butNot` a difference.
  */
-export function usersetOf(rewrite: Rewrite): OpenFgaUserset {
-  if (typeof rewrite === 'string') {
-    return { computedUserset: { relation: rewrite } };
+export function usersetOf(derived: DerivedRelation): OpenFgaUserset {
+  const { anyOf, allOf, butNot } = waysOf(derived);
+  const required = [...(anyOf.length === 0 ? [] : [oneOf(anyOf)]), ...allOf.map(usersetOfWay)];
+  const held = required.length === 1 && required[0] !== undefined ? required[0] : { intersection: { child: required } };
+
+  return butNot.length === 0 ? held : { difference: { base: held, subtract: oneOf(butNot) } };
+}
+
+function oneOf(ways: readonly Way[]): OpenFgaUserset {
+  const [first, ...others] = ways;
+
+  return others.length === 0 && first !== undefined
+    ? usersetOfWay(first)
+    : { union: { child: ways.map(usersetOfWay) } };
+}
+
+function usersetOfWay(way: Way): OpenFgaUserset {
+  if (typeof way === 'string') {
+    return { computedUserset: { relation: relationNameOf(way) } };
   }
 
-  switch (rewrite.kind) {
-    case 'from':
-      return {
-        tupleToUserset: {
-          tupleset: { relation: rewrite.relation },
-          computedUserset: { relation: rewrite.permission },
-        },
-      };
-    case 'exclusion':
-      return { difference: { base: usersetOf(rewrite.base), subtract: usersetOf(rewrite.subtract) } };
-    case 'union':
-      return { union: { child: rewrite.children.map(usersetOf) } };
-    case 'intersection':
-      return { intersection: { child: rewrite.children.map(usersetOf) } };
-  }
+  return {
+    tupleToUserset: {
+      tupleset: { relation: way.via },
+      computedUserset: { relation: relationNameOf(way.holds) },
+    },
+  };
 }

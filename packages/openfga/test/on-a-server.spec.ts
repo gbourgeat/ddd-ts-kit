@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Actor } from '@ddd-ts-kit/kernel';
 import { authorizerContract, relationTupleStoreContract } from '@ddd-ts-kit/auth/testing';
 import { authorizationModelOf, modelDrift, OpenFgaAuthorizer, OpenFgaRelationTupleStore } from '../src/index.js';
-import { docsPermissions, mapping, schema } from './support/documents.js';
+import { docsPermissions, schema } from './support/documents.js';
 import { freshStore, OPENFGA_URL } from './support/open-fga-server.js';
 
 const runner = { describe: describe.runIf(OPENFGA_URL !== ''), it, expect, beforeEach, afterEach };
@@ -20,13 +20,13 @@ authorizerContract(runner, {
     const client = await freshStore(schema);
 
     await new OpenFgaRelationTupleStore(client, schema).write([
-      { object: 'document:1', relation: 'editor', subject: 'group:eng#member' },
+      { object: 'document:1', relation: 'editor', subject: 'group:eng' },
       { object: 'group:eng', relation: 'member', subject: 'user:ada' },
       { object: 'document:2', relation: 'owner', subject: 'user:bob' },
     ]);
 
     return {
-      authorizer: new OpenFgaAuthorizer({ client, mapping }),
+      authorizer: new OpenFgaAuthorizer({ client, schema }),
       granted: { actor: ada, permission: edit, resource: { type: 'document', id: '1' } },
       refused: { actor: ada, permission: edit, resource: { type: 'document', id: '2' } },
     };
@@ -37,7 +37,7 @@ describe.runIf(OPENFGA_URL !== '')('the model generated from the schema, on an O
   it('is accepted, read back without drift, and decides as the schema says', async () => {
     const client = await freshStore(schema);
     const store = new OpenFgaRelationTupleStore(client, schema);
-    const authorizer = new OpenFgaAuthorizer({ client, mapping });
+    const authorizer = new OpenFgaAuthorizer({ client, schema });
     const document = (id: string) => ({ type: 'document', id });
 
     await store.write([

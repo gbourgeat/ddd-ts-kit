@@ -12,8 +12,8 @@ const viewFolder = docsPermissions['folder.view'];
 describe('RelationBasedAuthorizer.listAccessible', () => {
   const tuples = [
     fact('document:direct', 'owner', 'user:ada'),
-    fact('document:team', 'editor', 'group:eng#member'),
-    fact('group:eng', 'member', 'group:platform#member'),
+    fact('document:team', 'editor', 'group:eng'),
+    fact('group:eng', 'member', 'group:platform'),
     fact('group:platform', 'member', 'user:ada'),
     fact('document:filed', 'parent', 'folder:reports'),
     fact('folder:reports', 'parent', 'folder:finance'),
@@ -32,7 +32,7 @@ describe('RelationBasedAuthorizer.listAccessible', () => {
     expect(await list(ada)).toEqual({ kind: 'ids', ids: ['direct', 'filed', 'team'] });
   });
 
-  it('applies the whole rewrite to each candidate: derived, intersected, excluded', async () => {
+  it('applies the whole derived relation to each candidate: anyOf, allOf, butNot', async () => {
     expect(await list(ada, view)).toEqual({ kind: 'ids', ids: ['direct', 'filed', 'read-only', 'team'] });
     expect(await list(ada, sign)).toEqual({ kind: 'ids', ids: [] });
   });
@@ -51,11 +51,11 @@ describe('RelationBasedAuthorizer.listAccessible', () => {
     expect(await list(ada, view)).toEqual({ kind: 'ids', ids: checked.sort() });
   });
 
-  it('lists another type with its own mapping', async () => {
+  it('lists another type by the relation it derives for the permission', async () => {
     expect(await list(ada, viewFolder, 'folder')).toEqual({ kind: 'ids', ids: ['finance', 'reports'] });
   });
 
-  it('lists nothing for a stranger, an unmapped permission or the anonymous actor', async () => {
+  it('lists nothing for a stranger, a permission the type does not derive or the anonymous actor', async () => {
     expect(await list(user('eve'))).toEqual({ kind: 'ids', ids: [] });
     expect(await list(ada, viewFolder, 'document')).toEqual({ kind: 'none' });
     expect(await list(anonymousActor())).toEqual({ kind: 'none' });

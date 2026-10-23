@@ -20,7 +20,7 @@ The platform binds one authorizer, `RolesAndRelationshipsAuthorizer`, which answ
 1. the anonymous actor is refused;
 2. a system actor named `<context>.<what it does>` may use the permissions of that context on the resource `context:<context>`, without a stored tuple;
 3. a role of the token may grant the permission, from the table `src/platform/auth/authorization/role-grants.ts`; a grant may depend on a fact the use case states in the `context` of its requirement (`selfService: true` for a patient who books for themselves); a system actor never holds a role;
-4. otherwise the relationships decide, through `RelationBasedAuthorizer` over the schema of `relationship-schema.ts` and the mapping of `resource-permissions.ts`.
+4. otherwise the relationships decide, through `RelationBasedAuthorizer` over the schema of `relationship-schema.ts`, where a derived relation named after a permission grants it on its type.
 
 For a list, only a grant marked `listing: 'all'` and without condition answers `{ kind: 'all' }` (the administrator of the platform). Every other grant opens the use case only: the relationships answer which elements.
 
@@ -29,7 +29,7 @@ For a list, only a grant marked `listing: 'all'` and without condition answers `
 - Easier: a right over no element costs one line of a table read at a glance, and needs no tuple to be written when a user appears or a role changes in the identity provider. Integration event handlers need no line in `relate-system-actors.ts`; the generated lines of the jobs stay and are harmless.
 - Harder: there are two places to look for the reason of a decision. The denial codes say which one answered: `NO_MATCHING_ROLE` when only a role could have granted, `NO_RELATION`, `RESOURCE_REQUIRED` or `UNMAPPED_PERMISSION` from the relationships.
 - To watch: the role table must stay short. A right that depends on an element belongs to the schema, never to a role. A role grant is as fresh as the token: revoking a role takes effect when the token expires, where deleting a tuple is immediate.
-- To watch: the role table and the mapping name permissions by id. An id that no context declares is never asked and grants nothing, so a renamed permission fails closed, silently. A spec comparing those ids with the permission registry is worth adding once the contexts are stable.
+- To watch: the role table and the schema name permissions by their id. Written through the permission set (`schedulingPermissions['appointment.book'].id`), a renamed permission fails to compile; written as a string, it is never asked and grants nothing, so it fails closed, silently.
 - To watch: rule 2 trusts the name of a system actor. That name is only ever given by the code of a context (`systemActor(...)`); no authenticator produces an actor of type `system`. It holds as long as that stays true.
 - Impersonation is orthogonal: the token of the impersonated user carries their roles and relationships, and the command bus refuses every command of such a session (`IMPERSONATION_READ_ONLY`).
 

@@ -1,5 +1,5 @@
 [English](0001-combine-token-roles-with-relationships-in-one-authorizer.md) · **Français**
-<!-- translation-of: 0001-combine-token-roles-with-relationships-in-one-authorizer.md sha256:a90080ebcd6de4c6 -->
+<!-- translation-of: 0001-combine-token-roles-with-relationships-in-one-authorizer.md sha256:0423ea1ee9140ef1 -->
 
 # ADR-0001 : combiner les rôles du jeton et les relations dans un seul autorisateur
 
@@ -21,7 +21,7 @@ La plateforme lie un seul autorisateur, `RolesAndRelationshipsAuthorizer`, qui r
 1. l'acteur anonyme est refusé ;
 2. un acteur système nommé `<context>.<what it does>` peut utiliser les permissions de ce contexte sur la ressource `context:<context>`, sans tuple stocké ;
 3. un rôle du jeton peut accorder la permission, d'après la table `src/platform/auth/authorization/role-grants.ts` ; un octroi peut dépendre d'un fait que le cas d'usage énonce dans le `context` de son exigence (`selfService: true` pour un patient qui réserve pour lui-même) ; un acteur système ne détient jamais de rôle ;
-4. sinon, les relations décident, par `RelationBasedAuthorizer` sur le schéma de `relationship-schema.ts` et la correspondance de `resource-permissions.ts`.
+4. sinon, les relations décident, par `RelationBasedAuthorizer` sur le schéma de `relationship-schema.ts`, où une relation dérivée nommée d'après une permission l'accorde sur son type.
 
 Pour une liste, seul un octroi marqué `listing: 'all'` et sans condition répond `{ kind: 'all' }` (l'administrateur de la plateforme). Tout autre octroi n'ouvre que le cas d'usage : les relations répondent quels éléments.
 
@@ -30,7 +30,7 @@ Pour une liste, seul un octroi marqué `listing: 'all'` et sans condition répon
 - Plus simple : un droit sur aucun élément coûte une ligne d'une table qui se lit d'un coup d'œil, et ne demande d'écrire aucun tuple quand un utilisateur apparaît ou qu'un rôle change dans le fournisseur d'identité. Les gestionnaires d'événements d'intégration n'ont besoin d'aucune ligne dans `relate-system-actors.ts` ; les lignes générées des *jobs* restent et sont inoffensives.
 - Plus difficile : il y a deux endroits où chercher la raison d'une décision. Les codes de refus disent lequel a répondu : `NO_MATCHING_ROLE` quand seul un rôle aurait pu accorder, `NO_RELATION`, `RESOURCE_REQUIRED` ou `UNMAPPED_PERMISSION` venant des relations.
 - À surveiller : la table des rôles doit rester courte. Un droit qui dépend d'un élément appartient au schéma, jamais à un rôle. Un octroi par rôle est aussi frais que le jeton : retirer un rôle prend effet quand le jeton expire, alors que supprimer un tuple est immédiat.
-- À surveiller : la table des rôles et la correspondance nomment les permissions par identifiant. Un identifiant qu'aucun contexte ne déclare n'est jamais demandé et n'accorde rien ; une permission renommée échoue donc en position fermée, en silence. Une *spec* qui compare ces identifiants au registre des permissions vaudra la peine d'être ajoutée une fois les contextes stables.
+- À surveiller : la table des rôles et le schéma nomment les permissions par leur identifiant. Écrite par son jeu de permissions (`schedulingPermissions['appointment.book'].id`), une permission renommée ne compile plus ; écrite comme une chaîne, elle n'est jamais demandée et n'accorde rien, elle échoue donc en position fermée, en silence.
 - À surveiller : la règle 2 fait confiance au nom d'un acteur système. Ce nom n'est jamais donné que par le code d'un contexte (`systemActor(...)`) ; aucun authentificateur ne produit d'acteur de type `system`. Elle tient tant que cela reste vrai.
 - L'emprunt d'identité (impersonation) est orthogonal : le jeton de l'utilisateur dont on prend l'identité porte ses rôles et ses relations, et le bus de commandes refuse toute commande d'une telle session (`IMPERSONATION_READ_ONLY`).
 
