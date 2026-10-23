@@ -1,0 +1,3 @@
+**The observability files of a generated project keep their reasons and drop their narration.** `tracing.ts` and `errors.ts` said in which order they were evaluated, which `main.ts` already states where it decides it; they now say why they do what they do: `tracing.ts` cannot use `loadConfig` without loading modules an instrumentation patches, so it reads `OTEL_SERVICE_NAME` and `NODE_ENV` itself with the same defaults; `errors.ts` loads the configuration before `main.ts` does, so an invalid one fails there first, reported nowhere but stderr. The winston logger says once that its final flush drops what is logged after `stop()`.
+
+To move: nothing.
