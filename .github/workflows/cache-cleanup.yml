@@ -1,0 +1,40 @@
+name: Cache cleanup
+
+# The caches a pull request wrote under its merge ref (an install of a lockfile it changed, a build of
+# its sources) outlive it until the repository's 10 GB are full and the least recently used go: half
+# the quota was theirs on 2026-10-23, and the entries of the trunk went with them, which costs the
+# runs that follow an install. A pull request that closes takes its caches with it; nothing reads
+# them afterwards, and a pull request reopened writes them again (docs/proposals/build-and-test-velocity.md).
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    name: The caches of the pull request, deleted
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    steps:
+      - name: Delete every cache written under the merge ref of the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REF: refs/pull/${{ github.event.pull_request.number }}/merge
+        run: |
+          gh cache list --ref "$REF" --limit 100 --json id,key,sizeInBytes \
+            --jq '.[] | "\(.id)\t\(.sizeInBytes)\t\(.key)"' > caches.tsv
+          if [ ! -s caches.tsv ]; then
+            echo "No cache under $REF: the pull request restored the caches of the trunk."
+            exit 0
+          fi
+          freed=0
+          while IFS="$(printf '\t')" read -r id size key; do
+            gh cache delete "$id"
+            freed=$((freed + size))
+            echo "deleted $key ($((size / 1048576)) MB)"
+          done < caches.tsv
+          echo "Freed $((freed / 1048576)) MB under $REF."
