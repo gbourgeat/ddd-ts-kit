@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f20a6779316f0b6d -->
+<!-- translation-of: README.md sha256:df278f6923a9ef97 -->
 
 # @ddd-ts-kit/testing
 
@@ -1005,8 +1005,9 @@ export default defineConfig(({ mode }) => ({
   mesure `infrastructure`, tout autre mode les quatre.
 - `exclude` : les `<layer>.declarations.ts` que le générateur écrit dans les couches d'un
   contexte déclaré, dérivés de l'arborescence et jamais chargés par une *spec* d'adaptateur.
-- `thresholds` : une entrée par contexte et par couche qui contient un fichier source, si bien qu'un
-  contexte ne peut pas se cacher derrière un autre et qu'une couche vide n'est tenue à rien jusqu'à son
+- `thresholds` : une entrée par contexte et par couche qui contient un fichier source, et une par couche
+  de chaque module de son modèle (`<module>/domain/`), si bien qu'un contexte ne peut pas se cacher
+  derrière un autre, ni un module derrière un autre, et qu'une couche vide n'est tenue à rien jusqu'à son
   premier fichier.
 - Un lancement partiel ne mesure et ne tient que les contextes nommés dans `DDD_TS_KIT_AFFECTED` (séparés
   par des virgules, tels que [`ddd-ts-kit affected`](../cli/README.fr.md#affected) les calcule pour une

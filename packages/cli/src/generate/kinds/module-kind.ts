@@ -44,7 +44,7 @@ function moduleName(scope: Scope, input: string): Name {
   if (flaw?.reason === 'format' || flaw?.reason === 'role-folder') {
     throw new CliError(
       `"${input}" cannot name a module of the model.`,
-      'A module is one folder level under domain/ and application/, named after the cluster of concepts it holds, never after a role folder.',
+      'A module is one folder of its context holding its layers (<module>/domain/, <module>/application/...), named after the cluster of concepts it holds, never after a layer nor a role folder.',
     );
   }
 

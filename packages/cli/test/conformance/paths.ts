@@ -38,6 +38,6 @@ export const PATHS = {
   OCCUPANCY_ROUTE: 'src/contexts/analytics/presentation/http/practices/search-occupancy/search-occupancy.controller.ts',
   BUILDER: `${NOTIFICATION}/test/builders/reminder.builder.ts`,
   PUBLISHED: `${SCHEDULING}/published-language/appointment-expired.v1.integration-event.ts`,
-  PUBLISHER: `${SCHEDULING}/application/calendars/integration/publishers/appointment-expired.publisher.ts`,
+  PUBLISHER: `${SCHEDULING}/calendars/application/integration/publishers/appointment-expired.publisher.ts`,
   POLICY: 'src/platform/resilience/own-policy.ts',
 } as const;

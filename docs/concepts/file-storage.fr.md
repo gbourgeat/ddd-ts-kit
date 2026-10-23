@@ -1,5 +1,5 @@
 [English](file-storage.md) · **Français**
-<!-- translation-of: file-storage.md sha256:2ed1b2ae92ef8ea2 -->
+<!-- translation-of: file-storage.md sha256:7433aaa5316cf953 -->
 
 # Stockage de fichiers
 
@@ -269,9 +269,9 @@ export class AttachDocumentHandler implements CommandHandler<AttachDocumentComma
 
 L'application d'exemple porte ce cas d'usage de bout en bout, avec une *spec* qui valide et
 annule contre une vraie base de données et un vrai répertoire :
-[`attach-appointment-document`](../../examples/scheduling/src/contexts/scheduling/application/calendars/commands/attach-appointment-document/attach-appointment-document.handler.ts)
+[`attach-appointment-document`](../../examples/scheduling/src/contexts/scheduling/calendars/application/commands/attach-appointment-document/attach-appointment-document.handler.ts)
 et
-[`document-lands-with-its-file.spec.ts`](../../examples/scheduling/src/contexts/scheduling/test/integration/document-lands-with-its-file.spec.ts).
+[`document-lands-with-its-file.spec.ts`](../../examples/scheduling/src/contexts/scheduling/test/integration/calendars/document-lands-with-its-file.spec.ts).
 
 Pour un gros fichier, le client l'envoie directement au stockage. Une première commande génère
 la clé et signe un lien d'envoi pour elle (`FileStaging.uploadUrl(key, { expiresInSeconds,

@@ -231,7 +231,7 @@ export class BookingEligibilityService {
 `PractitionerSchedule` here is the local projection `appointments` keeps of the working hours
 and time off published by `calendars`: the handler loads it through a port and hands it over.
 The example application has a fuller one, `SchedulerService`
-(`examples/scheduling/src/contexts/scheduling/domain/calendars/services/scheduler.service.ts`): given a
+(`examples/scheduling/src/contexts/scheduling/calendars/domain/services/scheduler.service.ts`): given a
 calendar and the appointments already held, it checks the slot and the limit of the patient and
 returns the new `Appointment`, a domain service acting as a factory.
 

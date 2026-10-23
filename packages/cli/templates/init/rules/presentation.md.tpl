@@ -1,6 +1,7 @@
 ---
 paths:
   - "{{config.contextsDir}}/*/presentation/**"
+  - "{{config.contextsDir}}/*/*/presentation/**"
   - "openapi/**"
   - "scripts/openapi.ts"
 {{#if sdk.on}}

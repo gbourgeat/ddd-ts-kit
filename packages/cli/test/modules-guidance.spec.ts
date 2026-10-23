@@ -5,7 +5,7 @@ import { BILLING, projectWithModule } from './support/project-with-module';
 
 /** The credit note, an aggregate and its use case written in the module invoices, which the guidance specs build on. */
 function withCreditNote(root: string): void {
-  if (exists(root, `${BILLING}/domain/invoices/aggregates/credit-note.aggregate.ts`)) {
+  if (exists(root, `${BILLING}/invoices/domain/aggregates/credit-note.aggregate.ts`)) {
     return;
   }
 
@@ -66,7 +66,7 @@ describe('what guides the move into modules, and what refuses it', () => {
     expect(report.next.filter((step) => step.includes('/application/'))).not.toEqual([]);
 
     expect(
-      report.next.filter((step) => step.includes('/application/') && !step.includes('/application/invoices/')),
+      report.next.filter((step) => step.includes('/application/') && !step.includes('/invoices/application/')),
     ).toEqual([]);
   });
 
@@ -86,7 +86,7 @@ describe('what guides the move into modules, and what refuses it', () => {
     ).toBe(0);
 
     write(root, `${BILLING}/domain/value-objects/twin.vo.ts`, 'export const flat = 1;\n');
-    write(root, `${BILLING}/domain/reminders/value-objects/twin.vo.ts`, 'export const inReminders = 1;\n');
+    write(root, `${BILLING}/reminders/domain/value-objects/twin.vo.ts`, 'export const inReminders = 1;\n');
 
     const colliding = cli(
       root,
@@ -94,26 +94,26 @@ describe('what guides the move into modules, and what refuses it', () => {
       'billing',
       'invoices',
       'domain/value-objects/twin.vo.ts',
-      'domain/reminders/value-objects/twin.vo.ts',
+      'reminders/domain/value-objects/twin.vo.ts',
     );
 
     expect(colliding.code).not.toBe(0);
     expect(colliding.stderr).toContain('written twice');
     expect(read(root, `${BILLING}/domain/value-objects/twin.vo.ts`)).toBe('export const flat = 1;\n');
-    expect(read(root, `${BILLING}/domain/reminders/value-objects/twin.vo.ts`)).toBe('export const inReminders = 1;\n');
+    expect(read(root, `${BILLING}/reminders/domain/value-objects/twin.vo.ts`)).toBe('export const inReminders = 1;\n');
 
     const twinned = cli(root, 'move-to-module', 'billing', 'invoices', 'domain/value-objects/twin.vo.ts');
 
     expect(twinned.code).not.toBe(0);
     expect(twinned.stderr).toContain('same role and name');
-    expect(exists(root, `${BILLING}/domain/invoices/value-objects/twin.vo.ts`)).toBe(false);
+    expect(exists(root, `${BILLING}/invoices/domain/value-objects/twin.vo.ts`)).toBe(false);
   });
 
   it('tells a stray folder inside a module where its files go, not to declare it as a module', () => {
-    write(root, `${BILLING}/domain/invoices/helpers/rounding.ts`, 'export const rounding = 1;\n');
+    write(root, `${BILLING}/invoices/domain/helpers/rounding.ts`, 'export const rounding = 1;\n');
 
     const { violations } = checkJsonOf(cli(root, 'check', '--rule', 'tree/closed', '--json'));
-    const stray = violations.find((violation) => violation.file.endsWith('domain/invoices/helpers'));
+    const stray = violations.find((violation) => violation.file.endsWith('invoices/domain/helpers'));
 
     expect(stray).toBeDefined();
     expect(stray?.fix).not.toContain('generate module');
@@ -181,7 +181,7 @@ describe('what the generator and the move say, in a context with modules', () =>
 
     expect(split.code).not.toBe(0);
     expect(split.stderr).toContain('would split it between two modules');
-    expect(exists(root, `${BILLING}/application/reminders/commands/issue-credit-note`)).toBe(false);
+    expect(exists(root, `${BILLING}/reminders/application/commands/issue-credit-note`)).toBe(false);
   });
 
   it('reports the generated files the move derived, besides what it moved and rewrote', () => {
@@ -191,7 +191,7 @@ describe('what the generator and the move say, in a context with modules', () =>
 
     expect(moved.code).toBe(0);
 
-    expect(report.written).toContain(`${BILLING}/application/invoices/application.declarations.ts`);
-    expect(report.written).toContain(`${BILLING}/CONTEXT.md`);
+    expect(report.written).toContain(`${BILLING}/invoices/application/application.declarations.ts`);
+    expect(cli(root, 'docs', '--check').stdout).toBe('The generated documentation is up to date.');
   });
 });

@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/contexts/*/infrastructure/**"
+  - "src/contexts/*/*/infrastructure/**"
 ---
 
 # Infrastructure layer

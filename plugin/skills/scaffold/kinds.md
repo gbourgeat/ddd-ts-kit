@@ -2,8 +2,8 @@
 
 `npx ddd-ts-kit generate <kind> ... --json`. Common options: `--term "<Term>=<meaning>"`
 (repeatable), `--module <module>` (required in a context that declares modules of the model:
-the files of `domain/` and `application/` land in `domain/<module>/` and
-`application/<module>/`), `--local-only`, `--dry-run`, `--force`. The authoritative list is
+the files of each layer land in `<module>/domain/`, `<module>/application/`,
+`<module>/infrastructure/` and `<module>/presentation/`, their specs in `test/unit/<module>/`), `--local-only`, `--dry-run`, `--force`. The authoritative list is
 `npx ddd-ts-kit --help`; `npx ddd-ts-kit generate --help --json` gives it as data, with the
 shared files each kind writes (`writesShared`, `shared`, `sharedWhen`).
 

@@ -9,9 +9,9 @@ const SCHEDULING_DOC = `${SCHEDULING}/CONTEXT.md`;
 const WAITLIST_ROW =
   '| `waitlist` | The waitlist of a calendar for one day: its waiters, and the offers of a freed slot made to them. |';
 
-const DAY_RESULT = `${SCHEDULING}/application/calendars/queries/get-calendar-day/get-calendar-day.result.ts`;
-const STATUS_IMPORT = `import type { AppointmentStatus } from '${SOURCE_ALIAS}contexts/scheduling/domain/calendars/vocabularies/appointment-status.vocabulary${SOURCE_SUFFIX}';`;
-const WAITER_IMPORT = `import type { Waiter } from '${SOURCE_ALIAS}contexts/scheduling/domain/waitlist/value-objects/waiter.vo${SOURCE_SUFFIX}';`;
+const DAY_RESULT = `${SCHEDULING}/calendars/application/queries/get-calendar-day/get-calendar-day.result.ts`;
+const STATUS_IMPORT = `import type { AppointmentStatus } from '${SOURCE_ALIAS}contexts/scheduling/calendars/domain/vocabularies/appointment-status.vocabulary${SOURCE_SUFFIX}';`;
+const WAITER_IMPORT = `import type { Waiter } from '${SOURCE_ALIAS}contexts/scheduling/waitlist/domain/value-objects/waiter.vo${SOURCE_SUFFIX}';`;
 
 /** The modules of the model of scheduling: declared in the language, complete, and acyclic. */
 export const MODULE_INJECTIONS: readonly Injection[] = [

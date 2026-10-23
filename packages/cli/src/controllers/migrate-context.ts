@@ -19,7 +19,7 @@ export function migrateContext(migration: Migration, context: string): boolean {
 
   for (const controller of plan.controllers) {
     writeController(migration, plan, controller);
-    moveSpec(migration, plan, controller);
+    moveSpec(migration, controller);
   }
 
   moveSchemas(migration, plan);
@@ -45,9 +45,9 @@ function writeGroups({ draft }: Migration, { http, groups }: ContextPlan): void 
 
 function writeController(migration: Migration, plan: ContextPlan, controller: PlannedController): void {
   const { draft, config, renamed, moved } = migration;
-  const { route, types, body, resource, isPublic } = controller;
+  const { route, types, body, resource, isPublic, http } = controller;
   const group = isPublic ? undefined : plan.groups.get(resource);
-  const target = `${plan.http}/${resource}/${route.kebab}/${route.kebab}.controller.ts`;
+  const target = `${http}/${resource}/${route.kebab}/${route.kebab}.controller.ts`;
 
   const groupImport =
     group === undefined
@@ -60,31 +60,37 @@ function writeController(migration: Migration, plan: ContextPlan, controller: Pl
   moved.push(`${route.kebab}.route.ts -> ${resource}/${route.kebab}/${route.kebab}.controller.ts`);
 }
 
-/** A schema file named after a route follows it, under the role its name ends with; any other is shared, under the name it had. */
+/**
+ * A schema file named after a route of its folder follows it, under the role its name ends with;
+ * any other is shared, under the name it had, in the shared folder of the context.
+ */
 function moveSchemas({ ws, draft, renamed }: Migration, plan: ContextPlan): void {
   const byLength = [...plan.controllers].sort((left, right) => right.route.kebab.length - left.route.kebab.length);
+  const folders = [...new Set([plan.http, ...plan.controllers.map(({ http }) => http)])];
 
-  for (const name of ws.list(plan.http).filter((file) => file.endsWith('.dto.ts'))) {
-    const stem = name.replace(/\.dto\.ts$/, '');
+  for (const http of folders) {
+    for (const name of ws.list(http).filter((file) => file.endsWith('.dto.ts'))) {
+      const stem = name.replace(/\.dto\.ts$/, '');
 
-    const owner = byLength.find(
-      ({ route }) => ROLES.includes(stem.slice(route.kebab.length + 1)) && stem.startsWith(`${route.kebab}-`),
-    );
+      const owner = byLength.find(
+        ({ route, http: own }) =>
+          own === http && ROLES.includes(stem.slice(route.kebab.length + 1)) && stem.startsWith(`${route.kebab}-`),
+      );
 
-    const target =
-      owner === undefined
-        ? `${plan.http}/shared/${name}`
-        : `${plan.http}/${owner.resource}/${owner.route.kebab}/${owner.route.kebab}.${stem.slice(owner.route.kebab.length + 1)}.ts`;
+      const target =
+        owner === undefined
+          ? `${plan.http}/shared/${name}`
+          : `${http}/${owner.resource}/${owner.route.kebab}/${owner.route.kebab}.${stem.slice(owner.route.kebab.length + 1)}.ts`;
 
-    draft.write(target, ws.read(`${plan.http}/${name}`) ?? '');
-    draft.remove(`${plan.http}/${name}`);
-    renamed.set(`${plan.http}/${name}`, target);
+      draft.write(target, ws.read(`${http}/${name}`) ?? '');
+      draft.remove(`${http}/${name}`);
+      renamed.set(`${http}/${name}`, target);
+    }
   }
 }
 
 /** The spec of the route becomes the spec of the controller alone: its guards have their own. */
-function moveSpec({ ws, draft, config }: Migration, plan: ContextPlan, { route }: PlannedController): void {
-  const unit = `${config.contextsDir}/${plan.context}/test/unit`;
+function moveSpec({ ws, draft }: Migration, { route, unit }: PlannedController): void {
   const source = ws.read(`${unit}/${route.kebab}.route.spec.ts`);
   const factory = `${toName(route.kebab).camel}Route`;
 

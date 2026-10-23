@@ -11,9 +11,10 @@ import { SAMPLES } from './samples';
 const { BILLING, HANDLER, HANDLER_SPEC } = PATHS;
 const { SPEC } = SAMPLES;
 
-const IN_MODULE = `${BILLING}/application/invoices/commands/issue-invoice/issue-invoice.handler.ts`;
-const INVOICE_ISSUED = `${BILLING}/domain/invoices/events/invoice-issued.event.ts`;
-const REMINDER_SENT = `${BILLING}/domain/reminders/events/reminder-sent.event.ts`;
+const IN_MODULE = `${BILLING}/invoices/application/commands/issue-invoice/issue-invoice.handler.ts`;
+const SPEC_IN_MODULE = `${BILLING}/test/unit/invoices/issue-invoice.handler.spec.ts`;
+const INVOICE_ISSUED = `${BILLING}/invoices/domain/events/invoice-issued.event.ts`;
+const REMINDER_SENT = `${BILLING}/reminders/domain/events/reminder-sent.event.ts`;
 
 const HANDLER_CLASS =
   "import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@CommandHandler(IssueInvoice)\nexport class IssueInvoiceHandler {}\n";
@@ -24,7 +25,7 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
     name: 'a module named after a term of the glossary, with its row in CONTEXT.md',
     expect: 'pass',
     files: project(
-      { [IN_MODULE]: 'export class IssueInvoiceHandler {}\n', [HANDLER_SPEC]: SPEC },
+      { [IN_MODULE]: 'export class IssueInvoiceHandler {}\n', [SPEC_IN_MODULE]: SPEC },
       withModules({ invoices: {} }),
     ),
   },
@@ -48,11 +49,52 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'module/complete',
-    name: 'a context whose files of domain and application are all in its modules',
+    name: 'a context whose files are all in its modules, its specs with them, but what it keeps at its own level',
     expect: 'pass',
     files: project(
-      { [IN_MODULE]: 'export class IssueInvoiceHandler {}\n', [HANDLER_SPEC]: SPEC },
+      {
+        [IN_MODULE]: 'export class IssueInvoiceHandler {}\n',
+        [SPEC_IN_MODULE]: SPEC,
+        [`${BILLING}/infrastructure/persistence/billing.schema.ts`]: "export const billingSchema = 'billing';\n",
+        [`${BILLING}/presentation/http/invoices.routes.ts`]: 'export class InvoicesRoutes {}\n',
+        [`${BILLING}/presentation/http/shared/money.schema.ts`]: 'export const money = 1;\n',
+        [`${BILLING}/test/fakes/invoice.repository.fake.ts`]: 'export class InvoiceRepositoryFake {}\n',
+      },
       withModules({ invoices: { classification: 'core' } }),
+    ),
+  },
+  {
+    ruleId: 'module/complete',
+    name: 'an adapter left at the level of a context divided into modules',
+    expect: { file: `${BILLING}/infrastructure/persistence` },
+    severity: 'warn',
+    files: project(
+      {
+        [IN_MODULE]: 'export class IssueInvoiceHandler {}\n',
+        [SPEC_IN_MODULE]: SPEC,
+        [`${BILLING}/infrastructure/persistence/knex-invoice.repository.ts`]: 'export class KnexInvoiceRepository {}\n',
+      },
+      withModules({ invoices: {} }),
+    ),
+  },
+  {
+    ruleId: 'module/complete',
+    name: 'the spec of a file of a module left at the level of the context',
+    expect: { file: `${BILLING}/test/unit` },
+    severity: 'warn',
+    files: project(
+      { [IN_MODULE]: 'export class IssueInvoiceHandler {}\n', [HANDLER_SPEC]: SPEC },
+      withModules({ invoices: {} }),
+    ),
+  },
+  {
+    ruleId: 'module/complete',
+    name: 'a module where 0.86 put it, under domain/',
+    expect: { file: `${BILLING}/domain/invoices` },
+    severity: 'warn',
+    files: project(
+      { [`${BILLING}/domain/invoices/events/invoice-issued.event.ts`]: 'export const invoiceIssued = 1;\n' },
+      withModules({ invoices: {} }),
     ),
   },
   {
@@ -75,7 +117,7 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
         [REMINDER_SENT]: eventImporting(
           'reminderSent',
           'invoiceIssued',
-          '@/contexts/billing/domain/invoices/events/invoice-issued.event.js',
+          '@/contexts/billing/invoices/domain/events/invoice-issued.event.js',
         ),
       },
       withModules({ invoices: {}, reminders: {} }),
@@ -91,12 +133,12 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
         [INVOICE_ISSUED]: eventImporting(
           'invoiceIssued',
           'reminderSent',
-          '@/contexts/billing/domain/reminders/events/reminder-sent.event.js',
+          '@/contexts/billing/reminders/domain/events/reminder-sent.event.js',
         ),
         [REMINDER_SENT]: eventImporting(
           'reminderSent',
           'invoiceIssued',
-          '@/contexts/billing/domain/invoices/events/invoice-issued.event.js',
+          '@/contexts/billing/invoices/domain/events/invoice-issued.event.js',
         ),
       },
       withModules({ invoices: {}, reminders: {} }),
@@ -105,12 +147,12 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
   {
     ruleId: 'declarations/barrel-current',
     name: 'two modules holding a role file of one name, which the declarations of the context would export twice',
-    expect: { file: `${BILLING}/application/reminders/commands/issue-invoice/issue-invoice.handler.ts` },
+    expect: { file: `${BILLING}/reminders/application/commands/issue-invoice/issue-invoice.handler.ts` },
     files: declaredProject(
       {
         [IN_MODULE]: HANDLER_CLASS,
-        [`${BILLING}/application/reminders/commands/issue-invoice/issue-invoice.handler.ts`]: HANDLER_CLASS,
-        [HANDLER_SPEC]: SPEC,
+        [`${BILLING}/reminders/application/commands/issue-invoice/issue-invoice.handler.ts`]: HANDLER_CLASS,
+        [SPEC_IN_MODULE]: SPEC,
       },
       withModules({ invoices: {}, reminders: {} }, ['invoices', 'reminders'], 'declared'),
     ),
@@ -118,18 +160,18 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
   {
     ruleId: 'tree/closed',
     name: 'a stray folder inside a module of the model',
-    expect: { file: `${BILLING}/domain/invoices/helpers` },
+    expect: { file: `${BILLING}/invoices/domain/helpers` },
     files: project(
-      { [`${BILLING}/domain/invoices/helpers/rounding.ts`]: 'export const rounding = 1;\n' },
+      { [`${BILLING}/invoices/domain/helpers/rounding.ts`]: 'export const rounding = 1;\n' },
       withModules({ invoices: {} }),
     ),
   },
   {
     ruleId: 'tree/closed',
-    name: 'a folder of the model that no config declares as a module',
-    expect: { file: `${BILLING}/domain/invoices` },
+    name: 'a folder of the context that no config declares as a module',
+    expect: { file: `${BILLING}/invoices` },
     files: project({
-      [`${BILLING}/domain/invoices/events/invoice-issued.event.ts`]: 'export const invoiceIssued = 1;\n',
+      [`${BILLING}/invoices/domain/events/invoice-issued.event.ts`]: 'export const invoiceIssued = 1;\n',
     }),
   },
   {

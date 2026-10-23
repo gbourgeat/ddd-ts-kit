@@ -1,5 +1,5 @@
 [English](domain-building-blocks.md) · **Français**
-<!-- translation-of: domain-building-blocks.md sha256:634b70325924d7ad -->
+<!-- translation-of: domain-building-blocks.md sha256:4d2290e9600a6cca -->
 
 # Événements du domaine, services du domaine, repositories et fabriques
 
@@ -242,7 +242,7 @@ export class BookingEligibilityService {
 `PractitionerSchedule` est ici la projection locale qu'`appointments` garde des heures de
 travail et des absences publiées par `calendars` : le gestionnaire la charge par un port et la
 transmet. L'application d'exemple en a une plus complète, `SchedulerService`
-(`examples/scheduling/src/contexts/scheduling/domain/calendars/services/scheduler.service.ts`) : à partir
+(`examples/scheduling/src/contexts/scheduling/calendars/domain/services/scheduler.service.ts`) : à partir
 d'un calendrier et des rendez-vous déjà pris, elle vérifie le créneau et la limite du patient et
 renvoie le nouvel `Appointment`, un service du domaine qui joue le rôle de fabrique.
 

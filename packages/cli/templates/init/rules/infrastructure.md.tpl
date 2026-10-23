@@ -1,6 +1,7 @@
 ---
 paths:
   - "{{config.contextsDir}}/*/infrastructure/**"
+  - "{{config.contextsDir}}/*/*/infrastructure/**"
 ---
 
 # Infrastructure layer

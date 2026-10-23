@@ -1,6 +1,6 @@
 import { InMemoryRepository } from '@ddd-ts-kit/testing';
-import { Calendar } from '@/contexts/scheduling/domain/calendars/aggregates/calendar.aggregate';
-import type { CalendarRepository } from '@/contexts/scheduling/domain/calendars/repositories/calendar.repository';
+import { Calendar } from '@/contexts/scheduling/calendars/domain/aggregates/calendar.aggregate';
+import type { CalendarRepository } from '@/contexts/scheduling/calendars/domain/repositories/calendar.repository';
 
 export class FakeCalendarRepository extends InMemoryRepository<Calendar> implements CalendarRepository {
   constructor() {

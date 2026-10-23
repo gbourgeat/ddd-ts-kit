@@ -4,8 +4,8 @@ import { PATHS } from '../paths';
 const { NOTIFICATION, SCHEDULING } = PATHS;
 const REMINDER_ERROR = `${NOTIFICATION}/domain/errors/reminder-not-due.error.ts`;
 const CODES = `${NOTIFICATION}/notification.codes.ts`;
-const SCHEDULER = `${SCHEDULING}/domain/calendars/services/scheduler.service.ts`;
-const ROUTE = `${SCHEDULING}/presentation/http/appointments/get-appointment/get-appointment.controller.ts`;
+const SCHEDULER = `${SCHEDULING}/calendars/domain/services/scheduler.service.ts`;
+const ROUTE = `${SCHEDULING}/calendars/presentation/http/appointments/get-appointment/get-appointment.controller.ts`;
 const CLOSING = '    );\n  }\n}\n';
 const LISTED = "  ReminderNotDue: 'REMINDER_NOT_DUE',\n";
 

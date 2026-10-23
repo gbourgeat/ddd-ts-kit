@@ -63,8 +63,9 @@ One or two cores at most: if everything is core, nothing is.
 
 There is no sub-context, child context or nested context in the references (Evans, *DDD
 Reference*). A part with a language of its own is a context; a part of one model, same
-language, same schema, same transaction, is a **module of the model**: one folder under
-`domain/` and `application/`, declared in `contexts.<name>.modules`, named with glossary terms
+language, same schema, same transaction, is a **module of the model**: one folder of the
+context holding its own layers (`<module>/domain/`, `<module>/application/`, ...), declared in
+`contexts.<name>.modules`, named with glossary terms
 (`docs/concepts/modules.md`).
 
 - **Too large to read, one language**: propose modules, each a cluster of glossary terms used

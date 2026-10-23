@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/contexts/*/application/**"
+  - "src/contexts/*/*/application/**"
 ---
 
 # Application layer

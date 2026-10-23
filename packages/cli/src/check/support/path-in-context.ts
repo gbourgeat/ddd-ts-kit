@@ -1,6 +1,7 @@
 import type { Project } from '../model/project';
 import type { SourceFile } from '../model/source-file';
 import { earlierPlaceOf } from '../../context-files';
+import { moduleSplit } from '../../model-modules';
 import { inContext } from './in-context';
 
 /**
@@ -14,10 +15,10 @@ export function pathInContext(project: Project, file: SourceFile): string | unde
   }
 
   const relative = file.path.slice(`${project.config.contextsDir}/${file.location.context}/`.length);
-  const { layer, module } = file.location;
+  const { module } = file.location;
 
   if (module !== undefined) {
-    return relative.replace(`${layer}/${module}/`, `${layer}/`);
+    return moduleSplit(relative, [module]).path;
   }
 
   return earlierPlaceOf(file.location.context, relative) ?? relative;

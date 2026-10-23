@@ -70,7 +70,7 @@ const GENERATORS = [
     /\.error\.ts$/,
     'error <context> <Refusal> <factory> (under "stack.refusals": "factories": error <context> <Concept> <refusal>)',
   ],
-  // At the level of the context, or in a module of its model (domain/<module>/services/).
+  // At the level of the context, or in a module of its model (<module>/domain/services/).
   [/\/domain\/(?:[^/]+\/)?services\/[^/]+\.service\.ts$/, 'domain-service <context> <Name>'],
   [/\/domain\/(?:[^/]+\/)?repositories\/[^/]+\.repository\.ts$/, 'repository <context> <Aggregate>'],
   [/\.command\.ts$/, 'command <context> <UseCase> (--permission <aggregate>.<action> [--grant <role>] | --public)'],
@@ -697,7 +697,7 @@ function describeProject(root) {
     cli: existsSync(local) ? local : undefined,
     sourceRoot: config.sourceRoot ?? 'src',
     contextsDir: config.contextsDir ?? 'src/contexts',
-    // The modules of the model each context declares: one folder level under domain/ and application/.
+    // The modules of the model each context declares: one folder of the context holding its layers.
     modules: modulesByContext(config.contexts),
     platformDir: config.platformDir ?? 'src/platform',
     commit: commitLimits(config.commit),
@@ -969,18 +969,34 @@ function generatedFileReason(project, file) {
  * module of its model that the config declares.
  */
 function isBarrel(project, path) {
-  const [context, layer, ...rest] = insideContexts(project, path) ?? [];
-  if (rest.length === 0) {
-    return layer === `${context}.declarations.ts`;
+  const [context, ...parts] = insideContexts(project, path) ?? [];
+  if (parts.length === 1) {
+    return parts[0] === `${context}.declarations.ts`;
   }
-  const module = layer === 'application' && rest.length >= 2 && (project.modules?.[context] ?? []).includes(rest[0]);
-  const below = module ? rest.slice(1) : rest;
+  const [layer, ...below] = outsideItsModule(project, context, parts);
   const folder = below.length === 2 ? below[0] : layer;
   return (
     ['application', 'infrastructure', 'presentation'].includes(layer) &&
     below.length <= 2 &&
     below.at(-1) === `${folder}.declarations.ts`
   );
+}
+
+/**
+ * The path of a file inside its context, its module of the model left out, as the CLI reads it:
+ * a module holds its layers (<module>/application/...) and a folder of the test folders of its specs
+ * (test/unit/<module>/...); 0.86 put it under domain/ and application/ (application/<module>/...).
+ */
+function outsideItsModule(project, context, parts) {
+  const modules = project.modules?.[context] ?? [];
+  const [first, second, ...rest] = parts;
+  if (modules.includes(first) && ['domain', 'application', 'infrastructure', 'presentation'].includes(second)) {
+    return [second, ...rest];
+  }
+  if (first === 'test' && ['unit', 'integration'].includes(second) && modules.includes(rest[0])) {
+    return [first, second, ...rest.slice(1)];
+  }
+  return (first === 'domain' || first === 'application') && modules.includes(second) ? [first, ...rest] : parts;
 }
 
 function modulesByContext(contexts) {
@@ -1586,10 +1602,13 @@ function aggregateOption(args) {
   return at === -1 ? undefined : args[at].includes('=') ? args[at].split('=')[1] : args[at + 1];
 }
 
+// The repository port of an aggregate, at the level of the context or in a module of its model.
 function hasRepository(project, context, aggregate) {
   const name = aggregate.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-  return existsSync(
-    join(project.root, project.contextsDir, context, 'domain', 'repositories', `${name}.repository.ts`),
+  return ['', ...(project.modules?.[context] ?? [])].some((module) =>
+    existsSync(
+      join(project.root, project.contextsDir, context, module, 'domain', 'repositories', `${name}.repository.ts`),
+    ),
   );
 }
 
@@ -2155,11 +2174,9 @@ function sliceOf(project, path) {
         ? path.split('/')[0]
         : 'project root';
   }
-  const [context, layer, ...rest] = inside;
-  // A module of the model is one folder level under domain/ and application/: a use case sits below it.
-  const inModule =
-    (layer === 'application' || layer === 'domain') && (project.modules?.[context] ?? []).includes(rest[0]);
-  const [kind, useCase] = inModule ? rest.slice(1) : rest;
+  const [context, ...parts] = inside;
+  // A module of the model holds its layers: a use case sits below it.
+  const [layer, kind, useCase] = outsideItsModule(project, context, parts);
   if (layer === 'application' && (kind === 'commands' || kind === 'queries') && useCase) {
     return `${context}: ${useCase}`;
   }

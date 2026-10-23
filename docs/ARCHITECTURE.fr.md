@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:8e347a8880ce80f4 -->
+<!-- translation-of: ARCHITECTURE.md sha256:cafa9eb09a8028ed -->
 
 # Référence de l'architecture
 
@@ -92,6 +92,7 @@ src/
     <context>.dependencies.ts    généré, sous découverte seulement : ce que reçoit chaque constructeur
     <context>.module.ts          style explicite seulement : lie à la main les ports aux adaptateurs
     published-language/          contrats conçus pour les autres contextes
+    <module>/                    facultatif, un module du modèle : ses propres domain/ ... presentation/ (sous l'arbre)
     domain/
       aggregates/                *.aggregate.ts
       entities/                  *.entity.ts
@@ -136,28 +137,38 @@ src/
 ```
 
 **Modules du modèle.** Un contexte peut diviser son modèle en modules, déclarés dans
-`contexts.<name>.modules` de la configuration. Un module est un dossier placé directement sous
-`domain/` et `application/`, et contient les dossiers de rôle de l'arborescence ci-dessus,
-inchangés : `domain/<module>/aggregates/`, `application/<module>/commands/<use-case>/`.
-`infrastructure/`, `presentation/`, `test/` et `published-language/` gardent leur disposition.
-Ces fichiers restent au niveau du contexte, hors de tout module : `<context>.codes.ts`,
-`<context>.permissions.ts`, `<context>.module.ts`,
-`<context>.declarations.ts`, `<context>.dependencies.ts` et `CONTEXT.md`, qui gagne une section
-`## Modules` (une ligne par module : son nom et son but). Un module n'a jamais de glossaire, de
-schéma, de langage publié ni de fichier de module à lui ; une partie qui en a besoin est un
-contexte. Chaque règle lit un fichier d'un module comme le même fichier hors module : son rôle est
-son chemin, dossier du module retiré. `generate <kind> <context> ... --module <module>` écrit dans
-un module, `generate module <context> <module>` en déclare un, et
-`move-to-module <context> <module> <path>...` y déplace des fichiers existants avec leurs
-imports. Dans un contexte qui déclare des modules, le générateur refuse d'écrire un fichier de
-`domain/` ou `application/` sans `--module`, et nomme les modules. Pourquoi et quand :
+`contexts.<name>.modules` de la configuration. Un module est un dossier du contexte qui contient
+ses propres couches, chacune avec les dossiers de rôle de l'arborescence ci-dessus, inchangés :
+`<module>/domain/aggregates/`, `<module>/application/commands/<use-case>/`,
+`<module>/infrastructure/persistence/`, `<module>/presentation/http/<resource>/<use-case>/` ; les
+*specs* de ses fichiers sont dans le dossier du module de leur dossier de test,
+`test/unit/<module>/` et `test/integration/<module>/`. Tout ce qui concerne une partie du modèle
+est alors sous un seul dossier. Ce que partagent tous les modules reste au niveau du contexte :
+`CONTEXT.md`, qui gagne une section `## Modules` (une ligne par module : son nom et son but),
+`<context>.codes.ts`, `<context>.permissions.ts`, `<context>.module.ts`, les fichiers générés
+`<context>.declarations.ts` et `<context>.dependencies.ts`, `published-language/`, le schéma, les
+tables et les migrations de sa base (les `*.schema.ts` de `infrastructure/persistence/` qui ne
+sont pas un schéma de ligne), ses groupes de routes, ses gardes et ses formes partagées
+(`presentation/http/*.routes.ts`, `guards/`, `shared/`), et les *fakes*, *builders* et mondes de
+ses *specs*. Un module n'a jamais de glossaire, de schéma, de langage publié ni de fichier de
+module à lui ; une partie qui en a besoin est un contexte. Chaque règle lit un fichier d'un
+module comme le même fichier hors module : son rôle est son chemin, dossier du module retiré.
+`generate <kind> <context> ... --module <module>` écrit dans un module, les *specs* avec leur
+sujet, `generate module <context> <module>` en déclare un, et
+`move-to-module <context> <module> <path>...` y déplace des fichiers existants avec leurs imports,
+les *specs* qui portent leur nom les suivant. Dans un contexte qui déclare des modules, le
+générateur refuse d'écrire un fichier d'une couche sans `--module`, les fichiers que le contexte
+garde à part exceptés, et nomme les modules. La disposition de 0.86, un module sous
+`domain/<module>/` et `application/<module>/`, est lue pendant une version mineure, signalée par
+`module/complete`, et `ddd-ts-kit context-layout` la déplace, en reconnaissant le module de
+chaque adaptateur, route et *spec* à ce qu'il importe. Pourquoi et quand :
 [Modules du modèle](concepts/modules.fr.md).
 
 **Déclarations générées.** Dans le style déclaré assemblé par barrel, chaque couche d'un
 contexte qui contient un fichier de rôle déclaré a un `<layer>.declarations.ts` généré,
 directement dans la couche : `application/application.declarations.ts`,
 `infrastructure/infrastructure.declarations.ts`, `presentation/presentation.declarations.ts` ;
-dans un module, `application/<module>/application.declarations.ts`. Un dossier de rôle ne
+dans un module, `<module>/application/application.declarations.ts`. Un dossier de rôle ne
 contient que ses fichiers de rôle. Chaque fichier contient les imports dont il a besoin, un
 `export *` par fichier de rôle de sa couche, triés par chemin, puis un
 `injected(Class, [Tokens])` par classe de la couche dont le constructeur prend quelque chose.
@@ -311,11 +322,11 @@ et la plateforme le lie au démarrage. Pourquoi, et ce que contient chaque couch
 | `context/declared-relationship` | Un tel import exige que la relation soit déclarée dans la config. |
 | `context/published-language-is-a-contract` | `published-language/` n'importe que le noyau, `@ddd-ts-kit/events`, `@ddd-ts-kit/validation`, la bibliothèque de schémas du projet et d'autres langages publiés (`publishedLanguageAllowedPackages`). |
 | `context/no-cycle` | Les relations déclarées ne forment aucun cycle. |
-| `tree/closed` | Un contexte ne contient que les répertoires canoniques, plus ses `extraDirectories` déclarés et les dossiers de ses modules déclarés, et aucun fichier source hors d'un répertoire de rôle. Un dossier sous `domain/` ou `application/` qui n'est ni un dossier de rôle ni un module déclaré est signalé ; si c'est un module du modèle, `generate module <context> <module>` le déclare. La liste des codes et l'ensemble des permissions d'un contexte sont à sa racine, `<context>.codes.ts` et `<context>.permissions.ts`. Là où 0.86 les gardait, `domain/errors/codes.ts` et `application/authorization/<context>.permissions.ts`, ils sont un avertissement quelle que soit la sévérité de la règle, jusqu'à ce qu'une version mineure ultérieure en fasse une erreur, et une erreur à côté du fichier à la racine ; `ddd-ts-kit context-layout` les déplace avec chaque import d'eux. |
+| `tree/closed` | Un contexte ne contient que les répertoires canoniques, plus ses `extraDirectories` déclarés et les dossiers de ses modules déclarés, et aucun fichier source hors d'un répertoire de rôle. Un dossier à la racine d'un contexte qui n'est ni un répertoire canonique ni un module déclaré est signalé ; si c'est un module du modèle, `generate module <context> <module>` le déclare. La liste des codes et l'ensemble des permissions d'un contexte sont à sa racine, `<context>.codes.ts` et `<context>.permissions.ts`. Là où 0.86 les gardait, `domain/errors/codes.ts` et `application/authorization/<context>.permissions.ts`, ils sont un avertissement quelle que soit la sévérité de la règle, jusqu'à ce qu'une version mineure ultérieure en fasse une erreur, et une erreur à côté du fichier à la racine ; `ddd-ts-kit context-layout` les déplace avec chaque import d'eux. |
 | `tree/context-doc` | Chaque contexte a un `CONTEXT.md` avec les sections requises (`Purpose`, `Classification`, `Ubiquitous language`, `Aggregates`, `Published events`, `Relationships`) et la classification déclarée dans la config. |
 | `tree/documented-paths` | Un chemin d'un contexte borné écrit comme du code dans un fichier Markdown de `docs/architecture/` (un plan, une note de conception, une revue) est un emplacement que l'arborescence canonique accepte, jugé comme `tree/closed` juge un fichier : ses répertoires et le fichier lui-même. Un chemin écrit relativement à son contexte (il commence par `domain/`, `application/`, `infrastructure/`, `presentation/` ou `published-language/`) ne nomme aucun contexte : il n'est signalé que quand chaque contexte déclaré le refuse, ses répertoires supplémentaires compris. Un chemin qui n'existe pas encore n'est pas signalé, un plan nomme des fichiers à créer ; un chemin que l'arborescence refuse (`application/services/`) décrit une conception que le code n'a plus. Sévérité par défaut `warn`. |
-| `module/declared` | Chaque module de `contexts.<name>.modules` est nommé avec des termes de la table `## Ubiquitous language` du `CONTEXT.md` de son contexte, chaque mot de son nom, et jamais avec un mot technique (`shared`, `common`, `core`, `misc`, `utils` et les autres mots techniques de `language/no-technical-name`), et a une ligne dans la section `## Modules` de ce `CONTEXT.md`. Son nom est en kebab-case, unique dans le contexte et n'est pas un dossier de rôle. Correctif : `generate module <context> <module> --purpose "..." [--term "<Term>=<meaning>"]`. |
-| `module/complete` | Dès qu'un contexte déclare des modules, un fichier de son `domain/` ou de son `application/` hors de tout module est signalé, les déclarations générées mises à part (la liste des codes et l'ensemble des permissions sont à la racine du contexte, hors de tout module). Correctif : `move-to-module <context> <module> <path>`. Sévérité par défaut `warn`, pour qu'un contexte passe en modules un commit à la fois. |
+| `module/declared` | Chaque module de `contexts.<name>.modules` est nommé avec des termes de la table `## Ubiquitous language` du `CONTEXT.md` de son contexte, chaque mot de son nom, et jamais avec un mot technique (`shared`, `common`, `core`, `misc`, `utils` et les autres mots techniques de `language/no-technical-name`), et a une ligne dans la section `## Modules` de ce `CONTEXT.md`. Son nom est en kebab-case, unique dans le contexte, et n'est ni un dossier de rôle ni un dossier du contexte (`domain`, `test`, `published-language`...). Correctif : `generate module <context> <module> --purpose "..." [--term "<Term>=<meaning>"]`. |
+| `module/complete` | Dès qu'un contexte déclare des modules, un fichier d'une couche hors de tout module est signalé, comme une *spec* restée dans `test/unit/` ou `test/integration/` alors que le fichier dont elle porte le nom est dans un module, les fichiers que le contexte garde à part exceptés (section 2, modules du modèle). Un constat par dossier. Correctif : `move-to-module <context> <module> <path>`. Un module encore là où 0.86 le mettait, `domain/<module>/` ou `application/<module>/`, est signalé aussi, avec `ddd-ts-kit context-layout` pour correctif. Sévérité par défaut `warn`, pour qu'un contexte passe en modules un commit à la fois. |
 | `module/no-cycle` | Les imports entre les modules d'un même contexte ne forment aucun cycle. Sévérité par défaut `warn` : le couplage entre modules est un signal pour changer le modèle (Evans, Modules), pas un refus. |
 | `naming/suffix` | Un fichier d'un répertoire de rôle porte le suffixe du rôle, en kebab-case. La liste des codes d'un contexte, `<context>.codes.ts` à sa racine, se lit comme `domain/errors/codes.ts`, le seul fichier d'un rôle nommé autrement. |
 | `naming/one-concept-per-file` | Un seul agrégat, entité, objet-valeur, événement, gestionnaire, *job* ou projection exporté par fichier, et une seule classe déclarée par fichier de rôle. |
@@ -329,7 +340,7 @@ et la plateforme le lie au démarrage. Pourquoi, et ce que contient chaque couch
 | `test/builder-required` | Un agrégat a un *builder* dans `test/builders/`. Sévérité par défaut `warn`. |
 | `test/helper-placed` | Un fichier du `test/unit/` ou du `test/integration/` d'un contexte est une *spec* (`*.spec.ts`, `*.test.ts`). Une aide écrite parmi elles va à la place de son genre : une mise en place que partagent plusieurs *specs* dans `test/worlds/*.world.ts`, des données de test dans `test/builders/`, un port en mémoire dans `test/fakes/`. Sévérité par défaut `warn`. |
 | `test/acceptance-black-box` | Une *spec* d'acceptation (`test/acceptance/<story>.acceptance.spec.ts`) pilote l'application comme le fait un client : elle n'importe rien de la racine des sources, sauf les *builders* d'un contexte (`test/builders/`) et son `published-language/`. Ses scénarios sont écrits avant le code de la *story* et vérifient ce qu'observe un client. Sévérité par défaut `warn`. |
-| `test/coverage-governed` | La couverture ne se truque pas par exclusion. La config du lanceur de tests lit ce qu'elle mesure et ses seuils dans la clé `coverage` de `ddd-ts-kit.config.json`, par `governedCoverage` (`governedJestCoverage` sous jest) de `@ddd-ts-kit/testing/coverage` : les quatre couches de chaque contexte, y compris les fichiers qu'aucune *spec* ne charge, chaque contexte et chaque couche tenus à leur plancher dès leur premier fichier source. Refusés : `include`, `exclude`, `thresholds` ou `ignoreClassMethods` écrits à la main dans un bloc `coverage` (`collectCoverageFrom`, `coveragePathIgnorePatterns`, `coverageThreshold` sous jest), les mêmes fixés par une option dans un script de `package.json`, et un commentaire `v8 ignore`, `c8 ignore` ou `istanbul ignore` dans une source de production qui ne se termine pas par `-- ADR-NNNN: <reason>` nommant un enregistrement de décision existant. |
+| `test/coverage-governed` | La couverture ne se truque pas par exclusion. La config du lanceur de tests lit ce qu'elle mesure et ses seuils dans la clé `coverage` de `ddd-ts-kit.config.json`, par `governedCoverage` (`governedJestCoverage` sous jest) de `@ddd-ts-kit/testing/coverage` : les quatre couches de chaque contexte, y compris les fichiers qu'aucune *spec* ne charge, chaque contexte et chaque couche tenus à leur plancher dès leur premier fichier source, et chaque couche d'un module du modèle (`<module>/domain/`) seule au même plancher. Refusés : `include`, `exclude`, `thresholds` ou `ignoreClassMethods` écrits à la main dans un bloc `coverage` (`collectCoverageFrom`, `coveragePathIgnorePatterns`, `coverageThreshold` sous jest), les mêmes fixés par une option dans un script de `package.json`, et un commentaire `v8 ignore`, `c8 ignore` ou `istanbul ignore` dans une source de production qui ne se termine pas par `-- ADR-NNNN: <reason>` nommant un enregistrement de décision existant. |
 | `language/glossary-term` | Chaque agrégat, entité, objet-valeur, service du domaine, événement du domaine, commande et requête est nommé avec des termes de la table `## Ubiquitous language` du `CONTEXT.md` de son contexte, et sous `"stack.refusals": "factories"` ou `"named"` chaque classe de `domain/errors/` aussi : `AppointmentError` est nommée d'après `Appointment`, `SlotTaken` d'après `Slot` et `Take`. Une classe de refus de `named` (une classe qui étend `DomainRefusal`) peut aussi employer les qualificatifs d'un refus, `invalid`, `unknown`, `already`, `too`, `no`, `missing` et `required` (`InvalidAppointment`, `BookingTooLate`) ; `<context>.codes.ts` ne contient aucune classe et n'est pas jugé. Le glossaire s'écrit avant le code. |
 | `language/declared-vocabulary` | Une valeur d'un vocabulaire fermé que le projet déclare, un objet `as const` exporté avec le type union de son nom (`domain/vocabularies/*.vocabulary.ts`, le `Role` de la plateforme) ou un ensemble de permissions de `definePermissions`, se lit à travers lui (`AppointmentStatus.NoShow`, `billingPermissions['invoice.issue']`), et ne se réécrit jamais en littéral de chaîne hors de sa déclaration, clé entre guillemets comprise (`[AppointmentStatus.NoShow]: ..`). Sous `"stack.literals": "named"`, ce qu'écrit `init` ; une config qui ne dit rien garde les littéraux libres. Où : le vocabulaire d'un contexte dans ce contexte seulement, celui de la plateforme dans la plateforme et dans les groupes de routes `*.routes.ts`, un identifiant de permission et un vocabulaire du noyau partagé partout. Les tests, les langages publiés et le schéma des relations (`defineSchema`) ne sont pas jugés. Dans la persistance d'un contexte (`infrastructure/persistence/`), le nom d'une colonne, d'une table ou d'un schéma est un mot du stockage et n'est pas jugé : le premier argument d'un appel (`text('note')`, `createTable('invoice')`, `.where('note', ..)`) et la valeur de `name`, `tableName` ou `schema` ; une valeur stockée, l'argument de `.default(..)` ou une valeur comparée dans une requête, l'est. Un mot d'un autre langage n'est pas celui du contexte et n'est pas jugé quand son type le dit, hors de `domain/` : une clé d'un objet typé `Record<T, ..>` et une valeur chaîne d'un objet typé `Record<.., T>` (par l'annotation de sa déclaration ou par `satisfies` ; `as const` et `Readonly`, `Partial`, `Required` autour permis), et un littéral écrit `'x' satisfies T`, où `T` est une seule référence de type (`Payload['state']`, `typeof x`, pas d'union) dont le nom est importé d'un langage publié, importé comme type d'un paquet, ou importé de ou déclaré dans `infrastructure/anti-corruption/` ou `infrastructure/external/`. Là, les types littéraux d'une interface ou d'un alias de type, qui décrivent un enregistrement extérieur tel qu'il arrive, ne sont pas jugés non plus. Une clé d'une table typée par le vocabulaire propre du contexte, une comparaison ou un `case` sans `satisfies`, et une valeur du contexte dans une table de traduction restent jugées. Lu comme un vocabulaire : chaque entrée une clé et un littéral de chaîne, commentaires, l'un ou l'autre guillemet et `as const satisfies ..` permis, à côté de `export type X = (typeof X)[keyof typeof X]` ; un nombre, une décomposition (spread) ou une entrée calculée laisse l'objet non lu. |
 | `language/no-technical-name` | Aucun `Manager`, `Helper`, `Util`, `Utils`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`, `Abstract`, `Dto`, `Entity`, `Model` dans un nom sous `domain/` ni dans un nom de cas d'usage. |

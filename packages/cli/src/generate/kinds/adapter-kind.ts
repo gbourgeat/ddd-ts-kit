@@ -3,6 +3,8 @@ import type { Name } from '../../naming';
 import type { RenderContext } from '../../templating';
 import { emit } from '../emit';
 import { filesUnder } from '../files-under';
+import { declaredModules, intoModule, roleFoldersOf, treeOf } from '../../model-modules';
+import { toName } from '../../naming';
 import { isDeclared } from '../is-declared';
 import type { Kind } from '../kind';
 import { label } from '../label';
@@ -33,6 +35,8 @@ export const adapterKind: Kind = {
       what: `The port ${name.pascal}`,
       createdBy: `ddd-ts-kit generate port ${scope.context.kebab} ${name.pascal}`,
     });
+
+    placeWithItsPort(scope, { name, asked: request.flags.module });
 
     const adapter = adapterVars(scope, name);
 
@@ -89,20 +93,47 @@ function bindingKind(scope: Scope): string {
   );
 }
 
+/** What the adapter of a port is written next to: the port it implements, and the module `--module` names. */
+interface PortOfAdapter {
+  readonly name: Name;
+  readonly asked: string | undefined;
+}
+
+/**
+ * In a context divided into modules, the adapter of a port sits in the module of its port: a
+ * `--module` naming another one is refused, and so is a missing `--module`, with the command that
+ * names the right one.
+ */
+function placeWithItsPort(scope: Scope, { name, asked }: PortOfAdapter): void {
+  const port = `application/ports/${name.kebab}.port.ts`;
+  const modules = declaredModules(scope.config, scope.context.kebab);
+  const holder = modules.find((module) => scope.ws.existsAsIs(`${scope.dir}/${intoModule(module, port)}`));
+
+  if (holder === undefined || toName(asked ?? '').kebab === holder) {
+    return;
+  }
+
+  throw new CliError(
+    `The port ${name.pascal} of "${scope.context.kebab}" is in the module "${holder}": its adapter goes with it${asked === undefined ? '' : `, not in "${asked}"`}.`,
+    `Run it with the module of the port: \`ddd-ts-kit generate adapter ${scope.context.kebab} ${name.pascal} --module ${holder}\`.`,
+  );
+}
+
 /** A port has one adapter: a second class declaring itself for it would stop the application at startup. */
 function refuseSecondAdapter(scope: Scope, name: Name): void {
   const declaration = new RegExp(`@(?:Repository|Gateway|Adapter)\\(\\s*${name.pascal}\\b`);
 
-  const bound = filesUnder(scope.ws, `${scope.dir}/infrastructure`).find((file) =>
-    declaration.test(scope.ws.read(`${scope.dir}/infrastructure/${file}`) ?? ''),
-  );
+  // The infrastructure of the context and that of each module of its model.
+  const bound = roleFoldersOf(scope.ws, treeOf(scope.config, scope.context.kebab), 'infrastructure')
+    .flatMap((folder) => filesUnder(scope.ws, folder).map((file) => `${folder}/${file}`))
+    .find((file) => declaration.test(scope.ws.read(file) ?? ''));
 
   if (bound === undefined) {
     return;
   }
 
   throw new CliError(
-    `${name.pascal} is already bound by infrastructure/${bound}.`,
+    `${name.pascal} is already bound by ${bound.slice(scope.dir.length + 1)}.`,
     `A port has one adapter. When the outside system is ready, turn that class into the remote adapter (its declaration stays), or remove it and run the command again.`,
   );
 }

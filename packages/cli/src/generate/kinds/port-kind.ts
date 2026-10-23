@@ -1,4 +1,5 @@
 import { emit } from '../emit';
+import { toName } from '../../naming';
 import { isDeclared } from '../is-declared';
 import type { Kind } from '../kind';
 import { label } from '../label';
@@ -16,7 +17,8 @@ export const portKind: Kind = {
   run: (request) => {
     const scope = openScope(request);
     const name = label(scope, request.args[1] ?? '', { what: 'port', strip: ['port'] });
-    const adapter = `\`ddd-ts-kit generate adapter ${scope.context.kebab} ${name.pascal}\``;
+    const module = request.flags.module === undefined ? '' : ` --module ${toName(request.flags.module).kebab}`;
+    const adapter = `\`ddd-ts-kit generate adapter ${scope.context.kebab} ${name.pascal}${module}\``;
 
     emit(scope, vars(scope, { name: named(name) }), [
       ['port/port.ts.tpl', `application/ports/${name.kebab}.port.ts`],

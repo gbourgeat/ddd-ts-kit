@@ -1,5 +1,5 @@
 [English](bounded-context.md) · **Français**
-<!-- translation-of: bounded-context.md sha256:bd57a39c1ee3b033 -->
+<!-- translation-of: bounded-context.md sha256:a35a05a0aa0e3892 -->
 
 # Contexte délimité
 
@@ -75,7 +75,8 @@ Un contexte peut dépasser ce qu'une personne ou un agent tient en tête alors q
 un seul : un glossaire, un schéma, des règles validées ensemble. Le scinder achèterait des contrats
 et de la cohérence à terme pour rien, et emboîter des contextes n'est pas un concept des
 références. Divisez-le plutôt en [modules du modèle](modules.fr.md) : un dossier par partie du
-modèle, nommé dans son langage, placé directement sous `domain/` et `application/`.
+modèle, nommé dans son langage, qui contient ses propres couches (`<module>/domain/`,
+`<module>/application/`...).
 
 ## Ce que le kit fait d'un contexte
 

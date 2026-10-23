@@ -112,16 +112,16 @@ describe('the jobs of a context, as the documentation reads them', () => {
 describe('a context divided into modules of its model, as the documentation reads it', () => {
   it('reads the role folders of every module it is given next to those of the context', () => {
     const ws = workspaceWith({
-      [`${BILLING}/domain/reminders/state-machines/reminder.state-machine.ts`]:
+      [`${BILLING}/reminders/domain/state-machines/reminder.state-machine.ts`]:
         "export const reminderLifecycle = defineStateMachine({ initial: 'due', transitions: {} });\n",
       [`${MACHINES}/invoice.state-machine.ts`]:
         "export const invoiceLifecycle = defineStateMachine({ initial: 'draft', transitions: {} });\n",
-      [`${BILLING}/application/reminders/scheduling/remind-payers.job.ts`]: 'export class RemindPayersJob {}\n',
+      [`${BILLING}/reminders/application/scheduling/remind-payers.job.ts`]: 'export class RemindPayersJob {}\n',
     });
 
     expect(readStateMachines(ws, WITH_REMINDERS).map((machine) => machine.file)).toEqual([
       `${MACHINES}/invoice.state-machine.ts`,
-      `${BILLING}/domain/reminders/state-machines/reminder.state-machine.ts`,
+      `${BILLING}/reminders/domain/state-machines/reminder.state-machine.ts`,
     ]);
 
     expect(readJobs(ws, WITH_REMINDERS, 'billing')).toEqual([{ name: 'RemindPayersJob', schedule: '', command: '' }]);

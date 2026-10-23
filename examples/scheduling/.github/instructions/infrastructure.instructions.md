@@ -1,5 +1,5 @@
 ---
-applyTo: "src/contexts/*/infrastructure/**"
+applyTo: "src/contexts/*/infrastructure/**,src/contexts/*/*/infrastructure/**"
 ---
 
 # Infrastructure layer

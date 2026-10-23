@@ -46,33 +46,28 @@ function locateInContexts(config: Config, relative: string): Location {
     return locateAtContextRoot(context, first);
   }
 
-  const layer = LAYERS.find((candidate) => candidate === first) ?? 'root';
-  const inModule = moduleLocation(config, { context, layer, rest });
+  const inModule = moduleLocation(config, context, [first, ...rest]);
 
   if (inModule !== undefined) {
     return inModule;
   }
 
+  const layer = LAYERS.find((candidate) => candidate === first) ?? 'root';
+
   return { area: 'context', context, layer, inside: layer === 'root' ? [first, ...rest] : rest };
 }
 
-interface Placed {
-  readonly context: string;
-  readonly layer: Layer;
-  /** The path below the layer. */
-  readonly rest: readonly string[];
-}
-
 /**
- * A module of the model is one folder level under domain/ and application/: left out, the rest of
- * the path is what it would be without modules, so every role keeps its place.
+ * A module of the model is one folder of the context holding its layers, and one folder of the
+ * test folders of its specs: left out, the rest of the path is what it would be without modules,
+ * so every role keeps its place.
  */
-function moduleLocation(config: Config, { context, layer, rest }: Placed): Location | undefined {
-  const { module, path } = moduleSplit([layer, ...rest].join('/'), declaredModules(config, context));
+function moduleLocation(config: Config, context: string, parts: readonly string[]): Location | undefined {
+  const { module, path } = moduleSplit(parts.join('/'), declaredModules(config, context));
+  const [first, ...inside] = path.split('/');
+  const layer = LAYERS.find((candidate) => candidate === first);
 
-  return module === undefined
-    ? undefined
-    : { area: 'context', context, layer, inside: path.split('/').slice(1), module };
+  return module === undefined || layer === undefined ? undefined : { area: 'context', context, layer, inside, module };
 }
 
 function locateAtContextRoot(context: string, entry: string): Location {

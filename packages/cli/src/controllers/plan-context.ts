@@ -1,3 +1,5 @@
+import { posix } from 'node:path';
+import { intoModule, moduleSplit, roleFilesOf, treeOf, type ContextTree } from '../model-modules';
 import { toName } from '../naming';
 import { handleTypesOf, type HandleTypes } from './handle-types-of';
 import type { FunctionRoute } from './function-route';
@@ -13,11 +15,15 @@ export interface PlannedController {
   /** The folder of its resource: the first literal segment of its path, or the context. */
   readonly resource: string;
   readonly isPublic: boolean;
+  /** The `presentation/http` folder its route sits in: the context's, or that of a module of its model. */
+  readonly http: string;
+  /** The folder of the unit specs of that module, or of the context. */
+  readonly unit: string;
 }
 
 export interface ContextPlan {
   readonly context: string;
-  /** `<contextsDir>/<context>/presentation/http`. */
+  /** `<contextsDir>/<context>/presentation/http`, where the route groups are written. */
   readonly http: string;
   readonly controllers: readonly PlannedController[];
   readonly groups: ReadonlyMap<string, MigratedGroup>;
@@ -26,9 +32,12 @@ export interface ContextPlan {
 /** Reads every function route of a context; one that cannot be turned blocks the whole context, said in `blockers`. */
 export function planContext(migration: Migration, context: string): ContextPlan | undefined {
   const { ws, config, blockers } = migration;
-  const http = `${config.contextsDir}/${context}/presentation/http`;
-  const files = ws.list(http).filter((name) => name.endsWith('.route.ts'));
-  const planned = files.map((name) => plannedOf(`${http}/${name}`, ws.read(`${http}/${name}`) ?? '', context));
+  const tree = treeOf(config, context);
+  const http = `${tree.directory}/presentation/http`;
+
+  // The function routes of the context and those of each module of its model.
+  const files = roleFilesOf(ws, tree, 'presentation/http').filter(({ name }) => name.endsWith('.route.ts'));
+  const planned = files.map(({ path }) => plannedOf(path, ws.read(path) ?? '', { context, tree }));
   const refused = planned.filter((entry) => typeof entry === 'string');
 
   if (files.length === 0 || refused.length > 0) {
@@ -42,7 +51,13 @@ export function planContext(migration: Migration, context: string): ContextPlan 
   return { context, http, controllers, groups: groupsOf(controllers, context) };
 }
 
-function plannedOf(file: string, source: string, context: string): PlannedController | string {
+/** The context a route is planned in, with its directory and the modules of its model. */
+interface Planning {
+  readonly context: string;
+  readonly tree: ContextTree;
+}
+
+function plannedOf(file: string, source: string, { context, tree }: Planning): PlannedController | string {
   const route = readFunctionRoute(file, source);
 
   if (typeof route === 'string') {
@@ -60,7 +75,18 @@ function plannedOf(file: string, source: string, context: string): PlannedContro
     return `${file}: its handler answers something else than \`{ status, body }\` (headers, a status chosen at run time): keep it a function.`;
   }
 
-  return { route, types, body, resource: resourceOf(route, context), isPublic: route.spec.get('security') === 'false' };
+  const http = posix.dirname(file);
+  const { module } = moduleSplit(file.slice(tree.directory.length + 1), tree.modules);
+
+  return {
+    route,
+    types,
+    body,
+    resource: resourceOf(route, context),
+    isPublic: route.spec.get('security') === 'false',
+    http,
+    unit: `${tree.directory}/${intoModule(module, 'test/unit')}`,
+  };
 }
 
 /** The first literal segment of the path names the resource; a path that starts with a parameter belongs to the context. */

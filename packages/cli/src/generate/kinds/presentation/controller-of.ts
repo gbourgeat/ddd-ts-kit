@@ -2,6 +2,7 @@ import { CliError } from '../../../cli-error';
 import type { Name } from '../../../naming';
 import { filesUnder } from '../../files-under';
 import type { Scope } from '../../scope';
+import { roleFoldersOf, treeOf } from '../../../model-modules';
 
 /** A controller of the context, found by its use case, with its source as it stands. */
 export interface FoundController {
@@ -9,15 +10,13 @@ export interface FoundController {
   readonly source: string;
 }
 
-/** The controller of a use case, wherever its resource folder is under presentation/http/. */
+/** The controller of a use case, wherever its resource folder is under presentation/http/, in the context or in a module. */
 export function controllerOf(scope: Scope, useCase: Name): FoundController {
-  const http = `${scope.dir}/presentation/http`;
+  const found = roleFoldersOf(scope.ws, treeOf(scope.config, scope.context.kebab), 'presentation/http')
+    .flatMap((http) => filesUnder(scope.ws, http).map((file) => `${http}/${file}`))
+    .find((file) => file.endsWith(`/${useCase.kebab}/${useCase.kebab}.controller.ts`));
 
-  const found = filesUnder(scope.ws, http).find((file) =>
-    file.endsWith(`/${useCase.kebab}/${useCase.kebab}.controller.ts`),
-  );
-
-  const source = found === undefined ? undefined : scope.ws.read(`${http}/${found}`);
+  const source = found === undefined ? undefined : scope.ws.read(found);
 
   if (found === undefined || source === undefined || !source.includes('@Controller(')) {
     throw new CliError(
@@ -26,5 +25,5 @@ export function controllerOf(scope: Scope, useCase: Name): FoundController {
     );
   }
 
-  return { file: `${http}/${found}`, source };
+  return { file: found, source };
 }

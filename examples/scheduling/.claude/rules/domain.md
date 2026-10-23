@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/contexts/*/domain/**"
+  - "src/contexts/*/*/domain/**"
   - "src/shared-kernel/**"
 ---
 

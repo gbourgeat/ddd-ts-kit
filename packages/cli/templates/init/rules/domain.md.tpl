@@ -1,6 +1,7 @@
 ---
 paths:
   - "{{config.contextsDir}}/*/domain/**"
+  - "{{config.contextsDir}}/*/*/domain/**"
   - "{{config.sharedKernelDir}}/**"
 ---
 

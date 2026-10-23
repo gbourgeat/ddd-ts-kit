@@ -1,5 +1,5 @@
 ---
-applyTo: "src/contexts/*/presentation/**,openapi/**,scripts/openapi.ts,clients/**"
+applyTo: "src/contexts/*/presentation/**,src/contexts/*/*/presentation/**,openapi/**,scripts/openapi.ts,clients/**"
 ---
 
 # Presentation layer

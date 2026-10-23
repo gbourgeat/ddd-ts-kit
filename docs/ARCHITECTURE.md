@@ -88,6 +88,7 @@ src/
     <context>.dependencies.ts    generated, under discovery only: what each constructor is injected
     <context>.module.ts          explicit style only: binds ports to adapters by hand
     published-language/          contracts designed for other contexts
+    <module>/                    optional, a module of the model: its own domain/ ... presentation/ (below the tree)
     domain/
       aggregates/                *.aggregate.ts
       entities/                  *.entity.ts
@@ -132,27 +133,35 @@ src/
 ```
 
 **Modules of the model.** A context may divide its model into modules, declared in
-`contexts.<name>.modules` of the config. A module is one folder directly under `domain/` and
-`application/`, and holds the role folders of the tree above, unchanged:
-`domain/<module>/aggregates/`, `application/<module>/commands/<use-case>/`. `infrastructure/`,
-`presentation/`, `test/` and `published-language/` keep their layout. These files stay at the
-level of the context, outside every module: `<context>.codes.ts`,
-`<context>.permissions.ts`, `<context>.module.ts`,
-`<context>.declarations.ts`, `<context>.dependencies.ts` and `CONTEXT.md`, which gains a
-`## Modules` section (one row per module: its name and its purpose). A module never has a
-glossary, a schema, a published language or a module file of its own; a part that needs one is a
-context. Every rule reads a file of a module as the same file outside one: its role is its path
-with the module folder left out. `generate <kind> <context> ... --module <module>` writes into a
-module, `generate module <context> <module>` declares one, and
-`move-to-module <context> <module> <path>...` moves existing files into it with their imports.
-In a context that declares modules, the generator refuses to write a file of `domain/` or
-`application/` without `--module`, and names the modules. Why and when:
+`contexts.<name>.modules` of the config. A module is one folder of the context that holds its
+own layers, each with the role folders of the tree above, unchanged:
+`<module>/domain/aggregates/`, `<module>/application/commands/<use-case>/`,
+`<module>/infrastructure/persistence/`, `<module>/presentation/http/<resource>/<use-case>/`; the
+specs of its files sit in the module folder of their test folder, `test/unit/<module>/` and
+`test/integration/<module>/`. Everything about a part of the model is then under one folder.
+What every module shares stays at the level of the context: `CONTEXT.md`, which gains a
+`## Modules` section (one row per module: its name and its purpose), `<context>.codes.ts`,
+`<context>.permissions.ts`, `<context>.module.ts`, the generated `<context>.declarations.ts` and
+`<context>.dependencies.ts`, `published-language/`, the schema, tables and migrations of its
+database (the `*.schema.ts` of `infrastructure/persistence/` that are no row schema), its route
+groups, guards and shared shapes (`presentation/http/*.routes.ts`, `guards/`, `shared/`), and the
+fakes, builders and worlds of its specs. A module never has a glossary, a schema, a published
+language or a module file of its own; a part that needs one is a context. Every rule reads a
+file of a module as the same file outside one: its role is its path with the module folder left
+out. `generate <kind> <context> ... --module <module>` writes into a module, the specs with their
+subject, `generate module <context> <module>` declares one, and
+`move-to-module <context> <module> <path>...` moves existing files into it with their imports,
+the specs named after them following. In a context that declares modules, the generator refuses
+to write a file of a layer without `--module`, the files the context keeps aside, and names the
+modules. The layout of 0.86, a module under `domain/<module>/` and `application/<module>/`, is
+read for one minor version, warned about by `module/complete`, and `ddd-ts-kit context-layout`
+moves it, telling the module of each adapter, route and spec by what it imports. Why and when:
 [Modules of the model](concepts/modules.md).
 
 **Generated declarations.** In the declared style assembled by barrel, every layer of a context
 that holds a declared role file has a generated `<layer>.declarations.ts`, directly in the layer:
 `application/application.declarations.ts`, `infrastructure/infrastructure.declarations.ts`,
-`presentation/presentation.declarations.ts`; in a module, `application/<module>/application.declarations.ts`.
+`presentation/presentation.declarations.ts`; in a module, `<module>/application/application.declarations.ts`.
 A role folder holds its role files and nothing else. Each file holds the imports it needs, one
 `export *` per role file of its layer, sorted by path, then one `injected(Class, [Tokens])` per
 class of the layer whose constructor takes something. `<context>.declarations.ts`, at the root
@@ -299,11 +308,11 @@ the platform binds it at start-up. Why, and what each layer holds:
 | `context/declared-relationship` | Such an import requires the relationship to be declared in the config. |
 | `context/published-language-is-a-contract` | `published-language/` imports only the kernel, `@ddd-ts-kit/events`, `@ddd-ts-kit/validation`, the schema library of the project and other published languages (`publishedLanguageAllowedPackages`). |
 | `context/no-cycle` | The declared relationships form no cycle. |
-| `tree/closed` | A context holds only the canonical directories, plus its declared `extraDirectories` and the folders of its declared modules, and no source file outside a role directory. A folder under `domain/` or `application/` that is no role folder and no declared module is reported; if it is a module of the model, `generate module <context> <module>` declares it. The code list and the permission set of a context sit at its root, `<context>.codes.ts` and `<context>.permissions.ts`. Where 0.86 kept them, `domain/errors/codes.ts` and `application/authorization/<context>.permissions.ts`, they are a warning whatever the severity of the rule until a later minor version makes it an error, and an error next to the file at the root; `ddd-ts-kit context-layout` moves them and every import of them. |
+| `tree/closed` | A context holds only the canonical directories, plus its declared `extraDirectories` and the folders of its declared modules, and no source file outside a role directory. A folder at the root of a context that is no canonical directory and no declared module is reported; if it is a module of the model, `generate module <context> <module>` declares it. The code list and the permission set of a context sit at its root, `<context>.codes.ts` and `<context>.permissions.ts`. Where 0.86 kept them, `domain/errors/codes.ts` and `application/authorization/<context>.permissions.ts`, they are a warning whatever the severity of the rule until a later minor version makes it an error, and an error next to the file at the root; `ddd-ts-kit context-layout` moves them and every import of them. |
 | `tree/context-doc` | Every context has a `CONTEXT.md` with the required sections (`Purpose`, `Classification`, `Ubiquitous language`, `Aggregates`, `Published events`, `Relationships`) and the classification declared in the config. |
 | `tree/documented-paths` | A path of a bounded context written as code in a Markdown file of `docs/architecture/` (a plan, a design note, a review) is a place the canonical tree allows, judged as `tree/closed` judges a file: its directories and the file itself. A path written relative to its context (it starts with `domain/`, `application/`, `infrastructure/`, `presentation/` or `published-language/`) names no context: it is reported only when every declared context refuses it, their extra directories considered. A path that does not exist yet is not reported, a plan names files to create; one that the tree refuses (`application/services/`) describes a design the code no longer has. Default severity `warn`. |
-| `module/declared` | Every module of `contexts.<name>.modules` is named with terms of the `## Ubiquitous language` table of its context's `CONTEXT.md`, every word of its name, and never with a technical word (`shared`, `common`, `core`, `misc`, `utils` and the other technical words of `language/no-technical-name`), and has a row in the `## Modules` section of that `CONTEXT.md`. Its name is in kebab-case, unique in the context and no role folder. Fix: `generate module <context> <module> --purpose "..." [--term "<Term>=<meaning>"]`. |
-| `module/complete` | Once a context declares modules, a file of its `domain/` or `application/` outside every module is reported, the generated declarations aside (the code list and the permission set sit at the root of the context, outside every module). Fix: `move-to-module <context> <module> <path>`. Default severity `warn`, so that a context moves into modules one commit at a time. |
+| `module/declared` | Every module of `contexts.<name>.modules` is named with terms of the `## Ubiquitous language` table of its context's `CONTEXT.md`, every word of its name, and never with a technical word (`shared`, `common`, `core`, `misc`, `utils` and the other technical words of `language/no-technical-name`), and has a row in the `## Modules` section of that `CONTEXT.md`. Its name is in kebab-case, unique in the context, and neither a role folder nor a folder of the context (`domain`, `test`, `published-language`...). Fix: `generate module <context> <module> --purpose "..." [--term "<Term>=<meaning>"]`. |
+| `module/complete` | Once a context declares modules, a file of a layer outside every module is reported, and so is a spec left in `test/unit/` or `test/integration/` while the file it is named after sits in a module, the files the context keeps aside (section 2, modules of the model). One finding per folder. Fix: `move-to-module <context> <module> <path>`. A module still where 0.86 put it, `domain/<module>/` or `application/<module>/`, is reported too, with `ddd-ts-kit context-layout` as its fix. Default severity `warn`, so that a context moves into modules one commit at a time. |
 | `module/no-cycle` | The imports between the modules of one context form no cycle. Default severity `warn`: coupling between modules is a signal to change the model (Evans, Modules), not a refusal. |
 | `naming/suffix` | A file in a role directory carries the role's suffix, in kebab-case. The code list of a context, `<context>.codes.ts` at its root, is read as `domain/errors/codes.ts`, the one file of a role named otherwise. |
 | `naming/one-concept-per-file` | One exported aggregate, entity, value object, event, handler, job or projection per file, and one declared class per role file. |
@@ -317,7 +326,7 @@ the platform binds it at start-up. Why, and what each layer holds:
 | `test/builder-required` | An aggregate has a builder in `test/builders/`. Default severity `warn`. |
 | `test/helper-placed` | A file of a context's `test/unit/` or `test/integration/` is a spec (`*.spec.ts`, `*.test.ts`). A helper written among them is moved to the place of its kind: an arrangement several specs share to `test/worlds/*.world.ts`, test data to `test/builders/`, an in-memory port to `test/fakes/`. Default severity `warn`. |
 | `test/acceptance-black-box` | An acceptance spec (`test/acceptance/<story>.acceptance.spec.ts`) drives the application as a client does: it imports nothing from the source root but the builders of a context (`test/builders/`) and its `published-language/`. Its scenarios are written before the code of the story and assert what a client observes. Default severity `warn`. |
-| `test/coverage-governed` | Coverage cannot be gamed by exclusion. The test runner config reads what it measures and its thresholds from the `coverage` key of `ddd-ts-kit.config.json` through `governedCoverage` (`governedJestCoverage` under jest) of `@ddd-ts-kit/testing/coverage`: the four layers of every context, the files no spec loads included, each context and layer held to its floor from its first source file. Refused: `include`, `exclude`, `thresholds` or `ignoreClassMethods` written by hand in a `coverage` block (`collectCoverageFrom`, `coveragePathIgnorePatterns`, `coverageThreshold` under jest), the same set by a flag in a script of `package.json`, and a `v8 ignore`, `c8 ignore` or `istanbul ignore` comment in a production source that does not end with `-- ADR-NNNN: <reason>` naming an existing decision record. |
+| `test/coverage-governed` | Coverage cannot be gamed by exclusion. The test runner config reads what it measures and its thresholds from the `coverage` key of `ddd-ts-kit.config.json` through `governedCoverage` (`governedJestCoverage` under jest) of `@ddd-ts-kit/testing/coverage`: the four layers of every context, the files no spec loads included, each context and layer held to its floor from its first source file, and each layer of a module of the model (`<module>/domain/`) to the same floor on its own. Refused: `include`, `exclude`, `thresholds` or `ignoreClassMethods` written by hand in a `coverage` block (`collectCoverageFrom`, `coveragePathIgnorePatterns`, `coverageThreshold` under jest), the same set by a flag in a script of `package.json`, and a `v8 ignore`, `c8 ignore` or `istanbul ignore` comment in a production source that does not end with `-- ADR-NNNN: <reason>` naming an existing decision record. |
 | `language/glossary-term` | Every aggregate, entity, value object, domain service, domain event, command and query is named with terms of the `## Ubiquitous language` table of its context's `CONTEXT.md`, and under `"stack.refusals": "factories"` or `"named"` every class of `domain/errors/` too: `AppointmentError` is named after `Appointment`, `SlotTaken` after `Slot` and `Take`. A refusal class of `named` (one that extends `DomainRefusal`) may also use the qualifiers of a refusal, `invalid`, `unknown`, `already`, `too`, `no`, `missing` and `required` (`InvalidAppointment`, `BookingTooLate`); `<context>.codes.ts` holds no class and is not judged. The glossary is written before the code. |
 | `language/declared-vocabulary` | A value of a closed vocabulary the project declares, an object `as const` exported with the union type of its name (`domain/vocabularies/*.vocabulary.ts`, the `Role` of the platform) or a permission set of `definePermissions`, is read through it (`AppointmentStatus.NoShow`, `billingPermissions['invoice.issue']`), never written again as a string literal outside its declaration, a quoted key included (`[AppointmentStatus.NoShow]: ..`). Under `"stack.literals": "named"`, which `init` writes; a config that does not say keeps free literals. Where: the vocabulary of a context in that context only, the one of the platform in the platform and the route groups `*.routes.ts`, a permission id and a vocabulary of the shared kernel everywhere. Tests, published languages and the relationship schema (`defineSchema`) are not judged. In the persistence of a context (`infrastructure/persistence/`), the name of a column, a table or a schema is a word of the storage and is not judged: the first argument of a call (`text('note')`, `createTable('invoice')`, `.where('note', ..)`) and the value of `name`, `tableName` or `schema`; a stored value, the argument of `.default(..)` or a value compared in a query, is. A word of another language is not the context's and is not judged when its type says so, outside `domain/`: a key of an object typed `Record<T, ..>` and a string value of one typed `Record<.., T>` (by the annotation of its declaration or by `satisfies`; `as const` and `Readonly`, `Partial`, `Required` around allowed), and a literal written `'x' satisfies T`, where `T` is one type reference (`Payload['state']`, `typeof x`, no union) whose name is imported from a published language, imported as a type from a package, or imported from or declared in `infrastructure/anti-corruption/` or `infrastructure/external/`. There, the literal types of an interface or a type alias, which describe an outside record as it arrives, are not judged either. A key of a table typed by the context's own vocabulary, a comparison or a `case` without `satisfies`, and a value of the context in a translation table are still judged. Read as a vocabulary: each entry a key and a string literal, comments, either quote and `as const satisfies ..` allowed, next to `export type X = (typeof X)[keyof typeof X]`; a number, a spread or a computed entry leaves the object unread. |
 | `language/no-technical-name` | No `Manager`, `Helper`, `Util`, `Utils`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`, `Abstract`, `Dto`, `Entity`, `Model` in a name under `domain/` or in a use case name. |

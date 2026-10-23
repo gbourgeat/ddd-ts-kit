@@ -220,7 +220,10 @@ describe('the rule files and the README init writes', () => {
         expect(glob, rule).toMatch(/^[\w.*/-]+$/);
       }
 
-      expect(text.trimEnd().split('\n').length, rule).toBeLessThan(25);
+      // A page of guidance: the frontmatter, which grows with the layouts it names, is not counted.
+      const body = text.trimEnd().replace(/^---\n[\s\S]*?\n---\n/, '');
+
+      expect(body.split('\n').length, rule).toBeLessThan(21);
       expect(text.trimEnd().split('\n').at(-1), rule).toMatch(/\/ddd-ts-kit:|npx ddd-ts-kit generate/);
     }
 

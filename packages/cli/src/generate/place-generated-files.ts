@@ -1,9 +1,12 @@
+import path from 'node:path';
 import { aliasRoots } from '../alias';
 import { CliError } from '../cli-error';
 import type { Config } from '../config';
 import { contextFilePlacement } from '../context-files';
 import { declaredModule, declaredModules, modulePlacement, placedImports } from '../model-modules';
 import type { Workspace } from '../workspace';
+import { filesUnder } from './files-under';
+import { refuseEarlierLayout } from './refuse-earlier-layout';
 
 /** What `generate` was asked: the context its kind writes in, the `--module` given, and the command as typed. */
 export interface ModuleRequest {
@@ -54,6 +57,8 @@ function modulesPlacement(
     return undefined;
   }
 
+  refuseEarlierLayout(ws, config, request.context);
+
   return modulePlacement({
     config,
     asked,
@@ -62,6 +67,7 @@ function modulesPlacement(
     unplaced: (context, relative) => {
       throw unplacedError(context, relative, { modules: declaredModules(config, context), command: request.command });
     },
+    subjectModule: (context, spec) => subjectModule(ws, config, { context, spec }),
     split: (context, relative, holder) => {
       throw new CliError(
         `The use case of ${relative} is in the module "${holder}" of "${context}": --module ${asked?.module ?? ''} would split it between two modules.`,
@@ -69,6 +75,29 @@ function modulesPlacement(
       );
     },
   });
+}
+
+/** What a spec is named after, in a context: the module that holds the production file of that name. */
+interface Named {
+  readonly context: string;
+  readonly spec: string;
+}
+
+/**
+ * The module holding the file a spec is named after (`appointment.repository.contract.spec.ts`
+ * is of `appointment.repository.ts`), the longest name winning; undefined when no module holds one.
+ */
+function subjectModule(ws: Workspace, config: Config, { context, spec }: Named): string | undefined {
+  const stem = spec.replace(/\.spec\.ts$/, '');
+
+  const matches = declaredModules(config, context).flatMap((module) =>
+    filesUnder(ws, `${config.contextsDir}/${context}/${module}`)
+      .map((file) => path.posix.basename(file).replace(/\.ts$/, ''))
+      .filter((name) => stem === name || stem.startsWith(`${name}.`))
+      .map((name) => ({ module, length: name.length })),
+  );
+
+  return matches.sort((left, right) => right.length - left.length)[0]?.module;
 }
 
 function askedModule(

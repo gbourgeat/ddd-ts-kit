@@ -1,5 +1,5 @@
 import { defineBuilder, sequence } from '@ddd-ts-kit/testing';
-import type { AgendaEntry } from '@/contexts/scheduling/application/calendars/ports/agenda.port';
+import type { AgendaEntry } from '@/contexts/scheduling/calendars/application/ports/agenda.port';
 
 /** An entry of the agenda as the projection writes it: a booked consultation on Monday 2 March 2026, changed by what the test states. */
 export const anAgendaEntry = defineBuilder<AgendaEntry>({

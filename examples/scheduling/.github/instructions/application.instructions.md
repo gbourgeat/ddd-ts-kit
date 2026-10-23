@@ -1,5 +1,5 @@
 ---
-applyTo: "src/contexts/*/application/**"
+applyTo: "src/contexts/*/application/**,src/contexts/*/*/application/**"
 ---
 
 # Application layer

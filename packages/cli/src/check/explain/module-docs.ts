@@ -14,21 +14,25 @@ export const MODULE_DOCS: Readonly<Record<string, RuleDoc>> = {
 | \`waitlist\` | The waitlist of a calendar and the offers made to waiters. |`,
   },
   'module/complete': {
-    why: 'A context half divided into modules is read two ways at once: a concept may be in its module or still at the level of the context, and the reader has to look in both. Once a context declares modules, every file of its domain/ and application/ belongs to one of them, except the generated declarations; the closed list of its error codes (<context>.codes.ts) and its permission set (<context>.permissions.ts) sit at the root of the context, outside every module. It is a warning so that a large context moves into its modules one cluster per commit, with `ddd-ts-kit move-to-module`, which rewrites the imports.',
-    bad: `contexts/scheduling/domain/calendars/aggregates/calendar.aggregate.ts
-contexts/scheduling/domain/aggregates/waitlist.aggregate.ts   // still at the level of the context`,
-    good: `contexts/scheduling/domain/calendars/aggregates/calendar.aggregate.ts
-contexts/scheduling/domain/waitlist/aggregates/waitlist.aggregate.ts
-contexts/scheduling/scheduling.codes.ts                       // one per context, at its root`,
+    why: 'A context half divided into modules is read two ways at once: a concept may be in its module or still at the level of the context, and the reader has to look in both. Once a context declares modules, each module is one folder of the context holding its four layers, and every file of a layer belongs to one of them, with its specs in the module folder of its test folder (test/unit/<module>/). The context keeps at its own level what every module shares: the closed list of its error codes (<context>.codes.ts) and its permission set (<context>.permissions.ts) at its root, the schema, tables and migrations of its database (infrastructure/persistence/), its route groups, guards and shared shapes (presentation/http/), the fakes, builders and worlds of its specs, and the generated declarations. A module still where 0.86 put it (domain/<module>/) is reported too: `ddd-ts-kit context-layout` moves it. It is a warning so that a large context moves into its modules one cluster per commit, with `ddd-ts-kit move-to-module`, which rewrites the imports and takes the specs of a moved file with it.',
+    bad: `contexts/scheduling/calendars/domain/aggregates/calendar.aggregate.ts
+contexts/scheduling/domain/aggregates/waitlist.aggregate.ts                  // still at the level of the context
+contexts/scheduling/infrastructure/persistence/knex-waitlist.repository.ts   // an adapter of the waitlist, outside it`,
+    good: `contexts/scheduling/calendars/domain/aggregates/calendar.aggregate.ts
+contexts/scheduling/waitlist/domain/aggregates/waitlist.aggregate.ts
+contexts/scheduling/waitlist/infrastructure/persistence/knex-waitlist.repository.ts
+contexts/scheduling/test/unit/waitlist/waitlist.aggregate.spec.ts
+contexts/scheduling/infrastructure/persistence/scheduling.schema.ts         // the database of the context
+contexts/scheduling/scheduling.codes.ts                                      // one per context, at its root`,
   },
   'module/no-cycle': {
     why: 'Modules that import each other in a cycle cannot be read, changed or later extracted one without the other. Evans makes the coupling between modules a signal about the model: "This often yields low coupling between modules, but if it doesn\'t look for a way to change the model to disentangle the concepts, or an overlooked concept that might be the basis of a module." So the rule warns instead of refusing, and points at the remedies of the model: a domain event for an effect that follows a decision, a module for the concept both reach for, a projection for reads.',
-    bad: `// domain/calendars/aggregates/calendar.aggregate.ts
-import { Waitlist } from '@/contexts/scheduling/domain/waitlist/aggregates/waitlist.aggregate.js';
-// domain/waitlist/aggregates/waitlist.aggregate.ts
-import { Calendar } from '@/contexts/scheduling/domain/calendars/aggregates/calendar.aggregate.js';`,
-    good: `// application/waitlist/event-handlers/offer-freed-slot.event-handler.ts
-import { SlotFreed } from '@/contexts/scheduling/domain/calendars/events/slot-freed.event.js';
+    bad: `// calendars/domain/aggregates/calendar.aggregate.ts
+import { Waitlist } from '@/contexts/scheduling/waitlist/domain/aggregates/waitlist.aggregate.js';
+// waitlist/domain/aggregates/waitlist.aggregate.ts
+import { Calendar } from '@/contexts/scheduling/calendars/domain/aggregates/calendar.aggregate.js';`,
+    good: `// waitlist/application/event-handlers/offer-freed-slot.event-handler.ts
+import { SlotFreed } from '@/contexts/scheduling/calendars/domain/events/slot-freed.event.js';
 // calendars imports nothing of waitlist: waitlist reacts to what calendars decided`,
   },
 };

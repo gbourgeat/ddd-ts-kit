@@ -7,10 +7,10 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { applyingProjection } from '@ddd-ts-kit/kernel/declarations';
 import type { Persistence } from '@/platform/database/persistence';
-import type { AttendanceRecordEvent } from '@/contexts/scheduling/domain/calendars/aggregates/attendance-record.aggregate';
-import { AttendanceHistoryProjection } from '@/contexts/scheduling/application/calendars/projections/attendance-history.projection';
-import { attendanceRecordEvents } from '@/contexts/scheduling/infrastructure/persistence/attendance-record-events.mapper';
-import { KnexAttendanceHistory } from '@/contexts/scheduling/infrastructure/persistence/knex-attendance-history.repository';
+import type { AttendanceRecordEvent } from '@/contexts/scheduling/calendars/domain/aggregates/attendance-record.aggregate';
+import { AttendanceHistoryProjection } from '@/contexts/scheduling/calendars/application/projections/attendance-history.projection';
+import { attendanceRecordEvents } from '@/contexts/scheduling/calendars/infrastructure/persistence/attendance-record-events.mapper';
+import { KnexAttendanceHistory } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-attendance-history.repository';
 
 /** A projection declared `{ feed: 'event-store' }`: how it catches up, and how it is rebuilt from position zero. */
 export interface StoreFedProjection {

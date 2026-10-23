@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/contexts/*/presentation/**"
+  - "src/contexts/*/*/presentation/**"
   - "openapi/**"
   - "scripts/openapi.ts"
   - "clients/**"
