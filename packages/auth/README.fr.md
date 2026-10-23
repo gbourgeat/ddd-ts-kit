@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:9109aa1735057b07 -->
+<!-- translation-of: README.md sha256:425dab2d59126826 -->
 
 # @ddd-ts-kit/auth
 
@@ -122,7 +122,7 @@ les installe pour vous. L'exemple complet ci-dessous met chacune à sa place.
 
 <!-- checked sample -->
 ```ts
-// contexts/billing/application/authorization/billing.permissions.ts
+// contexts/billing/billing.permissions.ts
 import { definePermissions } from '@ddd-ts-kit/auth';
 
 export const billingPermissions = definePermissions('billing', {

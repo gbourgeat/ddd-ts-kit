@@ -137,7 +137,7 @@ describe('error-factories, from one class per error to the named form', () => {
     expect(read(root, `${ERRORS}/invoice-already-issued.error.ts`)).toBe(
       lines(
         "import { DomainRefusal } from '@ddd-ts-kit/kernel';",
-        "import { BillingCodes } from '@/contexts/billing/domain/errors/codes';",
+        "import { BillingCodes } from '@/contexts/billing/billing.codes';",
         '',
         'export class InvoiceAlreadyIssued extends DomainRefusal {',
         '  readonly code = BillingCodes.InvoiceAlreadyIssued;',
@@ -152,7 +152,7 @@ describe('error-factories, from one class per error to the named form', () => {
       ),
     );
 
-    expect(read(root, `${ERRORS}/codes.ts`)).toContain(
+    expect(read(root, `${BILLING}/billing.codes.ts`)).toContain(
       "export const BillingCodes = {\n  InvoiceAlreadyIssued: 'INVOICE_ALREADY_ISSUED',\n  InvoiceTooLarge: 'INVOICE_TOO_LARGE',\n  TooLate: 'TOO_LATE',\n} as const;\n",
     );
 

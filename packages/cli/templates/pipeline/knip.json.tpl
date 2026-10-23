@@ -17,7 +17,7 @@
   "ignoreExportsUsedInFile": true,
 {{#if refusals.named}}
   "ignoreIssues": {
-    "{{config.contextsDir}}/*/domain/errors/codes.ts": ["types"]
+    "{{config.contextsDir}}/*/*.codes.ts": ["types"]
   },
 {{/if}}
   "vitest": {

@@ -1,5 +1,5 @@
 [English](validation.md) · **Français**
-<!-- translation-of: validation.md sha256:04f6a874a511a342 -->
+<!-- translation-of: validation.md sha256:21a01adbfff8846f -->
 
 # Bibliothèques de validation : zod, class-validator, TypeBox, Standard Schema
 
@@ -62,7 +62,7 @@ const bookAppointmentBody = zodSchema(
 // contexts/appointments/domain/value-objects/time-slot.vo.ts
 import { DomainRefusal, ValueObject } from '@ddd-ts-kit/kernel';
 
-// contexts/appointments/domain/errors/codes.ts
+// contexts/appointments/appointments.codes.ts
 export const AppointmentsCodes = { InvalidTimeSlot: 'INVALID_TIME_SLOT' } as const;
 
 // contexts/appointments/domain/errors/invalid-time-slot.error.ts

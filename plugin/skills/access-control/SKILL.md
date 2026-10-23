@@ -53,7 +53,7 @@ npx ddd-ts-kit generate query <ctx> <UseCase> --public --json
   Under attributes or relationships, `--grant` is refused: give the right in that model.
 
 - The permission is named in the ubiquitous language (`invoice.issue`, not `admin.write`),
-  joins `application/authorization/<context>.permissions.ts`, and its words are checked
+  joins `<context>.permissions.ts`, and its words are checked
   against the glossary.
 - Declared style: `@Requires(permissions['invoice.issue'])` or `@Public()` on the message
   class. Explicit style: `.requires(...)` or `.public()` where the handler is registered.

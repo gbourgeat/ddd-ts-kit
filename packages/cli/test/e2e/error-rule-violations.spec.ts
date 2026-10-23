@@ -4,7 +4,7 @@ import { EditedProject } from './edited-project';
 import { SLOW } from './stacks';
 
 const BILLING = 'src/contexts/billing';
-const CODES = `${BILLING}/domain/errors/codes.ts`;
+const CODES = `${BILLING}/billing.codes.ts`;
 const VOIDED = `${BILLING}/domain/errors/invoice-voided.error.ts`;
 const SERVICE = `${BILLING}/domain/services/pricing.service.ts`;
 const ROUTE = `${BILLING}/presentation/http/invoices/issue-invoice/issue-invoice.controller.ts`;

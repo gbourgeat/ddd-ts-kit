@@ -173,7 +173,7 @@ describe('generate --grant <role> on roles written by hand', () => {
     const root = initProject('--context', 'billing:core');
 
     const imports =
-      "import { billingPermissions } from '@/contexts/billing/application/authorization/billing.permissions';\nimport { Role } from './role';\n";
+      "import { billingPermissions } from '@/contexts/billing/billing.permissions';\nimport { Role } from './role';\n";
 
     const roles = [
       'export const roles = {',
@@ -211,7 +211,7 @@ describe('generate --grant <role> on roles written by hand', () => {
     write(
       root,
       'src/platform/auth/authorization/signed-in-grants.ts',
-      "import { billingPermissions } from '@/contexts/billing/application/authorization/billing.permissions';\n\nexport const signedInGrants = [billingPermissions['invoice.issue']];\n",
+      "import { billingPermissions } from '@/contexts/billing/billing.permissions';\n\nexport const signedInGrants = [billingPermissions['invoice.issue']];\n",
     );
 
     const generated = report(command(root, 'IssueInvoice', '--permission', 'invoice.issue'));

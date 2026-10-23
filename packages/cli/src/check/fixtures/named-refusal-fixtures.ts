@@ -13,14 +13,14 @@ import { source } from './source';
 const { BILLING, ROUTE } = PATHS;
 const NAMED = { [CONFIG_FILE]: config({ stack: { refusals: 'named' } }) };
 
-const CODES = `${BILLING}/domain/errors/codes.ts`;
+const CODES = `${BILLING}/billing.codes.ts`;
 const ALREADY_ISSUED = `${BILLING}/domain/errors/invoice-already-issued.error.ts`;
 const UNKNOWN_INVOICE = `${BILLING}/domain/errors/unknown-invoice.error.ts`;
 const ALREADY_SENT = `${BILLING}/domain/errors/invoice-already-sent.error.ts`;
 const LEDGER_CLOSED = `${BILLING}/domain/errors/ledger-closed.error.ts`;
 const INVOICE_ERROR = `${BILLING}/domain/errors/invoice.error.ts`;
 
-/** `domain/errors/codes.ts` of billing, `entries` written as they are. */
+/** `billing.codes.ts`, the code list of billing, `entries` written as they are. */
 const codes = (entries: string, asConst = ' as const'): string =>
   source(
     `export const BillingCodes = {`,
@@ -34,7 +34,7 @@ const codes = (entries: string, asConst = ' as const'): string =>
 const refusal = (name: string, code = `BillingCodes.${name}`): string =>
   source(
     "import { DomainRefusal } from '@ddd-ts-kit/kernel';",
-    "import { BillingCodes } from '@/contexts/billing/domain/errors/codes.js';",
+    "import { BillingCodes } from '@/contexts/billing/billing.codes.js';",
     '',
     `export class ${name} extends DomainRefusal {`,
     ...(code === '' ? [] : [`  readonly code = ${code};`, '']),
@@ -167,7 +167,7 @@ const CODE_LISTED: readonly Fixture[] = [
   },
   {
     ruleId: 'errors/code-listed',
-    name: 'refusal classes in a context without domain/errors/codes.ts',
+    name: 'refusal classes in a context without its code list',
     expect: { file: ALREADY_ISSUED },
     files: project(
       { [ALREADY_ISSUED]: refusal('InvoiceAlreadyIssued'), [UNKNOWN_INVOICE]: refusal('UnknownInvoice') },
@@ -276,7 +276,7 @@ const NAMED_LANGUAGE: readonly Fixture[] = [
   },
   {
     ruleId: 'naming/suffix',
-    name: 'the code list of a context, domain/errors/codes.ts, without the suffix of the role',
+    name: 'the code list of a context, billing.codes.ts at its root',
     expect: 'pass',
     files: project(NAMED_REFUSALS, NAMED),
   },

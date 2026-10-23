@@ -21,6 +21,7 @@ import { measuresCommand } from './commands/measures';
 import { mergeTrunkCommand } from './commands/merge-trunk';
 import { planWavesCommand } from './commands/plan-waves';
 import { moveToModuleCommand } from './commands/move-to-module';
+import { contextLayoutCommand } from './commands/context-layout';
 import { platformFoldersCommand } from './commands/platform-folders';
 import { sdkCommand } from './commands/sdk';
 import { statusCommand } from './commands/status';
@@ -71,6 +72,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   'error-factories': errorFactoriesCommand,
   'value-objects': valueObjectsCommand,
   'platform-folders': platformFoldersCommand,
+  'context-layout': contextLayoutCommand,
   'move-to-module': moveToModuleCommand,
   controllers: controllersCommand,
   check: checksCommand,

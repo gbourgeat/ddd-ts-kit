@@ -6,7 +6,7 @@ import { InvalidDay } from '@/contexts/scheduling/domain/calendars/errors/invali
 import { UnknownCalendar } from '@/contexts/scheduling/domain/calendars/errors/unknown-calendar.error';
 import type { CalendarRepository } from '@/contexts/scheduling/domain/calendars/repositories/calendar.repository';
 import { TimeZone } from '@/contexts/scheduling/domain/calendars/value-objects/time-zone.vo';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 import type { Agenda, AgendaEntry } from '@/contexts/scheduling/application/calendars/ports/agenda.port';
 import { GetCalendarDayQuery } from '@/contexts/scheduling/application/calendars/queries/get-calendar-day/get-calendar-day.query';
 import type { GetCalendarDayResult } from '@/contexts/scheduling/application/calendars/queries/get-calendar-day/get-calendar-day.result';

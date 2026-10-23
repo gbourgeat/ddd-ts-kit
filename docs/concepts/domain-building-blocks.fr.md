@@ -1,5 +1,5 @@
 [English](domain-building-blocks.md) · **Français**
-<!-- translation-of: domain-building-blocks.md sha256:e6821310eaf790b2 -->
+<!-- translation-of: domain-building-blocks.md sha256:634b70325924d7ad -->
 
 # Événements du domaine, services du domaine, repositories et fabriques
 
@@ -74,7 +74,7 @@ class AppointmentCancelled extends NamedDomainEvent('appointments.appointment.ca
   }
 }
 
-// domain/errors/codes.ts
+// appointments.codes.ts
 const AppointmentsCodes = {
   AppointmentAlreadyCancelled: 'APPOINTMENT_ALREADY_CANCELLED',
 } as const;
@@ -216,7 +216,7 @@ interface PractitionerSchedule {
   isOffDuring(slot: TimeSlot): boolean;
 }
 
-// domain/errors/codes.ts
+// appointments.codes.ts
 export const AppointmentsCodes = {
   OutsideWorkingHours: 'OUTSIDE_WORKING_HOURS',
 } as const;
@@ -416,7 +416,7 @@ class AppointmentBooked extends NamedDomainEvent('appointments.appointment.booke
   }
 }
 
-// domain/errors/codes.ts
+// appointments.codes.ts
 const AppointmentsCodes = {
   StartsInThePast: 'STARTS_IN_THE_PAST',
 } as const;

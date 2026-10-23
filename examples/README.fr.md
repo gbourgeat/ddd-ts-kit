@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7039b42e6383197f -->
+<!-- translation-of: README.md sha256:fed384e3b45605e5 -->
 
 # Exemples
 
@@ -98,7 +98,7 @@ declare class Appointment {
   readonly slot: { readonly startsAt: Date };
 }
 
-// application/authorization/scheduling.permissions.ts
+// scheduling.permissions.ts
 export const schedulingPermissions = definePermissions('scheduling', {
   'appointment.cancel': { description: 'Patient cancels until notice' },
 });
@@ -174,7 +174,7 @@ const schedulingPermissions = definePermissions('scheduling', {
   'appointment.cancel': { description: 'Patient cancels until notice' },
 });
 
-// domain/errors/codes.ts : les codes du contexte, le contrat que lit un client ; la plateforme fait correspondre chacun à un statut.
+// scheduling.codes.ts : les codes du contexte, le contrat que lit un client ; la plateforme fait correspondre chacun à un statut.
 const SchedulingCodes = {
   UnknownAppointment: 'APPOINTMENT_NOT_FOUND',
   ReasonRequired: 'REASON_REQUIRED',

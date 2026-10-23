@@ -1,5 +1,5 @@
 [English](authentication-and-authorization.md) · **Français**
-<!-- translation-of: authentication-and-authorization.md sha256:26bbf6b0ff252948 -->
+<!-- translation-of: authentication-and-authorization.md sha256:fbc9faa1126cab21 -->
 
 # Authentification et autorisation
 
@@ -63,7 +63,7 @@ import { definePermissions } from '@ddd-ts-kit/auth';
 import { AuthorizedCommand, Query, type Actor } from '@ddd-ts-kit/kernel';
 import { Public, Requires } from '@ddd-ts-kit/kernel/declarations';
 
-// application/authorization/appointments.permissions.ts : des données qui appartiennent au contexte, dans ses mots.
+// appointments.permissions.ts : des données qui appartiennent au contexte, dans ses mots.
 export const appointmentsPermissions = definePermissions('appointments', {
   'appointment.book': { description: 'Book an appointment for a client' },
   'appointment.cancel': { description: 'Cancel a booked appointment' },

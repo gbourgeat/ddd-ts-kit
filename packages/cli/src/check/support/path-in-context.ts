@@ -1,8 +1,13 @@
 import type { Project } from '../model/project';
 import type { SourceFile } from '../model/source-file';
+import { earlierPlaceOf } from '../../context-files';
 import { inContext } from './in-context';
 
-/** The path of a source relative to its context, the way the role table names files; undefined outside a context. */
+/**
+ * The path of a source relative to its context, the way the role table names files: its module of
+ * the model left out, and the code list or the permission set at the root of the context read where
+ * its role folder is. Undefined outside a context.
+ */
 export function pathInContext(project: Project, file: SourceFile): string | undefined {
   if (!inContext(file.location)) {
     return undefined;
@@ -11,5 +16,9 @@ export function pathInContext(project: Project, file: SourceFile): string | unde
   const relative = file.path.slice(`${project.config.contextsDir}/${file.location.context}/`.length);
   const { layer, module } = file.location;
 
-  return module === undefined ? relative : relative.replace(`${layer}/${module}/`, `${layer}/`);
+  if (module !== undefined) {
+    return relative.replace(`${layer}/${module}/`, `${layer}/`);
+  }
+
+  return earlierPlaceOf(file.location.context, relative) ?? relative;
 }

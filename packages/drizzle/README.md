@@ -173,7 +173,7 @@ The domain side, an aggregate that knows nothing of rows, and its port:
 ```ts
 import { AggregateRoot, DomainRefusal, Repository } from '@ddd-ts-kit/kernel';
 
-// contexts/order-management/domain/errors/codes.ts
+// contexts/order-management/order-management.codes.ts
 export const OrderManagementCodes = {
   OrderAlreadyPlaced: 'ORDER_ALREADY_PLACED',
 } as const;

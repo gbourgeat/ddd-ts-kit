@@ -1,5 +1,5 @@
 import { DomainRefusal } from '@ddd-ts-kit/kernel';
-import { {{context.pascal}}Codes } from '{{alias.context}}/domain/errors/codes{{alias.ext}}';
+import { {{context.pascal}}Codes } from '{{alias.context}}/{{context.kebab}}.codes{{alias.ext}}';
 
 export class OrganisationSlugTaken extends DomainRefusal {
   readonly code = {{context.pascal}}Codes.OrganisationSlugTaken;

@@ -84,7 +84,7 @@ refused before anything is written, with the flag that would fit:
 |---|---|---|
 | `stack.style` | `declared` | the use cases, policies and adapters declare themselves; an explicit module would be a second copy of the context to keep |
 | `stack.dependencies` | `signature` | the classes state what they need by their constructor |
-| `stack.refusals` | `named`, `factories` | named: one class per refusal, its code read from `domain/errors/codes.ts`; factories: the static factories of one class per concept |
+| `stack.refusals` | `named`, `factories` | named: one class per refusal, its code read from `<context>.codes.ts`; factories: the static factories of one class per concept |
 | `stack.valueObjects` | `throwing` | the value objects refuse an invalid value when built |
 | `stack.routes` | `controllers` | one controller class per route |
 | `stack.orm` | `knex`, `drizzle` | the two adapters written; Prisma and TypeORM are not |

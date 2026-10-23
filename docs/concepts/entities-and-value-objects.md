@@ -43,7 +43,7 @@ the rules that make it valid and the operations that belong to it.
 ```ts
 import { DomainRefusal, ValueObject } from '@ddd-ts-kit/kernel';
 
-// contexts/appointments/domain/errors/codes.ts
+// contexts/appointments/appointments.codes.ts
 export const AppointmentsCodes = {
   InvalidTimeSlot: 'INVALID_TIME_SLOT',
 } as const;
@@ -385,7 +385,7 @@ An entity is defined by a thread of continuity. Its class protects that thread:
 ```ts
 import { DomainRefusal, Entity, ValueObject } from '@ddd-ts-kit/kernel';
 
-// contexts/calendars/domain/errors/codes.ts
+// contexts/calendars/calendars.codes.ts
 export const CalendarsCodes = {
   TimeOffCanOnlyShrink: 'TIME_OFF_CAN_ONLY_SHRINK',
 } as const;

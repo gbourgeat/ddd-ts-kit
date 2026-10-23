@@ -6,7 +6,7 @@ import { cli, read, tempDir, write } from './helpers';
 const ERRORS = 'src/contexts/scheduling/domain/errors';
 const APPLICATION = 'src/contexts/scheduling/application';
 const SLOT_ERROR = '@/contexts/scheduling/domain/errors/slot.error';
-const PATTERN = 'src/contexts/*/domain/errors/codes.ts';
+const PATTERN = 'src/contexts/*/*.codes.ts';
 
 const TELL_KNIP = `Tell knip that the code types are a contract: add \`"ignoreIssues": { "${PATTERN}": ["types"] }\` to its config.`;
 

@@ -7,7 +7,7 @@ const ISSUED = 'src/contexts/billing/domain/errors/invoice-already-issued.error.
 const VOIDED = 'src/contexts/billing/domain/errors/invoice-voided.error.ts';
 
 const VOIDED_CLASS = `import { DomainRefusal } from '@ddd-ts-kit/kernel';
-import { BillingCodes } from '@/contexts/billing/domain/errors/codes';
+import { BillingCodes } from '@/contexts/billing/billing.codes';
 
 export class InvoiceVoided extends DomainRefusal {
   readonly code = BillingCodes.InvoiceVoided;
@@ -108,10 +108,10 @@ describe('the errors of a context of one class per refusal ("stack.refusals": "n
     write(
       root,
       'src/contexts/billing/domain/errors/invoice-locked.error.ts',
-      "import { DomainRefusal } from '@ddd-ts-kit/kernel';\nimport { BillingCodes } from '@/contexts/billing/domain/errors/codes';\n\nexport class InvoiceLocked extends DomainRefusal {\n  readonly code = BillingCodes.InvoiceLocked;\n}\n",
+      "import { DomainRefusal } from '@ddd-ts-kit/kernel';\nimport { BillingCodes } from '@/contexts/billing/billing.codes';\n\nexport class InvoiceLocked extends DomainRefusal {\n  readonly code = BillingCodes.InvoiceLocked;\n}\n",
     );
 
-    const codes = 'src/contexts/billing/domain/errors/codes.ts';
+    const codes = 'src/contexts/billing/billing.codes.ts';
 
     write(root, codes, read(root, codes).replace("InvoiceVoided: 'INVOICE_CANCELLED',", ''));
 

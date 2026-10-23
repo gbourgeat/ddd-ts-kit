@@ -14,12 +14,12 @@ export const MODULE_DOCS: Readonly<Record<string, RuleDoc>> = {
 | \`waitlist\` | The waitlist of a calendar and the offers made to waiters. |`,
   },
   'module/complete': {
-    why: 'A context half divided into modules is read two ways at once: a concept may be in its module or still at the level of the context, and the reader has to look in both. Once a context declares modules, every file of its domain/ and application/ belongs to one of them, except the files that stay one per context: the closed list of its error codes (domain/errors/codes.ts), its permission set (application/authorization/<context>.permissions.ts) and the generated declarations. It is a warning so that a large context moves into its modules one cluster per commit, with `ddd-ts-kit move-to-module`, which rewrites the imports.',
+    why: 'A context half divided into modules is read two ways at once: a concept may be in its module or still at the level of the context, and the reader has to look in both. Once a context declares modules, every file of its domain/ and application/ belongs to one of them, except the generated declarations; the closed list of its error codes (<context>.codes.ts) and its permission set (<context>.permissions.ts) sit at the root of the context, outside every module. It is a warning so that a large context moves into its modules one cluster per commit, with `ddd-ts-kit move-to-module`, which rewrites the imports.',
     bad: `contexts/scheduling/domain/calendars/aggregates/calendar.aggregate.ts
 contexts/scheduling/domain/aggregates/waitlist.aggregate.ts   // still at the level of the context`,
     good: `contexts/scheduling/domain/calendars/aggregates/calendar.aggregate.ts
 contexts/scheduling/domain/waitlist/aggregates/waitlist.aggregate.ts
-contexts/scheduling/domain/errors/codes.ts                    // one per context`,
+contexts/scheduling/scheduling.codes.ts                       // one per context, at its root`,
   },
   'module/no-cycle': {
     why: 'Modules that import each other in a cycle cannot be read, changed or later extracted one without the other. Evans makes the coupling between modules a signal about the model: "This often yields low coupling between modules, but if it doesn\'t look for a way to change the model to disentangle the concepts, or an overlooked concept that might be the basis of a module." So the rule warns instead of refusing, and points at the remedies of the model: a domain event for an effect that follows a decision, a module for the concept both reach for, a projection for reads.',

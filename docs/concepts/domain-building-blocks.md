@@ -69,7 +69,7 @@ class AppointmentCancelled extends NamedDomainEvent('appointments.appointment.ca
   }
 }
 
-// domain/errors/codes.ts
+// appointments.codes.ts
 const AppointmentsCodes = {
   AppointmentAlreadyCancelled: 'APPOINTMENT_ALREADY_CANCELLED',
 } as const;
@@ -205,7 +205,7 @@ interface PractitionerSchedule {
   isOffDuring(slot: TimeSlot): boolean;
 }
 
-// domain/errors/codes.ts
+// appointments.codes.ts
 export const AppointmentsCodes = {
   OutsideWorkingHours: 'OUTSIDE_WORKING_HOURS',
 } as const;
@@ -398,7 +398,7 @@ class AppointmentBooked extends NamedDomainEvent('appointments.appointment.booke
   }
 }
 
-// domain/errors/codes.ts
+// appointments.codes.ts
 const AppointmentsCodes = {
   StartsInThePast: 'STARTS_IN_THE_PAST',
 } as const;

@@ -467,7 +467,7 @@ export class RequestPasswordReset extends Command {
   }
 }
 
-// domain/errors/codes.ts
+// identity.codes.ts
 export const IdentityCodes = {
   PasswordResetsExhausted: 'PASSWORD_RESETS_EXHAUSTED',
 } as const;

@@ -181,7 +181,7 @@ use case, which depends on the port and refuses with a code of its own:
 ```ts
 import { DomainRefusal, RateLimiter } from '@ddd-ts-kit/kernel';
 
-// contexts/appointments/domain/errors/codes.ts
+// contexts/appointments/appointments.codes.ts
 export const AppointmentsCodes = { TooManyBookingAttempts: 'TOO_MANY_BOOKING_ATTEMPTS' } as const;
 
 // contexts/appointments/domain/errors/too-many-booking-attempts.error.ts

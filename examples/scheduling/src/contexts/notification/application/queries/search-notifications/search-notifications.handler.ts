@@ -1,6 +1,6 @@
 import { Access } from '@ddd-ts-kit/auth';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
-import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
+import { notificationPermissions } from '@/contexts/notification/notification.permissions';
 import type { SearchNotificationsReader } from '@/contexts/notification/application/ports/search-notifications-reader.port';
 import { SearchNotificationsQuery } from '@/contexts/notification/application/queries/search-notifications/search-notifications.query';
 import type { SearchNotificationsResult } from '@/contexts/notification/application/queries/search-notifications/search-notifications.result';

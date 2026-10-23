@@ -479,7 +479,7 @@ A refusal built by a factory carries facts, and they are private: the document h
 ```ts
 import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-// domain/errors/codes.ts
+// scheduling.codes.ts
 export const SchedulingCodes = {
   SlotTaken: 'SLOT_TAKEN',
 } as const;

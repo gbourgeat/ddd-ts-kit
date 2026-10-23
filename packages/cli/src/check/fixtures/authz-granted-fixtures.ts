@@ -7,7 +7,7 @@ import { project } from './project';
 import { source } from './source';
 
 const { BILLING } = PATHS;
-const PERMISSIONS = `${BILLING}/application/authorization/billing.permissions.ts`;
+const PERMISSIONS = `${BILLING}/billing.permissions.ts`;
 const ROLES = 'src/platform/auth/roles/roles.ts';
 const ROLE = 'src/platform/auth/authorization/role.ts';
 const SIGNED_IN = 'src/platform/auth/authorization/signed-in-grants.ts';
@@ -96,7 +96,7 @@ function granting(...grants: readonly string[]): FixtureFiles {
 function roles(...grants: readonly string[]): string {
   return source(
     "import type { Grant } from '@ddd-ts-kit/auth';",
-    "import { billingPermissions } from '@/contexts/billing/application/authorization/billing.permissions.js';",
+    "import { billingPermissions } from '@/contexts/billing/billing.permissions.js';",
     "import { Role } from '@/platform/auth/authorization/role.js';",
     '',
     'export const roles: Readonly<Record<string, readonly Grant[]>> = {',

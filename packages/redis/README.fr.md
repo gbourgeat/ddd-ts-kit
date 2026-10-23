@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:07effe530968143e -->
+<!-- translation-of: README.md sha256:58ba86e2e0cabcce -->
 
 # @ddd-ts-kit/redis
 
@@ -479,7 +479,7 @@ export class RequestPasswordReset extends Command {
   }
 }
 
-// domain/errors/codes.ts
+// identity.codes.ts
 export const IdentityCodes = {
   PasswordResetsExhausted: 'PASSWORD_RESETS_EXHAUSTED',
 } as const;

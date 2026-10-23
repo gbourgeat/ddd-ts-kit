@@ -82,9 +82,31 @@ function locateAtContextRoot(context: string, entry: string): Location {
     return { area: 'context', context, layer: 'module', inside: [] };
   }
 
+  const placed = contextFileAt(context, entry.replace(/\.(?:js|ts)$/, ''));
+
+  if (placed !== undefined) {
+    return placed;
+  }
+
   const named = LAYERS.find((candidate) => candidate === entry.replace(/\.ts$/, ''));
 
   return { area: 'context', context, layer: named ?? 'root', inside: [] };
+}
+
+/**
+ * The code list and the permission set of a context sit at its root and are read as they were in
+ * their role folder, as `locate` of the CLI reads them: `billing.codes.ts` is
+ * `domain/errors/codes.ts`, `billing.permissions.ts` is `application/authorization/billing.permissions.ts`.
+ * `stem` is the entry without its extension, as an import may name it.
+ */
+function contextFileAt(context: string, stem: string): Location | undefined {
+  if (stem === `${context}.codes`) {
+    return { area: 'context', context, layer: 'domain', inside: ['errors', 'codes.ts'] };
+  }
+
+  return stem === `${context}.permissions`
+    ? { area: 'context', context, layer: 'application', inside: ['authorization', `${context}.permissions.ts`] }
+    : undefined;
 }
 
 function isUnder(file: string, directory: string): boolean {

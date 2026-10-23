@@ -271,7 +271,7 @@ describe('error-factories to the named form, what it leaves to a person', () => 
     expect(applied.written).not.toContain('knip.json');
 
     expect(applied.manual).toContain(
-      'Tell knip that the code types are a contract: add `"ignoreIssues": { "src/contexts/*/domain/errors/codes.ts": ["types"] }` to its config.',
+      'Tell knip that the code types are a contract: add `"ignoreIssues": { "src/contexts/*/*.codes.ts": ["types"] }` to its config.',
     );
   });
 });

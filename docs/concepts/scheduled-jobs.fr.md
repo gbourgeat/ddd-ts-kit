@@ -1,5 +1,5 @@
 [English](scheduled-jobs.md) · **Français**
-<!-- translation-of: scheduled-jobs.md sha256:0d1c11c3e0e1282c -->
+<!-- translation-of: scheduled-jobs.md sha256:7cdad1f22719fd1c -->
 
 # Jobs planifiés
 
@@ -221,7 +221,7 @@ de `SendReminders` n'agit que sur ce qui l'est.
 ```ts
 import { AggregateRoot, DomainRefusal, Repository } from '@ddd-ts-kit/kernel';
 
-// domain/errors/codes.ts
+// notification.codes.ts
 export const NotificationCodes = { ReminderNotDue: 'REMINDER_NOT_DUE' } as const;
 
 // domain/errors/reminder-not-due.error.ts

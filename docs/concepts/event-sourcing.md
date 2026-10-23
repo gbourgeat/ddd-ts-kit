@@ -128,7 +128,7 @@ export class AttendanceRecordNoShowNoted extends NamedDomainEvent('scheduling.at
 
 export type AttendanceRecordEvent = AttendanceRecordCreated | AttendanceRecordNoShowNoted;
 
-// domain/errors/codes.ts
+// scheduling.codes.ts
 export const SchedulingCodes = { AlreadyNoted: 'ALREADY_NOTED' } as const;
 
 // domain/errors/already-noted.error.ts

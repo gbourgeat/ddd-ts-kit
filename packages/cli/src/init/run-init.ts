@@ -4,9 +4,11 @@ import { DEPCRUISE_FILE } from '../depcruise/depcruise-file';
 import { renderCruiseFile } from '../depcruise/render-cruise-file';
 import { writeDocs } from '../docs/write-docs';
 import { declareContextEntries } from '../generate/kinds/declare-context-entries';
+import { placeContextFiles } from '../generate/place-context-files';
 import { wireContext } from '../generate/kinds/wire-context';
 import { formatJson } from '../json/format-json';
 import { parseContextName, toName } from '../naming';
+import { ignoreCodeTypesWhereTheyAre } from '../knip';
 import { inDialect } from '../package-manager/in-dialect';
 import { setUpSdk } from '../sdk';
 import { readTemplate, renderTemplate, type RenderContext } from '../templating';
@@ -50,6 +52,7 @@ export interface InitOptions extends StackOptions {
 export function runInit(root: string, options: InitOptions): WorkspaceReport {
   const ws = new Workspace(root, options.force);
   const config = { ...recordNoOutbox(ws, resolveStack(root, options), options.allowNoOutbox), initVersion: VERSION };
+
   const projectName = existingName(root) ?? (toName(path.basename(path.resolve(root))).kebab || 'app');
   const flat = keepFlatPlatform(ws, config);
 
@@ -111,6 +114,9 @@ function configText(ws: Workspace, config: Config): string {
  * value a gateway is given, the settings of a job) is not known here, and is said.
  */
 function rewireContexts(ws: Workspace, config: Config): void {
+  // A project initialised again may keep its code lists and permission sets where 0.86 wrote them.
+  placeContextFiles(ws, config);
+
   const present = Object.entries(config.contexts).filter(([name]) => ws.exists(`${config.contextsDir}/${name}`));
 
   for (const [name, { classification, upstreams }] of present) {
@@ -167,6 +173,9 @@ function writeFiles(ws: Workspace, { config, projectName, flat }: Written): void
 
     ws.create(kept === undefined ? target : `${kept}.ts`, target === KNIP_FILE ? laidOut(content) : content);
   }
+
+  // Initialised again, a project may keep code lists where 0.86 wrote them: knip is told of both places.
+  ignoreCodeTypesWhereTheyAre(ws, config);
 
   if (flat.moved.size > 0) {
     ws.note(

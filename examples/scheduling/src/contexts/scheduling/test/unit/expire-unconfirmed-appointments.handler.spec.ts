@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 import { ExpireUnconfirmedAppointmentsCommand } from '@/contexts/scheduling/application/calendars/commands/expire-unconfirmed-appointments/expire-unconfirmed-appointments.command';
 import type { Appointment } from '@/contexts/scheduling/domain/calendars/aggregates/appointment.aggregate';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';

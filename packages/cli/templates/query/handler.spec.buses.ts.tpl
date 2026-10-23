@@ -10,7 +10,7 @@ import { anActor } from '@ddd-ts-kit/auth/testing';
 {{/if}}
 import { createTestBuses } from '@ddd-ts-kit/testing';
 {{#if access.protected}}
-import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions{{alias.ext}}';
+import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
 {{/if}}
 import { {{name.pascal}}Handler } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.handler{{alias.ext}}';
 import { {{name.pascal}}Query } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.query{{alias.ext}}';

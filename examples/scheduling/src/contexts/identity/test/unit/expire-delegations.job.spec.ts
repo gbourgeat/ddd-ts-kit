@@ -5,7 +5,7 @@ import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import * as identityDeclarations from '@/contexts/identity/identity.declarations';
 import type { Message } from '@ddd-ts-kit/kernel';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
-import { identityPermissions } from '@/contexts/identity/application/authorization/identity.permissions';
+import { identityPermissions } from '@/contexts/identity/identity.permissions';
 import { ExpireDelegationsCommand } from '@/contexts/identity/application/commands/expire-delegations/expire-delegations.command';
 import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port';
 import { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository';

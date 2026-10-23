@@ -12,6 +12,7 @@ import { CONSTRUCTOR_INJECTION_FIXTURES } from './constructor-injection-fixtures
 import { CONSUMER_FIXTURES } from './consumer-fixtures';
 import { CONTEXT_FIXTURES } from './context-fixtures';
 import { COVERAGE_FIXTURES } from './coverage-fixtures';
+import { CONTEXT_FILE_FIXTURES } from './context-file-fixtures';
 import { DECLARATIONS_FIXTURES } from './declarations-fixtures';
 import { EARLIER_DECLARATIONS_FIXTURES } from './earlier-declarations-fixtures';
 import { DOMAIN_EVENTS_FIXTURES } from './domain-events-fixtures';
@@ -66,6 +67,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...CONSUMER_FIXTURES,
   ...CONTEXT_FIXTURES,
   ...COVERAGE_FIXTURES,
+  ...CONTEXT_FILE_FIXTURES,
   ...DECLARATIONS_FIXTURES,
   ...EARLIER_DECLARATIONS_FIXTURES,
   ...DOMAIN_EVENTS_FIXTURES,

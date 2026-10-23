@@ -12,7 +12,7 @@ import type { DelegationRepository } from '{{alias.context}}/domain/repositories
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
 import { RoleRightsService } from '{{alias.context}}/domain/services/role-rights.service{{alias.ext}}';
 import { DelegationPeriod } from '{{alias.context}}/domain/value-objects/delegation-period.vo{{alias.ext}}';
-import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions{{alias.ext}}';
+import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
 import { GrantDelegationCommand } from '{{alias.context}}/application/commands/grant-delegation/grant-delegation.command{{alias.ext}}';
 
 @CommandHandler(GrantDelegationCommand)

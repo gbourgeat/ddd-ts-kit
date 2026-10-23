@@ -24,7 +24,7 @@ export interface ContextFacts {
   readonly builders: readonly string[];
   /** The arrangements its specs share, `test/worlds/*.world.ts`. */
   readonly worlds: readonly string[];
-  /** Permission names declared in `application/authorization/<context>.permissions.ts`. */
+  /** Permission names declared in `<context>.permissions.ts`. */
   readonly permissions: readonly string[];
   readonly policies: readonly string[];
   readonly gateways: readonly string[];

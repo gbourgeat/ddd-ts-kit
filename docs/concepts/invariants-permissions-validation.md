@@ -64,7 +64,7 @@ import { definePermissions } from '@ddd-ts-kit/auth';
 import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
 
-// application/authorization/appointments.permissions.ts
+// appointments.permissions.ts
 export const permissions = definePermissions('appointments', {
   'appointment.cancel': { description: 'Cancel an appointment' },
 });
@@ -164,7 +164,7 @@ import { AggregateRoot, DomainRefusal } from '@ddd-ts-kit/kernel';
 
 const FREE_CANCELLATION_MS = 24 * 60 * 60_000;
 
-// domain/errors/codes.ts
+// scheduling.codes.ts
 export const SchedulingCodes = {
   AppointmentAlreadyCancelled: 'APPOINTMENT_ALREADY_CANCELLED',
   CancellationWindowPassed: 'CANCELLATION_WINDOW_PASSED',
@@ -332,7 +332,7 @@ import { DomainRefusal } from '@ddd-ts-kit/kernel';
 declare const calendar: { readonly id: string };
 declare const slot: { readonly startsAt: Date };
 
-// domain/errors/codes.ts
+// scheduling.codes.ts
 export const SchedulingCodes = {
   SlotTaken: 'SLOT_TAKEN',
 } as const;
@@ -357,7 +357,7 @@ throw SlotTaken.forCalendar(calendar.id, slot.startsAt);
 
 - **The name is the business's, twice.** The class is what the developer who refuses reads,
   the code what the client, the mapper, the audit trail and the tests read. They say the same
-  words: `SlotTaken` and `SLOT_TAKEN`. The code is written once, in `domain/errors/codes.ts`,
+  words: `SlotTaken` and `SLOT_TAKEN`. The code is written once, in `<context>.codes.ts`,
   and each class reads its own from that list (`errors/code-listed`). A code names one refusal
   of a context (`errors/code-unique`).
 - **The factory says what the refusal is about.** Its name starts with `for`, `with`,
@@ -378,7 +378,7 @@ throw SlotTaken.forCalendar(calendar.id, slot.startsAt);
   `expectProblem(response, { status: 409, code: 'SLOT_TAKEN' })`: the code is the key.
 - **One refusal, one file.** `domain/errors/slot-taken.error.ts` holds `SlotTaken` and nothing
   else. `ddd-ts-kit generate error scheduling SlotTaken forCalendar` writes the class, its
-  entry in `codes.ts`, the factory and its spec case, each when absent.
+  entry in `<context>.codes.ts`, the factory and its spec case, each when absent.
 
 This form is `"stack.refusals": "named"`, what `init` writes. The earlier forms keep working:
 `factories`, one `ConceptError` class per concept with a factory per refusal

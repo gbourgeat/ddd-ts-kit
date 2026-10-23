@@ -97,7 +97,7 @@ answers, abbreviated (`todos` repeats each place of `next` with the decision to 
 {
   "dryRun": false,
   "created": [
-    "src/contexts/ordering/application/authorization/ordering.permissions.ts",
+    "src/contexts/ordering/ordering.permissions.ts",
     "src/contexts/ordering/application/commands/place-order/place-order.command.ts",
     "src/contexts/ordering/application/commands/place-order/place-order.handler.ts",
     "src/contexts/ordering/test/unit/place-order.handler.spec.ts",

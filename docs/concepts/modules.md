@@ -91,10 +91,11 @@ folders of [the canonical tree](../ARCHITECTURE.md#2-canonical-tree), unchanged.
 ```
 src/contexts/appointments/
   CONTEXT.md                                   one glossary, with a ## Modules section
+  appointments.codes.ts                        the closed list of the codes of the context
+  appointments.permissions.ts                  the permission set of the context
   appointments.declarations.ts                 generated, at the root as before
   published-language/                          one per context
   domain/
-    errors/codes.ts                            the closed list of the codes of the context
     booking/
       aggregates/appointment.aggregate.ts
       errors/slot-taken.error.ts
@@ -102,7 +103,6 @@ src/contexts/appointments/
       aggregates/waitlist.aggregate.ts
       value-objects/offer.vo.ts
   application/
-    authorization/appointments.permissions.ts  the permission set of the context
     booking/
       commands/book-appointment/...
       application.declarations.ts              generated, per layer of the module
@@ -112,7 +112,7 @@ src/contexts/appointments/
   infrastructure/  presentation/  test/        unchanged: organised by technique
 ```
 
-What never moves into a module: `domain/errors/codes.ts`, `application/authorization/<context>.permissions.ts`,
+What never moves into a module: `<context>.codes.ts`, `<context>.permissions.ts`,
 `<context>.module.ts`, the generated `<context>.declarations.ts` and `<context>.dependencies.ts`,
 `CONTEXT.md` and `published-language/`. A module never has a glossary, a database schema, a
 published language or a module file of its own, and two modules of one context never exchange

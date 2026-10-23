@@ -58,7 +58,7 @@ import { definePermissions } from '@ddd-ts-kit/auth';
 import { AuthorizedCommand, Query, type Actor } from '@ddd-ts-kit/kernel';
 import { Public, Requires } from '@ddd-ts-kit/kernel/declarations';
 
-// application/authorization/appointments.permissions.ts: data owned by the context, in its words.
+// appointments.permissions.ts: data owned by the context, in its words.
 export const appointmentsPermissions = definePermissions('appointments', {
   'appointment.book': { description: 'Book an appointment for a client' },
   'appointment.cancel': { description: 'Cancel a booked appointment' },

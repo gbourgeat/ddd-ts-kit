@@ -239,7 +239,7 @@ examples/scheduling/docs/adr/0002-keep-read-models-with-projections-in-applicati
 
 ```text
 examples/scheduling/src/contexts/identity/CONTEXT.md
-examples/scheduling/src/contexts/identity/application/authorization/identity.permissions.ts
+examples/scheduling/src/contexts/identity/identity.permissions.ts
 examples/scheduling/src/contexts/identity/identity.declarations.ts
 examples/scheduling/src/contexts/identity/infrastructure/persistence/create-identity-tables.schema.ts
 examples/scheduling/src/contexts/identity/infrastructure/persistence/identity.schema.ts
@@ -494,7 +494,7 @@ examples/scheduling/src/contexts/identity/published-language/person-directory.co
 
 ```text
 examples/scheduling/src/contexts/scheduling/CONTEXT.md
-examples/scheduling/src/contexts/scheduling/application/authorization/scheduling.permissions.ts
+examples/scheduling/src/contexts/scheduling/scheduling.permissions.ts
 examples/scheduling/src/contexts/scheduling/infrastructure/persistence/create-scheduling-tables.schema.ts
 examples/scheduling/src/contexts/scheduling/infrastructure/persistence/scheduling.schema.ts
 examples/scheduling/src/contexts/scheduling/presentation/http/scheduling.routes.ts
@@ -988,7 +988,7 @@ examples/scheduling/src/contexts/scheduling/test/unit/unknown-calendar.error.spe
 
 ```text
 examples/scheduling/src/contexts/notification/CONTEXT.md
-examples/scheduling/src/contexts/notification/application/authorization/notification.permissions.ts
+examples/scheduling/src/contexts/notification/notification.permissions.ts
 examples/scheduling/src/contexts/notification/infrastructure/persistence/create-notification-tables.schema.ts
 examples/scheduling/src/contexts/notification/infrastructure/persistence/notification.schema.ts
 examples/scheduling/src/contexts/notification/notification.declarations.ts
@@ -1112,7 +1112,7 @@ examples/scheduling/test/e2e/notification-list-notifications.e2e.spec.ts
 ```text
 examples/scheduling/src/contexts/analytics/CONTEXT.md
 examples/scheduling/src/contexts/analytics/analytics.declarations.ts
-examples/scheduling/src/contexts/analytics/application/authorization/analytics.permissions.ts
+examples/scheduling/src/contexts/analytics/analytics.permissions.ts
 examples/scheduling/src/contexts/analytics/infrastructure/persistence/analytics.schema.ts
 examples/scheduling/src/contexts/analytics/infrastructure/persistence/create-analytics-tables.schema.ts
 examples/scheduling/src/contexts/analytics/presentation/http/analytics.routes.ts

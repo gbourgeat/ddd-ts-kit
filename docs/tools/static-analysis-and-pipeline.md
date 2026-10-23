@@ -70,7 +70,7 @@ business stays in plain TypeScript, with a refusal named after what it refuses:
 ```ts
 import { DomainRefusal, ValueObject } from '@ddd-ts-kit/kernel';
 
-// domain/errors/codes.ts
+// identity.codes.ts
 export const IdentityCodes = { InvalidEmail: 'INVALID_EMAIL' } as const;
 
 // domain/errors/invalid-email.error.ts

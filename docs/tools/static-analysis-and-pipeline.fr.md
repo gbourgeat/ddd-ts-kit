@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:d192fb6e51d2fc36 -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:31fac142649b7a23 -->
 
 # L'analyse statique et le pipeline
 
@@ -72,7 +72,7 @@ métier reste en TypeScript simple, avec un refus nommé d'après ce qu'il refus
 ```ts
 import { DomainRefusal, ValueObject } from '@ddd-ts-kit/kernel';
 
-// domain/errors/codes.ts
+// identity.codes.ts
 export const IdentityCodes = { InvalidEmail: 'INVALID_EMAIL' } as const;
 
 // domain/errors/invalid-email.error.ts

@@ -4,7 +4,7 @@ import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
 import type { DelegationRepository } from '{{alias.context}}/domain/repositories/delegation.repository{{alias.ext}}';
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
 import { RoleRightsService } from '{{alias.context}}/domain/services/role-rights.service{{alias.ext}}';
-import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions{{alias.ext}}';
+import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
 import type { SearchMembersReader } from '{{alias.context}}/application/ports/search-members-reader.port{{alias.ext}}';
 import { SearchMembersQuery } from '{{alias.context}}/application/queries/search-members/search-members.query{{alias.ext}}';
 import type { SearchMembersResult } from '{{alias.context}}/application/queries/search-members/search-members.result{{alias.ext}}';

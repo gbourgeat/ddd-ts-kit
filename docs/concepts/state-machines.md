@@ -34,7 +34,7 @@ export const AppointmentStatus = {
 
 export type AppointmentStatus = (typeof AppointmentStatus)[keyof typeof AppointmentStatus];
 
-// scheduling/domain/errors/codes.ts (the three codes the machine uses)
+// scheduling.codes.ts (the three codes the machine uses)
 export const SchedulingCodes = {
   AppointmentAlreadyConfirmed: 'APPOINTMENT_ALREADY_CONFIRMED',
   AppointmentEnded: 'APPOINTMENT_ENDED',
@@ -134,7 +134,7 @@ function refused(
   receives the context the aggregate passes and answers a refusal or nothing.
 - **The refusal** of a transition the state does not allow is built by a static factory of a
   refusal class, given the state, the transition and the context: the error codes of the model
-  stay where they are, in `domain/errors/codes.ts`, and each refusal in its own class
+  stay where they are, in `<context>.codes.ts`, and each refusal in its own class
   (`AppointmentEnded`).
 - Without `refused`, a forbidden transition throws `TransitionError.forbidden(from, transition)`
   of the kernel, code `FORBIDDEN_TRANSITION`: a placeholder until the lifecycle has its own

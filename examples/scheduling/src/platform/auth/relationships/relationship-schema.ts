@@ -1,8 +1,8 @@
 import { defineSchema, via } from '@ddd-ts-kit/auth/rebac';
-import { analyticsPermissions } from '@/contexts/analytics/application/authorization/analytics.permissions';
-import { identityPermissions } from '@/contexts/identity/application/authorization/identity.permissions';
-import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { analyticsPermissions } from '@/contexts/analytics/analytics.permissions';
+import { identityPermissions } from '@/contexts/identity/identity.permissions';
+import { notificationPermissions } from '@/contexts/notification/notification.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 import { permissions } from '@/platform/auth/authorization/permissions';
 
 /**

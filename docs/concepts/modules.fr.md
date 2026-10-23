@@ -1,5 +1,5 @@
 [English](modules.md) · **Français**
-<!-- translation-of: modules.md sha256:160f75a4ea096eaa -->
+<!-- translation-of: modules.md sha256:d3ee931eac10972e -->
 
 # Modules du modèle
 
@@ -98,10 +98,11 @@ inchangés.
 ```
 src/contexts/appointments/
   CONTEXT.md                                   un seul glossaire, avec une section ## Modules
+  appointments.codes.ts                        la liste fermée des codes du contexte
+  appointments.permissions.ts                  l'ensemble des permissions du contexte
   appointments.declarations.ts                 généré, à la racine comme avant
   published-language/                          un par contexte
   domain/
-    errors/codes.ts                            la liste fermée des codes du contexte
     booking/
       aggregates/appointment.aggregate.ts
       errors/slot-taken.error.ts
@@ -109,7 +110,6 @@ src/contexts/appointments/
       aggregates/waitlist.aggregate.ts
       value-objects/offer.vo.ts
   application/
-    authorization/appointments.permissions.ts  l'ensemble des permissions du contexte
     booking/
       commands/book-appointment/...
       application.declarations.ts              généré, par couche du module
@@ -119,8 +119,8 @@ src/contexts/appointments/
   infrastructure/  presentation/  test/        inchangés : organisés par technique
 ```
 
-Ce qui ne passe jamais dans un module : `domain/errors/codes.ts`,
-`application/authorization/<context>.permissions.ts`, `<context>.module.ts`, les fichiers générés
+Ce qui ne passe jamais dans un module : `<context>.codes.ts`,
+`<context>.permissions.ts`, `<context>.module.ts`, les fichiers générés
 `<context>.declarations.ts` et `<context>.dependencies.ts`, `CONTEXT.md` et
 `published-language/`. Un module n'a jamais de glossaire, de schéma de base de données, de langage
 publié ni de fichier de module à lui, et deux modules d'un même contexte n'échangent jamais

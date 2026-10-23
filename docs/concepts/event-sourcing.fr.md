@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:344ee47a327f9409 -->
+<!-- translation-of: event-sourcing.md sha256:1a5d0ad6341c7a6c -->
 
 # Event sourcing, par agrégat
 
@@ -133,7 +133,7 @@ export class AttendanceRecordNoShowNoted extends NamedDomainEvent('scheduling.at
 
 export type AttendanceRecordEvent = AttendanceRecordCreated | AttendanceRecordNoShowNoted;
 
-// domain/errors/codes.ts
+// scheduling.codes.ts
 export const SchedulingCodes = { AlreadyNoted: 'ALREADY_NOTED' } as const;
 
 // domain/errors/already-noted.error.ts

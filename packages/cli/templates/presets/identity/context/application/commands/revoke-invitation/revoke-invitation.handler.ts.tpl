@@ -11,7 +11,7 @@ import type { DelegationRepository } from '{{alias.context}}/domain/repositories
 import type { InvitationRepository } from '{{alias.context}}/domain/repositories/invitation.repository{{alias.ext}}';
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
 import { RoleRightsService } from '{{alias.context}}/domain/services/role-rights.service{{alias.ext}}';
-import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions{{alias.ext}}';
+import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
 import { RevokeInvitationCommand } from '{{alias.context}}/application/commands/revoke-invitation/revoke-invitation.command{{alias.ext}}';
 
 @CommandHandler(RevokeInvitationCommand)

@@ -1,4 +1,5 @@
 import { parseGlossary } from '../check/language/parse-glossary';
+import { contextFileAt, PERMISSIONS_FILE } from '../context-files';
 import type { Config, Upstream } from '../config';
 import { type ContextTree, roleDirectoriesOf, roleFilesOf, treeOf } from '../model-modules';
 import { toName } from '../naming';
@@ -64,7 +65,11 @@ function treeFacts(ws: Workspace, tree: ContextTree, name: string): TreeFacts {
     publishedEvents: publishedEventsOf(ws, `${directory}/published-language`),
     builders: namesBySuffix(ws, tree, { folder: 'test/builders', suffix: '.builder.ts' }),
     worlds: namesBySuffix(ws, tree, { folder: 'test/worlds', suffix: '.world.ts' }),
-    permissions: permissionsOf(ws.read(`${directory}/application/authorization/${name}.permissions.ts`) ?? ''),
+    permissions: permissionsOf(
+      ws.read(
+        `${directory}/${contextFileAt(PERMISSIONS_FILE, name, (relative) => ws.exists(`${directory}/${relative}`))}`,
+      ) ?? '',
+    ),
     jobs: readJobs(ws, tree, name),
     backgroundJobs: readBackgroundJobs(ws, tree),
     stateMachines: readStateMachines(ws, tree),

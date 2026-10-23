@@ -1,5 +1,5 @@
 [English](presentation-layer.md) · **Français**
-<!-- translation-of: presentation-layer.md sha256:67312a59c09cf6ef -->
+<!-- translation-of: presentation-layer.md sha256:e20b2be6a7f6a1ad -->
 
 # La couche présentation : contrôleurs, groupes de routes, gardes
 
@@ -391,7 +391,7 @@ import { definePermissions } from '@ddd-ts-kit/auth';
 import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
 
-// application/authorization/scheduling.permissions.ts
+// scheduling.permissions.ts
 export const schedulingPermissions = definePermissions('scheduling', {
   'appointment.cancel': { description: 'Patient cancels until notice' },
 });

@@ -1,6 +1,7 @@
 import { aliasRoots } from '../alias';
 import { CliError } from '../cli-error';
 import type { Config } from '../config';
+import { contextFilePlacement } from '../context-files';
 import { declaredModule, declaredModules, modulePlacement, placedImports } from '../model-modules';
 import type { Workspace } from '../workspace';
 
@@ -12,36 +13,19 @@ export interface ModuleRequest {
 }
 
 /**
- * In a project whose contexts have modules of their model, the generators keep naming files as
- * they are without modules: the workspace reads each where it is and writes it in the module
- * `--module` names, and the imports written follow. Answers what stops it, before the generated
- * declarations are derived from the tree.
+ * Where the generators read and write the files of a context, named as they are without modules
+ * and at their place of today: the workspace reads each where it is and writes it in the module
+ * `--module` names, writes the code list and the permission set of a context at its root unless
+ * the project still holds them where 0.86 wrote them (`contextFilePlacement`), and the imports
+ * written follow. Answers what stops it, before the generated declarations are derived from the
+ * tree.
  */
-export function placeInModules(ws: Workspace, config: Config, request: ModuleRequest): () => void {
-  const asked = askedModule(config, request);
-  const hasModules = Object.values(config.contexts).some((context) => context.modules.length > 0);
+export function placeGeneratedFiles(ws: Workspace, config: Config, request: ModuleRequest): () => void {
+  const inModules = modulesPlacement(ws, config, request);
+  const contextFile = contextFilePlacement(config.contextsDir, (file) => ws.existsAsIs(file));
 
-  if (asked === undefined && !hasModules) {
-    return () => undefined;
-  }
-
-  const modulesOf = (context: string): string[] => declaredModules(config, context);
-
-  const place = modulePlacement({
-    config,
-    asked,
-    existsAsIs: (file) => ws.existsAsIs(file),
-    modulesOf,
-    unplaced: (context, relative) => {
-      throw unplacedError(context, relative, { modules: declaredModules(config, context), command: request.command });
-    },
-    split: (context, relative, holder) => {
-      throw new CliError(
-        `The use case of ${relative} is in the module "${holder}" of "${context}": --module ${asked?.module ?? ''} would split it between two modules.`,
-        `Run it without --module, which places the file with its use case, or with \`--module ${holder}\`.`,
-      );
-    },
-  });
+  const place = (file: string, writing: boolean): string =>
+    contextFile(inModules === undefined ? file : inModules(file, writing));
 
   let active = true;
 
@@ -55,6 +39,36 @@ export function placeInModules(ws: Workspace, config: Config, request: ModuleReq
     active = false;
     ws.placeFiles(undefined);
   };
+}
+
+/** Where a file goes among the modules of the model, or nothing when no context has modules and none is asked. */
+function modulesPlacement(
+  ws: Workspace,
+  config: Config,
+  request: ModuleRequest,
+): ((file: string, writing: boolean) => string) | undefined {
+  const asked = askedModule(config, request);
+  const hasModules = Object.values(config.contexts).some((context) => context.modules.length > 0);
+
+  if (asked === undefined && !hasModules) {
+    return undefined;
+  }
+
+  return modulePlacement({
+    config,
+    asked,
+    existsAsIs: (file) => ws.existsAsIs(file),
+    modulesOf: (context) => declaredModules(config, context),
+    unplaced: (context, relative) => {
+      throw unplacedError(context, relative, { modules: declaredModules(config, context), command: request.command });
+    },
+    split: (context, relative, holder) => {
+      throw new CliError(
+        `The use case of ${relative} is in the module "${holder}" of "${context}": --module ${asked?.module ?? ''} would split it between two modules.`,
+        `Run it without --module, which places the file with its use case, or with \`--module ${holder}\`.`,
+      );
+    },
+  });
 }
 
 function askedModule(

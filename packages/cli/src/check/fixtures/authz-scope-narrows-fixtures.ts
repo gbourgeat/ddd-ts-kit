@@ -6,7 +6,7 @@ import { SAMPLES } from './samples';
 import { source } from './source';
 
 const { BILLING, QUERY_HANDLER, QUERY_HANDLER_SPEC } = PATHS;
-const PERMISSIONS = `${BILLING}/application/authorization/billing.permissions.ts`;
+const PERMISSIONS = `${BILLING}/billing.permissions.ts`;
 const SIGNED_IN = 'src/platform/auth/authorization/signed-in-grants.ts';
 const AUTHORIZER = 'src/platform/auth/authorization/create-authorizer.ts';
 
@@ -118,7 +118,7 @@ function searching(grants: string, narrowing: Narrowing = {}): FixtureFiles {
     [QUERY_HANDLER_SPEC]: SAMPLES.SPEC,
     [SIGNED_IN]: source(
       "import type { Grant } from '@ddd-ts-kit/auth';",
-      "import { billingPermissions } from '@/contexts/billing/application/authorization/billing.permissions.js';",
+      "import { billingPermissions } from '@/contexts/billing/billing.permissions.js';",
       '',
       `export const signedInGrants: readonly Grant[] = ${grants};`,
       '',
@@ -135,7 +135,7 @@ function authorizing(grants: string): FixtureFiles {
     [QUERY_HANDLER_SPEC]: SAMPLES.SPEC,
     [AUTHORIZER]: source(
       "import { type Authorizer, SignedInGrantsAuthorizer } from '@ddd-ts-kit/auth';",
-      "import { billingPermissions } from '@/contexts/billing/application/authorization/billing.permissions.js';",
+      "import { billingPermissions } from '@/contexts/billing/billing.permissions.js';",
       '',
       'declare const model: Authorizer;',
       'declare function grantsOf(set: unknown): readonly string[];',
@@ -152,7 +152,7 @@ function authorizing(grants: string): FixtureFiles {
 function handler({ before, field, permission = "billingPermissions['invoice.search']" }: Narrowing = {}): string {
   return source(
     "import type { Access } from '@ddd-ts-kit/auth';",
-    "import { billingPermissions } from '@/contexts/billing/application/authorization/billing.permissions.js';",
+    "import { billingPermissions } from '@/contexts/billing/billing.permissions.js';",
     "import type { InvoicesIssuedQuery } from '@/contexts/billing/application/queries/invoices-issued/invoices-issued.query.js';",
     '',
     ...(before === undefined ? [] : [before, '']),

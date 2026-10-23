@@ -1,9 +1,9 @@
 import type { AuthorizationContext } from '@ddd-ts-kit/auth';
 import type { RoleGrant } from '@/platform/auth/authorization/role-grant';
 import { auditPermissions } from '@/platform/audit/audit.permissions';
-import { identityPermissions } from '@/contexts/identity/application/authorization/identity.permissions';
-import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { identityPermissions } from '@/contexts/identity/identity.permissions';
+import { notificationPermissions } from '@/contexts/notification/notification.permissions';
+import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 import { Role } from '@/platform/auth/authorization/role';
 
 /**

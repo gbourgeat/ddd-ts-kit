@@ -60,7 +60,7 @@ write it in the domain, where every caller meets it, with a code of its own:
 // contexts/appointments/domain/value-objects/time-slot.vo.ts
 import { DomainRefusal, ValueObject } from '@ddd-ts-kit/kernel';
 
-// contexts/appointments/domain/errors/codes.ts
+// contexts/appointments/appointments.codes.ts
 export const AppointmentsCodes = { InvalidTimeSlot: 'INVALID_TIME_SLOT' } as const;
 
 // contexts/appointments/domain/errors/invalid-time-slot.error.ts

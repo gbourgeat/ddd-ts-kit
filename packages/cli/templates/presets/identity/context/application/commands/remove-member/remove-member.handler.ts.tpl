@@ -17,7 +17,7 @@ import type { OrganisationRepository } from '{{alias.context}}/domain/repositori
 import { RoleRightsService, type HeldRights } from '{{alias.context}}/domain/services/role-rights.service{{alias.ext}}';
 import { MemberRight } from '{{alias.context}}/domain/vocabularies/member-right.vocabulary{{alias.ext}}';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
-import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions{{alias.ext}}';
+import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
 import { RemoveMemberCommand } from '{{alias.context}}/application/commands/remove-member/remove-member.command{{alias.ext}}';
 
 @CommandHandler(RemoveMemberCommand)

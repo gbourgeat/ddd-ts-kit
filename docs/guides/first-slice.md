@@ -44,12 +44,12 @@ import { NamedDomainEvent,
 } from '@ddd-ts-kit/kernel';
 import { CommandHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
 
-// application/authorization/ordering.permissions.ts: `generate command` declared the permission
+// ordering.permissions.ts: `generate command` declared the permission
 export const orderingPermissions = definePermissions('ordering', {
   'order.place': { description: 'Place order' },
 });
 
-// domain/errors/codes.ts: the codes of the context, one closed list
+// ordering.codes.ts: the codes of the context, one closed list
 export const OrderingCodes = {
   OrderEmpty: 'ORDER_EMPTY',
 } as const;

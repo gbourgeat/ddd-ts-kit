@@ -1,5 +1,5 @@
 import { DomainRefusal } from '@ddd-ts-kit/kernel';
-import { NotificationCodes } from '@/contexts/notification/domain/errors/codes';
+import { NotificationCodes } from '@/contexts/notification/notification.codes';
 
 export class ReminderNotDue extends DomainRefusal {
   readonly code = NotificationCodes.ReminderNotDue;

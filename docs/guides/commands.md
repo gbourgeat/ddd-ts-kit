@@ -283,6 +283,7 @@ Usage
   ddd-ts-kit value-objects [--dry-run]
   ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]
   ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]
+  ddd-ts-kit context-layout [<context>...] [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
   ddd-ts-kit affected --base <git-ref> --run <script>
   ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--explain] [--self]
@@ -340,7 +341,15 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    first with generate module: each <path> is a file or a folder of a role, relative to the
                    context (domain/aggregates/waitlist.aggregate.ts, application/commands/join-waitlist);
                    every import of them under the source root, test/ and scripts/ follows, and the
-                   generated declarations are rewritten; codes.ts and the permissions stay one per context
+                   generated declarations are rewritten; the code list and the permission set stay one per
+                   context, at its root
+  context-layout   takes the files of the contexts, or of the ones named, that 0.86 wrote in a role folder
+                   to their place of today: domain/errors/codes.ts to <context>.codes.ts and
+                   application/authorization/<context>.permissions.ts to <context>.permissions.ts, at the
+                   root of the context; every import of them under the source root, test/ and scripts/
+                   follows, what derives from the tree is written again (.dependency-cruiser.cjs, the
+                   declarations) and knip is told of the code lists where they are; the generators keep
+                   either place until then
   controllers      moves the function routes of a project, or of one context, to controller classes: each
                    <name>.route.ts becomes <resource>/<name>/<name>.controller.ts behind the route group of
                    its resource, its schema files and its spec follow; a context is turned whole or not at all

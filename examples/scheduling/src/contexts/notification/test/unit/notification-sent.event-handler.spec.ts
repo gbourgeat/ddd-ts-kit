@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
-import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
+import { notificationPermissions } from '@/contexts/notification/notification.permissions';
 import { aReminder } from '@/contexts/notification/test/builders/reminder.builder';
 import { NotificationSent } from '@/contexts/notification/domain/events/notification-sent.event';
 import { NotificationKind } from '@/contexts/notification/domain/value-objects/notification-kind.vo';

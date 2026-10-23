@@ -139,7 +139,7 @@ export const BEHAVIOUR_INJECTIONS: readonly Injection[] = [
       },
       {
         file: COMMAND,
-        from: `import { notificationPermissions } from '${SOURCE_ALIAS}contexts/notification/application/authorization/notification.permissions${SOURCE_SUFFIX}';\n`,
+        from: `import { notificationPermissions } from '${SOURCE_ALIAS}contexts/notification/notification.permissions${SOURCE_SUFFIX}';\n`,
         to: '',
       },
       {

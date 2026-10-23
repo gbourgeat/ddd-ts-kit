@@ -3,7 +3,7 @@ import { cli, exists, read, write } from './helpers';
 import { failure, report } from './reports';
 import { billingProject as project, generateError as generate } from './support/billing-error-project';
 
-const CODES = 'src/contexts/billing/domain/errors/codes.ts';
+const CODES = 'src/contexts/billing/billing.codes.ts';
 const ISSUED = 'src/contexts/billing/domain/errors/invoice-already-issued.error.ts';
 const ISSUED_SPEC = 'src/contexts/billing/test/unit/invoice-already-issued.error.spec.ts';
 const PAYMENT_TERMS = ['--term', 'Payment=Money paid against an invoice', '--term', 'Late=Past its due date'];
@@ -34,7 +34,7 @@ describe('generate error, in a project of one class per refusal ("stack.refusals
 
     expect(read(root, ISSUED).split('\n').slice(0, 6)).toEqual([
       "import { DomainRefusal } from '@ddd-ts-kit/kernel';",
-      "import { BillingCodes } from '@/contexts/billing/domain/errors/codes';",
+      "import { BillingCodes } from '@/contexts/billing/billing.codes';",
       '',
       'export class InvoiceAlreadyIssued extends DomainRefusal {',
       '  readonly code = BillingCodes.InvoiceAlreadyIssued;',
@@ -149,7 +149,7 @@ describe('generate error, in a project of one class per refusal, refused', () =>
   });
 
   it('refuses a list of codes that does not declare the list of its context', () => {
-    write(root, 'src/contexts/billing/domain/errors/codes.ts', 'export const Codes = {} as const;\n');
+    write(root, 'src/contexts/billing/billing.codes.ts', 'export const Codes = {} as const;\n');
 
     expect(failure(generate(root, 'InvoiceVoided', 'forInvoice')).message).toBe(
       `${CODES} does not declare the list BillingCodes.`,

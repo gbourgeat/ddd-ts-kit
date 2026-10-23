@@ -3,7 +3,7 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { appointmentExpiredV1 } from '@/contexts/scheduling/published-language';
-import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
+import { notificationPermissions } from '@/contexts/notification/notification.permissions';
 import { SchedulingAppointmentExpiredIntegrationHandler } from '@/contexts/notification/application/integration/handlers/scheduling-appointment-expired.integration-handler';
 import { aReminder } from '@/contexts/notification/test/builders/reminder.builder';
 import { aNotificationWorld } from '@/contexts/notification/test/worlds/notification.world';

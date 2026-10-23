@@ -1,6 +1,6 @@
 import { describe, expect, it } from '{{tests.module}}';
 import type { Permission } from '@ddd-ts-kit/auth';
-import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions{{alias.ext}}';
+import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
 
 describe('The permissions of {{context.kebab}}', () => {
   it('belong to {{context.kebab}}, each under an identifier of its own and with a description', () => {

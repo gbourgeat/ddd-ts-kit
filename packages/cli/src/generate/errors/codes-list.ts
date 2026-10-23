@@ -4,7 +4,7 @@ import { matchingBracket } from '../../check/text/matching-bracket';
 
 const ENTRY_KEY = /([A-Za-z_$][\w$]*)\s*:\s*(?=['"])/g;
 
-/** The object literal of the closed list of codes in `domain/errors/codes.ts`: its braces, and its entries in order. */
+/** The object literal of the closed list of codes in `<context>.codes.ts`: its braces, and its entries in order. */
 export interface CodesList {
   readonly open: number;
   readonly close: number;

@@ -5,7 +5,7 @@ module.exports = {
     {
       "name": "layer-domain-purity",
       "severity": "error",
-      "comment": "domain/ imports only its own domain/, the shared kernel and the allowed kernel packages. Invert the dependency: declare the need as a port, an abstract class in domain/repositories or application/ports.",
+      "comment": "domain/ imports only its own domain/, the code list of its context, the shared kernel and the allowed kernel packages. Invert the dependency: declare the need as a port, an abstract class in domain/repositories or application/ports.",
       "from": {
         "path": "^src/contexts/([^/]+)/domain/",
         "pathNot": [
@@ -18,6 +18,7 @@ module.exports = {
       "to": {
         "pathNot": [
           "^src/contexts/$1/domain(/|\\.ts$)",
+          "^src/contexts/$1/$1\\.codes\\.ts$",
           "^src/shared-kernel/",
           "^src/contexts/(?!$1/)[^/]+/(?!published-language(/|\\.ts$))",
           "(^|/)node_modules/@ddd-ts-kit/kernel/",
@@ -28,7 +29,7 @@ module.exports = {
     {
       "name": "layer-application-inward",
       "severity": "error",
-      "comment": "application/ imports domain/, application/, published languages and the allowed kernel packages. Depend on a port and let the composition root bind the adapter.",
+      "comment": "application/ imports domain/, application/, the code list and the permission set of its context, published languages and the allowed kernel packages. Depend on a port and let the composition root bind the adapter.",
       "from": {
         "path": "^src/contexts/([^/]+)/application/",
         "pathNot": [
@@ -42,6 +43,8 @@ module.exports = {
         "pathNot": [
           "^src/contexts/$1/domain(/|\\.ts$)",
           "^src/contexts/$1/application(/|\\.ts$)",
+          "^src/contexts/$1/$1\\.codes\\.ts$",
+          "^src/contexts/$1/$1\\.permissions\\.ts$",
           "^src/contexts/$1/published-language(/|\\.ts$)",
           "^src/shared-kernel/",
           "^src/contexts/(?!$1/)[^/]+/",

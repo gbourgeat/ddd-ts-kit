@@ -64,7 +64,7 @@ Run the `Start with` commands of the slice row, or for a typical command:
 
 ```bash
 npx ddd-ts-kit generate command <ctx> <UseCase> --aggregate <Aggregate> --permission <aggregate>.<action> --grant <role> --json
-npx ddd-ts-kit generate error <ctx> <Refusal> <factory> --json        # one per refusal: its class, its code in codes.ts, a factory
+npx ddd-ts-kit generate error <ctx> <Refusal> <factory> --json        # one per refusal: its class, its code in <context>.codes.ts, a factory
 npx ddd-ts-kit generate domain-event <ctx> <Aggregate> <Fact> --json  # the fact recorded
 npx ddd-ts-kit generate route <ctx> <UseCase> --method POST --path /<resource> --json   # [--group <Name>] [--mapper] [--serializer]
 ```
@@ -92,7 +92,7 @@ factory after what the refusal is about. The class is made of terms of the gloss
 qualifiers `invalid`, `unknown`, `already`, `too`, `no`, `missing`, `required` (`BookingTooLate`);
 a missing term is added with `--term` (`language/glossary-term`). `generate error scheduling SlotTaken forCalendar` writes
 `domain/errors/slot-taken.error.ts` (`SlotTaken`, extending `DomainRefusal`, never `...Error`),
-adds `SlotTaken: 'SLOT_TAKEN'` to `SchedulingCodes` in `domain/errors/codes.ts`, the factory
+adds `SlotTaken: 'SLOT_TAKEN'` to `SchedulingCodes` in `<context>.codes.ts`, the factory
 `SlotTaken.forCalendar()`, and its case to the spec. Give the factory the facts of the refusal as
 typed parameters, and throw it where the rule is kept:
 `throw SlotTaken.forCalendar(calendar.id, slot.startsAt)`. Seen from another place, the same

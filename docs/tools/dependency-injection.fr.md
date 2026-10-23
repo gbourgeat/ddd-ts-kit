@@ -1,5 +1,5 @@
 [English](dependency-injection.md) · **Français**
-<!-- translation-of: dependency-injection.md sha256:28b4eb9e7f3c96fa -->
+<!-- translation-of: dependency-injection.md sha256:4e633a3e0186046a -->
 
 # Injection de dépendances : tsyringe avec déclarations, NestJS, câblage manuel
 
@@ -42,7 +42,7 @@ export abstract class AppointmentRepository {
   abstract save(appointment: Appointment): Promise<void>;
 }
 
-// contexts/appointments/application/authorization/appointments.permissions.ts
+// contexts/appointments/appointments.permissions.ts
 export const appointmentsPermissions = definePermissions('appointments', {
   'appointment.book': { description: 'Book an appointment' },
 });

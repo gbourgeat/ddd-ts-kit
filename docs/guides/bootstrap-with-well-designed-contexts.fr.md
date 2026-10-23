@@ -1,5 +1,5 @@
 [English](bootstrap-with-well-designed-contexts.md) · **Français**
-<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:a7bf18dd37904d3e -->
+<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:abdd2123797b1947 -->
 
 # Démarrer avec des contextes bien conçus
 
@@ -89,7 +89,7 @@ Une autre *stack* est refusée avant que rien ne soit écrit, avec l'option qui 
 |---|---|---|
 | `stack.style` | `declared` | les cas d'usage, les politiques et les adaptateurs se déclarent eux-mêmes ; un module explicite serait une seconde copie du contexte à tenir |
 | `stack.dependencies` | `signature` | les classes disent ce dont elles ont besoin par leur constructeur |
-| `stack.refusals` | `named`, `factories` | named : une classe par refus, qui lit son code dans `domain/errors/codes.ts` ; factories : les fabriques statiques d'une classe par concept |
+| `stack.refusals` | `named`, `factories` | named : une classe par refus, qui lit son code dans `<context>.codes.ts` ; factories : les fabriques statiques d'une classe par concept |
 | `stack.valueObjects` | `throwing` | les objets-valeurs refusent une valeur invalide quand on les construit |
 | `stack.routes` | `controllers` | une classe de contrôleur par route |
 | `stack.orm` | `knex`, `drizzle` | les deux adaptateurs écrits ; Prisma et TypeORM ne le sont pas |

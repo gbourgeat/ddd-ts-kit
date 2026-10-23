@@ -8,7 +8,7 @@ import { project } from './project';
 
 const { AGGREGATE, AGGREGATE_SPEC, BILLING, CATALOG, PUBLISHED, ROUTES } = PATHS;
 const STATUS = `${BILLING}/domain/vocabularies/invoice-status.vocabulary.ts`;
-const PERMISSIONS = `${BILLING}/application/authorization/billing.permissions.ts`;
+const PERMISSIONS = `${BILLING}/billing.permissions.ts`;
 const GRANTS = 'src/platform/auth/roles/roles.ts';
 const ROLE = 'src/platform/auth/authorization/role.ts';
 const SERVICE = `${BILLING}/domain/services/pricing.service.ts`;
@@ -54,7 +54,7 @@ export const VOCABULARY_FIXTURES: readonly Fixture[] = [
       [AGGREGATE_SPEC]: "import { it } from 'vitest';\n\nit('reads issued', () => 'issued');\n",
       [PUBLISHED]: "export const contract = { status: 'issued' as string, issued: true };\n",
       [GRANTS]:
-        "import { billingPermissions } from '@/contexts/billing/application/authorization/billing.permissions.js';\n\nexport const grants = { [billingPermissions['invoice.issue'].id]: [billingPermissions['invoice.issue']] };\n",
+        "import { billingPermissions } from '@/contexts/billing/billing.permissions.js';\n\nexport const grants = { [billingPermissions['invoice.issue'].id]: [billingPermissions['invoice.issue']] };\n",
     }),
   },
   {

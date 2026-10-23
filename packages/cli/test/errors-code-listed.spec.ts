@@ -82,9 +82,9 @@ describe('what errors/code-listed says under "stack.refusals": "named"', () => {
       'BillingCodes has no entry InvoiceAlreadySent: the code of the refusal is not listed.',
     ]);
 
-    expect(said('refusal classes in a context without domain/errors/codes.ts')).toEqual([
-      'InvoiceAlreadyIssued reads BillingCodes.InvoiceAlreadyIssued, but the context "billing" has no domain/errors/codes.ts.',
-      'UnknownInvoice reads BillingCodes.UnknownInvoice, but the context "billing" has no domain/errors/codes.ts.',
+    expect(said('refusal classes in a context without its code list')).toEqual([
+      'InvoiceAlreadyIssued reads BillingCodes.InvoiceAlreadyIssued, but the context "billing" has no billing.codes.ts.',
+      'UnknownInvoice reads BillingCodes.UnknownInvoice, but the context "billing" has no billing.codes.ts.',
     ]);
   });
 
@@ -106,7 +106,7 @@ describe('what errors/code-listed says under "stack.refusals": "named"', () => {
     ]);
 
     expect(said('a codes.ts that declares no list named after its context')).toEqual([
-      'domain/errors/codes.ts of "billing" declares no BillingCodes.',
+      'billing.codes.ts declares no BillingCodes.',
     ]);
   });
 });

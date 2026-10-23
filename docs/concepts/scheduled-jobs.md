@@ -213,7 +213,7 @@ of `SendReminders` only acts on what is.
 ```ts
 import { AggregateRoot, DomainRefusal, Repository } from '@ddd-ts-kit/kernel';
 
-// domain/errors/codes.ts
+// notification.codes.ts
 export const NotificationCodes = { ReminderNotDue: 'REMINDER_NOT_DUE' } as const;
 
 // domain/errors/reminder-not-due.error.ts

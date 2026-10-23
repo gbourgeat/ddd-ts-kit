@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:68a02dbe00677cb8 -->
+<!-- translation-of: persistence.md sha256:3e7b85e754a6a53d -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -96,7 +96,7 @@ export class InvoicePaid extends NamedDomainEvent('billing.invoice.paid') {
   }
 }
 
-// domain/errors/codes.ts
+// billing.codes.ts
 export const BillingCodes = { InvoiceAlreadyPaid: 'INVOICE_ALREADY_PAID' } as const;
 
 // domain/errors/invoice-already-paid.error.ts

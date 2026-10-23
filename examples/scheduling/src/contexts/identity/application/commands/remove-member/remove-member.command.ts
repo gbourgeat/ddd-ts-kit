@@ -1,6 +1,6 @@
 import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
-import { identityPermissions } from '@/contexts/identity/application/authorization/identity.permissions';
+import { identityPermissions } from '@/contexts/identity/identity.permissions';
 
 @Requires(identityPermissions['member.remove'], {
   resource: (command: RemoveMemberCommand) => ({ type: 'practice', id: command.practiceId }),

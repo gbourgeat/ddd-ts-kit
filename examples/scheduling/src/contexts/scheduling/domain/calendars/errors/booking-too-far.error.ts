@@ -1,5 +1,5 @@
 import { DomainRefusal } from '@ddd-ts-kit/kernel';
-import { SchedulingCodes } from '@/contexts/scheduling/domain/errors/codes';
+import { SchedulingCodes } from '@/contexts/scheduling/scheduling.codes';
 
 export class BookingTooFar extends DomainRefusal {
   readonly code = SchedulingCodes.BookingTooFar;

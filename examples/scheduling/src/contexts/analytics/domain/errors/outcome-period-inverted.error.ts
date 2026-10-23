@@ -1,5 +1,5 @@
 import { DomainRefusal } from '@ddd-ts-kit/kernel';
-import { AnalyticsCodes } from '@/contexts/analytics/domain/errors/codes';
+import { AnalyticsCodes } from '@/contexts/analytics/analytics.codes';
 
 export class OutcomePeriodInverted extends DomainRefusal {
   readonly code = AnalyticsCodes.OutcomePeriodInverted;

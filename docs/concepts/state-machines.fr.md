@@ -1,5 +1,5 @@
 [English](state-machines.md) · **Français**
-<!-- translation-of: state-machines.md sha256:9b615f4e7ac6b581 -->
+<!-- translation-of: state-machines.md sha256:39c5877cb906d6cc -->
 
 # Machines à états
 
@@ -36,7 +36,7 @@ export const AppointmentStatus = {
 
 export type AppointmentStatus = (typeof AppointmentStatus)[keyof typeof AppointmentStatus];
 
-// scheduling/domain/errors/codes.ts (les trois codes qu'utilise la machine)
+// scheduling.codes.ts (les trois codes qu'utilise la machine)
 export const SchedulingCodes = {
   AppointmentAlreadyConfirmed: 'APPOINTMENT_ALREADY_CONFIRMED',
   AppointmentEnded: 'APPOINTMENT_ENDED',
@@ -136,7 +136,7 @@ function refused(
   commence »). Elle reçoit le contexte que lui passe l'agrégat et répond par un refus ou par rien.
 - **Le refus** d'une transition que l'état n'autorise pas est construit par une fabrique statique
   d'une classe de refus, à qui sont donnés l'état, la transition et le contexte : les codes
-  d'erreur du modèle restent là où ils sont, dans `domain/errors/codes.ts`, et chaque refus dans
+  d'erreur du modèle restent là où ils sont, dans `<context>.codes.ts`, et chaque refus dans
   sa propre classe (`AppointmentEnded`).
 - Sans `refused`, une transition interdite lève `TransitionError.forbidden(from, transition)` du
   noyau (kernel), code `FORBIDDEN_TRANSITION` : une valeur d'attente jusqu'à ce que le cycle de

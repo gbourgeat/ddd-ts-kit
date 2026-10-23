@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:36775602c866d7dd -->
+<!-- translation-of: README.md sha256:f1ef3d45593ee08e -->
 
 # @ddd-ts-kit/http
 
@@ -504,7 +504,7 @@ quand elle n'en a exposé aucun.
 ```ts
 import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-// domain/errors/codes.ts
+// scheduling.codes.ts
 export const SchedulingCodes = {
   SlotTaken: 'SLOT_TAKEN',
 } as const;
