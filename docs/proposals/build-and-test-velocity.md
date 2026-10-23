@@ -25,7 +25,7 @@ as it was written, then what it became.
 
 | Part | Verdict |
 |---|---|
-| 1. Fewer jobs per pipeline run, the heavy families narrowed on a pull request | **built** (#248): five gates folded into one job, the alias suite on one Node line and the generated projects on npm on a pull request; 24 jobs to 20 on the trunk, 23 to 17 on a pull request; the end-to-end shards held to the stacks a change reaches are still to do |
+| 1. Fewer jobs per pipeline run, the heavy families narrowed on a pull request | **built** (#248): five gates folded into one job, the alias suite on one Node line and the generated projects on npm on a pull request; 24 jobs to 20 on the trunk, 23 to 17 on a pull request; the end-to-end shards and the alias runs held to the stacks a change reaches came with the pull request #260: a flag of a stack that names a changed package (an orm, a broker, a cache, a queue, a reporter, a logger, a storage) keeps it, a change of a package every project is built with keeps them all, the first stack stays so that every file runs something |
 | 2. The compile matrix of five spec files run in parallel | **built** (#250): the modes of a file compile a few at a time, the six longest files start first; the longest file 84 s to 27 s in a full run, the unit job of the pipeline 571 s to about 490 s |
 | 3. Half the cores outside a pipeline, the specs of the packages a branch reaches before a push | **built** (#252): the unit step of the hook 152 to 201 s and 9.3 to 11.5 GB, to 101 to 110 s and 6.8 to 7.3 GB on a branch that reaches everything, seconds on a leaf |
 | 4. ESLint with its content cache, the type check of the specs in parallel | **built** (#253): `npm run lint` 36.5 s to 1.3 s when nothing changed, the cache dropped when the rules of the kit as built, the config or the lockfile changed (`pipeline/monorepo/lint.mjs`); the trunk writes the cache of the pipeline, a pull request restores it; `typecheck:tests` 5.1 s to 3.3 s |
@@ -481,8 +481,7 @@ templates for the reasons above.
 - The findings of Oxlint with the kit rules as a JS plugin against ESLint's, on this tree and
   on a generated project, over several weeks of changes: the trial job of #256 writes them to
   the summary of each run of the trunk and of the night.
-- The end-to-end shards held to the stacks a change reaches, the part of the first line left to
-  do; and the ESLint content cache in the templates of a generated project.
+- The ESLint content cache in the templates of a generated project.
 - The p50 of the unit and end-to-end jobs on arm64 runners against x64, over ten night runs.
 - The recall of the end-to-end selection by stack: a template change that reaches a stack the
   selection did not name is a bug of the selection, caught by the night run and recorded here.

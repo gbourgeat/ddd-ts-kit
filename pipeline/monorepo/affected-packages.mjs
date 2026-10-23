@@ -11,9 +11,10 @@
 // request (the pre-push hook: `--base origin/main --run test`). Without it, the selection is
 // printed. The unit run takes `filters` as its path filters and `packages` as KIT_AFFECTED, which
 // vitest.config.ts reads to hold the coverage floor of those packages only. The end-to-end
-// suite, the generated projects, the example, the conformance run and the alias runs integrate
-// every package: they are never narrowed, and skipped only when nothing but documents changed
-// (`integrated`).
+// shards and the alias runs read KIT_AFFECTED too, to generate the stacks the change reaches
+// (`packages/cli/test/e2e/stacks.ts`); the generated projects, the example and the conformance
+// run integrate every package whole; all of them are skipped only when nothing but documents
+// changed (`integrated`).
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
