@@ -1,5 +1,5 @@
 import { compose, type Aspect } from '@ddd-ts-kit/aspects';
-import { selfGoverned } from '{{alias.platform}}/resilience/self-governed{{alias.ext}}';
+import { adaptersWithOwnPolicy } from '{{alias.platform}}/resilience/adapters-with-own-policy{{alias.ext}}';
 
 /**
  * The policy one adapter states for itself, in place of the default one:
@@ -13,7 +13,7 @@ export function ownPolicy(...policy: readonly Aspect[]): Aspect {
   return (instance, info) => {
     const governed = stated(instance, info);
 
-    selfGoverned.add(governed);
+    adaptersWithOwnPolicy.add(governed);
 
     return governed;
   };

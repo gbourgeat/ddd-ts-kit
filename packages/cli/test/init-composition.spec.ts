@@ -83,7 +83,7 @@ describe('the composition root init writes, on tsyringe', () => {
     expect(composition).not.toMatch(/traceBindings|tracedSubscriber|traceUseCases/);
 
     expect(platform(root, 'composition/platform.module.ts')).toContain(
-      "builder.around(['external', 'gateway'], () => adapterAspects(options.resilience ?? defaultResilience));",
+      "builder.around(['external', 'gateway'], () => defaultPolicy(options.resilience ?? defaultResilienceSettings));",
     );
 
     expect(platform(root, 'buses/create-command-bus.ts')).toContain(
@@ -92,7 +92,7 @@ describe('the composition root init writes, on tsyringe', () => {
 
     expect(platform(root, 'auth/authentication/http-boundary.ts')).toContain('around: tracedRoutes(),');
     expect(exists(root, 'src/platform/decorate-bindings.ts')).toBe(false);
-    expect(platform(root, 'resilience/adapter-aspects.ts')).not.toContain('traceDependency');
+    expect(platform(root, 'resilience/default-policy.ts')).not.toContain('traceDependency');
   });
 
   it('closes the event provider inside the stop of the application, before the logger is flushed', () => {

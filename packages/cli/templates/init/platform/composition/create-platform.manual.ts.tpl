@@ -31,8 +31,8 @@ import { platformEvents } from '{{alias.platform}}/events/platform-events{{alias
 {{#if files.any}}
 import { createFiles, type Files } from '{{alias.platform}}/files/create-files{{alias.ext}}';
 {{/if}}
-import { adapterAspects } from '{{alias.platform}}/resilience/adapter-aspects{{alias.ext}}';
-import { defaultResilience } from '{{alias.platform}}/resilience/default-resilience{{alias.ext}}';
+import { defaultPolicy } from '{{alias.platform}}/resilience/default-policy{{alias.ext}}';
+import { defaultResilienceSettings } from '{{alias.platform}}/resilience/default-resilience-settings{{alias.ext}}';
 import { ownPolicy } from '{{alias.platform}}/resilience/own-policy{{alias.ext}}';
 import type { ResilienceSettings } from '{{alias.platform}}/resilience/resilience-settings{{alias.ext}}';
 
@@ -61,7 +61,7 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
   const domainEvents = traced.domainEvents(new InMemoryDomainEventDispatcher(afterCommitFailed));
   const authorizer = createAuthorizer();
   const protection = new UseCaseProtection(authorizer, onDecision);
-  const adapter = adapterOf(options.resilience ?? defaultResilience, { traced, domainEvents });
+  const adapter = adapterOf(options.resilience ?? defaultResilienceSettings, { traced, domainEvents });
 {{#if files.any}}
   const files = filesOf(options, foundations);
 {{/if}}
@@ -107,11 +107,11 @@ interface Outside {
  * leaves the process.
  */
 function adapterOf(settings: ResilienceSettings, { traced, domainEvents }: Outside): Platform['adapter'] {
-  const resilient = adapterAspects(settings);
+  const governed = defaultPolicy(settings);
 
   return (instance, info) => {
-    const governed = resilient(instance, info);
-    const saving = info.kind === 'repository' ? dispatchingOnSave(governed, () => domainEvents) : governed;
+    const resilient = governed(instance, info);
+    const saving = info.kind === 'repository' ? dispatchingOnSave(resilient, () => domainEvents) : resilient;
 
     return traced.binding(saving, { ...info, context: info.context ?? 'platform' });
   };

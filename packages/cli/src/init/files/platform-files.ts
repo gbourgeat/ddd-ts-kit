@@ -21,8 +21,8 @@ export function platformFiles(config: Config): InitFile[] {
     ].map((name) => file(name)),
     file('observability/create-logger.ts', config.stack.logger),
     file('observability/create-metrics.ts'),
-    ...['resilience-settings', 'default-resilience', 'self-governed', 'adapter-aspects'].map((name) =>
-      file(`resilience/${name}.ts`),
+    ...['resilience-settings', 'default-resilience-settings', 'adapters-with-own-policy', 'default-policy'].map(
+      (name) => file(`resilience/${name}.ts`),
     ),
     // On tsyringe nothing names the helper before the first adapter, which brings it (`generate adapter`).
     ...when(familyOf(config) === 'manual', [file('resilience/own-policy.ts')]),

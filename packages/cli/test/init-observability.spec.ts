@@ -187,7 +187,7 @@ describe('a generated command handler', () => {
     const create = platform(initProject('--di', 'manual'), 'composition/create-platform.ts');
 
     expect(create).toContain(
-      "const saving = info.kind === 'repository' ? dispatchingOnSave(governed, () => domainEvents) : governed;",
+      "const saving = info.kind === 'repository' ? dispatchingOnSave(resilient, () => domainEvents) : resilient;",
     );
 
     expect(create).toContain("return traced.binding(saving, { ...info, context: info.context ?? 'platform' });");
