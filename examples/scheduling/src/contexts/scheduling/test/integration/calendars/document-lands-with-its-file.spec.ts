@@ -65,10 +65,11 @@ describe('The document of an appointment and its file, on the database and the l
   });
 
   it('roll back together: once the file was moved, a refused commit returns it to staging/ and the row keeps no document', async () => {
-    const { bus, appointments, storage } = await arrange(refusedAtCommit());
+    const refusal = new Error('commit refused');
+    const { bus, appointments, storage } = await arrange(refusedAtCommit(refusal));
     const command = new AttachAppointmentDocumentCommand(holder, 'appointment-1', aScan());
 
-    await expect(bus.execute(command)).rejects.toThrow('commit refused');
+    await expect(bus.execute(command)).rejects.toBe(refusal);
 
     const { key } = command.document.file;
 
@@ -106,11 +107,11 @@ async function arrange(...inside: readonly BusMiddleware[]) {
 }
 
 /** Refuses the commit once the handler has saved, inside the transaction: what a conflict detected at the commit does. */
-function refusedAtCommit(): BusMiddleware {
+function refusedAtCommit(refusal: Error): BusMiddleware {
   return async (_message, next) => {
     const result = await next();
 
-    await atCommit({ apply: () => Promise.reject(new Error('commit refused')), undo: async () => undefined });
+    await atCommit({ apply: () => Promise.reject(refusal), undo: async () => undefined });
 
     return result;
   };

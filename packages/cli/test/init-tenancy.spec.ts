@@ -18,6 +18,8 @@ describe('init --tenancy', () => {
   it('keeps the tenant of each event in the outbox', () => {
     const knex = initProject('--orm', 'knex', ...SHARED);
     const drizzle = initProject(...SHARED);
+    const prisma = initProject('--orm', 'prisma', ...SHARED);
+    const typeorm = initProject('--orm', 'typeorm', ...SHARED);
 
     expect(read(knex, 'src/platform/database/schema.ts')).toContain(
       'createOutboxTables(knex, { schema: MESSAGING_SCHEMA, tenant: true })',
@@ -30,16 +32,26 @@ describe('init --tenancy', () => {
     expect(read(drizzle, 'src/platform/database/schema.ts')).toContain(
       'export const outbox = tenantOutboxTable(MESSAGING_SCHEMA);',
     );
+
+    expect(read(prisma, 'prisma/schema.prisma')).toContain('  tenantId      String?   @map("tenant_id")\n');
+    expect(read(prisma, 'src/platform/database/persistence-over.ts')).toContain('      tenant: true,\n    }),');
+    expect(read(prisma, 'prisma/schema.prisma')).not.toContain('tenant_id") @db.VarChar');
+
+    expect(read(typeorm, 'src/platform/database/schema.ts')).toContain(
+      'export const outbox = outboxEntity({ schema: MESSAGING_SCHEMA, tenant: true });',
+    );
+
+    expect(read(initProject('--orm', 'prisma'), 'prisma/schema.prisma')).not.toContain('tenant_id');
   });
 
   it('generates every repository confined to the tenant through the helpers of the ORM', () => {
     const knex = initProject('--orm', 'knex', ...SHARED);
     const drizzle = initProject(...SHARED);
 
-    cli(knex, 'generate', 'aggregate', 'billing', 'Invoice', '--allow-name');
-    cli(knex, 'generate', 'repository', 'billing', 'Invoice', '--allow-name');
-    cli(drizzle, 'generate', 'aggregate', 'billing', 'Invoice', '--allow-name');
-    cli(drizzle, 'generate', 'repository', 'billing', 'Invoice', '--allow-name');
+    for (const project of [knex, drizzle]) {
+      cli(project, 'generate', 'aggregate', 'billing', 'Invoice', '--allow-name');
+      cli(project, 'generate', 'repository', 'billing', 'Invoice', '--allow-name');
+    }
 
     const knexAdapter = read(knex, 'src/contexts/billing/infrastructure/persistence/knex-invoice.repository.ts');
 
@@ -53,6 +65,61 @@ describe('init --tenancy', () => {
     expect(knexAdapter).not.toContain('executor()<');
     expect(drizzleAdapter).toContain('tenantCondition(invoices.tenantId, this.scope)');
     expect(drizzleAdapter).toContain('ownTenantCondition(invoices.tenantId, this.scope)');
+  });
+});
+
+describe('init --tenancy on Prisma and TypeORM', () => {
+  it('spreads the helpers into every statement of a Prisma or TypeORM repository, and names the tenant in the storage', () => {
+    const prisma = initProject('--orm', 'prisma', ...SHARED);
+    const typeorm = initProject('--orm', 'typeorm', ...SHARED);
+
+    for (const project of [prisma, typeorm]) {
+      cli(project, 'generate', 'aggregate', 'billing', 'Invoice', '--allow-name');
+      cli(project, 'generate', 'repository', 'billing', 'Invoice', '--allow-name');
+    }
+
+    const prismaAdapter = read(prisma, 'src/contexts/billing/infrastructure/persistence/prisma-invoice.repository.ts');
+    const model = read(prisma, 'prisma/schema.prisma');
+
+    const typeormAdapter = read(
+      typeorm,
+      'src/contexts/billing/infrastructure/persistence/type-orm-invoice.repository.ts',
+    );
+
+    const schema = read(typeorm, 'src/contexts/billing/infrastructure/persistence/billing.schema.ts');
+
+    expect(prismaAdapter).toContain('.findFirst({\n      where: { id, ...tenantWhere(this.scope) },\n    });');
+    expect(prismaAdapter).toContain('where: { id: state.id, version: expected, ...ownTenantWhere(this.scope) },');
+
+    expect(prismaAdapter).toContain(
+      'const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };',
+    );
+
+    expect(prismaAdapter).not.toContain('.findUnique(');
+    expect(model).toContain('  tenantId     String   @map("tenant_id")\n');
+    expect(model).toContain('  @@index([tenantId, id], map: "invoices_tenant_idx")\n');
+
+    expect(read(prisma, 'src/contexts/billing/infrastructure/persistence/invoice.mapper.ts')).toContain(
+      "Omit<InvoiceRow, 'version' | keyof AuditStamp | keyof TenantScoped>",
+    );
+
+    expect(typeormAdapter).toContain('findOneBy(invoices, { id, ...tenantWhere(this.scope) })');
+
+    expect(typeormAdapter).toContain(
+      'const guarded = { id: state.id, version: expected, ...ownTenantWhere(this.scope) };',
+    );
+
+    expect(typeormAdapter).toContain(
+      'const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };',
+    );
+
+    expect(schema).toContain("import { auditColumns, schemaNameOf, tenantColumn } from '@ddd-ts-kit/typeorm';");
+    expect(schema).toContain('    ...tenantColumn(),\n    ...auditColumns(),');
+    expect(schema).toContain("indices: [{ name: 'invoices_tenant_idx', columns: ['tenantId', 'id'] }],");
+
+    expect(read(typeorm, 'src/contexts/billing/infrastructure/persistence/invoice-row.schema.ts')).toContain(
+      'export interface InvoiceRow extends InvoiceColumns, TenantScoped, AuditStamp {',
+    );
   });
 
   it('confines the search of the audit trail to the tenant of the work, never to the actor', () => {
@@ -79,12 +146,13 @@ describe('init --tenancy', () => {
     expect(read(single, 'src/platform/audit/create-audit.ts')).not.toContain('TenantAuditReader');
   });
 
-  it('refuses an ORM without the helpers, and the strategies it does not generate yet', () => {
-    const prisma = initFailure('--orm', 'prisma', '--tenancy', 'shared-table');
+  it('refuses a project without an ORM package, and the strategies it does not generate yet', () => {
+    const custom = initFailure('--orm', 'custom', '--tenancy', 'shared-table');
     const rowLevel = initFailure('--tenancy', 'row-level-security');
     const unknown = initFailure('--tenancy', 'per-tenant');
 
-    expect(prisma.message).toBe('--tenancy shared-table cannot be combined with --orm prisma.');
+    expect(custom.message).toBe('--tenancy shared-table cannot be combined with --orm custom.');
+    expect(custom.fix).toContain('knex, drizzle, prisma and typeorm');
     expect(rowLevel.message).toBe('--tenancy row-level-security is not generated by init yet.');
     expect(rowLevel.fix).toContain('tenantSession');
     expect(unknown.message).toBe('Unknown value "per-tenant" for --tenancy.');

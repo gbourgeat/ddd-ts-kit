@@ -13,6 +13,7 @@ import type { TypeOrmContext } from '../unit-of-work/type-orm-context';
 import { criteriaToTypeOrm } from './criteria-to-type-orm';
 import { predicateToTypeOrm } from './predicate-to-type-orm';
 import { RowMapper } from './row.mapper';
+import { TenantOfRows } from './tenant-of-rows';
 import type { TypeOrmReadModelOptions } from './type-orm-read-model-options';
 import { TypeOrmStampedRows } from './type-orm-stamped-rows';
 
@@ -24,10 +25,14 @@ const ALIAS = 'row';
  * projection commits with the processed mark of its event. The rebuild is PostgreSQL only.
  */
 export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadModelTable<Row> {
+  private readonly tenant: TenantOfRows;
+
   constructor(
     private readonly context: TypeOrmContext,
     private readonly options: TypeOrmReadModelOptions<Row>,
-  ) {}
+  ) {
+    this.tenant = new TenantOfRows(options.tenant);
+  }
 
   find(key: string): Promise<StampedRow<Row> | undefined> {
     return this.rowsIn().find(key);
@@ -42,11 +47,16 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
   }
 
   async search(plan: CriteriaPlan): Promise<SearchedRows<Row>> {
-    const kept = () =>
-      this.context
+    const reach = this.tenant.reading((property) => `${ALIAS}.${property}`);
+
+    const kept = () => {
+      const rows = this.context
         .manager()
         .createQueryBuilder(this.options.entity, ALIAS)
         .where(`${ALIAS}.deleted = :kept`, { kept: false });
+
+      return reach === undefined ? rows : rows.andWhere(reach.clause, reach.parameters);
+    };
 
     const entities = await criteriaToTypeOrm(kept(), plan, { alias: ALIAS }).getMany();
     const rows = entities.map((entity) => this.mapper().fromEntity(entity));
@@ -110,6 +120,7 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
       path: schema === undefined ? table : `${schema}.${table}`,
       key: this.options.key ?? 'id',
       mapper: this.mapper(),
+      tenant: this.tenant,
       ...(copy === undefined ? { entity: this.options.entity } : {}),
     });
   }

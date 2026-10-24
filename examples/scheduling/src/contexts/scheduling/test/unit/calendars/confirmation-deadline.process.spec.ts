@@ -55,14 +55,12 @@ describe('The confirmation deadline of an appointment', () => {
 
   it('expires the appointment at its deadline, as the process itself', () => {
     givenProcess(watching)
-      .when((current) => (current === undefined ? undefined : process.timedOut('deadline', current)))
+      .when(timedOut('deadline'))
       .thenCommands([ExpireUnconfirmedAppointmentsCommand])
       .thenCommands([{ at: deadline, actor: { id: 'system:scheduling.confirmation-deadline' } }])
       .thenEnded();
 
-    givenProcess(watching)
-      .when((current) => (current === undefined ? undefined : process.timedOut('reminder', current)))
-      .thenIgnored();
+    givenProcess(watching).when(timedOut('reminder')).thenIgnored();
   });
 
   it('recognises the state it saved', () => {
@@ -71,3 +69,9 @@ describe('The confirmation deadline of an appointment', () => {
     expect(ConfirmationDeadlineProcess.isState(null)).toBe(false);
   });
 });
+
+/** The process told that one of its timeouts fired, while it watches an appointment. */
+function timedOut(timeout: Parameters<typeof process.timedOut>[0]) {
+  return (current: ConfirmationDeadlineState | undefined) =>
+    current === undefined ? undefined : process.timedOut(timeout, current);
+}

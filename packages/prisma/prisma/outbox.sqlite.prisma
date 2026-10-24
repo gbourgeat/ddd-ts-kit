@@ -20,6 +20,8 @@ model OutboxRecord {
   payload       Json?
   traceparent   String?
   correlationId String?   @map("correlation_id")
+  // The tenant of the event, for a multi-tenant project: uncomment it, and give the store `tenant: true`.
+  // tenantId      String?   @map("tenant_id")
   status        String    @default("pending")
   attempts      Int       @default(0)
   nextAttemptAt DateTime  @map("next_attempt_at")

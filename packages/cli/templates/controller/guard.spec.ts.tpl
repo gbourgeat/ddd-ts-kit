@@ -1,5 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { ForbiddenError, type GuardRequest } from '@ddd-ts-kit/http';
+import type { GuardRequest } from '@ddd-ts-kit/http';
 import { anonymousActor, executionContext } from '@ddd-ts-kit/kernel';
 import { {{name.pascal}}Guard } from '{{alias.context}}/presentation/http/guards/{{name.kebab}}.guard{{alias.ext}}';
 
@@ -18,7 +18,7 @@ const request: GuardRequest = {
 
 describe('{{name.pascal}}Guard', () => {
   it('refuses a caller with 403', () => {
-    expect(() => new {{name.pascal}}Guard().check(request)).toThrow(ForbiddenError);
+    expect(() => new {{name.pascal}}Guard().check(request)).toThrow(expect.objectContaining({ code: 'FORBIDDEN' }));
     expect(anonymousActor().type).toBe('anonymous');
   });
 

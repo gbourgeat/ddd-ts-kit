@@ -6,6 +6,7 @@ import { writeDocs } from '../docs/write-docs';
 import { declareContextEntries } from '../generate/kinds/declare-context-entries';
 import { placeContextFiles } from '../generate/place-context-files';
 import { wireContext } from '../generate/kinds/wire-context';
+import { rewirePersonalData } from './rewire-personal-data';
 import { formatJson } from '../json/format-json';
 import { parseContextName, toName } from '../naming';
 import { ignoreCodeTypesWhereTheyAre } from '../knip';
@@ -121,11 +122,12 @@ function rewireContexts(ws: Workspace, config: Config): void {
 
   for (const [name, { classification, upstreams }] of present) {
     wireContext(ws, { config, context: parseContextName(name), request: { name, classification, upstreams } });
+    rewirePersonalData(ws, config, name);
   }
 
   if (present.length > 0) {
     ws.note(
-      `--force rewrote the files of the platform from their templates and wired the declared contexts again (${present.map(([name]) => name).join(', ')}). What a generator had added to one of those files besides (the value of a gateway, the settings of a job, the grant of a role, a policy of its own) is gone: run \`npm run verify\`, and generate again what it reports missing.`,
+      `--force rewrote the files of the platform from their templates and wired the declared contexts again (${present.map(([name]) => name).join(', ')}), the erasure of each one listed again in the copies of the privacy folder. What a generator had added to one of those files besides (the value of a gateway, the settings of a job, the grant of a role, a policy of its own) is gone: run \`npm run verify\`, and generate again what it reports missing.`,
     );
   }
 }

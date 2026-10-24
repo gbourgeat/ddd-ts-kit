@@ -14,12 +14,14 @@ import {
   DI_STACKS,
   DOCS_UIS,
   ERROR_REPORTERS,
+  EVENT_SOURCING_MODES,
   EVENT_STACKS,
   HTTP_CACHE_STACKS,
   HTTP_STACKS,
   LOGGERS,
   ORM_STACKS,
   PACKAGE_MANAGERS,
+  PRIVACY_MODES,
   REFUSAL_FORMS,
   ROUTE_FORMS,
   FORM_MODES,
@@ -79,6 +81,8 @@ type Choices = Pick<
   | 'httpCache'
   | 'storage'
   | 'audit'
+  | 'eventSourcing'
+  | 'privacy'
   | 'errors'
   | 'logger'
   | 'style'
@@ -95,6 +99,9 @@ function parseChoices(choose: Choose, orm: Stack['orm']): Choices {
     httpCache: choose('httpCache', HTTP_CACHE_STACKS, 'none'),
     storage: choose('storage', STORAGE_STACKS, 'none'),
     audit: choose('audit', AUDIT_MODES, orm === 'none' ? 'off' : 'on'),
+    // Both were written before their choice existed: such a config has no event store and no privacy folder.
+    eventSourcing: choose('eventSourcing', EVENT_SOURCING_MODES, 'off'),
+    privacy: choose('privacy', PRIVACY_MODES, 'off'),
     errors: choose('errors', ERROR_REPORTERS, 'none'),
     logger: choose('logger', LOGGERS, 'stdout'),
     style: choose('style', STYLES, 'explicit'),

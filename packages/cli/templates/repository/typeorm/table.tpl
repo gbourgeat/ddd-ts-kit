@@ -1,6 +1,10 @@
 @@imports
 import type { {{aggregate.pascal}}Row } from '{{alias.context}}/infrastructure/persistence/{{aggregate.kebab}}-row.schema{{alias.ext}}';
+{{#if tenant.scoped}}
+import { tenantColumn } from '@ddd-ts-kit/typeorm';
+{{/if}}
 @@tables
+{{#if tenant.scoped}}
 export const {{aggregate.tableCamel}} = new EntitySchema<{{aggregate.pascal}}Row>({
   name: '{{context.pascal}}{{aggregate.pascal}}',
   tableName: '{{aggregate.table}}',
@@ -8,8 +12,31 @@ export const {{aggregate.tableCamel}} = new EntitySchema<{{aggregate.pascal}}Row
   columns: {
     id: { type: 'text', primary: true },
     registeredAt: { name: 'registered_at', type: 'timestamptz' },
+{{#if personal.any}}
+{{personal.typeormTable}}
+{{/if}}
+    // TODO(domain): add one column per field of {{aggregate.pascal}}State (and to {{aggregate.pascal}}Columns of {{aggregate.kebab}}-row.schema.ts), with the type and the constraints the storage must enforce; then run `npm run build && npm run db:generate migrations/<what-it-does>`.
+    version: { type: 'int' },
+    ...tenantColumn(),
+    ...auditColumns(),
+  },
+  indices: [{ name: '{{aggregate.table}}_tenant_idx', columns: ['tenantId', 'id'] }],
+});
+{{/if}}
+{{#unless tenant.scoped}}
+export const {{aggregate.tableCamel}} = new EntitySchema<{{aggregate.pascal}}Row>({
+  name: '{{context.pascal}}{{aggregate.pascal}}',
+  tableName: '{{aggregate.table}}',
+  schema: {{context.constant}}_SCHEMA,
+  columns: {
+    id: { type: 'text', primary: true },
+    registeredAt: { name: 'registered_at', type: 'timestamptz' },
+{{#if personal.any}}
+{{personal.typeormTable}}
+{{/if}}
     // TODO(domain): add one column per field of {{aggregate.pascal}}State (and to {{aggregate.pascal}}Columns of {{aggregate.kebab}}-row.schema.ts), with the type and the constraints the storage must enforce; then run `npm run build && npm run db:generate migrations/<what-it-does>`.
     version: { type: 'int' },
     ...auditColumns(),
   },
 });
+{{/unless}}

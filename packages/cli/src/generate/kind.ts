@@ -35,6 +35,12 @@ export interface KindFlags {
   /** The use case is reachable by anybody, on purpose. */
   readonly public: boolean;
   readonly tenantScoped: boolean;
+  /** The columns of the table that hold personal data, comma separated, as `--personal <column>,<column>`. */
+  readonly personal?: string;
+  /** The column that names the data subject a row is about, as `--subject <column>`; `id` when the row is the person. */
+  readonly subject?: string;
+  /** How the rows of a subject are erased: `pseudonymise` (the default) or `row`. */
+  readonly erasure?: string;
   /** The query answers one page of a search, filtered by the access scope of its actor. */
   readonly search: boolean;
   /** The role an adapter is bound under: `external` or `gateway`. */

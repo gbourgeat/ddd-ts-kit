@@ -107,6 +107,18 @@ describe('Practice', () => {
       .when((practice) => practice.removeMember('person-1', later))
       .thenEventNames(['identity.practice.member-removed']);
   });
+
+  it('lets a manager go when another manager remains among members of other roles', () => {
+    given(aPractice().managedBy('person-1').withManager('person-4').withAssistant('person-3'))
+      .when((practice) => practice.removeMember('person-1', later))
+      .thenEventNames(['identity.practice.member-removed']);
+  });
+
+  it('is known by its name without the spaces around it', () => {
+    const opened = aPractice().named('  Riverside ').build();
+
+    expect(opened.name).toBe('Riverside');
+  });
 });
 
 describe('Practice, by the role of its members', () => {

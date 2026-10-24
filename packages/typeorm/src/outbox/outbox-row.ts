@@ -10,6 +10,8 @@ export interface OutboxRow {
   payload: unknown;
   traceparent: string | null;
   correlationId: string | null;
+  /** The tenant of the event, on an outbox created with `tenant: true`; absent from the others. */
+  tenantId?: string | null;
   status: OutboxStatus;
   attempts: number;
   nextAttemptAt: Date;

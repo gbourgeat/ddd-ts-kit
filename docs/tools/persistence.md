@@ -359,8 +359,8 @@ read.
 3. **Type safety of read models.** Query handlers may bypass aggregates and read projections
    through a port; typed queries pay off there.
 4. **Transaction length.** Prisma's interactive transactions are bounded in time by default.
-5. **What the kit generates for it.** Tenant scoping and the SQL audit trail are not available
-   for all four (below).
+5. **What the kit generates for it.** Tenant scoping is generated on the four; the SQL audit
+   trail is not available for all four (below).
 6. **Version currency.** Prefer the current stable line; on the day of the check Prisma's npm
    `latest` tag carried a release candidate, so pin the version you tested.
 
@@ -377,10 +377,12 @@ audit columns and `tenant_id`; cursor and offset pages. The units of work pass
 `unitOfWorkContract`, the stores `outboxStoreContract` and `processedEventStoreContract`; your repositories are held to `repositoryContract` next to
 their in-memory fake. Delivery through the outbox is at least once and unordered.
 
-Tenant isolation is uneven across the four: Knex ships the four strategies (shared tables, row-level
-security, schema per tenant, database per tenant), Drizzle the first two, Prisma and TypeORM none
-beyond the `tenant_id` column. The table, and the `tenantIsolationContract` each strategy passes,
-are in [Multitenancy](../concepts/multitenancy.md#isolation-four-strategies).
+Tenant isolation is uneven across the four: shared tables on each of them (`tenantTable`,
+`tenantCondition`, `tenantWhere`, read models with `tenant`, the outbox keeping the tenant of each
+event), and beyond that Knex ships the three other strategies (row-level security, schema per
+tenant, database per tenant), Drizzle row-level security, Prisma and TypeORM nothing more. The
+table, and the `tenantIsolationContract` each strategy passes, are in
+[Multitenancy](../concepts/multitenancy.md#isolation-four-strategies).
 
 For the read side, each of the four also ships a translator of the kernel criteria into its
 query (`criteriaToDrizzle`, `criteriaToKnex`, `criteriaToPrisma`, `criteriaToTypeOrm`) and a
@@ -420,12 +422,16 @@ From [`packages/cli/README.md`](../../packages/cli/README.md) and
 - The generated persistence of the four ORMs is written for PostgreSQL. `custom` starts on
   in-memory adapters held to the contract suites, for you to replace.
 - `generate repository --tenant-scoped`, and every repository of a project initialised with
-  `--tenancy shared-table`, is implemented for Drizzle and Knex; with another ORM the regular
+  `--tenancy shared-table`, is implemented for the four ORMs; with `custom` or no ORM the regular
   adapter is written and a note says what to add, and `init` refuses the strategy.
 - The SQL audit trail exists for Knex and Drizzle, on PostgreSQL only. With Prisma, TypeORM,
   `custom` or no ORM the generated project starts on an in-memory trail behind a
   `TODO(platform)`.
 - Fast adapter specs run on PGlite; Docker Compose provides the real server.
+- The erasure of a data subject from the tables declared with `personalFields` exists on the four
+  ORMs (`KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`,
+  `TypeOrmPersonalDataErasure`), under one contract suite; the generator does not write the
+  declarations yet ([privacy by design](../proposals/privacy-by-design.md)).
 
 ## PostgreSQL versus the others
 

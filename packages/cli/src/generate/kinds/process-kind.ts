@@ -7,7 +7,7 @@ import { openScope } from '../open-scope';
 import { specVars } from '../spec-vars';
 import { vars } from '../vars';
 import { wire } from '../wire';
-import { requireContainer } from './background/require-container';
+import { specFamily } from './background/spec-family';
 
 export const processKind: Kind = {
   name: 'process',
@@ -20,7 +20,6 @@ export const processKind: Kind = {
   run: (request) => {
     const scope = openScope(request);
 
-    requireContainer(scope, 'process manager');
     learnTerms(scope);
 
     const name = concept(scope, request.args[1] ?? '', { what: 'process', strip: ['process', 'saga'] });
@@ -38,7 +37,10 @@ export const processKind: Kind = {
       ['process/process.ts.tpl', `application/processes/${name.kebab}.process.ts`],
       ['process/timeout-job.ts.tpl', `application/background/${name.kebab}-timeout.background-job.ts`],
       ['process/process.spec.ts.tpl', `test/unit/${name.kebab}.process.spec.ts`],
-      ['process/timeout-job.spec.ts.tpl', `test/unit/${name.kebab}-timeout.background-job.spec.ts`],
+      [
+        `process/timeout-job.spec.${specFamily(scope)}.ts.tpl`,
+        `test/unit/${name.kebab}-timeout.background-job.spec.ts`,
+      ],
     ]);
 
     wire(scope, 'process/timeout-job', context);

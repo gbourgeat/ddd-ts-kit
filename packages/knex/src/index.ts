@@ -60,3 +60,8 @@ export * from './processes/process-table-options';
 export * from './processes/create-process-table';
 export * from './processes/drop-process-table';
 export * from './processes/knex-process-store';
+export * from './personal-data/knex-personal-data-erasure';
+export * from './personal-data/knex-personal-data-erasure-options';
+export * from './personal-data/knex-personal-data-export';
+export * from './personal-data/knex-personal-data-export-options';
+export * from './personal-data/knex-personal-fields';

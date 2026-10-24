@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:9e6d256385490b66 -->
+<!-- translation-of: README.md sha256:92b7586f9b0e1e48 -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -565,21 +565,38 @@ Le registre de présence d'un patient est gardé sous forme de ses événements 
   *compare-and-set* du point de reprise laisse l'un d'eux appliquer chaque lot ; les autres
   sautent ce tour (une ligne de débogage, pas une erreur). Un déclenchement qui arrive pendant
   qu'un tour s'exécute est sauté.
-- **Un effacement.** `DATABASE_URL=<url> npm run erase:patient -- <patientId> <operatorId>`
-  vérifie que l'id nomme une personne d'un réseau, détruit la clé avec laquelle les paroles du
-  patient ont été scellées, écrit l'effacement dans le journal d'audit, puis reconstruit chaque
-  projection alimentée par le store (`src/platform/erasure/erase-data-subject.ts`,
-  `src/platform/erasure/erase-on-the-command-line.ts`, `scripts/erase-patient.ts`) : le flux et
-  les *snapshots* affichent `[erased]` immédiatement, et l'historique aussi une fois reconstruit.
-  Une reconstruction n'arrête jamais le rattrapage, donc l'API peut continuer de tourner. Le
-  relancer achève un effacement dont l'entrée ou la reconstruction a échoué. La clé est détruite
-  qu'identity connaisse encore le patient ou non : la clé d'abord, la fiche ensuite. Quand aucune
-  clé n'a été détruite, l'id est cherché parmi les personnes de tous les réseaux, sous une
-  élévation que le journal enregistre (`tenancy:elevate`, raison `PATIENT_ERASURE`), pour
-  distinguer une relance d'une faute de frappe, refusée avant les reconstructions (code de
-  sortie 2). Une valeur qui n'est pas un identifiant opaque (lettres, chiffres, `_`, `-`), un nom
-  ou un email collé à la place de l'id, est refusée avant qu'une clé ne soit touchée ou qu'une
-  entrée ne soit écrite : l'entrée l'emporterait dans le journal en ajout seul.
+- **Un effacement.** `DATABASE_URL=<url> NETWORKS=<tenant,...> npm run erase:patient -- <patientId> <operatorId>`
+  efface une personne de tout ce que l'application garde d'elle en clair, et de ce qu'elle garde
+  scellé. La clé avec laquelle les paroles du patient ont été scellées est détruite d'abord, et
+  l'effacement écrit dans le journal d'audit ; puis chaque copie qu'un contexte garde de la
+  personne est effacée, réseau par réseau, chacune dans un contexte d'exécution de ce réseau,
+  puisqu'une écriture de données de *tenant* n'est jamais élargie
+  (`src/platform/erasure/copies-of-a-person.ts`) : `identity` oublie la personne, nom et adresse
+  (`PersonRepository.erase`) ; `notification` oublie l'adresse à laquelle elle la joignait
+  (`Contacts.delete`, sous un tampon de cet instant, pour que l'annonce livrée de nouveau plus
+  tard ne la ramène pas) ; `scheduling` remplace par `[erased]` les notes que le personnel a
+  écrites sur les rendez-vous du patient et les motifs de ses annulations, dans les rendez-vous et
+  dans l'agenda, supprime du stockage de fichiers les documents attachés à ces rendez-vous et les
+  oublie, et remplace le nom affiché que son annuaire des praticiens avait copié d'identity
+  (`KnexPatientErasure`) ; puis chaque projection alimentée par le store est reconstruite
+  (`src/platform/erasure/erase-data-subject.ts`, `src/platform/erasure/erase-on-the-command-line.ts`,
+  `scripts/erase-patient.ts`) : le flux et les *snapshots* affichent `[erased]` immédiatement, et
+  l'historique aussi une fois reconstruit. Les rendez-vous et les registres de présence restent :
+  ce sont des faits du cabinet, et ils nomment la personne par un seul identifiant opaque. Le
+  rapport du script compte les lignes que chaque copie a atteintes (`copies`) et les événements
+  que chaque projection a rejoués (`rebuilt`). Une reconstruction n'arrête jamais le rattrapage,
+  donc l'API peut continuer de tourner. Le relancer achève un effacement dont l'entrée, une copie
+  ou la reconstruction a échoué : une copie qui échoue n'arrête pas les autres, et son échec est
+  levé une fois que tout a tourné. La clé est détruite qu'identity connaisse encore le patient ou
+  non : la clé d'abord, la fiche ensuite. Quand aucune clé n'a été détruite et aucune copie
+  effacée, l'id est cherché parmi les personnes de tous les réseaux, sous une élévation que le
+  journal enregistre (`tenancy:elevate`, raison `PATIENT_ERASURE`), pour distinguer une relance
+  d'une faute de frappe, refusée avant les reconstructions (code de sortie 2) ; une relance pour
+  une personne dont il ne reste rien l'est aussi, et le journal l'enregistre tout de même. Une
+  valeur qui n'est pas un identifiant opaque (lettres, chiffres, `_`, `-`), un nom ou un email
+  collé à la place de l'id, est refusée avant qu'une clé ne soit touchée ou qu'une entrée ne soit
+  écrite : l'entrée l'emporterait dans le journal en ajout seul.
+  `src/platform/erasure/erase-a-person.spec.ts` relit chaque table après un effacement.
 - **La preuve d'un effacement.** Le stockage des clés lié par la plateforme est décoré par
   `auditedSubjectKeys` (`src/platform/audit/create-audit.ts`), donc chaque effacement, depuis ce
   script ou depuis un cas d'usage, écrit une entrée : action `personal-data:erase`, le patient
@@ -589,18 +606,22 @@ Le registre de présence d'un patient est gardé sous forme de ses événements 
   id est pris tel que saisi, l'accès au script étant le justificatif. L'entrée est dans la chaîne
   globale, que lit le personnel de la plateforme : les clés sont hors des réseaux (ADR-0004). Sa
   date plus la rétention des sauvegardes des clés donne le jour où l'effacement est complet.
-- **Limites de l'effacement.** L'id doit être fait de ce dont un slug ou un UUID est fait
-  (`src/platform/erasure/is-subject-id.ts`) : un fournisseur d'identité dont les sujets portent un
-  autre caractère (`auth0|abc`) demande d'élargir cette grammaire, en connaissance de cause,
-  puisque ce qu'elle laisse passer peut atteindre le journal. Une faute de frappe qui respecte
-  cette grammaire laisse une entrée `keyDestroyed: false` définitive : un identifiant, pas une
-  donnée personnelle, et une trace fidèle de la tentative. Une relance pour un patient dont la
-  clé a disparu et dont la personne a disparu de tous les réseaux est refusée comme une faute de
-  frappe ; les projections qu'elle aurait reconstruites le sont par le prochain effacement de
-  n'importe qui, puisqu'une reconstruction rejoue tout le store. Un patient qu'`identity` ne
-  connaît plus reste effaçable tant que sa clé existe : la clé d'abord, la fiche ensuite, l'ordre
-  à garder le jour où identity effacera des personnes. L'id de l'opérateur est pris tel que saisi,
-  et l'entrée ne nomme aucun réseau, comme dit plus haut.
+- **Ce qu'un effacement n'atteint pas.** Ce qui a quitté l'application avant lui : les
+  événements d'intégration `identity.person.registered` et `identity.practice.member-added`
+  portent le nom et l'adresse de la personne, et les copies qu'ils ont laissées dans l'outbox
+  jusqu'à sa purge, dans le *broker* jusqu'à l'expiration de sa rétention et dans ce qui les a
+  consommés hors de cette application ne sont pas atteintes ; un déploiement qui promet
+  l'effacement limite ces charges aux identifiants, ou borne la rétention du *broker* et le dit.
+  Les sauvegardes : une sauvegarde prise avant l'effacement détient les lignes et la clé jusqu'à
+  son expiration, donc la date de l'entrée plus la plus longue rétention des sauvegardes donne le
+  jour où l'effacement est complet. Le journal d'audit, par conception : il nomme la personne par
+  un identifiant opaque, jamais par un nom. L'id doit être fait de ce dont un slug ou un UUID est
+  fait (`src/platform/erasure/is-subject-id.ts`) : un fournisseur d'identité dont les sujets
+  portent un autre caractère (`auth0|abc`) demande d'élargir cette grammaire, en connaissance de
+  cause, puisque ce qu'elle laisse passer peut atteindre le journal. Une faute de frappe qui
+  respecte cette grammaire laisse une entrée `keyDestroyed: false` définitive : un identifiant,
+  pas une donnée personnelle, et une trace fidèle de la tentative. L'id de l'opérateur est pris
+  tel que saisi, et l'entrée de la clé ne nomme aucun réseau, comme dit plus haut.
 - **Les clés.** `PostgresSubjectKeyStore`, dans le schéma `scheduling` de l'unique base, à côté des
   événements, pour que l'exemple tourne avec un seul PostgreSQL. Une sauvegarde de cette base prise
   avant un effacement détient encore la clé et les paroles scellées jusqu'à son expiration. Un

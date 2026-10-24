@@ -35,11 +35,13 @@ describe('Deactivate account', () => {
 
     await accounts.save(anAccount().identifiedBy('subject-grace').build());
 
-    for (const slug of ['acme', 'globex']) {
-      await organisations.save(anOrganisation().identifiedBy(slug).build());
-      await members.save(aMember().of(slug, 'subject-ada').as(MemberRole.Owner).build());
-      await members.save(aMember().of(slug, 'subject-grace').as(MemberRole.Admin).build());
-    }
+    await Promise.all(
+      ['acme', 'globex'].flatMap((slug) => [
+        organisations.save(anOrganisation().identifiedBy(slug).build()),
+        members.save(aMember().of(slug, 'subject-ada').as(MemberRole.Owner).build()),
+        members.save(aMember().of(slug, 'subject-grace').as(MemberRole.Admin).build()),
+      ]),
+    );
 
     await delegations.save(
       aDelegation()

@@ -16,6 +16,8 @@ strategic artefacts or the existing code, and write that reason down. Flags and 
 | `--orm`, `--database` | an ORM already in `package.json`; `none` only when nothing is stored | `drizzle`, `postgres` |
 | `--events` | never chosen: `outbox` as soon as there is an ORM (`in-memory` with one needs `--allow-no-outbox "<reason>"`, a recorded deviation) | `outbox` |
 | `--audit` | `on` with an ORM; `off` needs the owner to say nobody will ever ask who did what | `on` |
+| `--event-sourcing` | `on` only when an aggregate will be kept as its events (a history to replay, every change kept); the generator refuses `--event-sourced` without it | `off` |
+| `--privacy` | `on` with an ORM: the requests of a data subject (erasure, export) answered from the platform; `off` when the owner says the system keeps nothing about a person | `on` |
 | `--docs-ui` | taste | `swagger` |
 | `--logger` | `pino` or `winston` when the team already runs one; both are adapters of the kernel `Logger` | `stdout` |
 | `--errors` | `sentry` when a Sentry or a GlitchTip receives the incidents | `none` |

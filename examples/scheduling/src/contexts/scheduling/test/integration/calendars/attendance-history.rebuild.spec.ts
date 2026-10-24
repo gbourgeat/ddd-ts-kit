@@ -50,7 +50,7 @@ describe('the attendance history, fed by the event store', () => {
 
     const erasure = await eraseDataSubject('patient-1', { keys: persistence.eventSourcing.subjectKeys, projections });
 
-    expect(erasure).toEqual({ erased: true, rebuilt: { 'scheduling.attendance-history': 6 } });
+    expect(erasure).toEqual({ erased: true, copies: {}, rebuilt: { 'scheduling.attendance-history': 6 } });
     expect(await rows(history)).toContain('practice-1.patient-1#3 cancellation [erased]');
     expect(await rows(history)).toContain('practice-1.patient-2#3 cancellation Words of patient-2');
   });

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:e5f25d124edd72d6 -->
+<!-- translation-of: README.md sha256:4c78c034cc217748 -->
 
 # @ddd-ts-kit/audit
 
@@ -19,7 +19,7 @@ npm i drizzle-orm      # seulement pour @ddd-ts-kit/audit/drizzle
 
 | Point d'entrée | Contient | Importe |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`) et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`) et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (pair optionnel) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (pair optionnel) |
 | `@ddd-ts-kit/audit/testing` | `auditTrailContract` | `@ddd-ts-kit/testing` (pair optionnel), le *runner* que vous passez |
@@ -475,6 +475,43 @@ rejoignent sa transaction : la destruction et son entrée sont validées ensembl
 n'existe, et un échec annule l'entrée `failed` avec le reste. Ce que le journal garde de cet
 échec, c'est l'entrée `failed` de la commande, que `auditMiddleware` écrit après l'annulation.
 
+### f. Exports de personnes concernées
+
+Le droit d'accès et la portabilité remettent à une personne tout ce que le système garde d'elle :
+une lecture du profil entier, dont la responsabilité de l'article 5(2) demande la trace, qui a lu
+quoi de qui et quand. `auditedPersonalDataExport(port, trail, { scope, clock, ids })` décore le port
+`PersonalDataExport` d'un contexte, de sorte que chaque `exportOf`, quel que soit l'appelant (le
+script `privacy:export` d'un projet généré, un gestionnaire de commande, un *job*), écrive une
+entrée :
+
+| Champ | Valeur |
+|---|---|
+| `category` | `data-access` |
+| `action` | `personal-data:export` (`PERSONAL_DATA_EXPORT_ACTION`) |
+| `outcome` | `succeeded`, ou `failed` quand le port a levé une erreur, avec le `code` d'une `DomainError` ou `UNEXPECTED_ERROR` comme `reason` |
+| `resource` | `{ type: 'data-subject', id: <personne> }` |
+| `context` | le `name` du port : le contexte borné |
+| `changes` | `{ records: <n> }`, le nombre d'enregistrements lus, `0` quand le contexte ne garde rien de la personne |
+| acteur, *tenant*, session, corrélation, origine | le scope d'exécution |
+
+L'entrée ne contient jamais une valeur des enregistrements : le journal est en ajout seul et lu par
+beaucoup, le document va à la personne seule. L'ordre est choisi pour qu'aucun document ne parte
+sans sa trace : le contexte d'exécution est lu d'abord (un export hors de `ExecutionScope.run` est
+refusé avant qu'une ligne ne soit lue), les enregistrements sont lus, l'entrée est écrite, et alors
+seulement les enregistrements sont remis. Quand l'entrée ne peut pas être écrite, `exportOf` est
+rejeté avec cette erreur et ne remet rien ; relancé, il relit les mêmes lignes et les enregistre. Un
+essai est une lecture comme une autre et laisse son entrée : essayez un script sur une personne de
+test, jamais sur une vraie. Une lecture qui échoue est enregistrée avec son code, puis relevée ; quand cette entrée ne peut pas
+être écrite non plus, `onLostRecord(error, record)` en est informé. `exportDataSubject` du kernel
+rassemble les exports ainsi décorés en un document daté, et `init --privacy on` le câble dans
+`src/platform/privacy/run-export.ts` quand le journal est actif :
+
+```ts
+// src/platform/privacy/run-export.ts, tel qu'init l'écrit avec --audit on
+const audited = (port: PersonalDataExport): PersonalDataExport => auditedPersonalDataExport(port, trail, source);
+const exports = dataSubjectExports.map((port) => audited(container.resolve(port)));
+```
+
 ### Dans une application de `@ddd-ts-kit/di`
 
 Le store est lié aux deux ports, et le *masker* au sien, chacun sous sa classe :
@@ -570,6 +607,10 @@ auditedProjection(ExportAppointmentsCommand, (command) => ({ plain: { format: co
   l'email ; l'email lui-même n'y est pas, et sans le secret une supposition ne peut pas être
   vérifiée. Un simple hachage ne suffirait pas : un email ou un numéro de téléphone se devine en
   quelques secondes.
+- `masked('patientEmail', { subject: 'patientId' })` dit à qui appartient la valeur : le champ du
+  message qui tient l'identifiant opaque de la personne concernée, ou `subjectOf: (command) => ...`
+  quand aucun champ seul ne le tient. Le masqueur le lit comme `dataSubject` ; l'entrée ne le porte
+  jamais.
 - Un champ déclaré `masked` sans *masker* est refusé à la construction du *middleware* ; une
   projection qui demande un masque sans *masker* fait échouer la commande à sa première
   utilisation.
@@ -597,31 +638,33 @@ jamais les données :
    à la frontière.
 2. **Masquez ce que vous devez corréler.** Une valeur masquée n'est pas lisible ; elle reste liée
    à une personne pour qui détient le secret.
-3. **L'effacement cryptographique (crypto-shredding) pour l'effacement.** Écrivez un *masker*
-   qui dérive une clé par personne concernée (ou par *tenant*) depuis un stockage de clés, à
-   l'aide du `MaskingSubject` qu'il reçoit (`actorId`, `tenantId`, `resource`). `AuditMasker` est
-   un port, une classe abstraite avec la seule méthode `mask` : l'adaptateur l'`implements` et est
-   lié sous ce port :
+3. **L'effacement cryptographique (crypto-shredding) pour l'effacement.** `subjectMasker(keys)`
+   masque chaque valeur sous une clé dérivée de la clé de sa personne concernée dans le
+   `SubjectKeyStore` du kernel, les mêmes clés qui scellent les valeurs personnelles des
+   événements stockés (HKDF du matériau, étiqueté pour le journal ; en mémoire, ou dans la table
+   `subject_keys` de chaque *package* de persistance). Chaque champ masqué doit dire à qui il
+   appartient, `masked('patientEmail', { subject: 'patientId' })` : le *middleware* refuse celui
+   qui ne le dit pas, au câblage (`MissingDataSubjectError`), puisque l'acteur et la ressource
+   d'une entrée sont rarement cette personne ; et ce sujet doit être un identifiant opaque (la
+   grammaire d'un id de *tenant*), puisque le stockage de clés l'écrit en clair : un e-mail ou un
+   nom à sa place est refusé avant qu'une clé ne soit créée (`MaskingSubjectNotAnIdError`). Effacer une personne (`SubjectKeyStore.erase`,
+   enveloppé par `auditedSubjectKeys` pour que l'effacement laisse son entrée) détruit la clé :
+   chaque masque fait avec elle devient un jeton d'apparence aléatoire que personne ne peut
+   recalculer, les entrées restent, les hachages restent valides, et l'id de clé écrit devant
+   chaque masque distingue les masques d'une clé disparue. Le stockage de clés est alors le
+   système à protéger : gardez-le à part du journal et des événements, avec une rétention des
+   sauvegardes plus courte.
 
    ```ts
-   // infrastructure/external/per-subject-masker.ts
-   export class PerSubjectMasker implements AuditMasker {
-     constructor(private readonly keys: SubjectKeys) {}
-
-     async mask(value: AuditScalar, subject: MaskingSubject): Promise<string> {
-       const key = await this.keys.keyOf(subject.resource?.id ?? subject.actorId); // créée à la première utilisation
-
-       return hmacMasker(key.secret, { keyId: key.id }).mask(value, subject);
-     }
-   }
-
-   builder.bind(AuditMasker).toClass(PerSubjectMasker, [SubjectKeys]);
+   const keys = new PostgresSubjectKeyStore(run); // ou InMemorySubjectKeyStore, ou celui de create<Orm>EventSourcing
+   auditMiddleware(trail, {
+     scope,
+     clock,
+     ids,
+     masker: subjectMasker(keys),
+     fields: [auditedFields(RescheduleAppointmentCommand, ['status', masked('patientEmail', { subject: 'patientId' })])],
+   });
    ```
-
-   Effacer une personne, c'est supprimer sa clé : chaque masque fait avec elle devient un jeton
-   d'apparence aléatoire que personne ne peut recalculer, les entrées restent, les hachages
-   restent valides. Le stockage de clés devient alors le système à protéger et à sauvegarder avec
-   soin ; ce *package* n'en fournit pas.
 
 Ce qui reste après l'effacement, c'est « un acteur avec cet id opaque a fait ceci à ce moment ».
 Savoir si c'est acceptable est une question juridique pour le projet, à trancher avant que la

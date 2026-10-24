@@ -99,6 +99,15 @@ describe('Reminder', () => {
     expect(sent.dueAt).toEqual(dayBefore);
   });
 
+  it('is planned again, and due again, when planned for the same start once withdrawn', () => {
+    const withdrawn = aReminder().plannedFor(startsAt).withdrawn().build();
+
+    withdrawn.planFor(new Date(startsAt));
+
+    expect(withdrawn.status).toBe('planned');
+    expect(withdrawn.dueAt).toEqual(dayBefore);
+  });
+
   it('is due again, 24 hours before the new start, when its appointment moves', () => {
     const movedTo = new Date('2026-03-20T15:00:00.000Z');
     const sent = aReminder().plannedFor(startsAt).sent(dayBefore).build();

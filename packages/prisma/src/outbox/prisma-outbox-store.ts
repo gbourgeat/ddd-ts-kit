@@ -19,6 +19,12 @@ export interface PrismaOutboxStoreOptions<Tx> {
   readonly claim: PrismaOutboxClaim<Tx>;
   /** How long a claimed record stays invisible to other claims. Default 30000. */
   readonly leaseMs?: number;
+  /**
+   * Writes the tenant of each event to `tenantId`, which the model of a multi-tenant project
+   * has (`tenantId String? @map("tenant_id")`): its consumers then run in that tenant. Default
+   * false, for a model without the field. A model that has it is read back either way.
+   */
+  readonly tenant?: boolean;
 }
 
 interface LockingClaim<Tx> {
@@ -44,6 +50,8 @@ export class PrismaOutboxStore<Tx> implements OutboxStore {
 
   private readonly leaseDurationMs: number;
 
+  private readonly tenant: boolean;
+
   constructor(unitOfWork: PrismaUnitOfWork<Tx>, options: PrismaOutboxStoreOptions<Tx>) {
     this.unitOfWork = unitOfWork;
     this.modelOf = options.delegate;
@@ -52,6 +60,7 @@ export class PrismaOutboxStore<Tx> implements OutboxStore {
       options.claim === 'compare-and-set' ? undefined : { sql: lockingSelect(options.claim), raw: options.claim.raw };
 
     this.leaseDurationMs = options.leaseMs ?? 30_000;
+    this.tenant = options.tenant ?? false;
   }
 
   async append(events: readonly IntegrationEvent[]): Promise<void> {
@@ -68,6 +77,7 @@ export class PrismaOutboxStore<Tx> implements OutboxStore {
         ...payloadField(event.payload),
         traceparent: event.traceparent ?? null,
         correlationId: event.correlationId ?? null,
+        ...(this.tenant ? { tenantId: event.tenantId ?? null } : {}),
         nextAttemptAt: DUE_IMMEDIATELY,
       })),
     });

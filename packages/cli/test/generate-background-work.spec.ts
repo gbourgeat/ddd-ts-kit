@@ -222,15 +222,34 @@ describe('generate process', () => {
   });
 });
 
-describe('background jobs and processes off the kernel module of @ddd-ts-kit/di', () => {
-  it('are refused, with what to do by hand', () => {
-    const root = jobProject('--di', 'manual');
-    const refused = failure(cli(root, ...COMPILE, '--json'));
+describe('generate background-job and process, where the platform is wired by hand', () => {
+  let root: string;
 
-    expect(refused.message).toBe('A background job cannot be generated with --di manual.');
+  beforeAll(() => {
+    root = jobProject('--di', 'manual');
+    expect(cli(root, ...COMPILE).code).toBe(0);
+    expect(cli(root, ...DUNNING).code).toBe(0);
+  });
 
-    expect(failure(cli(root, ...DUNNING, '--json')).message).toBe(
-      'A process manager cannot be generated with --di manual.',
+  it('registers each background job on the worker of the platform, built on its buses and its process runner', () => {
+    const module = read(root, `${BILLING}/billing.module.ts`);
+
+    expect(module).toContain('platform.backgroundJobs.register(CompileStatementsBackgroundJob, [platform.commands]);');
+
+    expect(module).toContain('platform.backgroundJobs.register(DunningTimeoutBackgroundJob, [platform.processes]);');
+
+    expect(read(root, JOB)).not.toContain('@Background');
+  });
+
+  it('tests the job and the timeout through a queue and a worker in memory, on the test buses', () => {
+    const spec = read(root, JOB_SPEC);
+
+    expect(spec).toContain("import { createTestBuses } from '@ddd-ts-kit/testing';");
+    expect(spec).toContain('await jobQueue.enqueue(CompileStatementsBackgroundJob, {});');
+    expect(spec).toContain("expect(sent[0]).toMatchObject({ actor: { id: 'test-user' } });");
+
+    expect(read(root, TIMEOUT_SPEC)).toContain(
+      'new StoredProcessRunner({ store: processes, jobs: jobQueue, commands: commandBus, unitOfWork })',
     );
   });
 });

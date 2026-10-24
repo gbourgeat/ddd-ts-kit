@@ -10,7 +10,10 @@ const after = { ...before, at: new Date('2026-03-02T09:30:00.000Z') };
 describe('the lifecycle of an appointment', () => {
   it('starts requested or booked, never in one of its ends', () => {
     expect(appointmentLifecycle.start(AppointmentStatus.Requested)).toBe('requested');
-    expect(() => appointmentLifecycle.start(AppointmentStatus.Cancelled)).toThrow(/not an initial state/);
+
+    expect(() => appointmentLifecycle.start(AppointmentStatus.Cancelled)).toThrow(
+      expect.objectContaining({ code: 'INVALID_STATE_MACHINE' }),
+    );
   });
 
   it('confirms a requested appointment, and refuses to confirm a booked one', () => {
@@ -21,12 +24,22 @@ describe('the lifecycle of an appointment', () => {
     );
   });
 
-  it('refuses every change of an appointment that ended, saying which end', () => {
-    for (const end of [AppointmentStatus.Cancelled, AppointmentStatus.Expired, AppointmentStatus.Completed]) {
+  it.each([AppointmentStatus.Cancelled, AppointmentStatus.Expired, AppointmentStatus.Completed])(
+    'refuses every change of an appointment that is %s, saying which end',
+    (end) => {
       expect(() => appointmentLifecycle.next(end, 'reschedule', after)).toThrow(
         expect.objectContaining({ code: 'APPOINTMENT_ENDED', facts: { appointmentId: 'appointment-1', status: end } }),
       );
-    }
+    },
+  );
+
+  it('refuses to confirm an appointment that ended as ended, not as already confirmed', () => {
+    expect(() => appointmentLifecycle.next(AppointmentStatus.Cancelled, 'confirm', after)).toThrow(
+      expect.objectContaining({
+        code: 'APPOINTMENT_ENDED',
+        facts: { appointmentId: 'appointment-1', status: 'cancelled' },
+      }),
+    );
   });
 
   it('knows the outcome of an appointment once it started, not before', () => {

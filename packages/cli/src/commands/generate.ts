@@ -76,6 +76,9 @@ const OPTIONS = {
   grant: TEXT,
   public: SWITCH,
   'tenant-scoped': SWITCH,
+  personal: TEXT,
+  subject: TEXT,
+  erasure: TEXT,
   search: SWITCH,
   kind: TEXT,
   decorators: SWITCH,
@@ -162,6 +165,9 @@ const TEXT_FLAGS = [
   'role',
   'cache',
   'module',
+  'personal',
+  'subject',
+  'erasure',
 ] as const;
 
 function flagsOf(args: Arguments): KindFlags {

@@ -17,25 +17,25 @@ as a legal guarantee.
 
 ## Status (2026-10-24)
 
-Nothing is built but this page. The parts, in merge order; each is a pull request of its own
+Parts 0, 0b, 1, 2, 3, 4 and 5 are built. The parts, in merge order; each is a pull request of its own
 with its tests, its documentation in both languages, its skills and its file of `changes/`.
 
 | Part | Verdict |
 |---|---|
 | 0. This proposal | **written** |
-| 0b. The example erases a person end to end, by hand | proposed |
-| 1. `personalFields` and the `PersonalDataErasure` and `PersonalDataExport` ports of the kernel | proposed |
-| 2. `subjectMasker` of the audit trail, one key per data subject | proposed |
-| 3. The erasure adapter on the four ORMs, read models included | proposed |
-| 4. `init` writes `src/platform/privacy/` and wires event sourcing | proposed |
-| 5. `generate repository` and `generate projection` declare the personal fields | proposed |
+| 0b. The example erases a person end to end, by hand | **built** (#267): the person of identity, the contact of notification, the notes, the cancellation reasons, the documents and the copied name in scheduling, network by network; the README of the example says what stays out of reach |
+| 1. `personalFields` and the `PersonalDataErasure` and `PersonalDataExport` ports of the kernel | **built** (#268): the declaration, the two ports, `eraseDataSubject` and `inEachTenant` in the kernel, `InMemoryPersonalData`, the two contract suites of the testing package; with part 5, `exportDataSubject` and the `PersonalDataExportDocument` it answers, `recordsInEachTenant` |
+| 2. `subjectMasker` of the audit trail, one key per data subject | **built** (#270): `subjectMasker(keys)` over the `SubjectKeyStore`, `masked(field, { subject })`, the refusal at wiring time of a masked field without a subject and, before any key, of a subject that is not an opaque id |
+| 3. The erasure adapter on the four ORMs, read models included | **built** (#271): `KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`, each under the contract suite, the tenant confined, the files deleted first; a read model is a table like any other. With part 5, the export adapter beside each: `KnexPersonalDataExport`, `DrizzlePersonalDataExport`, `PrismaPersonalDataExport`, `TypeOrmPersonalDataExport`, under `personalDataExportContract`, and `auditedPersonalDataExport` in the audit package |
+| 4. `init` writes `src/platform/privacy/` and wires event sourcing | **built** (#274, then the two choices): `--privacy on`, the default with an ORM, writes `src/platform/privacy/` (the lists of copies and exports, `run-erasure.ts` and `run-export.ts`) and the scripts `privacy:erase` and `privacy:export`; `--event-sourcing on`, off unless asked, wires `Persistence.eventSourcing` on the four ORMs and in memory, and `src/platform/event-sourcing/` (the audited keys, the cipher, the module or `platform.eventSourcing`); a project without personal data pays nothing, one whose aggregates are rows pays no table; no HTTP command yet |
+| 5. `generate repository` and `generate projection` declare the personal fields | **built** for the repositories: `generate repository <ctx> <Aggregate> --personal <column>,... [--subject <column>] [--erasure pseudonymise\|row]` adds the columns to the storage, writes the declaration next to the mapper on the four ORMs and, once per context, the erasure and the export that read it (two ports, adapters over `<Orm>PersonalDataErasure` and `<Orm>PersonalDataExport`, fakes, one spec on the test database, listed in the copies and the exports of the platform; `privacy:export` answers one dated document through `exportDataSubject`, each export audited when the trail is on). A projection keeps its rows in a read model store, not in a table of its own: the declaration of a read model waits for the register (part 9), which will read what the store keeps |
 | 6. The erasure event, its generated handler, `personal` on an integration event | proposed |
 | 7. Retention on the declaration, the generated purge job | proposed |
 | 8. `archiveBefore` on the audit trail | proposed |
 | 9. The generated register of personal data | proposed |
 | 10. The `privacy/*` rules, as warnings first | proposed |
 | 11. The example adopts the ports of the kit | proposed |
-| 12. The concept page, the pages it touches, the public wording | proposed |
+| 12. The concept page, the pages it touches, the public wording | **started** with part 5: [the concept page](../concepts/personal-data.md) says what a generated project holds, the erasure end to end, what stays out of reach and what the tool does not decide; the README and the other pages come with this part |
 
 ## What the kit does today
 
@@ -279,8 +279,9 @@ The wording that follows from it, for the README and for whatever presents the k
   pseudonymised one keeps the history readable without the person. The first adapter will tell.
 - Whether the export of a person should be one use case of the platform that calls every
   `PersonalDataExport`, or an integration event `privacy.data-subject.export-requested` that each
-  context answers with a file, as the erasure does. The first form is simpler and sufficient for
-  a monolith; the second is the one that survives an extraction.
+  context answers with a file, as the erasure does. Settled for the monolith with part 5: the
+  first form, `exportDataSubject` run by `privacy:export`, every export audited; the second stays
+  for a context extracted into a service of its own.
 - Whether the vocabulary of `privacy/declared-field` should be a list of the kit at all, or a
   list the project writes in full: a list of the kit reports `email` in a project that never
   thought about it, which is the point, and reports it too in a column that holds a system

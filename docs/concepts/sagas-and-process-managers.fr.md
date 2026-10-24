@@ -1,5 +1,5 @@
 [English](sagas-and-process-managers.md) · **Français**
-<!-- translation-of: sagas-and-process-managers.md sha256:43d153de10ce89d2 -->
+<!-- translation-of: sagas-and-process-managers.md sha256:ac8d5768d78a8d25 -->
 
 # Sagas et gestionnaires de processus
 
@@ -352,10 +352,12 @@ le chemin : son `ProcessRunner` est en mémoire, `app.processes.list()` montre l
 `ddd-ts-kit generate process <context> <Name>` en démarre un : le processus avec une première
 étape qui arme une échéance, une étape qui le termine à temps et l'étape de l'échéance, le *job*
 en arrière-plan qui livre ses délais d'expiration, et les *specs* des deux, écrites avec
-`givenProcess` et à travers la file de l'application de test. Les étapes auxquelles il doit
-réagir sont ensuite appelées par des gestionnaires d'événements (`generate event-handler`) via
-`ProcessRunner.run`. Il exige `--di tsyringe`, qui lie le *runner* ; `stack.queue` dit où les
-instances sont conservées.
+`givenProcess` et à travers la file de l'application de test sur tsyringe, une file et un
+*runner* en mémoire sur les bus de test sinon. Les étapes auxquelles il doit réagir sont ensuite
+appelées par des gestionnaires d'événements (`generate event-handler`) via `ProcessRunner.run`.
+Le *runner* est lié par le module noyau de `@ddd-ts-kit/di` sur tsyringe et construit par
+`src/platform/jobs/create-background-work.ts` là où la plateforme est câblée à la main
+(`platform.processes`) ; `stack.queue` dit où les instances sont conservées.
 
 ## Sans moteur d'exécution : un agrégat porte le processus
 

@@ -4,7 +4,7 @@ import { INSTANT } from '../columns/instant';
 import { RIGHT_NOW } from '../columns/right-now';
 import type { TypeOrmDialect } from '../columns/type-orm-dialect';
 import { entityName } from './entity-name';
-import type { EntityOptions } from './entity-options';
+import type { OutboxEntityOptions } from './outbox-entity-options';
 import type { OutboxRow } from './outbox-row';
 
 const JSON_DOCUMENT: Record<TypeOrmDialect, EntitySchemaColumnOptions> = {
@@ -18,7 +18,7 @@ const JSON_DOCUMENT: Record<TypeOrmDialect, EntitySchemaColumnOptions> = {
  * `typeorm migration:generate` creates it in a migration of the consuming project. No
  * decorator, so no `reflect-metadata` import and no decorator compiler option is needed.
  */
-export function outboxEntity(options: EntityOptions = {}): EntitySchema<OutboxRow> {
+export function outboxEntity(options: OutboxEntityOptions = {}): EntitySchema<OutboxRow> {
   const dialect = options.dialect ?? 'postgres';
   const instant = INSTANT[dialect];
   const tableName = options.tableName ?? 'outbox';
@@ -37,6 +37,8 @@ export function outboxEntity(options: EntityOptions = {}): EntitySchema<OutboxRo
       payload: { ...JSON_DOCUMENT[dialect], nullable: true },
       traceparent: { type: 'text', nullable: true },
       correlationId: { name: 'correlation_id', type: 'text', nullable: true },
+      // The tenant of the event, for a multi-tenant project: its consumers run in it.
+      ...(options.tenant === true ? { tenantId: tenantOfEvent() } : {}),
       status: { type: 'varchar', length: 16, default: 'pending' },
       attempts: { type: 'int', default: 0 },
       nextAttemptAt: { ...instant, name: 'next_attempt_at' },
@@ -49,6 +51,11 @@ export function outboxEntity(options: EntityOptions = {}): EntitySchema<OutboxRo
 }
 
 type OutboxSchemaOptions = EntitySchema<OutboxRow>['options'];
+
+/** Nullable: an event of no tenant (the platform's own), and the events published before the column existed. */
+function tenantOfEvent(): EntitySchemaColumnOptions {
+  return { name: 'tenant_id', type: 'varchar', length: INDEXABLE_LENGTH, nullable: true };
+}
 
 function keyColumns(dialect: TypeOrmDialect): Pick<OutboxSchemaOptions['columns'], 'id' | 'sequence'> {
   if (dialect === 'sqlite') {

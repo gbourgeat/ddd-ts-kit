@@ -41,7 +41,7 @@ export class Reminder extends AggregateRoot<string> {
     return new Reminder(id, state);
   }
 
-  /** Plans the reminder for a start: the same start changes nothing, another one makes it due again, 24 hours before. */
+  /** Plans the reminder for a start: the same start changes nothing, another one makes it due again, 24 hours before; a withdrawn reminder is planned again whatever the start, since its appointment is requested anew. */
   planFor(startsAt: Date): void {
     if (this.state.status !== ReminderStatus.Withdrawn && this.state.startsAt.getTime() === startsAt.getTime()) {
       return;

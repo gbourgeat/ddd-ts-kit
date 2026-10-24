@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { checkJsonOf } from './check-support';
-import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers';
+import { cli, DEFAULT_STACK, exists, read, scaffoldEverything, tempDir, write } from './helpers';
 import { type Report, report } from './reports';
 import { initProject } from './support/init-project';
 
@@ -15,10 +15,32 @@ let root: string;
 
 beforeAll(() => {
   root = tempDir('event-sourced');
-  scaffoldEverything(root);
+  scaffoldEverything(root, { ...DEFAULT_STACK, 'event-sourcing': 'on' });
 });
 
 describe('generate aggregate --event-sourced', () => {
+  it('refuses an event-sourced aggregate while the platform has no event store, with the init --force to run', () => {
+    const project = initProject('--context', 'billing:core');
+
+    const refused = cli(
+      project,
+      'generate',
+      'aggregate',
+      'billing',
+      'Ledger',
+      '--event-sourced',
+      '--term',
+      'Ledger=Payments',
+      '--term',
+      'Create=To open',
+    );
+
+    expect(refused.code).not.toBe(0);
+    expect(refused.stderr).toContain('stack.eventSourcing is "off"');
+    expect(refused.stderr).toContain('init --force --event-sourcing on');
+    expect(exists(project, AGGREGATE)).toBe(false);
+  });
+
   it('refuses a birth fact the glossary does not define, and says how to define it', () => {
     const refused = cli(
       root,
@@ -167,7 +189,7 @@ describe('generate domain-event on an event-sourced aggregate reshaped by hand',
   ];
 
   function ledger(): string {
-    const project = initProject('--context', 'billing:core');
+    const project = initProject('--context', 'billing:core', '--event-sourcing', 'on');
     const generated = cli(project, 'generate', 'aggregate', 'billing', 'Ledger', '--event-sourced', ...TERMS);
 
     expect(generated.code, generated.stderr).toBe(0);
