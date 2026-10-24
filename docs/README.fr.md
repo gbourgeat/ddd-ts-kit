@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1e7b9281c004f296 -->
+<!-- translation-of: README.md sha256:459f91dc292adbba -->
 
 # Documentation
 
@@ -65,7 +65,7 @@ Ordonnées en parcours de lecture dans [concepts/README.fr.md](concepts/README.f
 | [Sagas et gestionnaires de processus](concepts/sagas-and-process-managers.fr.md) | les processus longs : ce que le kit fournit et ce qu'il ne fournit pas |
 | [Versionnement des événements](concepts/event-versioning.fr.md) | faire évoluer un événement publié |
 | [Event sourcing, par agrégat](concepts/event-sourcing.fr.md) | quand garder un agrégat sous forme de ses événements, ce que cela coûte, *upcasters*, crypto-effacement (crypto-shredding), projections alimentées par le magasin, y migrer et en revenir |
-| [Les données personnelles dans un projet généré](concepts/personal-data.fr.md) | ce qu'écrivent `init --privacy on` et `generate repository --personal`, l'effacement et l'export d'une personne de bout en bout, les deux modes d'effacement, ce qui reste hors de portée et ce que l'outil ne décide pas |
+| [Les données personnelles dans un projet généré](concepts/personal-data.fr.md) | ce qu'écrivent `init --privacy on` et `generate repository --personal`, l'effacement et l'export d'une personne de bout en bout, les deux modes d'effacement, la conservation purgée chaque nuit, le registre généré par `docs`, les règles `privacy/*`, ce qui reste hors de portée et ce que l'outil ne décide pas |
 | [Authentification et autorisation](concepts/authentication-and-authorization.fr.md) | RBAC, ABAC, ReBAC comparés, avec une table de décision |
 | [L'autorisation en pratique](concepts/authorization-in-practice.fr.md) | `@Requires`, le *middleware* du bus, le port `Authorizer` et les politiques, suivis à travers une seule commande |
 | [Acteur et portée d'exécution](concepts/actor-and-execution-scope.fr.md) | l'acteur explicite, et ce que porte chaque unité de travail |
@@ -138,7 +138,7 @@ a vérifié, les limites, et une recommandation selon la situation.
 | [Des modules à l'intérieur d'un contexte délimité](proposals/modules.fr.md) | construit : les sous-contextes ne sont pas un concept des références, les modules du modèle le sont (Evans) ; le jugement de ses gains et de ses limites, et l'essai qui a mesuré le coût sur l'exemple |
 | [Le côté lecture](proposals/read-side.fr.md) | critères, représentations, formulaires, modèles de lecture et projections ; la page dit, partie par partie, ce qui est construit dans les *packages* d'exécution, ce que la CLI ne génère pas encore et ce qui n'est pas construit |
 | [Vélocité du build, des contrôles et des tests](proposals/build-and-test-velocity.fr.md) | étudié, non construit : où vont le temps et la mémoire de ce dépôt, sur une station de travail et dans le *pipeline* ; les leviers de Vitest, ESLint, Oxlint, du compilateur natif et des gestionnaires de *packages* mesurés sur cet arbre ; ce que d'autres équipes ont publié sur les orchestrateurs, la sélection de tests et GitHub Actions ; un plan dans l'ordre du gain par coût, et pourquoi aucun orchestrateur |
-| [La protection des données dès la conception, au-delà de l'*event sourcing*](proposals/privacy-by-design.fr.md) | proposé : ce que le kit efface aujourd'hui (les valeurs personnelles des événements stockés) et ce que rien du kit n'efface, n'exporte, ne limite dans le temps ni n'inventorie (agrégats gardés en lignes, modèles de lecture, copies des autres contextes, masques du journal d'audit) ; une déclaration des champs personnels lue par des ports avec un adaptateur par ORM, des générateurs et des règles `privacy/*` ; les *pull requests* dans l'ordre de fusion, l'exemple d'abord ; ce qu'un outil ne peut jamais garantir et les mots à employer |
+| [La protection des données dès la conception, au-delà de l'*event sourcing*](proposals/privacy-by-design.fr.md) | construite, chaque partie : pourquoi le kit, qui n'effaçait que les valeurs personnelles des événements stockés, déclare désormais les champs personnels une fois et les lit dans des ports avec un adaptateur par ORM (effacement, export, conservation), des générateurs, un registre et des règles `privacy/*` ; les *pull requests* dans l'ordre de fusion, l'exemple qui adopte les ports ; ce qu'un outil ne peut jamais garantir et les mots à employer |
 | [Un second exemple, la gestion des dépenses sur la pile la plus populaire](proposals/spend-management-example.fr.md) | spécifié, non construit : NestJS, Prisma, Jest, Kafka, S3, ABAC sur un métier d'argent et de *workflows* ; d'abord les quatre capacités que cette pile éteint aujourd'hui (file et processus sur Nest, *tenancy* et audit sur Prisma, le *preset* identity), puis l'exemple comme preuve ; MySQL laissé de côté, avec ce qu'il faudrait |
 
 ## Partir d'une question
@@ -191,6 +191,8 @@ npx ddd-ts-kit describe billing             # un contexte sous forme de faits : 
    [Discipline de commit](guides/commit-discipline.fr.md)
 6. [Économie de jetons](guides/token-economy.fr.md), si l'équipe travaille avec des agents de code
 7. [Configuration](CONFIG.fr.md)
+8. [Les données personnelles](concepts/personal-data.fr.md), avant la production : ce qui est
+   déclaré, effacé, exporté et purgé, et ce qui reste la décision du responsable de traitement
 
 **Contributeur au kit.**
 

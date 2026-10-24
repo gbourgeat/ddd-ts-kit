@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:cde9e123afefb4a9 -->
+<!-- translation-of: README.md sha256:885870373321d5db -->
 
 # Concepts : un parcours de lecture
 
@@ -114,27 +114,30 @@ personnes, pas d'outils.
     lecture ni écriture qui passe de l'un à l'autre.
 27. [Journal d'audit](audit-trail.fr.md) : qui a fait quoi, enregistré depuis l'extérieur des cas
     d'usage.
-28. [Observabilité](observability.fr.md) : traçage, journaux, métriques, remontée des erreurs, et
+28. [Les données personnelles dans un projet généré](personal-data.fr.md) : ce qu'une table ou un
+    événement garde d'une personne, déclaré une fois, et l'effacement, l'export, la conservation
+    et le registre qui le lisent ; ce que l'outil ne décide pas.
+29. [Observabilité](observability.fr.md) : traçage, journaux, métriques, remontée des erreurs, et
     l'identifiant de corrélation qui les relie.
-29. [Résilience](resilience.fr.md) : nouvelle tentative (retry), délai d'expiration (timeout),
+30. [Résilience](resilience.fr.md) : nouvelle tentative (retry), délai d'expiration (timeout),
     disjoncteur (circuit breaker), cloison (bulkhead), cache, et comment chacun échoue.
-30. [Cache HTTP](http-caching.fr.md) : quoi mettre en cache à quelle couche, qui peut garder une
+31. [Cache HTTP](http-caching.fr.md) : quoi mettre en cache à quelle couche, qui peut garder une
     réponse, et jamais une décision d'autorisation d'un acteur à l'autre.
-31. [Jobs planifiés](scheduled-jobs.fr.md) : le travail déclenché par le temps, et pourquoi il
+32. [Jobs planifiés](scheduled-jobs.fr.md) : le travail déclenché par le temps, et pourquoi il
     doit être idempotent.
-32. [Jobs en arrière-plan](background-jobs.fr.md) : le travail qu'un cas d'usage confie à un
+33. [Jobs en arrière-plan](background-jobs.fr.md) : le travail qu'un cas d'usage confie à un
     *worker*, mis en file dans sa transaction, exécuté au moins une fois.
-33. [Stockage de fichiers](file-storage.fr.md) : les fichiers dans un stockage et jamais dans la
+34. [Stockage de fichiers](file-storage.fr.md) : les fichiers dans un stockage et jamais dans la
     base de données, l'ordre qui garde les deux cohérents, les liens signés.
-34. [Import et export de fichiers](file-import-export.fr.md) : une conception, pas encore
+35. [Import et export de fichiers](file-import-export.fr.md) : une conception, pas encore
     construite : un gros fichier lu ou écrit par un *job* en arrière-plan, ligne par ligne, entre
     la file d'attente et le stockage de fichiers.
 
 ## 6. Code et tests
 
-35. [Code propre](clean-code.fr.md) : nommage, petites fonctions, lecture en descente (stepdown),
+36. [Code propre](clean-code.fr.md) : nommage, petites fonctions, lecture en descente (stepdown),
     commentaires, testabilité par construction.
-36. [Stratégie de test](testing-strategy.fr.md) : des *fakes* plutôt que des *mocks*, des
+37. [Stratégie de test](testing-strategy.fr.md) : des *fakes* plutôt que des *mocks*, des
     *builders*, des tests de contrat, les quatre niveaux.
 
 ## Parcours plus courts
