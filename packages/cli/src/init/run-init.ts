@@ -24,6 +24,7 @@ import { REVIEW_POLICY } from './files/guidance-files';
 import { keepFlatPlatform } from '../platform-folders';
 import { ignoreWorktrees } from './ignore-worktrees';
 import { writeManifest } from './manifest/write-manifest';
+import { writeOverrides } from './manifest/write-overrides';
 import { recordAgentProfile } from './record-agent-profile';
 import { recordNoOutbox } from './record-no-outbox';
 import { resolveStack, type StackOptions } from './stack/resolve-stack';
@@ -61,7 +62,7 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   recordAgentProfile(ws, config);
   writeManifest(ws, { config, projectName, force: options.force });
   writeTypeScriptConfigs(ws, config);
-  writeFiles(ws, { config, projectName, flat });
+  writeFiles(ws, { config, projectName, flat, force: options.force });
   ignoreWorktrees(ws);
   writeCopilotInstructions(ws);
   ws.create(DEPCRUISE_FILE, renderCruiseFile(config));
@@ -166,7 +167,7 @@ function addPresets(ws: Workspace, config: Config, names: readonly string[]): Co
  * A template ending in `.tpl` is rendered; any other is copied as it is. A file of the platform a
  * version before the folders wrote flat is written flat again, its imports with it.
  */
-function writeFiles(ws: Workspace, { config, projectName, flat }: Written): void {
+function writeFiles(ws: Workspace, { config, projectName, flat, force }: Written): void {
   const context = templateVars(config, projectName);
 
   for (const [target, template] of initFiles(config, projectName)) {
@@ -175,6 +176,9 @@ function writeFiles(ws: Workspace, { config, projectName, flat }: Written): void
 
     ws.create(kept === undefined ? target : `${kept}.ts`, target === KNIP_FILE ? laidOut(content) : content);
   }
+
+  // After the files: under pnpm the overrides join the pnpm-workspace.yaml just written.
+  writeOverrides(ws, config, force);
 
   // Initialised again, a project may keep code lists where 0.86 and 0.87 wrote them: knip is told of both places.
   ignoreCodeTypesWhereTheyAre(ws, config);
@@ -201,6 +205,7 @@ interface Written {
   readonly config: Config;
   readonly projectName: string;
   readonly flat: Relocation;
+  readonly force: boolean;
 }
 
 /** The lists of knip.json depend on the stack: they are laid out as the formatter of the project would, whatever their length. */

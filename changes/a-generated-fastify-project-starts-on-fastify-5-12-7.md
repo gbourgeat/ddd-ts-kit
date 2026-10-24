@@ -1,3 +1,0 @@
-**A project generated on Fastify asks for `fastify` `^5.12.7`.** Fastify 5.12.2 to 5.12.5 let a request header go around the validation of a schema whose `propertyNames` reads it by case (low severity). The kit itself is tested against 5.12.7, Nest 12.2.0 and multer 2.5.0, where `@nestjs/platform-express` 12.2.0 still asks for multer 2.4.0 and its denial of service on a pending `fileFilter`.
-
-To move: in a project on Fastify, `npm install fastify@^5.12.7`. In a project on Nest, until `@nestjs/platform-express` asks for multer 2.5.0 itself, add `"overrides": { "multer": "^2.5.0" }` to `package.json` (`pnpm.overrides` on pnpm, `resolutions` on Yarn) and install again.

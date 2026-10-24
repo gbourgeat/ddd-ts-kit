@@ -125,6 +125,10 @@ recorded under `stack.packageManager`. pnpm is pinned in `package.json` and prov
 `pnpm-workspace.yaml` says that no dependency runs a build script unless allowed by name. Both are
 proven by a real install of a generated project, its build and its `verify`. The kit is installed
 from the registry either way.
+Under `--http nest` the project forces multer `^2.5.0`, in `overrides` of `package.json` under npm
+and of `pnpm-workspace.yaml` under pnpm, which reads nothing of `package.json`:
+`@nestjs/platform-express` still asks for 2.4.0 exactly, open to a denial of service. An override
+the project already sets for multer is kept, and said.
 
 **Pipelines.** A pull or merge request runs the unit specs, the integration specs and the lint of
 the contexts its change reaches through the context map ([`ddd-ts-kit affected`](#affected)); types,

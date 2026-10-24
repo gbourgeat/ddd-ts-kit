@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c59e62b7dedda6a7 -->
+<!-- translation-of: README.md sha256:7aa0076864942391 -->
 
 # ddd-ts-kit
 
@@ -134,6 +134,10 @@ de celui qui est choisi, enregistré sous `stack.packageManager`. pnpm est épin
 de script de build sans être autorisée par son nom. Les deux sont prouvés par une installation
 réelle d'un projet généré, son build et son `verify`. Le kit est installé depuis le registre dans
 les deux cas.
+Avec `--http nest`, le projet force multer `^2.5.0`, dans les `overrides` de `package.json` sous
+npm et de `pnpm-workspace.yaml` sous pnpm, qui ne lit rien de `package.json` :
+`@nestjs/platform-express` demande encore exactement la 2.4.0, exposée à un déni de service. Un
+override que le projet pose déjà pour multer est gardé, et signalé.
 
 **Pipelines.** Une *pull request* ou une *merge request* exécute les *specs* unitaires, les
 *specs* d'intégration et le lint des contextes que son changement atteint par la carte des
