@@ -369,8 +369,9 @@ and merge request settings were written from the API documentation.
 **Mutation testing runs every night.** The `mutation` job of the pipeline runs
 `npm run test:mutation` on the default branch when the schedule fires: Stryker 10.1.1 with the
 runner of the project, Vitest or Jest, on the domain layer of every context, its configuration read
-from the kit (`governedMutation()`, held by `test/mutation-governed`), then `ddd-ts-kit mutation`,
-which holds each context to the `mutation` floor of `ddd-ts-kit.config.json`. Not a gate of a pull
+from the kit (`governedMutation()`, held by `test/mutation-governed`: the texts of refusals and the
+static mutants left out), then `ddd-ts-kit mutation`, which holds each context to the `mutation`
+floor of `ddd-ts-kit.config.json`, the ignored mutants shown beside each score. Not a gate of a pull
 request: eight minutes for the example are too long for the loop of a change. The pipeline README
 holds the measures that decided it (2026-10-24).
 

@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:f291f0a0fe917acb -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:35ebf28ff1d25f95 -->
 
 # L'analyse statique et le pipeline
 
@@ -385,9 +385,10 @@ la documentation de l'API.
 **Les tests de mutation tournent chaque nuit.** Le *job* `mutation` du *pipeline* lance
 `npm run test:mutation` sur la branche par défaut quand la planification se déclenche : Stryker
 10.1.1 avec le lanceur du projet, Vitest ou Jest, sur la couche domaine de chaque contexte, sa
-configuration lue dans le kit (`governedMutation()`, tenue par `test/mutation-governed`), puis
-`ddd-ts-kit mutation`, qui tient chaque contexte au plancher `mutation` de `ddd-ts-kit.config.json`.
-Pas une porte de *pull request* : huit minutes pour l'exemple sont trop longues pour la boucle d'un
+configuration lue dans le kit (`governedMutation()`, tenue par `test/mutation-governed` : les textes
+des refus et les mutants statiques laissés de côté), puis `ddd-ts-kit mutation`, qui tient chaque
+contexte au plancher `mutation` de `ddd-ts-kit.config.json`, les mutants ignorés affichés à côté de
+chaque score. Pas une porte de *pull request* : huit minutes pour l'exemple sont trop longues pour la boucle d'un
 changement. Le README du *pipeline* tient les mesures qui l'ont décidé (2026-10-24).
 
 ## Limites, et quand ne pas l'utiliser

@@ -67,8 +67,11 @@ authenticated read passes through to the API. The API purges with `VARNISH_PURGE
 purged](#how-a-public-answer-is-cached-then-purged) follows one change through.
 
 The gate is `npm run verify` (types, lint with the kit's preset, format, tests, end to end,
-architecture rules, import graph, dead code, documentation drift); it needs no container. Stop
-with `docker compose --profile identity --profile observability --profile errors down --volumes`.
+architecture rules, import graph, dead code, documentation drift); it needs no container. The
+night adds `npm run test:mutation`: Stryker on the domain layer of the four contexts, each held to
+the `mutation` floor of the config (80); on 2026-10-24 the domain scored 96.3%, the lowest context
+95.4%, the texts of refusals and the static mutants left out of the measure. Stop with
+`docker compose --profile identity --profile observability --profile errors down --volumes`.
 
 ## Demo users
 
