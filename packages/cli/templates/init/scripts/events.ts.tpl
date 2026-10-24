@@ -2,6 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createEventRegistry, generateEventCatalog, type AnyIntegrationEventDefinition } from '@ddd-ts-kit/events';
 import { generateAsyncApi } from '@ddd-ts-kit/events/asyncapi';
+{{#if privacy.on}}
+import { dataSubjectErasedV1 } from '@ddd-ts-kit/kernel';
+{{/if}}
 import { contractFormat, stringifyContract } from 'ddd-ts-kit/dist/contracts.js';
 
 // Generates docs/integration/asyncapi.yaml (asyncapi.json under "openapi.format": "json" in
@@ -19,7 +22,16 @@ const PENDING = 'x-ddd-ts-kit-pending';
 
 /** The type of each declaration by the name its published language exports it under, `invoiceIssuedV1`: what a handler reads with `invoiceIssuedV1.type`. */
 const typesByName = new Map<string, string>();
+{{#if privacy.on}}
+
+// The erasure of a data subject, which the platform publishes: `privacy:erase` announces it once every copy is erased.
+typesByName.set('dataSubjectErasedV1', dataSubjectErasedV1.type);
+
+const registry = createEventRegistry([...(await declaredEvents()), dataSubjectErasedV1]);
+{{/if}}
+{{#unless privacy.on}}
 const registry = createEventRegistry(await declaredEvents());
+{{/unless}}
 
 const generated: Readonly<Record<string, string>> = {
   [`asyncapi.${format}`]: stringifyContract(

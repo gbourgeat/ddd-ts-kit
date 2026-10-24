@@ -135,6 +135,38 @@ describe('the personal data of a generated project: --privacy', () => {
   });
 });
 
+describe('the erasure announced to the services that keep a copy', () => {
+  it('announces the erasure through the outbox once every copy is erased, once per tenant with shared tables', () => {
+    const one = initProject();
+    const tenants = initProject('--tenancy', 'shared-table');
+    const byHand = initProject(...BY_HAND);
+
+    expect(platform(one, 'privacy/run-erasure.ts')).toContain(
+      'const publisher = container.resolve(IntegrationEventPublisher);',
+    );
+
+    expect(platform(one, 'privacy/run-erasure.ts')).toContain(
+      '    await announceErasure(subject, request);\n\n    return report;',
+    );
+
+    expect(platform(one, 'privacy/run-erasure.ts')).toContain('  await publish();');
+
+    expect(platform(tenants, 'privacy/run-erasure.ts')).toContain(
+      'await eachTenant(container.resolve(ExecutionScope), request.tenants, publish);',
+    );
+
+    expect(platform(byHand, 'privacy/run-erasure.ts')).toContain(
+      'const publish = () => platform.publisher.publish([event()]);',
+    );
+
+    expect(read(one, 'scripts/events.ts')).toContain(
+      'const registry = createEventRegistry([...(await declaredEvents()), dataSubjectErasedV1]);',
+    );
+
+    expect(read(initProject('--privacy', 'off'), 'scripts/events.ts')).not.toContain('dataSubjectErasedV1');
+  });
+});
+
 describe('the event store of a generated project: --event-sourcing', () => {
   it('wires no event store unless asked: no table, no store, no folder, nothing bound', () => {
     const project = initProject();

@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:73d3b76440fbab05 -->
+<!-- translation-of: commands.md sha256:b8cd44e27efe911b -->
 
 # Quelle commande, quand
 
@@ -618,6 +618,7 @@ Kinds
   schema <context|shared-kernel> <Name>
   integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]...
   integration-handler <context> <upstreamContext> <eventType> [--name <Name>] [--term "<Term>=<meaning>"]...   (alias: consumer)
+  erasure-handler <context>
   event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--name <Name>] [--term "<Term>=<meaning>"]...
   projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]...   (alias: projector)
   job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--term "<Term>=<meaning>"]...
