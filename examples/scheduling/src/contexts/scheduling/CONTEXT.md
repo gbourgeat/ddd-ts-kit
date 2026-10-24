@@ -330,6 +330,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `AttendanceHistory` | repository | `KnexAttendanceHistory` |
 | `AttendanceRecordRepository` | repository | `EventStoreAttendanceRecordRepository` |
 | `CalendarRepository` | repository | `KnexCalendarRepository` |
+| `PatientErasure` | repository | `KnexPatientErasure` |
 | `PersonDirectoryGateway` | gateway | `InProcessPersonDirectoryGateway` |
 | `PractitionerDirectory` | repository | `KnexPractitionerDirectory` |
 | `SchedulingRelationships` | repository | `TupleSchedulingRelationships` |

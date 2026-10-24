@@ -7,4 +7,8 @@ export class FakePersonRepository extends InMemoryRepository<Person> implements 
     // A copy by rehydration and not a snapshot: a snapshot goes through `structuredClone`, which turns the value objects of the state into plain objects. The state is immutable, so sharing its values between copies is safe.
     super({ clone: (stored: Person) => Person.rehydrate(stored.id, stored.toState()) });
   }
+
+  async erase(personId: string): Promise<boolean> {
+    return this.remove(personId);
+  }
 }
