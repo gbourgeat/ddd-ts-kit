@@ -450,6 +450,13 @@ share no transaction: when the entry cannot be written the erasure fails, and ru
 records that no key was left, at a later date, so the completion date is never early
 ([`@ddd-ts-kit/audit`](../../packages/audit/README.md#e-erasures-of-data-subjects)).
 
+What a context keeps of the same person in clear, the rows of its tables, is not sealed: it is
+declared once next to the mapper (`personalFields`: the subject column, the personal columns, rows
+deleted or pseudonymised, the columns that hold a file), erased through a `PersonalDataErasure`
+port of the context, and the whole chain, the key first, then every copy in every tenant, then the
+projections fed by the store, is `eraseDataSubject` of the kernel
+([`@ddd-ts-kit/kernel`](../../packages/kernel/README.md#personal-data)).
+
 What it does not do: identifiers are not sealed. A stream named after a patient
 (`scheduling.attendance-record-<practice>.<patient>`) keeps that identifier in the store. Use
 identifiers that mean nothing outside the application.
@@ -457,8 +464,10 @@ identifiers that mean nothing outside the application.
 The example keeps the keys in the table `subject_keys` of the `scheduling` schema of its own
 database, next to the events, to stay runnable with one PostgreSQL; its README says so and names
 what a deployment changes. Its erasure (`npm run erase:patient`) destroys the key of a patient,
-writes the erasure to the audit trail with the operator as actor, and rebuilds the projections
-fed by the store, so that the history read model loses the clear reason too.
+writes the erasure to the audit trail with the operator as actor, erases every copy the contexts
+keep of the person in clear (the person of identity, the contact of notification, the notes, the
+cancellation reasons and the documents of their appointments in scheduling), and rebuilds the
+projections fed by the store, so that the history read model loses the clear reason too.
 
 ## Projections fed by the store
 

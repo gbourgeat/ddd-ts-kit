@@ -61,6 +61,17 @@ export {
   type ProcessedEventStoreContractOptions,
 } from './contracts/processed-event-store-contract';
 export { rateLimiterContract, type RateLimiterContractOptions } from './contracts/rate-limiter-contract';
+export {
+  personalDataErasureContract,
+  type PersonalDataErasureContractOptions,
+  type PersonalDataErasureUnderContract,
+} from './contracts/personal-data-erasure-contract';
+export {
+  personalDataExportContract,
+  type PersonalDataExportContractOptions,
+  type PersonalDataExportUnderContract,
+} from './contracts/personal-data-export-contract';
+export type { PersonalDataUnderContract } from './contracts/personal-data/personal-data-under-contract';
 export { readModelStoreContract, type ReadModelStoreContractOptions } from './contracts/read-model-store-contract';
 export type { ReadModelStoreUnderContract } from './contracts/read-model/read-model-store-under-contract';
 export { SourceOfTruth } from './contracts/read-model/source-of-truth';

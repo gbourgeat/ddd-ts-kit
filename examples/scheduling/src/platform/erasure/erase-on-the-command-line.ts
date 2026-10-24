@@ -1,4 +1,10 @@
-import { executionContext, type Actor, type ExecutionScope, type IdGenerator } from '@ddd-ts-kit/kernel';
+import {
+  executionContext,
+  type Actor,
+  type ExecutionContext,
+  type ExecutionScope,
+  type IdGenerator,
+} from '@ddd-ts-kit/kernel';
 import type { Audit } from '@/platform/audit/create-audit';
 import { eraseDataSubject, type ErasureParts, type ErasureReport } from '@/platform/erasure/erase-data-subject';
 import type { PersonDirectoryContract } from '@/contexts/identity/published-language';
@@ -11,34 +17,56 @@ export interface CommandLineErasure {
   readonly ids: IdGenerator;
   /** Who runs the script, as typed: the access to the script is the credential. */
   readonly operator: string;
-  /** Who is known to the platform: tells a run again from a mistyped id, once no key was destroyed. */
+  /** Who is known to the platform: tells a run again from a mistyped id, once no key was destroyed and no copy erased. */
   readonly persons: PersonDirectoryContract;
   /** How the operator reaches the persons of every network, which the trail records before the lookup runs. */
   readonly elevate: Audit['elevate'];
+  /** The networks the deployment serves (`NETWORKS`): each copy is erased in each one, in an execution context of that network. */
+  readonly networks: readonly string[];
 }
 
 /**
  * An erasure run by `npm run erase:patient`, in an execution context of its own (origin `cli`):
  * the operator who runs it is the actor of the entry the audited key store writes, so that the
  * proof of the erasure names a person, never the script. The key is destroyed whether identity
- * still knows the patient or not: the key comes first, the record after. When no key was
- * destroyed, the id is looked up among the persons of every network, under an elevation the
- * trail records, so that a mistyped id is refused (`UnknownDataSubjectError`) and a run again
- * rebuilds. The context names no network: the keys of the data subjects are outside the
- * networks (ADR-0004), and the entry goes to the global chain, which platform staff read. Give
- * it the keys of `createAudit`, so that the erasure is recorded.
+ * still knows the patient or not: the key comes first, the record after. The copies the contexts
+ * keep of the person are then erased network by network, each in a context of that network,
+ * since a write of tenant data is never widened. When no key was destroyed and no copy erased,
+ * the id is looked up among the persons of every network, under an elevation the trail records,
+ * so that a mistyped id is refused (`UnknownDataSubjectError`) and a run again rebuilds. The
+ * context of the key names no network: the keys of the data subjects are outside the networks
+ * (ADR-0004), and the entry goes to the global chain, which platform staff read. Give it the keys
+ * of `createAudit`, so that the erasure is recorded.
  */
 export function eraseOnTheCommandLine(
   patientId: string,
-  parts: Pick<ErasureParts, 'keys' | 'projections'>,
-  { scope, ids, operator, persons, elevate }: CommandLineErasure,
+  parts: Pick<ErasureParts, 'keys' | 'projections' | 'copies'>,
+  { scope, ids, operator, persons, elevate, networks }: CommandLineErasure,
 ): Promise<ErasureReport> {
   const context = executionContext({ correlationId: ids.next(), actor: operatorActor(operator), origin: 'cli' });
 
   const isKnown = (subject: string): Promise<boolean> =>
     elevate({ reason: PATIENT_ERASURE, tenants: 'all' }, () => isKnownToIdentity(subject, persons));
 
-  return scope.run(context, () => eraseDataSubject(patientId, { ...parts, isKnown }));
+  const inEveryNetwork = (work: () => Promise<number>): Promise<number> =>
+    sumOver(networks, (network) => scope.run(inNetwork(context, network), work));
+
+  return scope.run(context, () => eraseDataSubject(patientId, { ...parts, isKnown, inEveryNetwork }));
+}
+
+/** The same operator and correlation, in the network a copy is kept in. */
+function inNetwork(context: ExecutionContext, network: string): ExecutionContext {
+  return executionContext({ ...context, tenantId: network });
+}
+
+async function sumOver(networks: readonly string[], count: (network: string) => Promise<number>): Promise<number> {
+  let total = 0;
+
+  for (const network of networks) {
+    total += await count(network);
+  }
+
+  return total;
 }
 
 async function isKnownToIdentity(patientId: string, persons: PersonDirectoryContract): Promise<boolean> {

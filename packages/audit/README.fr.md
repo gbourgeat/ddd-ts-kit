@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:e5f25d124edd72d6 -->
+<!-- translation-of: README.md sha256:6a9fca0dd2d04ee5 -->
 
 # @ddd-ts-kit/audit
 
@@ -570,6 +570,10 @@ auditedProjection(ExportAppointmentsCommand, (command) => ({ plain: { format: co
   l'email ; l'email lui-même n'y est pas, et sans le secret une supposition ne peut pas être
   vérifiée. Un simple hachage ne suffirait pas : un email ou un numéro de téléphone se devine en
   quelques secondes.
+- `masked('patientEmail', { subject: 'patientId' })` dit à qui appartient la valeur : le champ du
+  message qui tient l'identifiant opaque de la personne concernée, ou `subjectOf: (command) => ...`
+  quand aucun champ seul ne le tient. Le masqueur le lit comme `dataSubject` ; l'entrée ne le porte
+  jamais.
 - Un champ déclaré `masked` sans *masker* est refusé à la construction du *middleware* ; une
   projection qui demande un masque sans *masker* fait échouer la commande à sa première
   utilisation.
@@ -597,31 +601,33 @@ jamais les données :
    à la frontière.
 2. **Masquez ce que vous devez corréler.** Une valeur masquée n'est pas lisible ; elle reste liée
    à une personne pour qui détient le secret.
-3. **L'effacement cryptographique (crypto-shredding) pour l'effacement.** Écrivez un *masker*
-   qui dérive une clé par personne concernée (ou par *tenant*) depuis un stockage de clés, à
-   l'aide du `MaskingSubject` qu'il reçoit (`actorId`, `tenantId`, `resource`). `AuditMasker` est
-   un port, une classe abstraite avec la seule méthode `mask` : l'adaptateur l'`implements` et est
-   lié sous ce port :
+3. **L'effacement cryptographique (crypto-shredding) pour l'effacement.** `subjectMasker(keys)`
+   masque chaque valeur sous une clé dérivée de la clé de sa personne concernée dans le
+   `SubjectKeyStore` du kernel, les mêmes clés qui scellent les valeurs personnelles des
+   événements stockés (HKDF du matériau, étiqueté pour le journal ; en mémoire, ou dans la table
+   `subject_keys` de chaque *package* de persistance). Chaque champ masqué doit dire à qui il
+   appartient, `masked('patientEmail', { subject: 'patientId' })` : le *middleware* refuse celui
+   qui ne le dit pas, au câblage (`MissingDataSubjectError`), puisque l'acteur et la ressource
+   d'une entrée sont rarement cette personne ; et ce sujet doit être un identifiant opaque (la
+   grammaire d'un id de *tenant*), puisque le stockage de clés l'écrit en clair : un e-mail ou un
+   nom à sa place est refusé avant qu'une clé ne soit créée (`MaskingSubjectNotAnIdError`). Effacer une personne (`SubjectKeyStore.erase`,
+   enveloppé par `auditedSubjectKeys` pour que l'effacement laisse son entrée) détruit la clé :
+   chaque masque fait avec elle devient un jeton d'apparence aléatoire que personne ne peut
+   recalculer, les entrées restent, les hachages restent valides, et l'id de clé écrit devant
+   chaque masque distingue les masques d'une clé disparue. Le stockage de clés est alors le
+   système à protéger : gardez-le à part du journal et des événements, avec une rétention des
+   sauvegardes plus courte.
 
    ```ts
-   // infrastructure/external/per-subject-masker.ts
-   export class PerSubjectMasker implements AuditMasker {
-     constructor(private readonly keys: SubjectKeys) {}
-
-     async mask(value: AuditScalar, subject: MaskingSubject): Promise<string> {
-       const key = await this.keys.keyOf(subject.resource?.id ?? subject.actorId); // créée à la première utilisation
-
-       return hmacMasker(key.secret, { keyId: key.id }).mask(value, subject);
-     }
-   }
-
-   builder.bind(AuditMasker).toClass(PerSubjectMasker, [SubjectKeys]);
+   const keys = new PostgresSubjectKeyStore(run); // ou InMemorySubjectKeyStore, ou celui de create<Orm>EventSourcing
+   auditMiddleware(trail, {
+     scope,
+     clock,
+     ids,
+     masker: subjectMasker(keys),
+     fields: [auditedFields(RescheduleAppointmentCommand, ['status', masked('patientEmail', { subject: 'patientId' })])],
+   });
    ```
-
-   Effacer une personne, c'est supprimer sa clé : chaque masque fait avec elle devient un jeton
-   d'apparence aléatoire que personne ne peut recalculer, les entrées restent, les hachages
-   restent valides. Le stockage de clés devient alors le système à protéger et à sauvegarder avec
-   soin ; ce *package* n'en fournit pas.
 
 Ce qui reste après l'effacement, c'est « un acteur avec cet id opaque a fait ceci à ce moment ».
 Savoir si c'est acceptable est une question juridique pour le projet, à trancher avant que la

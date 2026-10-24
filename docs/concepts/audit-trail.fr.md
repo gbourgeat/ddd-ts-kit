@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:ae1660fac213b619 -->
+<!-- translation-of: audit-trail.md sha256:c2534c144cdb16cf -->
 
 # Journal d'audit
 
@@ -283,9 +283,11 @@ chaîne ne contient jamais les données :
    d'abord.
 2. **Masquer ce qu'il faut corréler.** Une valeur masquée est illisible, mais reste liée à une
    personne pour qui détient le secret.
-3. **Le crypto-shredding (effacement cryptographique) pour effacer.** Dérivez une clé de
-   masquage par personne concernée, depuis un stockage de clés. Effacer une personne, c'est
-   supprimer sa clé : les masques deviennent des jetons que personne ne peut recalculer, les
+3. **Le crypto-shredding (effacement cryptographique) pour effacer.** `subjectMasker(keys)` de
+   `@ddd-ts-kit/audit` masque chaque valeur sous une clé dérivée de la clé de sa personne
+   concernée dans le `SubjectKeyStore`, les mêmes clés qui scellent les événements stockés ;
+   `masked(field, { subject })` dit à qui appartient chaque valeur. Effacer une personne, c'est
+   détruire sa clé : les masques deviennent des jetons que personne ne peut recalculer, les
    entrées restent, les hachages restent valides.
 4. **Enregistrer l'effacement lui-même.** L'effacement laisse une entrée avec son acteur et sa
    date, qui, plus la rétention des sauvegardes des clés, donne le jour où il est complet
@@ -293,8 +295,8 @@ chaîne ne contient jamais les données :
 
 Ce qui reste après l'effacement, c'est « un acteur avec cet identifiant opaque a fait ceci à ce
 moment-là ». Que ce soit acceptable est une question juridique pour le projet, à trancher avant
-d'écrire la première entrée. Le stockage de clés devient alors le système à protéger ; le kit
-n'en fournit pas.
+d'écrire la première entrée. Le stockage de clés devient alors le système à protéger : gardez-le
+à part du journal et des événements, avec une rétention des sauvegardes plus courte.
 
 ## Le lire
 

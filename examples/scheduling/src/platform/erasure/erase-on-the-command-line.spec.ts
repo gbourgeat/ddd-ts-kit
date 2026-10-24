@@ -3,6 +3,7 @@ import {
   AsyncLocalStorageExecutionScope,
   FixedClock,
   FixedExecutionScope,
+  InMemoryFileStorage,
   PersonalDataCipher,
   SequentialIdGenerator,
   executionContext,
@@ -14,6 +15,7 @@ import {
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createAudit, type Audit } from '@/platform/audit/create-audit';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
+import { copiesOfAPerson } from '@/platform/erasure/copies-of-a-person';
 import { eraseOnTheCommandLine } from '@/platform/erasure/erase-on-the-command-line';
 import { NotASubjectIdError } from '@/platform/erasure/not-a-subject-id-error';
 import { storeFedProjections } from '@/platform/event-store/store-fed-projections';
@@ -80,13 +82,15 @@ describe('npm run erase:patient', () => {
     await expect(verifyChain(audit.trail, { chain: 'global' })).resolves.toMatchObject({ valid: true });
   });
 
-  it('records a run again as an erasure that found no key, under the operator who ran it again', async () => {
+  it('erases the person of identity too, and records a run again as an erasure that found no key, under the operator who ran it again', async () => {
     await database.persistence.eventSourcing.subjectKeys.keyFor('patient-2');
-    await erase('patient-2', 'operator-7');
 
-    const report = await erase('patient-2', 'operator-9');
+    const report = await erase('patient-2', 'operator-7');
 
-    expect(report.erased).toBe(false);
+    expect(report.copies).toMatchObject({ 'identity.persons': 1 });
+
+    // Nothing of the person is left anywhere: a run again is refused as already complete, and recorded all the same.
+    await expect(erase('patient-2', 'operator-9')).rejects.toThrow(UnknownDataSubjectError);
 
     expect((await erasuresOf('patient-2')).map(({ actor, changes }) => ({ actor: actor.id, changes }))).toEqual([
       { actor: 'operator-7', changes: { keyDestroyed: true } },
@@ -129,9 +133,12 @@ function erase(patientId: string, operator: string) {
   const parts = {
     keys: audit.subjectKeys,
     projections: storeFedProjections(database.persistence, new PersonalDataCipher(audit.subjectKeys)),
+    copies: copiesOfAPerson(database.persistence, { scope, clock: source.clock, files: new InMemoryFileStorage() }),
   };
 
-  return eraseOnTheCommandLine(patientId, parts, { scope, ids, operator, persons, elevate: audit.elevate });
+  const options = { scope, ids, operator, persons, elevate: audit.elevate, networks: ['acme'] };
+
+  return eraseOnTheCommandLine(patientId, parts, options);
 }
 
 function gist({ action, outcome, reason, changes }: AuditEntry) {

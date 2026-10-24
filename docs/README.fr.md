@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d3a55e2ccc7e8d49 -->
+<!-- translation-of: README.md sha256:2141d9fdeec8c9b0 -->
 
 # Documentation
 
@@ -137,6 +137,8 @@ a vérifié, les limites, et une recommandation selon la situation.
 | [Des modules à l'intérieur d'un contexte délimité](proposals/modules.fr.md) | construit : les sous-contextes ne sont pas un concept des références, les modules du modèle le sont (Evans) ; le jugement de ses gains et de ses limites, et l'essai qui a mesuré le coût sur l'exemple |
 | [Le côté lecture](proposals/read-side.fr.md) | critères, représentations, formulaires, modèles de lecture et projections ; la page dit, partie par partie, ce qui est construit dans les *packages* d'exécution, ce que la CLI ne génère pas encore et ce qui n'est pas construit |
 | [Vélocité du build, des contrôles et des tests](proposals/build-and-test-velocity.fr.md) | étudié, non construit : où vont le temps et la mémoire de ce dépôt, sur une station de travail et dans le *pipeline* ; les leviers de Vitest, ESLint, Oxlint, du compilateur natif et des gestionnaires de *packages* mesurés sur cet arbre ; ce que d'autres équipes ont publié sur les orchestrateurs, la sélection de tests et GitHub Actions ; un plan dans l'ordre du gain par coût, et pourquoi aucun orchestrateur |
+| [La protection des données dès la conception, au-delà de l'*event sourcing*](proposals/privacy-by-design.fr.md) | proposé : ce que le kit efface aujourd'hui (les valeurs personnelles des événements stockés) et ce que rien du kit n'efface, n'exporte, ne limite dans le temps ni n'inventorie (agrégats gardés en lignes, modèles de lecture, copies des autres contextes, masques du journal d'audit) ; une déclaration des champs personnels lue par des ports avec un adaptateur par ORM, des générateurs et des règles `privacy/*` ; les *pull requests* dans l'ordre de fusion, l'exemple d'abord ; ce qu'un outil ne peut jamais garantir et les mots à employer |
+| [Un second exemple, la gestion des dépenses sur la pile la plus populaire](proposals/spend-management-example.fr.md) | spécifié, non construit : NestJS, Prisma, Jest, Kafka, S3, ABAC sur un métier d'argent et de *workflows* ; d'abord les quatre capacités que cette pile éteint aujourd'hui (file et processus sur Nest, *tenancy* et audit sur Prisma, le *preset* identity), puis l'exemple comme preuve ; MySQL laissé de côté, avec ce qu'il faudrait |
 
 ## Partir d'une question
 

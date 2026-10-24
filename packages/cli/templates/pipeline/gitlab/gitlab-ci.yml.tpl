@@ -2,10 +2,17 @@ workflow:
   auto_cancel:
     on_new_commit: interruptible
   rules:
+    # A merge request reads the cache of ESLint the default branch wrote; the default branch and the night write it.
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      variables:
+        LINT_CACHE_POLICY: pull
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      variables:
+        LINT_CACHE_POLICY: pull-push
     # A pipeline schedule (Build > Pipeline schedules, every night on the default branch) runs everything.
     - if: $CI_PIPELINE_SOURCE == "schedule"
+      variables:
+        LINT_CACHE_POLICY: pull-push
 
 {{#if extras.gitlabInclude}}
 {{#if extras.gitlabSecurity}}
@@ -136,6 +143,24 @@ lint:
   extends: .node
   stage: test
   needs: [install]
+  cache:
+    - key:
+        files:
+          - package-lock.json
+          - package.json
+      paths:
+        - node_modules/
+      policy: pull
+    # The cache of ESLint (`ddd-ts-kit lint` keys it by the content of each file): a merge request reads the one the
+    # default branch wrote last for this lockfile and this config; the default branch and the night lint everything,
+    # which also sees a type changed in another file, and write it.
+    - key:
+        files:
+          - package-lock.json
+          - eslint.config.mjs
+      paths:
+        - .eslintcache/
+      policy: $LINT_CACHE_POLICY
   variables:
     ESLINT_CODE_QUALITY_REPORT: reports/gl-code-quality-eslint.json
   script:

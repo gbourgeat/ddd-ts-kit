@@ -105,7 +105,7 @@ first and on what changed; the wider ones run later, on every file:
 |---|---|---|---|
 | type check, sources | kit `ci:typecheck` (the build, then the checked samples of the documentation); example and project `typecheck` | kit, example, project: `ci:typecheck` | before a push |
 | type check, tests | kit `typecheck:tests` (every package, through `ci:typecheck`); example and project: `tsconfig.json` includes `test/` and the specs | same script | before a push |
-| lint | kit `ci:lint`; example and project `lint` | `ci:lint` | staged files, before a commit |
+| lint | kit `ci:lint`; example and project `lint`, each with the cache of ESLint keyed by content, dropped when the rules as installed or the config changed | `ci:lint`, the cache written by the default branch and restored by a pull request | staged files, before a commit |
 | format | kit `ci:format`; example and project `format:check` | `ci:format`, in the lint job | staged files, before a commit |
 | dead code | kit `ci:deadcode`; example and project `deadcode` | `ci:deadcode` | no |
 | dependency graph | kit `depcruise` (in `ci:arch`); example and project `depcruise` | kit `ci:arch`; example and project `ci:arch:graph` | no |
