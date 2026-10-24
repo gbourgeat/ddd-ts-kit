@@ -41,6 +41,7 @@ import { PURITY_FIXTURES } from './purity-fixtures';
 import { SCHEDULING_FIXTURES } from './scheduling-fixtures';
 import { SCHEMA_FIXTURES } from './schema-fixtures';
 import { STANDARD_FIXTURES } from './standard-fixtures';
+import { PRIVACY_FIXTURES } from './privacy-fixtures';
 import { TENANCY_FIXTURES } from './tenancy-fixtures';
 import { TEST_FIXTURES } from './test-fixtures';
 import { TRACING_FIXTURES } from './tracing-fixtures';
@@ -99,6 +100,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...SCHEDULING_FIXTURES,
   ...STANDARD_FIXTURES,
   ...TENANCY_FIXTURES,
+  ...PRIVACY_FIXTURES,
   ...TEST_FIXTURES,
   ...TRACING_FIXTURES,
   ...TREE_FIXTURES,

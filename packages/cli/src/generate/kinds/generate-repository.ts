@@ -53,7 +53,7 @@ const TENANT_AWARE: readonly OrmStack[] = ['drizzle', 'knex', 'prisma', 'typeorm
  * decided in the application layer.
  */
 function tenantVars(scope: Scope): RenderContext {
-  const asked = scope.flags.tenantScoped || scope.config.stack.tenancy !== 'none';
+  const asked = scope.flags.tenantFree !== true && (scope.flags.tenantScoped || scope.config.stack.tenancy !== 'none');
   const scoped = asked && TENANT_AWARE.includes(scope.config.stack.orm);
 
   if (asked && !scoped) {

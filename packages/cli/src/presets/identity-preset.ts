@@ -1,3 +1,5 @@
+import type { Config } from '../config';
+import type { KindFlags } from '../generate/kind';
 import { integrationEventKind } from '../generate/kinds/integration-event-kind';
 import { repositoryKind } from '../generate/kinds/repository-kind';
 import { identityRefusal } from './identity-refusal';
@@ -12,6 +14,16 @@ const AFTER_STEPS = [
 ];
 
 const AGGREGATES = ['Account', 'Organisation', 'Member', 'Invitation', 'Delegation'];
+
+/**
+ * What the tables keep of people, with `stack.privacy` on: the generator writes the erasure and the
+ * export of the context and lists them in the platform, the preset its own declarations. The tables
+ * of the context belong to no tenant, the erasure is not confined to one.
+ */
+const PERSONAL: Readonly<Record<string, Partial<KindFlags>>> = {
+  Account: { personal: 'email,display_name' },
+  Invitation: { personal: 'email', erasure: 'row', retention: 'expires_at:30d' },
+};
 
 /** The facts other contexts learn: each is declared in the published language and goes through the outbox. */
 const PUBLISHED = [
@@ -40,7 +52,14 @@ export const identityPreset: Preset = {
   terms: IDENTITY_TERMS,
   refusal: identityRefusal,
   steps: [
-    ...AGGREGATES.map((aggregate) => ({ kind: repositoryKind, args: [aggregate] })),
+    ...AGGREGATES.map((aggregate) => ({
+      kind: repositoryKind,
+      args: [aggregate],
+      flags: (config: Config) => ({
+        tenantFree: true,
+        ...(config.stack.privacy === 'on' ? (PERSONAL[aggregate] ?? {}) : {}),
+      }),
+    })),
     ...PUBLISHED.map((fact) => ({ kind: integrationEventKind, args: fact })),
   ],
   grantsEverySignedInPerson: true,

@@ -245,6 +245,25 @@ system and the transfers, which no code says. The file leaves them to the contro
 outside the markers that `docs` never rewrites, with what the code does not purge (backups, logs,
 files, the archives of the audit trail). A table is in the register only if a declaration names it.
 
+## The rules
+
+Five rules of `ddd-ts-kit check` hold a project whose `stack.privacy` is `on` to its declarations,
+as warnings first; a project that chose `off` hears nothing from them.
+
+| Rule | Reports |
+|---|---|
+| `privacy/declared-field` | a column named like personal data (`email`, `phone`, `birth_date`, `address`, `iban`... the vocabulary of the kit, with `privacy.vocabulary` of the config added and `privacy.allow` removed) that no declaration of its context names, on the four ORMs |
+| `privacy/event-payload-declared` | a field of the payload of an integration event named like personal data that its `personal` option does not list |
+| `privacy/erasure-reaches-copies` | a context that consumes an event carrying personal data and erases nothing when the person is erased |
+| `privacy/subject-is-opaque` | a subject that is personal data itself (an email as the key of a person) |
+| `privacy/no-personal-data-in-logs` | a call to the logger or the metrics that names a declared personal field |
+
+They read names, not contents, which is why each one says what it cannot see
+(`npx ddd-ts-kit explain privacy/declared-field`). A column that holds nothing of a person in a
+project (the shared mailbox of a team) is a deviation recorded where it is written,
+`// ddd-ts-kit-disable-next-line privacy/declared-field -- ADR-NNNN: <why>`, or a word of
+`privacy.allow`.
+
 ## What stays out of reach
 
 - **Backups and the retention of the broker.** An erasure reaches the database, never a backup nor a
@@ -257,8 +276,8 @@ files, the archives of the audit trail). A table is in the register only if a de
   credentials, not names ([Observability](observability.md#what-each-signal-may-carry)).
 - **A column no declaration names.** A rule reads the name of a column, not what a text field may
   contain: a `notes` column may hold a diagnosis. The declarations are the inventory a project
-  maintains; the `privacy/*` rules that report an undeclared column of the usual vocabulary come
-  with a later part of [the proposal](../proposals/privacy-by-design.md).
+  maintains, and `privacy/declared-field` reports only a column whose name holds a word of the
+  vocabulary (see [The rules](#the-rules)).
 - **A read model.** A projection keeps its rows in a read model store, not in a table of its own:
   it declares nothing yet. The rebuild of a projection fed by the event store removes the clear copy
   it kept, once given to `rebuilds`.

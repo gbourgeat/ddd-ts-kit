@@ -5,6 +5,11 @@ import { authzFieldsBySchema } from '../rules/authz-fields-by-schema';
 import { authzDeclared } from '../rules/authz-declared';
 import { authzGranted } from '../rules/authz-granted';
 import { authzScopeNarrows } from '../rules/authz-scope-narrows';
+import { privacyDeclaredField } from '../rules/privacy-declared-field';
+import { privacyErasureReachesCopies } from '../rules/privacy-erasure-reaches-copies';
+import { privacyEventPayloadDeclared } from '../rules/privacy-event-payload-declared';
+import { privacyNoPersonalDataInLogs } from '../rules/privacy-no-personal-data-in-logs';
+import { privacySubjectIsOpaque } from '../rules/privacy-subject-is-opaque';
 import { authzInApplication } from '../rules/authz-in-application';
 import { authzPolicyAsked } from '../rules/authz-policy-asked';
 import { cleanBlankLines } from '../rules/clean-blank-lines';
@@ -162,6 +167,11 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   authzPolicyAsked,
   authzGranted,
   authzScopeNarrows,
+  privacyDeclaredField,
+  privacyEventPayloadDeclared,
+  privacyErasureReachesCopies,
+  privacySubjectIsOpaque,
+  privacyNoPersonalDataInLogs,
   aspectsOutsideIn,
   tracingPlatformOnly,
   tenancyScopedStatement,

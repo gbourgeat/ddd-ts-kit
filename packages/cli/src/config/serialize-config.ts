@@ -70,6 +70,7 @@ function optionalKeys(config: Config): Record<string, unknown> {
     ...(Object.keys(standardInterfaces).length > 0 ? { standardInterfaces } : {}),
     ...(onePerFile.allow.length > 0 ? { onePerFile } : {}),
     ...writtenBusinessNames(businessNames),
+    ...writtenPrivacy(config.privacy),
     ...writtenCommit(commit),
     ...(worker ? { worker } : {}),
     ...(config.worktrees === 'advised' ? {} : { worktrees: config.worktrees }),
@@ -107,6 +108,15 @@ function writtenBusinessNames({ words, allow }: Config['businessNames']): Record
   }
 
   return { businessNames: { ...(words === undefined ? {} : { words }), ...(allow.length > 0 ? { allow } : {}) } };
+}
+
+/** Written once a project changes the vocabulary of the `privacy/*` rules. */
+function writtenPrivacy({ vocabulary, allow }: Config['privacy']): Record<string, unknown> {
+  if (vocabulary.length === 0 && allow.length === 0) {
+    return {};
+  }
+
+  return { privacy: { ...(vocabulary.length > 0 ? { vocabulary } : {}), ...(allow.length > 0 ? { allow } : {}) } };
 }
 
 /** The extra jobs of the pipeline, the form of the contracts when they are not the defaults, and their clients once asked for. */

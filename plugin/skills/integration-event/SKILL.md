@@ -46,6 +46,8 @@ change) and the specs. Fill the `next` places:
   it. Describe each field in the schema: the description lands in the catalog. A field that
   holds personal data is declared on the definition, `personal: { subject: 'customerId',
   fields: ['email'] }`: the catalog, AsyncAPI (`x-personal-data`) and the register read it.
+  `privacy/event-payload-declared` (a warning) reports a field named like personal data that the
+  option does not list.
 - **Outbox**: with a database the event is written in the transaction of the command and
   relayed afterwards; a publisher depends on `IntegrationEventPublisher` and nothing else
   (`events/outbox-required`). Never publish to a broker from a handler.
@@ -81,7 +83,8 @@ comes from the event; when the design names the handler after what it does here,
   InvoiceStatus>`, or writes `'issued' satisfies ProductListedV1Payload['state']` in a `case`,
   never `InvoiceStatus.Issued` (`language/declared-vocabulary`). Better still, the producer
   declares those values as a vocabulary of its published language.
-- A context that copies personal data from an event declares the copy with `personalFields`
+- A context that copies personal data from an event (`privacy/erasure-reaches-copies` reports
+  the consumer that erases nothing) declares the copy with `personalFields`
   (`generate repository --personal`) and erases it on `privacy.data-subject.erased`, the
   event the platform publishes at the end of `privacy:erase`: `npx ddd-ts-kit generate
   erasure-handler <ctx>` writes that handler over the erasure of the context (needed when the

@@ -20,10 +20,12 @@ import { STANDARD_DOCS } from './standard-docs';
 import { TENANCY_DOCS } from './tenancy-docs';
 import { TREE_DOCS } from './tree-docs';
 import { WIRING_DOCS } from './wiring-docs';
+import { PRIVACY_DOCS } from './privacy-docs';
 
 /** Shown by `ddd-ts-kit explain <rule-id>`: the reason behind the rule and one example each way. */
 export const RULE_DOCS: Readonly<Record<string, RuleDoc>> = {
   ...AUTHZ_DOCS,
+  ...PRIVACY_DOCS,
   ...CLEAN_DOCS,
   ...CONTEXT_DOCS,
   ...DOMAIN_DOCS,

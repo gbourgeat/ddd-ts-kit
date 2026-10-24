@@ -1,8 +1,10 @@
+import type { Config } from '../config';
 import type { Kind, KindFlags } from '../generate/kind';
 
 /** One generator a preset runs on its context, as `ddd-ts-kit generate <kind> <context> <args...>` would. */
 export interface PresetStep {
   readonly kind: Kind;
   readonly args: readonly string[];
-  readonly flags?: Partial<KindFlags>;
+  /** The flags of the generator, or what they are in a project of this config. */
+  readonly flags?: Partial<KindFlags> | ((config: Config) => Partial<KindFlags>);
 }

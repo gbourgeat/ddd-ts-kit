@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:285888c22bae28a2 -->
+<!-- translation-of: CONFIG.md sha256:c5d60fce46d8f4bb -->
 
 # `ddd-ts-kit.config.json`
 
@@ -600,6 +600,7 @@ la plateforme du dépôt les juge.
 | `onePerFile.allow` | `[{ "file": "<path or glob>", "reason": "<why these exports are one thing>" }]` : exempte un fichier du décompte de `clean/one-export-per-file`, jamais de son contrôle du nom de fichier. Une entrée sans `file` ou sans `reason` n'autorise rien et est signalée | `[]` |
 | `standardInterfaces` | `{ "<DeclaredName>": "<kernel interface to use instead>" }`, fusionné par-dessus les noms par défaut de `standard/no-parallel-interface` ; `false` retire un nom par défaut | `{}` |
 | `businessNames` | `{ "words": ["<word>"], "allow": ["<word>"] }`, lu par `naming/business-name` (par `ddd-ts-kit check` et par ESLint, dont les options `words` et `allow` passent par-dessus) : `words` remplace les mots génériques que la règle signale, `allow` en retire ; une entrée qui n'est pas un mot est ignorée | les mots de la règle (`target`, `targets`, `data`, `item`, `items`, `obj`, `object`, `thing`, `things`, `stuff`, `info`, `element`, `el`, `tmp`, `temp`, `foo`, `bar`, `baz`), aucun autorisé |
+| `privacy` | `{ "vocabulary": ["<word>"], "allow": ["<word>"] }`, lu par les règles `privacy/*` : `vocabulary` ajoute des mots du métier qui nomment des données personnelles (`patient_number`), `allow` retire un mot du kit qui ne nomme jamais une personne dans ce projet ; un mot se compare en *snake case*, `patientNumber` et `patient_number` de même, et une entrée qui n'est pas un mot est ignorée | les mots du kit (`email`, `phone`, `first_name`, `last_name`, `given_name`, `family_name`, `full_name`, `display_name`, `maiden_name`, `surname`, `birth_date`, `date_of_birth`, `birthdate`, `birthday`, `street`, `postal_code`, `zip_code`, `address`, `iban`, `card_number`, `social_security_number`, `ssn`, `national_id`, `passport_number`, `ip_address`, `gender`, `nationality`), aucun autorisé |
 | `coverage` | `{ "<layer>": { "<rate>": <0 to 100> } }` pour les couches `domain`, `application`, `presentation`, `infrastructure` et les taux `statements`, `branches`, `functions`, `lines` : la couverture de tests minimale de chaque couche, appliquée à chaque contexte. Un taux omis vaut la référence ; un taux qui n'est pas un pourcentage, une couche inconnue ou un taux inconnu est signalé (`config/valid`). `init` n'écrit pas la clé : la référence s'applique jusqu'à ce qu'un projet change un taux | domain 90, 85, 90, 90 ; application 85, 80, 85, 85 ; presentation 80, 70, 80, 80 ; infrastructure 70, 60, 70, 70 |
 | `domainAllowedPackages` | les *packages* que `domain/` peut importer | `["@ddd-ts-kit/kernel"]` |
 | `applicationAllowedPackages` | les *packages* qu'`application/` peut importer | `["@ddd-ts-kit/kernel", "@ddd-ts-kit/auth"]` |
