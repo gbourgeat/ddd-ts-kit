@@ -8,6 +8,7 @@ import type { InitFile } from './init-file';
 import { persistenceFiles } from './persistence-files';
 import { pipelineFiles } from './pipeline-files';
 import { platformFiles } from './platform-files';
+import { privacyFiles } from './privacy-files';
 import { projectFiles } from './project-files';
 import { scriptFiles } from './script-files';
 
@@ -16,6 +17,7 @@ export function initFiles(config: Config, projectName: string): InitFile[] {
     ...projectFiles(config, projectName),
     ...platformFiles(config),
     ...auditFiles(config),
+    ...privacyFiles(config),
     ...authFiles(config),
     ...persistenceFiles(config),
     ...scriptFiles(config),

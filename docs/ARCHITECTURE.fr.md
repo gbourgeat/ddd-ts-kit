@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:390f64faa2e96e98 -->
+<!-- translation-of: ARCHITECTURE.md sha256:4409f139dd09cb42 -->
 
 # Référence de l'architecture
 
@@ -78,6 +78,7 @@ src/
     observability/               tracing.ts (premier import de chaque point d'entrée), journaux, mesures, rapports d'erreur
     jobs/                        les réglages des jobs planifiés
     audit/search-audit-entries/  le côté lecture du journal d'audit
+    privacy/                     les clés des personnes concernées, le chiffre des événements stockés, les copies et les exports que chaque contexte déclare, l'effacement et l'export que lancent les scripts
     auth/
       authentication/            qui appelle : l'authentificateur, la session d'une requête, la frontière HTTP
       authorization/             ce qu'il peut faire, quel que soit le modèle : l'authorizer derrière le port, la garde des bus, Role

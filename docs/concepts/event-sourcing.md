@@ -609,8 +609,9 @@ same contract suites.
 
 ## Limits
 
-- One event store per database schema; a context that keeps its own binds its stores in its
-  module rather than in the platform.
+- One event store per database schema: `init` wires one, in the `event_store` schema, bound by
+  `src/platform/privacy/` with the keys of the data subjects and the cipher; a context that keeps
+  its own binds its stores in its module rather than in the platform.
 - Appends are serialised per store (above).
 - A projection fed by the store whose rows each come from several streams cannot be stamped by
   stream version alone: stamp it by event id and instant.

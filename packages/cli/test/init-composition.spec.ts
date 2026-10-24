@@ -26,7 +26,7 @@ describe('the composition root init writes, on tsyringe', () => {
     const composition = platform(initProject('--context', 'billing:core'), 'composition/compose-application.ts');
 
     expect(composition).toContain(
-      'modules: [\n      kernel(foundations, persistence, options),\n      platformModule(persistence, options),\n      guard,\n      auditModule(foundations.audit),\n      filesModule(options.files ?? new InMemoryFileStorage()),\n      ...contexts.modules,\n    ],',
+      'modules: [\n      kernel(foundations, persistence, options),\n      platformModule(persistence, options),\n      privacyModule(persistence, foundations.privacy),\n      guard,\n      auditModule(foundations.audit),\n      filesModule(options.files ?? new InMemoryFileStorage()),\n      ...contexts.modules,\n    ],',
     );
 
     expect(composition).toContain(

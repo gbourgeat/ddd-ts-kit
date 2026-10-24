@@ -1,5 +1,6 @@
 {{#if queue.processTable}}
 import {
+  createDrizzleEventSourcing,
   createDrizzleUnitOfWork,
   {{#if queue.database}}
   DrizzleJobStore,
@@ -10,11 +11,11 @@ import {
 } from '@ddd-ts-kit/drizzle/postgres';
 {{/if}}
 {{#unless queue.processTable}}
-import { createDrizzleUnitOfWork, DrizzleOutboxStore, DrizzleProcessedEventStore } from '@ddd-ts-kit/drizzle/postgres';
+import { createDrizzleEventSourcing, createDrizzleUnitOfWork, DrizzleOutboxStore, DrizzleProcessedEventStore } from '@ddd-ts-kit/drizzle/postgres';
 {{/unless}}
 import type { DatabaseConnection } from '{{alias.platform}}/database/connect-to-database{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
-import { {{#if queue.database}}jobs, {{/if}}outbox, processedEvents{{#if queue.processTable}}, processes{{/if}} } from '{{alias.platform}}/database/schema{{alias.ext}}';
+import { EVENT_STORE_SCHEMA, {{#if queue.database}}jobs, {{/if}}outbox, processedEvents{{#if queue.processTable}}, processes{{/if}} } from '{{alias.platform}}/database/schema{{alias.ext}}';
 
 /** One object is the unit of work and what repositories query through; the stores write in its transaction. */
 export function persistenceOver(connection: DatabaseConnection): Persistence {
@@ -31,6 +32,7 @@ export function persistenceOver(connection: DatabaseConnection): Persistence {
     {{#if queue.processTable}}
     processes: new DrizzleProcessStore(unitOfWork, processes),
     {{/if}}
+    eventSourcing: createDrizzleEventSourcing(unitOfWork, { schema: EVENT_STORE_SCHEMA }),
     close: () => connection.close(),
   };
 }

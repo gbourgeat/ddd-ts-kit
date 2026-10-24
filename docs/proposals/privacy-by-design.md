@@ -17,7 +17,7 @@ as a legal guarantee.
 
 ## Status (2026-10-24)
 
-Parts 0, 0b, 1 and 2 are built. The parts, in merge order; each is a pull request of its own
+Parts 0, 0b, 1, 2 and 4 are built. The parts, in merge order; each is a pull request of its own
 with its tests, its documentation in both languages, its skills and its file of `changes/`.
 
 | Part | Verdict |
@@ -27,7 +27,7 @@ with its tests, its documentation in both languages, its skills and its file of 
 | 1. `personalFields` and the `PersonalDataErasure` and `PersonalDataExport` ports of the kernel | **built** (#268): the declaration, the two ports, `eraseDataSubject` and `inEachTenant` in the kernel, `InMemoryPersonalData`, the two contract suites of the testing package |
 | 2. `subjectMasker` of the audit trail, one key per data subject | **built** (#270): `subjectMasker(keys)` over the `SubjectKeyStore`, `masked(field, { subject })`, the refusal at wiring time of a masked field without a subject and, before any key, of a subject that is not an opaque id |
 | 3. The erasure adapter on the four ORMs, read models included | proposed |
-| 4. `init` writes `src/platform/privacy/` and wires event sourcing | proposed |
+| 4. `init` writes `src/platform/privacy/` and wires event sourcing | **built**: `Persistence.eventSourcing` on the four ORMs and in memory, `create-privacy.ts` (the audited keys, the cipher), `privacy.module.ts` or `platform.privacy`, the lists of copies and exports, `run-erasure.ts` and `run-export.ts`, the scripts `privacy:erase` and `privacy:export`; no HTTP command yet |
 | 5. `generate repository` and `generate projection` declare the personal fields | proposed |
 | 6. The erasure event, its generated handler, `personal` on an integration event | proposed |
 | 7. Retention on the declaration, the generated purge job | proposed |

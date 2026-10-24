@@ -1,5 +1,5 @@
 [English](privacy-by-design.md) · **Français**
-<!-- translation-of: privacy-by-design.md sha256:f250eea8c42b0696 -->
+<!-- translation-of: privacy-by-design.md sha256:6c54fb9b92fb7a9a -->
 
 # Proposition : la protection des données dès la conception, au-delà de l'*event sourcing*
 
@@ -20,7 +20,7 @@ garantie légale.
 
 ## État (2026-10-24)
 
-Les parties 0, 0b, 1 et 2 sont construites. Les parties, dans l'ordre de fusion ; chacune est une
+Les parties 0, 0b, 1, 2 et 4 sont construites. Les parties, dans l'ordre de fusion ; chacune est une
 *pull request* à part, avec ses tests, sa documentation dans les deux langues, ses *skills* et
 son fichier de `changes/`.
 
@@ -31,7 +31,7 @@ son fichier de `changes/`.
 | 1. `personalFields` et les ports `PersonalDataErasure` et `PersonalDataExport` du kernel | **construite** (#268) : la déclaration, les deux ports, `eraseDataSubject` et `inEachTenant` dans le kernel, `InMemoryPersonalData`, les deux suites de contrat du package de tests |
 | 2. `subjectMasker` du journal d'audit, une clé par personne concernée | **construite** (#270) : `subjectMasker(keys)` sur le `SubjectKeyStore`, `masked(field, { subject })`, le refus au câblage d'un champ masqué sans sujet et, avant toute clé, d'un sujet qui n'est pas un identifiant opaque |
 | 3. L'adaptateur d'effacement sur les quatre ORM, modèles de lecture compris | proposée |
-| 4. `init` écrit `src/platform/privacy/` et câble l'*event sourcing* | proposée |
+| 4. `init` écrit `src/platform/privacy/` et câble l'*event sourcing* | **construite** : `Persistence.eventSourcing` sur les quatre ORM et en mémoire, `create-privacy.ts` (les clés auditées, le chiffre), `privacy.module.ts` ou `platform.privacy`, les listes des copies et des exports, `run-erasure.ts` et `run-export.ts`, les scripts `privacy:erase` et `privacy:export` ; pas encore de commande HTTP |
 | 5. `generate repository` et `generate projection` déclarent les champs personnels | proposée |
 | 6. L'événement d'effacement, son gestionnaire généré, `personal` sur un événement d'intégration | proposée |
 | 7. La conservation sur la déclaration, le *job* de purge généré | proposée |

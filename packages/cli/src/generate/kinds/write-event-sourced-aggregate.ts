@@ -27,6 +27,6 @@ export function writeEventSourcedAggregate(scope: Scope, name: Name): void {
   writeDomainEvent(scope, names);
 
   scope.ws.note(
-    `${name.pascal} is event-sourced: its repository adapter delegates to EventSourcedRepository of @ddd-ts-kit/kernel over the EventStore of the ORM adapter (createKnexEventSourcing, createDrizzleEventSourcing, createPrismaEventSourcing, createTypeOrmEventSourcing), and its stored events are declared in infrastructure/persistence/${name.kebab}-events.mapper.ts. See docs/concepts/event-sourcing.md of ddd-ts-kit.`,
+    `${name.pascal} is event-sourced: its repository adapter delegates to EventSourcedRepository of @ddd-ts-kit/kernel over the EventStore the platform binds (persistence.eventSourcing, in the event_store schema; the SubjectKeyStore and the PersonalDataCipher of src/platform/privacy/ seal its personal values), and its stored events are declared in infrastructure/persistence/${name.kebab}-events.mapper.ts. See docs/concepts/event-sourcing.md of ddd-ts-kit.`,
   );
 }
