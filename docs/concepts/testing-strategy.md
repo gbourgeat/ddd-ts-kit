@@ -548,15 +548,16 @@ test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // from @ddd-t
 ## Mutation score
 
 A coverage rate says that a line ran under a test; a mutation score says that a test would notice
-if the line changed. Every night the pipeline runs Stryker on the domain layer of every context
+if the line changed. Every night the pipeline runs Stryker on the domain and application layers of every context
 (`npm run test:mutation`): each mutant is one small change of the code, a condition negated, a
 boundary moved, a return emptied, and the unit specs run against it; a mutant the specs notice is
 detected, one they let through is a survivor. Then `ddd-ts-kit mutation` reads the report and holds
-each context to the `mutation` floor of `ddd-ts-kit.config.json`, 80 by the reference
+each layer of each context to its `mutation` floor of `ddd-ts-kit.config.json`, 80 and 75 by the
+reference
 ([CONFIG.md](../CONFIG.md#mutation-score)).
 
 The Stryker config writes no glob and no number: it spreads `governedMutation()` of
-`@ddd-ts-kit/testing/mutation`, which mutates the domain layer of every context, leaves the texts
+`@ddd-ts-kit/testing/mutation`, which mutates the domain and application layers of every context, leaves the texts
 of refusals out through the ignorer of the kit, since a refusal is asserted by its code and never
 by its text, every other string measured, and ignores the static mutants, those of code that runs
 once when the module loads. Rule
@@ -570,13 +571,13 @@ caller can reach, leave the mutant alive and say why, never hide it by configura
 the example on 2026-10-24 ([pipeline README](../../pipeline/README.md#mutation-testing)) with the
 shipped configuration: 1436 mutants, 163 of them texts of refusals and static mutants left out,
 1226 killed, 41 survivors, 6 without coverage, 96.3% in 5 minutes, the lowest context at
-95.4%.
+95.4%. With the application layer, measured the same day: 2412 mutants in 283 files, 96.1% in
+5 minutes 24 seconds, the application layer at 95.7% and its lowest context at 93.5%; the initial
+test run is what the night pays for, not the mutants.
 
 A pull request gets a reading of its change, not the whole measure: the `mutation-changed` job of
 the pipeline reuses the report of the last night for what the change leaves alone (the incremental
-mode of Stryker, about a minute on the example), runs the whole measure again when the change
-touches code the tests lean on and Stryker does not diff (a fake, a builder, a world, the platform,
-a dependency), then lists the survivors of the files the change touched
+mode of Stryker, about a minute on the example when the change stays in the domain, the use cases and the specs), runs the whole measure again, about five minutes, when the change touches code the tests lean on and Stryker does not diff (a route, an adapter, a fake, a builder, a world, the platform, a dependency, the common case of a feature), then lists the survivors of the files the change touched
 (`ddd-ts-kit mutation --changed <base>`). Read them before asking for a review; the floor stays the
 business of the night.
 
@@ -603,8 +604,7 @@ runner.
 - **The whole measure runs every night; a pull request gets a reading of its change.** Five
   minutes for the domain of the four contexts of the example is too long for the loop of a change,
   so the job of the night holds the floor, and a pull request lists the survivors of the files it
-  touched from an incremental run that reuses the results of the night, about a minute, never a
-  gate; a survivor found at night is a rule to state the next day.
+  touched from a run that reuses the results of the night when the change stays in the model and the use cases, never a gate; a survivor found at night is a rule to state the next day.
 - **A mutation score says that a change was noticed, not that the right rule was stated.** A test
   that kills a mutant states what the code does today: each one is read as a business decision
   before it is kept, and an accidental behaviour is left alive and said so rather than frozen.

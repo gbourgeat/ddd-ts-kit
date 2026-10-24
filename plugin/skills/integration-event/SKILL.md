@@ -43,7 +43,9 @@ change) and the specs. Fill the `next` places:
 - **Name**: `<context>.<aggregate>.<fact>`, past tense (`events/name-format`).
 - **Payload**: what a consumer needs to act without calling back, and nothing internal:
   identifiers and facts, not the aggregate as JSON; no personal data unless a consumer needs
-  it. Describe each field in the schema: the description lands in the catalog.
+  it. Describe each field in the schema: the description lands in the catalog. A field that
+  holds personal data is declared on the definition, `personal: { subject: 'customerId',
+  fields: ['email'] }`: the catalog, AsyncAPI (`x-personal-data`) and the register read it.
 - **Outbox**: with a database the event is written in the transaction of the command and
   relayed afterwards; a publisher depends on `IntegrationEventPublisher` and nothing else
   (`events/outbox-required`). Never publish to a broker from a handler.
@@ -79,6 +81,12 @@ comes from the event; when the design names the handler after what it does here,
   InvoiceStatus>`, or writes `'issued' satisfies ProductListedV1Payload['state']` in a `case`,
   never `InvoiceStatus.Issued` (`language/declared-vocabulary`). Better still, the producer
   declares those values as a vocabulary of its published language.
+- A context that copies personal data from an event declares the copy with `personalFields`
+  (`generate repository --personal`) and erases it on `privacy.data-subject.erased`, the
+  event the platform publishes at the end of `privacy:erase`: `npx ddd-ts-kit generate
+  erasure-handler <ctx>` writes that handler over the erasure of the context (needed when the
+  context runs as a service of its own; in the monolith the platform erases it directly, and
+  the handler then reaches nothing, idempotently).
 - A foreign model the context does not want is translated first:
   `npx ddd-ts-kit generate acl <ctx> <upstream>`.
 - End to end, once the handler sends its command: `npx ddd-ts-kit generate e2e <ctx>

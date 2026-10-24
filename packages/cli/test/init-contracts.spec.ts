@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { createEventRegistry, generateEventCatalog } from '@ddd-ts-kit/events';
+import { generateAsyncApi } from '@ddd-ts-kit/events/asyncapi';
+import { dataSubjectErasedV1 } from '@ddd-ts-kit/kernel';
 import { cli, exists, read, tempDir, write } from './helpers';
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
@@ -17,7 +20,7 @@ const CATALOG = 'docs/integration/event-catalog.md';
  */
 describe('the contracts init writes', () => {
   it('holds the route of the audit trail behind the bearer scheme, the problem schema, and no event, under the name and version of the manifest', () => {
-    const root = initProject();
+    const root = initProject('--privacy', 'off');
     const openapi = readContract(root, OPENAPI);
     const manifest = readJson(root, 'package.json');
 
@@ -155,5 +158,17 @@ describe('the contracts of a preset', () => {
       expect(read(preset, script)).toContain('if (committed.includes(PENDING)) {\n      writeFirst(file, content);');
       expect(read(preset, script)).toContain("if (process.env['CI'] !== undefined) {");
     }
+  });
+});
+
+describe('the contracts init writes with --privacy on', () => {
+  it('lists the erasure the platform publishes with --privacy on, exactly as the events script of the project writes it', () => {
+    const root = initProject();
+    const manifest = readJson(root, 'package.json');
+    const registry = createEventRegistry([dataSubjectErasedV1]);
+    const info = { title: String(jsonAt(manifest, 'name')), version: String(jsonAt(manifest, 'version')) };
+
+    expect(readContract(root, ASYNCAPI)).toEqual(JSON.parse(JSON.stringify(generateAsyncApi({ info, registry }))));
+    expect(read(root, CATALOG)).toBe(generateEventCatalog(registry, { consumers: {} }));
   });
 });

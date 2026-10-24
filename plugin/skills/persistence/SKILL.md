@@ -98,7 +98,8 @@ lookups of the port, the columns, the mapper.
   `src/platform/privacy/data-subject-copies.ts` (its export port in `data-subject-exports.ts`;
   `init --privacy on`, the default with an ORM, writes the folder and the scripts `privacy:erase`
   and `privacy:export`), and `npm run privacy:erase -- <subject-id>` reaches them all, the key
-  first when the project has an event store; `npm run privacy:export -- <subject-id>` hands over one
+  first when the project has an event store, then announces `privacy.data-subject.erased` through the
+  outbox for the services that keep a copy (`generate erasure-handler <ctx>`); `npm run privacy:export -- <subject-id>` hands over one
   dated document (`exportDataSubject`, `PersonalDataExportDocument`), each export wrapped by
   `auditedPersonalDataExport` when the trail is on, never the values in the entry; `personalDataErasureContract` of
   `@ddd-ts-kit/testing` holds the adapter and the fake (`InMemoryPersonalData`) to the same behaviour.

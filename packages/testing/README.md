@@ -1020,7 +1020,8 @@ marks them with the hint the `v8` provider reads, as the provider does by itself
 
 `@ddd-ts-kit/testing/mutation` gives Stryker what it mutates, what it leaves out and the floor the
 run is held to, read from the `mutation` key of `ddd-ts-kit.config.json` (80 for the domain layer
-when the key is absent), so that the Stryker config of a project writes no glob and no number:
+and 75 for the application layer when the key is absent), so that the Stryker config of a project
+writes no glob and no number:
 
 <!-- checked sample -->
 ```ts
@@ -1035,8 +1036,8 @@ export default {
 };
 ```
 
-- `mutate`: the domain layer of every context, at its level and in the modules of its model, the
-  generated declarations and the specs left out.
+- `mutate`: the domain and application layers of every context, at their level and in the modules
+  of its model, the generated declarations and the specs left out.
 - `appendPlugins` and `ignorers`: the ignorer of the kit, `refusal-texts`. A test asserts a refusal
   by its code and never by its text (`test/refusal-by-code`), so a mutant of such a text would
   survive by design: the message of `refusal(..)`, a text handed to a factory of a class that
@@ -1048,16 +1049,14 @@ export default {
   checked, or leave the survivor alive and say why.
 - `ignoreStatic`: the static mutants, in code that runs once when the module loads, are ignored;
   a rule written as a declaration is proven by the test that states it alone.
-- `thresholds`: the floor, which `ddd-ts-kit mutation` then holds each context to from the json
-  report, the ignored mutants shown beside each score. `REFERENCE_MUTATION` is the reference:
-  domain 80.
+- `thresholds`: the lowest floor, which the whole run is held to; `ddd-ts-kit mutation` then holds
+  each layer of each context to its own from the json report, the ignored mutants shown beside each
+  score. `REFERENCE_MUTATION` is the reference: domain 80, application 75.
 - `incremental`, `incrementalFile` and `force`: a full run by default, the truth of the night. With
   `DDD_TS_KIT_MUTATION_SINCE=<ref>` in the environment, as the job of a pull request sets it to the
   merge base of the change, the run is incremental: the results of the last report, kept in
   `reports/mutation/incremental.json`, are reused for what the change leaves alone, and the run
-  takes the time of its initial test run. Stryker diffs the mutated sources and the specs alone, so
-  the run is forced whole when the change touches other code the tests lean on: a fake, a builder, a
-  world, the platform, a dependency, a config.
+  takes the time of its initial test run. Stryker diffs the mutated sources (the domain and application layers) and the specs alone, so the run is forced whole when the change touches other code the tests lean on: a route, an adapter, a fake, a builder, a world, the platform, a dependency, a config. A change kept to the model and the use cases reads fast; most features touch a route too.
 
 ## See also
 

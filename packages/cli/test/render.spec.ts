@@ -79,6 +79,7 @@ describe('shipped templates', () => {
         'domain-service',
         'e2e',
         'entity',
+        'erasure-handler',
         'error',
         'event-handler',
         'file-upload',
