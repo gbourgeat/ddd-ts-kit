@@ -14,10 +14,6 @@ const PNPM_WORKSPACE = 'pnpm-workspace.yaml';
 export function writeOverrides(ws: Workspace, config: Config, force: boolean): void {
   const overrides = overridesFor(config);
 
-  if (Object.keys(overrides).length === 0) {
-    return;
-  }
-
   if (config.stack.packageManager === 'pnpm') {
     inPnpmWorkspace(ws, overrides);
   } else {
