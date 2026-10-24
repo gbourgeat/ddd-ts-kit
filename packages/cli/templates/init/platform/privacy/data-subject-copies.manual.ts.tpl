@@ -5,8 +5,8 @@ import type { Platform } from '{{alias.platform}}/composition/platform{{alias.ex
 
 /**
  * The copies the contexts keep of a person, each erased by the adapter of its context, instantiated
- * from the platform as the module file of the context does. A context that
- * erases what it keeps of a person adds the adapter here.
+ * from the platform as the module file of the context does. `generate repository <context> <Aggregate>
+ * --personal <column>,...` adds the adapter of its context here, once.
  */
 export const dataSubjectCopies: readonly ((platform: Platform) => PersonalDataCopy)[] = [
   // ddd-ts-kit:copies

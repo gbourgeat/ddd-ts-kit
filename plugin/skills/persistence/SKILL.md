@@ -22,7 +22,7 @@ allowed-tools:
 Subject: `$ARGUMENTS`
 
 ```bash
-npx ddd-ts-kit generate repository <ctx> <Aggregate> [--tenant-scoped] --json
+npx ddd-ts-kit generate repository <ctx> <Aggregate> [--tenant-scoped] [--personal <column>,... [--subject <column>] [--erasure pseudonymise|row]] --json
 ```
 
 writes the port (an abstract class extending the kernel `Repository<Aggregate>` in
@@ -86,6 +86,11 @@ lookups of the port, the columns, the mapper.
   next to its mapper with `personalFields` (the subject column, the personal columns, `row` or
   `pseudonymise`, the columns that hold a file) and erased through a `PersonalDataErasure` port of
   the context (`export abstract class PatientErasure extends PersonalDataErasure {}`);
+  `generate repository <ctx> <Aggregate> --personal <column>,... [--subject <column>] [--erasure row]`
+  writes all of it: the columns in the storage, the declaration (`<aggregate>.personal-fields.ts`,
+  spelled as the erasure of the ORM reads it), and once per context the port, the adapter over
+  `<Orm>PersonalDataErasure`, its fake, its spec on the test database and its line in the copies
+  (`docs/concepts/personal-data.md` of the kit draws the whole erasure);
   `eraseDataSubject` of the kernel runs the key, every copy in every tenant (`inEachTenant`) and
   the rebuilds, in that order; a context lists its port in
   `src/platform/privacy/data-subject-copies.ts` (its export port in `data-subject-exports.ts`;

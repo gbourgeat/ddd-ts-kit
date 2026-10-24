@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:edfe1de70bb4c356 -->
+<!-- translation-of: event-sourcing.md sha256:d2ae61f30c8e6bd7 -->
 
 # Event sourcing, par agrégat
 
@@ -656,6 +656,7 @@ chacun est tenu par les mêmes suites de contrat.
 
 ## Voir aussi
 
+- [Les données personnelles dans un projet généré](personal-data.fr.md) : la déclaration des colonnes personnelles d'une table, l'effacement qui la lit, et ce que les clés du store y ajoutent
 - [Agrégats](aggregates.fr.md), [Événements du domaine et événements d'intégration](domain-and-integration-events.fr.md)
 - [Outbox transactionnelle](transactional-outbox.fr.md), [Versionnement des événements](event-versioning.fr.md)
 - [CQRS tel qu'il est utilisé ici](cqrs.fr.md)

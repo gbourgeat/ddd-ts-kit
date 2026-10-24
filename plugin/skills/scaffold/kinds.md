@@ -19,7 +19,7 @@ shared files each kind writes (`writesShared`, `shared`, `sharedWhen`).
 | `domain-error` | `<ctx> <Name> [--code CODE]` | one class per error in `domain/errors/`, spec: only in a project whose config says `"stack.refusals": "classes"` or nothing; refused under `named` and `factories`, which use `error` |
 | `domain-service` | `<ctx> <Name>` | `domain/services/`, spec |
 | `state-machine` | `<ctx> <Aggregate> [--value <state>]... [--transition "<intention>:<from>[,<from>]...[><to>]"]...` | `domain/state-machines/<aggregate>.state-machine.ts`, the vocabulary `<Aggregate>Status` (created, or extended), spec; the first state is initial |
-| `repository` | `<ctx> <Aggregate> [--tenant-scoped]` | port in `domain/repositories/`, adapter and mapper in `infrastructure/persistence/`, fake, contract suite |
+| `repository` | `<ctx> <Aggregate> [--tenant-scoped] [--personal <column>,... [--subject <column>] [--erasure pseudonymise\|row]]` | port in `domain/repositories/`, adapter and mapper in `infrastructure/persistence/`, fake, contract suite; with `--personal`, the columns added to the storage, their `personalFields` declaration next to the mapper (`<name>.personal-fields.ts`) and, once per context, the erasure that reads it (port, adapter, fake, spec, listed in the copies of the platform); needs `stack.privacy` on |
 | `command` | `<ctx> <UseCase> (--permission <aggregate>.<action> [--grant <role>] \| --public) [--aggregate <Name>]` | `application/commands/<use-case>/`, handler spec |
 | `query` | `<ctx> <UseCase> (--permission <aggregate>.<action> [--grant <role>] \| --public) [--search]` | `application/queries/<use-case>/`, read port, in-memory reader, fake, spec |
 | `port` | `<ctx> <Name>` | `application/ports/<name>.port.ts`, fake |

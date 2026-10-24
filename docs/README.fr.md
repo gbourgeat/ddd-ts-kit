@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2141d9fdeec8c9b0 -->
+<!-- translation-of: README.md sha256:f0f79207065f179d -->
 
 # Documentation
 
@@ -65,6 +65,7 @@ Ordonnées en parcours de lecture dans [concepts/README.fr.md](concepts/README.f
 | [Sagas et gestionnaires de processus](concepts/sagas-and-process-managers.fr.md) | les processus longs : ce que le kit fournit et ce qu'il ne fournit pas |
 | [Versionnement des événements](concepts/event-versioning.fr.md) | faire évoluer un événement publié |
 | [Event sourcing, par agrégat](concepts/event-sourcing.fr.md) | quand garder un agrégat sous forme de ses événements, ce que cela coûte, *upcasters*, crypto-effacement (crypto-shredding), projections alimentées par le magasin, y migrer et en revenir |
+| [Les données personnelles dans un projet généré](concepts/personal-data.fr.md) | ce qu'écrivent `init --privacy on` et `generate repository --personal`, l'effacement d'une personne de bout en bout, les deux modes d'effacement, ce qui reste hors de portée et ce que l'outil ne décide pas |
 | [Authentification et autorisation](concepts/authentication-and-authorization.fr.md) | RBAC, ABAC, ReBAC comparés, avec une table de décision |
 | [L'autorisation en pratique](concepts/authorization-in-practice.fr.md) | `@Requires`, le *middleware* du bus, le port `Authorizer` et les politiques, suivis à travers une seule commande |
 | [Acteur et portée d'exécution](concepts/actor-and-execution-scope.fr.md) | l'acteur explicite, et ce que porte chaque unité de travail |
