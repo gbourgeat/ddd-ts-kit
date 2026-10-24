@@ -210,7 +210,11 @@ describe('the composition root init writes, by hand', () => {
   });
 
   it('starts the jobs after the subscriptions, only where the process is told to, and stops them first', () => {
-    const composition = platform(initProject('--di', 'manual'), 'composition/compose-application.ts');
+    // A queue in the memory of the process: its jobs are consumed apart from the scheduled ones.
+    const composition = platform(
+      initProject('--di', 'manual', '--queue', 'memory'),
+      'composition/compose-application.ts',
+    );
 
     expect(composition).toContain(
       'await options.events.start();\n\n  if (options.jobs?.start === true) {\n    await platform.jobs.start();\n  }',

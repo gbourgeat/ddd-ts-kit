@@ -159,7 +159,7 @@ function stackOf(options: StackOptions): Record<string, string> {
     ...resolveStyle(options, di),
     ...resolvePresentation(options, http),
     tenancy: resolveTenancy(options, persistence.orm),
-    queue: resolveQueue(options, { orm: persistence.orm, di }),
+    queue: resolveQueue(options, persistence.orm),
   };
 }
 
