@@ -8,6 +8,9 @@ import type { AuditRow } from '@ddd-ts-kit/knex';
 export interface {{aggregate.pascal}}Columns {
   readonly id: string;
   readonly registered_at: Date;
+{{#if personal.any}}
+{{personal.knexRow}}
+{{/if}}
   // TODO(domain): add one column per field of {{aggregate.pascal}}State, as the table of create-{{context.kebab}}-tables.schema.ts declares it.
 }
 

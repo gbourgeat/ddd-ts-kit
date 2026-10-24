@@ -17,9 +17,11 @@ import type {
   InMemoryQueryBus,
   IntegrationEventPublisher,
   IntegrationEventSubscriber,
+  JobQueue,
   JobScheduler,
   Logger,
   Metrics,
+  ProcessRunner,
   {{#if cache.rateLimit}}
   RateLimiter,
   {{/if}}
@@ -29,9 +31,13 @@ import type { Audit } from '{{alias.platform}}/audit/create-audit{{alias.ext}}';
 {{/if}}
 import type { UseCaseProtection } from '{{alias.platform}}/auth/authorization/use-case-protection{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+{{#if eventSourcing.on}}
+import type { EventSourcing } from '{{alias.platform}}/event-sourcing/create-event-sourcing{{alias.ext}}';
+{{/if}}
 {{#if files.any}}
 import type { Files } from '{{alias.platform}}/files/create-files{{alias.ext}}';
 {{/if}}
+import type { BackgroundJobs } from '{{alias.platform}}/jobs/background-jobs{{alias.ext}}';
 
 /** Wraps an adapter from outside: a span for its kind and, for what leaves the process, the default policy unless it states its own. */
 type Adapt = <T extends object>(instance: T, info: AspectInfo) => T;
@@ -81,12 +87,22 @@ export interface Platform {
   {{/if}}
   /** Where a context registers its scheduled jobs; the application starts it when this process runs the jobs. */
   readonly jobs: JobScheduler;
+  /** What a use case enqueues through: a background job is written with its command and run later by the worker, as the actor that enqueued it. */
+  readonly jobQueue: JobQueue;
+  /** Where a context registers its background jobs; the application starts it when this process runs the jobs. */
+  readonly backgroundJobs: BackgroundJobs;
+  /** Runs the steps of the process managers, in the unit of work of the step, and delivers their timeouts through the queue. */
+  readonly processes: ProcessRunner;
   readonly adapter: Adapt;
   /** The same, for an adapter that states its own policy, as aspects or as decorators on its class. */
   readonly selfGoverned: Adapt;
   readonly protection: UseCaseProtection;
   {{#if audit.on}}
   readonly audit: Audit;
+  {{/if}}
+  {{#if eventSourcing.on}}
+  /** The event store, the keys of the data subjects{{#if audit.on}}, audited,{{/if}} and the cipher of the personal values of the stored events: what an event-sourced repository adapter loads, saves and seals through{{#if privacy.on}}, and whose keys `scripts/privacy-erase.ts` destroys{{/if}}. */
+  readonly eventSourcing: EventSourcing;
   {{/if}}
   {{#if files.any}}
   /** Where files live, the keys they are stored under and the staging that keeps them consistent with the database: never their content in a table. */

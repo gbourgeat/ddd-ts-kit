@@ -13,6 +13,8 @@ export interface StackFlags {
   readonly cache?: string;
   readonly 'http-cache'?: string;
   readonly audit?: string;
+  readonly 'event-sourcing'?: string;
+  readonly privacy?: string;
   readonly errors?: string;
   readonly logger?: string;
   readonly style?: string;

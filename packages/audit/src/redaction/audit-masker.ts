@@ -5,5 +5,8 @@ import type { MaskingSubject } from './masking-subject';
 export abstract class AuditMasker {
   static readonly tokenKey = 'audit.AuditMasker';
 
+  /** A masker keyed per data subject says so: `auditMiddleware` then refuses, at wiring time, a masked field that names none. */
+  readonly requiresDataSubject?: boolean;
+
   abstract mask(value: AuditScalar, subject: MaskingSubject): string | Promise<string>;
 }

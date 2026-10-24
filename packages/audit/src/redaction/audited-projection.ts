@@ -11,5 +11,10 @@ export function auditedProjection<M extends Message>(
   type: MessageType<M>,
   project: (message: M) => AuditProjection,
 ): AuditedMessage {
-  return { type, masks: false, project: (message) => (message instanceof type ? project(message) : {}) };
+  return {
+    type,
+    masks: false,
+    subjectless: [],
+    project: (message) => (message instanceof type ? project(message) : {}),
+  };
 }

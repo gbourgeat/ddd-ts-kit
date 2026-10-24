@@ -2,12 +2,16 @@ import type { Knex } from 'knex';
 {{#if audit.on}}
 import { createAuditTables } from '@ddd-ts-kit/audit/knex';
 {{/if}}
-import { {{#if queue.database}}createJobTable, {{/if}}createOutboxTables{{#if queue.processTable}}, createProcessTable{{/if}} } from '@ddd-ts-kit/knex';
+import { {{#if eventSourcing.on}}createEventStoreTables, {{/if}}{{#if queue.database}}createJobTable, {{/if}}createOutboxTables{{#if queue.processTable}}, createProcessTable{{/if}} } from '@ddd-ts-kit/knex';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 
 /** The schema of what the kit stores for the application: the outbox and the processed events{{#if queue.database}}, the background jobs{{/if}}{{#if queue.processTable}}, the process instances{{/if}}. */
 export const MESSAGING_SCHEMA = 'messaging';
+{{#if eventSourcing.on}}
+/** The schema of the event store: the events, the snapshots, the checkpoints and the keys of the data subjects. It records no tenant. */
+export const EVENT_STORE_SCHEMA = 'event_store';
+{{/if}}
 {{#if audit.on}}
 /** The schema of the audit trail: two tables, and the triggers that keep the entries append-only. */
 export const AUDIT_SCHEMA = 'audit';
@@ -34,6 +38,9 @@ export const createTables = async (knex: Knex): Promise<void> => {
   {{/if}}
   {{#if audit.on}}
   await createAuditTables(knex, { schema: AUDIT_SCHEMA });
+  {{/if}}
+  {{#if eventSourcing.on}}
+  await createEventStoreTables(knex, { schema: EVENT_STORE_SCHEMA });
   {{/if}}
   // ddd-ts-kit:schemas
   // /ddd-ts-kit:schemas

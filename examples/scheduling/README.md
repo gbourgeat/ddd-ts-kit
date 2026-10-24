@@ -543,20 +543,36 @@ The attendance record of a patient is kept as its events; its history
   within one relay interval. With several replicas, each one polls, and the compare-and-set of
   the checkpoint lets one of them apply each batch; the others skip that round (a debug line,
   not an error). A tick that comes while a round runs is skipped.
-- **An erasure.** `DATABASE_URL=<url> npm run erase:patient -- <patientId> <operatorId>`
-  checks that the id names a person of some network, destroys the key the words of the patient
-  were sealed with, writes the erasure to the audit trail, then rebuilds every projection fed
-  by the store (`src/platform/erasure/erase-data-subject.ts`,
-  `src/platform/erasure/erase-on-the-command-line.ts`, `scripts/erase-patient.ts`): the stream and
-  the snapshots read `[erased]` at once, and so does the history once rebuilt. A rebuild never
-  stops the catch-up, so the API may keep running. Running it again completes an erasure whose
-  entry or rebuild failed. The key is destroyed whether identity still knows the patient or
-  not: the key comes first, the record after. When no key was destroyed, the id is looked up
-  among the persons of every network, under an elevation the trail records (`tenancy:elevate`,
-  reason `PATIENT_ERASURE`), to tell a run again from a mistyped id, which is refused before
-  the rebuilds (exit code 2). A value that is not an opaque identifier (letters, digits, `_`,
-  `-`), a name or an email pasted in place of the id, is refused before any key is touched or
-  any entry written: the entry would carry it into the append-only trail.
+- **An erasure.** `DATABASE_URL=<url> NETWORKS=<tenant,...> npm run erase:patient -- <patientId> <operatorId>`
+  erases a person from everything the application keeps of them in clear, and from what it keeps
+  sealed. The key the words of the patient were sealed with is destroyed first, and the erasure
+  written to the audit trail; then every copy a context keeps of the person is erased, network by
+  network, each in an execution context of that network, since a write of tenant data is never
+  widened (`src/platform/erasure/copies-of-a-person.ts`): `identity` forgets the person, name and
+  address (`PersonRepository.erase`); `notification` forgets the address it reached them at
+  (`Contacts.delete`, under a stamp of this instant, so that the announcement delivered again
+  later does not bring it back); `scheduling` replaces by `[erased]` the notes the staff wrote on
+  the appointments of the patient and the reasons of their cancellations, in the appointments and
+  in the agenda, deletes the documents attached to those appointments from the file storage and
+  forgets them, and replaces the display name its practitioner directory copied from identity
+  (`KnexPatientErasure`); then every projection fed by the store is rebuilt
+  (`src/platform/erasure/erase-data-subject.ts`, `src/platform/erasure/erase-on-the-command-line.ts`,
+  `scripts/erase-patient.ts`): the stream and the snapshots read `[erased]` at once, and so does
+  the history once rebuilt. The appointments and the attendance records stay: they are facts of
+  the practice, and they name the person by an opaque id alone. The report of the script counts
+  the rows each copy reached (`copies`) and the events each projection replayed (`rebuilt`). A
+  rebuild never stops the catch-up, so the API may keep running. Running it again completes an
+  erasure whose entry, copy or rebuild failed: a copy that fails does not stop the others, and
+  its failure is thrown once everything ran. The key is destroyed whether identity still knows
+  the patient or not: the key comes first, the record after. When no key was destroyed and no
+  copy erased, the id is looked up among the persons of every network, under an elevation the
+  trail records (`tenancy:elevate`, reason `PATIENT_ERASURE`), to tell a run again from a
+  mistyped id, which is refused before the rebuilds (exit code 2); so is a run again for a
+  person nothing is left of, which the trail records all the same. A value that is not an opaque
+  identifier (letters, digits, `_`, `-`), a name or an email pasted in place of the id, is
+  refused before any key is touched or any entry written: the entry would carry it into the
+  append-only trail. `src/platform/erasure/erase-a-person.spec.ts` reads every table after an
+  erasure.
 - **The proof of an erasure.** The key store bound by the platform is wrapped by
   `auditedSubjectKeys` (`src/platform/audit/create-audit.ts`), so every erasure, from this script
   or from a use case, writes an entry: action `personal-data:erase`, the patient as a
@@ -566,17 +582,20 @@ The attendance record of a patient is kept as its events; its history
   as typed, the access to the script being the credential. The entry is in the global chain,
   which platform staff read: the keys are outside the networks (ADR-0004). Its date plus the
   retention of the backups of the keys is the day the erasure is complete.
-- **Limits of the erasure.** The id has to be what a slug or a UUID is made of
+- **What an erasure does not reach.** What left the application before it: the integration
+  events `identity.person.registered` and `identity.practice.member-added` carry the name and
+  the address of the person, and the copies they left in the outbox until it is purged, in the
+  broker until its retention expires and in whatever consumed them outside this application are
+  not reached; a deployment that promises erasure keeps those payloads to identifiers, or bounds
+  the retention of the broker and says so. The backups: one taken before the erasure holds the
+  rows and the key until it expires, so the date of the entry plus the longest retention of the
+  backups is the day the erasure is complete. The audit trail, by design: it names the person by
+  an opaque id, never by a name. The id has to be what a slug or a UUID is made of
   (`src/platform/erasure/is-subject-id.ts`): an identity provider whose subjects carry another
   character (`auth0|abc`) needs that grammar widened, knowingly, since whatever it lets through
   can reach the trail. A mistyped id of that grammar leaves a permanent `keyDestroyed: false`
-  entry: an identifier, not personal data, and a faithful trace of the attempt. A run again for
-  a patient whose key is gone and whose person is gone from every network is refused as a
-  mistyped id; the projections it would have rebuilt are rebuilt by the next erasure of anyone,
-  since a rebuild replays the whole store. A patient that `identity` no longer knows is still
-  erasable as long as their key exists: the key comes first, the record after, the order to keep
-  the day identity erases persons. The operator id is taken as typed, and the entry names no
-  network, as said above.
+  entry: an identifier, not personal data, and a faithful trace of the attempt. The operator id
+  is taken as typed, and the entry of the key names no network, as said above.
 - **The keys.** `PostgresSubjectKeyStore`, in the `scheduling` schema of the one database, next
   to the events, so that the example runs with one PostgreSQL. A backup of that database taken
   before an erasure still holds the key and the sealed words until it expires. A deployment

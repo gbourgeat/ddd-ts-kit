@@ -11,6 +11,7 @@ import {
 import type { AuditMasker } from '../redaction/audit-masker';
 import type { AuditedMessage } from '../redaction/audited-message';
 import { changesOf } from '../redaction/changes-of';
+import { MissingDataSubjectError } from '../redaction/missing-data-subject-error';
 import { MissingMaskerError } from '../redaction/missing-masker-error';
 import { auditRecordOf } from './audit-record-of';
 import type { AuditSource } from './audit-source';
@@ -68,11 +69,21 @@ export function auditMiddleware(trail: AuditTrail, options: AuditMiddlewareOptio
   };
 }
 
+/** A masked field needs a masker, and a masker keyed per data subject needs every masked field to name its subject. */
 function assertMaskerGiven(options: AuditMiddlewareOptions): void {
   const masking = options.masker === undefined ? options.fields?.find((declaration) => declaration.masks) : undefined;
 
   if (masking !== undefined) {
     throw new MissingMaskerError(masking.type.name);
+  }
+
+  const subjectless =
+    options.masker?.requiresDataSubject === true
+      ? options.fields?.flatMap((declaration) => declaration.subjectless ?? [])
+      : [];
+
+  if (subjectless !== undefined && subjectless.length > 0) {
+    throw new MissingDataSubjectError(subjectless[0] ?? '');
   }
 }
 

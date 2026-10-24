@@ -206,10 +206,14 @@ does not compile, since `appointmentIds` and `reason` are missing.
   job) reaches every job.
 - **Generated**: `ddd-ts-kit generate background-job <context> <Name> --command <UseCase>` writes
   the class (`@Background()` in the declared style, `builder.backgroundJob(..)` in the module
-  file otherwise), sending its command as `execution.actor` with one field of its payload per
-  other input of the command (a `Date` travels as its ISO text, a value object is refused: a
-  command takes primitives and ids), and a spec that enqueues it as a user and runs what is
-  due. `init --queue database|redis|memory` chooses the store ([`stack.queue`](../CONFIG.md)).
+  file on tsyringe, `platform.backgroundJobs.register(..)` in the module file where the platform
+  is wired by hand, under Nest or without a container), sending its command as `execution.actor`
+  with one field of its payload per other input of the command (a `Date` travels as its ISO
+  text, a value object is refused: a command takes primitives and ids), and a spec that enqueues
+  it as a user and runs what is due. `init --queue database|redis|memory` chooses the store
+  ([`stack.queue`](../CONFIG.md)), whatever the container: the kernel module of `@ddd-ts-kit/di`
+  binds it on tsyringe, `src/platform/jobs/create-background-work.ts` builds the queue, the worker and
+  the process runner on it otherwise.
 
 **An idempotency key is derived from the work, never drawn at random.** A request retried by
 its client, or a command sent twice by a consumer, must find the job it already enqueued:
@@ -458,7 +462,11 @@ A spec of a background job is a spec of the use cases it triggers: the test appl
 the queue in memory, `application.backgroundJobs.runDue()` runs what is due on its clock (and
 throws what an attempt threw), and `application.backgroundJobs.store.list()` shows what was
 enqueued. A spec of the handler that enqueues asserts the job through the same list. Time is
-moved with `application.clock.advance(ms)` for a delayed job.
+moved with `application.clock.advance(ms)` for a delayed job. Where the platform is wired by
+hand, the generated spec builds the same pieces on the test buses of `@ddd-ts-kit/testing`: an
+`InMemoryJobStore`, a `StoredJobQueue` and a `QueueWorker` on the clock and the execution scope
+of `createTestBuses()`, the job registered on the worker, `worker.runDue()` in place of
+`application.backgroundJobs.runDue()`.
 
 A spec of the example, shortened: the second cancellation fails once, and the next attempt
 resumes from the checkpoint instead of starting over.

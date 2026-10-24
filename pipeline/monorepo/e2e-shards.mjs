@@ -39,9 +39,9 @@ export const SHARDS = [
     'new-rule-violations.spec.ts': 65,
     'zero-violation.spec.ts': 33,
     'event-sourced.spec.ts': 19,
+    // A repository that declares personal columns, with the erasure of its context, installed as published.
+    'personal-fields.spec.ts': 20,
     'violations.spec.ts': 15,
-    // A copy of the example application, merge-trunk run in two of its worktrees.
-    'merge-trunk-example.spec.ts': 2,
   },
   {
     'coverage-gate.spec.ts': 328,
@@ -52,6 +52,8 @@ export const SHARDS = [
     'preset-identity-generated.spec.ts': 25,
     'error-rule-violations.spec.ts': 11,
     'client-sdk.spec.ts': 9,
+    // A copy of the example application, merge-trunk run in two of its worktrees.
+    'merge-trunk-example.spec.ts': 2,
   },
   {
     'first-minute-two-contexts.spec.ts': 322,

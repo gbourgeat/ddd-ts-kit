@@ -1,5 +1,5 @@
 import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import { optimisticUpdate } from '../../../../../src';
+import { optimisticUpdate, ownTenantWhere, tenantWhere } from '../../../../../src';
 import type { Prisma } from '../../../../generated/client/client';
 import type { Database } from '../../../platform/database/database';
 import { Invoice, type InvoiceState } from '../../domain/invoice';
@@ -10,7 +10,9 @@ type VersionedInvoice = InvoiceState & { version: number };
 
 /**
  * The repository a consuming project would write: no transaction in sight, every statement
- * scoped to the tenant of the work in progress, audit columns stamped from its actor.
+ * confined to the tenant of the work in progress through the helpers (`tenantWhere` to read,
+ * `ownTenantWhere` to update, `tenantScopeOf` on the inserted row), audit columns stamped from
+ * its actor.
  */
 export class PrismaInvoiceRepository implements InvoiceRepository {
   constructor(
@@ -21,7 +23,7 @@ export class PrismaInvoiceRepository implements InvoiceRepository {
 
   async findById(id: string): Promise<Invoice | undefined> {
     // findFirst, not findUnique: the tenant is part of every condition, and it is not part of the key.
-    const row = await this.database.client().invoice.findFirst({ where: { id, ...tenantScopeOf(this.scope) } });
+    const row = await this.database.client().invoice.findFirst({ where: { id, ...tenantWhere(this.scope) } });
 
     if (row === null) {
       return undefined;
@@ -51,7 +53,7 @@ export class PrismaInvoiceRepository implements InvoiceRepository {
 
   private update(state: VersionedInvoice, expected: number): Promise<Prisma.BatchPayload> {
     return this.database.client().invoice.updateMany({
-      where: { id: state.id, version: expected, ...tenantScopeOf(this.scope) },
+      where: { id: state.id, version: expected, ...ownTenantWhere(this.scope) },
       data: { ...state, ...stampUpdate(this.scope, this.clock) },
     });
   }

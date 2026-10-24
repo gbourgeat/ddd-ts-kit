@@ -4,7 +4,7 @@ import { choose } from './choose';
 import type { StackOptions } from './stack-options';
 
 /** The ORMs whose package ships the helpers of the shared-table strategy, and the generated repositories use them. */
-const SHARED_TABLE_ORMS = ['knex', 'drizzle'];
+const SHARED_TABLE_ORMS = ['knex', 'drizzle', 'prisma', 'typeorm'];
 
 /** What the persistence packages offer at run time, without `init` generating it yet: where to read how. */
 const NOT_GENERATED: Readonly<Record<string, string>> = {
@@ -14,9 +14,9 @@ const NOT_GENERATED: Readonly<Record<string, string>> = {
 };
 
 /**
- * One customer unless asked otherwise. `shared-table` is generated on Knex and Drizzle; a
- * strategy the persistence packages offer but `init` does not generate, and an ORM without the
- * helpers, are refused before anything is written, with what to do instead.
+ * One customer unless asked otherwise. `shared-table` is generated on the four ORMs; a strategy
+ * the persistence packages offer but `init` does not generate, and a project without an ORM
+ * package (`custom`, `none`), are refused before anything is written, with what to do instead.
  */
 export function resolveTenancy(options: StackOptions, orm: string): string {
   const tenancy = choose(TENANCY_STRATEGIES, options.tenancy, 'tenancy') ?? 'none';
@@ -37,7 +37,7 @@ export function resolveTenancy(options: StackOptions, orm: string): string {
   if (!SHARED_TABLE_ORMS.includes(orm)) {
     throw new CliError(
       `--tenancy ${tenancy} cannot be combined with --orm ${orm}.`,
-      'The tenant helpers are generated for --orm knex and --orm drizzle; with another ORM keep --tenancy none and confine each statement by hand with tenantScopeOf.',
+      'The tenant helpers are generated for --orm knex, drizzle, prisma and typeorm; with a custom persistence or none, keep --tenancy none and confine each statement by hand with tenantScopeOf.',
     );
   }
 

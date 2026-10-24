@@ -23,7 +23,7 @@ describe('eraseDataSubject', () => {
       projections: [projection('scheduling.history', 4, order), projection('scheduling.counts', 7, order)],
     });
 
-    expect(erasure).toEqual({ erased: true, rebuilt: { 'scheduling.history': 4, 'scheduling.counts': 7 } });
+    expect(erasure).toEqual({ erased: true, copies: {}, rebuilt: { 'scheduling.history': 4, 'scheduling.counts': 7 } });
     expect(order).toEqual(['scheduling.history', 'scheduling.counts']);
   });
 
@@ -35,7 +35,7 @@ describe('eraseDataSubject', () => {
       projections: [projection('scheduling.history', 0, order)],
     });
 
-    expect(erasure).toEqual({ erased: false, rebuilt: { 'scheduling.history': 0 } });
+    expect(erasure).toEqual({ erased: false, copies: {}, rebuilt: { 'scheduling.history': 0 } });
     expect(order).toEqual(['scheduling.history']);
   });
 
@@ -82,7 +82,7 @@ describe('eraseDataSubject', () => {
       isKnown: async () => false,
     });
 
-    expect(erasure).toEqual({ erased: true, rebuilt: { 'scheduling.history': 2 } });
+    expect(erasure).toEqual({ erased: true, copies: {}, rebuilt: { 'scheduling.history': 2 } });
     expect(order).toEqual(['scheduling.history']);
   });
 
@@ -99,6 +99,101 @@ describe('eraseDataSubject', () => {
     expect(order).toEqual(['scheduling.history']);
   });
 });
+
+describe('eraseDataSubject, the copies the contexts keep of the person', () => {
+  it('erases every copy once per network, after the key and before the rebuilds, and counts the rows of each', async () => {
+    const keys = new InMemorySubjectKeyStore();
+    const order: string[] = [];
+
+    await keys.keyFor('patient-4');
+
+    const erasure = await eraseDataSubject('patient-4', {
+      keys,
+      projections: [projection('scheduling.history', 1, order)],
+      copies: [copy('identity.persons', 1, order), copy('scheduling.patient', 3, order)],
+      inEveryNetwork: inNetworks(['acme', 'north'], order),
+    });
+
+    expect(erasure).toEqual({
+      erased: true,
+      copies: { 'identity.persons': 2, 'scheduling.patient': 6 },
+      rebuilt: { 'scheduling.history': 1 },
+    });
+
+    expect(order).toEqual([
+      'acme',
+      'identity.persons',
+      'north',
+      'identity.persons',
+      'acme',
+      'scheduling.patient',
+      'north',
+      'scheduling.patient',
+      'scheduling.history',
+    ]);
+  });
+
+  it('takes a subject whose copies alone are left for a run again, not for a mistyped id', async () => {
+    const order: string[] = [];
+
+    const erasure = await eraseDataSubject('patient-5', {
+      keys: new InMemorySubjectKeyStore(),
+      projections: [projection('scheduling.history', 0, order)],
+      copies: [copy('notification.contacts', 1, order)],
+      isKnown: async () => false,
+    });
+
+    expect(erasure).toEqual({
+      erased: false,
+      copies: { 'notification.contacts': 1 },
+      rebuilt: { 'scheduling.history': 0 },
+    });
+  });
+
+  it('runs the other copies and the rebuilds when one copy fails, then throws that failure: running again completes', async () => {
+    const order: string[] = [];
+
+    await expect(
+      eraseDataSubject('patient-6', {
+        keys: new InMemorySubjectKeyStore(),
+        projections: [projection('scheduling.history', 0, order)],
+        copies: [failingCopy('identity.persons'), copy('notification.contacts', 1, order)],
+        isKnown: async () => false,
+      }),
+    ).rejects.toThrow('identity unreachable');
+
+    expect(order).toEqual(['notification.contacts', 'scheduling.history']);
+  });
+});
+
+function copy(name: string, rows: number, order: string[]) {
+  return {
+    name,
+    erase: async () => {
+      order.push(name);
+
+      return rows;
+    },
+  };
+}
+
+function failingCopy(name: string) {
+  return { name, erase: () => Promise.reject(new Error('identity unreachable')) };
+}
+
+/** Runs the work once per network, naming the network before, as the command line does with the execution scope. */
+function inNetworks(networks: readonly string[], order: string[]) {
+  return async (work: () => Promise<number>): Promise<number> => {
+    let total = 0;
+
+    for (const network of networks) {
+      order.push(network);
+      total += await work();
+    }
+
+    return total;
+  };
+}
 
 /** A key store that destroys the key, then fails, as the audited store does when its entry cannot be written. */
 class UnrecordedErasureKeyStore extends InMemorySubjectKeyStore {
