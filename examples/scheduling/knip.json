@@ -12,7 +12,7 @@
       ],
       "project": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"],
       "vitest": {
-        "config": ["vitest.config.ts", "vitest.e2e.config.ts"],
+        "config": ["vitest.config.ts", "vitest.e2e.config.ts", "vitest.mutation.config.ts"],
         "entry": ["src/**/*.spec.ts", "test/architecture/**/*.spec.ts", "test/e2e/**/*.e2e.spec.ts"]
       }
     }

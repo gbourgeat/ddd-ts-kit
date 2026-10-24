@@ -16,6 +16,7 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { personalDataErasureContract } from '@ddd-ts-kit/testing/contracts';
 import { KnexPersonalDataErasure, createKnexUnitOfWork, type TenantTableTarget } from '../src';
+import { boundInAnApplication } from './support/bound-in-an-application';
 import { createDatabase, type TestDatabase } from './support/database';
 import {
   PEOPLE,
@@ -202,4 +203,22 @@ describe('KnexPersonalDataErasure', () => {
       await database.knex.withSchema(PRIVACY).from<PersonRow>('people_strict').where({ person_id: 'ada' }),
     ).toEqual([ada]);
   });
+});
+
+describe('KnexPersonalDataErasure, bound in an application', () => {
+  beforeEach(async () => {
+    await database.truncate();
+  });
+
+  for (const erasure of ['row', 'pseudonymise'] as const) {
+    it(`erases through the wrappers of the platform, which await whatever a method answers (${erasure})`, async () => {
+      await insert([aPersonRow('ada', 1), aPersonRow('bob', 1)]);
+
+      const bound = boundInAnApplication(erasureOf(erasure, workIn('acme')));
+
+      expect(await bound.erase('ada')).toBe(1);
+      expect(await bound.erase('ada')).toBe(0);
+      expect(await rowsOf('bob')).toHaveLength(1);
+    });
+  }
 });

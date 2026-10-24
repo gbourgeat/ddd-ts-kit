@@ -35,6 +35,7 @@ export const USAGE = `Usage
   ddd-ts-kit story [<story>] [--gate build|close]
   ddd-ts-kit stories
   ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
+  ddd-ts-kit mutation [--report <file>] [--json]
   ddd-ts-kit worktree <name> [--base <ref>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]

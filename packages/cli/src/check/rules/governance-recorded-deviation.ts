@@ -3,7 +3,9 @@ import {
   COVERAGE_LAYERS,
   COVERAGE_METRICS,
   defaultAllowedPackages,
+  MUTATION_LAYERS,
   REFERENCE_COVERAGE,
+  REFERENCE_MUTATION,
   type Config,
   type Deviation,
 } from '../../config';
@@ -127,6 +129,7 @@ function unrecordedRelaxations(config: Config): ConfigFinding[] {
   const relaxations = [
     ...loweredRules(config),
     ...loweredCoverage(config),
+    ...loweredMutation(config),
     ...extraDirectories(config),
     ...extraPackages(config),
     ...guardMode(config),
@@ -169,6 +172,15 @@ function loweredCoverage({ coverage }: Config): Relaxation[] {
       where: ['"coverage"', `"${layer}"`, `"${metric}"`],
     })),
   );
+}
+
+/** A floor under the reference accepts mutants no test notices. */
+function loweredMutation({ mutation }: Config): Relaxation[] {
+  return MUTATION_LAYERS.filter((layer) => mutation[layer] < REFERENCE_MUTATION[layer]).map((layer) => ({
+    what: `mutation.${layer}`,
+    said: `The mutation floor "${layer}" is ${mutation[layer]}, below the reference of ${REFERENCE_MUTATION[layer]}`,
+    where: ['"mutation"', `"${layer}"`],
+  }));
 }
 
 function extraDirectories({ contexts }: Config): Relaxation[] {
@@ -228,7 +240,7 @@ function flawedDeviation({ what, adr, reason }: Deviation, records: DecisionReco
   if (what === '') {
     flaws.push({
       message: 'A deviation does not say what it relaxes.',
-      fix: 'Set "what" to the setting it justifies, for example "rules.<id>", "guard", "coverage.<layer>.<rate>" or "domainAllowedPackages.<package>".',
+      fix: 'Set "what" to the setting it justifies, for example "rules.<id>", "guard", "coverage.<layer>.<rate>", "mutation.domain" or "domainAllowedPackages.<package>".',
     });
   }
 

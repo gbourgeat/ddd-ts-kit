@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:970036d7a6c11bb6 -->
+<!-- translation-of: test-runners.md sha256:aaa885190ab1fadd -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -287,8 +287,9 @@ export default {
   premier import décoré, pas un message utile.
 - Le *plugin* appelle le compilateur du projet une fois par fichier décoré quand le cache est
   froid : une première exécution en CI sans cache le paie pour chacun de ces fichiers.
-- L'outillage autour d'une nouvelle version majeure peut être en retard : le README du
-  *pipeline* rapporte que l'outil de test de mutation essayé ne fonctionnait pas avec Vitest 5.
+- L'outillage autour d'une nouvelle version majeure peut être en retard : l'outil de test de
+  mutation que le README du *pipeline* mesure n'exécutait aucun test par mutant sous Vitest 5
+  jusqu'à sa version du 2026-10-23.
 
 **Jest**
 
@@ -322,7 +323,7 @@ export default {
 | Projet NestJS ou class-validator (décorateurs legacy) | Vitest fonctionne sans le *plugin* ; Jest si l'outillage NestJS de l'équipe repose dessus |
 | Base de code existante avec une grosse suite Jest qui adopte le kit | Jest, en ajoutant à la main la séparation des projets et les seuils ; ne planifiez une migration que si elle est rentable |
 | Une bibliothèque ou un adaptateur publié pour d'autres | écrivez son contrat avec `ContractSuite`, pour que les consommateurs l'exécutent sous l'un ou l'autre lanceur |
-| Vouloir des tests de mutation | non disponible dans le kit aujourd'hui, avec l'un comme l'autre lanceur |
+| Vouloir des tests de mutation | livré sous les deux : `npm run test:mutation` et le *job* de la nuit, chaque contexte tenu au plancher `mutation` de la config. Vitest fait tourner les *specs* unitaires de `vitest.mutation.config.ts` ; Jest celles de `jest.mutation.config.js`, en modules ES sous le drapeau du script `test` |
 
 ## Sources
 

@@ -6,6 +6,8 @@ dist
 .ddd-ts-kit/
 .eslintcache/
 .worktrees/
+.stryker-tmp/
+/reports/mutation/
 {{#if orm.prisma}}
 generated
 {{/if}}

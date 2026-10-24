@@ -17,6 +17,7 @@ const DEFAULT_SCRIPTS = {
   build: 'node node_modules/@typescript/native/bin/tsc -p tsconfig.build.json && ddd-ts-kit build-aliases',
   test: 'vitest run',
   'test:coverage': 'vitest run --coverage',
+  'test:mutation': 'stryker run && ddd-ts-kit mutation',
   'test:e2e': 'vitest run --config vitest.e2e.config.ts --passWithNoTests',
   'events:generate': 'npm run build && node dist/scripts/events.js',
   'docs:generate': 'ddd-ts-kit docs && npm run build && node dist/scripts/openapi.js && node dist/scripts/events.js',

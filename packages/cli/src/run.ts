@@ -31,6 +31,7 @@ import { storyCommand } from './commands/story';
 import { storyScopeCommand } from './commands/story-scope';
 import { worktreeCommand } from './commands/worktree';
 import { todoCommand } from './commands/todo';
+import { mutationCommand } from './commands/mutation';
 import { valueObjectsCommand } from './commands/value-objects';
 import { verifyMergeCommand } from './commands/verify-merge';
 import { verifySliceCommand } from './commands/verify-slice';
@@ -57,6 +58,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   story: storyCommand,
   stories: storiesCommand,
   measures: measuresCommand,
+  mutation: mutationCommand,
   worktree: worktreeCommand,
   'worker-scope': workerScopeCommand,
   'verify-slice': verifySliceCommand,

@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:b5ca6b7e681fb5d9 -->
+<!-- translation-of: testing-strategy.md sha256:b26f1d01f35717c2 -->
 
 # Stratégie de test
 
@@ -543,15 +543,50 @@ test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // depuis @ddd
 ]
 ```
 
+## Score de mutation
+
+Un taux de couverture dit qu'une ligne a tourné sous un test ; un score de mutation dit qu'un test
+remarquerait si la ligne changeait. Chaque nuit le *pipeline* lance Stryker sur la couche domaine de
+chaque contexte (`npm run test:mutation`) : chaque mutant est un petit changement du code, une
+condition inversée, une borne déplacée, un retour vidé, et les *specs* unitaires tournent contre
+lui ; un mutant que les *specs* remarquent est détecté, un qu'elles laissent passer est un
+survivant. Puis `ddd-ts-kit mutation` lit le rapport et tient chaque contexte au plancher
+`mutation` de `ddd-ts-kit.config.json`, 80 par la référence ([CONFIG.md](../CONFIG.fr.md#score-de-mutation)).
+
+La config Stryker n'écrit ni *glob* ni nombre : elle étale `governedMutation()` de
+`@ddd-ts-kit/testing/mutation`, qui mute la couche domaine de chaque contexte, écarte les textes
+des refus par l'*ignorer* du kit, puisqu'un refus se vérifie par son code et jamais par son texte,
+toute autre chaîne mesurée, et ignore les mutants statiques, ceux du code qui s'exécute une fois au
+chargement du module. La règle
+[`test/mutation-governed`](../ARCHITECTURE.fr.md#3-règles-de-dépendance) refuse un `mutate`, un
+`mutator`, un `ignoreStatic` ou des `thresholds` écrits à la main.
+
+Un survivant est une règle qu'aucun test n'énonce. Lisez-le comme une décision métier : quand le
+comportement est la règle, énoncez-la dans un test nommé d'après elle, comme l'essai sur l'exemple
+l'a fait pour un rappel retiré puis replanifié pour la même heure ; quand le comportement est un
+accident du code, ou une branche qu'aucun appelant n'atteint, laissez le mutant en vie et dites
+pourquoi, sans jamais le cacher par la configuration. Mesuré sur l'exemple le 2026-10-24
+([README du *pipeline*](../../pipeline/README.md#mutation-testing)) avec la configuration livrée :
+1436 mutants, dont 163 textes de refus et mutants statiques laissés de côté, 1226 tués, 41
+survivants, 6 sans couverture, 96,3 % en 5 minutes, le contexte le plus bas à 95,4 %.
+
 ## Limites et quand ne pas l'utiliser
 
-- **Les tests de mutation ne sont pas fournis.** C'est l'outil qui mesure si les tests
-  remarqueraient un comportement modifié. Le README du *pipeline* consigne pourquoi : Stryker 10,
-  lancé sur la couche domaine d'un projet généré avec Vitest 5, n'a exécuté aucun test par mutant
-  et a déclaré chaque mutant survivant, et son cœur réécrit le tsconfig par une API que le
-  TypeScript 7 natif n'a pas. Une porte qui donne zéro quoi que disent les tests est pire que pas
-  de porte du tout. Tant que le lanceur ne le prend pas en charge, la qualité des tests repose sur
-  la relecture et sur les conventions ci-dessus.
+- **Les tests de mutation tournent chaque nuit, pas sur une *pull request*.** Huit minutes pour le
+  domaine des quatre contextes de l'exemple, c'est trop long pour la boucle d'un changement : le
+  *job* de la nuit tient le plancher et une *pull request* ne l'attend pas ; un survivant trouvé la
+  nuit est une règle à énoncer le lendemain.
+- **Un score de mutation dit qu'un changement a été remarqué, pas que la bonne règle a été énoncée.**
+  Un test qui tue un mutant énonce ce que le code fait aujourd'hui : chacun se lit comme une
+  décision métier avant d'être gardé, et un comportement accidentel reste en vie et on le dit,
+  plutôt que d'être figé.
+- **Un score de mutation ne dit rien d'une règle écrite en déclaration.** Les mutants statiques sont
+  ignorés, ceux du code qui s'exécute une fois au chargement du module : les transitions d'une
+  machine à états, une constante, une expression régulière déclarée en haut d'un fichier. Une
+  transition fausse dans une telle table ne fait baisser aucun score, et le test qui énonce la règle
+  en est la seule preuve ; `ddd-ts-kit mutation` montre les mutants ignorés de chaque contexte à
+  côté de son score. Sur l'exemple, 90 des 1436 mutants sont statiques, dont la déclaration
+  de la machine à états des rendez-vous.
 - **Un *fake* ne vaut que ce que vaut sa suite de contrat.** Un comportement que la suite ne couvre
   pas peut différer en silence : collation et tri SQL, moment d'application des contraintes,
   gestion des fuseaux horaires. Quand un bogue vient d'un tel trou, ajoutez le cas à la suite, pas

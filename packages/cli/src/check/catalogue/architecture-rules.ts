@@ -87,6 +87,7 @@ import { testAcceptanceBlackBox } from '../rules/test-acceptance-black-box';
 import { testBuilderRequired } from '../rules/test-builder-required';
 import { testHelperPlaced } from '../rules/test-helper-placed';
 import { testCoverageGoverned } from '../rules/test-coverage-governed';
+import { testMutationGoverned } from '../rules/test-mutation-governed';
 import { testNoMocks } from '../rules/test-no-mocks';
 import { testSpecRequired } from '../rules/test-spec-required';
 import { tracingPlatformOnly } from '../rules/tracing-platform-only';
@@ -125,6 +126,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   testAcceptanceBlackBox,
   testHelperPlaced,
   testCoverageGoverned,
+  testMutationGoverned,
   languageGlossaryTerm,
   languageNoTechnicalName,
   languageDeclaredVocabulary,

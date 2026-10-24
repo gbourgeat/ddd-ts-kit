@@ -490,6 +490,28 @@ jobs:
       - name: The third shard, the longest, as the x64 job runs it
         run: npm run ci:test:e2e:stacks -- --shard=3/4
 
+  mutation:
+    name: Mutation score of the example, every night
+    needs: install
+    # The night only: Stryker on the domain layer of the four contexts of the example takes minutes, and nothing of it is read before a merge.
+    if: ${{ github.event_name == 'schedule' }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Stryker on the domain layer of every context of the example, each held to the "mutation" floor of its config
+        run: npm run test:mutation --workspace examples/scheduling
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: mutation
+          path: examples/scheduling/reports/mutation
+          if-no-files-found: ignore
+          retention-days: 30
+
   gate:
     name: gate
     if: ${{ always() }}
