@@ -23,16 +23,23 @@ describe('AppointmentType', () => {
     ['a duration of zero', { duration: 0 }],
     ['a duration that is not whole minutes', { duration: 12.5 }],
     ['a grid of zero', { grid: 0 }],
+    ['a negative grid', { grid: -15 }],
+    ['a grid that is not whole minutes', { grid: 2.5 }],
     ['a grid that does not divide a day', { grid: 7 }],
     ['a negative buffer', { buffer: -5 }],
     ['an empty name', { name: '  ' }],
     ['an empty identifier', { id: '' }],
+    ['an identifier made of spaces', { id: '  ' }],
   ])('refuses %s', (_case, facts) => {
     expectRefusal(() => AppointmentType.create({ ...consultation, ...facts }), 'INVALID_APPOINTMENT_TYPE');
   });
 
   it.each([5, 15, 20, 30, 45, 60, 90, 1440])('accepts a grid of %i minutes, which divides a day', (grid) => {
     expect(() => AppointmentType.create({ ...consultation, grid })).not.toThrow();
+  });
+
+  it('tells how long it lasts, the grid it starts on and the buffer it keeps free', () => {
+    expect(AppointmentType.create(consultation)).toMatchObject({ duration: 30, grid: 15, buffer: 10 });
   });
 
   it('holds its duration, then its buffer, from the start', () => {

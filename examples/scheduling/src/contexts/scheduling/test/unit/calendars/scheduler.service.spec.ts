@@ -100,6 +100,17 @@ describe('SchedulerService, on a calendar that holds appointments', () => {
     expect(errorOf(() => scheduler.book(wishAt('09:00'), calendar, held))).toMatchObject({ code: 'SLOT_TAKEN' });
   });
 
+  it('books a slot that only an appointment of another calendar holds at that time', () => {
+    const elsewhere = anAppointment()
+      .onCalendar('calendar-b')
+      .withPractitioner('practitioner-b')
+      .startingAt(at('08:00'));
+
+    const booked = scheduler.book(wishAt('08:00'), calendar, { onCalendar: [elsewhere.build()], byPatient: [] });
+
+    expect(booked.status).toBe('booked');
+  });
+
   it.each([
     ['cancelled', heldAt('08:00').cancelledByPatient()],
     ['expired', heldAt('08:00').expired()],
@@ -131,6 +142,16 @@ describe('SchedulerService, limiting the future appointments of a patient', () =
     expect(
       errorOf(() => scheduler.book(wishAt('08:00'), calendar, { onCalendar: [], byPatient: coming })),
     ).toMatchObject({ code: 'PATIENT_LIMIT_REACHED' });
+  });
+
+  it('counts no appointment of another patient towards the limit', () => {
+    const others = [heldAt('13:00'), heldAt('14:00'), heldAt('15:00')].map((builder) =>
+      builder.forPatient('patient-b').build(),
+    );
+
+    const booked = scheduler.book(wishAt('08:00'), calendar, { onCalendar: [], byPatient: others });
+
+    expect(booked.status).toBe('booked');
   });
 
   it('counts neither the past, nor the ended, nor the appointments with another practitioner towards the limit', () => {
@@ -201,6 +222,23 @@ describe('SchedulerService, moving an appointment', () => {
     });
 
     expect(appointment.slot.startsAt).toEqual(at('09:00'));
+  });
+
+  it('still counts the other future appointments of the patient towards the limit when one of them moves', () => {
+    const appointment = heldAt('08:00').forPatient('patient-a').build();
+
+    const coming = [heldAt('14:00'), heldAt('15:00'), heldAt('16:00')].map((builder) =>
+      builder.forPatient('patient-a').build(),
+    );
+
+    const refusal = errorOf(() =>
+      scheduler.reschedule({ appointment, startsAt: at('09:00'), now }, calendar, {
+        onCalendar: [appointment],
+        byPatient: [appointment, ...coming],
+      }),
+    );
+
+    expect(refusal).toMatchObject({ code: 'PATIENT_LIMIT_REACHED' });
   });
 
   it('refuses to move an appointment onto a slot another one holds, and leaves it where it was', () => {

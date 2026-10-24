@@ -33,6 +33,15 @@ describe('the lifecycle of an appointment', () => {
     },
   );
 
+  it('refuses to confirm an appointment that ended as ended, not as already confirmed', () => {
+    expect(() => appointmentLifecycle.next(AppointmentStatus.Cancelled, 'confirm', after)).toThrow(
+      expect.objectContaining({
+        code: 'APPOINTMENT_ENDED',
+        facts: { appointmentId: 'appointment-1', status: 'cancelled' },
+      }),
+    );
+  });
+
   it('knows the outcome of an appointment once it started, not before', () => {
     expect(appointmentLifecycle.next(AppointmentStatus.Booked, 'complete', after)).toBe('completed');
     expect(appointmentLifecycle.can(AppointmentStatus.Booked, 'markNoShow', before)).toBe(false);

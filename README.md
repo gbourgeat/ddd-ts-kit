@@ -264,7 +264,8 @@ limits and what was verified.
 `init --ci github|gitlab|both` installs the same gates on either platform: type check, lint,
 architecture, dead code, unit tests with coverage thresholds, integration tests on PostgreSQL,
 end-to-end tests, documentation and contract drift, security and image build, behind a single
-final gate, and every night the mutation score of the domain layer, each context held to its floor.
+final gate, and every night the mutation score of the domain layer, each context held to its floor,
+a pull request reading the survivors of its change.
 Every tool is free on any repository. Details: [pipeline/README.md](pipeline/README.md).
 
 ## Documentation

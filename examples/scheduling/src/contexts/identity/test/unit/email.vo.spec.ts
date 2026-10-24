@@ -18,12 +18,23 @@ describe('Email', () => {
     expect(() => Email.create(address)).not.toThrow();
   });
 
-  it.each(['ada', 'ada@', '@example.com', 'ada@example', 'ada lovelace@example.com', `${'a'.repeat(250)}@example.com`])(
-    'refuses "%s", which nobody can be written to at',
-    (address) => {
-      expectRefusal(() => Email.create(address), 'INVALID_EMAIL');
-    },
-  );
+  it('accepts the longest address there is, 254 characters', () => {
+    const longest = `${'a'.repeat(242)}@example.com`;
+
+    expect(Email.create(longest).value).toHaveLength(254);
+  });
+
+  it.each([
+    'ada',
+    'ada@',
+    '@example.com',
+    'ada@example',
+    'ada lovelace@example.com',
+    'ada@example.com extra',
+    `${'a'.repeat(250)}@example.com`,
+  ])('refuses "%s", which nobody can be written to at', (address) => {
+    expectRefusal(() => Email.create(address), 'INVALID_EMAIL');
+  });
 
   it('reads the same address whatever its case and the spaces around it', () => {
     const typed = Email.create('  Ada@Example.COM ');

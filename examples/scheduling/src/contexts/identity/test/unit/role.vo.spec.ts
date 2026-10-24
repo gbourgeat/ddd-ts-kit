@@ -20,6 +20,10 @@ describe('Role', () => {
     expect(role.is(name)).toBe(true);
   });
 
+  it('is not a role it was not given', () => {
+    expect(Role.create('assistant').is('manager')).toBe(false);
+  });
+
   it.each(['patient', 'admin', 'owner'])('refuses "%s", which nobody is in a practice', (name) => {
     expectRefusal(() => Role.create(name), 'UNKNOWN_ROLE');
   });
