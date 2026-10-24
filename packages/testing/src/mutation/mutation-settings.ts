@@ -1,15 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { isRecord } from '../vitest/is-record';
-import { REFERENCE_MUTATION } from './reference-mutation';
+import { type MutationLayer, REFERENCE_MUTATION } from './reference-mutation';
 
 const CONFIG_FILE = 'ddd-ts-kit.config.json';
 
-/** What the config file of a project says about mutation testing: where its contexts are and the floor of the domain layer. */
+/** What the config file of a project says about mutation testing: where its contexts are and the floor of each layer held. */
 export interface MutationSettings {
   readonly contextsDir: string;
-  /** The minimum mutation score of the domain layer of every context, a percentage. */
-  readonly domain: number;
+  /** The minimum mutation score of each layer of every context, a percentage. */
+  readonly floors: Readonly<Record<MutationLayer, number>>;
 }
 
 /**
@@ -23,7 +23,10 @@ export function mutationSettings(root: string): MutationSettings {
 
   return {
     contextsDir: textOf(config['contextsDir'], `${sourceRoot}/contexts`),
-    domain: scoreOf(written['domain'], REFERENCE_MUTATION.domain),
+    floors: {
+      domain: scoreOf(written['domain'], REFERENCE_MUTATION.domain),
+      application: scoreOf(written['application'], REFERENCE_MUTATION.application),
+    },
   };
 }
 
@@ -43,8 +46,6 @@ function textOf(value: unknown, fallback: string): string {
   return typeof value === 'string' && value !== '' ? value.replaceAll('\\', '/') : fallback;
 }
 
-function scoreOf(value: unknown, reference: number): number {
-  const valid = typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100;
-
-  return valid ? value : reference;
+function scoreOf(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100 ? value : fallback;
 }

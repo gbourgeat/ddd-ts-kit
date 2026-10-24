@@ -517,15 +517,16 @@ test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // from @ddd-t
 ## Mutation score
 
 A coverage rate says that a line ran under a test; a mutation score says that a test would notice
-if the line changed. Every night the pipeline runs Stryker on the domain layer of every context
+if the line changed. Every night the pipeline runs Stryker on the domain and application layers of every context
 (`npm run test:mutation`): each mutant is one small change of the code, a condition negated, a
 boundary moved, a return emptied, and the unit specs run against it; a mutant the specs notice is
 detected, one they let through is a survivor. Then `ddd-ts-kit mutation` reads the report and holds
-each context to the `mutation` floor of `ddd-ts-kit.config.json`, 80 by the reference
+each layer of each context to its `mutation` floor of `ddd-ts-kit.config.json`, 80 and 75 by the
+reference
 ([CONFIG.md](../CONFIG.md#mutation-score)).
 
 The Stryker config writes no glob and no number: it spreads `governedMutation()` of
-`@ddd-ts-kit/testing/mutation`, which mutates the domain layer of every context, leaves the texts
+`@ddd-ts-kit/testing/mutation`, which mutates the domain and application layers of every context, leaves the texts
 of refusals out through the ignorer of the kit, since a refusal is asserted by its code and never
 by its text, every other string measured, and ignores the static mutants, those of code that runs
 once when the module loads. Rule
@@ -539,7 +540,9 @@ caller can reach, leave the mutant alive and say why, never hide it by configura
 the example on 2026-10-24 ([pipeline README](../../pipeline/README.md#mutation-testing)) with the
 shipped configuration: 1436 mutants, 163 of them texts of refusals and static mutants left out,
 1226 killed, 41 survivors, 6 without coverage, 96.3% in 5 minutes, the lowest context at
-95.4%.
+95.4%. With the application layer, measured the same day: 2412 mutants in 283 files, 96.1% in
+5 minutes 24 seconds, the application layer at 95.7% and its lowest context at 93.5%; the initial
+test run is what the night pays for, not the mutants.
 
 A pull request gets a reading of its change, not the whole measure: the `mutation-changed` job of
 the pipeline reuses the report of the last night for what the change leaves alone (the incremental

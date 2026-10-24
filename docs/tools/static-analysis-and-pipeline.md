@@ -368,7 +368,7 @@ and merge request settings were written from the API documentation.
 
 **Mutation testing runs every night.** The `mutation` job of the pipeline runs
 `npm run test:mutation` on the default branch when the schedule fires: Stryker 10.1.1 with the
-runner of the project, Vitest or Jest, on the domain layer of every context, its configuration read
+runner of the project, Vitest or Jest, on the domain and application layers of every context, its configuration read
 from the kit (`governedMutation()`, held by `test/mutation-governed`: the texts of refusals and the
 static mutants left out), then `ddd-ts-kit mutation`, which holds each context to the `mutation`
 floor of `ddd-ts-kit.config.json`, the ignored mutants shown beside each score. Not a gate of a pull
@@ -411,7 +411,7 @@ decided it (2026-10-24).
 | A monorepo with its own boundary tooling | keep it for package boundaries; the kit's rules still hold inside each service |
 | TypeScript 7 only, no TypeScript 6 | not possible today with typed lint; keep both |
 | GitLab on a free tier | the pipeline as generated: audit and gitleaks block; scanner findings are visible in the job logs only |
-| Wanting the mutation score before the night | `npm run test:mutation` by hand: Stryker on the domain layer of every context, then each context against its floor; the html report lands in `reports/mutation/` |
+| Wanting the mutation score before the night | `npm run test:mutation` by hand: Stryker on the domain and application layers of every context, then each layer of each context against its floor; the html report lands in `reports/mutation/` |
 
 ## Sources
 

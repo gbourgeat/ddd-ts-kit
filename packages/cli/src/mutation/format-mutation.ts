@@ -1,14 +1,15 @@
 import type { ContextScore } from './mutation-scores';
-const COLUMNS = ['Context', 'Detected', 'Undetected', 'Errors', 'Ignored', 'Score', 'Floor', ''] as const;
+const COLUMNS = ['Context', 'Layer', 'Detected', 'Undetected', 'Errors', 'Ignored', 'Score', 'Floor', ''] as const;
 
-/** One line per context, its score against its floor, the mutants the measure leaves out beside it, then the verdict. */
+/** One line per layer of each context, its score against its floor, the mutants the measure leaves out beside it, then the verdict. */
 export function formatMutation(scores: readonly ContextScore[]): string {
   if (scores.length === 0) {
-    return 'The report holds no mutant of a context: nothing of the domain layers was mutated.';
+    return 'The report holds no mutant of a context: nothing of the domain and application layers was mutated.';
   }
 
   const rows = scores.map((entry) => [
     entry.context,
+    entry.layer,
     String(entry.detected),
     String(entry.undetected),
     String(entry.errors),
@@ -31,7 +32,7 @@ export function formatMutation(scores: readonly ContextScore[]): string {
   const verdict =
     under.length === 0
       ? 'Every context holds its mutation floor.'
-      : `${under.length} context(s) under the floor: ${under.map((entry) => entry.context).join(', ')}. A survivor is a rule no test states: read it as a decision, then write the test, or leave the mutant alive and say why.`;
+      : `${under.length} layer(s) under the floor: ${under.map((entry) => `${entry.context} (${entry.layer})`).join(', ')}. A survivor is a rule no test states: read it as a decision, then write the test, or leave the mutant alive and say why.`;
 
   return [line(COLUMNS), ...rows.map(line), '', verdict].join('\n');
 }

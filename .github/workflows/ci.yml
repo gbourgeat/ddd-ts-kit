@@ -493,7 +493,7 @@ jobs:
   mutation:
     name: Mutation score of the example, every night
     needs: install
-    # The night only: Stryker on the domain layer of the four contexts of the example takes minutes, and nothing of it is read before a merge.
+    # The night only: Stryker on the domain and application layers of the four contexts of the example takes minutes, and nothing of it is read before a merge.
     if: ${{ github.event_name == 'schedule' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 60
@@ -502,7 +502,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      - name: Stryker on the domain layer of every context of the example, each held to the "mutation" floor of its config
+      - name: Stryker on the domain and application layers of every context of the example, each layer held to its "mutation" floor of its config
         run: npm run test:mutation --workspace examples/scheduling
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}

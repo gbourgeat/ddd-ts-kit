@@ -224,10 +224,10 @@ without a privileged daemon.
 Shipped as the job of the night: `mutation`, which runs `npm run test:mutation` on the default
 branch when the schedule fires (GitHub) or when a pipeline schedule runs (GitLab), never on a pull
 or merge request, and keeps `reports/mutation/` as an artifact for thirty days. The script runs
-Stryker on the domain layer of every context, then `ddd-ts-kit mutation`, which holds each context
+Stryker on the domain and application layers of every context, then `ddd-ts-kit mutation`, which holds each layer of each context
 to the `mutation` floor of `ddd-ts-kit.config.json` (80 by the reference) and fails the job under
 it. `init` writes `stryker.config.mjs`, which spreads `governedMutation()` of
-`@ddd-ts-kit/testing/mutation` (the domain layers, the texts of refusals left out by the ignorer of the
+`@ddd-ts-kit/testing/mutation` (the domain and application layers, the texts of refusals left out by the ignorer of the
 kit, the static mutants ignored, the floor as `thresholds`), and `vitest.mutation.config.ts`, the unit specs alone;
 `test/mutation-governed` refuses a setting written by hand. On both runners: a project on Jest gets
 `jest.mutation.config.js` in place of the Vitest one, and its Stryker config passes the ES modules
@@ -251,6 +251,7 @@ the four contexts as `mutate` (`src/contexts/*/domain/**/*.ts` and
 | the same in incremental mode, nothing changed since the report it reuses | 127 | 1436, 1273 reused | 1226 | 41 | 6 | 0 | 96.3% | 1 min 30 s, the initial run of 1073 tests taking 84 s |
 | the same after a change inside one file of the domain (`slot.vo.ts`) | 127 | 1436, 1266 reused, 7 run again | 1226 | 41 | 6 | 0 | 96.3% | 1 min 8 s |
 | the same after a change of a builder alone | 127 | 1436, 1266 reused: the change was not seen | 1226 | 41 | 6 | 0 | 96.3% | 59 s |
+| the domain and application layers of the four contexts, the shipped configuration since the application layer is held too | 283 | 2412, 399 of them ignored | 1934 | 71 | 8 | 0 | 96.1% | 5 min 24 s, the initial run of 1083 tests taking 56 s |
 
 The last row is what the night job measures: `ddd-ts-kit mutation` then holds each context to the
 floor, `analytics` at 100.0%, `identity` at 97.9%, `notification` at 99.0%, `scheduling` at 95.4%,

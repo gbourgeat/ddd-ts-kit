@@ -2,7 +2,7 @@ import { governedMutation } from '@ddd-ts-kit/testing/mutation';
 
 export default {
   testRunner: 'vitest',
-  // The unit specs alone: a mutant of the domain is noticed by a spec of the domain or of the application, in milliseconds.
+  // The unit specs alone: a mutant of the domain or of the application is noticed by a spec of the domain or of the application, in milliseconds.
   vitest: { configFile: 'vitest.mutation.config.ts' },
   // The compiler is not asked to check each mutant: a mutant the types refuse is one the tests refuse too, for less.
   checkers: [],
