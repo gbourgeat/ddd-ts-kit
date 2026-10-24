@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:9079b25e8493a279 -->
+<!-- translation-of: README.md sha256:85c7ff5ab9276db1 -->
 
 # @ddd-ts-kit/di
 
@@ -1227,15 +1227,15 @@ classe est refusé (`INVALID_JOB_SETTINGS`), un nom déclaré deux fois aussi (`
   dans sa propre mémoire (`InMemoryJobStore`, le défaut) est quand même consommée, puisqu'aucun
   autre processus ne la voit.
 - **`kernelModule()`** lie `JobStore` (en mémoire par défaut : liez `KnexJobStore`,
-  `DrizzleJobStore` ou `RedisJobStore` avec `jobStore`, sinon aucun *job* n'atteint un *worker*
+  `DrizzleJobStore`, `PrismaJobStore` ou `RedisJobStore` avec `jobStore`, sinon aucun *job* n'atteint un *worker*
   d'un autre processus), `JobQueue` (une `StoredJobQueue` dessus, qui stocke le `traceparent`
   fourni par l'instrumentation) et `QueueWorker` (réglé par
   `queues: { concurrency, pollIntervalMs, graceMs }`, ses échecs remis à l'`ErrorReporter`).
 - **`describe().backgroundJobs`** liste chaque *job*, sa file et ses options, valeurs par défaut
   remplies.
 
-`kernelModule()` lie aussi `ProcessStore` (en mémoire par défaut : liez `KnexProcessStore` ou
-`DrizzleProcessStore` avec `processStore`) et `ProcessRunner`, l'exécuteur de
+`kernelModule()` lie aussi `ProcessStore` (en mémoire par défaut : liez `KnexProcessStore`,
+`DrizzleProcessStore` ou `PrismaProcessStore` avec `processStore`) et `ProcessRunner`, l'exécuteur de
 `@ddd-ts-kit/scheduling` sur celui-ci, la `JobQueue`, le `CommandBus` et la `UnitOfWork` : les
 gestionnaires qui pilotent un gestionnaire de processus dépendent de `ProcessRunner`, et son
 *job* d'expiration est un *job* en arrière-plan du contexte. Dans une application de test,

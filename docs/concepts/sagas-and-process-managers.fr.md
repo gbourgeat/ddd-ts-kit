@@ -1,5 +1,5 @@
 [English](sagas-and-process-managers.md) · **Français**
-<!-- translation-of: sagas-and-process-managers.md sha256:ac8d5768d78a8d25 -->
+<!-- translation-of: sagas-and-process-managers.md sha256:b330d99838b96e0f -->
 
 # Sagas et gestionnaires de processus
 
@@ -219,8 +219,8 @@ export class ConfirmationDeadlineProcess implements ProcessManager<ConfirmationD
   le *runner* ne l'exécute que tant que ce *job* précis est celui qui est armé, si bien qu'un
   délai désarmé ou remplacé ne se déclenche jamais.
 - **Stockages.** `InMemoryProcessStore` (noyau) pour les tests et pour un seul processus ;
-  `KnexProcessStore` et `createProcessTable`, `DrizzleProcessStore` et `processesTable`, qui
-  sauvegardent dans la transaction de l'étape. Chaque stockage est tenu par
+  `KnexProcessStore` et `createProcessTable`, `DrizzleProcessStore` et `processesTable`,
+  `PrismaProcessStore` et le modèle `ProcessInstance`, qui sauvegardent dans la transaction de l'étape. Chaque stockage est tenu par
   `processStoreContract`.
 
 Les deux classes qui appellent les étapes, dans l'exemple : le gestionnaire d'un événement du

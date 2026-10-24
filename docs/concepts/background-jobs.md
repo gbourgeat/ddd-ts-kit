@@ -444,8 +444,9 @@ the Sentry adapter included.
 | `InMemoryJobStore` | `@ddd-ts-kit/scheduling` | waits for the commit | the contract, in the unit specs; tests and one process without a database |
 | `KnexJobStore`, `createJobTable` | `@ddd-ts-kit/knex` | yes | the contract on PGlite and on PostgreSQL in CI |
 | `DrizzleJobStore`, `jobsTable` | `@ddd-ts-kit/drizzle` | yes | the contract on PGlite and on PostgreSQL in CI |
+| `PrismaJobStore`, the `BackgroundJob` model | `@ddd-ts-kit/prisma` | yes | the contract on PGlite and on PostgreSQL in CI |
 | `RedisJobStore` | `@ddd-ts-kit/redis` | waits for the commit | the contract on Dragonfly in CI (run by hand on Redis 8) |
-| Prisma, TypeORM | none in this version | | a project writes a `JobStore` over its ORM, held by `jobStoreContract` with its unit of work (the Knex store is about two hundred lines to follow) |
+| TypeORM | none in this version | | a project writes a `JobStore` over its ORM, held by `jobStoreContract` with its unit of work (the Knex store is about two hundred lines to follow) |
 
 The SQL stores claim with `FOR UPDATE SKIP LOCKED` in a short transaction of their own, on
 PostgreSQL; in CI their contract runs on a server behind a pool of several connections, where
