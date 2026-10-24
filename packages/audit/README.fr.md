@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:05a43324799a82be -->
+<!-- translation-of: README.md sha256:edc3e2606e5c6411 -->
 
 # @ddd-ts-kit/audit
 
@@ -760,9 +760,11 @@ l'archive est enregistrée dans `audit_archives` (plage, dernier hash, SHA-256 d
 les entrées sont supprimées. La garde de la table ne laisse passer un `DELETE` que pour des
 entrées qu'une archive couvre, et refuse toute modification des archives elles-mêmes. Une chaîne
 qui ne se vérifie pas est refusée avec `AuditArchiveRefusedError` et garde toutes ses entrées :
-une rupture est à examiner par l'opérateur, pas à enfouir dans un fichier. Le fichier est écrit
-avant la validation de la transaction : un échec ensuite laisse un fichier qu'aucune archive ne
-nomme, que le passage suivant réécrit sous la même clé.
+une rupture est à examiner par l'opérateur, pas à enfouir dans un fichier. Le fichier est écrit,
+puis relu depuis le stockage et son empreinte vérifiée, avant la validation de la transaction : un
+stockage qui ne l'a pas gardé est refusé avec `AuditArchiveNotStoredError` et rien n'est supprimé ;
+un échec ensuite laisse un fichier qu'aucune archive ne nomme, que le passage suivant réécrit sous
+la même clé.
 
 Ce que le journal prouvait reste démontrable :
 
@@ -778,8 +780,12 @@ await verifyChain(trail, { chain: 'tenant:acme', after: { chain: 'tenant:acme', 
 plateforme : chaque passage archive les entrées antérieures au premier jour du mois situé
 `monthsOnline` mois entiers plus tôt, en UTC, si bien qu'un passage manqué est rattrapé par le
 suivant. Un projet généré dont le journal est en base et dont les fichiers sont dans un stockage
-l'enregistre sous `audit.archive`, le premier jour de chaque mois à 04:00 UTC, désactivable dans
-un environnement avec `JOB_AUDIT_ARCHIVE_ENABLED=false`.
+l'enregistre sous `audit.archive`, le premier jour de chaque mois à 04:00 UTC. Avec un stockage
+objet (`--storage s3`), il tourne sauf `JOB_AUDIT_ARCHIVE_ENABLED=false` ; avec `--storage local`,
+il ne tourne qu'avec `JOB_AUDIT_ARCHIVE_ENABLED=true` : les fichiers seraient sur le disque du
+serveur, qu'un redéploiement peut effacer et qu'une sauvegarde peut ne pas atteindre, et une archive
+supprime les entrées de la base. Archivez vers un stockage durable et sauvegardé, avec un verrou de
+conservation là où la loi en demande un.
 
 Un journal créé avant les archives les ajoute une fois, dans une migration : `addAuditArchives(knex, {
 schema })` sur Knex, les instructions de `auditArchiveUpgradeStatements(schema)` sur Drizzle,

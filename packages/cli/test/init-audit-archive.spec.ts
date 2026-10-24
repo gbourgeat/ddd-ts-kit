@@ -4,7 +4,10 @@ import { read } from './helpers';
 import { initProject } from './support/init-project';
 
 const platform = (root: string, file: string): string => read(root, `src/platform/${file}`);
-const SWITCH = "'audit.archive': { enabled: environment['JOB_AUDIT_ARCHIVE_ENABLED'] !== 'false' },";
+/** On request while the files are on the disk of the server, the default storage. */
+const ON_REQUEST = "'audit.archive': { enabled: environment['JOB_AUDIT_ARCHIVE_ENABLED'] === 'true' },";
+/** On unless switched off once the files are in an object store. */
+const BY_DEFAULT = "'audit.archive': { enabled: environment['JOB_AUDIT_ARCHIVE_ENABLED'] !== 'false' },";
 
 describe('init: the monthly archive of the audit trail', () => {
   it('registers audit.archive on the first day of every month with the trail in a database and a storage of files', () => {
@@ -15,11 +18,21 @@ describe('init: the monthly archive of the audit trail', () => {
         '        .handledByFactory((resolve) => new ArchiveAuditEntries(audit.trail, resolve(FileStorage), resolve(Clock)));',
     );
 
-    expect(platform(root, 'jobs/job-settings.ts')).toContain(SWITCH);
+    expect(platform(root, 'jobs/job-settings.ts')).toContain(ON_REQUEST);
 
     expect(platform(root, 'database/schema.ts')).toContain(
       'export const auditArchives = auditArchivesTable(AUDIT_SCHEMA);',
     );
+  });
+
+  it('runs it unless switched off once the files are in an object store, and only on request on the disk of the server', () => {
+    const local = platform(initProject(), 'jobs/job-settings.ts');
+    const objectStore = platform(initProject('--storage', 's3'), 'jobs/job-settings.ts');
+
+    expect(local).toContain(ON_REQUEST);
+    expect(local).toContain('JOB_AUDIT_ARCHIVE_ENABLED=true once that disk is durable and backed up.');
+    expect(objectStore).toContain(BY_DEFAULT);
+    expect(objectStore).not.toContain(ON_REQUEST);
   });
 
   it('registers it on the scheduler of a hand-wired platform the same way', () => {

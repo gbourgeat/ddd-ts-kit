@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { FixedClock, InMemoryFileStorage, type AuditTrail } from '@ddd-ts-kit/kernel';
 import {
+  AuditArchiveNotStoredError,
   AuditArchiveRefusedError,
   verifyArchive,
   verifyChain,
@@ -148,8 +149,28 @@ function digestOf(text: string): string {
   return createHash('sha256').update(text, 'utf8').digest('hex');
 }
 
+/** A storage that accepts a file and does not keep it: an ephemeral disk, a bucket that lost a write. */
+class ForgetfulFileStorage extends InMemoryFileStorage {
+  override async get(): Promise<undefined> {
+    return undefined;
+  }
+}
+
 function integritySpecs(name: string, create: () => Promise<ArchiveFixture>): void {
   describe(`${name}: what an archive proves`, () => {
+    it('removes nothing when the file does not read back as it was written', async () => {
+      const { trail } = await create();
+
+      await recordAt(trail, 'january', JANUARY);
+
+      await expect(trail.archiveBefore(MARCH, { files: new ForgetfulFileStorage(), clock })).rejects.toBeInstanceOf(
+        AuditArchiveNotStoredError,
+      );
+
+      expect(await sequencesOf(trail)).toEqual([{ id: 'january', sequence: 1 }]);
+      expect(await trail.archivesOf(CHAIN)).toEqual([]);
+    });
+
     it('shows a file altered after it was written, and one read against the wrong archive before', async () => {
       const { trail } = await create();
       const files = new InMemoryFileStorage();

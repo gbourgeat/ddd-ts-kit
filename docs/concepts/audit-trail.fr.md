@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:973339316ae0e107 -->
+<!-- translation-of: audit-trail.md sha256:f43d9f9cf7b464fc -->
 
 # Journal d'audit
 
@@ -284,8 +284,10 @@ entrées couvertes. Les entrées restées en base se rattachent à ce dernier ha
 se vérifie de nouveau seul, contre son enregistrement et l'archive qui le précède. Une chaîne qui
 ne se vérifie pas n'est pas archivée : une rupture est à examiner par quelqu'un.
 
-Un projet généré dont le journal est en base et dont les fichiers sont dans un stockage le fait
-le premier jour de chaque mois et garde douze mois entiers en ligne. Archiver n'est pas effacer :
+Un projet généré dont le journal est en base le fait le premier jour de chaque mois et garde douze
+mois entiers en ligne, par défaut avec un stockage objet et seulement sur demande avec un stockage
+local : l'archive supprime les entrées de la base, les fichiers doivent donc arriver là où ils
+durent, durables et sauvegardés. Le fichier est relu et vérifié avant que rien ne soit supprimé. Archiver n'est pas effacer :
 les fichiers gardent des identifiants, et combien de temps ils sont gardés, sous quel verrou, est
 la décision du responsable de traitement. Voir [Archivage](../../packages/audit/README.fr.md#archivage).
 
