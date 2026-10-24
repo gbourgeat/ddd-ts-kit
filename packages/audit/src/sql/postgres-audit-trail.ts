@@ -29,6 +29,8 @@ import { insertOf } from './insert-of';
 import type { SqlSession } from './sql-session';
 import { joined, sql, type Sql } from './sql';
 
+const OCCURRED_AT_UTC = sql`to_char("occurred_at" at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')`;
+
 /**
  * The trail in PostgreSQL, whatever the query builder: the adapters give it a session, which
  * is the transaction of the unit of work in progress when there is one.
@@ -159,7 +161,8 @@ export class PostgresAuditTrail implements AuditTrail, AuditReader {
   }
 
   private async select(conditions: readonly Sql[], order: SearchOrder, limit: Sql): Promise<AuditEntry[]> {
-    const statement = sql`select * from ${this.tables.entries} ${where(conditions)} order by ${orderBy(order)} ${limit}`;
+    // The instant as UTC text as well: a driver that reads a timestamptz without the offset of the session (the Prisma adapter of pg) gets it right all the same.
+    const statement = sql`select *, ${OCCURRED_AT_UTC} as "occurred_at_utc" from ${this.tables.entries} ${where(conditions)} order by ${orderBy(order)} ${limit}`;
 
     return (await this.session().query(statement)).map(entryOf);
   }

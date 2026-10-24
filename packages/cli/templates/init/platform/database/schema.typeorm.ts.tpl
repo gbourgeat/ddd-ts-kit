@@ -1,3 +1,6 @@
+{{#if audit.on}}
+import { auditEntities } from '@ddd-ts-kit/audit/typeorm';
+{{/if}}
 import type { EntitySchema } from 'typeorm';
 import { {{#if eventSourcing.on}}eventStoreEntities, {{/if}}outboxEntity, processedEventEntity } from '@ddd-ts-kit/typeorm';
 // ddd-ts-kit:imports
@@ -23,12 +26,23 @@ export const EVENT_STORE_SCHEMA = 'event_store';
 export const eventStore = eventStoreEntities({ schema: EVENT_STORE_SCHEMA });
 
 {{/if}}
+{{#if audit.on}}
+/** The schema of the audit trail. */
+export const AUDIT_SCHEMA = 'audit';
+
+// TODO(platform): TypeORM generates no trigger. After the first `npm run db:generate migrations/<name>`, add a migration of your own that runs the statements `npm run db:audit-guard` prints: they make the entries refuse UPDATE, DELETE and TRUNCATE.
+export const auditTrail = auditEntities({ schema: AUDIT_SCHEMA });
+
+{{/if}}
 /** Every table of the application: what the data source registers and what migrations are generated from. */
 export const entities: readonly EntitySchema[] = [
   outbox,
   processedEvents,
   {{#if eventSourcing.on}}
   ...eventStore,
+  {{/if}}
+  {{#if audit.on}}
+  ...auditTrail,
   {{/if}}
   // ddd-ts-kit:schemas
   // /ddd-ts-kit:schemas

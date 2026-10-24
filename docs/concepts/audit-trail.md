@@ -309,7 +309,7 @@ These are stated by [`@ddd-ts-kit/audit`](../../packages/audit/README.md):
   database, a route bypassing the bus) is not in the trail. Keeping every route on the bus is
   what [`authz/declared`](../ARCHITECTURE.md#3-dependency-rules) and the dependency rules are
   for.
-- **PostgreSQL only** for the SQL stores shipped (Knex and Drizzle). With Prisma, TypeORM, a
+- **PostgreSQL only** for the SQL stores shipped (Knex, Drizzle, Prisma and TypeORM). With a
   custom ORM or no ORM, the generated project starts on an in-memory trail behind a
   `TODO(platform)`; another database is another adapter held to the contract suite.
 - **Appends to one chain are serialized.** Inside a unit of work the entries are written at its

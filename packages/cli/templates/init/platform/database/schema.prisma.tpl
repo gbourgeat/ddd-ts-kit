@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["messaging"{{#if eventSourcing.on}}, "event_store"{{/if}}]
+  schemas  = ["messaging"{{#if eventSourcing.on}}, "event_store"{{/if}}{{#if audit.on}}, "audit"{{/if}}]
 }
 
 // The outbox and the idempotency table, from @ddd-ts-kit/prisma. Keep the field names: the
@@ -109,5 +109,54 @@ model SubjectKey {
 
   @@map("subject_keys")
   @@schema("event_store")
+}
+{{/if}}
+{{#if audit.on}}
+
+// TODO(platform): Prisma writes no trigger. After the first `npm run db:generate <name>`, add a migration (`npm run db:generate audit-guard`) holding the statements `npm run db:audit-guard` prints: they make the entries refuse UPDATE, DELETE and TRUNCATE.
+/// The audit trail of @ddd-ts-kit/audit: written by PrismaAuditTrail with raw statements, append-only once the guard is migrated.
+model AuditEntry {
+  id             String   @unique
+  chain          String
+  sequence       BigInt
+  occurredAt     DateTime @map("occurred_at") @db.Timestamptz(3)
+  category       String
+  action         String
+  outcome        String
+  reason         String?
+  actorId        String   @map("actor_id")
+  actorType      String   @map("actor_type")
+  actorTenantId  String?  @map("actor_tenant_id")
+  tenantId       String?  @map("tenant_id")
+  impersonatedBy String?  @map("impersonated_by")
+  sessionId      String?  @map("session_id")
+  resourceType   String?  @map("resource_type")
+  resourceId     String?  @map("resource_id")
+  context        String?
+  correlationId  String   @map("correlation_id")
+  causationId    String?  @map("causation_id")
+  origin         String
+  changes        Json?
+  extensions     Json     @default("{}")
+  previousHash   String   @map("previous_hash")
+  hash           String
+
+  @@id([chain, sequence])
+  @@index([occurredAt, chain, sequence], map: "audit_entries_occurred_idx")
+  @@index([actorId, occurredAt], map: "audit_entries_actor_idx")
+  @@index([resourceType, resourceId], map: "audit_entries_resource_idx")
+  @@index([correlationId], map: "audit_entries_correlation_idx")
+  @@map("audit_entries")
+  @@schema("audit")
+}
+
+/// The head of each chain of the audit trail: the row an append locks.
+model AuditChain {
+  chain    String @id
+  sequence BigInt
+  hash     String
+
+  @@map("audit_chains")
+  @@schema("audit")
 }
 {{/if}}

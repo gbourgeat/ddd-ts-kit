@@ -1,5 +1,5 @@
 [English](spend-management-example.md) · **Français**
-<!-- translation-of: spend-management-example.md sha256:81af0bdf07782c7d -->
+<!-- translation-of: spend-management-example.md sha256:ccc43cead320f394 -->
 
 # Proposition : un second exemple, la gestion des dépenses sur la pile la plus populaire
 
@@ -166,6 +166,12 @@ Preuve : les deux suites de contrat sur PGlite et PostgreSQL ; `stacks.ts` gagne
 `nest + prisma + queue database`.
 
 ### 1.4 La piste d'audit SQL sur Prisma
+
+**Construite**, avec TypeORM : `PrismaAuditTrail` et `TypeOrmAuditTrail` (une classe chacun, piste
+et lecteur) tenus à `auditTrailContract` et aux *specs* SQL des autres stockages,
+`auditPrismaModels` et `auditEntities` prouvés créer les tables de `createAuditTables`,
+`create-audit.ts.tpl` les reliant, le `TODO(platform)` gardé pour `custom` et sans ORM. Le texte
+ci-dessous est le plan tel qu'il a été écrit.
 
 `@ddd-ts-kit/audit` stocke sur Knex et Drizzle ; sur Prisma le projet généré démarre sur la
 piste en mémoire derrière le `TODO(platform)` de `create-audit.ts.tpl` (ligne 131). À

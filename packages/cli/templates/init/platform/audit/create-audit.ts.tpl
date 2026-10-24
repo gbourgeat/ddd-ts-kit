@@ -35,11 +35,17 @@ import { KnexAuditTrail } from '@ddd-ts-kit/audit/knex';
 {{#if audit.drizzle}}
 import { DrizzleAuditTrail } from '@ddd-ts-kit/audit/drizzle';
 {{/if}}
+{{#if audit.prisma}}
+import { PrismaAuditTrail } from '@ddd-ts-kit/audit/prisma';
+{{/if}}
+{{#if audit.typeorm}}
+import { TypeOrmAuditTrail } from '@ddd-ts-kit/audit/typeorm';
+{{/if}}
 import type { OnDecision } from '@ddd-ts-kit/auth';
 import type { EventSubscription } from '@ddd-ts-kit/events';
 import type { BusMiddleware } from '@ddd-ts-kit/kernel';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
-{{#if audit.sql}}
+{{#if audit.schemaFile}}
 import { AUDIT_SCHEMA } from '{{alias.platform}}/database/schema{{alias.ext}}';
 {{/if}}
 {{#if audit.route}}
@@ -127,8 +133,21 @@ function createAuditTrail(persistence: Persistence): AuditTrail & AuditReader {
   return new DrizzleAuditTrail(persistence.database, { schema: AUDIT_SCHEMA });
 }
 {{/if}}
+{{#if audit.prisma}}
+/** The schema the models of the trail declare in prisma/schema.prisma (`@@schema("audit")`). */
+const AUDIT_SCHEMA = 'audit';
+
+function createAuditTrail(persistence: Persistence): AuditTrail & AuditReader {
+  return new PrismaAuditTrail(persistence.database, { schema: AUDIT_SCHEMA });
+}
+{{/if}}
+{{#if audit.typeorm}}
+function createAuditTrail(persistence: Persistence): AuditTrail & AuditReader {
+  return new TypeOrmAuditTrail(persistence.database, { schema: AUDIT_SCHEMA });
+}
+{{/if}}
 {{#if audit.memory}}
-// TODO(platform): the audit package stores on knex and drizzle only: write an adapter of AuditTrail and AuditReader for your storage, hold it to `auditTrailContract` of @ddd-ts-kit/audit/testing and answer it here. Until then the entries live in the memory of the process and are lost when it stops.
+// TODO(platform): the audit package stores on the four ORMs only: write an adapter of AuditTrail and AuditReader for your storage, hold it to `auditTrailContract` of @ddd-ts-kit/audit/testing and answer it here. Until then the entries live in the memory of the process and are lost when it stops.
 function createAuditTrail(): AuditTrail & AuditReader {
   return new InMemoryAuditTrail();
 }

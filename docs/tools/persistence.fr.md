@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:f6171878786ee3c8 -->
+<!-- translation-of: persistence.md sha256:35b1141e2ed9ada1 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -442,9 +442,10 @@ D'après [`packages/cli/README.fr.md`](../../packages/cli/README.fr.md) et
 - `generate repository --tenant-scoped`, et chaque *repository* d'un projet initialisé avec
   `--tenancy shared-table`, est implémenté pour les quatre ORM ; avec `custom` ou sans ORM,
   l'adaptateur ordinaire est écrit et une note dit quoi ajouter, et `init` refuse la stratégie.
-- Le journal d'audit SQL existe pour Knex et Drizzle, sur PostgreSQL seulement. Avec Prisma,
-  TypeORM, `custom` ou sans ORM, le projet généré démarre sur un journal en mémoire derrière un
-  `TODO(platform)`.
+- Le journal d'audit SQL existe pour les quatre ORM, sur PostgreSQL seulement ; le garde d'ajout
+  seul est créé par la première migration sur Knex et collé dans une migration écrite à la main sur
+  Drizzle, Prisma et TypeORM (`npm run db:audit-guard`). Avec `custom` ou sans ORM, le projet généré
+  démarre sur un journal en mémoire derrière un `TODO(platform)`.
 - Les *specs* rapides des adaptateurs s'exécutent sur PGlite ; Docker Compose fournit le vrai
   serveur.
 - L'effacement d'une personne concernée des tables déclarées avec `personalFields` existe sur les
