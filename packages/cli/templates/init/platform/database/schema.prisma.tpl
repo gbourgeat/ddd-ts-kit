@@ -46,6 +46,57 @@ model ProcessedEvent {
   @@map("processed_events")
   @@schema("messaging")
 }
+{{#if queue.database}}
+
+// The background jobs, from @ddd-ts-kit/prisma, enqueued in the transaction of the command. Keep
+// the field, table and column names: the claim selects the due rows by name.
+model BackgroundJob {
+  id             String    @id
+  /// Insertion order, the tie-breaker of the claim.
+  sequence       BigInt    @unique @default(autoincrement())
+  name           String
+  queue          String
+  payload        Json?
+  enqueuedBy     Json      @map("enqueued_by")
+  idempotencyKey String?   @map("idempotency_key")
+  /// The empty text outside any tenant: a null would make every such key distinct.
+  tenantId       String    @default("") @map("tenant_id")
+  subject        String?
+  status         String    @default("waiting")
+  attempts       Int       @default(0)
+  runAt          DateTime  @map("run_at") @db.Timestamptz(3)
+  leaseUntil     DateTime? @map("lease_until") @db.Timestamptz(3)
+  progress       Json?
+  /// JSON as text: a worker may clear it.
+  checkpoint     String?
+  lastErrorCode  String?   @map("last_error_code")
+  enqueuedAt     DateTime  @map("enqueued_at") @db.Timestamptz(3)
+  finishedAt     DateTime? @map("finished_at") @db.Timestamptz(3)
+
+  @@unique([name, tenantId, idempotencyKey], map: "background_jobs_idempotency_key")
+  @@index([queue, runAt, sequence], map: "background_jobs_due_idx")
+  @@map("background_jobs")
+  @@schema("messaging")
+}
+{{/if}}
+{{#if queue.processTable}}
+
+// The instances of the process managers, from @ddd-ts-kit/prisma, saved in the transaction of each step.
+model ProcessInstance {
+  name      String
+  id        String
+  /// JSON as text: a state may be null.
+  state     String
+  version   Int
+  ended     Boolean  @default(false)
+  timeouts  Json
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  @@id([name, id])
+  @@map("process_instances")
+  @@schema("messaging")
+}
+{{/if}}
 
 // One schema per bounded context, no relation across contexts.
 // ddd-ts-kit:models

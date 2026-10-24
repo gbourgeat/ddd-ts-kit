@@ -4,7 +4,7 @@ import { choose } from './choose';
 import type { StackOptions } from './stack-options';
 
 /** The ORMs whose package ships a job store and a process store sharing the transaction of the command. */
-const QUEUE_ORMS = ['knex', 'drizzle'];
+const QUEUE_ORMS = ['knex', 'drizzle', 'prisma'];
 
 interface Persistence {
   readonly orm: string;
@@ -25,7 +25,7 @@ export function resolveQueue(options: StackOptions, { orm, di }: Persistence): s
   if (queue === 'database' && !QUEUE_ORMS.includes(orm)) {
     throw new CliError(
       `--queue database cannot be combined with --orm ${orm}.`,
-      'The jobs table ships with @ddd-ts-kit/knex and @ddd-ts-kit/drizzle; with another ORM pick --queue redis (with --cache redis) or --queue memory, or write a JobStore held by jobStoreContract.',
+      'The jobs table ships with @ddd-ts-kit/knex, @ddd-ts-kit/drizzle and @ddd-ts-kit/prisma; with another ORM pick --queue redis (with --cache redis) or --queue memory, or write a JobStore held by jobStoreContract.',
     );
   }
 

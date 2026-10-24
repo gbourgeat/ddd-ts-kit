@@ -130,6 +130,8 @@ const EVERY_STACK: readonly StackFlags[] = [
   { ...DEFAULT_STACK, tenancy: 'shared-table' },
   { ...DISCOVERED_ON_KNEX, tenancy: 'shared-table' },
   { ...PRISMA_BY_HAND, tenancy: 'shared-table' },
+  // The background jobs and the process instances in the tables of Prisma, consumed by a platform wired by hand under Nest.
+  { ...PRISMA_BY_HAND, http: 'nest', di: 'nest', tenancy: 'shared-table', queue: 'database' },
   { ...TYPEORM_DECLARED, tenancy: 'shared-table' },
   /** Varnish in front of a multi-tenant API, on each family of wiring: the answers and the purges filed per tenant. */
   ...MULTI_TENANT_BEHIND_VARNISH,
