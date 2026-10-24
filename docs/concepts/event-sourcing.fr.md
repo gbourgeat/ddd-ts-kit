@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:0dff8f38ca4254d2 -->
+<!-- translation-of: event-sourcing.md sha256:6a5d73783f1c3f74 -->
 
 # Event sourcing, par agrégat
 
@@ -462,6 +462,14 @@ ensuite, puisque les deux stockages, séparés, ne partagent aucune transaction 
 ne peut pas être écrite, l'effacement échoue, et le relancer enregistre qu'il ne restait aucune
 clé, à une date ultérieure, de sorte que la date d'achèvement n'est jamais précoce
 ([`@ddd-ts-kit/audit`](../../packages/audit/README.fr.md#e-effacements-de-personnes-concernées)).
+
+Ce qu'un contexte garde de la même personne en clair, les lignes de ses tables, n'est pas scellé :
+on le déclare une fois à côté du *mapper* (`personalFields` : la colonne sujet, les colonnes
+personnelles, lignes supprimées ou pseudonymisées, les colonnes qui tiennent un fichier), on
+l'efface par un port `PersonalDataErasure` du contexte, et la chaîne entière, la clé d'abord, puis
+chaque copie dans chaque *tenant*, puis les projections alimentées par le store, est
+`eraseDataSubject` du kernel
+([`@ddd-ts-kit/kernel`](../../packages/kernel/README.fr.md#données-personnelles)).
 
 Ce qu'il ne fait pas : les identifiants ne sont pas scellés. Un flux nommé d'après un patient
 (`scheduling.attendance-record-<practice>.<patient>`) garde cet identifiant dans le store.
