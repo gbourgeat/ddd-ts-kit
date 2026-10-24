@@ -6,6 +6,7 @@ export * from './definition/integration-event-definition';
 export * from './definition/invalid-event-definition-error';
 export * from './definition/invalid-event-payload-error';
 export * from './definition/payload-of';
+export * from './definition/personal-payload';
 export * from './registry/create-event-registry';
 export * from './registry/duplicate-event-definition-error';
 export * from './registry/event-registry';

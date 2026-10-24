@@ -1,5 +1,7 @@
 {{#if tenancy.any}}
 import {
+  dataSubjectErasedV1,
+  eachTenant,
   eraseDataSubject,
   executionContext,
   inEachTenant,
@@ -8,7 +10,13 @@ import {
 } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#unless tenancy.any}}
-import { eraseDataSubject, executionContext, type Actor, type DataSubjectErasureReport } from '@ddd-ts-kit/kernel';
+import {
+  dataSubjectErasedV1,
+  eraseDataSubject,
+  executionContext,
+  type Actor,
+  type DataSubjectErasureReport,
+} from '@ddd-ts-kit/kernel';
 {{/unless}}
 import type { Platform } from '{{alias.platform}}/composition/platform{{alias.ext}}';
 import { dataSubjectCopies } from '{{alias.platform}}/privacy/data-subject-copies{{alias.ext}}';
@@ -47,8 +55,8 @@ export function runErasure(subject: string, request: ErasureRequest): Promise<Da
   const { platform, operator, correlationId } = request;
   const context = executionContext({ correlationId, actor: operatorActor(operator), origin: 'cli' });
 
-  return platform.scope.run(context, () =>
-    eraseDataSubject(subject, {
+  return platform.scope.run(context, async () => {
+    const report = await eraseDataSubject(subject, {
 {{#if eventSourcing.on}}
       // TODO(platform): once a projection is fed by the event store, give `rebuilds` the rebuild of each one: a projection keeps a clear copy of the person until it is rebuilt.
       keys: platform.eventSourcing.subjectKeys,
@@ -57,8 +65,33 @@ export function runErasure(subject: string, request: ErasureRequest): Promise<Da
 {{#if tenancy.any}}
       inEveryTenant: inEachTenant(platform.scope, request.tenants),
 {{/if}}
-    }),
-  );
+    });
+
+    await announceErasure(subject, request);
+
+    return report;
+  });
+}
+
+/**
+ * Once every copy is erased, `privacy.data-subject.erased` goes to the outbox{{#if tenancy.any}}, once per tenant{{/if}}: a context that
+ * runs as a service of its own, or a system that copied the person from an integration event, erases
+ * its copy on its side (GDPR article 19). The relay of the application delivers it; an erasure that
+ * failed publishes nothing, and running it again does.
+ */
+async function announceErasure(subject: string, { platform, operator{{#if tenancy.any}}, tenants{{/if}} }: ErasureRequest): Promise<void> {
+  const erasedAt = platform.clock.now();
+  const payload = { subjectId: subject, erasedAt: erasedAt.toISOString(), requestedBy: operator };
+  const event = () => dataSubjectErasedV1.create(payload, { id: platform.ids.next(), occurredAt: erasedAt });
+  const publish = () => platform.publisher.publish([event()]);
+{{#if tenancy.any}}
+
+  await eachTenant(platform.scope, tenants, publish);
+{{/if}}
+{{#unless tenancy.any}}
+
+  await publish();
+{{/unless}}
 }
 
 function operatorActor(id: string): Actor {

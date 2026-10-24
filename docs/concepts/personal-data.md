@@ -121,6 +121,24 @@ once everything ran: running the erasure again completes one that failed half wa
 the second time and says so. A subject that is not an opaque identifier (a name, an email) is
 refused before anything is touched.
 
+Once every copy is erased, `runErasure` publishes `privacy.data-subject.erased` through the outbox
+(`dataSubjectErasedV1` of the kernel, `{ subjectId, erasedAt, requestedBy }`, identifiers only),
+once per tenant with shared tables; the relay of the running application delivers it. An erasure
+that failed publishes nothing, and running it again does. This is how article 19 reaches beyond the
+database the platform holds:
+
+- a context extracted into a service of its own erases its copy on its side: `npx ddd-ts-kit
+  generate erasure-handler <context>` writes the idempotent handler of the event over the erasure
+  of the context, its spec on the fake and its subscription (the decorator, the module file, or the
+  hand-wired platform, in a transaction behind a broker). In the monolith the platform has erased
+  that copy already, and the handler reaches nothing: an erasure is idempotent;
+- a system outside the project that consumes the events of the project, and copied the person from
+  one of them, subscribes to the same type: the event catalog and AsyncAPI list it;
+- an integration event that carries personal data says so (`personal: { subject, fields }` on
+  `defineIntegrationEvent`): the catalog writes it under the payload, AsyncAPI as
+  `x-personal-data`, so that every consumer knows which copy it keeps
+  ([`@ddd-ts-kit/events`](../../packages/events/README.md#personal-data-in-a-payload)).
+
 In a handler spec, the fake of the erasure (`Fake<Context>PersonalDataErasure`) counts the rows it
 holds of a person and forgets them at the first erasure, like the fake of a repository.
 
@@ -176,6 +194,8 @@ a test gave it and remembers who was asked.
 
 - **Backups and the retention of the broker.** An erasure reaches the database, never a backup nor a
   message already published: the bound of an erasure is a date, which the retention policy decides.
+  The announcement reaches the consumers that are running and subscribed; a message already in a
+  dead letter queue or on a topic stays there until its retention ends.
   The keys of the event store make the events of a backup unreadable once destroyed, which is why
   they live apart, with a shorter retention ([Event sourcing](event-sourcing.md#personal-data-crypto-shredding)).
 - **Logs and exports already handed over.** Nothing of the kit rewrites them; the log adapters mask

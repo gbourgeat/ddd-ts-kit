@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:316a55710e1c1e2f -->
+<!-- translation-of: personal-data.md sha256:f2c3741518bc1cdd -->
 
 # Les données personnelles dans un projet généré
 
@@ -123,6 +123,25 @@ levé une fois que tout a tourné : relancer l'effacement achève celui qui a é
 n'atteint plus rien la deuxième fois et le dit. Un sujet qui n'est pas un identifiant opaque (un nom,
 un email) est refusé avant que quoi que ce soit ne soit touché.
 
+Une fois chaque copie effacée, `runErasure` publie `privacy.data-subject.erased` par l'outbox
+(`dataSubjectErasedV1` du kernel, `{ subjectId, erasedAt, requestedBy }`, des identifiants
+seulement), une fois par *tenant* avec des tables partagées ; le relais de l'application en marche
+le livre. Un effacement qui a échoué ne publie rien, et le relancer le fait. C'est ainsi que
+l'article 19 porte au-delà de la base que tient la plateforme :
+
+- un contexte extrait en service à part efface sa copie de son côté : `npx ddd-ts-kit generate
+  erasure-handler <context>` écrit le *handler* idempotent de l'événement sur l'effacement du
+  contexte, sa *spec* sur le *fake* et son abonnement (le décorateur, le fichier module, ou la
+  plateforme câblée à la main, dans une transaction derrière un *broker*). Dans le monolithe, la
+  plateforme a déjà effacé cette copie, et le *handler* n'atteint rien : un effacement est
+  idempotent ;
+- un système hors du projet qui consomme les événements du projet, et a copié la personne depuis
+  l'un d'eux, s'abonne au même type : le catalogue des événements et AsyncAPI le listent ;
+- un événement d'intégration qui porte des données personnelles le dit (`personal: { subject,
+  fields }` sur `defineIntegrationEvent`) : le catalogue l'écrit sous la charge utile, AsyncAPI en
+  `x-personal-data`, pour que chaque consommateur sache quelle copie il garde
+  ([`@ddd-ts-kit/events`](../../packages/events/README.fr.md#les-données-personnelles-dune-charge-utile)).
+
 Dans une *spec* de gestionnaire, le *fake* de l'effacement (`Fake<Contexte>PersonalDataErasure`)
 compte les lignes qu'il tient d'une personne et les oublie au premier effacement, comme le *fake* d'un
 *repository*.
@@ -180,7 +199,8 @@ enregistrements qu'un test lui a donnés et se souvient de qui a été demandé.
 
 - **Les sauvegardes et la rétention du *broker*.** Un effacement atteint la base de données, jamais
   une sauvegarde ni un message déjà publié : la borne d'un effacement est une date, que la politique
-  de rétention décide. Les clés de l'event store rendent illisibles les événements d'une sauvegarde
+  de rétention décide. L'annonce atteint les consommateurs en marche et abonnés ; un message déjà
+  dans une file de lettres mortes ou sur un *topic* y reste jusqu'à la fin de sa rétention. Les clés de l'event store rendent illisibles les événements d'une sauvegarde
   une fois détruites, raison pour laquelle elles vivent à part, avec une rétention plus courte
   ([Event sourcing](event-sourcing.fr.md#données-personnelles--crypto-shredding)).
 - **Les journaux et les exports déjà remis.** Rien du kit ne les réécrit ; les adaptateurs de journal

@@ -170,6 +170,7 @@ describe('worker-scope, the generators of a worker', () => {
       'form',
       'schema (in its own context: generate schema <context> <Name>)',
       'integration-handler',
+      'erasure-handler',
       'event-handler',
       'projection',
       'background-job',
