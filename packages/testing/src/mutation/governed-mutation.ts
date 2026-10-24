@@ -5,8 +5,8 @@ import { REFUSAL_TEXTS } from './refusal-texts-ignorer';
 export interface GovernedMutation {
   /** The domain layer of every context, at its level and in the modules of its model, in one pattern since Stryker warns at every run about a pattern that matches nothing; the generated declarations left out. */
   readonly mutate: string[];
-  /** The modules Stryker loads: its own plugins, and the ignorer of the kit. */
-  readonly plugins: string[];
+  /** The module of the ignorer of the kit, loaded beside the plugins Stryker finds by itself. */
+  readonly appendPlugins: string[];
   /**
    * The texts of refusals are never asserted by a test of the kit, which asserts a refusal by its
    * code: a mutant of such a text would survive by design, so the ignorer of the kit leaves them
@@ -45,7 +45,7 @@ export function governedMutation(root: string = process.cwd()): GovernedMutation
 
   return {
     mutate: [`${contextsDir}/**/domain/**/*.ts`, `!${contextsDir}/**/*.declarations.ts`, '!**/*.spec.ts'],
-    plugins: ['@stryker-mutator/*', IGNORER_MODULE],
+    appendPlugins: [IGNORER_MODULE],
     ignorers: [REFUSAL_TEXTS],
     ignoreStatic: true,
     thresholds: { high: Math.max(HIGH, domain), low: domain, break: domain },

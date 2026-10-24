@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:46f3b2d89d44f123 -->
+<!-- translation-of: CONFIG.md sha256:57dfaf6e88176b29 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -789,7 +789,7 @@ export default {
 ```
 
 `governedMutation()` mute la couche domaine de chaque contexte, à son niveau et dans les modules de
-son modèle, les déclarations générées exclues ; elle charge l'*ignorer* du kit (`plugins`,
+son modèle, les déclarations générées exclues ; elle charge l'*ignorer* du kit (`appendPlugins`,
 `ignorers`), qui écarte les textes des refus, le message de `refusal(..)`, un texte passé à une
 fabrique de refus (`InvalidSlot.forRule('ends after it starts')`), le message de `super(..)` dans
 une classe d'erreur et de `new ..Error(..)`, puisqu'un test du kit vérifie un refus par son code et

@@ -8,10 +8,15 @@ import {
   strykerPlugins,
 } from '../src/mutation/refusal-texts-ignorer';
 
-const TEXT: SyntaxNode = { type: 'StringLiteral', value: 'The slot is already held.' };
-const TEMPLATE: SyntaxNode = { type: 'TemplateLiteral' };
-const CODE: SyntaxNode = { type: 'StringLiteral', value: 'SLOT_TAKEN' };
-const RULE: SyntaxNode = { type: 'StringLiteral', value: 'ends after it starts' };
+/** A node as Babel builds it: its kind, and what the kind carries. */
+function node(shape: SyntaxNode & Record<string, unknown>): SyntaxNode {
+  return shape;
+}
+
+const TEXT = node({ type: 'StringLiteral', value: 'The slot is already held.' });
+const TEMPLATE = node({ type: 'TemplateLiteral' });
+const CODE = node({ type: 'StringLiteral', value: 'SLOT_TAKEN' });
+const RULE = node({ type: 'StringLiteral', value: 'ends after it starts' });
 
 /** What the file imports, by name: the module each name comes from. */
 const IMPORTS: Readonly<Record<string, string>> = {
@@ -34,7 +39,7 @@ const SCOPE: SyntaxScope = {
       return undefined;
     }
 
-    const declaration = pathOf({ type: 'ImportDeclaration', source: { value: from } }, null);
+    const declaration = pathOf(node({ type: 'ImportDeclaration', source: { value: from } }), null);
 
     return { path: pathOf({ type: 'ImportSpecifier' }, declaration) };
   },
@@ -65,7 +70,7 @@ function pathOf(node: SyntaxNode, parentPath: SyntaxPath | null, listKey?: strin
 
 /** `<object>.<method>(..args)`, as a factory of an error is called. */
 function staticCall(object: string, method: string, ...args: SyntaxNode[]): SyntaxNode {
-  return {
+  return node({
     type: 'CallExpression',
     callee: {
       type: 'MemberExpression',
@@ -73,19 +78,19 @@ function staticCall(object: string, method: string, ...args: SyntaxNode[]): Synt
       property: { type: 'Identifier', name: method },
     },
     arguments: args,
-  };
+  });
 }
 
 function newCall(className: string, ...args: SyntaxNode[]): SyntaxNode {
-  return { type: 'NewExpression', callee: { type: 'Identifier', name: className }, arguments: args };
+  return node({ type: 'NewExpression', callee: { type: 'Identifier', name: className }, arguments: args });
 }
 
 function superCall(...args: SyntaxNode[]): SyntaxNode {
-  return { type: 'CallExpression', callee: { type: 'Super' }, arguments: args };
+  return node({ type: 'CallExpression', callee: { type: 'Super' }, arguments: args });
 }
 
 function classExtending(superClass: string): SyntaxNode {
-  return { type: 'ClassDeclaration', superClass: { type: 'Identifier', name: superClass } };
+  return node({ type: 'ClassDeclaration', superClass: { type: 'Identifier', name: superClass } });
 }
 
 /** The path of one argument of a call, the call sitting in a class when one is given. */
@@ -160,7 +165,7 @@ describe('the refusal-texts ignorer, what a mutation run leaves out of the strin
   });
 
   it('keeps every other string of the domain measured: the name of an event, a status, a key', () => {
-    const name: SyntaxNode = { type: 'StringLiteral', value: 'scheduling.appointment.booked' };
+    const name = node({ type: 'StringLiteral', value: 'scheduling.appointment.booked' });
     const property: SyntaxNode = { type: 'ObjectProperty' };
 
     expect(refusalTextsIgnorer(argumentOf(staticCall('this', 'record', name), name))).toBeUndefined();

@@ -5,8 +5,8 @@
  * domain stays measured: the name of an event, a status, a code, a key. A text is one of a refusal
  * when it is handed to a class that refuses, which the file imports from the errors of its context
  * or from the kernel; a text a helper returns before the factory is called is not recognised.
- * Stryker loads this module through `plugins` and names the ignorer in `ignorers`, both written by
- * `governedMutation()`.
+ * Stryker loads this module through `appendPlugins` and names the ignorer in `ignorers`, both
+ * written by `governedMutation()`.
  */
 
 /** The name `ignorers` of the Stryker config gives this ignorer. */

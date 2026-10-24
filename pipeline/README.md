@@ -283,7 +283,8 @@ stay alive in every project that follows the kit and a floor on the raw score wo
 push a team to assert prose. Excluding the `StringLiteral` mutator, the first answer, took every
 string of the domain out of the measure, 158 on the example, the names of events, the statuses, the
 codes and the keys among them, about a hundred of which the tests did kill. The shipped
-configuration loads an ignorer of the kit instead (`refusal-texts`, in `plugins` and `ignorers`),
+configuration loads an ignorer of the kit instead (`refusal-texts`, in `appendPlugins` and
+`ignorers`),
 which leaves out the message of `refusal(..)`, a text handed to a factory of a refusal
 (`InvalidSlot.forRule('ends after it starts')`), the message of `super(..)` in an error class and
 of `new ..Error(..)`: 73 texts on the example, every other string measured. Six strings then

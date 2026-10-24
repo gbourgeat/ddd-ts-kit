@@ -763,7 +763,7 @@ export default {
 ```
 
 `governedMutation()` mutates the domain layer of every context, at its level and in the modules of
-its model, the generated declarations left out; it loads the ignorer of the kit (`plugins`,
+its model, the generated declarations left out; it loads the ignorer of the kit (`appendPlugins`,
 `ignorers`), which leaves the texts of refusals out, the message of `refusal(..)`, a text handed to
 a factory of a refusal (`InvalidSlot.forRule('ends after it starts')`), the message of `super(..)`
 in an error class and of `new ..Error(..)`, since a test of the kit asserts a refusal by its code
