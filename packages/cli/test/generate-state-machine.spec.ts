@@ -65,7 +65,7 @@ describe('generate state-machine', () => {
     expect(spec).toContain("expect(invoiceLifecycle.next(InvoiceStatus.Draft, 'issue')).toBe(InvoiceStatus.Issued);");
 
     expect(spec).toContain(
-      "expect(() => invoiceLifecycle.next(InvoiceStatus.Issued, 'issue')).toThrow('is not allowed from the state');",
+      "expect(() => invoiceLifecycle.next(InvoiceStatus.Issued, 'issue')).toThrow(\n      expect.objectContaining({ code: 'FORBIDDEN_TRANSITION' }),\n    );",
     );
 
     expect(spec).toContain("expect(invoiceLifecycle.next(InvoiceStatus.Draft, 'annotate')).toBe(InvoiceStatus.Draft);");

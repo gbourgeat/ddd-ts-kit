@@ -85,13 +85,13 @@ describe('Invite member', () => {
 
     await members.save(aMember().of('acme', 'subject-alan').as(MemberRole.Member).build());
 
-    for (const actor of [as('subject-alan'), as('subject-mallory')]) {
-      await expect(application.commandBus.execute(new InviteMemberCommand(actor, 'acme', grace))).rejects.toMatchObject(
-        {
-          code: 'FORBIDDEN',
-        },
-      );
-    }
+    await expect(
+      application.commandBus.execute(new InviteMemberCommand(as('subject-alan'), 'acme', grace)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+    await expect(
+      application.commandBus.execute(new InviteMemberCommand(as('subject-mallory'), 'acme', grace)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
 
     expect(invitations.all()).toEqual([]);
   });

@@ -71,8 +71,7 @@ describe('GET /practices/:practiceId/agenda', () => {
 
     const [query] = received;
 
-    const plan =
-      query === undefined ? undefined : planCriteria(agendaCriteria, scoped(query.criteria, { kind: 'all' }));
+    const plan = planOf(query);
 
     expect(query).toMatchObject({ practiceId: 'practice-1' });
     expect(plan?.filter).toBeDefined();
@@ -105,4 +104,9 @@ describe('GET /practices/:practiceId/agenda', () => {
 
 function request(query: Record<string, string>) {
   return { params: { practiceId: 'practice-1' }, query, headers: {}, body: undefined, raw: undefined };
+}
+
+/** The plan the reader would make of the criteria the controller handed to the query, once it handed one. */
+function planOf(query: SearchPracticeAgendaQuery | undefined) {
+  return query === undefined ? undefined : planCriteria(agendaCriteria, scoped(query.criteria, { kind: 'all' }));
 }

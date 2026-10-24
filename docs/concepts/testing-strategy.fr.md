@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:4c7a211e72a68d3c -->
+<!-- translation-of: testing-strategy.md sha256:f2c0511bb8d8aa6e -->
 
 # Stratégie de test
 
@@ -484,9 +484,15 @@ allers-retours HTTP. Et ne répétez pas une règle à chaque niveau : le test d
 le câblage avec un cas, le test du domaine prouve la règle avec tous.
 
 Chaque unité de comportement a une *spec* (règle
-[`test/spec-required`](../ARCHITECTURE.fr.md#3-règles-de-dépendance)), et un test ne contient
-aucune logique : pas de `if`, pas de boucle, préparation, action et vérification séparées par des
-lignes vides.
+[`test/spec-required`](../ARCHITECTURE.fr.md#3-règles-de-dépendance)), et six règles du *plugin*
+ESLint tiennent la forme de chaque test : son titre énonce la règle qu'il prouve, en minuscules,
+jamais `should` ni le nom d'une méthode (`test/title-states-a-rule`) ; il ne contient ni `if`, ni
+boucle, ni `try` (`test/no-logic`) ; il vérifie un résultat (`test/assertion-present`), un refus par
+son code et ses faits plutôt que par un message (`test/refusal-by-code`), et jamais un *snapshot*
+(`test/no-snapshot`) ; et chaque test s'exécute, sans `.only` ni `.skip` (`test/no-only-no-skip`).
+Préparation, action et vérification restent séparées par des lignes vides. Les quatre règles qui
+lisent ce qu'un test dit sont des avertissements jusqu'à 0.90.0, pour qu'une montée de version ne
+fasse jamais passer un *lint* vert au rouge ; `ddd-ts-kit lint` les liste après son rapport.
 
 ## Seuils de couverture
 
@@ -602,7 +608,10 @@ demander une revue ; le plancher reste l'affaire de la nuit.
   SQLite en mémoire dans l'exécution unitaire.
 - **Les règles d'existence vérifient des fichiers, pas leur contenu.** `test/spec-required` et
   `test/builder-required` vérifient que le fichier existe ; une *spec* qui ne contient que des
-  `it.todo` les satisfait. Des *todos* restants signifient que le travail n'est pas fini.
+  `it.todo` les satisfait. Les règles de forme lisent chaque test, pas si les cas qui comptent ont
+  été essayés : `expect(true).toBe(true)` passe `test/assertion-present`. Des *todos* restants
+  signifient que le travail n'est pas fini : `ddd-ts-kit todo` les liste, et `story --gate close`
+  refuse de clore une *story* tant qu'il reste un `it.todo` des siens.
 - **`test/no-mocks` est un avertissement par défaut** et concerne les tests d'un contexte. Du code
   existant en cours d'adoption, ou un SDK tiers sans point d'injection, peut justifier un *mock* ;
   faites-en une décision enregistrée plutôt qu'une habitude.

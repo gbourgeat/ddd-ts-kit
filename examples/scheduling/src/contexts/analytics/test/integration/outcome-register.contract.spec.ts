@@ -78,9 +78,7 @@ describe.each(ADAPTERS)('OutcomeRegister, %s', (_name, create) => {
       anOutcome({ id: 'appointment-4', calendarId: 'calendar-2' }),
     ];
 
-    for (const outcome of written) {
-      await outcomes.upsertIfNewer(outcome.id, at(0), () => outcome);
-    }
+    await recorded(outcomes, written);
 
     const page = await outcomes.search(
       scoped(Criteria.of<Outcome>().where('calendarId', 'eq', 'calendar-1').where('day', 'eq', '2026-10-12'), {
@@ -98,9 +96,7 @@ describe.each(ADAPTERS)('OutcomeRegister, %s', (_name, create) => {
       anOutcome({ id: `appointment-of-${day}`, day }),
     );
 
-    for (const outcome of written) {
-      await outcomes.upsertIfNewer(outcome.id, at(0), () => outcome);
-    }
+    await recorded(outcomes, written);
 
     const page = await outcomes.search(
       scoped(Criteria.of<Outcome>().where('day', 'between', ['2026-10-12', '2026-10-19']), { kind: 'all' }),
@@ -129,6 +125,13 @@ describe.each(ADAPTERS)('OutcomeRegister, %s', (_name, create) => {
     expect(await outcomes.get('appointment-1')).toMatchObject({ state: 'completed' });
   });
 });
+
+/** Each outcome recorded in the register at the same instant, in the order given, as the projection writes them. */
+async function recorded(outcomes: OutcomeRegister, written: readonly Outcome[]): Promise<void> {
+  for (const outcome of written) {
+    await outcomes.upsertIfNewer(outcome.id, at(0), () => outcome);
+  }
+}
 
 function at(minute: number) {
   return { eventId: `fact-${minute}`, occurredAt: new Date(Date.UTC(2026, 9, 1, 10, minute)) };

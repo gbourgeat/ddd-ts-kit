@@ -108,12 +108,12 @@ describe('Send due reminders', () => {
     const { application, reminderRepository, notificationRepository, mailer } = await arrange();
 
     await reminderRepository.save(aReminder().of('appointment-1').plannedFor(inOneDay).build());
-    mailer.failNextWith(new Error('provider unreachable'));
+    const outage = new Error('provider unreachable');
+
+    mailer.failNextWith(outage);
 
     // The reminder goes back to planned with the unit of work of the command, which a fake does not have: the next occurrence then sends it.
-    await expect(application.commandBus.execute(new SendDueRemindersCommand(holder, NOW))).rejects.toThrow(
-      'provider unreachable',
-    );
+    await expect(application.commandBus.execute(new SendDueRemindersCommand(holder, NOW))).rejects.toBe(outage);
 
     expect(mailer.delivered).toEqual([]);
     expect(notificationRepository.count()).toBe(0);
