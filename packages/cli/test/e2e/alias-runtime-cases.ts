@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { read, REPO_ROOT, type StackFlags, walk, write } from '../helpers';
 import {
   buildSteps,
@@ -66,6 +66,12 @@ export function describeTheAliasAtRunTime(cases: readonly AliasCase[]): void {
     let bare: Started;
     let rewritten: Rewritten;
     const bareSpelling = more.length === 0;
+
+    // Each project holds a copy of every package of the kit and its own node_modules: kept until the end of the
+    // file, the stacks of one half filled the disk of a runner. Removed as soon as its cases are done.
+    afterAll(async () => {
+      await fs.promises.rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    }, 120_000);
 
     beforeAll(() => {
       root = compiledOnly(stack, more);
