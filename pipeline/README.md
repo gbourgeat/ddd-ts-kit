@@ -252,7 +252,13 @@ of them, take 92% of the time: `ignoreStatic` would shorten the run.
 What shipping it would take: a `mutation` key of `ddd-ts-kit.config.json` read by a Stryker
 config the kit writes, a floor per context on the domain layer as the coverage has one, static
 mutants ignored, and a scheduled job rather than a gate of every pull request, 8 minutes for 127
-files being too long for the commit loop and for the pipeline of a small change. Until then a
+files being too long for the commit loop and for the pipeline of a small change. The texts of the
+refusals deserve a decision before any floor: a test of the kit asserts a refusal by its code and
+its facts, never by its text, so the string literal mutants of those texts, 29 of the 72 survivors
+here, stay alive in every project that follows the kit; a floor set on the raw score would punish
+them or push a team to assert prose. Either the shipped configuration leaves the `StringLiteral`
+mutator out (`excludedMutations`), at the price of the few string literals that are business
+values, or the floor is set with those texts counted as survivors. Until then a
 project runs it by hand: `npm i -D @stryker-mutator/core @stryker-mutator/vitest-runner`, the
 configuration above in `stryker.config.json`, `npx stryker run`.
 

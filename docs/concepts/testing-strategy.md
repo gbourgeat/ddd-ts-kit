@@ -520,9 +520,10 @@ test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // from @ddd-t
   notice a changed behaviour, and it runs: Stryker 10.1.1 with its Vitest runner, on the domain
   layer of the example application under Vitest 5, kills 1347 of 1441 mutants in 8 minutes, a
   score of 94.5%; the pipeline README records the measure and the configuration. The 72
-  survivors are mostly the messages of refusals, which no test asserts since a refusal is asserted
-  by its code, and a few conditions no test states. It will be offered as a scheduled job with a
-  floor per context; until then a project runs it by hand, and test quality rests on review and on
+  survivors are mostly the texts of refusals, which no test asserts since a refusal is asserted by
+  its code, and a few conditions no test states; a floor will leave those texts out of the score
+  rather than push anyone to assert prose. It will be offered as a scheduled job with a floor per
+  context; until then a project runs it by hand, and test quality rests on review and on
   the conventions above.
 - **A fake is only as good as its contract suite.** Behaviour the suite does not cover can
   differ silently: SQL collation and ordering, constraint timing, time zone handling. When a

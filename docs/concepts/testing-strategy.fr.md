@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:d46cda2a9492a320 -->
+<!-- translation-of: testing-strategy.md sha256:10c4fc71c9b0e9f6 -->
 
 # Stratégie de test
 
@@ -543,8 +543,9 @@ test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // depuis @ddd
   remarqueraient un comportement modifié, et il fonctionne : Stryker 10.1.1 avec son lanceur
   Vitest, sur la couche domaine de l'application d'exemple sous Vitest 5, tue 1347 des 1441
   mutants en 8 minutes, un score de 94,5 % ; le README du *pipeline* consigne la mesure et la
-  configuration. Les 72 survivants sont surtout les messages des refus, qu'aucun test ne vérifie
-  puisqu'un refus se vérifie par son code, et quelques conditions qu'aucun test n'énonce. Ils
+  configuration. Les 72 survivants sont surtout les textes des refus, qu'aucun test ne vérifie
+  puisqu'un refus se vérifie par son code, et quelques conditions qu'aucun test n'énonce ; un
+  plancher laissera ces textes hors du score plutôt que de pousser à vérifier de la prose. Ils
   seront proposés comme *job* planifié avec un plancher par contexte ; d'ici là un projet les lance
   à la main, et la qualité des tests repose sur la relecture et sur les conventions ci-dessus.
 - **Un *fake* ne vaut que ce que vaut sa suite de contrat.** Un comportement que la suite ne couvre
