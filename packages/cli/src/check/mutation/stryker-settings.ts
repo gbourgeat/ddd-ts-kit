@@ -13,6 +13,7 @@ const READER = 'governedMutation';
 const BY_HAND: Readonly<Record<string, string>> = {
   mutate: 'replaces the mutated layers',
   mutator: 'replaces the mutations left out',
+  ignorers: 'replaces the mutants left out',
   ignoreStatic: 'decides on the static mutants',
   thresholds: 'replaces the governed floor',
 };
@@ -70,7 +71,7 @@ function notGoverned(file: string): Finding {
   return {
     line: 1,
     message: `${file} does not read its mutation floor from ${CONFIG_FILE}.`,
-    fix: `Import \`${READER}\` from '@ddd-ts-kit/testing/mutation' and spread \`...${READER}()\` into the config: the domain layer of every context is then mutated, its string literals left out, and held to the "mutation" floor of ${CONFIG_FILE}, written once.`,
+    fix: `Import \`${READER}\` from '@ddd-ts-kit/testing/mutation' and spread \`...${READER}()\` into the config: the domain layer of every context is then mutated, the texts of its refusals left out, and held to the "mutation" floor of ${CONFIG_FILE}, written once.`,
   };
 }
 

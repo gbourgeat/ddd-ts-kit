@@ -30,10 +30,15 @@ describe('governedMutation(), what a Stryker run mutates and is held to', () => 
     ]);
   });
 
-  it('leaves the string literals out, since a refusal is asserted by its code and never by its text, and ignores the static mutants', () => {
+  it('leaves the texts of refusals out through the ignorer of the kit, since a refusal is asserted by its code and never by its text, and ignores the static mutants', () => {
     const governed = governedMutation(projectWith({}));
 
-    expect(governed.mutator).toEqual({ excludedMutations: ['StringLiteral'] });
+    expect(governed.plugins).toEqual([
+      '@stryker-mutator/*',
+      expect.stringMatching(/^file:\/\/\/.+\/mutation\/refusal-texts-ignorer\.js$/),
+    ]);
+
+    expect(governed.ignorers).toEqual(['refusal-texts']);
     expect(governed.ignoreStatic).toBe(true);
   });
 

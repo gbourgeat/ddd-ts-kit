@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:58b2668a0ceda9d0 -->
+<!-- translation-of: testing-strategy.md sha256:5887f5018fa4a787 -->
 
 # Stratégie de test
 
@@ -548,9 +548,10 @@ survivant. Puis `ddd-ts-kit mutation` lit le rapport et tient chaque contexte au
 `mutation` de `ddd-ts-kit.config.json`, 80 par la référence ([CONFIG.md](../CONFIG.fr.md#score-de-mutation)).
 
 La config Stryker n'écrit ni *glob* ni nombre : elle étale `governedMutation()` de
-`@ddd-ts-kit/testing/mutation`, qui mute la couche domaine de chaque contexte, exclut le mutateur
-`StringLiteral`, puisqu'un refus se vérifie par son code et jamais par son texte, et ignore les
-mutants statiques, ceux du code qui s'exécute une fois au chargement du module. La règle
+`@ddd-ts-kit/testing/mutation`, qui mute la couche domaine de chaque contexte, écarte les textes
+des refus par l'*ignorer* du kit, puisqu'un refus se vérifie par son code et jamais par son texte,
+toute autre chaîne mesurée, et ignore les mutants statiques, ceux du code qui s'exécute une fois au
+chargement du module. La règle
 [`test/mutation-governed`](../ARCHITECTURE.fr.md#3-règles-de-dépendance) refuse un `mutate`, un
 `mutator`, un `ignoreStatic` ou des `thresholds` écrits à la main.
 
@@ -560,8 +561,8 @@ l'a fait pour un rappel retiré puis replanifié pour la même heure ; quand le 
 accident du code, ou une branche qu'aucun appelant n'atteint, laissez le mutant en vie et dites
 pourquoi, sans jamais le cacher par la configuration. Mesuré sur l'exemple le 2026-10-24
 ([README du *pipeline*](../../pipeline/README.md#mutation-testing)) avec la configuration livrée :
-1441 mutants, dont 222 littéraux de chaînes et mutants statiques laissés de côté, 1178 tués, 36
-survivants, 5 sans couverture, 96,6 % en 4 minutes, le contexte le plus bas à 95,8 %.
+1436 mutants, dont 163 textes de refus et mutants statiques laissés de côté, 1226 tués, 41
+survivants, 6 sans couverture, 96,3 % en 5 minutes, le contexte le plus bas à 95,4 %.
 
 ## Limites et quand ne pas l'utiliser
 
@@ -578,7 +579,7 @@ survivants, 5 sans couverture, 96,6 % en 4 minutes, le contexte le plus bas à 9
   machine à états, une constante, une expression régulière déclarée en haut d'un fichier. Une
   transition fausse dans une telle table ne fait baisser aucun score, et le test qui énonce la règle
   en est la seule preuve ; `ddd-ts-kit mutation` montre les mutants ignorés de chaque contexte à
-  côté de son score. Sur l'exemple, 64 des 1441 mutants sont statiques, dont la déclaration
+  côté de son score. Sur l'exemple, 90 des 1436 mutants sont statiques, dont la déclaration
   de la machine à états des rendez-vous.
 - **Un *fake* ne vaut que ce que vaut sa suite de contrat.** Un comportement que la suite ne couvre
   pas peut différer en silence : collation et tri SQL, moment d'application des contraintes,

@@ -24,6 +24,8 @@ const BY_HAND = GOVERNED.replace(
   '  ...governedMutation(),\n  thresholds: { break: 10 },\n',
 );
 
+const IGNORER_DROPPED = GOVERNED.replace('  ...governedMutation(),\n', '  ...governedMutation(),\n  ignorers: [],\n');
+
 const UNGOVERNED = `export default {
   testRunner: 'vitest',
   mutate: ['src/contexts/billing/domain/**/*.ts'],
@@ -44,6 +46,12 @@ export const MUTATION_FIXTURES: readonly Fixture[] = [
     name: 'a floor written by hand next to the governed mutation',
     expect: { file: STRYKER },
     files: project({ [STRYKER]: BY_HAND }),
+  },
+  {
+    ruleId: RULE,
+    name: 'the ignorer of the kit dropped by hand next to the governed mutation',
+    expect: { file: STRYKER },
+    files: project({ [STRYKER]: IGNORER_DROPPED }),
   },
   {
     ruleId: RULE,
