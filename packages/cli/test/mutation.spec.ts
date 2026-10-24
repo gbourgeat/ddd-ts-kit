@@ -1,28 +1,49 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, read, write } from './helpers';
+import { git } from './support/git';
 import { initProject } from './support/init-project';
 
 const REPORT = 'reports/mutation/mutation.json';
 const BILLING = 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts';
 const SHIPPING = 'src/contexts/shipping/parcels/domain/value-objects/weight.vo.ts';
 
-/** A report as the json reporter of Stryker writes it: the mutants of each file, by status. */
-function report(files: Record<string, readonly string[]>): string {
-  const entries = Object.entries(files).map(([file, statuses]) => [
+/** A mutant as the json reporter of Stryker writes it, given by its status alone or with what changed and where. */
+type Mutant = string | { status: string; mutatorName: string; line: number; replacement: string };
+
+/** A report as the json reporter of Stryker writes it: the mutants of each file. */
+function report(files: Record<string, readonly Mutant[]>): string {
+  const entries = Object.entries(files).map(([file, mutants]) => [
     file,
-    { language: 'typescript', source: '', mutants: statuses.map((status, id) => ({ id: String(id), status })) },
+    { language: 'typescript', source: '', mutants: mutants.map((mutant, id) => reported(mutant, id)) },
   ]);
 
   return JSON.stringify({ schemaVersion: '2', files: Object.fromEntries(entries) });
 }
 
+function reported(mutant: Mutant, id: number): Record<string, unknown> {
+  if (typeof mutant === 'string') {
+    return { id: String(id), status: mutant };
+  }
+
+  return {
+    id: String(id),
+    status: mutant.status,
+    mutatorName: mutant.mutatorName,
+    replacement: mutant.replacement,
+    location: { start: { line: mutant.line, column: 5 }, end: { line: mutant.line, column: 20 } },
+  };
+}
+
+const UNNOTICED = { status: 'Survived', mutatorName: 'ConditionalExpression', line: 42, replacement: 'true' };
+const UNCOVERED = { status: 'NoCoverage', mutatorName: 'StringLiteral', line: 7, replacement: '""' };
+
+let root: string;
+
+beforeAll(() => {
+  root = initProject('--context', 'billing:core', '--context', 'shipping:supporting');
+});
+
 describe('mutation', () => {
-  let root: string;
-
-  beforeAll(() => {
-    root = initProject('--context', 'billing:core', '--context', 'shipping:supporting');
-  });
-
   it('holds every context to the floor of the reference, counting as Stryker does, shows the mutants left out, and exits 0 when all hold', () => {
     write(
       root,
@@ -89,6 +110,66 @@ describe('mutation', () => {
 
     expect(held.code).toBe(0);
     expect(held.stdout).toMatch(/^billing\s+1\s+1\s+0\s+0\s+50\.0%\s+50%\s+held$/m);
+  });
+});
+
+describe('mutation, the survivors it lists', () => {
+  it('lists the survivors on request, where, what mutator and what the code became, a line no test covers said so', () => {
+    write(
+      root,
+      REPORT,
+      report({ [BILLING]: [...Array<string>(8).fill('Killed'), UNNOTICED, UNCOVERED], [SHIPPING]: ['Killed'] }),
+    );
+
+    const listed = cli(root, 'mutation', '--survivors');
+
+    expect(listed.code).toBe(0);
+    expect(listed.stdout).toContain('Survivors (2):');
+    expect(listed.stdout).toContain(`  ${BILLING}:7  StringLiteral (no test covers the line)  ""`);
+    expect(listed.stdout).toContain(`  ${BILLING}:42  ConditionalExpression  true`);
+    expect(cli(root, 'mutation').stdout).not.toContain('Survivors');
+  });
+
+  it('lists the survivors of the files changed since a git ref alone, and exits 0 whatever the scores', () => {
+    git(root, 'init', '-q');
+    git(root, 'add', '.');
+    git(root, 'commit', '-q', '-m', 'the project');
+    write(root, BILLING, 'export class Invoice {}\n');
+    write(root, REPORT, report({ [BILLING]: ['Killed', UNNOTICED], [SHIPPING]: ['Killed', 'Survived', 'Survived'] }));
+
+    const changed = cli(root, 'mutation', '--changed', 'HEAD');
+
+    expect(changed.code).toBe(0);
+    expect(changed.stdout).toMatch(/^shipping\s+1\s+2\s+0\s+0\s+33\.3%\s+\d+%\s+under the floor$/m);
+    expect(changed.stdout).toContain('Survivors in the files changed since HEAD (1):');
+    expect(changed.stdout).toContain(`  ${BILLING}:42  ConditionalExpression  true`);
+    expect(changed.stdout).not.toContain(SHIPPING);
+
+    expect(cli(root, 'mutation', '--changed', 'HEAD', '--json').json()).toMatchObject({
+      survivors: [
+        { context: 'billing', file: BILLING, line: 42, mutator: 'ConditionalExpression', status: 'Survived' },
+      ],
+    });
+  });
+
+  it('reads the base of a change from the environment, as the job of a pull request sets it', () => {
+    process.env['DDD_TS_KIT_MUTATION_SINCE'] = 'HEAD';
+
+    try {
+      const changed = cli(root, 'mutation');
+
+      expect(changed.code).toBe(0);
+      expect(changed.stdout).toContain('Survivors in the files changed since HEAD (1):');
+    } finally {
+      delete process.env['DDD_TS_KIT_MUTATION_SINCE'];
+    }
+  });
+
+  it('refuses a ref git does not know', () => {
+    const unknown = cli(root, 'mutation', '--changed', 'no-such-ref');
+
+    expect(unknown.code).toBe(2);
+    expect(unknown.stderr).toContain('The files changed since no-such-ref cannot be listed.');
   });
 
   it('asks for a run when no report exists', () => {

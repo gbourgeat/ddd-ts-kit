@@ -547,12 +547,21 @@ shipped configuration: 1436 mutants, 163 of them texts of refusals and static mu
 1226 killed, 41 survivors, 6 without coverage, 96.3% in 5 minutes, the lowest context at
 95.4%.
 
+A pull request gets a reading of its change, not the whole measure: the `mutation-changed` job of
+the pipeline reuses the report of the last night for what the change leaves alone (the incremental
+mode of Stryker, about a minute on the example), runs the whole measure again when the change
+touches code the tests lean on and Stryker does not diff (a fake, a builder, a world, the platform,
+a dependency), then lists the survivors of the files the change touched
+(`ddd-ts-kit mutation --changed <base>`). Read them before asking for a review; the floor stays the
+business of the night.
+
 ## Limits and when not to use it
 
-- **Mutation testing runs every night, not on a pull request.** Eight minutes for the domain of
-  the four contexts of the example is too long for the loop of a change, so the job of the night
-  holds the floor and a pull request does not wait for it; a survivor found at night is a rule to
-  state the next day.
+- **The whole measure runs every night; a pull request gets a reading of its change.** Five
+  minutes for the domain of the four contexts of the example is too long for the loop of a change,
+  so the job of the night holds the floor, and a pull request lists the survivors of the files it
+  touched from an incremental run that reuses the results of the night, about a minute, never a
+  gate; a survivor found at night is a rule to state the next day.
 - **A mutation score says that a change was noticed, not that the right rule was stated.** A test
   that kills a mutant states what the code does today: each one is read as a business decision
   before it is kept, and an accidental behaviour is left alive and said so rather than frozen.

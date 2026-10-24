@@ -1,4 +1,5 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -17,6 +18,52 @@ function projectWith(config: object): string {
   writeFileSync(path.join(root, 'ddd-ts-kit.config.json'), JSON.stringify(config));
 
   return root;
+}
+
+const IDENTITY = ['-c', 'user.name=Test', '-c', 'user.email=test@example.com', '-c', 'commit.gpgsign=false'];
+
+/** A project under git, its files committed; what is written afterwards is the change. */
+function committedProject(): string {
+  const root = projectWith({});
+
+  writeTo(root, 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts', 'export class Invoice {}\n');
+  writeTo(root, 'src/contexts/billing/test/builders/invoice.builder.ts', 'export class InvoiceBuilder {}\n');
+
+  for (const args of [
+    ['init', '-q'],
+    ['add', '.'],
+    ['commit', '-q', '-m', 'the project'],
+  ]) {
+    execFileSync('git', [...IDENTITY, ...args], { cwd: root, stdio: 'ignore' });
+  }
+
+  return root;
+}
+
+function writeTo(root: string, file: string, content: string): void {
+  mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+  writeFileSync(path.join(root, file), content);
+}
+
+/** The run of a change reads its base from the environment, as the job of a pull request sets it. */
+function readingAChange<T>(since: string | undefined, run: () => T): T {
+  const kept = process.env['DDD_TS_KIT_MUTATION_SINCE'];
+
+  if (since === undefined) {
+    delete process.env['DDD_TS_KIT_MUTATION_SINCE'];
+  } else {
+    process.env['DDD_TS_KIT_MUTATION_SINCE'] = since;
+  }
+
+  try {
+    return run();
+  } finally {
+    if (kept === undefined) {
+      delete process.env['DDD_TS_KIT_MUTATION_SINCE'];
+    } else {
+      process.env['DDD_TS_KIT_MUTATION_SINCE'] = kept;
+    }
+  }
 }
 
 describe('governedMutation(), what a Stryker run mutates and is held to', () => {
@@ -39,6 +86,49 @@ describe('governedMutation(), what a Stryker run mutates and is held to', () => 
 
     expect(governed.ignorers).toEqual(['refusal-texts']);
     expect(governed.ignoreStatic).toBe(true);
+  });
+
+  it('runs everything by default, the truth of the night, with the incremental file beside the report', () => {
+    const governed = readingAChange(undefined, () => governedMutation(projectWith({})));
+
+    expect(governed.incremental).toBe(false);
+    expect(governed.force).toBe(false);
+    expect(governed.incrementalFile).toBe('reports/mutation/incremental.json');
+  });
+
+  it('reads a change incrementally when its base is given, reusing the last report for what the change leaves alone', () => {
+    const root = committedProject();
+
+    writeTo(
+      root,
+      'src/contexts/billing/domain/aggregates/invoice.aggregate.ts',
+      'export class Invoice { paid = false; }\n',
+    );
+
+    writeTo(root, 'src/contexts/billing/test/unit/invoice.aggregate.spec.ts', 'export {};\n');
+    writeTo(root, 'docs/architecture/decisions/0002-invoices.md', '# Invoices\n');
+
+    const governed = readingAChange('HEAD', () => governedMutation(root));
+
+    expect(governed.incremental).toBe(true);
+    expect(governed.force).toBe(false);
+  });
+
+  it('forces the whole run when the change touches what the tests lean on, which Stryker does not diff', () => {
+    const root = committedProject();
+
+    writeTo(
+      root,
+      'src/contexts/billing/test/builders/invoice.builder.ts',
+      'export class InvoiceBuilder { paid() {} }\n',
+    );
+
+    expect(readingAChange('HEAD', () => governedMutation(root))).toMatchObject({ incremental: true, force: true });
+
+    expect(readingAChange('HEAD', () => governedMutation(projectWith({})))).toMatchObject({
+      incremental: true,
+      force: true,
+    });
   });
 
   it('holds the run to the floor of the reference when the config says nothing', () => {
