@@ -424,9 +424,10 @@ From [`packages/cli/README.md`](../../packages/cli/README.md) and
 - `generate repository --tenant-scoped`, and every repository of a project initialised with
   `--tenancy shared-table`, is implemented for the four ORMs; with `custom` or no ORM the regular
   adapter is written and a note says what to add, and `init` refuses the strategy.
-- The SQL audit trail exists for Knex and Drizzle, on PostgreSQL only. With Prisma, TypeORM,
-  `custom` or no ORM the generated project starts on an in-memory trail behind a
-  `TODO(platform)`.
+- The SQL audit trail exists for the four ORMs, on PostgreSQL only; the append-only guard is
+  created by the first migration on Knex and pasted in a migration by hand on Drizzle, Prisma and
+  TypeORM (`npm run db:audit-guard`). With `custom` or no ORM the generated project starts on an
+  in-memory trail behind a `TODO(platform)`.
 - Fast adapter specs run on PGlite; Docker Compose provides the real server.
 - The erasure of a data subject from the tables declared with `personalFields` exists on the four
   ORMs (`KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`,

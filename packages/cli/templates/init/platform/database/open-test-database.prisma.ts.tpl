@@ -4,6 +4,9 @@ import { openAsBlob } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
+{{#if audit.on}}
+import { auditGuardStatements } from '@ddd-ts-kit/audit/prisma';
+{{/if}}
 import pg from 'pg';
 import type { PrismaClient } from '{{alias.generated}}/prisma/client{{alias.ext}}';
 import { createClient } from '{{alias.platform}}/database/create-client{{alias.ext}}';
@@ -13,7 +16,7 @@ import type { Persistence } from '{{alias.platform}}/database/persistence{{alias
 export interface TestDatabase {
   readonly persistence: Persistence;
 
-  /** Empties every table: call it before each test. */
+  /** Empties every table{{#if audit.on}} but the audit trail, which is append-only whoever asks{{/if}}: call it before each test. */
   reset(): Promise<void>;
 
   close(): Promise<void>;
@@ -75,6 +78,14 @@ async function createTables(url: string): Promise<void> {
 
   await connection.connect();
   await connection.query(await readFile('generated/schema.sql', 'utf8'));
+{{#if audit.on}}
+
+  // The guard a migration of the project holds: the trail refuses to be rewritten in the tests as in production.
+  for (const statement of auditGuardStatements('audit')) {
+    await connection.query(statement);
+  }
+
+{{/if}}
   await connection.end();
 }
 
@@ -86,7 +97,7 @@ interface TableName {
 async function emptyTables(client: PrismaClient): Promise<void> {
   const tables = await client.$queryRaw<TableName[]>`
     select table_schema, table_name from information_schema.tables
-    where table_type = 'BASE TABLE' and table_schema not in ('pg_catalog', 'information_schema') and table_name <> '_prisma_migrations'`;
+    where table_type = 'BASE TABLE' and table_schema not in ('pg_catalog', 'information_schema'{{#if audit.on}}, 'audit'{{/if}}) and table_name <> '_prisma_migrations'`;
 
   if (tables.length === 0) {
     return;
