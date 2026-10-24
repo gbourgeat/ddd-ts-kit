@@ -10,7 +10,6 @@ export { COVERAGE_METRICS } from './coverage-metrics';
 export { coverageProblems } from './coverage-problems';
 export { MUTATION_LAYERS } from './mutation-layers';
 export { mutationProblems } from './mutation-problems';
-export type { Mutation } from './mutation';
 export type {
   Config,
   ContextConfig,

@@ -4,7 +4,7 @@ import { isRecord } from '../config/values/is-record';
 import { MUTATION_REPORT } from './mutation-report-file';
 
 /** One mutant of the report, as the json reporter of Stryker writes it. */
-export interface ReportedMutant {
+interface ReportedMutant {
   readonly status: string;
 }
 
