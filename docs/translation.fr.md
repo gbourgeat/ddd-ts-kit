@@ -1,5 +1,5 @@
 [English](translation.md) · **Français**
-<!-- translation-of: translation.md sha256:f8163ec33c8d8388 -->
+<!-- translation-of: translation.md sha256:7f27b359c56fc68b -->
 
 # La documentation en français
 
@@ -27,6 +27,7 @@ elle : `README.md` et `README.fr.md`, `docs/concepts/aggregates.md` et
 | tout ce qui est sous `packages/cli/templates/` | les fichiers que `ddd-ts-kit init` et `generate` écrivent dans un projet |
 | tout ce qui est sous `site/` | le site de la documentation, qui copie ces pages à chacune de ses constructions |
 | `examples/scheduling/clients/api/README.md`, `examples/scheduling/docs/integration/event-catalog.md` | générés |
+| `examples/scheduling/docs/privacy/register.md` | en partie généré, comme un `CONTEXT.md` |
 
 La liste se trouve en tête de
 [`pipeline/monorepo/translations.mjs`](../pipeline/monorepo/translations.mjs) : une page est

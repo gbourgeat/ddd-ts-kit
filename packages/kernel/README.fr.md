@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:65d903aaf4e9e513 -->
+<!-- translation-of: README.md sha256:298a9aa1069515a0 -->
 
 # @ddd-ts-kit/kernel
 
@@ -2229,9 +2229,10 @@ export const personPersonalFields = personalFields<PersonRow>(PERSONS, {
 Ce que cela n'atteint pas : un événement d'intégration publié avant l'effacement et ce qui l'a
 consommé, les sauvegardes jusqu'à leur expiration, et le journal d'audit, qui nomme une personne
 par un identifiant opaque et jamais par un nom. Dites-le là où l'effacement est offert. L'exemple
-scheduling exécute la même chaîne à la main (`npm run erase:patient`), et
-[docs/proposals/privacy-by-design.fr.md](../../docs/proposals/privacy-by-design.fr.md) dit ce qui
-vient ensuite : les adaptateurs de chaque *package* de persistance, le dossier de plateforme
+scheduling exécute cette chaîne (`npm run privacy:erase`) sur le `PersonalDataErasure` de chacun
+de ses contextes, le réseau de chaque copie atteint comme un *tenant*, et
+[docs/concepts/personal-data.fr.md](../../docs/concepts/personal-data.fr.md) dit ce qu'un projet
+généré contient : les adaptateurs de chaque *package* de persistance, le dossier de plateforme
 qu'`init` écrit, le registre et les règles.
 
 ## Comment étendre

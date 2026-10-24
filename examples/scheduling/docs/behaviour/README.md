@@ -7,7 +7,7 @@ Each page lists, in the words of the test titles, the rules a context holds: a p
 | Page | Rules stated | Planned | Specs |
 |---|---|---|---|
 | [analytics](analytics.md) | 66 | 0 | 12 |
-| [identity](identity.md) | 187 | 0 | 61 |
-| [notification](notification.md) | 135 | 0 | 29 |
+| [identity](identity.md) | 188 | 0 | 62 |
+| [notification](notification.md) | 139 | 0 | 30 |
 | [scheduling](scheduling.md) | 613 | 3 | 166 |
 | [the application](application.md) | 93 | 0 | 18 |

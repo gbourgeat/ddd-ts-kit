@@ -14,7 +14,8 @@
  *     website copies these pages at each of its builds (site/scripts/assemble.mjs);
  *   - the generated examples/scheduling/clients/api/README.md,
  *     examples/scheduling/docs/integration/event-catalog.md and the pages of
- *     examples/scheduling/docs/behaviour/.
+ *     examples/scheduling/docs/behaviour/, and the register of personal data
+ *     examples/scheduling/docs/privacy/register.md, partly generated like a CONTEXT.md.
  *
  *   node pipeline/monorepo/translations.mjs --check [pages...]  one line per problem, exit 1 if any
  *                                                              (pages: English or French, all without)
@@ -55,6 +56,7 @@ const SKIPPED_NAMES = new Set(['CHANGELOG.md', 'AGENTS.md', 'CLAUDE.md', 'CONTEX
 const SKIPPED_FILES = new Set([
   'examples/scheduling/clients/api/README.md',
   'examples/scheduling/docs/integration/event-catalog.md',
+  'examples/scheduling/docs/privacy/register.md',
 ]);
 const DIAGRAMS = 'docs/assets/diagrams/';
 const RAW = 'https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/';

@@ -8,6 +8,7 @@ export const practiceMemberAddedV1 = defineIntegrationEvent({
   version: 1,
   description:
     'A person became a member of a practice with a role; the time zone of the practice travels with it so that a consumer needs nothing else to place the member.',
+  personal: { subject: 'personId', fields: ['displayName'] },
   payload: classSchema(PracticeMemberAddedV1Payload),
 });
 

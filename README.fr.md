@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:8f7089a07ebd5afb -->
+<!-- translation-of: README.md sha256:fc17a7c5153c5c72 -->
 
 <div align="center">
 
@@ -56,6 +56,13 @@ chaque push.
 - **Les exigences de la production, intégrées.** Outbox transactionnelle et consommateurs
   idempotents, une permission par cas d'usage, journal d'audit, OpenTelemetry, multitenancy,
   contrats OpenAPI et AsyncAPI, un pipeline de CI pour GitHub et GitLab.
+- **Les données personnelles, par construction.** Ce qu'une table ou un événement garde d'une
+  personne se déclare une fois ; en découlent l'effacement, l'export, la purge nocturne de ce qui
+  a dépassé sa durée de conservation, le registre des données personnelles et les règles
+  `privacy/*`, sur les quatre ORM, chaque demande d'une personne auditée. Les mécanismes de
+  l'article 25 du RGPD, intégrés par défaut : la base légale, les finalités et la réponse à une
+  personne restent les décisions du responsable de traitement
+  ([Données personnelles](docs/concepts/personal-data.fr.md)).
 - **Prêt à être découpé.** Chaque contexte délimité possède ses données et parle aux autres par
   des événements : il peut tourner comme son propre service le jour où l'équipe en a besoin.
 
@@ -218,6 +225,10 @@ autres :
   public, décidée dans la couche application, avec un acteur explicite.
 - **Clean code et tests** (`clean/*`, `test/*`) : de petites fonctions en ordre d'escalier,
   aucune échappatoire, une spec pour chaque unité de comportement, aucun mock.
+- **Données personnelles** (`privacy/*`, avertissements, avec `--privacy on`) : une colonne ou un
+  champ d'événement nommé comme une donnée personnelle est déclaré, un contexte qui copie une
+  personne efface sa copie, un sujet est un identifiant opaque, une ligne de journal ne nomme
+  jamais un champ personnel déclaré.
 
 `npx ddd-ts-kit rules` liste chaque identifiant avec sa sévérité ; la
 [référence de l'architecture](docs/ARCHITECTURE.fr.md) les définit.

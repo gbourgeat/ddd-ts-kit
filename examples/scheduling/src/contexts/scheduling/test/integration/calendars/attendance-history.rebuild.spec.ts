@@ -1,11 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { Criteria, PersonalDataCipher, scoped } from '@ddd-ts-kit/kernel';
+import { Criteria, PersonalDataCipher, eraseDataSubject, scoped } from '@ddd-ts-kit/kernel';
 import type { AttendanceEntry } from '@/contexts/scheduling/calendars/application/ports/attendance-history.port';
 import { AttendanceRecord } from '@/contexts/scheduling/calendars/domain/aggregates/attendance-record.aggregate';
 import { EventStoreAttendanceRecordRepository } from '@/contexts/scheduling/calendars/infrastructure/persistence/event-store-attendance-record.repository';
 import { KnexAttendanceHistory } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-attendance-history.repository';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
-import { eraseDataSubject } from '@/platform/erasure/erase-data-subject';
 import { storeFedProjections } from '@/platform/event-store/store-fed-projections';
 
 const at = new Date('2026-03-02T09:00:00.000Z');
@@ -48,7 +47,10 @@ describe('the attendance history, fed by the event store', () => {
     expect(await Promise.all(projections.map((projection) => projection.rebuild()))).toEqual([{ replayed: 6 }]);
     expect(await rows(history)).toEqual(caughtUp);
 
-    const erasure = await eraseDataSubject('patient-1', { keys: persistence.eventSourcing.subjectKeys, projections });
+    const erasure = await eraseDataSubject('patient-1', {
+      keys: persistence.eventSourcing.subjectKeys,
+      rebuilds: projections,
+    });
 
     expect(erasure).toEqual({ erased: true, copies: {}, rebuilt: { 'scheduling.attendance-history': 6 } });
     expect(await rows(history)).toContain('practice-1.patient-1#3 cancellation [erased]');

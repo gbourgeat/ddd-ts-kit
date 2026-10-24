@@ -43,6 +43,14 @@ Needed, and specific in what is said and when, but it decides nothing: a simple 
 <!-- ddd-ts-kit:events -->
 <!-- /ddd-ts-kit:events -->
 
+## Personal data
+
+<!-- ddd-ts-kit:personal-data -->
+| Table | About | Personal data | On erasure | Kept |
+|---|---|---|---|---|
+| `contacts` | `recipient_id` | `address` | row deleted | until erased |
+<!-- /ddd-ts-kit:personal-data -->
+
 ## Permissions
 
 <!-- ddd-ts-kit:permissions -->
@@ -113,6 +121,8 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 |---|---|---|
 | `Contacts` | repository | `KnexContacts` |
 | `Mailer` | external | `RemoteMailer` |
+| `NotificationPersonalDataErasure` | repository | `KnexNotificationPersonalDataErasure` |
+| `NotificationPersonalDataExport` | repository | `KnexNotificationPersonalDataExport` |
 | `NotificationRepository` | repository | `KnexNotificationRepository` |
 | `ReminderRepository` | repository | `KnexReminderRepository` |
 | `SearchNotificationsReader` | repository | `KnexSearchNotificationsReader` |

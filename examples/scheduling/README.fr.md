@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2dfcb126c4c2ccd8 -->
+<!-- translation-of: README.md sha256:2b34757e0a21fe0a -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -121,7 +121,7 @@ et le mot de passe de chacun est son nom d'utilisateur.
 | Une projection des propres événements du contexte | `scheduling/application/projections/agenda.projection.ts` |
 | Des modèles de lecture et leur reconstruction | `analytics/application/projections/`, `analytics/test/integration/outcome-register.rebuild.spec.ts` |
 | Un agrégat gardé sous forme de ses événements, à côté d'agrégats gardés en lignes : son historique est le métier | `scheduling/domain/aggregates/attendance-record.aggregate.ts` (méthodes apply), `infrastructure/persistence/attendance-record-events.mapper.ts` (formes stockées, un motif scellé par patient), `event-store-attendance-record.repository.ts` (*snapshots* tous les 20 événements), `stored-events.lock.json` |
-| Une projection alimentée par l'event store : rattrapage avec un point de reprise, reconstruction depuis la position zéro, un patient effacé | `scheduling/application/projections/attendance-history.projection.ts`, `src/platform/event-store/store-fed-projections.ts`, `test/integration/attendance-history.rebuild.spec.ts`, `test/integration/appointment-journey.spec.ts` ; un effacement par `npm run erase:patient` |
+| Une projection alimentée par l'event store : rattrapage avec un point de reprise, reconstruction depuis la position zéro, un patient effacé | `scheduling/application/projections/attendance-history.projection.ts`, `src/platform/event-store/store-fed-projections.ts`, `test/integration/attendance-history.rebuild.spec.ts`, `test/integration/appointment-journey.spec.ts` ; un effacement par `npm run privacy:erase` |
 | Une ligne par fait, calculée à la lecture : des chiffres groupés dans une seule requête SQL au moment où on les lit, au lieu de compteurs tenus par des événements (rien qui dérive, rien à vérifier la nuit) | `analytics/CONTEXT.md` (« How occupancy is measured »), `analytics/infrastructure/persistence/knex-occupancy-reader.repository.ts` |
 | Une définition métier et son SQL gardés égaux par un seul contrat | `analytics/domain/services/occupancy-measure.service.ts`, `analytics/test/integration/occupancy-reader.contract.spec.ts` |
 | Un consommateur avec un port sortant, nouvelle tentative (retry) puis file de rejet (dead letter) | `notification/application/integration/handlers/`, `infrastructure/external/remote-mailer.adapter.ts`, `test/integration/mailer-outage.spec.ts` |
@@ -566,26 +566,34 @@ Le registre de présence d'un patient est gardé sous forme de ses événements 
   *compare-and-set* du point de reprise laisse l'un d'eux appliquer chaque lot ; les autres
   sautent ce tour (une ligne de débogage, pas une erreur). Un déclenchement qui arrive pendant
   qu'un tour s'exécute est sauté.
-- **Un effacement.** `DATABASE_URL=<url> NETWORKS=<tenant,...> npm run erase:patient -- <patientId> <operatorId>`
+- **Un effacement.** `DATABASE_URL=<url> NETWORKS=<tenant,...> npm run privacy:erase -- <patientId> <operatorId>`
   efface une personne de tout ce que l'application garde d'elle en clair, et de ce qu'elle garde
   scellé. La clé avec laquelle les paroles du patient ont été scellées est détruite d'abord, et
   l'effacement écrit dans le journal d'audit ; puis chaque copie qu'un contexte garde de la
   personne est effacée, réseau par réseau, chacune dans un contexte d'exécution de ce réseau,
   puisqu'une écriture de données de *tenant* n'est jamais élargie
-  (`src/platform/erasure/copies-of-a-person.ts`) : `identity` oublie la personne, nom et adresse
-  (`PersonRepository.erase`) ; `notification` oublie l'adresse à laquelle elle la joignait
-  (`Contacts.delete`, sous un tampon de cet instant, pour que l'annonce livrée de nouveau plus
-  tard ne la ramène pas) ; `scheduling` remplace par `[erased]` les notes que le personnel a
-  écrites sur les rendez-vous du patient et les motifs de ses annulations, dans les rendez-vous et
-  dans l'agenda, supprime du stockage de fichiers les documents attachés à ces rendez-vous et les
-  oublie, et remplace le nom affiché que son annuaire des praticiens avait copié d'identity
-  (`KnexPatientErasure`) ; puis chaque projection alimentée par le store est reconstruite
-  (`src/platform/erasure/erase-data-subject.ts`, `src/platform/erasure/erase-on-the-command-line.ts`,
-  `scripts/erase-patient.ts`) : le flux et les *snapshots* affichent `[erased]` immédiatement, et
+  (`src/platform/privacy/copies-of-a-person.ts`, le `PersonalDataErasure` de chaque contexte sur
+  les déclarations `personalFields` de ses tables) : `identity` oublie la personne, nom et
+  adresse, la ligne supprimée (`person.personal-fields.ts`, `KnexIdentityPersonalDataErasure`) ;
+  `notification` oublie l'adresse à laquelle elle la joignait (`contact.personal-fields.ts`,
+  `KnexNotificationPersonalDataErasure`, qui supprime le contact sous un tampon de cet instant,
+  pour que l'annonce livrée de nouveau plus tard ne la ramène pas) ; `scheduling` remplace par
+  `[erased]` les notes que le personnel a écrites sur les rendez-vous du patient et les motifs de
+  ses annulations, dans les rendez-vous et dans l'agenda, supprime du stockage de fichiers les
+  documents attachés à ces rendez-vous et les oublie, et remplace le nom affiché que son annuaire
+  des praticiens avait copié d'identity (`appointment.personal-fields.ts`,
+  `agenda.personal-fields.ts`, `practitioner.personal-fields.ts`,
+  `KnexSchedulingPersonalDataErasure` sur `KnexPersonalDataErasure` de `@ddd-ts-kit/knex`) ; puis
+  chaque projection alimentée par le store est reconstruite (`eraseDataSubject` du noyau,
+  `src/platform/privacy/erase-on-the-command-line.ts`, `scripts/privacy-erase.ts`) : le flux et
+  les *snapshots* affichent `[erased]` immédiatement, et
   l'historique aussi une fois reconstruit. Les rendez-vous et les registres de présence restent :
   ce sont des faits du cabinet, et ils nomment la personne par un seul identifiant opaque. Le
   rapport du script compte les lignes que chaque copie a atteintes (`copies`) et les événements
-  que chaque projection a rejoués (`rebuilt`). Une reconstruction n'arrête jamais le rattrapage,
+  que chaque projection a rejoués (`rebuilt`). Les mêmes déclarations écrivent le registre de
+  `docs/privacy/register.md` et la section Personal data de chaque `CONTEXT.md`, et les règles
+  `privacy/*` de `ddd-ts-kit check` y tiennent les tables et les événements de l'exemple. Une
+  reconstruction n'arrête jamais le rattrapage,
   donc l'API peut continuer de tourner. Le relancer achève un effacement dont l'entrée, une copie
   ou la reconstruction a échoué : une copie qui échoue n'arrête pas les autres, et son échec est
   levé une fois que tout a tourné. La clé est détruite qu'identity connaisse encore le patient ou
@@ -597,7 +605,21 @@ Le registre de présence d'un patient est gardé sous forme de ses événements 
   valeur qui n'est pas un identifiant opaque (lettres, chiffres, `_`, `-`), un nom ou un email
   collé à la place de l'id, est refusée avant qu'une clé ne soit touchée ou qu'une entrée ne soit
   écrite : l'entrée l'emporterait dans le journal en ajout seul.
-  `src/platform/erasure/erase-a-person.spec.ts` relit chaque table après un effacement.
+  `src/platform/privacy/erase-a-person.spec.ts` relit chaque table après un effacement.
+- **Un export.** `DATABASE_URL=<url> NETWORKS=<tenant,...> npm run privacy:export -- <patientId> <operatorId>`
+  répond au droit d'accès et à la portabilité d'une personne (RGPD, articles 15 et 20) : chaque
+  enregistrement que les contextes gardent de la personne, dans chaque réseau, lu par le
+  `PersonalDataExport` de chaque contexte sur les mêmes déclarations `personalFields` que
+  l'effacement (`src/platform/privacy/exports-of-a-person.ts`, `KnexPersonalDataExport` de
+  `@ddd-ts-kit/knex`), rassemblé par `exportDataSubject` du noyau en un document daté
+  (`ddd-ts-kit/personal-data-export@1`, `src/platform/privacy/export-on-the-command-line.ts`,
+  `scripts/privacy-export.ts`). Un document est remis par sa clé, pas par son contenu. Chaque
+  export est enveloppé par `auditedPersonalDataExport` : chaque remise, une par contexte et par
+  réseau, écrit une entrée `personal-data:export` avec l'opérateur comme acteur et le nombre
+  d'enregistrements lus, jamais les valeurs. Un identifiant auquel aucun export ne répond et
+  qu'aucun réseau ne connaît est refusé plutôt que répondu par un document vide, qui affirmerait
+  que rien n'est gardé (code de sortie 2). `src/platform/privacy/export-a-person.spec.ts` lit le
+  document et le journal.
 - **La preuve d'un effacement.** Le stockage des clés lié par la plateforme est décoré par
   `auditedSubjectKeys` (`src/platform/audit/create-audit.ts`), donc chaque effacement, depuis ce
   script ou depuis un cas d'usage, écrit une entrée : action `personal-data:erase`, le patient
@@ -617,7 +639,7 @@ Le registre de présence d'un patient est gardé sous forme de ses événements 
   son expiration, donc la date de l'entrée plus la plus longue rétention des sauvegardes donne le
   jour où l'effacement est complet. Le journal d'audit, par conception : il nomme la personne par
   un identifiant opaque, jamais par un nom. L'id doit être fait de ce dont un slug ou un UUID est
-  fait (`src/platform/erasure/is-subject-id.ts`) : un fournisseur d'identité dont les sujets
+  fait (`isDataSubjectId` du noyau) : un fournisseur d'identité dont les sujets
   portent un autre caractère (`auth0|abc`) demande d'élargir cette grammaire, en connaissance de
   cause, puisque ce qu'elle laisse passer peut atteindre le journal. Une faute de frappe qui
   respecte cette grammaire laisse une entrée `keyDestroyed: false` définitive : un identifiant,

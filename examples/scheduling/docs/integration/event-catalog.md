@@ -51,6 +51,8 @@ Generated from the integration event declarations. Do not edit by hand: regenera
 | `displayName` | string | yes |  |
 | `email` | string (email) | yes |  |
 
+Personal data: `displayName`, `email`, about the data subject named by `personId`. A consumer that keeps a copy declares it with `personalFields` and erases it on `privacy.data-subject.erased`.
+
 ### identity.practice.member-added
 
 | Type | Version | Description | Deprecated |
@@ -66,6 +68,8 @@ Generated from the integration event declarations. Do not edit by hand: regenera
 | `role` | enum ("manager", "practitioner", "assistant") | yes |  |
 | `displayName` | string | yes |  |
 | `timeZone` | string | yes |  |
+
+Personal data: `displayName`, about the data subject named by `personId`. A consumer that keeps a copy declares it with `personalFields` and erases it on `privacy.data-subject.erased`.
 
 ### identity.practice.member-removed
 

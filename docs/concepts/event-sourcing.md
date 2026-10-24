@@ -466,7 +466,7 @@ identifiers that mean nothing outside the application.
 
 The example keeps the keys in the table `subject_keys` of the `scheduling` schema of its own
 database, next to the events, to stay runnable with one PostgreSQL; its README says so and names
-what a deployment changes. Its erasure (`npm run erase:patient`) destroys the key of a patient,
+what a deployment changes. Its erasure (`npm run privacy:erase`) destroys the key of a patient,
 writes the erasure to the audit trail with the operator as actor, erases every copy the contexts
 keep of the person in clear (the person of identity, the contact of notification, the notes, the
 cancellation reasons and the documents of their appointments in scheduling), and rebuilds the

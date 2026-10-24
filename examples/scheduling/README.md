@@ -115,7 +115,7 @@ of each is its user name.
 | A projection of the context's own events | `scheduling/application/projections/agenda.projection.ts` |
 | Read models and their rebuild | `analytics/application/projections/`, `analytics/test/integration/outcome-register.rebuild.spec.ts` |
 | One aggregate kept as its events, beside aggregates kept as rows: its history is the business | `scheduling/domain/aggregates/attendance-record.aggregate.ts` (apply methods), `infrastructure/persistence/attendance-record-events.mapper.ts` (stored shapes, a reason sealed per patient), `event-store-attendance-record.repository.ts` (snapshots every 20 events), `stored-events.lock.json` |
-| A projection fed by the event store: catch-up with a checkpoint, rebuild from position zero, an erased patient | `scheduling/application/projections/attendance-history.projection.ts`, `src/platform/event-store/store-fed-projections.ts`, `test/integration/attendance-history.rebuild.spec.ts`, `test/integration/appointment-journey.spec.ts`; an erasure by `npm run erase:patient` |
+| A projection fed by the event store: catch-up with a checkpoint, rebuild from position zero, an erased patient | `scheduling/application/projections/attendance-history.projection.ts`, `src/platform/event-store/store-fed-projections.ts`, `test/integration/attendance-history.rebuild.spec.ts`, `test/integration/appointment-journey.spec.ts`; an erasure by `npm run privacy:erase` |
 | One row per fact, computed at read time: figures grouped in one statement when they are read, instead of counters kept by events (nothing to drift, nothing to verify at night) | `analytics/CONTEXT.md` ("How occupancy is measured"), `analytics/infrastructure/persistence/knex-occupancy-reader.repository.ts` |
 | A business definition and its SQL held equal by one contract | `analytics/domain/services/occupancy-measure.service.ts`, `analytics/test/integration/occupancy-reader.contract.spec.ts` |
 | A consumer with an outbound port, retry then dead letter | `notification/application/integration/handlers/`, `infrastructure/external/remote-mailer.adapter.ts`, `test/integration/mailer-outage.spec.ts` |
@@ -545,24 +545,32 @@ The attendance record of a patient is kept as its events; its history
   within one relay interval. With several replicas, each one polls, and the compare-and-set of
   the checkpoint lets one of them apply each batch; the others skip that round (a debug line,
   not an error). A tick that comes while a round runs is skipped.
-- **An erasure.** `DATABASE_URL=<url> NETWORKS=<tenant,...> npm run erase:patient -- <patientId> <operatorId>`
+- **An erasure.** `DATABASE_URL=<url> NETWORKS=<tenant,...> npm run privacy:erase -- <patientId> <operatorId>`
   erases a person from everything the application keeps of them in clear, and from what it keeps
   sealed. The key the words of the patient were sealed with is destroyed first, and the erasure
   written to the audit trail; then every copy a context keeps of the person is erased, network by
   network, each in an execution context of that network, since a write of tenant data is never
-  widened (`src/platform/erasure/copies-of-a-person.ts`): `identity` forgets the person, name and
-  address (`PersonRepository.erase`); `notification` forgets the address it reached them at
-  (`Contacts.delete`, under a stamp of this instant, so that the announcement delivered again
-  later does not bring it back); `scheduling` replaces by `[erased]` the notes the staff wrote on
-  the appointments of the patient and the reasons of their cancellations, in the appointments and
-  in the agenda, deletes the documents attached to those appointments from the file storage and
-  forgets them, and replaces the display name its practitioner directory copied from identity
-  (`KnexPatientErasure`); then every projection fed by the store is rebuilt
-  (`src/platform/erasure/erase-data-subject.ts`, `src/platform/erasure/erase-on-the-command-line.ts`,
-  `scripts/erase-patient.ts`): the stream and the snapshots read `[erased]` at once, and so does
+  widened (`src/platform/privacy/copies-of-a-person.ts`, the `PersonalDataErasure` of each
+  context over the `personalFields` declarations of its tables): `identity` forgets the person,
+  name and address, the row deleted (`person.personal-fields.ts`,
+  `KnexIdentityPersonalDataErasure`); `notification` forgets the address it reached them at
+  (`contact.personal-fields.ts`, `KnexNotificationPersonalDataErasure`, which deletes the contact
+  under a stamp of this instant, so that the announcement delivered again later does not bring it
+  back); `scheduling` replaces by `[erased]` the notes the staff wrote on the appointments of the
+  patient and the reasons of their cancellations, in the appointments and in the agenda, deletes
+  the documents attached to those appointments from the file storage and forgets them, and
+  replaces the display name its practitioner directory copied from identity
+  (`appointment.personal-fields.ts`, `agenda.personal-fields.ts`, `practitioner.personal-fields.ts`,
+  `KnexSchedulingPersonalDataErasure` over `KnexPersonalDataErasure` of `@ddd-ts-kit/knex`); then
+  every projection fed by the store is rebuilt (`eraseDataSubject` of the kernel,
+  `src/platform/privacy/erase-on-the-command-line.ts`, `scripts/privacy-erase.ts`): the stream
+  and the snapshots read `[erased]` at once, and so does
   the history once rebuilt. The appointments and the attendance records stay: they are facts of
   the practice, and they name the person by an opaque id alone. The report of the script counts
-  the rows each copy reached (`copies`) and the events each projection replayed (`rebuilt`). A
+  the rows each copy reached (`copies`) and the events each projection replayed (`rebuilt`). The
+  same declarations write the register of `docs/privacy/register.md` and the Personal data section
+  of each `CONTEXT.md`, and the `privacy/*` rules of `ddd-ts-kit check` hold the tables and the
+  events of the example to them. A
   rebuild never stops the catch-up, so the API may keep running. Running it again completes an
   erasure whose entry, copy or rebuild failed: a copy that fails does not stop the others, and
   its failure is thrown once everything ran. The key is destroyed whether identity still knows
@@ -573,8 +581,21 @@ The attendance record of a patient is kept as its events; its history
   person nothing is left of, which the trail records all the same. A value that is not an opaque
   identifier (letters, digits, `_`, `-`), a name or an email pasted in place of the id, is
   refused before any key is touched or any entry written: the entry would carry it into the
-  append-only trail. `src/platform/erasure/erase-a-person.spec.ts` reads every table after an
+  append-only trail. `src/platform/privacy/erase-a-person.spec.ts` reads every table after an
   erasure.
+- **An export.** `DATABASE_URL=<url> NETWORKS=<tenant,...> npm run privacy:export -- <patientId> <operatorId>`
+  answers the right of access and to portability of a person (GDPR articles 15 and 20): every
+  record the contexts keep of the person, in each network, read by the `PersonalDataExport` of
+  each context over the same `personalFields` declarations as the erasure
+  (`src/platform/privacy/exports-of-a-person.ts`, `KnexPersonalDataExport` of `@ddd-ts-kit/knex`),
+  gathered by `exportDataSubject` of the kernel into one dated document
+  (`ddd-ts-kit/personal-data-export@1`, `src/platform/privacy/export-on-the-command-line.ts`,
+  `scripts/privacy-export.ts`). A document is handed over by its key, not its content. Each export
+  is wrapped by `auditedPersonalDataExport`: every handover, one per context and network, writes an
+  entry `personal-data:export` with the operator as actor and the number of records read, never
+  the values. An id no export answers and no network knows is refused rather than answered with an
+  empty document, which would state that nothing is kept (exit code 2).
+  `src/platform/privacy/export-a-person.spec.ts` reads the document and the trail.
 - **The proof of an erasure.** The key store bound by the platform is wrapped by
   `auditedSubjectKeys` (`src/platform/audit/create-audit.ts`), so every erasure, from this script
   or from a use case, writes an entry: action `personal-data:erase`, the patient as a
@@ -593,7 +614,7 @@ The attendance record of a patient is kept as its events; its history
   rows and the key until it expires, so the date of the entry plus the longest retention of the
   backups is the day the erasure is complete. The audit trail, by design: it names the person by
   an opaque id, never by a name. The id has to be what a slug or a UUID is made of
-  (`src/platform/erasure/is-subject-id.ts`): an identity provider whose subjects carry another
+  (`isDataSubjectId` of the kernel): an identity provider whose subjects carry another
   character (`auth0|abc`) needs that grammar widened, knowingly, since whatever it lets through
   can reach the trail. A mistyped id of that grammar leaves a permanent `keyDestroyed: false`
   entry: an identifier, not personal data, and a faithful trace of the attempt. The operator id
