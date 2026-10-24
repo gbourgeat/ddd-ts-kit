@@ -80,8 +80,9 @@ const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly s
   'broker:nats': [['@ddd-ts-kit/nats', '@nats-io/jetstream', '@nats-io/transport-node'], []],
   'queue:database': [['@ddd-ts-kit/scheduling'], []],
   'queue:redis': [['@ddd-ts-kit/scheduling', '@ddd-ts-kit/redis', 'ioredis'], []],
-  'tests:vitest': [[], ['vitest']],
-  'tests:jest': [[], ['jest', '@jest/globals', '@swc/core', '@swc/jest']],
+  // fast-check states the invariants of value objects as properties, under either runner.
+  'tests:vitest': [[], ['vitest', 'fast-check']],
+  'tests:jest': [[], ['jest', '@jest/globals', '@swc/core', '@swc/jest', 'fast-check']],
 };
 
 export function dependenciesFor(config: Config): Packages {

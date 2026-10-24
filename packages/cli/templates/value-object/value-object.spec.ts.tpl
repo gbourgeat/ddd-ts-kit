@@ -37,4 +37,5 @@ describe('{{name.pascal}}', () => {
   it.todo('accepts every valid form of a {{name.words}}');
   it.todo('refuses each invalid form with its own error code');
   it.todo('normalizes equivalent inputs to the same value');
+  it.todo('keeps its invariants for any value a generator can produce, as a property');
 });

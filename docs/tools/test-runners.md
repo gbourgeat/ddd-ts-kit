@@ -309,6 +309,7 @@ export default {
 | Existing codebase with a large Jest suite adopting the kit | Jest, adding the project split and thresholds by hand; plan a migration only if it pays |
 | A library or adapter published for others | write its contract with `ContractSuite`, so consumers run it under either runner |
 | Wanting mutation testing | not available in the kit today, with either runner |
+| Wanting property-based tests | `fast-check`, which `init` installs under either runner: a law of a value object stated once and checked on generated values, `fc.assert` an assertion for `test/assertion-present` |
 
 ## Sources
 

@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
 import { Range } from '@/contexts/scheduling/calendars/domain/value-objects/range.vo';
 import { expectRefusal } from '@ddd-ts-kit/testing';
+import fc from 'fast-check';
+import { describe, expect, it } from 'vitest';
 
 describe('Range', () => {
   it('is equal to another range between the same times', () => {
@@ -25,6 +26,16 @@ describe('Range', () => {
     ['', '12:00'],
   ])('refuses %j to %j as an invalid range', (start, end) => {
     expectRefusal(() => Range.create(start, end), 'INVALID_RANGE');
+  });
+
+  it('overlaps another range in both directions or in none, for any two ranges', () => {
+    fc.assert(fc.property(anyRange(), anyRange(), (one, other) => one.overlaps(other) === other.overlaps(one)));
+  });
+
+  it('is disjoint from another range exactly when neither overlaps the other, for any two ranges', () => {
+    fc.assert(
+      fc.property(anyRange(), anyRange(), (one, other) => Range.disjoint([one, other]) === !one.overlaps(other)),
+    );
   });
 
   it('is written back as its two times', () => {
@@ -54,4 +65,16 @@ describe('Range', () => {
 
 function range(start: string, end: string): Range {
   return Range.create(start, end);
+}
+
+/** Any range of the day: a start and an end in minutes from midnight, the end after the start. */
+function anyRange(): fc.Arbitrary<Range> {
+  return fc
+    .tuple(fc.integer({ min: 0, max: 1439 }), fc.integer({ min: 1, max: 1440 }))
+    .filter(([start, end]) => start < end)
+    .map(([start, end]) => Range.create(clock(start), clock(end)));
+}
+
+function clock(minute: number): string {
+  return `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
 }

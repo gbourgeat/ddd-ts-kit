@@ -40,6 +40,7 @@ export const VERSIONS: Readonly<Record<string, string>> = {
   'ddd-ts-kit': '^0.88.0',
   tsx: '^4.23.15',
   vitest: '^5.0.3',
+  'fast-check': '^3.23.2',
   zod: '^4.6.5',
   express: '^5.3.0',
   fastify: '^5.12.5',
