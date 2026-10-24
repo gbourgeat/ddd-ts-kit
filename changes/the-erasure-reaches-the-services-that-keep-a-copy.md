@@ -2,8 +2,9 @@
 `privacy.data-subject.erased` through the outbox once every copy is erased, `generate
 erasure-handler <context>` writes the idempotent handler of a context that erases its own copy, and
 an integration event says which fields of its payload are personal, and whose.** The event is
-`dataSubjectErasedV1` of `@ddd-ts-kit/kernel`, version 1, `{ subjectId, erasedAt, requestedBy }`:
-identifiers only, a name or an email refused at `create` (`InvalidDataSubjectErasedError`). It lives
+`dataSubjectErasedV1` of `@ddd-ts-kit/kernel`, version 1, `{ subjectId, erasedAt }`:
+the id of the person and nobody else, the operator staying in the audit trail that the correlation id
+of the event leads to, a name or an email refused at `create` (`InvalidDataSubjectErasedError`). It lives
 in the kernel because the application layer of every context handles it, and it is shaped as a
 definition of `@ddd-ts-kit/events`, so that the registry, the catalog, AsyncAPI, `on`, `consume`,
 `@IntegrationEventHandler` and the container take it as any other. A generated project with

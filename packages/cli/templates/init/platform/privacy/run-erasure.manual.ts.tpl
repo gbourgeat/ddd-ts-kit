@@ -76,12 +76,13 @@ export function runErasure(subject: string, request: ErasureRequest): Promise<Da
 /**
  * Once every copy is erased, `privacy.data-subject.erased` goes to the outbox{{#if tenancy.any}}, once per tenant{{/if}}: a context that
  * runs as a service of its own, or a system that copied the person from an integration event, erases
- * its copy on its side (GDPR article 19). The relay of the application delivers it; an erasure that
+ * its copy on its side (GDPR article 19). It names the person by id and nobody else: who asked is in
+ * the audit trail, under the correlation id the event carries. The relay of the application delivers it; an erasure that
  * failed publishes nothing, and running it again does.
  */
-async function announceErasure(subject: string, { platform, operator{{#if tenancy.any}}, tenants{{/if}} }: ErasureRequest): Promise<void> {
+async function announceErasure(subject: string, { platform{{#if tenancy.any}}, tenants{{/if}} }: ErasureRequest): Promise<void> {
   const erasedAt = platform.clock.now();
-  const payload = { subjectId: subject, erasedAt: erasedAt.toISOString(), requestedBy: operator };
+  const payload = { subjectId: subject, erasedAt: erasedAt.toISOString() };
   const event = () => dataSubjectErasedV1.create(payload, { id: platform.ids.next(), occurredAt: erasedAt });
   const publish = () => platform.publisher.publish([event()]);
 {{#if tenancy.any}}

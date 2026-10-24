@@ -17,7 +17,8 @@ const VERSION = 1;
  * reaches is erased (GDPR articles 17 and 19): a context that runs as a service of its own, or a
  * system that copied personal data from an integration event, erases its copy on its side, with
  * the handler `generate erasure-handler <context>` writes. The payload names the person by the
- * opaque id alone: the event erases nothing by itself and carries nothing to erase. A copy already
+ * opaque id alone, and no operator: the event erases nothing by itself and carries nothing to erase,
+ * and who asked stays in the audit trail, which its correlation id leads to. A copy already
  * gone (a message in a dead letter queue, a topic) is bounded by the retention of the broker, as a
  * backup is by its own.
  */
@@ -74,19 +75,17 @@ function parseEvent(
 function parsePayload(input: unknown): Result<DataSubjectErasedPayload, PayloadIssue[]> {
   const subjectId = textOf(input, 'subjectId');
   const erasedAt = textOf(input, 'erasedAt');
-  const requestedBy = textOf(input, 'requestedBy');
 
   const issues = [
     ...(isDataSubjectId(subjectId) ? [] : [issue('subjectId', 'is not the opaque identifier of a data subject')]),
     ...(erasedAt !== undefined && !Number.isNaN(Date.parse(erasedAt)) ? [] : [issue('erasedAt', 'is not an instant')]),
-    ...(requestedBy !== undefined && requestedBy !== '' ? [] : [issue('requestedBy', 'is not the id of an actor')]),
   ];
 
-  if (subjectId === undefined || erasedAt === undefined || requestedBy === undefined || issues.length > 0) {
+  if (subjectId === undefined || erasedAt === undefined || issues.length > 0) {
     return err(issues);
   }
 
-  return ok({ subjectId, erasedAt, requestedBy });
+  return ok({ subjectId, erasedAt });
 }
 
 function textOf(input: unknown, name: string): string | undefined {
@@ -102,12 +101,11 @@ function issue(path: string, message: string): PayloadIssue {
 function jsonSchema(): Record<string, unknown> {
   return {
     type: 'object',
-    required: ['subjectId', 'erasedAt', 'requestedBy'],
+    required: ['subjectId', 'erasedAt'],
     additionalProperties: false,
     properties: {
       subjectId: { type: 'string', description: 'The opaque identifier of the data subject.' },
       erasedAt: { type: 'string', format: 'date-time', description: 'When the platform erased its copies.' },
-      requestedBy: { type: 'string', description: 'The id of the actor who asked for the erasure.' },
     },
   };
 }

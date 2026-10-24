@@ -192,7 +192,7 @@ that copies one of those fields keeps a copy of the person: it declares it with 
 next to its mapper, and erases it when the platform announces the erasure of that person.
 
 That announcement is `dataSubjectErasedV1` of `@ddd-ts-kit/kernel`, type
-`privacy.data-subject.erased`, payload `{ subjectId, erasedAt, requestedBy }`: identifiers only,
+`privacy.data-subject.erased`, payload `{ subjectId, erasedAt }`: the id of the person and nobody else (who asked is in the audit trail),
 the event erases nothing by itself and carries nothing to erase. It lives in the kernel, since
 the application layer of every context handles it, and it is shaped as a definition of this
 package: the registry, the catalog, AsyncAPI, `on` and `consume` take it as any other. A project

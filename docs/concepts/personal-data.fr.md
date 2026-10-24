@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:f2c3741518bc1cdd -->
+<!-- translation-of: personal-data.md sha256:479c191bc4cbca10 -->
 
 # Les données personnelles dans un projet généré
 
@@ -124,7 +124,7 @@ n'atteint plus rien la deuxième fois et le dit. Un sujet qui n'est pas un ident
 un email) est refusé avant que quoi que ce soit ne soit touché.
 
 Une fois chaque copie effacée, `runErasure` publie `privacy.data-subject.erased` par l'outbox
-(`dataSubjectErasedV1` du kernel, `{ subjectId, erasedAt, requestedBy }`, des identifiants
+(`dataSubjectErasedV1` du kernel, `{ subjectId, erasedAt }` : l'id de la personne et de personne d'autre, l'opérateur restant dans le journal d'audit auquel mène son id de corrélation ; des identifiants
 seulement), une fois par *tenant* avec des tables partagées ; le relais de l'application en marche
 le livre. Un effacement qui a échoué ne publie rien, et le relancer le fait. C'est ainsi que
 l'article 19 porte au-delà de la base que tient la plateforme :

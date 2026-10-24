@@ -32,5 +32,5 @@ describe('When the platform announces the erasure of a person', () => {
 
 /** The erasure of a person as the platform announces it. */
 function erasureOf(subjectId: string, id = 'event-1') {
-  return dataSubjectErasedV1.create({ subjectId, erasedAt: at, requestedBy: 'dpo' }, { id, occurredAt: at });
+  return dataSubjectErasedV1.create({ subjectId, erasedAt: at }, { id, occurredAt: at });
 }

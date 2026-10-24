@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2edbc59becffe3fc -->
+<!-- translation-of: README.md sha256:5c46fb0c826c422f -->
 
 # @ddd-ts-kit/events
 
@@ -197,7 +197,7 @@ Un consommateur qui copie l'un de ces champs garde une copie de la personne : il
 cette personne.
 
 Cette annonce est `dataSubjectErasedV1` de `@ddd-ts-kit/kernel`, type
-`privacy.data-subject.erased`, charge utile `{ subjectId, erasedAt, requestedBy }` : des
+`privacy.data-subject.erased`, charge utile `{ subjectId, erasedAt }` : l'id de la personne et de personne d'autre (qui a demandé est dans le journal d'audit), des
 identifiants seulement, l'événement n'efface rien par lui-même et ne porte rien à effacer. Il vit
 dans le kernel, puisque la couche application de chaque contexte le traite, et il a la forme d'une
 définition de ce package : le registre, le catalogue, AsyncAPI, `on` et `consume` le prennent comme

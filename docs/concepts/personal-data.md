@@ -122,7 +122,7 @@ the second time and says so. A subject that is not an opaque identifier (a name,
 refused before anything is touched.
 
 Once every copy is erased, `runErasure` publishes `privacy.data-subject.erased` through the outbox
-(`dataSubjectErasedV1` of the kernel, `{ subjectId, erasedAt, requestedBy }`, identifiers only),
+(`dataSubjectErasedV1` of the kernel, `{ subjectId, erasedAt }`: the id of the person and nobody else, the operator staying in the audit trail that its correlation id leads to),
 once per tenant with shared tables; the relay of the running application delivers it. An erasure
 that failed publishes nothing, and running it again does. This is how article 19 reaches beyond the
 database the platform holds:
