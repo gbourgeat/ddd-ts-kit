@@ -72,6 +72,30 @@ describe('tenantWhere and ownTenantWhere', () => {
     expect(ownTenantWhere(new FixedExecutionScope(staffOver('all').build()))).toEqual({ tenantId: 'initech' });
   });
 
+  it('spread into the where of a query builder, as find options or alone', async () => {
+    await database.truncate();
+    const scope = new AsyncLocalStorageExecutionScope();
+
+    await asTenant(scope, 'acme', () => repository(scope).save(Invoice.draft('inv-acme', 1)));
+    await asTenant(scope, 'globex', () => repository(scope).save(Invoice.draft('inv-globex', 2)));
+
+    const ids = (tenants: TenantElevation['tenants']) =>
+      scoped(scope, staffOver(tenants), async () => {
+        const rows = await database.dataSource.manager
+          .createQueryBuilder(invoices, 'invoice')
+          .where(tenantWhere(scope))
+          .orderBy('invoice.id')
+          .getMany();
+
+        return rows.map((row) => row.id);
+      });
+
+    expect(await ids('all')).toEqual(['inv-acme', 'inv-globex']);
+    expect(await ids(['acme'])).toEqual(['inv-acme']);
+    expect(await ids([])).toEqual([]);
+    expect(await asTenant(scope, 'globex', () => ids(['globex']))).toEqual(['inv-globex']);
+  });
+
   it('refuse work that names no tenant, before any statement', () => {
     expect(() => tenantWhere(job)).toThrow(NoCurrentTenantError);
     expect(() => ownTenantWhere(job)).toThrow(NoCurrentTenantError);
@@ -92,6 +116,7 @@ describe('tenantWhere and ownTenantWhere', () => {
 
     expect((await read('all')).map((row) => row.id)).toEqual(['inv-acme', 'inv-globex']);
     expect((await read(['globex'])).map((row) => row.id)).toEqual(['inv-globex']);
+    expect(await read([])).toEqual([]);
 
     const elevated = await scoped(scope, staffOver('all'), () => repository(scope).findById('inv-acme'));
 

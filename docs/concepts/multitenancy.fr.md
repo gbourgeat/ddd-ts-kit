@@ -1,5 +1,5 @@
 [English](multitenancy.md) · **Français**
-<!-- translation-of: multitenancy.md sha256:2ba1688351be51e6 -->
+<!-- translation-of: multitenancy.md sha256:fb90fa0f3b880cc4 -->
 
 # Multitenance
 
@@ -196,6 +196,11 @@ pour l'outbox (les événements pas encore publiés vont aussi à ce client, pou
 consommateurs s'exécutent dans son *tenant*). Une table qui a déjà la colonne est laissée telle
 quelle, si bien que la migration s'exécute aussi sur une base construite depuis le schéma actuel.
 L'application d'exemple a suivi ce chemin (son ADR-0003) : un réseau de cabinets est un *tenant*.
+Sur Drizzle, Prisma et TypeORM, la colonne rejoint la déclaration de la table (`tenantColumn()`, le
+champ `tenantId` du modèle), l'outillage de migration de l'ORM écrit la migration (`drizzle-kit
+generate`, `prisma migrate dev`, `typeorm migration:generate`), et une instruction de cette
+migration donne aux lignes déjà présentes le *tenant* qu'elles servaient, avant que la colonne soit
+rendue obligatoire et indexée.
 
 L'outbox garde le *tenant* de chaque événement sur Knex (`tenant: true`), Drizzle
 (`tenantOutboxTable`), Prisma (`tenant: true`, sur un modèle qui porte le champ `tenantId` que le

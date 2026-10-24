@@ -91,6 +91,7 @@ describe('tenantWhere and ownTenantWhere', () => {
 
     expect((await read('all')).map((row) => row.id)).toEqual(['inv-acme', 'inv-globex']);
     expect((await read(['globex'])).map((row) => row.id)).toEqual(['inv-globex']);
+    expect(await read([])).toEqual([]);
 
     const elevated = await scoped(scope, staffOver('all'), () => repository(scope).findById('inv-acme'));
 

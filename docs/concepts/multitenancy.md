@@ -188,7 +188,11 @@ A project of one customer that becomes multi-tenant keeps its data: on Knex, a m
 and `addOutboxTenantColumn(knex, { schema, tenantOfUnpublished })` for the outbox (the events not
 published yet go to that customer too, so that their consumers run in its tenant). A table that already has the column is left alone, so
 the migration also runs on a database built from the current schema. The example application
-went this way (its ADR-0003): one network of practices is one tenant.
+went this way (its ADR-0003): one network of practices is one tenant. On Drizzle, Prisma and
+TypeORM, the column joins the table declaration (`tenantColumn()`, the `tenantId` field of the
+model), the migration tooling of the ORM writes the migration (`drizzle-kit generate`,
+`prisma migrate dev`, `typeorm migration:generate`), and a statement of that migration gives the
+rows already there the tenant they served before the column is made required and indexed.
 
 The outbox keeps the tenant of each event on Knex (`tenant: true`), Drizzle (`tenantOutboxTable`),
 Prisma (`tenant: true`, on a model with the `tenantId` field the shipped fragment leaves commented
