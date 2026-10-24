@@ -1,9 +1,9 @@
 [English](test-assertion-present.md) · **Français**
-<!-- translation-of: test-assertion-present.md sha256:1047d2cf38c27c16 -->
+<!-- translation-of: test-assertion-present.md sha256:9048f6705cb85910 -->
 
 # ddd-ts-kit/test-assertion-present
 
-Identifiant d'architecture : `test/assertion-present` (ajouté par ce *plugin*). Sévérité par défaut : `warn` dans `recommended` (une erreur à partir de 0.90.0 : `ddd-ts-kit lint` montre ses avertissements sans échouer dessus jusque-là), `error` dans `strict`.
+Identifiant d'architecture : `test/assertion-present` (ajouté par ce *plugin*). Sévérité par défaut : `error` dans `recommended`, `error` dans `strict`.
 
 S'applique à : chaque fichier de test du projet (`*.spec.ts`, `*.test.ts`, le `test/` d'un contexte).
 

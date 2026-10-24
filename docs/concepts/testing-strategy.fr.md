@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:9083a2fb6bc79d5e -->
+<!-- translation-of: testing-strategy.md sha256:e92f230645364b6b -->
 
 # Stratégie de test
 
@@ -490,9 +490,9 @@ jamais `should` ni le nom d'une méthode (`test/title-states-a-rule`) ; il ne co
 boucle, ni `try` (`test/no-logic`) ; il vérifie un résultat (`test/assertion-present`), un refus par
 son code et ses faits plutôt que par un message (`test/refusal-by-code`), et jamais un *snapshot*
 (`test/no-snapshot`) ; et chaque test s'exécute, sans `.only` ni `.skip` (`test/no-only-no-skip`).
-Préparation, action et vérification restent séparées par des lignes vides. Les quatre règles qui
-lisent ce qu'un test dit sont des avertissements jusqu'à 0.90.0, pour qu'une montée de version ne
-fasse jamais passer un *lint* vert au rouge ; `ddd-ts-kit lint` les liste après son rapport.
+Préparation, action et vérification restent séparées par des lignes vides. Les six sont des
+erreurs : les quatre qui lisent ce qu'un test dit étaient des avertissements en 0.89, pour que la
+montée de version vers elles ne fasse jamais passer un *lint* vert au rouge.
 
 ## Propriétés
 

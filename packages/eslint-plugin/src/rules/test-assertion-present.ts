@@ -14,8 +14,7 @@ const OUTCOME = /^then[A-Z]/;
 export const testAssertionPresent = defineRule<'none' | 'pending'>({
   id: 'test/assertion-present',
   type: 'problem',
-  recommended: 'warn',
-  transition: '0.90.0',
+  recommended: 'error',
   description:
     'Every test asserts something: an `expect`, an `expect...` or `assert...` helper, or the outcome of a scenario (`thenEvents`, `thenError`); a test without a body is written `it.todo`.',
   messages: {

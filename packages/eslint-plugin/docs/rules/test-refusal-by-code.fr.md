@@ -1,9 +1,9 @@
 [English](test-refusal-by-code.md) · **Français**
-<!-- translation-of: test-refusal-by-code.md sha256:d0f4cd2f5172b6e2 -->
+<!-- translation-of: test-refusal-by-code.md sha256:23f7e57668c1a946 -->
 
 # ddd-ts-kit/test-refusal-by-code
 
-Identifiant d'architecture : `test/refusal-by-code` (ajouté par ce *plugin*). Sévérité par défaut : `warn` dans `recommended` (une erreur à partir de 0.90.0 : `ddd-ts-kit lint` montre ses avertissements sans échouer dessus jusque-là), `error` dans `strict`.
+Identifiant d'architecture : `test/refusal-by-code` (ajouté par ce *plugin*). Sévérité par défaut : `error` dans `recommended`, `error` dans `strict`.
 
 S'applique à : les *specs* du modèle et de l'application, `test/unit/` d'un contexte, le noyau partagé, `test/e2e/` et `test/acceptance/` (`*.spec.ts`, `*.test.ts`). Les *specs* des adaptateurs (`*.adapter.spec.ts`, `test/integration/`) et de la plateforme ne sont pas jugées.
 

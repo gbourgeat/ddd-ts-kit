@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7a5824ccc279f258 -->
+<!-- translation-of: README.md sha256:328005b51ed4322c -->
 
 # @ddd-ts-kit/eslint-plugin
 
@@ -252,10 +252,10 @@ chaque règle à `error`.
 | [`event-sourcing/upcaster-required`](docs/rules/event-sourcing-upcaster-required.fr.md) | `ddd-ts-kit/event-sourcing-upcaster-required` | `defineStoredEvent` nomme le type de ses données, déclaré dans le fichier, et une version au-dessus de 1 a un *upcaster* depuis chaque version inférieure (le verrou des formes enregistrées : `ddd-ts-kit check`) | `error` | maison |
 | [`test/no-mocks`](docs/rules/test-no-mocks.fr.md) | `ddd-ts-kit/test-no-mocks` | pas de `vi.mock`, `vi.fn`, `vi.spyOn`, de leurs jumeaux `jest` ni de bibliothèque de *mocks* dans les tests d'un contexte | `warn` | maison |
 | [`test/no-only-no-skip`](docs/rules/test-no-only-no-skip.fr.md) | `ddd-ts-kit/test-no-only-no-skip` | pas de `.only` ni `.skip` sur un test ou un groupe, pas de `fit`, `xit`, `xdescribe`, pas de `.skipIf` ni `.runIf` sur une constante : chaque test s'exécute, ou s'exécute partout où sa condition tient | `error` | maison |
-| [`test/title-states-a-rule`](docs/rules/test-title-states-a-rule.fr.md) | `ddd-ts-kit/test-title-states-a-rule` | le titre d'un test énonce la règle qu'il prouve, en minuscules, après les *rows* et le critère qu'il cite ; jamais `should`, `test`, `works`, ni une méthode ou une classe ; un `describe` nomme l'unité | `warn` | maison |
-| [`test/no-logic`](docs/rules/test-no-logic.fr.md) | `ddd-ts-kit/test-no-logic` | ni `if`, ni `switch`, ni ternaire, ni boucle, ni `try` dans un test : un cas par ligne est un `it.each`, une décision appartient à un *builder*, un *fake* ou un *helper* | `warn` | maison |
-| [`test/assertion-present`](docs/rules/test-assertion-present.fr.md) | `ddd-ts-kit/test-assertion-present` | chaque test vérifie quelque chose : un `expect`, un *helper* `expect...` ou `assert...`, ou le résultat d'un scénario (`thenEvents`, `thenError`) ; un test sans corps est un `it.todo` | `warn` | maison |
-| [`test/refusal-by-code`](docs/rules/test-refusal-by-code.fr.md) | `ddd-ts-kit/test-refusal-by-code` | un refus se vérifie par son code et ses faits, jamais par `toThrow` avec un message, une classe ou rien | `warn` | maison |
+| [`test/title-states-a-rule`](docs/rules/test-title-states-a-rule.fr.md) | `ddd-ts-kit/test-title-states-a-rule` | le titre d'un test énonce la règle qu'il prouve, en minuscules, après les *rows* et le critère qu'il cite ; jamais `should`, `test`, `works`, ni une méthode ou une classe ; un `describe` nomme l'unité | `error` | maison |
+| [`test/no-logic`](docs/rules/test-no-logic.fr.md) | `ddd-ts-kit/test-no-logic` | ni `if`, ni `switch`, ni ternaire, ni boucle, ni `try` dans un test : un cas par ligne est un `it.each`, une décision appartient à un *builder*, un *fake* ou un *helper* | `error` | maison |
+| [`test/assertion-present`](docs/rules/test-assertion-present.fr.md) | `ddd-ts-kit/test-assertion-present` | chaque test vérifie quelque chose : un `expect`, un *helper* `expect...` ou `assert...`, ou le résultat d'un scénario (`thenEvents`, `thenError`) ; un test sans corps est un `it.todo` | `error` | maison |
+| [`test/refusal-by-code`](docs/rules/test-refusal-by-code.fr.md) | `ddd-ts-kit/test-refusal-by-code` | un refus se vérifie par son code et ses faits, jamais par `toThrow` avec un message, une classe ou rien | `error` | maison |
 | [`test/no-snapshot`](docs/rules/test-no-snapshot.fr.md) | `ddd-ts-kit/test-no-snapshot` | aucun *matcher* de *snapshot* dans un test : un test vérifie les champs dont la règle dépend | `error` | maison |
 | [`events/name-format`](docs/rules/events-name-format.fr.md) | `ddd-ts-kit/events-name-format` | les noms d'événements suivent `<context>.<aggregate>.<fact>` en kebab-case | `error` | maison |
 | [`events/outbox-required`](docs/rules/events-outbox-required.fr.md) | `ddd-ts-kit/events-outbox-required` | aucun client de *broker* et aucun bus concret dans `domain/` et `application/` ; un *publisher* dépend du port `IntegrationEventPublisher` | `error` | maison |
