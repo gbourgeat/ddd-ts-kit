@@ -5,6 +5,7 @@ import { KnexAuditTrail, createAuditTables, dropAuditTables } from '../src/knex'
 import type { AuditTrailOptions } from '../src';
 import { auditTrailContract } from '../src/testing';
 import { startPostgres, type TestPostgres } from './support/postgres';
+import { archiveGuardSpecs, archiveSpecs, type ArchiveFixture } from './support/archive-specs';
 import { sqlTrailSpecs } from './support/sql-trail-specs';
 import { REAL_SERVER, aRecord, type SqlTrailFixture } from './support/sql-trail-fixture';
 
@@ -93,7 +94,7 @@ auditTrailContract(runner, {
 sqlTrailSpecs({ name: 'KnexAuditTrail', real: REAL_SERVER, create: fixture });
 
 describe('createAuditTables', () => {
-  it('creates the two tables, the indexes of the reader and the guard, in the given schema', async () => {
+  it('creates the three tables, the indexes of the reader and the guard, in the given schema', async () => {
     const schema = await freshSchema();
 
     const { rows: indexes } = await db.raw<{ rows: { indexname: string }[] }>(
@@ -106,6 +107,7 @@ describe('createAuditTables', () => {
     );
 
     expect(indexes.map((row) => row.indexname)).toEqual([
+      'audit_archives_pkey',
       'audit_chains_pkey',
       'audit_entries_actor_idx',
       'audit_entries_correlation_idx',
@@ -127,12 +129,29 @@ describe('createAuditTables', () => {
 
     expect(await db.schema.withSchema(schema).hasTable('audit_entries')).toBe(false);
     expect(await db.schema.withSchema(schema).hasTable('audit_chains')).toBe(false);
+    expect(await db.schema.withSchema(schema).hasTable('audit_archives')).toBe(false);
 
     const { rows } = await db.raw<{ rows: unknown[] }>(
-      `select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = ? and p.proname = 'audit_entries_append_only'`,
+      `select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = ? and p.proname in ('audit_entries_append_only', 'audit_archives_append_only')`,
       [schema],
     );
 
     expect(rows).toEqual([]);
   });
 });
+
+/** The way an attacker with access to the database rewrites an entry: the guard set aside. */
+async function tampered(current: SqlTrailFixture, id: string): Promise<void> {
+  await current.run('alter table $table disable trigger "audit_entries_no_rewrite"');
+  await current.run(`update $table set "action" = 'forged' where "id" = '${id}'`);
+  await current.run('alter table $table enable trigger "audit_entries_no_rewrite"');
+}
+
+async function archiveFixture(): Promise<ArchiveFixture> {
+  const created = await fixture();
+
+  return { trail: created.trail, tamper: (id) => tampered(created, id), run: created.run };
+}
+
+archiveSpecs('KnexAuditTrail', archiveFixture);
+archiveGuardSpecs('KnexAuditTrail', archiveFixture);

@@ -66,3 +66,11 @@ export {
 } from './sources/audited-subject-keys';
 export type { AuthorizationDecision } from './sources/authorization-decision';
 export { TenantAuditReader } from './tenancy/tenant-audit-reader';
+export type { ArchivableAuditTrail } from './archive/archivable-audit-trail';
+export type { ArchiveOptions } from './archive/archive-options';
+export type { ArchiveVerification } from './archive/archive-verification';
+export { archiveKeyOf } from './archive/archive-key-of';
+export type { AuditArchive } from './archive/audit-archive';
+export type { AuditArchiveReport } from './archive/audit-archive-report';
+export { AuditArchiveRefusedError } from './archive/audit-archive-refused-error';
+export { verifyArchive } from './archive/verify-archive';
