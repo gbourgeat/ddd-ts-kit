@@ -57,9 +57,33 @@ describe('mutation', () => {
     const held = cli(root, 'mutation');
 
     expect(held.code).toBe(0);
-    expect(held.stdout).toMatch(/^billing\s+4\s+1\s+0\s+1\s+80\.0%\s+80%\s+held$/m);
-    expect(held.stdout).toMatch(/^shipping\s+1\s+0\s+1\s+0\s+100\.0%\s+80%\s+held$/m);
+    expect(held.stdout).toMatch(/^billing\s+domain\s+4\s+1\s+0\s+1\s+80\.0%\s+80%\s+held$/m);
+    expect(held.stdout).toMatch(/^shipping\s+domain\s+1\s+0\s+1\s+0\s+100\.0%\s+80%\s+held$/m);
     expect(held.stdout).toContain('Every context holds its mutation floor.');
+  });
+
+  it('holds the application layer of a context to its own floor, five below the domain, and leaves any other layer out', () => {
+    write(
+      root,
+      REPORT,
+      report({
+        [BILLING]: ['Killed', 'Killed'],
+        'src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts': [
+          'Killed',
+          'Killed',
+          'Killed',
+          'Survived',
+        ],
+        'src/contexts/billing/presentation/http/invoices/issue-invoice/issue-invoice.controller.ts': ['Survived'],
+      }),
+    );
+
+    const held = cli(root, 'mutation');
+
+    expect(held.code).toBe(0);
+    expect(held.stdout).toMatch(/^billing\s+application\s+3\s+1\s+0\s+0\s+75\.0%\s+75%\s+held$/m);
+    expect(held.stdout).toMatch(/^billing\s+domain\s+2\s+0\s+0\s+0\s+100\.0%\s+80%\s+held$/m);
+    expect(held.stdout).not.toContain('presentation');
   });
 
   it('exits 1 while a context is under its floor, naming it and what a survivor means', () => {
@@ -68,7 +92,7 @@ describe('mutation', () => {
     const under = cli(root, 'mutation');
 
     expect(under.code).toBe(1);
-    expect(under.stdout).toContain('1 context(s) under the floor: billing.');
+    expect(under.stdout).toContain('1 layer(s) under the floor: billing (domain).');
     expect(under.stdout).toContain('A survivor is a rule no test states');
   });
 
@@ -84,9 +108,19 @@ describe('mutation', () => {
     expect(scored.code).toBe(1);
 
     expect(scored.json()).toEqual({
-      floor: { domain: 80 },
+      floor: { domain: 80, application: 75 },
       scores: [
-        { context: 'billing', detected: 1, undetected: 1, errors: 0, ignored: 0, score: 50, floor: 80, held: false },
+        {
+          context: 'billing',
+          layer: 'domain',
+          detected: 1,
+          undetected: 1,
+          errors: 0,
+          ignored: 0,
+          score: 50,
+          floor: 80,
+          held: false,
+        },
       ],
     });
   });
@@ -109,7 +143,7 @@ describe('mutation', () => {
     const held = cli(root, 'mutation', '--report', 'reports/night.json');
 
     expect(held.code).toBe(0);
-    expect(held.stdout).toMatch(/^billing\s+1\s+1\s+0\s+0\s+50\.0%\s+50%\s+held$/m);
+    expect(held.stdout).toMatch(/^billing\s+domain\s+1\s+1\s+0\s+0\s+50\.0%\s+50%\s+held$/m);
   });
 });
 
@@ -140,7 +174,7 @@ describe('mutation, the survivors it lists', () => {
     const changed = cli(root, 'mutation', '--changed', 'HEAD');
 
     expect(changed.code).toBe(0);
-    expect(changed.stdout).toMatch(/^shipping\s+1\s+2\s+0\s+0\s+33\.3%\s+\d+%\s+under the floor$/m);
+    expect(changed.stdout).toMatch(/^shipping\s+domain\s+1\s+2\s+0\s+0\s+33\.3%\s+\d+%\s+under the floor$/m);
     expect(changed.stdout).toContain('Survivors in the files changed since HEAD (1):');
     expect(changed.stdout).toContain(`  ${BILLING}:42  ConditionalExpression  true`);
     expect(changed.stdout).not.toContain(SHIPPING);

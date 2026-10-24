@@ -1,10 +1,12 @@
 import { err, ok, type IntegrationEvent, type Result } from '@ddd-ts-kit/kernel';
 import type { Schema } from '@ddd-ts-kit/validation';
+import { assertPersonalPayload } from './assert-personal-payload';
 import type { EventMeta } from './event-meta';
 import type { EventParseError } from './event-parse-error';
 import type { IntegrationEventDefinition } from './integration-event-definition';
 import { InvalidEventDefinitionError } from './invalid-event-definition-error';
 import { InvalidEventPayloadError } from './invalid-event-payload-error';
+import type { PersonalPayload } from './personal-payload';
 
 export interface DefineIntegrationEventOptions<P> {
   /** Routing key, `<context>.<aggregate>.<fact>`, each segment in kebab-case. */
@@ -16,12 +18,18 @@ export interface DefineIntegrationEventOptions<P> {
   /** The bounded context that owns the event. Defaults to the first segment of `type`. */
   readonly producer?: string;
   readonly deprecated?: boolean;
+  /** The fields of the payload that hold personal data, and the field that names whose: read by the catalog, AsyncAPI and the register. */
+  readonly personal?: PersonalPayload;
 }
 
 export function defineIntegrationEvent<P>(options: DefineIntegrationEventOptions<P>): IntegrationEventDefinition<P> {
   const { type, version, payload } = options;
 
   assertTypeAndVersion(type, version);
+
+  if (options.personal !== undefined) {
+    assertPersonalPayload(type, payload, options.personal);
+  }
 
   const contract: EventContract<P> = { type, version, payload };
 
@@ -30,6 +38,7 @@ export function defineIntegrationEvent<P>(options: DefineIntegrationEventOptions
     producer: producerOf(options),
     ...(options.description === undefined ? {} : { description: options.description }),
     deprecated: options.deprecated === true,
+    ...(options.personal === undefined ? {} : { personal: options.personal }),
     create: (input, meta) => createEvent(contract, input, meta),
     parse: (event) => parseEvent(contract, event),
     is(event): event is IntegrationEvent<P> {

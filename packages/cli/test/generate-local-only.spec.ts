@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { KINDS } from '../src/generate/kinds';
 import { SHARED_WRITES } from '../src/generate/shared-writes';
-import { cli, exists, EXPLICIT_STACK, scaffoldEverything, tempDir } from './helpers';
+import { cli, exists, EXPLICIT_STACK, scaffoldEverything, tempDir, type StackFlags } from './helpers';
 import { jsonAt } from './support/json-at';
 import { stringsAt } from './support/strings-at';
 
@@ -62,6 +62,7 @@ const LOCAL_RUNS: readonly (readonly string[])[] = [
   ['representation', 'billing', 'IssueInvoice', 'xml'],
   ['form', 'billing', 'IssueInvoice'],
   ['integration-handler', 'shipping', 'billing', 'billing.invoice.issued', '--force'],
+  ['erasure-handler', 'billing'],
   ['event-handler', 'billing', 'Invoice', 'Cancelled'],
   ['projection', 'shipping', 'InvoicesToShip', 'billing.invoice.issued'],
   ['background-job', 'billing', 'CompileInvoices', '--command', 'CancelInvoice'],
@@ -126,8 +127,7 @@ describe.each([
 
   beforeAll(() => {
     root = tempDir(`local-only-${style}`);
-    scaffoldEverything(root, stack);
-    cli(root, 'generate', 'port', 'billing', 'PriceList');
+    scaffoldWithAPerson(root, stack);
   });
 
   const runs = runsOf(style);
@@ -247,4 +247,12 @@ function runsOf(style: string): readonly (readonly string[])[] {
   return LOCAL_RUNS.filter(
     ([kind = '']) => !CLASSES_ONLY.includes(kind) && (style === 'declared' || !DECLARED_ONLY.includes(kind)),
   );
+}
+
+/** Everything, a port, and a table that keeps a person: the context has an erasure for its erasure handler to call. */
+function scaffoldWithAPerson(root: string, stack: StackFlags | undefined): void {
+  scaffoldEverything(root, stack);
+  cli(root, 'generate', 'port', 'billing', 'PriceList');
+  cli(root, 'generate', 'aggregate', 'billing', 'Payer', '--term', 'Payer=A person who settles an invoice');
+  cli(root, 'generate', 'repository', 'billing', 'Payer', '--personal', 'email');
 }

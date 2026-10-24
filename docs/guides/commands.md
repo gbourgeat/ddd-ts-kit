@@ -394,12 +394,12 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    scripts (docs:generate regenerates it, docs:check compares it, ci:build builds it);
                    --check writes nothing and exits 1 while a client differs from its contract
   todo             those markers as file:line, in the project or in one context
-  mutation         the mutation score of the domain layer of each context, read from the json report the
-                   last stryker run wrote (reports/mutation/mutation.json, or --report <file>), held to
-                   the "mutation" floor of the config (80 by default): detected over detected and
+  mutation         the mutation score of the domain and application layers of each context, read from the
+                   json report the last stryker run wrote (reports/mutation/mutation.json, or --report
+                   <file>), each held to its "mutation" floor of the config (80 and 75 by default): detected over detected and
                    undetected, the errors left out, as Stryker counts, the ignored mutants (the texts of
                    refusals, the code that runs once when the module loads) shown beside, since the
-                   score says nothing about them; exits 1 while a context is under its floor, 2 without
+                   score says nothing about them; exits 1 while a layer is under its floor, 2 without
                    a report. --survivors lists the mutants no test noticed (file:line, mutator, what the
                    code became), each a decision: a test named after the rule, or left alive and said so;
                    --changed <ref>, or DDD_TS_KIT_MUTATION_SINCE in the environment as the job of a pull
@@ -613,6 +613,7 @@ Kinds
   schema <context|shared-kernel> <Name>
   integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]...
   integration-handler <context> <upstreamContext> <eventType> [--name <Name>] [--term "<Term>=<meaning>"]...   (alias: consumer)
+  erasure-handler <context>
   event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--name <Name>] [--term "<Term>=<meaning>"]...
   projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]...   (alias: projector)
   job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--term "<Term>=<meaning>"]...

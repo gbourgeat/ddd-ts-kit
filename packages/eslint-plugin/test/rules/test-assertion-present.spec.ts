@@ -22,6 +22,10 @@ ruleTester.run('test-assertion-present', testAssertionPresent, {
       `${VITEST}it('refuses a second payment', () => { given(anInvoice().paid()).when((invoice) => invoice.pay(at)).thenError('INVOICE_ALREADY_PAID'); });`,
     ),
     at(SPEC, `${VITEST}it('holds its lines', () => { expect.soft(count()).toBe(2); });`),
+    at(
+      SPEC,
+      `${VITEST}import fc from 'fast-check';\nit('overlaps in both directions, for any two slots', () => { fc.assert(fc.property(slots, slots, (one, other) => one.overlaps(other) === other.overlaps(one))); });`,
+    ),
     at(E2E, `${VITEST}it('answers 201', async () => { expectStatus(await client.post('/invoices', body), 201); });`),
     at(SPEC, `${VITEST}it('keeps the invoice', async () => { await assertSaved(repository, 'invoice-1'); });`),
     at(SPEC, `${VITEST}it.todo('refuses a second payment');`),

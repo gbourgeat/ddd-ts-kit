@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d6dececf74c0163f -->
+<!-- translation-of: README.md sha256:5c46fb0c826c422f -->
 
 # @ddd-ts-kit/events
 
@@ -165,6 +165,46 @@ export const orderPlacedV2 = defineIntegrationEvent({
 Un consommateur abonné à la version 1 ignore la version 2, et inversement : les deux cohabitent.
 Le document AsyncAPI liste les deux versions sur le canal du type, et le catalogue marque celle
 qui est dépréciée.
+
+### Les données personnelles d'une charge utile
+
+Une charge utile qui porte des données personnelles le dit, et de qui : `personal` nomme les
+champs qui en tiennent et le champ qui nomme la personne concernée, un identifiant opaque, jamais
+une donnée personnelle lui-même.
+
+<!-- checked sample -->
+```ts
+// contexts/crm/published-language/customer-registered.v1.integration-event.ts
+import { z } from 'zod';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { defineIntegrationEvent } from '@ddd-ts-kit/events';
+
+export const customerRegisteredV1 = defineIntegrationEvent({
+  type: 'crm.customer.registered',
+  version: 1,
+  payload: zodSchema(z.object({ customerId: z.string(), email: z.email(), address: z.object({ city: z.string() }) })),
+  personal: { subject: 'customerId', fields: ['email', 'address.city'] },
+});
+```
+
+Les chemins sont ceux du catalogue (`address.city`, `lines[].recipient`). La déclaration est
+refusée quand elle ne nomme aucun champ, en nomme un deux fois, nomme son sujet comme personnel, ou
+nomme un champ dont le schéma ne documente rien : une déclaration qui ment est pire qu'aucune. Le
+catalogue écrit sous la charge utile quels champs sont personnels et de qui, AsyncAPI étend le
+message de `x-personal-data: { subject, fields }`, et le registre des données personnelles le lit.
+Un consommateur qui copie l'un de ces champs garde une copie de la personne : il la déclare avec
+`personalFields` à côté de son *mapper*, et l'efface quand la plateforme annonce l'effacement de
+cette personne.
+
+Cette annonce est `dataSubjectErasedV1` de `@ddd-ts-kit/kernel`, type
+`privacy.data-subject.erased`, charge utile `{ subjectId, erasedAt }` : l'id de la personne et de personne d'autre (qui a demandé est dans le journal d'audit), des
+identifiants seulement, l'événement n'efface rien par lui-même et ne porte rien à effacer. Il vit
+dans le kernel, puisque la couche application de chaque contexte le traite, et il a la forme d'une
+définition de ce package : le registre, le catalogue, AsyncAPI, `on` et `consume` le prennent comme
+n'importe quelle autre. Un projet généré avec `--privacy on` le publie par l'outbox à la fin de
+`privacy:erase`, et `ddd-ts-kit generate erasure-handler <context>` écrit le *handler* idempotent
+d'un contexte qui efface sa propre copie (page de concept « Les données personnelles dans un
+projet généré »).
 
 ## Publier par l'outbox
 
@@ -567,7 +607,8 @@ par version dont la charge utile est l'enveloppe (`id`, `type`, `version`, `occu
 en Markdown : une section par producteur, un tableau des versions par événement, et les champs
 de la charge utile mis à plat (`customer.email`, `lines[].sku`). Les deux sorties ne dépendent
 que des déclarations, jamais de leur ordre d'enregistrement, si bien qu'on peut les commiter et
-les comparer.
+les comparer. Une déclaration avec `personal` ajoute une ligne sous sa charge utile dans le
+catalogue et `x-personal-data` à son message.
 Un projet généré par la CLI a ce script sous le nom `scripts/events.ts`, avec les deux mêmes
 chemins.
 

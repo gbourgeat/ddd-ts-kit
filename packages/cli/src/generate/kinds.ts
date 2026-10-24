@@ -12,6 +12,7 @@ import { domainErrorKind } from './kinds/domain-error-kind';
 import { domainEventKind } from './kinds/domain-event-kind';
 import { domainServiceKind } from './kinds/domain-service-kind';
 import { e2eKind } from './kinds/e2e-kind';
+import { erasureHandlerKind } from './kinds/erasure-handler-kind';
 import { errorKind } from './kinds/error-kind';
 import { entityKind } from './kinds/entity-kind';
 import { eventHandlerKind } from './kinds/event-handler-kind';
@@ -69,6 +70,7 @@ export const KINDS: readonly Kind[] = [
   schemaKind,
   integrationEventKind,
   integrationHandlerKind,
+  erasureHandlerKind,
   eventHandlerKind,
   projectionKind,
   jobKind,

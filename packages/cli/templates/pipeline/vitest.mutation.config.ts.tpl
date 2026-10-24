@@ -6,7 +6,7 @@ import { decoratorCoverage } from '@ddd-ts-kit/testing/vitest';
 {{/if}}
 import { defineConfig } from 'vitest/config';
 
-// The specs Stryker runs against each mutant of the domain: the unit specs, which need no database and answer in milliseconds; the integration specs would pay a database per mutant for nothing a unit spec does not already notice.
+// The specs Stryker runs against each mutant of the domain or of the application: the unit specs, which need no database and answer in milliseconds; the integration specs would pay a database per mutant for nothing a unit spec does not already notice.
 export default defineConfig({
   {{#if decorators.standard}}
   // Vitest does not lower standard (TC39) decorators, which every class of a declared context carries: the compiler the project builds with does.

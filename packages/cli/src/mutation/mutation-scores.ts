@@ -1,9 +1,13 @@
-import type { Config } from '../config';
+import { type Config, MUTATION_LAYERS } from '../config';
 import type { MutationReport } from './read-mutation-report';
 
-/** What the tests of the domain layer of one context did with its mutants. */
+/** A layer held to a mutation score. */
+type ScoredLayer = (typeof MUTATION_LAYERS)[number];
+
+/** What the tests of one layer of one context did with its mutants. */
 export interface ContextScore {
   readonly context: string;
+  readonly layer: ScoredLayer;
   /** Mutants a test noticed: killed, or run out of time. */
   readonly detected: number;
   /** Mutants no test noticed: survived, or covered by no test at all. */
@@ -34,46 +38,60 @@ const DETECTED = new Set(['Killed', 'Timeout']);
 const UNDETECTED = new Set(['Survived', 'NoCoverage']);
 
 /**
- * The score of the domain layer of each context the report holds, held to the floor of the
- * config. A mutant is counted under the context its file belongs to; a file outside the contexts
- * directory is left out, as `governedMutation` mutates nothing there.
+ * The score of each layer of each context the report holds, held to the floor of the config for
+ * that layer. A mutant is counted under the context and the layer its file belongs to; a file
+ * outside the contexts directory, or outside the layers held, is left out, as `governedMutation`
+ * mutates nothing there.
  */
 export function mutationScores(report: MutationReport, config: Config): ContextScore[] {
   const prefix = `${config.contextsDir}/`;
-  const byContext = new Map<string, Counts>();
+  const counted = new Map<string, Counts>();
 
   for (const [file, mutants] of Object.entries(report)) {
     const context = file.startsWith(prefix) ? file.slice(prefix.length).split('/')[0] : undefined;
+    const layer = layerOf(file);
 
-    if (context === undefined || context === '') {
+    if (context === undefined || context === '' || layer === undefined) {
       continue;
     }
 
-    const counts = byContext.get(context) ?? { detected: 0, undetected: 0, errors: 0, ignored: 0 };
+    const key = `${context}/${layer}`;
 
-    for (const { status } of mutants) {
-      if (DETECTED.has(status)) {
-        counts.detected += 1;
-      } else if (UNDETECTED.has(status)) {
-        counts.undetected += 1;
-      } else if (status === 'Ignored') {
-        counts.ignored += 1;
-      } else {
-        counts.errors += 1;
-      }
-    }
-
-    byContext.set(context, counts);
+    counted.set(key, tallied(mutants, counted.get(key) ?? { detected: 0, undetected: 0, errors: 0, ignored: 0 }));
   }
 
-  return [...byContext.entries()]
+  return [...counted.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
-    .map(([context, counts]) => scored(context, counts, config.mutation.domain));
+    .map(([key, counts]) => scored(key, counts, config));
 }
 
-function scored(context: string, { detected, undetected, errors, ignored }: Counts, floor: number): ContextScore {
+function tallied(mutants: readonly { readonly status: string }[], counts: Counts): Counts {
+  for (const { status } of mutants) {
+    if (DETECTED.has(status)) {
+      counts.detected += 1;
+    } else if (UNDETECTED.has(status)) {
+      counts.undetected += 1;
+    } else if (status === 'Ignored') {
+      counts.ignored += 1;
+    } else {
+      counts.errors += 1;
+    }
+  }
+
+  return counts;
+}
+
+/** The layer a mutated file belongs to: the first layer folder of its path inside the context, in a module of the model too. */
+function layerOf(file: string): ScoredLayer | undefined {
+  return MUTATION_LAYERS.find((layer) => file.includes(`/${layer}/`));
+}
+
+function scored(key: string, { detected, undetected, errors, ignored }: Counts, config: Config): ContextScore {
+  const [context = '', found] = key.split('/');
+  const layer = MUTATION_LAYERS.find((candidate) => candidate === found) ?? 'domain';
+  const floor = config.mutation[layer];
   const judged = detected + undetected;
   const score = judged === 0 ? 100 : (100 * detected) / judged;
 
-  return { context, detected, undetected, errors, ignored, score, floor, held: score >= floor };
+  return { context, layer, detected, undetected, errors, ignored, score, floor, held: score >= floor };
 }

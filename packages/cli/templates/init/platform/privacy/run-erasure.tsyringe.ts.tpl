@@ -1,8 +1,15 @@
 import type { Application as Container } from '@ddd-ts-kit/di';
 import {
+  Clock,
   ExecutionScope,
+  IdGenerator,
+  IntegrationEventPublisher,
 {{#if eventSourcing.on}}
   SubjectKeyStore,
+{{/if}}
+  dataSubjectErasedV1,
+{{#if tenancy.any}}
+  eachTenant,
 {{/if}}
   eraseDataSubject,
   executionContext,
@@ -49,8 +56,8 @@ export function runErasure(subject: string, request: ErasureRequest): Promise<Da
   const scope = container.resolve(ExecutionScope);
   const context = executionContext({ correlationId, actor: operatorActor(operator), origin: 'cli' });
 
-  return scope.run(context, () =>
-    eraseDataSubject(subject, {
+  return scope.run(context, async () => {
+    const report = await eraseDataSubject(subject, {
 {{#if eventSourcing.on}}
       // TODO(platform): once a projection is fed by the event store, give `rebuilds` the rebuild of each one: a projection keeps a clear copy of the person until it is rebuilt.
       keys: container.resolve(SubjectKeyStore),
@@ -59,8 +66,37 @@ export function runErasure(subject: string, request: ErasureRequest): Promise<Da
 {{#if tenancy.any}}
       inEveryTenant: inEachTenant(scope, request.tenants),
 {{/if}}
-    }),
-  );
+    });
+
+    await announceErasure(subject, request);
+
+    return report;
+  });
+}
+
+/**
+ * Once every copy is erased, `privacy.data-subject.erased` goes to the outbox{{#if tenancy.any}}, once per tenant{{/if}}: a context that
+ * runs as a service of its own, or a system that copied the person from an integration event, erases
+ * its copy on its side (GDPR article 19). It names the person by id and nobody else: who asked is in
+ * the audit trail, under the correlation id the event carries. The relay of the application delivers it; an erasure that
+ * failed publishes nothing, and running it again does.
+ */
+async function announceErasure(subject: string, request: ErasureRequest): Promise<void> {
+  const { container } = request;
+  const publisher = container.resolve(IntegrationEventPublisher);
+  const ids = container.resolve(IdGenerator);
+  const erasedAt = container.resolve(Clock).now();
+  const payload = { subjectId: subject, erasedAt: erasedAt.toISOString() };
+  const event = () => dataSubjectErasedV1.create(payload, { id: ids.next(), occurredAt: erasedAt });
+  const publish = () => publisher.publish([event()]);
+{{#if tenancy.any}}
+
+  await eachTenant(container.resolve(ExecutionScope), request.tenants, publish);
+{{/if}}
+{{#unless tenancy.any}}
+
+  await publish();
+{{/unless}}
 }
 
 function operatorActor(id: string): Actor {

@@ -798,8 +798,8 @@ export default {
 };
 ```
 
-`governedMutation()` mutates the domain layer of every context, at its level and in the modules of
-its model, the generated declarations left out; it loads the ignorer of the kit (`appendPlugins`,
+`governedMutation()` mutates the domain and application layers of every context, at their level and
+in the modules of its model, the generated declarations left out; it loads the ignorer of the kit (`appendPlugins`,
 `ignorers`), which leaves the texts of refusals out, the message of `refusal(..)`, a text handed to
 a factory of a refusal (`InvalidSlot.forRule('ends after it starts')`), the message of `super(..)`
 in an error class and of `new ..Error(..)`, since a test of the kit asserts a refusal by its code
@@ -812,19 +812,20 @@ context to the floor, as the coverage holds each context to its thresholds. The 
 every night, not on a pull request.
 
 ```json
-"mutation": { "domain": 90 }
+"mutation": { "domain": 90, "application": 80 }
 ```
 
 | Layer | Reference | Why this floor |
 |---|---|---|
 | `domain` | 80 | pure code that holds the rules of the business: a mutant its tests do not notice is a rule no test states. The example application reaches 96.3 with the shipped configuration, its lowest context 95.4 |
+| `application` | 75 | the use cases: the permission a command requires, the idempotence of a handler, the event it publishes, the refusal it relays; five below the domain, as the coverage reference steps down from one layer to the next. The example application reaches 95.7, its lowest context 93.5 |
 
 - **Raising the floor is free. Lowering it under the reference is a deviation** (`governance/recorded-deviation`) with its decision record, `"what": "mutation.domain"`.
-- **Each context is held on its own**: `ddd-ts-kit mutation` scores the domain layer of every context the report holds, as Stryker does (detected over detected and undetected, the errors left out), and exits 1 while one is under the floor.
+- **Each layer of each context is held on its own**: `ddd-ts-kit mutation` scores the domain and application layers of every context the report holds, as Stryker does (detected over detected and undetected, the errors left out), and exits 1 while one is under its floor.
 - **The measure cannot be narrowed quietly** (`test/mutation-governed`): no `mutate`, `mutator`, `ignorers`, `ignoreStatic` or `thresholds` by hand in the Stryker config.
 - **What the score says nothing about.** The texts of refusals, and the static mutants: a rule written as a declaration at the top of a file, the transitions of a state machine, a business constant, a regular expression, is never mutated, and a wrong transition in such a table lowers no score. The test that states such a rule is its only proof; `ddd-ts-kit mutation` shows the ignored mutants of each context beside its score. A text of a refusal that a helper returns before the factory is called is not recognised and survives: throw where the rule is checked, or leave it alive and say why. On the example, 163 of the 1436 mutants are ignored: 73 texts of refusals and 90 static ones, the declaration of the appointment state machine among them; every other string of the domain is measured.
 - **On both runners.** A project on Vitest runs the unit specs of `vitest.mutation.config.ts` against each mutant; a project on Jest those of `jest.mutation.config.js`, as ES modules under the flag the `test` script passes (`testRunnerNodeArgs`), Jest running the specs that import the mutated file.
-- **On a pull request, a reading of the change.** The `mutation-changed` job runs Stryker incrementally: `DDD_TS_KIT_MUTATION_SINCE` names the merge base of the change, `governedMutation()` turns `incremental` on, and the results of the last night, kept with its report (`reports/mutation/incremental.json`), are reused for what the change leaves alone, so that the run takes the time of its initial test run, about a minute on the example instead of five. Stryker diffs the mutated sources and the specs alone: when the change touches other code the tests lean on, a fake, a builder, a world, the platform, a dependency, `force` makes it a whole run. Then `ddd-ts-kit mutation`, which reads the same variable (`--changed <ref>` says it by hand), lists the survivors of the files the change touched and exits 0 whatever the scores: a reading before the review, never a gate, the floor being held by the night. `--survivors` lists every survivor of the report.
+- **On a pull request, a reading of the change.** The `mutation-changed` job runs Stryker incrementally: `DDD_TS_KIT_MUTATION_SINCE` names the merge base of the change, `governedMutation()` turns `incremental` on, and the results of the last night, kept with its report (`reports/mutation/incremental.json`), are reused for what the change leaves alone, so that the run takes the time of its initial test run, about a minute on the example instead of five. Stryker diffs the mutated sources (the domain and application layers) and the specs alone: when the change touches other code the tests lean on, a route, an adapter, a fake, a builder, a world, the platform, a dependency, `force` makes it a whole run, about five minutes on the example, so that no stale result is reused. The fast reading is for a change kept to the model, the use cases and their specs; most feature pull requests also touch a route and get the whole run, still a reading and never a gate. Then `ddd-ts-kit mutation`, which reads the same variable (`--changed <ref>` says it by hand), lists the survivors of the files the change touched and exits 0 whatever the scores: a reading before the review, never a gate, the floor being held by the night. `--survivors` lists every survivor of the report.
 
 ## Limits
 

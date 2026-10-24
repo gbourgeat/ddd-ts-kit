@@ -217,7 +217,7 @@ are a floor per context and layer, not a goal; a test written to move a number p
 Each spec file is held to the time budget of its level, five seconds for a unit spec and thirty for an
 integration spec by the reference: the runner names the slowest at the end of a run and warns over the budget, failing once the project sets `"enforce": true`. A slow unit spec is a world to share or a fake to write, never a budget to raise.
 
-The night runs `npm run test:mutation`: Stryker on the domain layer of every context, the texts of
+The night runs `npm run test:mutation`: Stryker on the domain and application layers of every context, the texts of
 its refusals left out and its static mutants ignored, then each context held to the `mutation` floor
 of the config, the ignored mutants shown beside the score. A survivor is a rule no test states: read it
 as a business decision, then state it in a test named after it, or leave the mutant alive and say
@@ -229,6 +229,15 @@ the factory is called is measured and survives: throw where the rule is checked.
 the `mutation-changed` job lists the survivors of the files you changed (`ddd-ts-kit mutation
 --changed <base>`, `--survivors` for all of them): read them before asking for a review, each a rule
 to state or a survivor to leave alive and say so.
+
+A law a value object holds for every value is stated once, as a property with `fast-check`, added
+with the first one (`npm i -D fast-check`):
+`fc.assert(fc.property(anyRange(), anyRange(), (one, other) => one.overlaps(other) === other.overlaps(one)))`,
+the title stating the law (`overlaps another range in both directions or in none, for any two ranges`),
+the arbitrary a small helper of the spec built on the factories of the model, so that every generated
+value is one the model accepts. A property is for an invariant, a symmetry, a round trip or an
+idempotence of the model; a use case is stated by its scenarios with named values. Every value object
+spec the generator writes ends with the planned rule that asks for one.
 
 Finish with `npm test -- <context>`, `npm run lint` (the shape of the tests), `npm run test:coverage`
 before the slice is closed, and
