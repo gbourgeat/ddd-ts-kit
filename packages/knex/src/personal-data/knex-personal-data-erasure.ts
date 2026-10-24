@@ -6,6 +6,7 @@ import {
   isDataSubjectId,
   pseudonymisedValueOf,
   tenantScopeOf,
+  type ExecutionScope,
   type PersonalDataErasure,
 } from '@ddd-ts-kit/kernel';
 import { tableIn } from '../tenancy/table-in';
@@ -15,6 +16,12 @@ import type { KnexPersonalDataErasureOptions } from './knex-personal-data-erasur
 import type { KnexPersonalFields } from './knex-personal-fields';
 
 type Changes = Readonly<Record<string, string | null>>;
+
+/** The rows sought: the ones of one subject in one declared table. */
+interface About {
+  readonly declaration: KnexPersonalFields;
+  readonly subject: string;
+}
 
 /** What the catalogue says of a column: its SQL type, and whether it accepts null. */
 interface Column {
@@ -65,11 +72,11 @@ export class KnexPersonalDataErasure implements PersonalDataErasure {
 
     await this.deleteFilesOf(declaration, subject);
 
+    const rows = rowsOf(this.context, { declaration, subject }, this.options.tenant);
+
     return changes === undefined
-      ? this.rowsOf(declaration, subject).delete()
-      : this.rowsOf(declaration, subject)
-          .where((reached) => notYetErased(reached, changes))
-          .update(changes);
+      ? rows.delete()
+      : rows.where((reached) => notYetErased(reached, changes)).update(changes);
   }
 
   /** The content first, then the reference: a row that still names a deleted file is run again, a file nothing names is lost. */
@@ -81,7 +88,7 @@ export class KnexPersonalDataErasure implements PersonalDataErasure {
       return;
     }
 
-    const rows: unknown = await this.rowsOf(declaration, subject)
+    const rows: unknown = await rowsOf(this.context, { declaration, subject }, this.options.tenant)
       .select(files)
       .where((named) => {
         for (const file of files) {
@@ -122,16 +129,6 @@ export class KnexPersonalDataErasure implements PersonalDataErasure {
     return changes;
   }
 
-  /** The rows about the subject, in the tenant of the work when the table holds tenant data. */
-  private rowsOf(declaration: KnexPersonalFields, subject: string): Knex.QueryBuilder {
-    const { tenant } = this.options;
-    const rows = tableIn(this.context, declaration.table).where(declaration.subject, subject);
-
-    return tenant === undefined
-      ? rows
-      : rows.where(declaration.table.column ?? TENANT_COLUMN, tenantScopeOf(tenant).tenantId);
-  }
-
   /** What the catalogue says of each column of the table, read once: a text is pseudonymised, anything else emptied. */
   private columnsOf({ table }: KnexPersonalFields): Promise<Readonly<Record<string, Column>>> {
     const name = `${table.schema ?? ''}.${table.table}`;
@@ -156,6 +153,24 @@ export class KnexPersonalDataErasure implements PersonalDataErasure {
 }
 
 /** A row is reached while one personal column still holds something: a text other than the marker, any other value, a file. */
+/**
+ * The rows about the subject, in the tenant of the work when the table holds tenant data. A
+ * function and not a method: a query builder is thenable, and a method that answers one is read
+ * as asynchronous by what wraps the adapter once it is bound (tracing, the aspects), which then
+ * answers a promise in its place.
+ */
+function rowsOf(
+  context: KnexContext,
+  { declaration, subject }: About,
+  tenant: ExecutionScope | undefined,
+): Knex.QueryBuilder {
+  const rows = tableIn(context, declaration.table).where(declaration.subject, subject);
+
+  return tenant === undefined
+    ? rows
+    : rows.where(declaration.table.column ?? TENANT_COLUMN, tenantScopeOf(tenant).tenantId);
+}
+
 function notYetErased(reached: Knex.QueryBuilder, changes: Changes): void {
   for (const [column, erased] of Object.entries(changes)) {
     if (erased === null) {

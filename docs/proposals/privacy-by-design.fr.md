@@ -1,5 +1,5 @@
 [English](privacy-by-design.md) · **Français**
-<!-- translation-of: privacy-by-design.md sha256:179456040ee29e5b -->
+<!-- translation-of: privacy-by-design.md sha256:c1a1f59dbb8e42d9 -->
 
 # Proposition : la protection des données dès la conception, au-delà de l'*event sourcing*
 
@@ -20,7 +20,7 @@ garantie légale.
 
 ## État (2026-10-24)
 
-Les parties 0, 0b, 1, 2, 3 et 4 sont construites. Les parties, dans l'ordre de fusion ; chacune est une
+Les parties 0, 0b, 1, 2, 3, 4 et 5 sont construites. Les parties, dans l'ordre de fusion ; chacune est une
 *pull request* à part, avec ses tests, sa documentation dans les deux langues, ses *skills* et
 son fichier de `changes/`.
 
@@ -32,14 +32,14 @@ son fichier de `changes/`.
 | 2. `subjectMasker` du journal d'audit, une clé par personne concernée | **construite** (#270) : `subjectMasker(keys)` sur le `SubjectKeyStore`, `masked(field, { subject })`, le refus au câblage d'un champ masqué sans sujet et, avant toute clé, d'un sujet qui n'est pas un identifiant opaque |
 | 3. L'adaptateur d'effacement sur les quatre ORM, modèles de lecture compris | **construite** (#271) : `KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`, chacun sous la suite de contrat, le *tenant* confiné, les fichiers supprimés d'abord ; un modèle de lecture est une table comme une autre |
 | 4. `init` écrit `src/platform/privacy/` et câble l'*event sourcing* | **construite** (#274, puis les deux choix) : `--privacy on`, le défaut avec un ORM, écrit `src/platform/privacy/` (les listes des copies et des exports, `run-erasure.ts` et `run-export.ts`) et les scripts `privacy:erase` et `privacy:export` ; `--event-sourcing on`, off sauf demande, câble `Persistence.eventSourcing` sur les quatre ORM et en mémoire, et `src/platform/event-sourcing/` (les clés auditées, le chiffre, le module ou `platform.eventSourcing`) ; un projet sans donnée personnelle ne paie rien, un projet dont les agrégats sont des lignes ne paie aucune table ; pas encore de commande HTTP |
-| 5. `generate repository` et `generate projection` déclarent les champs personnels | proposée |
+| 5. `generate repository` et `generate projection` déclarent les champs personnels | **construite** pour les *repositories* : `generate repository <ctx> <Aggregate> --personal <colonne>,... [--subject <colonne>] [--erasure pseudonymise\|row]` ajoute les colonnes au stockage, écrit la déclaration à côté du *mapper* sur les quatre ORM et, une fois par contexte, l'effacement qui la lit (port, adaptateur sur `<Orm>PersonalDataErasure`, *fake*, *spec* sur la base de test, listé dans les copies de la plateforme). Une projection garde ses lignes dans un *read model store*, pas dans une table à elle : la déclaration d'un *read model* attend le registre (partie 9), qui lira ce que le *store* garde |
 | 6. L'événement d'effacement, son gestionnaire généré, `personal` sur un événement d'intégration | proposée |
 | 7. La conservation sur la déclaration, le *job* de purge généré | proposée |
 | 8. `archiveBefore` sur le journal d'audit | proposée |
 | 9. Le registre généré des données personnelles | proposée |
 | 10. Les règles `privacy/*`, en avertissement d'abord | proposée |
 | 11. L'exemple adopte les ports du kit | proposée |
-| 12. La page de concept, les pages qu'elle touche, la formulation publique | proposée |
+| 12. La page de concept, les pages qu'elle touche, la formulation publique | **commencée** avec la partie 5 : [la page de concept](../concepts/personal-data.fr.md) dit ce qu'un projet généré contient, l'effacement de bout en bout, ce qui reste hors de portée et ce que l'outil ne décide pas ; le README et les autres pages viennent avec cette partie |
 
 ## Ce que le kit fait aujourd'hui
 

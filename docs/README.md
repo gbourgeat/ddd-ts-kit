@@ -61,6 +61,7 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [Sagas and process managers](concepts/sagas-and-process-managers.md) | long-running processes: what the kit provides and what it does not |
 | [Event versioning](concepts/event-versioning.md) | evolving a published event |
 | [Event sourcing, per aggregate](concepts/event-sourcing.md) | when to keep an aggregate as its events, what it costs, upcasters, crypto-shredding, projections fed by the store, migrating to it and back |
+| [Personal data in a generated project](concepts/personal-data.md) | what `init --privacy on` and `generate repository --personal` write, the erasure of a person end to end, the two modes of erasure, what stays out of reach and what the tool does not decide |
 | [Authentication and authorization](concepts/authentication-and-authorization.md) | RBAC, ABAC, ReBAC compared, with a decision table |
 | [Authorization in practice](concepts/authorization-in-practice.md) | `@Requires`, the bus middleware, the `Authorizer` port and policies, followed through one command |
 | [Actor and execution scope](concepts/actor-and-execution-scope.md) | the explicit actor, and what every unit of work carries |

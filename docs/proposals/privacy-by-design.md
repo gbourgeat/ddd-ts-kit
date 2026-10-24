@@ -17,7 +17,7 @@ as a legal guarantee.
 
 ## Status (2026-10-24)
 
-Parts 0, 0b, 1, 2, 3 and 4 are built. The parts, in merge order; each is a pull request of its own
+Parts 0, 0b, 1, 2, 3, 4 and 5 are built. The parts, in merge order; each is a pull request of its own
 with its tests, its documentation in both languages, its skills and its file of `changes/`.
 
 | Part | Verdict |
@@ -28,14 +28,14 @@ with its tests, its documentation in both languages, its skills and its file of 
 | 2. `subjectMasker` of the audit trail, one key per data subject | **built** (#270): `subjectMasker(keys)` over the `SubjectKeyStore`, `masked(field, { subject })`, the refusal at wiring time of a masked field without a subject and, before any key, of a subject that is not an opaque id |
 | 3. The erasure adapter on the four ORMs, read models included | **built** (#271): `KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`, each under the contract suite, the tenant confined, the files deleted first; a read model is a table like any other |
 | 4. `init` writes `src/platform/privacy/` and wires event sourcing | **built** (#274, then the two choices): `--privacy on`, the default with an ORM, writes `src/platform/privacy/` (the lists of copies and exports, `run-erasure.ts` and `run-export.ts`) and the scripts `privacy:erase` and `privacy:export`; `--event-sourcing on`, off unless asked, wires `Persistence.eventSourcing` on the four ORMs and in memory, and `src/platform/event-sourcing/` (the audited keys, the cipher, the module or `platform.eventSourcing`); a project without personal data pays nothing, one whose aggregates are rows pays no table; no HTTP command yet |
-| 5. `generate repository` and `generate projection` declare the personal fields | proposed |
+| 5. `generate repository` and `generate projection` declare the personal fields | **built** for the repositories: `generate repository <ctx> <Aggregate> --personal <column>,... [--subject <column>] [--erasure pseudonymise\|row]` adds the columns to the storage, writes the declaration next to the mapper on the four ORMs and, once per context, the erasure that reads it (port, adapter over `<Orm>PersonalDataErasure`, fake, spec on the test database, listed in the copies of the platform). A projection keeps its rows in a read model store, not in a table of its own: the declaration of a read model waits for the register (part 9), which will read what the store keeps |
 | 6. The erasure event, its generated handler, `personal` on an integration event | proposed |
 | 7. Retention on the declaration, the generated purge job | proposed |
 | 8. `archiveBefore` on the audit trail | proposed |
 | 9. The generated register of personal data | proposed |
 | 10. The `privacy/*` rules, as warnings first | proposed |
 | 11. The example adopts the ports of the kit | proposed |
-| 12. The concept page, the pages it touches, the public wording | proposed |
+| 12. The concept page, the pages it touches, the public wording | **started** with part 5: [the concept page](../concepts/personal-data.md) says what a generated project holds, the erasure end to end, what stays out of reach and what the tool does not decide; the README and the other pages come with this part |
 
 ## What the kit does today
 

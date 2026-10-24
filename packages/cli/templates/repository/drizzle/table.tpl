@@ -13,6 +13,9 @@ export const {{aggregate.tableCamel}} = {{context.camel}}Schema.table(
   {
     id: text('id').primaryKey(),
     registeredAt: timestamp('registered_at', { withTimezone: true, mode: 'date' }).notNull(),
+{{#if personal.any}}
+{{personal.drizzleTenantTable}}
+{{/if}}
     // TODO(domain): add one column per field of {{aggregate.pascal}}State, with the type and the constraints the storage must enforce; then run `npm run db:generate <what-it-does>`.
     version: integer('version').notNull(),
     ...tenantColumn(),
@@ -25,6 +28,9 @@ export const {{aggregate.tableCamel}} = {{context.camel}}Schema.table(
 export const {{aggregate.tableCamel}} = {{context.camel}}Schema.table('{{aggregate.table}}', {
   id: text('id').primaryKey(),
   registeredAt: timestamp('registered_at', { withTimezone: true, mode: 'date' }).notNull(),
+{{#if personal.any}}
+{{personal.drizzleTable}}
+{{/if}}
   // TODO(domain): add one column per field of {{aggregate.pascal}}State, with the type and the constraints the storage must enforce; then run `npm run db:generate <what-it-does>`.
   version: integer('version').notNull(),
   ...auditColumns(),

@@ -260,8 +260,10 @@ mapper with
 {{/unless}}
 `personalFields` of `@ddd-ts-kit/kernel`, erases it through a port that extends
 `PersonalDataErasure`, and lists that port in `{{config.platformDir}}/privacy/data-subject-copies.ts`
-(its `PersonalDataExport` port in `data-subject-exports.ts`). Two scripts answer the requests of a
-person, on the sources, with the variables of `.env`:
+(its `PersonalDataExport` port in `data-subject-exports.ts`); `npx ddd-ts-kit generate repository
+<context> <Aggregate> --personal <column>,...` writes the columns, the declaration and, once per
+context, that port, its adapter, its fake, its spec and its line here. Two scripts answer the
+requests of a person, on the sources, with the variables of `.env`:
 
 ```bash
 npm run privacy:erase -- <subject-id> --operator <who-asks>     # {{#if eventSourcing.on}}the key, then {{/if}}every declared copy{{#if tenancy.any}}, in each tenant of TENANTS{{/if}}

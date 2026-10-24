@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:c12ab17c25cda57e -->
+<!-- translation-of: ARCHITECTURE.md sha256:bdb8ba3f5db292d2 -->
 
 # Référence de l'architecture
 
@@ -119,7 +119,7 @@ src/
         publishers/              *.publisher.ts    (de l'événement du domaine à l'événement d'intégration)
         handlers/                *.integration-handler.ts (de l'événement d'intégration à la commande)
     infrastructure/
-      persistence/               adaptateurs *.repository.ts, *.mapper.ts, *.reader.ts, *.schema.ts
+      persistence/               adaptateurs *.repository.ts, *.mapper.ts, *.reader.ts, *.schema.ts, *.personal-fields.ts
       external/                  adaptateurs des systèmes extérieurs
       anti-corruption/           traducteurs du modèle d'un autre contexte ou système
     presentation/

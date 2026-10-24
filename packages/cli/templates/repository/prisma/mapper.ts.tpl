@@ -21,6 +21,16 @@ export const {{aggregate.pascal}}Mapper = {
 
   toRow(saved: {{aggregate.pascal}}): {{aggregate.pascal}}Columns {
     // TODO(domain): flatten each value object of {{aggregate.pascal}}State into its fields; nothing of the row type leaves this file.
+{{#if personal.any}}
+    return {
+      id: saved.id,
+      ...saved.toState(),
+      // What the table keeps of the person, as its personal fields declare it: written here once the aggregate carries it, empty until then.
+{{personal.nullColumns}}
+    };
+{{/if}}
+{{#unless personal.any}}
     return { id: saved.id, ...saved.toState() };
+{{/unless}}
   },
 };
