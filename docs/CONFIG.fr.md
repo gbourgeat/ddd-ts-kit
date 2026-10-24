@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:a13f1701602c3e15 -->
+<!-- translation-of: CONFIG.md sha256:30e324e0f86e6918 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -790,7 +790,7 @@ Chaque fichier de *spec* est tenu au budget de temps de son niveau, en milliseco
 lanceur de tests (`@ddd-ts-kit/testing/budget/vitest`, `@ddd-ts-kit/testing/budget/jest`, nommé dans
 la config du lanceur qu'écrit `init` et passé avec `--reporter` là où le *pipeline* nomme ses
 reporters) lit la clé, nomme la *spec* la plus lente de chaque niveau à la fin de chaque exécution, et
-avertit quand un fichier de *spec* a pris plus que son budget, collecte et tests compris ; avec `"enforce": true` sous `budget`, il fait échouer l'exécution à la place. Une durée dépend de la charge de la machine autant que de la *spec* : imposez le budget une fois les mesures du projet stables. Une *spec* unitaire d'un contexte fait tourner le modèle et les cas d'usage sur des *fakes* ;
+avertit quand un fichier de *spec* a pris plus que son budget, ses tests et ses *hooks* chronométrés, le chargement de ses modules laissé de côté (l'import du graphe de l'application, partagé par les fichiers et payé par celui qui tourne le premier) ; avec `"enforce": true` sous `budget`, il fait échouer l'exécution à la place. Une durée dépend de la charge de la machine autant que de la *spec* : imposez le budget une fois les mesures du projet stables. Une *spec* unitaire d'un contexte fait tourner le modèle et les cas d'usage sur des *fakes* ;
 une *spec* d'intégration d'un contexte, et une *spec* de la plateforme, ouvre une base de données ou
 atteint un serveur. Les *specs* de l'application hors des contextes (bout en bout, acceptation,
 architecture) ne sont pas tenues : un flux a le temps qu'il lui faut.

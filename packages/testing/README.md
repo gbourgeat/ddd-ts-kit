@@ -1037,8 +1037,7 @@ export default defineConfig({
 - A spec under `test/integration/` of a context, and a spec of the platform, are held to the
   integration budget; every other spec of the contexts to the unit budget; the specs of the
   application outside the contexts (`test/e2e`, `test/acceptance`, `test/architecture`) to none.
-- The time of a spec file is its collection and its tests and hooks together under Vitest, the run
-  of the file under Jest.
+- The time of a spec file is the time of its tests and hooks, the loading of its modules left out: that is the import of the graph of the application, shared by the files and paid by whichever runs first.
 - `@ddd-ts-kit/testing/budget` gives the reading to a tool of your own: `budgetSettings(root)`,
   `levelOf(file)`, `overBudget(specs, budget)`, `budgetLines(reading, budget)`, and
   `REFERENCE_BUDGET`.

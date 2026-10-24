@@ -763,7 +763,7 @@ deviation:
 Each spec file is held to the time budget of its level, in milliseconds. The reporter of the test
 runner (`@ddd-ts-kit/testing/budget/vitest`, `@ddd-ts-kit/testing/budget/jest`, named in the runner
 config `init` writes and passed with `--reporter` where the pipeline names its reporters) reads the
-key, names the slowest spec of each level at the end of every run, and warns when a spec file took more than its budget, collection and tests together; with `"enforce": true` under `budget` it fails the run instead. A duration depends on the load of the machine as much as on the spec: enforce the budget once the measures of the project are stable. A unit spec of a context runs the model and
+key, names the slowest spec of each level at the end of every run, and warns when a spec file took more than its budget, its tests and hooks timed, the loading of its modules left out (the import of the graph of the application, shared by the files and paid by whichever runs first); with `"enforce": true` under `budget` it fails the run instead. A duration depends on the load of the machine as much as on the spec: enforce the budget once the measures of the project are stable. A unit spec of a context runs the model and
 the use cases on fakes; an integration spec of a context, and a spec of the platform, opens a database
 or reaches a server. The specs of the application outside the contexts (end to end, acceptance,
 architecture) are not held: a flow has the time it needs.

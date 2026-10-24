@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:413c9a13b52b3bb4 -->
+<!-- translation-of: README.md sha256:22d2e4a4e0b90005 -->
 
 # @ddd-ts-kit/testing
 
@@ -1047,8 +1047,7 @@ export default defineConfig({
 - Une *spec* sous `test/integration/` d'un contexte, et une *spec* de la plateforme, sont tenues au
   budget d'intégration ; toute autre *spec* des contextes au budget unitaire ; les *specs* de
   l'application hors des contextes (`test/e2e`, `test/acceptance`, `test/architecture`) à aucun.
-- Le temps d'un fichier de *spec* est sa collecte et ses tests et *hooks* ensemble sous Vitest,
-  l'exécution du fichier sous Jest.
+- Le temps d'un fichier de *spec* est le temps de ses tests et de ses *hooks*, le chargement de ses modules laissé de côté : c'est l'import du graphe de l'application, partagé par les fichiers et payé par celui qui tourne le premier.
 - `@ddd-ts-kit/testing/budget` donne la lecture à un outil à vous : `budgetSettings(root)`,
   `levelOf(file)`, `overBudget(specs, budget)`, `budgetLines(reading, budget)` et
   `REFERENCE_BUDGET`.

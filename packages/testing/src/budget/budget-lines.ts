@@ -46,7 +46,7 @@ export function budgetLines(
   return {
     lines: [
       ...lines,
-      `Warning: ${overrun} The run is not failed: set "enforce": true under "budget" in ddd-ts-kit.config.json once the measures are stable.`,
+      `Warning: ${overrun} The run passes: set "enforce": true under "budget" in ddd-ts-kit.config.json once the measures are stable.`,
     ],
     failure: undefined,
   };

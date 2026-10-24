@@ -4,11 +4,15 @@ import { budgetSettings } from './budget-settings';
 import { levelOf } from './level-of';
 import { overBudget, type TimedSpec } from './over-budget';
 
-/** What the reporter reads of the results Jest aggregates: each test file with the instants its run started and ended. */
+/**
+ * What the reporter reads of the results Jest aggregates: each test file with the time of each of its
+ * tests. The loading of its modules is left out: it is the import of the graph of the application,
+ * shared by the files and paid by whichever runs first, not the cost of the spec.
+ */
 interface AggregatedResults {
   readonly testResults: readonly {
     readonly testFilePath: string;
-    readonly perfStats: { readonly start: number; readonly end: number };
+    readonly testResults: readonly { readonly duration?: number | null }[];
   }[];
 }
 
@@ -45,11 +49,13 @@ export class JestDurationBudgetReporter {
   }
 
   private timed(results: AggregatedResults): TimedSpec[] {
-    return results.testResults.flatMap(({ testFilePath, perfStats }) => {
+    return results.testResults.flatMap(({ testFilePath, testResults }) => {
       const file = path.relative(this.root, testFilePath).replaceAll('\\', '/');
       const level = levelOf(file);
 
-      return level === undefined ? [] : [{ file, level, duration: Math.round(perfStats.end - perfStats.start) }];
+      const duration = testResults.reduce((total, test) => total + (test.duration ?? 0), 0);
+
+      return level === undefined ? [] : [{ file, level, duration: Math.round(duration) }];
     });
   }
 }
