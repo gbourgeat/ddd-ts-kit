@@ -11,6 +11,9 @@ type Environment = Readonly<Record<string, string | undefined>>;
  */
 export function jobSettings(environment: Environment, context?: string): Readonly<Record<string, JobSettings>> {
   const settings: Readonly<Record<string, JobSettings>> = {
+{{#if audit.archive}}
+    'audit.archive': { enabled: environment['JOB_AUDIT_ARCHIVE_ENABLED'] !== 'false' },
+{{/if}}
     // ddd-ts-kit:jobs
     // /ddd-ts-kit:jobs
   };

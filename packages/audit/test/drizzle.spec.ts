@@ -5,11 +5,18 @@ import { getTableConfig } from 'drizzle-orm/pg-core';
 import pg from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createDrizzleUnitOfWork } from '@ddd-ts-kit/drizzle/postgres';
-import { DrizzleAuditTrail, auditChainsTable, auditEntriesTable, auditGuardStatements } from '../src/drizzle';
+import {
+  DrizzleAuditTrail,
+  auditArchivesTable,
+  auditChainsTable,
+  auditEntriesTable,
+  auditGuardStatements,
+} from '../src/drizzle';
 import { verifyChain, type AuditTrailOptions } from '../src';
 import { auditTrailContract } from '../src/testing';
 import { createTableSql } from './support/drizzle-ddl';
 import { startPostgres, type TestPostgres } from './support/postgres';
+import { archiveGuardSpecs, archiveSpecs, type ArchiveFixture } from './support/archive-specs';
 import { sqlTrailSpecs } from './support/sql-trail-specs';
 import { REAL_SERVER, aRecord, type SqlTrailFixture } from './support/sql-trail-fixture';
 
@@ -42,6 +49,7 @@ function migrationOf(schema?: string): string[] {
   return [
     ...createTableSql(auditChainsTable(schema)),
     ...createTableSql(auditEntriesTable(schema)),
+    ...createTableSql(auditArchivesTable(schema)),
     ...auditGuardStatements(schema),
   ];
 }
@@ -99,7 +107,7 @@ auditTrailContract(runner, {
   name: 'DrizzleAuditTrail in the public schema',
   createTrail: async () => {
     await pool.query(
-      'drop table if exists "audit_entries", "audit_chains"; drop function if exists "audit_entries_append_only"()',
+      'drop table if exists "audit_entries", "audit_chains", "audit_archives"; drop function if exists "audit_entries_append_only"(); drop function if exists "audit_archives_append_only"()',
     );
 
     for (const statement of migrationOf()) {
@@ -136,7 +144,7 @@ describe('table definitions', () => {
     const { auditTablesSql } = await import('../src/sql/audit-tables-sql');
 
     await pool.query(
-      `drop table "${schema}"."audit_entries", "${schema}"."audit_chains"; drop function "${schema}"."audit_entries_append_only"()`,
+      `drop table "${schema}"."audit_entries", "${schema}"."audit_chains", "${schema}"."audit_archives"; drop function "${schema}"."audit_entries_append_only"(); drop function "${schema}"."audit_archives_append_only"()`,
     );
 
     for (const statement of auditTablesSql({ schema })) {
@@ -183,3 +191,19 @@ describe('DrizzleAuditTrail on the PGlite driver', () => {
     await client.close();
   });
 });
+
+/** The way an attacker with access to the database rewrites an entry: the guard set aside. */
+async function tampered(current: SqlTrailFixture, id: string): Promise<void> {
+  await current.run('alter table $table disable trigger "audit_entries_no_rewrite"');
+  await current.run(`update $table set "action" = 'forged' where "id" = '${id}'`);
+  await current.run('alter table $table enable trigger "audit_entries_no_rewrite"');
+}
+
+async function archiveFixture(): Promise<ArchiveFixture> {
+  const created = await fixture();
+
+  return { trail: created.trail, tamper: (id) => tampered(created, id), run: created.run };
+}
+
+archiveSpecs('DrizzleAuditTrail', archiveFixture);
+archiveGuardSpecs('DrizzleAuditTrail', archiveFixture);
