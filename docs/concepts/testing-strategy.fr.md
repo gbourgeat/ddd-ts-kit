@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:da4d83e215df188f -->
+<!-- translation-of: testing-strategy.md sha256:53c12df10277d598 -->
 
 # Stratégie de test
 
@@ -509,7 +509,8 @@ it('overlaps another range in both directions or in none, for any two ranges', (
 });
 ```
 
-`init` installe `fast-check`, sous Vitest comme sous Jest. Le titre énonce la loi, pour que la page de
+`fast-check` rejoint les dépendances de développement avec la première propriété (`npm i -D fast-check`),
+sous Vitest comme sous Jest ; un projet sans propriété ne porte aucune dépendance morte. Le titre énonce la loi, pour que la page de
 ce qu'énoncent les tests la lise ; `fc.assert` est une assertion pour `test/assertion-present` ; le
 générateur (`anyRange()`) est une petite fonction auxiliaire de la *spec* bâtie sur les fabriques du
 modèle, pour que toute valeur générée soit une valeur que le modèle accepte. Une exécution qui

@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:d1d783bd0cf813e6 -->
+<!-- translation-of: test-runners.md sha256:c8878dd81a9ea8a7 -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -323,7 +323,7 @@ export default {
 | Base de code existante avec une grosse suite Jest qui adopte le kit | Jest, en ajoutant à la main la séparation des projets et les seuils ; ne planifiez une migration que si elle est rentable |
 | Une bibliothèque ou un adaptateur publié pour d'autres | écrivez son contrat avec `ContractSuite`, pour que les consommateurs l'exécutent sous l'un ou l'autre lanceur |
 | Vouloir des tests de mutation | non disponible dans le kit aujourd'hui, avec l'un comme l'autre lanceur |
-| Vouloir des tests par propriétés | `fast-check`, qu'`init` installe sous l'un comme l'autre lanceur : une loi d'un objet-valeur énoncée une fois et vérifiée sur des valeurs générées, `fc.assert` une assertion pour `test/assertion-present` |
+| Vouloir des tests par propriétés | `fast-check`, ajouté avec la première propriété (`npm i -D fast-check`), sous l'un comme l'autre lanceur : une loi d'un objet-valeur énoncée une fois et vérifiée sur des valeurs générées, `fc.assert` une assertion pour `test/assertion-present` |
 
 ## Sources
 

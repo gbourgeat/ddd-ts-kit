@@ -1,5 +1,6 @@
-**The invariants of a value object are stated as properties, with fast-check.** `init` installs
-`fast-check` beside the runner, under Vitest as under Jest; `fc.assert(fc.property(..))` is an
+**The invariants of a value object are stated as properties, with fast-check.** `fast-check` joins
+the development dependencies with the first property (`npm i -D fast-check`, under Vitest as under
+Jest: a project without a property carries no dead dependency); `fc.assert(fc.property(..))` is an
 assertion for `test/assertion-present`; and the spec `generate value-object` writes ends with a
 planned rule, `keeps its invariants for any value a generator can produce, as a property`, to remind
 of it. A property states a law of the model once and checks it on generated values, the failing one
