@@ -9,6 +9,7 @@ import { commandContext } from './command-context';
 import { commandOutputs } from './command-outputs';
 import { existingAggregate } from './existing-aggregate';
 import { generateRepository } from './generate-repository';
+import { wireRepositoryOnFirstUse } from './wire-repository-on-first-use';
 
 export const commandKind: Kind = {
   name: 'command',
@@ -44,6 +45,11 @@ export const commandKind: Kind = {
     }
 
     emit(scope, context, commandOutputs(scope, name));
+
+    if (aggregate !== undefined) {
+      wireRepositoryOnFirstUse(scope, aggregate);
+    }
+
     wire(scope, 'command', context);
   },
 };

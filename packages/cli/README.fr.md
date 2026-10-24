@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d57a2581f646f495 -->
+<!-- translation-of: README.md sha256:dd5fc79f46e8992e -->
 
 # ddd-ts-kit
 
@@ -777,8 +777,9 @@ Next, in this order: the language of the context first, then the business decisi
   `start`. En câblage manuel (`--di manual`, `--di nest`), le fichier de module est une fonction
   de la `Platform` :
   `platform.adapter(new DrizzleInvoiceRepository(...), { kind: 'repository', context, token })`,
-  qui donne au *repository* son *span* et la distribution de ce qu'il sauvegarde,
-  `platform.commands.register(Message, new Handler(...), { context })`,
+  qui donne au *repository* son *span* et la distribution de ce qu'il sauvegarde, écrit avec la
+  première commande qui en a besoin (une constante qu'aucun *handler* ne lit est refusée par le
+  lint), `platform.commands.register(Message, new Handler(...), { context })`,
   `platform.jobs.register({ name, schedule, run })`.
 - **Les *jobs*.** Le planning est validé quand le *job* est généré, par les règles du planificateur
   (`parseJobSchedule` du kernel, fixé par un test) : une durée (`15m`, `2s`, des chiffres seuls
