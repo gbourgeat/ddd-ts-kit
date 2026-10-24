@@ -372,8 +372,12 @@ runner of the project, Vitest or Jest, on the domain layer of every context, its
 from the kit (`governedMutation()`, held by `test/mutation-governed`: the texts of refusals and the
 static mutants left out), then `ddd-ts-kit mutation`, which holds each context to the `mutation`
 floor of `ddd-ts-kit.config.json`, the ignored mutants shown beside each score. Not a gate of a pull
-request: eight minutes for the example are too long for the loop of a change. The pipeline README
-holds the measures that decided it (2026-10-24).
+request: five minutes for the example are too long for the loop of a change. A pull request gets
+the `mutation-changed` job instead, a reading: Stryker reuses the report of the last night for what
+the change leaves alone, about a minute, runs everything again when the change touches code it does
+not diff (a fake, a builder, the platform, a dependency), and `ddd-ts-kit mutation --changed <base>`
+lists the survivors of the files the change touched. The pipeline README holds the measures that
+decided it (2026-10-24).
 
 ## Limits and when not to use it
 

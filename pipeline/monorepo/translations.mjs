@@ -33,6 +33,7 @@ const SKIPPED_DIRECTORIES = new Set([
   'dist',
   'coverage',
   'reports',
+  '.stryker-tmp',
   '.git',
   '.agents',
   '.claude',

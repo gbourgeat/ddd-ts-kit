@@ -1,3 +1,4 @@
+import { changedSince } from './changed-since';
 import { mutationSettings } from './mutation-settings';
 import { REFUSAL_TEXTS } from './refusal-texts-ignorer';
 
@@ -20,6 +21,19 @@ export interface GovernedMutation {
    * score says nothing about a rule written as a declaration, which a test states by itself.
    */
   readonly ignoreStatic: boolean;
+  /**
+   * The reading of a change (`DDD_TS_KIT_MUTATION_SINCE` names its base): the results of the last
+   * report, kept in `incrementalFile`, are reused for what the change leaves alone, and the run
+   * takes the time of its initial test run. A full run otherwise, the truth of the night.
+   */
+  readonly incremental: boolean;
+  readonly incrementalFile: string;
+  /**
+   * The whole run even with a report at hand, when the change touches what the tests lean on and
+   * Stryker does not diff: a fake, a builder, a world, the platform, a dependency. It diffs the
+   * mutated sources and the specs alone, and would reuse a result the change made stale.
+   */
+  readonly force: boolean;
   /** The floor the whole run is held to; `ddd-ts-kit mutation` then holds each context to it. */
   readonly thresholds: { readonly high: number; readonly low: number; readonly break: number };
 }
@@ -29,6 +43,11 @@ const HIGH = 80;
 
 /** The module of the ignorer, as the file Stryker loads it from: beside this one, once built. */
 const IGNORER_MODULE = new URL('./refusal-texts-ignorer.js', import.meta.url).href;
+
+/** The git ref the job of a pull request reads a change from: the merge base with the branch it targets. */
+const SINCE = 'DDD_TS_KIT_MUTATION_SINCE';
+/** Beside the json report, kept with it as the artifact of the night. */
+const INCREMENTAL_FILE = 'reports/mutation/incremental.json';
 
 /**
  * What a Stryker run mutates and the floor it is held to, read from the `mutation` key of
@@ -42,12 +61,34 @@ const IGNORER_MODULE = new URL('./refusal-texts-ignorer.js', import.meta.url).hr
  */
 export function governedMutation(root: string = process.cwd()): GovernedMutation {
   const { contextsDir, domain } = mutationSettings(root);
+  const since = process.env[SINCE];
 
   return {
     mutate: [`${contextsDir}/**/domain/**/*.ts`, `!${contextsDir}/**/*.declarations.ts`, '!**/*.spec.ts'],
     appendPlugins: [IGNORER_MODULE],
     ignorers: [REFUSAL_TEXTS],
     ignoreStatic: true,
+    incremental: since !== undefined,
+    incrementalFile: INCREMENTAL_FILE,
+    force: since !== undefined && leansOnSupport(root, since),
     thresholds: { high: Math.max(HIGH, domain), low: domain, break: domain },
   };
+}
+
+/** Code or configuration the tests may lean on: a document, an image or a pipeline file changes no test. */
+const CODE = /\.(?:[cm]?[jt]sx?|json)$/;
+
+/** Whether the change touches code the incremental run would not diff; a change git cannot list counts as one. */
+function leansOnSupport(root: string, since: string): boolean {
+  const changed = changedSince(root, since);
+
+  return changed === undefined || changed.some((file) => CODE.test(file) && !diffedByStryker(file));
+}
+
+/** A mutated source of the domain, or a spec: what Stryker compares with the last report by itself. */
+function diffedByStryker(file: string): boolean {
+  return (
+    file.endsWith('.spec.ts') ||
+    (file.includes('/domain/') && file.endsWith('.ts') && !file.endsWith('.declarations.ts'))
+  );
 }

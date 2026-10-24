@@ -102,8 +102,13 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    undetected, the errors left out, as Stryker counts, the ignored mutants (the texts of
                    refusals, the code that runs once when the module loads) shown beside, since the
                    score says nothing about them; exits 1 while a context is under its floor, 2 without
-                   a report. Runs no test: npm run test:mutation runs Stryker, then this; the pipeline
-                   runs it every night, not on a pull request
+                   a report. --survivors lists the mutants no test noticed (file:line, mutator, what the
+                   code became), each a decision: a test named after the rule, or left alive and said so;
+                   --changed <ref>, or DDD_TS_KIT_MUTATION_SINCE in the environment as the job of a pull
+                   request sets it, lists those of the files changed since the git ref alone and exits 0
+                   whatever the scores, a reading for a change in progress. Runs no test: npm run
+                   test:mutation runs Stryker, then this; the pipeline runs it every night and, with
+                   the variable set to the merge base of the change, on a pull request
   plan-waves       the rows of slices.md not done, of the project or of one context, in waves (wave 1: every
                    dependency done; wave n: the others in earlier waves), each wave cut into batches of one
                    owner, one or two rows on one aggregate, with the worker-scope command that briefs each,
