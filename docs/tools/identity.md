@@ -284,7 +284,11 @@ writes that context whole: accounts provisioned from the token at the first sign
 password, organisations, members and roles, invitations, delegations, and the port
 `IdentityProviderAdmin` that tells Keycloak 26 (organizations API) what was decided, at least
 once, from the consumers of its published facts. With tenants, the authenticator reads the
-`organization` claim as the tenants of the person. The Keycloak adapter is a recipe: specified
+`organization` claim as the tenants of the person. With `--privacy on`, the default with an ORM,
+it declares what it keeps of people: the address and the name of an account, pseudonymised when
+the person is erased, and the address an invitation was sent to, deleted thirty days after the
+invitation expired; its erasure and its export are listed in the platform, not confined to a
+tenant, since its tables belong to none ([Personal data](../concepts/personal-data.md)). The Keycloak adapter is a recipe: specified
 against a local server, not run against a real Keycloak by the pipeline of the kit. See
 [Bootstrap with well-designed contexts](../guides/bootstrap-with-well-designed-contexts.md).
 

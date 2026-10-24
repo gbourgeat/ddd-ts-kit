@@ -4,6 +4,7 @@ import { CONFIG_FILE } from './config-file';
 import { defaultAllowedPackages } from './default-allowed-packages';
 import { DEFAULT_IMPORT_ALIAS } from './default-import-alias';
 import { parseBusinessNames } from './parse-business-names';
+import { parsePrivacy } from './parse-privacy';
 import { parseCi } from './parse-ci';
 import { parseCommitConfig } from './parse-commit-config';
 import { parseContext } from './parse-context';
@@ -84,6 +85,7 @@ type Governance = Pick<
   | 'deviations'
   | 'standardInterfaces'
   | 'businessNames'
+  | 'privacy'
   | 'worker'
   | 'ci'
   | 'agents'
@@ -106,6 +108,7 @@ function parseGovernance(raw: Record<string, unknown>): Governance {
     deviations: parseDeviations(raw['deviations']),
     standardInterfaces: parseStandardInterfaces(raw['standardInterfaces']),
     businessNames: parseBusinessNames(raw['businessNames']),
+    privacy: parsePrivacy(raw['privacy']),
     worker: raw['worker'] === true,
     ci: parseCi(raw['ci']),
     agents: parseAgents(raw['agents']),

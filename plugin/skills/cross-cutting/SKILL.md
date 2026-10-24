@@ -51,7 +51,9 @@ the retries at once.
 
 By a log, a span, a metric, an error report: class, method, context, duration, error code,
 correlation and trace identifiers, the actor's identifier. Never arguments, results, error
-messages or full URLs: they carry personal data and secrets.
+messages or full URLs: they carry personal data and secrets. `privacy/no-personal-data-in-logs`
+(a warning) reports a call to the logger or the metrics that names a field a `personalFields`
+declaration or the `personal` option of an event says is personal data: log the opaque id.
 
 ## Error reporting
 
