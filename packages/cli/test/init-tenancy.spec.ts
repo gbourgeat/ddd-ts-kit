@@ -41,7 +41,12 @@ describe('init --tenancy', () => {
       'export const outbox = outboxEntity({ schema: MESSAGING_SCHEMA, tenant: true });',
     );
 
-    expect(read(initProject('--orm', 'prisma', '--audit', 'off'), 'prisma/schema.prisma')).not.toContain('tenant_id');
+    // The jobs table keeps a tenant in every project: the scope of an idempotency key, not a tenancy.
+    const singleTenant = read(initProject('--orm', 'prisma', '--audit', 'off'), 'prisma/schema.prisma');
+
+    expect(
+      singleTenant.slice(singleTenant.indexOf('model OutboxRecord'), singleTenant.indexOf('model ProcessedEvent')),
+    ).not.toContain('tenant_id');
   });
 
   it('generates every repository confined to the tenant through the helpers of the ORM', () => {

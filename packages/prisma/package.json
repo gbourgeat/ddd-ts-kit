@@ -1,7 +1,7 @@
 {
   "name": "@ddd-ts-kit/prisma",
   "version": "0.89.0",
-  "description": "Prisma adapters for the kernel ports: unit of work, transactional outbox store, processed-event store, PostgreSQL event store.",
+  "description": "Prisma adapters for the kernel ports: unit of work, transactional outbox store, processed-event store, background jobs, process instances, PostgreSQL event store.",
   "keywords": [
     "ddd",
     "domain-driven-design",
@@ -40,7 +40,8 @@
   ],
   "dependencies": {
     "@ddd-ts-kit/kernel": "0.89.0",
-    "@ddd-ts-kit/events": "0.89.0"
+    "@ddd-ts-kit/events": "0.89.0",
+    "@ddd-ts-kit/scheduling": "0.89.0"
   },
   "peerDependencies": {
     "@prisma/client": "^7.0.0"

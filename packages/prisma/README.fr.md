@@ -1,11 +1,12 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7ba9a3e15888489c -->
+<!-- translation-of: README.md sha256:518c8e484fa57a73 -->
 
 # @ddd-ts-kit/prisma
 
 Les adaptateurs Prisma des ports du noyau et des événements : une unité de travail que les
 *repositories* ne voient jamais, le registre de l'outbox transactionnelle, le registre des
-événements traités, les modèles de lecture des projections et la traduction des critères,
+événements traités, les tâches de fond et les instances des gestionnaires de processus, les
+modèles de lecture des projections et la traduction des critères,
 l'*event store*, et les modèles de leurs tables, sous forme d'un fragment de schéma à copier.
 Les mêmes pièces que `@ddd-ts-kit/drizzle`, pour les projets sur Prisma.
 
@@ -36,6 +37,8 @@ les adaptateurs des ports du domaine, et la plateforme les lie tous au démarrag
 | `PrismaReadModelStore` | le port de modèle de lecture d'une projection (`TableReadModelStore`) | [Modèles de lecture](#modèles-de-lecture) |
 | `PrismaOutboxStore` | `OutboxStore` de `@ddd-ts-kit/events` | [Outbox et idempotence](#outbox-et-idempotence) |
 | `PrismaProcessedEventStore` | `ProcessedEventStore` du noyau | [Outbox et idempotence](#outbox-et-idempotence) |
+| `PrismaJobStore` | `JobStore` de `@ddd-ts-kit/scheduling` | [Tâches de fond et instances de processus](#tâches-de-fond-et-instances-de-processus) |
+| `PrismaProcessStore` | `ProcessStore` du noyau | [Tâches de fond et instances de processus](#tâches-de-fond-et-instances-de-processus) |
 | `createPrismaEventSourcing(context)` | l'*event store*, les *snapshots*, les points de reprise et les clés de sujet du noyau | [Event store](#event-store) |
 | `schemaNameOf(context)` | le nom de schéma d'un contexte délimité (bounded context) | [Schéma](#schéma) |
 
@@ -919,6 +922,59 @@ export async function onOrderPlaced(event: IntegrationEvent): Promise<void> {
 
 La livraison se fait au moins une fois, sans ordre.
 
+## Tâches de fond et instances de processus
+
+Copiez les deux modèles de `prisma/jobs-and-processes.postgresql.prisma` dans le schéma, dans le
+schéma du contexte dont ils gardent les tâches (`init --orm prisma --queue database` les écrit
+dans `messaging`). Gardez les noms des champs, des tables et des colonnes : la réclamation des
+tâches est la seule instruction brute du registre, et elle sélectionne les colonnes par leur nom.
+
+- `PrismaJobStore` est le `JobStore` de `@ddd-ts-kit/scheduling`. `add` écrit sur le client de
+  l'unité de travail : une tâche mise en file par une commande existe si et seulement si la
+  commande a été validée. Une réclamation sélectionne les lignes dues de la file
+  `FOR UPDATE SKIP LOCKED`, puis les bail et les relit dans la même transaction courte : plusieurs
+  *workers* passent les uns sur les lignes des autres. Une clé d'idempotence est unique par nom
+  de tâche et par tenant ; un doublon est écarté par `createMany({ skipDuplicates: true })`, qui
+  laisse la transaction de la commande utilisable. PostgreSQL seulement.
+- `PrismaProcessStore` est le `ProcessStore` du noyau : une étape d'un gestionnaire de processus
+  enregistre son instance dans la transaction de son unité de travail, un premier enregistrement
+  écarte la ligne qu'un premier enregistrement concurrent a écrite, un suivant met à jour la ligne
+  à la version précédente, et un enregistrement qui ne change aucune ligne est refusé par
+  `ConcurrencyError`.
+- Le point de reprise d'une tâche et l'état d'une instance sont du JSON gardé en texte : un
+  *worker* efface un point de reprise et un état peut valoir `null`, ce qu'un champ `Json`
+  n'accepte que par la sentinelle du client généré (voir [Limites](#limites)).
+
+<!-- checked sample -->
+```ts
+// platform/database/background-work.ts
+import {
+  createPrismaUnitOfWork,
+  PrismaJobStore,
+  PrismaProcessStore,
+  type PrismaJobDelegate,
+  type PrismaProcessDelegate,
+  type PrismaRawQueries,
+} from '@ddd-ts-kit/prisma';
+
+// Tient lieu du client qu'écrit `prisma generate`, réduit à ce qu'appellent les registres : les
+// modèles du fragment livré, dans le schéma `messaging`.
+interface TransactionClient extends PrismaRawQueries {
+  readonly backgroundJob: PrismaJobDelegate;
+  readonly processInstance: PrismaProcessDelegate;
+}
+declare const prisma: TransactionClient & {
+  $transaction<R>(work: (transaction: TransactionClient) => Promise<R>, options?: { timeout?: number }): Promise<R>;
+};
+
+const unitOfWork = createPrismaUnitOfWork(prisma);
+
+// La réclamation est du SQL brut : elle nomme le schéma (et la table, quand ce n'est pas `background_jobs`).
+export const jobs = new PrismaJobStore(unitOfWork, { delegate: (client) => client.backgroundJob, schema: 'messaging' });
+
+export const processes = new PrismaProcessStore(unitOfWork, { delegate: (client) => client.processInstance });
+```
+
 ## Event store
 
 Copiez les modèles de `prisma/event-store.postgresql.prisma` dans le schéma ;
@@ -949,7 +1005,7 @@ refuse `--database mysql` et `--database sqlite`.
 
 | Base de données | État |
 |---|---|
-| PostgreSQL | Couvert par la suite automatisée, via `@prisma/adapter-pg` : suites de contrat de `@ddd-ts-kit/testing`, contrat de *repository*, annulation, unité de travail imbriquée, réclamations concurrentes, les deux stratégies de réclamation. Elle s'exécute par défaut sur PGlite servi par le protocole réseau de PostgreSQL, et sur un vrai serveur quand `DDD_TS_KIT_TEST_DATABASE_URL` est définie (dernière exécution : PostgreSQL 18). |
+| PostgreSQL | Couvert par la suite automatisée, via `@prisma/adapter-pg` : suites de contrat de `@ddd-ts-kit/testing`, contrat de *repository*, annulation, unité de travail imbriquée, réclamations concurrentes, les deux stratégies de réclamation de l'outbox, le registre des tâches et celui des processus. Elle s'exécute par défaut sur PGlite servi par le protocole réseau de PostgreSQL, et sur un vrai serveur quand `DDD_TS_KIT_TEST_DATABASE_URL` est définie (dernière exécution : PostgreSQL 18). |
 | MySQL 8 | Hors de la suite automatisée. Le fragment est validé par `prisma validate` ; les suites de contrat de l'outbox et des événements traités et l'annulation d'`append` ont été exécutées une fois à la main contre MySQL 8.4 via `@prisma/adapter-mariadb`, avec `skip-locked` et `compare-and-set`. |
 | SQLite | Hors de la suite automatisée. Le fragment est validé par `prisma validate` ; la suite de contrat de l'outbox a été exécutée une fois à la main via `@prisma/adapter-better-sqlite3` avec `compare-and-set`, la seule réclamation disponible là. Le registre des événements traités demande le *delegate* montré sous Limites. |
 | CockroachDB, SQL Server, MongoDB | Jamais exécuté. |
@@ -970,10 +1026,13 @@ Ce que Prisma ne permet pas, et ce que le *package* en fait :
   tiennent aussi une connexion pendant toute leur durée.
 - **Un `null` nu est refusé dans un champ `Json`**, et les sentinelles qui l'expriment vivent
   dans le client généré. Les registres omettent une charge utile `null` : elle est stockée en
-  `NULL` SQL et relue en `null` ; le champ est donc `Json?`.
+  `NULL` SQL et relue en `null` ; le champ est donc `Json?`. Ce qui peut devoir repasser à `null`
+  après avoir été écrit, le point de reprise d'une tâche et l'état d'une instance de processus,
+  est du JSON dans un champ texte.
 - **Pas d'index partiel dans le langage du schéma.** Le fragment déclare un index simple sur
   `(status, nextAttemptAt, sequence)`. Sur PostgreSQL, vous pouvez le remplacer à la main dans la
-  migration par `(next_attempt_at, sequence) WHERE status = 'pending'`.
+  migration par `(next_attempt_at, sequence) WHERE status = 'pending'` ; de même l'index de la
+  réclamation des tâches par `WHERE status IN ('waiting', 'running')`.
 - **Pas de `createMany({ skipDuplicates })` sur SQLite, SQL Server et MongoDB.** Là, le modèle
   ne correspond pas à `PrismaProcessedEventDelegate` ; donnez au registre un *delegate* qui
   traduit la violation d'unicité, que SQLite tolère dans une transaction :
@@ -1004,12 +1063,12 @@ Ce que Prisma ne permet pas, et ce que le *package* en fait :
 - Testé avec Prisma 7.10 et ses adaptateurs de pilote. La plage *peer* est Prisma 7
   (`@prisma/client` `^7.0.0`).
 - `stats()` fait trois requêtes `count`, pas une seule instruction : les nombres d'une outbox
-  chargée peuvent ne pas correspondre au même instant.
+  ou d'une file chargée peuvent ne pas correspondre au même instant.
 
 ## Tester un adaptateur
 
 L'unité de travail de ce *package* passe `unitOfWorkContract`, et ses registres
-`outboxStoreContract` et `processedEventStoreContract`, de `@ddd-ts-kit/testing/contracts`.
+`outboxStoreContract`, `processedEventStoreContract`, `jobStoreContract` et `processStoreContract`, de `@ddd-ts-kit/testing/contracts`.
 Tenez vos *repositories* à `repositoryContract` de la même façon, à côté de leur *fake* en
 mémoire. Les tests de ce *package* ne demandent ni conteneur ni étape manuelle :
 

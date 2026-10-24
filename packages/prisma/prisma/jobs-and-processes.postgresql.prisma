@@ -1,0 +1,55 @@
+// Models of @ddd-ts-kit/prisma for PostgreSQL: the background jobs and the instances of the
+// process managers. Copy them into your schema.prisma; your own `prisma migrate dev` then
+// creates the tables in a migration of your project.
+//
+// In the schema of a context (`@@schema("<context>")`, the schema listed in the datasource),
+// the jobs of that context travel with it when it is extracted as a service; tell `PrismaJobStore`
+// the schema, since its claim is a raw statement.
+//
+// Keep the field names, the table names and the column names: the stores are typed against the
+// fields, and the claim of the jobs selects the columns by name.
+
+model BackgroundJob {
+  id             String    @id
+  /// Insertion order, the tie-breaker of the claim.
+  sequence       BigInt    @unique @default(autoincrement())
+  name           String
+  queue          String
+  /// Optional because JSON `null` is a legal payload and is stored as SQL NULL.
+  payload        Json?
+  enqueuedBy     Json      @map("enqueued_by")
+  idempotencyKey String?   @map("idempotency_key")
+  /// The empty text outside any tenant: a null would make every such key distinct.
+  tenantId       String    @default("") @map("tenant_id")
+  subject        String?
+  status         String    @default("waiting")
+  attempts       Int       @default(0)
+  runAt          DateTime  @map("run_at") @db.Timestamptz(3)
+  leaseUntil     DateTime? @map("lease_until") @db.Timestamptz(3)
+  progress       Json?
+  /// JSON as text: a worker may clear it, which a `Json` field takes only through `Prisma.DbNull`.
+  checkpoint     String?
+  lastErrorCode  String?   @map("last_error_code")
+  enqueuedAt     DateTime  @map("enqueued_at") @db.Timestamptz(3)
+  finishedAt     DateTime? @map("finished_at") @db.Timestamptz(3)
+
+  @@unique([name, tenantId, idempotencyKey], map: "background_jobs_idempotency_key")
+  /// A claim only looks at what is waiting or running: on a large table, make it partial in the
+  /// migration (`WHERE status IN ('waiting', 'running')`), which the schema cannot say.
+  @@index([queue, runAt, sequence], map: "background_jobs_due_idx")
+  @@map("background_jobs")
+}
+
+model ProcessInstance {
+  name      String
+  id        String
+  /// JSON as text: a state may be null, which a `Json` field takes only through `Prisma.DbNull`.
+  state     String
+  version   Int
+  ended     Boolean  @default(false)
+  timeouts  Json
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  @@id([name, id])
+  @@map("process_instances")
+}

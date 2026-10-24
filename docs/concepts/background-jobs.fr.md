@@ -1,5 +1,5 @@
 [English](background-jobs.md) · **Français**
-<!-- translation-of: background-jobs.md sha256:a5d8a50548888ceb -->
+<!-- translation-of: background-jobs.md sha256:c31f6f5642c9beb3 -->
 
 # Jobs en arrière-plan
 
@@ -463,8 +463,9 @@ l'`ErrorReporter` (origine `queue`), adaptateur Sentry compris.
 | `InMemoryJobStore` | `@ddd-ts-kit/scheduling` | attend la validation | le contrat, dans les *specs* unitaires ; tests et processus unique sans base de données |
 | `KnexJobStore`, `createJobTable` | `@ddd-ts-kit/knex` | oui | le contrat sur PGlite et sur PostgreSQL en CI |
 | `DrizzleJobStore`, `jobsTable` | `@ddd-ts-kit/drizzle` | oui | le contrat sur PGlite et sur PostgreSQL en CI |
+| `PrismaJobStore`, le modèle `BackgroundJob` | `@ddd-ts-kit/prisma` | oui | le contrat sur PGlite et sur PostgreSQL en CI |
 | `RedisJobStore` | `@ddd-ts-kit/redis` | attend la validation | le contrat sur Dragonfly en CI (lancé à la main sur Redis 8) |
-| Prisma, TypeORM | aucun dans cette version | | un projet écrit un `JobStore` sur son ORM, tenu par `jobStoreContract` avec son unité de travail (le store Knex, environ deux cents lignes, sert de modèle) |
+| TypeORM | aucun dans cette version | | un projet écrit un `JobStore` sur son ORM, tenu par `jobStoreContract` avec son unité de travail (le store Knex, environ deux cents lignes, sert de modèle) |
 
 Les stores SQL prennent les *jobs* avec `FOR UPDATE SKIP LOCKED` dans une courte transaction qui
 leur est propre, sur PostgreSQL ; en CI, leur contrat s'exécute sur un serveur derrière un pool de

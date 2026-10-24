@@ -16,7 +16,7 @@ trail, the identity preset), so the kit is fixed first, and the example is the p
 fixes hold. MySQL is a decision taken here, not an oversight: not in this example, with the list
 of what it would take.
 
-## Status (2026-10-24)
+## Status (2026-10-25)
 
 **Specified, part 1 under way.** The stack below was run through `init --dry-run` on 0.88.0, which
 is where the refusals of part 1 come from. Each part is one or several pull requests; a part is
@@ -24,7 +24,7 @@ marked built here when its last pull request lands.
 
 | Part | Verdict |
 |---|---|
-| 1. The kit on the stack: queue and processes on Nest, tenancy and audit on Prisma, the preset on Nest and Prisma | under way, before the example: 1.1 built (#273), 1.2 built (#276, read models included), 1.3 to 1.5 to build |
+| 1. The kit on the stack: queue and processes on Nest, tenancy and audit on Prisma, the preset on Nest and Prisma | under way, before the example: 1.1 built (#273), 1.2 built (#276, read models included), 1.3 built (#297), 1.4 built (#287), 1.5 to build |
 | 2. The example: `examples/spend-management`, seven contexts, the documents of the method | to build, after part 1 |
 | 3. The repository: a second workspace in the gates, the website, the examples page | to build, with part 2 |
 | MySQL | **not in this example**, see [What is left out](#what-is-left-out-and-why) |

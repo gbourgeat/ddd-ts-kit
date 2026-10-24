@@ -114,7 +114,7 @@ function queueVars(config: Config): RenderContext {
   return {
     ...one(queue, ['memory', 'database', 'redis']),
     stored: queue !== 'memory',
-    processTable: queue !== 'memory' && (orm === 'knex' || orm === 'drizzle'),
+    processTable: queue !== 'memory' && (orm === 'knex' || orm === 'drizzle' || orm === 'prisma'),
   };
 }
 

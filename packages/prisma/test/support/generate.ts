@@ -133,12 +133,13 @@ const inSchema = (models: string, schema: string): string => models.replaceAll(/
 
 /**
  * The schema the tests run on, built from the fragments the package ships, the way a consuming
- * project would: the models as they are in `public`, and a renamed copy of the outbox in a
- * schema of its own.
+ * project would: the models as they are in `public`, and a renamed copy of the outbox, the jobs
+ * and the process instances in a schema of its own.
  */
 async function composeSchema(): Promise<string> {
   const fragment = await readFile(`${packageRoot}prisma/outbox.postgresql.prisma`, 'utf8');
   const eventStore = await readFile(`${packageRoot}prisma/event-store.postgresql.prisma`, 'utf8');
+  const background = await readFile(`${packageRoot}prisma/jobs-and-processes.postgresql.prisma`, 'utf8');
 
   const renamed = fragment
     .replace('model OutboxRecord ', 'model MessagingOutboxRecord ')
@@ -146,11 +147,17 @@ async function composeSchema(): Promise<string> {
     // The outbox of a multi-tenant project: the field the fragment leaves commented out.
     .replace('  // tenantId      String?   @map("tenant_id")', '  tenantId      String?   @map("tenant_id")');
 
+  const backgroundInMessaging = background
+    .replace('model BackgroundJob ', 'model MessagingBackgroundJob ')
+    .replace('model ProcessInstance ', 'model MessagingProcessInstance ');
+
   return [
     HEADER,
     inSchema(fragment, 'public'),
     inSchema(renamed, 'messaging'),
     inSchema(eventStore, 'public'),
+    inSchema(background, 'public'),
+    inSchema(backgroundInMessaging, 'messaging'),
     INVOICE,
     READ_MODEL,
     LEDGER,
