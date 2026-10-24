@@ -96,6 +96,12 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    scripts (docs:generate regenerates it, docs:check compares it, ci:build builds it);
                    --check writes nothing and exits 1 while a client differs from its contract
   todo             those markers as file:line, in the project or in one context
+  mutation         the mutation score of the domain layer of each context, read from the json report the
+                   last stryker run wrote (reports/mutation/mutation.json, or --report <file>), held to
+                   the "mutation" floor of the config (80 by default): detected over detected and
+                   undetected, the errors left out, as Stryker counts; exits 1 while a context is under
+                   its floor, 2 without a report. Runs no test: npm run test:mutation runs Stryker, then
+                   this; the pipeline runs it every night, not on a pull request
   plan-waves       the rows of slices.md not done, of the project or of one context, in waves (wave 1: every
                    dependency done; wave n: the others in earlier waves), each wave cut into batches of one
                    owner, one or two rows on one aggregate, with the worker-scope command that briefs each,

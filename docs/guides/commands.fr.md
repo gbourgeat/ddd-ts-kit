@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:0e77c25a3a90b942 -->
+<!-- translation-of: commands.md sha256:d5033559a9e91290 -->
 
 # Quelle commande, quand
 
@@ -271,6 +271,7 @@ Usage
   ddd-ts-kit story [<story>] [--gate build|close]
   ddd-ts-kit stories
   ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
+  ddd-ts-kit mutation [--report <file>] [--json]
   ddd-ts-kit worktree <name> [--base <ref>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]
@@ -398,6 +399,12 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    scripts (docs:generate regenerates it, docs:check compares it, ci:build builds it);
                    --check writes nothing and exits 1 while a client differs from its contract
   todo             those markers as file:line, in the project or in one context
+  mutation         the mutation score of the domain layer of each context, read from the json report the
+                   last stryker run wrote (reports/mutation/mutation.json, or --report <file>), held to
+                   the "mutation" floor of the config (80 by default): detected over detected and
+                   undetected, the errors left out, as Stryker counts; exits 1 while a context is under
+                   its floor, 2 without a report. Runs no test: npm run test:mutation runs Stryker, then
+                   this; the pipeline runs it every night, not on a pull request
   plan-waves       the rows of slices.md not done, of the project or of one context, in waves (wave 1: every
                    dependency done; wave n: the others in earlier waves), each wave cut into batches of one
                    owner, one or two rows on one aggregate, with the worker-scope command that briefs each,
