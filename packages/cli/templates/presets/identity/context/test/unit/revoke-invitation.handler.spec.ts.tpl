@@ -24,11 +24,13 @@ describe('Revoke invitation', () => {
     await members.save(aMember().of('acme', 'subject-ada').as(MemberRole.Admin).build());
     await invitations.save(anInvitation().identifiedBy('invitation-1').to('globex').build());
 
-    for (const invitationId of ['invitation-1', 'invitation-9']) {
-      await expect(
-        application.commandBus.execute(new RevokeInvitationCommand(as('subject-ada'), 'acme', invitationId)),
-      ).rejects.toMatchObject({ code: 'INVITATION_NOT_FOUND' });
-    }
+    await expect(
+      application.commandBus.execute(new RevokeInvitationCommand(as('subject-ada'), 'acme', 'invitation-1')),
+    ).rejects.toMatchObject({ code: 'INVITATION_NOT_FOUND' });
+
+    await expect(
+      application.commandBus.execute(new RevokeInvitationCommand(as('subject-ada'), 'acme', 'invitation-9')),
+    ).rejects.toMatchObject({ code: 'INVITATION_NOT_FOUND' });
   });
 
   it('is refused to a member whose role does not invite', async () => {

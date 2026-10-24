@@ -77,10 +77,7 @@ describe('GET /practices/:practiceId/patients/:patientId/attendance', () => {
 
     const [query] = received;
 
-    const plan =
-      query === undefined
-        ? undefined
-        : planCriteria(attendanceHistoryCriteria, scoped(query.criteria, { kind: 'all' }));
+    const plan = planOf(query);
 
     expect(query).toMatchObject({ practiceId: 'practice-1', patientId: 'patient-1' });
     expect(plan?.sort[0]).toMatchObject({ field: 'version', direction: 'desc' });
@@ -110,4 +107,11 @@ function request(query: Record<string, string>) {
     body: undefined,
     raw: undefined,
   };
+}
+
+/** The plan the reader would make of the criteria the controller handed to the query, once it handed one. */
+function planOf(query: SearchAttendanceHistoryQuery | undefined) {
+  return query === undefined
+    ? undefined
+    : planCriteria(attendanceHistoryCriteria, scoped(query.criteria, { kind: 'all' }));
 }

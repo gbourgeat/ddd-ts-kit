@@ -10,8 +10,8 @@ describe('NotificationKind', () => {
     expect(first.equals(second)).toBe(true);
   });
 
-  it('refuses an empty value with a coded error', () => {
-    expect(() => NotificationKind.create('  ')).toThrow();
+  it('refuses an empty value, with the code INVALID_NOTIFICATION_KIND', () => {
+    expectRefusal(() => NotificationKind.create('  '), 'INVALID_NOTIFICATION_KIND', { given: '  ' });
   });
 
   it.each(['request', 'confirmation', 'rescheduling', 'cancellation', 'reminder'])('accepts the kind %s', (kind) => {

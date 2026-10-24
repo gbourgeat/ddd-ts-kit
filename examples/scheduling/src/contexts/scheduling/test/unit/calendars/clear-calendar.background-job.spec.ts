@@ -3,6 +3,7 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
+import type { BusMiddleware } from '@ddd-ts-kit/kernel';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
@@ -43,12 +44,9 @@ describe('The clearance of a calendar, when its job runs', () => {
       { job: 'scheduling.clear-calendar', outcome: 'succeeded' },
     ]);
 
-    for (const id of IDS) {
-      const appointment = await appointments.findById(id);
-
-      expect(appointment?.status).toBe(AppointmentStatus.Cancelled);
-      expect(appointment?.cancellation).toMatchObject({ by: 'practice', reason: REASON });
-    }
+    expect(await Promise.all(IDS.map((id) => appointments.findById(id)))).toMatchObject(
+      IDS.map(() => ({ status: AppointmentStatus.Cancelled, cancellation: { by: 'practice', reason: REASON } })),
+    );
 
     expect((await appointments.findById('after'))?.status).toBe(AppointmentStatus.Booked);
     expect(application.backgroundJobs.store.list()).toMatchObject([{ progress: { done: 3, total: 3 } }]);
@@ -57,21 +55,11 @@ describe('The clearance of a calendar, when its job runs', () => {
   it('resumes after the last appointment an interrupted attempt handled, never cancelling one twice', async () => {
     const { application } = await cleared();
     const sent: string[] = [];
-    let failures = 1;
+    const outage = new Error('the database went away');
 
-    application.commandBus.use(async (message, next) => {
-      if (message instanceof CancelAppointmentCommand) {
-        sent.push(message.appointmentId);
+    application.commandBus.use(cancellationsNoted(sent, outage));
 
-        if (message.appointmentId === 'second' && failures-- > 0) {
-          throw new Error('the database went away');
-        }
-      }
-
-      return next();
-    });
-
-    await expect(application.backgroundJobs.runDue()).rejects.toThrow('the database went away');
+    await expect(application.backgroundJobs.runDue()).rejects.toBe(outage);
     expect(application.backgroundJobs.store.list()).toMatchObject([{ status: 'waiting', progress: { done: 1 } }]);
 
     application.clock.advance(BACKOFF_MS);
@@ -92,6 +80,23 @@ describe('The clearance of a calendar, when its job runs', () => {
     expect((await appointments.findById('second'))?.cancellation).toMatchObject({ by: 'patient' });
   });
 });
+
+/** The bus as a flaky database leaves it: every cancellation noted in `sent`, the first one of `second` refused with `outage`. */
+function cancellationsNoted(sent: string[], outage: Error): BusMiddleware {
+  let failures = 1;
+
+  return async (message, next) => {
+    if (message instanceof CancelAppointmentCommand) {
+      sent.push(message.appointmentId);
+
+      if (message.appointmentId === 'second' && failures-- > 0) {
+        throw outage;
+      }
+    }
+
+    return next();
+  };
+}
 
 /** Three appointments inside the period, one after it, and the clearance of the period asked, as the holder of the calendar. */
 async function cleared() {

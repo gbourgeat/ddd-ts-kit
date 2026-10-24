@@ -133,11 +133,7 @@ describe('An appointment, from its booking on, through the application', () => {
 
     await call('ada', 'cancelAppointment', { params: { appointmentId }, body: { reason: 'A fever.' } });
 
-    const cipher = application.container.resolve(PersonalDataCipher);
-
-    for (const { subscription } of storeFedProjections(database.persistence, cipher)) {
-      await subscription.catchUp();
-    }
+    await caughtUp(application.container.resolve(PersonalDataCipher));
 
     const history = await new KnexAttendanceHistory(database.persistence.database).search(
       scoped(Criteria.of<AttendanceEntry>(), { kind: 'all' }),
@@ -203,6 +199,13 @@ async function booked(patient: string): Promise<string> {
   }
 
   return id;
+}
+
+/** Every projection the store feeds brought up to date, as the catch-up of the platform does when it starts. */
+async function caughtUp(cipher: PersonalDataCipher): Promise<void> {
+  for (const { subscription } of storeFedProjections(database.persistence, cipher)) {
+    await subscription.catchUp();
+  }
 }
 
 /** A route as the HTTP server runs it: authenticated, in the execution scope, through the buses and their unit of work. */

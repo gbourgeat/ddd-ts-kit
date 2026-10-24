@@ -64,7 +64,13 @@ import { schedulingJobName } from './scheduling-job-name';
 import { schedulingJobTriggersUseCase } from './scheduling-job-triggers-use-case';
 import { schemaPresentationOnly } from './schema-presentation-only';
 import { standardNoParallelInterface } from './standard-no-parallel-interface';
+import { testAssertionPresent } from './test-assertion-present';
+import { testNoLogic } from './test-no-logic';
 import { testNoMocks } from './test-no-mocks';
+import { testNoOnlyNoSkip } from './test-no-only-no-skip';
+import { testNoSnapshot } from './test-no-snapshot';
+import { testRefusalByCode } from './test-refusal-by-code';
+import { testTitleStatesARule } from './test-title-states-a-rule';
 import { cleanNoMagicNumber } from './clean-no-magic-number';
 import { languageDeclaredVocabulary } from './language-declared-vocabulary';
 import { tracingPlatformOnly } from './tracing-platform-only';
@@ -110,6 +116,12 @@ const ALL = [
   eventSourcingProjectionNeverAppends,
   eventSourcingUpcasterRequired,
   testNoMocks,
+  testNoOnlyNoSkip,
+  testTitleStatesARule,
+  testNoLogic,
+  testAssertionPresent,
+  testRefusalByCode,
+  testNoSnapshot,
   eventsNameFormat,
   eventsOutboxRequired,
   eventsConsumerIdempotent,
