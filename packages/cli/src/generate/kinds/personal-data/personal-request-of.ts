@@ -11,7 +11,7 @@ export interface PersonalRequest {
   readonly retention?: RetentionRequest;
 }
 
-export interface RetentionRequest {
+interface RetentionRequest {
   readonly column: string;
   readonly unit: 'days' | 'months' | 'years';
   readonly amount: number;
