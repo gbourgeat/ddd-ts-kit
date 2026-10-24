@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4c78c034cc217748 -->
+<!-- translation-of: README.md sha256:d0a11f32fa2c5e35 -->
 
 # @ddd-ts-kit/audit
 
@@ -15,6 +15,7 @@ concernées. Aucun gestionnaire (handler) et aucun agrégat ne contient d'appel 
 npm i @ddd-ts-kit/audit
 npm i knex pg          # seulement pour @ddd-ts-kit/audit/knex
 npm i drizzle-orm      # seulement pour @ddd-ts-kit/audit/drizzle
+npm i typeorm          # seulement pour @ddd-ts-kit/audit/typeorm
 ```
 
 | Point d'entrée | Contient | Importe |
@@ -22,6 +23,8 @@ npm i drizzle-orm      # seulement pour @ddd-ts-kit/audit/drizzle
 | `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`) et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (pair optionnel) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (pair optionnel) |
+| `@ddd-ts-kit/audit/prisma` | `PrismaAuditTrail`, `auditPrismaModels`, `auditGuardStatements` | rien : le client de l'unité de travail de `@ddd-ts-kit/prisma` convient structurellement |
+| `@ddd-ts-kit/audit/typeorm` | `TypeOrmAuditTrail`, `auditEntities`, `auditGuardStatements` | `typeorm` (pair optionnel) |
 | `@ddd-ts-kit/audit/testing` | `auditTrailContract` | `@ddd-ts-kit/testing` (pair optionnel), le *runner* que vous passez |
 
 ## L'idée
@@ -728,7 +731,7 @@ qu'en comparant avec un point de contrôle ultérieur ou en demandant `to`.
 vérifier et pour altérer) et de quoi suffire à une application sans base de données.
 
 Les stores SQL sont pour **PostgreSQL**. Ils écrivent sur l'exécuteur de l'unité de travail
-(`KnexContext.executor()`, `DrizzleContext.executor()`) : dans une unité de travail, l'entrée est
+(`KnexContext.executor()`, `DrizzleContext.executor()`, `PrismaContext.client()`, `TypeOrmContext.manager()`) : dans une unité de travail, l'entrée est
 écrite à sa validation et partage son sort ; hors de toute unité de travail, elle est écrite
 immédiatement dans une transaction à elle.
 
@@ -748,7 +751,25 @@ for (const statement of auditGuardStatements('audit')) {
 }
 
 new DrizzleAuditTrail(unitOfWork, { schema: 'audit' });
+
+// prisma : les modèles dans prisma/schema.prisma (avec "audit" dans les schémas de la datasource), le
+// garde dans une migration créée par `prisma migrate dev --create-only`
+console.log(auditPrismaModels('audit'));
+new PrismaAuditTrail(unitOfWork, { schema: 'audit' });
+
+// typeorm : les entités enregistrées auprès de la data source, le garde dans une migration à vous
+const dataSource = new DataSource({ type: 'postgres', entities: [...auditEntities({ schema: 'audit' })] });
+new TypeOrmAuditTrail(unitOfWork, { schema: 'audit' });
 ```
+
+Les quatre stores partagent une seule implémentation PostgreSQL, et leurs *specs* tiennent chacun
+au même contrat, entités et modèles compris : créés par les migrations d'un projet, ils donnent les
+colonnes, les clés et les index de `createAuditTables`. Prisma écrit des instructions brutes sur le
+client de l'unité de travail : il n'imbrique aucune transaction, donc un ajout à l'intérieur d'une
+transaction prend un *savepoint*, et un échec de la base revient avec son SQLSTATE comme `code`
+(`23505`, `23001`), comme sur les autres stores, là où Prisma rapporte `P2010`. Son adaptateur de pg
+lit un `timestamptz` sans le décalage de la session, alors le lecteur demande l'instant en UTC à
+PostgreSQL.
 
 Deux tables : `audit_entries` (clé primaire `(chain, sequence)`, `id` unique, des index pour le
 lecteur) et `audit_chains`, une ligne par chaîne qui détient sa dernière séquence et son dernier

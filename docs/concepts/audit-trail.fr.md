@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:02493b04fa381e3e -->
+<!-- translation-of: audit-trail.md sha256:2edb0c9c900d3c0f -->
 
 # Journal d'audit
 
@@ -329,9 +329,9 @@ Elles sont énoncées par [`@ddd-ts-kit/audit`](../../packages/audit/README.fr.m
   écrit dans la base de données, une route qui contourne le bus) n'est pas dans le journal.
   Garder chaque route sur le bus, c'est à cela que servent
   [`authz/declared`](../ARCHITECTURE.fr.md#3-règles-de-dépendance) et les règles de dépendance.
-- **PostgreSQL seulement** pour les stockages SQL livrés (Knex et Drizzle). Avec Prisma,
-  TypeORM, un ORM maison ou sans ORM, le projet généré démarre sur un journal en mémoire derrière
-  un `TODO(platform)` ; une autre base de données est un autre adaptateur, soumis à la suite de
+- **PostgreSQL seulement** pour les stockages SQL livrés (Knex, Drizzle, Prisma et TypeORM). Avec
+  un ORM maison ou sans ORM, le projet généré démarre sur un journal en mémoire derrière un
+  `TODO(platform)` ; une autre base de données est un autre adaptateur, soumis à la suite de
   contrat.
 - **Les ajouts à une même chaîne sont sérialisés.** Dans une unité de travail, les entrées sont
   écrites à sa validation, les têtes en dernier et toujours dans le même ordre : deux unités de

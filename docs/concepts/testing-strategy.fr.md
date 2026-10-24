@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:2597c3ec1fc06b47 -->
+<!-- translation-of: testing-strategy.md sha256:9083a2fb6bc79d5e -->
 
 # Stratégie de test
 
@@ -569,6 +569,22 @@ test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // depuis @ddd
   { "what": "coverage.infrastructure.branches", "adr": "0011", "reason": "The failure branches of the driver are held by its contract suite." }
 ]
 ```
+
+## Vitesse
+
+Une boucle qui attend est une boucle qu'on saute : les *specs* d'un contexte tournent après chaque
+changement, donc chaque fichier de *spec* est tenu au budget de temps de son niveau, cinq secondes
+pour une *spec* unitaire et trente pour une *spec* d'intégration par la référence (`budget` de
+`ddd-ts-kit.config.json`, baissé librement, monté seulement par une dérogation enregistrée). Le
+reporter du lanceur, `@ddd-ts-kit/testing/budget/vitest` ou `@ddd-ts-kit/testing/budget/jest`, nomme
+la *spec* la plus lente de chaque niveau à la fin de chaque exécution et avertit quand les tests et les *hooks* d'un fichier dépassent son budget, le chargement de ses modules laissé de côté ; il fait échouer l'exécution une fois que le projet impose le budget (`"enforce": true` sous `budget`), quand ses mesures sont stables, puisqu'une durée dépend de la charge de la machine autant que de la *spec*. Une *spec* unitaire lente cache un
+monde reconstruit à chaque test au lieu d'être partagé ([Mondes](#mondes)), des entrées-sorties
+derrière ce qui devrait être un *fake*, ou une attente ; une *spec* d'intégration lente reconstruit un
+schéma par test ou rejoue plus que le comportement qu'elle énonce. Les *specs* de l'application hors
+des contextes, bout en bout, acceptation et architecture, ne sont pas tenues : un flux a le temps
+qu'il lui faut ; une *spec* de la plateforme compte comme intégration, puisque ses adaptateurs
+ouvrent une base. Sur l'exemple, la *spec* unitaire la plus lente prend 1,6 seconde et la *spec*
+d'intégration la plus lente 11, sous charge.
 
 ## Score de mutation
 

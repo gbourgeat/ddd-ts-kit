@@ -22,13 +22,15 @@ const DATABASE_SCRIPTS: Readonly<Record<string, Record<string, string>>> = {
   },
 };
 
-/** drizzle-kit generates no trigger: the statements that make the audit entries append-only are printed, to paste in a custom migration. */
-const AUDIT_GUARD = `node --input-type=module -e "import { auditGuardStatements } from '@ddd-ts-kit/audit/drizzle'; console.log(auditGuardStatements('audit').join(';\\n') + ';')"`;
+const GUARDED = ['drizzle', 'prisma', 'typeorm'];
 
 export function databaseScripts(config: Config): Record<string, string> {
   const { orm, audit } = config.stack;
 
-  return { ...scriptsOf(config), ...(orm === 'drizzle' && audit === 'on' ? { 'db:audit-guard': AUDIT_GUARD } : {}) };
+  return {
+    ...scriptsOf(config),
+    ...(GUARDED.includes(orm) && audit === 'on' ? { 'db:audit-guard': auditGuard(orm) } : {}),
+  };
 }
 
 /** The TypeORM CLI reads the compiled data source of the platform, wherever the project keeps its platform; it takes the path of the new migration (`npm run db:generate migrations/add-invoices`). */
@@ -44,4 +46,9 @@ function scriptsOf(config: Config): Record<string, string> {
     'db:generate': `typeorm migration:generate -d ${dataSource}`,
     'db:migrate': `typeorm migration:run -d ${dataSource}`,
   };
+}
+
+/** No ORM generates a trigger: the statements that make the audit entries append-only are printed, to paste in a migration of the project. */
+function auditGuard(orm: string): string {
+  return `node --input-type=module -e "import { auditGuardStatements } from '@ddd-ts-kit/audit/${orm}'; console.log(auditGuardStatements('audit').join(';\\n') + ';')"`;
 }
