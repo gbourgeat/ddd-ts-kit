@@ -267,8 +267,11 @@ which the guard allows for covered entries only. The entries left in the databas
 last hash, and each file can be verified again on its own, against its record and the archive
 before it. A chain that does not verify is not archived: a break is for someone to look at.
 
-A generated project whose trail is in a database and whose files are in a storage runs this on
-the first day of every month and keeps twelve whole months online. Archiving is not erasing:
+A generated project whose trail is in a database runs this on the first day of every month and
+keeps twelve whole months online, by default with an object store and only on request with a
+local storage: the archive removes the entries from the database, so the files have to land
+where they last, durable and backed up. The file is read back and checked before anything is
+removed. Archiving is not erasing:
 the files still hold identifiers, and how long they are kept, and under which lock, is the
 controller's decision. See [Archiving](../../packages/audit/README.md#archiving).
 
