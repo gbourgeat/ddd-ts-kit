@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:2069ac195441aa5e -->
+<!-- translation-of: testing-strategy.md sha256:10c4fc71c9b0e9f6 -->
 
 # Stratégie de test
 
@@ -539,13 +539,15 @@ test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // depuis @ddd
 
 ## Limites et quand ne pas l'utiliser
 
-- **Les tests de mutation ne sont pas fournis.** C'est l'outil qui mesure si les tests
-  remarqueraient un comportement modifié. Le README du *pipeline* consigne pourquoi : Stryker 10,
-  lancé sur la couche domaine d'un projet généré avec Vitest 5, n'a exécuté aucun test par mutant
-  et a déclaré chaque mutant survivant, et son cœur réécrit le tsconfig par une API que le
-  TypeScript 7 natif n'a pas. Une porte qui donne zéro quoi que disent les tests est pire que pas
-  de porte du tout. Tant que le lanceur ne le prend pas en charge, la qualité des tests repose sur
-  la relecture et sur les conventions ci-dessus.
+- **Les tests de mutation ne sont pas fournis comme porte.** C'est l'outil qui mesure si les tests
+  remarqueraient un comportement modifié, et il fonctionne : Stryker 10.1.1 avec son lanceur
+  Vitest, sur la couche domaine de l'application d'exemple sous Vitest 5, tue 1347 des 1441
+  mutants en 8 minutes, un score de 94,5 % ; le README du *pipeline* consigne la mesure et la
+  configuration. Les 72 survivants sont surtout les textes des refus, qu'aucun test ne vérifie
+  puisqu'un refus se vérifie par son code, et quelques conditions qu'aucun test n'énonce ; un
+  plancher laissera ces textes hors du score plutôt que de pousser à vérifier de la prose. Ils
+  seront proposés comme *job* planifié avec un plancher par contexte ; d'ici là un projet les lance
+  à la main, et la qualité des tests repose sur la relecture et sur les conventions ci-dessus.
 - **Un *fake* ne vaut que ce que vaut sa suite de contrat.** Un comportement que la suite ne couvre
   pas peut différer en silence : collation et tri SQL, moment d'application des contraintes,
   gestion des fuseaux horaires. Quand un bogue vient d'un tel trou, ajoutez le cas à la suite, pas
