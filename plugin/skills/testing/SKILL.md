@@ -210,7 +210,9 @@ of the config, the ignored mutants shown beside the score. A survivor is a rule 
 as a business decision, then state it in a test named after it, or leave the mutant alive and say
 why; never narrow the measure (`test/mutation-governed`). A rule written as a declaration, a
 transition table or a constant at the top of a file, is never mutated: the test that states it is
-its only proof.
+its only proof. The text of a refusal leaves the score when it is handed to the error class where
+the rule is checked (`InvalidSlot.forRule('ends after it starts')`); a text a helper returns before
+the factory is called is measured and survives: throw where the rule is checked.
 
 Finish with `npm test -- <context>`, `npm run test:coverage` before the slice is closed, and
 `npx ddd-ts-kit check --rule test/no-mocks --rule test/builder-required --rule test/spec-required --rule test/helper-placed --rule test/acceptance-black-box`.
