@@ -8,6 +8,8 @@ import type { AuditResource } from '@ddd-ts-kit/kernel';
 export interface AuditProjection {
   readonly plain?: Readonly<Record<string, unknown>>;
   readonly masked?: Readonly<Record<string, unknown>>;
+  /** The data subject each masked value belongs to, by field: whose key a masker keyed per person uses. */
+  readonly subjects?: Readonly<Record<string, string>>;
   readonly resource?: AuditResource;
   readonly context?: string;
 }

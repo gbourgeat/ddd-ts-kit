@@ -56,11 +56,27 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
+      # The cache of ESLint (`ddd-ts-kit lint` keys it by the content of each file): a pull request restores the one the
+      # default branch wrote last for this lockfile and this config, and lints the files that changed since; the default
+      # branch and the night restore nothing, lint everything, which also sees a type changed in another file, and write it.
+      - name: The cache of ESLint, as the default branch wrote it last
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/cache/restore@v6
+        with:
+          path: .eslintcache/
+          key: eslint-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs', 'ddd-ts-kit.config.json') }}-${{ github.sha }}
+          restore-keys: eslint-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs', 'ddd-ts-kit.config.json') }}-
       - run: npm run ci:format
       - name: Lint (the contexts a pull request does not reach are left to the default branch)
         env:
           LINT: ${{ needs.install.outputs.lint }}
         run: npm run ci:lint -- $LINT
+      - name: The cache of ESLint, for the pull requests that follow
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/cache/save@v6
+        with:
+          path: .eslintcache/
+          key: eslint-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs', 'ddd-ts-kit.config.json') }}-${{ github.sha }}
 
   architecture:
     name: Architecture

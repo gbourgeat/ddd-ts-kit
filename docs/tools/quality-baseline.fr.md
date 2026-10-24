@@ -1,5 +1,5 @@
 [English](quality-baseline.md) · **Français**
-<!-- translation-of: quality-baseline.md sha256:7eaad603a3774421 -->
+<!-- translation-of: quality-baseline.md sha256:061efffb14198696 -->
 
 # Base de qualité
 
@@ -108,7 +108,7 @@ d'abord et sur ce qui a changé ; les plus larges tournent plus tard, sur tous l
 |---|---|---|---|
 | vérification des types, sources | kit `ci:typecheck` (le build, puis les exemples vérifiés de la documentation) ; exemple et projet `typecheck` | kit, exemple, projet : `ci:typecheck` | avant un *push* |
 | vérification des types, tests | kit `typecheck:tests` (chaque *package*, par `ci:typecheck`) ; exemple et projet : `tsconfig.json` inclut `test/` et les *specs* | même script | avant un *push* |
-| lint | kit `ci:lint` ; exemple et projet `lint` | `ci:lint` | fichiers indexés, avant un *commit* |
+| lint | kit `ci:lint` ; exemple et projet `lint`, chacun avec le cache d'ESLint indexé par contenu, abandonné quand les règles telles qu'installées ou la config ont changé | `ci:lint`, le cache écrit par la branche par défaut et restauré par une *pull request* | fichiers indexés, avant un *commit* |
 | format | kit `ci:format` ; exemple et projet `format:check` | `ci:format`, dans le *job* de lint | fichiers indexés, avant un *commit* |
 | code mort | kit `ci:deadcode` ; exemple et projet `deadcode` | `ci:deadcode` | non |
 | graphe des dépendances | kit `depcruise` (dans `ci:arch`) ; exemple et projet `depcruise` | kit `ci:arch` ; exemple et projet `ci:arch:graph` | non |

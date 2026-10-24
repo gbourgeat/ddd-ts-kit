@@ -138,6 +138,7 @@ title check (GitLab) run: with squash merges the title becomes the commit on the
 | Fast DAG | `needs:` between jobs | `needs:` between jobs, stages for the gate |
 | Typecheck, dead code, docs, audit, build | `npm run ci:*` | the same scripts |
 | Lint report | annotations from the problem matcher of `setup-node` | `-- --format gitlab` (eslint-formatter-gitlab) into `artifacts:reports:codequality` |
+| Lint cache | `actions/cache/restore` on a pull request, `actions/cache/save` on the default branch and the night, keyed by the lockfile and the lint config | a second `cache:` entry of the lint job, `policy: pull` on a merge request and `pull-push` on the default branch (`LINT_CACHE_POLICY`, set by the workflow rules) |
 | Architecture report | `ci:arch:check -- --format github` annotations | `ci:arch:check -- --format gitlab` into `artifacts:reports:codequality`, in one step (the file of this directory still runs `--format json`, then `arch-to-codequality.mjs`) |
 | Test reports | the GitHub Actions reporter of Vitest; coverage as an artifact | `-- --reporter=junit` into `artifacts:reports:junit`; `coverage:` regex; Cobertura into `artifacts:reports:coverage_report` |
 | PostgreSQL | `services: postgres`, reached on `localhost` | `services:` with the alias `postgres` |

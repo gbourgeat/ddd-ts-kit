@@ -265,8 +265,10 @@ holds the data:
    If the identifiers are themselves personal (an email used as user id), fix that first.
 2. **Mask what must be correlated.** A masked value is unreadable but still linked to a person
    for whoever holds the secret.
-3. **Crypto-shredding for erasure.** Derive one masking key per data subject from a key store.
-   Erasing a person is deleting their key: the masks become tokens nobody can recompute, the
+3. **Crypto-shredding for erasure.** `subjectMasker(keys)` of `@ddd-ts-kit/audit` masks each
+   value under a key derived from the key of its data subject in the `SubjectKeyStore`, the same
+   keys that seal the stored events; `masked(field, { subject })` says whose each value is.
+   Erasing a person is destroying their key: the masks become tokens nobody can recompute, the
    entries stay, the hashes stay valid.
 4. **Record the erasure itself.** The erasure leaves an entry with its actor and its date,
    which, plus the retention of the backups of the keys, is the day it is complete
@@ -274,7 +276,8 @@ holds the data:
 
 What remains after erasure is "an actor with this opaque id did this at that time". Whether
 that is acceptable is a legal question for the project, to be answered before the first entry
-is written. The key store then becomes the system to protect; the kit does not provide one.
+is written. The key store then becomes the system to protect: keep it apart from the trail and
+from the events, with a shorter backup retention.
 
 ## Reading it
 

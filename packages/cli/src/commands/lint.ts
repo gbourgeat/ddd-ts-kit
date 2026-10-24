@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { CliError } from '../cli-error';
 import { ESLINT_IN_PROJECT, LINT_RUN_VARIABLE } from '../lint/eslint-in-project';
+import { lintCacheOf } from '../lint/lint-cache-of';
 import { type LintAnswer, parseLintAnswer } from '../lint/parse-lint-answer';
 import type { LintRun } from '../lint/lint-run';
 import { formatVerdict } from '../lint/format-verdict';
@@ -12,17 +13,29 @@ import type { Command } from './command';
 import type { Io } from './io';
 
 /**
- * `lint` and `ci:lint` of a generated project: the ESLint of the project, failing on an error or a
- * warning, but on a warning of a rule of the kit in transition, which it reports apart.
+ * `lint` and `ci:lint` of a generated project: the ESLint of the project, with its cache unless
+ * `--no-cache` asks for every file again, failing on an error or a warning, but on a warning of a
+ * rule of the kit in transition, which it reports apart.
  */
 export const lintCommand: Command = (argv, io) => {
-  const args = Arguments.parse(argv, { format: { type: 'string' }, fix: { type: 'boolean', default: false } });
+  const args = Arguments.parse(argv, {
+    format: { type: 'string' },
+    fix: { type: 'boolean', default: false },
+    'no-cache': { type: 'boolean', default: false },
+  });
+
   const root = args.projectRoot;
 
   refuseWithoutEslint(root);
 
   const answer = runEslint(
-    { root, patterns: args.positionals, format: args.text('format') ?? 'stylish', fix: args.flag('fix') },
+    {
+      root,
+      patterns: args.positionals,
+      format: args.text('format') ?? 'stylish',
+      fix: args.flag('fix'),
+      cache: args.flag('no-cache') ? undefined : lintCacheOf(root),
+    },
     io,
   );
 
