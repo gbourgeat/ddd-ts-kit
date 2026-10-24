@@ -11,7 +11,7 @@ shared files each kind writes (`writesShared`, `shared`, `sharedWhen`).
 |---|---|---|
 | `context` | `<name> --classification <core\|supporting\|generic> [--purpose "<two sentences>"] [--upstream <ctx>[:pattern]]...` | `contexts/<name>/`: `CONTEXT.md`, published language, barrel (or module file), route list; config, composition root, context map |
 | `module` | `<ctx> <module> [--purpose "<one sentence>"] [--classification <core\|supporting\|generic>]` | `contexts.<ctx>.modules` of the config, its row of `## Modules` in `CONTEXT.md`, the `--term` rows of the glossary; run again, it adds what is missing. Existing files move with `npx ddd-ts-kit move-to-module <ctx> <module> <path>...` |
-| `aggregate` | `<ctx> <Name> [--event-sourced]` | `domain/aggregates/`, builder, spec; event-sourced: its birth event `<Name>Created` and apply method, the codec `infrastructure/persistence/<name>-events.mapper.ts`, a builder that replays a history |
+| `aggregate` | `<ctx> <Name> [--event-sourced]` | `domain/aggregates/`, builder, spec; event-sourced: its birth event `<Name>Created` and apply method, the codec `infrastructure/persistence/<name>-events.mapper.ts`, a builder that replays a history; needs `stack.eventSourcing` on (`init --force --event-sourcing on`), refused otherwise |
 | `entity` | `<ctx> <Name>` | `domain/entities/`, spec |
 | `value-object` (`vo`) | `<ctx> <Name>` | `domain/value-objects/`, spec |
 | `domain-event` | `<ctx> <Aggregate> <Fact>` | `domain/events/`, named `<ctx>.<aggregate>.<fact>`, spec; of an event-sourced aggregate, also the union, `appliers()` with an empty apply method, and the codec entry |

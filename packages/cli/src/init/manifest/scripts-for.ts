@@ -40,6 +40,7 @@ function scriptsOf(config: Config, tracing: string): Record<string, string> {
     // Every derived file in one step after a change: the dependency rules from the config, then what `docs:generate` writes.
     regenerate: 'ddd-ts-kit depcruise-config --write && npm run docs:generate',
     ...databaseScripts(config),
+    ...privacyScripts(config),
     'infra:up': 'docker compose up -d --wait',
     'infra:down': 'docker compose down',
   };
@@ -48,6 +49,22 @@ function scriptsOf(config: Config, tracing: string): Record<string, string> {
   const gates = BASELINE.map((gate) => gate.verify).filter((gate) => gate in scripts);
 
   return { ...scripts, verify: gates.map((gate) => `npm run ${gate}`).join(' && ') };
+}
+
+/**
+ * With `--privacy on`, the two requests of a data subject, answered from the command line on the
+ * sources, with the variables of `.env`: the right to erasure and the right of access. Each takes
+ * the subject id and `--operator <who-asks>`.
+ */
+function privacyScripts(config: Config): Record<string, string> {
+  if (config.stack.privacy !== 'on') {
+    return {};
+  }
+
+  return {
+    'privacy:erase': 'tsx --env-file-if-exists=.env scripts/privacy-erase.ts',
+    'privacy:export': 'tsx --env-file-if-exists=.env scripts/privacy-export.ts',
+  };
 }
 
 /**

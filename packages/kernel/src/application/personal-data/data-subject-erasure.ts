@@ -4,7 +4,12 @@ import type { ProjectionToRebuild } from './projection-to-rebuild';
 
 /** What an erasure is made of: the keys, the copies the contexts keep, how to reach every tenant, the projections to rebuild. */
 export interface DataSubjectErasure {
-  readonly keys: SubjectKeyStore;
+  /**
+   * The keys the personal values of the stored events are sealed with: the key of the subject is
+   * destroyed first. Left out, nothing is sealed, as in a project whose aggregates are rows: the
+   * copies alone are erased, and the report says no key was destroyed.
+   */
+  readonly keys?: SubjectKeyStore;
   /** The copies the contexts keep of a data subject in clear, erased after the key, in every tenant. None: the key and the rebuilds alone. */
   readonly copies?: readonly PersonalDataCopy[];
   /**

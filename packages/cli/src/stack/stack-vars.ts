@@ -13,9 +13,12 @@ import { redisVars } from './redis-vars';
 import { filesVars } from './files-vars';
 import { usesLegacyDecorators } from './uses-legacy-decorators';
 
+/** The line width of the formatter of a generated project (`biome.json`, `lineWidth`). */
+const FORMATTED_WIDTH = 120;
+
 /** The choices of the stack as template variables: what every template of `init` and of `generate` reads. */
 export function stackVars(config: Config): RenderContext {
-  const { validation, di, tests, orm, authz, style, logger, tenancy } = config.stack;
+  const { validation, di, tests, orm, authz, style, logger } = config.stack;
   const legacy = usesLegacyDecorators(config);
 
   return {
@@ -43,9 +46,49 @@ export function stackVars(config: Config): RenderContext {
     config: platformPaths(config),
     alias: aliasVars(config),
     persistence: persistenceVars(config),
-    tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
+    ...platformVars(config),
     ...backgroundVars(config),
   };
+}
+
+/** The tenants the storage confines to, the event store and the requests of a data subject, and the hand-wired foundations. */
+function platformVars(config: Config): RenderContext {
+  const { tenancy, eventSourcing, privacy } = config.stack;
+
+  return {
+    tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
+    eventSourcing: one(eventSourcing, ['on', 'off']),
+    privacy: one(privacy, ['on', 'off']),
+    foundations: { founded: foundedUnion(founded(config)) },
+  };
+}
+
+/** The members of the platform the hand-wired foundations hand on as they are, in the order the union names them. */
+function founded(config: Config): readonly string[] {
+  const { cache, http, audit, errors, eventSourcing } = config.stack;
+  const rateLimit = cache === 'redis' && http !== 'none';
+
+  return [
+    'scope',
+    'clock',
+    'ids',
+    'logger',
+    'metrics',
+    ...(errors === 'sentry' ? ['errors'] : []),
+    'cache',
+    'jobs',
+    ...(rateLimit ? ['rateLimiter'] : []),
+    ...(audit === 'on' ? ['audit'] : []),
+    ...(eventSourcing === 'on' ? ['eventSourcing'] : []),
+  ];
+}
+
+/** The `Founded` union as the formatter lays it out: one line while it fits the width of the project, one member per line beyond. */
+function foundedUnion(members: readonly string[]): string {
+  const quoted = members.map((member) => `'${member}'`);
+  const oneLine = `type Founded = ${quoted.join(' | ')};`;
+
+  return oneLine.length <= FORMATTED_WIDTH ? oneLine : `type Founded =\n${quoted.map((m) => `  | ${m}`).join('\n')};`;
 }
 
 /** Where the background jobs run and are kept. */

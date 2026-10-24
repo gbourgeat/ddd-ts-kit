@@ -333,9 +333,11 @@ path: its `ProcessRunner` is in memory, `app.processes.list()` shows the instanc
 `ddd-ts-kit generate process <context> <Name>` starts one: the process with a first step that
 arms a deadline, a step that ends it in time and the step of the deadline, the background job
 that delivers its timeouts, and the specs of both, written with `givenProcess` and through the
-queue of the test application. The steps it has to react to are then called by event handlers
-(`generate event-handler`) through `ProcessRunner.run`. It needs `--di tsyringe`, which binds
-the runner; `stack.queue` says where the instances are kept.
+queue of the test application on tsyringe, a queue and a runner in memory on the test buses
+otherwise. The steps it has to react to are then called by event handlers
+(`generate event-handler`) through `ProcessRunner.run`. The runner is bound by the kernel module
+of `@ddd-ts-kit/di` on tsyringe and built by `src/platform/jobs/create-background-work.ts` where the
+platform is wired by hand (`platform.processes`); `stack.queue` says where the instances are kept.
 
 ## Without a runtime: an aggregate holds the process
 

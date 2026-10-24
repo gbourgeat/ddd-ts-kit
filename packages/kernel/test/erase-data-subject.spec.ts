@@ -40,6 +40,24 @@ describe('eraseDataSubject, the key and the rebuilds', () => {
     expect(order).toEqual(['scheduling.history']);
   });
 
+  it('erases the copies alone when the project seals nothing: no key store, no key destroyed, and the report says so', async () => {
+    const copy = { name: 'identity.persons', erase: () => Promise.resolve(1) };
+
+    expect(await eraseDataSubject('patient-1', { copies: [copy] })).toEqual({
+      erased: false,
+      copies: { 'identity.persons': 1 },
+      rebuilt: {},
+    });
+  });
+
+  it('still refuses a mistyped id without a key store, when no copy was reached and nobody knows the subject', async () => {
+    const copy = { name: 'identity.persons', erase: () => Promise.resolve(0) };
+
+    await expect(
+      eraseDataSubject('patient-9', { copies: [copy], isKnown: () => Promise.resolve(false) }),
+    ).rejects.toThrow(UnknownDataSubjectError);
+  });
+
   it('rebuilds nothing when nothing is fed by the store', async () => {
     const keys = new InMemorySubjectKeyStore();
 

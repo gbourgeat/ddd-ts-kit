@@ -45,6 +45,8 @@ export const PLATFORM_LAYOUT = [
       'tracing.ts': 'observability/tracing.ts',
       'errors.ts': 'observability/errors.ts',
       'job-settings.ts': 'jobs/job-settings.ts',
+      'background-jobs.ts': 'jobs/background-jobs.ts',
+      'create-background-work.ts': 'jobs/create-background-work.ts',
     },
   },
   {

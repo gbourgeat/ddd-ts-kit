@@ -14,11 +14,13 @@ import { createDatabase, type TestDatabase } from './support/database';
 const runner = { describe, it, expect, beforeEach, afterEach };
 const outbox = outboxEntity({ schema: 'messaging' });
 const processed = processedEventEntity({ schema: 'messaging' });
+/** The outbox of a multi-tenant project: the tenant of each event kept in `tenant_id`. */
+const tenantedOutbox = outboxEntity({ schema: 'tenanted', tenant: true });
 
 let database: TestDatabase;
 
 beforeAll(async () => {
-  database = await createDatabase([outbox, processed, outboxEntity(), processedEventEntity()]);
+  database = await createDatabase([outbox, processed, outboxEntity(), processedEventEntity(), tenantedOutbox]);
 });
 
 afterAll(async () => {
@@ -63,6 +65,17 @@ outboxStoreContract(runner, {
     await database.truncate();
 
     return new TypeOrmOutboxStore(context(), { entity: outbox, claim: 'compare-and-set' });
+  },
+});
+
+outboxStoreContract(runner, {
+  name: 'TypeOrmOutboxStore keeping the tenant of each event',
+  leaseMs: 30_000,
+  carriesTenant: true,
+  createStore: async () => {
+    await database.truncate();
+
+    return new TypeOrmOutboxStore(context(), { entity: tenantedOutbox });
   },
 });
 
@@ -121,6 +134,17 @@ describe('entity schemas', () => {
     expect(await indexes('processed_events')).toEqual([
       expect.stringMatching(/UNIQUE INDEX .* \(consumer, event_id\)/),
     ]);
+  });
+
+  it('add the tenant of the events, nullable, to the outbox of a multi-tenant project only', () => {
+    expect(tenantedOutbox.options.columns.tenantId).toEqual({
+      name: 'tenant_id',
+      type: 'varchar',
+      length: 191,
+      nullable: true,
+    });
+
+    expect(outbox.options.columns.tenantId).toBeUndefined();
   });
 
   it('pick the column types of the dialect', () => {

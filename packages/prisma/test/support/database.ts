@@ -28,6 +28,8 @@ const TABLES = [
   'public.stream_snapshots',
   'public.subscription_checkpoints',
   'public.subject_keys',
+  'privacy.people',
+  'privacy.people_strict',
 ];
 
 /** What the Prisma schema cannot say, and a migration of the project adds by hand: strings ordered by code point. */

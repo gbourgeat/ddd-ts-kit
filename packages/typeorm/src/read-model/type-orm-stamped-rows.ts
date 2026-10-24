@@ -1,7 +1,8 @@
-import type { EntityManager, EntitySchema, ObjectLiteral, QueryBuilder } from 'typeorm';
+import type { EntityManager, EntitySchema, ObjectLiteral, QueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import type { EventStamp, ReadModelRows, StampedRow } from '@ddd-ts-kit/kernel';
 import type { TypeOrmContext } from '../unit-of-work/type-orm-context';
 import type { RowMapper } from './row.mapper';
+import type { TenantCondition, TenantOfRows } from './tenant-of-rows';
 
 export interface StampedTable<Row extends object> {
   /** `schema.table`, or the table alone. */
@@ -11,6 +12,8 @@ export interface StampedTable<Row extends object> {
   /** A property of the entity, not a column. */
   readonly key: string;
   readonly mapper: RowMapper<Row>;
+  /** The tenant of the rows, for a read model of tenant data. */
+  readonly tenant: TenantOfRows;
 }
 
 /**
@@ -25,15 +28,17 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
   ) {}
 
   async find(key: string): Promise<StampedRow<Row> | undefined> {
-    const { path, mapper } = this.target;
+    const { path, mapper, tenant } = this.target;
     const manager = this.context.manager();
 
-    const record: unknown = await manager
+    const query = manager
       .createQueryBuilder()
       .select('*')
       .from(path, 'held')
-      .where(`${this.column(manager, 'held', this.target.key)} = :key`, { key })
-      .getRawOne();
+      .where(`${this.column(manager, 'held', this.target.key)} = :key`, { key });
+
+    const reach = tenant.reading((property) => this.column(manager, 'held', property));
+    const record: unknown = await confined(query, reach).getRawOne();
 
     if (typeof record !== 'object' || record === null) {
       return undefined;
@@ -74,7 +79,7 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
   }
 
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {
-    const { path, entity, mapper } = this.target;
+    const { path, entity, mapper, tenant } = this.target;
     const manager = this.context.manager();
     const column = (property: string): string => manager.dataSource.driver.escape(mapper.columnOf(property));
     const written = this.written(entry);
@@ -89,7 +94,7 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
       .andWhere(`${column('lastEventId')} = :heldId`, { heldId: held.eventId })
       .andWhere(`${column('lastEventAt')} = :heldAt`, { heldAt: held.occurredAt });
 
-    return affected(manager, update);
+    return affected(manager, confined(update, tenant.writing(column)));
   }
 
   private column(manager: EntityManager, alias: string, property: string): string {
@@ -98,7 +103,7 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
     return `${driver.escape(alias)}.${driver.escape(this.target.mapper.columnOf(property))}`;
   }
 
-  /** What the entry writes, by property. A removed row keeps its fields and changes its stamp only. */
+  /** What the entry writes, by property: a removed row keeps its fields and changes its stamp only; tenant data carries the tenant of the work. */
   private written({ key, row, stamp }: StampedRow<Row>): Record<string, unknown> {
     return {
       ...row,
@@ -107,8 +112,21 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
       lastEventAt: stamp.occurredAt,
       lastEventVersion: stamp.version ?? null,
       deleted: row === undefined,
+      ...this.target.tenant.written(),
     };
   }
+}
+
+/** The statement confined to the tenants of the work, when the read model is of tenant data. */
+function confined<Builder extends WhereExpressionBuilder>(
+  builder: Builder,
+  condition: TenantCondition | undefined,
+): Builder {
+  if (condition !== undefined) {
+    void builder.andWhere(condition.clause, condition.parameters);
+  }
+
+  return builder;
 }
 
 /** Whether the statement wrote one row: the structured result of the query runner says it on every driver. */

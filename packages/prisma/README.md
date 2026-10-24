@@ -428,9 +428,20 @@ model Invoice {
 No `@default(now())` and no `@updatedAt` on them: the instant is the one of the `Clock`, and
 Prisma's own attributes know nothing of who acts.
 
+The tenant reaches every statement through three helpers, which read it from the execution scope
+and refuse work that names none (`NoCurrentTenantError`): `tenantWhere(scope)` is spread into
+the `where` of a read (the tenant of the work, or the tenants an elevation of platform staff
+reaches, `{ tenantId: { in } }` or nothing over every tenant), `ownTenantWhere(scope)` into the
+`where` of an update or a delete (the one tenant of the work, whatever an elevation widens) and
+`tenantScopeOf(scope)` of the kernel into the `data` of a create. `findUnique`, `update` and
+`delete` by key are not used: the tenant is never part of the key. The rule
+`tenancy/scoped-statement` of the CLI holds the adapters of a `--tenancy shared-table` project to
+it, and `generate repository` writes them this way.
+
 ```ts
 import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { optimisticUpdate, ownTenantWhere, tenantWhere } from '@ddd-ts-kit/prisma';
 
 @Repository(InvoiceRepository)
 export class PrismaInvoiceRepository implements InvoiceRepository {
@@ -442,7 +453,7 @@ export class PrismaInvoiceRepository implements InvoiceRepository {
 
   async findById(id: string): Promise<Invoice | undefined> {
     // findFirst, not findUnique: the tenant is part of every condition, and it is not part of the key.
-    const row = await this.database.client().invoice.findFirst({ where: { id, ...tenantScopeOf(this.scope) } });
+    const row = await this.database.client().invoice.findFirst({ where: { id, ...tenantWhere(this.scope) } });
 
     return row === null ? undefined : InvoiceMapper.toDomain(row);
   }
@@ -464,7 +475,7 @@ export class PrismaInvoiceRepository implements InvoiceRepository {
 
   private update(state: VersionedInvoice, expected: number): Promise<Prisma.BatchPayload> {
     return this.database.client().invoice.updateMany({
-      where: { id: state.id, version: expected, ...tenantScopeOf(this.scope) },
+      where: { id: state.id, version: expected, ...ownTenantWhere(this.scope) },
       data: { ...state, ...stampUpdate(this.scope, this.clock) },
     });
   }
@@ -482,8 +493,9 @@ export abstract class InvoiceQueries {
 
 ```ts
 // contexts/billing-core/infrastructure/persistence/prisma-invoice-queries.reader.ts
-import { ExecutionScope, encodeCursor, pageOf, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { ExecutionScope, encodeCursor, pageOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { tenantWhere, type TenantWhere } from '@ddd-ts-kit/prisma';
 
 @Repository(InvoiceQueries)
 export class PrismaInvoiceQueries implements InvoiceQueries {
@@ -497,21 +509,20 @@ export class PrismaInvoiceQueries implements InvoiceQueries {
   }
 
   private async byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
-    const { invoice } = this.database.client();
-    const where = tenantScopeOf(this.scope);
-    const rows = await invoice.findMany({
+    const where = tenantWhere(this.scope);
+    const rows = await this.database.client().invoice.findMany({
       where,
       orderBy: totalOrder(directionOf(request)),
       take: request.limit,
       skip: request.offset,
     });
 
-    return pageOf(rows.map(toSummary), { total: await invoice.count({ where }) });
+    return pageOf(rows.map(toSummary), { total: await this.database.client().invoice.count({ where }) });
   }
 
   private async byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     const direction = directionOf(request);
-    const tenant = tenantScopeOf(this.scope);
+    const tenant = tenantWhere(this.scope);
     const rows = await this.database.client().invoice.findMany({
       where: request.cursor === undefined ? tenant : beyond(positionOf(request.cursor), direction, tenant),
       orderBy: totalOrder(direction),
@@ -537,7 +548,7 @@ const totalOrder = (direction: SortDirection): Prisma.InvoiceOrderByWithRelation
 function beyond(
   { amount, id }: { amount: number; id: string },
   direction: SortDirection,
-  tenant: TenantScoped,
+  tenant: TenantWhere,
 ): Prisma.InvoiceWhereInput {
   const past = direction === 'asc' ? 'gt' : 'lt';
 
@@ -561,10 +572,13 @@ The rules these examples hold, and that the tests of this package check on a rea
   clock)` on insert, `stampUpdate(scope, clock)` on update, which leaves `created_at` and
   `created_by` alone. The actor is the one of the execution scope: the user of the request, or
   `system:<consumer>` for a consumed event.
-- **The tenant is part of every statement**: written on insert, and in the condition of every
-  read and every update, the version guard included. A row of another tenant is not found, and
-  an update aimed at it writes nothing, which `optimisticUpdate` reports as a
-  `ConcurrencyError`. Work that names no tenant raises `NoCurrentTenantError` before any SQL.
+- **The tenant is part of every statement**: written on insert (`tenantScopeOf`), and in the
+  condition of every read (`tenantWhere`) and every update (`ownTenantWhere`), the version guard
+  included. A row of another tenant is not found, and an update aimed at it writes nothing, which
+  `optimisticUpdate` reports as a `ConcurrencyError`. An elevation of platform staff widens what
+  a read reaches, never what a write touches. Work that names no tenant raises
+  `NoCurrentTenantError` before any SQL. The tenant isolation contract of
+  `@ddd-ts-kit/testing` proves it on this repository.
 - **A list has a total order.** The primary key follows the sort field, in the same direction,
   as a tie-breaker: rows equal on the sort field otherwise have no defined order, and a page
   could repeat or skip one of them. The index covers `(tenant_id, <sort field>, id)`.
@@ -713,6 +727,52 @@ the schema and the column of each field are named. The arguments given to the mo
 from the fields of the row at run time, so `PrismaReadModelDelegate` types them as objects and
 it is the generated client that validates them.
 
+A read model of tenant data takes `tenant: { scope }` (and `field` when the model holds the
+tenant other than in `tenantId`, mapped to its column by `columns` or to `tenant_id`): every row
+is written with the tenant of the work in progress, every read, search and write is confined to
+it, an elevation of platform staff widening the reads only, and the copy of a rebuild follows the
+same conditions. Keys stay unique across tenants, as the conflict of an insert is on the key
+alone: a key two tenants could share (a day, a slug) carries the tenant (`acme:2026-03-01`). A
+store built without `tenant` in a `--tenancy shared-table` project is reported by
+`tenancy/scoped-statement`.
+
+## Personal data erasure
+
+The erasure of a data subject from the tables of a context, from the `personalFields` declarations
+written next to its mappers (`@ddd-ts-kit/kernel`, "Personal data"): `PrismaPersonalDataErasure` implements
+the `PersonalDataErasure` port over the client of the unit of work (`$queryRawUnsafe` and `$executeRawUnsafe`). The port of the context extends the one of the kernel, and
+its adapter extends this class.
+
+```ts
+// infrastructure/persistence/person.personal-fields.ts: the table as @@map and @@schema name it, the columns by their SQL names (@map)
+export const personPersonalFields = personalFields<PersonRow, PrismaPersonalTable>(
+  { schema: 'identity', table: 'persons' },
+  { subject: 'id', fields: ['display_name', 'email'], erasure: 'row' },
+);
+
+// infrastructure/persistence/prisma-identity-erasure.repository.ts
+@Repository(IdentityErasure)
+export class PrismaIdentityErasure extends PrismaPersonalDataErasure<Prisma.TransactionClient> implements IdentityErasure {
+  constructor(database: Database, scope: ExecutionScope, files: FileStorage) {
+    super(database, { name: 'identity.persons', declarations: [personPersonalFields], tenant: { scope }, files });
+  }
+}
+```
+
+`erase(subject)` deletes the files the rows name from the storage first, then deletes the rows of
+the subject (`row`) or pseudonymises them (`pseudonymise`: a text column reads `[erased]`, a column
+of any other type reads nothing, a file column nothing), and answers how many rows it reached, none
+the second time. With `tenant`, every statement is confined to the tenant of the work and never
+widened by an elevation (`tenant_id`, or `tenant.column`); without it, the table holds the rows of every tenant. A subject
+that is not an opaque identifier is refused before any statement, and a declaration that names file
+columns without a file storage is refused when the adapter is built. Prisma builds no statement on a column it does not know at build time, so the statements are written here for PostgreSQL, with quoted identifiers from the declarations and every value a `$n` parameter; the types of the columns are read once from `information_schema`, so that a text and a number are pseudonymised each its own way. A personal column
+that is not a text has to accept null, or the rows are erased with `row`: a declaration that would
+pseudonymise one that does not is refused before any file or row is touched
+(`NotNullablePersonalColumnError`). The adapter passes
+`personalDataErasureContract` of `@ddd-ts-kit/testing`, as the in-memory one does, on PGlite and
+PostgreSQL. What an erasure does not reach, and the whole chain (`eraseDataSubject`: the key, every
+copy in every tenant, the rebuilds), is in the README of the kernel ("Personal data").
+
 ## Outbox and idempotency
 
 `claim` is required, because a Prisma client does not tell which database it talks to:
@@ -727,6 +787,10 @@ it is the generated client that validates them.
   identifiers. Everything else, the update included, is Prisma Client.
 - `'compare-and-set'` reads the due rows and takes each one with an `updateMany` guarded by the
   attempt count it read: same guarantee, no raw SQL, any database, one statement per record.
+- `tenant: true` writes the tenant of each event to `tenantId`, the field a multi-tenant project
+  uncomments in the shipped fragment (`tenantId String? @map("tenant_id")`, nullable: an event of
+  no tenant, and the events published before the field existed): its consumers then run in that
+  tenant. A model that has the field is read back either way.
 
 ![The two claim strategies side by side: skip-locked locks the due rows with a raw select for update skip locked, reads them and leases them in one short transaction, so relays pass over each other's rows; compare-and-set reads the due rows, takes each one with an updateMany guarded by the attempt count it read, and reads again to replace the rows another relay took; both hide a claimed record for leaseMs, so the records of a relay that died are claimed again](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/prisma-outbox-claim.svg)
 

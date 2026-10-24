@@ -313,6 +313,8 @@ export * from './infrastructure/in-memory/in-memory-event-bus';
 export * from './infrastructure/in-memory/in-memory-event-store';
 export * from './infrastructure/in-memory/in-memory-lock';
 export * from './infrastructure/in-memory/in-memory-personal-data';
+export * from './infrastructure/personal-data/not-nullable-personal-column-error';
+export * from './infrastructure/personal-data/pseudonymised-value-of';
 export * from './infrastructure/in-memory/in-memory-logger';
 export * from './infrastructure/in-memory/in-memory-metrics';
 export * from './infrastructure/in-memory/in-memory-process-store';

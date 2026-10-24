@@ -1,5 +1,8 @@
 {{#if queue.database}}
 import {
+{{#if eventSourcing.on}}
+  createKnexEventSourcing,
+{{/if}}
   createKnexUnitOfWork,
   KnexJobStore,
   KnexOutboxStore,
@@ -8,11 +11,24 @@ import {
 } from '@ddd-ts-kit/knex';
 {{/if}}
 {{#unless queue.database}}
+{{#if eventSourcing.on}}
+import {
+  createKnexEventSourcing,
+  createKnexUnitOfWork,
+  KnexOutboxStore,
+  KnexProcessedEventStore,
+{{#if queue.processTable}}
+  KnexProcessStore,
+{{/if}}
+} from '@ddd-ts-kit/knex';
+{{/if}}
+{{#unless eventSourcing.on}}
 import { createKnexUnitOfWork, KnexOutboxStore, KnexProcessedEventStore{{#if queue.processTable}}, KnexProcessStore{{/if}} } from '@ddd-ts-kit/knex';
+{{/unless}}
 {{/unless}}
 import type { DatabaseConnection } from '{{alias.platform}}/database/connect-to-database{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
-import { MESSAGING_SCHEMA } from '{{alias.platform}}/database/schema{{alias.ext}}';
+import { {{#if eventSourcing.on}}EVENT_STORE_SCHEMA, {{/if}}MESSAGING_SCHEMA } from '{{alias.platform}}/database/schema{{alias.ext}}';
 
 /** One object is the unit of work and what repositories query through; the stores write in its transaction. */
 export function persistenceOver(connection: DatabaseConnection): Persistence {
@@ -33,6 +49,9 @@ export function persistenceOver(connection: DatabaseConnection): Persistence {
     {{/if}}
     {{#if queue.processTable}}
     processes: new KnexProcessStore(unitOfWork, { schema: MESSAGING_SCHEMA }),
+    {{/if}}
+    {{#if eventSourcing.on}}
+    eventSourcing: createKnexEventSourcing(unitOfWork, { schema: EVENT_STORE_SCHEMA }),
     {{/if}}
     close: () => connection.close(),
   };

@@ -1,0 +1,57 @@
+import { describe, expect, it } from '{{tests.module}}';
+import type { BackgroundJob, Message } from '@ddd-ts-kit/kernel';
+import { InMemoryJobStore, QueueWorker, StoredJobQueue } from '@ddd-ts-kit/scheduling';
+import { createTestBuses } from '@ddd-ts-kit/testing';
+import { {{job.command}}Command } from '{{alias.context}}/application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command{{alias.ext}}';
+{{job.specImport}}
+
+describe('{{name.title}}, once enqueued', () => {
+  it('sends {{job.commandWords}}{{job.asActor}}', async () => {
+    const { jobQueue, worker, sent } = arrange();
+
+{{#if job.hasPayload}}
+    const payload: {{name.pascal}}Payload = {
+{{job.payloadSample}}
+    };
+
+    await jobQueue.enqueue({{name.pascal}}BackgroundJob, payload);
+{{/if}}
+{{#unless job.hasPayload}}
+    await jobQueue.enqueue({{name.pascal}}BackgroundJob, {});
+{{/unless}}
+
+    expect(await worker.runDue()).toMatchObject([{ job: '{{job.name}}', outcome: 'succeeded' }]);
+
+    expect(sent).toHaveLength(1);
+    expect(sent[0]).toBeInstanceOf({{job.command}}Command);
+{{#if job.protected}}
+    expect(sent[0]).toMatchObject({ actor: { id: 'test-user' } });
+{{/if}}
+  });
+
+  // TODO(domain): replace each entry below by a test of what "{{name.words}}" asks of the use case: a run may be a retry, and a long one resumes from its checkpoint.
+  it.todo('has the same outcome when the same job runs twice');
+  it.todo('resumes from its checkpoint after an interrupted attempt');
+});
+
+/** The queue and its worker in memory, on the clock and the execution scope of the test buses: the job is enqueued as `test-user`. */
+function arrange() {
+  const { commandBus, clock, ids, executionScope } = createTestBuses();
+  const store = new InMemoryJobStore();
+  const jobQueue = new StoredJobQueue({ store, clock, ids, scope: executionScope });
+  const worker = new QueueWorker({ store, clock, scope: executionScope });
+  const job: BackgroundJob<unknown> = new {{name.pascal}}BackgroundJob(commandBus);
+  const sent: Message[] = [];
+
+  worker.register({ name: {{name.pascal}}BackgroundJob.jobName, run: (payload, execution) => job.run(payload, execution) });
+
+  commandBus.register({{job.command}}Command, {
+    execute: () => Promise.reject(new Error('{{job.command}}Command is recorded before it reaches a handler')),
+  });
+
+  commandBus.use(async (message) => {
+    sent.push(message);
+  });
+
+  return { jobQueue, worker, sent };
+}

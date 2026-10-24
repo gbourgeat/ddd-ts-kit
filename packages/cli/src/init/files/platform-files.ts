@@ -76,7 +76,12 @@ function compositionFiles(config: Config): InitFile[] {
     file('composition/compose-application.ts', family),
     ...BOTH.map((name) => file(name, family)),
     ...own.map((name) => file(name, family)),
-    ...when(family === 'manual', [file('events/platform-events.ts'), file('jobs/configured-job-scheduler.ts')]),
+    ...when(family === 'manual', [
+      file('events/platform-events.ts'),
+      file('jobs/configured-job-scheduler.ts'),
+      file('jobs/background-jobs.ts'),
+      file('jobs/create-background-work.ts'),
+    ]),
   ];
 }
 

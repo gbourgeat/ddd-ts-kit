@@ -43,11 +43,15 @@ export class TypeOrmOutboxStore implements OutboxStore {
 
   private readonly claimStrategy: OutboxClaimStrategy | undefined;
 
+  /** Whether the entity has the tenant column (`outboxEntity({ tenant: true })`): the tenant of each event is then written to it. */
+  private readonly tenant: boolean;
+
   constructor(context: TypeOrmContext, options: TypeOrmOutboxStoreOptions = {}) {
     this.context = context;
     this.outbox = options.entity ?? outboxEntity();
     this.leaseDurationMs = options.leaseMs ?? 30_000;
     this.claimStrategy = options.claim;
+    this.tenant = this.outbox.options.columns.tenantId !== undefined;
   }
 
   async append(events: readonly IntegrationEvent[]): Promise<void> {
@@ -70,6 +74,7 @@ export class TypeOrmOutboxStore implements OutboxStore {
           ...(event.payload === null || event.payload === undefined ? {} : { payload: event.payload }),
           traceparent: event.traceparent ?? null,
           correlationId: event.correlationId ?? null,
+          ...(this.tenant ? { tenantId: event.tenantId ?? null } : {}),
           nextAttemptAt: DUE_IMMEDIATELY,
         })),
       )
@@ -252,6 +257,7 @@ function toRecord(row: OutboxRow): OutboxRecord {
       payload: row.payload,
       ...(row.traceparent === null ? {} : { traceparent: row.traceparent }),
       ...(row.correlationId === null ? {} : { correlationId: row.correlationId }),
+      ...(typeof row.tenantId === 'string' ? { tenantId: row.tenantId } : {}),
     },
     status: row.status,
     attempts: row.attempts,

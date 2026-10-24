@@ -25,6 +25,8 @@ export const CACHE_STACKS = ['none', 'redis'] as const;
 export const HTTP_CACHE_STACKS = ['none', 'varnish'] as const;
 export const STORAGE_STACKS = ['none', 'local', 's3'] as const;
 export const AUDIT_MODES = ['on', 'off'] as const;
+export const EVENT_SOURCING_MODES = ['on', 'off'] as const;
+export const PRIVACY_MODES = ['on', 'off'] as const;
 export const ERROR_REPORTERS = ['none', 'sentry'] as const;
 export const LOGGERS = ['stdout', 'pino', 'winston'] as const;
 export const PACKAGE_MANAGERS = ['npm', 'pnpm'] as const;
@@ -75,6 +77,21 @@ export interface Stack {
   readonly storage: (typeof STORAGE_STACKS)[number];
   /** Whether the audit trail is wired: decisions, commands and integration events, recorded from outside the use cases. */
   readonly audit: (typeof AUDIT_MODES)[number];
+  /**
+   * Whether the event store is wired: `on`, the tables of the `event_store` schema, `Persistence.eventSourcing`
+   * and `src/platform/event-sourcing/`, which binds the stores, the keys of the data subjects and the cipher
+   * of the stored events, for the aggregates `generate aggregate --event-sourced` writes; `off`, none of it,
+   * and the generator refuses an event-sourced aggregate. A config that says nothing was written before the
+   * choice existed: it is `off`.
+   */
+  readonly eventSourcing: (typeof EVENT_SOURCING_MODES)[number];
+  /**
+   * Whether the platform answers the requests of a data subject: `on`, `src/platform/privacy/` with the lists
+   * of the copies and of the exports each context declares, and the scripts `privacy:erase` and
+   * `privacy:export`; `off`, none of it. A config that says nothing was written before the choice existed:
+   * it is `off`.
+   */
+  readonly privacy: (typeof PRIVACY_MODES)[number];
   /** Where unexpected errors are reported: nowhere, or a Sentry protocol server (Sentry, GlitchTip). */
   readonly errors: (typeof ERROR_REPORTERS)[number];
   /** What implements the kernel `Logger` port: JSON lines on the standard output, pino or winston. */

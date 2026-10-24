@@ -1,6 +1,7 @@
 import type { SourceFile } from '../model/source-file';
 import { declaredWith } from './declared-with';
-import { executorUses, type ExecutorUse } from './executor-uses';
+import type { AccessorUse } from './accessor-uses';
+import { executorUses } from './executor-uses';
 
 /** What confines a read, an update or a delete to the tenant. */
 const CONDITION = /(?<![\w$])(?:tenantCondition|ownTenantCondition)\s*\(/;
@@ -21,7 +22,7 @@ export function drizzleUnscoped(file: SourceFile): readonly { offset: number; me
   });
 }
 
-function unscopedStatement(code: string, { statement }: ExecutorUse): string | undefined {
+function unscopedStatement(code: string, { statement, offset }: AccessorUse): string | undefined {
   if (/\.query\s*\./.test(statement)) {
     return 'A relational query (executor().query) cannot carry the tenant condition: write it with select().';
   }
@@ -31,13 +32,14 @@ function unscopedStatement(code: string, { statement }: ExecutorUse): string | u
   }
 
   if (/\.insert\s*\(/.test(statement)) {
-    return TENANT_OF_ROW.test(statement) || declaredWith(code, { statement, method: 'values' }, TENANT_OF_ROW)
+    return TENANT_OF_ROW.test(statement) ||
+      declaredWith(code, { statement, method: 'values', at: offset }, TENANT_OF_ROW)
       ? undefined
       : 'An insert names no tenant: spread tenantScopeOf(this.scope) into the row it writes.';
   }
 
   if (READ_OR_WRITE.test(statement)) {
-    return CONDITION.test(statement) || declaredWith(code, { statement, method: 'where' }, CONDITION)
+    return CONDITION.test(statement) || declaredWith(code, { statement, method: 'where', at: offset }, CONDITION)
       ? undefined
       : 'A statement reaches a table with no tenant condition in its where.';
   }
