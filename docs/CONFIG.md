@@ -748,7 +748,7 @@ The Stryker config writes no glob and no number: it spreads `governedMutation()`
 holds the floor, and `check` holds that place (`test/mutation-governed`).
 
 <!-- checked sample -->
-```js
+```ts
 // stryker.config.mjs
 import { governedMutation } from '@ddd-ts-kit/testing/mutation';
 

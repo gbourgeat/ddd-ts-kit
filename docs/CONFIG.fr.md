@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:5d0b36bf36eb01a2 -->
+<!-- translation-of: CONFIG.md sha256:1cdfee1afc0616ad -->
 
 # `ddd-ts-kit.config.json`
 
@@ -774,7 +774,7 @@ La config Stryker n'écrit ni *glob* ni nombre : elle étale `governedMutation()
 seul endroit tient le plancher, et `check` tient cet endroit (`test/mutation-governed`).
 
 <!-- checked sample -->
-```js
+```ts
 // stryker.config.mjs
 import { governedMutation } from '@ddd-ts-kit/testing/mutation';
 
