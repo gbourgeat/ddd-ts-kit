@@ -29,7 +29,7 @@ export const docsCommand: Command = (argv, io) => {
   const check = args.flag('check');
 
   // A check writes nothing: a context still declared as an earlier version wrote it is only warned about.
-  const kept = writeDocs(ws, config, check ? 'keep' : 'move');
+  const kept = writeDocs(ws, config, { earlier: check ? 'keep' : 'move' });
 
   if (args.flag('stored-events')) {
     recordStoredEvents(ws, config);

@@ -321,6 +321,6 @@ for each moment of the project: https://github.com/gbourgeat/ddd-ts-kit/blob/mai
 | `npm test` | domain, application and adapter specs |
 | `npm run test:e2e` | the whole application through HTTP, on an in-process database unless `DATABASE_URL` is set |
 | `npm run check:arch` | `ddd-ts-kit check` |
-| `npm run docs:generate` | context map, OpenAPI, AsyncAPI and event catalog{{#if sdk.on}}, the clients under `clients/`{{/if}} |
+| `npm run docs:generate` | context map, OpenAPI, AsyncAPI and event catalog, the pages of what the tests state (`docs/behaviour/`){{#if sdk.on}}, the clients under `clients/`{{/if}} |
 | `npm run regenerate` | every derived file after a change: `.dependency-cruiser.cjs`, then `docs:generate` |
 | `npm run verify` | everything CI runs |

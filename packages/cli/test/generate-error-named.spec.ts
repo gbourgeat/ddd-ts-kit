@@ -64,8 +64,15 @@ describe('generate error, in a project of one class per refusal ("stack.refusals
     const added = report(generate(root, 'InvoiceAlreadyIssuedError', 'with-issue-date'));
     const source = read(root, ISSUED);
 
-    // The reference of CONTEXT.md gains the row of the new factory.
-    expect(added.updated).toEqual([ISSUED, ISSUED_SPEC, 'src/contexts/billing/CONTEXT.md']);
+    // The reference of CONTEXT.md gains the row of the new factory, and the page of what the tests state the new case.
+    expect(added.updated).toEqual([
+      ISSUED,
+      ISSUED_SPEC,
+      'src/contexts/billing/CONTEXT.md',
+      'docs/behaviour/billing.md',
+      'docs/behaviour/README.md',
+    ]);
+
     expect(source.indexOf('static forInvoice()')).toBeLessThan(source.indexOf('static withIssueDate()'));
     expect(source).toContain("return InvoiceAlreadyIssued.refusal('Invoice already issued.');\n  }\n}\n");
     expect(read(root, ISSUED_SPEC).match(/^ {2}it\(/gm)).toHaveLength(2);

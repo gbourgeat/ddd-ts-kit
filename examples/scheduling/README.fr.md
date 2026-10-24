@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7703f75f9e032f13 -->
+<!-- translation-of: README.md sha256:9e6d256385490b66 -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -530,7 +530,9 @@ ensuite.
 8. **Passer la barrière de qualité** (`/ddd-ts-kit:quality-gate`) : `npm run verify` avant chaque
    fusion.
 9. **Documenter** (`/ddd-ts-kit:document`) : `npm run docs:generate`, commité avec le code. Ici :
-   `openapi/` et les [notes d'intégration](docs/integration/README.fr.md).
+   `openapi/`, les [notes d'intégration](docs/integration/README.fr.md) et
+   [ce qu'énoncent les tests](docs/behaviour/README.md), une page par contexte d'après les titres
+   de ses *specs*.
 
 Une étape sautée coûte plus tard : des frontières tracées d'après les tables, un glossaire écrit
 après le code, une première intégration faite par un import direct que le vérificateur refuse
