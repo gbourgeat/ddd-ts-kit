@@ -11,6 +11,7 @@ export function parseBudget(value: unknown): Budget {
   return {
     unit: budgetOf(raw, 'unit'),
     integration: budgetOf(raw, 'integration'),
+    enforce: raw['enforce'] === true,
   };
 }
 

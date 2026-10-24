@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:81ba0405b4f46ddd -->
+<!-- translation-of: CONFIG.md sha256:37dbae95a6266e17 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -783,15 +783,14 @@ dérogation :
 ## Budget de temps
 
 ```json
-"budget": { "unit": 3000 }
+"budget": { "unit": 3000, "enforce": true }
 ```
 
 Chaque fichier de *spec* est tenu au budget de temps de son niveau, en millisecondes. Le reporter du
 lanceur de tests (`@ddd-ts-kit/testing/budget/vitest`, `@ddd-ts-kit/testing/budget/jest`, nommé dans
 la config du lanceur qu'écrit `init` et passé avec `--reporter` là où le *pipeline* nomme ses
 reporters) lit la clé, nomme la *spec* la plus lente de chaque niveau à la fin de chaque exécution, et
-fait échouer l'exécution quand un fichier de *spec* a pris plus que son budget, collecte et tests
-compris. Une *spec* unitaire d'un contexte fait tourner le modèle et les cas d'usage sur des *fakes* ;
+avertit quand un fichier de *spec* a pris plus que son budget, collecte et tests compris ; avec `"enforce": true` sous `budget`, il fait échouer l'exécution à la place. Une durée dépend de la charge de la machine autant que de la *spec* : imposez le budget une fois les mesures du projet stables. Une *spec* unitaire d'un contexte fait tourner le modèle et les cas d'usage sur des *fakes* ;
 une *spec* d'intégration d'un contexte, et une *spec* de la plateforme, ouvre une base de données ou
 atteint un serveur. Les *specs* de l'application hors des contextes (bout en bout, acceptation,
 architecture) ne sont pas tenues : un flux a le temps qu'il lui faut.
@@ -802,7 +801,7 @@ architecture) ne sont pas tenues : un flux a le temps qu'il lui faut.
 | `integration` | 30000 | une base ouverte dans le processus et ses tables créées, un serveur atteint, des parcours rejoués ; la plus lente de l'exemple prend 11 secondes, sous charge |
 
 - **Baisser un budget est libre. Le monter au-dessus de la référence est une dérogation** (`governance/recorded-deviation`) avec son enregistrement de décision, `"what": "budget.unit"` ou `"budget.integration"`.
-- **La mesure porte sur la boucle, pas sur la machine** : les références laissent de la marge à un runner chargé sous couverture ; une équipe qui veut la boucle plus serrée les baisse.
+- **Un avertissement d'abord, un échec une fois imposé** : `"enforce": true` fait échouer l'exécution sur une *spec* au-delà de son budget, en local, avant un *push* et dans le *pipeline* ; sans lui, l'exécution nomme la *spec* et passe. **La mesure porte sur la boucle, pas sur la machine** : les références laissent de la marge à un runner chargé sous couverture ; une équipe qui veut la boucle plus serrée les baisse.
 - **Un budget qui n'est pas un nombre entier de millisecondes au-dessus de zéro, ou un niveau qui n'est pas tenu**, est signalé par `check` sous `config/valid` et lu comme la référence.
 
 ## Limites

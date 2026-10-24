@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:fa8f4a1939444bf9 -->
+<!-- translation-of: README.md sha256:4883c7df2615e876 -->
 
 # @ddd-ts-kit/testing
 
@@ -1031,7 +1031,7 @@ fait de lui-même pour SWC.
 dans `reporters` de la config du runner, ou passés avec `--reporter`, ils lisent la clé `budget` de
 `ddd-ts-kit.config.json` (5000 ms pour un fichier de *spec* unitaire et 30000 ms pour un fichier de
 *spec* d'intégration quand la clé est absente), nomment la *spec* la plus lente de chaque niveau à la
-fin de l'exécution, et font échouer l'exécution quand un fichier de *spec* a pris plus que son budget :
+fin de l'exécution, et avertissent quand un fichier de *spec* a pris plus que son budget, l'exécution échouant une fois `"enforce": true` posé sous `budget`, puisqu'une durée dépend de la charge de la machine :
 
 <!-- checked sample -->
 ```ts

@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:39936c8a5b02d3c4 -->
+<!-- translation-of: testing-strategy.md sha256:0ce2a4cfdd0b5c10 -->
 
 # Stratégie de test
 
@@ -544,8 +544,7 @@ changement, donc chaque fichier de *spec* est tenu au budget de temps de son niv
 pour une *spec* unitaire et trente pour une *spec* d'intégration par la référence (`budget` de
 `ddd-ts-kit.config.json`, baissé librement, monté seulement par une dérogation enregistrée). Le
 reporter du lanceur, `@ddd-ts-kit/testing/budget/vitest` ou `@ddd-ts-kit/testing/budget/jest`, nomme
-la *spec* la plus lente de chaque niveau à la fin de chaque exécution et fait échouer l'exécution
-quand un fichier dépasse son budget, collecte et tests compris. Une *spec* unitaire lente cache un
+la *spec* la plus lente de chaque niveau à la fin de chaque exécution et avertit quand un fichier dépasse son budget, collecte et tests compris ; il fait échouer l'exécution une fois que le projet impose le budget (`"enforce": true` sous `budget`), quand ses mesures sont stables, puisqu'une durée dépend de la charge de la machine autant que de la *spec*. Une *spec* unitaire lente cache un
 monde reconstruit à chaque test au lieu d'être partagé ([Mondes](#mondes)), des entrées-sorties
 derrière ce qui devrait être un *fake*, ou une attente ; une *spec* d'intégration lente reconstruit un
 schéma par test ou rejoue plus que le comportement qu'elle énonce. Les *specs* de l'application hors

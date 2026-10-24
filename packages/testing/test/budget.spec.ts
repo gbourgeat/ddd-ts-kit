@@ -59,6 +59,12 @@ describe('the time budget of the specs', () => {
     expect(() => budgetSettings(path.join(workspace, 'nowhere'))).toThrow(/ddd-ts-kit\.config\.json was not found/);
   });
 
+  it('warns by default, and fails the run only once the config enforces the budget', () => {
+    expect(budgetSettings(projectWith({})).enforced).toBe(false);
+    expect(budgetSettings(projectWith({ budget: { enforce: 'yes' } })).enforced).toBe(false);
+    expect(budgetSettings(projectWith({ budget: { enforce: true } })).enforced).toBe(true);
+  });
+
   it('names the slowest spec of each level, and the specs over their budget, slowest first', () => {
     const reading = overBudget([UNIT, SLOW_UNIT, INTEGRATION], REFERENCE_BUDGET);
 
@@ -67,7 +73,7 @@ describe('the time budget of the specs', () => {
     expect(overBudget([UNIT, INTEGRATION], { unit: 500, integration: 4000 }).over).toEqual([INTEGRATION, UNIT]);
   });
 
-  it('prints one line per level that ran, and a failure that names the specs over the budget and how a budget is raised', () => {
+  it('prints one line per level that ran, and names the specs over the budget and how a budget is raised, as a warning until it is enforced', () => {
     const held = budgetLines(overBudget([UNIT, INTEGRATION], REFERENCE_BUDGET), REFERENCE_BUDGET);
 
     expect(held.lines).toEqual([
@@ -77,7 +83,13 @@ describe('the time budget of the specs', () => {
 
     expect(held.failure).toBeUndefined();
 
-    const over = budgetLines(overBudget([UNIT, SLOW_UNIT], REFERENCE_BUDGET), REFERENCE_BUDGET);
+    const warned = budgetLines(overBudget([UNIT, SLOW_UNIT], REFERENCE_BUDGET), REFERENCE_BUDGET);
+
+    expect(warned.failure).toBeUndefined();
+    expect(warned.lines.at(-1)).toMatch(/^Warning: 1 spec file over the time budget: .*money\.vo\.spec\.ts \(6120 ms/);
+    expect(warned.lines.at(-1)).toContain('set "enforce": true under "budget"');
+
+    const over = budgetLines(overBudget([UNIT, SLOW_UNIT], REFERENCE_BUDGET), REFERENCE_BUDGET, true);
 
     expect(over.failure).toContain(
       '1 spec file over the time budget: src/contexts/billing/test/unit/money.vo.spec.ts (6120 ms, unit budget 5000 ms).',
@@ -86,8 +98,8 @@ describe('the time budget of the specs', () => {
     expect(over.failure).toContain('"what": "budget.<level>"');
   });
 
-  it('fails a Vitest run from its reporter when a module took more than its budget, collection and tests together', () => {
-    const root = projectWith({ budget: { unit: 1000 } });
+  it('fails an enforced Vitest run from its reporter when a module took more than its budget, collection and tests together', () => {
+    const root = projectWith({ budget: { unit: 1000, enforce: true } });
     const reporter = new VitestDurationBudgetReporter({ root });
     const logged: string[] = [];
 
@@ -113,8 +125,24 @@ describe('the time budget of the specs', () => {
     );
   });
 
-  it('fails a Jest run through the error its reporter keeps for the end', () => {
-    const root = projectWith({});
+  it('warns from the Vitest reporter without failing the run while the budget is not enforced', () => {
+    const root = projectWith({ budget: { unit: 1000 } });
+    const reporter = new VitestDurationBudgetReporter({ root });
+    const logged: string[] = [];
+
+    reporter.onInit({ logger: { log: (message) => logged.push(message) } });
+
+    expect(() =>
+      reporter.onTestRunEnd([
+        { moduleId: path.join(root, SLOW_UNIT.file), diagnostic: () => ({ duration: 1100, collectDuration: 50 }) },
+      ]),
+    ).not.toThrow();
+
+    expect(logged.at(-1)).toMatch(/^Warning: 1 spec file over the time budget/);
+  });
+
+  it('fails an enforced Jest run through the error its reporter keeps for the end', () => {
+    const root = projectWith({ budget: { enforce: true } });
     const reporter = new JestDurationBudgetReporter(undefined, { root });
 
     reporter.onRunComplete(undefined, {

@@ -19,7 +19,7 @@ interface Started {
  * The reporter that holds each spec file to the time budget of its level, read from the `budget` key
  * of `ddd-ts-kit.config.json` (the reference when the key is absent): named in `reporters` of the
  * Vitest config as `@ddd-ts-kit/testing/budget/vitest`, or passed on the command line with
- * `--reporter`. It names the slowest spec of each level at the end of the run, and fails the run
+ * `--reporter`. It names the slowest spec of each level at the end of the run, and warns, failing the run once the config enforces the budget,
  * when a spec file took more than its budget, collection and tests together.
  */
 export class VitestDurationBudgetReporter {
@@ -35,9 +35,9 @@ export class VitestDurationBudgetReporter {
   }
 
   onTestRunEnd(testModules: readonly TimedModule[]): void {
-    const { budget } = budgetSettings(this.root);
+    const { budget, enforced } = budgetSettings(this.root);
     const reading = overBudget(this.timed(testModules), budget);
-    const { lines, failure } = budgetLines(reading, budget);
+    const { lines, failure } = budgetLines(reading, budget, enforced);
 
     for (const line of lines) {
       this.log(line);

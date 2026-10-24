@@ -757,14 +757,13 @@ deviation:
 ## Time budget
 
 ```json
-"budget": { "unit": 3000 }
+"budget": { "unit": 3000, "enforce": true }
 ```
 
 Each spec file is held to the time budget of its level, in milliseconds. The reporter of the test
 runner (`@ddd-ts-kit/testing/budget/vitest`, `@ddd-ts-kit/testing/budget/jest`, named in the runner
 config `init` writes and passed with `--reporter` where the pipeline names its reporters) reads the
-key, names the slowest spec of each level at the end of every run, and fails the run when a spec file
-took more than its budget, collection and tests together. A unit spec of a context runs the model and
+key, names the slowest spec of each level at the end of every run, and warns when a spec file took more than its budget, collection and tests together; with `"enforce": true` under `budget` it fails the run instead. A duration depends on the load of the machine as much as on the spec: enforce the budget once the measures of the project are stable. A unit spec of a context runs the model and
 the use cases on fakes; an integration spec of a context, and a spec of the platform, opens a database
 or reaches a server. The specs of the application outside the contexts (end to end, acceptance,
 architecture) are not held: a flow has the time it needs.
@@ -775,7 +774,7 @@ architecture) are not held: a flow has the time it needs.
 | `integration` | 30000 | a database opened in the process and its tables created, a server reached, journeys replayed; the slowest of the example takes 11 seconds, under load |
 
 - **Lowering a budget is free. Raising it above the reference is a deviation** (`governance/recorded-deviation`) with its decision record, `"what": "budget.unit"` or `"budget.integration"`.
-- **The measure is of the loop, not of the machine**: the references leave room for a busy runner under coverage; a team that wants the loop tighter lowers them.
+- **A warning first, a failure once enforced**: `"enforce": true` makes a spec over its budget fail the run, locally, before a push and in the pipeline; without it the run names the spec and passes. **The measure is of the loop, not of the machine**: the references leave room for a busy runner under coverage; a team that wants the loop tighter lowers them.
 - **A budget that is not a whole number of milliseconds above zero, or a level that is not held**, is reported by `check` as `config/valid` and read as the reference.
 
 ## Limits

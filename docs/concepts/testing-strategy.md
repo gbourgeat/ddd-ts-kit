@@ -521,7 +521,7 @@ file is held to the time budget of its level, five seconds for a unit spec and t
 integration spec by the reference (`budget` of `ddd-ts-kit.config.json`, lowered freely, raised only
 by a recorded deviation). The reporter of the runner, `@ddd-ts-kit/testing/budget/vitest` or
 `@ddd-ts-kit/testing/budget/jest`, names the slowest spec of each level at the end of every run and
-fails the run when a file is over its budget, collection and tests together. A slow unit spec hides a
+warns when a file is over its budget, collection and tests together; it fails the run once the project enforces the budget (`"enforce": true` under `budget`), when its measures are stable, since a duration depends on the load of the machine as much as on the spec. A slow unit spec hides a
 world rebuilt per test instead of shared ([Worlds](#worlds)), I/O behind what should be a fake, or a
 wait; a slow integration spec rebuilds a schema per test or replays more than the behaviour it states.
 The specs of the application outside the contexts, end to end, acceptance and architecture, are not

@@ -5,9 +5,11 @@ import { type BudgetLevel, REFERENCE_BUDGET } from './reference-budget';
 
 const CONFIG_FILE = 'ddd-ts-kit.config.json';
 
-/** What the config file of a project says about the time its specs may take: a budget per level, in milliseconds. */
+/** What the config file of a project says about the time its specs may take: a budget per level, in milliseconds, and whether a spec over it fails the run. */
 export interface BudgetSettings {
   readonly budget: Readonly<Record<BudgetLevel, number>>;
+  /** False by default: a spec over its budget is a warning until the project enforces the budget. */
+  readonly enforced: boolean;
 }
 
 /**
@@ -23,6 +25,7 @@ export function budgetSettings(root: string): BudgetSettings {
       unit: durationOf(written['unit'], REFERENCE_BUDGET.unit),
       integration: durationOf(written['integration'], REFERENCE_BUDGET.integration),
     },
+    enforced: written['enforce'] === true,
   };
 }
 

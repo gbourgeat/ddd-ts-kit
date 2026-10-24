@@ -32,4 +32,16 @@ export const BUDGET_FIXTURES: readonly Fixture[] = [
     expect: { file: CONFIG_FILE },
     files: project({}, { [CONFIG_FILE]: config({ budget: { unit: 'fast', e2e: 60_000 }, deviations: [] }) }),
   },
+  {
+    ruleId: 'config/valid',
+    name: 'a time budget enforced, so that a spec over it fails the run',
+    expect: 'pass',
+    files: project({}, { [CONFIG_FILE]: config({ budget: { unit: 3000, enforce: true }, deviations: [] }) }),
+  },
+  {
+    ruleId: 'config/valid',
+    name: 'a time budget enforced by something that is not a boolean',
+    expect: { file: CONFIG_FILE },
+    files: project({}, { [CONFIG_FILE]: config({ budget: { enforce: 'yes' }, deviations: [] }) }),
+  },
 ];

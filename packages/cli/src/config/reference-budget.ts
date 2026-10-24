@@ -5,4 +5,4 @@ import type { Budget } from './budget';
  * cases on fakes, thirty for an integration spec file, which opens a database or reaches a server. A
  * project may lower either freely; raising one accepts slower specs and is a recorded deviation.
  */
-export const REFERENCE_BUDGET: Budget = { unit: 5000, integration: 30_000 };
+export const REFERENCE_BUDGET: Budget = { unit: 5000, integration: 30_000, enforce: false };

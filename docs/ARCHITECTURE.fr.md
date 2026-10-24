@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:4377fe8fc1ddafca -->
+<!-- translation-of: ARCHITECTURE.md sha256:c578c5b9f520911b -->
 
 # Référence de l'architecture
 
@@ -1618,8 +1618,7 @@ générées, réalistes, avec une graine fixe affichée en cas d'échec, si bien
 Chaque fichier de *spec* est tenu au budget de temps de son niveau (`budget` de
 `ddd-ts-kit.config.json`, cinq secondes pour une *spec* unitaire et trente pour une *spec*
 d'intégration par la référence, une *spec* de la plateforme comptant comme intégration) : le reporter
-du lanceur nomme la *spec* la plus lente de chaque niveau à la fin d'une exécution et fait échouer
-l'exécution quand un fichier dépasse, pour que la boucle reste rapide ; un budget ne se monte que par
+du lanceur nomme la *spec* la plus lente de chaque niveau à la fin d'une exécution et avertit quand un fichier dépasse, l'exécution échouant une fois que le projet impose le budget (`"enforce": true`), pour que la boucle reste rapide ; un budget ne se monte que par
 une dérogation enregistrée.
 
 Une *spec* d'acceptation (`test/acceptance/<story>.acceptance.spec.ts`) est le contrat d'une

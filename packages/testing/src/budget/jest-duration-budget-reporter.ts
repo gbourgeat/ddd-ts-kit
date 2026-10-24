@@ -16,7 +16,7 @@ interface AggregatedResults {
  * The reporter that holds each spec file to the time budget of its level, read from the `budget` key
  * of `ddd-ts-kit.config.json` (the reference when the key is absent): named in `reporters` of the
  * Jest config as `@ddd-ts-kit/testing/budget/jest`. It names the slowest spec of each level at the
- * end of the run, and fails the run when a spec file took more than its budget.
+ * end of the run, and warns when a spec file took more than its budget, failing the run once the config enforces the budget.
  */
 export class JestDurationBudgetReporter {
   private failure: Error | undefined;
@@ -28,9 +28,9 @@ export class JestDurationBudgetReporter {
   }
 
   onRunComplete(_contexts: unknown, results: AggregatedResults): void {
-    const { budget } = budgetSettings(this.root);
+    const { budget, enforced } = budgetSettings(this.root);
     const reading = overBudget(this.timed(results), budget);
-    const { lines, failure } = budgetLines(reading, budget);
+    const { lines, failure } = budgetLines(reading, budget, enforced);
 
     for (const line of lines) {
       console.log(line);

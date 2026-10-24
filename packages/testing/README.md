@@ -1021,8 +1021,7 @@ marks them with the hint the `v8` provider reads, as the provider does by itself
 `@ddd-ts-kit/testing/budget/vitest` and `@ddd-ts-kit/testing/budget/jest` are reporters: named in
 `reporters` of the runner config, or passed with `--reporter`, they read the `budget` key of
 `ddd-ts-kit.config.json` (5000 ms for a unit spec file and 30000 ms for an integration spec file when
-the key is absent), name the slowest spec of each level at the end of the run, and fail the run when a
-spec file took more than its budget:
+the key is absent), name the slowest spec of each level at the end of the run, and warn when a spec file took more than its budget, failing the run once `"enforce": true` is set under `budget`, since a duration depends on the load of the machine:
 
 <!-- checked sample -->
 ```ts
