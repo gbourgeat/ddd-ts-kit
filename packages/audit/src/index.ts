@@ -69,6 +69,7 @@ export { TenantAuditReader } from './tenancy/tenant-audit-reader';
 export type { ArchivableAuditTrail } from './archive/archivable-audit-trail';
 export type { ArchiveOptions } from './archive/archive-options';
 export type { ArchiveVerification } from './archive/archive-verification';
+export { ArchiveAuditEntries } from './archive/archive-audit-entries';
 export { archiveKeyOf } from './archive/archive-key-of';
 export type { AuditArchive } from './archive/audit-archive';
 export type { AuditArchiveReport } from './archive/audit-archive-report';

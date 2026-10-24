@@ -7,8 +7,8 @@ import {
   verifyChain,
   type ArchivableAuditTrail,
   type AuditArchive,
-  type AuditTrailUnderContract,
 } from '../../src';
+import type { AuditTrailUnderContract } from '../../src/testing';
 import { CHAIN, aRecord, sequencesOf } from './sql-trail-fixture';
 
 /** A trail that archives, and what tampers with it the way an attacker with access to the store would. */

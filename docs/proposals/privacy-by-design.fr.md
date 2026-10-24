@@ -1,5 +1,5 @@
 [English](privacy-by-design.md) · **Français**
-<!-- translation-of: privacy-by-design.md sha256:535878e3903a485b -->
+<!-- translation-of: privacy-by-design.md sha256:a2270f47f0710046 -->
 
 # Proposition : la protection des données dès la conception, au-delà de l'*event sourcing*
 
@@ -35,7 +35,7 @@ son fichier de `changes/`.
 | 5. `generate repository` et `generate projection` déclarent les champs personnels | **construite** pour les *repositories* : `generate repository <ctx> <Aggregate> --personal <colonne>,... [--subject <colonne>] [--erasure pseudonymise\|row]` ajoute les colonnes au stockage, écrit la déclaration à côté du *mapper* sur les quatre ORM et, une fois par contexte, l'effacement et l'export qui la lisent (deux ports, adaptateurs sur `<Orm>PersonalDataErasure` et `<Orm>PersonalDataExport`, *fakes*, une *spec* sur la base de test, listés dans les copies et les exports de la plateforme ; `privacy:export` répond un document daté par `exportDataSubject`, chaque export audité quand le journal est actif). Une projection garde ses lignes dans un *read model store*, pas dans une table à elle : la déclaration d'un *read model* attend le registre (partie 9), qui lira ce que le *store* garde |
 | 6. L'événement d'effacement, son gestionnaire généré, `personal` sur un événement d'intégration | proposée |
 | 7. La conservation sur la déclaration, le *job* de purge généré | proposée |
-| 8. `archiveBefore` sur le journal d'audit | proposée |
+| 8. `archiveBefore` sur le journal d'audit | **construite** (#287 garde aussi le journal en base sur Prisma et TypeORM, puis l'archive) : `archiveBefore(date, { files, clock })` et `archivesOf(chain)` sur les quatre stores SQL et en mémoire, chaque plage vérifiée depuis l'ancre de l'archive qui la précède, écrite dans le stockage de fichiers, enregistrée avec son dernier hash et l'empreinte de son fichier, puis supprimée, ce que la garde n'autorise que pour des entrées couvertes ; `verifyArchive` revérifie un fichier, `verifyChain` part d'une ancre ; `init` enregistre `audit.archive` le premier jour de chaque mois, douze mois gardés en ligne, quand le journal est en base et les fichiers dans un stockage |
 | 9. Le registre généré des données personnelles | proposée |
 | 10. Les règles `privacy/*`, en avertissement d'abord | proposée |
 | 11. L'exemple adopte les ports du kit | proposée |
