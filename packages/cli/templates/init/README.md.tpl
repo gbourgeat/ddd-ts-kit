@@ -356,7 +356,7 @@ for each moment of the project: https://github.com/gbourgeat/ddd-ts-kit/blob/mai
 | Script | Does |
 |---|---|
 | `npm run dev` | the application with auto reload |
-| `npm test` | domain, application and adapter specs |
+| `npm test` | domain, application and adapter specs, each spec file held to the time budget of its level |
 | `npm run test:e2e` | the whole application through HTTP, on an in-process database unless `DATABASE_URL` is set |
 | `npm run check:arch` | `ddd-ts-kit check` |
 | `npm run docs:generate` | context map, OpenAPI, AsyncAPI and event catalog{{#if sdk.on}}, the clients under `clients/`{{/if}} |

@@ -55,6 +55,8 @@ export default defineConfig(({ mode }) => ({
     // The integration project has no spec before the first repository or adapter of the project: its run passes until then.
     passWithNoTests: mode === INTEGRATION_MODE,
     ...WORKERS,
+    // Each spec file is held to the time budget of its level ("budget" in ddd-ts-kit.config.json, the reference when it is absent): the slowest named at the end of the run, a file over its budget fails it.
+    reporters: ['default', '@ddd-ts-kit/testing/budget/vitest'],
     {{#if assembly.discovery}}
     // Discovery imports the role files of a context itself: inlined, the package loads them through the runner, which compiles them.
     server: { deps: { inline: ['@ddd-ts-kit/di'] } },

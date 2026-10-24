@@ -1,11 +1,11 @@
 import type { UnitOfWork } from '@ddd-ts-kit/kernel';
-import type { AuditRecord, AuditTrailOptions } from '../../src';
+import type { ArchivableAuditTrail, AuditRecord, AuditTrailOptions } from '../../src';
 import type { AuditTrailUnderContract } from '../../src/testing';
 import { NOW } from './fixtures';
 
 /** What a spec of a SQL store gives: a fresh schema with the tables and the guard, per call. */
 export interface SqlTrailFixture {
-  readonly trail: AuditTrailUnderContract;
+  readonly trail: AuditTrailUnderContract & ArchivableAuditTrail;
   readonly unitOfWork: UnitOfWork;
   /**
    * Runs one statement on the connection of the unit of work in progress, or on the database.

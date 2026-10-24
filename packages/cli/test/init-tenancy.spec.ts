@@ -41,7 +41,7 @@ describe('init --tenancy', () => {
       'export const outbox = outboxEntity({ schema: MESSAGING_SCHEMA, tenant: true });',
     );
 
-    expect(read(initProject('--orm', 'prisma'), 'prisma/schema.prisma')).not.toContain('tenant_id');
+    expect(read(initProject('--orm', 'prisma', '--audit', 'off'), 'prisma/schema.prisma')).not.toContain('tenant_id');
   });
 
   it('generates every repository confined to the tenant through the helpers of the ORM', () => {

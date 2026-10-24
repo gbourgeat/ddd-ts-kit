@@ -11,6 +11,7 @@ import { CONFIG_FIXTURES } from './config-fixtures';
 import { CONSTRUCTOR_INJECTION_FIXTURES } from './constructor-injection-fixtures';
 import { CONSUMER_FIXTURES } from './consumer-fixtures';
 import { CONTEXT_FIXTURES } from './context-fixtures';
+import { BUDGET_FIXTURES } from './budget-fixtures';
 import { COVERAGE_FIXTURES } from './coverage-fixtures';
 import { MUTATION_FIXTURES } from './mutation-fixtures';
 import { CONTEXT_FILE_FIXTURES } from './context-file-fixtures';
@@ -69,6 +70,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...CONSUMER_FIXTURES,
   ...CONTEXT_FIXTURES,
   ...COVERAGE_FIXTURES,
+  ...BUDGET_FIXTURES,
   ...MUTATION_FIXTURES,
   ...CONTEXT_FILE_FIXTURES,
   ...DECLARATIONS_FIXTURES,

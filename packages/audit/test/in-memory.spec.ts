@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryAuditTrail } from '../src';
+import { archiveSpecs } from './support/archive-specs';
 import { auditTrailContract } from '../src/testing';
 
 const runner = { describe, it, expect, beforeEach };
@@ -47,4 +48,20 @@ describe('InMemoryAuditTrail', () => {
 
     await expect(reading).rejects.toMatchObject({ code: 'INVALID_PAGE_REQUEST' });
   });
+});
+
+archiveSpecs('InMemoryAuditTrail', async () => {
+  const archivable = new InMemoryAuditTrail();
+
+  return {
+    trail: archivable,
+    tamper: async (id) => {
+      const index = archivable.entries.findIndex((entry) => entry.id === id);
+      const entry = archivable.entries[index];
+
+      if (entry !== undefined) {
+        archivable.entries.splice(index, 1, { ...entry, action: 'forged' });
+      }
+    },
+  };
 });
