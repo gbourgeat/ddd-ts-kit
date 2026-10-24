@@ -2,7 +2,7 @@
 
 # ddd-ts-kit/test-no-logic
 
-Architecture id: `test/no-logic` (added by this plugin). Default severity: `warn` in `recommended` (an error from 0.90.0: `ddd-ts-kit lint` shows its warnings without failing on them until then), `error` in `strict`.
+Architecture id: `test/no-logic` (added by this plugin). Default severity: `error` in `recommended`, `error` in `strict`.
 
 Applies to: every test file of the project (`*.spec.ts`, `*.test.ts`, the `test/` of a context).
 

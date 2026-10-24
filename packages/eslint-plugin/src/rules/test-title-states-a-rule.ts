@@ -24,8 +24,7 @@ type MessageId = 'rule' | 'word' | 'code' | 'group' | 'empty';
 export const testTitleStatesARule = defineRule<MessageId>({
   id: 'test/title-states-a-rule',
   type: 'suggestion',
-  recommended: 'warn',
-  transition: '0.90.0',
+  recommended: 'error',
   description:
     'The title of a test states the rule it proves: in lower case, what the subject does, after the rows and the criterion it cites; never `should`, `test`, `works`, nor the name of a method or a class. A `describe` names the unit.',
   messages: {

@@ -14,8 +14,7 @@ type By = 'nothing' | 'its message' | 'its class';
 export const testRefusalByCode = defineRule<'by'>({
   id: 'test/refusal-by-code',
   type: 'suggestion',
-  recommended: 'warn',
-  transition: '0.90.0',
+  recommended: 'error',
   description:
     'A refusal of the model or of the application is asserted by its code and its facts, never by its message or the class of one error: `thenError`, `expectRefusal`, `rejects.toMatchObject({ code })`, `expectProblem`; `toThrow` with a message, a class or nothing is reported, outside the specs of the adapters and of the platform.',
   messages: {

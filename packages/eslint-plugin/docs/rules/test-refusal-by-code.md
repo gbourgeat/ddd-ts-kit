@@ -2,7 +2,7 @@
 
 # ddd-ts-kit/test-refusal-by-code
 
-Architecture id: `test/refusal-by-code` (added by this plugin). Default severity: `warn` in `recommended` (an error from 0.90.0: `ddd-ts-kit lint` shows its warnings without failing on them until then), `error` in `strict`.
+Architecture id: `test/refusal-by-code` (added by this plugin). Default severity: `error` in `recommended`, `error` in `strict`.
 
 Applies to: the specs of the model and of the application, `test/unit/` of a context, the shared kernel, `test/e2e/` and `test/acceptance/` (`*.spec.ts`, `*.test.ts`). The specs of the adapters (`*.adapter.spec.ts`, `test/integration/`) and of the platform are not judged.
 
