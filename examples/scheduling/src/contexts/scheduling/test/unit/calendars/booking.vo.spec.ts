@@ -35,7 +35,7 @@ describe('Booking', () => {
     },
   );
 
-  it.each(['', '02/03/2026', '2026-3-2', '2026-03-02T09:00:00Z'])(
+  it.each(['', '02/03/2026', '2026-3-2', 'the 2026-03-02', '2026-03-02T09:00:00Z'])(
     'refuses the day "%s", which is no calendar date',
     (day) => {
       expectRefusal(() => Booking.create({ ...morning, day }), 'INVALID_BOOKING');

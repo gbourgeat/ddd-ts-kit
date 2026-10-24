@@ -24,6 +24,23 @@ describe('AttendanceRecord', () => {
     expect(record.pullEvents()).toEqual([created]);
   });
 
+  it('starts with nothing noted and nothing missed', () => {
+    const record = AttendanceRecord.create({ practiceId: 'practice-1', patientId: 'patient-1' }, bornAt);
+
+    expect(record.toState()).toEqual({
+      registeredAt: bornAt,
+      practiceId: 'practice-1',
+      patientId: 'patient-1',
+      noted: [],
+      missed: 0,
+    });
+  });
+
+  it('writes the practice before the patient in its identifier, the dots and percent signs of the practice escaped', () => {
+    expect(AttendanceRecord.idOf('practice.1', 'patient-1')).toBe('practice%2E1.patient-1');
+    expect(AttendanceRecord.idOf('50%', 'patient-1')).toBe('50%25.patient-1');
+  });
+
   it('never gives two pairs of practice and patient the same identifier, even with a dot in an identifier', () => {
     expect(AttendanceRecord.idOf('practice.1', 'patient')).not.toBe(AttendanceRecord.idOf('practice', '1.patient'));
     expect(AttendanceRecord.idOf('practice%2E1', 'patient')).not.toBe(AttendanceRecord.idOf('practice.1', 'patient'));
@@ -65,6 +82,12 @@ describe('AttendanceRecord', () => {
     expect(record.version).toBe(3);
     expect(record.missed).toBe(2);
     expect(record.pullEvents()).toEqual([]);
+  });
+
+  it('keeps the appointments it noted, in the order they were, in its state', () => {
+    const record = anAttendanceRecord().missed('appointment-1').missed('appointment-2').build();
+
+    expect(record.toState().noted).toEqual(['appointment-1', 'appointment-2']);
   });
 
   it('gives the same state rebuilt from any of its snapshots as from its whole history', () => {
