@@ -4,7 +4,7 @@ import { REFUSAL_TEXTS } from './refusal-texts-ignorer';
 
 /** The part of the options of Stryker that the config file of a project governs. */
 export interface GovernedMutation {
-  /** The domain layer of every context, at its level and in the modules of its model, in one pattern since Stryker warns at every run about a pattern that matches nothing; the generated declarations left out. */
+  /** The domain and application layers of every context, at its level and in the modules of its model, one pattern per layer since Stryker warns at every run about a pattern that matches nothing; the generated declarations left out. */
   readonly mutate: string[];
   /** The module of the ignorer of the kit, loaded beside the plugins Stryker finds by itself. */
   readonly appendPlugins: string[];
@@ -34,7 +34,7 @@ export interface GovernedMutation {
    * mutated sources and the specs alone, and would reuse a result the change made stale.
    */
   readonly force: boolean;
-  /** The floor the whole run is held to; `ddd-ts-kit mutation` then holds each context to it. */
+  /** The lowest floor, which the whole run is held to; `ddd-ts-kit mutation` then holds each layer of each context to its own. */
   readonly thresholds: { readonly high: number; readonly low: number; readonly break: number };
 }
 
@@ -52,26 +52,32 @@ const INCREMENTAL_FILE = 'reports/mutation/incremental.json';
 /**
  * What a Stryker run mutates and the floor it is held to, read from the `mutation` key of
  * `ddd-ts-kit.config.json` (the reference when the key is absent): the one place the floor is
- * written. The domain layer of every context is mutated, the texts of its refusals left out, since a
- * refusal is asserted by its code and never by its text.
+ * written. The domain and application layers of every context are mutated, the texts of their
+ * refusals left out, since a refusal is asserted by its code and never by its text.
  *
  *     // stryker.config.mjs
  *     import { governedMutation } from '@ddd-ts-kit/testing/mutation';
  *     export default { testRunner: 'vitest', ...governedMutation() };
  */
 export function governedMutation(root: string = process.cwd()): GovernedMutation {
-  const { contextsDir, domain } = mutationSettings(root);
+  const { contextsDir, floors } = mutationSettings(root);
   const since = process.env[SINCE];
+  const lowest = Math.min(...Object.values(floors));
 
   return {
-    mutate: [`${contextsDir}/**/domain/**/*.ts`, `!${contextsDir}/**/*.declarations.ts`, '!**/*.spec.ts'],
+    mutate: [
+      `${contextsDir}/**/domain/**/*.ts`,
+      `${contextsDir}/**/application/**/*.ts`,
+      `!${contextsDir}/**/*.declarations.ts`,
+      '!**/*.spec.ts',
+    ],
     appendPlugins: [IGNORER_MODULE],
     ignorers: [REFUSAL_TEXTS],
     ignoreStatic: true,
     incremental: since !== undefined,
     incrementalFile: INCREMENTAL_FILE,
     force: since !== undefined && leansOnSupport(root, since),
-    thresholds: { high: Math.max(HIGH, domain), low: domain, break: domain },
+    thresholds: { high: Math.max(HIGH, ...Object.values(floors)), low: lowest, break: lowest },
   };
 }
 

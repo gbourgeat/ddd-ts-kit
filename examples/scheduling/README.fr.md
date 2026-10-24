@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7703f75f9e032f13 -->
+<!-- translation-of: README.md sha256:3d49473b52e755bf -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -73,10 +73,11 @@ bout.
 
 La porte est `npm run verify` (types, lint avec le *preset* du kit, format, tests, bout en bout,
 règles d'architecture, graphe des imports, code mort, dérive de la documentation) ; elle n'a besoin
-d'aucun conteneur. La nuit ajoute `npm run test:mutation` : Stryker sur la couche domaine des quatre
-contextes, chacun tenu au plancher `mutation` de la configuration (80) ; le 2026-10-24 le domaine
-a obtenu 96,3 %, le contexte le plus bas 95,4 %, les textes des refus et les mutants statiques
-laissés hors de la mesure. Pour arrêter :
+d'aucun conteneur. La nuit ajoute `npm run test:mutation` : Stryker sur les couches domaine et
+application des quatre contextes, chacune tenue à son plancher `mutation` de la configuration (80 et
+75) ; le 2026-10-24 le domaine a obtenu 96,3 % et l'application 95,7 %, la couche la plus basse d'un
+contexte 93,5 %, les textes des refus et les mutants statiques laissés hors de la mesure. Pour
+arrêter :
 `docker compose --profile identity --profile observability --profile errors down --volumes`.
 
 ## Les utilisateurs de démonstration

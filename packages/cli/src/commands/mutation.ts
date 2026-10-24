@@ -11,9 +11,10 @@ import { Arguments } from './arguments';
 import type { Command } from './command';
 
 /**
- * Holds each context to the mutation floor of the config: reads the json report the last
- * `stryker run` wrote, scores the domain layer of each context as Stryker does (detected over
- * detected and undetected, errors left out), and exits 1 while a context is under `mutation.domain`.
+ * Holds each layer of each context to the mutation floor of the config: reads the json report the
+ * last `stryker run` wrote, scores the domain and application layers of each context as Stryker
+ * does (detected over detected and undetected, errors left out), and exits 1 while a layer is under
+ * its `mutation.<layer>` floor.
  * `--survivors` lists the mutants no test noticed, each a decision to take; `--changed <ref>`, or
  * `DDD_TS_KIT_MUTATION_SINCE` in the environment as the job of a pull request sets it, lists those
  * of the files changed since the git ref alone and exits 0 whatever the scores, a reading for a

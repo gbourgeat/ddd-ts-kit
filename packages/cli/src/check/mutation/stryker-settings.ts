@@ -73,7 +73,7 @@ function notGoverned(file: string): Finding {
   return {
     line: 1,
     message: `${file} does not read its mutation floor from ${CONFIG_FILE}.`,
-    fix: `Import \`${READER}\` from '@ddd-ts-kit/testing/mutation' and spread \`...${READER}()\` into the config: the domain layer of every context is then mutated, the texts of its refusals left out, and held to the "mutation" floor of ${CONFIG_FILE}, written once.`,
+    fix: `Import \`${READER}\` from '@ddd-ts-kit/testing/mutation' and spread \`...${READER}()\` into the config: the domain and application layers of every context are then mutated, the texts of their refusals left out, and held to the "mutation" floors of ${CONFIG_FILE}, written once.`,
   };
 }
 
@@ -81,7 +81,7 @@ function handWritten(key: string, effect: string, line: number): Finding {
   return {
     line,
     message: `The mutation setting "${key}" is written by hand: it ${effect}.`,
-    fix: `Remove "${key}": what is mutated, what is left out and the floor come from the "mutation" key of ${CONFIG_FILE} alone. To lower the floor, change it there and record the deviation ("what": "mutation.domain") with its decision record.`,
+    fix: `Remove "${key}": what is mutated, what is left out and the floors come from the "mutation" key of ${CONFIG_FILE} alone. To lower a floor, change it there and record the deviation ("what": "mutation.domain" or "mutation.application") with its decision record.`,
   };
 }
 

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:8f55426b0744941d -->
+<!-- translation-of: README.md sha256:3d00d6a87bbb75ed -->
 
 # @ddd-ts-kit/testing
 
@@ -1029,7 +1029,8 @@ fait de lui-même pour SWC.
 
 `@ddd-ts-kit/testing/mutation` donne à Stryker ce qu'il mute, ce qu'il laisse de côté et le plancher
 auquel l'exécution est tenue, lus dans la clé `mutation` de `ddd-ts-kit.config.json` (80 pour la
-couche domaine quand la clé est absente), de sorte que la config Stryker d'un projet n'écrit ni *glob*
+couche domaine et 75 pour la couche application quand la clé est absente), de sorte que la config
+Stryker d'un projet n'écrit ni *glob*
 ni nombre :
 
 <!-- checked sample -->
@@ -1045,7 +1046,7 @@ export default {
 };
 ```
 
-- `mutate` : la couche domaine de chaque contexte, à son niveau et dans les modules de son modèle,
+- `mutate` : les couches domaine et application de chaque contexte, à leur niveau et dans les modules de son modèle,
   les déclarations générées et les *specs* exclues.
 - `appendPlugins` et `ignorers` : l'*ignorer* du kit, `refusal-texts`. Un test vérifie un refus par
   son code et jamais par son texte (`test/refusal-by-code`), donc un mutant d'un tel texte survivrait
@@ -1058,9 +1059,9 @@ export default {
   là où la règle est vérifiée, ou laissez le survivant en vie et dites pourquoi.
 - `ignoreStatic` : les mutants statiques, dans du code qui s'exécute une fois au chargement du
   module, sont ignorés ; une règle écrite en déclaration n'est prouvée que par le test qui l'énonce.
-- `thresholds` : le plancher, auquel `ddd-ts-kit mutation` tient ensuite chaque contexte d'après le
-  rapport json, les mutants ignorés affichés à côté de chaque score. `REFERENCE_MUTATION` est la
-  référence : domaine 80.
+- `thresholds` : le plancher le plus bas, auquel toute l'exécution est tenue ; `ddd-ts-kit mutation`
+  tient ensuite chaque couche de chaque contexte au sien d'après le rapport json, les mutants ignorés
+  affichés à côté de chaque score. `REFERENCE_MUTATION` est la référence : domaine 80, application 75.
 - `incremental`, `incrementalFile` et `force` : une passe complète par défaut, la vérité de la nuit.
   Avec `DDD_TS_KIT_MUTATION_SINCE=<ref>` dans l'environnement, comme le *job* d'une *pull request* le
   fixe à la base de fusion du changement, la passe est incrémentale : les résultats du dernier
