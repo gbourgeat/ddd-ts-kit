@@ -7,6 +7,9 @@ export const EXPLICIT_REBAC_ON_RABBITMQ: StackFlags = { ...REBAC_ON_RABBITMQ, st
 export const DISCOVERED_ON_KNEX: StackFlags = { ...DEFAULT_STACK, orm: 'knex', assembly: 'discovery' };
 /** Discovery behind a broker: each context listens on queues of its own, with no helper written for it. */
 export const DISCOVERED_BEHIND_NATS: StackFlags = { ...DISCOVERED_ON_KNEX, broker: 'nats' };
+/** Prisma on a platform wired by hand, and TypeORM on the declared style: the two ORMs the type check reads and this workspace cannot run. */
+const PRISMA_BY_HAND: StackFlags = { ...DEFAULT_STACK, http: 'fastify', di: 'manual', orm: 'prisma' };
+const TYPEORM_DECLARED: StackFlags = { ...DEFAULT_STACK, orm: 'typeorm' };
 
 /** Unexpected failures reported to Sentry or GlitchTip, wired by hand: the buses, the jobs, the HTTP boundary, the events RabbitMQ gives up. */
 const REPORTED_BY_HAND: StackFlags = {
@@ -86,8 +89,8 @@ const EVERY_STACK: readonly StackFlags[] = [
   { http: 'fastify', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'none', events: 'outbox' },
   { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'custom', events: 'in-memory' },
   { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'knex', events: 'outbox' },
-  { http: 'fastify', validation: 'zod', di: 'manual', tests: 'vitest', orm: 'prisma', events: 'outbox' },
-  { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'typeorm', events: 'outbox' },
+  PRISMA_BY_HAND,
+  TYPEORM_DECLARED,
   { http: 'none', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox' },
   { http: 'none', validation: 'none', di: 'manual', tests: 'vitest', orm: 'none', events: 'in-memory' },
   REBAC_ON_RABBITMQ,
@@ -123,9 +126,11 @@ const EVERY_STACK: readonly StackFlags[] = [
   DISCOVERED_BEHIND_NATS,
   { ...DEFAULT_STACK, broker: 'redis' },
   { ...DEFAULT_STACK, broker: 'kafka', orm: 'knex' },
-  /** Shared tables on both ORMs that generate them: every repository confined to the tenant, the tenant kept in the outbox. */
+  /** Shared tables on the four ORMs: every repository confined to the tenant, the tenant kept in the outbox. */
   { ...DEFAULT_STACK, tenancy: 'shared-table' },
   { ...DISCOVERED_ON_KNEX, tenancy: 'shared-table' },
+  { ...PRISMA_BY_HAND, tenancy: 'shared-table' },
+  { ...TYPEORM_DECLARED, tenancy: 'shared-table' },
   /** Varnish in front of a multi-tenant API, on each family of wiring: the answers and the purges filed per tenant. */
   ...MULTI_TENANT_BEHIND_VARNISH,
   { ...DEFAULT_STACK, broker: 'nats', style: 'explicit' },
@@ -326,9 +331,9 @@ export function label(stack: StackFlags): string {
 }
 
 /**
- * The stacks the workspace can run as generated. Left out, as for the type check: jest (not
- * installed in this workspace), prisma (its client has to be generated first) and typeorm (not
- * installed at the workspace root).
+ * The stacks the workspace can run as generated. Left out: jest (not installed in this workspace),
+ * prisma (its client has to be generated and a database reached) and typeorm (not installed at the
+ * workspace root); the type check reads the last two, this does not run them.
  */
 export const RUNNABLE: readonly StackFlags[] = STACKS.filter(
   (stack) => stack.tests === 'vitest' && stack.orm !== 'prisma' && stack.orm !== 'typeorm',

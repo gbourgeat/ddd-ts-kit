@@ -30,6 +30,10 @@ export function persistenceOver(client: PrismaClient): Persistence {
       delegate: (current) => current.outboxRecord,
       // Prisma Client has no row locking: the claim is the one raw statement of the store.
       claim: { strategy: 'skip-locked', dialect: 'postgresql', schema: MESSAGING_SCHEMA, raw: (current) => current },
+{{#if tenancy.any}}
+      // The tenant of each event, so that its consumers run in that tenant.
+      tenant: true,
+{{/if}}
     }),
     processedEvents: new PrismaProcessedEventStore(unitOfWork, { delegate: (current) => current.processedEvent }),
     {{#if eventSourcing.on}}

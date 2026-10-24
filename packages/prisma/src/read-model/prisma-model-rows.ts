@@ -4,21 +4,25 @@ import type { PrismaReadModelDelegate } from './prisma-read-model-delegate';
 import type { PrismaReadModelOptions } from './prisma-read-model-options';
 import { RowMapper } from './row.mapper';
 import { stampedRowOf } from './stamped-row-of';
+import { TenantOfRows } from './tenant-of-rows';
 import { writtenOf } from './written-of';
 
 /** The stamped rows of the table of a read model, through its model. */
 export class PrismaModelRows<Row extends object, Tx> implements ReadModelRows<Row> {
   private readonly mapper: RowMapper<Row>;
 
+  private readonly tenant: TenantOfRows;
+
   constructor(
     private readonly context: PrismaContext<Tx>,
     private readonly options: PrismaReadModelOptions<Row, Tx>,
   ) {
     this.mapper = new RowMapper<Row>(options.columns);
+    this.tenant = new TenantOfRows(options.tenant, options.columns);
   }
 
   async find(key: string): Promise<StampedRow<Row> | undefined> {
-    const [found] = await this.model().findMany({ where: { [this.keyField()]: key }, take: 1 });
+    const [found] = await this.model().findMany({ where: { [this.keyField()]: key, ...this.reading() }, take: 1 });
 
     if (found === undefined) {
       return undefined;
@@ -39,7 +43,7 @@ export class PrismaModelRows<Row extends object, Tx> implements ReadModelRows<Ro
     }
 
     const { count } = await this.model().createMany({
-      data: [writtenOf(entry, this.keyField())],
+      data: [{ ...writtenOf(entry, this.keyField()), ...this.tenant.writing() }],
       skipDuplicates: true,
     });
 
@@ -47,9 +51,11 @@ export class PrismaModelRows<Row extends object, Tx> implements ReadModelRows<Ro
   }
 
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {
+    const own = this.tenant.writing();
+
     const { count } = await this.model().updateMany({
-      where: { [this.keyField()]: entry.key, lastEventId: held.eventId, lastEventAt: held.occurredAt },
-      data: writtenOf(entry, this.keyField()),
+      where: { [this.keyField()]: entry.key, lastEventId: held.eventId, lastEventAt: held.occurredAt, ...own },
+      data: { ...writtenOf(entry, this.keyField()), ...own },
     });
 
     return count === 1;
@@ -57,6 +63,11 @@ export class PrismaModelRows<Row extends object, Tx> implements ReadModelRows<Ro
 
   model(): PrismaReadModelDelegate {
     return this.options.delegate(this.context.client());
+  }
+
+  /** The condition of a read, by field: what the tenant of the work may see, or nothing for a read model of every tenant. */
+  reading(): Readonly<Record<string, unknown>> {
+    return this.tenant.reading();
   }
 
   private keyField(): string {

@@ -1,15 +1,14 @@
 import {
   encodeCursor,
   pageOf,
-  tenantScopeOf,
   type CursorPageRequest,
   type ExecutionScope,
   type OffsetPageRequest,
   type Page,
   type PageRequest,
   type SortDirection,
-  type TenantScoped,
 } from '@ddd-ts-kit/kernel';
+import { tenantWhere, type TenantWhere } from '../../../../../src';
 import type { Prisma } from '../../../../generated/client/client';
 import type { Database } from '../../../platform/database/database';
 import type { InvoiceQueries, InvoiceSort, InvoiceSummary } from '../../application/ports/invoice-queries.port';
@@ -33,23 +32,22 @@ export class PrismaInvoiceQueries implements InvoiceQueries {
   }
 
   private async byOffset(request: OffsetPageRequest<InvoiceSort>): Promise<Page<InvoiceSummary>> {
-    const { invoice } = this.database.client();
-    const where = tenantScopeOf(this.scope);
+    const where = tenantWhere(this.scope);
 
-    const rows = await invoice.findMany({
+    const rows = await this.database.client().invoice.findMany({
       where,
       orderBy: totalOrder(directionOf(request)),
       take: request.limit,
       skip: request.offset,
     });
 
-    return pageOf(rows.map(toSummary), { total: await invoice.count({ where }) });
+    return pageOf(rows.map(toSummary), { total: await this.database.client().invoice.count({ where }) });
   }
 
   /** One row more than asked tells whether a page follows, without counting. */
   private async byCursor(request: CursorPageRequest<InvoiceSort>): Promise<Page<InvoiceSummary>> {
     const direction = directionOf(request);
-    const tenant = tenantScopeOf(this.scope);
+    const tenant = tenantWhere(this.scope);
 
     const rows = await this.database.client().invoice.findMany({
       where: request.cursor === undefined ? tenant : beyond(positionOf(request.cursor), direction, tenant),
@@ -73,7 +71,7 @@ function totalOrder(direction: SortDirection): Prisma.InvoiceOrderByWithRelation
 function beyond(
   { amount, id }: InvoicePosition,
   direction: SortDirection,
-  tenant: TenantScoped,
+  tenant: TenantWhere,
 ): Prisma.InvoiceWhereInput {
   const past = direction === 'asc' ? 'gt' : 'lt';
 

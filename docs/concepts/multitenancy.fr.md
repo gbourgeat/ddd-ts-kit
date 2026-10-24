@@ -1,5 +1,5 @@
 [English](multitenancy.md) · **Français**
-<!-- translation-of: multitenancy.md sha256:d63518b061a8d109 -->
+<!-- translation-of: multitenancy.md sha256:fb90fa0f3b880cc4 -->
 
 # Multitenance
 
@@ -99,15 +99,16 @@ Ce que fournit chaque adaptateur, prouvé par `tenantIsolationContract`
 
 | Stratégie | Knex | Drizzle | Prisma | TypeORM |
 |---|---|---|---|---|
-| Tables partagées | `tenantTable`, `ownTenantTable`, `whereTenant`, `derivedTable` ; modèles de lecture avec `tenant` ; `addTenantColumn` pour migrer | `tenantCondition`, `ownTenantCondition` ; modèles de lecture avec `tenant` | à la main : `tenantScopeOf` et `tenantReachOf` dans chaque instruction, aucun *helper*, aucune exécution du contrat | à la main, comme Prisma |
+| Tables partagées | `tenantTable`, `ownTenantTable`, `whereTenant`, `derivedTable` ; modèles de lecture avec `tenant` ; `addTenantColumn` pour migrer | `tenantCondition`, `ownTenantCondition` ; modèles de lecture avec `tenant` | `tenantWhere` et `ownTenantWhere` décomposés dans le where, `tenantScopeOf` dans les données ; modèles de lecture avec `tenant` ; l'outbox avec `tenant: true` | `tenantWhere` et `ownTenantWhere` ; modèles de lecture avec `tenant` ; `outboxEntity({ tenant: true })` |
 | Sécurité au niveau des lignes | `enableTenantIsolation`, `tenantSession` | `tenantPolicies`, `forceRowLevelSecurity`, `tenantSession` | non fourni | non fourni |
 | Un schéma par *tenant* | `tenantSchemaTable`, `migrateTenantSchema`, `tenantSearchPath` | non fourni : une table drizzle est liée à son schéma là où elle est déclarée | non fourni | non fourni |
 | Une base par *tenant* | `TenantDatabases`, `createTenantRoutedUnitOfWork`, `migrateEveryTenant` | non fourni | non fourni | non fourni |
 
-`init --tenancy shared-table` génère la première stratégie sur Knex et Drizzle : chaque
+`init --tenancy shared-table` génère la première stratégie sur les quatre ORM : chaque
 *repository* passe par les *helpers*, l'outbox garde le *tenant*, et la règle
 `tenancy/scoped-statement` du *checker* signale une instruction qui atteint une table directement
-depuis l'exécuteur. Les trois autres se câblent à la main à partir des *packages* pour l'instant ;
+depuis l'exécuteur, le client ou le *manager*, une ligne atteinte par sa seule clé, un registre de
+modèles de lecture construit sans son *tenant*. Les trois autres se câblent à la main à partir des *packages* pour l'instant ;
 `init` les refuse et dit quoi ajouter.
 
 Un *repository* sur tables partagées, version simplifiée de ce qu'écrit le générateur sur Knex (les
@@ -195,10 +196,16 @@ pour l'outbox (les événements pas encore publiés vont aussi à ce client, pou
 consommateurs s'exécutent dans son *tenant*). Une table qui a déjà la colonne est laissée telle
 quelle, si bien que la migration s'exécute aussi sur une base construite depuis le schéma actuel.
 L'application d'exemple a suivi ce chemin (son ADR-0003) : un réseau de cabinets est un *tenant*.
+Sur Drizzle, Prisma et TypeORM, la colonne rejoint la déclaration de la table (`tenantColumn()`, le
+champ `tenantId` du modèle), l'outillage de migration de l'ORM écrit la migration (`drizzle-kit
+generate`, `prisma migrate dev`, `typeorm migration:generate`), et une instruction de cette
+migration donne aux lignes déjà présentes le *tenant* qu'elles servaient, avant que la colonne soit
+rendue obligatoire et indexée.
 
-L'outbox garde le *tenant* de chaque événement sur Knex (`tenant: true`) et Drizzle
-(`tenantOutboxTable`) ; les outbox de Prisma et de TypeORM ne le stockent pas encore, donc leurs
-consommateurs s'exécutent sans *tenant*.
+L'outbox garde le *tenant* de chaque événement sur Knex (`tenant: true`), Drizzle
+(`tenantOutboxTable`), Prisma (`tenant: true`, sur un modèle qui porte le champ `tenantId` que le
+fragment livré laisse en commentaire) et TypeORM (`outboxEntity({ tenant: true })`), si bien que
+ses consommateurs s'exécutent dans ce *tenant*.
 
 Trois règles tiennent quelle que soit la stratégie :
 
