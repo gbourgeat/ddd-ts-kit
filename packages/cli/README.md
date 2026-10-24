@@ -852,7 +852,7 @@ Templates are plain files in `templates/<kind>/`, with `{{name.pascal}}`, `{{nam
 ## docs
 
 ```
-ddd-ts-kit docs [--check] [--stored-events]
+ddd-ts-kit docs [--check] [--stored-events] [--behaviour]
 ```
 
 Regenerates what is derived from the config and the code, and nothing else:
@@ -882,6 +882,8 @@ Regenerates what is derived from the config and the code, and nothing else:
   `ddd-ts-kit.config.json`, the pipeline files, `REVIEW.md`, `AGENTS.md` and `docs/adr/` to the
   platform owners. A file the team wrote keeps its lines, the block appended after them; without
   any owner nothing is written.
+
+`--behaviour` writes the pages of `docs/behaviour/` alone, every other generated document left as it is: what the pre-commit hook runs when a spec is staged; with `--check`, those pages alone are compared.
 
 `--stored-events` also records in `stored-events.lock.json` the shape of each version of a stored
 event declared in the codecs of `infrastructure/persistence/`, never rewriting a recorded version:

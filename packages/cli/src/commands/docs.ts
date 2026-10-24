@@ -3,6 +3,7 @@ import path from 'node:path';
 import { readConfig, type Config } from '../config';
 import { barrelFile, earlierLayoutNotice, generatedDrift } from '../declared';
 import { readContexts } from '../docs/read-contexts';
+import { writeBehaviour } from '../docs/write-behaviour';
 import { writeDocs } from '../docs/write-docs';
 import type { KeptContext } from '../generate/refresh-barrels';
 import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file';
@@ -21,12 +22,17 @@ export const docsCommand: Command = (argv, io) => {
     check: { type: 'boolean', default: false },
     'dry-run': { type: 'boolean', default: false },
     'stored-events': { type: 'boolean', default: false },
+    behaviour: { type: 'boolean', default: false },
   });
 
   const ws = new Workspace(args.projectRoot, false);
 
   const { config } = readConfig(args.projectRoot);
   const check = args.flag('check');
+
+  if (args.flag('behaviour')) {
+    return behaviourOnly(io, args, { ws, config, kept: [] });
+  }
 
   // A check writes nothing: a context still declared as an earlier version wrote it is only warned about.
   const kept = writeDocs(ws, config, { earlier: check ? 'keep' : 'move' });
@@ -50,6 +56,31 @@ interface DocsRun {
   readonly config: Config;
   /** The contexts still declared in the single file of 0.84: a warning, not a failure, in this version. */
   readonly kept: readonly KeptContext[];
+}
+
+/**
+ * `docs --behaviour`: the pages of what the tests state alone, which the pre-commit hook writes when a
+ * spec is staged, every other generated document left as it is; with `--check`, those pages alone.
+ */
+function behaviourOnly(io: Io, args: Arguments, run: DocsRun): number {
+  writeBehaviour(run.ws, run.config, readContexts(run.ws, run.config));
+
+  if (!args.flag('check')) {
+    printReport(io, args, run.ws.commit(args.flag('dry-run')));
+
+    return 0;
+  }
+
+  const report = run.ws.commit(true);
+  const stale = [...report.created, ...report.updated, ...report.deleted];
+
+  io.out(
+    stale.length === 0
+      ? 'The pages of what the tests state are up to date.'
+      : `Stale, run \`ddd-ts-kit docs --behaviour\`: ${stale.join(', ')}.`,
+  );
+
+  return stale.length === 0 ? 0 : 1;
 }
 
 /** `docs --check`: the generated files that would change, and the stored-event versions not recorded yet or recorded by 0.82.0 or earlier; 0 when there is none. */

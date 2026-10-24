@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:c7f7203f2cc64cf2 -->
+<!-- translation-of: commands.md sha256:1fff689b3803a17d -->
 
 # Quelle commande, quand
 
@@ -278,7 +278,7 @@ Usage
   ddd-ts-kit verify-merge [<commit>] [--since <git-ref>] [--theirs <git-ref>] [--base <commit>] [--warn]
   ddd-ts-kit merge-trunk [--trunk <git-ref>] [--since <commit>] [--to-land] [--dry-run]
   ddd-ts-kit merge-trunk --continue [--accept-lost] | --abort
-  ddd-ts-kit docs [--check] [--stored-events]
+  ddd-ts-kit docs [--check] [--stored-events] [--behaviour]
   ddd-ts-kit sdk [--check] [--dry-run]
   ddd-ts-kit depcruise-config [--check|--write]
   ddd-ts-kit build-aliases [--project <tsconfig>]
@@ -577,6 +577,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   --explain        check follows the violations with the reason of each rule they report, once per rule, as
                    explain gives it without its examples ("explanations" in JSON); with github and gitlab, each
                    annotation carries the reason of its rule, a pull request showing an annotation on its own
+  --behaviour      docs writes the pages of what the tests state (docs/behaviour/) alone, every other generated
+                   document left as it is: what the pre-commit hook runs when a spec is staged; with --check,
+                   those pages alone are compared
   --stored-events  docs records the shape of each version of the stored events in stored-events.lock.json,
                    never rewriting a recorded one but one recorded by 0.82.0 or earlier, recorded again as
                    the kit reads it now: run it once the shape of a version is the one to store; docs --check

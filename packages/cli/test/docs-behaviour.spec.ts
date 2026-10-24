@@ -100,6 +100,34 @@ describe('docs, the pages of what the tests state', () => {
     expect(cli(root, 'docs', '--check').code).toBe(0);
   });
 
+  it('writes the pages alone with --behaviour, every other generated document left as it is, and checks them alone', () => {
+    const map = read(root, 'docs/context-map.md');
+
+    write(
+      root,
+      'docs/context-map.md',
+      map.replace('<!-- /ddd-ts-kit:context-map -->', 'edited by hand\n<!-- /ddd-ts-kit:context-map -->'),
+    );
+
+    write(
+      root,
+      'src/contexts/billing/test/unit/invoice-due.vo.spec.ts',
+      "import { describe, it } from 'vitest';\n\ndescribe('InvoiceDue', () => {\n  it.todo('falls due thirty days after the issue');\n});\n",
+    );
+
+    expect(cli(root, 'docs', '--behaviour', '--check').code).toBe(1);
+    expect(cli(root, 'docs', '--behaviour').code).toBe(0);
+    expect(read(root, 'docs/behaviour/billing.md')).toContain('falls due thirty days after the issue (planned)');
+    expect(read(root, 'docs/context-map.md')).toContain('edited by hand');
+
+    expect(cli(root, 'docs', '--behaviour', '--check').stdout).toBe(
+      'The pages of what the tests state are up to date.',
+    );
+
+    expect(cli(root, 'docs', '--check').code).toBe(1);
+    expect(cli(root, 'docs').code).toBe(0);
+  });
+
   it('deletes the page of a context that is gone', () => {
     rmSync(path.join(root, 'src/contexts/shipping'), { recursive: true, force: true });
 

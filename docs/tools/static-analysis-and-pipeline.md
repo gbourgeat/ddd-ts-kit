@@ -196,7 +196,7 @@ pre-commit:
       run: npx --no -- ddd-ts-kit check {staged_files}
     - name: behaviour pages
       glob: '**/*.spec.ts'
-      run: 'if [ -f .ddd-ts-kit/worker.json ]; then echo "behaviour pages: left to the trunk, as every shared file of a worker."; else npx --no -- ddd-ts-kit docs && git add docs/behaviour; fi'
+      run: 'if [ -f .ddd-ts-kit/worker.json ]; then echo "behaviour pages: left to the trunk, as every shared file of a worker."; else npx --no -- ddd-ts-kit docs --behaviour && git add docs/behaviour; fi'
     - name: commit size
       run: npx --no -- ddd-ts-kit check --commit-size --staged
 
