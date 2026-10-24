@@ -128,10 +128,12 @@ describe('Send notification', () => {
       announced.push(event.aggregateId);
     });
 
-    mailer.failNextWith(new Error('provider unreachable'));
+    const outage = new Error('provider unreachable');
 
-    await expect(application.commandBus.execute(new SendNotificationCommand(holder, confirmation))).rejects.toThrow(
-      'provider unreachable',
+    mailer.failNextWith(outage);
+
+    await expect(application.commandBus.execute(new SendNotificationCommand(holder, confirmation))).rejects.toBe(
+      outage,
     );
 
     expect(notificationRepository.count()).toBe(0);

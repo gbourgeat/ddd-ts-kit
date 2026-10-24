@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:3a6c73d5879ab731 -->
+<!-- translation-of: README.md sha256:0766db32f698c0e9 -->
 
 # ddd-ts-kit
 
@@ -2071,7 +2071,8 @@ règle.
   `error`, sauf `test/no-mocks`, `test/builder-required`, `clean/function-size`,
   `clean/no-noise-comment`, `clean/no-flag-argument`, `standard/no-parallel-interface`,
   `declarations/port-adapter-wired` et, tenue
-  par ESLint, `application/command-query-separation` (`warn`). `any` dans un fichier de test est
+  par ESLint, `application/command-query-separation`, `test/title-states-a-rule`,
+  `test/no-logic`, `test/assertion-present` et `test/refusal-by-code` (`warn`). `any` dans un fichier de test est
   toujours un avertissement.
 - `limits: { "maxParameters": 3, "maxFunctionLines": 30 }` dans la configuration règle
   `clean/function-size`. `maxFunctionLines` va de 1 à 100 : une valeur au-dessus est lue comme 100
@@ -2189,7 +2190,8 @@ règle.
 D'autres identifiants appartiennent à `@ddd-ts-kit/eslint-plugin`, qui lit l'arbre syntaxique là
 où ce *checker* lit du texte : `domain/aggregate-encapsulation`,
 `domain/value-object-immutability`, `domain/no-generic-error`, `application/handler-shape`,
-`application/command-query-separation` et `clean/no-magic-number` parmi eux (`ddd-ts-kit rules`
+`application/command-query-separation`, `clean/no-magic-number` et les six règles sur la forme
+d'un test (`test/no-only-no-skip`, `test/title-states-a-rule`, `test/no-logic`, `test/assertion-present`, `test/refusal-by-code`, `test/no-snapshot`) parmi eux (`ddd-ts-kit rules`
 les liste tous). `rules` et `explain` les montrent comme « checked by @ddd-ts-kit/eslint-plugin »,
 la configuration les accepte sous `rules`, et `check --rule` sur l'un d'eux répond avec
 `npm run lint`. Un identifiant, `clean/formatted`, appartient au formateur : `rules` et `explain`

@@ -15,6 +15,7 @@ allowed-tools:
   - Bash(npx ddd-ts-kit check *)
   - Bash(npx ddd-ts-kit list *)
   - Bash(npm test *)
+  - Bash(npm run lint *)
   - Bash(npm run test:coverage)
   - Bash(npm run test:e2e *)
   - Bash(npx ddd-ts-kit acceptance *)
@@ -195,10 +196,19 @@ the `## Statement` of the fix, as a scenario is against its criterion.
 
 ## Shape
 
-- `describe` the unit, `it` states the rule: `refuses to pay an order twice`.
-- Arrange, act, assert separated by blank lines; no `if`, no loop; `it.each` for the
-  boundaries of a value object.
-- No shared mutable state; never read a private field; no snapshot of whole objects.
+Held by `npm run lint`, on every test file of the project:
+
+- `describe` names the unit, `it` states the rule, in lower case, after the rows and the
+  criterion it cites: `refuses to pay an order twice`, `#US5.02 AC1 a customer places an order`;
+  never `should`, `test`, `works`, nor a method or a class (`test/title-states-a-rule`).
+- Arrange, act, assert separated by blank lines; no `if`, no loop, no `try` (`test/no-logic`):
+  `it.each` for the boundaries of a value object, a builder or a fake for a decision.
+- Every test asserts an outcome (`test/assertion-present`); a refusal by its code and its facts,
+  `thenError`, `expectRefusal`, `rejects.toMatchObject({ code })`, `expectProblem`, never
+  `toThrow('message')` (`test/refusal-by-code`); no snapshot (`test/no-snapshot`).
+- Every test runs: no `.only`, `.skip`, no `.skipIf` on a constant (`test/no-only-no-skip`). What is not proven
+  yet is an `it.todo` named after it, which `story --gate close` refuses while it is the story's.
+- No shared mutable state; never read a private field.
 
 A coverage rate says that code ran under a test, never that the test asserts anything: write
 the spec for the behaviour, and let the rate follow. The thresholds of `ddd-ts-kit.config.json`
@@ -217,5 +227,6 @@ its only proof. The text of a refusal leaves the score when it is handed to the 
 the rule is checked (`InvalidSlot.forRule('ends after it starts')`); a text a helper returns before
 the factory is called is measured and survives: throw where the rule is checked.
 
-Finish with `npm test -- <context>`, `npm run test:coverage` before the slice is closed, and
+Finish with `npm test -- <context>`, `npm run lint` (the shape of the tests), `npm run test:coverage`
+before the slice is closed, and
 `npx ddd-ts-kit check --rule test/no-mocks --rule test/builder-required --rule test/spec-required --rule test/helper-placed --rule test/acceptance-black-box`.

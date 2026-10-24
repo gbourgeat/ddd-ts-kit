@@ -11,9 +11,11 @@ describe('When an account is deactivated, the identity provider follows', () => 
   it('disables the person once, asked again after a failure until it answers: a deactivation is never lost', async () => {
     const { application, identityProvider } = await startedIdentity();
 
-    identityProvider.failWith(new Error('provider unreachable'));
+    const outage = new Error('provider unreachable');
 
-    await expect(application.eventBus.publish([deactivation])).rejects.toThrow();
+    identityProvider.failWith(outage);
+
+    await expect(application.eventBus.publish([deactivation])).rejects.toBe(outage);
 
     identityProvider.answerAgain();
     await application.eventBus.publish([deactivation]);

@@ -88,7 +88,7 @@ describe('RemoteMailer', () => {
 
     const refused = withAspectRuntime(fakes, () => adapter.deliver('ada@example.test', reminder.build())).then(
       () => 'delivered',
-      (error: unknown) => (error instanceof Error ? error.message : 'failed'),
+      failureMessage,
     );
 
     await new Promise((resolve) => setImmediate(resolve));
@@ -97,10 +97,17 @@ describe('RemoteMailer', () => {
     fakes.scheduler.advance(30_000);
     await new Promise((resolve) => setImmediate(resolve));
     fakes.scheduler.advance(30_000);
-    fake.failAlwaysWith(new Error('unreachable'));
+    const outage = new Error('unreachable');
+
+    fake.failAlwaysWith(outage);
 
     expect(await refused).toBe('unreachable');
     expect(adapter.calls).toBe(3);
-    await expect(fake.deliver('ada@example.test', reminder.build())).rejects.toThrow('unreachable');
+    await expect(fake.deliver('ada@example.test', reminder.build())).rejects.toBe(outage);
   });
 });
+
+/** What a refused delivery says, as the test reads it. */
+function failureMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'failed';
+}

@@ -11,13 +11,15 @@ import { invoiceIssuedV2 } from '@/contexts/billing/published-language/invoice-i
 import { startOutboxRelay } from '@/platform/events/start-outbox-relay';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
 
+/** What the storage answers while it is down: nobody planned it, and the test asserts it as itself. */
+const outage = new Error('The storage is down.');
 const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { scheduler: [billingPermissions['invoice.issue']] }, systemRole: 'scheduler' }) });
 
 describe('what fails outside of a request', () => {
   it('a job whose command fails is reported once, as the work of the schedule, under the name of the command', async () => {
     const application = arrange();
 
-    await expect(application.jobs.runNow('billing.issue-invoices-monthly')).rejects.toThrow('The storage is down.');
+    await expect(application.jobs.runNow('billing.issue-invoices-monthly')).rejects.toBe(outage);
 
     expect(application.errors.reports).toHaveLength(1);
     expect(application.errors.reports[0]?.report).toMatchObject({ origin: 'schedule', operation: 'IssueInvoiceCommand', actorId: 'system:billing.issue-invoices-monthly' });
@@ -45,7 +47,7 @@ describe('what fails outside of a request', () => {
 
 /** The billing context on the test application, its storage down: saving fails with something nobody planned. */
 function arrange(): TestApplication {
-  const down = { findById: () => Promise.resolve(undefined), save: () => Promise.reject(new Error('The storage is down.')) };
+  const down = { findById: () => Promise.resolve(undefined), save: () => Promise.reject(outage) };
 
   return createTestApplication({ modules: [platformTestModule, contextModule('billing', billing), authorization], fakes: [fake(InvoiceRepository, down)] });
 }
