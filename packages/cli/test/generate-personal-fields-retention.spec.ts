@@ -15,8 +15,12 @@ describe('generate repository --retention: how long the rows keep what they hold
   it('declares the retention from a date column it adds to the storage, and the spec proves the purge', () => {
     const root = billingWithPersonalInvoices(['--orm', 'knex'], [...PERSONAL, '--retention', 'ended_at:36m']);
 
-    expect(read(root, DECLARATION)).toContain(
-      "  erasure: 'pseudonymise',\n  retention: { after: 'ended_at', months: 36 },\n};",
+    const declaration = read(root, DECLARATION);
+
+    expect(declaration).toContain("  retention: { after: 'ended_at', months: 36 },\n};");
+
+    expect(declaration).toContain(
+      '  // TODO(domain): the mapper writes ended_at empty: write the date the relation with the person ended',
     );
 
     expect(read(root, `${PERSISTENCE}/create-billing-tables.schema.ts`)).toContain(
@@ -37,16 +41,16 @@ describe('generate repository --retention: how long the rows keep what they hold
     expect(checkJsonOf(cli(root, 'check', '--json')).violations).toEqual([]);
   });
 
-  it('runs from registered_at without adding a column, and deletes the rows in the row mode', () => {
+  it('deletes the rows in the row mode once their retention ended, a row of another subject included', () => {
     const root = billingWithPersonalInvoices(
       ['--orm', 'knex'],
-      [...PERSONAL, '--erasure', 'row', '--retention', 'registered_at:5y'],
+      [...PERSONAL, '--subject', 'customer_id', '--erasure', 'row', '--retention', 'closed_at:10y'],
     );
 
-    expect(read(root, DECLARATION)).toContain("  retention: { after: 'registered_at', years: 5 },");
+    expect(read(root, DECLARATION)).toContain("  retention: { after: 'closed_at', years: 10 },");
 
-    expect(read(root, `${PERSISTENCE}/create-billing-tables.schema.ts`)).not.toContain(
-      "table.timestamp('registered_at', { useTz: true });\n    table.timestamp",
+    expect(read(root, `${PERSISTENCE}/create-billing-tables.schema.ts`)).toContain(
+      "    table.timestamp('closed_at', { useTz: true });\n",
     );
 
     expect(read(root, SPEC)).toContain('    expect(await rowOf(ada)).toBeUndefined();');
@@ -84,7 +88,7 @@ describe('what --retention refuses before anything is written', () => {
     return result;
   };
 
-  it('a period that is not one, a column that is personal or the subject, a column of the table, a retention alone', () => {
+  it('a period that is not one, a column that is personal or the subject, a column of the table, registered_at, a retention alone', () => {
     const root = initProject('--orm', 'knex');
 
     expectOk(
@@ -113,6 +117,12 @@ describe('what --retention refuses before anything is written', () => {
     );
 
     expect(refused(root, ...PERSONAL, '--retention', 'version:3y').stderr).toContain('keeps for its own needs');
+
+    // Counted from the registration, the nightly purge would erase people who are still customers.
+    expect(refused(root, ...PERSONAL, '--retention', 'registered_at:5y').stderr).toContain(
+      'never from its beginning: counted from registered_at, the nightly purge would erase people who are still customers',
+    );
+
     expect(refused(root, '--retention', 'ended_at:3y').stderr).toContain('go with --personal');
   });
 });

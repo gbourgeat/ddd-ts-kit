@@ -16,6 +16,7 @@ const declaration: PersonalFieldsOptions<Record<string, unknown>> = {
 {{personal.fields}}
   erasure: '{{personal.erasure}}',
 {{#if personal.retains}}
+  // TODO(domain): the mapper writes {{personal.retentionColumn}} empty: write the date the relation with the person ended (the contract closed, the account deleted), or these rows never expire. Never count from the registration.
   retention: {{personal.retention}},
 {{/if}}
 };

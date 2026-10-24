@@ -59,7 +59,7 @@ export function personalVars(scope: Scope): RenderContext {
 /** The columns the generated storage gains, nullable text each: the personal ones, and the subject column when the row is about somebody else. */
 function storageVars(request: PersonalRequest): RenderContext {
   const columns = [...request.fields, ...(request.subject === 'id' ? [] : [request.subject])].map(personalColumn);
-  const lines = linesOf(columns, request.retention?.added === true ? [personalColumn(request.retention.column)] : []);
+  const lines = linesOf(columns, request.retention === undefined ? [] : [personalColumn(request.retention.column)]);
 
   return { ...sqlStorage(lines), ...modelStorage(lines) };
 }
@@ -129,6 +129,7 @@ function retentionVars(request: PersonalRequest, spelling: Spelling): RenderCont
     retains: true,
     retention: `{ after: '${after[spelling.declaration]}', ${retention.unit}: ${String(retention.amount)} }`,
     retentionRow: after[spelling.row],
+    retentionColumn: retention.column,
   };
 }
 
@@ -136,7 +137,7 @@ function retentionVars(request: PersonalRequest, spelling: Spelling): RenderCont
 function spelledVars(request: PersonalRequest, spelling: Spelling): RenderContext {
   const fields = request.fields.map(personalColumn);
   const subject = personalColumn(request.subject);
-  const dated = request.retention?.added === true ? [personalColumn(request.retention.column)] : [];
+  const dated = request.retention === undefined ? [] : [personalColumn(request.retention.column)];
   const columns = [...(request.subject === 'id' ? fields : [...fields, subject]), ...dated];
 
   const about = (person: string): (readonly [string, string])[] =>

@@ -197,12 +197,17 @@ npx ddd-ts-kit generate repository billing Customer --personal email,display_nam
 ```
 
 `--retention <column>:<n><d|m|y>` says how long the rows keep the person (GDPR article 5(1)(e)),
-counted from a date column of the row: `registered_at`, which every generated table has, or a column
-of yours, `ended_at` above, which joins the storage as a nullable timestamp, empty until the fact it
-dates happens; a row whose date is empty never expires. The declaration gains
-`retention: { after: 'ended_at', months: 36 }`, and the generated spec proves the purge on the test
-database. A personal column, the subject and the columns the table keeps for itself are refused as
-the start of a retention, as is a period that is not one positive unit.
+counted from the end of the relation with the person: a column of yours that dates it, `ended_at`
+above, which joins the storage as a nullable timestamp, empty while the relation lasts; a row whose
+date is empty never expires. The declaration gains `retention: { after: 'ended_at', months: 36 }`,
+and the generated spec proves the purge on the test database. Fill that column when the relation
+ends (the contract closed, the account deleted), in the mapper of the aggregate that knows it.
+
+Never count a retention from the beginning: `registered_at` dates the registration, and a purge
+counted from it would erase, every night and for good, people who are still customers. The
+generator refuses it, as it refuses the other columns the table keeps for itself, a personal column,
+the subject and a period that is not one positive unit; a declaration written by hand takes the
+same care.
 
 Every night at 03:00 UTC, the job `privacy.purge-expired` of the platform runs `runPurge`: every copy
 listed in `data-subject-copies.ts` erases, as its declaration says, the rows that outlived their

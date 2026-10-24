@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:0b74bf5cb1fc39b3 -->
+<!-- translation-of: personal-data.md sha256:713421f6663f188a -->
 
 # Les données personnelles dans un projet généré
 
@@ -202,13 +202,18 @@ npx ddd-ts-kit generate repository billing Customer --personal email,display_nam
 ```
 
 `--retention <colonne>:<n><d|m|y>` dit combien de temps les lignes gardent la personne (RGPD,
-article 5(1)(e)), compté depuis une colonne de date de la ligne : `registered_at`, que chaque table
-générée possède, ou une colonne à vous, `ended_at` ci-dessus, qui rejoint le stockage en horodatage
-nullable, vide tant que le fait qu'elle date n'est pas arrivé ; une ligne dont la date est vide
-n'expire jamais. La déclaration gagne `retention: { after: 'ended_at', months: 36 }`, et la *spec*
-générée prouve la purge sur la base de test. Une colonne personnelle, le sujet et les colonnes que
-la table garde pour elle sont refusés comme départ d'une conservation, de même qu'une période qui
-n'est pas une unité positive.
+article 5(1)(e)), compté depuis la fin de la relation avec la personne : une colonne à vous qui la
+date, `ended_at` ci-dessus, qui rejoint le stockage en horodatage nullable, vide tant que la relation
+dure ; une ligne dont la date est vide n'expire jamais. La déclaration gagne
+`retention: { after: 'ended_at', months: 36 }`, et la *spec* générée prouve la purge sur la base de
+test. Remplissez cette colonne quand la relation prend fin (le contrat clos, le compte supprimé),
+dans le *mapper* de l'agrégat qui le sait.
+
+Ne comptez jamais une conservation depuis le début : `registered_at` date l'inscription, et une purge
+comptée depuis elle effacerait, chaque nuit et pour de bon, des personnes encore clientes. Le
+générateur la refuse, comme il refuse les autres colonnes que la table garde pour elle, une colonne
+personnelle, le sujet et une période qui n'est pas une unité positive ; une déclaration écrite à la
+main prend le même soin.
 
 Chaque nuit à 03:00 UTC, le *job* `privacy.purge-expired` de la plateforme lance `runPurge` : chaque
 copie listée dans `data-subject-copies.ts` efface, comme sa déclaration le dit, les lignes qui ont

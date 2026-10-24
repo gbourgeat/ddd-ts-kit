@@ -14,7 +14,9 @@ would keep what it should not, bounded to an erasure by the date of the row, and
 multitenancy page. `auditedPersonalDataRetention` of `@ddd-ts-kit/audit` records each purge (`data-access`,
 `personal-data:purge`, the context, `changes: { rows }`, no person). `generate repository ...
 --personal ... --retention <column>:<n><d|m|y>` writes the retention in the declaration, adds a
-column other than `registered_at` to the storage as a nullable timestamp, and proves the purge in the
+column that dates the end of the relation to the storage as a nullable timestamp, empty while it
+lasts (it refuses `registered_at` and the other columns the table keeps for itself: counted from the
+registration, the purge would erase people who are still customers), and proves the purge in the
 generated spec. `init --privacy on` writes `src/platform/privacy/run-purge.ts`, schedules
 `privacy.purge-expired` every night at 03:00 UTC (the privacy module on tsyringe, the platform wired
 by hand), switched off by `JOB_PRIVACY_PURGE_EXPIRED_ENABLED=false`, and the script `privacy:purge`.
