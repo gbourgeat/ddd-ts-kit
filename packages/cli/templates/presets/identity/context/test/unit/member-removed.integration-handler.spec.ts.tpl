@@ -21,11 +21,13 @@ describe('When a member is removed, the identity provider follows', () => {
   it('is asked again after a failure, until the provider is in line: the revocation is never lost', async () => {
     const { application, identityProvider } = await startedIdentity();
 
-    identityProvider.failWith(new Error('provider unreachable'));
+    const outage = new Error('provider unreachable');
+
+    identityProvider.failWith(outage);
 
     // The failure goes back to who delivered the fact (the outbox relay, the broker), which delivers it again later.
-    await expect(application.eventBus.publish([removal])).rejects.toThrow();
-    await expect(application.eventBus.publish([removal])).rejects.toThrow();
+    await expect(application.eventBus.publish([removal])).rejects.toBe(outage);
+    await expect(application.eventBus.publish([removal])).rejects.toBe(outage);
 
     identityProvider.answerAgain();
     await application.eventBus.publish([removal]);

@@ -96,7 +96,7 @@ describe('PersonRepository.erase, the right to erasure', () => {
     expect(await repository.erase('ada')).toBe(false);
   });
 
-  it('KnexPersonRepository forgets a person of its own network alone: asked from another network, it reaches nothing', async () => {
+  it('on knex, forgets a person of its own network alone: asked from another network, it reaches nothing', async () => {
     await database.reset();
 
     const acme = new KnexPersonRepository(

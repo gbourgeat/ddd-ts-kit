@@ -463,8 +463,14 @@ round trips. And do not repeat a rule at every level: the end-to-end test proves
 with one case, the domain test proves the rule with all of them.
 
 Every unit of behaviour has a spec (rule
-[`test/spec-required`](../ARCHITECTURE.md#3-dependency-rules)), and a test contains no logic:
-no `if`, no loop, arrange, act and assert separated by blank lines.
+[`test/spec-required`](../ARCHITECTURE.md#3-dependency-rules)), and six rules of the ESLint plugin
+hold the shape of each test: its title states the rule it proves, in lower case, never `should` or
+the name of a method (`test/title-states-a-rule`); it holds no `if`, no loop, no `try`
+(`test/no-logic`); it asserts an outcome (`test/assertion-present`), a refusal by its code and its
+facts rather than by a message (`test/refusal-by-code`), and never a snapshot (`test/no-snapshot`);
+and every test runs, no `.only`, no `.skip` (`test/no-only-no-skip`). Arrange, act and assert stay
+separated by blank lines. The four rules that read what a test says are warnings until 0.90.0, so
+that an upgrade never turns a green lint red; `ddd-ts-kit lint` lists them after its report.
 
 ## Coverage thresholds
 
@@ -565,7 +571,10 @@ shipped configuration: 1436 mutants, 163 of them texts of refusals and static mu
   held to their contract suites on an in-memory SQLite database in the unit run.
 - **The existence rules check files, not content.** `test/spec-required` and
   `test/builder-required` verify that the file exists; a spec holding only `it.todo` satisfies
-  them. Leftover todos mean the work is not done.
+  them. The shape rules read each test, not whether the cases that matter were tried:
+  `expect(true).toBe(true)` passes `test/assertion-present`. Leftover todos mean the work is not
+  done: `ddd-ts-kit todo` lists them, and `story --gate close` refuses to close a story while an
+  `it.todo` of its own is left.
 - **`test/no-mocks` is a warning by default** and concerns the tests of a context. Legacy code
   being adopted, or a third-party SDK with no seam, may justify a mock; make it a recorded
   decision rather than a habit.

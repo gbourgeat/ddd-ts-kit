@@ -1953,7 +1953,8 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 - Severities come from `rules` in the config (`error`, `warn`, `off`). Default `error`, except
   `test/no-mocks`, `test/builder-required`, `clean/function-size`, `clean/no-noise-comment`,
   `clean/no-flag-argument`, `standard/no-parallel-interface`, `declarations/port-adapter-wired`
-  and, held by ESLint, `application/command-query-separation` (`warn`). `any` in a test file is
+  and, held by ESLint, `application/command-query-separation`, `test/title-states-a-rule`,
+  `test/no-logic`, `test/assertion-present` and `test/refusal-by-code` (`warn`). `any` in a test file is
   always a warning.
 - `limits: { "maxParameters": 3, "maxFunctionLines": 30 }` in the config sets
   `clean/function-size`. `maxFunctionLines` goes from 1 to 100: a value above is read as 100 and
@@ -2067,7 +2068,8 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 More ids belong to `@ddd-ts-kit/eslint-plugin`, which reads the syntax tree where this
 checker reads text: `domain/aggregate-encapsulation`, `domain/value-object-immutability`,
 `domain/no-generic-error`, `application/handler-shape`,
-`application/command-query-separation` and `clean/no-magic-number` among them (`ddd-ts-kit rules`
+`application/command-query-separation`, `clean/no-magic-number` and the six rules on the shape
+of a test (`test/no-only-no-skip`, `test/title-states-a-rule`, `test/no-logic`, `test/assertion-present`, `test/refusal-by-code`, `test/no-snapshot`) among them (`ddd-ts-kit rules`
 lists them all). `rules` and `explain` show them as "checked by
 @ddd-ts-kit/eslint-plugin", the config accepts them under `rules`, and `check --rule` on one of
 them answers with `npm run lint`. One id, `clean/formatted`, belongs to the formatter: `rules`

@@ -45,7 +45,8 @@ the arrangement several specs share (`npx ddd-ts-kit generate test-world <contex
 
 ## Finish
 
-`npm test -- <context>`, `npx ddd-ts-kit todo <context>` (no `it.todo` left) and
+`npm test -- <context>`, `npx ddd-ts-kit todo <context>` (no `it.todo` left), `npm run lint` (the shape
+of the tests: `test/title-states-a-rule`, `test/no-logic`, `test/assertion-present`, `test/refusal-by-code`) and
 `npx ddd-ts-kit check --rule test/spec-required --rule test/no-mocks --rule test/helper-placed`. Report in a few
 lines: the behaviours now covered, the result, each behaviour you could not cover and why,
 each defect found with `file:line`. No file contents.

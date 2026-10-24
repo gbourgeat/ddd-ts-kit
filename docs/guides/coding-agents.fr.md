@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:83e9bf8e4baf4204 -->
+<!-- translation-of: coding-agents.md sha256:f14836116b217063 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -164,7 +164,7 @@ ligne.
 | `persistence` | `layer/domain-purity`, `layer/application-inward`, `files/port-not-connector`, `persistence/migration-history`, `persistence/primary-key-order`, `persistence/no-file-content`, `tenancy/scoped-statement`, les suites de contrat, le seuil de couverture de `infrastructure/` (`test/coverage-governed`) | un adaptateur sans sa suite de contrat n'est signalé par `test/spec-required` que quand son fichier de spec manque |
 | `access-control` | `authz/declared`, `authz/granted`, `authz/in-application`, `authz/actor-explicit`, `authz/policy-asked`, `authz/scope-narrows`, `authz/fields-by-schema`, `presentation/guard-at-the-edge` | |
 | `cross-cutting` | `aspects/outside-in`, `tracing/platform-only`, `standard/no-parallel-interface`, `purity/no-system-clock`, `purity/no-ambient-randomness`, `purity/no-environment`, `presentation/shared-cache-varies` | |
-| `testing` | `test/no-mocks`, `test/spec-required`, `test/builder-required`, `test/helper-placed`, `test/coverage-governed`, `test/acceptance-black-box`, le verrou de l'acceptation | une *spec* de régression n'est verrouillée que dans une *story* de correctif |
+| `testing` | `test/no-mocks`, `test/spec-required`, `test/builder-required`, `test/helper-placed`, `test/coverage-governed`, `test/acceptance-black-box`, la forme d'un test (`test/no-only-no-skip`, `test/title-states-a-rule`, `test/no-logic`, `test/assertion-present`, `test/refusal-by-code`, `test/no-snapshot`), le verrou de l'acceptation | une *spec* de régression n'est verrouillée que dans une *story* de correctif |
 | `clean-code` | `clean/stepdown`, `clean/function-size`, `clean/file-size`, `clean/blank-lines`, `clean/braces`, `clean/one-export-per-file`, `clean/no-escape-hatch`, `clean/no-commented-out-code`, `clean/no-noise-comment`, `clean/no-flag-argument`, `clean/no-hash-private`, `clean/no-magic-number`, `clean/formatted` (Biome dans le *hook* de *commit* et dans le *pipeline*), `language/no-technical-name` | le formateur tourne au *commit* et en CI, pas à l'écriture |
 | `document` | `docs --check` (`npm run docs:check`, la porte `docs` du *pipeline*), `declarations/barrel-current`, `tree/context-doc`, `sdk --check` | |
 | `extract-service` | `context/extractable`, `context/published-language-only`, `imports/alias-only`, le point d'entrée par contexte qu'écrit `generate service` et son test de démarrage | |

@@ -15,9 +15,11 @@ describe('When a member joins, the identity provider follows', () => {
 
     await members.save(aMember().of('acme', 'subject-grace').build());
     await application.start();
-    identityProvider.failWith(new Error('provider unreachable'));
+    const outage = new Error('provider unreachable');
 
-    await expect(application.eventBus.publish([joining])).rejects.toThrow();
+    identityProvider.failWith(outage);
+
+    await expect(application.eventBus.publish([joining])).rejects.toBe(outage);
 
     identityProvider.answerAgain();
     await application.eventBus.publish([joining]);
