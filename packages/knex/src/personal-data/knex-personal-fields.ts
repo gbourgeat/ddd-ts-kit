@@ -1,4 +1,4 @@
-import type { ErasureMode } from '@ddd-ts-kit/kernel';
+import type { ErasureMode, RetentionPeriod } from '@ddd-ts-kit/kernel';
 import type { TenantTableTarget } from '../tenancy/tenant-table-target';
 
 /** A `personalFields` declaration on a Knex table, whatever its row type: the table named as `tenantTable` names it, the columns by their SQL names. */
@@ -8,4 +8,6 @@ export interface KnexPersonalFields {
   readonly fields: readonly string[];
   readonly erasure: ErasureMode;
   readonly files: readonly string[];
+  /** How long the rows keep it, from a date column: what `purgeExpired` reads. */
+  readonly retention?: RetentionPeriod & { readonly after: string };
 }

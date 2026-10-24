@@ -53,8 +53,9 @@ function scriptsOf(config: Config, tracing: string): Record<string, string> {
 
 /**
  * With `--privacy on`, the two requests of a data subject, answered from the command line on the
- * sources, with the variables of `.env`: the right to erasure and the right of access. Each takes
- * the subject id and `--operator <who-asks>`.
+ * sources, with the variables of `.env`: the right to erasure and the right of access, each with
+ * the subject id and `--operator <who-asks>`; and the storage limitation the nightly job applies,
+ * run by hand.
  */
 function privacyScripts(config: Config): Record<string, string> {
   if (config.stack.privacy !== 'on') {
@@ -64,6 +65,7 @@ function privacyScripts(config: Config): Record<string, string> {
   return {
     'privacy:erase': 'tsx --env-file-if-exists=.env scripts/privacy-erase.ts',
     'privacy:export': 'tsx --env-file-if-exists=.env scripts/privacy-export.ts',
+    'privacy:purge': 'tsx --env-file-if-exists=.env scripts/privacy-purge.ts',
   };
 }
 

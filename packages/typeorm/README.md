@@ -605,6 +605,16 @@ its adapter extends this class with `name`, `declarations` and `tenant` (`TypeOr
 every export into one dated document. Wrap the adapter with `auditedPersonalDataExport` of
 `@ddd-ts-kit/audit` where it is bound, so that each handover leaves an entry.
 
+The same declarations give the storage limitation (GDPR article 5(1)(e)): a declaration with
+`retention: { after: 'endedAt', months: 36 }` says how long its rows keep the person, counted from a
+date column of the row, and `purgeExpired(now)` of the erasure adapter erases, as the declaration
+says, the rows whose date is older than the period; a row whose date is empty never expires, and a
+second run reaches nothing. It confines itself to the tenant of the work when the work names one,
+and reaches every tenant when it names none, as the nightly job of the platform does: a tenant left
+out of a list would keep what it should not. The adapter implements `PersonalDataRetention` of the
+kernel and passes `personalDataRetentionContract`; `purgeExpiredPersonalData` of the kernel runs
+every copy, and `auditedPersonalDataRetention` of `@ddd-ts-kit/audit` records each purge.
+
 ## Outbox and idempotency
 
 ![Two relays share the outbox: with skip-locked, each selects the due rows FOR UPDATE SKIP LOCKED in a short transaction and relay B passes over the rows relay A has locked; with compare-and-set, both read row 7 and try an update guarded by the attempt count they read, the first takes it and the second writes no row and reads again; either way a claimed row stays hidden until its lease ends](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/typeorm-outbox-claim.svg)

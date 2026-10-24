@@ -5,9 +5,11 @@ import {
   isDataSubjectId,
   pseudonymisedValueOf,
   type PersonalDataErasure,
+  type PersonalDataRetention,
 } from '@ddd-ts-kit/kernel';
 import type { PrismaContext } from '../unit-of-work/prisma-context';
-import { aboutSubject } from './about-subject';
+import { aboutSubject, type Condition } from './about-subject';
+import { expiredRows } from './expired-rows';
 import { pathOf } from './path-of';
 import type { PrismaPersonalDataErasureOptions } from './prisma-personal-data-erasure-options';
 import type { PrismaPersonalFields } from './prisma-personal-fields';
@@ -37,8 +39,12 @@ interface Column {
  * run on the client of the unit of work and, for tenant data, in the tenant of the work alone. The
  * port of the context extends `PersonalDataErasure` and its adapter extends this class:
  * `class PrismaPatientErasure extends PrismaPersonalDataErasure<Prisma.TransactionClient> implements PatientErasure`.
+ * The same declarations give the storage limitation: `purgeExpired(now)` erases, as each declaration
+ * says, the rows whose `retention` ended.
  */
-export class PrismaPersonalDataErasure<Tx extends PrismaRawCommands> implements PersonalDataErasure {
+export class PrismaPersonalDataErasure<Tx extends PrismaRawCommands>
+  implements PersonalDataErasure, PersonalDataRetention
+{
   readonly name: string;
 
   private readonly columns = new Map<string, Promise<Readonly<Record<string, Column>>>>();
@@ -60,32 +66,42 @@ export class PrismaPersonalDataErasure<Tx extends PrismaRawCommands> implements 
     let reached = 0;
 
     for (const declaration of this.options.declarations) {
-      reached += await this.eraseIn(declaration, subject);
+      reached += await this.eraseIn(declaration, aboutSubject(declaration, subject, this.options.tenant));
+    }
+
+    return reached;
+  }
+
+  /** The rows whose retention ended before `now`, in every declared table that gives one, none the second time. */
+  async purgeExpired(now: Date): Promise<number> {
+    let reached = 0;
+
+    for (const declaration of this.options.declarations.filter((declared) => declared.retention !== undefined)) {
+      reached += await this.eraseIn(declaration, expiredRows(declaration, { now, tenant: this.options.tenant }));
     }
 
     return reached;
   }
 
   /** What a pseudonymisation would write is settled, and refused, before any file or row is touched. */
-  private async eraseIn(declaration: PrismaPersonalFields, subject: string): Promise<number> {
+  private async eraseIn(declaration: PrismaPersonalFields, about: Condition): Promise<number> {
     const pseudonymised = declaration.erasure === 'row' ? undefined : await this.pseudonymisedOf(declaration);
 
-    await this.deleteFilesOf(declaration, subject);
+    await this.deleteFilesOf(declaration, about);
 
     return pseudonymised === undefined
-      ? this.deleteRows(declaration, subject)
-      : this.pseudonymise(declaration, subject, pseudonymised);
+      ? this.deleteRows(declaration, about)
+      : this.pseudonymise(declaration, about, pseudonymised);
   }
 
   /** The content first, then the reference: a row that still names a deleted file is run again, a file nothing names is lost. */
-  private async deleteFilesOf(declaration: PrismaPersonalFields, subject: string): Promise<void> {
+  private async deleteFilesOf(declaration: PrismaPersonalFields, about: Condition): Promise<void> {
     const storage = this.options.files;
 
     if (declaration.files.length === 0 || storage === undefined) {
       return;
     }
 
-    const about = aboutSubject(declaration, subject, this.options.tenant);
     const anyFile = declaration.files.map((file) => `${quoted(file)} is not null`).join(' or ');
     const columns = declaration.files.map(quoted).join(', ');
 
@@ -102,9 +118,7 @@ export class PrismaPersonalDataErasure<Tx extends PrismaRawCommands> implements 
     }
   }
 
-  private deleteRows(declaration: PrismaPersonalFields, subject: string): Promise<number> {
-    const about = aboutSubject(declaration, subject, this.options.tenant);
-
+  private deleteRows(declaration: PrismaPersonalFields, about: Condition): Promise<number> {
     return this.context
       .client()
       .$executeRawUnsafe(`delete from ${pathOf(declaration)} where ${about.text}`, ...about.values);
@@ -112,11 +126,9 @@ export class PrismaPersonalDataErasure<Tx extends PrismaRawCommands> implements 
 
   private pseudonymise(
     declaration: PrismaPersonalFields,
-    subject: string,
+    about: Condition,
     pseudonymised: readonly Pseudonymised[],
   ): Promise<number> {
-    const about = aboutSubject(declaration, subject, this.options.tenant);
-
     const changes = pseudonymised.map(
       ({ column }, index) => `${quoted(column)} = $${String(about.values.length + index + 1)}`,
     );

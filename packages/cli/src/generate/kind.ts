@@ -41,6 +41,8 @@ export interface KindFlags {
   readonly subject?: string;
   /** How the rows of a subject are erased: `pseudonymise` (the default) or `row`. */
   readonly erasure?: string;
+  /** How long the rows keep the personal data, from a date column: `--retention <column>:<n><d|m|y>`. */
+  readonly retention?: string;
   /** The query answers one page of a search, filtered by the access scope of its actor. */
   readonly search: boolean;
   /** The role an adapter is bound under: `external` or `gateway`. */

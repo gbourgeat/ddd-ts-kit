@@ -11,6 +11,7 @@ export const people = pgSchema('privacy').table('people', {
   avatarKey: text('avatar_key'),
   tenantId: text('tenant_id').notNull(),
   registeredAt: instant('registered_at').notNull(),
+  endedAt: instant('ended_at'),
 });
 
 /** The same table, its `age` not nullable: what a pseudonymisation cannot write to. */
@@ -23,6 +24,7 @@ export const peopleStrict = pgSchema('privacy').table('people_strict', {
   avatarKey: text('avatar_key'),
   tenantId: text('tenant_id').notNull(),
   registeredAt: instant('registered_at').notNull(),
+  endedAt: instant('ended_at'),
 });
 
 export type PersonRow = typeof people.$inferSelect;
@@ -37,5 +39,6 @@ export function aPersonRow(subject: string, n: number, tenant = 'acme'): PersonR
     avatarKey: `tenants/${tenant}/avatars/${subject}-${String(n)}`,
     tenantId: tenant,
     registeredAt: new Date('2026-01-01T00:00:00.000Z'),
+    endedAt: null,
   };
 }

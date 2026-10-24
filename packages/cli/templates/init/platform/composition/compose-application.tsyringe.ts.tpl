@@ -112,6 +112,9 @@ import { fileRoutes } from '{{alias.platform}}/files/file-routes{{alias.ext}}';
 {{#if files.any}}
 import { filesModule } from '{{alias.platform}}/files/files.module{{alias.ext}}';
 {{/if}}
+{{#if privacy.on}}
+import { privacyModule } from '{{alias.platform}}/privacy/privacy.module{{alias.ext}}';
+{{/if}}
 import { layFoundations, type Foundations } from '{{alias.platform}}/composition/lay-foundations{{alias.ext}}';
 import { platformModule, type PlatformOptions } from '{{alias.platform}}/composition/platform.module{{alias.ext}}';
 // ddd-ts-kit:imports
@@ -210,6 +213,9 @@ export function composeApplication(
 {{/if}}
 {{#if files.any}}
       filesModule(options.files ?? new InMemoryFileStorage()),
+{{/if}}
+{{#if privacy.on}}
+      privacyModule(),
 {{/if}}
       ...contexts.modules,
     ],

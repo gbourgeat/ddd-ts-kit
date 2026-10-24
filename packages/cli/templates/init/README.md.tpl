@@ -269,7 +269,12 @@ variables of `.env`:
 ```bash
 npm run privacy:erase -- <subject-id> --operator <who-asks>     # {{#if eventSourcing.on}}the key, then {{/if}}every declared copy{{#if tenancy.any}}, in each tenant of TENANTS{{/if}}
 npm run privacy:export -- <subject-id> > export.json            # one dated document of every declared record{{#if audit.on}}, audited{{/if}}
+npm run privacy:purge                                           # what outlived its retention, as the nightly job does
 ```
+
+A declaration with `retention` (`generate repository ... --retention ended_at:36m`) is purged every night at
+03:00 UTC by the job `privacy.purge-expired`{{#if audit.on}}, each purge recorded in the audit trail{{/if}}; `JOB_PRIVACY_PURGE_EXPIRED_ENABLED=false`
+switches it off in one environment. How long is your decision: write it in your register with its reason.
 
 Running an erasure again completes one that failed half way.{{#if audit.on}} Every run of either script is
 recorded in the audit trail, a trial included: try them on a test subject, never on a real person.{{/if}}

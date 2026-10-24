@@ -5,8 +5,8 @@ import { platformFile } from './platform-file';
 
 /**
  * The requests of a data subject as a capability of the platform, with `--privacy on`: the lists
- * of the copies and of the exports each context declares, and the erasure and the export the two
- * scripts run. Nothing here is a bounded context, and a project that declares nothing pays an
+ * of the copies and of the exports each context declares, the erasure and the export the two
+ * scripts run, and the purge of what outlived its retention, run every night. Nothing here is a bounded context, and a project that declares nothing pays an
  * empty list; a project without personal data takes `--privacy off` and pays nothing.
  */
 export function privacyFiles(config: Config): InitFile[] {
@@ -22,5 +22,7 @@ export function privacyFiles(config: Config): InitFile[] {
     file('data-subject-exports.ts'),
     file('run-erasure.ts'),
     file('run-export.ts'),
+    file('run-purge.ts'),
+    ...(family === 'tsyringe' ? [file('privacy.module.ts')] : []),
   ];
 }

@@ -7,6 +7,7 @@ import {
   isDataSubjectId,
   pseudonymisedValueOf,
   type PersonalDataErasure,
+  type PersonalDataRetention,
 } from '@ddd-ts-kit/kernel';
 import { columnOf } from '../read-model/column-of';
 import { rowsOf } from '../read-model/rows-of';
@@ -14,6 +15,7 @@ import type { DrizzleContext } from '../unit-of-work/drizzle-context';
 import { aboutSubject } from './about-subject';
 import type { DrizzlePersonalDataErasureOptions } from './drizzle-personal-data-erasure-options';
 import type { DrizzlePersonalFields } from './drizzle-personal-fields';
+import { expiredRows } from './expired-rows';
 import { named } from './named';
 import { tableSqlOf } from './table-sql-of';
 
@@ -31,12 +33,14 @@ interface Pseudonymised {
  * the executor of the unit of work and, for tenant data, in the tenant of the work alone. The port
  * of the context extends `PersonalDataErasure` and its adapter extends this class:
  * `class DrizzlePatientErasure extends DrizzlePersonalDataErasure<NodePgQueryResultHKT> implements PatientErasure`.
+ * The same declarations give the storage limitation: `purgeExpired(now)` erases, as each declaration
+ * says, the rows whose `retention` ended.
  */
 export class DrizzlePersonalDataErasure<
   Q extends PgQueryResultHKT,
   F extends Record<string, unknown> = Record<string, never>,
   S extends TablesRelationalConfig = TablesRelationalConfig,
-> implements PersonalDataErasure
+> implements PersonalDataErasure, PersonalDataRetention
 {
   readonly name: string;
 
@@ -57,25 +61,36 @@ export class DrizzlePersonalDataErasure<
     let reached = 0;
 
     for (const declaration of this.options.declarations) {
-      reached += await this.eraseIn(declaration, subject);
+      reached += await this.eraseIn(declaration, aboutSubject(declaration, subject, this.options.tenant));
+    }
+
+    return reached;
+  }
+
+  /** The rows whose retention ended before `now`, in every declared table that gives one, none the second time. */
+  async purgeExpired(now: Date): Promise<number> {
+    let reached = 0;
+
+    for (const declaration of this.options.declarations.filter((declared) => declared.retention !== undefined)) {
+      reached += await this.eraseIn(declaration, expiredRows(declaration, { now, tenant: this.options.tenant }));
     }
 
     return reached;
   }
 
   /** What a pseudonymisation would write is settled, and refused, before any file or row is touched. */
-  private async eraseIn(declaration: DrizzlePersonalFields, subject: string): Promise<number> {
+  private async eraseIn(declaration: DrizzlePersonalFields, rows: SQL): Promise<number> {
     const pseudonymised = declaration.erasure === 'row' ? undefined : pseudonymisedOf(declaration);
 
-    await this.deleteFilesOf(declaration, subject);
+    await this.deleteFilesOf(declaration, rows);
 
     return pseudonymised === undefined
-      ? this.deleteRows(declaration, subject)
-      : this.pseudonymise(declaration, subject, pseudonymised);
+      ? this.deleteRows(declaration, rows)
+      : this.pseudonymise(declaration, rows, pseudonymised);
   }
 
   /** The content first, then the reference: a row that still names a deleted file is run again, a file nothing names is lost. */
-  private async deleteFilesOf(declaration: DrizzlePersonalFields, subject: string): Promise<void> {
+  private async deleteFilesOf(declaration: DrizzlePersonalFields, rows: SQL): Promise<void> {
     const storage = this.options.files;
 
     if (declaration.files.length === 0 || storage === undefined) {
@@ -89,34 +104,32 @@ export class DrizzlePersonalDataErasure<
       sql` or `,
     );
 
-    const rows = rowsOf(
+    const withFiles = rowsOf(
       await this.context
         .executor()
         .execute(
-          sql`select ${sql.join(files.map(named), sql`, `)} from ${tableSqlOf(declaration)} where ${aboutSubject(declaration, subject, this.options.tenant)} and (${anyFile})`,
+          sql`select ${sql.join(files.map(named), sql`, `)} from ${tableSqlOf(declaration)} where ${rows} and (${anyFile})`,
         ),
     );
 
-    for (const key of rows.flatMap((row) => files.map((file) => row[file.name]))) {
+    for (const key of withFiles.flatMap((row) => files.map((file) => row[file.name]))) {
       if (typeof key === 'string') {
         await storage.delete(key);
       }
     }
   }
 
-  private async deleteRows(declaration: DrizzlePersonalFields, subject: string): Promise<number> {
+  private async deleteRows(declaration: DrizzlePersonalFields, rows: SQL): Promise<number> {
     const deleted = await this.context
       .executor()
-      .execute(
-        sql`delete from ${tableSqlOf(declaration)} where ${aboutSubject(declaration, subject, this.options.tenant)} returning 1`,
-      );
+      .execute(sql`delete from ${tableSqlOf(declaration)} where ${rows} returning 1`);
 
     return rowsOf(deleted).length;
   }
 
   private async pseudonymise(
     declaration: DrizzlePersonalFields,
-    subject: string,
+    rows: SQL,
     pseudonymised: readonly Pseudonymised[],
   ): Promise<number> {
     const changes = sql.join(
@@ -127,7 +140,7 @@ export class DrizzlePersonalDataErasure<
     const updated = await this.context
       .executor()
       .execute(
-        sql`update ${tableSqlOf(declaration)} set ${changes} where ${aboutSubject(declaration, subject, this.options.tenant)} and (${notYetErased(pseudonymised)}) returning 1`,
+        sql`update ${tableSqlOf(declaration)} set ${changes} where ${rows} and (${notYetErased(pseudonymised)}) returning 1`,
       );
 
     return rowsOf(updated).length;

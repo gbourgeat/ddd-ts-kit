@@ -58,7 +58,7 @@ describe('scheduled jobs in the platform', () => {
     );
 
     expect(settings).toContain(
-      "  const settings: Readonly<Record<string, JobSettings>> = {\n    'audit.archive': { enabled: environment['JOB_AUDIT_ARCHIVE_ENABLED'] !== 'false' },\n    // ddd-ts-kit:jobs\n    // /ddd-ts-kit:jobs\n  };",
+      "  const settings: Readonly<Record<string, JobSettings>> = {\n    'audit.archive': { enabled: environment['JOB_AUDIT_ARCHIVE_ENABLED'] !== 'false' },\n    'privacy.purge-expired': { enabled: environment['JOB_PRIVACY_PURGE_EXPIRED_ENABLED'] !== 'false' },\n    // ddd-ts-kit:jobs\n    // /ddd-ts-kit:jobs\n  };",
     );
 
     expect(settings.match(/^import /gm)).toHaveLength(1);
@@ -70,6 +70,7 @@ describe('scheduled jobs in the platform', () => {
 
     expect(await settingsOf(root, {})).toEqual({
       'audit.archive': { enabled: true },
+      'privacy.purge-expired': { enabled: true },
       'billing.send-reminders': { enabled: true },
       'shipping.close-parcels': { timeoutMs: 1000 },
     });

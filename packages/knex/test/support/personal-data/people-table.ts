@@ -11,6 +11,8 @@ export interface PersonRow {
   readonly avatar_key: string | null;
   readonly tenant_id: string;
   readonly registered_at: Date;
+  /** When the relation with the person ended: what a retention runs from; empty while it lasts. */
+  readonly ended_at: Date | null;
 }
 
 export const PRIVACY = 'privacy';
@@ -38,6 +40,7 @@ export async function createPeopleTable(knex: Knex): Promise<void> {
       columns.text('avatar_key');
       columns.text('tenant_id').notNullable();
       columns.timestamp('registered_at', { useTz: true }).notNullable();
+      columns.timestamp('ended_at', { useTz: true });
     });
   }
 }
@@ -52,5 +55,6 @@ export function aPersonRow(subject: string, n: number, tenant = 'acme'): PersonR
     avatar_key: `tenants/${tenant}/avatars/${subject}-${String(n)}`,
     tenant_id: tenant,
     registered_at: new Date('2026-01-01T00:00:00.000Z'),
+    ended_at: null,
   };
 }

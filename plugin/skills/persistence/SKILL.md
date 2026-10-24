@@ -103,6 +103,9 @@ lookups of the port, the columns, the mapper.
   dated document (`exportDataSubject`, `PersonalDataExportDocument`), each export wrapped by
   `auditedPersonalDataExport` when the trail is on, never the values in the entry; `personalDataErasureContract` of
   `@ddd-ts-kit/testing` holds the adapter and the fake (`InMemoryPersonalData`) to the same behaviour.
+  How long the rows keep the person goes on the same declaration, `retention: { after: 'ended_at',
+  months: 36 }` (`generate repository ... --retention ended_at:36m`): the job `privacy.purge-expired`
+  erases what outlived it every night, `npm run privacy:purge` by hand.
   The adapter of a context extends the one of its ORM package (`KnexPersonalDataErasure`,
   `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`), given
   the declarations, the scope for tenant data and the file storage; a personal column that is not a

@@ -45,6 +45,9 @@ import { fileRoutes } from '{{alias.platform}}/files/file-routes{{alias.ext}}';
 {{/if}}
 import type { Platform } from '{{alias.platform}}/composition/platform{{alias.ext}}';
 import type { PlatformOptions } from '{{alias.platform}}/composition/platform-options{{alias.ext}}';
+{{#if privacy.on}}
+import { runPurge } from '{{alias.platform}}/privacy/run-purge{{alias.ext}}';
+{{/if}}
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 
@@ -121,11 +124,8 @@ export function composeApplication(
   const { logger, metrics, cache, clock } = platform;
 
   installAspectRuntime({ logger, metrics, cache, clock });
-{{#if files.any}}
-  purgeStagedFiles(platform);
-{{/if}}
-{{#if audit.archive}}
-  archiveAuditEntries(platform);
+{{#if platformJobs.any}}
+  registerPlatformJobs(platform);
 {{/if}}
 
 {{#if audit.route}}
@@ -241,6 +241,21 @@ async function stop(platform: Platform, options: ApplicationOptions): Promise<vo
 {{/if}}
   await platform.logger.flush();
 }
+{{#if platformJobs.any}}
+
+/** The jobs of the platform itself, run by the process that runs the jobs. */
+function registerPlatformJobs(platform: Platform): void {
+{{#if files.any}}
+  purgeStagedFiles(platform);
+{{/if}}
+{{#if audit.archive}}
+  archiveAuditEntries(platform);
+{{/if}}
+{{#if privacy.on}}
+  purgeExpiredEveryNight(platform);
+{{/if}}
+}
+{{/if}}
 {{#if files.any}}
 
 /** What rolled-back commands left in `staging/`, removed every hour by the process that runs the jobs. */
@@ -260,5 +275,18 @@ function archiveAuditEntries(platform: Platform): void {
   const archive = new ArchiveAuditEntries(platform.audit.trail, platform.files.storage, platform.clock);
 
   platform.jobs.register({ name: 'audit.archive', schedule: { cron: '0 4 1 * *' }, run: () => archive.run() });
+}
+{{/if}}
+{{#if privacy.on}}
+
+/** What outlived the retention its declaration gives, purged every night at 03:00 UTC by the process that runs the jobs. */
+function purgeExpiredEveryNight(platform: Platform): void {
+  platform.jobs.register({
+    name: 'privacy.purge-expired',
+    schedule: { cron: '0 3 * * *' },
+    run: async () => {
+      await runPurge(platform);
+    },
+  });
 }
 {{/if}}

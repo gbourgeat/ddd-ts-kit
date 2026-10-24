@@ -55,6 +55,11 @@ type Personal = Partial<{{aggregate.pascal}}Row>;
 {{/unless}}
 
 const clock = new FixedClock(new Date('2026-01-01T00:00:00.000Z'));
+{{#if personal.retains}}
+
+/** Long before any retention ends. */
+const LONG_AGO = new Date('2000-01-01T00:00:00.000Z');
+{{/if}}
 
 /** What `{{aggregate.table}}` keeps of two people in clear, as a use case would have written it. */
 const OF_ADA: Personal = {{personal.ofAda}};
@@ -128,6 +133,25 @@ describe('{{personal.names.adapter}}', () => {
   });
 });
 
+{{#if personal.retains}}
+describe('{{personal.names.adapter}}, the purge of what outlived its retention', () => {
+  it('erases the rows whose retention ended, as the declaration says, and leaves the others', async () => {
+    const ada = await saved({ ...OF_ADA, {{personal.retentionRow}}: LONG_AGO });
+    const bob = await saved(OF_BOB);
+
+    expect(await erasure.purgeExpired(clock.now())).toBe(1);
+{{#if personal.pseudonymise}}
+    expect(await rowOf(ada)).toMatchObject(ERASED);
+{{/if}}
+{{#if personal.row}}
+    expect(await rowOf(ada)).toBeUndefined();
+{{/if}}
+    expect(await rowOf(bob)).toMatchObject(OF_BOB);
+    expect(await erasure.purgeExpired(clock.now())).toBe(0);
+  });
+});
+
+{{/if}}
 describe('{{personal.names.exportAdapter}}', () => {
   it('hands over what {{aggregate.table}} keeps of the subject as plain data, under its source, and nothing of the others', async () => {
 {{#if personal.subjectIsId}}

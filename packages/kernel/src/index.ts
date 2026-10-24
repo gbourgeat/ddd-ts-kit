@@ -192,6 +192,7 @@ export * from './application/ports/served-file-storage';
 export * from './application/ports/snapshot-store';
 export * from './application/ports/personal-data-erasure';
 export * from './application/ports/personal-data-export';
+export * from './application/ports/personal-data-retention';
 export * from './application/ports/subject-key-store';
 export * from './application/ports/unit-of-work';
 export * from './application/ports/tenant-directory';

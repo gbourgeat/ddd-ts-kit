@@ -21,6 +21,7 @@ export interface PersonRow {
   readonly avatar_key: string | null;
   readonly tenant_id: string;
   readonly registered_at: Date;
+  readonly ended_at: Date | null;
 }
 
 export const PEOPLE: PrismaPersonalTable = { schema: 'privacy', table: 'people' };
@@ -36,6 +37,7 @@ const COLUMNS = [
   'avatar_key',
   'tenant_id',
   'registered_at',
+  'ended_at',
 ] as const;
 
 export function aPersonRow(subject: string, n: number, tenant = 'acme'): PersonRow {
@@ -48,6 +50,7 @@ export function aPersonRow(subject: string, n: number, tenant = 'acme'): PersonR
     avatar_key: `tenants/${tenant}/avatars/${subject}-${String(n)}`,
     tenant_id: tenant,
     registered_at: new Date('2026-01-01T00:00:00.000Z'),
+    ended_at: null,
   };
 }
 
@@ -97,6 +100,7 @@ export const insertPeople = async (prisma: PrismaClient, rows: readonly PersonRo
       avatarKey: row.avatar_key,
       tenantId: row.tenant_id,
       registeredAt: row.registered_at,
+      endedAt: row.ended_at,
     })),
   });
 };
@@ -124,6 +128,7 @@ export const insertPeopleStrict = async (prisma: PrismaClient, rows: readonly Pe
       avatarKey: row.avatar_key,
       tenantId: row.tenant_id,
       registeredAt: row.registered_at,
+      endedAt: row.ended_at,
     })),
   });
 };
