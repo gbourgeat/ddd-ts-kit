@@ -1532,14 +1532,23 @@ the workspace installs, its packages resolved as Node does, from the project up;
 `engines.node` accepts (`nvm use`), `npm ci`, the packages of the kit upgraded together,
 `git submodule update --init --recursive`.
 
+Last, on what is installed, the overrides `init` writes under a dependency that pins a package
+below a security fix (qs under Stryker, multer under Nest): the range the installed parent asks
+for, found from the real place of each package as Node finds it, against the overrides of
+`package.json` under npm or of `pnpm-workspace.yaml` under pnpm. An override the project lacks
+while the parent still pins the package below the fix is `missing`, and `init` adds it; one the
+project keeps once the parent asks for the fixed version itself is `no longer needed`, to remove,
+as it would hold the package back when a later major is asked for. A chain that is not installed
+is not judged.
+
 `--strict` exits 1 while something is missing or at another range, or while the checkout cannot
 run the project: a Node outside `engines.node`, no `node_modules`, a package of the kit not
-installed or at another version, a submodule not initialised. A script written otherwise, a hook
-this clone has not installed, a Node `.nvmrc` does not name while `engines.node` accepts it, and a
-lockfile changed since the install (a checkout may rewrite it with what `node_modules` already
-holds) are said without failing it. `--json` prints `{ version, findings: [{ area, name, problem,
+installed or at another version, a submodule not initialised, an override missing. A script
+written otherwise, a hook this clone has not installed, a Node `.nvmrc` does not name while
+`engines.node` accepts it, a lockfile changed since the install (a checkout may rewrite it with
+what `node_modules` already holds), and an override no longer needed are said without failing it. `--json` prints `{ version, findings: [{ area, name, problem,
 expected, found }] }`, `area` being `script`, `package`, `permission`, `hook`, `guidance`, `node`,
-`install` or `submodule`.
+`install`, `submodule` or `override`.
 
 ## worker-scope
 

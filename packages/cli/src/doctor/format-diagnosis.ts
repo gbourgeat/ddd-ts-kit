@@ -69,7 +69,9 @@ function version(area: DoctorFinding['area']): string {
 }
 
 function fixesOf(findings: readonly DoctorFinding[]): string[] {
-  const ofTheProject = findings.filter((finding) => finding.area !== 'hook' && finding.area !== 'folder');
+  const ofTheProject = findings.filter(
+    (finding) => finding.area !== 'hook' && finding.area !== 'folder' && finding.problem !== 'no longer needed',
+  );
 
   const fixes =
     ofTheProject.length === 0
@@ -79,6 +81,12 @@ function fixesOf(findings: readonly DoctorFinding[]): string[] {
   if (ofTheProject.some((finding) => finding.area === 'package' && finding.problem === 'other version')) {
     fixes.push(
       'fix: upgrade `ddd-ts-kit` and every `@ddd-ts-kit/*` package together, to the ranges above; the steps of each version are in node_modules/ddd-ts-kit/CHANGELOG.md.',
+    );
+  }
+
+  if (findings.some((finding) => finding.problem === 'no longer needed')) {
+    fixes.push(
+      'fix: remove the override from the file it names, then install again: its dependency asks for the fixed version itself, and the override would hold the package back when a later major is asked for.',
     );
   }
 
