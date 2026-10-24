@@ -73,7 +73,22 @@ function eventSection(
       `#### Payload of version ${definition.version}`,
       '',
       ...payloadTable(payloadFields(definition.payload.toJsonSchema())),
+      ...personalLine(definition),
     ]),
+  ];
+}
+
+/** Says which fields carry personal data, and whose: a consumer that copies one keeps a copy of the person. */
+function personalLine({ personal }: AnyIntegrationEventDefinition): string[] {
+  if (personal === undefined) {
+    return [];
+  }
+
+  const fields = personal.fields.map((field) => `\`${field}\``).join(', ');
+
+  return [
+    '',
+    `Personal data: ${fields}, about the data subject named by \`${personal.subject}\`. A consumer that keeps a copy declares it with \`personalFields\` and erases it on \`privacy.data-subject.erased\`.`,
   ];
 }
 

@@ -94,6 +94,9 @@ function message(
     ...(definition.deprecated ? { deprecated: true } : {}),
     contentType: 'application/json',
     tags: [{ name: definition.producer }],
+    ...(definition.personal === undefined
+      ? {}
+      : { 'x-personal-data': { subject: definition.personal.subject, fields: [...definition.personal.fields] } }),
     payload: envelope(definition, payloadSchema(definition, messageId, schemas)),
   };
 }

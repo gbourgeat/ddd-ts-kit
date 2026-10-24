@@ -20,7 +20,8 @@ export interface ContractsRequest {
 
 /**
  * The generated contracts of a project that has no route and no integration event of its own
- * yet, as its scripts write them (`docs:generate`): the first commit holds them, and the check
+ * yet, as its scripts write them (`docs:generate`), the erasure the platform publishes included
+ * with `--privacy on`: the first commit holds them, and the check
  * of the documents passes before anything is generated. A contract that is already there is
  * left alone: the scripts of the project are what keeps it current from then on. When a preset
  * wrote routes and events (`presetApplied`), each is marked to be written by the first check of
@@ -35,10 +36,12 @@ export function writeContracts(ws: Workspace, { config, projectName, presetAppli
   const written = (template: string): string =>
     stringifyContract({ ...asRecord(JSON.parse(renderTemplate(template, context))), ...mark }, format);
 
-  const catalog = readTemplate('docs/event-catalog.md');
+  // With the privacy folder, the platform publishes the erasure of a data subject: the contracts list it from the start.
+  const events = config.stack.privacy === 'on' ? '.privacy' : '';
+  const catalog = readTemplate(`docs/event-catalog${events}.md`);
 
   const contracts: (readonly [string, string])[] = [
-    [`${INTEGRATION}/asyncapi.${format}`, written('docs/asyncapi.json.tpl')],
+    [`${INTEGRATION}/asyncapi.${format}`, written(`docs/asyncapi${events}.json.tpl`)],
     [`${INTEGRATION}/event-catalog.md`, presetApplied ? `${catalog}\n<!-- ${PENDING}: ${PENDING_TEXT} -->\n` : catalog],
   ];
 
