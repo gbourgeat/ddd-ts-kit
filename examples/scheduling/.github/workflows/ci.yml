@@ -193,6 +193,26 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  mutation:
+    name: Mutation score of the domain
+    needs: install
+    # The night only: minutes per hundred files is too long for the loop of a pull request, and nothing of this run is read before a merge.
+    if: ${{ github.event_name == 'schedule' }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - name: Stryker on the domain layer of every context, each held to the "mutation" floor of ddd-ts-kit.config.json
+        run: npm run test:mutation
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: mutation
+          path: reports/mutation
+          if-no-files-found: ignore
+          retention-days: 30
+
   gate:
     name: gate
     if: ${{ always() }}

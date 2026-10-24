@@ -7,10 +7,11 @@ import type { Scope } from '../scope';
 import { vars } from '../vars';
 import { wire } from '../wire';
 import { declareStorage } from './declare-storage';
+import { personalVars } from './personal-data/personal-vars';
 import { REPOSITORY_ADAPTERS } from './repository-adapter';
 
 /** The port of the repository of an aggregate, the adapter of the ORM of the stack, the fake and the contract both pass. */
-export function generateRepository(scope: Scope, aggregate: Name): void {
+export function generateRepository(scope: Scope, aggregate: Name): RenderContext {
   const adapter = REPOSITORY_ADAPTERS[scope.config.stack.orm];
 
   const prefix = {
@@ -19,7 +20,12 @@ export function generateRepository(scope: Scope, aggregate: Name): void {
     needsDatabase: adapter.prefix !== 'InMemory',
   };
 
-  const context = vars(scope, { aggregate: named(aggregate), adapter: prefix, tenant: tenantVars(scope) });
+  const context = vars(scope, {
+    aggregate: named(aggregate),
+    adapter: prefix,
+    tenant: tenantVars(scope),
+    personal: personalVars(scope),
+  });
 
   emit(scope, context, [
     ['repository/repository.ts.tpl', `domain/repositories/${aggregate.kebab}.repository.ts`],
@@ -34,6 +40,8 @@ export function generateRepository(scope: Scope, aggregate: Name): void {
   scope.ws.note(
     `Fake${aggregate.pascal}Repository (test/fakes) and ${adapter.prefix}${aggregate.pascal}Repository pass the same repositoryContract (test/integration): handlers are tested with the fake.`,
   );
+
+  return context;
 }
 
 const TENANT_AWARE: readonly OrmStack[] = ['drizzle', 'knex', 'prisma', 'typeorm'];

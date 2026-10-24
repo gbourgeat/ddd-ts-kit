@@ -635,6 +635,7 @@ same contract suites.
 
 ## See also
 
+- [Personal data in a generated project](personal-data.md): the declaration of the personal columns of a table, the erasure that reads it, and what the keys of the store add to it
 - [Aggregates](aggregates.md), [Domain and integration events](domain-and-integration-events.md)
 - [Transactional outbox](transactional-outbox.md), [Event versioning](event-versioning.md)
 - [CQRS as used here](cqrs.md)

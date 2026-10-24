@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:408899b3df0dd69d -->
+<!-- translation-of: README.md sha256:5cae38e80dd596f9 -->
 
 # @ddd-ts-kit/typeorm
 
@@ -613,6 +613,19 @@ est refusée avant qu'un fichier ou une ligne ne soit touché (`NotNullablePerso
 `@ddd-ts-kit/testing`, comme celui en mémoire, sur PGlite et PostgreSQL. Ce qu'un effacement
 n'atteint pas, et la chaîne entière (`eraseDataSubject` : la clé, chaque copie dans chaque *tenant*,
 les reconstructions), sont dans le README du kernel (« Données personnelles »).
+
+`TypeOrmPersonalDataExport` répond au droit d'accès et à la portabilité à partir des mêmes déclarations :
+`exportOf(subject)` remet un `PersonalDataRecord` par ligne sur la personne dans chaque table déclarée,
+sous `<name>.<table>`, avec chaque colonne personnelle et chaque colonne de fichier (par sa clé) en
+données simples, par les propriétés de l'entité, aucune autre colonne et rien de personne d'autre ; une ligne déjà
+pseudonymisée répond ce qu'elle lit. La même option `tenant` confine chaque instruction au *tenant* du
+travail, un sujet qui n'est pas un identifiant opaque est refusé avant toute instruction, et
+l'adaptateur passe `personalDataExportContract`. Le port du contexte étend `PersonalDataExport` du
+kernel et son adaptateur étend cette classe avec `name`, `declarations` et `tenant`
+(`TypeOrmPersonalDataExportOptions`) ; `generate repository --personal` écrit les deux adaptateurs, et
+`exportDataSubject` du kernel rassemble chaque export en un document daté. Enveloppez l'adaptateur
+avec `auditedPersonalDataExport` de `@ddd-ts-kit/audit` là où il est lié, pour que chaque remise
+laisse une entrée.
 
 ## Outbox et idempotence
 

@@ -4,21 +4,16 @@ import {
   NotNullablePersonalColumnError,
   isDataSubjectId,
   pseudonymisedValueOf,
-  tenantScopeOf,
   type PersonalDataErasure,
 } from '@ddd-ts-kit/kernel';
 import type { PrismaContext } from '../unit-of-work/prisma-context';
+import { aboutSubject } from './about-subject';
+import { pathOf } from './path-of';
 import type { PrismaPersonalDataErasureOptions } from './prisma-personal-data-erasure-options';
 import type { PrismaPersonalFields } from './prisma-personal-fields';
 import type { PrismaRawCommands } from './prisma-raw-commands';
-
-const TENANT_COLUMN = 'tenant_id';
-
-/** The condition of the rows about the subject, as SQL text with its parameters. */
-interface Condition {
-  readonly text: string;
-  readonly values: readonly unknown[];
-}
+import { quoted } from './quoted';
+import { rawRows } from './raw-rows';
 
 /** A personal column and what it reads once pseudonymised: the marker for a text, nothing for anything else or for a file. */
 interface Pseudonymised {
@@ -90,11 +85,12 @@ export class PrismaPersonalDataErasure<Tx extends PrismaRawCommands> implements 
       return;
     }
 
-    const about = this.about(declaration, subject);
+    const about = aboutSubject(declaration, subject, this.options.tenant);
     const anyFile = declaration.files.map((file) => `${quoted(file)} is not null`).join(' or ');
     const columns = declaration.files.map(quoted).join(', ');
 
-    const rows = await this.query(
+    const rows = await rawRows(
+      this.context.client(),
       `select ${columns} from ${pathOf(declaration)} where ${about.text} and (${anyFile})`,
       about.values,
     );
@@ -107,7 +103,7 @@ export class PrismaPersonalDataErasure<Tx extends PrismaRawCommands> implements 
   }
 
   private deleteRows(declaration: PrismaPersonalFields, subject: string): Promise<number> {
-    const about = this.about(declaration, subject);
+    const about = aboutSubject(declaration, subject, this.options.tenant);
 
     return this.context
       .client()
@@ -119,7 +115,7 @@ export class PrismaPersonalDataErasure<Tx extends PrismaRawCommands> implements 
     subject: string,
     pseudonymised: readonly Pseudonymised[],
   ): Promise<number> {
-    const about = this.about(declaration, subject);
+    const about = aboutSubject(declaration, subject, this.options.tenant);
 
     const changes = pseudonymised.map(
       ({ column }, index) => `${quoted(column)} = $${String(about.values.length + index + 1)}`,
@@ -135,20 +131,6 @@ export class PrismaPersonalDataErasure<Tx extends PrismaRawCommands> implements 
         ...pseudonymised.map(({ erased }) => erased),
         ERASED_PERSONAL_DATA,
       );
-  }
-
-  /** The rows about the subject, in the tenant of the work when the table holds tenant data. */
-  private about(declaration: PrismaPersonalFields, subject: string): Condition {
-    const { tenant } = this.options;
-
-    if (tenant === undefined) {
-      return { text: `${quoted(declaration.subject)} = $1`, values: [subject] };
-    }
-
-    return {
-      text: `${quoted(declaration.subject)} = $1 and ${quoted(tenant.column ?? TENANT_COLUMN)} = $2`,
-      values: [subject, tenantScopeOf(tenant.scope).tenantId],
-    };
   }
 
   /** Each personal column and what it reads once pseudonymised: the marker for a text, nothing for anything else or for a file, which the column has to accept. */
@@ -179,7 +161,8 @@ export class PrismaPersonalDataErasure<Tx extends PrismaRawCommands> implements 
       return known;
     }
 
-    const read = this.query(
+    const read = rawRows(
+      this.context.client(),
       'select column_name, data_type, is_nullable from information_schema.columns where table_schema = coalesce($1, current_schema()) and table_name = $2',
       [table.schema ?? null, table.table],
     ).then((rows) =>
@@ -194,14 +177,6 @@ export class PrismaPersonalDataErasure<Tx extends PrismaRawCommands> implements 
     this.columns.set(name, read);
 
     return read;
-  }
-
-  private async query(statement: string, values: readonly unknown[]): Promise<Readonly<Record<string, unknown>>[]> {
-    const rows: unknown = await this.context.client().$queryRawUnsafe(statement, ...values);
-
-    return Array.isArray(rows)
-      ? rows.filter((row): row is Readonly<Record<string, unknown>> => typeof row === 'object' && row !== null)
-      : [];
   }
 }
 
@@ -225,14 +200,6 @@ function knownColumn(columns: Readonly<Record<string, Column>>, name: string, ta
   }
 
   return column;
-}
-
-function pathOf({ table }: PrismaPersonalFields): string {
-  return table.schema === undefined ? quoted(table.table) : `${quoted(table.schema)}.${quoted(table.table)}`;
-}
-
-function quoted(identifier: string): string {
-  return `"${identifier.replaceAll('"', '""')}"`;
 }
 
 function assertFilesReachable({ declarations, files }: PrismaPersonalDataErasureOptions): void {

@@ -214,6 +214,16 @@ A coverage rate says that code ran under a test, never that the test asserts any
 the spec for the behaviour, and let the rate follow. The thresholds of `ddd-ts-kit.config.json`
 are a floor per context and layer, not a goal; a test written to move a number proves nothing.
 
+The night runs `npm run test:mutation`: Stryker on the domain layer of every context, the texts of
+its refusals left out and its static mutants ignored, then each context held to the `mutation` floor
+of the config, the ignored mutants shown beside the score. A survivor is a rule no test states: read it
+as a business decision, then state it in a test named after it, or leave the mutant alive and say
+why; never narrow the measure (`test/mutation-governed`). A rule written as a declaration, a
+transition table or a constant at the top of a file, is never mutated: the test that states it is
+its only proof. The text of a refusal leaves the score when it is handed to the error class where
+the rule is checked (`InvalidSlot.forRule('ends after it starts')`); a text a helper returns before
+the factory is called is measured and survives: throw where the rule is checked.
+
 A law a value object holds for every value is stated once, as a property with `fast-check`, added
 with the first one (`npm i -D fast-check`):
 `fc.assert(fc.property(anyRange(), anyRange(), (one, other) => one.overlaps(other) === other.overlaps(one)))`,

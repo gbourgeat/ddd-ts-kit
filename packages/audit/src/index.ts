@@ -55,6 +55,11 @@ export type { AuditSource } from './sources/audit-source';
 export type { AuditSubscription } from './sources/audit-subscription';
 export type { AuditedEvents } from './sources/audited-events';
 export {
+  PERSONAL_DATA_EXPORT_ACTION,
+  auditedPersonalDataExport,
+  type AuditedPersonalDataExportOptions,
+} from './sources/audited-personal-data-export';
+export {
   SUBJECT_ERASURE_ACTION,
   auditedSubjectKeys,
   type AuditedSubjectKeysOptions,

@@ -5,7 +5,7 @@ import type { PersonalDataErasure } from '@ddd-ts-kit/kernel';
 /**
  * The ports of the contexts that erase what they keep of a person, one per context, each extending
  * `PersonalDataErasure` of the kernel: the erasure resolves them once the application is composed.
- * A context that erases what it keeps of a person adds its port here.
+ * `generate repository <context> <Aggregate> --personal <column>,...` adds the port of its context here, once.
  */
 export const dataSubjectCopies: readonly (typeof PersonalDataErasure)[] = [
   // ddd-ts-kit:copies
