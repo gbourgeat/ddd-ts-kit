@@ -1,8 +1,8 @@
 import type { ContextScore } from './mutation-scores';
 
-const COLUMNS = ['Context', 'Detected', 'Undetected', 'Errors', 'Score', 'Floor', ''] as const;
+const COLUMNS = ['Context', 'Detected', 'Undetected', 'Errors', 'Ignored', 'Score', 'Floor', ''] as const;
 
-/** One line per context, its score against its floor, then the verdict. */
+/** One line per context, its score against its floor, the mutants the measure leaves out beside it, then the verdict. */
 export function formatMutation(scores: readonly ContextScore[]): string {
   if (scores.length === 0) {
     return 'The report holds no mutant of a context: nothing of the domain layers was mutated.';
@@ -13,6 +13,7 @@ export function formatMutation(scores: readonly ContextScore[]): string {
     String(entry.detected),
     String(entry.undetected),
     String(entry.errors),
+    String(entry.ignored),
     `${entry.score.toFixed(1)}%`,
     `${entry.floor}%`,
     entry.held ? 'held' : 'under the floor',

@@ -10,11 +10,24 @@ export interface ContextScore {
   readonly undetected: number;
   /** Mutants Stryker could not judge, an error at load or compile time: left out of the score. */
   readonly errors: number;
+  /**
+   * Mutants the measure leaves out on purpose: the texts of refusals, and the static mutants, in code
+   * that runs once when the module loads. The score says nothing about them: a rule written as a
+   * declaration is proven by the test that states it alone.
+   */
+  readonly ignored: number;
   /** The share of detected mutants, as Stryker computes it, 100 when nothing was mutated. */
   readonly score: number;
   /** The floor of the config for the layer. */
   readonly floor: number;
   readonly held: boolean;
+}
+
+interface Counts {
+  detected: number;
+  undetected: number;
+  errors: number;
+  ignored: number;
 }
 
 const DETECTED = new Set(['Killed', 'Timeout']);
@@ -27,7 +40,7 @@ const UNDETECTED = new Set(['Survived', 'NoCoverage']);
  */
 export function mutationScores(report: MutationReport, config: Config): ContextScore[] {
   const prefix = `${config.contextsDir}/`;
-  const byContext = new Map<string, { detected: number; undetected: number; errors: number }>();
+  const byContext = new Map<string, Counts>();
 
   for (const [file, mutants] of Object.entries(report)) {
     const context = file.startsWith(prefix) ? file.slice(prefix.length).split('/')[0] : undefined;
@@ -36,14 +49,16 @@ export function mutationScores(report: MutationReport, config: Config): ContextS
       continue;
     }
 
-    const counts = byContext.get(context) ?? { detected: 0, undetected: 0, errors: 0 };
+    const counts = byContext.get(context) ?? { detected: 0, undetected: 0, errors: 0, ignored: 0 };
 
     for (const { status } of mutants) {
       if (DETECTED.has(status)) {
         counts.detected += 1;
       } else if (UNDETECTED.has(status)) {
         counts.undetected += 1;
-      } else if (status !== 'Ignored') {
+      } else if (status === 'Ignored') {
+        counts.ignored += 1;
+      } else {
         counts.errors += 1;
       }
     }
@@ -56,13 +71,9 @@ export function mutationScores(report: MutationReport, config: Config): ContextS
     .map(([context, counts]) => scored(context, counts, config.mutation.domain));
 }
 
-function scored(
-  context: string,
-  { detected, undetected, errors }: { detected: number; undetected: number; errors: number },
-  floor: number,
-): ContextScore {
+function scored(context: string, { detected, undetected, errors, ignored }: Counts, floor: number): ContextScore {
   const judged = detected + undetected;
   const score = judged === 0 ? 100 : (100 * detected) / judged;
 
-  return { context, detected, undetected, errors, score, floor, held: score >= floor };
+  return { context, detected, undetected, errors, ignored, score, floor, held: score >= floor };
 }

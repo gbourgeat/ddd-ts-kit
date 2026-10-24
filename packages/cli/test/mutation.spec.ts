@@ -23,12 +23,12 @@ describe('mutation', () => {
     root = initProject('--context', 'billing:core', '--context', 'shipping:supporting');
   });
 
-  it('holds every context to the floor of the reference, counting as Stryker does, and exits 0 when all hold', () => {
+  it('holds every context to the floor of the reference, counting as Stryker does, shows the mutants left out, and exits 0 when all hold', () => {
     write(
       root,
       REPORT,
       report({
-        [BILLING]: ['Killed', 'Killed', 'Killed', 'Timeout', 'Survived'],
+        [BILLING]: ['Killed', 'Killed', 'Killed', 'Timeout', 'Survived', 'Ignored'],
         [SHIPPING]: ['Killed', 'RuntimeError'],
       }),
     );
@@ -36,8 +36,8 @@ describe('mutation', () => {
     const held = cli(root, 'mutation');
 
     expect(held.code).toBe(0);
-    expect(held.stdout).toMatch(/^billing\s+4\s+1\s+0\s+80\.0%\s+80%\s+held$/m);
-    expect(held.stdout).toMatch(/^shipping\s+1\s+0\s+1\s+100\.0%\s+80%\s+held$/m);
+    expect(held.stdout).toMatch(/^billing\s+4\s+1\s+0\s+1\s+80\.0%\s+80%\s+held$/m);
+    expect(held.stdout).toMatch(/^shipping\s+1\s+0\s+1\s+0\s+100\.0%\s+80%\s+held$/m);
     expect(held.stdout).toContain('Every context holds its mutation floor.');
   });
 
@@ -64,7 +64,9 @@ describe('mutation', () => {
 
     expect(scored.json()).toEqual({
       floor: { domain: 80 },
-      scores: [{ context: 'billing', detected: 1, undetected: 1, errors: 0, score: 50, floor: 80, held: false }],
+      scores: [
+        { context: 'billing', detected: 1, undetected: 1, errors: 0, ignored: 0, score: 50, floor: 80, held: false },
+      ],
     });
   });
 
@@ -86,7 +88,7 @@ describe('mutation', () => {
     const held = cli(root, 'mutation', '--report', 'reports/night.json');
 
     expect(held.code).toBe(0);
-    expect(held.stdout).toMatch(/^billing\s+1\s+1\s+0\s+50\.0%\s+50%\s+held$/m);
+    expect(held.stdout).toMatch(/^billing\s+1\s+1\s+0\s+0\s+50\.0%\s+50%\s+held$/m);
   });
 
   it('asks for a run when no report exists', () => {

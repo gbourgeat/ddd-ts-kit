@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:1cdfee1afc0616ad -->
+<!-- translation-of: CONFIG.md sha256:7a1b7c85f6be9489 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -791,8 +791,9 @@ export default {
 `governedMutation()` mute la couche domaine de chaque contexte, à son niveau et dans les modules de
 son modèle, les déclarations générées exclues ; elle exclut le mutateur `StringLiteral`, puisqu'un
 test du kit vérifie un refus par son code et jamais par son texte, de sorte qu'un tel mutant
-survivrait par construction ; elle ignore les mutants statiques, qui rechargent l'environnement
-pour chaque test ; et elle écrit le plancher comme `thresholds` de Stryker. `npm run test:mutation`
+survivrait par construction ; elle ignore les mutants statiques, ceux du code qui s'exécute une fois
+au chargement du module, qui rechargeraient l'environnement et relanceraient tous les tests pour
+chacun d'eux ; et elle écrit le plancher comme `thresholds` de Stryker. `npm run test:mutation`
 lance Stryker, puis `ddd-ts-kit mutation`, qui lit le rapport (`reports/mutation/mutation.json`) et
 tient chaque contexte au plancher, comme la couverture tient chaque contexte à ses seuils. Le
 *pipeline* le lance chaque nuit, pas sur une *pull request*.
@@ -808,6 +809,7 @@ tient chaque contexte au plancher, comme la couverture tient chaque contexte à 
 - **Monter le plancher est libre. Le baisser sous la référence est une dérogation** (`governance/recorded-deviation`) avec son enregistrement de décision, `"what": "mutation.domain"`.
 - **Chaque contexte est tenu pour lui-même** : `ddd-ts-kit mutation` note la couche domaine de chaque contexte que le rapport contient, comme Stryker le fait (détectés sur détectés et non détectés, les erreurs exclues), et sort en 1 tant qu'un contexte est sous le plancher.
 - **La mesure ne se rétrécit pas en silence** (`test/mutation-governed`) : ni `mutate`, ni `mutator`, ni `ignoreStatic`, ni `thresholds` à la main dans la config Stryker.
+- **Ce dont le score ne dit rien.** Les textes des refus, exclus avec leur mutateur, et les mutants statiques : une règle écrite en déclaration en haut d'un fichier, les transitions d'une machine à états, une constante métier, une expression régulière, n'est jamais mutée, et une transition fausse dans une telle table ne fait baisser aucun score. Le test qui énonce une telle règle en est la seule preuve ; `ddd-ts-kit mutation` montre les mutants ignorés de chaque contexte à côté de son score. Sur l'exemple, 222 des 1441 mutants sont ignorés : 158 littéraux de chaînes et 64 statiques, dont la déclaration de la machine à états des rendez-vous.
 - **Sous les deux lanceurs.** Un projet sous Vitest fait tourner contre chaque mutant les *specs* unitaires de `vitest.mutation.config.ts` ; un projet sous Jest celles de `jest.mutation.config.js`, en modules ES sous le drapeau que le script `test` passe (`testRunnerNodeArgs`), Jest lançant les *specs* qui importent le fichier muté.
 
 ## Limites

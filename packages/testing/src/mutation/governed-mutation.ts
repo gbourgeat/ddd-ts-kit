@@ -6,7 +6,11 @@ export interface GovernedMutation {
   readonly mutate: string[];
   /** The texts of refusals are never asserted by a test of the kit: a mutant of a string literal would survive by design. */
   readonly mutator: { readonly excludedMutations: string[] };
-  /** A static mutant reloads the environment and runs every test: the few it tells apart are not worth the hours. */
+  /**
+   * A static mutant, in code that runs once when the module loads (a transition table, a constant, a
+   * pattern at the top of a file), reloads the environment and runs every test: it is ignored, and the
+   * score says nothing about a rule written as a declaration, which a test states by itself.
+   */
   readonly ignoreStatic: boolean;
   /** The floor the whole run is held to; `ddd-ts-kit mutation` then holds each context to it. */
   readonly thresholds: { readonly high: number; readonly low: number; readonly break: number };

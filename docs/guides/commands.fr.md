@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:d5033559a9e91290 -->
+<!-- translation-of: commands.md sha256:ede9b7f4bb76ab5d -->
 
 # Quelle commande, quand
 
@@ -402,9 +402,11 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   mutation         the mutation score of the domain layer of each context, read from the json report the
                    last stryker run wrote (reports/mutation/mutation.json, or --report <file>), held to
                    the "mutation" floor of the config (80 by default): detected over detected and
-                   undetected, the errors left out, as Stryker counts; exits 1 while a context is under
-                   its floor, 2 without a report. Runs no test: npm run test:mutation runs Stryker, then
-                   this; the pipeline runs it every night, not on a pull request
+                   undetected, the errors left out, as Stryker counts, the ignored mutants (the texts of
+                   refusals, the code that runs once when the module loads) shown beside, since the
+                   score says nothing about them; exits 1 while a context is under its floor, 2 without
+                   a report. Runs no test: npm run test:mutation runs Stryker, then this; the pipeline
+                   runs it every night, not on a pull request
   plan-waves       the rows of slices.md not done, of the project or of one context, in waves (wave 1: every
                    dependency done; wave n: the others in earlier waves), each wave cut into batches of one
                    owner, one or two rows on one aggregate, with the worker-scope command that briefs each,

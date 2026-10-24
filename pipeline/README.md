@@ -246,11 +246,17 @@ the four contexts as `mutate` (`src/contexts/*/domain/**/*.ts` and
 |---|---|---|---|---|---|---|---|---|
 | the domain of `notification` | 12 | 104 | 103 | 1 | 0 | 0 | 99.0% | 25 s, the initial run of 119 tests taking 8 s |
 | the domain of the four contexts | 127 | 1441 | 1347 | 72 | 6 | 16 | 94.5% | 8 min 2 s, the initial run of 1075 tests taking 54 s |
-| the same with the shipped configuration (`governedMutation()`: string literals out, static mutants ignored), after the survivors of #269 were read | 110 | 1441, 222 of them ignored | 1178 | 36 | 5 | 0 | 96.6% | 4 min 2 s, the initial run of 1073 tests taking 65 s under the e2e suites of the kit |
+| the same with the shipped configuration (`governedMutation()`: string literals out, static mutants ignored), after the survivors of #269 were read | 110 | 1441, 222 of them ignored: 158 string literals, 64 static | 1178 | 36 | 5 | 0 | 96.6% | 4 min 2 s, the initial run of 1073 tests taking 65 s under the e2e suites of the kit; 3 min 44 s when repeated |
 
 The last row is what the night job measures: `ddd-ts-kit mutation` then holds each context to the
 floor, `analytics` at 100.0%, `identity` at 97.8%, `notification` at 99.0%, `scheduling` at 95.8%,
 every one above 80. The errors are gone with the static mutants, and the run takes half the time.
+What the score no longer sees: the 64 static mutants, those of code that runs once when the module
+loads, 17 of them in the declaration of the appointment state machine, the rest in the patterns and
+tables of value objects (`email.vo.ts` 11, `time-zone.vo.ts` 10, `booking.vo.ts` 8, `range.vo.ts`
+7). A wrong transition in that table lowers no score, and the test that states the transition is
+its only proof; `ddd-ts-kit mutation` shows the ignored mutants of each context beside its score, so
+that the night says how much of the domain the score is silent about.
 
 The runner executes the tests per mutant, 4.9 and 17.9 on average: its code reads the test names
 as Vitest 5 writes them (`vitest-test-runner.js` tells the separator of 5.0.0 apart), which the

@@ -765,8 +765,9 @@ export default {
 `governedMutation()` mutates the domain layer of every context, at its level and in the modules of
 its model, the generated declarations left out; it leaves the `StringLiteral` mutator out, since a
 test of the kit asserts a refusal by its code and never by its text, so that such a mutant would
-survive by design; it ignores the static mutants, which reload the environment for every test; and
-it writes the floor as the `thresholds` of Stryker. `npm run test:mutation` runs Stryker, then
+survive by design; it ignores the static mutants, those of code that runs once when the module
+loads, which would reload the environment and run every test for each of them; and it writes the
+floor as the `thresholds` of Stryker. `npm run test:mutation` runs Stryker, then
 `ddd-ts-kit mutation`, which reads the report (`reports/mutation/mutation.json`) and holds each
 context to the floor, as the coverage holds each context to its thresholds. The pipeline runs it
 every night, not on a pull request.
@@ -782,6 +783,7 @@ every night, not on a pull request.
 - **Raising the floor is free. Lowering it under the reference is a deviation** (`governance/recorded-deviation`) with its decision record, `"what": "mutation.domain"`.
 - **Each context is held on its own**: `ddd-ts-kit mutation` scores the domain layer of every context the report holds, as Stryker does (detected over detected and undetected, the errors left out), and exits 1 while one is under the floor.
 - **The measure cannot be narrowed quietly** (`test/mutation-governed`): no `mutate`, `mutator`, `ignoreStatic` or `thresholds` by hand in the Stryker config.
+- **What the score says nothing about.** The texts of refusals, left out with their mutator, and the static mutants: a rule written as a declaration at the top of a file, the transitions of a state machine, a business constant, a regular expression, is never mutated, and a wrong transition in such a table lowers no score. The test that states such a rule is its only proof; `ddd-ts-kit mutation` shows the ignored mutants of each context beside its score. On the example, 222 of the 1441 mutants are ignored: 158 string literals and 64 static ones, the declaration of the appointment state machine among them.
 - **On both runners.** A project on Vitest runs the unit specs of `vitest.mutation.config.ts` against each mutant; a project on Jest those of `jest.mutation.config.js`, as ES modules under the flag the `test` script passes (`testRunnerNodeArgs`), Jest running the specs that import the mutated file.
 
 ## Limits

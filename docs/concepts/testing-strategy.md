@@ -527,8 +527,9 @@ each context to the `mutation` floor of `ddd-ts-kit.config.json`, 80 by the refe
 The Stryker config writes no glob and no number: it spreads `governedMutation()` of
 `@ddd-ts-kit/testing/mutation`, which mutates the domain layer of every context, leaves the
 `StringLiteral` mutator out, since a refusal is asserted by its code and never by its text, and
-ignores the static mutants. Rule [`test/mutation-governed`](../ARCHITECTURE.md#3-dependency-rules)
-refuses a `mutate`, `mutator`, `ignoreStatic` or `thresholds` written by hand.
+ignores the static mutants, those of code that runs once when the module loads. Rule
+[`test/mutation-governed`](../ARCHITECTURE.md#3-dependency-rules) refuses a `mutate`, `mutator`,
+`ignoreStatic` or `thresholds` written by hand.
 
 A survivor is a rule no test states. Read it as a business decision: when the behaviour is the
 rule, state it in a test named after it, as the trial on the example did for a withdrawn reminder
@@ -547,6 +548,12 @@ killed, 36 survivors, 5 without coverage, 96.6% in 4 minutes, the lowest context
 - **A mutation score says that a change was noticed, not that the right rule was stated.** A test
   that kills a mutant states what the code does today: each one is read as a business decision
   before it is kept, and an accidental behaviour is left alive and said so rather than frozen.
+- **A mutation score says nothing about a rule written as a declaration.** The static mutants are
+  ignored, those of code that runs once when the module loads: the transitions of a state machine, a
+  constant, a regular expression declared at the top of a file. A wrong transition in such a table
+  lowers no score, and the test that states the rule is its only proof; `ddd-ts-kit mutation` shows
+  the ignored mutants of each context beside its score. On the example, 64 of the 1441 mutants are
+  static, the declaration of the appointment state machine among them.
 - **A fake is only as good as its contract suite.** Behaviour the suite does not cover can
   differ silently: SQL collation and ordering, constraint timing, time zone handling. When a
   bug comes from such a gap, add the case to the suite, not only to one adapter.

@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:d11862785a9d87a0 -->
+<!-- translation-of: testing-strategy.md sha256:58b2668a0ceda9d0 -->
 
 # Stratégie de test
 
@@ -550,8 +550,9 @@ survivant. Puis `ddd-ts-kit mutation` lit le rapport et tient chaque contexte au
 La config Stryker n'écrit ni *glob* ni nombre : elle étale `governedMutation()` de
 `@ddd-ts-kit/testing/mutation`, qui mute la couche domaine de chaque contexte, exclut le mutateur
 `StringLiteral`, puisqu'un refus se vérifie par son code et jamais par son texte, et ignore les
-mutants statiques. La règle [`test/mutation-governed`](../ARCHITECTURE.fr.md#3-règles-de-dépendance)
-refuse un `mutate`, un `mutator`, un `ignoreStatic` ou des `thresholds` écrits à la main.
+mutants statiques, ceux du code qui s'exécute une fois au chargement du module. La règle
+[`test/mutation-governed`](../ARCHITECTURE.fr.md#3-règles-de-dépendance) refuse un `mutate`, un
+`mutator`, un `ignoreStatic` ou des `thresholds` écrits à la main.
 
 Un survivant est une règle qu'aucun test n'énonce. Lisez-le comme une décision métier : quand le
 comportement est la règle, énoncez-la dans un test nommé d'après elle, comme l'essai sur l'exemple
@@ -572,6 +573,13 @@ survivants, 5 sans couverture, 96,6 % en 4 minutes, le contexte le plus bas à 9
   Un test qui tue un mutant énonce ce que le code fait aujourd'hui : chacun se lit comme une
   décision métier avant d'être gardé, et un comportement accidentel reste en vie et on le dit,
   plutôt que d'être figé.
+- **Un score de mutation ne dit rien d'une règle écrite en déclaration.** Les mutants statiques sont
+  ignorés, ceux du code qui s'exécute une fois au chargement du module : les transitions d'une
+  machine à états, une constante, une expression régulière déclarée en haut d'un fichier. Une
+  transition fausse dans une telle table ne fait baisser aucun score, et le test qui énonce la règle
+  en est la seule preuve ; `ddd-ts-kit mutation` montre les mutants ignorés de chaque contexte à
+  côté de son score. Sur l'exemple, 64 des 1441 mutants sont statiques, dont la déclaration
+  de la machine à états des rendez-vous.
 - **Un *fake* ne vaut que ce que vaut sa suite de contrat.** Un comportement que la suite ne couvre
   pas peut différer en silence : collation et tri SQL, moment d'application des contraintes,
   gestion des fuseaux horaires. Quand un bogue vient d'un tel trou, ajoutez le cas à la suite, pas
