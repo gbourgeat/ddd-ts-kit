@@ -34,13 +34,6 @@ export class KnexPersonRepository implements PersonRepository {
     return row === undefined ? undefined : PersonMapper.toDomain(row);
   }
 
-  /** Deletes the row of the person in the network of the work: nothing of the name or the address stays in this table. */
-  async erase(personId: string): Promise<boolean> {
-    const deleted = await ownTenantTable<PersonRow>(this.database, this.scope, TABLE).where({ id: personId }).delete();
-
-    return deleted > 0;
-  }
-
   async save(saved: Person): Promise<void> {
     await optimisticUpdate(saved, async ({ expected, next }) => {
       const state = { ...PersonMapper.toRow(saved), version: next };

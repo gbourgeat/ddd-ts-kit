@@ -1,18 +1,16 @@
-import { PersonalDataCipher } from '@ddd-ts-kit/kernel';
+import { NotADataSubjectIdError, PersonalDataCipher, UnknownDataSubjectError } from '@ddd-ts-kit/kernel';
 import { layFoundations } from '@/platform/composition/lay-foundations';
 import { Environment } from '@/platform/config/environment';
 import { readFiles } from '@/platform/config/read-files';
 import { readNetworks } from '@/platform/config/read-networks';
 import { openPersistence } from '@/platform/database/open-persistence';
-import { copiesOfAPerson } from '@/platform/erasure/copies-of-a-person';
-import { eraseOnTheCommandLine } from '@/platform/erasure/erase-on-the-command-line';
-import { NotASubjectIdError } from '@/platform/erasure/not-a-subject-id-error';
+import { copiesOfAPerson } from '@/platform/privacy/copies-of-a-person';
+import { eraseOnTheCommandLine } from '@/platform/privacy/erase-on-the-command-line';
 import { openFiles } from '@/platform/files/open-files';
 import { storeFedProjections } from '@/platform/event-store/store-fed-projections';
-import { UnknownDataSubjectError } from '@/platform/erasure/unknown-data-subject-error';
 import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persistence/knex-person-directory.reader';
 
-// `npm run erase:patient -- <patientId> <operatorId>`: the right to erasure of a person.
+// `npm run privacy:erase -- <patientId> <operatorId>`: the right to erasure of a person.
 // Destroys the key the words of the patient were sealed with in the attendance records, writes
 // the erasure to the audit trail, with the operator as actor, erases every copy the contexts keep
 // of the person in clear in each network (`NETWORKS`): the person of identity, the contact of
@@ -30,7 +28,7 @@ const operator = process.argv[3] ?? '';
 const databaseUrl = process.env['DATABASE_URL'] ?? '';
 
 if (patientId === '' || operator === '' || databaseUrl === '') {
-  console.error('Usage: DATABASE_URL=<url> NETWORKS=<tenant,...> npm run erase:patient -- <patientId> <operatorId>');
+  console.error('Usage: DATABASE_URL=<url> NETWORKS=<tenant,...> npm run privacy:erase -- <patientId> <operatorId>');
   process.exit(2);
 }
 
@@ -53,7 +51,7 @@ try {
     patientId,
     {
       keys: subjectKeys,
-      projections: storeFedProjections(persistence, new PersonalDataCipher(subjectKeys)),
+      rebuilds: storeFedProjections(persistence, new PersonalDataCipher(subjectKeys)),
       copies: copiesOfAPerson(persistence, { scope, clock, files }),
     },
     {
@@ -68,7 +66,7 @@ try {
 
   console.log(JSON.stringify({ patientId, ...report }));
 } catch (error) {
-  if (!(error instanceof UnknownDataSubjectError || error instanceof NotASubjectIdError)) {
+  if (!(error instanceof UnknownDataSubjectError || error instanceof NotADataSubjectIdError)) {
     throw error;
   }
 

@@ -59,6 +59,19 @@ Needed and specific (delegations between members of a practice), but not what pr
 - `identity.practice.opened` (version 1)
 <!-- /ddd-ts-kit:events -->
 
+## Personal data
+
+<!-- ddd-ts-kit:personal-data -->
+| Table | About | Personal data | On erasure | Kept |
+|---|---|---|---|---|
+| `persons` | `id` | `display_name`, `email` | row deleted | until erased |
+
+Published in:
+
+- `identity.person.registered` (version 1): `displayName`, `email`, about `personId`
+- `identity.practice.member-added` (version 1): `displayName`, about `personId`
+<!-- /ddd-ts-kit:personal-data -->
+
 ## Permissions
 
 <!-- ddd-ts-kit:permissions -->
@@ -167,6 +180,8 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | Port | Kind | Adapters |
 |---|---|---|
 | `DelegationRepository` | repository | `KnexDelegationRepository` |
+| `IdentityPersonalDataErasure` | repository | `KnexIdentityPersonalDataErasure` |
+| `IdentityPersonalDataExport` | repository | `KnexIdentityPersonalDataExport` |
 | `IdentityRelationships` | repository | `TupleIdentityRelationships` |
 | `PersonRepository` | repository | `KnexPersonRepository` |
 | `PracticeRepository` | repository | `KnexPracticeRepository` |

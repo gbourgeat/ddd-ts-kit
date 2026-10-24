@@ -7,8 +7,9 @@ import { KnexAppointmentExport } from '@/contexts/scheduling/calendars/infrastru
 import { KnexAppointmentRepository } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-appointment.repository';
 import { KnexAttendanceHistory } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-attendance-history.repository';
 import { KnexCalendarRepository } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-calendar.repository';
-import { KnexPatientErasure } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-patient-erasure.repository';
 import { KnexPractitionerDirectory } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-practitioner-directory.repository';
+import { KnexSchedulingPersonalDataErasure } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-scheduling-personal-data-erasure.repository';
+import { KnexSchedulingPersonalDataExport } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-scheduling-personal-data-export.repository';
 import { TupleSchedulingRelationships } from '@/contexts/scheduling/calendars/infrastructure/persistence/tuple-scheduling-relationships.repository';
 import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
 import { Clock, EventStore, ExecutionScope, FileStorage, PersonalDataCipher, SnapshotStore } from '@ddd-ts-kit/kernel';
@@ -21,8 +22,9 @@ export * from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-a
 export * from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-appointment.repository';
 export * from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-attendance-history.repository';
 export * from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-calendar.repository';
-export * from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-patient-erasure.repository';
 export * from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-practitioner-directory.repository';
+export * from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-scheduling-personal-data-erasure.repository';
+export * from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-scheduling-personal-data-export.repository';
 export * from '@/contexts/scheduling/calendars/infrastructure/persistence/tuple-scheduling-relationships.repository';
 
 injected(InProcessPersonDirectoryGateway, [PersonDirectoryContract]);
@@ -32,6 +34,7 @@ injected(KnexAppointmentExport, [KnexContext, ExecutionScope]);
 injected(KnexAppointmentRepository, [KnexContext, ExecutionScope, Clock]);
 injected(KnexAttendanceHistory, [KnexContext]);
 injected(KnexCalendarRepository, [KnexContext, ExecutionScope, Clock]);
-injected(KnexPatientErasure, [KnexContext, ExecutionScope, FileStorage]);
 injected(KnexPractitionerDirectory, [KnexContext, ExecutionScope]);
+injected(KnexSchedulingPersonalDataErasure, [KnexContext, ExecutionScope, FileStorage]);
+injected(KnexSchedulingPersonalDataExport, [KnexContext, ExecutionScope]);
 injected(TupleSchedulingRelationships, [RelationTupleStore]);

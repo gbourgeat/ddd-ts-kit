@@ -11,7 +11,7 @@ import {
 import { AttachedDocument } from '@/contexts/scheduling/calendars/domain/value-objects/attached-document.vo';
 import { Cancellation } from '@/contexts/scheduling/calendars/domain/value-objects/cancellation.vo';
 import { KnexAppointmentRepository } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-appointment.repository';
-import { KnexPatientErasure } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-patient-erasure.repository';
+import { KnexSchedulingPersonalDataErasure } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-scheduling-personal-data-erasure.repository';
 import { KnexPractitionerDirectory } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-practitioner-directory.repository';
 import { storableStamp } from '@/shared-kernel/storable-stamp';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
@@ -27,7 +27,7 @@ const clock = new FixedClock(NOW);
 
 let database: TestDatabase;
 let files: InMemoryFileStorage;
-let erasure: KnexPatientErasure;
+let erasure: KnexSchedulingPersonalDataErasure;
 let appointments: KnexAppointmentRepository;
 let practitioners: KnexPractitionerDirectory;
 
@@ -45,13 +45,13 @@ beforeEach(async () => {
 
   const { database: context } = database.persistence;
 
-  erasure = new KnexPatientErasure(context, north, files);
+  erasure = new KnexSchedulingPersonalDataErasure(context, north, files);
   appointments = new KnexAppointmentRepository(context, north, clock);
   practitioners = new KnexPractitionerDirectory(context, north);
 });
 
-describe('KnexPatientErasure', () => {
-  it('replaces the notes and the cancellation reasons of the patient, deletes their documents and the copied name, and counts the rows', async () => {
+describe('KnexSchedulingPersonalDataErasure', () => {
+  it('replaces the notes and the cancellation reasons of the patient, deletes their documents and the copied name, and counts the rows it reached', async () => {
     const referral = await aStoredFile('tenants/north/appointment-documents/referral');
     const noted = anAppointment().identifiedBy('visit-1').forPatient('ada').build();
     const cancelled = anAppointment().identifiedBy('visit-2').forPatient('ada').build();
@@ -63,7 +63,7 @@ describe('KnexPatientErasure', () => {
     await appointments.save(cancelled);
     await practitioners.upsertIfNewer('practice-1.ada', stamp('member-1'), () => practitionerOf('ada', 'Ada Lovelace'));
 
-    expect(await erasure.erase('ada')).toBe(4);
+    expect(await erasure.erase('ada')).toBe(3);
 
     const [afterNote, afterCancellation] = [
       await appointments.findById('visit-1'),

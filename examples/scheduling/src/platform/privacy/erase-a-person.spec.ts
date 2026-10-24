@@ -8,6 +8,7 @@ import {
   InMemoryFileStorage,
   PersonalDataCipher,
   SequentialIdGenerator,
+  UnknownDataSubjectError,
   executionContext,
   offsetPage,
   type Actor,
@@ -18,9 +19,8 @@ import {
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createAudit, type Audit } from '@/platform/audit/create-audit';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
-import { copiesOfAPerson } from '@/platform/erasure/copies-of-a-person';
-import { eraseOnTheCommandLine } from '@/platform/erasure/erase-on-the-command-line';
-import { UnknownDataSubjectError } from '@/platform/erasure/unknown-data-subject-error';
+import { copiesOfAPerson } from '@/platform/privacy/copies-of-a-person';
+import { eraseOnTheCommandLine } from '@/platform/privacy/erase-on-the-command-line';
 import { storeFedProjections } from '@/platform/event-store/store-fed-projections';
 import { storableStamp } from '@/shared-kernel/storable-stamp';
 import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persistence/knex-person-directory.reader';
@@ -79,12 +79,13 @@ afterAll(async () => {
   await database.close();
 });
 
-describe('npm run erase:patient, on a person every context keeps a copy of', () => {
+describe('npm run privacy:erase, on a person every context keeps a copy of', () => {
   it('erases the person wherever a context keeps them in clear, in every network, and reports what it reached', async () => {
     const report = await erase('ada', 'operator-7');
 
     expect(report.erased).toBe(true);
-    expect(report.copies).toEqual({ 'identity.persons': 1, 'notification.contacts': 1, 'scheduling.patient': 5 });
+    // The rows each copy reached: the person, the contact, the two appointments, the agenda and the directory.
+    expect(report.copies).toEqual({ identity: 1, notification: 1, scheduling: 4 });
 
     // identity: the person is gone; notification: the address is gone.
     expect(await persons.findById('ada')).toBeUndefined();
@@ -130,7 +131,7 @@ describe('npm run erase:patient, on a person every context keeps a copy of', () 
 function erase(patientId: string, operator: string) {
   const parts = {
     keys: audit.subjectKeys,
-    projections: storeFedProjections(database.persistence, new PersonalDataCipher(audit.subjectKeys)),
+    rebuilds: storeFedProjections(database.persistence, new PersonalDataCipher(audit.subjectKeys)),
     copies: copiesOfAPerson(database.persistence, { scope, clock, files }),
   };
 

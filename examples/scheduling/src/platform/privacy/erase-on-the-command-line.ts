@@ -1,12 +1,14 @@
 import {
+  eraseDataSubject,
   executionContext,
   type Actor,
+  type DataSubjectErasure,
+  type DataSubjectErasureReport,
   type ExecutionContext,
   type ExecutionScope,
   type IdGenerator,
 } from '@ddd-ts-kit/kernel';
 import type { Audit } from '@/platform/audit/create-audit';
-import { eraseDataSubject, type ErasureParts, type ErasureReport } from '@/platform/erasure/erase-data-subject';
 import type { PersonDirectoryContract } from '@/contexts/identity/published-language';
 
 /** Why the operator reaches every network here, as the trail records it: a code, never a sentence. */
@@ -26,7 +28,7 @@ export interface CommandLineErasure {
 }
 
 /**
- * An erasure run by `npm run erase:patient`, in an execution context of its own (origin `cli`):
+ * An erasure run by `npm run privacy:erase`, in an execution context of its own (origin `cli`):
  * the operator who runs it is the actor of the entry the audited key store writes, so that the
  * proof of the erasure names a person, never the script. The key is destroyed whether identity
  * still knows the patient or not: the key comes first, the record after. The copies the contexts
@@ -40,18 +42,18 @@ export interface CommandLineErasure {
  */
 export function eraseOnTheCommandLine(
   patientId: string,
-  parts: Pick<ErasureParts, 'keys' | 'projections' | 'copies'>,
+  parts: Pick<DataSubjectErasure, 'keys' | 'rebuilds' | 'copies'>,
   { scope, ids, operator, persons, elevate, networks }: CommandLineErasure,
-): Promise<ErasureReport> {
+): Promise<DataSubjectErasureReport> {
   const context = executionContext({ correlationId: ids.next(), actor: operatorActor(operator), origin: 'cli' });
 
   const isKnown = (subject: string): Promise<boolean> =>
     elevate({ reason: PATIENT_ERASURE, tenants: 'all' }, () => isKnownToIdentity(subject, persons));
 
-  const inEveryNetwork = (work: () => Promise<number>): Promise<number> =>
+  const inEveryTenant = (work: () => Promise<number>): Promise<number> =>
     sumOver(networks, (network) => scope.run(inNetwork(context, network), work));
 
-  return scope.run(context, () => eraseDataSubject(patientId, { ...parts, isKnown, inEveryNetwork }));
+  return scope.run(context, () => eraseDataSubject(patientId, { ...parts, isKnown, inEveryTenant }));
 }
 
 /** The same operator and correlation, in the network a copy is kept in. */

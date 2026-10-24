@@ -122,6 +122,16 @@ This is why practices come: a time on a calendar is held once, under rules of av
 - `scheduling.calendar.created` (version 1)
 <!-- /ddd-ts-kit:events -->
 
+## Personal data
+
+<!-- ddd-ts-kit:personal-data -->
+| Table | About | Personal data | On erasure | Kept |
+|---|---|---|---|---|
+| `agenda` | `patient_id` | `internal_note` | pseudonymised | until erased |
+| `appointments` | `patient_id` | `internal_note`, `cancellation_reason`, `document_name`, `document_media_type`, `document_checksum`, `document_size`, `document_attached_at`; files `document_key` | pseudonymised | until erased |
+| `practitioners` | `practitioner_id` | `display_name` | pseudonymised | until erased |
+<!-- /ddd-ts-kit:personal-data -->
+
 ## Permissions
 
 <!-- ddd-ts-kit:permissions -->
@@ -330,9 +340,10 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `AttendanceHistory` | repository | `KnexAttendanceHistory` |
 | `AttendanceRecordRepository` | repository | `EventStoreAttendanceRecordRepository` |
 | `CalendarRepository` | repository | `KnexCalendarRepository` |
-| `PatientErasure` | repository | `KnexPatientErasure` |
 | `PersonDirectoryGateway` | gateway | `InProcessPersonDirectoryGateway` |
 | `PractitionerDirectory` | repository | `KnexPractitionerDirectory` |
+| `SchedulingPersonalDataErasure` | repository | `KnexSchedulingPersonalDataErasure` |
+| `SchedulingPersonalDataExport` | repository | `KnexSchedulingPersonalDataExport` |
 | `SchedulingRelationships` | repository | `TupleSchedulingRelationships` |
 | `WaitlistRepository` | repository | `KnexWaitlistRepository` |
 

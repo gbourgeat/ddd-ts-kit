@@ -1,7 +1,9 @@
-import type { PatientErasure } from '@/contexts/scheduling/calendars/application/ports/patient-erasure.port';
+import type { SchedulingPersonalDataErasure } from '@/contexts/scheduling/calendars/application/ports/scheduling-personal-data-erasure.port';
 
 /** Counts the rows each person has, as a test gave them, and forgets them at the first erasure. */
-export class FakePatientErasure implements PatientErasure {
+export class FakeSchedulingPersonalDataErasure implements SchedulingPersonalDataErasure {
+  readonly name = 'scheduling';
+
   private readonly rows = new Map<string, number>();
 
   readonly erased: string[] = [];

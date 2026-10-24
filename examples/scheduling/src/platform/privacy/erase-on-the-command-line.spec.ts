@@ -4,8 +4,10 @@ import {
   FixedClock,
   FixedExecutionScope,
   InMemoryFileStorage,
+  NotADataSubjectIdError,
   PersonalDataCipher,
   SequentialIdGenerator,
+  UnknownDataSubjectError,
   executionContext,
   offsetPage,
   type Actor,
@@ -15,11 +17,9 @@ import {
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createAudit, type Audit } from '@/platform/audit/create-audit';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
-import { copiesOfAPerson } from '@/platform/erasure/copies-of-a-person';
-import { eraseOnTheCommandLine } from '@/platform/erasure/erase-on-the-command-line';
-import { NotASubjectIdError } from '@/platform/erasure/not-a-subject-id-error';
+import { copiesOfAPerson } from '@/platform/privacy/copies-of-a-person';
+import { eraseOnTheCommandLine } from '@/platform/privacy/erase-on-the-command-line';
 import { storeFedProjections } from '@/platform/event-store/store-fed-projections';
-import { UnknownDataSubjectError } from '@/platform/erasure/unknown-data-subject-error';
 import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persistence/knex-person-directory.reader';
 import { KnexPersonRepository } from '@/contexts/identity/infrastructure/persistence/knex-person.repository';
 import { aPerson } from '@/contexts/identity/test/builders/person.builder';
@@ -57,7 +57,7 @@ afterAll(async () => {
   await database.close();
 });
 
-describe('npm run erase:patient', () => {
+describe('npm run privacy:erase', () => {
   it('writes the erasure to the audit trail, with the operator as actor, and the chain still holds', async () => {
     await database.persistence.eventSourcing.subjectKeys.keyFor('patient-1');
 
@@ -87,7 +87,7 @@ describe('npm run erase:patient', () => {
 
     const report = await erase('patient-2', 'operator-7');
 
-    expect(report.copies).toMatchObject({ 'identity.persons': 1 });
+    expect(report.copies).toMatchObject({ identity: 1 });
 
     // Nothing of the person is left anywhere: a run again is refused as already complete, and recorded all the same.
     await expect(erase('patient-2', 'operator-9')).rejects.toThrow(UnknownDataSubjectError);
@@ -101,8 +101,8 @@ describe('npm run erase:patient', () => {
   });
 
   it('refuses an email or a name pasted in place of the id before any entry is written', async () => {
-    await expect(erase('ada@example.org', 'operator-1')).rejects.toThrow(NotASubjectIdError);
-    await expect(erase('Ada Lovelace', 'operator-1')).rejects.toThrow(NotASubjectIdError);
+    await expect(erase('ada@example.org', 'operator-1')).rejects.toThrow(NotADataSubjectIdError);
+    await expect(erase('Ada Lovelace', 'operator-1')).rejects.toThrow(NotADataSubjectIdError);
 
     expect(await entriesOf('operator-1')).toEqual([]);
   });
@@ -132,7 +132,7 @@ describe('npm run erase:patient', () => {
 function erase(patientId: string, operator: string) {
   const parts = {
     keys: audit.subjectKeys,
-    projections: storeFedProjections(database.persistence, new PersonalDataCipher(audit.subjectKeys)),
+    rebuilds: storeFedProjections(database.persistence, new PersonalDataCipher(audit.subjectKeys)),
     copies: copiesOfAPerson(database.persistence, { scope, clock: source.clock, files: new InMemoryFileStorage() }),
   };
 

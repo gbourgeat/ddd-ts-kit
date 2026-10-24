@@ -2140,11 +2140,12 @@ export const personPersonalFields = personalFields<PersonRow>(PERSONS, {
 
 What it does not reach: an integration event published before the erasure and whatever consumed
 it, the backups until they expire, and the audit trail, which names a person by an opaque id and
-never by a name. Say so where the erasure is offered. The scheduling example runs the same chain
-by hand (`npm run erase:patient`), and
-[docs/proposals/privacy-by-design.md](../../docs/proposals/privacy-by-design.md) says what comes
-next: the adapters of each persistence package, the platform folder `init` writes, the register
-and the rules.
+never by a name. Say so where the erasure is offered. The scheduling example runs this chain
+(`npm run privacy:erase`) over the `PersonalDataErasure` of each of its contexts, the network of
+each copy reached as a tenant, and
+[docs/concepts/personal-data.md](../../docs/concepts/personal-data.md) says what a generated
+project holds: the adapters of each persistence package, the platform folder `init` writes, the
+register and the rules.
 
 ## How to extend
 
