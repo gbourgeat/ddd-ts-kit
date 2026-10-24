@@ -23,9 +23,13 @@ export async function changesOf(projection: AuditProjection, redaction: Redactio
 
   for (const [field, value] of Object.entries(projection.masked ?? {})) {
     const scalar = scalarOf(value);
+    const dataSubject = projection.subjects?.[field];
 
     if (scalar !== undefined) {
-      changes[field] = await maskOf(scalar, field, redaction);
+      changes[field] = await maskOf(scalar, field, {
+        ...redaction,
+        ...(dataSubject === undefined ? {} : { dataSubject }),
+      });
     }
   }
 
@@ -48,10 +52,18 @@ function scalarOf(value: unknown): AuditScalar | undefined {
   return value instanceof Date ? value.toISOString() : undefined;
 }
 
-async function maskOf(value: AuditScalar, field: string, { masker, subject }: Redaction): Promise<AuditChange> {
+type Masking = Redaction & { readonly dataSubject?: string };
+
+async function maskOf(
+  value: AuditScalar,
+  field: string,
+  { masker, subject, dataSubject }: Masking,
+): Promise<AuditChange> {
   if (masker === undefined) {
     throw new MissingMaskerError(field);
   }
 
-  return { masked: await masker.mask(value, { ...subject, field }) };
+  return {
+    masked: await masker.mask(value, { ...subject, field, ...(dataSubject === undefined ? {} : { dataSubject }) }),
+  };
 }

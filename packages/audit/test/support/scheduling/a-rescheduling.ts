@@ -5,6 +5,7 @@ export function aRescheduling(more: Partial<Rescheduling> = {}): Rescheduling {
     appointmentId: 'apt-1',
     status: 'confirmed',
     startsAt: new Date('2026-03-04T09:30:00.000Z'),
+    patientId: 'patient-lin',
     patientEmail: 'lin@example.org',
     note: 'Patient asked to come later because of a family matter',
     ...more,

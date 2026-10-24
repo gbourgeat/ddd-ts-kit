@@ -23,8 +23,11 @@ already does.
 
 Identifiers and codes by default, no payload. A field appears only when declared for that
 command, and personal data only masked (keyed hash: equality can be checked, the value
-cannot be read). Never free text, tokens, request bodies or error messages. An append-only
-chain and the right to erasure coexist only because personal data stays out of it.
+cannot be read), under the key of the person it belongs to: `masker: subjectMasker(keys)` over
+the `SubjectKeyStore`, and `masked('patientEmail', { subject: 'patientId' })` to say whose each
+value is, so that erasing the person makes its masks meaningless. Never free text, tokens,
+request bodies or error messages. An append-only chain and the right to erasure coexist only
+because personal data stays out of it.
 
 An erasure is proven by its own entry (`data-access`, `personal-data:erase`, the subject as
 an opaque `data-subject` id): its date plus the retention of the key backups is the day the

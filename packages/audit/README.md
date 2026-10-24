@@ -554,6 +554,9 @@ auditedProjection(ExportAppointmentsCommand, (command) => ({ plain: { format: co
   "every entry about this person" can be answered by masking the email again; the email itself
   is not there, and without the secret a guess cannot be checked. A plain hash would not do: an
   email or a phone number is guessed in seconds.
+- `masked('patientEmail', { subject: 'patientId' })` says whose the value is: the field of the
+  message that holds the opaque id of the data subject, or `subjectOf: (command) => ...` when no
+  single field does. The masker reads it as `dataSubject`; the entry never carries it.
 - A field declared `masked` without a masker is refused when the middleware is built; a
   projection that asks for a mask without one fails the command at its first use.
 
@@ -576,29 +579,29 @@ personal data be erased. The two coexist as long as the chain never holds the da
    mask them at the boundary.
 2. **Mask what you must correlate.** A masked value is not readable; it is still linked to a
    person for whoever holds the secret.
-3. **Crypto-shredding for erasure.** Write a masker that derives one key per data subject (or
-   per tenant) from a key store, using the `MaskingSubject` it receives (`actorId`, `tenantId`,
-   `resource`). `AuditMasker` is a port, an abstract class with the one method `mask`: the
-   adapter `implements` it and is bound under it:
+3. **Crypto-shredding for erasure.** `subjectMasker(keys)` masks each value under a key derived
+   from the key of its data subject in the `SubjectKeyStore` of the kernel, the same keys that seal
+   the personal values of the stored events (HKDF of the material, labelled for the trail; in
+   memory, or in the `subject_keys` table of every persistence package). Each masked field has to
+   say whose it is, `masked('patientEmail', { subject: 'patientId' })`: the middleware refuses one
+   that does not, at wiring time (`MissingDataSubjectError`), since the actor and the resource of
+   an entry are rarely that person. Erasing a person (`SubjectKeyStore.erase`, wrapped by
+   `auditedSubjectKeys` so that the erasure leaves its entry) destroys the key: every mask made
+   with it becomes a random-looking token nobody can recompute, the entries stay, the hashes stay
+   valid, and the key id written before each mask tells the masks of a key that is gone. The key
+   store is then the system to protect: keep it apart from the trail and from the events, with a
+   shorter backup retention.
 
    ```ts
-   // infrastructure/external/per-subject-masker.ts
-   export class PerSubjectMasker implements AuditMasker {
-     constructor(private readonly keys: SubjectKeys) {}
-
-     async mask(value: AuditScalar, subject: MaskingSubject): Promise<string> {
-       const key = await this.keys.keyOf(subject.resource?.id ?? subject.actorId); // created on first use
-
-       return hmacMasker(key.secret, { keyId: key.id }).mask(value, subject);
-     }
-   }
-
-   builder.bind(AuditMasker).toClass(PerSubjectMasker, [SubjectKeys]);
+   const keys = new PostgresSubjectKeyStore(run); // or InMemorySubjectKeyStore, or the one of create<Orm>EventSourcing
+   auditMiddleware(trail, {
+     scope,
+     clock,
+     ids,
+     masker: subjectMasker(keys),
+     fields: [auditedFields(RescheduleAppointmentCommand, ['status', masked('patientEmail', { subject: 'patientId' })])],
+   });
    ```
-
-   Erasing a person is deleting their key: every mask made with it becomes a random-looking
-   token nobody can recompute, the entries stay, the hashes stay valid. The key store is then
-   the system to protect and to back up with care; this package does not provide one.
 
 What stays after erasure is "an actor with this opaque id did this at that time". Whether that
 is acceptable is a legal question for the project, to answer before the first entry is written.
