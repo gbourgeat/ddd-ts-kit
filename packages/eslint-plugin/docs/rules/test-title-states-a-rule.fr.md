@@ -1,9 +1,9 @@
 [English](test-title-states-a-rule.md) · **Français**
-<!-- translation-of: test-title-states-a-rule.md sha256:9de5d77beee52337 -->
+<!-- translation-of: test-title-states-a-rule.md sha256:e38c7696227c6f45 -->
 
 # ddd-ts-kit/test-title-states-a-rule
 
-Identifiant d'architecture : `test/title-states-a-rule` (ajouté par ce *plugin*). Sévérité par défaut : `warn` dans `recommended` (une erreur à partir de 0.90.0 : `ddd-ts-kit lint` montre ses avertissements sans échouer dessus jusque-là), `error` dans `strict`.
+Identifiant d'architecture : `test/title-states-a-rule` (ajouté par ce *plugin*). Sévérité par défaut : `error` dans `recommended`, `error` dans `strict`.
 
 S'applique à : chaque fichier de test du projet (`*.spec.ts`, `*.test.ts`, le `test/` d'un contexte).
 

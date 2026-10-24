@@ -469,8 +469,8 @@ the name of a method (`test/title-states-a-rule`); it holds no `if`, no loop, no
 (`test/no-logic`); it asserts an outcome (`test/assertion-present`), a refusal by its code and its
 facts rather than by a message (`test/refusal-by-code`), and never a snapshot (`test/no-snapshot`);
 and every test runs, no `.only`, no `.skip` (`test/no-only-no-skip`). Arrange, act and assert stay
-separated by blank lines. The four rules that read what a test says are warnings until 0.90.0, so
-that an upgrade never turns a green lint red; `ddd-ts-kit lint` lists them after its report.
+separated by blank lines. All six are errors: the four that read what a test says were warnings
+in 0.89, so that the upgrade to them never turned a green lint red.
 
 ## Properties
 
