@@ -206,13 +206,15 @@ describe('what a pull request runs, against the default branch', () => {
     const jobs = [...github.matchAll(/\n {2}([\w-]+):\n {4}name:/g)].map((match) => match[1] ?? '');
     const needed = /needs: \[([^\]]+)\]\n {4}runs-on: ubuntu-26.04\n {4}timeout-minutes: 5/.exec(github)?.[1] ?? '';
 
-    // The night alone runs the mutation score: a pull request has nothing of it to wait for.
-    const nightly = [
-      ...github.matchAll(/\n {2}([\w-]+):\n(?: {4}.*\n)*? {4}if: \$\{\{ github\.event_name == 'schedule' \}\}\n/g),
+    // The mutation score is a reading, never a gate: the night runs the whole measure, a pull request reads its change.
+    const readings = [
+      ...github.matchAll(
+        /\n {2}([\w-]+):\n(?: {4}.*\n)*? {4}if: \$\{\{ github\.event_name == '(?:schedule|pull_request)' \}\}\n/g,
+      ),
     ].map((match) => match[1] ?? '');
 
-    expect(nightly).toEqual(['mutation']);
-    expect(needed.split(', ')).toEqual(jobs.filter((job) => job !== 'gate' && !nightly.includes(job)));
+    expect(readings).toEqual(['mutation', 'mutation-changed']);
+    expect(needed.split(', ')).toEqual(jobs.filter((job) => job !== 'gate' && !readings.includes(job)));
     expect(github).toContain("cancel-in-progress: ${{ github.event_name == 'pull_request' }}");
     expect(github).not.toMatch(/npm ci|cache: npm/);
     expect(github.match(/uses: \.\/\.github\/actions\/setup/g)).toHaveLength(jobs.length - 2);

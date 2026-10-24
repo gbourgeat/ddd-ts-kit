@@ -248,6 +248,9 @@ the four contexts as `mutate` (`src/contexts/*/domain/**/*.ts` and
 | the domain of the four contexts | 127 | 1441 | 1347 | 72 | 6 | 16 | 94.5% | 8 min 2 s, the initial run of 1075 tests taking 54 s |
 | the same with `governedMutation()` as first written, the `StringLiteral` mutator excluded, static mutants ignored, after the survivors of #269 were read | 110 | 1441, 222 of them ignored: 158 string literals, 64 static | 1178 | 36 | 5 | 0 | 96.6% | 4 min 2 s, the initial run of 1073 tests taking 65 s under the e2e suites of the kit; 3 min 44 s when repeated |
 | the same with the ignorer of the kit in place of the excluded mutator, the shipped configuration: the texts of refusals alone left out, every other string measured | 110 | 1436, 163 of them ignored: 73 texts of refusals, 90 static | 1226 | 41 | 6 | 0 | 96.3% | 5 min 20 s under the unit suites of the kit, the initial run of 1073 tests taking 75 s; the configuration of the row above ran alone in 3 min 44 s |
+| the same in incremental mode, nothing changed since the report it reuses | 127 | 1436, 1273 reused | 1226 | 41 | 6 | 0 | 96.3% | 1 min 30 s, the initial run of 1073 tests taking 84 s |
+| the same after a change inside one file of the domain (`slot.vo.ts`) | 127 | 1436, 1266 reused, 7 run again | 1226 | 41 | 6 | 0 | 96.3% | 1 min 8 s |
+| the same after a change of a builder alone | 127 | 1436, 1266 reused: the change was not seen | 1226 | 41 | 6 | 0 | 96.3% | 59 s |
 
 The last row is what the night job measures: `ddd-ts-kit mutation` then holds each context to the
 floor, `analytics` at 100.0%, `identity` at 97.9%, `notification` at 99.0%, `scheduling` at 95.4%,
@@ -295,6 +298,20 @@ the empty practice and patient of a record before its first fact. The appointmen
 example throws where each rule is checked, as its other value objects do: its four texts, which a
 helper returned before, are recognised now, and a project with such a helper has the same choice,
 throw where the rule is checked or leave the survivor and say why.
+
+A pull request gets a reading of its change, the three last rows measured it: Stryker's incremental
+mode reuses the results of the report it is given for every mutant whose code and tests did not
+change, relocating them in the changed files, so that a run costs its initial test run and the
+mutants of the change alone, about a minute here instead of five. It diffs the mutated sources and
+the specs alone: a change of a builder, a fake, a world, the platform or a dependency is not seen
+and its results are reused stale, as the last row shows. The `mutation-changed` job therefore runs
+with `DDD_TS_KIT_MUTATION_SINCE` set to the merge base of the change: `governedMutation()` turns
+`incremental` on, and `force` too when the change touches code outside the domain sources and the
+specs, so that such a change gets the whole run. The job restores the report of the last night
+(`reports/mutation`, the artifact of the `mutation` job), then runs `npm run test:mutation`, whose
+`ddd-ts-kit mutation` reads the same variable and lists the survivors of the files the change
+touched (`--changed <base>` says it by hand), exiting 0 whatever the scores: a reading before the
+review, never a gate, the floor being held by the night.
 
 The Jest runner, measured the same day on a project `init` wrote on Jest (Express, zod, tsyringe,
 Drizzle; one context with an aggregate, a value object and eleven specs) with
