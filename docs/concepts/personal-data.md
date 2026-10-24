@@ -221,6 +221,30 @@ per context. A table whose declaration gives no retention keeps its rows until t
 How long is the project's decision, not the tool's: the duration a law imposes (accounting,
 health), or the one the purpose needs. Write it in the register with its reason.
 
+## The register, generated
+
+`npx ddd-ts-kit docs` reads every declaration and every integration event, and writes what the
+system keeps of people in two places, which `docs --check` holds to the code like the rest:
+
+- the **Personal data** section of each `CONTEXT.md`: one row per table (the column that names the
+  person, the personal columns and files, what an erasure does, how long the rows are kept), then
+  the events whose `personal` option says their payload carries some;
+- **`docs/privacy/register.md`**, with `--privacy on`: the same rows across the contexts, the
+  columns named as the database names them whatever the ORM, and each event that carries personal
+  data with the contexts downstream of its producer.
+
+```md
+| Context | Table | About | Personal data | On erasure | Kept |
+|---|---|---|---|---|---|
+| billing | `customers` | `id` | `email`, `display_name` | pseudonymised | 36 months after `ended_at` |
+```
+
+The register is the inventory a project maintains, not the record of processing activities of
+GDPR article 30: that record also names the purposes, the lawful basis, the recipients outside the
+system and the transfers, which no code says. The file leaves them to the controller, in sections
+outside the markers that `docs` never rewrites, with what the code does not purge (backups, logs,
+files, the archives of the audit trail). A table is in the register only if a declaration names it.
+
 ## What stays out of reach
 
 - **Backups and the retention of the broker.** An erasure reaches the database, never a backup nor a
@@ -244,7 +268,7 @@ health), or the one the purpose needs. Write it in the register with its reason.
 ## What the tool does not decide
 
 The kit provides the technical measures of privacy by design (GDPR article 25): declaration,
-erasure, export, a dated proof, and a register and retention to come. The lawful basis of each
+erasure, export, a dated proof, a retention purged every night and a generated register. The lawful basis of each
 processing, the information of the data subjects, the processors and the impact assessment are the
 project's own; whether a pseudonymised row is an erasure in the eyes of the law is for the
 controller to decide, as the audit trail page says of what stays in the chain. The document of an

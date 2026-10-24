@@ -1,6 +1,7 @@
 import type { Upstream } from '../config';
 import type { BackgroundJobFacts } from './background-job-facts';
 import type { DeclaredFacts } from './declared-facts';
+import type { PersonalTableFacts } from './personal-table-facts';
 import type { ProcessFacts } from './process-facts';
 import type { StateMachineFacts } from './state-machine-facts';
 
@@ -38,6 +39,8 @@ export interface ContextFacts {
   readonly stateMachines: readonly StateMachineFacts[];
   /** Its process managers, `application/processes/*.process.ts`. */
   readonly processes: readonly ProcessFacts[];
+  /** What its tables keep of people, `infrastructure/persistence/*.personal-fields.ts`. */
+  readonly personalData: readonly PersonalTableFacts[];
   /** The context has its own entry point under `apps/`. */
   readonly deployable: boolean;
   /** What the decorators of the role files say, in a declared-style project. */
@@ -47,6 +50,8 @@ export interface ContextFacts {
 export interface PublishedEvent {
   readonly type: string;
   readonly version: number;
+  /** The fields of its payload that hold personal data, and the one that names whose: its `personal` option. */
+  readonly personal?: { readonly subject: string; readonly fields: readonly string[] };
 }
 
 export interface JobFacts {
