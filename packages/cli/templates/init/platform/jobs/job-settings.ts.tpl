@@ -11,8 +11,13 @@ type Environment = Readonly<Record<string, string | undefined>>;
  */
 export function jobSettings(environment: Environment, context?: string): Readonly<Record<string, JobSettings>> {
   const settings: Readonly<Record<string, JobSettings>> = {
-{{#if audit.archive}}
+{{#if audit.archiveByDefault}}
     'audit.archive': { enabled: environment['JOB_AUDIT_ARCHIVE_ENABLED'] !== 'false' },
+{{/if}}
+{{#if audit.archiveOnRequest}}
+    // Off while the files are on the disk of the server, since an archive removes the entries from the
+    // database: JOB_AUDIT_ARCHIVE_ENABLED=true once that disk is durable and backed up.
+    'audit.archive': { enabled: environment['JOB_AUDIT_ARCHIVE_ENABLED'] === 'true' },
 {{/if}}
 {{#if privacy.on}}
     'privacy.purge-expired': { enabled: environment['JOB_PRIVACY_PURGE_EXPIRED_ENABLED'] !== 'false' },

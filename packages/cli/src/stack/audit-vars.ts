@@ -14,13 +14,24 @@ export function auditVars(config: Config): RenderContext {
     off: !on,
     sql,
     memory: on && !sql,
-    /** The monthly archive of the oldest entries: a trail in a database, and a storage for the files. */
-    archive: sql && storage !== 'none',
+    ...archiveOf(sql, storage),
     ...storeOf(on ? orm : 'none'),
     /** The ORMs whose platform declares the schema of the trail in `database/schema.ts`; Prisma declares it in `prisma/schema.prisma`. */
     schemaFile: sql && orm !== 'prisma',
     ...readSideOf(on && http !== 'none', routes),
   };
+}
+
+/**
+ * The monthly archive of the oldest entries: a trail in a database, and a storage for the files.
+ * On by default in an object store only: the files of a local storage are on the disk of the
+ * server, which a redeployment may wipe and a backup may not reach, and an archive removes the
+ * entries from the database.
+ */
+function archiveOf(sql: boolean, storage: string): RenderContext {
+  const archive = sql && storage !== 'none';
+
+  return { archive, archiveByDefault: archive && storage === 's3', archiveOnRequest: archive && storage !== 's3' };
 }
 
 /** The route that searches the trail, written as a function or a controller; none without HTTP. */
