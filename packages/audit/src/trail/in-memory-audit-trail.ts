@@ -9,6 +9,12 @@ import {
   type Page,
   type PageRequest,
 } from '@ddd-ts-kit/kernel';
+import { archivablePrefix } from '../archive/archivable-prefix';
+import type { ArchivableAuditTrail } from '../archive/archivable-audit-trail';
+import type { ArchiveOptions } from '../archive/archive-options';
+import { archiveOf } from '../archive/archive-of';
+import type { AuditArchive } from '../archive/audit-archive';
+import type { AuditArchiveReport } from '../archive/audit-archive-report';
 import type { ChainHead } from '../chain/chain-head';
 import { chainOfTenant } from '../chain/chain-of-tenant';
 import { emptyChain } from '../chain/empty-chain';
@@ -26,10 +32,13 @@ import type { AuditTrailOptions } from './audit-trail-options';
 /**
  * The trail in the memory of the process: the fake of both ports, and enough for an
  * application without a database. `entries` is the store itself, in the order of arrival: a
- * test asserts it, and tampers with it to see a verification fail.
+ * test asserts it, and tampers with it to see a verification fail. `archives` holds what
+ * `archiveBefore` moved to the file storage.
  */
-export class InMemoryAuditTrail implements AuditTrail, AuditReader {
+export class InMemoryAuditTrail implements AuditTrail, AuditReader, ArchivableAuditTrail {
   readonly entries: AuditEntry[] = [];
+
+  readonly archives: AuditArchive[] = [];
 
   private readonly heads = new Map<string, ChainHead>();
 
@@ -48,6 +57,29 @@ export class InMemoryAuditTrail implements AuditTrail, AuditReader {
     await sealCheckpoint(entry, this.options.sealing);
   }
 
+  /** The entries older than `before`, chain by chain, verified, written to the file storage and removed; see `ArchivableAuditTrail`. */
+  async archiveBefore(before: Date, options: ArchiveOptions): Promise<AuditArchiveReport> {
+    const archives: AuditArchive[] = [];
+
+    for (const chain of [...this.heads.keys()].sort()) {
+      const previous = this.archives.filter((archive) => archive.chain === chain).at(-1);
+      const first = (previous?.toSequence ?? 0) + 1;
+      const ofChain = this.entries.filter((entry) => entry.chain === chain);
+      const archive = await archiveOf(chain, archivablePrefix(ofChain, first, before), { previous, options });
+
+      if (archive !== undefined) {
+        this.forget(archive);
+        archives.push(archive);
+      }
+    }
+
+    return { archives };
+  }
+
+  async archivesOf(chain: string): Promise<readonly AuditArchive[]> {
+    return this.archives.filter((archive) => archive.chain === chain);
+  }
+
   async search(filter: AuditFilter, page: PageRequest<AuditSortField>): Promise<Page<AuditEntry>> {
     const order = orderOf(page);
     const found = this.entries.filter(matches(filter)).sort(comparing(order));
@@ -61,6 +93,13 @@ export class InMemoryAuditTrail implements AuditTrail, AuditReader {
     const last = items.at(-1);
 
     return pageOf(items, rest.length > items.length && last !== undefined ? { nextCursor: encodeCursor(last) } : {});
+  }
+
+  private forget(archive: AuditArchive): void {
+    const kept = this.entries.filter((entry) => entry.chain !== archive.chain || entry.sequence > archive.toSequence);
+
+    this.entries.splice(0, this.entries.length, ...kept);
+    this.archives.push(archive);
   }
 }
 
