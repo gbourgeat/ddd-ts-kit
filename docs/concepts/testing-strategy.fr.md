@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:8d766f0ea649b493 -->
+<!-- translation-of: testing-strategy.md sha256:79eec28453ab547a -->
 
 # Stratégie de test
 
@@ -575,9 +575,7 @@ initiale que la nuit paie, pas les mutants.
 
 Une *pull request* reçoit une lecture de son changement, pas la mesure complète : le *job*
 `mutation-changed` du *pipeline* réutilise le rapport de la dernière nuit pour ce que le changement
-ne touche pas (le mode incrémental de Stryker, une minute environ sur l'exemple), relance la mesure
-complète quand le changement touche un code dont les tests dépendent et que Stryker ne compare pas
-(un *fake*, un *builder*, un monde, la plateforme, une dépendance), puis liste les survivants des
+ne touche pas (le mode incrémental de Stryker, une minute environ sur l'exemple quand le changement reste dans le domaine, les cas d'usage et les *specs*), relance la mesure complète, cinq minutes environ, quand le changement touche un code dont les tests dépendent et que Stryker ne compare pas (une route, un adaptateur, un *fake*, un *builder*, un monde, la plateforme, une dépendance, le cas courant d'une fonctionnalité), puis liste les survivants des
 fichiers que le changement a touchés (`ddd-ts-kit mutation --changed <base>`). Lisez-les avant de
 demander une revue ; le plancher reste l'affaire de la nuit.
 
@@ -586,8 +584,7 @@ demander une revue ; le plancher reste l'affaire de la nuit.
 - **La mesure complète tourne chaque nuit ; une *pull request* reçoit une lecture de son changement.**
   Cinq minutes pour le domaine des quatre contextes de l'exemple, c'est trop long pour la boucle
   d'un changement : le *job* de la nuit tient le plancher, et une *pull request* liste les survivants
-  des fichiers qu'elle a touchés d'après une passe incrémentale qui réutilise les résultats de la
-  nuit, une minute environ, jamais une porte ; un survivant trouvé la nuit est une règle à énoncer le
+  des fichiers qu'elle a touchés d'après une passe qui réutilise les résultats de la nuit quand le changement reste dans le modèle et les cas d'usage, jamais une porte ; un survivant trouvé la nuit est une règle à énoncer le
   lendemain.
 - **Un score de mutation dit qu'un changement a été remarqué, pas que la bonne règle a été énoncée.**
   Un test qui tue un mutant énonce ce que le code fait aujourd'hui : chacun se lit comme une

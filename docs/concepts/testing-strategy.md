@@ -552,9 +552,7 @@ test run is what the night pays for, not the mutants.
 
 A pull request gets a reading of its change, not the whole measure: the `mutation-changed` job of
 the pipeline reuses the report of the last night for what the change leaves alone (the incremental
-mode of Stryker, about a minute on the example), runs the whole measure again when the change
-touches code the tests lean on and Stryker does not diff (a fake, a builder, a world, the platform,
-a dependency), then lists the survivors of the files the change touched
+mode of Stryker, about a minute on the example when the change stays in the domain, the use cases and the specs), runs the whole measure again, about five minutes, when the change touches code the tests lean on and Stryker does not diff (a route, an adapter, a fake, a builder, a world, the platform, a dependency, the common case of a feature), then lists the survivors of the files the change touched
 (`ddd-ts-kit mutation --changed <base>`). Read them before asking for a review; the floor stays the
 business of the night.
 
@@ -563,8 +561,7 @@ business of the night.
 - **The whole measure runs every night; a pull request gets a reading of its change.** Five
   minutes for the domain of the four contexts of the example is too long for the loop of a change,
   so the job of the night holds the floor, and a pull request lists the survivors of the files it
-  touched from an incremental run that reuses the results of the night, about a minute, never a
-  gate; a survivor found at night is a rule to state the next day.
+  touched from a run that reuses the results of the night when the change stays in the model and the use cases, never a gate; a survivor found at night is a rule to state the next day.
 - **A mutation score says that a change was noticed, not that the right rule was stated.** A test
   that kills a mutant states what the code does today: each one is read as a business decision
   before it is kept, and an accidental behaviour is left alive and said so rather than frozen.

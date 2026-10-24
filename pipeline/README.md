@@ -307,8 +307,7 @@ mutants of the change alone, about a minute here instead of five. It diffs the m
 the specs alone: a change of a builder, a fake, a world, the platform or a dependency is not seen
 and its results are reused stale, as the last row shows. The `mutation-changed` job therefore runs
 with `DDD_TS_KIT_MUTATION_SINCE` set to the merge base of the change: `governedMutation()` turns
-`incremental` on, and `force` too when the change touches code outside the domain sources and the
-specs, so that such a change gets the whole run. The job restores the report of the last night
+`incremental` on, and `force` too when the change touches code outside the mutated layers (domain and application) and the specs, so that such a change gets the whole run. The fast reading is therefore for a change kept to the model, the use cases and their specs; a feature that adds a route, an adapter or a fake, the common case, gets the whole run, about five minutes here, still a reading and never a gate. The job restores the report of the last night
 (`reports/mutation`, the artifact of the `mutation` job), then runs `npm run test:mutation`, whose
 `ddd-ts-kit mutation` reads the same variable and lists the survivors of the files the change
 touched (`--changed <base>` says it by hand), exiting 0 whatever the scores: a reading before the

@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:f127a041bf5b228e -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:c3d5e1145246bb77 -->
 
 # L'analyse statique et le pipeline
 
@@ -391,8 +391,7 @@ contexte au plancher `mutation` de `ddd-ts-kit.config.json`, les mutants ignoré
 chaque score. Pas une porte de *pull request* : cinq minutes pour l'exemple sont trop longues pour la
 boucle d'un changement. Une *pull request* reçoit à la place le *job* `mutation-changed`, une
 lecture : Stryker réutilise le rapport de la dernière nuit pour ce que le changement ne touche pas,
-une minute environ, relance tout quand le changement touche un code qu'il ne compare pas (un *fake*,
-un *builder*, la plateforme, une dépendance), et `ddd-ts-kit mutation --changed <base>` liste les
+une minute environ quand le changement reste dans le domaine, les cas d'usage et les *specs*, et relance tout, cinq minutes environ, quand il touche un code qu'il ne compare pas (une route, un adaptateur, un *fake*, un *builder*, la plateforme, une dépendance), le cas courant d'une fonctionnalité, et `ddd-ts-kit mutation --changed <base>` liste les
 survivants des fichiers que le changement a touchés. Le README du *pipeline* tient les mesures qui
 l'ont décidé (2026-10-24).
 

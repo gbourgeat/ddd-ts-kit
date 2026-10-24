@@ -374,8 +374,7 @@ static mutants left out), then `ddd-ts-kit mutation`, which holds each context t
 floor of `ddd-ts-kit.config.json`, the ignored mutants shown beside each score. Not a gate of a pull
 request: five minutes for the example are too long for the loop of a change. A pull request gets
 the `mutation-changed` job instead, a reading: Stryker reuses the report of the last night for what
-the change leaves alone, about a minute, runs everything again when the change touches code it does
-not diff (a fake, a builder, the platform, a dependency), and `ddd-ts-kit mutation --changed <base>`
+the change leaves alone, about a minute when the change stays in the domain, the use cases and the specs, and runs everything again, about five, when it touches code it does not diff (a route, an adapter, a fake, a builder, the platform, a dependency), the common case of a feature, and `ddd-ts-kit mutation --changed <base>`
 lists the survivors of the files the change touched. The pipeline README holds the measures that
 decided it (2026-10-24).
 

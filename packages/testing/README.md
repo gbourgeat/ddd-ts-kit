@@ -1056,9 +1056,7 @@ export default {
   `DDD_TS_KIT_MUTATION_SINCE=<ref>` in the environment, as the job of a pull request sets it to the
   merge base of the change, the run is incremental: the results of the last report, kept in
   `reports/mutation/incremental.json`, are reused for what the change leaves alone, and the run
-  takes the time of its initial test run. Stryker diffs the mutated sources and the specs alone, so
-  the run is forced whole when the change touches other code the tests lean on: a fake, a builder, a
-  world, the platform, a dependency, a config.
+  takes the time of its initial test run. Stryker diffs the mutated sources (the domain and application layers) and the specs alone, so the run is forced whole when the change touches other code the tests lean on: a route, an adapter, a fake, a builder, a world, the platform, a dependency, a config. A change kept to the model and the use cases reads fast; most features touch a route too.
 
 ## See also
 

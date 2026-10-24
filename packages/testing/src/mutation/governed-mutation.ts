@@ -66,8 +66,7 @@ export function governedMutation(root: string = process.cwd()): GovernedMutation
 
   return {
     mutate: [
-      `${contextsDir}/**/domain/**/*.ts`,
-      `${contextsDir}/**/application/**/*.ts`,
+      ...MUTATED_LAYERS.map((layer) => `${contextsDir}/**/${layer}/**/*.ts`),
       `!${contextsDir}/**/*.declarations.ts`,
       '!**/*.spec.ts',
     ],
@@ -76,25 +75,36 @@ export function governedMutation(root: string = process.cwd()): GovernedMutation
     ignoreStatic: true,
     incremental: since !== undefined,
     incrementalFile: INCREMENTAL_FILE,
-    force: since !== undefined && leansOnSupport(root, since),
+    force: since !== undefined && leansOnSupport(root, since, contextsDir),
     thresholds: { high: Math.max(HIGH, ...Object.values(floors)), low: lowest, break: lowest },
   };
 }
 
+/** The layers of a context a run mutates, each held to its own floor. */
+const MUTATED_LAYERS = ['domain', 'application'] as const;
+
 /** Code or configuration the tests may lean on: a document, an image or a pipeline file changes no test. */
 const CODE = /\.(?:[cm]?[jt]sx?|json)$/;
 
-/** Whether the change touches code the incremental run would not diff; a change git cannot list counts as one. */
-function leansOnSupport(root: string, since: string): boolean {
+/**
+ * Whether the change touches code the incremental run would not diff; a change git cannot list
+ * counts as one. A change kept to the model and the use cases of the contexts and to the specs reads
+ * fast; one of a route, an adapter, a fake, a builder, the platform or a dependency runs everything,
+ * since a spec that leans on it may now kill a mutant differently.
+ */
+function leansOnSupport(root: string, since: string, contextsDir: string): boolean {
   const changed = changedSince(root, since);
 
-  return changed === undefined || changed.some((file) => CODE.test(file) && !diffedByStryker(file));
+  return changed === undefined || changed.some((file) => CODE.test(file) && !diffedByStryker(file, contextsDir));
 }
 
-/** A mutated source of the domain, or a spec: what Stryker compares with the last report by itself. */
-function diffedByStryker(file: string): boolean {
-  return (
-    file.endsWith('.spec.ts') ||
-    (file.includes('/domain/') && file.endsWith('.ts') && !file.endsWith('.declarations.ts'))
-  );
+/** A mutated source, in a layer the run mutates, or a spec: what Stryker compares with the last report by itself. */
+function diffedByStryker(file: string, contextsDir: string): boolean {
+  if (file.endsWith('.spec.ts')) {
+    return true;
+  }
+
+  const mutated = file.startsWith(`${contextsDir}/`) && MUTATED_LAYERS.some((layer) => file.includes(`/${layer}/`));
+
+  return mutated && file.endsWith('.ts') && !file.endsWith('.declarations.ts');
 }

@@ -115,6 +115,22 @@ describe('governedMutation(), what a Stryker run mutates and is held to', () => 
     expect(governed.force).toBe(false);
   });
 
+  it('reads a change of the use cases fast too, the application layer being mutated, and runs everything for a change of a route', () => {
+    const root = committedProject();
+
+    writeTo(root, 'src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts', 'export {};\n');
+
+    expect(readingAChange('HEAD', () => governedMutation(root))).toMatchObject({ incremental: true, force: false });
+
+    writeTo(
+      root,
+      'src/contexts/billing/presentation/http/invoices/issue-invoice/issue-invoice.controller.ts',
+      'export {};\n',
+    );
+
+    expect(readingAChange('HEAD', () => governedMutation(root))).toMatchObject({ incremental: true, force: true });
+  });
+
   it('forces the whole run when the change touches what the tests lean on, which Stryker does not diff', () => {
     const root = committedProject();
 
