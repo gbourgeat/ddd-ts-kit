@@ -10,6 +10,7 @@ import type { PresetFile } from './preset-file';
 const VARIANTS: Readonly<Record<string, (config: Config) => boolean>> = {
   knex: (config) => config.stack.orm === 'knex',
   drizzle: (config) => config.stack.orm === 'drizzle',
+  prisma: (config) => config.stack.orm === 'prisma',
   zod: (config) => config.stack.validation === 'zod',
   'class-validator': (config) => config.stack.validation === 'class-validator',
   'per-route': (config) => config.stack.schemas === 'per-route',
