@@ -4,7 +4,9 @@ import { referenceLines } from '../describe/reference-lines';
 import { replaceRegion } from '../markers';
 import type { Workspace } from '../workspace';
 import type { ContextFacts } from './context-facts';
+import { ensurePersonalDataRegion } from './ensure-personal-data-region';
 import { ensureReferenceRegion } from './ensure-reference-region';
+import { personalDataLines } from './personal-data-lines';
 import { readContext } from './read-context';
 import { stateMachineLines } from './state-machine-lines';
 
@@ -14,6 +16,7 @@ const LATER_REGIONS: Readonly<Record<string, (facts: ContextFacts) => number>> =
   'background-jobs': (facts) => facts.backgroundJobs.length,
   'state-machines': (facts) => facts.stateMachines.length,
   processes: (facts) => facts.processes.length,
+  'personal-data': () => 0,
 };
 
 /**
@@ -31,7 +34,7 @@ export function refreshContextDoc(ws: Workspace, config: Config, context: string
   }
 
   const facts = readContext(ws, config, context);
-  let content = original;
+  let content = declaresPersonalData(facts) ? ensurePersonalDataRegion(original) : original;
 
   for (const [region, lines] of Object.entries(generatedLists(facts))) {
     const next = replaceRegion(content, region, lines);
@@ -50,6 +53,11 @@ export function refreshContextDoc(ws: Workspace, config: Config, context: string
   );
 }
 
+/** A table or a published event of the context says it holds personal data. */
+function declaresPersonalData(facts: ContextFacts): boolean {
+  return facts.personalData.length > 0 || facts.publishedEvents.some((event) => event.personal !== undefined);
+}
+
 function generatedLists(facts: ContextFacts): Record<string, string[]> {
   return {
     aggregates: facts.aggregates.map(
@@ -64,6 +72,7 @@ function generatedLists(facts: ContextFacts): Record<string, string[]> {
     'background-jobs': backgroundJobLines(facts),
     'state-machines': stateMachineLines(facts.stateMachines, facts.name),
     processes: processLines(facts),
+    'personal-data': personalDataLines(facts),
     relationships: relationshipLines(facts),
   };
 }

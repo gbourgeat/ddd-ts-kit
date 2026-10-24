@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:713421f6663f188a -->
+<!-- translation-of: personal-data.md sha256:3884102072cdb603 -->
 
 # Les données personnelles dans un projet généré
 
@@ -228,6 +228,32 @@ dont la déclaration ne donne aucune durée garde ses lignes jusqu'à ce que la 
 Combien de temps est une décision du projet, pas de l'outil : la durée qu'une loi impose
 (comptabilité, santé), ou celle dont la finalité a besoin. Écrivez-la au registre avec sa raison.
 
+## Le registre, généré
+
+`npx ddd-ts-kit docs` lit chaque déclaration et chaque événement d'intégration, et écrit ce que le
+système garde des personnes à deux endroits, que `docs --check` tient au code comme le reste :
+
+- la section **Personal data** de chaque `CONTEXT.md` : une ligne par table (la colonne qui nomme
+  la personne, les colonnes et les fichiers personnels, ce que fait un effacement, combien de temps
+  les lignes sont gardées), puis les événements dont l'option `personal` dit que leur payload en
+  porte ;
+- **`docs/privacy/register.md`**, avec `--privacy on` : les mêmes lignes à travers les contextes,
+  les colonnes nommées comme la base les nomme quel que soit l'ORM, et chaque événement qui porte
+  des données personnelles avec les contextes en aval de son producteur.
+
+```md
+| Context | Table | About | Personal data | On erasure | Kept |
+|---|---|---|---|---|---|
+| billing | `customers` | `id` | `email`, `display_name` | pseudonymised | 36 months after `ended_at` |
+```
+
+Le registre est l'inventaire qu'un projet tient, pas le registre des activités de traitement de
+l'article 30 du RGPD : celui-ci nomme aussi les finalités, la base légale, les destinataires hors du
+système et les transferts, qu'aucun code ne dit. Le fichier les laisse au responsable de traitement,
+dans des sections hors des marqueurs que `docs` ne réécrit jamais, avec ce que le code ne purge pas
+(sauvegardes, journaux, fichiers, archives du journal d'audit). Une table n'est au registre que si
+une déclaration la nomme.
+
 ## Ce qui reste hors de portée
 
 - **Les sauvegardes et la rétention du *broker*.** Un effacement atteint la base de données, jamais
@@ -251,8 +277,8 @@ Combien de temps est une décision du projet, pas de l'outil : la durée qu'une 
 ## Ce que l'outil ne décide pas
 
 Le kit fournit les mesures techniques de la protection des données dès la conception (RGPD,
-article 25) : déclaration, effacement, export, une preuve datée, et un registre et une rétention à
-venir. La base légale de chaque traitement, l'information des personnes concernées, les sous-traitants
+article 25) : déclaration, effacement, export, une preuve datée, une conservation purgée chaque nuit et un
+registre généré. La base légale de chaque traitement, l'information des personnes concernées, les sous-traitants
 et l'analyse d'impact appartiennent au projet ; qu'une ligne pseudonymisée vaille effacement aux yeux
 de la loi est au responsable de traitement d'en décider, comme la page du journal d'audit le dit de
 ce qui reste dans la chaîne. Le document d'un export porte les données ; les informations qui
