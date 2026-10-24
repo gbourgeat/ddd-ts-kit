@@ -34,5 +34,7 @@ To move: nothing blocks. `npx ddd-ts-kit check --rule privacy/declared-field` (a
 lists what to take up: declare the column (`generate repository ... --personal`), list the field in
 `personal: { subject, fields }`, erase the copy (`generate erasure-handler` for a service of its own),
 or record a column that holds nothing of a person, `// ddd-ts-kit-disable-next-line
-privacy/declared-field -- ADR-NNNN: <why>` or a word of `privacy.allow`. The rules become errors one
-minor version later.
+privacy/declared-field -- ADR-NNNN: <why>` or a word of `privacy.allow`. The rules stay warnings:
+they read names, never contents, so a column `address` of a warehouse is reported as well as the
+address of a person; no later version turns them into errors. A team that wants them blocking sets
+`"rules": { "privacy/declared-field": "error" }` in ddd-ts-kit.config.json, rule by rule.

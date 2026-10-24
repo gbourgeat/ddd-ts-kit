@@ -248,7 +248,9 @@ files, the archives of the audit trail). A table is in the register only if a de
 ## The rules
 
 Five rules of `ddd-ts-kit check` hold a project whose `stack.privacy` is `on` to its declarations,
-as warnings first; a project that chose `off` hears nothing from them.
+as warnings, and they stay warnings: they read names, never contents, and a column `address` may
+name a warehouse. A team that wants one blocking sets its severity to `error` in `rules` of the
+config. A project that chose `off` hears nothing from them.
 
 | Rule | Reports |
 |---|---|
