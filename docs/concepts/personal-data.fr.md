@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:3884102072cdb603 -->
+<!-- translation-of: personal-data.md sha256:f96db042f47d0e6d -->
 
 # Les données personnelles dans un projet généré
 
@@ -254,6 +254,27 @@ dans des sections hors des marqueurs que `docs` ne réécrit jamais, avec ce que
 (sauvegardes, journaux, fichiers, archives du journal d'audit). Une table n'est au registre que si
 une déclaration la nomme.
 
+## Les règles
+
+Cinq règles de `ddd-ts-kit check` tiennent un projet dont `stack.privacy` vaut `on` à ses
+déclarations, en avertissements, et elles le restent : elles lisent des noms, jamais des
+contenus, et une colonne `address` peut désigner un entrepôt. Une équipe qui en veut une bloquante
+met sa sévérité à `error` dans `rules` de la config. Un projet qui a choisi `off` n'en entend rien.
+
+| Règle | Signale |
+|---|---|
+| `privacy/declared-field` | une colonne nommée comme une donnée personnelle (`email`, `phone`, `birth_date`, `address`, `iban`... le vocabulaire du kit, avec `privacy.vocabulary` de la config ajouté et `privacy.allow` retiré) qu'aucune déclaration de son contexte ne nomme, sur les quatre ORM |
+| `privacy/event-payload-declared` | un champ du *payload* d'un événement d'intégration nommé comme une donnée personnelle que son option `personal` ne liste pas |
+| `privacy/erasure-reaches-copies` | un contexte qui consomme un événement portant des données personnelles et n'efface rien quand la personne est effacée |
+| `privacy/subject-is-opaque` | un sujet qui est lui-même une donnée personnelle (un email comme clé d'une personne) |
+| `privacy/no-personal-data-in-logs` | un appel au *logger* ou aux métriques qui nomme un champ personnel déclaré |
+
+Elles lisent des noms, pas des contenus, c'est pourquoi chacune dit ce qu'elle ne voit pas
+(`npx ddd-ts-kit explain privacy/declared-field`). Une colonne qui ne tient rien d'une personne dans
+un projet (la boîte aux lettres partagée d'une équipe) est une dérogation enregistrée là où elle
+s'écrit, `// ddd-ts-kit-disable-next-line privacy/declared-field -- ADR-NNNN: <why>`, ou un mot de
+`privacy.allow`.
+
 ## Ce qui reste hors de portée
 
 - **Les sauvegardes et la rétention du *broker*.** Un effacement atteint la base de données, jamais
@@ -266,8 +287,8 @@ une déclaration la nomme.
   masquent les secrets, pas les noms ([Observabilité](observability.fr.md#ce-que-chaque-signal-peut-porter)).
 - **Une colonne qu'aucune déclaration ne nomme.** Une règle lit le nom d'une colonne, pas ce qu'un
   champ texte peut contenir : une colonne `notes` peut tenir un diagnostic. Les déclarations sont
-  l'inventaire qu'un projet maintient ; les règles `privacy/*` qui signalent une colonne non déclarée
-  du vocabulaire usuel viennent avec une partie ultérieure de [la proposition](../proposals/privacy-by-design.fr.md).
+  l'inventaire qu'un projet maintient, et `privacy/declared-field` ne signale qu'une colonne dont le
+  nom porte un mot du vocabulaire (voir [Les règles](#les-règles)).
 - **Un *read model*.** Une projection garde ses lignes dans un *read model store*, pas dans une table
   à elle : elle ne déclare rien encore. La reconstruction d'une projection alimentée par l'event store
   retire la copie en clair qu'elle gardait, une fois donnée à `rebuilds`.

@@ -73,6 +73,16 @@ export interface BusinessNames {
   readonly allow: readonly string[];
 }
 
+/**
+ * The words of a name that say it holds personal data, read by the `privacy/*` rules: the list of
+ * the kit, with `vocabulary` added (the words of the business: `patient_number`) and `allow`
+ * removed (a word that never names a person in this project).
+ */
+export interface PrivacyConfig {
+  readonly vocabulary: readonly string[];
+  readonly allow: readonly string[];
+}
+
 /** What the pipeline adds over the free gates: the jobs of `CI_EXTRAS` the team asked for. */
 export interface CiConfig {
   readonly extras: readonly string[];
@@ -139,6 +149,7 @@ export interface Config {
   readonly standardInterfaces: Readonly<Record<string, string | false>>;
   /** The generic words `naming/business-name` reports, over its defaults. */
   readonly businessNames: BusinessNames;
+  readonly privacy: PrivacyConfig;
   /** True once the project has a worker process under `apps/worker/main.ts`: the API then starts with its jobs off. */
   readonly worker: boolean;
   readonly ci: CiConfig;

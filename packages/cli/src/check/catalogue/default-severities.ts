@@ -4,6 +4,11 @@ import type { Severity } from '../../config';
 export const DEFAULT_SEVERITIES: Readonly<Record<string, Severity>> = {
   'authz/granted': 'warn',
   'authz/scope-narrows': 'warn',
+  'privacy/declared-field': 'warn',
+  'privacy/event-payload-declared': 'warn',
+  'privacy/erasure-reaches-copies': 'warn',
+  'privacy/subject-is-opaque': 'warn',
+  'privacy/no-personal-data-in-logs': 'warn',
   'test/no-mocks': 'warn',
   'test/builder-required': 'warn',
   'clean/function-size': 'warn',

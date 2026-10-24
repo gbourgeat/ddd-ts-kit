@@ -1,5 +1,5 @@
 [English](privacy-by-design.md) · **Français**
-<!-- translation-of: privacy-by-design.md sha256:d8d6f4aaa79239b8 -->
+<!-- translation-of: privacy-by-design.md sha256:a6be6ee50d47bd1f -->
 
 # Proposition : la protection des données dès la conception, au-delà de l'*event sourcing*
 
@@ -37,7 +37,7 @@ son fichier de `changes/`.
 | 7. La conservation sur la déclaration, le *job* de purge généré | **construite** : `retention: { after, days \| months \| years }` sur `personalFields`, vérifiée ; `PersonalDataRetention` et `purgeExpiredPersonalData` dans le kernel, `purgeExpired(now)` sur les adaptateurs d'effacement des quatre ORM sous `personalDataRetentionContract`, dans chaque *tenant* quand le travail n'en nomme aucun ; `auditedPersonalDataRetention` ; `generate repository --retention <colonne>:<n><d\|m\|y>` (une colonne à vous qui date la fin de la relation rejoint le stockage en horodatage nullable ; `registered_at` est refusée, puisqu'une purge comptée depuis l'inscription effacerait des clients actifs) ; le *job* `privacy.purge-expired` chaque nuit et `npm run privacy:purge`. Non construit : `retainedRows` pour une table sans donnée personnelle, que la limitation de la conservation n'atteint pas ; les purges de l'outbox et des fichiers en attente existent déjà |
 | 8. `archiveBefore` sur le journal d'audit | **construite** (#287 garde aussi le journal en base sur Prisma et TypeORM, puis l'archive) : `archiveBefore(date, { files, clock })` et `archivesOf(chain)` sur les quatre stores SQL et en mémoire, chaque plage vérifiée depuis l'ancre de l'archive qui la précède, écrite dans le stockage de fichiers, enregistrée avec son dernier hash et l'empreinte de son fichier, puis supprimée, ce que la garde n'autorise que pour des entrées couvertes ; `verifyArchive` revérifie un fichier, `verifyChain` part d'une ancre ; `init` enregistre `audit.archive` le premier jour de chaque mois, douze mois gardés en ligne, quand le journal est en base et les fichiers dans un stockage |
 | 9. Le registre généré des données personnelles | **construite** : `ddd-ts-kit docs` lit chaque appel `personalFields` de `infrastructure/persistence/*.personal-fields.ts` (généré ou écrit à la main, plusieurs par fichier) et l'option `personal` des événements d'intégration ; chaque `CONTEXT.md` gagne une section Personal data (ajoutée à celui qui n'en a pas dès que son contexte en déclare), et avec `--privacy on` `docs/privacy/register.md` liste les tables à travers les contextes, colonnes nommées comme la base les nomme sur les quatre ORM, et les événements qui portent des données personnelles avec les contextes en aval ; les finalités, la base légale, les destinataires hors du système et ce que le code ne purge pas sont des sections qu'écrit le responsable de traitement, gardées par `docs` ; `docs --check` échoue sur une dérive |
-| 10. Les règles `privacy/*`, en avertissement d'abord | proposée |
+| 10. Les règles `privacy/*`, en avertissement d'abord | **construite**, et gardées en avertissements pour de bon (elles lisent des noms, jamais des contenus : une colonne `address` peut désigner un entrepôt ; une équipe en passe une à `error` dans `rules`) : `privacy/declared-field` (tables Knex, Drizzle et TypeORM des contextes, modèles Prisma dans leur schéma), `privacy/event-payload-declared` (le `z.object` de la déclaration, la classe ou l'interface de son `.payload.ts`), `privacy/erasure-reaches-copies` (un consommateur de la couche application, projection comprise, qui ne déclare aucun `PersonalDataErasure` ni ne traite `privacy.data-subject.erased`), `privacy/subject-is-opaque` (déclarations et événements), `privacy/no-personal-data-in-logs` (une approximation sur le texte des appels) ; toutes dans `ddd-ts-kit check` en `warn`, silencieuses avec `stack.privacy` off ; le vocabulaire du kit avec `privacy.vocabulary` et `privacy.allow` dans la config ; fixtures, `explain`, une injection chacune dans la copie de l'exemple, qui garde ses propres mots autorisés jusqu'à la partie 11 ; pas de pendant ESLint : les cinq lisent des noms à travers les fichiers, ce que tient le checker |
 | 11. L'exemple adopte les ports du kit | proposée |
 | 12. La page de concept, les pages qu'elle touche, la formulation publique | **commencée** avec la partie 5 : [la page de concept](../concepts/personal-data.fr.md) dit ce qu'un projet généré contient, l'effacement de bout en bout, ce qui reste hors de portée et ce que l'outil ne décide pas ; le README et les autres pages viennent avec cette partie |
 
@@ -205,8 +205,10 @@ système : la page le dit et laisse ces colonnes au responsable du traitement.
 | `privacy/subject-is-opaque` | un `personalFields` ou un `personalData` dont le sujet est lui-même un champ personnel (un e-mail comme identifiant) | check et ESLint |
 | `privacy/no-personal-data-in-logs` | un appel au *logger* ou aux métriques dont l'argument nomme un champ personnel déclaré | ESLint (une approximation) |
 
-Toutes à `warn` par défaut, en erreur une version mineure plus tard, comme
-[CONTRIBUTING.md](../../CONTRIBUTING.fr.md) le demande. Toutes muettes dans un projet sans
+Toutes à `warn` par défaut. Proposées en erreur une version mineure plus tard, comme
+[CONTRIBUTING.md](../../CONTRIBUTING.fr.md) le demande d'une règle qui bloque ; tranché à leur
+construction : elles restent des avertissements, puisqu'elles lisent des noms et jamais des
+contenus, et une équipe en passe une à `error` dans `rules` de sa config. Toutes muettes dans un projet sans
 déclaration et sans mot du vocabulaire : rien n'est obligatoire pour un projet sans données
 personnelles.
 

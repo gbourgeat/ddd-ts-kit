@@ -1,5 +1,5 @@
 [English](identity.md) · **Français**
-<!-- translation-of: identity.md sha256:302acdb25a511316 -->
+<!-- translation-of: identity.md sha256:090dba0eb038537b -->
 
 # Identité : Keycloak ou simple OIDC et JWT
 
@@ -300,7 +300,11 @@ première connexion, jamais de mot de passe, les organisations, les membres et l
 invitations, les délégations, et le port `IdentityProviderAdmin` qui dit à Keycloak 26 (API des
 organisations) ce qui a été décidé, au moins une fois, depuis les consommateurs de ses faits
 publiés. Avec des *tenants*, l'authentificateur lit le *claim* `organization` comme les *tenants*
-de la personne. L'adaptateur Keycloak est une recette : spécifié contre un serveur local, il
+de la personne. Avec `--privacy on`, le défaut avec un ORM, il déclare ce qu'il garde des
+personnes : l'adresse et le nom d'un compte, pseudonymisés quand la personne est effacée, et
+l'adresse à laquelle une invitation a été envoyée, supprimée trente jours après l'expiration de
+l'invitation ; son effacement et son export sont listés dans la plateforme, sans être confinés à un
+*tenant*, puisque ses tables n'appartiennent à aucun ([Données personnelles](../concepts/personal-data.fr.md)). L'adaptateur Keycloak est une recette : spécifié contre un serveur local, il
 n'est pas exécuté contre un vrai Keycloak par le *pipeline* du kit. Voir
 [Démarrer avec des contextes bien conçus](../guides/bootstrap-with-well-designed-contexts.fr.md).
 
