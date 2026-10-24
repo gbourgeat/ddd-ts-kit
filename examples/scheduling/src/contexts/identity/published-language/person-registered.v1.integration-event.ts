@@ -8,6 +8,7 @@ export const personRegisteredV1 = defineIntegrationEvent({
   version: 1,
   description:
     'A person signed in for the first time and is now known to the platform, with the name and the address to reach them.',
+  personal: { subject: 'personId', fields: ['displayName', 'email'] },
   payload: classSchema(PersonRegisteredV1Payload),
 });
 

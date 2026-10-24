@@ -25,6 +25,7 @@ it: `README.md` and `README.fr.md`, `docs/concepts/aggregates.md` and
 | anything under `packages/cli/templates/` | the files `ddd-ts-kit init` and `generate` write into a project |
 | anything under `site/` | the documentation website, which copies these pages at each of its builds |
 | `examples/scheduling/clients/api/README.md`, `examples/scheduling/docs/integration/event-catalog.md` | generated |
+| `examples/scheduling/docs/privacy/register.md` | partly generated, like a `CONTEXT.md` |
 
 The list lives at the top of
 [`pipeline/monorepo/translations.mjs`](../pipeline/monorepo/translations.mjs): a page is in

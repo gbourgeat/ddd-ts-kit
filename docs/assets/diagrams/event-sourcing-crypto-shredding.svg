@@ -27,7 +27,7 @@
   <rect x="32" y="238" width="232" height="84" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
   <text x="148" y="266" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">erasure</text>
   <text x="148" y="290" font-size="13" fill="#1f2328" text-anchor="middle">erase('patient-1')</text>
-  <text x="148" y="308" font-size="13" fill="#1f2328" text-anchor="middle">npm run erase:patient</text>
+  <text x="148" y="308" font-size="13" fill="#1f2328" text-anchor="middle">npm run privacy:erase</text>
   <rect x="328" y="238" width="232" height="84" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
   <text x="444" y="266" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">SubjectKeyStore</text>
   <text x="444" y="290" font-size="13" fill="#1f2328" text-anchor="middle">one key per subject:</text>

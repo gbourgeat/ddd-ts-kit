@@ -22,6 +22,7 @@
     "httpCache": "varnish",
     "storage": "local",
     "audit": "on",
+    "privacy": "on",
     "errors": "sentry",
     "logger": "pino",
     "style": "declared",

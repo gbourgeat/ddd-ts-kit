@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:d2ae61f30c8e6bd7 -->
+<!-- translation-of: event-sourcing.md sha256:76ea07afcc0ee27a -->
 
 # Event sourcing, par agrégat
 
@@ -480,7 +480,7 @@ Utilisez des identifiants qui ne signifient rien en dehors de l'application.
 
 L'exemple garde les clés dans la table `subject_keys` du schéma `scheduling` de sa propre base de
 données, à côté des événements, pour rester exécutable avec un seul PostgreSQL ; son README le
-dit et nomme ce que change un déploiement. Son effacement (`npm run erase:patient`) détruit la clé
+dit et nomme ce que change un déploiement. Son effacement (`npm run privacy:erase`) détruit la clé
 d'un patient, écrit l'effacement dans le journal d'audit avec l'opérateur comme acteur, efface
 chaque copie que les contextes gardent de la personne en clair (la personne d'identity, le contact
 de notification, les notes, les motifs d'annulation et les documents de ses rendez-vous dans
