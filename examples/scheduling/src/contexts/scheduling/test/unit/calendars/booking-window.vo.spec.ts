@@ -18,6 +18,10 @@ describe('BookingWindow', () => {
     expectRefusal(() => BookingWindow.create(notice, horizon), 'INVALID_BOOKING_WINDOW');
   });
 
+  it('accepts a notice of zero minutes: a slot may then be booked right up to its start', () => {
+    expect(BookingWindow.create(0, 60).notice).toBe(0);
+  });
+
   it('is by default a notice of two hours and a horizon of ninety days', () => {
     expect(BookingWindow.standard()).toMatchObject({ notice: 120, horizon: 90 * 24 * 60 });
   });
