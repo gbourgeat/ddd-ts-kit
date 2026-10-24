@@ -174,6 +174,22 @@ e2e:
     # The whole application, whatever the contexts a change reaches.
     - npm run ci:test:e2e -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
 
+mutation:
+  extends: .node
+  stage: test
+  needs: [install]
+  # The pipeline schedule only (Build > Pipeline schedules, every night on the default branch): too long for a merge request, read by nobody before a merge.
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  script:
+    # Stryker on the domain layer of every context, each held to the "mutation" floor of ddd-ts-kit.config.json.
+    - npm run test:mutation
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - reports/mutation
+
 build:
   extends: .node
   stage: test

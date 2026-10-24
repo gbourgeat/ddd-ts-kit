@@ -6,3 +6,5 @@ dist
 .ddd-ts-kit/
 .data/
 .worktrees/
+.stryker-tmp/
+/reports/mutation/

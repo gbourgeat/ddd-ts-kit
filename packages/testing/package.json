@@ -52,6 +52,10 @@
     "./vitest": {
       "types": "./dist/vitest.d.ts",
       "default": "./dist/vitest.js"
+    },
+    "./mutation": {
+      "types": "./dist/mutation.d.ts",
+      "default": "./dist/mutation.js"
     }
   },
   "files": [

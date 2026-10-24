@@ -308,7 +308,7 @@ export default {
 | NestJS or class-validator project (legacy decorators) | Vitest works without the plugin; Jest if the team's NestJS tooling is built on it |
 | Existing codebase with a large Jest suite adopting the kit | Jest, adding the project split and thresholds by hand; plan a migration only if it pays |
 | A library or adapter published for others | write its contract with `ContractSuite`, so consumers run it under either runner |
-| Wanting mutation testing | Vitest: Stryker 10.1.1 with its Vitest runner, by hand, as the pipeline README measures it; not a gate of the kit yet. Jest: not measured |
+| Wanting mutation testing | shipped on both: `npm run test:mutation` and the job of the night, each context held to the `mutation` floor of the config. Vitest runs the unit specs of `vitest.mutation.config.ts`; Jest those of `jest.mutation.config.js`, as ES modules under the flag of the `test` script |
 
 ## Sources
 

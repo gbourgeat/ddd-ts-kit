@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:df278f6923a9ef97 -->
+<!-- translation-of: README.md sha256:ffa45036abb0a98a -->
 
 # @ddd-ts-kit/testing
 
@@ -21,6 +21,7 @@ npm i -D @ddd-ts-kit/testing
 | `@ddd-ts-kit/testing/contracts` | les suites de contrat des ports du noyau, `ContractSuite` pour en écrire une autre | le runner que vous passez |
 | `@ddd-ts-kit/testing/vitest` | `decorators()`, le *plugin* Vite qui permet à Vitest d'exécuter les décorateurs standard, et `decoratorCoverage()` | Node seulement ; exécute le `tsc` du projet |
 | `@ddd-ts-kit/testing/coverage` | `governedCoverage()`, `governedJestCoverage()`, `unaffectedContexts()` : la couverture que mesure le runner et son plancher, lus dans `ddd-ts-kit.config.json` | Node seulement |
+| `@ddd-ts-kit/testing/mutation` | `governedMutation()` : ce que Stryker mute, l'*ignorer* du kit qui écarte les textes des refus, les mutants statiques ignorés et le plancher, lus dans `ddd-ts-kit.config.json` | Node seulement |
 
 L'entrée principale, `/contracts` et `/e2e` suivent les
 [niveaux de test](../../docs/ARCHITECTURE.fr.md#7-niveaux-de-test) ; les *builders* servent à chaque niveau, et les
@@ -1023,6 +1024,43 @@ En mode de décorateurs historique avec `emitDecoratorMetadata`, ajoutez `decora
 décorateurs contiennent, pour chaque type que nomme une classe décorée, une branche qu'aucun test ne peut
 prendre ; le *plugin* les marque avec l'indication que lit le fournisseur `v8`, comme le fournisseur le
 fait de lui-même pour SWC.
+
+## Score de mutation lu dans la configuration
+
+`@ddd-ts-kit/testing/mutation` donne à Stryker ce qu'il mute, ce qu'il laisse de côté et le plancher
+auquel l'exécution est tenue, lus dans la clé `mutation` de `ddd-ts-kit.config.json` (80 pour la
+couche domaine quand la clé est absente), de sorte que la config Stryker d'un projet n'écrit ni *glob*
+ni nombre :
+
+<!-- checked sample -->
+```ts
+// stryker.config.mjs
+import { governedMutation } from '@ddd-ts-kit/testing/mutation';
+
+export default {
+  testRunner: 'vitest',
+  vitest: { configFile: 'vitest.mutation.config.ts' },
+  coverageAnalysis: 'perTest',
+  ...governedMutation(),
+};
+```
+
+- `mutate` : la couche domaine de chaque contexte, à son niveau et dans les modules de son modèle,
+  les déclarations générées et les *specs* exclues.
+- `appendPlugins` et `ignorers` : l'*ignorer* du kit, `refusal-texts`. Un test vérifie un refus par
+  son code et jamais par son texte (`test/refusal-by-code`), donc un mutant d'un tel texte survivrait
+  par construction : le message de `refusal(..)`, un texte passé à une fabrique d'une classe qui
+  refuse (`InvalidSlot.forRule('ends after it starts')`), le message de `super(..)` dans une classe
+  d'erreur et de `new ..Error(..)` sont écartés, avec la raison dans le rapport. Une classe refuse
+  quand le fichier l'importe des erreurs de son contexte ou du kernel sous un nom qui le dit ; toute
+  autre chaîne du domaine reste mesurée, le nom d'un événement, un statut, un code, une clé. Un texte
+  qu'une fonction auxiliaire renvoie avant l'appel de la fabrique n'est pas reconnu : levez le refus
+  là où la règle est vérifiée, ou laissez le survivant en vie et dites pourquoi.
+- `ignoreStatic` : les mutants statiques, dans du code qui s'exécute une fois au chargement du
+  module, sont ignorés ; une règle écrite en déclaration n'est prouvée que par le test qui l'énonce.
+- `thresholds` : le plancher, auquel `ddd-ts-kit mutation` tient ensuite chaque contexte d'après le
+  rapport json, les mutants ignorés affichés à côté de chaque score. `REFERENCE_MUTATION` est la
+  référence : domaine 80.
 
 ## Voir aussi
 

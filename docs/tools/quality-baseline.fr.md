@@ -1,5 +1,5 @@
 [English](quality-baseline.md) · **Français**
-<!-- translation-of: quality-baseline.md sha256:061efffb14198696 -->
+<!-- translation-of: quality-baseline.md sha256:34d88b948571cf93 -->
 
 # Base de qualité
 
@@ -115,6 +115,7 @@ d'abord et sur ce qui a changé ; les plus larges tournent plus tard, sur tous l
 | architecture | kit `check:self`, les *fixtures* de chaque règle, et les tests de la garde (dans `ci:arch`) ; exemple et projet `check:arch` | kit `ci:arch` ; exemple et projet `ci:arch:check` | projet et exemple : fichiers indexés, avant un *commit* ; à chaque écriture par le *hook* d'éditeur |
 | chaque règle prouvée sur l'exemple | kit : `example:verify` lance `example:conformance` après la porte propre à l'exemple | kit : le *job* `example` | non |
 | dérive des documents | kit `ci:docs` (ni tiret cadratin ni demi-cadratin, chaque page française au niveau de sa page anglaise) ; exemple et projet `docs:check` | `ci:docs` | kit : le contrôle des tirets (`check:dashes`), avant un *commit* |
+| score de mutation | kit : le `test:mutation` de l'exemple (le *job* `mutation` de la nuit) ; exemple et projet `test:mutation` | le *job* `mutation`, quand la planification se déclenche, jamais une *pull request* | non |
 | *specs* unitaires | kit `ci:test:unit` ; exemple et projet `test:coverage` | `ci:test:unit` | avant un *push*, sur ce que la branche atteint : pour le kit les *packages* et les *packages* construits dessus (`affected-packages.mjs --base origin/main --run test`, sans couverture), pour l'exemple et un projet les contextes (`ddd-ts-kit affected --run`) |
 | *specs* d'intégration | kit : le *pipeline* seulement (elles ont besoin de serveurs) ; exemple et projet `test:coverage` (PostgreSQL dans le processus) | `ci:test:integration` | non |
 | *specs* de bout en bout | kit : le *pipeline* seulement (`ci:test:e2e`, chaque *stack* générée et exécutée) ; exemple et projet `test:e2e` | `ci:test:e2e` | non |

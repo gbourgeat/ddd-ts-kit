@@ -21,7 +21,7 @@
   },
 {{/if}}
   "vitest": {
-    "config": ["vitest.config.ts"{{knip.e2eConfig}}],
+    "config": ["vitest.config.ts"{{knip.e2eConfig}}{{knip.mutationConfig}}],
     "entry": [
       "{{config.sourceRoot}}/**/*.spec.ts",
       "{{config.contextsDir}}/*/test/fakes/*.ts",
