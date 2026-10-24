@@ -47,7 +47,7 @@ export const TEST_INJECTIONS: readonly Injection[] = [
     rule: 'test/assertion-present',
     what: 'a test that executes the command and asserts nothing',
     file: HANDLER_SPEC,
-    changes: [{ file: HANDLER_SPEC, from: `\n${OTHERS_PLANNED}`, to: '\n' }],
+    changes: [{ file: HANDLER_SPEC, from: `\n${OTHERS_PLANNED}`, to: '' }],
     checker: false,
     eslint: 'ddd-ts-kit/test-assertion-present',
   },
