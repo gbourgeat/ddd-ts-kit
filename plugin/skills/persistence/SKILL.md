@@ -78,7 +78,13 @@ lookups of the port, the columns, the mapper.
   one destroys its key in the `SubjectKeyStore`, then rebuilds the projections that hold a
   clear copy. Bind that store wrapped by `auditedSubjectKeys` of `@ddd-ts-kit/audit`, so that
   every erasure leaves a dated audit entry, and keep the keys in a store of their own, with a
-  shorter backup retention than the events.
+  shorter backup retention than the events. What a table keeps of a person in clear is declared
+  next to its mapper with `personalFields` (the subject column, the personal columns, `row` or
+  `pseudonymise`, the columns that hold a file) and erased through a `PersonalDataErasure` port of
+  the context (`export abstract class PatientErasure extends PersonalDataErasure {}`);
+  `eraseDataSubject` of the kernel runs the key, every copy in every tenant (`inEachTenant`) and
+  the rebuilds, in that order; `personalDataErasureContract` of `@ddd-ts-kit/testing` holds the
+  adapter and the fake (`InMemoryPersonalData`) to the same behaviour.
 - **Searches** use the kernel `Page` and `PageRequest`; a cursor ends on a unique tie-breaker.
 - **Queries may skip aggregates**: `generate query` writes a read port and an in-memory
   reader; replace the reader by an adapter that queries the tables and returns the shape of

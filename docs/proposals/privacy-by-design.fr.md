@@ -1,5 +1,5 @@
 [English](privacy-by-design.md) · **Français**
-<!-- translation-of: privacy-by-design.md sha256:8bcaa5f6f3380e75 -->
+<!-- translation-of: privacy-by-design.md sha256:8cf5184b1093d01e -->
 
 # Proposition : la protection des données dès la conception, au-delà de l'*event sourcing*
 
@@ -20,7 +20,7 @@ garantie légale.
 
 ## État (2026-10-24)
 
-Les parties 0 et 0b sont construites. Les parties, dans l'ordre de fusion ; chacune est une
+Les parties 0, 0b et 1 sont construites. Les parties, dans l'ordre de fusion ; chacune est une
 *pull request* à part, avec ses tests, sa documentation dans les deux langues, ses *skills* et
 son fichier de `changes/`.
 
@@ -28,7 +28,7 @@ son fichier de `changes/`.
 |---|---|
 | 0. Cette proposition | **écrite** |
 | 0b. L'exemple efface une personne de bout en bout, à la main | **construite** (#267) : la personne d'identity, le contact de notification, les notes, les motifs d'annulation, les documents et le nom copié dans scheduling, réseau par réseau ; le README de l'exemple dit ce qui reste hors d'atteinte |
-| 1. `personalFields` et les ports `PersonalDataErasure` et `PersonalDataExport` du kernel | proposée |
+| 1. `personalFields` et les ports `PersonalDataErasure` et `PersonalDataExport` du kernel | **construite** (#268) : la déclaration, les deux ports, `eraseDataSubject` et `inEachTenant` dans le kernel, `InMemoryPersonalData`, les deux suites de contrat du package de tests |
 | 2. `subjectMasker` du journal d'audit, une clé par personne concernée | proposée |
 | 3. L'adaptateur d'effacement sur les quatre ORM, modèles de lecture compris | proposée |
 | 4. `init` écrit `src/platform/privacy/` et câble l'*event sourcing* | proposée |
