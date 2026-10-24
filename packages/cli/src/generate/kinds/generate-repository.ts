@@ -7,10 +7,11 @@ import type { Scope } from '../scope';
 import { vars } from '../vars';
 import { wire } from '../wire';
 import { declareStorage } from './declare-storage';
+import { personalVars } from './personal-data/personal-vars';
 import { REPOSITORY_ADAPTERS } from './repository-adapter';
 
 /** The port of the repository of an aggregate, the adapter of the ORM of the stack, the fake and the contract both pass. */
-export function generateRepository(scope: Scope, aggregate: Name): void {
+export function generateRepository(scope: Scope, aggregate: Name): RenderContext {
   const adapter = REPOSITORY_ADAPTERS[scope.config.stack.orm];
 
   const prefix = {
@@ -19,7 +20,12 @@ export function generateRepository(scope: Scope, aggregate: Name): void {
     needsDatabase: adapter.prefix !== 'InMemory',
   };
 
-  const context = vars(scope, { aggregate: named(aggregate), adapter: prefix, tenant: tenantVars(scope) });
+  const context = vars(scope, {
+    aggregate: named(aggregate),
+    adapter: prefix,
+    tenant: tenantVars(scope),
+    personal: personalVars(scope),
+  });
 
   emit(scope, context, [
     ['repository/repository.ts.tpl', `domain/repositories/${aggregate.kebab}.repository.ts`],
@@ -34,15 +40,17 @@ export function generateRepository(scope: Scope, aggregate: Name): void {
   scope.ws.note(
     `Fake${aggregate.pascal}Repository (test/fakes) and ${adapter.prefix}${aggregate.pascal}Repository pass the same repositoryContract (test/integration): handlers are tested with the fake.`,
   );
+
+  return context;
 }
 
-const TENANT_AWARE: readonly OrmStack[] = ['drizzle', 'knex'];
+const TENANT_AWARE: readonly OrmStack[] = ['drizzle', 'knex', 'prisma', 'typeorm'];
 
 /**
  * `--tenant-scoped`, or a project whose `stack.tenancy` is not `none`: the adapter confines every
  * statement to the tenant of the work in progress through the helpers of its ORM package
- * (`tenantTable`, `tenantCondition`). Defence in depth: the permission is still decided in the
- * application layer.
+ * (`tenantTable`, `tenantCondition`, `tenantWhere`). Defence in depth: the permission is still
+ * decided in the application layer.
  */
 function tenantVars(scope: Scope): RenderContext {
   const asked = scope.flags.tenantScoped || scope.config.stack.tenancy !== 'none';
@@ -50,7 +58,7 @@ function tenantVars(scope: Scope): RenderContext {
 
   if (asked && !scoped) {
     scope.ws.note(
-      `--tenant-scoped is generated for drizzle and knex only: with ${scope.config.stack.orm}, add the tenant column to the storage (\`tenant_id\`), write \`tenantScopeOf(this.scope)\` on insert and put it in the condition of every read and every update.`,
+      `--tenant-scoped is generated for drizzle, knex, prisma and typeorm only: with ${scope.config.stack.orm}, add the tenant column to the storage (\`tenant_id\`), write \`tenantScopeOf(this.scope)\` on insert and put it in the condition of every read and every update.`,
     );
   }
 

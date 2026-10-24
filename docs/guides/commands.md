@@ -240,7 +240,7 @@ Usage
                   [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--http-cache none|varnish]
                   [--storage local|s3|none]
-                  [--audit on|off]
+                  [--audit on|off] [--event-sourcing on|off] [--privacy on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals named|factories|classes]
                   [--routes controllers|functions] [--representations negotiated|json] [--forms on|off]
@@ -594,7 +594,7 @@ Kinds
   error <context> <Refusal> <factory> [--code CODE] [--term "<Term>=<meaning>"]...   (alias: refusal)
   domain-error <context> <Name> [--code CODE]
   domain-service <context> <Name> [--term "<Term>=<meaning>"]...
-  repository <context> <Aggregate> [--tenant-scoped]
+  repository <context> <Aggregate> [--tenant-scoped] [--personal <column>,<column>... [--subject <column>] [--erasure pseudonymise|row]]
   command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]...
   query <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--search] [--term "<Term>=<meaning>"]...
   port <context> <Name>

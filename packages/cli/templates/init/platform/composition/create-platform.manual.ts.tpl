@@ -31,6 +31,7 @@ import { platformEvents } from '{{alias.platform}}/events/platform-events{{alias
 {{#if files.any}}
 import { createFiles, type Files } from '{{alias.platform}}/files/create-files{{alias.ext}}';
 {{/if}}
+import { createBackgroundWork } from '{{alias.platform}}/jobs/create-background-work{{alias.ext}}';
 import { defaultPolicy } from '{{alias.platform}}/resilience/default-policy{{alias.ext}}';
 import { defaultResilienceSettings } from '{{alias.platform}}/resilience/default-resilience-settings{{alias.ext}}';
 import { ownPolicy } from '{{alias.platform}}/resilience/own-policy{{alias.ext}}';
@@ -38,8 +39,8 @@ import type { ResilienceSettings } from '{{alias.platform}}/resilience/resilienc
 
 /**
  * The platform, assembled: the foundations, the domain events, the guard of the use cases, the
- * two buses, the event ports{{#if files.any}}, the files{{/if}} and what every adapter is wrapped in. Replacing a provider
- * (another broker, another clock) happens here and nowhere else.
+ * two buses, the event ports, the background work{{#if files.any}}, the files{{/if}} and what every adapter is wrapped in.
+ * Replacing a provider (another broker, another clock) happens here and nowhere else.
  */
 export function createPlatform(persistence: Persistence, options: PlatformOptions): Platform {
   const foundations = layFoundations(persistence, options);
@@ -65,11 +66,14 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
 {{#if files.any}}
   const files = filesOf(options, foundations);
 {{/if}}
+  const commands = createCommandBus(foundations, { guard: protection.guard, persistence{{#if files.any}}, files{{/if}}{{#if cache.relaySignal}}, redis: options.redis{{/if}} });
 
   return {
     ...founded,
     ...platformEvents(persistence, options, foundations),
-    commands: createCommandBus(foundations, { guard: protection.guard, persistence{{#if files.any}}, files{{/if}}{{#if cache.relaySignal}}, redis: options.redis{{/if}} }),
+    // The queue, its worker and the runner of the process managers: a timeout is a command the runner sends on the bus.
+    ...createBackgroundWork({ persistence, options, foundations, commands }),
+    commands,
     queries: createQueryBus(foundations, protection.guard),
     domainEvents,
     persistence,

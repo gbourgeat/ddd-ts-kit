@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c138d885ebd7555a -->
+<!-- translation-of: README.md sha256:0379acff9e181f12 -->
 
 # @ddd-ts-kit/kernel
 
@@ -45,6 +45,7 @@ avec une bibliothèque.
 | Fichiers | `FileStorage`, `StoredFile`, `FileScanner`, `FileKeys`, `TenantFileKeys`, `FileStaging`, `FileUpload`, `fileUploadsMiddleware`, `FileInspection`, `FileError`, `InMemoryFileStorage`, `LocalFileStorage`, `PurgeStagedFiles` (voir « FileStorage, StoredFile, FileScanner ») |
 | Multitenance | `tenantScopeOf`, `tenantReachOf`, `acrossTenants`, `tenantKey`, `tenantCacheKey`, `isTenantId`, `TenantDirectory`, `InMemoryTenantDirectory` (voir « Multitenance ») |
 | *Event sourcing* | `EventSourcedAggregate`, `EventStore`, `defineStoredEvent`, `EventSerializer`, `EventSourcedRepository`, `SnapshotPolicy`, `personalData`, `PersonalDataCipher`, `CatchUpSubscription`, `EventStoreProjectionRebuild`, `InMemoryEventStore`, `PostgresEventStore` (voir « Event sourcing ») |
+| Données personnelles | `personalFields`, `PersonalDataErasure`, `PersonalDataExport`, `eraseDataSubject`, `inEachTenant`, `isDataSubjectId`, `PersonalDataRecord`, `InMemoryPersonalData` (voir « Données personnelles ») |
 | Côté lecture | `Criteria`, `defineCriteria`, `validateCriteria`, `scoped`, `planCriteria`, `evaluateCriteria`, `pageOfPlan`, `hydrate`, `ReadModelStore`, `stampOf`, `TableReadModelStore`, `ProjectionRebuild`, `InMemoryReadModelStore` (voir « Critères », « Hydratation » et « Projections ») |
 | Aides à la persistance | `optimisticUpdate`, `expectVersion` (la version qu'un appelant a lue, `If-Match` en HTTP, est toujours la version courante, sinon `PreconditionFailedError` : 412), `schemaNameOf`, `stampCreation`, `stampUpdate`, `tenantScopeOf`, `encodeCursor`, `decodeCursor` |
 | Remontée des erreurs | `ErrorReporter`, `ErrorReport`, `errorReportOf`, `reportOnce`, `isUnexpectedError`, `errorReportingMiddleware`, `DeadLetterReports`, `reportProcessFailures`, `NoopErrorReporter` |
@@ -2193,6 +2194,40 @@ s'exécute avant la validation et écrit l'outbox : le flux et les enregistremen
 sont validés ensemble ou pas du tout. `eventStoreUnitOfWorkContract` de `@ddd-ts-kit/testing` le
 prouve pour chaque store transactionnel : rien n'est publié pour un ajout annulé ou refusé par un
 conflit de concurrence.
+
+## Données personnelles
+
+Le droit à l'effacement, d'accès et à la portabilité, pour ce qu'un contexte garde d'une personne
+en clair : ses lignes. Ce qu'un événement stocké scelle est effacé par la clé de sa personne
+concernée (voir « Event sourcing ») ; ce qu'une table garde en clair est déclaré une fois, à côté
+du *mapper*, puis effacé, exporté et inventorié à partir de cette déclaration.
+
+```ts
+// infrastructure/persistence/person.personal-fields.ts
+export const personPersonalFields = personalFields<PersonRow>(PERSONS, {
+  subject: 'id', // la colonne qui nomme la personne concernée : un identifiant opaque, jamais une donnée personnelle
+  fields: ['display_name', 'email'],
+  erasure: 'row', // ou 'pseudonymise' : les lignes restent, chaque champ texte lit ERASED_PERSONAL_DATA
+});
+```
+
+| Pièce | Ce qu'elle fait |
+|---|---|
+| `personalFields(table, { subject, fields, erasure, files? })` | La déclaration : quelles colonnes d'une table sont personnelles, à qui elles appartiennent, et comment les lignes d'une personne sont effacées (`row`, supprimées ; `pseudonymise`, chaque champ texte lit `ERASED_PERSONAL_DATA` et tout autre champ rien). `files` nomme les colonnes qui tiennent la clé d'un fichier de la personne : le fichier est supprimé du `FileStorage` et la colonne vidée, quel que soit le mode. Refusé (`InvalidPersonalFieldsError`) : aucun champ, une colonne listée deux fois, une colonne sujet déclarée personnelle |
+| `PersonalDataErasure` | Le port qu'un contexte étend et nomme, comme il étend `Repository` : `export abstract class PatientErasure extends PersonalDataErasure {}`. `name` est la copie qu'il atteint, telle que le rapport la nomme ; `erase(subject)` efface ce que le contexte garde de la personne dans le *tenant* du travail et répond combien de lignes il a atteintes, aucune la seconde fois. Les *packages* de persistance l'implémentent à partir des déclarations ; `InMemoryPersonalData` ici |
+| `PersonalDataExport` | Le port du droit d'accès : `exportOf(subject)` répond un `PersonalDataRecord` par ligne sur la personne, `{ source, values }`, chaque colonne personnelle en données simples (`PersonalDataValue` : un scalaire tel quel, un instant en texte ISO, `null` pour rien, du texte JSON pour tout le reste) |
+| `eraseDataSubject(subject, { keys?, copies, inEveryTenant, rebuilds, isKnown })` | L'effacement entier, dans l'ordre : la clé de la personne détruite (`SubjectKeyStore.erase`, enveloppé par `auditedSubjectKeys` de `@ddd-ts-kit/audit` pour qu'une entrée datée le prouve ; sans `keys`, rien n'est scellé et seules les copies sont effacées, comme dans un projet dont les agrégats sont des lignes), chaque copie effacée dans chaque *tenant*, chaque projection alimentée par le store reconstruite. Une copie qui échoue n'arrête pas les autres ; le premier échec est levé une fois que tout a tourné, et relancer l'effacement l'achève. Un sujet qui n'est pas un identifiant opaque (`isDataSubjectId`, la grammaire d'un id de *tenant*) est refusé avant qu'une clé ne soit touchée (`NotADataSubjectIdError`) ; un id qui n'a détruit aucune clé, rien effacé et qu'`isKnown` ne connaît pas est refusé avant les reconstructions (`UnknownDataSubjectError`) : une faute de frappe, ou un effacement déjà complet. Répond `{ erased, copies, rebuilt }` : si une clé a été détruite, les lignes atteintes par chaque copie, les événements rejoués par chaque projection |
+| `inEachTenant(scope, tenants)` | Ce qu'on donne à `inEveryTenant` : exécute une copie une fois par *tenant*, dans le contexte du travail doté de ce *tenant*, et somme les lignes. Une écriture de données de *tenant* est confinée au *tenant* de son contexte et jamais élargie par une élévation : c'est le seul moyen d'effacer dans chaque *tenant* |
+| `InMemoryPersonalData(name, declaration, { files? })` | L'implémentation de référence des deux ports sur une déclaration, les lignes gardées en mémoire (`insert`, `all`) : le *fake* d'un contexte, et ce à quoi `personalDataErasureContract` et `personalDataExportContract` de `@ddd-ts-kit/testing` tiennent chaque adaptateur |
+| `pseudonymisedValueOf(sqlType)` | Ce que lit une colonne pseudonymisée, d'après son type SQL : `ERASED_PERSONAL_DATA` pour un texte (`text`, `varchar`, `char`, `citext`), rien pour tout autre type. La règle unique que suivent les adaptateurs des quatre *packages* de persistance (`KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`), pour qu'une déclaration efface de la même façon sur chaque ORM. `NotNullablePersonalColumnError` est ce qu'ils lèvent, avant qu'un fichier ou une ligne ne soit touché, pour une colonne qui ne lirait rien et n'accepte pas null |
+
+Ce que cela n'atteint pas : un événement d'intégration publié avant l'effacement et ce qui l'a
+consommé, les sauvegardes jusqu'à leur expiration, et le journal d'audit, qui nomme une personne
+par un identifiant opaque et jamais par un nom. Dites-le là où l'effacement est offert. L'exemple
+scheduling exécute la même chaîne à la main (`npm run erase:patient`), et
+[docs/proposals/privacy-by-design.fr.md](../../docs/proposals/privacy-by-design.fr.md) dit ce qui
+vient ensuite : les adaptateurs de chaque *package* de persistance, le dossier de plateforme
+qu'`init` écrit, le registre et les règles.
 
 ## Comment étendre
 

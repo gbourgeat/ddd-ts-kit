@@ -1,8 +1,10 @@
 import type { EventStamp, ReadModelRows, StampedRow } from '@ddd-ts-kit/kernel';
 import type { PrismaRawQueries } from '../outbox/prisma-raw-queries';
 import type { PrismaContext } from '../unit-of-work/prisma-context';
+import { quoted } from './quoted';
 import type { RowMapper } from './row.mapper';
 import { stampedRowOf } from './stamped-row-of';
+import type { TenantOfRows } from './tenant-of-rows';
 import { writtenOf } from './written-of';
 
 export interface NamedTable<Row extends object> {
@@ -11,6 +13,8 @@ export interface NamedTable<Row extends object> {
   /** A field of the row, not a column. */
   readonly key: string;
   readonly mapper: RowMapper<Row>;
+  /** The tenant of the rows, for a read model of tenant data. */
+  readonly tenant: TenantOfRows;
 }
 
 /**
@@ -25,8 +29,13 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
   ) {}
 
   async find(key: string): Promise<StampedRow<Row> | undefined> {
-    const { path, mapper } = this.target;
-    const [record] = await this.run(`select * from ${path} where ${this.column(this.target.key)} = $1 limit 1`, [key]);
+    const { path, mapper, tenant } = this.target;
+    const reach = tenant.readingSql(2);
+
+    const [record] = await this.run(
+      `select * from ${path} where ${this.column(this.target.key)} = $1${reach.clause} limit 1`,
+      [key, ...reach.values],
+    );
 
     if (record === undefined) {
       return undefined;
@@ -44,7 +53,7 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
       return false;
     }
 
-    const record = Object.entries(this.target.mapper.toRecord(writtenOf(entry, this.target.key)));
+    const record = this.recordOf(entry);
     const columns = record.map(([column]) => quoted(column)).join(', ');
     const places = record.map((_, index) => `$${String(index + 1)}`).join(', ');
     const key = this.column(this.target.key);
@@ -58,17 +67,25 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
   }
 
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {
-    const record = Object.entries(this.target.mapper.toRecord(writtenOf(entry, this.target.key)));
+    const record = this.recordOf(entry);
     const changes = record.map(([column], index) => `${quoted(column)} = $${String(index + 1)}`).join(', ');
     const key = this.column(this.target.key);
     const next = (offset: number): string => `$${String(record.length + offset)}`;
+    const own = this.target.tenant.writingSql(record.length + 4);
 
     const replaced = await this.run(
-      `update ${this.target.path} set ${changes} where ${key} = ${next(1)} and "last_event_id" = ${next(2)} and "last_event_at" = ${next(3)} returning ${key}`,
-      [...record.map(([, value]) => value), entry.key, held.eventId, held.occurredAt],
+      `update ${this.target.path} set ${changes} where ${key} = ${next(1)} and "last_event_id" = ${next(2)} and "last_event_at" = ${next(3)}${own.clause} returning ${key}`,
+      [...record.map(([, value]) => value), entry.key, held.eventId, held.occurredAt, ...own.values],
     );
 
     return replaced.length === 1;
+  }
+
+  /** What the entry writes, by column: its fields and stamps, and the tenant of the work for a read model of tenant data. */
+  private recordOf(entry: StampedRow<Row>): [string, unknown][] {
+    const { mapper, key, tenant } = this.target;
+
+    return Object.entries({ ...mapper.toRecord(writtenOf(entry, key)), ...tenant.written() });
   }
 
   private column(field: string): string {
@@ -82,8 +99,4 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
       ? rows.filter((row): row is Readonly<Record<string, unknown>> => typeof row === 'object' && row !== null)
       : [];
   }
-}
-
-function quoted(identifier: string): string {
-  return `"${identifier.replaceAll('"', '""')}"`;
 }

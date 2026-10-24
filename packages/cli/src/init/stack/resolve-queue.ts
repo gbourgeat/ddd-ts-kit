@@ -12,21 +12,15 @@ interface Persistence {
 }
 
 /**
- * The jobs table of the ORM package when the project has one that ships it, the memory of the
- * process otherwise. `redis` needs the server of the cache, and every store needs the kernel
- * module of `@ddd-ts-kit/di`, which binds it: refused before anything is written otherwise.
+ * The jobs table of the ORM package when the project has one that ships it and the kernel module
+ * of `@ddd-ts-kit/di` binds it, the memory of the process otherwise. `redis` needs the server of
+ * the cache. A store asked for is bound whatever the container: by the kernel module on tsyringe,
+ * by `jobs/create-background-work.ts` where the platform is wired by hand.
  */
 export function resolveQueue(options: StackOptions, { orm, di }: Persistence): string {
   const queue =
     choose(QUEUE_STORES, options.queue, 'queue') ??
     (QUEUE_ORMS.includes(orm) && di === 'tsyringe' ? 'database' : 'memory');
-
-  if (queue !== 'memory' && di !== 'tsyringe') {
-    throw new CliError(
-      `--queue ${queue} cannot be combined with --di ${di}.`,
-      'The job store is bound by the kernel module of @ddd-ts-kit/di: use --di tsyringe, or keep --queue memory and bind a store where your platform builds the worker.',
-    );
-  }
 
   if (queue === 'database' && !QUEUE_ORMS.includes(orm)) {
     throw new CliError(

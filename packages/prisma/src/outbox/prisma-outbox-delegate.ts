@@ -26,6 +26,8 @@ export interface PrismaOutboxRow {
   readonly payload: unknown;
   readonly traceparent: string | null;
   readonly correlationId: string | null;
+  /** Absent from a model without the field. */
+  readonly tenantId?: string | null;
   readonly status: string;
   readonly attempts: number;
   readonly nextAttemptAt: Date;
@@ -41,6 +43,8 @@ export interface PrismaOutboxInsert {
   payload?: PrismaJsonInput;
   traceparent: string | null;
   correlationId: string | null;
+  /** Written by a store told `tenant: true`, to a model that has the field. */
+  tenantId?: string | null;
   nextAttemptAt: Date;
 }
 

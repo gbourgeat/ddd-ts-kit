@@ -19,6 +19,10 @@ export interface StackOptions {
   readonly httpCache?: string;
   readonly storage?: string;
   readonly audit?: string;
+  /** `on` or `off`: whether the event store is wired, for the aggregates kept as events. */
+  readonly eventSourcing?: string;
+  /** `on` or `off`: whether the platform answers the requests of a data subject (erasure, export). */
+  readonly privacy?: string;
   readonly errors?: string;
   readonly logger?: string;
   readonly style?: string;

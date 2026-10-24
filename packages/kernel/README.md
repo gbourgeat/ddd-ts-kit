@@ -42,6 +42,7 @@ starts, so a business rule never changes with a library.
 | Files | `FileStorage`, `StoredFile`, `FileScanner`, `FileKeys`, `TenantFileKeys`, `FileStaging`, `FileUpload`, `fileUploadsMiddleware`, `FileInspection`, `FileError`, `InMemoryFileStorage`, `LocalFileStorage`, `PurgeStagedFiles` (see "FileStorage, StoredFile, FileScanner") |
 | Tenancy | `tenantScopeOf`, `tenantReachOf`, `acrossTenants`, `tenantKey`, `tenantCacheKey`, `isTenantId`, `TenantDirectory`, `InMemoryTenantDirectory` (see "Tenancy") |
 | Event sourcing | `EventSourcedAggregate`, `EventStore`, `defineStoredEvent`, `EventSerializer`, `EventSourcedRepository`, `SnapshotPolicy`, `personalData`, `PersonalDataCipher`, `CatchUpSubscription`, `EventStoreProjectionRebuild`, `InMemoryEventStore`, `PostgresEventStore` (see "Event sourcing") |
+| Personal data | `personalFields`, `PersonalDataErasure`, `PersonalDataExport`, `eraseDataSubject`, `inEachTenant`, `isDataSubjectId`, `PersonalDataRecord`, `InMemoryPersonalData` (see "Personal data") |
 | Read side | `Criteria`, `defineCriteria`, `validateCriteria`, `scoped`, `planCriteria`, `evaluateCriteria`, `pageOfPlan`, `hydrate`, `ReadModelStore`, `stampOf`, `TableReadModelStore`, `ProjectionRebuild`, `InMemoryReadModelStore` (see "Criteria", "Hydration" and "Projections") |
 | Persistence helpers | `optimisticUpdate`, `expectVersion` (the version a caller read, `If-Match` over HTTP, still the current one, else `PreconditionFailedError`: 412), `schemaNameOf`, `stampCreation`, `stampUpdate`, `tenantScopeOf`, `encodeCursor`, `decodeCursor` |
 | Error reporting | `ErrorReporter`, `ErrorReport`, `errorReportOf`, `reportOnce`, `isUnexpectedError`, `errorReportingMiddleware`, `DeadLetterReports`, `reportProcessFailures`, `NoopErrorReporter` |
@@ -2105,6 +2106,40 @@ the integration events is a handler of the domain events that runs before the co
 writes the outbox: the stream and the outbox records commit together or not at all.
 `eventStoreUnitOfWorkContract` of `@ddd-ts-kit/testing` proves it for each transactional store:
 nothing is published for an append rolled back or refused by a concurrency conflict.
+
+## Personal data
+
+The right to erasure, of access and to portability, for what a context keeps of a person in
+clear: its rows. What a stored event seals is erased by the key of its data subject (see "Event
+sourcing"); what a table holds in clear is declared once, next to the mapper, and erased,
+exported and inventoried from that declaration.
+
+```ts
+// infrastructure/persistence/person.personal-fields.ts
+export const personPersonalFields = personalFields<PersonRow>(PERSONS, {
+  subject: 'id', // the column that names the data subject: an opaque identifier, never personal data itself
+  fields: ['display_name', 'email'],
+  erasure: 'row', // or 'pseudonymise': the rows stay, each text field reads ERASED_PERSONAL_DATA
+});
+```
+
+| Piece | What it does |
+|---|---|
+| `personalFields(table, { subject, fields, erasure, files? })` | The declaration: which columns of a table are personal, whose they are, and how the rows of a subject are erased (`row`, deleted; `pseudonymise`, each text field reads `ERASED_PERSONAL_DATA` and any other field nothing). `files` names the columns that hold the key of a file of the subject: the file is deleted from the `FileStorage` and the column emptied, whatever the mode. Refused (`InvalidPersonalFieldsError`): no field, a column listed twice, a subject column declared personal |
+| `PersonalDataErasure` | The port a context extends and names, as it extends `Repository`: `export abstract class PatientErasure extends PersonalDataErasure {}`. `name` is the copy it reaches, as the report names it; `erase(subject)` erases what the context holds of the subject in the tenant of the work and answers how many rows it reached, none the second time. The persistence packages implement it from the declarations; `InMemoryPersonalData` here |
+| `PersonalDataExport` | The port of the right of access: `exportOf(subject)` answers one `PersonalDataRecord` per row about the subject, `{ source, values }`, each personal column as plain data (`PersonalDataValue`: a scalar as it is, an instant as ISO text, `null` for nothing, JSON text for anything else) |
+| `eraseDataSubject(subject, { keys?, copies, inEveryTenant, rebuilds, isKnown })` | The whole erasure, in order: the key of the subject destroyed (`SubjectKeyStore.erase`, wrapped by `auditedSubjectKeys` of `@ddd-ts-kit/audit` so that a dated entry proves it; `keys` left out, nothing is sealed and the copies alone are erased, as in a project whose aggregates are rows), every copy erased in every tenant, every projection fed by the store rebuilt. A copy that fails does not stop the others; the first failure is thrown once everything ran, and running the erasure again completes it. A subject that is not an opaque identifier (`isDataSubjectId`, the grammar of a tenant id) is refused before any key is touched (`NotADataSubjectIdError`); an id that destroyed no key, erased nothing and that `isKnown` denies is refused before the rebuilds (`UnknownDataSubjectError`): a mistyped id, or an erasure already complete. Answers `{ erased, copies, rebuilt }`: whether a key was destroyed, the rows each copy reached, the events each projection replayed |
+| `inEachTenant(scope, tenants)` | What `inEveryTenant` is given: runs a copy once per tenant, in the context of the work given that tenant, and sums the rows. A write of tenant data is confined to the tenant of its context and never widened by an elevation, so this is the one way to erase in every tenant |
+| `InMemoryPersonalData(name, declaration, { files? })` | The reference implementation of both ports over one declaration, the rows held in memory (`insert`, `all`): the fake of a context, and what `personalDataErasureContract` and `personalDataExportContract` of `@ddd-ts-kit/testing` hold every adapter to |
+| `pseudonymisedValueOf(sqlType)` | What a pseudonymised column reads, from its SQL type: `ERASED_PERSONAL_DATA` for a text (`text`, `varchar`, `char`, `citext`), nothing for any other type. The one rule the adapters of the four persistence packages follow (`KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`), so that one declaration erases the same way on every ORM. `NotNullablePersonalColumnError` is what they throw, before any file or row is touched, for a column that would read nothing and does not accept null |
+
+What it does not reach: an integration event published before the erasure and whatever consumed
+it, the backups until they expire, and the audit trail, which names a person by an opaque id and
+never by a name. Say so where the erasure is offered. The scheduling example runs the same chain
+by hand (`npm run erase:patient`), and
+[docs/proposals/privacy-by-design.md](../../docs/proposals/privacy-by-design.md) says what comes
+next: the adapters of each persistence package, the platform folder `init` writes, the register
+and the rules.
 
 ## How to extend
 

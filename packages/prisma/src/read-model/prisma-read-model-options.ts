@@ -1,4 +1,5 @@
 import type { PrismaReadModelDelegate } from './prisma-read-model-delegate';
+import type { PrismaReadModelTenant } from './prisma-read-model-tenant';
 
 export interface PrismaReadModelOptions<Row, Tx> {
   /** How to reach the model from a client: `(client) => client.appointmentRow`. */
@@ -10,4 +11,6 @@ export interface PrismaReadModelOptions<Row, Tx> {
   readonly columns: Readonly<Record<keyof Row & string, string>>;
   /** The field of the key, which is the `@id` of the model. Default `id`. */
   readonly key?: keyof Row & string;
+  /** For a read model of tenant data: the scope that names the tenant of the work, and the field that holds it. */
+  readonly tenant?: PrismaReadModelTenant;
 }
