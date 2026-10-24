@@ -21,6 +21,10 @@ model OutboxRecord {
   payload       Json?
   traceparent   String?
   correlationId String?   @map("correlation_id")
+{{#if tenancy.any}}
+  /// The tenant of the event, so that its consumers run in that tenant.
+  tenantId      String?   @map("tenant_id")
+{{/if}}
   status        String    @default("pending")
   attempts      Int       @default(0)
   nextAttemptAt DateTime  @map("next_attempt_at") @db.Timestamptz(3)

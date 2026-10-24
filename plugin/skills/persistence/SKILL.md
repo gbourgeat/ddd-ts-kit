@@ -58,9 +58,11 @@ lookups of the port, the columns, the mapper.
   later). `docs/concepts/file-storage.md`.
 - **Multi-tenant** (`"stack.tenancy": "shared-table"`): every statement on tenant data goes
   through the helpers of the ORM package, `tenantTable` and `ownTenantTable` (Knex),
-  `tenantCondition` and `ownTenantCondition` (Drizzle), never a table straight from the
-  executor (`tenancy/scoped-statement`); reads may widen under an audited elevation, writes
-  never. Row-level security, schema and database per tenant are in the packages, wired by
+  `tenantCondition` and `ownTenantCondition` (Drizzle), `tenantWhere` and `ownTenantWhere` spread
+  into the where (Prisma, TypeORM; `findFirst`, never `findUnique` or `save`: the key holds no
+  tenant), `tenantScopeOf` in every inserted row, never a table straight from the executor, the
+  client or the manager, a read model store built with its `tenant` option
+  (`tenancy/scoped-statement`); reads may widen under an audited elevation, writes never. Row-level security, schema and database per tenant are in the packages, wired by
   hand; prove the adapter with `tenantIsolationContract`. A measure grouped then paged selects
   from the scoped query with `derivedTable`; a raw aggregate is fine in its select as a literal
   (bind a list as one value, `state = any(?)`, rather than interpolating placeholders), raw SQL

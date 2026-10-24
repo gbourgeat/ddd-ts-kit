@@ -1,8 +1,13 @@
+{{#if tenant.scoped}}
+import type { AuditStamp, TenantScoped } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#unless tenant.scoped}}
 import type { AuditStamp } from '@ddd-ts-kit/kernel';
+{{/unless}}
 import { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate{{alias.ext}}';
 import type { {{context.pascal}}{{aggregate.pascal}} as {{aggregate.pascal}}Row } from '{{alias.generated}}/prisma/client{{alias.ext}}';
 
-export type {{aggregate.pascal}}Columns = Omit<{{aggregate.pascal}}Row, 'version' | keyof AuditStamp>;
+export type {{aggregate.pascal}}Columns = Omit<{{aggregate.pascal}}Row, 'version' | keyof AuditStamp{{#if tenant.scoped}} | keyof TenantScoped{{/if}}>;
 
 export const {{aggregate.pascal}}Mapper = {
   toDomain(row: {{aggregate.pascal}}Row): {{aggregate.pascal}} {

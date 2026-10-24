@@ -11,6 +11,7 @@ export function toOutboxRecord(row: PrismaOutboxRow): OutboxRecord {
       payload: row.payload,
       ...(row.traceparent === null ? {} : { traceparent: row.traceparent }),
       ...(row.correlationId === null ? {} : { correlationId: row.correlationId }),
+      ...(typeof row.tenantId === 'string' ? { tenantId: row.tenantId } : {}),
     },
     status: statusOf(row.status),
     attempts: row.attempts,

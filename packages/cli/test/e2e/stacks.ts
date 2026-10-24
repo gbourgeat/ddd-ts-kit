@@ -123,9 +123,27 @@ const EVERY_STACK: readonly StackFlags[] = [
   DISCOVERED_BEHIND_NATS,
   { ...DEFAULT_STACK, broker: 'redis' },
   { ...DEFAULT_STACK, broker: 'kafka', orm: 'knex' },
-  /** Shared tables on both ORMs that generate them: every repository confined to the tenant, the tenant kept in the outbox. */
+  /** Shared tables on the four ORMs: every repository confined to the tenant, the tenant kept in the outbox. */
   { ...DEFAULT_STACK, tenancy: 'shared-table' },
   { ...DISCOVERED_ON_KNEX, tenancy: 'shared-table' },
+  {
+    http: 'fastify',
+    validation: 'zod',
+    di: 'manual',
+    tests: 'vitest',
+    orm: 'prisma',
+    events: 'outbox',
+    tenancy: 'shared-table',
+  },
+  {
+    http: 'express',
+    validation: 'zod',
+    di: 'tsyringe',
+    tests: 'vitest',
+    orm: 'typeorm',
+    events: 'outbox',
+    tenancy: 'shared-table',
+  },
   /** Varnish in front of a multi-tenant API, on each family of wiring: the answers and the purges filed per tenant. */
   ...MULTI_TENANT_BEHIND_VARNISH,
   { ...DEFAULT_STACK, broker: 'nats', style: 'explicit' },

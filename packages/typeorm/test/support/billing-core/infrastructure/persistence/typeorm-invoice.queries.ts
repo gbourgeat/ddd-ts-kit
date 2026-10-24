@@ -2,16 +2,14 @@ import { LessThan, MoreThan, type FindOptionsWhere } from 'typeorm';
 import {
   encodeCursor,
   pageOf,
-  tenantScopeOf,
   type CursorPageRequest,
   type ExecutionScope,
   type OffsetPageRequest,
   type Page,
   type PageRequest,
   type SortDirection,
-  type TenantScoped,
 } from '@ddd-ts-kit/kernel';
-import type { TypeOrmContext } from '../../../../../src';
+import { tenantWhere, type TenantWhere, type TypeOrmContext } from '../../../../../src';
 import type { InvoiceQueries, InvoiceSort, InvoiceSummary } from '../../application/ports/invoice-queries.port';
 import { directionOf } from './direction-of';
 import type { InvoiceRow } from './invoice-row';
@@ -35,7 +33,7 @@ export class TypeOrmInvoiceQueries implements InvoiceQueries {
 
   private async byOffset(request: OffsetPageRequest<InvoiceSort>): Promise<Page<InvoiceSummary>> {
     const [rows, total] = await this.context.manager().findAndCount(invoices, {
-      where: tenantScopeOf(this.scope),
+      where: tenantWhere(this.scope),
       order: totalOrder(directionOf(request)),
       take: request.limit,
       skip: request.offset,
@@ -47,7 +45,7 @@ export class TypeOrmInvoiceQueries implements InvoiceQueries {
   /** One row more than asked tells whether a page follows, without counting. */
   private async byCursor(request: CursorPageRequest<InvoiceSort>): Promise<Page<InvoiceSummary>> {
     const direction = directionOf(request);
-    const tenant = tenantScopeOf(this.scope);
+    const tenant = tenantWhere(this.scope);
 
     const rows = await this.context.manager().find(invoices, {
       where: request.cursor === undefined ? tenant : beyond(positionOf(request.cursor), direction, tenant),
@@ -74,7 +72,7 @@ function totalOrder(direction: SortDirection): { amount: SortDirection; id: Sort
 function beyond(
   { amount, id }: InvoicePosition,
   direction: SortDirection,
-  tenant: TenantScoped,
+  tenant: TenantWhere,
 ): FindOptionsWhere<InvoiceRow>[] {
   const past = direction === 'asc' ? MoreThan : LessThan;
 

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:670844f6f7068322 -->
+<!-- translation-of: README.md sha256:59e551ddefede829 -->
 
 # @ddd-ts-kit/prisma
 
@@ -437,9 +437,20 @@ model Invoice {
 Ni `@default(now())` ni `@updatedAt` sur ces champs : l'instant est celui de la `Clock`, et les
 attributs de Prisma ne savent rien de qui agit.
 
+Le tenant atteint chaque instruction par trois aides, qui le lisent dans la portée d'exécution et
+refusent un travail qui n'en nomme aucun (`NoCurrentTenantError`) : `tenantWhere(scope)` se
+décompose dans le `where` d'une lecture (le tenant du travail, ou les tenants qu'atteint une
+élévation du personnel de la plateforme, `{ tenantId: { in } }` ou rien au-dessus de tous les
+tenants), `ownTenantWhere(scope)` dans le `where` d'une mise à jour ou d'une suppression (le seul
+tenant du travail, quoi qu'une élévation élargisse) et `tenantScopeOf(scope)` du noyau dans les
+`data` d'une création. `findUnique`, `update` et `delete` par clé ne servent pas : le tenant ne
+fait jamais partie de la clé. La règle `tenancy/scoped-statement` de la CLI y tient les adaptateurs
+d'un projet `--tenancy shared-table`, et `generate repository` les écrit ainsi.
+
 ```ts
 import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { optimisticUpdate, ownTenantWhere, tenantWhere } from '@ddd-ts-kit/prisma';
 
 @Repository(InvoiceRepository)
 export class PrismaInvoiceRepository implements InvoiceRepository {
@@ -451,7 +462,7 @@ export class PrismaInvoiceRepository implements InvoiceRepository {
 
   async findById(id: string): Promise<Invoice | undefined> {
     // findFirst, pas findUnique : le tenant fait partie de chaque condition, et il ne fait pas partie de la clé.
-    const row = await this.database.client().invoice.findFirst({ where: { id, ...tenantScopeOf(this.scope) } });
+    const row = await this.database.client().invoice.findFirst({ where: { id, ...tenantWhere(this.scope) } });
 
     return row === null ? undefined : InvoiceMapper.toDomain(row);
   }
@@ -473,7 +484,7 @@ export class PrismaInvoiceRepository implements InvoiceRepository {
 
   private update(state: VersionedInvoice, expected: number): Promise<Prisma.BatchPayload> {
     return this.database.client().invoice.updateMany({
-      where: { id: state.id, version: expected, ...tenantScopeOf(this.scope) },
+      where: { id: state.id, version: expected, ...ownTenantWhere(this.scope) },
       data: { ...state, ...stampUpdate(this.scope, this.clock) },
     });
   }
@@ -492,8 +503,9 @@ export abstract class InvoiceQueries {
 
 ```ts
 // contexts/billing-core/infrastructure/persistence/prisma-invoice-queries.reader.ts
-import { ExecutionScope, encodeCursor, pageOf, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { ExecutionScope, encodeCursor, pageOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { tenantWhere, type TenantWhere } from '@ddd-ts-kit/prisma';
 
 @Repository(InvoiceQueries)
 export class PrismaInvoiceQueries implements InvoiceQueries {
@@ -507,21 +519,20 @@ export class PrismaInvoiceQueries implements InvoiceQueries {
   }
 
   private async byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
-    const { invoice } = this.database.client();
-    const where = tenantScopeOf(this.scope);
-    const rows = await invoice.findMany({
+    const where = tenantWhere(this.scope);
+    const rows = await this.database.client().invoice.findMany({
       where,
       orderBy: totalOrder(directionOf(request)),
       take: request.limit,
       skip: request.offset,
     });
 
-    return pageOf(rows.map(toSummary), { total: await invoice.count({ where }) });
+    return pageOf(rows.map(toSummary), { total: await this.database.client().invoice.count({ where }) });
   }
 
   private async byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     const direction = directionOf(request);
-    const tenant = tenantScopeOf(this.scope);
+    const tenant = tenantWhere(this.scope);
     const rows = await this.database.client().invoice.findMany({
       where: request.cursor === undefined ? tenant : beyond(positionOf(request.cursor), direction, tenant),
       orderBy: totalOrder(direction),
@@ -547,7 +558,7 @@ const totalOrder = (direction: SortDirection): Prisma.InvoiceOrderByWithRelation
 function beyond(
   { amount, id }: { amount: number; id: string },
   direction: SortDirection,
-  tenant: TenantScoped,
+  tenant: TenantWhere,
 ): Prisma.InvoiceWhereInput {
   const past = direction === 'asc' ? 'gt' : 'lt';
 
@@ -573,11 +584,13 @@ base de données :
   `stampCreation(scope, clock)` à l'insertion, `stampUpdate(scope, clock)` à la mise à jour, qui
   laisse `created_at` et `created_by` intacts. L'acteur est celui de la portée d'exécution :
   l'utilisateur de la requête HTTP, ou `system:<consumer>` pour un événement consommé.
-- **Le tenant fait partie de chaque instruction** : écrit à l'insertion, et dans la condition de
-  chaque lecture et de chaque mise à jour, garde de version comprise. Une ligne d'un autre tenant
-  n'est pas trouvée, et une mise à jour qui la vise n'écrit rien, ce qu'`optimisticUpdate`
-  signale par une `ConcurrencyError`. Un travail qui ne nomme aucun tenant lève
-  `NoCurrentTenantError` avant toute requête SQL.
+- **Le tenant fait partie de chaque instruction** : écrit à l'insertion (`tenantScopeOf`), et dans
+  la condition de chaque lecture (`tenantWhere`) et de chaque mise à jour (`ownTenantWhere`), garde
+  de version comprise. Une ligne d'un autre tenant n'est pas trouvée, et une mise à jour qui la
+  vise n'écrit rien, ce qu'`optimisticUpdate` signale par une `ConcurrencyError`. Une élévation du
+  personnel de la plateforme élargit ce qu'une lecture atteint, jamais ce qu'une écriture touche.
+  Un travail qui ne nomme aucun tenant lève `NoCurrentTenantError` avant toute requête SQL. Le
+  contrat d'isolation des tenants de `@ddd-ts-kit/testing` le prouve sur ce *repository*.
 - **Une liste a un ordre total.** La clé primaire suit le champ de tri, dans le même sens, pour
   départager : sinon, les lignes égales sur le champ de tri n'ont pas d'ordre défini, et une page
   pourrait en répéter ou en sauter une. L'index couvre `(tenant_id, <sort field>, id)`.
@@ -732,6 +745,16 @@ pourquoi la table, le schéma et la colonne de chaque champ sont nommés. Les ar
 modèle sont construits à l'exécution à partir des champs de la ligne : `PrismaReadModelDelegate`
 les type donc comme des objets, et c'est le client généré qui les valide.
 
+Un modèle de lecture de données de *tenant* prend `tenant: { scope }` (et `field` quand le modèle
+porte le *tenant* ailleurs que dans `tenantId`, associé à sa colonne par `columns` ou à
+`tenant_id`) : chaque ligne s'écrit avec le *tenant* du travail en cours, chaque lecture, recherche
+et écriture lui est confinée, une élévation du personnel de la plateforme n'élargissant que les
+lectures, et la copie d'une reconstruction suit les mêmes conditions. Les clés restent uniques
+entre les *tenants*, puisque le conflit d'une insertion porte sur la seule clé : une clé que deux
+*tenants* pourraient partager (un jour, un *slug*) porte le *tenant* (`acme:2026-03-01`). Un
+registre construit sans `tenant` dans un projet `--tenancy shared-table` est signalé par
+`tenancy/scoped-statement`.
+
 ## Effacement des données personnelles
 
 L'effacement d'une personne concernée des tables d'un contexte, à partir des déclarations
@@ -784,6 +807,11 @@ les reconstructions), sont dans le README du kernel (« Données personnelles »
 - `'compare-and-set'` lit les lignes dues et prend chacune par un `updateMany` gardé par le
   nombre de tentatives lu : même garantie, pas de SQL brut, toute base de données, une
   instruction par enregistrement.
+- `tenant: true` écrit le *tenant* de chaque événement dans `tenantId`, le champ qu'un projet
+  multi-tenant décommente dans le fragment livré (`tenantId String? @map("tenant_id")`, nullable :
+  un événement sans *tenant*, et les événements publiés avant que le champ existe) : ses
+  consommateurs s'exécutent alors dans ce *tenant*. Un modèle qui porte le champ est relu dans tous
+  les cas.
 
 ![Les deux stratégies de réclamation côte à côte : skip-locked verrouille les lignes dues par un select for update skip locked en SQL brut, les lit et leur donne un bail en une transaction courte, si bien que les relais sautent les lignes des autres ; compare-and-set lit les lignes dues, prend chacune par un updateMany gardé par le nombre de tentatives lu, et relit pour remplacer les lignes qu'un autre relais a prises ; dans les deux cas un enregistrement réclamé est caché pendant leaseMs, si bien que les enregistrements d'un relais mort sont réclamés de nouveau](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/prisma-outbox-claim.fr.svg)
 

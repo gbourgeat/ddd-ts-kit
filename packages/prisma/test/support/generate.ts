@@ -140,7 +140,9 @@ async function composeSchema(): Promise<string> {
 
   const renamed = fragment
     .replace('model OutboxRecord ', 'model MessagingOutboxRecord ')
-    .replace('model ProcessedEvent ', 'model MessagingProcessedEvent ');
+    .replace('model ProcessedEvent ', 'model MessagingProcessedEvent ')
+    // The outbox of a multi-tenant project: the field the fragment leaves commented out.
+    .replace('  // tenantId      String?   @map("tenant_id")', '  tenantId      String?   @map("tenant_id")');
 
   return [
     HEADER,

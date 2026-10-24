@@ -15,6 +15,7 @@ import { PrismaModelRows } from './prisma-model-rows';
 import type { PrismaReadModelOptions } from './prisma-read-model-options';
 import { PrismaTableRows } from './prisma-table-rows';
 import { RowMapper } from './row.mapper';
+import { TenantOfRows } from './tenant-of-rows';
 
 const KEPT = { deleted: false };
 
@@ -46,6 +47,7 @@ export class PrismaReadModelTable<Row extends object, Tx extends PrismaRawQuerie
       path: schema === undefined ? shadow : `"${schema.replaceAll('"', '""')}".${shadow}`,
       key: options.key ?? 'id',
       mapper: this.mapper,
+      tenant: new TenantOfRows(options.tenant, options.columns),
     });
 
     this.rebuild = new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), {
@@ -69,10 +71,13 @@ export class PrismaReadModelTable<Row extends object, Tx extends PrismaRawQuerie
   async search(plan: CriteriaPlan): Promise<SearchedRows<Row>> {
     const { where, counted, orderBy, take, skip } = criteriaToPrisma(plan);
     const model = this.rows.model();
-    const found = await model.findMany({ where: { AND: [KEPT, where] }, orderBy, take, skip });
+    const kept = [KEPT, this.rows.reading()];
+    const found = await model.findMany({ where: { AND: [...kept, where] }, orderBy, take, skip });
     const rows = found.map((row) => this.mapper.toRow(row));
 
-    return plan.kind === 'cursor' ? { rows } : { rows, total: await model.count({ where: { AND: [KEPT, counted] } }) };
+    return plan.kind === 'cursor'
+      ? { rows }
+      : { rows, total: await model.count({ where: { AND: [...kept, counted] } }) };
   }
 
   rebuilding(): Promise<boolean> {

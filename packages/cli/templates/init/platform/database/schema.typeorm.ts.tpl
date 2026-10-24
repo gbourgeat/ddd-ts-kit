@@ -6,7 +6,13 @@ import { {{#if eventSourcing.on}}eventStoreEntities, {{/if}}outboxEntity, proces
 /** The schema of what the kit stores for the application: the outbox and the processed events. */
 export const MESSAGING_SCHEMA = 'messaging';
 
+{{#if tenancy.any}}
+// The tenant of each event, so that its consumers run in that tenant.
+export const outbox = outboxEntity({ schema: MESSAGING_SCHEMA, tenant: true });
+{{/if}}
+{{#unless tenancy.any}}
 export const outbox = outboxEntity({ schema: MESSAGING_SCHEMA });
+{{/unless}}
 export const processedEvents = processedEventEntity({ schema: MESSAGING_SCHEMA });
 
 {{#if eventSourcing.on}}

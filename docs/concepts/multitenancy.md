@@ -94,14 +94,15 @@ on PostgreSQL:
 
 | Strategy | Knex | Drizzle | Prisma | TypeORM |
 |---|---|---|---|---|
-| Shared tables | `tenantTable`, `ownTenantTable`, `whereTenant`, `derivedTable`; read models with `tenant`; `addTenantColumn` to migrate | `tenantCondition`, `ownTenantCondition`; read models with `tenant` | by hand: `tenantScopeOf` and `tenantReachOf` in every statement, no helper, no contract run | by hand, as Prisma |
+| Shared tables | `tenantTable`, `ownTenantTable`, `whereTenant`, `derivedTable`; read models with `tenant`; `addTenantColumn` to migrate | `tenantCondition`, `ownTenantCondition`; read models with `tenant` | `tenantWhere` and `ownTenantWhere` spread into the where, `tenantScopeOf` into the data; read models with `tenant`; the outbox with `tenant: true` | `tenantWhere` and `ownTenantWhere`; read models with `tenant`; `outboxEntity({ tenant: true })` |
 | Row-level security | `enableTenantIsolation`, `tenantSession` | `tenantPolicies`, `forceRowLevelSecurity`, `tenantSession` | not shipped | not shipped |
 | Schema per tenant | `tenantSchemaTable`, `migrateTenantSchema`, `tenantSearchPath` | not shipped: a drizzle table is bound to its schema where it is declared | not shipped | not shipped |
 | Database per tenant | `TenantDatabases`, `createTenantRoutedUnitOfWork`, `migrateEveryTenant` | not shipped | not shipped | not shipped |
 
-`init --tenancy shared-table` generates the first strategy on Knex and Drizzle: every repository
+`init --tenancy shared-table` generates the first strategy on the four ORMs: every repository
 through the helpers, the outbox keeping the tenant, and the rule `tenancy/scoped-statement` of the
-checker reporting a statement that reaches a table straight from the executor. The three others
+checker reporting a statement that reaches a table straight from the executor, the client or the
+manager, a row reached by its key alone, a read model store built without its tenant. The three others
 are wired by hand from the packages for now; `init` refuses them and says what to add.
 
 A repository on shared tables, a simplified version of what the generator writes on Knex (the
@@ -189,9 +190,9 @@ published yet go to that customer too, so that their consumers run in its tenant
 the migration also runs on a database built from the current schema. The example application
 went this way (its ADR-0003): one network of practices is one tenant.
 
-The outbox keeps the tenant of each event on Knex (`tenant: true`) and Drizzle
-(`tenantOutboxTable`); the Prisma and TypeORM outboxes do not store it yet, so their consumers
-run in no tenant.
+The outbox keeps the tenant of each event on Knex (`tenant: true`), Drizzle (`tenantOutboxTable`),
+Prisma (`tenant: true`, on a model with the `tenantId` field the shipped fragment leaves commented
+out) and TypeORM (`outboxEntity({ tenant: true })`), so that its consumers run in that tenant.
 
 Three rules hold whatever the strategy:
 

@@ -36,13 +36,13 @@ export function generateRepository(scope: Scope, aggregate: Name): void {
   );
 }
 
-const TENANT_AWARE: readonly OrmStack[] = ['drizzle', 'knex'];
+const TENANT_AWARE: readonly OrmStack[] = ['drizzle', 'knex', 'prisma', 'typeorm'];
 
 /**
  * `--tenant-scoped`, or a project whose `stack.tenancy` is not `none`: the adapter confines every
  * statement to the tenant of the work in progress through the helpers of its ORM package
- * (`tenantTable`, `tenantCondition`). Defence in depth: the permission is still decided in the
- * application layer.
+ * (`tenantTable`, `tenantCondition`, `tenantWhere`). Defence in depth: the permission is still
+ * decided in the application layer.
  */
 function tenantVars(scope: Scope): RenderContext {
   const asked = scope.flags.tenantScoped || scope.config.stack.tenancy !== 'none';
@@ -50,7 +50,7 @@ function tenantVars(scope: Scope): RenderContext {
 
   if (asked && !scoped) {
     scope.ws.note(
-      `--tenant-scoped is generated for drizzle and knex only: with ${scope.config.stack.orm}, add the tenant column to the storage (\`tenant_id\`), write \`tenantScopeOf(this.scope)\` on insert and put it in the condition of every read and every update.`,
+      `--tenant-scoped is generated for drizzle, knex, prisma and typeorm only: with ${scope.config.stack.orm}, add the tenant column to the storage (\`tenant_id\`), write \`tenantScopeOf(this.scope)\` on insert and put it in the condition of every read and every update.`,
     );
   }
 

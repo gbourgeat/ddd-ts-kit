@@ -306,9 +306,20 @@ export const invoices = new EntitySchema<InvoiceRow>({
 });
 ```
 
+The tenant reaches every statement through three helpers, which read it from the execution scope
+and refuse work that names none (`NoCurrentTenantError`): `tenantWhere(scope)` is spread into
+the where of a read, as find options or on a query builder (the tenant of the work, or the tenants
+an elevation of platform staff reaches, `In([...])` or nothing over every tenant),
+`ownTenantWhere(scope)` into the criteria of an update or a delete (the one tenant of the work,
+whatever an elevation widens) and `tenantScopeOf(scope)` of the kernel into an inserted row.
+`save` and `upsert` are not used: they write by the key, which the tenant is never part of. The
+rule `tenancy/scoped-statement` of the CLI holds the adapters of a `--tenancy shared-table`
+project to it, and `generate repository` writes them this way.
+
 ```ts
 import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { insertIgnoringConflict, optimisticUpdate, ownTenantWhere, tenantWhere } from '@ddd-ts-kit/typeorm';
 
 @Repository(InvoiceRepository)
 export class TypeOrmInvoiceRepository implements InvoiceRepository {
@@ -319,7 +330,7 @@ export class TypeOrmInvoiceRepository implements InvoiceRepository {
   ) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
-    const row = await this.context.manager().findOneBy(invoices, { id, ...tenantScopeOf(this.scope) });
+    const row = await this.context.manager().findOneBy(invoices, { id, ...tenantWhere(this.scope) });
 
     return row === null ? undefined : InvoiceMapper.toDomain(row);
   }
@@ -339,7 +350,7 @@ export class TypeOrmInvoiceRepository implements InvoiceRepository {
   }
 
   private async update(state: VersionedInvoice, expected: number): Promise<number> {
-    const guarded = { id: state.id, version: expected, ...tenantScopeOf(this.scope) };
+    const guarded = { id: state.id, version: expected, ...ownTenantWhere(this.scope) };
     const row = { ...state, ...stampUpdate(this.scope, this.clock) };
 
     return (await this.context.manager().update(invoices, guarded, row)).affected ?? 0;
@@ -362,8 +373,9 @@ export abstract class InvoiceQueries {
 ```ts
 // contexts/billing-core/infrastructure/persistence/type-orm-invoice-queries.reader.ts
 import { LessThan, MoreThan, type FindOptionsWhere } from 'typeorm';
-import { ExecutionScope, encodeCursor, pageOf, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { ExecutionScope, encodeCursor, pageOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { tenantWhere, type TenantWhere } from '@ddd-ts-kit/typeorm';
 
 @Repository(InvoiceQueries)
 export class TypeOrmInvoiceQueries implements InvoiceQueries {
@@ -378,7 +390,7 @@ export class TypeOrmInvoiceQueries implements InvoiceQueries {
 
   private async byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     const [rows, total] = await this.context.manager().findAndCount(invoices, {
-      where: tenantScopeOf(this.scope),
+      where: tenantWhere(this.scope),
       order: totalOrder(directionOf(request)),
       take: request.limit,
       skip: request.offset,
@@ -389,7 +401,7 @@ export class TypeOrmInvoiceQueries implements InvoiceQueries {
 
   private async byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     const direction = directionOf(request);
-    const tenant = tenantScopeOf(this.scope);
+    const tenant = tenantWhere(this.scope);
     const rows = await this.context.manager().find(invoices, {
       where: request.cursor === undefined ? tenant : beyond(positionOf(request.cursor), direction, tenant),
       order: totalOrder(direction),
@@ -413,7 +425,7 @@ const totalOrder = (direction: SortDirection) => ({ amount: direction, id: direc
 function beyond(
   { amount, id }: { amount: number; id: string },
   direction: SortDirection,
-  tenant: TenantScoped,
+  tenant: TenantWhere,
 ): FindOptionsWhere<InvoiceRow>[] {
   const past = direction === 'asc' ? MoreThan : LessThan;
 
@@ -438,10 +450,13 @@ The rules these examples hold, and that the tests of this package check on a rea
   clock)` on insert, `stampUpdate(scope, clock)` on update, which leaves `created_at` and
   `created_by` alone. The actor is the one of the execution scope: the user of the request, or
   `system:<consumer>` for a consumed event.
-- **The tenant is part of every statement**: written on insert, and in the condition of every
-  read and every update, the version guard included. A row of another tenant is not found, and
-  an update aimed at it writes nothing, which `optimisticUpdate` reports as a
-  `ConcurrencyError`. Work that names no tenant raises `NoCurrentTenantError` before any SQL.
+- **The tenant is part of every statement**: written on insert (`tenantScopeOf`), and in the
+  condition of every read (`tenantWhere`) and every update (`ownTenantWhere`), the version guard
+  included. A row of another tenant is not found, and an update aimed at it writes nothing, which
+  `optimisticUpdate` reports as a `ConcurrencyError`. An elevation of platform staff widens what
+  a read reaches, never what a write touches. Work that names no tenant raises
+  `NoCurrentTenantError` before any SQL. The tenant isolation contract of
+  `@ddd-ts-kit/testing` proves it on this repository.
 - **A list has a total order.** The primary key follows the sort field, in the same direction,
   as a tie-breaker: rows equal on the sort field otherwise have no defined order, and a page
   could repeat or skip one of them. The index covers `(tenant_id, <sort field>, id)`.
@@ -532,6 +547,14 @@ Criteria and read models were never run on MySQL or SQLite.
 The table is written through its entity; the copy of a rebuild, which has none, is written by
 column through the same query builder.
 
+A read model of tenant data takes `tenant: { scope }` (and `property` when the entity holds the
+tenant other than in `tenantId`, which `tenantColumn()` declares): every row is written with the
+tenant of the work in progress, every read, search and write is confined to it, an elevation of
+platform staff widening the reads only, and the copy of a rebuild follows the same conditions.
+Keys stay unique across tenants, as the conflict of an insert is on the key alone: a key two
+tenants could share (a day, a slug) carries the tenant (`acme:2026-03-01`). A store built without
+`tenant` in a `--tenancy shared-table` project is reported by `tenancy/scoped-statement`.
+
 ## Personal data erasure
 
 The erasure of a data subject from the tables of a context, from the `personalFields` declarations
@@ -589,6 +612,10 @@ copy in every tenant, the rebuilds), is in the README of the kernel ("Personal d
 - `TypeOrmProcessedEventStore.markProcessed` is an insert ignoring the conflict on
   `(consumer, event_id)`. Run the consumer inside the unit of work: the mark then commits with
   the effects of the handler, and disappears with them if it fails.
+- `outboxEntity({ tenant: true })` adds `tenant_id`, nullable, and the store writes the tenant of
+  each event to it, so that its consumers run in that tenant: the outbox of a multi-tenant
+  project. A project that becomes multi-tenant turns it on and generates the migration that adds
+  the column; the events published before it belong to no tenant.
 
 The options of the outbox store, and the relay that reads it:
 
