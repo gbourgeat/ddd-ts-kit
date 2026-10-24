@@ -40,14 +40,15 @@ function linked(entries: readonly unknown[], archive: AuditArchive, anchor: stri
 
   for (const [position, entry] of entries.entries()) {
     const sequence = archive.fromSequence + position;
-    const hash: unknown = Reflect.get(Object(entry), 'hash');
+    const record: object = new Object(entry);
+    const hash: unknown = Reflect.get(record, 'hash');
 
     if (
       typeof hash !== 'string' ||
-      Reflect.get(Object(entry), 'chain') !== archive.chain ||
-      Reflect.get(Object(entry), 'sequence') !== sequence ||
-      Reflect.get(Object(entry), 'previousHash') !== previousHash ||
-      hash !== sealOf(entry)
+      Reflect.get(record, 'chain') !== archive.chain ||
+      Reflect.get(record, 'sequence') !== sequence ||
+      Reflect.get(record, 'previousHash') !== previousHash ||
+      hash !== sealOf(record)
     ) {
       return { valid: false, reason: 'chain', sequence };
     }
@@ -61,9 +62,8 @@ function linked(entries: readonly unknown[], archive: AuditArchive, anchor: stri
 }
 
 /** The hash of an entry as `hashOf` computes it: SHA-256 of the canonical form without its `hash`. */
-function sealOf(entry: unknown): string {
-  const fields: [string, unknown][] = typeof entry === 'object' && entry !== null ? Object.entries(entry) : [];
-  const content = Object.fromEntries(fields.filter(([key]) => key !== 'hash'));
+function sealOf(entry: object): string {
+  const content = Object.fromEntries(Object.entries(entry).filter(([key]) => key !== 'hash'));
 
   return createHash('sha256').update(canonicalize(content), 'utf8').digest('hex');
 }
