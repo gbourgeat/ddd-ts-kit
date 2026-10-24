@@ -9,6 +9,7 @@ import type { DeclaredFacts, DeclaredUseCase } from './declared-facts';
 import { readDeclarations } from './read-declarations';
 import { readBackgroundJobs } from './read-background-jobs';
 import { readJobs } from './read-jobs';
+import { readPersonalData } from './read-personal-data';
 import { readProcesses } from './read-processes';
 import { readStateMachines } from './read-state-machines';
 import { withoutComments } from './without-comments';
@@ -52,6 +53,7 @@ type TreeFacts = Pick<
   | 'backgroundJobs'
   | 'stateMachines'
   | 'processes'
+  | 'personalData'
 >;
 
 /** What the folders of the context hold, whatever the style of the project. */
@@ -74,6 +76,7 @@ function treeFacts(ws: Workspace, tree: ContextTree, name: string): TreeFacts {
     backgroundJobs: readBackgroundJobs(ws, tree),
     stateMachines: readStateMachines(ws, tree),
     processes: readProcesses(ws, tree),
+    personalData: readPersonalData(ws, tree),
   };
 }
 
@@ -172,8 +175,27 @@ function publishedEventsOf(ws: Workspace, directory: string): PublishedEvent[] {
   const events = ws.list(directory).flatMap((file) => {
     const content = (ws.read(`${directory}/${file}`) ?? '').replace(/\s+/g, ' ');
 
-    return [...content.matchAll(DECLARED_EVENT)].map((match) => ({ type: match[1] ?? '', version: Number(match[2]) }));
+    return [...content.matchAll(DECLARED_EVENT)].map((match, position, all) => {
+      const declaration = content.slice(match.index, all[position + 1]?.index);
+      const personal = personalPayloadOf(declaration);
+
+      return { type: match[1] ?? '', version: Number(match[2]), ...(personal === undefined ? {} : { personal }) };
+    });
   });
 
   return events.sort((left, right) => left.type.localeCompare(right.type) || left.version - right.version);
+}
+
+/** The `personal: { subject, fields }` option of one declared event, as written. */
+function personalPayloadOf(declaration: string): PublishedEvent['personal'] {
+  const option = /\bpersonal:\s*\{([^}]*)\}/.exec(declaration)?.[1];
+  const subject = option === undefined ? undefined : /\bsubject:\s*['"]([^'"]+)['"]/.exec(option)?.[1];
+
+  if (option === undefined || subject === undefined) {
+    return undefined;
+  }
+
+  const fields = /\bfields:\s*\[([^\]]*)\]/.exec(option)?.[1] ?? '';
+
+  return { subject, fields: [...fields.matchAll(/['"]([^'"]+)['"]/g)].map((field) => field[1] ?? '') };
 }

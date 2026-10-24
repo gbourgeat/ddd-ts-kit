@@ -38,6 +38,7 @@ a command, checked for drift in the pipeline, never edited by hand: the guard re
 | `openapi/openapi.yaml` (one file per document of `openapi.documents`), `<platform>/http/openapi-documents.ts` | generated from the route definitions and the config | `npm run docs:generate` |
 | `docs/integration/event-catalog.md`, `asyncapi.yaml` | generated from `defineIntegrationEvent` declarations and their handlers | `npm run events:generate` |
 | `docs/context-map.md` between its markers, lists of each `CONTEXT.md` between theirs, `<context>.declarations.ts` and the `<layer>.declarations.ts` of each layer | generated from the config and the tree | `npx ddd-ts-kit docs` (every `generate` runs it) |
+| `docs/privacy/register.md` between its markers (with `--privacy on`) | generated from the `personalFields` declarations and the `personal` option of the integration events; the purposes, the lawful basis and the recipients outside the system around them are written by the controller | `npx ddd-ts-kit docs` (every `generate` runs it) |
 | `.dependency-cruiser.cjs` | generated from the config | `npx ddd-ts-kit depcruise-config --write` |
 | `docs/integration/README.md` | written | you |
 | `docs/adr/NNNN-<slug>.md` | written, one decision each | `npx ddd-ts-kit generate adr "<title>"` |
