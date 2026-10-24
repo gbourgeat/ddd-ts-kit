@@ -11,7 +11,7 @@ import { specVars } from '../spec-vars';
 import { vars } from '../vars';
 import { wire } from '../wire';
 import { backgroundJobVars } from './background/background-job-vars';
-import { requireContainer } from './background/require-container';
+import { specFamily } from './background/spec-family';
 import { readSentCommand } from './job/read-sent-command';
 
 /** `CompileReportBackgroundJob` and `compile-report-background-job` name the job `CompileReport`. */
@@ -22,14 +22,13 @@ export const backgroundJobKind: Kind = {
   aliases: [],
   usage: 'background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]...',
   summary:
-    'A job a use case enqueues, run later by a worker as the actor that enqueued it, with retries and a lease: the class named by its static jobName, its spec through the queue of the test application and its registration.',
+    'A job a use case enqueues, run later by a worker as the actor that enqueued it, with retries and a lease: the class named by its static jobName, its spec through a queue in memory and its registration.',
   positionals: ['context', 'Name'],
   writesShared: false,
   textFlags: ['command'],
   run: (request) => {
     const scope = openScope(request);
 
-    requireContainer(scope, 'background job');
     learnTerms(scope);
 
     const input = (request.args[1] ?? '').replace(ROLE_SUFFIX, '');
@@ -44,7 +43,10 @@ export const backgroundJobKind: Kind = {
 
     emit(scope, context, [
       ['background-job/background-job.ts.tpl', `application/background/${name.kebab}.background-job.ts`],
-      ['background-job/background-job.spec.ts.tpl', `test/unit/${name.kebab}.background-job.spec.ts`],
+      [
+        `background-job/background-job.spec.${specFamily(scope)}.ts.tpl`,
+        `test/unit/${name.kebab}.background-job.spec.ts`,
+      ],
     ]);
 
     wire(scope, 'background-job', context);

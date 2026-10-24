@@ -123,7 +123,7 @@ export function scaffoldEverything(root: string, stack = DEFAULT_STACK, more: re
   scaffoldShipping(step, isDeclared(stack));
   scaffoldShippingReaction(step, withHttp, grantOf(stack, more));
   scaffoldOrderFulfilment(step, withHttp, grantOf(stack, more));
-  scaffoldBillingLifecycle(step, stack);
+  scaffoldBillingLifecycle(step);
   scaffoldNamedReactions(step);
   // The arrangement the specs of billing share, once every fake of the context exists.
   step('generate', 'test-world', 'billing');

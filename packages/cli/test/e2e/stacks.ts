@@ -62,6 +62,7 @@ export const MULTI_TENANT_BEHIND_VARNISH: readonly StackFlags[] = [
     tenancy: 'shared-table',
     'http-cache': 'varnish',
   },
+  // The background jobs in the table of the tenant-scoped persistence, consumed by a platform wired by hand under Nest.
   {
     http: 'nest',
     validation: 'standard-schema',
@@ -71,6 +72,7 @@ export const MULTI_TENANT_BEHIND_VARNISH: readonly StackFlags[] = [
     events: 'outbox',
     tenancy: 'shared-table',
     'http-cache': 'varnish',
+    queue: 'database',
   },
 ];
 
@@ -138,6 +140,7 @@ const EVERY_STACK: readonly StackFlags[] = [
     authn: 'keycloak',
     cache: 'redis',
   },
+  // The background jobs on the server of the cache, consumed by a platform wired by hand under Nest; the processes in the database.
   {
     http: 'nest',
     validation: 'standard-schema',
@@ -147,6 +150,7 @@ const EVERY_STACK: readonly StackFlags[] = [
     events: 'outbox',
     cache: 'redis',
     broker: 'rabbitmq',
+    queue: 'redis',
   },
   {
     http: 'express',

@@ -17,9 +17,11 @@ import type {
   InMemoryQueryBus,
   IntegrationEventPublisher,
   IntegrationEventSubscriber,
+  JobQueue,
   JobScheduler,
   Logger,
   Metrics,
+  ProcessRunner,
   {{#if cache.rateLimit}}
   RateLimiter,
   {{/if}}
@@ -32,6 +34,7 @@ import type { Persistence } from '{{alias.platform}}/database/persistence{{alias
 {{#if files.any}}
 import type { Files } from '{{alias.platform}}/files/create-files{{alias.ext}}';
 {{/if}}
+import type { BackgroundJobs } from '{{alias.platform}}/jobs/background-jobs{{alias.ext}}';
 import type { Privacy } from '{{alias.platform}}/privacy/create-privacy{{alias.ext}}';
 
 /** Wraps an adapter from outside: a span for its kind and, for what leaves the process, the default policy unless it states its own. */
@@ -82,6 +85,12 @@ export interface Platform {
   {{/if}}
   /** Where a context registers its scheduled jobs; the application starts it when this process runs the jobs. */
   readonly jobs: JobScheduler;
+  /** What a use case enqueues through: a background job is written with its command and run later by the worker, as the actor that enqueued it. */
+  readonly jobQueue: JobQueue;
+  /** Where a context registers its background jobs; the application starts it when this process runs the jobs. */
+  readonly backgroundJobs: BackgroundJobs;
+  /** Runs the steps of the process managers, in the unit of work of the step, and delivers their timeouts through the queue. */
+  readonly processes: ProcessRunner;
   readonly adapter: Adapt;
   /** The same, for an adapter that states its own policy, as aspects or as decorators on its class. */
   readonly selfGoverned: Adapt;

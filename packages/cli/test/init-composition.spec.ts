@@ -220,7 +220,7 @@ describe('the composition root init writes, by hand', () => {
 
     // Nothing flushes the logger for a platform built by hand: it does, last.
     expect(composition).toContain(
-      '  await platform.jobs.stop();\n  await options.events.close();\n  await platform.logger.flush();\n}',
+      '  await platform.jobs.stop();\n  await platform.backgroundJobs.stop();\n  await options.events.close();\n  await platform.logger.flush();\n}',
     );
   });
 });
