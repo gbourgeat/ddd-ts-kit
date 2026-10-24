@@ -79,7 +79,8 @@ Conventional commits, checked by commitlint at `commit-msg`:
 4. Read `git diff --cached --stat` and `npx ddd-ts-kit check --commit-size --staged`: one
    story, within the limits?
 5. Commit. The pre-commit hook runs the linter and the architecture check on the staged
-   files, and the commit size; never pass `--no-verify`.
+   files, regenerates and adds the pages of what the tests state when a spec is staged, and reads
+   the commit size; never pass `--no-verify`.
 
 Propose the commit (files and message) and let the user confirm, unless you were asked to
 commit or you are a worker in your own worktree, where each finished slice is committed.

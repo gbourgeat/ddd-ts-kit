@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:4c7a211e72a68d3c -->
+<!-- translation-of: testing-strategy.md sha256:6c89aa75f1e7b462 -->
 
 # Stratégie de test
 
@@ -571,6 +571,25 @@ complète quand le changement touche un code dont les tests dépendent et que St
 (un *fake*, un *builder*, un monde, la plateforme, une dépendance), puis liste les survivants des
 fichiers que le changement a touchés (`ddd-ts-kit mutation --changed <base>`). Lisez-les avant de
 demander une revue ; le plancher reste l'affaire de la nuit.
+
+## Documentation vivante
+
+Le métier demande aux tests ce que Gherkin promet : une lecture des règles dans ses propres mots. Le
+kit la donne sans seconde langue : le titre d'un test énonce une règle (`test/title-states-a-rule`),
+et `ddd-ts-kit docs` écrit `docs/behaviour/<context>.md` d'après les titres des *specs* de chaque
+contexte, groupés comme les *specs* les groupent, avec le rôle de chaque *spec* (`slot (value
+object), in calendars`), une règle planifiée (`it.todo`) et une *spec* mise de côté dites comme
+telles, et `docs/behaviour/application.md` pour les *specs* hors des contextes (bout en bout,
+acceptation, architecture). `npm run docs:generate` les écrit, le *hook* de pre-commit les régénère et
+les ajoute quand une *spec* est indexée (un worker confiné à son contexte les laisse au tronc),
+`docs --check` les tient à jour, et elles sont commitées avec les *specs* : le test est la preuve,
+la page sa lecture. Sur l'exemple,
+`scheduling` liste 593 règles d'après 165 *specs*, une table de cas comptant pour une règle.
+
+Un fichier `.feature` promettrait la même lecture, au prix d'une glu de *step definitions*, d'une
+seconde grammaire à enseigner et d'une dérive que le *pipeline* ne voit pas. Gherkin ne paie que si
+le métier écrit lui-même les scénarios ; il est alors une entrée pour les *specs* d'acceptation
+d'une story, jamais le moteur.
 
 ## Limites et quand ne pas l'utiliser
 

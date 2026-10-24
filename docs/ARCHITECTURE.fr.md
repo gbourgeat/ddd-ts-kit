@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:0c2a0fde2d7417bc -->
+<!-- translation-of: ARCHITECTURE.md sha256:bf35f615ec2d53ba -->
 
 # Référence de l'architecture
 
@@ -18,7 +18,8 @@ modèle, un vocabulaire et ses données.
   les routes, les événements consommés et publiés, les ports avec leurs adaptateurs, les
   politiques, les *gateways* et une ligne de dépendances. `ddd-ts-kit docs` l'écrit,
   `docs --check` détecte sa dérive, et `ddd-ts-kit describe <context> --json` donne les mêmes
-  faits sous forme de données.
+  faits sous forme de données. `ddd-ts-kit docs` écrit aussi `docs/behaviour/<context>.md`, ce
+  qu'énoncent les tests du contexte, lu dans les titres de ses *specs*.
 - Chaque contexte est classé : `core` (différenciant, il reçoit le meilleur effort de
   conception), `supporting` (nécessaire, non différenciant) ou `generic` (à acheter ou à garder
   trivial).
@@ -1624,6 +1625,13 @@ s'exécute une fois au chargement du module, n'est jamais mutée : un test l'én
 rien. Une *pull request* reçoit une lecture de son changement : les survivants des fichiers qu'elle
 a touchés, d'après une passe incrémentale qui réutilise le rapport de la nuit. Le plancher n'est pas
 un but, et la mesure ne se rétrécit jamais à la main (`test/mutation-governed`).
+
+Ce qu'énoncent les tests se relit comme un document : `ddd-ts-kit docs` écrit `docs/behaviour/`,
+une page par contexte et une pour l'application, d'après les titres des *specs*, groupés comme les
+*specs* les groupent, une règle planifiée (`it.todo`) dite comme telle. Le titre d'un test énonce une
+règle (`test/title-states-a-rule`), donc la page se lit comme le métier l'écrirait ; le *hook* de
+pre-commit la régénère quand une *spec* est commitée et `docs --check` la tient à jour : le test est
+la preuve, la page sa lecture, et aucune seconde langue n'est tenue en phase avec le code.
 
 Une *spec* d'acceptation (`test/acceptance/<story>.acceptance.spec.ts`) est le contrat d'une
 *story*, écrit à partir des critères de `docs/architecture/stories/<story>.md` avant tout son

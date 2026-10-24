@@ -15,7 +15,9 @@ A system is a set of **bounded contexts**. Each one owns a model, a vocabulary a
   It ends with a generated `## Reference`: use cases with their permission, routes, consumed
   and published events, ports with their adapters, policies, gateways and a dependencies
   line. `ddd-ts-kit docs` writes it, `docs --check` detects its drift, and
-  `ddd-ts-kit describe <context> --json` gives the same facts as data.
+  `ddd-ts-kit describe <context> --json` gives the same facts as data. `ddd-ts-kit docs` also
+  writes `docs/behaviour/<context>.md`, what the tests of the context state, read from the titles
+  of its specs.
 - Every context is classified: `core` (differentiating, gets the best design effort),
   `supporting` (needed, not differentiating) or `generic` (buy or keep trivial).
 - Relationships are declared in `ddd-ts-kit.config.json`, never implied by an import. A
@@ -1554,6 +1556,13 @@ A rule written as a declaration, in code that runs once when the module loads, i
 test states it, the score says nothing about it. A pull request gets a reading of its change: the
 survivors of the files it touched, from an incremental run that reuses the report of the night. The
 floor is not a goal, and the measure is never narrowed by hand (`test/mutation-governed`).
+
+What the tests state is read back as a document: `ddd-ts-kit docs` writes `docs/behaviour/`, one
+page per context and one for the application, from the titles of the specs, grouped as the specs
+group them, a planned rule (`it.todo`) said so. The title of a test states a rule
+(`test/title-states-a-rule`), so the page reads as the business would write it; the pre-commit hook
+regenerates it when a spec is committed and `docs --check` holds it current: the test is the proof,
+the page its reading, and no second language is kept in step with the code.
 
 An acceptance spec (`test/acceptance/<story>.acceptance.spec.ts`) is the contract of a story,
 written from the criteria of `docs/architecture/stories/<story>.md` before any of its code. Each

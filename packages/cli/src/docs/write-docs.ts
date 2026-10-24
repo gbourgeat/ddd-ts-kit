@@ -9,18 +9,34 @@ import { CONTEXT_MAP } from './context-map-file';
 import { contextMapLines } from './context-map-lines';
 import { readContexts } from './read-contexts';
 import { refreshContextDoc } from './refresh-context-doc';
+import { writeBehaviour } from './write-behaviour';
 import { writeCodeOwners } from './write-code-owners';
 import { writeOpenApiDocuments } from './write-open-api-documents';
 
 const INTEGRATION_README = 'docs/integration/README.md';
 
+/** How the documentation is written: which layout a context declared by an earlier version keeps, and how far the writing reaches. */
+export interface DocsWriting {
+  readonly earlier?: EarlierDeclarations;
+  /**
+   * `whole`: every generated document. `context`: what a worker confined to its context may write
+   * (`generate --local-only`), the pages of what the tests state left to the trunk, where `docs`
+   * writes them.
+   */
+  readonly scope?: 'whole' | 'context';
+}
+
 /**
  * Plans every generated part of the documentation: the lists of each CONTEXT.md, the block
  * of the context map, the barrel of each declared context, the code owners once an owner is
- * configured, and, once, the skeleton of what only people can write. The caller commits the workspace, or reads what it would change to detect drift.
+ * configured, the pages of what the tests state, and, once, the skeleton of what only people can write. The caller commits the workspace, or reads what it would change to detect drift.
  * Answers the contexts left in a layout of their declarations an earlier version wrote, which `earlier` keeps.
  */
-export function writeDocs(ws: Workspace, config: Config, earlier: EarlierDeclarations = 'move'): KeptContext[] {
+export function writeDocs(
+  ws: Workspace,
+  config: Config,
+  { earlier = 'move', scope = 'whole' }: DocsWriting = {},
+): KeptContext[] {
   const contexts = readContexts(ws, config);
 
   for (const context of contexts) {
@@ -35,6 +51,10 @@ export function writeDocs(ws: Workspace, config: Config, earlier: EarlierDeclara
 
   writeOpenApiDocuments(ws, config);
   writeCodeOwners(ws, config, contexts);
+
+  if (scope === 'whole') {
+    writeBehaviour(ws, config, contexts);
+  }
 
   // Written by people from here on: never replaced, not even with --force.
   if (!ws.exists(INTEGRATION_README)) {
