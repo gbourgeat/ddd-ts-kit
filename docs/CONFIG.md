@@ -755,6 +755,29 @@ deviation:
 - **The measure cannot be narrowed quietly** (`test/coverage-governed`): no `include`, `exclude` or `thresholds` by hand in the runner config, no such flag in a script, no `v8 ignore` or `istanbul ignore` comment without `-- ADR-NNNN: <reason>`.
 - Under the legacy decorator mode the generated Vitest config lists `decoratorCoverage()` of `@ddd-ts-kit/testing/vitest`: the statements the transform writes to apply decorators hold a branch per named type that no test can take, and are kept out of the measure.
 
+## Time budget
+
+```json
+"budget": { "unit": 3000, "enforce": true }
+```
+
+Each spec file is held to the time budget of its level, in milliseconds. The reporter of the test
+runner (`@ddd-ts-kit/testing/budget/vitest`, `@ddd-ts-kit/testing/budget/jest`, named in the runner
+config `init` writes and passed with `--reporter` where the pipeline names its reporters) reads the
+key, names the slowest spec of each level at the end of every run, and warns when a spec file took more than its budget, its tests and hooks timed, the loading of its modules left out (the import of the graph of the application, shared by the files and paid by whichever runs first); with `"enforce": true` under `budget` it fails the run instead. A duration depends on the load of the machine as much as on the spec: enforce the budget once the measures of the project are stable. A unit spec of a context runs the model and
+the use cases on fakes; an integration spec of a context, and a spec of the platform, opens a database
+or reaches a server. The specs of the application outside the contexts (end to end, acceptance,
+architecture) are not held: a flow has the time it needs.
+
+| Level | Reference | Why this budget |
+|---|---|---|
+| `unit` | 5000 | a unit spec file over five seconds hides a world rebuilt per test, I/O behind a fake, or a wait; the slowest of the example takes 1.6 seconds |
+| `integration` | 30000 | a database opened in the process and its tables created, a server reached, journeys replayed; the slowest of the example takes 11 seconds, under load |
+
+- **Lowering a budget is free. Raising it above the reference is a deviation** (`governance/recorded-deviation`) with its decision record, `"what": "budget.unit"` or `"budget.integration"`.
+- **A warning first, a failure once enforced**: `"enforce": true` makes a spec over its budget fail the run, locally, before a push and in the pipeline; without it the run names the spec and passes. **The measure is of the loop, not of the machine**: the references leave room for a busy runner under coverage; a team that wants the loop tighter lowers them.
+- **A budget that is not a whole number of milliseconds above zero, or a level that is not held**, is reported by `check` as `config/valid` and read as the reference.
+
 ## Mutation score
 
 The Stryker config writes no glob and no number: it spreads `governedMutation()` of
@@ -808,6 +831,6 @@ every night, not on a pull request.
 ## Limits
 
 The parser is tolerant: a key it does not know is ignored without a message, and a wrong
-classification, relationship, rule id, guard mode, worktrees mode, import extension or coverage rate is reported by `check` as `config/valid`,
+classification, relationship, rule id, guard mode, worktrees mode, import extension, coverage rate or time budget is reported by `check` as `config/valid`,
 not when the file is read. Only a wrong `stack.*` value, or a file that is not a JSON object,
 stops a command.

@@ -19,7 +19,8 @@ export function entryOf(row: SqlRow): AuditEntry {
     id: text(row, 'id'),
     chain: text(row, 'chain'),
     sequence: Number(row['sequence']),
-    occurredAt: instant(row['occurred_at']),
+    // The reader selects the instant as UTC text too: some drivers read a timestamptz without the offset of the session.
+    occurredAt: instant(row['occurred_at_utc']),
     category: text(row, 'category'),
     action: text(row, 'action'),
     outcome: outcomeOf(text(row, 'outcome')),

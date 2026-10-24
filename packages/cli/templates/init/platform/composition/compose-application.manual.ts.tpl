@@ -11,6 +11,9 @@ import { subscribeAll } from '@ddd-ts-kit/events';
 {{#if http.any}}
 import { createErrorMapper, defineRoutes, type Route } from '@ddd-ts-kit/http';
 {{/if}}
+{{#if audit.archive}}
+import { ArchiveAuditEntries } from '@ddd-ts-kit/audit';
+{{/if}}
 {{#if files.any}}
 import { PurgeStagedFiles } from '@ddd-ts-kit/kernel';
 {{/if}}
@@ -121,11 +124,8 @@ export function composeApplication(
   const { logger, metrics, cache, clock } = platform;
 
   installAspectRuntime({ logger, metrics, cache, clock });
-{{#if files.any}}
-  purgeStagedFiles(platform);
-{{/if}}
-{{#if privacy.on}}
-  purgeExpiredEveryNight(platform);
+{{#if platformJobs.any}}
+  registerPlatformJobs(platform);
 {{/if}}
 
 {{#if audit.route}}
@@ -241,6 +241,21 @@ async function stop(platform: Platform, options: ApplicationOptions): Promise<vo
 {{/if}}
   await platform.logger.flush();
 }
+{{#if platformJobs.any}}
+
+/** The jobs of the platform itself, run by the process that runs the jobs. */
+function registerPlatformJobs(platform: Platform): void {
+{{#if files.any}}
+  purgeStagedFiles(platform);
+{{/if}}
+{{#if audit.archive}}
+  archiveAuditEntries(platform);
+{{/if}}
+{{#if privacy.on}}
+  purgeExpiredEveryNight(platform);
+{{/if}}
+}
+{{/if}}
 {{#if files.any}}
 
 /** What rolled-back commands left in `staging/`, removed every hour by the process that runs the jobs. */
@@ -248,6 +263,18 @@ function purgeStagedFiles(platform: Platform): void {
   const purge = new PurgeStagedFiles(platform.files.staging, platform.clock);
 
   platform.jobs.register({ name: 'files.purge-staged', schedule: { every: '1h' }, run: () => purge.run() });
+}
+{{/if}}
+{{#if audit.archive}}
+
+/**
+ * The entries of the audit trail older than the twelve whole months it keeps online, moved to the
+ * storage on the first day of every month at 04:00 UTC, verified and anchored.
+ */
+function archiveAuditEntries(platform: Platform): void {
+  const archive = new ArchiveAuditEntries(platform.audit.trail, platform.files.storage, platform.clock);
+
+  platform.jobs.register({ name: 'audit.archive', schedule: { cron: '0 4 1 * *' }, run: () => archive.run() });
 }
 {{/if}}
 {{#if privacy.on}}

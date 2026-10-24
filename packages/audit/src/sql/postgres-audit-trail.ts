@@ -12,6 +12,10 @@ import {
   type PageRequest,
   type UnitOfWorkStage,
 } from '@ddd-ts-kit/kernel';
+import type { ArchivableAuditTrail } from '../archive/archivable-audit-trail';
+import type { ArchiveOptions } from '../archive/archive-options';
+import type { AuditArchive } from '../archive/audit-archive';
+import type { AuditArchiveReport } from '../archive/audit-archive-report';
 import type { ChainHead } from '../chain/chain-head';
 import { chainOfTenant } from '../chain/chain-of-tenant';
 import { GENESIS_HASH } from '../chain/genesis-hash';
@@ -23,11 +27,15 @@ import { encodeCursor } from '../search/encode-cursor';
 import type { SearchOrder } from '../search/search-order';
 import { orderOf } from '../search/order-of';
 import type { AuditTrailOptions } from '../trail/audit-trail-options';
+import { archiveInPostgres } from './archive-in-postgres';
+import { archivesIn } from './archives-in';
 import type { AuditTables } from './audit-tables';
 import { entryOf } from './entry-of';
 import { insertOf } from './insert-of';
 import type { SqlSession } from './sql-session';
 import { joined, sql, type Sql } from './sql';
+
+const OCCURRED_AT_UTC = sql`to_char("occurred_at" at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')`;
 
 /**
  * The trail in PostgreSQL, whatever the query builder: the adapters give it a session, which
@@ -42,7 +50,7 @@ import { joined, sql, type Sql } from './sql';
  * SERIALIZABLE a second append fails with a serialization error instead of waiting: the caller
  * retries its unit of work, as for any other statement.
  */
-export class PostgresAuditTrail implements AuditTrail, AuditReader {
+export class PostgresAuditTrail implements AuditTrail, AuditReader, ArchivableAuditTrail {
   // What each unit of work in progress recorded and has not written yet, by its transaction.
   private readonly waiting = new WeakMap<object, AuditRecord[]>();
 
@@ -99,6 +107,15 @@ export class PostgresAuditTrail implements AuditTrail, AuditReader {
     const last = items.at(-1);
 
     return pageOf(items, rows.length > items.length && last !== undefined ? { nextCursor: encodeCursor(last) } : {});
+  }
+
+  /** The entries older than `before`, chain by chain, verified, written to the file storage and removed; see `ArchivableAuditTrail`. */
+  archiveBefore(before: Date, options: ArchiveOptions): Promise<AuditArchiveReport> {
+    return archiveInPostgres(this.session(), this.tables, { before, options });
+  }
+
+  archivesOf(chain: string): Promise<readonly AuditArchive[]> {
+    return archivesIn(this.session(), this.tables, chain);
   }
 
   /**
@@ -159,7 +176,8 @@ export class PostgresAuditTrail implements AuditTrail, AuditReader {
   }
 
   private async select(conditions: readonly Sql[], order: SearchOrder, limit: Sql): Promise<AuditEntry[]> {
-    const statement = sql`select * from ${this.tables.entries} ${where(conditions)} order by ${orderBy(order)} ${limit}`;
+    // The instant as UTC text as well: a driver that reads a timestamptz without the offset of the session (the Prisma adapter of pg) gets it right all the same.
+    const statement = sql`select *, ${OCCURRED_AT_UTC} as "occurred_at_utc" from ${this.tables.entries} ${where(conditions)} order by ${orderBy(order)} ${limit}`;
 
     return (await this.session().query(statement)).map(entryOf);
   }

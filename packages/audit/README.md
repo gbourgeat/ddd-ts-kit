@@ -13,6 +13,7 @@ audit call.
 npm i @ddd-ts-kit/audit
 npm i knex pg          # only for @ddd-ts-kit/audit/knex
 npm i drizzle-orm      # only for @ddd-ts-kit/audit/drizzle
+npm i typeorm          # only for @ddd-ts-kit/audit/typeorm
 ```
 
 | Entry | Holds | Imports |
@@ -20,6 +21,8 @@ npm i drizzle-orm      # only for @ddd-ts-kit/audit/drizzle
 | `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`) and `auditRecordOf`, `auditedFields`, `auditedProjection` and `masked`, the `AuditMasker` port and `hmacMasker`, `verifyChain`, `TenantAuditReader`, the chain primitives (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`); re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (optional peer) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (optional peer) |
+| `@ddd-ts-kit/audit/prisma` | `PrismaAuditTrail`, `auditPrismaModels`, `auditGuardStatements` | nothing: the client of the unit of work of `@ddd-ts-kit/prisma` fits structurally |
+| `@ddd-ts-kit/audit/typeorm` | `TypeOrmAuditTrail`, `auditEntities`, `auditGuardStatements` | `typeorm` (optional peer) |
 | `@ddd-ts-kit/audit/testing` | `auditTrailContract` | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
 
 ## The idea
@@ -705,13 +708,62 @@ the checkpoints go is the project's choice: another database under another role,
 store with retention lock, a transparency log, a signed timestamp. A truncated tail (the last
 entries removed) is only seen by comparing with a later checkpoint or by asking for `to`.
 
+## Archiving
+
+A trail grows for as long as the system lives, and every entry keeps the identifiers of a
+person (GDPR article 5(1)(e), storage limitation). The four SQL stores and
+`InMemoryAuditTrail` implement `ArchivableAuditTrail`: the oldest entries of each chain leave
+the database for a `FileStorage` of the kernel, verified, and the chain goes on from their last
+hash.
+
+```ts
+const { archives } = await trail.archiveBefore(new Date('2025-06-01T00:00:00Z'), { files, clock });
+// [{ chain: 'tenant:acme', fromSequence: 1, toSequence: 4211, lastHash: '...', entries: 4211,
+//    fileKey: 'audit-archives/tenant/acme/000000000001-000000004211.ndjson', fileDigest: '...', archivedAt }]
+```
+
+For each chain, in one transaction holding the head of the chain: the entries after the last
+archive and older than the date, without a hole, are verified from the anchor of the archive
+before them; they are written to one file, one canonical JSON per line; the archive is recorded
+in `audit_archives` (range, last hash, SHA-256 of the file); then the entries are deleted. The
+guard of the table lets a `DELETE` through only for entries an archive covers, and refuses any
+change to the archives themselves. A chain that does not verify is refused with
+`AuditArchiveRefusedError` and keeps every entry: a break is for the operator to look at, not to
+bury in a file. The file is written before the transaction commits: a failure afterwards leaves
+a file no archive names, which the next run writes again under the same key.
+
+What the trail proved stays provable:
+
+```ts
+const [first, second] = await trail.archivesOf('tenant:acme');
+verifyArchive(await textOf(files, second.fileKey), second, first);
+// { valid: true, entries: 1830 }: the digest, the range, every hash and link, the last hash
+await verifyChain(trail, { chain: 'tenant:acme', after: { chain: 'tenant:acme', sequence: second.toSequence, hash: second.lastHash } });
+// the entries left in the database link to the anchor of the last archive
+```
+
+`ArchiveAuditEntries(trail, files, clock, monthsOnline = 12)` is the scheduled job of the
+platform: each run archives the entries older than the first day of the month `monthsOnline`
+whole months ago, in UTC, so a run missed is caught up by the next. A generated project whose
+trail is in a database and whose files are in a storage registers it as `audit.archive`, on the
+first day of every month at 04:00 UTC, switched off in one environment with
+`JOB_AUDIT_ARCHIVE_ENABLED=false`.
+
+A trail created before the archives adds them once, in a migration: `addAuditArchives(knex, {
+schema })` on Knex, the statements of `auditArchiveUpgradeStatements(schema)` on Drizzle, Prisma
+and TypeORM, after the table of the ORM was generated.
+
+What an archive is not: a deletion. The entries still hold the identifiers of people, in a file
+instead of a row; how long the files are kept, and the retention lock of the bucket that keeps
+them, are decisions of the controller. The search of the trail reads the database only.
+
 ## Stores
 
 `InMemoryAuditTrail` implements both ports: the fake for tests (`entries` is the store, to
 assert and to tamper with) and enough for an application without a database.
 
 The SQL stores are for **PostgreSQL**. They write on the executor of the unit of work
-(`KnexContext.executor()`, `DrizzleContext.executor()`): inside a unit of work the entry is
+(`KnexContext.executor()`, `DrizzleContext.executor()`, `PrismaContext.client()`, `TypeOrmContext.manager()`): inside a unit of work the entry is
 written at its commit and shares its fate, outside it is written at once in a transaction of its
 own.
 
@@ -731,7 +783,25 @@ for (const statement of auditGuardStatements('audit')) {
 }
 
 new DrizzleAuditTrail(unitOfWork, { schema: 'audit' });
+
+// prisma: the models in prisma/schema.prisma (with "audit" in the schemas of the datasource), the
+// guard in a migration created with `prisma migrate dev --create-only`
+console.log(auditPrismaModels('audit'));
+new PrismaAuditTrail(unitOfWork, { schema: 'audit' });
+
+// typeorm: the entities registered with the data source, the guard in a migration of your own
+const dataSource = new DataSource({ type: 'postgres', entities: [...auditEntities({ schema: 'audit' })] });
+new TypeOrmAuditTrail(unitOfWork, { schema: 'audit' });
 ```
+
+The four stores share one PostgreSQL implementation, and their specs hold each to the same
+contract, the entities and the models included: created by the migrations of a project, they
+give the columns, the keys and the indexes of `createAuditTables`. Prisma writes raw statements on
+the client of the unit of work: it nests no transaction, so an append inside one takes a
+savepoint, and a failure of the database comes back with its SQLSTATE as `code` (`23505`,
+`23001`), as on the other stores, where Prisma reports `P2010`. Its adapter of pg reads a
+`timestamptz` without the offset of the session, so the reader asks PostgreSQL for the instant in
+UTC.
 
 Two tables: `audit_entries` (primary key `(chain, sequence)`, unique `id`, indexes for the
 reader) and `audit_chains`, one row per chain holding its last sequence and hash.
@@ -856,9 +926,9 @@ recorded), and work that names neither is refused (`NoCurrentTenantError`).
 - **`occurredAt` is the clock of the instance that recorded**; inside a chain, the order is
   the sequence.
 - **Verification reads the range into memory**, and trusts the entry before `from`.
-- **No retention or archiving policy** is provided: how long entries are kept, and where old
-  chains go, is a decision of the project. Deleting old entries means dropping the guard on
-  purpose, by the owner role, after anchoring the entry that becomes the new start.
+- **Archiving moves, it does not erase**: how long the archive files are kept is a decision of
+  the project, and so is the retention lock of the storage that keeps them. The search of the
+  trail does not read the archives.
 - drizzle wraps driver errors and prints the parameters of the failed statement in the
   message of its error. The entry of an audit insert holds identifiers and codes only; still,
   log the `code` of such an error, not its message.

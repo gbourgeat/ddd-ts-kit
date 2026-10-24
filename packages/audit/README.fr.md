@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:5d0848120aaeba01 -->
+<!-- translation-of: README.md sha256:05a43324799a82be -->
 
 # @ddd-ts-kit/audit
 
@@ -15,6 +15,7 @@ concernées. Aucun gestionnaire (handler) et aucun agrégat ne contient d'appel 
 npm i @ddd-ts-kit/audit
 npm i knex pg          # seulement pour @ddd-ts-kit/audit/knex
 npm i drizzle-orm      # seulement pour @ddd-ts-kit/audit/drizzle
+npm i typeorm          # seulement pour @ddd-ts-kit/audit/typeorm
 ```
 
 | Point d'entrée | Contient | Importe |
@@ -22,6 +23,8 @@ npm i drizzle-orm      # seulement pour @ddd-ts-kit/audit/drizzle
 | `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`) et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (pair optionnel) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (pair optionnel) |
+| `@ddd-ts-kit/audit/prisma` | `PrismaAuditTrail`, `auditPrismaModels`, `auditGuardStatements` | rien : le client de l'unité de travail de `@ddd-ts-kit/prisma` convient structurellement |
+| `@ddd-ts-kit/audit/typeorm` | `TypeOrmAuditTrail`, `auditEntities`, `auditGuardStatements` | `typeorm` (pair optionnel) |
 | `@ddd-ts-kit/audit/testing` | `auditTrailContract` | `@ddd-ts-kit/testing` (pair optionnel), le *runner* que vous passez |
 
 ## L'idée
@@ -736,13 +739,64 @@ de données sous un autre rôle, un stockage d'objets avec verrou de rétention,
 transparence, un horodatage signé. Une fin tronquée (les dernières entrées supprimées) ne se voit
 qu'en comparant avec un point de contrôle ultérieur ou en demandant `to`.
 
+## Archivage
+
+Un journal grandit aussi longtemps que vit le système, et chaque entrée garde les identifiants
+d'une personne (RGPD, article 5(1)(e), limitation de la conservation). Les quatre stores SQL et
+`InMemoryAuditTrail` implémentent `ArchivableAuditTrail` : les plus anciennes entrées de chaque
+chaîne quittent la base pour un `FileStorage` du noyau, vérifiées, et la chaîne repart de leur
+dernier hash.
+
+```ts
+const { archives } = await trail.archiveBefore(new Date('2025-06-01T00:00:00Z'), { files, clock });
+// [{ chain: 'tenant:acme', fromSequence: 1, toSequence: 4211, lastHash: '...', entries: 4211,
+//    fileKey: 'audit-archives/tenant/acme/000000000001-000000004211.ndjson', fileDigest: '...', archivedAt }]
+```
+
+Pour chaque chaîne, dans une transaction qui tient la tête de la chaîne : les entrées qui suivent
+la dernière archive et sont antérieures à la date, sans trou, sont vérifiées depuis l'ancre de
+l'archive qui les précède ; elles sont écrites dans un fichier, un JSON canonique par ligne ;
+l'archive est enregistrée dans `audit_archives` (plage, dernier hash, SHA-256 du fichier) ; puis
+les entrées sont supprimées. La garde de la table ne laisse passer un `DELETE` que pour des
+entrées qu'une archive couvre, et refuse toute modification des archives elles-mêmes. Une chaîne
+qui ne se vérifie pas est refusée avec `AuditArchiveRefusedError` et garde toutes ses entrées :
+une rupture est à examiner par l'opérateur, pas à enfouir dans un fichier. Le fichier est écrit
+avant la validation de la transaction : un échec ensuite laisse un fichier qu'aucune archive ne
+nomme, que le passage suivant réécrit sous la même clé.
+
+Ce que le journal prouvait reste démontrable :
+
+```ts
+const [first, second] = await trail.archivesOf('tenant:acme');
+verifyArchive(await textOf(files, second.fileKey), second, first);
+// { valid: true, entries: 1830 } : l'empreinte, la plage, chaque hash et chaque lien, le dernier hash
+await verifyChain(trail, { chain: 'tenant:acme', after: { chain: 'tenant:acme', sequence: second.toSequence, hash: second.lastHash } });
+// les entrées restées en base se rattachent à l'ancre de la dernière archive
+```
+
+`ArchiveAuditEntries(trail, files, clock, monthsOnline = 12)` est la tâche planifiée de la
+plateforme : chaque passage archive les entrées antérieures au premier jour du mois situé
+`monthsOnline` mois entiers plus tôt, en UTC, si bien qu'un passage manqué est rattrapé par le
+suivant. Un projet généré dont le journal est en base et dont les fichiers sont dans un stockage
+l'enregistre sous `audit.archive`, le premier jour de chaque mois à 04:00 UTC, désactivable dans
+un environnement avec `JOB_AUDIT_ARCHIVE_ENABLED=false`.
+
+Un journal créé avant les archives les ajoute une fois, dans une migration : `addAuditArchives(knex, {
+schema })` sur Knex, les instructions de `auditArchiveUpgradeStatements(schema)` sur Drizzle,
+Prisma et TypeORM, une fois la table de l'ORM générée.
+
+Ce qu'une archive n'est pas : un effacement. Les entrées gardent les identifiants des personnes,
+dans un fichier au lieu d'une ligne ; combien de temps les fichiers sont gardés, et le verrou de
+conservation du bucket qui les garde, sont des décisions du responsable de traitement. La
+recherche dans le journal ne lit que la base.
+
 ## Stores
 
 `InMemoryAuditTrail` implémente les deux ports : le *fake* des tests (`entries` est le store, pour
 vérifier et pour altérer) et de quoi suffire à une application sans base de données.
 
 Les stores SQL sont pour **PostgreSQL**. Ils écrivent sur l'exécuteur de l'unité de travail
-(`KnexContext.executor()`, `DrizzleContext.executor()`) : dans une unité de travail, l'entrée est
+(`KnexContext.executor()`, `DrizzleContext.executor()`, `PrismaContext.client()`, `TypeOrmContext.manager()`) : dans une unité de travail, l'entrée est
 écrite à sa validation et partage son sort ; hors de toute unité de travail, elle est écrite
 immédiatement dans une transaction à elle.
 
@@ -762,7 +816,25 @@ for (const statement of auditGuardStatements('audit')) {
 }
 
 new DrizzleAuditTrail(unitOfWork, { schema: 'audit' });
+
+// prisma : les modèles dans prisma/schema.prisma (avec "audit" dans les schémas de la datasource), le
+// garde dans une migration créée par `prisma migrate dev --create-only`
+console.log(auditPrismaModels('audit'));
+new PrismaAuditTrail(unitOfWork, { schema: 'audit' });
+
+// typeorm : les entités enregistrées auprès de la data source, le garde dans une migration à vous
+const dataSource = new DataSource({ type: 'postgres', entities: [...auditEntities({ schema: 'audit' })] });
+new TypeOrmAuditTrail(unitOfWork, { schema: 'audit' });
 ```
+
+Les quatre stores partagent une seule implémentation PostgreSQL, et leurs *specs* tiennent chacun
+au même contrat, entités et modèles compris : créés par les migrations d'un projet, ils donnent les
+colonnes, les clés et les index de `createAuditTables`. Prisma écrit des instructions brutes sur le
+client de l'unité de travail : il n'imbrique aucune transaction, donc un ajout à l'intérieur d'une
+transaction prend un *savepoint*, et un échec de la base revient avec son SQLSTATE comme `code`
+(`23505`, `23001`), comme sur les autres stores, là où Prisma rapporte `P2010`. Son adaptateur de pg
+lit un `timestamptz` sans le décalage de la session, alors le lecteur demande l'instant en UTC à
+PostgreSQL.
 
 Deux tables : `audit_entries` (clé primaire `(chain, sequence)`, `id` unique, des index pour le
 lecteur) et `audit_chains`, une ligne par chaîne qui détient sa dernière séquence et son dernier
@@ -898,10 +970,9 @@ du noyau, elle-même enregistrée), et un travail qui ne nomme ni l'un ni l'autr
 - **`occurredAt` est l'horloge de l'instance qui a enregistré** ; dans une chaîne, l'ordre est la
   séquence.
 - **La vérification lit la plage en mémoire**, et fait confiance à l'entrée qui précède `from`.
-- **Aucune politique de rétention ni d'archivage** n'est fournie : combien de temps les entrées
-  sont gardées, et où vont les anciennes chaînes, est une décision du projet. Supprimer
-  d'anciennes entrées signifie retirer la garde délibérément, par le rôle propriétaire, après
-  avoir ancré l'entrée qui devient le nouveau début.
+- **Archiver déplace, n'efface pas** : combien de temps les fichiers d'archive sont gardés est une
+  décision du projet, tout comme le verrou de conservation du stockage qui les garde. La
+  recherche dans le journal ne lit pas les archives.
 - drizzle enveloppe les erreurs du pilote et affiche les paramètres de l'instruction en échec dans
   le message de son erreur. L'entrée d'une insertion d'audit ne contient que des identifiants et
   des codes ; journalisez tout de même le `code` d'une telle erreur, pas son message.
