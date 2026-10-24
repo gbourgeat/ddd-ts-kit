@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 660" width="960" height="660" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">L'effacement d'une personne dans un projet généré</title>
+  <desc id="desc">Le script privacy:erase ouvre un contexte d'exécution et appelle runErasure de la plateforme, qui donne trois choses à eraseDataSubject du noyau : le magasin de clés de l'event store quand le projet en a un, pour que les événements stockés de la personne se lisent effacés ; chaque copie listée dans data-subject-copies.ts, un port d'effacement par contexte dont l'adaptateur sur le paquet d'ORM efface ou pseudonymise les lignes des tables déclarées par personalFields ; et les projections à reconstruire. Le rapport compte les lignes atteintes par contexte. En bas, ce que generate repository --personal écrit pour une table : ses colonnes personnelles, la déclaration à côté du mapper et, une fois par contexte, le port, l'adaptateur, le fake, la spec et la ligne dans les copies.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="660" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">L'effacement d'une personne dans un projet généré</text>
+
+  <rect x="24" y="64" width="280" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="40" y="90" font-size="16" font-weight="700" fill="#5f6b73">npm run privacy:erase</text>
+  <text x="40" y="112" font-size="13" fill="#1f2328">scripts/privacy-erase.ts</text>
+  <text x="40" y="132" font-size="13" fill="#1f2328">l'opérateur, un id de corrélation,</text>
+  <text x="40" y="152" font-size="13" fill="#1f2328">les tenants nommés par TENANTS</text>
+  <line x1="304" y1="116" x2="334" y2="116" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="336" y="64" width="280" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="352" y="90" font-size="16" font-weight="700" fill="#5f6b73">runErasure</text>
+  <text x="352" y="112" font-size="13" fill="#1f2328">src/platform/privacy/run-erasure.ts</text>
+  <text x="352" y="132" font-size="13" fill="#1f2328">un contexte d'origine cli,</text>
+  <text x="352" y="152" font-size="13" fill="#1f2328">chaque copie une fois par tenant</text>
+  <line x1="616" y1="116" x2="646" y2="116" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="648" y="64" width="280" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="664" y="90" font-size="16" font-weight="700" fill="#2b5d8a">eraseDataSubject</text>
+  <text x="664" y="112" font-size="13" fill="#1f2328">@ddd-ts-kit/kernel</text>
+  <text x="664" y="132" font-size="13" fill="#1f2328">la clé, chaque copie, les reconstructions ;</text>
+  <text x="664" y="152" font-size="13" fill="#1f2328">puis un rapport</text>
+
+  <line x1="788" y1="168" x2="788" y2="190" stroke="#3d4449" stroke-width="1.5"/>
+  <line x1="164" y1="190" x2="788" y2="190" stroke="#3d4449" stroke-width="1.5"/>
+  <line x1="164" y1="190" x2="164" y2="210" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="476" y1="190" x2="476" y2="210" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="788" y1="190" x2="788" y2="210" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="24" y="212" width="280" height="122" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="40" y="238" font-size="14" font-weight="700" fill="#7a4f9a">1. la clé de la personne</text>
+  <text x="40" y="260" font-size="13" fill="#1f2328">SubjectKeyStore, table subject_keys</text>
+  <text x="40" y="280" font-size="13" fill="#1f2328">avec --event-sourcing on : détruite ;</text>
+  <text x="40" y="300" font-size="13" fill="#1f2328">ses événements stockés se lisent</text>
+  <text x="40" y="320" font-size="13" fill="#1f2328">[erased] au prochain rejeu</text>
+
+  <rect x="336" y="212" width="280" height="284" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="352" y="238" font-size="14" font-weight="700" fill="#5f6b73">2. chaque copie</text>
+  <text x="352" y="260" font-size="13" fill="#1f2328">listée dans data-subject-copies.ts :</text>
+  <text x="352" y="280" font-size="13" fill="#1f2328">un port par contexte, résolu depuis</text>
+  <text x="352" y="300" font-size="13" fill="#1f2328">l'application, chacun lisant</text>
+  <text x="352" y="320" font-size="13" fill="#1f2328">ses déclarations</text>
+
+  <rect x="352" y="334" width="248" height="90" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="364" y="356" font-size="13" font-weight="700" fill="#2b5d8a">BillingPersonalDataErasure</text>
+  <text x="364" y="376" font-size="13" fill="#1f2328">customers : email, display_name</text>
+  <text x="364" y="396" font-size="13" fill="#1f2328">lus [erased] ; invoices de</text>
+  <text x="364" y="416" font-size="13" fill="#1f2328">customer_id : lignes supprimées</text>
+
+  <rect x="352" y="434" width="248" height="50" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="364" y="456" font-size="13" font-weight="700" fill="#2b5d8a">CrmPersonalDataErasure</text>
+  <text x="364" y="476" font-size="13" fill="#1f2328">contacts de person_id : [erased]</text>
+
+  <rect x="648" y="212" width="280" height="102" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="664" y="238" font-size="14" font-weight="700" fill="#2b5d8a">3. les reconstructions</text>
+  <text x="664" y="260" font-size="13" fill="#1f2328">les projections du store, rebâties</text>
+  <text x="664" y="280" font-size="13" fill="#1f2328">une fois la clé détruite ;</text>
+  <text x="664" y="300" font-size="13" fill="#1f2328">données à la main pour l'instant</text>
+
+  <rect x="648" y="334" width="280" height="134" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="664" y="360" font-size="14" font-weight="700" fill="#5f6b73">le rapport, imprimé en JSON</text>
+  <text x="664" y="384" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1f2328">{ erased: true,</text>
+  <text x="664" y="404" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1f2328">  copies: { billing: 3,</text>
+  <text x="664" y="424" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1f2328">            crm: 1 },</text>
+  <text x="664" y="444" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1f2328">  rebuilt: {} }</text>
+
+  <rect x="24" y="516" width="904" height="86" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="40" y="542" font-size="14" font-weight="700" fill="#1f2328">generate repository billing Customer --personal email,display_name</text>
+  <text x="40" y="564" font-size="13" fill="#1f2328">écrit les colonnes personnelles en texte nullable et customer.personal-fields.ts à côté du mapper ; une fois par contexte,</text>
+  <text x="40" y="584" font-size="13" fill="#1f2328">le port (extends PersonalDataErasure), l'adaptateur sur le paquet d'ORM, son fake, sa spec, sa ligne dans la liste des copies.</text>
+
+  <text x="32" y="628" font-size="13" fill="#5f6b73">Hors de portée : sauvegardes, journaux, exports déjà remis, copie qu'aucun contexte n'a déclarée.</text>
+  <text x="32" y="648" font-size="13" fill="#5f6b73">Relancé, un effacement n'atteint plus rien et le dit : il achève celui qui a échoué à mi-chemin.</text>
+</svg>

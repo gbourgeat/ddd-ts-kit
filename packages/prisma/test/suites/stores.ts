@@ -42,12 +42,20 @@ const skipLocked: Claim = {
   raw: (client) => client,
 };
 
-/** The outbox of the `messaging` schema: the renamed copy of the shipped model. */
+/** The outbox of the `messaging` schema: the renamed copy of the shipped model, its tenant field uncommented. */
 const messagingOutbox = (claim: Claim, leaseMs = 30_000) =>
   new PrismaOutboxStore(unitOfWork(), {
     delegate: (client) => client.messagingOutboxRecord,
     claim,
     leaseMs,
+  });
+
+/** The same outbox, told to keep the tenant of each event. */
+const tenantedOutbox = () =>
+  new PrismaOutboxStore(unitOfWork(), {
+    delegate: (client) => client.messagingOutboxRecord,
+    claim: skipLocked,
+    tenant: true,
   });
 
 outboxStoreContract(runner, {
@@ -81,6 +89,17 @@ outboxStoreContract(runner, {
     await database.truncate();
 
     return messagingOutbox('compare-and-set');
+  },
+});
+
+outboxStoreContract(runner, {
+  name: 'PrismaOutboxStore keeping the tenant of each event',
+  leaseMs: 30_000,
+  carriesTenant: true,
+  createStore: async () => {
+    await database.truncate();
+
+    return tenantedOutbox();
   },
 });
 
@@ -298,6 +317,19 @@ describe('PrismaOutboxStore: what a record keeps', () => {
 
     expect(claimed?.nextAttemptAt).toEqual(new Date('2026-03-01T10:00:01.000Z'));
     expect(row).toMatchObject({ status: 'published', publishedAt: now, attempts: 1, sequence: 1n });
+  });
+
+  it('writes no tenant unless told to, and gives back the one a row has', async () => {
+    const untold = messagingOutbox(skipLocked);
+
+    await untold.append([{ ...event('evt-1'), tenantId: 'acme' }]);
+    await tenantedOutbox().append([{ ...event('evt-2'), tenantId: 'acme' }, event('evt-3')]);
+
+    const rows = await database.prisma.messagingOutboxRecord.findMany({ orderBy: { sequence: 'asc' } });
+    const claimed = await untold.claimBatch(10, now);
+
+    expect(rows.map((row) => row.tenantId)).toEqual([null, 'acme', null]);
+    expect(claimed.map((record) => record.event.tenantId)).toEqual([undefined, 'acme', undefined]);
   });
 
   it('keeps a payload that is not an object as it was published', async () => {

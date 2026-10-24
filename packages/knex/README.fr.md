@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:af94625dc6e22b42 -->
+<!-- translation-of: README.md sha256:30c07ce4e95ccaef -->
 
 # @ddd-ts-kit/knex
 
@@ -752,6 +752,60 @@ l'échange par renommage dans une seule transaction), et ses garanties et ses li
 README de `@ddd-ts-kit/kernel` (« Reconstruction »). Le store passe `criteriaContract` et
 `readModelStoreContract` de `@ddd-ts-kit/testing/contracts`, sur PGlite et sur PostgreSQL 18.
 Les critères et les modèles de lecture n'ont jamais été exécutés sur MySQL ni sur SQLite.
+
+## Effacement des données personnelles
+
+L'effacement d'une personne concernée des tables d'un contexte, à partir des déclarations
+`personalFields` écrites à côté de ses *mappers* (`@ddd-ts-kit/kernel`, « Données personnelles ») :
+`KnexPersonalDataErasure` implémente le port `PersonalDataErasure` sur l'exécuteur de l'unité de travail. Le port du contexte étend celui du
+kernel, et son adaptateur étend cette classe.
+
+```ts
+// infrastructure/persistence/person.personal-fields.ts
+export const personPersonalFields = personalFields<PersonRow, TenantTableTarget>(PERSONS, {
+  subject: 'id',
+  fields: ['display_name', 'email'],
+  erasure: 'row',
+});
+
+// application/ports/identity-erasure.port.ts
+export abstract class IdentityErasure extends PersonalDataErasure {}
+
+// infrastructure/persistence/knex-identity-erasure.repository.ts
+@Repository(IdentityErasure)
+export class KnexIdentityErasure extends KnexPersonalDataErasure implements IdentityErasure {
+  constructor(database: KnexContext, scope: ExecutionScope, files: FileStorage) {
+    super(database, { name: 'identity.persons', declarations: [personPersonalFields], tenant: scope, files });
+  }
+}
+```
+
+`erase(subject)` supprime d'abord du stockage les fichiers que les lignes nomment, puis supprime les
+lignes de la personne (`row`) ou les pseudonymise (`pseudonymise` : une colonne texte lit `[erased]`,
+une colonne de tout autre type ne lit rien, une colonne de fichier rien), et répond combien de lignes
+il a atteintes, aucune la seconde fois. Avec `tenant`, chaque instruction est confinée au *tenant* du
+travail et jamais élargie par une élévation (`tenant_id`, ou la `column` de la cible) ; sans lui, la table tient les lignes de tous
+les *tenants*. Un sujet qui n'est pas un identifiant opaque est refusé avant toute instruction, et une
+déclaration qui nomme des colonnes de fichier sans stockage de fichiers est refusée à la construction
+de l'adaptateur. Les types des colonnes sont lus une fois dans la base (`columnInfo`), pour qu'un texte et un nombre soient pseudonymisés chacun à sa façon. Une colonne personnelle qui n'est pas un texte doit accepter null, sinon
+les lignes s'effacent avec `row` : une déclaration qui en pseudonymiserait une qui ne l'accepte pas
+est refusée avant qu'un fichier ou une ligne ne soit touché (`NotNullablePersonalColumnError`). L'adaptateur passe `personalDataErasureContract` de
+`@ddd-ts-kit/testing`, comme celui en mémoire, sur PGlite et PostgreSQL. Ce qu'un effacement
+n'atteint pas, et la chaîne entière (`eraseDataSubject` : la clé, chaque copie dans chaque *tenant*,
+les reconstructions), sont dans le README du kernel (« Données personnelles »).
+
+`KnexPersonalDataExport` répond au droit d'accès et à la portabilité à partir des mêmes déclarations :
+`exportOf(subject)` remet un `PersonalDataRecord` par ligne sur la personne dans chaque table déclarée,
+sous `<name>.<table>`, avec chaque colonne personnelle et chaque colonne de fichier (par sa clé) en
+données simples, par leurs noms SQL, aucune autre colonne et rien de personne d'autre ; une ligne déjà
+pseudonymisée répond ce qu'elle lit. La même option `tenant` confine chaque instruction au *tenant* du
+travail, un sujet qui n'est pas un identifiant opaque est refusé avant toute instruction, et
+l'adaptateur passe `personalDataExportContract`. Le port du contexte étend `PersonalDataExport` du
+kernel et son adaptateur étend cette classe avec `name`, `declarations` et `tenant`
+(`KnexPersonalDataExportOptions`) ; `generate repository --personal` écrit les deux adaptateurs, et
+`exportDataSubject` du kernel rassemble chaque export en un document daté. Enveloppez l'adaptateur
+avec `auditedPersonalDataExport` de `@ddd-ts-kit/audit` là où il est lié, pour que chaque remise
+laisse une entrée.
 
 ## Outbox et idempotence
 

@@ -68,7 +68,10 @@ An audit trail is not a reason by itself: the kit records who did what around ev
 birth event and apply method, the codec, a builder that replays a history and a given-events
 spec; `generate domain-event` on such an aggregate adds the event to its union, to
 `appliers()` with an empty apply method, and to the codec. `describe`, `list` and `CONTEXT.md`
-say which aggregates are event-sourced.
+say which aggregates are event-sourced. The store they are saved through is wired by
+`init --event-sourcing on` (`init --force --event-sourcing on` on an existing project), and the
+generator refuses an event-sourced aggregate without it: a project whose aggregates are all rows
+pays no table for it.
 
 **No double write.** Appending the events and publishing the integration events are one
 transaction: the store joins the transaction of the unit of work, and the publisher is a
@@ -450,6 +453,13 @@ share no transaction: when the entry cannot be written the erasure fails, and ru
 records that no key was left, at a later date, so the completion date is never early
 ([`@ddd-ts-kit/audit`](../../packages/audit/README.md#e-erasures-of-data-subjects)).
 
+What a context keeps of the same person in clear, the rows of its tables, is not sealed: it is
+declared once next to the mapper (`personalFields`: the subject column, the personal columns, rows
+deleted or pseudonymised, the columns that hold a file), erased through a `PersonalDataErasure`
+port of the context, and the whole chain, the key first, then every copy in every tenant, then the
+projections fed by the store, is `eraseDataSubject` of the kernel
+([`@ddd-ts-kit/kernel`](../../packages/kernel/README.md#personal-data)).
+
 What it does not do: identifiers are not sealed. A stream named after a patient
 (`scheduling.attendance-record-<practice>.<patient>`) keeps that identifier in the store. Use
 identifiers that mean nothing outside the application.
@@ -457,8 +467,10 @@ identifiers that mean nothing outside the application.
 The example keeps the keys in the table `subject_keys` of the `scheduling` schema of its own
 database, next to the events, to stay runnable with one PostgreSQL; its README says so and names
 what a deployment changes. Its erasure (`npm run erase:patient`) destroys the key of a patient,
-writes the erasure to the audit trail with the operator as actor, and rebuilds the projections
-fed by the store, so that the history read model loses the clear reason too.
+writes the erasure to the audit trail with the operator as actor, erases every copy the contexts
+keep of the person in clear (the person of identity, the contact of notification, the notes, the
+cancellation reasons and the documents of their appointments in scheduling), and rebuilds the
+projections fed by the store, so that the history read model loses the clear reason too.
 
 ## Projections fed by the store
 
@@ -600,8 +612,9 @@ same contract suites.
 
 ## Limits
 
-- One event store per database schema; a context that keeps its own binds its stores in its
-  module rather than in the platform.
+- One event store per database schema: `init --event-sourcing on` wires one, in the `event_store`
+  schema, bound by `src/platform/event-sourcing/` with the keys of the data subjects and the
+  cipher; a context that keeps its own binds its stores in its module rather than in the platform.
 - Appends are serialised per store (above).
 - A projection fed by the store whose rows each come from several streams cannot be stamped by
   stream version alone: stamp it by event id and instant.
@@ -622,6 +635,7 @@ same contract suites.
 
 ## See also
 
+- [Personal data in a generated project](personal-data.md): the declaration of the personal columns of a table, the erasure that reads it, and what the keys of the store add to it
 - [Aggregates](aggregates.md), [Domain and integration events](domain-and-integration-events.md)
 - [Transactional outbox](transactional-outbox.md), [Event versioning](event-versioning.md)
 - [CQRS as used here](cqrs.md)

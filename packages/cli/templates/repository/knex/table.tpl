@@ -12,6 +12,9 @@ function create{{aggregate.pascal}}Table(knex: Knex): Promise<void> {
   return knex.schema.withSchema({{context.constant}}_SCHEMA).createTable('{{aggregate.table}}', (table) => {
     table.text('id').primary();
     table.timestamp('registered_at', { useTz: true }).notNullable();
+{{#if personal.any}}
+{{personal.knexTable}}
+{{/if}}
     // TODO(domain): add one column per field of {{aggregate.pascal}}State (and to {{aggregate.pascal}}Columns of {{aggregate.kebab}}-row.schema.ts), with the type and the constraints the storage must enforce.
     table.integer('version').notNullable();
 {{#if tenant.scoped}}

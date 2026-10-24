@@ -1,7 +1,26 @@
+{{#if eventSourcing.on}}
+import { defineContextModule, type ModuleBuilder } from '@ddd-ts-kit/di';
+import {
+  CheckpointStore,
+  EventStore,
+  InMemoryCheckpointStore,
+  InMemoryEventStore,
+{{#if files.any}}
+  InMemoryFileStorage,
+{{/if}}
+  InMemorySnapshotStore,
+  InMemorySubjectKeyStore,
+  PersonalDataCipher,
+  SnapshotStore,
+  SubjectKeyStore,
+} from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#unless eventSourcing.on}}
 import { defineContextModule } from '@ddd-ts-kit/di';
 {{#if files.any}}
 import { InMemoryFileStorage } from '@ddd-ts-kit/kernel';
 {{/if}}
+{{/unless}}
 {{#if persistence.packagedToken}}
 import { {{persistence.token}} } from '{{persistence.tokenPackage}}';
 {{/if}}
@@ -29,7 +48,24 @@ export const platformTestModule = defineContextModule({
     bindFiles(builder, new InMemoryFileStorage());
 
     {{/if}}
+    {{#if eventSourcing.on}}
+    // The stored events, the snapshots, the checkpoints and the keys of a handler spec stay in the memory of the test: an event-sourced aggregate needs no fake.
+    bindEventSourcing(builder);
+
+    {{/if}}
     // ddd-ts-kit:test-bindings
     // /ddd-ts-kit:test-bindings
   },
 });
+{{#if eventSourcing.on}}
+
+function bindEventSourcing(builder: ModuleBuilder): void {
+  const subjectKeys = new InMemorySubjectKeyStore();
+
+  builder.bind(EventStore).toValue(new InMemoryEventStore());
+  builder.bind(SnapshotStore).toValue(new InMemorySnapshotStore());
+  builder.bind(CheckpointStore).toValue(new InMemoryCheckpointStore());
+  builder.bind(SubjectKeyStore).toValue(subjectKeys);
+  builder.bind(PersonalDataCipher).toValue(new PersonalDataCipher(subjectKeys));
+}
+{{/if}}

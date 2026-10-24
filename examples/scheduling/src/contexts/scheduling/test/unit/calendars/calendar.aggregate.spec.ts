@@ -288,6 +288,24 @@ describe('Calendar, the slot of an appointment', () => {
   });
 });
 
+describe('Calendar, the end of its day', () => {
+  it('is given up to midnight when the calendar is open until the end of the day', () => {
+    const late = aCalendar().openEveryDay(['22:00', '24:00']).offering('consultation').build();
+
+    const slot = late.slotFor('consultation', instant('2026-03-02T22:30:00.000Z'), now);
+
+    expect(slot.endsAt).toEqual(instant('2026-03-02T23:00:00.000Z'));
+  });
+
+  it('is refused when it would run past midnight, the end of the day the calendar is open until', () => {
+    const late = aCalendar().openEveryDay(['22:00', '24:00']).offering('consultation', { grid: 15 }).build();
+
+    expect(() => late.slotFor('consultation', instant('2026-03-02T22:45:00.000Z'), now)).toThrow(
+      expect.objectContaining({ code: 'OUTSIDE_AVAILABILITY' }),
+    );
+  });
+});
+
 describe('Calendar, the confirmation of an appointment', () => {
   it('is due within a day for a type that needs one', () => {
     const calendar = open().offering('surgery', { needsConfirmation: true }).build();

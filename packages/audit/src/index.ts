@@ -35,10 +35,13 @@ export { auditedFields, type AuditedFieldsOptions } from './redaction/audited-fi
 export type { AuditedMessage } from './redaction/audited-message';
 export { auditedProjection } from './redaction/audited-projection';
 export { hmacMasker, type HmacMaskerOptions } from './redaction/hmac-masker';
-export { masked } from './redaction/masked';
+export { masked, type MaskedFieldOptions } from './redaction/masked';
 export type { MaskedField } from './redaction/masked-field';
 export type { MaskingSubject } from './redaction/masking-subject';
+export { MaskingSubjectNotAnIdError } from './redaction/masking-subject-not-an-id-error';
+export { MissingDataSubjectError } from './redaction/missing-data-subject-error';
 export { MissingMaskerError } from './redaction/missing-masker-error';
+export { subjectMasker, type SubjectMaskerOptions } from './redaction/subject-masker';
 export type { AllowedReads } from './sources/allowed-reads';
 export { auditDecisions, type AuditDecisionsOptions } from './sources/audit-decisions';
 export { auditGuardRefusals } from './sources/audit-guard-refusals';
@@ -51,6 +54,11 @@ export { auditRecordOf } from './sources/audit-record-of';
 export type { AuditSource } from './sources/audit-source';
 export type { AuditSubscription } from './sources/audit-subscription';
 export type { AuditedEvents } from './sources/audited-events';
+export {
+  PERSONAL_DATA_EXPORT_ACTION,
+  auditedPersonalDataExport,
+  type AuditedPersonalDataExportOptions,
+} from './sources/audited-personal-data-export';
 export {
   SUBJECT_ERASURE_ACTION,
   auditedSubjectKeys,

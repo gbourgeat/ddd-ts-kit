@@ -1,5 +1,5 @@
 import { expect } from 'vitest';
-import { cli, read, scaffoldEverything, tempDir, write } from '../helpers';
+import { cli, DEFAULT_STACK, read, scaffoldEverything, tempDir, write } from '../helpers';
 import { eslintOn } from './analyzers';
 import { installAsPublished } from './install-as-published';
 import { bin, findingsOf } from './run-in';
@@ -17,11 +17,11 @@ export class EditedProject {
 
   private constructor(readonly root: string) {}
 
-  /** `prepare` generates more into the scaffold before the kit is installed. */
-  static generate(prepare: (root: string) => void = () => undefined): EditedProject {
+  /** `prepare` generates more into the scaffold of `stack` before the kit is installed. */
+  static generate(prepare: (root: string) => void = () => undefined, stack = DEFAULT_STACK): EditedProject {
     const root = tempDir('violations');
 
-    scaffoldEverything(root);
+    scaffoldEverything(root, stack);
     prepare(root);
     installAsPublished(root);
 

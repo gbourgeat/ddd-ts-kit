@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The export of a person in a generated project</title>
+  <desc id="desc">The script privacy:export opens an execution context and calls runExport of the platform, which hands exportDataSubject of the kernel every export listed in data-subject-exports.ts, one export port per context whose adapter over the ORM package reads the tables declared with personalFields, each wrapped by auditedPersonalDataExport when the audit trail is on; the exports run in every tenant and in the order listed, and the result is one dated document of a stable format, printed as JSON, with one record per row about the person. The entry of each export names the operator, the subject, the context and the number of records, never the values.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The export of a person in a generated project</text>
+  <rect x="24" y="64" width="280" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="40" y="90" font-size="16" font-weight="700" fill="#5f6b73">npm run privacy:export</text>
+  <text x="40" y="112" font-size="13" fill="#1f2328">scripts/privacy-export.ts</text>
+  <text x="40" y="132" font-size="13" fill="#1f2328">the operator, a correlation id,</text>
+  <text x="40" y="152" font-size="13" fill="#1f2328">the tenants named by TENANTS</text>
+  <line x1="304" y1="116" x2="334" y2="116" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="336" y="64" width="280" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="352" y="90" font-size="16" font-weight="700" fill="#5f6b73">runExport</text>
+  <text x="352" y="112" font-size="13" fill="#1f2328">src/platform/privacy/run-export.ts</text>
+  <text x="352" y="132" font-size="13" fill="#1f2328">a context of origin cli; with --audit on,</text>
+  <text x="352" y="152" font-size="13" fill="#1f2328">each export wrapped by the audit</text>
+  <line x1="616" y1="116" x2="646" y2="116" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="648" y="64" width="280" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="664" y="90" font-size="16" font-weight="700" fill="#2b5d8a">exportDataSubject</text>
+  <text x="664" y="112" font-size="13" fill="#1f2328">@ddd-ts-kit/kernel</text>
+  <text x="664" y="132" font-size="13" fill="#1f2328">every export, in every tenant,</text>
+  <text x="664" y="152" font-size="13" fill="#1f2328">in the order listed; then one document</text>
+  <line x1="788" y1="168" x2="788" y2="190" stroke="#3d4449" stroke-width="1.5"/>
+  <line x1="164" y1="190" x2="788" y2="190" stroke="#3d4449" stroke-width="1.5"/>
+  <line x1="164" y1="190" x2="164" y2="210" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="476" y1="190" x2="476" y2="210" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="788" y1="190" x2="788" y2="210" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="24" y="212" width="280" height="262" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="40" y="238" font-size="14" font-weight="700" fill="#5f6b73">1. every export</text>
+  <text x="40" y="260" font-size="13" fill="#1f2328">listed in data-subject-exports.ts:</text>
+  <text x="40" y="280" font-size="13" fill="#1f2328">one port per context, resolved</text>
+  <text x="40" y="300" font-size="13" fill="#1f2328">from the application, each one</text>
+  <text x="40" y="320" font-size="13" fill="#1f2328">reading the same declarations</text>
+  <rect x="40" y="334" width="248" height="70" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="52" y="356" font-size="13" font-weight="700" fill="#2b5d8a">BillingPersonalDataExport</text>
+  <text x="52" y="376" font-size="13" fill="#1f2328">customers: email, display_name;</text>
+  <text x="52" y="396" font-size="13" fill="#1f2328">invoices of customer_id: email</text>
+  <rect x="40" y="414" width="248" height="50" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="52" y="436" font-size="13" font-weight="700" fill="#2b5d8a">CrmPersonalDataExport</text>
+  <text x="52" y="456" font-size="13" fill="#1f2328">contacts of person_id: email, phone</text>
+  <rect x="336" y="212" width="280" height="262" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="352" y="238" font-size="14" font-weight="700" fill="#7a4f9a">2. the entry of each export</text>
+  <text x="352" y="260" font-size="13" fill="#1f2328">auditedPersonalDataExport, --audit on</text>
+  <text x="352" y="280" font-size="13" fill="#1f2328">data-access, personal-data&#58;export</text>
+  <text x="352" y="300" font-size="13" fill="#1f2328">the operator, the subject, the context,</text>
+  <text x="352" y="320" font-size="13" fill="#1f2328">records: n, never the values;</text>
+  <text x="352" y="340" font-size="13" fill="#1f2328">written before the records are</text>
+  <text x="352" y="360" font-size="13" fill="#1f2328">handed over: no document leaves</text>
+  <text x="352" y="380" font-size="13" fill="#1f2328">without its trace, and a failed</text>
+  <text x="352" y="400" font-size="13" fill="#1f2328">read is recorded with its code</text>
+  <text x="352" y="420" font-size="13" fill="#1f2328">(accountability, article 5(2))</text>
+  <rect x="648" y="212" width="280" height="262" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="664" y="238" font-size="14" font-weight="700" fill="#5f6b73">3. the document, printed as JSON</text>
+  <text x="664" y="262" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1f2328">{ format: &apos;ddd-ts-kit/</text>
+  <text x="664" y="282" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1f2328">    personal-data-export@1&apos;,</text>
+  <text x="664" y="302" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1f2328">  subject: &apos;cus_42&apos;,</text>
+  <text x="664" y="322" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1f2328">  exportedAt: &apos;2026-10-24T09:30Z&apos;,</text>
+  <text x="664" y="342" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1f2328">  records: [</text>
+  <text x="664" y="362" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1f2328">    { source: &apos;billing.customers&apos;,</text>
+  <text x="664" y="382" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1f2328">      values: { email: ..., ... } },</text>
+  <text x="664" y="402" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1f2328">    { source: &apos;billing.invoices&apos;,</text>
+  <text x="664" y="422" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1f2328">      values: { ... } },</text>
+  <text x="664" y="442" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1f2328">    { source: &apos;crm.contacts&apos;, ... } ] }</text>
+  <rect x="24" y="490" width="904" height="54" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="40" y="514" font-size="13" fill="#5f6b73">Refused before any read: a name or an email, which would be a search in personal data. A context that fails stops the document: it never states less than the system keeps.</text>
+  <text x="40" y="534" font-size="13" fill="#5f6b73">Hand the document over to the person, then delete the file. Structured, machine-readable, dated: the form article 20 asks for.</text>
+</svg>

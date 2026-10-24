@@ -78,7 +78,12 @@ function todosOf(ws: Workspace, story: string, rows: readonly Slice[]): string[]
 
   return criteria.length > 0
     ? criteria.map((criterion) => `  it.todo('${criterion.id} ${quoted(criterion.text)}');`)
-    : rows.map((row) => `  it.todo('#${row.id} ${quoted(row.slice)}');`);
+    : rows.map((row) => `  it.todo('#${row.id} ${quoted(asARule(row.slice))}');`);
+}
+
+/** The title of a slice read as the rule its scenario will state: `Place order` as `place order`. */
+function asARule(slice: string): string {
+  return slice.charAt(0).toLowerCase() + slice.slice(1);
 }
 
 /** The slice rows of the story, which a client can observe; contracts and skeletons are proved through them. */

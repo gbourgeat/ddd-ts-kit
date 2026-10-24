@@ -90,13 +90,15 @@ describe('TupleIdentityRelationships', () => {
   });
 
   it('writes in the unit of work of the command: what a failed command recorded is not kept', async () => {
+    const failure = new Error('the command failed after recording');
+
     const failing = database.persistence.unitOfWork.run(async () => {
       await relationships.recordPerson('ada');
 
-      throw new Error('the command failed after recording');
+      throw failure;
     });
 
-    await expect(failing).rejects.toThrow('the command failed after recording');
+    await expect(failing).rejects.toBe(failure);
     expect(await subjectsOf('person:ada', 'self')).toEqual([]);
   });
 });

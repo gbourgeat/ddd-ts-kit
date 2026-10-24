@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:3e7b85e754a6a53d -->
+<!-- translation-of: persistence.md sha256:f6171878786ee3c8 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -371,8 +371,8 @@ verrous de ligne pour le relais de l'outbox et des migrations que l'on peut lire
    rapportent.
 4. **Durée des transactions.** Les transactions interactives de Prisma sont bornées dans le temps
    par défaut.
-5. **Ce que le kit génère pour elle.** Le cloisonnement par *tenant* et le journal d'audit SQL ne
-   sont pas disponibles pour les quatre (plus bas).
+5. **Ce que le kit génère pour elle.** Le cloisonnement par *tenant* est généré sur les quatre ;
+   le journal d'audit SQL n'est pas disponible pour les quatre (plus bas).
 6. **Fraîcheur de la version.** Préférez la ligne stable courante ; le jour de la vérification,
    l'étiquette npm `latest` de Prisma portait une *release candidate* : épinglez la version que
    vous avez testée.
@@ -392,10 +392,12 @@ passent `unitOfWorkContract`, les registres `outboxStoreContract` et
 `processedEventStoreContract` ; vos *repositories* sont tenus à `repositoryContract` à côté de
 leur *fake* en mémoire. La livraison par l'outbox se fait au moins une fois et sans ordre.
 
-L'isolation des *tenants* est inégale entre les quatre : Knex livre les quatre stratégies
-(tables partagées, sécurité au niveau des lignes, schéma par *tenant*, base de données par
-*tenant*), Drizzle les deux premières, Prisma et TypeORM aucune au-delà de la colonne
-`tenant_id`. Le tableau, et le `tenantIsolationContract` que passe chaque stratégie, sont dans
+L'isolation des *tenants* est inégale entre les quatre : les tables partagées sur chacun d'eux
+(`tenantTable`, `tenantCondition`, `tenantWhere`, les modèles de lecture avec `tenant`, l'outbox
+qui garde le *tenant* de chaque événement), et au-delà Knex livre les trois autres stratégies
+(sécurité au niveau des lignes, schéma par *tenant*, base de données par *tenant*), Drizzle la
+sécurité au niveau des lignes, Prisma et TypeORM rien de plus. Le tableau, et le
+`tenantIsolationContract` que passe chaque stratégie, sont dans
 [Multitenance](../concepts/multitenancy.fr.md#lisolation--quatre-stratégies).
 
 Pour le côté lecture, chacune des quatre livre aussi un traducteur des critères du noyau vers sa
@@ -438,13 +440,17 @@ D'après [`packages/cli/README.fr.md`](../../packages/cli/README.fr.md) et
 - La persistance générée des quatre ORM est écrite pour PostgreSQL. `custom` démarre sur des
   adaptateurs en mémoire tenus aux suites de contrat, que vous remplacez.
 - `generate repository --tenant-scoped`, et chaque *repository* d'un projet initialisé avec
-  `--tenancy shared-table`, est implémenté pour Drizzle et Knex ; avec un autre ORM, l'adaptateur
-  ordinaire est écrit et une note dit quoi ajouter, et `init` refuse la stratégie.
+  `--tenancy shared-table`, est implémenté pour les quatre ORM ; avec `custom` ou sans ORM,
+  l'adaptateur ordinaire est écrit et une note dit quoi ajouter, et `init` refuse la stratégie.
 - Le journal d'audit SQL existe pour Knex et Drizzle, sur PostgreSQL seulement. Avec Prisma,
   TypeORM, `custom` ou sans ORM, le projet généré démarre sur un journal en mémoire derrière un
   `TODO(platform)`.
 - Les *specs* rapides des adaptateurs s'exécutent sur PGlite ; Docker Compose fournit le vrai
   serveur.
+- L'effacement d'une personne concernée des tables déclarées avec `personalFields` existe sur les
+  quatre ORM (`KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`,
+  `TypeOrmPersonalDataErasure`), sous une seule suite de contrat ; le générateur n'écrit pas encore
+  les déclarations ([protection des données dès la conception](../proposals/privacy-by-design.fr.md)).
 
 ## PostgreSQL face aux autres
 

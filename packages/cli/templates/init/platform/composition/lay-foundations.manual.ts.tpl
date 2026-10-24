@@ -31,11 +31,14 @@ import { logDecisions } from '{{alias.platform}}/auth/authorization/log-decision
 import type { Platform } from '{{alias.platform}}/composition/platform{{alias.ext}}';
 import type { PlatformOptions } from '{{alias.platform}}/composition/platform-options{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+{{#if eventSourcing.on}}
+import { createEventSourcing } from '{{alias.platform}}/event-sourcing/create-event-sourcing{{alias.ext}}';
+{{/if}}
 import { ConfiguredJobScheduler } from '{{alias.platform}}/jobs/configured-job-scheduler{{alias.ext}}';
 import { createLogger } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
 import { createMetrics } from '{{alias.platform}}/observability/create-metrics{{alias.ext}}';
 
-type Founded = 'scope' | 'clock' | 'ids' | 'logger' | 'metrics'{{#if errors.sentry}} | 'errors'{{/if}} | 'cache' | 'jobs'{{#if cache.rateLimit}} | 'rateLimiter'{{/if}}{{#if audit.on}} | 'audit'{{/if}};
+{{foundations.founded}}
 
 /**
  * What exists before anything else: one execution scope, one clock and one generator for the
@@ -72,6 +75,9 @@ export function layFoundations(persistence: Persistence, options: PlatformOption
   // TODO(platform): this lock excludes inside one process only. Before running several instances, give the scheduler a lock between processes (`RedisLock` of @ddd-ts-kit/redis), or each instance runs every job.
   const lock = new InMemoryLock(clock);
 {{/unless}}
+{{#if audit.on}}
+  const audit = createAudit(persistence, { scope, clock, ids });
+{{/if}}
 
   return {
     traced,
@@ -100,10 +106,16 @@ export function layFoundations(persistence: Persistence, options: PlatformOption
     jobs: schedulerOf(options, traced, { clock, lock, scope, ids, logger, metrics, onRun: reportFailedRuns(errors) }),
 {{/if}}
 {{#if audit.on}}
-    audit: createAudit(persistence, { scope, clock, ids }),
+    audit,
+{{#if eventSourcing.on}}
+    eventSourcing: createEventSourcing(persistence, audit, { scope, clock, ids }),
+{{/if}}
 {{/if}}
 {{#unless audit.on}}
     decisions: logDecisions(logger),
+{{#if eventSourcing.on}}
+    eventSourcing: createEventSourcing(persistence),
+{{/if}}
 {{/unless}}
   };
 }

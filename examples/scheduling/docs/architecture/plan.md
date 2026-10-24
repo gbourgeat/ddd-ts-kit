@@ -51,6 +51,8 @@ the code later becomes a record in `docs/adr/` once the project exists.
 - 2026-10-10 scheduled work runs in a worker process (`src/apps/worker/main.ts`), not in the API (product owner).
 - 2026-10-10, after delivery: `analytics` keeps one row per fact (the outcome of each appointment) and computes the occupancy at read time, in the database; the stored occupancy, its nightly verification and its job are removed: a counter kept by events has to be defended against order and repaired, a figure computed from the facts cannot drift (product owner; `slices.md`, notes of M1.35 and M1.37).
 
+- 2026-10-24 an erasure reaches every copy of a person, not the sealed words alone: `identity` forgets the person, `notification` its contact, `scheduling` the notes, the cancellation reasons and the documents of their appointments and the name its directory copied; the appointments stay as facts with an opaque id; what was published before is out of reach and the README says so (product owner, on the proposal `privacy-by-design` of the kit).
+
 ## Open questions
 
 One line each, with who can answer. A question blocks only the step that needs its answer.

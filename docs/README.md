@@ -61,6 +61,7 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [Sagas and process managers](concepts/sagas-and-process-managers.md) | long-running processes: what the kit provides and what it does not |
 | [Event versioning](concepts/event-versioning.md) | evolving a published event |
 | [Event sourcing, per aggregate](concepts/event-sourcing.md) | when to keep an aggregate as its events, what it costs, upcasters, crypto-shredding, projections fed by the store, migrating to it and back |
+| [Personal data in a generated project](concepts/personal-data.md) | what `init --privacy on` and `generate repository --personal` write, the erasure and the export of a person end to end, the two modes of erasure, what stays out of reach and what the tool does not decide |
 | [Authentication and authorization](concepts/authentication-and-authorization.md) | RBAC, ABAC, ReBAC compared, with a decision table |
 | [Authorization in practice](concepts/authorization-in-practice.md) | `@Requires`, the bus middleware, the `Authorizer` port and policies, followed through one command |
 | [Actor and execution scope](concepts/actor-and-execution-scope.md) | the explicit actor, and what every unit of work carries |
@@ -134,6 +135,7 @@ limits, and a recommendation by situation.
 | [The read side](proposals/read-side.md) | criteria, representations, forms, read models and projections; the page says, part by part, what is built in the runtime packages, what the CLI does not generate yet and what is not built |
 | [Velocity of the build, the checks and the tests](proposals/build-and-test-velocity.md) | studied, not built: where the time and the memory of this repository go, on a workstation and in the pipeline; the levers of Vitest, ESLint, Oxlint, the native compiler and the package managers measured on this tree; what other teams published about orchestrators, test selection and GitHub Actions; a plan in order of gain per cost, and why no orchestrator |
 | [Privacy by design, beyond event sourcing](proposals/privacy-by-design.md) | proposed: what the kit erases today (the personal values of stored events) and what nothing of it erases, exports, retains or inventories (aggregates kept as rows, read models, the copies of other contexts, the masks of the audit trail); one declaration of the personal fields read by ports with an adapter per ORM, generators and `privacy/*` rules; the pull requests in merge order, the example first; what a tool can never guarantee and the words to use |
+| [A second example, spend management on the most popular stack](proposals/spend-management-example.md) | specified, not built: NestJS, Prisma, Jest, Kafka, S3, ABAC on a business of money and workflows; first the four capabilities that stack switches off today (queue and processes on Nest, tenancy and audit on Prisma, the identity preset), then the example as the proof; MySQL left out, with what it would take |
 
 ## Start from a question
 

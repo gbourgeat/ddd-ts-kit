@@ -14,6 +14,7 @@ import type { FileStorage, JobSettings } from '@ddd-ts-kit/kernel';
 import type { JobSettings } from '@ddd-ts-kit/kernel';
 {{/unless}}
 {{/unless}}
+import type { QueueWorkerOptions } from '@ddd-ts-kit/scheduling';
 import type { ConsumerTrace } from '@ddd-ts-kit/tracing';
 import type { EventProvider } from '{{alias.platform}}/events/event-provider{{alias.ext}}';
 import type { LogSettings } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
@@ -40,8 +41,10 @@ export interface PlatformOptions {
 {{/if}}
   /** The policy around every adapter that leaves the process; left out, `resilience/default-resilience-settings.ts`. */
   readonly resilience?: ResilienceSettings;
-  /** Whether this process runs the scheduled jobs, and their settings; left out (the tools, the tests), no job runs by time. */
+  /** Whether this process runs the scheduled jobs and consumes the background jobs, and the settings of the scheduled ones; left out (the tools, the tests), no job runs by time. */
   readonly jobs?: JobsOptions;
+  /** Concurrency per queue, polling interval and grace period of the worker of the background jobs; left out, one attempt at a time per queue. */
+  readonly queues?: Pick<QueueWorkerOptions, 'concurrency' | 'pollIntervalMs' | 'graceMs'>;
   /** Whether a consumed event continues the trace of its publication (the default) or starts one linked to it. */
   readonly traceConsumers?: ConsumerTrace;
 {{#if cache.redis}}

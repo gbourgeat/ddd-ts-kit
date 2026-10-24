@@ -809,6 +809,56 @@ and limits are in the README of `@ddd-ts-kit/kernel` ([Rebuild](../kernel/README
 The store passes `criteriaContract` and `readModelStoreContract` of
 `@ddd-ts-kit/testing/contracts`, on PGlite and on PostgreSQL 18.
 
+## Personal data erasure
+
+The erasure of a data subject from the tables of a context, from the `personalFields` declarations
+written next to its mappers (`@ddd-ts-kit/kernel`, "Personal data"): `DrizzlePersonalDataErasure` implements
+the `PersonalDataErasure` port over the executor of the unit of work. The port of the context extends the one of the kernel, and
+its adapter extends this class.
+
+```ts
+// infrastructure/persistence/person.personal-fields.ts: the table itself, the columns by the keys of its definition
+export const personPersonalFields = personalFields<typeof persons.$inferSelect, PgTable>(persons, {
+  subject: 'id',
+  fields: ['displayName', 'email'],
+  erasure: 'row',
+});
+
+// infrastructure/persistence/drizzle-identity-erasure.repository.ts
+@Repository(IdentityErasure)
+export class DrizzleIdentityErasure extends DrizzlePersonalDataErasure<NodePgQueryResultHKT> implements IdentityErasure {
+  constructor(database: Database, scope: ExecutionScope, files: FileStorage) {
+    super(database, { name: 'identity.persons', declarations: [personPersonalFields], tenant: { scope }, files });
+  }
+}
+```
+
+`erase(subject)` deletes the files the rows name from the storage first, then deletes the rows of
+the subject (`row`) or pseudonymises them (`pseudonymise`: a text column reads `[erased]`, a column
+of any other type reads nothing, a file column nothing), and answers how many rows it reached, none
+the second time. With `tenant`, every statement is confined to the tenant of the work and never
+widened by an elevation (the column named `tenant_id`, or `tenant.column`); without it, the table holds the rows of every tenant. A subject
+that is not an opaque identifier is refused before any statement, and a declaration that names file
+columns without a file storage is refused when the adapter is built. The types of the columns come from the table definition, so that a text and a number are pseudonymised each its own way. A personal column
+that is not a text has to accept null, or the rows are erased with `row`: a declaration that would
+pseudonymise one that does not is refused before any file or row is touched
+(`NotNullablePersonalColumnError`). The adapter passes
+`personalDataErasureContract` of `@ddd-ts-kit/testing`, as the in-memory one does, on PGlite and
+PostgreSQL. What an erasure does not reach, and the whole chain (`eraseDataSubject`: the key, every
+copy in every tenant, the rebuilds), is in the README of the kernel ("Personal data").
+
+`DrizzlePersonalDataExport` answers the right of access and to portability from the same declarations:
+`exportOf(subject)` hands over one `PersonalDataRecord` per row about the subject in every declared
+table, under `<name>.<table>`, with each personal column and each file column (by its key) as plain
+data, by the keys of the table definition, no other column and nothing of anyone else; a row pseudonymised already
+answers what it reads. The same `tenant` option confines every statement to the tenant of the work, a
+subject that is not an opaque identifier is refused before any statement, and the adapter passes
+`personalDataExportContract`. The port of the context extends `PersonalDataExport` of the kernel and
+its adapter extends this class with `name`, `declarations` and `tenant` (`DrizzlePersonalDataExportOptions`);
+`generate repository --personal` writes both adapters, and `exportDataSubject` of the kernel gathers
+every export into one dated document. Wrap the adapter with `auditedPersonalDataExport` of
+`@ddd-ts-kit/audit` where it is bound, so that each handover leaves an entry.
+
 ## Outbox and idempotency
 
 - `DrizzleOutboxStore.claimBatch` selects the due rows `FOR UPDATE SKIP LOCKED` and leases

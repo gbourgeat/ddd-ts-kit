@@ -11,9 +11,11 @@ describe('When an organisation is opened, the identity provider follows', () => 
   it('learns the organisation under its slug once, asked again after a failure until it answers', async () => {
     const { application, identityProvider } = await startedIdentity();
 
-    identityProvider.failWith(new Error('provider unreachable'));
+    const outage = new Error('provider unreachable');
 
-    await expect(application.eventBus.publish([opening])).rejects.toThrow();
+    identityProvider.failWith(outage);
+
+    await expect(application.eventBus.publish([opening])).rejects.toBe(outage);
 
     identityProvider.answerAgain();
     await application.eventBus.publish([opening]);

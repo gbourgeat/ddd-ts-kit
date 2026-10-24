@@ -139,7 +139,7 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
       expect(compose).toContain('    stop: () => stop(platform, options),\n');
 
       expect(compose).toContain(
-        '  await platform.jobs.stop();\n  await options.events.close();\n  await platform.errors.flush(2_000);\n  await platform.logger.flush();\n}',
+        '  await platform.jobs.stop();\n  await platform.backgroundJobs.stop();\n  await options.events.close();\n  await platform.errors.flush(2_000);\n  await platform.logger.flush();\n}',
       );
     },
   );

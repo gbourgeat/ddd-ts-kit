@@ -10,6 +10,7 @@ import { LIFECYCLE_INJECTIONS } from './injections/lifecycle-injections';
 import { MODULE_INJECTIONS } from './injections/module-injections';
 import { PERSISTENCE_INJECTIONS } from './injections/persistence-injections';
 import { STRUCTURE_INJECTIONS } from './injections/structure-injections';
+import { TEST_INJECTIONS } from './injections/test-injections';
 import { VALUE_OBJECT_INJECTIONS } from './injections/value-object-injections';
 import { WIRING_INJECTIONS } from './injections/wiring-injections';
 
@@ -22,6 +23,7 @@ export const INJECTIONS: readonly Injection[] = [
   ...CLEAN_INJECTIONS,
   ...BEHAVIOUR_INJECTIONS,
   ...VALUE_OBJECT_INJECTIONS,
+  ...TEST_INJECTIONS,
   ...AUTHZ_AND_EVENT_INJECTIONS,
   ...LIFECYCLE_INJECTIONS,
   ...ERROR_INJECTIONS,

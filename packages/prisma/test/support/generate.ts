@@ -23,7 +23,7 @@ const HEADER = `generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["public", "messaging", "billing_core", "read_side"]
+  schemas  = ["public", "messaging", "billing_core", "read_side", "privacy"]
 }
 `;
 
@@ -91,6 +91,42 @@ model LedgerRow {
 }
 `;
 
+/**
+ * The rows of a context about persons, for the erasure contract: three personal columns of two
+ * types, a file column, the tenant. A personal column that is not a text accepts null: pseudonymised,
+ * it reads nothing.
+ */
+const PEOPLE = `
+model PrivacyPerson {
+  id           String   @id
+  personId     String   @map("person_id")
+  displayName  String   @map("display_name")
+  email        String
+  age          Int?
+  avatarKey    String?  @map("avatar_key")
+  tenantId     String   @map("tenant_id")
+  registeredAt DateTime @map("registered_at") @db.Timestamptz(3)
+
+  @@map("people")
+  @@schema("privacy")
+}
+
+/// The same table, its age not nullable: what a pseudonymisation cannot write to.
+model PrivacyPersonStrict {
+  id           String   @id
+  personId     String   @map("person_id")
+  displayName  String   @map("display_name")
+  email        String
+  age          Int
+  avatarKey    String?  @map("avatar_key")
+  tenantId     String   @map("tenant_id")
+  registeredAt DateTime @map("registered_at") @db.Timestamptz(3)
+
+  @@map("people_strict")
+  @@schema("privacy")
+}
+`;
+
 const inSchema = (models: string, schema: string): string => models.replaceAll(/^}$/gm, `  @@schema("${schema}")\n}`);
 
 /**
@@ -104,7 +140,9 @@ async function composeSchema(): Promise<string> {
 
   const renamed = fragment
     .replace('model OutboxRecord ', 'model MessagingOutboxRecord ')
-    .replace('model ProcessedEvent ', 'model MessagingProcessedEvent ');
+    .replace('model ProcessedEvent ', 'model MessagingProcessedEvent ')
+    // The outbox of a multi-tenant project: the field the fragment leaves commented out.
+    .replace('  // tenantId      String?   @map("tenant_id")', '  tenantId      String?   @map("tenant_id")');
 
   return [
     HEADER,
@@ -114,6 +152,7 @@ async function composeSchema(): Promise<string> {
     INVOICE,
     READ_MODEL,
     LEDGER,
+    PEOPLE,
   ].join('\n');
 }
 
