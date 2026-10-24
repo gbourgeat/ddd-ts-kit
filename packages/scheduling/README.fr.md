@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2a229953408cdcf4 -->
+<!-- translation-of: README.md sha256:4cba0471ae7aaf1c -->
 
 # @ddd-ts-kit/scheduling
 
@@ -654,7 +654,7 @@ declare class CompileStatementsBackgroundJob implements BackgroundJob<CompileSta
 }
 declare const job: CompileStatementsBackgroundJob;
 
-const store = new InMemoryJobStore(); // KnexJobStore, DrizzleJobStore, PrismaJobStore ou RedisJobStore en production
+const store = new InMemoryJobStore(); // KnexJobStore, DrizzleJobStore, PrismaJobStore, TypeOrmJobStore ou RedisJobStore en production
 // la JobQueue sur laquelle un cas d'usage met en file : jobs.enqueue(CompileStatementsBackgroundJob, { month: '2026-10' })
 export const jobs = new StoredJobQueue({ store, clock, ids, scope, traceparent: captureTraceparent });
 
