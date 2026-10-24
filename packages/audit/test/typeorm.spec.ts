@@ -6,6 +6,7 @@ import { TypeOrmAuditTrail, auditEntities, auditGuardStatements } from '../src/t
 import type { AuditTrailOptions } from '../src';
 import { auditTrailContract } from '../src/testing';
 import { startPostgres, type TestPostgres } from './support/postgres';
+import { archiveGuardSpecs, archiveSpecs, type ArchiveFixture } from './support/archive-specs';
 import { sqlTrailSpecs } from './support/sql-trail-specs';
 import { REAL_SERVER, aRecord, type SqlTrailFixture } from './support/sql-trail-fixture';
 
@@ -141,3 +142,19 @@ async function shapeOf(schema: string): Promise<unknown> {
 
   return { columns, indexes };
 }
+
+/** The way an attacker with access to the database rewrites an entry: the guard set aside. */
+async function tampered(current: SqlTrailFixture, id: string): Promise<void> {
+  await current.run('alter table $table disable trigger "audit_entries_no_rewrite"');
+  await current.run(`update $table set "action" = 'forged' where "id" = '${id}'`);
+  await current.run('alter table $table enable trigger "audit_entries_no_rewrite"');
+}
+
+async function archiveFixture(): Promise<ArchiveFixture> {
+  const created = await fixture();
+
+  return { trail: created.trail, tamper: (id) => tampered(created, id), run: created.run };
+}
+
+archiveSpecs('TypeOrmAuditTrail', archiveFixture);
+archiveGuardSpecs('TypeOrmAuditTrail', archiveFixture);

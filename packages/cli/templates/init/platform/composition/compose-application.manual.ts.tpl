@@ -11,6 +11,9 @@ import { subscribeAll } from '@ddd-ts-kit/events';
 {{#if http.any}}
 import { createErrorMapper, defineRoutes, type Route } from '@ddd-ts-kit/http';
 {{/if}}
+{{#if audit.archive}}
+import { ArchiveAuditEntries } from '@ddd-ts-kit/audit';
+{{/if}}
 {{#if files.any}}
 import { PurgeStagedFiles } from '@ddd-ts-kit/kernel';
 {{/if}}
@@ -123,6 +126,9 @@ export function composeApplication(
   installAspectRuntime({ logger, metrics, cache, clock });
 {{#if files.any}}
   purgeStagedFiles(platform);
+{{/if}}
+{{#if audit.archive}}
+  archiveAuditEntries(platform);
 {{/if}}
 {{#if privacy.on}}
   purgeExpiredEveryNight(platform);
@@ -248,6 +254,18 @@ function purgeStagedFiles(platform: Platform): void {
   const purge = new PurgeStagedFiles(platform.files.staging, platform.clock);
 
   platform.jobs.register({ name: 'files.purge-staged', schedule: { every: '1h' }, run: () => purge.run() });
+}
+{{/if}}
+{{#if audit.archive}}
+
+/**
+ * The entries of the audit trail older than the twelve whole months it keeps online, moved to the
+ * storage on the first day of every month at 04:00 UTC, verified and anchored.
+ */
+function archiveAuditEntries(platform: Platform): void {
+  const archive = new ArchiveAuditEntries(platform.audit.trail, platform.files.storage, platform.clock);
+
+  platform.jobs.register({ name: 'audit.archive', schedule: { cron: '0 4 1 * *' }, run: () => archive.run() });
 }
 {{/if}}
 {{#if privacy.on}}

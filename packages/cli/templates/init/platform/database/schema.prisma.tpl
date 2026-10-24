@@ -150,6 +150,22 @@ model AuditEntry {
   @@schema("audit")
 }
 
+/// The archives of the audit trail: one row per range of a chain written to the file storage, append-only, read by the guard.
+model AuditArchive {
+  chain        String
+  fromSequence BigInt   @map("from_sequence")
+  toSequence   BigInt   @map("to_sequence")
+  lastHash     String   @map("last_hash")
+  entries      Int
+  fileKey      String   @map("file_key")
+  fileDigest   String   @map("file_digest")
+  archivedAt   DateTime @map("archived_at") @db.Timestamptz(3)
+
+  @@id([chain, toSequence])
+  @@map("audit_archives")
+  @@schema("audit")
+}
+
 /// The head of each chain of the audit trail: the row an append locks.
 model AuditChain {
   chain    String @id

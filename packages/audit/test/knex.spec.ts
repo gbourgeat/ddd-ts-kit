@@ -1,10 +1,13 @@
 import knex, { type Knex } from 'knex';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { FixedClock, InMemoryFileStorage } from '@ddd-ts-kit/kernel';
 import { createKnexUnitOfWork } from '@ddd-ts-kit/knex';
-import { KnexAuditTrail, createAuditTables, dropAuditTables } from '../src/knex';
+import { auditArchiveUpgradeStatements } from '../src/drizzle';
+import { KnexAuditTrail, addAuditArchives, createAuditTables, dropAuditTables } from '../src/knex';
 import type { AuditTrailOptions } from '../src';
 import { auditTrailContract } from '../src/testing';
 import { startPostgres, type TestPostgres } from './support/postgres';
+import { archiveGuardSpecs, archiveSpecs, type ArchiveFixture } from './support/archive-specs';
 import { sqlTrailSpecs } from './support/sql-trail-specs';
 import { REAL_SERVER, aRecord, type SqlTrailFixture } from './support/sql-trail-fixture';
 
@@ -93,7 +96,7 @@ auditTrailContract(runner, {
 sqlTrailSpecs({ name: 'KnexAuditTrail', real: REAL_SERVER, create: fixture });
 
 describe('createAuditTables', () => {
-  it('creates the two tables, the indexes of the reader and the guard, in the given schema', async () => {
+  it('creates the three tables, the indexes of the reader and the guard, in the given schema', async () => {
     const schema = await freshSchema();
 
     const { rows: indexes } = await db.raw<{ rows: { indexname: string }[] }>(
@@ -106,6 +109,7 @@ describe('createAuditTables', () => {
     );
 
     expect(indexes.map((row) => row.indexname)).toEqual([
+      'audit_archives_pkey',
       'audit_chains_pkey',
       'audit_entries_actor_idx',
       'audit_entries_correlation_idx',
@@ -127,12 +131,76 @@ describe('createAuditTables', () => {
 
     expect(await db.schema.withSchema(schema).hasTable('audit_entries')).toBe(false);
     expect(await db.schema.withSchema(schema).hasTable('audit_chains')).toBe(false);
+    expect(await db.schema.withSchema(schema).hasTable('audit_archives')).toBe(false);
 
     const { rows } = await db.raw<{ rows: unknown[] }>(
-      `select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = ? and p.proname = 'audit_entries_append_only'`,
+      `select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = ? and p.proname in ('audit_entries_append_only', 'audit_archives_append_only')`,
       [schema],
     );
 
     expect(rows).toEqual([]);
+  });
+});
+
+/** The way an attacker with access to the database rewrites an entry: the guard set aside. */
+async function tampered(current: SqlTrailFixture, id: string): Promise<void> {
+  await current.run('alter table $table disable trigger "audit_entries_no_rewrite"');
+  await current.run(`update $table set "action" = 'forged' where "id" = '${id}'`);
+  await current.run('alter table $table enable trigger "audit_entries_no_rewrite"');
+}
+
+async function archiveFixture(): Promise<ArchiveFixture> {
+  const created = await fixture();
+
+  return { trail: created.trail, tamper: (id) => tampered(created, id), run: created.run };
+}
+
+archiveSpecs('KnexAuditTrail', archiveFixture);
+archiveGuardSpecs('KnexAuditTrail', archiveFixture);
+
+/** A trail as `createAuditTables` wrote it before the archives: no archives table, a guard that refuses every delete. */
+async function trailBeforeTheArchives(): Promise<{ readonly schema: string; readonly trail: KnexAuditTrail }> {
+  const schema = await freshSchema();
+
+  await db.raw(`drop table "${schema}"."audit_archives" cascade`);
+
+  await db.raw(
+    `create or replace function "${schema}"."audit_entries_append_only"() returns trigger language plpgsql as $$ begin raise exception 'audit entries are append-only'; end $$`,
+  );
+
+  const trail = new KnexAuditTrail(createKnexUnitOfWork(db), { schema });
+
+  await trail.record({ ...aRecord('entry-1'), occurredAt: new Date('2026-01-10T00:00:00.000Z') });
+
+  return { schema, trail };
+}
+
+const archiving = { files: new InMemoryFileStorage(), clock: new FixedClock(new Date('2026-04-01T00:00:00.000Z')) };
+const MARCH = new Date('2026-03-01T00:00:00.000Z');
+
+describe('a trail created before the archives', () => {
+  it('cannot archive until it is upgraded', async () => {
+    const { trail } = await trailBeforeTheArchives();
+
+    await expect(trail.archiveBefore(MARCH, archiving)).rejects.toThrow();
+  });
+
+  it('archives once addAuditArchives ran in a migration', async () => {
+    const { schema, trail } = await trailBeforeTheArchives();
+
+    await addAuditArchives(db, { schema });
+
+    expect((await trail.archiveBefore(MARCH, archiving)).archives).toMatchObject([{ fromSequence: 1, toSequence: 1 }]);
+  });
+
+  it('archives once the statements of auditArchiveUpgradeStatements ran, as Drizzle, Prisma and TypeORM migrations run them', async () => {
+    const { schema, trail } = await trailBeforeTheArchives();
+
+    for (const statement of auditArchiveUpgradeStatements(schema)) {
+      await db.raw(statement);
+    }
+
+    expect((await trail.archiveBefore(MARCH, archiving)).archives).toHaveLength(1);
+    expect(auditArchiveUpgradeStatements()[0]).toContain('create table if not exists "audit_archives"');
   });
 });

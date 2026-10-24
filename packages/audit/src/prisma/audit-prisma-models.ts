@@ -34,6 +34,22 @@ model AuditEntry {
   @@schema("{schema}")
 }
 
+/// The archives of the audit trail: one row per range of a chain written to the file storage, append-only, read by the guard.
+model AuditArchive {
+  chain        String
+  fromSequence BigInt   @map("from_sequence")
+  toSequence   BigInt   @map("to_sequence")
+  lastHash     String   @map("last_hash")
+  entries      Int
+  fileKey      String   @map("file_key")
+  fileDigest   String   @map("file_digest")
+  archivedAt   DateTime @map("archived_at") @db.Timestamptz(3)
+
+  @@id([chain, toSequence])
+  @@map("audit_archives")
+  @@schema("{schema}")
+}
+
 /// The head of each chain of the audit trail: the row an append locks.
 model AuditChain {
   chain    String @id
@@ -46,7 +62,7 @@ model AuditChain {
 `;
 
 /**
- * The two tables of the trail as Prisma models, to paste in `prisma/schema.prisma` so that the
+ * The three tables of the trail (the entries, the heads of the chains, the archives) as Prisma models, to paste in `prisma/schema.prisma` so that the
  * migrations of the project create them, with the columns, the keys and the indexes the SQL of
  * the package gives them, in the given schema (which the `schemas` of the datasource lists). The
  * models are read by no generated client: the trail writes raw statements. The guard that keeps
