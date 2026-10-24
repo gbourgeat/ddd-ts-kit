@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:0f21b5574b4c7653 -->
+<!-- translation-of: testing-strategy.md sha256:b5895235f4abb155 -->
 
 # Stratégie de test
 
@@ -573,15 +573,15 @@ test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // depuis @ddd
 ## Score de mutation
 
 Un taux de couverture dit qu'une ligne a tourné sous un test ; un score de mutation dit qu'un test
-remarquerait si la ligne changeait. Chaque nuit le *pipeline* lance Stryker sur la couche domaine de
+remarquerait si la ligne changeait. Chaque nuit le *pipeline* lance Stryker sur les couches domaine et application de
 chaque contexte (`npm run test:mutation`) : chaque mutant est un petit changement du code, une
 condition inversée, une borne déplacée, un retour vidé, et les *specs* unitaires tournent contre
 lui ; un mutant que les *specs* remarquent est détecté, un qu'elles laissent passer est un
-survivant. Puis `ddd-ts-kit mutation` lit le rapport et tient chaque contexte au plancher
-`mutation` de `ddd-ts-kit.config.json`, 80 par la référence ([CONFIG.md](../CONFIG.fr.md#score-de-mutation)).
+survivant. Puis `ddd-ts-kit mutation` lit le rapport et tient chaque couche de chaque contexte à son
+plancher `mutation` de `ddd-ts-kit.config.json`, 80 et 75 par la référence ([CONFIG.md](../CONFIG.fr.md#score-de-mutation)).
 
 La config Stryker n'écrit ni *glob* ni nombre : elle étale `governedMutation()` de
-`@ddd-ts-kit/testing/mutation`, qui mute la couche domaine de chaque contexte, écarte les textes
+`@ddd-ts-kit/testing/mutation`, qui mute les couches domaine et application de chaque contexte, écarte les textes
 des refus par l'*ignorer* du kit, puisqu'un refus se vérifie par son code et jamais par son texte,
 toute autre chaîne mesurée, et ignore les mutants statiques, ceux du code qui s'exécute une fois au
 chargement du module. La règle
@@ -595,13 +595,14 @@ accident du code, ou une branche qu'aucun appelant n'atteint, laissez le mutant 
 pourquoi, sans jamais le cacher par la configuration. Mesuré sur l'exemple le 2026-10-24
 ([README du *pipeline*](../../pipeline/README.md#mutation-testing)) avec la configuration livrée :
 1436 mutants, dont 163 textes de refus et mutants statiques laissés de côté, 1226 tués, 41
-survivants, 6 sans couverture, 96,3 % en 5 minutes, le contexte le plus bas à 95,4 %.
+survivants, 6 sans couverture, 96,3 % en 5 minutes, le contexte le plus bas à 95,4 %. Avec la couche
+application, mesurée le même jour : 2412 mutants dans 283 fichiers, 96,1 % en 5 minutes 24 secondes,
+la couche application à 95,7 % et son contexte le plus bas à 93,5 % ; c'est la passe de tests
+initiale que la nuit paie, pas les mutants.
 
 Une *pull request* reçoit une lecture de son changement, pas la mesure complète : le *job*
 `mutation-changed` du *pipeline* réutilise le rapport de la dernière nuit pour ce que le changement
-ne touche pas (le mode incrémental de Stryker, une minute environ sur l'exemple), relance la mesure
-complète quand le changement touche un code dont les tests dépendent et que Stryker ne compare pas
-(un *fake*, un *builder*, un monde, la plateforme, une dépendance), puis liste les survivants des
+ne touche pas (le mode incrémental de Stryker, une minute environ sur l'exemple quand le changement reste dans le domaine, les cas d'usage et les *specs*), relance la mesure complète, cinq minutes environ, quand le changement touche un code dont les tests dépendent et que Stryker ne compare pas (une route, un adaptateur, un *fake*, un *builder*, un monde, la plateforme, une dépendance, le cas courant d'une fonctionnalité), puis liste les survivants des
 fichiers que le changement a touchés (`ddd-ts-kit mutation --changed <base>`). Lisez-les avant de
 demander une revue ; le plancher reste l'affaire de la nuit.
 
@@ -610,8 +611,7 @@ demander une revue ; le plancher reste l'affaire de la nuit.
 - **La mesure complète tourne chaque nuit ; une *pull request* reçoit une lecture de son changement.**
   Cinq minutes pour le domaine des quatre contextes de l'exemple, c'est trop long pour la boucle
   d'un changement : le *job* de la nuit tient le plancher, et une *pull request* liste les survivants
-  des fichiers qu'elle a touchés d'après une passe incrémentale qui réutilise les résultats de la
-  nuit, une minute environ, jamais une porte ; un survivant trouvé la nuit est une règle à énoncer le
+  des fichiers qu'elle a touchés d'après une passe qui réutilise les résultats de la nuit quand le changement reste dans le modèle et les cas d'usage, jamais une porte ; un survivant trouvé la nuit est une règle à énoncer le
   lendemain.
 - **Un score de mutation dit qu'un changement a été remarqué, pas que la bonne règle a été énoncée.**
   Un test qui tue un mutant énonce ce que le code fait aujourd'hui : chacun se lit comme une
