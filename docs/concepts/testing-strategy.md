@@ -545,6 +545,21 @@ test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // from @ddd-t
 ]
 ```
 
+## Speed
+
+A loop that waits is a loop that skips: the specs of a context run after every change, so each spec
+file is held to the time budget of its level, five seconds for a unit spec and thirty for an
+integration spec by the reference (`budget` of `ddd-ts-kit.config.json`, lowered freely, raised only
+by a recorded deviation). The reporter of the runner, `@ddd-ts-kit/testing/budget/vitest` or
+`@ddd-ts-kit/testing/budget/jest`, names the slowest spec of each level at the end of every run and
+warns when the tests and hooks of a file are over its budget, the loading of its modules left out; it fails the run once the project enforces the budget (`"enforce": true` under `budget`), when its measures are stable, since a duration depends on the load of the machine as much as on the spec. A slow unit spec hides a
+world rebuilt per test instead of shared ([Worlds](#worlds)), I/O behind what should be a fake, or a
+wait; a slow integration spec rebuilds a schema per test or replays more than the behaviour it states.
+The specs of the application outside the contexts, end to end, acceptance and architecture, are not
+held: a flow has the time it needs; a spec of the platform counts as integration, since its adapters
+open a database. On the example, the slowest unit spec takes 1.6 seconds and the slowest integration
+spec 11, under load.
+
 ## Mutation score
 
 A coverage rate says that a line ran under a test; a mutation score says that a test would notice

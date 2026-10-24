@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:02493b04fa381e3e -->
+<!-- translation-of: audit-trail.md sha256:973339316ae0e107 -->
 
 # Journal d'audit
 
@@ -272,6 +272,23 @@ de chaîne tronquée ne se voit qu'en comparant avec un point de contrôle plus 
 La vérification devrait s'exécuter selon une planification et alerter ; une chaîne que personne
 ne vérifie ne prouve rien en pratique.
 
+## Archivage
+
+Chaque entrée garde les identifiants d'une personne, et un journal grandit aussi longtemps que
+vit le système : la limitation de la conservation (RGPD, article 5(1)(e)) s'applique à lui aussi.
+L'archivage sort de la base les plus anciennes entrées de chaque chaîne vers le stockage de
+fichiers, sans casser ce que la chaîne prouve. Les entrées sont d'abord vérifiées, depuis l'ancre
+de l'archive précédente ; écrites dans un fichier par plage ; enregistrées avec le hash de la
+dernière et l'empreinte du fichier ; puis supprimées, ce que la garde n'autorise que pour des
+entrées couvertes. Les entrées restées en base se rattachent à ce dernier hash, et chaque fichier
+se vérifie de nouveau seul, contre son enregistrement et l'archive qui le précède. Une chaîne qui
+ne se vérifie pas n'est pas archivée : une rupture est à examiner par quelqu'un.
+
+Un projet généré dont le journal est en base et dont les fichiers sont dans un stockage le fait
+le premier jour de chaque mois et garde douze mois entiers en ligne. Archiver n'est pas effacer :
+les fichiers gardent des identifiants, et combien de temps ils sont gardés, sous quel verrou, est
+la décision du responsable de traitement. Voir [Archivage](../../packages/audit/README.fr.md#archivage).
+
 ## Le droit à l'effacement et une chaîne en ajout seul
 
 Une entrée ne peut pas être supprimée sans rompre sa chaîne, et une réglementation comme le RGPD
@@ -329,9 +346,9 @@ Elles sont énoncées par [`@ddd-ts-kit/audit`](../../packages/audit/README.fr.m
   écrit dans la base de données, une route qui contourne le bus) n'est pas dans le journal.
   Garder chaque route sur le bus, c'est à cela que servent
   [`authz/declared`](../ARCHITECTURE.fr.md#3-règles-de-dépendance) et les règles de dépendance.
-- **PostgreSQL seulement** pour les stockages SQL livrés (Knex et Drizzle). Avec Prisma,
-  TypeORM, un ORM maison ou sans ORM, le projet généré démarre sur un journal en mémoire derrière
-  un `TODO(platform)` ; une autre base de données est un autre adaptateur, soumis à la suite de
+- **PostgreSQL seulement** pour les stockages SQL livrés (Knex, Drizzle, Prisma et TypeORM). Avec
+  un ORM maison ou sans ORM, le projet généré démarre sur un journal en mémoire derrière un
+  `TODO(platform)` ; une autre base de données est un autre adaptateur, soumis à la suite de
   contrat.
 - **Les ajouts à une même chaîne sont sérialisés.** Dans une unité de travail, les entrées sont
   écrites à sa validation, les têtes en dernier et toujours dans le même ordre : deux unités de
@@ -340,8 +357,8 @@ Elles sont énoncées par [`@ddd-ts-kit/audit`](../../packages/audit/README.fr.m
   pas visible dans son unité de travail avant la validation.
 - **L'horodatage est l'horloge de l'instance qui a enregistré.** Dans une chaîne, l'ordre est la
   séquence.
-- **Aucune politique de conservation ni d'archivage** n'est fournie. Combien de temps les
-  entrées sont gardées et où vont les anciennes chaînes est une décision du projet.
+- **Archiver déplace, n'efface pas.** Combien de temps les fichiers d'archive sont gardés, et le
+  verrou du stockage qui les garde, sont des décisions du projet ; la recherche ne lit que la base.
 - **L'ancrage est un *hook*, pas un service.** Sans points de contrôle gardés ailleurs, une
   réécriture complète de la table est indétectable.
 - **La vérification lit sa plage en mémoire** : vérifiez les longues chaînes par plages.

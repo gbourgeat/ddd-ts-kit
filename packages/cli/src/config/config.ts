@@ -1,4 +1,5 @@
 import type { CommitConfig } from './commit-config';
+import type { Budget } from './budget';
 import type { Coverage } from './coverage';
 import type { Mutation } from './mutation';
 import type { RuleSetting } from './rule-setting';
@@ -116,6 +117,8 @@ export interface Config {
   readonly onePerFile: OnePerFile;
   /** The minimum test coverage of each layer, per context: read by the test runner config, lowered only by a recorded deviation. */
   readonly coverage: Coverage;
+  /** The time a spec file of each level may take, in milliseconds: held by the reporter of the test runner, raised only by a recorded deviation. */
+  readonly budget: Budget;
   /** The minimum mutation score of the domain layer, per context: read by the Stryker config and held by `ddd-ts-kit mutation`, lowered only by a recorded deviation. */
   readonly mutation: Mutation;
   /** The advised size of one commit, generated files not counted. */

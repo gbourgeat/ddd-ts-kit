@@ -1,5 +1,5 @@
 [English](file-storage.md) · **Français**
-<!-- translation-of: file-storage.md sha256:7433aaa5316cf953 -->
+<!-- translation-of: file-storage.md sha256:24646fa2c4bbddab -->
 
 # Stockage de fichiers
 
@@ -407,6 +407,10 @@ corrélation, sans le contenu ni le lien.
   désigne un *tenant* par son préfixe. L'identifiant du *tenant* est le segment lui-même : le
   noyau n'accepte que des lettres, des chiffres, `-` et `_` (voir
   [Multitenance](multitenancy.fr.md)), donc deux *tenants* ne partagent jamais un préfixe.
+- **Les archives du journal d'audit à part.** Elles sont écrites sous `audit-archives/`, hors de
+  tout préfixe de tenant : un effacement ou un export par préfixe de tenant les laisse, et
+  l'application ne signe aucun lien vers elles. Un stockage à elles, avec un verrou de
+  conservation, est le choix le plus sûr (voir [Journal d'audit](audit-trail.fr.md#archivage)).
 - **Des liens courts.** Un lien signé est un jeton au porteur : il fuit avec la page, le journal
   ou le courriel qui le contient. Le kit refuse un lien qui vit plus d'une heure.
 - **Vérifié sur les octets, analysé avant d'être accepté.** `FileScanner` s'exécute sur le

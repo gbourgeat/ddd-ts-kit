@@ -22,6 +22,14 @@ export interface VerifyChainOptions {
 
   /** Checkpoints published elsewhere: an entry at one of these positions must have that hash. */
   readonly checkpoints?: readonly AuditCheckpoint[];
+
+  /**
+   * The entry just before the first one examined, as an archive keeps it (`lastHash` and
+   * `toSequence`): the first entry must link to its hash, so that the entries left in the trail
+   * are proven to go on from the archived ones. Without it, starting at `from` above 1 trusts the
+   * entry before.
+   */
+  readonly after?: AuditCheckpoint;
 }
 
 /**
@@ -146,7 +154,7 @@ function breakAt(entries: readonly AuditEntry[], position: number, options: OneC
     return misplacement(entries.slice(position + 1), entry.sequence, expected);
   }
 
-  if (hashOf(entry) !== entry.hash || !linksTo(entry, entries[position - 1])) {
+  if (hashOf(entry) !== entry.hash || !linksTo(entry, entries[position - 1], options.after)) {
     return 'altered-content';
   }
 
@@ -157,9 +165,13 @@ function misplacement(rest: readonly AuditEntry[], found: number, expected: numb
   return found < expected || rest.some((entry) => entry.sequence === expected) ? 'reordered' : 'missing-entry';
 }
 
-function linksTo(entry: AuditEntry, previous: AuditEntry | undefined): boolean {
+function linksTo(entry: AuditEntry, previous: AuditEntry | undefined, after: AuditCheckpoint | undefined): boolean {
   if (previous !== undefined) {
     return entry.previousHash === previous.hash;
+  }
+
+  if (after !== undefined) {
+    return entry.sequence === after.sequence + 1 && entry.previousHash === after.hash;
   }
 
   return entry.sequence !== 1 || entry.previousHash === GENESIS_HASH;

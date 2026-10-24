@@ -1,5 +1,5 @@
 {{#if audit.on}}
-import { auditChainsTable, auditEntriesTable } from '@ddd-ts-kit/audit/drizzle';
+import { auditArchivesTable, auditChainsTable, auditEntriesTable } from '@ddd-ts-kit/audit/drizzle';
 {{/if}}
 {{#if tenancy.any}}
 import { {{#if eventSourcing.on}}eventStoreTables, {{/if}}{{#if queue.database}}jobsTable, {{/if}}processedEventsTable{{#if queue.processTable}}, processesTable{{/if}}, tenantOutboxTable } from '@ddd-ts-kit/drizzle/postgres';
@@ -37,6 +37,8 @@ export const AUDIT_SCHEMA = 'audit';
 // TODO(platform): drizzle-kit writes no trigger. After the first `npm run db:generate <name>`, add a custom migration (`npm run db:generate -- audit-guard --custom`) holding the statements `npm run db:audit-guard` prints: they make the entries refuse UPDATE, DELETE and TRUNCATE.
 export const auditEntries = auditEntriesTable(AUDIT_SCHEMA);
 export const auditChains = auditChainsTable(AUDIT_SCHEMA);
+/** One row per range of a chain moved to the storage of files: the anchor the chain goes on from. */
+export const auditArchives = auditArchivesTable(AUDIT_SCHEMA);
 {{/if}}
 {{#if eventSourcing.on}}
 

@@ -37,6 +37,7 @@ export default defineConfig(
       'reports/**',
       'packages/cli/templates/**',
       'packages/prisma/test/generated/**',
+      'packages/audit/test/generated/**',
       'site/src/content/**',
       'site/.astro/**',
       '**/*.d.ts',
