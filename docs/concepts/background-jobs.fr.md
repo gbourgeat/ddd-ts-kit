@@ -1,5 +1,5 @@
 [English](background-jobs.md) · **Français**
-<!-- translation-of: background-jobs.md sha256:68cded80e620bb3c -->
+<!-- translation-of: background-jobs.md sha256:a5d8a50548888ceb -->
 
 # Jobs en arrière-plan
 
@@ -212,11 +212,15 @@ La charge utile (payload) est vérifiée par rapport à `run` :
   mono-*tenant*, un *job* système) atteint tous les *jobs*.
 - **Généré** : `ddd-ts-kit generate background-job <context> <Name> --command <UseCase>` écrit la
   classe (`@Background()` dans le style déclaré, `builder.backgroundJob(..)` dans le fichier de
-  module sinon), qui envoie sa commande en tant que `execution.actor` avec un champ de sa charge
-  utile par autre entrée de la commande (une `Date` voyage sous forme de texte ISO, un objet-valeur
-  est refusé : une commande prend des primitives et des identifiants), et une *spec* qui le met en
-  file en tant qu'utilisateur et exécute ce qui est échu. `init --queue database|redis|memory`
-  choisit le store ([`stack.queue`](../CONFIG.fr.md)).
+  module sur tsyringe, `platform.backgroundJobs.register(..)` dans le fichier de module là où la
+  plateforme est câblée à la main, sous Nest ou sans conteneur), qui envoie sa commande en tant
+  que `execution.actor` avec un champ de sa charge utile par autre entrée de la commande (une
+  `Date` voyage sous forme de texte ISO, un objet-valeur est refusé : une commande prend des
+  primitives et des identifiants), et une *spec* qui le met en file en tant qu'utilisateur et
+  exécute ce qui est échu. `init --queue database|redis|memory` choisit le store
+  ([`stack.queue`](../CONFIG.fr.md)), quel que soit le conteneur : le module noyau de
+  `@ddd-ts-kit/di` le lie sur tsyringe, `src/platform/jobs/create-background-work.ts` construit dessus
+  la file, le *worker* et le *runner* des processus sinon.
 
 **Une clé d'idempotence se déduit du travail, elle ne se tire jamais au hasard.** Une requête HTTP
 retentée par son client, ou une commande envoyée deux fois par un consommateur, doit retrouver le
@@ -480,7 +484,11 @@ l'application de test garde la file en mémoire, `application.backgroundJobs.run
 ce qui est échu selon son horloge (et relance ce qu'une tentative a levé), et
 `application.backgroundJobs.store.list()` montre ce qui a été mis en file. Une *spec* du
 gestionnaire qui met en file vérifie le *job* par la même liste. Le temps avance avec
-`application.clock.advance(ms)` pour un *job* différé.
+`application.clock.advance(ms)` pour un *job* différé. Là où la plateforme est câblée à la main,
+la *spec* générée construit les mêmes pièces sur les bus de test de `@ddd-ts-kit/testing` : un
+`InMemoryJobStore`, une `StoredJobQueue` et un `QueueWorker` sur l'horloge et la portée
+d'exécution de `createTestBuses()`, le *job* enregistré sur le *worker*, `worker.runDue()` à la
+place de `application.backgroundJobs.runDue()`.
 
 Une *spec* de l'exemple, raccourcie : la deuxième annulation échoue une fois, et la tentative
 suivante reprend au point de reprise au lieu de recommencer depuis le début.
