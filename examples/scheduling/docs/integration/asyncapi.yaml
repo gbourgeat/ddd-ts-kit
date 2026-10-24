@@ -1,7 +1,7 @@
 asyncapi: '3.0.0'
 info:
   title: scheduling
-  version: '0.88.0'
+  version: '0.89.0'
 channels:
   identity.delegation.granted:
     address: identity.delegation.granted

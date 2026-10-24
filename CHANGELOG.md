@@ -4,6 +4,599 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.89.0
+
+**`clean/one-export-per-file` runs under the JS plugin API of Oxlint.** The rule walked the
+tree of a file through a node a parser may leave null (the body of a declaration without one),
+which the parser of ESLint never does and the one of Oxlint does: under Oxlint the rule stopped
+on 2,494 of the files of the kit with `Cannot convert undefined or null to object`. The walker
+now walks nothing for what is not a node. The plugin as a whole runs under
+`oxlint --type-aware` with `jsPlugins` set to `@ddd-ts-kit/eslint-plugin`, which stays a trial:
+the API is alpha, and `no-redeclare` of Oxlint contradicts the compiler on a class and an
+interface of one name.
+
+**`clean/stepdown` reports on a JavaScript file too.** The rule kept the references of a function
+that the scope manager of typescript-eslint marks as values; the scope manager of the default
+parser of ESLint, which lints a `.mjs`, `.cjs` or `.js` file, marks nothing, so on such a file the
+rule found no caller and reported nothing. A reference the parser does not qualify is a value
+now. The preset of the kit applies the rule to TypeScript sources only; a project that applies it
+to its scripts as well sees what it reports there from this version on.
+
+**`ddd-ts-kit lint` keeps the cache of ESLint, and the pipeline of a project restores it.** The
+command lints with the cache of ESLint keyed by the content of each file (`.eslintcache/`, ignored
+by git): a second run on a tree that did not change lints the files that changed since, in a
+second or two instead of the whole project. The cache keys on the files and the config, not on the
+rules as installed, so the command drops it when the lockfile, `eslint.config.mjs` or
+`ddd-ts-kit.config.json` changed since it was written. The lint job of the pipeline `init` writes
+restores, on a pull request or a merge request, the cache the default branch wrote last for the
+same lockfile and config, and the default branch and the night lint everything and write it: a
+type changed in another file is seen there. `ddd-ts-kit lint --no-cache` lints every file again.
+
+To move, by hand, not with `init --force`, which rewrites far more than the pipeline: add
+`.eslintcache/` to `.gitignore`; in `.github/workflows/ci.yml`, give the lint job the two steps of
+the template (`actions/cache/restore` of `.eslintcache/` before the lint, on a pull request only,
+keyed by the lockfile, `eslint.config.mjs` and `ddd-ts-kit.config.json` with a prefix fallback;
+`actions/cache/save` after it, on the default branch and the night only), as
+`node_modules/ddd-ts-kit/templates/pipeline/github/workflows/ci.yml.tpl` writes them; in
+`.gitlab-ci.yml`, add the second `cache:` entry of the lint job (`.eslintcache/`, keyed by the
+lockfile and `eslint.config.mjs`, `policy: $LINT_CACHE_POLICY`) and the `LINT_CACHE_POLICY` variable
+of each workflow rule (`pull` on a merge request, `pull-push` on the default branch and the night),
+as `templates/pipeline/gitlab/gitlab-ci.yml.tpl` writes them.
+
+**A proposal page says what privacy by design asks of the kit beyond event sourcing, and the
+pull requests that build it.** `docs/proposals/privacy-by-design.md` verifies what the kit
+erases today (the personal values of stored events, by crypto-shredding, with a dated audit
+entry) and what nothing of the kit erases, exports, retains or inventories: the aggregates kept
+as rows on the four ORMs, the read models, the copies a person leaves in the contexts that
+consumed its events, the masks of the audit trail. It designs one declaration of the personal
+fields, read by ports with an adapter per ORM, by generators, by a generated register and by
+`privacy/*` rules, nothing of it mandatory for a project without personal data; cuts the work
+into pull requests in merge order, the example first; and says what a tool can never guarantee,
+with the wording that follows for the README. The glossary of the translations gains the terms
+of the page. Nothing of the code changes.
+
+**The scheduling example erases a person from every copy the contexts keep, not from the sealed
+words alone.** `npm run erase:patient` destroyed the key the words of a patient were sealed with
+and rebuilt the projections, and left the person named and reachable in the tables: the person of
+`identity` (name and address), the contact of `notification`, the notes the staff wrote on their
+appointments, the reasons of their cancellations, the documents attached to those appointments and
+the name the practitioner directory of `scheduling` copied. The erasure now reaches each of them,
+network by network (`NETWORKS`), after the key and before the rebuilds: `identity` forgets the
+person (`PersonRepository.erase`), `notification` deletes the contact, `scheduling` replaces the
+notes and the reasons by `[erased]` and deletes the documents from the file storage
+(`KnexPatientErasure`). The report of the script counts the rows each copy reached; a copy that
+fails does not stop the others and running the script again completes the erasure; a run again
+once nothing is left is refused and recorded. The README of the example says what an erasure does
+not reach: the events published before it, the backups, the opaque ids of the audit trail. The
+first part of the proposal [privacy by design](../docs/proposals/privacy-by-design.md) built; the
+hand-written steps are the specification of the erasure port the next parts bring to the kit.
+
+**A proposal specifies a second example, spend management on the most popular stack.** `docs/proposals/spend-management-example.md` runs the stack NestJS, class-validator, Jest, Prisma, Kafka, Redis, S3, shared-table tenancy, Keycloak, ABAC, Winston, Scalar through `init --dry-run` and lists what the kit refuses today on it: the queue and the processes on `--di nest`, the shared-table tenancy, the jobs table and the SQL audit trail on Prisma, the identity preset on Nest, Prisma and the explicit style. It specifies those fixes first, then the example (seven bounded contexts on expense reports, corporate cards, approvals, budgets, reimbursements and the ledger), then what the repository gains; MySQL is left out with the list of what it would take. Nothing is built by this change.
+
+**The kernel declares the personal fields of a table and erases a data subject end to end: the
+key, every copy in every tenant, the rebuilds.** `personalFields(table, { subject, fields,
+erasure, files? })` says, next to the mapper, which columns of a table are personal, whose they
+are and how the rows of a subject are erased, `row` deleted or `pseudonymise` read as `[erased]`,
+the files they name deleted from the storage. Two ports a context extends and names, as it extends
+`Repository`: `PersonalDataErasure` (`erase(subject)` answers the rows reached, none the second
+time) and `PersonalDataExport` (`exportOf(subject)` answers one `PersonalDataRecord` per row,
+each personal column as plain data). `eraseDataSubject`, lifted from the scheduling example,
+destroys the key, erases every copy in every tenant (`inEachTenant` runs a copy in the context of
+the work given each tenant, since a write of tenant data is never widened), rebuilds the
+projections fed by the store, and reports `{ erased, copies, rebuilt }`; a copy that fails does
+not stop the others, and running the erasure again completes it; a subject that is not an opaque
+identifier is refused before any key is touched, and an id nothing is left of is refused before
+the rebuilds; `keys` may be left out, as in a project whose aggregates are rows and seal nothing:
+the copies alone are erased, and the report says no key was destroyed. `InMemoryPersonalData` implements both ports over one declaration, and
+`personalDataErasureContract` and `personalDataExportContract` of `@ddd-ts-kit/testing` hold it
+and every adapter to the same behaviour. The adapters of the persistence packages, the platform
+folder `init` writes and the register come with the next parts of
+[privacy by design](../docs/proposals/privacy-by-design.md). The persistence skill says it.
+
+**The audit trail masks a personal value under the key of the person it belongs to, so that
+erasing the person makes its masks meaningless.** `subjectMasker(keys)` of `@ddd-ts-kit/audit` is
+an `AuditMasker` over the `SubjectKeyStore` of the kernel, the same keys that seal the personal
+values of the stored events: each mask is an HMAC under a key derived from the key of the data
+subject (HKDF, labelled for the trail), written `<keyId>:<hex>`; `SubjectKeyStore.erase` destroys
+the key, and the masks made with it become tokens nobody can recompute while the entries and the
+chain stay as they are. A masked field says whose its value is, `masked('patientEmail', { subject:
+'patientId' })` or `subjectOf: (command) => ...`; `auditMiddleware` refuses, at wiring time, a
+masked field that names none when the masker is keyed per data subject
+(`MissingDataSubjectError`), and the masker refuses a subject that is not an opaque identifier
+before any key is created (`MaskingSubjectNotAnIdError`): a name or an email named as the subject
+would be written into the key store in clear. `hmacMasker` under one secret stays as it was.
+
+What a masker or a declaration written by hand sees: `MaskingSubject` gains `dataSubject`, set
+only for a masked field declared with `subject` or `subjectOf`; `AuditProjection` gains
+`subjects`, the data subject of each masked value by field, which `auditedFields` fills and a
+projection of your own may fill; `AuditedMessage` gains `subjectless`, optional, the masked fields
+that name no subject, which `auditedFields` lists and a declaration of your own may leave out;
+`AuditMasker` gains `requiresDataSubject`, optional, which a masker keyed per person sets so that
+the middleware checks the declarations at wiring time. Nothing existing changes shape or meaning.
+Part 2 of [privacy by design](../docs/proposals/privacy-by-design.md).
+
+**`init` writes `src/platform/privacy/` with `--privacy on`, the default with an ORM, and wires the
+event store with `--event-sourcing on`: a generated project erases and exports a data subject from
+its first minute, and pays no table it did not ask for.** Two choices of the stack, recorded as
+`stack.privacy` and `stack.eventSourcing`, each changed later by `init --force`.
+
+`--privacy on` writes `src/platform/privacy/`: a context that erases or exports what it keeps of a
+person lists its port in `data-subject-copies.ts` or `data-subject-exports.ts`; `run-erasure.ts`
+opens an execution context of origin `cli` with the operator as actor and runs `eraseDataSubject`
+of the kernel over the copies, in every tenant with `--tenancy shared-table` (`inEachTenant`);
+`run-export.ts` gathers every record. Two scripts answer the requests: `npm run privacy:erase --
+<subject-id> [--operator <who-asks>]` and `npm run privacy:export -- <subject-id>`, on the sources
+with the variables of `.env`, the tenants named by `TENANTS`. What they cannot reach is said where
+they are written: backups, logs, exports and a copy no context declared. No HTTP command erases yet.
+A project without personal data takes `--privacy off` and gets none of it.
+
+`--event-sourcing on`, off unless asked, since keeping an aggregate as its events is a choice made
+per aggregate: `Persistence` gains `eventSourcing` (`create<Orm>EventSourcing` in the `event_store`
+schema, whose five tables the schema file of Knex, Drizzle, Prisma and TypeORM then declares; the
+in-memory stores without a database), and `src/platform/event-sourcing/` holds the `SubjectKeyStore`
+of that store, wrapped by `auditedSubjectKeys` of `@ddd-ts-kit/audit` when the audit trail is on, so
+that every erasure leaves a dated entry, and the `PersonalDataCipher` over it; `event-sourcing.module.ts`
+binds `EventStore`, `SnapshotStore`, `CheckpointStore`, `SubjectKeyStore` and `PersonalDataCipher`
+on tsyringe, the hand-wired `Platform` carries them as `platform.eventSourcing`, and
+`platform-test.module.ts` binds the in-memory stores, so a handler spec of an event-sourced
+aggregate needs no fake. With both choices on, the erasure destroys the key first. The event store
+of the kit runs on PostgreSQL through the four ORM packages: `--event-sourcing on` is refused with
+`--orm custom`, with what to bind instead, and `generate aggregate --event-sourced` is refused
+while the project has no event store, with the `init --force --event-sourcing on` to run. The
+architecture reference (section 2), the CLI README, the config reference, the event sourcing page,
+the persistence skill and the stack criteria say it.
+
+To move: a project generated before this version keeps its platform as it is; `npx ddd-ts-kit init
+--force --privacy on` writes the privacy folder and the two scripts, `npx ddd-ts-kit init --force
+--event-sourcing on` the event store, then a migration creates the tables of the `event_store`
+schema (`npm run db:generate event-store`).
+
+**The erasure of a data subject from the tables of a context exists on the four ORMs, from the
+`personalFields` declarations.** `KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`,
+`PrismaPersonalDataErasure` and `TypeOrmPersonalDataErasure` implement the `PersonalDataErasure`
+port of the kernel over the unit of work of their package: the files the rows name are deleted
+from the storage first, then the rows of the subject are deleted (`row`) or pseudonymised
+(`pseudonymise`: a text column reads `[erased]`, a column of any other type nothing, a file column
+nothing), and the rows reached are counted, none the second time. With the `tenant` option every
+statement is confined to the tenant of the work and never widened by an elevation. A subject that
+is not an opaque identifier is refused before any statement; a declaration that names file columns
+without a file storage is refused when the adapter is built, and one that names a column or a
+property the table does not have is refused before any file or row is touched. The types of the columns decide how a
+column is pseudonymised (`pseudonymisedValueOf` of the kernel, the one rule the four follow), read
+from the database on Knex and Prisma, from the table definition on Drizzle, from the entity on
+TypeORM: a personal column that is not a text has to accept null, and a declaration that would
+pseudonymise one that does not is refused before any file or row is touched
+(`NotNullablePersonalColumnError`), so that an erasure never deletes the files of a person and
+leaves their rows in clear. The four pass
+`personalDataErasureContract` of `@ddd-ts-kit/testing`, on PGlite and PostgreSQL. Part 3 of
+[privacy by design](../docs/proposals/privacy-by-design.md); the generator writes the declarations
+in part 5, and the example adopts the adapter in part 11.
+
+**The background jobs and the process managers run on a platform wired by hand: NestJS and `--di manual` gain `--queue database|redis`, `generate background-job` and `generate process`.** The platform of a project whose contexts are wired in a module file gains `src/platform/jobs/create-background-work.ts`, which builds the queue a use case enqueues through (`platform.jobQueue`), the worker that consumes it (`platform.backgroundJobs`) and the runner of the process managers (`platform.processes`) on the store `stack.queue` names: the jobs table of Knex or Drizzle, the server of the cache with Redis, the memory of the process otherwise, each job traced and its failures reported as on tsyringe. `init --queue database` and `--queue redis` are accepted with every container (the default stays `database` on Knex or Drizzle with tsyringe, `memory` otherwise), the application starts and stops the worker with its jobs, and `generate background-job` and `generate process` register the job in `<context>.module.ts` (`platform.backgroundJobs.register(..)`) with a spec built on the test buses of `@ddd-ts-kit/testing`, where they were refused before. The generated matrix runs background work on every stack, Nest with the jobs in the database and on Redis among them.
+
+To move: a project on Nest or wired by hand that initialised before this version keeps its queue in memory; `init --force --queue database` (Knex or Drizzle) or `--queue redis` (with `--cache redis`) writes `create-background-work.ts` and the stores, then `generate background-job` works as on tsyringe. `PlatformOptions` gains `queues` (concurrency per queue, polling interval, grace period of the worker).
+
+**The shared-table tenancy reaches Prisma and TypeORM: `init --tenancy shared-table` and `generate repository --tenant-scoped` work on the four ORMs, and `tenancy/scoped-statement` judges their adapters.** `@ddd-ts-kit/prisma` and `@ddd-ts-kit/typeorm` gain `tenantWhere(scope)`, spread into the where of every read (the tenant of the work, or the tenants an elevation of platform staff reaches), and `ownTenantWhere(scope)`, spread into the where of every update and delete (the one tenant of the work, which an elevation never widens); an inserted row spreads `tenantScopeOf`. Their outbox keeps the tenant of each event so that its consumers run in that tenant: `tenant: true` on `PrismaOutboxStore`, with the `tenantId` field the shipped fragment leaves commented out, and `outboxEntity({ tenant: true })` on TypeORM. Their read model stores take the `tenant` option of the Knex and Drizzle ones: every row written in the tenant of the work, every read, search and write confined to it, the copy of a rebuild included. Both repositories pass `tenantIsolationContract` of `@ddd-ts-kit/testing`, both outboxes the outbox contract with the tenant. `init` accepts `--tenancy shared-table` with `--orm prisma` and `--orm typeorm`: the generated repositories read with `findFirst` or `findOneBy` and `tenantWhere`, write with `ownTenantWhere`, name the tenant on the insert, declare `tenant_id` and an index that starts with it (the Prisma model, `tenantColumn()` on TypeORM), and the generated outbox keeps the tenant. The rule `tenancy/scoped-statement` reads a Prisma statement on the client (a read without `tenantWhere`, a write without `ownTenantWhere`, a create without `tenantScopeOf`, `findUnique` and `upsert`, raw SQL, the client held in a variable) and a TypeORM statement on the manager (the same, `save` and `upsert`, a query builder without the condition, a row handed to `insertIgnoringConflict` that names no tenant, `query`), and a read model store of the four ORMs built without its `tenant`. The generated matrix gains a Prisma and a TypeORM stack on shared tables.
+
+To move: a Prisma or TypeORM project that confined its statements by hand with `tenantScopeOf` keeps working; `tenantWhere` in the where of its reads lets an elevation of platform staff read across tenants, and the rule asks for it once the project records `"stack.tenancy": "shared-table"`. A multi-tenant project on Prisma adds `tenantId String? @map("tenant_id")` to its outbox model, migrates, and gives `PrismaOutboxStore` `tenant: true`; on TypeORM it builds its outbox with `outboxEntity({ schema, tenant: true })` and generates the migration that adds the column.
+
+**`generate repository --personal <column>,...` declares what a table keeps of a person, and writes the
+erasure of its context: one command, and `npm run privacy:erase` reaches the new copy.** The named
+columns join the storage and the row type of the aggregate as nullable text (the mapper writes them
+empty until the aggregate carries them), and `<aggregate>.personal-fields.ts` declares them next to
+the mapper with `personalFields` of the kernel: the subject column, `id` unless `--subject` names the
+column that holds the id of the person, the fields, and `pseudonymise` unless `--erasure row` asks for
+the row to be deleted; the declaration is spelled as the erasure of the ORM reads it, SQL names on
+Knex and Prisma, properties on Drizzle and TypeORM. The first table of a context that declares
+personal data brings the erasure of the context: the port
+`application/ports/<context>-personal-data-erasure.port.ts` (`extends PersonalDataErasure`), the
+adapter `<orm>-<context>-personal-data-erasure.repository.ts` over `<Orm>PersonalDataErasure` of the
+ORM package (confined to the tenant of the work on a tenant-scoped repository), its fake, a spec that
+saves two people through the repository and proves the erasure on the test database, the binding
+where the context binds its adapters (the decorator in the declared style, the module file otherwise,
+the factory of the hand-wired platform wrapped like any other adapter) and its line in
+`src/platform/privacy/data-subject-copies.ts`. A second table of the same context joins the
+declarations of that adapter. `*.personal-fields.ts` is a file of `infrastructure/persistence/` the
+`naming/suffix` rule knows. Refused before anything is written: a project whose `stack.privacy` is
+off (`init --force --privacy on`), `--orm none` or `custom` (no erasure adapter of the kit reads the
+declaration), a column that is not one, a column the table keeps for itself, a subject listed as
+personal, a mode that does not exist, `--subject` or `--erasure` without `--personal`. The CLI README,
+the scaffold and persistence skills, the architecture reference and the proposal say it; a projection
+keeps its rows in a read model store, not in a table of its own, so its declaration waits for the
+register.
+
+Proven end to end on generated projects: through the composed application (the container of
+tsyringe, the platform wired by hand under Nest), two contexts and three tables, one person erased
+from all of them in one run, in every tenant of a multi-tenant project or in the tenants given, the
+key of the event store first when the project has one. That run uncovered a fault of the Knex erasure
+adapter the direct tests could not see: bound in an application, every method of an adapter is
+wrapped by tracing and by the aspects, and a helper that answered a query builder was awaited and its
+chain broken; the helper is a function now, and the Knex spec runs the adapter wrapped the way the
+platform binds it. `init --force`, which rewrites `data-subject-copies.ts`, lists the erasure of each
+context again, as the port or as the factory of the hand-wired platform. The new concept page
+[Personal data in a generated project](../docs/concepts/personal-data.md) draws the erasure end to
+end, what stays out of reach and what the tool does not decide, in both languages.
+
+**Mutation testing runs on a project of the kit, with Stryker 10.1.1 and its Vitest runner.** The
+documentation said it did not: Stryker 10.0 executed no test per mutant under Vitest 5. Measured
+on 2026-10-24 on the example application, 10.1.1 runs the tests per mutant and kills 1347 of the
+1441 mutants of the domain layer of its four contexts in 8 minutes, a score of 94.5%; the
+pipeline README holds the measure, the configuration to run it by hand (no checker, the unit
+specs alone, the domain layer as `mutate`) and what shipping it as a scheduled job with a floor
+per context would take. The kit ships no gate yet.
+
+**The right of access and to portability comes built in: `KnexPersonalDataExport`,
+`DrizzlePersonalDataExport`, `PrismaPersonalDataExport` and `TypeOrmPersonalDataExport` read the same
+`personalFields` declarations as the erasure, `exportDataSubject` of the kernel gathers every export
+into one dated document, `auditedPersonalDataExport` of the audit package leaves the entry of each
+handover, and `generate repository --personal` writes the export of a context beside its erasure.**
+Each adapter answers one `PersonalDataRecord` per row about the subject in every declared table, under
+`<name>.<table>`, with the personal columns and the keys of the files as plain data, no other column
+and nothing of anyone else; the same `tenant` option confines every statement to the tenant of the
+work, a subject that is not an opaque identifier is refused before any statement, and each passes
+`personalDataExportContract`, whose `source` now reads the name of the exporter alone or followed by
+the table. `exportDataSubject(subject, { exports, inEveryTenant, clock, isKnown })` answers a
+`PersonalDataExportDocument`: `format` (`ddd-ts-kit/personal-data-export@1`), `subject`, `exportedAt`,
+`records`; the exports run in the order listed and one that fails stops the gathering, a mistyped id
+is refused when `isKnown` denies it rather than answered with an empty document, and
+`recordsInEachTenant(scope, tenants)` reaches every tenant as `inEachTenant` does for an erasure
+(both over `eachTenant`). `auditedPersonalDataExport(port, trail, { scope, clock, ids })` wraps a
+port so that every `exportOf` writes an entry of category `data-access` and action
+`personal-data:export` (`PERSONAL_DATA_EXPORT_ACTION`), with the subject as resource, the context,
+the number of records and never the values, before the records are handed over: when the entry
+cannot be written, nothing is handed over. In a generated project, `src/platform/privacy/run-export.ts`
+runs `exportDataSubject` over the exports, each wrapped when the trail is on, and
+`scripts/privacy-export.ts` prints the document as JSON; `generate repository <ctx> <Aggregate>
+--personal <column>,...` writes, once per context, the export port (`extends PersonalDataExport`),
+the adapter over `<Orm>PersonalDataExport`, its fake and its line in `data-subject-exports.ts`, bound
+where the context binds its adapters, and one spec `test/integration/<context>-personal-data.spec.ts`
+proves the erasure and the export; a second table joins the declarations of both adapters, and
+`init --force` lists the exports again. The concept page draws the export end to end with its
+diagram, in both languages, and the kernel, audit, ORM and CLI READMEs, the audit trail page, the
+proposal and the skills say it.
+
+**Mutation testing of the domain layer runs every night, each context held to a floor.** `init`
+writes `stryker.config.mjs`, which spreads `governedMutation()` of `@ddd-ts-kit/testing/mutation`:
+the domain layer of every context mutated, at its level and in the modules of its model, the
+texts of refusals left out by an ignorer the kit ships, since a refusal is asserted by its code and
+never by its text, every other string measured, the static mutants ignored, those of code that runs
+once when the module loads, the floor as
+`thresholds`; and `vitest.mutation.config.ts`, the unit specs alone. `npm run test:mutation` runs
+Stryker, then `ddd-ts-kit mutation`, a new command that reads `reports/mutation/mutation.json` and
+holds the domain of each context to the `mutation` floor of `ddd-ts-kit.config.json`, 80 by the
+reference (a lower floor is a recorded deviation, `"what": "mutation.domain"`), and exits 1 under
+it; the ignored mutants of each context are shown beside its score, since a rule written as a
+declaration is never mutated and its test is its only proof. The pipelines of GitHub and GitLab get a
+`mutation` job that runs it when the schedule fires, never on a pull or merge request, and keeps
+the report as an artifact. A new rule, `test/mutation-governed`, refuses a `mutate`,
+`mutator`, `ignorers`, `ignoreStatic` or `thresholds` written by hand in a Stryker config, and a
+Stryker config that does not read the kit. The example application and the pipeline of the kit run
+the same job. On both runners: a project on Jest gets `jest.mutation.config.js` in place of the
+Vitest one, and its Stryker config passes the ES modules flag to the processes that run the specs.
+
+To move: `npm i -D @stryker-mutator/core @stryker-mutator/vitest-runner` (`jest-runner` on Jest),
+copy `stryker.config.mjs` and `vitest.mutation.config.ts` or `jest.mutation.config.js` from a
+freshly initialised project (or run `init --force` on a copy and take the two files and the
+`test:mutation` script), add the
+`mutation` job to your pipeline from `pipeline/github/workflows/ci.yml` or
+`pipeline/gitlab/.gitlab-ci.yml`, list `vitest.mutation.config.ts` under `vitest.config` of
+`knip.json`, and add `.stryker-tmp/` and `/reports/mutation/` to `.gitignore`. Run
+`npm run test:mutation` once: a context under 80 names the rules its tests do not state.
+
+**Six rules of `@ddd-ts-kit/eslint-plugin` hold the shape of a test.** The testing skill asked
+for it and nothing checked it: a test is named after the rule it proves, holds no logic, asserts an
+outcome, asserts a refusal by its code, never by a snapshot, and every test runs. Each is a rule
+of the architecture reference now, on every test file of the project (`*.spec.ts`, `*.test.ts`,
+the `test/` of a context), read by ESLint alone: `test/no-only-no-skip` (no `.only`, `.skip`, `fit`,
+`xit`, `xdescribe`, no `.skipIf` or `.runIf` on a constant), `test/title-states-a-rule` (the title of an `it`
+in lower case, what the subject does, after the rows and the criterion it cites, never `should`,
+`test`, `works` nor a method or a class; a `describe` named after the unit),
+`test/no-logic` (no `if`, `switch`, ternary, loop or `try` in a test), `test/assertion-present`
+(an `expect`, an `expect...` or `assert...` helper, or `thenEvents`, `thenError`, `thenState` in
+every test; `it('title')` without a body written `it.todo`), `test/refusal-by-code` (`toThrow`
+with a message, a regular expression, a class or nothing reported in the specs of the model and of
+the application, not in those of the adapters and of the platform; `thenError`, `expectRefusal`,
+`rejects.toMatchObject({ code })` and `expectProblem` instead, and `rejects.toBe(outage)` for a
+failure the test injected) and
+`test/no-snapshot`. `ddd-ts-kit rules` lists them as checked by the plugin, `ddd-ts-kit explain`
+explains each, the config sets their severity under `rules`. The `it.todo` left in a spec was
+already a marker `ddd-ts-kit todo` lists and `story --gate close` refuses while it belongs to the
+story: the testing strategy and the skill now say so. The example application and the templates
+follow the six rules; the rules of the agents on tests (`.claude/rules/tests.md`,
+`.github/instructions/tests.instructions.md`) name them.
+
+To move: run `npm run lint`. `test/no-only-no-skip` and `test/no-snapshot` are errors, as nothing
+legitimate trips them; the four rules that read what a test says, `test/title-states-a-rule`,
+`test/no-logic`, `test/assertion-present` and `test/refusal-by-code`, are warnings until 0.90.0,
+listed by `ddd-ts-kit lint` after its report without failing it. Rename a title that says
+`should` or names a method, move a loop to an `it.each` and a decision to a builder or a fake,
+replace a `toThrow('message')` by the code of the refusal, and write `it.todo` where a test has
+no body. A project that wants none of a rule sets it to `off` under `rules` of
+`ddd-ts-kit.config.json`.
+
+**A pull request gets a reading of its mutation score, the night keeps the whole measure.** The
+pipelines of GitHub and GitLab get a `mutation-changed` job on a pull or merge request: it reuses
+the report of the last night for what the change leaves alone (Stryker's incremental mode, turned
+on by `governedMutation()` when `DDD_TS_KIT_MUTATION_SINCE` names the merge base of the change,
+the results kept in `reports/mutation/incremental.json` beside the report), runs everything again
+when the change touches code the tests lean on and Stryker does not diff (a fake, a builder, a
+world, the platform, a dependency), and lists the survivors of the files the change touched:
+`ddd-ts-kit mutation` reads the same variable (`--changed <ref>` says it by hand) and exits 0
+whatever the scores, a reading and never a gate, so that `npm run test:mutation` is the one script
+of the night and of a pull request. `ddd-ts-kit mutation --survivors` lists every survivor of the
+report, where, what mutator and what the code became. `test/mutation-governed` also refuses `incremental` and `force` written by
+hand.
+
+To move: add the `mutation-changed` job to your pipeline from `pipeline/github/workflows/ci.yml` or
+`pipeline/gitlab/.gitlab-ci.yml`; nothing else changes, the Stryker config spreads
+`governedMutation()` already.
+
+**The invariants of a value object are stated as properties, with fast-check.** `fast-check` joins
+the development dependencies with the first property (`npm i -D fast-check`, under Vitest as under
+Jest: a project without a property carries no dead dependency); `fc.assert(fc.property(..))` is an
+assertion for `test/assertion-present`; and the spec `generate value-object` writes ends with a
+planned rule, `keeps its invariants for any value a generator can produce, as a property`, to remind
+of it. A property states a law of the model once and checks it on generated values, the failing one
+printed with its seed and shrunk to the smallest: two ranges overlap in both directions or in none,
+a slot is held at least until it ends, a parse then a format gives the value back. The example
+states four on its ranges and slots. A property is for a law, an invariant, a symmetry, a round trip,
+an idempotence; the orchestration of a use case is stated by its scenarios. The testing skill and
+the testing strategy say when and how.
+
+To move: `npm i -D fast-check`, then state the first law a value object of yours holds for every
+value.
+
+**An erasure now reaches beyond the database the platform holds: `privacy:erase` announces
+`privacy.data-subject.erased` through the outbox once every copy is erased, `generate
+erasure-handler <context>` writes the idempotent handler of a context that erases its own copy, and
+an integration event says which fields of its payload are personal, and whose.** The event is
+`dataSubjectErasedV1` of `@ddd-ts-kit/kernel`, version 1, `{ subjectId, erasedAt }`:
+the id of the person and nobody else, the operator staying in the audit trail that the correlation id
+of the event leads to, a name or an email refused at `create` (`InvalidDataSubjectErasedError`). It lives
+in the kernel because the application layer of every context handles it, and it is shaped as a
+definition of `@ddd-ts-kit/events`, so that the registry, the catalog, AsyncAPI, `on`, `consume`,
+`@IntegrationEventHandler` and the container take it as any other. A generated project with
+`--privacy on` publishes it at the end of `runErasure`, once per tenant with shared tables, never
+after a failed erasure, and lists it in its event catalog and AsyncAPI document with the contexts
+that consume it. `generate erasure-handler <context>` writes
+`application/integration/handlers/data-subject-erased.integration-handler.ts` over the
+`<Context>PersonalDataErasure` of the context, its spec on the fake, and its subscription under the
+consumer name `<context>.data-subject-erased`: the decorator in the declared style, the module file
+of an explicit context, the hand-wired platform with the adapter wrapped as any other (in a
+transaction behind a broker); it refuses a context that has no erasure yet. `defineIntegrationEvent`
+takes `personal: { subject, fields }`, checked against the fields the payload schema documents (no
+field, a field twice, a personal subject or an unknown path is refused), written by the catalog
+under the payload and by AsyncAPI as `x-personal-data` on the message. The events, kernel and CLI
+READMEs, the concept page and its diagram, the proposal and the persistence and integration event
+skills say it, in English and in French.
+
+**The mutation score holds the application layer too, at a floor of its own.** `governedMutation()`
+mutates the application layer of every context beside its domain, at its level and in the modules
+of its model, and `ddd-ts-kit mutation` scores each layer of each context against its floor: the
+`mutation` key of `ddd-ts-kit.config.json` takes `"application"` beside `"domain"`, 75 by the
+reference, five below the domain as the coverage reference steps down from one layer to the next,
+and lowering it is a recorded deviation (`"what": "mutation.application"`). The use cases hold
+rules the domain does not: the permission a command requires, the idempotence of a handler, the
+event it publishes, the refusal it relays; a survivor there is a rule no test states as much as in
+an aggregate. On the example the application layer scores 95.7, its lowest context 93.5, and the
+run grows by twenty seconds: the initial test run is what the night pays for, not the mutants.
+
+To move: nothing, unless a context sits under 75 on its application layer: `npm run test:mutation`
+names the survivors to read, a test to write for each rule, or a deviation to record.
+
+**The audit trail of a generated project on Prisma or TypeORM is kept in its database, no longer in
+the memory of the process: `@ddd-ts-kit/audit/prisma` and `@ddd-ts-kit/audit/typeorm` give
+`PrismaAuditTrail` and `TypeOrmAuditTrail`, held to the same contract as the Knex and Drizzle
+stores.** Until now `--orm prisma` and `--orm typeorm` started on an `InMemoryAuditTrail` behind a
+`TODO(platform)`, so the proof of every command, decision, erasure, export and purge was lost when
+the process stopped. The four stores share one PostgreSQL implementation (the hash chain, the head
+locked per chain, the entries written at the commit of the unit of work). `auditPrismaModels(schema)`
+gives the two Prisma models and `auditEntities({ schema })` the two TypeORM entities; their specs
+prove that, created by the migrations of a project, they give the columns, the keys and the
+indexes of `createAuditTables`. On Prisma the statements are raw ones on the client of the unit of
+work, an append inside a transaction takes a savepoint, a failure of the database comes back with
+its SQLSTATE as `code`, and the reader asks PostgreSQL for the instant in UTC, since the adapter of
+pg reads a `timestamptz` without the offset of the session (the shared reader does so for every
+store). `init --audit on` with Prisma or TypeORM writes the models in `prisma/schema.prisma` (the
+`audit` schema added to the datasource) or the entities in `schema.ts`, binds the store in
+`create-audit.ts`, adds `npm run db:audit-guard` for the append-only guard to paste in a
+migration, and the test databases install that guard and leave the trail out of `reset()`.
+
+To move: a project on Prisma or TypeORM with `--audit on` runs `init --force` to get the store, then
+generates a migration for the two tables and adds one holding what `npm run db:audit-guard`
+prints.
+
+**Each spec file is held to the time budget of its level.** The reporter of the test runner the kit
+ships, `@ddd-ts-kit/testing/budget/vitest` and `@ddd-ts-kit/testing/budget/jest`, named in the runner
+config `init` writes and passed with `--reporter` where the pipeline names its reporters, reads the
+`budget` key of `ddd-ts-kit.config.json`, five seconds for a unit spec file and thirty for an
+integration spec file by the reference, names the slowest spec of each level at the end of every run,
+and warns when a spec file took more than its budget, its tests and hooks timed, the loading of its modules left out; `"enforce": true` under `budget` makes it fail the run, once the measures of a project are stable, since a duration depends on the load of the machine as much as on the spec. A unit
+spec of a context runs the model and the use cases on fakes; an integration spec of a context, and a
+spec of the platform, opens a database or reaches a server; the specs of the application outside the
+contexts (end to end, acceptance, architecture) are not held. A slow spec hides a world rebuilt per
+test, I/O behind a fake, or a wait: lowering a budget is free, raising one above the reference is a
+recorded deviation (`"what": "budget.unit"`), and a budget that is no duration is reported by
+`config/valid`. On the example, the slowest unit spec takes 1.6 seconds and the slowest integration
+spec 11, under load.
+
+To move: name the reporter in your runner config, `reporters: ['default', '@ddd-ts-kit/testing/budget/vitest']`
+(or `budget/jest`), and in the commands of your pipeline that pass `--reporter`.
+
+**The oldest entries of the audit trail leave the database for the file storage, verified and
+anchored: `archiveBefore(date, { files, clock })` on the four SQL stores and on
+`InMemoryAuditTrail`, and a generated project archives every month what is older than the twelve
+whole months it keeps online.** Each entry keeps the identifiers of a person, and a trail grows
+for as long as the system lives (GDPR article 5(1)(e)). For each chain, in one transaction
+holding its head, the entries after the last archive and older than the date are verified from
+the anchor of the archive before them, written to one file (`audit-archives/<chain>/<from>-<to>.ndjson`,
+one canonical JSON per line), recorded in the new `audit_archives` table with their last hash
+and the SHA-256 of the file, then deleted: the guard of the trail lets a `DELETE` through only
+for entries an archive covers, and refuses any change to the archives. A chain that does not
+verify is refused (`AuditArchiveRefusedError`) and keeps every entry. `archivesOf(chain)` lists
+the archives, `verifyArchive(text, archive, previous)` checks a file again, and `verifyChain`
+takes `after`, the anchor the entries left in the database start from. `ArchiveAuditEntries` is
+the scheduled job; `init` registers it as `audit.archive` (first day of the month, 04:00 UTC,
+`JOB_AUDIT_ARCHIVE_ENABLED=false` switches it off) when the trail is in a database and the
+project keeps files in a storage, and declares the archives with the rest of the trail on the
+four ORMs. Archiving moves, it does not erase: how long the files are kept is the controller's
+decision.
+
+To move: a trail created before this version adds the archives once, in a migration:
+`addAuditArchives(knex, { schema: 'audit' })` on Knex; on Drizzle, Prisma and TypeORM, `init
+--force` declares the table, the migration of the ORM creates it, and a migration of your own
+runs the statements of `auditArchiveUpgradeStatements('audit')` (the guard that lets archived
+entries go, and the guard of the archives). Until then, `archiveBefore` fails on the missing
+table and the job reports the failed run.
+
+**In a context wired by hand (`--di manual`, `--di nest`), `generate repository` no longer creates
+the repository in the module file: the first `generate command --aggregate` that needs it does, and
+the next one finds it there.** Until now the module file of a context with a repository and no
+command yet held a constant nothing read, and its import, which the lint of the project refused
+(`no-unused-vars`). `declarations/port-adapter-wired` agrees: an adapter whose port no class needs
+yet (no file outside the infrastructure and the tests names it, but the one that declares it) is not
+reported, since nothing misses it at run time.
+
+To move: nothing. A module file written by an earlier version keeps its constant; the next command
+on the same aggregate finds it and adds nothing.
+
+**What a table keeps of a person can now be kept for a set time: `personalFields` takes a
+`retention`, the erasure adapters of the four ORMs purge what outlived it, and a generated project
+runs that purge every night, audited.** `retention: { after, days | months | years }` counts the
+period from a date column of the row that is not personal data, one positive unit (refused
+otherwise); a row whose date is empty never expires. The kernel adds the port
+`PersonalDataRetention` (`purgeExpired(now)`), `purgeExpiredPersonalData(now, retentions)`, which
+runs every copy at one instant and answers the rows each reached, `expiredBefore` and
+`isPersonalDataRetention`; `InMemoryPersonalData` implements it, and
+`personalDataRetentionContract` of `@ddd-ts-kit/testing` holds every adapter to it. The erasure
+adapters of Knex, Drizzle, Prisma and TypeORM implement `purgeExpired` from the same declarations,
+as the declaration says, files first, in the tenant of the work or in every tenant when the work
+names none: the one write of the kit across tenants, chosen because a tenant left out of a list
+would keep what it should not, bounded to an erasure by the date of the row, and written in the
+multitenancy page. `auditedPersonalDataRetention` of `@ddd-ts-kit/audit` records each purge (`data-access`,
+`personal-data:purge`, the context, `changes: { rows }`, no person). `generate repository ...
+--personal ... --retention <column>:<n><d|m|y>` writes the retention in the declaration, adds a
+column that dates the end of the relation to the storage as a nullable timestamp, empty while it
+lasts (it refuses `registered_at` and the other columns the table keeps for itself: counted from the
+registration, the purge would erase people who are still customers), and proves the purge in the
+generated spec. `init --privacy on` writes `src/platform/privacy/run-purge.ts`, schedules
+`privacy.purge-expired` every night at 03:00 UTC (the privacy module on tsyringe, the platform wired
+by hand), switched off by `JOB_PRIVACY_PURGE_EXPIRED_ENABLED=false`, and the script `privacy:purge`.
+The concept page, the kernel, audit, ORM and CLI READMEs, the proposal and the skills say it, in
+English and in French.
+
+To move: `init --force` on a project with `--privacy on` writes the purge runner, the job and the
+script; a declaration without `retention` purges nothing.
+
+**`ddd-ts-kit docs` writes the register of personal data from the code: a Personal data section in
+each `CONTEXT.md`, and with `--privacy on` the file `docs/privacy/register.md`, held to the code by
+`docs --check`.** It reads every `personalFields` call of `infrastructure/persistence/*.personal-fields.ts`,
+the one `generate repository --personal` writes or one written by hand (several per file), and the
+`personal` option of the integration events. Each table is one row: the column that names the
+person, the personal columns and files, what an erasure does (`pseudonymised`, `row deleted`), how
+long the rows are kept (`36 months after ended_at`, or `until erased`); the columns are named as the
+database names them on the four ORMs, a Drizzle or TypeORM declaration read back through the table it
+names. The register adds the integration events that carry personal data and the contexts
+downstream of their producer. It is not the record of processing activities of GDPR article 30:
+the purposes, the lawful basis, the recipients outside the system and what the code does not purge
+are sections around the markers that the controller writes and `docs` keeps.
+
+To move: nothing to do. The next `npx ddd-ts-kit docs` (or `generate`) of a project with
+`stack.privacy: "on"` creates `docs/privacy/register.md`, and adds the Personal data section to the
+`CONTEXT.md` of each context that declares personal data; commit both, `docs --check` holds them
+from then on.
+
+**`ddd-ts-kit check` holds a project whose `stack.privacy` is `on` to its declarations of personal
+data, with five new rules, all warnings: `privacy/declared-field`, `privacy/event-payload-declared`,
+`privacy/erasure-reaches-copies`, `privacy/subject-is-opaque` and `privacy/no-personal-data-in-logs`.**
+The erasure, the export, the retention and the register read the `personalFields` declarations and
+the `personal` option of the integration events, never the columns: a copy of a person nobody
+declared is a copy nobody erases, and nothing failed until now.
+
+- `privacy/declared-field`: a column of a table of a context (Knex, Drizzle, TypeORM, and the Prisma
+  models in the schema of the context) whose name holds a word of the personal vocabulary and that
+  no declaration of its context names.
+- `privacy/event-payload-declared`: a field of the payload of an integration event named like
+  personal data that its `personal` option does not list.
+- `privacy/erasure-reaches-copies`: a context that consumes an event carrying personal data (a
+  handler, a projection, a process manager) and declares no `PersonalDataErasure` and handles no
+  `privacy.data-subject.erased`.
+- `privacy/subject-is-opaque`: the subject of a declaration or of an event that is personal data
+  itself, or one of its personal fields.
+- `privacy/no-personal-data-in-logs`: a call to the logger or to the metrics that names a declared
+  personal field.
+
+The identity preset declares what it keeps of people when `stack.privacy` is `on`: the address and
+the name of an account (pseudonymised when the person is erased) and the address an invitation was
+sent to (the row deleted thirty days after the invitation expired, by the nightly purge), with the
+erasure and the export of the context written and listed in the platform, not confined to a tenant
+since its tables belong to none.
+
+The vocabulary is the one of the kit (`email`, `phone`, `first_name`, `birth_date`, `address`,
+`iban`, `ip_address` and the others listed in the configuration reference); the new config key
+`privacy`, `{ "vocabulary": [...], "allow": [...] }`, adds the words of the business and removes a
+word that never names a person in the project. A project with `stack.privacy` off, or whose config
+predates the choice, is not judged.
+
+To move: nothing blocks. `npx ddd-ts-kit check --rule privacy/declared-field` (and the four others)
+lists what to take up: declare the column (`generate repository ... --personal`), list the field in
+`personal: { subject, fields }`, erase the copy (`generate erasure-handler` for a service of its own),
+or record a column that holds nothing of a person, `// ddd-ts-kit-disable-next-line
+privacy/declared-field -- ADR-NNNN: <why>` or a word of `privacy.allow`. The rules stay warnings:
+they read names, never contents, so a column `address` of a warehouse is reported as well as the
+address of a person; no later version turns them into errors. A team that wants them blocking sets
+`"rules": { "privacy/declared-field": "error" }` in ddd-ts-kit.config.json, rule by rule.
+
+**The monthly archive of the audit trail runs by default only when the files of the project are in
+an object store, and no entry leaves the database before its file reads back from the storage as it
+was written.** An archive removes the entries from the database; with `--storage local`, the default
+of `init`, the files are on the disk of the server, which a redeployment may wipe and a backup may
+not reach, and the proof of who did what would be lost a year after going live. A generated project
+with `--storage s3` keeps the job on (`JOB_AUDIT_ARCHIVE_ENABLED=false` switches it off); one with
+`--storage local` writes it off, and `JOB_AUDIT_ARCHIVE_ENABLED=true` switches it on once that disk
+is durable and backed up, which `job-settings.ts` says next to the line. `archiveBefore` of the
+four SQL stores and of `InMemoryAuditTrail` reads each file back and checks its digest before the
+entries are removed: a storage that did not keep it is refused with the new
+`AuditArchiveNotStoredError`, and the trail keeps every entry.
+
+To move: a project generated with `--storage local` by the previous version has the job on; change
+its line of `src/platform/jobs/job-settings.ts` to
+`'audit.archive': { enabled: environment['JOB_AUDIT_ARCHIVE_ENABLED'] === 'true' }`, or keep it on
+where the files already land on a durable, backed-up disk.
+
+**The scheduling example declares what it keeps of people and erases and exports it through the
+ports of the kit: `personalFields` in each context, a `PersonalDataErasure` and a
+`PersonalDataExport` per context over the adapters of `@ddd-ts-kit/knex`, `eraseDataSubject` and
+`exportDataSubject` of the kernel, and the register and the privacy rules on.** The persons of
+identity and the contacts of notification are deleted, the notes, the cancellation reasons, the
+documents and the copied names of scheduling pseudonymised; notification keeps its own erasure,
+which deletes a contact under a stamp so that a redelivered announcement does not bring the address
+back. The hand-written erasure engine of the example is gone, its platform folder is
+`src/platform/privacy/`, `npm run erase:patient` becomes `npm run privacy:erase`, and `npm run
+privacy:export` hands over one dated document of what every context keeps of a person, every
+handover audited. `identity.person.registered` and `identity.practice.member-added` declare their
+personal fields, so the event catalog and AsyncAPI say so; `docs/privacy/register.md` is generated,
+with the sections a controller writes filled in as an illustration.
+
+To move: nothing for a project. For a reader of the example: run `npm run privacy:erase` where
+`npm run erase:patient` was run; the report names each copy by its context (`identity`,
+`notification`, `scheduling`) and counts the rows reached.
+
+**The tests are read back as a document: `ddd-ts-kit docs` writes `docs/behaviour/`, one page per
+context of what its tests state.** Each page lists, in the words of the test titles, the rules of
+the context grouped as the specs group them (`describe` and `it`, a table of cases as one rule), with
+the role of each spec (`slot (value object), in calendars`), a planned rule (`it.todo`) and a spec
+put aside said so, and the counts; `docs/behaviour/application.md` does the same for the specs
+outside the contexts (end to end, acceptance, architecture) and `docs/behaviour/README.md` indexes
+them. `npm run docs:generate` writes them with the other generated documents, the pre-commit hook `init` writes regenerates and adds them when a spec is staged, with `ddd-ts-kit docs --behaviour`, which writes those pages alone, and `docs --check` holds them
+current, so a spec whose title changed never reaches the trunk without its page. This
+is the reading the business asks of Gherkin, without a second language to keep in step: the title of
+a test, which `test/title-states-a-rule` makes a rule, is the sentence. Under `generate --local-only`
+the pages are left to the trunk, as every shared file is.
+
+To move: run `npm run docs:generate` once and commit `docs/behaviour/`; add the `behaviour pages`
+job to the `pre-commit` of your `lefthook.yml` from `pipeline/lefthook.yml`.
+
 ## 0.88.0
 
 **The code list and the permission set of a context sit at its root: `<context>.codes.ts` and `<context>.permissions.ts`.** They are one per context, whatever its modules, so they now sit next to `CONTEXT.md` and `<context>.declarations.ts` instead of `domain/errors/codes.ts` and `application/authorization/<context>.permissions.ts`. `domain/errors/` holds the refusal classes, `application/authorization/` the policies, and a folder that held the code list or the permission set alone is gone. In a context divided into modules, `domain/` and `application/` now hold nothing but their modules. Every rule reads the two files as it read them in their role folder: `<context>.codes.ts` is the code list of the domain for `errors/*`, `naming/suffix` and the layer rules, `<context>.permissions.ts` the permission set of the application for `authz/*`. `ddd-ts-kit check`, the ESLint plugin and the generated `.dependency-cruiser.cjs` follow (the domain may import the code list of its context, the application both files). The generators, the templates, the identity preset and `error-factories` write them at the root, and knip is told of the code types as `src/contexts/*/*.codes.ts`, and also where 0.86 and 0.87 kept them as long as one context still holds its list there (`init`, `generate` and `context-layout` keep the two patterns in step with the tree). `ddd-ts-kit context-layout [<context>...] [--dry-run]` is new: it moves the two files of every context, or of the ones named, from where 0.86 and 0.87 wrote them to the root, rewrites every import of them under the source root, `test/` and `scripts/`, removes a role folder the move leaves empty, writes again what derives from the tree (`.dependency-cruiser.cjs`, the generated declarations) and tells knip of the code lists where they now are; it says each file it wrote, `--dry-run` included.
