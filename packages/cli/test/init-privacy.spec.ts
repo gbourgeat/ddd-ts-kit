@@ -73,12 +73,50 @@ describe('the personal data of a generated project: --privacy', () => {
       'inEveryTenant: inEachTenant(scope, request.tenants),',
     );
 
-    expect(platform(tenants, 'privacy/run-export.ts')).toContain('for (const tenantId of request.tenants) {');
+    expect(platform(tenants, 'privacy/run-export.ts')).toContain(
+      'inEveryTenant: recordsInEachTenant(scope, request.tenants),',
+    );
+
     expect(read(tenants, 'scripts/privacy-erase.ts')).toContain("process.env['TENANTS']");
 
     expect(platform(one, 'privacy/run-erasure.ts')).not.toContain('inEachTenant');
     expect(platform(one, 'privacy/run-erasure.ts')).toContain("origin: 'cli'");
     expect(read(one, 'scripts/privacy-erase.ts')).not.toContain('TENANTS');
+  });
+
+  it('gathers the export into one dated document of the kernel, each export audited when the trail is on', () => {
+    const audited = initProject();
+    const unaudited = initProject('--audit', 'off');
+    const byHand = initProject(...BY_HAND);
+
+    expect(platform(audited, 'privacy/run-export.ts')).toContain(
+      "import { AuditTrail, auditedPersonalDataExport } from '@ddd-ts-kit/audit';",
+    );
+
+    expect(platform(audited, 'privacy/run-export.ts')).toContain(
+      'const audited = (port: PersonalDataExport): PersonalDataExport => auditedPersonalDataExport(port, trail, source);',
+    );
+
+    expect(platform(audited, 'privacy/run-export.ts')).toContain('Promise<PersonalDataExportDocument>');
+
+    expect(platform(audited, 'privacy/run-export.ts')).toContain(
+      '    exportDataSubject(subject, {\n      exports,\n      clock,\n',
+    );
+
+    expect(platform(unaudited, 'privacy/run-export.ts')).not.toContain('audited');
+
+    expect(platform(unaudited, 'privacy/run-export.ts')).toContain(
+      'const exports: readonly PersonalDataExport[] = dataSubjectExports.map((port) => container.resolve(port));',
+    );
+
+    expect(platform(byHand, 'privacy/run-export.ts')).toContain(
+      'const source = { scope: platform.scope, clock: platform.clock, ids: platform.ids };',
+    );
+
+    expect(platform(byHand, 'privacy/run-export.ts')).toContain('clock: platform.clock,');
+    expect(read(audited, 'scripts/privacy-export.ts')).toContain('const document = await runExport(subject, {');
+    expect(read(audited, 'scripts/privacy-export.ts')).toContain('the audit trail keeps the entry of each export');
+    expect(read(unaudited, 'scripts/privacy-export.ts')).not.toContain('audit trail');
   });
 
   it('writes the two scripts of the requests of a data subject, on the sources with the variables of .env', () => {

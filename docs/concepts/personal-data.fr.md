@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:0ddcec58f66de558 -->
+<!-- translation-of: personal-data.md sha256:316a55710e1c1e2f -->
 
 # Les données personnelles dans un projet généré
 
@@ -8,9 +8,9 @@ efface une personne de toutes d'une seule commande. `init` écrit le dossier *pr
 plateforme (`--privacy on`, le défaut avec un ORM) : les listes des copies et des exports que chaque
 contexte déclare, et les scripts `privacy:erase` et `privacy:export`. `generate repository <context>
 <Aggregate> --personal <colonne>,...` déclare ce qu'une table garde d'une personne, à côté de son
-*mapper*, et écrit une fois par contexte l'effacement qui lit chaque déclaration : un port, son
-adaptateur sur l'effacement du paquet d'ORM, son *fake*, sa *spec* et sa ligne dans les copies de la
-plateforme. Avec `--event-sourcing on`, la clé de la personne dans l'event store est détruite d'abord,
+*mapper*, et écrit une fois par contexte l'effacement et l'export qui lisent chaque déclaration :
+deux ports, leurs adaptateurs sur ceux du paquet d'ORM, leurs *fakes*, une *spec* et leurs lignes
+dans les copies et les exports de la plateforme. Avec `--event-sourcing on`, la clé de la personne dans l'event store est détruite d'abord,
 pour que ses événements stockés se lisent effacés. Ce sont les mécanismes de la protection des
 données dès la conception, intégrés par défaut ; ce qu'un outil ne peut pas décider, la base légale
 d'un traitement ou la complétude d'une déclaration, reste au projet, et cette page le dit. Les pièces
@@ -26,7 +26,7 @@ pour la preuve datée, [Multi-tenant](multitenancy.fr.md) pour ce qu'un *tenant*
 |---|---|---|
 | `init --privacy on` (`on` avec un ORM, `off` sans ou sur demande) | les listes des copies et des exports que les contextes déclarent, `runErasure` et `runExport`, les deux scripts | `src/platform/privacy/`, `scripts/privacy-erase.ts`, `scripts/privacy-export.ts` |
 | `init --event-sourcing on` (`off` sauf demande) | l'event store, les clés des personnes concernées et le chiffre qui scelle une valeur personnelle d'un événement stocké, audités quand le journal est actif | `src/platform/event-sourcing/`, le schéma `event_store` |
-| `generate repository <ctx> <Aggregate> --personal <colonne>,...` | les colonnes dans le stockage, leur déclaration, et une fois par contexte l'effacement qui la lit | le contexte |
+| `generate repository <ctx> <Aggregate> --personal <colonne>,...` | les colonnes dans le stockage, leur déclaration, et une fois par contexte l'effacement et l'export qui la lisent | le contexte |
 
 Un projet sans donnée personnelle prend `--privacy off` et ne paie rien ; un projet dont tous les
 agrégats sont des lignes garde `--event-sourcing off` et ne paie aucune table pour cela. Les deux
@@ -58,12 +58,19 @@ se lit `[erased]`. La seconde déclare que la table `invoices` copie l'email d'u
   l'effacement du paquet d'ORM (`KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`,
   `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`) avec les déclarations du contexte,
   confiné au *tenant* du travail quand le *repository* l'est ; son *fake* ; une *spec* qui enregistre
-  deux personnes par le *repository*, écrit leurs colonnes personnelles et prouve l'effacement sur la
-  base de test ; et sa liaison, le décorateur `@Repository` en style déclaré, le fichier module d'un
-  contexte explicite, la fabrique d'une plateforme câblée à la main ;
-- liste ce port une fois dans `src/platform/privacy/data-subject-copies.ts`, entre les marqueurs ;
-  `init --force` le liste de nouveau quand il réécrit le fichier ;
-- une table ultérieure du même contexte rejoint les `declarations` de cet adaptateur, entre
+  deux personnes par le *repository*, écrit leurs colonnes personnelles et prouve l'effacement et
+  l'export sur la base de test ; et sa liaison, le décorateur `@Repository` en style déclaré, le
+  fichier module d'un contexte explicite, la fabrique d'une plateforme câblée à la main ;
+- la première fois dans un contexte aussi, écrit son export : le port
+  `application/ports/<contexte>-personal-data-export.port.ts`, qui étend `PersonalDataExport` du
+  kernel ; l'adaptateur `infrastructure/persistence/<orm>-<contexte>-personal-data-export.repository.ts`,
+  qui étend l'export du paquet d'ORM (`KnexPersonalDataExport`, `DrizzlePersonalDataExport`,
+  `PrismaPersonalDataExport`, `TypeOrmPersonalDataExport`) avec les mêmes déclarations, confiné au
+  *tenant* de la même façon ; son *fake* ; lié de la même façon ;
+- liste les deux ports une fois, dans `src/platform/privacy/data-subject-copies.ts` et
+  `data-subject-exports.ts`, entre les marqueurs ; `init --force` les liste de nouveau quand il
+  réécrit les fichiers ;
+- une table ultérieure du même contexte rejoint les `declarations` des deux adaptateurs, entre
   marqueurs.
 
 ```ts
@@ -114,14 +121,60 @@ Il imprime le rapport en JSON : si une clé a été détruite, les lignes que ch
 les projections reconstruites. Une copie qui échoue n'arrête pas les autres, et le premier échec est
 levé une fois que tout a tourné : relancer l'effacement achève celui qui a échoué à mi-chemin,
 n'atteint plus rien la deuxième fois et le dit. Un sujet qui n'est pas un identifiant opaque (un nom,
-un email) est refusé avant que quoi que ce soit ne soit touché. `npm run privacy:export --
-<subject-id> > export.json` rassemble chaque enregistrement que les contextes listent dans
-`data-subject-exports.ts` : aucun adaptateur d'export n'est encore généré, un contexte qui répond au
-droit d'accès écrit son port `PersonalDataExport` à la main.
+un email) est refusé avant que quoi que ce soit ne soit touché.
 
 Dans une *spec* de gestionnaire, le *fake* de l'effacement (`Fake<Contexte>PersonalDataErasure`)
 compte les lignes qu'il tient d'une personne et les oublie au premier effacement, comme le *fake* d'un
 *repository*.
+
+## L'export, de bout en bout
+
+![L'export d'une personne dans un projet généré : le script appelle runExport de la plateforme, qui donne à exportDataSubject du noyau chaque export listé dans data-subject-exports.ts, un port par contexte dont l'adaptateur lit les tables déclarées par personalFields ; chaque export est enveloppé par auditedPersonalDataExport quand le journal est actif ; le résultat est un document daté, imprimé en JSON](../assets/diagrams/personal-data-export.fr.svg)
+
+`npm run privacy:export -- <subject-id> [--operator <qui-demande>] > export.json` répond au droit
+d'accès et à la portabilité (RGPD, articles 15 et 20) de la même façon : le script compose
+l'application, ouvre un contexte d'exécution d'origine `cli` avec l'opérateur pour acteur, et lance
+`exportDataSubject` du kernel sur chaque export listé dans `data-subject-exports.ts`, un port par
+contexte, dans chaque *tenant* nommé par `TENANTS` avec des tables partagées, puisqu'une lecture de
+données de *tenant* est confinée à son *tenant* comme une écriture. Chaque adaptateur lit les mêmes
+déclarations que l'effacement et répond un enregistrement par ligne sur la personne, sous
+`<contexte>.<table>`, avec les colonnes personnelles et les clés des fichiers en données simples,
+aucune autre colonne et rien de personne d'autre ; une ligne déjà pseudonymisée se lit `[erased]`, une
+ligne supprimée ne répond rien. Le résultat est un document :
+
+```json
+{
+  "format": "ddd-ts-kit/personal-data-export@1",
+  "subject": "cus_42",
+  "exportedAt": "2026-10-24T09:30:00.000Z",
+  "records": [
+    { "source": "billing.customers", "values": { "email": "ada@example.org", "display_name": "Ada" } },
+    { "source": "billing.invoices", "values": { "customer_email": "ada@example.org" } },
+    { "source": "crm.contacts", "values": { "email": "ada@example.org", "phone": null } }
+  ]
+}
+```
+
+Structuré, couramment utilisé et lisible par machine, comme le demande l'article 20 ; daté, pour que
+ce qu'il affirme soit vrai de cet instant ; nommé par son format, pour qu'un lecteur en connaisse la
+forme et distingue une forme ultérieure ; nommant la personne par le seul id opaque. Remettez-le à la
+personne, puis supprimez le fichier. Les exports tournent dans l'ordre listé, pour qu'un document se
+lise pareil d'une exécution à l'autre, et celui qui échoue arrête le rassemblement : un document
+auquel un contexte manquerait en silence affirmerait moins que ce que le système garde. Un sujet qui
+n'est pas un identifiant opaque est refusé avant toute lecture : un export cherche une personne par
+son id, jamais par un nom ou un email, ce qui serait une recherche dans des données personnelles.
+
+Avec `--audit on`, `runExport` enveloppe chaque port avec `auditedPersonalDataExport` de
+`@ddd-ts-kit/audit` : une entrée par contexte, catégorie `data-access`, action `personal-data:export`,
+l'opérateur, la personne, le contexte et le nombre d'enregistrements, jamais les valeurs, écrite
+avant que les enregistrements ne soient remis, pour qu'aucun document ne parte sans sa trace. C'est
+la responsabilité de l'article 5(2) appliquée au droit d'accès : qui a lu quoi de qui, et quand
+([Journal d'audit](audit-trail.fr.md#le-droit-à-leffacement-et-une-chaîne-en-ajout-seul)). Le journal
+est en ajout seul : chaque exécution est une remise et laisse son entrée, un essai compris ; essayez
+le script sur une personne de test, jamais sur une vraie.
+
+Dans une *spec* de gestionnaire, le *fake* de l'export (`Fake<Contexte>PersonalDataExport`) remet les
+enregistrements qu'un test lui a donnés et se souvient de qui a été demandé.
 
 ## Ce qui reste hors de portée
 
@@ -149,15 +202,17 @@ article 25) : déclaration, effacement, export, une preuve datée, et un registr
 venir. La base légale de chaque traitement, l'information des personnes concernées, les sous-traitants
 et l'analyse d'impact appartiennent au projet ; qu'une ligne pseudonymisée vaille effacement aux yeux
 de la loi est au responsable de traitement d'en décider, comme la page du journal d'audit le dit de
-ce qui reste dans la chaîne. Par construction veut dire intégré par défaut, jamais une garantie
-juridique.
+ce qui reste dans la chaîne. Le document d'un export porte les données ; les informations qui
+accompagnent la réponse à une demande d'accès (les finalités, les destinataires, la durée de
+conservation, les droits de la personne, article 15(1)) sont la lettre que le projet écrit autour.
+Par construction veut dire intégré par défaut, jamais une garantie juridique.
 
 ## Voir aussi
 
 - [Event sourcing, par agrégat](event-sourcing.fr.md) : le scellement des événements stockés et les
   clés
-- [Journal d'audit](audit-trail.fr.md) : la preuve datée d'un effacement, les masques à clé par
-  personne concernée
+- [Journal d'audit](audit-trail.fr.md) : la preuve datée d'un effacement et d'un export, les masques à
+  clé par personne concernée
 - [Multi-tenant](multitenancy.fr.md) : ce qu'un *tenant* confine, et pourquoi un effacement est joué
   une fois par *tenant*
 - [Stockage de fichiers](file-storage.fr.md) : les fichiers d'une personne, déclarés comme `files`

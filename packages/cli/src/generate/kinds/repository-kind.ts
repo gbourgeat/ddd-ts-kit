@@ -10,7 +10,7 @@ export const repositoryKind: Kind = {
   usage:
     'repository <context> <Aggregate> [--tenant-scoped] [--personal <column>,<column>... [--subject <column>] [--erasure pseudonymise|row]]',
   summary:
-    "A repository port (an abstract class of the domain), its in-memory fake, the adapter of the project's ORM with its mapper, the contract suite both pass, and its registration; with --personal, the declaration of the personal columns of its table, and the erasure of the context that reads it.",
+    "A repository port (an abstract class of the domain), its in-memory fake, the adapter of the project's ORM with its mapper, the contract suite both pass, and its registration; with --personal, the declaration of the personal columns of its table, and the erasure and the export of the context that read it.",
   positionals: ['context', 'Aggregate'],
   writesShared: true,
   run: (request) => {

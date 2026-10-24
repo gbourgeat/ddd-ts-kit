@@ -111,3 +111,19 @@ export const peopleOf = async (prisma: PrismaClient, subject: string, tenant = '
 
   return Array.isArray(rows) ? rows.filter((row): row is PersonRow => typeof row === 'object' && row !== null) : [];
 };
+
+/** The same rows in the strict table, whose `age` cannot be null. */
+export const insertPeopleStrict = async (prisma: PrismaClient, rows: readonly PersonRow[]): Promise<void> => {
+  await prisma.privacyPersonStrict.createMany({
+    data: rows.map((row) => ({
+      id: row.id,
+      personId: row.person_id,
+      displayName: row.display_name,
+      email: row.email,
+      age: row.age ?? 0,
+      avatarKey: row.avatar_key,
+      tenantId: row.tenant_id,
+      registeredAt: row.registered_at,
+    })),
+  });
+};
