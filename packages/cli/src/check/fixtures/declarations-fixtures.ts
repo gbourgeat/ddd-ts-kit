@@ -273,9 +273,21 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'declarations/port-adapter-wired',
-    name: 'declared style: an adapter that carries no declaration and that nothing binds',
+    name: 'declared style: an adapter that carries no declaration and that nothing binds, its port needed by a handler',
     expect: { file: STRIPE },
-    files: declaredProject({ [PORT]: DECLARED.port, [STRIPE]: stripeGateway() }),
+    files: declaredProject({
+      [PORT]: DECLARED.port,
+      [STRIPE]: stripeGateway(),
+      [COMMAND]: DECLARED.command,
+      ...handler(
+        DECLARED.handler
+          .replace(
+            "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';",
+            PORT_IMPORT,
+          )
+          .replace('[InvoiceRepository, Clock]', '[PaymentGateway, Clock]'),
+      ),
+    }),
   },
   {
     ruleId: 'declarations/port-adapter-wired',
@@ -294,11 +306,20 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'declarations/port-adapter-wired',
-    name: 'explicit style: an adapter only a test binds',
+    name: 'explicit style: an adapter only a test binds, its port needed by a handler',
     expect: { file: STRIPE },
     files: project({
       [PORT]: DECLARED.port,
       [STRIPE]: stripeGateway(),
+      ...handler(
+        source(
+          PORT_IMPORT,
+          '',
+          'export class IssueInvoiceHandler {',
+          '  constructor(private readonly payments: PaymentGateway) {}',
+          '}',
+        ),
+      ),
       [`${BILLING}/test/integration/stripe-payment-gateway.spec.ts`]: source(
         "import { it } from 'vitest';",
         STRIPE_IMPORT,
@@ -306,5 +327,11 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
         "it.todo('charges through Stripe', () => new StripePaymentGateway());",
       ),
     }),
+  },
+  {
+    ruleId: 'declarations/port-adapter-wired',
+    name: 'an adapter whose port no class needs yet: a hand-wired context creates it with its first use case',
+    expect: 'pass',
+    files: project({ [PORT]: DECLARED.port, [STRIPE]: stripeGateway() }),
   },
 ];
