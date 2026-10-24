@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 660" width="960" height="660" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">L'effacement d'une personne dans un projet généré</title>
-  <desc id="desc">Le script privacy:erase ouvre un contexte d'exécution et appelle runErasure de la plateforme, qui donne trois choses à eraseDataSubject du noyau : le magasin de clés de l'event store quand le projet en a un, pour que les événements stockés de la personne se lisent effacés ; chaque copie listée dans data-subject-copies.ts, un port d'effacement par contexte dont l'adaptateur sur le paquet d'ORM efface ou pseudonymise les lignes des tables déclarées par personalFields ; et les projections à reconstruire. Le rapport compte les lignes atteintes par contexte. En bas, ce que generate repository --personal écrit pour une table : ses colonnes personnelles, la déclaration à côté du mapper et, une fois par contexte, le port, l'adaptateur, le fake, la spec et la ligne dans les copies.</desc>
+  <desc id="desc">Le script privacy:erase ouvre un contexte d'exécution et appelle runErasure de la plateforme, qui donne trois choses à eraseDataSubject du noyau : le magasin de clés de l'event store quand le projet en a un, pour que les événements stockés de la personne se lisent effacés ; chaque copie listée dans data-subject-copies.ts, un port d'effacement par contexte dont l'adaptateur sur le paquet d'ORM efface ou pseudonymise les lignes des tables déclarées par personalFields ; et les projections à reconstruire. Le rapport compte les lignes atteintes par contexte ; puis l'événement privacy.data-subject.erased part dans l'outbox, pour qu'un contexte qui tourne comme un service à part efface sa copie. En bas, ce que generate repository --personal écrit pour une table : ses colonnes personnelles, la déclaration à côté du mapper et, une fois par contexte, le port, l'adaptateur, le fake, la spec et la ligne dans les copies.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
@@ -78,5 +78,5 @@
   <text x="40" y="584" font-size="13" fill="#1f2328">le port (extends PersonalDataErasure), l'adaptateur sur le paquet d'ORM, son fake, sa spec, sa ligne dans la liste des copies.</text>
 
   <text x="32" y="628" font-size="13" fill="#5f6b73">Hors de portée : sauvegardes, journaux, exports déjà remis, copie qu'aucun contexte n'a déclarée.</text>
-  <text x="32" y="648" font-size="13" fill="#5f6b73">Relancé, un effacement n'atteint plus rien et le dit : il achève celui qui a échoué à mi-chemin.</text>
+  <text x="32" y="648" font-size="13" fill="#5f6b73">Puis privacy.data-subject.erased part dans l'outbox : un service à part efface sa copie (generate erasure-handler).</text>
 </svg>
