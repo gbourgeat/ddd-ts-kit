@@ -7,6 +7,7 @@ import type { Rule } from '../model/rule';
 import type { SourceFile } from '../model/source-file';
 import type { ClassShape } from '../structure/class-shape';
 import { importedFrom } from '../support/imported-from';
+import { escapeRegExp } from '../text/escape-reg-exp';
 import { inLayer } from '../support/in-layer';
 import { isDeclaredStyle } from '../support/is-declared-style';
 import { isPortFile } from '../support/is-port-file';
@@ -37,10 +38,11 @@ interface Implementation {
 export const declarationsPortAdapterWired: Rule = {
   id: RULE_ID,
   description:
-    'A class of infrastructure/ that implements a port is wired: declared with @Repository, @Gateway or @Adapter in the declared style, or imported by the composition root (<context>.module.ts, main.ts, apps/, the platform directory). One kept unwired on purpose says so with a suppression that points to a decision record. A file that still carries a TODO(domain) or TODO(platform) of the generator is not judged yet.',
+    'A class of infrastructure/ that implements a port some class needs is wired: declared with @Repository, @Gateway or @Adapter in the declared style, or imported by the composition root (<context>.module.ts, main.ts, apps/, the platform directory). One kept unwired on purpose says so with a suppression that points to a decision record. A file that still carries a TODO(domain) or TODO(platform) of the generator, or whose port no class needs yet, is not judged yet.',
   scope: 'project',
   run(project) {
     const composed = composedClasses(project);
+    const needed = neededPorts(project);
 
     return perFile(project, this.id, (file) => {
       const place = inLayer(file, 'infrastructure');
@@ -50,7 +52,10 @@ export const declarationsPortAdapterWired: Rule = {
       }
 
       return implementations(file)
-        .filter(({ shape }) => !composed.has(`${file.path}#${shape.name}`) && !isDeclared(file, project, shape))
+        .filter(
+          ({ shape, port }) =>
+            needed(port) && !composed.has(`${file.path}#${shape.name}`) && !isDeclared(file, project, shape),
+        )
         .map((implementation) => unwired(implementation, project, place.context));
     });
   },
@@ -62,6 +67,30 @@ export const declarationsPortAdapterWired: Rule = {
  */
 function isLeftToDo({ scan }: SourceFile): boolean {
   return scan.comments.some(({ text }) => LEFT_TO_DO.test(text));
+}
+
+/**
+ * Whether some class needs a port: a file outside the infrastructure and the tests names it, other
+ * than the one that declares it (a handler, a policy, a service, a module). A port nobody needs
+ * yet is not missing at run time, and a hand-wired context creates its adapter with its first
+ * user: until then the adapter is not judged.
+ */
+function neededPorts(project: Project): (port: string) => boolean {
+  const readers = project.files.filter(
+    (file) => !file.isTest && !(file.location.area === 'context' && file.location.layer === 'infrastructure'),
+  );
+
+  const known = new Map<string, boolean>();
+
+  return (port) => {
+    const named = new RegExp(String.raw`\b${escapeRegExp(port)}\b`);
+    const declared = new RegExp(String.raw`\bclass\s+${escapeRegExp(port)}\b`);
+    const answer = known.get(port) ?? readers.some(({ scan }) => named.test(scan.code) && !declared.test(scan.code));
+
+    known.set(port, answer);
+
+    return answer;
+  };
 }
 
 /** `<file>#<class>` for each class a file of the composition root imports as a value. */

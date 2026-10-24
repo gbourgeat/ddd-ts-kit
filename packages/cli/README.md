@@ -749,7 +749,8 @@ Next, in this order: the language of the context first, then the business decisi
   a domain event handler are bound under themselves and subscribed in the `start` region. With
   hand wiring (`--di manual`, `--di nest`) the module file is a function of the `Platform`:
   `platform.adapter(new DrizzleInvoiceRepository(...), { kind: 'repository', context, token })`,
-  which gives the repository its span and the dispatch of what it saves,
+  which gives the repository its span and the dispatch of what it saves, written with the first
+  command that needs it (a constant no handler reads is refused by the lint),
   `platform.commands.register(Message, new Handler(...), { context })`,
   `platform.jobs.register({ name, schedule, run })`.
 - **Jobs.** The schedule is validated when the job is generated, by the rules of the scheduler
