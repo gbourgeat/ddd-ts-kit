@@ -227,6 +227,15 @@ the `mutation-changed` job lists the survivors of the files you changed (`ddd-ts
 --changed <base>`, `--survivors` for all of them): read them before asking for a review, each a rule
 to state or a survivor to leave alive and say so.
 
+A law a value object holds for every value is stated once, as a property with `fast-check`, added
+with the first one (`npm i -D fast-check`):
+`fc.assert(fc.property(anyRange(), anyRange(), (one, other) => one.overlaps(other) === other.overlaps(one)))`,
+the title stating the law (`overlaps another range in both directions or in none, for any two ranges`),
+the arbitrary a small helper of the spec built on the factories of the model, so that every generated
+value is one the model accepts. A property is for an invariant, a symmetry, a round trip or an
+idempotence of the model; a use case is stated by its scenarios with named values. Every value object
+spec the generator writes ends with the planned rule that asks for one.
+
 The titles are read back as a document: `npm run docs:generate` writes `docs/behaviour/<context>.md`
 from them, grouped as the specs group them, the pre-commit hook regenerates it when a spec is staged,
 and `docs --check` holds it current, so a title is a sentence the business reads, and the page is

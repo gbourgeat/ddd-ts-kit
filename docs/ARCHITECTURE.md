@@ -1278,7 +1278,7 @@ lines, audit entries and error reports.
 
 | Kind | Target | Doubles |
 |---|---|---|
-| unit | aggregates, value objects, domain services | none |
+| unit | aggregates, value objects, domain services; the invariants of a value object as properties on generated values (fast-check) | none |
 | unit | handlers | fakes of ports and repositories (no mocking library needed) |
 | integration | adapters against the real dependency | none |
 | contract | each fake and each adapter pass the same port contract suite | |
