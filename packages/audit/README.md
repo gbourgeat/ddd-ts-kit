@@ -729,8 +729,10 @@ in `audit_archives` (range, last hash, SHA-256 of the file); then the entries ar
 guard of the table lets a `DELETE` through only for entries an archive covers, and refuses any
 change to the archives themselves. A chain that does not verify is refused with
 `AuditArchiveRefusedError` and keeps every entry: a break is for the operator to look at, not to
-bury in a file. The file is written before the transaction commits: a failure afterwards leaves
-a file no archive names, which the next run writes again under the same key.
+bury in a file. The file is written, then read back from the storage and its digest checked,
+before the transaction commits: a storage that did not keep it is refused with
+`AuditArchiveNotStoredError` and nothing is removed; a failure afterwards leaves a file no archive
+names, which the next run writes again under the same key.
 
 What the trail proved stays provable:
 
@@ -746,8 +748,12 @@ await verifyChain(trail, { chain: 'tenant:acme', after: { chain: 'tenant:acme', 
 platform: each run archives the entries older than the first day of the month `monthsOnline`
 whole months ago, in UTC, so a run missed is caught up by the next. A generated project whose
 trail is in a database and whose files are in a storage registers it as `audit.archive`, on the
-first day of every month at 04:00 UTC, switched off in one environment with
-`JOB_AUDIT_ARCHIVE_ENABLED=false`.
+first day of every month at 04:00 UTC. With an object store (`--storage s3`) it runs unless
+`JOB_AUDIT_ARCHIVE_ENABLED=false`; with `--storage local` it runs only with
+`JOB_AUDIT_ARCHIVE_ENABLED=true`: the files would be on the disk of the server, which a
+redeployment may wipe and a backup may not reach, and an archive removes the entries from the
+database. Archive to a storage that is durable and backed up, with a retention lock where the law
+asks for one.
 
 A trail created before the archives adds them once, in a migration: `addAuditArchives(knex, {
 schema })` on Knex, the statements of `auditArchiveUpgradeStatements(schema)` on Drizzle, Prisma
