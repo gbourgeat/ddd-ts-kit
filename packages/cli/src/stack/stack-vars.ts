@@ -59,8 +59,16 @@ function platformVars(config: Config): RenderContext {
     tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
     eventSourcing: one(eventSourcing, ['on', 'off']),
     privacy: one(privacy, ['on', 'off']),
+    platformJobs: { any: platformJobsOf(config) },
     foundations: { founded: foundedUnion(founded(config)) },
   };
+}
+
+/** The platform registers jobs of its own: the purge of staged files, the archive of the audit trail, the purge of what outlived its retention. */
+function platformJobsOf(config: Config): boolean {
+  const { storage, privacy } = config.stack;
+
+  return storage !== 'none' || privacy === 'on' || auditVars(config)['archive'] === true;
 }
 
 /** The members of the platform the hand-wired foundations hand on as they are, in the order the union names them. */

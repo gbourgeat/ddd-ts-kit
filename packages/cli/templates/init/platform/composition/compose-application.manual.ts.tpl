@@ -124,14 +124,8 @@ export function composeApplication(
   const { logger, metrics, cache, clock } = platform;
 
   installAspectRuntime({ logger, metrics, cache, clock });
-{{#if files.any}}
-  purgeStagedFiles(platform);
-{{/if}}
-{{#if audit.archive}}
-  archiveAuditEntries(platform);
-{{/if}}
-{{#if privacy.on}}
-  purgeExpiredEveryNight(platform);
+{{#if platformJobs.any}}
+  registerPlatformJobs(platform);
 {{/if}}
 
 {{#if audit.route}}
@@ -247,6 +241,21 @@ async function stop(platform: Platform, options: ApplicationOptions): Promise<vo
 {{/if}}
   await platform.logger.flush();
 }
+{{#if platformJobs.any}}
+
+/** The jobs of the platform itself, run by the process that runs the jobs. */
+function registerPlatformJobs(platform: Platform): void {
+{{#if files.any}}
+  purgeStagedFiles(platform);
+{{/if}}
+{{#if audit.archive}}
+  archiveAuditEntries(platform);
+{{/if}}
+{{#if privacy.on}}
+  purgeExpiredEveryNight(platform);
+{{/if}}
+}
+{{/if}}
 {{#if files.any}}
 
 /** What rolled-back commands left in `staging/`, removed every hour by the process that runs the jobs. */
