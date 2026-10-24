@@ -37,7 +37,7 @@ export const generateCommand: Command = (argv, io) => {
   kind.run({ ws, config, args: rest, flags });
   stopPlacing();
   // A worker confined to its context leaves another context in the single declarations file of 0.84: the trunk moves it.
-  refreshDocs(ws, args.flag('local-only') ? 'keep' : 'move');
+  refreshDocs(ws, args.flag('local-only') ? 'keep' : 'move', args.flag('local-only') ? 'context' : 'whole');
 
   if (args.flag('local-only')) {
     refuseSharedWrites(ws, config, kind.positionals[0] === 'context' ? toName(rest[0] ?? '').kebab : undefined);

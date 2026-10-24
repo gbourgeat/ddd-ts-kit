@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:760b3ee2d428e2be -->
+<!-- translation-of: README.md sha256:c59e62b7dedda6a7 -->
 
 # ddd-ts-kit
 
@@ -903,7 +903,7 @@ et des blocs `{{#if x}}` / `{{#unless x}}`. Un emplacement inconnu est une erreu
 ## docs
 
 ```
-ddd-ts-kit docs [--check] [--stored-events]
+ddd-ts-kit docs [--check] [--stored-events] [--behaviour]
 ```
 
 Régénère ce qui dérive de la configuration et du code, et rien d'autre :
@@ -949,6 +949,8 @@ Régénère ce qui dérive de la configuration et du code, et rien d'autre :
   `REVIEW.md`, `AGENTS.md` et `docs/adr/` aux propriétaires de la plateforme. Un fichier écrit
   par l'équipe garde ses lignes, le bloc ajouté à leur suite ; sans aucun propriétaire, rien
   n'est écrit.
+
+`--behaviour` n'écrit que les pages de `docs/behaviour/`, tout autre document généré laissé tel quel : c'est ce que lance le *hook* de pre-commit quand une *spec* est indexée ; avec `--check`, seules ces pages sont comparées.
 
 `--stored-events` enregistre aussi dans `stored-events.lock.json` la forme de chaque version d'un
 événement stocké déclarée dans les codecs de `infrastructure/persistence/`, sans jamais réécrire

@@ -12,8 +12,9 @@
  *     .claude, .codex, .github, .gitlab or .ddd-ts-kit, wherever it is;
  *   - anything under plugin/, pipeline/ and packages/cli/templates/, and under site/, where the
  *     website copies these pages at each of its builds (site/scripts/assemble.mjs);
- *   - the generated examples/scheduling/clients/api/README.md and
- *     examples/scheduling/docs/integration/event-catalog.md, and the register of personal data
+ *   - the generated examples/scheduling/clients/api/README.md,
+ *     examples/scheduling/docs/integration/event-catalog.md and the pages of
+ *     examples/scheduling/docs/behaviour/, and the register of personal data
  *     examples/scheduling/docs/privacy/register.md, partly generated like a CONTEXT.md.
  *
  *   node pipeline/monorepo/translations.mjs --check [pages...]  one line per problem, exit 1 if any
@@ -43,7 +44,14 @@ const SKIPPED_DIRECTORIES = new Set([
   '.gitlab',
   '.ddd-ts-kit',
 ]);
-const SKIPPED_PREFIXES = ['plugin/', 'pipeline/', 'packages/cli/templates/', 'site/', 'changes/'];
+const SKIPPED_PREFIXES = [
+  'plugin/',
+  'pipeline/',
+  'packages/cli/templates/',
+  'site/',
+  'changes/',
+  'examples/scheduling/docs/behaviour/',
+];
 const SKIPPED_NAMES = new Set(['CHANGELOG.md', 'AGENTS.md', 'CLAUDE.md', 'CONTEXT.md']);
 const SKIPPED_FILES = new Set([
   'examples/scheduling/clients/api/README.md',

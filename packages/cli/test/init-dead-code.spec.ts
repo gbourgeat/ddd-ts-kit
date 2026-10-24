@@ -79,8 +79,10 @@ describe('the validation packages of a project that validates nothing yet', () =
 
     expect(routed(root, '--local-only').stderr).toBe('');
     expect(ignored(root)).toEqual([VALIDATION, 'zod']);
-    expect(cli(root, 'docs', '--check').code).toBe(0);
+    // The page of what the tests of the context state is a shared file too: the trunk writes it.
+    expect(cli(root, 'docs', '--check').stdout).toContain('docs/behaviour/billing.md');
     expect(cli(root, 'docs').code).toBe(0);
+    expect(cli(root, 'docs', '--check').code).toBe(0);
     expect(ignored(root)).toEqual([]);
   });
 

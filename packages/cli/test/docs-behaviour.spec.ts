@@ -1,0 +1,138 @@
+import { rmSync } from 'node:fs';
+import path from 'node:path';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { rulesIn } from '../src/docs/rules-in';
+import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers';
+
+describe('rulesIn, the rules a spec states', () => {
+  it('reads the it titles under their describe, nested as the file nests them, the planned ones said so', () => {
+    const rules = rulesIn(`describe('Slot', () => {
+  it('is equal to another slot with the same instants', () => {});
+  describe('when it ends', () => {
+    it.todo('frees its calendar');
+    it('is over', () => {});
+  });
+});
+it('stands alone', () => {});
+`);
+
+    expect(rules.rules.map((rule) => rule.title)).toEqual(['stands alone']);
+    expect(rules.groups).toHaveLength(1);
+
+    const slot = rules.groups[0];
+
+    expect(slot?.title).toBe('Slot');
+
+    expect(slot?.rules.map((rule) => [rule.title, rule.state])).toEqual([
+      ['is equal to another slot with the same instants', 'stated'],
+    ]);
+
+    expect(slot?.groups[0]?.title).toBe('when it ends');
+
+    expect(slot?.groups[0]?.rules.map((rule) => [rule.title, rule.state, rule.line])).toEqual([
+      ['frees its calendar', 'planned', 4],
+      ['is over', 'stated', 5],
+    ]);
+  });
+
+  it('reads a table of cases as one rule, a test call as an it, a spec put aside as such, and skips a title that is no literal', () => {
+    const rules = rulesIn(`describe('Slot', () => {
+  it.each([['ends when it starts', 1], ['ends before it starts', 2]] as const)('refuses a slot that %s', () => {});
+  test('counts', () => {});
+  it.skip('waits', () => {});
+  describe(Slot.name, () => {
+    it('has no literal title above', () => {});
+  });
+});
+`);
+
+    const slot = rules.groups[0];
+
+    expect(slot?.rules.map((rule) => [rule.title, rule.state])).toEqual([
+      ['refuses a slot that %s', 'stated'],
+      ['counts', 'stated'],
+      ['waits', 'aside'],
+      ['has no literal title above', 'stated'],
+    ]);
+
+    expect(slot?.groups).toEqual([]);
+  });
+});
+
+describe('docs, the pages of what the tests state', () => {
+  let root: string;
+
+  beforeAll(() => {
+    root = tempDir('behaviour');
+    scaffoldEverything(root);
+  });
+
+  it('writes one page per context from its specs and the index, up to date right after the generators', () => {
+    expect(cli(root, 'docs', '--check').code).toBe(0);
+
+    const page = read(root, 'docs/behaviour/billing.md');
+
+    expect(page).toContain('# billing: what its tests state');
+    expect(page).toContain('## Unit specs');
+    expect(page).toMatch(/\d+ rules? stated/);
+    expect(page).toContain('(planned)');
+    expect(read(root, 'docs/behaviour/README.md')).toContain('| [billing](billing.md) |');
+  });
+
+  it('reports the page stale once a spec changes, and reads the new title the next time', () => {
+    write(
+      root,
+      'src/contexts/billing/test/unit/invoice-total.vo.spec.ts',
+      "import { describe, it } from 'vitest';\n\ndescribe('InvoiceTotal', () => {\n  it('adds the lines of the invoice, taxes included', () => {});\n});\n",
+    );
+
+    const stale = cli(root, 'docs', '--check');
+
+    expect(stale.code).toBe(1);
+    expect(stale.stdout).toContain('docs/behaviour/billing.md');
+    expect(cli(root, 'docs').code).toBe(0);
+
+    const page = read(root, 'docs/behaviour/billing.md');
+
+    expect(page).toContain('### invoice-total (value object)');
+    expect(page).toContain('`unit/invoice-total.vo.spec.ts`');
+    expect(page).toContain('- **InvoiceTotal**\n  - adds the lines of the invoice, taxes included');
+    expect(cli(root, 'docs', '--check').code).toBe(0);
+  });
+
+  it('writes the pages alone with --behaviour, every other generated document left as it is, and checks them alone', () => {
+    const map = read(root, 'docs/context-map.md');
+
+    write(
+      root,
+      'docs/context-map.md',
+      map.replace('<!-- /ddd-ts-kit:context-map -->', 'edited by hand\n<!-- /ddd-ts-kit:context-map -->'),
+    );
+
+    write(
+      root,
+      'src/contexts/billing/test/unit/invoice-due.vo.spec.ts',
+      "import { describe, it } from 'vitest';\n\ndescribe('InvoiceDue', () => {\n  it.todo('falls due thirty days after the issue');\n});\n",
+    );
+
+    expect(cli(root, 'docs', '--behaviour', '--check').code).toBe(1);
+    expect(cli(root, 'docs', '--behaviour').code).toBe(0);
+    expect(read(root, 'docs/behaviour/billing.md')).toContain('falls due thirty days after the issue (planned)');
+    expect(read(root, 'docs/context-map.md')).toContain('edited by hand');
+
+    expect(cli(root, 'docs', '--behaviour', '--check').stdout).toBe(
+      'The pages of what the tests state are up to date.',
+    );
+
+    expect(cli(root, 'docs', '--check').code).toBe(1);
+    expect(cli(root, 'docs').code).toBe(0);
+  });
+
+  it('deletes the page of a context that is gone', () => {
+    rmSync(path.join(root, 'src/contexts/shipping'), { recursive: true, force: true });
+
+    expect(cli(root, 'docs').code).toBe(0);
+    expect(exists(root, 'docs/behaviour/shipping.md')).toBe(false);
+    expect(read(root, 'docs/behaviour/README.md')).not.toContain('shipping.md');
+  });
+});

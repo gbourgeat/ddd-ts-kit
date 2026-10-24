@@ -514,7 +514,8 @@ status` in this repository) says which step is next.
    Here: five parallel workers, given the [briefings](docs/architecture/briefings/README.md).
 8. **Pass the gate** (`/ddd-ts-kit:quality-gate`): `npm run verify` before each merge.
 9. **Document** (`/ddd-ts-kit:document`): `npm run docs:generate`, committed with the code. Here:
-   `openapi/` and the [integration notes](docs/integration/README.md).
+   `openapi/`, the [integration notes](docs/integration/README.md) and
+   [what the tests state](docs/behaviour/README.md), one page per context from the titles of its specs.
 
 A step skipped costs later: boundaries drawn from the tables, a glossary written after the
 code, a first integration made by a direct import the checker then refuses. The method, step by

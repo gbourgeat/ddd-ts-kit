@@ -27,6 +27,8 @@ export function buildAndCheckDocuments(root: string): void {
   expect(fs.existsSync(path.join(root, 'dist/src/apps/shipping/main.js'))).toBe(true);
   expect(fs.existsSync(path.join(root, 'dist/src/apps/worker/main.js'))).toBe(true);
   expect(cli(root, 'check').code).toBe(0);
+  // The specs the steps before wrote reach the trunk with their pages of what the tests state, as the pre-commit hook writes them.
+  expect(cli(root, 'docs', '--behaviour').code).toBe(0);
   expect(cli(root, 'docs', '--check').code).toBe(0);
 
   if (!fs.existsSync(path.join(root, 'scripts/openapi.ts'))) {

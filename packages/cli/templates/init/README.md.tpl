@@ -316,7 +316,8 @@ declaration that no longer follows `importAlias` and `importExtension` of
 | drift | `npm run docs:check` | context map, OpenAPI, AsyncAPI, event catalog |
 
 `npm run verify` chains them with the tests. Git hooks: `npm run hooks:install` once per clone
-(lefthook: lint and architecture on staged files, conventional commit messages).
+(lefthook: lint and architecture on staged files, the pages of what the tests state regenerated when a
+spec is staged, conventional commit messages).
 {{#if ci.any}}
 The pipeline calls the same `ci:*` scripts; what makes it binding is described in
 {{#if ci.github}}
@@ -359,6 +360,6 @@ for each moment of the project: https://github.com/gbourgeat/ddd-ts-kit/blob/mai
 | `npm test` | domain, application and adapter specs, each spec file held to the time budget of its level |
 | `npm run test:e2e` | the whole application through HTTP, on an in-process database unless `DATABASE_URL` is set |
 | `npm run check:arch` | `ddd-ts-kit check` |
-| `npm run docs:generate` | context map, OpenAPI, AsyncAPI and event catalog{{#if sdk.on}}, the clients under `clients/`{{/if}} |
+| `npm run docs:generate` | context map, OpenAPI, AsyncAPI and event catalog, the pages of what the tests state (`docs/behaviour/`){{#if sdk.on}}, the clients under `clients/`{{/if}} |
 | `npm run regenerate` | every derived file after a change: `.dependency-cruiser.cjs`, then `docs:generate` |
 | `npm run verify` | everything CI runs |
