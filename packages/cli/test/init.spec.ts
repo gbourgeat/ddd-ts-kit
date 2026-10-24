@@ -134,6 +134,8 @@ const FASTIFY_STACK = {
   cache: 'none',
   httpCache: 'none',
   audit: 'on',
+  eventSourcing: 'off',
+  privacy: 'on',
   errors: 'none',
   logger: 'stdout',
   refusals: 'named',

@@ -11,7 +11,8 @@ the work given each tenant, since a write of tenant data is never widened), rebu
 projections fed by the store, and reports `{ erased, copies, rebuilt }`; a copy that fails does
 not stop the others, and running the erasure again completes it; a subject that is not an opaque
 identifier is refused before any key is touched, and an id nothing is left of is refused before
-the rebuilds. `InMemoryPersonalData` implements both ports over one declaration, and
+the rebuilds; `keys` may be left out, as in a project whose aggregates are rows and seal nothing:
+the copies alone are erased, and the report says no key was destroyed. `InMemoryPersonalData` implements both ports over one declaration, and
 `personalDataErasureContract` and `personalDataExportContract` of `@ddd-ts-kit/testing` hold it
 and every adapter to the same behaviour. The adapters of the persistence packages, the platform
 folder `init` writes and the register come with the next parts of

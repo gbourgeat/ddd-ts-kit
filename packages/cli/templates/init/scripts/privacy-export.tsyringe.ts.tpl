@@ -17,8 +17,13 @@ import { runExport } from '{{alias.platform}}/privacy/run-export{{alias.ext}}';
 //   npm run privacy:export -- <subject-id> [--operator <who-asks>] > export.json
 // Every record each context declared in src/platform/privacy/data-subject-exports.ts keeps of the
 // person{{#if tenancy.any}}, in each tenant of TENANTS (comma separated){{/if}}, as JSON on the standard output: hand it over, then delete the file.
+{{#if eventSourcing.on}}
 // What this script cannot reach: the stored events (read them through the aggregate), backups,
 // logs and the copies no context declared.
+{{/if}}
+{{#unless eventSourcing.on}}
+// What this script cannot reach: backups, logs and the copies no context declared.
+{{/unless}}
 const { positionals, values } = parseArgs({
   allowPositionals: true,
   options: { operator: { type: 'string', default: os.userInfo().username } },

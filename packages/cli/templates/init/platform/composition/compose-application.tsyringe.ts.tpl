@@ -103,6 +103,9 @@ import { relateSystemActors } from '{{alias.platform}}/auth/relationships/relate
 import { createCommandBus } from '{{alias.platform}}/buses/create-command-bus{{alias.ext}}';
 import { createQueryBus } from '{{alias.platform}}/buses/create-query-bus{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+{{#if eventSourcing.on}}
+import { eventSourcingModule } from '{{alias.platform}}/event-sourcing/event-sourcing.module{{alias.ext}}';
+{{/if}}
 {{#if files.http}}
 import { fileRoutes } from '{{alias.platform}}/files/file-routes{{alias.ext}}';
 {{/if}}
@@ -111,7 +114,6 @@ import { filesModule } from '{{alias.platform}}/files/files.module{{alias.ext}}'
 {{/if}}
 import { layFoundations, type Foundations } from '{{alias.platform}}/composition/lay-foundations{{alias.ext}}';
 import { platformModule, type PlatformOptions } from '{{alias.platform}}/composition/platform.module{{alias.ext}}';
-import { privacyModule } from '{{alias.platform}}/privacy/privacy.module{{alias.ext}}';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 
@@ -199,7 +201,9 @@ export function composeApplication(
     modules: [
       kernel(foundations, persistence, options),
       platformModule(persistence, options),
-      privacyModule(persistence, foundations.privacy),
+{{#if eventSourcing.on}}
+      eventSourcingModule(foundations.eventSourcing),
+{{/if}}
       guard,
 {{#if audit.on}}
       auditModule(foundations.audit),

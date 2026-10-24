@@ -19,9 +19,11 @@ import { createAudit, type Audit } from '{{alias.platform}}/audit/create-audit{{
 import { logDecisions } from '{{alias.platform}}/auth/authorization/log-decisions{{alias.ext}}';
 {{/unless}}
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+{{#if eventSourcing.on}}
+import { createEventSourcing, type EventSourcing } from '{{alias.platform}}/event-sourcing/create-event-sourcing{{alias.ext}}';
+{{/if}}
 import { createLogger, type LogSettings } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
 import { createMetrics } from '{{alias.platform}}/observability/create-metrics{{alias.ext}}';
-import { createPrivacy, type Privacy } from '{{alias.platform}}/privacy/create-privacy{{alias.ext}}';
 
 /**
  * What exists before any module: built once and handed to the kernel module, so that the buses,
@@ -43,8 +45,10 @@ export interface Foundations {
   /** What every authorization decision is told to: the log, since the audit trail is off. */
   readonly decisions: OnDecision;
 {{/unless}}
-  /** The keys of the data subjects{{#if audit.on}}, audited,{{/if}} and the cipher of the personal values of the stored events. */
-  readonly privacy: Privacy;
+{{#if eventSourcing.on}}
+  /** The event store, the keys of the data subjects{{#if audit.on}}, audited,{{/if}} and the cipher of the personal values of the stored events. */
+  readonly eventSourcing: EventSourcing;
+{{/if}}
 }
 
 interface Observed {
@@ -72,11 +76,15 @@ export function layFoundations(persistence: Persistence, options: Observed): Fou
     traced: traceApplication({ consumers: options.traceConsumers ?? 'continue' }),
 {{#if audit.on}}
     audit,
-    privacy: createPrivacy(persistence, audit, { scope, clock, ids }),
+{{#if eventSourcing.on}}
+    eventSourcing: createEventSourcing(persistence, audit, { scope, clock, ids }),
+{{/if}}
 {{/if}}
 {{#unless audit.on}}
     decisions: logDecisions(logger),
-    privacy: createPrivacy(persistence),
+{{#if eventSourcing.on}}
+    eventSourcing: createEventSourcing(persistence),
+{{/if}}
 {{/unless}}
   };
 }

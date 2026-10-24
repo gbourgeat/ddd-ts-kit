@@ -31,11 +31,13 @@ import type { Audit } from '{{alias.platform}}/audit/create-audit{{alias.ext}}';
 {{/if}}
 import type { UseCaseProtection } from '{{alias.platform}}/auth/authorization/use-case-protection{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+{{#if eventSourcing.on}}
+import type { EventSourcing } from '{{alias.platform}}/event-sourcing/create-event-sourcing{{alias.ext}}';
+{{/if}}
 {{#if files.any}}
 import type { Files } from '{{alias.platform}}/files/create-files{{alias.ext}}';
 {{/if}}
 import type { BackgroundJobs } from '{{alias.platform}}/jobs/background-jobs{{alias.ext}}';
-import type { Privacy } from '{{alias.platform}}/privacy/create-privacy{{alias.ext}}';
 
 /** Wraps an adapter from outside: a span for its kind and, for what leaves the process, the default policy unless it states its own. */
 type Adapt = <T extends object>(instance: T, info: AspectInfo) => T;
@@ -98,8 +100,10 @@ export interface Platform {
   {{#if audit.on}}
   readonly audit: Audit;
   {{/if}}
-  /** The keys of the data subjects{{#if audit.on}}, audited,{{/if}} and the cipher of the personal values of the stored events: what an event-sourced repository adapter seals with, and what `scripts/privacy-erase.ts` destroys. */
-  readonly privacy: Privacy;
+  {{#if eventSourcing.on}}
+  /** The event store, the keys of the data subjects{{#if audit.on}}, audited,{{/if}} and the cipher of the personal values of the stored events: what an event-sourced repository adapter loads, saves and seals through{{#if privacy.on}}, and whose keys `scripts/privacy-erase.ts` destroys{{/if}}. */
+  readonly eventSourcing: EventSourcing;
+  {{/if}}
   {{#if files.any}}
   /** Where files live, the keys they are stored under and the staging that keeps them consistent with the database: never their content in a table. */
   readonly files: Files;

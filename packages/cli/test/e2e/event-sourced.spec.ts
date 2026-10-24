@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { cli } from '../helpers';
+import { cli, DEFAULT_STACK } from '../helpers';
 import { EditedProject } from './edited-project';
 import { bin, runIn } from './run-in';
 import { SLOW } from './stacks';
@@ -13,6 +13,8 @@ const SPEC = `${BILLING}/test/unit/ledger.aggregate.spec.ts`;
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
 const PROJECTION = 'src/contexts/shipping/application/projections/invoices-to-ship.projection.ts';
 const TO_STATE = '  toState(): LedgerState {\n    return { ...this.state };';
+/** The default stack with the event store the aggregate is saved through. */
+const EVENT_SOURCED = { ...DEFAULT_STACK, 'event-sourcing': 'on' };
 
 interface Injection {
   readonly rule: string;
@@ -82,7 +84,7 @@ describe.runIf(SLOW)('an event-sourced aggregate as generated', () => {
 
       cli(root, 'generate', 'domain-event', 'billing', 'Ledger', 'Credited', '--term', 'Credit=To add money');
       cli(root, 'generate', 'projection', 'shipping', 'InvoicesToShip', 'billing.invoice.issued');
-    });
+    }, EVENT_SOURCED);
   }, 240_000);
 
   afterEach(() => {

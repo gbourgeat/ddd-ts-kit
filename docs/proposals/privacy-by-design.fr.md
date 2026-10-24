@@ -1,5 +1,5 @@
 [English](privacy-by-design.md) · **Français**
-<!-- translation-of: privacy-by-design.md sha256:c86bec495a21af9e -->
+<!-- translation-of: privacy-by-design.md sha256:179456040ee29e5b -->
 
 # Proposition : la protection des données dès la conception, au-delà de l'*event sourcing*
 
@@ -31,7 +31,7 @@ son fichier de `changes/`.
 | 1. `personalFields` et les ports `PersonalDataErasure` et `PersonalDataExport` du kernel | **construite** (#268) : la déclaration, les deux ports, `eraseDataSubject` et `inEachTenant` dans le kernel, `InMemoryPersonalData`, les deux suites de contrat du package de tests |
 | 2. `subjectMasker` du journal d'audit, une clé par personne concernée | **construite** (#270) : `subjectMasker(keys)` sur le `SubjectKeyStore`, `masked(field, { subject })`, le refus au câblage d'un champ masqué sans sujet et, avant toute clé, d'un sujet qui n'est pas un identifiant opaque |
 | 3. L'adaptateur d'effacement sur les quatre ORM, modèles de lecture compris | **construite** (#271) : `KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`, chacun sous la suite de contrat, le *tenant* confiné, les fichiers supprimés d'abord ; un modèle de lecture est une table comme une autre |
-| 4. `init` écrit `src/platform/privacy/` et câble l'*event sourcing* | **construite** : `Persistence.eventSourcing` sur les quatre ORM et en mémoire, `create-privacy.ts` (les clés auditées, le chiffre), `privacy.module.ts` ou `platform.privacy`, les listes des copies et des exports, `run-erasure.ts` et `run-export.ts`, les scripts `privacy:erase` et `privacy:export` ; pas encore de commande HTTP |
+| 4. `init` écrit `src/platform/privacy/` et câble l'*event sourcing* | **construite** (#274, puis les deux choix) : `--privacy on`, le défaut avec un ORM, écrit `src/platform/privacy/` (les listes des copies et des exports, `run-erasure.ts` et `run-export.ts`) et les scripts `privacy:erase` et `privacy:export` ; `--event-sourcing on`, off sauf demande, câble `Persistence.eventSourcing` sur les quatre ORM et en mémoire, et `src/platform/event-sourcing/` (les clés auditées, le chiffre, le module ou `platform.eventSourcing`) ; un projet sans donnée personnelle ne paie rien, un projet dont les agrégats sont des lignes ne paie aucune table ; pas encore de commande HTTP |
 | 5. `generate repository` et `generate projection` déclarent les champs personnels | proposée |
 | 6. L'événement d'effacement, son gestionnaire généré, `personal` sur un événement d'intégration | proposée |
 | 7. La conservation sur la déclaration, le *job* de purge généré | proposée |

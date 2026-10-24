@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:02edd770d50547eb -->
+<!-- translation-of: event-sourcing.md sha256:edfe1de70bb4c356 -->
 
 # Event sourcing, par agrégat
 
@@ -72,7 +72,10 @@ l'agrégat.
 événement de naissance et sa méthode apply, le codec, un *builder* qui rejoue un historique et une
 *spec* en événements donnés ; `generate domain-event` sur un tel agrégat ajoute l'événement à son
 union, à `appliers()` avec une méthode apply vide, et au codec. `describe`, `list` et `CONTEXT.md`
-disent quels agrégats sont en *event sourcing*.
+disent quels agrégats sont en *event sourcing*. Le store par lequel ils sont enregistrés est câblé
+par `init --event-sourcing on` (`init --force --event-sourcing on` sur un projet existant), et le
+générateur refuse un agrégat *event-sourced* sans lui : un projet dont tous les agrégats sont des
+lignes ne paie aucune table pour cela.
 
 **Pas de double écriture.** Ajouter les événements et publier les événements d'intégration ne
 font qu'une transaction : le store rejoint la transaction de l'unité de travail, et le
@@ -628,9 +631,10 @@ chacun est tenu par les mêmes suites de contrat.
 
 ## Limites
 
-- Un event store par schéma de base de données : `init` en câble un, dans le schéma `event_store`,
-  lié par `src/platform/privacy/` avec les clés des personnes concernées et le chiffre ; un contexte
-  qui garde le sien lie ses stores dans son module plutôt que dans la plateforme.
+- Un event store par schéma de base de données : `init --event-sourcing on` en câble un, dans le
+  schéma `event_store`, lié par `src/platform/event-sourcing/` avec les clés des personnes concernées
+  et le chiffre ; un contexte qui garde le sien lie ses stores dans son module plutôt que dans la
+  plateforme.
 - Les ajouts sont sérialisés par store (voir plus haut).
 - Une projection alimentée par le store dont les lignes viennent chacune de plusieurs flux ne peut
   pas être estampillée par la seule version du flux : estampillez-la par identifiant d'événement

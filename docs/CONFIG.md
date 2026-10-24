@@ -52,6 +52,8 @@ deviation.
     "httpCache": "none",
     "storage": "local",
     "audit": "on",
+    "eventSourcing": "off",
+    "privacy": "on",
     "errors": "none",
     "logger": "stdout",
     "style": "declared",
@@ -96,7 +98,7 @@ before the key existed has none and stays valid; `init --force` adds it.
 
 ## How a key is read
 
-![A decision tree: an unknown key is ignored; a known key that is not written is read as its default, which for thirteen stack keys and importExtension is the default of an older file; an accepted value is read as written; a wrong stack value stops every command; any other wrong value is kept or defaulted and reported by check as config/valid](assets/diagrams/config-how-a-key-is-read.svg)
+![A decision tree: an unknown key is ignored; a known key that is not written is read as its default, which for fourteen stack keys and importExtension is the default of an older file; an accepted value is read as written; a wrong stack value stops every command; any other wrong value is kept or defaulted and reported by check as config/valid](assets/diagrams/config-how-a-key-is-read.svg)
 
 A wrong `stack.*` value stops every command before it does anything, with the list of accepted
 values:
@@ -119,7 +121,7 @@ ddd-ts-kit.config.json:39  error  config/valid
 
 A key that is not written is not always read as what `init` writes today: a file without the key
 was written by a version that did not know it, and the kit reads it the way that version
-worked, so that an upgrade of the packages changes nothing in an existing project. The thirteen keys
+worked, so that an upgrade of the packages changes nothing in an existing project. The fourteen keys
 concerned are in [the table of the Stack section](#a-key-left-out-of-stack), and `importExtension`
 below. The exact rules of the parser are in [Limits](#limits).
 
@@ -230,6 +232,8 @@ outside the list stops every command with the list of accepted values.
 | `stack.httpCache` | `none`, `varnish`: the shared HTTP cache in front of the API. `varnish` (`init --http-cache varnish`, with an HTTP framework and `events: outbox`) adds the Varnish 9.1.0 service to the compose file with its VCL in `docker/varnish/default.vcl` (it keeps only an answer whose `Cache-Control` allows it by `max-age` or `s-maxage`, and lets a purge in from its machine or with `VARNISH_PURGE_KEY`), reads `VARNISH_URL` and `VARNISH_PURGE_KEY`, tags the public answers in `xkey` (`cacheTags` of the HTTP boundary), and hands the purge requests of the outbox to `VarnishCachePurger` in `main.ts` and in every entry point `generate service` writes; the end-to-end application records them instead (`purges.purged`). On `di: manual` and `nest`, the platform gains `cacheInvalidation`, what a before-commit handler asks to purge. With `stack.tenancy` other than `none`, the tags of the answers and of the purges are filed under the tenant (`perTenant`), and the HTTP boundary reads the tenant of a request from `x-tenant-id` (`resolveTenant: tenantFromHeader()`), so that a public call names its tenant and its answers vary on it. A config without the key is `none`: nothing changes. See [HTTP caches](tools/http-caches.md) | `none` |
 | `stack.storage` | `local`, `s3`, `none`: where the content of files lives, never in the database. `local`: a directory in development (`FILES_DIRECTORY`, `.data/files`), the memory of the process in the tests and the tools, the signed links answered by the application under `/files`; `s3`: a bucket of any provider of the S3 protocol (`@ddd-ts-kit/s3`, MinIO in the compose stack, `S3_*` variables), the memory in the tests; `none`: no file storage wired. Either way `platform/files/` binds `FileStorage`, `FileKeys`, `FileScanner` and `FileStaging`, registers the hourly purge of staged files, stages the file a command carries on the command bus before the transaction, and mounts the upload reader; `generate file-upload` needs it. With `local`, `FILES_PUBLIC_URL` and `FILES_SIGNING_SECRET` are required in production. See [file storage](concepts/file-storage.md) | `local` in what `init` writes; `none` when the key is absent |
 | `stack.audit` | `on`, `off`: whether the audit trail is wired; `on` also records the refusals of the guards at the edge of authenticated callers (`onGuardRefusal`), never those of a caller without a credential | `on` when an ORM is set, `off` otherwise |
+| `stack.eventSourcing` | `on`, `off`: whether the event store is wired. `on` (`init --event-sourcing on`, or `init --force --event-sourcing on` on an existing project): the five tables of the `event_store` schema, `Persistence.eventSourcing` and `src/platform/event-sourcing/`, which binds the stores, the keys of the data subjects and the cipher of the stored events; `generate aggregate --event-sourced` needs it. `off`: none of it, and the generator refuses an event-sourced aggregate. Refused with `orm: custom`, since the event store of the kit runs on PostgreSQL through the four ORM packages ([Event sourcing](concepts/event-sourcing.md)) | `off` |
+| `stack.privacy` | `on`, `off`: whether the platform answers the requests of a data subject. `on`: `src/platform/privacy/` (the lists of the copies and of the exports each context declares, `run-erasure.ts`, `run-export.ts`) and the scripts `privacy:erase` and `privacy:export`; `off`: none of it ([Privacy by design](proposals/privacy-by-design.md)) | `on` when an ORM is set, `off` otherwise |
 | `stack.errors` | `none`, `sentry`: where unexpected failures are reported; `sentry` binds the kernel `ErrorReporter` to `@ddd-ts-kit/sentry` (Sentry or GlitchTip) | `none` |
 | `stack.logger` | `stdout`, `pino`, `winston`: what implements the kernel `Logger` port | `stdout` |
 | `stack.style` | `declared`: each class declares what it is with a decorator and a context has no module file; `explicit`: every binding is written in `<context>.module.ts`. `init` accepts `declared` with `di: tsyringe` only | `declared` with `di: tsyringe`, `explicit` otherwise |
@@ -250,7 +254,7 @@ outside the list stops every command with the list of accepted values.
 ### A key left out of `stack`
 
 A config file that omits a `stack` key is read with the defaults of the table above, except for
-thirteen keys. A file without one of them was written by a version that did not have the choice, and
+fourteen keys. A file without one of them was written by a version that did not have the choice, and
 it is read the way that version worked:
 
 | Key | Left out, read as | What `init` writes | To move a project |
@@ -268,6 +272,7 @@ it is read the way that version worked:
 | `stack.representations` | `json` | `negotiated` (`json` with `http: none`) | `init --force --representations negotiated` |
 | `stack.forms` | `off` | `on` (`off` with `http: none`) | `init --force --forms on` |
 | `stack.values` | `free` | `classes` | set the key, then follow `check --rule domain/value-object-class` and ESLint |
+| `stack.privacy` | `off` | `on` when an ORM is set, `off` otherwise | `init --force --privacy on` |
 
 The paragraphs below say why for each, and what each move leaves to a person.
 
@@ -486,6 +491,14 @@ that builds a plain object. Nothing is reported there. To move it:
 
 Until it is done, the rule can stay at `warn` under `rules`, recorded in `deviations` with the
 ADR that says when it goes, as any other relaxed rule (`governance/recorded-deviation`).
+
+The fourteenth: without `stack.privacy` the project is read as `off`, because such a file was
+written before the platform answered the requests of a data subject: it has no
+`src/platform/privacy/` and no `privacy:*` script, and nothing is reported there. `init --force
+--privacy on` on a clean tree writes the folder and the two scripts; a context that keeps a copy
+of a person then declares it with `personalFields` and lists its port in
+`data-subject-copies.ts`. `stack.eventSourcing` is not among these keys: left out, it is read as
+`off`, which is also what `init` writes unless `--event-sourcing on` is asked for.
 
 ## Pipeline
 

@@ -31,32 +31,14 @@ import { logDecisions } from '{{alias.platform}}/auth/authorization/log-decision
 import type { Platform } from '{{alias.platform}}/composition/platform{{alias.ext}}';
 import type { PlatformOptions } from '{{alias.platform}}/composition/platform-options{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+{{#if eventSourcing.on}}
+import { createEventSourcing } from '{{alias.platform}}/event-sourcing/create-event-sourcing{{alias.ext}}';
+{{/if}}
 import { ConfiguredJobScheduler } from '{{alias.platform}}/jobs/configured-job-scheduler{{alias.ext}}';
 import { createLogger } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
 import { createMetrics } from '{{alias.platform}}/observability/create-metrics{{alias.ext}}';
-import { createPrivacy } from '{{alias.platform}}/privacy/create-privacy{{alias.ext}}';
 
-{{#if foundations.wide}}
-type Founded =
-  | 'scope'
-  | 'clock'
-  | 'ids'
-  | 'logger'
-  | 'metrics'
-{{#if errors.sentry}}
-  | 'errors'
-{{/if}}
-  | 'cache'
-  | 'jobs'
-  | 'rateLimiter'
-{{#if audit.on}}
-  | 'audit'
-{{/if}}
-  | 'privacy';
-{{/if}}
-{{#unless foundations.wide}}
-type Founded = 'scope' | 'clock' | 'ids' | 'logger' | 'metrics'{{#if errors.sentry}} | 'errors'{{/if}} | 'cache' | 'jobs'{{#if cache.rateLimit}} | 'rateLimiter'{{/if}}{{#if audit.on}} | 'audit'{{/if}} | 'privacy';
-{{/unless}}
+{{foundations.founded}}
 
 /**
  * What exists before anything else: one execution scope, one clock and one generator for the
@@ -125,11 +107,15 @@ export function layFoundations(persistence: Persistence, options: PlatformOption
 {{/if}}
 {{#if audit.on}}
     audit,
-    privacy: createPrivacy(persistence, audit, { scope, clock, ids }),
+{{#if eventSourcing.on}}
+    eventSourcing: createEventSourcing(persistence, audit, { scope, clock, ids }),
+{{/if}}
 {{/if}}
 {{#unless audit.on}}
     decisions: logDecisions(logger),
-    privacy: createPrivacy(persistence),
+{{#if eventSourcing.on}}
+    eventSourcing: createEventSourcing(persistence),
+{{/if}}
 {{/unless}}
   };
 }

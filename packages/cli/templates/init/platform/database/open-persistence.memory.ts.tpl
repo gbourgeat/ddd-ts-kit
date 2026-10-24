@@ -4,6 +4,7 @@ import { InMemoryOutboxStore, InMemoryRelaySignal } from '@ddd-ts-kit/events';
 {{#unless persistence.signals}}
 import { InMemoryOutboxStore } from '@ddd-ts-kit/events';
 {{/unless}}
+{{#if eventSourcing.on}}
 import {
   InMemoryCheckpointStore,
   InMemoryEventStore,
@@ -12,6 +13,10 @@ import {
   InMemorySubjectKeyStore,
   InMemoryUnitOfWork,
 } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#unless eventSourcing.on}}
+import { InMemoryProcessedEventStore, InMemoryUnitOfWork } from '@ddd-ts-kit/kernel';
+{{/unless}}
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 
 {{#if orm.custom}}
@@ -37,12 +42,14 @@ export function openPersistence(): Persistence {
     outbox: new InMemoryOutboxStore(),
 {{/unless}}
     processedEvents: new InMemoryProcessedEventStore(),
+{{#if eventSourcing.on}}
     eventSourcing: {
       events: new InMemoryEventStore(),
       snapshots: new InMemorySnapshotStore(),
       checkpoints: new InMemoryCheckpointStore(),
       subjectKeys: new InMemorySubjectKeyStore(),
     },
+{{/if}}
     close: () => Promise.resolve(),
   };
 }
