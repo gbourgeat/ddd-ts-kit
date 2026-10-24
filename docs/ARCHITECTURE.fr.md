@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:65c85f5e3a02ba48 -->
+<!-- translation-of: ARCHITECTURE.md sha256:565577cb9a3f85b3 -->
 
 # Référence de l'architecture
 
@@ -1333,7 +1333,7 @@ lignes de journal, les entrées d'audit et les remontées d'erreurs.
 
 | Genre | Cible | Doublures |
 |---|---|---|
-| unitaire | agrégats, objets-valeurs, services du domaine | aucune |
+| unitaire | agrégats, objets-valeurs, services du domaine ; les invariants d'un objet-valeur en propriétés sur des valeurs générées (fast-check) | aucune |
 | unitaire | gestionnaires | *fakes* des ports et des *repositories* (aucune bibliothèque de *mocks* nécessaire) |
 | intégration | adaptateurs face à la vraie dépendance | aucune |
 | contrat | chaque *fake* et chaque adaptateur passent la même suite de contrat du port | |

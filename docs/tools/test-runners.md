@@ -309,6 +309,7 @@ export default {
 | Existing codebase with a large Jest suite adopting the kit | Jest, adding the project split and thresholds by hand; plan a migration only if it pays |
 | A library or adapter published for others | write its contract with `ContractSuite`, so consumers run it under either runner |
 | Wanting mutation testing | shipped on both: `npm run test:mutation` and the job of the night, each context held to the `mutation` floor of the config. Vitest runs the unit specs of `vitest.mutation.config.ts`; Jest those of `jest.mutation.config.js`, as ES modules under the flag of the `test` script |
+| Wanting property-based tests | `fast-check`, added with the first property (`npm i -D fast-check`), under either runner: a law of a value object stated once and checked on generated values, `fc.assert` an assertion for `test/assertion-present` |
 
 ## Sources
 
