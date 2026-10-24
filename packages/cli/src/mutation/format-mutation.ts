@@ -1,5 +1,4 @@
 import type { ContextScore } from './mutation-scores';
-
 const COLUMNS = ['Context', 'Detected', 'Undetected', 'Errors', 'Ignored', 'Score', 'Floor', ''] as const;
 
 /** One line per context, its score against its floor, the mutants the measure leaves out beside it, then the verdict. */

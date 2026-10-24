@@ -212,7 +212,10 @@ why; never narrow the measure (`test/mutation-governed`). A rule written as a de
 transition table or a constant at the top of a file, is never mutated: the test that states it is
 its only proof. The text of a refusal leaves the score when it is handed to the error class where
 the rule is checked (`InvalidSlot.forRule('ends after it starts')`); a text a helper returns before
-the factory is called is measured and survives: throw where the rule is checked.
+the factory is called is measured and survives: throw where the rule is checked. On a pull request
+the `mutation-changed` job lists the survivors of the files you changed (`ddd-ts-kit mutation
+--changed <base>`, `--survivors` for all of them): read them before asking for a review, each a rule
+to state or a survivor to leave alive and say so.
 
 Finish with `npm test -- <context>`, `npm run test:coverage` before the slice is closed, and
 `npx ddd-ts-kit check --rule test/no-mocks --rule test/builder-required --rule test/spec-required --rule test/helper-placed --rule test/acceptance-black-box`.

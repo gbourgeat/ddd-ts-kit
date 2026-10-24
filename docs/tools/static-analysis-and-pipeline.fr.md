@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:35ebf28ff1d25f95 -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:ab4ced60503fd908 -->
 
 # L'analyse statique et le pipeline
 
@@ -388,8 +388,13 @@ la documentation de l'API.
 configuration lue dans le kit (`governedMutation()`, tenue par `test/mutation-governed` : les textes
 des refus et les mutants statiques laissés de côté), puis `ddd-ts-kit mutation`, qui tient chaque
 contexte au plancher `mutation` de `ddd-ts-kit.config.json`, les mutants ignorés affichés à côté de
-chaque score. Pas une porte de *pull request* : huit minutes pour l'exemple sont trop longues pour la boucle d'un
-changement. Le README du *pipeline* tient les mesures qui l'ont décidé (2026-10-24).
+chaque score. Pas une porte de *pull request* : cinq minutes pour l'exemple sont trop longues pour la
+boucle d'un changement. Une *pull request* reçoit à la place le *job* `mutation-changed`, une
+lecture : Stryker réutilise le rapport de la dernière nuit pour ce que le changement ne touche pas,
+une minute environ, relance tout quand le changement touche un code qu'il ne compare pas (un *fake*,
+un *builder*, la plateforme, une dépendance), et `ddd-ts-kit mutation --changed <base>` liste les
+survivants des fichiers que le changement a touchés. Le README du *pipeline* tient les mesures qui
+l'ont décidé (2026-10-24).
 
 ## Limites, et quand ne pas l'utiliser
 
