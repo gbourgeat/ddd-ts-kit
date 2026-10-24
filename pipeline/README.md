@@ -221,12 +221,40 @@ without a privileged daemon.
 
 ## Mutation testing
 
-Not shipped. Stryker 10 declares support for Vitest 2 and later but, run on the domain layer of
-a generated project with Vitest 5, it executes no test per mutant and reports every mutant as
-survived, including one that removes a guard a passing test asserts. Its core also rewrites the
-tsconfig through an API the native TypeScript 7 does not have. A gate that scores zero whatever
-the tests say is worse than no gate; it will be added as a scheduled job when the runner
-supports Vitest 5.
+Not shipped as a gate yet; it runs. Measured on 2026-10-24 on the example application
+(`examples/scheduling`: Vitest 5.0.5, `typescript` 6.0.3 installed beside the native 7, the kit
+from the workspace) with `@stryker-mutator/core` and `@stryker-mutator/vitest-runner` 10.1.1,
+published on 2026-10-23: no checker, `coverageAnalysis: perTest`, a Vitest config of its own
+holding the unit specs alone (`src/**/*.spec.ts` without `test/integration/`), the domain layer of
+the four contexts as `mutate` (`src/contexts/*/domain/**/*.ts` and
+`src/contexts/*/*/domain/**/*.ts`), eight workers under `nice`, on an otherwise idle machine of
+20 cores (load average from 0.8 to 12.2 during the run).
+
+| Run | Files | Mutants | Killed | Survived | No coverage | Errors | Score | Time |
+|---|---|---|---|---|---|---|---|---|
+| the domain of `notification` | 12 | 104 | 103 | 1 | 0 | 0 | 99.0% | 25 s, the initial run of 119 tests taking 8 s |
+| the domain of the four contexts | 127 | 1441 | 1347 | 72 | 6 | 16 | 94.5% | 8 min 2 s, the initial run of 1075 tests taking 54 s |
+
+The runner executes the tests per mutant, 4.9 and 17.9 on average: its code reads the test names
+as Vitest 5 writes them (`vitest-test-runner.js` tells the separator of 5.0.0 apart), which the
+10.0 tried earlier did not, when it reported every mutant as survived; that earlier run was not
+repeated. The sandbox tsconfig is rewritten through the `typescript` 6 of the project, which the
+native compiler does not provide: a project with the native 7 alone is not covered by this
+measure. The 16 errors are the mutants of the declaration of the appointment state machine, which
+the consistency check of `StateMachine` refuses when the module loads: neither a test failure nor
+a survivor, and left out of the score. The 72 survivors: 29 string literals, the messages of
+refusals, which no test asserts since a refusal is asserted by its code; 15 conditions, 6 regular
+expressions, 5 equality operators and the rest in ones and twos, each a rule no test states, such
+as a withdrawn reminder planned again for the same start that becomes planned again
+(`reminder.aggregate.ts` of `notification`). Stryker estimates that the 423 static mutants, 29%
+of them, take 92% of the time: `ignoreStatic` would shorten the run.
+
+What shipping it would take: a `mutation` key of `ddd-ts-kit.config.json` read by a Stryker
+config the kit writes, a floor per context on the domain layer as the coverage has one, static
+mutants ignored, and a scheduled job rather than a gate of every pull request, 8 minutes for 127
+files being too long for the commit loop and for the pipeline of a small change. Until then a
+project runs it by hand: `npm i -D @stryker-mutator/core @stryker-mutator/vitest-runner`, the
+configuration above in `stryker.config.json`, `npx stryker run`.
 
 ## What was verified, and how
 

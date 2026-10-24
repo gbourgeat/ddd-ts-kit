@@ -516,12 +516,14 @@ test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // from @ddd-t
 
 ## Limits and when not to use it
 
-- **Mutation testing is not shipped.** It is the tool that measures whether tests would notice
-  a changed behaviour. The pipeline README records why: Stryker 10, run on the domain layer of
-  a generated project with Vitest 5, executed no test per mutant and reported every mutant as
-  survived, and its core rewrites the tsconfig through an API the native TypeScript 7 does not
-  have. A gate that scores zero whatever the tests say is worse than no gate. Until the runner
-  supports it, test quality rests on review and on the conventions above.
+- **Mutation testing is not shipped as a gate.** It is the tool that measures whether tests would
+  notice a changed behaviour, and it runs: Stryker 10.1.1 with its Vitest runner, on the domain
+  layer of the example application under Vitest 5, kills 1347 of 1441 mutants in 8 minutes, a
+  score of 94.5%; the pipeline README records the measure and the configuration. The 72
+  survivors are mostly the messages of refusals, which no test asserts since a refusal is asserted
+  by its code, and a few conditions no test states. It will be offered as a scheduled job with a
+  floor per context; until then a project runs it by hand, and test quality rests on review and on
+  the conventions above.
 - **A fake is only as good as its contract suite.** Behaviour the suite does not cover can
   differ silently: SQL collation and ordering, constraint timing, time zone handling. When a
   bug comes from such a gap, add the case to the suite, not only to one adapter.

@@ -275,8 +275,8 @@ export default {
   decorated import, not a helpful message.
 - The plugin calls the project's compiler once per decorated file on a cold cache: a first run
   in CI without a cache pays it for every such file.
-- Tooling around a new major version can lag: the
-  pipeline README reports that the mutation testing tool it tried did not work with Vitest 5.
+- Tooling around a new major version can lag: the mutation testing tool the pipeline README
+  measures executed no test per mutant under Vitest 5 until its release of 2026-10-23.
 
 **Jest**
 
@@ -308,7 +308,7 @@ export default {
 | NestJS or class-validator project (legacy decorators) | Vitest works without the plugin; Jest if the team's NestJS tooling is built on it |
 | Existing codebase with a large Jest suite adopting the kit | Jest, adding the project split and thresholds by hand; plan a migration only if it pays |
 | A library or adapter published for others | write its contract with `ContractSuite`, so consumers run it under either runner |
-| Wanting mutation testing | not available in the kit today, with either runner |
+| Wanting mutation testing | Vitest: Stryker 10.1.1 with its Vitest runner, by hand, as the pipeline README measures it; not a gate of the kit yet. Jest: not measured |
 
 ## Sources
 
