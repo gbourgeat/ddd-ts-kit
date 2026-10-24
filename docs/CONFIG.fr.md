@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:9879c1b0a48d0716 -->
+<!-- translation-of: CONFIG.md sha256:5d0b36bf36eb01a2 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -766,6 +766,49 @@ dérogation :
 - **Une exécution est tenue aux couches qu'elle exécute** : `npm run test:coverage`, l'exécution de `verify`, lance chaque *spec* et mesure les quatre couches ; dans le *pipeline*, `ci:test:unit` (`--mode unit`) mesure domain, application et presentation, `ci:test:integration` (`--mode integration`) mesure infrastructure. Jest lance chaque *spec* en une seule exécution.
 - **La mesure ne peut pas être restreinte en silence** (`test/coverage-governed`) : ni `include`, ni `exclude`, ni `thresholds` à la main dans la configuration du lanceur, aucune option de ce genre dans un script, aucun commentaire `v8 ignore` ou `istanbul ignore` sans `-- ADR-NNNN: <reason>`.
 - Sous le mode des décorateurs historiques (legacy), la configuration Vitest générée liste `decoratorCoverage()` de `@ddd-ts-kit/testing/vitest` : les instructions qu'écrit la transformation pour appliquer les décorateurs portent une branche par type nommé qu'aucun test ne peut prendre, et sont tenues hors de la mesure.
+
+## Score de mutation
+
+La config Stryker n'écrit ni *glob* ni nombre : elle étale `governedMutation()` de
+`@ddd-ts-kit/testing/mutation`, qui lit la clé `mutation` à chaque démarrage d'une exécution. Un
+seul endroit tient le plancher, et `check` tient cet endroit (`test/mutation-governed`).
+
+<!-- checked sample -->
+```js
+// stryker.config.mjs
+import { governedMutation } from '@ddd-ts-kit/testing/mutation';
+
+export default {
+  testRunner: 'vitest',
+  vitest: { configFile: 'vitest.mutation.config.ts' },
+  checkers: [],
+  coverageAnalysis: 'perTest',
+  // Ce qui est muté, ce qui est laissé de côté et le plancher viennent de "mutation" dans ddd-ts-kit.config.json.
+  ...governedMutation(),
+};
+```
+
+`governedMutation()` mute la couche domaine de chaque contexte, à son niveau et dans les modules de
+son modèle, les déclarations générées exclues ; elle exclut le mutateur `StringLiteral`, puisqu'un
+test du kit vérifie un refus par son code et jamais par son texte, de sorte qu'un tel mutant
+survivrait par construction ; elle ignore les mutants statiques, qui rechargent l'environnement
+pour chaque test ; et elle écrit le plancher comme `thresholds` de Stryker. `npm run test:mutation`
+lance Stryker, puis `ddd-ts-kit mutation`, qui lit le rapport (`reports/mutation/mutation.json`) et
+tient chaque contexte au plancher, comme la couverture tient chaque contexte à ses seuils. Le
+*pipeline* le lance chaque nuit, pas sur une *pull request*.
+
+```json
+"mutation": { "domain": 90 }
+```
+
+| Couche | Référence | Pourquoi ce plancher |
+|---|---|---|
+| `domain` | 80 | du code pur qui porte les règles du métier : un mutant que ses tests ne remarquent pas est une règle qu'aucun test n'énonce. L'application d'exemple atteint 96,6 avec la configuration livrée, son contexte le plus bas 95,8 |
+
+- **Monter le plancher est libre. Le baisser sous la référence est une dérogation** (`governance/recorded-deviation`) avec son enregistrement de décision, `"what": "mutation.domain"`.
+- **Chaque contexte est tenu pour lui-même** : `ddd-ts-kit mutation` note la couche domaine de chaque contexte que le rapport contient, comme Stryker le fait (détectés sur détectés et non détectés, les erreurs exclues), et sort en 1 tant qu'un contexte est sous le plancher.
+- **La mesure ne se rétrécit pas en silence** (`test/mutation-governed`) : ni `mutate`, ni `mutator`, ni `ignoreStatic`, ni `thresholds` à la main dans la config Stryker.
+- **Sous les deux lanceurs.** Un projet sous Vitest fait tourner contre chaque mutant les *specs* unitaires de `vitest.mutation.config.ts` ; un projet sous Jest celles de `jest.mutation.config.js`, en modules ES sous le drapeau que le script `test` passe (`testRunnerNodeArgs`), Jest lançant les *specs* qui importent le fichier muté.
 
 ## Limites
 

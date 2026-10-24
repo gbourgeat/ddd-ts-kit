@@ -221,7 +221,19 @@ without a privileged daemon.
 
 ## Mutation testing
 
-Not shipped as a gate yet; it runs. Measured on 2026-10-24 on the example application
+Shipped as the job of the night: `mutation`, which runs `npm run test:mutation` on the default
+branch when the schedule fires (GitHub) or when a pipeline schedule runs (GitLab), never on a pull
+or merge request, and keeps `reports/mutation/` as an artifact for thirty days. The script runs
+Stryker on the domain layer of every context, then `ddd-ts-kit mutation`, which holds each context
+to the `mutation` floor of `ddd-ts-kit.config.json` (80 by the reference) and fails the job under
+it. `init` writes `stryker.config.mjs`, which spreads `governedMutation()` of
+`@ddd-ts-kit/testing/mutation` (the domain layers, the `StringLiteral` mutator left out, the static
+mutants ignored, the floor as `thresholds`), and `vitest.mutation.config.ts`, the unit specs alone;
+`test/mutation-governed` refuses a setting written by hand. On both runners: a project on Jest gets
+`jest.mutation.config.js` in place of the Vitest one, and its Stryker config passes the ES modules
+flag to the processes that run the specs.
+
+The measure that decided it, on 2026-10-24, on the example application
 (`examples/scheduling`: Vitest 5.0.5, `typescript` 6.0.3 installed beside the native 7, the kit
 from the workspace) with `@stryker-mutator/core` and `@stryker-mutator/vitest-runner` 10.1.1,
 published on 2026-10-23: no checker, `coverageAnalysis: perTest`, a Vitest config of its own
@@ -234,6 +246,11 @@ the four contexts as `mutate` (`src/contexts/*/domain/**/*.ts` and
 |---|---|---|---|---|---|---|---|---|
 | the domain of `notification` | 12 | 104 | 103 | 1 | 0 | 0 | 99.0% | 25 s, the initial run of 119 tests taking 8 s |
 | the domain of the four contexts | 127 | 1441 | 1347 | 72 | 6 | 16 | 94.5% | 8 min 2 s, the initial run of 1075 tests taking 54 s |
+| the same with the shipped configuration (`governedMutation()`: string literals out, static mutants ignored), after the survivors of #269 were read | 110 | 1441, 222 of them ignored | 1178 | 36 | 5 | 0 | 96.6% | 4 min 2 s, the initial run of 1073 tests taking 65 s under the e2e suites of the kit |
+
+The last row is what the night job measures: `ddd-ts-kit mutation` then holds each context to the
+floor, `analytics` at 100.0%, `identity` at 97.8%, `notification` at 99.0%, `scheduling` at 95.8%,
+every one above 80. The errors are gone with the static mutants, and the run takes half the time.
 
 The runner executes the tests per mutant, 4.9 and 17.9 on average: its code reads the test names
 as Vitest 5 writes them (`vitest-test-runner.js` tells the separator of 5.0.0 apart), which the
@@ -249,23 +266,32 @@ as a withdrawn reminder planned again for the same start that becomes planned ag
 (`reminder.aggregate.ts` of `notification`). Stryker estimates that the 423 static mutants, 29%
 of them, take 92% of the time: `ignoreStatic` would shorten the run.
 
-What shipping it would take: a `mutation` key of `ddd-ts-kit.config.json` read by a Stryker
-config the kit writes, a floor per context on the domain layer as the coverage has one, static
-mutants ignored, and a scheduled job rather than a gate of every pull request, 8 minutes for 127
-files being too long for the commit loop and for the pipeline of a small change. The texts of the
-refusals deserve a decision before any floor: a test of the kit asserts a refusal by its code and
-its facts, never by its text, so the string literal mutants of those texts, 29 of the 72 survivors
-here, stay alive in every project that follows the kit; a floor set on the raw score would punish
-them or push a team to assert prose. Either the shipped configuration leaves the `StringLiteral`
-mutator out (`excludedMutations`), at the price of the few string literals that are business
-values, or the floor is set with those texts counted as survivors. Until then a
-project runs it by hand: `npm i -D @stryker-mutator/core @stryker-mutator/vitest-runner`, the
-configuration above in `stryker.config.json`, `npx stryker run`.
+What shipping took, and why: a `mutation` key of `ddd-ts-kit.config.json` read by the Stryker
+config the kit writes, a floor per context on the domain layer as the coverage has one, the static
+mutants ignored, and the job of the night rather than a gate of every pull request, 8 minutes for
+127 files being too long for the commit loop and for the pipeline of a small change. The texts of
+the refusals decided the mutators: a test of the kit asserts a refusal by its code and its facts,
+never by its text, so the string literal mutants of those texts, 29 of the 72 survivors here, would
+stay alive in every project that follows the kit and a floor on the raw score would punish them or
+push a team to assert prose. The shipped configuration leaves the `StringLiteral` mutator out, at
+the price of the few string literals that are business values, which the tests of the example
+state by other means.
+
+The Jest runner, measured the same day on a project `init` wrote on Jest (Express, zod, tsyringe,
+Drizzle; one context with an aggregate, a value object and eleven specs) with
+`@stryker-mutator/jest-runner` 10.1.1: 16 mutants, 14 killed, 2 survived, 1.59 tests per mutant
+under `perTest`, one second. It took one setting: the specs are ES modules and run under
+`--experimental-vm-modules`, which the `test` script passes to Jest; the flag on the `stryker`
+process does not reach the processes it runs Jest in, and without it the initial run fails
+(`ERR_REQUIRE_ESM` on `@ddd-ts-kit/testing`), so the config passes it as `testRunnerNodeArgs`.
+`enableFindRelatedTests` lets Jest run the specs that import the mutated file; the plugin is found
+under `@stryker-mutator/*` without being named.
 
 ## What was verified, and how
 
 | Piece | Verification |
 |---|---|
+| `stryker.config.mjs`, `vitest.mutation.config.ts` or `jest.mutation.config.js`, the `mutation` job | `npm run test:mutation` run on the example with the shipped configuration (the section above); the generated files formatted and the project linted and dead-code checked on the stacks of `formatted.spec.ts` and `first-class.spec.ts`; the job parsed as YAML with the workflow, not executed on GitHub or GitLab |
 | ESLint preset and plugin | run on a generated project of three contexts, clean and with one deliberate violation per rule, when the plugin held 23 rules: all of them and the delegated typescript-eslint rules reported; also run under ESLint 9. The plugin holds 46 rules today (45 ids and the ceiling of `clean/function-size`); those added since were not run this way and are held by the plugin's own tests (`packages/eslint-plugin/test/rules`) |
 | `depcruise-config.mjs` | run with dependency-cruiser 18 on the same project with the TypeScript 6 parser, and on a second one with `@swc/core`: every rule of the config reported its deliberate violation. The generated `.dependency-cruiser.cjs` is exercised by the end-to-end test of the CLI |
 | `knip.json` | unused file, export, type and dependency reported |

@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:8e00a988f968af1e -->
+<!-- translation-of: test-runners.md sha256:aaa885190ab1fadd -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -323,7 +323,7 @@ export default {
 | Projet NestJS ou class-validator (décorateurs legacy) | Vitest fonctionne sans le *plugin* ; Jest si l'outillage NestJS de l'équipe repose dessus |
 | Base de code existante avec une grosse suite Jest qui adopte le kit | Jest, en ajoutant à la main la séparation des projets et les seuils ; ne planifiez une migration que si elle est rentable |
 | Une bibliothèque ou un adaptateur publié pour d'autres | écrivez son contrat avec `ContractSuite`, pour que les consommateurs l'exécutent sous l'un ou l'autre lanceur |
-| Vouloir des tests de mutation | Vitest : Stryker 10.1.1 avec son lanceur Vitest, à la main, comme le README du *pipeline* le mesure ; pas encore une porte du kit. Jest : non mesuré |
+| Vouloir des tests de mutation | livré sous les deux : `npm run test:mutation` et le *job* de la nuit, chaque contexte tenu au plancher `mutation` de la config. Vitest fait tourner les *specs* unitaires de `vitest.mutation.config.ts` ; Jest celles de `jest.mutation.config.js`, en modules ES sous le drapeau du script `test` |
 
 ## Sources
 

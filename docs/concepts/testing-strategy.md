@@ -514,17 +514,39 @@ test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // from @ddd-t
 ]
 ```
 
+## Mutation score
+
+A coverage rate says that a line ran under a test; a mutation score says that a test would notice
+if the line changed. Every night the pipeline runs Stryker on the domain layer of every context
+(`npm run test:mutation`): each mutant is one small change of the code, a condition negated, a
+boundary moved, a return emptied, and the unit specs run against it; a mutant the specs notice is
+detected, one they let through is a survivor. Then `ddd-ts-kit mutation` reads the report and holds
+each context to the `mutation` floor of `ddd-ts-kit.config.json`, 80 by the reference
+([CONFIG.md](../CONFIG.md#mutation-score)).
+
+The Stryker config writes no glob and no number: it spreads `governedMutation()` of
+`@ddd-ts-kit/testing/mutation`, which mutates the domain layer of every context, leaves the
+`StringLiteral` mutator out, since a refusal is asserted by its code and never by its text, and
+ignores the static mutants. Rule [`test/mutation-governed`](../ARCHITECTURE.md#3-dependency-rules)
+refuses a `mutate`, `mutator`, `ignoreStatic` or `thresholds` written by hand.
+
+A survivor is a rule no test states. Read it as a business decision: when the behaviour is the
+rule, state it in a test named after it, as the trial on the example did for a withdrawn reminder
+planned again for the same start; when the behaviour is an accident of the code, or a branch no
+caller can reach, leave the mutant alive and say why, never hide it by configuration. Measured on
+the example on 2026-10-24 ([pipeline README](../../pipeline/README.md#mutation-testing)) with the
+shipped configuration: 1441 mutants, 222 of them string literals and static mutants left out, 1178
+killed, 36 survivors, 5 without coverage, 96.6% in 4 minutes, the lowest context at 95.8%.
+
 ## Limits and when not to use it
 
-- **Mutation testing is not shipped as a gate.** It is the tool that measures whether tests would
-  notice a changed behaviour, and it runs: Stryker 10.1.1 with its Vitest runner, on the domain
-  layer of the example application under Vitest 5, kills 1347 of 1441 mutants in 8 minutes, a
-  score of 94.5%; the pipeline README records the measure and the configuration. The 72
-  survivors are mostly the texts of refusals, which no test asserts since a refusal is asserted by
-  its code, and a few conditions no test states; a floor will leave those texts out of the score
-  rather than push anyone to assert prose. It will be offered as a scheduled job with a floor per
-  context; until then a project runs it by hand, and test quality rests on review and on
-  the conventions above.
+- **Mutation testing runs every night, not on a pull request.** Eight minutes for the domain of
+  the four contexts of the example is too long for the loop of a change, so the job of the night
+  holds the floor and a pull request does not wait for it; a survivor found at night is a rule to
+  state the next day.
+- **A mutation score says that a change was noticed, not that the right rule was stated.** A test
+  that kills a mutant states what the code does today: each one is read as a business decision
+  before it is kept, and an accidental behaviour is left alive and said so rather than frozen.
 - **A fake is only as good as its contract suite.** Behaviour the suite does not cover can
   differ silently: SQL collation and ordering, constraint timing, time zone handling. When a
   bug comes from such a gap, add the case to the suite, not only to one adapter.

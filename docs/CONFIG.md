@@ -741,6 +741,49 @@ deviation:
 - **The measure cannot be narrowed quietly** (`test/coverage-governed`): no `include`, `exclude` or `thresholds` by hand in the runner config, no such flag in a script, no `v8 ignore` or `istanbul ignore` comment without `-- ADR-NNNN: <reason>`.
 - Under the legacy decorator mode the generated Vitest config lists `decoratorCoverage()` of `@ddd-ts-kit/testing/vitest`: the statements the transform writes to apply decorators hold a branch per named type that no test can take, and are kept out of the measure.
 
+## Mutation score
+
+The Stryker config writes no glob and no number: it spreads `governedMutation()` of
+`@ddd-ts-kit/testing/mutation`, which reads the `mutation` key each time a run starts. One place
+holds the floor, and `check` holds that place (`test/mutation-governed`).
+
+<!-- checked sample -->
+```js
+// stryker.config.mjs
+import { governedMutation } from '@ddd-ts-kit/testing/mutation';
+
+export default {
+  testRunner: 'vitest',
+  vitest: { configFile: 'vitest.mutation.config.ts' },
+  checkers: [],
+  coverageAnalysis: 'perTest',
+  // What is mutated, what is left out and the floor come from "mutation" in ddd-ts-kit.config.json.
+  ...governedMutation(),
+};
+```
+
+`governedMutation()` mutates the domain layer of every context, at its level and in the modules of
+its model, the generated declarations left out; it leaves the `StringLiteral` mutator out, since a
+test of the kit asserts a refusal by its code and never by its text, so that such a mutant would
+survive by design; it ignores the static mutants, which reload the environment for every test; and
+it writes the floor as the `thresholds` of Stryker. `npm run test:mutation` runs Stryker, then
+`ddd-ts-kit mutation`, which reads the report (`reports/mutation/mutation.json`) and holds each
+context to the floor, as the coverage holds each context to its thresholds. The pipeline runs it
+every night, not on a pull request.
+
+```json
+"mutation": { "domain": 90 }
+```
+
+| Layer | Reference | Why this floor |
+|---|---|---|
+| `domain` | 80 | pure code that holds the rules of the business: a mutant its tests do not notice is a rule no test states. The example application reaches 96.6 with the shipped configuration, its lowest context 95.8 |
+
+- **Raising the floor is free. Lowering it under the reference is a deviation** (`governance/recorded-deviation`) with its decision record, `"what": "mutation.domain"`.
+- **Each context is held on its own**: `ddd-ts-kit mutation` scores the domain layer of every context the report holds, as Stryker does (detected over detected and undetected, the errors left out), and exits 1 while one is under the floor.
+- **The measure cannot be narrowed quietly** (`test/mutation-governed`): no `mutate`, `mutator`, `ignoreStatic` or `thresholds` by hand in the Stryker config.
+- **On both runners.** A project on Vitest runs the unit specs of `vitest.mutation.config.ts` against each mutant; a project on Jest those of `jest.mutation.config.js`, as ES modules under the flag the `test` script passes (`testRunnerNodeArgs`), Jest running the specs that import the mutated file.
+
 ## Limits
 
 The parser is tolerant: a key it does not know is ignored without a message, and a wrong
