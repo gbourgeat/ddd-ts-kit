@@ -396,6 +396,10 @@ whom, on which resource, under which correlation, without the content or the lin
   `tenants/<tenant>/`, so a bucket policy, an export or an erasure addresses a tenant by prefix.
   The tenant id is the segment itself: the kernel accepts no other than letters, digits, `-`
   and `_` (see [Multitenancy](multitenancy.md)), so two tenants never share a prefix.
+- **The archives of the audit trail apart.** They are written under `audit-archives/`, outside
+  any tenant prefix: an erasure or an export by tenant prefix leaves them, and the application
+  signs no link to them. A storage of their own, with a retention lock, is the stronger choice
+  (see [Audit trail](audit-trail.md#archiving)).
 - **Short links.** A signed link is a bearer token: it leaks with the page, the log or the mail
   that holds it. The kit refuses one that lives more than an hour.
 - **Checked on the bytes, scanned before acceptance.** `FileScanner` runs on the staged file; a

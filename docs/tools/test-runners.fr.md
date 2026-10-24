@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:6c6dac4a1f7d436a -->
+<!-- translation-of: test-runners.md sha256:4ee9710b9a03899e -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -324,6 +324,7 @@ export default {
 | Base de code existante avec une grosse suite Jest qui adopte le kit | Jest, en ajoutant à la main la séparation des projets et les seuils ; ne planifiez une migration que si elle est rentable |
 | Une bibliothèque ou un adaptateur publié pour d'autres | écrivez son contrat avec `ContractSuite`, pour que les consommateurs l'exécutent sous l'un ou l'autre lanceur |
 | Vouloir des tests de mutation | livré sous les deux : `npm run test:mutation` et le *job* de la nuit, chaque contexte tenu au plancher `mutation` de la config. Vitest fait tourner les *specs* unitaires de `vitest.mutation.config.ts` ; Jest celles de `jest.mutation.config.js`, en modules ES sous le drapeau du script `test` |
+| Vouloir des *specs* tenues à un budget de temps | les deux : le reporter du kit, `@ddd-ts-kit/testing/budget/vitest` ou `/budget/jest`, nommé dans la config du runner qu'écrit `init` ; cinq secondes par fichier de *spec* unitaire et trente par fichier de *spec* d'intégration par la référence |
 | Vouloir des tests par propriétés | `fast-check`, ajouté avec la première propriété (`npm i -D fast-check`), sous l'un comme l'autre lanceur : une loi d'un objet-valeur énoncée une fois et vérifiée sur des valeurs générées, `fc.assert` une assertion pour `test/assertion-present` |
 
 ## Sources

@@ -161,6 +161,12 @@ Proof: the two contract suites on PGlite and PostgreSQL; `stacks.ts` gains
 
 ### 1.4 The SQL audit trail on Prisma
 
+**Built**, with TypeORM: `PrismaAuditTrail` and `TypeOrmAuditTrail` (one class each, trail and
+reader) held to `auditTrailContract` and to the SQL specs of the other stores, `auditPrismaModels`
+and `auditEntities` proven to create the tables of `createAuditTables`, `create-audit.ts.tpl`
+binding them, the `TODO(platform)` kept for `custom` and no ORM. The text below is the plan as it
+was written.
+
 `@ddd-ts-kit/audit` stores on Knex and Drizzle; on Prisma the generated project starts on the
 in-memory trail behind the `TODO(platform)` of `create-audit.ts.tpl` (line 131). To build:
 `PrismaAuditTrail` and `PrismaAuditReader` held to `auditTrailContract`, the models in
