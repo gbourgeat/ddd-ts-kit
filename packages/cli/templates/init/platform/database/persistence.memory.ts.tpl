@@ -4,7 +4,7 @@ import type { OutboxStore, RelaySignal } from '@ddd-ts-kit/events';
 {{#unless persistence.signals}}
 import type { OutboxStore } from '@ddd-ts-kit/events';
 {{/unless}}
-import type { ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
+import type { EventSourcingStores, ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
 
 /** Where state lives and how a command is made atomic. The composition root binds each member to its port. */
 export interface Persistence {
@@ -15,6 +15,8 @@ export interface Persistence {
   readonly relaySignal: RelaySignal;
   {{/if}}
   readonly processedEvents: ProcessedEventStore;
+  /** The event store, the snapshots, the checkpoints and the keys of the data subjects: what an event-sourced aggregate is saved through, and what seals its personal values. */
+  readonly eventSourcing: EventSourcingStores;
 
   close(): Promise<void>;
 }

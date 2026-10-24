@@ -15,7 +15,7 @@ import { usesLegacyDecorators } from './uses-legacy-decorators';
 
 /** The choices of the stack as template variables: what every template of `init` and of `generate` reads. */
 export function stackVars(config: Config): RenderContext {
-  const { validation, di, tests, orm, authz, style, logger, tenancy } = config.stack;
+  const { validation, di, tests, orm, authz, style, logger } = config.stack;
   const legacy = usesLegacyDecorators(config);
 
   return {
@@ -43,9 +43,27 @@ export function stackVars(config: Config): RenderContext {
     config: platformPaths(config),
     alias: aliasVars(config),
     persistence: persistenceVars(config),
-    tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
+    ...platformVars(config),
     ...backgroundVars(config),
   };
+}
+
+/** The tenants the storage confines to, and the layout of the hand-wired foundations. */
+function platformVars(config: Config): RenderContext {
+  const { tenancy } = config.stack;
+
+  return {
+    tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
+    foundations: foundationVars(config),
+  };
+}
+
+/** `wide`: the members the hand-wired foundations hand on as they are no longer fit one line once the limiter joins the audit trail or the error reporter. */
+function foundationVars(config: Config): RenderContext {
+  const { cache, http, audit, errors } = config.stack;
+  const rateLimit = cache === 'redis' && http !== 'none';
+
+  return { wide: rateLimit && (audit === 'on' || errors === 'sentry') };
 }
 
 /** Where the background jobs run and are kept. */

@@ -111,6 +111,7 @@ import { filesModule } from '{{alias.platform}}/files/files.module{{alias.ext}}'
 {{/if}}
 import { layFoundations, type Foundations } from '{{alias.platform}}/composition/lay-foundations{{alias.ext}}';
 import { platformModule, type PlatformOptions } from '{{alias.platform}}/composition/platform.module{{alias.ext}}';
+import { privacyModule } from '{{alias.platform}}/privacy/privacy.module{{alias.ext}}';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 
@@ -198,6 +199,7 @@ export function composeApplication(
     modules: [
       kernel(foundations, persistence, options),
       platformModule(persistence, options),
+      privacyModule(persistence, foundations.privacy),
       guard,
 {{#if audit.on}}
       auditModule(foundations.audit),

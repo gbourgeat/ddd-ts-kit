@@ -32,6 +32,7 @@ import type { Persistence } from '{{alias.platform}}/database/persistence{{alias
 {{#if files.any}}
 import type { Files } from '{{alias.platform}}/files/create-files{{alias.ext}}';
 {{/if}}
+import type { Privacy } from '{{alias.platform}}/privacy/create-privacy{{alias.ext}}';
 
 /** Wraps an adapter from outside: a span for its kind and, for what leaves the process, the default policy unless it states its own. */
 type Adapt = <T extends object>(instance: T, info: AspectInfo) => T;
@@ -88,6 +89,8 @@ export interface Platform {
   {{#if audit.on}}
   readonly audit: Audit;
   {{/if}}
+  /** The keys of the data subjects{{#if audit.on}}, audited,{{/if}} and the cipher of the personal values of the stored events: what an event-sourced repository adapter seals with, and what `scripts/privacy-erase.ts` destroys. */
+  readonly privacy: Privacy;
   {{#if files.any}}
   /** Where files live, the keys they are stored under and the staging that keeps them consistent with the database: never their content in a table. */
   readonly files: Files;

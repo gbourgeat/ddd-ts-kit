@@ -21,6 +21,7 @@ import { logDecisions } from '{{alias.platform}}/auth/authorization/log-decision
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 import { createLogger, type LogSettings } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
 import { createMetrics } from '{{alias.platform}}/observability/create-metrics{{alias.ext}}';
+import { createPrivacy, type Privacy } from '{{alias.platform}}/privacy/create-privacy{{alias.ext}}';
 
 /**
  * What exists before any module: built once and handed to the kernel module, so that the buses,
@@ -42,6 +43,8 @@ export interface Foundations {
   /** What every authorization decision is told to: the log, since the audit trail is off. */
   readonly decisions: OnDecision;
 {{/unless}}
+  /** The keys of the data subjects{{#if audit.on}}, audited,{{/if}} and the cipher of the personal values of the stored events. */
+  readonly privacy: Privacy;
 }
 
 interface Observed {
@@ -56,6 +59,9 @@ export function layFoundations(persistence: Persistence, options: Observed): Fou
   const clock = new SystemClock();
   const ids = new UuidGenerator();
   const logger = createLogger(scope, options.log);
+{{#if audit.on}}
+  const audit = createAudit(persistence, { scope, clock, ids });
+{{/if}}
 
   return {
     scope,
@@ -65,10 +71,12 @@ export function layFoundations(persistence: Persistence, options: Observed): Fou
     metrics: createMetrics(),
     traced: traceApplication({ consumers: options.traceConsumers ?? 'continue' }),
 {{#if audit.on}}
-    audit: createAudit(persistence, { scope, clock, ids }),
+    audit,
+    privacy: createPrivacy(persistence, audit, { scope, clock, ids }),
 {{/if}}
 {{#unless audit.on}}
     decisions: logDecisions(logger),
+    privacy: createPrivacy(persistence),
 {{/unless}}
   };
 }

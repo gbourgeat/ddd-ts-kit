@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:6a5d73783f1c3f74 -->
+<!-- translation-of: event-sourcing.md sha256:02edd770d50547eb -->
 
 # Event sourcing, par agrégat
 
@@ -628,8 +628,9 @@ chacun est tenu par les mêmes suites de contrat.
 
 ## Limites
 
-- Un event store par schéma de base de données ; un contexte qui garde le sien lie ses stores dans
-  son module plutôt que dans la plateforme.
+- Un event store par schéma de base de données : `init` en câble un, dans le schéma `event_store`,
+  lié par `src/platform/privacy/` avec les clés des personnes concernées et le chiffre ; un contexte
+  qui garde le sien lie ses stores dans son module plutôt que dans la plateforme.
 - Les ajouts sont sérialisés par store (voir plus haut).
 - Une projection alimentée par le store dont les lignes viennent chacune de plusieurs flux ne peut
   pas être estampillée par la seule version du flux : estampillez-la par identifiant d'événement

@@ -34,8 +34,29 @@ import type { Persistence } from '{{alias.platform}}/database/persistence{{alias
 import { ConfiguredJobScheduler } from '{{alias.platform}}/jobs/configured-job-scheduler{{alias.ext}}';
 import { createLogger } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
 import { createMetrics } from '{{alias.platform}}/observability/create-metrics{{alias.ext}}';
+import { createPrivacy } from '{{alias.platform}}/privacy/create-privacy{{alias.ext}}';
 
-type Founded = 'scope' | 'clock' | 'ids' | 'logger' | 'metrics'{{#if errors.sentry}} | 'errors'{{/if}} | 'cache' | 'jobs'{{#if cache.rateLimit}} | 'rateLimiter'{{/if}}{{#if audit.on}} | 'audit'{{/if}};
+{{#if foundations.wide}}
+type Founded =
+  | 'scope'
+  | 'clock'
+  | 'ids'
+  | 'logger'
+  | 'metrics'
+{{#if errors.sentry}}
+  | 'errors'
+{{/if}}
+  | 'cache'
+  | 'jobs'
+  | 'rateLimiter'
+{{#if audit.on}}
+  | 'audit'
+{{/if}}
+  | 'privacy';
+{{/if}}
+{{#unless foundations.wide}}
+type Founded = 'scope' | 'clock' | 'ids' | 'logger' | 'metrics'{{#if errors.sentry}} | 'errors'{{/if}} | 'cache' | 'jobs'{{#if cache.rateLimit}} | 'rateLimiter'{{/if}}{{#if audit.on}} | 'audit'{{/if}} | 'privacy';
+{{/unless}}
 
 /**
  * What exists before anything else: one execution scope, one clock and one generator for the
@@ -72,6 +93,9 @@ export function layFoundations(persistence: Persistence, options: PlatformOption
   // TODO(platform): this lock excludes inside one process only. Before running several instances, give the scheduler a lock between processes (`RedisLock` of @ddd-ts-kit/redis), or each instance runs every job.
   const lock = new InMemoryLock(clock);
 {{/unless}}
+{{#if audit.on}}
+  const audit = createAudit(persistence, { scope, clock, ids });
+{{/if}}
 
   return {
     traced,
@@ -100,10 +124,12 @@ export function layFoundations(persistence: Persistence, options: PlatformOption
     jobs: schedulerOf(options, traced, { clock, lock, scope, ids, logger, metrics, onRun: reportFailedRuns(errors) }),
 {{/if}}
 {{#if audit.on}}
-    audit: createAudit(persistence, { scope, clock, ids }),
+    audit,
+    privacy: createPrivacy(persistence, audit, { scope, clock, ids }),
 {{/if}}
 {{#unless audit.on}}
     decisions: logDecisions(logger),
+    privacy: createPrivacy(persistence),
 {{/unless}}
   };
 }

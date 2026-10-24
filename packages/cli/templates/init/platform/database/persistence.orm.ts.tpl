@@ -1,5 +1,5 @@
 import type { OutboxStore } from '@ddd-ts-kit/events';
-import type { ProcessedEventStore, {{#if queue.processTable}}ProcessStore, {{/if}}UnitOfWork } from '@ddd-ts-kit/kernel';
+import type { EventSourcingStores, ProcessedEventStore, {{#if queue.processTable}}ProcessStore, {{/if}}UnitOfWork } from '@ddd-ts-kit/kernel';
 {{#if queue.database}}
 import type { JobStore } from '@ddd-ts-kit/scheduling';
 {{/if}}
@@ -25,6 +25,12 @@ export interface Persistence {
   {{/if}}
   /** What repositories query through: the transaction of the current unit of work, or the database. */
   readonly database: {{persistence.token}};
+  /**
+   * The event store, the snapshots, the checkpoints of the projections it feeds and the keys of the
+   * data subjects, in the `event_store` schema: what an event-sourced aggregate is loaded and saved
+   * through, and what seals its personal values. The platform binds each store to its port.
+   */
+  readonly eventSourcing: EventSourcingStores;
 
   close(): Promise<void>;
 }
