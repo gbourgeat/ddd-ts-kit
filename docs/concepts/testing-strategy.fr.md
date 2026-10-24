@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:79eec28453ab547a -->
+<!-- translation-of: testing-strategy.md sha256:b5895235f4abb155 -->
 
 # Stratégie de test
 
@@ -493,6 +493,33 @@ son code et ses faits plutôt que par un message (`test/refusal-by-code`), et ja
 Préparation, action et vérification restent séparées par des lignes vides. Les quatre règles qui
 lisent ce qu'un test dit sont des avertissements jusqu'à 0.90.0, pour qu'une montée de version ne
 fasse jamais passer un *lint* vert au rouge ; `ddd-ts-kit lint` les liste après son rapport.
+
+## Propriétés
+
+Un objet-valeur porte des lois vraies pour toute valeur, pas pour les trois qu'un test nomme : deux
+plages se chevauchent dans les deux sens ou dans aucun, un créneau est tenu au moins jusqu'à sa fin,
+un *parse* puis un *format* rendent la valeur. Une telle loi s'énonce une fois, en propriété, et se
+vérifie sur des valeurs générées :
+
+```ts
+import fc from 'fast-check';
+
+it('overlaps another range in both directions or in none, for any two ranges', () => {
+  fc.assert(fc.property(anyRange(), anyRange(), (one, other) => one.overlaps(other) === other.overlaps(one)));
+});
+```
+
+`fast-check` rejoint les dépendances de développement avec la première propriété (`npm i -D fast-check`),
+sous Vitest comme sous Jest ; un projet sans propriété ne porte aucune dépendance morte. Le titre énonce la loi, pour que la page de
+ce qu'énoncent les tests la lise ; `fc.assert` est une assertion pour `test/assertion-present` ; le
+générateur (`anyRange()`) est une petite fonction auxiliaire de la *spec* bâtie sur les fabriques du
+modèle, pour que toute valeur générée soit une valeur que le modèle accepte. Une exécution qui
+échoue imprime la graine et le contre-exemple, réduit au plus petit. Une propriété est pour une loi
+du modèle : un invariant, une symétrie, un aller-retour, une idempotence ; l'orchestration d'un cas
+d'usage s'énonce par ses scénarios, avec des valeurs nommées, pas par une propriété. La *spec*
+qu'écrit `generate value-object` se termine par une règle planifiée pour le rappeler :
+`keeps its invariants for any value a generator can produce, as a property`. L'exemple en énonce
+quatre, sur ses plages et ses créneaux.
 
 ## Seuils de couverture
 
