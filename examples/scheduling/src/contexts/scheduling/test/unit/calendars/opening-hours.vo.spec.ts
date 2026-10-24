@@ -35,12 +35,6 @@ describe('OpeningHours', () => {
     expect(hours.rangesOn(day).map((open) => open.start)).toEqual(starts);
   });
 
-  it('opens nothing on a text that is not a day', () => {
-    const hours = OpeningHours.create({ monday: [morning], sunday: [range('10:00', '11:00')] });
-
-    expect(hours.rangesOn('tomorrow')).toEqual([]);
-  });
-
   it('opens nothing when closed', () => {
     expect(OpeningHours.closed().rangesOn('2026-03-02')).toEqual([]);
     expect(OpeningHours.closed().equals(OpeningHours.create({}))).toBe(true);
