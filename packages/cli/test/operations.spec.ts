@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { auditPrismaModels } from '@ddd-ts-kit/audit/prisma';
 import { cli, exists, read, tempDir } from './helpers';
 import { KIT_RANGE } from './support/kit-range';
 
@@ -126,10 +127,13 @@ describe('init --audit', () => {
     expect(manifest(root).dependencies).toMatchObject({ '@ddd-ts-kit/audit': KIT_RANGE });
   });
 
-  it('keeps the trail in memory behind a TODO where the audit package has no store, and is off without a database', () => {
+  it('keeps the trail in the database on prisma and typeorm too, and is off without a database', () => {
     const prisma = tempDir('operations');
 
     cli(prisma, 'init', '--orm', 'prisma');
+    const typeorm = tempDir('operations');
+
+    cli(typeorm, 'init', '--orm', 'typeorm');
     const bare = tempDir('operations');
 
     cli(bare, 'init', '--orm', 'none');
@@ -137,9 +141,25 @@ describe('init --audit', () => {
 
     cli(off, 'init', '--audit', 'off');
 
-    expect(read(prisma, 'src/platform/audit/create-audit.ts')).toMatch(
-      /TODO\(platform\): the audit package stores on knex and drizzle only[\s\S]*new InMemoryAuditTrail\(\)/,
+    expect(read(prisma, 'src/platform/audit/create-audit.ts')).toContain(
+      'return new PrismaAuditTrail(persistence.database, { schema: AUDIT_SCHEMA });',
     );
+
+    // The models the audit package proves against its SQL, as they are.
+    expect(read(prisma, 'prisma/schema.prisma')).toContain(auditPrismaModels('audit'));
+
+    expect(read(typeorm, 'src/platform/audit/create-audit.ts')).toContain(
+      'return new TypeOrmAuditTrail(persistence.database, { schema: AUDIT_SCHEMA });',
+    );
+
+    expect(read(typeorm, 'src/platform/database/schema.ts')).toContain(
+      'export const auditTrail = auditEntities({ schema: AUDIT_SCHEMA });',
+    );
+
+    for (const root of [prisma, typeorm]) {
+      expect(read(root, 'package.json')).toContain('"db:audit-guard"');
+      expect(read(root, 'src/platform/audit/create-audit.ts')).not.toContain('InMemoryAuditTrail');
+    }
 
     expect(stack(bare)).toMatchObject({ audit: 'off' });
     expect(stack(off)).toMatchObject({ audit: 'off' });

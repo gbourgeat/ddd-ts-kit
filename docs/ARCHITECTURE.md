@@ -1561,6 +1561,12 @@ The same builders serve every level. End-to-end tests use generated, realistic d
 fixed seed that is printed on failure, so a failing run can be replayed exactly. They assert
 what a client observes (responses, published events), never the database directly.
 
+Each spec file is held to the time budget of its level (`budget` of `ddd-ts-kit.config.json`, five
+seconds for a unit spec and thirty for an integration spec by the reference, a spec of the platform
+counting as integration): the reporter of the runner names the slowest spec of each level at the end
+of a run and warns when a file is over, failing the run once the project enforces the budget (`"enforce": true`), so that the loop stays fast; a budget is raised only
+by a recorded deviation.
+
 A sixth measure sits beside the levels: the mutation score of the domain and application layers.
 Every night the pipeline runs Stryker on both layers of every context (`npm run test:mutation`),
 the texts of refusals left out and the static mutants ignored, then `ddd-ts-kit mutation` holds

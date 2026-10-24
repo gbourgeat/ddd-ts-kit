@@ -13,6 +13,7 @@ audit call.
 npm i @ddd-ts-kit/audit
 npm i knex pg          # only for @ddd-ts-kit/audit/knex
 npm i drizzle-orm      # only for @ddd-ts-kit/audit/drizzle
+npm i typeorm          # only for @ddd-ts-kit/audit/typeorm
 ```
 
 | Entry | Holds | Imports |
@@ -20,6 +21,8 @@ npm i drizzle-orm      # only for @ddd-ts-kit/audit/drizzle
 | `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`) and `auditRecordOf`, `auditedFields`, `auditedProjection` and `masked`, the `AuditMasker` port and `hmacMasker`, `verifyChain`, `TenantAuditReader`, the chain primitives (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`); re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (optional peer) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (optional peer) |
+| `@ddd-ts-kit/audit/prisma` | `PrismaAuditTrail`, `auditPrismaModels`, `auditGuardStatements` | nothing: the client of the unit of work of `@ddd-ts-kit/prisma` fits structurally |
+| `@ddd-ts-kit/audit/typeorm` | `TypeOrmAuditTrail`, `auditEntities`, `auditGuardStatements` | `typeorm` (optional peer) |
 | `@ddd-ts-kit/audit/testing` | `auditTrailContract` | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
 
 ## The idea
@@ -711,7 +714,7 @@ entries removed) is only seen by comparing with a later checkpoint or by asking 
 assert and to tamper with) and enough for an application without a database.
 
 The SQL stores are for **PostgreSQL**. They write on the executor of the unit of work
-(`KnexContext.executor()`, `DrizzleContext.executor()`): inside a unit of work the entry is
+(`KnexContext.executor()`, `DrizzleContext.executor()`, `PrismaContext.client()`, `TypeOrmContext.manager()`): inside a unit of work the entry is
 written at its commit and shares its fate, outside it is written at once in a transaction of its
 own.
 
@@ -731,7 +734,25 @@ for (const statement of auditGuardStatements('audit')) {
 }
 
 new DrizzleAuditTrail(unitOfWork, { schema: 'audit' });
+
+// prisma: the models in prisma/schema.prisma (with "audit" in the schemas of the datasource), the
+// guard in a migration created with `prisma migrate dev --create-only`
+console.log(auditPrismaModels('audit'));
+new PrismaAuditTrail(unitOfWork, { schema: 'audit' });
+
+// typeorm: the entities registered with the data source, the guard in a migration of your own
+const dataSource = new DataSource({ type: 'postgres', entities: [...auditEntities({ schema: 'audit' })] });
+new TypeOrmAuditTrail(unitOfWork, { schema: 'audit' });
 ```
+
+The four stores share one PostgreSQL implementation, and their specs hold each to the same
+contract, the entities and the models included: created by the migrations of a project, they
+give the columns, the keys and the indexes of `createAuditTables`. Prisma writes raw statements on
+the client of the unit of work: it nests no transaction, so an append inside one takes a
+savepoint, and a failure of the database comes back with its SQLSTATE as `code` (`23505`,
+`23001`), as on the other stores, where Prisma reports `P2010`. Its adapter of pg reads a
+`timestamptz` without the offset of the session, so the reader asks PostgreSQL for the instant in
+UTC.
 
 Two tables: `audit_entries` (primary key `(chain, sequence)`, unique `id`, indexes for the
 reader) and `audit_chains`, one row per chain holding its last sequence and hash.

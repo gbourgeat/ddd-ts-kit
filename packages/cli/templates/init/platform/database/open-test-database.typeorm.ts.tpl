@@ -3,15 +3,21 @@ import { openAsBlob } from 'node:fs';
 {{/if}}
 import { PGlite } from '@electric-sql/pglite';
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
+{{#if audit.on}}
+import { auditGuardStatements } from '@ddd-ts-kit/audit/typeorm';
+{{/if}}
 import type { DataSource } from 'typeorm';
 import { createDataSource } from '{{alias.platform}}/database/create-data-source{{alias.ext}}';
 import { persistenceOver } from '{{alias.platform}}/database/persistence-over{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+{{#if audit.on}}
+import { AUDIT_SCHEMA } from '{{alias.platform}}/database/schema{{alias.ext}}';
+{{/if}}
 
 export interface TestDatabase {
   readonly persistence: Persistence;
 
-  /** Empties every table: call it before each test. */
+  /** Empties every table{{#if audit.on}} but the audit trail, which is append-only whoever asks{{/if}}: call it before each test. */
   reset(): Promise<void>;
 
   close(): Promise<void>;
@@ -83,12 +89,26 @@ async function createTables(dataSource: DataSource): Promise<void> {
   }
 
   await dataSource.synchronize();
+{{#if audit.on}}
+
+  // The guard a migration of the project holds: the trail refuses to be rewritten in the tests as in production.
+  for (const statement of auditGuardStatements(AUDIT_SCHEMA)) {
+    await dataSource.query(statement);
+  }
+{{/if}}
 }
 
 async function emptyTables(dataSource: DataSource): Promise<void> {
+{{#if audit.on}}
+  const names = dataSource.entityMetadatas
+    .filter((table) => table.schema !== AUDIT_SCHEMA)
+    .map((table) => (table.schema === undefined ? '' : '"' + table.schema + '".') + '"' + table.tableName + '"');
+{{/if}}
+{{#unless audit.on}}
   const names = dataSource.entityMetadatas.map(
     (table) => (table.schema === undefined ? '' : '"' + table.schema + '".') + '"' + table.tableName + '"',
   );
+{{/unless}}
 
   await dataSource.query('truncate table ' + names.join(', ') + ' restart identity');
 }

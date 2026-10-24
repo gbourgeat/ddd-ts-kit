@@ -48,7 +48,7 @@
     "ci:docs": "npm run check:dashes && npm run docs:translations",
     "ci:audit": "npm audit --omit=dev --audit-level=high",
     "ci:build": "npm run package:check",
-    "typecheck:tests": "tsx packages/prisma/test/support/generate-client.ts && node pipeline/monorepo/typecheck-tests.mjs"
+    "typecheck:tests": "tsx packages/prisma/test/support/generate-client.ts && tsx packages/audit/test/support/prisma/generate-client.ts && node pipeline/monorepo/typecheck-tests.mjs"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
