@@ -165,7 +165,9 @@ With `--audit on`, `runExport` wraps every port with `auditedPersonalDataExport`
 the operator, the subject, the context and the number of records, never the values, written before
 the records are handed over, so that no document leaves without its trace. This is the
 accountability of article 5(2) for the right of access: who read what of whom, and when
-([Audit trail](audit-trail.md#the-right-to-erasure-and-an-append-only-chain)).
+([Audit trail](audit-trail.md#the-right-to-erasure-and-an-append-only-chain)). The trail is
+append-only, so every run is a handover and leaves its entry, a trial included: try the script on a
+test subject, never on a real person.
 
 In a handler spec, the fake of the export (`Fake<Context>PersonalDataExport`) hands over the records
 a test gave it and remembers who was asked.

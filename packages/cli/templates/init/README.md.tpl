@@ -271,8 +271,9 @@ npm run privacy:erase -- <subject-id> --operator <who-asks>     # {{#if eventSou
 npm run privacy:export -- <subject-id> > export.json            # one dated document of every declared record{{#if audit.on}}, audited{{/if}}
 ```
 
-Running an erasure again completes one that failed half way. Neither script reaches backups,
-logs, exports or a copy no context declared: say so in your register{{#if eventSourcing.on}}, and keep the keys in a
+Running an erasure again completes one that failed half way.{{#if audit.on}} Every run of either script is
+recorded in the audit trail, a trial included: try them on a test subject, never on a real person.{{/if}}
+Neither script reaches backups, logs, exports or a copy no context declared: say so in your register{{#if eventSourcing.on}}, and keep the keys in a
 store of their own in production, with a shorter backup retention than the events
 (docs/concepts/event-sourcing.md of ddd-ts-kit, "Personal data"){{/if}}.
 

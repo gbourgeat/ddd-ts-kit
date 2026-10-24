@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:c0f2cff8187d7852 -->
+<!-- translation-of: personal-data.md sha256:316a55710e1c1e2f -->
 
 # Les données personnelles dans un projet généré
 
@@ -169,7 +169,9 @@ Avec `--audit on`, `runExport` enveloppe chaque port avec `auditedPersonalDataEx
 l'opérateur, la personne, le contexte et le nombre d'enregistrements, jamais les valeurs, écrite
 avant que les enregistrements ne soient remis, pour qu'aucun document ne parte sans sa trace. C'est
 la responsabilité de l'article 5(2) appliquée au droit d'accès : qui a lu quoi de qui, et quand
-([Journal d'audit](audit-trail.fr.md#le-droit-à-leffacement-et-une-chaîne-en-ajout-seul)).
+([Journal d'audit](audit-trail.fr.md#le-droit-à-leffacement-et-une-chaîne-en-ajout-seul)). Le journal
+est en ajout seul : chaque exécution est une remise et laisse son entrée, un essai compris ; essayez
+le script sur une personne de test, jamais sur une vraie.
 
 Dans une *spec* de gestionnaire, le *fake* de l'export (`Fake<Contexte>PersonalDataExport`) remet les
 enregistrements qu'un test lui a donnés et se souvient de qui a été demandé.

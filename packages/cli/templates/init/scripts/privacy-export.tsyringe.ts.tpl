@@ -18,7 +18,8 @@ import { runExport } from '{{alias.platform}}/privacy/run-export{{alias.ext}}';
 // One JSON document on the standard output (`format`, `subject`, `exportedAt`, `records`): every
 // record each context declared in src/platform/privacy/data-subject-exports.ts keeps of the
 // person{{#if tenancy.any}}, in each tenant of TENANTS (comma separated){{/if}}, as plain data. Hand it over to the person, then delete
-// the file{{#if audit.on}}; the audit trail keeps the entry of each export, never the values{{/if}}.
+// the file{{#if audit.on}}; the audit trail keeps the entry of each export, never the values. Every run is a
+// handover and leaves its entry, a trial included: try it on a test subject, never on a real person{{/if}}.
 {{#if eventSourcing.on}}
 // What this script cannot reach: the stored events (read them through the aggregate), backups,
 // logs and the copies no context declared.

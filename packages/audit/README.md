@@ -485,8 +485,9 @@ document goes to the person alone. The order is chosen so that no document leave
 trace: the execution context is read first (an export outside `ExecutionScope.run` is refused
 before any row is read), the records are read, the entry is written, and only then are the records
 handed over. When the entry cannot be written, `exportOf` rejects with that error and hands nothing
-over; run again, it reads the same rows and records them. A read that fails is recorded with its
-code, then rethrown; when that entry cannot be written either, `onLostRecord(error, record)` is
+over; run again, it reads the same rows and records them. A trial run is a read like any other and
+leaves its entry: try a script on a test subject, never on a real person. A read that fails is
+recorded with its code, then rethrown; when that entry cannot be written either, `onLostRecord(error, record)` is
 told. `exportDataSubject` of the kernel gathers the exports so wrapped into one dated document, and
 `init --privacy on` wires it in `src/platform/privacy/run-export.ts` when the trail is on:
 

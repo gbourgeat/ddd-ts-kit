@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:8d9674c168cd5e04 -->
+<!-- translation-of: README.md sha256:4c78c034cc217748 -->
 
 # @ddd-ts-kit/audit
 
@@ -499,8 +499,9 @@ beaucoup, le document va à la personne seule. L'ordre est choisi pour qu'aucun 
 sans sa trace : le contexte d'exécution est lu d'abord (un export hors de `ExecutionScope.run` est
 refusé avant qu'une ligne ne soit lue), les enregistrements sont lus, l'entrée est écrite, et alors
 seulement les enregistrements sont remis. Quand l'entrée ne peut pas être écrite, `exportOf` est
-rejeté avec cette erreur et ne remet rien ; relancé, il relit les mêmes lignes et les enregistre.
-Une lecture qui échoue est enregistrée avec son code, puis relevée ; quand cette entrée ne peut pas
+rejeté avec cette erreur et ne remet rien ; relancé, il relit les mêmes lignes et les enregistre. Un
+essai est une lecture comme une autre et laisse son entrée : essayez un script sur une personne de
+test, jamais sur une vraie. Une lecture qui échoue est enregistrée avec son code, puis relevée ; quand cette entrée ne peut pas
 être écrite non plus, `onLostRecord(error, record)` en est informé. `exportDataSubject` du kernel
 rassemble les exports ainsi décorés en un document daté, et `init --privacy on` le câble dans
 `src/platform/privacy/run-export.ts` quand le journal est actif :
