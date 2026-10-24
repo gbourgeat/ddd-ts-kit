@@ -106,6 +106,7 @@ model PrivacyPerson {
   avatarKey    String?  @map("avatar_key")
   tenantId     String   @map("tenant_id")
   registeredAt DateTime @map("registered_at") @db.Timestamptz(3)
+  endedAt      DateTime? @map("ended_at") @db.Timestamptz(3)
 
   @@map("people")
   @@schema("privacy")
@@ -121,6 +122,7 @@ model PrivacyPersonStrict {
   avatarKey    String?  @map("avatar_key")
   tenantId     String   @map("tenant_id")
   registeredAt DateTime @map("registered_at") @db.Timestamptz(3)
+  endedAt      DateTime? @map("ended_at") @db.Timestamptz(3)
 
   @@map("people_strict")
   @@schema("privacy")

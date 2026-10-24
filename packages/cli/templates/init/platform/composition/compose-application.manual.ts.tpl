@@ -42,6 +42,9 @@ import { fileRoutes } from '{{alias.platform}}/files/file-routes{{alias.ext}}';
 {{/if}}
 import type { Platform } from '{{alias.platform}}/composition/platform{{alias.ext}}';
 import type { PlatformOptions } from '{{alias.platform}}/composition/platform-options{{alias.ext}}';
+{{#if privacy.on}}
+import { runPurge } from '{{alias.platform}}/privacy/run-purge{{alias.ext}}';
+{{/if}}
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 
@@ -120,6 +123,9 @@ export function composeApplication(
   installAspectRuntime({ logger, metrics, cache, clock });
 {{#if files.any}}
   purgeStagedFiles(platform);
+{{/if}}
+{{#if privacy.on}}
+  purgeExpiredEveryNight(platform);
 {{/if}}
 
 {{#if audit.route}}
@@ -242,5 +248,18 @@ function purgeStagedFiles(platform: Platform): void {
   const purge = new PurgeStagedFiles(platform.files.staging, platform.clock);
 
   platform.jobs.register({ name: 'files.purge-staged', schedule: { every: '1h' }, run: () => purge.run() });
+}
+{{/if}}
+{{#if privacy.on}}
+
+/** What outlived the retention its declaration gives, purged every night at 03:00 UTC by the process that runs the jobs. */
+function purgeExpiredEveryNight(platform: Platform): void {
+  platform.jobs.register({
+    name: 'privacy.purge-expired',
+    schedule: { cron: '0 3 * * *' },
+    run: async () => {
+      await runPurge(platform);
+    },
+  });
 }
 {{/if}}

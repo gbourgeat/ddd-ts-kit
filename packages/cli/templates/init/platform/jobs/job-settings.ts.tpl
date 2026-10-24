@@ -11,6 +11,9 @@ type Environment = Readonly<Record<string, string | undefined>>;
  */
 export function jobSettings(environment: Environment, context?: string): Readonly<Record<string, JobSettings>> {
   const settings: Readonly<Record<string, JobSettings>> = {
+{{#if privacy.on}}
+    'privacy.purge-expired': { enabled: environment['JOB_PRIVACY_PURGE_EXPIRED_ENABLED'] !== 'false' },
+{{/if}}
     // ddd-ts-kit:jobs
     // /ddd-ts-kit:jobs
   };

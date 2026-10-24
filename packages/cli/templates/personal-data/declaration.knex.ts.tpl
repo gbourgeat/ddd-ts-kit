@@ -15,6 +15,9 @@ const declaration: PersonalFieldsOptions<{{aggregate.pascal}}Row> = {
   subject: '{{personal.subject}}',
 {{personal.fields}}
   erasure: '{{personal.erasure}}',
+{{#if personal.retains}}
+  retention: {{personal.retention}},
+{{/if}}
 };
 
 export const {{aggregate.pascal}}PersonalFields = personalFields(TABLE, declaration);

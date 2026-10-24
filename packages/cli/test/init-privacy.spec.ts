@@ -8,7 +8,13 @@ const platform = (root: string, file: string): string => read(root, `src/platfor
 const stackOf = (root: string): Record<string, string> => textsAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack');
 
 /** The files of the folder `--privacy on` writes, in both families. */
-const PRIVACY = ['data-subject-copies.ts', 'data-subject-exports.ts', 'run-erasure.ts', 'run-export.ts'];
+const PRIVACY = [
+  'data-subject-copies.ts',
+  'data-subject-exports.ts',
+  'run-erasure.ts',
+  'run-export.ts',
+  'run-purge.ts',
+];
 
 const BY_HAND = ['--di', 'manual', '--orm', 'knex'];
 const EVENT_SOURCED = ['--event-sourcing', 'on'];

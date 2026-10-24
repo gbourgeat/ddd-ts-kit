@@ -1,0 +1,144 @@
+import { and, eq } from 'drizzle-orm';
+import type { PgQueryResultHKT, PgTable } from 'drizzle-orm/pg-core';
+import { Readable } from 'node:stream';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
+  FixedExecutionScope,
+  InMemoryFileStorage,
+  executionContext,
+  personalFields,
+  systemActor,
+  type ErasureMode,
+  type ExecutionContext,
+} from '@ddd-ts-kit/kernel';
+import { personalDataRetentionContract } from '@ddd-ts-kit/testing/contracts';
+import { DrizzlePersonalDataErasure, createDrizzleUnitOfWork } from '../src/postgres';
+import { createDatabase } from './support/database';
+import { aPersonRow, people, peopleStrict, type PersonRow } from './support/personal-data/people-table';
+
+const runner = { describe, it, expect, beforeEach, afterEach };
+
+let database: Awaited<ReturnType<typeof createDatabase>>;
+
+beforeAll(async () => {
+  database = await createDatabase([people, peopleStrict]);
+});
+
+afterAll(async () => {
+  await database.client.close();
+});
+
+const NOW = new Date('2026-06-15T12:00:00.000Z');
+const LONG_AGO = new Date('2024-01-01T00:00:00.000Z');
+
+/** The work of a tenant, or of the platform when it names none. */
+function workIn(tenantId: string | undefined): ExecutionContext {
+  return executionContext({
+    correlationId: 'retention-spec',
+    actor: systemActor('privacy.purge-expired'),
+    origin: 'job',
+    ...(tenantId === undefined ? {} : { tenantId }),
+  });
+}
+
+function declarationOf(erasure: ErasureMode) {
+  return personalFields<PersonRow, PgTable>(people, {
+    subject: 'personId',
+    fields: ['displayName', 'email', 'age'],
+    files: ['avatarKey'],
+    erasure,
+    retention: { after: 'endedAt', months: 6 },
+  });
+}
+
+function erasureOf(erasure: ErasureMode, context: ExecutionContext, files = new InMemoryFileStorage()) {
+  return new DrizzlePersonalDataErasure<PgQueryResultHKT>(createDrizzleUnitOfWork(database.db), {
+    name: 'identity.people',
+    declarations: [declarationOf(erasure)],
+    tenant: { scope: new FixedExecutionScope(context) },
+    files,
+  });
+}
+
+function withoutRetention(context: ExecutionContext) {
+  const { retention: _, ...kept } = declarationOf('row');
+
+  return new DrizzlePersonalDataErasure<PgQueryResultHKT>(createDrizzleUnitOfWork(database.db), {
+    name: 'identity.people',
+    declarations: [kept],
+    tenant: { scope: new FixedExecutionScope(context) },
+    files: new InMemoryFileStorage(),
+  });
+}
+
+const insert = async (rows: readonly PersonRow[]): Promise<void> => {
+  await database.db.insert(people).values([...rows]);
+};
+
+const rowsOf = (subject: string, tenant = 'acme'): Promise<PersonRow[]> =>
+  database.db
+    .select()
+    .from(people)
+    .where(and(eq(people.personId, subject), eq(people.tenantId, tenant)))
+    .orderBy(people.id);
+
+const rowsOfTenant = (tenant: string): Promise<PersonRow[]> =>
+  database.db.select().from(people).where(eq(people.tenantId, tenant));
+
+for (const erasure of ['row', 'pseudonymise'] as const) {
+  personalDataRetentionContract<PersonRow>(runner, {
+    name: `DrizzlePersonalDataErasure, the retention, ${erasure}`,
+    create: async () => {
+      await database.truncate();
+
+      return {
+        declaration: declarationOf(erasure),
+        retention: erasureOf(erasure, workIn('acme')),
+        insert,
+        rowsOf: (subject) => rowsOf(subject),
+        aRowOf: (subject, n) => aPersonRow(subject, n),
+        aRowFrom: (subject, n, at) => ({ ...aPersonRow(subject, n), endedAt: at }),
+      };
+    },
+  });
+}
+
+describe('DrizzlePersonalDataErasure, the purge of what outlived its retention', () => {
+  beforeEach(async () => {
+    await database.truncate();
+  });
+
+  const expired = (subject: string, tenant: string) => ({ ...aPersonRow(subject, 1, tenant), endedAt: LONG_AGO });
+
+  it('purges in the tenant of the work alone when the work names one', async () => {
+    await insert([expired('ada', 'acme'), expired('ada', 'north')]);
+
+    expect(await erasureOf('row', workIn('acme')).purgeExpired(NOW)).toBe(1);
+    expect(await rowsOfTenant('north')).toHaveLength(1);
+  });
+
+  it('purges in every tenant when the work names none, as the job of the platform runs it', async () => {
+    await insert([expired('ada', 'acme'), expired('bob', 'north'), aPersonRow('cy', 1, 'north')]);
+
+    expect(await erasureOf('row', workIn(undefined)).purgeExpired(NOW)).toBe(2);
+    expect(await rowsOfTenant('north')).toHaveLength(1);
+  });
+
+  it('deletes the files an expired row names before it forgets them', async () => {
+    const files = new InMemoryFileStorage();
+    const row = expired('ada', 'acme');
+
+    await files.put(row.avatarKey ?? '', Readable.from([Buffer.from('png')]), { mediaType: 'image/png' });
+    await insert([row]);
+
+    expect(await erasureOf('pseudonymise', workIn('acme'), files).purgeExpired(NOW)).toBe(1);
+    expect(await files.stat(row.avatarKey ?? '')).toBeUndefined();
+  });
+
+  it('purges nothing in a table whose declaration gives no retention: kept until the person asks', async () => {
+    await insert([expired('ada', 'acme')]);
+
+    expect(await withoutRetention(workIn('acme')).purgeExpired(NOW)).toBe(0);
+    expect(await rowsOf('ada')).toHaveLength(1);
+  });
+});

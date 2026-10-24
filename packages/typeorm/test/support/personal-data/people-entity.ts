@@ -10,6 +10,7 @@ export interface PersonRow {
   readonly avatarKey: string | null;
   readonly tenantId: string;
   readonly registeredAt: Date;
+  readonly endedAt: Date | null;
 }
 
 export const people = new EntitySchema<PersonRow>({
@@ -25,6 +26,7 @@ export const people = new EntitySchema<PersonRow>({
     avatarKey: { type: 'text', name: 'avatar_key', nullable: true },
     tenantId: { type: 'text', name: 'tenant_id' },
     registeredAt: { type: 'timestamp with time zone', precision: 3, name: 'registered_at' },
+    endedAt: { type: 'timestamp with time zone', precision: 3, name: 'ended_at', nullable: true },
   },
 });
 
@@ -42,6 +44,7 @@ export const peopleStrict = new EntitySchema<PersonRow>({
     avatarKey: { type: 'text', name: 'avatar_key', nullable: true },
     tenantId: { type: 'text', name: 'tenant_id' },
     registeredAt: { type: 'timestamp with time zone', precision: 3, name: 'registered_at' },
+    endedAt: { type: 'timestamp with time zone', precision: 3, name: 'ended_at', nullable: true },
   },
 });
 
@@ -59,6 +62,7 @@ export const peopleByConstructor = new EntitySchema<PersonRow>({
     avatarKey: { type: String, name: 'avatar_key', nullable: true },
     tenantId: { type: String, name: 'tenant_id' },
     registeredAt: { type: 'timestamp with time zone', precision: 3, name: 'registered_at' },
+    endedAt: { type: 'timestamp with time zone', precision: 3, name: 'ended_at', nullable: true },
   },
 });
 
@@ -72,5 +76,6 @@ export function aPersonRow(subject: string, n: number, tenant = 'acme'): PersonR
     avatarKey: `tenants/${tenant}/avatars/${subject}-${String(n)}`,
     tenantId: tenant,
     registeredAt: new Date('2026-01-01T00:00:00.000Z'),
+    endedAt: null,
   };
 }

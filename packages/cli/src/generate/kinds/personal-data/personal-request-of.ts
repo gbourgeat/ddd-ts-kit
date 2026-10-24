@@ -7,6 +7,16 @@ export interface PersonalRequest {
   readonly fields: readonly string[];
   readonly subject: string;
   readonly erasure: 'pseudonymise' | 'row';
+  /** `--retention`: the date column the period runs from, and the period; absent, the rows are kept until the person asks. */
+  readonly retention?: RetentionRequest;
+}
+
+export interface RetentionRequest {
+  readonly column: string;
+  readonly unit: 'days' | 'months' | 'years';
+  readonly amount: number;
+  /** The column is not one the generated table has: it joins the storage as a nullable timestamp. */
+  readonly added: boolean;
 }
 
 const COLUMN = /^[a-z][a-z0-9_]*$/;
@@ -18,7 +28,7 @@ const ADAPTED: readonly OrmStack[] = ['knex', 'drizzle', 'prisma', 'typeorm'];
 
 /** The request of `--personal`, checked before anything is written; nothing without the flag, and then `--subject` or `--erasure` alone is refused. */
 export function personalRequestOf(scope: Scope): PersonalRequest | undefined {
-  const { personal, subject = 'id', erasure = 'pseudonymise' } = scope.flags;
+  const { personal, subject = 'id', erasure = 'pseudonymise', retention } = scope.flags;
 
   if (personal === undefined) {
     assertNothingAlone(scope);
@@ -32,16 +42,21 @@ export function personalRequestOf(scope: Scope): PersonalRequest | undefined {
 
   assertSubject(subject, fields);
 
-  return { fields, subject, erasure: modeOf(erasure) };
+  return {
+    fields,
+    subject,
+    erasure: modeOf(erasure),
+    ...(retention === undefined ? {} : { retention: retentionOf(retention, [...fields, subject]) }),
+  };
 }
 
 function assertNothingAlone(scope: Scope): void {
-  if (scope.flags.subject === undefined && scope.flags.erasure === undefined) {
+  if (scope.flags.subject === undefined && scope.flags.erasure === undefined && scope.flags.retention === undefined) {
     return;
   }
 
   throw new CliError(
-    '--subject and --erasure go with --personal.',
+    '--subject, --erasure and --retention go with --personal.',
     'Add --personal <column>,<column> to declare the personal columns the subject owns.',
   );
 }
@@ -129,4 +144,43 @@ function modeOf(erasure: string): PersonalRequest['erasure'] {
   }
 
   return mode;
+}
+
+const RETENTION = /^([a-z][a-z0-9_]*):([1-9][0-9]*)([dmy])$/;
+const UNITS: Readonly<Record<string, RetentionRequest['unit']>> = { d: 'days', m: 'months', y: 'years' };
+/** The date column every generated table has: a retention may run from the registration of the row. */
+const REGISTERED_AT = 'registered_at';
+
+/**
+ * `--retention <column>:<n><d|m|y>`: the period, one unit, from a date column of the row that is
+ * neither personal nor the subject. `registered_at` is the one the generated table has; any other
+ * column joins the storage as a nullable timestamp, empty until the fact it dates happens.
+ */
+function retentionOf(text: string, named: readonly string[]): RetentionRequest {
+  const match = RETENTION.exec(text);
+  const [, column = '', amount = '', unit = ''] = match ?? [];
+  const known = UNITS[unit];
+
+  if (match === null || known === undefined) {
+    throw new CliError(
+      `--retention "${text}" is not a retention.`,
+      'Write the date column the period runs from, then the period in days, months or years: --retention ended_at:36m, --retention registered_at:5y.',
+    );
+  }
+
+  assertRetentionColumn(column, named);
+
+  return { column, unit: known, amount: Number(amount), added: column !== REGISTERED_AT };
+}
+
+/** A retention runs from a fact of the row: neither a personal column, nor the subject, nor a column the table keeps for itself but `registered_at`. */
+function assertRetentionColumn(column: string, named: readonly string[]): void {
+  const own = column !== REGISTERED_AT && (OWN_COLUMNS.includes(column) || column === 'id');
+
+  if (named.includes(column) || own) {
+    throw new CliError(
+      `--retention runs from "${column}", which is ${own ? 'a column the generated table keeps for its own needs' : 'named by --personal or --subject'}.`,
+      'A retention runs from a fact of the row, an end or a last activity: registered_at, or a date column of yours (ended_at), which joins the table.',
+    );
+  }
 }

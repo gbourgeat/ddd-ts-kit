@@ -14,6 +14,7 @@ and can prove it was not rewritten. It is recorded around the use cases, never b
 | every integration event crossing a boundary | one idempotent consumer named `audit`; `generate integration-event` registers each new event in `audited-events.ts` |
 | every erasure of a data subject (crypto-shredding), with whether a key was destroyed | `auditedSubjectKeys`, the key store wrapped where it is bound (`src/platform/event-sourcing/create-event-sourcing.ts`, written by `init --event-sourcing on`), whoever calls `erase` |
 | every export of what a context keeps of a data subject, with the number of records and never the values | `auditedPersonalDataExport`, the export port wrapped where the platform runs it (`src/platform/privacy/run-export.ts`, written by `init --privacy on` with the trail on) |
+| every purge of what outlived its retention, with the number of rows and no person | `auditedPersonalDataRetention`, the copies wrapped where the platform runs the purge (`src/platform/privacy/run-purge.ts`) |
 | bulk reads | the infrastructure that performs them, as the exception |
 
 Actor, session, impersonation, tenant, correlation and origin come from the execution

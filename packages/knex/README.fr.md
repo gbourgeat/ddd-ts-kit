@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:30c07ce4e95ccaef -->
+<!-- translation-of: README.md sha256:3ccbe053ae2527ea -->
 
 # @ddd-ts-kit/knex
 
@@ -806,6 +806,17 @@ kernel et son adaptateur étend cette classe avec `name`, `declarations` et `ten
 `exportDataSubject` du kernel rassemble chaque export en un document daté. Enveloppez l'adaptateur
 avec `auditedPersonalDataExport` de `@ddd-ts-kit/audit` là où il est lié, pour que chaque remise
 laisse une entrée.
+
+Les mêmes déclarations donnent la limitation de la conservation (RGPD, article 5(1)(e)) : une
+déclaration avec `retention: { after: 'ended_at', months: 36 }` dit combien de temps ses lignes gardent
+la personne, compté depuis une colonne de date de la ligne, et `purgeExpired(now)` de l'adaptateur
+d'effacement efface, comme la déclaration le dit, les lignes dont la date est plus ancienne que la
+période ; une ligne dont la date est vide n'expire jamais, et un second passage n'atteint rien. Il
+se confine au *tenant* du travail quand le travail en nomme un, et atteint chaque *tenant* quand il
+n'en nomme aucun, comme le fait le *job* de nuit de la plateforme : un *tenant* oublié dans une liste
+garderait ce qu'il ne doit pas. L'adaptateur implémente `PersonalDataRetention` du kernel et passe
+`personalDataRetentionContract` ; `purgeExpiredPersonalData` du kernel lance chaque copie, et
+`auditedPersonalDataRetention` de `@ddd-ts-kit/audit` enregistre chaque purge.
 
 ## Outbox et idempotence
 

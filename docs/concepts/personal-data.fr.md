@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:479c191bc4cbca10 -->
+<!-- translation-of: personal-data.md sha256:79a1e6625d8645ec -->
 
 # Les données personnelles dans un projet généré
 
@@ -24,7 +24,7 @@ pour la preuve datée, [Multi-tenant](multitenancy.fr.md) pour ce qu'un *tenant*
 
 | Écrit par | Quoi | Où |
 |---|---|---|
-| `init --privacy on` (`on` avec un ORM, `off` sans ou sur demande) | les listes des copies et des exports que les contextes déclarent, `runErasure` et `runExport`, les deux scripts | `src/platform/privacy/`, `scripts/privacy-erase.ts`, `scripts/privacy-export.ts` |
+| `init --privacy on` (`on` avec un ORM, `off` sans ou sur demande) | les listes des copies et des exports que les contextes déclarent, `runErasure`, `runExport` et `runPurge`, le *job* de nuit `privacy.purge-expired`, les trois scripts | `src/platform/privacy/`, `scripts/privacy-erase.ts`, `scripts/privacy-export.ts`, `scripts/privacy-purge.ts` |
 | `init --event-sourcing on` (`off` sauf demande) | l'event store, les clés des personnes concernées et le chiffre qui scelle une valeur personnelle d'un événement stocké, audités quand le journal est actif | `src/platform/event-sourcing/`, le schéma `event_store` |
 | `generate repository <ctx> <Aggregate> --personal <colonne>,...` | les colonnes dans le stockage, leur déclaration, et une fois par contexte l'effacement et l'export qui la lisent | le contexte |
 
@@ -194,6 +194,33 @@ le script sur une personne de test, jamais sur une vraie.
 
 Dans une *spec* de gestionnaire, le *fake* de l'export (`Fake<Contexte>PersonalDataExport`) remet les
 enregistrements qu'un test lui a donnés et se souvient de qui a été demandé.
+
+## La conservation, chaque nuit
+
+```bash
+npx ddd-ts-kit generate repository billing Customer --personal email,display_name --retention ended_at:36m
+```
+
+`--retention <colonne>:<n><d|m|y>` dit combien de temps les lignes gardent la personne (RGPD,
+article 5(1)(e)), compté depuis une colonne de date de la ligne : `registered_at`, que chaque table
+générée possède, ou une colonne à vous, `ended_at` ci-dessus, qui rejoint le stockage en horodatage
+nullable, vide tant que le fait qu'elle date n'est pas arrivé ; une ligne dont la date est vide
+n'expire jamais. La déclaration gagne `retention: { after: 'ended_at', months: 36 }`, et la *spec*
+générée prouve la purge sur la base de test. Une colonne personnelle, le sujet et les colonnes que
+la table garde pour elle sont refusés comme départ d'une conservation, de même qu'une période qui
+n'est pas une unité positive.
+
+Chaque nuit à 03:00 UTC, le *job* `privacy.purge-expired` de la plateforme lance `runPurge` : chaque
+copie listée dans `data-subject-copies.ts` efface, comme sa déclaration le dit, les lignes qui ont
+dépassé leur durée de conservation, dans chaque *tenant*, puisque le travail d'un *job* n'en nomme
+aucun et qu'un *tenant* oublié dans une liste garderait ce qu'il ne doit pas ; avec `--audit on`,
+chaque copie laisse une entrée `personal-data:purge` avec le nombre de lignes, `0` compris, et
+aucune personne. `JOB_PRIVACY_PURGE_EXPIRED_ENABLED=false` coupe le *job* dans un environnement, et
+`npm run privacy:purge` le lance à la main et imprime les lignes atteintes par contexte. Une table
+dont la déclaration ne donne aucune durée garde ses lignes jusqu'à ce que la personne le demande.
+
+Combien de temps est une décision du projet, pas de l'outil : la durée qu'une loi impose
+(comptabilité, santé), ou celle dont la finalité a besoin. Écrivez-la au registre avec sa raison.
 
 ## Ce qui reste hors de portée
 

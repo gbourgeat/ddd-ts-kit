@@ -24,7 +24,7 @@ own, and this page says so. The pieces of the kit this page rests on:
 
 | Written by | What | Where |
 |---|---|---|
-| `init --privacy on` (`on` with an ORM, `off` without one or when asked) | the lists of the copies and of the exports the contexts declare, `runErasure` and `runExport`, the two scripts | `src/platform/privacy/`, `scripts/privacy-erase.ts`, `scripts/privacy-export.ts` |
+| `init --privacy on` (`on` with an ORM, `off` without one or when asked) | the lists of the copies and of the exports the contexts declare, `runErasure`, `runExport` and `runPurge`, the nightly job `privacy.purge-expired`, the three scripts | `src/platform/privacy/`, `scripts/privacy-erase.ts`, `scripts/privacy-export.ts`, `scripts/privacy-purge.ts` |
 | `init --event-sourcing on` (`off` unless asked) | the event store, the keys of the data subjects and the cipher that seals a personal value of a stored event, audited when the trail is on | `src/platform/event-sourcing/`, the `event_store` schema |
 | `generate repository <ctx> <Aggregate> --personal <column>,...` | the columns in the storage, their declaration, and once per context the erasure and the export that read it | the context |
 
@@ -189,6 +189,31 @@ test subject, never on a real person.
 
 In a handler spec, the fake of the export (`Fake<Context>PersonalDataExport`) hands over the records
 a test gave it and remembers who was asked.
+
+## Retention, every night
+
+```bash
+npx ddd-ts-kit generate repository billing Customer --personal email,display_name --retention ended_at:36m
+```
+
+`--retention <column>:<n><d|m|y>` says how long the rows keep the person (GDPR article 5(1)(e)),
+counted from a date column of the row: `registered_at`, which every generated table has, or a column
+of yours, `ended_at` above, which joins the storage as a nullable timestamp, empty until the fact it
+dates happens; a row whose date is empty never expires. The declaration gains
+`retention: { after: 'ended_at', months: 36 }`, and the generated spec proves the purge on the test
+database. A personal column, the subject and the columns the table keeps for itself are refused as
+the start of a retention, as is a period that is not one positive unit.
+
+Every night at 03:00 UTC, the job `privacy.purge-expired` of the platform runs `runPurge`: every copy
+listed in `data-subject-copies.ts` erases, as its declaration says, the rows that outlived their
+retention, in every tenant, since the work of a job names none and a tenant left out of a list would
+keep what it should not; with `--audit on`, each copy leaves an entry `personal-data:purge` with the
+number of rows, `0` included, and no person. `JOB_PRIVACY_PURGE_EXPIRED_ENABLED=false` switches the
+job off in one environment, and `npm run privacy:purge` runs it by hand and prints the rows reached
+per context. A table whose declaration gives no retention keeps its rows until the person asks.
+
+How long is the project's decision, not the tool's: the duration a law imposes (accounting,
+health), or the one the purpose needs. Write it in the register with its reason.
 
 ## What stays out of reach
 

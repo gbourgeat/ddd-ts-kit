@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryPersonalData, personalFields, type ErasureMode } from '@ddd-ts-kit/kernel';
-import { personalDataErasureContract, personalDataExportContract } from '../src/contracts';
+import {
+  personalDataErasureContract,
+  personalDataExportContract,
+  personalDataRetentionContract,
+} from '../src/contracts';
 
 interface PersonRow {
   readonly id: string;
@@ -9,6 +13,7 @@ interface PersonRow {
   readonly age: number;
   readonly avatar_key: string | null;
   readonly registered_at: Date;
+  readonly ended_at?: Date | null;
 }
 
 const runner = { describe, it, expect, beforeEach };
@@ -64,3 +69,29 @@ personalDataExportContract<PersonRow>(runner, {
     };
   },
 });
+
+for (const erasure of ['row', 'pseudonymise'] as const) {
+  personalDataRetentionContract<PersonRow>(runner, {
+    name: `InMemoryPersonalData, ${erasure}`,
+    create: () => {
+      const declaration = personalFields<PersonRow>('persons', {
+        subject: 'id',
+        fields: ['display_name', 'email', 'age'],
+        files: ['avatar_key'],
+        erasure,
+        retention: { after: 'ended_at', months: 6 },
+      });
+
+      const table = new InMemoryPersonalData('identity.persons', declaration);
+
+      return {
+        declaration,
+        retention: table,
+        insert: (rows) => table.insert(...rows),
+        rowsOf: (subject) => table.all().filter((row) => row.id === subject),
+        aRowOf,
+        aRowFrom: (subject, n, at) => ({ ...aRowOf(subject, n), ended_at: at }),
+      };
+    },
+  });
+}
