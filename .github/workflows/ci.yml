@@ -534,6 +534,7 @@ jobs:
           if [ -n "$run" ]; then gh run download "$run" --name mutation --dir examples/scheduling/reports/mutation || echo "The last night kept no report: a full run."; fi
       - name: Stryker on what the change touches in the example, then the survivors of its files
         run: |
+          mkdir -p examples/scheduling/reports/mutation
           base=$(git merge-base "origin/${{ github.base_ref }}" HEAD)
           DDD_TS_KIT_MUTATION_SINCE="$base" npm run --silent test:mutation --workspace examples/scheduling | tee examples/scheduling/reports/mutation/changed.txt
           { echo '```'; cat examples/scheduling/reports/mutation/changed.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

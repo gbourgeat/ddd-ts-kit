@@ -250,6 +250,7 @@ jobs:
           if [ -n "$run" ]; then gh run download "$run" --name mutation --dir reports/mutation || echo "The last night kept no report: a full run."; fi
       - name: Stryker on what the change touches, then the survivors of its files
         run: |
+          mkdir -p reports/mutation
           base=$(git merge-base "origin/${{ github.base_ref }}" HEAD)
           DDD_TS_KIT_MUTATION_SINCE="$base" npm run --silent test:mutation | tee reports/mutation/changed.txt
           { echo '```'; cat reports/mutation/changed.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
