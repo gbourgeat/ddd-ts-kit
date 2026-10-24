@@ -218,8 +218,9 @@ the `mutation-changed` job lists the survivors of the files you changed (`ddd-ts
 to state or a survivor to leave alive and say so.
 
 The titles are read back as a document: `npm run docs:generate` writes `docs/behaviour/<context>.md`
-from them, grouped as the specs group them, and `docs --check` holds it current, so a title is a
-sentence the business reads, and the page is regenerated and committed with the spec.
+from them, grouped as the specs group them, the pre-commit hook regenerates it when a spec is staged,
+and `docs --check` holds it current, so a title is a sentence the business reads, and the page is
+committed with the spec.
 
 Finish with `npm test -- <context>`, `npm run test:coverage` before the slice is closed, and
 `npx ddd-ts-kit check --rule test/no-mocks --rule test/builder-required --rule test/spec-required --rule test/helper-placed --rule test/acceptance-black-box`.

@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:eb6bef07ca0f2223 -->
+<!-- translation-of: testing-strategy.md sha256:6c89aa75f1e7b462 -->
 
 # Stratégie de test
 
@@ -580,8 +580,10 @@ et `ddd-ts-kit docs` écrit `docs/behaviour/<context>.md` d'après les titres de
 contexte, groupés comme les *specs* les groupent, avec le rôle de chaque *spec* (`slot (value
 object), in calendars`), une règle planifiée (`it.todo`) et une *spec* mise de côté dites comme
 telles, et `docs/behaviour/application.md` pour les *specs* hors des contextes (bout en bout,
-acceptation, architecture). `npm run docs:generate` les écrit, `docs --check` les tient à jour, et
-elles sont commitées avec les *specs* : le test est la preuve, la page sa lecture. Sur l'exemple,
+acceptation, architecture). `npm run docs:generate` les écrit, le *hook* de pre-commit les régénère et
+les ajoute quand une *spec* est indexée (un worker confiné à son contexte les laisse au tronc),
+`docs --check` les tient à jour, et elles sont commitées avec les *specs* : le test est la preuve,
+la page sa lecture. Sur l'exemple,
 `scheduling` liste 593 règles d'après 165 *specs*, une table de cas comptant pour une règle.
 
 Un fichier `.feature` promettrait la même lecture, au prix d'une glu de *step definitions*, d'une

@@ -1560,9 +1560,9 @@ floor is not a goal, and the measure is never narrowed by hand (`test/mutation-g
 What the tests state is read back as a document: `ddd-ts-kit docs` writes `docs/behaviour/`, one
 page per context and one for the application, from the titles of the specs, grouped as the specs
 group them, a planned rule (`it.todo`) said so. The title of a test states a rule
-(`test/title-states-a-rule`), so the page reads as the business would write it, and `docs --check`
-holds it current: the test is the proof, the page its reading, and no second language is kept in
-step with the code.
+(`test/title-states-a-rule`), so the page reads as the business would write it; the pre-commit hook
+regenerates it when a spec is committed and `docs --check` holds it current: the test is the proof,
+the page its reading, and no second language is kept in step with the code.
 
 An acceptance spec (`test/acceptance/<story>.acceptance.spec.ts`) is the contract of a story,
 written from the criteria of `docs/architecture/stories/<story>.md` before any of its code. Each

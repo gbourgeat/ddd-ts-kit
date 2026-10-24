@@ -557,8 +557,9 @@ and `ddd-ts-kit docs` writes `docs/behaviour/<context>.md` from the titles of th
 context, grouped as the specs group them, with the role of each spec (`slot (value object), in
 calendars`), a planned rule (`it.todo`) and a spec put aside said so, and `docs/behaviour/application.md`
 for the specs outside the contexts (end to end, acceptance, architecture). `npm run docs:generate`
-writes them, `docs --check` holds them current, and they are committed with the specs: the test is
-the proof, the page its reading. On the example, `scheduling` lists 593 rules from 165 specs, a
+writes them, the pre-commit hook regenerates and adds them when a spec is staged (a worker confined
+to its context leaves them to the trunk), `docs --check` holds them current, and they are committed
+with the specs: the test is the proof, the page its reading. On the example, `scheduling` lists 593 rules from 165 specs, a
 table of cases counting as one rule.
 
 A `.feature` file would promise the same reading, at the price of a glue of step definitions, a

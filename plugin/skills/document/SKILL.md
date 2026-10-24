@@ -37,7 +37,7 @@ a command, checked for drift in the pipeline, never edited by hand: the guard re
 |---|---|---|
 | `openapi/openapi.yaml` (one file per document of `openapi.documents`), `<platform>/http/openapi-documents.ts` | generated from the route definitions and the config | `npm run docs:generate` |
 | `docs/integration/event-catalog.md`, `asyncapi.yaml` | generated from `defineIntegrationEvent` declarations and their handlers | `npm run events:generate` |
-| `docs/behaviour/<context>.md`, `application.md`, `README.md` | generated from the titles of the specs: what the tests state, grouped as the specs group it, a planned rule (`it.todo`) said so | `npm run docs:generate` |
+| `docs/behaviour/<context>.md`, `application.md`, `README.md` | generated from the titles of the specs: what the tests state, grouped as the specs group it, a planned rule (`it.todo`) said so | `npm run docs:generate`, and the pre-commit hook when a spec is staged |
 | `docs/context-map.md` between its markers, lists of each `CONTEXT.md` between theirs, `<context>.declarations.ts` and the `<layer>.declarations.ts` of each layer | generated from the config and the tree | `npx ddd-ts-kit docs` (every `generate` runs it) |
 | `.dependency-cruiser.cjs` | generated from the config | `npx ddd-ts-kit depcruise-config --write` |
 | `docs/integration/README.md` | written | you |

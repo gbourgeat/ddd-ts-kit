@@ -278,7 +278,8 @@ declaration that no longer follows `importAlias` and `importExtension` of
 | drift | `npm run docs:check` | context map, OpenAPI, AsyncAPI, event catalog |
 
 `npm run verify` chains them with the tests. Git hooks: `npm run hooks:install` once per clone
-(lefthook: lint and architecture on staged files, conventional commit messages).
+(lefthook: lint and architecture on staged files, the pages of what the tests state regenerated when a
+spec is staged, conventional commit messages).
 {{#if ci.any}}
 The pipeline calls the same `ci:*` scripts; what makes it binding is described in
 {{#if ci.github}}
