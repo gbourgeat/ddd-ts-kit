@@ -1,4 +1,4 @@
-import { Brackets, type EntityManager, type WhereExpressionBuilder } from 'typeorm';
+import { Brackets, type EntityManager, type ObjectLiteral, type WhereExpressionBuilder } from 'typeorm';
 import {
   ERASED_PERSONAL_DATA,
   NotADataSubjectIdError,
@@ -6,10 +6,12 @@ import {
   isDataSubjectId,
   pseudonymisedValueOf,
   type PersonalDataErasure,
+  type PersonalDataRetention,
 } from '@ddd-ts-kit/kernel';
 import type { TypeOrmContext } from '../unit-of-work/type-orm-context';
 import { aboutSubject } from './about-subject';
 import { affectedRows } from './affected-rows';
+import { expiredRows } from './expired-rows';
 import type { TypeOrmPersonalDataErasureOptions } from './type-orm-personal-data-erasure-options';
 import type { TypeOrmPersonalFields } from './type-orm-personal-fields';
 
@@ -27,9 +29,11 @@ interface Pseudonymised {
  * `ERASED_PERSONAL_DATA`, any other type nothing, a file column nothing). Every statement runs on
  * the entity manager of the unit of work and, for tenant data, in the tenant of the work alone. The
  * port of the context extends `PersonalDataErasure` and its adapter extends this class:
- * `class TypeOrmPatientErasure extends TypeOrmPersonalDataErasure implements PatientErasure`.
+ * `class TypeOrmPatientErasure extends TypeOrmPersonalDataErasure implements PatientErasure`. The
+ * same declarations give the storage limitation: `purgeExpired(now)` erases, as each declaration
+ * says, the rows whose `retention` ended.
  */
-export class TypeOrmPersonalDataErasure implements PersonalDataErasure {
+export class TypeOrmPersonalDataErasure implements PersonalDataErasure, PersonalDataRetention {
   readonly name: string;
 
   constructor(
@@ -49,26 +53,37 @@ export class TypeOrmPersonalDataErasure implements PersonalDataErasure {
     let reached = 0;
 
     for (const declaration of this.options.declarations) {
-      reached += await this.eraseIn(declaration, subject);
+      reached += await this.eraseIn(declaration, aboutSubject(declaration, subject, this.options.tenant));
+    }
+
+    return reached;
+  }
+
+  /** The rows whose retention ended before `now`, in every declared entity that gives one, none the second time. */
+  async purgeExpired(now: Date): Promise<number> {
+    let reached = 0;
+
+    for (const declaration of this.options.declarations.filter((declared) => declared.retention !== undefined)) {
+      reached += await this.eraseIn(declaration, expiredRows(declaration, { now, tenant: this.options.tenant }));
     }
 
     return reached;
   }
 
   /** What a pseudonymisation would write is settled, and refused, before any file or row is touched. */
-  private async eraseIn(declaration: TypeOrmPersonalFields, subject: string): Promise<number> {
+  private async eraseIn(declaration: TypeOrmPersonalFields, rows: ObjectLiteral): Promise<number> {
     const manager = this.context.manager();
     const pseudonymised = declaration.erasure === 'row' ? undefined : pseudonymisedOf(manager, declaration);
 
-    await this.deleteFilesOf(declaration, subject);
+    await this.deleteFilesOf(declaration, rows);
 
     return pseudonymised === undefined
-      ? this.deleteRows(declaration, subject)
-      : this.pseudonymise(declaration, subject, pseudonymised);
+      ? this.deleteRows(declaration, rows)
+      : this.pseudonymise(declaration, rows, pseudonymised);
   }
 
   /** The content first, then the reference: a row that still names a deleted file is run again, a file nothing names is lost. */
-  private async deleteFilesOf(declaration: TypeOrmPersonalFields, subject: string): Promise<void> {
+  private async deleteFilesOf(declaration: TypeOrmPersonalFields, where: ObjectLiteral): Promise<void> {
     const storage = this.options.files;
 
     if (declaration.files.length === 0 || storage === undefined) {
@@ -80,7 +95,7 @@ export class TypeOrmPersonalDataErasure implements PersonalDataErasure {
       .getRepository(declaration.table)
       .find({
         select: Object.fromEntries(declaration.files.map((file) => [file, true])),
-        where: aboutSubject(declaration, subject, this.options.tenant),
+        where,
       });
 
     for (const row of rows) {
@@ -94,13 +109,13 @@ export class TypeOrmPersonalDataErasure implements PersonalDataErasure {
     }
   }
 
-  private async deleteRows(declaration: TypeOrmPersonalFields, subject: string): Promise<number> {
+  private async deleteRows(declaration: TypeOrmPersonalFields, rows: ObjectLiteral): Promise<number> {
     const deleted = await this.context
       .manager()
       .createQueryBuilder()
       .delete()
       .from(declaration.table)
-      .where(aboutSubject(declaration, subject, this.options.tenant))
+      .where(rows)
       .execute();
 
     return affectedRows(deleted);
@@ -108,7 +123,7 @@ export class TypeOrmPersonalDataErasure implements PersonalDataErasure {
 
   private async pseudonymise(
     declaration: TypeOrmPersonalFields,
-    subject: string,
+    rows: ObjectLiteral,
     pseudonymised: readonly Pseudonymised[],
   ): Promise<number> {
     const manager = this.context.manager();
@@ -118,7 +133,7 @@ export class TypeOrmPersonalDataErasure implements PersonalDataErasure {
       .createQueryBuilder()
       .update(declaration.table)
       .set(changes)
-      .where(aboutSubject(declaration, subject, this.options.tenant))
+      .where(rows)
       .andWhere(new Brackets((reached) => notYetErased(reached, pseudonymised, manager)))
       .execute();
 

@@ -14,6 +14,9 @@ export function jobSettings(environment: Environment, context?: string): Readonl
 {{#if audit.archive}}
     'audit.archive': { enabled: environment['JOB_AUDIT_ARCHIVE_ENABLED'] !== 'false' },
 {{/if}}
+{{#if privacy.on}}
+    'privacy.purge-expired': { enabled: environment['JOB_PRIVACY_PURGE_EXPIRED_ENABLED'] !== 'false' },
+{{/if}}
     // ddd-ts-kit:jobs
     // /ddd-ts-kit:jobs
   };

@@ -60,6 +60,11 @@ export {
   type AuditedPersonalDataExportOptions,
 } from './sources/audited-personal-data-export';
 export {
+  PERSONAL_DATA_PURGE_ACTION,
+  auditedPersonalDataRetention,
+  type AuditedPersonalDataRetentionOptions,
+} from './sources/audited-personal-data-retention';
+export {
   SUBJECT_ERASURE_ACTION,
   auditedSubjectKeys,
   type AuditedSubjectKeysOptions,

@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:a25d128e630b3d32 -->
+<!-- translation-of: commands.md sha256:ba58a0c66f4a8c69 -->
 
 # Quelle commande, quand
 
@@ -607,7 +607,7 @@ Kinds
   error <context> <Refusal> <factory> [--code CODE] [--term "<Term>=<meaning>"]...   (alias: refusal)
   domain-error <context> <Name> [--code CODE]
   domain-service <context> <Name> [--term "<Term>=<meaning>"]...
-  repository <context> <Aggregate> [--tenant-scoped] [--personal <column>,<column>... [--subject <column>] [--erasure pseudonymise|row]]
+  repository <context> <Aggregate> [--tenant-scoped] [--personal <column>,<column>... [--subject <column>] [--erasure pseudonymise|row] [--retention <column>:<n><d|m|y>]]
   command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]...
   query <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--search] [--term "<Term>=<meaning>"]...
   port <context> <Name>

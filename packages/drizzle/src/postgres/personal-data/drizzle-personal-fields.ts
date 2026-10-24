@@ -1,5 +1,5 @@
 import type { PgTable } from 'drizzle-orm/pg-core';
-import type { ErasureMode } from '@ddd-ts-kit/kernel';
+import type { ErasureMode, RetentionPeriod } from '@ddd-ts-kit/kernel';
 
 /** A `personalFields` declaration on a Drizzle table, whatever its row type: the table itself, the columns by the keys of its definition. */
 export interface DrizzlePersonalFields {
@@ -8,4 +8,6 @@ export interface DrizzlePersonalFields {
   readonly fields: readonly string[];
   readonly erasure: ErasureMode;
   readonly files: readonly string[];
+  /** How long the rows keep it, from a date column: what `purgeExpired` reads. */
+  readonly retention?: RetentionPeriod & { readonly after: string };
 }

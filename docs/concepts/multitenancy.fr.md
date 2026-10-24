@@ -1,5 +1,5 @@
 [English](multitenancy.md) · **Français**
-<!-- translation-of: multitenancy.md sha256:fb90fa0f3b880cc4 -->
+<!-- translation-of: multitenancy.md sha256:9b520117fd45c7e5 -->
 
 # Multitenance
 
@@ -309,6 +309,31 @@ export async function appointmentsForATicket(practitionerId: string, tenants: re
   );
 }
 ```
+
+## La seule écriture à travers les *tenants* : la purge de ce qui a dépassé sa durée de conservation
+
+Chaque écriture du kit reste dans le *tenant* du travail, et une élévation n'en élargit jamais
+aucune : un effacement tourne une fois par *tenant* de `TENANTS`, dans un contexte d'exécution de ce
+*tenant*. Il existe une exception, choisie et bornée : `purgeExpired(now)` des adaptateurs
+d'effacement, que lance le *job* de nuit `privacy.purge-expired` de la plateforme (page de concept
+[Les données personnelles](personal-data.fr.md#la-conservation-chaque-nuit)).
+
+- **Pourquoi.** La durée de conservation est une politique de la table, la même pour chaque
+  *tenant*, et la limitation de la conservation est due à chacun d'eux. Une purge confinée à une
+  liste de *tenants* garderait, dans un *tenant* oublié de cette liste, des données qui devaient
+  disparaître : l'échec serait silencieux et le manquement réel.
+- **Quand.** Seulement quand le travail ne nomme aucun *tenant* : le *job* de la plateforme, ou
+  `npm run privacy:purge`, tous deux hors de toute requête. Dans le contexte d'un *tenant*, le même
+  adaptateur confine sa purge à ce *tenant*, comme toute autre écriture.
+- **Ce qu'elle peut faire.** Effacer, comme la déclaration le dit, les lignes dont la colonne de date
+  est plus ancienne que la durée : les supprimer ou pseudonymiser leurs colonnes personnelles. Elle
+  ne relit rien, ne déplace rien d'un *tenant* à un autre, et son critère est la seule date de la
+  ligne, jamais la personne qu'elle concerne ni le *tenant* qui la tient.
+- **Ce qu'elle laisse.** Avec le journal d'audit actif, une entrée par contexte et par passage
+  (`personal-data:purge`, le nombre de lignes, aucune personne), dans la chaîne de la plateforme.
+
+Un projet qui veut une purge confinée la lance plutôt par *tenant*, dans des contextes de ces
+*tenants* (`eachTenant`), et prend à sa charge le devoir de la liste.
 
 ## Limites et quand ne pas l'utiliser
 

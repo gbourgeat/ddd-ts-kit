@@ -785,6 +785,16 @@ its adapter extends this class with `name`, `declarations` and `tenant` (`Prisma
 every export into one dated document. Wrap the adapter with `auditedPersonalDataExport` of
 `@ddd-ts-kit/audit` where it is bound, so that each handover leaves an entry.
 
+The same declarations give the storage limitation (GDPR article 5(1)(e)): a declaration with
+`retention: { after: 'ended_at', months: 36 }` says how long its rows keep the person, counted from a
+date column of the row, and `purgeExpired(now)` of the erasure adapter erases, as the declaration
+says, the rows whose date is older than the period; a row whose date is empty never expires, and a
+second run reaches nothing. It confines itself to the tenant of the work when the work names one,
+and reaches every tenant when it names none, as the nightly job of the platform does: a tenant left
+out of a list would keep what it should not. The adapter implements `PersonalDataRetention` of the
+kernel and passes `personalDataRetentionContract`; `purgeExpiredPersonalData` of the kernel runs
+every copy, and `auditedPersonalDataRetention` of `@ddd-ts-kit/audit` records each purge.
+
 ## Outbox and idempotency
 
 `claim` is required, because a Prisma client does not tell which database it talks to:

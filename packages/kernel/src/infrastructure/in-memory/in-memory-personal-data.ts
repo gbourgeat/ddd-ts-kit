@@ -5,6 +5,8 @@ import type { PersonalFields } from '../../application/personal-data/personal-fi
 import type { FileStorage } from '../../application/ports/file-storage';
 import type { PersonalDataErasure } from '../../application/ports/personal-data-erasure';
 import type { PersonalDataExport } from '../../application/ports/personal-data-export';
+import type { PersonalDataRetention } from '../../application/ports/personal-data-retention';
+import { expiredBefore } from '../../application/personal-data/expired-before';
 
 export interface InMemoryPersonalDataOptions {
   /** Where the files the declaration names live: deleted by an erasure. Left out, their columns are emptied alone. */
@@ -18,7 +20,9 @@ export interface InMemoryPersonalDataOptions {
  * `personalDataExportContract` of `@ddd-ts-kit/testing`. For tests, and for a context whose copy
  * lives in memory.
  */
-export class InMemoryPersonalData<R extends object> implements PersonalDataErasure, PersonalDataExport {
+export class InMemoryPersonalData<R extends object>
+  implements PersonalDataErasure, PersonalDataExport, PersonalDataRetention
+{
   private rows: R[] = [];
 
   constructor(
@@ -37,18 +41,24 @@ export class InMemoryPersonalData<R extends object> implements PersonalDataErasu
   }
 
   async erase(subject: string): Promise<number> {
-    const reached = this.rows.filter((row) => this.isAbout(row, subject) && !this.isErased(row));
+    return this.eraseRows((row) => this.isAbout(row, subject));
+  }
 
-    for (const row of reached) {
-      await this.deleteFilesOf(row);
+  /** The rows whose retention ended before `now`, erased as the declaration says; nothing without a retention, nor for a row whose date is empty. */
+  async purgeExpired(now: Date): Promise<number> {
+    const { retention } = this.declaration;
+
+    if (retention === undefined) {
+      return 0;
     }
 
-    this.rows =
-      this.declaration.erasure === 'row'
-        ? this.rows.filter((row) => !reached.includes(row))
-        : this.rows.map((row) => (reached.includes(row) ? this.pseudonymised(row) : row));
+    const before = expiredBefore(retention, now).getTime();
 
-    return reached.length;
+    return this.eraseRows((row) => {
+      const start = instantOf(columnOf(row, retention.after));
+
+      return start !== undefined && start < before;
+    });
   }
 
   async exportOf(subject: string): Promise<readonly PersonalDataRecord[]> {
@@ -62,6 +72,21 @@ export class InMemoryPersonalData<R extends object> implements PersonalDataErasu
           [...fields, ...files].map((field) => [field, personalDataValueOf(columnOf(row, field))]),
         ),
       }));
+  }
+
+  private async eraseRows(selected: (row: R) => boolean): Promise<number> {
+    const reached = this.rows.filter((row) => selected(row) && !this.isErased(row));
+
+    for (const row of reached) {
+      await this.deleteFilesOf(row);
+    }
+
+    this.rows =
+      this.declaration.erasure === 'row'
+        ? this.rows.filter((row) => !reached.includes(row))
+        : this.rows.map((row) => (reached.includes(row) ? this.pseudonymised(row) : row));
+
+    return reached.length;
   }
 
   private isAbout(row: R, subject: string): boolean {
@@ -108,4 +133,11 @@ function columnOf(row: object, column: string): unknown {
   const value: unknown = Reflect.get(row, column);
 
   return value;
+}
+
+/** A date column as a store gives it back: a date, or its ISO text. */
+function instantOf(value: unknown): number | undefined {
+  const time = value instanceof Date ? value.getTime() : typeof value === 'string' ? Date.parse(value) : Number.NaN;
+
+  return Number.isNaN(time) ? undefined : time;
 }

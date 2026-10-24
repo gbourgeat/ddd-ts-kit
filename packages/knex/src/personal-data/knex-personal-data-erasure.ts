@@ -6,6 +6,7 @@ import {
   isDataSubjectId,
   pseudonymisedValueOf,
   type PersonalDataErasure,
+  type PersonalDataRetention,
 } from '@ddd-ts-kit/kernel';
 import { tableIn } from '../tenancy/table-in';
 import type { KnexContext } from '../unit-of-work/knex-context';
@@ -13,8 +14,12 @@ import type { KnexPersonalDataErasureOptions } from './knex-personal-data-erasur
 import type { KnexPersonalFields } from './knex-personal-fields';
 import { recordsOf } from './records-of';
 import { rowsAbout } from './rows-about';
+import { rowsExpired } from './rows-expired';
 
 type Changes = Readonly<Record<string, string | null>>;
+
+/** The rows an erasure or a purge reaches in one table, built anew for each statement. */
+type Rows = () => Knex.QueryBuilder;
 
 /** What the catalogue says of a column: its SQL type, and whether it accepts null. */
 interface Column {
@@ -29,9 +34,11 @@ interface Column {
  * `ERASED_PERSONAL_DATA`, any other type nothing, a file column nothing). Every statement runs on
  * the executor of the unit of work and, for tenant data, in the tenant of the work alone. The port
  * of the context extends `PersonalDataErasure` and its adapter extends this class:
- * `class KnexPatientErasure extends KnexPersonalDataErasure implements PatientErasure`.
+ * `class KnexPatientErasure extends KnexPersonalDataErasure implements PatientErasure`. The same
+ * declarations give the storage limitation: `purgeExpired(now)` erases, as each declaration says,
+ * the rows whose `retention` ended.
  */
-export class KnexPersonalDataErasure implements PersonalDataErasure {
+export class KnexPersonalDataErasure implements PersonalDataErasure, PersonalDataRetention {
   readonly name: string;
 
   private readonly columns = new Map<string, Promise<Readonly<Record<string, Column>>>>();
@@ -53,27 +60,42 @@ export class KnexPersonalDataErasure implements PersonalDataErasure {
     let reached = 0;
 
     for (const declaration of this.options.declarations) {
-      reached += await this.eraseIn(declaration, subject);
+      reached += await this.eraseIn(declaration, () =>
+        rowsAbout(this.context, { declaration, subject }, this.options.tenant),
+      );
+    }
+
+    return reached;
+  }
+
+  /** The rows whose retention ended before `now`, in every declared table that gives one, none the second time. */
+  async purgeExpired(now: Date): Promise<number> {
+    let reached = 0;
+
+    for (const declaration of this.options.declarations.filter((declared) => declared.retention !== undefined)) {
+      reached += await this.eraseIn(declaration, () =>
+        rowsExpired(this.context, declaration, { now, tenant: this.options.tenant }),
+      );
     }
 
     return reached;
   }
 
   /** What a pseudonymisation would write is settled, and refused, before any file or row is touched. */
-  private async eraseIn(declaration: KnexPersonalFields, subject: string): Promise<number> {
+  private async eraseIn(declaration: KnexPersonalFields, rows: Rows): Promise<number> {
     const changes = declaration.erasure === 'row' ? undefined : await this.changesOf(declaration);
 
-    await this.deleteFilesOf(declaration, subject);
-
-    const rows = rowsAbout(this.context, { declaration, subject }, this.options.tenant);
+    await this.deleteFilesOf(declaration, rows);
 
     return changes === undefined
-      ? rows.delete()
-      : rows.where((reached) => notYetErased(reached, changes)).update(changes);
+      ? rows().delete()
+      : rows()
+          .where((reached) => notYetErased(reached, changes))
+          .update(changes);
   }
 
   /** The content first, then the reference: a row that still names a deleted file is run again, a file nothing names is lost. */
-  private async deleteFilesOf(declaration: KnexPersonalFields, subject: string): Promise<void> {
+  private async deleteFilesOf(declaration: KnexPersonalFields, rows: Rows): Promise<void> {
     const { files } = declaration;
     const storage = this.options.files;
 
@@ -81,15 +103,15 @@ export class KnexPersonalDataErasure implements PersonalDataErasure {
       return;
     }
 
-    const rows: unknown = await rowsAbout(this.context, { declaration, subject }, this.options.tenant)
+    const named: unknown = await rows()
       .select(files)
-      .where((named) => {
+      .where((any) => {
         for (const file of files) {
-          void named.orWhereNotNull(file);
+          void any.orWhereNotNull(file);
         }
       });
 
-    for (const row of recordsOf(rows)) {
+    for (const row of recordsOf(named)) {
       for (const file of files) {
         const key = row[file];
 

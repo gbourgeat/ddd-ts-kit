@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:17190eab9f6f73f5 -->
+<!-- translation-of: README.md sha256:05a43324799a82be -->
 
 # @ddd-ts-kit/audit
 
@@ -20,7 +20,7 @@ npm i typeorm          # seulement pour @ddd-ts-kit/audit/typeorm
 
 | Point d'entrée | Contient | Importe |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`) et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`) et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (pair optionnel) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (pair optionnel) |
 | `@ddd-ts-kit/audit/prisma` | `PrismaAuditTrail`, `auditPrismaModels`, `auditGuardStatements` | rien : le client de l'unité de travail de `@ddd-ts-kit/prisma` convient structurellement |
@@ -514,6 +514,20 @@ rassemble les exports ainsi décorés en un document daté, et `init --privacy o
 const audited = (port: PersonalDataExport): PersonalDataExport => auditedPersonalDataExport(port, trail, source);
 const exports = dataSubjectExports.map((port) => audited(container.resolve(port)));
 ```
+
+### g. Purges de ce qui a dépassé sa durée de conservation
+
+La limitation de la conservation de l'article 5(1)(e) s'applique sans que personne ne le demande :
+le *job* de nuit d'un projet généré efface les lignes qui ont dépassé la durée que leur déclaration
+donne. La responsabilité de l'article 5(2) demande la preuve qu'il tourne.
+`auditedPersonalDataRetention(port, trail, { scope, clock, ids })` décore le `PersonalDataRetention`
+d'une copie, de sorte que chaque `purgeExpired` écrive une entrée : catégorie `data-access`, action
+`personal-data:purge` (`PERSONAL_DATA_PURGE_ACTION`), le nom de la copie comme `context`,
+`changes: { rows }`, `0` compris, et aucune ressource : une purge atteint des lignes par leur âge,
+jamais par la personne qu'elles concernent, et l'entrée ne nomme donc personne. L'ordre est celui
+des exports : le contexte d'exécution d'abord (le *job* et le script en ouvrent un), la purge, puis
+l'entrée ; un échec est enregistré avec son code et relevé, `onLostRecord` informé quand cette
+entrée se perd aussi.
 
 ### Dans une application de `@ddd-ts-kit/di`
 

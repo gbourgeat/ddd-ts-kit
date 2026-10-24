@@ -48,6 +48,7 @@ export function personalVars(scope: Scope): RenderContext {
     pseudonymise: request.erasure === 'pseudonymise',
     subjectIsId: request.subject === 'id',
     names: { ...names },
+    ...retentionVars(request, spelling),
     header: classHeader(names.adapter, names.base, names.port),
     exportHeader: classHeader(names.exportAdapter, names.exportBase, names.exportPort),
     ...storageVars(request),
@@ -58,18 +59,77 @@ export function personalVars(scope: Scope): RenderContext {
 /** The columns the generated storage gains, nullable text each: the personal ones, and the subject column when the row is about somebody else. */
 function storageVars(request: PersonalRequest): RenderContext {
   const columns = [...request.fields, ...(request.subject === 'id' ? [] : [request.subject])].map(personalColumn);
+  const lines = linesOf(columns, request.retention === undefined ? [] : [personalColumn(request.retention.column)]);
+
+  return { ...sqlStorage(lines), ...modelStorage(lines) };
+}
+
+type Lines = ReturnType<typeof linesOf>;
+
+/** The lines of a Knex table and row, and of a Drizzle table. */
+function sqlStorage(lines: Lines): RenderContext {
+  return {
+    knexTable: lines(
+      ({ column }) => `    table.text('${column}');`,
+      ({ column }) => `    table.timestamp('${column}', { useTz: true });`,
+    ),
+    knexRow: lines(
+      ({ column }) => `  readonly ${column}: string | null;`,
+      ({ column }) => `  readonly ${column}: Date | null;`,
+    ),
+    drizzleTable: lines(
+      ({ column, property }) => `  ${property}: text('${column}'),`,
+      ({ column, property }) => `  ${property}: timestamp('${column}', { withTimezone: true, mode: 'date' }),`,
+    ),
+    drizzleTenantTable: lines(
+      ({ column, property }) => `    ${property}: text('${column}'),`,
+      ({ column, property }) => `    ${property}: timestamp('${column}', { withTimezone: true, mode: 'date' }),`,
+    ),
+  };
+}
+
+/** The lines of a Prisma model and of a TypeORM entity and row. */
+function modelStorage(lines: Lines): RenderContext {
+  return {
+    prismaModel: lines(
+      ({ column, property }) => `  ${property} String? @map("${column}")`,
+      ({ column, property }) => `  ${property} DateTime? @map("${column}") @db.Timestamptz(3)`,
+    ),
+    typeormTable: lines(
+      ({ column, property }) => `    ${property}: { name: '${column}', type: 'text', nullable: true },`,
+      ({ column, property }) => `    ${property}: { name: '${column}', type: 'timestamptz', nullable: true },`,
+    ),
+    typeormRow: lines(
+      ({ property }) => `  ${property}: string | null;`,
+      ({ property }) => `  ${property}: Date | null;`,
+    ),
+  };
+}
+
+/** The lines of the personal columns, as text, then the date column a retention adds, as a timestamp. */
+function linesOf(
+  columns: readonly PersonalColumn[],
+  dated: readonly PersonalColumn[],
+): (text: (column: PersonalColumn) => string, date: (column: PersonalColumn) => string) => string {
+  return (text, date) =>
+    [columnLines(columns, text), ...(dated.length === 0 ? [] : [columnLines(dated, date)])].join('\n');
+}
+
+/** The retention as the declaration spells it and as the generated spec dates a row. */
+function retentionVars(request: PersonalRequest, spelling: Spelling): RenderContext {
+  const { retention } = request;
+
+  if (retention === undefined) {
+    return { retains: false };
+  }
+
+  const after = personalColumn(retention.column);
 
   return {
-    knexTable: columnLines(columns, ({ column }) => `    table.text('${column}');`),
-    knexRow: columnLines(columns, ({ column }) => `  readonly ${column}: string | null;`),
-    drizzleTable: columnLines(columns, ({ column, property }) => `  ${property}: text('${column}'),`),
-    drizzleTenantTable: columnLines(columns, ({ column, property }) => `    ${property}: text('${column}'),`),
-    prismaModel: columnLines(columns, ({ column, property }) => `  ${property} String? @map("${column}")`),
-    typeormTable: columnLines(
-      columns,
-      ({ column, property }) => `    ${property}: { name: '${column}', type: 'text', nullable: true },`,
-    ),
-    typeormRow: columnLines(columns, ({ property }) => `  ${property}: string | null;`),
+    retains: true,
+    retention: `{ after: '${after[spelling.declaration]}', ${retention.unit}: ${String(retention.amount)} }`,
+    retentionRow: after[spelling.row],
+    retentionColumn: retention.column,
   };
 }
 
@@ -77,7 +137,8 @@ function storageVars(request: PersonalRequest): RenderContext {
 function spelledVars(request: PersonalRequest, spelling: Spelling): RenderContext {
   const fields = request.fields.map(personalColumn);
   const subject = personalColumn(request.subject);
-  const columns = request.subject === 'id' ? fields : [...fields, subject];
+  const dated = request.retention === undefined ? [] : [personalColumn(request.retention.column)];
+  const columns = [...(request.subject === 'id' ? fields : [...fields, subject]), ...dated];
 
   const about = (person: string): (readonly [string, string])[] =>
     request.subject === 'id' ? [] : [[subject[spelling.row], `'${person}'`]];

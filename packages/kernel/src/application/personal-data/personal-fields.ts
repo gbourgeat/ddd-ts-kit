@@ -1,5 +1,7 @@
 import type { ErasureMode } from './erasure-mode';
+import { assertRetention } from './assert-retention';
 import { InvalidPersonalFieldsError } from './invalid-personal-fields-error';
+import type { Retention } from './retention';
 
 /** The columns of one table that hold personal data, and whose: what an erasure, an export and a register read. */
 export interface PersonalFields<Row, Table = unknown> {
@@ -12,6 +14,8 @@ export interface PersonalFields<Row, Table = unknown> {
   readonly erasure: ErasureMode;
   /** Columns that hold the key of a file of the subject in the file storage: the file is deleted and the column emptied, whatever the mode. */
   readonly files: readonly (keyof Row & string)[];
+  /** How long the rows keep it, counted from a date column: past that, the purge erases them as `erasure` says. Absent: kept until the person asks. */
+  readonly retention?: Retention<Row>;
 }
 
 export interface PersonalFieldsOptions<Row> {
@@ -19,6 +23,7 @@ export interface PersonalFieldsOptions<Row> {
   readonly fields: readonly (keyof Row & string)[];
   readonly erasure: ErasureMode;
   readonly files?: readonly (keyof Row & string)[];
+  readonly retention?: Retention<Row>;
 }
 
 /**
@@ -27,11 +32,12 @@ export interface PersonalFieldsOptions<Row> {
  * One declaration, read by the erasure adapter of the persistence package, by the export, by the
  * generated register and by the `privacy/*` rules. A table without personal data declares nothing.
  * Refused: no field, a column listed twice, and a subject column that is itself declared
- * personal, since an identifier that is personal data (an email) cannot name a data subject.
+ * personal, since an identifier that is personal data (an email) cannot name a data subject, and a
+ * retention that is not one positive unit or that runs from a personal column.
  */
 export function personalFields<Row, Table = unknown>(
   table: Table,
-  { subject, fields, erasure, files = [] }: PersonalFieldsOptions<Row>,
+  { subject, fields, erasure, files = [], retention }: PersonalFieldsOptions<Row>,
 ): PersonalFields<Row, Table> {
   const personal = [...fields, ...files];
 
@@ -49,5 +55,9 @@ export function personalFields<Row, Table = unknown>(
     throw new InvalidPersonalFieldsError('lists a column twice');
   }
 
-  return { table, subject, fields, erasure, files };
+  if (retention !== undefined) {
+    assertRetention(retention, personal);
+  }
+
+  return { table, subject, fields, erasure, files, ...(retention === undefined ? {} : { retention }) };
 }

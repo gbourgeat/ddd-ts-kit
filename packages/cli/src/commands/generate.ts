@@ -79,6 +79,7 @@ const OPTIONS = {
   personal: TEXT,
   subject: TEXT,
   erasure: TEXT,
+  retention: TEXT,
   search: SWITCH,
   kind: TEXT,
   decorators: SWITCH,
@@ -168,6 +169,7 @@ const TEXT_FLAGS = [
   'personal',
   'subject',
   'erasure',
+  'retention',
 ] as const;
 
 function flagsOf(args: Arguments): KindFlags {

@@ -18,7 +18,7 @@ npm i typeorm          # only for @ddd-ts-kit/audit/typeorm
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`) and `auditRecordOf`, `auditedFields`, `auditedProjection` and `masked`, the `AuditMasker` port and `hmacMasker`, `verifyChain`, `TenantAuditReader`, the chain primitives (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`); re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`) and `auditRecordOf`, `auditedFields`, `auditedProjection` and `masked`, the `AuditMasker` port and `hmacMasker`, `verifyChain`, `TenantAuditReader`, the chain primitives (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`); re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (optional peer) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (optional peer) |
 | `@ddd-ts-kit/audit/prisma` | `PrismaAuditTrail`, `auditPrismaModels`, `auditGuardStatements` | nothing: the client of the unit of work of `@ddd-ts-kit/prisma` fits structurally |
@@ -499,6 +499,19 @@ told. `exportDataSubject` of the kernel gathers the exports so wrapped into one 
 const audited = (port: PersonalDataExport): PersonalDataExport => auditedPersonalDataExport(port, trail, source);
 const exports = dataSubjectExports.map((port) => audited(container.resolve(port)));
 ```
+
+### g. Purges of what outlived its retention
+
+The storage limitation of article 5(1)(e) is applied without anybody asking: the nightly job of a
+generated project erases the rows that outlived the retention their declaration gives. The
+accountability of article 5(2) asks for the proof that it runs. `auditedPersonalDataRetention(port,
+trail, { scope, clock, ids })` wraps the `PersonalDataRetention` of a copy, so that every
+`purgeExpired` writes an entry: category `data-access`, action `personal-data:purge`
+(`PERSONAL_DATA_PURGE_ACTION`), the name of the copy as `context`, `changes: { rows }`, `0` included,
+and no resource: a purge reaches rows by their age, never by whom they are about, so the entry
+names nobody. The order is that of the exports: the execution context first (the job and the
+script open one), the purge, then the entry; a failure is recorded with its code and rethrown,
+`onLostRecord` told when that entry is lost too.
 
 ### In an application of `@ddd-ts-kit/di`
 
