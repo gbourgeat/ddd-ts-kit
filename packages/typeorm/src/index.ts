@@ -27,3 +27,6 @@ export * from './read-model/criteria-to-type-orm';
 export * from './read-model/type-orm-read-model-options';
 export * from './read-model/type-orm-read-model-table';
 export * from './read-model/type-orm-read-model-store';
+export * from './personal-data/type-orm-personal-data-erasure';
+export * from './personal-data/type-orm-personal-data-erasure-options';
+export * from './personal-data/type-orm-personal-fields';

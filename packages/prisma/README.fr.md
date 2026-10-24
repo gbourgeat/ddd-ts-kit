@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:95af436f8417a4ae -->
+<!-- translation-of: README.md sha256:670844f6f7068322 -->
 
 # @ddd-ts-kit/prisma
 
@@ -731,6 +731,43 @@ par `$queryRawUnsafe` avec des identifiants entre guillemets et des paramètres 
 pourquoi la table, le schéma et la colonne de chaque champ sont nommés. Les arguments donnés au
 modèle sont construits à l'exécution à partir des champs de la ligne : `PrismaReadModelDelegate`
 les type donc comme des objets, et c'est le client généré qui les valide.
+
+## Effacement des données personnelles
+
+L'effacement d'une personne concernée des tables d'un contexte, à partir des déclarations
+`personalFields` écrites à côté de ses *mappers* (`@ddd-ts-kit/kernel`, « Données personnelles ») :
+`PrismaPersonalDataErasure` implémente le port `PersonalDataErasure` sur le client de l'unité de travail (`$queryRawUnsafe` et `$executeRawUnsafe`). Le port du contexte étend celui du
+kernel, et son adaptateur étend cette classe.
+
+```ts
+// infrastructure/persistence/person.personal-fields.ts : la table telle que @@map et @@schema la nomment, les colonnes par leurs noms SQL (@map)
+export const personPersonalFields = personalFields<PersonRow, PrismaPersonalTable>(
+  { schema: 'identity', table: 'persons' },
+  { subject: 'id', fields: ['display_name', 'email'], erasure: 'row' },
+);
+
+// infrastructure/persistence/prisma-identity-erasure.repository.ts
+@Repository(IdentityErasure)
+export class PrismaIdentityErasure extends PrismaPersonalDataErasure<Prisma.TransactionClient> implements IdentityErasure {
+  constructor(database: Database, scope: ExecutionScope, files: FileStorage) {
+    super(database, { name: 'identity.persons', declarations: [personPersonalFields], tenant: { scope }, files });
+  }
+}
+```
+
+`erase(subject)` supprime d'abord du stockage les fichiers que les lignes nomment, puis supprime les
+lignes de la personne (`row`) ou les pseudonymise (`pseudonymise` : une colonne texte lit `[erased]`,
+une colonne de tout autre type ne lit rien, une colonne de fichier rien), et répond combien de lignes
+il a atteintes, aucune la seconde fois. Avec `tenant`, chaque instruction est confinée au *tenant* du
+travail et jamais élargie par une élévation (`tenant_id`, ou `tenant.column`) ; sans lui, la table tient les lignes de tous
+les *tenants*. Un sujet qui n'est pas un identifiant opaque est refusé avant toute instruction, et une
+déclaration qui nomme des colonnes de fichier sans stockage de fichiers est refusée à la construction
+de l'adaptateur. Prisma ne construit aucune instruction sur une colonne qu'il ne connaît pas à la compilation, donc les instructions sont écrites ici pour PostgreSQL, avec des identifiants entre guillemets venus des déclarations et chaque valeur en paramètre `$n` ; les types des colonnes sont lus une fois dans `information_schema`, pour qu'un texte et un nombre soient pseudonymisés chacun à sa façon. Une colonne personnelle qui n'est pas un texte doit accepter null, sinon
+les lignes s'effacent avec `row` : une déclaration qui en pseudonymiserait une qui ne l'accepte pas
+est refusée avant qu'un fichier ou une ligne ne soit touché (`NotNullablePersonalColumnError`). L'adaptateur passe `personalDataErasureContract` de
+`@ddd-ts-kit/testing`, comme celui en mémoire, sur PGlite et PostgreSQL. Ce qu'un effacement
+n'atteint pas, et la chaîne entière (`eraseDataSubject` : la clé, chaque copie dans chaque *tenant*,
+les reconstructions), sont dans le README du kernel (« Données personnelles »).
 
 ## Outbox et idempotence
 

@@ -17,7 +17,7 @@ as a legal guarantee.
 
 ## Status (2026-10-24)
 
-Parts 0, 0b, 1, 2 and 4 are built. The parts, in merge order; each is a pull request of its own
+Parts 0, 0b, 1, 2, 3 and 4 are built. The parts, in merge order; each is a pull request of its own
 with its tests, its documentation in both languages, its skills and its file of `changes/`.
 
 | Part | Verdict |
@@ -26,7 +26,7 @@ with its tests, its documentation in both languages, its skills and its file of 
 | 0b. The example erases a person end to end, by hand | **built** (#267): the person of identity, the contact of notification, the notes, the cancellation reasons, the documents and the copied name in scheduling, network by network; the README of the example says what stays out of reach |
 | 1. `personalFields` and the `PersonalDataErasure` and `PersonalDataExport` ports of the kernel | **built** (#268): the declaration, the two ports, `eraseDataSubject` and `inEachTenant` in the kernel, `InMemoryPersonalData`, the two contract suites of the testing package |
 | 2. `subjectMasker` of the audit trail, one key per data subject | **built** (#270): `subjectMasker(keys)` over the `SubjectKeyStore`, `masked(field, { subject })`, the refusal at wiring time of a masked field without a subject and, before any key, of a subject that is not an opaque id |
-| 3. The erasure adapter on the four ORMs, read models included | proposed |
+| 3. The erasure adapter on the four ORMs, read models included | **built** (#271): `KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`, each under the contract suite, the tenant confined, the files deleted first; a read model is a table like any other |
 | 4. `init` writes `src/platform/privacy/` and wires event sourcing | **built**: `Persistence.eventSourcing` on the four ORMs and in memory, `create-privacy.ts` (the audited keys, the cipher), `privacy.module.ts` or `platform.privacy`, the lists of copies and exports, `run-erasure.ts` and `run-export.ts`, the scripts `privacy:erase` and `privacy:export`; no HTTP command yet |
 | 5. `generate repository` and `generate projection` declare the personal fields | proposed |
 | 6. The erasure event, its generated handler, `personal` on an integration event | proposed |

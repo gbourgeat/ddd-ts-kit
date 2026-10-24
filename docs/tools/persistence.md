@@ -426,6 +426,10 @@ From [`packages/cli/README.md`](../../packages/cli/README.md) and
   `custom` or no ORM the generated project starts on an in-memory trail behind a
   `TODO(platform)`.
 - Fast adapter specs run on PGlite; Docker Compose provides the real server.
+- The erasure of a data subject from the tables declared with `personalFields` exists on the four
+  ORMs (`KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`,
+  `TypeOrmPersonalDataErasure`), under one contract suite; the generator does not write the
+  declarations yet ([privacy by design](../proposals/privacy-by-design.md)).
 
 ## PostgreSQL versus the others
 

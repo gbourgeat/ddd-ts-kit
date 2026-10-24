@@ -532,6 +532,44 @@ Criteria and read models were never run on MySQL or SQLite.
 The table is written through its entity; the copy of a rebuild, which has none, is written by
 column through the same query builder.
 
+## Personal data erasure
+
+The erasure of a data subject from the tables of a context, from the `personalFields` declarations
+written next to its mappers (`@ddd-ts-kit/kernel`, "Personal data"): `TypeOrmPersonalDataErasure` implements
+the `PersonalDataErasure` port over the entity manager of the unit of work. The port of the context extends the one of the kernel, and
+its adapter extends this class.
+
+```ts
+// infrastructure/persistence/person.personal-fields.ts: the entity schema itself, the columns by the properties of the entity
+export const personPersonalFields = personalFields<PersonRow, EntitySchema>(personEntity, {
+  subject: 'id',
+  fields: ['displayName', 'email'],
+  erasure: 'row',
+});
+
+// infrastructure/persistence/type-orm-identity-erasure.repository.ts
+@Repository(IdentityErasure)
+export class TypeOrmIdentityErasure extends TypeOrmPersonalDataErasure implements IdentityErasure {
+  constructor(database: TypeOrmContext, scope: ExecutionScope, files: FileStorage) {
+    super(database, { name: 'identity.persons', declarations: [personPersonalFields], tenant: { scope }, files });
+  }
+}
+```
+
+`erase(subject)` deletes the files the rows name from the storage first, then deletes the rows of
+the subject (`row`) or pseudonymises them (`pseudonymise`: a text column reads `[erased]`, a column
+of any other type reads nothing, a file column nothing), and answers how many rows it reached, none
+the second time. With `tenant`, every statement is confined to the tenant of the work and never
+widened by an elevation (the property `tenantId`, or `tenant.property`); without it, the table holds the rows of every tenant. A subject
+that is not an opaque identifier is refused before any statement, and a declaration that names file
+columns without a file storage is refused when the adapter is built. The types of the columns come from the metadata of the entity (`String` stands for a text), so that a text and a number are pseudonymised each its own way. A personal column
+that is not a text has to accept null, or the rows are erased with `row`: a declaration that would
+pseudonymise one that does not is refused before any file or row is touched
+(`NotNullablePersonalColumnError`). The adapter passes
+`personalDataErasureContract` of `@ddd-ts-kit/testing`, as the in-memory one does, on PGlite and
+PostgreSQL. What an erasure does not reach, and the whole chain (`eraseDataSubject`: the key, every
+copy in every tenant, the rebuilds), is in the README of the kernel ("Personal data").
+
 ## Outbox and idempotency
 
 ![Two relays share the outbox: with skip-locked, each selects the due rows FOR UPDATE SKIP LOCKED in a short transaction and relay B passes over the rows relay A has locked; with compare-and-set, both read row 7 and try an update guarded by the attempt count they read, the first takes it and the second writes no row and reads again; either way a claimed row stays hidden until its lease ends](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/typeorm-outbox-claim.svg)

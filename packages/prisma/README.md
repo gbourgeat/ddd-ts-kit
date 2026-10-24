@@ -713,6 +713,43 @@ the schema and the column of each field are named. The arguments given to the mo
 from the fields of the row at run time, so `PrismaReadModelDelegate` types them as objects and
 it is the generated client that validates them.
 
+## Personal data erasure
+
+The erasure of a data subject from the tables of a context, from the `personalFields` declarations
+written next to its mappers (`@ddd-ts-kit/kernel`, "Personal data"): `PrismaPersonalDataErasure` implements
+the `PersonalDataErasure` port over the client of the unit of work (`$queryRawUnsafe` and `$executeRawUnsafe`). The port of the context extends the one of the kernel, and
+its adapter extends this class.
+
+```ts
+// infrastructure/persistence/person.personal-fields.ts: the table as @@map and @@schema name it, the columns by their SQL names (@map)
+export const personPersonalFields = personalFields<PersonRow, PrismaPersonalTable>(
+  { schema: 'identity', table: 'persons' },
+  { subject: 'id', fields: ['display_name', 'email'], erasure: 'row' },
+);
+
+// infrastructure/persistence/prisma-identity-erasure.repository.ts
+@Repository(IdentityErasure)
+export class PrismaIdentityErasure extends PrismaPersonalDataErasure<Prisma.TransactionClient> implements IdentityErasure {
+  constructor(database: Database, scope: ExecutionScope, files: FileStorage) {
+    super(database, { name: 'identity.persons', declarations: [personPersonalFields], tenant: { scope }, files });
+  }
+}
+```
+
+`erase(subject)` deletes the files the rows name from the storage first, then deletes the rows of
+the subject (`row`) or pseudonymises them (`pseudonymise`: a text column reads `[erased]`, a column
+of any other type reads nothing, a file column nothing), and answers how many rows it reached, none
+the second time. With `tenant`, every statement is confined to the tenant of the work and never
+widened by an elevation (`tenant_id`, or `tenant.column`); without it, the table holds the rows of every tenant. A subject
+that is not an opaque identifier is refused before any statement, and a declaration that names file
+columns without a file storage is refused when the adapter is built. Prisma builds no statement on a column it does not know at build time, so the statements are written here for PostgreSQL, with quoted identifiers from the declarations and every value a `$n` parameter; the types of the columns are read once from `information_schema`, so that a text and a number are pseudonymised each its own way. A personal column
+that is not a text has to accept null, or the rows are erased with `row`: a declaration that would
+pseudonymise one that does not is refused before any file or row is touched
+(`NotNullablePersonalColumnError`). The adapter passes
+`personalDataErasureContract` of `@ddd-ts-kit/testing`, as the in-memory one does, on PGlite and
+PostgreSQL. What an erasure does not reach, and the whole chain (`eraseDataSubject`: the key, every
+copy in every tenant, the rebuilds), is in the README of the kernel ("Personal data").
+
 ## Outbox and idempotency
 
 `claim` is required, because a Prisma client does not tell which database it talks to:
