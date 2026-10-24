@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:624e256b796cadab -->
+<!-- translation-of: CONFIG.md sha256:d6f8e41fb92b6463 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -780,6 +780,30 @@ dérogation :
 - **La mesure ne peut pas être restreinte en silence** (`test/coverage-governed`) : ni `include`, ni `exclude`, ni `thresholds` à la main dans la configuration du lanceur, aucune option de ce genre dans un script, aucun commentaire `v8 ignore` ou `istanbul ignore` sans `-- ADR-NNNN: <reason>`.
 - Sous le mode des décorateurs historiques (legacy), la configuration Vitest générée liste `decoratorCoverage()` de `@ddd-ts-kit/testing/vitest` : les instructions qu'écrit la transformation pour appliquer les décorateurs portent une branche par type nommé qu'aucun test ne peut prendre, et sont tenues hors de la mesure.
 
+## Budget de temps
+
+```json
+"budget": { "unit": 3000, "enforce": true }
+```
+
+Chaque fichier de *spec* est tenu au budget de temps de son niveau, en millisecondes. Le reporter du
+lanceur de tests (`@ddd-ts-kit/testing/budget/vitest`, `@ddd-ts-kit/testing/budget/jest`, nommé dans
+la config du lanceur qu'écrit `init` et passé avec `--reporter` là où le *pipeline* nomme ses
+reporters) lit la clé, nomme la *spec* la plus lente de chaque niveau à la fin de chaque exécution, et
+avertit quand un fichier de *spec* a pris plus que son budget, ses tests et ses *hooks* chronométrés, le chargement de ses modules laissé de côté (l'import du graphe de l'application, partagé par les fichiers et payé par celui qui tourne le premier) ; avec `"enforce": true` sous `budget`, il fait échouer l'exécution à la place. Une durée dépend de la charge de la machine autant que de la *spec* : imposez le budget une fois les mesures du projet stables. Une *spec* unitaire d'un contexte fait tourner le modèle et les cas d'usage sur des *fakes* ;
+une *spec* d'intégration d'un contexte, et une *spec* de la plateforme, ouvre une base de données ou
+atteint un serveur. Les *specs* de l'application hors des contextes (bout en bout, acceptation,
+architecture) ne sont pas tenues : un flux a le temps qu'il lui faut.
+
+| Niveau | Référence | Pourquoi ce budget |
+|---|---|---|
+| `unit` | 5000 | un fichier de *spec* unitaire au-delà de cinq secondes cache un monde reconstruit à chaque test, des entrées-sorties derrière un *fake*, ou une attente ; la plus lente de l'exemple prend 1,6 seconde |
+| `integration` | 30000 | une base ouverte dans le processus et ses tables créées, un serveur atteint, des parcours rejoués ; la plus lente de l'exemple prend 11 secondes, sous charge |
+
+- **Baisser un budget est libre. Le monter au-dessus de la référence est une dérogation** (`governance/recorded-deviation`) avec son enregistrement de décision, `"what": "budget.unit"` ou `"budget.integration"`.
+- **Un avertissement d'abord, un échec une fois imposé** : `"enforce": true` fait échouer l'exécution sur une *spec* au-delà de son budget, en local, avant un *push* et dans le *pipeline* ; sans lui, l'exécution nomme la *spec* et passe. **La mesure porte sur la boucle, pas sur la machine** : les références laissent de la marge à un runner chargé sous couverture ; une équipe qui veut la boucle plus serrée les baisse.
+- **Un budget qui n'est pas un nombre entier de millisecondes au-dessus de zéro, ou un niveau qui n'est pas tenu**, est signalé par `check` sous `config/valid` et lu comme la référence.
+
 ## Score de mutation
 
 La config Stryker n'écrit ni *glob* ni nombre : elle étale `governedMutation()` de
@@ -835,6 +859,6 @@ tient chaque contexte au plancher, comme la couverture tient chaque contexte à 
 
 L'analyseur est tolérant : une clé qu'il ne connaît pas est ignorée sans message, et une
 classification, une relation, un identifiant de règle, un mode de garde, un mode des *worktrees*, une extension d'import
-ou un taux de couverture erronés sont signalés par `check` sous `config/valid`, pas à la lecture
+, un taux de couverture ou un budget de temps erronés sont signalés par `check` sous `config/valid`, pas à la lecture
 du fichier. Seule une valeur `stack.*` erronée, ou un fichier qui n'est pas un objet JSON,
 arrête une commande.

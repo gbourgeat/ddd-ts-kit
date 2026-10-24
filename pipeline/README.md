@@ -46,7 +46,7 @@ not a benchmark.
 | 1 | architecture | `ci:arch:check` | the tree, `CONTEXT.md`, the glossary, names, required specs and builders, event declarations, the declarations barrel, where adapters are bound, the config and its deviations | 0.3 s |
 | 1 | architecture | `ci:arch:graph` | a `.dependency-cruiser.cjs` that no longer matches the config, then the resolved import graph: the same layer and context rules through barrels, cycles, orphans, dev dependencies and test files imported by production code, undeclared packages | 0.8 s |
 | 1 | dead code | `ci:deadcode` | unused files, exports, types and dependencies | 0.6 s |
-| 2 | unit tests | `ci:test:unit` | behaviour of the domain, the application and the routes; coverage thresholds of these three layers, per context (`--mode unit`) | seconds |
+| 2 | unit tests | `ci:test:unit` | behaviour of the domain, the application and the routes; coverage thresholds of these three layers, per context (`--mode unit`); each spec file held to the time budget of its level | seconds |
 | 3 | integration tests | `ci:test:integration` | adapters against a real PostgreSQL; coverage threshold of `infrastructure/`, per context (`--mode integration`) | tens of seconds |
 | 4 | end-to-end tests | `ci:test:e2e` | the whole application through HTTP and the event bus | tens of seconds |
 | 2 | docs and contract drift | `ci:docs` | a stale context map, `CONTEXT.md` list, OpenAPI document, AsyncAPI document or event catalog, and a client of the contract that differs from it when the config has `sdk` | a build |

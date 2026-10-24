@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:5ec3ebd63b533b88 -->
+<!-- translation-of: ARCHITECTURE.md sha256:4b2358192ed1b783 -->
 
 # Référence de l'architecture
 
@@ -1629,6 +1629,12 @@ Les mêmes *builders* servent à tous les niveaux. Les tests de bout en bout uti
 générées, réalistes, avec une graine fixe affichée en cas d'échec, si bien qu'une exécution qui
 échoue peut se rejouer à l'identique. Ils vérifient ce qu'observe un client (réponses,
 événements publiés), jamais directement la base de données.
+
+Chaque fichier de *spec* est tenu au budget de temps de son niveau (`budget` de
+`ddd-ts-kit.config.json`, cinq secondes pour une *spec* unitaire et trente pour une *spec*
+d'intégration par la référence, une *spec* de la plateforme comptant comme intégration) : le reporter
+du lanceur nomme la *spec* la plus lente de chaque niveau à la fin d'une exécution et avertit quand un fichier dépasse, l'exécution échouant une fois que le projet impose le budget (`"enforce": true`), pour que la boucle reste rapide ; un budget ne se monte que par
+une dérogation enregistrée.
 
 Une sixième mesure se tient à côté des niveaux : le score de mutation des couches domaine et
 application. Chaque nuit le *pipeline* lance Stryker sur les deux couches de chaque contexte
