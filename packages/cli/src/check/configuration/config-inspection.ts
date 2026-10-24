@@ -4,6 +4,7 @@ import {
   sdkProblems,
   CLASSIFICATIONS,
   commitLimitProblems,
+  budgetProblems,
   coverageProblems,
   CONFIG_FILE,
   FUNCTION_LINES_CEILING,
@@ -206,6 +207,13 @@ export class ConfigInspection {
   /** A threshold that is not a percentage is read as the reference: the config says something no run enforces. */
   coverageThresholds(): Violation[] {
     return coverageProblems(rawConfig(this.project)['coverage']).map(({ where, message, fix }) =>
+      this.report({ file: CONFIG_FILE, line: lineOfSequence(this.project.configText, where) }, message, fix),
+    );
+  }
+
+  /** A budget that is not a duration is read as the reference: the config says something no run enforces. */
+  budgetDurations(): Violation[] {
+    return budgetProblems(rawConfig(this.project)['budget']).map(({ where, message, fix }) =>
       this.report({ file: CONFIG_FILE, line: lineOfSequence(this.project.configText, where) }, message, fix),
     );
   }

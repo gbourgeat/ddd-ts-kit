@@ -204,5 +204,9 @@ A coverage rate says that code ran under a test, never that the test asserts any
 the spec for the behaviour, and let the rate follow. The thresholds of `ddd-ts-kit.config.json`
 are a floor per context and layer, not a goal; a test written to move a number proves nothing.
 
+Each spec file is held to the time budget of its level, five seconds for a unit spec and thirty for an
+integration spec by the reference: the runner names the slowest at the end of a run and fails over the
+budget. A slow unit spec is a world to share or a fake to write, never a budget to raise.
+
 Finish with `npm test -- <context>`, `npm run test:coverage` before the slice is closed, and
 `npx ddd-ts-kit check --rule test/no-mocks --rule test/builder-required --rule test/spec-required --rule test/helper-placed --rule test/acceptance-black-box`.

@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:bdb8ba3f5db292d2 -->
+<!-- translation-of: ARCHITECTURE.md sha256:4377fe8fc1ddafca -->
 
 # Référence de l'architecture
 
@@ -1614,6 +1614,13 @@ Les mêmes *builders* servent à tous les niveaux. Les tests de bout en bout uti
 générées, réalistes, avec une graine fixe affichée en cas d'échec, si bien qu'une exécution qui
 échoue peut se rejouer à l'identique. Ils vérifient ce qu'observe un client (réponses,
 événements publiés), jamais directement la base de données.
+
+Chaque fichier de *spec* est tenu au budget de temps de son niveau (`budget` de
+`ddd-ts-kit.config.json`, cinq secondes pour une *spec* unitaire et trente pour une *spec*
+d'intégration par la référence, une *spec* de la plateforme comptant comme intégration) : le reporter
+du lanceur nomme la *spec* la plus lente de chaque niveau à la fin d'une exécution et fait échouer
+l'exécution quand un fichier dépasse, pour que la boucle reste rapide ; un budget ne se monte que par
+une dérogation enregistrée.
 
 Une *spec* d'acceptation (`test/acceptance/<story>.acceptance.spec.ts`) est le contrat d'une
 *story*, écrit à partir des critères de `docs/architecture/stories/<story>.md` avant tout son

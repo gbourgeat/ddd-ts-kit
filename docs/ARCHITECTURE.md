@@ -1546,6 +1546,12 @@ The same builders serve every level. End-to-end tests use generated, realistic d
 fixed seed that is printed on failure, so a failing run can be replayed exactly. They assert
 what a client observes (responses, published events), never the database directly.
 
+Each spec file is held to the time budget of its level (`budget` of `ddd-ts-kit.config.json`, five
+seconds for a unit spec and thirty for an integration spec by the reference, a spec of the platform
+counting as integration): the reporter of the runner names the slowest spec of each level at the end
+of a run and fails the run when a file is over, so that the loop stays fast; a budget is raised only
+by a recorded deviation.
+
 An acceptance spec (`test/acceptance/<story>.acceptance.spec.ts`) is the contract of a story,
 written from the criteria of `docs/architecture/stories/<story>.md` before any of its code. Each
 scenario names the rows that make it pass and the criterion it proves (`#US5.02 AC1 ...`), and
