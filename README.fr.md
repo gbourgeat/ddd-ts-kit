@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:678354151a1e8a32 -->
+<!-- translation-of: README.md sha256:3263a5fe1ce68d0b -->
 
 <div align="center">
 
@@ -272,7 +272,8 @@ vérification des types, lint, architecture, code mort, tests unitaires avec seu
 couverture, tests d'intégration sur PostgreSQL, tests de bout en bout, dérive de la
 documentation et du contrat, sécurité et construction de l'image, derrière une seule porte
 finale, et chaque nuit le score de mutation de la couche domaine, chaque contexte tenu à son
-plancher. Chaque outil est gratuit sur n'importe quel dépôt. Les détails :
+plancher, une *pull request* lisant les survivants de son changement. Chaque outil est gratuit sur
+n'importe quel dépôt. Les détails :
 [pipeline/README.md](pipeline/README.md).
 
 ## Documentation

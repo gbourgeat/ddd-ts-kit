@@ -23,6 +23,8 @@ describe('Range', () => {
     ['09:60', '12:00'],
     ['09:00', '24:30'],
     ['', '12:00'],
+    ['at 09:00', '12:00'],
+    ['09:00', '12:00 sharp'],
   ])('refuses %j to %j as an invalid range', (start, end) => {
     expectRefusal(() => Range.create(start, end), 'INVALID_RANGE');
   });
@@ -36,6 +38,7 @@ describe('Range', () => {
   it('overlaps a range it shares a minute with, and not the one that starts when it ends', () => {
     expect(range('09:00', '12:00').overlaps(range('11:59', '14:00'))).toBe(true);
     expect(range('09:00', '12:00').overlaps(range('12:00', '14:00'))).toBe(false);
+    expect(range('12:00', '14:00').overlaps(range('09:00', '12:00'))).toBe(false);
   });
 
   it('contains a span that lies whole inside it, bounds included', () => {

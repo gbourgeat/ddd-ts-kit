@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:22d2e4a4e0b90005 -->
+<!-- translation-of: README.md sha256:b39bda71b541b34d -->
 
 # @ddd-ts-kit/testing
 
@@ -1088,6 +1088,14 @@ export default {
 - `thresholds` : le plancher, auquel `ddd-ts-kit mutation` tient ensuite chaque contexte d'après le
   rapport json, les mutants ignorés affichés à côté de chaque score. `REFERENCE_MUTATION` est la
   référence : domaine 80.
+- `incremental`, `incrementalFile` et `force` : une passe complète par défaut, la vérité de la nuit.
+  Avec `DDD_TS_KIT_MUTATION_SINCE=<ref>` dans l'environnement, comme le *job* d'une *pull request* le
+  fixe à la base de fusion du changement, la passe est incrémentale : les résultats du dernier
+  rapport, gardés dans `reports/mutation/incremental.json`, sont réutilisés pour ce que le changement
+  ne touche pas, et la passe coûte le temps de sa passe de tests initiale. Stryker ne compare que les
+  sources mutées et les *specs*, donc la passe est forcée complète quand le changement touche un
+  autre code dont les tests dépendent : un *fake*, un *builder*, un monde, la plateforme, une
+  dépendance, une config.
 
 ## Voir aussi
 

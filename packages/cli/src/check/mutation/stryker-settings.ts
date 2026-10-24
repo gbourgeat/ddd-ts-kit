@@ -15,6 +15,8 @@ const BY_HAND: Readonly<Record<string, string>> = {
   mutator: 'replaces the mutations left out',
   ignorers: 'replaces the mutants left out',
   ignoreStatic: 'decides on the static mutants',
+  incremental: 'decides on the reuse of the results of the last run',
+  force: 'decides on the reuse of the results of the last run',
   thresholds: 'replaces the governed floor',
 };
 

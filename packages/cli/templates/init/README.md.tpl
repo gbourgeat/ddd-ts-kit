@@ -307,7 +307,7 @@ declaration that no longer follows `importAlias` and `importExtension` of
 | structure | `npm run check:arch` | `ddd-ts-kit check` |
 | import graph | `npm run depcruise` | dependency-cruiser, on `.dependency-cruiser.cjs` (generated from `ddd-ts-kit.config.json`) |
 | dead code | `npm run deadcode` | knip |
-| mutation score | `npm run test:mutation` | Stryker on the domain layer of every context, the texts of its refusals left out, each context held to the `mutation` floor of `ddd-ts-kit.config.json`; the pipeline runs it every night, not on a pull request |
+| mutation score | `npm run test:mutation` | Stryker on the domain layer of every context, the texts of its refusals left out, each context held to the `mutation` floor of `ddd-ts-kit.config.json`; the pipeline runs it every night, and on a pull request lists the survivors of the files the change touched |
 | drift | `npm run docs:check` | context map, OpenAPI, AsyncAPI, event catalog |
 
 `npm run verify` chains them with the tests. Git hooks: `npm run hooks:install` once per clone

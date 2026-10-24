@@ -1077,6 +1077,13 @@ export default {
 - `thresholds`: the floor, which `ddd-ts-kit mutation` then holds each context to from the json
   report, the ignored mutants shown beside each score. `REFERENCE_MUTATION` is the reference:
   domain 80.
+- `incremental`, `incrementalFile` and `force`: a full run by default, the truth of the night. With
+  `DDD_TS_KIT_MUTATION_SINCE=<ref>` in the environment, as the job of a pull request sets it to the
+  merge base of the change, the run is incremental: the results of the last report, kept in
+  `reports/mutation/incremental.json`, are reused for what the change leaves alone, and the run
+  takes the time of its initial test run. Stryker diffs the mutated sources and the specs alone, so
+  the run is forced whole when the change touches other code the tests lean on: a fake, a builder, a
+  world, the platform, a dependency, a config.
 
 ## See also
 

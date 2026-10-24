@@ -16,6 +16,7 @@ describe('Waiter', () => {
   it.each([
     ['without a patient', { patientId: '  ' }],
     ['without an appointment type', { appointmentTypeId: '' }],
+    ['with an appointment type made of spaces', { appointmentTypeId: '  ' }],
     ['who joined at no real instant', { joinedAt: new Date('never') }],
   ])('refuses a waiter %s', (_case, facts) => {
     expectRefusal(() => Waiter.create({ ...ada, ...facts }), 'INVALID_WAITER');
@@ -23,5 +24,11 @@ describe('Waiter', () => {
 
   it('keeps who waits, for what and since when', () => {
     expect(Waiter.create(ada)).toMatchObject(ada);
+  });
+
+  it('reads the patient and the appointment type without the spaces around them', () => {
+    const typed = Waiter.create({ ...ada, patientId: ' patient-1 ', appointmentTypeId: ' consultation ' });
+
+    expect(typed).toMatchObject({ patientId: 'patient-1', appointmentTypeId: 'consultation' });
   });
 });
