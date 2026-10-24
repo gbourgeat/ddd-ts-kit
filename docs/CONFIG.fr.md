@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:6e7b7e762fdcdc1f -->
+<!-- translation-of: CONFIG.md sha256:762986ea9306c53b -->
 
 # `ddd-ts-kit.config.json`
 
