@@ -3,8 +3,9 @@
 # @ddd-ts-kit/prisma
 
 Prisma adapters of the kernel and events ports: a unit of work that repositories never see,
-the transactional outbox store, the processed-event store, the read models of projections and
-the translation of criteria, the event store, and the models of their tables as a schema
+the transactional outbox store, the processed-event store, the background jobs and the instances
+of the process managers, the read models of projections and the translation of criteria, the
+event store, and the models of their tables as a schema
 fragment to copy. Same pieces as `@ddd-ts-kit/drizzle`, for projects on Prisma.
 
 ```
@@ -33,6 +34,8 @@ the domain ports on top of it, and the platform binds them all at start-up.
 | `PrismaReadModelStore` | the read model port of a projection (`TableReadModelStore`) | [Read models](#read-models) |
 | `PrismaOutboxStore` | `OutboxStore` of `@ddd-ts-kit/events` | [Outbox and idempotency](#outbox-and-idempotency) |
 | `PrismaProcessedEventStore` | `ProcessedEventStore` of the kernel | [Outbox and idempotency](#outbox-and-idempotency) |
+| `PrismaJobStore` | `JobStore` of `@ddd-ts-kit/scheduling` | [Background jobs and process instances](#background-jobs-and-process-instances) |
+| `PrismaProcessStore` | `ProcessStore` of the kernel | [Background jobs and process instances](#background-jobs-and-process-instances) |
 | `createPrismaEventSourcing(context)` | the event store, snapshots, checkpoints and subject keys of the kernel | [Event store](#event-store) |
 | `schemaNameOf(context)` | the schema name of a bounded context | [Schema](#schema) |
 
@@ -895,6 +898,58 @@ export async function onOrderPlaced(event: IntegrationEvent): Promise<void> {
 
 Delivery is at least once, unordered.
 
+## Background jobs and process instances
+
+Copy the two models of `prisma/jobs-and-processes.postgresql.prisma` into the schema, in the
+schema of the context whose jobs they hold (`init --orm prisma --queue database` writes them in
+`messaging`). Keep the field, table and column names: the claim of the jobs is the one raw
+statement of the store, and it selects the columns by name.
+
+- `PrismaJobStore` is the `JobStore` of `@ddd-ts-kit/scheduling`. `add` writes on the client of
+  the unit of work: a job enqueued by a command exists if and only if the command committed. A
+  claim selects the due rows of the queue `FOR UPDATE SKIP LOCKED`, then leases them and reads
+  them back in the same short transaction, so several workers pass over each other's rows. An
+  idempotency key is unique per job name and tenant; a duplicate is skipped with
+  `createMany({ skipDuplicates: true })`, which leaves the transaction of the command usable.
+  PostgreSQL only.
+- `PrismaProcessStore` is the `ProcessStore` of the kernel: a step of a process manager saves its
+  instance in the transaction of its unit of work, a first save skips the row a concurrent first
+  save wrote, a next one updates the row at the previous version, and a save that changes no row
+  is refused with `ConcurrencyError`.
+- The checkpoint of a job and the state of an instance are JSON kept as text: a worker clears a
+  checkpoint and a state may be `null`, which a `Json` field takes only through the sentinel of
+  the generated client (see [Limits](#limits)).
+
+<!-- checked sample -->
+```ts
+// platform/database/background-work.ts
+import {
+  createPrismaUnitOfWork,
+  PrismaJobStore,
+  PrismaProcessStore,
+  type PrismaJobDelegate,
+  type PrismaProcessDelegate,
+  type PrismaRawQueries,
+} from '@ddd-ts-kit/prisma';
+
+// Stands for the client `prisma generate` writes, reduced to what the stores call: the models
+// of the shipped fragment, in the `messaging` schema.
+interface TransactionClient extends PrismaRawQueries {
+  readonly backgroundJob: PrismaJobDelegate;
+  readonly processInstance: PrismaProcessDelegate;
+}
+declare const prisma: TransactionClient & {
+  $transaction<R>(work: (transaction: TransactionClient) => Promise<R>, options?: { timeout?: number }): Promise<R>;
+};
+
+const unitOfWork = createPrismaUnitOfWork(prisma);
+
+// The claim is raw SQL: it names the schema (and the table, when it is not `background_jobs`).
+export const jobs = new PrismaJobStore(unitOfWork, { delegate: (client) => client.backgroundJob, schema: 'messaging' });
+
+export const processes = new PrismaProcessStore(unitOfWork, { delegate: (client) => client.processInstance });
+```
+
 ## Event store
 
 Copy the models of `prisma/event-store.postgresql.prisma` into the schema; `prisma migrate dev`
@@ -922,7 +977,7 @@ refuses `--database mysql` and `--database sqlite`.
 
 | Database | Status |
 |---|---|
-| PostgreSQL | Covered by the automated suite, through `@prisma/adapter-pg`: contract suites of `@ddd-ts-kit/testing`, repository contract, rollback, nested unit of work, concurrent claims, both claim strategies. It runs on PGlite served over the PostgreSQL wire protocol by default, and on a real server when `DDD_TS_KIT_TEST_DATABASE_URL` is set (last run: PostgreSQL 18). |
+| PostgreSQL | Covered by the automated suite, through `@prisma/adapter-pg`: contract suites of `@ddd-ts-kit/testing`, repository contract, rollback, nested unit of work, concurrent claims, both claim strategies of the outbox, the job store and the process store. It runs on PGlite served over the PostgreSQL wire protocol by default, and on a real server when `DDD_TS_KIT_TEST_DATABASE_URL` is set (last run: PostgreSQL 18). |
 | MySQL 8 | Not in the automated suite. The fragment is validated by `prisma validate`; the outbox and processed-event contract suites and the rollback of `append` were run once by hand against MySQL 8.4 through `@prisma/adapter-mariadb`, with `skip-locked` and `compare-and-set`. |
 | SQLite | Not in the automated suite. The fragment is validated by `prisma validate`; the outbox contract suite was run once by hand through `@prisma/adapter-better-sqlite3` with `compare-and-set`, the only claim available there. The processed-event store needs the delegate shown under Limits. |
 | CockroachDB, SQL Server, MongoDB | Never run. |
@@ -943,10 +998,13 @@ What Prisma does not allow, and what the package does about it:
   connection for their whole duration.
 - **A bare `null` is refused in a `Json` field**, and the sentinels that express it live in the
   generated client. The stores leave a `null` payload out, so it is stored as SQL `NULL` and
-  read back as `null`; the field is therefore `Json?`.
+  read back as `null`; the field is therefore `Json?`. What may have to be set back to `null`
+  after it was written, the checkpoint of a job and the state of a process instance, is JSON in
+  a text field.
 - **No partial index in the schema language.** The fragment declares a plain index on
   `(status, nextAttemptAt, sequence)`. On PostgreSQL you may replace it by hand in the
-  migration with `(next_attempt_at, sequence) WHERE status = 'pending'`.
+  migration with `(next_attempt_at, sequence) WHERE status = 'pending'`; likewise the index of
+  the claim of the jobs with `WHERE status IN ('waiting', 'running')`.
 - **No `createMany({ skipDuplicates })` on SQLite, SQL Server and MongoDB.** There the model
   does not fit `PrismaProcessedEventDelegate`; give the store a delegate that maps the unique
   violation, which SQLite tolerates inside a transaction:
@@ -976,13 +1034,13 @@ What Prisma does not allow, and what the package does about it:
   required.
 - Tested with Prisma 7.10 and its driver adapters. The peer range is Prisma 7
   (`@prisma/client` `^7.0.0`).
-- `stats()` is three `count` queries, not one statement: the numbers of a busy outbox may not
-  add up to the same instant.
+- `stats()` is three `count` queries, not one statement: the numbers of a busy outbox or queue
+  may not add up to the same instant.
 
 ## Testing an adapter
 
 The unit of work of this package passes `unitOfWorkContract`, and its stores
-`outboxStoreContract` and `processedEventStoreContract`, of `@ddd-ts-kit/testing/contracts`. Hold your repositories to `repositoryContract` the same way,
+`outboxStoreContract`, `processedEventStoreContract`, `jobStoreContract` and `processStoreContract`, of `@ddd-ts-kit/testing/contracts`. Hold your repositories to `repositoryContract` the same way,
 next to their in-memory fake. The tests of this package need no container and no manual step:
 
 ```
