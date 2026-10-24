@@ -1,19 +1,17 @@
-import { Brackets, type EntityManager, type ObjectLiteral, type WhereExpressionBuilder } from 'typeorm';
+import { Brackets, type EntityManager, type WhereExpressionBuilder } from 'typeorm';
 import {
   ERASED_PERSONAL_DATA,
   NotADataSubjectIdError,
   NotNullablePersonalColumnError,
   isDataSubjectId,
   pseudonymisedValueOf,
-  tenantScopeOf,
   type PersonalDataErasure,
 } from '@ddd-ts-kit/kernel';
 import type { TypeOrmContext } from '../unit-of-work/type-orm-context';
+import { aboutSubject } from './about-subject';
 import { affectedRows } from './affected-rows';
 import type { TypeOrmPersonalDataErasureOptions } from './type-orm-personal-data-erasure-options';
 import type { TypeOrmPersonalFields } from './type-orm-personal-fields';
-
-const TENANT_PROPERTY = 'tenantId';
 
 /** A personal property, its column as the database names it, and what it reads once pseudonymised. */
 interface Pseudonymised {
@@ -82,7 +80,7 @@ export class TypeOrmPersonalDataErasure implements PersonalDataErasure {
       .getRepository(declaration.table)
       .find({
         select: Object.fromEntries(declaration.files.map((file) => [file, true])),
-        where: this.about(declaration, subject),
+        where: aboutSubject(declaration, subject, this.options.tenant),
       });
 
     for (const row of rows) {
@@ -102,7 +100,7 @@ export class TypeOrmPersonalDataErasure implements PersonalDataErasure {
       .createQueryBuilder()
       .delete()
       .from(declaration.table)
-      .where(this.about(declaration, subject))
+      .where(aboutSubject(declaration, subject, this.options.tenant))
       .execute();
 
     return affectedRows(deleted);
@@ -120,21 +118,11 @@ export class TypeOrmPersonalDataErasure implements PersonalDataErasure {
       .createQueryBuilder()
       .update(declaration.table)
       .set(changes)
-      .where(this.about(declaration, subject))
+      .where(aboutSubject(declaration, subject, this.options.tenant))
       .andWhere(new Brackets((reached) => notYetErased(reached, pseudonymised, manager)))
       .execute();
 
     return affectedRows(updated);
-  }
-
-  /** The rows about the subject, in the tenant of the work when the entity holds tenant data. */
-  private about(declaration: TypeOrmPersonalFields, subject: string): ObjectLiteral {
-    const { tenant } = this.options;
-
-    return {
-      [declaration.subject]: subject,
-      ...(tenant === undefined ? {} : { [tenant.property ?? TENANT_PROPERTY]: tenantScopeOf(tenant.scope).tenantId }),
-    };
   }
 }
 

@@ -6,16 +6,16 @@ import {
   NotNullablePersonalColumnError,
   isDataSubjectId,
   pseudonymisedValueOf,
-  tenantScopeOf,
   type PersonalDataErasure,
 } from '@ddd-ts-kit/kernel';
 import { columnOf } from '../read-model/column-of';
 import { rowsOf } from '../read-model/rows-of';
 import type { DrizzleContext } from '../unit-of-work/drizzle-context';
+import { aboutSubject } from './about-subject';
 import type { DrizzlePersonalDataErasureOptions } from './drizzle-personal-data-erasure-options';
 import type { DrizzlePersonalFields } from './drizzle-personal-fields';
-
-const TENANT_COLUMN = 'tenant_id';
+import { named } from './named';
+import { tableSqlOf } from './table-sql-of';
 
 /** A personal column and what it reads once pseudonymised: the marker for a text, nothing for anything else or for a file. */
 interface Pseudonymised {
@@ -93,7 +93,7 @@ export class DrizzlePersonalDataErasure<
       await this.context
         .executor()
         .execute(
-          sql`select ${sql.join(files.map(named), sql`, `)} from ${tableOf(declaration)} where ${this.about(declaration, subject)} and (${anyFile})`,
+          sql`select ${sql.join(files.map(named), sql`, `)} from ${tableSqlOf(declaration)} where ${aboutSubject(declaration, subject, this.options.tenant)} and (${anyFile})`,
         ),
     );
 
@@ -107,7 +107,9 @@ export class DrizzlePersonalDataErasure<
   private async deleteRows(declaration: DrizzlePersonalFields, subject: string): Promise<number> {
     const deleted = await this.context
       .executor()
-      .execute(sql`delete from ${tableOf(declaration)} where ${this.about(declaration, subject)} returning 1`);
+      .execute(
+        sql`delete from ${tableSqlOf(declaration)} where ${aboutSubject(declaration, subject, this.options.tenant)} returning 1`,
+      );
 
     return rowsOf(deleted).length;
   }
@@ -125,25 +127,10 @@ export class DrizzlePersonalDataErasure<
     const updated = await this.context
       .executor()
       .execute(
-        sql`update ${tableOf(declaration)} set ${changes} where ${this.about(declaration, subject)} and (${notYetErased(pseudonymised)}) returning 1`,
+        sql`update ${tableSqlOf(declaration)} set ${changes} where ${aboutSubject(declaration, subject, this.options.tenant)} and (${notYetErased(pseudonymised)}) returning 1`,
       );
 
     return rowsOf(updated).length;
-  }
-
-  /** The rows about the subject, in the tenant of the work when the table holds tenant data. */
-  private about(declaration: DrizzlePersonalFields, subject: string): SQL {
-    const columns = getTableColumns(declaration.table);
-    const subjectColumn = named(columnOf(columns, declaration.subject));
-    const { tenant } = this.options;
-
-    if (tenant === undefined) {
-      return sql`${subjectColumn} = ${subject}`;
-    }
-
-    const tenantColumn = tenantColumnOf(columns, tenant.column ?? TENANT_COLUMN, declaration);
-
-    return sql`${subjectColumn} = ${subject} and ${named(tenantColumn)} = ${tenantScopeOf(tenant.scope).tenantId}`;
   }
 }
 
@@ -179,32 +166,6 @@ function notYetErased(pseudonymised: readonly Pseudonymised[]): SQL {
     ),
     sql` or `,
   );
-}
-
-function tenantColumnOf(
-  columns: Readonly<Record<string, PgColumn>>,
-  name: string,
-  declaration: DrizzlePersonalFields,
-): PgColumn {
-  const column = Object.values(columns).find((candidate) => candidate.name === name);
-
-  if (column === undefined) {
-    throw new Error(
-      `The table ${getTableConfig(declaration.table).name} has no column "${name}": a table of tenant data names its tenant in it, or the erasure is given the column`,
-    );
-  }
-
-  return column;
-}
-
-function tableOf({ table }: DrizzlePersonalFields): SQL {
-  const { schema, name } = getTableConfig(table);
-
-  return schema === undefined ? sql`${sql.identifier(name)}` : sql`${sql.identifier(schema)}.${sql.identifier(name)}`;
-}
-
-function named(column: PgColumn): SQL {
-  return sql`${sql.identifier(column.name)}`;
 }
 
 function assertFilesReachable({ declarations, files }: DrizzlePersonalDataErasureOptions): void {

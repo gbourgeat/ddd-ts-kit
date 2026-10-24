@@ -88,15 +88,19 @@ lookups of the port, the columns, the mapper.
   the context (`export abstract class PatientErasure extends PersonalDataErasure {}`);
   `generate repository <ctx> <Aggregate> --personal <column>,... [--subject <column>] [--erasure row]`
   writes all of it: the columns in the storage, the declaration (`<aggregate>.personal-fields.ts`,
-  spelled as the erasure of the ORM reads it), and once per context the port, the adapter over
-  `<Orm>PersonalDataErasure`, its fake, its spec on the test database and its line in the copies
-  (`docs/concepts/personal-data.md` of the kit draws the whole erasure);
+  spelled as the erasure of the ORM reads it), and once per context the erasure and the export: the
+  ports (`extends PersonalDataErasure`, `extends PersonalDataExport`), the adapters over
+  `<Orm>PersonalDataErasure` and `<Orm>PersonalDataExport`, their fakes, one spec on the test
+  database and their lines in the copies and in the exports (`docs/concepts/personal-data.md` of
+  the kit draws both);
   `eraseDataSubject` of the kernel runs the key, every copy in every tenant (`inEachTenant`) and
   the rebuilds, in that order; a context lists its port in
   `src/platform/privacy/data-subject-copies.ts` (its export port in `data-subject-exports.ts`;
   `init --privacy on`, the default with an ORM, writes the folder and the scripts `privacy:erase`
   and `privacy:export`), and `npm run privacy:erase -- <subject-id>` reaches them all, the key
-  first when the project has an event store; `personalDataErasureContract` of
+  first when the project has an event store; `npm run privacy:export -- <subject-id>` hands over one
+  dated document (`exportDataSubject`, `PersonalDataExportDocument`), each export wrapped by
+  `auditedPersonalDataExport` when the trail is on, never the values in the entry; `personalDataErasureContract` of
   `@ddd-ts-kit/testing` holds the adapter and the fake (`InMemoryPersonalData`) to the same behaviour.
   The adapter of a context extends the one of its ORM package (`KnexPersonalDataErasure`,
   `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`), given

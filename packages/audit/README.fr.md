@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6a9fca0dd2d04ee5 -->
+<!-- translation-of: README.md sha256:8d9674c168cd5e04 -->
 
 # @ddd-ts-kit/audit
 
@@ -19,7 +19,7 @@ npm i drizzle-orm      # seulement pour @ddd-ts-kit/audit/drizzle
 
 | Point d'entrée | Contient | Importe |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`) et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`) et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (pair optionnel) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (pair optionnel) |
 | `@ddd-ts-kit/audit/testing` | `auditTrailContract` | `@ddd-ts-kit/testing` (pair optionnel), le *runner* que vous passez |
@@ -474,6 +474,42 @@ travail (un gestionnaire de commande, derrière `unitOfWorkMiddleware`), les deu
 rejoignent sa transaction : la destruction et son entrée sont validées ensemble ou aucune
 n'existe, et un échec annule l'entrée `failed` avec le reste. Ce que le journal garde de cet
 échec, c'est l'entrée `failed` de la commande, que `auditMiddleware` écrit après l'annulation.
+
+### f. Exports de personnes concernées
+
+Le droit d'accès et la portabilité remettent à une personne tout ce que le système garde d'elle :
+une lecture du profil entier, dont la responsabilité de l'article 5(2) demande la trace, qui a lu
+quoi de qui et quand. `auditedPersonalDataExport(port, trail, { scope, clock, ids })` décore le port
+`PersonalDataExport` d'un contexte, de sorte que chaque `exportOf`, quel que soit l'appelant (le
+script `privacy:export` d'un projet généré, un gestionnaire de commande, un *job*), écrive une
+entrée :
+
+| Champ | Valeur |
+|---|---|
+| `category` | `data-access` |
+| `action` | `personal-data:export` (`PERSONAL_DATA_EXPORT_ACTION`) |
+| `outcome` | `succeeded`, ou `failed` quand le port a levé une erreur, avec le `code` d'une `DomainError` ou `UNEXPECTED_ERROR` comme `reason` |
+| `resource` | `{ type: 'data-subject', id: <personne> }` |
+| `context` | le `name` du port : le contexte borné |
+| `changes` | `{ records: <n> }`, le nombre d'enregistrements lus, `0` quand le contexte ne garde rien de la personne |
+| acteur, *tenant*, session, corrélation, origine | le scope d'exécution |
+
+L'entrée ne contient jamais une valeur des enregistrements : le journal est en ajout seul et lu par
+beaucoup, le document va à la personne seule. L'ordre est choisi pour qu'aucun document ne parte
+sans sa trace : le contexte d'exécution est lu d'abord (un export hors de `ExecutionScope.run` est
+refusé avant qu'une ligne ne soit lue), les enregistrements sont lus, l'entrée est écrite, et alors
+seulement les enregistrements sont remis. Quand l'entrée ne peut pas être écrite, `exportOf` est
+rejeté avec cette erreur et ne remet rien ; relancé, il relit les mêmes lignes et les enregistre.
+Une lecture qui échoue est enregistrée avec son code, puis relevée ; quand cette entrée ne peut pas
+être écrite non plus, `onLostRecord(error, record)` en est informé. `exportDataSubject` du kernel
+rassemble les exports ainsi décorés en un document daté, et `init --privacy on` le câble dans
+`src/platform/privacy/run-export.ts` quand le journal est actif :
+
+```ts
+// src/platform/privacy/run-export.ts, tel qu'init l'écrit avec --audit on
+const audited = (port: PersonalDataExport): PersonalDataExport => auditedPersonalDataExport(port, trail, source);
+const exports = dataSubjectExports.map((port) => audited(container.resolve(port)));
+```
 
 ### Dans une application de `@ddd-ts-kit/di`
 

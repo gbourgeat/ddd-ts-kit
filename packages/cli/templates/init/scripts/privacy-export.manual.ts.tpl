@@ -15,8 +15,10 @@ import { runExport } from '{{alias.platform}}/privacy/run-export{{alias.ext}}';
 // The right of access and to portability of one data subject (GDPR, articles 15 and 20), from the
 // command line:
 //   npm run privacy:export -- <subject-id> [--operator <who-asks>] > export.json
-// Every record each context declared in src/platform/privacy/data-subject-exports.ts keeps of the
-// person{{#if tenancy.any}}, in each tenant of TENANTS (comma separated){{/if}}, as JSON on the standard output: hand it over, then delete the file.
+// One JSON document on the standard output (`format`, `subject`, `exportedAt`, `records`): every
+// record each context declared in src/platform/privacy/data-subject-exports.ts keeps of the
+// person{{#if tenancy.any}}, in each tenant of TENANTS (comma separated){{/if}}, as plain data. Hand it over to the person, then delete
+// the file{{#if audit.on}}; the audit trail keeps the entry of each export, never the values{{/if}}.
 {{#if eventSourcing.on}}
 // What this script cannot reach: the stored events (read them through the aggregate), backups,
 // logs and the copies no context declared.
@@ -60,7 +62,7 @@ const application = composeApplication(persistence, {
 });
 
 try {
-  const records = await runExport(subject, {
+  const document = await runExport(subject, {
     platform: application.platform,
     operator: values.operator,
     correlationId: randomUUID(),
@@ -69,7 +71,7 @@ try {
 {{/if}}
   });
 
-  console.log(JSON.stringify(records, null, 2));
+  console.log(JSON.stringify(document, null, 2));
 } finally {
   await application.stop();
   await persistence.close();

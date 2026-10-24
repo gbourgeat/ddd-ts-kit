@@ -259,15 +259,16 @@ A context that keeps a copy of a person in clear (a row, a contact, a note) decl
 mapper with
 {{/unless}}
 `personalFields` of `@ddd-ts-kit/kernel`, erases it through a port that extends
-`PersonalDataErasure`, and lists that port in `{{config.platformDir}}/privacy/data-subject-copies.ts`
-(its `PersonalDataExport` port in `data-subject-exports.ts`); `npx ddd-ts-kit generate repository
-<context> <Aggregate> --personal <column>,...` writes the columns, the declaration and, once per
-context, that port, its adapter, its fake, its spec and its line here. Two scripts answer the
-requests of a person, on the sources, with the variables of `.env`:
+`PersonalDataErasure`, listed in `{{config.platformDir}}/privacy/data-subject-copies.ts`, and hands it
+over through a port that extends `PersonalDataExport`, listed in `data-subject-exports.ts`;
+`npx ddd-ts-kit generate repository <context> <Aggregate> --personal <column>,...` writes the
+columns, the declaration and, once per context, both ports, their adapters, their fakes, their spec
+and their lines here. Two scripts answer the requests of a person, on the sources, with the
+variables of `.env`:
 
 ```bash
 npm run privacy:erase -- <subject-id> --operator <who-asks>     # {{#if eventSourcing.on}}the key, then {{/if}}every declared copy{{#if tenancy.any}}, in each tenant of TENANTS{{/if}}
-npm run privacy:export -- <subject-id> > export.json            # every declared record, as JSON
+npm run privacy:export -- <subject-id> > export.json            # one dated document of every declared record{{#if audit.on}}, audited{{/if}}
 ```
 
 Running an erasure again completes one that failed half way. Neither script reaches backups,

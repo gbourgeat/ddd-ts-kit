@@ -35,6 +35,7 @@ unit of work already crosses, wired once in the platform:
 | commands | each command with `succeeded` or `failed` and the code of the error | a bus middleware placed before the unit of work |
 | integration events | that an event of a given type occurred, from its envelope only | one idempotent subscription |
 | erasures of data subjects | that the key of a subject was destroyed, or that none was left, by whom and when | the key store, wrapped by `auditedSubjectKeys` |
+| exports of data subjects | that a context handed over what it keeps of a subject, how many records, by whom and when, never the values | the export port of each context, wrapped by `auditedPersonalDataExport` |
 
 ![A command crosses the authorization middleware, the audit middleware and the unit of work before the use case, which holds no audit call; the decision hook, the audit middleware and an event subscription append to the audit trail and read who acted from the execution scope](../assets/diagrams/audit-trail-sources.svg)
 
@@ -272,7 +273,10 @@ holds the data:
    entries stay, the hashes stay valid.
 4. **Record the erasure itself.** The erasure leaves an entry with its actor and its date,
    which, plus the retention of the backups of the keys, is the day it is complete
-   ([`@ddd-ts-kit/audit`](../../packages/audit/README.md#e-erasures-of-data-subjects)).
+   ([`@ddd-ts-kit/audit`](../../packages/audit/README.md#e-erasures-of-data-subjects)). An export
+   of what the system keeps of a person leaves one too, with the number of records and never the
+   values (`auditedPersonalDataExport`): a document handed over without its trace is a read nobody
+   can account for.
 
 What remains after erasure is "an actor with this opaque id did this at that time". Whether
 that is acceptable is a legal question for the project, to be answered before the first entry

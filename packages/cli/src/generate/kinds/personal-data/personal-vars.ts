@@ -49,6 +49,7 @@ export function personalVars(scope: Scope): RenderContext {
     subjectIsId: request.subject === 'id',
     names: { ...names },
     header: classHeader(names.adapter, names.base, names.port),
+    exportHeader: classHeader(names.exportAdapter, names.exportBase, names.exportPort),
     ...storageVars(request),
     ...spelledVars(request, spelling),
   };
@@ -72,7 +73,7 @@ function storageVars(request: PersonalRequest): RenderContext {
   };
 }
 
-/** The subject and the fields as the declaration of this ORM spells them, and the rows of two people as its tests write and expect them. */
+/** The subject and the fields as the declaration of this ORM spells them, the rows of two people as its tests write and expect them, and what the export hands over of one. */
 function spelledVars(request: PersonalRequest, spelling: Spelling): RenderContext {
   const fields = request.fields.map(personalColumn);
   const subject = personalColumn(request.subject);
@@ -94,5 +95,7 @@ function spelledVars(request: PersonalRequest, spelling: Spelling): RenderContex
       ...fields.map((field) => [field[spelling.row], `'${field.column} of bob'`] as const),
     ]),
     erased: rowObject(fields.map((field) => [field[spelling.row], 'ERASED_PERSONAL_DATA'] as const)),
+    exportedOfAda: rowObject(fields.map((field) => [field[spelling.declaration], `'${field.column} of ada'`] as const)),
+    exportedErased: rowObject(fields.map((field) => [field[spelling.declaration], 'ERASED_PERSONAL_DATA'] as const)),
   };
 }

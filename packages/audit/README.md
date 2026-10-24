@@ -17,7 +17,7 @@ npm i drizzle-orm      # only for @ddd-ts-kit/audit/drizzle
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`) and `auditRecordOf`, `auditedFields`, `auditedProjection` and `masked`, the `AuditMasker` port and `hmacMasker`, `verifyChain`, `TenantAuditReader`, the chain primitives (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`); re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`) and `auditRecordOf`, `auditedFields`, `auditedProjection` and `masked`, the `AuditMasker` port and `hmacMasker`, `verifyChain`, `TenantAuditReader`, the chain primitives (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`); re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (optional peer) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (optional peer) |
 | `@ddd-ts-kit/audit/testing` | `auditTrailContract` | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
@@ -461,6 +461,40 @@ command handler, behind `unitOfWorkMiddleware`), both writes join its transactio
 destruction and its entry commit together or neither exists, and a failure rolls back the
 `failed` entry with the rest. What the trail keeps of that failure is the `failed` entry of the
 command, which `auditMiddleware` writes after the rollback.
+
+### f. Exports of data subjects
+
+The right of access and to portability hands a person everything the system keeps of them: a read
+of the whole profile, which the accountability of article 5(2) asks to be traceable, who read what
+of whom and when. `auditedPersonalDataExport(port, trail, { scope, clock, ids })` wraps the
+`PersonalDataExport` port of a context, so that every `exportOf`, whoever calls it (the
+`privacy:export` script of a generated project, a command handler, a job), writes an entry:
+
+| Field | Value |
+|---|---|
+| `category` | `data-access` |
+| `action` | `personal-data:export` (`PERSONAL_DATA_EXPORT_ACTION`) |
+| `outcome` | `succeeded`, or `failed` when the port threw, with the `code` of a `DomainError` or `UNEXPECTED_ERROR` as `reason` |
+| `resource` | `{ type: 'data-subject', id: <subject> }` |
+| `context` | the `name` of the port: the bounded context |
+| `changes` | `{ records: <n> }`, the number of records read, `0` when the context keeps nothing of the subject |
+| actor, tenant, session, correlation, origin | the execution scope |
+
+The entry never holds a value of the records: the trail is append-only and read by many, the
+document goes to the person alone. The order is chosen so that no document leaves without its
+trace: the execution context is read first (an export outside `ExecutionScope.run` is refused
+before any row is read), the records are read, the entry is written, and only then are the records
+handed over. When the entry cannot be written, `exportOf` rejects with that error and hands nothing
+over; run again, it reads the same rows and records them. A read that fails is recorded with its
+code, then rethrown; when that entry cannot be written either, `onLostRecord(error, record)` is
+told. `exportDataSubject` of the kernel gathers the exports so wrapped into one dated document, and
+`init --privacy on` wires it in `src/platform/privacy/run-export.ts` when the trail is on:
+
+```ts
+// src/platform/privacy/run-export.ts, as init writes it with --audit on
+const audited = (port: PersonalDataExport): PersonalDataExport => auditedPersonalDataExport(port, trail, source);
+const exports = dataSubjectExports.map((port) => audited(container.resolve(port)));
+```
 
 ### In an application of `@ddd-ts-kit/di`
 
