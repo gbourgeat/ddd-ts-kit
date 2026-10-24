@@ -214,7 +214,7 @@ A coverage rate says that code ran under a test, never that the test asserts any
 the spec for the behaviour, and let the rate follow. The thresholds of `ddd-ts-kit.config.json`
 are a floor per context and layer, not a goal; a test written to move a number proves nothing.
 
-The night runs `npm run test:mutation`: Stryker on the domain layer of every context, the texts of
+The night runs `npm run test:mutation`: Stryker on the domain and application layers of every context, the texts of
 its refusals left out and its static mutants ignored, then each context held to the `mutation` floor
 of the config, the ignored mutants shown beside the score. A survivor is a rule no test states: read it
 as a business decision, then state it in a test named after it, or leave the mutant alive and say

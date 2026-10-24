@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:3263a5fe1ce68d0b -->
+<!-- translation-of: README.md sha256:8f7089a07ebd5afb -->
 
 <div align="center">
 
@@ -271,7 +271,7 @@ README de chaque package dit ses limites et ce qui a été vérifié.
 vérification des types, lint, architecture, code mort, tests unitaires avec seuils de
 couverture, tests d'intégration sur PostgreSQL, tests de bout en bout, dérive de la
 documentation et du contrat, sécurité et construction de l'image, derrière une seule porte
-finale, et chaque nuit le score de mutation de la couche domaine, chaque contexte tenu à son
+finale, et chaque nuit le score de mutation des couches domaine et application, chacune tenue à son
 plancher, une *pull request* lisant les survivants de son changement. Chaque outil est gratuit sur
 n'importe quel dépôt. Les détails :
 [pipeline/README.md](pipeline/README.md).
