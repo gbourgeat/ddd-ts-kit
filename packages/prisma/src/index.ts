@@ -25,3 +25,8 @@ export * from './read-model/prisma-read-model-delegate';
 export * from './read-model/prisma-read-model-options';
 export * from './read-model/prisma-read-model-table';
 export * from './read-model/prisma-read-model-store';
+export * from './personal-data/prisma-personal-data-erasure';
+export * from './personal-data/prisma-personal-data-erasure-options';
+export * from './personal-data/prisma-personal-fields';
+export * from './personal-data/prisma-personal-table';
+export * from './personal-data/prisma-raw-commands';

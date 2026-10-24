@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b592cc46b0da88df -->
+<!-- translation-of: README.md sha256:5769279129ad8a65 -->
 
 # @ddd-ts-kit/kernel
 
@@ -2219,6 +2219,7 @@ export const personPersonalFields = personalFields<PersonRow>(PERSONS, {
 | `eraseDataSubject(subject, { keys, copies, inEveryTenant, rebuilds, isKnown })` | L'effacement entier, dans l'ordre : la clé de la personne détruite (`SubjectKeyStore.erase`, enveloppé par `auditedSubjectKeys` de `@ddd-ts-kit/audit` pour qu'une entrée datée le prouve), chaque copie effacée dans chaque *tenant*, chaque projection alimentée par le store reconstruite. Une copie qui échoue n'arrête pas les autres ; le premier échec est levé une fois que tout a tourné, et relancer l'effacement l'achève. Un sujet qui n'est pas un identifiant opaque (`isDataSubjectId`, la grammaire d'un id de *tenant*) est refusé avant qu'une clé ne soit touchée (`NotADataSubjectIdError`) ; un id qui n'a détruit aucune clé, rien effacé et qu'`isKnown` ne connaît pas est refusé avant les reconstructions (`UnknownDataSubjectError`) : une faute de frappe, ou un effacement déjà complet. Répond `{ erased, copies, rebuilt }` : si une clé a été détruite, les lignes atteintes par chaque copie, les événements rejoués par chaque projection |
 | `inEachTenant(scope, tenants)` | Ce qu'on donne à `inEveryTenant` : exécute une copie une fois par *tenant*, dans le contexte du travail doté de ce *tenant*, et somme les lignes. Une écriture de données de *tenant* est confinée au *tenant* de son contexte et jamais élargie par une élévation : c'est le seul moyen d'effacer dans chaque *tenant* |
 | `InMemoryPersonalData(name, declaration, { files? })` | L'implémentation de référence des deux ports sur une déclaration, les lignes gardées en mémoire (`insert`, `all`) : le *fake* d'un contexte, et ce à quoi `personalDataErasureContract` et `personalDataExportContract` de `@ddd-ts-kit/testing` tiennent chaque adaptateur |
+| `pseudonymisedValueOf(sqlType)` | Ce que lit une colonne pseudonymisée, d'après son type SQL : `ERASED_PERSONAL_DATA` pour un texte (`text`, `varchar`, `char`, `citext`), rien pour tout autre type. La règle unique que suivent les adaptateurs des quatre *packages* de persistance (`KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`), pour qu'une déclaration efface de la même façon sur chaque ORM. `NotNullablePersonalColumnError` est ce qu'ils lèvent, avant qu'un fichier ou une ligne ne soit touché, pour une colonne qui ne lirait rien et n'accepte pas null |
 
 Ce que cela n'atteint pas : un événement d'intégration publié avant l'effacement et ce qui l'a
 consommé, les sauvegardes jusqu'à leur expiration, et le journal d'audit, qui nomme une personne

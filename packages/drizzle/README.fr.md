@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:cdbb97f17b5005fd -->
+<!-- translation-of: README.md sha256:8cc5e20a5a4970a7 -->
 
 # @ddd-ts-kit/drizzle
 
@@ -829,6 +829,44 @@ par renommage en une transaction) et ses garanties et limites sont dans le READM
 `@ddd-ts-kit/kernel` ([Reconstruction](../kernel/README.fr.md#reconstruction)).
 Le store passe `criteriaContract` et `readModelStoreContract` de
 `@ddd-ts-kit/testing/contracts`, sur PGlite et sur PostgreSQL 18.
+
+## Effacement des données personnelles
+
+L'effacement d'une personne concernée des tables d'un contexte, à partir des déclarations
+`personalFields` écrites à côté de ses *mappers* (`@ddd-ts-kit/kernel`, « Données personnelles ») :
+`DrizzlePersonalDataErasure` implémente le port `PersonalDataErasure` sur l'exécuteur de l'unité de travail. Le port du contexte étend celui du
+kernel, et son adaptateur étend cette classe.
+
+```ts
+// infrastructure/persistence/person.personal-fields.ts : la table elle-même, les colonnes par les clés de sa définition
+export const personPersonalFields = personalFields<typeof persons.$inferSelect, PgTable>(persons, {
+  subject: 'id',
+  fields: ['displayName', 'email'],
+  erasure: 'row',
+});
+
+// infrastructure/persistence/drizzle-identity-erasure.repository.ts
+@Repository(IdentityErasure)
+export class DrizzleIdentityErasure extends DrizzlePersonalDataErasure<NodePgQueryResultHKT> implements IdentityErasure {
+  constructor(database: Database, scope: ExecutionScope, files: FileStorage) {
+    super(database, { name: 'identity.persons', declarations: [personPersonalFields], tenant: { scope }, files });
+  }
+}
+```
+
+`erase(subject)` supprime d'abord du stockage les fichiers que les lignes nomment, puis supprime les
+lignes de la personne (`row`) ou les pseudonymise (`pseudonymise` : une colonne texte lit `[erased]`,
+une colonne de tout autre type ne lit rien, une colonne de fichier rien), et répond combien de lignes
+il a atteintes, aucune la seconde fois. Avec `tenant`, chaque instruction est confinée au *tenant* du
+travail et jamais élargie par une élévation (la colonne nommée `tenant_id`, ou `tenant.column`) ; sans lui, la table tient les lignes de tous
+les *tenants*. Un sujet qui n'est pas un identifiant opaque est refusé avant toute instruction, et une
+déclaration qui nomme des colonnes de fichier sans stockage de fichiers est refusée à la construction
+de l'adaptateur. Les types des colonnes viennent de la définition de la table, pour qu'un texte et un nombre soient pseudonymisés chacun à sa façon. Une colonne personnelle qui n'est pas un texte doit accepter null, sinon
+les lignes s'effacent avec `row` : une déclaration qui en pseudonymiserait une qui ne l'accepte pas
+est refusée avant qu'un fichier ou une ligne ne soit touché (`NotNullablePersonalColumnError`). L'adaptateur passe `personalDataErasureContract` de
+`@ddd-ts-kit/testing`, comme celui en mémoire, sur PGlite et PostgreSQL. Ce qu'un effacement
+n'atteint pas, et la chaîne entière (`eraseDataSubject` : la clé, chaque copie dans chaque *tenant*,
+les reconstructions), sont dans le README du kernel (« Données personnelles »).
 
 ## Outbox et idempotence
 

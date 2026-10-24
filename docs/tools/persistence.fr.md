@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:3e7b85e754a6a53d -->
+<!-- translation-of: persistence.md sha256:1ad6f78475269bc7 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -445,6 +445,10 @@ D'après [`packages/cli/README.fr.md`](../../packages/cli/README.fr.md) et
   `TODO(platform)`.
 - Les *specs* rapides des adaptateurs s'exécutent sur PGlite ; Docker Compose fournit le vrai
   serveur.
+- L'effacement d'une personne concernée des tables déclarées avec `personalFields` existe sur les
+  quatre ORM (`KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`,
+  `TypeOrmPersonalDataErasure`), sous une seule suite de contrat ; le générateur n'écrit pas encore
+  les déclarations ([protection des données dès la conception](../proposals/privacy-by-design.fr.md)).
 
 ## PostgreSQL face aux autres
 

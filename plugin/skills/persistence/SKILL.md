@@ -89,6 +89,10 @@ lookups of the port, the columns, the mapper.
   `src/platform/privacy/data-subject-copies.ts` (its export port in `data-subject-exports.ts`),
   and `npm run privacy:erase -- <subject-id>` reaches them all; `personalDataErasureContract` of
   `@ddd-ts-kit/testing` holds the adapter and the fake (`InMemoryPersonalData`) to the same behaviour.
+  The adapter of a context extends the one of its ORM package (`KnexPersonalDataErasure`,
+  `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`), given
+  the declarations, the scope for tenant data and the file storage; a personal column that is not a
+  text accepts null, or the rows are erased with `row`.
 - **Searches** use the kernel `Page` and `PageRequest`; a cursor ends on a unique tie-breaker.
 - **Queries may skip aggregates**: `generate query` writes a read port and an in-memory
   reader; replace the reader by an adapter that queries the tables and returns the shape of
