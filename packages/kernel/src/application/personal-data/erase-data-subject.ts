@@ -1,5 +1,6 @@
 import type { DataSubjectErasure } from './data-subject-erasure';
 import type { DataSubjectErasureReport } from './data-subject-erasure-report';
+import type { SubjectKeyStore } from '../ports/subject-key-store';
 import { isDataSubjectId } from './is-data-subject-id';
 import { NotADataSubjectIdError } from './not-a-data-subject-id-error';
 import type { ProjectionToRebuild } from './projection-to-rebuild';
@@ -25,14 +26,15 @@ interface Outcome {
  * running the erasure again completes it. Only a mistyped id skips the rebuilds. A subject that is
  * not an opaque identifier is refused before any key is touched: the audited keys write the
  * subject into the append-only trail, which never holds a name or an email. Give it the keys
- * wrapped by `auditedSubjectKeys` of `@ddd-ts-kit/audit`, so that every erasure leaves a dated proof.
+ * wrapped by `auditedSubjectKeys` of `@ddd-ts-kit/audit`, so that every erasure leaves a dated proof;
+ * a project that seals nothing (its aggregates are rows) gives none, and erases its copies alone.
  */
 export async function eraseDataSubject(subject: string, parts: DataSubjectErasure): Promise<DataSubjectErasureReport> {
   if (!isDataSubjectId(subject)) {
     throw new NotADataSubjectIdError();
   }
 
-  const [erasure] = await Promise.allSettled([parts.keys.erase(subject)]);
+  const [erasure] = await Promise.allSettled([eraseKeyOf(subject, parts.keys)]);
   const copies = await eraseCopies(subject, parts);
 
   if (await isMistyped(subject, { erasure, copies }, parts.isKnown)) {
@@ -44,6 +46,11 @@ export async function eraseDataSubject(subject: string, parts: DataSubjectErasur
   throwFirstFailure({ erasure, copies });
 
   return { erased: erasure.status === 'fulfilled' && erasure.value, copies: copies.reached, rebuilt };
+}
+
+/** The key of the subject, when there is a store of keys at all: without one, no key was destroyed. */
+function eraseKeyOf(subject: string, keys: SubjectKeyStore | undefined): Promise<boolean> {
+  return keys === undefined ? Promise.resolve(false) : keys.erase(subject);
 }
 
 /** Every copy, in every tenant, one after the other: a copy that fails does not stop the next, and is thrown once everything ran. */

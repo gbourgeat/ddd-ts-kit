@@ -12,7 +12,7 @@ and can prove it was not rewritten. It is recorded around the use cases, never b
 | every authorization decision, denials always | the decision hook of the authorization |
 | every command, with its outcome and error code | a bus middleware before the unit of work: success inside the transaction, failure after the rollback |
 | every integration event crossing a boundary | one idempotent consumer named `audit`; `generate integration-event` registers each new event in `audited-events.ts` |
-| every erasure of a data subject (crypto-shredding), with whether a key was destroyed | `auditedSubjectKeys`, the key store wrapped where it is bound (`src/platform/privacy/create-privacy.ts`, written by `init`), whoever calls `erase` |
+| every erasure of a data subject (crypto-shredding), with whether a key was destroyed | `auditedSubjectKeys`, the key store wrapped where it is bound (`src/platform/event-sourcing/create-event-sourcing.ts`, written by `init --event-sourcing on`), whoever calls `erase` |
 | bulk reads and exports | the infrastructure that performs them, as the exception |
 
 Actor, session, impersonation, tenant, correlation and origin come from the execution

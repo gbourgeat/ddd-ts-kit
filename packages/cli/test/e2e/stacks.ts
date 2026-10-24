@@ -208,6 +208,40 @@ const EVERY_STACK: readonly StackFlags[] = [
     cache: 'redis',
   },
   { http: 'fastify', validation: 'typebox', di: 'manual', tests: 'vitest', orm: 'knex', events: 'outbox' },
+  /** The event store on each ORM and in memory, the privacy folder off on one of them, and the hand-wired foundations too wide for one line. */
+  { ...DEFAULT_STACK, 'event-sourcing': 'on' },
+  { ...ABAC_ON_KNEX_BY_HAND, errors: 'sentry', 'event-sourcing': 'on' },
+  {
+    http: 'fastify',
+    validation: 'zod',
+    di: 'manual',
+    tests: 'vitest',
+    orm: 'prisma',
+    events: 'outbox',
+    'event-sourcing': 'on',
+  },
+  {
+    http: 'express',
+    validation: 'zod',
+    di: 'tsyringe',
+    tests: 'vitest',
+    orm: 'typeorm',
+    events: 'outbox',
+    'event-sourcing': 'on',
+    privacy: 'off',
+  },
+  {
+    http: 'nest',
+    validation: 'standard-schema',
+    di: 'nest',
+    tests: 'vitest',
+    orm: 'none',
+    events: 'in-memory',
+    'event-sourcing': 'on',
+    privacy: 'on',
+  },
+  /** Nothing of the personal data: no folder, no script. */
+  { ...DEFAULT_STACK, privacy: 'off' },
 ];
 
 /** The flags whose value names a package of the kit a project installs for it: an orm, a broker, a cache, a queue, an error reporter, a logger, a file storage. */

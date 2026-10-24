@@ -76,18 +76,20 @@ lookups of the port, the columns, the mapper.
   version once its shape is final, and `docs --check` fails while one is unrecorded). When to choose it: `docs/concepts/event-sourcing.md` of the kit.
   Personal values are sealed per data subject (`personalData`, `PersonalDataCipher`); erasing
   one destroys its key in the `SubjectKeyStore`, then rebuilds the projections that hold a
-  clear copy. `init` wires the stores (`persistence.eventSourcing`, schema `event_store`) and
-  `src/platform/privacy/`: the keys wrapped by `auditedSubjectKeys` of `@ddd-ts-kit/audit` when
-  the audit trail is on, so that every erasure leaves a dated audit entry, the cipher, and the
-  scripts `privacy:erase` and `privacy:export`; keep the keys in a store of their own in
-  production, with a shorter backup retention than the events. What a table keeps of a person in clear is declared
+  clear copy. `init --event-sourcing on` wires the stores (`persistence.eventSourcing`, schema
+  `event_store`) and `src/platform/event-sourcing/`: the keys wrapped by `auditedSubjectKeys` of
+  `@ddd-ts-kit/audit` when the audit trail is on, so that every erasure leaves a dated audit entry,
+  and the cipher; `generate aggregate --event-sourced` is refused without it. Keep the keys in a
+  store of their own in production, with a shorter backup retention than the events. What a table keeps of a person in clear is declared
   next to its mapper with `personalFields` (the subject column, the personal columns, `row` or
   `pseudonymise`, the columns that hold a file) and erased through a `PersonalDataErasure` port of
   the context (`export abstract class PatientErasure extends PersonalDataErasure {}`);
   `eraseDataSubject` of the kernel runs the key, every copy in every tenant (`inEachTenant`) and
   the rebuilds, in that order; a context lists its port in
-  `src/platform/privacy/data-subject-copies.ts` (its export port in `data-subject-exports.ts`),
-  and `npm run privacy:erase -- <subject-id>` reaches them all; `personalDataErasureContract` of
+  `src/platform/privacy/data-subject-copies.ts` (its export port in `data-subject-exports.ts`;
+  `init --privacy on`, the default with an ORM, writes the folder and the scripts `privacy:erase`
+  and `privacy:export`), and `npm run privacy:erase -- <subject-id>` reaches them all, the key
+  first when the project has an event store; `personalDataErasureContract` of
   `@ddd-ts-kit/testing` holds the adapter and the fake (`InMemoryPersonalData`) to the same behaviour.
   The adapter of a context extends the one of its ORM package (`KnexPersonalDataErasure`,
   `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`), given

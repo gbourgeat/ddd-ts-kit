@@ -3,14 +3,16 @@ import { familyOf } from './family-of';
 import type { InitFile } from './init-file';
 import { when } from './when';
 
-/** The contracts, and the two requests of a data subject the platform answers from the command line. */
+/** The contracts and, with `--privacy on`, the two requests of a data subject the platform answers from the command line. */
 export function scriptFiles(config: Config): InitFile[] {
   const family = familyOf(config);
 
   return [
     ...when(config.stack.http !== 'none', [['scripts/openapi.ts', 'init/scripts/openapi.ts.tpl']]),
     ['scripts/events.ts', 'init/scripts/events.ts.tpl'],
-    ['scripts/privacy-erase.ts', `init/scripts/privacy-erase.${family}.ts.tpl`],
-    ['scripts/privacy-export.ts', `init/scripts/privacy-export.${family}.ts.tpl`],
+    ...when(config.stack.privacy === 'on', [
+      ['scripts/privacy-erase.ts', `init/scripts/privacy-erase.${family}.ts.tpl`],
+      ['scripts/privacy-export.ts', `init/scripts/privacy-export.${family}.ts.tpl`],
+    ]),
   ];
 }

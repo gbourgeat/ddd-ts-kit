@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["messaging", "event_store"]
+  schemas  = ["messaging"{{#if eventSourcing.on}}, "event_store"{{/if}}]
 }
 
 // The outbox and the idempotency table, from @ddd-ts-kit/prisma. Keep the field names: the
@@ -46,6 +46,7 @@ model ProcessedEvent {
 // One schema per bounded context, no relation across contexts.
 // ddd-ts-kit:models
 // /ddd-ts-kit:models
+{{#if eventSourcing.on}}
 
 // The event store of @ddd-ts-kit/prisma: the events, the snapshots, the checkpoints and the
 // keys of the data subjects. Keep the table and column names: the stores run raw statements
@@ -105,3 +106,4 @@ model SubjectKey {
   @@map("subject_keys")
   @@schema("event_store")
 }
+{{/if}}

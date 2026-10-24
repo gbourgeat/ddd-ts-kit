@@ -68,7 +68,10 @@ An audit trail is not a reason by itself: the kit records who did what around ev
 birth event and apply method, the codec, a builder that replays a history and a given-events
 spec; `generate domain-event` on such an aggregate adds the event to its union, to
 `appliers()` with an empty apply method, and to the codec. `describe`, `list` and `CONTEXT.md`
-say which aggregates are event-sourced.
+say which aggregates are event-sourced. The store they are saved through is wired by
+`init --event-sourcing on` (`init --force --event-sourcing on` on an existing project), and the
+generator refuses an event-sourced aggregate without it: a project whose aggregates are all rows
+pays no table for it.
 
 **No double write.** Appending the events and publishing the integration events are one
 transaction: the store joins the transaction of the unit of work, and the publisher is a
@@ -609,9 +612,9 @@ same contract suites.
 
 ## Limits
 
-- One event store per database schema: `init` wires one, in the `event_store` schema, bound by
-  `src/platform/privacy/` with the keys of the data subjects and the cipher; a context that keeps
-  its own binds its stores in its module rather than in the platform.
+- One event store per database schema: `init --event-sourcing on` wires one, in the `event_store`
+  schema, bound by `src/platform/event-sourcing/` with the keys of the data subjects and the
+  cipher; a context that keeps its own binds its stores in its module rather than in the platform.
 - Appends are serialised per store (above).
 - A projection fed by the store whose rows each come from several streams cannot be stamped by
   stream version alone: stamp it by event id and instant.

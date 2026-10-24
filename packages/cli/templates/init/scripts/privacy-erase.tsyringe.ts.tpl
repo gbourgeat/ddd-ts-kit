@@ -14,9 +14,16 @@ import { runErasure } from '{{alias.platform}}/privacy/run-erasure{{alias.ext}}'
 
 // The right to erasure of one data subject (GDPR, article 17), from the command line:
 //   npm run privacy:erase -- <subject-id> [--operator <who-asks>]
+{{#if eventSourcing.on}}
 // The key of the subject is destroyed first, so every personal value of its stored events reads as
 // erased{{#if audit.on}}, and the erasure leaves a dated entry in the audit trail{{/if}}; then every copy a context declared in
 // src/platform/privacy/data-subject-copies.ts is erased{{#if tenancy.any}}, in each tenant of TENANTS (comma separated){{/if}}.
+{{/if}}
+{{#unless eventSourcing.on}}
+// Every copy a context declared in src/platform/privacy/data-subject-copies.ts is erased or
+// pseudonymised where it lies{{#if tenancy.any}}, in each tenant of TENANTS (comma separated){{/if}}: the aggregates of
+// this project are rows, so there is no key to destroy.
+{{/unless}}
 // The report says what was reached. Running it again completes an erasure that failed half way.
 // What this script cannot reach: backups, logs, exports and the copies no context declared.
 const { positionals, values } = parseArgs({
