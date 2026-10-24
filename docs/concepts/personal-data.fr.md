@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:7139ab47fc8a5f32 -->
+<!-- translation-of: personal-data.md sha256:f96db042f47d0e6d -->
 
 # Les données personnelles dans un projet généré
 
@@ -257,7 +257,9 @@ une déclaration la nomme.
 ## Les règles
 
 Cinq règles de `ddd-ts-kit check` tiennent un projet dont `stack.privacy` vaut `on` à ses
-déclarations, en avertissements d'abord ; un projet qui a choisi `off` n'en entend rien.
+déclarations, en avertissements, et elles le restent : elles lisent des noms, jamais des
+contenus, et une colonne `address` peut désigner un entrepôt. Une équipe qui en veut une bloquante
+met sa sévérité à `error` dans `rules` de la config. Un projet qui a choisi `off` n'en entend rien.
 
 | Règle | Signale |
 |---|---|
