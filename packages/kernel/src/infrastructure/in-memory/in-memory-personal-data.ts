@@ -11,8 +11,6 @@ export interface InMemoryPersonalDataOptions {
   readonly files?: FileStorage;
 }
 
-type Row = Readonly<Record<string, unknown>>;
-
 /**
  * The reference implementation of an erasure and of an export over one declaration of personal
  * fields: the rows of one table, held in memory. What every adapter of a persistence package does
@@ -20,7 +18,7 @@ type Row = Readonly<Record<string, unknown>>;
  * `personalDataExportContract` of `@ddd-ts-kit/testing`. For tests, and for a context whose copy
  * lives in memory.
  */
-export class InMemoryPersonalData<R extends Row> implements PersonalDataErasure, PersonalDataExport {
+export class InMemoryPersonalData<R extends object> implements PersonalDataErasure, PersonalDataExport {
   private rows: R[] = [];
 
   constructor(
@@ -60,12 +58,14 @@ export class InMemoryPersonalData<R extends Row> implements PersonalDataErasure,
       .filter((row) => this.isAbout(row, subject))
       .map((row) => ({
         source: this.name,
-        values: Object.fromEntries([...fields, ...files].map((field) => [field, personalDataValueOf(row[field])])),
+        values: Object.fromEntries(
+          [...fields, ...files].map((field) => [field, personalDataValueOf(columnOf(row, field))]),
+        ),
       }));
   }
 
   private isAbout(row: R, subject: string): boolean {
-    return row[this.declaration.subject] === subject;
+    return columnOf(row, this.declaration.subject) === subject;
   }
 
   /** Pseudonymised already: every personal field reads erased or nothing, and no file is left. */
@@ -73,14 +73,14 @@ export class InMemoryPersonalData<R extends Row> implements PersonalDataErasure,
     const { fields, files } = this.declaration;
 
     return (
-      fields.every((field) => row[field] === ERASED_PERSONAL_DATA || row[field] === null) &&
-      files.every((file) => row[file] === null)
+      fields.every((field) => columnOf(row, field) === ERASED_PERSONAL_DATA || columnOf(row, field) === null) &&
+      files.every((file) => columnOf(row, file) === null)
     );
   }
 
   private async deleteFilesOf(row: R): Promise<void> {
     for (const column of this.declaration.files) {
-      const key = row[column];
+      const key = columnOf(row, column);
 
       if (typeof key === 'string' && this.options.files !== undefined) {
         await this.options.files.delete(key);
@@ -101,4 +101,11 @@ export class InMemoryPersonalData<R extends Row> implements PersonalDataErasure,
 
     return { ...row, ...Object.fromEntries(erased) };
   }
+}
+
+/** The value of one column of a row, whatever the type of the row: read, never asserted. */
+function columnOf(row: object, column: string): unknown {
+  const value: unknown = Reflect.get(row, column);
+
+  return value;
 }

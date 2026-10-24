@@ -22,14 +22,14 @@ type Columns = Readonly<Record<string, unknown>>;
  * in-memory one included: the rows about the subject alone are reached, deleted or pseudonymised
  * as the declaration says, counted once, and never twice.
  */
-export function personalDataErasureContract<Row extends Columns>(
+export function personalDataErasureContract<Row extends object>(
   runner: ContractRunner,
   options: PersonalDataErasureContractOptions<Row>,
 ): void {
   new PersonalDataErasureSuite(runner, options).describe(`${options.name} (personal data erasure contract)`);
 }
 
-class PersonalDataErasureSuite<Row extends Columns> extends ContractSuite<PersonalDataErasureUnderContract<Row>> {
+class PersonalDataErasureSuite<Row extends object> extends ContractSuite<PersonalDataErasureUnderContract<Row>> {
   constructor(runner: ContractRunner, options: PersonalDataErasureContractOptions<Row>) {
     super(runner, () => options.create());
   }
@@ -100,15 +100,15 @@ class PersonalDataErasureSuite<Row extends Columns> extends ContractSuite<Person
 }
 
 /** The personal columns of a row: the fields and the file keys. */
-function personalPartOf<Row extends Columns>(
+function personalPartOf<Row extends object>(
   row: Row,
   { fields, files }: PersonalDataErasureUnderContract<Row>['declaration'],
 ): Columns {
-  return Object.fromEntries([...fields, ...files].map((column) => [column, row[column]]));
+  return Object.fromEntries([...fields, ...files].map((column) => [column, columnOf(row, column)]));
 }
 
 /** What the personal columns of a pseudonymised row read: erased for a text, nothing for anything else, nothing for a file. */
-function erasedPartOf<Row extends Columns>(
+function erasedPartOf<Row extends object>(
   { fields, files }: PersonalDataErasureUnderContract<Row>['declaration'],
   before: Row,
 ): Columns {
@@ -124,11 +124,18 @@ function erasedPartOf<Row extends Columns>(
 }
 
 /** Every column that is not personal: untouched by a pseudonymisation. */
-function restOf<Row extends Columns>(
+function restOf<Row extends object>(
   row: Row,
   { fields, files }: PersonalDataErasureUnderContract<Row>['declaration'],
 ): Columns {
   const personal = new Set<string>([...fields, ...files]);
 
   return Object.fromEntries(Object.entries(row).filter(([column]) => !personal.has(column)));
+}
+
+/** The value of one column of a row, whatever the type of the row: read, never asserted. */
+function columnOf(row: object, column: string): unknown {
+  const value: unknown = Reflect.get(row, column);
+
+  return value;
 }

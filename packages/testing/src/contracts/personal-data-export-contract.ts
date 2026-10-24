@@ -15,21 +15,19 @@ export interface PersonalDataExportContractOptions<Row> {
   create(): Awaitable<PersonalDataExportUnderContract<Row>>;
 }
 
-type Columns = Readonly<Record<string, unknown>>;
-
 /**
  * What every adapter of `PersonalDataExport` over a `personalFields` declaration guarantees: one
  * record per row about the subject, under the name of the source, holding each personal column as
  * plain data, and nothing of anyone else.
  */
-export function personalDataExportContract<Row extends Columns>(
+export function personalDataExportContract<Row extends object>(
   runner: ContractRunner,
   options: PersonalDataExportContractOptions<Row>,
 ): void {
   new PersonalDataExportSuite(runner, options).describe(`${options.name} (personal data export contract)`);
 }
 
-class PersonalDataExportSuite<Row extends Columns> extends ContractSuite<PersonalDataExportUnderContract<Row>> {
+class PersonalDataExportSuite<Row extends object> extends ContractSuite<PersonalDataExportUnderContract<Row>> {
   constructor(runner: ContractRunner, options: PersonalDataExportContractOptions<Row>) {
     super(runner, () => options.create());
   }
@@ -53,7 +51,10 @@ class PersonalDataExportSuite<Row extends Columns> extends ContractSuite<Persona
           [first, second].map((row) => ({
             source: exporter.name,
             values: Object.fromEntries(
-              [...declaration.fields, ...declaration.files].map((column) => [column, personalDataValueOf(row[column])]),
+              [...declaration.fields, ...declaration.files].map((column) => [
+                column,
+                personalDataValueOf(columnOf(row, column)),
+              ]),
             ),
           })),
         );
@@ -68,4 +69,11 @@ class PersonalDataExportSuite<Row extends Columns> extends ContractSuite<Persona
       this.expect(await this.subject.exporter.exportOf('ada')).toEqual([]);
     });
   }
+}
+
+/** The value of one column of a row, whatever the type of the row: read, never asserted. */
+function columnOf(row: object, column: string): unknown {
+  const value: unknown = Reflect.get(row, column);
+
+  return value;
 }
