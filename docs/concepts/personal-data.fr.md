@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:79a1e6625d8645ec -->
+<!-- translation-of: personal-data.md sha256:0b74bf5cb1fc39b3 -->
 
 # Les données personnelles dans un projet généré
 
@@ -213,7 +213,8 @@ n'est pas une unité positive.
 Chaque nuit à 03:00 UTC, le *job* `privacy.purge-expired` de la plateforme lance `runPurge` : chaque
 copie listée dans `data-subject-copies.ts` efface, comme sa déclaration le dit, les lignes qui ont
 dépassé leur durée de conservation, dans chaque *tenant*, puisque le travail d'un *job* n'en nomme
-aucun et qu'un *tenant* oublié dans une liste garderait ce qu'il ne doit pas ; avec `--audit on`,
+aucun et qu'un *tenant* oublié dans une liste garderait ce qu'il ne doit pas, la seule écriture du
+kit à travers les *tenants* ([Multi-tenant](multitenancy.fr.md#la-seule-écriture-à-travers-les-tenants--la-purge-de-ce-qui-a-dépassé-sa-durée-de-conservation)) ; avec `--audit on`,
 chaque copie laisse une entrée `personal-data:purge` avec le nombre de lignes, `0` compris, et
 aucune personne. `JOB_PRIVACY_PURGE_EXPIRED_ENABLED=false` coupe le *job* dans un environnement, et
 `npm run privacy:purge` le lance à la main et imprime les lignes atteintes par contexte. Une table

@@ -207,7 +207,8 @@ the start of a retention, as is a period that is not one positive unit.
 Every night at 03:00 UTC, the job `privacy.purge-expired` of the platform runs `runPurge`: every copy
 listed in `data-subject-copies.ts` erases, as its declaration says, the rows that outlived their
 retention, in every tenant, since the work of a job names none and a tenant left out of a list would
-keep what it should not; with `--audit on`, each copy leaves an entry `personal-data:purge` with the
+keep what it should not, the one write of the kit across tenants
+([Multitenancy](multitenancy.md#the-one-write-across-tenants-the-purge-of-what-outlived-its-retention)); with `--audit on`, each copy leaves an entry `personal-data:purge` with the
 number of rows, `0` included, and no person. `JOB_PRIVACY_PURGE_EXPIRED_ENABLED=false` switches the
 job off in one environment, and `npm run privacy:purge` runs it by hand and prints the rows reached
 per context. A table whose declaration gives no retention keeps its rows until the person asks.

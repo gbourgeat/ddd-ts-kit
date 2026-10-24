@@ -294,6 +294,31 @@ export async function appointmentsForATicket(practitionerId: string, tenants: re
 }
 ```
 
+## The one write across tenants: the purge of what outlived its retention
+
+Every write of the kit stays in the tenant of the work, and an elevation never widens one: an
+erasure runs once per tenant of `TENANTS`, in an execution context of that tenant. There is one
+exception, chosen and bounded: `purgeExpired(now)` of the erasure adapters, which the nightly job
+`privacy.purge-expired` of the platform runs (concept page
+[Personal data](personal-data.md#retention-every-night)).
+
+- **Why.** The retention is a policy of the table, the same for every tenant, and storage
+  limitation is owed for every one of them. A purge confined to a list of tenants would keep, in a
+  tenant left out of that list, data that had to disappear: the failure would be silent and the
+  breach real.
+- **When.** Only when the work names no tenant: the job of the platform, or `npm run privacy:purge`,
+  both outside any request. In the context of a tenant, the same adapter confines its purge to that
+  tenant, as every other write.
+- **What it can do.** Erase, as the declaration says, the rows whose date column is older than the
+  retention: delete them or pseudonymise their personal columns. It reads nothing back, moves
+  nothing from one tenant to another, and its criterion is the date of the row alone, never who it
+  is about nor which tenant holds it.
+- **What it leaves.** With the audit trail on, one entry per context and per run
+  (`personal-data:purge`, the number of rows, no person), in the chain of the platform.
+
+A purge that a project wants confined runs per tenant instead, in contexts of those tenants
+(`eachTenant`), and takes on the duty of the list.
+
 ## Limits and when not to use it
 
 - **One tenant per unit of work.** A request that must write to two tenants is two units of

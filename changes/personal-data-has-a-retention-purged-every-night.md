@@ -9,7 +9,9 @@ runs every copy at one instant and answers the rows each reached, `expiredBefore
 `personalDataRetentionContract` of `@ddd-ts-kit/testing` holds every adapter to it. The erasure
 adapters of Knex, Drizzle, Prisma and TypeORM implement `purgeExpired` from the same declarations,
 as the declaration says, files first, in the tenant of the work or in every tenant when the work
-names none. `auditedPersonalDataRetention` of `@ddd-ts-kit/audit` records each purge (`data-access`,
+names none: the one write of the kit across tenants, chosen because a tenant left out of a list
+would keep what it should not, bounded to an erasure by the date of the row, and written in the
+multitenancy page. `auditedPersonalDataRetention` of `@ddd-ts-kit/audit` records each purge (`data-access`,
 `personal-data:purge`, the context, `changes: { rows }`, no person). `generate repository ...
 --personal ... --retention <column>:<n><d|m|y>` writes the retention in the declaration, adds a
 column other than `registered_at` to the storage as a nullable timestamp, and proves the purge in the
