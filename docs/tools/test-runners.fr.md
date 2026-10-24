@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:8e00a988f968af1e -->
+<!-- translation-of: test-runners.md sha256:55389362b30360fd -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -324,6 +324,7 @@ export default {
 | Base de code existante avec une grosse suite Jest qui adopte le kit | Jest, en ajoutant à la main la séparation des projets et les seuils ; ne planifiez une migration que si elle est rentable |
 | Une bibliothèque ou un adaptateur publié pour d'autres | écrivez son contrat avec `ContractSuite`, pour que les consommateurs l'exécutent sous l'un ou l'autre lanceur |
 | Vouloir des tests de mutation | Vitest : Stryker 10.1.1 avec son lanceur Vitest, à la main, comme le README du *pipeline* le mesure ; pas encore une porte du kit. Jest : non mesuré |
+| Vouloir des *specs* tenues à un budget de temps | les deux : le reporter du kit, `@ddd-ts-kit/testing/budget/vitest` ou `/budget/jest`, nommé dans la config du runner qu'écrit `init` ; cinq secondes par fichier de *spec* unitaire et trente par fichier de *spec* d'intégration par la référence |
 
 ## Sources
 

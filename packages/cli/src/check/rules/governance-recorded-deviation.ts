@@ -1,8 +1,10 @@
 import {
+  BUDGET_LEVELS,
   CONFIG_FILE,
   COVERAGE_LAYERS,
   COVERAGE_METRICS,
   defaultAllowedPackages,
+  REFERENCE_BUDGET,
   REFERENCE_COVERAGE,
   type Config,
   type Deviation,
@@ -127,6 +129,7 @@ function unrecordedRelaxations(config: Config): ConfigFinding[] {
   const relaxations = [
     ...loweredRules(config),
     ...loweredCoverage(config),
+    ...raisedBudget(config),
     ...extraDirectories(config),
     ...extraPackages(config),
     ...guardMode(config),
@@ -169,6 +172,15 @@ function loweredCoverage({ coverage }: Config): Relaxation[] {
       where: ['"coverage"', `"${layer}"`, `"${metric}"`],
     })),
   );
+}
+
+/** Lowering a budget is free; one above the reference accepts specs slower than the loop affords. */
+function raisedBudget({ budget }: Config): Relaxation[] {
+  return BUDGET_LEVELS.filter((level) => budget[level] > REFERENCE_BUDGET[level]).map((level) => ({
+    what: `budget.${level}`,
+    said: `The time budget "${level}" is ${budget[level]} ms, above the reference of ${REFERENCE_BUDGET[level]} ms`,
+    where: ['"budget"', `"${level}"`],
+  }));
 }
 
 function extraDirectories({ contexts }: Config): Relaxation[] {
@@ -228,7 +240,7 @@ function flawedDeviation({ what, adr, reason }: Deviation, records: DecisionReco
   if (what === '') {
     flaws.push({
       message: 'A deviation does not say what it relaxes.',
-      fix: 'Set "what" to the setting it justifies, for example "rules.<id>", "guard", "coverage.<layer>.<rate>" or "domainAllowedPackages.<package>".',
+      fix: 'Set "what" to the setting it justifies, for example "rules.<id>", "guard", "coverage.<layer>.<rate>", "budget.<level>" or "domainAllowedPackages.<package>".',
     });
   }
 

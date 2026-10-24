@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:df278f6923a9ef97 -->
+<!-- translation-of: README.md sha256:fa8f4a1939444bf9 -->
 
 # @ddd-ts-kit/testing
 
@@ -21,6 +21,7 @@ npm i -D @ddd-ts-kit/testing
 | `@ddd-ts-kit/testing/contracts` | les suites de contrat des ports du noyau, `ContractSuite` pour en écrire une autre | le runner que vous passez |
 | `@ddd-ts-kit/testing/vitest` | `decorators()`, le *plugin* Vite qui permet à Vitest d'exécuter les décorateurs standard, et `decoratorCoverage()` | Node seulement ; exécute le `tsc` du projet |
 | `@ddd-ts-kit/testing/coverage` | `governedCoverage()`, `governedJestCoverage()`, `unaffectedContexts()` : la couverture que mesure le runner et son plancher, lus dans `ddd-ts-kit.config.json` | Node seulement |
+| `@ddd-ts-kit/testing/budget`, `/budget/vitest`, `/budget/jest` | le budget de temps de chaque niveau de *specs*, lu dans `ddd-ts-kit.config.json`, et les reporters qui y tiennent chaque fichier de *spec* | Node seulement ; le runner |
 
 L'entrée principale, `/contracts` et `/e2e` suivent les
 [niveaux de test](../../docs/ARCHITECTURE.fr.md#7-niveaux-de-test) ; les *builders* servent à chaque niveau, et les
@@ -1023,6 +1024,33 @@ En mode de décorateurs historique avec `emitDecoratorMetadata`, ajoutez `decora
 décorateurs contiennent, pour chaque type que nomme une classe décorée, une branche qu'aucun test ne peut
 prendre ; le *plugin* les marque avec l'indication que lit le fournisseur `v8`, comme le fournisseur le
 fait de lui-même pour SWC.
+
+## Budget de temps des specs
+
+`@ddd-ts-kit/testing/budget/vitest` et `@ddd-ts-kit/testing/budget/jest` sont des reporters : nommés
+dans `reporters` de la config du runner, ou passés avec `--reporter`, ils lisent la clé `budget` de
+`ddd-ts-kit.config.json` (5000 ms pour un fichier de *spec* unitaire et 30000 ms pour un fichier de
+*spec* d'intégration quand la clé est absente), nomment la *spec* la plus lente de chaque niveau à la
+fin de l'exécution, et font échouer l'exécution quand un fichier de *spec* a pris plus que son budget :
+
+<!-- checked sample -->
+```ts
+// vitest.config.ts
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: { reporters: ['default', '@ddd-ts-kit/testing/budget/vitest'] },
+});
+```
+
+- Une *spec* sous `test/integration/` d'un contexte, et une *spec* de la plateforme, sont tenues au
+  budget d'intégration ; toute autre *spec* des contextes au budget unitaire ; les *specs* de
+  l'application hors des contextes (`test/e2e`, `test/acceptance`, `test/architecture`) à aucun.
+- Le temps d'un fichier de *spec* est sa collecte et ses tests et *hooks* ensemble sous Vitest,
+  l'exécution du fichier sous Jest.
+- `@ddd-ts-kit/testing/budget` donne la lecture à un outil à vous : `budgetSettings(root)`,
+  `levelOf(file)`, `overBudget(specs, budget)`, `budgetLines(reading, budget)` et
+  `REFERENCE_BUDGET`.
 
 ## Voir aussi
 

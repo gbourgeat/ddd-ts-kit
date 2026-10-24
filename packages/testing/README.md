@@ -20,6 +20,7 @@ npm i -D @ddd-ts-kit/testing
 | `@ddd-ts-kit/testing/contracts` | contract suites of the kernel ports, `ContractSuite` to write another | the runner you pass |
 | `@ddd-ts-kit/testing/vitest` | `decorators()`, the Vite plugin that lets Vitest run standard decorators, and `decoratorCoverage()` | Node only; runs the `tsc` of the project |
 | `@ddd-ts-kit/testing/coverage` | `governedCoverage()`, `governedJestCoverage()`, `unaffectedContexts()`: the coverage the runner measures and its floor, read from `ddd-ts-kit.config.json` | Node only |
+| `@ddd-ts-kit/testing/budget`, `/budget/vitest`, `/budget/jest` | the time budget of each level of specs, read from `ddd-ts-kit.config.json`, and the reporters that hold each spec file to it | Node only; the runner |
 
 The main entry, `/contracts` and `/e2e` follow the
 [test levels](../../docs/ARCHITECTURE.md#7-test-levels); the builders serve every level, and the
@@ -1014,6 +1015,33 @@ Under the legacy decorator mode with `emitDecoratorMetadata`, add `decoratorCove
 `@ddd-ts-kit/testing/vitest` to `plugins`: the statements the transform writes to apply
 decorators hold, for every type a decorated class names, a branch no test can take; the plugin
 marks them with the hint the `v8` provider reads, as the provider does by itself for SWC.
+
+## Time budget of the specs
+
+`@ddd-ts-kit/testing/budget/vitest` and `@ddd-ts-kit/testing/budget/jest` are reporters: named in
+`reporters` of the runner config, or passed with `--reporter`, they read the `budget` key of
+`ddd-ts-kit.config.json` (5000 ms for a unit spec file and 30000 ms for an integration spec file when
+the key is absent), name the slowest spec of each level at the end of the run, and fail the run when a
+spec file took more than its budget:
+
+<!-- checked sample -->
+```ts
+// vitest.config.ts
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: { reporters: ['default', '@ddd-ts-kit/testing/budget/vitest'] },
+});
+```
+
+- A spec under `test/integration/` of a context, and a spec of the platform, are held to the
+  integration budget; every other spec of the contexts to the unit budget; the specs of the
+  application outside the contexts (`test/e2e`, `test/acceptance`, `test/architecture`) to none.
+- The time of a spec file is its collection and its tests and hooks together under Vitest, the run
+  of the file under Jest.
+- `@ddd-ts-kit/testing/budget` gives the reading to a tool of your own: `budgetSettings(root)`,
+  `levelOf(file)`, `overBudget(specs, budget)`, `budgetLines(reading, budget)`, and
+  `REFERENCE_BUDGET`.
 
 ## See also
 

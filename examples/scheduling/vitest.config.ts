@@ -16,6 +16,8 @@ export default defineConfig(({ mode }) => ({
   resolve: { tsconfigPaths: true },
   test: {
     ...WORKERS,
+    // Each spec file is held to the time budget of its level ("budget" in ddd-ts-kit.config.json, the reference when it is absent): the slowest named at the end of the run, a file over its budget fails it.
+    reporters: ['default', '@ddd-ts-kit/testing/budget/vitest'],
     projects: [
       {
         extends: true,

@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:762986ea9306c53b -->
+<!-- translation-of: CONFIG.md sha256:81ba0405b4f46ddd -->
 
 # `ddd-ts-kit.config.json`
 
@@ -780,10 +780,35 @@ dérogation :
 - **La mesure ne peut pas être restreinte en silence** (`test/coverage-governed`) : ni `include`, ni `exclude`, ni `thresholds` à la main dans la configuration du lanceur, aucune option de ce genre dans un script, aucun commentaire `v8 ignore` ou `istanbul ignore` sans `-- ADR-NNNN: <reason>`.
 - Sous le mode des décorateurs historiques (legacy), la configuration Vitest générée liste `decoratorCoverage()` de `@ddd-ts-kit/testing/vitest` : les instructions qu'écrit la transformation pour appliquer les décorateurs portent une branche par type nommé qu'aucun test ne peut prendre, et sont tenues hors de la mesure.
 
+## Budget de temps
+
+```json
+"budget": { "unit": 3000 }
+```
+
+Chaque fichier de *spec* est tenu au budget de temps de son niveau, en millisecondes. Le reporter du
+lanceur de tests (`@ddd-ts-kit/testing/budget/vitest`, `@ddd-ts-kit/testing/budget/jest`, nommé dans
+la config du lanceur qu'écrit `init` et passé avec `--reporter` là où le *pipeline* nomme ses
+reporters) lit la clé, nomme la *spec* la plus lente de chaque niveau à la fin de chaque exécution, et
+fait échouer l'exécution quand un fichier de *spec* a pris plus que son budget, collecte et tests
+compris. Une *spec* unitaire d'un contexte fait tourner le modèle et les cas d'usage sur des *fakes* ;
+une *spec* d'intégration d'un contexte, et une *spec* de la plateforme, ouvre une base de données ou
+atteint un serveur. Les *specs* de l'application hors des contextes (bout en bout, acceptation,
+architecture) ne sont pas tenues : un flux a le temps qu'il lui faut.
+
+| Niveau | Référence | Pourquoi ce budget |
+|---|---|---|
+| `unit` | 5000 | un fichier de *spec* unitaire au-delà de cinq secondes cache un monde reconstruit à chaque test, des entrées-sorties derrière un *fake*, ou une attente ; la plus lente de l'exemple prend 1,6 seconde |
+| `integration` | 30000 | une base ouverte dans le processus et ses tables créées, un serveur atteint, des parcours rejoués ; la plus lente de l'exemple prend 11 secondes, sous charge |
+
+- **Baisser un budget est libre. Le monter au-dessus de la référence est une dérogation** (`governance/recorded-deviation`) avec son enregistrement de décision, `"what": "budget.unit"` ou `"budget.integration"`.
+- **La mesure porte sur la boucle, pas sur la machine** : les références laissent de la marge à un runner chargé sous couverture ; une équipe qui veut la boucle plus serrée les baisse.
+- **Un budget qui n'est pas un nombre entier de millisecondes au-dessus de zéro, ou un niveau qui n'est pas tenu**, est signalé par `check` sous `config/valid` et lu comme la référence.
+
 ## Limites
 
 L'analyseur est tolérant : une clé qu'il ne connaît pas est ignorée sans message, et une
 classification, une relation, un identifiant de règle, un mode de garde, un mode des *worktrees*, une extension d'import
-ou un taux de couverture erronés sont signalés par `check` sous `config/valid`, pas à la lecture
+, un taux de couverture ou un budget de temps erronés sont signalés par `check` sous `config/valid`, pas à la lecture
 du fichier. Seule une valeur `stack.*` erronée, ou un fichier qui n'est pas un objet JSON,
 arrête une commande.

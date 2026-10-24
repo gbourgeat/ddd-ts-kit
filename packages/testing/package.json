@@ -52,6 +52,18 @@
     "./vitest": {
       "types": "./dist/vitest.d.ts",
       "default": "./dist/vitest.js"
+    },
+    "./budget": {
+      "types": "./dist/budget.d.ts",
+      "default": "./dist/budget.js"
+    },
+    "./budget/vitest": {
+      "types": "./dist/budget-vitest.d.ts",
+      "default": "./dist/budget-vitest.js"
+    },
+    "./budget/jest": {
+      "types": "./dist/budget-jest.d.ts",
+      "default": "./dist/budget-jest.js"
     }
   },
   "files": [
