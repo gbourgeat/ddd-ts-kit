@@ -103,7 +103,7 @@ describe('the package.json init writes', () => {
   });
 
   it.each([
-    ['fastify', 'zod', 'tsyringe', { fastify: '^5.12.5' }],
+    ['fastify', 'zod', 'tsyringe', { fastify: '^5.12.7' }],
     [
       'nest',
       'class-validator',

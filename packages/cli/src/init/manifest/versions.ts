@@ -45,7 +45,7 @@ export const VERSIONS: Readonly<Record<string, string>> = {
   '@stryker-mutator/vitest-runner': '^10.1.1',
   zod: '^4.6.5',
   express: '^5.3.0',
-  fastify: '^5.12.5',
+  fastify: '^5.12.7',
   hono: '^4.13.13',
   '@hono/node-server': '^2.1.4',
   typebox: '^1.3.37',
