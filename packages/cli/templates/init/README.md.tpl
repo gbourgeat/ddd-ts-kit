@@ -307,7 +307,7 @@ declaration that no longer follows `importAlias` and `importExtension` of
 | structure | `npm run check:arch` | `ddd-ts-kit check` |
 | import graph | `npm run depcruise` | dependency-cruiser, on `.dependency-cruiser.cjs` (generated from `ddd-ts-kit.config.json`) |
 | dead code | `npm run deadcode` | knip |
-| mutation score | `npm run test:mutation` | Stryker on the domain layer of every context, the texts of its refusals left out, each context held to the `mutation` floor of `ddd-ts-kit.config.json`; the pipeline runs it every night, and on a pull request lists the survivors of the files the change touched |
+| mutation score | `npm run test:mutation` | Stryker on the domain and application layers of every context, the texts of their refusals left out, each layer of each context held to its `mutation` floor of `ddd-ts-kit.config.json`; the pipeline runs it every night, and on a pull request lists the survivors of the files the change touched |
 | drift | `npm run docs:check` | context map, OpenAPI, AsyncAPI, event catalog |
 
 `npm run verify` chains them with the tests. Git hooks: `npm run hooks:install` once per clone
@@ -351,7 +351,7 @@ for each moment of the project: https://github.com/gbourgeat/ddd-ts-kit/blob/mai
 | Script | Does |
 |---|---|
 | `npm run dev` | the application with auto reload |
-| `npm test` | domain, application and adapter specs |
+| `npm test` | domain, application and adapter specs, each spec file held to the time budget of its level |
 | `npm run test:e2e` | the whole application through HTTP, on an in-process database unless `DATABASE_URL` is set |
 | `npm run check:arch` | `ddd-ts-kit check` |
 | `npm run docs:generate` | context map, OpenAPI, AsyncAPI and event catalog{{#if sdk.on}}, the clients under `clients/`{{/if}} |

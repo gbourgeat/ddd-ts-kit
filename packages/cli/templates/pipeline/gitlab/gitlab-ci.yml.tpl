@@ -202,7 +202,7 @@ unit:
   script:
     - if [ "$AFFECTED_SCOPE" = "none" ]; then echo "Only documents changed, no spec to run."; exit 0; fi
     - export DDD_TS_KIT_AFFECTED="$AFFECTED_CONTEXTS"
-    - npm run ci:test:unit -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml $AFFECTED_ARGS
+    - npm run ci:test:unit -- --reporter=default --reporter=junit --reporter=@ddd-ts-kit/testing/budget/vitest --outputFile.junit=reports/junit.xml $AFFECTED_ARGS
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   artifacts:
     when: always
@@ -221,7 +221,7 @@ integration:
     - if [ "$AFFECTED_SCOPE" = "none" ]; then echo "Only documents changed, no spec to run."; exit 0; fi
     - export DDD_TS_KIT_AFFECTED="$AFFECTED_CONTEXTS"
     - npm run db:migrate
-    - npm run ci:test:integration -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml $AFFECTED_ARGS
+    - npm run ci:test:integration -- --reporter=default --reporter=junit --reporter=@ddd-ts-kit/testing/budget/vitest --outputFile.junit=reports/junit.xml $AFFECTED_ARGS
 
 e2e:
   extends: [.node, .postgres, .junit]
@@ -241,7 +241,7 @@ mutation:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
   script:
-    # Stryker on the domain layer of every context, each held to the "mutation" floor of ddd-ts-kit.config.json.
+    # Stryker on the domain and application layers of every context, each layer held to its "mutation" floor of ddd-ts-kit.config.json.
     - npm run test:mutation
   artifacts:
     when: always

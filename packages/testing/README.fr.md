@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:8f55426b0744941d -->
+<!-- translation-of: README.md sha256:06cdf937df4caa2e -->
 
 # @ddd-ts-kit/testing
 
@@ -21,6 +21,7 @@ npm i -D @ddd-ts-kit/testing
 | `@ddd-ts-kit/testing/contracts` | les suites de contrat des ports du noyau, `ContractSuite` pour en écrire une autre | le runner que vous passez |
 | `@ddd-ts-kit/testing/vitest` | `decorators()`, le *plugin* Vite qui permet à Vitest d'exécuter les décorateurs standard, et `decoratorCoverage()` | Node seulement ; exécute le `tsc` du projet |
 | `@ddd-ts-kit/testing/coverage` | `governedCoverage()`, `governedJestCoverage()`, `unaffectedContexts()` : la couverture que mesure le runner et son plancher, lus dans `ddd-ts-kit.config.json` | Node seulement |
+| `@ddd-ts-kit/testing/budget`, `/budget/vitest`, `/budget/jest` | le budget de temps de chaque niveau de *specs*, lu dans `ddd-ts-kit.config.json`, et les reporters qui y tiennent chaque fichier de *spec* | Node seulement ; le runner |
 | `@ddd-ts-kit/testing/mutation` | `governedMutation()` : ce que Stryker mute, l'*ignorer* du kit qui écarte les textes des refus, les mutants statiques ignorés et le plancher, lus dans `ddd-ts-kit.config.json` | Node seulement |
 
 L'entrée principale, `/contracts` et `/e2e` suivent les
@@ -1025,11 +1026,38 @@ décorateurs contiennent, pour chaque type que nomme une classe décorée, une b
 prendre ; le *plugin* les marque avec l'indication que lit le fournisseur `v8`, comme le fournisseur le
 fait de lui-même pour SWC.
 
+## Budget de temps des specs
+
+`@ddd-ts-kit/testing/budget/vitest` et `@ddd-ts-kit/testing/budget/jest` sont des reporters : nommés
+dans `reporters` de la config du runner, ou passés avec `--reporter`, ils lisent la clé `budget` de
+`ddd-ts-kit.config.json` (5000 ms pour un fichier de *spec* unitaire et 30000 ms pour un fichier de
+*spec* d'intégration quand la clé est absente), nomment la *spec* la plus lente de chaque niveau à la
+fin de l'exécution, et avertissent quand un fichier de *spec* a pris plus que son budget, l'exécution échouant une fois `"enforce": true` posé sous `budget`, puisqu'une durée dépend de la charge de la machine :
+
+<!-- checked sample -->
+```ts
+// vitest.config.ts
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: { reporters: ['default', '@ddd-ts-kit/testing/budget/vitest'] },
+});
+```
+
+- Une *spec* sous `test/integration/` d'un contexte, et une *spec* de la plateforme, sont tenues au
+  budget d'intégration ; toute autre *spec* des contextes au budget unitaire ; les *specs* de
+  l'application hors des contextes (`test/e2e`, `test/acceptance`, `test/architecture`) à aucun.
+- Le temps d'un fichier de *spec* est le temps de ses tests et de ses *hooks*, le chargement de ses modules laissé de côté : c'est l'import du graphe de l'application, partagé par les fichiers et payé par celui qui tourne le premier.
+- `@ddd-ts-kit/testing/budget` donne la lecture à un outil à vous : `budgetSettings(root)`,
+  `levelOf(file)`, `overBudget(specs, budget)`, `budgetLines(reading, budget)` et
+  `REFERENCE_BUDGET`.
+
 ## Score de mutation lu dans la configuration
 
 `@ddd-ts-kit/testing/mutation` donne à Stryker ce qu'il mute, ce qu'il laisse de côté et le plancher
 auquel l'exécution est tenue, lus dans la clé `mutation` de `ddd-ts-kit.config.json` (80 pour la
-couche domaine quand la clé est absente), de sorte que la config Stryker d'un projet n'écrit ni *glob*
+couche domaine et 75 pour la couche application quand la clé est absente), de sorte que la config
+Stryker d'un projet n'écrit ni *glob*
 ni nombre :
 
 <!-- checked sample -->
@@ -1045,7 +1073,7 @@ export default {
 };
 ```
 
-- `mutate` : la couche domaine de chaque contexte, à son niveau et dans les modules de son modèle,
+- `mutate` : les couches domaine et application de chaque contexte, à leur niveau et dans les modules de son modèle,
   les déclarations générées et les *specs* exclues.
 - `appendPlugins` et `ignorers` : l'*ignorer* du kit, `refusal-texts`. Un test vérifie un refus par
   son code et jamais par son texte (`test/refusal-by-code`), donc un mutant d'un tel texte survivrait
@@ -1058,17 +1086,14 @@ export default {
   là où la règle est vérifiée, ou laissez le survivant en vie et dites pourquoi.
 - `ignoreStatic` : les mutants statiques, dans du code qui s'exécute une fois au chargement du
   module, sont ignorés ; une règle écrite en déclaration n'est prouvée que par le test qui l'énonce.
-- `thresholds` : le plancher, auquel `ddd-ts-kit mutation` tient ensuite chaque contexte d'après le
-  rapport json, les mutants ignorés affichés à côté de chaque score. `REFERENCE_MUTATION` est la
-  référence : domaine 80.
+- `thresholds` : le plancher le plus bas, auquel toute l'exécution est tenue ; `ddd-ts-kit mutation`
+  tient ensuite chaque couche de chaque contexte au sien d'après le rapport json, les mutants ignorés
+  affichés à côté de chaque score. `REFERENCE_MUTATION` est la référence : domaine 80, application 75.
 - `incremental`, `incrementalFile` et `force` : une passe complète par défaut, la vérité de la nuit.
   Avec `DDD_TS_KIT_MUTATION_SINCE=<ref>` dans l'environnement, comme le *job* d'une *pull request* le
   fixe à la base de fusion du changement, la passe est incrémentale : les résultats du dernier
   rapport, gardés dans `reports/mutation/incremental.json`, sont réutilisés pour ce que le changement
-  ne touche pas, et la passe coûte le temps de sa passe de tests initiale. Stryker ne compare que les
-  sources mutées et les *specs*, donc la passe est forcée complète quand le changement touche un
-  autre code dont les tests dépendent : un *fake*, un *builder*, un monde, la plateforme, une
-  dépendance, une config.
+  ne touche pas, et la passe coûte le temps de sa passe de tests initiale. Stryker ne compare que les sources mutées (les couches domaine et application) et les *specs*, donc la passe est forcée complète quand le changement touche un autre code dont les tests dépendent : une route, un adaptateur, un *fake*, un *builder*, un monde, la plateforme, une dépendance, une config. Un changement limité au modèle et aux cas d'usage se lit vite ; la plupart des fonctionnalités touchent aussi une route.
 
 ## Voir aussi
 

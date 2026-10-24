@@ -20,6 +20,7 @@ npm i -D @ddd-ts-kit/testing
 | `@ddd-ts-kit/testing/contracts` | contract suites of the kernel ports, `ContractSuite` to write another | the runner you pass |
 | `@ddd-ts-kit/testing/vitest` | `decorators()`, the Vite plugin that lets Vitest run standard decorators, and `decoratorCoverage()` | Node only; runs the `tsc` of the project |
 | `@ddd-ts-kit/testing/coverage` | `governedCoverage()`, `governedJestCoverage()`, `unaffectedContexts()`: the coverage the runner measures and its floor, read from `ddd-ts-kit.config.json` | Node only |
+| `@ddd-ts-kit/testing/budget`, `/budget/vitest`, `/budget/jest` | the time budget of each level of specs, read from `ddd-ts-kit.config.json`, and the reporters that hold each spec file to it | Node only; the runner |
 | `@ddd-ts-kit/testing/mutation` | `governedMutation()`: what Stryker mutates, the ignorer of the kit that leaves the texts of refusals out, the static mutants ignored and the floor, read from `ddd-ts-kit.config.json` | Node only |
 
 The main entry, `/contracts` and `/e2e` follow the
@@ -1016,11 +1017,37 @@ Under the legacy decorator mode with `emitDecoratorMetadata`, add `decoratorCove
 decorators hold, for every type a decorated class names, a branch no test can take; the plugin
 marks them with the hint the `v8` provider reads, as the provider does by itself for SWC.
 
+## Time budget of the specs
+
+`@ddd-ts-kit/testing/budget/vitest` and `@ddd-ts-kit/testing/budget/jest` are reporters: named in
+`reporters` of the runner config, or passed with `--reporter`, they read the `budget` key of
+`ddd-ts-kit.config.json` (5000 ms for a unit spec file and 30000 ms for an integration spec file when
+the key is absent), name the slowest spec of each level at the end of the run, and warn when a spec file took more than its budget, failing the run once `"enforce": true` is set under `budget`, since a duration depends on the load of the machine:
+
+<!-- checked sample -->
+```ts
+// vitest.config.ts
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: { reporters: ['default', '@ddd-ts-kit/testing/budget/vitest'] },
+});
+```
+
+- A spec under `test/integration/` of a context, and a spec of the platform, are held to the
+  integration budget; every other spec of the contexts to the unit budget; the specs of the
+  application outside the contexts (`test/e2e`, `test/acceptance`, `test/architecture`) to none.
+- The time of a spec file is the time of its tests and hooks, the loading of its modules left out: that is the import of the graph of the application, shared by the files and paid by whichever runs first.
+- `@ddd-ts-kit/testing/budget` gives the reading to a tool of your own: `budgetSettings(root)`,
+  `levelOf(file)`, `overBudget(specs, budget)`, `budgetLines(reading, budget)`, and
+  `REFERENCE_BUDGET`.
+
 ## Mutation score read from the config
 
 `@ddd-ts-kit/testing/mutation` gives Stryker what it mutates, what it leaves out and the floor the
 run is held to, read from the `mutation` key of `ddd-ts-kit.config.json` (80 for the domain layer
-when the key is absent), so that the Stryker config of a project writes no glob and no number:
+and 75 for the application layer when the key is absent), so that the Stryker config of a project
+writes no glob and no number:
 
 <!-- checked sample -->
 ```ts
@@ -1035,8 +1062,8 @@ export default {
 };
 ```
 
-- `mutate`: the domain layer of every context, at its level and in the modules of its model, the
-  generated declarations and the specs left out.
+- `mutate`: the domain and application layers of every context, at their level and in the modules
+  of its model, the generated declarations and the specs left out.
 - `appendPlugins` and `ignorers`: the ignorer of the kit, `refusal-texts`. A test asserts a refusal
   by its code and never by its text (`test/refusal-by-code`), so a mutant of such a text would
   survive by design: the message of `refusal(..)`, a text handed to a factory of a class that
@@ -1048,16 +1075,14 @@ export default {
   checked, or leave the survivor alive and say why.
 - `ignoreStatic`: the static mutants, in code that runs once when the module loads, are ignored;
   a rule written as a declaration is proven by the test that states it alone.
-- `thresholds`: the floor, which `ddd-ts-kit mutation` then holds each context to from the json
-  report, the ignored mutants shown beside each score. `REFERENCE_MUTATION` is the reference:
-  domain 80.
+- `thresholds`: the lowest floor, which the whole run is held to; `ddd-ts-kit mutation` then holds
+  each layer of each context to its own from the json report, the ignored mutants shown beside each
+  score. `REFERENCE_MUTATION` is the reference: domain 80, application 75.
 - `incremental`, `incrementalFile` and `force`: a full run by default, the truth of the night. With
   `DDD_TS_KIT_MUTATION_SINCE=<ref>` in the environment, as the job of a pull request sets it to the
   merge base of the change, the run is incremental: the results of the last report, kept in
   `reports/mutation/incremental.json`, are reused for what the change leaves alone, and the run
-  takes the time of its initial test run. Stryker diffs the mutated sources and the specs alone, so
-  the run is forced whole when the change touches other code the tests lean on: a fake, a builder, a
-  world, the platform, a dependency, a config.
+  takes the time of its initial test run. Stryker diffs the mutated sources (the domain and application layers) and the specs alone, so the run is forced whole when the change touches other code the tests lean on: a route, an adapter, a fake, a builder, a world, the platform, a dependency, a config. A change kept to the model and the use cases reads fast; most features touch a route too.
 
 ## See also
 

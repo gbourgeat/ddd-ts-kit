@@ -7,6 +7,7 @@ import { parseBusinessNames } from './parse-business-names';
 import { parseCi } from './parse-ci';
 import { parseCommitConfig } from './parse-commit-config';
 import { parseContext } from './parse-context';
+import { parseBudget } from './parse-budget';
 import { parseCoverage } from './parse-coverage';
 import { parseMutation } from './parse-mutation';
 import { parseLimits } from './parse-limits';
@@ -74,6 +75,7 @@ type Governance = Pick<
   | 'limits'
   | 'onePerFile'
   | 'coverage'
+  | 'budget'
   | 'mutation'
   | 'commit'
   | 'guard'
@@ -95,6 +97,7 @@ function parseGovernance(raw: Record<string, unknown>): Governance {
     limits: parseLimits(raw['limits']),
     onePerFile: parseOnePerFile(raw['onePerFile']),
     coverage: parseCoverage(raw['coverage']),
+    budget: parseBudget(raw['budget']),
     mutation: parseMutation(raw['mutation']),
     commit: parseCommitConfig(raw['commit']),
     guard: text(raw['guard'], 'enforce'),

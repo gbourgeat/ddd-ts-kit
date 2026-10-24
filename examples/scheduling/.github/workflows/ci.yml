@@ -203,7 +203,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
-      - name: Stryker on the domain layer of every context, each held to the "mutation" floor of ddd-ts-kit.config.json
+      - name: Stryker on the domain and application layers of every context, each layer held to its "mutation" floor of ddd-ts-kit.config.json
         run: npm run test:mutation
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}

@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:285888c22bae28a2 -->
+<!-- translation-of: CONFIG.md sha256:d6f8e41fb92b6463 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -780,6 +780,30 @@ dérogation :
 - **La mesure ne peut pas être restreinte en silence** (`test/coverage-governed`) : ni `include`, ni `exclude`, ni `thresholds` à la main dans la configuration du lanceur, aucune option de ce genre dans un script, aucun commentaire `v8 ignore` ou `istanbul ignore` sans `-- ADR-NNNN: <reason>`.
 - Sous le mode des décorateurs historiques (legacy), la configuration Vitest générée liste `decoratorCoverage()` de `@ddd-ts-kit/testing/vitest` : les instructions qu'écrit la transformation pour appliquer les décorateurs portent une branche par type nommé qu'aucun test ne peut prendre, et sont tenues hors de la mesure.
 
+## Budget de temps
+
+```json
+"budget": { "unit": 3000, "enforce": true }
+```
+
+Chaque fichier de *spec* est tenu au budget de temps de son niveau, en millisecondes. Le reporter du
+lanceur de tests (`@ddd-ts-kit/testing/budget/vitest`, `@ddd-ts-kit/testing/budget/jest`, nommé dans
+la config du lanceur qu'écrit `init` et passé avec `--reporter` là où le *pipeline* nomme ses
+reporters) lit la clé, nomme la *spec* la plus lente de chaque niveau à la fin de chaque exécution, et
+avertit quand un fichier de *spec* a pris plus que son budget, ses tests et ses *hooks* chronométrés, le chargement de ses modules laissé de côté (l'import du graphe de l'application, partagé par les fichiers et payé par celui qui tourne le premier) ; avec `"enforce": true` sous `budget`, il fait échouer l'exécution à la place. Une durée dépend de la charge de la machine autant que de la *spec* : imposez le budget une fois les mesures du projet stables. Une *spec* unitaire d'un contexte fait tourner le modèle et les cas d'usage sur des *fakes* ;
+une *spec* d'intégration d'un contexte, et une *spec* de la plateforme, ouvre une base de données ou
+atteint un serveur. Les *specs* de l'application hors des contextes (bout en bout, acceptation,
+architecture) ne sont pas tenues : un flux a le temps qu'il lui faut.
+
+| Niveau | Référence | Pourquoi ce budget |
+|---|---|---|
+| `unit` | 5000 | un fichier de *spec* unitaire au-delà de cinq secondes cache un monde reconstruit à chaque test, des entrées-sorties derrière un *fake*, ou une attente ; la plus lente de l'exemple prend 1,6 seconde |
+| `integration` | 30000 | une base ouverte dans le processus et ses tables créées, un serveur atteint, des parcours rejoués ; la plus lente de l'exemple prend 11 secondes, sous charge |
+
+- **Baisser un budget est libre. Le monter au-dessus de la référence est une dérogation** (`governance/recorded-deviation`) avec son enregistrement de décision, `"what": "budget.unit"` ou `"budget.integration"`.
+- **Un avertissement d'abord, un échec une fois imposé** : `"enforce": true` fait échouer l'exécution sur une *spec* au-delà de son budget, en local, avant un *push* et dans le *pipeline* ; sans lui, l'exécution nomme la *spec* et passe. **La mesure porte sur la boucle, pas sur la machine** : les références laissent de la marge à un runner chargé sous couverture ; une équipe qui veut la boucle plus serrée les baisse.
+- **Un budget qui n'est pas un nombre entier de millisecondes au-dessus de zéro, ou un niveau qui n'est pas tenu**, est signalé par `check` sous `config/valid` et lu comme la référence.
+
 ## Score de mutation
 
 La config Stryker n'écrit ni *glob* ni nombre : elle étale `governedMutation()` de
@@ -801,8 +825,8 @@ export default {
 };
 ```
 
-`governedMutation()` mute la couche domaine de chaque contexte, à son niveau et dans les modules de
-son modèle, les déclarations générées exclues ; elle charge l'*ignorer* du kit (`appendPlugins`,
+`governedMutation()` mute les couches domaine et application de chaque contexte, à leur niveau et
+dans les modules de son modèle, les déclarations générées exclues ; elle charge l'*ignorer* du kit (`appendPlugins`,
 `ignorers`), qui écarte les textes des refus, le message de `refusal(..)`, un texte passé à une
 fabrique de refus (`InvalidSlot.forRule('ends after it starts')`), le message de `super(..)` dans
 une classe d'erreur et de `new ..Error(..)`, puisqu'un test du kit vérifie un refus par son code et
@@ -816,24 +840,25 @@ tient chaque contexte au plancher, comme la couverture tient chaque contexte à 
 *pipeline* le lance chaque nuit, pas sur une *pull request*.
 
 ```json
-"mutation": { "domain": 90 }
+"mutation": { "domain": 90, "application": 80 }
 ```
 
 | Couche | Référence | Pourquoi ce plancher |
 |---|---|---|
 | `domain` | 80 | du code pur qui porte les règles du métier : un mutant que ses tests ne remarquent pas est une règle qu'aucun test n'énonce. L'application d'exemple atteint 96,3 avec la configuration livrée, son contexte le plus bas 95,4 |
+| `application` | 75 | les cas d'usage : la permission qu'une commande exige, l'idempotence d'un gestionnaire, l'événement qu'il publie, le refus qu'il relaie ; cinq sous le domaine, comme la référence de couverture descend d'une couche à la suivante. L'application d'exemple atteint 95,7, son contexte le plus bas 93,5 |
 
 - **Monter le plancher est libre. Le baisser sous la référence est une dérogation** (`governance/recorded-deviation`) avec son enregistrement de décision, `"what": "mutation.domain"`.
-- **Chaque contexte est tenu pour lui-même** : `ddd-ts-kit mutation` note la couche domaine de chaque contexte que le rapport contient, comme Stryker le fait (détectés sur détectés et non détectés, les erreurs exclues), et sort en 1 tant qu'un contexte est sous le plancher.
+- **Chaque couche de chaque contexte est tenue pour elle-même** : `ddd-ts-kit mutation` note les couches domaine et application de chaque contexte que le rapport contient, comme Stryker le fait (détectés sur détectés et non détectés, les erreurs exclues), et sort en 1 tant qu'une couche est sous son plancher.
 - **La mesure ne se rétrécit pas en silence** (`test/mutation-governed`) : ni `mutate`, ni `mutator`, ni `ignorers`, ni `ignoreStatic`, ni `thresholds` à la main dans la config Stryker.
 - **Ce dont le score ne dit rien.** Les textes des refus, et les mutants statiques : une règle écrite en déclaration en haut d'un fichier, les transitions d'une machine à états, une constante métier, une expression régulière, n'est jamais mutée, et une transition fausse dans une telle table ne fait baisser aucun score. Le test qui énonce une telle règle en est la seule preuve ; `ddd-ts-kit mutation` montre les mutants ignorés de chaque contexte à côté de son score. Un texte de refus qu'une fonction auxiliaire renvoie avant l'appel de la fabrique n'est pas reconnu et survit : levez le refus là où la règle est vérifiée, ou laissez-le en vie et dites pourquoi. Sur l'exemple, 163 des 1436 mutants sont ignorés : 73 textes de refus et 90 statiques, dont la déclaration de la machine à états des rendez-vous ; toute autre chaîne du domaine est mesurée.
 - **Sous les deux lanceurs.** Un projet sous Vitest fait tourner contre chaque mutant les *specs* unitaires de `vitest.mutation.config.ts` ; un projet sous Jest celles de `jest.mutation.config.js`, en modules ES sous le drapeau que le script `test` passe (`testRunnerNodeArgs`), Jest lançant les *specs* qui importent le fichier muté.
-- **Sur une *pull request*, une lecture du changement.** Le job `mutation-changed` lance Stryker en mode incrémental : `DDD_TS_KIT_MUTATION_SINCE` nomme la base de fusion du changement, `governedMutation()` active `incremental`, et les résultats de la dernière nuit, gardés avec son rapport (`reports/mutation/incremental.json`), sont réutilisés pour ce que le changement ne touche pas, de sorte que l'exécution coûte le temps de sa passe de tests initiale, une minute sur l'exemple au lieu de cinq. Stryker ne compare que les sources mutées et les *specs* : quand le changement touche un autre code dont les tests dépendent, un *fake*, un *builder*, un monde, la plateforme, une dépendance, `force` en fait une passe complète. Puis `ddd-ts-kit mutation`, qui lit la même variable (`--changed <ref>` le dit à la main), liste les survivants des fichiers que le changement a touchés et sort en 0 quels que soient les scores : une lecture avant la revue, jamais une porte, le plancher étant tenu par la nuit. `--survivors` liste tous les survivants du rapport.
+- **Sur une *pull request*, une lecture du changement.** Le job `mutation-changed` lance Stryker en mode incrémental : `DDD_TS_KIT_MUTATION_SINCE` nomme la base de fusion du changement, `governedMutation()` active `incremental`, et les résultats de la dernière nuit, gardés avec son rapport (`reports/mutation/incremental.json`), sont réutilisés pour ce que le changement ne touche pas, de sorte que l'exécution coûte le temps de sa passe de tests initiale, une minute sur l'exemple au lieu de cinq. Stryker ne compare que les sources mutées (les couches domaine et application) et les *specs* : quand le changement touche un autre code dont les tests dépendent, une route, un adaptateur, un *fake*, un *builder*, un monde, la plateforme, une dépendance, `force` en fait une passe complète, cinq minutes environ sur l'exemple, pour qu'aucun résultat périmé ne soit réutilisé. La lecture rapide est pour un changement limité au modèle, aux cas d'usage et à leurs *specs* ; la plupart des *pull requests* d'une fonctionnalité touchent aussi une route et reçoivent la passe complète, toujours une lecture et jamais une porte. Puis `ddd-ts-kit mutation`, qui lit la même variable (`--changed <ref>` le dit à la main), liste les survivants des fichiers que le changement a touchés et sort en 0 quels que soient les scores : une lecture avant la revue, jamais une porte, le plancher étant tenu par la nuit. `--survivors` liste tous les survivants du rapport.
 
 ## Limites
 
 L'analyseur est tolérant : une clé qu'il ne connaît pas est ignorée sans message, et une
 classification, une relation, un identifiant de règle, un mode de garde, un mode des *worktrees*, une extension d'import
-ou un taux de couverture erronés sont signalés par `check` sous `config/valid`, pas à la lecture
+, un taux de couverture ou un budget de temps erronés sont signalés par `check` sous `config/valid`, pas à la lecture
 du fichier. Seule une valeur `stack.*` erronée, ou un fichier qui n'est pas un objet JSON,
 arrête une commande.
