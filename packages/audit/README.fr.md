@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f483708de89cbe2c -->
+<!-- translation-of: README.md sha256:6a9fca0dd2d04ee5 -->
 
 # @ddd-ts-kit/audit
 
@@ -608,7 +608,9 @@ jamais les données :
    `subject_keys` de chaque *package* de persistance). Chaque champ masqué doit dire à qui il
    appartient, `masked('patientEmail', { subject: 'patientId' })` : le *middleware* refuse celui
    qui ne le dit pas, au câblage (`MissingDataSubjectError`), puisque l'acteur et la ressource
-   d'une entrée sont rarement cette personne. Effacer une personne (`SubjectKeyStore.erase`,
+   d'une entrée sont rarement cette personne ; et ce sujet doit être un identifiant opaque (la
+   grammaire d'un id de *tenant*), puisque le stockage de clés l'écrit en clair : un e-mail ou un
+   nom à sa place est refusé avant qu'une clé ne soit créée (`MaskingSubjectNotAnIdError`). Effacer une personne (`SubjectKeyStore.erase`,
    enveloppé par `auditedSubjectKeys` pour que l'effacement laisse son entrée) détruit la clé :
    chaque masque fait avec elle devient un jeton d'apparence aléatoire que personne ne peut
    recalculer, les entrées restent, les hachages restent valides, et l'id de clé écrit devant

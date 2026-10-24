@@ -79,7 +79,7 @@ function assertMaskerGiven(options: AuditMiddlewareOptions): void {
 
   const subjectless =
     options.masker?.requiresDataSubject === true
-      ? options.fields?.flatMap((declaration) => declaration.subjectless)
+      ? options.fields?.flatMap((declaration) => declaration.subjectless ?? [])
       : [];
 
   if (subjectless !== undefined && subjectless.length > 0) {

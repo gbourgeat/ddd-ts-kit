@@ -38,6 +38,7 @@ export { hmacMasker, type HmacMaskerOptions } from './redaction/hmac-masker';
 export { masked, type MaskedFieldOptions } from './redaction/masked';
 export type { MaskedField } from './redaction/masked-field';
 export type { MaskingSubject } from './redaction/masking-subject';
+export { MaskingSubjectNotAnIdError } from './redaction/masking-subject-not-an-id-error';
 export { MissingDataSubjectError } from './redaction/missing-data-subject-error';
 export { MissingMaskerError } from './redaction/missing-masker-error';
 export { subjectMasker, type SubjectMaskerOptions } from './redaction/subject-masker';

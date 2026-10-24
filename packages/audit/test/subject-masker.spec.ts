@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { InMemoryCommandBus, InMemorySubjectKeyStore } from '@ddd-ts-kit/kernel';
 import {
   InMemoryAuditTrail,
+  MaskingSubjectNotAnIdError,
   MissingDataSubjectError,
   auditMiddleware,
   auditedFields,
@@ -69,6 +70,18 @@ describe('subjectMasker, a mask under the key of the data subject', () => {
 
     expect(other).not.toBe(trail);
     expect(other.slice(0, other.indexOf(':'))).toBe(trail.slice(0, trail.indexOf(':')));
+  });
+
+  it('refuses a data subject that is not an opaque identifier before any key is created: a name or an email never reaches the key store', async () => {
+    const keys = new InMemorySubjectKeyStore();
+    const masker = subjectMasker(keys);
+
+    await expect(masker.mask('lin@example.org', about('lin@example.org'))).rejects.toThrow(MaskingSubjectNotAnIdError);
+    await expect(masker.mask('lin@example.org', about('Lin Chen'))).rejects.toThrow(MaskingSubjectNotAnIdError);
+
+    await expect(keys.find('anything')).resolves.toBeUndefined();
+    expect(await keys.erase('lin@example.org')).toBe(false);
+    expect(await keys.erase('Lin Chen')).toBe(false);
   });
 
   it('refuses a value whose data subject is unknown, since it would have to invent whose key to use', async () => {
@@ -152,6 +165,18 @@ describe('masked(field, { subject }), whose a masked value is', () => {
 
     expect(() => auditMiddleware(new InMemoryAuditTrail(), options)).toThrow(MissingDataSubjectError);
     expect(() => auditMiddleware(new InMemoryAuditTrail(), options)).toThrow('masked("patientEmail", { subject:');
+  });
+
+  it('wires a declaration written by hand, without the list of subjectless fields, as before', async () => {
+    const byHand: AuditedMessage = {
+      type: RescheduleAppointmentCommand,
+      masks: false,
+      project: () => ({ plain: { kept: 'yes' } }),
+    };
+
+    const entry = await changesRecordedWith([byHand], subjectMasker(new InMemorySubjectKeyStore()));
+
+    expect(entry?.changes).toEqual({ kept: 'yes' });
   });
 
   it('only accepts, as the subject, the name of a field the message has', () => {

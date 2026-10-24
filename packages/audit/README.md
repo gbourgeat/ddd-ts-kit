@@ -585,7 +585,9 @@ personal data be erased. The two coexist as long as the chain never holds the da
    memory, or in the `subject_keys` table of every persistence package). Each masked field has to
    say whose it is, `masked('patientEmail', { subject: 'patientId' })`: the middleware refuses one
    that does not, at wiring time (`MissingDataSubjectError`), since the actor and the resource of
-   an entry are rarely that person. Erasing a person (`SubjectKeyStore.erase`, wrapped by
+   an entry are rarely that person; and that subject has to be an opaque identifier (the grammar of
+   a tenant id), since the key store writes it in clear: an email or a name in its place is refused
+   before any key is created (`MaskingSubjectNotAnIdError`). Erasing a person (`SubjectKeyStore.erase`, wrapped by
    `auditedSubjectKeys` so that the erasure leaves its entry) destroys the key: every mask made
    with it becomes a random-looking token nobody can recompute, the entries stay, the hashes stay
    valid, and the key id written before each mask tells the masks of a key that is gone. The key
