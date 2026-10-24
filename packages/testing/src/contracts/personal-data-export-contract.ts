@@ -17,8 +17,9 @@ export interface PersonalDataExportContractOptions<Row> {
 
 /**
  * What every adapter of `PersonalDataExport` over a `personalFields` declaration guarantees: one
- * record per row about the subject, under the name of the source, holding each personal column as
- * plain data, and nothing of anyone else.
+ * record per row about the subject, under the name of the exporter (or that name and the table,
+ * `<name>.<table>`, when the exporter reads several tables), holding each personal column and each
+ * file column as plain data, no other column, and nothing of anyone else.
  */
 export function personalDataExportContract<Row extends object>(
   runner: ContractRunner,
@@ -34,12 +35,13 @@ class PersonalDataExportSuite<Row extends object> extends ContractSuite<Personal
 
   protected tests(): void {
     this.answersEveryRowOfTheSubject();
+    this.namesTheSourceOfEveryRecord();
     this.answersNothingForAStranger();
   }
 
   private answersEveryRowOfTheSubject(): void {
     this.it(
-      'answers one record per row about the subject, under the name of the source, with each personal column as plain data',
+      'answers one record per row about the subject, with each personal column and file column as plain data, and no other',
       async () => {
         const { exporter, declaration } = this.subject;
         const first = this.subject.aRowOf('ada', 1);
@@ -47,19 +49,33 @@ class PersonalDataExportSuite<Row extends object> extends ContractSuite<Personal
 
         await this.subject.insert([first, this.subject.aRowOf('bob', 1), second]);
 
-        this.expect(await exporter.exportOf('ada')).toEqual(
-          [first, second].map((row) => ({
-            source: exporter.name,
-            values: Object.fromEntries(
+        const records = await exporter.exportOf('ada');
+
+        this.expect(records.map(({ values }) => values)).toEqual(
+          [first, second].map((row) =>
+            Object.fromEntries(
               [...declaration.fields, ...declaration.files].map((column) => [
                 column,
                 personalDataValueOf(columnOf(row, column)),
               ]),
             ),
-          })),
+          ),
         );
       },
     );
+  }
+
+  private namesTheSourceOfEveryRecord(): void {
+    this.it('names the source of every record after the exporter, alone or followed by the table', async () => {
+      const { exporter } = this.subject;
+
+      await this.subject.insert([this.subject.aRowOf('ada', 1), this.subject.aRowOf('ada', 2)]);
+
+      const sources = (await exporter.exportOf('ada')).map(({ source }) => source);
+
+      this.expect(sources).toEqual([sources[0], sources[0]]);
+      this.expect(sources[0] === exporter.name || sources[0]?.startsWith(`${exporter.name}.`)).toBe(true);
+    });
   }
 
   private answersNothingForAStranger(): void {

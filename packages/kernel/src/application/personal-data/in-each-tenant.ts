@@ -1,5 +1,5 @@
-import { executionContext } from '../execution/execution-context';
 import type { ExecutionScope } from '../ports/execution-scope';
+import { eachTenant } from './each-tenant';
 
 /**
  * How an erasure reaches the copies of every tenant: the work runs once per tenant, in the
@@ -13,14 +13,5 @@ export function inEachTenant(
   scope: ExecutionScope,
   tenants: readonly string[],
 ): (work: () => Promise<number>) => Promise<number> {
-  return async (work) => {
-    const current = scope.require();
-    let total = 0;
-
-    for (const tenantId of tenants) {
-      total += await scope.run(executionContext({ ...current, tenantId }), work);
-    }
-
-    return total;
-  };
+  return async (work) => (await eachTenant(scope, tenants, work)).reduce((total, reached) => total + reached, 0);
 }

@@ -1,6 +1,7 @@
 import type { CommitConfig } from './commit-config';
 import type { Budget } from './budget';
 import type { Coverage } from './coverage';
+import type { Mutation } from './mutation';
 import type { RuleSetting } from './rule-setting';
 import type { Stack } from './stack';
 
@@ -118,6 +119,8 @@ export interface Config {
   readonly coverage: Coverage;
   /** The time a spec file of each level may take, in milliseconds: held by the reporter of the test runner, raised only by a recorded deviation. */
   readonly budget: Budget;
+  /** The minimum mutation score of the domain layer, per context: read by the Stryker config and held by `ddd-ts-kit mutation`, lowered only by a recorded deviation. */
+  readonly mutation: Mutation;
   /** The advised size of one commit, generated files not counted. */
   readonly commit: CommitConfig;
   /** How the editor hook of the plugin reacts to a violation: `enforce`, `advise` or `off`. Kept as written, `check` reports a wrong value. */

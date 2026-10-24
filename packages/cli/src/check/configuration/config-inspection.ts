@@ -4,8 +4,6 @@ import {
   sdkProblems,
   CLASSIFICATIONS,
   commitLimitProblems,
-  budgetProblems,
-  coverageProblems,
   CONFIG_FILE,
   FUNCTION_LINES_CEILING,
   AGENT_PROFILES,
@@ -24,6 +22,7 @@ import type { Violation } from '../model/violation';
 import { isRecord } from '../support/is-record';
 import { lineOf } from '../support/line-of';
 import { lineOfSequence } from '../support/line-of-sequence';
+import { measureSettings } from './measure-settings';
 import { moduleProblems } from './module-problems';
 import { rawConfig } from './raw-config';
 
@@ -204,18 +203,9 @@ export class ConfigInspection {
     return sdkProblems(rawConfig(this.project)['sdk']).map(({ key, message, fix }) => this.inConfig(key, message, fix));
   }
 
-  /** A threshold that is not a percentage is read as the reference: the config says something no run enforces. */
-  coverageThresholds(): Violation[] {
-    return coverageProblems(rawConfig(this.project)['coverage']).map(({ where, message, fix }) =>
-      this.report({ file: CONFIG_FILE, line: lineOfSequence(this.project.configText, where) }, message, fix),
-    );
-  }
-
-  /** A budget that is not a duration is read as the reference: the config says something no run enforces. */
-  budgetDurations(): Violation[] {
-    return budgetProblems(rawConfig(this.project)['budget']).map(({ where, message, fix }) =>
-      this.report({ file: CONFIG_FILE, line: lineOfSequence(this.project.configText, where) }, message, fix),
-    );
+  /** A coverage threshold, a mutation floor or a time budget the config writes that no run reads as written. */
+  measureSettings(): Violation[] {
+    return measureSettings(this.project, this.report);
   }
 
   /** An entry without a file or without a reason allows nothing: it is ignored, and has to be said. */

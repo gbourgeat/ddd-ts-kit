@@ -777,6 +777,54 @@ architecture) are not held: a flow has the time it needs.
 - **A warning first, a failure once enforced**: `"enforce": true` makes a spec over its budget fail the run, locally, before a push and in the pipeline; without it the run names the spec and passes. **The measure is of the loop, not of the machine**: the references leave room for a busy runner under coverage; a team that wants the loop tighter lowers them.
 - **A budget that is not a whole number of milliseconds above zero, or a level that is not held**, is reported by `check` as `config/valid` and read as the reference.
 
+## Mutation score
+
+The Stryker config writes no glob and no number: it spreads `governedMutation()` of
+`@ddd-ts-kit/testing/mutation`, which reads the `mutation` key each time a run starts. One place
+holds the floor, and `check` holds that place (`test/mutation-governed`).
+
+<!-- checked sample -->
+```ts
+// stryker.config.mjs
+import { governedMutation } from '@ddd-ts-kit/testing/mutation';
+
+export default {
+  testRunner: 'vitest',
+  vitest: { configFile: 'vitest.mutation.config.ts' },
+  checkers: [],
+  coverageAnalysis: 'perTest',
+  // What is mutated, what is left out and the floor come from "mutation" in ddd-ts-kit.config.json.
+  ...governedMutation(),
+};
+```
+
+`governedMutation()` mutates the domain layer of every context, at its level and in the modules of
+its model, the generated declarations left out; it loads the ignorer of the kit (`appendPlugins`,
+`ignorers`), which leaves the texts of refusals out, the message of `refusal(..)`, a text handed to
+a factory of a refusal (`InvalidSlot.forRule('ends after it starts')`), the message of `super(..)`
+in an error class and of `new ..Error(..)`, since a test of the kit asserts a refusal by its code
+and never by its text, so that such a mutant would survive by design, and leaves every other string
+of the domain measured, the name of an event, a status, a code, a key; it ignores the static
+mutants, those of code that runs once when the module loads, which would reload the environment
+and run every test for each of them; and it writes the floor as the `thresholds` of Stryker. `npm run test:mutation` runs Stryker, then
+`ddd-ts-kit mutation`, which reads the report (`reports/mutation/mutation.json`) and holds each
+context to the floor, as the coverage holds each context to its thresholds. The pipeline runs it
+every night, not on a pull request.
+
+```json
+"mutation": { "domain": 90 }
+```
+
+| Layer | Reference | Why this floor |
+|---|---|---|
+| `domain` | 80 | pure code that holds the rules of the business: a mutant its tests do not notice is a rule no test states. The example application reaches 96.3 with the shipped configuration, its lowest context 95.4 |
+
+- **Raising the floor is free. Lowering it under the reference is a deviation** (`governance/recorded-deviation`) with its decision record, `"what": "mutation.domain"`.
+- **Each context is held on its own**: `ddd-ts-kit mutation` scores the domain layer of every context the report holds, as Stryker does (detected over detected and undetected, the errors left out), and exits 1 while one is under the floor.
+- **The measure cannot be narrowed quietly** (`test/mutation-governed`): no `mutate`, `mutator`, `ignorers`, `ignoreStatic` or `thresholds` by hand in the Stryker config.
+- **What the score says nothing about.** The texts of refusals, and the static mutants: a rule written as a declaration at the top of a file, the transitions of a state machine, a business constant, a regular expression, is never mutated, and a wrong transition in such a table lowers no score. The test that states such a rule is its only proof; `ddd-ts-kit mutation` shows the ignored mutants of each context beside its score. A text of a refusal that a helper returns before the factory is called is not recognised and survives: throw where the rule is checked, or leave it alive and say why. On the example, 163 of the 1436 mutants are ignored: 73 texts of refusals and 90 static ones, the declaration of the appointment state machine among them; every other string of the domain is measured.
+- **On both runners.** A project on Vitest runs the unit specs of `vitest.mutation.config.ts` against each mutant; a project on Jest those of `jest.mutation.config.js`, as ES modules under the flag the `test` script passes (`testRunnerNodeArgs`), Jest running the specs that import the mutated file.
+
 ## Limits
 
 The parser is tolerant: a key it does not know is ignored without a message, and a wrong

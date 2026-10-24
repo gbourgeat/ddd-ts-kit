@@ -207,5 +207,15 @@ are a floor per context and layer, not a goal; a test written to move a number p
 Each spec file is held to the time budget of its level, five seconds for a unit spec and thirty for an
 integration spec by the reference: the runner names the slowest at the end of a run and warns over the budget, failing once the project sets `"enforce": true`. A slow unit spec is a world to share or a fake to write, never a budget to raise.
 
+The night runs `npm run test:mutation`: Stryker on the domain layer of every context, the texts of
+its refusals left out and its static mutants ignored, then each context held to the `mutation` floor
+of the config, the ignored mutants shown beside the score. A survivor is a rule no test states: read it
+as a business decision, then state it in a test named after it, or leave the mutant alive and say
+why; never narrow the measure (`test/mutation-governed`). A rule written as a declaration, a
+transition table or a constant at the top of a file, is never mutated: the test that states it is
+its only proof. The text of a refusal leaves the score when it is handed to the error class where
+the rule is checked (`InvalidSlot.forRule('ends after it starts')`); a text a helper returns before
+the factory is called is measured and survives: throw where the rule is checked.
+
 Finish with `npm test -- <context>`, `npm run test:coverage` before the slice is closed, and
 `npx ddd-ts-kit check --rule test/no-mocks --rule test/builder-required --rule test/spec-required --rule test/helper-placed --rule test/acceptance-black-box`.

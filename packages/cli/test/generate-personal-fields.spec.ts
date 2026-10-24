@@ -61,7 +61,7 @@ describe('generate repository --personal declares the personal columns of the ta
       'export class FakeBillingPersonalDataErasure implements BillingPersonalDataErasure {',
     );
 
-    const spec = read(root, `${BILLING}/test/integration/billing-personal-data-erasure.spec.ts`);
+    const spec = read(root, `${BILLING}/test/integration/billing-personal-data.spec.ts`);
 
     expect(spec).toContain('expect(await erasure.erase(ada)).toBe(1);');
     expect(spec).toContain('expect(await rowOf(ada)).toMatchObject(ERASED);');
@@ -144,7 +144,7 @@ describe('the subject, the mode of erasure and a second table of the same contex
     expect(declaration).toContain("  erasure: 'row',");
     expect(read(root, `${PERSISTENCE}/create-billing-tables.schema.ts`)).toContain("    table.text('customer_id');");
 
-    const spec = read(root, `${BILLING}/test/integration/billing-personal-data-erasure.spec.ts`);
+    const spec = read(root, `${BILLING}/test/integration/billing-personal-data.spec.ts`);
 
     expect(spec).toContain("  customer_id: 'ada',\n  customer_email: 'customer_email of ada',");
     expect(spec).toContain("expect(await erasure.erase('ada')).toBe(1);");
@@ -192,7 +192,7 @@ describe('the subject, the mode of erasure and a second table of the same contex
     expect(adapter).toContain('  constructor(database: KnexContext, scope: ExecutionScope) {');
     expect(adapter).toContain('      tenant: scope,\n');
 
-    expect(read(root, `${BILLING}/test/integration/billing-personal-data-erasure.spec.ts`)).toContain(
+    expect(read(root, `${BILLING}/test/integration/billing-personal-data.spec.ts`)).toContain(
       'erasure = new KnexBillingPersonalDataErasure(database.persistence.database, scope);',
     );
   });

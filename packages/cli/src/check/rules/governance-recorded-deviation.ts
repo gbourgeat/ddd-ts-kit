@@ -5,7 +5,9 @@ import {
   COVERAGE_METRICS,
   defaultAllowedPackages,
   REFERENCE_BUDGET,
+  MUTATION_LAYERS,
   REFERENCE_COVERAGE,
+  REFERENCE_MUTATION,
   type Config,
   type Deviation,
 } from '../../config';
@@ -130,6 +132,7 @@ function unrecordedRelaxations(config: Config): ConfigFinding[] {
     ...loweredRules(config),
     ...loweredCoverage(config),
     ...raisedBudget(config),
+    ...loweredMutation(config),
     ...extraDirectories(config),
     ...extraPackages(config),
     ...guardMode(config),
@@ -180,6 +183,15 @@ function raisedBudget({ budget }: Config): Relaxation[] {
     what: `budget.${level}`,
     said: `The time budget "${level}" is ${budget[level]} ms, above the reference of ${REFERENCE_BUDGET[level]} ms`,
     where: ['"budget"', `"${level}"`],
+  }));
+}
+
+/** A floor under the reference accepts mutants no test notices. */
+function loweredMutation({ mutation }: Config): Relaxation[] {
+  return MUTATION_LAYERS.filter((layer) => mutation[layer] < REFERENCE_MUTATION[layer]).map((layer) => ({
+    what: `mutation.${layer}`,
+    said: `The mutation floor "${layer}" is ${mutation[layer]}, below the reference of ${REFERENCE_MUTATION[layer]}`,
+    where: ['"mutation"', `"${layer}"`],
   }));
 }
 
@@ -240,7 +252,7 @@ function flawedDeviation({ what, adr, reason }: Deviation, records: DecisionReco
   if (what === '') {
     flaws.push({
       message: 'A deviation does not say what it relaxes.',
-      fix: 'Set "what" to the setting it justifies, for example "rules.<id>", "guard", "coverage.<layer>.<rate>", "budget.<level>" or "domainAllowedPackages.<package>".',
+      fix: 'Set "what" to the setting it justifies, for example "rules.<id>", "guard", "coverage.<layer>.<rate>", "mutation.domain", "budget.<level>" or "domainAllowedPackages.<package>".',
     });
   }
 

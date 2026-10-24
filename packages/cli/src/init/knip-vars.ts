@@ -17,6 +17,7 @@ export function knipVars(config: Config): RenderContext {
     e2eEntry: when(',\n    "test/e2e/**/*.ts"'),
     e2eProject: when(', "test/**/*.ts"'),
     e2eConfig: when(', "vitest.e2e.config.ts"'),
+    mutationConfig: config.stack.tests === 'vitest' ? ', "vitest.mutation.config.ts"' : '',
     e2eSpecs: when(', "test/e2e/**/*.e2e.spec.ts"'),
     testDatabase: opensTestDatabaseLater(config)
       ? `,\n      "${config.platformDir}/database/open-test-database.ts"`

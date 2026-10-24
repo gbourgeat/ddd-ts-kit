@@ -259,19 +259,21 @@ A context that keeps a copy of a person in clear (a row, a contact, a note) decl
 mapper with
 {{/unless}}
 `personalFields` of `@ddd-ts-kit/kernel`, erases it through a port that extends
-`PersonalDataErasure`, and lists that port in `{{config.platformDir}}/privacy/data-subject-copies.ts`
-(its `PersonalDataExport` port in `data-subject-exports.ts`); `npx ddd-ts-kit generate repository
-<context> <Aggregate> --personal <column>,...` writes the columns, the declaration and, once per
-context, that port, its adapter, its fake, its spec and its line here. Two scripts answer the
-requests of a person, on the sources, with the variables of `.env`:
+`PersonalDataErasure`, listed in `{{config.platformDir}}/privacy/data-subject-copies.ts`, and hands it
+over through a port that extends `PersonalDataExport`, listed in `data-subject-exports.ts`;
+`npx ddd-ts-kit generate repository <context> <Aggregate> --personal <column>,...` writes the
+columns, the declaration and, once per context, both ports, their adapters, their fakes, their spec
+and their lines here. Two scripts answer the requests of a person, on the sources, with the
+variables of `.env`:
 
 ```bash
 npm run privacy:erase -- <subject-id> --operator <who-asks>     # {{#if eventSourcing.on}}the key, then {{/if}}every declared copy{{#if tenancy.any}}, in each tenant of TENANTS{{/if}}
-npm run privacy:export -- <subject-id> > export.json            # every declared record, as JSON
+npm run privacy:export -- <subject-id> > export.json            # one dated document of every declared record{{#if audit.on}}, audited{{/if}}
 ```
 
-Running an erasure again completes one that failed half way. Neither script reaches backups,
-logs, exports or a copy no context declared: say so in your register{{#if eventSourcing.on}}, and keep the keys in a
+Running an erasure again completes one that failed half way.{{#if audit.on}} Every run of either script is
+recorded in the audit trail, a trial included: try them on a test subject, never on a real person.{{/if}}
+Neither script reaches backups, logs, exports or a copy no context declared: say so in your register{{#if eventSourcing.on}}, and keep the keys in a
 store of their own in production, with a shorter backup retention than the events
 (docs/concepts/event-sourcing.md of ddd-ts-kit, "Personal data"){{/if}}.
 
@@ -305,6 +307,7 @@ declaration that no longer follows `importAlias` and `importExtension` of
 | structure | `npm run check:arch` | `ddd-ts-kit check` |
 | import graph | `npm run depcruise` | dependency-cruiser, on `.dependency-cruiser.cjs` (generated from `ddd-ts-kit.config.json`) |
 | dead code | `npm run deadcode` | knip |
+| mutation score | `npm run test:mutation` | Stryker on the domain layer of every context, the texts of its refusals left out, each context held to the `mutation` floor of `ddd-ts-kit.config.json`; the pipeline runs it every night, not on a pull request |
 | drift | `npm run docs:check` | context map, OpenAPI, AsyncAPI, event catalog |
 
 `npm run verify` chains them with the tests. Git hooks: `npm run hooks:install` once per clone

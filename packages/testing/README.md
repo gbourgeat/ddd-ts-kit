@@ -21,6 +21,7 @@ npm i -D @ddd-ts-kit/testing
 | `@ddd-ts-kit/testing/vitest` | `decorators()`, the Vite plugin that lets Vitest run standard decorators, and `decoratorCoverage()` | Node only; runs the `tsc` of the project |
 | `@ddd-ts-kit/testing/coverage` | `governedCoverage()`, `governedJestCoverage()`, `unaffectedContexts()`: the coverage the runner measures and its floor, read from `ddd-ts-kit.config.json` | Node only |
 | `@ddd-ts-kit/testing/budget`, `/budget/vitest`, `/budget/jest` | the time budget of each level of specs, read from `ddd-ts-kit.config.json`, and the reporters that hold each spec file to it | Node only; the runner |
+| `@ddd-ts-kit/testing/mutation` | `governedMutation()`: what Stryker mutates, the ignorer of the kit that leaves the texts of refusals out, the static mutants ignored and the floor, read from `ddd-ts-kit.config.json` | Node only |
 
 The main entry, `/contracts` and `/e2e` follow the
 [test levels](../../docs/ARCHITECTURE.md#7-test-levels); the builders serve every level, and the
@@ -1041,6 +1042,42 @@ export default defineConfig({
 - `@ddd-ts-kit/testing/budget` gives the reading to a tool of your own: `budgetSettings(root)`,
   `levelOf(file)`, `overBudget(specs, budget)`, `budgetLines(reading, budget)`, and
   `REFERENCE_BUDGET`.
+
+## Mutation score read from the config
+
+`@ddd-ts-kit/testing/mutation` gives Stryker what it mutates, what it leaves out and the floor the
+run is held to, read from the `mutation` key of `ddd-ts-kit.config.json` (80 for the domain layer
+when the key is absent), so that the Stryker config of a project writes no glob and no number:
+
+<!-- checked sample -->
+```ts
+// stryker.config.mjs
+import { governedMutation } from '@ddd-ts-kit/testing/mutation';
+
+export default {
+  testRunner: 'vitest',
+  vitest: { configFile: 'vitest.mutation.config.ts' },
+  coverageAnalysis: 'perTest',
+  ...governedMutation(),
+};
+```
+
+- `mutate`: the domain layer of every context, at its level and in the modules of its model, the
+  generated declarations and the specs left out.
+- `appendPlugins` and `ignorers`: the ignorer of the kit, `refusal-texts`. A test asserts a refusal
+  by its code and never by its text (`test/refusal-by-code`), so a mutant of such a text would
+  survive by design: the message of `refusal(..)`, a text handed to a factory of a class that
+  refuses (`InvalidSlot.forRule('ends after it starts')`), the message of `super(..)` in an error
+  class and of `new ..Error(..)` are left out, with the reason in the report. A class refuses when
+  the file imports it from the errors of its context or from the kernel under a name that says so;
+  every other string of the domain stays measured, the name of an event, a status, a code, a key.
+  A text a helper returns before the factory is called is not recognised: throw where the rule is
+  checked, or leave the survivor alive and say why.
+- `ignoreStatic`: the static mutants, in code that runs once when the module loads, are ignored;
+  a rule written as a declaration is proven by the test that states it alone.
+- `thresholds`: the floor, which `ddd-ts-kit mutation` then holds each context to from the json
+  report, the ignored mutants shown beside each score. `REFERENCE_MUTATION` is the reference:
+  domain 80.
 
 ## See also
 

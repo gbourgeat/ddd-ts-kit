@@ -80,8 +80,12 @@ const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly s
   'broker:nats': [['@ddd-ts-kit/nats', '@nats-io/jetstream', '@nats-io/transport-node'], []],
   'queue:database': [['@ddd-ts-kit/scheduling'], []],
   'queue:redis': [['@ddd-ts-kit/scheduling', '@ddd-ts-kit/redis', 'ioredis'], []],
-  'tests:vitest': [[], ['vitest']],
-  'tests:jest': [[], ['jest', '@jest/globals', '@swc/core', '@swc/jest']],
+  // Mutation testing of the domain layer: the runner of Stryker reads the test config of the project.
+  'tests:vitest': [[], ['vitest', '@stryker-mutator/core', '@stryker-mutator/vitest-runner']],
+  'tests:jest': [
+    [],
+    ['jest', '@jest/globals', '@swc/core', '@swc/jest', '@stryker-mutator/core', '@stryker-mutator/jest-runner'],
+  ],
 };
 
 export function dependenciesFor(config: Config): Packages {

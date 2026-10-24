@@ -2,6 +2,7 @@ import type { Config, ContextConfig } from './config';
 import { DEFAULT_COMMIT_LIMITS } from './default-commit-limits';
 import { isReferenceBudget } from './is-reference-budget';
 import { isReferenceCoverage } from './is-reference-coverage';
+import { isReferenceMutation } from './is-reference-mutation';
 import { writtenStack } from './written-stack';
 import { formatJson } from '../json/format-json';
 
@@ -61,10 +62,12 @@ function writtenModules(modules: ContextConfig['modules']): Record<string, unkno
 }
 
 function optionalKeys(config: Config): Record<string, unknown> {
-  const { deviations, standardInterfaces, businessNames, onePerFile, worker, commit, coverage, budget } = config;
+  const { deviations, standardInterfaces, businessNames, onePerFile, worker, commit, coverage, mutation, budget } =
+    config;
 
   return {
     ...(isReferenceCoverage(coverage) ? {} : { coverage }),
+    ...(isReferenceMutation(mutation) ? {} : { mutation }),
     ...(isReferenceBudget(budget) ? {} : { budget }),
     ...(deviations.length > 0 ? { deviations } : {}),
     ...(Object.keys(standardInterfaces).length > 0 ? { standardInterfaces } : {}),

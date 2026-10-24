@@ -24,13 +24,23 @@ export class AppointmentType extends ValueObject<AppointmentTypeProps> {
   }
 
   static create(facts: AppointmentTypeProps): AppointmentType {
-    const refusal = refusalOf(facts);
-
-    if (refusal === undefined) {
-      return new AppointmentType({ ...facts, name: facts.name.trim() });
+    if (facts.id.trim().length === 0 || facts.name.trim().length === 0) {
+      throw InvalidAppointmentType.forRule('has an identifier and a name');
     }
 
-    throw InvalidAppointmentType.forRule(refusal);
+    if (!Number.isInteger(facts.duration) || facts.duration <= 0) {
+      throw InvalidAppointmentType.forRule('lasts a positive number of minutes');
+    }
+
+    if (!Number.isInteger(facts.grid) || facts.grid <= 0 || DAY % facts.grid !== 0) {
+      throw InvalidAppointmentType.forRule('has a grid of positive minutes that divides a day');
+    }
+
+    if (!Number.isInteger(facts.buffer) || facts.buffer < 0) {
+      throw InvalidAppointmentType.forRule('has a buffer of whole minutes');
+    }
+
+    return new AppointmentType({ ...facts, name: facts.name.trim() });
   }
 
   /** What an appointment of this type holds when it starts at the instant: its duration, then its buffer. */
@@ -68,24 +78,4 @@ export class AppointmentType extends ValueObject<AppointmentTypeProps> {
   get needsConfirmation(): boolean {
     return this.props.needsConfirmation;
   }
-}
-
-function refusalOf(facts: AppointmentTypeProps): string | undefined {
-  if (facts.id.trim().length === 0 || facts.name.trim().length === 0) {
-    return 'has an identifier and a name';
-  }
-
-  if (!Number.isInteger(facts.duration) || facts.duration <= 0) {
-    return 'lasts a positive number of minutes';
-  }
-
-  if (!Number.isInteger(facts.grid) || facts.grid <= 0 || DAY % facts.grid !== 0) {
-    return 'has a grid of positive minutes that divides a day';
-  }
-
-  if (!Number.isInteger(facts.buffer) || facts.buffer < 0) {
-    return 'has a buffer of whole minutes';
-  }
-
-  return undefined;
 }

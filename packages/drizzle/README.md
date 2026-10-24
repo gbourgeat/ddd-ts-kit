@@ -847,6 +847,18 @@ pseudonymise one that does not is refused before any file or row is touched
 PostgreSQL. What an erasure does not reach, and the whole chain (`eraseDataSubject`: the key, every
 copy in every tenant, the rebuilds), is in the README of the kernel ("Personal data").
 
+`DrizzlePersonalDataExport` answers the right of access and to portability from the same declarations:
+`exportOf(subject)` hands over one `PersonalDataRecord` per row about the subject in every declared
+table, under `<name>.<table>`, with each personal column and each file column (by its key) as plain
+data, by the keys of the table definition, no other column and nothing of anyone else; a row pseudonymised already
+answers what it reads. The same `tenant` option confines every statement to the tenant of the work, a
+subject that is not an opaque identifier is refused before any statement, and the adapter passes
+`personalDataExportContract`. The port of the context extends `PersonalDataExport` of the kernel and
+its adapter extends this class with `name`, `declarations` and `tenant` (`DrizzlePersonalDataExportOptions`);
+`generate repository --personal` writes both adapters, and `exportDataSubject` of the kernel gathers
+every export into one dated document. Wrap the adapter with `auditedPersonalDataExport` of
+`@ddd-ts-kit/audit` where it is bound, so that each handover leaves an entry.
+
 ## Outbox and idempotency
 
 - `DrizzleOutboxStore.claimBatch` selects the due rows `FOR UPDATE SKIP LOCKED` and leases

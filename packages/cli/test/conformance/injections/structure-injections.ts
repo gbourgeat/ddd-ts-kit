@@ -6,7 +6,7 @@ import { SOURCE_SUFFIX } from '../source-suffix';
 const { AGGREGATE, BUILDER, APPLICATION_DECLARATIONS, CONFIG, CONTEXT_DOC, EVENT, HANDLER, NOTIFICATION, READER } =
   PATHS;
 
-const { ROUTE, SEARCH_READER, VALUE_OBJECT, VALUE_OBJECT_SPEC } = PATHS;
+const { ROUTE, SEARCH_READER, STRYKER, VALUE_OBJECT, VALUE_OBJECT_SPEC } = PATHS;
 const ERROR = `${NOTIFICATION}/domain/errors/contact.ts`;
 const CHANNEL = `${NOTIFICATION}/domain/value-objects/channel.vo.ts`;
 const CHANNEL_SPEC = `${NOTIFICATION}/test/unit/channel.vo.spec.ts`;
@@ -114,6 +114,19 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
     what: 'an aggregate left out of the coverage measure by a comment, without a decision record',
     file: AGGREGATE,
     changes: [{ file: AGGREGATE, where: 'start', to: '/* v8 ignore file */\n' }],
+    checker: true,
+  },
+  {
+    rule: 'test/mutation-governed',
+    what: 'a mutation floor written by hand into the Stryker config, beside the governed one',
+    file: STRYKER,
+    changes: [
+      {
+        file: STRYKER,
+        from: '  ...governedMutation(),\n',
+        to: '  ...governedMutation(),\n  thresholds: { high: 80, low: 60, break: 10 },\n',
+      },
+    ],
     checker: true,
   },
   {

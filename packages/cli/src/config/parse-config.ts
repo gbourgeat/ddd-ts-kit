@@ -9,6 +9,7 @@ import { parseCommitConfig } from './parse-commit-config';
 import { parseContext } from './parse-context';
 import { parseBudget } from './parse-budget';
 import { parseCoverage } from './parse-coverage';
+import { parseMutation } from './parse-mutation';
 import { parseLimits } from './parse-limits';
 import { parseOnePerFile } from './parse-one-per-file';
 import { parseOpenApi } from './parse-open-api';
@@ -75,6 +76,7 @@ type Governance = Pick<
   | 'onePerFile'
   | 'coverage'
   | 'budget'
+  | 'mutation'
   | 'commit'
   | 'guard'
   | 'worktrees'
@@ -96,6 +98,7 @@ function parseGovernance(raw: Record<string, unknown>): Governance {
     onePerFile: parseOnePerFile(raw['onePerFile']),
     coverage: parseCoverage(raw['coverage']),
     budget: parseBudget(raw['budget']),
+    mutation: parseMutation(raw['mutation']),
     commit: parseCommitConfig(raw['commit']),
     guard: text(raw['guard'], 'enforce'),
     worktrees: text(raw['worktrees'], 'advised'),

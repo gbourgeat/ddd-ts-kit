@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:56a2eda18a8e3687 -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:35ebf28ff1d25f95 -->
 
 # L'analyse statique et le pipeline
 
@@ -382,13 +382,14 @@ et vérifiés avec actionlint, pas exécutés sur GitHub ; le fichier GitLab a �
 GitLab ; la protection des branches et les réglages des *merge requests* ont été écrits d'après
 la documentation de l'API.
 
-**Les tests de mutation ne sont pas livrés comme porte.** Le README du pipeline les mesure :
-Stryker 10.1.1 avec son lanceur Vitest, sur la couche domaine de l'application d'exemple sous
-Vitest 5, exécute les tests par mutant et tue 1347 des 1441 mutants en 8 minutes, là où le 10.0
-essayé plus tôt n'exécutait aucun test par mutant. Il réécrit le tsconfig du bac à sable par le
-`typescript` 6 qu'un projet généré installe à côté du compilateur natif. Ils seront ajoutés comme
-*job* planifié avec un plancher par contexte, pas comme porte de chaque *pull request*. (Mesuré le
-2026-10-24.)
+**Les tests de mutation tournent chaque nuit.** Le *job* `mutation` du *pipeline* lance
+`npm run test:mutation` sur la branche par défaut quand la planification se déclenche : Stryker
+10.1.1 avec le lanceur du projet, Vitest ou Jest, sur la couche domaine de chaque contexte, sa
+configuration lue dans le kit (`governedMutation()`, tenue par `test/mutation-governed` : les textes
+des refus et les mutants statiques laissés de côté), puis `ddd-ts-kit mutation`, qui tient chaque
+contexte au plancher `mutation` de `ddd-ts-kit.config.json`, les mutants ignorés affichés à côté de
+chaque score. Pas une porte de *pull request* : huit minutes pour l'exemple sont trop longues pour la boucle d'un
+changement. Le README du *pipeline* tient les mesures qui l'ont décidé (2026-10-24).
 
 ## Limites, et quand ne pas l'utiliser
 
@@ -425,7 +426,7 @@ essayé plus tôt n'exécutait aucun test par mutant. Il réécrit le tsconfig d
 | Un monorepo avec ses propres outils de frontières | les garder pour les frontières entre *packages* ; les règles du kit s'appliquent toujours à l'intérieur de chaque service |
 | TypeScript 7 seul, sans TypeScript 6 | pas possible aujourd'hui avec le lint typé ; garder les deux |
 | GitLab en offre gratuite | le *pipeline* tel que généré : audit et gitleaks bloquent ; les constats des scanners ne sont visibles que dans les journaux des *jobs* |
-| Vouloir des tests de mutation dès maintenant | lancer Stryker 10.1.1 à la main avec son lanceur Vitest et la configuration que donne le README du *pipeline*, `typescript` 6 installé à côté du compilateur natif comme `init` le laisse |
+| Vouloir le score de mutation avant la nuit | `npm run test:mutation` à la main : Stryker sur la couche domaine de chaque contexte, puis chaque contexte face à son plancher ; le rapport html arrive dans `reports/mutation/` |
 
 ## Sources
 

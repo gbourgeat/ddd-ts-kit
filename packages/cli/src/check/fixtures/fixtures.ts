@@ -13,6 +13,7 @@ import { CONSUMER_FIXTURES } from './consumer-fixtures';
 import { CONTEXT_FIXTURES } from './context-fixtures';
 import { BUDGET_FIXTURES } from './budget-fixtures';
 import { COVERAGE_FIXTURES } from './coverage-fixtures';
+import { MUTATION_FIXTURES } from './mutation-fixtures';
 import { CONTEXT_FILE_FIXTURES } from './context-file-fixtures';
 import { DECLARATIONS_FIXTURES } from './declarations-fixtures';
 import { EARLIER_DECLARATIONS_FIXTURES } from './earlier-declarations-fixtures';
@@ -69,6 +70,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...CONTEXT_FIXTURES,
   ...COVERAGE_FIXTURES,
   ...BUDGET_FIXTURES,
+  ...MUTATION_FIXTURES,
   ...CONTEXT_FILE_FIXTURES,
   ...DECLARATIONS_FIXTURES,
   ...EARLIER_DECLARATIONS_FIXTURES,

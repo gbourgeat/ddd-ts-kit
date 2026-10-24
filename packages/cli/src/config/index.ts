@@ -10,6 +10,8 @@ export { budgetProblems } from './budget-problems';
 export { COVERAGE_LAYERS } from './coverage-layers';
 export { COVERAGE_METRICS } from './coverage-metrics';
 export { coverageProblems } from './coverage-problems';
+export { MUTATION_LAYERS } from './mutation-layers';
+export { mutationProblems } from './mutation-problems';
 export type {
   Config,
   ContextConfig,
@@ -37,6 +39,7 @@ export { sdkProblems } from './sdk-problems';
 export { readConfig } from './read-config';
 export { REFERENCE_BUDGET } from './reference-budget';
 export { REFERENCE_COVERAGE } from './reference-coverage';
+export { REFERENCE_MUTATION } from './reference-mutation';
 export { RELATIONSHIPS } from './relationships';
 export { restackConfigText } from './restack-config-text';
 export { serializeConfig } from './serialize-config';

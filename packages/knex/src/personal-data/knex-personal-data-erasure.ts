@@ -5,23 +5,16 @@ import {
   NotNullablePersonalColumnError,
   isDataSubjectId,
   pseudonymisedValueOf,
-  tenantScopeOf,
-  type ExecutionScope,
   type PersonalDataErasure,
 } from '@ddd-ts-kit/kernel';
 import { tableIn } from '../tenancy/table-in';
-import { TENANT_COLUMN } from '../tenancy/where-tenant';
 import type { KnexContext } from '../unit-of-work/knex-context';
 import type { KnexPersonalDataErasureOptions } from './knex-personal-data-erasure-options';
 import type { KnexPersonalFields } from './knex-personal-fields';
+import { recordsOf } from './records-of';
+import { rowsAbout } from './rows-about';
 
 type Changes = Readonly<Record<string, string | null>>;
-
-/** The rows sought: the ones of one subject in one declared table. */
-interface About {
-  readonly declaration: KnexPersonalFields;
-  readonly subject: string;
-}
 
 /** What the catalogue says of a column: its SQL type, and whether it accepts null. */
 interface Column {
@@ -72,7 +65,7 @@ export class KnexPersonalDataErasure implements PersonalDataErasure {
 
     await this.deleteFilesOf(declaration, subject);
 
-    const rows = rowsOf(this.context, { declaration, subject }, this.options.tenant);
+    const rows = rowsAbout(this.context, { declaration, subject }, this.options.tenant);
 
     return changes === undefined
       ? rows.delete()
@@ -88,7 +81,7 @@ export class KnexPersonalDataErasure implements PersonalDataErasure {
       return;
     }
 
-    const rows: unknown = await rowsOf(this.context, { declaration, subject }, this.options.tenant)
+    const rows: unknown = await rowsAbout(this.context, { declaration, subject }, this.options.tenant)
       .select(files)
       .where((named) => {
         for (const file of files) {
@@ -153,24 +146,6 @@ export class KnexPersonalDataErasure implements PersonalDataErasure {
 }
 
 /** A row is reached while one personal column still holds something: a text other than the marker, any other value, a file. */
-/**
- * The rows about the subject, in the tenant of the work when the table holds tenant data. A
- * function and not a method: a query builder is thenable, and a method that answers one is read
- * as asynchronous by what wraps the adapter once it is bound (tracing, the aspects), which then
- * answers a promise in its place.
- */
-function rowsOf(
-  context: KnexContext,
-  { declaration, subject }: About,
-  tenant: ExecutionScope | undefined,
-): Knex.QueryBuilder {
-  const rows = tableIn(context, declaration.table).where(declaration.subject, subject);
-
-  return tenant === undefined
-    ? rows
-    : rows.where(declaration.table.column ?? TENANT_COLUMN, tenantScopeOf(tenant).tenantId);
-}
-
 function notYetErased(reached: Knex.QueryBuilder, changes: Changes): void {
   for (const [column, erased] of Object.entries(changes)) {
     if (erased === null) {
@@ -181,13 +156,6 @@ function notYetErased(reached: Knex.QueryBuilder, changes: Changes): void {
       });
     }
   }
-}
-
-/** The rows a statement answered, as records. */
-function recordsOf(answered: unknown): Readonly<Record<string, unknown>>[] {
-  const rows: readonly unknown[] = Array.isArray(answered) ? answered : [];
-
-  return rows.filter((row): row is Readonly<Record<string, unknown>> => typeof row === 'object' && row !== null);
 }
 
 function assertFilesReachable({ declarations, files }: KnexPersonalDataErasureOptions): void {
