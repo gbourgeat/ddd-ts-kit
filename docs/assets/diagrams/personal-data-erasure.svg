@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 660" width="960" height="660" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">The erasure of a person in a generated project</title>
-  <desc id="desc">The script privacy:erase opens an execution context and calls runErasure of the platform, which hands eraseDataSubject of the kernel three things: the key store of the event store when the project has one, so that the stored events of the person read as erased; every copy listed in data-subject-copies.ts, one erasure port per context whose adapter over the ORM package erases or pseudonymises the rows of the tables declared with personalFields; and the projections to rebuild. The report counts the rows reached per context. Below, what generate repository --personal writes for a table: its personal columns, the declaration next to the mapper and, once per context, the port, the adapter, the fake, the spec and the line in the copies.</desc>
+  <desc id="desc">The script privacy:erase opens an execution context and calls runErasure of the platform, which hands eraseDataSubject of the kernel three things: the key store of the event store when the project has one, so that the stored events of the person read as erased; every copy listed in data-subject-copies.ts, one erasure port per context whose adapter over the ORM package erases or pseudonymises the rows of the tables declared with personalFields; and the projections to rebuild. The report counts the rows reached per context; then the event privacy.data-subject.erased goes to the outbox, so that a context running as a service of its own erases its copy. Below, what generate repository --personal writes for a table: its personal columns, the declaration next to the mapper and, once per context, the port, the adapter, the fake, the spec and the line in the copies.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
@@ -81,5 +81,5 @@
   <text x="40" y="584" font-size="13" fill="#1f2328">(extends PersonalDataErasure), the adapter over the ORM package, its fake, its spec, its line in the copies list.</text>
 
   <text x="32" y="628" font-size="13" fill="#5f6b73">Out of reach: backups, logs, exports already handed over, a copy no context declared.</text>
-  <text x="32" y="648" font-size="13" fill="#5f6b73">Run again, an erasure reaches nothing and says so: it completes one that failed half way.</text>
+  <text x="32" y="648" font-size="13" fill="#5f6b73">Then privacy.data-subject.erased goes to the outbox: a service of its own erases its copy (generate erasure-handler).</text>
 </svg>

@@ -1,5 +1,5 @@
 [English](privacy-by-design.md) · **Français**
-<!-- translation-of: privacy-by-design.md sha256:a2270f47f0710046 -->
+<!-- translation-of: privacy-by-design.md sha256:0454e620e11ce262 -->
 
 # Proposition : la protection des données dès la conception, au-delà de l'*event sourcing*
 
@@ -33,7 +33,7 @@ son fichier de `changes/`.
 | 3. L'adaptateur d'effacement sur les quatre ORM, modèles de lecture compris | **construite** (#271) : `KnexPersonalDataErasure`, `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`, chacun sous la suite de contrat, le *tenant* confiné, les fichiers supprimés d'abord ; un modèle de lecture est une table comme une autre. Avec la partie 5, l'adaptateur d'export à côté de chacun : `KnexPersonalDataExport`, `DrizzlePersonalDataExport`, `PrismaPersonalDataExport`, `TypeOrmPersonalDataExport`, sous `personalDataExportContract`, et `auditedPersonalDataExport` dans le package d'audit |
 | 4. `init` écrit `src/platform/privacy/` et câble l'*event sourcing* | **construite** (#274, puis les deux choix) : `--privacy on`, le défaut avec un ORM, écrit `src/platform/privacy/` (les listes des copies et des exports, `run-erasure.ts` et `run-export.ts`) et les scripts `privacy:erase` et `privacy:export` ; `--event-sourcing on`, off sauf demande, câble `Persistence.eventSourcing` sur les quatre ORM et en mémoire, et `src/platform/event-sourcing/` (les clés auditées, le chiffre, le module ou `platform.eventSourcing`) ; un projet sans donnée personnelle ne paie rien, un projet dont les agrégats sont des lignes ne paie aucune table ; pas encore de commande HTTP |
 | 5. `generate repository` et `generate projection` déclarent les champs personnels | **construite** pour les *repositories* : `generate repository <ctx> <Aggregate> --personal <colonne>,... [--subject <colonne>] [--erasure pseudonymise\|row]` ajoute les colonnes au stockage, écrit la déclaration à côté du *mapper* sur les quatre ORM et, une fois par contexte, l'effacement et l'export qui la lisent (deux ports, adaptateurs sur `<Orm>PersonalDataErasure` et `<Orm>PersonalDataExport`, *fakes*, une *spec* sur la base de test, listés dans les copies et les exports de la plateforme ; `privacy:export` répond un document daté par `exportDataSubject`, chaque export audité quand le journal est actif). Une projection garde ses lignes dans un *read model store*, pas dans une table à elle : la déclaration d'un *read model* attend le registre (partie 9), qui lira ce que le *store* garde |
-| 6. L'événement d'effacement, son gestionnaire généré, `personal` sur un événement d'intégration | proposée |
+| 6. L'événement d'effacement, son gestionnaire généré, `personal` sur un événement d'intégration | **construite** : `dataSubjectErasedV1` (`privacy.data-subject.erased`, `{ subjectId, erasedAt }`, sans opérateur : le journal d'audit garde qui a demandé) dans le kernel, avec la forme d'une définition de `@ddd-ts-kit/events` puisque la couche application de chaque contexte le traite ; publié par l'outbox à la fin de `privacy:erase`, une fois par *tenant* ; `generate erasure-handler <context>` écrit le gestionnaire idempotent sur l'effacement du contexte dans les trois familles ; `personal: { subject, fields }` sur `defineIntegrationEvent`, vérifié contre la charge utile, écrit par le catalogue et en `x-personal-data` dans AsyncAPI. Le générateur d'un événement d'intégration écrit un champ d'id : les champs personnels d'une charge utile s'écrivent, et se déclarent, à la main |
 | 7. La conservation sur la déclaration, le *job* de purge généré | proposée |
 | 8. `archiveBefore` sur le journal d'audit | **construite** (#287 garde aussi le journal en base sur Prisma et TypeORM, puis l'archive) : `archiveBefore(date, { files, clock })` et `archivesOf(chain)` sur les quatre stores SQL et en mémoire, chaque plage vérifiée depuis l'ancre de l'archive qui la précède, écrite dans le stockage de fichiers, enregistrée avec son dernier hash et l'empreinte de son fichier, puis supprimée, ce que la garde n'autorise que pour des entrées couvertes ; `verifyArchive` revérifie un fichier, `verifyChain` part d'une ancre ; `init` enregistre `audit.archive` le premier jour de chaque mois, douze mois gardés en ligne, quand le journal est en base et les fichiers dans un stockage |
 | 9. Le registre généré des données personnelles | proposée |
@@ -159,8 +159,8 @@ dossier porte `npm run privacy:export`.
 
 ### La propagation : un contrat publié par le kit
 
-Un événement d'intégration `privacy.data-subject.erased` (version 1 : `subjectId`, `erasedAt`,
-`requestedBy`), publié par le cas d'usage de la plateforme à travers l'outbox, et
+Un événement d'intégration `privacy.data-subject.erased` (version 1 : `subjectId`, `erasedAt` ;
+qui a demandé reste dans le journal d'audit), publié par le cas d'usage de la plateforme à travers l'outbox, et
 `generate integration-handler <context> --erasure`, qui écrit le gestionnaire idempotent
 appelant le `PersonalDataErasure` du contexte. La charge porte le seul identifiant : un
 consommateur qui a copié l'e-mail dans son modèle de lecture le retire de son côté. Pour les
