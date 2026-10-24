@@ -106,26 +106,29 @@ of tools.
 26. [Multitenancy](multitenancy.md): one deployment, many customers, and no read or write
     that crosses from one to another.
 27. [Audit trail](audit-trail.md): who did what, recorded from outside the use cases.
-28. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
+28. [Personal data in a generated project](personal-data.md): what a table or an event keeps of
+    a person, declared once, and the erasure, the export, the retention and the register that
+    read it; what the tool does not decide.
+29. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
     correlation id that ties them.
-29. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
+30. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
     each one fails.
-30. [HTTP caching](http-caching.md): what to cache at which layer, who may keep an answer,
+31. [HTTP caching](http-caching.md): what to cache at which layer, who may keep an answer,
     and never a decision of authorization across actors.
-31. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
+32. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
     idempotent.
-32. [Background jobs](background-jobs.md): work a use case hands to a worker, enqueued in its
+33. [Background jobs](background-jobs.md): work a use case hands to a worker, enqueued in its
     transaction, run at least once.
-33. [File storage](file-storage.md): files in a storage and never in the database, the order
+34. [File storage](file-storage.md): files in a storage and never in the database, the order
     that keeps both consistent, signed links.
-34. [File import and export](file-import-export.md): a design, not built yet: a large file
+35. [File import and export](file-import-export.md): a design, not built yet: a large file
     read or written by a background job, row by row, between the queue and the file storage.
 
 ## 6. Code and tests
 
-35. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
+36. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
     construction.
-36. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
+37. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
     tests, the four levels.
 
 ## Shorter paths

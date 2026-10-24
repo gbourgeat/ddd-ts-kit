@@ -53,6 +53,12 @@ every merge and on every push.
 - **Production concerns built in.** Transactional outbox and idempotent consumers, a permission
   per use case, audit trail, OpenTelemetry, multitenancy, OpenAPI and AsyncAPI contracts, a CI
   pipeline for GitHub and GitLab.
+- **Personal data, by construction.** What a table or an event keeps of a person is declared
+  once; from it the erasure, the export, the nightly purge of what outlived its retention, the
+  register of personal data and the `privacy/*` rules, on the four ORMs, every request of a person
+  audited. The mechanisms of GDPR article 25, built in by default: the lawful basis, the purposes
+  and the answer to a person stay the decisions of the controller
+  ([Personal data](docs/concepts/personal-data.md)).
 - **Ready to split.** Every bounded context owns its data and talks to the others by events: it
   can run as its own service the day the team needs it.
 
@@ -211,6 +217,9 @@ The rules cover, among others:
   decided in the application layer, with an explicit actor.
 - **Clean code and tests** (`clean/*`, `test/*`): small functions in stepdown order, no escape
   hatch, a spec for every unit of behaviour, no mocks.
+- **Personal data** (`privacy/*`, warnings, with `--privacy on`): a column or a field of an event
+  named like personal data is declared, a context that copies a person erases its copy, a subject
+  is an opaque id, a log line never names a declared personal field.
 
 `npx ddd-ts-kit rules` lists every id with its severity; the
 [architecture reference](docs/ARCHITECTURE.md) defines them.
