@@ -1,5 +1,6 @@
 import { AUDIT_CHAINS_TABLE } from './audit-chains-table-name';
 import { AUDIT_ENTRIES_TABLE } from './audit-entries-table-name';
+import { auditArchivesTableSql } from './audit-archives-table-sql';
 import { auditGuardSql } from './audit-guard-sql';
 import type { AuditTablesOptions } from './audit-tables-options';
 import { named } from './named';
@@ -33,7 +34,7 @@ const ENTRY_COLUMNS = [
 
 /**
  * The tables of the trail on PostgreSQL, one statement per element: `audit_entries`, the
- * chain heads that serialize the appends, the indexes of the reader, then the guard.
+ * chain heads that serialize the appends, the indexes of the reader, the archives, then the guard.
  */
 export function auditTablesSql(options: AuditTablesOptions = {}): string[] {
   const entries = named(options.schema, AUDIT_ENTRIES_TABLE);
@@ -46,6 +47,7 @@ export function auditTablesSql(options: AuditTablesOptions = {}): string[] {
     `create index "audit_entries_actor_idx" on ${entries} ("actor_id", "occurred_at")`,
     `create index "audit_entries_resource_idx" on ${entries} ("resource_type", "resource_id")`,
     `create index "audit_entries_correlation_idx" on ${entries} ("correlation_id")`,
+    auditArchivesTableSql(options),
     ...auditGuardSql(options),
   ];
 }

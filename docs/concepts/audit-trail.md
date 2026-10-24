@@ -256,6 +256,22 @@ comparing with a later checkpoint.
 Verification should run on a schedule and alert; a chain nobody verifies proves nothing in
 practice.
 
+## Archiving
+
+Every entry keeps the identifiers of a person, and a trail grows for as long as the system
+lives: storage limitation (GDPR article 5(1)(e)) applies to it too. Archiving moves the oldest
+entries of each chain out of the database to the file storage, without breaking what the chain
+proves. The entries are verified first, from the anchor of the previous archive; written to one
+file per range; recorded with the hash of the last one and the digest of the file; then deleted,
+which the guard allows for covered entries only. The entries left in the database link to that
+last hash, and each file can be verified again on its own, against its record and the archive
+before it. A chain that does not verify is not archived: a break is for someone to look at.
+
+A generated project whose trail is in a database and whose files are in a storage runs this on
+the first day of every month and keeps twelve whole months online. Archiving is not erasing:
+the files still hold identifiers, and how long they are kept, and under which lock, is the
+controller's decision. See [Archiving](../../packages/audit/README.md#archiving).
+
 ## The right to erasure and an append-only chain
 
 An entry cannot be deleted without breaking its chain, and a regulation such as the GDPR
@@ -318,8 +334,8 @@ These are stated by [`@ddd-ts-kit/audit`](../../packages/audit/README.md):
   work locked. The price: an entry is not visible inside its unit of work before the commit.
 - **The timestamp is the clock of the instance that recorded.** Inside a chain the order is the
   sequence.
-- **No retention or archiving policy** is provided. How long entries are kept and where old
-  chains go is a decision of the project.
+- **Archiving moves, it does not erase.** How long the archive files are kept, and the lock of
+  the storage that keeps them, are decisions of the project; the search reads the database only.
 - **Anchoring is a hook, not a service.** Without checkpoints kept elsewhere, a full rewrite of
   the table is undetectable.
 - **Verification reads its range into memory**: verify long chains by ranges.

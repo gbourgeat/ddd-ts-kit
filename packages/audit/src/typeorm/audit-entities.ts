@@ -1,4 +1,5 @@
 import { EntitySchema } from 'typeorm';
+import { AUDIT_ARCHIVES_TABLE } from '../sql/audit-archives-table-name';
 import { AUDIT_CHAINS_TABLE } from '../sql/audit-chains-table-name';
 import { AUDIT_ENTRIES_TABLE } from '../sql/audit-entries-table-name';
 import type { AuditEntitiesOptions } from './audit-entities-options';
@@ -40,8 +41,19 @@ const ENTRY_INDICES = [
   { name: 'audit_entries_correlation_idx', columns: ['correlationId'] },
 ];
 
+const ARCHIVE_COLUMNS = {
+  chain: { ...text, primary: true },
+  fromSequence: { type: 'bigint', name: 'from_sequence' },
+  toSequence: { type: 'bigint', name: 'to_sequence', primary: true },
+  lastHash: { ...text, name: 'last_hash' },
+  entries: { type: 'integer' },
+  fileKey: { ...text, name: 'file_key' },
+  fileDigest: { ...text, name: 'file_digest' },
+  archivedAt: { type: 'timestamptz', precision: 3, name: 'archived_at' },
+} as const;
+
 /**
- * The two tables of the trail as TypeORM entities, to register with the data source so that the
+ * The three tables of the trail (the entries, the heads of the chains, the archives) as TypeORM entities, to register with the data source so that the
  * migrations of the project create them, with the columns, the keys and the indexes the SQL of
  * the package gives them. The guard that keeps the entries append-only is no entity: paste
  * `auditGuardStatements` in a migration of your own after the one that creates the tables.
@@ -63,5 +75,6 @@ export function auditEntities(options: AuditEntitiesOptions = {}): readonly Enti
       ...schema,
       columns: { chain: { ...text, primary: true }, sequence: { type: 'bigint' }, hash: text },
     }),
+    new EntitySchema({ name: 'AuditArchive', tableName: AUDIT_ARCHIVES_TABLE, ...schema, columns: ARCHIVE_COLUMNS }),
   ];
 }
