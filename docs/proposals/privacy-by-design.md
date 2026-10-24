@@ -17,7 +17,7 @@ as a legal guarantee.
 
 ## Status (2026-10-24)
 
-Parts 0, 0b and 1 are built. The parts, in merge order; each is a pull request of its own
+Parts 0, 0b, 1 and 2 are built. The parts, in merge order; each is a pull request of its own
 with its tests, its documentation in both languages, its skills and its file of `changes/`.
 
 | Part | Verdict |
@@ -25,7 +25,7 @@ with its tests, its documentation in both languages, its skills and its file of 
 | 0. This proposal | **written** |
 | 0b. The example erases a person end to end, by hand | **built** (#267): the person of identity, the contact of notification, the notes, the cancellation reasons, the documents and the copied name in scheduling, network by network; the README of the example says what stays out of reach |
 | 1. `personalFields` and the `PersonalDataErasure` and `PersonalDataExport` ports of the kernel | **built** (#268): the declaration, the two ports, `eraseDataSubject` and `inEachTenant` in the kernel, `InMemoryPersonalData`, the two contract suites of the testing package |
-| 2. `subjectMasker` of the audit trail, one key per data subject | proposed |
+| 2. `subjectMasker` of the audit trail, one key per data subject | **built** (#270): `subjectMasker(keys)` over the `SubjectKeyStore`, `masked(field, { subject })`, the refusal at wiring time of a masked field without a subject and, before any key, of a subject that is not an opaque id |
 | 3. The erasure adapter on the four ORMs, read models included | proposed |
 | 4. `init` writes `src/platform/privacy/` and wires event sourcing | proposed |
 | 5. `generate repository` and `generate projection` declare the personal fields | proposed |
