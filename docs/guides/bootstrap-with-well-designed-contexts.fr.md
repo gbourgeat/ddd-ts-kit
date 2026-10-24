@@ -1,5 +1,5 @@
 [English](bootstrap-with-well-designed-contexts.md) · **Français**
-<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:abdd2123797b1947 -->
+<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:1c7b837381a17e77 -->
 
 # Démarrer avec des contextes bien conçus
 
@@ -76,7 +76,7 @@ dans un projet qui existe et décide avec OpenFGA (`preset-identity-generated.sp
 | Autorisation | `identityPermissions`, sept politiques sur `OrganisationRights` (les droits de l'acteur dans une organisation : son rôle et ce que lui prêtent les délégations actives) |
 | Langage publié | `organisation.opened`, `member.joined`, `member.role-changed`, `member.removed`, `delegation.granted`, `delegation.revoked`, `account.deactivated`, par l'outbox |
 | Fournisseur d'identité | le port `IdentityProviderAdmin`, tenu à jour par quatre consommateurs des faits publiés, livrés au moins une fois (organisation connue, membre ajouté ou retiré, compte désactivé), avec un *fake* en mémoire et `KeycloakIdentityProviderAdmin`, une recette pour Keycloak 26 ou plus récent |
-| Adaptateurs | des *repositories* Knex ou Drizzle, des *mappers*, des tables et le lecteur de recherche, chacun avec sa *spec* de contrat |
+| Adaptateurs | des *repositories* Knex, Drizzle ou Prisma, des *mappers*, des tables (sur Prisma, les modèles et les *enums* de `prisma/schema.prisma`) et le lecteur de recherche, chacun avec sa *spec* de contrat |
 | Tests | des *builders*, des *fakes*, des *specs* unitaires du modèle et de chaque gestionnaire et contrôleur, les *specs* de contrat des *repositories*, la *spec* de l'adaptateur Keycloak contre un serveur HTTP local |
 | Documentation | l'objet, la classification, le glossaire et une section `## Design` dans `CONTEXT.md` ; avec des *tenants*, un enregistrement de décision |
 
@@ -92,12 +92,12 @@ Une autre *stack* est refusée avant que rien ne soit écrit, avec l'option qui 
 | `stack.refusals` | `named`, `factories` | named : une classe par refus, qui lit son code dans `<context>.codes.ts` ; factories : les fabriques statiques d'une classe par concept |
 | `stack.valueObjects` | `throwing` | les objets-valeurs refusent une valeur invalide quand on les construit |
 | `stack.routes` | `controllers` | une classe de contrôleur par route |
-| `stack.orm` | `knex`, `drizzle` | les deux adaptateurs écrits ; Prisma et TypeORM ne le sont pas |
+| `stack.orm` | `knex`, `drizzle`, `prisma` | les trois adaptateurs écrits ; TypeORM ne l'est pas |
 | `stack.validation` | `zod`, `class-validator` | les deux familles de schémas de requête HTTP écrites |
 | `stack.schemas` | `shared`, `per-route` | partagés : les réponses par identifiant sont l'`Accepted` de `@ddd-ts-kit/http` et le jeton d'une invitation un schéma de `presentation/http/shared/` ; par route : chaque route garde le sien |
 | `stack.http` | `express`, `fastify` | les routes NestJS s'écrivent autrement |
 | `stack.authn` | `jwt`, `keycloak` | un compte est le sujet d'un jeton : sans vérificateur, chaque appelant est anonyme et le contexte ne servirait personne |
-| `stack.database` | `postgres` | les tables gardent une seule appartenance en cours par compte avec un index unique partiel (`where removed_at is null`), que MySQL n'a pas |
+| `stack.database` | `postgres` | les tables gardent une seule appartenance en cours par compte avec un index unique partiel (`where removed_at is null`), que MySQL n'a pas ; sur Prisma, c'est `where: { removedAt: null }` de la fonctionnalité en préversion `partialIndexes`, que le *preset* active dans le générateur du client |
 
 Prendre en charge une autre valeur revient à écrire la variante des fichiers qu'elle change
 (`*.knex.ts.tpl` à côté de `*.drizzle.ts.tpl` sous `packages/cli/templates/presets/identity/`,
