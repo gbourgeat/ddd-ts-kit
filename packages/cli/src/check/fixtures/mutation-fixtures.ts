@@ -89,6 +89,6 @@ export const MUTATION_FIXTURES: readonly Fixture[] = [
     ruleId: 'config/valid',
     name: 'a mutation floor that is not a percentage, and a layer that is not held to one',
     expect: { file: CONFIG_FILE },
-    files: project({}, { [CONFIG_FILE]: config({ mutation: { domain: 120, application: 80 }, deviations: [] }) }),
+    files: project({}, { [CONFIG_FILE]: config({ mutation: { domain: 120, presentation: 80 }, deviations: [] }) }),
   },
 ];
