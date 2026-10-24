@@ -472,6 +472,31 @@ and every test runs, no `.only`, no `.skip` (`test/no-only-no-skip`). Arrange, a
 separated by blank lines. The four rules that read what a test says are warnings until 0.90.0, so
 that an upgrade never turns a green lint red; `ddd-ts-kit lint` lists them after its report.
 
+## Properties
+
+A value object holds laws that hold for every value, not for the three a test names: two ranges
+overlap in both directions or in none, a slot is held at least until it ends, a parse then a format
+gives the value back. Such a law is stated once, as a property, and checked on generated values:
+
+```ts
+import fc from 'fast-check';
+
+it('overlaps another range in both directions or in none, for any two ranges', () => {
+  fc.assert(fc.property(anyRange(), anyRange(), (one, other) => one.overlaps(other) === other.overlaps(one)));
+});
+```
+
+`fast-check` joins the development dependencies with the first property (`npm i -D fast-check`), under
+Vitest as under Jest; a project without a property carries no dead dependency. The title states the law, so that the page
+of what the tests state reads it; `fc.assert` is an assertion for `test/assertion-present`; the
+arbitrary (`anyRange()`) is a small helper of the spec built on the factories of the model, so that
+every generated value is one the model accepts. A failing run prints the seed and the counterexample,
+shrunk to the smallest. A property is for a law of the model: an invariant, a symmetry, a round trip,
+an idempotence; the orchestration of a use case is stated by its scenarios, with named values, not
+by a property. The spec `generate value-object` writes ends with a planned rule to remind of it:
+`keeps its invariants for any value a generator can produce, as a property`. The example states four,
+on its ranges and its slots.
+
 ## Coverage thresholds
 
 A project states the minimum coverage of each layer in one place, the `coverage` key of

@@ -214,6 +214,15 @@ A coverage rate says that code ran under a test, never that the test asserts any
 the spec for the behaviour, and let the rate follow. The thresholds of `ddd-ts-kit.config.json`
 are a floor per context and layer, not a goal; a test written to move a number proves nothing.
 
+A law a value object holds for every value is stated once, as a property with `fast-check`, added
+with the first one (`npm i -D fast-check`):
+`fc.assert(fc.property(anyRange(), anyRange(), (one, other) => one.overlaps(other) === other.overlaps(one)))`,
+the title stating the law (`overlaps another range in both directions or in none, for any two ranges`),
+the arbitrary a small helper of the spec built on the factories of the model, so that every generated
+value is one the model accepts. A property is for an invariant, a symmetry, a round trip or an
+idempotence of the model; a use case is stated by its scenarios with named values. Every value object
+spec the generator writes ends with the planned rule that asks for one.
+
 Finish with `npm test -- <context>`, `npm run lint` (the shape of the tests), `npm run test:coverage`
 before the slice is closed, and
 `npx ddd-ts-kit check --rule test/no-mocks --rule test/builder-required --rule test/spec-required --rule test/helper-placed --rule test/acceptance-black-box`.
