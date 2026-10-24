@@ -23,7 +23,7 @@ export const DELEGATED_RULES: readonly DelegatedRule[] = [
     checkedBy: '@ddd-ts-kit/eslint-plugin',
     authority: ESLINT_AUTHORITY,
     script: 'npm run lint',
-    where: `This rule reads the shape of a class, which needs a syntax tree: it is ${ESLINT_AUTHORITY} as \`ddd-ts-kit/${rule.id.replace('/', '-')}\` (\`npm run lint\`), not by \`ddd-ts-kit check\`. Its severity is still set under "rules" in ${CONFIG_FILE}.`,
+    where: `This rule reads the shape of the code, a class or a test, which needs a syntax tree: it is ${ESLINT_AUTHORITY} as \`ddd-ts-kit/${rule.id.replace('/', '-')}\` (\`npm run lint\`), not by \`ddd-ts-kit check\`. Its severity is still set under "rules" in ${CONFIG_FILE}.`,
   })),
   {
     ...FORMATTER_RULE,

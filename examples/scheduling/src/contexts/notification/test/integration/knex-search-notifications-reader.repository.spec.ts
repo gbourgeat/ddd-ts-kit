@@ -89,10 +89,7 @@ describe.each([
     const reader = await createReader();
     const first = await reader.search({ kind: 'ids', ids: ['patient-1'] }, cursorPage({ limit: 1 }));
 
-    const second = await reader.search(
-      { kind: 'ids', ids: ['patient-1'] },
-      cursorPage({ limit: 2, ...(first.nextCursor === undefined ? {} : { cursor: first.nextCursor }) }),
-    );
+    const second = await reader.search({ kind: 'ids', ids: ['patient-1'] }, pageAfter(first, 2));
 
     expect(first.items.map((item) => item.id)).toEqual(['notification-4']);
     expect(second.items.map((item) => item.id)).toEqual(['notification-3', 'notification-1']);
@@ -179,4 +176,9 @@ function sentNotifications(): readonly Notification[] {
       .bornAt(new Date('2026-01-03T08:00:00.000Z'))
       .build(),
   ];
+}
+
+/** The page that follows `page`, `limit` items long. */
+function pageAfter<Field extends string>(page: { readonly nextCursor?: string | undefined }, limit: number) {
+  return cursorPage<Field>({ limit, ...(page.nextCursor === undefined ? {} : { cursor: page.nextCursor }) });
 }

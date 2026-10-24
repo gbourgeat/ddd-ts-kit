@@ -53,11 +53,13 @@ describe('Get clearance', () => {
       timeout: 'b',
     });
 
-    for (const clearanceId of ['clearance-9', other.id]) {
-      await expect(
-        application.queryBus.execute(new GetClearanceQuery(holder, 'calendar-1', clearanceId)),
-      ).rejects.toMatchObject({ code: 'UNKNOWN_CLEARANCE' });
-    }
+    await expect(
+      application.queryBus.execute(new GetClearanceQuery(holder, 'calendar-1', 'clearance-9')),
+    ).rejects.toMatchObject({ code: 'UNKNOWN_CLEARANCE' });
+
+    await expect(
+      application.queryBus.execute(new GetClearanceQuery(holder, 'calendar-1', other.id)),
+    ).rejects.toMatchObject({ code: 'UNKNOWN_CLEARANCE' });
   });
 
   it('refuses the clearance of another calendar, whoever knows its identifier', async () => {

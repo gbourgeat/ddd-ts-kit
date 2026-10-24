@@ -61,7 +61,9 @@ function cases({ machine, transition, states, member }: Case): string[] {
     allowed,
     [
       `  it('refuses ${name} from ${outside}', () => {`,
-      `    expect(() => ${machine}.next(${member(outside)}, '${name}')).toThrow('is not allowed from the state');`,
+      `    expect(() => ${machine}.next(${member(outside)}, '${name}')).toThrow(`,
+      "      expect.objectContaining({ code: 'FORBIDDEN_TRANSITION' }),",
+      '    );',
       '  });',
     ].join('\n'),
   ];

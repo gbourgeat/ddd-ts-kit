@@ -116,11 +116,11 @@ describe('When the mailer fails on every attempt', () => {
       }),
     );
 
-    mailer.failNextWith(new Error('provider unreachable'));
+    const outage = new Error('provider unreachable');
 
-    await expect(application.commandBus.execute(new SendDueRemindersCommand(operator, NOW))).rejects.toThrow(
-      'provider unreachable',
-    );
+    mailer.failNextWith(outage);
+
+    await expect(application.commandBus.execute(new SendDueRemindersCommand(operator, NOW))).rejects.toBe(outage);
 
     const afterTheOutage = (await application.get(ReminderRepository).findByAppointment('appointment-1'))?.status;
 

@@ -26,14 +26,14 @@ describe('generate acceptance', () => {
     expect(cli(root, 'generate', 'acceptance', 'US5.02').stderr).toContain('"US5.02" is not the code of a story.');
   });
 
-  it('writes the spec of a story without specification with an it.todo per slice row, its title quoted', () => {
+  it('writes the spec of a story without specification with an it.todo per slice row, its title quoted and in lower case', () => {
     expect(cli(root, 'generate', 'acceptance', 'US5', 'Order and invoice', '--json').code).toBe(0);
 
     const spec = read(root, SPEC);
 
     expect(spec).toContain("describe('Order and invoice, acceptance', () => {");
-    expect(spec).toContain("  it.todo('#US5.02 Place order');");
-    expect(spec).toContain("  it.todo('#US5.03 Invoice a customer\\'s order');");
+    expect(spec).toContain("  it.todo('#US5.02 place order');");
+    expect(spec).toContain("  it.todo('#US5.03 invoice a customer\\'s order');");
     expect(spec).not.toContain("it.todo('#US5.01");
     expect(spec).toContain("// Rows to cover: #US5.02 Place order, #US5.03 Invoice a customer's order.");
     expect(spec).toContain("from '$test/e2e/support/start-application'");

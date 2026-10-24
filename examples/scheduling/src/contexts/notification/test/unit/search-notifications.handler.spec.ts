@@ -77,12 +77,7 @@ describe('Search notifications', () => {
     const application = arrange(LINES);
     const first = await application.queryBus.execute(new SearchNotificationsQuery(holder, cursorPage({ limit: 2 })));
 
-    const second = await application.queryBus.execute(
-      new SearchNotificationsQuery(
-        holder,
-        cursorPage({ limit: 2, ...(first.nextCursor === undefined ? {} : { cursor: first.nextCursor }) }),
-      ),
-    );
+    const second = await application.queryBus.execute(new SearchNotificationsQuery(holder, pageAfter(first, 2)));
 
     expect(first.items.map((item) => item.id)).toEqual(['notification-3', 'notification-2']);
     expect(second.items.map((item) => item.id)).toEqual(['notification-1']);
@@ -110,4 +105,9 @@ function line(id: string, recipientId: string, sentAt: string): SearchNotificati
     startsAt: new Date('2026-02-01T09:00:00.000Z'),
     sentAt: new Date(sentAt),
   };
+}
+
+/** The page that follows `page`, `limit` items long. */
+function pageAfter<Field extends string>(page: { readonly nextCursor?: string | undefined }, limit: number) {
+  return cursorPage<Field>({ limit, ...(page.nextCursor === undefined ? {} : { cursor: page.nextCursor }) });
 }

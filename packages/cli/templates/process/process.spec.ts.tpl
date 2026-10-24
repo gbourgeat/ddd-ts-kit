@@ -29,9 +29,7 @@ describe('{{name.title}}', () => {
   });
 
   it('ends at its deadline', () => {
-    givenProcess(waiting)
-      .when((current) => (current === undefined ? undefined : process.timedOut('deadline', current)))
-      .thenEnded();
+    givenProcess(waiting).when(timedOut('deadline')).thenEnded();
   });
 
   it('recognises the state it saved', () => {
@@ -42,3 +40,8 @@ describe('{{name.title}}', () => {
   // TODO(domain): one case per step, and the commands a missed deadline sends.
   it.todo('sends the command that answers a missed deadline');
 });
+
+function timedOut(timeout: string) {
+  return (current: typeof waiting | undefined) =>
+    current === undefined ? undefined : process.timedOut(timeout, current);
+}
