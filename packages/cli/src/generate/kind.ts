@@ -35,6 +35,12 @@ export interface KindFlags {
   /** The use case is reachable by anybody, on purpose. */
   readonly public: boolean;
   readonly tenantScoped: boolean;
+  /**
+   * The tables belong to no tenant whatever the tenancy of the project (the control plane of the
+   * tenants): what the generator writes over them is not confined. Set by a preset, never on the
+   * command line.
+   */
+  readonly tenantFree?: boolean;
   /** The columns of the table that hold personal data, comma separated, as `--personal <column>,<column>`. */
   readonly personal?: string;
   /** The column that names the data subject a row is about, as `--subject <column>`; `id` when the row is the person. */

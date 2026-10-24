@@ -133,7 +133,8 @@ function generated(scope: Scope, preset: Preset): Config {
   let config = scope.config;
 
   for (const step of preset.steps) {
-    const flags: KindFlags = { ...NO_FLAGS, allowName: true, ...step.flags };
+    const own = typeof step.flags === 'function' ? step.flags(config) : step.flags;
+    const flags: KindFlags = { ...NO_FLAGS, allowName: true, ...own };
 
     step.kind.run({ ws: scope.ws, config, args: [scope.context.kebab, ...step.args], flags });
     config = current(scope.ws) ?? config;
