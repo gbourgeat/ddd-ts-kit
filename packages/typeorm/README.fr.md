@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a256c76e1a818442 -->
+<!-- translation-of: README.md sha256:5cae38e80dd596f9 -->
 
 # @ddd-ts-kit/typeorm
 
@@ -317,9 +317,21 @@ export const invoices = new EntitySchema<InvoiceRow>({
 });
 ```
 
+Le *tenant* atteint chaque instruction par trois aides, qui le lisent dans la portée d'exécution
+et refusent un travail qui n'en nomme aucun (`NoCurrentTenantError`) : `tenantWhere(scope)` se
+décompose dans le where d'une lecture, en options de recherche ou sur un *query builder* (le
+*tenant* du travail, ou les *tenants* qu'atteint une élévation du personnel de la plateforme,
+`In([...])` ou rien au-dessus de tous les *tenants*), `ownTenantWhere(scope)` dans les critères
+d'une mise à jour ou d'une suppression (le seul *tenant* du travail, quoi qu'une élévation
+élargisse) et `tenantScopeOf(scope)` du noyau dans une ligne insérée. `save` et `upsert` ne
+servent pas : ils écrivent par la clé, dont le *tenant* ne fait jamais partie. La règle
+`tenancy/scoped-statement` de la CLI y tient les adaptateurs d'un projet `--tenancy shared-table`,
+et `generate repository` les écrit ainsi.
+
 ```ts
 import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { insertIgnoringConflict, optimisticUpdate, ownTenantWhere, tenantWhere } from '@ddd-ts-kit/typeorm';
 
 @Repository(InvoiceRepository)
 export class TypeOrmInvoiceRepository implements InvoiceRepository {
@@ -330,7 +342,7 @@ export class TypeOrmInvoiceRepository implements InvoiceRepository {
   ) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
-    const row = await this.context.manager().findOneBy(invoices, { id, ...tenantScopeOf(this.scope) });
+    const row = await this.context.manager().findOneBy(invoices, { id, ...tenantWhere(this.scope) });
 
     return row === null ? undefined : InvoiceMapper.toDomain(row);
   }
@@ -350,7 +362,7 @@ export class TypeOrmInvoiceRepository implements InvoiceRepository {
   }
 
   private async update(state: VersionedInvoice, expected: number): Promise<number> {
-    const guarded = { id: state.id, version: expected, ...tenantScopeOf(this.scope) };
+    const guarded = { id: state.id, version: expected, ...ownTenantWhere(this.scope) };
     const row = { ...state, ...stampUpdate(this.scope, this.clock) };
 
     return (await this.context.manager().update(invoices, guarded, row)).affected ?? 0;
@@ -374,8 +386,9 @@ export abstract class InvoiceQueries {
 ```ts
 // contexts/billing-core/infrastructure/persistence/type-orm-invoice-queries.reader.ts
 import { LessThan, MoreThan, type FindOptionsWhere } from 'typeorm';
-import { ExecutionScope, encodeCursor, pageOf, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { ExecutionScope, encodeCursor, pageOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { tenantWhere, type TenantWhere } from '@ddd-ts-kit/typeorm';
 
 @Repository(InvoiceQueries)
 export class TypeOrmInvoiceQueries implements InvoiceQueries {
@@ -390,7 +403,7 @@ export class TypeOrmInvoiceQueries implements InvoiceQueries {
 
   private async byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     const [rows, total] = await this.context.manager().findAndCount(invoices, {
-      where: tenantScopeOf(this.scope),
+      where: tenantWhere(this.scope),
       order: totalOrder(directionOf(request)),
       take: request.limit,
       skip: request.offset,
@@ -401,7 +414,7 @@ export class TypeOrmInvoiceQueries implements InvoiceQueries {
 
   private async byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     const direction = directionOf(request);
-    const tenant = tenantScopeOf(this.scope);
+    const tenant = tenantWhere(this.scope);
     const rows = await this.context.manager().find(invoices, {
       where: request.cursor === undefined ? tenant : beyond(positionOf(request.cursor), direction, tenant),
       order: totalOrder(direction),
@@ -425,7 +438,7 @@ const totalOrder = (direction: SortDirection) => ({ amount: direction, id: direc
 function beyond(
   { amount, id }: { amount: number; id: string },
   direction: SortDirection,
-  tenant: TenantScoped,
+  tenant: TenantWhere,
 ): FindOptionsWhere<InvoiceRow>[] {
   const past = direction === 'asc' ? MoreThan : LessThan;
 
@@ -452,11 +465,13 @@ base de données :
   `stampCreation(scope, clock)` à l'insertion, `stampUpdate(scope, clock)` à la mise à jour, qui
   laisse `created_at` et `created_by` intacts. L'acteur est celui de la portée d'exécution :
   l'utilisateur de la requête HTTP, ou `system:<consumer>` pour un événement consommé.
-- **Le tenant fait partie de chaque instruction** : écrit à l'insertion, et dans la condition de
-  chaque lecture et de chaque mise à jour, garde de version comprise. Une ligne d'un autre
-  *tenant* n'est pas trouvée, et une mise à jour qui la vise n'écrit rien, ce que
-  `optimisticUpdate` signale par une `ConcurrencyError`. Un travail qui ne nomme aucun *tenant*
-  lève `NoCurrentTenantError` avant tout SQL.
+- **Le tenant fait partie de chaque instruction** : écrit à l'insertion (`tenantScopeOf`), et dans
+  la condition de chaque lecture (`tenantWhere`) et de chaque mise à jour (`ownTenantWhere`), garde
+  de version comprise. Une ligne d'un autre *tenant* n'est pas trouvée, et une mise à jour qui la
+  vise n'écrit rien, ce que `optimisticUpdate` signale par une `ConcurrencyError`. Une élévation du
+  personnel de la plateforme élargit ce qu'une lecture atteint, jamais ce qu'une écriture touche.
+  Un travail qui ne nomme aucun *tenant* lève `NoCurrentTenantError` avant tout SQL. Le contrat
+  d'isolation des *tenants* de `@ddd-ts-kit/testing` le prouve sur ce *repository*.
 - **Une liste a un ordre total.** La clé primaire suit le champ de tri, dans le même sens, pour
   départager : sans elle, des lignes égales sur le champ de tri n'ont pas d'ordre défini, et une
   page pourrait en répéter ou en sauter une. L'index couvre `(tenant_id, <sort field>, id)`.
@@ -552,6 +567,66 @@ Les critères et les modèles de lecture n'ont jamais été exécutés sur MySQL
 La table s'écrit par son entité ; la copie d'une reconstruction, qui n'en a pas, s'écrit colonne
 par colonne avec le même *query builder*.
 
+Un modèle de lecture de données de *tenant* prend `tenant: { scope }` (et `property` quand
+l'entité porte le *tenant* ailleurs que dans `tenantId`, que `tenantColumn()` déclare) : chaque
+ligne s'écrit avec le *tenant* du travail en cours, chaque lecture, recherche et écriture lui est
+confinée, une élévation du personnel de la plateforme n'élargissant que les lectures, et la copie
+d'une reconstruction suit les mêmes conditions. Les clés restent uniques entre les *tenants*,
+puisque le conflit d'une insertion porte sur la seule clé : une clé que deux *tenants* pourraient
+partager (un jour, un *slug*) porte le *tenant* (`acme:2026-03-01`). Un registre construit sans
+`tenant` dans un projet `--tenancy shared-table` est signalé par `tenancy/scoped-statement`.
+
+## Effacement des données personnelles
+
+L'effacement d'une personne concernée des tables d'un contexte, à partir des déclarations
+`personalFields` écrites à côté de ses *mappers* (`@ddd-ts-kit/kernel`, « Données personnelles ») :
+`TypeOrmPersonalDataErasure` implémente le port `PersonalDataErasure` sur le gestionnaire d'entités de l'unité de travail. Le port du contexte étend celui du
+kernel, et son adaptateur étend cette classe.
+
+```ts
+// infrastructure/persistence/person.personal-fields.ts : le schéma d'entité lui-même, les colonnes par les propriétés de l'entité
+export const personPersonalFields = personalFields<PersonRow, EntitySchema>(personEntity, {
+  subject: 'id',
+  fields: ['displayName', 'email'],
+  erasure: 'row',
+});
+
+// infrastructure/persistence/type-orm-identity-erasure.repository.ts
+@Repository(IdentityErasure)
+export class TypeOrmIdentityErasure extends TypeOrmPersonalDataErasure implements IdentityErasure {
+  constructor(database: TypeOrmContext, scope: ExecutionScope, files: FileStorage) {
+    super(database, { name: 'identity.persons', declarations: [personPersonalFields], tenant: { scope }, files });
+  }
+}
+```
+
+`erase(subject)` supprime d'abord du stockage les fichiers que les lignes nomment, puis supprime les
+lignes de la personne (`row`) ou les pseudonymise (`pseudonymise` : une colonne texte lit `[erased]`,
+une colonne de tout autre type ne lit rien, une colonne de fichier rien), et répond combien de lignes
+il a atteintes, aucune la seconde fois. Avec `tenant`, chaque instruction est confinée au *tenant* du
+travail et jamais élargie par une élévation (la propriété `tenantId`, ou `tenant.property`) ; sans lui, la table tient les lignes de tous
+les *tenants*. Un sujet qui n'est pas un identifiant opaque est refusé avant toute instruction, et une
+déclaration qui nomme des colonnes de fichier sans stockage de fichiers est refusée à la construction
+de l'adaptateur. Les types des colonnes viennent des métadonnées de l'entité (`String` vaut pour un texte), pour qu'un texte et un nombre soient pseudonymisés chacun à sa façon. Une colonne personnelle qui n'est pas un texte doit accepter null, sinon
+les lignes s'effacent avec `row` : une déclaration qui en pseudonymiserait une qui ne l'accepte pas
+est refusée avant qu'un fichier ou une ligne ne soit touché (`NotNullablePersonalColumnError`). L'adaptateur passe `personalDataErasureContract` de
+`@ddd-ts-kit/testing`, comme celui en mémoire, sur PGlite et PostgreSQL. Ce qu'un effacement
+n'atteint pas, et la chaîne entière (`eraseDataSubject` : la clé, chaque copie dans chaque *tenant*,
+les reconstructions), sont dans le README du kernel (« Données personnelles »).
+
+`TypeOrmPersonalDataExport` répond au droit d'accès et à la portabilité à partir des mêmes déclarations :
+`exportOf(subject)` remet un `PersonalDataRecord` par ligne sur la personne dans chaque table déclarée,
+sous `<name>.<table>`, avec chaque colonne personnelle et chaque colonne de fichier (par sa clé) en
+données simples, par les propriétés de l'entité, aucune autre colonne et rien de personne d'autre ; une ligne déjà
+pseudonymisée répond ce qu'elle lit. La même option `tenant` confine chaque instruction au *tenant* du
+travail, un sujet qui n'est pas un identifiant opaque est refusé avant toute instruction, et
+l'adaptateur passe `personalDataExportContract`. Le port du contexte étend `PersonalDataExport` du
+kernel et son adaptateur étend cette classe avec `name`, `declarations` et `tenant`
+(`TypeOrmPersonalDataExportOptions`) ; `generate repository --personal` écrit les deux adaptateurs, et
+`exportDataSubject` du kernel rassemble chaque export en un document daté. Enveloppez l'adaptateur
+avec `auditedPersonalDataExport` de `@ddd-ts-kit/audit` là où il est lié, pour que chaque remise
+laisse une entrée.
+
 ## Outbox et idempotence
 
 ![Deux relais se partagent l'outbox : avec skip-locked, chacun sélectionne les lignes dues FOR UPDATE SKIP LOCKED dans une courte transaction et le relais B saute les lignes que le relais A a verrouillées ; avec compare-and-set, les deux lisent la ligne 7 et tentent une mise à jour gardée par le nombre de tentatives lu, le premier la prend et le second n'écrit aucune ligne et relit ; dans les deux cas, une ligne prise reste cachée jusqu'à la fin de son bail](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/typeorm-outbox-claim.fr.svg)
@@ -572,6 +647,10 @@ par colonne avec le même *query builder*.
 - `TypeOrmProcessedEventStore.markProcessed` est une insertion qui ignore le conflit sur
   `(consumer, event_id)`. Exécutez le consommateur dans l'unité de travail : la marque est alors
   validée avec les effets du gestionnaire, et disparaît avec eux s'il échoue.
+- `outboxEntity({ tenant: true })` ajoute `tenant_id`, nullable, et le registre y écrit le *tenant*
+  de chaque événement, si bien que ses consommateurs s'exécutent dans ce *tenant* : l'outbox d'un
+  projet multi-tenant. Un projet qui devient multi-tenant l'active et génère la migration qui
+  ajoute la colonne ; les événements publiés avant elle n'appartiennent à aucun *tenant*.
 
 Les options du store de l'outbox, et le relais qui le lit :
 

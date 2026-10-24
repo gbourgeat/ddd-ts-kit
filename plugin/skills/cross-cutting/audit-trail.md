@@ -12,8 +12,9 @@ and can prove it was not rewritten. It is recorded around the use cases, never b
 | every authorization decision, denials always | the decision hook of the authorization |
 | every command, with its outcome and error code | a bus middleware before the unit of work: success inside the transaction, failure after the rollback |
 | every integration event crossing a boundary | one idempotent consumer named `audit`; `generate integration-event` registers each new event in `audited-events.ts` |
-| every erasure of a data subject (crypto-shredding), with whether a key was destroyed | `auditedSubjectKeys`, the key store wrapped where it is bound, whoever calls `erase` |
-| bulk reads and exports | the infrastructure that performs them, as the exception |
+| every erasure of a data subject (crypto-shredding), with whether a key was destroyed | `auditedSubjectKeys`, the key store wrapped where it is bound (`src/platform/event-sourcing/create-event-sourcing.ts`, written by `init --event-sourcing on`), whoever calls `erase` |
+| every export of what a context keeps of a data subject, with the number of records and never the values | `auditedPersonalDataExport`, the export port wrapped where the platform runs it (`src/platform/privacy/run-export.ts`, written by `init --privacy on` with the trail on) |
+| bulk reads | the infrastructure that performs them, as the exception |
 
 Actor, session, impersonation, tenant, correlation and origin come from the execution
 scope. A handler or an aggregate calling the audit trail is a defect: the middleware
@@ -34,7 +35,7 @@ an opaque `data-subject` id): its date plus the retention of the key backups is 
 erasure is complete. The key is destroyed first and the entry written after; when the entry
 fails, the erasure fails and is run again, which records that no key was left. A script that
 erases opens an execution context (operator as actor, origin `cli`), or `erase` is refused
-before any key is touched.
+before any key is touched: `npm run privacy:erase -- <subject-id> --operator <who-asks>` does.
 
 ## Integrity
 
@@ -54,6 +55,6 @@ the platform, not a bounded context. Support staff acting as a user appear as su
 - Denied decisions are recorded, and tested.
 - A failed command leaves an entry; a rolled-back success leaves none.
 - No personal data in clear.
-- The `SubjectKeyStore` every caller resolves is the one wrapped by `auditedSubjectKeys`.
+- The `SubjectKeyStore` every caller resolves is the one wrapped by `auditedSubjectKeys`, and an export of a data subject goes through `auditedPersonalDataExport`.
 - The application's database role cannot update or delete entries.
 - Chain verification runs on a schedule (a job) and alerts.

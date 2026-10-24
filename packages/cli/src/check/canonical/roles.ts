@@ -67,7 +67,10 @@ export const ROLES: readonly Role[] = [
     oneConcept: true,
     specFor: ['.integration-handler.ts'],
   },
-  { directory: 'infrastructure/persistence', suffixes: ['.repository.ts', '.mapper.ts', '.reader.ts', '.schema.ts'] },
+  {
+    directory: 'infrastructure/persistence',
+    suffixes: ['.repository.ts', '.mapper.ts', '.reader.ts', '.schema.ts', '.personal-fields.ts'],
+  },
   { directory: 'infrastructure/external', suffixes: [] },
   { directory: 'infrastructure/anti-corruption', suffixes: [] },
   { directory: 'presentation/http', suffixes: ['.routes.ts', '.route.ts', '.controller.ts', '.dto.ts'] },

@@ -42,6 +42,7 @@ import { choose } from './choose';
 import { recordedOptions } from './recorded-options';
 import { resolveCiExtras } from './resolve-ci-extras';
 import { resolvePersistence } from './resolve-persistence';
+import { resolvePersonalData } from './resolve-personal-data';
 import { resolveQueue } from './resolve-queue';
 import { resolveStyle } from './resolve-style';
 import { resolveTenancy } from './resolve-tenancy';
@@ -153,6 +154,7 @@ function stackOf(options: StackOptions): Record<string, string> {
     broker,
     httpCache: resolveHttpCache(options, http, persistence.events),
     ...resolveOperations(options, persistence.orm),
+    ...resolvePersonalData(options, persistence.orm),
     ...resolveWriting(options),
     ...resolveStyle(options, di),
     ...resolvePresentation(options, http),

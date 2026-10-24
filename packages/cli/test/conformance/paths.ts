@@ -8,6 +8,7 @@ const SEARCH = `${NOTIFICATION}/application/queries/search-notifications`;
 export const PATHS = {
   CONFIG: 'ddd-ts-kit.config.json',
   MANIFEST: 'package.json',
+  STRYKER: 'stryker.config.mjs',
   NOTIFICATION,
   SCHEDULING,
   ANALYTICS: 'src/contexts/analytics',

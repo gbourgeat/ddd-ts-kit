@@ -1,8 +1,10 @@
-import { CONFIG_FILE } from '../../config';
-import { config } from './config';
 import type { Fixture } from './fixture';
 import { PATHS } from './paths';
 import { project } from './project';
+import { tenancyBypass } from './tenancy-bypass';
+import { tenancyConfig } from './tenancy-config';
+import { TENANCY_PRISMA_FIXTURES } from './tenancy-prisma-fixtures';
+import { TENANCY_TYPEORM_FIXTURES } from './tenancy-typeorm-fixtures';
 
 const RULE = 'tenancy/scoped-statement';
 const KNEX_ADAPTER = `${PATHS.BILLING}/infrastructure/persistence/knex-invoice.repository.ts`;
@@ -72,44 +74,29 @@ const RAW_EXPRESSIONS = `export class KnexInvoiceRepository {
 }
 `;
 
-const tenancy = (orm: string, value = 'shared-table') => ({
-  [CONFIG_FILE]: config({ stack: { orm, tenancy: value } }),
-});
-
-/** A repository of a shared-table project whose one method goes around the helpers. */
-const bypass = (orm: 'knex' | 'drizzle', name: string, body: string): Fixture => {
-  const adapter = orm === 'knex' ? KNEX_ADAPTER : DRIZZLE_ADAPTER;
-  const owner = orm === 'knex' ? 'KnexInvoiceRepository' : 'DrizzleInvoiceRepository';
-
-  return {
-    ruleId: RULE,
-    name: `${orm}: ${name}`,
-    expect: { file: adapter },
-    files: project({ [adapter]: `export class ${owner} {\n  find() {\n    ${body}\n  }\n}\n` }, tenancy(orm)),
-  };
-};
-
 const READ_MODEL = `${PATHS.BILLING}/infrastructure/persistence/knex-invoice-totals.repository.ts`;
 
 const readModel = (name: string, source: string, expected: Fixture['expect']): Fixture => ({
   ruleId: RULE,
   name: `read model store ${name}`,
   expect: expected,
-  files: project({ [READ_MODEL]: source }, tenancy('knex')),
+  files: project({ [READ_MODEL]: source }, tenancyConfig('knex')),
 });
 
 export const TENANCY_FIXTURES: readonly Fixture[] = [
+  ...TENANCY_PRISMA_FIXTURES,
+  ...TENANCY_TYPEORM_FIXTURES,
   {
     ruleId: RULE,
     name: 'a knex adapter reaching tenant data through the helpers',
     expect: 'pass',
-    files: project({ [KNEX_ADAPTER]: KNEX_SCOPED }, tenancy('knex')),
+    files: project({ [KNEX_ADAPTER]: KNEX_SCOPED }, tenancyConfig('knex')),
   },
   {
     ruleId: RULE,
     name: 'a knex table reached straight from the executor on shared tables',
     expect: { file: KNEX_ADAPTER },
-    files: project({ [KNEX_ADAPTER]: KNEX_UNSCOPED }, tenancy('knex')),
+    files: project({ [KNEX_ADAPTER]: KNEX_UNSCOPED }, tenancyConfig('knex')),
   },
   {
     ruleId: RULE,
@@ -120,29 +107,37 @@ export const TENANCY_FIXTURES: readonly Fixture[] = [
         [KNEX_ADAPTER]:
           'export class KnexInvoiceRepository {\n  insert(row: Row) {\n    return insertIgnoringConflict(this.database.executor(), ownTenantTable(this.database, this.scope, T), { row });\n  }\n}\n',
       },
-      tenancy('knex'),
+      tenancyConfig('knex'),
     ),
   },
-  bypass('knex', 'a table reached by from()', "return this.database.executor().from('invoices');"),
-  bypass('knex', 'a select chained on the executor', "return this.database.executor().select('id').from('invoices');"),
-  bypass('knex', 'a table reached by table()', "return this.database.executor().table('invoices');"),
-  bypass('knex', 'raw SQL', "return this.database.executor().raw('select * from invoices');"),
-  bypass('knex', 'raw SQL in a template', 'return this.database.executor().raw(`select * from ${INVOICES}`);'),
-  bypass('knex', 'raw SQL whose text is not a literal', 'return this.database.executor().raw(statement);'),
-  bypass(
+  tenancyBypass('knex', 'a table reached by from()', "return this.database.executor().from('invoices');"),
+  tenancyBypass(
+    'knex',
+    'a select chained on the executor',
+    "return this.database.executor().select('id').from('invoices');",
+  ),
+  tenancyBypass('knex', 'a table reached by table()', "return this.database.executor().table('invoices');"),
+  tenancyBypass('knex', 'raw SQL', "return this.database.executor().raw('select * from invoices');"),
+  tenancyBypass('knex', 'raw SQL in a template', 'return this.database.executor().raw(`select * from ${INVOICES}`);'),
+  tenancyBypass('knex', 'raw SQL whose text is not a literal', 'return this.database.executor().raw(statement);'),
+  tenancyBypass(
     'knex',
     'raw SQL completed by an interpolation',
     'return this.database.executor().raw(`${statement} where id = ?`, [id]);',
   ),
-  bypass('knex', 'raw SQL that names a table alone', "return this.database.executor().raw('table invoices');"),
-  bypass(
+  tenancyBypass('knex', 'raw SQL that names a table alone', "return this.database.executor().raw('table invoices');"),
+  tenancyBypass(
     'knex',
     'raw SQL that starts with a common table',
     "return this.database.executor().raw('with due as (table invoices) table due');",
   ),
-  bypass('knex', 'raw SQL of values', "return this.database.executor().raw('values (1), (2)');"),
-  bypass('knex', 'raw SQL that calls a procedure', "return this.database.executor().raw('call purge_invoices()');"),
-  bypass('knex', 'raw SQL that calls a function', "return this.database.executor().raw('purge_all()');"),
+  tenancyBypass('knex', 'raw SQL of values', "return this.database.executor().raw('values (1), (2)');"),
+  tenancyBypass(
+    'knex',
+    'raw SQL that calls a procedure',
+    "return this.database.executor().raw('call purge_invoices()');",
+  ),
+  tenancyBypass('knex', 'raw SQL that calls a function', "return this.database.executor().raw('purge_all()');"),
   {
     ruleId: RULE,
     name: 'knex: a raw expression in the select of a confined statement, and a constraint of the schema',
@@ -153,10 +148,10 @@ export const TENANCY_FIXTURES: readonly Fixture[] = [
         [`${PATHS.BILLING}/infrastructure/persistence/create-billing-tables.schema.ts`]:
           "export const holdOnce = (knex: Knex) => knex.raw('alter table ??.?? add constraint held_once exclude using gist (desk with =)', [S, T]);\n",
       },
-      tenancy('knex'),
+      tenancyConfig('knex'),
     ),
   },
-  bypass(
+  tenancyBypass(
     'knex',
     'the executor held in a variable',
     "const db = this.database.executor();\n\n    return db('invoices');",
@@ -165,13 +160,13 @@ export const TENANCY_FIXTURES: readonly Fixture[] = [
     ruleId: RULE,
     name: 'a drizzle adapter that writes no tenant condition',
     expect: { file: DRIZZLE_ADAPTER },
-    files: project({ [DRIZZLE_ADAPTER]: DRIZZLE_UNSCOPED }, tenancy('drizzle')),
+    files: project({ [DRIZZLE_ADAPTER]: DRIZZLE_UNSCOPED }, tenancyConfig('drizzle')),
   },
   {
     ruleId: RULE,
     name: 'a drizzle adapter with its tenant condition in every statement',
     expect: 'pass',
-    files: project({ [DRIZZLE_ADAPTER]: DRIZZLE_SCOPED }, tenancy('drizzle')),
+    files: project({ [DRIZZLE_ADAPTER]: DRIZZLE_SCOPED }, tenancyConfig('drizzle')),
   },
   {
     ruleId: RULE,
@@ -184,16 +179,16 @@ export const TENANCY_FIXTURES: readonly Fixture[] = [
           '  all() {\n    return this.database.executor().select().from(invoices);\n  }\n\n  remove(id: string) {',
         ),
       },
-      tenancy('drizzle'),
+      tenancyConfig('drizzle'),
     ),
   },
-  bypass(
+  tenancyBypass(
     'drizzle',
     'an insert that names no tenant',
     'return this.database.executor().insert(invoices).values(state);',
   ),
-  bypass('drizzle', 'a relational query', 'return this.database.executor().query.invoices.findMany();'),
-  bypass('drizzle', 'raw SQL', 'return this.database.executor().execute(sql`select * from invoices`);'),
+  tenancyBypass('drizzle', 'a relational query', 'return this.database.executor().query.invoices.findMany();'),
+  tenancyBypass('drizzle', 'raw SQL', 'return this.database.executor().execute(sql`select * from invoices`);'),
   readModel(
     'built without its tenant',
     'export class KnexInvoiceTotals extends KnexReadModelStore<Total> {\n  constructor(context: KnexContext) {\n    super(context, { table: TABLE });\n  }\n}\n',
@@ -213,6 +208,6 @@ export const TENANCY_FIXTURES: readonly Fixture[] = [
     ruleId: RULE,
     name: 'a project of one customer, which says nothing of tenancy',
     expect: 'pass',
-    files: project({ [KNEX_ADAPTER]: KNEX_UNSCOPED }, { [CONFIG_FILE]: config({ stack: { orm: 'knex' } }) }),
+    files: project({ [KNEX_ADAPTER]: KNEX_UNSCOPED }, tenancyConfig('knex', 'none')),
   },
 ];

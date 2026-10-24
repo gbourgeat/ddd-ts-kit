@@ -366,12 +366,14 @@ checked with actionlint, not run on GitHub; the GitLab file was parsed and its s
 by a script, `glab ci lint` was not run, and it was not executed on GitLab; branch protection
 and merge request settings were written from the API documentation.
 
-**Mutation testing is not shipped.** The pipeline README reports that Stryker 10, run on the
-domain layer of a generated project with Vitest 5, executed no test per mutant and reported
-every mutant as survived, and that its core rewrites the tsconfig through an API the native
-compiler lacks. It will be added as a scheduled job when the runner supports Vitest 5. (On
-npm, `@stryker-mutator/vitest-runner` 10.0.0 declares the peer `vitest >=2.0.0`, checked on
-2026-10-10; the behaviour itself was not re-run for this page.)
+**Mutation testing runs every night.** The `mutation` job of the pipeline runs
+`npm run test:mutation` on the default branch when the schedule fires: Stryker 10.1.1 with the
+runner of the project, Vitest or Jest, on the domain layer of every context, its configuration read
+from the kit (`governedMutation()`, held by `test/mutation-governed`: the texts of refusals and the
+static mutants left out), then `ddd-ts-kit mutation`, which holds each context to the `mutation`
+floor of `ddd-ts-kit.config.json`, the ignored mutants shown beside each score. Not a gate of a pull
+request: eight minutes for the example are too long for the loop of a change. The pipeline README
+holds the measures that decided it (2026-10-24).
 
 ## Limits and when not to use it
 
@@ -405,7 +407,7 @@ npm, `@stryker-mutator/vitest-runner` 10.0.0 declares the peer `vitest >=2.0.0`,
 | A monorepo with its own boundary tooling | keep it for package boundaries; the kit's rules still hold inside each service |
 | TypeScript 7 only, no TypeScript 6 | not possible today with typed lint; keep both |
 | GitLab on a free tier | the pipeline as generated: audit and gitleaks block; scanner findings are visible in the job logs only |
-| Wanting mutation testing now | run it by hand on TypeScript 6 and an older Vitest in a side branch, knowing the kit does not support it |
+| Wanting the mutation score before the night | `npm run test:mutation` by hand: Stryker on the domain layer of every context, then each context against its floor; the html report lands in `reports/mutation/` |
 
 ## Sources
 

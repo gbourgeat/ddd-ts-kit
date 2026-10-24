@@ -20,6 +20,7 @@ const STACK_FLAGS = [
   'cache',
   'storage',
   'audit',
+  'privacy',
   'errors',
   'logger',
   'style',
@@ -39,6 +40,7 @@ const STACK_FLAGS = [
 const OTHER_TEXT_FLAGS = [
   'docs-ui',
   'http-cache',
+  'event-sourcing',
   'ci-extras',
   'allow-no-outbox',
   'import-alias',
@@ -90,6 +92,7 @@ function initOptions(args: Arguments, dryRun: boolean): InitOptions {
 function stackOptions(args: Arguments) {
   const docsUi = args.text('docs-ui');
   const httpCache = args.text('http-cache');
+  const eventSourcing = args.text('event-sourcing');
   const ciExtras = args.text('ci-extras');
   const allowNoOutbox = args.text('allow-no-outbox');
   const importAlias = args.text('import-alias');
@@ -101,6 +104,7 @@ function stackOptions(args: Arguments) {
     ...args.texts(STACK_FLAGS),
     ...(docsUi === undefined ? {} : { docsUi }),
     ...(httpCache === undefined ? {} : { httpCache }),
+    ...(eventSourcing === undefined ? {} : { eventSourcing }),
     ...(ciExtras === undefined ? {} : { ciExtras }),
     ...(allowNoOutbox === undefined ? {} : { allowNoOutbox }),
     ...(importAlias === undefined ? {} : { importAlias }),

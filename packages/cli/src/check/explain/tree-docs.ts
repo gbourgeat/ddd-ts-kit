@@ -86,6 +86,17 @@ coverage: { provider: 'v8', reporter: ['text', 'cobertura', 'lcov'], ...governed
 // domain/aggregates/invoice.aggregate.ts
 /* v8 ignore next 3 -- ADR-0012: reached only by the legacy import, removed with it */`,
   },
+  'test/mutation-governed': {
+    why: 'A mutation score says how many of the changes made to the domain its tests would notice, and it only says so while the measure is honest. One source holds it: the "mutation" key of ddd-ts-kit.config.json gives the floor of the domain layer every context must reach (80 when the key is absent), and the Stryker config reads it through governedMutation of @ddd-ts-kit/testing/mutation, which also mutates the domain layer of every context, the texts of its refusals left out through the ignorer of the kit, since a refusal is asserted by its code and never by its text, every other string measured. Raising the floor is free; lowering it is a deviation with its decision record (governance/recorded-deviation). What this rule refuses is the quiet way around: a mutate, mutator, ignorers, ignoreStatic or thresholds written by hand in the Stryker config, or a config that does not read the kit at all. A survivor is a rule no test states: it is read as a decision, then tested or left alive and said so, never hidden by the configuration.',
+    bad: `// stryker.config.mjs
+export default { testRunner: 'vitest', mutate: ['src/contexts/billing/domain/**'], thresholds: { break: 10 } };`,
+    good: `// stryker.config.mjs
+import { governedMutation } from '@ddd-ts-kit/testing/mutation';
+export default { testRunner: 'vitest', vitest: { configFile: 'vitest.mutation.config.ts' }, ...governedMutation() };
+// ddd-ts-kit.config.json
+"mutation": { "domain": 70 },
+"deviations": [{ "what": "mutation.domain", "adr": "0013", "reason": "The legacy module is retired next quarter." }]`,
+  },
   'test/no-mocks': {
     why: 'A mock asserts that a call was made, not that the outcome is right, so it breaks on every refactoring and passes on wrong behaviour. A fake is a working in-memory implementation held to the same contract suite as the real adapter. Tests assert its state, the published events or the returned value.',
     bad: `const repository = { save: vi.fn() };

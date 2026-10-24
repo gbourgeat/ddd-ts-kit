@@ -24,6 +24,11 @@ export function projectFiles(config: Config, projectName: string): InitFile[] {
     tests === 'jest'
       ? ['jest.config.js', 'init/jest.config.js.tpl']
       : ['vitest.config.ts', 'pipeline/vitest.config.ts.tpl'],
+    // Mutation testing of the domain layer, run every night by the pipeline: the Stryker config reads its floor from the kit, the specs it runs are the unit ones.
+    ['stryker.config.mjs', 'pipeline/stryker.config.mjs.tpl'],
+    tests === 'jest'
+      ? ['jest.mutation.config.js', 'pipeline/jest.mutation.config.js.tpl']
+      : ['vitest.mutation.config.ts', 'pipeline/vitest.mutation.config.ts.tpl'],
     ['eslint.config.mjs', 'pipeline/eslint.config.mjs.tpl'],
     ['biome.json', 'pipeline/biome.json.tpl'],
     ['knip.json', 'pipeline/knip.json.tpl'],

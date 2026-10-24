@@ -52,6 +52,8 @@ deviation.
     "httpCache": "none",
     "storage": "local",
     "audit": "on",
+    "eventSourcing": "off",
+    "privacy": "on",
     "errors": "none",
     "logger": "stdout",
     "style": "declared",
@@ -96,7 +98,7 @@ before the key existed has none and stays valid; `init --force` adds it.
 
 ## How a key is read
 
-![A decision tree: an unknown key is ignored; a known key that is not written is read as its default, which for thirteen stack keys and importExtension is the default of an older file; an accepted value is read as written; a wrong stack value stops every command; any other wrong value is kept or defaulted and reported by check as config/valid](assets/diagrams/config-how-a-key-is-read.svg)
+![A decision tree: an unknown key is ignored; a known key that is not written is read as its default, which for fourteen stack keys and importExtension is the default of an older file; an accepted value is read as written; a wrong stack value stops every command; any other wrong value is kept or defaulted and reported by check as config/valid](assets/diagrams/config-how-a-key-is-read.svg)
 
 A wrong `stack.*` value stops every command before it does anything, with the list of accepted
 values:
@@ -119,7 +121,7 @@ ddd-ts-kit.config.json:39  error  config/valid
 
 A key that is not written is not always read as what `init` writes today: a file without the key
 was written by a version that did not know it, and the kit reads it the way that version
-worked, so that an upgrade of the packages changes nothing in an existing project. The thirteen keys
+worked, so that an upgrade of the packages changes nothing in an existing project. The fourteen keys
 concerned are in [the table of the Stack section](#a-key-left-out-of-stack), and `importExtension`
 below. The exact rules of the parser are in [Limits](#limits).
 
@@ -230,6 +232,8 @@ outside the list stops every command with the list of accepted values.
 | `stack.httpCache` | `none`, `varnish`: the shared HTTP cache in front of the API. `varnish` (`init --http-cache varnish`, with an HTTP framework and `events: outbox`) adds the Varnish 9.1.0 service to the compose file with its VCL in `docker/varnish/default.vcl` (it keeps only an answer whose `Cache-Control` allows it by `max-age` or `s-maxage`, and lets a purge in from its machine or with `VARNISH_PURGE_KEY`), reads `VARNISH_URL` and `VARNISH_PURGE_KEY`, tags the public answers in `xkey` (`cacheTags` of the HTTP boundary), and hands the purge requests of the outbox to `VarnishCachePurger` in `main.ts` and in every entry point `generate service` writes; the end-to-end application records them instead (`purges.purged`). On `di: manual` and `nest`, the platform gains `cacheInvalidation`, what a before-commit handler asks to purge. With `stack.tenancy` other than `none`, the tags of the answers and of the purges are filed under the tenant (`perTenant`), and the HTTP boundary reads the tenant of a request from `x-tenant-id` (`resolveTenant: tenantFromHeader()`), so that a public call names its tenant and its answers vary on it. A config without the key is `none`: nothing changes. See [HTTP caches](tools/http-caches.md) | `none` |
 | `stack.storage` | `local`, `s3`, `none`: where the content of files lives, never in the database. `local`: a directory in development (`FILES_DIRECTORY`, `.data/files`), the memory of the process in the tests and the tools, the signed links answered by the application under `/files`; `s3`: a bucket of any provider of the S3 protocol (`@ddd-ts-kit/s3`, MinIO in the compose stack, `S3_*` variables), the memory in the tests; `none`: no file storage wired. Either way `platform/files/` binds `FileStorage`, `FileKeys`, `FileScanner` and `FileStaging`, registers the hourly purge of staged files, stages the file a command carries on the command bus before the transaction, and mounts the upload reader; `generate file-upload` needs it. With `local`, `FILES_PUBLIC_URL` and `FILES_SIGNING_SECRET` are required in production. See [file storage](concepts/file-storage.md) | `local` in what `init` writes; `none` when the key is absent |
 | `stack.audit` | `on`, `off`: whether the audit trail is wired; `on` also records the refusals of the guards at the edge of authenticated callers (`onGuardRefusal`), never those of a caller without a credential | `on` when an ORM is set, `off` otherwise |
+| `stack.eventSourcing` | `on`, `off`: whether the event store is wired. `on` (`init --event-sourcing on`, or `init --force --event-sourcing on` on an existing project): the five tables of the `event_store` schema, `Persistence.eventSourcing` and `src/platform/event-sourcing/`, which binds the stores, the keys of the data subjects and the cipher of the stored events; `generate aggregate --event-sourced` needs it. `off`: none of it, and the generator refuses an event-sourced aggregate. Refused with `orm: custom`, since the event store of the kit runs on PostgreSQL through the four ORM packages ([Event sourcing](concepts/event-sourcing.md)) | `off` |
+| `stack.privacy` | `on`, `off`: whether the platform answers the requests of a data subject. `on`: `src/platform/privacy/` (the lists of the copies and of the exports each context declares, `run-erasure.ts`, `run-export.ts`) and the scripts `privacy:erase` and `privacy:export`; `off`: none of it ([Privacy by design](proposals/privacy-by-design.md)) | `on` when an ORM is set, `off` otherwise |
 | `stack.errors` | `none`, `sentry`: where unexpected failures are reported; `sentry` binds the kernel `ErrorReporter` to `@ddd-ts-kit/sentry` (Sentry or GlitchTip) | `none` |
 | `stack.logger` | `stdout`, `pino`, `winston`: what implements the kernel `Logger` port | `stdout` |
 | `stack.style` | `declared`: each class declares what it is with a decorator and a context has no module file; `explicit`: every binding is written in `<context>.module.ts`. `init` accepts `declared` with `di: tsyringe` only | `declared` with `di: tsyringe`, `explicit` otherwise |
@@ -241,16 +245,16 @@ outside the list stops every command with the list of accepted values.
 | `stack.valueObjects` | `throwing`, `result`: how the factory of a value object refuses. `throwing`: `create` returns the value object or throws the refusal built by the static factory of its concept (`throw PersonError.invalidEmail(raw)`), as an aggregate refuses; a caller takes the value as it is, and a spec asserts `expectRefusal(() => Email.create(raw), 'INVALID_EMAIL')`. `result`: `create` returns a `Result` of the kernel, `err(PersonError.invalidEmail(raw))`, that a caller unwraps with `unwrap(..)`, as 0.1 to 0.5 wrote them. `generate value-object` writes the form the key says; `Result`, `ok`, `err` and `unwrap` stay in the kernel for a project that keeps them. Validation at the edge (the schema of a request) is not concerned: a value refused there never reaches the factory | `throwing` |
 | `stack.literals` | `named`, `free`: how the code writes a closed value and a number. `named`: a value a closed vocabulary of the project declares is read through it, `AppointmentStatus.NoShow`, `billingPermissions['invoice.issue']`, `Role.Admin`, never written again as a string (`language/declared-vocabulary`, checker and ESLint), and a number of `domain/` or `application/` other than 0, 1, -1 and an index has a name (`clean/no-magic-number`, ESLint). `free`: both rules are silent, as 0.1 to 0.5 wrote code. The rules templates `init` writes say the rules under `named` only | `named` |
 | `stack.values` | `classes`, `free`: how a value of the model is written. `classes`: a value object class extending `ValueObject`, built through static factories (`generate value-object` writes one), and never a function that builds a plain object; `domain/value-object-class` (checker and ESLint) holds the files of `domain/value-objects/` and the functions of `domain/` and of the shared kernel ([Entities and value objects](concepts/entities-and-value-objects.md#why-a-value-object-is-a-class)). `free`: the rule is silent, as 0.1 to 0.15 wrote code. The rules template `init` writes names the rule under `classes` only | `classes` |
-| `stack.tenancy` | `none`, `shared-table`; read also: `row-level-security`, `schema-per-tenant`, `database-per-tenant`. How the data of one tenant is kept from the others ([Multitenancy](concepts/multitenancy.md)). `shared-table`: every generated repository, on Knex or Drizzle, confines its statements to the tenant of the work through `tenantTable` and `ownTenantTable` or `tenantCondition` and `ownTenantCondition`, the outbox keeps the tenant of each event so that consumers run in it, and `tenancy/scoped-statement` reports a statement that bypasses the helpers. `init --tenancy` offers `none` and `shared-table`, and refuses `shared-table` with Prisma, TypeORM, `custom` or no ORM; the three other strategies are shipped by the persistence packages and wired by hand (`init` refuses them with what to add). Absent: `none`, and the file says nothing of tenancy | absent (`none`) |
+| `stack.tenancy` | `none`, `shared-table`; read also: `row-level-security`, `schema-per-tenant`, `database-per-tenant`. How the data of one tenant is kept from the others ([Multitenancy](concepts/multitenancy.md)). `shared-table`: every generated repository confines its statements to the tenant of the work through the helpers of its ORM package (`tenantTable` and `ownTenantTable` on Knex, `tenantCondition` and `ownTenantCondition` on Drizzle, `tenantWhere` and `ownTenantWhere` on Prisma and TypeORM), the outbox keeps the tenant of each event so that consumers run in it, and `tenancy/scoped-statement` reports a statement that bypasses the helpers or a read model store built without its tenant. `init --tenancy` offers `none` and `shared-table`, and refuses `shared-table` with `custom` or no ORM; the three other strategies are shipped by the persistence packages and wired by hand (`init` refuses them with what to add). Absent: `none`, and the file says nothing of tenancy | absent (`none`) |
 | `stack.representations` | `negotiated`, `json`: what a route answers in. `negotiated`: `src/platform/http/presentation-of.ts` registers `Representations.standard()` of `@ddd-ts-kit/http` in the HTTP boundary and the contract script, so each request is answered in the media type its `Accept` header prefers among JSON and what its route declares in `produces` (XML, CSV, `406` when none fits), an XML body is read on a route that declares `consumes`, and the fields a schema reserves with `withFieldAccess` are decided through the `Access` of the application; `generate representation` adds `produces` to a controller. `json`: JSON whatever the request accepts, as before the key existed. `init` writes `json` without an HTTP stack | `negotiated` (`json` with `http: none`) |
 | `stack.forms` | `on`, `off`: whether a route that declares `form` is served as a form. `on`: `src/platform/http/with-forms.ts` adds `formRoutes` of `@ddd-ts-kit/http` to the routes, one `GET /forms/<operationId>` per such route (JSON Forms, or `?format=blocks`), fields hidden or read-only for each caller by the same field access, and `npm run docs:generate` writes each form whole to `openapi/forms/<operationId>.json`; `generate form` gives a controller its hints. `off`: no form is served | `on` (`off` with `http: none`) |
-| `stack.queue` | `database`, `redis`, `memory`. Where the background jobs and the instances of the process managers are kept ([Background jobs](concepts/background-jobs.md), [Sagas and process managers](concepts/sagas-and-process-managers.md)). `database`: the `background_jobs` and `process_instances` tables of `@ddd-ts-kit/knex` or `@ddd-ts-kit/drizzle` in the `messaging` schema, created by the first migration, bound in place of the stores in memory by the platform module: a job enqueued by a command exists if and only if the command committed. `redis`: `RedisJobStore` on the server of the cache (`--cache redis`, Dragonfly in docker-compose and in CI), written once the command committed; the process instances stay in the database with Knex or Drizzle. `memory`: in the process, which a worker of another process does not see. `init --queue` defaults to `database` on Knex or Drizzle with `--di tsyringe`, `memory` otherwise; it refuses a store with another container than tsyringe, `database` with another ORM, and `redis` without `--cache redis`. `generate background-job` and `generate process` need `--di tsyringe`. With `memory` and a worker, each process consumes the queue in its own memory, its jobs on or off: the API runs the jobs it enqueues, the worker those its scheduled jobs enqueue, and a restart loses what waits. With `redis`, a job write lost after its command committed is logged and reported (`reportLostJobs` of `@ddd-ts-kit/redis`, bound by the platform module). Absent: `memory`, the store of a project initialised before background jobs existed | `database` on Knex or Drizzle with tsyringe, `memory` otherwise |
+| `stack.queue` | `database`, `redis`, `memory`. Where the background jobs and the instances of the process managers are kept ([Background jobs](concepts/background-jobs.md), [Sagas and process managers](concepts/sagas-and-process-managers.md)). `database`: the `background_jobs` and `process_instances` tables of `@ddd-ts-kit/knex` or `@ddd-ts-kit/drizzle` in the `messaging` schema, created by the first migration, bound in place of the stores in memory by the platform (the platform module on tsyringe, `jobs/create-background-work.ts` where the platform is wired by hand): a job enqueued by a command exists if and only if the command committed. `redis`: `RedisJobStore` on the server of the cache (`--cache redis`, Dragonfly in docker-compose and in CI), written once the command committed; the process instances stay in the database with Knex or Drizzle. `memory`: in the process, which a worker of another process does not see. `init --queue` defaults to `database` on Knex or Drizzle with `--di tsyringe`, `memory` otherwise, and accepts `database` and `redis` with every container; it refuses `database` with another ORM, and `redis` without `--cache redis`. `generate background-job` and `generate process` register the job where the project is wired: on the kernel module with tsyringe, on `platform.backgroundJobs` in `<context>.module.ts` with Nest or by hand. With `memory` and a worker, each process consumes the queue in its own memory, its jobs on or off: the API runs the jobs it enqueues, the worker those its scheduled jobs enqueue, and a restart loses what waits. With `redis`, a job write lost after its command committed is logged and reported (`reportLostJobs` of `@ddd-ts-kit/redis`, bound by the platform). Absent: `memory`, the store of a project initialised before background jobs existed | `database` on Knex or Drizzle with tsyringe, `memory` otherwise |
 | `stack.packageManager` | `npm`, `pnpm`: what installs the dependencies and runs the scripts. Every command the CLI writes is in its dialect: the scripts of `package.json`, the pipelines, the git hooks, the `Dockerfile`, the README and the notes `init` and `generate` print (`pnpm run verify` and `pnpm exec ddd-ts-kit`, or `npm run verify` and `npx ddd-ts-kit`). pnpm is pinned by the `packageManager` field of `package.json`, which corepack provides (`corepack enable`, once per machine); npm comes with Node and is not pinned. `init --package-manager npm\|pnpm` | `pnpm` in what `init` writes; `npm` when the key is absent |
 
 ### A key left out of `stack`
 
 A config file that omits a `stack` key is read with the defaults of the table above, except for
-thirteen keys. A file without one of them was written by a version that did not have the choice, and
+fourteen keys. A file without one of them was written by a version that did not have the choice, and
 it is read the way that version worked:
 
 | Key | Left out, read as | What `init` writes | To move a project |
@@ -268,6 +272,7 @@ it is read the way that version worked:
 | `stack.representations` | `json` | `negotiated` (`json` with `http: none`) | `init --force --representations negotiated` |
 | `stack.forms` | `off` | `on` (`off` with `http: none`) | `init --force --forms on` |
 | `stack.values` | `free` | `classes` | set the key, then follow `check --rule domain/value-object-class` and ESLint |
+| `stack.privacy` | `off` | `on` when an ORM is set, `off` otherwise | `init --force --privacy on` |
 
 The paragraphs below say why for each, and what each move leaves to a person.
 
@@ -486,6 +491,14 @@ that builds a plain object. Nothing is reported there. To move it:
 
 Until it is done, the rule can stay at `warn` under `rules`, recorded in `deviations` with the
 ADR that says when it goes, as any other relaxed rule (`governance/recorded-deviation`).
+
+The fourteenth: without `stack.privacy` the project is read as `off`, because such a file was
+written before the platform answered the requests of a data subject: it has no
+`src/platform/privacy/` and no `privacy:*` script, and nothing is reported there. `init --force
+--privacy on` on a clean tree writes the folder and the two scripts; a context that keeps a copy
+of a person then declares it with `personalFields` and lists its port in
+`data-subject-copies.ts`. `stack.eventSourcing` is not among these keys: left out, it is read as
+`off`, which is also what `init` writes unless `--event-sourcing on` is asked for.
 
 ## Pipeline
 
@@ -740,6 +753,54 @@ deviation:
 - **A run is held to the layers it executes**: `npm run test:coverage`, the run of `verify`, executes every spec and measures the four layers; in the pipeline `ci:test:unit` (`--mode unit`) measures domain, application and presentation, `ci:test:integration` (`--mode integration`) measures infrastructure. Jest runs every spec in one run.
 - **The measure cannot be narrowed quietly** (`test/coverage-governed`): no `include`, `exclude` or `thresholds` by hand in the runner config, no such flag in a script, no `v8 ignore` or `istanbul ignore` comment without `-- ADR-NNNN: <reason>`.
 - Under the legacy decorator mode the generated Vitest config lists `decoratorCoverage()` of `@ddd-ts-kit/testing/vitest`: the statements the transform writes to apply decorators hold a branch per named type that no test can take, and are kept out of the measure.
+
+## Mutation score
+
+The Stryker config writes no glob and no number: it spreads `governedMutation()` of
+`@ddd-ts-kit/testing/mutation`, which reads the `mutation` key each time a run starts. One place
+holds the floor, and `check` holds that place (`test/mutation-governed`).
+
+<!-- checked sample -->
+```ts
+// stryker.config.mjs
+import { governedMutation } from '@ddd-ts-kit/testing/mutation';
+
+export default {
+  testRunner: 'vitest',
+  vitest: { configFile: 'vitest.mutation.config.ts' },
+  checkers: [],
+  coverageAnalysis: 'perTest',
+  // What is mutated, what is left out and the floor come from "mutation" in ddd-ts-kit.config.json.
+  ...governedMutation(),
+};
+```
+
+`governedMutation()` mutates the domain layer of every context, at its level and in the modules of
+its model, the generated declarations left out; it loads the ignorer of the kit (`appendPlugins`,
+`ignorers`), which leaves the texts of refusals out, the message of `refusal(..)`, a text handed to
+a factory of a refusal (`InvalidSlot.forRule('ends after it starts')`), the message of `super(..)`
+in an error class and of `new ..Error(..)`, since a test of the kit asserts a refusal by its code
+and never by its text, so that such a mutant would survive by design, and leaves every other string
+of the domain measured, the name of an event, a status, a code, a key; it ignores the static
+mutants, those of code that runs once when the module loads, which would reload the environment
+and run every test for each of them; and it writes the floor as the `thresholds` of Stryker. `npm run test:mutation` runs Stryker, then
+`ddd-ts-kit mutation`, which reads the report (`reports/mutation/mutation.json`) and holds each
+context to the floor, as the coverage holds each context to its thresholds. The pipeline runs it
+every night, not on a pull request.
+
+```json
+"mutation": { "domain": 90 }
+```
+
+| Layer | Reference | Why this floor |
+|---|---|---|
+| `domain` | 80 | pure code that holds the rules of the business: a mutant its tests do not notice is a rule no test states. The example application reaches 96.3 with the shipped configuration, its lowest context 95.4 |
+
+- **Raising the floor is free. Lowering it under the reference is a deviation** (`governance/recorded-deviation`) with its decision record, `"what": "mutation.domain"`.
+- **Each context is held on its own**: `ddd-ts-kit mutation` scores the domain layer of every context the report holds, as Stryker does (detected over detected and undetected, the errors left out), and exits 1 while one is under the floor.
+- **The measure cannot be narrowed quietly** (`test/mutation-governed`): no `mutate`, `mutator`, `ignorers`, `ignoreStatic` or `thresholds` by hand in the Stryker config.
+- **What the score says nothing about.** The texts of refusals, and the static mutants: a rule written as a declaration at the top of a file, the transitions of a state machine, a business constant, a regular expression, is never mutated, and a wrong transition in such a table lowers no score. The test that states such a rule is its only proof; `ddd-ts-kit mutation` shows the ignored mutants of each context beside its score. A text of a refusal that a helper returns before the factory is called is not recognised and survives: throw where the rule is checked, or leave it alive and say why. On the example, 163 of the 1436 mutants are ignored: 73 texts of refusals and 90 static ones, the declaration of the appointment state machine among them; every other string of the domain is measured.
+- **On both runners.** A project on Vitest runs the unit specs of `vitest.mutation.config.ts` against each mutant; a project on Jest those of `jest.mutation.config.js`, as ES modules under the flag the `test` script passes (`testRunnerNodeArgs`), Jest running the specs that import the mutated file.
 
 ## Limits
 

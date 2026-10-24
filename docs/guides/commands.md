@@ -240,7 +240,7 @@ Usage
                   [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--http-cache none|varnish]
                   [--storage local|s3|none]
-                  [--audit on|off]
+                  [--audit on|off] [--event-sourcing on|off] [--privacy on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals named|factories|classes]
                   [--routes controllers|functions] [--representations negotiated|json] [--forms on|off]
@@ -266,6 +266,7 @@ Usage
   ddd-ts-kit story [<story>] [--gate build|close]
   ddd-ts-kit stories
   ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
+  ddd-ts-kit mutation [--report <file>] [--json]
   ddd-ts-kit worktree <name> [--base <ref>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]
@@ -393,6 +394,14 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    scripts (docs:generate regenerates it, docs:check compares it, ci:build builds it);
                    --check writes nothing and exits 1 while a client differs from its contract
   todo             those markers as file:line, in the project or in one context
+  mutation         the mutation score of the domain layer of each context, read from the json report the
+                   last stryker run wrote (reports/mutation/mutation.json, or --report <file>), held to
+                   the "mutation" floor of the config (80 by default): detected over detected and
+                   undetected, the errors left out, as Stryker counts, the ignored mutants (the texts of
+                   refusals, the code that runs once when the module loads) shown beside, since the
+                   score says nothing about them; exits 1 while a context is under its floor, 2 without
+                   a report. Runs no test: npm run test:mutation runs Stryker, then this; the pipeline
+                   runs it every night, not on a pull request
   plan-waves       the rows of slices.md not done, of the project or of one context, in waves (wave 1: every
                    dependency done; wave n: the others in earlier waves), each wave cut into batches of one
                    owner, one or two rows on one aggregate, with the worker-scope command that briefs each,
@@ -585,7 +594,7 @@ Kinds
   error <context> <Refusal> <factory> [--code CODE] [--term "<Term>=<meaning>"]...   (alias: refusal)
   domain-error <context> <Name> [--code CODE]
   domain-service <context> <Name> [--term "<Term>=<meaning>"]...
-  repository <context> <Aggregate> [--tenant-scoped]
+  repository <context> <Aggregate> [--tenant-scoped] [--personal <column>,<column>... [--subject <column>] [--erasure pseudonymise|row]]
   command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]...
   query <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--search] [--term "<Term>=<meaning>"]...
   port <context> <Name>

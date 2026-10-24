@@ -1,5 +1,11 @@
 import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import { insertIgnoringConflict, optimisticUpdate, type TypeOrmContext } from '../../../../../src';
+import {
+  insertIgnoringConflict,
+  optimisticUpdate,
+  ownTenantWhere,
+  tenantWhere,
+  type TypeOrmContext,
+} from '../../../../../src';
 import { Invoice, type InvoiceState } from '../../domain/invoice';
 import type { InvoiceRepository } from '../../domain/repositories/invoice.repository';
 import { invoices } from './invoices';
@@ -8,7 +14,9 @@ type VersionedInvoice = InvoiceState & { version: number };
 
 /**
  * The repository a consuming project would write: no transaction in sight, every statement
- * scoped to the tenant of the work in progress, audit columns stamped from its actor.
+ * confined to the tenant of the work in progress through the helpers (`tenantWhere` to read,
+ * `ownTenantWhere` to update, `tenantScopeOf` on the inserted row), audit columns stamped from
+ * its actor.
  */
 export class TypeOrmInvoiceRepository implements InvoiceRepository {
   constructor(
@@ -18,7 +26,7 @@ export class TypeOrmInvoiceRepository implements InvoiceRepository {
   ) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
-    const row = await this.context.manager().findOneBy(invoices, { id, ...tenantScopeOf(this.scope) });
+    const row = await this.context.manager().findOneBy(invoices, { id, ...tenantWhere(this.scope) });
 
     if (row === null) {
       return undefined;
@@ -46,7 +54,7 @@ export class TypeOrmInvoiceRepository implements InvoiceRepository {
   }
 
   private async update(state: VersionedInvoice, expected: number): Promise<number> {
-    const guarded = { id: state.id, version: expected, ...tenantScopeOf(this.scope) };
+    const guarded = { id: state.id, version: expected, ...ownTenantWhere(this.scope) };
     const row = { ...state, ...stampUpdate(this.scope, this.clock) };
 
     return (await this.context.manager().update(invoices, guarded, row)).affected ?? 0;

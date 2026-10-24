@@ -5,6 +5,7 @@ import {
   CLASSIFICATIONS,
   commitLimitProblems,
   coverageProblems,
+  mutationProblems,
   CONFIG_FILE,
   FUNCTION_LINES_CEILING,
   AGENT_PROFILES,
@@ -206,6 +207,13 @@ export class ConfigInspection {
   /** A threshold that is not a percentage is read as the reference: the config says something no run enforces. */
   coverageThresholds(): Violation[] {
     return coverageProblems(rawConfig(this.project)['coverage']).map(({ where, message, fix }) =>
+      this.report({ file: CONFIG_FILE, line: lineOfSequence(this.project.configText, where) }, message, fix),
+    );
+  }
+
+  /** A floor that is not a percentage is read as the reference: the config says something no run enforces. */
+  mutationFloors(): Violation[] {
+    return mutationProblems(rawConfig(this.project)['mutation']).map(({ where, message, fix }) =>
       this.report({ file: CONFIG_FILE, line: lineOfSequence(this.project.configText, where) }, message, fix),
     );
   }

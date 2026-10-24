@@ -25,6 +25,7 @@ export const configValid: Rule = {
       ...inspection.onePerFileAllowances(),
       ...inspection.commitLimits(),
       ...inspection.coverageThresholds(),
+      ...inspection.mutationFloors(),
       ...inspection.ciExtras(),
       ...inspection.openApiSettings(),
       ...inspection.sdkSettings(),

@@ -188,7 +188,11 @@ export function composeApplication(
   };
 }
 
-/** The consumers first, then the jobs: a job sends commands whose events must find their handlers. */
+/**
+ * The consumers first, then the jobs: a job sends commands whose events must find their handlers.
+ * The worker of the background jobs runs in the process that runs the jobs{{#if queue.memory}}, and in every
+ * process while the queue is kept in its memory: no other process would see what this one enqueues{{/if}}.
+ */
 async function start(platform: Platform, options: ApplicationOptions): Promise<void> {
 {{#if authz.rebac}}
   await relateSystemActors();
@@ -207,16 +211,24 @@ async function start(platform: Platform, options: ApplicationOptions): Promise<v
 
   if (options.jobs?.start === true) {
     await platform.jobs.start();
+{{#unless queue.memory}}
+    await platform.backgroundJobs.start();
+{{/unless}}
   }
+{{#if queue.memory}}
+
+  await platform.backgroundJobs.start();
+{{/if}}
 }
 
 /**
- * The jobs first, then the provider{{#if errors.sentry}}; what failed on the way is given two seconds to reach the
- * tracker{{/if}}; the logger last, flushed by hand since nothing here does it: whatever logs has closed
- * before, and nothing may log after `stop()` returned.
+ * The jobs first, the worker next (a job may still enqueue), then the provider{{#if errors.sentry}}; what failed on the
+ * way is given two seconds to reach the tracker{{/if}}; the logger last, flushed by hand since nothing here
+ * does it: whatever logs has closed before, and nothing may log after `stop()` returned.
  */
 async function stop(platform: Platform, options: ApplicationOptions): Promise<void> {
   await platform.jobs.stop();
+  await platform.backgroundJobs.stop();
   await options.events.close();
 {{#if errors.sentry}}
   await platform.errors.flush(2_000);

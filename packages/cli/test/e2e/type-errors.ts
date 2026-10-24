@@ -9,6 +9,9 @@ export const NATIVE_COMPILER = path.join(REPO_ROOT, 'node_modules/@typescript/na
 const PACKAGES = path.join(REPO_ROOT, 'packages');
 const TOOLS = ['cli', 'eslint-plugin'];
 
+/** TypeORM is a dependency of its package alone, not of the workspace root: a generated project finds it there. */
+const TYPEORM = path.join(PACKAGES, 'typeorm/node_modules/typeorm/index.d.ts');
+
 /**
  * What the compiler says of a generated project read against the SOURCES of the workspace
  * packages, so that a template can never lag behind their real API; empty when it type-checks.
@@ -22,7 +25,11 @@ export function typeErrors(root: string): string {
     JSON.stringify({
       extends: './tsconfig.json',
       // `paths` of an extending config replaces the one it extends: the aliases of the project are repeated next to the sources of the packages.
-      compilerOptions: { noEmit: true, rootDir: '/', paths: { ...aliasPaths(root), ...sourcePaths() } },
+      compilerOptions: {
+        noEmit: true,
+        rootDir: '/',
+        paths: { ...aliasPaths(root), ...sourcePaths(), typeorm: [TYPEORM] },
+      },
       include: ['src', 'scripts', 'test', path.join(PACKAGES, 'validation/src/*.d.ts')],
     }),
   );

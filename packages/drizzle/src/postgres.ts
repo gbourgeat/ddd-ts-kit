@@ -34,3 +34,8 @@ export * from './postgres/jobs/jobs-table';
 export * from './postgres/jobs/drizzle-job-store';
 export * from './postgres/processes/processes-table';
 export * from './postgres/processes/drizzle-process-store';
+export * from './postgres/personal-data/drizzle-personal-data-erasure';
+export * from './postgres/personal-data/drizzle-personal-data-erasure-options';
+export * from './postgres/personal-data/drizzle-personal-data-export';
+export * from './postgres/personal-data/drizzle-personal-data-export-options';
+export * from './postgres/personal-data/drizzle-personal-fields';

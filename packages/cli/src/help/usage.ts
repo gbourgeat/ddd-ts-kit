@@ -9,7 +9,7 @@ export const USAGE = `Usage
                   [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--http-cache none|varnish]
                   [--storage local|s3|none]
-                  [--audit on|off]
+                  [--audit on|off] [--event-sourcing on|off] [--privacy on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals named|factories|classes]
                   [--routes controllers|functions] [--representations negotiated|json] [--forms on|off]
@@ -35,6 +35,7 @@ export const USAGE = `Usage
   ddd-ts-kit story [<story>] [--gate build|close]
   ddd-ts-kit stories
   ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
+  ddd-ts-kit mutation [--report <file>] [--json]
   ddd-ts-kit worktree <name> [--base <ref>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]
