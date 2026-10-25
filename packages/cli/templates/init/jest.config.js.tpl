@@ -6,8 +6,14 @@ export default {
   // Jest does not read tsconfig: the import aliases of its "paths", repeated here, and held equal by `ddd-ts-kit check` (imports/alias-declared).
   moduleNameMapper: {
     {{alias.jestMapper}}
+{{#if orm.prisma}}
+    // The client `prisma generate` writes names its own modules with `.js`: they are TypeScript sources, which Jest transforms.
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+{{/if}}
   },
   testMatch: ['<rootDir>/{{config.sourceRoot}}/**/*.spec.ts', '<rootDir>/test/architecture/**/*.spec.ts'],
+  // A hook opens the test database (PGlite started and its tables created, or a server reached): on a busy machine it outlasts the 5 seconds Jest gives a test and its hooks, as Vitest is given 60.
+  testTimeout: 60_000,
   // Each spec file is held to the time budget of its level ("budget" in ddd-ts-kit.config.json, the reference when it is absent): the slowest named at the end of the run, a file over its budget fails it.
   reporters: ['default', '@ddd-ts-kit/testing/budget/jest'],
   // A pull request names the contexts its change reaches (DDD_TS_KIT_AFFECTED, from `ddd-ts-kit affected`): the specs of the others are left to the default branch.

@@ -102,6 +102,15 @@ describe('the package.json init writes', () => {
     expect(read(root, 'eslint.config.mjs')).toContain("import { dddTsKit } from '@ddd-ts-kit/eslint-plugin';");
   });
 
+  it('measures the coverage with the runner of the specs: the plugin of Vitest on Vitest, nothing of it on Jest', () => {
+    const vitest = textsAt(manifest(initProject(...NPM)), 'devDependencies');
+    const jest = textsAt(manifest(initProject(...NPM, '--tests', 'jest')), 'devDependencies');
+
+    expect(Object.keys(vitest)).toContain('@vitest/coverage-v8');
+    expect(Object.keys(jest)).not.toContain('@vitest/coverage-v8');
+    expect(Object.keys(jest)).toEqual(expect.arrayContaining(['jest', '@swc/jest']));
+  });
+
   it.each([
     ['fastify', 'zod', 'tsyringe', { fastify: '^5.12.7' }],
     [

@@ -21,24 +21,29 @@ describe('A bounded context is a deployable unit in waiting', () => {
     ).not.toThrow();
   });
 
-  it.each(contexts)(
-    '%s wires alone from its declarations, on the kernel and the platform, with no other context',
-    (_name, module) => {
-      expect(() =>
-        createTestApplication({ modules: [platformTestModule, authorization, module], authorization: 'optional' }),
-      ).not.toThrow();
-    },
-  );
+  // Jest refuses a table without rows: until the first context joins the project, its cases wait.
+  if (contexts.length === 0) {
+    it.todo('wires each context alone, with its scheduled jobs, once the project has one');
+  } else {
+    it.each(contexts)(
+      '%s wires alone from its declarations, on the kernel and the platform, with no other context',
+      (_name, module) => {
+        expect(() =>
+          createTestApplication({ modules: [platformTestModule, authorization, module], authorization: 'optional' }),
+        ).not.toThrow();
+      },
+    );
 
-  it.each(contexts)('%s takes its scheduled jobs with it, and no job of another context', (name, module) => {
-    const application = createTestApplication({
-      modules: [platformTestModule, authorization, module],
-      authorization: 'optional',
+    it.each(contexts)('%s takes its scheduled jobs with it, and no job of another context', (name, module) => {
+      const application = createTestApplication({
+        modules: [platformTestModule, authorization, module],
+        authorization: 'optional',
+      });
+
+      const jobs = application.describe().jobs.map((job) => job.name);
+
+      expect(jobs.filter((job) => !job.startsWith(name + '.'))).toEqual([]);
+      expect(application.jobs.scheduler.describe().map((job) => job.name)).toEqual(jobs);
     });
-
-    const jobs = application.describe().jobs.map((job) => job.name);
-
-    expect(jobs.filter((job) => !job.startsWith(name + '.'))).toEqual([]);
-    expect(application.jobs.scheduler.describe().map((job) => job.name)).toEqual(jobs);
-  });
+  }
 });

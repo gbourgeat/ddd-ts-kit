@@ -50,9 +50,10 @@ describe('init and the import alias', () => {
   it('gives jest, which does not read tsconfig, the same mapping to the sources', () => {
     const config = read(initProject('--tests', 'jest'), 'jest.config.js');
 
-    expect(config).toContain("'^@/(.*)$': '<rootDir>/src/$1.ts',");
-    expect(config).toContain("'^\\\\$test/(.*)$': '<rootDir>/test/$1.ts',");
-    expect(config).toContain("'^\\\\$scripts/(.*)$': '<rootDir>/scripts/$1.ts',");
+    // The file, then the barrel of a directory: an import without an ending can name either.
+    expect(config).toContain("'^@/(.*)$': ['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts'],");
+    expect(config).toContain("'^\\\\$test/(.*)$': ['<rootDir>/test/$1.ts', '<rootDir>/test/$1/index.ts'],");
+    expect(config).toContain("'^\\\\$scripts/(.*)$': ['<rootDir>/scripts/$1.ts', '<rootDir>/scripts/$1/index.ts'],");
     expect(config).not.toContain('dist');
     expect(config).not.toContain('customExportConditions');
   });

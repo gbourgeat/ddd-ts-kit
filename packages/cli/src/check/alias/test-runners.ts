@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { moduleNameMapper, specifierSuffix } from '../../alias';
+import { mapperTargetText, moduleNameMapper, specifierSuffix, type MapperTarget } from '../../alias';
 import type { Violation } from '../model/violation';
 import { escapeRegExp } from '../text/escape-reg-exp';
 import { ALIAS_FILES } from './alias-files';
@@ -47,7 +47,7 @@ function jest({ report, roots, project }: Inspected, file: string, text: string)
   return Object.entries(moduleNameMapper(roots, specifierSuffix(project.config.importExtension)))
     .filter(([pattern, target]) => !mapped(text, pattern, target))
     .map(([pattern, target]) => {
-      const entry = `'${pattern.replaceAll('\\', '\\\\')}': '${target}'`;
+      const entry = `'${pattern.replaceAll('\\', '\\\\')}': ${mapperTargetText(target)}`;
 
       return report(
         { file, line: 1 },
@@ -57,10 +57,17 @@ function jest({ report, roots, project }: Inspected, file: string, text: string)
     });
 }
 
-function mapped(text: string, pattern: string, target: string): boolean {
+/** Whether the config maps `pattern` to `target`: one path, or the same paths in the same order, however they are laid out. */
+function mapped(text: string, pattern: string, target: MapperTarget): boolean {
   const written = escapeRegExp(pattern.replaceAll('\\', '\\\\'));
+  const quoted = (path: string): string => `['"]${escapeRegExp(path)}['"]`;
 
-  return new RegExp(`['"]${written}['"]\\s*:\\s*['"]${escapeRegExp(target)}['"]`).test(text);
+  const value =
+    typeof target === 'string'
+      ? quoted(target)
+      : String.raw`\[\s*${target.map(quoted).join(String.raw`\s*,\s*`)}\s*,?\s*\]`;
+
+  return new RegExp(`['"]${written}['"]\\s*:\\s*${value}`).test(text);
 }
 
 function rootFiles(root: string): string[] {

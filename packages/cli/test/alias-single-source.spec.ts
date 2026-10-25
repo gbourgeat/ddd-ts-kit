@@ -170,7 +170,7 @@ const MUTATIONS: readonly Mutation[] = [
   {
     what: 'the jest config loses the mapping of the source root',
     file: 'jest.config.js',
-    change: swap(/\n\s*'\^@\/\(\.\*\)\$': '<rootDir>\/src\/\$1\.ts',/, ''),
+    change: swap(/\n\s*'\^@\/\(\.\*\)\$': \[[^\]]*\],/, ''),
     finding: /jest\.config\.js does not map the import alias "\^@\/\(\.\*\)\$"/,
     flags: JEST,
   },
@@ -221,7 +221,7 @@ const MUTATIONS: readonly Mutation[] = [
   {
     what: 'the jest config loses the mapping of the tests',
     file: 'jest.config.js',
-    change: swap(/\n\s*'\^\\\\\$test\/\(\.\*\)\$': '<rootDir>\/test\/\$1\.ts',/, ''),
+    change: swap(/\n\s*'\^\\\\\$test\/\(\.\*\)\$': \[[^\]]*\],/, ''),
     finding: /jest\.config\.js does not map the import alias "\^\\\$test\//,
     flags: JEST,
   },

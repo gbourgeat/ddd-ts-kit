@@ -1,10 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
-{{#if tests.jest}}
-    "{{config.contextsDir}}/*/test/fakes/*.ts",
-    "{{config.contextsDir}}/*/test/worlds/*.ts",
-{{/if}}
 {{#if knip.apps}}
     "{{config.sourceRoot}}/apps/*/main.ts",
 {{/if}}
@@ -20,8 +16,8 @@
     "{{config.contextsDir}}/*/*.codes.ts": ["types"]
   },
 {{/if}}
-  "vitest": {
-    "config": ["vitest.config.ts"{{knip.e2eConfig}}{{knip.mutationConfig}}],
+  "{{knip.runner}}": {
+    "config": [{{knip.runnerConfigs}}],
     "entry": [
       "{{config.sourceRoot}}/**/*.spec.ts",
       "{{config.contextsDir}}/*/test/fakes/*.ts",
