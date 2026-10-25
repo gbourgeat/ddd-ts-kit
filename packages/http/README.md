@@ -3,7 +3,8 @@
 # @ddd-ts-kit/http
 
 Declare a route once, without a framework. Mount it on Express 5, Fastify 5, Hono 4 (on Node)
-or NestJS, and generate the OpenAPI 3.1 contract from the same declaration.
+or NestJS, serve it as an oRPC procedure too, and generate the OpenAPI 3.1 contract from the
+same declaration.
 
 Every adapter goes through one pipeline (`executeRoute`): validation, handler, error mapping.
 The behaviour is therefore the same on the four frameworks, and one test suite proves it.
@@ -1247,6 +1248,62 @@ A plain array works as well: `createRoutesModule(routes, options)`. These routes
 pipes, guards, interceptors, exception filters and global prefix: validation and error mapping
 are those described above. Use `prefixRoutes` for a prefix.
 
+## oRPC procedures
+
+A second door to the same routes, for a TypeScript client that calls procedures rather than
+paths. `orpcRouter` turns each route into an oRPC procedure named by its `operationId`, which
+`RPCHandler` of `@orpc/server` (1.15 or later, an optional peer) serves under a prefix, next to
+the routes themselves. Each call runs through `executeRoute` with the options the HTTP adapter
+is given: the guards, the principal, the tenant, the validation, the permissions of the use case,
+`onError` and `around` see a call over `/rpc` as they see a request.
+
+<!-- checked sample -->
+```ts
+import express from 'express';
+import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
+import { mountExpress } from '@ddd-ts-kit/http/express';
+import { orpcRouter } from '@ddd-ts-kit/http/orpc';
+import { RPCHandler } from '@orpc/server/node';
+
+declare const routes: readonly Route[];
+declare const options: ExecuteOptions;
+
+const app = express();
+const rpc = new RPCHandler(orpcRouter(routes, options));
+
+app.use(express.json()); // oRPC reads the body Express already parsed
+app.use('/rpc', (request, response, next) => {
+  const context = { headers: request.headers, raw: request };
+
+  void rpc.handle(request, response, { prefix: '/rpc', context }).then(({ matched }) => {
+    if (!matched) {
+      next();
+    }
+  }, next);
+});
+mountExpress(app, routes, options);
+```
+
+The `context` of a call is `OrpcContext`: the headers of the RPC request, which carry the
+credentials, the request and correlation ids and the tenant, and `raw`, what `resolvePrincipal`
+reads (`{ headers }` when it is left out, which `principalResolver` of `@ddd-ts-kit/auth` reads).
+Fastify (`@orpc/server/fastify`), Hono (`@orpc/server/fetch`) and NestJS on Express
+(`@orpc/server/node`) mount it the same way.
+
+| | Over `/rpc` |
+|---|---|
+| Input | `{ path, query, header, body }`, the input of the operation in the generated client; `header` goes over the headers of the RPC request |
+| Answer | the body of the success, as JSON writes it (a date is its text, as the contract says); a binary body is a `Blob` |
+| Refusal | an `ORPCError`: the `code` and `status` of the problem, its `detail` (or `title`) as `message`, the problem document as `data`. It is a defined error when the route declares its code (its own codes and those of its guards, `VALIDATION_FAILED`, the preconditions), with the status the error mapper of the application gives it. A refusal the handler answers itself, without a problem document, is `HTTP_<status>` with its body as `data` |
+| `If-Match` | sent in `header`, checked as on the route |
+| Headers of the answer | not returned: no `ETag`, no cache policy, no `Location`. A shared cache keeps nothing of `/rpc` and needs no purge |
+| Representations | none: JSON only, so no 406 nor 415 for a media type |
+| Upload, raw body | not a procedure: only the HTTP route receives a file |
+| File, list streamed as it is read | refused with 406 and closed, without reading further: they are streamed because they may not fit in memory |
+
+Two routes with one `operationId` are refused, as `mountExpress` refuses them: one procedure
+would hide the other.
+
 ## OpenAPI 3.1
 
 <!-- checked sample -->
@@ -1499,6 +1556,9 @@ writes a file, and a route that declares no body schema is never refused 406.
   the client sees a truncated body, and `onError` is told. The items of a stream are not checked
   one by one by `validateResponses`.
 - CSV is written, never read, and holds flat rows only.
+- An oRPC procedure answers its body only: what a route says in its headers (an `ETag`, a cache
+  policy, a `Location`) stays with the HTTP route, and so do uploads, raw bodies, files, lists
+  streamed as they are read and representations other than JSON (see "oRPC procedures").
 - A form describes scalars, nested objects and lists of a closed vocabulary; a list of objects
   is a `list` field with no detail. Layout beyond groups and order is the front end's. A lookup
   names the route of the options; how the front end calls it and labels its items is its own.

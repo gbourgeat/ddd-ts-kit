@@ -1,10 +1,11 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f1ef3d45593ee08e -->
+<!-- translation-of: README.md sha256:47444d7c4129b62d -->
 
 # @ddd-ts-kit/http
 
 Déclarez une route une seule fois, sans framework. Montez-la sur Express 5, Fastify 5, Hono 4
-(sur Node) ou NestJS, et générez le contrat OpenAPI 3.1 à partir de la même déclaration.
+(sur Node) ou NestJS, servez-la aussi comme procédure oRPC, et générez le contrat OpenAPI 3.1 à
+partir de la même déclaration.
 
 Chaque adaptateur passe par un seul pipeline (`executeRoute`) : validation, gestionnaire
 (handler), correspondance des erreurs. Le comportement est donc le même sur les quatre
@@ -1300,6 +1301,63 @@ contournent les pipes, les guards, les intercepteurs, les filtres d'exceptions e
 global de Nest : la validation et la correspondance des erreurs sont celles décrites plus haut.
 Utilisez `prefixRoutes` pour un préfixe.
 
+## Procédures oRPC
+
+Une seconde porte vers les mêmes routes, pour un client TypeScript qui appelle des procédures
+plutôt que des chemins. `orpcRouter` fait de chaque route une procédure oRPC nommée par son
+`operationId`, que `RPCHandler` de `@orpc/server` (1.15 ou plus récent, pair optionnelle) sert
+sous un préfixe, à côté des routes elles-mêmes. Chaque appel passe par `executeRoute` avec les
+options données à l'adaptateur HTTP : les gardes, le principal, le tenant, la validation, les
+permissions du cas d'usage, `onError` et `around` voient un appel sur `/rpc` comme ils voient une
+requête.
+
+<!-- checked sample -->
+```ts
+import express from 'express';
+import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
+import { mountExpress } from '@ddd-ts-kit/http/express';
+import { orpcRouter } from '@ddd-ts-kit/http/orpc';
+import { RPCHandler } from '@orpc/server/node';
+
+declare const routes: readonly Route[];
+declare const options: ExecuteOptions;
+
+const app = express();
+const rpc = new RPCHandler(orpcRouter(routes, options));
+
+app.use(express.json()); // oRPC lit le corps qu'Express a déjà analysé
+app.use('/rpc', (request, response, next) => {
+  const context = { headers: request.headers, raw: request };
+
+  void rpc.handle(request, response, { prefix: '/rpc', context }).then(({ matched }) => {
+    if (!matched) {
+      next();
+    }
+  }, next);
+});
+mountExpress(app, routes, options);
+```
+
+Le `context` d'un appel est un `OrpcContext` : les en-têtes de la requête RPC, qui portent les
+identifiants, les identifiants de requête et de corrélation et le tenant, et `raw`, ce que lit
+`resolvePrincipal` (`{ headers }` quand il est omis, ce que lit `principalResolver` de
+`@ddd-ts-kit/auth`). Fastify (`@orpc/server/fastify`), Hono (`@orpc/server/fetch`) et NestJS sur
+Express (`@orpc/server/node`) le montent de la même façon.
+
+| | Sur `/rpc` |
+|---|---|
+| Entrée | `{ path, query, header, body }`, l'entrée de l'opération dans le client généré ; `header` passe par-dessus les en-têtes de la requête RPC |
+| Réponse | le corps du succès, tel que JSON l'écrit (une date est son texte, comme le dit le contrat) ; un corps binaire est un `Blob` |
+| Refus | une `ORPCError` : le `code` et le `status` du *problem*, son `detail` (ou son `title`) comme `message`, le document *problem* comme `data`. C'est une erreur définie quand la route déclare son code (ses codes et ceux de ses gardes, `VALIDATION_FAILED`, les préconditions), avec le statut que lui donne le correspondant d'erreurs de l'application. Un refus que le gestionnaire répond lui-même, sans document *problem*, est `HTTP_<statut>` avec son corps comme `data` |
+| `If-Match` | envoyé dans `header`, vérifié comme sur la route |
+| En-têtes de la réponse | non rendus : ni `ETag`, ni politique de cache, ni `Location`. Un cache partagé ne garde rien de `/rpc` et n'a rien à purger |
+| Représentations | aucune : JSON seulement, donc ni 406 ni 415 pour un type de média |
+| Téléversement, corps brut | pas une procédure : seule la route HTTP reçoit un fichier |
+| Fichier, liste lue au fil de l'eau | refusés en 406 et fermés, sans rien lire de plus : ils sont envoyés en flux parce qu'ils peuvent ne pas tenir en mémoire |
+
+Deux routes d'un même `operationId` sont refusées, comme `mountExpress` les refuse : une
+procédure cacherait l'autre.
+
 ## OpenAPI 3.1
 
 <!-- checked sample -->
@@ -1565,6 +1623,10 @@ schéma de corps n'est jamais refusée par un 406.
   est coupée, le client voit un corps tronqué, et `onError` est prévenu. Les éléments d'un flux
   ne sont pas vérifiés un par un par `validateResponses`.
 - CSV est écrit, jamais lu, et ne contient que des lignes plates.
+- Une procédure oRPC ne répond que son corps : ce qu'une route dit dans ses en-têtes (un `ETag`,
+  une politique de cache, un `Location`) reste à la route HTTP, comme les téléversements, les
+  corps bruts, les fichiers, les listes lues au fil de l'eau et les représentations autres que
+  JSON (voir « Procédures oRPC »).
 - Un formulaire décrit des scalaires, des objets imbriqués et des listes d'un vocabulaire fermé ;
   une liste d'objets est un champ `list` sans détail. La mise en page au-delà des groupes et de
   l'ordre revient au front-end. Une consultation nomme la route des options ; la façon dont le
