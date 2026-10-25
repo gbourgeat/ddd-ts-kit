@@ -712,10 +712,9 @@ function findProject(from) {
 
 function describeProject(root) {
   const config = readJson(join(root, CONFIG)) ?? {};
-  const local = join(root, 'node_modules', '.bin', 'ddd-ts-kit');
   return {
     root,
-    cli: existsSync(local) ? local : undefined,
+    cli: installedCli(root),
     sourceRoot: config.sourceRoot ?? 'src',
     contextsDir: config.contextsDir ?? 'src/contexts',
     // The modules of the model each context declares: one folder of the context holding its layers.
@@ -733,6 +732,20 @@ function describeProject(root) {
     // On trial: the dependency rules judge the text about to be written, before the write; absent, after it.
     dependenciesBeforeWrite: config.dependenciesBeforeWrite === true,
   };
+}
+
+// The CLI the project installed, where Node would find it: in the project, or hoisted to a parent
+// by the workspaces of npm or pnpm (a project of a monorepo, the example of this repository).
+function installedCli(root) {
+  for (let directory = root; ; directory = dirname(directory)) {
+    const cli = join(directory, 'node_modules', '.bin', 'ddd-ts-kit');
+    if (existsSync(cli)) {
+      return cli;
+    }
+    if (dirname(directory) === directory) {
+      return undefined;
+    }
+  }
 }
 
 function commitLimits(configured) {
@@ -1495,8 +1508,15 @@ function dependencyReason(project, { file, written, replaced }, input) {
   try {
     const rules = DEPENDENCY_RULES.flatMap((rule) => ['--rule', rule]);
     const started = Date.now();
-    const errors = errorsOf(runCli(project, ['check-file', file, '--content-from', text, ...rules, '--json'], 4000));
-    recordTrial(project, { file, errors, ms: Date.now() - started, host: hostOf(input) });
+    const report = runCli(project, ['check-file', file, '--content-from', text, ...rules, '--json'], 4000);
+    const ms = Date.now() - started;
+    if (!Array.isArray(report?.violations)) {
+      // A CLI older than --content-from, a timeout, a crash: not judged, and recorded as such.
+      recordTrial(project, { file, ms, host: hostOf(input), unjudged: report?.error?.message ?? 'no report' });
+      return undefined;
+    }
+    const errors = errorsOf(report);
+    recordTrial(project, { file, refused: [...new Set(errors.map((error) => error.ruleId))], ms, host: hostOf(input) });
     return errors.length > 0
       ? `this write adds ${errors.length} import(s) a dependency rule refuses, so it was not written (dependenciesBeforeWrite, on trial). Write it without them.\n${describe(errors)}`
       : undefined;
@@ -1508,7 +1528,7 @@ function dependencyReason(project, { file, written, replaced }, input) {
 // The trial is decided on what it did: each judged write is a line of the record of the repository,
 // in its git directory, which every worktree shares and none commits. A record that cannot be written
 // is skipped.
-function recordTrial(project, { file, errors, ms, host }) {
+function recordTrial(project, { file, ...outcome }) {
   try {
     const common = spawnSync('git', ['rev-parse', '--git-common-dir'], { cwd: project.root, encoding: 'utf8' });
     if (common.status !== 0) {
@@ -1516,8 +1536,7 @@ function recordTrial(project, { file, errors, ms, host }) {
     }
     const directory = join(resolve(project.root, common.stdout.trim()), 'ddd-ts-kit');
     mkdirSync(directory, { recursive: true });
-    const refused = [...new Set(errors.map((error) => error.ruleId))];
-    const entry = { at: new Date().toISOString(), file: projectPath(project, file), refused, ms, host };
+    const entry = { at: new Date().toISOString(), file: projectPath(project, file), ...outcome };
     appendFileSync(join(directory, 'before-write.jsonl'), `${JSON.stringify(entry)}\n`, { mode: 0o600 });
   } catch {
     // The record serves the verdict of the trial, never the write.

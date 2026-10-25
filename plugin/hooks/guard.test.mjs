@@ -2016,6 +2016,41 @@ test('on trial, each judged write is recorded in the git directory of the reposi
   assert.equal(typeof entry.ms, 'number');
 });
 
+test('a CLI hoisted to a parent by workspaces is the one the guard runs', () => {
+  const workspaceRoot = directory('workspaces');
+  const root = join(workspaceRoot, 'examples', 'shop');
+  mkdirSync(root, { recursive: true });
+  const init = spawnSync('node', [cli, 'init', '--orm', 'none', '--context', 'ordering:core'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  assert.equal(init.status, 0, init.stderr);
+  launcher(workspaceRoot);
+  const file = pricingService(
+    root,
+    "import express from 'express';\nexport class Pricing { app() { return express; } }\n",
+  );
+  const result = run('post-write', write(file));
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /layer\/domain-purity/);
+});
+
+test('on trial, a CLI that cannot judge the text lets the write through and is recorded as not judged', () => {
+  const root = project({ dependenciesBeforeWrite: true });
+  spawnSync('git', ['init', '--quiet'], { cwd: root });
+  const older = `#!/bin/sh\necho '{"error":{"message":"Unknown option --content-from"}}'\n`;
+  writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), older, { mode: 0o755 });
+  const file = pricingService(root, 'export class Pricing {}\n');
+  const edit = { file_path: file, old_string: 'export', new_string: "import express from 'express';\nexport" };
+  assert.equal(run('pre-write', { tool_name: 'Edit', tool_input: edit }).output, undefined);
+  const [entry] = readFileSync(join(root, '.git/ddd-ts-kit/before-write.jsonl'), 'utf8')
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line));
+  assert.equal(entry.unjudged, 'Unknown option --content-from');
+  assert.equal(entry.refused, undefined);
+});
+
 function pricingService(root, content) {
   const file = join(root, 'src/contexts/ordering/domain/services/pricing.service.ts');
   mkdirSync(dirname(file), { recursive: true });
