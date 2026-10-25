@@ -1248,6 +1248,90 @@ A plain array works as well: `createRoutesModule(routes, options)`. These routes
 pipes, guards, interceptors, exception filters and global prefix: validation and error mapping
 are those described above. Use `prefixRoutes` for a prefix.
 
+### Nest controllers served by the kit
+
+A project that writes Nest controllers keeps them: `@Controller`, `@Get`, `@Post` and the other
+methods, `@Param`, `@Query`, `@Headers`, `@Body` with a DTO class, `@HttpCode`, injection by
+constructor and modules. `@KitRoute` on a method adds what Nest does not say: its name in the
+contract, who may call it, the refusals it answers, its answer. The kit, not Nest's router,
+serves the method: it is a route of the kit, with its guards, validation, problem documents,
+tracing and contract, and a procedure over `/rpc` and `/trpc` as every route.
+
+<!-- checked sample: legacy-decorators -->
+```ts
+import { Body, Controller, Inject, Module, Param, Post } from '@nestjs/common';
+import { IsString, MinLength } from 'class-validator';
+import type { Actor } from '@ddd-ts-kit/kernel';
+import { Authenticated, type ExecuteOptions } from '@ddd-ts-kit/http';
+import { createControllersModule, CurrentActor, KitRoute, KitRoutes } from '@ddd-ts-kit/http/nest';
+import { classSchema } from '@ddd-ts-kit/validation/class-validator';
+
+declare const options: ExecuteOptions;
+
+/** What the controller sends its use case through: here a port of the application. */
+abstract class Invoicing {
+  abstract issue(invoiceId: string, customerId: string, actor: Actor): Promise<void>;
+}
+
+declare const invoicing: Invoicing;
+
+class IssueInvoiceBody {
+  @IsString()
+  @MinLength(1)
+  customerId = '';
+}
+
+@Controller('invoices')
+@KitRoutes({ guards: [Authenticated], tags: ['Invoices'] })
+export class InvoicesController {
+  constructor(@Inject(Invoicing) private readonly invoicing: Invoicing) {}
+
+  @Post(':invoiceId/issue')
+  @KitRoute({ operationId: 'issueInvoice', summary: 'Issue an invoice', errors: ['INVOICE_ALREADY_ISSUED'] })
+  async issue(
+    @Param('invoiceId') invoiceId: string,
+    @Body() body: IssueInvoiceBody,
+    @CurrentActor() actor: Actor,
+  ): Promise<void> {
+    await this.invoicing.issue(invoiceId, body.customerId, actor);
+  }
+}
+
+@Module({
+  imports: [
+    createControllersModule([InvoicesController], {
+      ...options,
+      providers: [{ provide: Invoicing, useValue: invoicing }],
+      schemaOfClass: classSchema,
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+- `createControllersModule(controllers, options)` registers the controllers as providers, so that
+  Nest builds them with what they inject, and mounts each method carrying `@KitRoute` on the
+  HTTP server underneath Nest. A controller also listed in the `controllers` of a Nest module is
+  refused at the start: Nest would serve it a second time, through its own pipeline.
+- `@KitRoutes({ guards, tags, errors })` on the class is what every route shares, as a route group;
+  `guards` of `@KitRoute` run after. A route with no guard on either is refused: `[Public]` says
+  it is open.
+- `@CurrentActor()` hands the method the caller the authentication resolved (`resolvePrincipal`),
+  never one the controller builds; `@RouteContext()` the context of the request (`expectedVersion`
+  under `ifMatch`).
+- A parameter that takes a part whole is validated by its class, read through `schemaOfClass`
+  (`classSchema` of class-validator; the project compiles with `emitDecoratorMetadata`, as Nest
+  needs); a part named one by one (`@Param('invoiceId')`) is a text; `request` of `@KitRoute`
+  gives a schema of any library instead. `response.body` is a schema or a DTO class.
+- `nestControllerRoutes(controllers, { schemaOfClass })` gives the same routes without Nest's
+  container, for `generateOpenApi`, `orpcRouter` and `trpcRouter`.
+- Refused when the routes are built, because the kit's pipeline would not run them: `@UseGuards`,
+  `@UsePipes`, `@UseInterceptors`, `@UseFilters`, `@Header`, `@Redirect`, `@Render`, `@Sse`,
+  `@Version`, a pipe on a parameter, `@Req`, `@Res` and the other parameters of Nest. The kit
+  reads what Nest's decorators record (`@nestjs/common/constants`); its shape is checked on every
+  read, and a test of the kit holds it on the Nest it is released with, so a release of Nest that
+  changes it is refused at the start rather than read wrong.
+
 ## oRPC procedures
 
 A second door to the same routes, for a TypeScript client that calls procedures rather than
