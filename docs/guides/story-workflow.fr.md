@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:b4f3572c37712266 -->
+<!-- translation-of: story-workflow.md sha256:c77a3fca85b2da0e -->
 
 # Parcours d'une story : une session par user story
 
@@ -100,7 +100,11 @@ en vigueur, consignées avec elle.
 
 Chaque ligne reçoit une section de la revue de conception avant que rien ne soit généré :
 l'agrégat et ses invariants, la commande ou la requête et sa permission, les événements, les
-erreurs par leur nom métier, la route, les ports, le contrat lu dans un autre contexte. L'agent
+erreurs par leur nom métier, la route, les ports, le contrat lu dans un autre contexte. Un
+critère qui énonce une loi sur toutes les valeurs d'un *value object* (« jamais négatif »,
+« symétrique ») y reçoit une ligne `Laws:`, et la construction l'énonce comme une propriété
+(`generate property`) : sur l'exemple, la symétrie de `Range.overlaps` énoncée comme propriété tue
+un mutant d'une borne que les exemples de l'époque manquaient. L'agent
 `architecture-reviewer` la lit comme une revue de conception de lignes à construire ; ses
 remarques bloquantes changent la conception. Les politiques du projet sont des *skills*, celles
 du plugin (contrôle d'accès, persistance, préoccupations transverses, tests) et celles du projet

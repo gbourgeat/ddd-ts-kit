@@ -105,6 +105,13 @@ the `Policies:` lines as part of the design. Its blocking findings change the de
 non-blocking one is settled at once or becomes a decision `D<n>`. `npx ddd-ts-kit cited --rows <ids> --base <base>` lists the names the design
 cites that the trunk replaced: write the name the trunk has.
 
+A criterion that states a law over every value of a value object, rather than a case ("never
+negative", "the total equals the sum of its lines", "overlaps the other in both directions or in
+none", "a parse then a format gives the value back"), gets a line in the section of its row:
+`Laws: <ValueObject>: <the law, as a test title>`. It stays a criterion with its scenarios in the
+acceptance; the law is the spec of the value object, stated on generated values when the row is
+built. A law catches the bound or the symmetry an example misses.
+
 ## 4. The acceptance, before any code
 
 Skill `ddd-ts-kit:testing`, "Acceptance of a story": `npx ddd-ts-kit generate acceptance $0`, one
@@ -134,7 +141,10 @@ tell the owner when no open story carries it.
   of `ddd-ts-kit.config.json` is `true`, add: "End each commit message with the trailer
   `Agent: <host> ddd-ts-kit@<plugin version> context-builder`" (the host as it names itself,
   `claude-code`; the version from `## Origin`), and end your own commits with the same trailer,
-  `story` as the agent name. Read its report.
+  `story` as the agent name. When the section of the row has a `Laws:` line, add: "State each
+  law of the `Laws:` line of `docs/architecture/reviews/$0.md` as a property:
+  `npx ddd-ts-kit generate property <context> <ValueObject> --local-only`, the law its title."
+  Read its report.
   A blocking need (a contract field, a dependency, a grant, a migration) is yours: do it, commit
   it, launch the next agent on the same row. A scenario it says is wrong is compared with its
   criterion (skill `ddd-ts-kit:testing`): never changed to make code pass.
