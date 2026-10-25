@@ -1,3 +1,5 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { CliError } from '../cli-error';
 import { readConfig } from '../config';
 import {
@@ -5,6 +7,7 @@ import {
   auditGuardStatementsOf,
   generateAndRead,
   replayDrizzleMigrations,
+  schemasIfMissing,
   tidyWrittenMigration,
 } from '../migration';
 import { Arguments } from './arguments';
@@ -41,12 +44,22 @@ export const drizzleGenerateCommand: Command = (argv, io) => {
   const { code, written } = generateAndRead({ root, name, custom: args.flag('custom'), interactive }, io);
 
   if (code === 0) {
+    createSchemasIfMissing(root, written.paths);
     tidyWrittenMigration(written, io);
     guardTheAuditTrail({ root, written: written.paths, files: [...written.files.keys()] }, io);
   }
 
   return code;
 };
+
+/** drizzle-kit writes `CREATE SCHEMA` alone: a schema that exists already is left as it is. */
+function createSchemasIfMissing(root: string, written: readonly string[]): void {
+  for (const file of written.filter((path) => path.endsWith('.sql'))) {
+    const full = join(root, file);
+
+    writeFileSync(full, schemasIfMissing(readFileSync(full, 'utf8')));
+  }
+}
 
 /** With an audit trail, the migration that creates it makes it append-only, which drizzle-kit cannot write. */
 function guardTheAuditTrail(

@@ -23,7 +23,19 @@ function projectWithDrizzleKit(script: string): string {
 const PROMPT_REFUSED =
   "console.log('Error: Interactive prompts require a TTY terminal (process.stdin.isTTY or process.stdout.isTTY is false).'); process.exit(0);";
 
-describe('ddd-ts-kit drizzle-generate', () => {
+describe('ddd-ts-kit drizzle-generate, what it adds to a migration drizzle-kit wrote', () => {
+  it('creates a schema only if it is missing, so that a database that has it already migrates', () => {
+    const root = projectWithDrizzleKit(
+      "const fs = require('node:fs'); fs.mkdirSync('migrations', { recursive: true }); fs.writeFileSync('migrations/0000_init.sql', 'CREATE SCHEMA \"messaging\";\\n--> statement-breakpoint\\nCREATE SCHEMA IF NOT EXISTS \"audit\";\\n');",
+    );
+
+    expect(cli(root, 'drizzle-generate', '--name', 'init').code).toBe(0);
+
+    expect(read(root, 'migrations/0000_init.sql')).toBe(
+      'CREATE SCHEMA IF NOT EXISTS "messaging";\n--> statement-breakpoint\nCREATE SCHEMA IF NOT EXISTS "audit";\n',
+    );
+  });
+
   it('makes the audit trail append-only in the migration that creates it, with the statements of the installed package', () => {
     const root = projectWithDrizzleKit(
       "const fs = require('node:fs'); fs.mkdirSync('migrations', { recursive: true }); fs.writeFileSync('migrations/0000_init.sql', 'CREATE TABLE \"audit\".\"audit_entries\" (\"id\" text);\\n');",
@@ -51,7 +63,9 @@ describe('ddd-ts-kit drizzle-generate', () => {
       'CREATE TABLE "audit"."audit_entries" ("id" text);\n--> statement-breakpoint\ncreate function "audit"."audit_entries_append_only"();\n',
     );
   });
+});
 
+describe('ddd-ts-kit drizzle-generate', () => {
   it('runs drizzle-kit generate with the name of the migration, in the project root, and prints what it printed', () => {
     const root = projectWithDrizzleKit("console.log('Your SQL migration file is migrations/1_add-invoices.sql');");
 
