@@ -95,7 +95,10 @@ it.
 
 Each row gets a section of the design review before anything is generated: the aggregate and
 its invariants, the command or query and its permission, the events, the errors by business
-name, the route, the ports, the contract read from another context. The `architecture-reviewer`
+name, the route, the ports, the contract read from another context. A criterion that states a
+law over every value of a value object ("never negative", "symmetric") gets a `Laws:` line there,
+and the build states it as a property (`generate property`): on the example, the symmetry of
+`Range.overlaps` stated as a property kills a mutant of a bound the examples of the time missed. The `architecture-reviewer`
 agent reads it as a design review of rows still to build; its blocking findings change the
 design. The policies of the project are skills, those of the plugin (access control,
 persistence, cross-cutting concerns, testing) and the project's own under `.claude/skills/`:
