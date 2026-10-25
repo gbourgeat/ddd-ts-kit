@@ -152,6 +152,7 @@ describe('worker-scope, the generators of a worker', () => {
       'test-world',
       'entity',
       'value-object',
+      'property (once fast-check is installed)',
       'vocabulary',
       'state-machine',
       'domain-event',
@@ -182,7 +183,7 @@ describe('worker-scope, the generators of a worker', () => {
     ]);
 
     expect(String(jsonAt(scope, 'briefing'))).toContain(
-      '- Generators you may run: aggregate, builder, test-world, entity, value-object, vocabulary, state-machine,',
+      '- Generators you may run: aggregate, builder, test-world, entity, value-object, property (once fast-check is installed), vocabulary,',
     );
   });
 });

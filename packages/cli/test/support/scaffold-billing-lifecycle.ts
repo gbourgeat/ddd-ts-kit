@@ -1,11 +1,13 @@
 const term = (row: string): string[] => ['--term', row];
 
-/** The lifecycle of an invoice, a background job and a process manager, whatever container runs the queue. */
+/** The lifecycle of an invoice, the laws of its money, a background job and a process manager, whatever container runs the queue. */
 export function scaffoldBillingLifecycle(step: (...args: string[]) => void): void {
   const states = ['--value', 'draft', '--value', 'issued', '--value', 'cancelled'];
   const transitions = ['--transition', 'issue:draft>issued', '--transition', 'cancel:draft,issued>cancelled'];
 
   step('generate', 'state-machine', 'billing', 'Invoice', ...states, ...transitions);
+  // The laws of a value object on generated values: fast-check joins the project, and the spec runs in it.
+  step('generate', 'property', 'billing', 'Money');
 
   step(
     'generate',

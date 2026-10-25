@@ -237,7 +237,9 @@ the title stating the law (`overlaps another range in both directions or in none
 the arbitrary a small helper of the spec built on the factories of the model, so that every generated
 value is one the model accepts. A property is for an invariant, a symmetry, a round trip or an
 idempotence of the model; a use case is stated by its scenarios with named values. Every value object
-spec the generator writes ends with the planned rule that asks for one.
+spec the generator writes ends with the planned rule that asks for one;
+`npx ddd-ts-kit generate property <context> <ValueObject>` starts it, with the arbitrary, a first law
+and fast-check added when it is missing: replace the arbitrary by the real components first.
 
 The titles are read back as a document: `npm run docs:generate` writes `docs/behaviour/<context>.md`
 from them, grouped as the specs group them, the pre-commit hook regenerates it when a spec is staged,

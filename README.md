@@ -41,7 +41,7 @@ every merge and on every push.
 - **Rules, not guidelines.** Each rule has an id, a reason and a fix
   (`npx ddd-ts-kit explain <rule-id>`), checked by a zero-dependency CLI, an ESLint plugin and
   dependency-cruiser.
-- **Generate, do not type.** `ddd-ts-kit generate` writes 42 kinds of building blocks with their
+- **Generate, do not type.** `ddd-ts-kit generate` writes 43 kinds of building blocks with their
   spec, fake and registration, and leaves `TODO(domain)` where a business decision is expected.
 - **Made for coding agents.** A plugin for Claude Code, Codex and GitHub Copilot: skills that
   conduct the work step by step, agents for parallel work and review, and a hook that checks each

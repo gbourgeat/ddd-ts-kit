@@ -38,6 +38,7 @@ import { serviceKind } from './kinds/service-kind';
 import { stateMachineKind } from './kinds/state-machine-kind';
 import { testWorldKind } from './kinds/test-world-kind';
 import { valueObjectKind } from './kinds/value-object-kind';
+import { propertyKind } from './kinds/property-kind';
 import { vocabularyKind } from './kinds/vocabulary-kind';
 import { workerKind } from './kinds/worker-kind';
 
@@ -50,6 +51,7 @@ export const KINDS: readonly Kind[] = [
   testWorldKind,
   entityKind,
   valueObjectKind,
+  propertyKind,
   vocabularyKind,
   stateMachineKind,
   domainEventKind,

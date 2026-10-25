@@ -40,6 +40,7 @@ export const VERSIONS: Readonly<Record<string, string>> = {
   'ddd-ts-kit': '^0.90.0',
   tsx: '^4.23.15',
   vitest: '^5.0.3',
+  'fast-check': '^4.10.2',
   '@stryker-mutator/core': '^10.1.1',
   '@stryker-mutator/jest-runner': '^10.1.1',
   '@stryker-mutator/vitest-runner': '^10.1.1',

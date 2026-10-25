@@ -486,8 +486,11 @@ it('overlaps another range in both directions or in none, for any two ranges', (
 });
 ```
 
-`fast-check` joins the development dependencies with the first property (`npm i -D fast-check`), under
-Vitest as under Jest; a project without a property carries no dead dependency. The title states the law, so that the page
+`generate property <context> <ValueObject>` starts one: a spec beside the spec of the value object
+(`test/unit/<name>.vo.properties.spec.ts`), with the arbitrary built on its factory, a first law
+(equal to the value created again from its own components) and one planned rule per kind of law.
+`fast-check` joins the development dependencies with the first property (the generator adds it,
+or `npm i -D fast-check`), under Vitest as under Jest; a project without a property carries no dead dependency. The title states the law, so that the page
 of what the tests state reads it; `fc.assert` is an assertion for `test/assertion-present`; the
 arbitrary (`anyRange()`) is a small helper of the spec built on the factories of the model, so that
 every generated value is one the model accepts. A failing run prints the seed and the counterexample,

@@ -87,6 +87,11 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
       '<platformDir>/config/load-config.ts',
     ],
   },
+  property: {
+    files: ['package.json (fast-check joins the development dependencies)'],
+    when: 'fast-check is not yet a dependency of the project',
+    worker: 'once fast-check is installed',
+  },
   adr: {
     files: ['docs/adr/', 'ddd-ts-kit.config.json (with --deviation)'],
     worker: 'without --deviation: a decision of its slices',
