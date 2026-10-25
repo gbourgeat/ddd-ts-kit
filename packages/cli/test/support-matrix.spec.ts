@@ -7,6 +7,7 @@ import {
   refusalsOverPairs,
   undeclared,
   unheld,
+  vagueReasons,
   valuesOf,
 } from './support/refusals-of-the-matrix';
 import { GENERATED_DIFFERENCES, IDENTITY_PRESET_REFUSALS, INIT_REFUSALS } from './support/support-matrix';
@@ -45,4 +46,13 @@ describe('the members of a family of flags, with every capability on', () => {
       expect(differencesOf(family, GENERATED_DIFFERENCES)).toEqual([]);
     },
   );
+});
+
+describe('the lines of the support matrix', () => {
+  it('each give a reason that says what the kit does instead', () => {
+    const refusals = [...INIT_REFUSALS, ...IDENTITY_PRESET_REFUSALS].map(({ why }) => why);
+    const differences = GENERATED_DIFFERENCES.flatMap(({ without }) => Object.values(without));
+
+    expect(vagueReasons([...refusals, ...differences])).toEqual([]);
+  });
 });

@@ -19,4 +19,6 @@ TypeScript. Public repository.
   capability added to one member reaches the others, or `pipeline/monorepo/families.mjs` says
   why not (`npm run check:parity`). What `init` refuses and what sibling flags generate
   differently is declared, decided or not yet, in `packages/cli/test/support/support-matrix.ts`.
+  Never add a line there to turn a check green: fill the gap, or stop and ask the maintainer
+  (the hook of `.claude/settings.json` asks before any edit of the two registries).
 - Details: `CONTRIBUTING.md`.

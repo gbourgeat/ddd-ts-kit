@@ -72,6 +72,11 @@ node --test plugin/hooks/guard.test.mjs
   member of a family with every capability on: a refusal, a platform todo or a package of the kit
   that no line explains fails, and so does a line that no longer holds. A `not yet` line is a gap
   that stays in sight until a pull request fills it and removes the line.
+- A line of those two registries turns a failing check green, so it is a decision of the
+  maintainer, never the shortest way to a green pipeline: its reason says what the member does
+  instead (a reason too short, or a promise for later, fails), the run of a pull request annotates
+  each line it adds (`pipeline/monorepo/asymmetries.mjs`), and in Claude Code the hook of
+  `.claude/settings.json` asks before any edit of them, whatever the permission mode.
 - A new check rule comes with a passing and a failing fixture, a `fix` sentence and an
   `explain` entry.
 - A change that makes the checks report what they did not (a new rule, a rule that judges more

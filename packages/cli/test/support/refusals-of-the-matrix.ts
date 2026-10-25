@@ -104,3 +104,10 @@ function pairsOf(choices: readonly Options[]): Options[] {
       .map((second) => ({ ...first, ...second })),
   );
 }
+
+const VAGUE = /^(todo|tbd|later|wip|n\/a|none|not needed|not yet|for now|temporary)\b/i;
+
+/** The reasons that say too little to be a decision: too short, or a promise for later. */
+export function vagueReasons(reasons: readonly string[]): string[] {
+  return reasons.filter((reason) => reason.length < 25 || VAGUE.test(reason));
+}
