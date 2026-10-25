@@ -20,6 +20,9 @@ paths:
 {{#if routes.functions}}
 - A route validates the shape of the input, builds a command or a query with the actor, executes it through `CommandBus` or `QueryBus` (never a handler class) and maps the answer. Nothing else.
 {{/if}}
+{{#if http.nest}}
+- Nothing of Nest's request pipeline in a context: no controller, guard, pipe, exception filter, interceptor or `HttpException` of Nest, no `@nestjs/swagger`, `@nestjs/cqrs` or `@nestjs/passport` (`nest/no-parallel-pipeline`). The routes of the kit do not go through that pipeline, and a Nest controller is a route the kit does not see: no declared security, no problem codes, missing from the contract. A route is the kit's, a right is the permission of the use case, a refusal comes from the code list; each finding names the tool of the kit to use. Nest stays in the platform.
+{{/if}}
 - Imports `application/` (and domain types for mapping), never `infrastructure/` (`layer/presentation-no-infrastructure`).
 - Input shape is validated here with the schema library of the project, behind the `Schema` port. Business rules are not validated here.
 {{#if refusals.named}}

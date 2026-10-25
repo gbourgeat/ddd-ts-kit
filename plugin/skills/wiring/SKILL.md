@@ -109,7 +109,9 @@ know every layer (`composition/only-in-module`):
 the list of each statement names the ports of the constructor, in order, and the compiler
 checks it; nothing is read from signatures here. Generators add the lines between the
 markers. With NestJS or manual wiring the rule is the same in another syntax;
-keep `@Injectable()` out of `domain/` and `application/`.
+keep `@Injectable()` out of `domain/` and `application/`. The rest of Nest's request pipeline
+(controllers, guards, pipes, exception filters, interceptors) stays out of every context
+(`nest/no-parallel-pipeline`): where each tool of Nest goes is in [nest.md](nest.md).
 
 ## Composition root
 

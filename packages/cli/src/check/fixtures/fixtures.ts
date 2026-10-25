@@ -35,6 +35,7 @@ import { LIFECYCLE_FIXTURES } from './lifecycle-fixtures';
 import { MODULE_FIXTURES } from './module-fixtures';
 import { NAMED_REFUSAL_FIXTURES } from './named-refusal-fixtures';
 import { NAMING_FIXTURES } from './naming-fixtures';
+import { NEST_FIXTURES } from './nest-fixtures';
 import { OUTBOX_FIXTURES } from './outbox-fixtures';
 import { PERSISTENCE_FIXTURES } from './persistence-fixtures';
 import { PORTS_FIXTURES } from './ports-fixtures';
@@ -101,6 +102,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...PURITY_FIXTURES,
   ...SCHEDULING_FIXTURES,
   ...STANDARD_FIXTURES,
+  ...NEST_FIXTURES,
   ...TENANCY_FIXTURES,
   ...PRIVACY_FIXTURES,
   ...TEST_FIXTURES,

@@ -3,7 +3,7 @@ import { PATHS } from '../paths';
 import { SOURCE_ALIAS } from '../source-alias';
 import { SOURCE_SUFFIX } from '../source-suffix';
 
-const { ADAPTER, DUE_HANDLER, EVENT_HANDLER, JOB, OCCUPANCY_ROUTE, PLAN_HANDLER, PORT, SEND_HANDLER } = PATHS;
+const { ADAPTER, DUE_HANDLER, EVENT_HANDLER, JOB, OCCUPANCY_ROUTE, PLAN_HANDLER, PORT, ROUTE, SEND_HANDLER } = PATHS;
 
 const CONCRETE =
   'What implements a port lives outside the application layer: naming it there is also an import that leaves the layer.';
@@ -226,6 +226,13 @@ export const WIRING_INJECTIONS: readonly Injection[] = [
     changes: [{ file: ADAPTER, where: 'start', to: "import '@ddd-ts-kit/tracing';\n" }],
     checker: true,
     eslint: 'ddd-ts-kit/tracing-platform-only',
+  },
+  {
+    rule: 'nest/no-parallel-pipeline',
+    what: 'the common package of Nest in a controller of a context',
+    file: ROUTE,
+    changes: [{ file: ROUTE, where: 'start', to: "import '@nestjs/common';\n" }],
+    checker: true,
   },
   {
     rule: 'standard/no-parallel-interface',
