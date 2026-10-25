@@ -10,7 +10,9 @@ import {
   vagueReasons,
   valuesOf,
 } from './support/refusals-of-the-matrix';
-import { GENERATED_DIFFERENCES, IDENTITY_PRESET_REFUSALS, INIT_REFUSALS } from './support/support-matrix';
+import { GENERATED_DIFFERENCES, IDENTITY_PRESET_REFUSALS, INIT_REFUSALS, TENANT_GAPS } from './support/support-matrix';
+import { tenantTakers, untenantedCalls } from './support/tenant-wiring';
+import { DEFAULT_STACK, scaffoldEverything, tempDir } from './helpers';
 
 // Every combination the kit refuses is a written decision, or a gap named as such: a refusal no
 // line of test/support/support-matrix.ts declares fails here, and so does a line that no longer holds.
@@ -55,4 +57,21 @@ describe('the lines of the support matrix', () => {
 
     expect(vagueReasons([...refusals, ...differences])).toEqual([]);
   });
+});
+
+/** Every capability that keeps rows of a tenant, beside the shared tables themselves. */
+const MULTI_TENANT = ['--queue', 'database', '--audit', 'on', '--event-sourcing', 'on', '--privacy', 'on'];
+
+describe('a multi-tenant project, every kind generated', () => {
+  it.each(['knex', 'drizzle', 'prisma', 'typeorm'])(
+    'gives the tenant to every store of the kit that takes one, on %s',
+    (orm) => {
+      const root = tempDir(`tenant-wiring-${orm}`);
+
+      scaffoldEverything(root, { ...DEFAULT_STACK, orm, tenancy: 'shared-table' }, MULTI_TENANT);
+
+      expect(untenantedCalls(root, tenantTakers(), TENANT_GAPS)).toEqual([]);
+    },
+    120_000,
+  );
 });

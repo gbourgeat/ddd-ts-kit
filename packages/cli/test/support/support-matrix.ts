@@ -236,3 +236,13 @@ export const GENERATED_DIFFERENCES: readonly DeclaredDifference[] = [
     without: { rebac: 'its starting point is the relationships' },
   },
 ];
+
+/** A call of the generated code to a store of the kit that takes a tenant, made without one on purpose. */
+export interface DeclaredTenantGap {
+  /** `<file>: <export>`, the file from the root of the project. */
+  readonly call: RegExp;
+  readonly why: string;
+}
+
+/** The calls that pass no tenant in a multi-tenant project, each with its reason. */
+export const TENANT_GAPS: readonly DeclaredTenantGap[] = [];

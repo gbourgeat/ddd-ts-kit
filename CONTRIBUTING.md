@@ -71,7 +71,10 @@ node --test plugin/hooks/guard.test.mjs
   reason. `support-matrix.spec.ts` tries every flag and every pair of flags, and generates each
   member of a family with every capability on: a refusal, a platform todo or a package of the kit
   that no line explains fails, and so does a line that no longer holds. A `not yet` line is a gap
-  that stays in sight until a pull request fills it and removes the line.
+  that stays in sight until a pull request fills it and removes the line. The same spec generates
+  every kind in a multi-tenant project on each ORM and reads every call of the generated code to a
+  class or function of the kit whose options take a `tenant` (read from the sources of the
+  packages): a call without it fails, unless `TENANT_GAPS` says why.
 - A line of those two registries turns a failing check green, so it is a decision of the
   maintainer, never the shortest way to a green pipeline: its reason says what the member does
   instead (a reason too short, or a promise for later, fails), the run of a pull request annotates
