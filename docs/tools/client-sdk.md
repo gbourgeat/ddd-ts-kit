@@ -365,6 +365,12 @@ your choice, or the integrations of TanStack Query). What the procedures do not 
 the HTTP client, as over oRPC, binary bodies included. Moving from `orpc` to `trpc`, or back to
 `none`, and running `sdk` deletes the entry the API no longer serves and its dependencies.
 
+Over oRPC as over tRPC, a procedure is named by its `operationId` and called at that name: a
+renamed `operationId`, a `GET` route given another method (a tRPC query that becomes a
+mutation) or a route that now receives a file breaks a front end already deployed, which the
+HTTP client would not notice before its next build. Rename only with every consumer rebuilt and
+deployed with the change.
+
 ### Limits
 
 - Request bodies are JSON. A route of another media type (an upload) is generated without its
