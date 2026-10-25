@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:64b9515bf6f154be -->
+<!-- translation-of: CONTRIBUTING.md sha256:b46b2d880f0663ed -->
 
 # Contribuer
 
@@ -232,8 +232,8 @@ ci:test:stacks-at-night`) et les *stacks* qui font se rencontrer chaque paire de
 capacité (`npm run ci:test:pairwise`) : la CI d'une autre pull request ne fait que typer les
 premiers et laisse les secondes à la nuit. L'étiquette
 lance le workflow `Release` : il les fait tourner une fois de plus et ne publie rien tant que l'un
-d'eux est rouge (posez l'étiquette une fois le job `managers` de la pull request de la release
-vert : l'étiquette pointe sur ce code ; si `generated-stacks` échoue quand même, rien n'a atteint
+d'eux est rouge (posez l'étiquette une fois les jobs `managers` et `pairwise` de la pull request de la release
+verts, ou un run de la nuit demandé sur `main`, `gh workflow run ci.yml --ref main` : l'étiquette pointe sur ce code ; si `generated-stacks` échoue quand même, rien n'a atteint
 npm : corrigez sur `main`, supprimez l'étiquette, `git push --delete origin v0.2.0 && git tag -d
 v0.2.0`, et posez-la sur le commit corrigé avec la même version), puis vérifie que l'étiquette est la version qu'annonce chaque package, construit, vérifie les archives, publie chaque package sur le registre npm avec
 sa provenance et crée la release GitHub. Une version qui a une partie de préversion
