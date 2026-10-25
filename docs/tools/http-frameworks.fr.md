@@ -1,5 +1,5 @@
 [English](http-frameworks.md) · **Français**
-<!-- translation-of: http-frameworks.md sha256:bba43f87d22e4e4f -->
+<!-- translation-of: http-frameworks.md sha256:677e8148862cf49b -->
 
 # Frameworks HTTP : Express, Fastify, Hono, NestJS
 
@@ -213,10 +213,13 @@ Trois autres coûts découlent du choix de Nest dans ce kit :
   plateforme, et `@Injectable()` est tenu hors de `domain/` et `application/`.
 - **Décorateurs legacy.** Le `tsconfig.json` généré active `experimentalDecorators` (et
   `emitDecoratorMetadata`) pour Nest.
-- **Une seule façon pour les contextes.** Des contrôleurs Nest natifs donneraient deux chemins de
+- **Un seul pipeline pour les cas d'usage.** Un contrôleur que Nest sert donnerait deux chemins de
   validation, deux formats d'erreur et deux contrats à garder cohérents, et des routes dont rien ne
-  déclare la sécurité : `ddd-ts-kit check` les refuse dans un contexte (`nest/no-parallel-pipeline`),
-  avec l'outil du kit à utiliser à la place. Nest reste libre dans la plateforme.
+  déclare la sécurité : `ddd-ts-kit check` le refuse dans un contexte, et partout ailleurs dès qu'il
+  atteint un cas d'usage (`nest/no-parallel-pipeline`). Un contrôleur Nest que le kit sert garde les
+  décorateurs de Nest : `@KitRoute` sur chaque méthode, `createControllersModule` pour le servir
+  ([le README du paquet](../../packages/http/README.fr.md), « Contrôleurs Nest servis par le kit »).
+  Nest reste libre dans la plateforme pour ce qui n'atteint aucun cas d'usage.
 
 Ce que Nest donne encore : son système de modules pour les parties qui ne sont pas des cas
 d'usage (santé, passerelles WebSocket, GraphQL, files d'attente), sa CLI et son vivier de
@@ -235,7 +238,7 @@ Nest reste libre.
 
 | Vous écririez, en Nest | Dans le kit | Ce que cela garde |
 |---|---|---|
-| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | une route : `generate route`, `@Controller` de `@ddd-ts-kit/http` ou `defineRoute` | une sécurité déclarée sur chaque route, les codes de *problem* que lisent les clients, la route dans le contrat |
+| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | le même contrôleur Nest, `@KitRoute` sur chaque méthode, servi par `createControllersModule` ; ou une route du kit (`generate route`) | une sécurité déclarée sur chaque route, les codes de *problem* que lisent les clients, la route dans le contrat |
 | un `ValidationPipe`, une classe DTO avec class-validator | les schémas de la route, écrits avec la bibliothèque de validation du projet (class-validator dans les piles Nest que le kit prouve) | la validation que documente le contrat, rien de transformé avant elle |
 | `@UseGuards(AuthGuard('jwt'))`, une stratégie Passport | l'authentification de la plateforme, lue par `resolvePrincipal` ; un *guard* de groupe de routes pour un contrôle en bordure (`generate guard`) | un appel anonyme refusé de la même façon sur chaque porte |
 | `@Roles('admin')`, un `RolesGuard`, CASL | la permission du cas d'usage (`requires` dans le fichier de module, `@Requires`), une *policy* pour une règle sur l'état chargé, une portée d'accès pour une recherche | le droit vérifié sur HTTP, `/rpc`, `/trpc`, un *job* et un événement pareil, les refus audités quand le journal d'audit est actif, les listes filtrées (`authz/*`) |

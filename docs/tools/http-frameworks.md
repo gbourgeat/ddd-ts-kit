@@ -204,10 +204,13 @@ Three further costs follow from choosing Nest in this kit:
   `@Injectable()` is kept out of `domain/` and `application/`.
 - **Legacy decorators.** The generated `tsconfig.json` sets `experimentalDecorators` (and
   `emitDecoratorMetadata`) for Nest.
-- **One way for the contexts.** Native Nest controllers would give two validation paths, two
-  error formats and two contracts to keep coherent, and routes whose security nothing declares:
-  `ddd-ts-kit check` refuses them in a context (`nest/no-parallel-pipeline`), with the tool of
-  the kit to use instead. Nest stays free in the platform.
+- **One pipeline for the use cases.** A controller Nest serves would give two validation paths,
+  two error formats and two contracts to keep coherent, and routes whose security nothing
+  declares: `ddd-ts-kit check` refuses it in a context, and anywhere else once it reaches a use
+  case (`nest/no-parallel-pipeline`). A Nest controller the kit serves keeps the decorators of
+  Nest: `@KitRoute` on each method, `createControllersModule` to serve it ([the package
+  README](../../packages/http/README.md), "Nest controllers served by the kit"). Nest stays free
+  in the platform for what reaches no use case.
 
 What Nest still gives: its module system for the parts that are not use cases (health,
 WebSocket gateways, GraphQL, queues), its CLI and its hiring pool. If those are the reason for
@@ -224,7 +227,7 @@ Nest tool and names the kit's (`nest/no-parallel-pipeline`); in the platform Nes
 
 | You would write, in Nest | In the kit | What it keeps |
 |---|---|---|
-| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | a route: `generate route`, `@Controller` of `@ddd-ts-kit/http` or `defineRoute` | a security declared on every route, the problem codes the clients read, the route in the contract |
+| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | the same Nest controller, `@KitRoute` on each method, served by `createControllersModule`; or a route of the kit (`generate route`) | a security declared on every route, the problem codes the clients read, the route in the contract |
 | a `ValidationPipe`, a DTO class with class-validator | the schemas of the route, written with the validation library of the project (class-validator in the Nest stacks the kit proves) | the validation the contract documents, nothing transformed before it |
 | `@UseGuards(AuthGuard('jwt'))`, a Passport strategy | the authentication of the platform, read by `resolvePrincipal`; a guard of a route group for a control at the edge (`generate guard`) | an anonymous call refused the same way on every door |
 | `@Roles('admin')`, a `RolesGuard`, CASL | the permission of the use case (`requires` in the module file, `@Requires`), a policy for a rule on loaded state, an access scope for a search | the right checked on HTTP, `/rpc`, `/trpc`, a job and an event alike, the refusals audited when the audit trail is on, the lists narrowed (`authz/*`) |

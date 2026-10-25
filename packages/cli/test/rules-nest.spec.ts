@@ -21,10 +21,10 @@ describe('nest/no-parallel-pipeline', () => {
     const [controller, swagger] = violations;
 
     expect(controller?.message).toBe(
-      '"@nestjs/common" brings a controller and a guard and a pipe of Nest into a context, where the pipeline of the kit does not see it.',
+      '"@nestjs/common" brings a controller Nest serves and a guard and a pipe of Nest into a context, where the pipeline of the kit does not see it.',
     );
 
-    expect(controller?.fix).toContain('a route of the kit (`generate route`');
+    expect(controller?.fix).toContain('`@KitRoute` of `@ddd-ts-kit/http/nest` on each method');
     expect(controller?.fix).toContain('which the bus checks on every door: HTTP, /rpc, /trpc, a job, an event');
     expect(controller?.fix).toContain('the schemas of the route');
     expect(swagger?.message).toContain('brings Swagger of Nest');
@@ -69,6 +69,49 @@ describe('nest/no-parallel-pipeline', () => {
     expect(
       found({ [CONTROLLER]: lines("import { Get } from '@nestjs/common';") }, { rules: { [RULE]: 'off' } }),
     ).toEqual([]);
+  });
+
+  it('lets a controller the kit serves declare its routes with the decorators of Nest, and refuses there what the kit does not read', () => {
+    const files = {
+      [CONTROLLER]: lines(
+        "import { Body, Controller, Param, Post, Req, UseGuards } from '@nestjs/common';",
+        "import { CurrentActor, KitRoute } from '@ddd-ts-kit/http/nest';",
+      ),
+    };
+
+    expect(found(files)).toEqual([
+      `${CONTROLLER}:1 "@nestjs/common" brings the raw request or answer and a guard of Nest`,
+    ]);
+  });
+
+  it('refuses outside the contexts a controller Nest serves that reaches a use case, through a bus or a context', () => {
+    const files = {
+      'src/platform/http/invoices.controller.ts': lines(
+        "import { Controller, Post } from '@nestjs/common';",
+        "import type { CommandBus } from '@ddd-ts-kit/kernel';",
+      ),
+      'src/platform/http/billing.controller.ts': lines(
+        "import { Controller, Get } from '@nestjs/common';",
+        "import { IssueInvoiceCommand } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command';",
+      ),
+      'src/platform/http/served.controller.ts': lines(
+        "import { Controller, Post } from '@nestjs/common';",
+        "import type { CommandBus } from '@ddd-ts-kit/kernel';",
+        "import { KitRoute } from '@ddd-ts-kit/http/nest';",
+      ),
+      'src/platform/http/health.controller.ts': lines("import { Controller, Get } from '@nestjs/common';"),
+      'src/platform/http/invoices.controller.spec.ts': lines(
+        "import { Controller } from '@nestjs/common';",
+        "import type { CommandBus } from '@ddd-ts-kit/kernel';",
+      ),
+    };
+
+    const routed = reported(projectWith(files), RULE).map(({ file, line }) => `${file}:${line}`);
+
+    expect(routed.sort()).toEqual([
+      'src/platform/http/billing.controller.ts:1',
+      'src/platform/http/invoices.controller.ts:1',
+    ]);
   });
 });
 
