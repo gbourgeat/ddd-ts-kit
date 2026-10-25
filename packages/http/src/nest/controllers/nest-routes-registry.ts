@@ -1,7 +1,6 @@
-import type { Schema } from '@ddd-ts-kit/validation';
-import type { DtoType } from './dto-type';
 import type { KitRouteSpec } from './kit-route-spec';
 import type { KitRoutesOptions } from './kit-routes-options';
+import type { NestSignature } from './nest-signature';
 
 /** What a parameter decorator of the kit asks for: the caller, or the context of the request. */
 export type Injected = 'actor' | 'context';
@@ -13,12 +12,12 @@ export interface NestRoutesRegistry {
   readonly controllers: WeakMap<object, KitRoutesOptions>;
   /** By prototype, method and index, what the kit hands a parameter. */
   readonly injected: WeakMap<object, Map<string, Map<number, Injected>>>;
-  /** By controller class and method, the body read from its signature by `ddd-ts-kit`; `null` when it answers none. */
-  readonly answers: WeakMap<object, ReadonlyMap<string, Schema<unknown> | DtoType | null>>;
+  /** By controller class and method, what its signature says, read by `ddd-ts-kit`. */
+  readonly signatures: WeakMap<object, ReadonlyMap<string, NestSignature>>;
 }
 
 /* One registry per process, whatever the number of copies of this package it loaded, as the registry of the presentation. */
-const REGISTRY = Symbol.for('@ddd-ts-kit/http/nest-controllers/v2');
+const REGISTRY = Symbol.for('@ddd-ts-kit/http/nest-controllers/v3');
 
 export function nestRoutesRegistry(): NestRoutesRegistry {
   const existing: unknown = Reflect.get(globalThis, REGISTRY);
@@ -31,7 +30,7 @@ export function nestRoutesRegistry(): NestRoutesRegistry {
     routes: new WeakMap(),
     controllers: new WeakMap(),
     injected: new WeakMap(),
-    answers: new WeakMap(),
+    signatures: new WeakMap(),
   };
 
   Reflect.set(globalThis, REGISTRY, created);
@@ -44,5 +43,5 @@ function isRegistry(value: unknown): value is NestRoutesRegistry {
     return false;
   }
 
-  return ['routes', 'controllers', 'injected', 'answers'].every((key) => Reflect.get(value, key) instanceof WeakMap);
+  return ['routes', 'controllers', 'injected', 'signatures'].every((key) => Reflect.get(value, key) instanceof WeakMap);
 }

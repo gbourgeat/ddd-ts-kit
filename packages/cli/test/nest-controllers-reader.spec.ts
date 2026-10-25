@@ -11,11 +11,12 @@ const CONFIG = parseConfig({
 
 const FOLDER = 'src/contexts/billing/presentation/http/invoices';
 
-const CONTROLLER = `import { Body, Controller, Get, Post } from '@nestjs/common';
+const CONTROLLER = `import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import type { Accepted } from '@ddd-ts-kit/http';
-import { KitRoute, KitRoutes } from '@ddd-ts-kit/http/nest';
+import { CurrentActor, KitRoute, KitRoutes } from '@ddd-ts-kit/http/nest';
 import { IssuedInvoice } from '@/contexts/billing/presentation/http/invoices/issued-invoice';
 import type { InvoiceLine } from '@/contexts/billing/presentation/http/invoices/invoice-line';
+import { IssueInvoiceBody } from '@/contexts/billing/presentation/http/invoices/issue-invoice-body';
 
 @Controller('invoices')
 @KitRoutes({ guards: [] })
@@ -24,13 +25,15 @@ export class InvoicesController {
 
   @Post(':invoiceId/issue')
   async issueInvoice(
-    @Body() body: { reason: string },
+    @Param('invoiceId') invoiceId: string,
+    @Body() body: IssueInvoiceBody,
+    @CurrentActor() actor: Actor,
   ): Promise<IssuedInvoice> {
     return new IssuedInvoice();
   }
 
   @Post()
-  async create(): Promise<Accepted> {
+  async create(@Body() body: { reason: string }, @Query() query: Record<string, string>): Promise<Accepted> {
     return { id: '1' };
   }
 
@@ -58,8 +61,8 @@ export class InvoicesController {
   }
 
   @Get('declared')
-  @KitRoute({ response: { body: declared } })
-  async declaredAnswer(): Promise<InvoiceLine[]> {
+  @KitRoute({ request: { query: declaredQuery }, response: { body: declared } })
+  async declaredAnswer(@Query() query: Record<string, string>): Promise<InvoiceLine[]> {
     return [];
   }
 
@@ -73,6 +76,7 @@ const FILES: Readonly<Record<string, string>> = {
   [`${FOLDER}/invoices.controller.ts`]: CONTROLLER,
   [`${FOLDER}/issued-invoice.ts`]: 'export class IssuedInvoice {}\n',
   [`${FOLDER}/invoice-line.ts`]: 'export interface InvoiceLine {\n  sku: string;\n}\n',
+  [`${FOLDER}/issue-invoice-body.ts`]: 'export class IssueInvoiceBody {}\n',
   [`${FOLDER}/invoices.controller.spec.ts`]: CONTROLLER.replace('InvoicesController', 'SpecController'),
 };
 
@@ -104,6 +108,28 @@ describe('the Nest controllers of a context, read from their sources', () => {
     });
   });
 
+  it('reads the parts of the request a parameter takes whole, and knows those @KitRoute gives', () => {
+    expect(Object.fromEntries(controller?.methods.map(({ name, request }) => [name, request]) ?? [])).toMatchObject({
+      issueInvoice: [
+        {
+          source: 'body',
+          type: {
+            kind: 'class',
+            name: 'IssueInvoiceBody',
+            specifier: '@/contexts/billing/presentation/http/invoices/issue-invoice-body',
+          },
+          declared: false,
+        },
+      ],
+      create: [
+        { source: 'body', type: { kind: 'unread', text: '{ reason: string }' }, declared: false },
+        { source: 'query', type: { kind: 'unread', text: 'Record<string, string>' }, declared: false },
+      ],
+      declaredAnswer: [{ source: 'query', type: { kind: 'unread' }, declared: true }],
+      voidInvoice: [],
+    });
+  });
+
   it('knows a method whose @KitRoute says its body, and leaves out what is no route and the specs', () => {
     expect(controller?.methods.filter(({ declaresResponse }) => declaresResponse).map(({ name }) => name)).toEqual([
       'declaredAnswer',
@@ -126,7 +152,17 @@ describe('the Nest controllers of a context, read from their sources', () => {
     );
 
     expect(written).toContain(
-      '  withAnswers(InvoicesController, { issueInvoice: IssuedInvoice, create: acceptedSchema, voidInvoice: null }),',
+      "import { IssueInvoiceBody } from '@/contexts/billing/presentation/http/invoices/issue-invoice-body';",
+    );
+
+    expect(written).toContain(
+      [
+        '  withSignatures(InvoicesController, {',
+        '    issueInvoice: { body: IssueInvoiceBody, answer: IssuedInvoice },',
+        '    create: { answer: acceptedSchema },',
+        '    voidInvoice: { answer: null },',
+        '  }),',
+      ].join('\n'),
     );
   });
 });

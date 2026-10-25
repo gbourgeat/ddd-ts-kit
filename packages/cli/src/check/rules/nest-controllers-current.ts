@@ -1,4 +1,5 @@
 import { controllersFile } from '../../nest-controllers/controllers-file';
+import type { NestControllerEntry } from '../../nest-controllers/nest-controller-entry';
 import { readNestControllers, type ProjectFiles } from '../../nest-controllers/read-nest-controllers';
 import { renderControllersFile } from '../../nest-controllers/render-controllers-file';
 import { toName } from '../../naming';
@@ -13,7 +14,7 @@ const REGENERATE =
 export const nestControllersCurrent: Rule = {
   id: 'nest/controllers-current',
   description:
-    'With Nest controllers ("stack.routes": "nest"), the generated <context>.controllers.ts of each context lists its Nest controllers with what each method answers, as its signature says it, and every route method answers a type the kit reads into a schema: a DTO class, `Accepted` or `void`, or says its body in `response` of `@KitRoute`.',
+    'With Nest controllers ("stack.routes": "nest"), the generated <context>.controllers.ts of each context lists its Nest controllers with what the signature of each method says, and every route method takes and answers types the kit reads into schemas: a part of the request taken whole is typed by a DTO class, or given in `request` of `@KitRoute`; the answer is a DTO class, `Accepted` or `void`, or given in `response` of `@KitRoute`.',
   scope: 'project',
   run(project) {
     if (project.config.stack.routes !== 'nest') {
@@ -57,7 +58,23 @@ function judged(project: Project, files: ProjectFiles, context: string): Violati
       ),
   );
 
-  return [...stale, ...unread];
+  return [...stale, ...unread, ...unreadRequests(report, entries)];
+}
+
+function unreadRequests(report: ReturnType<typeof reporter>, entries: readonly NestControllerEntry[]): Violation[] {
+  return entries.flatMap((entry) =>
+    entry.methods.flatMap(({ name, line, request }) =>
+      request
+        .filter(({ type, declared }) => type.kind === 'unread' && !declared)
+        .map(({ source, type }) =>
+          report(
+            { file: entry.file, line },
+            `${entry.className}.${name} takes the whole ${source} as ${type.kind === 'unread' ? type.text : ''}, which the kit cannot read into the schema of its route.`,
+            `Type it by a DTO class imported from its own file (\`@Body() body: IssueInvoiceBody\`), or give \`request.${source}\` in \`@KitRoute\`.`,
+          ),
+        ),
+    ),
+  );
 }
 
 function projectFiles(project: Project): ProjectFiles {

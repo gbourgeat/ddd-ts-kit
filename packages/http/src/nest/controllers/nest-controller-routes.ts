@@ -56,6 +56,7 @@ function routesOf(controller: NestControllerClass, options: NestControllerRoutes
 
   const answering = lazyInstance(controller, options);
   const injected = nestRoutesRegistry().injected.get(prototype);
+  const signatures = nestRoutesRegistry().signatures.get(controller);
 
   return names.map((name) => {
     const written = declared.get(name) ?? {};
@@ -67,6 +68,7 @@ function routesOf(controller: NestControllerClass, options: NestControllerRoutes
       spec: { ...written, operationId: written.operationId ?? name, summary: written.summary ?? summaryOf(name) },
       read: nestRouteMetadata(controller, name),
       injected: injected?.get(name) ?? new Map<number, Injected>(),
+      signature: signatures?.get(name) ?? {},
     };
 
     return synthetic(method, specOf(method, options), answering);
@@ -145,14 +147,14 @@ function responseOf(
 
 /**
  * The body the route answers: the one `@KitRoute` declares, else the one its signature names as
- * `ddd-ts-kit` read it (`withAnswers`). A method TypeScript recorded as answering a value with
+ * `ddd-ts-kit` read it (`withSignatures`). A method TypeScript recorded as answering a value with
  * neither is refused, never answered empty.
  */
 function bodyOf(
   method: NestMethod,
   response: NonNullable<KitRouteSpec['response']>,
 ): Schema<unknown> | DtoType | undefined {
-  const signed = nestRoutesRegistry().answers.get(method.controller)?.get(method.name);
+  const signed = method.signature.answer;
   const body = response.body ?? signed ?? undefined;
 
   if (body === undefined && signed !== null && answersAValue(method.read.returnType)) {
