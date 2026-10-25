@@ -55,6 +55,7 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
    | a job or an event handler doing work | anything other than building one command and sending it |
    | an effect the commit does not cover | a `before-commit` domain event handler calling a gateway, an outside system or a cache; an `after-commit` handler saving an aggregate or publishing an integration event; work that must not be lost left in an `after-commit` handler |
    | a leak inward | an ORM, HTTP, logging or tracing type in `domain/` or `application/`; rows returned through a port; a port named after a technology |
+   | a contract broken for deployed clients | in `git diff -- openapi/`, an `operationId` gone while its method and path stay, a `GET` route given another method, a route that now receives a file or a raw body: with `stack.rpc` `orpc` or `trpc`, a front end already deployed calls a procedure that is gone (the table "Breaking or not" of the `document` skill); blocking unless the change says the consumers are moved with it |
    | generic or reused errors | `throw new Error` for a business failure; one error class for several cases; an error code missing from the route |
    | weak tests | a mock; an assertion on a private field or a call; a failure path, a denial or an idempotent replay not covered; an `it.todo` left |
    | a hand-made registration | a token constant, a `*.ports.ts` file, a hand-edited barrel, an adapter instantiated outside the composition root, a handler calling `pullEvents()` or a dispatcher |

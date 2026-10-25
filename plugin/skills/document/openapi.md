@@ -45,9 +45,14 @@ documentation page offers a selector between them. `npx ddd-ts-kit docs` writes 
 | new required request field, stricter validation, removed or renamed field, changed type | yes |
 | new error code or status on an existing route | yes for clients that enumerate errors |
 | new enum value in a response | yes for clients with exhaustive switches |
+| renamed `operationId` | yes: with `stack.rpc` `orpc` or `trpc`, a deployed client calls a procedure that answers 404; for the HTTP client, the function it calls is renamed at its next build |
+| a `GET` route given another method | yes for a tRPC client: its query becomes a mutation |
+| a route that now receives a file or a raw body | yes for an oRPC or tRPC client: the route no longer has a procedure |
 
 A breaking change needs a new route version or a deprecation period (`deprecated: true` on
-the old route) and a look at every known consumer before merging. Tightening validation on a
+the old route) and a look at every known consumer before merging. A procedure has no deprecation
+period: its name is the `operationId`, which one route holds at a time, so rename it only when
+every oRPC or tRPC consumer is rebuilt and deployed with the change. Tightening validation on a
 deployed API breaks clients that sent what used to be tolerated.
 
 ## Clients

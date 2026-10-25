@@ -1,5 +1,5 @@
 [English](client-sdk.md) · **Français**
-<!-- translation-of: client-sdk.md sha256:3ed2efebb961d500 -->
+<!-- translation-of: client-sdk.md sha256:db63cde7232af4a5 -->
 
 # SDK client : un client typé à partir du contrat OpenAPI
 
@@ -381,6 +381,12 @@ contrat est dans `error.data.problem`, qui n'est pas rétréci aux codes de la p
 de votre choix, ou les intégrations de TanStack Query). Ce que les procédures ne portent pas reste
 au client HTTP, comme sur oRPC, corps binaires compris. Passer d'`orpc` à `trpc`, ou revenir à
 `none`, puis lancer `sdk` supprime l'entrée que l'API ne sert plus et ses dépendances.
+
+Sur oRPC comme sur tRPC, une procédure est nommée par son `operationId` et appelée sous ce nom :
+un `operationId` renommé, une route `GET` passée à une autre méthode (une *query* tRPC qui devient
+une *mutation*) ou une route qui reçoit désormais un fichier casse un front-end déjà déployé, ce
+que le client HTTP ne remarquerait qu'à sa prochaine compilation. Ne renommez qu'avec chaque
+consommateur recompilé et déployé avec le changement.
 
 ### Limites
 
