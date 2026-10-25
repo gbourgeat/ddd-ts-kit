@@ -16,8 +16,9 @@ export function knipVars(config: Config): RenderContext {
     apps: config.worker || Object.values(config.contexts).some((context) => context.deployable),
     e2eEntry: when(',\n    "test/e2e/**/*.ts"'),
     e2eProject: when(', "test/**/*.ts"'),
-    e2eConfig: when(', "vitest.e2e.config.ts"'),
-    mutationConfig: config.stack.tests === 'vitest' ? ', "vitest.mutation.config.ts"' : '',
+    // The plugin of the runner of the specs reads its configurations, and enters by the specs, the fakes and the worlds.
+    runner: config.stack.tests,
+    runnerConfigs: runnerConfigs(config, when),
     e2eSpecs: when(', "test/e2e/**/*.e2e.spec.ts"'),
     testDatabase: opensTestDatabaseLater(config)
       ? `,\n      "${config.platformDir}/database/open-test-database.ts"`
@@ -25,6 +26,14 @@ export function knipVars(config: Config): RenderContext {
     ignores: ignored.length > 0,
     ignored: JSON.stringify(ignored),
   };
+}
+
+/** The configuration files of the runner of the specs: the unit one, the end-to-end one with an HTTP stack, the mutation one. */
+function runnerConfigs(config: Config, when: (text: string) => string): string {
+  const name = (role: string): string =>
+    config.stack.tests === 'jest' ? `"jest${role}.config.js"` : `"vitest${role}.config.ts"`;
+
+  return `${name('')}${when(`, ${name('.e2e')}`)}, ${name('.mutation')}`;
 }
 
 /**

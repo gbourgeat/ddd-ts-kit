@@ -1,5 +1,5 @@
 [English](spend-management-example.md) · **Français**
-<!-- translation-of: spend-management-example.md sha256:94500933d3c969b0 -->
+<!-- translation-of: spend-management-example.md sha256:dfd0c78ef13239ee -->
 
 # Proposition : un second exemple, la gestion des dépenses sur la pile la plus populaire
 
@@ -25,7 +25,7 @@ partie est marquée construite ici quand sa dernière *pull request* est fusionn
 
 | Partie | Verdict |
 |---|---|
-| 1. Le kit sur la pile : file et processus sur Nest, *tenancy* et audit sur Prisma, le *preset* sur Nest et Prisma | en cours, avant l'exemple : 1.1 construite (#273), 1.2 construite (#276, modèles de lecture compris), 1.3 construite (#297), 1.4 construite (#287), 1.5 à construire |
+| 1. Le kit sur la pile : file et processus sur Nest, *tenancy* et audit sur Prisma, le *preset* sur Nest et Prisma | en cours, avant l'exemple : 1.1 construite (#273), 1.2 construite (#276, modèles de lecture compris), 1.3 construite (#297), 1.4 construite (#287), 1.5 construite (#301, #302), 1.6 construite (#306), le registre des tâches TypeORM et le défaut de la file sur tout conteneur (#298) |
 | 2. L'exemple : `examples/spend-management`, sept contextes, les documents de la méthode | à construire, après la partie 1 |
 | 3. Le dépôt : un second *workspace* dans les portes, le site, la page des exemples | à construire, avec la partie 2 |
 | MySQL | **pas dans cet exemple**, voir [Ce qui est laissé de côté](#ce-qui-est-laissé-de-côté-et-pourquoi) |

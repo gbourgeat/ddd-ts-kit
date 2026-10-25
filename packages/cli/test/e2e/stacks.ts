@@ -333,12 +333,12 @@ export function label(stack: StackFlags): string {
 }
 
 /**
- * The stacks the workspace can run as generated. Left out: jest (not installed in this workspace),
- * prisma (its client has to be generated and a database reached) and typeorm (not installed at the
- * workspace root); the type check reads the last two, this does not run them.
+ * The stacks the workspace can run as generated, on Vitest or on Jest (both installed at the workspace
+ * root). Left out: prisma (its client has to be generated and a database reached) and typeorm (not
+ * installed at the workspace root); the type check reads them, this does not run them.
  */
 export const RUNNABLE: readonly StackFlags[] = STACKS.filter(
-  (stack) => stack.tests === 'vitest' && stack.orm !== 'prisma' && stack.orm !== 'typeorm',
+  (stack) => stack.orm !== 'prisma' && stack.orm !== 'typeorm',
 );
 
 export const SLOW = process.env['DDD_TS_KIT_E2E'] === '1';

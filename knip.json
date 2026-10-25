@@ -6,7 +6,11 @@
     "publint",
     "eslint-formatter-gitlab",
     "@electric-sql/pglite",
-    "@electric-sql/pglite-socket"
+    "@electric-sql/pglite-socket",
+    "@jest/globals",
+    "@swc/core",
+    "@swc/jest",
+    "jest"
   ],
   "workspaces": {
     ".": {

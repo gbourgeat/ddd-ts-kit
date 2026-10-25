@@ -111,14 +111,25 @@ function ranges(names: readonly string[]): Record<string, string> {
   return Object.fromEntries(names.map((name) => [name, VERSIONS[name] ?? 'latest']));
 }
 
-/** The analyzers of the pipeline, at its versions. The GitLab report formatter only where a GitLab pipeline uses it. */
+/**
+ * The analyzers of the pipeline, at its versions. The GitLab report formatter only where a GitLab
+ * pipeline uses it, the coverage of Vitest only where Vitest runs the specs: Jest measures its own.
+ */
 function analyzers(config: Config): Record<string, string> {
-  const { 'eslint-formatter-gitlab': gitlabFormatter, ...common } = pipelineManifest().devDependencies;
+  const {
+    'eslint-formatter-gitlab': gitlabFormatter,
+    '@vitest/coverage-v8': vitestCoverage,
+    ...common
+  } = pipelineManifest().devDependencies;
+
   const usesGitlab = config.stack.ci === 'gitlab' || config.stack.ci === 'both';
 
   return {
     ...common,
     ...(usesGitlab && gitlabFormatter !== undefined ? { 'eslint-formatter-gitlab': gitlabFormatter } : {}),
+    ...(config.stack.tests === 'vitest' && vitestCoverage !== undefined
+      ? { '@vitest/coverage-v8': vitestCoverage }
+      : {}),
   };
 }
 

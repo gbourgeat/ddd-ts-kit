@@ -55,21 +55,21 @@ describe('the import alias', () => {
     ).toBe('platform/observability/errors');
   });
 
-  it('gives jest a mapping without the extension when the imports are written without one, and still answers the TypeScript source alone', () => {
+  it('gives jest a mapping without the extension when the imports are written without one: the TypeScript source, then the barrel of a directory', () => {
     const mapper = moduleNameMapper(ROOTS, '');
     const [pattern = '', target] = Object.entries(mapper)[0] ?? [];
 
     expect(mapper).toEqual({
-      '^@/(.*)$': '<rootDir>/src/$1.ts',
-      '^\\$test/(.*)$': '<rootDir>/test/$1.ts',
-      '^\\$scripts/(.*)$': '<rootDir>/scripts/$1.ts',
+      '^@/(.*)$': ['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts'],
+      '^\\$test/(.*)$': ['<rootDir>/test/$1.ts', '<rootDir>/test/$1/index.ts'],
+      '^\\$scripts/(.*)$': ['<rootDir>/scripts/$1.ts', '<rootDir>/scripts/$1/index.ts'],
     });
 
     expect(new RegExp(pattern).exec('@/contexts/billing/domain/aggregates/invoice.aggregate')?.[1]).toBe(
       'contexts/billing/domain/aggregates/invoice.aggregate',
     );
 
-    expect(target).toBe('<rootDir>/src/$1.ts');
+    expect(target).toEqual(['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts']);
     expect(new RegExp(pattern).test('@ddd-ts-kit/kernel')).toBe(false);
     expect(new RegExp(pattern).test('@scope/package/file.js')).toBe(false);
   });

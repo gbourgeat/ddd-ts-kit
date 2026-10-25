@@ -16,17 +16,22 @@ describe('A bounded context is a deployable unit in waiting', () => {
     expect(() => createPlatform(inertPersistence(), { events: inProcessEvents() })).not.toThrow();
   });
 
-  it.each(contexts)('%s wires alone, on the platform, with no other context', (name, module) => {
-    const platform = createPlatform(inertPersistence(), { events: inProcessEvents() });
+  // Jest refuses a table without rows: until the first context joins the project, its cases wait.
+  if (contexts.length === 0) {
+    it.todo('wires each context alone, with its scheduled jobs, once the project has one');
+  } else {
+    it.each(contexts)('%s wires alone, on the platform, with no other context', (name, module) => {
+      const platform = createPlatform(inertPersistence(), { events: inProcessEvents() });
 
-    expect(module(platform).name).toBe(name);
-  });
+      expect(module(platform).name).toBe(name);
+    });
 
-  it.each(contexts)('%s takes its scheduled jobs with it, and no job of another context', (name, module) => {
-    const platform = createPlatform(inertPersistence(), { events: inProcessEvents() });
+    it.each(contexts)('%s takes its scheduled jobs with it, and no job of another context', (name, module) => {
+      const platform = createPlatform(inertPersistence(), { events: inProcessEvents() });
 
-    module(platform);
+      module(platform);
 
-    expect(platform.jobs.describe().filter((job) => !job.name.startsWith(name + '.'))).toEqual([]);
-  });
+      expect(platform.jobs.describe().filter((job) => !job.name.startsWith(name + '.'))).toEqual([]);
+    });
+  }
 });

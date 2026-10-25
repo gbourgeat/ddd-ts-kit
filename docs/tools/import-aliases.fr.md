@@ -1,5 +1,5 @@
 [English](import-aliases.md) · **Français**
-<!-- translation-of: import-aliases.md sha256:f72a49d22183bb04 -->
+<!-- translation-of: import-aliases.md sha256:264a5b936077ae12 -->
 
 # Alias d'import : les `paths` de tsconfig, réécrits à la construction
 
@@ -161,7 +161,7 @@ d'un *scope*), `name/` ou `~/` (des noms de *package* possibles), et `$test/`, `
 | `node` (production, `npm start`, l'image Docker) | rien : la sortie ne contient que des chemins relatifs | rien |
 | tsx (`npm run dev`) | `paths`, de lui-même, aussi pour un fichier chargé avec `--import` | rien : le script n'a besoin d'aucune option pour cela |
 | vitest | `paths`, une fois qu'on le lui dit | `resolve: { tsconfigPaths: true }` dans ses configurations (natif dans vite 8, sans *plugin*) |
-| jest | rien de tsconfig | `moduleNameMapper`, les mêmes entrées, chaque motif se terminant comme les imports : `'^@/(.*)$': '<rootDir>/src/$1.ts'` sous `none`, `'^@/(.*)\\.js$': '<rootDir>/src/$1.ts'` sous `js`. La cible est toujours la source TypeScript |
+| jest | rien de tsconfig | `moduleNameMapper`, les mêmes entrées, chaque motif se terminant comme les imports : `'^@/(.*)$': ['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts']` sous `none` (la source, puis la barrière d'un dossier), `'^@/(.*)\\.js$': '<rootDir>/src/$1.ts'` sous `js`. La cible est toujours la source TypeScript |
 | dependency-cruiser | `paths`, une fois qu'on le lui dit | `tsConfig: { fileName: 'tsconfig.json' }` dans le `.dependency-cruiser.cjs` généré |
 | knip | `paths`, de lui-même | rien |
 | drizzle-kit (`npm run db:generate <what-it-does>`) | `paths`, de lui-même, quand il charge le schéma TypeScript | rien : le script est `ddd-ts-kit drizzle-generate --name`, qui lance `drizzle-kit generate --name` à la racine du projet |
@@ -183,9 +183,9 @@ export default defineConfig({
 ```js
 // jest.config.js : jest ne lit aucun tsconfig, la correspondance est donc répétée, chaque cible est une source.
 moduleNameMapper: {
-  '^@/(.*)$': '<rootDir>/src/$1.ts',
-  '^\\$test/(.*)$': '<rootDir>/test/$1.ts',
-  '^\\$scripts/(.*)$': '<rootDir>/scripts/$1.ts',
+  '^@/(.*)$': ['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts'],
+  '^\\$test/(.*)$': ['<rootDir>/test/$1.ts', '<rootDir>/test/$1/index.ts'],
+  '^\\$scripts/(.*)$': ['<rootDir>/scripts/$1.ts', '<rootDir>/scripts/$1/index.ts'],
 },
 ```
 

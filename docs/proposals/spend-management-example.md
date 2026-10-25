@@ -24,7 +24,7 @@ marked built here when its last pull request lands.
 
 | Part | Verdict |
 |---|---|
-| 1. The kit on the stack: queue and processes on Nest, tenancy and audit on Prisma, the preset on Nest and Prisma | under way, before the example: 1.1 built (#273), 1.2 built (#276, read models included), 1.3 built (#297), 1.4 built (#287), 1.5 to build |
+| 1. The kit on the stack: queue and processes on Nest, tenancy and audit on Prisma, the preset on Nest and Prisma | under way, before the example: 1.1 built (#273), 1.2 built (#276, read models included), 1.3 built (#297), 1.4 built (#287), 1.5 built (#301, #302), 1.6 built (#306), the TypeORM job store and the default of the queue on every container (#298) |
 | 2. The example: `examples/spend-management`, seven contexts, the documents of the method | to build, after part 1 |
 | 3. The repository: a second workspace in the gates, the website, the examples page | to build, with part 2 |
 | MySQL | **not in this example**, see [What is left out](#what-is-left-out-and-why) |

@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:4ee9710b9a03899e -->
+<!-- translation-of: test-runners.md sha256:415aa69660e00ed6 -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -116,7 +116,7 @@ cette page.
   legacy des décorateurs et les deux lanceurs le gèrent. Dans le mode standard, Vitest a besoin
   d'une ligne de *plugin*, que la configuration générée contient ; le *template* Jest règle le
   mode standard dans les options de `@swc/jest`.
-- **Portes de couverture par couche.** Les deux configurations lisent les seuils dans `ddd-ts-kit.config.json` (`governedCoverage`, `governedJestCoverage`). La porte Vitest est exécutée sur des projets générés par la suite de bout en bout de la CLI ; celle de Jest est écrite mais pas exécutée là, le *workspace* n'installe pas Jest.
+- **Portes de couverture par couche.** Les deux configurations lisent les seuils dans `ddd-ts-kit.config.json` (`governedCoverage`, `governedJestCoverage`). La porte Vitest est exécutée sur des projets générés par la suite de bout en bout de la CLI ; celle de Jest est écrite mais pas exécutée là, même si la suite exécute les *specs* d'une pile Jest (plus bas).
 - **Habitudes du framework.** La documentation et les générateurs de NestJS supposent Jest ;
   c'est une habitude, pas une contrainte, puisque les gestionnaires et les agrégats du kit se
   testent sans le framework.
@@ -254,7 +254,7 @@ import { governedJestCoverage, unaffectedContexts } from '@ddd-ts-kit/testing/co
 
 export default {
   testEnvironment: 'node',
-  moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1.ts' }, // les "paths" de tsconfig.json, répétés
+  moduleNameMapper: { '^@/(.*)$': ['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts'] }, // les "paths" de tsconfig.json, répétés
   testPathIgnorePatterns: ['/node_modules/', ...unaffectedContexts().map((directory) => `/${directory}`)],
   extensionsToTreatAsEsm: ['.ts'],
   transform: {
@@ -298,14 +298,20 @@ export default {
   `vm.SourceTextModule` et `vm.SyntheticModule` de « Stability: 1 - Experimental », et la page
   propre à Jest dit sa prise en charge d'ESM expérimentale ; simuler un module en ESM passe par
   `jest.unstable_mockModule`.
-- `@swc/jest` a été publié pour la dernière fois en septembre 2025 (0.2.39 sur npm) ; il
-  fonctionne avec le Jest actuel dans la mesure où le *template* le suppose, ce qui n'a pas été
-  exécuté pour cette page.
+- `@swc/jest` a été publié pour la dernière fois en septembre 2025 (0.2.39 sur npm) ; il tourne
+  avec Jest 30.5.2, que le *workspace* installe : la suite de bout en bout de la CLI exécute les
+  *specs* d'un projet généré sur Jest dès sa première minute, et le *preset* identity sur NestJS,
+  class-validator, Prisma et Jest, la pile de l'exemple de gestion des dépenses.
 - Le *template* écrit le mode des décorateurs du projet dans `jest.config.js` quand le projet est
   généré : Jest ne lit pas `tsconfig.json`, si bien qu'un projet qui change plus tard son mode
   là-bas change aussi les options de `transform` de `jest.config.js`.
-- Pas de séparation unit et integration, pas de preuve dans le dépôt d'une exécution
-  complète : c'est à vous de les ajouter et de les faire fonctionner.
+- Pas de séparation unit et integration : les *specs* tournent dans un seul projet Jest, avec
+  60 secondes par test et par *hook* (`testTimeout`), comme Vitest en donne aux *hooks* qui ouvrent
+  la base de test.
+- Un import sans terminaison peut nommer un dossier : chaque alias vise la source, puis la
+  barrière du dossier (`['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts']`). Sur Prisma, le
+  client qu'écrit `prisma generate` nomme ses propres modules en `.js`, ramenés à leurs sources
+  (`'^(\\.{1,2}/.*)\\.js$': '$1'`).
 
 **L'un comme l'autre**
 

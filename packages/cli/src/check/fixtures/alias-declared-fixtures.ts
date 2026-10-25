@@ -9,7 +9,7 @@ const COMPILE = 'node node_modules/@typescript/native/bin/tsc -p tsconfig.build.
 const BUILD = `${COMPILE} && ddd-ts-kit build-aliases`;
 const JEST_MAPPER = String.raw`moduleNameMapper: { '^\\$app/(.*)\\.js$': '<rootDir>/src/$1.ts', '^\\$test/(.*)\\.js$': '<rootDir>/test/$1.ts', '^\\$scripts/(.*)\\.js$': '<rootDir>/scripts/$1.ts' }`;
 
-const BARE_JEST_MAPPER = String.raw`moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1.ts', '^\\$test/(.*)$': '<rootDir>/test/$1.ts', '^\\$scripts/(.*)$': '<rootDir>/scripts/$1.ts' }`;
+const BARE_JEST_MAPPER = String.raw`moduleNameMapper: { '^@/(.*)$': ['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts'], '^\\$test/(.*)$': ['<rootDir>/test/$1.ts', '<rootDir>/test/$1/index.ts'], '^\\$scripts/(.*)$': ['<rootDir>/scripts/$1.ts', '<rootDir>/scripts/$1/index.ts'] }`;
 const BUNDLER = { module: 'ESNext', moduleResolution: 'Bundler', customConditions: ['node'] };
 
 export const ALIAS_DECLARED_FIXTURES: readonly Fixture[] = [

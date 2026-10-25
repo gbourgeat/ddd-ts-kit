@@ -1,4 +1,11 @@
-import { aliasRoots, directoryAlias, FIXED_ALIAS_ROOTS, moduleNameMapper, specifierSuffix } from '../alias';
+import {
+  aliasRoots,
+  directoryAlias,
+  FIXED_ALIAS_ROOTS,
+  mapperTargetText,
+  moduleNameMapper,
+  specifierSuffix,
+} from '../alias';
 import type { Config } from '../config';
 import type { RenderContext } from '../templating';
 
@@ -29,6 +36,6 @@ export function aliasVars(config: Config): RenderContext {
 
 function jestMapperLines(config: Config): string {
   return Object.entries(moduleNameMapper(aliasRoots(config), specifierSuffix(config.importExtension)))
-    .map(([pattern, target]) => `'${pattern.replaceAll('\\', '\\\\')}': '${target}',`)
+    .map(([pattern, target]) => `'${pattern.replaceAll('\\', '\\\\')}': ${mapperTargetText(target)},`)
     .join('\n    ');
 }
