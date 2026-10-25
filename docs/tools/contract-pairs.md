@@ -7,8 +7,8 @@
 framework and the OpenAPI contract is generated from the same declaration. The framework and the
 validation library are therefore two choices made at `init` and changed later without touching a
 route's behaviour. Four pairs are generated and run end to end by the kit: Express and zod,
-Fastify and TypeBox, Hono on Node and zod, NestJS and class-validator. oRPC is not a pair: it
-serves the same routes a second way, as procedures for a typed TypeScript client. What separates the pairs is less speed than the team: what it already knows,
+Fastify and TypeBox, Hono on Node and zod, NestJS and class-validator. oRPC and tRPC are not
+pairs: they serve the same routes a second way, as procedures for a typed TypeScript client. What separates the pairs is less speed than the team: what it already knows,
 how it writes types, and how much of a framework it is ready to leave unused.
 
 ## What every pair keeps
@@ -280,6 +280,25 @@ policy), the representations other than JSON, uploads, files and lists streamed 
 ([the package README](../../packages/http/README.md), "oRPC procedures"). A client that needs
 them keeps the HTTP client, which `ddd-ts-kit sdk` still writes ([client SDK](client-sdk.md)).
 
+## tRPC: the same door, for a tRPC client
+
+tRPC declares no contract: a client is typed by the type of the server's router, which a front
+end imports from the server's code, and its procedures have no path, no method and no OpenAPI
+document. As a pair, it would make the router the declaration of the API, next to the routes.
+The kit serves it the way it serves oRPC (`stack.rpc: trpc`, `init --rpc trpc`):
+
+- `trpcRouter` of `@ddd-ts-kit/http/trpc` serves each route as a procedure named by its
+  `operationId`, a query for a `GET` and a mutation for the other methods, through the same
+  `executeRoute`;
+- a refusal is a `TRPCError` of the code tRPC has for its status, with the problem document in
+  `data.problem`: tRPC has a fixed set of codes, so the code of the kit is read there;
+- the type of the router is written by `ddd-ts-kit sdk` from the OpenAPI document
+  (`<client>/trpc`, `AppRouter`): a front end imports the client, never the server's code.
+
+What tRPC types less than oRPC: a refusal is not narrowed to the codes of its procedure, its
+`data.problem.code` is any code of the contract; and a binary body has no procedure answer, as
+tRPC answers JSON only.
+
 ## Sources
 
 - npm registry, read on 2026-10-13: express, fastify, hono, @hono/node-server, @nestjs/core,
@@ -293,6 +312,9 @@ them keeps the HTTP client, which `ddd-ts-kit sdk` still writes ([client SDK](cl
   `@orpc/openapi` and `@orpc/zod` 1.15.6 and zod 4.6.5; its code is summarised in the table above.
   The procedures of the kit are proven with `@orpc/server`, `@orpc/client` and `@orpc/contract`
   1.16.1 (`packages/http/test/orpc.spec.ts`, and a generated project on each framework).
+- tRPC: https://trpc.io. The procedures of the kit are proven with `@trpc/server` and
+  `@trpc/client` 11.19.0 (`packages/http/test/trpc.spec.ts`, a generated project on each
+  framework, and the router type of the client of the example, type-checked).
 - Not verified: Hono on Bun, Deno or an edge runtime; TypeBox through `Type.Ref` and a context.
 
 ## See also

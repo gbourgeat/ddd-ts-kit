@@ -147,27 +147,62 @@ describe('the oRPC contract of the client of the example', () => {
   it('type-checks a consumer of the procedures, each refusal of the contract narrowed to its codes', () => {
     write(root, 'consumer/consumer.ts', RPC_CONSUMER);
 
-    write(
-      root,
-      'consumer/tsconfig.json',
-      JSON.stringify({
-        compilerOptions: {
-          target: 'ES2023',
-          lib: ['ES2023', 'DOM'],
-          module: 'ESNext',
-          moduleResolution: 'Bundler',
-          strict: true,
-          noUncheckedIndexedAccess: true,
-          exactOptionalPropertyTypes: true,
-          verbatimModuleSyntax: true,
-          noEmit: true,
-          skipLibCheck: true,
-          types: [],
-          paths: { 'scheduling-api-client/orpc': ['../src/orpc.ts'] },
-        },
-        include: ['consumer.ts'],
-      }),
-    );
+    write(root, 'consumer/tsconfig.json', consumerConfig('scheduling-api-client/orpc', '../src/orpc.ts'));
+
+    expect(compile(path.join(root, 'consumer'), '-p', 'tsconfig.json')).toBe('');
+  });
+});
+
+/** A consumer of the procedures of the example, through the tRPC router type of its client. */
+const TRPC_CONSUMER = `import { createRpcClient, isRpcRefusal } from 'scheduling-api-client/trpc';
+
+const trpc = createRpcClient({ url: 'http://127.0.0.1:3000/trpc', headers: () => ({ authorization: 'Bearer token' }) });
+
+export async function opened(): Promise<string> {
+  try {
+    const practice = await trpc.openPractice.mutate({ body: { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' } });
+
+    return practice.id;
+  } catch (error) {
+    if (isRpcRefusal(error)) {
+      const code: string | undefined = error.data?.problem?.code;
+      const status: number | undefined = error.data?.httpStatus;
+
+      return \`\${code ?? 'none'} \${String(status)}\`;
+    }
+
+    throw error;
+  }
+}
+
+export async function appointment(appointmentId: string): Promise<string> {
+  const found = await trpc.getAppointment.query({ path: { appointmentId } });
+
+  return found.id;
+}
+
+// @ts-expect-error an operation that is not a GET is a mutation, not a query
+export const asQuery = () => trpc.openPractice.query({ body: { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' } });
+
+// @ts-expect-error a procedure the API does not serve
+export const missing = trpc.noSuchProcedure;
+`;
+
+describe('the tRPC router type of the client of the example', () => {
+  const contract = fromYaml(read(REPO_ROOT, 'examples/scheduling/openapi/openapi.yaml'));
+  const root = writtenClient(contract, 'scheduling-api-client', 'trpc');
+
+  // The packages of tRPC, as a workspace that installed the client finds them.
+  fs.symlinkSync(path.join(REPO_ROOT, 'node_modules'), path.join(root, 'node_modules'), 'dir');
+
+  it('compiles with its tRPC entry, for a browser as for Node', () => {
+    expect(compile(root, '-p', 'tsconfig.json')).toBe('');
+    expect(read(root, 'dist/trpc.d.ts')).toContain('export type AppRouter = TRPCBuiltRouter<');
+  });
+
+  it('type-checks a consumer of the procedures: a query for a GET, a mutation otherwise, the problem in data', () => {
+    write(root, 'consumer/consumer.ts', TRPC_CONSUMER);
+    write(root, 'consumer/tsconfig.json', consumerConfig('scheduling-api-client/trpc', '../src/trpc.ts'));
 
     expect(compile(path.join(root, 'consumer'), '-p', 'tsconfig.json')).toBe('');
   });
@@ -192,4 +227,25 @@ function compile(root: string, ...args: string[]): string {
   } catch (error) {
     return error instanceof Error && 'stdout' in error ? String(error.stdout) : String(error);
   }
+}
+
+/** The compiler options of a consumer that imports one entry of the client from its sources. */
+function consumerConfig(entry: string, source: string): string {
+  return JSON.stringify({
+    compilerOptions: {
+      target: 'ES2023',
+      lib: ['ES2023', 'DOM'],
+      module: 'ESNext',
+      moduleResolution: 'Bundler',
+      strict: true,
+      noUncheckedIndexedAccess: true,
+      exactOptionalPropertyTypes: true,
+      verbatimModuleSyntax: true,
+      noEmit: true,
+      skipLibCheck: true,
+      types: [],
+      paths: { [entry]: [source] },
+    },
+    include: ['consumer.ts'],
+  });
 }

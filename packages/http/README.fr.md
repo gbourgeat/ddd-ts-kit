@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:98405e763f823ed0 -->
+<!-- translation-of: README.md sha256:c0516be3b60e3692 -->
 
 # @ddd-ts-kit/http
 
@@ -1393,8 +1393,10 @@ mountExpress(app, routes, options);
 ```
 
 Le contexte d'un appel est un `TrpcContext`, le même qu'`OrpcContext`. Fastify
-(`@trpc/server/adapters/fastify`), Hono (`@trpc/server/adapters/fetch`) et NestJS sur Express le
-montent de la même façon. Montez-le comme un routeur à part, sans le fusionner dans un autre :
+(`@trpc/server/adapters/fastify`), Hono (`@trpc/server/adapters/fetch`) et NestJS sur Express
+(`@trpc/server/adapters/standalone`) le montent de la même façon ; `ddd-ts-kit init --rpc trpc`
+écrit le montage pour le framework du projet, et `ddd-ts-kit sdk` donne à chaque client le type du
+routeur, sous `<client>/trpc`. Montez-le comme un routeur à part, sans le fusionner dans un autre :
 tRPC met en forme une erreur avec le formateur du routeur qu'il sert, et c'est celui de
 `trpcRouter` qui place le document *problem* dans `data.problem`.
 

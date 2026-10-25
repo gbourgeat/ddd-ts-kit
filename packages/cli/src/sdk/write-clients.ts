@@ -6,8 +6,7 @@ import { clientManifest } from './client-manifest';
 import { CLIENTS_DIRECTORY } from './clients-directory';
 import type { PlannedClient } from './planned-client';
 import { putFile } from './put-file';
-
-const ORPC_FILE = 'src/orpc.ts';
+import { RPC_PACKAGES } from './rpc-packages';
 
 /**
  * Writes the client of every document of the contract, and the build config that compiles them
@@ -43,9 +42,11 @@ function writeClient(ws: Workspace, config: Config, client: PlannedClient): void
     putFile(ws, `${directory}/${file}`, content);
   }
 
-  // The contract of procedures the API no longer serves would compile against packages the manifest no longer lists.
-  if (rpc !== 'orpc' && ws.exists(`${directory}/${ORPC_FILE}`)) {
-    ws.delete(`${directory}/${ORPC_FILE}`);
+  // The procedures the API no longer serves would compile against packages the manifest no longer lists.
+  for (const stale of Object.keys(RPC_PACKAGES).filter((kind) => kind !== rpc)) {
+    if (ws.exists(`${directory}/src/${stale}.ts`)) {
+      ws.delete(`${directory}/src/${stale}.ts`);
+    }
   }
 
   const manifest = `${directory}/package.json`;
