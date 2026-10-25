@@ -1322,7 +1322,10 @@ export class AppModule {}
 - A parameter that takes a part whole is validated by its class, read through `schemaOfClass`
   (`classSchema` of class-validator; the project compiles with `emitDecoratorMetadata`, as Nest
   needs); a part named one by one (`@Param('invoiceId')`) is a text; `request` of `@KitRoute`
-  gives a schema of any library instead. `response.body` is a schema or a DTO class.
+  gives a schema of any library instead. `response.body` is a schema or a DTO class. A method
+  answers a body only when `response.body` declares it, as the contract says: one that returns a
+  value without it is refused, when the routes are built if TypeScript recorded its return type,
+  else at the call (a 500, told to `onError`), never answered empty.
 - `nestControllerRoutes(controllers, { schemaOfClass })` gives the same routes without Nest's
   container, for `generateOpenApi`, `orpcRouter` and `trpcRouter`.
 - Refused when the routes are built, because the kit's pipeline would not run them: `@UseGuards`,

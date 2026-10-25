@@ -82,6 +82,12 @@ function synthetic(method: NestMethod, spec: ControllerSpec, answering: () => ob
 
       const answer: unknown = await Reflect.apply(handler, instance, argumentsOf(method, request));
 
+      if (answer !== undefined && spec.response.body === undefined) {
+        throw new DeclarationError(
+          `${where} returned a value and @KitRoute declares no response.body: the kit would answer it empty. Declare the body the route answers, or return nothing.`,
+        );
+      }
+
       return answer;
     }
   }
@@ -118,11 +124,29 @@ function responseOf(
 ): ControllerSpec['response'] {
   const status = response.status ?? read.httpCode ?? (read.method === 'POST' ? 201 : 200);
 
+  if (response.body === undefined && answersAValue(read.returnType)) {
+    throw new DeclarationError(
+      `${where} returns ${describedType(read.returnType)} and @KitRoute declares no response.body: the kit would answer it empty. Declare the body the route answers, or return nothing.`,
+    );
+  }
+
   return {
     status,
     ...(response.description === undefined ? {} : { description: response.description }),
     ...(response.body === undefined ? {} : { body: schemaOf(where, response.body, options) }),
   };
+}
+
+/**
+ * Whether the type TypeScript recorded says the method answers something: `void` is recorded as
+ * nothing, and a `Promise` says nothing of what it holds, which the call then checks.
+ */
+function answersAValue(returnType: unknown): boolean {
+  return returnType !== undefined && returnType !== Promise;
+}
+
+function describedType(returnType: unknown): string {
+  return typeof returnType === 'function' && returnType.name !== '' ? returnType.name : 'a value';
 }
 
 /** The instance Nest's container built, asked once at the first call. */

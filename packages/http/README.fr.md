@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b8dec3128fc18607 -->
+<!-- translation-of: README.md sha256:eeea59787432ccbc -->
 
 # @ddd-ts-kit/http
 
@@ -1377,7 +1377,10 @@ export class AppModule {}
   (`classSchema` de class-validator ; le projet compile avec `emitDecoratorMetadata`, comme Nest le
   demande) ; une partie nommée une à une (`@Param('invoiceId')`) est un texte ; `request` de
   `@KitRoute` donne à la place un schéma de n'importe quelle bibliothèque. `response.body` est un
-  schéma ou une classe DTO.
+  schéma ou une classe DTO. Une méthode ne répond un corps que si `response.body` le déclare, comme
+  le dit le contrat : une méthode qui rend une valeur sans lui est refusée, à la construction des
+  routes si TypeScript a enregistré son type de retour, sinon à l'appel (une 500, signalée à
+  `onError`), jamais répondue vide.
 - `nestControllerRoutes(controllers, { schemaOfClass })` donne les mêmes routes sans le conteneur
   de Nest, pour `generateOpenApi`, `orpcRouter` et `trpcRouter`.
 - Refusés quand les routes sont construites, parce que le pipeline du kit ne les exécuterait pas :
