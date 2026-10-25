@@ -1185,14 +1185,14 @@ refused (`INVALID_JOB_SETTINGS`), a name declared twice too (`DUPLICATE_JOB`).
   enqueues and leaves the shared queue to the worker; a queue kept in its own memory
   (`InMemoryJobStore`, the default) is still consumed, since no other process sees it.
 - **`kernelModule()`** binds `JobStore` (in memory by default: bind `KnexJobStore`,
-  `DrizzleJobStore`, `PrismaJobStore` or `RedisJobStore` with `jobStore`, or no job reaches a worker of another
+  `DrizzleJobStore`, `PrismaJobStore`, `TypeOrmJobStore` or `RedisJobStore` with `jobStore`, or no job reaches a worker of another
   process), `JobQueue` (a `StoredJobQueue` on it, which stores the `traceparent` given by the
   instrumentation) and `QueueWorker` (tuned by `queues: { concurrency, pollIntervalMs, graceMs }`,
   failures to the `ErrorReporter`).
 - **`describe().backgroundJobs`** lists each job, its queue and its options, defaults filled in.
 
 `kernelModule()` also binds `ProcessStore` (in memory by default: bind `KnexProcessStore`,
-`DrizzleProcessStore` or `PrismaProcessStore` with `processStore`) and `ProcessRunner`, the runner of
+`DrizzleProcessStore`, `PrismaProcessStore` or `TypeOrmProcessStore` with `processStore`) and `ProcessRunner`, the runner of
 `@ddd-ts-kit/scheduling` on it, the `JobQueue`, the `CommandBus` and the `UnitOfWork`: the
 handlers that drive a process manager depend on `ProcessRunner`, and its timeout job is a
 background job of the context. In a test application, `app.processes.list()` shows the instances.

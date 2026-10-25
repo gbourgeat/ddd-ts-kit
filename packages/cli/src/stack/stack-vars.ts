@@ -1,4 +1,4 @@
-import type { Config } from '../config';
+import { QUEUE_ORMS, type Config } from '../config';
 import type { RenderContext } from '../templating';
 import { aliasVars } from './alias-vars';
 import { auditVars } from './audit-vars';
@@ -114,7 +114,7 @@ function queueVars(config: Config): RenderContext {
   return {
     ...one(queue, ['memory', 'database', 'redis']),
     stored: queue !== 'memory',
-    processTable: queue !== 'memory' && (orm === 'knex' || orm === 'drizzle' || orm === 'prisma'),
+    processTable: queue !== 'memory' && QUEUE_ORMS.includes(orm),
   };
 }
 

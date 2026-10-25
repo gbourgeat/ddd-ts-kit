@@ -630,7 +630,7 @@ declare class CompileStatementsBackgroundJob implements BackgroundJob<CompileSta
 }
 declare const job: CompileStatementsBackgroundJob;
 
-const store = new InMemoryJobStore(); // KnexJobStore, DrizzleJobStore, PrismaJobStore or RedisJobStore in production
+const store = new InMemoryJobStore(); // KnexJobStore, DrizzleJobStore, PrismaJobStore, TypeOrmJobStore or RedisJobStore in production
 // the JobQueue a use case enqueues on: jobs.enqueue(CompileStatementsBackgroundJob, { month: '2026-10' })
 export const jobs = new StoredJobQueue({ store, clock, ids, scope, traceparent: captureTraceparent });
 

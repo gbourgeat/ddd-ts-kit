@@ -202,7 +202,7 @@ export class ConfirmationDeadlineProcess implements ProcessManager<ConfirmationD
   while that very job is the armed one, so a disarmed or replaced timeout never fires.
 - **Stores.** `InMemoryProcessStore` (kernel) for tests and one process; `KnexProcessStore` and
   `createProcessTable`, `DrizzleProcessStore` and `processesTable`, `PrismaProcessStore` and the
-  `ProcessInstance` model, which save in the transaction of the step. Every store is held by `processStoreContract`.
+  `ProcessInstance` model, `TypeOrmProcessStore` and `processEntity`, which save in the transaction of the step. Every store is held by `processStoreContract`.
 
 The two classes that call the steps, in the example: the handler of a domain event of the
 context, run in the unit of work of the command that booked, and the background job that

@@ -1,5 +1,5 @@
 [English](background-jobs.md) · **Français**
-<!-- translation-of: background-jobs.md sha256:c31f6f5642c9beb3 -->
+<!-- translation-of: background-jobs.md sha256:54badd185cdfd150 -->
 
 # Jobs en arrière-plan
 
@@ -465,7 +465,7 @@ l'`ErrorReporter` (origine `queue`), adaptateur Sentry compris.
 | `DrizzleJobStore`, `jobsTable` | `@ddd-ts-kit/drizzle` | oui | le contrat sur PGlite et sur PostgreSQL en CI |
 | `PrismaJobStore`, le modèle `BackgroundJob` | `@ddd-ts-kit/prisma` | oui | le contrat sur PGlite et sur PostgreSQL en CI |
 | `RedisJobStore` | `@ddd-ts-kit/redis` | attend la validation | le contrat sur Dragonfly en CI (lancé à la main sur Redis 8) |
-| TypeORM | aucun dans cette version | | un projet écrit un `JobStore` sur son ORM, tenu par `jobStoreContract` avec son unité de travail (le store Knex, environ deux cents lignes, sert de modèle) |
+| `TypeOrmJobStore`, `jobEntity` | `@ddd-ts-kit/typeorm` | oui | le contrat sur PGlite et sur PostgreSQL en CI |
 
 Les stores SQL prennent les *jobs* avec `FOR UPDATE SKIP LOCKED` dans une courte transaction qui
 leur est propre, sur PostgreSQL ; en CI, leur contrat s'exécute sur un serveur derrière un pool de
