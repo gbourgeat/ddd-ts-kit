@@ -9,13 +9,16 @@ import { ignore } from '../ignore';
 export interface PublicationSettings {
   readonly exchange: string;
   readonly failOnUnroutable: boolean;
+  /** A publication the broker has not confirmed by then is rejected, so that the relay retries it. */
+  readonly publishTimeoutMs: number;
   /** Called when the channel dies while the connection lives. */
   readonly channelLost: () => void;
 }
 
 /**
  * Publishing with publisher confirms: a publication succeeds only once the broker has taken
- * responsibility for the message, which is what lets an outbox relay mark it published.
+ * responsibility for the message, which is what lets an outbox relay mark it published; one the
+ * broker has not confirmed within `publishTimeoutMs` fails, as on NATS and Kafka.
  */
 export class Publications {
   private readonly returned = new Set<string>();
@@ -87,6 +90,7 @@ export class Publications {
 
     return new Promise((resolve, reject) => {
       const confirmed = (error: unknown): void => {
+        clearTimeout(late);
         this.unconfirmed.delete(confirmed);
 
         // The broker sends the return of an unroutable message before its confirmation.
@@ -100,6 +104,8 @@ export class Publications {
       };
 
       this.unconfirmed.add(confirmed);
+      // A confirmation that never comes (a broker stalled under a full disk, a reply lost) fails the publication.
+      const late = setTimeout(() => confirmed(new Error('not confirmed in time')), this.settings.publishTimeoutMs);
 
       try {
         channel.publish(this.settings.exchange, event.type, content, options, confirmed);
