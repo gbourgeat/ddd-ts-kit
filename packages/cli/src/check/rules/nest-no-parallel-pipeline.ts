@@ -81,7 +81,9 @@ function routedByNest(file: SourceFile): Finding[] {
 }
 
 function servesThroughTheKit(file: SourceFile): boolean {
-  return file.imports.some(({ specifier, names }) => specifier === NEST_BRIDGE && names.includes('KitRoute'));
+  return file.imports.some(
+    ({ specifier, names }) => specifier === NEST_BRIDGE && (names.includes('KitRoute') || names.includes('KitRoutes')),
+  );
 }
 
 function reachesUseCase(file: SourceFile): boolean {

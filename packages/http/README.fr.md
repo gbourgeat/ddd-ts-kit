@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6c8f36d6958be8de -->
+<!-- translation-of: README.md sha256:7cbca173ac096e03 -->
 
 # @ddd-ts-kit/http
 
@@ -1305,8 +1305,11 @@ Utilisez `prefixRoutes` pour un préfixe.
 
 Un projet qui écrit des contrôleurs Nest les garde : `@Controller`, `@Get`, `@Post` et les autres
 méthodes, `@Param`, `@Query`, `@Headers`, `@Body` avec une classe DTO, `@HttpCode`, l'injection par
-constructeur et les modules. `@KitRoute` sur une méthode ajoute ce que Nest ne dit pas : son nom
-dans le contrat, qui peut l'appeler, les refus qu'elle répond, sa réponse. C'est le kit, et non le
+constructeur et les modules. Chaque méthode qui porte un décorateur de route de Nest est une route
+du kit, nommée d'après la méthode (`issueInvoice`, résumé `Issue invoice` ; renommer la méthode
+renomme la route, sa procédure et la fonction de son client), derrière les *guards* de `@KitRoutes`
+sur la classe. `@KitRoute` sur une méthode, facultatif, ajoute ce que Nest ne dit pas :
+un autre nom, ses propres *guards*, les refus qu'elle répond, sa réponse. C'est le kit, et non le
 routeur de Nest, qui sert la méthode : c'est une route du kit, avec ses *guards*, sa validation, ses
 documents *problem*, son traçage et son contrat, et une procédure sur `/rpc` et `/trpc` comme toute
 route.
@@ -1341,7 +1344,7 @@ export class InvoicesController {
   constructor(@Inject(Invoicing) private readonly invoicing: Invoicing) {}
 
   @Post(':invoiceId/issue')
-  @KitRoute({ operationId: 'issueInvoice', summary: 'Issue an invoice', errors: ['INVOICE_ALREADY_ISSUED'] })
+  @KitRoute({ errors: ['INVOICE_ALREADY_ISSUED'] }) // named issueInvoice, after the method
   async issue(
     @Param('invoiceId') invoiceId: string,
     @Body() body: IssueInvoiceBody,

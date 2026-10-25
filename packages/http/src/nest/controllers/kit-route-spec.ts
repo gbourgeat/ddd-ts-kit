@@ -6,12 +6,18 @@ import type { DtoType } from './dto-type';
 
 /**
  * What a route says besides what Nest's decorators say (its method, its path, its parameters, its
- * status): who may call it, the refusals it answers, its answer, its name in the contract.
+ * status): who may call it, the refusals it answers, its answer, its name in the contract. Every
+ * member is optional, and so is `@KitRoute` itself: a method that carries a route decorator of Nest
+ * is a route of the kit, named after the method.
  */
 export interface KitRouteSpec {
-  /** Names the route in the contract, the function of the generated client and the procedure over /rpc and /trpc. */
-  readonly operationId: string;
-  readonly summary: string;
+  /**
+   * Names the route in the contract, the function of the generated client and the procedure over
+   * /rpc and /trpc. Left out, the name of the method: `issueInvoice`.
+   */
+  readonly operationId?: string;
+  /** Left out, the name of the method as a sentence: `Issue invoice`. */
+  readonly summary?: string;
   readonly description?: string;
   /** Added to those of @KitRoutes. */
   readonly tags?: readonly string[];

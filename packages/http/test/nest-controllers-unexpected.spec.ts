@@ -112,7 +112,7 @@ describe('metadata of Nest the kit does not expect', () => {
 
     Controller('bare')(Bare);
 
-    expect(() => nestControllerRoutes([Bare])).toThrow(/no method carries @KitRoute/);
+    expect(() => nestControllerRoutes([Bare])).toThrow(/no method carries a route decorator of Nest/);
     expect(() => KitRoute({ operationId: 'x', summary: 'X' })({}, Symbol('x'))).toThrow(/a method named by a string/);
     expect(() => CurrentActor()(class {}, undefined, 0)).toThrow(/goes on a parameter of a method/);
   });

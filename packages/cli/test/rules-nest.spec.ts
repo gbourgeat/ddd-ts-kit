@@ -75,7 +75,7 @@ describe('nest/no-parallel-pipeline', () => {
     const files = {
       [CONTROLLER]: lines(
         "import { Body, Controller, Param, Post, Req, UseGuards } from '@nestjs/common';",
-        "import { CurrentActor, KitRoute } from '@ddd-ts-kit/http/nest';",
+        "import { CurrentActor, KitRoutes } from '@ddd-ts-kit/http/nest';",
       ),
     };
 

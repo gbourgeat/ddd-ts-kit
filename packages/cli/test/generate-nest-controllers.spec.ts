@@ -70,7 +70,8 @@ describe('generate route under "stack.routes": "nest"', () => {
     expect(controller).toContain('@KitRoutes({ group: InvoicesRoutes })');
     expect(controller).toContain('constructor(@Inject(CommandBus) private readonly commands: CommandBus) {}');
     expect(controller).toContain("@Post(':invoiceId/issue')");
-    expect(controller).toContain("operationId: 'issueInvoice',");
+    expect(controller).toContain('async issueInvoice(');
+    expect(controller).not.toContain('operationId');
     expect(controller).toContain('request: { params: paramsSchema, body: bodySchema },');
     expect(controller).toContain('@Param() params: IssueInvoiceParams');
     expect(controller).toContain('@Body() body: IssueInvoiceBody');
