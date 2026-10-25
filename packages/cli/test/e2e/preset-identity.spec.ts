@@ -4,6 +4,7 @@ import { expectNoFinding } from './expect-no-finding';
 import { installAsPublished } from './install-as-published';
 import { generatePrismaClient } from './generate-prisma-client';
 import { bin, findingsOf, runIn } from './run-in';
+import { allPassed, runSpecs } from './run-specs';
 import { SLOW } from './stacks';
 import { typeErrors } from './type-errors';
 
@@ -33,6 +34,24 @@ const FLAVOURS: readonly (readonly [string, readonly string[]])[] = [
   ['prisma, zod, rbac, shared tables', ['--orm', 'prisma', '--tenancy', 'shared-table']],
   ['explicit, wired by hand, fastify', ['--di', 'manual', '--http', 'fastify']],
   ['explicit, nest, class-validator', ['--http', 'nest', '--di', 'nest', '--validation', 'class-validator']],
+  // The stack of the spend management example: NestJS, class-validator, Prisma with tenants, Jest.
+  [
+    'nest, class-validator, prisma, shared tables, jest',
+    [
+      '--http',
+      'nest',
+      '--di',
+      'nest',
+      '--validation',
+      'class-validator',
+      '--orm',
+      'prisma',
+      '--tenancy',
+      'shared-table',
+      '--tests',
+      'jest',
+    ],
+  ],
   [
     'abac, fastify, shared tables, jwt, schemas per route',
     ['--authz', 'abac', '--http', 'fastify', '--tenancy', 'shared-table', '--schemas', 'per-route'],
@@ -82,9 +101,10 @@ describe.runIf(SLOW).each(FLAVOURS)('a project bootstrapped with the identity pr
 
     expect(typeErrors(checked)).toBe('');
 
-    const specs = runIn(root, { command: bin('vitest'), args: ['run'] });
+    const tests = flags.includes('jest') ? 'jest' : 'vitest';
+    const specs = runSpecs(root, tests);
 
-    expect(specs).toMatch(/Test Files\s+\d+ passed/);
+    expect(specs).toMatch(allPassed(tests));
     expect(specs).not.toContain('failed');
   }, 480_000);
 });

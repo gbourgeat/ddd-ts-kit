@@ -4,6 +4,7 @@ import { initFlags } from '../support/init-flags';
 import { expectNoFinding } from './expect-no-finding';
 import { installAsPublished } from './install-as-published';
 import { bin, runIn } from './run-in';
+import { allPassed, runSpecs } from './run-specs';
 import { NATIVE_COMPILER } from './type-errors';
 
 /**
@@ -24,7 +25,7 @@ export function initAloneIsGreen(stack: StackFlags, contexts: readonly string[])
 
   // Not a finding, and still a remark: a pattern of its configuration that matches nothing, a note it no longer needs.
   expect(runIn(root, { command: 'sh', args: ['-c', `${bin('knip')} 2>&1`] })).toBe('');
-  expect(runIn(root, { command: bin('vitest'), args: ['run'] })).toMatch(/Test Files\s+\d+ passed/);
+  expect(runSpecs(root, stack.tests)).toMatch(allPassed(stack.tests));
 
   documentsAreCurrent(root);
 }
