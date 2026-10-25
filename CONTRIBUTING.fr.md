@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:2936c2f2f124420a -->
+<!-- translation-of: CONTRIBUTING.md sha256:d07c44a664b91c84 -->
 
 # Contribuer
 
@@ -51,6 +51,7 @@ npm run lint
 npm run format:check
 node packages/cli/dist/bin.js check --self
 npm run check:dashes
+npm run check:parity
 npm run docs:translations
 npm run docs:samples
 node --test plugin/hooks/guard.test.mjs
@@ -62,6 +63,13 @@ node --test plugin/hooks/guard.test.mjs
   changement de règle commence là, puis atteint le checker, les templates et les skills dans
   la même pull request. Le test de bout en bout de la CLI (tout générer, puis vérifier) doit
   rester vert : le générateur et le checker ne sont jamais en désaccord.
+- Les membres d'une famille de paquets (les quatre ORM, les brokers, les loggers) sont à
+  parité : une option, ou une capacité d'un contrat, qu'un membre a, les autres l'ont aussi, ou
+  `pipeline/monorepo/families.mjs` dit, membre par membre, pourquoi non. `npm run check:parity`
+  échoue sur une asymétrie que personne n'a écrite, et sur une asymétrie écrite qui n'est plus
+  vraie. Un comportement d'un adaptateur est prouvé par le contrat de son port dans
+  `@ddd-ts-kit/testing`, jamais par une spec d'un seul paquet : une nouvelle option vient avec la
+  capacité du contrat qui la prouve, que chaque membre exécute alors.
 - Une nouvelle règle de vérification vient avec une fixture qui passe et une fixture qui
   échoue, une phrase `fix` et une entrée `explain`.
 - Un changement qui fait signaler aux contrôles ce qu'ils ne signalaient pas (une nouvelle

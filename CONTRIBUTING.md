@@ -46,6 +46,7 @@ npm run lint
 npm run format:check
 node packages/cli/dist/bin.js check --self
 npm run check:dashes
+npm run check:parity
 npm run docs:translations
 npm run docs:samples
 node --test plugin/hooks/guard.test.mjs
@@ -57,6 +58,13 @@ node --test plugin/hooks/guard.test.mjs
   rule starts there, then reaches the checker, the templates and the skills in the same pull
   request. The end-to-end test of the CLI (generate everything, then check) must stay green:
   the generator and the checker never disagree.
+- The members of a family of packages (the four ORM, the brokers, the loggers) are at parity:
+  an option, or a capability of a contract, that one member has, the others have too, or
+  `pipeline/monorepo/families.mjs` says, member by member, why not. `npm run check:parity` fails
+  on an asymmetry nobody wrote down, and on a written one that is no longer true. A behaviour of
+  an adapter is proven by the contract of its port in `@ddd-ts-kit/testing`, never by a spec of
+  one package alone: a new option comes with the capability of the contract that proves it,
+  which every member then runs.
 - A new check rule comes with a passing and a failing fixture, a `fix` sentence and an
   `explain` entry.
 - A change that makes the checks report what they did not (a new rule, a rule that judges more
