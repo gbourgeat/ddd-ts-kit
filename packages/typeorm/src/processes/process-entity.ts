@@ -7,8 +7,9 @@ import { entityName } from '../outbox/entity-name';
 import type { ProcessRow } from './process-row';
 
 /**
- * The instances of the process managers as an `EntitySchema`, on PostgreSQL: one row per process
- * and correlation key, its JSON state, its version, its end and its armed timeouts.
+ * The instances of the process managers as an `EntitySchema`, on PostgreSQL: one row per tenant,
+ * process and correlation key, its JSON state, its version, its end and its armed timeouts. The
+ * tenant is the empty text outside any tenant.
  */
 export function processEntity(options: PostgresEntityOptions = {}): EntitySchema<ProcessRow> {
   return new EntitySchema<ProcessRow>({
@@ -16,6 +17,7 @@ export function processEntity(options: PostgresEntityOptions = {}): EntitySchema
     tableName: options.tableName ?? 'process_instances',
     ...(options.schema === undefined ? {} : { schema: options.schema }),
     columns: {
+      tenantId: { type: 'varchar', length: INDEXABLE_LENGTH, primary: true, name: 'tenant_id', default: '' },
       name: { type: 'varchar', length: INDEXABLE_LENGTH, primary: true },
       id: { type: 'varchar', length: INDEXABLE_LENGTH, primary: true },
       state: { type: 'jsonb', nullable: true },

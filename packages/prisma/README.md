@@ -915,7 +915,10 @@ statement of the store, and it selects the columns by name.
 - `PrismaProcessStore` is the `ProcessStore` of the kernel: a step of a process manager saves its
   instance in the transaction of its unit of work, a first save skips the row a concurrent first
   save wrote, a next one updates the row at the previous version, and a save that changes no row
-  is refused with `ConcurrencyError`.
+  is refused with `ConcurrencyError`. With `tenant` (the `ExecutionScope`), the store keeps each instance in the tenant of the work that
+  saves it: the table keys a row by its tenant too, the empty text outside any, so two tenants may
+  use the same correlation key; an instance of another tenant is neither found nor changed, and
+  work that names no tenant is refused with `NoCurrentTenantError`.
 - The checkpoint of a job and the state of an instance are JSON kept as text: a worker clears a
   checkpoint and a state may be `null`, which a `Json` field takes only through the sentinel of
   the generated client (see [Limits](#limits)).

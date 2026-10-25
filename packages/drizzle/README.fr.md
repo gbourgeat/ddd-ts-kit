@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:62a037da816460ff -->
+<!-- translation-of: README.md sha256:c08abec48ed9ea50 -->
 
 # @ddd-ts-kit/drizzle
 
@@ -967,7 +967,7 @@ const unitOfWork = createDrizzleUnitOfWork(db);
 export const kernel = kernelModule({
   unitOfWork,
   jobStore: new DrizzleJobStore(unitOfWork, schedulingJobs),
-  processStore: new DrizzleProcessStore(unitOfWork, schedulingProcesses),
+  processStore: new DrizzleProcessStore(unitOfWork, { table: schedulingProcesses }),
 });
 ```
 
@@ -983,6 +983,12 @@ enregistrement insère, un suivant met à jour à la version précédente, et un
 ne change aucune ligne lève `ConcurrencyError`, dans la transaction de l'étape. Il passe
 `processStoreContract`. L'exemple de [Jobs en arrière-plan](#jobs-en-arrière-plan) le lie avec
 `kernelModule({ processStore })`.
+
+Avec `tenant` (l'`ExecutionScope`), le store garde chaque instance dans le tenant du travail qui
+l'enregistre : la table repère aussi une ligne par son tenant, le texte vide hors de tout tenant,
+si bien que deux tenants peuvent utiliser la même clé de corrélation ; une instance d'un autre
+tenant n'est ni trouvée ni modifiée, et un travail qui ne nomme aucun tenant est refusé par
+`NoCurrentTenantError`.
 
 ## Tester un adaptateur
 

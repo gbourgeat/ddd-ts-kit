@@ -1,5 +1,5 @@
 [English](sagas-and-process-managers.md) · **Français**
-<!-- translation-of: sagas-and-process-managers.md sha256:340eeb2538edb499 -->
+<!-- translation-of: sagas-and-process-managers.md sha256:860c7933057cca50 -->
 
 # Sagas et gestionnaires de processus
 
@@ -221,7 +221,10 @@ export class ConfirmationDeadlineProcess implements ProcessManager<ConfirmationD
 - **Stockages.** `InMemoryProcessStore` (noyau) pour les tests et pour un seul processus ;
   `KnexProcessStore` et `createProcessTable`, `DrizzleProcessStore` et `processesTable`,
   `PrismaProcessStore` et le modèle `ProcessInstance`, `TypeOrmProcessStore` et `processEntity`, qui sauvegardent dans la transaction de l'étape. Chaque stockage est tenu par
-  `processStoreContract`.
+  `processStoreContract`. Avec l'`ExecutionScope` pour `tenant`, chacun des quatre garde une
+  instance dans le tenant du travail qui l'enregistre, sous une clé qui comprend le tenant : deux
+  tenants peuvent utiliser la même clé de corrélation, et aucun ne trouve ni ne modifie l'instance
+  de l'autre. Un projet généré avec `--tenancy` le lui donne.
 
 Les deux classes qui appellent les étapes, dans l'exemple : le gestionnaire d'un événement du
 domaine du contexte, exécuté dans l'unité de travail de la commande qui a réservé, et le *job* en

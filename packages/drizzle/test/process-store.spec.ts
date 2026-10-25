@@ -26,9 +26,10 @@ processStoreContract(runner, {
     await database.truncate();
     shared = context();
 
-    return new DrizzleProcessStore(shared, processes);
+    return new DrizzleProcessStore(shared, { table: processes });
   },
   unitOfWork: () => shared,
+  storeInTenant: (tenant) => new DrizzleProcessStore(shared, { table: processes, tenant }),
 });
 
 processStoreContract(runner, {

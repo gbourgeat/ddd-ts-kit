@@ -41,6 +41,8 @@ model BackgroundJob {
 }
 
 model ProcessInstance {
+  /// The empty text outside any tenant: two tenants may use the same correlation key.
+  tenantId  String   @default("") @map("tenant_id")
   name      String
   id        String
   /// JSON as text: a state may be null, which a `Json` field takes only through `Prisma.DbNull`.
@@ -50,6 +52,6 @@ model ProcessInstance {
   timeouts  Json
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
 
-  @@id([name, id])
+  @@id([tenantId, name, id])
   @@map("process_instances")
 }
