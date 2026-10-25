@@ -42,7 +42,7 @@ export function persistenceOver(connection: DatabaseConnection): Persistence {
     jobs: new DrizzleJobStore(unitOfWork, jobs),
     {{/if}}
     {{#if queue.processTable}}
-    processes: new DrizzleProcessStore(unitOfWork, processes),
+    processes: ({{#if tenancy.any}}tenant{{/if}}) => new DrizzleProcessStore(unitOfWork, { table: processes{{#if tenancy.any}}, tenant{{/if}} }),
     {{/if}}
     {{#if eventSourcing.on}}
     eventSourcing: createDrizzleEventSourcing(unitOfWork, { schema: EVENT_STORE_SCHEMA }),

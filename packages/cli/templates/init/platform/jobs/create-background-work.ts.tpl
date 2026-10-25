@@ -90,7 +90,7 @@ export function createBackgroundWork({
     processes: new StoredProcessRunner({
 {{#if queue.processTable}}
       // The instances of the process managers, saved in the transaction of each step.
-      store: persistence.processes,
+      store: persistence.processes(scope),
 {{/if}}
 {{#unless queue.processTable}}
       // The instances of the process managers, in the memory of the process: the process store of the ORM package keeps them with the steps.

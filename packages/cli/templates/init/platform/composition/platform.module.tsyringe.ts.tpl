@@ -18,6 +18,9 @@ import { ErrorMapper, createErrorMapper } from '@ddd-ts-kit/http';
 import {
   Cache,
   EventSubscribers,
+  {{#if queue.processTable}}
+  ExecutionScope,
+  {{/if}}
   Lock,
   Metrics,
   ProcessedEventStore,
@@ -35,6 +38,9 @@ import {
 {{#if errors.sentry}}
 import {
   Cache,
+  {{#if queue.processTable}}
+  ExecutionScope,
+  {{/if}}
   Lock,
   Metrics,
   ProcessedEventStore,
@@ -47,7 +53,7 @@ import {
 } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#unless errors.sentry}}
-import { Cache, Lock, Metrics, ProcessedEventStore, {{#if queue.processTable}}ProcessStore, {{/if}}RateLimiter, UnitOfWork } from '@ddd-ts-kit/kernel';
+import { Cache, {{#if queue.processTable}}ExecutionScope, {{/if}}Lock, Metrics, ProcessedEventStore, {{#if queue.processTable}}ProcessStore, {{/if}}RateLimiter, UnitOfWork } from '@ddd-ts-kit/kernel';
 {{/unless}}
 {{/unless}}
 {{/if}}
@@ -56,7 +62,7 @@ import { {{#if broker.external}}EventSubscribers, {{/if}}ProcessedEventStore, Un
 {{/unless}}
 {{#unless cache.redis}}
 {{#if queue.processTable}}
-import { ProcessStore } from '@ddd-ts-kit/kernel';
+import { ExecutionScope, ProcessStore } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{/unless}}
 {{#if queue.redis}}
@@ -141,7 +147,7 @@ export function platformModule(persistence: Persistence, options: PlatformOption
       builder.rebind(JobStore).toValue(persistence.jobs);
       {{/if}}
       {{#if queue.processTable}}
-      builder.rebind(ProcessStore).toValue(persistence.processes);
+      builder.rebind(ProcessStore).toFactory((resolve) => persistence.processes(resolve(ExecutionScope)));
       {{/if}}
       {{#if broker.external}}
       builder.rebind(EventSubscribers).toValue({ forContext: (name) => options.events.forConsumer(name) });

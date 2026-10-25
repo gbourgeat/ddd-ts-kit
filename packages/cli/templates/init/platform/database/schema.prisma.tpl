@@ -83,6 +83,8 @@ model BackgroundJob {
 
 // The instances of the process managers, from @ddd-ts-kit/prisma, saved in the transaction of each step.
 model ProcessInstance {
+  /// The empty text outside any tenant: two tenants may use the same correlation key.
+  tenantId  String   @default("") @map("tenant_id")
   name      String
   id        String
   /// JSON as text: a state may be null.
@@ -92,7 +94,7 @@ model ProcessInstance {
   timeouts  Json
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
 
-  @@id([name, id])
+  @@id([tenantId, name, id])
   @@map("process_instances")
   @@schema("messaging")
 }
