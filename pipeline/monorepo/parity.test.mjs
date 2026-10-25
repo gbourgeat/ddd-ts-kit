@@ -24,6 +24,12 @@ export interface PrismaProcessStoreOptions<Tx> {
   readonly delegate: (client: Tx) => unknown;
 }`;
 
+const PRISMA_IN_TENANT = `
+export interface PrismaProcessStoreOptions<Tx> {
+  readonly delegate: (client: Tx) => unknown;
+  readonly tenant?: ExecutionScope;
+}`;
+
 const RUN_IN_TENANT = `processStoreContract(runner, { name: 'a', createStore, storeInTenant: (tenant) => store(tenant) });`;
 const RUN = `processStoreContract(runner, { name: 'b', createStore: () => store() });`;
 
@@ -39,15 +45,9 @@ test('an option of one member alone fails, and names the members that have it', 
 });
 
 test('a capability of the contract one member gives and another does not fails', () => {
-  const prisma = `
-export interface PrismaProcessStoreOptions<Tx> {
-  readonly delegate: (client: Tx) => unknown;
-  readonly tenant?: ExecutionScope;
-}`;
-
   const problems = problemsOf(
     family(),
-    source({ knex: KNEX_IN_TENANT, prisma, knexSpec: RUN_IN_TENANT, prismaSpec: RUN }),
+    source({ knex: KNEX_IN_TENANT, prisma: PRISMA_IN_TENANT, knexSpec: RUN_IN_TENANT, prismaSpec: RUN }),
   );
 
   assert.deepEqual(problems, [
@@ -66,7 +66,7 @@ test('an asymmetry written with its reason passes, and fails once it is no longe
 
   const caughtUp = source({
     knex: KNEX_IN_TENANT,
-    prisma: `${PRISMA.replace('}', '')}  readonly tenant?: ExecutionScope;\n}`,
+    prisma: PRISMA_IN_TENANT,
     knexSpec: RUN_IN_TENANT,
     prismaSpec: RUN_IN_TENANT,
   });
