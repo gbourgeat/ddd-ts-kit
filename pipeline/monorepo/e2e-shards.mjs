@@ -42,14 +42,13 @@ export const SHARDS = [
     // A repository that declares personal columns, with the erasure of its context, installed as published.
     'personal-fields.spec.ts': 20,
     'formatted.spec.ts': 29,
+    'error-reporting.spec.ts': 17,
   },
   {
     'coverage-gate.spec.ts': 328,
     'typecheck.spec.ts': 70,
-    // oRPC and tRPC on the four servers and on Nest controllers: 66 seconds on a runner for the 48 they took here
-    // (run 40182551102), so about 96 for the 70 they take here now.
-    'rpc-procedures.spec.ts': 96,
-    'preset-identity-generated.spec.ts': 25,
+    // oRPC and tRPC on the four servers and on Nest controllers (run 40221251830 of the pull request that added them).
+    'rpc-procedures.spec.ts': 131,
     'error-rule-violations.spec.ts': 11,
     'client-sdk.spec.ts': 9,
     // A copy of the example application, merge-trunk run in two of its worktrees.
@@ -61,7 +60,7 @@ export const SHARDS = [
     // With the client SDK of each pair.
     'contract-pairs.spec.ts': 38,
     'file-uploads.spec.ts': 26,
-    'error-reporting.spec.ts': 17,
+    'preset-identity-generated.spec.ts': 25,
   },
   {
     'first-minute-no-context.spec.ts': 312,
