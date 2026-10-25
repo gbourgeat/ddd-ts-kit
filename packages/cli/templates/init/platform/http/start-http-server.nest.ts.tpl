@@ -1,6 +1,10 @@
 import 'reflect-metadata';
-import { Server } from 'node:http';
+import { {{#if rpc.orpc}}type IncomingMessage, {{/if}}Server{{#if rpc.orpc}}, type ServerResponse{{/if}} } from 'node:http';
 import { NestFactory } from '@nestjs/core';
+{{#if rpc.orpc}}
+import { orpcRouter } from '@ddd-ts-kit/http/orpc';
+import { RPCHandler } from '@orpc/server/node';
+{{/if}}
 import type { Application } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 import { createAppModule } from '{{alias.platform}}/http/create-app-module{{alias.ext}}';
@@ -40,7 +44,8 @@ type Middleware = (request: Incoming, response: Outgoing, next: () => void) => v
 /**
  * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
  * server), then the routes of the contexts, the pages of the contract (with documentation on) and
- * the signed file links (with a storage the application serves), all in one Nest module.
+ * the signed file links (with a storage the application serves), all in one Nest module.{{#if rpc.orpc}} The
+ * routes of the contexts are served as oRPC procedures under /rpc too, for the typed client of the contract.{{/if}}
  */
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
 {{#if files.http}}
@@ -65,6 +70,10 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 {{#if cache.rateLimit}}
   app.use(answeringReadiness(served));
   app.use(limitingEachCaller(served, config));
+
+{{/if}}
+{{#if rpc.orpc}}
+  app.use(RPC_PREFIX, servingProcedures(served));
 
 {{/if}}
   await app.listen(config.port);
@@ -100,6 +109,27 @@ function limitingEachCaller(served: Served, config: AppConfig): Middleware {
         response.writeHead(tooMany.status, tooMany.headers).end(tooMany.body);
       }
     });
+  };
+}
+{{/if}}
+{{#if rpc.orpc}}
+
+const RPC_PREFIX = '/rpc';
+
+/** Each route as the procedure named by its operationId: the same pipeline, the JSON body already read by Nest. */
+function servingProcedures(
+  served: Served,
+): (request: IncomingMessage, response: ServerResponse, next: (error?: unknown) => void) => void {
+  const handler = new RPCHandler(orpcRouter(served.routes, served.boundary));
+
+  return (request, response, next) => {
+    const context = { headers: request.headers, raw: request };
+
+    void handler.handle(request, response, { prefix: RPC_PREFIX, context }).then(({ matched }) => {
+      if (!matched) {
+        next();
+      }
+    }, next);
   };
 }
 {{/if}}

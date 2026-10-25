@@ -23,6 +23,7 @@ export const LITERAL_FORMS = ['named', 'free'] as const;
 export const VALUE_FORMS = ['classes', 'free'] as const;
 export const CACHE_STACKS = ['none', 'redis'] as const;
 export const HTTP_CACHE_STACKS = ['none', 'varnish'] as const;
+export const RPC_STACKS = ['none', 'orpc'] as const;
 export const STORAGE_STACKS = ['none', 'local', 's3'] as const;
 export const AUDIT_MODES = ['on', 'off'] as const;
 export const EVENT_SOURCING_MODES = ['on', 'off'] as const;
@@ -70,6 +71,13 @@ export interface Stack {
    * `VarnishCachePurger`. A config that says nothing was written before the choice existed: `none`.
    */
   readonly httpCache: (typeof HTTP_CACHE_STACKS)[number];
+  /**
+   * A second door to the same routes for a TypeScript client: `orpc` serves them as oRPC
+   * procedures under `/rpc` (`orpcRouter` of `@ddd-ts-kit/http/orpc`), and `ddd-ts-kit sdk` gives
+   * each client the oRPC contract of its document. A config that says nothing was written before
+   * the choice existed: `none`.
+   */
+  readonly rpc: (typeof RPC_STACKS)[number];
   /**
    * Where the content of files lives, never in the database: `local`, a directory in development
    * and the memory in the tests; `s3`, a bucket of any provider of the S3 protocol (MinIO in the

@@ -17,6 +17,7 @@ import {
   EVENT_SOURCING_MODES,
   EVENT_STACKS,
   HTTP_CACHE_STACKS,
+  RPC_STACKS,
   HTTP_STACKS,
   LOGGERS,
   ORM_STACKS,
@@ -79,6 +80,7 @@ type Choices = Pick<
   | 'broker'
   | 'cache'
   | 'httpCache'
+  | 'rpc'
   | 'storage'
   | 'audit'
   | 'eventSourcing'
@@ -97,6 +99,7 @@ function parseChoices(choose: Choose, orm: Stack['orm']): Choices {
     broker: choose('broker', BROKER_STACKS, 'none'),
     cache: choose('cache', CACHE_STACKS, 'none'),
     httpCache: choose('httpCache', HTTP_CACHE_STACKS, 'none'),
+    rpc: choose('rpc', RPC_STACKS, 'none'),
     storage: choose('storage', STORAGE_STACKS, 'none'),
     audit: choose('audit', AUDIT_MODES, orm === 'none' ? 'off' : 'on'),
     // Both were written before their choice existed: such a config has no event store and no privacy folder.

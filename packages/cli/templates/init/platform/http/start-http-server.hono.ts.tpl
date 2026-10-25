@@ -5,6 +5,10 @@ import { getConnInfo } from '@hono/node-server/conninfo';
 {{/if}}
 import { Hono } from 'hono';
 import { mountHono } from '@ddd-ts-kit/http/hono';
+{{#if rpc.orpc}}
+import { orpcRouter } from '@ddd-ts-kit/http/orpc';
+import { RPCHandler } from '@orpc/server/fetch';
+{{/if}}
 import type { Application } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 {{#if cache.rateLimit}}
@@ -27,7 +31,8 @@ type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | '
 /**
  * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
  * server), the signed file links (with a storage the application serves), the routes of the
- * contexts, then the pages of the contract (with documentation on).
+ * contexts, then the pages of the contract (with documentation on).{{#if rpc.orpc}} The same routes are served
+ * as oRPC procedures under /rpc, for the typed client of the contract.{{/if}}
  */
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
   const app = new Hono();
@@ -38,6 +43,9 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 {{/if}}
 {{#if files.http}}
   mountHono(app, served.fileRoutes, served.boundary);
+{{/if}}
+{{#if rpc.orpc}}
+  serveProcedures(app, served);
 {{/if}}
 {{#if docs.any}}
   mountHono(app, withDocumentation(served.routes, config, served.boundary), served.boundary);
@@ -74,6 +82,32 @@ function limitEachCaller(app: Hono, served: Served, config: AppConfig): void {
     }
 
     return new Response(tooMany.body, { status: tooMany.status, headers: tooMany.headers });
+  });
+}
+{{/if}}
+{{#if rpc.orpc}}
+
+const RPC_PREFIX = '/rpc';
+
+/** Each route as the procedure named by its operationId: the same pipeline, the raw request what the routes read. */
+function serveProcedures(app: Hono, served: Served): void {
+  const handler = new RPCHandler(orpcRouter(served.routes, served.boundary));
+
+  app.use(`${RPC_PREFIX}/*`, async (context, next) => {
+    const headers = context.req.header();
+
+    const { matched, response } = await handler.handle(context.req.raw, {
+      prefix: RPC_PREFIX,
+      context: { headers, raw: { headers, context } },
+    });
+
+    if (matched) {
+      return context.newResponse(response.body, response);
+    }
+
+    await next();
+
+    return undefined;
   });
 }
 {{/if}}

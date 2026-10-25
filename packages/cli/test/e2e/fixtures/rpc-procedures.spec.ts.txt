@@ -1,0 +1,88 @@
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { createCredentials, type Credentials } from '$test/e2e/support/create-credentials';
+import { testEnvironment } from '$test/e2e/support/test-environment';
+import { type Application, composeApplication } from '@/platform/composition/compose-application';
+import { loadConfig } from '@/platform/config/load-config';
+import { openPersistence } from '@/platform/database/open-persistence';
+import { inProcessEvents } from '@/platform/events/in-process-events';
+import { type HttpServer, startHttpServer } from '@/platform/http/start-http-server';
+
+/** What a door of the API answered: its status, and the code of its refusal or the fields of its body. */
+interface Answer {
+  readonly status: number;
+  readonly code?: string;
+  readonly defined?: boolean;
+  readonly fields?: readonly string[];
+}
+
+let credentials: Credentials;
+let application: Application;
+let server: HttpServer;
+
+beforeAll(async () => {
+  credentials = await createCredentials();
+  application = composeApplication(openPersistence(), { events: inProcessEvents(), authenticator: credentials.authenticator });
+  await application.start();
+  server = await startHttpServer(application, loadConfig(testEnvironment()));
+});
+
+afterAll(async () => {
+  await server.close();
+  await application.stop();
+});
+
+const base = (): string => 'http://127.0.0.1:' + String(server.port);
+
+async function overHttp(headers: Record<string, string>): Promise<Answer> {
+  const response = await fetch(base() + '/invoices', {
+    method: 'POST',
+    headers: { ...headers, 'content-type': 'application/json' },
+    body: '{}',
+  });
+  const body = (await response.json()) as Record<string, unknown>;
+
+  return response.status >= 400
+    ? { status: response.status, code: String(body['code']) }
+    : { status: response.status, fields: Object.keys(body).sort() };
+}
+
+/** The call as the RPC protocol of oRPC carries it: the input under `json`, the answer or the error under `json`. */
+async function overRpc(procedure: string, headers: Record<string, string>): Promise<Answer> {
+  const response = await fetch(base() + '/rpc/' + procedure, {
+    method: 'POST',
+    headers: { ...headers, 'content-type': 'application/json' },
+    body: JSON.stringify({ json: { body: {} }, meta: [] }),
+  });
+  const { json } = (await response.json()) as { json: Record<string, unknown> };
+
+  return response.status >= 400
+    ? { status: response.status, code: String(json['code']), defined: json['defined'] === true }
+    : { status: response.status, fields: Object.keys(json).sort() };
+}
+
+describe('the procedures served under /rpc', () => {
+  it('refuse an anonymous caller as the route does, with a refusal the contract declares', async () => {
+    const http = await overHttp({});
+
+    expect(http).toEqual({ status: 401, code: 'UNAUTHORIZED' });
+    expect(await overRpc('issueInvoice', {})).toEqual({ ...http, defined: true });
+  });
+
+  it('answer a granted caller as the route does: the same refusal, or a body with the same fields', async () => {
+    const headers = await credentials.headersOf({ id: 'user-1', roles: ['accountant'] });
+    const http = await overHttp(headers);
+    const rpc = await overRpc('issueInvoice', headers);
+
+    if (http.code === undefined) {
+      expect(rpc).toEqual({ status: 200, fields: http.fields });
+    } else {
+      expect(rpc).toEqual({ ...http, defined: true });
+    }
+  });
+
+  it('leave an unknown procedure to the HTTP framework, which answers 404', async () => {
+    const response = await fetch(base() + '/rpc/noSuchProcedure', { method: 'POST', body: '{}' });
+
+    expect(response.status).toBe(404);
+  });
+});

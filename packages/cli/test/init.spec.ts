@@ -140,6 +140,7 @@ const FASTIFY_STACK = {
   logger: 'stdout',
   refusals: 'named',
   routes: 'controllers',
+  rpc: 'none',
   representations: 'negotiated',
   forms: 'on',
   schemas: 'shared',
