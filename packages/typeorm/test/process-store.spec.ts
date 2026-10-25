@@ -29,6 +29,7 @@ processStoreContract(runner, {
     return new TypeOrmProcessStore(shared, { entity: messagingProcesses });
   },
   unitOfWork: () => shared,
+  storeInTenant: (tenant) => new TypeOrmProcessStore(shared, { entity: messagingProcesses, tenant }),
 });
 
 processStoreContract(runner, {

@@ -6,11 +6,18 @@ import type { PrismaJsonInput } from '../outbox/prisma-json-input';
  */
 export interface PrismaProcessDelegate {
   createMany(args: { data: PrismaProcessInsert[]; skipDuplicates: true }): Promise<{ count: number }>;
-  findFirst(args: { where: { name: string; id: string } }): Promise<PrismaProcessRow | null>;
+  findFirst(args: { where: PrismaProcessKey }): Promise<PrismaProcessRow | null>;
   updateMany(args: {
-    where: { name: string; id: string; version: number };
+    where: PrismaProcessKey & { version: number };
     data: PrismaProcessChange & { updatedAt: Date };
   }): Promise<{ count: number }>;
+}
+
+/** An instance by its tenant, the empty text outside any, its process and its correlation key. */
+export interface PrismaProcessKey {
+  tenantId: string;
+  name: string;
+  id: string;
 }
 
 /** The model of the process instances as Prisma returns it: the fields of the shipped schema fragment. */
@@ -29,7 +36,4 @@ export interface PrismaProcessChange {
   timeouts: PrismaJsonInput;
 }
 
-export interface PrismaProcessInsert extends PrismaProcessChange {
-  name: string;
-  id: string;
-}
+export type PrismaProcessInsert = PrismaProcessChange & PrismaProcessKey;

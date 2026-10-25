@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:518c8e484fa57a73 -->
+<!-- translation-of: README.md sha256:832d08ed4a85b04c -->
 
 # @ddd-ts-kit/prisma
 
@@ -940,7 +940,11 @@ tâches est la seule instruction brute du registre, et elle sélectionne les col
   enregistre son instance dans la transaction de son unité de travail, un premier enregistrement
   écarte la ligne qu'un premier enregistrement concurrent a écrite, un suivant met à jour la ligne
   à la version précédente, et un enregistrement qui ne change aucune ligne est refusé par
-  `ConcurrencyError`.
+  `ConcurrencyError`. Avec `tenant` (l'`ExecutionScope`), le store garde chaque instance dans le tenant du travail qui
+  l'enregistre : la table repère aussi une ligne par son tenant, le texte vide hors de tout tenant,
+  si bien que deux tenants peuvent utiliser la même clé de corrélation ; une instance d'un autre
+  tenant n'est ni trouvée ni modifiée, et un travail qui ne nomme aucun tenant est refusé par
+  `NoCurrentTenantError`.
 - Le point de reprise d'une tâche et l'état d'une instance sont du JSON gardé en texte : un
   *worker* efface un point de reprise et un état peut valoir `null`, ce qu'un champ `Json`
   n'accepte que par la sentinelle du client généré (voir [Limites](#limites)).

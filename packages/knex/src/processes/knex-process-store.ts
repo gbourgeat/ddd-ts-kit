@@ -6,13 +6,12 @@ import {
   type ProcessStore,
   type StoredProcess,
 } from '@ddd-ts-kit/kernel';
-import { tenantRow } from '../columns/tenant-row';
-import { TENANT_COLUMN } from '../tenancy/where-tenant';
 import type { KnexContext } from '../unit-of-work/knex-context';
 import { PROCESS_TABLE } from './process-table-name';
 import type { ProcessTableOptions } from './process-table-options';
 
 interface ProcessRow {
+  tenant_id: string;
   name: string;
   id: string;
   state: unknown;
@@ -24,12 +23,12 @@ interface ProcessRow {
 
 type Rows = Knex.QueryBuilder<ProcessRow, ProcessRow[]>;
 
-export interface KnexProcessStoreOptions extends Omit<ProcessTableOptions, 'tenant'> {
+export interface KnexProcessStoreOptions extends ProcessTableOptions {
   /**
-   * Keeps each instance in the tenant of the work that saves it, in the `tenant_id` that
-   * `createProcessTable(knex, { tenant: true })` added: a step loads and changes the instances of
-   * its own tenant only, and work that names no tenant is refused (`NoCurrentTenantError`). Left
-   * out, the instances are shared, as before.
+   * Keeps each instance in the tenant of the work that saves it, in `tenant_id`: a step loads and
+   * changes the instances of its own tenant only, two tenants may use the same correlation key,
+   * and work that names no tenant is refused (`NoCurrentTenantError`). Left out, the instances
+   * are those of no tenant.
    */
   readonly tenant?: ExecutionScope;
 }
@@ -78,8 +77,8 @@ export class KnexProcessStore implements ProcessStore {
 
   private async insert(executor: Knex, process: StoredProcess): Promise<number> {
     const inserted: unknown[] = await this.rows(executor)
-      .insert({ ...this.columns(process), ...this.tenantOfWork(), name: process.name, id: process.id })
-      .onConflict(['name', 'id'])
+      .insert({ ...this.columns(process), tenant_id: this.tenantOfWork(), name: process.name, id: process.id })
+      .onConflict(['tenant_id', 'name', 'id'])
       .ignore()
       .returning('id');
 
@@ -102,15 +101,14 @@ export class KnexProcessStore implements ProcessStore {
     };
   }
 
-  /** The rows of the tenant of the work, with `tenant`; every row without. */
+  /** The rows of the tenant of the work, with `tenant`; those of no tenant without. */
   private owned(executor: Knex): Rows {
-    const rows = this.rows(executor);
-
-    return this.tenant === undefined ? rows : rows.where(TENANT_COLUMN, tenantScopeOf(this.tenant).tenantId);
+    return this.rows(executor).where('tenant_id', this.tenantOfWork());
   }
 
-  private tenantOfWork(): Readonly<Record<string, string>> {
-    return this.tenant === undefined ? {} : { ...tenantRow(tenantScopeOf(this.tenant)) };
+  /** The empty text outside any tenant, as the table keeps it. */
+  private tenantOfWork(): string {
+    return this.tenant === undefined ? '' : tenantScopeOf(this.tenant).tenantId;
   }
 
   private rows(executor: Knex): Rows {

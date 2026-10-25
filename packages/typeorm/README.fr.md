@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:5bfd1e5a15043781 -->
+<!-- translation-of: README.md sha256:62c82dbb24125131 -->
 
 # @ddd-ts-kit/typeorm
 
@@ -744,7 +744,11 @@ source de données à côté de l'outbox (`init --orm typeorm` les place dans le
   enregistre son instance dans la transaction de son unité de travail, un premier enregistrement
   écarte la ligne qu'un premier enregistrement concurrent a écrite, un suivant met à jour la ligne
   à la version précédente, et un enregistrement qui ne change aucune ligne est refusé par
-  `ConcurrencyError`.
+  `ConcurrencyError`. Avec `tenant` (l'`ExecutionScope`), le store garde chaque instance dans le tenant du travail qui
+  l'enregistre : la table repère aussi une ligne par son tenant, le texte vide hors de tout tenant,
+  si bien que deux tenants peuvent utiliser la même clé de corrélation ; une instance d'un autre
+  tenant n'est ni trouvée ni modifiée, et un travail qui ne nomme aucun tenant est refusé par
+  `NoCurrentTenantError`.
 
 <!-- checked sample -->
 ```ts

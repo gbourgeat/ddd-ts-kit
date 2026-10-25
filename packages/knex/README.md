@@ -852,12 +852,17 @@ What the jobs guarantee: [Background jobs](../../docs/concepts/background-jobs.m
 
 ## Process managers
 
-`KnexProcessStore` is the `ProcessStore` of the kernel: one row per process and correlation key
+`KnexProcessStore` is the `ProcessStore` of the kernel: one row per tenant, process and correlation key
 in `process_instances`, created by `createProcessTable(knex, { schema })` from a migration
 (`dropProcessTable` is its `down`). A first save inserts, ignoring a row a concurrent first save
 wrote; a next one updates the row at the previous version; a save that changes no row throws
 `ConcurrencyError`. It runs on the executor of the context, in the transaction of the step, and
 passes `processStoreContract` with its unit of work.
+
+With `tenant` (the `ExecutionScope`), the store keeps each instance in the tenant of the work that
+saves it: the table keys a row by its tenant too, the empty text outside any, so two tenants may
+use the same correlation key; an instance of another tenant is neither found nor changed, and
+work that names no tenant is refused with `NoCurrentTenantError`.
 
 ## Dialect coverage
 

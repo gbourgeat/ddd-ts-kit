@@ -42,7 +42,7 @@ export function persistenceOver(dataSource: DataSource): Persistence {
     jobs: new TypeOrmJobStore(unitOfWork, { entity: jobs }),
     {{/if}}
     {{#if queue.processTable}}
-    processes: new TypeOrmProcessStore(unitOfWork, { entity: processes }),
+    processes: ({{#if tenancy.any}}tenant{{/if}}) => new TypeOrmProcessStore(unitOfWork, { entity: processes{{#if tenancy.any}}, tenant{{/if}} }),
     {{/if}}
     {{#if eventSourcing.on}}
     eventSourcing: createTypeOrmEventSourcing(unitOfWork, { schema: EVENT_STORE_SCHEMA }),
