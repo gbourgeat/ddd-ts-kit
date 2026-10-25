@@ -1,7 +1,9 @@
 # NestJS: where each tool of Nest goes
 
 Rule: a context uses none of the tools of Nest the kit does its own way
-(`nest/no-parallel-pipeline`, an error). The routes of the kit are mounted under Nest, not
+(`nest/no-parallel-pipeline`, an error), and a controller Nest serves reaches no use case,
+wherever it is written. A Nest controller the kit serves (`@KitRoute`) keeps Nest's route and
+parameter decorators. The routes of the kit are mounted under Nest, not
 through its pipeline: a Nest guard, pipe, exception filter or interceptor never sees them, and a
 Nest controller in a context is a route nothing secures, outside the contract and the problem
 format. A right checked by a Nest guard is checked on HTTP only, never on `/rpc`, `/trpc`, a job
@@ -10,7 +12,7 @@ or an event handler. Nest stays free in the platform. Judged: `presentation/`,
 
 | Reached for, in Nest | Write instead |
 |---|---|
-| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | `npx ddd-ts-kit generate route <context> <UseCase> --method <M> --path <p>`: a route of the kit, its security and its `errors` declared |
+| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | keep them: `@KitRoute({ operationId, summary, guards, errors })` on each method, `@KitRoutes` on the class, `@CurrentActor()` for the caller, served by `createControllersModule` of `@ddd-ts-kit/http/nest`; or `npx ddd-ts-kit generate route <context> <UseCase> --method <M> --path <p>` |
 | `ValidationPipe`, a DTO with class-validator | the schemas of the route, with the validation library of the project |
 | `@UseGuards(AuthGuard(...))`, Passport | authentication in the platform, read by `resolvePrincipal`; `generate guard` for a control at the edge of a route group |
 | `@Roles`, a `RolesGuard`, CASL | the permission of the use case (`requires` in the module file, `@Requires`), a policy, an access scope: `/ddd-ts-kit:access-control` |

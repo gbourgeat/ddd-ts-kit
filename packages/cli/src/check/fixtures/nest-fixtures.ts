@@ -5,6 +5,7 @@ import { project } from './project';
 const { BILLING, ADAPTER, GATEWAY, MODULE } = PATHS;
 const RULE = 'nest/no-parallel-pipeline';
 const NEST_CONTROLLER = `${BILLING}/presentation/http/invoices.controller.ts`;
+const PLATFORM_CONTROLLER = 'src/platform/http/invoices.controller.ts';
 
 export const NEST_FIXTURES: readonly Fixture[] = [
   {
@@ -44,6 +45,24 @@ export const NEST_FIXTURES: readonly Fixture[] = [
     expect: { file: MODULE },
     files: project({
       [MODULE]: "import { ConfigService } from '@nestjs/config';\n\nexport const settings = ConfigService;\n",
+    }),
+  },
+  {
+    ruleId: RULE,
+    name: 'a Nest controller of a context the kit serves, its routes declared with the decorators of Nest',
+    expect: 'pass',
+    files: project({
+      [NEST_CONTROLLER]:
+        "import { Body, Controller, Post } from '@nestjs/common';\nimport { KitRoute } from '@ddd-ts-kit/http/nest';\n\n@Controller('invoices')\nexport class InvoicesController {\n  @Post()\n  @KitRoute({ operationId: 'issueInvoice', summary: 'Issue' })\n  issue(@Body() body: object): object {\n    return body;\n  }\n}\n",
+    }),
+  },
+  {
+    ruleId: RULE,
+    name: 'a controller Nest serves in the platform that sends a command',
+    expect: { file: PLATFORM_CONTROLLER },
+    files: project({
+      [PLATFORM_CONTROLLER]:
+        "import { Controller } from '@nestjs/common';\nimport type { CommandBus } from '@ddd-ts-kit/kernel';\n\n@Controller('invoices')\nexport class InvoicesController {\n  constructor(readonly commands: CommandBus) {}\n}\n",
     }),
   },
 ];
