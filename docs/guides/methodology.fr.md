@@ -1,5 +1,5 @@
 [English](methodology.md) · **Français**
-<!-- translation-of: methodology.md sha256:fcac0e27e5256ffb -->
+<!-- translation-of: methodology.md sha256:bdf50c3f63f8f615 -->
 
 # Méthodologie : d'une expression des besoins au code qui tourne
 
@@ -235,7 +235,9 @@ prévisualise avec `--dry-run`, lance `ddd-ts-kit init` avec les options choisie
 prouve le résultat avec `npm run verify` (`pnpm install` et `pnpm run verify` sous pnpm, le
 gestionnaire par défaut : `init` affiche les deux commandes dans les termes du gestionnaire de
 paquets choisi, et le projet nu passe toute la porte avant son premier contexte). Un projet
-existant est adopté : les fichiers existants sont laissés de côté, sauf si `--force` est donné.
+existant est adopté : les fichiers existants sont laissés de côté, sauf si `--force` est donné,
+et les notes de son premier `init --dry-run` nomment chaque dépendance de son `package.json` que
+les options choisies contredisent, avec l'option qui la garde.
 
 Un contexte `generic` pour lequel le kit a un *preset* est écrit en entier à cette étape plutôt
 que construit tranche par tranche : `--preset identity` écrit les comptes venus du fournisseur
