@@ -47,6 +47,20 @@ processStoreContract(runner, {
   },
 });
 
+describe('the state of a process instance', () => {
+  it('comes back null when it was saved without one', async () => {
+    await database.truncate();
+
+    const store = new KnexProcessStore(context(), { table: 'billing_processes' });
+    const started = { name: 'billing.dunning', id: 'inv-1', version: 1, ended: false, timeouts: {} };
+
+    await store.save({ ...started, state: { step: 1 } });
+    await store.save({ ...started, version: 2, state: undefined });
+
+    expect(await store.load(started.name, started.id)).toMatchObject({ version: 2, state: null });
+  });
+});
+
 describe('the table of the process instances', () => {
   it('is dropped by its down migration', async () => {
     await dropProcessTable(database.knex, { table: 'billing_processes' });
