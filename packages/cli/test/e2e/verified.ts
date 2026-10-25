@@ -15,6 +15,7 @@ export function verified(root: string, manager: Manager): void {
     env: { COREPACK_ENABLE_DOWNLOAD_PROMPT: '0' },
   });
 
-  expect(printed).toMatch(/Test Files\s+\d+ passed/);
+  // Vitest says `Test Files  3 passed`, Jest `Test Suites: 3 passed`.
+  expect(printed).toMatch(/Test (?:Files\s+|Suites:\s+)\d+ passed/);
   expect(printed).not.toMatch(/\d+ failed|Unused|Configuration hints/);
 }

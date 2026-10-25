@@ -46,5 +46,15 @@ function holdsASource(directory: string): boolean {
 
   return fs
     .readdirSync(directory, { withFileTypes: true, recursive: true })
-    .some((entry) => entry.isFile() && SOURCE.test(entry.name) && !SPEC.test(entry.name));
+    .some((entry) => entry.isFile() && SOURCE.test(entry.name) && !SPEC.test(entry.name) && !isPort(entry));
+}
+
+/** A port is not measured (`portFiles`): a layer that holds nothing else is held to nothing. */
+function isPort(entry: fs.Dirent): boolean {
+  const folder = entry.parentPath.split(path.sep).join('/');
+
+  return (
+    (folder.endsWith('/domain/repositories') && entry.name.endsWith('.repository.ts')) ||
+    (folder.endsWith('/application/ports') && entry.name.endsWith('.port.ts'))
+  );
 }

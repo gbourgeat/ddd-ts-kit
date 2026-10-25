@@ -51,7 +51,11 @@ describe('governedCoverage(), what a Vitest run measures and is held to', () => 
       'src/contexts/*/*/infrastructure/**/*.ts',
     ]);
 
-    expect(exclude).toEqual(['src/contexts/**/*.declarations.ts']);
+    expect(exclude).toEqual([
+      'src/contexts/**/*.declarations.ts',
+      'src/contexts/**/domain/repositories/*.repository.ts',
+      'src/contexts/**/application/ports/*.port.ts',
+    ]);
 
     expect(thresholds).toEqual({
       'src/contexts/billing/domain/**/*.ts': REFERENCE_COVERAGE.domain,
@@ -87,7 +91,11 @@ describe('governedCoverage(), what a Vitest run measures and is held to', () => 
 
     expect(governedCoverage('integration', root)).toEqual({
       include: ['src/contexts/*/infrastructure/**/*.ts', 'src/contexts/*/*/infrastructure/**/*.ts'],
-      exclude: ['src/contexts/**/*.declarations.ts'],
+      exclude: [
+        'src/contexts/**/*.declarations.ts',
+        'src/contexts/**/domain/repositories/*.repository.ts',
+        'src/contexts/**/application/ports/*.port.ts',
+      ],
       thresholds: { 'src/contexts/billing/infrastructure/**/*.ts': REFERENCE_COVERAGE.infrastructure },
     });
   });
@@ -143,6 +151,22 @@ describe('governedCoverage(), what a Vitest run measures and is held to', () => 
   });
 });
 
+describe('the ports of a context', () => {
+  it('are neither measured nor held: a layer of ports alone is held to nothing', () => {
+    const root = projectWith({}, [
+      'src/contexts/billing/domain/repositories/invoice.repository.ts',
+      'src/contexts/billing/application/ports/mailer.port.ts',
+      'src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts',
+    ]);
+
+    expect(Object.keys(governedCoverage('test', root).thresholds)).toEqual([
+      'src/contexts/billing/application/**/*.ts',
+    ]);
+
+    expect(Object.keys(governedJestCoverage(root).coverageThreshold)).toEqual(['./src/contexts/billing/application/']);
+  });
+});
+
 describe('governedJestCoverage(), the same in the options of Jest', () => {
   it('collects the four layers and sums each context and layer under its directory', () => {
     const root = projectWith({ coverage: { application: { lines: 100 } } }, BILLING);
@@ -158,6 +182,8 @@ describe('governedJestCoverage(), the same in the options of Jest', () => {
         '<rootDir>/src/contexts/*/infrastructure/**/*.ts',
         '<rootDir>/src/contexts/*/*/infrastructure/**/*.ts',
         '!<rootDir>/src/contexts/**/*.declarations.ts',
+        '!<rootDir>/src/contexts/**/domain/repositories/*.repository.ts',
+        '!<rootDir>/src/contexts/**/application/ports/*.port.ts',
       ],
       coverageThreshold: {
         './src/contexts/billing/domain/': REFERENCE_COVERAGE.domain,
@@ -210,7 +236,11 @@ describe('a partial run, which DDD_TS_KIT_AFFECTED narrows to the contexts a pul
 
     expect(governedCoverage('integration', root)).toEqual({
       include: ['src/contexts/shipping/infrastructure/**/*.ts', 'src/contexts/shipping/*/infrastructure/**/*.ts'],
-      exclude: ['src/contexts/**/*.declarations.ts'],
+      exclude: [
+        'src/contexts/**/*.declarations.ts',
+        'src/contexts/**/domain/repositories/*.repository.ts',
+        'src/contexts/**/application/ports/*.port.ts',
+      ],
       thresholds: { 'src/contexts/shipping/infrastructure/**/*.ts': REFERENCE_COVERAGE.infrastructure },
     });
 

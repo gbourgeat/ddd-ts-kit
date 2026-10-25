@@ -1,5 +1,5 @@
 [English](quality-baseline.md) · **Français**
-<!-- translation-of: quality-baseline.md sha256:edf441601a7eebd9 -->
+<!-- translation-of: quality-baseline.md sha256:b20fd5e0dd67c59a -->
 
 # Base de qualité
 
@@ -120,7 +120,7 @@ d'abord et sur ce qui a changé ; les plus larges tournent plus tard, sur tous l
 | score de mutation | kit : le `test:mutation` de l'exemple (le *job* `mutation` de la nuit) ; exemple et projet `test:mutation` | le *job* `mutation` quand la planification se déclenche, et `mutation-changed` sur une *pull request*, une lecture des survivants du changement | non |
 | *specs* unitaires | kit `ci:test:unit` ; exemple et projet `test:coverage` | `ci:test:unit` | avant un *push*, sur ce que la branche atteint : pour le kit les *packages* et les *packages* construits dessus (`affected-packages.mjs --base origin/main --run test`, sans couverture), pour l'exemple et un projet les contextes (`ddd-ts-kit affected --run`) |
 | *specs* d'intégration | kit : le *pipeline* seulement (elles ont besoin de serveurs) ; exemple et projet `test:coverage` (PostgreSQL dans le processus) | `ci:test:integration` | non |
-| *specs* de bout en bout | kit : le *pipeline* seulement (`ci:test:e2e`, chaque *stack* générée et exécutée) ; exemple et projet `test:e2e` | `ci:test:e2e` | non |
+| *specs* de bout en bout | kit : le *pipeline* seulement (`ci:test:e2e`, chaque *stack* générée et exécutée ; la nuit, les *stacks* Prisma et TypeORM installées pour de vrai depuis le kit empaqueté et tenues à leur `verify`, contrats des stores de la plateforme compris) ; exemple et projet `test:e2e` | `ci:test:e2e`, le job `managers` la nuit | non |
 | seuils de couverture | kit : un plancher par *package* dans `vitest.config.ts`, dans `ci:test:unit` ; exemple et projet : par contexte et par couche, depuis `ddd-ts-kit.config.json`, dans `test:coverage` | `ci:test:unit` et, pour l'exemple et un projet, `ci:test:integration` | exemple et projet : avant un *push* (l'exécution unitaire) ; kit : le *pipeline* seulement |
 | *packages* tels que publiés | kit `ci:build` (publint, Are the Types Wrong) | kit `ci:build` ; exemple et projet `ci:build` (le build de production) | non |
 | secrets | non : pas une porte de `verify` | le job `secrets` (gitleaks sur tout l'historique) | kit, exemple et projet : les changements indexés, avant un *commit*, quand le binaire `gitleaks` est sur le chemin ; une ligne et aucun refus sinon |
