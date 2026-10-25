@@ -104,7 +104,10 @@ function contractProblems(at, port, { source, capabilitiesOf }) {
   }
 
   const callsOf = new Map(
-    Object.keys(port.options).map((member) => [member, callsIn(source.tests(member), port.contract)]),
+    Object.keys(port.options).map((member) => [
+      member,
+      callsIn(source.tests(member), port.contract).filter((call) => port.calls === undefined || port.calls.test(call)),
+    ]),
   );
 
   return [
@@ -276,19 +279,16 @@ function optionalKeysIn(name, files) {
 
 /** The text of each call of `contract(...)` in the specs. */
 function callsIn(files, contract) {
-  const calls = [];
+  // `contract(` or, with a type argument, `contract<Invoice>(`.
+  const call = new RegExp(`\\b${contract}(?:<[^()]*>)?\\(`, 'g');
 
-  for (const { text } of files) {
-    let start = text.indexOf(`${contract}(`);
+  return files.flatMap(({ text }) =>
+    [...text.matchAll(call)].map((match) => {
+      const open = match.index + match[0].length - 1;
 
-    while (start !== -1) {
-      const open = start + contract.length;
-      calls.push(text.slice(open, closingOf(text, open) + 1));
-      start = text.indexOf(`${contract}(`, open);
-    }
-  }
-
-  return calls;
+      return text.slice(open, closingOf(text, open) + 1);
+    }),
+  );
 }
 
 function closingOf(text, open) {

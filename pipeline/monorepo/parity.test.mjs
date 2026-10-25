@@ -87,6 +87,32 @@ test('a member whose specs never run the contract fails, unless it says why', ()
   assert.deepEqual(problemsOf(family({ withoutContract: { knex: 'a reason' } }), silent), []);
 });
 
+test('a call with a type argument is a call of the contract', () => {
+  const generic = RUN_IN_TENANT.replace('processStoreContract(', 'processStoreContract<Invoice>(');
+
+  assert.deepEqual(
+    problemsOf(family(), source({ knex: KNEX_IN_TENANT, prisma: PRISMA, knexSpec: generic, prismaSpec: generic }))
+      .length,
+    1,
+  );
+});
+
+test('a port proven by some calls of a contract counts those calls alone', () => {
+  const shared = `processStoreContract(runner, { name: 'knex, shared tables', createStore });`;
+  const underSecurity = `processStoreContract(runner, { name: 'knex, row-level security', createStore });`;
+  const port = { calls: /row-level security/ };
+  const run = (prismaSpec) =>
+    problemsOf(
+      family(port),
+      source({ knex: PRISMA.replace('Prisma', 'Knex'), prisma: PRISMA, knexSpec: underSecurity, prismaSpec }),
+    );
+
+  assert.deepEqual(run(underSecurity.replace('knex', 'prisma')), []);
+  assert.deepEqual(run(shared), [
+    'ORM, process store: the specs of prisma never run processStoreContract. Hold its adapter to it, or say in families.mjs (withoutContract) why not.',
+  ]);
+});
+
 test('the options of the place are never compared, and an interface is read through extends, Pick and Omit', () => {
   const knex = `
 export interface KnexStore extends Store {}

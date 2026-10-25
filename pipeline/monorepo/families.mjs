@@ -9,12 +9,21 @@
 //   names it (a schema, a table, a delegate, an entity, a connection): never compared;
 // - `apart`: option -> member -> why that member goes without it;
 // - `contract`: the contract suite of `@ddd-ts-kit/testing` every member runs;
+// - `calls`: when one contract proves several ports, the calls of this one (by their `name`);
 // - `withoutContract`: member -> why its specs do not run the contract yet;
 // - `capabilitiesApart`: optional key of the contract -> member -> why the member does not give it.
 
 export const CONTRACTS_DIR = 'packages/testing/src/contracts';
 
 const ORM_PLACE = ['schema', 'table', 'tableName', 'delegate', 'entity'];
+
+const NO_OPTIONS = { knex: null, drizzle: null, prisma: null, typeorm: null };
+
+const NO_ROW_LEVEL_SECURITY =
+  'no row-level security strategy: nothing sets the tenant at the start of a transaction (the `begin` of the unit of work of Knex and Drizzle)';
+
+const SEPARATE_STORAGE =
+  'a schema or a database per tenant (tenantSearchPath, tenantDatabases) is a strategy of Knex alone';
 
 const ORM = {
   family: 'ORM',
@@ -110,21 +119,45 @@ const ORM = {
         typeorm: 'TypeOrmPersonalDataErasureOptions',
       },
       contract: 'personalDataErasureContract',
-      withoutContract: {
-        knex: 'held by a spec of its own, written before the contract; moved to the contract with the tenancy ones',
-        drizzle: 'held by a spec of its own, written before the contract; moved to the contract with the tenancy ones',
-        prisma: 'held by a spec of its own, written before the contract; moved to the contract with the tenancy ones',
-        typeorm: 'held by a spec of its own, written before the contract; moved to the contract with the tenancy ones',
-      },
+    },
+    { port: 'personal data export', options: NO_OPTIONS, contract: 'personalDataExportContract' },
+    { port: 'personal data retention', options: NO_OPTIONS, contract: 'personalDataRetentionContract' },
+    { port: 'repository', options: NO_OPTIONS, contract: 'repositoryContract' },
+    {
+      port: 'tenancy, shared tables',
+      options: NO_OPTIONS,
+      contract: 'tenantIsolationContract',
+      calls: /name: '[^']*, shared tables'/,
+    },
+    {
+      port: 'tenancy, row-level security',
+      options: NO_OPTIONS,
+      contract: 'tenantIsolationContract',
+      calls: /row-level security/,
+      withoutContract: { prisma: NO_ROW_LEVEL_SECURITY, typeorm: NO_ROW_LEVEL_SECURITY },
+    },
+    {
+      port: 'tenancy, schema per tenant',
+      options: NO_OPTIONS,
+      contract: 'tenantIsolationContract',
+      calls: /schema per tenant/,
+      withoutContract: { drizzle: SEPARATE_STORAGE, prisma: SEPARATE_STORAGE, typeorm: SEPARATE_STORAGE },
+    },
+    {
+      port: 'tenancy, database per tenant',
+      options: NO_OPTIONS,
+      contract: 'tenantIsolationContract',
+      calls: /database per tenant/,
+      withoutContract: { drizzle: SEPARATE_STORAGE, prisma: SEPARATE_STORAGE, typeorm: SEPARATE_STORAGE },
     },
     {
       port: 'event store',
-      options: { knex: null, drizzle: null, prisma: null, typeorm: null },
+      options: NO_OPTIONS,
       contract: 'eventStoreContract',
     },
     {
       port: 'event store in the unit of work',
-      options: { knex: null, drizzle: null, prisma: null, typeorm: null },
+      options: NO_OPTIONS,
       contract: 'eventStoreUnitOfWorkContract',
     },
     {
