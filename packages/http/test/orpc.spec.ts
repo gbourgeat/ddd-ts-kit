@@ -271,6 +271,7 @@ describe('what only HTTP carries', () => {
     await expect(untypedClientOf([streamed], options)['exportRows']?.()).rejects.toMatchObject({
       code: 'NOT_ACCEPTABLE',
       status: 406,
+      data: { code: 'NOT_ACCEPTABLE', status: 406, requestId: expect.any(String) },
     });
 
     expect(reads.closed).toBe(reads.opened);

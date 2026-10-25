@@ -6,14 +6,15 @@ import type { ExecuteOptions } from '../pipeline/execute-options';
 import { executeRoute } from '../pipeline/execute-route';
 import { assertUniqueRoutes } from '../route/assert-unique-routes';
 import type { Route } from '../route/route';
-import type { OrpcContext } from './orpc-context';
-import { rpcAnswer } from './rpc-answer';
-import { rpcRequest } from './rpc-request';
+import { rpcAnswer } from '../rpc/rpc-answer';
+import type { RpcContext } from '../rpc/rpc-context';
+import { rpcRequest } from '../rpc/rpc-request';
+import { ORPC_PROTOCOL } from './orpc-protocol';
 
 /** One procedure of `orpcRouter`: its input and output are checked by the schemas of its route, not by oRPC. */
 export type OrpcProcedure = Procedure<
-  OrpcContext,
-  OrpcContext,
+  RpcContext,
+  RpcContext,
   Schema<unknown, unknown>,
   Schema<unknown, unknown>,
   ErrorMap,
@@ -52,9 +53,11 @@ function withoutRepresentations({ representations, ...options }: ExecuteOptions)
 
 function procedureOf(route: Route, options: ExecuteOptions, mapper: ErrorMapper): OrpcProcedure {
   return os
-    .$context<OrpcContext>()
+    .$context<RpcContext>()
     .errors(declaredErrors(route, mapper))
-    .handler(async ({ input, context }) => rpcAnswer(await executeRoute(route, rpcRequest(input, context), options)));
+    .handler(async ({ input, context }) =>
+      rpcAnswer(await executeRoute(route, rpcRequest(input, context), options), ORPC_PROTOCOL, mapper),
+    );
 }
 
 /** The codes the contract documents for the route, with their status: the refusals the client may narrow to. */

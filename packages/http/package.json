@@ -1,7 +1,7 @@
 {
   "name": "@ddd-ts-kit/http",
   "version": "0.90.0",
-  "description": "Framework-agnostic route definitions with Express, Fastify, Hono and NestJS adapters, oRPC procedures and OpenAPI 3.1 generation.",
+  "description": "Framework-agnostic route definitions with Express, Fastify, Hono and NestJS adapters, oRPC and tRPC procedures and OpenAPI 3.1 generation.",
   "keywords": [
     "ddd",
     "domain-driven-design",
@@ -13,6 +13,7 @@
     "hono",
     "nestjs",
     "orpc",
+    "trpc",
     "openapi",
     "rest-api"
   ],
@@ -55,6 +56,10 @@
       "types": "./dist/orpc.d.ts",
       "default": "./dist/orpc.js"
     },
+    "./trpc": {
+      "types": "./dist/trpc.d.ts",
+      "default": "./dist/trpc.js"
+    },
     "./openapi": {
       "types": "./dist/openapi.d.ts",
       "default": "./dist/openapi.js"
@@ -82,11 +87,12 @@
   "peerDependencies": {
     "@nestjs/common": ">=11.0.0",
     "@nestjs/core": ">=11.0.0",
+    "@orpc/server": "^1.15.0",
+    "@trpc/server": "^11.10.0",
+    "busboy": "^1.6.0",
     "express": "^5.0.0",
     "fastify": "^5.0.0",
-    "hono": "^4.0.0",
-    "busboy": "^1.6.0",
-    "@orpc/server": "^1.15.0"
+    "hono": "^4.0.0"
   },
   "peerDependenciesMeta": {
     "express": {
@@ -109,6 +115,9 @@
     },
     "@orpc/server": {
       "optional": true
+    },
+    "@trpc/server": {
+      "optional": true
     }
   },
   "devDependencies": {
@@ -121,6 +130,8 @@
     "@orpc/client": "^1.16.1",
     "@orpc/contract": "^1.16.1",
     "@orpc/server": "^1.16.1",
+    "@trpc/client": "^11.19.0",
+    "@trpc/server": "^11.19.0",
     "@types/busboy": "^1.5.5",
     "@types/express": "^5.0.0",
     "busboy": "^1.6.0",
