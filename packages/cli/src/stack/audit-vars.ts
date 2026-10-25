@@ -36,7 +36,7 @@ function archiveOf(sql: boolean, storage: string): RenderContext {
 
 /** The route that searches the trail, written as a function or a controller; none without HTTP. */
 function readSideOf(route: boolean, routes: string): RenderContext {
-  return { route, functionRoute: route && routes === 'functions', controller: route && routes === 'controllers' };
+  return { route, functionRoute: route && routes === 'functions', controller: route && routes !== 'functions' };
 }
 
 /** The store of the trail, by the ORM of the project; none of them with the trail off. */

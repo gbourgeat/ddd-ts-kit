@@ -144,11 +144,15 @@ function stackOf(options: StackOptions): Record<string, string> {
   const docsUi = http === 'none' ? 'none' : (choose(DOCS_UIS, options.docsUi, 'docs-ui') ?? 'swagger');
   const persistence = resolvePersistence(options);
   const broker = resolveBroker(options, persistence.orm);
+  const tooling = resolveTooling(options);
+  const writing = resolveWriting(options);
+
+  assertNestRoutes(writing.routes, http, tooling.validation);
 
   return {
     http,
     di,
-    ...resolveTooling(options),
+    ...tooling,
     ...persistence,
     docsUi,
     ...resolveSecurity(options),
@@ -157,7 +161,7 @@ function stackOf(options: StackOptions): Record<string, string> {
     rpc: resolveRpc(options, http),
     ...resolveOperations(options, persistence.orm),
     ...resolvePersonalData(options, persistence.orm),
-    ...resolveWriting(options),
+    ...writing,
     ...resolveStyle(options, di),
     ...resolvePresentation(options, http),
     tenancy: resolveTenancy(options, persistence.orm),
@@ -252,6 +256,18 @@ function resolveHttpCache(options: StackOptions, http: string, events: string): 
   throw new CliError(
     `--http-cache ${httpCache} cannot be combined with --http ${http} --events ${events}.`,
     'The purge of the shared cache is a row of the outbox, written with the command and sent after its commit: keep an HTTP framework and --events outbox, or --http-cache none.',
+  );
+}
+
+/** Nest controllers are read through the DTO classes of class-validator, in a project that runs on Nest. */
+function assertNestRoutes(routes: string, http: string, validation: string): void {
+  if (routes !== 'nest' || (http === 'nest' && validation === 'class-validator')) {
+    return;
+  }
+
+  throw new CliError(
+    `--routes nest writes Nest controllers, and this project has --http ${http} and --validation ${validation}.`,
+    'Choose --http nest --validation class-validator, or --routes controllers.',
   );
 }
 

@@ -108,6 +108,7 @@ function specOf(method: NestMethod, options: NestControllerRoutesOptions): Contr
   return {
     ...declared,
     ...requestSchemasOf(method, options),
+    ...(shared.group === undefined ? {} : { group: shared.group }),
     method: read.method,
     path: `/${read.path}`,
     tags: [...(shared.tags ?? []), ...tags],

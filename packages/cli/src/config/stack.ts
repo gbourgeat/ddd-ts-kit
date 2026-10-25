@@ -14,7 +14,7 @@ export const STYLES = ['declared', 'explicit'] as const;
 export const ASSEMBLIES = ['barrel', 'discovery'] as const;
 export const DEPENDENCY_STATEMENTS = ['signature', 'listed'] as const;
 export const REFUSAL_FORMS = ['named', 'factories', 'classes'] as const;
-export const ROUTE_FORMS = ['controllers', 'functions'] as const;
+export const ROUTE_FORMS = ['controllers', 'functions', 'nest'] as const;
 export const REPRESENTATION_MODES = ['negotiated', 'json'] as const;
 export const FORM_MODES = ['on', 'off'] as const;
 export const SCHEMA_FORMS = ['shared', 'per-route'] as const;
@@ -137,9 +137,11 @@ export interface Stack {
   /**
    * How a route is written: `controllers`, one class per route decorated with `@Controller`,
    * under a folder of its own with its schemas, behind the guards of its `@RouteGroup`;
-   * `functions`, one `defineRoute` function per route, listed in `<context>.routes.ts`. A config
-   * that says nothing was written when every route was a function: it is `functions`, and both
-   * forms run in either.
+   * `functions`, one `defineRoute` function per route, listed in `<context>.routes.ts`; `nest`, with
+   * `--http nest` and class-validator, a controller of Nest (`@Controller`, `@Post`, `@Body`) whose
+   * method carries `@KitRoute`, built by Nest's container with the buses it injects and served by
+   * the pipeline of the kit. A config that says nothing was written when every route was a
+   * function: it is `functions`, and every form runs in any.
    */
   readonly routes: (typeof ROUTE_FORMS)[number];
   /**

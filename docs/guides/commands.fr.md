@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:0230e885b13d4d8c -->
+<!-- translation-of: commands.md sha256:010b0daace5c980a -->
 
 # Quelle commande, quand
 
@@ -249,7 +249,7 @@ Usage
                   [--audit on|off] [--event-sourcing on|off] [--privacy on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals named|factories|classes]
-                  [--routes controllers|functions] [--representations negotiated|json] [--forms on|off]
+                  [--routes controllers|functions|nest] [--representations negotiated|json] [--forms on|off]
                   [--value-objects throwing|result] [--literals named|free] [--values classes|free] [--tenancy none|shared-table] [--queue database|redis|memory]
                   [--schemas shared|per-route]
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']

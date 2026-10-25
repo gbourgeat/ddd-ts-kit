@@ -141,10 +141,10 @@ function routeVars(config: Config): RenderContext {
   const declaredControllers = http !== 'none' && style === 'declared';
 
   return {
-    ...one(routes, ['controllers', 'functions']),
+    ...one(routes, ['controllers', 'functions', 'nest']),
     listed: http !== 'none' && !(style === 'declared' && routes === 'controllers'),
     declaredControllers,
-    mountsControllers: declaredControllers || (http !== 'none' && audit === 'on' && routes === 'controllers'),
+    mountsControllers: declaredControllers || (http !== 'none' && audit === 'on' && routes !== 'functions'),
   };
 }
 

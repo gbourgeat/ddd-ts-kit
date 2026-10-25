@@ -40,7 +40,7 @@ export function auditFiles(config: Config): InitFile[] {
       http !== 'none',
       [
         ...READ_SIDE,
-        `search-audit-entries/search-audit-entries.${config.stack.routes === 'controllers' ? 'controller' : 'route'}.ts`,
+        `search-audit-entries/search-audit-entries.${config.stack.routes === 'functions' ? 'route' : 'controller'}.ts`,
       ].map((name) => file(name)),
     ),
   ];

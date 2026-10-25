@@ -16,6 +16,7 @@ import { parseEndpoint } from './route/parse-endpoint';
 import { planController } from './route/plan-controller';
 import { routeVars, type RouteParts } from './route/route-vars';
 import { writeController } from './route/write-controller';
+import { writeNestController } from './route/write-nest-controller';
 import { SEARCH_LINE_LIBRARIES } from './route/search-line-libraries';
 
 const USAGE =
@@ -26,7 +27,7 @@ export const routeKind: Kind = {
   aliases: [],
   usage: `route ${USAGE}`,
   summary:
-    'An HTTP route calling an existing use case through its bus, with its spec: under "stack.routes": "controllers", a controller class in its folder, behind the guards of its route group; under "functions", a defineRoute function and its registration.',
+    'An HTTP route calling an existing use case through its bus, with its spec: under "stack.routes": "controllers", a controller class in its folder, behind the guards of its route group; under "functions", a defineRoute function and its registration; under "nest", a Nest controller whose method carries @KitRoute, listed in the module of its context.',
   positionals: ['context', 'UseCaseName'],
   writesShared: false,
   run: (request) => {
@@ -37,6 +38,12 @@ export const routeKind: Kind = {
     const name = label(scope, request.args[1] ?? '', { what: 'use case', strip: ['route', 'controller', 'handler'] });
     const parts = { name, endpoint: parseEndpoint(request.flags), useCase: findUseCase(scope, name, request.flags) };
     const { validation, routes } = scope.config.stack;
+
+    if (routes === 'nest' && request.asController !== true) {
+      writeNestController(scope, planController(scope, parts));
+
+      return;
+    }
 
     if (routes === 'controllers' || request.asController === true) {
       writeController(scope, planController(scope, parts));

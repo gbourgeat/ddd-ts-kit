@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:eeea59787432ccbc -->
+<!-- translation-of: README.md sha256:6c8f36d6958be8de -->
 
 # @ddd-ts-kit/http
 
@@ -1382,7 +1382,16 @@ export class AppModule {}
   routes si TypeScript a enregistré son type de retour, sinon à l'appel (une 500, signalée à
   `onError`), jamais répondue vide.
 - `nestControllerRoutes(controllers, { schemaOfClass })` donne les mêmes routes sans le conteneur
-  de Nest, pour `generateOpenApi`, `orpcRouter` et `trpcRouter`.
+  de Nest, pour `generateOpenApi`, `orpcRouter` et `trpcRouter` ; `nestControllerRoute` l'unique
+  route d'un contrôleur, pour sa spec.
+- Une application qui compose ses routes avant le démarrage de Nest prend
+  `nestControllers(controllers, { providers, schemaOfClass })` : ses `routes` rejoignent les autres
+  routes de l'application, et `provideControllers(served)` dans le module Nest construit les
+  contrôleurs avec ce qu'ils injectent (les bus, comme `{ provide: CommandBus, useValue: commands }`)
+  et donne aux routes leurs instances au démarrage. `ddd-ts-kit init --routes nest` écrit cette
+  composition.
+- `@KitRoutes({ group })` nomme un groupe de routes du kit (`@RouteGroup`) : son préfixe précède les
+  chemins de Nest, ses tags, *guards* et codes précèdent ceux de la classe.
 - Refusés quand les routes sont construites, parce que le pipeline du kit ne les exécuterait pas :
   `@UseGuards`, `@UsePipes`, `@UseInterceptors`, `@UseFilters`, `@Header`, `@Redirect`, `@Render`,
   `@Sse`, `@Version`, un *pipe* sur un paramètre, `@Req`, `@Res` et les autres paramètres de Nest. Le
