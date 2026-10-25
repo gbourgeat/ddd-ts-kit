@@ -28,5 +28,8 @@ export const PROVEN_AT_NIGHT: readonly (readonly [string, StackFlags])[] = [
   ],
 ];
 
-/** At night the proven stacks include those the workspace cannot run. */
+/** At night, and before a release, the proven stacks include those the workspace cannot run. */
 export const NIGHT = process.env['DDD_TS_KIT_NIGHT'] === '1';
+
+/** The release runs them alone: the other proven stacks ran on every pull request. */
+export const NIGHT_ONLY = process.env['DDD_TS_KIT_NIGHT'] === 'only';

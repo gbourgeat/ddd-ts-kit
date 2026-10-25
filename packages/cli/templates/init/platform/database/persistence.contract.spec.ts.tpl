@@ -4,6 +4,9 @@ import { FixedExecutionScope, executionContext, systemActor } from '@ddd-ts-kit/
 {{/if}}
 {{#if queue.database}}
 import {
+{{#if eventSourcing.on}}
+  eventStoreContract,
+{{/if}}
   jobStoreContract,
   outboxStoreContract,
   processedEventStoreContract,
@@ -11,7 +14,22 @@ import {
 } from '@ddd-ts-kit/testing/contracts';
 {{/if}}
 {{#unless queue.database}}
-import { outboxStoreContract, processedEventStoreContract{{#if queue.processTable}}, processStoreContract{{/if}} } from '@ddd-ts-kit/testing/contracts';
+{{#if queue.processTable}}
+{{#if eventSourcing.on}}
+import {
+  eventStoreContract,
+  outboxStoreContract,
+  processedEventStoreContract,
+  processStoreContract,
+} from '@ddd-ts-kit/testing/contracts';
+{{/if}}
+{{#unless eventSourcing.on}}
+import { outboxStoreContract, processedEventStoreContract, processStoreContract } from '@ddd-ts-kit/testing/contracts';
+{{/unless}}
+{{/if}}
+{{#unless queue.processTable}}
+import { {{#if eventSourcing.on}}eventStoreContract, {{/if}}outboxStoreContract, processedEventStoreContract } from '@ddd-ts-kit/testing/contracts';
+{{/unless}}
 {{/unless}}
 import { openTestDatabase, type TestDatabase } from '{{alias.platform}}/database/open-test-database{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
@@ -44,6 +62,14 @@ processedEventStoreContract(runner, {
   name: 'The processed-event store of the platform',
   createStore: async () => (await emptied()).processedEvents,
 });
+{{#if eventSourcing.on}}
+
+eventStoreContract(runner, {
+  name: 'The event store of the platform',
+  createStore: async () => (await emptied()).eventSourcing.events,
+  createCompanions: async () => (await emptied()).eventSourcing,
+});
+{{/if}}
 {{#if queue.database}}
 
 jobStoreContract(runner, {

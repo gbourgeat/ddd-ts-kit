@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:332ea85ba7aad470 -->
+<!-- translation-of: CONTRIBUTING.md sha256:f95ae929f646f3f2 -->
 
 # Contribuer
 
@@ -223,8 +223,11 @@ npm install --package-lock-only
 git tag v0.2.0 && git push origin v0.2.0
 ```
 
-L'étiquette lance le workflow `Release` : il vérifie que l'étiquette est la version qu'annonce
-chaque package, construit, vérifie les archives, publie chaque package sur le registre npm avec
+La pull request d'une release (son titre commence par `chore(release)`) fait tourner les projets
+générés sur Prisma et TypeORM installés pour de vrai, comme la nuit (`npm run
+ci:test:stacks-at-night`) : la CI d'une autre pull request ne fait que les typer. L'étiquette
+lance le workflow `Release` : il les fait tourner une fois de plus et ne publie rien tant que l'un
+d'eux est rouge, puis vérifie que l'étiquette est la version qu'annonce chaque package, construit, vérifie les archives, publie chaque package sur le registre npm avec
 sa provenance et crée la release GitHub. Une version qui a une partie de préversion
 (`0.2.0-rc.1`) est publiée sous l'étiquette `next`. Une exécution arrêtée à mi-chemin se
 relance : ce qui est déjà publié est sauté. Les notes de la release GitHub sont générées à
