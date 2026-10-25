@@ -16,6 +16,7 @@ import {
   DOCS_UIS,
   ERROR_REPORTERS,
   HTTP_CACHE_STACKS,
+  RPC_STACKS,
   HTTP_STACKS,
   IMPORT_EXTENSIONS,
   LOGGERS,
@@ -153,6 +154,7 @@ function stackOf(options: StackOptions): Record<string, string> {
     ...resolveSecurity(options),
     broker,
     httpCache: resolveHttpCache(options, http, persistence.events),
+    rpc: resolveRpc(options, http),
     ...resolveOperations(options, persistence.orm),
     ...resolvePersonalData(options, persistence.orm),
     ...resolveWriting(options),
@@ -250,6 +252,20 @@ function resolveHttpCache(options: StackOptions, http: string, events: string): 
   throw new CliError(
     `--http-cache ${httpCache} cannot be combined with --http ${http} --events ${events}.`,
     'The purge of the shared cache is a row of the outbox, written with the command and sent after its commit: keep an HTTP framework and --events outbox, or --http-cache none.',
+  );
+}
+
+/** The procedures are the routes of the HTTP framework served a second way: there must be one. */
+function resolveRpc(options: StackOptions, http: string): string {
+  const rpc = choose(RPC_STACKS, options.rpc, 'rpc') ?? 'none';
+
+  if (rpc === 'none' || http !== 'none') {
+    return rpc;
+  }
+
+  throw new CliError(
+    `--rpc ${rpc} cannot be combined with --http none.`,
+    'The procedures run the routes of the contexts through the same pipeline: choose an HTTP framework, or --rpc none.',
   );
 }
 

@@ -15,4 +15,10 @@ export interface ClientOperation {
   /** The schema of its JSON body, when it takes one. */
   readonly body: { readonly schema: unknown; readonly required: boolean } | undefined;
   readonly responses: readonly ClientResponse[];
+  /**
+   * The procedure that serves it under /rpc, its `operationId`, as `orpcRouter` of
+   * `@ddd-ts-kit/http/orpc` names it; none when it receives a body that is not JSON (a file, a
+   * raw body), which only its HTTP route receives.
+   */
+  readonly procedure: string | undefined;
 }

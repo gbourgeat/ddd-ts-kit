@@ -124,6 +124,7 @@ clients/
       errors.ts          ERROR_CODES, ErrorCode, isErrorCode(), isProblem()
       schemas.ts         one type per component schema
       runtime.ts         the same for every contract: request, credentials, answer
+      orpc.ts            with stack.rpc orpc: the oRPC contract, createRpcClient(), at <client>/orpc
 ```
 
 A split contract (`openapi.documents`) gives `clients/<name>` for each document, a document
@@ -295,6 +296,40 @@ These samples import the client of the example by its package name, which resolv
 project that generated it, not in the repository of the kit, so the checked samples of this
 documentation skip them. They were compiled by hand against `examples/scheduling/clients/api`,
 and the compiler messages quoted above are its own; no gate keeps them so.
+
+### Procedures (oRPC)
+
+With `stack.rpc` set to `orpc` (`init --rpc orpc`), the API serves its routes as oRPC procedures
+under `/rpc` too, and each client gets `src/orpc.ts`, exported as `<client>/orpc`: the oRPC
+contract of its document, each procedure named by its `operationId`, its input and its answer
+the types of the HTTP client, its refusals the codes of `x-error-codes` with their status.
+`@orpc/client` and `@orpc/contract` become the dependencies of the package; its root entry still
+needs nothing, and a consumer that does not import `./orpc` bundles none of them.
+
+```ts
+import { isDefinedError, safe } from '@orpc/client';
+import { createRpcClient } from 'scheduling-api-client/orpc';
+
+const rpc = createRpcClient({
+  url: 'https://api.example.com/rpc',
+  headers: () => ({ authorization: `Bearer ${session.token()}` }),
+});
+
+const [error, practice] = await safe(
+  rpc.openPractice({ body: { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' } }),
+);
+
+if (isDefinedError(error) && error.code === 'PERSON_NOT_REGISTERED') {
+  // error.code is one of the codes of openPractice, error.data its problem document
+}
+```
+
+`contract` is the oRPC contract itself, for what is built on it (`createTanstackQueryUtils` of
+`@orpc/tanstack-query` takes the client). What the procedures do not carry stays with the HTTP
+client: the headers of an answer (an `ETag` to send back in `If-Match`, a cache policy), the
+representations other than JSON, and the operations that receive a file or a raw body, which
+have no procedure. Setting `stack.rpc` back to `none` and running `sdk` deletes `src/orpc.ts` and
+its dependencies, and keeps those the team added.
 
 ### Limits
 

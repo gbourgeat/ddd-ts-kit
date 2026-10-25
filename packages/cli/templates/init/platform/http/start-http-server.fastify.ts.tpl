@@ -1,5 +1,9 @@
-import Fastify{{#if cache.rateLimit}}, { type FastifyInstance }{{/if}} from 'fastify';
+import Fastify{{#if cache.rateLimit}}, { type FastifyInstance }{{/if}}{{#unless cache.rateLimit}}{{#if rpc.orpc}}, { type FastifyInstance }{{/if}}{{/unless}} from 'fastify';
 import { mountFastify } from '@ddd-ts-kit/http/fastify';
+{{#if rpc.orpc}}
+import { orpcRouter } from '@ddd-ts-kit/http/orpc';
+import { RPCHandler } from '@orpc/server/fastify';
+{{/if}}
 import type { Application } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 {{#if cache.rateLimit}}
@@ -22,7 +26,8 @@ type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | '
 /**
  * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
  * server), the signed file links (with a storage the application serves), the routes of the
- * contexts, then the pages of the contract (with documentation on).
+ * contexts, then the pages of the contract (with documentation on).{{#if rpc.orpc}} The same routes are served
+ * as oRPC procedures under /rpc, for the typed client of the contract.{{/if}}
  */
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
   const app = Fastify();
@@ -40,6 +45,9 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 {{#unless docs.any}}
   mountFastify(app, served.routes, served.boundary);
 {{/unless}}
+{{#if rpc.orpc}}
+  serveProcedures(app, served);
+{{/if}}
   await app.listen({ port: config.port, host: '0.0.0.0' });
 
   const [address] = app.addresses();
@@ -68,6 +76,24 @@ function limitEachCaller(app: FastifyInstance, served: Served, config: AppConfig
 
     if (tooMany !== undefined) {
       await reply.code(tooMany.status).headers(tooMany.headers).send(tooMany.body);
+    }
+  });
+}
+{{/if}}
+{{#if rpc.orpc}}
+
+const RPC_PREFIX = '/rpc';
+
+/** Each route as the procedure named by its operationId: the same pipeline, the JSON body already read by Fastify. */
+function serveProcedures(app: FastifyInstance, served: Served): void {
+  const handler = new RPCHandler(orpcRouter(served.routes, served.boundary));
+
+  app.all(`${RPC_PREFIX}/*`, async (request, reply) => {
+    const context = { headers: request.headers, raw: request };
+    const { matched } = await handler.handle(request, reply, { prefix: RPC_PREFIX, context });
+
+    if (!matched) {
+      reply.callNotFound();
     }
   });
 }

@@ -1288,7 +1288,9 @@ The `context` of a call is `OrpcContext`: the headers of the RPC request, which 
 credentials, the request and correlation ids and the tenant, and `raw`, what `resolvePrincipal`
 reads (`{ headers }` when it is left out, which `principalResolver` of `@ddd-ts-kit/auth` reads).
 Fastify (`@orpc/server/fastify`), Hono (`@orpc/server/fetch`) and NestJS on Express
-(`@orpc/server/node`) mount it the same way.
+(`@orpc/server/node`) mount it the same way; `ddd-ts-kit init --rpc orpc` writes the mount for
+the framework of the project, and `ddd-ts-kit sdk` gives each client the oRPC contract of its
+document, at `<client>/orpc`.
 
 | | Over `/rpc` |
 |---|---|

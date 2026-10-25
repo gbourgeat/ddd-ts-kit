@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:47444d7c4129b62d -->
+<!-- translation-of: README.md sha256:f02600c455aa5064 -->
 
 # @ddd-ts-kit/http
 
@@ -1342,7 +1342,9 @@ Le `context` d'un appel est un `OrpcContext` : les en-têtes de la requête RPC,
 identifiants, les identifiants de requête et de corrélation et le tenant, et `raw`, ce que lit
 `resolvePrincipal` (`{ headers }` quand il est omis, ce que lit `principalResolver` de
 `@ddd-ts-kit/auth`). Fastify (`@orpc/server/fastify`), Hono (`@orpc/server/fetch`) et NestJS sur
-Express (`@orpc/server/node`) le montent de la même façon.
+Express (`@orpc/server/node`) le montent de la même façon ; `ddd-ts-kit init --rpc orpc` écrit le
+montage pour le framework du projet, et `ddd-ts-kit sdk` donne à chaque client le contrat oRPC de
+son document, sous `<client>/orpc`.
 
 | | Sur `/rpc` |
 |---|---|

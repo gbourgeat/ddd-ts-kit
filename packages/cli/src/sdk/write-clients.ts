@@ -7,6 +7,8 @@ import { CLIENTS_DIRECTORY } from './clients-directory';
 import type { PlannedClient } from './planned-client';
 import { putFile } from './put-file';
 
+const ORPC_FILE = 'src/orpc.ts';
+
 /**
  * Writes the client of every document of the contract, and the build config that compiles them
  * all (`tsc -b clients`). A client whose document is gone is not deleted: it is answered, with
@@ -33,13 +35,28 @@ export function writeClients(ws: Workspace, config: Config, clients: readonly Pl
     .map((name) => `${CLIENTS_DIRECTORY}/${name}`);
 }
 
-function writeClient(ws: Workspace, config: Config, { document, packageName, directory }: PlannedClient): void {
-  for (const [file, content] of clientFiles(document, packageName, directory)) {
+function writeClient(ws: Workspace, config: Config, client: PlannedClient): void {
+  const { document, packageName, directory } = client;
+  const { rpc } = config.stack;
+
+  for (const [file, content] of clientFiles(client, rpc)) {
     putFile(ws, `${directory}/${file}`, content);
   }
 
+  // The contract of procedures the API no longer serves would compile against packages the manifest no longer lists.
+  if (rpc !== 'orpc' && ws.exists(`${directory}/${ORPC_FILE}`)) {
+    ws.delete(`${directory}/${ORPC_FILE}`);
+  }
+
   const manifest = `${directory}/package.json`;
-  const facts = { name: packageName, version: document.version, title: document.title, access: config.sdk?.access };
+
+  const facts = {
+    name: packageName,
+    version: document.version,
+    title: document.title,
+    access: config.sdk?.access,
+    rpc,
+  };
 
   putFile(ws, manifest, clientManifest(facts, ws.read(manifest)));
 }

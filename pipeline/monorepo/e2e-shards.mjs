@@ -46,8 +46,8 @@ export const SHARDS = [
   {
     'coverage-gate.spec.ts': 328,
     'typecheck.spec.ts': 70,
-    // With the client SDK of each pair.
-    'contract-pairs.spec.ts': 38,
+    // Seconds of a workstation (25) taken two and a half times, as the runners take longer: not measured on one yet.
+    'rpc-procedures.spec.ts': 60,
     'formatted.spec.ts': 29,
     'preset-identity-generated.spec.ts': 25,
     'error-rule-violations.spec.ts': 11,
@@ -58,11 +58,12 @@ export const SHARDS = [
   {
     'first-minute-two-contexts.spec.ts': 322,
     'preset-identity.spec.ts': 135,
+    // With the client SDK of each pair.
+    'contract-pairs.spec.ts': 38,
     'file-uploads.spec.ts': 26,
     'error-reporting.spec.ts': 17,
-    'dev-reload.spec.ts': 9,
   },
-  { 'first-minute-no-context.spec.ts': 312, 'first-class.spec.ts': 209 },
+  { 'first-minute-no-context.spec.ts': 312, 'first-class.spec.ts': 209, 'dev-reload.spec.ts': 9 },
 ];
 
 /** The spec files of the directory that a shard has to run. */

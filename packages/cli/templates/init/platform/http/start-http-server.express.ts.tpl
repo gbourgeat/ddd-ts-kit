@@ -2,6 +2,10 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import express from 'express';
 import { mountExpress } from '@ddd-ts-kit/http/express';
+{{#if rpc.orpc}}
+import { orpcRouter } from '@ddd-ts-kit/http/orpc';
+import { RPCHandler } from '@orpc/server/node';
+{{/if}}
 import type { Application } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 {{#if cache.rateLimit}}
@@ -24,7 +28,8 @@ type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | '
 /**
  * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
  * server), the signed file links before any body parser (with a storage the application serves),
- * the routes of the contexts, then the pages of the contract (with documentation on).
+ * the routes of the contexts, then the pages of the contract (with documentation on).{{#if rpc.orpc}} The same
+ * routes are served as oRPC procedures under /rpc, for the typed client of the contract.{{/if}}
  */
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
   const app = express();
@@ -39,6 +44,9 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
   mountExpress(app, served.fileRoutes, served.boundary);
 {{/if}}
   app.use(express.json());
+{{#if rpc.orpc}}
+  serveProcedures(app, served);
+{{/if}}
 {{#if docs.any}}
   mountExpress(app, withDocumentation(served.routes, config, served.boundary), served.boundary);
 {{/if}}
@@ -69,6 +77,25 @@ function limitEachCaller(app: express.Express, served: Served, config: AppConfig
         next();
       } else {
         response.status(tooMany.status).set(tooMany.headers).send(tooMany.body);
+      }
+    }, next);
+  });
+}
+{{/if}}
+{{#if rpc.orpc}}
+
+const RPC_PREFIX = '/rpc';
+
+/** Each route as the procedure named by its operationId: the same pipeline, the JSON body already read. */
+function serveProcedures(app: express.Express, served: Served): void {
+  const handler = new RPCHandler(orpcRouter(served.routes, served.boundary));
+
+  app.use(RPC_PREFIX, (request, response, next) => {
+    const context = { headers: request.headers, raw: request };
+
+    void handler.handle(request, response, { prefix: RPC_PREFIX, context }).then(({ matched }) => {
+      if (!matched) {
+        next();
       }
     }, next);
   });

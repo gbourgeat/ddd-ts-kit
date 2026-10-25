@@ -1,12 +1,16 @@
 import type { ClientDocument } from './client-document';
 import type { ClientOperation } from './client-operation';
 import { errorCodes } from './error-codes';
+import type { Rpc } from './rpc';
 import { isInputOptional } from './is-input-optional';
+import { propertyKey } from './property-key';
 
 /** What a README needs besides the document: the package name and where the client sits in its project. */
 export interface ReadmePlace {
   readonly packageName: string;
   readonly directory: string;
+  /** `orpc` when the API serves its routes as procedures too, which `./orpc` calls. */
+  readonly rpc?: Rpc;
 }
 
 /** `README.md` of the package: how to install it, call it, authenticate, handle its refusals; its operations and error codes. */
@@ -18,6 +22,7 @@ export function renderReadme(document: ClientDocument, place: ReadmePlace): stri
     usage(document, place.packageName),
     operationsTable(document.operations),
     codesSection(document),
+    ...(place.rpc === 'orpc' ? [procedures(document, place.packageName)] : []),
     publishing(place),
   ].join('\n\n');
 }
@@ -60,6 +65,39 @@ function codesSection(document: ClientDocument): string {
   const codes = errorCodes(document);
 
   return `## Error codes\n\n${codes.length === 0 ? 'The contract declares none.' : codes.map((code) => `- \`${code}\``).join('\n')}\n\n\`ERROR_CODES\` lists them, \`ErrorCode\` is their type.`;
+}
+
+function procedures(document: ClientDocument, packageName: string): string {
+  const first = document.operations.find((operation) => operation.procedure !== undefined);
+
+  const left = document.operations
+    .filter((operation) => operation.procedure === undefined)
+    .map(({ name }) => `\`${name}\``);
+
+  const call =
+    first === undefined
+      ? ''
+      : `\nconst [error, data] = await safe(rpc${memberOf(first.procedure ?? first.name)}(${isInputOptional(first) ? '' : '{ ... }'}));\n\nif (isDefinedError(error)) {\n  // error.code is one of the codes of the procedure, error.data its problem document\n}\n`;
+
+  return `## Procedures (oRPC)
+
+The API serves the same operations as oRPC procedures under \`/rpc\`, through the same pipeline: the same credentials, permissions, validation and error codes. \`${packageName}/orpc\` is their client, which needs \`@orpc/client\` and \`@orpc/contract\`; the root entry needs nothing.
+
+\`\`\`ts
+import { isDefinedError, safe } from '@orpc/client';
+import { createRpcClient } from '${packageName}/orpc';
+
+const rpc = createRpcClient({ url: 'https://api.example.com/rpc', headers: () => ({ authorization: \`Bearer \${session.token()}\` }) });
+${call}\`\`\`
+
+A procedure takes the input of its operation (\`path\`, \`query\`, \`header\`, \`body\`) and answers its body. A refusal throws an \`ORPCError\` whose \`code\`, \`status\` and \`data\` are those of the problem document. What only HTTP carries stays with the HTTP client: the headers of an answer (an \`ETag\`, its cache policy), a representation other than JSON, a file or a list streamed as it is read (refused with 406)${left.length === 0 ? '' : `, and the operations no procedure serves, those that receive a file or a raw body: ${left.join(', ')}`}.`;
+}
+
+/** How a member is read in TypeScript: \`.name\`, or \`['some-name']\` for a name that is not an identifier. */
+function memberOf(name: string): string {
+  const key = propertyKey(name);
+
+  return key === name ? `.${name}` : `[${key}]`;
 }
 
 function publishing(place: ReadmePlace): string {

@@ -172,13 +172,17 @@ function assemblyVars(config: Config): RenderContext {
   };
 }
 
-/** The HTTP framework, and the shared cache in front of it. */
+/** The HTTP framework, the shared cache in front of it, and the procedures served next to it. */
 function edgeVars(config: Config): RenderContext {
-  const { httpCache, tenancy } = config.stack;
+  const { httpCache, tenancy, rpc } = config.stack;
   // A multi-tenant application files its tags under the tenant, on the answers and on the purges alike.
   const perTenant = httpCache !== 'none' && tenancy !== 'none';
 
-  return { http: httpVars(config), httpCache: { ...one(httpCache, ['none', 'varnish']), perTenant } };
+  return {
+    http: httpVars(config),
+    httpCache: { ...one(httpCache, ['none', 'varnish']), perTenant },
+    rpc: one(rpc, ['none', 'orpc']),
+  };
 }
 
 function httpVars(config: Config): RenderContext {

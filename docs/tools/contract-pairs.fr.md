@@ -1,5 +1,5 @@
 [English](contract-pairs.md) · **Français**
-<!-- translation-of: contract-pairs.md sha256:3cf60ebe6988969e -->
+<!-- translation-of: contract-pairs.md sha256:6d7fc35ef3033a53 -->
 
 # Paires de contrat : un framework HTTP et une bibliothèque de validation
 
@@ -9,7 +9,8 @@ sur un framework, et le contrat OpenAPI est généré à partir de la même déc
 et la bibliothèque de validation sont donc deux choix faits à `init` et changés plus tard sans
 toucher au comportement d'une route. Quatre paires sont générées et exécutées de bout en bout par
 le kit : Express et zod, Fastify et TypeBox, Hono sur Node et zod, NestJS et class-validator.
-oRPC a été évalué et n'en fait pas partie. Ce qui sépare les paires, c'est moins la vitesse que
+oRPC n'est pas une paire : il sert les mêmes routes d'une seconde façon, comme procédures pour
+un client TypeScript typé. Ce qui sépare les paires, c'est moins la vitesse que
 l'équipe : ce qu'elle connaît déjà, comment elle écrit les types, et quelle part d'un framework
 elle est prête à laisser inutilisée.
 
@@ -254,7 +255,7 @@ laquelle les exécutions s'accordent.
   voient pas les routes ([frameworks HTTP](http-frameworks.fr.md)). class-transformer n'a eu
   aucune version publiée depuis 2021.
 
-## oRPC : évalué, pas une paire
+## oRPC : une seconde porte, pas une paire
 
 oRPC 1.15.6 (MIT, première version publiée en novembre 2024) part du contrat : un contrat
 (`oc.route({ method, path }).input(schema).output(schema).errors({...})`) est implémenté par des
@@ -262,7 +263,7 @@ procédures, servi en HTTP par un `OpenAPIHandler`, et transformé en document O
 `OpenAPIGenerator` avec un convertisseur par bibliothèque de schémas. Vérifié en l'exécutant avec
 zod 4 :
 
-| Invariant du kit | Ce que fait oRPC à la place |
+| Invariant du kit | Ce que fait oRPC à la place, comme paire |
 |---|---|
 | une classe contrôleur avec une seule `handle` | une procédure est une fonction (`os.book.handler(({ input, context, errors }) => ...)`) ; une classe ne serait qu'appelée depuis elle |
 | les gardes | des *middlewares* sur la procédure ou le routeur, avec leur propre contexte |
@@ -270,13 +271,27 @@ zod 4 :
 | une forme déclarée une fois dans le contrat | un schéma zod avec `.meta({ id })` a été recopié deux fois ; il n'est référencé que s'il est aussi listé dans l'option `commonSchemas` du générateur, un second registre |
 | un seul générateur de contrat | oRPC génère son propre document à partir de son contrat, à côté de celui du kit |
 
-L'intégrer comme paire donnerait à un projet deux façons de déclarer une route, deux formats
-d'erreur et deux générateurs de contrat, soit ce que le kit existe pour éviter. Ce qu'oRPC offre
-et qu'une équipe peut vouloir, un client typé de bout en bout, le kit l'obtient du contrat qu'il
-génère déjà : `ddd-ts-kit sdk` écrit un client typé à partir de `openapi/*.yaml`
-([SDK client](client-sdk.fr.md)). Utilisez oRPC seul, hors des contextes délimités (bounded
-contexts), pour un RPC interne entre un front-end et son backend-for-frontend ; utilisez les
-contrôleurs du kit pour l'API des contextes.
+Comme paire, il donnerait à un projet deux façons de déclarer une route, deux formats d'erreur
+et deux générateurs de contrat, soit ce que le kit existe pour éviter. Ce qu'un front-end
+TypeScript attend d'oRPC, c'est son client : des procédures appelées par leur nom, des entrées et
+des réponses inférées, des refus rétrécis à leurs codes, les intégrations de TanStack Query. Le
+kit donne ce client sans seconde déclaration (`stack.rpc: orpc`, `init --rpc orpc`) :
+
+- les routes restent la seule déclaration : `orpcRouter` de `@ddd-ts-kit/http/orpc` sert chacune
+  comme une procédure nommée par son `operationId` sur le protocole RPC d'oRPC (`RPCHandler`, sous
+  `/rpc`), par le même `executeRoute`, gardes, validation et permissions compris ;
+- un seul format d'erreur : un refus est une `ORPCError` dont le code et le statut sont ceux du
+  document *problem*, qu'elle porte comme données ;
+- un seul contrat : `ddd-ts-kit sdk` écrit le contrat oRPC de chaque client à partir du document
+  OpenAPI (`<client>/orpc`), ses entrées et ses réponses étant les types du client HTTP, ses refus
+  les codes que déclare `x-error-codes`. L'`OpenAPIHandler` et l'`OpenAPIGenerator` d'oRPC ne
+  servent pas.
+
+Ce que seul HTTP porte reste aux routes : les en-têtes d'une réponse (un `ETag`, une politique de
+cache), les représentations autres que JSON, les téléversements, les fichiers et les listes lues
+au fil de l'eau ([le README du paquet](../../packages/http/README.fr.md), « Procédures oRPC »). Un
+client qui en a besoin garde le client HTTP, que `ddd-ts-kit sdk` écrit toujours
+([SDK client](client-sdk.fr.md)).
 
 ## Sources
 
@@ -290,6 +305,8 @@ contrôleurs du kit pour l'API des contextes.
 - La sonde d'oRPC a été exécutée dans un répertoire jetable avec `@orpc/server`,
   `@orpc/contract`, `@orpc/openapi` et `@orpc/zod` 1.15.6 et zod 4.6.5 ; son code est résumé dans
   le tableau ci-dessus.
+  Les procédures du kit sont prouvées avec `@orpc/server`, `@orpc/client` et `@orpc/contract`
+  1.16.1 (`packages/http/test/orpc.spec.ts`, et un projet généré sur chaque framework).
 - Non vérifié : Hono sur Bun, Deno ou un runtime edge ; TypeBox par `Type.Ref` et un contexte.
 
 ## Voir aussi
