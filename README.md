@@ -41,11 +41,11 @@ every merge and on every push.
 - **Rules, not guidelines.** Each rule has an id, a reason and a fix
   (`npx ddd-ts-kit explain <rule-id>`), checked by a zero-dependency CLI, an ESLint plugin and
   dependency-cruiser.
-- **Generate, do not type.** `ddd-ts-kit generate` writes 36 kinds of building blocks with their
+- **Generate, do not type.** `ddd-ts-kit generate` writes 42 kinds of building blocks with their
   spec, fake and registration, and leaves `TODO(domain)` where a business decision is expected.
 - **Made for coding agents.** A plugin for Claude Code, Codex and GitHub Copilot: skills that
-  conduct the work step by step, agents for parallel work and review, and a hook that refuses a
-  write which breaks a rule.
+  conduct the work step by step, agents for parallel work and review, and a hook that checks each
+  TypeScript file the agent writes and names the broken rule at once.
 - **Your stack, not ours.** Express, Fastify, Hono or NestJS; zod, class-validator, TypeBox or any
   Standard Schema library; tsyringe, NestJS or manual wiring; Drizzle, Knex, Prisma or TypeORM;
   RabbitMQ, Kafka, NATS JetStream or Redis Streams; JWT or Keycloak; roles, attributes or
@@ -74,7 +74,8 @@ starting from [README.fr.md](README.fr.md).
 
 You do not run ddd-ts-kit yourself: your coding agent does. You describe the business, answer its
 questions and review what it writes; the agent runs the generators, the checks and the gate, and
-the hook of the plugin refuses a write that breaks a rule.
+the hook of the plugin checks each TypeScript file it writes, names the broken rule at once and
+refuses once to stop while an error remains.
 
 **1. Install the plugin** in the agent you use. This repository is its marketplace:
 
@@ -91,10 +92,10 @@ the hook of the plugin refuses a write that breaks a rule.
 /ddd-ts-kit:start An API for a shop: customers place orders, each order is billed, then shipped.
 ```
 
-The agent conducts the [nine steps](#start-a-project) one at a time and stops for your decision at
-each strategic choice. It writes the discovery, the bounded contexts and their glossaries under
-`docs/architecture/` for you to review, then bootstraps the project, plans the slices and builds
-them one commit at a time, green on the whole gate at every step. A later session resumes from
+The agent conducts the first seven of the [nine steps](#start-a-project) one at a time and stops for
+your decision at each strategic choice. It writes the discovery, the bounded contexts and their
+glossaries under `docs/architecture/` for you to review, then has you run `/ddd-ts-kit:bootstrap`,
+plans the slices and builds them one commit at a time, green on the whole gate at every step. A later session resumes from
 `docs/architecture/plan.md`: the same skill, with no argument.
 
 The machine needs Node 22.12 or later: the agent runs the CLI through `npx`. Without the plugin,
@@ -224,14 +225,14 @@ The rules cover, among others:
 `npx ddd-ts-kit rules` lists every id with its severity; the
 [architecture reference](docs/ARCHITECTURE.md) defines them.
 
-![The same rules checked at three moments: at every file write by the hook of the Claude Code plugin, before each merge by npm run verify, and on every push by the CI pipeline, all three applying the rules defined in docs/ARCHITECTURE.md](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/ddd-ts-kit-checks.svg)
+![The same rules checked at three moments: at every file write by the hook of the plugin, before each merge by npm run verify, and on every pull request by the CI pipeline, all three applying the rules defined in docs/ARCHITECTURE.md](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/ddd-ts-kit-checks.svg)
 
 ## The plugin for coding agents
 
 This repository is the marketplace of the plugin for Claude Code, Codex and GitHub Copilot; the
-[quick start](#quick-start) says how each agent installs it. Twenty-two skills conduct a project from a statement of needs to working contexts, five agents
-explore, build one context in its own worktree, write the specs, review and judge a change to a
-locked acceptance test, and the hook refuses
+[quick start](#quick-start) says how each agent installs it. Twenty-six skills conduct a project from a statement of needs to working contexts, six agents
+explore, build one context in its own worktree, write the specs, review, judge a change to a
+locked acceptance test and verify a story at its close in a fresh context, and the hook refuses
 a hand-written file where a generator exists and checks every file written. Without any plugin,
 the `AGENTS.md` and the rules by layer that `init` writes still guide every agent.
 [The plugin for coding agents](docs/guides/coding-agents.md) lists the skills and says what each

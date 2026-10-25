@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 496" width="960" height="496" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">One set of rules, checked at three moments</title>
-  <desc id="desc">At every file write, the hook of the Claude Code plugin checks the written file and returns each violation with its fix. Before each merge, npm run verify runs the compiler, ESLint with the plugin of the kit, the formatter, the tests, the checker, dependency-cruiser, knip and the drift checks. On every push, the CI pipeline runs the same scripts, plus integration tests, security scans and the image build, behind one final gate. All three apply the rules defined in docs/ARCHITECTURE.md.</desc>
+  <desc id="desc">At every file write, the hook of the plugin checks the written file and returns each violation with its fix. Before each merge, npm run verify runs the compiler, ESLint with the plugin of the kit, the formatter, the tests, the checker, dependency-cruiser, knip and the drift checks. On every pull request, the CI pipeline runs the same scripts, plus integration tests, security scans and the image build, behind one final gate. All three apply the rules defined in docs/ARCHITECTURE.md.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
@@ -10,7 +10,7 @@
   <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One set of rules, checked at three moments</text>
   <rect x="32" y="62" width="272" height="330" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
   <text x="50" y="92" font-size="16" font-weight="700" fill="#5f6b73">1. At every file write</text>
-  <text x="50" y="114" font-size="13" font-style="italic" fill="#1f2328">the hook of the Claude Code plugin</text>
+  <text x="50" y="114" font-size="13" font-style="italic" fill="#1f2328">the hook of the plugin</text>
   <line x1="48" y1="128" x2="288" y2="128" stroke="#5f6b73" stroke-opacity="0.35"/>
   <circle cx="54" cy="149" r="2.5" fill="#5f6b73"/>
   <text x="64" y="154" font-size="14" fill="#1f2328">check-file on the written file</text>
@@ -21,8 +21,8 @@
   <text x="64" y="226" font-size="14" fill="#1f2328">a hand-written file refused</text>
   <text x="64" y="246" font-size="14" fill="#1f2328">where a generator exists</text>
   <circle cx="54" cy="267" r="2.5" fill="#5f6b73"/>
-  <text x="64" y="272" font-size="14" fill="#1f2328">no finish while architecture</text>
-  <text x="64" y="292" font-size="14" fill="#1f2328">errors remain</text>
+  <text x="64" y="272" font-size="14" fill="#1f2328">the end refused once while</text>
+  <text x="64" y="292" font-size="14" fill="#1f2328">architecture errors remain</text>
   <rect x="344" y="62" width="272" height="330" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
   <text x="362" y="92" font-size="16" font-weight="700" fill="#5f6b73">2. npm run verify</text>
   <text x="362" y="114" font-size="13" font-style="italic" fill="#1f2328">on your machine, before each merge</text>
@@ -45,7 +45,7 @@
   <text x="376" y="336" font-size="14" fill="#1f2328">documentation and contract drift</text>
   <rect x="656" y="62" width="272" height="330" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
   <text x="674" y="92" font-size="16" font-weight="700" fill="#5f6b73">3. The CI pipeline</text>
-  <text x="674" y="114" font-size="13" font-style="italic" fill="#1f2328">GitHub or GitLab, on every push</text>
+  <text x="674" y="114" font-size="13" font-style="italic" fill="#1f2328">GitHub or GitLab, per pull request</text>
   <line x1="672" y1="128" x2="912" y2="128" stroke="#5f6b73" stroke-opacity="0.35"/>
   <circle cx="678" cy="149" r="2.5" fill="#5f6b73"/>
   <text x="688" y="154" font-size="14" fill="#1f2328">the same npm scripts</text>
