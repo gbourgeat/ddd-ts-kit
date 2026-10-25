@@ -3,6 +3,7 @@ import { cli, tempDir } from '../helpers';
 import { grantOf } from '../support/grant-of';
 import { initFlags } from '../support/init-flags';
 import { installForReal, type Manager } from './install-for-real';
+import { NIGHT, NIGHT_ONLY, PROVEN_AT_NIGHT } from './night-stacks';
 import { PROVEN, SLOW } from './stacks';
 import { verified } from './verified';
 
@@ -16,9 +17,10 @@ const TERMS = [
   'Issue=To make an invoice final',
 ];
 
-/** Every proven stack but the default one, which the quick start of the README covers on both managers: one manager each, in turn. */
-const OTHERS = PROVEN.slice(1)
+/** Every proven stack but the default one, which the quick start of the README covers on both managers, and at night those the workspace cannot run: one manager each, in turn. */
+const OTHERS = [...PROVEN.slice(1), ...(NIGHT || NIGHT_ONLY ? PROVEN_AT_NIGHT : [])]
   .map(([label, stack], index) => [label, index % 2 === 0 ? 'pnpm' : 'npm', stack] as const)
+  .filter(([label]) => !NIGHT_ONLY || PROVEN_AT_NIGHT.some(([night]) => night === label))
   .filter(([, manager]) => only === undefined || only === manager);
 
 /**

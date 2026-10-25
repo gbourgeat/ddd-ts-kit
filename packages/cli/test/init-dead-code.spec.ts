@@ -111,6 +111,16 @@ describe('the database of the tests, in a project nothing drives through HTTP', 
   });
 });
 
+describe('the files an ORM reads by itself', () => {
+  it('are known to knip: the data source the TypeORM CLI loads, the schema the Prisma CLI reads', () => {
+    expect(stringsAt(readJson(initProject('--orm', 'typeorm'), 'knip.json'), 'entry')).toContain(
+      'src/platform/database/data-source.ts',
+    );
+
+    expect(stringsAt(readJson(initProject('--orm', 'prisma'), 'knip.json'), 'project')).toContain('prisma/**/*.prisma');
+  });
+});
+
 /** An aggregate, its command and the route of that command, in billing: the route is the first file that validates. */
 function routed(root: string, ...more: string[]): ReturnType<typeof cli> {
   cli(root, 'generate', 'aggregate', 'billing', 'Invoice', '--allow-name');

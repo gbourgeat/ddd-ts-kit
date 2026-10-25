@@ -689,7 +689,10 @@ raises one to `error` there.
 
 The test runner config writes no number: it spreads `governedCoverage(mode)` (`governedJestCoverage()`
 under jest) of `@ddd-ts-kit/testing/coverage`, which reads the `coverage` key each time a run
-starts. One place holds a threshold, and `check` holds that place.
+starts. One place holds a threshold, and `check` holds that place. The ports
+(`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) are not measured: abstract
+members only, nothing in them runs, and under Vitest and Jest alike a layer of ports alone is held
+to nothing.
 
 Instead of writing a number in the runner config, which `test/coverage-governed` refuses:
 

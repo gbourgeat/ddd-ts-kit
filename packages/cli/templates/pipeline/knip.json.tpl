@@ -4,9 +4,9 @@
 {{#if knip.apps}}
     "{{config.sourceRoot}}/apps/*/main.ts",
 {{/if}}
-    "scripts/*.ts"{{knip.e2eEntry}}
+    "scripts/*.ts"{{knip.e2eEntry}}{{knip.toolEntry}}
   ],
-  "project": ["{{config.sourceRoot}}/**/*.ts", "scripts/**/*.ts"{{knip.e2eProject}}],
+  "project": ["{{config.sourceRoot}}/**/*.ts", "scripts/**/*.ts"{{knip.e2eProject}}{{#if orm.prisma}}, "prisma/**/*.prisma"{{/if}}],
 {{#if knip.ignores}}
   "ignoreDependencies": {{knip.ignored}},
 {{/if}}

@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:1fee2b4608330d2a -->
+<!-- translation-of: CONFIG.md sha256:1172bcf38e28eb55 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -715,7 +715,9 @@ certains fichiers, ou l'y relève à `error`.
 La configuration du lanceur de tests n'écrit aucun nombre : elle étale `governedCoverage(mode)`
 (`governedJestCoverage()` sous jest) de `@ddd-ts-kit/testing/coverage`, qui lit la clé
 `coverage` à chaque démarrage d'une exécution. Un seul endroit porte un seuil, et `check` tient
-cet endroit.
+cet endroit. Les ports (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) ne
+sont pas mesurés : membres abstraits seulement, rien ne s'y exécute, et sous Vitest comme sous
+Jest une couche qui ne contient que des ports n'est tenue à rien.
 
 Au lieu d'écrire un nombre dans la configuration du lanceur, ce que `test/coverage-governed`
 refuse :

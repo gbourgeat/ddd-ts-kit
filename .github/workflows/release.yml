@@ -17,8 +17,26 @@ permissions:
   contents: read
 
 jobs:
+  # The generated projects the pipeline of a pull request only type-checks (Prisma, TypeORM),
+  # installed for real from the packed kit and held to their whole `verify`: nothing is published
+  # while one of them is red.
+  generated-stacks:
+    name: Generated projects on Prisma and TypeORM, installed for real
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: The package managers a generated project pins
+        run: corepack enable
+      - name: Each stack installed, then green from its first minute to its first use case
+        run: npm run ci:test:stacks-at-night
+
   publish:
     name: Publish to npm
+    needs: generated-stacks
     runs-on: ubuntu-26.04
     timeout-minutes: 20
     environment: npm
@@ -65,6 +83,7 @@ jobs:
   # is stored. Installing from that registry needs a token even for a public package.
   github-packages:
     name: Publish to GitHub Packages
+    needs: generated-stacks
     if: ${{ vars.PUBLISH_GITHUB_PACKAGES == 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 20

@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:d574b248620ba769 -->
+<!-- translation-of: testing-strategy.md sha256:cde8d45ff4d53f99 -->
 
 # Stratégie de test
 
@@ -200,6 +200,13 @@ ainsi que `ContractSuite`, la base pour écrire la suite d'un port à vous. Remp
 
 Un contrat couvre ce qu'il teste et rien de plus : le comportement propre à un adaptateur (le
 *mapping* de chaque colonne, l'annulation d'une transaction) a ses propres tests d'intégration.
+
+Un projet généré sur un ORM tient les stores du kit tels que sa propre plateforme les branche :
+`src/platform/database/persistence.contract.spec.ts` exécute les contrats des stores de
+l'outbox, des événements traités, des *jobs* et des processus sur la persistance de
+`open-test-database.ts`, avec ce que la pile active (le *tenant* de chaque événement et de chaque
+instance de processus sous `--tenancy`, l'unité de travail d'une étape). Un store branché sans ce
+que la pile demande échoue là, avant d'échouer en production.
 
 ## *Builders*
 
