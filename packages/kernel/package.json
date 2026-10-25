@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/kernel",
-  "version": "0.89.0",
+  "version": "0.90.0",
   "description": "Framework-agnostic Domain-Driven Design (DDD) building blocks for TypeScript: aggregates, entities, value objects, domain events, CQRS command and query buses, unit of work and application ports, with an in-memory event bus.",
   "keywords": [
     "ddd",
