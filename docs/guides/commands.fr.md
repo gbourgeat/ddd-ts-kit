@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:3f08a68a9fde3c23 -->
+<!-- translation-of: commands.md sha256:998af2c7d19091a9 -->
 
 # Quelle commande, quand
 
@@ -604,6 +604,7 @@ Kinds
   test-world <context> [Name]
   entity <context> <Name> [--term "<Term>=<meaning>"]...
   value-object <context> <Name> [--term "<Term>=<meaning>"]...   (alias: vo)
+  property <context> <ValueObject>
   vocabulary <context> <Name> --value <value> [--value <value>]...
   state-machine <context> <Aggregate> [--value <state>]... [--transition "<intention>:<from>[,<from>]...[><to>]"]... [--term "<Term>=<meaning>"]...
   domain-event <context> <Aggregate> <Fact> [--term "<Term>=<meaning>"]...

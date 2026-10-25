@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:0786a564cac1425f -->
+<!-- translation-of: README.md sha256:755ed099a100886a -->
 
 # ddd-ts-kit
 
@@ -473,7 +473,9 @@ réponse d'identifiant comprise, comme 0.1 à 0.5 les écrivaient.
 `generate value-object` écrit un `create` qui renvoie l'objet-valeur ou lève le refus de son
 concept, et une *spec* qui le vérifie avec `expectRefusal(() => ..)`. `--value-objects result`,
 ou une configuration sans la clé, garde un `create` qui renvoie un `Result` que l'appelant
-déballe, comme 0.1 à 0.5 l'écrivaient ; `value-objects` fait passer un projet de l'un à l'autre.
+déballe, comme 0.1 à 0.5 l'écrivaient ; `value-objects` fait passer un projet de l'un à l'autre. `generate property`
+écrit les lois d'un *value object* existant comme une *spec* sur des valeurs générées, sous
+l'une ou l'autre forme, et ajoute `fast-check` aux dépendances de développement s'il manque.
 
 **Les événements du domaine partent avec la sauvegarde.** Un gestionnaire de commande généré
 construit ou charge son agrégat, appelle une méthode d'intention, `await repository.save(aggregate)`

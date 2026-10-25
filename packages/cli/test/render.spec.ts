@@ -93,6 +93,7 @@ describe('shipped templates', () => {
         'presets',
         'process',
         'projection',
+        'property',
         'query',
         'repository',
         'route',

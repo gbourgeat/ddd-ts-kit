@@ -454,7 +454,9 @@ schema per route, an identifier answer included, as 0.1 to 0.5 wrote them.
 `generate value-object` writes a `create` that returns the value object or throws the refusal of
 its concept, and a spec that asserts it with `expectRefusal(() => ..)`. `--value-objects result`,
 or a config without the key, keeps a `create` returning a `Result` that the caller unwraps, as 0.1
-to 0.5 wrote it; `value-objects` moves a project from one to the other.
+to 0.5 wrote it; `value-objects` moves a project from one to the other. `generate property` writes
+the laws of an existing value object as a spec on generated values, in either form, and adds
+`fast-check` to the development dependencies when it is missing.
 
 **Domain events leave with the save.** A generated command handler builds or loads its aggregate,
 calls one intention method, `await repository.save(aggregate)` and returns: no `pullEvents()`, and

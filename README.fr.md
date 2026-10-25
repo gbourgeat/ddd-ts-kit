@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:177849b0ec74f9de -->
+<!-- translation-of: README.md sha256:833f8650122926c3 -->
 
 <div align="center">
 
@@ -43,7 +43,7 @@ chaque push.
 - **Des règles, pas des consignes.** Chaque règle a un identifiant, une raison et une correction
   (`npx ddd-ts-kit explain <rule-id>`), vérifiées par une CLI sans dépendance, un plugin ESLint
   et dependency-cruiser.
-- **Générer, pas taper.** `ddd-ts-kit generate` écrit 42 types de briques avec leur spec, leur
+- **Générer, pas taper.** `ddd-ts-kit generate` écrit 43 types de briques avec leur spec, leur
   fake et leur enregistrement, et laisse un `TODO(domain)` là où une décision métier est
   attendue.
 - **Fait pour les agents de code.** Un plugin pour Claude Code, Codex et GitHub Copilot : des
