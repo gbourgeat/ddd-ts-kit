@@ -1,11 +1,12 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6af6f987a01fac6e -->
+<!-- translation-of: README.md sha256:5bfd1e5a15043781 -->
 
 # @ddd-ts-kit/typeorm
 
 Les adaptateurs TypeORM des ports du noyau et des événements : une unité de travail que les
 *repositories* ne voient jamais, le store de l'outbox transactionnelle, le store des événements
-traités, leurs tables sous forme d'objets `EntitySchema`, et un schéma de base de données par
+traités, les tâches de fond et les instances des gestionnaires de processus, leurs tables sous
+forme d'objets `EntitySchema`, et un schéma de base de données par
 contexte délimité (bounded context). Les mêmes pièces que `@ddd-ts-kit/drizzle`, pour les
 projets sur TypeORM.
 
@@ -103,6 +104,7 @@ export const dataSource = new DataSource({
   url: process.env.DATABASE_URL,
   entities: [outbox, processedEvents, invoices],
 });
+
 const unitOfWork = createTypeOrmUnitOfWork(dataSource);
 
 export const persistenceModule = defineContextModule({
@@ -727,6 +729,45 @@ export const invoiceOnOrderPlaced = consume(
 );
 ```
 
+## Tâches de fond et instances de processus
+
+`jobEntity()` et `processEntity()` sont les deux tables, sur PostgreSQL, à enregistrer dans la
+source de données à côté de l'outbox (`init --orm typeorm` les place dans le schéma `messaging`).
+
+- `TypeOrmJobStore` est le `JobStore` de `@ddd-ts-kit/scheduling`. `add` passe par le *manager*
+  du contexte : une tâche mise en file par une commande existe si et seulement si la commande a
+  été validée. Une prise réserve les lignes dues de la file `FOR UPDATE SKIP LOCKED` et les bail
+  dans une transaction courte : plusieurs *workers* passent les uns sur les lignes des autres. Une
+  clé d'idempotence est unique par nom de tâche et par tenant ; un doublon est écarté par une
+  insertion qui ignore le conflit, ce qui laisse la transaction de la commande utilisable.
+- `TypeOrmProcessStore` est le `ProcessStore` du noyau : une étape d'un gestionnaire de processus
+  enregistre son instance dans la transaction de son unité de travail, un premier enregistrement
+  écarte la ligne qu'un premier enregistrement concurrent a écrite, un suivant met à jour la ligne
+  à la version précédente, et un enregistrement qui ne change aucune ligne est refusé par
+  `ConcurrencyError`.
+
+<!-- checked sample -->
+```ts
+// platform/database/background-work.ts
+import {
+  jobEntity,
+  processEntity,
+  TypeOrmJobStore,
+  TypeOrmProcessStore,
+  type TypeOrmUnitOfWork,
+} from '@ddd-ts-kit/typeorm';
+
+// De la racine de composition : `createTypeOrmUnitOfWork(dataSource)`.
+declare const unitOfWork: TypeOrmUnitOfWork;
+
+// Enregistrées dans les `entities` de la source de données, migrées comme les autres tables.
+export const jobs = jobEntity({ schema: 'messaging' });
+export const processes = processEntity({ schema: 'messaging' });
+
+export const jobStore = new TypeOrmJobStore(unitOfWork, { entity: jobs });
+export const processStore = new TypeOrmProcessStore(unitOfWork, { entity: processes });
+```
+
 ## Event store
 
 ```ts
@@ -758,7 +799,7 @@ refuse `--database mysql` et `--database sqlite`.
 
 | Base de données | État |
 |---|---|
-| PostgreSQL | Couvert par la suite automatique : suites de contrat de `@ddd-ts-kit/testing`, contrat de *repository*, annulation, unité de travail imbriquée, prises concurrentes. Elle tourne par défaut sur PGlite servi par le protocole réseau de PostgreSQL, et sur un vrai serveur quand `DDD_TS_KIT_TEST_DATABASE_URL` est définie (dernière exécution : PostgreSQL 18). |
+| PostgreSQL | Couvert par la suite automatique : suites de contrat de `@ddd-ts-kit/testing`, contrat de *repository*, annulation, unité de travail imbriquée, prises concurrentes, le store des tâches et celui des processus (PostgreSQL seulement). Elle tourne par défaut sur PGlite servi par le protocole réseau de PostgreSQL, et sur un vrai serveur quand `DDD_TS_KIT_TEST_DATABASE_URL` est définie (dernière exécution : PostgreSQL 18). |
 | MySQL 8 | Hors de la suite automatique. Les suites de contrat de l'outbox et des événements traités et l'annulation d'`append` ont été exécutées une fois à la main contre MySQL 8.4 avec `mysql2`, entités construites avec `dialect: 'mysql'`, avec `skip-locked` et `compare-and-set`. |
 | SQLite | Hors de la suite automatique. Les mêmes suites ont été exécutées une fois à la main avec le pilote `better-sqlite3`, entités construites avec `dialect: 'sqlite'`. Pas de `SKIP LOCKED` : la prise est `compare-and-set`. Pas de schémas : omettez `schema` et nommez les tables par contexte. |
 | MariaDB, CockroachDB, SQL Server, Oracle, MongoDB | Jamais exécuté. |
@@ -781,7 +822,7 @@ refuse `--database mysql` et `--database sqlite`.
 ## Tester un adaptateur
 
 L'unité de travail de ce *package* passe `unitOfWorkContract`, et ses stores
-`outboxStoreContract` et `processedEventStoreContract`, de `@ddd-ts-kit/testing/contracts`.
+`outboxStoreContract`, `processedEventStoreContract`, `jobStoreContract` et `processStoreContract`, de `@ddd-ts-kit/testing/contracts`.
 Tenez vos *repositories* à `repositoryContract` de la même façon, à côté de leur *fake* en
 mémoire. Les tests de ce *package* n'ont besoin d'aucun conteneur :
 

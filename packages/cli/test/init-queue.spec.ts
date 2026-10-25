@@ -15,13 +15,15 @@ const COMPOSE = 'src/platform/composition/compose-application.ts';
 const queueOf = (root: string): unknown => jsonAt(readJson(root, CONFIG), 'stack', 'queue');
 
 describe('init --queue', () => {
-  it('keeps the jobs in the database when the ORM package ships the table, in memory otherwise', () => {
-    expect(queueOf(initProject())).toBe('database');
-    expect(queueOf(initProject('--orm', 'prisma'))).toBe('database');
+  it('keeps the jobs in the database when the ORM package ships the table, whatever the container, in memory otherwise', () => {
+    for (const orm of ['knex', 'drizzle', 'prisma', 'typeorm']) {
+      expect(queueOf(initProject('--orm', orm))).toBe('database');
+    }
+
+    expect(queueOf(initProject('--di', 'manual'))).toBe('database');
+    expect(queueOf(initProject('--di', 'nest', '--http', 'nest'))).toBe('database');
     expect(queueOf(initProject('--orm', 'custom'))).toBe('memory');
-    // Asked for, the table is bound by the platform wired by hand too; left to the default, that platform keeps the memory.
-    expect(queueOf(initProject('--di', 'manual'))).toBe('memory');
-    expect(queueOf(initProject('--di', 'manual', '--queue', 'database'))).toBe('database');
+    expect(queueOf(initProject('--orm', 'none'))).toBe('memory');
     expect(cli(initProject(), '--help').stdout).toContain('[--queue database|redis|memory]');
   });
 
@@ -47,7 +49,7 @@ describe('init --queue', () => {
 
   it('puts the jobs of a hand-wired platform on the server of the cache with redis, and in memory by default', () => {
     const onRedis = read(initProject('--di', 'manual', '--cache', 'redis', '--queue', 'redis'), BACKGROUND_WORK);
-    const inMemory = initProject('--di', 'nest', '--http', 'nest');
+    const inMemory = initProject('--di', 'nest', '--http', 'nest', '--queue', 'memory');
 
     expect(onRedis).toContain('const store = options.redis?.jobs(foundations.logger) ?? new InMemoryJobStore();');
     expect(onRedis).toContain('store: persistence.processes,');
@@ -78,34 +80,6 @@ describe('init --queue', () => {
     expect(read(root, PERSISTENCE)).toContain(
       'processes: new KnexProcessStore(unitOfWork, { schema: MESSAGING_SCHEMA }),',
     );
-  });
-
-  it('binds the jobs and the process instances of Prisma, their models in the schema of the messaging tables', () => {
-    const root = initProject('--orm', 'prisma', '--di', 'nest', '--http', 'nest', '--queue', 'database');
-    const schema = read(root, 'prisma/schema.prisma');
-
-    expect(schema).toContain('model BackgroundJob {');
-    expect(schema).toContain('model ProcessInstance {');
-    expect(schema).toContain('  @@map("background_jobs")\n  @@schema("messaging")');
-
-    expect(read(root, PERSISTENCE)).toContain(
-      'jobs: new PrismaJobStore(unitOfWork, { delegate: (current) => current.backgroundJob, schema: MESSAGING_SCHEMA }),',
-    );
-
-    expect(read(root, PERSISTENCE)).toContain(
-      'processes: new PrismaProcessStore(unitOfWork, { delegate: (current) => current.processInstance }),',
-    );
-
-    expect(read(root, BACKGROUND_WORK)).toContain('store: persistence.processes,');
-  });
-
-  it('keeps the process instances of Prisma in the database when the jobs go to the server of the cache', () => {
-    const root = initProject('--orm', 'prisma', '--cache', 'redis', '--queue', 'redis');
-
-    expect(read(root, 'prisma/schema.prisma')).not.toContain('model BackgroundJob {');
-    expect(read(root, 'prisma/schema.prisma')).toContain('model ProcessInstance {');
-    expect(read(root, PERSISTENCE)).not.toContain('PrismaJobStore');
-    expect(read(root, PLATFORM)).toContain('builder.rebind(ProcessStore).toValue(persistence.processes);');
   });
 
   it('puts the jobs on the server of the cache with redis, the processes staying in the database', () => {
@@ -145,5 +119,45 @@ describe('init --queue', () => {
     expect(initFailure('--orm', 'custom', '--queue', 'database').message).toBe(
       '--queue database cannot be combined with --orm custom.',
     );
+  });
+});
+
+describe('init --queue database on the packages of Prisma and TypeORM', () => {
+  it('binds the jobs and the process instances of Prisma, their models in the schema of the messaging tables', () => {
+    const root = initProject('--orm', 'prisma', '--di', 'nest', '--http', 'nest', '--queue', 'database');
+    const schema = read(root, 'prisma/schema.prisma');
+
+    expect(schema).toContain('model BackgroundJob {');
+    expect(schema).toContain('model ProcessInstance {');
+    expect(schema).toContain('  @@map("background_jobs")\n  @@schema("messaging")');
+
+    expect(read(root, PERSISTENCE)).toContain(
+      'jobs: new PrismaJobStore(unitOfWork, { delegate: (current) => current.backgroundJob, schema: MESSAGING_SCHEMA }),',
+    );
+
+    expect(read(root, PERSISTENCE)).toContain(
+      'processes: new PrismaProcessStore(unitOfWork, { delegate: (current) => current.processInstance }),',
+    );
+
+    expect(read(root, BACKGROUND_WORK)).toContain('store: persistence.processes,');
+  });
+
+  it('binds the jobs and the process instances of TypeORM, their entities in the messaging schema', () => {
+    const root = initProject('--orm', 'typeorm');
+
+    expect(read(root, SCHEMA)).toContain('export const jobs = jobEntity({ schema: MESSAGING_SCHEMA });');
+    expect(read(root, SCHEMA)).toContain('export const processes = processEntity({ schema: MESSAGING_SCHEMA });');
+    expect(read(root, PERSISTENCE)).toContain('jobs: new TypeOrmJobStore(unitOfWork, { entity: jobs }),');
+    expect(read(root, PERSISTENCE)).toContain('processes: new TypeOrmProcessStore(unitOfWork, { entity: processes }),');
+    expect(read(root, PLATFORM)).toContain('builder.rebind(JobStore).toValue(persistence.jobs);');
+  });
+
+  it('keeps the process instances of Prisma in the database when the jobs go to the server of the cache', () => {
+    const root = initProject('--orm', 'prisma', '--cache', 'redis', '--queue', 'redis');
+
+    expect(read(root, 'prisma/schema.prisma')).not.toContain('model BackgroundJob {');
+    expect(read(root, 'prisma/schema.prisma')).toContain('model ProcessInstance {');
+    expect(read(root, PERSISTENCE)).not.toContain('PrismaJobStore');
+    expect(read(root, PLATFORM)).toContain('builder.rebind(ProcessStore).toValue(persistence.processes);');
   });
 });

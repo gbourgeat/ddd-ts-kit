@@ -31,6 +31,8 @@ export const ERROR_REPORTERS = ['none', 'sentry'] as const;
 export const LOGGERS = ['stdout', 'pino', 'winston'] as const;
 export const PACKAGE_MANAGERS = ['npm', 'pnpm'] as const;
 export const QUEUE_STORES = ['memory', 'database', 'redis'] as const;
+/** The ORMs whose package ships a job store and a process store sharing the transaction of the command. */
+export const QUEUE_ORMS: readonly string[] = ['knex', 'drizzle', 'prisma', 'typeorm'];
 export const TENANCY_STRATEGIES = [
   'none',
   'shared-table',

@@ -8,6 +8,7 @@ import { guidanceFindings } from './guidance-findings';
 import { hookFindings } from './hook-findings';
 import { installFindings } from './install-findings';
 import { nodeFindings } from './node-findings';
+import { overrideFindings } from './override-findings';
 import { packageFindings } from './package-findings';
 import { permissionFindings } from './permission-findings';
 import { scriptFindings } from './script-findings';
@@ -20,7 +21,8 @@ import { platformFileIn } from '../platform-layout';
  * policy, then the files of the platform this version gives a folder.
  * Settings the project does not have are not judged: an agent may run elsewhere than Claude Code.
  * Then what this checkout lacks to run it: the Node it asks, its dependencies installed, the
- * packages of the kit at the version of this CLI, its submodules.
+ * packages of the kit at the version of this CLI, its submodules. Last, read on what is installed,
+ * the overrides of a version the stack pins below a security fix: one missing, one no longer needed.
  */
 export function diagnose(root: string, config: Config): DoctorFinding[] {
   const manifest = readJson(path.join(root, 'package.json'));
@@ -42,6 +44,7 @@ export function diagnose(root: string, config: Config): DoctorFinding[] {
     ...folderFindings(root, config),
     ...nodeFindings(process.versions.node, nodeEngine(manifest), readText(path.join(root, '.nvmrc'))),
     ...installFindings(root, config.stack.packageManager, declared),
+    ...overrideFindings(root, config, manifest),
     ...submoduleFindings(root),
   ];
 }

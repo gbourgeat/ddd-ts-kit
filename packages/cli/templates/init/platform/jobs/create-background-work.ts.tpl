@@ -93,7 +93,7 @@ export function createBackgroundWork({
       store: persistence.processes,
 {{/if}}
 {{#unless queue.processTable}}
-      // The instances of the process managers, in the memory of the process: `KnexProcessStore`, `DrizzleProcessStore` or `PrismaProcessStore` keeps them with the steps.
+      // The instances of the process managers, in the memory of the process: the process store of the ORM package keeps them with the steps.
       store: new InMemoryProcessStore(),
 {{/unless}}
       jobs: jobQueue,

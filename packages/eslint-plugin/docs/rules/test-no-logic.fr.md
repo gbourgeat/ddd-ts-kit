@@ -1,9 +1,9 @@
 [English](test-no-logic.md) · **Français**
-<!-- translation-of: test-no-logic.md sha256:f477d5367e9f49c7 -->
+<!-- translation-of: test-no-logic.md sha256:32c6e7bc125f7cc7 -->
 
 # ddd-ts-kit/test-no-logic
 
-Identifiant d'architecture : `test/no-logic` (ajouté par ce *plugin*). Sévérité par défaut : `warn` dans `recommended` (une erreur à partir de 0.90.0 : `ddd-ts-kit lint` montre ses avertissements sans échouer dessus jusque-là), `error` dans `strict`.
+Identifiant d'architecture : `test/no-logic` (ajouté par ce *plugin*). Sévérité par défaut : `error` dans `recommended`, `error` dans `strict`.
 
 S'applique à : chaque fichier de test du projet (`*.spec.ts`, `*.test.ts`, le `test/` d'un contexte).
 

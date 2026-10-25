@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/aspects",
-  "version": "0.89.0",
+  "version": "0.90.0",
   "description": "Cross-cutting behaviour applied from outside: logging, metrics, retry, timeout, circuit breaker and caching as composable wrappers at the composition root, as bus middlewares, or as standard decorators on adapters. The domain stays clean.",
   "keywords": [
     "ddd",
@@ -47,9 +47,9 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.89.0"
+    "@ddd-ts-kit/kernel": "0.90.0"
   },
   "devDependencies": {
-    "@ddd-ts-kit/di": "0.89.0"
+    "@ddd-ts-kit/di": "0.90.0"
   }
 }

@@ -3,7 +3,8 @@
 # @ddd-ts-kit/typeorm
 
 TypeORM adapters of the kernel and events ports: a unit of work that repositories never see,
-the transactional outbox store, the processed-event store, their tables as `EntitySchema`
+the transactional outbox store, the processed-event store, the background jobs and the instances
+of the process managers, their tables as `EntitySchema`
 objects, and one database schema per bounded context. Same pieces as `@ddd-ts-kit/drizzle`, for
 projects on TypeORM.
 
@@ -97,6 +98,7 @@ export const dataSource = new DataSource({
   url: process.env.DATABASE_URL,
   entities: [outbox, processedEvents, invoices],
 });
+
 const unitOfWork = createTypeOrmUnitOfWork(dataSource);
 
 export const persistenceModule = defineContextModule({
@@ -702,6 +704,44 @@ export const invoiceOnOrderPlaced = consume(
 );
 ```
 
+## Background jobs and process instances
+
+`jobEntity()` and `processEntity()` are the two tables, on PostgreSQL, to register with the data
+source next to the outbox (`init --orm typeorm` puts them in the `messaging` schema).
+
+- `TypeOrmJobStore` is the `JobStore` of `@ddd-ts-kit/scheduling`. `add` runs on the manager of
+  the context: a job enqueued by a command exists if and only if the command committed. A claim
+  takes the due rows of the queue `FOR UPDATE SKIP LOCKED` and leases them in a short transaction,
+  so several workers pass over each other's rows. An idempotency key is unique per job name and
+  tenant; a duplicate is skipped by an insert that ignores the conflict, which leaves the
+  transaction of the command usable.
+- `TypeOrmProcessStore` is the `ProcessStore` of the kernel: a step of a process manager saves its
+  instance in the transaction of its unit of work, a first save skips the row a concurrent first
+  save wrote, a next one updates the row at the previous version, and a save that changes no row
+  is refused with `ConcurrencyError`.
+
+<!-- checked sample -->
+```ts
+// platform/database/background-work.ts
+import {
+  jobEntity,
+  processEntity,
+  TypeOrmJobStore,
+  TypeOrmProcessStore,
+  type TypeOrmUnitOfWork,
+} from '@ddd-ts-kit/typeorm';
+
+// From the composition root: `createTypeOrmUnitOfWork(dataSource)`.
+declare const unitOfWork: TypeOrmUnitOfWork;
+
+// Registered in the `entities` of the data source, migrated like the other tables.
+export const jobs = jobEntity({ schema: 'messaging' });
+export const processes = processEntity({ schema: 'messaging' });
+
+export const jobStore = new TypeOrmJobStore(unitOfWork, { entity: jobs });
+export const processStore = new TypeOrmProcessStore(unitOfWork, { entity: processes });
+```
+
 ## Event store
 
 ```ts
@@ -731,7 +771,7 @@ refuses `--database mysql` and `--database sqlite`.
 
 | Database | Status |
 |---|---|
-| PostgreSQL | Covered by the automated suite: contract suites of `@ddd-ts-kit/testing`, repository contract, rollback, nested unit of work, concurrent claims. It runs on PGlite served over the PostgreSQL wire protocol by default, and on a real server when `DDD_TS_KIT_TEST_DATABASE_URL` is set (last run: PostgreSQL 18). |
+| PostgreSQL | Covered by the automated suite: contract suites of `@ddd-ts-kit/testing`, repository contract, rollback, nested unit of work, concurrent claims, the job store and the process store (PostgreSQL only). It runs on PGlite served over the PostgreSQL wire protocol by default, and on a real server when `DDD_TS_KIT_TEST_DATABASE_URL` is set (last run: PostgreSQL 18). |
 | MySQL 8 | Not in the automated suite. The outbox and processed-event contract suites and the rollback of `append` were run once by hand against MySQL 8.4 with `mysql2`, entities built with `dialect: 'mysql'`, with `skip-locked` and `compare-and-set`. |
 | SQLite | Not in the automated suite. The same suites were run once by hand with the `better-sqlite3` driver, entities built with `dialect: 'sqlite'`. No `SKIP LOCKED`: the claim is `compare-and-set`. No schemas: leave `schema` out and name the tables per context. |
 | MariaDB, CockroachDB, SQL Server, Oracle, MongoDB | Never run. |
@@ -752,7 +792,7 @@ refuses `--database mysql` and `--database sqlite`.
 ## Testing an adapter
 
 The unit of work of this package passes `unitOfWorkContract`, and its stores
-`outboxStoreContract` and `processedEventStoreContract`, of `@ddd-ts-kit/testing/contracts`. Hold your repositories to `repositoryContract` the same way,
+`outboxStoreContract`, `processedEventStoreContract`, `jobStoreContract` and `processStoreContract`, of `@ddd-ts-kit/testing/contracts`. Hold your repositories to `repositoryContract` the same way,
 next to their in-memory fake. The tests of this package need no container:
 
 ```

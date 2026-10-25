@@ -13,12 +13,14 @@ export interface DoctorFinding {
     | 'folder'
     | 'node'
     | 'install'
-    | 'submodule';
+    | 'submodule'
+    | 'override';
   readonly name: string;
   /**
    * `not installed`: a git hook this clone lacks, or a package of the kit node_modules lacks.
    * `unsupported`: a running Node outside `engines.node`. `outdated`: node_modules installed
    * before the lockfile last changed. `flat`: files of the platform generated before their folders.
+   * `no longer needed`: an override of a version its dependency now asks for itself.
    */
   readonly problem:
     | 'missing'
@@ -28,7 +30,8 @@ export interface DoctorFinding {
     | 'unsupported'
     | 'outdated'
     | 'not initialised'
-    | 'flat';
+    | 'flat'
+    | 'no longer needed';
   /** What this version writes, or what the project asks of its environment. */
   readonly expected: string;
   /** What the project has, when it has something. */

@@ -19,8 +19,7 @@ const LOGIC: Readonly<Partial<Record<AST_NODE_TYPES, string>>> = {
 export const testNoLogic = defineRule<'logic'>({
   id: 'test/no-logic',
   type: 'suggestion',
-  recommended: 'warn',
-  transition: '0.90.0',
+  recommended: 'error',
   description:
     'A test holds no `if`, `switch`, ternary, loop or `try`: it arranges, acts and asserts; a case per row is an `it.each`, a decision belongs to a builder, a fake or a helper.',
   messages: {

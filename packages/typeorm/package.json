@@ -1,7 +1,7 @@
 {
   "name": "@ddd-ts-kit/typeorm",
-  "version": "0.89.0",
-  "description": "TypeORM adapters for the kernel ports: unit of work, transactional outbox store, processed-event store, PostgreSQL event store.",
+  "version": "0.90.0",
+  "description": "TypeORM adapters for the kernel ports: unit of work, transactional outbox store, processed-event store, background jobs, process instances, PostgreSQL event store.",
   "keywords": [
     "ddd",
     "domain-driven-design",
@@ -38,15 +38,16 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.89.0",
-    "@ddd-ts-kit/events": "0.89.0"
+    "@ddd-ts-kit/kernel": "0.90.0",
+    "@ddd-ts-kit/events": "0.90.0",
+    "@ddd-ts-kit/scheduling": "0.90.0"
   },
   "peerDependencies": {
     "typeorm": "^1.0.0"
   },
   "devDependencies": {
     "typeorm": "^1.1.2",
-    "@ddd-ts-kit/testing": "0.89.0",
+    "@ddd-ts-kit/testing": "0.90.0",
     "pg": "^8.23.1",
     "@types/pg": "^8.23.1",
     "@electric-sql/pglite": "0.5.10",
