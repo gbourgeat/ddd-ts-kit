@@ -1,7 +1,8 @@
 import { controllersFile } from '../../nest-controllers/controllers-file';
 import type { NestControllerEntry } from '../../nest-controllers/nest-controller-entry';
 import type { NestRequestPart } from '../../nest-controllers/nest-request-part';
-import { readNestControllers, type ProjectFiles } from '../../nest-controllers/read-nest-controllers';
+import type { ProjectFiles } from '../../nest-controllers/project-files';
+import { readNestControllers } from '../../nest-controllers/read-nest-controllers';
 import { renderControllersFile } from '../../nest-controllers/render-controllers-file';
 import { toName } from '../../naming';
 import type { Project } from '../model/project';

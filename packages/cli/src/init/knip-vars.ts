@@ -40,11 +40,12 @@ function runnerConfigs(config: Config, when: (text: string) => string): string {
 
 /**
  * The report formatter a GitLab pipeline names on its command line, and the validation packages
- * while nothing validates: the route of the audit trail is their only user in a new project.
+ * while nothing validates: in a new project, the route of the audit trail is their only user, or
+ * the composition of Nest controllers, which reads their DTO classes with `classSchema`.
  */
 function ignoredDependencies(config: Config): string[] {
-  const { ci, audit, http } = config.stack;
-  const validates = audit === 'on' && http !== 'none';
+  const { ci, audit, http, routes } = config.stack;
+  const validates = (audit === 'on' && http !== 'none') || routes === 'nest';
 
   return [
     ...(ci === 'gitlab' || ci === 'both' ? ['eslint-formatter-gitlab'] : []),

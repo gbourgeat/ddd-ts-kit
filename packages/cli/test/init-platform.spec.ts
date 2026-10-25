@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { exists, read } from './helpers';
 import { initProject } from './support/init-project';
+import { jsonAt } from './support/json-at';
+import { readJson } from './support/read-json';
 import { sourceFiles } from './support/source-files';
 
 /** A platform file and what it exports: the names the generated contexts and the documentation rely on. */
@@ -118,7 +120,7 @@ describe('the platform init writes', () => {
   });
 
   it('gives the Nest application its module, next to the server that mounts the routes', () => {
-    const root = initProject('--http', 'nest');
+    const root = initProject('--http', 'nest', '--routes', 'controllers');
 
     expect(read(root, 'src/platform/http/create-app-module.ts')).toContain(
       'export function createAppModule(routes: readonly Route[], boundary: HttpBoundary): DynamicModule',
@@ -127,6 +129,14 @@ describe('the platform init writes', () => {
     expect(read(root, 'src/platform/http/start-http-server.ts')).toContain(
       "import { createAppModule } from '@/platform/http/create-app-module';",
     );
+  });
+
+  it('makes a Nest project validate with class-validator and write its routes as Nest controllers, unless told otherwise', () => {
+    const nest = readJson(initProject('--http', 'nest'), 'ddd-ts-kit.config.json');
+    const zod = readJson(initProject('--http', 'nest', '--validation', 'zod'), 'ddd-ts-kit.config.json');
+
+    expect([jsonAt(nest, 'stack', 'validation'), jsonAt(nest, 'stack', 'routes')]).toEqual(['class-validator', 'nest']);
+    expect([jsonAt(zod, 'stack', 'validation'), jsonAt(zod, 'stack', 'routes')]).toEqual(['zod', 'controllers']);
   });
 
   it('names the end-to-end support after what each file exports', () => {

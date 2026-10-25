@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:fdf13cf926d39003 -->
+<!-- translation-of: README.md sha256:6f250d2a07b22cea -->
 
 # @ddd-ts-kit/http
 
@@ -1397,8 +1397,8 @@ export class AppModule {}
   `nestControllers(controllers, { providers, schemaOfClass })` : ses `routes` rejoignent les autres
   routes de l'application, et `provideControllers(served)` dans le module Nest construit les
   contrôleurs avec ce qu'ils injectent (les bus, comme `{ provide: CommandBus, useValue: commands }`)
-  et donne aux routes leurs instances au démarrage. `ddd-ts-kit init --routes nest` écrit cette
-  composition.
+  et donne aux routes leurs instances au démarrage. `ddd-ts-kit init --http nest` écrit cette
+  composition (`--routes nest`, la valeur par défaut d'un projet Nest sur class-validator).
 - `@KitRoutes({ group })` nomme un groupe de routes du kit (`@RouteGroup`) : son préfixe précède les
   chemins de Nest, ses tags, *guards* et codes précèdent ceux de la classe.
 - Ce qu'une méthode prend et répond, c'est sa signature : TypeScript efface `Promise<IssuedInvoice>`,

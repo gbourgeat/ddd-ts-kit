@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:64dd6a2cd8bbfdec -->
+<!-- translation-of: README.md sha256:cdb9fb4bf0c175e2 -->
 
 # ddd-ts-kit
 
@@ -124,8 +124,9 @@ Un import d'un fichier du projet s'écrit sans extension
 émis. Une configuration sans cette clé se lit comme `js`, si bien qu'un projet généré avant
 l'existence de la clé garde son écriture. Voir [docs/CONFIG.fr.md](../../docs/CONFIG.fr.md).
 
-Valeurs par défaut : `express`, `zod`, `tsyringe` (`nest` avec `--http nest`, et seulement
-alors), `vitest`, `drizzle` sur `postgres`, `outbox` quand il y a un ORM, `swagger`, `github`,
+Valeurs par défaut : `express`, `zod` (`class-validator` avec `--http nest`, comme Nest valide),
+`tsyringe` (`nest` avec `--http nest`, et seulement alors), des routes écrites en contrôleurs du
+kit (des contrôleurs Nest avec `--http nest` sur class-validator, `--routes nest`), `vitest`, `drizzle` sur `postgres`, `outbox` quand il y a un ORM, `swagger`, `github`,
 `jwt`, `rbac`, aucun *broker*, le cache dans le processus, les fichiers dans un répertoire local
 (`--storage local`), le journal d'audit `on` quand il y a un ORM, les demandes d'une personne concernée traitées (`--privacy on`) quand il y a un ORM, pas d'event store (`--event-sourcing off`), les échecs inattendus remontés
 nulle part (`--errors none`), des lignes JSON sur la sortie standard (`--logger stdout`), et le
