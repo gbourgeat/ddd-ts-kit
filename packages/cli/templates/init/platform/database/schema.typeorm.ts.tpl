@@ -38,7 +38,7 @@ export const eventStore = eventStoreEntities({ schema: EVENT_STORE_SCHEMA });
 /** The schema of the audit trail. */
 export const AUDIT_SCHEMA = 'audit';
 
-// TODO(platform): TypeORM generates no trigger. After the first `npm run db:generate migrations/<name>`, add a migration of your own that runs the statements `npm run db:audit-guard` prints: they make the entries refuse UPDATE, DELETE and TRUNCATE.
+// TODO(platform): TypeORM writes no trigger. After the first `npm run db:generate migrations/<name>`, add a migration of your own that runs the statements `npm run db:audit-guard` prints: they make the entries refuse UPDATE, DELETE and TRUNCATE.
 export const auditTrail = auditEntities({ schema: AUDIT_SCHEMA });
 
 {{/if}}

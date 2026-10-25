@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:d07c44a664b91c84 -->
+<!-- translation-of: CONTRIBUTING.md sha256:332ea85ba7aad470 -->
 
 # Contribuer
 
@@ -70,6 +70,20 @@ node --test plugin/hooks/guard.test.mjs
   vraie. Un comportement d'un adaptateur est prouvé par le contrat de son port dans
   `@ddd-ts-kit/testing`, jamais par une spec d'un seul paquet : une nouvelle option vient avec la
   capacité du contrat qui la prouve, que chaque membre exécute alors.
+- Ce que `init` et les presets refusent, et ce que les membres d'une famille de flags (les ORM,
+  les conteneurs, les frameworks HTTP, les brokers, les runners...) génèrent différemment, est
+  écrit dans `packages/cli/test/support/support-matrix.ts`, chaque ligne `decided` ou `not yet`
+  avec sa raison. `support-matrix.spec.ts` essaie chaque flag et chaque paire de flags, et génère
+  chaque membre d'une famille avec toutes les capacités activées : un refus, un TODO de plateforme
+  ou un paquet du kit qu'aucune ligne n'explique échoue, comme une ligne qui ne tient plus. Une
+  ligne `not yet` est un manque qui reste en vue jusqu'à ce qu'une pull request le comble et
+  retire la ligne.
+- Une ligne de ces deux registres rend vert un contrôle qui échouait : c'est donc une décision du
+  mainteneur, jamais le plus court chemin vers une CI verte. Sa raison dit ce que fait le membre
+  à la place (une raison trop courte, ou une promesse pour plus tard, échoue), la CI d'une pull
+  request annote chaque ligne qu'elle ajoute (`pipeline/monorepo/asymmetries.mjs`), et dans
+  Claude Code le hook de `.claude/settings.json` demande avant toute modification de ces
+  fichiers, quel que soit le mode de permission.
 - Une nouvelle règle de vérification vient avec une fixture qui passe et une fixture qui
   échoue, une phrase `fix` et une entrée `explain`.
 - Un changement qui fait signaler aux contrôles ce qu'ils ne signalaient pas (une nouvelle

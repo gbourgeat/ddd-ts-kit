@@ -102,8 +102,8 @@ const ORM = {
       apart: {
         keyColumn: {
           drizzle: 'named `key` there, as on Prisma and TypeORM',
-          prisma: 'named `key`',
-          typeorm: 'named `key`',
+          prisma: 'the same option is named `key` there, as on Drizzle and TypeORM',
+          typeorm: 'the same option is named `key` there, as on Drizzle and Prisma',
         },
         key: { knex: 'named `keyColumn` on Knex, written before the others' },
         columns: { typeorm: 'the entity maps the columns' },

@@ -1,5 +1,5 @@
 [English](http-frameworks.md) · **Français**
-<!-- translation-of: http-frameworks.md sha256:489c4118cd210821 -->
+<!-- translation-of: http-frameworks.md sha256:bba43f87d22e4e4f -->
 
 # Frameworks HTTP : Express, Fastify, Hono, NestJS
 
@@ -213,15 +213,49 @@ Trois autres coûts découlent du choix de Nest dans ce kit :
   plateforme, et `@Injectable()` est tenu hors de `domain/` et `application/`.
 - **Décorateurs legacy.** Le `tsconfig.json` généré active `experimentalDecorators` (et
   `emitDecoratorMetadata`) pour Nest.
-- **Deux façons de tout faire.** Une équipe qui écrit aussi des contrôleurs Nest natifs a deux
-  chemins de validation, deux formats d'erreur et deux contrats à garder cohérents. Choisissez-en
-  un pour l'API des contextes délimités (bounded contexts).
+- **Une seule façon pour les contextes.** Des contrôleurs Nest natifs donneraient deux chemins de
+  validation, deux formats d'erreur et deux contrats à garder cohérents, et des routes dont rien ne
+  déclare la sécurité : `ddd-ts-kit check` les refuse dans un contexte (`nest/no-parallel-pipeline`),
+  avec l'outil du kit à utiliser à la place. Nest reste libre dans la plateforme.
 
 Ce que Nest donne encore : son système de modules pour les parties qui ne sont pas des cas
 d'usage (santé, passerelles WebSocket, GraphQL, files d'attente), sa CLI et son vivier de
 recrutement. Si c'est pour cela que Nest a été choisi, le coût est juste. Si Nest a été choisi
 pour ses contrôleurs, ses gardes et ses *pipes*, les routes du kit retirent exactement cela, et
 Express ou Fastify font le même travail avec moins de machinerie.
+
+## Où va chaque outil de Nest
+
+Ce qu'un développeur Nest cherche, et où il le trouve dans un projet du kit. L'outil du kit n'est
+pas une traduction pour le principe : chacun tient une garantie que l'outil Nest ne tiendrait pas,
+souvent parce que le cas d'usage est appelé par plus d'une porte (HTTP, `/rpc`, `/trpc`, un *job*,
+un gestionnaire d'événement) et que seul le bus les voit toutes. Dans un contexte, `ddd-ts-kit check`
+refuse l'outil Nest et nomme celui du kit (`nest/no-parallel-pipeline`) ; dans la plateforme,
+Nest reste libre.
+
+| Vous écririez, en Nest | Dans le kit | Ce que cela garde |
+|---|---|---|
+| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | une route : `generate route`, `@Controller` de `@ddd-ts-kit/http` ou `defineRoute` | une sécurité déclarée sur chaque route, les codes de *problem* que lisent les clients, la route dans le contrat |
+| un `ValidationPipe`, une classe DTO avec class-validator | les schémas de la route, écrits avec la bibliothèque de validation du projet (class-validator dans les piles Nest que le kit prouve) | la validation que documente le contrat, rien de transformé avant elle |
+| `@UseGuards(AuthGuard('jwt'))`, une stratégie Passport | l'authentification de la plateforme, lue par `resolvePrincipal` ; un *guard* de groupe de routes pour un contrôle en bordure (`generate guard`) | un appel anonyme refusé de la même façon sur chaque porte |
+| `@Roles('admin')`, un `RolesGuard`, CASL | la permission du cas d'usage (`requires` dans le fichier de module, `@Requires`), une *policy* pour une règle sur l'état chargé, une portée d'accès pour une recherche | le droit vérifié sur HTTP, `/rpc`, `/trpc`, un *job* et un événement pareil, les refus audités quand le journal d'audit est actif, les listes filtrées (`authz/*`) |
+| un filtre d'exceptions, `throw new NotFoundException()` | un refus de la liste des codes du contexte, répondu par le *mapper* d'erreurs | un document *problem* avec le code que déclare le contrat et que le client reconnaît |
+| un intercepteur pour les logs, les traces, les reprises | un *middleware* du bus ou un aspect ; le traçage est câblé par la plateforme | une seule politique pour tous les cas d'usage, lue à un seul endroit |
+| `CacheInterceptor`, `@nestjs/cache-manager` | le `cache` de la route (avec `etag`, `tags`) et le port `Cache` du noyau | des réponses gardées par appelant quand il le faut, purgées après le *commit* |
+| `@nestjs/swagger` | le contrat généré à partir des routes (`npm run docs:generate`) | un contrat qui ne peut pas s'écarter du code, `x-error-codes`, les clients générés |
+| `@nestjs/cqrs` | le `CommandBus` et le `QueryBus` du kit | la permission, l'unité de travail et l'*outbox* autour de chaque commande |
+| `@nestjs/schedule`, `@nestjs/bullmq` | un *job* du kit (`generate job`), un *job* d'arrière-plan | un *job* qui envoie une commande, donc par les mêmes contrôles |
+| `@nestjs/event-emitter` | les événements de domaine, les événements d'intégration par l'*outbox* | des événements qui partent avec l'enregistrement, jamais perdus par un arrêt brutal |
+| `@nestjs/config`, `ConfigService` | la configuration de la plateforme, validée au démarrage et remise au module | un seul endroit validé, aucune variable d'environnement lue dans un contexte (`purity/no-environment`) |
+| `@nestjs/typeorm`, `@InjectRepository` | l'adaptateur de dépôt du contexte sur le *package* ORM du kit | l'unité de travail, les colonnes de tenant et d'audit, la suite de contrat du port |
+| `@nestjs/throttler` | la limite de débit de la plateforme (`rateLimit`) | une seule limite, avant que l'authentification ne coûte quoi que ce soit |
+| `Logger` de `@nestjs/common` | le `Logger` du noyau | les identifiants de requête et de corrélation sur chaque ligne, aucune donnée personnelle journalisée (`privacy/no-personal-data-in-logs`) |
+| `@Injectable()`, `@Inject()` | la fonction de module du contexte ; un adaptateur peut toujours être lié comme *provider* Nest | rien n'est perdu : c'est du câblage, que la règle laisse en paix hors de `domain/` et `application/` |
+| `setGlobalPrefix` | `prefixRoutes` | le préfixe dans le contrat comme sur le serveur |
+
+Les passerelles WebSocket, les *resolvers* GraphQL et les clients de microservices de Nest ne sont
+pas jugés : le kit n'a pas d'outil à lui pour eux. Un *resolver* ou une passerelle qui appelle un
+cas d'usage envoie sa commande par le bus, qui vérifie sa permission comme pour une route.
 
 ## Ce que ce kit prend en charge et a vérifié
 

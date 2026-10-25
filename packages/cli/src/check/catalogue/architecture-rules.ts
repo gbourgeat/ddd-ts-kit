@@ -70,6 +70,7 @@ import { namingBusinessName } from '../rules/naming-business-name';
 import { namingOneConceptPerFile } from '../rules/naming-one-concept-per-file';
 import { namingSearchNotList } from '../rules/naming-search-not-list';
 import { namingSuffix } from '../rules/naming-suffix';
+import { nestNoParallelPipeline } from '../rules/nest-no-parallel-pipeline';
 import { persistenceMigrationHistory } from '../rules/persistence-migration-history';
 import { persistenceNoFileContent } from '../rules/persistence-no-file-content';
 import { persistencePrimaryKeyOrder } from '../rules/persistence-primary-key-order';
@@ -176,6 +177,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   tracingPlatformOnly,
   tenancyScopedStatement,
   standardNoParallelInterface,
+  nestNoParallelPipeline,
   governanceRecordedDeviation,
   configRuleOffEverywhere,
   compositionOnlyInModule,

@@ -59,6 +59,9 @@ jobs:
       - name: What the change does for a user in a file of changes/, CHANGELOG.md and the plugin version left to the release
         if: ${{ github.event_name == 'pull_request' }}
         run: node pipeline/monorepo/changes.mjs --check --base HEAD^1
+      - name: The asymmetries this pull request accepts, shown for the review
+        if: ${{ github.event_name == 'pull_request' }}
+        run: node pipeline/monorepo/asymmetries.mjs --base HEAD^1
       - name: Type check (the packages, the specs of each of them, the checked samples of the documentation)
         run: npm run ci:typecheck
       - name: Dead code

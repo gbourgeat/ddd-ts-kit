@@ -204,14 +204,47 @@ Three further costs follow from choosing Nest in this kit:
   `@Injectable()` is kept out of `domain/` and `application/`.
 - **Legacy decorators.** The generated `tsconfig.json` sets `experimentalDecorators` (and
   `emitDecoratorMetadata`) for Nest.
-- **Two ways to do everything.** A team that also writes native Nest controllers has two
-  validation paths, two error formats and two contracts to keep coherent. Pick one for the
-  API of the bounded contexts.
+- **One way for the contexts.** Native Nest controllers would give two validation paths, two
+  error formats and two contracts to keep coherent, and routes whose security nothing declares:
+  `ddd-ts-kit check` refuses them in a context (`nest/no-parallel-pipeline`), with the tool of
+  the kit to use instead. Nest stays free in the platform.
 
 What Nest still gives: its module system for the parts that are not use cases (health,
 WebSocket gateways, GraphQL, queues), its CLI and its hiring pool. If those are the reason for
 Nest, the cost is fair. If Nest was chosen for its controllers, guards and pipes, the kit's
 routes remove exactly that, and Express or Fastify does the same job with less machinery.
+
+## Where each tool of Nest goes
+
+What a Nest developer reaches for, and where it is in a project of the kit. The kit's tool is
+not a translation for its own sake: each one holds a guarantee the Nest tool would not, often
+because the use case is called through more than one door (HTTP, `/rpc`, `/trpc`, a job, an
+event handler) and only the bus sees all of them. In a context, `ddd-ts-kit check` refuses the
+Nest tool and names the kit's (`nest/no-parallel-pipeline`); in the platform Nest stays free.
+
+| You would write, in Nest | In the kit | What it keeps |
+|---|---|---|
+| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | a route: `generate route`, `@Controller` of `@ddd-ts-kit/http` or `defineRoute` | a security declared on every route, the problem codes the clients read, the route in the contract |
+| a `ValidationPipe`, a DTO class with class-validator | the schemas of the route, written with the validation library of the project (class-validator in the Nest stacks the kit proves) | the validation the contract documents, nothing transformed before it |
+| `@UseGuards(AuthGuard('jwt'))`, a Passport strategy | the authentication of the platform, read by `resolvePrincipal`; a guard of a route group for a control at the edge (`generate guard`) | an anonymous call refused the same way on every door |
+| `@Roles('admin')`, a `RolesGuard`, CASL | the permission of the use case (`requires` in the module file, `@Requires`), a policy for a rule on loaded state, an access scope for a search | the right checked on HTTP, `/rpc`, `/trpc`, a job and an event alike, the refusals audited when the audit trail is on, the lists narrowed (`authz/*`) |
+| an exception filter, `throw new NotFoundException()` | a refusal from the code list of the context, answered by the error mapper | a problem document with the code the contract declares and the client narrows |
+| an interceptor for logs, traces, retries | a bus middleware or an aspect; tracing is wired by the platform | one policy for every use case, read in one place |
+| `CacheInterceptor`, `@nestjs/cache-manager` | the `cache` of the route (with `etag`, `tags`) and the `Cache` port of the kernel | answers kept per caller when they must, purged after the commit |
+| `@nestjs/swagger` | the contract generated from the routes (`npm run docs:generate`) | a contract that cannot drift from the code, `x-error-codes`, the generated clients |
+| `@nestjs/cqrs` | the `CommandBus` and `QueryBus` of the kit | the permission, the unit of work and the outbox around every command |
+| `@nestjs/schedule`, `@nestjs/bullmq` | a job of the kit (`generate job`), a background job | a job that sends a command, so through the same checks |
+| `@nestjs/event-emitter` | domain events, integration events through the outbox | events that leave with the save, never lost by a crash |
+| `@nestjs/config`, `ConfigService` | the configuration of the platform, validated at start and handed to the module | one validated place, no environment read in a context (`purity/no-environment`) |
+| `@nestjs/typeorm`, `@InjectRepository` | the repository adapter of the context on the ORM package of the kit | the unit of work, the tenant and audit columns, the contract suite of the port |
+| `@nestjs/throttler` | the rate limit of the platform (`rateLimit`) | one limit before authentication costs anything |
+| `Logger` of `@nestjs/common` | the `Logger` of the kernel | the request and correlation ids of every line, no personal data logged (`privacy/no-personal-data-in-logs`) |
+| `@Injectable()`, `@Inject()` | the module function of the context; an adapter may still be bound as a Nest provider | nothing is lost: this is wiring, which the rule leaves alone outside `domain/` and `application/` |
+| `setGlobalPrefix` | `prefixRoutes` | the prefix in the contract as on the server |
+
+WebSocket gateways, GraphQL resolvers and microservice clients of Nest are not judged: the kit
+has no tool of its own for them. A resolver or a gateway that calls a use case sends its command
+through the bus, which checks its permission as it does for a route.
 
 ## What this kit supports and verified
 

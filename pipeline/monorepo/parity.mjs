@@ -13,6 +13,9 @@ import { CONTRACTS_DIR, FAMILIES } from './families.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
+/** A reason that only promises: no decision. */
+const VAGUE = /^(todo|tbd|later|wip|n\/a|none|not needed|not yet|for now|temporary)\b/i;
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const problems = problemsOf(FAMILIES, repositorySource());
 
@@ -38,18 +41,36 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 export function problemsOf(families, source) {
   const capabilitiesOf = optionalKeysOfContracts(source.contracts);
 
-  return families.flatMap((family) =>
-    family.ports.flatMap((port) => {
-      const at = `${family.family}, ${port.port}`;
-      const keysOf = new Map(family.members.map((member) => [member, optionKeys(member, port, source)]));
+  return [
+    ...families.flatMap(reasonProblems),
+    ...families.flatMap((family) =>
+      family.ports.flatMap((port) => {
+        const at = `${family.family}, ${port.port}`;
+        const keysOf = new Map(family.members.map((member) => [member, optionKeys(member, port, source)]));
 
-      return [
-        ...missingInterfaces(at, port, keysOf),
-        ...optionProblems(at, port, keysOf),
-        ...contractProblems(at, port, { source, capabilitiesOf }),
-      ];
-    }),
-  );
+        return [
+          ...missingInterfaces(at, port, keysOf),
+          ...optionProblems(at, port, keysOf),
+          ...contractProblems(at, port, { source, capabilitiesOf }),
+        ];
+      }),
+    ),
+  ];
+}
+
+/** A reason that says nothing (too short, or a promise for later) is no decision. */
+function reasonProblems(family) {
+  return family.ports.flatMap((port) => {
+    const tables = [port.apart, port.capabilitiesApart].flatMap((table) => Object.values(table ?? {}));
+    const reasons = [...tables, port.withoutContract ?? {}].flatMap((members) => Object.entries(members));
+
+    return reasons
+      .filter(([, reason]) => typeof reason !== 'string' || reason.length < 25 || VAGUE.test(reason))
+      .map(
+        ([member, reason]) =>
+          `${family.family}, ${port.port}: the reason given for ${member} says too little ("${reason}"): say what the member does instead, or fill the gap.`,
+      );
+  });
 }
 
 function missingInterfaces(at, port, keysOf) {

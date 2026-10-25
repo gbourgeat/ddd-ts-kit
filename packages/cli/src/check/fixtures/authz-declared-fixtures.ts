@@ -84,8 +84,8 @@ export const AUTHZ_DECLARED_FIXTURES: readonly Fixture[] = [
         "import { Controller } from '@ddd-ts-kit/http';\n\n@Controller({ group: InvoicesRoutes, method: 'POST', path: '/' })\nexport class IssueInvoiceController {}\n",
       [`${HTTP}/get-rates/get-rates.controller.ts`]:
         "import { Controller, Public } from '@ddd-ts-kit/http';\n\n@Controller({\n  method: 'GET',\n  path: '/rates',\n  guards: [Public],\n})\nexport class GetRatesController {}\n",
-      [`${HTTP}/nest/nest.controller.ts`]:
-        "import { Controller } from '@nestjs/common';\n\n@Controller({ path: 'invoices' })\nexport class NestController {}\n",
+      [`${HTTP}/legacy/legacy.controller.ts`]:
+        "import { Controller } from 'routing-controllers';\n\n@Controller({ path: 'invoices' })\nexport class LegacyController {}\n",
     }),
   },
   {

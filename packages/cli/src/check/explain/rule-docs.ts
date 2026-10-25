@@ -12,6 +12,7 @@ import { LAYER_DOCS } from './layer-docs';
 import { LAYOUT_DOCS } from './layout-docs';
 import { LIFECYCLE_DOCS } from './lifecycle-docs';
 import { MODULE_DOCS } from './module-docs';
+import { NEST_DOCS } from './nest-docs';
 import { PERSISTENCE_DOCS } from './persistence-docs';
 import { PORTS_DOCS } from './ports-docs';
 import { SCHEDULING_DOCS } from './scheduling-docs';
@@ -43,6 +44,7 @@ export const RULE_DOCS: Readonly<Record<string, RuleDoc>> = {
   ...SCHEDULING_DOCS,
   ...SCHEMA_DOCS,
   ...STANDARD_DOCS,
+  ...NEST_DOCS,
   ...TENANCY_DOCS,
   ...TREE_DOCS,
   ...WIRING_DOCS,
