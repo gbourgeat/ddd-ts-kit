@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from '{{tests.module}}';
 import { FixedClock, FixedExecutionScope, executionContext, offsetPage, type Actor } from '@ddd-ts-kit/kernel';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
-import { {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}AccountRepository } from '{{alias.context}}/infrastructure/persistence/{{#if orm.knex}}knex{{/if}}{{#if orm.drizzle}}drizzle{{/if}}-account.repository{{alias.ext}}';
-import { {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}MemberRepository } from '{{alias.context}}/infrastructure/persistence/{{#if orm.knex}}knex{{/if}}{{#if orm.drizzle}}drizzle{{/if}}-member.repository{{alias.ext}}';
-import { {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}SearchMembersReader } from '{{alias.context}}/infrastructure/persistence/{{#if orm.knex}}knex{{/if}}{{#if orm.drizzle}}drizzle{{/if}}-search-members-reader.repository{{alias.ext}}';
+import { {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}AccountRepository } from '{{alias.context}}/infrastructure/persistence/{{#if orm.knex}}knex{{/if}}{{#if orm.drizzle}}drizzle{{/if}}{{#if orm.prisma}}prisma{{/if}}-account.repository{{alias.ext}}';
+import { {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}MemberRepository } from '{{alias.context}}/infrastructure/persistence/{{#if orm.knex}}knex{{/if}}{{#if orm.drizzle}}drizzle{{/if}}{{#if orm.prisma}}prisma{{/if}}-member.repository{{alias.ext}}';
+import { {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}SearchMembersReader } from '{{alias.context}}/infrastructure/persistence/{{#if orm.knex}}knex{{/if}}{{#if orm.drizzle}}drizzle{{/if}}{{#if orm.prisma}}prisma{{/if}}-search-members-reader.repository{{alias.ext}}';
 import { openTestDatabase, type TestDatabase } from '{{alias.platform}}/database/open-test-database{{alias.ext}}';
 import { anAccount } from '{{alias.context}}/test/builders/account.builder{{alias.ext}}';
 import { aMember } from '{{alias.context}}/test/builders/member.builder{{alias.ext}}';
@@ -21,8 +21,8 @@ beforeAll(async () => {
 beforeEach(async () => {
   await database.reset();
 
-  const accounts = new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}AccountRepository(database.persistence.database, scope, clock);
-  const members = new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}MemberRepository(database.persistence.database, scope, clock);
+  const accounts = new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}AccountRepository(database.persistence.database, scope, clock);
+  const members = new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}MemberRepository(database.persistence.database, scope, clock);
 
   for (const [id, name] of [
     ['subject-ada', 'Ada'],
@@ -42,9 +42,9 @@ afterAll(async () => {
   await database.close();
 });
 
-describe('{{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}SearchMembersReader', () => {
+describe('{{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}SearchMembersReader', () => {
   it('reads the current members of one organisation, with the profile of their account, earliest first', async () => {
-    const reader = new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}SearchMembersReader(database.persistence.database);
+    const reader = new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}SearchMembersReader(database.persistence.database);
 
     const page = await reader.search('acme', offsetPage({ limit: 10 }));
 
@@ -72,7 +72,7 @@ describe('{{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}SearchMemb
   });
 
   it('answers a page of them, latest first when asked, with the total', async () => {
-    const reader = new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}SearchMembersReader(database.persistence.database);
+    const reader = new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}SearchMembersReader(database.persistence.database);
 
     const page = await reader.search('acme', offsetPage({ limit: 1, offset: 1, sort: [{ field: 'joinedAt', direction: 'desc' }] }));
 

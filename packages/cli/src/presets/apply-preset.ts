@@ -9,6 +9,7 @@ import type { RenderContext } from '../templating';
 import { renderTemplate } from '../templating';
 import type { Workspace } from '../workspace';
 import { grantToSignedIn } from './grant-to-signed-in';
+import { layOutPrismaModels } from './lay-out-prisma-models';
 import { NO_FLAGS } from './no-flags';
 import { organisationsAsTenants } from './organisations-as-tenants';
 import type { PresetFile } from './preset-file';
@@ -55,6 +56,10 @@ export function applyPreset(ws: Workspace, config: Config, request: PresetReques
     preset.files(config).filter((file) => file.afterSteps === true),
     rendering,
   );
+
+  if (preset.prismaModels !== undefined && config.stack.orm === 'prisma') {
+    layOutPrismaModels(ws, renderTemplate(`presets/${preset.name}/${preset.prismaModels}`, rendering.context));
+  }
 
   describeContext(scope, preset, rendering);
 

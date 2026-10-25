@@ -71,7 +71,7 @@ exists and decides with OpenFGA (`preset-identity-generated.spec.ts`).
 | Authorization | `identityPermissions`, seven policies over `OrganisationRights` (the rights of the actor in one organisation: their role and what active delegations lend them) |
 | Published language | `organisation.opened`, `member.joined`, `member.role-changed`, `member.removed`, `delegation.granted`, `delegation.revoked`, `account.deactivated`, through the outbox |
 | Identity provider | the port `IdentityProviderAdmin`, kept in line by four consumers of the published facts, delivered at least once (organisation known, member added or removed, account disabled), with an in-memory fake and `KeycloakIdentityProviderAdmin`, a recipe for Keycloak 26 or later |
-| Adapters | Knex or Drizzle repositories, mappers, tables and the search reader, each with its contract spec |
+| Adapters | Knex, Drizzle or Prisma repositories, mappers, tables (on Prisma, the models and the enums of `prisma/schema.prisma`) and the search reader, each with its contract spec |
 | Tests | builders, fakes, unit specs of the model and of every handler and controller, contract specs of the repositories, the spec of the Keycloak adapter against a local HTTP server |
 | Documentation | the purpose, the classification, the glossary and a `## Design` section in `CONTEXT.md`; with tenants, a decision record |
 
@@ -87,12 +87,20 @@ refused before anything is written, with the flag that would fit:
 | `stack.refusals` | `named`, `factories` | named: one class per refusal, its code read from `<context>.codes.ts`; factories: the static factories of one class per concept |
 | `stack.valueObjects` | `throwing` | the value objects refuse an invalid value when built |
 | `stack.routes` | `controllers` | one controller class per route |
-| `stack.orm` | `knex`, `drizzle` | the two adapters written; Prisma and TypeORM are not |
+| `stack.orm` | `knex`, `drizzle`, `prisma` | the three adapters written; TypeORM is not |
 | `stack.validation` | `zod`, `class-validator` | the two families of request schemas written |
 | `stack.schemas` | `shared`, `per-route` | shared: the identifier answers are the `Accepted` of `@ddd-ts-kit/http` and the token of an invitation one schema of `presentation/http/shared/`; per route: each route keeps its own |
 | `stack.http` | `express`, `fastify` | NestJS routes are written another way |
 | `stack.authn` | `jwt`, `keycloak` | an account is the subject of a token: without a verifier every caller is anonymous and the context would serve nobody |
-| `stack.database` | `postgres` | the tables keep one current membership per account with a partial unique index (`where removed_at is null`), which MySQL has not |
+| `stack.database` | `postgres` | the tables keep one current membership per account with a partial unique index (`where removed_at is null`), which MySQL has not; on Prisma it is `where: { removedAt: null }` of the `partialIndexes` preview feature, which the preset turns on in the generator of the client |
+
+On Prisma the partial unique index rests on a preview feature, `partialIndexes`, which Prisma may
+change or drop without a major version: the generator of the client turns it on, and the end-to-end
+spec of the preset checks the statement Prisma derives from the schema (`CREATE UNIQUE INDEX
+"members_current_idx" ... WHERE ("removed_at" IS NULL)`), so an upgrade of Prisma in the kit that
+changes it fails there first. A project that upgrades Prisma on its own checks the same line of
+`generated/schema.sql` after `npm run db:client`; if the feature is gone, the index moves to a
+migration of its own, written by hand.
 
 Supporting another value is writing the variant of the files it changes
 (`*.knex.ts.tpl` beside `*.drizzle.ts.tpl` under `packages/cli/templates/presets/identity/`, several

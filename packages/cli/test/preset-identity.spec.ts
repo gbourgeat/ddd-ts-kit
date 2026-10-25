@@ -88,13 +88,13 @@ describe('init --preset identity', () => {
   });
 
   it('is refused on a stack it is not written for, with what to change', () => {
-    const prisma = initFailure('--orm', 'prisma', '--preset', 'identity');
+    const typeorm = initFailure('--orm', 'typeorm', '--preset', 'identity');
     const anonymous = initFailure('--authn', 'none', '--preset', 'identity');
     const unknown = initFailure('--preset', 'billing');
     const classes = initFailure('--refusals', 'classes', '--preset', 'identity');
 
-    expect(prisma.message).toBe('The identity preset is not written for "stack.orm": "prisma".');
-    expect(prisma.fix).toContain('--orm knex or --orm drizzle');
+    expect(typeorm.message).toBe('The identity preset is not written for "stack.orm": "typeorm".');
+    expect(typeorm.fix).toContain('--orm knex, --orm drizzle or --orm prisma');
     expect(anonymous.message).toBe('The identity preset is not written for "stack.authn": "none".');
     expect(anonymous.fix).toContain('--authn jwt or --authn keycloak');
     expect(unknown.message).toBe('Unknown preset "billing".');
