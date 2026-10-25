@@ -1,6 +1,7 @@
 import { findRoot } from '../commands/find-root';
 import { readConfig } from '../config';
 import { refreshBarrels } from '../generate/refresh-barrels';
+import { refreshNestControllers } from '../nest-controllers/refresh-nest-controllers';
 import { Workspace } from '../workspace';
 
 /**
@@ -15,7 +16,10 @@ export function refreshDeclarations(start: string, tell: (line: string) => void)
     const root = findRoot(start);
     const ws = new Workspace(root, false);
 
-    refreshBarrels(ws, readConfig(root).config);
+    const { config } = readConfig(root);
+
+    refreshBarrels(ws, config);
+    refreshNestControllers(ws, config);
 
     const { created, updated, deleted, notes } = ws.commit(false);
     const rewritten = [...created, ...updated];

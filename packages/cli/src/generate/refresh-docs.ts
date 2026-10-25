@@ -5,6 +5,7 @@ import { CONTEXT_MAP } from '../docs/context-map-file';
 import { type DocsWriting, writeDocs } from '../docs/write-docs';
 import { ignoreCodeTypesWhereTheyAre } from '../knip';
 import type { Workspace } from '../workspace';
+import { refreshNestControllers } from '../nest-controllers/refresh-nest-controllers';
 import { type EarlierDeclarations, refreshBarrels } from './refresh-barrels';
 
 /** Keeps what is derived from the config and the tree in step with what was just scaffolded, once the project has it. */
@@ -18,6 +19,7 @@ export function refreshDocs(ws: Workspace, earlier: EarlierDeclarations, scope: 
   const current = parseConfig(JSON.parse(config));
 
   refreshBarrels(ws, current, earlier);
+  refreshNestControllers(ws, current);
 
   if (ws.exists(CONTEXT_MAP)) {
     writeDocs(ws, current, { earlier, scope });

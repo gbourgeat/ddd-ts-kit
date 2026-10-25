@@ -28,6 +28,12 @@ or an event handler. Nest stays free in the platform. Judged: `presentation/`,
 | `@nestjs/throttler` | `rateLimit` of the platform |
 | `Logger` of `@nestjs/common` | the `Logger` of the kernel |
 
+What a method answers is its signature (`Promise<IssuedInvoiceAnswer>`, `Promise<Accepted>`,
+`Promise<void>`): the kit reads it into the generated `<context>.controllers.ts`, which the module
+lists, and `nest/controllers-current` keeps that file current and reports an answer it cannot read
+(an array, an inline type, an interface): answer a DTO class, or say the body in `response` of
+`@KitRoute`. `@KitRoute` is left for the refusal codes and the validation of the request.
+
 A generated controller injects the buses only (`@Inject(CommandBus)`, `@Inject(QueryBus)`): they
 are the providers the platform gives Nest, as a controller only sends a message through a bus.
 Another provider is added to `controllersOf` in `src/platform/composition/compose-application.ts`.

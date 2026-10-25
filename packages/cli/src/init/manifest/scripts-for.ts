@@ -74,11 +74,14 @@ function privacyScripts(config: Config): Record<string, string> {
  * to an existing project). `start` is plain `node` on the compiled output, whose alias specifiers
  * the build rewrote; `dev` runs the sources under tsx, which reads the `paths` of tsconfig.json.
  * In the declared style every start of `dev`, the first and each reload, begins by rewriting the
- * generated declarations: a dependency added to a constructor is injected without a manual step.
+ * generated declarations: a dependency added to a constructor is injected without a manual step;
+ * with Nest controllers, the list of each context and what their methods answer, read from their
+ * signatures.
  */
 function runScripts(config: Config, tracing: string): Record<string, string> {
   const compiled = `dist/${config.sourceRoot}`;
-  const preloads = [`./${tracing}`, ...(config.stack.style === 'declared' ? [REFRESH] : [])];
+  const refreshes = config.stack.style === 'declared' || config.stack.routes === 'nest';
+  const preloads = [`./${tracing}`, ...(refreshes ? [REFRESH] : [])];
 
   return {
     start: `node ${compiled}/main.js`,

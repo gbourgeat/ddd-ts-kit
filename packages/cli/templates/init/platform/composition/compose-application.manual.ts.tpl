@@ -331,7 +331,8 @@ function controllersOf(contexts: readonly ContextWiring[], platform: Platform): 
         { provide: CommandBus, useValue: platform.commands },
         { provide: QueryBus, useValue: platform.queries },
       ],
-      schemaOfClass: classSchema,
+      // A DTO without a decorated field yet accepts the empty object alone: whitelist and forbidNonWhitelisted refuse any field.
+      schemaOfClass: (dto) => classSchema(dto, { validator: { forbidUnknownValues: false } }),
 {{#if authn.none}}
       security: ['developmentActor'],
 {{/if}}

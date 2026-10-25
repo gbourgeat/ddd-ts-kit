@@ -1339,6 +1339,11 @@ export class AppModule {}
   instances at the start. `ddd-ts-kit init --routes nest` writes that composition.
 - `@KitRoutes({ group })` names a route group of the kit (`@RouteGroup`): its prefix comes before
   the paths of Nest, its tags, guards and codes before those of the class.
+- What a method answers is its signature: TypeScript erases `Promise<IssuedInvoice>`, so
+  `withAnswers(controller, { issueInvoice: IssuedInvoice })` says it to the bridge, a DTO class, a
+  schema or `null` for no body; `response` of `@KitRoute` still wins. Under `--routes nest`,
+  `ddd-ts-kit` reads the signatures and writes these calls in the generated
+  `<context>.controllers.ts`, which the module of the context lists.
 - Refused when the routes are built, because the kit's pipeline would not run them: `@UseGuards`,
   `@UsePipes`, `@UseInterceptors`, `@UseFilters`, `@Header`, `@Redirect`, `@Render`, `@Sse`,
   `@Version`, a pipe on a parameter, `@Req`, `@Res` and the other parameters of Nest. The kit

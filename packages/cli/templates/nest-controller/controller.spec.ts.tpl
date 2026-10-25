@@ -1,9 +1,11 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { nestControllerRoute } from '@ddd-ts-kit/http/nest';
+import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { {{route.busClass}}{{#if route.protected}}, type Actor{{/if}} } from '@ddd-ts-kit/kernel';
 {{route.messageImport}}
 {{route.specImports}}
+import { {{context.camel}}Controllers } from '{{alias.context}}/{{context.kebab}}.controllers{{alias.ext}}';
 
 {{#if route.protected}}
 const caller: Actor = { id: 'user-1', type: 'user', roles: [], attributes: {} };
@@ -34,6 +36,8 @@ describe('{{route.method}} {{route.path}}', () => {
 
     const route = nestControllerRoute({{name.pascal}}Controller, {
       instanceOf: () => new {{name.pascal}}Controller({{route.specArguments}}),
+      // A DTO without a decorated field yet accepts the empty object alone: whitelist and forbidNonWhitelisted refuse any field.
+      schemaOfClass: (dto) => classSchema(dto, { validator: { forbidUnknownValues: false } }),
     });
 
     const response = await executeRoute(
@@ -44,6 +48,7 @@ describe('{{route.method}} {{route.path}}', () => {
 
     expect(response.status).toBe({{route.status}});
     expect(route.path).toBe('{{route.path}}');
+    expect({{context.camel}}Controllers).toContain({{name.pascal}}Controller);
   });
 
   // TODO(domain): replace each entry below by a test of the contract a client relies on.

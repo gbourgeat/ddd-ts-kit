@@ -52,6 +52,18 @@ class OptionalNoteDto {
 
 class LaterNoteDto extends OptionalNoteDto {}
 
+/** A route that reads nothing yet: no field declared. */
+class NothingDto {}
+
+/** A nested field whose class class-transformer is not told, so it stays a plain object. */
+class UntypedNestedDto {
+  @ValidateNested()
+  item = new OrderItemDto();
+}
+
+/** As the generated projects write it: a class with no decorated field is not refused for having none. */
+const UNKNOWN_VALUES_ALLOWED = { validator: { forbidUnknownValues: false } };
+
 class GiftOrderDto extends PlaceOrderDto {
   @IsString()
   message = '';
@@ -111,6 +123,29 @@ describe('the class-validator adapter', () => {
     if (result.ok) {
       expect(result.value).not.toHaveProperty('extra');
     }
+  });
+
+  it('accepts the empty object alone for a class with no field, when unknown values are allowed', () => {
+    const nothing = classSchema(NothingDto, UNKNOWN_VALUES_ALLOWED);
+
+    expect(nothing.parse({}).ok).toBe(true);
+
+    expect(nothing.parse({ admin: true })).toMatchObject({
+      ok: false,
+      error: [{ path: 'admin', code: 'whitelistValidation' }],
+    });
+  });
+
+  it('refuses every field of a nested object it cannot check, when unknown values are allowed', () => {
+    const untyped = classSchema(UntypedNestedDto, UNKNOWN_VALUES_ALLOWED);
+
+    expect(untyped.parse({ item: { sku: 'A-1', quantity: 1 } })).toMatchObject({
+      ok: false,
+      error: [
+        { path: 'item.sku', code: 'whitelistValidation' },
+        { path: 'item.quantity', code: 'whitelistValidation' },
+      ],
+    });
   });
 
   it('refuses an input that is not an object', () => {

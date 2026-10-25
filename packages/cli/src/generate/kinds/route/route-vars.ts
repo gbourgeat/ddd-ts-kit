@@ -4,6 +4,7 @@ import type { RenderContext } from '../../../templating';
 import type { Scope } from '../../scope';
 import { dtoClasses } from './dto-classes';
 import { sharesSchemas } from './shares-schemas';
+import { successStatus } from './success-status';
 import type { Endpoint } from './endpoint';
 import type { UseCase } from './use-case';
 
@@ -67,18 +68,6 @@ function requestVars(scope: Scope, { parameters }: Endpoint, hasBody: boolean): 
     hasRequest: typedParameters || hasBody,
     requestParts: [...(typedParameters ? ['params'] : []), ...(hasBody ? ['body'] : [])].join(', '),
   };
-}
-
-function successStatus(endpoint: Endpoint, useCase: UseCase): number {
-  if (useCase.isQuery) {
-    return 200;
-  }
-
-  if (!useCase.returnsId) {
-    return 204;
-  }
-
-  return endpoint.method === 'POST' ? 201 : 200;
 }
 
 function busVars(useCase: UseCase, messageFile: string): RenderContext {

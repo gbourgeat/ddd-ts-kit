@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7cbca173ac096e03 -->
+<!-- translation-of: README.md sha256:b73771513830b6fc -->
 
 # @ddd-ts-kit/http
 
@@ -1395,6 +1395,11 @@ export class AppModule {}
   composition.
 - `@KitRoutes({ group })` nomme un groupe de routes du kit (`@RouteGroup`) : son préfixe précède les
   chemins de Nest, ses tags, *guards* et codes précèdent ceux de la classe.
+- Ce qu'une méthode répond, c'est sa signature : TypeScript efface `Promise<IssuedInvoice>`, donc
+  `withAnswers(controller, { issueInvoice: IssuedInvoice })` le dit au pont, une classe DTO, un schéma
+  ou `null` pour aucun corps ; `response` de `@KitRoute` l'emporte toujours. Sous `--routes nest`,
+  `ddd-ts-kit` lit les signatures et écrit ces appels dans le fichier généré `<context>.controllers.ts`,
+  que le module du contexte liste.
 - Refusés quand les routes sont construites, parce que le pipeline du kit ne les exécuterait pas :
   `@UseGuards`, `@UsePipes`, `@UseInterceptors`, `@UseFilters`, `@Header`, `@Redirect`, `@Render`,
   `@Sse`, `@Version`, un *pipe* sur un paramètre, `@Req`, `@Res` et les autres paramètres de Nest. Le

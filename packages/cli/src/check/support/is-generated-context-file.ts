@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { dependenciesFile, isDeclarationsFile } from '../../declared';
 import { WITHOUT_MODULE } from '../../model-modules';
+import { controllersFile } from '../../nest-controllers/controllers-file';
 import type { SourceFile } from '../model/source-file';
 
 /**
@@ -21,6 +22,8 @@ export function isGeneratedContextFile(file: SourceFile): boolean {
       : [location.layer, ...location.inside].join('/');
 
   return (
-    isDeclarationsFile(location.context, inContext, WITHOUT_MODULE) || inContext === dependenciesFile(location.context)
+    isDeclarationsFile(location.context, inContext, WITHOUT_MODULE) ||
+    inContext === dependenciesFile(location.context) ||
+    inContext === controllersFile(location.context)
   );
 }

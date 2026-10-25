@@ -1,6 +1,7 @@
 import type { UseCaseDeclaration } from '@ddd-ts-kit/auth';
 {{#if routes.nest}}
 import type { Type } from '@nestjs/common';
+import { {{context.camel}}Controllers } from '{{alias.context}}/{{context.kebab}}.controllers{{alias.ext}}';
 {{/if}}
 {{#if http.any}}
 import type { Route } from '@ddd-ts-kit/http';
@@ -16,7 +17,7 @@ export interface {{context.pascal}}Wiring {
   readonly routes: readonly Route[];
   {{/if}}
   {{#if routes.nest}}
-  /** Its Nest controllers: Nest builds them with the buses they inject, the kit serves their methods. */
+  /** Its Nest controllers, listed by the generated `{{context.kebab}}.controllers.ts`: Nest builds them, the kit serves their methods. */
   readonly controllers: readonly Type<unknown>[];
   {{/if}}
 }
@@ -38,10 +39,7 @@ export function {{context.camel}}Module(platform: Platform): {{context.pascal}}W
     ],
     {{/if}}
     {{#if routes.nest}}
-    controllers: [
-      // ddd-ts-kit:controllers
-      // /ddd-ts-kit:controllers
-    ],
+    controllers: {{context.camel}}Controllers,
     {{/if}}
   };
 }

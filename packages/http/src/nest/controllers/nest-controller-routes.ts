@@ -1,3 +1,4 @@
+import type { Schema } from '@ddd-ts-kit/validation';
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
 import { controllerRoutes } from '../../controller/controller-routes';
 import type { ControllerSpec } from '../../controller/controller-spec';
@@ -5,6 +6,7 @@ import type { ErasedController } from '../../controller/erased-controller';
 import { presentationRegistry } from '../../controller/presentation-registry';
 import type { Route } from '../../route/route';
 import { argumentsOf } from './arguments-of';
+import type { DtoType } from './dto-type';
 import { isNestController } from './is-nest-controller';
 import type { KitRouteSpec } from './kit-route-spec';
 import type { NestControllerClass } from './nest-controller-class';
@@ -126,23 +128,40 @@ function specOf(method: NestMethod, options: NestControllerRoutesOptions): Contr
 }
 
 function responseOf(
-  { where, read }: NestMethod,
+  method: NestMethod,
   response: NonNullable<KitRouteSpec['response']>,
   options: NestControllerRoutesOptions,
 ): ControllerSpec['response'] {
+  const { where, read } = method;
   const status = response.status ?? read.httpCode ?? (read.method === 'POST' ? 201 : 200);
-
-  if (response.body === undefined && answersAValue(read.returnType)) {
-    throw new DeclarationError(
-      `${where} returns ${describedType(read.returnType)} and @KitRoute declares no response.body: the kit would answer it empty. Declare the body the route answers, or return nothing.`,
-    );
-  }
+  const body = bodyOf(method, response);
 
   return {
     status,
     ...(response.description === undefined ? {} : { description: response.description }),
-    ...(response.body === undefined ? {} : { body: schemaOf(where, response.body, options) }),
+    ...(body === undefined ? {} : { body: schemaOf(where, body, options) }),
   };
+}
+
+/**
+ * The body the route answers: the one `@KitRoute` declares, else the one its signature names as
+ * `ddd-ts-kit` read it (`withAnswers`). A method TypeScript recorded as answering a value with
+ * neither is refused, never answered empty.
+ */
+function bodyOf(
+  method: NestMethod,
+  response: NonNullable<KitRouteSpec['response']>,
+): Schema<unknown> | DtoType | undefined {
+  const signed = nestRoutesRegistry().answers.get(method.controller)?.get(method.name);
+  const body = response.body ?? signed ?? undefined;
+
+  if (body === undefined && signed !== null && answersAValue(method.read.returnType)) {
+    throw new DeclarationError(
+      `${method.where} returns ${describedType(method.read.returnType)} and @KitRoute declares no response.body: the kit would answer it empty. Declare the body the route answers, or return nothing.`,
+    );
+  }
+
+  return body;
 }
 
 /**
