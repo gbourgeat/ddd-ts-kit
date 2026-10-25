@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, tempDir } from '../helpers';
+import { cli, read, tempDir } from '../helpers';
 import { expectNoFinding } from './expect-no-finding';
 import { installAsPublished } from './install-as-published';
 import { generatePrismaClient } from './generate-prisma-client';
@@ -60,6 +60,16 @@ describe.runIf(SLOW).each(FLAVOURS)('a project bootstrapped with the identity pr
     expectNoFinding(root);
     expect(findingsOf(root, { command: bin('biome'), args: ['format', '--max-diagnostics=400', '.'] })).toBe('');
   }, 480_000);
+
+  it.runIf(flags.includes('prisma'))(
+    'keeps one current membership per account with the partial index Prisma derives from its preview feature',
+    () => {
+      // `partialIndexes` is a preview feature of Prisma: an upgrade that changes it fails here first.
+      expect(read(root, 'generated/schema.sql')).toMatch(
+        /CREATE UNIQUE INDEX "members_current_idx" ON "identity"\."members"\("organisation_id", "account_id"\) WHERE \("removed_at" IS NULL\);/,
+      );
+    },
+  );
 
   it('type-checks against the sources of the packages, and passes its specs', () => {
     const checked = bootstrapped(flags);

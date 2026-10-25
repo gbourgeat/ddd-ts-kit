@@ -1,5 +1,5 @@
 [English](bootstrap-with-well-designed-contexts.md) · **Français**
-<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:1c7b837381a17e77 -->
+<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:307138fd793d9ca6 -->
 
 # Démarrer avec des contextes bien conçus
 
@@ -98,6 +98,14 @@ Une autre *stack* est refusée avant que rien ne soit écrit, avec l'option qui 
 | `stack.http` | `express`, `fastify` | les routes NestJS s'écrivent autrement |
 | `stack.authn` | `jwt`, `keycloak` | un compte est le sujet d'un jeton : sans vérificateur, chaque appelant est anonyme et le contexte ne servirait personne |
 | `stack.database` | `postgres` | les tables gardent une seule appartenance en cours par compte avec un index unique partiel (`where removed_at is null`), que MySQL n'a pas ; sur Prisma, c'est `where: { removedAt: null }` de la fonctionnalité en préversion `partialIndexes`, que le *preset* active dans le générateur du client |
+
+Sur Prisma, l'index unique partiel repose sur une fonctionnalité en préversion, `partialIndexes`,
+que Prisma peut changer ou retirer sans version majeure : le générateur du client l'active, et la
+*spec* de bout en bout du *preset* vérifie l'instruction que Prisma tire du schéma (`CREATE UNIQUE
+INDEX "members_current_idx" ... WHERE ("removed_at" IS NULL)`), si bien qu'une montée de Prisma dans
+le kit qui la changerait échoue là d'abord. Un projet qui monte Prisma de lui-même vérifie la même
+ligne de `generated/schema.sql` après `npm run db:client` ; si la fonctionnalité disparaît, l'index
+passe dans une migration à lui, écrite à la main.
 
 Prendre en charge une autre valeur revient à écrire la variante des fichiers qu'elle change
 (`*.knex.ts.tpl` à côté de `*.drizzle.ts.tpl` sous `packages/cli/templates/presets/identity/`,

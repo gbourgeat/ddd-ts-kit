@@ -76,6 +76,7 @@ model {{context.pascal}}Member {
   updatedAt      DateTime                    @map("updated_at") @db.Timestamptz(3)
   updatedBy      String                      @map("updated_by")
 
+  // Preview feature `partialIndexes`: after an upgrade of Prisma, check generated/schema.sql keeps the WHERE.
   @@unique([organisationId, accountId], map: "members_current_idx", where: { removedAt: null })
   @@index([accountId], map: "members_account_idx")
   @@map("members")

@@ -94,6 +94,14 @@ refused before anything is written, with the flag that would fit:
 | `stack.authn` | `jwt`, `keycloak` | an account is the subject of a token: without a verifier every caller is anonymous and the context would serve nobody |
 | `stack.database` | `postgres` | the tables keep one current membership per account with a partial unique index (`where removed_at is null`), which MySQL has not; on Prisma it is `where: { removedAt: null }` of the `partialIndexes` preview feature, which the preset turns on in the generator of the client |
 
+On Prisma the partial unique index rests on a preview feature, `partialIndexes`, which Prisma may
+change or drop without a major version: the generator of the client turns it on, and the end-to-end
+spec of the preset checks the statement Prisma derives from the schema (`CREATE UNIQUE INDEX
+"members_current_idx" ... WHERE ("removed_at" IS NULL)`), so an upgrade of Prisma in the kit that
+changes it fails there first. A project that upgrades Prisma on its own checks the same line of
+`generated/schema.sql` after `npm run db:client`; if the feature is gone, the index moves to a
+migration of its own, written by hand.
+
 Supporting another value is writing the variant of the files it changes
 (`*.knex.ts.tpl` beside `*.drizzle.ts.tpl` under `packages/cli/templates/presets/identity/`, several
 variants in a row when a file depends on several keys: `*.class-validator.per-route.ts.tpl`), not
