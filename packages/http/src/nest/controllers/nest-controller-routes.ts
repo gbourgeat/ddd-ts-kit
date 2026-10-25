@@ -11,10 +11,12 @@ import type { NestControllerClass } from './nest-controller-class';
 import type { NestControllerRoutesOptions } from './nest-controller-routes-options';
 import type { NestMethod } from './nest-method';
 import { nestRouteMetadata } from './nest-route-metadata';
+import { nestRouteMethods } from './nest-route-methods';
 import { type Injected, nestRoutesRegistry } from './nest-routes-registry';
 import { prototypeOf } from './prototype-of';
 import { requestSchemasOf } from './request-schemas-of';
 import { schemaOf } from './schema-of';
+import { summaryOf } from './summary-of';
 
 /**
  * The routes of Nest controllers whose methods carry `@KitRoute`, for any adapter of the kit and
@@ -41,21 +43,26 @@ function routesOf(controller: NestControllerClass, options: NestControllerRoutes
   }
 
   const prototype = prototypeOf(controller);
-  const declared = nestRoutesRegistry().routes.get(prototype);
+  const declared = nestRoutesRegistry().routes.get(prototype) ?? new Map<string, KitRouteSpec>();
+  const names = [...new Set([...nestRouteMethods(controller), ...declared.keys()])];
 
-  if (declared === undefined || declared.size === 0) {
-    throw new DeclarationError(`${controller.name} is served by the kit and no method carries @KitRoute.`);
+  if (names.length === 0) {
+    throw new DeclarationError(
+      `${controller.name} is served by the kit and no method carries a route decorator of Nest.`,
+    );
   }
 
   const answering = lazyInstance(controller, options);
   const injected = nestRoutesRegistry().injected.get(prototype);
 
-  return [...declared].map(([name, spec]) => {
+  return names.map((name) => {
+    const written = declared.get(name) ?? {};
+
     const method: NestMethod = {
       controller,
       name,
       where: `${controller.name}.${name}`,
-      spec,
+      spec: { ...written, operationId: written.operationId ?? name, summary: written.summary ?? summaryOf(name) },
       read: nestRouteMetadata(controller, name),
       injected: injected?.get(name) ?? new Map<number, Injected>(),
     };

@@ -104,6 +104,26 @@ describe('a Nest controller in a route group of the kit', () => {
   });
 });
 
+describe('a Nest controller written with the decorators of Nest alone', () => {
+  class Reminders {
+    sendReminders(): void {}
+
+    notARoute(): void {}
+  }
+
+  Controller('reminders')(Reminders);
+  KitRoutes({ guards: [Public] })(Reminders);
+  Reflect.decorate([Post('send')], Reminders.prototype, 'sendReminders', { value: Reminders.prototype.sendReminders });
+
+  it('is a route of the kit for each method that carries a route decorator of Nest, named after the method', () => {
+    const routes = nestControllerRoutes([Reminders]);
+
+    expect(routes.map(({ operationId, summary, path }) => ({ operationId, summary, path }))).toEqual([
+      { operationId: 'sendReminders', summary: 'Send reminders', path: '/reminders/send' },
+    ]);
+  });
+});
+
 describe('a Nest controller the kit refuses to serve', () => {
   it.each([
     ['a guard of Nest, which the kit does not run', [UseGuards(class {})], undefined, /@UseGuards/],

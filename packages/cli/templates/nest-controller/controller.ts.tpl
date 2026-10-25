@@ -34,8 +34,6 @@ export class {{name.pascal}}Controller {
 
   @{{route.nestMethod}}({{route.nestPath}})
   @KitRoute({
-    operationId: '{{name.camel}}',
-    summary: '{{name.title}}',
     {{#if route.readsRequest}}
     request: { {{route.nestRequest}} },
     {{/if}}

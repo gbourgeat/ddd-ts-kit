@@ -12,7 +12,7 @@ or an event handler. Nest stays free in the platform. Judged: `presentation/`,
 
 | Reached for, in Nest | Write instead |
 |---|---|
-| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | keep them: `@KitRoute({ operationId, summary, request, response, errors })` on each method, `@KitRoutes({ group })` on the class, `@CurrentActor()` for the caller, the bus injected by Nest; under `stack.routes: nest` (`init --routes nest`), `npx ddd-ts-kit generate route <context> <UseCase> --method <M> --path <p>` writes it and lists it under `controllers` in the module of the context |
+| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | keep them: each method with a route decorator of Nest is a route, named after the method; `@KitRoute({ request, response, errors })` when it says more, `@KitRoutes({ group })` on the class, `@CurrentActor()` for the caller, the bus injected by Nest; under `stack.routes: nest` (`init --routes nest`), `npx ddd-ts-kit generate route <context> <UseCase> --method <M> --path <p>` writes it and lists it under `controllers` in the module of the context |
 | `ValidationPipe`, a DTO with class-validator | the schemas of the route, with the validation library of the project |
 | `@UseGuards(AuthGuard(...))`, Passport | authentication in the platform, read by `resolvePrincipal`; `generate guard` for a control at the edge of a route group |
 | `@Roles`, a `RolesGuard`, CASL | the permission of the use case (`requires` in the module file, `@Requires`), a policy, an access scope: `/ddd-ts-kit:access-control` |
@@ -27,6 +27,10 @@ or an event handler. Nest stays free in the platform. Judged: `presentation/`,
 | `@nestjs/typeorm`, `@InjectRepository` | the repository adapter on the ORM package of the kit: `/ddd-ts-kit:persistence` |
 | `@nestjs/throttler` | `rateLimit` of the platform |
 | `Logger` of `@nestjs/common` | the `Logger` of the kernel |
+
+A generated controller injects the buses only (`@Inject(CommandBus)`, `@Inject(QueryBus)`): they
+are the providers the platform gives Nest, as a controller only sends a message through a bus.
+Another provider is added to `controllersOf` in `src/platform/composition/compose-application.ts`.
 
 Not judged: `@Injectable()` and `@Inject()` outside `domain/` and `application/` (an adapter
 bound as a Nest provider), and the packages the kit has no answer to (`@nestjs/websockets`,

@@ -9,7 +9,8 @@ export interface NestMethod {
   readonly name: string;
   /** `InvoicesController.issue`, for the messages. */
   readonly where: string;
-  readonly spec: KitRouteSpec;
+  /** What @KitRoute says, its name and its summary given when it said none. */
+  readonly spec: KitRouteSpec & Required<Pick<KitRouteSpec, 'operationId' | 'summary'>>;
   readonly read: NestRouteMetadata;
   /** By index, what a parameter decorator of the kit asks for. */
   readonly injected: ReadonlyMap<number, Injected>;

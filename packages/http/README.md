@@ -1252,8 +1252,11 @@ are those described above. Use `prefixRoutes` for a prefix.
 
 A project that writes Nest controllers keeps them: `@Controller`, `@Get`, `@Post` and the other
 methods, `@Param`, `@Query`, `@Headers`, `@Body` with a DTO class, `@HttpCode`, injection by
-constructor and modules. `@KitRoute` on a method adds what Nest does not say: its name in the
-contract, who may call it, the refusals it answers, its answer. The kit, not Nest's router,
+constructor and modules. Each method that carries a route decorator of Nest is a route of the
+kit, named after the method (`issueInvoice`, summary `Issue invoice`; renaming the method renames
+the route, its procedure and the function of its client), behind the guards of `@KitRoutes` on
+the class. `@KitRoute` on a method, optional, adds what Nest does not say: another
+name, its own guards, the refusals it answers, its answer. The kit, not Nest's router,
 serves the method: it is a route of the kit, with its guards, validation, problem documents,
 tracing and contract, and a procedure over `/rpc` and `/trpc` as every route.
 
@@ -1287,7 +1290,7 @@ export class InvoicesController {
   constructor(@Inject(Invoicing) private readonly invoicing: Invoicing) {}
 
   @Post(':invoiceId/issue')
-  @KitRoute({ operationId: 'issueInvoice', summary: 'Issue an invoice', errors: ['INVOICE_ALREADY_ISSUED'] })
+  @KitRoute({ errors: ['INVOICE_ALREADY_ISSUED'] }) // named issueInvoice, after the method
   async issue(
     @Param('invoiceId') invoiceId: string,
     @Body() body: IssueInvoiceBody,
