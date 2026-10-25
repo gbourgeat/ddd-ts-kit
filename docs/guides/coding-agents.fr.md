@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:da42886e03eb1ef9 -->
+<!-- translation-of: coding-agents.md sha256:c4caddec40d1d1f3 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -58,8 +58,10 @@ routes de la *story* et les deux flux les plus proches, et rend compte de ce qui
 
 Le hook est la partie qui rend le reste contraignant. Dans un projet qui a un
 `ddd-ts-kit.config.json`, il rappelle la démarche et la carte des contextes au début de la
-session, signale quand les packages installés ne sont pas la version que décrivent les skills, refuse un fichier écrit à la main là où un générateur existe ainsi que toute
-modification d'un contrat généré, demande l'avis du propriétaire du projet avant qu'une
+session, signale quand les packages installés ne sont pas la version que décrivent les skills, refuse un fichier écrit à la main là où un générateur existe, toute
+modification d'un contrat généré et l'écriture de la *baseline* des erreurs (`check --baseline
+write`, ou une modification de `ddd-ts-kit-baseline.json` : le propriétaire du projet l'écrit,
+dans un terminal), demande l'avis du propriétaire du projet avant qu'une
 désactivation, un test sauté ou un changement des règles soit écrit, vérifie chaque fichier
 écrit et renvoie les violations avec leur correction, et refuse de terminer tant que des
 erreurs d'architecture restent. Avec `"formatOnWrite": true` dans la configuration (écrite par `init` pour un nouveau projet), il lance

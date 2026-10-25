@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:010c6f9a8847fe5e -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:703515bed3204bcc -->
 
 # L'analyse statique et le pipeline
 
@@ -430,7 +430,7 @@ l'ont décidé (2026-10-24).
 | Situation | Choix |
 |---|---|
 | Un projet généré par `init` | tout garder tel que généré ; marquer le *job* de porte unique comme obligatoire |
-| Adopter le kit dans une base de code existante | commencer par le *checker* et le *preset* ESLint ; consigner les constats de lint que l'existant a déjà dans `eslint-suppressions.json` (`npx eslint . --suppress-all`, un avertissement passé d'abord à `error`), qui ne fait ensuite que rétrécir ; chaque assouplissement d'une règle consigné avec son enregistrement de décision ; ajouter dependency-cruiser quand l'arborescence est en place |
+| Adopter le kit dans une base de code existante | commencer par le *checker* et le *preset* ESLint ; consigner les erreurs du *checker* que l'existant a déjà dans `ddd-ts-kit-baseline.json` (`npx ddd-ts-kit check --baseline write`) et ses constats de lint dans `eslint-suppressions.json` (`npx eslint . --suppress-all`, un avertissement passé d'abord à `error`), qui ne font ensuite que rétrécir (`check --baseline prune`, `eslint --prune-suppressions`) ; chaque assouplissement d'une règle consigné avec son enregistrement de décision ; ajouter dependency-cruiser quand l'arborescence est en place |
 | La boucle d'édition d'un agent de code | la vérification par fichier après chaque écriture, la porte complète avant de terminer |
 | Un monorepo avec ses propres outils de frontières | les garder pour les frontières entre *packages* ; les règles du kit s'appliquent toujours à l'intérieur de chaque service |
 | TypeScript 7 seul, sans TypeScript 6 | pas possible aujourd'hui avec le lint typé ; garder les deux |

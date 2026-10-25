@@ -57,7 +57,9 @@ flows, and reports what does not match the design or a decision).
 The hook is the part that makes the rest binding. In a project that has a
 `ddd-ts-kit.config.json` it reminds the workflow and the context map at session start, says
 when the installed packages are not the version the skills describe, refuses
-a hand-written file where a generator exists and any edit of a generated contract, asks the
+a hand-written file where a generator exists, any edit of a generated contract and the writing
+of the baseline of the errors (`check --baseline write`, or an edit of `ddd-ts-kit-baseline.json`:
+the project owner writes it, in a terminal), asks the
 project owner before a suppression, a skipped test or a change of the rules is written, checks
 every written file and returns the violations with their fix, and refuses to finish while
 architecture errors remain. With `"formatOnWrite": true` in the config (written by `init` for a new project), it first runs the Biome

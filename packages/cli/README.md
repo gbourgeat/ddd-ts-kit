@@ -1915,6 +1915,7 @@ generated pipelines wire all three.
 ```
 ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab]
                  [--changed-since <git-ref>] [--explain] [--self]
+ddd-ts-kit check --baseline write|prune
 ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
 ddd-ts-kit check --commit-size [--staged] [--strict]
 ```
@@ -1974,6 +1975,19 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 `ddd-ts-kit explain <rule-id>` prints the same kind of bad and good example for every rule.
 
 - `paths` and `--changed-since` limit what is reported, not what is analysed.
+- `--baseline write` records the errors a project already has, counted by file and by rule, in
+  `ddd-ts-kit-baseline.json` (the shape of `eslint-suppressions.json`), for a codebase that adopts
+  the kit; commit it. From then on `check` and `check-file` (the hook of the agent) leave quiet the
+  errors of a rule in a file while they are no more than the baseline records, and report all of
+  them once they are more; `check` fails when a recorded count is no longer reached, until
+  `--baseline prune` lowers it, so that the baseline only shrinks. Warnings are not recorded: they
+  fail nothing. Writing a baseline is a decision of the project owner, who runs `--baseline write`
+  in a terminal: the guard of the plugin refuses the command and any direct edit of the file to an
+  agent, under Claude Code, Codex and Copilot alike, and the permissions `init` writes ask before
+  both for an agent without the plugin. A command the guard does not read (a script of the
+  project that writes the file) is not caught: the review reads the diff of the baseline, which
+  should only shrink. `--baseline prune` needs no one. A baseline makes old errors quiet; it does
+  not make a tree outside the canonical one checkable.
   `--changed-since` runs `git diff --name-only --relative <ref>...` in the project.
 - `--format github` prints `::error file=...,line=...::` annotations.
 - `--explain` follows the violations with each rule they report, once, with its description and
