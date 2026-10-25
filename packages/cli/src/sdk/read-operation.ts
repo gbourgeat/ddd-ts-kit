@@ -21,7 +21,15 @@ export function readOperation(place: OperationPlace, value: unknown): ClientOper
     parameters: parametersOf([...place.shared, ...own]),
     body: bodyOf(raw['requestBody']),
     responses: readResponses(raw['responses']),
+    procedure: procedureOf(raw),
   };
+}
+
+function procedureOf(raw: Record<string, unknown>): string | undefined {
+  const operationId = raw['operationId'];
+  const sent = raw['requestBody'] === undefined || bodyOf(raw['requestBody']) !== undefined;
+
+  return typeof operationId === 'string' && operationId !== '' && sent ? operationId : undefined;
 }
 
 const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { toYaml } from '../src/yaml/to-yaml';
 import { changeConfig } from './check-support';
-import { cli, exists, read, write } from './helpers';
+import { cli, exists, read, tempDir, write } from './helpers';
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
 import { SHOP_CONTRACT } from './support/shop-contract';
@@ -182,6 +182,46 @@ describe('ddd-ts-kit sdk', () => {
 
     expect(result.code).toBe(2);
     expect(result.stderr).toContain('openapi/openapi.yaml cannot be read: line 1');
+  });
+});
+
+describe('init --rpc orpc', () => {
+  it('serves the routes as procedures under /rpc, and gives each client the oRPC contract of its document', () => {
+    const root = initProject('--sdk', '--rpc', 'orpc', '--package-manager', 'npm');
+    const client = json(root, 'clients/api/package.json');
+
+    expect(jsonAt(json(root, CONFIG), 'stack', 'rpc')).toBe('orpc');
+    expect(jsonAt(json(root, 'package.json'), 'dependencies', '@orpc/server')).toMatch(/^\^1\./);
+
+    expect(read(root, 'src/platform/http/start-http-server.ts')).toContain(
+      'const handler = new RPCHandler(orpcRouter(served.routes, served.boundary));',
+    );
+
+    expect(read(root, 'clients/api/src/orpc.ts')).toContain('export function createRpcClient(');
+    expect(jsonAt(client, 'exports', './orpc')).toEqual({ types: './dist/orpc.d.ts', default: './dist/orpc.js' });
+    expect(Object.keys(jsonAt(client, 'dependencies') as object)).toEqual(['@orpc/client', '@orpc/contract']);
+    expect(findings(root, 'config/valid')).toEqual([]);
+  });
+
+  it('takes the contract and its dependencies back from the clients once stack.rpc is none, keeping those of the team', () => {
+    const root = initProject('--sdk', '--rpc', 'orpc');
+    const manifest = 'clients/api/package.json';
+    const config = json(root, CONFIG) as { stack: object };
+
+    write(root, manifest, JSON.stringify({ ...(json(root, manifest) as object), dependencies: { ky: '^1.0.0' } }));
+    changeConfig(root, { stack: { ...config.stack, rpc: 'none' } });
+
+    expect(cli(root, 'sdk').stdout).toContain('deleted      clients/api/src/orpc.ts');
+    expect(jsonAt(json(root, manifest), 'exports', './orpc')).toBeUndefined();
+    expect(jsonAt(json(root, manifest), 'dependencies')).toEqual({ ky: '^1.0.0' });
+    expect(cli(root, 'sdk', '--check').code).toBe(0);
+  });
+
+  it('is refused without an HTTP boundary: the procedures are its routes', () => {
+    const refused = cli(tempDir('init'), 'init', '--http', 'none', '--di', 'manual', '--rpc', 'orpc');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('--rpc orpc cannot be combined with --http none.');
   });
 });
 

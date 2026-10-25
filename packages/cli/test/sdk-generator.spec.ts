@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { clientFiles } from '../src/sdk/client-files';
+import type { ClientDocument } from '../src/sdk/client-document';
+import { clientFiles, type Rpc } from '../src/sdk/client-files';
 import { readClientDocument } from '../src/sdk/read-client-document';
 import { SchemaTypes } from '../src/sdk/schema-types';
 import { CLASHING_CONTRACT } from './support/clashing-contract';
@@ -169,6 +170,75 @@ describe('the files of a client', () => {
   });
 });
 
-function file(name: string): string {
-  return new Map(clientFiles(SHOP, 'shop-api-client', 'clients/api')).get(name) ?? '';
+describe('the oRPC contract of a client, when the API serves procedures', () => {
+  const UPLOADING = readClientDocument(
+    { name: 'api', source: 'openapi/openapi.yaml' },
+    {
+      ...SHOP_CONTRACT,
+      paths: {
+        ...SHOP_CONTRACT.paths,
+        '/orders/{orderId}/receipt': {
+          post: {
+            operationId: 'attachReceipt',
+            requestBody: { required: true, content: { 'multipart/form-data': { schema: { type: 'object' } } } },
+            responses: { '204': { description: 'Attached.' } },
+          },
+        },
+      },
+    },
+  );
+
+  it('is written only when stack.rpc is orpc', () => {
+    expect(file('src/orpc.ts')).toBe('');
+    expect(file('src/orpc.ts', 'orpc')).toContain('export const contract = {');
+  });
+
+  it('names each procedure by the operationId of its route, quoted when it is not an identifier', () => {
+    const orpc = file('src/orpc.ts', 'orpc');
+
+    expect(orpc).toContain('  placeOrder: oc\n');
+    expect(orpc).toContain("  'cancel order': oc\n");
+  });
+
+  it('types the input and the body as the HTTP client does, the refusals by code with their status', () => {
+    const orpc = file('src/orpc.ts', 'orpc');
+
+    expect(orpc).toContain(
+      [
+        '    .errors({',
+        '      DUPLICATE: { status: 409, data: type<Problem>() },',
+        '      OUT_OF_STOCK: { status: 409, data: type<Problem>() },',
+        '    })',
+        '    .input(type<Operations.PlaceOrderInput>())',
+        '    .output(type<DataOf<Operations.PlaceOrderResult>>()),',
+      ].join('\n'),
+    );
+
+    expect(orpc).toContain('type Problem = Schemas.Problem;');
+  });
+
+  it('leaves out an operation that receives a body other than JSON, and one that has no operationId', () => {
+    const orpc = filesOf(UPLOADING, 'orpc').get('src/orpc.ts') ?? '';
+
+    expect(orpc).not.toContain('attachReceipt');
+    expect(orpc).not.toContain('getHealth');
+    expect(UPLOADING.operations.find(({ name }) => name === 'attachReceipt')?.procedure).toBeUndefined();
+  });
+
+  it('says in the README how to call the procedures, and what stays with the HTTP client', () => {
+    const readme = file('README.md', 'orpc');
+
+    expect(readme).toContain("import { createRpcClient } from 'shop-api-client/orpc';");
+    expect(readme).toContain('await safe(rpc.placeOrder({ ... }))');
+    expect(readme).toContain('those that receive a file or a raw body: `getHealth`');
+    expect(file('README.md')).not.toContain('## Procedures (oRPC)');
+  });
+});
+
+function file(name: string, rpc: Rpc = 'none'): string {
+  return filesOf(SHOP, rpc).get(name) ?? '';
+}
+
+function filesOf(document: ClientDocument, rpc: Rpc): Map<string, string> {
+  return new Map(clientFiles({ document, packageName: 'shop-api-client', directory: 'clients/api' }, rpc));
 }

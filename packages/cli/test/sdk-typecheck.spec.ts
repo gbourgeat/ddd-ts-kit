@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { fromYaml } from '../src/yaml/from-yaml';
@@ -89,6 +90,80 @@ describe('the client of the example contract', () => {
           types: ['node'],
           typeRoots: [path.join(REPO_ROOT, 'node_modules/@types')],
           paths: { 'scheduling-api-client': ['../src/index.ts'] },
+        },
+        include: ['consumer.ts'],
+      }),
+    );
+
+    expect(compile(path.join(root, 'consumer'), '-p', 'tsconfig.json')).toBe('');
+  });
+});
+
+/** A consumer of the procedures of the example, through the oRPC contract of its client. */
+const RPC_CONSUMER = `import { isDefinedError, safe } from '@orpc/client';
+import { createRpcClient } from 'scheduling-api-client/orpc';
+
+const rpc = createRpcClient({ url: 'http://127.0.0.1:3000/rpc', headers: () => ({ authorization: 'Bearer token' }) });
+
+export async function opened(): Promise<string> {
+  const [error, practice] = await safe(rpc.openPractice({ body: { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' } }));
+
+  if (error === null) {
+    return practice.id;
+  }
+
+  if (isDefinedError(error) && error.code === 'PERSON_NOT_REGISTERED') {
+    const status: number = error.status;
+
+    return \`\${error.data.requestId} \${String(status)}\`;
+  }
+
+  return error.message;
+}
+
+export async function refusedForAnotherSlot(): Promise<boolean> {
+  const [error] = await safe(rpc.openPractice({ body: { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' } }));
+
+  // @ts-expect-error a code no refusal of the procedure carries, the only error of the line
+  return isDefinedError(error) && error.code === 'SLOT_TAKEN';
+}
+
+// @ts-expect-error a procedure the API does not serve
+export const missing = rpc.noSuchProcedure;
+`;
+
+describe('the oRPC contract of the client of the example', () => {
+  const contract = fromYaml(read(REPO_ROOT, 'examples/scheduling/openapi/openapi.yaml'));
+  const root = writtenClient(contract, 'scheduling-api-client', 'orpc');
+
+  // The packages of oRPC, as a workspace that installed the client finds them.
+  fs.symlinkSync(path.join(REPO_ROOT, 'node_modules'), path.join(root, 'node_modules'), 'dir');
+
+  it('compiles with its oRPC entry, for a browser as for Node', () => {
+    expect(compile(root, '-p', 'tsconfig.json')).toBe('');
+    expect(read(root, 'dist/orpc.d.ts')).toContain('createRpcClient');
+  });
+
+  it('type-checks a consumer of the procedures, each refusal of the contract narrowed to its codes', () => {
+    write(root, 'consumer/consumer.ts', RPC_CONSUMER);
+
+    write(
+      root,
+      'consumer/tsconfig.json',
+      JSON.stringify({
+        compilerOptions: {
+          target: 'ES2023',
+          lib: ['ES2023', 'DOM'],
+          module: 'ESNext',
+          moduleResolution: 'Bundler',
+          strict: true,
+          noUncheckedIndexedAccess: true,
+          exactOptionalPropertyTypes: true,
+          verbatimModuleSyntax: true,
+          noEmit: true,
+          skipLibCheck: true,
+          types: [],
+          paths: { 'scheduling-api-client/orpc': ['../src/orpc.ts'] },
         },
         include: ['consumer.ts'],
       }),

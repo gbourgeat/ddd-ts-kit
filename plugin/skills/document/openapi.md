@@ -65,6 +65,12 @@ the contract, `docs:check` fails while one differs from it, `ci:build` builds th
   does; the HTTP helpers stay for requests the contract does not describe.
 - A new error code on a route changes the type of its outcome: a consumer with an exhaustive
   `switch` on `problem.code` fails to compile, which is the signal the table above calls breaking.
+- With `stack.rpc` set to `orpc` (`init --rpc orpc`), the server also serves every route as an
+  oRPC procedure named by its `operationId` under `/rpc`, and each client gains `./orpc`, the oRPC
+  contract written from the same OpenAPI document. Nothing more to declare: a route is still the
+  one declaration, and a new `operationId` renames its procedure, which is breaking for an oRPC
+  consumer. What only HTTP carries (answer headers, uploads, files, streamed lists, XML and CSV)
+  has no procedure answer: keep the HTTP client for it.
 - Publishing is manual (`npm publish --workspace clients/<document>` after raising its
   version); set `sdk.name` and `sdk.access` first. The comparison with openapi-typescript, hey-api
   and orval, and the limits: https://github.com/gbourgeat/ddd-ts-kit/blob/main/docs/tools/client-sdk.md.

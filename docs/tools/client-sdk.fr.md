@@ -1,5 +1,5 @@
 [English](client-sdk.md) · **Français**
-<!-- translation-of: client-sdk.md sha256:2ffb21aa9cbcbe50 -->
+<!-- translation-of: client-sdk.md sha256:c2ffa0382b12ce22 -->
 
 # SDK client : un client typé à partir du contrat OpenAPI
 
@@ -130,6 +130,7 @@ clients/
       errors.ts          ERROR_CODES, ErrorCode, isErrorCode(), isProblem()
       schemas.ts         un type par schéma de composant
       runtime.ts         le même pour tout contrat : requête HTTP, justificatifs, réponse
+      orpc.ts            avec stack.rpc orpc : le contrat oRPC, createRpcClient(), sous <client>/orpc
 ```
 
 Un contrat séparé (`openapi.documents`) donne `clients/<nom>` pour chaque document, y compris un
@@ -310,6 +311,42 @@ projet qui l'a généré, pas dans le dépôt du kit : les exemples vérifiés d
 les laissent donc de côté. Ils ont été compilés à la main contre `examples/scheduling/clients/api`,
 et les messages du compilateur cités plus haut sont les siens ; aucune porte ne les maintient en
 l'état.
+
+### Procédures (oRPC)
+
+Avec `stack.rpc` à `orpc` (`init --rpc orpc`), l'API sert aussi ses routes comme procédures oRPC
+sous `/rpc`, et chaque client reçoit `src/orpc.ts`, exporté sous `<client>/orpc` : le contrat
+oRPC de son document, chaque procédure nommée par son `operationId`, son entrée et sa réponse
+étant les types du client HTTP, ses refus les codes de `x-error-codes` avec leur statut.
+`@orpc/client` et `@orpc/contract` deviennent les dépendances du paquet ; son point d'entrée
+racine n'a toujours besoin de rien, et un consommateur qui n'importe pas `./orpc` n'en embarque
+aucun.
+
+```ts
+import { isDefinedError, safe } from '@orpc/client';
+import { createRpcClient } from 'scheduling-api-client/orpc';
+
+const rpc = createRpcClient({
+  url: 'https://api.example.com/rpc',
+  headers: () => ({ authorization: `Bearer ${session.token()}` }),
+});
+
+const [error, practice] = await safe(
+  rpc.openPractice({ body: { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' } }),
+);
+
+if (isDefinedError(error) && error.code === 'PERSON_NOT_REGISTERED') {
+  // error.code est l'un des codes d'openPractice, error.data son document problem
+}
+```
+
+`contract` est le contrat oRPC lui-même, pour ce qui se construit dessus
+(`createTanstackQueryUtils` de `@orpc/tanstack-query` prend le client). Ce que les procédures ne
+portent pas reste au client HTTP : les en-têtes d'une réponse (un `ETag` à renvoyer dans
+`If-Match`, une politique de cache), les représentations autres que JSON, et les opérations qui
+reçoivent un fichier ou un corps brut, qui n'ont pas de procédure. Remettre `stack.rpc` à `none`
+puis lancer `sdk` supprime `src/orpc.ts` et ses dépendances, et garde celles que l'équipe a
+ajoutées.
 
 ### Limites
 
