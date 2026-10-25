@@ -9,8 +9,8 @@ import { successStatus } from './success-status';
 /**
  * What the template of a Nest controller reads, over what the template of a controller of the kit
  * reads: the decorators of Nest it is written with, the parameters of its method, and the bus Nest
- * injects by its class. What it answers is read from its signature by `ddd-ts-kit` into the
- * `<context>.controllers.ts` of its context.
+ * injects by its class. What it takes and answers is read from its signature by `ddd-ts-kit` into
+ * the `<context>.controllers.ts` of its context.
  */
 export function nestControllerVars(scope: Scope, plan: ControllerPlan): RenderContext {
   const types = controllerTypes(scope, plan);
@@ -43,7 +43,6 @@ function importVars(scope: Scope, plan: ControllerPlan, types: ControllerTypes):
     nestImports: fromNest.sort().join(', '),
     importsFromTheKit: fromTheKit.length > 0,
     kitImports: fromTheKit.join(', '),
-    readsSchemas: types.hasTypedParams || types.hasBody,
     bridgeImports: [...(useCase.isProtected ? ['CurrentActor'] : []), 'KitRoute', 'KitRoutes'].join(', '),
     kernelImports: useCase.isProtected ? `${busType}, type Actor` : busType,
   };
@@ -78,16 +77,11 @@ function declarationVars(
   };
 }
 
-/** What the method reads, and the message it sends through the bus the constructor injects. */
+/** The parameters of the method, whose types `ddd-ts-kit` reads into the schemas of the route, and the message it sends through the bus the constructor injects. */
 function methodVars({ name, useCase }: ControllerPlan, types: ControllerTypes): RenderContext {
   const busType = busTypeOf(useCase.isQuery);
 
   return {
-    readsRequest: types.hasTypedParams || types.hasBody,
-    nestRequest: [
-      ...(types.hasTypedParams ? ['params: paramsSchema'] : []),
-      ...(types.hasBody ? ['body: bodySchema'] : []),
-    ].join(', '),
     nestParameters: [
       ...(types.hasTypedParams ? [`@Param() params: ${name.pascal}Params`] : []),
       ...(types.hasBody ? [`@Body() body: ${name.pascal}Body`] : []),

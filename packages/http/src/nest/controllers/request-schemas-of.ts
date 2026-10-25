@@ -16,7 +16,8 @@ const NO_CLASS: readonly unknown[] = [undefined, Object, String, Number, Boolean
 
 /**
  * The schemas of the parts of the request: those @KitRoute gives, else the class of a parameter
- * that takes a part whole, else the names its parameters read one by one, each a text.
+ * that takes a part whole (as `ddd-ts-kit` read it from the source, else as `emitDecoratorMetadata`
+ * recorded it), else the names its parameters read one by one, each a text.
  */
 export function requestSchemasOf(method: NestMethod, options: NestControllerRoutesOptions): RequestSchemas {
   const given = method.spec.request ?? {};
@@ -31,7 +32,7 @@ export function requestSchemasOf(method: NestMethod, options: NestControllerRout
 }
 
 function derived(
-  { where, read }: NestMethod,
+  { where, read, signature }: NestMethod,
   source: Source,
   options: NestControllerRoutesOptions,
 ): Schema<unknown> | undefined {
@@ -39,7 +40,7 @@ function derived(
   const whole = taking.find(({ key }) => key === undefined);
 
   if (whole !== undefined) {
-    return schemaOf(where, dtoOf(where, whole), options);
+    return schemaOf(where, signature[source] ?? dtoOf(where, whole), options);
   }
 
   if (taking.length === 0) {
@@ -58,7 +59,7 @@ function derived(
 function dtoOf(where: string, { index, source, type }: NestParameter): DtoType {
   if (NO_CLASS.includes(type) || !isDto(type)) {
     throw new DeclarationError(
-      `${where}: parameter ${String(index)} takes the whole ${source} and has no class: type it by a DTO class, compiled with emitDecoratorMetadata, or give request.${source} in @KitRoute.`,
+      `${where}: parameter ${String(index)} takes the whole ${source} and has no class: type it by a DTO class, which ddd-ts-kit reads into the generated list of the context, or give request.${source} in @KitRoute.`,
     );
   }
 

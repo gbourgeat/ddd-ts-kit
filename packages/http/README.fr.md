@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b73771513830b6fc -->
+<!-- translation-of: README.md sha256:c6eaaa581312de50 -->
 
 # @ddd-ts-kit/http
 
@@ -1377,8 +1377,8 @@ export class AppModule {}
   (`resolvePrincipal`), jamais un appelant construit par le contrôleur ; `@RouteContext()` le
   contexte de la requête (`expectedVersion` sous `ifMatch`).
 - Un paramètre qui prend une partie entière est validé par sa classe, lue par `schemaOfClass`
-  (`classSchema` de class-validator ; le projet compile avec `emitDecoratorMetadata`, comme Nest le
-  demande) ; une partie nommée une à une (`@Param('invoiceId')`) est un texte ; `request` de
+  (`classSchema` de class-validator) : la classe que nomme `withSignatures`, sinon celle que
+  TypeScript a enregistrée sous `emitDecoratorMetadata`, que tsx et esbuild n'écrivent pas ; une partie nommée une à une (`@Param('invoiceId')`) est un texte ; `request` de
   `@KitRoute` donne à la place un schéma de n'importe quelle bibliothèque. `response.body` est un
   schéma ou une classe DTO. Une méthode ne répond un corps que si `response.body` le déclare, comme
   le dit le contrat : une méthode qui rend une valeur sans lui est refusée, à la construction des
@@ -1395,11 +1395,14 @@ export class AppModule {}
   composition.
 - `@KitRoutes({ group })` nomme un groupe de routes du kit (`@RouteGroup`) : son préfixe précède les
   chemins de Nest, ses tags, *guards* et codes précèdent ceux de la classe.
-- Ce qu'une méthode répond, c'est sa signature : TypeScript efface `Promise<IssuedInvoice>`, donc
-  `withAnswers(controller, { issueInvoice: IssuedInvoice })` le dit au pont, une classe DTO, un schéma
-  ou `null` pour aucun corps ; `response` de `@KitRoute` l'emporte toujours. Sous `--routes nest`,
-  `ddd-ts-kit` lit les signatures et écrit ces appels dans le fichier généré `<context>.controllers.ts`,
-  que le module du contexte liste.
+- Ce qu'une méthode prend et répond, c'est sa signature : TypeScript efface `Promise<IssuedInvoice>`,
+  et n'enregistre les classes des paramètres que sous `emitDecoratorMetadata`, donc
+  `withSignatures(controller, { issueInvoice: { body: IssueInvoiceBody, answer: IssuedInvoice } })`
+  le dit au pont : la classe DTO de chaque partie qu'un paramètre prend entière (`params`, `query`,
+  `headers`, `body`), et la réponse, une classe DTO, un schéma ou `null` pour aucun corps ;
+  `request` et `response` de `@KitRoute` l'emportent toujours. Sous `--routes nest`, `ddd-ts-kit`
+  lit les signatures et écrit ces appels dans le fichier généré `<context>.controllers.ts`, que le
+  module du contexte liste.
 - Refusés quand les routes sont construites, parce que le pipeline du kit ne les exécuterait pas :
   `@UseGuards`, `@UsePipes`, `@UseInterceptors`, `@UseFilters`, `@Header`, `@Redirect`, `@Render`,
   `@Sse`, `@Version`, un *pipe* sur un paramètre, `@Req`, `@Res` et les autres paramètres de Nest. Le

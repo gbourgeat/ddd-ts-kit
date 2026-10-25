@@ -3,10 +3,14 @@ import { aliasRoots } from '../alias/alias-roots';
 import { scan } from '../check/scan/scan';
 import type { ImportRecord } from '../check/scan/import-record';
 import type { ClassShape } from '../check/structure/class-shape';
+import type { MethodShape } from '../check/structure/method-shape';
 import { readStructure } from '../check/structure/read-structure';
 import type { Config } from '../config';
 import type { NestAnswer } from './nest-answer';
 import type { NestControllerEntry, NestRouteMethod } from './nest-controller-entry';
+import type { NestReadType } from './nest-read-type';
+import type { NestRequestPart } from './nest-request-part';
+import { parametersOf } from './parameters-of';
 
 /** What the reader needs of the project: the text of a file, and the files below a directory. */
 export interface ProjectFiles {
@@ -22,12 +26,25 @@ const PROMISED = /^Promise\s*<([\s\S]+)>$/;
 const TYPE_NAME = /^[A-Z][\w$]*$/;
 const CONTROLLER = /@Controller\s*\(/;
 const DECLARED_RESPONSE = /@KitRoute\s*\(\s*\{[\s\S]*\bresponse\s*:/;
+const DECLARED_REQUEST = /@KitRoute\s*\(\s*\{[\s\S]*\brequest\s*:\s*\{([^}]*)\}/;
+
+/** A parameter that takes a part of the request whole: `@Body() body: IssueInvoiceBody`. */
+const WHOLE_PART =
+  /^@(Body|Query|Param|Headers)\s*\(\s*\)\s*(?:(?:public|private|protected|readonly)\s+)*[\w$]+\??\s*:\s*([\s\S]+)$/;
+
+const SOURCES: Readonly<Record<string, NestRequestPart['source']>> = {
+  Body: 'body',
+  Query: 'query',
+  Param: 'params',
+  Headers: 'headers',
+};
 
 /**
  * The Nest controllers of a context that the kit serves (a class of `presentation/` carrying
  * Nest's `@Controller`, in a file that imports the bridge), in the order of their files, with what
- * each route method answers as its signature says: `Promise<IssuedInvoice>` a DTO class,
- * `Promise<Accepted>` an identifier, `Promise<void>` nothing.
+ * the signature of each route method says: the DTO class of each part of the request a parameter
+ * takes whole (`@Body() body: IssueInvoiceBody`), and its answer, `Promise<IssuedInvoice>` a DTO
+ * class, `Promise<Accepted>` an identifier, `Promise<void>` nothing.
  */
 export function readNestControllers(files: ProjectFiles, config: Config, context: string): NestControllerEntry[] {
   const presentation = `${config.contextsDir}/${context}/presentation`;
@@ -71,7 +88,7 @@ interface Reading {
   readonly code: string;
 }
 
-/** The methods of the class that carry a route decorator of Nest, each with what its signature answers. */
+/** The methods of the class that carry a route decorator of Nest, each with what its signature takes and answers. */
 function routeMethodsOf(shape: ClassShape, reading: Reading): NestRouteMethod[] {
   let previous = shape.bodyStart;
 
@@ -84,17 +101,35 @@ function routeMethodsOf(shape: ClassShape, reading: Reading): NestRouteMethod[] 
       return [];
     }
 
-    const written = RETURN_TYPE.exec(reading.text.slice(method.start, method.bodyStart))?.[1];
+    const signature = reading.text.slice(method.start, method.bodyStart);
+    const written = RETURN_TYPE.exec(signature)?.[1];
 
     return [
       {
         name: method.name,
         line: method.line,
+        request: requestOf(method, decorators, reading),
         answer: written === undefined ? { kind: 'unread', text: 'no return type' } : answerOf(written, reading),
         declaresResponse: DECLARED_RESPONSE.test(decorators),
       },
     ];
   });
+}
+
+/** The parts of the request the parameters take whole, each with its type and whether `@KitRoute` gives it. */
+function requestOf({ start, bodyStart }: MethodShape, decorators: string, reading: Reading): NestRequestPart[] {
+  const declared = DECLARED_REQUEST.exec(decorators)?.[1] ?? '';
+
+  return parametersOf(reading.text.slice(start, bodyStart), reading.code.slice(start, bodyStart)).flatMap(
+    (parameter) => {
+      const [, decorator = '', type = ''] = WHOLE_PART.exec(parameter) ?? [];
+      const source = SOURCES[decorator];
+
+      return source === undefined
+        ? []
+        : [{ source, type: typeOf(type.trim(), reading), declared: new RegExp(`\\b${source}\\s*:`).test(declared) }];
+    },
+  );
 }
 
 function answerOf(written: string, reading: Reading): NestAnswer {
@@ -104,19 +139,26 @@ function answerOf(written: string, reading: Reading): NestAnswer {
     return { kind: 'none' };
   }
 
-  const imported = TYPE_NAME.test(type) ? reading.imports.find(({ names }) => names.includes(type)) : undefined;
-
-  if (imported === undefined) {
-    return { kind: 'unread', text: written };
-  }
-
-  if (type === 'Accepted' && imported.specifier === '@ddd-ts-kit/http') {
+  if (type === 'Accepted' && importOf(type, reading)?.specifier === '@ddd-ts-kit/http') {
     return { kind: 'accepted' };
   }
 
-  return isClassAt(reading, imported.specifier, type)
+  const read = typeOf(type, reading);
+
+  return read.kind === 'class' ? read : { kind: 'unread', text: written };
+}
+
+/** A DTO class imported by its name from a file of the project, else a type the kit cannot read. */
+function typeOf(type: string, reading: Reading): NestReadType {
+  const imported = importOf(type, reading);
+
+  return imported !== undefined && isClassAt(reading, imported.specifier, type)
     ? { kind: 'class', name: type, specifier: imported.specifier }
-    : { kind: 'unread', text: written };
+    : { kind: 'unread', text: type };
+}
+
+function importOf(type: string, { imports }: Reading): ImportRecord | undefined {
+  return TYPE_NAME.test(type) ? imports.find(({ names }) => names.includes(type)) : undefined;
 }
 
 /** Whether the file an alias names exports a class of that name: an interface or a type has no schema to read. */

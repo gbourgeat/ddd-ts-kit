@@ -72,7 +72,8 @@ describe('generate route under "stack.routes": "nest"', () => {
     expect(controller).toContain("@Post(':invoiceId/issue')");
     expect(controller).toContain('async issueInvoice(');
     expect(controller).not.toContain('operationId');
-    expect(controller).toContain('request: { params: paramsSchema, body: bodySchema },');
+    expect(controller).not.toContain('request:');
+    expect(controller).not.toContain('classSchema');
     expect(controller).toContain('@Param() params: IssueInvoiceParams');
     expect(controller).toContain('@Body() body: IssueInvoiceBody');
     expect(controller).toContain('@CurrentActor() actor: Actor');
@@ -91,14 +92,17 @@ describe('generate route under "stack.routes": "nest"', () => {
     expect(controller).not.toContain('response:');
   });
 
-  it('lists the controllers in the generated file of the context, with what their signatures answer, which the module reads', () => {
+  it('lists the controllers in the generated file of the context, with what their signatures take and answer, which the module reads', () => {
     const module = read(root, `${BILLING}/billing.module.ts`);
     const listed = read(root, `${BILLING}/billing.controllers.ts`);
 
     expect(module).toContain('controllers: billingControllers,');
     expect(module).not.toContain('new IssueInvoiceController');
-    expect(listed).toContain('withAnswers(InvoiceDetailsController, { invoiceDetails: InvoiceDetailsAnswer }),');
-    expect(listed).toContain('withAnswers(IssueInvoiceController, { issueInvoice: acceptedSchema }),');
+    expect(listed).toContain('invoiceDetails: { params: InvoiceDetailsParams, answer: InvoiceDetailsAnswer },');
+
+    expect(listed).toContain(
+      'issueInvoice: { params: IssueInvoiceParams, body: IssueInvoiceBody, answer: acceptedSchema },',
+    );
   });
 
   it('gives each controller a spec that calls its route through the pipeline of the kit', () => {

@@ -1323,8 +1323,8 @@ export class AppModule {}
   never one the controller builds; `@RouteContext()` the context of the request (`expectedVersion`
   under `ifMatch`).
 - A parameter that takes a part whole is validated by its class, read through `schemaOfClass`
-  (`classSchema` of class-validator; the project compiles with `emitDecoratorMetadata`, as Nest
-  needs); a part named one by one (`@Param('invoiceId')`) is a text; `request` of `@KitRoute`
+  (`classSchema` of class-validator): the class `withSignatures` names, else the one TypeScript
+  recorded under `emitDecoratorMetadata`, which tsx and esbuild do not write; a part named one by one (`@Param('invoiceId')`) is a text; `request` of `@KitRoute`
   gives a schema of any library instead. `response.body` is a schema or a DTO class. A method
   answers a body only when `response.body` declares it, as the contract says: one that returns a
   value without it is refused, when the routes are built if TypeScript recorded its return type,
@@ -1339,11 +1339,14 @@ export class AppModule {}
   instances at the start. `ddd-ts-kit init --routes nest` writes that composition.
 - `@KitRoutes({ group })` names a route group of the kit (`@RouteGroup`): its prefix comes before
   the paths of Nest, its tags, guards and codes before those of the class.
-- What a method answers is its signature: TypeScript erases `Promise<IssuedInvoice>`, so
-  `withAnswers(controller, { issueInvoice: IssuedInvoice })` says it to the bridge, a DTO class, a
-  schema or `null` for no body; `response` of `@KitRoute` still wins. Under `--routes nest`,
-  `ddd-ts-kit` reads the signatures and writes these calls in the generated
-  `<context>.controllers.ts`, which the module of the context lists.
+- What a method takes and answers is its signature: TypeScript erases `Promise<IssuedInvoice>`,
+  and records the classes of the parameters only under `emitDecoratorMetadata`, so
+  `withSignatures(controller, { issueInvoice: { body: IssueInvoiceBody, answer: IssuedInvoice } })`
+  says it to the bridge: the DTO class of each part a parameter takes whole (`params`, `query`,
+  `headers`, `body`), and the answer, a DTO class, a schema or `null` for no body; `request` and
+  `response` of `@KitRoute` still win. Under `--routes nest`, `ddd-ts-kit` reads the signatures
+  and writes these calls in the generated `<context>.controllers.ts`, which the module of the
+  context lists.
 - Refused when the routes are built, because the kit's pipeline would not run them: `@UseGuards`,
   `@UsePipes`, `@UseInterceptors`, `@UseFilters`, `@Header`, `@Redirect`, `@Render`, `@Sse`,
   `@Version`, a pipe on a parameter, `@Req`, `@Res` and the other parameters of Nest. The kit

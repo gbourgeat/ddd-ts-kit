@@ -4,22 +4,9 @@ import { {{route.kitImports}} } from '@ddd-ts-kit/http';
 {{/if}}
 import { {{route.bridgeImports}} } from '@ddd-ts-kit/http/nest';
 import { {{route.kernelImports}} } from '@ddd-ts-kit/kernel';
-{{#if route.readsSchemas}}
-import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-{{/if}}
 {{route.imports}}
 
-{{#if route.hasParams}}
-const paramsSchema = classSchema({{name.pascal}}Params);
-{{/if}}
-{{#if route.hasBody}}
-// TODO(domain): once {{name.pascal}}Body has its decorated fields, drop the second argument: it only lets a class without any decorated field through.
-const bodySchema = classSchema({{name.pascal}}Body, { validator: { forbidUnknownValues: false } });
-{{/if}}
-{{#if route.readsSchemas}}
-
-{{/if}}
-/** Built by Nest with the bus it injects, served by the kit: what each method answers is read from its signature. */
+/** Built by Nest with the bus it injects, served by the kit: what each method takes and answers is read from its signature. */
 @Controller()
 @KitRoutes({ {{route.nestShared}} })
 export class {{name.pascal}}Controller {
@@ -30,9 +17,6 @@ export class {{name.pascal}}Controller {
   @HttpCode({{route.nestHttpCode}})
   {{/if}}
   @KitRoute({
-    {{#if route.readsRequest}}
-    request: { {{route.nestRequest}} },
-    {{/if}}
     // TODO(domain): list the codes of the refusals "{{name.words}}" can raise, as their factories set them, so that they appear in the contract with their status (`errors/known-code`).
     errors: [],
     {{#if route.cached}}

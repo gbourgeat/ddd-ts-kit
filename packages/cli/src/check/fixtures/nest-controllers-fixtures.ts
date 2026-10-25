@@ -14,8 +14,8 @@ const BILLING_FILE = `${BILLING}/billing.controllers.ts`;
 const CATALOG_FILE = `${CATALOG}/catalog.controllers.ts`;
 const NEST = { stack: { http: 'nest', di: 'nest', validation: 'class-validator', routes: 'nest' } };
 
-const controller = (answered: string): string =>
-  `import { Controller, Post } from '@nestjs/common';
+const controller = (answered: string, taken = ''): string =>
+  `import { Body, Controller, Post } from '@nestjs/common';
 import { KitRoutes } from '@ddd-ts-kit/http/nest';
 import { IssueInvoiceAnswer } from '@/contexts/billing/presentation/http/invoices/issue-invoice/issue-invoice.answer.js';
 
@@ -23,7 +23,7 @@ import { IssueInvoiceAnswer } from '@/contexts/billing/presentation/http/invoice
 @KitRoutes({ guards: [] })
 export class IssueInvoiceController {
   @Post()
-  async issueInvoice(): Promise<${answered}> {
+  async issueInvoice(${taken}): Promise<${answered}> {
     return new IssueInvoiceAnswer();
   }
 }
@@ -43,6 +43,7 @@ const ANSWERED = renderControllersFile('billing', 'billingControllers', [
           name: 'IssueInvoiceAnswer',
           specifier: '@/contexts/billing/presentation/http/invoices/issue-invoice/issue-invoice.answer.js',
         },
+        request: [],
         declaresResponse: false,
       },
     ],
@@ -76,9 +77,26 @@ export const NEST_CONTROLLERS_FIXTURES: readonly Fixture[] = [
           file: CONTROLLER,
           className: 'IssueInvoiceController',
           specifier: '@/contexts/billing/presentation/http/invoices/issue-invoice/issue-invoice.controller.js',
-          methods: [{ name: 'issueInvoice', line: 9, answer: { kind: 'unread', text: '' }, declaresResponse: false }],
+          methods: [
+            {
+              name: 'issueInvoice',
+              line: 9,
+              request: [],
+              answer: { kind: 'unread', text: '' },
+              declaresResponse: false,
+            },
+          ],
         },
       ]),
+    }),
+  },
+  {
+    ruleId: RULE,
+    name: 'a method that takes the whole body as a type written inline, which the kit cannot read into a schema',
+    expect: { file: CONTROLLER },
+    files: nestProject({
+      [CONTROLLER]: controller('IssueInvoiceAnswer', '@Body() body: { reason: string }'),
+      [BILLING_FILE]: ANSWERED,
     }),
   },
 ];

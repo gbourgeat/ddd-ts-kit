@@ -2,6 +2,7 @@ import type { KitRouteSpec } from './kit-route-spec';
 import type { NestControllerClass } from './nest-controller-class';
 import type { NestRouteMetadata } from './nest-route-metadata';
 import type { Injected } from './nest-routes-registry';
+import type { NestSignature } from './nest-signature';
 
 /** One method of a Nest controller the kit serves: what Nest's decorators say, and what the kit's say. */
 export interface NestMethod {
@@ -14,4 +15,6 @@ export interface NestMethod {
   readonly read: NestRouteMetadata;
   /** By index, what a parameter decorator of the kit asks for. */
   readonly injected: ReadonlyMap<number, Injected>;
+  /** What its signature says, as `ddd-ts-kit` read it into the generated list of its context. */
+  readonly signature: NestSignature;
 }

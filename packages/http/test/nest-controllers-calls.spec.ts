@@ -1,8 +1,9 @@
 import 'reflect-metadata';
-import { Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { ok } from '@ddd-ts-kit/kernel';
 import { customSchema } from '@ddd-ts-kit/validation';
+import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { executeRoute, Public, type Route } from '../src';
 import {
   CurrentActor,
@@ -11,9 +12,10 @@ import {
   nestControllerRoute,
   nestControllerRoutes,
   RouteContext,
-  withAnswers,
+  withSignatures,
 } from '../src/nest';
 import type { NestControllerRoutesOptions } from '../src/nest';
+import { IssueInvoiceBody } from './support/nest-invoices';
 
 class Reading {
   read(page: string | undefined, context: { requestId?: string }, actor: { type: string }): object {
@@ -150,7 +152,7 @@ describe('a call of a route of a Nest controller', () => {
     expect(() => nestControllerRoutes([Reporting])).toThrow(/returns Invoice and @KitRoute declares no response.body/);
   });
 
-  it('answers the body its signature names, as ddd-ts-kit read it into withAnswers, with no @KitRoute at all', async () => {
+  it('answers the body its signature names, as ddd-ts-kit read it into withSignatures, with no @KitRoute at all', async () => {
     class Summing {
       async total(): Promise<object> {
         return { total: 3 };
@@ -160,11 +162,31 @@ describe('a call of a route of a Nest controller', () => {
     Controller('summing')(Summing);
     KitRoutes({ guards: [Public] })(Summing);
     Reflect.decorate([Get()], Summing.prototype, 'total', { value: Summing.prototype.total });
-    withAnswers(Summing, { total: customSchema((input) => ok(input), { type: 'object' }) });
+    withSignatures(Summing, { total: { answer: customSchema((input) => ok(input), { type: 'object' }) } });
 
     const route = nestControllerRoute(Summing, { instanceOf: () => new Summing() });
 
     expect(route.responses).toMatchObject({ 200: { body: expect.any(Object) } });
     expect(await read(route)).toMatchObject({ status: 200, body: { total: 3 } });
+  });
+
+  it('validates a body taken whole by the class its signature names, with no metadata of TypeScript nor request in @KitRoute', async () => {
+    class Filing {
+      file(body: IssueInvoiceBody): void {
+        expect(body).toBeInstanceOf(IssueInvoiceBody);
+      }
+    }
+
+    Controller('filing')(Filing);
+    KitRoutes({ guards: [Public] })(Filing);
+    Reflect.decorate([Post()], Filing.prototype, 'file', { value: Filing.prototype.file });
+    Body()(Filing.prototype, 'file', 0);
+    withSignatures(Filing, { file: { body: IssueInvoiceBody, answer: null } });
+
+    const route = nestControllerRoute(Filing, { instanceOf: () => new Filing(), schemaOfClass: classSchema });
+    const call = (body: unknown) => executeRoute(route, { params: {}, query: {}, headers: {}, body, raw: {} });
+
+    expect(await call({ customerId: 'c-1' })).toMatchObject({ status: 201 });
+    expect(await call({ customerId: '' })).toMatchObject({ status: 422 });
   });
 });
