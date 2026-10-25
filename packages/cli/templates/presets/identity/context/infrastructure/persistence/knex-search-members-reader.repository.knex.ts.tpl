@@ -1,8 +1,15 @@
 import type { Knex } from 'knex';
 import { InvalidPageRequestError, pageOf, type PageRequest } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
 import type { KnexContext } from '@ddd-ts-kit/knex';
+{{#if style.declared}}
 import { SearchMembersReader } from '{{alias.context}}/application/ports/search-members-reader.port{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { SearchMembersReader } from '{{alias.context}}/application/ports/search-members-reader.port{{alias.ext}}';
+{{/unless}}
 import type {
   SearchMembersItem,
   SearchMembersResult,
@@ -26,7 +33,9 @@ const COLUMNS = [
 ];
 
 /** The current members of an organisation joined to the profile of their account: one statement, the page applied by the database. */
+{{#if style.declared}}
 @Repository(SearchMembersReader)
+{{/if}}
 export class KnexSearchMembersReader implements SearchMembersReader {
   constructor(private readonly database: KnexContext) {}
 

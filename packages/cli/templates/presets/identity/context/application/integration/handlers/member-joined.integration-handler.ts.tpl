@@ -1,4 +1,6 @@
+{{#if style.declared}}
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
 import { memberJoinedV1, type MemberJoinedV1 } from '{{alias.context}}/published-language/member-joined.v1.integration-event{{alias.ext}}';
 import type { IdentityProviderAdmin } from '{{alias.context}}/application/ports/identity-provider-admin.port{{alias.ext}}';
@@ -9,7 +11,9 @@ import type { IdentityProviderAdmin } from '{{alias.context}}/application/ports/
  * alone. A membership already ended (removed, or its account deactivated) is taken out again,
  * so that a late retry of this fact never gives a removed person back their organisation.
  */
+{{#if style.declared}}
 @IntegrationEventHandler(memberJoinedV1, { consumer: '{{context.kebab}}.provider-follows-joined-member' })
+{{/if}}
 export class MemberJoinedIntegrationHandler {
   static readonly eventType = memberJoinedV1.type;
 

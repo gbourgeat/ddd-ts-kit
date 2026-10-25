@@ -7,8 +7,9 @@ import { IDENTITY_TERMS } from './identity-terms';
 import type { Preset } from './preset';
 import { presetFiles } from './preset-files';
 
-/** The tables of the context: the repository generator starts them, the preset lays them out whole. */
+/** The tables of the context and, in the explicit style, its module: the generators start them, the preset lays them out whole. */
 const AFTER_STEPS = [
+  '__context__.module.ts',
   'infrastructure/persistence/create-__context__-tables.schema.ts',
   'infrastructure/persistence/__context__.schema.ts',
 ];
@@ -67,4 +68,5 @@ export const identityPreset: Preset = {
   signature: 'domain/services/role-rights.service.ts',
   files: (config) => presetFiles('identity', config, AFTER_STEPS),
   prismaModels: 'prisma/models.prisma.tpl',
+  explicitPolicies: 'explicit/access-policies.wiring.tpl',
 };

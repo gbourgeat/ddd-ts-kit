@@ -38,4 +38,10 @@ export interface Preset {
    * out in `prisma/schema.prisma` once the generators ran, each in place of the model they started.
    */
   readonly prismaModels?: string;
+  /**
+   * In the explicit style, the policies of the context as the platform lists them: a wiring of
+   * `templates/presets/<name>/` applied to `access-policies.ts` once the generators ran. The module
+   * file of the context is one of its files.
+   */
+  readonly explicitPolicies?: string;
 }

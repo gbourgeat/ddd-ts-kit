@@ -1,6 +1,11 @@
 import type { Access } from '@ddd-ts-kit/auth';
 import type { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#unless style.declared}}
+import type { CommandHandler } from '@ddd-ts-kit/kernel';
+{{/unless}}
 import { Invitation } from '{{alias.context}}/domain/aggregates/invitation.aggregate{{alias.ext}}';
 import { Member } from '{{alias.context}}/domain/aggregates/member.aggregate{{alias.ext}}';
 import type { DelegationRepository } from '{{alias.context}}/domain/repositories/delegation.repository{{alias.ext}}';
@@ -11,10 +16,17 @@ import { EmailAddress } from '{{alias.context}}/domain/value-objects/email-addre
 import { MemberRight } from '{{alias.context}}/domain/vocabularies/member-right.vocabulary{{alias.ext}}';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
+{{#if style.declared}}
 import { InviteMemberCommand } from '{{alias.context}}/application/commands/invite-member/invite-member.command{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { InviteMemberCommand } from '{{alias.context}}/application/commands/invite-member/invite-member.command{{alias.ext}}';
+{{/unless}}
 import type { InvitationTokens } from '{{alias.context}}/application/ports/invitation-tokens.port{{alias.ext}}';
 
+{{#if style.declared}}
 @CommandHandler(InviteMemberCommand)
+{{/if}}
 export class InviteMemberHandler implements CommandHandler<InviteMemberCommand> {
   constructor(
     private readonly invitationRepository: InvitationRepository,

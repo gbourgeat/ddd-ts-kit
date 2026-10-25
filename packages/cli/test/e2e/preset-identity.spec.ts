@@ -31,6 +31,8 @@ const FLAVOURS: readonly (readonly [string, readonly string[]])[] = [
     ],
   ],
   ['prisma, zod, rbac, shared tables', ['--orm', 'prisma', '--tenancy', 'shared-table']],
+  ['explicit, wired by hand, fastify', ['--di', 'manual', '--http', 'fastify']],
+  ['explicit, nest, class-validator', ['--http', 'nest', '--di', 'nest', '--validation', 'class-validator']],
   [
     'abac, fastify, shared tables, jwt, schemas per route',
     ['--authz', 'abac', '--http', 'fastify', '--tenancy', 'shared-table', '--schemas', 'per-route'],

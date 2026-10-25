@@ -1,5 +1,5 @@
 [English](bootstrap-with-well-designed-contexts.md) · **Français**
-<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:307138fd793d9ca6 -->
+<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:d39649197bfd4674 -->
 
 # Démarrer avec des contextes bien conçus
 
@@ -87,15 +87,15 @@ Une autre *stack* est refusée avant que rien ne soit écrit, avec l'option qui 
 
 | Clé | Acceptée | Pourquoi |
 |---|---|---|
-| `stack.style` | `declared` | les cas d'usage, les politiques et les adaptateurs se déclarent eux-mêmes ; un module explicite serait une seconde copie du contexte à tenir |
-| `stack.dependencies` | `signature` | les classes disent ce dont elles ont besoin par leur constructeur |
+| `stack.style` | `declared`, ou `explicit` avec `--di manual` ou `--di nest` | déclaré : les cas d'usage, les politiques et les adaptateurs se déclarent eux-mêmes ; explicite : `identity.module.ts` liste chaque liaison (les adaptateurs, les gestionnaires, les éditeurs, les consommateurs, les permissions, les routes) et `access-policies.ts` les politiques, le *world* des *specs* câble les *fakes* de la même façon, et `test/unit/identity.module.spec.ts` tient le module à ses cas d'usage (un gestionnaire et une permission pour chacun, chaque route montée). Sur tsyringe, le style explicite est refusé : ce conteneur lit les déclarations |
+| `stack.dependencies` | `signature`, dans le style déclaré | les classes disent ce dont elles ont besoin par leur constructeur ; le style explicite ne le lit pas, son fichier de module passe chaque dépendance |
 | `stack.refusals` | `named`, `factories` | named : une classe par refus, qui lit son code dans `<context>.codes.ts` ; factories : les fabriques statiques d'une classe par concept |
 | `stack.valueObjects` | `throwing` | les objets-valeurs refusent une valeur invalide quand on les construit |
 | `stack.routes` | `controllers` | une classe de contrôleur par route |
 | `stack.orm` | `knex`, `drizzle`, `prisma` | les trois adaptateurs écrits ; TypeORM ne l'est pas |
 | `stack.validation` | `zod`, `class-validator` | les deux familles de schémas de requête HTTP écrites |
 | `stack.schemas` | `shared`, `per-route` | partagés : les réponses par identifiant sont l'`Accepted` de `@ddd-ts-kit/http` et le jeton d'une invitation un schéma de `presentation/http/shared/` ; par route : chaque route garde le sien |
-| `stack.http` | `express`, `fastify` | les routes NestJS s'écrivent autrement |
+| `stack.http` | `express`, `fastify`, `nest` | les routes sont des contrôleurs de `@ddd-ts-kit/http`, montés avec ceux des autres contextes : par le serveur, ou sous Nest par le module d'application que la plateforme construit |
 | `stack.authn` | `jwt`, `keycloak` | un compte est le sujet d'un jeton : sans vérificateur, chaque appelant est anonyme et le contexte ne servirait personne |
 | `stack.database` | `postgres` | les tables gardent une seule appartenance en cours par compte avec un index unique partiel (`where removed_at is null`), que MySQL n'a pas ; sur Prisma, c'est `where: { removedAt: null }` de la fonctionnalité en préversion `partialIndexes`, que le *preset* active dans le générateur du client |
 

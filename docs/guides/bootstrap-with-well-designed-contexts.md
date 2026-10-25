@@ -82,15 +82,15 @@ refused before anything is written, with the flag that would fit:
 
 | Key | Accepted | Why |
 |---|---|---|
-| `stack.style` | `declared` | the use cases, policies and adapters declare themselves; an explicit module would be a second copy of the context to keep |
-| `stack.dependencies` | `signature` | the classes state what they need by their constructor |
+| `stack.style` | `declared`, or `explicit` with `--di manual` or `--di nest` | declared: the use cases, policies and adapters declare themselves; explicit: `identity.module.ts` lists every binding (the adapters, the handlers, the publishers, the consumers, the permissions, the routes) and `access-policies.ts` the policies, the world of the specs wires the fakes the same way, and `test/unit/identity.module.spec.ts` holds the module to its use cases (a handler and a permission for each, each route mounted). On tsyringe the explicit style is refused: the declarations are what that container reads |
+| `stack.dependencies` | `signature`, in the declared style | the classes state what they need by their constructor; the explicit style does not read it, its module file passes each dependency |
 | `stack.refusals` | `named`, `factories` | named: one class per refusal, its code read from `<context>.codes.ts`; factories: the static factories of one class per concept |
 | `stack.valueObjects` | `throwing` | the value objects refuse an invalid value when built |
 | `stack.routes` | `controllers` | one controller class per route |
 | `stack.orm` | `knex`, `drizzle`, `prisma` | the three adapters written; TypeORM is not |
 | `stack.validation` | `zod`, `class-validator` | the two families of request schemas written |
 | `stack.schemas` | `shared`, `per-route` | shared: the identifier answers are the `Accepted` of `@ddd-ts-kit/http` and the token of an invitation one schema of `presentation/http/shared/`; per route: each route keeps its own |
-| `stack.http` | `express`, `fastify` | NestJS routes are written another way |
+| `stack.http` | `express`, `fastify`, `nest` | the routes are controllers of `@ddd-ts-kit/http`, mounted with those of the other contexts: by the server, or under Nest by the app module the platform builds |
 | `stack.authn` | `jwt`, `keycloak` | an account is the subject of a token: without a verifier every caller is anonymous and the context would serve nobody |
 | `stack.database` | `postgres` | the tables keep one current membership per account with a partial unique index (`where removed_at is null`), which MySQL has not; on Prisma it is `where: { removedAt: null }` of the `partialIndexes` preview feature, which the preset turns on in the generator of the client |
 

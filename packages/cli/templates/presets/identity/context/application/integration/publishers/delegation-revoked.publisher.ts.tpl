@@ -1,11 +1,20 @@
 import type { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#if style.declared}}
 import { DelegationRevoked } from '{{alias.context}}/domain/events/delegation-revoked.event{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { DelegationRevoked } from '{{alias.context}}/domain/events/delegation-revoked.event{{alias.ext}}';
+{{/unless}}
 import { delegationRevokedV1 } from '{{alias.context}}/published-language/delegation-revoked.v1.integration-event{{alias.ext}}';
 
 /** Tells the other contexts, through the outbox, in the transaction of the fact. */
+{{#if style.declared}}
 @DomainEventHandler(DelegationRevoked)
-export class DelegationRevokedPublisher implements DomainEventHandler<DelegationRevoked> {
+{{/if}}
+export class DelegationRevokedPublisher{{#if style.declared}} implements DomainEventHandler<DelegationRevoked>{{/if}} {
   constructor(
     private readonly publisher: IntegrationEventPublisher,
     private readonly ids: IdGenerator,

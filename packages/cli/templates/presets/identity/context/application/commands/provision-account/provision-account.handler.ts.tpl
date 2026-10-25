@@ -1,5 +1,10 @@
 import type { Clock } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#unless style.declared}}
+import type { CommandHandler } from '@ddd-ts-kit/kernel';
+{{/unless}}
 import { Account } from '{{alias.context}}/domain/aggregates/account.aggregate{{alias.ext}}';
 {{#unless refusals.named}}
 import { AccountError } from '{{alias.context}}/domain/errors/account.error{{alias.ext}}';
@@ -10,9 +15,16 @@ import { EmailNotVerified } from '{{alias.context}}/domain/errors/email-not-veri
 import type { AccountRepository } from '{{alias.context}}/domain/repositories/account.repository{{alias.ext}}';
 import { DisplayName } from '{{alias.context}}/domain/value-objects/display-name.vo{{alias.ext}}';
 import { EmailAddress } from '{{alias.context}}/domain/value-objects/email-address.vo{{alias.ext}}';
+{{#if style.declared}}
 import { ProvisionAccountCommand } from '{{alias.context}}/application/commands/provision-account/provision-account.command{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { ProvisionAccountCommand } from '{{alias.context}}/application/commands/provision-account/provision-account.command{{alias.ext}}';
+{{/unless}}
 
+{{#if style.declared}}
 @CommandHandler(ProvisionAccountCommand)
+{{/if}}
 export class ProvisionAccountHandler implements CommandHandler<ProvisionAccountCommand> {
   constructor(
     private readonly accountRepository: AccountRepository,

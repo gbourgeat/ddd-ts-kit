@@ -8,6 +8,8 @@ import { parseContextName } from '../naming';
 import type { RenderContext } from '../templating';
 import { renderTemplate } from '../templating';
 import type { Workspace } from '../workspace';
+import { applyWiring } from '../generate/apply-wiring';
+import { platformPath } from '../generate/platform-path';
 import { grantToSignedIn } from './grant-to-signed-in';
 import { layOutPrismaModels } from './lay-out-prisma-models';
 import { NO_FLAGS } from './no-flags';
@@ -39,7 +41,7 @@ export function applyPreset(ws: Workspace, config: Config, request: PresetReques
 
   const scope = scopeOf(ws, config, request);
   const adr = presetDecision(scope, preset.name);
-  const rendering = { preset: preset.name, context: vars(scope, { preset: { adr } }) };
+  const rendering = { preset: preset.name, context: vars(scope, { preset: { adr, adapter: adapterOf(config) } }) };
 
   learnTerms(scope);
 
@@ -51,19 +53,35 @@ export function applyPreset(ws: Workspace, config: Config, request: PresetReques
 
   const wired = runSteps(scope, preset);
 
-  writeFiles(
-    { ...scope, config: wired },
-    preset.files(config).filter((file) => file.afterSteps === true),
-    rendering,
-  );
-
-  if (preset.prismaModels !== undefined && config.stack.orm === 'prisma') {
-    layOutPrismaModels(ws, renderTemplate(`presets/${preset.name}/${preset.prismaModels}`, rendering.context));
-  }
+  layOutAfterSteps({ ...scope, config: wired }, preset, rendering);
 
   describeContext(scope, preset, rendering);
 
   return wired;
+}
+
+/** What the generators started and the preset lays out whole: its files of after the steps, its policies in the explicit style, its models on Prisma. */
+function layOutAfterSteps(scope: Scope, preset: Preset, rendering: Rendering): void {
+  const render = (template: string): string => renderTemplate(`presets/${preset.name}/${template}`, rendering.context);
+  const { style, orm } = scope.config.stack;
+
+  writeFiles(
+    scope,
+    preset.files(scope.config).filter((file) => file.afterSteps === true),
+    rendering,
+  );
+
+  if (preset.explicitPolicies !== undefined && style === 'explicit') {
+    applyWiring(
+      scope.ws,
+      platformPath(scope, 'auth/authorization/access-policies.ts'),
+      render(preset.explicitPolicies),
+    );
+  }
+
+  if (preset.prismaModels !== undefined && orm === 'prisma') {
+    layOutPrismaModels(scope.ws, render(preset.prismaModels));
+  }
 }
 
 /** One context of each preset kind: two would declare the same facts, routes and platform files, and could not live together. */
@@ -97,6 +115,13 @@ function describeContext(scope: Scope, preset: Preset, rendering: Rendering): vo
     .replace('## Aggregates', `${design}## Aggregates`);
 
   scope.ws.update(file, text);
+}
+
+/** The prefix of the adapters the persistence of the project names its classes and files by: `Prisma`, `prisma`. */
+function adapterOf(config: Config): RenderContext {
+  const { orm } = config.stack;
+
+  return { pascal: `${orm.charAt(0).toUpperCase()}${orm.slice(1)}`, kebab: orm };
 }
 
 function scopeOf(ws: Workspace, config: Config, { context, preset }: PresetRequest): Scope {

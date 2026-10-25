@@ -1,6 +1,11 @@
 import type { Access } from '@ddd-ts-kit/auth';
 import type { Clock } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#unless style.declared}}
+import type { CommandHandler } from '@ddd-ts-kit/kernel';
+{{/unless}}
 import type { Member } from '{{alias.context}}/domain/aggregates/member.aggregate{{alias.ext}}';
 import type { Organisation } from '{{alias.context}}/domain/aggregates/organisation.aggregate{{alias.ext}}';
 {{#unless refusals.named}}
@@ -18,9 +23,16 @@ import { RoleRightsService, type HeldRights } from '{{alias.context}}/domain/ser
 import { MemberRight } from '{{alias.context}}/domain/vocabularies/member-right.vocabulary{{alias.ext}}';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
+{{#if style.declared}}
 import { RemoveMemberCommand } from '{{alias.context}}/application/commands/remove-member/remove-member.command{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { RemoveMemberCommand } from '{{alias.context}}/application/commands/remove-member/remove-member.command{{alias.ext}}';
+{{/unless}}
 
+{{#if style.declared}}
 @CommandHandler(RemoveMemberCommand)
+{{/if}}
 export class RemoveMemberHandler implements CommandHandler<RemoveMemberCommand> {
   constructor(
     private readonly organisationRepository: OrganisationRepository,

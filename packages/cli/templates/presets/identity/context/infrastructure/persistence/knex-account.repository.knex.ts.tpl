@@ -1,16 +1,25 @@
 import type { Knex } from 'knex';
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
 import { type KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
 import type { Account } from '{{alias.context}}/domain/aggregates/account.aggregate{{alias.ext}}';
+{{#if style.declared}}
 import { AccountRepository } from '{{alias.context}}/domain/repositories/account.repository{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { AccountRepository } from '{{alias.context}}/domain/repositories/account.repository{{alias.ext}}';
+{{/unless}}
 import { {{context.constant}}_SCHEMA } from '{{alias.context}}/infrastructure/persistence/{{context.kebab}}.schema{{alias.ext}}';
 import { AccountMapper } from '{{alias.context}}/infrastructure/persistence/account.mapper{{alias.ext}}';
 import type { AccountColumns, AccountRow } from '{{alias.context}}/infrastructure/persistence/account-row.schema{{alias.ext}}';
 
 type VersionedAccount = AccountColumns & { readonly version: number };
 
+{{#if style.declared}}
 @Repository(AccountRepository)
+{{/if}}
 export class KnexAccountRepository implements AccountRepository {
   constructor(
     private readonly database: KnexContext,

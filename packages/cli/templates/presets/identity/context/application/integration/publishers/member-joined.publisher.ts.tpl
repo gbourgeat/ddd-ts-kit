@@ -1,11 +1,20 @@
 import type { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#if style.declared}}
 import { MemberJoined } from '{{alias.context}}/domain/events/member-joined.event{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { MemberJoined } from '{{alias.context}}/domain/events/member-joined.event{{alias.ext}}';
+{{/unless}}
 import { memberJoinedV1 } from '{{alias.context}}/published-language/member-joined.v1.integration-event{{alias.ext}}';
 
 /** Tells the other contexts, through the outbox, in the transaction of the fact. */
+{{#if style.declared}}
 @DomainEventHandler(MemberJoined)
-export class MemberJoinedPublisher implements DomainEventHandler<MemberJoined> {
+{{/if}}
+export class MemberJoinedPublisher{{#if style.declared}} implements DomainEventHandler<MemberJoined>{{/if}} {
   constructor(
     private readonly publisher: IntegrationEventPublisher,
     private readonly ids: IdGenerator,

@@ -1,15 +1,24 @@
 import { optimisticUpdate } from '@ddd-ts-kit/prisma';
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
 import type { Member } from '{{alias.context}}/domain/aggregates/member.aggregate{{alias.ext}}';
+{{#if style.declared}}
 import { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
+{{/unless}}
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 import type { Database } from '{{alias.platform}}/database/database{{alias.ext}}';
 import { MemberMapper, type MemberColumns } from '{{alias.context}}/infrastructure/persistence/member.mapper{{alias.ext}}';
 
 type VersionedMember = MemberColumns & { readonly version: number };
 
+{{#if style.declared}}
 @Repository(MemberRepository)
+{{/if}}
 export class PrismaMemberRepository implements MemberRepository {
   constructor(
     private readonly database: Database,

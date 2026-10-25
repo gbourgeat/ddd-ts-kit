@@ -1,16 +1,25 @@
 import type { Knex } from 'knex';
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
 import { type KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
 import type { Invitation } from '{{alias.context}}/domain/aggregates/invitation.aggregate{{alias.ext}}';
+{{#if style.declared}}
 import { InvitationRepository } from '{{alias.context}}/domain/repositories/invitation.repository{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { InvitationRepository } from '{{alias.context}}/domain/repositories/invitation.repository{{alias.ext}}';
+{{/unless}}
 import { {{context.constant}}_SCHEMA } from '{{alias.context}}/infrastructure/persistence/{{context.kebab}}.schema{{alias.ext}}';
 import { InvitationMapper } from '{{alias.context}}/infrastructure/persistence/invitation.mapper{{alias.ext}}';
 import type { InvitationColumns, InvitationRow } from '{{alias.context}}/infrastructure/persistence/invitation-row.schema{{alias.ext}}';
 
 type VersionedInvitation = InvitationColumns & { readonly version: number };
 
+{{#if style.declared}}
 @Repository(InvitationRepository)
+{{/if}}
 export class KnexInvitationRepository implements InvitationRepository {
   constructor(
     private readonly database: KnexContext,

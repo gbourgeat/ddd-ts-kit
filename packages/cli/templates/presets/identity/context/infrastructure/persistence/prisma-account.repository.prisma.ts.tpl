@@ -1,14 +1,23 @@
 import { optimisticUpdate } from '@ddd-ts-kit/prisma';
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
 import type { Account } from '{{alias.context}}/domain/aggregates/account.aggregate{{alias.ext}}';
+{{#if style.declared}}
 import { AccountRepository } from '{{alias.context}}/domain/repositories/account.repository{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { AccountRepository } from '{{alias.context}}/domain/repositories/account.repository{{alias.ext}}';
+{{/unless}}
 import type { Database } from '{{alias.platform}}/database/database{{alias.ext}}';
 import { AccountMapper, type AccountColumns } from '{{alias.context}}/infrastructure/persistence/account.mapper{{alias.ext}}';
 
 type VersionedAccount = AccountColumns & { readonly version: number };
 
+{{#if style.declared}}
 @Repository(AccountRepository)
+{{/if}}
 export class PrismaAccountRepository implements AccountRepository {
   constructor(
     private readonly database: Database,

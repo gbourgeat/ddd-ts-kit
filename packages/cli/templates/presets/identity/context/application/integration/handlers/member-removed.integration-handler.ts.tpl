@@ -1,4 +1,6 @@
+{{#if style.declared}}
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
 import { memberRemovedV1, type MemberRemovedV1 } from '{{alias.context}}/published-language/member-removed.v1.integration-event{{alias.ext}}';
 import type { IdentityProviderAdmin } from '{{alias.context}}/application/ports/identity-provider-admin.port{{alias.ext}}';
@@ -9,7 +11,9 @@ import type { IdentityProviderAdmin } from '{{alias.context}}/application/ports/
  * provider down at the time of the removal is asked again until it answers; a person who joined
  * again since is left in, the context holding the membership now.
  */
+{{#if style.declared}}
 @IntegrationEventHandler(memberRemovedV1, { consumer: '{{context.kebab}}.provider-follows-removed-member' })
+{{/if}}
 export class MemberRemovedIntegrationHandler {
   static readonly eventType = memberRemovedV1.type;
 

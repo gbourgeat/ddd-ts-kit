@@ -1,16 +1,25 @@
 import { and, eq, isNull, or } from 'drizzle-orm';
 import { optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
 import type { Delegation } from '{{alias.context}}/domain/aggregates/delegation.aggregate{{alias.ext}}';
+{{#if style.declared}}
 import { DelegationRepository } from '{{alias.context}}/domain/repositories/delegation.repository{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { DelegationRepository } from '{{alias.context}}/domain/repositories/delegation.repository{{alias.ext}}';
+{{/unless}}
 import type { Database } from '{{alias.platform}}/database/database{{alias.ext}}';
 import { delegations } from '{{alias.context}}/infrastructure/persistence/{{context.kebab}}.schema{{alias.ext}}';
 import { DelegationMapper, type DelegationColumns } from '{{alias.context}}/infrastructure/persistence/delegation.mapper{{alias.ext}}';
 
 type VersionedDelegation = DelegationColumns & { readonly version: number };
 
+{{#if style.declared}}
 @Repository(DelegationRepository)
+{{/if}}
 export class DrizzleDelegationRepository implements DelegationRepository {
   constructor(
     private readonly database: Database,

@@ -1,12 +1,21 @@
 import { createHash, randomBytes } from 'node:crypto';
+{{#if style.declared}}
 import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#if style.declared}}
 import { InvitationTokens } from '{{alias.context}}/application/ports/invitation-tokens.port{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { InvitationTokens } from '{{alias.context}}/application/ports/invitation-tokens.port{{alias.ext}}';
+{{/unless}}
 
 /** 256 bits: a token is never guessed, and never stored. */
 const TOKEN_BYTES = 32;
 
 /** Tokens drawn from the random source of the platform, kept as their SHA-256 digest. */
+{{#if style.declared}}
 @Adapter(InvitationTokens, { kind: 'external' })
+{{/if}}
 export class CryptoInvitationTokens implements InvitationTokens {
   issue(): { token: string; digest: string } {
     const token = randomBytes(TOKEN_BYTES).toString('base64url');

@@ -1,16 +1,25 @@
 import { and, eq } from 'drizzle-orm';
 import { optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
 import type { Invitation } from '{{alias.context}}/domain/aggregates/invitation.aggregate{{alias.ext}}';
+{{#if style.declared}}
 import { InvitationRepository } from '{{alias.context}}/domain/repositories/invitation.repository{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { InvitationRepository } from '{{alias.context}}/domain/repositories/invitation.repository{{alias.ext}}';
+{{/unless}}
 import type { Database } from '{{alias.platform}}/database/database{{alias.ext}}';
 import { invitations } from '{{alias.context}}/infrastructure/persistence/{{context.kebab}}.schema{{alias.ext}}';
 import { InvitationMapper, type InvitationColumns } from '{{alias.context}}/infrastructure/persistence/invitation.mapper{{alias.ext}}';
 
 type VersionedInvitation = InvitationColumns & { readonly version: number };
 
+{{#if style.declared}}
 @Repository(InvitationRepository)
+{{/if}}
 export class DrizzleInvitationRepository implements InvitationRepository {
   constructor(
     private readonly database: Database,

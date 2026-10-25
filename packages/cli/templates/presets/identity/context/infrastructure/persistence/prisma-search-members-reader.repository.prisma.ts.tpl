@@ -1,6 +1,13 @@
 import { InvalidPageRequestError, pageOf, type PageRequest } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#if style.declared}}
 import { SearchMembersReader } from '{{alias.context}}/application/ports/search-members-reader.port{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { SearchMembersReader } from '{{alias.context}}/application/ports/search-members-reader.port{{alias.ext}}';
+{{/unless}}
 import type {
   SearchMembersItem,
   SearchMembersResult,
@@ -14,7 +21,9 @@ import type { {{context.pascal}}Account as AccountRow, {{context.pascal}}Member 
  * the database, then the accounts of that page read in one statement, since the models of the
  * context hold no relation.
  */
+{{#if style.declared}}
 @Repository(SearchMembersReader)
+{{/if}}
 export class PrismaSearchMembersReader implements SearchMembersReader {
   constructor(private readonly database: Database) {}
 

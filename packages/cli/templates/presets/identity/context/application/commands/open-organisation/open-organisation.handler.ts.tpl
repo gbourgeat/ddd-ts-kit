@@ -1,5 +1,10 @@
 import type { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#unless style.declared}}
+import type { CommandHandler } from '@ddd-ts-kit/kernel';
+{{/unless}}
 import { Member } from '{{alias.context}}/domain/aggregates/member.aggregate{{alias.ext}}';
 import { Organisation } from '{{alias.context}}/domain/aggregates/organisation.aggregate{{alias.ext}}';
 {{#unless refusals.named}}
@@ -16,9 +21,16 @@ import type { OrganisationRepository } from '{{alias.context}}/domain/repositori
 import { OrganisationName } from '{{alias.context}}/domain/value-objects/organisation-name.vo{{alias.ext}}';
 import { OrganisationSlug } from '{{alias.context}}/domain/value-objects/organisation-slug.vo{{alias.ext}}';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
+{{#if style.declared}}
 import { OpenOrganisationCommand } from '{{alias.context}}/application/commands/open-organisation/open-organisation.command{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { OpenOrganisationCommand } from '{{alias.context}}/application/commands/open-organisation/open-organisation.command{{alias.ext}}';
+{{/unless}}
 
+{{#if style.declared}}
 @CommandHandler(OpenOrganisationCommand)
+{{/if}}
 export class OpenOrganisationHandler implements CommandHandler<OpenOrganisationCommand> {
   constructor(
     private readonly organisationRepository: OrganisationRepository,
