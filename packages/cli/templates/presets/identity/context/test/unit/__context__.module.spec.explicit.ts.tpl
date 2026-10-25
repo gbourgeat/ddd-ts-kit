@@ -1,5 +1,11 @@
 import { describe, expect, it } from '{{tests.module}}';
+{{#if routes.nest}}
+import { nestControllerRoutes } from '@ddd-ts-kit/http/nest';
+{{/if}}
 import { DuplicateHandlerError, type Command, type MessageType, type Query } from '@ddd-ts-kit/kernel';
+{{#if routes.nest}}
+import { classSchema } from '@ddd-ts-kit/validation/class-validator';
+{{/if}}
 import { {{context.camel}}Module } from '{{alias.context}}/{{context.kebab}}.module{{alias.ext}}';
 import { AcceptInvitationCommand } from '{{alias.context}}/application/commands/accept-invitation/accept-invitation.command{{alias.ext}}';
 import { ChangeMemberRoleCommand } from '{{alias.context}}/application/commands/change-member-role/change-member-role.command{{alias.ext}}';
@@ -52,7 +58,14 @@ describe('The module of {{context.kebab}}', () => {
   });
 
   it('mounts one route per use case of the context', () => {
+{{#unless routes.nest}}
     const mounted = wiring.routes.map(({ method, path }) => `${method} ${path}`).toSorted();
+{{/unless}}
+{{#if routes.nest}}
+    // The Nest controllers of the context, served by the kit: their routes as the application mounts them.
+    const routes = nestControllerRoutes(wiring.controllers, { schemaOfClass: (dto) => classSchema(dto) });
+    const mounted = routes.map(({ method, path }) => `${method} ${path}`).toSorted();
+{{/if}}
 
     expect(mounted).toEqual([
       'DELETE /organisations/:organisationId/delegations/:delegationId',

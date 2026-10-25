@@ -1,11 +1,17 @@
 import type { UseCaseDeclaration } from '@ddd-ts-kit/auth';
+{{#if routes.nest}}
+import type { Type } from '@nestjs/common';
+import { {{context.camel}}Controllers } from '{{alias.context}}/{{context.kebab}}.controllers{{alias.ext}}';
+{{/if}}
 import type { Route } from '@ddd-ts-kit/http';
 import type { Actored, DomainEvent, Message } from '@ddd-ts-kit/kernel';
 import type { Platform } from '{{alias.platform}}/composition/platform{{alias.ext}}';
 // ddd-ts-kit:imports
 import { requires, type RequirementOptions } from '@ddd-ts-kit/auth';
 import { on, subscribeAll } from '@ddd-ts-kit/events';
+{{#unless routes.nest}}
 import { controllerRoutes } from '@ddd-ts-kit/http';
+{{/unless}}
 import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
 import { {{preset.adapter.pascal}}AccountRepository } from '{{alias.context}}/infrastructure/persistence/{{preset.adapter.kebab}}-account.repository{{alias.ext}}';
 import { {{preset.adapter.pascal}}OrganisationRepository } from '{{alias.context}}/infrastructure/persistence/{{preset.adapter.kebab}}-organisation.repository{{alias.ext}}';
@@ -48,6 +54,7 @@ import { MemberRemovedIntegrationHandler } from '{{alias.context}}/application/i
 import { memberRemovedV1 } from '{{alias.context}}/published-language/member-removed.v1.integration-event{{alias.ext}}';
 import { OrganisationOpenedIntegrationHandler } from '{{alias.context}}/application/integration/handlers/organisation-opened.integration-handler{{alias.ext}}';
 import { organisationOpenedV1 } from '{{alias.context}}/published-language/organisation-opened.v1.integration-event{{alias.ext}}';
+{{#unless routes.nest}}
 import { DeactivateAccountController } from '{{alias.context}}/presentation/http/accounts/deactivate-account/deactivate-account.controller{{alias.ext}}';
 import { ProvisionAccountController } from '{{alias.context}}/presentation/http/accounts/provision-account/provision-account.controller{{alias.ext}}';
 import { AcceptInvitationController } from '{{alias.context}}/presentation/http/invitations/accept-invitation/accept-invitation.controller{{alias.ext}}';
@@ -60,6 +67,7 @@ import { RemoveMemberController } from '{{alias.context}}/presentation/http/orga
 import { RevokeDelegationController } from '{{alias.context}}/presentation/http/organisations/revoke-delegation/revoke-delegation.controller{{alias.ext}}';
 import { RevokeInvitationController } from '{{alias.context}}/presentation/http/organisations/revoke-invitation/revoke-invitation.controller{{alias.ext}}';
 import { SearchMembersController } from '{{alias.context}}/presentation/http/organisations/search-members/search-members.controller{{alias.ext}}';
+{{/unless}}
 import { AccountDeactivatedPublisher } from '{{alias.context}}/application/integration/publishers/account-deactivated.publisher{{alias.ext}}';
 import { AccountDeactivated } from '{{alias.context}}/domain/events/account-deactivated.event{{alias.ext}}';
 import { OrganisationOpenedPublisher } from '{{alias.context}}/application/integration/publishers/organisation-opened.publisher{{alias.ext}}';
@@ -80,6 +88,10 @@ export interface {{context.pascal}}Wiring {
   readonly name: string;
   readonly useCases: readonly UseCaseDeclaration[];
   readonly routes: readonly Route[];
+  {{#if routes.nest}}
+  /** Its Nest controllers, listed by the generated `{{context.kebab}}.controllers.ts`: Nest builds them, the kit serves their methods. */
+  readonly controllers: readonly Type<unknown>[];
+  {{/if}}
 }
 
 /** Every use case of the context is asked of the context as a whole: inside an organisation, its policies decide. */
@@ -120,6 +132,7 @@ export function {{context.camel}}Module(platform: Platform): {{context.pascal}}W
     ],
     routes: [
       // ddd-ts-kit:routes
+      {{#unless routes.nest}}
       ...controllerRoutes([new DeactivateAccountController(platform.commands)]),
       ...controllerRoutes([new ProvisionAccountController(platform.commands)]),
       ...controllerRoutes([new AcceptInvitationController(platform.commands)]),
@@ -132,8 +145,12 @@ export function {{context.camel}}Module(platform: Platform): {{context.pascal}}W
       ...controllerRoutes([new RevokeDelegationController(platform.commands)]),
       ...controllerRoutes([new RevokeInvitationController(platform.commands)]),
       ...controllerRoutes([new SearchMembersController(platform.queries)]),
+      {{/unless}}
       // /ddd-ts-kit:routes
     ],
+    {{#if routes.nest}}
+    controllers: {{context.camel}}Controllers,
+    {{/if}}
   };
 }
 

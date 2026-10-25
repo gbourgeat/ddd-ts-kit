@@ -63,7 +63,7 @@ ddd-ts-kit init [--http express|fastify|hono|nest|none]
                 [--errors none|sentry] [--logger stdout|pino|winston]
                 [--style declared|explicit] [--assembly barrel|discovery]
                 [--dependencies signature|listed] [--refusals named|factories|classes]
-                [--routes controllers|functions] [--value-objects throwing|result]
+                [--routes controllers|functions|nest] [--value-objects throwing|result]
                 [--literals named|free] [--values classes|free] [--tenancy none|shared-table]
                 [--queue database|redis|memory]
                 [--schemas shared|per-route]
@@ -643,7 +643,8 @@ the grant `'identity:*'` of `platform/auth/authorization/signed-in-grants.ts`, a
 the context belong to none, under a decision record the preset writes, and with `--authn
 keycloak` the authenticator reads the `organization` claim as the tenants of the person
 (another authenticator gets a next step saying what to map). The preset is written for
-`declared` with `signature` dependencies, `factories`, `throwing` value objects, `controllers`,
+`declared` with `signature` dependencies, `factories`, `throwing` value objects, `controllers` or `nest` routes (Nest controllers, read from their
+signatures, on a Nest project),
 Knex or Drizzle on PostgreSQL, Zod or class-validator, Express or Fastify, and a token verifier
 (`jwt` or `keycloak`); another stack is refused with what to change, and so is a second context
 written from the same preset. Why, and which other contexts deserve one:

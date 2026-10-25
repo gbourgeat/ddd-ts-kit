@@ -5,7 +5,7 @@ import type { PresetFile } from './preset-file';
 /**
  * The variants a template is written for, by the segments before its extension:
  * `account.mapper.knex.ts.tpl`, `open-organisation.accepted.class-validator.per-route.ts.tpl`,
- * `unknown-account.error.named.ts.tpl`.
+ * `unknown-account.error.named.ts.tpl`, `open-organisation.controller.nest-routes.ts.tpl`.
  */
 const VARIANTS: Readonly<Record<string, (config: Config) => boolean>> = {
   knex: (config) => config.stack.orm === 'knex',
@@ -20,6 +20,8 @@ const VARIANTS: Readonly<Record<string, (config: Config) => boolean>> = {
   privacy: (config) => config.stack.privacy === 'on',
   declared: (config) => config.stack.style === 'declared',
   explicit: (config) => config.stack.style === 'explicit',
+  'kit-routes': (config) => config.stack.routes !== 'nest',
+  'nest-routes': (config) => config.stack.routes === 'nest',
 };
 
 const NAMES = Object.keys(VARIANTS).join('|');
