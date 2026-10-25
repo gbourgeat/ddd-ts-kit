@@ -1964,3 +1964,21 @@ test('the baseline of the errors is never written by an agent, on any host; prun
   const advised = project({ guard: 'advise' });
   assert.equal(decision(run('pre-bash', bash(advised, 'npx ddd-ts-kit check --baseline write'))), 'ask');
 });
+
+test('a CLI hoisted to a parent by workspaces is the one the guard runs', () => {
+  const workspaceRoot = directory('workspaces');
+  const root = join(workspaceRoot, 'examples', 'shop');
+  mkdirSync(root, { recursive: true });
+  const init = spawnSync('node', [cli, 'init', '--orm', 'none', '--context', 'ordering:core'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  assert.equal(init.status, 0, init.stderr);
+  launcher(workspaceRoot);
+  const file = join(root, 'src/contexts/ordering/domain/services/pricing.service.ts');
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, "import express from 'express';\nexport class Pricing { app() { return express; } }\n");
+  const result = run('post-write', write(file));
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /layer\/domain-purity/);
+});
