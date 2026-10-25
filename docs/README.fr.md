@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:81e49c52273a6bf7 -->
+<!-- translation-of: README.md sha256:d9602c4d8b6e2ee1 -->
 
 # Documentation
 
@@ -90,7 +90,7 @@ a vérifié, les limites, et une recommandation selon la situation.
 |---|---|
 | [Frameworks HTTP](tools/http-frameworks.fr.md) | Express, Fastify, Hono ou NestJS, et ce que coûtent des routes indépendantes du framework avec Nest |
 | [Validation](tools/validation.fr.md) | zod, class-validator, TypeBox ou une bibliothèque Standard Schema ; les schémas partagés |
-| [Paires de contrat](tools/contract-pairs.fr.md) | quel framework avec quelle bibliothèque de validation, selon l'équipe : les quatre paires prouvées de bout en bout, mesurées ; oRPC comme seconde porte, pas comme paire |
+| [Paires de contrat](tools/contract-pairs.fr.md) | quel framework avec quelle bibliothèque de validation, selon l'équipe : les quatre paires prouvées de bout en bout, mesurées ; oRPC et tRPC comme seconde porte, pas comme paire |
 | [Représentations et formulaires](tools/representations-and-forms.fr.md) | XML et CSV sans bibliothèque, et pourquoi ; les moteurs de rendu JSON Forms pour React, Angular et Vue, et les alternatives |
 | [Injection de dépendances](tools/dependency-injection.fr.md) | tsyringe avec les déclarations du kit, NestJS, ou un câblage manuel |
 | [Persistance](tools/persistence.fr.md) | Drizzle, Knex, Prisma ou TypeORM ; PostgreSQL face aux autres |

@@ -41,14 +41,13 @@ export const SHARDS = [
     'event-sourced.spec.ts': 19,
     // A repository that declares personal columns, with the erasure of its context, installed as published.
     'personal-fields.spec.ts': 20,
-    'violations.spec.ts': 15,
+    'formatted.spec.ts': 29,
   },
   {
     'coverage-gate.spec.ts': 328,
     'typecheck.spec.ts': 70,
-    // Seconds of a workstation (25) taken two and a half times, as the runners take longer: not measured on one yet.
-    'rpc-procedures.spec.ts': 60,
-    'formatted.spec.ts': 29,
+    // oRPC and tRPC on the four servers: twice the 46 seconds oRPC alone took (run 40178531545).
+    'rpc-procedures.spec.ts': 92,
     'preset-identity-generated.spec.ts': 25,
     'error-rule-violations.spec.ts': 11,
     'client-sdk.spec.ts': 9,
@@ -63,7 +62,12 @@ export const SHARDS = [
     'file-uploads.spec.ts': 26,
     'error-reporting.spec.ts': 17,
   },
-  { 'first-minute-no-context.spec.ts': 312, 'first-class.spec.ts': 209, 'dev-reload.spec.ts': 9 },
+  {
+    'first-minute-no-context.spec.ts': 312,
+    'first-class.spec.ts': 209,
+    'dev-reload.spec.ts': 9,
+    'violations.spec.ts': 15,
+  },
 ];
 
 /** The spec files of the directory that a shard has to run. */

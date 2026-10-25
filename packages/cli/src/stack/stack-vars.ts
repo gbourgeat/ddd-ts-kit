@@ -181,7 +181,7 @@ function edgeVars(config: Config): RenderContext {
   return {
     http: httpVars(config),
     httpCache: { ...one(httpCache, ['none', 'varnish']), perTenant },
-    rpc: one(rpc, ['none', 'orpc']),
+    rpc: one(rpc, ['none', 'orpc', 'trpc']),
   };
 }
 

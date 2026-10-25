@@ -1,0 +1,94 @@
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { createCredentials, type Credentials } from '$test/e2e/support/create-credentials';
+import { testEnvironment } from '$test/e2e/support/test-environment';
+import { type Application, composeApplication } from '@/platform/composition/compose-application';
+import { loadConfig } from '@/platform/config/load-config';
+import { openPersistence } from '@/platform/database/open-persistence';
+import { inProcessEvents } from '@/platform/events/in-process-events';
+import { type HttpServer, startHttpServer } from '@/platform/http/start-http-server';
+
+/** What a door of the API answered: its status, and the code of its refusal or the fields of its body. */
+interface Answer {
+  readonly status: number;
+  readonly code?: string;
+  readonly fields?: readonly string[];
+}
+
+let credentials: Credentials;
+let application: Application;
+let server: HttpServer;
+
+beforeAll(async () => {
+  credentials = await createCredentials();
+  application = composeApplication(openPersistence(), { events: inProcessEvents(), authenticator: credentials.authenticator });
+  await application.start();
+  server = await startHttpServer(application, loadConfig(testEnvironment()));
+});
+
+afterAll(async () => {
+  await server.close();
+  await application.stop();
+});
+
+const base = (): string => 'http://127.0.0.1:' + String(server.port);
+
+async function overHttp(headers: Record<string, string>): Promise<Answer> {
+  const response = await fetch(base() + '/invoices', {
+    method: 'POST',
+    headers: { ...headers, 'content-type': 'application/json' },
+    body: '{}',
+  });
+  const body = (await response.json()) as Record<string, unknown>;
+
+  return response.status >= 400
+    ? { status: response.status, code: String(body['code']) }
+    : { status: response.status, fields: Object.keys(body).sort() };
+}
+
+/** The call as tRPC carries a mutation without batching: the input as the body, the answer under `result.data`, the error under `error`. */
+async function overRpc(procedure: string, headers: Record<string, string>): Promise<Answer> {
+  const response = await fetch(base() + '/trpc/' + procedure, {
+    method: 'POST',
+    headers: { ...headers, 'content-type': 'application/json' },
+    body: JSON.stringify({ body: {} }),
+  });
+  const json = (await response.json()) as {
+    result?: { data: Record<string, unknown> };
+    error?: { data: { problem: { code: string } | null } };
+  };
+
+  return response.status >= 400
+    ? { status: response.status, code: String(json.error?.data.problem?.code) }
+    : { status: response.status, fields: Object.keys(json.result?.data ?? {}).sort() };
+}
+
+describe('the procedures served under /trpc', () => {
+  it('refuse an anonymous caller as the route does: the same status, the code of the kit in data.problem', async () => {
+    const http = await overHttp({});
+
+    expect(http).toEqual({ status: 401, code: 'UNAUTHORIZED' });
+    expect(await overRpc('issueInvoice', {})).toEqual(http);
+  });
+
+  it('answer a granted caller as the route does: the same refusal, or a body with the same fields', async () => {
+    const headers = await credentials.headersOf({ id: 'user-1', roles: ['accountant'] });
+    const http = await overHttp(headers);
+    const rpc = await overRpc('issueInvoice', headers);
+
+    if (http.code === undefined) {
+      expect(rpc).toEqual({ status: 200, fields: http.fields });
+    } else {
+      expect(rpc).toEqual(http);
+    }
+  });
+
+  it('answer 404 for an unknown procedure, as tRPC does', async () => {
+    const response = await fetch(base() + '/trpc/noSuchProcedure', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{}',
+    });
+
+    expect(response.status).toBe(404);
+  });
+});

@@ -8,11 +8,12 @@ import { renderOperations } from './render-operations';
 import { renderOrpc } from './render-orpc';
 import { renderReadme } from './render-readme';
 import { renderSchemas } from './render-schemas';
+import { renderTrpc } from './render-trpc';
 import type { Rpc } from './rpc';
 
 /**
  * Every file of a client the generator owns, relative to its directory: its sources, its README
- * and its compiler options, and the oRPC contract of its procedures when the API serves them.
+ * and its compiler options, and the oRPC contract or the tRPC router of its procedures when the API serves them.
  * package.json is not among them: the team owns its version.
  */
 export function clientFiles(
@@ -29,5 +30,6 @@ export function clientFiles(
     ...(rpc === 'orpc' ? [['src/orpc.ts', renderOrpc(document)] satisfies [string, string]] : []),
     ['src/runtime.ts', readTemplate('sdk/runtime.ts.tpl')],
     ['src/schemas.ts', renderSchemas(document)],
+    ...(rpc === 'trpc' ? [['src/trpc.ts', renderTrpc(document)] satisfies [string, string]] : []),
   ];
 }

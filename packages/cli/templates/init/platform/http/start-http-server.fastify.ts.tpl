@@ -1,8 +1,12 @@
-import Fastify{{#if cache.rateLimit}}, { type FastifyInstance }{{/if}}{{#unless cache.rateLimit}}{{#if rpc.orpc}}, { type FastifyInstance }{{/if}}{{/unless}} from 'fastify';
+import Fastify{{#if cache.rateLimit}}, { type FastifyInstance }{{/if}}{{#unless cache.rateLimit}}{{#unless rpc.none}}, { type FastifyInstance }{{/unless}}{{/unless}} from 'fastify';
 import { mountFastify } from '@ddd-ts-kit/http/fastify';
 {{#if rpc.orpc}}
 import { orpcRouter } from '@ddd-ts-kit/http/orpc';
 import { RPCHandler } from '@orpc/server/fastify';
+{{/if}}
+{{#if rpc.trpc}}
+import { type TrpcRouter, trpcRouter } from '@ddd-ts-kit/http/trpc';
+import { type FastifyTRPCPluginOptions, fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
 {{/if}}
 import type { Application } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
@@ -27,7 +31,8 @@ type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | '
  * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
  * server), the signed file links (with a storage the application serves), the routes of the
  * contexts, then the pages of the contract (with documentation on).{{#if rpc.orpc}} The same routes are served
- * as oRPC procedures under /rpc, for the typed client of the contract.{{/if}}
+ * as oRPC procedures under /rpc, for the typed client of the contract.{{/if}}{{#if rpc.trpc}} The same routes are served
+ * as tRPC procedures under /trpc, for the typed client of the contract.{{/if}}
  */
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
   const app = Fastify();
@@ -47,6 +52,9 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 {{/unless}}
 {{#if rpc.orpc}}
   serveProcedures(app, served);
+{{/if}}
+{{#if rpc.trpc}}
+  await serveProcedures(app, served);
 {{/if}}
   await app.listen({ port: config.port, host: '0.0.0.0' });
 
@@ -96,5 +104,19 @@ function serveProcedures(app: FastifyInstance, served: Served): void {
       reply.callNotFound();
     }
   });
+}
+{{/if}}
+{{#if rpc.trpc}}
+
+const TRPC_ENDPOINT = '/trpc';
+
+/** Each route as the procedure named by its operationId: the same pipeline, the JSON body already read by Fastify. */
+async function serveProcedures(app: FastifyInstance, served: Served): Promise<void> {
+  const trpcOptions: FastifyTRPCPluginOptions<TrpcRouter>['trpcOptions'] = {
+    router: trpcRouter(served.routes, served.boundary),
+    createContext: ({ req }) => ({ headers: req.headers, raw: req }),
+  };
+
+  await app.register(fastifyTRPCPlugin, { prefix: TRPC_ENDPOINT, trpcOptions });
 }
 {{/if}}
