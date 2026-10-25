@@ -1,8 +1,6 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import { IfMatch } from '../cache/if-match';
+import { refusalCodesByStatus } from '../error/refusal-codes-by-status';
 import { statusTitle } from '../error/status-title';
-import { NOT_ACCEPTABLE } from '../representation/not-acceptable-error';
-import { UNSUPPORTED_MEDIA_TYPE } from '../representation/unsupported-media-type-error';
 import { answersWithSchema } from '../route/answers-with-schema';
 import type { ResponseSpec } from '../route/response-spec';
 import type { Route } from '../route/route';
@@ -11,12 +9,7 @@ import { cacheResponseHeaders } from './cache-response-headers';
 import { compare } from './compare';
 import type { Documenting } from './documenting';
 
-const VALIDATION_FAILED = 'VALIDATION_FAILED';
-const PRECONDITION_FAILED = 'PRECONDITION_FAILED';
-const PRECONDITION_REQUIRED = 'PRECONDITION_REQUIRED';
 const NOT_MODIFIED = 304;
-/** What a route that declares an upload may answer besides its own codes: a file too large, of another type, or missing. */
-const UPLOAD_REFUSALS = ['FILE_TOO_LARGE', 'UNSUPPORTED_MEDIA_TYPE', VALIDATION_FAILED];
 const PROBLEM_REF = { $ref: '#/components/schemas/Problem' };
 const JSON_MEDIA_TYPE = 'application/json';
 const PROBLEM_MEDIA_TYPE = 'application/problem+json';
@@ -33,7 +26,7 @@ export function responses(route: Route, documenting: Documenting): JsonSchema {
     });
   }
 
-  for (const [status, codes] of errorCodesByStatus(route, documenting)) {
+  for (const [status, codes] of refusalCodesByStatus(route, documenting.mapper, documenting.representations)) {
     byStatus.set(status, problemResponse({ status, codes, mediaTypes: problemTypes }, byStatus.get(status)));
   }
 
@@ -74,48 +67,6 @@ function problemMediaTypes(route: Route, { representations }: Documenting): read
   const types = representations.offeredBy(route).map((mediaType) => representations.problemIn(mediaType).mediaType);
 
   return [...new Set(types)];
-}
-
-function errorCodesByStatus(route: Route, { mapper, representations }: Documenting): Map<number, string[]> {
-  const validatesInput = Object.values(route.request ?? {}).some((schema) => schema !== undefined);
-  const uploads = route.upload === undefined ? [] : UPLOAD_REFUSALS;
-
-  const codes = new Set([
-    ...(route.errors ?? []),
-    ...(validatesInput ? [VALIDATION_FAILED] : []),
-    ...uploads,
-    ...(representations === undefined ? [] : negotiationCodes(route)),
-    ...preconditionCodes(route),
-  ]);
-
-  const codesByStatus = new Map<number, string[]>();
-
-  for (const code of codes) {
-    const status = mapper.statusOf(code);
-
-    codesByStatus.set(status, [...(codesByStatus.get(status) ?? []), code]);
-  }
-
-  return codesByStatus;
-}
-
-/**
- * Under negotiation, a route whose answer a representation writes refuses an `Accept` header it
- * cannot meet with 406, and a route that reads a body refuses a media type it does not read with
- * 415, whatever it declares in `produces` and `consumes`.
- */
-function negotiationCodes(route: Route): readonly string[] {
-  const readsBody = route.request?.body !== undefined && route.upload === undefined && route.rawBody !== true;
-
-  return [...(answersWithSchema(route) ? [NOT_ACCEPTABLE] : []), ...(readsBody ? [UNSUPPORTED_MEDIA_TYPE] : [])];
-}
-
-function preconditionCodes({ ifMatch }: Route): readonly string[] {
-  if (ifMatch === undefined) {
-    return [];
-  }
-
-  return ifMatch === IfMatch.required ? [PRECONDITION_FAILED, PRECONDITION_REQUIRED] : [PRECONDITION_FAILED];
 }
 
 interface Refusals {
