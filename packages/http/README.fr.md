@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c0516be3b60e3692 -->
+<!-- translation-of: README.md sha256:b8dec3128fc18607 -->
 
 # @ddd-ts-kit/http
 
@@ -1300,6 +1300,92 @@ Un simple tableau convient aussi : `createRoutesModule(routes, options)`. Ces ro
 contournent les pipes, les guards, les intercepteurs, les filtres d'exceptions et le préfixe
 global de Nest : la validation et la correspondance des erreurs sont celles décrites plus haut.
 Utilisez `prefixRoutes` pour un préfixe.
+
+### Contrôleurs Nest servis par le kit
+
+Un projet qui écrit des contrôleurs Nest les garde : `@Controller`, `@Get`, `@Post` et les autres
+méthodes, `@Param`, `@Query`, `@Headers`, `@Body` avec une classe DTO, `@HttpCode`, l'injection par
+constructeur et les modules. `@KitRoute` sur une méthode ajoute ce que Nest ne dit pas : son nom
+dans le contrat, qui peut l'appeler, les refus qu'elle répond, sa réponse. C'est le kit, et non le
+routeur de Nest, qui sert la méthode : c'est une route du kit, avec ses *guards*, sa validation, ses
+documents *problem*, son traçage et son contrat, et une procédure sur `/rpc` et `/trpc` comme toute
+route.
+
+<!-- checked sample: legacy-decorators -->
+```ts
+import { Body, Controller, Inject, Module, Param, Post } from '@nestjs/common';
+import { IsString, MinLength } from 'class-validator';
+import type { Actor } from '@ddd-ts-kit/kernel';
+import { Authenticated, type ExecuteOptions } from '@ddd-ts-kit/http';
+import { createControllersModule, CurrentActor, KitRoute, KitRoutes } from '@ddd-ts-kit/http/nest';
+import { classSchema } from '@ddd-ts-kit/validation/class-validator';
+
+declare const options: ExecuteOptions;
+
+/** What the controller sends its use case through: here a port of the application. */
+abstract class Invoicing {
+  abstract issue(invoiceId: string, customerId: string, actor: Actor): Promise<void>;
+}
+
+declare const invoicing: Invoicing;
+
+class IssueInvoiceBody {
+  @IsString()
+  @MinLength(1)
+  customerId = '';
+}
+
+@Controller('invoices')
+@KitRoutes({ guards: [Authenticated], tags: ['Invoices'] })
+export class InvoicesController {
+  constructor(@Inject(Invoicing) private readonly invoicing: Invoicing) {}
+
+  @Post(':invoiceId/issue')
+  @KitRoute({ operationId: 'issueInvoice', summary: 'Issue an invoice', errors: ['INVOICE_ALREADY_ISSUED'] })
+  async issue(
+    @Param('invoiceId') invoiceId: string,
+    @Body() body: IssueInvoiceBody,
+    @CurrentActor() actor: Actor,
+  ): Promise<void> {
+    await this.invoicing.issue(invoiceId, body.customerId, actor);
+  }
+}
+
+@Module({
+  imports: [
+    createControllersModule([InvoicesController], {
+      ...options,
+      providers: [{ provide: Invoicing, useValue: invoicing }],
+      schemaOfClass: classSchema,
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+- `createControllersModule(controllers, options)` enregistre les contrôleurs comme *providers*,
+  pour que Nest les construise avec ce qu'ils injectent, et monte chaque méthode portant
+  `@KitRoute` sur le serveur HTTP sous Nest. Un contrôleur listé aussi dans les `controllers` d'un
+  module Nest est refusé au démarrage : Nest le servirait une seconde fois, par son propre pipeline.
+- `@KitRoutes({ guards, tags, errors })` sur la classe est ce que toutes ses routes partagent, comme
+  un groupe de routes ; les `guards` de `@KitRoute` passent après. Une route sans *guard* ni d'un
+  côté ni de l'autre est refusée : `[Public]` dit qu'elle est ouverte.
+- `@CurrentActor()` donne à la méthode l'appelant que l'authentification a résolu
+  (`resolvePrincipal`), jamais un appelant construit par le contrôleur ; `@RouteContext()` le
+  contexte de la requête (`expectedVersion` sous `ifMatch`).
+- Un paramètre qui prend une partie entière est validé par sa classe, lue par `schemaOfClass`
+  (`classSchema` de class-validator ; le projet compile avec `emitDecoratorMetadata`, comme Nest le
+  demande) ; une partie nommée une à une (`@Param('invoiceId')`) est un texte ; `request` de
+  `@KitRoute` donne à la place un schéma de n'importe quelle bibliothèque. `response.body` est un
+  schéma ou une classe DTO.
+- `nestControllerRoutes(controllers, { schemaOfClass })` donne les mêmes routes sans le conteneur
+  de Nest, pour `generateOpenApi`, `orpcRouter` et `trpcRouter`.
+- Refusés quand les routes sont construites, parce que le pipeline du kit ne les exécuterait pas :
+  `@UseGuards`, `@UsePipes`, `@UseInterceptors`, `@UseFilters`, `@Header`, `@Redirect`, `@Render`,
+  `@Sse`, `@Version`, un *pipe* sur un paramètre, `@Req`, `@Res` et les autres paramètres de Nest. Le
+  kit lit ce qu'enregistrent les décorateurs de Nest (`@nestjs/common/constants`) ; la forme en est
+  vérifiée à chaque lecture, et un test du kit la tient sur la version de Nest avec laquelle il est
+  publié : une version de Nest qui la changerait est refusée au démarrage plutôt que lue de travers.
 
 ## Procédures oRPC
 

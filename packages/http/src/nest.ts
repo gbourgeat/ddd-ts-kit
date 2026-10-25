@@ -1,3 +1,15 @@
+export type { ControllersModuleOptions } from './nest/controllers/controllers-module-options';
+export { createControllersModule } from './nest/controllers/create-controllers-module';
+export { CurrentActor } from './nest/controllers/current-actor';
+export type { DtoType } from './nest/controllers/dto-type';
+export { KitRoute } from './nest/controllers/kit-route';
+export type { KitRouteSpec } from './nest/controllers/kit-route-spec';
+export { KitRoutes } from './nest/controllers/kit-routes';
+export type { KitRoutesOptions } from './nest/controllers/kit-routes-options';
+export type { NestControllerClass } from './nest/controllers/nest-controller-class';
+export { nestControllerRoutes } from './nest/controllers/nest-controller-routes';
+export type { NestControllerRoutesOptions } from './nest/controllers/nest-controller-routes-options';
+export { RouteContext } from './nest/controllers/route-context';
 export { createRoutesModule, type RoutesModuleOptions } from './nest/create-routes-module';
 export type { RoutesFactory } from './nest/routes-factory';
 export { RoutesMounter } from './nest/routes-mounter';
