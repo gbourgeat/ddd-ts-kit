@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ClientDocument } from '../src/sdk/client-document';
-import { clientFiles, type Rpc } from '../src/sdk/client-files';
+import { clientFiles } from '../src/sdk/client-files';
+import type { Rpc } from '../src/sdk/rpc';
 import { readClientDocument } from '../src/sdk/read-client-document';
 import { SchemaTypes } from '../src/sdk/schema-types';
 import { CLASHING_CONTRACT } from './support/clashing-contract';

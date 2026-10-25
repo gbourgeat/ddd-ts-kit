@@ -1,5 +1,4 @@
 import { readTemplate } from '../templating';
-import type { Stack } from '../config';
 import { CLIENT_TSCONFIG } from './client-tsconfig';
 import type { PlannedClient } from './planned-client';
 import { renderClient } from './render-client';
@@ -9,9 +8,7 @@ import { renderOperations } from './render-operations';
 import { renderOrpc } from './render-orpc';
 import { renderReadme } from './render-readme';
 import { renderSchemas } from './render-schemas';
-
-/** How the API serves its routes besides HTTP: `stack.rpc`. */
-export type Rpc = Stack['rpc'];
+import type { Rpc } from './rpc';
 
 /**
  * Every file of a client the generator owns, relative to its directory: its sources, its README

@@ -1,6 +1,6 @@
 import { isRecord } from '../config/values/is-record';
 import { VERSIONS } from '../init/manifest/versions';
-import type { Rpc } from './client-files';
+import type { Rpc } from './rpc';
 import { manifestJson } from './manifest-json';
 
 /** What the package.json of a client is made of. */

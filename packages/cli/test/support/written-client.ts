@@ -1,6 +1,7 @@
-import { clientFiles, type Rpc } from '../../src/sdk/client-files';
+import { clientFiles } from '../../src/sdk/client-files';
 import { clientManifest } from '../../src/sdk/client-manifest';
 import { readClientDocument } from '../../src/sdk/read-client-document';
+import type { Rpc } from '../../src/sdk/rpc';
 import { tempDir, write } from '../helpers';
 
 /** The client of a contract written to a temporary directory as `ddd-ts-kit sdk` writes it: the directory. */

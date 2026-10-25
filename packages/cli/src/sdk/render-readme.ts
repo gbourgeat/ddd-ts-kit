@@ -1,7 +1,7 @@
 import type { ClientDocument } from './client-document';
 import type { ClientOperation } from './client-operation';
 import { errorCodes } from './error-codes';
-import type { Rpc } from './client-files';
+import type { Rpc } from './rpc';
 import { isInputOptional } from './is-input-optional';
 import { propertyKey } from './property-key';
 
