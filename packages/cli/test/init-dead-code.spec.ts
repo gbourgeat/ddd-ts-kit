@@ -45,11 +45,15 @@ describe('the validation packages of a project that validates nothing yet', () =
       ],
     ],
     [
-      ['--http', 'nest', '--orm', 'none', '--validation', 'class-validator'],
+      ['--http', 'nest', '--orm', 'none', '--validation', 'class-validator', '--routes', 'controllers'],
       [VALIDATION, 'class-validator-jsonschema'],
     ],
   ])('wait in knip.json where nothing uses them, with what the library brings (%j)', (flags, waiting) => {
     expect(ignored(initProject(...flags))).toEqual(waiting);
+  });
+
+  it('do not wait under Nest controllers, whose composition reads their DTO classes from the start', () => {
+    expect(ignored(initProject('--http', 'nest', '--orm', 'none'))).toEqual([]);
   });
 
   it('stop waiting with the first file that validates, and knip.json keeps what else it ignores', () => {

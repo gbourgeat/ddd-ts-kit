@@ -1341,7 +1341,7 @@ export class AppModule {}
   { providers, schemaOfClass })`: its `routes` join the other routes of the application, and
   `provideControllers(served)` in the Nest module builds the controllers with what they inject
   (the buses, as `{ provide: CommandBus, useValue: commands }`) and hands the routes their
-  instances at the start. `ddd-ts-kit init --routes nest` writes that composition.
+  instances at the start. `ddd-ts-kit init --http nest` writes that composition (`--routes nest`, the default of a Nest project on class-validator).
 - `@KitRoutes({ group })` names a route group of the kit (`@RouteGroup`): its prefix comes before
   the paths of Nest, its tags, guards and codes before those of the class.
 - What a method takes and answers is its signature: TypeScript erases `Promise<IssuedInvoice>`,

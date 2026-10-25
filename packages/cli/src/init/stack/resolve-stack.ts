@@ -144,8 +144,8 @@ function stackOf(options: StackOptions): Record<string, string> {
   const docsUi = http === 'none' ? 'none' : (choose(DOCS_UIS, options.docsUi, 'docs-ui') ?? 'swagger');
   const persistence = resolvePersistence(options);
   const broker = resolveBroker(options, persistence.orm);
-  const tooling = resolveTooling(options);
-  const writing = resolveWriting(options);
+  const tooling = resolveTooling(options, http);
+  const writing = resolveWriting(options, { http, validation: tooling.validation });
 
   assertNestRoutes(writing.routes, http, tooling.validation);
 
@@ -213,12 +213,15 @@ function resolveOperations(
 /** How the code is written: a new project takes the forms of the current version, a recorded one keeps the form it says. */
 function resolveWriting(
   options: StackOptions,
+  { http, validation }: { http: string; validation: string },
 ): Record<'refusals' | 'routes' | 'schemas' | 'valueObjects' | 'literals' | 'values', string> {
   return {
     // A new project names each refusal and builds it through factories; a recorded one keeps the form it says, or the one of 0.2.
     refusals: choose(REFUSAL_FORMS, options.refusals, 'refusals') ?? 'named',
-    // A new project writes each route as a controller class; a recorded one keeps the form it says, or the functions of 0.3.
-    routes: choose(ROUTE_FORMS, options.routes, 'routes') ?? 'controllers',
+    // A new project writes each route as a controller class, a Nest controller on Nest with class-validator; a recorded one keeps the form it says, or the functions of 0.3.
+    routes:
+      choose(ROUTE_FORMS, options.routes, 'routes') ??
+      (http === 'nest' && validation === 'class-validator' ? 'nest' : 'controllers'),
     // A new project declares a shape once and shares it; a recorded one keeps the form it says, or one schema per route as 0.5.
     schemas: choose(SCHEMA_FORMS, options.schemas, 'schemas') ?? 'shared',
     // A new project throws the refusals of its value objects; a recorded one keeps the form it says, or the Result of 0.5.
@@ -307,9 +310,11 @@ function resolveBroker(options: StackOptions, orm: string): string {
 
 type Tooling = Record<'validation' | 'tests' | 'ci' | 'packageManager', string>;
 
-function resolveTooling(options: StackOptions): Tooling {
+/** A Nest project validates with class-validator, as Nest does; any other with Zod. */
+function resolveTooling(options: StackOptions, http: string): Tooling {
   return {
-    validation: choose(VALIDATION_STACKS, options.validation, 'validation') ?? 'zod',
+    validation:
+      choose(VALIDATION_STACKS, options.validation, 'validation') ?? (http === 'nest' ? 'class-validator' : 'zod'),
     tests: choose(TEST_STACKS, options.tests, 'tests') ?? 'vitest',
     ci: choose(CI_PLATFORMS, options.ci, 'ci') ?? 'github',
     packageManager: choose(PACKAGE_MANAGERS, options.packageManager, 'package-manager') ?? DEFAULT_PACKAGE_MANAGER,

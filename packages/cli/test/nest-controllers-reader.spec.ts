@@ -78,6 +78,11 @@ const FILES: Readonly<Record<string, string>> = {
   [`${FOLDER}/invoice-line.ts`]: 'export interface InvoiceLine {\n  sku: string;\n}\n',
   [`${FOLDER}/issue-invoice-body.ts`]: 'export class IssueInvoiceBody {}\n',
   [`${FOLDER}/invoices.controller.spec.ts`]: CONTROLLER.replace('InvoicesController', 'SpecController'),
+  // A module of the context keeps its presentation in its own folder.
+  ['src/contexts/billing/ledger/presentation/http/entries/entries.controller.ts']: CONTROLLER.replace(
+    'InvoicesController',
+    'EntriesController',
+  ),
 };
 
 const files = {
@@ -86,7 +91,9 @@ const files = {
 };
 
 describe('the Nest controllers of a context, read from their sources', () => {
-  const [controller] = readNestControllers(files, CONFIG, 'billing');
+  const controller = readNestControllers(files, CONFIG, 'billing').find(
+    ({ className }) => className === 'InvoicesController',
+  );
 
   it('finds the route methods of a controller the kit serves, and what each signature answers', () => {
     expect(controller?.className).toBe('InvoicesController');
@@ -130,12 +137,15 @@ describe('the Nest controllers of a context, read from their sources', () => {
     });
   });
 
-  it('knows a method whose @KitRoute says its body, and leaves out what is no route and the specs', () => {
+  it('knows a method whose @KitRoute says its body, and reads the modules of the context but not the specs', () => {
     expect(controller?.methods.filter(({ declaresResponse }) => declaresResponse).map(({ name }) => name)).toEqual([
       'declaredAnswer',
     ]);
 
-    expect(readNestControllers(files, CONFIG, 'billing')).toHaveLength(1);
+    expect(readNestControllers(files, CONFIG, 'billing').map(({ className }) => className)).toEqual([
+      'EntriesController',
+      'InvoicesController',
+    ]);
   });
 
   it('writes the list with what it read, a method it could not read left to @KitRoute or the checker', () => {

@@ -116,7 +116,9 @@ An import of a file of the project is written without an extension
 instead. A config without the key is read as `js`, so a project generated before the key
 existed keeps its spelling. See [docs/CONFIG.md](../../docs/CONFIG.md).
 
-Defaults: `express`, `zod`, `tsyringe` (`nest` with `--http nest`, and only then), `vitest`,
+Defaults: `express`, `zod` (`class-validator` with `--http nest`, as Nest validates), `tsyringe` (`nest` with
+`--http nest`, and only then), routes written as controllers of the kit (Nest controllers with `--http nest`
+on class-validator, `--routes nest`), `vitest`,
 `drizzle` on `postgres`, `outbox` when there is an ORM, `swagger`, `github`, `jwt`, `rbac`, no broker,
 the cache in the process, files in a local directory (`--storage local`), the audit trail `on` when there is an ORM, the requests of a data subject answered (`--privacy on`) when there is an ORM, no event store (`--event-sourcing off`), unexpected failures reported
 nowhere (`--errors none`), JSON lines on the standard output (`--logger stdout`), and the

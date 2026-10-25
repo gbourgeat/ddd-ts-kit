@@ -1,5 +1,5 @@
 [English](http-frameworks.md) · **Français**
-<!-- translation-of: http-frameworks.md sha256:3e023fea4176c9d2 -->
+<!-- translation-of: http-frameworks.md sha256:34c77dfbb0274eb6 -->
 
 # Frameworks HTTP : Express, Fastify, Hono, NestJS
 
@@ -238,7 +238,7 @@ Nest reste libre.
 
 | Vous écririez, en Nest | Dans le kit | Ce que cela garde |
 |---|---|---|
-| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | le même contrôleur Nest, `@KitRoute` sur chaque méthode, construit par Nest et servi par le kit ; `init --routes nest` en fait ce qu'écrit `generate route` | une sécurité déclarée sur chaque route, les codes de *problem* que lisent les clients, la route dans le contrat |
+| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | le même contrôleur Nest, ses parties et sa réponse lues dans sa signature, `@KitRoute` pour ses codes de refus, construit par Nest et servi par le kit ; ce qu'écrit `generate route` dans un projet Nest sur class-validator (`--routes nest`, la valeur par défaut) | une sécurité déclarée sur chaque route, les codes de *problem* que lisent les clients, la route dans le contrat |
 | un `ValidationPipe`, une classe DTO avec class-validator | les schémas de la route, écrits avec la bibliothèque de validation du projet (class-validator dans les piles Nest que le kit prouve) | la validation que documente le contrat, rien de transformé avant elle |
 | `@UseGuards(AuthGuard('jwt'))`, une stratégie Passport | l'authentification de la plateforme, lue par `resolvePrincipal` ; un *guard* de groupe de routes pour un contrôle en bordure (`generate guard`) | un appel anonyme refusé de la même façon sur chaque porte |
 | `@Roles('admin')`, un `RolesGuard`, CASL | la permission du cas d'usage (`requires` dans le fichier de module, `@Requires`), une *policy* pour une règle sur l'état chargé, une portée d'accès pour une recherche | le droit vérifié sur HTTP, `/rpc`, `/trpc`, un *job* et un événement pareil, les refus audités quand le journal d'audit est actif, les listes filtrées (`authz/*`) |

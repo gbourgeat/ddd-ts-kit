@@ -204,6 +204,27 @@ describe('the other generators of a route, on a Nest controller', () => {
   });
 });
 
+describe('the routes of the Nest controllers, as ddd-ts-kit describes them', () => {
+  it('reads each route method: its path under its group, its use case, its parts, its answer and its codes', () => {
+    const described = cli(root, 'describe', 'billing', '--json');
+    const routes = JSON.stringify(described.json());
+
+    expect(described.code).toBe(0);
+    expect(routes).toContain('"method":"POST","path":"/invoices/:invoiceId/issue","operationId":"issueInvoice"');
+    expect(routes).toContain('"useCase":"IssueInvoice","permission":"invoice.issue"');
+
+    expect(routes).toContain(
+      '{"part":"params","schema":"IssueInvoiceParams"},{"part":"body","schema":"IssueInvoiceBody"}',
+    );
+
+    expect(routes).toContain('"responses":[{"status":200,"schema":"InvoiceDetailsAnswer"}]');
+
+    expect(routes).toContain(
+      '"request":[{"part":"query","schema":"query"}],"responses":[{"status":200,"schema":"page of SearchInvoicesLine"}]',
+    );
+  });
+});
+
 describe('init --routes nest', () => {
   it.each([
     [['--http', 'express', '--validation', 'class-validator'], '--http express and --validation class-validator'],

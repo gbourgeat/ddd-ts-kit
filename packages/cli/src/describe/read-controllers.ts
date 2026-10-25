@@ -3,19 +3,18 @@ import { roleFoldersOf } from '../model-modules';
 import type { RequestPart, RouteFact, RouteResponse, UseCaseFact } from './context-description';
 import type { ContextSources } from './context-sources';
 import { decoratorOptions } from './decorator-options';
+import { guardErrors } from './guard-errors';
 import { listedIn } from './listed-in';
 import { presentationOfRoute } from './presentation-of-route';
 import { readRouteGroups } from './read-route-groups';
 import type { RouteGroupFact } from './route-group-fact';
+import { NO_GROUP } from './no-group';
+import { readNestControllerRoutes } from './read-nest-controller-routes';
+import { schemaClassOf } from './schema-class-of';
 
 const FOLDER = 'presentation/http';
+const NEST_BRIDGE = "from '@ddd-ts-kit/http/nest'";
 const PARTS = ['params', 'query', 'headers', 'body'];
-
-/** What the guards of the kit document on the routes behind them. */
-const GUARD_ERRORS: Readonly<Record<string, readonly string[]>> = {
-  Authenticated: ['UNAUTHORIZED'],
-  HasRole: ['UNAUTHORIZED', 'FORBIDDEN'],
-};
 
 interface Read {
   readonly file: string;
@@ -25,7 +24,7 @@ interface Read {
   readonly options: string;
 }
 
-/** The routes the controllers of a context declare, one per `*.controller.ts` file, with what their groups add. */
+/** The routes the controllers of a context declare, one per `*.controller.ts` file and one per route method of a Nest controller, with what their groups add. */
 export function readControllers(sources: ContextSources, useCases: readonly UseCaseFact[]): RouteFact[] {
   const { ws, directory } = sources;
   const groups = readRouteGroups(ws, directory);
@@ -36,6 +35,11 @@ export function readControllers(sources: ContextSources, useCases: readonly UseC
     .filter((file) => file.endsWith('.controller.ts'))
     .flatMap((path) => {
       const source = ws.read(path) ?? '';
+
+      if (source.includes(NEST_BRIDGE)) {
+        return readNestControllerRoutes({ sources, file: path, groups }, useCases);
+      }
+
       const options = decoratorOptions(source, 'Controller');
       const mapper = ws.read(path.replace(/\.controller\.ts$/, '.mapper.ts')) ?? '';
 
@@ -67,8 +71,6 @@ function routeOf(read: Read, groups: ReadonlyMap<string, RouteGroupFact>, useCas
   };
 }
 
-const NO_GROUP: RouteGroupFact = { name: '', prefix: '', guards: [], errors: [], tags: [] };
-
 function field(options: string, key: string): string {
   const [, written = ''] = new RegExp(String.raw`\b${key}:\s*'([^']*)'`).exec(options) ?? [];
 
@@ -99,7 +101,7 @@ function operationIdOf(source: string): string {
 
 function errorsOf(options: string, group: RouteGroupFact, guards: readonly string[]): string[] {
   const own = listedIn(options, 'errors').map((entry) => entry.replace(/^['"]|['"]$/g, ''));
-  const guarded = guards.flatMap((guard) => GUARD_ERRORS[guard.replace(/\(.*$/, '')] ?? []);
+  const guarded = guardErrors(guards);
 
   return [...new Set([...guarded, ...group.errors, ...own])];
 }
@@ -113,7 +115,7 @@ function requestOf(source: string, options: string): RequestPart[] {
   return PARTS.flatMap((part) => {
     const written = new RegExp(String.raw`(?:^|[\n,{])\s*${part}(?::\s*([^,\n]+?))?\s*,`).exec(outside);
 
-    return written === null ? [] : [{ part, schema: schemaName(source, written[1] ?? part) }];
+    return written === null ? [] : [{ part, schema: schemaClassOf(source, written[1] ?? part) }];
   });
 }
 
@@ -124,18 +126,5 @@ function responsesOf(source: string, options: string): RouteResponse[] {
 
   return status === undefined
     ? []
-    : [{ status: Number(status), schema: body === undefined ? '' : schemaName(source, body) }];
-}
-
-/** The class a schema validates with, when it names one; else what the controller writes. */
-function schemaName(source: string, written: string): string {
-  const page = /^pageSchemaOf\((.+)\)$/.exec(written)?.[1];
-
-  if (page !== undefined) {
-    return `page of ${schemaName(source, page)}`;
-  }
-
-  const inline = /^classSchema\((\w+)/.exec(written)?.[1];
-
-  return inline ?? new RegExp(String.raw`\bconst ${written} = classSchema\((\w+)`).exec(source)?.[1] ?? written;
+    : [{ status: Number(status), schema: body === undefined ? '' : schemaClassOf(source, body) }];
 }
