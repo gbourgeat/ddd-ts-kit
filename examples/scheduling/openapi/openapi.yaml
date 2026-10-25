@@ -1,7 +1,7 @@
 openapi: '3.1.0'
 info:
   title: scheduling
-  version: '0.90.0'
+  version: '0.91.0'
 tags:
   - name: analytics
   - name: audit

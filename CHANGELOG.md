@@ -4,6 +4,291 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.91.0
+
+**The background jobs and the process instances go to the database by default on every ORM of
+the kit and with every container: `TypeOrmJobStore` and `TypeOrmProcessStore`, and one rule for
+`init --queue`.** `@ddd-ts-kit/typeorm` gains the job store and the process store, with their
+tables `jobEntity()` and `processEntity()`, held to `jobStoreContract` and `processStoreContract`
+on PGlite and on PostgreSQL: a job enqueued by a command is written by its transaction, a claim
+takes the due rows `FOR UPDATE SKIP LOCKED`, an idempotency key is unique per job name and tenant,
+a step of a process manager saves its instance in its unit of work. `init --orm typeorm` now
+accepts `--queue database` and writes the two entities in the `messaging` schema. And the default
+of `--queue` no longer depends on the container: `database` on Knex, Drizzle, Prisma and TypeORM
+with tsyringe, Nest or a platform wired by hand, `memory` with a custom persistence or none. Until
+now a project under Nest or wired by hand kept its jobs in memory unless it asked otherwise.
+
+To move: nothing for an existing project, whose `stack.queue` is kept. A new project under Nest or
+wired by hand that wants its jobs in memory passes `--queue memory`.
+
+**The identity preset is written on Prisma: `init --orm prisma --preset identity`.** The context
+comes with its Prisma adapters (the repositories of the five aggregates, the search reader of the
+members, their mappers over the generated client, the declarations of the personal fields), and
+its models and enums laid out in `prisma/schema.prisma` in place of the ones the generators start:
+the closed vocabularies (the role of a member, the status of an account and of an invitation) are
+enums of the schema, the token of an invitation is unique, and one current membership per account
+and organisation is a partial unique index, `where: { removedAt: null }`, for which the preset
+turns on the `partialIndexes` preview feature of the client generator: a preview feature, which
+Prisma may change without a major version, so after an upgrade of Prisma check that
+`generated/schema.sql` still ends `members_current_idx` with `WHERE ("removed_at" IS NULL)`. The tables belong to no
+tenant, as on Knex and Drizzle. The preset is still refused on TypeORM, the explicit style and
+NestJS.
+
+To move: nothing for an existing project. A project on Prisma that wants the context runs
+`ddd-ts-kit generate context identity --preset identity`, then `npm run db:client` and
+`npm run db:generate identity`.
+
+**A route is served as an oRPC procedure too, for a typed TypeScript client: `orpcRouter` of `@ddd-ts-kit/http/orpc`.**
+`orpcRouter(routes, options)` turns each route into an oRPC procedure named by its `operationId`,
+for `RPCHandler` of `@orpc/server` (1.15 or later, a new optional peer of `@ddd-ts-kit/http`),
+mounted next to the routes under a prefix such as `/rpc`. Each call runs through `executeRoute`
+with the options of the HTTP adapter: the same guards, principal, tenant, validation,
+permissions, `onError` and `around`. A refusal is an `ORPCError` with the code and the status of
+its problem document, which it carries as its data, and a code the route declares (its own, its
+guards', `VALIDATION_FAILED`, the preconditions) is a defined error for the client. What only HTTP
+carries stays with the routes: an answer has no headers (no `ETag`, no cache policy), JSON is the
+only representation, a route that receives a file or a raw body is not a procedure, and a file or
+a list streamed as it is read is refused with 406 and closed.
+
+A list read as it comes and closed before its end now closes its cursor: the pipeline read its
+first item in advance, and stopping the list, as a client that goes away does, left the cursor
+open until it was collected.
+
+**`init --rpc orpc` serves the routes of the contexts under `/rpc` as oRPC procedures, and `ddd-ts-kit sdk` gives each client its oRPC contract at `./orpc`.**
+The new key `stack.rpc` (`none`, `orpc`) has `start-http-server.ts` mount `orpcRouter` of
+`@ddd-ts-kit/http/orpc` under `/rpc` on Express, Fastify, Hono and NestJS, with the options of the
+HTTP boundary, and adds `@orpc/server`; it needs an HTTP framework. `ddd-ts-kit sdk` then writes
+`src/orpc.ts` in each client: the oRPC contract of its document (`contract`, `createRpcClient`),
+each procedure named by its `operationId`, its input and answer the types of the HTTP client, its
+refusals the codes of `x-error-codes` with their status, so that `isDefinedError` narrows them.
+`@orpc/client` and `@orpc/contract` become the only dependencies of the client, whose root entry
+still has none; setting the key back to `none` takes them and `src/orpc.ts` away. The kit no longer
+documents oRPC as set aside: it is a second door to the routes, not a pair of the contract.
+
+To move: a project that wants the procedures runs `init --force --rpc orpc` on a clean tree (it
+records the key, rewrites `start-http-server.ts` and adds `@orpc/server`), then
+`npx ddd-ts-kit sdk` when it has clients.
+
+**The identity preset is written in the explicit style and under NestJS: `init --di manual --preset
+identity` and `init --http nest --di nest --preset identity`.** The classes of the context are written
+without the declarations of the kernel, a policy carrying its name and its permission, and the preset
+lays out `identity.module.ts` whole once the generators ran: its adapters, its use cases with the
+permission each requires, the publishers of its facts, the consumers that keep the identity provider
+in line (each with its consumer name, the processed-event store and the unit of work), and its
+routes, in short functions named after what they wire, the regions of the generators kept. Its
+policies join `access-policies.ts` of the platform, and the world of its specs wires the fakes the
+way the module wires the adapters; `test/unit/identity.module.spec.ts` holds the module itself to its
+use cases, on the platform: each command and query has its handler and its permission, and each
+route is mounted. Under NestJS the routes are mounted with those of the other
+contexts by the app module of the platform. The explicit style stays refused on tsyringe, which
+reads the declarations, and `--dependencies signature` is asked of the declared style only.
+
+To move: nothing for an existing project.
+
+**A project generated on Jest is green from its first minute, and the kit now runs it: Jest is
+installed in the workspace and one Jest stack joins the stacks its end-to-end suite runs.** Running
+it found what a type check could not: a Jest project listed `@vitest/coverage-v8`, which knip
+refused as unused; knip entered its fakes and worlds through top-level patterns, reported as
+matching nothing before the first context, instead of a `jest` section beside the `vitest` one of
+a Vitest project; the extractability spec of `test/architecture/` gave `it.each` an empty table,
+which Jest refuses, before the first context (it now waits with an `it.todo`); an import of a
+directory (`@/contexts/<context>/published-language`) did not resolve, each alias now mapping to the
+source then to the barrel of the directory; the modules of the Prisma client, written with `.js`,
+did not resolve, now mapped back to their sources; and a hook opening the test database outlasted
+the 5 seconds of Jest, now 60 as on Vitest. The identity preset is held green on NestJS,
+class-validator, Prisma, shared tables and Jest, the stack of the spend management example.
+
+To move: in `jest.config.js`, write each alias of `moduleNameMapper` as
+`['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts']` (the check asks for it), add
+`testTimeout: 60_000`, and on Prisma `'^(\\.{1,2}/.*)\\.js$': '$1'`; in `knip.json`, move the
+entries of the fakes and the worlds into a `jest` section with `"config": ["jest.config.js",
+"jest.e2e.config.js", "jest.mutation.config.js"]`; drop `@vitest/coverage-v8` from the dev
+dependencies.
+
+**A route is served as a tRPC procedure too: `trpcRouter` of `@ddd-ts-kit/http/trpc`.**
+`trpcRouter(routes, options)` turns each route into a tRPC procedure named by its `operationId`, a
+query for a `GET` route and a mutation for the other methods, for the adapters of `@trpc/server`
+(11.10 or later, a new optional peer of `@ddd-ts-kit/http`), mounted next to the routes under an
+endpoint such as `/trpc`. Each call runs through `executeRoute` with the options of the HTTP
+adapter, as a call of `orpcRouter` does. A refusal is a `TRPCError` of the code tRPC has for its
+status (`UNAUTHORIZED` for 401, `CONFLICT` for 409), with the problem document of the route in
+`data.problem`, whose `code` is the one of the kit: tRPC has a fixed set of codes of its own. What
+only HTTP carries stays with the routes, as over oRPC, and a binary body is refused with 406 too,
+as tRPC answers JSON only.
+
+Over oRPC, a file or a streamed list refused with 406 now carries its problem document as `data`,
+as every other refusal does.
+
+**`init --rpc trpc` serves the routes of the contexts under `/trpc` as tRPC procedures, and `ddd-ts-kit sdk` gives each client the type of their router at `./trpc`.**
+`stack.rpc` takes a third value, `trpc`: `start-http-server.ts` mounts `trpcRouter` of
+`@ddd-ts-kit/http/trpc` under `/trpc` on Express, Fastify, Hono and NestJS, with the options of
+the HTTP boundary, and adds `@trpc/server`; it needs an HTTP framework, as `orpc` does. `ddd-ts-kit
+sdk` then writes `src/trpc.ts` in each client: `AppRouter`, the type of the router written from
+its document, a query for each `GET` operation and a mutation for the others, their input and
+answer the types of the HTTP client, a refusal carrying its problem document in `data.problem`;
+`createRpcClient` and `isRpcRefusal` call it. A front end imports the client, never the code of
+the server. `@trpc/client` and `@trpc/server` become the only dependencies of the client; moving
+to another value takes them and `src/trpc.ts` away.
+
+To move: a project that wants the procedures runs `init --force --rpc trpc` on a clean tree (it
+records the key, rewrites `start-http-server.ts` and adds `@trpc/server`), then
+`npx ddd-ts-kit sdk` when it has clients. A project that served oRPC removes `@orpc/server` from
+its `package.json`: `init` adds the dependencies of a stack, it does not take back those of the
+previous one.
+
+**`init` on an existing project names each dependency of its `package.json` the stack about to be written contradicts.** The first `init` of a project that already has a `package.json`, a dry run included, adds a note per key its direct dependencies answer otherwise than the flags (`package.json depends on fastify, and the project is written for --http express: pass --http fastify to keep it.`), for the HTTP framework, the validation library, the injection, the test runner, the ORM, the database, the broker, the authentication, the logger, the error reporter and the storage. Two dependencies that answer one key differently are left to the owner, and said; the rights model is never read from a dependency. Nothing is written by these notes, and an initialised project is not read again. The `bootstrap` skill puts them to the owner.
+
+**The instances of the process managers are kept in the tenant of the work on Knex, Drizzle, Prisma and TypeORM alike, under a key that includes the tenant.**
+
+`KnexProcessStore`, `DrizzleProcessStore`, `PrismaProcessStore` and `TypeOrmProcessStore` take `tenant` (the `ExecutionScope`): a step loads and changes the instances of its own tenant only, and work that names no tenant is refused with `NoCurrentTenantError`. The table of each package (`createProcessTable`, `processesTable`, the `ProcessInstance` model, `processEntity`) always has `tenant_id`, the empty text outside any tenant, and its primary key is `(tenant_id, name, id)`: two tenants may run an instance under the same correlation key, a month or an invoice number, where the first save of the second was refused before. `processStoreContract` proves it with `storeInTenant`, on the four packages. A project generated with `--tenancy` gives the scope to its process store: `Persistence.processes` is now `(scope) => ProcessStore`.
+
+To move: drop `tenant: true` from `createProcessTable` (the option is gone, the column always there); `DrizzleProcessStore` takes its table as `{ table }`. A database created before needs a migration that adds `tenant_id` (`''` for the rows of no tenant, `addTenantColumn` of `@ddd-ts-kit/knex` for those of a tenant) and makes `(tenant_id, name, id)` the primary key; on Prisma, `prisma migrate dev` writes it from the model. In a generated project, `persistence.processes` is called with the execution scope (`persistence.processes(scope)`), as `init` now writes it.
+
+**A renamed `operationId` is a breaking change of the API when the routes are served as procedures, and the architecture reviewer says so.**
+With `stack.rpc` set to `orpc` or `trpc`, a procedure is named by the `operationId` of its route
+and called at that name: renaming it, giving a `GET` route another method (a tRPC query becomes a
+mutation) or having a route receive a file breaks a front end already deployed, which answers
+404 or calls it the wrong way. The table "Breaking or not" of the `document` skill lists these
+three changes, the client SDK guide says it, and the `architecture-reviewer` agent reports them
+from the diff of `openapi/`, blocking unless the change says its consumers move with it.
+
+**`generate property <context> <ValueObject>` writes the laws of a value object as a spec on generated values.** The spec lands beside the spec of the value object (`test/unit/<name>.vo.properties.spec.ts`), with an arbitrary built on its factory (`any<Name>()`), a first law (the value is equal to the one created again from its own value) and one planned rule per kind of law (an invariant after each operation, a symmetry, a round trip), under Vitest and Jest, for value objects that throw or return a `Result`. `fast-check` joins the development dependencies when the project does not have it yet; that write is a shared one, so a worker confined to its context runs the kind with `--local-only` once fast-check is there. The value object must exist: the refusal names the command that creates it.
+
+**`ddd-ts-kit check --baseline write` records the errors an existing codebase already has, and `check` then reports only new ones.** The errors of the checker are counted by file and by rule in `ddd-ts-kit-baseline.json`, the shape of `eslint-suppressions.json`. While a file has no more errors of a rule than the baseline records, `check` and `check-file` (the hook of the agent) leave them quiet; once it has more, all of them are reported. A recorded count the project no longer reaches fails `check` until `check --baseline prune` lowers it, so the baseline only shrinks. Warnings are not recorded. Writing it is a decision of the project owner, who runs the command in a terminal: the guard of the plugin refuses `check --baseline write` and any direct edit of the file to an agent, under Claude Code, Codex and Copilot alike, and the permissions `init` writes ask before both for an agent without the plugin. `check --baseline prune` is free.
+
+To move: in a project initialised before this version, run `npx ddd-ts-kit init` again: it adds the two permissions to `.claude/settings.json` and names them.
+
+**`ddd-ts-kit check` refuses in a context the tools of Nest that the kit does its own way, and says which tool of the kit to use instead (`nest/no-parallel-pipeline`).**
+The routes of the kit are mounted under Nest, not through its pipeline: a Nest guard, pipe,
+exception filter or interceptor never sees them, and a Nest controller written in a context was
+a route the checker let through, with no declared security, no problem codes and no place in the
+contract (`authz/declared` judged the controllers of the kit only). The new rule, an error,
+reports in `presentation/`, `infrastructure/` and the module file of a context, tests apart: a
+controller and its decorators, a guard, a pipe, an exception filter or an `HttpException`, an
+interceptor or the `Logger` of `@nestjs/common`, and `@nestjs/core`, `@nestjs/swagger`,
+`@nestjs/cqrs`, `@nestjs/passport`, `@nestjs/jwt`, `@nestjs/schedule`, `@nestjs/bull(mq)`,
+`@nestjs/config`, `@nestjs/throttler`, `@nestjs/cache-manager`, `@nestjs/event-emitter`, the ORM
+modules of Nest and `@nestjs/terminus`. Each finding names the tool of the kit in its place. The
+container of Nest (`@Injectable()`, `@Inject()` on an adapter bound as a provider), its WebSocket,
+GraphQL, microservice and testing packages, and everything in the platform are left alone. The
+HTTP frameworks guide gains "Where each tool of Nest goes", and the `wiring` skill `nest.md`.
+
+To move: a project with Nest code in a context runs `npx ddd-ts-kit check` and replaces each
+finding by the tool its message names (a Nest controller by `generate route`, a role guard by the
+permission of the use case, an `HttpException` by a refusal of the code list), or moves what is
+not a use case to the platform.
+
+**A file that moves keeps the errors `ddd-ts-kit-baseline.json` records for it.** Adopting the kit is made of moving code into the canonical tree: `move-to-module`, `context-layout` and `platform-folders` now carry the entry of each file they move to its new path, and `check --baseline prune`, which an agent may run, follows the renames git sees since the baseline was committed (a `git mv`) before it lowers the counts. A count follows its file and is never raised, so a move silences nothing new. A file moved otherwise (a plain `mv` git does not see as a rename) still reports its errors at its new path, and its old entry fails until the owner writes the baseline again.
+
+**A Nest controller is a route of the kit: `@KitRoute` on its method, `createControllersModule` of `@ddd-ts-kit/http/nest` to serve it.**
+A project on NestJS writes its controllers as Nest does (`@Controller`, `@Get`, `@Post`,
+`@Param`, `@Query`, `@Headers`, `@Body` with a DTO class, `@HttpCode`, injection by constructor),
+and adds `@KitRoute({ operationId, summary, guards, errors, response })` to each method,
+`@KitRoutes({ guards, tags, errors })` to the class for what its routes share. The kit, not Nest's
+router, serves the method, through the pipeline of every route: guards, validation of the DTO
+(`schemaOfClass: classSchema`), problem documents, tracing, the contract, and a procedure over
+`/rpc` and `/trpc`. `@CurrentActor()` hands the method the caller the authentication resolved;
+`@RouteContext()` the context of the request. `nestControllerRoutes` gives the same routes without
+Nest's container, for the contract and the procedures. What the kit's pipeline would not run is
+refused when the routes are built: `@UseGuards`, `@UsePipes`, `@UseInterceptors`, `@UseFilters`,
+`@Header`, `@Redirect`, `@Render`, `@Sse`, `@Version`, pipes on a parameter, `@Req`, `@Res`; a
+route with no guard is refused; a controller also among the `controllers` of a Nest module stops
+the start. The metadata Nest's decorators record is read in one place, checked on each read, and
+held by a test on the Nest the kit is released with.
+
+**`nest/no-parallel-pipeline` lets a Nest controller the kit serves declare its routes with Nest's decorators, and refuses anywhere a controller Nest serves that reaches a use case.**
+In a context, a file that imports `KitRoute` of `@ddd-ts-kit/http/nest` may use `@Controller`,
+`@Get`, `@Post` and the other methods, `@Param`, `@Query`, `@Headers`, `@Body` and `@HttpCode` of
+Nest: the kit reads them and serves the route through its own pipeline. The raw request and answer
+(`@Req`, `@Res`, `@Header`, `@Redirect`, `@Render`, `@Sse`, uploads), guards, pipes, filters and
+interceptors of Nest stay refused there. Outside the contexts, under the source root and outside
+the tests, a file that imports `Controller` of `@nestjs/common`, not `KitRoute`, and names
+`CommandBus` or `QueryBus` or imports a file of a context is reported: a controller Nest serves
+that reaches a use case has no declared security, no problem codes and no place in the contract,
+and moving it to the platform no longer hides it. A controller of the platform that reaches no
+use case (health, metrics) is left alone.
+
+To move: a Nest controller of the platform that sends commands or queries gets `@KitRoute` on each
+method and moves to `createControllersModule`, or becomes a route of the context.
+
+**A method of a Nest controller the kit serves that returns a value without `response.body` is refused, instead of answering an empty body.**
+In Nest, what a method returns is the body of the answer; under `@KitRoute` the kit answers the
+body its `response.body` declares, as the contract does, and dropped what an undeclared method
+returned without a word. The routes are now refused when they are built if TypeScript recorded
+that the method returns a value (`design:returntype`, under `emitDecoratorMetadata`), and an
+`async` method, whose recorded type is only `Promise`, is refused at the call: a 500, the reason
+told to `onError`.
+
+To move: give `response: { body }` to each `@KitRoute` whose method returns what the caller reads,
+or return nothing.
+
+**The guard of the plugin finds the CLI a workspace hoisted to a parent directory.** It looked for `node_modules/.bin/ddd-ts-kit` in the project only, so in a project of an npm or pnpm workspace, whose install lands at the root of the monorepo, it found none and skipped, without a word, every check that needs the CLI: the check of each written file, the refusal to stop while errors remain, the gates of a story. It now looks where Node would, from the project up to the root of the filesystem.
+
+To move: in a project of a workspace, the guard now runs those checks. Run `npx ddd-ts-kit check` before updating the plugin: an error it reports would otherwise first appear as a refusal to end a session.
+
+**A project generated on an ORM holds the stores of the kit, as its platform wires them, to their contracts; and the test database of a Drizzle project has its unique indexes.**
+
+`init` writes `src/platform/database/persistence.contract.spec.ts` on Knex, Drizzle, Prisma and TypeORM: the outbox, processed-event, job and process stores of `Persistence`, on the database of `open-test-database.ts`, run the contracts of `@ddd-ts-kit/testing` with what the stack turns on (`carriesTenant` and `storeInTenant` under `--tenancy`, the unit of work of a step with `--queue database`), and the event store with its snapshots, checkpoints and keys under `--event-sourcing on`. A store bound without the tenant the stack asks for now fails a spec of the project. On Drizzle, `table-statements.ts` creates the unique indexes and constraints of `schema.ts` too: the in-process database of the tests lacked the one of `background_jobs`, so a job enqueued in a spec failed with `there is no unique or exclusion constraint matching the ON CONFLICT specification`.
+
+Run for real at night on Prisma (NestJS, Jest, Kafka, shared tables, the jobs in the database) and on TypeORM, installed from the packed kit, three more things came out, now fixed: under Jest, a port that a module file wiring by hand never loads counted as uncovered code and dropped the domain under its floor from the first use case, so the ports (abstract members only, `ports/abstract-class`) are no longer measured, under Vitest or Jest; knip reported `prisma/schema.prisma` as outside the project on Prisma, and `data-source.ts`, which only the TypeORM CLI loads, as unused on TypeORM.
+
+To move: on a project generated before, `init --force` writes the spec and the new `table-statements.ts`; a Drizzle project that copied `table-statements.ts` by hand adds `uniqueIndexStatements` from the new template; `knip.json` gets `"prisma/**/*.prisma"` in `project` on Prisma, and the data source in `entry` on TypeORM.
+
+**`init --routes nest` makes a Nest controller what `generate route` writes: Nest builds it with the bus it injects, the kit serves it.**
+A new form of `stack.routes`, `nest`, for a project on `--http nest` with class-validator. `generate
+route` writes `<use-case>.controller.ts` with Nest's `@Controller()`, `@Post` or `@Get`, `@Param`,
+`@Body` typed by the DTO classes beside it, `@CurrentActor()` for the caller, the bus injected by
+Nest (`@Inject(CommandBus)`), and `@KitRoute` and `@KitRoutes({ group })` of
+`@ddd-ts-kit/http/nest`; the module of the context lists it under `controllers`, the application
+composes its routes with the others (`nestControllers`), and the Nest module of the platform builds
+it with the buses of the platform (`provideControllers`). The routes keep the guarantees of every
+route: the guards of the group, validation, problem documents, the contract, and the procedures
+over `/rpc` and `/trpc`. A search stays a controller of the kit (`generate controller`), and
+`--mapper` and `--serializer` are left out: the method maps its input and its answer itself.
+
+`@ddd-ts-kit/http/nest` gains `nestControllers`, `provideControllers` and `nestControllerRoute`,
+and `@KitRoutes` a `group`, a route group of the kit whose prefix, tags, guards and codes come first.
+
+To move: a new Nest project passes `--routes nest`; an existing one keeps its routes, and a context
+that gets Nest controllers needs the `controllers` list of the module file and the composition of
+the platform that `init --force --routes nest` writes.
+
+**On trial, `"dependenciesBeforeWrite": true` has the guard of the plugin refuse, before the write, a new import that breaks a dependency rule.** The lines a session is about to add to a TypeScript file (the content of a `Write`, the replacements of an `Edit`, the added lines of a Codex patch), less those the file already held, are judged by `layer/domain-purity`, `layer/application-inward`, `layer/infrastructure-no-presentation`, `layer/presentation-no-infrastructure` and `context/published-language-only`, and the write is refused with the message of the checker, under Claude Code, Codex and Copilot; the file never reaches the disk with the import. The other rules stay after the write. The key is off by default. `ddd-ts-kit check-file` gains `--content-from <file>`, which judges a given text as the content of the path, and `--rule <id>`. Each judged write is recorded, on the machine only, in `.git/ddd-ts-kit/before-write.jsonl` of the repository (the file, the rules refused, the time the check took), so that the trial can be decided on what it did; the example application runs it.
+
+**`@KitRoute` is optional: each method of a Nest controller the kit serves that carries a route decorator of Nest is a route, named after the method.**
+`@Post`, `@Get` and the other route decorators of Nest are enough: the route is named by the
+method (`issueInvoice`), summed up by its name as a sentence (`Issue invoice`), behind the guards
+of `@KitRoutes` on the class. `@KitRoute` says only what Nest does not: another name, guards of its
+own, the refusals it answers, the body it answers (a method that returns a value without it is
+still refused, never answered empty). `generate route` under `"stack.routes": "nest"` no longer
+writes the name and the summary, and `nest/no-parallel-pipeline` takes a file that imports
+`KitRoutes` alone for a controller the kit serves. The docs say that a generated controller
+injects the buses only, the providers the platform gives Nest.
+
+**A project without a database (`--orm custom` or `none`) and with `--cache redis` compiles again: its outbox relay is woken by its own store alone.**
+
+`main.ts` (and the `main.ts` of each extracted service) gave the relay two `wakeOn` keys, the signal of the in-memory persistence and the Redis signal, which TypeScript refuses (`An object literal cannot have multiple properties with the same name`). An outbox kept in the memory of the process is relayed by that process alone, so the Redis signal, which wakes the relay of another process, is no longer created there; with a database it stays. Found by the stacks that now meet every pair of capability values, generated and type-checked at night and before a release.
+
+To move: on such a project, `init --force` writes `main.ts` and the Redis services again; by hand, remove `wakeOn: redis.relaySignal` from `main.ts`.
+
+**A criterion of a story that states a law over every value of a value object becomes a property.** In the design review of the `story` skill, such a criterion ("never negative", "the total equals the sum of its lines", "overlaps the other in both directions or in none") gets a `Laws: <ValueObject>: <law>` line in the section of its row, and the build of the row states it with `generate property`, the law its title; the criterion keeps its scenarios in the acceptance. Measured on the example before its specs were hardened: the property of symmetry of `Range.overlaps` kills a mutant of a bound (`<` to `<=`) that its examples let through.
+
+**What a method of a Nest controller answers is its signature: the kit reads it into a generated `<context>.controllers.ts`, and `@KitRoute` no longer says it.**
+Under `"stack.routes": "nest"`, `ddd-ts-kit generate`, `docs` and the `dev` script write
+`<context>.controllers.ts` at the root of each context: its Nest controllers, each with what its
+route methods answer as their signatures say it (`Promise<IssuedInvoice>` a DTO class,
+`Promise<Accepted>` an identifier, `Promise<void>` nothing), through `withAnswers` of
+`@ddd-ts-kit/http/nest`. The module of the context lists them from that file, so `generate route`
+no longer touches it, and the generated controller declares in `@KitRoute` its validation and its
+refusal codes only, its status through `@HttpCode` of Nest when Nest would answer another. The
+check `nest/controllers-current` keeps the file current and reports a route method whose answer
+the kit cannot read into a schema (an array, an inline type, an interface, no type) and whose
+`@KitRoute` declares no `response`. A DTO without a decorated field accepts the empty object
+alone, as `whitelist` and `forbidNonWhitelisted` refuse any field.
+
+To move: a project on `--routes nest` runs `npx ddd-ts-kit docs` once, and its context modules
+list `<context>Controllers` from the generated file in place of their `controllers` list.
+
 ## 0.90.0
 
 **A generated project forces qs `^6.16.0`, and multer `^2.5.0` on Nest, where its stack still pins the vulnerable versions; one on Fastify asks for `fastify` `^5.12.7`.** Stryker 10.1 asks for `typed-rest-client` 2.3, which asks for qs 6.15.1 exactly (three denials of service, moderate), and `@nestjs/platform-express`, up to 12.2.0, asks for multer 2.4.0 exactly (a denial of service through a pending `fileFilter`, high). `init` forces the fixed versions in `overrides` of `package.json` under npm, and of `pnpm-workspace.yaml` under pnpm, which reads nothing of `package.json`. An override the project already sets for one of them is kept, and said, unless `--force`. Fastify 5.12.2 to 5.12.5 let a request header go around the validation of a schema whose `propertyNames` reads it by case (low).
