@@ -22,12 +22,15 @@ export function loadProject(root: string, options: ProjectOptions = {}): Project
   const { config, text: configText } = readConfig(root);
 
   const tree =
-    options.onlyFile === undefined ? walkTree(root, config) : oneFile(root, config, options.onlyFile, options.text);
+    options.onlyFile === undefined
+      ? walkTree(root, config)
+      : oneFile(root, config, { file: options.onlyFile, text: options.text });
 
   return assembleProject({ root, config, configText, ...tree });
 }
 
-function oneFile(root: string, config: Config, file: string, text: string | undefined): Tree {
+/** The one source the editor hook asks about: its text on disk, or the text about to be written. */
+function oneFile(root: string, config: Config, { file, text }: { file: string; text: string | undefined }): Tree {
   const source = text === undefined ? readSource(root, config, file) : loadSourceFile(config, file, text);
 
   return { files: [source], contextEntries: [], contextsOnDisk: [] };
