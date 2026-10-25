@@ -38,8 +38,16 @@ function pointAtTarballs(root: string, manager: Manager): void {
 
   if (manager === 'pnpm') {
     const overrides = Object.entries(kit).map(([name, tarball]) => `  '${name}': '${tarball}'`);
+    const workspace = read(root, 'pnpm-workspace.yaml');
 
-    write(root, 'pnpm-workspace.yaml', `${read(root, 'pnpm-workspace.yaml')}overrides:\n${overrides.join('\n')}\n`);
+    // init writes an overrides block of its own, and YAML refuses a second one: the tarballs join it.
+    write(
+      root,
+      'pnpm-workspace.yaml',
+      /^overrides:$/m.test(workspace)
+        ? workspace.replace(/^overrides:$/m, `overrides:\n${overrides.join('\n')}`)
+        : `${workspace}overrides:\n${overrides.join('\n')}\n`,
+    );
 
     return;
   }
