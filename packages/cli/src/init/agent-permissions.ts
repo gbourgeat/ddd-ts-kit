@@ -76,7 +76,9 @@ const DENY: readonly string[] = [
 const ASK: readonly string[] = [
   'Bash(git push *)',
   'Bash(npm publish *)',
+  'Bash(npx ddd-ts-kit check --baseline write*)',
   'Edit(./ddd-ts-kit.config.json)',
+  'Edit(./ddd-ts-kit-baseline.json)',
   'Edit(./REVIEW.md)',
   'Edit(./eslint.config.mjs)',
   'Edit(./biome.json)',

@@ -133,6 +133,7 @@ const E2E_SPEC = /^test\/e2e\/([^/]+)\.e2e\.spec\.ts$/;
 // Changing these is a decision about the rules themselves: the project owner confirms it.
 const GOVERNED_FILES = [
   /^ddd-ts-kit\.config\.json$/,
+  /^ddd-ts-kit-baseline\.json$/,
   /^eslint\.config\.[cm]?js$/,
   /^biome\.jsonc?$/,
   /^knip\.json$/,

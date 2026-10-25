@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:63337265cc3af0de -->
+<!-- translation-of: README.md sha256:4ddcbe78e2035004 -->
 
 # ddd-ts-kit
 
@@ -2027,6 +2027,7 @@ ajoute, `lint` ce qu'elle ajoute à ESLint ; les *pipelines* générés câblent
 ```
 ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab]
                  [--changed-since <git-ref>] [--explain] [--self]
+ddd-ts-kit check --baseline write|prune
 ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
 ddd-ts-kit check --commit-size [--staged] [--strict]
 ```
@@ -2087,6 +2088,17 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 règle.
 
 - `paths` et `--changed-since` limitent ce qui est signalé, pas ce qui est analysé.
+- `--baseline write` consigne les erreurs qu'un projet a déjà, comptées par fichier et par règle,
+  dans `ddd-ts-kit-baseline.json` (la forme de `eslint-suppressions.json`), pour un code existant
+  qui adopte le kit ; commitez-le. Dès lors, `check` et `check-file` (le *hook* de l'agent) taisent
+  les erreurs d'une règle dans un fichier tant qu'elles ne dépassent pas ce que la *baseline*
+  consigne, et les signalent toutes dès qu'elles le dépassent ; `check` échoue quand un compte
+  consigné n'est plus atteint, jusqu'à ce que `--baseline prune` l'abaisse, pour que la *baseline*
+  ne fasse que rétrécir. Les avertissements ne sont pas consignés : ils ne font rien échouer.
+  Écrire une *baseline* est une décision du *owner* du projet : les permissions qu'écrit `init`
+  demandent avant `check --baseline write` et avant une modification du fichier. Une *baseline*
+  fait taire les anciennes erreurs ; elle ne rend pas vérifiable une arborescence hors de
+  l'arborescence canonique.
   `--changed-since` lance `git diff --name-only --relative <ref>...` dans le projet.
 - `--format github` affiche des annotations `::error file=...,line=...::`.
 - `--explain` fait suivre les violations de chaque règle qu'elles signalent, une fois, avec sa
