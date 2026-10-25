@@ -33,7 +33,10 @@ const FLAVOURS: readonly (readonly [string, readonly string[]])[] = [
   ],
   ['prisma, zod, rbac, shared tables', ['--orm', 'prisma', '--tenancy', 'shared-table']],
   ['explicit, wired by hand, fastify', ['--di', 'manual', '--http', 'fastify']],
-  ['explicit, nest, class-validator', ['--http', 'nest', '--di', 'nest', '--validation', 'class-validator']],
+  [
+    'explicit, nest, class-validator, Nest controllers',
+    ['--http', 'nest', '--di', 'nest', '--validation', 'class-validator', '--routes', 'nest'],
+  ],
   // The stack of the spend management example: NestJS, class-validator, Prisma with tenants, Jest.
   [
     'nest, class-validator, prisma, shared tables, jest',

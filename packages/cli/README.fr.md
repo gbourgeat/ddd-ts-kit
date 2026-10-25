@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:bf3f78e88c8fdd94 -->
+<!-- translation-of: README.md sha256:64dd6a2cd8bbfdec -->
 
 # ddd-ts-kit
 
@@ -68,7 +68,7 @@ ddd-ts-kit init [--http express|fastify|hono|nest|none]
                 [--errors none|sentry] [--logger stdout|pino|winston]
                 [--style declared|explicit] [--assembly barrel|discovery]
                 [--dependencies signature|listed] [--refusals named|factories|classes]
-                [--routes controllers|functions] [--value-objects throwing|result]
+                [--routes controllers|functions|nest] [--value-objects throwing|result]
                 [--literals named|free] [--values classes|free] [--tenancy none|shared-table]
                 [--queue database|redis|memory]
                 [--schemas shared|per-route]
@@ -670,7 +670,7 @@ quoi que dise `--authz` : l'attribution `'identity:*'` de `platform/auth/authori
 le *preset* écrit, et avec `--authn keycloak` l'authentificateur lit le *claim* `organization`
 comme les *tenants* de la personne (un autre authentificateur reçoit une étape suivante qui dit
 quoi faire correspondre). Le *preset* est écrit pour `declared` avec les dépendances `signature`,
-`factories`, les objets-valeurs `throwing`, `controllers`, Knex ou Drizzle sur PostgreSQL, Zod ou
+`factories`, les objets-valeurs `throwing`, les routes `controllers` ou `nest` (des contrôleurs Nest, lus dans leurs signatures, sur un projet Nest), Knex ou Drizzle sur PostgreSQL, Zod ou
 class-validator, Express ou Fastify, et un vérificateur de jeton (`jwt` ou `keycloak`) ; une
 autre *stack* est refusée avec ce qu'il faut changer, de même qu'un second contexte écrit depuis
 le même *preset*. Pourquoi, et quels autres contextes en méritent un :
