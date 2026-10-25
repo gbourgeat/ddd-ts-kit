@@ -209,7 +209,9 @@ git tag v0.2.0 && git push origin v0.2.0
 
 The pull request of a release (its title starts with `chore(release)`) runs the generated
 projects on Prisma and TypeORM installed for real, as the night does (`npm run
-ci:test:stacks-at-night`): the pipeline of another pull request only type-checks them. The tag
+ci:test:stacks-at-night`) and the stacks that meet every pair of capability values (`npm run
+ci:test:pairwise`): the pipeline of another pull request only type-checks the first and leaves
+the second to the night. The tag
 starts the `Release` workflow: it runs them once more and publishes nothing while one of them is
 red (tag once the `managers` job of the pull request of the release is green: the tag points at
 that code; if `generated-stacks` still fails, nothing reached npm, so fix on `main`, delete the

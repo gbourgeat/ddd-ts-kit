@@ -331,6 +331,21 @@ jobs:
           KIT_AFFECTED: ${{ needs.install.outputs.packages }}
         run: npm run ci:test:e2e:stacks -- --shard=${{ matrix.shard }}/4
 
+  pairwise:
+    name: Every pair of capability values, generated and type-checked
+    needs: install
+    # At night and on the pull request of a release: the stacks generated to meet every pair of values of two capability flags.
+    if: ${{ needs.install.outputs.integrated == 'true' && (github.event_name == 'schedule' || startsWith(github.event.pull_request.title, 'chore(release)')) }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Each stack generated whole and held to the compiler
+        run: npm run ci:test:pairwise
+
   managers:
     name: Generated project on ${{ matrix.manager }}
     needs: install

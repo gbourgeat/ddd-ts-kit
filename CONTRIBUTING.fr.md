@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:2c28deaa1e5b8c50 -->
+<!-- translation-of: CONTRIBUTING.md sha256:64b9515bf6f154be -->
 
 # Contribuer
 
@@ -228,7 +228,9 @@ git tag v0.2.0 && git push origin v0.2.0
 
 La pull request d'une release (son titre commence par `chore(release)`) fait tourner les projets
 générés sur Prisma et TypeORM installés pour de vrai, comme la nuit (`npm run
-ci:test:stacks-at-night`) : la CI d'une autre pull request ne fait que les typer. L'étiquette
+ci:test:stacks-at-night`) et les *stacks* qui font se rencontrer chaque paire de valeurs de
+capacité (`npm run ci:test:pairwise`) : la CI d'une autre pull request ne fait que typer les
+premiers et laisse les secondes à la nuit. L'étiquette
 lance le workflow `Release` : il les fait tourner une fois de plus et ne publie rien tant que l'un
 d'eux est rouge (posez l'étiquette une fois le job `managers` de la pull request de la release
 vert : l'étiquette pointe sur ce code ; si `generated-stacks` échoue quand même, rien n'a atteint

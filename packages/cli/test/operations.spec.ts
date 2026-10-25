@@ -10,6 +10,15 @@ const stack = (root: string): Record<string, string> =>
   (JSON.parse(read(root, 'ddd-ts-kit.config.json')) as { stack: Record<string, string> }).stack;
 
 describe('init --cache', () => {
+  it('wakes an outbox kept in memory by its own store alone, the relay of no other process to reach', () => {
+    const root = tempDir('operations');
+
+    cli(root, 'init', '--cache', 'redis', '--orm', 'custom', '--http', 'none');
+
+    expect(read(root, 'src/main.ts')).toContain('wakeOn: persistence.relaySignal');
+    expect(read(root, 'src/main.ts')).not.toContain('redis.relaySignal');
+  });
+
   it('redis wires the cache, the limiter, the relay signal, the readiness probe and a Dragonfly service named cache', () => {
     const root = tempDir('operations');
 
