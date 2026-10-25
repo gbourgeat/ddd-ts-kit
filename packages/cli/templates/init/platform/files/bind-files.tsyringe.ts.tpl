@@ -19,7 +19,7 @@ import {
  */
 export function bindFiles(builder: ModuleBuilder, storage: FileStorage): void {
   builder.bind(FileStorage).toValue(storage);
-  // TODO(platform): bind a scanner of your own (an antivirus, a content check) before accepting files from people you do not know.
+  // TODO(platform): plug in a scanner of your own (an antivirus, a content check) before accepting files from people you do not know.
   builder.bind(FileScanner).toValue(new AcceptEveryFileScanner());
 
   builder

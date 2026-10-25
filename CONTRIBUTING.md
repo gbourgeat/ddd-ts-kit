@@ -65,6 +65,18 @@ node --test plugin/hooks/guard.test.mjs
   an adapter is proven by the contract of its port in `@ddd-ts-kit/testing`, never by a spec of
   one package alone: a new option comes with the capability of the contract that proves it,
   which every member then runs.
+- What `init` and the presets refuse, and what the members of a family of flags (the ORM, the
+  containers, the HTTP frameworks, the brokers, the runners...) generate differently, is written
+  in `packages/cli/test/support/support-matrix.ts`, each line `decided` or `not yet` with its
+  reason. `support-matrix.spec.ts` tries every flag and every pair of flags, and generates each
+  member of a family with every capability on: a refusal, a platform todo or a package of the kit
+  that no line explains fails, and so does a line that no longer holds. A `not yet` line is a gap
+  that stays in sight until a pull request fills it and removes the line.
+- A line of those two registries turns a failing check green, so it is a decision of the
+  maintainer, never the shortest way to a green pipeline: its reason says what the member does
+  instead (a reason too short, or a promise for later, fails), the run of a pull request annotates
+  each line it adds (`pipeline/monorepo/asymmetries.mjs`), and in Claude Code the hook of
+  `.claude/settings.json` asks before any edit of them, whatever the permission mode.
 - A new check rule comes with a passing and a failing fixture, a `fix` sentence and an
   `explain` entry.
 - A change that makes the checks report what they did not (a new rule, a rule that judges more

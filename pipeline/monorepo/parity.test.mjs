@@ -30,6 +30,9 @@ export interface PrismaProcessStoreOptions<Tx> {
   readonly tenant?: ExecutionScope;
 }`;
 
+/** A reason long enough to be read as one. */
+const REASON = 'the member keeps the instances another way';
+
 const RUN_IN_TENANT = `processStoreContract(runner, { name: 'a', createStore, storeInTenant: (tenant) => store(tenant) });`;
 const RUN = `processStoreContract(runner, { name: 'b', createStore: () => store() });`;
 
@@ -57,8 +60,8 @@ test('a capability of the contract one member gives and another does not fails',
 
 test('an asymmetry written with its reason passes, and fails once it is no longer true', () => {
   const apart = {
-    apart: { tenant: { prisma: 'a reason' } },
-    capabilitiesApart: { storeInTenant: { prisma: 'a reason' } },
+    apart: { tenant: { prisma: REASON } },
+    capabilitiesApart: { storeInTenant: { prisma: REASON } },
   };
   const lacking = source({ knex: KNEX_IN_TENANT, prisma: PRISMA, knexSpec: RUN_IN_TENANT, prismaSpec: RUN });
 
@@ -77,6 +80,19 @@ test('an asymmetry written with its reason passes, and fails once it is no longe
   ]);
 });
 
+test('a reason that says too little is refused', () => {
+  const vague = {
+    apart: { tenant: { prisma: 'later' } },
+    capabilitiesApart: { storeInTenant: { prisma: 'TODO: fix this one day' } },
+  };
+  const lacking = source({ knex: KNEX_IN_TENANT, prisma: PRISMA, knexSpec: RUN_IN_TENANT, prismaSpec: RUN });
+
+  assert.deepEqual(problemsOf(family(vague), lacking), [
+    'ORM, process store: the reason given for prisma says too little ("later"): say what the member does instead, or fill the gap.',
+    'ORM, process store: the reason given for prisma says too little ("TODO: fix this one day"): say what the member does instead, or fill the gap.',
+  ]);
+});
+
 test('a member whose specs never run the contract fails, unless it says why', () => {
   const silent = source({ knex: PRISMA.replace('Prisma', 'Knex'), prisma: PRISMA, knexSpec: '', prismaSpec: RUN });
 
@@ -84,7 +100,7 @@ test('a member whose specs never run the contract fails, unless it says why', ()
     'ORM, process store: the specs of knex never run processStoreContract. Hold its adapter to it, or say in families.mjs (withoutContract) why not.',
   ]);
 
-  assert.deepEqual(problemsOf(family({ withoutContract: { knex: 'a reason' } }), silent), []);
+  assert.deepEqual(problemsOf(family({ withoutContract: { knex: REASON } }), silent), []);
 });
 
 test('a call with a type argument is a call of the contract', () => {
