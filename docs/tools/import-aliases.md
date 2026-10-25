@@ -154,7 +154,7 @@ names), and `$test/`, `$scripts/`, `$generated/` (already taken).
 | `node` (production, `npm start`, the Docker image) | nothing: the output holds relative paths only | nothing |
 | tsx (`npm run dev`) | `paths`, by itself, also for a file loaded with `--import` | nothing: the script has no flag for it |
 | vitest | `paths`, once told to | `resolve: { tsconfigPaths: true }` in its configs (native to vite 8, no plugin) |
-| jest | nothing of tsconfig | `moduleNameMapper`, the same entries, each pattern ending as the imports do: `'^@/(.*)$': '<rootDir>/src/$1.ts'` under `none`, `'^@/(.*)\\.js$': '<rootDir>/src/$1.ts'` under `js`. The target is always the TypeScript source |
+| jest | nothing of tsconfig | `moduleNameMapper`, the same entries, each pattern ending as the imports do: `'^@/(.*)$': ['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts']` under `none` (the source, then the barrel of a directory), `'^@/(.*)\\.js$': '<rootDir>/src/$1.ts'` under `js`. The target is always the TypeScript source |
 | dependency-cruiser | `paths`, once told to | `tsConfig: { fileName: 'tsconfig.json' }` in the generated `.dependency-cruiser.cjs` |
 | knip | `paths`, by itself | nothing |
 | drizzle-kit (`npm run db:generate <what-it-does>`) | `paths`, by itself, when it loads the TypeScript schema | nothing: the script is `ddd-ts-kit drizzle-generate --name`, which runs `drizzle-kit generate --name` in the project root |
@@ -176,9 +176,9 @@ export default defineConfig({
 ```js
 // jest.config.js: jest reads no tsconfig, so the mapping is repeated, each target a source.
 moduleNameMapper: {
-  '^@/(.*)$': '<rootDir>/src/$1.ts',
-  '^\\$test/(.*)$': '<rootDir>/test/$1.ts',
-  '^\\$scripts/(.*)$': '<rootDir>/scripts/$1.ts',
+  '^@/(.*)$': ['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts'],
+  '^\\$test/(.*)$': ['<rootDir>/test/$1.ts', '<rootDir>/test/$1/index.ts'],
+  '^\\$scripts/(.*)$': ['<rootDir>/scripts/$1.ts', '<rootDir>/scripts/$1/index.ts'],
 },
 ```
 

@@ -109,7 +109,7 @@ Speed comparisons between the two depend on the project and were not measured fo
   legacy decorator mode and both runners handle it. In the standard mode, Vitest needs one
   plugin line, which the generated config has; the Jest template sets the standard mode in the
   options of `@swc/jest`.
-- **Coverage gates per layer.** Both configs read the thresholds from `ddd-ts-kit.config.json` (`governedCoverage`, `governedJestCoverage`). The Vitest gate is run on generated projects by the end-to-end suite of the CLI; the Jest one is written and not run there, the workspace does not install Jest.
+- **Coverage gates per layer.** Both configs read the thresholds from `ddd-ts-kit.config.json` (`governedCoverage`, `governedJestCoverage`). The Vitest gate is run on generated projects by the end-to-end suite of the CLI; the Jest one is written and not run there, although the suite runs the specs of a Jest stack (below).
 - **Framework habits.** NestJS documentation and generators assume Jest; that is a habit, not
   a constraint, since handlers and aggregates of the kit are tested without the framework.
 
@@ -243,7 +243,7 @@ import { governedJestCoverage, unaffectedContexts } from '@ddd-ts-kit/testing/co
 
 export default {
   testEnvironment: 'node',
-  moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1.ts' }, // the "paths" of tsconfig.json, repeated
+  moduleNameMapper: { '^@/(.*)$': ['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts'] }, // the "paths" of tsconfig.json, repeated
   testPathIgnorePatterns: ['/node_modules/', ...unaffectedContexts().map((directory) => `/${directory}`)],
   extensionsToTreatAsEsm: ['.ts'],
   transform: {
@@ -284,13 +284,19 @@ export default {
   on 2026-10-10, https://nodejs.org/api/vm.html) labels `vm.Module`, `vm.SourceTextModule` and
   `vm.SyntheticModule` "Stability: 1 - Experimental", and Jest's own page calls its ESM
   support experimental; mocking a module in ESM goes through `jest.unstable_mockModule`.
-- `@swc/jest` was last published in September 2025 (0.2.39 on npm); it works with current
-  Jest as far as the template assumes, which was not run for this page.
+- `@swc/jest` was last published in September 2025 (0.2.39 on npm); it runs with Jest 30.5.2,
+  which the workspace installs: the end-to-end suite of the CLI runs the specs of a generated
+  project on Jest from its first minute, and the identity preset on NestJS, class-validator,
+  Prisma and Jest, the stack of the spend management example.
 - The template writes the decorator mode of the project into `jest.config.js` when the
   project is generated: Jest does not read `tsconfig.json`, so a project that later changes
   its mode there changes the `transform` options of `jest.config.js` too.
-- No unit and integration split, no in-repository proof of a full run: those are yours to add
-  and to keep working.
+- No unit and integration split: the specs run in one Jest project, given 60 seconds per test
+  and per hook (`testTimeout`), as Vitest gives the hooks that open the test database.
+- An import without an ending can name a directory: each alias is mapped to the source, then to
+  the barrel of the directory (`['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts']`). On Prisma,
+  the client `prisma generate` writes names its own modules with `.js`, mapped back to their
+  sources (`'^(\\.{1,2}/.*)\\.js$': '$1'`).
 
 **Either one**
 
