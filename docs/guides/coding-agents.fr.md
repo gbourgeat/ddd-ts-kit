@@ -1,10 +1,10 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:f14836116b217063 -->
+<!-- translation-of: coding-agents.md sha256:da42886e03eb1ef9 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
 Le [dépôt ddd-ts-kit](https://github.com/gbourgeat/ddd-ts-kit) est la marketplace du plugin pour
-les trois agents :
+trois agents de code :
 
 | Agent | Installation | Une skill s'appelle |
 |---|---|---|
