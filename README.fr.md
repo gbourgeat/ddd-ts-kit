@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:fc17a7c5153c5c72 -->
+<!-- translation-of: README.md sha256:177849b0ec74f9de -->
 
 <div align="center">
 
@@ -43,12 +43,13 @@ chaque push.
 - **Des règles, pas des consignes.** Chaque règle a un identifiant, une raison et une correction
   (`npx ddd-ts-kit explain <rule-id>`), vérifiées par une CLI sans dépendance, un plugin ESLint
   et dependency-cruiser.
-- **Générer, pas taper.** `ddd-ts-kit generate` écrit 36 types de briques avec leur spec, leur
+- **Générer, pas taper.** `ddd-ts-kit generate` écrit 42 types de briques avec leur spec, leur
   fake et leur enregistrement, et laisse un `TODO(domain)` là où une décision métier est
   attendue.
 - **Fait pour les agents de code.** Un plugin pour Claude Code, Codex et GitHub Copilot : des
   skills qui conduisent le travail étape par étape, des agents pour le travail en parallèle et la
-  revue, et un hook qui refuse une écriture qui enfreint une règle.
+  revue, et un hook qui vérifie chaque fichier TypeScript que l'agent écrit et nomme aussitôt
+  la règle enfreinte.
 - **Votre stack, pas la nôtre.** Express, Fastify, Hono ou NestJS ; zod, class-validator, TypeBox
   ou toute bibliothèque Standard Schema ; tsyringe, NestJS ou un câblage manuel ; Drizzle, Knex,
   Prisma ou TypeORM ; RabbitMQ, Kafka, NATS JetStream ou Redis Streams ; JWT ou Keycloak ;
@@ -78,8 +79,9 @@ laquelle mène le lien de sa première ligne.
 
 Vous ne lancez pas ddd-ts-kit vous-même : votre agent de code le fait. Vous décrivez le métier,
 répondez à ses questions et relisez ce qu'il écrit ; l'agent lance les générateurs, les
-vérifications et la porte de qualité, et le hook du plugin refuse une écriture qui enfreint une
-règle.
+vérifications et la porte de qualité, et le hook du plugin vérifie chaque fichier TypeScript qu'il
+écrit, nomme aussitôt la règle enfreinte et refuse une fois de s'arrêter tant qu'une erreur
+demeure.
 
 **1. Installez le plugin** dans l'agent que vous utilisez. Ce dépôt est sa marketplace :
 
@@ -96,9 +98,10 @@ règle.
 /ddd-ts-kit:start Une API pour une boutique : les clients passent des commandes, chaque commande est facturée, puis expédiée.
 ```
 
-L'agent conduit les [neuf étapes](#démarrer-un-projet) une à une et s'arrête pour votre
-décision à chaque choix stratégique. Il écrit la découverte, les contextes délimités et leurs
-glossaires sous `docs/architecture/` pour que vous les relisiez, puis amorce le projet, planifie
+L'agent conduit les sept premières des [neuf étapes](#démarrer-un-projet) une à une et s'arrête
+pour votre décision à chaque choix stratégique. Il écrit la découverte, les contextes délimités
+et leurs glossaires sous `docs/architecture/` pour que vous les relisiez, puis vous fait lancer
+`/ddd-ts-kit:bootstrap`, planifie
 les tranches et les construit un commit à la fois, vert sur toute la porte à chaque étape. Une
 session ultérieure reprend depuis `docs/architecture/plan.md` : la même skill, sans argument.
 
@@ -233,14 +236,15 @@ autres :
 `npx ddd-ts-kit rules` liste chaque identifiant avec sa sévérité ; la
 [référence de l'architecture](docs/ARCHITECTURE.fr.md) les définit.
 
-![Les mêmes règles vérifiées à trois moments : à chaque écriture de fichier par le hook du plugin Claude Code, avant chaque fusion par npm run verify, et à chaque push par le pipeline de CI, les trois appliquant les règles définies dans docs/ARCHITECTURE.md](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/ddd-ts-kit-checks.fr.svg)
+![Les mêmes règles vérifiées à trois moments : à chaque écriture de fichier par le hook du plugin, avant chaque fusion par npm run verify, et à chaque pull request par le pipeline de CI, les trois appliquant les règles définies dans docs/ARCHITECTURE.md](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/ddd-ts-kit-checks.fr.svg)
 
 ## Le plugin pour agents de code
 
 Ce dépôt est la marketplace du plugin pour Claude Code, Codex et GitHub Copilot ; le
-[démarrage rapide](#démarrage-rapide) dit comment chaque agent l'installe. Vingt-deux skills conduisent un projet d'une expression des besoins jusqu'à des contextes qui
-fonctionnent, cinq agents explorent, construisent un contexte dans son propre worktree,
-écrivent les specs, relisent et jugent un changement d'un test d'acceptation verrouillé, et le hook refuse un fichier écrit à la main là où un générateur
+[démarrage rapide](#démarrage-rapide) dit comment chaque agent l'installe. Vingt-six skills conduisent un projet d'une expression des besoins jusqu'à des contextes qui
+fonctionnent, six agents explorent, construisent un contexte dans son propre worktree,
+écrivent les specs, relisent, jugent un changement d'un test d'acceptation verrouillé et
+vérifient une story à sa clôture dans un contexte neuf, et le hook refuse un fichier écrit à la main là où un générateur
 existe et vérifie chaque fichier écrit. Même sans plugin, l'`AGENTS.md` et les règles par couche
 qu'écrit `init` guident chaque agent. [Le plugin pour agents de code](docs/guides/coding-agents.fr.md)
 liste les skills et dit ce que chaque hôte exécute.

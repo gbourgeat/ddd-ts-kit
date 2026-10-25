@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 496" width="960" height="496" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">Un seul jeu de règles, vérifié à trois moments</title>
-  <desc id="desc">À chaque écriture de fichier, le hook du plugin Claude Code vérifie le fichier écrit et renvoie chaque violation avec sa correction. Avant chaque fusion, npm run verify lance le compilateur, ESLint avec le plugin du kit, le formateur, les tests, le checker, dependency-cruiser, knip et les contrôles de dérive. À chaque push, le pipeline de CI lance les mêmes scripts, plus les tests d'intégration, les analyses de sécurité et la construction de l'image, derrière une porte finale unique. Les trois appliquent les règles définies dans docs/ARCHITECTURE.md.</desc>
+  <desc id="desc">À chaque écriture de fichier, le hook du plugin vérifie le fichier écrit et renvoie chaque violation avec sa correction. Avant chaque fusion, npm run verify lance le compilateur, ESLint avec le plugin du kit, le formateur, les tests, le checker, dependency-cruiser, knip et les contrôles de dérive. À chaque pull request, le pipeline de CI lance les mêmes scripts, plus les tests d'intégration, les analyses de sécurité et la construction de l'image, derrière une porte finale unique. Les trois appliquent les règles définies dans docs/ARCHITECTURE.md.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
@@ -10,7 +10,7 @@
   <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un seul jeu de règles, vérifié à trois moments</text>
   <rect x="32" y="62" width="272" height="330" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
   <text x="50" y="92" font-size="16" font-weight="700" fill="#5f6b73">1. À chaque écriture</text>
-  <text x="50" y="114" font-size="13" font-style="italic" fill="#1f2328">le hook du plugin Claude Code</text>
+  <text x="50" y="114" font-size="13" font-style="italic" fill="#1f2328">le hook du plugin</text>
   <line x1="48" y1="128" x2="288" y2="128" stroke="#5f6b73" stroke-opacity="0.35"/>
   <circle cx="54" cy="149" r="2.5" fill="#5f6b73"/>
   <text x="64" y="154" font-size="14" fill="#1f2328">check-file sur le fichier écrit</text>
@@ -21,8 +21,8 @@
   <text x="64" y="226" font-size="14" fill="#1f2328">un fichier écrit à la main refusé</text>
   <text x="64" y="246" font-size="14" fill="#1f2328">là où un générateur existe</text>
   <circle cx="54" cy="267" r="2.5" fill="#5f6b73"/>
-  <text x="64" y="272" font-size="14" fill="#1f2328">pas de fin tant que des erreurs</text>
-  <text x="64" y="292" font-size="14" fill="#1f2328">d'architecture restent</text>
+  <text x="64" y="272" font-size="14" fill="#1f2328">la fin refusée une fois tant</text>
+  <text x="64" y="292" font-size="14" fill="#1f2328">que des erreurs restent</text>
   <rect x="344" y="62" width="272" height="330" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
   <text x="362" y="92" font-size="16" font-weight="700" fill="#5f6b73">2. npm run verify</text>
   <text x="362" y="114" font-size="13" font-style="italic" fill="#1f2328">sur votre poste, avant chaque fusion</text>
@@ -47,7 +47,7 @@
   <text x="376" y="376" font-size="14" fill="#1f2328">et du contrat</text>
   <rect x="656" y="62" width="272" height="330" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
   <text x="674" y="92" font-size="16" font-weight="700" fill="#5f6b73">3. Le pipeline de CI</text>
-  <text x="674" y="114" font-size="13" font-style="italic" fill="#1f2328">GitHub ou GitLab, à chaque push</text>
+  <text x="674" y="114" font-size="13" font-style="italic" fill="#1f2328">GitHub ou GitLab, par pull request</text>
   <line x1="672" y1="128" x2="912" y2="128" stroke="#5f6b73" stroke-opacity="0.35"/>
   <circle cx="678" cy="149" r="2.5" fill="#5f6b73"/>
   <text x="688" y="154" font-size="14" fill="#1f2328">les mêmes scripts npm</text>
