@@ -45,6 +45,7 @@
     "ci:test:alias": "DDD_TS_KIT_E2E=1 VITEST_MAX_WORKERS=2 vitest run --hookTimeout=240000 packages/cli/test/e2e/alias-runtime.spec.ts packages/cli/test/e2e/alias-runtime-second-half.spec.ts packages/cli/test/e2e/alias-tools.spec.ts packages/cli/test/e2e/alias-fixes.spec.ts packages/cli/test/e2e/alias-example.spec.ts",
     "ci:test:e2e": "DDD_TS_KIT_E2E=1 vitest run --no-file-parallelism --hookTimeout=180000 packages/cli/test/e2e",
     "ci:test:e2e:stacks": "node pipeline/monorepo/e2e-shards.mjs",
+    "ci:test:pairwise": "DDD_TS_KIT_E2E=1 DDD_TS_KIT_PAIRWISE=1 VITEST_MAX_WORKERS=2 vitest run --hookTimeout=240000 packages/cli/test/e2e/pairwise.spec.ts",
     "ci:test:stacks-at-night": "DDD_TS_KIT_E2E=1 DDD_TS_KIT_NIGHT=only VITEST_MAX_WORKERS=2 vitest run --hookTimeout=900000 packages/cli/test/e2e/first-minute-proven.spec.ts",
     "ci:test:managers": "DDD_TS_KIT_E2E=1 VITEST_MAX_WORKERS=2 vitest run --hookTimeout=600000 packages/cli/test/e2e/package-managers.spec.ts packages/cli/test/e2e/first-minute.spec.ts packages/cli/test/e2e/first-minute-proven.spec.ts packages/cli/test/e2e/first-minute-js.spec.ts",
     "ci:docs": "npm run check:dashes && npm run docs:translations",

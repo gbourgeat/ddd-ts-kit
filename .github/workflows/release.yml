@@ -23,7 +23,7 @@ jobs:
   generated-stacks:
     name: Generated projects on Prisma and TypeORM, installed for real
     runs-on: ubuntu-26.04
-    timeout-minutes: 45
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -33,6 +33,8 @@ jobs:
         run: corepack enable
       - name: Each stack installed, then green from its first minute to its first use case
         run: npm run ci:test:stacks-at-night
+      - name: Every pair of capability values, generated whole and type-checked
+        run: npm run ci:test:pairwise
 
   publish:
     name: Publish to npm

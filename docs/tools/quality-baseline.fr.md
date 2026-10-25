@@ -1,5 +1,5 @@
 [English](quality-baseline.md) · **Français**
-<!-- translation-of: quality-baseline.md sha256:b20fd5e0dd67c59a -->
+<!-- translation-of: quality-baseline.md sha256:d8b5f8ce958c9993 -->
 
 # Base de qualité
 
@@ -114,6 +114,7 @@ d'abord et sur ce qui a changé ; les plus larges tournent plus tard, sur tous l
 | graphe des dépendances | kit `depcruise` (dans `ci:arch`) ; exemple et projet `depcruise` | kit `ci:arch` ; exemple et projet `ci:arch:graph` | non |
 | architecture | kit `check:self`, les *fixtures* de chaque règle, et les tests de la garde (dans `ci:arch`) ; exemple et projet `check:arch` | kit `ci:arch` ; exemple et projet `ci:arch:check` | projet et exemple : fichiers indexés, avant un *commit* ; à chaque écriture par le *hook* d'éditeur |
 | familles à parité | kit `check:parity` : les quatre ORM, les brokers et les loggers offrent les mêmes options et exécutent leurs contrats avec les mêmes capacités, ou `pipeline/monorepo/families.mjs` dit pourquoi non (dans `ci:arch`) | kit `ci:arch` | non |
+| paires de valeurs de capacité | kit `ci:test:pairwise` : des *stacks* choisies pour faire rencontrer chaque valeur d'un flag de capacité à chaque valeur de tous les autres qu'`init` accepte (`test/support/pairwise.ts`), générées entières et typées ; l'exécution unitaire prouve que toutes les paires sont rencontrées | le job `pairwise` la nuit et sur la pull request d'une release, et la release | non |
 | matrice de support du générateur | kit `support-matrix.spec.ts` de la CLI : chaque refus d'`init` et des presets sur chaque paire de flags, et les TODO de plateforme et les paquets du kit de chaque membre d'une famille de flags, déclarés `decided` ou `not yet` | `ci:test:unit` | avant un push |
 | chaque règle prouvée sur l'exemple | kit : `example:verify` lance `example:conformance` après la porte propre à l'exemple | kit : le *job* `example` | non |
 | dérive des documents | kit `ci:docs` (ni tiret cadratin ni demi-cadratin, chaque page française au niveau de sa page anglaise) ; exemple et projet `docs:check` | `ci:docs` | kit : le contrôle des tirets (`check:dashes`), avant un *commit* |

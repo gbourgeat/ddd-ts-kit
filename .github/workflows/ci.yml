@@ -7,6 +7,8 @@ on:
   schedule:
     # Every night, everything, on both Node lines: a pull request runs the unit specs of the packages its change reaches.
     - cron: '0 3 * * *'
+  # The run of the night on demand (`gh workflow run ci.yml --ref <branch>`): before a tag, or to try a change of the night jobs.
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -331,6 +333,21 @@ jobs:
           KIT_AFFECTED: ${{ needs.install.outputs.packages }}
         run: npm run ci:test:e2e:stacks -- --shard=${{ matrix.shard }}/4
 
+  pairwise:
+    name: Every pair of capability values, generated and type-checked
+    needs: install
+    # At night and on the pull request of a release: the stacks generated to meet every pair of values of two capability flags.
+    if: ${{ needs.install.outputs.integrated == 'true' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.event.pull_request.title, 'chore(release)')) }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Each stack generated whole and held to the compiler
+        run: npm run ci:test:pairwise
+
   managers:
     name: Generated project on ${{ matrix.manager }}
     needs: install
@@ -354,7 +371,7 @@ jobs:
         env:
           DDD_TS_KIT_PACKAGE_MANAGER: ${{ matrix.manager }}
           # At night and on the pull request of a release, the stacks the workspace cannot run too (Prisma, TypeORM), with every capability on.
-          DDD_TS_KIT_NIGHT: ${{ (github.event_name == 'schedule' || startsWith(github.event.pull_request.title, 'chore(release)')) && '1' || '' }}
+          DDD_TS_KIT_NIGHT: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.event.pull_request.title, 'chore(release)')) && '1' || '' }}
         run: npm run ci:test:managers
 
   example:
@@ -468,7 +485,7 @@ jobs:
     name: Trial, unit tests on arm64
     needs: install
     # The night only: ten runs give a p50 to compare with the x64 job of the same nights.
-    if: ${{ github.event_name == 'schedule' }}
+    if: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-26.04-arm
     timeout-minutes: 25
     continue-on-error: true
@@ -483,7 +500,7 @@ jobs:
   e2e-arm:
     name: Trial, end-to-end tests (3/4) on arm64
     needs: install
-    if: ${{ github.event_name == 'schedule' }}
+    if: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-26.04-arm
     timeout-minutes: 30
     continue-on-error: true
@@ -499,7 +516,7 @@ jobs:
     name: Mutation score of the example, every night
     needs: install
     # The night only: Stryker on the domain and application layers of the four contexts of the example takes minutes, and nothing of it is read before a merge.
-    if: ${{ github.event_name == 'schedule' }}
+    if: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-26.04
     timeout-minutes: 60
     steps:

@@ -13,6 +13,8 @@ import {
 import { GENERATED_DIFFERENCES, IDENTITY_PRESET_REFUSALS, INIT_REFUSALS, TENANT_GAPS } from './support/support-matrix';
 import { tenantTakers, untenantedCalls } from './support/tenant-wiring';
 import { DEFAULT_STACK, scaffoldEverything, tempDir } from './helpers';
+import { acceptedPairs, pairsMet, pairwiseStacks } from './support/pairwise';
+import { EVERY_STACK } from './e2e/stacks';
 
 // Every combination the kit refuses is a written decision, or a gap named as such: a refusal no
 // line of test/support/support-matrix.ts declares fails here, and so does a line that no longer holds.
@@ -74,4 +76,12 @@ describe('a multi-tenant project, every kind generated', () => {
     },
     120_000,
   );
+});
+
+describe('the stacks of the end-to-end run', () => {
+  it('meet every pair of capability values init accepts, the pairwise ones added to those listed', () => {
+    const met = pairsMet([...EVERY_STACK, ...pairwiseStacks(EVERY_STACK)]);
+
+    expect(acceptedPairs().filter((pair) => !met.has(pair))).toEqual([]);
+  });
 });

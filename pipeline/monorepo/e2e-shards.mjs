@@ -19,9 +19,10 @@ import path from 'node:path';
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const DIRECTORY = 'packages/cli/test/e2e';
 
-/** Run by jobs of their own: the alias at run time on both Node lines, and the real installs per package manager. */
+/** Run by jobs of their own: the alias at run time on both Node lines, the real installs per package manager, and the pairwise stacks at night and before a release. */
 export const ELSEWHERE = [
   /^alias-.*\.spec\.ts$/,
+  /^pairwise\.spec\.ts$/,
   /^package-managers\.spec\.ts$/,
   /^first-minute(?:-proven|-js)?\.spec\.ts$/,
 ];
@@ -46,6 +47,7 @@ export const SHARDS = [
   },
   {
     'coverage-gate.spec.ts': 328,
+    // The Jest stack too, a few seconds over the measure.
     'typecheck.spec.ts': 70,
     // oRPC and tRPC on the four servers and on Nest controllers (run 40221251830 of the pull request that added them).
     'rpc-procedures.spec.ts': 131,

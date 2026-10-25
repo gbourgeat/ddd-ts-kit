@@ -80,7 +80,7 @@ export const MULTI_TENANT_BEHIND_VARNISH: readonly StackFlags[] = [
 ];
 
 /** Every combination the generator is held to: zero violation as generated, and a type check against the sources of the workspace. */
-const EVERY_STACK: readonly StackFlags[] = [
+export const EVERY_STACK: readonly StackFlags[] = [
   DEFAULT_STACK,
   { http: 'fastify', validation: 'class-validator', di: 'manual', tests: 'vitest', orm: 'drizzle', events: 'outbox' },
   { http: 'nest', validation: 'standard-schema', di: 'nest', tests: 'vitest', orm: 'drizzle', events: 'in-memory' },

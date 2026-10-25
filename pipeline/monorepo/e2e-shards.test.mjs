@@ -14,7 +14,7 @@ test('every end-to-end spec file of the stacks is run by exactly one runner', ()
 
 test('the files left out are the ones other jobs of the pipeline run by name', () => {
   const scripts = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).scripts;
-  const named = `${scripts['ci:test:alias']} ${scripts['ci:test:managers']}`;
+  const named = `${scripts['ci:test:alias']} ${scripts['ci:test:managers']} ${scripts['ci:test:pairwise']}`;
   const left = fs.readdirSync(path.join(ROOT, 'packages/cli/test/e2e')).filter((file) => file.endsWith('.spec.ts'));
 
   for (const file of left.filter((candidate) => ELSEWHERE.some((pattern) => pattern.test(candidate)))) {
