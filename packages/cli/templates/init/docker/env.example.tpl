@@ -77,7 +77,7 @@ KAFKA_BROKERS=localhost:9092
 NATS_PORT=4222
 NATS_URL=nats://localhost:4222
 {{/if}}
-{{#if authn.jwt}}
+{{#if authn.jwks}}
 
 # Authentication: the issuer of the tokens, the audience this service answers to, the keys of the issuer.
 AUTH_ISSUER=https://id.example.com/realms/app

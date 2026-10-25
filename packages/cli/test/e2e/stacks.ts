@@ -1,4 +1,5 @@
 import { DEFAULT_STACK, EXPLICIT_STACK, type StackFlags } from '../helpers';
+import { NEST_WITH_PASSPORT } from './nest-with-passport';
 
 export const REBAC_ON_RABBITMQ: StackFlags = { ...DEFAULT_STACK, authz: 'rebac', broker: 'rabbitmq', ci: 'gitlab' };
 export const ABAC_ON_KNEX_BY_HAND: StackFlags = { ...DEFAULT_STACK, orm: 'knex', di: 'manual', authz: 'abac' };
@@ -314,6 +315,7 @@ export const STACKS: readonly StackFlags[] = reached(EVERY_STACK);
 /** The stacks held to everything a project runs in its pipeline, as generated. */
 export const PROVEN: readonly (readonly [string, StackFlags])[] = [
   ['the default stack, declared: jwt, roles, no broker', DEFAULT_STACK],
+  ['NestJS as its developers write it: Nest controllers, class-validator, Passport', NEST_WITH_PASSPORT],
   ['declared, relationships and RabbitMQ, GitLab pipeline', REBAC_ON_RABBITMQ],
   ['declared, discovered instead of listed in a barrel', DISCOVERED_ON_KNEX],
   ['declared, discovered behind NATS, failures reported to Sentry or GlitchTip', REPORTED_BEHIND_NATS],

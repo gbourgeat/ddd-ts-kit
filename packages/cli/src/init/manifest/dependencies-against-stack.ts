@@ -50,7 +50,11 @@ export const CLUES: readonly Clue[] = [
     key: 'broker',
     packages: { amqplib: 'rabbitmq', 'amqp-connection-manager': 'rabbitmq', kafkajs: 'kafka', nats: 'nats' },
   },
-  { flag: '--authn', key: 'authn', packages: { 'keycloak-connect': 'keycloak', jose: 'jwt', jsonwebtoken: 'jwt' } },
+  {
+    flag: '--authn',
+    key: 'authn',
+    packages: { 'keycloak-connect': 'keycloak', jose: 'jwt', jsonwebtoken: 'jwt', 'passport-jwt': 'passport' },
+  },
   { flag: '--logger', key: 'logger', packages: { pino: 'pino', winston: 'winston' } },
   { flag: '--errors', key: 'errors', packages: { '@sentry/node': 'sentry' } },
   { flag: '--storage', key: 'storage', packages: { '@aws-sdk/client-s3': 's3' } },

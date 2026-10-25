@@ -32,7 +32,7 @@ export interface AppConfig {
   {{#if docs.any}}
   readonly docsEnabled: boolean;
   {{/if}}
-  {{#if authn.jwt}}
+  {{#if authn.jwks}}
   readonly auth: AuthConfig;
   {{/if}}
   {{#if authn.keycloak}}
@@ -99,7 +99,7 @@ interface KeycloakConfig {
   readonly clientId?: string;
 }
 {{/if}}
-{{#if authn.jwt}}
+{{#if authn.jwks}}
 
 /** Where tokens come from and whom they are for: the issuer, the audience this service answers to, the keys of the issuer. */
 interface AuthConfig {

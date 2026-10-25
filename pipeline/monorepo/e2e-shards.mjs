@@ -37,13 +37,12 @@ export const ELSEWHERE = [
  */
 export const SHARDS = [
   {
-    'proven-stacks.spec.ts': 371,
+    // With NestJS on Nest controllers and Passport, 20 seconds on a workstation, three times that on a runner.
+    'proven-stacks.spec.ts': 431,
     'new-rule-violations.spec.ts': 65,
     'zero-violation.spec.ts': 33,
-    'event-sourced.spec.ts': 19,
     // A repository that declares personal columns, with the erasure of its context, installed as published.
     'personal-fields.spec.ts': 20,
-    'formatted.spec.ts': 29,
     'error-reporting.spec.ts': 17,
   },
   {
@@ -56,6 +55,7 @@ export const SHARDS = [
     'client-sdk.spec.ts': 9,
     // A copy of the example application, merge-trunk run in two of its worktrees.
     'merge-trunk-example.spec.ts': 2,
+    'event-sourced.spec.ts': 19,
   },
   {
     'first-minute-two-contexts.spec.ts': 322,
@@ -66,13 +66,14 @@ export const SHARDS = [
     'preset-identity-generated.spec.ts': 25,
     // Moved from the fourth runner when the Nest controllers joined it.
     'dev-reload.spec.ts': 9,
+    'violations.spec.ts': 15,
   },
   {
     'first-minute-no-context.spec.ts': 312,
     'first-class.spec.ts': 209,
-    'violations.spec.ts': 15,
     // Every route generator on Nest controllers, one project (7 s on a workstation, three times that on a runner).
     'nest-controllers.spec.ts': 21,
+    'formatted.spec.ts': 29,
   },
 ];
 

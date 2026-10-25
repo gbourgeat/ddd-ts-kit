@@ -226,7 +226,7 @@ outside the list stops every command with the list of accepted values.
 | `stack.tests` | `vitest`, `jest` | `vitest` |
 | `stack.docsUi` | `swagger`, `scalar`, `redoc`, `none` | `swagger` (`none` when `http` is `none`) |
 | `stack.ci` | `github`, `gitlab`, `both`, `none` | `github` |
-| `stack.authn` | `jwt`, `keycloak`, `none` | `jwt` |
+| `stack.authn` | `jwt`, `keycloak`, `passport` (the bearer token verified by a strategy of Passport, `passport-jwt` on the key set of the issuer, written in `src/platform/auth/authentication/bearer-strategy.ts`), `none` | `jwt` |
 | `stack.authz` | `rbac`, `abac`, `rebac`, `custom` | `rbac` |
 | `stack.broker` | `none`, `rabbitmq`, `kafka`, `nats`, `redis` (Redis Streams), `custom`; `init` refuses a broker without an ORM, since a broker is reached through the outbox | `none` |
 | `stack.cache` | `none`, `redis`: what backs the kernel `Cache` port, the wake-up of the outbox relay, the rate limiter and the lock of the scheduled jobs | `none` |

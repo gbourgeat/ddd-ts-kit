@@ -82,5 +82,5 @@ function readsText(config: Config): boolean {
 function verifiesTokens(config: Config): boolean {
   const { authn, http } = config.stack;
 
-  return (authn === 'jwt' || authn === 'keycloak') && http !== 'none';
+  return (authn === 'jwt' || authn === 'keycloak' || authn === 'passport') && http !== 'none';
 }

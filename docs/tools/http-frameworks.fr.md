@@ -1,5 +1,5 @@
 [English](http-frameworks.md) · **Français**
-<!-- translation-of: http-frameworks.md sha256:6d671100ceea69da -->
+<!-- translation-of: http-frameworks.md sha256:fd0f72e0c6c501e5 -->
 
 # Frameworks HTTP : Express, Fastify, Hono, NestJS
 
@@ -240,7 +240,7 @@ Nest reste libre.
 |---|---|---|
 | `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | le même contrôleur Nest, ses parties et sa réponse lues dans sa signature, `@KitRoute` pour ses codes de refus, construit par Nest et servi par le kit ; ce qu'écrit `generate route` dans un projet Nest sur class-validator (`--routes nest`, la valeur par défaut) | une sécurité déclarée sur chaque route, les codes de *problem* que lisent les clients, la route dans le contrat |
 | un `ValidationPipe`, une classe DTO avec class-validator | les schémas de la route, écrits avec la bibliothèque de validation du projet (class-validator dans les piles Nest que le kit prouve) | la validation que documente le contrat, rien de transformé avant elle |
-| `@UseGuards(AuthGuard('jwt'))`, une stratégie Passport | la stratégie gardée, dans la plateforme : `passportPrincipal(strategy, { actorOf })` de `@ddd-ts-kit/auth/passport` en fait le `resolvePrincipal` de la frontière ; un *guard* de groupe de routes pour un contrôle en bordure (`generate guard`) | un appel anonyme refusé de la même façon sur chaque porte |
+| `@UseGuards(AuthGuard('jwt'))`, une stratégie Passport | la stratégie gardée, dans la plateforme : `passportPrincipal(strategy, { actorOf })` de `@ddd-ts-kit/auth/passport` en fait le `resolvePrincipal` de la frontière, et `init --authn passport` l'écrit sur `passport-jwt` ; un *guard* de groupe de routes pour un contrôle en bordure (`generate guard`) | un appel anonyme refusé de la même façon sur chaque porte |
 | `@Roles('admin')`, un `RolesGuard`, CASL | la permission du cas d'usage (`requires` dans le fichier de module, `@Requires`), une *policy* pour une règle sur l'état chargé, une portée d'accès pour une recherche | le droit vérifié sur HTTP, `/rpc`, `/trpc`, un *job* et un événement pareil, les refus audités quand le journal d'audit est actif, les listes filtrées (`authz/*`) |
 | un filtre d'exceptions, `throw new NotFoundException()` | un refus de la liste des codes du contexte, répondu par le *mapper* d'erreurs | un document *problem* avec le code que déclare le contrat et que le client reconnaît |
 | un intercepteur pour les logs, les traces, les reprises | un *middleware* du bus ou un aspect ; le traçage est câblé par la plateforme | une seule politique pour tous les cas d'usage, lue à un seul endroit |

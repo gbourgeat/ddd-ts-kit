@@ -5,9 +5,9 @@ import { SignJWT } from 'jose';
 import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt';
 import { describe, expect, it } from 'vitest';
 import { defineRoute, executeRoute, type RawRequest } from '@ddd-ts-kit/http';
-import { anonymousSession, type Actor } from '@ddd-ts-kit/kernel';
-import { InvalidCredentialError, actorOf } from '../src';
-import { passportPrincipal, type PassportStrategyLike } from '../src/passport';
+import { anonymousActor, anonymousSession, type Actor } from '@ddd-ts-kit/kernel';
+import { InvalidCredentialError, actorOf, actorOfClaims } from '../src';
+import { passportAuthenticator, passportPrincipal, type PassportStrategyLike } from '../src/passport';
 
 const SECRET = 'a secret of the tests, long enough for HS256';
 
@@ -209,6 +209,45 @@ describe('passportPrincipal, on the strategies of passport-jwt and @nestjs/passp
       status: 401,
       body: { code: 'UNAUTHORIZED' },
     });
+  });
+});
+
+describe('passportAuthenticator, a strategy of Passport behind the port of the kit', () => {
+  const strategy = new JwtStrategy(
+    { jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), secretOrKey: SECRET },
+    (payload: unknown, done: (error: unknown, user?: unknown) => void) => {
+      done(null, payload);
+    },
+  );
+
+  const authenticator = passportAuthenticator(strategy, {
+    actorOf: (user) => actorOfClaims(typeof user === 'object' && user !== null ? { ...user } : {}),
+  });
+
+  const signed = (secret: string) =>
+    new SignJWT({ realm_access: { roles: ['accountant'] }, tenant_id: 'acme', email: 'ada@example.test' })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setSubject('ada')
+      .setExpirationTime('5m')
+      .sign(new TextEncoder().encode(secret));
+
+  it('answers the actor the claims of a verified token stand for, as JwtAuthenticator reads them', async () => {
+    await expect(authenticator.authenticate(await signed(SECRET))).resolves.toEqual({
+      id: 'ada',
+      type: 'user',
+      tenantId: 'acme',
+      roles: ['accountant'],
+      attributes: { email: 'ada@example.test' },
+    });
+  });
+
+  it('refuses a forged credential, and answers the anonymous actor without one', async () => {
+    await expect(authenticator.authenticate(await signed('another secret, long enough too'))).rejects.toBeInstanceOf(
+      InvalidCredentialError,
+    );
+
+    await expect(authenticator.authenticate(undefined)).resolves.toEqual(anonymousActor());
+    await expect(authenticator.authenticate('')).resolves.toEqual(anonymousActor());
   });
 });
 
