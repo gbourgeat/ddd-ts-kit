@@ -1,7 +1,8 @@
 import { isRecord } from '../config/values/is-record';
 import { VERSIONS } from '../init/manifest/versions';
-import type { Rpc } from './rpc';
 import { manifestJson } from './manifest-json';
+import type { Rpc } from './rpc';
+import { RPC_PACKAGES } from './rpc-packages';
 
 /** What the package.json of a client is made of. */
 export interface ManifestFacts {
@@ -9,12 +10,9 @@ export interface ManifestFacts {
   readonly version: string;
   readonly title: string;
   readonly access: string | undefined;
-  /** `orpc`: the client exports the oRPC contract of the procedures too, at `./orpc`, with what it imports. */
+  /** `orpc` or `trpc`: the client exports the procedures too, at `./orpc` or `./trpc`, with what it imports. */
   readonly rpc?: Rpc;
 }
-
-/** What `./orpc` imports, the only dependencies of a client. */
-const ORPC_PACKAGES = ['@orpc/client', '@orpc/contract'];
 
 /**
  * The package.json of a client: the keys the generator owns (name, entry points, files, build,
@@ -48,26 +46,30 @@ export function clientManifest(facts: ManifestFacts, written: string | undefined
 }
 
 function ownedKeys(facts: ManifestFacts): Record<string, unknown> {
-  const orpc = facts.rpc === 'orpc' ? { './orpc': { types: './dist/orpc.d.ts', default: './dist/orpc.js' } } : {};
+  const { rpc = 'none' } = facts;
+
+  const procedures =
+    rpc === 'none' ? {} : { [`./${rpc}`]: { types: `./dist/${rpc}.d.ts`, default: `./dist/${rpc}.js` } };
 
   return {
     name: facts.name,
     description: `Typed client of ${facts.title}, generated from its OpenAPI contract by ddd-ts-kit.`,
     type: 'module',
     sideEffects: false,
-    exports: { '.': { types: './dist/index.d.ts', default: './dist/index.js' }, ...orpc },
+    exports: { '.': { types: './dist/index.d.ts', default: './dist/index.js' }, ...procedures },
     types: './dist/index.d.ts',
     files: ['dist', 'README.md'],
     scripts: { build: 'tsc -p tsconfig.json', prepublishOnly: 'npm run build' },
   };
 }
 
-/** The dependencies the team added, and those of `./orpc` when the client has it: never those of an `./orpc` it no longer has. */
-function dependenciesOf(written: unknown, rpc: Rpc | undefined): Record<string, unknown> {
-  const own = Object.entries(isRecord(written) ? written : {}).filter(([name]) => !ORPC_PACKAGES.includes(name));
-  const orpc = rpc === 'orpc' ? ORPC_PACKAGES.map((name) => [name, VERSIONS[name]] as const) : [];
+/** The dependencies the team added, and those of the procedures when the client has them: never those of an entry it no longer has. */
+function dependenciesOf(written: unknown, rpc: Rpc = 'none'): Record<string, unknown> {
+  const generated = new Set(Object.values(RPC_PACKAGES).flat());
+  const own = Object.entries(isRecord(written) ? written : {}).filter(([name]) => !generated.has(name));
+  const procedures = rpc === 'none' ? [] : RPC_PACKAGES[rpc].map((name) => [name, VERSIONS[name]] as const);
 
-  return Object.fromEntries([...own, ...orpc].sort(([a], [b]) => a.localeCompare(b)));
+  return Object.fromEntries([...own, ...procedures].sort(([a], [b]) => a.localeCompare(b)));
 }
 
 function parsed(written: string | undefined): Record<string, unknown> {

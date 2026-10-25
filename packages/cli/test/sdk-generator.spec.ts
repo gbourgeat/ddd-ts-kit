@@ -236,6 +236,36 @@ describe('the oRPC contract of a client, when the API serves procedures', () => 
   });
 });
 
+describe('the tRPC router type of a client, when the API serves procedures', () => {
+  it('is written only when stack.rpc is trpc, and the oRPC contract is not', () => {
+    expect(file('src/trpc.ts')).toBe('');
+    expect(file('src/trpc.ts', 'trpc')).toContain('export type AppRouter = TRPCBuiltRouter<');
+    expect(file('src/orpc.ts', 'trpc')).toBe('');
+  });
+
+  it('types each procedure as a query for a GET and a mutation otherwise, its input and body as the HTTP client does', () => {
+    const trpc = file('src/trpc.ts', 'trpc');
+
+    expect(trpc).toContain(
+      '    placeOrder: TRPCMutationProcedure<Procedure<Operations.PlaceOrderInput, DataOf<Operations.PlaceOrderResult>>>;',
+    );
+
+    expect(trpc).toMatch(/ {4}getOrder: TRPCQueryProcedure<Procedure<Operations\.GetOrderInput, /);
+    expect(trpc).toContain("    'cancel order': TRPCMutationProcedure<");
+    expect(trpc).toContain('readonly problem: Problem | null;');
+    expect(trpc).not.toContain('getHealth');
+  });
+
+  it('says in the README how to call the procedures, and where the code of a refusal is', () => {
+    const readme = file('README.md', 'trpc');
+
+    expect(readme).toContain("import { createRpcClient, isRpcRefusal } from 'shop-api-client/trpc';");
+    expect(readme).toContain('await trpc.placeOrder.mutate({ ... });');
+    expect(readme).toContain('`data.problem` the problem document');
+    expect(readme).not.toContain('## Procedures (oRPC)');
+  });
+});
+
 function file(name: string, rpc: Rpc = 'none'): string {
   return filesOf(SHOP, rpc).get(name) ?? '';
 }

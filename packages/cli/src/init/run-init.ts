@@ -24,6 +24,7 @@ import { REVIEW_POLICY } from './files/guidance-files';
 import { keepFlatPlatform } from '../platform-folders';
 import { ignoreWorktrees } from './ignore-worktrees';
 import { writeManifest } from './manifest/write-manifest';
+import { dependenciesAgainstStack } from './manifest/dependencies-against-stack';
 import { writeOverrides } from './manifest/write-overrides';
 import { recordAgentProfile } from './record-agent-profile';
 import { recordNoOutbox } from './record-no-outbox';
@@ -58,7 +59,7 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   const projectName = existingName(root) ?? (toName(path.basename(path.resolve(root))).kebab || 'app');
   const flat = keepFlatPlatform(ws, config);
 
-  ws.create(CONFIG_FILE, configText(ws, config));
+  writeConfig(ws, config);
   recordAgentProfile(ws, config);
   writeManifest(ws, { config, projectName, force: options.force });
   writeTypeScriptConfigs(ws, config);
@@ -90,6 +91,21 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   }
 
   return report;
+}
+
+/**
+ * The config of the project. An existing project initialised for the first time is told what its
+ * dependencies say against the stack about to be written, a dry run included, so that the owner
+ * passes the flags before anything is written; an initialised project is not read again.
+ */
+function writeConfig(ws: Workspace, config: Config): void {
+  const manifest = ws.read(CONFIG_FILE) === undefined ? ws.read('package.json') : undefined;
+
+  for (const line of manifest === undefined ? [] : dependenciesAgainstStack(manifest, config.stack)) {
+    ws.note(line);
+  }
+
+  ws.create(CONFIG_FILE, configText(ws, config));
 }
 
 /**

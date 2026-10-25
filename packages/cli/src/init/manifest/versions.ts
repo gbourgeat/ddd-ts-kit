@@ -52,6 +52,8 @@ export const VERSIONS: Readonly<Record<string, string>> = {
   '@orpc/client': '^1.16.1',
   '@orpc/contract': '^1.16.1',
   '@orpc/server': '^1.16.1',
+  '@trpc/client': '^11.19.0',
+  '@trpc/server': '^11.19.0',
   typebox: '^1.3.37',
   tsyringe: '^4.10.0',
   'reflect-metadata': '^0.2.2',

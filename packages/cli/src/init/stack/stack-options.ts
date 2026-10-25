@@ -17,7 +17,7 @@ export interface StackOptions {
   readonly cache?: string;
   /** `none` or `varnish`: the shared HTTP cache in front of the API. */
   readonly httpCache?: string;
-  /** `none` or `orpc`: the routes served as procedures too, for a typed TypeScript client. */
+  /** `none`, `orpc` or `trpc`: the routes served as procedures too, for a typed TypeScript client. */
   readonly rpc?: string;
   readonly storage?: string;
   readonly audit?: string;

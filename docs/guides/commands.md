@@ -239,7 +239,7 @@ Usage
                   [--ci github|gitlab|both|none] [--ci-extras <extra>,...|none]
                   [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--http-cache none|varnish]
-                  [--rpc none|orpc]
+                  [--rpc none|orpc|trpc]
                   [--storage local|s3|none]
                   [--audit on|off] [--event-sourcing on|off] [--privacy on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]

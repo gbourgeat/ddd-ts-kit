@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:a7a0d55d4fcad5c7 -->
+<!-- translation-of: commands.md sha256:998af2c7d19091a9 -->
 
 # Quelle commande, quand
 
@@ -244,7 +244,7 @@ Usage
                   [--ci github|gitlab|both|none] [--ci-extras <extra>,...|none]
                   [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--http-cache none|varnish]
-                  [--rpc none|orpc]
+                  [--rpc none|orpc|trpc]
                   [--storage local|s3|none]
                   [--audit on|off] [--event-sourcing on|off] [--privacy on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]

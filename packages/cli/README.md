@@ -82,8 +82,11 @@ of the project write them for a project without a route or an integration event 
 `"openapi": { "format": "json" }` of the config), so that the first commit holds them and
 `docs:check` passes at once; a contract that is already there is
 left alone, `--force` included. An existing `package.json` is merged: missing scripts and
-dependencies are added, yours are kept and mentioned in the notes. Run again later, `init` keeps
-the stack recorded in the config.
+dependencies are added, yours are kept and mentioned in the notes. The first time, the notes also
+name each dependency the stack about to be written contradicts, and the flag that keeps it
+(`package.json depends on fastify, and the project is written for --http express: pass --http
+fastify to keep it.`), a dry run included: run `init --dry-run` first on an existing project.
+Run again later, `init` keeps the stack recorded in the config.
 
 `init --force` on a project that is already initialised rewrites the files `init` owns and keeps
 the config: the contexts and their upstreams, the rules, the limits, the deviations and every

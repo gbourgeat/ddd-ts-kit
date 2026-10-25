@@ -1,9 +1,13 @@
 import 'reflect-metadata';
-import { {{#if rpc.orpc}}type IncomingMessage, {{/if}}Server{{#if rpc.orpc}}, type ServerResponse{{/if}} } from 'node:http';
+import { {{#if rpc.orpc}}type IncomingMessage, {{/if}}{{#if rpc.trpc}}type RequestListener, {{/if}}Server{{#if rpc.orpc}}, type ServerResponse{{/if}} } from 'node:http';
 import { NestFactory } from '@nestjs/core';
 {{#if rpc.orpc}}
 import { orpcRouter } from '@ddd-ts-kit/http/orpc';
 import { RPCHandler } from '@orpc/server/node';
+{{/if}}
+{{#if rpc.trpc}}
+import { trpcRouter } from '@ddd-ts-kit/http/trpc';
+import { createHTTPHandler } from '@trpc/server/adapters/standalone';
 {{/if}}
 import type { Application } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
@@ -45,7 +49,8 @@ type Middleware = (request: Incoming, response: Outgoing, next: () => void) => v
  * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
  * server), then the routes of the contexts, the pages of the contract (with documentation on) and
  * the signed file links (with a storage the application serves), all in one Nest module.{{#if rpc.orpc}} The
- * routes of the contexts are served as oRPC procedures under /rpc too, for the typed client of the contract.{{/if}}
+ * routes of the contexts are served as oRPC procedures under /rpc too, for the typed client of the contract.{{/if}}{{#if rpc.trpc}} The
+ * routes of the contexts are served as tRPC procedures under /trpc too, for the typed client of the contract.{{/if}}
  */
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
 {{#if files.http}}
@@ -74,6 +79,10 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 {{/if}}
 {{#if rpc.orpc}}
   app.use(RPC_PREFIX, servingProcedures(served));
+
+{{/if}}
+{{#if rpc.trpc}}
+  app.use(TRPC_ENDPOINT, servingProcedures(served));
 
 {{/if}}
   await app.listen(config.port);
@@ -131,6 +140,18 @@ function servingProcedures(
       }
     }, next);
   };
+}
+{{/if}}
+{{#if rpc.trpc}}
+
+const TRPC_ENDPOINT = '/trpc';
+
+/** Each route as the procedure named by its operationId, its path what Nest leaves of the URL: the JSON body already read by Nest. */
+function servingProcedures(served: Served): RequestListener {
+  return createHTTPHandler({
+    router: trpcRouter(served.routes, served.boundary),
+    createContext: ({ req }) => ({ headers: req.headers, raw: req }),
+  });
 }
 {{/if}}
 

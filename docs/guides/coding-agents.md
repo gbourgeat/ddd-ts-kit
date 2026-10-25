@@ -3,7 +3,7 @@
 # The plugin for coding agents: Claude Code, Codex, GitHub Copilot
 
 The [ddd-ts-kit repository](https://github.com/gbourgeat/ddd-ts-kit) is the marketplace of the plugin
-for the three agents:
+for three coding agents:
 
 | Agent | Install | A skill is called |
 |---|---|---|

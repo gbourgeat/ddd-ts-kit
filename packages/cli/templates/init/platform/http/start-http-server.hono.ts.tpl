@@ -9,6 +9,10 @@ import { mountHono } from '@ddd-ts-kit/http/hono';
 import { orpcRouter } from '@ddd-ts-kit/http/orpc';
 import { RPCHandler } from '@orpc/server/fetch';
 {{/if}}
+{{#if rpc.trpc}}
+import { trpcRouter } from '@ddd-ts-kit/http/trpc';
+import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
+{{/if}}
 import type { Application } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 {{#if cache.rateLimit}}
@@ -32,7 +36,8 @@ type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | '
  * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
  * server), the signed file links (with a storage the application serves), the routes of the
  * contexts, then the pages of the contract (with documentation on).{{#if rpc.orpc}} The same routes are served
- * as oRPC procedures under /rpc, for the typed client of the contract.{{/if}}
+ * as oRPC procedures under /rpc, for the typed client of the contract.{{/if}}{{#if rpc.trpc}} The same routes are served
+ * as tRPC procedures under /trpc, for the typed client of the contract.{{/if}}
  */
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
   const app = new Hono();
@@ -44,9 +49,9 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 {{#if files.http}}
   mountHono(app, served.fileRoutes, served.boundary);
 {{/if}}
-{{#if rpc.orpc}}
+{{#unless rpc.none}}
   serveProcedures(app, served);
-{{/if}}
+{{/unless}}
 {{#if docs.any}}
   mountHono(app, withDocumentation(served.routes, config, served.boundary), served.boundary);
 {{/if}}
@@ -108,6 +113,26 @@ function serveProcedures(app: Hono, served: Served): void {
     await next();
 
     return undefined;
+  });
+}
+{{/if}}
+{{#if rpc.trpc}}
+
+const TRPC_ENDPOINT = '/trpc';
+
+/** Each route as the procedure named by its operationId: the same pipeline, the raw request what the routes read. */
+function serveProcedures(app: Hono, served: Served): void {
+  const router = trpcRouter(served.routes, served.boundary);
+
+  app.all(`${TRPC_ENDPOINT}/*`, (context) => {
+    const headers = context.req.header();
+
+    return fetchRequestHandler({
+      endpoint: TRPC_ENDPOINT,
+      req: context.req.raw,
+      router,
+      createContext: () => ({ headers, raw: { headers, context } }),
+    });
   });
 }
 {{/if}}
