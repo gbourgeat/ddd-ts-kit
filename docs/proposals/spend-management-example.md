@@ -18,14 +18,16 @@ of what it would take.
 
 ## Status (2026-10-25)
 
-**Specified, part 1 under way.** The stack below was run through `init --dry-run` on 0.88.0, which
+**Part 1 built, part 2 next.** The stack below was run through `init --dry-run` on 0.88.0, which
 is where the refusals of part 1 come from. Each part is one or several pull requests; a part is
-marked built here when its last pull request lands.
+marked built here when its last pull request lands. On 2026-10-25, with part 1 merged, the
+command of [the stack](#23-stack) passes `init --dry-run` without a refusal, which is when part 2
+starts.
 
 | Part | Verdict |
 |---|---|
-| 1. The kit on the stack: queue and processes on Nest, tenancy and audit on Prisma, the preset on Nest and Prisma | under way, before the example: 1.1 built (#273), 1.2 built (#276, read models included), 1.3 built (#297), 1.4 built (#287), 1.5 built (#301, #302), 1.6 built (#306), the TypeORM job store and the default of the queue on every container (#298) |
-| 2. The example: `examples/spend-management`, seven contexts, the documents of the method | to build, after part 1 |
+| 1. The kit on the stack: queue and processes on Nest, tenancy and audit on Prisma, the preset on Nest and Prisma | **built**: 1.1 built (#273), 1.2 built (#276, read models included), 1.3 built (#297), 1.4 built (#287), 1.5 built (#301, #302), 1.6 built (#306), the TypeORM job store and the default of the queue on every container (#298) |
+| 2. The example: `examples/spend-management`, seven contexts, the documents of the method | to build, next |
 | 3. The repository: a second workspace in the gates, the website, the examples page | to build, with part 2 |
 | MySQL | **not in this example**, see [What is left out](#what-is-left-out-and-why) |
 
