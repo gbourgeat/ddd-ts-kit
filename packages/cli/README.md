@@ -1986,7 +1986,11 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
   agent, under Claude Code, Codex and Copilot alike, and the permissions `init` writes ask before
   both for an agent without the plugin. A command the guard does not read (a script of the
   project that writes the file) is not caught: the review reads the diff of the baseline, which
-  should only shrink. `--baseline prune` needs no one. A baseline makes old errors quiet; it does
+  should only shrink. `--baseline prune` needs no one. A file that moves keeps its counts: the
+  commands of the kit that move files (`move-to-module`, `context-layout`, `platform-folders`)
+  carry its entry to the new path, and `--baseline prune` follows the renames git sees since the
+  baseline was committed (a `git mv`); a file moved otherwise reports its errors at its new path,
+  and its old entry fails until the owner writes the baseline again. A baseline makes old errors quiet; it does
   not make a tree outside the canonical one checkable.
   `--changed-since` runs `git diff --name-only --relative <ref>...` in the project.
 - `--format github` prints `::error file=...,line=...::` annotations.

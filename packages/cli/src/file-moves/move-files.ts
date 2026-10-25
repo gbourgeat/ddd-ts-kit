@@ -1,4 +1,6 @@
 import { aliasRoots } from '../alias';
+import { movedBaselineText } from '../check/baseline/moved-baseline-text';
+import { BASELINE_FILE } from '../check/baseline/read-baseline';
 import type { Config } from '../config';
 import { withMovedImports } from '../platform-folders/with-moved-imports';
 import { projectSources } from '../refusals/project-sources';
@@ -53,5 +55,16 @@ export function moveFiles(ws: Workspace, config: Config, moved: readonly FileMov
       return [file];
     });
 
+  followInBaseline(ws, moved);
+
   return { moved, rewritten: [...rewrittenMoved, ...rewrittenOthers] };
+}
+
+/** The errors the baseline of the project records for a moved file follow it to its new path. */
+function followInBaseline(ws: Workspace, moved: readonly FileMove[]): void {
+  const baseline = movedBaselineText(ws.read(BASELINE_FILE), moved);
+
+  if (baseline !== undefined) {
+    ws.writeAsIs(BASELINE_FILE, baseline);
+  }
 }

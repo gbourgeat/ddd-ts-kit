@@ -1,4 +1,6 @@
 import { aliasRoots } from '../alias';
+import { movedBaselineText } from '../check/baseline/moved-baseline-text';
+import { BASELINE_FILE } from '../check/baseline/read-baseline';
 import type { Config } from '../config';
 import type { MigrationDraft } from '../refusals/migration-draft';
 import { projectSources } from '../refusals/project-sources';
@@ -56,6 +58,7 @@ export function platformFolders(tree: Tree, draft: MigrationDraft): PlatformFold
   }
 
   rewriteScripts(draft, moves);
+  followInBaseline(draft, moves);
 
   const platform = `${tree.config.platformDir}/`;
 
@@ -71,6 +74,15 @@ export function platformFolders(tree: Tree, draft: MigrationDraft): PlatformFold
 }
 
 /** `dev` preloads the tracing module by its path: the scripts name it where it is now. */
+/** The errors the baseline of the project records for a moved file follow it to its new path. */
+function followInBaseline(draft: MigrationDraft, moves: readonly FolderMove[]): void {
+  const baseline = movedBaselineText(draft.read(BASELINE_FILE), moves);
+
+  if (baseline !== undefined) {
+    draft.write(BASELINE_FILE, baseline);
+  }
+}
+
 function rewriteScripts(draft: MigrationDraft, moves: readonly FolderMove[]): void {
   const manifest = draft.read('package.json');
 

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f41baff2ae1f77db -->
+<!-- translation-of: README.md sha256:fef8f4f4bc6da81f -->
 
 # ddd-ts-kit
 
@@ -2106,7 +2106,12 @@ règle.
   à un agent, sous Claude Code, Codex et Copilot de la même façon, et les permissions qu'écrit
   `init` demandent avant les deux pour un agent sans le *plugin*. Une commande que la garde ne lit
   pas (un script du projet qui écrit le fichier) n'est pas interceptée : la revue lit le *diff*
-  de la *baseline*, qui ne doit que rétrécir. `--baseline prune` ne demande personne. Une
+  de la *baseline*, qui ne doit que rétrécir. `--baseline prune` ne demande personne. Un fichier
+  déplacé garde ses comptes : les commandes du kit qui déplacent des fichiers (`move-to-module`,
+  `context-layout`, `platform-folders`) portent son entrée au nouveau chemin, et `--baseline
+  prune` suit les renommages que git voit depuis le commit de la *baseline* (un `git mv`) ; un
+  fichier déplacé autrement signale ses erreurs à son nouveau chemin, et son ancienne entrée
+  échoue jusqu'à ce que le propriétaire réécrive la *baseline*. Une
   *baseline* fait taire les anciennes erreurs ; elle ne rend pas vérifiable une arborescence hors
   de l'arborescence canonique.
   `--changed-since` lance `git diff --name-only --relative <ref>...` dans le projet.

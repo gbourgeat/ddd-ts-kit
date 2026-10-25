@@ -1,6 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { MODULE_LAYERS, ROLE_FOLDERS } from '../src/model-modules';
 import { AGGREGATE, checkJsonOf } from './check-support';
 import { cli, read, scaffoldEverything, tempDir, write } from './helpers';
+import { git } from './support/git';
 import { readJson } from './support/read-json';
 
 const BASELINE = 'ddd-ts-kit-baseline.json';
@@ -80,6 +84,49 @@ describe('check --baseline', () => {
     expect(cli(root, 'check', '--baseline', 'keep').stderr).toContain('Use --baseline write or --baseline prune.');
   });
 });
+
+describe('check --baseline, when files move', () => {
+  it('moves the counts of a file with it when move-to-module moves it, and silences nothing new', () => {
+    const root = legacyProject('baseline-module');
+
+    cli(root, 'check', '--baseline', 'write');
+    cli(root, 'generate', 'module', 'billing', 'invoices', '--purpose', 'The invoices of a customer.');
+
+    expect(cli(root, 'move-to-module', 'billing', 'invoices', ...roleFolders(root)).code).toBe(0);
+
+    const baseline = readJson(root, BASELINE);
+    const json = checkJsonOf(cli(root, 'check', '--json'));
+
+    expect(baseline).toEqual({
+      'src/contexts/billing/invoices/domain/aggregates/invoice.aggregate.ts': { 'layer/domain-purity': { count: 1 } },
+    });
+
+    expect(json.violations.filter((violation) => violation.ruleId === 'layer/domain-purity')).toEqual([]);
+  });
+
+  it('follows a file git sees renamed when prune runs, which an agent may run', () => {
+    const root = legacyProject('baseline-renamed');
+    const renamed = AGGREGATE.replace('invoice.aggregate.ts', 'legacy-invoice.aggregate.ts');
+
+    cli(root, 'check', '--baseline', 'write');
+    git(root, 'init', '--quiet', '--initial-branch', 'main');
+    git(root, 'add', '--all');
+    git(root, 'commit', '--quiet', '--message', 'chore: the baseline of the errors');
+    git(root, 'mv', AGGREGATE, renamed);
+
+    expect(cli(root, 'check', '--baseline', 'prune').code).toBe(0);
+    expect(readJson(root, BASELINE)).toEqual({ [renamed]: { 'layer/domain-purity': { count: 1 } } });
+  });
+});
+
+function roleFolders(root: string): string[] {
+  return MODULE_LAYERS.flatMap((layer) =>
+    fs
+      .readdirSync(path.join(root, 'src/contexts/billing', layer))
+      .filter((folder) => ROLE_FOLDERS[layer]?.includes(folder) === true)
+      .map((folder) => `${layer}/${folder}`),
+  );
+}
 
 /** A generated project whose aggregate imports a validation library: one error of the domain, as code written before the kit would hold. */
 function legacyProject(label: string): string {

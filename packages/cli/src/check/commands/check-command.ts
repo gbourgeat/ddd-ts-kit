@@ -8,7 +8,9 @@ import { isOneOf } from '../../config';
 import { applyBaseline } from '../baseline/apply-baseline';
 import { BASELINE_FILE, readBaseline } from '../baseline/read-baseline';
 import { writeBaseline } from '../baseline/write-baseline';
+import { baselineFollowingMoves } from '../baseline/baseline-following-moves';
 import { prunedBaseline } from '../baseline/pruned-baseline';
+import { renamedFiles } from '../baseline/renamed-files';
 import { recordedBaseline } from '../baseline/recorded-baseline';
 import { CLEAN_RULE_IDS } from '../catalogue/clean-rule-ids';
 import type { CheckResult } from '../engine/check-result';
@@ -130,7 +132,9 @@ function rewriteBaseline(args: Arguments, io: Io, mode: string): number {
   const recorded = readBaseline(root);
 
   const baseline =
-    mode === 'write' || recorded === undefined ? recordedBaseline(violations) : prunedBaseline(recorded, violations);
+    mode === 'write' || recorded === undefined
+      ? recordedBaseline(violations)
+      : prunedBaseline(baselineFollowingMoves(recorded, renamedFiles(root)), violations);
 
   writeBaseline(root, baseline);
   io.out(baselineSummary(baseline));
