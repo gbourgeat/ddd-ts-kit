@@ -5,9 +5,15 @@ export interface NestEquivalent {
 }
 
 const ROUTE: NestEquivalent = {
-  tool: 'a controller',
+  tool: 'a controller Nest serves',
   instead:
-    'a route of the kit (`generate route`, `@Controller` of `@ddd-ts-kit/http`): its security is declared, its refusals are problem documents with their codes, and it is in the contract',
+    'a route of the kit: `@KitRoute` of `@ddd-ts-kit/http/nest` on each method of the controller, served by `createControllersModule`, or `generate route`. Its security is declared, its refusals are problem documents with their codes, and it is in the contract',
+};
+
+const RAW: NestEquivalent = {
+  tool: 'the raw request or answer',
+  instead:
+    'the parts of the request a route of the kit validates (`@Body`, `@Query`, `@Param`, `@Headers`, `@CurrentActor`, `@RouteContext`), and an answer it declares (`response` of `@KitRoute`, `cache` for its headers)',
 };
 
 const GUARD: NestEquivalent = {
@@ -48,10 +54,8 @@ const PIPELINE: NestEquivalent = {
 
 /** The tools of `@nestjs/common`, by the names a context imports. */
 const COMMON: readonly (readonly [RegExp, NestEquivalent])[] = [
-  [
-    /^(?:Controller|Get|Post|Put|Patch|Delete|All|Head|Options|Search|Body|Param|Query|Headers|Req|Request|Res|Response|HttpCode|Header|Redirect|Render|Sse|Ip|HostParam|Session|UploadedFiles?)$/,
-    ROUTE,
-  ],
+  [/^(?:Controller|Get|Post|Put|Patch|Delete|All|Head|Options|Search|Body|Param|Query|Headers|HttpCode)$/, ROUTE],
+  [/^(?:Req|Request|Res|Response|Next|Header|Redirect|Render|Sse|Ip|HostParam|Session|UploadedFiles?)$/, RAW],
   [/^(?:UseGuards|CanActivate|SetMetadata|applyDecorators)$/, GUARD],
   [/^(?:UsePipes|PipeTransform|ArgumentMetadata)$|Pipe$/, PIPE],
   [/^(?:UseFilters|Catch|ExceptionFilter|ArgumentsHost)$|Exception$/, FILTER],
@@ -121,9 +125,15 @@ const PACKAGES: Readonly<Record<string, NestEquivalent>> = {
 /**
  * What a context imports of Nest that the kit does in its own way, one per tool: none for a
  * package of Nest the kit has no answer to (WebSockets, GraphQL, microservices, testing), nor for
- * its container (`Injectable`, `Inject`), which an adapter bound as a Nest provider may carry.
+ * its container (`Injectable`, `Inject`), which an adapter bound as a Nest provider may carry. In
+ * a controller the kit serves (`servedByKit`: it carries `@KitRoute`), the decorators that declare
+ * a route are what the kit reads, and are not reported.
  */
-export function nestEquivalentsOf(packageName: string, names: readonly string[]): readonly NestEquivalent[] {
+export function nestEquivalentsOf(
+  packageName: string,
+  names: readonly string[],
+  servedByKit = false,
+): readonly NestEquivalent[] {
   if (packageName !== '@nestjs/common') {
     const equivalent = PACKAGES[packageName];
 
@@ -134,5 +144,7 @@ export function nestEquivalentsOf(packageName: string, names: readonly string[])
     return [SIDE_EFFECT];
   }
 
-  return [...new Set(names.flatMap((name) => COMMON.find(([pattern]) => pattern.test(name))?.[1] ?? []))];
+  const found = names.flatMap((name) => COMMON.find(([pattern]) => pattern.test(name))?.[1] ?? []);
+
+  return [...new Set(found.filter((equivalent) => !(servedByKit && equivalent === ROUTE)))];
 }

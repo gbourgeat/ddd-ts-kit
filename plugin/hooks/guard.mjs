@@ -712,10 +712,9 @@ function findProject(from) {
 
 function describeProject(root) {
   const config = readJson(join(root, CONFIG)) ?? {};
-  const local = join(root, 'node_modules', '.bin', 'ddd-ts-kit');
   return {
     root,
-    cli: existsSync(local) ? local : undefined,
+    cli: installedCli(root),
     sourceRoot: config.sourceRoot ?? 'src',
     contextsDir: config.contextsDir ?? 'src/contexts',
     // The modules of the model each context declares: one folder of the context holding its layers.
@@ -733,6 +732,20 @@ function describeProject(root) {
     // On trial: the dependency rules judge the text about to be written, before the write; absent, after it.
     dependenciesBeforeWrite: config.dependenciesBeforeWrite === true,
   };
+}
+
+// The CLI the project installed, where Node would find it: in the project, or hoisted to a parent
+// by the workspaces of npm or pnpm (a project of a monorepo, the example of this repository).
+function installedCli(root) {
+  for (let directory = root; ; directory = dirname(directory)) {
+    const cli = join(directory, 'node_modules', '.bin', 'ddd-ts-kit');
+    if (existsSync(cli)) {
+      return cli;
+    }
+    if (dirname(directory) === directory) {
+      return undefined;
+    }
+  }
 }
 
 function commitLimits(configured) {
