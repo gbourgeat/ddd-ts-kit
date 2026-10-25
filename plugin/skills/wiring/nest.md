@@ -12,7 +12,7 @@ or an event handler. Nest stays free in the platform. Judged: `presentation/`,
 
 | Reached for, in Nest | Write instead |
 |---|---|
-| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | keep them: `@KitRoute({ operationId, summary, guards, errors })` on each method, `@KitRoutes` on the class, `@CurrentActor()` for the caller, served by `createControllersModule` of `@ddd-ts-kit/http/nest`; or `npx ddd-ts-kit generate route <context> <UseCase> --method <M> --path <p>` |
+| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | keep them: `@KitRoute({ operationId, summary, request, response, errors })` on each method, `@KitRoutes({ group })` on the class, `@CurrentActor()` for the caller, the bus injected by Nest; under `stack.routes: nest` (`init --routes nest`), `npx ddd-ts-kit generate route <context> <UseCase> --method <M> --path <p>` writes it and lists it under `controllers` in the module of the context |
 | `ValidationPipe`, a DTO with class-validator | the schemas of the route, with the validation library of the project |
 | `@UseGuards(AuthGuard(...))`, Passport | authentication in the platform, read by `resolvePrincipal`; `generate guard` for a control at the edge of a route group |
 | `@Roles`, a `RolesGuard`, CASL | the permission of the use case (`requires` in the module file, `@Requires`), a policy, an access scope: `/ddd-ts-kit:access-control` |

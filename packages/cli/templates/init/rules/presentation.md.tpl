@@ -17,6 +17,10 @@ paths:
 - A route group (`<resource>.routes.ts`, `@RouteGroup`) gives its controllers a prefix, a tag and guards. A controller names its group, or says `guards: [Public]`: nothing is open by omission (`authz/declared`).
 - A guard is a control at the edge (authenticated, a role, the tenant of the path); a permission stays on the use case (`@Requires`), where a job and an event handler meet it too. A guard of the project is a declared class in `presentation/http/guards/*.guard.ts` and never imports `domain/`, `infrastructure/`, a repository or the command bus (`presentation/guard-at-the-edge`).
 {{/if}}
+{{#if routes.nest}}
+- A route is a Nest controller the kit serves: `<use-case>.controller.ts` in `presentation/http/<resource>/<use-case>/`, `@Controller()` and `@KitRoutes({ group: <Resource>Routes })` on the class, `@Post`, `@Get`... of Nest and `@KitRoute({ operationId, summary, request, response, errors })` of `@ddd-ts-kit/http/nest` on its method. The method reads `@Param()`, `@Query()`, `@Headers()`, `@Body()` typed by the DTO classes beside it, and the caller with `@CurrentActor()`; it builds the command or the query and sends it through the bus the constructor injects (`@Inject(CommandBus)`), nothing else. Nest builds the controller (the module of the context lists it under `controllers`), the kit serves it: guards of the group, validation by `request`, problem documents, the contract.
+- A method answers a body only when `response.body` declares it. The raw request and answer of Nest (`@Req`, `@Res`, `@Header`), its guards, pipes, interceptors and filters are refused (`nest/no-parallel-pipeline`): the kit would not run them.
+{{/if}}
 {{#if routes.functions}}
 - A route validates the shape of the input, builds a command or a query with the actor, executes it through `CommandBus` or `QueryBus` (never a handler class) and maps the answer. Nothing else.
 {{/if}}

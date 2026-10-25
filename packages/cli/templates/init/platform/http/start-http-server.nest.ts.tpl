@@ -27,7 +27,7 @@ export interface HttpServer {
 }
 
 /** What the server needs of the application: its routes and what stands at its edge. */
-type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
+type Served = Pick<Application, 'routes' | 'boundary'{{#if routes.nest}} | 'controllers'{{/if}}{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
 {{#if cache.rateLimit}}
 
 /** The part of the incoming request and of its response the limiter and the probe need, whatever Nest runs on. */
@@ -70,7 +70,14 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 {{/unless}}
 {{/unless}}
 
+{{#if routes.nest}}
+  const app = await NestFactory.create(createAppModule(routes, served.boundary, served.controllers), {
+    logger: ['error', 'warn'],
+  });
+{{/if}}
+{{#unless routes.nest}}
   const app = await NestFactory.create(createAppModule(routes, served.boundary), { logger: ['error', 'warn'] });
+{{/unless}}
 
 {{#if cache.rateLimit}}
   app.use(answeringReadiness(served));

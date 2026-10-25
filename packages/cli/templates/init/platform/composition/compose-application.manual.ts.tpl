@@ -11,6 +11,12 @@ import { subscribeAll } from '@ddd-ts-kit/events';
 {{#if http.any}}
 import { createErrorMapper, defineRoutes, type Route } from '@ddd-ts-kit/http';
 {{/if}}
+{{#if routes.nest}}
+import type { Type } from '@nestjs/common';
+import { type NestControllers, nestControllers } from '@ddd-ts-kit/http/nest';
+import { CommandBus, QueryBus } from '@ddd-ts-kit/kernel';
+import { classSchema } from '@ddd-ts-kit/validation/class-validator';
+{{/if}}
 {{#if audit.archive}}
 import { ArchiveAuditEntries } from '@ddd-ts-kit/audit';
 {{/if}}
@@ -58,6 +64,10 @@ interface ContextWiring {
 {{#if http.any}}
   readonly routes: readonly Route[];
 {{/if}}
+{{#if routes.nest}}
+  /** Its Nest controllers, which Nest builds and the kit serves. */
+  readonly controllers?: readonly Type<unknown>[];
+{{/if}}
 }
 
 {{#if http.any}}
@@ -83,6 +93,10 @@ export interface Application {
   readonly routes: readonly Route[];
   /** Authenticates every request and runs it inside the execution scope. */
   readonly boundary: HttpBoundary;
+{{/if}}
+{{#if routes.nest}}
+  /** The Nest controllers of the contexts: their routes are among `routes`, Nest builds them with the buses they inject. */
+  readonly controllers: NestControllers;
 {{/if}}
 {{#if files.http}}
   /** The routes that answer the signed links of a storage the application serves itself; mounted before any body parser. */
@@ -136,6 +150,9 @@ export function composeApplication(
 {{/unless}}
 
   platform.protection.declare(contexts.flatMap((context) => context.useCases));
+{{#if routes.nest}}
+  const controllers = controllersOf(contexts, platform);
+{{/if}}
 {{#if presentation.any}}
   // What the server answers in and which fields each caller sees: the forms and the contract are given the same.
   const presentation = presentationOf(platform.access, clock);
@@ -144,11 +161,24 @@ export function composeApplication(
   return {
 {{#if http.any}}
 {{#if presentation.forms}}
+{{#if routes.nest}}
+    routes: withForms(defineRoutes(...contexts.map((context) => context.routes), controllers.routes), presentation),
+{{/if}}
+{{#unless routes.nest}}
     routes: withForms(defineRoutes(...contexts.map((context) => context.routes)), presentation),
+{{/unless}}
 {{/if}}
 {{#unless presentation.forms}}
+{{#if routes.nest}}
+    routes: defineRoutes(...contexts.map((context) => context.routes), controllers.routes),
+{{/if}}
+{{#unless routes.nest}}
     routes: defineRoutes(...contexts.map((context) => context.routes)),
 {{/unless}}
+{{/unless}}
+{{#if routes.nest}}
+    controllers,
+{{/if}}
     boundary: httpBoundary({
       authenticator: options.authenticator,
       executionScope: platform.scope,
@@ -288,5 +318,24 @@ function purgeExpiredEveryNight(platform: Platform): void {
       await runPurge(platform);
     },
   });
+}
+{{/if}}
+{{#if routes.nest}}
+
+/** The Nest controllers of the contexts: their routes now, their instances built by Nest when the server starts, with the buses of the platform. */
+function controllersOf(contexts: readonly ContextWiring[], platform: Platform): NestControllers {
+  return nestControllers(
+    contexts.flatMap((context) => context.controllers ?? []),
+    {
+      providers: [
+        { provide: CommandBus, useValue: platform.commands },
+        { provide: QueryBus, useValue: platform.queries },
+      ],
+      schemaOfClass: classSchema,
+{{#if authn.none}}
+      security: ['developmentActor'],
+{{/if}}
+    },
+  );
 }
 {{/if}}

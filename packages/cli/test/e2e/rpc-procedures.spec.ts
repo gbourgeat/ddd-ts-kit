@@ -39,6 +39,18 @@ const SERVERS: readonly (readonly [string, StackFlags])[] = [
     'NestJS',
     { http: 'nest', validation: 'class-validator', di: 'nest', tests: 'vitest', orm: 'custom', events: 'outbox' },
   ],
+  [
+    'NestJS, Nest controllers',
+    {
+      http: 'nest',
+      validation: 'class-validator',
+      di: 'nest',
+      tests: 'vitest',
+      orm: 'custom',
+      events: 'outbox',
+      routes: 'nest',
+    },
+  ],
 ];
 
 /** Each server with each protocol: the mount differs for every pair. */
@@ -78,6 +90,13 @@ describe.runIf(SLOW).each(RPC_STACKS)('a project that serves its routes as proce
 
     expect(proof).toMatch(/Tests\s+3 passed/);
     expect(proof).not.toMatch(FAILED_COUNT);
+  }, 240_000);
+
+  it('passes the specs it was generated with, the spec of its controller among them', () => {
+    const specs = runIn(root, { command: bin('vitest'), args: ['run'] });
+
+    expect(specs).toMatch(/Test Files\s+\d+ passed/);
+    expect(specs).not.toMatch(FAILED_COUNT);
   }, 240_000);
 });
 

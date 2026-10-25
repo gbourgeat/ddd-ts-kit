@@ -4,8 +4,8 @@ import { NestFactory } from '@nestjs/core';
 import { describe, expect, it } from 'vitest';
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { createErrorMapper, Public } from '../src';
-import { createControllersModule, KitRoute, nestControllerRoutes } from '../src/nest';
+import { Authenticated, createErrorMapper, Public, RouteGroup } from '../src';
+import { createControllersModule, KitRoute, KitRoutes, nestControllerRoute, nestControllerRoutes } from '../src/nest';
 import { generateOpenApi } from '../src/openapi';
 import { orpcRouter } from '../src/orpc';
 import { InvoicesController, LEDGER } from './support/nest-invoices';
@@ -60,6 +60,47 @@ describe('the routes of Nest controllers, as the kit reads them', () => {
     const routes = nestControllerRoutes([InvoicesController], { schemaOfClass: classSchema });
 
     expect(Object.keys(orpcRouter(routes)).sort()).toEqual(['issueInvoice', 'searchInvoices']);
+  });
+});
+
+describe('a Nest controller in a route group of the kit', () => {
+  class BillingRoutes {}
+
+  RouteGroup({ prefix: '/billing', tags: ['billing'], guards: [Authenticated], errors: ['FORBIDDEN'] })(BillingRoutes);
+
+  class Statements {
+    list(): void {}
+  }
+
+  Controller('statements')(Statements);
+  KitRoutes({ group: BillingRoutes })(Statements);
+
+  Reflect.decorate(
+    [
+      Post(':statementId/close'),
+      KitRoute({ operationId: 'closeStatement', summary: 'Close a statement', errors: ['STATEMENT_CLOSED'] }),
+    ],
+    Statements.prototype,
+    'list',
+    { value: Statements.prototype.list },
+  );
+
+  it('takes the prefix, the tags, the guards and the codes of the group, before its own', () => {
+    const [route] = nestControllerRoutes([Statements]);
+
+    expect(route).toMatchObject({
+      path: '/billing/statements/:statementId/close',
+      tags: ['billing'],
+      security: ['bearer'],
+      groups: ['BillingRoutes'],
+    });
+
+    expect(route?.errors).toEqual(expect.arrayContaining(['FORBIDDEN', 'STATEMENT_CLOSED', 'UNAUTHORIZED']));
+  });
+
+  it('is the one route nestControllerRoute gives, and a controller of two routes is refused there', () => {
+    expect(nestControllerRoute(Statements).operationId).toBe('closeStatement');
+    expect(() => nestControllerRoute(InvoicesController, { schemaOfClass: classSchema })).toThrow(/serves 2 routes/);
   });
 });
 
