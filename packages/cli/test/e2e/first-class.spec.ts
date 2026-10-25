@@ -8,6 +8,7 @@ import { buildAndCheckDocuments } from './build-and-check-documents';
 import { expectNoFinding } from './expect-no-finding';
 import { installAsPublished } from './install-as-published';
 import { bin, findingsOf, runIn } from './run-in';
+import { FAILED_COUNT } from './run-specs';
 import { FIRST_CLASS, FIRST_CLASS_BROKERS, SLOW } from './stacks';
 import { NATIVE_COMPILER } from './type-errors';
 import { REPORTED_WORK_PROOF, writeReportedWorkProof } from './write-reported-work-proof';
@@ -54,7 +55,7 @@ describe.runIf(SLOW).each(FIRST_CLASS_BROKERS)('the first-class stack, events on
     const specs = runIn(root, { command: bin('vitest'), args: ['run'] });
 
     expect(specs).toMatch(/Test Files\s+\d+ passed/);
-    expect(specs).not.toContain('failed');
+    expect(specs).not.toMatch(FAILED_COUNT);
 
     // class-validator imposes the legacy decorator mode: the declarations and the aspects on a method serve it as they are.
     expect(JSON.parse(read(root, 'tsconfig.json'))).toMatchObject({
@@ -131,6 +132,6 @@ describe.runIf(SLOW).each(FIRST_CLASS_BROKERS)('the first-class stack, events on
       /expectSpanTree\(storyOf\(trace\)[\s\S]*'POST \/invoices'[\s\S]*'command IssueInvoiceCommand'[\s\S]*'repository InvoiceRepository\.save'[\s\S]*'domain-event billing\.invoice\.issued'/,
     );
 
-    expect(endToEnd).not.toContain('failed');
+    expect(endToEnd).not.toMatch(FAILED_COUNT);
   }, 480_000);
 });

@@ -7,6 +7,12 @@ const ALL_PASSED: Readonly<Record<string, RegExp>> = {
 };
 
 /**
+ * What the summary of Vitest or Jest prints when a spec or a file failed: `1 failed`. Never the word
+ * alone, which a passing spec may carry in its title, printed when it is slow.
+ */
+export const FAILED_COUNT = /\b\d+ failed\b/;
+
+/**
  * The specs of a generated project, run by its own runner as its `test` script runs them, and
  * what that printed: Jest on the native ES modules of Node (its summary is written to stderr).
  */

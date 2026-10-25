@@ -7,6 +7,7 @@ import { shareMoney } from './contract-pair-sources';
 import { expectNoFinding } from './expect-no-finding';
 import { installAsPublished } from './install-as-published';
 import { bin, runIn } from './run-in';
+import { FAILED_COUNT } from './run-specs';
 import { SLOW } from './stacks';
 import { NATIVE_COMPILER } from './type-errors';
 
@@ -60,7 +61,7 @@ describe.runIf(SLOW).each(PAIRS)('a project on a contract pair (%s)', (_label, s
     const endToEnd = vitest('--config', 'vitest.e2e.config.ts');
 
     expect(endToEnd).toMatch(/Tests\s+4 passed/);
-    expect(endToEnd).not.toContain('failed');
+    expect(endToEnd).not.toMatch(FAILED_COUNT);
   }, 240_000);
 
   it('documents the shared shape once, answers with the Accepted schema, and keeps its contract current', () => {

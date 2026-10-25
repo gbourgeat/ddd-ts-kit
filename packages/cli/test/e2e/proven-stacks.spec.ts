@@ -4,6 +4,7 @@ import { buildAndCheckDocuments } from './build-and-check-documents';
 import { expectNoFinding } from './expect-no-finding';
 import { installAsPublished } from './install-as-published';
 import { bin, runIn } from './run-in';
+import { FAILED_COUNT } from './run-specs';
 import { PROVEN, SLOW } from './stacks';
 
 const UNIT = 'src/contexts/billing/test/unit';
@@ -40,7 +41,7 @@ describe.runIf(SLOW).each(PROVEN)('a freshly generated project (%s)', (_label, s
       : 'await job.run(occurrence);';
 
     expect(specs).toMatch(/Test Files\s+\d+ passed/);
-    expect(specs).not.toContain('failed');
+    expect(specs).not.toMatch(FAILED_COUNT);
 
     expect(read(root, JOB_SPECS[0] ?? '')).toContain(
       `${ran}\n\n    expect(sent).toHaveLength(1);\n    expect(sent[0]).toBeInstanceOf(CancelInvoiceCommand);`,
@@ -60,7 +61,7 @@ describe.runIf(SLOW).each(PROVEN)('a freshly generated project (%s)', (_label, s
     const endToEnd = vitest('--config', 'vitest.e2e.config.ts');
 
     expect(endToEnd).toMatch(/Tests\s+6 passed/);
-    expect(endToEnd).not.toContain('failed');
+    expect(endToEnd).not.toMatch(FAILED_COUNT);
 
     expect(read(root, 'test/e2e/issue-invoice.e2e.spec.ts')).toMatch(
       /expectStatus\(response, 401\)[\s\S]*expectStatus\(response, 403\)[\s\S]*expectSpanTree\(storyOf\(trace\), \[\n\s+\{\n\s+name: 'POST \/invoices',\n\s+kind: 'SERVER',\n\s+children: \[\{ name: 'command IssueInvoiceCommand', children: \[\{ name: 'repository InvoiceRepository\.save' \}\] \}\],\n\s+\},/,

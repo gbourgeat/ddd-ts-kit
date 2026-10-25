@@ -3,6 +3,7 @@ import { cli, read, tempDir } from '../helpers';
 import { expectNoFinding } from './expect-no-finding';
 import { installAsPublished } from './install-as-published';
 import { bin, runIn } from './run-in';
+import { FAILED_COUNT } from './run-specs';
 import { SLOW } from './stacks';
 import { NATIVE_COMPILER } from './type-errors';
 import { REPORTED_FAILURES_PROOF, writeReportedFailuresProof } from './write-reported-failures-proof';
@@ -51,7 +52,7 @@ describe.runIf(SLOW).each(REPORTED)('a generated project that reports its failur
     const proof = runIn(root, { command: bin('vitest'), args: ['run', REPORTED_FAILURES_PROOF] });
 
     expect(proof).toMatch(/Tests\s+3 passed/);
-    expect(proof).not.toContain('failed');
+    expect(proof).not.toMatch(FAILED_COUNT);
   }, 240_000);
 });
 

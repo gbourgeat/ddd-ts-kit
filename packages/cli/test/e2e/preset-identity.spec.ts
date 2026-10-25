@@ -4,7 +4,7 @@ import { expectNoFinding } from './expect-no-finding';
 import { installAsPublished } from './install-as-published';
 import { generatePrismaClient } from './generate-prisma-client';
 import { bin, findingsOf, runIn } from './run-in';
-import { allPassed, runSpecs } from './run-specs';
+import { allPassed, FAILED_COUNT, runSpecs } from './run-specs';
 import { SLOW } from './stacks';
 import { typeErrors } from './type-errors';
 
@@ -105,7 +105,7 @@ describe.runIf(SLOW).each(FLAVOURS)('a project bootstrapped with the identity pr
     const specs = runSpecs(root, tests);
 
     expect(specs).toMatch(allPassed(tests));
-    expect(specs).not.toContain('failed');
+    expect(specs).not.toMatch(FAILED_COUNT);
   }, 480_000);
 });
 

@@ -7,6 +7,7 @@ import { initFlags } from '../support/init-flags';
 import { expectNoFinding } from './expect-no-finding';
 import { installAsPublished } from './install-as-published';
 import { bin, runIn } from './run-in';
+import { FAILED_COUNT } from './run-specs';
 import { SLOW } from './stacks';
 import { NATIVE_COMPILER } from './type-errors';
 
@@ -65,7 +66,7 @@ describe.runIf(SLOW).each(RPC_STACKS)('a project that serves its routes as oRPC 
     const proof = runIn(root, { command: bin('vitest'), args: ['run', PROOF] });
 
     expect(proof).toMatch(/Tests\s+3 passed/);
-    expect(proof).not.toContain('failed');
+    expect(proof).not.toMatch(FAILED_COUNT);
   }, 240_000);
 });
 

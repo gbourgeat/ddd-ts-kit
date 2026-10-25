@@ -16,6 +16,7 @@ import {
   spelled,
 } from './compiled-project';
 import { bin, findingsOf, runIn } from './run-in';
+import { FAILED_COUNT } from './run-specs';
 import { FIRST_CLASS, label, SLOW, STACKS } from './stacks';
 import { type Started, started } from './started';
 
@@ -185,7 +186,7 @@ export function describeTheAliasAtRunTime(cases: readonly AliasCase[]): void {
         const jest = path.join(REPO_ROOT, 'node_modules/jest/bin/jest.js');
         const run = runIn(root, { command: process.execPath, args: ['--experimental-vm-modules', jest, PROBE_SPEC] });
 
-        expect(run).not.toContain('failed');
+        expect(run).not.toMatch(FAILED_COUNT);
       },
       120_000,
     );
