@@ -2001,6 +2001,21 @@ test('on trial, a Codex patch is judged on the lines it adds; off, the import wa
   assert.equal(run('pre-write', { tool_name: 'Edit', tool_input: edit }).output, undefined);
 });
 
+test('on trial, each judged write is recorded in the git directory of the repository, for the verdict', () => {
+  const root = project({ dependenciesBeforeWrite: true });
+  spawnSync('git', ['init', '--quiet'], { cwd: root });
+  const file = pricingService(root, 'export class Pricing {}\n');
+  const edit = { file_path: file, old_string: 'export', new_string: "import express from 'express';\nexport" };
+  assert.equal(decision(run('pre-write', { tool_name: 'Edit', tool_input: edit })), 'deny');
+  const [entry] = readFileSync(join(root, '.git/ddd-ts-kit/before-write.jsonl'), 'utf8')
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line));
+  assert.equal(entry.file, 'src/contexts/ordering/domain/services/pricing.service.ts');
+  assert.deepEqual(entry.refused, ['layer/domain-purity']);
+  assert.equal(typeof entry.ms, 'number');
+});
+
 function pricingService(root, content) {
   const file = join(root, 'src/contexts/ordering/domain/services/pricing.service.ts');
   mkdirSync(dirname(file), { recursive: true });

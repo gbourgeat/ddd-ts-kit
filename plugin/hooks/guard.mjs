@@ -3,6 +3,7 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
+  appendFileSync,
   closeSync,
   existsSync,
   fstatSync,
@@ -366,7 +367,7 @@ function verdictOn({ file, written, replaced }, input) {
     testWriterScopeReason(project, file, input) ??
     (isUnwrapping(project, file, input) ? undefined : workerScopeReason(project, file, input)) ??
     handWrittenRoleReason(project, file) ??
-    dependencyReason(project, { file, written, replaced });
+    dependencyReason(project, { file, written, replaced }, input);
   if (refusal) {
     return { decision: project.mode === 'advise' ? 'ask' : 'deny', reason: refusal };
   }
@@ -1481,7 +1482,7 @@ function baselineWriteReason(command) {
 // before, are judged by the dependency rules before they reach the disk: a new import that breaks
 // one is refused with the message of the checker. An import the file already held is left to the
 // check after the write. A slow or failing check lets the write through.
-function dependencyReason(project, { file, written, replaced }) {
+function dependencyReason(project, { file, written, replaced }, input) {
   const added =
     project.dependenciesBeforeWrite && project.cli && /\.(ts|mts|cts)$/.test(file) && newLines(file, written, replaced);
   if (!added || !/\bimport\b|\brequire\(/.test(added)) {
@@ -1493,12 +1494,33 @@ function dependencyReason(project, { file, written, replaced }) {
   writeFileSync(text, added, { mode: 0o600 });
   try {
     const rules = DEPENDENCY_RULES.flatMap((rule) => ['--rule', rule]);
+    const started = Date.now();
     const errors = errorsOf(runCli(project, ['check-file', file, '--content-from', text, ...rules, '--json'], 4000));
+    recordTrial(project, { file, errors, ms: Date.now() - started, host: hostOf(input) });
     return errors.length > 0
       ? `this write adds ${errors.length} import(s) a dependency rule refuses, so it was not written (dependenciesBeforeWrite, on trial). Write it without them.\n${describe(errors)}`
       : undefined;
   } finally {
     rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+// The trial is decided on what it did: each judged write is a line of the record of the repository,
+// in its git directory, which every worktree shares and none commits. A record that cannot be written
+// is skipped.
+function recordTrial(project, { file, errors, ms, host }) {
+  try {
+    const common = spawnSync('git', ['rev-parse', '--git-common-dir'], { cwd: project.root, encoding: 'utf8' });
+    if (common.status !== 0) {
+      return;
+    }
+    const directory = join(resolve(project.root, common.stdout.trim()), 'ddd-ts-kit');
+    mkdirSync(directory, { recursive: true });
+    const refused = [...new Set(errors.map((error) => error.ruleId))];
+    const entry = { at: new Date().toISOString(), file: projectPath(project, file), refused, ms, host };
+    appendFileSync(join(directory, 'before-write.jsonl'), `${JSON.stringify(entry)}\n`, { mode: 0o600 });
+  } catch {
+    // The record serves the verdict of the trial, never the write.
   }
 }
 
