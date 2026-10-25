@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:35b1141e2ed9ada1 -->
+<!-- translation-of: persistence.md sha256:bf5c22adba3fee35 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -443,8 +443,10 @@ D'après [`packages/cli/README.fr.md`](../../packages/cli/README.fr.md) et
   `--tenancy shared-table`, est implémenté pour les quatre ORM ; avec `custom` ou sans ORM,
   l'adaptateur ordinaire est écrit et une note dit quoi ajouter, et `init` refuse la stratégie.
 - Le journal d'audit SQL existe pour les quatre ORM, sur PostgreSQL seulement ; le garde d'ajout
-  seul est créé par la première migration sur Knex et collé dans une migration écrite à la main sur
-  Drizzle, Prisma et TypeORM (`npm run db:audit-guard`). Avec `custom` ou sans ORM, le projet généré
+  seul est créé par la première migration sur Knex, et sur Drizzle, Prisma et TypeORM `npm run
+  db:generate` ajoute ses instructions à la migration qui crée les tables d'audit, ce que l'outil
+  de l'ORM ne sait pas écrire (`npm run db:audit-guard` les affiche pour une migration écrite à la
+  main). Avec `custom` ou sans ORM, le projet généré
   démarre sur un journal en mémoire derrière un `TODO(platform)`.
 - Les *specs* rapides des adaptateurs s'exécutent sur PGlite ; Docker Compose fournit le vrai
   serveur.
@@ -502,11 +504,14 @@ le même fichier.
 |---|---|---|---|
 | drizzle-kit 0.31 | `ddd-ts-kit drizzle-generate --name`, qui lance `drizzle-kit generate --name` (`migrations.prefix: 'timestamp'` dans `drizzle.config.ts`) | `migrations/20261012093000_add-invoices.sql`, son *snapshot* `meta/20261012093000_snapshot.json`, une entrée de `meta/_journal.json` | **ignorée sans un mot** : le migrateur applique les entrées plus récentes que la dernière enregistrée |
 | knex 3 | `knex migrate:make` (le gabarit module ES de knex, fixé dans `knexfile.js`) | `migrations/20261012093000_add-invoices.js` | appliquée : knex exécute chaque fichier qu'il n'a pas enregistré |
-| Prisma 7 | `prisma migrate dev --create-only --name` | `prisma/migrations/20261012093000_add_invoices/migration.sql` (Prisma transforme `-` en `_`) | appliquée par `migrate deploy`, qui exécute chaque migration qu'il n'a pas enregistrée (d'après sa documentation ; non mesuré ici) |
-| TypeORM 1.1 | `typeorm migration:generate -d <data source>`, à qui l'on donne le chemin : `npm run db:generate migrations/add-invoices` | `migrations/1791829645467-add-invoices.ts` (des millisecondes, et un `-` : TypeORM fixe les deux) | appliquée : TypeORM exécute chaque migration qu'il n'a pas enregistrée |
+| Prisma 7 | `ddd-ts-kit prisma-generate --name`, qui lance `prisma migrate dev --create-only --name` | `prisma/migrations/20261012093000_add_invoices/migration.sql` (Prisma transforme `-` en `_`) | appliquée par `migrate deploy`, qui exécute chaque migration qu'il n'a pas enregistrée (d'après sa documentation ; non mesuré ici) |
+| TypeORM 1.1 | `ddd-ts-kit typeorm-generate`, qui lance `typeorm migration:generate -d <data source>`, à qui l'on donne le chemin : `npm run db:generate migrations/add-invoices` | `migrations/1791829645467-add-invoices.ts` (des millisecondes, et un `-` : TypeORM fixe les deux) | appliquée : TypeORM exécute chaque migration qu'il n'a pas enregistrée |
 
 La commande prend la description après le script : `npm run db:generate add-invoices`
 (`npm run db:generate -- audit-guard --custom` pour une migration drizzle-kit écrite à la main).
+Avec un journal d'audit, les commandes du kit ajoutent les instructions de son garde d'ajout seul
+à la migration qui crée les tables d'audit, une seule fois : un projet dont les migrations les
+contiennent reste tel quel.
 
 **Deux migrations gardées séparées.** Un outil qui génère depuis le schéma écrit, dans une
 migration, la différence entre les fichiers du schéma et la dernière migration : deux changements

@@ -166,7 +166,7 @@ model SubjectKey {
 {{/if}}
 {{#if audit.on}}
 
-// TODO(platform): Prisma writes no trigger. After the first `npm run db:generate <name>`, add a migration (`npm run db:generate audit-guard`) holding the statements `npm run db:audit-guard` prints: they make the entries refuse UPDATE, DELETE and TRUNCATE.
+// Prisma writes no trigger: `npm run db:generate <name>` adds the statements that make the audit trail append-only (UPDATE, DELETE and TRUNCATE refused) to the migration that creates it; `npm run db:audit-guard` prints them for a migration written by hand.
 /// The audit trail of @ddd-ts-kit/audit: written by PrismaAuditTrail with raw statements, append-only once the guard is migrated.
 model AuditEntry {
   id             String   @unique

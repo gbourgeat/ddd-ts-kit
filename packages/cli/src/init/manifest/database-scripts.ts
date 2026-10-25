@@ -13,7 +13,8 @@ const DATABASE_SCRIPTS: Readonly<Record<string, Record<string, string>>> = {
   prisma: {
     'db:client':
       'prisma generate && prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script -o generated/schema.sql',
-    'db:generate': 'prisma migrate dev --create-only --name',
+    // Through the CLI: with an audit trail, the migration that creates it is made append-only, which Prisma cannot write.
+    'db:generate': 'ddd-ts-kit prisma-generate --name',
     'db:migrate': 'prisma migrate deploy',
     pretypecheck: 'npm run db:client',
     prebuild: 'npm run db:client',
@@ -33,7 +34,12 @@ export function databaseScripts(config: Config): Record<string, string> {
   };
 }
 
-/** The TypeORM CLI reads the compiled data source of the platform, wherever the project keeps its platform; it takes the path of the new migration (`npm run db:generate migrations/add-invoices`). */
+/**
+ * The TypeORM CLI reads the compiled data source of the platform, wherever the project keeps its
+ * platform; it takes the path of the new migration (`npm run db:generate migrations/add-invoices`).
+ * `db:generate` goes through the CLI of the kit, which makes the audit trail append-only in the
+ * migration that creates it.
+ */
 function scriptsOf(config: Config): Record<string, string> {
   const { orm } = config.stack;
   const dataSource = `dist/${config.platformDir}/database/data-source.js`;
@@ -43,12 +49,12 @@ function scriptsOf(config: Config): Record<string, string> {
   }
 
   return {
-    'db:generate': `typeorm migration:generate -d ${dataSource}`,
+    'db:generate': 'ddd-ts-kit typeorm-generate',
     'db:migrate': `typeorm migration:run -d ${dataSource}`,
   };
 }
 
-/** No ORM generates a trigger: the statements that make the audit entries append-only are printed, to paste in a migration of the project. */
+/** The statements that make the audit entries append-only, which `db:generate` writes in the migration that creates them: printed, for a migration written by hand. */
 function auditGuard(orm: string): string {
   return `node --input-type=module -e "import { auditGuardStatements } from '@ddd-ts-kit/audit/${orm}'; console.log(auditGuardStatements('audit').join(';\\n') + ';')"`;
 }

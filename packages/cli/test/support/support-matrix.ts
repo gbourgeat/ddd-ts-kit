@@ -196,18 +196,10 @@ export interface DeclaredDifference {
   readonly without: Readonly<Record<string, string>>;
 }
 
-const BY_KNEX = 'createAuditTables of @ddd-ts-kit/knex creates the trigger in the first migration';
-
 const RELATIONSHIPS = 'it decides on roles and attributes, not on stored relationships';
 
 /** What the members of a family of flags generate differently, on a stack where every capability is on. */
 export const GENERATED_DIFFERENCES: readonly DeclaredDifference[] = [
-  {
-    family: 'orm',
-    trait: /^TODO\(platform\): <member> writes no trigger$/,
-    kind: 'not yet',
-    without: { knex: BY_KNEX },
-  },
   {
     family: 'container',
     trait: /^package @ddd-ts-kit\/di$/,
