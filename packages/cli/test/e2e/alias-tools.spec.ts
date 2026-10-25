@@ -15,6 +15,7 @@ import {
 } from './compiled-project';
 import { expectNoFinding } from './expect-no-finding';
 import { bin, findingsOf, runIn } from './run-in';
+import { FAILED_COUNT } from './run-specs';
 import { SLOW } from './stacks';
 import { started } from './started';
 import { NATIVE_COMPILER } from './type-errors';
@@ -179,6 +180,6 @@ describe.runIf(SLOW)('a project initialised with --import-alias "$app/"', () => 
     ]);
 
     expect(specs).toMatch(/Test Files\s+\d+ passed/);
-    expect(specs).not.toContain('failed');
+    expect(specs).not.toMatch(FAILED_COUNT);
   }, 480_000);
 });

@@ -3,6 +3,7 @@ import { cli, read, tempDir, write } from '../helpers';
 import { expectNoFinding } from './expect-no-finding';
 import { installAsPublished } from './install-as-published';
 import { bin, findingsOf, runIn } from './run-in';
+import { FAILED_COUNT } from './run-specs';
 import { SLOW } from './stacks';
 import { typeErrors } from './type-errors';
 
@@ -75,7 +76,7 @@ describe.runIf(SLOW)('the identity preset generated into a project that decides 
     const specs = runIn(root, { command: bin('vitest'), args: ['run'] });
 
     expect(specs).toMatch(/Test Files\s+\d+ passed/);
-    expect(specs).not.toContain('failed');
+    expect(specs).not.toMatch(FAILED_COUNT);
   }, 480_000);
 });
 

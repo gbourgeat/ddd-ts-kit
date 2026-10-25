@@ -5,6 +5,7 @@ import { initFlags } from '../support/init-flags';
 import { expectNoFinding } from './expect-no-finding';
 import { installAsPublished } from './install-as-published';
 import { bin, findingsOf, runIn } from './run-in';
+import { FAILED_COUNT } from './run-specs';
 import { SLOW } from './stacks';
 import { NATIVE_COMPILER } from './type-errors';
 
@@ -92,6 +93,6 @@ describe.runIf(SLOW).each(FILE_STACKS)('a project that receives files (%s)', (_l
     });
 
     expect(specs).toMatch(/Test Files\s+4 passed/);
-    expect(specs).not.toContain('failed');
+    expect(specs).not.toMatch(FAILED_COUNT);
   }, 240_000);
 });
