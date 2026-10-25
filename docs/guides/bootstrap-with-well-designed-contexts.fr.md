@@ -1,5 +1,5 @@
 [English](bootstrap-with-well-designed-contexts.md) · **Français**
-<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:26b8d43c8f2ec3b1 -->
+<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:d39649197bfd4674 -->
 
 # Démarrer avec des contextes bien conçus
 
@@ -87,7 +87,7 @@ Une autre *stack* est refusée avant que rien ne soit écrit, avec l'option qui 
 
 | Clé | Acceptée | Pourquoi |
 |---|---|---|
-| `stack.style` | `declared`, ou `explicit` avec `--di manual` ou `--di nest` | déclaré : les cas d'usage, les politiques et les adaptateurs se déclarent eux-mêmes ; explicite : `identity.module.ts` liste chaque liaison (les adaptateurs, les gestionnaires, les éditeurs, les consommateurs, les permissions, les routes) et `access-policies.ts` les politiques, le *world* des *specs* câble les *fakes* de la même façon. Sur tsyringe, le style explicite est refusé : ce conteneur lit les déclarations |
+| `stack.style` | `declared`, ou `explicit` avec `--di manual` ou `--di nest` | déclaré : les cas d'usage, les politiques et les adaptateurs se déclarent eux-mêmes ; explicite : `identity.module.ts` liste chaque liaison (les adaptateurs, les gestionnaires, les éditeurs, les consommateurs, les permissions, les routes) et `access-policies.ts` les politiques, le *world* des *specs* câble les *fakes* de la même façon, et `test/unit/identity.module.spec.ts` tient le module à ses cas d'usage (un gestionnaire et une permission pour chacun, chaque route montée). Sur tsyringe, le style explicite est refusé : ce conteneur lit les déclarations |
 | `stack.dependencies` | `signature`, dans le style déclaré | les classes disent ce dont elles ont besoin par leur constructeur ; le style explicite ne le lit pas, son fichier de module passe chaque dépendance |
 | `stack.refusals` | `named`, `factories` | named : une classe par refus, qui lit son code dans `<context>.codes.ts` ; factories : les fabriques statiques d'une classe par concept |
 | `stack.valueObjects` | `throwing` | les objets-valeurs refusent une valeur invalide quand on les construit |

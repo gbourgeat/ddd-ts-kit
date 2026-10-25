@@ -82,7 +82,7 @@ refused before anything is written, with the flag that would fit:
 
 | Key | Accepted | Why |
 |---|---|---|
-| `stack.style` | `declared`, or `explicit` with `--di manual` or `--di nest` | declared: the use cases, policies and adapters declare themselves; explicit: `identity.module.ts` lists every binding (the adapters, the handlers, the publishers, the consumers, the permissions, the routes) and `access-policies.ts` the policies, the world of the specs wires the fakes the same way. On tsyringe the explicit style is refused: the declarations are what that container reads |
+| `stack.style` | `declared`, or `explicit` with `--di manual` or `--di nest` | declared: the use cases, policies and adapters declare themselves; explicit: `identity.module.ts` lists every binding (the adapters, the handlers, the publishers, the consumers, the permissions, the routes) and `access-policies.ts` the policies, the world of the specs wires the fakes the same way, and `test/unit/identity.module.spec.ts` holds the module to its use cases (a handler and a permission for each, each route mounted). On tsyringe the explicit style is refused: the declarations are what that container reads |
 | `stack.dependencies` | `signature`, in the declared style | the classes state what they need by their constructor; the explicit style does not read it, its module file passes each dependency |
 | `stack.refusals` | `named`, `factories` | named: one class per refusal, its code read from `<context>.codes.ts`; factories: the static factories of one class per concept |
 | `stack.valueObjects` | `throwing` | the value objects refuse an invalid value when built |
