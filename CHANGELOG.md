@@ -4,6 +4,39 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.90.0
+
+**A generated project forces qs `^6.16.0`, and multer `^2.5.0` on Nest, where its stack still pins the vulnerable versions; one on Fastify asks for `fastify` `^5.12.7`.** Stryker 10.1 asks for `typed-rest-client` 2.3, which asks for qs 6.15.1 exactly (three denials of service, moderate), and `@nestjs/platform-express`, up to 12.2.0, asks for multer 2.4.0 exactly (a denial of service through a pending `fileFilter`, high). `init` forces the fixed versions in `overrides` of `package.json` under npm, and of `pnpm-workspace.yaml` under pnpm, which reads nothing of `package.json`. An override the project already sets for one of them is kept, and said, unless `--force`. Fastify 5.12.2 to 5.12.5 let a request header go around the validation of a schema whose `propertyNames` reads it by case (low).
+
+To move: `npx ddd-ts-kit init` adds the overrides (or write them by hand: `"overrides": { "qs": "^6.16.0", "multer": "^2.5.0" }` in `package.json` under npm, the same entries under `overrides:` of `pnpm-workspace.yaml` under pnpm, multer on Nest alone), then `npm install` (`pnpm install`). Check that `npm ls qs multer` (`pnpm why qs multer`) shows no qs below 6.16 and no multer below 2.5; a copy left older moves with `npm update qs multer`. In a project on Fastify, install `fastify@^5.12.7`.
+
+**The background jobs and the process instances live in the database on Prisma too:
+`PrismaJobStore` and `PrismaProcessStore`, and `init --orm prisma --queue database`.** The two
+stores of `@ddd-ts-kit/prisma` are held to `jobStoreContract` and `processStoreContract`, on PGlite
+and on PostgreSQL. A job enqueued by a command is written by the transaction of that command, so it
+exists if and only if the command committed; a claim selects the due rows `FOR UPDATE SKIP LOCKED`,
+the one raw statement of the store, and leases them in a short transaction; an idempotency key is
+unique per job name and tenant. A step of a process manager saves its instance in the transaction
+of its unit of work, refused with `ConcurrencyError` at a stale version. Their models ship in
+`prisma/jobs-and-processes.postgresql.prisma`; the checkpoint of a job and the state of an
+instance are JSON in a text field, since Prisma Client writes a SQL `NULL` to a `Json` field only
+through the sentinel of the generated client. `init` writes the `BackgroundJob` and
+`ProcessInstance` models in the `messaging` schema of `prisma/schema.prisma` and binds the stores in
+`persistence-over.ts`; on Prisma with tsyringe `--queue` now defaults to `database`, as on Knex and
+Drizzle, and with `--queue redis` the process instances stay in the database.
+
+To move: a project on Prisma that keeps its jobs in memory and wants them in the database runs
+`init --force --queue database` on a clean tree, then `npm run db:generate <name>` for the two new
+tables.
+
+**The four rules that read what a test says are errors: `test/title-states-a-rule`, `test/no-logic`, `test/assertion-present` and `test/refusal-by-code`.** They were warnings in 0.89, listed by `ddd-ts-kit lint` after its report without failing it; `recommended` of the ESLint plugin and `ddd-ts-kit rules` now give them `error`, as `strict` did, and the lint fails on them.
+
+To move: before upgrading, run `npm run lint` on 0.89 and take up what it lists under these four rules: rename a title that says `should` or names a method, move a loop to an `it.each` and a decision to a builder or a fake, replace a `toThrow('message')` by the code of the refusal, and write `it.todo` where a test has no body. A project that keeps one of them a warning sets `"rules": { "test/no-logic": "warn" }` in `ddd-ts-kit.config.json`, rule by rule.
+
+**`ddd-ts-kit doctor` says when an override `init` writes is missing, or no longer needed.** `init` forces qs `^6.16.0`, and multer `^2.5.0` on Nest, under a dependency that pins them below a security fix; nothing removed such an override from a project once that dependency was fixed, and it would hold the package back when a later major is asked for. `doctor` now reads, on what is installed, the range the parent asks for (`typed-rest-client` under `@stryker-mutator/core`, `@nestjs/platform-express`), found from the real place of each package under npm and under pnpm, against the overrides of `package.json` or of `pnpm-workspace.yaml`: `override <name>: missing` while the parent still pins the package below the fix and the project does not force it, which fails `--strict`; `override <name>: no longer needed` once the parent asks for the fixed version itself, said without failing it.
+
+To move: run `npx ddd-ts-kit doctor` after an install; remove an override it says is no longer needed from the file it names, then install again.
+
 ## 0.89.0
 
 **`clean/one-export-per-file` runs under the JS plugin API of Oxlint.** The rule walked the
