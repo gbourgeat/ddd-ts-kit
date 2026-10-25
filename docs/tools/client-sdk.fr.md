@@ -1,5 +1,5 @@
 [English](client-sdk.md) · **Français**
-<!-- translation-of: client-sdk.md sha256:c2ffa0382b12ce22 -->
+<!-- translation-of: client-sdk.md sha256:db63cde7232af4a5 -->
 
 # SDK client : un client typé à partir du contrat OpenAPI
 
@@ -131,6 +131,7 @@ clients/
       schemas.ts         un type par schéma de composant
       runtime.ts         le même pour tout contrat : requête HTTP, justificatifs, réponse
       orpc.ts            avec stack.rpc orpc : le contrat oRPC, createRpcClient(), sous <client>/orpc
+      trpc.ts            avec stack.rpc trpc : le type du routeur tRPC, createRpcClient(), sous <client>/trpc
 ```
 
 Un contrat séparé (`openapi.documents`) donne `clients/<nom>` pour chaque document, y compris un
@@ -347,6 +348,45 @@ portent pas reste au client HTTP : les en-têtes d'une réponse (un `ETag` à re
 reçoivent un fichier ou un corps brut, qui n'ont pas de procédure. Remettre `stack.rpc` à `none`
 puis lancer `sdk` supprime `src/orpc.ts` et ses dépendances, et garde celles que l'équipe a
 ajoutées.
+
+### Procédures (tRPC)
+
+Avec `stack.rpc` à `trpc` (`init --rpc trpc`), l'API sert ses routes comme procédures tRPC sous
+`/trpc`, et chaque client reçoit `src/trpc.ts`, exporté comme `<client>/trpc` : `AppRouter`, le
+type du routeur écrit à partir du document, une *query* pour chaque opération `GET` et une
+*mutation* pour les autres, ses entrées et ses réponses étant les types du client HTTP. Un
+front-end importe le client, jamais le code du serveur. `@trpc/client` et `@trpc/server` (pour ses
+types) deviennent les dépendances du paquet.
+
+```ts
+import { createRpcClient, isRpcRefusal } from 'scheduling-api-client/trpc';
+
+const trpc = createRpcClient({
+  url: 'https://api.example.com/trpc',
+  headers: () => ({ authorization: `Bearer ${session.token()}` }),
+});
+
+try {
+  await trpc.openPractice.mutate({ body: { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' } });
+} catch (error) {
+  if (isRpcRefusal(error) && error.data?.problem?.code === 'PERSON_NOT_REGISTERED') {
+    // error.data.problem est le document problem du refus
+  }
+}
+```
+
+tRPC a une liste fixe de codes : `error.data.code` est celui qu'il a pour le statut, et le code du
+contrat est dans `error.data.problem`, qui n'est pas rétréci aux codes de la procédure.
+`AppRouter` type aussi un client construit à la main (`createTRPCClient<AppRouter>`, avec les liens
+de votre choix, ou les intégrations de TanStack Query). Ce que les procédures ne portent pas reste
+au client HTTP, comme sur oRPC, corps binaires compris. Passer d'`orpc` à `trpc`, ou revenir à
+`none`, puis lancer `sdk` supprime l'entrée que l'API ne sert plus et ses dépendances.
+
+Sur oRPC comme sur tRPC, une procédure est nommée par son `operationId` et appelée sous ce nom :
+un `operationId` renommé, une route `GET` passée à une autre méthode (une *query* tRPC qui devient
+une *mutation*) ou une route qui reçoit désormais un fichier casse un front-end déjà déployé, ce
+que le client HTTP ne remarquerait qu'à sa prochaine compilation. Ne renommez qu'avec chaque
+consommateur recompilé et déployé avec le changement.
 
 ### Limites
 

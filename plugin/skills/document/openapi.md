@@ -45,9 +45,14 @@ documentation page offers a selector between them. `npx ddd-ts-kit docs` writes 
 | new required request field, stricter validation, removed or renamed field, changed type | yes |
 | new error code or status on an existing route | yes for clients that enumerate errors |
 | new enum value in a response | yes for clients with exhaustive switches |
+| renamed `operationId` | yes: with `stack.rpc` `orpc` or `trpc`, a deployed client calls a procedure that answers 404; for the HTTP client, the function it calls is renamed at its next build |
+| a `GET` route given another method | yes for a tRPC client: its query becomes a mutation |
+| a route that now receives a file or a raw body | yes for an oRPC or tRPC client: the route no longer has a procedure |
 
 A breaking change needs a new route version or a deprecation period (`deprecated: true` on
-the old route) and a look at every known consumer before merging. Tightening validation on a
+the old route) and a look at every known consumer before merging. A procedure has no deprecation
+period: its name is the `operationId`, which one route holds at a time, so rename it only when
+every oRPC or tRPC consumer is rebuilt and deployed with the change. Tightening validation on a
 deployed API breaks clients that sent what used to be tolerated.
 
 ## Clients
@@ -65,12 +70,13 @@ the contract, `docs:check` fails while one differs from it, `ci:build` builds th
   does; the HTTP helpers stay for requests the contract does not describe.
 - A new error code on a route changes the type of its outcome: a consumer with an exhaustive
   `switch` on `problem.code` fails to compile, which is the signal the table above calls breaking.
-- With `stack.rpc` set to `orpc` (`init --rpc orpc`), the server also serves every route as an
-  oRPC procedure named by its `operationId` under `/rpc`, and each client gains `./orpc`, the oRPC
-  contract written from the same OpenAPI document. Nothing more to declare: a route is still the
-  one declaration, and a new `operationId` renames its procedure, which is breaking for an oRPC
-  consumer. What only HTTP carries (answer headers, uploads, files, streamed lists, XML and CSV)
-  has no procedure answer: keep the HTTP client for it.
+- With `stack.rpc` set to `orpc` (`init --rpc orpc`) or `trpc` (`init --rpc trpc`), the server
+  also serves every route as a procedure named by its `operationId`, under `/rpc` or `/trpc`, and
+  each client gains `./orpc` (the oRPC contract) or `./trpc` (the type of the tRPC router),
+  written from the same OpenAPI document. Nothing more to declare: a route is still the one
+  declaration, and a new `operationId` renames its procedure, which is breaking for an oRPC or
+  tRPC consumer. What only HTTP carries (answer headers, uploads, files, streamed lists, XML and
+  CSV) has no procedure answer: keep the HTTP client for it.
 - Publishing is manual (`npm publish --workspace clients/<document>` after raising its
   version); set `sdk.name` and `sdk.access` first. The comparison with openapi-typescript, hey-api
   and orval, and the limits: https://github.com/gbourgeat/ddd-ts-kit/blob/main/docs/tools/client-sdk.md.

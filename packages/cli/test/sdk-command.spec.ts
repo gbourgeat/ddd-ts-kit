@@ -225,6 +225,50 @@ describe('init --rpc orpc', () => {
   });
 });
 
+describe('init --rpc trpc', () => {
+  it('serves the routes as procedures under /trpc, and gives each client the type of their router', () => {
+    const root = initProject('--sdk', '--rpc', 'trpc', '--package-manager', 'npm');
+    const client = json(root, 'clients/api/package.json');
+
+    expect(jsonAt(json(root, CONFIG), 'stack', 'rpc')).toBe('trpc');
+    expect(jsonAt(json(root, 'package.json'), 'dependencies', '@trpc/server')).toMatch(/^\^11\./);
+
+    expect(read(root, 'src/platform/http/start-http-server.ts')).toContain(
+      'router: trpcRouter(served.routes, served.boundary),',
+    );
+
+    expect(read(root, 'clients/api/src/trpc.ts')).toContain('export type AppRouter = TRPCBuiltRouter<');
+    expect(jsonAt(client, 'exports', './trpc')).toEqual({ types: './dist/trpc.d.ts', default: './dist/trpc.js' });
+    expect(Object.keys(jsonAt(client, 'dependencies') as object)).toEqual(['@trpc/client', '@trpc/server']);
+    expect(findings(root, 'config/valid')).toEqual([]);
+  });
+
+  it('moves the clients from oRPC to tRPC: the contract and its dependencies leave, the router type comes', () => {
+    const root = initProject('--sdk', '--rpc', 'orpc');
+    const manifest = 'clients/api/package.json';
+    const config = json(root, CONFIG) as { stack: object };
+
+    changeConfig(root, { stack: { ...config.stack, rpc: 'trpc' } });
+
+    expect(cli(root, 'sdk').stdout).toContain('deleted      clients/api/src/orpc.ts');
+    expect(jsonAt(json(root, manifest), 'exports', './orpc')).toBeUndefined();
+
+    expect(Object.keys(jsonAt(json(root, manifest), 'dependencies') as object)).toEqual([
+      '@trpc/client',
+      '@trpc/server',
+    ]);
+
+    expect(cli(root, 'sdk', '--check').code).toBe(0);
+  });
+
+  it('is refused without an HTTP boundary: the procedures are its routes', () => {
+    const refused = cli(tempDir('init'), 'init', '--http', 'none', '--di', 'manual', '--rpc', 'trpc');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('--rpc trpc cannot be combined with --http none.');
+  });
+});
+
 describe('config/valid on "sdk"', () => {
   it('reports what npm would not publish as written', () => {
     const root = initProject();

@@ -1,9 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { ConcurrencyError, NoCurrentTenantError, type StoredProcess } from '@ddd-ts-kit/kernel';
 import { processStoreContract } from '@ddd-ts-kit/testing/contracts';
 import { KnexProcessStore, createKnexUnitOfWork, createProcessTable, dropProcessTable } from '../src';
 import { createDatabase, type TestDatabase } from './support/database';
-import { ada, bob, eve, nobody, scopeOf } from './support/scopes';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 
@@ -14,9 +12,8 @@ beforeAll(async () => {
     async (knex) => {
       await createProcessTable(knex, { schema: 'billing' });
       await createProcessTable(knex, { table: 'billing_processes' });
-      await createProcessTable(knex, { table: 'tenant_processes', tenant: true });
     },
-    ['billing.process_instances', 'billing_processes', 'tenant_processes'],
+    ['billing.process_instances', 'billing_processes'],
   );
 });
 
@@ -38,6 +35,7 @@ processStoreContract(runner, {
     return new KnexProcessStore(shared, { schema: 'billing' });
   },
   unitOfWork: () => shared,
+  storeInTenant: (tenant) => new KnexProcessStore(shared, { schema: 'billing', tenant }),
 });
 
 processStoreContract(runner, {
@@ -49,52 +47,17 @@ processStoreContract(runner, {
   },
 });
 
-processStoreContract(runner, {
-  name: 'KnexProcessStore in the tenant of the work',
-  createStore: async () => {
+describe('the state of a process instance', () => {
+  it('comes back null when it was saved without one', async () => {
     await database.truncate();
-    shared = context();
 
-    return new KnexProcessStore(shared, { table: 'tenant_processes', tenant: scopeOf(ada) });
-  },
-  unitOfWork: () => shared,
-});
+    const store = new KnexProcessStore(context(), { table: 'billing_processes' });
+    const started = { name: 'billing.dunning', id: 'inv-1', version: 1, ended: false, timeouts: {} };
 
-describe('the process instances of a tenant', () => {
-  const started: StoredProcess = {
-    name: 'billing.dunning',
-    id: 'inv-1',
-    state: { step: 1 },
-    version: 1,
-    ended: false,
-    timeouts: {},
-  };
+    await store.save({ ...started, state: { step: 1 } });
+    await store.save({ ...started, version: 2, state: undefined });
 
-  const storeOf = (actor: typeof ada) =>
-    new KnexProcessStore(context(), { table: 'tenant_processes', tenant: scopeOf(actor) });
-
-  beforeEach(async () => {
-    await database.truncate();
-    await storeOf(ada).save(started);
-  });
-
-  it('are found and changed by the work of their tenant', async () => {
-    await storeOf(bob).save({ ...started, version: 2, state: { step: 2 } });
-
-    expect(await storeOf(ada).load(started.name, started.id)).toMatchObject({ version: 2, state: { step: 2 } });
-  });
-
-  it('are neither found nor changed by another tenant, whoever knows their key', async () => {
-    const other = storeOf(eve);
-
-    expect(await other.load(started.name, started.id)).toBeUndefined();
-    await expect(other.save({ ...started, version: 2 })).rejects.toBeInstanceOf(ConcurrencyError);
-    await expect(other.save(started)).rejects.toBeInstanceOf(ConcurrencyError);
-    expect(await storeOf(ada).load(started.name, started.id)).toMatchObject({ version: 1 });
-  });
-
-  it('refuse work that names no tenant', async () => {
-    await expect(storeOf(nobody).load(started.name, started.id)).rejects.toBeInstanceOf(NoCurrentTenantError);
+    expect(await store.load(started.name, started.id)).toMatchObject({ version: 2, state: null });
   });
 });
 

@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:e92f230645364b6b -->
+<!-- translation-of: testing-strategy.md sha256:d574b248620ba769 -->
 
 # Stratégie de test
 
@@ -509,8 +509,11 @@ it('overlaps another range in both directions or in none, for any two ranges', (
 });
 ```
 
-`fast-check` rejoint les dépendances de développement avec la première propriété (`npm i -D fast-check`),
-sous Vitest comme sous Jest ; un projet sans propriété ne porte aucune dépendance morte. Le titre énonce la loi, pour que la page de
+`generate property <context> <ValueObject>` en commence une : une *spec* à côté de celle du *value
+object* (`test/unit/<name>.vo.properties.spec.ts`), avec le générateur de valeurs bâti sur sa
+fabrique, une première loi (égal à la valeur créée de nouveau depuis ses propres composants) et une
+règle prévue par sorte de loi. `fast-check` rejoint les dépendances de développement avec la
+première propriété (le générateur l'ajoute, ou `npm i -D fast-check`), sous Vitest comme sous Jest ; un projet sans propriété ne porte aucune dépendance morte. Le titre énonce la loi, pour que la page de
 ce qu'énoncent les tests la lise ; `fc.assert` est une assertion pour `test/assertion-present` ; le
 générateur (`anyRange()`) est une petite fonction auxiliaire de la *spec* bâtie sur les fabriques du
 modèle, pour que toute valeur générée soit une valeur que le modèle accepte. Une exécution qui

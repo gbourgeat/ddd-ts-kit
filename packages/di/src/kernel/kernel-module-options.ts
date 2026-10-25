@@ -104,8 +104,9 @@ export interface KernelModuleOptions {
   readonly queueWorker?: Provided<QueueWorker>;
   /**
    * Where the process managers keep their instances. Defaults to the memory of the process: bind
-   * `KnexProcessStore` or `DrizzleProcessStore` so that a step saves its state in the transaction
-   * of its unit of work. `ProcessRunner` is always the one of `@ddd-ts-kit/scheduling`, on it.
+   * `KnexProcessStore`, `DrizzleProcessStore`, `PrismaProcessStore` or `TypeOrmProcessStore` so that
+   * a step saves its state in the transaction of its unit of work, given `tenant` in a multi-tenant
+   * project. `ProcessRunner` is always the one of `@ddd-ts-kit/scheduling`, on it.
    */
   readonly processStore?: Provided<ProcessStore>;
   /** Concurrency per queue, polling interval and grace period of the default worker. */

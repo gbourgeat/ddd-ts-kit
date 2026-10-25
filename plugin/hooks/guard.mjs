@@ -133,7 +133,6 @@ const E2E_SPEC = /^test\/e2e\/([^/]+)\.e2e\.spec\.ts$/;
 // Changing these is a decision about the rules themselves: the project owner confirms it.
 const GOVERNED_FILES = [
   /^ddd-ts-kit\.config\.json$/,
-  /^ddd-ts-kit-baseline\.json$/,
   /^eslint\.config\.[cm]?js$/,
   /^biome\.jsonc?$/,
   /^knip\.json$/,
@@ -150,6 +149,12 @@ const GOVERNED_FILES = [
   /^\.github\/hooks\//,
   /^\.codex\//,
 ];
+
+// The errors a codebase had when it adopted the kit: written by the project owner, lowered by `check --baseline prune`.
+const BASELINE_FILE = /^ddd-ts-kit-baseline\.json$/;
+const BASELINE_WRITE = /\bddd-ts-kit(?:@\S+)?\s+check\b[^;&|\n]*--baseline(?:=|\s+)write\b/;
+const BASELINE_OWNER =
+  'it is written by the project owner, in a terminal, when the project adopts the kit; an agent never writes it, since one command would silence every error of the moment, its own included. `npx ddd-ts-kit check --baseline prune` lowers it after a fix, without asking. Fix the error instead.';
 
 const ESCAPES = [
   [/ddd-ts-kit-disable/g, 'an architecture rule suppression'],
@@ -343,6 +348,7 @@ function verdictOn({ file, written, replaced }, input) {
     return undefined;
   }
   const refusal =
+    baselineFileReason(project, file) ??
     acceptanceReason(project, input, { file, written, replaced }) ??
     storyCodeReason(project, file) ??
     worktreeCodeReason(project, file) ??
@@ -367,13 +373,7 @@ async function preBash(input) {
   if (!project || project.mode === 'off') {
     return;
   }
-  const preparing =
-    (await workerPlaceReason(input, command)) ??
-    (await landingReason(input, command)) ??
-    oneSideMergeReason(project, input, command) ??
-    (await acceptanceLockingReason(input, command)) ??
-    (await acceptanceFilesShellReason(project, input, command)) ??
-    (await generatorPlaceReason(project, input, command));
+  const preparing = await preparingReason(project, input, command);
   if (preparing) {
     decide(input, project.mode === 'advise' ? 'ask' : 'deny', preparing);
     return;
@@ -388,6 +388,19 @@ async function preBash(input) {
   if (refusal) {
     decide(input, project.mode === 'advise' ? 'ask' : 'deny', refusal);
   }
+}
+
+// What no agent runs, then what waits for a place, a landing, a lock or a generator first.
+async function preparingReason(project, input, command) {
+  return (
+    baselineWriteReason(command) ??
+    (await workerPlaceReason(input, command)) ??
+    (await landingReason(input, command)) ??
+    oneSideMergeReason(project, input, command) ??
+    (await acceptanceLockingReason(input, command)) ??
+    (await acceptanceFilesShellReason(project, input, command)) ??
+    (await generatorPlaceReason(project, input, command))
+  );
 }
 
 // What a worker may not run: a file it must put back first, then what the command itself would do;
@@ -1439,6 +1452,16 @@ function isPartOfSpec(project, path) {
     .some((_, index) =>
       existsSync(join(project.root, 'test/e2e', `${words.slice(0, index + 1).join('-')}.e2e.spec.ts`)),
     );
+}
+
+function baselineFileReason(project, file) {
+  return BASELINE_FILE.test(projectPath(project, file)) ? `ddd-ts-kit-baseline.json: ${BASELINE_OWNER}` : undefined;
+}
+
+function baselineWriteReason(command) {
+  return BASELINE_WRITE.test(command)
+    ? `check --baseline write records ddd-ts-kit-baseline.json: ${BASELINE_OWNER}`
+    : undefined;
 }
 
 function governedFileReason(project, file) {

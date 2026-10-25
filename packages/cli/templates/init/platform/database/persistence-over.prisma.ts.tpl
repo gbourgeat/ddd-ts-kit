@@ -57,7 +57,13 @@ export function persistenceOver(client: PrismaClient): Persistence {
     jobs: new PrismaJobStore(unitOfWork, { delegate: (current) => current.backgroundJob, schema: MESSAGING_SCHEMA }),
     {{/if}}
     {{#if queue.processTable}}
-    processes: new PrismaProcessStore(unitOfWork, { delegate: (current) => current.processInstance }),
+    {{#if tenancy.any}}
+    processes: (tenant) =>
+      new PrismaProcessStore(unitOfWork, { delegate: (current) => current.processInstance, tenant }),
+    {{/if}}
+    {{#unless tenancy.any}}
+    processes: () => new PrismaProcessStore(unitOfWork, { delegate: (current) => current.processInstance }),
+    {{/unless}}
     {{/if}}
     {{#if eventSourcing.on}}
     eventSourcing: createPrismaEventSourcing(unitOfWork, { schema: EVENT_STORE_SCHEMA }),

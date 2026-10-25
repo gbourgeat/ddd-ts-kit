@@ -1,5 +1,5 @@
 import type { OutboxStore } from '@ddd-ts-kit/events';
-import type { {{#if eventSourcing.on}}EventSourcingStores, {{/if}}ProcessedEventStore, {{#if queue.processTable}}ProcessStore, {{/if}}UnitOfWork } from '@ddd-ts-kit/kernel';
+import type { {{#if eventSourcing.on}}EventSourcingStores, {{/if}}{{#if queue.processTable}}ExecutionScope, {{/if}}ProcessedEventStore, {{#if queue.processTable}}ProcessStore, {{/if}}UnitOfWork } from '@ddd-ts-kit/kernel';
 {{#if queue.database}}
 import type { JobStore } from '@ddd-ts-kit/scheduling';
 {{/if}}
@@ -20,8 +20,13 @@ export interface Persistence {
   readonly jobs: JobStore;
   {{/if}}
   {{#if queue.processTable}}
-  /** The instances of the process managers, saved in the transaction of each step. */
-  readonly processes: ProcessStore;
+{{#if tenancy.any}}
+  /** The instances of the process managers, saved in the transaction of each step, each in the tenant of the work `scope` runs. */
+{{/if}}
+{{#unless tenancy.any}}
+  /** The instances of the process managers, saved in the transaction of each step; `scope` serves a multi-tenant project. */
+{{/unless}}
+  readonly processes: (scope: ExecutionScope) => ProcessStore;
   {{/if}}
   /** What repositories query through: the transaction of the current unit of work, or the database. */
   readonly database: {{persistence.token}};

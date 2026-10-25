@@ -9,7 +9,7 @@ import { propertyKey } from './property-key';
 export interface ReadmePlace {
   readonly packageName: string;
   readonly directory: string;
-  /** `orpc` when the API serves its routes as procedures too, which `./orpc` calls. */
+  /** `orpc` or `trpc` when the API serves its routes as procedures too, which `./orpc` or `./trpc` calls. */
   readonly rpc?: Rpc;
 }
 
@@ -23,6 +23,7 @@ export function renderReadme(document: ClientDocument, place: ReadmePlace): stri
     operationsTable(document.operations),
     codesSection(document),
     ...(place.rpc === 'orpc' ? [procedures(document, place.packageName)] : []),
+    ...(place.rpc === 'trpc' ? [trpcProcedures(document, place.packageName)] : []),
     publishing(place),
   ].join('\n\n');
 }
@@ -91,6 +92,27 @@ const rpc = createRpcClient({ url: 'https://api.example.com/rpc', headers: () =>
 ${call}\`\`\`
 
 A procedure takes the input of its operation (\`path\`, \`query\`, \`header\`, \`body\`) and answers its body. A refusal throws an \`ORPCError\` whose \`code\`, \`status\` and \`data\` are those of the problem document. What only HTTP carries stays with the HTTP client: the headers of an answer (an \`ETag\`, its cache policy), a representation other than JSON, a file or a list streamed as it is read (refused with 406)${left.length === 0 ? '' : `, and the operations no procedure serves, those that receive a file or a raw body: ${left.join(', ')}`}.`;
+}
+
+function trpcProcedures(document: ClientDocument, packageName: string): string {
+  const first = document.operations.find((operation) => operation.procedure !== undefined);
+
+  const call =
+    first === undefined
+      ? ''
+      : `\ntry {\n  await trpc${memberOf(first.procedure ?? first.name)}.${first.method === 'GET' ? 'query' : 'mutate'}(${isInputOptional(first) ? '' : '{ ... }'});\n} catch (error) {\n  if (isRpcRefusal(error)) {\n    // error.data?.problem?.code is one of the codes of the contract, error.data?.problem its problem document\n  }\n}\n`;
+
+  return `## Procedures (tRPC)
+
+The API serves the same operations as tRPC procedures under \`/trpc\`, through the same pipeline: the same credentials, permissions, validation and error codes. \`${packageName}/trpc\` holds the type of their router, \`AppRouter\`, and a client of it; it needs \`@trpc/client\` and \`@trpc/server\` (for its types); the root entry needs nothing.
+
+\`\`\`ts
+import { createRpcClient, isRpcRefusal } from '${packageName}/trpc';
+
+const trpc = createRpcClient({ url: 'https://api.example.com/trpc', headers: () => ({ authorization: \`Bearer \${session.token()}\` }) });
+${call}\`\`\`
+
+A procedure is a query for a \`GET\` operation and a mutation for the others; it takes the input of its operation (\`path\`, \`query\`, \`header\`, \`body\`) and answers its body. A refusal throws a \`TRPCClientError\` whose \`data.code\` is the code tRPC has for its status and \`data.problem\` the problem document, with the code of the contract: tRPC types no refusal per procedure. \`AppRouter\` also types a client built by hand, with the links of your choice. What only HTTP carries stays with the HTTP client, as over oRPC, and a binary body too (refused with 406).`;
 }
 
 /** How a member is read in TypeScript: \`.name\`, or \`['some-name']\` for a name that is not an identifier. */

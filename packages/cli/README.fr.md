@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4ddcbe78e2035004 -->
+<!-- translation-of: README.md sha256:f41baff2ae1f77db -->
 
 # ddd-ts-kit
 
@@ -88,7 +88,11 @@ générés tels que les scripts du projet les écrivent pour un projet qui n'a e
 que le premier *commit* les contienne et que `docs:check` passe d'emblée ; un contrat déjà
 présent est laissé tel quel, `--force` compris. Un `package.json` existant est fusionné : les
 scripts et les dépendances qui manquent sont ajoutés, les vôtres sont gardés et mentionnés dans
-les notes. Relancé plus tard, `init` garde la *stack* enregistrée dans la configuration.
+les notes. La première fois, les notes nomment aussi chaque dépendance que la *stack* sur le
+point d'être écrite contredit, et l'option qui la garde (`package.json depends on fastify, and the
+project is written for --http express: pass --http fastify to keep it.`), en *dry run* compris :
+lancez d'abord `init --dry-run` sur un projet existant. Relancé plus tard, `init` garde la
+*stack* enregistrée dans la configuration.
 
 `init --force` sur un projet déjà initialisé réécrit les fichiers qui appartiennent à `init` et
 garde la configuration : les contextes et leurs amonts, les règles, les limites, les dérogations
@@ -469,7 +473,9 @@ réponse d'identifiant comprise, comme 0.1 à 0.5 les écrivaient.
 `generate value-object` écrit un `create` qui renvoie l'objet-valeur ou lève le refus de son
 concept, et une *spec* qui le vérifie avec `expectRefusal(() => ..)`. `--value-objects result`,
 ou une configuration sans la clé, garde un `create` qui renvoie un `Result` que l'appelant
-déballe, comme 0.1 à 0.5 l'écrivaient ; `value-objects` fait passer un projet de l'un à l'autre.
+déballe, comme 0.1 à 0.5 l'écrivaient ; `value-objects` fait passer un projet de l'un à l'autre. `generate property`
+écrit les lois d'un *value object* existant comme une *spec* sur des valeurs générées, sous
+l'une ou l'autre forme, et ajoute `fast-check` aux dépendances de développement s'il manque.
 
 **Les événements du domaine partent avec la sauvegarde.** Un gestionnaire de commande généré
 construit ou charge son agrégat, appelle une méthode d'intention, `await repository.save(aggregate)`
@@ -2095,10 +2101,14 @@ règle.
   consigne, et les signalent toutes dès qu'elles le dépassent ; `check` échoue quand un compte
   consigné n'est plus atteint, jusqu'à ce que `--baseline prune` l'abaisse, pour que la *baseline*
   ne fasse que rétrécir. Les avertissements ne sont pas consignés : ils ne font rien échouer.
-  Écrire une *baseline* est une décision du *owner* du projet : les permissions qu'écrit `init`
-  demandent avant `check --baseline write` et avant une modification du fichier. Une *baseline*
-  fait taire les anciennes erreurs ; elle ne rend pas vérifiable une arborescence hors de
-  l'arborescence canonique.
+  Écrire une *baseline* est une décision du *owner* du projet, qui lance `--baseline write` dans
+  un terminal : la garde du *plugin* refuse la commande et toute modification directe du fichier
+  à un agent, sous Claude Code, Codex et Copilot de la même façon, et les permissions qu'écrit
+  `init` demandent avant les deux pour un agent sans le *plugin*. Une commande que la garde ne lit
+  pas (un script du projet qui écrit le fichier) n'est pas interceptée : la revue lit le *diff*
+  de la *baseline*, qui ne doit que rétrécir. `--baseline prune` ne demande personne. Une
+  *baseline* fait taire les anciennes erreurs ; elle ne rend pas vérifiable une arborescence hors
+  de l'arborescence canonique.
   `--changed-since` lance `git diff --name-only --relative <ref>...` dans le projet.
 - `--format github` affiche des annotations `::error file=...,line=...::`.
 - `--explain` fait suivre les violations de chaque règle qu'elles signalent, une fois, avec sa

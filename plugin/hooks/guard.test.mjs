@@ -1944,3 +1944,23 @@ test('session start names the workers to resume, and asks the CLI nothing withou
     /^Worker to resume: build\/ordering \(mid-row, agent a1b2\): `npx ddd-ts-kit worker-scope ordering --resume`, then send what it prints\.$/m,
   );
 });
+
+test('the baseline of the errors is never written by an agent, on any host; prune lowers it freely', () => {
+  const root = project();
+  const file = join(root, 'ddd-ts-kit-baseline.json');
+  assert.equal(decision(run('pre-write', write(file))), 'deny');
+  assert.match(reason(run('pre-write', write(file))), /written by the project owner, in a terminal/);
+  const patched = run('pre-write', patch(root, '*** Add File: ddd-ts-kit-baseline.json', '+{}'));
+  assert.equal(patched.output.hookSpecificOutput.permissionDecision, 'deny');
+  for (const command of [
+    'npx ddd-ts-kit check --baseline write',
+    'pnpm exec ddd-ts-kit check --baseline=write',
+    'npx ddd-ts-kit@latest check --baseline write && git add ddd-ts-kit-baseline.json',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command))), 'deny', command);
+  }
+  assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit check --baseline prune')).output, undefined);
+  assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit check')).output, undefined);
+  const advised = project({ guard: 'advise' });
+  assert.equal(decision(run('pre-bash', bash(advised, 'npx ddd-ts-kit check --baseline write'))), 'ask');
+});

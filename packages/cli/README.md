@@ -82,8 +82,11 @@ of the project write them for a project without a route or an integration event 
 `"openapi": { "format": "json" }` of the config), so that the first commit holds them and
 `docs:check` passes at once; a contract that is already there is
 left alone, `--force` included. An existing `package.json` is merged: missing scripts and
-dependencies are added, yours are kept and mentioned in the notes. Run again later, `init` keeps
-the stack recorded in the config.
+dependencies are added, yours are kept and mentioned in the notes. The first time, the notes also
+name each dependency the stack about to be written contradicts, and the flag that keeps it
+(`package.json depends on fastify, and the project is written for --http express: pass --http
+fastify to keep it.`), a dry run included: run `init --dry-run` first on an existing project.
+Run again later, `init` keeps the stack recorded in the config.
 
 `init --force` on a project that is already initialised rewrites the files `init` owns and keeps
 the config: the contexts and their upstreams, the rules, the limits, the deviations and every
@@ -451,7 +454,9 @@ schema per route, an identifier answer included, as 0.1 to 0.5 wrote them.
 `generate value-object` writes a `create` that returns the value object or throws the refusal of
 its concept, and a spec that asserts it with `expectRefusal(() => ..)`. `--value-objects result`,
 or a config without the key, keeps a `create` returning a `Result` that the caller unwraps, as 0.1
-to 0.5 wrote it; `value-objects` moves a project from one to the other.
+to 0.5 wrote it; `value-objects` moves a project from one to the other. `generate property` writes
+the laws of an existing value object as a spec on generated values, in either form, and adds
+`fast-check` to the development dependencies when it is missing.
 
 **Domain events leave with the save.** A generated command handler builds or loads its aggregate,
 calls one intention method, `await repository.save(aggregate)` and returns: no `pullEvents()`, and
@@ -1976,9 +1981,13 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
   errors of a rule in a file while they are no more than the baseline records, and report all of
   them once they are more; `check` fails when a recorded count is no longer reached, until
   `--baseline prune` lowers it, so that the baseline only shrinks. Warnings are not recorded: they
-  fail nothing. Writing a baseline is a decision of the project owner: the permissions `init`
-  writes ask before `check --baseline write` and before an edit of the file. A baseline makes old
-  errors quiet; it does not make a tree outside the canonical one checkable.
+  fail nothing. Writing a baseline is a decision of the project owner, who runs `--baseline write`
+  in a terminal: the guard of the plugin refuses the command and any direct edit of the file to an
+  agent, under Claude Code, Codex and Copilot alike, and the permissions `init` writes ask before
+  both for an agent without the plugin. A command the guard does not read (a script of the
+  project that writes the file) is not caught: the review reads the diff of the baseline, which
+  should only shrink. `--baseline prune` needs no one. A baseline makes old errors quiet; it does
+  not make a tree outside the canonical one checkable.
   `--changed-since` runs `git diff --name-only --relative <ref>...` in the project.
 - `--format github` prints `::error file=...,line=...::` annotations.
 - `--explain` follows the violations with each rule they report, once, with its description and

@@ -23,6 +23,7 @@ const SHARED_KINDS = [
   'schema',
   'route-group',
   'acceptance',
+  'property',
 ];
 
 /** One run of every kind that declares it writes nothing shared, and of a command on an aggregate that has its repository. */

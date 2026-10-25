@@ -68,6 +68,8 @@ const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly s
   'cache:redis': [['@ddd-ts-kit/redis', 'ioredis'], []],
   // The server of oRPC, the optional peer of `@ddd-ts-kit/http/orpc`, which the HTTP server mounts under /rpc.
   'rpc:orpc': [['@orpc/server'], []],
+  // The server of tRPC, the optional peer of `@ddd-ts-kit/http/trpc`, which the HTTP server mounts under /trpc.
+  'rpc:trpc': [['@trpc/server'], []],
   'audit:on': [['@ddd-ts-kit/audit'], []],
   // The connector and the official SDK it is written against: the three packages are its optional peers.
   'storage:s3': [['@ddd-ts-kit/s3', '@aws-sdk/client-s3', '@aws-sdk/lib-storage', '@aws-sdk/s3-request-presigner'], []],

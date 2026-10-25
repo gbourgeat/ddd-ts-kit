@@ -25,8 +25,8 @@ export const createTables = async (knex: Knex): Promise<void> => {
   // The tenant of each event, so that its consumers run in that tenant.
   await createOutboxTables(knex, { schema: MESSAGING_SCHEMA, tenant: true });
   await createJobTable(knex, { schema: MESSAGING_SCHEMA });
-  // Each instance in the network of the work that started it.
-  await createProcessTable(knex, { schema: MESSAGING_SCHEMA, tenant: true });
+  // Each instance keyed by the network of the work that started it, which `persistenceOver` gives its store.
+  await createProcessTable(knex, { schema: MESSAGING_SCHEMA });
   await createAuditTables(knex, { schema: AUDIT_SCHEMA });
   await createRelationTupleTables(knex, { schema: AUTHORIZATION_SCHEMA });
   // ddd-ts-kit:schemas

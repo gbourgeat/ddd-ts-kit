@@ -203,6 +203,10 @@ export class ConfirmationDeadlineProcess implements ProcessManager<ConfirmationD
 - **Stores.** `InMemoryProcessStore` (kernel) for tests and one process; `KnexProcessStore` and
   `createProcessTable`, `DrizzleProcessStore` and `processesTable`, `PrismaProcessStore` and the
   `ProcessInstance` model, `TypeOrmProcessStore` and `processEntity`, which save in the transaction of the step. Every store is held by `processStoreContract`.
+  Given the `ExecutionScope` as `tenant`, each of the four keeps an instance in the tenant of the
+  work that saves it, under a key that includes the tenant: two tenants may use the same
+  correlation key, and neither finds nor changes the instance of the other. A project generated
+  with `--tenancy` gives it.
 
 The two classes that call the steps, in the example: the handler of a domain event of the
 context, run in the unit of work of the command that booked, and the background job that

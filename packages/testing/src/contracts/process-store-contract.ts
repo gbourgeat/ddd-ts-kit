@@ -1,4 +1,12 @@
-import type { StoredProcess } from '@ddd-ts-kit/kernel';
+import {
+  AsyncLocalStorageExecutionScope,
+  NoCurrentTenantError,
+  executionContext,
+  systemActor,
+  type ExecutionScope,
+  type StoredProcess,
+} from '@ddd-ts-kit/kernel';
+import { asTenant } from '../execution/as-tenant';
 import type { Awaitable } from './awaitable';
 import type { ContractRunner } from './contract-runner';
 import { ContractSuite } from './contract-suite';
@@ -21,21 +29,31 @@ export interface ProcessStoreContractOptions {
   createStore(): Awaitable<ProcessStoreUnderContract>;
   /** The unit of work over the same context as the store just created: the contract then proves that a rolled back save leaves nothing. */
   readonly unitOfWork?: () => UnitOfWorkOfTheStore;
+  /**
+   * The store over the same table as the one `createStore` just created, keeping each instance in
+   * the tenant `scope` names; called after `createStore`, it empties nothing. The contract then
+   * proves that each tenant has its instances of its own, under the keys another tenant uses too.
+   */
+  readonly storeInTenant?: (scope: ExecutionScope) => Awaitable<ProcessStoreUnderContract>;
 }
 
 /**
  * What every `ProcessStore` guarantees: an instance comes back as saved, JSON state, armed
  * timeouts and end included; a save at a version that is not the next one is refused with the
- * code `CONCURRENCY_CONFLICT`, also when two first saves race; and, in a unit of work, a save
- * shares its fate.
+ * code `CONCURRENCY_CONFLICT`, also when two first saves race; in a unit of work, a save
+ * shares its fate; and, in the tenant of the work, an instance is its tenant's alone.
  */
 export function processStoreContract(runner: ContractRunner, options: ProcessStoreContractOptions): void {
   new ProcessStoreSuite(runner, options).describe(`${options.name} (process store contract)`);
 }
 
 const NAME = 'billing.dunning';
+const ACME = 'acme';
+const GLOBEX = 'globex';
 
 class ProcessStoreSuite extends ContractSuite<ProcessStoreUnderContract> {
+  private static readonly scope = new AsyncLocalStorageExecutionScope();
+
   constructor(
     runner: ContractRunner,
     private readonly options: ProcessStoreContractOptions,
@@ -49,6 +67,10 @@ class ProcessStoreSuite extends ContractSuite<ProcessStoreUnderContract> {
 
     if (this.options.unitOfWork !== undefined) {
       this.sharesTheUnitOfWork(this.options.unitOfWork);
+    }
+
+    if (this.options.storeInTenant !== undefined) {
+      this.keepsEachTenantApart(this.options.storeInTenant);
     }
   }
 
@@ -105,6 +127,76 @@ class ProcessStoreSuite extends ContractSuite<ProcessStoreUnderContract> {
 
       this.expect(await this.subject.load(NAME, 'invoice-1')).toBe(undefined);
     });
+  }
+
+  private keepsEachTenantApart(storeInTenant: (scope: ExecutionScope) => Awaitable<ProcessStoreUnderContract>): void {
+    const tenantStore = () => storeInTenant(ProcessStoreSuite.scope);
+
+    this.hidesAnInstanceFromAnotherTenant(tenantStore);
+    this.letsTwoTenantsUseOneKey(tenantStore);
+    this.keepsTenantsApartFromNoTenant(tenantStore);
+    this.refusesWorkWithoutATenant(tenantStore);
+  }
+
+  private hidesAnInstanceFromAnotherTenant(tenantStore: () => Awaitable<ProcessStoreUnderContract>): void {
+    this.it('hides an instance from another tenant, which cannot change it either', async () => {
+      const store = await tenantStore();
+
+      await this.as(ACME, () => store.save(anInstance(1)));
+
+      this.expect(await this.as(GLOBEX, () => store.load(NAME, 'invoice-1'))).toBe(undefined);
+
+      const changed = await failureOf(() => this.as(GLOBEX, () => store.save(anInstance(2))));
+
+      this.expect(codeOf(changed)).toBe('CONCURRENCY_CONFLICT');
+      this.expect(await this.as(ACME, () => store.load(NAME, 'invoice-1'))).toEqual(anInstance(1));
+    });
+  }
+
+  private letsTwoTenantsUseOneKey(tenantStore: () => Awaitable<ProcessStoreUnderContract>): void {
+    this.it('lets two tenants run an instance each under the same key', async () => {
+      const store = await tenantStore();
+      const globex = { ...anInstance(1), state: { stage: 'started' } };
+
+      await this.as(ACME, () => store.save(anInstance(1)));
+      await this.as(GLOBEX, () => store.save(globex));
+      await this.as(ACME, () => store.save(anInstance(2)));
+
+      this.expect(await this.as(ACME, () => store.load(NAME, 'invoice-1'))).toEqual(anInstance(2));
+      this.expect(await this.as(GLOBEX, () => store.load(NAME, 'invoice-1'))).toEqual(globex);
+    });
+  }
+
+  private keepsTenantsApartFromNoTenant(tenantStore: () => Awaitable<ProcessStoreUnderContract>): void {
+    this.it('keeps the instances of a tenant apart from those saved outside any tenant', async () => {
+      const store = await tenantStore();
+
+      await this.subject.save(anInstance(1));
+
+      this.expect(await this.as(ACME, () => store.load(NAME, 'invoice-1'))).toBe(undefined);
+
+      await this.as(ACME, () => store.save({ ...anInstance(1), ended: true }));
+
+      this.expect(await this.subject.load(NAME, 'invoice-1')).toEqual(anInstance(1));
+    });
+  }
+
+  private refusesWorkWithoutATenant(tenantStore: () => Awaitable<ProcessStoreUnderContract>): void {
+    this.it('refuses work that names no tenant', async () => {
+      const store = await tenantStore();
+      const job = executionContext({ correlationId: 'no-tenant', actor: systemActor('contract'), origin: 'test' });
+
+      const failures = [
+        await failureOf(() => ProcessStoreSuite.scope.run(job, () => store.load(NAME, 'invoice-1'))),
+        await failureOf(() => ProcessStoreSuite.scope.run(job, () => store.save(anInstance(1)))),
+      ];
+
+      this.expect(failures.map((failure) => failure instanceof NoCurrentTenantError)).toEqual([true, true]);
+    });
+  }
+
+  private as<T>(tenantId: string, work: () => Promise<T>): Promise<T> {
+    return asTenant(ProcessStoreSuite.scope, tenantId, work);
   }
 }
 

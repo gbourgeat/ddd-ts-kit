@@ -125,6 +125,7 @@ clients/
       schemas.ts         one type per component schema
       runtime.ts         the same for every contract: request, credentials, answer
       orpc.ts            with stack.rpc orpc: the oRPC contract, createRpcClient(), at <client>/orpc
+      trpc.ts            with stack.rpc trpc: the type of the tRPC router, createRpcClient(), at <client>/trpc
 ```
 
 A split contract (`openapi.documents`) gives `clients/<name>` for each document, a document
@@ -330,6 +331,45 @@ client: the headers of an answer (an `ETag` to send back in `If-Match`, a cache 
 representations other than JSON, and the operations that receive a file or a raw body, which
 have no procedure. Setting `stack.rpc` back to `none` and running `sdk` deletes `src/orpc.ts` and
 its dependencies, and keeps those the team added.
+
+### Procedures (tRPC)
+
+With `stack.rpc` set to `trpc` (`init --rpc trpc`), the API serves its routes as tRPC procedures
+under `/trpc`, and each client gets `src/trpc.ts`, exported as `<client>/trpc`: `AppRouter`, the
+type of the router written from the document, a query for each `GET` operation and a mutation
+for the others, its inputs and answers the types of the HTTP client. A front end imports the
+client, never the code of the server. `@trpc/client` and `@trpc/server` (for its types) become
+the dependencies of the package.
+
+```ts
+import { createRpcClient, isRpcRefusal } from 'scheduling-api-client/trpc';
+
+const trpc = createRpcClient({
+  url: 'https://api.example.com/trpc',
+  headers: () => ({ authorization: `Bearer ${session.token()}` }),
+});
+
+try {
+  await trpc.openPractice.mutate({ body: { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' } });
+} catch (error) {
+  if (isRpcRefusal(error) && error.data?.problem?.code === 'PERSON_NOT_REGISTERED') {
+    // error.data.problem is the problem document of the refusal
+  }
+}
+```
+
+tRPC has a fixed set of codes: `error.data.code` is the one it has for the status, and the code
+of the contract is in `error.data.problem`, which is not narrowed to the codes of the procedure.
+`AppRouter` also types a client built by hand (`createTRPCClient<AppRouter>`, with the links of
+your choice, or the integrations of TanStack Query). What the procedures do not carry stays with
+the HTTP client, as over oRPC, binary bodies included. Moving from `orpc` to `trpc`, or back to
+`none`, and running `sdk` deletes the entry the API no longer serves and its dependencies.
+
+Over oRPC as over tRPC, a procedure is named by its `operationId` and called at that name: a
+renamed `operationId`, a `GET` route given another method (a tRPC query that becomes a
+mutation) or a route that now receives a file breaks a front end already deployed, which the
+HTTP client would not notice before its next build. Rename only with every consumer rebuilt and
+deployed with the change.
 
 ### Limits
 

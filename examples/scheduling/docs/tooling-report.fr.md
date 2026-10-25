@@ -1,5 +1,5 @@
 [English](tooling-report.md) · **Français**
-<!-- translation-of: tooling-report.md sha256:094510a2baa97e3c -->
+<!-- translation-of: tooling-report.md sha256:d48d760fe477f2d4 -->
 
 # Rapport sur l'outillage
 
@@ -1762,7 +1762,7 @@ les réseaux. Ce que chacune est devenue :
 | Ajouté par | Devenu |
 |---|---|
 | *Jobs* en arrière-plan (`messaging.background_jobs`) | gardaient déjà `tenant_id` et s'exécutaient dans le réseau du travail qui les avait mis en file ; un vidage est lu par la file, qui ne montre un *job* qu'à son réseau. La migration de l'ADR-0003 donne `NETWORK_OF_EXISTING_ROWS` aux *jobs* en attente ou en cours, dans la colonne et dans qui les a mis en file |
-| Instances de processus (`messaging.process_instances`) | `tenant_id`, obligatoire : `createProcessTable(knex, { tenant: true })`, et `KnexProcessStore` avec `tenant`, lié par portée d'exécution ; une instance d'un autre réseau n'est ni trouvée ni changée. La migration ajoute la colonne à une table créée avant, ses lignes recevant le réseau nommé |
+| Instances de processus (`messaging.process_instances`) | `tenant_id`, obligatoire et dans la clé (`createProcessTable(knex, { schema })`), et `KnexProcessStore` avec `tenant`, lié par portée d'exécution ; une instance d'un autre réseau n'est ni trouvée ni changée, et deux réseaux peuvent utiliser la même clé. La migration ajoute la colonne à une table créée avant, ses lignes recevant le réseau nommé |
 | Horaires d'ouverture, Varnish | étiquettes rangées sous le réseau de la requête HTTP (`cacheTags.perTenant`), purges sous le réseau du travail (`PublishedCacheInvalidation` avec `perTenant`), `Vary: x-tenant-id` ; un appelant anonyme nomme le réseau dans `x-tenant-id`. Les étiquettes se lisent `north/calendar:<id>` |
 | Représentations, formulaires, accès aux champs, exports | inchangés : ils lisent par les *repositories* et les modèles de lecture déjà restreints, et le résolveur du réseau est celui de chaque route |
 | Kit | `servedTenantOf` laissait tomber les en-têtes du résolveur qu'il tient : les réponses de l'exemple ne variaient pas sur `x-tenant-id`, et Varnish aurait remis les horaires lus par un réseau à tous les autres. Il les garde désormais, et une *spec* le dit |

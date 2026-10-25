@@ -139,9 +139,10 @@ Five ids are held by ESLint (`domain/*`, `application/*`): `npm run lint` report
 
 A suppression, a lowered severity, a wider allow-list, an extra directory, a relaxed
 pipeline, `any`, a non-null assertion, a skipped or deleted test, an acceptance scenario changed
-while its criterion was not, a baseline written or raised (`check --baseline write`): skill
-`ddd-ts-kit:deviation`. Getting to green is never the reason. `check --baseline prune` needs no
-agreement: it only lowers what the baseline holds, after a fix.
+while its criterion was not: skill `ddd-ts-kit:deviation`. Getting to green is never the
+reason. A baseline of the errors (`check --baseline write`) is written by the owner, in a
+terminal, never by you: the guard refuses it. `check --baseline prune` needs no agreement: it only
+lowers what the baseline holds, after a fix.
 
 ## Report
 

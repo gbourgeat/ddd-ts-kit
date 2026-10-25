@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:1f7d9aeb26c8de21 -->
+<!-- translation-of: commands.md sha256:c704fe127a624ff0 -->
 
 # Quelle commande, quand
 
@@ -244,7 +244,7 @@ Usage
                   [--ci github|gitlab|both|none] [--ci-extras <extra>,...|none]
                   [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--http-cache none|varnish]
-                  [--rpc none|orpc]
+                  [--rpc none|orpc|trpc]
                   [--storage local|s3|none]
                   [--audit on|off] [--event-sourcing on|off] [--privacy on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
@@ -605,6 +605,7 @@ Kinds
   test-world <context> [Name]
   entity <context> <Name> [--term "<Term>=<meaning>"]...
   value-object <context> <Name> [--term "<Term>=<meaning>"]...   (alias: vo)
+  property <context> <ValueObject>
   vocabulary <context> <Name> --value <value> [--value <value>]...
   state-machine <context> <Aggregate> [--value <state>]... [--transition "<intention>:<from>[,<from>]...[><to>]"]... [--term "<Term>=<meaning>"]...
   domain-event <context> <Aggregate> <Fact> [--term "<Term>=<meaning>"]...

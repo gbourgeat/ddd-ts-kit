@@ -1340,7 +1340,9 @@ mountExpress(app, routes, options);
 
 The context of a call is `TrpcContext`, the same as `OrpcContext`. Fastify
 (`@trpc/server/adapters/fastify`), Hono (`@trpc/server/adapters/fetch`) and NestJS on Express
-mount it the same way. Mount it as a router of its own, not merged into another: tRPC formats an
+(`@trpc/server/adapters/standalone`) mount it the same way; `ddd-ts-kit init --rpc trpc` writes
+the mount for the framework of the project, and `ddd-ts-kit sdk` gives each client the type of
+the router, at `<client>/trpc`. Mount it as a router of its own, not merged into another: tRPC formats an
 error with the formatter of the router it serves, and the one of `trpcRouter` is what puts the
 problem document in `data.problem`.
 

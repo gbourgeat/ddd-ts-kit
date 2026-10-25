@@ -939,7 +939,7 @@ const unitOfWork = createDrizzleUnitOfWork(db);
 export const kernel = kernelModule({
   unitOfWork,
   jobStore: new DrizzleJobStore(unitOfWork, schedulingJobs),
-  processStore: new DrizzleProcessStore(unitOfWork, schedulingProcesses),
+  processStore: new DrizzleProcessStore(unitOfWork, { table: schedulingProcesses }),
 });
 ```
 
@@ -954,6 +954,11 @@ guarantee: [Background jobs](../../docs/concepts/background-jobs.md).
 save inserts, a next one updates at the previous version, and a save that changes no row throws
 `ConcurrencyError`, in the transaction of the step. It passes `processStoreContract`. The
 sample of [Background jobs](#background-jobs) binds it with `kernelModule({ processStore })`.
+
+With `tenant` (the `ExecutionScope`), the store keeps each instance in the tenant of the work that
+saves it: the table keys a row by its tenant too, the empty text outside any, so two tenants may
+use the same correlation key; an instance of another tenant is neither found nor changed, and
+work that names no tenant is refused with `NoCurrentTenantError`.
 
 ## Testing an adapter
 

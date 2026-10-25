@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:3ccbe053ae2527ea -->
+<!-- translation-of: README.md sha256:fdc4b2763e2bdbae -->
 
 # @ddd-ts-kit/knex
 
@@ -888,13 +888,19 @@ Ce que garantissent les *jobs* : [Jobs en arrière-plan](../../docs/concepts/bac
 
 ## Gestionnaires de processus
 
-`KnexProcessStore` est le `ProcessStore` du noyau : une ligne par processus et par clé de
-corrélation dans `process_instances`, créée par `createProcessTable(knex, { schema })` depuis une
+`KnexProcessStore` est le `ProcessStore` du noyau : une ligne par tenant, par processus et par
+clé de corrélation dans `process_instances`, créée par `createProcessTable(knex, { schema })` depuis une
 migration (`dropProcessTable` est son `down`). Une première sauvegarde insère, en ignorant une
 ligne qu'une première sauvegarde concurrente a écrite ; une suivante met à jour la ligne à la
 version précédente ; une sauvegarde qui ne change aucune ligne lève `ConcurrencyError`. Il
 s'exécute sur l'exécuteur du contexte, dans la transaction de l'étape, et passe
 `processStoreContract` avec son unité de travail.
+
+Avec `tenant` (l'`ExecutionScope`), le store garde chaque instance dans le tenant du travail qui
+l'enregistre : la table repère aussi une ligne par son tenant, le texte vide hors de tout tenant,
+si bien que deux tenants peuvent utiliser la même clé de corrélation ; une instance d'un autre
+tenant n'est ni trouvée ni modifiée, et un travail qui ne nomme aucun tenant est refusé par
+`NoCurrentTenantError`.
 
 ## Couverture des dialectes
 

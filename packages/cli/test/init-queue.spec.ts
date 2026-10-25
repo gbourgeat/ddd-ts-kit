@@ -32,7 +32,7 @@ describe('init --queue', () => {
     const work = read(root, BACKGROUND_WORK);
 
     expect(work).toContain('const store = persistence.jobs;');
-    expect(work).toContain('store: persistence.processes,');
+    expect(work).toContain('store: persistence.processes(scope),');
     expect(work).toContain('traceparent: traced.traceparent');
     expect(read(root, PERSISTENCE)).toContain('jobs: new DrizzleJobStore(unitOfWork, jobs),');
 
@@ -52,7 +52,7 @@ describe('init --queue', () => {
     const inMemory = initProject('--di', 'nest', '--http', 'nest', '--queue', 'memory');
 
     expect(onRedis).toContain('const store = options.redis?.jobs(foundations.logger) ?? new InMemoryJobStore();');
-    expect(onRedis).toContain('store: persistence.processes,');
+    expect(onRedis).toContain('store: persistence.processes(scope),');
 
     expect(read(inMemory, BACKGROUND_WORK)).toContain('const store = new InMemoryJobStore();');
     expect(read(inMemory, BACKGROUND_WORK)).toContain('store: new InMemoryProcessStore(),');
@@ -67,7 +67,11 @@ describe('init --queue', () => {
     expect(read(root, SCHEMA)).toContain('export const processes = processesTable(MESSAGING_SCHEMA);');
     expect(read(root, PERSISTENCE)).toContain('jobs: new DrizzleJobStore(unitOfWork, jobs),');
     expect(read(root, PLATFORM)).toContain('builder.rebind(JobStore).toValue(persistence.jobs);');
-    expect(read(root, PLATFORM)).toContain('builder.rebind(ProcessStore).toValue(persistence.processes);');
+
+    expect(read(root, PLATFORM)).toContain(
+      'builder.rebind(ProcessStore).toFactory((resolve) => persistence.processes(resolve(ExecutionScope)));',
+    );
+
     expect(jsonAt(readJson(root, 'package.json'), 'dependencies')).toHaveProperty('@ddd-ts-kit/scheduling');
   });
 
@@ -78,7 +82,7 @@ describe('init --queue', () => {
     expect(read(root, SCHEMA)).toContain('await createProcessTable(knex, { schema: MESSAGING_SCHEMA });');
 
     expect(read(root, PERSISTENCE)).toContain(
-      'processes: new KnexProcessStore(unitOfWork, { schema: MESSAGING_SCHEMA }),',
+      'processes: () => new KnexProcessStore(unitOfWork, { schema: MESSAGING_SCHEMA }),',
     );
   });
 
@@ -92,7 +96,10 @@ describe('init --queue', () => {
       'builder.rebind(JobStore).toFactory((resolve) => redis.jobs(resolve(Logger)));',
     );
 
-    expect(read(root, PLATFORM)).toContain('builder.rebind(ProcessStore).toValue(persistence.processes);');
+    expect(read(root, PLATFORM)).toContain(
+      'builder.rebind(ProcessStore).toFactory((resolve) => persistence.processes(resolve(ExecutionScope)));',
+    );
+
     expect(read(root, SCHEMA)).not.toContain('jobsTable');
     expect(read(root, 'docker-compose.yml')).toContain('dragonfly');
   });
@@ -136,10 +143,10 @@ describe('init --queue database on the packages of Prisma and TypeORM', () => {
     );
 
     expect(read(root, PERSISTENCE)).toContain(
-      'processes: new PrismaProcessStore(unitOfWork, { delegate: (current) => current.processInstance }),',
+      'processes: () => new PrismaProcessStore(unitOfWork, { delegate: (current) => current.processInstance }),',
     );
 
-    expect(read(root, BACKGROUND_WORK)).toContain('store: persistence.processes,');
+    expect(read(root, BACKGROUND_WORK)).toContain('store: persistence.processes(scope),');
   });
 
   it('binds the jobs and the process instances of TypeORM, their entities in the messaging schema', () => {
@@ -148,7 +155,11 @@ describe('init --queue database on the packages of Prisma and TypeORM', () => {
     expect(read(root, SCHEMA)).toContain('export const jobs = jobEntity({ schema: MESSAGING_SCHEMA });');
     expect(read(root, SCHEMA)).toContain('export const processes = processEntity({ schema: MESSAGING_SCHEMA });');
     expect(read(root, PERSISTENCE)).toContain('jobs: new TypeOrmJobStore(unitOfWork, { entity: jobs }),');
-    expect(read(root, PERSISTENCE)).toContain('processes: new TypeOrmProcessStore(unitOfWork, { entity: processes }),');
+
+    expect(read(root, PERSISTENCE)).toContain(
+      'processes: () => new TypeOrmProcessStore(unitOfWork, { entity: processes }),',
+    );
+
     expect(read(root, PLATFORM)).toContain('builder.rebind(JobStore).toValue(persistence.jobs);');
   });
 
@@ -158,6 +169,28 @@ describe('init --queue database on the packages of Prisma and TypeORM', () => {
     expect(read(root, 'prisma/schema.prisma')).not.toContain('model BackgroundJob {');
     expect(read(root, 'prisma/schema.prisma')).toContain('model ProcessInstance {');
     expect(read(root, PERSISTENCE)).not.toContain('PrismaJobStore');
-    expect(read(root, PLATFORM)).toContain('builder.rebind(ProcessStore).toValue(persistence.processes);');
+
+    expect(read(root, PLATFORM)).toContain(
+      'builder.rebind(ProcessStore).toFactory((resolve) => persistence.processes(resolve(ExecutionScope)));',
+    );
+  });
+});
+
+describe('init --queue database with tenants', () => {
+  it.each(['knex', 'drizzle', 'prisma', 'typeorm'])(
+    'keeps each process instance of %s in the tenant of the work that saves it',
+    (orm) => {
+      const root = initProject('--orm', orm, '--tenancy', 'shared-table');
+
+      expect(read(root, PERSISTENCE)).toMatch(
+        /processes: \(tenant\) =>\s+new \w+ProcessStore\(unitOfWork, \{ [^}]*, tenant \}\),/,
+      );
+    },
+  );
+
+  it('keys the process instances of Prisma by their tenant, so two tenants may use one correlation key', () => {
+    const root = initProject('--orm', 'prisma', '--tenancy', 'shared-table');
+
+    expect(read(root, 'prisma/schema.prisma')).toContain('  @@id([tenantId, name, id])\n  @@map("process_instances")');
   });
 });

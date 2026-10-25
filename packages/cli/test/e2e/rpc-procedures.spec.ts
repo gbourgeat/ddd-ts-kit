@@ -12,12 +12,17 @@ import { SLOW } from './stacks';
 import { NATIVE_COMPILER } from './type-errors';
 
 const PROOF = 'src/rpc-procedures.spec.ts';
-const FIXTURE = path.join(import.meta.dirname, 'fixtures/rpc-procedures.spec.ts.txt');
+
+/** The proof written into the project, by the protocol it serves its procedures with. */
+const FIXTURES = {
+  orpc: path.join(import.meta.dirname, 'fixtures/rpc-procedures.spec.ts.txt'),
+  trpc: path.join(import.meta.dirname, 'fixtures/trpc-procedures.spec.ts.txt'),
+};
 
 const TERMS = ['--term', 'Invoice=A request for payment', '--term', 'Issue=To make an invoice final'];
 
 /** The four servers the procedures are mounted on, each in the wiring it is most often found with. */
-const RPC_STACKS: readonly (readonly [string, StackFlags])[] = [
+const SERVERS: readonly (readonly [string, StackFlags])[] = [
   [
     'Express, declared',
     { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'custom', events: 'outbox' },
@@ -36,17 +41,23 @@ const RPC_STACKS: readonly (readonly [string, StackFlags])[] = [
   ],
 ];
 
+/** Each server with each protocol: the mount differs for every pair. */
+const RPC_STACKS = (['orpc', 'trpc'] as const).flatMap((rpc) =>
+  SERVERS.map(([label, stack]) => [`${label}, ${rpc === 'orpc' ? 'oRPC' : 'tRPC'}`, stack, rpc] as const),
+);
+
 /**
- * Slow, opt-in (DDD_TS_KIT_E2E=1): `init --rpc orpc` on each HTTP framework, a protected command
- * behind its route, installed as a published kit. The project has no finding and type-checks, and
- * a spec written into it starts its real server and holds /rpc to what the route answers.
+ * Slow, opt-in (DDD_TS_KIT_E2E=1): `init --rpc orpc` and `init --rpc trpc` on each HTTP framework,
+ * a protected command behind its route, installed as a published kit. The project has no finding and
+ * type-checks, and a spec written into it starts its real server and holds the procedures to what
+ * the route answers.
  */
-describe.runIf(SLOW).each(RPC_STACKS)('a project that serves its routes as oRPC procedures (%s)', (_label, stack) => {
+describe.runIf(SLOW).each(RPC_STACKS)('a project that serves its routes as procedures (%s)', (_label, stack, rpc) => {
   let root: string;
 
   beforeAll(() => {
     root = tempDir('rpc');
-    scaffold(root, stack);
+    scaffold(root, stack, rpc);
     installAsPublished(root);
   }, 120_000);
 
@@ -61,7 +72,7 @@ describe.runIf(SLOW).each(RPC_STACKS)('a project that serves its routes as oRPC 
   }, 240_000);
 
   it('answers a procedure as its route: the same refusal for an anonymous caller, the same answer for a granted one', () => {
-    write(root, PROOF, fs.readFileSync(FIXTURE, 'utf8'));
+    write(root, PROOF, fs.readFileSync(FIXTURES[rpc], 'utf8'));
 
     const proof = runIn(root, { command: bin('vitest'), args: ['run', PROOF] });
 
@@ -70,9 +81,9 @@ describe.runIf(SLOW).each(RPC_STACKS)('a project that serves its routes as oRPC 
   }, 240_000);
 });
 
-function scaffold(root: string, stack: StackFlags): void {
+function scaffold(root: string, stack: StackFlags, rpc: keyof typeof FIXTURES): void {
   const steps = [
-    ['init', ...initFlags(stack), '--rpc', 'orpc'],
+    ['init', ...initFlags(stack), '--rpc', rpc],
     [
       'generate',
       'context',
