@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:da05d733f947738a -->
+<!-- translation-of: README.md sha256:cf3292a4b4042d2f -->
 
 # Documentation
 
@@ -140,6 +140,7 @@ a vérifié, les limites, et une recommandation selon la situation.
 | [Vélocité du build, des contrôles et des tests](proposals/build-and-test-velocity.fr.md) | étudié, non construit : où vont le temps et la mémoire de ce dépôt, sur une station de travail et dans le *pipeline* ; les leviers de Vitest, ESLint, Oxlint, du compilateur natif et des gestionnaires de *packages* mesurés sur cet arbre ; ce que d'autres équipes ont publié sur les orchestrateurs, la sélection de tests et GitHub Actions ; un plan dans l'ordre du gain par coût, et pourquoi aucun orchestrateur |
 | [La protection des données dès la conception, au-delà de l'*event sourcing*](proposals/privacy-by-design.fr.md) | construite, chaque partie : pourquoi le kit, qui n'effaçait que les valeurs personnelles des événements stockés, déclare désormais les champs personnels une fois et les lit dans des ports avec un adaptateur par ORM (effacement, export, conservation), des générateurs, un registre et des règles `privacy/*` ; les *pull requests* dans l'ordre de fusion, l'exemple qui adopte les ports ; ce qu'un outil ne peut jamais garantir et les mots à employer |
 | [Un second exemple, la gestion des dépenses sur la pile la plus populaire](proposals/spend-management-example.fr.md) | spécifié, non construit : NestJS, Prisma, Jest, Kafka, S3, ABAC sur un métier d'argent et de *workflows* ; d'abord les quatre capacités que cette pile éteint aujourd'hui (file et processus sur Nest, *tenancy* et audit sur Prisma, le *preset* identity), puis l'exemple comme preuve ; MySQL laissé de côté, avec ce qu'il faudrait |
+| [Où mener le kit, d'après ce que font les outils voisins](proposals/direction-from-neighbouring-tools.fr.md) | proposé, non construit : seize outils voisins lus le 2026-10-25 (méthodes pour agents, *plugins* DDD, outils de frontières d'import, briques CQRS et *event sourcing*), neuf propositions notées par valeur, coût et pertinence, en paliers (maintenant, ensuite, plus tard), et ce que la comparaison suggère et que le kit ne devrait pas faire, avec la raison |
 
 ## Partir d'une question
 
