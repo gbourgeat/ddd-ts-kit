@@ -1,5 +1,5 @@
 [English](http-frameworks.md) · **Français**
-<!-- translation-of: http-frameworks.md sha256:dc9f24a7280123c9 -->
+<!-- translation-of: http-frameworks.md sha256:3e023fea4176c9d2 -->
 
 # Frameworks HTTP : Express, Fastify, Hono, NestJS
 
@@ -245,6 +245,7 @@ Nest reste libre.
 | un filtre d'exceptions, `throw new NotFoundException()` | un refus de la liste des codes du contexte, répondu par le *mapper* d'erreurs | un document *problem* avec le code que déclare le contrat et que le client reconnaît |
 | un intercepteur pour les logs, les traces, les reprises | un *middleware* du bus ou un aspect ; le traçage est câblé par la plateforme | une seule politique pour tous les cas d'usage, lue à un seul endroit |
 | `CacheInterceptor`, `@nestjs/cache-manager` | le `cache` de la route (avec `etag`, `tags`) et le port `Cache` du noyau | des réponses gardées par appelant quand il le faut, purgées après le *commit* |
+| `FileInterceptor`, `@UploadedFile()`, `ParseFilePipe` | `upload` de `@KitRoute` et `@Upload()` sur le paramètre (`generate file-upload`) | le fichier lu en flux et vérifié contre sa taille et ses types de média à son arrivée, ses limites dans le contrat, déposé puis promu avec le commit |
 | `@nestjs/swagger` | le contrat généré à partir des routes (`npm run docs:generate`) | un contrat qui ne peut pas s'écarter du code, `x-error-codes`, les clients générés |
 | `@nestjs/cqrs` | le `CommandBus` et le `QueryBus` du kit | la permission, l'unité de travail et l'*outbox* autour de chaque commande |
 | `@nestjs/schedule`, `@nestjs/bullmq` | un *job* du kit (`generate job`), un *job* d'arrière-plan | un *job* qui envoie une commande, donc par les mêmes contrôles |

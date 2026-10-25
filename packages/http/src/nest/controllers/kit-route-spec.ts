@@ -2,6 +2,8 @@ import type { Schema } from '@ddd-ts-kit/validation';
 import type { CachePolicy } from '../../cache/cache-policy';
 import type { IfMatch } from '../../cache/if-match';
 import type { GuardReference } from '../../controller/guard-reference';
+import type { FormHints } from '../../forms/form-hints';
+import type { UploadSpec } from '../../route/upload-spec';
 import type { DtoType } from './dto-type';
 
 /**
@@ -39,9 +41,18 @@ export interface KitRouteSpec {
     readonly headers?: Schema<unknown>;
     readonly body?: Schema<unknown>;
   };
+  /**
+   * A file received as `multipart/form-data`, its field, size and media types stated here and in
+   * the contract; `@Upload()` hands it to the method, and `@Body()` takes the text fields.
+   */
+  readonly upload?: UploadSpec;
   readonly deprecated?: boolean;
+  /** Media types answered besides `application/json`, chosen by `Accept`: `['application/xml', 'text/csv']`. */
   readonly produces?: readonly string[];
+  /** Media types a body is read in besides `application/json`: `['application/xml']`. */
   readonly consumes?: readonly string[];
+  /** Describes the body as a form at `GET /forms/<operationId>` (`formRoutes`): `defineForm(...)` beside the controller. */
+  readonly form?: FormHints;
   readonly cache?: CachePolicy;
   readonly ifMatch?: IfMatch;
 }

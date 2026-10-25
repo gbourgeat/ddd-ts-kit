@@ -2,8 +2,8 @@ import type { KitRouteSpec } from './kit-route-spec';
 import type { KitRoutesOptions } from './kit-routes-options';
 import type { NestSignature } from './nest-signature';
 
-/** What a parameter decorator of the kit asks for: the caller, or the context of the request. */
-export type Injected = 'actor' | 'context';
+/** What a parameter decorator of the kit asks for: the caller, the context of the request, or the file it streams. */
+export type Injected = 'actor' | 'context' | 'upload';
 
 export interface NestRoutesRegistry {
   /** By prototype of a controller, the routes of its methods. */

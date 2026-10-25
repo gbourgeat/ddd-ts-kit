@@ -1,6 +1,10 @@
+const NEST_ROUTE = /^([ \t]*)@KitRoute\(\{[ \t]*$/m;
+const NEST_BODY = /@Body\(\)\s+(?:readonly\s+)?[\w$]+\s*:\s*([\w$]+)/;
+
 /**
  * Edits of the source of a controller written by the generator, which keep its shape: one more
- * name in an import, one more option of `@Controller`, a declaration before the class.
+ * name in an import, one more option of `@Controller` (of `@KitRoute` of its method, for a Nest
+ * controller), a declaration before the class.
  */
 export const controllerSource = {
   /** Adds `name` (`type Name` for a type) to the import of `module`, or a new import line after the last one. */
@@ -40,8 +44,29 @@ export const controllerSource = {
     );
   },
 
-  /** Adds an option line to `@Controller({ ... })`, after its `summary`, with its indentation. */
+  /** Whether it is a Nest controller the kit serves: its options are those of `@KitRoute` of its method. */
+  isNest(source: string): boolean {
+    return source.includes("from '@ddd-ts-kit/http/nest'");
+  },
+
+  /** The DTO class of the body a Nest controller takes whole (`@Body() body: IssueInvoiceBody`), if it takes one. */
+  nestBody(source: string): string | undefined {
+    return NEST_BODY.exec(source)?.[1];
+  },
+
+  /**
+   * Adds an option line to `@Controller({ ... })`, after its `summary`, with its indentation; to a
+   * Nest controller, at the top of `@KitRoute({ ... })` of its method.
+   */
   withOption(source: string, line: string): string {
+    const route = NEST_ROUTE.exec(source);
+
+    if (route !== null) {
+      const end = route.index + route[0].length;
+
+      return `${source.slice(0, end)}\n${route[1] ?? ''}  ${line}${source.slice(end)}`;
+    }
+
     const summary = /^(\s*)summary:.*$/m.exec(source);
 
     if (summary === null) {
@@ -53,9 +78,11 @@ export const controllerSource = {
     return `${source.slice(0, end)}\n${summary[1] ?? ''}${line}${source.slice(end)}`;
   },
 
-  /** Puts a declaration right before the decorator of the class. */
+  /** Puts a declaration right before the decorator of the class, and before the comment that documents the class. */
   beforeController(source: string, declaration: string): string {
-    const at = source.indexOf('@Controller(');
+    const decorator = source.indexOf('@Controller(');
+    const documented = /\/\*\*(?:(?!\*\/)[\s\S])*\*\/\s*$/.exec(source.slice(0, decorator));
+    const at = documented === null ? decorator : documented.index;
 
     return `${source.slice(0, at)}${declaration}\n${source.slice(at)}`;
   },

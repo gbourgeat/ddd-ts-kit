@@ -11,7 +11,7 @@ const CONFIG = parseConfig({
 
 const FOLDER = 'src/contexts/billing/presentation/http/invoices';
 
-const CONTROLLER = `import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+const CONTROLLER = `import { Body, Controller, Get, Headers, Param, Post, Query } from '@nestjs/common';
 import type { Accepted } from '@ddd-ts-kit/http';
 import { CurrentActor, KitRoute, KitRoutes } from '@ddd-ts-kit/http/nest';
 import { IssuedInvoice } from '@/contexts/billing/presentation/http/invoices/issued-invoice';
@@ -61,8 +61,8 @@ export class InvoicesController {
   }
 
   @Get('declared')
-  @KitRoute({ request: { query: declaredQuery }, response: { body: declared } })
-  async declaredAnswer(@Query() query: Record<string, string>): Promise<InvoiceLine[]> {
+  @KitRoute({ request: { headers }, response: { body: declared } })
+  async declaredAnswer(@Headers() signed: Record<string, string>): Promise<InvoiceLine[]> {
     return [];
   }
 
@@ -125,7 +125,7 @@ describe('the Nest controllers of a context, read from their sources', () => {
         { source: 'body', type: { kind: 'unread', text: '{ reason: string }' }, declared: false },
         { source: 'query', type: { kind: 'unread', text: 'Record<string, string>' }, declared: false },
       ],
-      declaredAnswer: [{ source: 'query', type: { kind: 'unread' }, declared: true }],
+      declaredAnswer: [{ source: 'headers', type: { kind: 'unread' }, declared: true }],
       voidInvoice: [],
     });
   });

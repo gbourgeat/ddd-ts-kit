@@ -23,4 +23,6 @@ export interface StackFlags {
   readonly tenancy?: string;
   readonly queue?: string;
   readonly routes?: string;
+  readonly forms?: string;
+  readonly representations?: string;
 }
