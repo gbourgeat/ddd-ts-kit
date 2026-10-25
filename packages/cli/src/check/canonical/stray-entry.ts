@@ -1,6 +1,7 @@
 import path from 'node:path';
 import type { Config } from '../../config';
 import { CONTEXT_FILES } from '../../context-files';
+import { controllersFile } from '../../nest-controllers/controllers-file';
 import { barrelFile, dependenciesFile, isDeclarationsFile } from '../../declared';
 import { declaredModules, moduleSplit, WITHOUT_MODULE } from '../../model-modules';
 import type { Flaw } from '../model/flaw';
@@ -106,7 +107,12 @@ function atContextRoot({ context, declared, inside: file }: Placed): Flaw | unde
   const generated = [barrelFile(context), dependenciesFile(context)];
   const ofTheContext = CONTEXT_FILES.map((candidate) => candidate.root(context));
 
-  if (file === `${context}.module.ts` || ofTheContext.includes(file) || (declared && generated.includes(file))) {
+  if (
+    file === `${context}.module.ts` ||
+    file === controllersFile(context) ||
+    ofTheContext.includes(file) ||
+    (declared && generated.includes(file))
+  ) {
     return undefined;
   }
 

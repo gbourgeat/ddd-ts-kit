@@ -15,6 +15,7 @@ export { ControllersBinder } from './nest/controllers/controllers-binder';
 export { nestControllerRoutes } from './nest/controllers/nest-controller-routes';
 export type { NestControllerRoutesOptions } from './nest/controllers/nest-controller-routes-options';
 export { RouteContext } from './nest/controllers/route-context';
+export { withAnswers } from './nest/controllers/with-answers';
 export { createRoutesModule, type RoutesModuleOptions } from './nest/create-routes-module';
 export type { RoutesFactory } from './nest/routes-factory';
 export { RoutesMounter } from './nest/routes-mounter';

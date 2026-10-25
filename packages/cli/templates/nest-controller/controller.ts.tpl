@@ -4,7 +4,7 @@ import { {{route.kitImports}} } from '@ddd-ts-kit/http';
 {{/if}}
 import { {{route.bridgeImports}} } from '@ddd-ts-kit/http/nest';
 import { {{route.kernelImports}} } from '@ddd-ts-kit/kernel';
-{{#if route.declaresSchema}}
+{{#if route.readsSchemas}}
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 {{/if}}
 {{route.imports}}
@@ -16,35 +16,22 @@ const paramsSchema = classSchema({{name.pascal}}Params);
 // TODO(domain): once {{name.pascal}}Body has its decorated fields, drop the second argument: it only lets a class without any decorated field through.
 const bodySchema = classSchema({{name.pascal}}Body, { validator: { forbidUnknownValues: false } });
 {{/if}}
-{{#if route.ownAccepted}}
-const accepted = classSchema({{name.pascal}}Accepted);
-{{/if}}
-{{#if route.isQuery}}
-// TODO(domain): once {{name.pascal}}Answer has its decorated fields, drop the second argument: it only lets a class without any decorated field through.
-const answer = classSchema({{name.pascal}}Answer, { validator: { forbidUnknownValues: false } });
-{{/if}}
-{{#if route.declaresSchema}}
+{{#if route.readsSchemas}}
 
 {{/if}}
-/** Built by Nest with the bus it injects, served by the kit: its route is declared once, by Nest's decorators and @KitRoute. */
+/** Built by Nest with the bus it injects, served by the kit: what each method answers is read from its signature. */
 @Controller()
 @KitRoutes({ {{route.nestShared}} })
 export class {{name.pascal}}Controller {
   constructor({{route.nestConstructor}}) {}
 
   @{{route.nestMethod}}({{route.nestPath}})
+  {{#if route.hasHttpCode}}
+  @HttpCode({{route.nestHttpCode}})
+  {{/if}}
   @KitRoute({
     {{#if route.readsRequest}}
     request: { {{route.nestRequest}} },
-    {{/if}}
-    {{#if route.returnsId}}
-    response: { status: {{route.status}}, description: 'Done; the body carries the identifier.', body: {{route.acceptedBody}} },
-    {{/if}}
-    {{#if route.returnsNothing}}
-    response: { status: {{route.status}}, description: 'Done.' },
-    {{/if}}
-    {{#if route.isQuery}}
-    response: { status: {{route.status}}, description: 'The answer.', body: answer },
     {{/if}}
     // TODO(domain): list the codes of the refusals "{{name.words}}" can raise, as their factories set them, so that they appear in the contract with their status (`errors/known-code`).
     errors: [],

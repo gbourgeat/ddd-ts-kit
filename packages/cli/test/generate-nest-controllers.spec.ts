@@ -79,7 +79,7 @@ describe('generate route under "stack.routes": "nest"', () => {
     expect(controller).toContain('new IssueInvoiceCommand(actor)');
   });
 
-  it('writes a query as a GET method that injects the query bus and declares its answer', () => {
+  it('writes a query as a GET method that injects the query bus and names its answer in its signature', () => {
     const controller = read(
       root,
       `${BILLING}/presentation/http/invoices/invoice-details/invoice-details.controller.ts`,
@@ -87,18 +87,18 @@ describe('generate route under "stack.routes": "nest"', () => {
 
     expect(controller).toContain("@Get(':invoiceId')");
     expect(controller).toContain('constructor(@Inject(QueryBus) private readonly queries: QueryBus) {}');
-    expect(controller).toContain("response: { status: 200, description: 'The answer.', body: answer },");
+    expect(controller).toContain('): Promise<InvoiceDetailsAnswer> {');
+    expect(controller).not.toContain('response:');
   });
 
-  it('lists the controllers in the module of the context, for Nest to build them, and builds none itself', () => {
+  it('lists the controllers in the generated file of the context, with what their signatures answer, which the module reads', () => {
     const module = read(root, `${BILLING}/billing.module.ts`);
+    const listed = read(root, `${BILLING}/billing.controllers.ts`);
 
-    expect(module).toMatch(
-      /controllers: \[\n\s+\/\/ ddd-ts-kit:controllers\n\s+IssueInvoiceController,\n\s+InvoiceDetailsController,/,
-    );
-
+    expect(module).toContain('controllers: billingControllers,');
     expect(module).not.toContain('new IssueInvoiceController');
-    expect(module).not.toContain('controllerRoutes');
+    expect(listed).toContain('withAnswers(InvoiceDetailsController, { invoiceDetails: InvoiceDetailsAnswer }),');
+    expect(listed).toContain('withAnswers(IssueInvoiceController, { issueInvoice: acceptedSchema }),');
   });
 
   it('gives each controller a spec that calls its route through the pipeline of the kit', () => {

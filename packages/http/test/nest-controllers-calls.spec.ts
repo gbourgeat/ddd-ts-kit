@@ -4,7 +4,15 @@ import { describe, expect, it } from 'vitest';
 import { ok } from '@ddd-ts-kit/kernel';
 import { customSchema } from '@ddd-ts-kit/validation';
 import { executeRoute, Public, type Route } from '../src';
-import { CurrentActor, KitRoute, nestControllerRoutes, RouteContext } from '../src/nest';
+import {
+  CurrentActor,
+  KitRoute,
+  KitRoutes,
+  nestControllerRoute,
+  nestControllerRoutes,
+  RouteContext,
+  withAnswers,
+} from '../src/nest';
 import type { NestControllerRoutesOptions } from '../src/nest';
 
 class Reading {
@@ -140,5 +148,23 @@ describe('a call of a route of a Nest controller', () => {
     Reflect.defineMetadata('design:returntype', Invoice, Reporting.prototype, 'report');
 
     expect(() => nestControllerRoutes([Reporting])).toThrow(/returns Invoice and @KitRoute declares no response.body/);
+  });
+
+  it('answers the body its signature names, as ddd-ts-kit read it into withAnswers, with no @KitRoute at all', async () => {
+    class Summing {
+      async total(): Promise<object> {
+        return { total: 3 };
+      }
+    }
+
+    Controller('summing')(Summing);
+    KitRoutes({ guards: [Public] })(Summing);
+    Reflect.decorate([Get()], Summing.prototype, 'total', { value: Summing.prototype.total });
+    withAnswers(Summing, { total: customSchema((input) => ok(input), { type: 'object' }) });
+
+    const route = nestControllerRoute(Summing, { instanceOf: () => new Summing() });
+
+    expect(route.responses).toMatchObject({ 200: { body: expect.any(Object) } });
+    expect(await read(route)).toMatchObject({ status: 200, body: { total: 3 } });
   });
 });

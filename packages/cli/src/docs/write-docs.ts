@@ -1,6 +1,7 @@
 import type { Config } from '../config';
 import { CliError } from '../cli-error';
 import { type EarlierDeclarations, type KeptContext, refreshBarrels } from '../generate/refresh-barrels';
+import { refreshNestControllers } from '../nest-controllers/refresh-nest-controllers';
 import { replaceRegion } from '../markers';
 import { readTemplate, renderTemplate } from '../templating';
 import type { Workspace } from '../workspace';
@@ -50,6 +51,8 @@ export function writeDocs(
   writePrivacyRegister(ws, config, contexts);
 
   const kept = refreshBarrels(ws, config, earlier);
+
+  refreshNestControllers(ws, config);
 
   writeOpenApiDocuments(ws, config);
   writeCodeOwners(ws, config, contexts);
