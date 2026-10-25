@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:c4caddec40d1d1f3 -->
+<!-- translation-of: coding-agents.md sha256:55f03b93140ba23c -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -63,7 +63,9 @@ modification d'un contrat généré et l'écriture de la *baseline* des erreurs 
 write`, ou une modification de `ddd-ts-kit-baseline.json` : le propriétaire du projet l'écrit,
 dans un terminal), demande l'avis du propriétaire du projet avant qu'une
 désactivation, un test sauté ou un changement des règles soit écrit, vérifie chaque fichier
-écrit et renvoie les violations avec leur correction, et refuse de terminer tant que des
+écrit et renvoie les violations avec leur correction (avec `"dependenciesBeforeWrite": true`, à
+l'essai, il refuse avant l'écriture un nouvel import qui enfreint une règle de dépendance), et
+refuse de terminer tant que des
 erreurs d'architecture restent. Avec `"formatOnWrite": true` dans la configuration (écrite par `init` pour un nouveau projet), il lance
 d'abord le Biome que le projet a installé sur le fichier écrit (`node_modules/.bin/biome format
 --write`, un fichier, jamais un autre formateur), pour que la mise en page soit réglée à

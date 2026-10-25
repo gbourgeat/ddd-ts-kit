@@ -76,10 +76,18 @@ function optionalKeys(config: Config): Record<string, unknown> {
     ...writtenPrivacy(config.privacy),
     ...writtenCommit(commit),
     ...(worker ? { worker } : {}),
-    ...(config.worktrees === 'advised' ? {} : { worktrees: config.worktrees }),
-    ...(config.formatOnWrite ? { formatOnWrite: true } : {}),
+    ...guardKeys(config),
     ...teamKeys(config),
     ...pipelineKeys(config),
+  };
+}
+
+/** What the guard of the plugin does at a write, once a project sets it otherwise than the default. */
+function guardKeys({ worktrees, formatOnWrite, dependenciesBeforeWrite }: Config): Record<string, unknown> {
+  return {
+    ...(worktrees === 'advised' ? {} : { worktrees }),
+    ...(formatOnWrite ? { formatOnWrite: true } : {}),
+    ...(dependenciesBeforeWrite ? { dependenciesBeforeWrite: true } : {}),
   };
 }
 

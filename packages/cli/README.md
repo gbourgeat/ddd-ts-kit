@@ -2253,12 +2253,16 @@ import is judged by every boundary rule exactly as the relative path to the same
 ## check-file
 
 ```
-ddd-ts-kit check-file <path>
+ddd-ts-kit check-file <path> [--content-from <file>] [--rule <id>]...
 ```
 
 Runs the per-file rules (layers, contexts, naming, events, language, purity, clean code, mocks,
 composition, suppressions) on one file without walking the project: meant for an editor or
 agent hook after each write. A file that is not a source of the project is ignored.
+`--content-from <file>` judges the text of that file as the content of `<path>`, which need not
+exist yet: what a session is about to write, as the guard of the plugin reads it before the write
+under `"dependenciesBeforeWrite": true`. `--rule` narrows the rules; the baseline of the project
+applies as for a file on disk.
 
 ## lint
 

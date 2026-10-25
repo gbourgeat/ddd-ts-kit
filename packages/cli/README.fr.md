@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c0fa9a7ca6982a88 -->
+<!-- translation-of: README.md sha256:cc7741aeae40b686 -->
 
 # ddd-ts-kit
 
@@ -2402,13 +2402,16 @@ exactement comme le chemin relatif vers le même fichier.
 ## check-file
 
 ```
-ddd-ts-kit check-file <path>
+ddd-ts-kit check-file <path> [--content-from <file>] [--rule <id>]...
 ```
 
 Exécute les règles par fichier (couches, contextes, nommage, événements, langage, pureté, code
 propre, *mocks*, composition, désactivations) sur un fichier sans parcourir le projet : conçu pour
 un *hook* d'éditeur ou d'agent après chaque écriture. Un fichier qui n'est pas une source du
-projet est ignoré.
+projet est ignoré. `--content-from <file>` juge le texte de ce fichier comme le contenu de
+`<path>`, qui n'a pas besoin d'exister encore : ce qu'une session s'apprête à écrire, comme la
+garde du *plugin* le lit avant l'écriture sous `"dependenciesBeforeWrite": true`. `--rule`
+restreint les règles ; la *baseline* du projet s'applique comme pour un fichier sur le disque.
 
 ## lint
 

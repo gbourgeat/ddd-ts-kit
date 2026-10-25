@@ -1964,3 +1964,46 @@ test('the baseline of the errors is never written by an agent, on any host; prun
   const advised = project({ guard: 'advise' });
   assert.equal(decision(run('pre-bash', bash(advised, 'npx ddd-ts-kit check --baseline write'))), 'ask');
 });
+
+test('on trial, an import a dependency rule refuses is refused before the write, an import the file held is not', () => {
+  const root = project({ dependenciesBeforeWrite: true });
+  const file = pricingService(root, "import { z } from 'zod';\nexport class Pricing { shape() { return z; } }\n");
+  const edit = (old_string, new_string) => ({
+    tool_name: 'Edit',
+    tool_input: { file_path: file, old_string, new_string },
+  });
+  const adding = run('pre-write', edit('export class', "import express from 'express';\nexport class"));
+  assert.equal(decision(adding), 'deny');
+  assert.match(reason(adding), /layer\/domain-purity/);
+  assert.match(reason(adding), /dependenciesBeforeWrite, on trial/);
+  assert.doesNotMatch(reason(adding), /zod/);
+  const keeping = run(
+    'pre-write',
+    edit("import { z } from 'zod';\nexport class", "import { z } from 'zod';\n\nexport class"),
+  );
+  assert.equal(keeping.output, undefined);
+  const content = readFileSync(file, 'utf8');
+  assert.equal(run('pre-write', { tool_name: 'Write', tool_input: { file_path: file, content } }).output, undefined);
+});
+
+test('on trial, a Codex patch is judged on the lines it adds; off, the import waits for the check after the write', () => {
+  const root = project({ dependenciesBeforeWrite: true });
+  pricingService(root, 'export class Pricing {}\n');
+  const added = [
+    '*** Update File: src/contexts/ordering/domain/services/pricing.service.ts',
+    '@@',
+    "+import express from 'express';",
+  ];
+  assert.equal(decision(run('pre-write', patch(root, ...added))), 'deny');
+  const off = project();
+  const file = pricingService(off, 'export class Pricing {}\n');
+  const edit = { file_path: file, old_string: 'export', new_string: "import express from 'express';\nexport" };
+  assert.equal(run('pre-write', { tool_name: 'Edit', tool_input: edit }).output, undefined);
+});
+
+function pricingService(root, content) {
+  const file = join(root, 'src/contexts/ordering/domain/services/pricing.service.ts');
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, content);
+  return file;
+}
