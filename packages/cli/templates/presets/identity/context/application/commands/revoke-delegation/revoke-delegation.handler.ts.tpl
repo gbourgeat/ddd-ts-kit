@@ -1,6 +1,11 @@
 import type { Access } from '@ddd-ts-kit/auth';
 import type { Clock } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#unless style.declared}}
+import type { CommandHandler } from '@ddd-ts-kit/kernel';
+{{/unless}}
 {{#unless refusals.named}}
 import { DelegationError } from '{{alias.context}}/domain/errors/delegation.error{{alias.ext}}';
 {{/unless}}
@@ -11,9 +16,16 @@ import type { DelegationRepository } from '{{alias.context}}/domain/repositories
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
 import { RoleRightsService } from '{{alias.context}}/domain/services/role-rights.service{{alias.ext}}';
 import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
+{{#if style.declared}}
 import { RevokeDelegationCommand } from '{{alias.context}}/application/commands/revoke-delegation/revoke-delegation.command{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { RevokeDelegationCommand } from '{{alias.context}}/application/commands/revoke-delegation/revoke-delegation.command{{alias.ext}}';
+{{/unless}}
 
+{{#if style.declared}}
 @CommandHandler(RevokeDelegationCommand)
+{{/if}}
 export class RevokeDelegationHandler implements CommandHandler<RevokeDelegationCommand> {
   constructor(
     private readonly delegationRepository: DelegationRepository,

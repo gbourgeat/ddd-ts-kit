@@ -1,14 +1,23 @@
 import { optimisticUpdate } from '@ddd-ts-kit/prisma';
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
 import type { Organisation } from '{{alias.context}}/domain/aggregates/organisation.aggregate{{alias.ext}}';
+{{#if style.declared}}
 import { OrganisationRepository } from '{{alias.context}}/domain/repositories/organisation.repository{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { OrganisationRepository } from '{{alias.context}}/domain/repositories/organisation.repository{{alias.ext}}';
+{{/unless}}
 import type { Database } from '{{alias.platform}}/database/database{{alias.ext}}';
 import { OrganisationMapper, type OrganisationColumns } from '{{alias.context}}/infrastructure/persistence/organisation.mapper{{alias.ext}}';
 
 type VersionedOrganisation = OrganisationColumns & { readonly version: number };
 
+{{#if style.declared}}
 @Repository(OrganisationRepository)
+{{/if}}
 export class PrismaOrganisationRepository implements OrganisationRepository {
   constructor(
     private readonly database: Database,

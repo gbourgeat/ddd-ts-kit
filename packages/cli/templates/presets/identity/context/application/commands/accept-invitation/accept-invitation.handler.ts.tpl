@@ -1,5 +1,10 @@
 import type { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#unless style.declared}}
+import type { CommandHandler } from '@ddd-ts-kit/kernel';
+{{/unless}}
 import { Member } from '{{alias.context}}/domain/aggregates/member.aggregate{{alias.ext}}';
 {{#unless refusals.named}}
 import { AccountError } from '{{alias.context}}/domain/errors/account.error{{alias.ext}}';
@@ -14,10 +19,17 @@ import { UnknownInvitation } from '{{alias.context}}/domain/errors/unknown-invit
 import type { AccountRepository } from '{{alias.context}}/domain/repositories/account.repository{{alias.ext}}';
 import type { InvitationRepository } from '{{alias.context}}/domain/repositories/invitation.repository{{alias.ext}}';
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
+{{#if style.declared}}
 import { AcceptInvitationCommand } from '{{alias.context}}/application/commands/accept-invitation/accept-invitation.command{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { AcceptInvitationCommand } from '{{alias.context}}/application/commands/accept-invitation/accept-invitation.command{{alias.ext}}';
+{{/unless}}
 import type { InvitationTokens } from '{{alias.context}}/application/ports/invitation-tokens.port{{alias.ext}}';
 
+{{#if style.declared}}
 @CommandHandler(AcceptInvitationCommand)
+{{/if}}
 export class AcceptInvitationHandler implements CommandHandler<AcceptInvitationCommand> {
   constructor(
     private readonly invitationRepository: InvitationRepository,

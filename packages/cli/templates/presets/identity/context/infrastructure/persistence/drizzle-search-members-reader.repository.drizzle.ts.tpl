@@ -1,7 +1,14 @@
 import { and, asc, count, desc, eq, isNull } from 'drizzle-orm';
 import { InvalidPageRequestError, pageOf, type PageRequest } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#if style.declared}}
 import { SearchMembersReader } from '{{alias.context}}/application/ports/search-members-reader.port{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { SearchMembersReader } from '{{alias.context}}/application/ports/search-members-reader.port{{alias.ext}}';
+{{/unless}}
 import type {
   SearchMembersResult,
   SearchMembersSort,
@@ -10,7 +17,9 @@ import type { Database } from '{{alias.platform}}/database/database{{alias.ext}}
 import { accounts, members } from '{{alias.context}}/infrastructure/persistence/{{context.kebab}}.schema{{alias.ext}}';
 
 /** The current members of an organisation joined to the profile of their account: one statement, the page applied by the database. */
+{{#if style.declared}}
 @Repository(SearchMembersReader)
+{{/if}}
 export class DrizzleSearchMembersReader implements SearchMembersReader {
   constructor(private readonly database: Database) {}
 

@@ -1,9 +1,16 @@
 import type { Knex } from 'knex';
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
 import { type KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
 import type { Member } from '{{alias.context}}/domain/aggregates/member.aggregate{{alias.ext}}';
+{{#if style.declared}}
 import { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
+{{/unless}}
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 import { {{context.constant}}_SCHEMA } from '{{alias.context}}/infrastructure/persistence/{{context.kebab}}.schema{{alias.ext}}';
 import { MemberMapper } from '{{alias.context}}/infrastructure/persistence/member.mapper{{alias.ext}}';
@@ -11,7 +18,9 @@ import type { MemberColumns, MemberRow } from '{{alias.context}}/infrastructure/
 
 type VersionedMember = MemberColumns & { readonly version: number };
 
+{{#if style.declared}}
 @Repository(MemberRepository)
+{{/if}}
 export class KnexMemberRepository implements MemberRepository {
   constructor(
     private readonly database: KnexContext,

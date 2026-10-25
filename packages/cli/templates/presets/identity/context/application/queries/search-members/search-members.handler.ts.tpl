@@ -1,15 +1,27 @@
 import type { Access } from '@ddd-ts-kit/auth';
 import type { Clock } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#unless style.declared}}
+import type { QueryHandler } from '@ddd-ts-kit/kernel';
+{{/unless}}
 import type { DelegationRepository } from '{{alias.context}}/domain/repositories/delegation.repository{{alias.ext}}';
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
 import { RoleRightsService } from '{{alias.context}}/domain/services/role-rights.service{{alias.ext}}';
 import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
 import type { SearchMembersReader } from '{{alias.context}}/application/ports/search-members-reader.port{{alias.ext}}';
+{{#if style.declared}}
 import { SearchMembersQuery } from '{{alias.context}}/application/queries/search-members/search-members.query{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { SearchMembersQuery } from '{{alias.context}}/application/queries/search-members/search-members.query{{alias.ext}}';
+{{/unless}}
 import type { SearchMembersResult } from '{{alias.context}}/application/queries/search-members/search-members.result{{alias.ext}}';
 
+{{#if style.declared}}
 @QueryHandler(SearchMembersQuery)
+{{/if}}
 export class SearchMembersHandler implements QueryHandler<SearchMembersQuery> {
   constructor(
     private readonly reader: SearchMembersReader,

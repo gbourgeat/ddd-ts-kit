@@ -18,6 +18,8 @@ const VARIANTS: Readonly<Record<string, (config: Config) => boolean>> = {
   named: (config) => config.stack.refusals === 'named',
   factories: (config) => config.stack.refusals === 'factories',
   privacy: (config) => config.stack.privacy === 'on',
+  declared: (config) => config.stack.style === 'declared',
+  explicit: (config) => config.stack.style === 'explicit',
 };
 
 const NAMES = Object.keys(VARIANTS).join('|');

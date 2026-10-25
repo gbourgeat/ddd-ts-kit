@@ -1,11 +1,20 @@
 import type { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#if style.declared}}
 import { MemberRoleChanged } from '{{alias.context}}/domain/events/member-role-changed.event{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { MemberRoleChanged } from '{{alias.context}}/domain/events/member-role-changed.event{{alias.ext}}';
+{{/unless}}
 import { memberRoleChangedV1 } from '{{alias.context}}/published-language/member-role-changed.v1.integration-event{{alias.ext}}';
 
 /** Tells the other contexts, through the outbox, in the transaction of the fact. */
+{{#if style.declared}}
 @DomainEventHandler(MemberRoleChanged)
-export class MemberRoleChangedPublisher implements DomainEventHandler<MemberRoleChanged> {
+{{/if}}
+export class MemberRoleChangedPublisher{{#if style.declared}} implements DomainEventHandler<MemberRoleChanged>{{/if}} {
   constructor(
     private readonly publisher: IntegrationEventPublisher,
     private readonly ids: IdGenerator,

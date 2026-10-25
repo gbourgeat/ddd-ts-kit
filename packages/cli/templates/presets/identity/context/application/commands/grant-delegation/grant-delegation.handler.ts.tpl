@@ -1,6 +1,11 @@
 import type { Access } from '@ddd-ts-kit/auth';
 import type { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#unless style.declared}}
+import type { CommandHandler } from '@ddd-ts-kit/kernel';
+{{/unless}}
 import { Delegation } from '{{alias.context}}/domain/aggregates/delegation.aggregate{{alias.ext}}';
 {{#unless refusals.named}}
 import { MemberError } from '{{alias.context}}/domain/errors/member.error{{alias.ext}}';
@@ -13,9 +18,16 @@ import type { MemberRepository } from '{{alias.context}}/domain/repositories/mem
 import { RoleRightsService } from '{{alias.context}}/domain/services/role-rights.service{{alias.ext}}';
 import { DelegationPeriod } from '{{alias.context}}/domain/value-objects/delegation-period.vo{{alias.ext}}';
 import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
+{{#if style.declared}}
 import { GrantDelegationCommand } from '{{alias.context}}/application/commands/grant-delegation/grant-delegation.command{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { GrantDelegationCommand } from '{{alias.context}}/application/commands/grant-delegation/grant-delegation.command{{alias.ext}}';
+{{/unless}}
 
+{{#if style.declared}}
 @CommandHandler(GrantDelegationCommand)
+{{/if}}
 export class GrantDelegationHandler implements CommandHandler<GrantDelegationCommand> {
   constructor(
     private readonly delegationRepository: DelegationRepository,

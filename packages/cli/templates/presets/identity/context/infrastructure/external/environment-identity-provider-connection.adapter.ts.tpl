@@ -1,5 +1,12 @@
+{{#if style.declared}}
 import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#if style.declared}}
 import { IdentityProviderConnection } from '{{alias.context}}/application/ports/identity-provider-connection.port{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { IdentityProviderConnection } from '{{alias.context}}/application/ports/identity-provider-connection.port{{alias.ext}}';
+{{/unless}}
 
 /** The variables read, and what each one holds. */
 const VARIABLES = {
@@ -14,7 +21,9 @@ const VARIABLES = {
  * is made: an application that never calls it starts without it. A missing variable fails the
  * call that needed it, with its name; its value is never written.
  */
+{{#if style.declared}}
 @Adapter(IdentityProviderConnection, { kind: 'external' })
+{{/if}}
 export class EnvironmentIdentityProviderConnection implements IdentityProviderConnection {
   async settings(): Promise<{ baseUrl: string; realm: string; clientId: string; clientSecret: string }> {
     return {

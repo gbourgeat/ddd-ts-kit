@@ -1,5 +1,10 @@
 import type { Clock } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#unless style.declared}}
+import type { CommandHandler } from '@ddd-ts-kit/kernel';
+{{/unless}}
 import type { Member } from '{{alias.context}}/domain/aggregates/member.aggregate{{alias.ext}}';
 {{#unless refusals.named}}
 import { AccountError } from '{{alias.context}}/domain/errors/account.error{{alias.ext}}';
@@ -13,9 +18,16 @@ import type { AccountRepository } from '{{alias.context}}/domain/repositories/ac
 import type { DelegationRepository } from '{{alias.context}}/domain/repositories/delegation.repository{{alias.ext}}';
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
 import type { OrganisationRepository } from '{{alias.context}}/domain/repositories/organisation.repository{{alias.ext}}';
+{{#if style.declared}}
 import { DeactivateAccountCommand } from '{{alias.context}}/application/commands/deactivate-account/deactivate-account.command{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import type { DeactivateAccountCommand } from '{{alias.context}}/application/commands/deactivate-account/deactivate-account.command{{alias.ext}}';
+{{/unless}}
 
+{{#if style.declared}}
 @CommandHandler(DeactivateAccountCommand)
+{{/if}}
 export class DeactivateAccountHandler implements CommandHandler<DeactivateAccountCommand> {
   constructor(
     private readonly accountRepository: AccountRepository,
