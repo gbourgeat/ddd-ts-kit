@@ -1327,7 +1327,15 @@ export class AppModule {}
   value without it is refused, when the routes are built if TypeScript recorded its return type,
   else at the call (a 500, told to `onError`), never answered empty.
 - `nestControllerRoutes(controllers, { schemaOfClass })` gives the same routes without Nest's
-  container, for `generateOpenApi`, `orpcRouter` and `trpcRouter`.
+  container, for `generateOpenApi`, `orpcRouter` and `trpcRouter`; `nestControllerRoute` the one
+  route of a controller, for its spec.
+- An application that composes its routes before Nest starts takes `nestControllers(controllers,
+  { providers, schemaOfClass })`: its `routes` join the other routes of the application, and
+  `provideControllers(served)` in the Nest module builds the controllers with what they inject
+  (the buses, as `{ provide: CommandBus, useValue: commands }`) and hands the routes their
+  instances at the start. `ddd-ts-kit init --routes nest` writes that composition.
+- `@KitRoutes({ group })` names a route group of the kit (`@RouteGroup`): its prefix comes before
+  the paths of Nest, its tags, guards and codes before those of the class.
 - Refused when the routes are built, because the kit's pipeline would not run them: `@UseGuards`,
   `@UsePipes`, `@UseInterceptors`, `@UseFilters`, `@Header`, `@Redirect`, `@Render`, `@Sse`,
   `@Version`, a pipe on a parameter, `@Req`, `@Res` and the other parameters of Nest. The kit

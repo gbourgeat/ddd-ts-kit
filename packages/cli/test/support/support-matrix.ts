@@ -106,6 +106,12 @@ export const INIT_REFUSALS: readonly DeclaredRefusal[] = [
     why: 'the procedures are the routes of the HTTP boundary, served once more',
   },
   {
+    refusal: /^--routes nest writes Nest controllers, and this project has --http \S+ and --validation \S+\.$/,
+    example: { routes: 'nest', http: 'express' },
+    kind: 'decided',
+    why: 'a Nest controller runs on Nest, and the kit reads its parameters through the DTO classes of class-validator',
+  },
+  {
     refusal: /^--sdk cannot be combined with --http none\.$/,
     example: { sdk: true, http: 'none' },
     kind: 'decided',
