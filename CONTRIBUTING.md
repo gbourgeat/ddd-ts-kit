@@ -208,7 +208,10 @@ The pull request of a release (its title starts with `chore(release)`) runs the 
 projects on Prisma and TypeORM installed for real, as the night does (`npm run
 ci:test:stacks-at-night`): the pipeline of another pull request only type-checks them. The tag
 starts the `Release` workflow: it runs them once more and publishes nothing while one of them is
-red, then checks that the tag is the version every package states, builds, checks the tarballs,
+red (tag once the `managers` job of the pull request of the release is green: the tag points at
+that code; if `generated-stacks` still fails, nothing reached npm, so fix on `main`, delete the
+tag, `git push --delete origin v0.2.0 && git tag -d v0.2.0`, and tag the fixed commit with the
+same version), then checks that the tag is the version every package states, builds, checks the tarballs,
 publishes each package to the npm registry with provenance
 and creates the GitHub release. A version with a pre-release part (`0.2.0-rc.1`) is published
 under the `next` tag. A run that stopped half-way is run again: what is already published is
