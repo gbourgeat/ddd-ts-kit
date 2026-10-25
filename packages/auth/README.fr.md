@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:425dab2d59126826 -->
+<!-- translation-of: README.md sha256:b32b1ed7cb24f9a1 -->
 
 # @ddd-ts-kit/auth
 
@@ -18,6 +18,7 @@ npm i jose            # seulement pour @ddd-ts-kit/auth/jwt
 | `@ddd-ts-kit/auth` | les permissions, `requires`, `AuthorizationMap`, `authorizationMiddleware`, les ports `Authorizer`, `Access`, `Authenticator` et `SessionAuthenticator`, les politiques et `PolicyAccess`, `RoleBasedAuthorizer`, `PolicyBasedAuthorizer`, le raccordement HTTP | le noyau seulement |
 | `@ddd-ts-kit/auth/rebac` | le DSL de schéma, les tuples de relation, `RelationTupleStore`, `RelationBasedAuthorizer` | le noyau seulement |
 | `@ddd-ts-kit/auth/jwt` | `JwtAuthenticator`, `keycloakAuthenticator` | `jose` (dépendance *peer* optionnelle), le seul fichier qui l'importe |
+| `@ddd-ts-kit/auth/passport` | `passportPrincipal` : une stratégie de Passport comme `resolvePrincipal` de la frontière HTTP | rien : il exécute la stratégie qu'on lui donne |
 | `@ddd-ts-kit/auth/di` | `authorizationModule`, `authorizationMapOf`, et de nouveau les classes que le module lie : `Authorizer`, `Authenticator`, `Access`, `AuthorizationMap` | `@ddd-ts-kit/di` (dépendance *peer* optionnelle) |
 | `@ddd-ts-kit/auth/testing` | `anActor()` et son `ActorBuilder`, `AllowAll`, `DenyAll`, `RecordingAuthorizer`, `FakeAuthenticator`, les deux suites de contrat | `@ddd-ts-kit/testing` (dépendance *peer* optionnelle), le *runner* que vous passez |
 
@@ -608,6 +609,48 @@ Ce qu'il faut configurer dans le *realm* pour que ces *claims* figurent dans le 
 `preferred_username` et `email` viennent des *scopes* intégrés `profile` et `email`. Le
 préréglage n'appelle jamais Keycloak au-delà du jeu de clés : une session révoquée est refusée
 quand son jeton d'accès expire, donc gardez courte la durée de vie du jeton d'accès.
+
+### Passport
+
+Un projet qui authentifie avec une stratégie de Passport la garde : `passportPrincipal` exécute la
+stratégie sur chaque requête, comme le fait `passport.authenticate`, et répond la session que le
+pipeline place dans le contexte d'exécution. Les gardes des routes et les permissions des cas
+d'usage décident ensuite, sur chaque porte, comme avec les authentificateurs ci-dessus.
+
+```ts
+import { passportPrincipal } from '@ddd-ts-kit/auth/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+
+const strategy = new Strategy(
+  { jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), secretOrKey: settings.jwtSecret },
+  (payload, done) => done(null, payload),
+);
+
+const resolvePrincipal = passportPrincipal(strategy, {
+  // Ce que le callback de vérification a passé à `done`, lu comme un mapper lit ce qui entre.
+  actorOf: (user) => accountActorOf(user),
+});
+```
+
+Une classe écrite avec `PassportStrategy` de `@nestjs/passport` est aussi une stratégie : ce que
+répond son `validate` est l'utilisateur que lit `actorOf`. Nest peut la construire avec ce qu'il
+injecte ; donnez alors à `passportPrincipal` une fonction qui répond l'instance une fois Nest
+démarré.
+
+Il refuse par défaut :
+
+| La stratégie | L'appel |
+|---|---|
+| réussit | continue avec l'acteur que répond `actorOf` |
+| échoue sur une requête qui présente un identifiant | est refusé, 401 (`InvalidCredentialError`) |
+| échoue sur une requête qui n'en présente aucun | continue anonyme, les gardes de la route décident |
+| passe (`pass`) | continue anonyme |
+| échoue sur une erreur, ou lève | est refusé, l'erreur signalée comme toute autre |
+| redirige (une connexion OAuth) | est refusé : un parcours de connexion est servi par la plateforme, pas par l'authentification d'un appel |
+| ne répond rien avant `timeoutMs` (10 s) | est refusé |
+
+Un identifiant est présenté quand la requête porte un en-tête `Authorization` ; une stratégie qui
+lit un cookie dit où avec `presented: (raw) => ...`.
 
 ## Choisir un modèle
 

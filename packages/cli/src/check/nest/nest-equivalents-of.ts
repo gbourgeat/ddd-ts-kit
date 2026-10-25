@@ -86,7 +86,8 @@ const PACKAGES: Readonly<Record<string, NestEquivalent>> = {
   },
   '@nestjs/passport': {
     tool: 'Passport',
-    instead: 'the authentication of the platform, read by `resolvePrincipal` of the HTTP boundary',
+    instead:
+      'the strategy in the platform, where `passportPrincipal(strategy, { actorOf })` of `@ddd-ts-kit/auth/passport` makes it the `resolvePrincipal` of the HTTP boundary; a strategy class of `@nestjs/passport` is one, and Nest may build it',
   },
   '@nestjs/jwt': {
     tool: 'its JWT module',
