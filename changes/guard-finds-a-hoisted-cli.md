@@ -1,3 +1,0 @@
-**The guard of the plugin finds the CLI a workspace hoisted to a parent directory.** It looked for `node_modules/.bin/ddd-ts-kit` in the project only, so in a project of an npm or pnpm workspace, whose install lands at the root of the monorepo, it found none and skipped, without a word, every check that needs the CLI: the check of each written file, the refusal to stop while errors remain, the gates of a story. It now looks where Node would, from the project up to the root of the filesystem.
-
-To move: in a project of a workspace, the guard now runs those checks. Run `npx ddd-ts-kit check` before updating the plugin: an error it reports would otherwise first appear as a refusal to end a session.
