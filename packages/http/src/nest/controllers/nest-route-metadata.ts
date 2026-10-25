@@ -37,7 +37,12 @@ export interface NestRouteMetadata {
   readonly path: string;
   readonly httpCode: number | undefined;
   readonly parameters: readonly NestParameter[];
+  /** What TypeScript recorded the method returns, with `emitDecoratorMetadata`: `undefined` for `void` or without it. */
+  readonly returnType: unknown;
 }
+
+/** Written by TypeScript itself under `emitDecoratorMetadata`, next to `design:paramtypes`. */
+const RETURN_TYPE_METADATA = 'design:returntype';
 
 const METHODS: ReadonlyMap<number, HttpMethod> = new Map([
   [RequestMethod.GET, 'GET'],
@@ -87,6 +92,7 @@ export function nestRouteMetadata(controller: NestControllerClass, method: strin
       .join('/'),
     httpCode: httpCodeOf(where, metadata(HTTP_CODE_METADATA, handler)),
     parameters: parametersOf(where, controller, method),
+    returnType: metadata(RETURN_TYPE_METADATA, prototypeOf(controller), method),
   };
 }
 

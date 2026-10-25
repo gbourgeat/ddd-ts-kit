@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Post, Query } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { ok } from '@ddd-ts-kit/kernel';
 import { customSchema } from '@ddd-ts-kit/validation';
@@ -83,5 +83,62 @@ describe('a call of a route of a Nest controller', () => {
     await read(route);
 
     expect(built).toBe(1);
+  });
+
+  it('refuses a method that returns a value its @KitRoute declares no body for, rather than answer it empty', async () => {
+    class Issuing {
+      async issue(): Promise<object> {
+        return { id: 'inv-1' };
+      }
+    }
+
+    Controller('issuing')(Issuing);
+
+    Reflect.decorate(
+      [Post(), KitRoute({ operationId: 'issue', summary: 'Issue', guards: [Public] })],
+      Issuing.prototype,
+      'issue',
+      { value: Issuing.prototype.issue },
+    );
+
+    Reflect.defineMetadata('design:returntype', Promise, Issuing.prototype, 'issue');
+
+    const errors: unknown[] = [];
+    const [route] = nestControllerRoutes([Issuing], { instanceOf: () => new Issuing() });
+
+    if (route === undefined) {
+      throw new Error('Issuing declares one route.');
+    }
+
+    const answer = await executeRoute(
+      route,
+      { params: {}, query: {}, headers: {}, body: undefined, raw: {} },
+      { onError: (error) => errors.push(error) },
+    );
+
+    expect(answer).toMatchObject({ status: 500, body: { code: 'INTERNAL_ERROR' } });
+    expect(String(errors[0])).toContain('returned a value and @KitRoute declares no response.body');
+  });
+
+  it('refuses it when the routes are built, when TypeScript recorded what the method returns', () => {
+    class Invoice {}
+    class Reporting {
+      report(): Invoice {
+        return new Invoice();
+      }
+    }
+
+    Controller('reporting')(Reporting);
+
+    Reflect.decorate(
+      [Get(), KitRoute({ operationId: 'report', summary: 'Report', guards: [Public] })],
+      Reporting.prototype,
+      'report',
+      { value: Reporting.prototype.report },
+    );
+
+    Reflect.defineMetadata('design:returntype', Invoice, Reporting.prototype, 'report');
+
+    expect(() => nestControllerRoutes([Reporting])).toThrow(/returns Invoice and @KitRoute declares no response.body/);
   });
 });
