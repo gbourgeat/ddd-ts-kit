@@ -154,7 +154,7 @@ const GOVERNED_FILES = [
 const BASELINE_FILE = /^ddd-ts-kit-baseline\.json$/;
 const BASELINE_WRITE = /\bddd-ts-kit(?:@\S+)?\s+check\b[^;&|\n]*--baseline(?:=|\s+)write\b/;
 const BASELINE_OWNER =
-  'it is written by the project owner, in a terminal, when the project adopts the kit; an agent never writes it, since one command would silence every error of the moment, its own included. `npx ddd-ts-kit check --baseline prune` lowers it after a fix, without asking. Fix the error instead.';
+  'it is written by the project owner, in a terminal, when the project adopts the kit; an agent never writes it, since one command would silence every error of the moment, its own included. `npx ddd-ts-kit check --baseline prune` lowers it after a fix and follows a `git mv`, without asking. Fix the error instead.';
 
 const ESCAPES = [
   [/ddd-ts-kit-disable/g, 'an architecture rule suppression'],
