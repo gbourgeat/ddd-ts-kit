@@ -46,6 +46,7 @@ export const SHARDS = [
   },
   {
     'coverage-gate.spec.ts': 328,
+    // The Jest stack too, a few seconds over the measure.
     'typecheck.spec.ts': 70,
     // oRPC and tRPC on the four servers and on Nest controllers: 66 seconds on a runner for the 48 they took here
     // (run 40182551102), so about 96 for the 70 they take here now.

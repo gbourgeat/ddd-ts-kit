@@ -76,6 +76,8 @@ describe('a multi-tenant project, every kind generated', () => {
     },
     120_000,
   );
+});
+
 describe('the stacks of the end-to-end run', () => {
   it('meet every pair of capability values init accepts, the pairwise ones added to those listed', () => {
     const met = pairsMet([...EVERY_STACK, ...pairwiseStacks(EVERY_STACK)]);

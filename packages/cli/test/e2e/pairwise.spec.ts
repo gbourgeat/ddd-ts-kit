@@ -8,8 +8,8 @@ import { typeErrors } from './type-errors';
 /** At night and before a release: the stacks that meet the pairs of capability values no other stack meets. */
 const PAIRWISE = process.env['DDD_TS_KIT_PAIRWISE'] === '1';
 
-// Left out as in typecheck.spec.ts: jest, whose types are not installed in this workspace.
-const CHECKABLE = pairwiseStacks(EVERY_STACK).filter((stack) => stack.tests === 'vitest');
+// Jest and Vitest alike: both runners and their types are installed in the workspace.
+const CHECKABLE = pairwiseStacks(EVERY_STACK);
 
 /**
  * Slow, opt-in (DDD_TS_KIT_E2E=1 and DDD_TS_KIT_PAIRWISE=1): each value of a capability flag meets
