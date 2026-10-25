@@ -58,7 +58,42 @@ function createStatements(table: PgTable): string[] {
   return [
     ...(owner === undefined ? [] : ['create schema if not exists ' + quote(owner)]),
     'create table if not exists ' + qualifiedName(table) + ' (' + body + ')',
+    ...uniqueIndexStatements(table),
   ];
+}
+
+/** The unique indexes and constraints, which change what a statement does (an insert `on conflict`); the other indexes only change its speed. */
+function uniqueIndexStatements(table: PgTable): string[] {
+  const { indexes, uniqueConstraints } = getTableConfig(table);
+
+  const unique = indexes
+    .filter((index) => index.config.unique)
+    .map(({ config: { name, columns, where } }) => {
+      const on = columns.map((column) => (is(column, SQL) ? inline(column) : quote(nameOf(column)))).join(', ');
+
+      return uniqueIndex(name ?? '', table, on) + (where === undefined ? '' : ' where ' + inline(where));
+    });
+
+  const constraints = uniqueConstraints.map((constraint) =>
+    uniqueIndex(constraint.getName() ?? '', table, constraint.columns.map((column) => quote(column.name)).join(', ')),
+  );
+
+  return [...unique, ...constraints];
+}
+
+function uniqueIndex(name: string, table: PgTable, on: string): string {
+  return 'create unique index if not exists ' + quote(name) + ' on ' + qualifiedName(table) + ' (' + on + ')';
+}
+
+function inline(fragment: SQL): string {
+  return dialect.sqlToQuery(fragment).sql;
+}
+
+/** The name of an indexed column, which drizzle types loosely. */
+function nameOf(column: object): string {
+  const name: unknown = Reflect.get(column, 'name');
+
+  return typeof name === 'string' ? name : '';
 }
 
 function columnDefinition(column: Column): string {
@@ -69,6 +104,7 @@ function columnDefinition(column: Column): string {
     column.notNull ? ' not null' : '',
     defaultClause(column),
     column.primary ? ' primary key' : '',
+    column.isUnique ? ' unique' : '',
   ].join('');
 }
 

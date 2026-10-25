@@ -44,6 +44,8 @@ function onDatabase(orm: string, opening: string): Variants {
     [INERT, opening],
     ['persistence-over.ts', orm],
     ['open-test-database.ts', orm],
+    // The stores of the kit as the platform wires them, held to their contracts with the capabilities of the stack.
+    ['persistence.contract.spec.ts'],
   ];
 }
 

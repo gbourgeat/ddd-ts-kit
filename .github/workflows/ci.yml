@@ -353,6 +353,8 @@ jobs:
       - name: Installed for real from the packed kit and held to verify (every kind generated on the default stack and a heavy one; from the first minute, the quick start of the README and the other proven stacks)
         env:
           DDD_TS_KIT_PACKAGE_MANAGER: ${{ matrix.manager }}
+          # At night, the stacks the workspace cannot run too (Prisma, TypeORM), with every capability on.
+          DDD_TS_KIT_NIGHT: ${{ github.event_name == 'schedule' && '1' || '' }}
         run: npm run ci:test:managers
 
   example:

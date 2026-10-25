@@ -1,5 +1,6 @@
 import type { CoverageRates } from './coverage-rates';
 import { generatedDeclarations } from './generated-declarations';
+import { portFiles } from './port-files';
 import { governedSettings } from './governed-settings';
 import { heldLayers } from './held-layers';
 import { measuredFiles } from './measured-files';
@@ -30,6 +31,7 @@ export function governedJestCoverage(root: string = process.cwd()): GovernedJest
     collectCoverageFrom: [
       ...measuredFiles(contextsDir, layers).map((files) => `<rootDir>/${files}`),
       `!<rootDir>/${generatedDeclarations(contextsDir)}`,
+      ...portFiles(contextsDir).map((files) => `!<rootDir>/${files}`),
     ],
     coverageThreshold: Object.fromEntries(
       held.map(({ layer, directory }) => [`./${directory}/`, { ...thresholds[layer] }]),

@@ -196,6 +196,12 @@ pass the suite".
 A contract covers what it tests and nothing more: behaviour specific to an adapter (the mapping
 of every column, a transaction rollback) gets its own integration tests.
 
+A project generated on an ORM holds the stores of the kit as its own platform wires them:
+`src/platform/database/persistence.contract.spec.ts` runs the outbox, processed-event, job and
+process store contracts on the persistence of `open-test-database.ts`, with what the stack turns
+on (the tenant of each event and each process instance under `--tenancy`, the unit of work of a
+step). A store bound without what the stack asks for fails there, before it fails in production.
+
 ## Builders
 
 Test data comes from builders, one per aggregate:

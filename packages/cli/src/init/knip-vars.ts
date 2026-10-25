@@ -15,6 +15,8 @@ export function knipVars(config: Config): RenderContext {
   return {
     apps: config.worker || Object.values(config.contexts).some((context) => context.deployable),
     e2eEntry: when(',\n    "test/e2e/**/*.ts"'),
+    // The data source the TypeORM CLI loads to run the migrations: no source file imports it.
+    toolEntry: config.stack.orm === 'typeorm' ? `,\n    "${config.platformDir}/database/data-source.ts"` : '',
     e2eProject: when(', "test/**/*.ts"'),
     // The plugin of the runner of the specs reads its configurations, and enters by the specs, the fakes and the worlds.
     runner: config.stack.tests,
