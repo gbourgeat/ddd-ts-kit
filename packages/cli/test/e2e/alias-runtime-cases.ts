@@ -173,8 +173,8 @@ export function describeTheAliasAtRunTime(cases: readonly AliasCase[]): void {
 
         const ending = bareSpelling ? '' : '\\\\.js';
 
-        expect(mapper).toContain(`'^@/(.*)${ending}$': '<rootDir>/src/$1.ts',`);
-        expect(mapper).toContain(`'^\\\\$test/(.*)${ending}$': '<rootDir>/test/$1.ts',`);
+        expect(mapper).toContain(`'^@/(.*)${ending}$': ${jestTarget(bareSpelling, 'src')},`);
+        expect(mapper).toContain(`'^\\\\$test/(.*)${ending}$': ${jestTarget(bareSpelling, 'test')},`);
         expect(mapper).not.toContain('dist');
       },
     );
@@ -204,4 +204,11 @@ function sourcesWrittenTheOtherWay(root: string, bareSpelling: boolean): string[
         .filter((specifier) => /\.[cm]?[jt]s$/.test(specifier) === bareSpelling)
         .map((specifier) => `${file}: ${specifier}`),
     );
+}
+
+/** Where the jest config maps an alias: the source and, without an ending, which can name a directory, its barrel after it. */
+function jestTarget(bareSpelling: boolean, directory: string): string {
+  return bareSpelling
+    ? `['<rootDir>/${directory}/$1.ts', '<rootDir>/${directory}/$1/index.ts']`
+    : `'<rootDir>/${directory}/$1.ts'`;
 }
