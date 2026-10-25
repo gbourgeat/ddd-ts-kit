@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:5cefa7897d4e3b1a -->
+<!-- translation-of: CONFIG.md sha256:783f3df6fa039421 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -232,7 +232,7 @@ hors de la liste arrête toutes les commandes avec la liste des valeurs accepté
 | `stack.tests` | `vitest`, `jest` | `vitest` |
 | `stack.docsUi` | `swagger`, `scalar`, `redoc`, `none` | `swagger` (`none` quand `http` vaut `none`) |
 | `stack.ci` | `github`, `gitlab`, `both`, `none` | `github` |
-| `stack.authn` | `jwt`, `keycloak`, `passport` (le jeton bearer vérifié par une stratégie de Passport, `passport-jwt` sur le jeu de clés de l'émetteur, écrite dans `src/platform/auth/authentication/bearer-strategy.ts`), `none` | `jwt` |
+| `stack.authn` | `jwt`, `keycloak`, `passport` (le jeton bearer vérifié par une stratégie de Passport, `passport-jwt` sur le jeu de clés de l'émetteur, écrite dans `src/platform/auth/authentication/bearer-strategy.ts`, où une autre stratégie bearer peut prendre sa place ; une stratégie qui lit un cookie ou une session se branche à la main avec `passportPrincipal`), `none` | `jwt` |
 | `stack.authz` | `rbac`, `abac`, `rebac`, `custom` | `rbac` |
 | `stack.broker` | `none`, `rabbitmq`, `kafka`, `nats`, `redis` (Redis Streams), `custom` ; `init` refuse un *broker* sans ORM, puisqu'un *broker* est atteint par l'outbox | `none` |
 | `stack.cache` | `none`, `redis` : ce qui porte le port `Cache` du kernel, le réveil du relais de l'outbox, le limiteur de débit et le verrou des *jobs* planifiés | `none` |

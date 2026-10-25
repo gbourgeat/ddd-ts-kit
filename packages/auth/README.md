@@ -634,7 +634,13 @@ so that the procedures, the scripts and the end-to-end tests authenticate throug
 `actorOfClaims(claims)` reads the claims of a token as `JwtAuthenticator` does, for the
 `actorOf` of a strategy that hands its payload on. `ddd-ts-kit init --authn passport` writes
 that platform: a strategy of `passport-jwt` on the key set of the issuer (`jwks-rsa`), its
-`actorOf`, and the end-to-end credentials signed for it.
+`actorOf`, and the end-to-end credentials signed for it. It verifies bearer tokens, as
+`--authn jwt` does, with the strategy in the code of the project: another strategy that reads a
+bearer token (opaque tokens through `passport-http-bearer`, an introspection) takes its place in
+`bearer-strategy.ts`. A strategy that reads a cookie or a session does not go through the
+`Authenticator` port, which only receives a credential: give it to `passportPrincipal`, which
+receives the request itself, as the `resolvePrincipal` of the boundary, and declare its security
+scheme in the contract.
 
 ## Choosing a model
 

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:abc346cd30182824 -->
+<!-- translation-of: README.md sha256:ed293f77e4a42c57 -->
 
 # @ddd-ts-kit/auth
 
@@ -659,7 +659,12 @@ s'authentifient aussi par elle. `actorOfClaims(claims)` lit les *claims* d'un je
 `JwtAuthenticator`, pour l'`actorOf` d'une stratégie qui transmet sa charge utile.
 `ddd-ts-kit init --authn passport` écrit cette plateforme : une stratégie de `passport-jwt` sur le
 jeu de clés de l'émetteur (`jwks-rsa`), son `actorOf`, et les identifiants de bout en bout signés
-pour elle.
+pour elle. Elle vérifie des jetons bearer, comme `--authn jwt`, avec la stratégie dans le code du
+projet : une autre stratégie qui lit un jeton bearer (des jetons opaques par
+`passport-http-bearer`, une introspection) prend sa place dans `bearer-strategy.ts`. Une stratégie
+qui lit un cookie ou une session ne passe pas par le port `Authenticator`, qui ne reçoit qu'un
+identifiant : donnez-la à `passportPrincipal`, qui reçoit la requête elle-même, comme
+`resolvePrincipal` de la frontière, et déclarez son schéma de sécurité dans le contrat.
 
 ## Choisir un modèle
 

@@ -6,3 +6,5 @@ which reads the payload with `actorOfClaims`; `create-authenticator.ts` puts the
 HTTP boundary, the procedures and the end-to-end tests (credentials signed for the strategy)
 authenticate through it. `actorOfClaims`, the reading of claims of `JwtAuthenticator`, is now
 exported by `@ddd-ts-kit/auth` without `jose`. The identity preset accepts `--authn passport`.
+The option verifies bearer tokens, as `--authn jwt`, with the strategy in the code of the project:
+a strategy that reads a cookie or a session is wired by hand with `passportPrincipal`.
