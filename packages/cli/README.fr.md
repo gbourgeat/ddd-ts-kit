@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:63337265cc3af0de -->
+<!-- translation-of: README.md sha256:0786a564cac1425f -->
 
 # ddd-ts-kit
 
@@ -88,7 +88,11 @@ générés tels que les scripts du projet les écrivent pour un projet qui n'a e
 que le premier *commit* les contienne et que `docs:check` passe d'emblée ; un contrat déjà
 présent est laissé tel quel, `--force` compris. Un `package.json` existant est fusionné : les
 scripts et les dépendances qui manquent sont ajoutés, les vôtres sont gardés et mentionnés dans
-les notes. Relancé plus tard, `init` garde la *stack* enregistrée dans la configuration.
+les notes. La première fois, les notes nomment aussi chaque dépendance que la *stack* sur le
+point d'être écrite contredit, et l'option qui la garde (`package.json depends on fastify, and the
+project is written for --http express: pass --http fastify to keep it.`), en *dry run* compris :
+lancez d'abord `init --dry-run` sur un projet existant. Relancé plus tard, `init` garde la
+*stack* enregistrée dans la configuration.
 
 `init --force` sur un projet déjà initialisé réécrit les fichiers qui appartiennent à `init` et
 garde la configuration : les contextes et leurs amonts, les règles, les limites, les dérogations

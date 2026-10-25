@@ -60,11 +60,15 @@ the command under `## Decisions` of the plan.
 ## 3. Create the project
 
 ```bash
-npx ddd-ts-kit@latest init <flags> --dry-run --json   # read `created` and `skipped`
+npx ddd-ts-kit@latest init <flags> --dry-run --json   # read `created`, `skipped` and `notes`
 npx ddd-ts-kit@latest init <flags> --json             # its `notes` end with the two commands to run next
 pnpm install                                          # `npm install` with --package-manager npm
 pnpm run verify                                       # the bare project is green before its first context
 ```
+
+On an existing project, a note of the dry run that starts with `package.json depends on` is a
+dependency the flags contradict: put it to the owner, and run the dry run again with the flag it
+names, or with the owner's reason to change the stack under `## Decisions`.
 
 A project is on pnpm unless `--package-manager npm` was chosen: every command below is said for
 pnpm, and reads `npm run <script>` and `npx ddd-ts-kit <command>` on npm. pnpm is pinned in
