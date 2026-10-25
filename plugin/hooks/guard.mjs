@@ -7,6 +7,7 @@ import {
   existsSync,
   fstatSync,
   mkdirSync,
+  mkdtempSync,
   openSync,
   readdirSync,
   readFileSync,
@@ -1486,8 +1487,10 @@ function dependencyReason(project, { file, written, replaced }) {
   if (!added || !/\bimport\b|\brequire\(/.test(added)) {
     return undefined;
   }
-  const text = join(tmpdir(), `ddd-ts-kit-before-write-${process.pid}.ts`);
-  writeFileSync(text, added);
+  // A directory of its own, readable by this user only: never a predictable name in the shared temp dir.
+  const directory = mkdtempSync(join(tmpdir(), 'ddd-ts-kit-before-write-'));
+  const text = join(directory, 'written.ts');
+  writeFileSync(text, added, { mode: 0o600 });
   try {
     const rules = DEPENDENCY_RULES.flatMap((rule) => ['--rule', rule]);
     const errors = errorsOf(runCli(project, ['check-file', file, '--content-from', text, ...rules, '--json'], 4000));
@@ -1495,7 +1498,7 @@ function dependencyReason(project, { file, written, replaced }) {
       ? `this write adds ${errors.length} import(s) a dependency rule refuses, so it was not written (dependenciesBeforeWrite, on trial). Write it without them.\n${describe(errors)}`
       : undefined;
   } finally {
-    rmSync(text, { force: true });
+    rmSync(directory, { recursive: true, force: true });
   }
 }
 
