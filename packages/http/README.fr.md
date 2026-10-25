@@ -1,10 +1,10 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f02600c455aa5064 -->
+<!-- translation-of: README.md sha256:98405e763f823ed0 -->
 
 # @ddd-ts-kit/http
 
 Déclarez une route une seule fois, sans framework. Montez-la sur Express 5, Fastify 5, Hono 4
-(sur Node) ou NestJS, servez-la aussi comme procédure oRPC, et générez le contrat OpenAPI 3.1 à
+(sur Node) ou NestJS, servez-la aussi comme procédure oRPC ou tRPC, et générez le contrat OpenAPI 3.1 à
 partir de la même déclaration.
 
 Chaque adaptateur passe par un seul pipeline (`executeRoute`) : validation, gestionnaire
@@ -1355,10 +1355,57 @@ son document, sous `<client>/orpc`.
 | En-têtes de la réponse | non rendus : ni `ETag`, ni politique de cache, ni `Location`. Un cache partagé ne garde rien de `/rpc` et n'a rien à purger |
 | Représentations | aucune : JSON seulement, donc ni 406 ni 415 pour un type de média |
 | Téléversement, corps brut | pas une procédure : seule la route HTTP reçoit un fichier |
-| Fichier, liste lue au fil de l'eau | refusés en 406 et fermés, sans rien lire de plus : ils sont envoyés en flux parce qu'ils peuvent ne pas tenir en mémoire |
+| Fichier, liste lue au fil de l'eau | refusés en 406 (`NOT_ACCEPTABLE`, son *problem* comme `data`) et fermés, sans rien lire de plus : ils sont envoyés en flux parce qu'ils peuvent ne pas tenir en mémoire |
 
 Deux routes d'un même `operationId` sont refusées, comme `mountExpress` les refuse : une
 procédure cacherait l'autre.
+
+## Procédures tRPC
+
+La même porte pour un client tRPC. `trpcRouter` fait de chaque route une procédure tRPC nommée
+par son `operationId`, une *query* pour une route `GET` et une *mutation* pour les autres
+méthodes, que les adaptateurs de `@trpc/server` (11.10 ou plus récent, pair optionnelle) servent
+sous un point d'entrée comme `/trpc`. Chaque appel passe par `executeRoute` avec les options de
+l'adaptateur HTTP, comme un appel d'`orpcRouter`.
+
+<!-- checked sample -->
+```ts
+import express from 'express';
+import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
+import { mountExpress } from '@ddd-ts-kit/http/express';
+import { trpcRouter } from '@ddd-ts-kit/http/trpc';
+import { createExpressMiddleware } from '@trpc/server/adapters/express';
+
+declare const routes: readonly Route[];
+declare const options: ExecuteOptions;
+
+const app = express();
+
+app.use(express.json()); // tRPC lit le corps qu'Express a déjà analysé
+app.use(
+  '/trpc',
+  createExpressMiddleware({
+    router: trpcRouter(routes, options),
+    createContext: ({ req }) => ({ headers: req.headers, raw: req }),
+  }),
+);
+mountExpress(app, routes, options);
+```
+
+Le contexte d'un appel est un `TrpcContext`, le même qu'`OrpcContext`. Fastify
+(`@trpc/server/adapters/fastify`), Hono (`@trpc/server/adapters/fetch`) et NestJS sur Express le
+montent de la même façon. Montez-le comme un routeur à part, sans le fusionner dans un autre :
+tRPC met en forme une erreur avec le formateur du routeur qu'il sert, et c'est celui de
+`trpcRouter` qui place le document *problem* dans `data.problem`.
+
+| | Sur `/trpc` |
+|---|---|
+| Procédure | une *query* pour une route `GET` (`client.getOrder.query(input)`), une *mutation* pour les autres méthodes (`client.placeOrder.mutate(input)`) |
+| Entrée | `{ path, query, header, body }`, comme sur `/rpc` |
+| Réponse | le corps du succès, tel que JSON l'écrit |
+| Refus | une `TRPCError` du code que tRPC a pour le statut (`UNAUTHORIZED` pour 401, `NOT_FOUND` pour 404, `CONFLICT` pour 409, `UNPROCESSABLE_CONTENT` pour 422 ; `BAD_REQUEST` ou `INTERNAL_SERVER_ERROR` pour un statut sans code), le `detail` (ou le `title`) du *problem* comme `message`, et le document *problem* comme `data.problem`. tRPC a une liste fixe de codes : c'est le `code` du *problem*, celui du kit, qui permet à un client de distinguer les refus. `data.problem` vaut `null` pour un refus que le gestionnaire répond lui-même, sans document *problem* (son message est `HTTP_<statut>`), et pour une erreur de tRPC lui-même, comme une procédure inconnue. La pile d'appels que tRPC ajoute en développement est retirée |
+| `If-Match`, en-têtes de la réponse, représentations, téléversements et corps bruts | comme sur `/rpc` |
+| Fichier, liste lue au fil de l'eau, corps binaire | refusés en 406 (`NOT_ACCEPTABLE` dans `data.problem`) et fermés : tRPC ne répond qu'en JSON |
 
 ## OpenAPI 3.1
 
@@ -1625,10 +1672,11 @@ schéma de corps n'est jamais refusée par un 406.
   est coupée, le client voit un corps tronqué, et `onError` est prévenu. Les éléments d'un flux
   ne sont pas vérifiés un par un par `validateResponses`.
 - CSV est écrit, jamais lu, et ne contient que des lignes plates.
-- Une procédure oRPC ne répond que son corps : ce qu'une route dit dans ses en-têtes (un `ETag`,
-  une politique de cache, un `Location`) reste à la route HTTP, comme les téléversements, les
-  corps bruts, les fichiers, les listes lues au fil de l'eau et les représentations autres que
-  JSON (voir « Procédures oRPC »).
+- Une procédure oRPC ou tRPC ne répond que son corps : ce qu'une route dit dans ses en-têtes (un
+  `ETag`, une politique de cache, un `Location`) reste à la route HTTP, comme les téléversements,
+  les corps bruts, les fichiers, les listes lues au fil de l'eau et les représentations autres que
+  JSON (voir « Procédures oRPC ») ; sur tRPC, les corps binaires aussi, et un refus porte le code
+  que tRPC a pour son statut, celui du kit étant dans `data.problem`.
 - Un formulaire décrit des scalaires, des objets imbriqués et des listes d'un vocabulaire fermé ;
   une liste d'objets est un champ `list` sans détail. La mise en page au-delà des groupes et de
   l'ordre revient au front-end. Une consultation nomme la route des options ; la façon dont le

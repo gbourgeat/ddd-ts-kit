@@ -3,7 +3,7 @@
 # @ddd-ts-kit/http
 
 Declare a route once, without a framework. Mount it on Express 5, Fastify 5, Hono 4 (on Node)
-or NestJS, serve it as an oRPC procedure too, and generate the OpenAPI 3.1 contract from the
+or NestJS, serve it as an oRPC or tRPC procedure too, and generate the OpenAPI 3.1 contract from the
 same declaration.
 
 Every adapter goes through one pipeline (`executeRoute`): validation, handler, error mapping.
@@ -1301,10 +1301,57 @@ document, at `<client>/orpc`.
 | Headers of the answer | not returned: no `ETag`, no cache policy, no `Location`. A shared cache keeps nothing of `/rpc` and needs no purge |
 | Representations | none: JSON only, so no 406 nor 415 for a media type |
 | Upload, raw body | not a procedure: only the HTTP route receives a file |
-| File, list streamed as it is read | refused with 406 and closed, without reading further: they are streamed because they may not fit in memory |
+| File, list streamed as it is read | refused with 406 (`NOT_ACCEPTABLE`, its problem as `data`) and closed, without reading further: they are streamed because they may not fit in memory |
 
 Two routes with one `operationId` are refused, as `mountExpress` refuses them: one procedure
 would hide the other.
+
+## tRPC procedures
+
+The same door for a client of tRPC. `trpcRouter` turns each route into a tRPC procedure named by
+its `operationId`, a query for a `GET` route and a mutation for the other methods, which the
+adapters of `@trpc/server` (11.10 or later, an optional peer) serve under an endpoint such as
+`/trpc`. Each call runs through `executeRoute` with the options of the HTTP adapter, as a call of
+`orpcRouter` does.
+
+<!-- checked sample -->
+```ts
+import express from 'express';
+import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
+import { mountExpress } from '@ddd-ts-kit/http/express';
+import { trpcRouter } from '@ddd-ts-kit/http/trpc';
+import { createExpressMiddleware } from '@trpc/server/adapters/express';
+
+declare const routes: readonly Route[];
+declare const options: ExecuteOptions;
+
+const app = express();
+
+app.use(express.json()); // tRPC reads the body Express already parsed
+app.use(
+  '/trpc',
+  createExpressMiddleware({
+    router: trpcRouter(routes, options),
+    createContext: ({ req }) => ({ headers: req.headers, raw: req }),
+  }),
+);
+mountExpress(app, routes, options);
+```
+
+The context of a call is `TrpcContext`, the same as `OrpcContext`. Fastify
+(`@trpc/server/adapters/fastify`), Hono (`@trpc/server/adapters/fetch`) and NestJS on Express
+mount it the same way. Mount it as a router of its own, not merged into another: tRPC formats an
+error with the formatter of the router it serves, and the one of `trpcRouter` is what puts the
+problem document in `data.problem`.
+
+| | Over `/trpc` |
+|---|---|
+| Procedure | a query for a `GET` route (`client.getOrder.query(input)`), a mutation for the other methods (`client.placeOrder.mutate(input)`) |
+| Input | `{ path, query, header, body }`, as over `/rpc` |
+| Answer | the body of the success, as JSON writes it |
+| Refusal | a `TRPCError` of the code tRPC has for the status (`UNAUTHORIZED` for 401, `NOT_FOUND` for 404, `CONFLICT` for 409, `UNPROCESSABLE_CONTENT` for 422; `BAD_REQUEST` or `INTERNAL_SERVER_ERROR` for a status it has no code for), the `detail` (or `title`) of the problem as `message`, and the problem document as `data.problem`. tRPC has a fixed set of codes: the `code` of the problem, the one of the kit, is what a client tells refusals apart by. `data.problem` is `null` for a refusal the handler answers without a problem document (its message is `HTTP_<status>`) and for an error of tRPC itself, such as an unknown procedure. The stack tRPC adds in development is left out |
+| `If-Match`, headers of the answer, representations, uploads and raw bodies | as over `/rpc` |
+| File, list streamed as it is read, binary body | refused with 406 (`NOT_ACCEPTABLE` in `data.problem`) and closed: tRPC answers JSON only |
 
 ## OpenAPI 3.1
 
@@ -1558,9 +1605,11 @@ writes a file, and a route that declares no body schema is never refused 406.
   the client sees a truncated body, and `onError` is told. The items of a stream are not checked
   one by one by `validateResponses`.
 - CSV is written, never read, and holds flat rows only.
-- An oRPC procedure answers its body only: what a route says in its headers (an `ETag`, a cache
-  policy, a `Location`) stays with the HTTP route, and so do uploads, raw bodies, files, lists
-  streamed as they are read and representations other than JSON (see "oRPC procedures").
+- An oRPC or tRPC procedure answers its body only: what a route says in its headers (an `ETag`, a
+  cache policy, a `Location`) stays with the HTTP route, and so do uploads, raw bodies, files,
+  lists streamed as they are read and representations other than JSON (see "oRPC procedures");
+  over tRPC, binary bodies too, and a refusal has the code tRPC has for its status, the code of
+  the kit being in `data.problem`.
 - A form describes scalars, nested objects and lists of a closed vocabulary; a list of objects
   is a `list` field with no detail. Layout beyond groups and order is the front end's. A lookup
   names the route of the options; how the front end calls it and labels its items is its own.
