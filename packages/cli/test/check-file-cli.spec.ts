@@ -36,6 +36,30 @@ describe('check-file', () => {
     expect(violations.every((violation) => violation.file === HANDLER && violation.fix !== '')).toBe(true);
   });
 
+  it('judges a given text as the content of a file not written yet, on the rules asked', () => {
+    const planned = 'src/contexts/billing/domain/services/discount.service.ts';
+
+    write(
+      root,
+      'tmp/discount.ts',
+      "import express from 'express';\nexport class Discount { app() { return express; } }\n",
+    );
+
+    const judged = checkJsonOf(
+      cli(root, 'check-file', planned, '--content-from', 'tmp/discount.ts', '--rule', 'layer/domain-purity', '--json'),
+    );
+
+    expect(judged.violations.map((violation) => [violation.ruleId, violation.file])).toEqual([
+      ['layer/domain-purity', planned],
+    ]);
+
+    expect(cli(root, 'check-file', planned).code).toBe(0);
+
+    expect(cli(root, 'check-file', planned, '--content-from', 'tmp/discount.ts', '--rule', 'test/no-mocks').code).toBe(
+      0,
+    );
+  });
+
   it('accepts an absolute path and stays silent on a clean file', () => {
     const result = cli(tempDir('elsewhere'), 'check-file', `${root}/${AGGREGATE}`);
 

@@ -12,19 +12,28 @@ import { walkDirectory } from './walk-directory';
 export interface ProjectOptions {
   /** Load only this source instead of walking the tree (editor hook path). */
   readonly onlyFile?: string;
+  /** The text to judge for that file instead of what is on disk: what a session is about to write. */
+  readonly text?: string | undefined;
 }
 
 type Tree = Pick<Project, 'files' | 'contextEntries' | 'contextsOnDisk'>;
 
 export function loadProject(root: string, options: ProjectOptions = {}): Project {
   const { config, text: configText } = readConfig(root);
-  const tree = options.onlyFile === undefined ? walkTree(root, config) : oneFile(root, config, options.onlyFile);
+
+  const tree =
+    options.onlyFile === undefined
+      ? walkTree(root, config)
+      : oneFile(root, config, { file: options.onlyFile, text: options.text });
 
   return assembleProject({ root, config, configText, ...tree });
 }
 
-function oneFile(root: string, config: Config, file: string): Tree {
-  return { files: [readSource(root, config, file)], contextEntries: [], contextsOnDisk: [] };
+/** The one source the editor hook asks about: its text on disk, or the text about to be written. */
+function oneFile(root: string, config: Config, { file, text }: { file: string; text: string | undefined }): Tree {
+  const source = text === undefined ? readSource(root, config, file) : loadSourceFile(config, file, text);
+
+  return { files: [source], contextEntries: [], contextsOnDisk: [] };
 }
 
 function walkTree(root: string, config: Config): Tree {

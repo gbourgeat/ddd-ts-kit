@@ -144,6 +144,12 @@ export interface Config {
   readonly worktrees: string;
   /** True when the guard of the plugin runs the Biome of the project on each file a session writes, before it checks it; absent, off. */
   readonly formatOnWrite: boolean;
+  /**
+   * True when the guard of the plugin refuses, before the write, a written text that breaks a
+   * dependency rule (the layers a file imports, the published language between contexts), on trial;
+   * absent, those rules are checked just after the write, like the others.
+   */
+  readonly dependenciesBeforeWrite: boolean;
   readonly deviations: readonly Deviation[];
   /** Names reported by `standard/no-parallel-interface`, over its defaults: the kernel interface to use instead, or `false` to drop a default. */
   readonly standardInterfaces: Readonly<Record<string, string | false>>;

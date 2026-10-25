@@ -82,6 +82,7 @@ type Governance = Pick<
   | 'guard'
   | 'worktrees'
   | 'formatOnWrite'
+  | 'dependenciesBeforeWrite'
   | 'deviations'
   | 'standardInterfaces'
   | 'businessNames'
@@ -105,6 +106,7 @@ function parseGovernance(raw: Record<string, unknown>): Governance {
     guard: text(raw['guard'], 'enforce'),
     worktrees: text(raw['worktrees'], 'advised'),
     formatOnWrite: raw['formatOnWrite'] === true,
+    dependenciesBeforeWrite: raw['dependenciesBeforeWrite'] === true,
     deviations: parseDeviations(raw['deviations']),
     standardInterfaces: parseStandardInterfaces(raw['standardInterfaces']),
     businessNames: parseBusinessNames(raw['businessNames']),

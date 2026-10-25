@@ -3,10 +3,12 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
+  appendFileSync,
   closeSync,
   existsSync,
   fstatSync,
   mkdirSync,
+  mkdtempSync,
   openSync,
   readdirSync,
   readFileSync,
@@ -155,6 +157,15 @@ const BASELINE_FILE = /^ddd-ts-kit-baseline\.json$/;
 const BASELINE_WRITE = /\bddd-ts-kit(?:@\S+)?\s+check\b[^;&|\n]*--baseline(?:=|\s+)write\b/;
 const BASELINE_OWNER =
   'it is written by the project owner, in a terminal, when the project adopts the kit; an agent never writes it, since one command would silence every error of the moment, its own included. `npx ddd-ts-kit check --baseline prune` lowers it after a fix and follows a `git mv`, without asking. Fix the error instead.';
+
+// The rules of dependency between layers and contexts: what a new import breaks, judged on its own lines.
+const DEPENDENCY_RULES = [
+  'layer/domain-purity',
+  'layer/application-inward',
+  'layer/infrastructure-no-presentation',
+  'layer/presentation-no-infrastructure',
+  'context/published-language-only',
+];
 
 const ESCAPES = [
   [/ddd-ts-kit-disable/g, 'an architecture rule suppression'],
@@ -355,7 +366,8 @@ function verdictOn({ file, written, replaced }, input) {
     generatedFileReason(project, file) ??
     testWriterScopeReason(project, file, input) ??
     (isUnwrapping(project, file, input) ? undefined : workerScopeReason(project, file, input)) ??
-    handWrittenRoleReason(project, file);
+    handWrittenRoleReason(project, file) ??
+    dependencyReason(project, { file, written, replaced }, input);
   if (refusal) {
     return { decision: project.mode === 'advise' ? 'ask' : 'deny', reason: refusal };
   }
@@ -717,6 +729,8 @@ function describeProject(root) {
     worktrees: config.worktrees === 'required' ? 'required' : 'advised',
     // The project's Biome runs on each written file before the check; absent, off.
     formatOnWrite: config.formatOnWrite === true,
+    // On trial: the dependency rules judge the text about to be written, before the write; absent, after it.
+    dependenciesBeforeWrite: config.dependenciesBeforeWrite === true,
   };
 }
 
@@ -1475,6 +1489,77 @@ function baselineWriteReason(command) {
   return BASELINE_WRITE.test(command)
     ? `check --baseline write records ddd-ts-kit-baseline.json: ${BASELINE_OWNER}`
     : undefined;
+}
+
+// With dependenciesBeforeWrite, the lines a write adds to a TypeScript file, those it did not hold
+// before, are judged by the dependency rules before they reach the disk: a new import that breaks
+// one is refused with the message of the checker. An import the file already held is left to the
+// check after the write. A slow or failing check lets the write through.
+function dependencyReason(project, { file, written, replaced }, input) {
+  const added =
+    project.dependenciesBeforeWrite && project.cli && /\.(ts|mts|cts)$/.test(file) && newLines(file, written, replaced);
+  if (!added || !/\bimport\b|\brequire\(/.test(added)) {
+    return undefined;
+  }
+  // A directory of its own, readable by this user only: never a predictable name in the shared temp dir.
+  const directory = mkdtempSync(join(tmpdir(), 'ddd-ts-kit-before-write-'));
+  const text = join(directory, 'written.ts');
+  writeFileSync(text, added, { mode: 0o600 });
+  try {
+    const rules = DEPENDENCY_RULES.flatMap((rule) => ['--rule', rule]);
+    const started = Date.now();
+    const report = runCli(project, ['check-file', file, '--content-from', text, ...rules, '--json'], 4000);
+    const ms = Date.now() - started;
+    if (!Array.isArray(report?.violations)) {
+      // A CLI older than --content-from, a timeout, a crash: not judged, and recorded as such.
+      recordTrial(project, { file, ms, host: hostOf(input), unjudged: report?.error?.message ?? 'no report' });
+      return undefined;
+    }
+    const errors = errorsOf(report);
+    recordTrial(project, { file, refused: [...new Set(errors.map((error) => error.ruleId))], ms, host: hostOf(input) });
+    return errors.length > 0
+      ? `this write adds ${errors.length} import(s) a dependency rule refuses, so it was not written (dependenciesBeforeWrite, on trial). Write it without them.\n${describe(errors)}`
+      : undefined;
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+// The trial is decided on what it did: each judged write is a line of the record of the repository,
+// in its git directory, which every worktree shares and none commits. A record that cannot be written
+// is skipped.
+function recordTrial(project, { file, ...outcome }) {
+  try {
+    const common = spawnSync('git', ['rev-parse', '--git-common-dir'], { cwd: project.root, encoding: 'utf8' });
+    if (common.status !== 0) {
+      return;
+    }
+    const directory = join(resolve(project.root, common.stdout.trim()), 'ddd-ts-kit');
+    mkdirSync(directory, { recursive: true });
+    const entry = { at: new Date().toISOString(), file: projectPath(project, file), ...outcome };
+    appendFileSync(join(directory, 'before-write.jsonl'), `${JSON.stringify(entry)}\n`, { mode: 0o600 });
+  } catch {
+    // The record serves the verdict of the trial, never the write.
+  }
+}
+
+// The lines of the written text the file did not hold: an Edit is compared with the text it replaces,
+// a Write with the file on disk.
+function newLines(file, written, replaced) {
+  const held = replaced.trim() !== '' ? replaced : existsSync(file) ? readFileSync(file, 'utf8') : '';
+  const before = held.split('\n');
+  const left = new Map();
+  for (const line of before) {
+    left.set(line, (left.get(line) ?? 0) + 1);
+  }
+  return written
+    .split('\n')
+    .filter((line) => {
+      const held = left.get(line) ?? 0;
+      left.set(line, held - 1);
+      return held <= 0;
+    })
+    .join('\n');
 }
 
 function governedFileReason(project, file) {

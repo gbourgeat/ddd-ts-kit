@@ -1965,6 +1965,80 @@ test('the baseline of the errors is never written by an agent, on any host; prun
   assert.equal(decision(run('pre-bash', bash(advised, 'npx ddd-ts-kit check --baseline write'))), 'ask');
 });
 
+test('on trial, an import a dependency rule refuses is refused before the write, an import the file held is not', () => {
+  const root = project({ dependenciesBeforeWrite: true });
+  const file = pricingService(root, "import { z } from 'zod';\nexport class Pricing { shape() { return z; } }\n");
+  const edit = (old_string, new_string) => ({
+    tool_name: 'Edit',
+    tool_input: { file_path: file, old_string, new_string },
+  });
+  const adding = run('pre-write', edit('export class', "import express from 'express';\nexport class"));
+  assert.equal(decision(adding), 'deny');
+  assert.match(reason(adding), /layer\/domain-purity/);
+  assert.match(reason(adding), /dependenciesBeforeWrite, on trial/);
+  assert.doesNotMatch(reason(adding), /zod/);
+  const keeping = run(
+    'pre-write',
+    edit("import { z } from 'zod';\nexport class", "import { z } from 'zod';\n\nexport class"),
+  );
+  assert.equal(keeping.output, undefined);
+  const content = readFileSync(file, 'utf8');
+  assert.equal(run('pre-write', { tool_name: 'Write', tool_input: { file_path: file, content } }).output, undefined);
+});
+
+test('on trial, a Codex patch is judged on the lines it adds; off, the import waits for the check after the write', () => {
+  const root = project({ dependenciesBeforeWrite: true });
+  pricingService(root, 'export class Pricing {}\n');
+  const added = [
+    '*** Update File: src/contexts/ordering/domain/services/pricing.service.ts',
+    '@@',
+    "+import express from 'express';",
+  ];
+  assert.equal(decision(run('pre-write', patch(root, ...added))), 'deny');
+  const off = project();
+  const file = pricingService(off, 'export class Pricing {}\n');
+  const edit = { file_path: file, old_string: 'export', new_string: "import express from 'express';\nexport" };
+  assert.equal(run('pre-write', { tool_name: 'Edit', tool_input: edit }).output, undefined);
+});
+
+test('on trial, each judged write is recorded in the git directory of the repository, for the verdict', () => {
+  const root = project({ dependenciesBeforeWrite: true });
+  spawnSync('git', ['init', '--quiet'], { cwd: root });
+  const file = pricingService(root, 'export class Pricing {}\n');
+  const edit = { file_path: file, old_string: 'export', new_string: "import express from 'express';\nexport" };
+  assert.equal(decision(run('pre-write', { tool_name: 'Edit', tool_input: edit })), 'deny');
+  const [entry] = readFileSync(join(root, '.git/ddd-ts-kit/before-write.jsonl'), 'utf8')
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line));
+  assert.equal(entry.file, 'src/contexts/ordering/domain/services/pricing.service.ts');
+  assert.deepEqual(entry.refused, ['layer/domain-purity']);
+  assert.equal(typeof entry.ms, 'number');
+});
+
+test('on trial, a CLI that cannot judge the text lets the write through and is recorded as not judged', () => {
+  const root = project({ dependenciesBeforeWrite: true });
+  spawnSync('git', ['init', '--quiet'], { cwd: root });
+  const older = `#!/bin/sh\necho '{"error":{"message":"Unknown option --content-from"}}'\n`;
+  writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), older, { mode: 0o755 });
+  const file = pricingService(root, 'export class Pricing {}\n');
+  const edit = { file_path: file, old_string: 'export', new_string: "import express from 'express';\nexport" };
+  assert.equal(run('pre-write', { tool_name: 'Edit', tool_input: edit }).output, undefined);
+  const [entry] = readFileSync(join(root, '.git/ddd-ts-kit/before-write.jsonl'), 'utf8')
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line));
+  assert.equal(entry.unjudged, 'Unknown option --content-from');
+  assert.equal(entry.refused, undefined);
+});
+
+function pricingService(root, content) {
+  const file = join(root, 'src/contexts/ordering/domain/services/pricing.service.ts');
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, content);
+  return file;
+}
+
 test('a CLI hoisted to a parent by workspaces is the one the guard runs', () => {
   const workspaceRoot = directory('workspaces');
   const root = join(workspaceRoot, 'examples', 'shop');
