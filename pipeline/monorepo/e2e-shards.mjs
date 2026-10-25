@@ -46,8 +46,9 @@ export const SHARDS = [
   {
     'coverage-gate.spec.ts': 328,
     'typecheck.spec.ts': 70,
-    // oRPC and tRPC on the four servers: twice the 46 seconds oRPC alone took (run 40178531545).
-    'rpc-procedures.spec.ts': 92,
+    // oRPC and tRPC on the four servers (run 40182551102 of the pull request that added tRPC).
+    'rpc-procedures.spec.ts': 66,
+    'violations.spec.ts': 15,
     'preset-identity-generated.spec.ts': 25,
     'error-rule-violations.spec.ts': 11,
     'client-sdk.spec.ts': 9,
@@ -62,12 +63,7 @@ export const SHARDS = [
     'file-uploads.spec.ts': 26,
     'error-reporting.spec.ts': 17,
   },
-  {
-    'first-minute-no-context.spec.ts': 312,
-    'first-class.spec.ts': 209,
-    'dev-reload.spec.ts': 9,
-    'violations.spec.ts': 15,
-  },
+  { 'first-minute-no-context.spec.ts': 312, 'first-class.spec.ts': 209, 'dev-reload.spec.ts': 9 },
 ];
 
 /** The spec files of the directory that a shard has to run. */
