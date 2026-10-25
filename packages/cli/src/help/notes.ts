@@ -69,9 +69,11 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    this checkout lacks to run the project, read without network: the running Node against
                    engines.node and .nvmrc, node_modules installed since the lockfile last changed, each
                    package of the kit installed at the version of this CLI, the submodules initialised;
+                   last, the overrides init writes under a dependency that pins a package below a
+                   security fix, missing or no longer needed once it asks for the fix itself;
                    each with its fix; --strict exits 1 while something is missing or the checkout cannot
                    run the project, never for a hook this clone has not installed, a Node .nvmrc does not
-                   name or a lockfile changed since the install
+                   name, a lockfile changed since the install or an override no longer needed
   lint             the ESLint of the project (lint and ci:lint run it): fails on an error, and on a warning
                    as on an error, but on one of a rule of the kit in transition, a new rule that becomes an
                    error in the version it names, whose warnings are listed apart; --format and --fix as ESLint

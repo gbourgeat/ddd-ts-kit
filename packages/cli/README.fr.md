@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:0097d5ffa77b739d -->
+<!-- translation-of: README.md sha256:431355ccfd0abdd4 -->
 
 # ddd-ts-kit
 
@@ -1622,15 +1622,24 @@ résolus comme le fait Node, du projet vers le haut ; et, quand le dépôt a un
 Chacun vient avec son correctif : un Node qu'`engines.node` accepte (`nvm use`), `npm ci`, les
 paquets du kit montés ensemble, `git submodule update --init --recursive`.
 
+Enfin, sur ce qui est installé, les *overrides* qu'`init` écrit sous une dépendance qui épingle un
+paquet sous un correctif de sécurité (qs sous Stryker, multer sous Nest) : la plage que demande le
+parent installé, trouvé depuis l'emplacement réel de chaque paquet comme Node le trouve, face aux
+*overrides* de `package.json` sous npm ou de `pnpm-workspace.yaml` sous pnpm. Un *override* qui
+manque au projet tant que le parent épingle encore le paquet sous le correctif est `missing`, et
+`init` l'ajoute ; un *override* que le projet garde une fois que le parent demande lui-même la
+version corrigée est `no longer needed`, à retirer, car il retiendrait le paquet quand une majeure
+suivante sera demandée. Une chaîne qui n'est pas installée n'est pas jugée.
+
 `--strict` sort avec 1 tant que quelque chose manque ou est à une autre plage, ou tant que le
 *checkout* ne peut pas faire tourner le projet : un Node hors d'`engines.node`, pas de
 `node_modules`, un paquet du kit non installé ou à une autre version, un sous-module non
-initialisé. Un script écrit autrement, un *hook* que ce clone n'a pas installé, un Node que
-`.nvmrc` ne nomme pas quand `engines.node` l'accepte, et un *lockfile* modifié depuis
-l'installation (un *checkout* peut le réécrire avec ce que `node_modules` contient déjà) sont
-signalés sans le faire échouer. `--json` affiche `{ version, findings: [{ area, name, problem,
+initialisé, un *override* qui manque. Un script écrit autrement, un *hook* que ce clone n'a pas
+installé, un Node que `.nvmrc` ne nomme pas quand `engines.node` l'accepte, un *lockfile* modifié
+depuis l'installation (un *checkout* peut le réécrire avec ce que `node_modules` contient déjà), et
+un *override* qui n'est plus nécessaire sont signalés sans le faire échouer. `--json` affiche `{ version, findings: [{ area, name, problem,
 expected, found }] }`, `area` valant `script`, `package`, `permission`, `hook`, `guidance`,
-`node`, `install` ou `submodule`.
+`node`, `install`, `submodule` ou `override`.
 
 ## worker-scope
 
