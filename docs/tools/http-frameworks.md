@@ -234,6 +234,7 @@ Nest tool and names the kit's (`nest/no-parallel-pipeline`); in the platform Nes
 | an exception filter, `throw new NotFoundException()` | a refusal from the code list of the context, answered by the error mapper | a problem document with the code the contract declares and the client narrows |
 | an interceptor for logs, traces, retries | a bus middleware or an aspect; tracing is wired by the platform | one policy for every use case, read in one place |
 | `CacheInterceptor`, `@nestjs/cache-manager` | the `cache` of the route (with `etag`, `tags`) and the `Cache` port of the kernel | answers kept per caller when they must, purged after the commit |
+| `FileInterceptor`, `@UploadedFile()`, `ParseFilePipe` | `upload` of `@KitRoute` and `@Upload()` on the parameter (`generate file-upload`) | the file streamed and checked against its size and media types as it arrives, its limits in the contract, staged and promoted with the commit |
 | `@nestjs/swagger` | the contract generated from the routes (`npm run docs:generate`) | a contract that cannot drift from the code, `x-error-codes`, the generated clients |
 | `@nestjs/cqrs` | the `CommandBus` and `QueryBus` of the kit | the permission, the unit of work and the outbox around every command |
 | `@nestjs/schedule`, `@nestjs/bullmq` | a job of the kit (`generate job`), a background job | a job that sends a command, so through the same checks |

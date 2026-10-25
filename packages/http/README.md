@@ -1321,7 +1321,12 @@ export class AppModule {}
   it is open.
 - `@CurrentActor()` hands the method the caller the authentication resolved (`resolvePrincipal`),
   never one the controller builds; `@RouteContext()` the context of the request (`expectedVersion`
-  under `ifMatch`).
+  under `ifMatch`); `@Upload()` the file `upload` of `@KitRoute` declares, streamed and checked by
+  the kit against its size and its media types, never parsed by Nest (a method that takes it with
+  no `upload` declared is refused when the routes are built).
+- `@KitRoute` also carries what a controller of the kit declares besides its route: `upload`,
+  `form` (`defineForm(...)`, served at `GET /forms/<operationId>`), `produces` and `consumes`,
+  `cache`, `ifMatch`.
 - A parameter that takes a part whole is validated by its class, read through `schemaOfClass`
   (`classSchema` of class-validator): the class `withSignatures` names, else the one TypeScript
   recorded under `emitDecoratorMetadata`, which tsx and esbuild do not write; a part named one by one (`@Param('invoiceId')`) is a text; `request` of `@KitRoute`

@@ -1,5 +1,6 @@
 import { controllersFile } from '../../nest-controllers/controllers-file';
 import type { NestControllerEntry } from '../../nest-controllers/nest-controller-entry';
+import type { NestRequestPart } from '../../nest-controllers/nest-request-part';
 import { readNestControllers, type ProjectFiles } from '../../nest-controllers/read-nest-controllers';
 import { renderControllersFile } from '../../nest-controllers/render-controllers-file';
 import { toName } from '../../naming';
@@ -7,6 +8,13 @@ import type { Project } from '../model/project';
 import type { Rule } from '../model/rule';
 import type { Violation } from '../model/violation';
 import { reporter } from '../support/reporter';
+
+const EXAMPLES: Readonly<Record<NestRequestPart['source'], string>> = {
+  params: '@Param() params: InvoiceDetailsParams',
+  query: '@Query() criteria: SearchInvoicesCriteria',
+  headers: '@Headers() headers: SignedHeaders',
+  body: '@Body() body: IssueInvoiceBody',
+};
 
 const REGENERATE =
   'Run `ddd-ts-kit docs` or `ddd-ts-kit generate`, or restart `npm run dev`, which rewrite it from the Nest controllers of the context and the signatures of their methods: the file is never edited by hand.';
@@ -70,7 +78,7 @@ function unreadRequests(report: ReturnType<typeof reporter>, entries: readonly N
           report(
             { file: entry.file, line },
             `${entry.className}.${name} takes the whole ${source} as ${type.kind === 'unread' ? type.text : ''}, which the kit cannot read into the schema of its route.`,
-            `Type it by a DTO class imported from its own file (\`@Body() body: IssueInvoiceBody\`), or give \`request.${source}\` in \`@KitRoute\`.`,
+            `Type it by a DTO class imported from its own file (\`${EXAMPLES[source]}\`), or give \`request.${source}\` in \`@KitRoute\`.`,
           ),
         ),
     ),

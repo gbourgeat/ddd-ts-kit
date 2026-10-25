@@ -16,6 +16,7 @@ export { nestControllerRoutes } from './nest/controllers/nest-controller-routes'
 export type { NestControllerRoutesOptions } from './nest/controllers/nest-controller-routes-options';
 export { RouteContext } from './nest/controllers/route-context';
 export type { NestSignature } from './nest/controllers/nest-signature';
+export { Upload } from './nest/controllers/upload';
 export { withSignatures } from './nest/controllers/with-signatures';
 export { createRoutesModule, type RoutesModuleOptions } from './nest/create-routes-module';
 export type { RoutesFactory } from './nest/routes-factory';

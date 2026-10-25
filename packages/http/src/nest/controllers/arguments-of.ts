@@ -1,5 +1,6 @@
 import type { ErasedController } from '../../controller/erased-controller';
 import type { NestMethod } from './nest-method';
+import type { Injected } from './nest-routes-registry';
 
 type Request = Parameters<ErasedController['handle']>[0];
 
@@ -14,8 +15,14 @@ export function argumentsOf({ read, injected }: NestMethod, request: Request): u
     args[index] = key === undefined ? part : fieldOf(part, source === 'headers' ? key.toLowerCase() : key);
   }
 
+  const handed: Readonly<Record<Injected, unknown>> = {
+    actor: request.actor,
+    context: request.context,
+    upload: request.upload,
+  };
+
   for (const [index, what] of injected) {
-    args[index] = what === 'actor' ? request.actor : request.context;
+    args[index] = handed[what];
   }
 
   return args;

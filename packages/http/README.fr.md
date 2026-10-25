@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c6eaaa581312de50 -->
+<!-- translation-of: README.md sha256:fdf13cf926d39003 -->
 
 # @ddd-ts-kit/http
 
@@ -1375,7 +1375,13 @@ export class AppModule {}
   côté ni de l'autre est refusée : `[Public]` dit qu'elle est ouverte.
 - `@CurrentActor()` donne à la méthode l'appelant que l'authentification a résolu
   (`resolvePrincipal`), jamais un appelant construit par le contrôleur ; `@RouteContext()` le
-  contexte de la requête (`expectedVersion` sous `ifMatch`).
+  contexte de la requête (`expectedVersion` sous `ifMatch`) ; `@Upload()` le fichier que déclare
+  `upload` de `@KitRoute`, lu en flux et vérifié par le kit contre sa taille et ses types de média,
+  jamais analysé par Nest (une méthode qui le prend sans `upload` déclaré est refusée à la
+  construction des routes).
+- `@KitRoute` porte aussi ce qu'un contrôleur du kit déclare en plus de sa route : `upload`,
+  `form` (`defineForm(...)`, servi à `GET /forms/<operationId>`), `produces` et `consumes`,
+  `cache`, `ifMatch`.
 - Un paramètre qui prend une partie entière est validé par sa classe, lue par `schemaOfClass`
   (`classSchema` de class-validator) : la classe que nomme `withSignatures`, sinon celle que
   TypeScript a enregistrée sous `emitDecoratorMetadata`, que tsx et esbuild n'écrivent pas ; une partie nommée une à une (`@Param('invoiceId')`) est un texte ; `request` de

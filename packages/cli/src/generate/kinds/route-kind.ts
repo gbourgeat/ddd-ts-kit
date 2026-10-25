@@ -27,7 +27,7 @@ export const routeKind: Kind = {
   aliases: [],
   usage: `route ${USAGE}`,
   summary:
-    'An HTTP route calling an existing use case through its bus, with its spec: under "stack.routes": "controllers", a controller class in its folder, behind the guards of its route group; under "functions", a defineRoute function and its registration; under "nest", a Nest controller whose method carries @KitRoute, listed in the module of its context.',
+    'An HTTP route calling an existing use case through its bus, with its spec: under "stack.routes": "controllers", a controller class in its folder, behind the guards of its route group; under "functions", a defineRoute function and its registration; under "nest", a Nest controller whose method takes and answers what its signature names, listed in the generated <context>.controllers.ts.',
   positionals: ['context', 'UseCaseName'],
   writesShared: false,
   run: (request) => {

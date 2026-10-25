@@ -15,7 +15,7 @@ export const representationKind: Kind = {
   aliases: [],
   usage: 'representation <context> <UseCase> <xml|csv|media/type>[,...]',
   summary:
-    'Makes a controller answer in more media types than JSON: `produces` in `@Controller`, and `consumes` of XML for a route that receives a body. The request chooses by its Accept header when "stack.representations" is "negotiated"; the contract lists every media type.',
+    'Makes a controller answer in more media types than JSON: `produces` in `@Controller` (`@KitRoute` of a Nest controller), and `consumes` of XML for a route that receives a body. The request chooses by its Accept header when "stack.representations" is "negotiated"; the contract lists every media type.',
   positionals: ['context', 'UseCase', 'media'],
   writesShared: false,
   run: (request) => {
@@ -31,14 +31,15 @@ export const representationKind: Kind = {
       );
     }
 
-    const receivesXml = media.includes(XML) && /^\s*body[,:]/m.test(source);
+    const receivesBody = controllerSource.nestBody(source) !== undefined || /^\s*body[,:]/m.test(source);
+    const receivesXml = media.includes(XML) && receivesBody;
     const produced = controllerSource.withOption(source, `produces: [${media.map((type) => `'${type}'`).join(', ')}],`);
 
     scope.ws.update(file, receivesXml ? controllerSource.withOption(produced, `consumes: ['${XML}'],`) : produced);
 
     if (receivesXml) {
       scope.ws.note(
-        `The route now also reads its body in XML (\`consumes: ['${XML}']\`), and answers 415 to another media type: remove \`consumes\` from @Controller if only the answer was to be XML.`,
+        `The route now also reads its body in XML (\`consumes: ['${XML}']\`), and answers 415 to another media type: remove \`consumes\` from ${controllerSource.isNest(source) ? '@KitRoute' : '@Controller'} if only the answer was to be XML.`,
       );
     }
 

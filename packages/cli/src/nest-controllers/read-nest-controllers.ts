@@ -127,9 +127,14 @@ function requestOf({ start, bodyStart }: MethodShape, decorators: string, readin
 
       return source === undefined
         ? []
-        : [{ source, type: typeOf(type.trim(), reading), declared: new RegExp(`\\b${source}\\s*:`).test(declared) }];
+        : [{ source, type: typeOf(type.trim(), reading), declared: givesPart(declared, source) }];
     },
   );
+}
+
+/** Whether the members of `request` of `@KitRoute` name that part, written in full (`query: schema`) or short (`query`). */
+function givesPart(members: string, source: NestRequestPart['source']): boolean {
+  return new RegExp(`(?:^|,)\\s*${source}\\s*(?::|,|$)`).test(members.trim());
 }
 
 function answerOf(written: string, reading: Reading): NestAnswer {

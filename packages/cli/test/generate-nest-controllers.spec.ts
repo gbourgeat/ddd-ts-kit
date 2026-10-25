@@ -6,7 +6,19 @@ const BILLING = 'src/contexts/billing';
 const INVOICE = ['--term', 'Invoice=A request for payment'];
 const ISSUE = [...INVOICE, '--term', 'Issue=To make an invoice final'];
 const DETAILS = [...INVOICE, '--term', 'Details=What an invoice holds', '--term', 'Read=To look at'];
+const SEARCH = [...INVOICE, '--term', 'Search=To look for'];
+
+const SCAN = [
+  ...INVOICE,
+  '--term',
+  'Attach=To join a document to what it proves',
+  '--term',
+  'Scan=The image of a paper',
+];
+
 const NEST = ['--http', 'nest', '--di', 'nest', '--validation', 'class-validator', '--routes', 'nest'];
+const PRESENTATION = ['--storage', 'local', '--forms', 'on', '--representations', 'negotiated'];
+const INVOICES = `${BILLING}/presentation/http/invoices`;
 
 let root: string;
 
@@ -19,7 +31,7 @@ function step(...args: string[]): void {
 }
 
 beforeAll(() => {
-  root = initProject(...NEST, '--package-manager', 'npm');
+  root = initProject(...NEST, ...PRESENTATION, '--package-manager', 'npm');
   step('generate', 'context', 'billing', '--classification', 'core', '--purpose', 'Bills customers.');
   step('generate', 'aggregate', 'billing', 'Invoice', ...INVOICE);
 
@@ -60,6 +72,24 @@ beforeAll(() => {
     '/invoices/:invoiceId',
     ...DETAILS,
   );
+
+  step('generate', 'query', 'billing', 'SearchInvoices', '--search', '--permission', 'invoice.search', ...SEARCH);
+  step('generate', 'route', 'billing', 'SearchInvoices', '--method', 'GET', '--path', '/invoices', ...SEARCH);
+
+  step(
+    'generate',
+    'file-upload',
+    'billing',
+    'AttachInvoiceScan',
+    '--path',
+    '/invoices/:invoiceId/scan',
+    '--permission',
+    'invoice.attach-scan',
+    ...SCAN,
+  );
+
+  step('generate', 'form', 'billing', 'IssueInvoice');
+  step('generate', 'representation', 'billing', 'IssueInvoice', 'xml');
 });
 
 describe('generate route under "stack.routes": "nest"', () => {
@@ -71,7 +101,7 @@ describe('generate route under "stack.routes": "nest"', () => {
     expect(controller).toContain('constructor(@Inject(CommandBus) private readonly commands: CommandBus) {}');
     expect(controller).toContain("@Post(':invoiceId/issue')");
     expect(controller).toContain('async issueInvoice(');
-    expect(controller).not.toContain('operationId');
+    expect(controller).not.toContain('operationId:');
     expect(controller).not.toContain('request:');
     expect(controller).not.toContain('classSchema');
     expect(controller).toContain('@Param() params: IssueInvoiceParams');
@@ -136,6 +166,41 @@ describe('generate route under "stack.routes": "nest"', () => {
     );
 
     expect(search.stdout + search.stderr).toContain('--mapper and --serializer are left out');
+  });
+});
+
+describe('the other generators of a route, on a Nest controller', () => {
+  it('writes a search as a Nest controller whose @KitRoute gives the page it reads and answers', () => {
+    const controller = read(root, `${INVOICES}/search-invoices/search-invoices.controller.ts`);
+
+    expect(controller).toContain("import { Controller, Get, Inject, Query } from '@nestjs/common';");
+    expect(controller).toContain('request: { query },');
+    expect(controller).toContain("response: { description: 'One page of the search.', body: pageSchemaOf(line) },");
+    expect(controller).toContain('@Query() criteria: Infer<typeof query>,');
+    expect(controller).toContain('new SearchInvoicesQuery(actor, criteria)');
+  });
+
+  it('writes an upload as a Nest controller whose method takes the file the kit streams', () => {
+    const controller = read(root, `${INVOICES}/attach-invoice-scan/attach-invoice-scan.controller.ts`);
+
+    expect(controller).toContain("@Post(':invoiceId/scan')");
+    expect(controller).toContain('upload: { field: ');
+    expect(controller).toContain('async attachInvoiceScan(@Upload() file: IncomingFile, @CurrentActor() actor: Actor)');
+    expect(controller).toContain('new AttachInvoiceScanCommand(actor, file)');
+    expect(read(root, `${BILLING}/test/unit/attach-invoice-scan.controller.spec.ts`)).toContain('nestControllerRoute(');
+    expect(read(root, `${BILLING}/billing.controllers.ts`)).toContain('withSignatures(AttachInvoiceScanController, {');
+  });
+
+  it('declares the form and the media types of a Nest controller in @KitRoute of its method', () => {
+    const controller = read(root, `${INVOICES}/issue-invoice/issue-invoice.controller.ts`);
+
+    expect(controller).toContain('const form = defineForm<IssueInvoiceBody>({');
+
+    expect(controller).toMatch(
+      /@KitRoute\(\{\n {4}consumes: \['application\/xml'\],\n {4}produces: \['application\/xml'\],\n {4}form,\n/,
+    );
+
+    expect(controller.indexOf('const form')).toBeLessThan(controller.indexOf('/** Built by Nest'));
   });
 });
 

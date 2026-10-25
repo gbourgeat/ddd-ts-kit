@@ -113,6 +113,9 @@ function synthetic(method: NestMethod, spec: ControllerSpec, answering: () => ob
 /** The declaration of the controller of the kit: Nest's method, path and status, the rest of @KitRoute over @KitRoutes. */
 function specOf(method: NestMethod, options: NestControllerRoutesOptions): ControllerSpec {
   const { read, spec } = method;
+
+  assertUploadDeclared(method);
+
   const shared = nestRoutesRegistry().controllers.get(method.controller) ?? {};
   const { response = {}, request, guards = [], tags = [], errors = [], ...declared } = spec;
 
@@ -127,6 +130,15 @@ function specOf(method: NestMethod, options: NestControllerRoutesOptions): Contr
     errors: [...(shared.errors ?? []), ...errors],
     response: responseOf(method, response, options),
   };
+}
+
+/** A method that takes `@Upload()` reads the file `upload` of `@KitRoute` declares: without it, the kit would stream none. */
+function assertUploadDeclared({ where, spec, injected }: NestMethod): void {
+  if (spec.upload === undefined && [...injected.values()].includes('upload')) {
+    throw new DeclarationError(
+      `${where} takes @Upload() and its @KitRoute declares no upload: say the field, the largest size and the media types of the file in \`upload\`.`,
+    );
+  }
 }
 
 function responseOf(

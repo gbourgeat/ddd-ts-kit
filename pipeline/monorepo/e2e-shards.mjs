@@ -63,12 +63,15 @@ export const SHARDS = [
     'contract-pairs.spec.ts': 38,
     'file-uploads.spec.ts': 26,
     'preset-identity-generated.spec.ts': 25,
+    // Moved from the fourth runner when the Nest controllers joined it.
+    'dev-reload.spec.ts': 9,
   },
   {
     'first-minute-no-context.spec.ts': 312,
     'first-class.spec.ts': 209,
-    'dev-reload.spec.ts': 9,
     'violations.spec.ts': 15,
+    // Every route generator on Nest controllers, one project (7 s on a workstation, three times that on a runner).
+    'nest-controllers.spec.ts': 21,
   },
 ];
 

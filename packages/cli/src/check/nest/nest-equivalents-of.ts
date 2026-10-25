@@ -10,6 +10,12 @@ const ROUTE: NestEquivalent = {
     'a route of the kit: `@KitRoute` of `@ddd-ts-kit/http/nest` on each method of the controller, served by `createControllersModule`, or `generate route`. Its security is declared, its refusals are problem documents with their codes, and it is in the contract',
 };
 
+const UPLOADED: NestEquivalent = {
+  tool: 'a file parsed by Nest',
+  instead:
+    '`upload` of `@KitRoute` (its field, largest size and media types, in the contract) and `@Upload()` of `@ddd-ts-kit/http/nest`, which hands the method the file the kit streams and checks: `ddd-ts-kit generate file-upload` writes it',
+};
+
 const RAW: NestEquivalent = {
   tool: 'the raw request or answer',
   instead:
@@ -55,7 +61,8 @@ const PIPELINE: NestEquivalent = {
 /** The tools of `@nestjs/common`, by the names a context imports. */
 const COMMON: readonly (readonly [RegExp, NestEquivalent])[] = [
   [/^(?:Controller|Get|Post|Put|Patch|Delete|All|Head|Options|Search|Body|Param|Query|Headers|HttpCode)$/, ROUTE],
-  [/^(?:Req|Request|Res|Response|Next|Header|Redirect|Render|Sse|Ip|HostParam|Session|UploadedFiles?)$/, RAW],
+  [/^(?:Req|Request|Res|Response|Next|Header|Redirect|Render|Sse|Ip|HostParam|Session)$/, RAW],
+  [/^(?:UploadedFiles?|ParseFilePipe|ParseFilePipeBuilder|MaxFileSizeValidator|FileTypeValidator)$/, UPLOADED],
   [/^(?:UseGuards|CanActivate|SetMetadata|applyDecorators)$/, GUARD],
   [/^(?:UsePipes|PipeTransform|ArgumentMetadata)$|Pipe$/, PIPE],
   [/^(?:UseFilters|Catch|ExceptionFilter|ArgumentsHost)$|Exception$/, FILTER],

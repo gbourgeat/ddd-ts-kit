@@ -12,13 +12,14 @@ or an event handler. Nest stays free in the platform. Judged: `presentation/`,
 
 | Reached for, in Nest | Write instead |
 |---|---|
-| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | keep them: each method with a route decorator of Nest is a route, named after the method; `@KitRoute({ request, response, errors })` when it says more, `@KitRoutes({ group })` on the class, `@CurrentActor()` for the caller, the bus injected by Nest; under `stack.routes: nest` (`init --routes nest`), `npx ddd-ts-kit generate route <context> <UseCase> --method <M> --path <p>` writes it and lists it under `controllers` in the module of the context |
+| `@Controller`, `@Get`, `@Post`, `@Body`, `@Param` | keep them: each method with a route decorator of Nest is a route, named after the method, its parts and its answer read from its signature; `@KitRoute({ errors })` for its refusal codes, `@KitRoutes({ group })` on the class, `@CurrentActor()` for the caller, the bus injected by Nest; under `stack.routes: nest` (`init --routes nest`), `npx ddd-ts-kit generate route <context> <UseCase> --method <M> --path <p>` writes it and the generated `<context>.controllers.ts` lists it |
 | `ValidationPipe`, a DTO with class-validator | the schemas of the route, with the validation library of the project |
 | `@UseGuards(AuthGuard(...))`, Passport | authentication in the platform, read by `resolvePrincipal`; `generate guard` for a control at the edge of a route group |
 | `@Roles`, a `RolesGuard`, CASL | the permission of the use case (`requires` in the module file, `@Requires`), a policy, an access scope: `/ddd-ts-kit:access-control` |
 | an exception filter, `throw new NotFoundException()` | a refusal from the code list of the context; the error mapper answers the problem |
 | an interceptor (logs, traces, retries) | a bus middleware or an aspect: `/ddd-ts-kit:cross-cutting` |
 | `CacheInterceptor`, `@nestjs/cache-manager` | the `cache` of the route, the `Cache` port of the kernel |
+| `FileInterceptor`, `@UploadedFile()` | `upload` of `@KitRoute` and `@Upload()` on the parameter: `npx ddd-ts-kit generate file-upload <context> <UseCase> --path <p>` |
 | `@nestjs/swagger` | `npm run docs:generate`: the contract comes from the routes |
 | `@nestjs/cqrs` | `CommandBus` and `QueryBus` of the kit |
 | `@nestjs/schedule`, `@nestjs/bullmq` | `generate job`: a job sends a command |
@@ -35,6 +36,12 @@ that file current and reports a type it cannot read (an array, an inline type, a
 type the part or the answer by a DTO class, or give it in `request` or `response` of `@KitRoute`.
 `@KitRoute` is left for the refusal codes. Nothing depends on `emitDecoratorMetadata`, so tsx in
 `npm run dev` serves the same routes as the build.
+
+Every route generator writes the Nest form: `generate route` a search too (its page is no DTO
+class, so its `@KitRoute` gives `request: { query }` and `response.body`), `generate file-upload`
+a method that takes `@Upload() file: IncomingFile`, streamed and checked by the kit, and
+`generate form` and `generate representation` their options at the top of `@KitRoute`. Nest's
+`@UploadedFile()` and `FileInterceptor` are refused: the kit would not stream nor check the file.
 
 A generated controller injects the buses only (`@Inject(CommandBus)`, `@Inject(QueryBus)`): they
 are the providers the platform gives Nest, as a controller only sends a message through a bus.

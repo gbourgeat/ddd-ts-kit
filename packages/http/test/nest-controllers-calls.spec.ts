@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { Readable } from 'node:stream';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { ok } from '@ddd-ts-kit/kernel';
@@ -12,6 +13,7 @@ import {
   nestControllerRoute,
   nestControllerRoutes,
   RouteContext,
+  Upload,
   withSignatures,
 } from '../src/nest';
 import type { NestControllerRoutesOptions } from '../src/nest';
@@ -169,7 +171,9 @@ describe('a call of a route of a Nest controller', () => {
     expect(route.responses).toMatchObject({ 200: { body: expect.any(Object) } });
     expect(await read(route)).toMatchObject({ status: 200, body: { total: 3 } });
   });
+});
 
+describe('a call of a route of a Nest controller, by what its signature and @KitRoute declare', () => {
   it('validates a body taken whole by the class its signature names, with no metadata of TypeScript nor request in @KitRoute', async () => {
     class Filing {
       file(body: IssueInvoiceBody): void {
@@ -188,5 +192,80 @@ describe('a call of a route of a Nest controller', () => {
 
     expect(await call({ customerId: 'c-1' })).toMatchObject({ status: 201 });
     expect(await call({ customerId: '' })).toMatchObject({ status: 422 });
+  });
+
+  it('hands @Upload() the file the kit streamed, as @KitRoute declares it', async () => {
+    class Receiving {
+      receive(file: { fileName: string }): { fileName: string } {
+        return { fileName: file.fileName };
+      }
+    }
+
+    Controller('receipts')(Receiving);
+    KitRoutes({ guards: [Public] })(Receiving);
+
+    Reflect.decorate(
+      [
+        Post(),
+        KitRoute({
+          upload: { field: 'file', maxBytes: 64, mediaTypes: ['application/pdf'] },
+          response: { body: customSchema((input) => ok(input)) },
+        }),
+      ],
+      Receiving.prototype,
+      'receive',
+      { value: Receiving.prototype.receive },
+    );
+
+    Upload()(Receiving.prototype, 'receive', 0);
+
+    const route = nestControllerRoute(Receiving, { instanceOf: () => new Receiving() });
+    const file = { fileName: 'receipt.pdf', mediaType: 'application/pdf', stream: Readable.from([]) };
+
+    const answer = await executeRoute(
+      route,
+      { params: {}, query: {}, headers: {}, body: undefined, raw: {} },
+      { uploads: () => Promise.resolve({ fields: {}, file }) },
+    );
+
+    expect(route.upload).toEqual({ field: 'file', maxBytes: 64, mediaTypes: ['application/pdf'] });
+    expect(answer).toMatchObject({ status: 201, body: { fileName: 'receipt.pdf' } });
+  });
+
+  it('refuses @Upload() on a method whose @KitRoute declares no upload, when its routes are built', () => {
+    class Receiving {
+      receive(): void {}
+    }
+
+    Controller('receipts')(Receiving);
+    KitRoutes({ guards: [Public] })(Receiving);
+    Reflect.decorate([Post()], Receiving.prototype, 'receive', { value: Receiving.prototype.receive });
+    Upload()(Receiving.prototype, 'receive', 0);
+
+    expect(() => nestControllerRoute(Receiving, { instanceOf: () => new Receiving() })).toThrow(
+      /takes @Upload\(\) and its @KitRoute declares no upload/,
+    );
+  });
+
+  it('carries the form and the media types @KitRoute declares onto the route', () => {
+    class Entering {
+      enter(): void {}
+    }
+
+    Controller('entries')(Entering);
+    KitRoutes({ guards: [Public] })(Entering);
+
+    Reflect.decorate(
+      [Post(), KitRoute({ form: {}, produces: ['application/xml'], consumes: ['application/xml'] })],
+      Entering.prototype,
+      'enter',
+      { value: Entering.prototype.enter },
+    );
+
+    expect(nestControllerRoute(Entering, { instanceOf: () => new Entering() })).toMatchObject({
+      form: {},
+      produces: ['application/xml'],
+      consumes: ['application/xml'],
+    });
   });
 });
