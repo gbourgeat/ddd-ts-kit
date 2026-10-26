@@ -131,6 +131,7 @@ describe('generate aggregate --event-sourced', () => {
       drift: {},
       unrecorded: ['billing.ledger.created version 1', 'billing.ledger.credited version 1'],
       formerlyRecorded: [],
+      emptilyRecorded: [],
       warnings: [],
     });
 
@@ -221,6 +222,20 @@ describe('docs --stored-events', () => {
     expect(unrecorded.stdout).toContain(`unrecorded  billing.ledger.credited version 1 in ${LOCK}`);
     expect(unrecorded.stdout).toContain('run `ddd-ts-kit docs --stored-events`');
 
+    const placeholder = cli(root, 'docs', '--stored-events');
+
+    expect(placeholder.code).not.toBe(0);
+    expect(placeholder.stderr).toContain(`${CODEC}:`);
+    expect(placeholder.stderr).toContain('LedgerCreditedData, the data of LedgerCredited, declares no member');
+    expect(placeholder.stderr).toContain('LedgerCreatedData, the data of LedgerCreated, declares no member');
+    expect(exists(root, LOCK)).toBe(false);
+
+    write(
+      root,
+      CODEC,
+      read(root, CODEC).replace(/interface (Ledger\w+Data) \{\s*\}/g, 'interface $1 {\n  readonly note: string;\n}'),
+    );
+
     cli(root, 'docs', '--stored-events');
 
     const recorded = read(root, LOCK);
@@ -232,8 +247,8 @@ describe('docs --stored-events', () => {
       root,
       CODEC,
       read(root, CODEC).replace(
-        'interface LedgerCreditedData {}',
-        'interface LedgerCreditedData {\n  readonly cents: number;\n}',
+        'interface LedgerCreditedData {\n  readonly note: string;\n}',
+        'interface LedgerCreditedData {\n  readonly note: string;\n  readonly cents: number;\n}',
       ),
     );
 

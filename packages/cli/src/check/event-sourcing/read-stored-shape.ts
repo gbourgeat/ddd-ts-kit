@@ -3,6 +3,9 @@ import type { Scan } from '../scan/scan';
 import { declaredShape, type ShapeReading } from './declared-shape';
 import type { StoredShape } from './stored-shape';
 
+/** The fingerprint of a shape of no member: the hash of empty input, which vouches for nothing. */
+export const EMPTY_SHAPE_FINGERPRINT = digest([], []);
+
 /**
  * Stored shapes the kit itself owns and keeps readable across its releases: named in a data
  * type, they are not declared in the codec file.
@@ -62,7 +65,7 @@ function fingerprinted(
     }
   }
 
-  return { fingerprint: digest(root.members, nested), unresolved };
+  return { fingerprint: digest(root.members, nested), empty: root.members.length === 0, unresolved };
 }
 
 /** A shape that names no type of the file keeps the digest of its members alone. */
