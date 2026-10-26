@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:0292818692c5d778 -->
+<!-- translation-of: event-sourcing.md sha256:9386195828353248 -->
 
 # Event sourcing, par agrégat
 
@@ -287,7 +287,8 @@ passée du code. Le kit applique la même discipline avec son propre mécanisme 
    version est celle à stocker. Elle lit les codecs de `infrastructure/persistence/` du contexte
    et de chaque module de son modèle, et refuse, en nommant le fichier du codec et la raison, un
    type de données qu'elle ne sait pas lire (non déclaré dans le fichier) ou qui ne déclare aucun
-   membre : le hachage du vide ne garantirait aucune forme, et `docs --check` signale une entrée
+   membre : le hachage du vide ne garantirait aucune forme (un événement qui ne porte rien s'écrit `type <Event>Data = Record<string, never>`),
+   et `docs --check` signale une entrée
    du fichier de verrouillage qui le contient. Une version enregistrée n'est jamais réécrite, sauf une version
    enregistrée par la 0.82.0 ou une version antérieure : celle-ci lisait à part les arguments de
    type d'un membre (`Record<string, number>`), si bien que deux formes pouvaient partager une

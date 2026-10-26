@@ -30,5 +30,7 @@ function reasonOf({ eventClass, payloadType, fingerprint, emptyShape }: CodecDec
     return `${payloadType}, the data of ${eventClass}, is not declared in this file`;
   }
 
-  return emptyShape === true ? `${payloadType}, the data of ${eventClass}, declares no member` : undefined;
+  return emptyShape === true
+    ? `${payloadType}, the data of ${eventClass}, declares no member: fill its fields, or write \`type ${payloadType} = Record<string, never>\` if the event carries nothing`
+    : undefined;
 }
