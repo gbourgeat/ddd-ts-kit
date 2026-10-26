@@ -50,7 +50,7 @@ describe('init', () => {
     // Controllers declare themselves: nothing lists the routes of a declared context, and the composition root mounts what the contexts declare.
     expect(created).not.toContain('src/contexts/billing/presentation/http/billing.routes.ts');
 
-    expect(read(root, 'src/platform/composition/compose-application.ts')).toContain(
+    expect(read(root, 'src/platform/composition/routes-of.ts')).toContain(
       "controllerRoutes(container.resolve(DeclaredEdges).of('controller'), { resolve: container.resolve, security }),",
     );
 

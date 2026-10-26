@@ -1,4 +1,9 @@
+{{#if tenancy.any}}
+import { LOG_LEVELS, isTenantId } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#unless tenancy.any}}
 import { LOG_LEVELS } from '@ddd-ts-kit/kernel';
+{{/unless}}
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 import { Environment, type Variables } from '{{alias.platform}}/config/environment{{alias.ext}}';
 {{#if files.any}}
@@ -35,6 +40,9 @@ export function loadConfig(variables: Variables): AppConfig {
     tracing: readTracing(env),
     resilience: readResilience(env),
     runJobs: env.flag('RUN_JOBS', runJobsByDefault),
+    {{#if tenancy.any}}
+    tenants: readTenants(env),
+    {{/if}}
     {{#if persistence.needsUrl}}
     databaseUrl: env.url('DATABASE_URL'),
     {{/if}}
@@ -79,6 +87,22 @@ export function loadConfig(variables: Variables): AppConfig {
   return config;
 }
 
+{{#if tenancy.any}}
+/** `TENANTS=acme,globex`: each id in the grammar of a tenant id. */
+function readTenants(env: Environment): readonly string[] {
+  const tenants = (env.optional('TENANTS') ?? '')
+    .split(',')
+    .map((tenant) => tenant.trim())
+    .filter((tenant) => tenant !== '');
+
+  if (!tenants.every(isTenantId)) {
+    env.problem('TENANTS must list tenant ids: letters, digits, _ and -, at most 63 characters each');
+  }
+
+  return tenants;
+}
+
+{{/if}}
 function readLog(env: Environment): AppConfig['log'] {
   return {
     level: env.oneOf('LOG_LEVEL', LOG_LEVELS, 'info'),

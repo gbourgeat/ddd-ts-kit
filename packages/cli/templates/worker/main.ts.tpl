@@ -44,6 +44,9 @@ const application = composeApplication(persistence, {
   resilience: config.resilience,
   // This process is the one that runs the jobs, whatever `RUN_JOBS` says to the others.
   jobs: { start: true, settings: jobSettings(process.env) },
+{{#if tenancy.any}}
+  tenants: config.tenants,
+{{/if}}
 {{#if cache.redis}}
   redis,
 {{/if}}

@@ -166,5 +166,9 @@ MINIO_PORT=9000
 # continue: a consumed event stays in the trace of the request that published it. link: each delivery starts its own trace, linked to it.
 # TRACE_CONSUMERS=continue
 OTEL_SERVICE_NAME={{project.name}}
+{{#if tenancy.any}}
+# The tenants that exist, comma separated: a scheduled job declared per-tenant runs once for each, and the privacy scripts reach each.
+TENANTS=
+{{/if}}
 JAEGER_UI_PORT=16686
 OTLP_HTTP_PORT=4318

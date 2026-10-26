@@ -13,6 +13,7 @@ export const NO_FLAGS: KindFlags = {
   tenantScoped: false,
   search: false,
   decorators: false,
+  global: false,
   mapper: false,
   serializer: false,
   eventSourced: false,

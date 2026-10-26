@@ -1,5 +1,5 @@
 [English](scheduled-jobs.md) · **Français**
-<!-- translation-of: scheduled-jobs.md sha256:7cdad1f22719fd1c -->
+<!-- translation-of: scheduled-jobs.md sha256:e4b3e524f6d3f541 -->
 
 # Jobs planifiés
 
@@ -105,7 +105,16 @@ lequel) ; un *tenant* qui échoue n'arrête pas les autres.
 npx ddd-ts-kit generate job notifications SendReminders --cron "0 7 * * *" --time-zone Europe/Paris --command SendReminders
 ```
 
-écrit le *job*, sa *spec*, son interrupteur dans les réglages des *jobs* de la plateforme
+Dans un projet avec *tenancy* (`stack.tenancy` autre que `none`), `generate job` écrit
+`tenancy: 'per-tenant'`, car un *job* global s'exécute dans aucun *tenant* et un *repository*
+confiné à un *tenant* le refuse (`NoCurrentTenantError`) à chaque exécution réelle ; `--global`
+écrit `tenancy: 'global'` pour un travail à travers les *tenants*, et la note de la commande dit
+lequel a été écrit. `init` donne au planificateur les *tenants* de `TENANTS` (identifiants séparés
+par des virgules, `config.tenants`, transmis à l'application sous le nom `tenants`) : liez un
+annuaire à vous quand les *tenants* vivent dans une table. La *spec* générée exécute le *job* pour
+deux *tenants*.
+
+La commande écrit le *job*, sa *spec*, son interrupteur dans les réglages des *jobs* de la plateforme
 (`src/platform/jobs/job-settings.ts`, désactivé par `JOB_<CONTEXT>_<JOB>_ENABLED=false`) et, là où le
 modèle d'autorisation en fait une ligne, la permission accordée à son acteur système.
 

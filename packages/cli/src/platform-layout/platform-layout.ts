@@ -39,6 +39,8 @@ export const PLATFORM_LAYOUT = [
     anchor: 'compose-application.ts',
     files: {
       'compose-application.ts': 'composition/compose-application.ts',
+      'context-selection.ts': 'composition/context-selection.ts',
+      'routes-of.ts': 'composition/routes-of.ts',
       'platform.module.ts': 'composition/platform.module.ts',
       'platform-test.module.ts': 'composition/platform-test.module.ts',
       'platform-error-mapper.ts': 'composition/platform-error-mapper.ts',

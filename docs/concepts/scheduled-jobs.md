@@ -100,7 +100,15 @@ scope (`execution.tenantId` says which); a tenant that fails does not stop the o
 npx ddd-ts-kit generate job notifications SendReminders --cron "0 7 * * *" --time-zone Europe/Paris --command SendReminders
 ```
 
-writes the job, its spec, its switch in the job settings of the platform
+In a project with tenancy (`stack.tenancy` other than `none`), `generate job` writes
+`tenancy: 'per-tenant'`, since a global job runs in no tenant and a tenant-scoped repository
+refuses it (`NoCurrentTenantError`) on every real run; `--global` writes `tenancy: 'global'` for
+work across tenants, and the note of the command says which was written. `init` gives the scheduler
+the tenants of `TENANTS` (comma separated ids, `config.tenants`, passed to the application as
+`tenants`): bind a directory of your own once the tenants live in a table. The generated spec
+runs the job for two tenants.
+
+The command writes the job, its spec, its switch in the job settings of the platform
 (`src/platform/jobs/job-settings.ts`, switched off with `JOB_<CONTEXT>_<JOB>_ENABLED=false`) and,
 where the authorization model makes it one line, the grant of its system actor.
 

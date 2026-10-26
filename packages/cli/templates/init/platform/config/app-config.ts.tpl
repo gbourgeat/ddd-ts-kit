@@ -23,6 +23,10 @@ export interface AppConfig {
   readonly resilience: ResilienceSettings;
   /** Whether this process runs the scheduled jobs (`RUN_JOBS`): off for the API of a project that has a worker. */
   readonly runJobs: boolean;
+  {{#if tenancy.any}}
+  /** The tenants that exist (`TENANTS`, comma separated): a job declared `per-tenant` runs once for each. Bind a directory of your own in `main.ts` once the tenants live in a table. */
+  readonly tenants: readonly string[];
+  {{/if}}
   {{#if persistence.needsUrl}}
   readonly databaseUrl: string;
   {{/if}}

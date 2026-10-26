@@ -56,6 +56,9 @@ const application = composeApplication(
     resilience: config.resilience,
     // A context run alone takes its jobs with it, and only its own.
     jobs: { start: config.runJobs, settings: jobSettings(process.env, '{{context.kebab}}') },
+    {{#if tenancy.any}}
+    tenants: config.tenants,
+    {{/if}}
     {{#if cache.redis}}
     redis,
     {{/if}}

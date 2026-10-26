@@ -59,7 +59,11 @@ function fileStorageFiles(config: Config): InitFile[] {
   ];
 }
 
-const TSYRINGE = ['composition/platform.module.ts', 'composition/platform-test.module.ts'];
+const TSYRINGE = [
+  'composition/platform.module.ts',
+  'composition/platform-test.module.ts',
+  'composition/context-selection.ts',
+];
 
 const MANUAL = ['composition/platform.ts', 'composition/platform-options.ts', 'composition/create-platform.ts'];
 
@@ -77,6 +81,7 @@ function compositionFiles(config: Config): InitFile[] {
     ...BOTH.map((name) => file(name, family)),
     ...own.map((name) => file(name, family)),
     ...when(config.stack.http !== 'none', [file('composition/platform-error-mapper.ts')]),
+    ...when(family !== 'manual' && config.stack.http !== 'none', [file('composition/routes-of.ts', family)]),
     ...when(family === 'manual', [
       file('events/platform-events.ts'),
       file('jobs/configured-job-scheduler.ts'),

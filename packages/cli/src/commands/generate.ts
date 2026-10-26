@@ -83,6 +83,7 @@ const OPTIONS = {
   search: SWITCH,
   kind: TEXT,
   decorators: SWITCH,
+  global: SWITCH,
   deviation: TEXT,
   phase: TEXT,
   event: TEXT,
@@ -198,6 +199,7 @@ type Switch =
   | 'tenantScoped'
   | 'search'
   | 'decorators'
+  | 'global'
   | 'mapper'
   | 'serializer'
   | 'eventSourced';
@@ -211,6 +213,7 @@ function switchesOf(args: Arguments): Pick<KindFlags, Switch> {
     tenantScoped: args.flag('tenant-scoped'),
     search: args.flag('search'),
     decorators: args.flag('decorators'),
+    global: args.flag('global'),
     mapper: args.flag('mapper'),
     serializer: args.flag('serializer'),
     eventSourced: args.flag('event-sourced'),

@@ -186,7 +186,7 @@ describe('a declared context and what hosts it', () => {
 
     expect(composition).not.toContain('billingRoutes');
 
-    expect(composition).toContain(
+    expect(read(root, 'src/platform/composition/routes-of.ts')).toContain(
       "controllerRoutes(container.resolve(DeclaredEdges).of('controller'), { resolve: container.resolve, security }),",
     );
 

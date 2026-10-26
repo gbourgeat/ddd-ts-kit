@@ -13,7 +13,7 @@ import type { Scope } from '../scope';
 import { specVars } from '../spec-vars';
 import { vars } from '../vars';
 import { wire } from '../wire';
-import { jobVars } from './job/job-vars';
+import { jobVars, type JobTenancy } from './job/job-vars';
 import { readSentCommand } from './job/read-sent-command';
 import { requestedSchedule } from './job/requested-schedule';
 import { writtenSchedule } from './job/written-schedule';
@@ -23,9 +23,9 @@ export const jobKind: Kind = {
   name: 'job',
   aliases: [],
   usage:
-    'job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--term "<Term>=<meaning>"]...',
+    'job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--global] [--term "<Term>=<meaning>"]...',
   summary:
-    'A job run by time that sends one command as its own system actor, its spec, its registration, its switch in the job settings of the platform and, where the authorization model makes it one line, the grant of that actor.',
+    'A job run by time (once per tenant under tenancy, or `--global`) that sends one command as its own system actor, its spec, its registration, its switch in the job settings of the platform and, where the authorization model makes it one line, the grant of that actor.',
   positionals: ['context', 'Name'],
   writesShared: true,
   textFlags: ['command'],
@@ -41,12 +41,39 @@ export const jobKind: Kind = {
     const context = vars(scope, {
       name: named(name),
       spec: specVars(scope, { protected: false }),
-      job: jobVars(scope, { name, schedule, command }),
+      job: jobVars(scope, { name, schedule, command, tenancy: tenancyOf(scope, name) }),
     });
 
     writeJob(scope, name, context);
   },
 };
+
+/**
+ * Under tenancy a job runs once per tenant unless `--global` says it works across them: a global job
+ * runs in no tenant, and a tenant-scoped repository refuses to be read there.
+ */
+function tenancyOf(scope: Scope, name: Name): JobTenancy {
+  const { global } = scope.flags;
+
+  if (scope.config.stack.tenancy === 'none') {
+    if (global) {
+      throw new CliError(
+        '--global means nothing in a project without tenancy.',
+        `Every job runs once there: drop --global from \`generate job ${scope.context.kebab} ${name.pascal}\`.`,
+      );
+    }
+
+    return undefined;
+  }
+
+  scope.ws.note(
+    global
+      ? `${name.pascal}Job is global (\`tenancy: 'global'\`): it runs once per occurrence, in no tenant, so a tenant-scoped repository refuses it. Drop --global for a job that works one tenant at a time.`
+      : `${name.pascal}Job runs per tenant (\`tenancy: 'per-tenant'\`): once per tenant of the TenantDirectory (TENANTS) for each occurrence, each run in the scope of its tenant. Pass --global for work across tenants.`,
+  );
+
+  return global ? 'global' : 'per-tenant';
+}
 
 function commandNamed(scope: Scope, name: Name): string {
   const { commandName } = scope.flags;

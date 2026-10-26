@@ -52,6 +52,9 @@ const application = composeApplication(persistence, {
   traceConsumers: config.tracing.consumers,
   resilience: config.resilience,
   jobs: { start: config.runJobs, settings: jobSettings(process.env) },
+  {{#if tenancy.any}}
+  tenants: config.tenants,
+  {{/if}}
   {{#if cache.redis}}
   redis,
   {{/if}}

@@ -9,6 +9,9 @@ const occurrence = {
   startedAt: new Date('2026-01-01T07:00:02.000Z'),
   attempt: 1,
   signal: new AbortController().signal,
+{{#if job.perTenant}}
+  tenantId: 'tenant-a',
+{{/if}}
 };
 
 describe('{{name.title}}, when its time comes', () => {

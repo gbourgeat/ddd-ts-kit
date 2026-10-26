@@ -8,15 +8,19 @@ import type { SentCommand } from './sent-command';
 const PERIOD =
   'which period the work is for is said by `execution.scheduledAt`, never by the clock: an occurrence may run late, or twice';
 
+/** Which tenants a run is for, as the source of the job says it; empty where the project has no tenant. */
+export type JobTenancy = 'per-tenant' | 'global' | undefined;
+
 export interface JobParts {
   readonly name: Name;
   /** The schedule as the source writes it. */
   readonly schedule: string;
   readonly command: SentCommand;
+  readonly tenancy: JobTenancy;
 }
 
 /** What the templates of a job read; the grant of its system actor is written on the way, where the model allows. */
-export function jobVars(scope: Scope, { name, schedule, command }: JobParts): RenderContext {
+export function jobVars(scope: Scope, { name, schedule, command, tenancy }: JobParts): RenderContext {
   const jobName = `${scope.context.kebab}.${name.kebab}`;
   const actor = command.isProtected ? [`systemActor('${jobName}')`] : [];
   const grant = command.isProtected ? grantSystemActor(scope, jobName, command) : undefined;
@@ -24,6 +28,7 @@ export function jobVars(scope: Scope, { name, schedule, command }: JobParts): Re
   return {
     name: jobName,
     schedule,
+    ...tenancyVars(schedule, tenancy),
     switch: `JOB_${scope.context.constant}_${name.constant}_ENABLED`,
     command: command.name.pascal,
     commandKebab: command.name.kebab,
@@ -39,6 +44,16 @@ export function jobVars(scope: Scope, { name, schedule, command }: JobParts): Re
     ...grantedInSpec(scope, command),
     ungranted: grant?.isWritten === false,
     grant: grant?.todo ?? '',
+  };
+}
+
+function tenancyVars(schedule: string, tenancy: JobTenancy): RenderContext {
+  return {
+    tenancy: tenancy ?? '',
+    perTenant: tenancy === 'per-tenant',
+    tenanted: tenancy !== undefined,
+    // Where the source writes the schedule and the options of the job together (the decorator, the builder).
+    scheduled: tenancy === undefined ? schedule : `${schedule.slice(0, -2)}, tenancy: '${tenancy}' }`,
   };
 }
 
