@@ -1,5 +1,5 @@
 [English](build-and-test-velocity.md) · **Français**
-<!-- translation-of: build-and-test-velocity.md sha256:d8a285ce2209b605 -->
+<!-- translation-of: build-and-test-velocity.md sha256:1a6551b52f10610d -->
 
 # Proposition : vélocité du build, des contrôles et des tests
 
@@ -887,6 +887,32 @@ est la trace.
 |---|---|---|---|---|
 | avant (la porte telle que configurée le 2026-10-26) | 3 | 6 | 3 | 3 |
 | après | 3 | 3 | **3** | 0 |
+
+### Résultats du plan : point 3, le job Lint d'une pull request sous Oxlint
+
+La condition (aucune différence avec ESLint sur ce dépôt, fichier, ligne et règle) tient : 3 constats
+de chaque côté, 3 au même endroit, `no-unsafe-enum-assignment` seule règle qu'ESLint a et
+qu'Oxlint n'a pas, et elle ne rapporte rien ici. Le job Lint d'une *pull request* lance maintenant la
+vérification du format et `npm run lint:oxlint` ; le tronc et la nuit lancent ESLint sur tout
+l'arbre, comme avant, sans le cache (que seules les *pull requests* lisaient). `npm run lint` reste
+ESLint avec son cache par contenu. Mesuré sur la station de l'étude, sous `nice`, une commande à la
+fois, charge moyenne de la dernière minute avant chaque exécution :
+
+| Exécution | Charge | Durée min / médiane | CPU (médiane) | Mémoire de pointe (médiane) |
+|---|---|---|---|---|
+| `npm run lint`, cache par contenu d'ESLint, rien de changé (3 exécutions) | 4,4 ; 3,4 ; 3,3 | 1,22 / 1,24 s | 1,75 s | 0,38 Go |
+| `npm run lint:oxlint`, tout le dépôt, avec types, *plugin* du kit (3 exécutions) | 3,0 à 3,2 | 5,86 / 5,93 s | 20,3 s | 1,55 Go |
+| `eslint .`, sans cache, ce que lance le tronc (3 exécutions) | 2,6 à 3,1 | 36,9 / 37,2 s | 59,5 s | 3,0 Go |
+
+À lire : face à une *pull request* qui trouve son cache, Oxlint n'est pas plus rapide : 5,9 s contre
+1,2 à 1,7 s de lint (le job dure 38 s en médiane, mise en place comprise). Ce que le changement
+apporte, c'est que la *pull request* ne dépend plus du cache : la première après un changement de la
+configuration, du *lockfile* ou d'une règle du kit (le cache est alors abandonné) lint tout l'arbre en
+6 s d'Oxlint au lieu de 37 à 70 s d'ESLint, et le job perd ses deux étapes de cache. Le job du tronc,
+qui écrit le cache, est inchangé à environ 97 s, donc pas d'économie des 57 s que le plan attendait
+là : le tronc garde ESLint comme référence. Le temps final du job Lint d'une *pull request* est estimé à
+ses 38 s actuelles moins la restauration du cache, plus environ 4 s : aucun changement mesurable quand
+le cache est trouvé, 30 à 60 s de moins quand il ne l'est pas.
 
 ## Reste à vérifier
 

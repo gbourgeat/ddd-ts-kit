@@ -838,6 +838,32 @@ its record.
 | before (the gate as configured on 2026-10-26) | 3 | 6 | 3 | 3 |
 | after | 3 | 3 | **3** | 0 |
 
+### Results of the plan: item 3, the Lint job of a pull request on Oxlint
+
+The condition (no difference with ESLint on this repository, file, line and rule) holds: 3 findings
+on each side, 3 at the same place, `no-unsafe-enum-assignment` the only rule ESLint has and Oxlint
+lacks, and it reports nothing here. The Lint job of a pull request now runs the format check and
+`npm run lint:oxlint`; the trunk and the night run ESLint on the whole tree, as before, without the
+cache (which only the pull requests read). `npm run lint` stays ESLint with its content cache.
+Measured on the workstation of the study, `nice`, one command at a time, load average of the
+last minute before each run:
+
+| Run | Load | Wall min / median | CPU (median) | Peak memory (median) |
+|---|---|---|---|---|
+| `npm run lint`, ESLint content cache, nothing changed (3 runs) | 4.4, 3.4, 3.3 | 1.22 / 1.24 s | 1.75 s | 0.38 GB |
+| `npm run lint:oxlint`, whole repository, typed, kit plugin (3 runs) | 3.0 to 3.2 | 5.86 / 5.93 s | 20.3 s | 1.55 GB |
+| `eslint .`, no cache, what the trunk runs (3 runs) | 2.6 to 3.1 | 36.9 / 37.2 s | 59.5 s | 3.0 GB |
+
+Read: against a pull request that finds its cache, Oxlint is not faster: 5.9 s against 1.2 to 1.7 s
+of lint (the job lasts 38 s at the median, set-up included). What the change buys is that the
+pull request no longer depends on the cache: a first pull request after a change of the config, of
+the lockfile or of a rule of the kit (the cache is then dropped) lints the whole tree in 6 s of
+Oxlint instead of 37 to 70 s of ESLint, and the job loses its two cache steps. The trunk job, which
+writes the cache, is unchanged at about 97 s, hence no saving of the 57 s the plan expected there:
+the trunk keeps ESLint as the reference. The final time of the Lint job of a pull request is
+estimated at its current 38 s minus the cache restore, plus about 4 s: no measurable change when
+the cache is found, 30 to 60 s less when it is not.
+
 ## Still to verify
 
 - The findings of Oxlint with the kit rules as a JS plugin against ESLint's, on this tree and
