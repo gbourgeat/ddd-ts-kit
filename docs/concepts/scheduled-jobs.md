@@ -103,10 +103,32 @@ npx ddd-ts-kit generate job notifications SendReminders --cron "0 7 * * *" --tim
 In a project with tenancy (`stack.tenancy` other than `none`), `generate job` writes
 `tenancy: 'per-tenant'`, since a global job runs in no tenant and a tenant-scoped repository
 refuses it (`NoCurrentTenantError`) on every real run; `--global` writes `tenancy: 'global'` for
-work across tenants, and the note of the command says which was written. `init` gives the scheduler
-the tenants of `TENANTS` (comma separated ids, `config.tenants`, passed to the application as
-`tenants`): bind a directory of your own once the tenants live in a table. The generated spec
-runs the job for two tenants.
+work across tenants, and the note of the command says which was written. The scheduler asks the
+`TenantDirectory` again at **each occurrence**, and what the directory lists depends on the project:
+
+- With the identity preset (`--preset identity`), the tenants are its organisations, read from
+  the database at each occurrence: an organisation opened after the process started gets its run
+  at the next occurrence, with no restart. `init` writes the directory
+  (`src/platform/composition/tenant-directory.ts`) over the organisations of the context, on
+  Drizzle, Knex and Prisma.
+- Without a source of tenants, `init` gives the scheduler the tenants of `TENANTS` (comma
+  separated ids, `config.tenants`, passed to the application as `tenants`), read **once when the
+  process starts**. A fixed list misses an organisation or a customer created later: its
+  per-tenant jobs (reminders, purges, deadlines) never run for it, with no error, until the
+  process restarts with a new list. Once the tenants live in a table of your own, make the
+  directory read it, as the identity preset does in `tenant-directory.ts`.
+
+The generated spec runs the job for two tenants.
+
+### A run reads its own tenant
+
+A per-tenant run opens the execution scope of its tenant, so a tenant-scoped repository reads
+and writes that tenant only. Prove it on the real repository, not on a fake, when a handler
+depends on one: save a row for each tenant on the test database, run the job through the test
+application, and read both rows through the repository from inside the run. Each run must find
+its own row and not the other. The end-to-end suite of the kit does exactly that against the
+generated repository of a multi-tenant project; a fake repository that ignores the tenant would
+pass for the wrong reason.
 
 The command writes the job, its spec, its switch in the job settings of the platform
 (`src/platform/jobs/job-settings.ts`, switched off with `JOB_<CONTEXT>_<JOB>_ENABLED=false`) and,
