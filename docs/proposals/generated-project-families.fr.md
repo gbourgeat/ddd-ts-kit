@@ -1,5 +1,5 @@
 [English](generated-project-families.md) · **Français**
-<!-- translation-of: generated-project-families.md sha256:d57e2e1a0db1d747 -->
+<!-- translation-of: generated-project-families.md sha256:0184af650d22b4fc -->
 
 # Proposition : les familles qui génèrent des projets, dans le *pipeline* et sur une station de travail
 
@@ -458,6 +458,15 @@ encore mesuré après le changement) :
   Attendu : les mêmes -990 secondes de *runner* par exécution pour un projet dont l'exemple a la
   taille de celui-ci, en proportion de ses mutants ; un fichier de `changes/` porte l'étape aux
   projets existants.
+
+- **Ligne 2, les tranches.** La table de `pipeline/monorepo/e2e-shards.mjs` porte les médianes du
+  2026-10-26 et les quatre *runners* finissent à 870, 867, 870 et 873 s de specs (ils finissaient
+  à 593, 758, 1 195 et 968 s de job). Les deux balayages `first-minute` ne sont **pas** coupés :
+  chacun (664 et 661 s) est plus court que la part d'un *runner* (870 s), l'équilibre est le même
+  avec ou sans coupure et le *runner* le plus long n'en raccourcit pas. Attendu : la troisième
+  tranche, de 1 195 s à environ 900 s de job (la mise en place d'un job s'ajoute aux 873 s de
+  specs), environ 300 s de temps écoulé à chaque *pull request* et exécution du tronc, aucune
+  seconde de *runner*. La dérive de la table n'est pas encore signalée.
 
 ## Ce qu'une *pull request* doit encore prouver
 

@@ -29,55 +29,55 @@ export const ELSEWHERE = [
 ];
 
 /**
- * One list per runner, with the seconds each file took on a runner of the pipeline (run 40006101911
- * of the trunk, 2026-10-23, four cores, the files one after the other), each file given, longest
- * first, to the runner with the most room. The earlier table (2026-10-12) held the seconds of a
- * workstation, which the runners took two to three times longer over; the third runner ended at
- * 715 s against 352 s for the first.
+ * One list per runner, with the seconds each file took on a runner of the pipeline (the median of
+ * the 16 runs of the trunk and of pull requests of 2026-10-26, four cores, the files one after the
+ * other), each file given, longest first, to the runner with the most room. The earlier table
+ * (2026-10-23) had the two `first-minute` sweeps at 312 and 322 seconds; they doubled to 664 and 661
+ * as the templates grew, and the third runner ended at 1,195 s against 593 s for the first. The
+ * runners now end at 870, 867, 870 and 873 seconds. The two sweeps are not split in halves: each is
+ * shorter than a runner's share, so a split would not shorten the longest runner.
  */
 export const SHARDS = [
   {
-    // With NestJS on Nest controllers and Passport, 20 seconds on a workstation, three times that on a runner.
-    'proven-stacks.spec.ts': 431,
-    'new-rule-violations.spec.ts': 65,
-    'error-reporting.spec.ts': 17,
-    'platform-error-mapper.spec.ts': 20,
-    'manual-module.spec.ts': 40,
-    // A multi-tenant project with a service, its roots composed (17 s on a workstation).
-    'service-composition.spec.ts': 18,
+    'first-minute-no-context.spec.ts': 664,
+    // oRPC and tRPC on the four servers and on Nest controllers.
+    'rpc-procedures.spec.ts': 122,
+    'event-sourced.spec.ts': 56,
+    // A multi-tenant project with a service, its roots composed.
+    'service-composition.spec.ts': 16,
+    'client-sdk.spec.ts': 12,
   },
   {
-    'zero-violation.spec.ts': 33,
-    'coverage-gate.spec.ts': 328,
-    // The Jest stack too, a few seconds over the measure.
-    'typecheck.spec.ts': 70,
-    // oRPC and tRPC on the four servers and on Nest controllers (run 40221251830 of the pull request that added them).
-    'rpc-procedures.spec.ts': 131,
-    'error-rule-violations.spec.ts': 11,
-    'client-sdk.spec.ts': 9,
+    'first-minute-two-contexts.spec.ts': 661,
+    // The Jest stack too.
+    'typecheck.spec.ts': 130,
+    'preset-identity-generated.spec.ts': 39,
+    'error-reporting.spec.ts': 20,
+    // Every route generator on Nest controllers, one project.
+    'nest-controllers.spec.ts': 13,
+    'platform-error-mapper.spec.ts': 2,
     // A copy of the example application, merge-trunk run in two of its worktrees.
     'merge-trunk-example.spec.ts': 2,
   },
   {
-    'event-sourced.spec.ts': 19,
-    'first-minute-two-contexts.spec.ts': 322,
-    'preset-identity.spec.ts': 135,
-    // With the client SDK of each pair.
-    'contract-pairs.spec.ts': 38,
-    'file-uploads.spec.ts': 26,
-    'preset-identity-generated.spec.ts': 25,
-    // Moved from the fourth runner when the Nest controllers joined it.
-    'dev-reload.spec.ts': 9,
-    'violations.spec.ts': 15,
+    'coverage-gate.spec.ts': 519,
+    'first-class.spec.ts': 208,
+    'contract-pairs.spec.ts': 60,
+    'formatted.spec.ts': 56,
+    'error-rule-violations.spec.ts': 15,
+    // A repository that declares personal columns, with the erasure of its context, installed as published.
+    'personal-fields.spec.ts': 12,
   },
   {
-    // A repository that declares personal columns, with the erasure of its context, installed as published.
-    'personal-fields.spec.ts': 20,
-    'first-minute-no-context.spec.ts': 312,
-    'first-class.spec.ts': 209,
-    // Every route generator on Nest controllers, one project (7 s on a workstation, three times that on a runner).
-    'nest-controllers.spec.ts': 21,
-    'formatted.spec.ts': 29,
+    // With NestJS on Nest controllers and Passport.
+    'proven-stacks.spec.ts': 362,
+    'preset-identity.spec.ts': 303,
+    'new-rule-violations.spec.ts': 74,
+    'zero-violation.spec.ts': 57,
+    'file-uploads.spec.ts': 34,
+    'violations.spec.ts': 20,
+    'manual-module.spec.ts': 12,
+    'dev-reload.spec.ts': 11,
   },
 ];
 

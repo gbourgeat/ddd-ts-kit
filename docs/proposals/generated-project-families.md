@@ -430,6 +430,14 @@ after the change):
   Expected: the same -990 runner seconds per run of a project whose example is the size of this
   one, in proportion to its mutants; a file of `changes/` carries the step to existing projects.
 
+- **Line 2, the shards.** The table of `pipeline/monorepo/e2e-shards.mjs` holds the medians of
+  2026-10-26 and the four runners end at 870, 867, 870 and 873 s of spec run (they ended at 593,
+  758, 1,195 and 968 s of job). The two `first-minute` sweeps are **not** split: each (664 and 661
+  s) is shorter than a runner's share (870 s), so the balance is the same with or without a split
+  and the longest runner does not get shorter by it. Expected: the third shard, 1,195 s, to about
+  900 s of job (the setup of a job on top of 873 s of specs), about 300 s of wall time on every
+  pull request and trunk run, no runner second. The drift of the table is not yet warned about.
+
 ## What a pull request must still prove
 
 The levers that need a decision trade a proof before the merge for a proof within the hour (the
