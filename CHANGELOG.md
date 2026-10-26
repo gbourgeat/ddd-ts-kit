@@ -4,6 +4,60 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.94.0
+
+**The rules of `@ddd-ts-kit/eslint-plugin` run whole when Oxlint loads the plugin as a JS plugin.** Oxlint hands a rule no type information and a parser that parses nothing. `naming-business-name` threw there, which stopped every rule of the kit on the file (303 of 985 files of a generated application); it now reads the names of the code when the linter offers no parser services, as it already did without a program. `clean-no-commented-out-code`, `language-declared-vocabulary`, `authz-declared` and `ports-implements-never-extends`, which parse a text of their own, reported nothing under Oxlint; they now parse with the parser of typescript-eslint when the run configured none (or only the stand-in of Oxlint). The findings under ESLint do not change. On the copy of the example with every rule of the catalogue broken once, Oxlint reports the 77 injections ESLint reports, each at the same place.
+
+**Under relationships, a permission modelled on an element is no longer held by the operators of the context, and a use case on the context says so.** `generate command` and `generate query` write, next to the `{ type: 'context', id: '<context>' }` resource, a `TODO(domain)` naming the element the permission is checked on (`{ type: '<aggregate>', id: <message>.<aggregate>Id }`), so `ddd-ts-kit todo` and `status` list it until the resource names it; a search keeps the context. The schema written by `init` derives on `context` only the permissions no element derives: the elements go in `elements` of `relationships/relationship-schema.ts`, and a permission derived there leaves the operators of the context, where it used to be granted to all of them whatever the element. The access-control skill and the guide on choosing access control say when the context is the right resource.
+
+`authz/resource-modelled` (an error under relationships, from the first day) reports a requirement whose resource is the context for a permission the relationship schema derives on an element type, and a search whose gate is on the context while its scope asks the same permission derived on the element; it reads the types written in `elements` or in place in `defineSchema`, and reports a schema or a resource it cannot read.
+
+To move: in a project generated earlier, open `relationships/relationship-schema.ts`: move the types of the elements out of `defineSchema` into an `elements` object and derive on `context` only `permissions.all()` minus the ids those elements derive (the template of `init` shows it), then replace each context resource by the element the use case is about. A search whose requirement and scope use the same permission needs two: one on the context, one on the element. Then run `ddd-ts-kit check`: name the element in each reported requirement, give a search two permissions (one on the context to run it, one on the element for the scope), or make the schema readable (an object literal given to `defineSchema`, derived keys as `[<context>Permissions['<permission>'].id]`).
+
+**`generate job` under relationships relates the system actor of the job as `system:<job>`, not `system:system:<job>`.**
+
+The tuple written in `platform/auth/relationships/relate-system-actors.ts` carried the prefix
+twice, so the actor of the job (`system:<context>.<job>`) held no right and every run was refused
+`FORBIDDEN` before its handler ran.
+
+To move: a job generated before this version has `system:system:` in its line of
+`relate-system-actors.ts`: remove one `system:`.
+
+**With the identity preset, a per-tenant job runs for every organisation, including one opened after the process started.**
+
+Until now `init` gave the scheduler the tenants of `TENANTS`, read once when the process
+started: an organisation created later (a sign-up, an operator) never got the run of a per-tenant
+job (a reminder, a purge, a deadline), with no error and no log. `init` under tenancy now writes
+`src/platform/composition/tenant-directory.ts`, the one place the scheduler's `TenantDirectory`
+is made; `--preset identity` (and `generate context --preset identity`) replaces it by a
+directory that reads the organisations of the identity context from the database at each
+occurrence, on Drizzle, Knex and Prisma (the preset refuses TypeORM). A project with tenancy and
+no source of tenants keeps `TENANTS`, and the documentation says plainly that a fixed list misses
+a tenant created later. The adapter is integration-tested on PostgreSQL, including an
+organisation opened after the first read and, on tsyringe, its run of a per-tenant job.
+
+`privacy:erase` and `privacy:export` go through the same directory: with the identity preset they
+reach the organisations of the database, not only the tenants of `TENANTS`, and they refuse to
+run when the directory lists none.
+
+A per-tenant run reading its own tenant only is now proven end to end on the real tenant-scoped
+repository of a generated multi-tenant project, and the generated job spec points to that
+pattern where it kept an `it.todo`.
+
+To move: a project with tenancy regenerates its platform; a project that already holds the
+identity preset and tenancy replaces `src/platform/composition/tenant-directory.ts` (or, before
+this version, the `InMemoryTenantDirectory` bound in `compose-application.ts` or
+`lay-foundations.ts`) by a directory over `<Orm>OrganisationTenantDirectory`. `TENANTS` is no
+longer read once the organisations are the tenants.
+
+**`scheduling/tenancy-declared` reports a job that does not say whether it runs per tenant or globally.** In a project whose `stack.tenancy` is not `none`, the options of every `@Scheduled(..)` and `builder.job(..)` must carry `tenancy: 'per-tenant'` or `tenancy: 'global'`. A job that leaves it out runs globally, in no tenant, as a system actor that names none, and a tenant-scoped repository refuses it at run time (`NoCurrentTenantError`) while the specs on fakes stay green. An error from the first day, with the fix in the message; what the checker cannot read (options that are not an object literal, a spread, a `tenancy` that is not a literal) is reported, never passed. The jobs `init` registers in the platform (`files.purge-staged`, `privacy.purge-expired`, `audit.archive`) now write `tenancy: 'global'`, which is what they already did by default.
+
+To move: run `ddd-ts-kit check` in a project under tenancy and add `tenancy: 'per-tenant'` to each reported job that reads or writes tenant data (the `TenantDirectory` must be bound so the scheduler can list the tenants), or `tenancy: 'global'` to a job that works across tenants and reaches no tenant-scoped repository.
+
+**The mutation job of a merge request or pull request in a generated project reuses the report of the night.** The night runs Stryker without a base, so it writes `reports/mutation/mutation.json` and no incremental file, and the job of a change that downloaded that report found nothing to reuse: it logged "No incremental result file found" and ran every mutant. The job now copies the json report to `reports/mutation/incremental.json` before it runs, the same object Stryker reads back, and mutates what the change touches only. On the example of the kit this takes the job from 1,133 s to about 140 s.
+
+To move: in a project generated before this version, add one step after the download of the report of the night, in the `mutation-changed` job of `.github/workflows/ci.yml` or the `mutation_changed` job of `.gitlab-ci.yml`: `if [ -f reports/mutation/mutation.json ]; then cp reports/mutation/mutation.json reports/mutation/incremental.json; fi`. Or run `ddd-ts-kit init` in a scratch copy and take the job from there.
+
 ## 0.93.0
 
 **The behaviour pages of `ddd-ts-kit docs` no longer open a rule with the row ids and criteria of its title.** A regression spec named `#FIX1 escalates ...` or an acceptance scenario named `#US1.04 AC1 a member declares ...` is written in `docs/behaviour/` as `escalates ...` and `a member declares ...`, read with the patterns `acceptance` uses for rows and criteria; the rest of the title is kept as it is.

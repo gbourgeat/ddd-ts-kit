@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/http",
-  "version": "0.93.0",
+  "version": "0.94.0",
   "description": "Framework-agnostic route definitions with Express, Fastify, Hono and NestJS adapters, oRPC and tRPC procedures and OpenAPI 3.1 generation.",
   "keywords": [
     "ddd",
@@ -81,8 +81,8 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.93.0",
-    "@ddd-ts-kit/validation": "0.93.0"
+    "@ddd-ts-kit/kernel": "0.94.0",
+    "@ddd-ts-kit/validation": "0.94.0"
   },
   "peerDependencies": {
     "@nestjs/common": ">=11.0.0",
@@ -121,7 +121,7 @@
     }
   },
   "devDependencies": {
-    "@ddd-ts-kit/testing": "0.93.0",
+    "@ddd-ts-kit/testing": "0.94.0",
     "@hono/node-server": "^2.1.4",
     "@nestjs/common": "^12.2.0",
     "@nestjs/core": "^12.2.0",
