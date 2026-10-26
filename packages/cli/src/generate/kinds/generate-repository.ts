@@ -1,4 +1,4 @@
-import type { OrmStack } from '../../config';
+import { isControlPlane, type OrmStack } from '../../config';
 import type { Name } from '../../naming';
 import type { RenderContext } from '../../templating';
 import { emit } from '../emit';
@@ -48,18 +48,21 @@ export function generateRepository(scope: Scope, aggregate: Name): RenderContext
 const TENANT_AWARE: readonly OrmStack[] = ['drizzle', 'knex', 'prisma', 'typeorm'];
 
 /**
- * `--tenant-scoped`, or a project whose `stack.tenancy` is not `none`: the adapter confines every
- * statement to the tenant of the work in progress through the helpers of its ORM package
- * (`tenantTable`, `tenantCondition`, `tenantWhere`). Defence in depth: the permission is still
- * decided in the application layer.
+ * `--tenant-scoped`, or a project whose `stack.tenancy` is not `none` in a context that is not the
+ * control plane of the tenants (`contexts.<name>.tenancy`): the adapter confines every statement to
+ * the tenant of the work in progress through the helpers of its ORM package (`tenantTable`,
+ * `tenantCondition`, `tenantWhere`). Defence in depth: the permission is still decided in the
+ * application layer.
  */
 function tenantVars(scope: Scope): RenderContext {
-  const asked = scope.flags.tenantFree !== true && (scope.flags.tenantScoped || scope.config.stack.tenancy !== 'none');
-  const scoped = asked && TENANT_AWARE.includes(scope.config.stack.orm);
+  const { config } = scope;
+  const inherited = config.stack.tenancy !== 'none' && !isControlPlane(config, scope.context.kebab);
+  const asked = scope.flags.tenantScoped || inherited;
+  const scoped = asked && TENANT_AWARE.includes(config.stack.orm);
 
   if (asked && !scoped) {
     scope.ws.note(
-      `--tenant-scoped is generated for drizzle, knex, prisma and typeorm only: with ${scope.config.stack.orm}, add the tenant column to the storage (\`tenant_id\`), write \`tenantScopeOf(this.scope)\` on insert and put it in the condition of every read and every update.`,
+      `--tenant-scoped is generated for drizzle, knex, prisma and typeorm only: with ${config.stack.orm}, add the tenant column to the storage (\`tenant_id\`), write \`tenantScopeOf(this.scope)\` on insert and put it in the condition of every read and every update.`,
     );
   }
 

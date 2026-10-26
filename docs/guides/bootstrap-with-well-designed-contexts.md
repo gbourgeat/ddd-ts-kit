@@ -133,8 +133,10 @@ With `--tenancy shared-table`, an organisation is a tenant: the publishers give 
 organisation as its tenant, so the consumers of other contexts run in it. The tables of the
 identity context belong to no tenant, since they decide who belongs to which: they are the
 control plane of the tenants, read across them under a decision record the preset writes
-(`docs/adr/NNNN-identity-is-the-control-plane-of-the-tenants.md`), the suppressions of
-`tenancy/scoped-statement` pointing to it. See [Multitenancy](../concepts/multitenancy.md).
+(`docs/adr/NNNN-identity-is-the-control-plane-of-the-tenants.md`). The config declares the context
+so, `"tenancy": "control-plane"` under `contexts.identity`, with the entry of `deviations` that
+names the record: `tenancy/scoped-statement` leaves its adapters alone, and `check` counts no
+suppression on a fresh project. See [Multitenancy](../concepts/multitenancy.md).
 
 The token says which organisations a person belongs to, so that every other context knows its
 tenant from it. With `--authn keycloak` the preset sets `tenantClaim: 'organization'` in

@@ -13,7 +13,7 @@ export function config(overrides: Record<string, unknown> = {}): string {
   return JSON.stringify({ deviations: recordedRelaxations(written), ...written }, null, 2);
 }
 
-/** Unless a fixture writes its own `deviations`, the severities, guard mode and directories it changes are recorded. */
+/** Unless a fixture writes its own `deviations`, the severities, guard mode, directories and context tenancies it changes are recorded. */
 function recordedRelaxations(written: Record<string, unknown>): { what: string; adr: string; reason: string }[] {
   const { rules, guard, contexts } = parseConfig(written);
 
@@ -22,6 +22,9 @@ function recordedRelaxations(written: Record<string, unknown>): { what: string; 
     ...(guard === 'enforce' ? [] : ['guard']),
     ...Object.entries(contexts).flatMap(([name, context]) =>
       context.extraDirectories.map((directory) => `contexts.${name}.extraDirectories.${directory}`),
+    ),
+    ...Object.entries(contexts).flatMap(([name, context]) =>
+      context.tenancy === undefined ? [] : [`contexts.${name}.tenancy`],
     ),
   ];
 

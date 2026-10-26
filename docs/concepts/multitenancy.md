@@ -105,6 +105,13 @@ checker reporting a statement that reaches a table straight from the executor, t
 manager, a row reached by its key alone, a read model store built without its tenant. The three others
 are wired by hand from the packages for now; `init` refuses them and says what to add.
 
+A context whose tables belong to no tenant, because it decides who belongs to which, is declared
+so in the config rather than suppressed statement by statement: `"tenancy": "control-plane"`
+under `contexts.<name>`, a deviation recorded in `deviations` with its decision record. The rule
+then leaves its adapters alone and `generate repository` confines none of them. The identity
+preset writes the three, the key, the entry and the record. One table of another context that
+holds no tenant data stays a suppression that names its record.
+
 A repository on shared tables, a simplified version of what the generator writes on Knex (the
 audit columns and the `Clock` they need are left out): every statement goes through
 a helper that reads the tenant from the scope, reads through `tenantTable`, writes through
