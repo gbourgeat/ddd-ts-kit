@@ -112,6 +112,64 @@ export const AUTHZ_RESOURCE_MODELLED_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: rule,
+    name: 'a schema whose types are given by a call',
+    expect: { file: SCHEMA },
+    files: requiring(ON_THE_INVOICE, written('defineSchema(typesOf())')),
+  },
+  {
+    ruleId: rule,
+    name: 'a type written as a shorthand property',
+    expect: { file: SCHEMA },
+    files: requiring(ON_THE_INVOICE, written('defineSchema({ user: {}, invoice })')),
+  },
+  {
+    ruleId: rule,
+    name: 'a type held in a constant of the file',
+    expect: { file: SCHEMA },
+    files: requiring(ON_THE_INVOICE, written('defineSchema({ user: {}, invoice: invoiceType })')),
+  },
+  {
+    ruleId: rule,
+    name: 'the derived relations of a type given by a call',
+    expect: { file: SCHEMA },
+    files: requiring(ON_THE_INVOICE, written('defineSchema({ user: {}, invoice: { derived: derivedOf() } })')),
+  },
+  {
+    ruleId: rule,
+    name: 'a derived key held in a constant the file does not declare',
+    expect: { file: SCHEMA },
+    files: requiring(ON_THE_INVOICE, elements("[issue]: 'owner'")),
+  },
+  {
+    ruleId: rule,
+    name: 'a search whose gate is on the context, which lists the permission among those it derives, the scope on the invoice',
+    expect: 'pass',
+    files: searching(
+      "context: { relations: { operator: ['user'] }, derived: { [billingPermissions['invoice.search'].id]: 'operator' } }",
+    ),
+  },
+  {
+    ruleId: rule,
+    name: 'a search whose gate is on the context, which derives only the permissions no element derives',
+    expect: { file: QUERY },
+    files: searching(
+      "context: { relations: { operator: ['user'] }, derived: Object.fromEntries(permissions.all().filter((permission) => !modelled.has(permission.id)).map((permission) => [permission.id, 'operator'])) }",
+    ),
+  },
+  {
+    ruleId: rule,
+    name: 'a requirement whose permission the checker cannot read',
+    expect: 'pass',
+    files: requiring(ON_THE_INVOICE, elements(`[${ISSUE}.id]: 'owner'`), { permission: 'permissionHeldElsewhere' }),
+  },
+  {
+    ruleId: rule,
+    name: 'a requirement with no resource, for a permission derived on the invoice',
+    expect: { file: COMMAND },
+    files: requiring('', elements(`[${ISSUE}.id]: 'owner'`)),
+  },
+  {
+    ruleId: rule,
     name: 'a requirement whose resource the checker cannot read, for a permission derived on the invoice',
     expect: { file: COMMAND },
     files: requiring('resource: resourceOf', elements(`[${ISSUE}.id]: 'owner'`)),
@@ -142,6 +200,15 @@ export const AUTHZ_RESOURCE_MODELLED_FIXTURES: readonly Fixture[] = [
     files: requiring(ON_THE_INVOICE, elements("[permissionOf('invoice.issue')]: 'owner'")),
   },
 ];
+
+/** A schema file whose `defineSchema` call is as written. */
+function written(call: string): string {
+  return source(
+    "import { defineSchema } from '@ddd-ts-kit/auth/rebac';",
+    '',
+    `export const relationshipSchema = ${call};`,
+  );
+}
 
 interface Placing {
   readonly before?: string;
@@ -187,7 +254,11 @@ function inline(derived: string): string {
 function requiring(
   resource: string,
   schema: string,
-  { context, overrides = {} }: { context?: string; overrides?: Record<string, unknown> } = {},
+  {
+    context,
+    overrides = {},
+    permission = ISSUE,
+  }: { context?: string; overrides?: Record<string, unknown>; permission?: string } = {},
 ): FixtureFiles {
   return project(
     {
@@ -204,7 +275,7 @@ function requiring(
         "import { Requires } from '@ddd-ts-kit/kernel/declarations';",
         "import { billingPermissions } from '@/contexts/billing/billing.permissions.js';",
         '',
-        `@Requires(${ISSUE}, { ${resource} })`,
+        `@Requires(${permission}, { ${resource} })`,
         'export class IssueInvoiceCommand extends AuthorizedCommand<void> {}',
       ),
     },
