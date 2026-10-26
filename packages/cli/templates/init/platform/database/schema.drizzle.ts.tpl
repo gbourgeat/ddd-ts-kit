@@ -1,3 +1,4 @@
+import { pgSchema } from 'drizzle-orm/pg-core';
 {{#if audit.on}}
 import { auditArchivesTable, auditChainsTable, auditEntriesTable } from '@ddd-ts-kit/audit/drizzle';
 {{/if}}
@@ -10,6 +11,9 @@ import { {{#if eventSourcing.on}}eventStoreTables, {{/if}}{{#if queue.database}}
 
 /** The schema of what the kit stores for the application: the outbox and the processed events{{#if queue.database}}, the background jobs{{/if}}{{#if queue.processTable}}, the process instances{{/if}}. */
 export const MESSAGING_SCHEMA = 'messaging';
+
+/** Exported, so that drizzle-kit writes its `CREATE SCHEMA` before the first table it holds. */
+export const messaging = pgSchema(MESSAGING_SCHEMA);
 
 {{#if tenancy.any}}
 /** It keeps the tenant of each event, so that its consumers run in that tenant. */
@@ -34,7 +38,10 @@ export const processes = processesTable(MESSAGING_SCHEMA);
 /** The schema of the audit trail. */
 export const AUDIT_SCHEMA = 'audit';
 
-// TODO(platform): drizzle-kit writes no trigger. After the first `npm run db:generate <name>`, add a custom migration (`npm run db:generate -- audit-guard --custom`) holding the statements `npm run db:audit-guard` prints: they make the entries refuse UPDATE, DELETE and TRUNCATE.
+/** Exported, so that drizzle-kit writes its `CREATE SCHEMA` before the first table it holds. */
+export const audit = pgSchema(AUDIT_SCHEMA);
+
+// drizzle-kit writes no trigger: `npm run db:generate <name>` adds the statements that make the audit trail append-only (UPDATE, DELETE and TRUNCATE refused) to the migration that creates it; `npm run db:audit-guard` prints them for a migration written by hand.
 export const auditEntries = auditEntriesTable(AUDIT_SCHEMA);
 export const auditChains = auditChainsTable(AUDIT_SCHEMA);
 /** One row per range of a chain moved to the storage of files: the anchor the chain goes on from. */
@@ -44,6 +51,9 @@ export const auditArchives = auditArchivesTable(AUDIT_SCHEMA);
 
 /** The schema of the event store: the events, the snapshots, the checkpoints and the keys of the data subjects. It records no tenant. */
 export const EVENT_STORE_SCHEMA = 'event_store';
+
+/** Exported, so that drizzle-kit writes its `CREATE SCHEMA` before the first table it holds. */
+export const eventStoreSchema = pgSchema(EVENT_STORE_SCHEMA);
 
 const eventStore = eventStoreTables(EVENT_STORE_SCHEMA);
 

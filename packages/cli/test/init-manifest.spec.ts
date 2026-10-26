@@ -136,7 +136,8 @@ describe('the package.json init writes', () => {
 
     expect(scripts['db:migrate']).toBe('typeorm migration:run -d dist/src/platform/database/data-source.js');
 
-    expect(scripts['db:generate']).toBe('typeorm migration:generate -d dist/src/platform/database/data-source.js');
+    // The CLI of the kit reads the same data source from the config: `ddd-ts-kit typeorm-generate`.
+    expect(scripts['db:generate']).toBe('ddd-ts-kit typeorm-generate');
   });
 
   it('makes every migration tool refuse a migration without a name, and drizzle-kit prefix it with a timestamp', () => {
@@ -145,7 +146,7 @@ describe('the package.json init writes', () => {
 
     expect(generate('drizzle')).toBe('ddd-ts-kit drizzle-generate --name');
     expect(generate('knex')).toBe('knex migrate:make');
-    expect(generate('prisma')).toBe('prisma migrate dev --create-only --name');
+    expect(generate('prisma')).toBe('ddd-ts-kit prisma-generate --name');
     expect(read(initProject(...NPM), 'drizzle.config.ts')).toContain("migrations: { prefix: 'timestamp' },");
   });
 

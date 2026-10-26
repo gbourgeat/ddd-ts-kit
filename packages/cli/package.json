@@ -54,6 +54,8 @@
   "devDependencies": {
     "@ddd-ts-kit/audit": "^0.91.0",
     "@ddd-ts-kit/events": "^0.91.0",
-    "@ddd-ts-kit/kernel": "^0.91.0"
+    "@ddd-ts-kit/kernel": "^0.91.0",
+    "@types/pg": "^8.23.1",
+    "pg": "^8.23.1"
   }
 }

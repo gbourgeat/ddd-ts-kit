@@ -348,6 +348,25 @@ jobs:
       - name: Each stack generated whole and held to the compiler
         run: npm run ci:test:pairwise
 
+  migrations:
+    name: First migration of a generated project, on a real PostgreSQL
+    needs: install
+    # At night, on demand and on the pull request of a release: the tool of each ORM generates, the audit guard is added, the migration is applied.
+    if: ${{ needs.install.outputs.integrated == 'true' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.event.pull_request.title, 'chore(release)')) }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    env:
+      DDD_TS_KIT_MIGRATIONS_SERVER: postgres://app:app@localhost:5432
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: PostgreSQL
+        run: sh pipeline/github/scripts/start-postgres.sh
+      - name: Drizzle, Prisma and TypeORM, installed for real, generate their first migration and apply it
+        run: npm run ci:test:migrations
+
   managers:
     name: Generated project on ${{ matrix.manager }}
     needs: install

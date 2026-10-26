@@ -13,6 +13,8 @@ import { docsCommand } from './commands/docs';
 import { doctorCommand } from './commands/doctor';
 import { lintCommand } from './commands/lint';
 import { drizzleGenerateCommand } from './commands/drizzle-generate';
+import { prismaGenerateCommand } from './commands/prisma-generate';
+import { typeormGenerateCommand } from './commands/typeorm-generate';
 import { errorFactoriesCommand } from './commands/error-factories';
 import { generateCommand } from './commands/generate';
 import { initCommand } from './commands/init';
@@ -71,6 +73,8 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   'depcruise-config': depcruiseConfigCommand,
   'build-aliases': buildAliasesCommand,
   'drizzle-generate': drizzleGenerateCommand,
+  'prisma-generate': prismaGenerateCommand,
+  'typeorm-generate': typeormGenerateCommand,
   'error-factories': errorFactoriesCommand,
   'value-objects': valueObjectsCommand,
   'platform-folders': platformFoldersCommand,
