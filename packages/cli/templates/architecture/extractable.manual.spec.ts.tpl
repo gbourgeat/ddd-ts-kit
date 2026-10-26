@@ -16,9 +16,9 @@ describe('A bounded context is a deployable unit in waiting', () => {
     expect(() => createPlatform(inertPersistence(), { events: inProcessEvents() })).not.toThrow();
   });
 
-  // Jest refuses a table without rows: until the first context joins the project, its cases wait.
+  // Jest refuses a table without rows: until the first context joins the project, its cases wait, as a passing case that says so (a pending entry would stay in the list of what is left for ever).
   if (contexts.length === 0) {
-    it.todo('wires each context alone, with its scheduled jobs, once the project has one');
+    it('has no context to wire alone yet', () => expect(contexts).toHaveLength(0));
   } else {
     it.each(contexts)('%s wires alone, on the platform, with no other context', (name, module) => {
       const platform = createPlatform(inertPersistence(), { events: inProcessEvents() });

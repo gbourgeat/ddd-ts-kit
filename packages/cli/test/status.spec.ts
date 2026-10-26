@@ -224,3 +224,18 @@ describe('status at step 7, the build', () => {
     expect(cli(root, 'status').stdout).toContain('Next: 6 plan-slices - cut the first slices of billing\n');
   });
 });
+
+describe('status and todo, the specs the kit owns', () => {
+  it('lists no it.todo for the extractable spec, with no context yet and with one', () => {
+    const root = initProject();
+    const extractable = 'test/architecture/extractable.spec.ts';
+
+    expect(read(root, extractable)).not.toContain('it.todo');
+    expect(cli(root, 'todo').stdout).not.toContain(extractable);
+
+    cli(root, 'generate', 'context', 'billing', '--classification', 'core');
+
+    expect(read(root, extractable)).not.toContain('it.todo');
+    expect(cli(root, 'todo').stdout).not.toContain(extractable);
+  });
+});
