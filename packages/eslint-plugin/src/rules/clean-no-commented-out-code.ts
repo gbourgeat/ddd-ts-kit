@@ -1,4 +1,5 @@
 import type { TSESLint } from '@typescript-eslint/utils';
+import { parserOf } from '../support/parse/parser-of';
 import { isCommentedOutCode } from '../support/comments/is-commented-out-code';
 import { isFragment } from '../support/comments/is-fragment';
 import { commentLines, type CommentLine } from '../support/comments/comment-lines';
@@ -14,7 +15,7 @@ export const cleanNoCommentedOutCode = defineRule<'code'>({
     code: 'The comment holds code: "{{excerpt}}". Delete it: version control keeps the old version, and code that does not run misleads the reader.',
   },
   create({ context, sourceCode, report }) {
-    const { parser } = context.languageOptions;
+    const parser = parserOf(context);
 
     return {
       Program() {

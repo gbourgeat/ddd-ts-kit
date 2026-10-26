@@ -785,6 +785,119 @@ of this page:
 5. Oxfmt, tsdown, oxc-transform and the module cache of Vitest in the pipeline stay out; this
    section is the figure to compare with when one of them changes.
 
+### Results of the plan: items 1 and 2 (branch `fix/oxlint-plugin-whole`)
+
+**Item 1, the plugin runs whole.** Three changes in `packages/eslint-plugin`: `naming-business-name`
+asks for the parser services in a `try` and reads the names of the code when the linter offers none;
+four rules that parse a text of their own (`clean-no-commented-out-code`, `language-declared-vocabulary`,
+`authz-declared`, `ports-implements-never-extends`) take the parser of typescript-eslint when the run
+configured none. The parser Oxlint hands its JS plugins as `languageOptions.parser` is a stand-in
+named `oxlint` whose `parse` throws "not implemented yet": it is treated as no parser at all, which
+is why the first attempt (take `languageOptions.parser` when present) still missed two rules. A spec
+of the package runs three rules on one file under ESLint and under Oxlint and compares them. The
+measure is the one of the study, the harness of the conformance suite (every injection in rounds on
+a copy of the example, both tools, same files):
+
+| Copy of the example, 115 files in 7 rounds | Before | After |
+|---|---|---|
+| files on which no rule of the kit ran (`fatal`) | 303 of 985 | 0 |
+| findings on the untouched copy | 345 (303 `fatal`, 41 `consistent-type-imports`, 1 `no-undef`) | 42 (41 `consistent-type-imports`, 1 `no-undef`) |
+| injections ESLint reports that Oxlint reports too, `naming-business-name` on | 27 of 77 | **77 of 77** |
+| the same, `naming-business-name` off | 74 of 77 | 77 of 77 (the rule is no longer needed off) |
+| findings of the rounds, ESLint / Oxlint / at the same place | 89 / 108 / 29 | 89 / 100 / **89** |
+| findings only Oxlint makes | 68 `fatal`, 11 `consistent-type-imports` | 11 `consistent-type-imports` |
+| findings only ESLint makes | 60 | 0 |
+
+What is left is outside the plugin: `consistent-type-imports` of Oxlint ignores
+`emitDecoratorMetadata` (41 on the untouched copy, 11 in the rounds, all false) and `no-undef` reads a
+`.cjs` as a module; both belong to item 4, the Oxlint preset of a generated project.
+
+**Item 2, the configuration and the comparison.** `.oxlintrc.json` has the four rules back
+(`no-var`, `prefer-const`, `prefer-rest-params`, `prefer-spread`, on sources and tests), the
+fifteen core rules that typescript-eslint turns off for TypeScript (the study counted thirteen; read
+from `eslint --print-config` of a source file, they are `constructor-super`, `getter-return`,
+`no-class-assign`, `no-const-assign`, `no-dupe-class-members`, `no-dupe-keys`, `no-func-assign`,
+`no-import-assign`, `no-new-native-nonconstructor`, `no-obj-calls`, `no-setter-return`,
+`no-this-before-super`, `no-unreachable`, `no-unsafe-negation`, `no-with`) off, the ignore of
+`packages/audit/test/generated/`, and `no-unused-vars` off on scripts as in ESLint. Oxlint then
+reported three true findings ESLint does not make (two `no-unsafe-optional-chaining` on
+`(x?.y as T)['200']` in specs of `packages/http`, one `unbound-method` on
+`(this.options.follow ?? followWithFetch)(request)` in `packages/testing`); they are fixed in the
+code, so that both tools say the same on this tree. The trial job runs both tools with their JSON
+output and `pipeline/monorepo/compare-linters.mjs` writes to its summary the totals and every
+finding only one side makes, by file, line and rule, `no-unsafe-enum-assignment` set apart as
+expected. It stays outside the gate (`continue-on-error`, not needed by the gate job); the ESLint
+run of the job is cold, which adds about 70 s to a job of 38 s that runs on the trunk and at night
+only. The comparison on the broken copy of the example is not in CI: it needs the whole conformance
+suite (a build of every package and a generated Oxlint configuration for the example, which the
+migrator writes and the repository does not keep), about 40 s on a workstation; the measure above is
+its record.
+
+| This repository, 6,084 files | ESLint | Oxlint | At the same place | Only Oxlint |
+|---|---|---|---|---|
+| before (the gate as configured on 2026-10-26) | 3 | 6 | 3 | 3 |
+| after | 3 | 3 | **3** | 0 |
+
+### Results of the plan: item 3, the Lint job of a pull request on Oxlint
+
+The condition (no difference with ESLint on this repository, file, line and rule) holds: 3 findings
+on each side, 3 at the same place, `no-unsafe-enum-assignment` the only rule ESLint has and Oxlint
+lacks, and it reports nothing here. The Lint job of a pull request now runs the format check and
+`npm run lint:oxlint`; the trunk and the night run ESLint on the whole tree, as before, without the
+cache (which only the pull requests read). `npm run lint` stays ESLint with its content cache.
+Measured on the workstation of the study, `nice`, one command at a time, load average of the
+last minute before each run:
+
+| Run | Load | Wall min / median | CPU (median) | Peak memory (median) |
+|---|---|---|---|---|
+| `npm run lint`, ESLint content cache, nothing changed (3 runs) | 4.4, 3.4, 3.3 | 1.22 / 1.24 s | 1.75 s | 0.38 GB |
+| `npm run lint:oxlint`, whole repository, typed, kit plugin (3 runs) | 3.0 to 3.2 | 5.86 / 5.93 s | 20.3 s | 1.55 GB |
+| `eslint .`, no cache, what the trunk runs (3 runs) | 2.6 to 3.1 | 36.9 / 37.2 s | 59.5 s | 3.0 GB |
+
+Read: against a pull request that finds its cache, Oxlint is not faster: 5.9 s against 1.2 to 1.7 s
+of lint (the job lasts 38 s at the median, set-up included). What the change buys is that the
+pull request no longer depends on the cache: a first pull request after a change of the config, of
+the lockfile or of a rule of the kit (the cache is then dropped) lints the whole tree in 6 s of
+Oxlint instead of 37 to 70 s of ESLint, and the job loses its two cache steps. The trunk job, which
+writes the cache, is unchanged at about 97 s, hence no saving of the 57 s the plan expected there:
+the trunk keeps ESLint as the reference. The final time of the Lint job of a pull request is
+estimated at its current 38 s minus the cache restore, plus about 4 s: no measurable change when
+the cache is found, 30 to 60 s less when it is not.
+
+### Results of the plan: item 4 of the request, the pre-commit hook on Oxlint
+
+The hook lints the staged files with `oxlint --type-aware --no-error-on-unmatched-pattern` instead of
+ESLint (the flag is needed: Oxlint exits 1 when every file it is given is ignored, a commit of
+templates only, and then lints the working directory, which costs a run and fails nothing). The 13
+files of a typical commit (#405), five runs each because the load average was above 4:
+
+| Run | Load | Wall min / median | CPU (median) | Peak memory (median) |
+|---|---|---|---|---|
+| ESLint, `--no-warn-ignored`, no cache (the hook as it was) | 4.6 to 4.8 | 1.66 / 1.70 s | 3.71 s | 0.48 GB |
+| Oxlint, typed, kit plugin (the hook now) | 4.4 to 4.7 | 0.79 / 0.81 s | 2.80 s | 0.29 GB |
+
+The hook is twice as fast, on the same files and the same parity as the Lint job.
+
+### Results of the plan: item 5 of the request, the module cache of Vitest on the workstation
+
+Confirmed, and nothing to turn on: Vitest 5 keeps the transformed modules in
+`node_modules/.vitest-cache` by default (`experimental.fsModuleCache`), `node_modules` is ignored by
+git, and the pipeline never keeps it (the install job saves `node_modules` before any spec ran).
+`CONTRIBUTING.md` now says where it lives and that `rm -rf node_modules/.vitest-cache` empties it.
+Measured with that directory kept (warm) and removed before each run (cold), on a loaded machine
+(load 2.5 to 13.8, five runs when above 4):
+
+| Run | Wall min / median | CPU (median) | Peak memory (median) |
+|---|---|---|---|
+| `vitest run packages/kernel` (59 files), warm | 7.22 / 7.87 s | 80.5 s | 4.1 GB |
+| the same, cache emptied | 11.71 / 11.84 s | 84.1 s | 4.1 GB |
+| `vitest run packages/http` (47 files), warm | 3.86 / 4.02 s | 50.5 s | 1.9 GB |
+| the same, cache emptied | 5.08 / 5.14 s | 54.4 s | 2.0 GB |
+
+The gain is 33 percent of the wall time on the kernel and 22 percent on http (38 and 25 percent in the
+first measure), 5 percent on the whole suite; the cache weighs 14 MB for http and 54 MB for the kernel
+specs. Not kept in the pipeline, as decided.
+
 ## Still to verify
 
 - The findings of Oxlint with the kit rules as a JS plugin against ESLint's, on this tree and
