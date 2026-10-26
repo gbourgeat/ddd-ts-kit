@@ -38,8 +38,9 @@ qualifiers of a refusal besides: `invalid`, `unknown`, `already`, `too`, `no`, `
 
 A context that `generate context <name> --preset <preset>` will write (today `identity`) takes
 the preset's glossary as its draft, not an empty one: its terms are in
-`packages/cli/src/presets/identity-terms.ts` (`IDENTITY_TERMS`, the rows the preset writes into
-its CONTEXT.md; no command prints them). Keep the preset's word for each concept it names
+[identity-preset.md](identity-preset.md), next to this skill, the rows the preset writes into its
+CONTEXT.md word for word (before the bootstrap the project has no CLI to read them from). Keep
+the preset's word for each concept it names
 (`Organisation` is the tenant, `Member` a membership), and add only the business terms beyond it,
 one row each. The preset's terms win: the glossaries downstream refer to them.
 
