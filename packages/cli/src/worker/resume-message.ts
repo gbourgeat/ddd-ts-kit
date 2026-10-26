@@ -1,5 +1,4 @@
 import { namedPaths } from './named-paths';
-import { REPORT_FILE } from './report-file';
 import type { WorkerProgress } from './worker-progress';
 
 /** Where the resumed worker works and what it checks against. */
@@ -35,7 +34,7 @@ export function resumeMessage(progress: WorkerProgress, place: ResumedPlace): st
       ...(progress.inSlice.length > 0 ? [`Left modified by you: ${namedPaths(progress.inSlice)}.`] : []),
       leftText(progress),
     ].join(' '),
-    `Next: finish ${current === undefined ? 'it' : `#${current.id}`}, ${verify} until it passes, commit with the command it prints, rewrite ${REPORT_FILE}, end with the report.`,
+    `Next: finish ${current === undefined ? 'it' : `#${current.id}`}, ${verify} until it passes, commit with the command it prints, end with your report as your final message.`,
   ].join('\n');
 }
 

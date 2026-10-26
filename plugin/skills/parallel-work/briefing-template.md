@@ -56,12 +56,11 @@ A spec of a delivered row that a change of this branch broke is adapted in this 
 
 Budget: one row is one agent's work, two at most. The guard counts your tool calls and warns you twice,
 early rather than late: about 30 turns before your limit (finish the slice under way, start no other) and
-about 12 before (stop changing code, commit what verify-slice passed, rewrite the report, end). Without
+about 12 before (stop changing code, commit what verify-slice passed, end with your report). Without
 these notices (another host), stop after your second slice. Stopping loses nothing: your commits, the files
 you leave and your report are read by `worker-scope --resume`. When your context grows long, act as at the
 first notice.
-Rewrite .ddd-ts-kit/report.md in the worktree, in the form of the report below, after each commit, whenever
-a need, a question or a term appears, and before ending.
+Your report is your final message, in the form of the report below; never write a report file.
 
 Done when: every slice is committed, `npm run verify` is green in the worktree (the whole tree:
 `check --changed-since` sees your files only), and `npx ddd-ts-kit todo <context>` lists nothing but

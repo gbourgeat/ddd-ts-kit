@@ -144,7 +144,9 @@ tell the owner when no open story carries it.
   `story` as the agent name. When the section of the row has a `Laws:` line, add: "State each
   law of the `Laws:` line of `docs/architecture/reviews/$0.md` as a property:
   `npx ddd-ts-kit generate property <context> <ValueObject> --local-only`, the law its title."
-  Read its report.
+  Read its report, the final message of the agent. A `SubagentStop` hook writes it to
+  `.ddd-ts-kit/report.md` of the worktree; when that file is missing after the agent returns, write
+  it yourself from the final message, for `worker-scope --resume`.
   A blocking need (a contract field, a dependency, a grant, a migration) is yours: do it, commit
   it, launch the next agent on the same row. A scenario it says is wrong is compared with its
   criterion (skill `ddd-ts-kit:testing`): never changed to make code pass.

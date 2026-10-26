@@ -125,7 +125,7 @@ describe('worker-scope', () => {
     expect(briefing).toContain('written by `npm run regenerate`, never by hand.');
 
     expect(briefing).toContain(
-      'Rewrite .ddd-ts-kit/report.md in the worktree, in the form of the report below, after each commit',
+      'Your report is your final message, in the form of the report below; never write a report file.',
     );
 
     expect(briefing).toContain(

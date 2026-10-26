@@ -25,13 +25,14 @@ install of its package manager), never an install that names a package.
   rather than late. At the notice "your turn limit is near" (about 30 turns left): finish the
   slice under way and start no other, listed as not done. At "your turn limit is close" (about
   12 left): stop changing code; if `verify-slice` passed, commit with the command it printed,
-  otherwise leave the files as they are; rewrite the report, then end with it. Without these
+  otherwise leave the files as they are; write the report, then end with it. Without these
   notices (another host), stop after your second slice. When your context grows long (many
   files read, long outputs), act as at the first notice.
-- Rewrite `.ddd-ts-kit/report.md` in the worktree, in the form of the report below, after
-  each commit, whenever a need, a question or a term appears, and before ending. It is ignored
-  by git. Your commits, the files you leave and this report are what `worker-scope --resume`
-  reads when you stop: stopping loses nothing, a resumed agent or a new one continues from them.
+- Your report is your final message, in the form below. Claude Code refuses a sub-agent the
+  write of a report file: never write one. A hook of the plugin writes your last message to
+  `.ddd-ts-kit/report.md` of your worktree (ignored by git) when you end. Your commits, the
+  files you leave and that report are what `worker-scope --resume` reads when you stop:
+  stopping loses nothing, a resumed agent or a new one continues from them.
 - A slice that is not green is not committed: name it in the report with the files it left
   modified, so that the next agent resumes from them instead of starting over. Resumed with a
   message, continue the row it names: never regenerate, delete or reset the files you left.

@@ -387,9 +387,11 @@ Rules that keep worktrees from hurting:
 - stage file by file, and read the staged diff before committing: a broad `git add` in a
   directory another process writes to commits somebody else's half-finished work;
 - remove the worktree when its branch is merged (`git worktree remove`);
-- a `context-builder` agent rewrites `.ddd-ts-kit/report.md` in its worktree (ignored by git)
-  after each commit and before it ends: when one stops, `worker-scope --resume` reads it there
-  with the rest of the worktree.
+- a `context-builder` agent returns its report as its final message (Claude Code refuses a
+  sub-agent the write of a report file); a `SubagentStop` hook of the plugin writes that message
+  to `.ddd-ts-kit/report.md` in its worktree (ignored by git): when one stops, `worker-scope
+  --resume` reads it there with the rest of the worktree. If the file is missing, the conductor
+  writes it from the agent's final message.
 
 For coding agents specifically: an agent told to work "in the appointments context" that is
 started in the main checkout will still read, and may edit, anything. Give it a worktree and
@@ -430,7 +432,7 @@ read from git and from files the kit writes, never from what it says.
 the hooks that already run on its shell commands and its writes (no hook is added on every tool
 call), and adds a notice to the call that crosses each threshold, once a run: "your turn limit
 is near" (finish the slice under way, start no other) and "your turn limit is close" (stop
-changing code, commit what `verify-slice` passed, rewrite the report, end). Reads (`Read`,
+changing code, commit what `verify-slice` passed, end with your report). Reads (`Read`,
 `Grep`, `Glob`) are not seen, so the thresholds assume a quarter of the calls uncounted: on the
 measured runs, where nearly every call went through the shell, the notices came at 90 and 117
 calls of 150, early rather than late. Stopping early costs a message; stopping late loses the
@@ -447,7 +449,7 @@ report. A resumed agent gets a new turn budget, and its count starts again.
 - `agent.json`, written by the guard: the agent id, its run (1 at launch, one more at each
   resume), when its run started and at which commit, when it was last seen, the calls counted,
   the calls each committed row took, and its last stop when it ended on its own;
-- `report.md`, written by the agent, whose freshness is read from the time of the last commit
+- `report.md`, written by the `SubagentStop` hook from the final message of the agent, whose freshness is read from the time of the last commit
   and of the last change of a file of the slice.
 
 **One command for the conductor.** On a stop notification, from the trunk:
@@ -464,7 +466,7 @@ next: SendMessage to a389e09:
 ---
 Continue row #M1.14 (Pay an invoice) in .worktrees/billing; do not start #M1.15.
 Committed: #M1.07, #M1.12. Left modified by you: src/contexts/billing/... 3 TODO(domain) and 2 it.todo remain; your last verify-slice failed at tests.
-Next: finish #M1.14, `npx ddd-ts-kit verify-slice billing --since origin/main` until it passes, commit with the command it prints, rewrite .ddd-ts-kit/report.md, end with the report.
+Next: finish #M1.14, `npx ddd-ts-kit verify-slice billing --since origin/main` until it passes, commit with the command it prints, end with your report as your final message.
 ---
 If SendMessage is refused, or the agent stops again without progress: launch a new context-builder with this briefing:
 ---
@@ -487,7 +489,7 @@ with this command; without a worker worktree it starts no process for it.
 notice added by the guard reaches the agent's model, which follows it; `SubagentStart` fires at
 the launch and at a `SendMessage` resume; `SubagentStop` fires when the agent ends on its own and
 honours one `block`, and then the guard keeps it going once when it would leave a slice that
-passed `verify-slice` uncommitted, or no current report. A stop at the turn limit runs no hook at
+passed `verify-slice` uncommitted, and writes the report from its last message. A stop at the turn limit runs no hook at
 all: the notices are the primary mechanism, and `--resume` reads the rest from the worktree.
 
 The parallel-work skill tells the conductor what to do on each kind of stop: run `--resume`, send

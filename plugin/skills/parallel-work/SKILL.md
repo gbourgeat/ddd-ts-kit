@@ -170,6 +170,10 @@ together, without the isolation option (the worktree already exists). In one con
 the next row's agent once the previous one reported. The guard warns each `context-builder`
 twice before its turn limit (finish the slice under way, then stop, commit what passed and
 report) and records its runs in its worktree; a session start names the workers to resume.
+A worker returns its report as its final message (Claude Code refuses a sub-agent the write of a
+file) and a `SubagentStop` hook writes it to `.ddd-ts-kit/report.md` of its worktree. When the file
+is missing after a worker returns, write it yourself from the worker's final message, so that
+`worker-scope --resume` reads it.
 
 **When an agent stops**, whatever the reason:
 
