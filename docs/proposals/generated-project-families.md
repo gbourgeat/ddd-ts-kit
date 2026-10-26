@@ -438,6 +438,17 @@ after the change):
   900 s of job (the setup of a job on top of 873 s of specs), about 300 s of wall time on every
   pull request and trunk run, no runner second. The drift of the table is not yet warned about.
 
+- **Line 5, one family.** `zero-violation` and `formatted` stay in the end-to-end shards (the
+  homogeneity guarantee runs on every pull request that reaches `cli`, where the heavy checks
+  already are) and leave the unit suite (`describe.runIf(SLOW)`, as the other specs of
+  `test/e2e`), so the two unit jobs and the pre-push hook stop generating the matrix. Measured on
+  the workstation: 49 s and 57 s of wall, 118 CPU seconds and 1.3 GB per push that reaches `cli`.
+  Expected: about 57 s off each unit job (the longest files after the compile matrix), about 113
+  runner seconds off a pull request run and the same off a trunk run, no cost in the shards. The
+  unit coverage of `cli` fell by two lines under its floor of 98 percent (97.99 against 98.00),
+  which two unit specs now hold (a registration with no requirement; `--tenant-scoped` on a
+  custom store).
+
 ## What a pull request must still prove
 
 The levers that need a decision trade a proof before the merge for a proof within the hour (the

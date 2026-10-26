@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:e7327798ac2c44ed -->
+<!-- translation-of: CONTRIBUTING.md sha256:620af7affd82471e -->
 
 # Contribuer
 
@@ -64,6 +64,9 @@ l'arbre, qui porte aussi `no-unsafe-enum-assignment`, et le job d'essai compare 
 `eslint.config.mjs` atteint `.oxlintrc.json` dans le même commit. Vitest garde les modules transformés des sources dans
 `node_modules/.vitest-cache` (actif par défaut, ignoré par git, non conservé par la pipeline) : il rend une deuxième
 exécution d'un package environ 40 pour cent plus rapide, et `rm -rf node_modules/.vitest-cache` le vide.
+
+`zero-violation.spec.ts` et `formatted.spec.ts` génèrent chaque pile : ils ne tournent que dans les
+tranches de bout en bout (`DDD_TS_KIT_E2E=1`), ni dans `npm test` ni dans le *hook* `pre-push`.
 
 ## Règles de base
 

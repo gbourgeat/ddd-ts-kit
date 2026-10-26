@@ -60,6 +60,9 @@ also holds `no-unsafe-enum-assignment`, and the trial job compares the two. A ch
 (on by default, ignored by git, not kept by the pipeline): it makes a second run of one package about 40 percent
 faster, and `rm -rf node_modules/.vitest-cache` empties it.
 
+`zero-violation.spec.ts` and `formatted.spec.ts` generate every stack: they run in the end-to-end shards
+only (`DDD_TS_KIT_E2E=1`), not in `npm test` nor in the pre-push hook.
+
 ## Ground rules
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) is the single normative document. A change of

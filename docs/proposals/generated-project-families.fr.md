@@ -1,5 +1,5 @@
 [English](generated-project-families.md) · **Français**
-<!-- translation-of: generated-project-families.md sha256:0184af650d22b4fc -->
+<!-- translation-of: generated-project-families.md sha256:c40e44a7a886b19e -->
 
 # Proposition : les familles qui génèrent des projets, dans le *pipeline* et sur une station de travail
 
@@ -467,6 +467,18 @@ encore mesuré après le changement) :
   tranche, de 1 195 s à environ 900 s de job (la mise en place d'un job s'ajoute aux 873 s de
   specs), environ 300 s de temps écoulé à chaque *pull request* et exécution du tronc, aucune
   seconde de *runner*. La dérive de la table n'est pas encore signalée.
+
+- **Ligne 5, une seule famille.** `zero-violation` et `formatted` restent dans les tranches de
+  bout en bout (la garantie d'homogénéité tourne à chaque *pull request* qui atteint `cli`, là où
+  sont déjà les contrôles lourds) et quittent la suite unitaire (`describe.runIf(SLOW)`, comme les
+  autres specs de `test/e2e`) : les deux jobs unitaires et le *hook* `pre-push` ne génèrent plus la
+  matrice. Mesuré sur la station : 49 s et 57 s de temps écoulé, 118 secondes de CPU et 1,3 Go par
+  *push* qui atteint `cli`. Attendu : environ 57 s en moins par job unitaire (les fichiers les plus
+  longs après la matrice de compilation), environ 113 secondes de *runner* en moins par
+  *pull request* et autant par exécution du tronc, aucun coût dans les tranches. La couverture
+  unitaire de `cli` passait de deux lignes sous son plancher de 98 pour cent (97,99 contre 98,00) :
+  deux specs unitaires la tiennent désormais (un enregistrement sans exigence ; `--tenant-scoped`
+  sur un stockage personnalisé).
 
 ## Ce qu'une *pull request* doit encore prouver
 
