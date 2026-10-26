@@ -27,7 +27,7 @@ const NOTICES = {
   first:
     'ddd-ts-kit: your turn limit is near (about 30 turns left, or more). Finish the slice under way; start no other one (list it as not done in your report).',
   second:
-    'ddd-ts-kit: your turn limit is close (about 12 turns left, or more). Stop changing code. If `verify-slice` passed, commit with the command it printed; otherwise leave the files as they are. Rewrite `.ddd-ts-kit/report.md`, then end with your report.',
+    'ddd-ts-kit: your turn limit is close (about 12 turns left, or more). Stop changing code. If `verify-slice` passed, commit with the command it printed; otherwise leave the files as they are. Then end with your report as your final message.',
 };
 
 /**
@@ -72,6 +72,7 @@ export function stopRun(input, places) {
   if (!run?.worker || !existsSync(run.worker)) {
     return undefined;
   }
+  writeReport(run.worker, input);
   const slice = sliceState(run.worker);
   const agent = readJson(join(run.worker, AGENT_FILE));
   if (agent) {
@@ -92,11 +93,62 @@ export function stopRun(input, places) {
 
 function stopReason(slice) {
   if (slice.verifiedUncommitted) {
-    return 'ddd-ts-kit: verify-slice passed but the slice is not committed. Commit it with the command verify-slice printed, then rewrite `.ddd-ts-kit/report.md` and end with your report.';
+    return 'ddd-ts-kit: verify-slice passed but the slice is not committed. Commit it with the command verify-slice printed, then end with your report as your final message.';
   }
-  return slice.reportCurrent
-    ? undefined
-    : 'ddd-ts-kit: `.ddd-ts-kit/report.md` is older than your last commit or change. Rewrite it in the form of your briefing (slices done with their commits, slices not done with the files left, needs, terms, questions), then end with the same report.';
+  return undefined;
+}
+
+/**
+ * Claude Code refuses a sub-agent the write of a report file: the builder ends with its report as
+ * its final message, and the file `worker-scope --resume` reads is written here, from that message
+ * (the hook input, else the last assistant message of the transcript it names). Fails open.
+ */
+export function writeReport(worker, input) {
+  try {
+    const report = finalMessage(input);
+    if (report) {
+      mkdirSync(join(worker, '.ddd-ts-kit'), { recursive: true });
+      writeFileSync(join(worker, REPORT_FILE), `${report}\n`);
+    }
+  } catch {
+    // fail open
+  }
+}
+
+function finalMessage(input) {
+  const given = typeof input.last_assistant_message === 'string' ? input.last_assistant_message.trim() : '';
+  if (given) {
+    return given;
+  }
+  const path = [input.agent_transcript_path, input.transcript_path].find((value) => typeof value === 'string');
+  const lines = (path ? (readText(path) ?? '') : '').split('\n');
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    const text = assistantText(lines[index]);
+    if (text) {
+      return text;
+    }
+  }
+  return undefined;
+}
+
+function assistantText(line) {
+  try {
+    const entry = JSON.parse(line);
+    const message = entry?.message ?? entry;
+    if (entry?.type !== 'assistant' && message?.role !== 'assistant') {
+      return undefined;
+    }
+    const content = message.content;
+    const text = Array.isArray(content)
+      ? content
+          .filter((block) => block?.type === 'text' && typeof block.text === 'string')
+          .map((block) => block.text)
+          .join('\n')
+      : content;
+    return typeof text === 'string' && text.trim() ? text.trim() : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function newRun() {

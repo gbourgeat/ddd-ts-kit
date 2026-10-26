@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:2a45dfa033e09ff8 -->
+<!-- translation-of: parallel-work.md sha256:ffc8838cd12a0820 -->
 
 # Travailler en parallèle sans collisions
 
@@ -409,9 +409,11 @@ Les règles qui empêchent les *worktrees* de faire du tort :
   dans un répertoire où écrit un autre processus commite le travail à moitié fini de quelqu'un
   d'autre ;
 - retirez le *worktree* quand sa branche est fusionnée (`git worktree remove`) ;
-- un agent `context-builder` réécrit `.ddd-ts-kit/report.md` dans son *worktree* (ignoré par
-  git) après chaque *commit* et avant de finir : quand il s'arrête, `worker-scope --resume` le lit
-  là avec le reste du *worktree*.
+- un agent `context-builder` rend son rapport comme dernier message (Claude Code refuse à un
+  sous-agent l'écriture d'un fichier de rapport) ; un *hook* `SubagentStop` du plugin écrit ce
+  message dans `.ddd-ts-kit/report.md` de son *worktree* (ignoré par git) : quand il s'arrête,
+  `worker-scope --resume` le lit là avec le reste du *worktree*. Si le fichier manque, le chef
+  d'orchestre l'écrit depuis le dernier message de l'agent.
 
 Pour les agents de code en particulier : un agent à qui l'on dit de travailler « dans le contexte
 appointments » et qui est lancé dans le checkout principal lira quand même, et pourra modifier,
@@ -459,7 +461,7 @@ le garde compte et l'avertit, et ce qu'il laisse se lit dans git et dans des fic
 (aucun *hook* n'est ajouté sur chaque appel d'outil), et ajoute un avertissement à l'appel qui
 franchit chaque seuil, une fois par exécution : « your turn limit is near » (finir la tranche en
 cours, n'en commencer aucune autre) et « your turn limit is close » (ne plus changer de code,
-commiter ce que `verify-slice` a validé, réécrire le rapport, finir). Les lectures (`Read`,
+commiter ce que `verify-slice` a validé, finir par le rapport). Les lectures (`Read`,
 `Grep`, `Glob`) ne sont pas vues, et les seuils supposent donc un quart des appels non comptés :
 sur les exécutions mesurées, où presque chaque appel passait par le *shell*, les avertissements
 sont arrivés à 90 et 117 appels sur 150, tôt plutôt que tard. S'arrêter tôt coûte un message ;
@@ -480,7 +482,7 @@ repart de zéro.
   de plus à chaque reprise), quand elle a commencé et à quel *commit*, quand il a été vu pour la
   dernière fois, les appels comptés, les appels de chaque ligne commitée, et son dernier arrêt
   quand il a fini de lui-même ;
-- `report.md`, écrit par l'agent, dont la fraîcheur se lit à l'heure du dernier *commit* et du
+- `report.md`, écrit par le *hook* `SubagentStop` depuis le dernier message de l'agent, dont la fraîcheur se lit à l'heure du dernier *commit* et du
   dernier changement d'un fichier de la tranche.
 
 **Une commande pour le chef d'orchestre.** Sur une notification d'arrêt, depuis le tronc :
@@ -497,7 +499,7 @@ next: SendMessage to a389e09:
 ---
 Continue row #M1.14 (Pay an invoice) in .worktrees/billing; do not start #M1.15.
 Committed: #M1.07, #M1.12. Left modified by you: src/contexts/billing/... 3 TODO(domain) and 2 it.todo remain; your last verify-slice failed at tests.
-Next: finish #M1.14, `npx ddd-ts-kit verify-slice billing --since origin/main` until it passes, commit with the command it prints, rewrite .ddd-ts-kit/report.md, end with the report.
+Next: finish #M1.14, `npx ddd-ts-kit verify-slice billing --since origin/main` until it passes, commit with the command it prints, end with your report as your final message.
 ---
 If SendMessage is refused, or the agent stops again without progress: launch a new context-builder with this briefing:
 ---
@@ -523,7 +525,7 @@ interface de Claude Code : un avertissement ajouté par le garde atteint le mod�
 le suit ; `SubagentStart` se déclenche au lancement et à une reprise par `SendMessage` ;
 `SubagentStop` se déclenche quand l'agent finit de lui-même et honore un `block`, et le garde le
 relance alors une fois quand il laisserait non commitée une tranche que `verify-slice` a validée,
-ou aucun rapport à jour. Un arrêt à la limite de tours ne déclenche aucun *hook* : les
+et il écrit le rapport depuis son dernier message. Un arrêt à la limite de tours ne déclenche aucun *hook* : les
 avertissements sont le mécanisme principal, et `--resume` lit le reste dans le *worktree*.
 
 La compétence parallel-work dit au chef d'orchestre quoi faire à chaque sorte d'arrêt : lancer

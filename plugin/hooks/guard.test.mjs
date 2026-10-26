@@ -1857,19 +1857,15 @@ test('the worktree of a builder records its agent, and the calls of each row it 
   assert.ok(Date.parse(recorded.lastSeen) > 0);
 });
 
-test('at its own stop, a builder without a current report or with a verified slice uncommitted is kept going once', () => {
+test('at its own stop, a builder with a verified slice uncommitted is kept going once', () => {
   const root = committed();
   worker(root);
   const agent = builder('stopper');
   run('pre-bash', bash(root, 'git status', agent));
   put(root, 'src/contexts/ordering/domain/order.ts', 'export const order = 1;\n');
   const stopping = { cwd: root, ...agent, stop_hook_active: false };
-  const stale = run('subagent-stop', stopping);
-  assert.equal(stale.output.decision, 'block');
-  assert.match(stale.output.reason, /report\.md` is older than your last commit or change/);
+  assert.equal(run('subagent-stop', stopping).output, undefined, "a stale report is the hook's to write, not a block");
   assert.equal(agentFile(root).lastStop.reportCurrent, false);
-  assert.equal(run('subagent-stop', stopping).output, undefined, 'once a run');
-  assert.equal(run('subagent-stop', { ...stopping, stop_hook_active: true }).output, undefined);
 
   const verified = builder('verified');
   run('pre-bash', bash(root, 'git status', verified));
@@ -1888,6 +1884,63 @@ test('at its own stop, a builder without a current report or with a verified sli
   assert.equal(agentFile(root).lastStop.reportCurrent, true);
   assert.equal(run('subagent-stop', { cwd: root, ...builder('unknown'), stop_hook_active: false }).output, undefined);
 });
+
+const REPORT = join('.ddd-ts-kit', 'report.md');
+
+test('at its stop, the final message of a builder becomes the report of its worktree', () => {
+  const root = committed();
+  worker(root);
+  const agent = builder('reporter');
+  run('pre-bash', bash(root, 'git status', agent));
+  const agent_transcript_path = transcript(root, [
+    said('first thoughts'),
+    { type: 'user', message: { role: 'user', content: 'continue' } },
+    said('Slices done: #M1.14 (abc1234).'),
+  ]);
+  run('subagent-stop', { cwd: root, ...agent, agent_transcript_path, stop_hook_active: false });
+  assert.equal(readFileSync(join(root, REPORT), 'utf8'), 'Slices done: #M1.14 (abc1234).\n');
+  assert.equal(agentFile(root).lastStop.reportCurrent, true);
+
+  const given = builder('given');
+  run('pre-bash', bash(root, 'git status', given));
+  run('subagent-stop', { cwd: root, ...given, last_assistant_message: 'From the input.', stop_hook_active: false });
+  assert.equal(readFileSync(join(root, REPORT), 'utf8'), 'From the input.\n');
+});
+
+test('another agent writes no report, and a broken transcript fails open', () => {
+  const root = committed();
+  worker(root);
+  const other = { session_id: 'conductor', agent_id: 'reviewer', agent_type: 'ddd-ts-kit:architecture-reviewer' };
+  const path = transcript(root, [said('A review.')]);
+  assert.equal(run('subagent-stop', { cwd: root, ...other, agent_transcript_path: path }).status, 0);
+  assert.equal(existsSync(join(root, REPORT)), false);
+
+  const agent = builder('broken');
+  run('pre-bash', bash(root, 'git status', agent));
+  for (const lines of [['not json', '{"type":"assistant"}', '[1]'], []]) {
+    const result = run('subagent-stop', {
+      cwd: root,
+      ...agent,
+      agent_transcript_path: transcript(root, lines),
+      stop_hook_active: false,
+    });
+    assert.equal(result.status, 0);
+    assert.equal(existsSync(join(root, REPORT)), false);
+  }
+  const missing = run('subagent-stop', { cwd: root, ...agent, agent_transcript_path: join(root, 'nope.jsonl') });
+  assert.equal(missing.status, 0);
+  assert.equal(existsSync(join(root, REPORT)), false);
+});
+
+function transcript(root, lines) {
+  const file = join(root, 'transcript.jsonl');
+  writeFileSync(file, lines.map((line) => (typeof line === 'string' ? line : JSON.stringify(line))).join('\n'));
+  return file;
+}
+
+function said(text) {
+  return { type: 'assistant', message: { role: 'assistant', content: [{ type: 'text', text }] } };
+}
 
 test('the hooks add no entry on every tool call: two rare events, filtered by the builder', () => {
   const { hooks } = JSON.parse(readFileSync(join(here, 'hooks.json'), 'utf8'));

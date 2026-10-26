@@ -145,7 +145,7 @@ describe('the message that resumes a stopped agent', () => {
     expect(resumeMessage(progressOf({ markers: { domain: 1, test: 2 } }), PLACE).split('\n')).toEqual([
       'Continue row #2 (Cancel an invoice) in /work/billing; do not start #3.',
       'Committed: #1. Left modified by you: src/contexts/billing/domain/invoice.ts. 1 TODO(domain) and 2 it.todo remain; you have not run verify-slice yet.',
-      'Next: finish #2, `npx ddd-ts-kit verify-slice billing --since origin/main` until it passes, commit with the command it prints, rewrite .ddd-ts-kit/report.md, end with the report.',
+      'Next: finish #2, `npx ddd-ts-kit verify-slice billing --since origin/main` until it passes, commit with the command it prints, end with your report as your final message.',
     ]);
   });
 
