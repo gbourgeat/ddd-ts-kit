@@ -85,7 +85,8 @@ describe('init, in a project with tenants', () => {
         ? read(root, 'src/platform/composition/compose-application.ts')
         : read(root, 'src/platform/composition/lay-foundations.ts');
 
-    expect(bound).toContain('new InMemoryTenantDirectory(options.tenants ?? [])');
+    expect(bound).toContain('tenantDirectory(');
+    expect(read(root, 'src/platform/composition/tenant-directory.ts')).toContain('new InMemoryTenantDirectory(fixed)');
   });
 
   it('says nothing of tenants without tenancy', () => {

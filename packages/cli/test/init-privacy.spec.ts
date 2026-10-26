@@ -85,6 +85,12 @@ describe('the personal data of a generated project: --privacy', () => {
 
     expect(read(tenants, 'scripts/privacy-erase.ts')).toContain("process.env['TENANTS']");
 
+    for (const script of ['privacy-erase', 'privacy-export']) {
+      expect(read(tenants, `scripts/${script}.ts`)).toContain(
+        'const tenants = await tenantDirectory(persistence, fixedTenants).tenants();',
+      );
+    }
+
     expect(platform(one, 'privacy/run-erasure.ts')).not.toContain('inEachTenant');
     expect(platform(one, 'privacy/run-erasure.ts')).toContain("origin: 'cli'");
     expect(read(one, 'scripts/privacy-erase.ts')).not.toContain('TENANTS');

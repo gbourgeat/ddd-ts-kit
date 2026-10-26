@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:f96db042f47d0e6d -->
+<!-- translation-of: personal-data.md sha256:cd60a1bb1ae35c08 -->
 
 # Les données personnelles dans un projet généré
 
@@ -111,8 +111,8 @@ d'exécution d'origine `cli` avec l'opérateur pour acteur, et lance `eraseDataS
    stocké de la personne se lise `[erased]` au prochain rejeu, et auditée quand le journal est actif ;
 2. chaque copie listée dans `data-subject-copies.ts`, un port par contexte, résolu depuis
    l'application : chaque adaptateur efface ou pseudonymise les lignes de ses tables déclarées, dans
-   le *tenant* du travail ; avec `--tenancy shared-table`, `TENANTS` nomme les *tenants*, séparés par
-   des virgules, et une copie est jouée une fois par *tenant*, puisqu'une écriture de données de
+   le *tenant* du travail ; avec `--tenancy shared-table`, l'annuaire des *tenants* les nomme (les organisations du contexte
+   d'identité quand le projet l'a, sinon `TENANTS`, séparés par des virgules) et une copie est jouée une fois par *tenant*, puisqu'une écriture de données de
    *tenant* n'est jamais élargie ;
 3. les projections alimentées par le store, reconstruites une fois la clé détruite : données à la
    main pour l'instant, là où le lanceur dit `TODO(platform)`.
@@ -154,7 +154,7 @@ compte les lignes qu'il tient d'une personne et les oublie au premier effacement
 d'accès et à la portabilité (RGPD, articles 15 et 20) de la même façon : le script compose
 l'application, ouvre un contexte d'exécution d'origine `cli` avec l'opérateur pour acteur, et lance
 `exportDataSubject` du kernel sur chaque export listé dans `data-subject-exports.ts`, un port par
-contexte, dans chaque *tenant* nommé par `TENANTS` avec des tables partagées, puisqu'une lecture de
+contexte, dans chaque *tenant* que l'annuaire liste avec des tables partagées (les organisations du contexte d'identité, sinon `TENANTS`), puisqu'une lecture de
 données de *tenant* est confinée à son *tenant* comme une écriture. Chaque adaptateur lit les mêmes
 déclarations que l'effacement et répond un enregistrement par ligne sur la personne, sous
 `<contexte>.<table>`, avec les colonnes personnelles et les clés des fichiers en données simples,

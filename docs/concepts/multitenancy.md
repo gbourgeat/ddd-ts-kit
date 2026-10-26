@@ -233,7 +233,10 @@ Three rules hold whatever the strategy:
   per-tenant job runs once per tenant, one after the other, each run in that tenant's scope; one
   tenant failing does not stop the others. In a project with `stack.tenancy`, `generate job`
   writes `per-tenant` (`--global` for work across tenants: it runs in no tenant, so a tenant-scoped
-  repository refuses it), and `init` hands the scheduler the ids of `TENANTS`.
+  repository refuses it). The scheduler asks the `TenantDirectory` at each occurrence: with the
+  identity preset it lists the organisations of the database, so one opened later gets its run;
+  otherwise `init` hands it the ids of `TENANTS`, read once at the start, and a fixed list misses a
+  tenant created later (see [Scheduled jobs](scheduled-jobs.md)).
 - **Caches, rate limits and locks.** A key of a shared store is confined to the tenant:
   `tenantCacheKey(scope, ...)`, `tenantKey(scope, ...)`, each segment percent-encoded so that
   two lists of segments never give one key. A key built without it is shared by every tenant,

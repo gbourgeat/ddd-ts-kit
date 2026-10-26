@@ -171,7 +171,8 @@ OTEL_SERVICE_NAME={{project.name}}
 # the rate limiter, the job store). The same for the API, the worker and the services; never the name of a container.
 DEPLOYMENT_NAME={{project.name}}
 {{#if tenancy.any}}
-# The tenants that exist, comma separated: a scheduled job declared per-tenant runs once for each, and the privacy scripts reach each.
+# The tenants that exist, comma separated, read once when the process starts: a scheduled job declared per-tenant runs once for each, and the privacy scripts reach each.
+# A tenant created later is missed until the process restarts. With the identity preset the scheduler reads the organisations of the database at each occurrence instead.
 TENANTS=
 {{/if}}
 JAEGER_UI_PORT=16686

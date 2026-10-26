@@ -47,7 +47,7 @@ describe('{{name.title}}, when its time comes', () => {
   it.todo('names the period of the occurrence, never the instant it really runs');
   it.todo('has the same outcome when the same occurrence runs twice');
 {{#if job.perTenant}}
-  // TODO(domain): once the handler reads a tenant-scoped repository, run it for both tenants with their own rows and assert each run reads its own tenant only.
+  // TODO(domain): once the handler reads a tenant-scoped repository, prove on the test database that each run reads its own tenant only: save a row for each tenant, run the job, and read both through the real repository inside the run (docs/concepts/scheduled-jobs.md, "A run reads its own tenant").
   it.todo('reads and writes one tenant at a time');
 {{/if}}
 });

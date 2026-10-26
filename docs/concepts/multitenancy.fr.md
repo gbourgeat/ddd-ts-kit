@@ -1,5 +1,5 @@
 [English](multitenancy.md) · **Français**
-<!-- translation-of: multitenancy.md sha256:7ad24c151ac43ff0 -->
+<!-- translation-of: multitenancy.md sha256:87ce9ceb9941bd92 -->
 
 # Multitenance
 
@@ -247,7 +247,10 @@ Trois règles tiennent quelle que soit la stratégie :
   la portée de ce *tenant* ; l'échec d'un *tenant* n'arrête pas les autres. Dans un projet avec
   `stack.tenancy`, `generate job` écrit `per-tenant` (`--global` pour un travail à travers les
   *tenants* : il s'exécute dans aucun *tenant*, donc un *repository* confiné à un *tenant* le
-  refuse), et `init` donne au planificateur les identifiants de `TENANTS`.
+  refuse). Le planificateur interroge le `TenantDirectory` à chaque occurrence : avec le *preset* d'identité il
+  liste les organisations de la base, donc l'une ouverte plus tard a son exécution ; sinon `init` lui
+  donne les identifiants de `TENANTS`, lus une seule fois au démarrage, et une liste fixe manque un
+  *tenant* créé plus tard (voir [Jobs planifiés](scheduled-jobs.fr.md)).
 - **Caches, limites de débit et verrous.** Une clé d'un stockage partagé est confinée au
   *tenant* : `tenantCacheKey(scope, ...)`, `tenantKey(scope, ...)`, chaque segment encodé en
   pourcentage pour que deux listes de segments ne donnent jamais la même clé. Une clé construite

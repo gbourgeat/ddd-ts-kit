@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:625e334eec9dcf53 -->
+<!-- translation-of: README.md sha256:1a299156421ce74c -->
 
 # ddd-ts-kit
 
@@ -809,7 +809,7 @@ Next, in this order: the language of the context first, then the business decisi
   donne à chaque acteur système (`systemRole`) ; `--authz abac`, une règle
   `permit('system-<job>', [permission], ({ actor }) => actor.id === 'system:<job>')` dans
   `platform/auth/attributes/attribute-policies.ts` ; `--authz rebac`, le tuple
-  `context:<context>#operator@system:system:<job>` dans `platform/auth/relationships/relate-system-actors.ts`,
+  `context:<context>#operator@system:<job>` dans `platform/auth/relationships/relate-system-actors.ts`,
   écrit dans le magasin de tuples au démarrage de l'application, tant que le schéma laisse encore
   un sujet `system` opérer un contexte. Avec `--authz custom`, une région supprimée, un schéma de
   relations remodelé ou une permission que le générateur ne sait pas lire, rien n'est écrit et le

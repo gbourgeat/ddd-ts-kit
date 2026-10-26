@@ -79,6 +79,7 @@ function compositionFiles(config: Config): InitFile[] {
   return [
     file('composition/compose-application.ts', family),
     ...BOTH.map((name) => file(name, family)),
+    ...when(config.stack.tenancy !== 'none', [file('composition/tenant-directory.ts')]),
     ...own.map((name) => file(name, family)),
     ...when(config.stack.http !== 'none', [file('composition/platform-error-mapper.ts')]),
     ...when(family !== 'manual' && config.stack.http !== 'none', [file('composition/routes-of.ts', family)]),
