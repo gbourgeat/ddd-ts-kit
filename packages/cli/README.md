@@ -780,7 +780,7 @@ Next, in this order: the language of the context first, then the business decisi
   the role `createAuthorizer` gives every system actor (`systemRole`); `--authz abac`, a
   `permit('system-<job>', [permission], ({ actor }) => actor.id === 'system:<job>')` rule in
   `platform/auth/attributes/attribute-policies.ts`; `--authz rebac`, the tuple
-  `context:<context>#operator@system:system:<job>` in `platform/auth/relationships/relate-system-actors.ts`,
+  `context:<context>#operator@system:<job>` in `platform/auth/relationships/relate-system-actors.ts`,
   written to the tuple store when the application starts, as long as the schema still lets a
   `system` subject operate a context. With `--authz custom`, a removed region, a remodelled
   relationship schema or a permission the generator cannot read, nothing is written and the job
