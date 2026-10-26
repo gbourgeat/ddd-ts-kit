@@ -6,6 +6,9 @@ dist
 .ddd-ts-kit/
 .eslintcache/
 .worktrees/
+{{#if pm.pnpm}}
+.pnpm-store/
+{{/if}}
 .stryker-tmp/
 /reports/mutation/
 {{#if orm.prisma}}

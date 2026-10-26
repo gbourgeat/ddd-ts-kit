@@ -8,4 +8,4 @@
     profiles: [services]
     env_file: .env
     ports:
-      - "${{service.portVariable}}:3000"
+      - "{{service.portVariable}}:3000"

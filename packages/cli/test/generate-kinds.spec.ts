@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, EXPLICIT_STACK, read, scaffoldEverything, tempDir, walk } from './helpers';
+import { readYaml } from './support/read-yaml';
 
 const BILLING = 'src/contexts/billing';
 const SHIPPING = 'src/contexts/shipping';
@@ -99,6 +100,14 @@ describe('extraction and governance kinds', () => {
     expect(read(root, 'test/architecture/extractable.spec.ts').match(/^ {2}\['[a-z-]+', \w+Module\],$/gm)).toHaveLength(
       3,
     );
+  });
+
+  it('writes the port of the compose service as an interpolation Docker reads, 3001 by default', () => {
+    const compose = read(root, 'docker-compose.yml');
+    const [parsed] = readYaml([compose]);
+
+    expect(compose).not.toContain('{{');
+    expect(parsed?.yaml12).toMatchObject({ services: { shipping: { ports: ['${SHIPPING_PORT:-3001}:3000'] } } });
   });
 
   it('numbers decision records and records a deviation with the entry of the config that points to it', () => {

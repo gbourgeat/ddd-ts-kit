@@ -94,6 +94,33 @@ describe('a project init writes', () => {
     expect(read(root, 'lefthook.yml')).toContain('biome format --no-errors-on-unmatched {staged_files}');
   });
 
+  it('formats past what is not the project: the empty files the sandbox leaves, a pnpm store, what git ignores', () => {
+    const root = initProject('--package-manager', 'pnpm');
+
+    const write = (file: string, text: string): void => {
+      fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+      fs.writeFileSync(path.join(root, file), text);
+    };
+
+    for (const empty of ['.mcp.json', '.claude/launch.json', '.claude/settings.local.json']) {
+      write(empty, '');
+    }
+
+    write('.pnpm-store/v10/files/broken.json', '{ broken');
+    fs.symlinkSync('/nowhere', path.join(root, '.pnpm-store', 'dangling'));
+
+    expect(formatFindings(root)).toBe('');
+  });
+
+  it('keeps knip from loading the MCP configuration of the agent hosts, and git from versioning a pnpm store', () => {
+    const pnpm = initProject('--package-manager', 'pnpm');
+    const npm = initProject('--package-manager', 'npm');
+
+    expect(readJson(pnpm, 'knip.json')).toMatchObject({ mcp: false });
+    expect(read(pnpm, '.gitignore')).toContain('.pnpm-store/');
+    expect(read(npm, '.gitignore')).not.toContain('.pnpm-store/');
+  });
+
   it('passes its format check with the state the guard writes on one line in .ddd-ts-kit', () => {
     const root = initProject('--package-manager', 'npm');
 

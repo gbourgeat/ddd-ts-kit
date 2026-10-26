@@ -21,7 +21,7 @@ export const serviceKind: Kind = {
     const scope = openScope(request);
     const { ws, config, context } = scope;
     const entry = new EntryPoint(config, context.kebab);
-    const service = { ...serviceSelection(scope), portVariable: `{${context.constant}_PORT:-3001}` };
+    const service = { ...serviceSelection(scope), portVariable: `\${${context.constant}_PORT:-3001}` };
 
     ws.create(entry.source, renderTemplate('service/main.ts.tpl', vars(scope, { service })));
     entry.declareIn(ws);
