@@ -5,7 +5,6 @@
     "@arethetypeswrong/cli",
     "publint",
     "eslint-formatter-gitlab",
-    "@electric-sql/pglite",
     "@electric-sql/pglite-socket",
     "@jest/globals",
     "@swc/core",
@@ -15,7 +14,8 @@
   "workspaces": {
     ".": {
       "entry": ["pipeline/monorepo/*.mjs", "plugin/hooks/*.mjs"],
-      "project": ["pipeline/monorepo/**/*.mjs", "plugin/**/*.mjs", "*.{js,cjs,mjs,ts}"]
+      "project": ["pipeline/monorepo/**/*.mjs", "plugin/**/*.mjs", "*.{js,cjs,mjs,ts}"],
+      "ignoreDependencies": ["@opentelemetry/exporter-prometheus", "@opentelemetry/sdk-metrics"]
     },
     "packages/*": {
       "project": ["src/**/*.ts", "test/**/*.ts"]

@@ -1,12 +1,12 @@
 import { context, trace } from '@opentelemetry/api';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import {
-  BasicTracerProvider,
+  TracerProvider,
   InMemorySpanExporter,
   SimpleSpanProcessor,
   type ReadableSpan,
   type SpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
+} from '@opentelemetry/sdk-trace';
 
 export interface TestTracing {
   spans(): ReadableSpan[];
@@ -18,8 +18,8 @@ export interface TestTracing {
 export function setupTracing(processors: SpanProcessor[] = []): TestTracing {
   const exporter = new InMemorySpanExporter();
 
-  const provider = new BasicTracerProvider({
-    spanProcessors: [...processors, new SimpleSpanProcessor(exporter)],
+  const provider = new TracerProvider({
+    spanProcessors: [...processors, new SimpleSpanProcessor({ exporter })],
   });
 
   context.setGlobalContextManager(new AsyncLocalStorageContextManager().enable());

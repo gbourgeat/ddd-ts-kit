@@ -1,12 +1,12 @@
 import { context, trace } from '@opentelemetry/api';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import {
-  BasicTracerProvider,
+  TracerProvider,
   InMemorySpanExporter,
   SimpleSpanProcessor,
   type Sampler,
   type SpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
+} from '@opentelemetry/sdk-trace';
 import { LocalRootTracker } from '../local-root/local-root-tracker';
 import type { SpanNode } from './span-node';
 import { spanTreeOf } from './span-tree-of';
@@ -68,15 +68,15 @@ function collectingProvider(
   options: TestTracingOptions,
   order: StartOrder,
   exporter: InMemorySpanExporter,
-): BasicTracerProvider {
+): TracerProvider {
   const spanProcessors = [
     new LocalRootTracker(),
     order,
     ...(options.processors ?? []),
-    new SimpleSpanProcessor(exporter),
+    new SimpleSpanProcessor({ exporter }),
   ];
 
-  return new BasicTracerProvider({
+  return new TracerProvider({
     spanProcessors,
     ...(options.sampler === undefined ? {} : { sampler: options.sampler }),
   });
