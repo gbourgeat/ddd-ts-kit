@@ -116,7 +116,9 @@ built. A law catches the bound or the symmetry an example misses.
 
 Skill `ddd-ts-kit:testing`, "Acceptance of a story": `npx ddd-ts-kit generate acceptance $0`, one
 or more scenarios per criterion wrapped in `pending(...)`, `npm run test:e2e -- test/acceptance`
-to see each fail on an assertion, `npx ddd-ts-kit acceptance $0 --lock`. Commit the story file,
+to see each fail on an assertion, `npm run format` and `npm run lint -- test/acceptance/<spec>`
+on the spec (`--lock` refuses a spec that fails them, and a locked spec is not touched again),
+`npx ddd-ts-kit acceptance $0 --lock`. Commit the story file,
 the rows, the design review, the acceptance and its lock: one commit,
 `docs($0): specify, design and accept the story`.
 

@@ -11,6 +11,7 @@
   "ignoreDependencies": {{knip.ignored}},
 {{/if}}
   "ignoreExportsUsedInFile": true,
+  "mcp": false,
 {{#if refusals.named}}
   "ignoreIssues": {
     "{{config.contextsDir}}/*/*.codes.ts": ["types"]

@@ -1,3 +1,4 @@
+import { checkLockedFiles } from '../acceptance/check-locked-files';
 import { ACCEPTANCE_GATES, type AcceptanceGate } from '../acceptance/acceptance-gate';
 import { countsFor } from '../acceptance/counts-for';
 import { formatAcceptance } from '../acceptance/format-acceptance';
@@ -67,6 +68,8 @@ function lock(ws: Workspace, { asked, story, json }: LockRequest, io: Io): numbe
 
   const locked = lockAcceptance(ws, { story, on: new Date().toISOString().slice(0, 10) });
 
+  refuseUnchecked(ws, story);
+
   ws.commit(false);
 
   io.out(
@@ -82,6 +85,23 @@ function lock(ws: Workspace, { asked, story, json }: LockRequest, io: Io): numbe
   );
 
   return 0;
+}
+
+/**
+ * A locked file can no longer be touched, so the lock is refused while the files it makes untouchable
+ * fail the formatter or the linter of the project: the spec of a story, or the regression specs of a fix.
+ */
+function refuseUnchecked(ws: Workspace, story: StoryAcceptance): void {
+  const files = story.regression?.filter(({ found }) => found).map(({ file }) => file) ?? [story.file ?? ''];
+  const named = files.filter((file) => file !== '');
+  const checked = checkLockedFiles(ws.root, named);
+
+  if (checked.findings.length > 0) {
+    throw new CliError(
+      `${named.join(', ')} fails the checks of the project, and a locked file can no longer be changed:\n${checked.findings.join('\n')}`,
+      'Run the formatter and the linter on the file, fix what they report (`npm run format`, `npm run lint -- <file>`), then lock again.',
+    );
+  }
 }
 
 /** What a lock recorded: the regression tests of a fix, or the scenarios of a story. */
