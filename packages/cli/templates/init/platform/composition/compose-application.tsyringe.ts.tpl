@@ -8,9 +8,6 @@ import { Authenticator } from '@ddd-ts-kit/auth';
 {{/unless}}
 {{/if}}
 import {
-{{#if routes.declaredControllers}}
-  DeclaredEdges,
-{{/if}}
   createApplication,
   kernelModule,
   type Application as Container,
@@ -21,19 +18,11 @@ import {
 import { OutboxPublisher } from '@ddd-ts-kit/events';
 {{/if}}
 {{#if http.any}}
-{{#if routes.mountsControllers}}
-import { ErrorMapper, controllerRoutes, defineRoutes, type Route } from '@ddd-ts-kit/http';
-{{/if}}
-{{#unless routes.mountsControllers}}
-import { ErrorMapper, defineRoutes, type Route } from '@ddd-ts-kit/http';
-{{/unless}}
+import { ErrorMapper, type Route } from '@ddd-ts-kit/http';
 {{/if}}
 import {
   Cache,
   Clock,
-{{#if http.any}}
-  CommandBus,
-{{/if}}
 {{#if errors.sentry}}
 {{#if http.any}}
   ErrorReporter,
@@ -49,6 +38,9 @@ import {
 {{#if files.any}}
   InMemoryFileStorage,
 {{/if}}
+{{#if tenancy.any}}
+  InMemoryTenantDirectory,
+{{/if}}
 {{#unless broker.external}}
   IntegrationEventSubscriber,
 {{/unless}}
@@ -56,9 +48,6 @@ import {
   Metrics,
 {{#if httpCache.perTenant}}
   PublishedCacheInvalidation,
-{{/if}}
-{{#if http.any}}
-  QueryBus,
 {{/if}}
 {{#if cache.rateLimit}}
   RateLimiter,
@@ -78,16 +67,7 @@ import { tracedPublisher } from '@ddd-ts-kit/tracing';
 {{#if audit.on}}
 import { auditModule } from '{{alias.platform}}/audit/audit.module{{alias.ext}}';
 {{/if}}
-{{#if audit.functionRoute}}
-import { searchAuditEntriesRoute } from '{{alias.platform}}/audit/search-audit-entries/search-audit-entries.route{{alias.ext}}';
-{{/if}}
-{{#if audit.controller}}
-import { SearchAuditEntriesController } from '{{alias.platform}}/audit/search-audit-entries/search-audit-entries.controller{{alias.ext}}';
-{{/if}}
 import { authorization } from '{{alias.platform}}/auth/authorization/authorization{{alias.ext}}';
-{{#if routes.mountsControllers}}
-import { securitySchemes } from '{{alias.platform}}/auth/authentication/security-schemes{{alias.ext}}';
-{{/if}}
 {{#if http.any}}
 import { httpBoundary, type HttpBoundary } from '{{alias.platform}}/auth/authentication/http-boundary{{alias.ext}}';
 {{/if}}
@@ -115,6 +95,10 @@ import { filesModule } from '{{alias.platform}}/files/files.module{{alias.ext}}'
 {{#if privacy.on}}
 import { privacyModule } from '{{alias.platform}}/privacy/privacy.module{{alias.ext}}';
 {{/if}}
+import type { ContextSelection } from '{{alias.platform}}/composition/context-selection{{alias.ext}}';
+{{#if http.any}}
+import { routesOf } from '{{alias.platform}}/composition/routes-of{{alias.ext}}';
+{{/if}}
 import { layFoundations, type Foundations } from '{{alias.platform}}/composition/lay-foundations{{alias.ext}}';
 import { platformModule, type PlatformOptions } from '{{alias.platform}}/composition/platform.module{{alias.ext}}';
 // ddd-ts-kit:imports
@@ -123,6 +107,12 @@ import { platformModule, type PlatformOptions } from '{{alias.platform}}/composi
 export interface ApplicationOptions extends PlatformOptions {
   /** Whether this process runs the scheduled jobs, and their settings; left out (the tools, the tests), no job runs by time. */
   readonly jobs?: JobsOptions;
+  /** Whether the jobs of the platform itself are registered: a service passes `false`, they run in the whole application. Default `true`. */
+  readonly platformJobs?: boolean;
+{{#if tenancy.any}}
+  /** The ids of the tenants that exist (`TENANTS`): a job declared `per-tenant` runs once for each. Left out (the tools, the tests), none, and such a job runs for nobody. */
+  readonly tenants?: readonly string[];
+{{/if}}
 {{#if files.any}}
   /** Where the content of files lives: the storage of `main.ts`; left out (the tools, the tests), the memory of the process. */
   readonly files?: FileStorage;
@@ -164,16 +154,7 @@ export interface Application {
   stop(): Promise<void>;
 }
 
-/** The contexts an application hosts: all of them here, one alone in `apps/<context>/main.ts`. */
-export interface ContextSelection {
-  readonly modules: readonly ContextModule[];
-{{#if http.any}}
-  /** The function routes of each context, given the two buses they call; controllers need no list. */
-  readonly routes?: readonly ((commands: CommandBus, queries: QueryBus) => readonly Route[])[];
-{{/if}}
-}
-
-const everyContext: ContextSelection = {
+export const everyContext: ContextSelection = {
   modules: [
     // ddd-ts-kit:contexts
     // /ddd-ts-kit:contexts
@@ -183,6 +164,27 @@ const everyContext: ContextSelection = {
     // ddd-ts-kit:routes
     // /ddd-ts-kit:routes
   ],
+{{/if}}
+};
+
+/** The contexts run as services of their own (`generate service`): `main.ts` and the worker leave them out, routes included. */
+const extractedModules: readonly string[] = [
+  // ddd-ts-kit:extracted
+  // /ddd-ts-kit:extracted
+];
+{{#if http.any}}
+
+const extractedRoutes: NonNullable<ContextSelection['routes']> = [
+  // ddd-ts-kit:extracted-routes
+  // /ddd-ts-kit:extracted-routes
+];
+{{/if}}
+
+/** What `main.ts` and the worker host; `everyContext` stays the full list for the tools, the contracts and the end-to-end tests. */
+export const hostedContexts: ContextSelection = {
+  modules: everyContext.modules.filter((module) => !extractedModules.includes(module.name)),
+{{#if http.any}}
+  routes: (everyContext.routes ?? []).filter((routes) => !extractedRoutes.includes(routes)),
 {{/if}}
 };
 
@@ -209,13 +211,18 @@ export function composeApplication(
 {{/if}}
       guard,
 {{#if audit.on}}
+{{#if audit.archive}}
+      auditModule(foundations.audit, { jobs: options.platformJobs !== false }),
+{{/if}}
+{{#unless audit.archive}}
       auditModule(foundations.audit),
+{{/unless}}
 {{/if}}
 {{#if files.any}}
-      filesModule(options.files ?? new InMemoryFileStorage()),
+      filesModule(options.files ?? new InMemoryFileStorage(), { jobs: options.platformJobs !== false }),
 {{/if}}
 {{#if privacy.on}}
-      privacyModule(),
+      privacyModule({ jobs: options.platformJobs !== false }),
 {{/if}}
       ...contexts.modules,
     ],
@@ -257,6 +264,10 @@ function kernel(foundations: Foundations, persistence: Persistence, options: App
     logger,
     metrics,
     eventBus: bus,
+{{#if tenancy.any}}
+    // The tenants a job declared `per-tenant` runs for.
+    tenants: new InMemoryTenantDirectory(options.tenants ?? []),
+{{/if}}
 {{#if events.outbox}}
     // Use cases publish to the outbox, in the transaction of their command; the relay of `main.ts` delivers to the provider.
     eventPublisher: scopedPublisher(new OutboxPublisher(persistence.outbox), scope),
@@ -373,32 +384,3 @@ function running({ container, options, contexts }: Composed): Application {
     stop: () => container.stop(),
   };
 }
-{{#if http.any}}
-
-function routesOf(container: Container, contexts: ContextSelection): readonly Route[] {
-  const commands = container.resolve(CommandBus);
-  const queries = container.resolve(QueryBus);
-
-{{#unless routes.mountsControllers}}
-  return defineRoutes(...(contexts.routes ?? []).map((routes) => routes(commands, queries)){{#if audit.route}}, [searchAuditEntriesRoute(queries)]{{/if}});
-{{/unless}}
-{{#if routes.mountsControllers}}
-  // Every route that is not public names these schemes in the contract.
-  const security = Object.keys(securitySchemes);
-
-  return defineRoutes(
-    ...(contexts.routes ?? []).map((routes) => routes(commands, queries)),
-{{#if routes.declaredControllers}}
-    // The controllers the hosted contexts declare, each built from its constructor.
-    controllerRoutes(container.resolve(DeclaredEdges).of('controller'), { resolve: container.resolve, security }),
-{{/if}}
-{{#if audit.functionRoute}}
-    [searchAuditEntriesRoute(queries)],
-{{/if}}
-{{#if audit.controller}}
-    controllerRoutes([new SearchAuditEntriesController(queries)], { security }),
-{{/if}}
-  );
-{{/if}}
-}
-{{/if}}

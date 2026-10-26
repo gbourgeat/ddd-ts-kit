@@ -286,7 +286,8 @@ the storage and calls `composeApplication` of `src/platform/composition/compose-
 the modules: the kernel module (default buses, clock, id generator, in-memory defaults), the
 platform module (storage, the event provider, the policy around outbound adapters), the
 authorization and audit modules, the files module when the project stores files, and one module
-per context, built from its declarations. The
+per context, built from its declarations. `main.ts` passes `hostedContexts`, every context but
+those `generate service` runs as a service of its own; `everyContext` is the full list. The
 container checks the whole graph before anything is instantiated: duplicate bindings, unbound
 dependencies and cycles are errors at startup, with the port and the module named (the list of
 checks is in the README of `@ddd-ts-kit/di`).

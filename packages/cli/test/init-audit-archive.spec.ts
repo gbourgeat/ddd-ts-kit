@@ -14,8 +14,8 @@ describe('init: the monthly archive of the audit trail', () => {
     const root = initProject();
 
     expect(platform(root, 'audit/audit.module.ts')).toContain(
-      "        .job('audit.archive', { cron: '0 4 1 * *' })\n" +
-        '        .handledByFactory((resolve) => new ArchiveAuditEntries(audit.trail, resolve(FileStorage), resolve(Clock)));',
+      "      if (jobs) {\n        builder\n          .job('audit.archive', { cron: '0 4 1 * *' })\n" +
+        '          .handledByFactory((resolve) => new ArchiveAuditEntries(audit.trail, resolve(FileStorage), resolve(Clock)));',
     );
 
     expect(platform(root, 'jobs/job-settings.ts')).toContain(ON_REQUEST);

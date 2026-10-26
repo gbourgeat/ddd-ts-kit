@@ -55,6 +55,8 @@ export interface KindFlags {
   readonly kind?: string;
   /** The adapter carries its resilience policy as standard decorators on its class. */
   readonly decorators: boolean;
+  /** A job works across tenants, in none of them: `--global`, where a job of a multi-tenant project runs once per tenant by default. */
+  readonly global: boolean;
   /** What an ADR deviates from, as a config key such as `rules.clean/stepdown`. */
   readonly deviation?: string;
   readonly reason?: string;

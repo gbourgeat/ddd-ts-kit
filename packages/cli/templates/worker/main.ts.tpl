@@ -7,7 +7,7 @@ import { errors } from '{{alias.platform}}/observability/errors{{alias.ext}}';
 {{#if http.any}}
 import { createAuthenticator } from '{{alias.platform}}/auth/authentication/create-authenticator{{alias.ext}}';
 {{/if}}
-import { composeApplication } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
+import { composeApplication, hostedContexts } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
 import { openPersistence } from '{{alias.platform}}/database/open-persistence{{alias.ext}}';
 import { {{events.providerName}} } from '{{alias.platform}}/events/{{events.providerFile}}{{alias.ext}}';
@@ -31,26 +31,33 @@ const persistence = openPersistence();
 const redis = openRedis(config);
 {{/if}}
 
-const application = composeApplication(persistence, {
-  events: {{events.provider}},
+const application = composeApplication(
+  persistence,
+  {
+    events: {{events.provider}},
 {{#if errors.sentry}}
-  errors,
+    errors,
 {{/if}}
 {{#if http.any}}
-  authenticator: createAuthenticator(config),
+    authenticator: createAuthenticator(config),
 {{/if}}
-  log: { ...config.log, service: config.serviceName, environment: config.environment },
-  traceConsumers: config.tracing.consumers,
-  resilience: config.resilience,
-  // This process is the one that runs the jobs, whatever `RUN_JOBS` says to the others.
-  jobs: { start: true, settings: jobSettings(process.env) },
+    log: { ...config.log, service: config.serviceName, environment: config.environment },
+    traceConsumers: config.tracing.consumers,
+    resilience: config.resilience,
+    // This process is the one that runs the jobs, whatever `RUN_JOBS` says to the others.
+    jobs: { start: true, settings: jobSettings(process.env) },
+{{#if tenancy.any}}
+    tenants: config.tenants,
+{{/if}}
 {{#if cache.redis}}
-  redis,
+    redis,
 {{/if}}
 {{#if files.any}}
-  files: openFiles(config.files),
+    files: openFiles(config.files),
 {{/if}}
-});
+  },
+  hostedContexts,
+);
 
 await application.start();
 application.logger.info('started', { process: 'worker' });

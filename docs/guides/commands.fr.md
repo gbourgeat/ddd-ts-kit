@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:e8b11a2f033c1e3b -->
+<!-- translation-of: commands.md sha256:af46bdf97bace9f2 -->
 
 # Quelle commande, quand
 
@@ -633,7 +633,7 @@ Kinds
   erasure-handler <context>
   event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--name <Name>] [--term "<Term>=<meaning>"]...
   projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]...   (alias: projector)
-  job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--term "<Term>=<meaning>"]...
+  job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--global] [--term "<Term>=<meaning>"]...
   background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]...
   process <context> <Name> [--term "<Term>=<meaning>"]...   (alias: process-manager)
   acl <context> <upstreamOrSystemName>

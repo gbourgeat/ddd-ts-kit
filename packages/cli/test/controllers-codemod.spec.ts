@@ -7,7 +7,7 @@ import { stringsAt } from './support/strings-at';
 
 const HTTP = 'src/contexts/billing/presentation/http';
 const FUNCTIONS = ['--routes', 'functions'];
-const COMPOSITION = 'src/platform/composition/compose-application.ts';
+const ROUTES_OF = 'src/platform/composition/routes-of.ts';
 
 describe('controllers, on a declared project of function routes', () => {
   let root: string;
@@ -146,7 +146,7 @@ describe('controllers, where it stops', () => {
     );
 
     // A project initialised before controllers existed mounts none: the command says which line to add.
-    write(root, COMPOSITION, read(root, COMPOSITION).replace("of('controller')", "of('none')"));
+    write(root, ROUTES_OF, read(root, ROUTES_OF).replace("of('controller')", "of('none')"));
 
     expect(cli(root, 'controllers').stdout).toContain('Mount the declared controllers');
 

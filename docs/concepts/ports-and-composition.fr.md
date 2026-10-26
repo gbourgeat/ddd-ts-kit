@@ -1,5 +1,5 @@
 [English](ports-and-composition.md) · **Français**
-<!-- translation-of: ports-and-composition.md sha256:0d58803cd180edd8 -->
+<!-- translation-of: ports-and-composition.md sha256:1364ceeba2847a3e -->
 
 # Ports et composition
 
@@ -298,7 +298,9 @@ configuration, ouvre le stockage et appelle `composeApplication` de
 défaut, horloge, générateur d'identifiants, implémentations en mémoire par défaut), le module de
 la plateforme (stockage, fournisseur d'événements, politique autour des adaptateurs sortants), les
 modules d'autorisation et d'audit, le module des fichiers quand le projet stocke des fichiers, et
-un module par contexte, construit à partir de ses déclarations. Le conteneur vérifie tout le
+un module par contexte, construit à partir de ses déclarations. `main.ts` passe `hostedContexts`,
+tous les contextes sauf ceux que `generate service` exécute comme services à part ; `everyContext`
+est la liste complète. Le conteneur vérifie tout le
 graphe avant d'instancier quoi que ce soit : liaisons en double, dépendances non liées et cycles
 sont des erreurs au démarrage, qui nomment le port et le module (la liste des vérifications est
 dans le README de `@ddd-ts-kit/di`).

@@ -99,7 +99,9 @@ function listedByHand(text: string, kebab: string): string {
 }
 
 function remind({ config, draft }: Migration): void {
-  const composition = draft.read(compositionOf(config, draft)) ?? '';
+  const routes = platformFileIn(config, 'composition/routes-of.ts', (path) => draft.read(path) !== undefined);
+  const hosting = draft.read(routes) === undefined ? compositionOf(config, draft) : routes;
+  const composition = draft.read(hosting) ?? '';
 
   draft.manual.push(
     'Run the formatter, then `ddd-ts-kit docs` (the generated file of each context registers what each controller is given), then the checks.',
@@ -110,7 +112,7 @@ function remind({ config, draft }: Migration): void {
 
   if (isDeclared(config) && !composition.includes("of('controller')")) {
     draft.manual.push(
-      `Mount the declared controllers in ${compositionOf(config, draft)}: add \`${MOUNTS}\` to the routes it defines, with \`controllerRoutes\` of @ddd-ts-kit/http and \`DeclaredEdges\` of @ddd-ts-kit/di.`,
+      `Mount the declared controllers in ${hosting}: add \`${MOUNTS}\` to the routes it defines, with \`controllerRoutes\` of @ddd-ts-kit/http and \`DeclaredEdges\` of @ddd-ts-kit/di.`,
     );
   }
 }

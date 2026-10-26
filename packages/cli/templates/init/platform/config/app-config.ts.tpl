@@ -12,7 +12,10 @@ import type { TracingConfig } from '{{alias.platform}}/config/read-tracing{{alia
 
 /** The validated configuration of the process: `loadConfig` is the only reader of the environment. */
 export interface AppConfig {
+  /** What this process is called in traces and logs (`OTEL_SERVICE_NAME`): one per container, so it tells the processes of a deployment apart. */
   readonly serviceName: string;
+  /** What the processes of one deployment share (`DEPLOYMENT_NAME`, the name of the project when left out): the namespace of the keys they exchange through the server, never `serviceName`. */
+  readonly deploymentName: string;
   readonly serviceVersion: string;
   readonly environment: 'development' | 'test' | 'production';
   readonly port: number;
@@ -23,6 +26,10 @@ export interface AppConfig {
   readonly resilience: ResilienceSettings;
   /** Whether this process runs the scheduled jobs (`RUN_JOBS`): off for the API of a project that has a worker. */
   readonly runJobs: boolean;
+  {{#if tenancy.any}}
+  /** The tenants that exist (`TENANTS`, comma separated): a job declared `per-tenant` runs once for each. Bind a directory of your own in `main.ts` once the tenants live in a table. */
+  readonly tenants: readonly string[];
+  {{/if}}
   {{#if persistence.needsUrl}}
   readonly databaseUrl: string;
   {{/if}}

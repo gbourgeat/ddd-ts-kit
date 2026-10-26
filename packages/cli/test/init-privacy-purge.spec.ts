@@ -17,7 +17,10 @@ describe('the purge of what outlived its retention, every night', () => {
       "builder.job('privacy.purge-expired', { cron: '0 3 * * *' })",
     );
 
-    expect(platform(tsyringe, 'composition/compose-application.ts')).toContain('      privacyModule(),\n');
+    expect(platform(tsyringe, 'composition/compose-application.ts')).toContain(
+      '      privacyModule({ jobs: options.platformJobs !== false }),\n',
+    );
+
     expect(exists(byHand, 'src/platform/privacy/privacy.module.ts')).toBe(false);
     expect(platform(byHand, 'composition/compose-application.ts')).toContain("    name: 'privacy.purge-expired',");
 

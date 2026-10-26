@@ -7,12 +7,16 @@ import { bindFiles } from '{{alias.platform}}/files/bind-files{{alias.ext}}';
  * for the tools and the tests), its ports, and the hourly purge of what rolled-back commands left
  * in `staging/`.
  */
-export function filesModule(storage: FileStorage): ContextModule {
+export function filesModule(storage: FileStorage, { jobs = true }: { readonly jobs?: boolean } = {}): ContextModule {
   return defineContextModule({
     name: 'files',
     register(builder) {
       bindFiles(builder, storage);
-      builder.job('files.purge-staged', { every: '1h' }).handledBy(PurgeStagedFiles, [FileStaging, Clock]);
+
+      // Registered by the process that runs the jobs of the platform; a service of the deployment passes `jobs: false`.
+      if (jobs) {
+        builder.job('files.purge-staged', { every: '1h' }).handledBy(PurgeStagedFiles, [FileStaging, Clock]);
+      }
     },
   });
 }

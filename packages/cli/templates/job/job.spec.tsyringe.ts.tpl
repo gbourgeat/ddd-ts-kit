@@ -21,16 +21,35 @@ describe('{{name.title}}, when its time comes', () => {
 
     await application.jobs.runNow('{{job.name}}');
 
+{{#if job.perTenant}}
+    expect(sent).toHaveLength(2);
+{{/if}}
+{{#unless job.perTenant}}
     expect(sent).toHaveLength(1);
+{{/unless}}
     expect(sent[0]).toBeInstanceOf({{job.command}}Command);
 {{#if job.protected}}
     expect(sent[0]).toMatchObject({ actor: { id: 'system:{{job.name}}', type: 'system' } });
 {{/if}}
   });
+{{#if job.perTenant}}
+
+  it('runs once for each tenant, in the scope of that tenant', async () => {
+    const { application, tenants } = {{spec.await}}arrange();
+
+    await application.jobs.runNow('{{job.name}}');
+
+    expect(tenants).toEqual(['tenant-a', 'tenant-b']);
+  });
+{{/if}}
 
   // TODO(domain): replace each entry below by a test of what "{{name.words}}" asks of the use case: the period it names from `scheduledAt`, and that a second run of the same occurrence changes nothing.
   it.todo('names the period of the occurrence, never the instant it really runs');
   it.todo('has the same outcome when the same occurrence runs twice');
+{{#if job.perTenant}}
+  // TODO(domain): once the handler reads a tenant-scoped repository, run it for both tenants with their own rows and assert each run reads its own tenant only.
+  it.todo('reads and writes one tenant at a time');
+{{/if}}
 });
 
 {{spec.async}}function arrange() {
@@ -40,13 +59,22 @@ describe('{{name.title}}, when its time comes', () => {
 {{/if}}
   const application = createTestApplication({
     modules: [{{spec.modules}}],
+{{#if job.perTenant}}
+    tenants: ['tenant-a', 'tenant-b'],
+{{/if}}
   });
 
   const sent: Message[] = [];
+{{#if job.perTenant}}
+  const tenants: (string | undefined)[] = [];
+{{/if}}
 
   application.commandBus.use(async (message) => {
     sent.push(message);
+{{#if job.perTenant}}
+    tenants.push(application.executionScope.require().tenantId);
+{{/if}}
   });
 
-  return { application, sent };
+  return { application, sent{{#if job.perTenant}}, tenants{{/if}} };
 }

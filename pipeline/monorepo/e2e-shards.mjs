@@ -43,6 +43,8 @@ export const SHARDS = [
     'error-reporting.spec.ts': 17,
     'platform-error-mapper.spec.ts': 20,
     'manual-module.spec.ts': 40,
+    // A multi-tenant project with a service, its roots composed (17 s on a workstation).
+    'service-composition.spec.ts': 18,
   },
   {
     'zero-violation.spec.ts': 33,

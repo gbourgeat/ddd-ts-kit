@@ -1,5 +1,5 @@
 [English](multitenancy.md) · **Français**
-<!-- translation-of: multitenancy.md sha256:548d0b690bd6419d -->
+<!-- translation-of: multitenancy.md sha256:7ad24c151ac43ff0 -->
 
 # Multitenance
 
@@ -244,7 +244,10 @@ Trois règles tiennent quelle que soit la stratégie :
   d'autre.
 - **Jobs planifiés.** Un *job* déclare `tenancy: 'global'` (par défaut) ou `'per-tenant'`. Un
   *job* par *tenant* s'exécute une fois par *tenant*, l'un après l'autre, chaque exécution dans
-  la portée de ce *tenant* ; l'échec d'un *tenant* n'arrête pas les autres.
+  la portée de ce *tenant* ; l'échec d'un *tenant* n'arrête pas les autres. Dans un projet avec
+  `stack.tenancy`, `generate job` écrit `per-tenant` (`--global` pour un travail à travers les
+  *tenants* : il s'exécute dans aucun *tenant*, donc un *repository* confiné à un *tenant* le
+  refuse), et `init` donne au planificateur les identifiants de `TENANTS`.
 - **Caches, limites de débit et verrous.** Une clé d'un stockage partagé est confinée au
   *tenant* : `tenantCacheKey(scope, ...)`, `tenantKey(scope, ...)`, chaque segment encodé en
   pourcentage pour que deux listes de segments ne donnent jamais la même clé. Une clé construite

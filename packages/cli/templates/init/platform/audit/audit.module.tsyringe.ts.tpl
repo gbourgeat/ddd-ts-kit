@@ -29,7 +29,12 @@ import { SearchAuditEntriesQuery } from '{{alias.platform}}/audit/search-audit-e
  * the entries older than the twelve whole months kept online moved to the storage of files,
  * verified and anchored (`audit.archive`){{/if}}.
  */
+{{#if audit.archive}}
+export function auditModule(audit: Audit, { jobs = true }: { readonly jobs?: boolean } = {}): ContextModule {
+{{/if}}
+{{#unless audit.archive}}
 export function auditModule(audit: Audit): ContextModule {
+{{/unless}}
   return defineContextModule({
     name: 'audit',
     register(builder) {
@@ -58,9 +63,12 @@ export function auditModule(audit: Audit): ContextModule {
 {{/if}}
 {{#if audit.archive}}
 
-      builder
-        .job('audit.archive', { cron: '0 4 1 * *' })
-        .handledByFactory((resolve) => new ArchiveAuditEntries(audit.trail, resolve(FileStorage), resolve(Clock)));
+      // Registered by the process that runs the jobs of the platform; a service of the deployment passes `jobs: false`.
+      if (jobs) {
+        builder
+          .job('audit.archive', { cron: '0 4 1 * *' })
+          .handledByFactory((resolve) => new ArchiveAuditEntries(audit.trail, resolve(FileStorage), resolve(Clock)));
+      }
 {{/if}}
     },
     onStart({ resolve }) {

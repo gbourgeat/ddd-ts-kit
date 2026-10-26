@@ -54,8 +54,12 @@ const application = composeApplication(
     log: { ...config.log, service: config.serviceName, environment: config.environment },
     traceConsumers: config.tracing.consumers,
     resilience: config.resilience,
-    // A context run alone takes its jobs with it, and only its own.
+    // A context run alone takes its jobs with it, and only its own: the jobs of the platform stay with the whole application.
     jobs: { start: config.runJobs, settings: jobSettings(process.env, '{{context.kebab}}') },
+    platformJobs: false,
+    {{#if tenancy.any}}
+    tenants: config.tenants,
+    {{/if}}
     {{#if cache.redis}}
     redis,
     {{/if}}

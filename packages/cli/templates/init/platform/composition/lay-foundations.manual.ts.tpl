@@ -8,6 +8,9 @@ import {
 {{#if cache.rateLimit}}
   InMemoryRateLimiter,
 {{/if}}
+{{#if tenancy.any}}
+  InMemoryTenantDirectory,
+{{/if}}
 {{#if errors.sentry}}
   NoopErrorReporter,
 {{/if}}
@@ -126,5 +129,17 @@ function schedulerOf(
   traced: TracedApplication,
   parts: InProcessJobSchedulerOptions,
 ): JobScheduler {
+{{#if tenancy.any}}
+  // The tenants a job declared `per-tenant` runs for; left out (the tools, the tests), none.
+  const tenants = new InMemoryTenantDirectory(options.tenants ?? []);
+
+  return new ConfiguredJobScheduler(
+    new InProcessJobScheduler({ ...parts, tenants }),
+    options.jobs?.settings ?? {},
+    traced.job,
+  );
+{{/if}}
+{{#unless tenancy.any}}
   return new ConfiguredJobScheduler(new InProcessJobScheduler(parts), options.jobs?.settings ?? {}, traced.job);
+{{/unless}}
 }

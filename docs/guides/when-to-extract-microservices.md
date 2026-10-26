@@ -198,7 +198,14 @@ As the `extract-service` skill drives them:
    (`npm run start:<context>`), a compose service in the `services` profile, and sets
    `deployable: true` for the context in the config, which the context map shows in its
    "Deployable alone" column once `npx ddd-ts-kit docs` has run. The service takes the
-   scheduled jobs of its context with it (unless `RUN_JOBS=false`), and no job of another one.
+   scheduled jobs of its context with it (unless `RUN_JOBS=false`), and no job of another one,
+   nor the jobs of the platform. The context also **leaves the whole application**: the command
+   adds it to the `extracted` regions of the composition root, `src/main.ts` and the worker
+   compose `hostedContexts` (every context but the extracted ones), and its consumers, its
+   processes, its jobs and its routes run in the service only. `everyContext` stays the full list
+   for the contracts and the end-to-end tests. Give every container the same `DEPLOYMENT_NAME`
+   (the keys of the lock, the cache and the job store) and its own `OTEL_SERVICE_NAME` (the
+   traces). `test/architecture/hosting.spec.ts` proves it.
 2. **Replace in-process gateways by remote adapters.** In the remaining contexts, each
    `gateway` adapter that pointed at the extracted context becomes a remote adapter of the
    same port, held to the same contract suite.

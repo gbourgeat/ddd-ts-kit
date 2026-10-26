@@ -231,7 +231,9 @@ Three rules hold whatever the strategy:
   reads and writes the tenant of the fact it handles, and nothing else.
 - **Scheduled jobs.** A job states `tenancy: 'global'` (the default) or `'per-tenant'`. A
   per-tenant job runs once per tenant, one after the other, each run in that tenant's scope; one
-  tenant failing does not stop the others.
+  tenant failing does not stop the others. In a project with `stack.tenancy`, `generate job`
+  writes `per-tenant` (`--global` for work across tenants: it runs in no tenant, so a tenant-scoped
+  repository refuses it), and `init` hands the scheduler the ids of `TENANTS`.
 - **Caches, rate limits and locks.** A key of a shared store is confined to the tenant:
   `tenantCacheKey(scope, ...)`, `tenantKey(scope, ...)`, each segment percent-encoded so that
   two lists of segments never give one key. A key built without it is shared by every tenant,

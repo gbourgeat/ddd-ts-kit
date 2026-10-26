@@ -91,7 +91,7 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
       '.use((message, next, info) =>\n      errorReportingMiddleware(resolve(ErrorReporter), foundations.scope)(message, next, info),\n    )';
 
     expect(read(root, 'src/main.ts')).toContain(
-      'const application = composeApplication(persistence, {\n  events: inProcessEvents(),\n  errors,\n',
+      'const application = composeApplication(\n  persistence,\n  {\n    events: inProcessEvents(),\n    errors,\n',
     );
 
     const composition = platform(root, 'composition/compose-application.ts');
@@ -162,7 +162,7 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
       const root = reported('--broker', broker);
       const provider = platform(root, 'events/create-event-provider.ts');
 
-      expect(read(root, 'src/main.ts')).toContain('  events: createEventProvider(config, errors),\n');
+      expect(read(root, 'src/main.ts')).toContain('    events: createEventProvider(config, errors),\n');
 
       expect(provider).toContain(
         'export function createEventProvider(config: AppConfig, errors: ErrorReporter = new NoopErrorReporter()): EventProvider {',
@@ -190,7 +190,7 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
     );
 
     expect(read(root, 'src/main.ts')).toContain('  logger: application.logger,\n  errors,\n});');
-    expect(read(root, 'src/main.ts')).toContain('  events: createEventProvider(),\n  errors,\n');
+    expect(read(root, 'src/main.ts')).toContain('    events: createEventProvider(),\n    errors,\n');
     expect(platform(root, 'events/create-event-provider.ts')).not.toContain('DeadLetterReports');
     expect(exists(reported('--orm', 'none'), 'src/platform/events/start-outbox-relay.ts')).toBe(false);
   });
@@ -306,7 +306,7 @@ describe('the other entry points of a project that reports', () => {
       "import { errors } from '@/platform/observability/errors';",
     ]);
 
-    expect(worker).toContain('  events: createEventProvider(config, errors),\n  errors,\n');
+    expect(worker).toContain('    events: createEventProvider(config, errors),\n    errors,\n');
     expect(worker).toContain('  await application.stop();\n  await persistence.close();\n  await tracing.shutdown();');
   });
 

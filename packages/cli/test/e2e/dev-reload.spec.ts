@@ -65,8 +65,8 @@ describe.runIf(SLOW)('npm run dev, when a dependency is added to a constructor',
       'src/main.ts',
       read(root, 'src/main.ts')
         .replace(
-          'import { composeApplication } from',
-          `import { CancelInvoiceHandler } from '${HANDLER_ALIAS}';\nimport { composeApplication } from`,
+          'import { composeApplication, hostedContexts } from',
+          `import { CancelInvoiceHandler } from '${HANDLER_ALIAS}';\nimport { composeApplication, hostedContexts } from`,
         )
         .replace(
           'await application.start();',

@@ -26,7 +26,7 @@ describe('the composition root init writes, on tsyringe', () => {
     const composition = platform(initProject('--context', 'billing:core'), 'composition/compose-application.ts');
 
     expect(composition).toContain(
-      'modules: [\n      kernel(foundations, persistence, options),\n      platformModule(persistence, options),\n      guard,\n      auditModule(foundations.audit),\n      filesModule(options.files ?? new InMemoryFileStorage()),\n      privacyModule(),\n      ...contexts.modules,\n    ],',
+      'modules: [\n      kernel(foundations, persistence, options),\n      platformModule(persistence, options),\n      guard,\n      auditModule(foundations.audit, { jobs: options.platformJobs !== false }),\n      filesModule(options.files ?? new InMemoryFileStorage(), { jobs: options.platformJobs !== false }),\n      privacyModule({ jobs: options.platformJobs !== false }),\n      ...contexts.modules,\n    ],',
     );
 
     expect(composition).toContain(
@@ -36,7 +36,11 @@ describe('the composition root init writes, on tsyringe', () => {
     expect(composition).not.toContain('decorate');
     expect(composition).toContain("authorization: 'required',");
     expect(composition).toContain("contextModule('billing', billingDeclarations),");
-    expect(composition).toContain('routes(commands, queries)');
+
+    expect(platform(initProject('--routes', 'functions'), 'composition/routes-of.ts')).toContain(
+      'routes(commands, queries)',
+    );
+
     expect(composition).not.toContain('PUBLISHERS');
   });
 
@@ -47,9 +51,7 @@ describe('the composition root init writes, on tsyringe', () => {
     expect(composition).toContain('container.resolve(Authenticator)');
     expect(composition).toContain('errorMapper: container.resolve(ErrorMapper),');
 
-    expect(composition).toMatch(
-      /import \{\n {2}Cache,\n {2}Clock,\n {2}CommandBus,\n {2}EventBus,\n {2}ExecutionScope,/,
-    );
+    expect(composition).toMatch(/import \{\n {2}Cache,\n {2}Clock,\n {2}EventBus,\n {2}ExecutionScope,/);
   });
 
   it('rebinds in the platform module what needs the storage, and binds the storage under its class', () => {

@@ -100,7 +100,15 @@ scope (`execution.tenantId` says which); a tenant that fails does not stop the o
 npx ddd-ts-kit generate job notifications SendReminders --cron "0 7 * * *" --time-zone Europe/Paris --command SendReminders
 ```
 
-writes the job, its spec, its switch in the job settings of the platform
+In a project with tenancy (`stack.tenancy` other than `none`), `generate job` writes
+`tenancy: 'per-tenant'`, since a global job runs in no tenant and a tenant-scoped repository
+refuses it (`NoCurrentTenantError`) on every real run; `--global` writes `tenancy: 'global'` for
+work across tenants, and the note of the command says which was written. `init` gives the scheduler
+the tenants of `TENANTS` (comma separated ids, `config.tenants`, passed to the application as
+`tenants`): bind a directory of your own once the tenants live in a table. The generated spec
+runs the job for two tenants.
+
+The command writes the job, its spec, its switch in the job settings of the platform
 (`src/platform/jobs/job-settings.ts`, switched off with `JOB_<CONTEXT>_<JOB>_ENABLED=false`) and,
 where the authorization model makes it one line, the grant of its system actor.
 
@@ -320,6 +328,16 @@ process.on('SIGTERM', () => void app.stop());
 `RUN_JOBS` off for the API. With `start: false` the jobs are still registered and `runNow` still
 runs one. Keep the single-run lock on even with one worker: a rolling deployment runs two for a
 while.
+
+### Services and the jobs of the platform
+
+The jobs of the platform itself (`audit.archive`, `privacy.purge-expired`, `files.purge-staged`)
+belong to the whole application. A service written by `generate service` composes with
+`platformJobs: false`, and its `jobSettings(env, '<context>')` keeps the settings of its own jobs
+only; the whole application leaves out the jobs of the contexts run as services. The lock that
+keeps an occurrence to one run is shared through Redis under `DEPLOYMENT_NAME` (like the cache,
+the rate limiter and the job store), never under `OTEL_SERVICE_NAME`: that one names the container
+in the traces, and a lock per container is no lock.
 
 ## Testing
 
