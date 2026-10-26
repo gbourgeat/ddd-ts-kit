@@ -1,7 +1,8 @@
+import { execFileSync } from 'node:child_process';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers';
+import { cli, read, REPO_ROOT, write } from './helpers';
 import { BUILT, LOCK, SLICES, SPEC, SPECIFICATION, STORY } from './support/acceptance-story';
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
@@ -46,6 +47,12 @@ function verdict(
 }
 
 describe('the lock of an acceptance', () => {
+  it('is written in the layout the formatter of the project prints, so the format gate passes at the commit', () => {
+    const biome = path.join(REPO_ROOT, 'node_modules/.bin/biome');
+
+    expect(() => execFileSync(biome, ['format', LOCK], { cwd: root, stdio: 'pipe' })).not.toThrow();
+  });
+
   it('reports a locked scenario changed while its criterion was not, whatever the gate, and refuses to lock it again without a verdict', () => {
     write(root, SPEC, BUILT.replace('201);\n  });\n\n  it(', '200);\n  });\n\n  it('));
 
