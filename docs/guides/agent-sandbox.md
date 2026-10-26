@@ -190,6 +190,17 @@ them, or run `init --force`.
 The sandbox may also leave a read-only `.git/config.lock`. Delete it from a terminal outside the
 sandbox before `git config` or `git branch -d`, which refuse to run while it exists.
 
+#### Creating the project under the sandbox
+
+The sandbox of Claude Code keeps the agent from writing `.claude/settings.json`, `.claude/hooks/`
+and `.git/hooks`: where `init` writes the agent settings and the hooks of the regulated profile,
+and where `npm run hooks:install` installs the git hooks. `init` writes every other file and lists
+these under `unwritable` (and in `skipped`) of its report, a dry run included, with a note that
+gives the command to finish: the same `init`, run from a terminal outside the sandbox, which
+writes the missing files and keeps the ones written. The `bootstrap` skill hands both to the owner
+from the start: the agent runs the dry run and shows the command, the owner runs `init`, the agent
+resumes at `npm install`, and the owner runs `npm run hooks:install` before the first commit.
+
 ### 3. NVIDIA OpenShell
 
 [OpenShell](https://github.com/NVIDIA/OpenShell) is the open source runtime (Apache 2.0) NVIDIA

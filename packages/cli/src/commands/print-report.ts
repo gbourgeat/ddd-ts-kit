@@ -39,8 +39,14 @@ function fileLines(report: WorkspaceReport, dryRun: boolean): string[] {
     ...report.created.map((file) => `${verb('created')}${file}`),
     ...report.updated.map((file) => `${verb('updated')}${file}`),
     ...report.deleted.map((file) => `${verb('deleted')}${file}`),
-    ...report.skipped.map((file) => `${'skipped'.padEnd(13)}${file} (exists; pass --force to replace it)`),
+    ...report.skipped.map((file) => `${'skipped'.padEnd(13)}${file} (${skippedBecause(report, file)})`),
   ];
 
   return lines.length > 0 ? lines : ['Nothing to do.'];
+}
+
+function skippedBecause(report: WorkspaceReport, file: string): string {
+  return report.unwritable.includes(file)
+    ? 'cannot be written here: a sandbox or the permissions protect the path'
+    : 'exists; pass --force to replace it';
 }

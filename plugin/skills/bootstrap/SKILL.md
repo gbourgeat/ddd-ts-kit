@@ -60,11 +60,19 @@ the command under `## Decisions` of the plan.
 ## 3. Create the project
 
 ```bash
-npx ddd-ts-kit@latest init <flags> --dry-run --json   # read `created`, `skipped` and `notes`
+npx ddd-ts-kit@latest init <flags> --dry-run --json   # read `created`, `skipped`, `unwritable` and `notes`
 npx ddd-ts-kit@latest init <flags> --json             # its `notes` end with the two commands to run next
 pnpm install                                          # `npm install` with --package-manager npm
 pnpm run verify                                       # the bare project is green before its first context
 ```
+
+In a sandboxed session (the sandbox of Claude Code, which the regulated profile turns on), or
+whenever the dry run lists files under `unwritable`, the real `init` is the owner's: the sandbox
+keeps the agent from writing `.claude/settings.json` and `.claude/hooks/`. Run the dry run, show
+the owner the same command without `--dry-run` and `--json`, to run from a terminal outside the
+sandbox, and wait for their word that it ran; resume at `pnpm install`. An `init` run in the sandbox anyway writes
+every other file and ends with a note that gives the command to finish: hand it to the owner the
+same way.
 
 On an existing project, a note of the dry run that starts with `package.json depends on` is a
 dependency the flags contradict: put it to the owner, and run the dry run again with the flag it
@@ -119,6 +127,11 @@ would drift.
 pnpm run verify          # types, lint, format, tests, end to end, architecture, import graph, dead code, docs drift
 pnpm run hooks:install   # pre-commit checks and conventional commit messages
 ```
+
+In a sandboxed session `.git/hooks` is read-only to the agent: `hooks:install` is the owner's too,
+from a terminal outside the sandbox, once `pnpm install` has run (lefthook comes with the
+dependencies). Commit after their word that it ran, so that the first commit goes through the
+hooks.
 
 Report the real output. Propose the commits (skill `ddd-ts-kit:commit-discipline`): one for
 the bare project (`chore: bootstrap the project`), then one per context

@@ -6,6 +6,9 @@ import { packageManagerOf } from '../package-manager/package-manager-of';
 import type { NextStep } from './next-step';
 import type { TodoLocation } from './todo-location';
 import { todosIn } from './todos-in';
+import { cannotWrite } from './cannot-write';
+import { isFileOrAbsent } from './is-file-or-absent';
+import { writeIfAllowed } from './write-if-allowed';
 import type { WorkspaceReport } from './workspace-report';
 
 interface Pending {
@@ -25,6 +28,9 @@ export class Workspace {
   private readonly pending = new Map<string, Pending>();
 
   private readonly skipped = new Set<string>();
+
+  /** Files this command cannot write where it runs, such as a path the sandbox of an agent protects. */
+  private readonly unwritable = new Set<string>();
 
   /** Files on disk this command removes: no longer derived from anything. */
   private readonly removed = new Set<string>();
@@ -65,7 +71,8 @@ export class Workspace {
       return pending.content;
     }
 
-    if (this.removed.has(file)) {
+    if (this.removed.has(file) || !isFileOrAbsent(this.absolute(file))) {
+      // A device in place of a file (what a sandbox mounts over a path it protects) holds no text of the project.
       return undefined;
     }
 
@@ -114,7 +121,7 @@ export class Workspace {
 
     if (this.exists(file) && !this.force) {
       if (onDisk) {
-        this.skipped.add(file);
+        (isFileOrAbsent(this.absolute(file)) ? this.skipped : this.unwritable).add(file);
       }
 
       return false;
@@ -228,8 +235,12 @@ export class Workspace {
     }
   }
 
+  /**
+   * Writes the plan, or (dry run) only says it. A file it cannot write here (a path the sandbox of an
+   * agent protects) is reported as unwritable, in `skipped` too, and every other file is written.
+   */
   commit(dryRun: boolean): WorkspaceReport {
-    const written = [...this.pending].map(([file, { content, existed }]) => ({ file, content, existed }));
+    const written = this.writtenOf(dryRun);
 
     const left = written
       .filter(({ existed }) => !existed || this.force)
@@ -238,15 +249,7 @@ export class Workspace {
     const todos = [...left, ...this.steps.map((step) => this.located(step))];
 
     if (!dryRun) {
-      written.forEach(({ file, content }) => this.write(file, content));
-
-      this.removed.forEach((file) => {
-        fs.rmSync(this.absolute(file), { force: true });
-
-        if (this.pruning) {
-          this.pruneEmptied(path.posix.dirname(file));
-        }
-      });
+      this.removed.forEach((file) => this.remove(file));
     }
 
     // The language comes before the code: its definition is the first thing to do.
@@ -256,11 +259,35 @@ export class Workspace {
       created: written.filter(({ existed }) => !existed).map(({ file }) => file),
       updated: written.filter(({ existed }) => existed).map(({ file }) => file),
       deleted: [...this.removed].sort(),
-      skipped: [...this.skipped].sort(),
+      skipped: [...new Set([...this.skipped, ...this.unwritable])].sort(),
+      unwritable: [...this.unwritable].sort(),
       next: todos.map((todo) => `${todo.file}:${todo.line}`),
       todos,
       notes: this.notes.map((note) => this.spoken(note)),
     };
+  }
+
+  /** The planned files written, or (dry run) that could be: the others are recorded as unwritable. */
+  private writtenOf(dryRun: boolean): { file: string; content: string; existed: boolean }[] {
+    const planned = [...this.pending].map(([file, { content, existed }]) => ({ file, content, existed }));
+
+    return planned.filter(({ file, content }) => {
+      const writable = dryRun ? !cannotWrite(this.absolute(file)) : writeIfAllowed(this.absolute(file), content);
+
+      if (!writable) {
+        this.unwritable.add(file);
+      }
+
+      return writable;
+    });
+  }
+
+  private remove(file: string): void {
+    fs.rmSync(this.absolute(file), { force: true });
+
+    if (this.pruning) {
+      this.pruneEmptied(path.posix.dirname(file));
+    }
   }
 
   private located({ file, anchor, text }: NextStep): TodoLocation {
@@ -301,11 +328,6 @@ export class Workspace {
 
     fs.rmdirSync(absolute);
     this.pruneEmptied(path.posix.dirname(directory));
-  }
-
-  private write(file: string, content: string): void {
-    fs.mkdirSync(path.dirname(this.absolute(file)), { recursive: true });
-    fs.writeFileSync(this.absolute(file), content);
   }
 
   private absolute(file: string): string {
