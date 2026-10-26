@@ -66,6 +66,18 @@ describe('authz/policy-asked beyond the decorated use cases', () => {
     expect(found).toEqual([]);
   });
 
+  it('reads nothing from a registration that declares no requirement', () => {
+    const found = policyAskedIn({
+      [MODULE]:
+        'export function billingModule(builder: Builder): void {\n  builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler);\n}\n',
+      [POLICY]: definedPolicy(ISSUE),
+      [COMMAND]: 'export class IssueInvoiceCommand {}\n',
+      [HANDLER]: SAVING_HANDLER,
+    });
+
+    expect(found).toEqual([]);
+  });
+
   it('skips a permission written as no entry of a permission set, and a use case it cannot find', () => {
     const found = policyAskedIn({
       [MODULE]: [

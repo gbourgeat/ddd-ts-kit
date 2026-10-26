@@ -9,9 +9,7 @@ import { ON_A_SERVER } from './pipeline/monorepo/affected-packages.mjs';
  */
 const SLOW_FIRST = [
   'packages/kernel/test/declarations.spec.ts',
-  'packages/cli/test/e2e/zero-violation.spec.ts',
   'packages/aspects/test/decorators.spec.ts',
-  'packages/cli/test/e2e/formatted.spec.ts',
   'packages/http/test/controllers.spec.ts',
   'packages/di/test/discovered-context.spec.ts',
 ];

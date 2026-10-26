@@ -228,6 +228,8 @@ mutation_changed:
     GIT_DEPTH: 0
   script:
     - 'curl --silent --fail --location --output night.zip --header "JOB-TOKEN: $CI_JOB_TOKEN" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/jobs/artifacts/$CI_DEFAULT_BRANCH/download?job=mutation" && unzip -q -o night.zip && rm night.zip || echo "The last night kept no report: a full run."'
+    # The night runs without a base and writes no incremental file: its json report is the same object, which Stryker reads back.
+    - if [ -f reports/mutation/mutation.json ]; then cp reports/mutation/mutation.json reports/mutation/incremental.json; fi
     - git fetch --quiet origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
     - base=$(git merge-base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" HEAD)
     - DDD_TS_KIT_MUTATION_SINCE="$base" npm run test:mutation

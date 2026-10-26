@@ -419,6 +419,44 @@ Node 24 with coverage, 451 s median and 745 s p95, the npm job at about 500 s, t
 should take the repository off its limit for most of the day, which only the runs of the following
 days can say.
 
+### Plan status
+
+Built on `fix/families-quick`, one commit each (the gain is the page's figure, not yet measured
+after the change):
+
+- **Line 1, the templates.** The mutation job of the pull request or merge request that `init`
+  writes (GitHub and GitLab, and the copies in `pipeline/` and `examples/scheduling`) copies the
+  json report of the night to `incremental.json` before Stryker runs, as the CI of the kit does.
+  Expected: the same -990 runner seconds per run of a project whose example is the size of this
+  one, in proportion to its mutants; a file of `changes/` carries the step to existing projects.
+
+- **Line 2, the shards.** The table of `pipeline/monorepo/e2e-shards.mjs` holds the medians of
+  2026-10-26 and the four runners end at 870, 867, 870 and 873 s of spec run (they ended at 593,
+  758, 1,195 and 968 s of job). The two `first-minute` sweeps are **not** split: each (664 and 661
+  s) is shorter than a runner's share (870 s), so the balance is the same with or without a split
+  and the longest runner does not get shorter by it. Expected: the third shard, 1,195 s, to about
+  900 s of job (the setup of a job on top of 873 s of specs), about 300 s of wall time on every
+  pull request and trunk run, no runner second. The drift of the table is not yet warned about.
+
+- **Line 5, one family.** `zero-violation` and `formatted` stay in the end-to-end shards (the
+  homogeneity guarantee runs on every pull request that reaches `cli`, where the heavy checks
+  already are) and leave the unit suite (`describe.runIf(SLOW)`, as the other specs of
+  `test/e2e`), so the two unit jobs and the pre-push hook stop generating the matrix. Measured on
+  the workstation: 49 s and 57 s of wall, 118 CPU seconds and 1.3 GB per push that reaches `cli`.
+  Expected: about 57 s off each unit job (the longest files after the compile matrix), about 113
+  runner seconds off a pull request run and the same off a trunk run, no cost in the shards. The
+  unit coverage of `cli` fell by two lines under its floor of 98 percent (97.99 against 98.00),
+  which two unit specs now hold (a registration with no requirement; `--tenant-scoped` on a
+  custom store).
+
+- **Line 9, the workstation.** `pipeline/monorepo/heavy-lock.sh` holds one of two machine-wide
+  slots (`flock` on files of `$XDG_RUNTIME_DIR`) around the `ci:test:*` scripts and the unit step
+  of the pre-push hook; a Stryker run goes through it by hand (CONTRIBUTING.md). The end-to-end
+  scripts start `VITEST_MAX_WORKERS=2` outside a pipeline (`ci:test:e2e` and the shards script
+  now; the managers, alias, pairwise and night scripts already did). No gain in time: a bound on
+  the peak memory of several sessions together, two heavy runs (about 7 GB each) instead of as
+  many as there are sessions. An agent that finds both slots taken waits and says so.
+
 ## What a pull request must still prove
 
 The levers that need a decision trade a proof before the merge for a proof within the hour (the

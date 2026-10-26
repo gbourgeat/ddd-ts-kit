@@ -297,3 +297,19 @@ function withoutExtras(text: string): string {
 
   return removed === text ? text : withoutExtras(removed);
 }
+
+describe('pipeline mutation reading', () => {
+  it('the mutation reading of a change gives Stryker the json report of the night as its incremental file, on GitHub and on GitLab', () => {
+    const copy = 'cp reports/mutation/mutation.json reports/mutation/incremental.json';
+    const github = read(initProject('--package-manager', 'npm'), '.github/workflows/ci.yml');
+    const gitlab = read(initProject('--package-manager', 'npm', '--ci', 'gitlab'), '.gitlab-ci.yml');
+
+    expect(github).toContain(copy);
+    expect(gitlab).toContain(copy);
+    // After the download of the report and before the run that reads it.
+    expect(github.indexOf('gh run download')).toBeLessThan(github.indexOf(copy));
+    expect(github.indexOf(copy)).toBeLessThan(github.indexOf('DDD_TS_KIT_MUTATION_SINCE='));
+    expect(gitlab.indexOf('night.zip')).toBeLessThan(gitlab.indexOf(copy));
+    expect(gitlab.indexOf(copy)).toBeLessThan(gitlab.indexOf('DDD_TS_KIT_MUTATION_SINCE='));
+  });
+});

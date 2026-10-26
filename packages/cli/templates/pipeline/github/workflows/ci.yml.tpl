@@ -256,6 +256,8 @@ jobs:
         run: |
           run=$(gh run list --workflow "${{ github.workflow }}" --event schedule --branch "${{ github.event.repository.default_branch }}" --status success --limit 1 --json databaseId --jq '.[0].databaseId')
           if [ -n "$run" ]; then gh run download "$run" --name mutation --dir reports/mutation || echo "The last night kept no report: a full run."; fi
+          # The night runs without a base and writes no incremental file: its json report is the same object, which Stryker reads back.
+          if [ -f reports/mutation/mutation.json ]; then cp reports/mutation/mutation.json reports/mutation/incremental.json; fi
       - name: Stryker on what the change touches, then the survivors of its files
         run: |
           mkdir -p reports/mutation

@@ -73,6 +73,28 @@ describe('init --tenancy', () => {
   });
 });
 
+describe('generate repository --tenant-scoped on a custom store', () => {
+  it('says how to confine the statements by hand, since no ORM package carries the helpers', () => {
+    const project = initProject('--orm', 'custom', '--context', 'billing:core');
+
+    cli(project, 'generate', 'aggregate', 'billing', 'Invoice', '--allow-name');
+
+    const generated = cli(
+      project,
+      'generate',
+      'repository',
+      'billing',
+      'Invoice',
+      '--allow-name',
+      '--tenant-scoped',
+      '--json',
+    );
+
+    expect(generated.stdout).toContain('--tenant-scoped is generated for drizzle, knex, prisma and typeorm only');
+    expect(generated.stdout).toContain('with custom, add the tenant column to the storage');
+  });
+});
+
 describe('init --tenancy on Prisma and TypeORM', () => {
   it('spreads the helpers into every statement of a Prisma or TypeORM repository, and names the tenant in the storage', () => {
     const prisma = initProject('--orm', 'prisma', ...SHARED);

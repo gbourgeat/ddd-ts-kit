@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cli, scaffoldEverything, tempDir, walk } from '../helpers';
 import { runnerConfigFindings } from './runner-config-findings';
-import { label, STACKS } from './stacks';
+import { label, SLOW, STACKS } from './stacks';
 
 interface CheckJson {
   ok: boolean;
@@ -81,7 +81,7 @@ const SHIPPING = [
  * The homogeneity guarantee: whatever the generator writes, the checker accepts.
  * A template and a rule can therefore never drift apart without this test failing.
  */
-describe('a freshly generated project', () => {
+describe.runIf(SLOW)('a freshly generated project', () => {
   it.each(STACKS.map((stack) => [label(stack), stack] as const))('has zero violation (%s)', (_label, stack) => {
     const root = tempDir('e2e');
 

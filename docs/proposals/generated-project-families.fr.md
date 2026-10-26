@@ -1,5 +1,5 @@
 [English](generated-project-families.md) · **Français**
-<!-- translation-of: generated-project-families.md sha256:555bd7fabfb36536 -->
+<!-- translation-of: generated-project-families.md sha256:467a958c6f2f5098 -->
 
 # Proposition : les familles qui génèrent des projets, dans le *pipeline* et sur une station de travail
 
@@ -446,6 +446,49 @@ lieu de quatre, un job de moins contre la limite, pour environ 100 s de temps de
 l'indicateur à surveiller : moins de secondes de *runner* au même trafic devraient sortir le dépôt
 de sa limite la plus grande partie de la journée, ce que seules les exécutions des jours suivants
 peuvent dire.
+
+### État du plan
+
+Construit sur `fix/families-quick`, un commit chacun (le gain est le chiffre de la page, pas
+encore mesuré après le changement) :
+
+- **Ligne 1, les modèles.** Le job de mutation de la *pull request* ou de la *merge request* que
+  `init` écrit (GitHub et GitLab, et les copies de `pipeline/` et de `examples/scheduling`) copie
+  le rapport json de la nuit dans `incremental.json` avant de lancer Stryker, comme la CI du kit.
+  Attendu : les mêmes -990 secondes de *runner* par exécution pour un projet dont l'exemple a la
+  taille de celui-ci, en proportion de ses mutants ; un fichier de `changes/` porte l'étape aux
+  projets existants.
+
+- **Ligne 2, les tranches.** La table de `pipeline/monorepo/e2e-shards.mjs` porte les médianes du
+  2026-10-26 et les quatre *runners* finissent à 870, 867, 870 et 873 s de specs (ils finissaient
+  à 593, 758, 1 195 et 968 s de job). Les deux balayages `first-minute` ne sont **pas** coupés :
+  chacun (664 et 661 s) est plus court que la part d'un *runner* (870 s), l'équilibre est le même
+  avec ou sans coupure et le *runner* le plus long n'en raccourcit pas. Attendu : la troisième
+  tranche, de 1 195 s à environ 900 s de job (la mise en place d'un job s'ajoute aux 873 s de
+  specs), environ 300 s de temps écoulé à chaque *pull request* et exécution du tronc, aucune
+  seconde de *runner*. La dérive de la table n'est pas encore signalée.
+
+- **Ligne 5, une seule famille.** `zero-violation` et `formatted` restent dans les tranches de
+  bout en bout (la garantie d'homogénéité tourne à chaque *pull request* qui atteint `cli`, là où
+  sont déjà les contrôles lourds) et quittent la suite unitaire (`describe.runIf(SLOW)`, comme les
+  autres specs de `test/e2e`) : les deux jobs unitaires et le *hook* `pre-push` ne génèrent plus la
+  matrice. Mesuré sur la station : 49 s et 57 s de temps écoulé, 118 secondes de CPU et 1,3 Go par
+  *push* qui atteint `cli`. Attendu : environ 57 s en moins par job unitaire (les fichiers les plus
+  longs après la matrice de compilation), environ 113 secondes de *runner* en moins par
+  *pull request* et autant par exécution du tronc, aucun coût dans les tranches. La couverture
+  unitaire de `cli` passait de deux lignes sous son plancher de 98 pour cent (97,99 contre 98,00) :
+  deux specs unitaires la tiennent désormais (un enregistrement sans exigence ; `--tenant-scoped`
+  sur un stockage personnalisé).
+
+- **Ligne 9, la station de travail.** `pipeline/monorepo/heavy-lock.sh` tient l'une de deux
+  places pour toute la machine (`flock` sur des fichiers de `$XDG_RUNTIME_DIR`) autour des
+  scripts `ci:test:*` et de l'étape unitaire du *hook* `pre-push` ; une exécution de Stryker y
+  passe à la main (CONTRIBUTING.md). Les scripts de bout en bout démarrent `VITEST_MAX_WORKERS=2`
+  hors d'un *pipeline* (`ci:test:e2e` et le script des tranches désormais ; ceux des
+  gestionnaires, de l'alias, des paires et de la nuit le faisaient déjà). Aucun gain de temps : une
+  borne sur la mémoire de crête de plusieurs sessions ensemble, deux exécutions lourdes (environ
+  7 Go chacune) au lieu d'autant que de sessions. Un agent qui trouve les deux places prises attend
+  et le dit.
 
 ## Ce qu'une *pull request* doit encore prouver
 
