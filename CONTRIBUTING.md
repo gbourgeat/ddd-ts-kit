@@ -222,8 +222,9 @@ gh pr merge --auto --squash
 
 What the CI runs depends on the pull request (`docs/proposals/generated-project-families.md`). Open it
 as a draft until the branch is final: a draft runs the fast checks only, and marking it ready runs the
-whole CI. A pull request that touches no template, generator, package manifest or end-to-end spec
-generates no project; one that does generates a cover of 16 stacks in which every value of every flag
+whole CI. A pull request that changes documents alone, the website, the plugin text or the example
+generates no project; one that touches anything under `packages/` or `pipeline/`, or the root
+configuration, generates a cover of 16 stacks in which every value of every flag
 appears. The trunk generates every stack, installs on npm and runs the alias on Node 24; the night and
 the pull request of a release (title `chore(release)` or branch `release/*`) add pnpm, Node 22, the
 intermediate states of the first minute, the coverage gate on ten stacks, the pairs and the migrations.

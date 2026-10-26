@@ -50,8 +50,8 @@ jobs:
           BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }}
         run: node pipeline/monorepo/affected-packages.mjs --base "$BASE" --format github | tee -a "$GITHUB_OUTPUT"
       # `all` on the default branch, at night and on a release; on another pull request the script says `cover` when the change
-      # touches a template or a generator and `none` when it touches neither (docs/proposals/generated-project-families.md).
-      - name: Which of the slow families this run starts (not in draft, not on documents alone, not without a template or a generator), the stacks they take, and whether it goes deep (the night, on demand, a release)
+      # touches anything a generated project runs or is built from (`packages/`, `pipeline/`, the root configuration) and `none` when it touches none of it (docs/proposals/generated-project-families.md).
+      - name: Which of the slow families this run starts (not in draft, not on documents alone, not on a change that touches nothing a project runs), the stacks they take, and whether it goes deep (the night, on demand, a release)
         id: kind
         env:
           EVENT: ${{ github.event_name }}
@@ -249,7 +249,7 @@ jobs:
   alias:
     name: Import alias at run time (Node ${{ matrix.node }})
     needs: install
-    # Left out of a draft, when nothing but documents they do not read changed, and when the change touches no template and no generator.
+    # Left out of a draft, when nothing but documents they do not read changed, and when the change touches nothing a generated project runs.
     if: ${{ needs.install.outputs.generates == 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 25
@@ -347,7 +347,7 @@ jobs:
   e2e:
     name: End-to-end tests (${{ matrix.shard }}/4)
     needs: install
-    # Left out of a draft, when nothing but documents they do not read changed, and when the change touches no template and no generator.
+    # Left out of a draft, when nothing but documents they do not read changed, and when the change touches nothing a generated project runs.
     if: ${{ needs.install.outputs.generates == 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 30
@@ -404,7 +404,7 @@ jobs:
   managers:
     name: Generated project on ${{ matrix.manager }}
     needs: install
-    # Left out of a draft, when nothing but documents they do not read changed, and when the change touches no template and no generator.
+    # Left out of a draft, when nothing but documents they do not read changed, and when the change touches nothing a generated project runs.
     if: ${{ needs.install.outputs.generates == 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 30
@@ -636,7 +636,7 @@ jobs:
           # Every job this one needs, read whole: a job added later is held without being listed here.
           NEEDS: ${{ toJSON(needs) }}
           # A job is skipped without failing the gate only where the install job says its own `if:` skips it, and then only:
-          # `generates` is false for a draft, for a change of documents alone and for a change that touches no template and no
+          # `generates` is false for a draft, for a change of documents alone and for a change that touches nothing a project runs and no
           # generator; `whole` is false for a draft and for a change of documents alone.
           SKIP_WITHOUT_GENERATES: alias e2e managers
           SKIP_WITHOUT_WHOLE: example conformance

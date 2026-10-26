@@ -1,5 +1,5 @@
 [English](generated-project-families.md) · **Français**
-<!-- translation-of: generated-project-families.md sha256:6ac1bbf2deb62da1 -->
+<!-- translation-of: generated-project-families.md sha256:4153c77f187f7b9c -->
 
 # Proposition : les familles qui génèrent des projets, dans le *pipeline* et sur une station de travail
 
@@ -526,23 +526,25 @@ Le mainteneur a décidé quatre choses ; chacune est un *commit* de `fix/familie
 gain que les chiffres de cette page lui donnent (estimé depuis les médianes par fichier et par
 étape, à relire sur les premières exécutions) :
 
-1. **Un ensemble couvrant de 16 *stacks* sur une *pull request* qui touche un *template* ou un
-   générateur, toutes les *stacks* sur le tronc, les paires la nuit.** La sélection par *stack* de
+1. **Un ensemble couvrant de 16 *stacks* sur une *pull request* qui change ce qu'un projet exécute,
+   toutes les *stacks* sur le tronc, les paires la nuit.** La sélection par *stack* de
    #260 lisait les *packages* qu'un changement atteint, et toute *pull request* atteignait `cli`.
-   Le job d'installation dit maintenant `stacks` : `none` quand aucun *template*
-   (`packages/*/templates/`), générateur (`packages/cli/src/`), manifeste de *package*, *spec* de
-   bout en bout ni fichier qui les exécute (`ci.yml`, les *shards*, l'empaquetage du kit) n'a
-   changé, `cover` quand l'un d'eux a changé, `all` sur le tronc, la nuit et sur la *pull request*
+   Le job d'installation dit maintenant `stacks` : `none` quand le
+   changement ne touche rien de ce qu'un projet généré exécute ou dont il est fait, `cover` quand il
+   touche un fichier de `packages/` (sources, *templates*, manifestes et *specs* de chaque
+   *package*, hors fichiers Markdown), de `pipeline/`, le manifeste, le verrou ou la configuration
+   de la racine, ou le *workflow* qui les exécute ; les documents, le site, le texte du *plugin*,
+   l'exemple (il a son propre job) et les modèles d'issues donnent `none` ; `all` sur le tronc, la nuit et sur la *pull request*
    d'une *release* (titre `chore(release)` ou branche `release/*`). `none` saute les *shards*, les
    exécutions de l'alias et le job des gestionnaires ; `cover` donne aux deux balayages d'`init`
    seul et aux cas de l'alias les 16 *stacks* où chaque valeur de chaque drapeau apparaît
    (`coverOf` dans `packages/cli/test/e2e/stacks.ts`, calculé depuis `EVERY_STACK` : 16 des 48
    *stacks* exécutables et des 55 *stacks*). `zero-violation`, `formatted` et `typecheck` gardent
    toutes les *stacks* sur une *pull request* qui génère : elles coûtent 57, 56 et 130 s.
-   **Gain :** environ 1 180 secondes de *runner* pour une *pull request* qui touche un *template*
-   ou un générateur, environ 4 800 pour une qui n'en touche aucun (*shards* 3 514, gestionnaires
-   784, alias 521) ; au trafic du 2026-10-26, où 63 *pull requests* sur 104 en touchaient un,
-   environ 2 600 par exécution de *pull request*. Tronc : 0.
+   **Gain :** environ 1 180 secondes de *runner* pour une *pull request* qui change ce qu'un projet
+   exécute, environ 4 800 pour une qui ne change que des documents (*shards* 3 514, gestionnaires
+   784, alias 521) ; au trafic du 2026-10-26, où 9 *pull requests* sur 113 seulement ne changeaient
+   que des documents, environ 1 300 par exécution de *pull request*. Tronc : 0.
 2. **À la nuit, et à la *pull request* d'une *release* : pnpm, les exécutions de l'alias sur
    Node 22, les états intermédiaires de la première minute, la porte de couverture sur ses dix
    *stacks*.** Le job d'installation dit `deep` pour la nuit, une exécution à la demande et une
@@ -578,14 +580,15 @@ gain que les chiffres de cette page lui donnent (estimé depuis les médianes pa
 
 Là où la construction diffère du plan ci-dessus : l'ensemble couvrant ne s'applique qu'aux
 balayages et aux exécutions de l'alias (le levier 3 le disait ; la décision disait « pas les 48 ») ;
-un changement qui ne touche ni *template* ni générateur ne génère rien, même s'il touche un
-*package* que tout projet généré installe (le noyau, le *package* de test, le *plugin* ESLint : leurs
-propres jobs unitaires, et le tronc, les tiennent) ; le tronc exécute la porte de couverture sur une
+un changement d'un *package* d'exécution
+(le noyau, le *package* de test, le *plugin* ESLint, un adaptateur) génère l'ensemble couvrant, comme
+un changement de *template* ; seul un changement qui ne touche rien de ce qu'un projet généré exécute
+ne génère rien ; le tronc exécute la porte de couverture sur une
 *stack*, comme une *pull request*.
 
 Attendu, avec ces quatre et les lignes de `fix/families-quick` : une exécution de *pull request*
 qui touche un *template*, d'environ 7 700 à environ 4 400 secondes de *runner* ; une qui n'en
-touche aucun, à environ 1 900 ; une exécution du tronc d'environ 8 000 à environ 5 900. Le temps de
+ne change que des documents, à environ 1 900 ; une exécution du tronc d'environ 8 000 à environ 5 900. Le temps de
 mur d'une *pull request* suit le job unitaire sur Node 24 et le job npm.
 
 Ce que les premières exécutions doivent montrer : les sorties `stacks`, `deep`, `generates` et

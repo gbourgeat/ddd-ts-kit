@@ -12,7 +12,7 @@
 // printed. The unit run takes `filters` as its path filters and `packages` as KIT_AFFECTED, which
 // vitest.config.ts reads to hold the coverage floor of those packages only. The end-to-end
 // shards and the alias runs generate the `stacks` the output names: none when the change touches no
-// template or generator, a cover of the values of every flag when it does, every stack on the trunk
+// package, script or configuration a project runs, a cover of the values of every flag when it does, every stack on the trunk
 // and at night (`packages/cli/test/e2e/stacks.ts`); the example and the conformance run integrate
 // every package whole; all of these are skipped when nothing but documents changed (`integrated`).
 import { spawnSync } from 'node:child_process';
@@ -51,20 +51,19 @@ export const ON_A_SERVER = [
 ];
 
 /**
- * What a generated project is made of, and what proves it: the templates and the generators of the CLI, the
- * manifests of the packages a project installs, the end-to-end specs that generate it and the files that run
- * them. A change to none of them leaves the projects the end-to-end, alias and managers jobs generate exactly as
- * they were.
+ * What a generated project runs or is built from, and what proves it: every source, template, manifest and spec of
+ * `packages/` (a Markdown file apart, unless it is a template), the scripts of `pipeline/`, the manifest, lockfile and
+ * configuration of the root, and the workflow and actions that run them. A change to none of them (documents, the
+ * website, the plugin text, the example, which has its own job, the issue templates) leaves the projects the
+ * end-to-end, alias and managers jobs generate exactly as they were.
  */
 const GENERATES = [
   /^packages\/[^/]+\/templates\//,
-  /^packages\/cli\/src\//,
-  /^packages\/cli\/test\/(e2e|support)\//,
-  /^packages\/cli\/test\/helpers\.ts$/,
-  /^packages\/[^/]+\/package\.json$/,
-  /^pipeline\/monorepo\/(e2e-shards|pack-kit)\.mjs$/,
+  /^packages\/(?!.*\.md$)/,
+  /^pipeline\/(?!.*\.md$)/,
+  /^(package|package-lock)\.json$/,
+  /^(tsconfig[^/]*\.json|vitest[^/]*\.[cm]?ts|eslint\.config\.[cm]?js|biome\.json)$/,
   /^\.github\/(workflows\/ci\.yml|actions\/)/,
-  /^package\.json$/,
 ];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

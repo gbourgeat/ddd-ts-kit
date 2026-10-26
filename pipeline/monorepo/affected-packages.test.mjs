@@ -49,7 +49,7 @@ test('a leaf is selected alone, the kernel selects every package that is built o
     reason: 'the changed packages and the packages that depend on them',
     packages: ['winston'],
     integrated: true,
-    stacks: 'none',
+    stacks: 'cover',
   });
 
   // The ESLint plugin does not build on the kernel, but its specs replay the checker of the CLI, which does.
@@ -136,25 +136,38 @@ test('a script runs on the packages reached as path filters, on everything witho
   assert.equal(select(graph, ['README.md']).scope, 'none');
 });
 
-test('a pull request generates no stack unless it touches a template or a generator, and then a cover of them', () => {
+test('a pull request that changes anything a project runs or is built from generates a cover of the stacks', () => {
   for (const file of [
     'packages/cli/templates/init/CLAUDE.md.tpl',
     'packages/pino/templates/pino.ts.tpl',
     'packages/cli/src/generate/aggregate.ts',
     'packages/cli/test/e2e/stacks.ts',
     'packages/kernel/package.json',
+    'packages/kernel/src/aggregate.ts',
+    'packages/knex/src/index.ts',
+    'packages/eslint-plugin/src/index.ts',
+    'packages/kernel/test/aggregate.spec.ts',
     'pipeline/monorepo/e2e-shards.mjs',
+    'pipeline/depcruise-config.mjs',
+    'package-lock.json',
+    'tsconfig.json',
+    'vitest.config.ts',
+    'eslint.config.mjs',
     '.github/workflows/ci.yml',
     'package.json',
   ]) {
     assert.equal(stacksOf([file]), 'cover', file);
     assert.equal(select(graph, [file]).stacks, 'cover', file);
   }
+});
 
+test('a pull request that changes nothing a project runs generates no stack', () => {
   for (const file of [
-    'packages/kernel/src/aggregate.ts',
-    'packages/knex/src/index.ts',
-    'packages/cli/test/check.spec.ts',
+    'packages/kernel/README.md',
+    'pipeline/README.md',
+    'plugin/skills/testing/SKILL.md',
+    'examples/scheduling/src/main.ts',
+    '.github/ISSUE_TEMPLATE/bug.yml',
     'docs/guides/commands.md',
     'README.md',
     'changes/a.md',

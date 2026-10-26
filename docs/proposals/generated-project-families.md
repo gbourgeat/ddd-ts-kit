@@ -489,20 +489,23 @@ The maintainer decided four things; each is a commit of `fix/families-decided`, 
 figures of this page give for it (estimated from the per-file and per-step medians, to be read on
 the first runs):
 
-1. **A cover of 16 stacks on a pull request that touches a template or a generator, every stack on
+1. **A cover of 16 stacks on a pull request that changes what a project runs, every stack on
    the trunk, the pairs at night.** The selection by stack of #260 read the packages a change
-   reaches, and every pull request reached `cli`. The install job now says `stacks`: `none` when no
-   template (`packages/*/templates/`), generator (`packages/cli/src/`), package manifest,
-   end-to-end spec or file that runs them (`ci.yml`, the shards, the packing of the kit) changed,
-   `cover` when one did, `all` on the trunk, at night and on the pull request of a release (title
+   reaches, and every pull request reached `cli`. The install job now says `stacks`: `none` when the
+   change touches nothing a generated project runs or is built from, `cover` when it touches any
+   file under `packages/` (sources, templates, manifests and specs of every package, a Markdown
+   file apart), `pipeline/`, the root manifest, lockfile or configuration, or the workflow that runs
+   them; documents, the website, the text of the plugin, the example (it has its own job) and the
+   issue templates give `none`; `all` on the trunk, at night and on the pull request of a release (title
    `chore(release)` or branch `release/*`). `none` skips the shards, the alias runs and the managers
    job; `cover` gives the two sweeps of `init` alone and the alias cases the 16 stacks in which
    every value of every flag appears (`coverOf` in `packages/cli/test/e2e/stacks.ts`, computed from
    `EVERY_STACK`: 16 of the 48 runnable ones and of the 55 stacks). `zero-violation`, `formatted`
    and `typecheck` keep every stack on a pull request that generates: they cost 57, 56 and 130 s.
-   **Gain:** about 1,180 runner seconds of a pull request that touches a template or a generator,
+   **Gain:** about 1,180 runner seconds of a pull request that changes what a project runs,
    about 4,800 of one that touches none (shards 3,514, managers 784, alias 521); on the traffic of
-   2026-10-26, where 63 of 104 pull requests touched one, about 2,600 per pull request run. Trunk 0.
+   2026-10-26, where only 9 of 113 pull requests changed documents alone, about 1,300 per pull
+   request run. Trunk 0.
 2. **To the night, and to the pull request of a release: pnpm, the alias runs on Node 22, the
    intermediate states of the first minute, the coverage gate on its ten stacks.** The install job
    says `deep` for the night, a run on demand and a release, and for no other run. Elsewhere, the
@@ -531,13 +534,13 @@ the first runs):
    of lever 4 above because decision 2 already took the coverage gate to one stack.
 
 Where the build differs from the plan above: the cover applies to the sweeps and to the alias runs
-only (lever 3 said so; the decision said "not all 48"); a change that touches no template and no
-generator generates nothing even when it touches a package that every generated project installs
-(the kernel, the testing package, the ESLint plugin: their own unit jobs, and the trunk, hold
-them); the trunk runs the coverage gate on one stack, as a pull request does.
+only (lever 3 said so; the decision said "not all 48"); a change to a runtime package
+(the kernel, the testing package, the ESLint plugin, an adapter) generates the cover, like a
+change to a template; only a change that touches nothing a generated project runs generates
+nothing; the trunk runs the coverage gate on one stack, as a pull request does.
 
 Expected, with these four and the lines of `fix/families-quick`: a pull request run that touches a
-template, from about 7,700 to about 4,400 runner seconds; one that touches none, to about 1,900;
+template, from about 7,700 to about 4,400 runner seconds; one that changes documents alone, to about 1,900;
 a trunk run from about 8,000 to about 5,900. The wall time of a pull request follows the unit job
 on Node 24 and the npm job.
 
