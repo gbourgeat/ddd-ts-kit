@@ -170,3 +170,72 @@ describe('status, what is left in each context', () => {
     );
   });
 });
+
+describe('status at step 7, the build', () => {
+  const STEP_7 = '# Plan\n\nNext: 7 use-case - build the rows of docs/architecture/slices.md, starting with US1.01\n';
+
+  const table = (...rows: string[]): string =>
+    `| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |\n|---|---|---|---|---|---|---|---|\n${rows.join('\n')}\n`;
+
+  it('derives the next step from the rows, and prints the line of the plan beside it', () => {
+    const root = initProject('--context', 'billing:core');
+
+    write(root, 'docs/architecture/plan.md', STEP_7);
+
+    write(
+      root,
+      'docs/architecture/slices.md',
+      table(
+        '| US1.01 | billing | slice | A | | | billing | done |',
+        '| US1.02 | billing | slice | B | | US1.01 | billing | todo |',
+      ),
+    );
+
+    const status = cli(root, 'status');
+
+    expect(status.stdout).toMatch(/^Next: 7 use-case - build the next row ready on the trunk, #US1\.02 B \(billing\)/);
+
+    expect(status.stdout).toContain(
+      '(the plan says: 7 use-case - build the rows of docs/architecture/slices.md, starting with US1.01',
+    );
+
+    expect(jsonAt(cli(root, 'status', '--json').json(), 'planNext')).toContain('starting with US1.01');
+  });
+
+  it('says the build is done when every row is done, and never names the first row again', () => {
+    const root = initProject('--context', 'billing:core');
+
+    write(root, 'docs/architecture/plan.md', STEP_7);
+    write(root, 'docs/architecture/slices.md', table('| US1.01 | billing | slice | A | | | billing | done |'));
+
+    const status = cli(root, 'status').stdout;
+
+    expect(status).toMatch(/^Next: 7 build done: close step 7 in docs\/architecture\/plan\.md \(Next: done\)\n/);
+    expect(status).toContain('(the plan says: 7 use-case');
+  });
+
+  it('leaves the line of the plan alone at any other step', () => {
+    const root = initProject('--context', 'billing:core');
+
+    write(root, 'docs/architecture/plan.md', PLAN);
+    write(root, 'docs/architecture/slices.md', table('| US1.01 | billing | slice | A | | | billing | done |'));
+
+    expect(jsonAt(cli(root, 'status', '--json').json(), 'planNext')).toBeNull();
+    expect(cli(root, 'status').stdout).toContain('Next: 6 plan-slices - cut the first slices of billing\n');
+  });
+});
+
+describe('status and todo, the specs the kit owns', () => {
+  it('lists no it.todo for the extractable spec, with no context yet and with one', () => {
+    const root = initProject();
+    const extractable = 'test/architecture/extractable.spec.ts';
+
+    expect(read(root, extractable)).not.toContain('it.todo');
+    expect(cli(root, 'todo').stdout).not.toContain(extractable);
+
+    cli(root, 'generate', 'context', 'billing', '--classification', 'core');
+
+    expect(read(root, extractable)).not.toContain('it.todo');
+    expect(cli(root, 'todo').stdout).not.toContain(extractable);
+  });
+});

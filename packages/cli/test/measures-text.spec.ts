@@ -106,7 +106,7 @@ describe('ddd-ts-kit measures: without history', () => {
 });
 
 describe('ddd-ts-kit measures: a story squash-merged, measured in hours', () => {
-  it('reads a lead time from the commit whose subject names the branch, findings without a pass heading, and an incident repeated by its message', () => {
+  it('reads a lead time up to the squash commit that carries the story, whatever its subject, findings without a pass heading, and an incident repeated by its message', () => {
     const root = path.join(fs.realpathSync(tempDir('measures-hours')), 'shop');
 
     const at = (instant: string, message: string, files: Readonly<Record<string, string>>): string =>
@@ -134,7 +134,10 @@ describe('ddd-ts-kit measures: a story squash-merged, measured in hours', () => 
       'docs/architecture/stories/US7.md': `${STATEMENT_OF_US5.replace('US5', 'US7')}\nDone.\n`,
     });
 
-    at('2026-04-03T08:00:00Z', 'feat(ordering): order (story/US7 squashed)', { 'src/contexts/ordering/lines.ts': '' });
+    at('2026-04-03T08:00:00Z', 'feat(ordering): order (#12)', {
+      'docs/architecture/stories/US7.md': `${STATEMENT_OF_US5.replace('US5', 'US7')}\nDone, squashed.\n`,
+      'src/contexts/ordering/lines.ts': '',
+    });
 
     const text = cli(root, 'measures').stdout;
 

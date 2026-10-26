@@ -917,7 +917,7 @@ Regenerates what is derived from the config and the code, and nothing else:
   platform owners. A file the team wrote keeps its lines, the block appended after them; without
   any owner nothing is written.
 
-`--behaviour` writes the pages of `docs/behaviour/` alone, every other generated document left as it is: what the pre-commit hook runs when a spec is staged; with `--check`, those pages alone are compared.
+`--behaviour` writes the pages of `docs/behaviour/` alone, every other generated document left as it is: what the pre-commit hook runs when a spec is staged; with `--check`, those pages alone are compared. A rule is written as its title without the row ids and criteria it opens with (`#FIX1 `, `#US1.04 AC1 `), which date it to the change that brought it and mean nothing to a reader of the business.
 
 `--stored-events` also records in `stored-events.lock.json` the shape of each version of a stored
 event declared in the codecs of `infrastructure/persistence/`, never rewriting a recorded version:
@@ -1172,7 +1172,7 @@ ddd-ts-kit todo [<context>]
 `status` prints the `Next:` line of `docs/architecture/plan.md`, the rows of
 `docs/architecture/slices.md` by status and by owner, and per context the `TODO(domain)`,
 `TODO(platform)` and `it.todo` left, then those outside the contexts. A missing file is not an
-error. Each row not done says whether it can start: ready on the trunk when every dependency is
+error. When the plan sits at step 7 (the build) the `Next:` line is derived from the rows (the next row ready on the trunk, or `7 build done` once every row is done) and the line of the plan is printed beside it, `planNext` in `--json`. Each row not done says whether it can start: ready on the trunk when every dependency is
 done, ready on a branch when each dependency not done is a row briefed to a worker whose worktree
 has commits ahead of its base (the `rows` of its `.ddd-ts-kit/worker.json`, as `status --workers`
 reads them), and waiting otherwise, with the ids it waits for. A story or a milestone whose rows
@@ -1471,7 +1471,7 @@ nothing and asks nothing of the platform.
 |---|---|
 | design time | the first commit of `docs/architecture/stories/<code>.md` to the commit of `test/acceptance/<code>.acceptance.lock.json` |
 | build time | the lock commit to the first commit whose `## Report` holds text |
-| lead time | the first commit of the story file to the commit of the current branch whose subject names `story/<code>` (a merge commit first, else a squash commit that names the branch); `open` without one |
+| lead time | the first commit of the story file to the close: the first commit of the first-parent history of the current branch that contains the last commit of the story, whatever its subject (a merge, a squash; the merge of the trunk into the story branch is never it); `open` without a report or without a close |
 | requirements rework | the commits that changed `## Acceptance criteria` after the first commit carrying a `Slice: <code>.<n>` trailer; the amendments of the lock (each an `amend` verdict); the `refuse` verdicts of `test/acceptance/verdicts/` |
 | provisional decisions | the `D<n>` lines of the story file |
 | compromises | the items under `### Compromises` of the report |

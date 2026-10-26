@@ -8,8 +8,9 @@ import type { Timeline } from './timeline';
 
 /**
  * Design: the first commit of the story file to the commit of its lock. Build: the lock to the
- * first commit whose `## Report` holds text. Lead: the first commit to the commit of the branch
- * that carries the branch of the story (`story/<code>` in its subject, a merge commit first).
+ * first commit whose `## Report` holds text. Lead: the first commit to the close, the first commit
+ * of the first-parent history of the branch that contains the last commit of the story, whatever
+ * its subject (a merge, a squash); a story with no report is not closed.
  */
 export function timelineOf(repository: Repository, history: StoryHistory, branch: readonly BranchCommit[]): Timeline {
   const { files, commits } = history;
@@ -21,7 +22,7 @@ export function timelineOf(repository: Repository, history: StoryHistory, branch
 
   const lock = commits.lock;
   const report = commits.ofStoryFile.find((commit) => reported(repository, commit, files.file));
-  const merged = mergeCommit(files.story, branch);
+  const merged = report === undefined ? undefined : closeOf(history.commits.all, branch);
 
   return {
     opened: new Date(first.at).toISOString(),
@@ -37,10 +38,45 @@ function reported(repository: Repository, commit: BranchCommit, file: string): b
   return (sectionOf(fileAt(repository, commit.sha, file) ?? '', 'Report') ?? '').trim() !== '';
 }
 
-/** The commit of the branch whose subject names `story/<code>`: a merge commit, else any. */
-function mergeCommit(story: string, branch: readonly BranchCommit[]): BranchCommit | undefined {
-  const name = `story/${story.toLowerCase()}`;
-  const naming = branch.filter((commit) => commit.subject.toLowerCase().includes(name));
+/**
+ * The first commit of the first-parent history of the branch that has the last commit of the story
+ * among its ancestors (or is it). Parents come first in `branch`, so one pass marks every commit
+ * that contains it. A merge of the trunk into the story branch never contains it before the story
+ * ends, and a squash merge, which carries the files of the story itself, is the last commit.
+ */
+function closeOf(own: readonly BranchCommit[], branch: readonly BranchCommit[]): BranchCommit | undefined {
+  const last = own.at(-1);
+  const head = branch.at(-1);
 
-  return naming.find((commit) => commit.parents.length > 1) ?? naming[0];
+  if (last === undefined || head === undefined) {
+    return undefined;
+  }
+
+  const containing = containingSet(last, branch);
+  const bySha = new Map(branch.map((commit) => [commit.sha, commit]));
+  let close: BranchCommit | undefined;
+
+  for (let at = containing.has(head.sha) ? head : undefined; at !== undefined; ) {
+    close = at;
+    at = bySha.get(at.parents[0] ?? '');
+
+    if (at !== undefined && !containing.has(at.sha)) {
+      at = undefined;
+    }
+  }
+
+  return close;
+}
+
+/** The shas of the commits that are `last` or have it among their ancestors; parents come first in `branch`. */
+function containingSet(last: BranchCommit, branch: readonly BranchCommit[]): Set<string> {
+  const containing = new Set<string>();
+
+  for (const commit of branch) {
+    if (commit.sha === last.sha || commit.parents.some((parent) => containing.has(parent))) {
+      containing.add(commit.sha);
+    }
+  }
+
+  return containing;
 }

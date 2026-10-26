@@ -2,8 +2,10 @@ import type { Slice } from './slice';
 
 /** Where the work stands: the next step of the plan, the slices, and what the generators left to fill. */
 export interface Progress {
-  /** What follows `Next: ` in `docs/architecture/plan.md`; null when the project has no plan or the plan has no such line. */
+  /** What follows `Next: ` in `docs/architecture/plan.md`, or at step 7 (the build) what the rows of the slices say; null when the project has no plan or the plan has no such line. */
   readonly next: string | null;
+  /** The `Next:` line of the plan when `next` was derived from the slices and differs from it; else null. */
+  readonly planNext: string | null;
   /** Null when the project has no `docs/architecture/slices.md`, or the file has no slices table. */
   readonly slices: SlicesProgress | null;
   /** One entry per context, then one with an empty context for the rest of the project when something is left there. */
