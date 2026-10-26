@@ -11,10 +11,10 @@ const CALL = /\b(?:it|test)(?:\.(todo|skip|only|fails|failing|concurrent))?\(\s*
 const WRAPPER = /^\s*,\s*pending\s*\(/;
 
 /** A row id as a title names it: `#US5.02`, `#M2.07`, `#4.15`. */
-const ROW = /#([A-Za-z0-9][\w.-]*\w)/g;
+export const ROW = /#([A-Za-z0-9][\w.-]*\w)/g;
 
 /** An acceptance criterion of the story as a title names it: `AC1`. */
-const CRITERION = /\bAC\d+\b/g;
+export const CRITERION = /\bAC\d+\b/g;
 
 const SKIPPED = new Set(['skip', 'fails', 'failing']);
 

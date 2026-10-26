@@ -1,6 +1,7 @@
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { behaviourPage } from '../src/docs/behaviour-page';
 import { rulesIn } from '../src/docs/rules-in';
 import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers';
 
@@ -56,6 +57,33 @@ it('stands alone', () => {});
     ]);
 
     expect(slot?.groups).toEqual([]);
+  });
+});
+
+describe('behaviourPage, a rule without the codes of the change that brought it', () => {
+  it('drops the row ids and the criterion a title opens with, and keeps the rest of the title as it is', () => {
+    const titles = [
+      '#FIX1 escalates to the next person, #FIX2 included',
+      '#US1.04 AC1 a member declares an incident and gets 201',
+      '#US1.04 #US1.05 AC2, AC3: lists them',
+      'AC4 keeps AC4 inside',
+      'is never issued twice',
+      '#FIX1',
+    ];
+
+    const source = titles.map((title) => `it('${title}', () => {});`).join('\n');
+
+    const page = behaviourPage('Billing', 'intro', [
+      { title: 'unit', specs: [{ file: 'a.spec.ts', rules: rulesIn(source) }] },
+    ]);
+
+    expect(page).toContain('- escalates to the next person, #FIX2 included\n');
+    expect(page).toContain('- a member declares an incident and gets 201\n');
+    expect(page).toContain('- lists them\n');
+    expect(page).toContain('- keeps AC4 inside\n');
+    expect(page).toContain('- is never issued twice\n');
+    expect(page).toContain('- #FIX1\n');
+    expect(page).not.toMatch(/^\s*- #(?!FIX1$)/m);
   });
 });
 

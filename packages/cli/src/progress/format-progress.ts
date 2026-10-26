@@ -10,6 +10,9 @@ const NO_PLAN =
 export function formatProgress(progress: Progress): string {
   return [
     `Next: ${progress.next ?? NO_PLAN}`,
+    ...(progress.planNext === null
+      ? []
+      : [`  (the plan says: ${progress.planNext}; at step 7 the next step is read from the slices)`]),
     '',
     ...(progress.slices === null
       ? ['Slices: no docs/architecture/slices.md with a slices table (the skill ddd-ts-kit:plan-slices writes it)']
