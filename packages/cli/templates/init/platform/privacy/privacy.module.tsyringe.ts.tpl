@@ -12,7 +12,7 @@ export function privacyModule({ jobs = true }: { readonly jobs?: boolean } = {})
     register(builder) {
       // Registered by the process that runs the jobs of the platform; a service of the deployment passes `jobs: false`.
       if (jobs) {
-        builder.job('privacy.purge-expired', { cron: '0 3 * * *' }).handledByFactory((resolve) => ({
+        builder.job('privacy.purge-expired', { cron: '0 3 * * *', tenancy: 'global' }).handledByFactory((resolve) => ({
           run: async () => {
             await runPurge(resolve);
           },

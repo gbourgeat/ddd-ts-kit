@@ -109,7 +109,7 @@ export function filesModule(storage: FileStorage): ContextModule {
         .bind(FileStaging)
         .toFactory((resolve) => new FileStaging(resolve(FileStorage), resolve(FileScanner), resolve(ErrorReporter)));
       // every hour, the staged files older than a day are removed
-      builder.job('files.purge-staged', { every: '1h' }).handledBy(PurgeStagedFiles, [FileStaging, Clock]);
+      builder.job('files.purge-staged', { every: '1h', tenancy: 'global' }).handledBy(PurgeStagedFiles, [FileStaging, Clock]);
     },
   });
 }

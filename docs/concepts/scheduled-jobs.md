@@ -118,7 +118,9 @@ work across tenants, and the note of the command says which was written. The sch
   process restarts with a new list. Once the tenants live in a table of your own, make the
   directory read it, as the identity preset does in `tenant-directory.ts`.
 
-The generated spec runs the job for two tenants.
+The generated spec runs the job for two tenants. A job written by hand under tenancy must say it too:
+`scheduling/tenancy-declared` (an error) reports a `@Scheduled` or `builder.job` whose options carry
+neither `tenancy: 'per-tenant'` nor `tenancy: 'global'`.
 
 ### A run reads its own tenant
 
