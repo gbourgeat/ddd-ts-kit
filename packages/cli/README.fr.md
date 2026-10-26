@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b2f7af23fd555c8f -->
+<!-- translation-of: README.md sha256:c66a08e8723e07d8 -->
 
 # ddd-ts-kit
 
@@ -1855,7 +1855,10 @@ Une ligne insérée entre des lignes de la base que l'autre côté n'a pas touch
 même quand l'autre côté a inséré au même endroit : perdre l'une de deux nouvelles méthodes est la
 perte que le contrôle cherche. De même pour une réécriture qui a perdu plus de lignes que les
 lignes de la base ou que la réécriture de l'autre côté qu'elle concurrençait (une modification
-suivie d'une nouvelle méthode). Ce qu'un côté a supprimé, ou rouvert, n'est jamais signalé. Une
+suivie d'une nouvelle méthode). Ce qu'un côté a supprimé, ou rouvert, n'est jamais signalé. Une ligne de la branche dans un fichier
+que la branche n'a pas touché depuis sa bifurcation de la branche principale (le fichier est le même sur
+la branche et à `git merge-base`) ne l'est pas non plus : ce que la branche principale y a supprimé ou
+remplacé depuis est son propre changement, quelle que soit la base du calcul de la fusion. Une
 suppression voulue se consigne dans le *commit* de fusion par un *trailer*
 `Lost-Accepted: <file:line>,...` (un fichier seul accepte toutes ses lignes) : ces constats sont
 listés et ne font jamais échouer. Pour une fusion plus ancienne que HEAD, un constat que HEAD ne
