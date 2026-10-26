@@ -1,7 +1,9 @@
+import { assertStreamReach } from '../../../application/event-sourcing/assert-stream-reach';
 import type { Appended } from '../../../application/event-sourcing/appended';
 import type { EventToAppend } from '../../../application/event-sourcing/event-to-append';
 import type { StoredEvent } from '../../../application/event-sourcing/stored-event';
 import type { EventStore } from '../../../application/ports/event-store';
+import type { ExecutionScope } from '../../../application/ports/execution-scope';
 import { ConcurrencyError } from '../../../domain/errors/concurrency-error';
 import type { SqlRun } from '../../read-model/sql-run';
 import type { EventStoreTablesOptions } from './event-store-tables-options';
@@ -17,6 +19,8 @@ const COLUMNS = 'position, stream, version, event_id, type, schema_version, data
 const SELECTED = `position, stream, version, event_id, type, schema_version, data, metadata,
   to_char(occurred_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as occurred_at`;
 
+const TENANT_SELECTED = `${SELECTED}, tenant_id`;
+
 /**
  * The event store on PostgreSQL, shared by the ORM adapters, which differ only in how they run a
  * statement. An append is one statement on the executor of the unit of work: it takes the head of
@@ -29,11 +33,17 @@ const SELECTED = `position, stream, version, event_id, type, schema_version, dat
  * deadlock with row locks the same transaction took in another order: the caller retries. When
  * PostgreSQL gives up the other statement of such a cycle, the unit of work rejects with a
  * `TransactionConflictError`, a `ConcurrencyError` too.
+ *
+ * Given an execution scope (`options.scope`), the first append of a stream records the tenant of the
+ * work in `tenant_id`, and a read or an append of a stream of another tenant is refused with an
+ * `EventStreamTenantError`.
  */
 export class PostgresEventStore implements EventStore {
   private readonly events: string;
 
   private readonly headRow: string;
+
+  private readonly scope: ExecutionScope | undefined;
 
   constructor(
     private readonly run: SqlRun,
@@ -41,6 +51,7 @@ export class PostgresEventStore implements EventStore {
   ) {
     this.events = qualifiedTable(options.schema, 'events');
     this.headRow = qualifiedTable(options.schema, 'head');
+    this.scope = options.scope;
   }
 
   async append(stream: string, expectedVersion: number, events: readonly EventToAppend[]): Promise<Appended> {
@@ -48,9 +59,11 @@ export class PostgresEventStore implements EventStore {
       return this.unchanged(stream, expectedVersion);
     }
 
+    const tenantId = await this.tenantToWrite(stream);
+
     await this.run(`insert into ${this.headRow} (id, position) values (1, 0) on conflict (id) do nothing`, []);
 
-    const inserted = await this.inserted(stream, expectedVersion, events);
+    const inserted = await this.inserted(stream, expectedVersion, events, tenantId);
 
     if (inserted.length === 0) {
       throw new ConcurrencyError(stream);
@@ -64,16 +77,20 @@ export class PostgresEventStore implements EventStore {
 
   async readStream(stream: string, after = 0): Promise<readonly StoredEvent[]> {
     const rows = await this.run(
-      `select ${SELECTED} from ${this.events} where stream = $1::text and version > $2::integer order by version`,
+      `select ${this.selected()} from ${this.events} where stream = $1::text and version > $2::integer order by version`,
       [stream, after],
     );
+
+    if (this.scope !== undefined) {
+      this.assertReach(stream, rows[0], 'read');
+    }
 
     return rows.map(storedEventOf);
   }
 
   async readAll(after: number, limit: number): Promise<readonly StoredEvent[]> {
     const rows = await this.run(
-      `select ${SELECTED} from ${this.events} where position > $1::bigint order by position limit $2::integer`,
+      `select ${this.selected()} from ${this.events} where position > $1::bigint order by position limit $2::integer`,
       [after, limit],
     );
 
@@ -86,9 +103,42 @@ export class PostgresEventStore implements EventStore {
     return Number(row?.['position'] ?? 0);
   }
 
-  private async inserted(stream: string, expected: number, events: readonly EventToAppend[]): Promise<readonly Row[]> {
+  private selected(): string {
+    return this.scope === undefined ? SELECTED : TENANT_SELECTED;
+  }
+
+  private assertReach(stream: string, first: Row | undefined, access: 'read' | 'write'): void {
+    if (first !== undefined) {
+      assertStreamReach(this.scope?.current(), { stream, recorded: tenantOf(first) }, access);
+    }
+  }
+
+  /** The tenant a new event of the stream carries: the one its stream recorded, or the one of the work for a new stream. */
+  private async tenantToWrite(stream: string): Promise<string | null> {
+    if (this.scope === undefined) {
+      return null;
+    }
+
+    const [first] = await this.run(`select tenant_id from ${this.events} where stream = $1::text limit 1`, [stream]);
+
+    this.assertReach(stream, first, 'write');
+
+    return (first === undefined ? this.scope.current()?.tenantId : tenantOf(first)) ?? null;
+  }
+
+  private async inserted(
+    stream: string,
+    expected: number,
+    events: readonly EventToAppend[],
+    tenantId: string | null,
+  ): Promise<readonly Row[]> {
     try {
-      return await this.run(this.appendStatement(), [stream, expected, JSON.stringify(events.map(recordOf))]);
+      const parameters = [stream, expected, JSON.stringify(events.map(recordOf))];
+
+      return await this.run(
+        this.appendStatement(),
+        this.scope === undefined ? parameters : [...parameters, tenantId ?? ''],
+      );
     } catch (error) {
       if (isAppendConflict(error)) {
         throw new ConcurrencyError(stream);
@@ -99,6 +149,8 @@ export class PostgresEventStore implements EventStore {
   }
 
   private appendStatement(): string {
+    const tenant = this.scope !== undefined;
+
     return `with input as (
   select $1::text as stream, $2::integer as expected, $3::jsonb as events
 ), held as (
@@ -109,8 +161,8 @@ export class PostgresEventStore implements EventStore {
   where h.id = 1 and held.version = input.expected
   returning h.position - jsonb_array_length(input.events) as base
 )
-insert into ${this.events} (${COLUMNS})
-select moved.base + e.n, input.stream, input.expected + e.n, e.id, e.type, e.schema_version, e.data, e.metadata, e.occurred_at
+insert into ${this.events} (${COLUMNS}${tenant ? ', tenant_id' : ''})
+select moved.base + e.n, input.stream, input.expected + e.n, e.id, e.type, e.schema_version, e.data, e.metadata, e.occurred_at${tenant ? ", nullif($4::text, '')" : ''}
 from moved, input, jsonb_to_recordset(input.events)
   as e(n integer, id text, type text, schema_version integer, data jsonb, metadata jsonb, occurred_at timestamptz)
 order by e.n
@@ -118,6 +170,8 @@ returning position, version`;
   }
 
   private async unchanged(stream: string, expected: number): Promise<Appended> {
+    await this.tenantToWrite(stream);
+
     const [row] = await this.run(
       `select coalesce(max(version), 0) as version from ${this.events} where stream = $1::text`,
       [stream],
@@ -143,8 +197,15 @@ function recordOf(event: EventToAppend, index: number): Readonly<Record<string, 
   };
 }
 
+function tenantOf(row: Row): string | undefined {
+  const tenantId = row['tenant_id'];
+
+  return typeof tenantId === 'string' ? tenantId : undefined;
+}
+
 function storedEventOf(row: Row): StoredEvent {
   const id = String(row['event_id']);
+  const tenantId = tenantOf(row);
 
   return {
     id,
@@ -156,6 +217,7 @@ function storedEventOf(row: Row): StoredEvent {
     data: storedDataFrom(row['data'], `The data of stored event ${id}`),
     metadata: storedDataFrom(row['metadata'], `The metadata of stored event ${id}`),
     occurredAt: instantOf(row['occurred_at']),
+    ...(tenantId === undefined ? {} : { tenantId }),
   };
 }
 

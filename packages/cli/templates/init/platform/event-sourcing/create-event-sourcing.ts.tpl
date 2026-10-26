@@ -1,7 +1,7 @@
 {{#if audit.on}}
 import { auditedSubjectKeys, type AuditSource } from '@ddd-ts-kit/audit';
 {{/if}}
-import { PersonalDataCipher, type EventSourcingStores } from '@ddd-ts-kit/kernel';
+import { PersonalDataCipher, type EventSourcingStores{{#if tenancy.any}}, type ExecutionScope{{/if}} } from '@ddd-ts-kit/kernel';
 {{#if audit.on}}
 import type { Audit } from '{{alias.platform}}/audit/create-audit{{alias.ext}}';
 {{/if}}
@@ -22,15 +22,27 @@ export interface EventSourcing extends EventSourcingStores {
 
 {{#if audit.on}}
 export function createEventSourcing(persistence: Persistence, audit: Audit, source: AuditSource): EventSourcing {
-  const subjectKeys = auditedSubjectKeys(persistence.eventSourcing.subjectKeys, audit.trail, source);
+{{#if tenancy.any}}
+  const stores = persistence.eventSourcing(source.scope);
+{{/if}}
+{{#unless tenancy.any}}
+  const stores = persistence.eventSourcing;
+{{/unless}}
+  const subjectKeys = auditedSubjectKeys(stores.subjectKeys, audit.trail, source);
 
-  return { ...persistence.eventSourcing, subjectKeys, cipher: new PersonalDataCipher(subjectKeys) };
+  return { ...stores, subjectKeys, cipher: new PersonalDataCipher(subjectKeys) };
 }
 {{/if}}
 {{#unless audit.on}}
-export function createEventSourcing(persistence: Persistence): EventSourcing {
-  const { subjectKeys } = persistence.eventSourcing;
+export function createEventSourcing(persistence: Persistence{{#if tenancy.any}}, scope: ExecutionScope{{/if}}): EventSourcing {
+{{#if tenancy.any}}
+  const stores = persistence.eventSourcing(scope);
+{{/if}}
+{{#unless tenancy.any}}
+  const stores = persistence.eventSourcing;
+{{/unless}}
+  const { subjectKeys } = stores;
 
-  return { ...persistence.eventSourcing, cipher: new PersonalDataCipher(subjectKeys) };
+  return { ...stores, cipher: new PersonalDataCipher(subjectKeys) };
 }
 {{/unless}}

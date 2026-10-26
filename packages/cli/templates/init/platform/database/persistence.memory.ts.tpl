@@ -5,7 +5,7 @@ import type { OutboxStore, RelaySignal } from '@ddd-ts-kit/events';
 import type { OutboxStore } from '@ddd-ts-kit/events';
 {{/unless}}
 {{#if eventSourcing.on}}
-import type { EventSourcingStores, ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
+import type { EventSourcingStores, {{#if tenancy.any}}ExecutionScope, {{/if}}ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#unless eventSourcing.on}}
 import type { ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
@@ -22,7 +22,13 @@ export interface Persistence {
   readonly processedEvents: ProcessedEventStore;
   {{#if eventSourcing.on}}
   /** The event store, the snapshots, the checkpoints and the keys of the data subjects: what an event-sourced aggregate is saved through, and what seals its personal values. */
+{{#if tenancy.any}}
+  /** Given the execution scope, each stream keeps the tenant of the work that first appended to it. */
+  readonly eventSourcing: (scope: ExecutionScope) => EventSourcingStores;
+{{/if}}
+{{#unless tenancy.any}}
   readonly eventSourcing: EventSourcingStores;
+{{/unless}}
   {{/if}}
 
   close(): Promise<void>;

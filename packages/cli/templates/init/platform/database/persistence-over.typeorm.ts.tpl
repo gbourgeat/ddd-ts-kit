@@ -45,7 +45,12 @@ export function persistenceOver(dataSource: DataSource): Persistence {
     processes: ({{#if tenancy.any}}tenant{{/if}}) => new TypeOrmProcessStore(unitOfWork, { entity: processes{{#if tenancy.any}}, tenant{{/if}} }),
     {{/if}}
     {{#if eventSourcing.on}}
+{{#if tenancy.any}}
+    eventSourcing: (scope) => createTypeOrmEventSourcing(unitOfWork, { schema: EVENT_STORE_SCHEMA, scope }),
+{{/if}}
+{{#unless tenancy.any}}
     eventSourcing: createTypeOrmEventSourcing(unitOfWork, { schema: EVENT_STORE_SCHEMA }),
+{{/unless}}
     {{/if}}
     close: async () => {
       if (dataSource.isInitialized) {

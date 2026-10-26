@@ -8,7 +8,11 @@ import { MESSAGING_SCHEMA } from '@/platform/database/schema';
 /** The schemas of the bounded contexts: every table in them holds the data of one network. */
 const CONTEXT_SCHEMAS = ['identity', 'scheduling', 'notification', 'analytics'];
 
-/** The event store of the attendance records and the history it feeds, which keep no network yet (ADR-0004). */
+/**
+ * The event store of the attendance records and the history it feeds (ADR-0004): no required
+ * network of this migration; `stored_events` keeps the tenant of each stream in a column of its
+ * own, nullable, which the event store writes at the first append and checks on every read.
+ */
 const WITHOUT_NETWORK = [
   'scheduling.attendance_history',
   'scheduling.stored_events',
@@ -45,10 +49,12 @@ describe('The network of every row (ADR-0003, ADR-0004)', () => {
       .whereIn('table_schema', CONTEXT_SCHEMAS)
       .where('table_type', 'BASE TABLE');
 
-    const networks = await knex<Column>('information_schema.columns')
-      .select('table_schema', 'table_name', 'is_nullable')
-      .whereIn('table_schema', CONTEXT_SCHEMAS)
-      .where('column_name', 'tenant_id');
+    const networks = (
+      await knex<Column>('information_schema.columns')
+        .select('table_schema', 'table_name', 'is_nullable')
+        .whereIn('table_schema', CONTEXT_SCHEMAS)
+        .where('column_name', 'tenant_id')
+    ).filter((column) => !WITHOUT_NETWORK.includes(nameOf(column)));
 
     const ofNetworks = tables.map(nameOf).filter((name) => !WITHOUT_NETWORK.includes(name));
 

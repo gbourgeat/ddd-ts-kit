@@ -73,12 +73,15 @@ describe.each(SERVERS)(
       expect(scope.current()).toBeUndefined();
     });
 
-    it('runs every handler inside the execution scope it was given, under the name of the consumer', async () => {
+    it('runs a handler in the execution context of its event, under the name of its consumer', async () => {
       const scope = new AsyncLocalStorageExecutionScope();
-      const bus = server.bus({ scope });
+      const bus = server.bus({});
       const seen: (ExecutionContext | undefined)[] = [];
 
-      bus.forConsumer('billing').subscribe(PLACED, async () => void seen.push(scope.current()));
+      bus.forConsumer('billing').subscribe(
+        PLACED,
+        inEventScope(scope, { consumer: 'billing' }, async () => void seen.push(scope.current())),
+      );
 
       await bus.publish([{ ...anEvent('evt-1'), correlationId: 'corr-7' }]);
       await server.settled(bus);
@@ -96,18 +99,21 @@ describe.each(SERVERS)(
 
     it('keeps the correlation across a retry: the redelivery runs in the same context', async () => {
       const scope = new AsyncLocalStorageExecutionScope();
-      const bus = server.bus({ scope });
+      const bus = server.bus({});
       const correlations: (string | undefined)[] = [];
       let failures = 1;
 
-      bus.subscribe(PLACED, async () => {
-        correlations.push(scope.current()?.correlationId);
+      bus.subscribe(
+        PLACED,
+        inEventScope(scope, { consumer: 'billing' }, async () => {
+          correlations.push(scope.current()?.correlationId);
 
-        if (failures > 0) {
-          failures -= 1;
-          throw new InvoicingFailed();
-        }
-      });
+          if (failures > 0) {
+            failures -= 1;
+            throw new InvoicingFailed();
+          }
+        }),
+      );
 
       await bus.publish([{ ...anEvent('evt-1'), correlationId: 'corr-1' }]);
       await server.settled(bus);

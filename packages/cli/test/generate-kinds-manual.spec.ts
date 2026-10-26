@@ -23,12 +23,18 @@ describe('a context wired by hand', () => {
     expect(module).toContain('export function billingModule(platform: Platform): BillingWiring {');
 
     expect(module).toContain(
-      "const invoiceRepository = platform.adapter(\n    new KnexInvoiceRepository(platform.persistence.database, platform.scope, platform.clock),\n    { kind: 'repository', context: 'billing', token: 'InvoiceRepository' },\n  );\n\n  platform.commands.register(\n    IssueInvoiceCommand,",
+      "const invoiceRepository = platform.adapter(\n    new KnexInvoiceRepository(platform.persistence.database, platform.scope, platform.clock),\n    { kind: 'repository', context: 'billing', token: 'InvoiceRepository' },\n  );",
     );
+
+    // One function per layer or role, each under the ceiling however many use cases the context holds.
+    expect(module).toContain('function registerHandlers(platform: Platform): void {');
+    expect(module).toContain('function registerReactions(platform: Platform): void {');
+    expect(module).toContain('function registerJobs(platform: Platform): void {');
+    expect(module).toContain('new IssueInvoiceHandler(invoiceRepository,');
 
     expect(module).toContain("requires(IssueInvoiceCommand, billingPermissions['invoice.issue']),");
     expect(module).toContain('issueInvoiceRoute(platform.commands),');
-    expect(module).toContain('  // /ddd-ts-kit:registrations\n\n  return {');
+    expect(module).toContain('function routesOf(platform: Platform): Route[] {');
 
     expect(read(root, 'src/platform/composition/compose-application.ts')).toContain(
       '  billingModule,\n  shippingModule,\n  orderFulfilmentModule,',

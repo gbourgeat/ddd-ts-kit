@@ -2,6 +2,13 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 {{#if queue.processTable}}
 import { FixedExecutionScope, executionContext, systemActor } from '@ddd-ts-kit/kernel';
 {{/if}}
+{{#unless queue.processTable}}
+{{#if tenancy.any}}
+{{#if eventSourcing.on}}
+import { FixedExecutionScope } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{/if}}
+{{/unless}}
 {{#if queue.database}}
 import {
 {{#if eventSourcing.on}}
@@ -66,8 +73,19 @@ processedEventStoreContract(runner, {
 
 eventStoreContract(runner, {
   name: 'The event store of the platform',
+{{#if tenancy.any}}
+  createStore: async () => (await emptied()).eventSourcing(new FixedExecutionScope()).events,
+  createCompanions: async () => (await emptied()).eventSourcing(new FixedExecutionScope()),
+  createTenantStore: async () => {
+    const scope = new FixedExecutionScope();
+
+    return { scope, store: (await emptied()).eventSourcing(scope).events };
+  },
+{{/if}}
+{{#unless tenancy.any}}
   createStore: async () => (await emptied()).eventSourcing.events,
   createCompanions: async () => (await emptied()).eventSourcing,
+{{/unless}}
 });
 {{/if}}
 {{#if queue.database}}

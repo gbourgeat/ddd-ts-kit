@@ -2,7 +2,9 @@ import type { StoredEvent } from '../../application/event-sourcing/stored-event'
 import type { EventStore } from '../../application/ports/event-store';
 import type { ReadModelStore } from '../../application/ports/read-model-store';
 import type { ReadModelTable } from '../../application/ports/read-model-table';
+import type { ExecutionScope } from '../../application/ports/execution-scope';
 import type { UnitOfWork } from '../../application/ports/unit-of-work';
+import { inTenantOfEvent } from './in-tenant-of-event';
 import { ShadowReadModelStore } from '../read-model/shadow-read-model-store';
 
 export interface EventStoreProjectionRebuildParts<Row> {
@@ -12,6 +14,10 @@ export interface EventStoreProjectionRebuildParts<Row> {
   readonly unitOfWork: UnitOfWork;
   /** How the projection applies an event to the store it is given: the same projection, built over the copy. */
   applierOn(copy: ReadModelStore<Row>): (event: StoredEvent) => Promise<void>;
+  /** The subscriber being rebuilt, `<context>.<name>`: the name the events are applied under. Default `rebuild`. */
+  readonly name?: string;
+  /** With a scope, each event is applied in the tenant its stream recorded, as the subscription does. */
+  readonly scope?: ExecutionScope;
   /** Events read per round. Default 500. */
   readonly batchSize?: number;
 }
@@ -64,7 +70,7 @@ export class EventStoreProjectionRebuild<Row> {
     apply: (event: StoredEvent) => Promise<void>,
     from: number,
   ): Promise<{ readonly position: number; readonly read: number }> {
-    const { store, batchSize = 500 } = this.parts;
+    const { store, batchSize = 500, scope, name = 'rebuild' } = this.parts;
     let position = from;
     let read = 0;
 
@@ -74,7 +80,7 @@ export class EventStoreProjectionRebuild<Row> {
       events = await store.readAll(position, batchSize)
     ) {
       for (const event of events) {
-        await apply(event);
+        await inTenantOfEvent(scope, name, event, () => apply(event));
         position = event.position;
       }
 

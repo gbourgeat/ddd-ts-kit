@@ -7,6 +7,7 @@ export {
 } from '@ddd-ts-kit/kernel';
 export * from './unit-of-work/knex-context';
 export * from './unit-of-work/create-knex-unit-of-work';
+export * from './event-sourcing/add-event-store-tenant-column';
 export * from './event-sourcing/create-event-store-tables';
 export * from './event-sourcing/create-knex-event-sourcing';
 export * from './outbox/table-names';

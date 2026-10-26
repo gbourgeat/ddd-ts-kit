@@ -83,7 +83,7 @@ export function layFoundations(persistence: Persistence, options: Observed): Fou
 {{#unless audit.on}}
     decisions: logDecisions(logger),
 {{#if eventSourcing.on}}
-    eventSourcing: createEventSourcing(persistence),
+    eventSourcing: createEventSourcing(persistence{{#if tenancy.any}}, scope{{/if}}),
 {{/if}}
 {{/unless}}
   };

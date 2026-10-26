@@ -126,6 +126,7 @@ model StoredEvent {
   data          Json
   metadata      Json
   occurredAt    DateTime @map("occurred_at") @db.Timestamptz(3)
+  tenantId      String?  @map("tenant_id")
   recordedAt    DateTime @default(now()) @map("recorded_at") @db.Timestamptz(3)
 
   @@unique([stream, version])

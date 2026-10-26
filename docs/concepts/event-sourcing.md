@@ -291,7 +291,11 @@ discipline with its own mechanism:
    so the codec maps it to a stored type of its own.
 2. `ddd-ts-kit docs --stored-events` records the fingerprint of that type, and of the types it
    reaches, for each version in `stored-events.lock.json`, once the shape of the version is the
-   one to store. A recorded version is never rewritten, but one recorded by 0.82.0 or earlier:
+   one to store. It reads the codecs of `infrastructure/persistence/` of the context and of each
+   module of its model, and refuses, naming the codec file and the reason, a data type it cannot
+   read (not declared in the file) or that declares no member: the hash of nothing would vouch
+   for no shape (an event that carries nothing is written `type <Event>Data = Record<string, never>`),
+   and `docs --check` reports an entry of the lock that holds it. A recorded version is never rewritten, but one recorded by 0.82.0 or earlier:
    that release read the type arguments of a member (`Record<string, number>`) apart, so that two
    shapes could share a fingerprint, and `docs --stored-events` records it again as the kit reads
    it now. `ddd-ts-kit docs --check`, which the generated pipeline runs (`npm run docs:check`),
@@ -517,6 +521,25 @@ serializer does not declare: such an event would otherwise be passed over at eve
 silently. A projection fed by the store follows the events of one event-sourced aggregate; a
 read model that joins two of them is two projections, or a projection fed by the dispatcher.
 
+### Under shared-table tenancy
+
+An event store given the execution scope (`InMemoryEventStore(scope)`, or `scope` in the options
+of `createKnexEventSourcing`, `createDrizzleEventSourcing`, `createPrismaEventSourcing` and
+`createTypeOrmEventSourcing`) records the tenant of the work at the first append of a stream, in
+the nullable `tenant_id` column of the events, and gives it back on each stored event
+(`StoredEvent.tenantId`). A read or an append of a stream of another tenant is then refused
+with an `EventStreamTenantError`, which names the stream and never the other tenant; platform
+staff elevated over the tenant (`acrossTenants`) may read it, never append to it. Work that names
+no tenant is not scoped: nothing is recorded and nothing is refused, so a project without tenancy
+is unchanged. A stream stored before the column existed has no tenant and is refused to every
+tenant until a migration gives it one. Every repository of an event-sourced aggregate relies on
+it, `generate repository --tenant-scoped` included: the store is what isolates the stream, not a
+condition on a statement. The same contract case holds the in-memory store and the four ORM.
+
+A `CatchUpSubscription` or an `EventStoreProjectionRebuild` given the same `scope` applies each
+event in the tenant of its stream (origin `event`, as a consumer of the outbox runs), so the
+projection reads and writes that tenant only.
+
 ## Testing
 
 - `givenEvents(rehydrate, events).when(command).thenEvents([...])`: the behaviour of the aggregate
@@ -624,6 +647,8 @@ same contract suites.
 
 ## Limits
 
+- `readAll` and `head` are not tenant-scoped: they feed the subscriptions, which run on a context
+  of their own and apply each event in its tenant. Give them to infrastructure only.
 - One event store per database schema: `init --event-sourcing on` wires one, in the `event_store`
   schema, bound by `src/platform/event-sourcing/` with the keys of the data subjects and the
   cipher; a context that keeps its own binds its stores in its module rather than in the platform.
@@ -632,6 +657,9 @@ same contract suites.
   stream version alone: stamp it by event id and instant.
 - The past-tense check is a list of words, not a grammar; an irregular verb it does not know is
   suppressed with a reason.
+- Under a tenancy, `init` hands the execution scope to the event store (`persistence.eventSourcing`
+  is then a function of the scope). It generates no catch-up subscription: a project that runs
+  one passes the same `scope` to `CatchUpSubscription` and `EventStoreProjectionRebuild`.
 - `generate projection` and `generate repository` have no event-sourced form yet: the
   projection fed by the store and the repository adapter are written by hand (the example shows
   both).

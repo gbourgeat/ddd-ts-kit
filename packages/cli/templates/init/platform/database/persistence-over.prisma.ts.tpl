@@ -66,7 +66,12 @@ export function persistenceOver(client: PrismaClient): Persistence {
     {{/unless}}
     {{/if}}
     {{#if eventSourcing.on}}
+{{#if tenancy.any}}
+    eventSourcing: (scope) => createPrismaEventSourcing(unitOfWork, { schema: EVENT_STORE_SCHEMA, scope }),
+{{/if}}
+{{#unless tenancy.any}}
     eventSourcing: createPrismaEventSourcing(unitOfWork, { schema: EVENT_STORE_SCHEMA }),
+{{/unless}}
     {{/if}}
     close: () => client.$disconnect(),
   };

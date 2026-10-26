@@ -8,7 +8,7 @@ import { on, subscribeAll } from '@ddd-ts-kit/events';
 import { dataSubjectErasedV1 } from '@ddd-ts-kit/kernel';
 import { {{personal.names.adapter}} } from '{{alias.context}}/infrastructure/persistence/{{personal.names.adapterKebab}}.repository{{alias.ext}}';
 import { DataSubjectErasedIntegrationHandler } from '{{alias.context}}/application/integration/handlers/data-subject-erased.integration-handler{{alias.ext}}';
-@@registrations
+@@reactions
 const dataSubjectErasedIntegrationHandler = new DataSubjectErasedIntegrationHandler(platform.adapter(new {{personal.names.adapter}}(platform.persistence.database{{#if tenant.scoped}}, platform.scope{{/if}}), { kind: 'repository', context: '{{context.kebab}}', token: '{{personal.names.port}}' }));
 
 {{#if consumer.transactional}}

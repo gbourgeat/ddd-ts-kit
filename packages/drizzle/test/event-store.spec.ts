@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { FixedExecutionScope } from '@ddd-ts-kit/kernel';
 import { eventStoreContract, eventStoreUnitOfWorkContract } from '@ddd-ts-kit/testing/contracts';
 import {
   DrizzleOutboxStore,
@@ -41,6 +42,16 @@ eventStoreContract(runner, {
   name: 'createDrizzleEventSourcing on PGlite',
   createStore: async () => (await stores()).events,
   createCompanions: stores,
+  createTenantStore: async () => {
+    await database.truncate();
+
+    const scope = new FixedExecutionScope();
+
+    return {
+      scope,
+      store: createDrizzleEventSourcing(createDrizzleUnitOfWork(database.db), { schema: 'scheduling', scope }).events,
+    };
+  },
 });
 
 eventStoreUnitOfWorkContract(runner, {
