@@ -9,6 +9,7 @@
   "project": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"],
   "ignoreDependencies": ["eslint-formatter-gitlab"],
   "ignoreExportsUsedInFile": true,
+  "mcp": false,
   "ignoreIssues": {
     "src/contexts/*/*.codes.ts": ["types"]
   },
