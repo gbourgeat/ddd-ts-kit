@@ -578,7 +578,7 @@ config, `docsUi`, `ci` and `logger` included.
 | `REVIEW.md` | the review policy of the project: the passes of a review (bugs, security, compliance against the design review of the row, the acceptance of the story, the records of `docs/adr/` and the rules), what Important means, at most five nits (a recurring one becomes a line of `AGENTS.md` under `## Mistakes seen here` or a rule of the config), what is not reported (generated files, what `npm run verify` refuses). Read by the `architecture-reviewer` agent on top of its method, by a human reviewer and by any review bot. Written once, for the team to edit: `--force` leaves it alone, `doctor` says when it is missing |
 | `.github/copilot/settings.json` | the plugin of the kit, declared for GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`): its cloud agent installs it, the Copilot CLI and VS Code recommend it; an existing file keeps what it holds and gains the two entries |
 | `.claude/hooks/production-gate.mjs`, `.claude/hooks/change-reference.mjs` | with `--agent-profile regulated`: the two hooks of the profile, registered under `hooks.PreToolUse` of `.claude/settings.json`, written once for the team to edit (`--force` writes them again). The gate blocks a command that names the production environment with a release action unless `RELEASE_APPROVAL` names an approver and a change; the reference asks before an edit of a migration or of the containers, for the `Change: <id>` trailer of the commit ([Sandboxing coding agents](../../docs/guides/agent-sandbox.md#the-regulated-profile)) |
-| `.claude/settings.json` | permissions (and, with `--agent-profile regulated`, the sandbox block below): the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), the three generated documents are not edited by hand, `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) ask first, and so does an edit of what reaches production otherwise than through the code: the migrations of the ORM (`migrations/**` with drizzle, knex and typeorm, `prisma/migrations/**` with prisma, nothing with a custom persistence or none), `Dockerfile`, `docker-compose.yml` and `docker/**`. The compose file reads `.env` at the root, which the deny list already covers; nothing under `docker/` holds a secret |
+| `.claude/settings.json` | permissions (and, with `--agent-profile regulated`, the sandbox block below): the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) ask first, and so does an edit of the generated contracts and of the lock of an acceptance (`openapi/**`, `docs/integration/asyncapi.*`, `docs/integration/event-catalog.md`, `test/acceptance/*.acceptance.lock.json`: an ask rule, since the sandbox of Claude Code would make a denied path read-only to `docs:generate` and `acceptance --lock` too; the guard of the plugin refuses a hand edit of them) and of what reaches production otherwise than through the code: the migrations of the ORM (`migrations/**` with drizzle, knex and typeorm, `prisma/migrations/**` with prisma, nothing with a custom persistence or none), `Dockerfile`, `docker-compose.yml` and `docker/**`. The compose file reads `.env` at the root, which the deny list already covers; nothing under `docker/` holds a secret |
 | `.gitignore` | `node_modules`, `dist`, `coverage`, `.env`, `*.tsbuildinfo`, `.ddd-ts-kit/`, where `worker-scope` writes, and `.worktrees/`, where the worktrees live |
 
 `--ci both` writes the two pipelines, `--ci none` neither (and no `renovate.json`). The pipeline
@@ -588,11 +588,16 @@ documented placeholders.
 
 `--agent-profile regulated` records `agents.profile` in the config, with or without `--force`
 (`--agent-profile none` removes it), and writes the `sandbox` block of Claude Code next to the
-permissions: enabled, failing when the sandbox is unavailable, no unsandboxed retry, the npm
-registry and the git host of the project (from `repository` of `package.json`, else the `origin`
-remote) as the only hosts, the credential files (`~/.ssh`, `~/.aws`, `~/.config/gcloud`,
-`~/.azure`) and the usual secret variables denied to every sandboxed command; a key the project
-already set is kept. It also prints, as a note, the block of managed settings a project file
+permissions: enabled, failing when the sandbox is unavailable, no unsandboxed retry, the caches
+the install of the stack writes as the only paths outside the project and the temporary directory
+(`~/.npm`, or the store and the cache of pnpm, and `~/.cache/prisma` with Prisma), the npm
+registry, the git host of the project (from `repository` of `package.json`, else the `origin`
+remote) and the hosts the install scripts of the stack download from (`binaries.prisma.sh` with
+Prisma, `github.com` and `release-assets.githubusercontent.com` with the Kafka client) as the only
+hosts, the credential files (`~/.ssh`, `~/.aws`, `~/.config/gcloud`, `~/.azure`) and the usual secret variables denied to every sandboxed command; a key the project
+already set is kept, and a list it holds gains the entries the stack needs. It also prints, as a
+note, that the owner runs the first install outside the agent (a path missing when a session
+starts stays read-only to it), and the block of managed settings a project file
 cannot set (`allowManagedHooksOnly`, `allowManagedPermissionRulesOnly`,
 `permissions.disableBypassPermissionsMode`, `strictKnownMarketplaces` with the marketplace of
 the kit, `requiredMinimumVersion`), for the platform team to paste, and writes the two hooks of

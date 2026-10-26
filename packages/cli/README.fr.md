@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1a299156421ce74c -->
+<!-- translation-of: README.md sha256:008ba5858c8426c8 -->
 
 # ddd-ts-kit
 
@@ -598,7 +598,7 @@ choix sont enregistrés sous `stack` dans la configuration, `docsUi`, `ci` et `l
 | `REVIEW.md` | la politique de revue du projet : les passes d'une revue (bugs, sécurité, conformité face à la revue de conception de la ligne, l'acceptation de la *story*, les enregistrements de `docs/adr/` et les règles), ce qu'Important veut dire, au plus cinq *nits* (un *nit* récurrent devient une ligne de `AGENTS.md` sous `## Mistakes seen here` ou une règle de la configuration), ce qui n'est pas signalé (les fichiers générés, ce que `npm run verify` refuse). Lu par l'agent `architecture-reviewer` par-dessus sa méthode, par un relecteur humain et par tout robot de revue. Écrit une fois, pour que l'équipe le modifie : `--force` le laisse tel quel, `doctor` dit quand il manque |
 | `.github/copilot/settings.json` | le *plugin* du kit, déclaré pour GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`) : son agent cloud l'installe, la CLI Copilot et VS Code le recommandent ; un fichier existant garde ce qu'il contient et reçoit les deux entrées |
 | `.claude/hooks/production-gate.mjs`, `.claude/hooks/change-reference.mjs` | avec `--agent-profile regulated` : les deux *hooks* du profil, enregistrés sous `hooks.PreToolUse` de `.claude/settings.json`, écrits une fois pour que l'équipe les modifie (`--force` les réécrit). La porte bloque une commande qui nomme l'environnement de production avec une action de mise en production sauf si `RELEASE_APPROVAL` nomme un approbateur et un changement ; la référence demande avant une modification d'une migration ou des conteneurs, pour le *trailer* `Change: <id>` du *commit* ([Mettre les agents de code en bac à sable](../../docs/guides/agent-sandbox.fr.md#le-profil-réglementé)) |
-| `.claude/settings.json` | des permissions (et, avec `--agent-profile regulated`, le bloc de bac à sable ci-dessous) : les vérifications et les générateurs s'exécutent sans demander, les fichiers `.env` sont illisibles (`.env.example` reste lisible), les trois documents générés ne sont pas modifiés à la main, `git push`, `npm publish` et toute modification des fichiers qui portent les règles et le *pipeline* (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) demandent d'abord, comme une modification de ce qui atteint la production autrement que par le code : les migrations de l'ORM (`migrations/**` avec drizzle, knex et typeorm, `prisma/migrations/**` avec prisma, rien avec une persistance *custom* ou sans ORM), `Dockerfile`, `docker-compose.yml` et `docker/**`. Le fichier compose lit `.env` à la racine, que la liste de refus couvre déjà ; rien sous `docker/` ne porte de secret |
+| `.claude/settings.json` | des permissions (et, avec `--agent-profile regulated`, le bloc de bac à sable ci-dessous) : les vérifications et les générateurs s'exécutent sans demander, les fichiers `.env` sont illisibles (`.env.example` reste lisible), `git push`, `npm publish` et toute modification des fichiers qui portent les règles et le *pipeline* (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) demandent d'abord, comme une modification des contrats générés et du verrou d'une acceptation (`openapi/**`, `docs/integration/asyncapi.*`, `docs/integration/event-catalog.md`, `test/acceptance/*.acceptance.lock.json` : une règle `ask`, puisque le bac à sable de Claude Code mettrait un chemin refusé en lecture seule pour `docs:generate` et `acceptance --lock` aussi ; la garde du plugin en refuse la modification à la main) et de ce qui atteint la production autrement que par le code : les migrations de l'ORM (`migrations/**` avec drizzle, knex et typeorm, `prisma/migrations/**` avec prisma, rien avec une persistance *custom* ou sans ORM), `Dockerfile`, `docker-compose.yml` et `docker/**`. Le fichier compose lit `.env` à la racine, que la liste de refus couvre déjà ; rien sous `docker/` ne porte de secret |
 | `.gitignore` | `node_modules`, `dist`, `coverage`, `.env`, `*.tsbuildinfo`, `.ddd-ts-kit/`, où écrit `worker-scope`, et `.worktrees/`, où vivent les *worktrees* |
 
 `--ci both` écrit les deux *pipelines*, `--ci none` aucun (et pas de `renovate.json`). Les
@@ -609,11 +609,17 @@ emplacements à remplacer documentés.
 `--agent-profile regulated` enregistre `agents.profile` dans la configuration, avec ou sans
 `--force` (`--agent-profile none` le retire), et écrit le bloc `sandbox` de Claude Code à côté des
 permissions : activé, échouant quand le bac à sable est indisponible, aucune nouvelle tentative
-hors bac à sable, le registre npm et l'hôte git du projet (lu dans `repository` de
-`package.json`, sinon dans le *remote* `origin`) comme seuls hôtes, les fichiers d'identifiants
+hors bac à sable, les caches qu'écrit l'installation de la pile comme seuls chemins hors du
+projet et du répertoire temporaire (`~/.npm`, ou le *store* et le cache de pnpm, et `~/.cache/prisma` avec Prisma), le
+registre npm, l'hôte git du projet (lu dans `repository` de `package.json`, sinon dans le
+*remote* `origin`) et les hôtes d'où téléchargent les scripts d'installation de la pile
+(`binaries.prisma.sh` avec Prisma, `github.com` et `release-assets.githubusercontent.com` avec le
+client Kafka) comme seuls hôtes, les fichiers d'identifiants
 (`~/.ssh`, `~/.aws`, `~/.config/gcloud`, `~/.azure`) et les variables secrètes usuelles refusés à
-chaque commande en bac à sable ; une clé que le projet avait déjà posée est gardée. Elle affiche
-aussi, en note, le bloc de réglages gérés qu'un fichier de projet ne peut pas poser
+chaque commande en bac à sable ; une clé que le projet avait déjà posée est gardée, et une liste
+qu'il porte gagne les entrées dont la pile a besoin. Elle affiche aussi, en note, que le
+propriétaire lance la première installation hors de l'agent (un chemin absent au démarrage d'une
+session y reste en lecture seule), et le bloc de réglages gérés qu'un fichier de projet ne peut pas poser
 (`allowManagedHooksOnly`, `allowManagedPermissionRulesOnly`,
 `permissions.disableBypassPermissionsMode`, `strictKnownMarketplaces` avec la *marketplace* du
 kit, `requiredMinimumVersion`), pour que l'équipe plateforme le colle, et écrit les deux *hooks*

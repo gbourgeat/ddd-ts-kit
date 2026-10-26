@@ -6,6 +6,7 @@ import { jsonAt } from './support/json-at';
 import { keysAt } from './support/keys-at';
 import { readJson } from './support/read-json';
 import { stringsAt } from './support/strings-at';
+import { lockFileOf } from '../src/acceptance/lock-file-of';
 
 const SETTINGS = '.claude/settings.json';
 const permissions = (root: string, kind: string): string[] => stringsAt(readJson(root, SETTINGS), 'permissions', kind);
@@ -17,16 +18,37 @@ const DENIED = [
   'Read(./.env.production)',
   'Read(./.env.development)',
   'Read(./.env.test)',
+];
+
+const GENERATED = [
   'Edit(./openapi/**)',
   'Edit(./docs/integration/asyncapi.*)',
   'Edit(./docs/integration/event-catalog.md)',
   'Edit(./test/acceptance/*.acceptance.lock.json)',
 ];
 
+/** The path of the project a permission rule on a file names, as a pattern: `**` crosses folders, `*` stays in one. */
+const pathOf = (rule: string): RegExp | undefined => {
+  const glob = /^Edit\(\.\/(.+)\)$/.exec(rule)?.[1];
+
+  return glob === undefined
+    ? undefined
+    : new RegExp(
+        `^${glob
+          .split('**')
+          .map((part) => part.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replaceAll('*', '[^/]*'))
+          .join('.*')}$`,
+      );
+};
+
+const matching = (rules: readonly string[], file: string): string[] =>
+  rules.filter((rule) => pathOf(rule)?.test(file) === true);
+
 const ASKED = [
   'Bash(git push *)',
   'Bash(npm publish *)',
   'Bash(npx ddd-ts-kit check --baseline write*)',
+  ...GENERATED,
   'Edit(./ddd-ts-kit.config.json)',
   'Edit(./ddd-ts-kit-baseline.json)',
   'Edit(./REVIEW.md)',
@@ -91,7 +113,62 @@ describe('agent settings', () => {
       'Read(./.env.test)',
     ]);
   });
+});
 
+describe('agent settings under the sandbox of Claude Code', () => {
+  it('denies no Edit of a file a command of the kit writes, which the sandbox would make read-only to that command, and asks for each instead', () => {
+    const root = initProject(...NPM);
+    const deny = permissions(root, 'deny');
+    const ask = permissions(root, 'ask');
+    // What docs:generate (openapi:generate, then events:generate) writes, in YAML or JSON, split
+    // into documents and with the form of a route, then the lock `acceptance <story> --lock` writes.
+    const contracts = ['openapi/openapi.yaml', 'docs/integration/asyncapi.yaml', 'docs/integration/event-catalog.md'];
+
+    const written = [
+      ...contracts,
+      'openapi/openapi.json',
+      'openapi/back-office.yaml',
+      'openapi/forms/createOrder.json',
+      'docs/integration/asyncapi.json',
+      lockFileOf('US-5'),
+    ];
+
+    expect(contracts.filter((file) => read(root, file) === '')).toEqual([]);
+    expect(deny.filter((rule) => rule.startsWith('Edit('))).toEqual([]);
+
+    for (const file of written) {
+      expect(matching(deny, file), file).toEqual([]);
+      expect(matching(ask, file), file).not.toEqual([]);
+    }
+  });
+
+  it('takes the Edit deny rules of an earlier version out of the deny list, asks for them, and says why', () => {
+    const root = initProject(...NPM);
+    const settings = readJson(root, SETTINGS) as { permissions: Record<string, string[]> };
+    const ask = settings.permissions['ask'] ?? [];
+
+    write(
+      root,
+      SETTINGS,
+      JSON.stringify({
+        permissions: {
+          ...settings.permissions,
+          deny: [...DENIED, ...GENERATED],
+          ask: ask.filter((rule) => !GENERATED.includes(rule)),
+        },
+      }),
+    );
+
+    const notes = stringsAt(cli(root, 'init', '--json').json(), 'notes').join('\n');
+
+    expect(permissions(root, 'deny')).toEqual(DENIED);
+    expect(permissions(root, 'ask')).toEqual(expect.arrayContaining(GENERATED));
+    expect(notes).toContain(`.claude/settings.json no longer denies ${GENERATED.join(', ')}`);
+    expect(notes).toContain('docs:generate and acceptance --lock included');
+  });
+});
+
+describe('agent settings of the files that reach production', () => {
   it('asks before a migration of the ORM of the project, and never names a folder the project has no migration in', () => {
     const prisma = permissions(initProject(...NPM, '--orm', 'prisma'), 'ask');
     const knex = permissions(initProject(...NPM, '--orm', 'knex'), 'ask');
@@ -123,7 +200,7 @@ describe('agent settings', () => {
     expect(permissions(root, 'allow').slice(0, 2)).toEqual(['Bash(make *)', 'Bash(npm run verify)']);
     expect(permissions(root, 'allow').filter((rule) => rule === 'Bash(npm run verify)')).toHaveLength(1);
     expect(permissions(root, 'deny')[0]).toBe('Read(./secrets/**)');
-    expect(permissions(root, 'deny')).toContain('Edit(./openapi/**)');
+    expect(permissions(root, 'ask')).toContain('Edit(./openapi/**)');
 
     expect(stringsAt(report, 'notes').join('\n')).toMatch(
       /\.claude\/settings\.json gained 59 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,

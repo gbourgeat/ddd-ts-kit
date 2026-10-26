@@ -3,7 +3,8 @@ import type { Workspace } from '../workspace';
 import { isRecord } from './is-record';
 import { jsonObject } from './json-object';
 import { formatJson } from '../json/format-json';
-import { agentPermissions, type AgentPermissions } from './agent-permissions';
+import { agentPermissions, GENERATED_FILES, type AgentPermissions } from './agent-permissions';
+import { firstInstallNote } from './first-install-note';
 import { gitHostOf } from './git-host-of';
 import { managedSettingsNote } from './managed-settings-note';
 import { mergeSandbox } from './merge-sandbox';
@@ -23,10 +24,12 @@ export function writeAgentSettings(ws: Workspace, config: Config): void {
   const regulated = config.agents.profile === 'regulated';
 
   if (existing === undefined) {
-    const profile = regulated ? { sandbox: regulatedSandbox(gitHostOf(ws.root)), hooks: mergeHooks(undefined) } : {};
+    const profile = regulated
+      ? { sandbox: regulatedSandbox(gitHostOf(ws.root), config.stack), hooks: mergeHooks(undefined) }
+      : {};
 
     ws.create(AGENT_SETTINGS, serialize({ permissions, ...profile }));
-    noteManaged(ws, regulated);
+    noteManaged(ws, config);
 
     return;
   }
@@ -40,7 +43,10 @@ export function writeAgentSettings(ws: Workspace, config: Config): void {
   }
 
   const merged = mergePermissions(settings, permissions, (rule) => ws.spoken(rule));
-  const sandboxed = regulated ? withSandbox(merged.settings, gitHostOf(ws.root)) : merged.settings;
+
+  const sandboxed = regulated
+    ? withSandbox(merged.settings, regulatedSandbox(gitHostOf(ws.root), config.stack))
+    : merged.settings;
 
   ws.update(AGENT_SETTINGS, serialize(sandboxed));
 
@@ -48,20 +54,23 @@ export function writeAgentSettings(ws: Workspace, config: Config): void {
     ws.note(`${AGENT_SETTINGS} gained ${merged.added.length} permission(s): ${merged.added.join(', ')}.`);
   }
 
-  noteManaged(ws, regulated);
+  if (merged.retired.length > 0) {
+    ws.note(
+      `${AGENT_SETTINGS} no longer denies ${merged.retired.join(', ')}: under the sandbox of Claude Code an Edit deny rule makes the path read-only for every command, docs:generate and acceptance --lock included. They are asked instead, and the guard of the plugin refuses a hand edit of them.`,
+    );
+  }
+
+  noteManaged(ws, config);
 }
 
-function withSandbox(settings: Record<string, unknown>, gitHost: string | undefined): Record<string, unknown> {
-  return {
-    ...settings,
-    sandbox: mergeSandbox(settings['sandbox'], regulatedSandbox(gitHost)),
-    hooks: mergeHooks(settings['hooks']),
-  };
+function withSandbox(settings: Record<string, unknown>, profile: Record<string, unknown>): Record<string, unknown> {
+  return { ...settings, sandbox: mergeSandbox(settings['sandbox'], profile), hooks: mergeHooks(settings['hooks']) };
 }
 
-function noteManaged(ws: Workspace, regulated: boolean): void {
-  if (regulated) {
+function noteManaged(ws: Workspace, config: Config): void {
+  if (config.agents.profile === 'regulated') {
     ws.note(managedSettingsNote());
+    ws.note(firstInstallNote(config.stack));
   }
 }
 
@@ -70,9 +79,14 @@ const serialize = (settings: unknown): string => formatJson(settings);
 interface Merged {
   readonly settings: Record<string, unknown>;
   readonly added: string[];
+  /** The deny rules of an earlier version that stopped a command of the kit under the sandbox. */
+  readonly retired: string[];
 }
 
-/** A rule is compared as the project says it: its settings name the package manager it runs, not npm. */
+/**
+ * A rule is compared as the project says it: its settings name the package manager it runs, not
+ * npm. The deny rules an earlier version wrote on the generated files leave the deny list.
+ */
 function mergePermissions(
   settings: Record<string, unknown>,
   expected: AgentPermissions,
@@ -81,14 +95,19 @@ function mergePermissions(
   const current = isRecord(settings['permissions']) ? settings['permissions'] : {};
   const added: string[] = [];
   const permissions: Record<string, unknown> = { ...current };
+  const listed = (kind: string): unknown[] => (Array.isArray(current[kind]) ? current[kind] : []);
+
+  const retired = listed('deny').filter(
+    (rule): rule is string => typeof rule === 'string' && GENERATED_FILES.includes(rule),
+  );
 
   for (const [kind, wanted] of Object.entries(expected)) {
-    const present: unknown[] = Array.isArray(current[kind]) ? current[kind] : [];
+    const present = listed(kind).filter((rule) => kind !== 'deny' || !retired.includes(String(rule)));
     const missing = wanted.map(spoken).filter((rule) => !present.includes(rule));
 
     permissions[kind] = [...present, ...missing];
     added.push(...missing.map((rule) => `${kind} ${rule}`));
   }
 
-  return { settings: { ...settings, permissions }, added };
+  return { settings: { ...settings, permissions }, added, retired };
 }
