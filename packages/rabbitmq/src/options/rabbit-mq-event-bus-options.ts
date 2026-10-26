@@ -23,6 +23,11 @@ export interface RabbitMqEventBusOptions {
   readonly queueType?: QueueType;
   /** What `publish` does with an event no queue is bound for. Default `ignore`. */
   readonly onUnroutable?: 'ignore' | 'fail';
+  /**
+   * Time the broker has to confirm a publication before `publish` rejects (`PUBLISH_NOT_CONFIRMED`),
+   * and to answer each step of `close()`, which goes on without the answer. Default 30000.
+   */
+  readonly publishTimeoutMs?: number;
   readonly retry?: RetryOptions;
   readonly reconnect?: ReconnectOptions;
   /** Observability hook. It receives codes only, so it is safe to log as is. */

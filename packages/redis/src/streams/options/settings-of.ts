@@ -21,7 +21,6 @@ export function settingsOf(options: RedisStreamsEventBusOptions): Settings {
     reconnect: reconnectOf(options.reconnect),
     retention: options.retention,
     deduplication: options.deduplication,
-    scope: options.scope,
     onFailure: guarded(options.onFailure),
     onDelivery: guarded(options.onDelivery),
   };

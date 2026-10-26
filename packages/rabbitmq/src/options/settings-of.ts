@@ -17,6 +17,7 @@ export function settingsOf(
     prefetch: options.prefetch ?? 10,
     queueType: options.queueType ?? 'quorum',
     failOnUnroutable: options.onUnroutable === 'fail',
+    publishTimeoutMs: options.publishTimeoutMs ?? 30_000,
     retry: retryOf(options.retry),
     reconnect: reconnectOf(options.reconnect),
     onFailure: guarded(options.onFailure),

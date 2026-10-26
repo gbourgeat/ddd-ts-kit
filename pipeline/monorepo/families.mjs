@@ -191,9 +191,6 @@ const BROKER_PLACE = [
   'instance',
 ];
 
-const ABOVE_THE_BUS =
-  'the consumers of the kit (`on` of @ddd-ts-kit/events, the consumer of @ddd-ts-kit/di) enter the execution context of the event above any bus';
-
 const BROKERS = {
   family: 'brokers',
   members: ['rabbitmq', 'nats', 'kafka', 'redis'],
@@ -227,7 +224,6 @@ const BROKERS = {
           nats: 'a durable consumer starts with the stream, its position kept by the server',
         },
         publishTimeoutMs: {
-          rabbitmq: 'publish waits for the confirmation of the broker on a confirm channel, with no timer of its own',
           redis: 'XADD answers at once, there is no acknowledgement of replicas to wait for',
         },
         connectTimeoutMs: {
@@ -275,7 +271,6 @@ const BROKERS = {
           kafka: 'a topic keeps every record',
           redis: 'a stream keeps every entry',
         },
-        scope: { rabbitmq: ABOVE_THE_BUS, nats: ABOVE_THE_BUS, kafka: ABOVE_THE_BUS },
       },
       contract: 'eventBusContract',
     },
