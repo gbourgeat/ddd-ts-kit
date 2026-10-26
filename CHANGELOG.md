@@ -4,6 +4,195 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.92.0
+
+**What a method of a Nest controller takes is its signature too: `@Body() body: IssueInvoiceBody` is read into the generated `<context>.controllers.ts`, and `@KitRoute` no longer gives `request`.**
+`withAnswers` of `@ddd-ts-kit/http/nest` becomes `withSignatures(controller, { method: { params,
+query, headers, body, answer } })`: the DTO class of each part of the request a parameter takes
+whole, as `ddd-ts-kit` reads it from the source, and the answer. The bridge validates each part by
+that class, so a route no longer depends on `emitDecoratorMetadata`, which tsx and esbuild do not
+write: `npm run dev` serves the same validation as the build. A generated Nest controller no longer
+builds `paramsSchema` nor `bodySchema`, and its `@KitRoute` holds the refusal codes alone.
+`nest/controllers-current` also reports a part taken whole by a type the kit cannot read (an inline
+type, an interface, a `Record`) that `request` of `@KitRoute` does not give.
+
+To move: replace `withAnswers(Controller, { method: X })` by `withSignatures(Controller, { method:
+{ answer: X } })` where it was written by hand; a project on `--routes nest` runs `npx ddd-ts-kit
+docs`, then drops `request` and the schemas it built from its generated controllers.
+
+**Under `"stack.routes": "nest"`, every route generator writes the Nest form: a search, an upload, a form and a representation.**
+`generate route` writes a search as a Nest controller, its page given in `@KitRoute` (`request:
+{ query }`, `response.body: pageSchemaOf(line)`), where it used to refuse. `generate file-upload`
+writes a Nest controller whose method takes `@Upload() file: IncomingFile`, the new parameter
+decorator of `@ddd-ts-kit/http/nest`: the kit streams the file and checks it against the `upload`
+of `@KitRoute`, which now takes `upload` and `form` as `@Controller` of the kit does; a method that
+takes `@Upload()` with no `upload` declared is refused when the routes are built. `generate form`
+and `generate representation` write their options at the top of `@KitRoute`, the form typed by the
+body class. `nest/no-parallel-pipeline` points `@UploadedFile()` and `ParseFilePipe` at `@Upload()`.
+`nest/controllers-current` reads `request: { query }` written short.
+
+**The identity preset is written for Nest controllers too: `init --preset identity --http nest --routes nest`.**
+Under `"stack.routes": "nest"`, its twelve routes are Nest controllers built by Nest with the buses it
+injects: their parts and their answers read from their signatures into the generated
+`identity.controllers.ts`, their summaries, descriptions and refusal codes in `@KitRoute`, the shared
+invitation token documented once as before. The module of the context lists those controllers, and
+its spec mounts them through the pipeline of the kit, as the spec of each controller does. A
+project on `--routes controllers` gets the controllers of the kit as before.
+
+**A Nest project validates with class-validator and writes its routes as Nest controllers, by default.**
+`init --http nest` now records `"validation": "class-validator"`, as Nest validates, and
+`"routes": "nest"`: `generate route`, `file-upload`, `form` and `representation` write Nest
+controllers built by Nest and served by the kit, their parts and answers read from their
+signatures. `--validation zod` (or another library) keeps the controllers of the kit, and
+`--routes controllers` asks for them on class-validator too. `describe`, `generate e2e` and every
+reading of the routes of a context now read the route methods of Nest controllers, and the
+generated list of a context holds the Nest controllers of its modules, which it left out.
+
+To move: nothing for a recorded project, which keeps the stack its config says, `init --force`
+included. A new Nest project that wants the controllers of the kit passes `--routes controllers`.
+
+**A strategy of Passport authenticates the calls of the kit: `passportPrincipal` of `@ddd-ts-kit/auth/passport`.**
+`passportPrincipal(strategy, { actorOf })` runs a strategy of Passport on each request, as
+`passport.authenticate` does, and answers the session `resolvePrincipal` hands the pipeline: the
+guards of the routes and the permissions of the use cases decide as with any authenticator, on
+every door. A strategy of `passport-jwt` or a class of `@nestjs/passport` (given lazily, once Nest
+has built it) works as it is; `actorOf` reads the user its verify callback or its `validate`
+answered. It fails closed: a credential the strategy fails is a 401, an error, a redirect (a
+sign-in flow) or a strategy silent past `timeoutMs` refuses the request, and only a request
+without credential, or one the strategy passes, goes on anonymous. The entry imports nothing of
+Passport. `nest/no-parallel-pipeline` now points `@nestjs/passport` in a context at it.
+
+**On Drizzle, Prisma and TypeORM, `npm run db:generate` makes the audit trail append-only in the migration that creates it: no statement to paste by hand any more.**
+
+The tools of these ORM write no trigger, so a project with `--audit on` had a `TODO(platform)` asking to copy the statements `npm run db:audit-guard` prints into a migration of its own. `ddd-ts-kit drizzle-generate` now adds them to the migration that creates `audit_entries`, once, and two commands do the same around the tool of the other ORM: `ddd-ts-kit prisma-generate --name <what-it-does>` (`prisma migrate dev --create-only`) and `ddd-ts-kit typeorm-generate <folder>/<what-it-does>` (`typeorm migration:generate` on the compiled data source). A project whose migrations hold the guard already, or without an audit trail, gets the tool of its ORM as before.
+
+Generating and applying a first migration on a real PostgreSQL, which no test did before, found three more things, fixed here: on Drizzle, the platform schemas (`messaging`, `audit`, `event_store`) were never created, so a first migration failed on a new database without a word from drizzle-kit (they are now exported with `pgSchema`); on TypeORM, the migrations were never compiled into the `dist/migrations` the data source reads, so `db:migrate` answered `No migrations are pending` (`tsconfig.json` includes `migrations`, `typeorm-generate` imports its types as types and formats the file, ESLint leaves the migrations a tool writes alone), and TypeORM writes no `CREATE SCHEMA`, which `typeorm-generate` adds at the start of `up`; and the `CREATE SCHEMA` drizzle-kit writes is made `IF NOT EXISTS`, so that a migration applies to a database that has the schema already. A job of the night and of the release now generates, guards and applies the first migration of each of the three ORM on a real PostgreSQL, every gate of the project then run.
+
+To move:
+
+- **A TypeORM project generated before: `npm run db:migrate` never applied any migration.** It answered `No migrations are pending`, since nothing compiled `migrations/` into `dist/migrations`; a database that only `db:migrate` built has none of the tables. Run `init --force` (it writes `tsconfig.json` with `migrations` in `include`, `eslint.config.mjs` that leaves `migrations/**` to the tool, and `db:generate` through `ddd-ts-kit typeorm-generate`); then, in each migration written before, make the import `import type { MigrationInterface, QueryRunner } from 'typeorm';`, add `await queryRunner.query('CREATE SCHEMA IF NOT EXISTS "<schema>"');` at the start of `up` for each schema its tables use (`messaging`, `audit`, the schema of each context), and with an audit trail the statements `npm run db:audit-guard` prints after the creation of `audit_entries`; `npm run build && npm run db:migrate` then applies them. A database built by `synchronize` or by hand is to compare with the migrations before migrating it.
+- **A Drizzle project generated before: a first migration failed on a new database** (`messaging`, `audit` and `event_store` never created). Run `init --force`, or add to `schema.ts` `export const messaging = pgSchema(MESSAGING_SCHEMA);` and the same for `AUDIT_SCHEMA` and `EVENT_STORE_SCHEMA`, then `npm run db:generate add-platform-schemas`: `drizzle-generate` now writes every `CREATE SCHEMA` as `CREATE SCHEMA IF NOT EXISTS`, so this migration also applies to a database whose schemas were created by hand; with an audit trail and no guard yet, paste what `npm run db:audit-guard` prints into a custom migration (`npm run db:generate -- audit-guard --custom`).
+- **A Prisma project generated before:** set `db:generate` to `ddd-ts-kit prisma-generate --name` (`init --force` writes it); with an audit trail and no guard yet, `npm run db:generate audit-guard` writes an empty migration to paste what `npm run db:audit-guard` prints into.
+- A migration that already holds the guard by hand is recognised and left alone by the three commands.
+
+**`init --authn passport` verifies the bearer tokens with a strategy of Passport, and the identity preset runs on it.**
+The platform gets `bearer-strategy.ts`, a strategy of `passport-jwt` on the key set the issuer
+publishes (`jwks-rsa`, `AUTH_JWKS_URI`), its issuer and its audience, and `actor-of-token.ts`,
+which reads the payload with `actorOfClaims`; `create-authenticator.ts` puts them behind the
+`Authenticator` port with `passportAuthenticator`, new in `@ddd-ts-kit/auth/passport`, so that the
+HTTP boundary, the procedures and the end-to-end tests (credentials signed for the strategy)
+authenticate through it. `actorOfClaims`, the reading of claims of `JwtAuthenticator`, is now
+exported by `@ddd-ts-kit/auth` without `jose`. The identity preset accepts `--authn passport`.
+The option verifies bearer tokens, as `--authn jwt`, with the strategy in the code of the project:
+a strategy that reads a cookie or a session is wired by hand with `passportPrincipal`.
+
+**A controller answers response headers.** `response` of `@Controller` (and of `@KitRoute` on a Nest controller) takes `headers`, a map of the header name to what it holds: the contract lists them under `responses.<status>.headers`, and `handle` returns `{ body, headers }` (`{ headers }` with no body), typed from the declaration so a declared header left out does not compile. Express, Fastify, Hono and Nest write them. A response that declares none keeps returning the body alone. A `Location` on a `201`, an `ETag`, a `Content-Disposition` on an export or a `Retry-After` on a `202` no longer need a function route.
+
+**The guard lets `generate module` through on the trunk, and the skills name modules, the authorization model and the preset's glossary.**
+`generate module` writes the config and the `CONTEXT.md` of the context, not code, so the guard no longer refuses it on the main checkout
+under `"worktrees": "required"`, as it already did for `generate context`. The `bootstrap` skill declares each module of a context
+right after its `generate context`, with its `--term`. `plan-slices` gives every row of a context with modules a `--module`, and leaves
+`--grant` out on a `rebac` or `abac` project, where the generator refuses it. `glossary` takes the terms of a preset (today `identity`,
+`packages/cli/src/presets/identity-terms.ts`) as the draft of a context the preset writes, and adds only the business terms beyond them.
+
+**`ddd-ts-kit acceptance <story> --lock` writes the lock in the layout the formatter of the project prints.**
+The lock was written with `JSON.stringify` in two spaces, which the Biome of the project then refused at the commit (the format hook asked for `biome format --write` on every lock and every relock). It is written through the JSON layout the kit uses for its other generated files, the one `biome format` prints at a width of 120, so the format hook passes on it untouched.
+
+To move: nothing; a lock already written is reformatted by the next `acceptance <story> --lock`, or by `biome format --write test/acceptance/*.acceptance.lock.json`.
+
+**The agent denies the secret files of a project by name, and reads `.env.example` again.**
+`init` denied `Read(./.env.*)` with the negation `Read(!./.env.example)` to keep the example readable. The sandbox of Claude Code ignores the negation and masks `.env.example` with `/dev/null`, which breaks git in the session. The deny list names `.env`, `.env.local`, `.env.*.local`, `.env.production`, `.env.development` and `.env.test`, and no rule carries a `!`.
+
+To move: a project written before this change keeps the glob and its negation in `.claude/settings.json`; replace them by the six rules above (`init` adds the missing ones and says so, but does not remove the old pair).
+
+**The `biome.json` of a project no longer ignores the worktrees of its own checkout.**
+`init` wrote `"!**/.worktrees"` in `files.includes`: inside a worktree under `.worktrees/`, Biome then ignored every file, and `format` of `verify` failed in every story and worker. The entry is `"!.worktrees"`, anchored at the root of the configuration: the main checkout still skips its worktrees, and a worktree formats its own files.
+
+To move: a project written before this change keeps `"!**/.worktrees"` in its `biome.json`; replace it with `"!.worktrees"` (or run `init --force`, which rewrites the file).
+
+**`merge-trunk` and `verify-merge` no longer report as lost the lines the trunk itself removed or replaced.** A line of the branch in a file the branch did not touch since it left the trunk (the file is the same on the branch and at `git merge-base`) cannot be a loss of the merge: what the trunk changed there since the base is the trunk's change. It happened when the branch had taken lines from the trunk with an earlier merge and the base of the new merge was older, which stopped the merge on `the merge lost N line(s)` and taught workers to pass `--accept-lost` blind. A line of a file the branch touched, dropped by the merge, is still reported.
+
+**A controller declares a raw body.** `@Controller({ rawBody: true })` (and `@KitRoute({ rawBody: true })` on a Nest controller) leaves the body unparsed and unvalidated: `handle` reads the bytes in `context.stream` and the headers as they arrived in `context.rawHeaders`, to verify an HMAC signed over them before parsing anything. The contract describes the body as `application/octet-stream`, and `rawBody` is refused with `body`, `upload` or `consumes`. Express, Fastify, Hono and Nest (over Express and over Fastify) serve it; a signed webhook no longer needs a function route outside the closed presentation tree.
+
+To move: a project generated by `init` from now on has it. An existing project adds it by hand: on Express, keep the bytes of a JSON body the parser reads before the routes (`express.json({ verify })` writing `request.rawBody`), and create a Nest application with `rawBody: true`, or a JSON webhook reaches the controller empty.
+
+**The repository contract asks for a change of state: `mutate` is optional, and a `mutate` that changes nothing fails the stale-save case with a message that says so.** The case `refuses to overwrite a change it has not seen` waited for a conflict that never came on an event-sourced adapter when `mutate` changed nothing, because an event store appends nothing for no pending event. The contract now changes the stale copy too before saving it, so a table adapter and an event store both refuse it, and a `mutate` that changes nothing fails with `mutate changed nothing: give the contract a change of state`. Without a `mutate`, the case is registered as pending (`it.todo`) with the reason `give the contract a mutate that records a change of state`, so a freshly generated repository is green and the case shows in `ddd-ts-kit todo`. The fakes and the adapters do not change: a table adapter and an event store may differ on a save without a change, which the contract does not judge.
+
+To move: add a `mutate` that records a change to each contract spec; the case stays pending until then.
+
+**`generate aggregate --event-sourced --birth <Event>` names the birth event after the business.**
+The birth event of an event-sourced aggregate was always `<Name>Created`, and the generator refused
+until `Created` was a term of the glossary, so an agent defined a word the business never says.
+`--birth Triggered` writes `IncidentTriggered` (`incidents.incident.triggered`) for the event class,
+its type, the codec of the stored events, the builder and the specs, checked against the glossary
+and as a past fact like any event name. `Created` stays the default. `--birth` without
+`--event-sourced` is refused. The `scaffold` skill says to pass it with the word of the glossary.
+
+**`generate repository` on an event-sourced aggregate writes the adapter over `EventSourcedRepository`, not a table.**
+When the class of the aggregate extends `EventSourcedAggregate`, `generate repository` (and the
+first `generate command --aggregate` that needs one) writes `event-store-<name>.repository.ts`,
+which delegates to `EventSourcedRepository` of the kernel over the `EventStore` and the
+`PersonalDataCipher` the platform binds, with the codec of `<name>-events.mapper.ts` and its
+snapshot policy left as a `TODO(domain)`; no table, no row mapper. The fake is that adapter over
+the in-memory stores, and the repository contract runs on the fake and on the adapter over
+`InMemoryEventStore`, its stale-save case pending until a `mutate` that records an event is added. It is bound where the project
+binds its adapters (the declarations, the module of the context, or the hand-written platform).
+The event store keeps no tenant, so `--tenant-scoped` changes nothing and the note says who
+decides who may load an id; `--personal` is refused, the personal values being sealed in the
+events. A project that deleted the table adapter and wrote this one by hand can regenerate it
+and compare.
+
+**`@ddd-ts-kit/tracing` runs on the OpenTelemetry JS SDK 3.0.** `@opentelemetry/sdk-node` 0.300 no
+longer exports the `resources` and `tracing` namespaces, so `initTracing` imports the resource
+from `@opentelemetry/resources` and the samplers and span processors from `@opentelemetry/sdk-trace`,
+the package that replaces `@opentelemetry/sdk-trace-base`. The test harness of
+`@ddd-ts-kit/tracing/testing` uses its `TracerProvider`, the former `BasicTracerProvider`. The peer
+ranges ask for `@opentelemetry/sdk-node` and `@opentelemetry/exporter-trace-otlp-http` 0.300,
+`@opentelemetry/auto-instrumentations-node` 0.82, `@opentelemetry/sdk-trace`,
+`@opentelemetry/resources` and `@opentelemetry/context-async-hooks` 3.0, and `@opentelemetry/api`
+1.10: the former ranges let a fresh install pull 0.300, which the previous `initTracing` could not
+start with. `init` writes these versions.
+
+To move: `npm i @opentelemetry/sdk-node@^0.300.0 @opentelemetry/exporter-trace-otlp-http@^0.300.0
+@opentelemetry/auto-instrumentations-node@^0.82.0 @opentelemetry/resources@^3.0.0
+@opentelemetry/api@^1.10.0`, then `npm uninstall @opentelemetry/sdk-trace-base` and
+`npm i -D @opentelemetry/sdk-trace@^3.0.0 @opentelemetry/context-async-hooks@^3.0.0`; an import of
+`@opentelemetry/sdk-trace-base` becomes `@opentelemetry/sdk-trace`, `BasicTracerProvider`
+becomes `TracerProvider`, and a span processor takes its exporter as an option:
+`new SimpleSpanProcessor({ exporter })`.
+
+**RabbitMQ rejects a publication the broker does not confirm in time, as NATS and Kafka do; the Redis Streams bus no longer takes a `scope` of its own.**
+
+`RabbitMqEventBus` gains `publishTimeoutMs` (default 30000): `publish` waited for the confirmation of the broker with no timer, so a broker stalled (a full disk, a reply lost) held the outbox relay forever; it now rejects with `PUBLISH_NOT_CONFIRMED` and the relay retries. `close()` waits as long at most for each answer of the broker (the confirmations in flight, the cancel of the consumers, the close of the channels), so that a broker that stopped answering no longer holds the stop of the application. `RedisStreamsEventBus` loses its `scope` option, which no other bus had: the consumers of the kit (`on` of `@ddd-ts-kit/events`, the consumer of `@ddd-ts-kit/di`) run a handler in the execution context of its event above any bus, and the option ran it in that context a second time when given. Found by the parity check of the brokers (`pipeline/monorepo/families.mjs`).
+
+To move: a bus built with `scope` drops it and wraps its handler with `inEventScope(scope, { consumer }, handler)` of `@ddd-ts-kit/kernel`, which the consumers of the kit already do; nothing generated by `init` passes it.
+
+**`ddd-ts-kit docs --stored-events` reads the codecs of the modules of a context too, and refuses a shape it cannot read instead of recording the hash of nothing.**
+
+A context divided into modules keeps its codecs in `<context>/<module>/infrastructure/persistence/` (where `generate aggregate --module <module> --event-sourced` writes them): `docs --stored-events`, `docs --check` and the unrecorded versions it lists read only `<context>/infrastructure/persistence/`, so nothing of a module was ever recorded. They now read the folder of the context and the one of each module of its model. A codec whose data type is not declared in its file, or declares no member, was recorded as `sha256:e3b0c44298fc1c14`, the hash of empty input, so that the lock vouched for no shape: `docs --stored-events` now stops with a non-zero exit code, names the codec file, the line and the reason, and writes nothing. `docs --check` reports an entry of the lock that holds the hash of nothing (`recorded empty`, and `emptilyRecorded` in `--json`).
+
+To move: a lock that holds `sha256:e3b0c44298fc1c14` records nothing. Declare the fields of the data type in the codec, remove the entry from `stored-events.lock.json` (the version was not stored with a guarantee yet) and run `ddd-ts-kit docs --stored-events`. The placeholder `interface <Event>Data {}` a generator writes has to get its fields before its version is recorded.
+
+**The sandbox guide says what the deny rules of the generated contracts cost an agent session, and what to do.** `Edit(./openapi/**)` and the other deny rules `init` writes for the generated contracts become read-only mounts under the sandbox of Claude Code: a merge of a branch that regenerated them and `docs:generate` in the main checkout fail inside the sandbox. The rules stay (the Edit tool must not touch a generated contract); `docs/guides/agent-sandbox.md` says to do those two gestures outside the sandbox, or to run the session with `--setting-sources local`, the guard of the plugin still refusing a hand edit of a generated file.
+
+**The module of a context on `--di manual` keeps each function short as the context grows: one function per role.** `<context>.module.ts` registered everything in one function, which went past the 100 lines no function may exceed (`clean/function-size`) once a few use cases were scaffolded. It now holds `registerHandlers` (the repositories and readers with the command and query handlers), `registerReactions` (the handlers of events, the publishers of integration events, the integration handlers), `registerJobs`, `declaredUseCases` and `routesOf`, called by the module; the generators insert into the right one (`ddd-ts-kit:handlers`, `reactions`, `jobs`, `authorization` and `routes` regions replace `registrations`).
+
+To move: a module written by an earlier version keeps its `registrations` region and its one function; move the lines by hand into the function of their role if it outgrows the limit.
+
+**`init` writes the error mapper of the platform in one file, `platform/composition/platform-error-mapper.ts`, and the test platform binds it like the platform does.** A route spec through the test application used to see the default mapper (a refusal of the authenticator answered 422 where the running application answered 401) because `platform-test.module.ts` bound no `ErrorMapper`. `platformErrorMapper()` is bound by `platform.module.ts` and by `platform-test.module.ts` on tsyringe, and read by `compose-application.ts` on manual DI and Nest. Nothing is written without HTTP.
+
+To move: a project that maps its own errors in `platform.module.ts` moves the mapping into `platformErrorMapper()` and binds it in `platform-test.module.ts`.
+
+**The event store keeps the tenant of each stream, so an event-sourced aggregate is isolated under shared-table tenancy.** Given the execution scope (`InMemoryEventStore(scope)`, or `scope` in the options of `createKnexEventSourcing`, `createDrizzleEventSourcing`, `createPrismaEventSourcing` and `createTypeOrmEventSourcing`), the store records the tenant of the work at the first append of a stream in a nullable `tenant_id` column of the events, gives it on each `StoredEvent.tenantId`, and refuses a read or an append of a stream of another tenant with an `EventStreamTenantError` (platform staff elevated by `acrossTenants` may read, never append). Work that names no tenant is not scoped, and a store given no scope neither reads nor writes the column. `CatchUpSubscription` and `EventStoreProjectionRebuild` take the same `scope` and apply each event in the tenant of its stream. `eventStoreContract` gains `createTenantStore`, held by the in-memory store and the four ORM. `eventStoreTablesSql`, `eventStoreTables` (Drizzle), `eventStoreEntities` (TypeORM) and the Prisma model carry the column. Under a tenancy, `init` hands the execution scope to the event store: `persistence.eventSourcing` becomes a function of the scope, and `createEventSourcing(persistence, scope)` (or with the audit source) calls it.
+
+To move: a generated project edits its `persistence-over` and `createEventSourcing` the same way (`eventSourcing: (scope) => createKnexEventSourcing(unitOfWork, { schema, scope })`), and a project under shared-table tenancy passes `scope` to its event store, and a project whose event store already exists adds the column in a migration: `addEventStoreTenantColumn(knex, { schema, tenantOfExistingStreams: '<tenant>' })` on Knex (or `eventStoreTenantColumnSql`), and the migration of the tooling of the ORM on Drizzle, Prisma and TypeORM (`tenant_id text`, nullable) followed by `update stored_events set tenant_id = '<tenant>'` for the streams already there; a stream without a tenant is refused to every tenant. A Prisma project copies the new `tenantId String? @map("tenant_id")` line into its `StoredEvent` model.
+
+**A `context-builder` agent returns its report as its final message, and a `SubagentStop` hook of the plugin writes it to `.ddd-ts-kit/report.md` of its worktree.**
+
+Claude Code refuses a sub-agent the write of a report file ("Subagents should return findings as text, not write report files."), so the report that `worker-scope --resume` and the guard read was never there. The agent is no longer asked to write it; the guard takes its last message (from the hook input, else from the transcript the input names) and writes the file in the worktree of the worker, failing open. The briefing of `worker-scope` and its resume message say the same. The `parallel-work` and `story` skills tell the conductor to write the file from the worker's final message when it is missing after the worker returns.
+
+The guard no longer asks an agent that stops to rewrite a report older than its last commit; it still keeps it going once when a slice that passed `verify-slice` is left uncommitted.
+
 ## 0.91.0
 
 **The background jobs and the process instances go to the database by default on every ORM of

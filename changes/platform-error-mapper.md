@@ -1,3 +1,0 @@
-**`init` writes the error mapper of the platform in one file, `platform/composition/platform-error-mapper.ts`, and the test platform binds it like the platform does.** A route spec through the test application used to see the default mapper (a refusal of the authenticator answered 422 where the running application answered 401) because `platform-test.module.ts` bound no `ErrorMapper`. `platformErrorMapper()` is bound by `platform.module.ts` and by `platform-test.module.ts` on tsyringe, and read by `compose-application.ts` on manual DI and Nest. Nothing is written without HTTP.
-
-To move: a project that maps its own errors in `platform.module.ts` moves the mapping into `platformErrorMapper()` and binds it in `platform-test.module.ts`.
