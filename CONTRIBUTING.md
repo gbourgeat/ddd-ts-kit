@@ -52,6 +52,14 @@ npm run docs:samples
 node --test plugin/hooks/guard.test.mjs
 ```
 
+`npm run lint` is ESLint with a content cache (`.eslintcache/`, 1 to 2 seconds when nothing changed). The
+pre-commit hook and the Lint job of a pull request run Oxlint instead (`npm run lint:oxlint`, type-aware, with the rules
+of the kit as a JS plugin, configured by `.oxlintrc.json`); the trunk and the night run ESLint on the whole tree, which
+also holds `no-unsafe-enum-assignment`, and the trial job compares the two. A change of `eslint.config.mjs` reaches
+`.oxlintrc.json` in the same commit. Vitest keeps the transformed modules of the sources in `node_modules/.vitest-cache`
+(on by default, ignored by git, not kept by the pipeline): it makes a second run of one package about 40 percent
+faster, and `rm -rf node_modules/.vitest-cache` empties it.
+
 ## Ground rules
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) is the single normative document. A change of

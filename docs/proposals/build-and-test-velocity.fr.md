@@ -1,5 +1,5 @@
 [English](build-and-test-velocity.md) · **Français**
-<!-- translation-of: build-and-test-velocity.md sha256:30ba2a98cd622a66 -->
+<!-- translation-of: build-and-test-velocity.md sha256:b8b4787c1fce713b -->
 
 # Proposition : vélocité du build, des contrôles et des tests
 
@@ -928,6 +928,27 @@ chacun car la charge moyenne dépassait 4 :
 | Oxlint, avec types, *plugin* du kit (le *hook* maintenant) | 4,4 à 4,7 | 0,79 / 0,81 s | 2,80 s | 0,29 Go |
 
 Le *hook* est deux fois plus rapide, sur les mêmes fichiers et avec la même parité que le job Lint.
+
+### Résultats du plan : point 5 de la demande, le cache de modules de Vitest sur la station
+
+Confirmé, et rien à activer : Vitest 5 garde les modules transformés dans
+`node_modules/.vitest-cache` par défaut (`experimental.fsModuleCache`), `node_modules` est ignoré par
+git, et le *pipeline* ne le garde jamais (le job d'installation sauvegarde `node_modules` avant qu'aucune
+*spec* n'ait tourné). `CONTRIBUTING.md` dit maintenant où il se trouve et que
+`rm -rf node_modules/.vitest-cache` le vide. Mesuré avec ce répertoire gardé (chaud) et supprimé avant
+chaque exécution (froid), sur une machine chargée (charge de 2,5 à 13,8, cinq exécutions au-dessus
+de 4) :
+
+| Exécution | Durée min / médiane | CPU (médiane) | Mémoire de pointe (médiane) |
+|---|---|---|---|
+| `vitest run packages/kernel` (59 fichiers), chaud | 7,22 / 7,87 s | 80,5 s | 4,1 Go |
+| idem, cache vidé | 11,71 / 11,84 s | 84,1 s | 4,1 Go |
+| `vitest run packages/http` (47 fichiers), chaud | 3,86 / 4,02 s | 50,5 s | 1,9 Go |
+| idem, cache vidé | 5,08 / 5,14 s | 54,4 s | 2,0 Go |
+
+Le gain est de 33 % du temps mesuré sur le noyau et de 22 % sur http (38 et 25 % à la première
+mesure), 5 % sur toute la suite ; le cache pèse 14 Mo pour http et 54 Mo pour les *specs* du noyau.
+Non gardé dans le *pipeline*, comme décidé.
 
 ## Reste à vérifier
 

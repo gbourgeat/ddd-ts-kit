@@ -878,6 +878,26 @@ files of a typical commit (#405), five runs each because the load average was ab
 
 The hook is twice as fast, on the same files and the same parity as the Lint job.
 
+### Results of the plan: item 5 of the request, the module cache of Vitest on the workstation
+
+Confirmed, and nothing to turn on: Vitest 5 keeps the transformed modules in
+`node_modules/.vitest-cache` by default (`experimental.fsModuleCache`), `node_modules` is ignored by
+git, and the pipeline never keeps it (the install job saves `node_modules` before any spec ran).
+`CONTRIBUTING.md` now says where it lives and that `rm -rf node_modules/.vitest-cache` empties it.
+Measured with that directory kept (warm) and removed before each run (cold), on a loaded machine
+(load 2.5 to 13.8, five runs when above 4):
+
+| Run | Wall min / median | CPU (median) | Peak memory (median) |
+|---|---|---|---|
+| `vitest run packages/kernel` (59 files), warm | 7.22 / 7.87 s | 80.5 s | 4.1 GB |
+| the same, cache emptied | 11.71 / 11.84 s | 84.1 s | 4.1 GB |
+| `vitest run packages/http` (47 files), warm | 3.86 / 4.02 s | 50.5 s | 1.9 GB |
+| the same, cache emptied | 5.08 / 5.14 s | 54.4 s | 2.0 GB |
+
+The gain is 33 percent of the wall time on the kernel and 22 percent on http (38 and 25 percent in the
+first measure), 5 percent on the whole suite; the cache weighs 14 MB for http and 54 MB for the kernel
+specs. Not kept in the pipeline, as decided.
+
 ## Still to verify
 
 - The findings of Oxlint with the kit rules as a JS plugin against ESLint's, on this tree and
