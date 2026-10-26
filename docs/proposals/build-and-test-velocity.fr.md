@@ -1,5 +1,5 @@
 [English](build-and-test-velocity.md) · **Français**
-<!-- translation-of: build-and-test-velocity.md sha256:1a6551b52f10610d -->
+<!-- translation-of: build-and-test-velocity.md sha256:30ba2a98cd622a66 -->
 
 # Proposition : vélocité du build, des contrôles et des tests
 
@@ -913,6 +913,21 @@ qui écrit le cache, est inchangé à environ 97 s, donc pas d'économie des 57 
 là : le tronc garde ESLint comme référence. Le temps final du job Lint d'une *pull request* est estimé à
 ses 38 s actuelles moins la restauration du cache, plus environ 4 s : aucun changement mesurable quand
 le cache est trouvé, 30 à 60 s de moins quand il ne l'est pas.
+
+### Résultats du plan : point 4 de la demande, le *hook* de pre-commit sous Oxlint
+
+Le *hook* lint les fichiers indexés avec `oxlint --type-aware --no-error-on-unmatched-pattern` au
+lieu d'ESLint (l'option est nécessaire : Oxlint sort en code 1 quand tous les fichiers donnés sont
+ignorés, un *commit* de *templates* seuls, puis lint le répertoire courant, ce qui coûte une
+exécution et ne fait rien échouer). Les 13 fichiers d'un *commit* typique (#405), cinq exécutions
+chacun car la charge moyenne dépassait 4 :
+
+| Exécution | Charge | Durée min / médiane | CPU (médiane) | Mémoire de pointe (médiane) |
+|---|---|---|---|---|
+| ESLint, `--no-warn-ignored`, sans cache (le *hook* d'avant) | 4,6 à 4,8 | 1,66 / 1,70 s | 3,71 s | 0,48 Go |
+| Oxlint, avec types, *plugin* du kit (le *hook* maintenant) | 4,4 à 4,7 | 0,79 / 0,81 s | 2,80 s | 0,29 Go |
+
+Le *hook* est deux fois plus rapide, sur les mêmes fichiers et avec la même parité que le job Lint.
 
 ## Reste à vérifier
 

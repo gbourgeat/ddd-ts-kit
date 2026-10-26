@@ -864,6 +864,20 @@ the trunk keeps ESLint as the reference. The final time of the Lint job of a pul
 estimated at its current 38 s minus the cache restore, plus about 4 s: no measurable change when
 the cache is found, 30 to 60 s less when it is not.
 
+### Results of the plan: item 4 of the request, the pre-commit hook on Oxlint
+
+The hook lints the staged files with `oxlint --type-aware --no-error-on-unmatched-pattern` instead of
+ESLint (the flag is needed: Oxlint exits 1 when every file it is given is ignored, a commit of
+templates only, and then lints the working directory, which costs a run and fails nothing). The 13
+files of a typical commit (#405), five runs each because the load average was above 4:
+
+| Run | Load | Wall min / median | CPU (median) | Peak memory (median) |
+|---|---|---|---|---|
+| ESLint, `--no-warn-ignored`, no cache (the hook as it was) | 4.6 to 4.8 | 1.66 / 1.70 s | 3.71 s | 0.48 GB |
+| Oxlint, typed, kit plugin (the hook now) | 4.4 to 4.7 | 0.79 / 0.81 s | 2.80 s | 0.29 GB |
+
+The hook is twice as fast, on the same files and the same parity as the Lint job.
+
 ## Still to verify
 
 - The findings of Oxlint with the kit rules as a JS plugin against ESLint's, on this tree and
