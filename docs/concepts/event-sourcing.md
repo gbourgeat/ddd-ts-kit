@@ -279,7 +279,10 @@ discipline with its own mechanism:
    so the codec maps it to a stored type of its own.
 2. `ddd-ts-kit docs --stored-events` records the fingerprint of that type, and of the types it
    reaches, for each version in `stored-events.lock.json`, once the shape of the version is the
-   one to store. A recorded version is never rewritten, but one recorded by 0.82.0 or earlier:
+   one to store. It reads the codecs of `infrastructure/persistence/` of the context and of each
+   module of its model, and refuses, naming the codec file and the reason, a data type it cannot
+   read (not declared in the file) or that declares no member: the hash of nothing would vouch
+   for no shape, and `docs --check` reports an entry of the lock that holds it. A recorded version is never rewritten, but one recorded by 0.82.0 or earlier:
    that release read the type arguments of a member (`Record<string, number>`) apart, so that two
    shapes could share a fingerprint, and `docs --stored-events` records it again as the kit reads
    it now. `ddd-ts-kit docs --check`, which the generated pipeline runs (`npm run docs:check`),

@@ -12,6 +12,8 @@ export interface StoredEventDeclaration {
   readonly payloadType: string | undefined;
   /** The fingerprint of that type as declared in the same file; `undefined` when it is not declared there. */
   readonly fingerprint: string | undefined;
+  /** The type declares no member, so that its fingerprint is the one of empty input; `undefined` when it is not declared. */
+  readonly emptyShape: boolean | undefined;
   /** The fingerprint 0.82.0 and earlier recorded for that type, when it is another one: a lock written then holds it. */
   readonly formerFingerprint: string | undefined;
   /** The named types that data reaches and the file does not declare: a change of theirs would not move the fingerprint. */

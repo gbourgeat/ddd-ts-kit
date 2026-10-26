@@ -3,18 +3,22 @@ import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-f
 import type { Config } from '../config';
 import type { Workspace } from '../workspace';
 import { declaredStoredEvents } from './declared-stored-events';
+import { refuseUnreadableStoredEvents } from './refuse-unreadable-stored-events';
 
 /**
  * `ddd-ts-kit docs --stored-events`: records in `stored-events.lock.json` the shape of each
- * version of a stored event declared in the codecs of `infrastructure/persistence/`. Run when a
+ * version of a stored event declared in the codecs of `infrastructure/persistence/`, of the context and of each module of its model. Run when a
  * version starts being stored where events are kept (before the release that ships it): from
  * then on its shape is the one stored. A version already recorded is never rewritten, so a
  * changed shape stays visible to `event-sourcing/upcaster-required`, save the fingerprint 0.82.0
  * and earlier recorded for the same shape, recorded again as it reads now; a project without
- * stored events gets no lock. `docs --check` fails while a declared version is not recorded.
+ * stored events gets no lock. A codec whose data type is not found or declares no member is refused, with
+ * its file and the reason, and nothing is recorded: the hash of nothing would vouch for no shape. `docs --check` fails while a declared version is not recorded.
  */
 export function writeStoredEventsLock(ws: Workspace, config: Config, contexts: readonly string[]): void {
   const declared = declaredStoredEvents(ws, config, contexts);
+
+  refuseUnreadableStoredEvents(declared);
   const recorded = readStoredEventsLock(ws.root);
   const exists = ws.exists(STORED_EVENTS_LOCK);
 
