@@ -1930,6 +1930,12 @@ test('another agent writes no report, and a broken transcript fails open', () =>
   const missing = run('subagent-stop', { cwd: root, ...agent, agent_transcript_path: join(root, 'nope.jsonl') });
   assert.equal(missing.status, 0);
   assert.equal(existsSync(join(root, REPORT)), false);
+  const conductor = transcript(root, [
+    { type: 'assistant', message: { content: [{ type: 'text', text: 'The conductor speaking.' }] } },
+  ]);
+  const onlyTheConductor = run('subagent-stop', { cwd: root, ...agent, transcript_path: conductor });
+  assert.equal(onlyTheConductor.status, 0);
+  assert.equal(existsSync(join(root, REPORT)), false);
 });
 
 function transcript(root, lines) {

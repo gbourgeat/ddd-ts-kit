@@ -120,7 +120,8 @@ function finalMessage(input) {
   if (given) {
     return given;
   }
-  const path = [input.agent_transcript_path, input.transcript_path].find((value) => typeof value === 'string');
+  // `transcript_path` is the transcript of the conductor, never the worker's: only `agent_transcript_path` is read.
+  const path = typeof input.agent_transcript_path === 'string' ? input.agent_transcript_path : undefined;
   const lines = (path ? (readText(path) ?? '') : '').split('\n');
   for (let index = lines.length - 1; index >= 0; index -= 1) {
     const text = assistantText(lines[index]);
