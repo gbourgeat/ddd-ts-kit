@@ -55,4 +55,10 @@ describe('a service and the jobs of the platform', () => {
     expect(redis).not.toContain('serviceName');
     expect(read(root, '.env.example')).toContain('\nDEPLOYMENT_NAME=');
   });
+
+  it('writes the inert persistence the proof composes with, in a project without HTTP that has none', () => {
+    const root = withShippingService('--http', 'none');
+
+    expect(read(root, 'src/platform/database/inert-persistence.ts')).toContain('export function inertPersistence');
+  });
 });

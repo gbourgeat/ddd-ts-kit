@@ -1,4 +1,5 @@
 import { CONFIG_FILE } from '../../config';
+import { inertPersistenceFile } from '../../init/files/inert-persistence-file';
 import { renderTemplate } from '../../templating';
 import type { Kind } from '../kind';
 import { openScope } from '../open-scope';
@@ -65,6 +66,13 @@ function leaveTheWholeApplication(scope: Scope): void {
   );
 
   applyWiring(ws, platformPath(scope, 'jobs/job-settings.ts'), renderTemplate('service/extracted-name.tpl', rendered));
+
+  const inert = inertPersistenceFile(config);
+
+  // A project without HTTP on tsyringe composes nothing without a database until now: the proof needs the inert one.
+  if (inert !== undefined && !ws.exists(inert[0])) {
+    ws.create(inert[0], renderTemplate(inert[1], rendered));
+  }
 
   if (!ws.exists(HOSTING_PROOF)) {
     ws.create(HOSTING_PROOF, renderTemplate(`architecture/hosting.${wiringFamily(config)}.spec.ts.tpl`, rendered));
