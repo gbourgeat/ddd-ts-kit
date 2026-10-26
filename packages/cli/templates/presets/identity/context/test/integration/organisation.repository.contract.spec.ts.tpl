@@ -14,7 +14,7 @@ const scope = new FixedExecutionScope(executionContext({ correlationId: 'contrac
 
 const expectations = {
   createAggregate: () => anOrganisation().build(),
-  mutate: () => undefined,
+  // No `mutate`: nothing changes an organisation once opened, so the stale-save case stays pending.
   idOf: (subject: Organisation) => subject.id,
   stateOf: (subject: Organisation) => subject.toState(),
 };

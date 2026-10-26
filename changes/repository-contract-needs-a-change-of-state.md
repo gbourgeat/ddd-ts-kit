@@ -3,3 +3,5 @@
 `mutate` is optional in the options of `repositoryContract`: without it, the stale-save case is registered as pending (`it.todo`) with the reason `give the contract a mutate that records a change of state`, so a freshly generated repository is green and the case shows in `ddd-ts-kit todo`. A `mutate` that changes nothing fails the case with `mutate changed nothing: give the contract a change of state`.
 
 To move: add a `mutate` that records a change to each contract spec; the case stays pending until then.
+
+`InMemoryRepository` takes `versionsEverySave: true` for an aggregate whose state-stored adapter moves the version on every save, an unchanged one included (the identity preset saves the organisation unchanged so that its version orders the changes of its owners); the fake then does the same.

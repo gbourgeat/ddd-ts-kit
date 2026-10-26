@@ -251,6 +251,20 @@ describe('InMemoryRepository', () => {
     expect((await orders.findById('order-1'))?.version).toBe(2);
   });
 
+  it('moves the version on every save with versionsEverySave, an unchanged one included', async () => {
+    const orders = new InMemoryRepository<Order>({
+      clone: (order) => Order.rehydrate(order.toSnapshot()),
+      versionsEverySave: true,
+    });
+
+    const order = place('order-1');
+
+    await orders.save(order);
+    await orders.save(order);
+
+    expect((await orders.findById('order-1'))?.version).toBe(2);
+  });
+
   it('raises a ConcurrencyError on a lost update, and when creating what already exists', async () => {
     const orders = new InMemoryOrders();
 

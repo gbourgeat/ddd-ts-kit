@@ -7,7 +7,14 @@ import type { SnapshotCodec } from './snapshot-codec';
  * one before saving it) never changes what is stored. Either a `clone` function, or the
  * snapshot pair a real adapter's mapper already has; snapshots go through `structuredClone`.
  */
-export type InMemoryRepositoryOptions<A> = { readonly clone: (aggregate: A) => A } | SnapshotCodec<A, unknown>;
+export type InMemoryRepositoryOptions<A> = ({ readonly clone: (aggregate: A) => A } | SnapshotCodec<A, unknown>) & {
+  /**
+   * For an aggregate whose adapter is state-stored and moves the version on every save, an unchanged one
+   * included (a save used to order the changes of others): the fake does the same. Off by default, as an
+   * event store appends nothing for no pending change.
+   */
+  readonly versionsEverySave?: boolean;
+};
 
 interface Entry<A> {
   /** A new copy of the stored aggregate at each call. */
@@ -32,12 +39,15 @@ export class InMemoryRepository<A extends AggregateRoot<Id>, Id extends string |
 {
   private readonly entries = new Map<Id, Entry<A>>();
 
+  private readonly versionsEverySave: boolean;
+
   private readonly keep: (aggregate: A) => Kept<A>;
 
   /** What each handed out or saved instance looked like then: a save of one that still does, changes nothing. */
   private readonly seen = new WeakMap<A, unknown>();
 
   constructor(options: InMemoryRepositoryOptions<A>) {
+    this.versionsEverySave = options.versionsEverySave === true;
     this.keep = 'clone' in options ? keptByCloning(options.clone) : keptAsSnapshot(options);
   }
 
@@ -50,7 +60,11 @@ export class InMemoryRepository<A extends AggregateRoot<Id>, Id extends string |
   async save(aggregate: A): Promise<void> {
     const kept = this.keep(aggregate);
 
-    if (this.seen.has(aggregate) && isDeepStrictEqual(this.seen.get(aggregate), kept.fingerprint)) {
+    if (
+      !this.versionsEverySave &&
+      this.seen.has(aggregate) &&
+      isDeepStrictEqual(this.seen.get(aggregate), kept.fingerprint)
+    ) {
       return;
     }
 
