@@ -333,4 +333,4 @@ dedicated service is the subject of [Authorization engines](../tools/authorizati
 - [Authorization engines](../tools/authorization-engines.md)
 - [`@ddd-ts-kit/auth`](../../packages/auth/README.md): the API reference
 - [Architecture reference](../ARCHITECTURE.md): rules `authz/declared`, `authz/in-application`,
-  `authz/actor-explicit`, `authz/granted`, `authz/scope-narrows`
+  `authz/actor-explicit`, `authz/granted`, `authz/scope-narrows`, `authz/resource-modelled`

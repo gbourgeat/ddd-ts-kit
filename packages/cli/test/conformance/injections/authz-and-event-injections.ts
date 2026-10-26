@@ -98,6 +98,19 @@ export const AUTHZ_AND_EVENT_INJECTIONS: readonly Injection[] = [
     checker: true,
   },
   {
+    rule: 'authz/resource-modelled',
+    what: 'a command of scheduling checked on the context for a permission the schema derives on the calendar',
+    file: 'src/contexts/scheduling/calendars/application/commands/set-opening-hours/set-opening-hours.command.ts',
+    changes: [
+      {
+        file: 'src/contexts/scheduling/calendars/application/commands/set-opening-hours/set-opening-hours.command.ts',
+        from: "resource: (command: SetOpeningHoursCommand) => ({ type: 'calendar', id: command.calendarId }),",
+        to: "resource: () => ({ type: 'context', id: 'scheduling' }),",
+      },
+    ],
+    checker: true,
+  },
+  {
     rule: 'authz/actor-explicit',
     what: 'a handler that reads the ambient actor instead of the one its command carries',
     file: DUE_HANDLER,

@@ -12,6 +12,9 @@ export class {{name.pascal}}Command extends AuthorizedCommand<string> {
   /** Staged by the bus under a key of its area before the transaction opens: the handler reads `upload.file`. */
   readonly upload: FileUpload;
 
+{{#if access.resourceUnnamed}}
+  // {{access.resourceTodo}}
+{{/if}}
   // TODO(domain): add the identifier of what the file is attached to, read from the path by the controller, for example `readonly invoiceId: string`.
   constructor(actor: Actor, file: ReceivedFile) {
     super(actor);

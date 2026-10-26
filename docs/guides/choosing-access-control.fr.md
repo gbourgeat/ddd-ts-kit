@@ -1,5 +1,5 @@
 [English](choosing-access-control.md) · **Français**
-<!-- translation-of: choosing-access-control.md sha256:34639db2dad19de7 -->
+<!-- translation-of: choosing-access-control.md sha256:314296017814ca0f -->
 
 # Choisir le contrôle d'accès, avec des préréglages commentés
 
@@ -410,6 +410,17 @@ export async function adaReadsTheQuarterlyReport(): Promise<void> {
 ```
 
 ![Les trois tuples enregistrés de l'exemple sous forme de graphe : ada est membre de l'équipe finance, les membres de finance sont lecteurs du dossier reports, le dossier reports est le parent du document q3 ; le schéma en dérive qu'ada peut voir q3](../assets/diagrams/choosing-access-control-relationships.fr.svg)
+
+Un cas d'usage nomme l'élément sur lequel sa permission est vérifiée, dans le `resource` de son
+exigence (`{ type: 'document', id: command.documentId }`). Les générateurs écrivent le contexte
+(`{ type: 'context', id: '<contexte>' }`) avec un `TODO(domain)` qui nomme l'élément, car le contexte
+n'est la bonne ressource que pour un cas d'usage sur aucun élément (en déclarer un, lancer une
+recherche dont la portée restreint les identifiants). Le schéma écrit par `init` ne dérive sur le
+type `context` que les permissions qu'aucun élément ne dérive : une permission modélisée sur un
+élément quitte les opérateurs du contexte, si bien qu'une vérification qui nomme encore le contexte
+est refusée au lieu d'être accordée à tous les opérateurs. Une recherche garde pour cela deux
+permissions : l'une tenue sur le contexte pour la lancer, l'autre dérivée sur l'élément pour sa
+portée.
 
 Les tuples s'écrivent à travers un port, dans les mots de l'application, dans la transaction de la
 commande quand le magasin est celui de PostgreSQL. Le gestionnaire dit ce qui s'est passé (« cet

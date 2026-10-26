@@ -91,6 +91,35 @@ does not, and at run time its result is refused with `PolicyNotAskedError` and r
 generators write the question about the message; replace the message by the loaded aggregate. A rule that holds whoever asks ("not after publication") is an invariant: it goes in
 the aggregate.
 
+## The resource of a use case under relationships
+
+Under `stack.authz` `rebac`, `generate command` and `generate query` (not a search) write the
+context as the resource, `{ resource: () => ({ type: 'context', id: '<context>' }) }`, and a
+`// TODO(domain): name the <element> this command is about` next to it, which `todo` and `status`
+list. The context is the right resource only for a use case on no element: declaring a service,
+running a search (its scope narrows the ids). A use case about one element (change the
+dependencies of a service, add a member to a team) names that element, once its message carries
+the id:
+
+```ts
+@Requires(cataloguePermissions['service.change'], {
+  resource: (command) => ({ type: 'service', id: command.serviceId }),
+})
+```
+
+and the schema derives the permission on that type (`service: { derived: { [cataloguePermissions['service.change'].id]: 'owning-member' } }`
+in `elements` of `relationships/relationship-schema.ts`). The schema written by `init` derives on
+`context` only the permissions no element derives: modelling a right on an element takes it away
+from the operators of the context. A right left on the context is held by every operator of it,
+and the project's bridge from roles to permissions (a member holds it) widens it to every
+member: any member then acts on any element, and every spec written as a member of the owning
+team stays green. When a search runs under the permission of its element, give the gate its own
+permission (`service.search`, on the context) and keep the scope on the element's
+(`service.view`), since the first is no longer held on the context once derived on the element.
+`authz/resource-modelled` (an error under relationships) reports a requirement on the context for
+a permission the schema derives on an element, and a search whose gate and scope share such a
+permission; a schema or a resource it cannot read is reported too.
+
 ## Searches
 
 Never load then filter in memory. `generate query ... --search` writes a handler that asks the
@@ -101,7 +130,8 @@ A search across many elements asks two questions, under two permissions:
 
 - **May the actor run it?** The requirement of the query. Under relationships it always names a
   resource (`RESOURCE_REQUIRED` otherwise): the enclosing one the generator writes,
-  `{ resource: () => ({ type: 'context', id: '<context>' }) }`. When an actor who reaches no
+  `{ resource: () => ({ type: 'context', id: '<context>' }) }` (see "The resource of a use case
+  under relationships" below for the use cases that are about one element). When an actor who reaches no
   element must get 403 rather than an empty page, name the tenant of the actor instead,
   `{ type: 'tenant', id: <its tenant> }`, with, on the type `tenant`, the derived relation
   `[<ctx>Permissions['folder.search'].id]: via('folder', <ctx>Permissions['folder.view'].id)` and a
@@ -189,7 +219,7 @@ not hold. Use it in a spec or a console when a decision surprises, never in an a
 | a search permission given to every signed-in person to get it past the bus | a requirement on an enclosing resource; the signed-in grant would make the scope `all` (`authz/scope-narrows`) |
 
 Finish with
-`npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit --rule authz/fields-by-schema --rule authz/policy-asked --rule authz/granted --rule authz/scope-narrows`.
+`npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit --rule authz/fields-by-schema --rule authz/policy-asked --rule authz/granted --rule authz/scope-narrows --rule authz/resource-modelled`.
 Every decision, denials included, is recorded by the audit trail (skill
 `ddd-ts-kit:cross-cutting`), the refusals of the guards at the edge too (`onGuardRefusal` of the
 HTTP boundary, wired to `auditGuardRefusals`).

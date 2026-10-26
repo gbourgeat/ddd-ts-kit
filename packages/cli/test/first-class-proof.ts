@@ -73,12 +73,37 @@ export function writeBusinessDecisions(root: string): void {
     ],
   ]);
 
+  // The gate of the search is held on the context, the scope on the element: two permissions, since the invoice no longer leaves its view to the operators.
+  edit(root, 'src/contexts/billing/billing.permissions.ts', [
+    [
+      "  'invoice.search': { description: 'Search invoices' },\n",
+      "  'invoice.search': { description: 'Search invoices' },\n  'invoice.view': { description: 'View invoice' },\n",
+    ],
+  ]);
+
+  // CONTEXT.md lists the permissions of the context.
+  if (cli(root, 'docs').code !== 0) {
+    throw new Error('docs refused the permission the proof adds.');
+  }
+
+  edit(root, 'src/contexts/billing/application/queries/search-invoices/search-invoices.handler.ts', [
+    ["billingPermissions['invoice.search'], 'invoice'", "billingPermissions['invoice.view'], 'invoice'"],
+  ]);
+
+  // The generated spec holds the permission of the scope too, with the role of its actor.
+  edit(root, 'src/contexts/billing/test/unit/search-invoices.handler.spec.ts', [
+    [
+      "roles: { holder: [billingPermissions['invoice.search']] }",
+      "roles: { holder: [billingPermissions['invoice.search'], billingPermissions['invoice.view']] }",
+    ],
+  ]);
+
   // The schema knows the invoice and who views it: the derived relation named after the search permission grants it.
   edit(root, 'src/platform/auth/relationships/relationship-schema.ts', [
     [/^import \{ permissions \}.*$/m, `$&\n${importOfBillingPermissions(root)}`],
     [
-      "    derived: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operator'])),\n  },",
-      "    derived: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operator'])),\n  },\n  invoice: {\n    relations: { viewer: ['user'] },\n    derived: { [billingPermissions['invoice.search'].id]: 'viewer' },\n  },",
+      'const elements: SchemaDefinition = {};',
+      "const elements: SchemaDefinition = {\n  invoice: {\n    relations: { viewer: ['user'] },\n    derived: { [billingPermissions['invoice.view'].id]: 'viewer' },\n  },\n};",
     ],
   ]);
 
