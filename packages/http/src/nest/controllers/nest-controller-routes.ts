@@ -93,6 +93,10 @@ function synthetic(method: NestMethod, spec: ControllerSpec, answering: () => ob
 
       const answer: unknown = await Reflect.apply(handler, instance, argumentsOf(method, request));
 
+      if (spec.response.headers !== undefined) {
+        return answer;
+      }
+
       if (answer !== undefined && spec.response.body === undefined) {
         throw new DeclarationError(
           `${where} returned a value and @KitRoute declares no response.body: the kit would answer it empty. Declare the body the route answers, or return nothing.`,
@@ -153,6 +157,7 @@ function responseOf(
   return {
     status,
     ...(response.description === undefined ? {} : { description: response.description }),
+    ...(response.headers === undefined ? {} : { headers: response.headers }),
     ...(body === undefined ? {} : { body: schemaOf(where, body, options) }),
   };
 }
@@ -166,6 +171,11 @@ function bodyOf(
   method: NestMethod,
   response: NonNullable<KitRouteSpec['response']>,
 ): Schema<unknown> | DtoType | undefined {
+  // The method returns `{ body, headers }` then: its type says nothing of the body.
+  if (response.headers !== undefined) {
+    return response.body;
+  }
+
   const signed = method.signature.answer;
   const body = response.body ?? signed ?? undefined;
 

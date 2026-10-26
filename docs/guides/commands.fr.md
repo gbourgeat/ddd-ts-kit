@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:5bea91df3d4ae604 -->
+<!-- translation-of: commands.md sha256:f597b66462de15e5 -->
 
 # Quelle commande, quand
 
@@ -602,7 +602,7 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
 Kinds
   context <name> --classification <core|supporting|generic> [--purpose "<two sentences>"] [--term "<Term>=<meaning>"]... [--upstream <ctx>[:relationship]]... [--preset identity]
   module <context> <module> [--purpose "<what it holds>"] [--classification <core|supporting|generic>] [--term "<Term>=<meaning>"]...
-  aggregate <context> <Name> [--event-sourced] [--term "<Term>=<meaning>"]...
+  aggregate <context> <Name> [--event-sourced [--birth <Event>]] [--term "<Term>=<meaning>"]...
   builder <context> <Aggregate>
   test-world <context> [Name]
   entity <context> <Name> [--term "<Term>=<meaning>"]...

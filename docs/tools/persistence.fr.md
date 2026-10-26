@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:bf5c22adba3fee35 -->
+<!-- translation-of: persistence.md sha256:e0e8ed91b28aade6 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -335,6 +335,15 @@ Le contrat vérifie qu'un agrégat sauvegardé est retrouvé avec son état, que
 séparés, que les sauvegardes suivantes sont enregistrées, qu'une modification non sauvegardée ne
 l'est pas, et qu'une sauvegarde par-dessus une version qu'elle n'a pas lue est refusée avec
 `CONCURRENCY_CONFLICT`.
+
+Le cas de la sauvegarde périmée demande un `mutate` qui enregistre un changement d'état : le
+contrat change les deux copies, pour qu'un adaptateur de table comme un event store refusent la
+périmée. Quand `mutate` n'enregistre rien, le cas échoue avec `mutate changed nothing: give the
+contract a change of state` au lieu d'attendre un conflit qui ne vient jamais. `mutate` est
+facultatif : sans lui, le cas reste en attente (`it.todo`, avec la raison `give the contract a
+mutate that records a change of state`), ce qui est l'état de départ d'un spec de contrat tout juste
+généré. Une sauvegarde sans changement n'est pas jugée : un adaptateur de table avance la version,
+un event store n'ajoute rien.
 
 ## Comparaison
 

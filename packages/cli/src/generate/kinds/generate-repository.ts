@@ -6,6 +6,8 @@ import { named } from '../named';
 import type { Scope } from '../scope';
 import { vars } from '../vars';
 import { wire } from '../wire';
+import { generateEventSourcedRepository } from './generate-event-sourced-repository';
+import { isEventSourced } from './is-event-sourced';
 import { declareStorage } from './declare-storage';
 import { personalVars } from './personal-data/personal-vars';
 import { REPOSITORY_ADAPTERS } from './repository-adapter';
@@ -13,6 +15,10 @@ import { repositoryPrefix } from './repository-prefix';
 
 /** The port of the repository of an aggregate, the adapter of the ORM of the stack, the fake and the contract both pass. */
 export function generateRepository(scope: Scope, aggregate: Name): RenderContext {
+  if (isEventSourced(scope, aggregate)) {
+    return generateEventSourcedRepository(scope, aggregate);
+  }
+
   const adapter = REPOSITORY_ADAPTERS[scope.config.stack.orm];
 
   const context = vars(scope, {

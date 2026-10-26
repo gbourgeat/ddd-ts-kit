@@ -13,7 +13,7 @@
       "!**/dist",
       "!**/coverage",
       "!**/reports",
-      "!**/.worktrees",
+      "!.worktrees",
       "!**/.ddd-ts-kit",
       "!**/generated",
       "!**/clients/*/src",

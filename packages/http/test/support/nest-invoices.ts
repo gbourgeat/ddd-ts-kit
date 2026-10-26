@@ -41,14 +41,21 @@ for (const field of ['invoiceId', 'customerId', 'issuedBy']) {
 export class InvoicesController {
   constructor(private readonly ledger: Ledger) {}
 
-  issue(invoiceId: string, body: IssueInvoiceBody, actor: Actor): IssuedInvoice {
+  issue(
+    invoiceId: string,
+    body: IssueInvoiceBody,
+    actor: Actor,
+  ): { body: IssuedInvoice; headers: { Location: string } } {
     if (this.ledger.issued.includes(invoiceId)) {
       throw new InvoiceAlreadyIssued(`Invoice ${invoiceId} is already issued.`);
     }
 
     this.ledger.issued.push(invoiceId);
 
-    return { invoiceId, customerId: body.customerId, issuedBy: actor.id };
+    return {
+      body: { invoiceId, customerId: body.customerId, issuedBy: actor.id },
+      headers: { Location: `/invoices/${invoiceId}` },
+    };
   }
 
   search(page: string | undefined, reason: string | undefined): { page: string | null; reason: string | null } {
@@ -75,7 +82,7 @@ Reflect.decorate(
       operationId: 'issueInvoice',
       summary: 'Issue an invoice',
       errors: ['INVOICE_ALREADY_ISSUED'],
-      response: { body: IssuedInvoice },
+      response: { body: IssuedInvoice, headers: { Location: 'The URL of the invoice.' } },
     }),
   ],
   prototype,

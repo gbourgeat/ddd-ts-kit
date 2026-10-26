@@ -56,14 +56,18 @@ const ALLOW: readonly string[] = [
 ];
 
 // Secrets, then the generated contracts: those are regenerated, never edited, and the lock of
-// an acceptance, which `ddd-ts-kit acceptance <story> --lock` alone writes. In a deny
-// list, a pattern starting with `!` carves its matches out of the rules before it
-// (gitignore negation), which keeps `.env.example`, documentation, readable. The compose file
-// reads `.env` at the root, denied here; nothing under `docker/` holds a secret.
+// an acceptance, which `ddd-ts-kit acceptance <story> --lock` alone writes. The secrets are
+// named one by one: the sandbox of Claude Code masks every path a Read rule matches, and it
+// ignores the negation of a `!` pattern, so a glob such as `.env.*` would also mask
+// `.env.example` and break git. The compose file reads `.env` at the root, denied here;
+// nothing under `docker/` holds a secret.
 const DENY: readonly string[] = [
   'Read(./.env)',
-  'Read(./.env.*)',
-  'Read(!./.env.example)',
+  'Read(./.env.local)',
+  'Read(./.env.*.local)',
+  'Read(./.env.production)',
+  'Read(./.env.development)',
+  'Read(./.env.test)',
   'Edit(./openapi/**)',
   'Edit(./docs/integration/asyncapi.*)',
   'Edit(./docs/integration/event-catalog.md)',

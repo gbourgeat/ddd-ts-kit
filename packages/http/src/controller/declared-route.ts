@@ -42,6 +42,7 @@ export function declaredRoute(className: string, spec: ControllerSpec): Declared
 
   assertPath(className, spec.path, path);
   assertAccess(className, guards);
+  assertRawBody(className, spec);
 
   return {
     path,
@@ -96,6 +97,20 @@ function assertAccess(className: string, guards: readonly GuardReference[]): voi
   if (guards.length > 1 && guards.includes(Public)) {
     throw new DeclarationError(
       `Controller ${className} is behind Public and another guard: a route is open or it is guarded. Move it to a group of its kind.`,
+    );
+  }
+}
+
+function assertRawBody(className: string, spec: ControllerSpec): void {
+  if (spec.rawBody !== true) {
+    return;
+  }
+
+  const reading = (['body', 'upload', 'consumes'] as const).filter((part) => spec[part] !== undefined);
+
+  if (reading.length > 0) {
+    throw new DeclarationError(
+      `Controller ${className} declares rawBody and ${reading.join(', ')}: the body is left unparsed, so nothing reads it. Parse the bytes in handle after checking them, or drop rawBody.`,
     );
   }
 }

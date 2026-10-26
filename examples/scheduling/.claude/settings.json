@@ -35,8 +35,11 @@
     ],
     "deny": [
       "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(!./.env.example)",
+      "Read(./.env.local)",
+      "Read(./.env.*.local)",
+      "Read(./.env.production)",
+      "Read(./.env.development)",
+      "Read(./.env.test)",
       "Edit(./openapi/**)",
       "Edit(./docs/integration/asyncapi.*)",
       "Edit(./docs/integration/event-catalog.md)",

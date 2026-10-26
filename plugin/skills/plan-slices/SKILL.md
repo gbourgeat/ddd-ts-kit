@@ -70,12 +70,19 @@ missing. Rows with no path between them can be built in parallel.
 | US1.02 | ordering | contract | Order placed | `generate integration-event ordering Order Placed` | US1.01 | conductor | todo |
 | US1.03 | ordering | slice | Place order | `generate command ordering PlaceOrder --aggregate Order --permission order.place --grant customer`; `generate route ordering PlaceOrder --method POST --path /orders` | US1.01, US1.02 | ordering | todo |
 | US1.04 | billing | slice | Invoice a placed order | `generate integration-handler billing ordering ordering.order.placed` | US1.02 | billing | todo |
+| US1.05 | incidents | slice | Open an incident | `generate command incidents OpenIncident --module triage --aggregate Incident --permission incident.open` | US1.01 | incidents | todo |
 ```
 
 - `Start with` holds the exact generator commands (without `npx ddd-ts-kit` and `--json`), so
   the worker runs them instead of working them out. Every command or query names its
   permission or `--public`; every name is made of glossary terms, or the row adds the term
   (`--term "<Term>=<meaning>"`).
+- When `contexts.<name>.modules` of `ddd-ts-kit.config.json` is not empty, each row of that
+  context names its module, and its generator commands carry `--module <module>`. What the
+  modules share stays at the level of the context: codes, permissions, route groups, fakes. A
+  row that serves two modules is split.
+- `--grant <role>` is written only when `stack.authz` is `rbac`. On `rebac` or `abac` the right
+  is decided by the relationship schema or a policy, never by `--grant`: the generator refuses it.
 - `Owner` is `conductor`, the name of a context (one worker per context) or a person.
 - `Status` is `todo`, `in progress`, `done`. Only the conductor edits this file: a worker
   reports, the conductor marks the row at the merge. A story or a milestone is closed when

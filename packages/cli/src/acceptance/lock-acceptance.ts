@@ -1,4 +1,5 @@
 import { CliError } from '../cli-error';
+import { formatJson } from '../json/format-json';
 import type { Workspace } from '../workspace';
 import type { AcceptanceLock, Amendment, LockedTest } from './acceptance-lock';
 import type { AcceptanceProblem } from './acceptance-problem';
@@ -58,7 +59,7 @@ export function lockAcceptance(ws: Workspace, request: LockRequest): Locked {
 
   const file = lockFileOf(story.story);
 
-  ws.update(file, `${JSON.stringify(lock, null, 2)}\n`);
+  ws.update(file, formatJson(lock));
 
   return { file, scenarios: written.length, tests: tests.length, amendments };
 }

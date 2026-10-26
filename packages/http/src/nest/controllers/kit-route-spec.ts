@@ -33,6 +33,12 @@ export interface KitRouteSpec {
     readonly description?: string;
     /** A schema, or a DTO class read through the `schemaOfClass` of the module. */
     readonly body?: Schema<unknown> | DtoType;
+    /**
+     * The headers the answer carries, each with what it holds. The method then returns
+     * `{ body, headers }` (`{ headers }` with no body), and `body` is declared here: its return type
+     * is not read for the body.
+     */
+    readonly headers?: Readonly<Record<string, string>>;
   };
   /** Schemas that replace what the types of the parameters give: for a project that does not write DTO classes. */
   readonly request?: {
@@ -46,6 +52,13 @@ export interface KitRouteSpec {
    * the contract; `@Upload()` hands it to the method, and `@Body()` takes the text fields.
    */
   readonly upload?: UploadSpec;
+  /**
+   * The body is left as it arrives, unparsed and not validated: `@RouteContext()` gives the method
+   * `context.stream` (the bytes) and `context.rawHeaders`, to verify a signature made over them. The
+   * contract describes it as `application/octet-stream`. A Nest application must be created with
+   * `rawBody: true` to serve it a JSON body.
+   */
+  readonly rawBody?: boolean;
   readonly deprecated?: boolean;
   /** Media types answered besides `application/json`, chosen by `Accept`: `['application/xml', 'text/csv']`. */
   readonly produces?: readonly string[];
