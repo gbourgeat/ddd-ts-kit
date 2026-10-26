@@ -4,6 +4,10 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.94.1
+
+**The glossary step finds the terms of the identity preset in the plugin, and every row of a context with modules passes `--module`.** The `glossary` skill sent an agent to `packages/cli/src/presets/identity-terms.ts`, a file of the repository of the kit: the package ships no source, and before the bootstrap a project has no CLI installed. The terms are now on a page beside the skill, `identity-preset.md`, kept equal to the rows the preset writes by a spec of the CLI. The `plan-slices` skill said that what the modules share stays at the level of the context, and a plan of a context with modules then left `--module` out of its policies, integration events and integration handlers, which the generator refuses there: it now says that every generator command of such a row carries `--module`, and that the generator keeps the shared files (codes, permissions, the schema of the database, route groups, fakes and builders) at the level of the context by itself.
+
 ## 0.94.0
 
 **The rules of `@ddd-ts-kit/eslint-plugin` run whole when Oxlint loads the plugin as a JS plugin.** Oxlint hands a rule no type information and a parser that parses nothing. `naming-business-name` threw there, which stopped every rule of the kit on the file (303 of 985 files of a generated application); it now reads the names of the code when the linter offers no parser services, as it already did without a program. `clean-no-commented-out-code`, `language-declared-vocabulary`, `authz-declared` and `ports-implements-never-extends`, which parse a text of their own, reported nothing under Oxlint; they now parse with the parser of typescript-eslint when the run configured none (or only the stand-in of Oxlint). The findings under ESLint do not change. On the copy of the example with every rule of the catalogue broken once, Oxlint reports the 77 injections ESLint reports, each at the same place.
