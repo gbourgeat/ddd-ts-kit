@@ -12,6 +12,7 @@ export function filesModule(storage: FileStorage): ContextModule {
     name: 'files',
     register(builder) {
       bindFiles(builder, storage);
+
       builder
         .job('files.purge-staged', { every: '1h', tenancy: 'global' })
         .handledBy(PurgeStagedFiles, [FileStaging, Clock]);
