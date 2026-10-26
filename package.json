@@ -60,7 +60,7 @@
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "@ddd-ts-kit/eslint-plugin": "0.91.0",
-    "@electric-sql/pglite": "0.5.10",
+    "@electric-sql/pglite": "0.5.11",
     "@electric-sql/pglite-socket": "0.2.13",
     "@eslint/js": "^10.0.1",
     "@jest/globals": "^30.5.2",
