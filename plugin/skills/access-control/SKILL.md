@@ -116,8 +116,9 @@ member: any member then acts on any element, and every spec written as a member 
 team stays green. When a search runs under the permission of its element, give the gate its own
 permission (`service.search`, on the context) and keep the scope on the element's
 (`service.view`), since the first is no longer held on the context once derived on the element.
-There is no rule yet that compares the resource with the schema: read each marker and each
-`resource` of `type: 'context'` against the types of the schema.
+`authz/resource-modelled` (an error under relationships) reports a requirement on the context for
+a permission the schema derives on an element, and a search whose gate and scope share such a
+permission; a schema or a resource it cannot read is reported too.
 
 ## Searches
 
@@ -218,7 +219,7 @@ not hold. Use it in a spec or a console when a decision surprises, never in an a
 | a search permission given to every signed-in person to get it past the bus | a requirement on an enclosing resource; the signed-in grant would make the scope `all` (`authz/scope-narrows`) |
 
 Finish with
-`npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit --rule authz/fields-by-schema --rule authz/policy-asked --rule authz/granted --rule authz/scope-narrows`.
+`npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit --rule authz/fields-by-schema --rule authz/policy-asked --rule authz/granted --rule authz/scope-narrows --rule authz/resource-modelled`.
 Every decision, denials included, is recorded by the audit trail (skill
 `ddd-ts-kit:cross-cutting`), the refusals of the guards at the edge too (`onGuardRefusal` of the
 HTTP boundary, wired to `auditGuardRefusals`).

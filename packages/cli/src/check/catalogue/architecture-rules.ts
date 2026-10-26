@@ -4,6 +4,7 @@ import { authzActorExplicit } from '../rules/authz-actor-explicit';
 import { authzFieldsBySchema } from '../rules/authz-fields-by-schema';
 import { authzDeclared } from '../rules/authz-declared';
 import { authzGranted } from '../rules/authz-granted';
+import { authzResourceModelled } from '../rules/authz-resource-modelled';
 import { authzScopeNarrows } from '../rules/authz-scope-narrows';
 import { privacyDeclaredField } from '../rules/privacy-declared-field';
 import { privacyErasureReachesCopies } from '../rules/privacy-erasure-reaches-copies';
@@ -169,6 +170,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   authzPolicyAsked,
   authzGranted,
   authzScopeNarrows,
+  authzResourceModelled,
   privacyDeclaredField,
   privacyEventPayloadDeclared,
   privacyErasureReachesCopies,

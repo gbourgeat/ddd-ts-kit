@@ -58,6 +58,23 @@ export class SearchDocumentsQuery extends AuthorizedQuery<SearchDocumentsResult>
 const scope = await this.access.scope(query.actor, docsPermissions['document.search'], 'document');
 // { kind: 'ids', ids: [...] }: the documents the actor reaches, an empty page for one who reaches none`,
   },
+  'authz/resource-modelled': {
+    why: "Under relationships, a requirement names the element its permission is checked on. The schema written by `init` derives on `context` only the permissions no element derives, so a permission modelled on an element (`service: { derived: { [cataloguePermissions['service.change'].id]: 'owning-member' } }`) is not held by the operators of the context: a requirement that still names `{ type: 'context' }` for it is refused to everybody, or, where the project's own bridge grants it to every member, the rule on the element is never asked and any member acts on any element, while every spec written as a member of the owning team stays green. A search whose gate and scope use the same permission has the same shape: the gate on the context fails once the permission is derived on the element, so it needs two permissions, one held on the context to run the search and one derived on the element for its scope. Judged: the permissions the types other than `context` derive in `<platformDir>/auth/relationships/relationship-schema.ts` (the types written in place or in the `elements` object), against the resource of every `@Requires`, `.requires(` and `requires(` outside the tests. What it cannot read is reported, never taken as safe: a schema built by a call, a spread other than `elements`, a key computed in another way, a resource that is not an object literal with a literal `type`. An error under relationships; silent with any other model.",
+    bad: `// platform/auth/relationships/relationship-schema.ts
+const elements: SchemaDefinition = {
+  service: { relations: { owner: ['user'] }, derived: { [cataloguePermissions['service.change'].id]: 'owner' } },
+};
+// contexts/catalogue/application/commands/change-service/change-service.command.ts
+@Requires(cataloguePermissions['service.change'], { resource: () => ({ type: 'context', id: 'catalogue' }) })
+export class ChangeServiceCommand extends AuthorizedCommand<void> {}`,
+    good: `// contexts/catalogue/application/commands/change-service/change-service.command.ts
+@Requires(cataloguePermissions['service.change'], {
+  resource: (command) => ({ type: 'service', id: command.serviceId }),
+})
+export class ChangeServiceCommand extends AuthorizedCommand<void> {
+  constructor(actor: Actor, readonly serviceId: string) { super(actor); }
+}`,
+  },
   'authz/policy-asked': {
     why: 'The bus checks the permission of a use case before its handler runs, with the identifier of the element at most: it cannot read the element. A policy is the part of the right that needs the element (only the issuer, not after closing), and it is evaluated only when the handler asks Access once the element is loaded. A handler that forgets to ask leaves the policy declared, tested and never applied, and nothing at run time says so. Judged: for every permission refined by a policy (@Policy or definePolicy in application/authorization/), the handlers in the folder of each command or query that requires it (@Requires, .requires(...) or requires(X, ...)) call authorize, decide or decideOn and name that permission in their code. The TODO(domain) the generator leaves in such a handler, naming the permission, is accepted, and so is a TODO(review) that names it: `ddd-ts-kit todo` lists both, and until it is done the authorization module refuses the result of the handler at run time (PolicyNotAskedError).',
     bad: `// application/authorization/only-issuer-voids.policy.ts
