@@ -1,0 +1,212 @@
+label,run,started_load_1min,wall_s,cpu_user_sys_s,peak_tree_mb,maxrss_main_process_mb,exit,finished_at,command
+eslint-cold,0,8.99,71.07,104.78,3110,3107,0,2026-10-26T14:51:22,node_modules/.bin/eslint --config eslint.config.mjs .
+eslint-cold,1,9.94,36.87,60.02,3014,3010,0,2026-10-26T14:51:59,node_modules/.bin/eslint --config eslint.config.mjs .
+eslint-cold,2,6.53,35.97,57.28,2866,2901,0,2026-10-26T14:52:35,node_modules/.bin/eslint --config eslint.config.mjs .
+eslint-cold,3,4.68,36.41,58.47,3025,3022,0,2026-10-26T14:53:11,node_modules/.bin/eslint --config eslint.config.mjs .
+eslint-cold,4,3.43,35.7,55.98,2926,2926,0,2026-10-26T14:53:47,node_modules/.bin/eslint --config eslint.config.mjs .
+eslint-cache-warm,0,1.91,1.17,1.65,390,345,0,2026-10-26T14:54:42,node pipeline/monorepo/lint.mjs
+eslint-cache-warm,1,1.92,1.16,1.64,385,334,0,2026-10-26T14:54:43,node pipeline/monorepo/lint.mjs
+eslint-cache-warm,2,1.92,1.23,1.7,390,346,0,2026-10-26T14:54:44,node pipeline/monorepo/lint.mjs
+eslint-cache-one-file,0,1.92,1.65,2.69,438,425,0,2026-10-26T14:54:46,node pipeline/monorepo/lint.mjs
+eslint-cache-one-file,1,1.92,1.69,2.76,502,443,0,2026-10-26T14:54:48,node pipeline/monorepo/lint.mjs
+eslint-cache-one-file,2,2.0,1.69,2.76,503,444,0,2026-10-26T14:54:50,node pipeline/monorepo/lint.mjs
+oxlint-typed-js,0,1.62,5.75,19.63,1512,1142,0,2026-10-26T14:58:17,sh -c node_modules/.bin/oxlint --type-aware >/dev/null 2>&1; true
+oxlint-typed-js,1,1.81,5.89,20.23,1634,1154,0,2026-10-26T14:58:23,sh -c node_modules/.bin/oxlint --type-aware >/dev/null 2>&1; true
+oxlint-typed-js,2,4.41,5.85,20.21,1654,1181,0,2026-10-26T14:58:29,sh -c node_modules/.bin/oxlint --type-aware >/dev/null 2>&1; true
+oxlint-untyped-js,0,4.13,3.55,6.21,447,442,0,2026-10-26T14:58:32,sh -c node_modules/.bin/oxlint -c oxlintrc-untyped.tmp.json >/dev/null 2>&1; true
+oxlint-untyped-js,1,3.88,3.42,5.9,445,439,0,2026-10-26T14:58:36,sh -c node_modules/.bin/oxlint -c oxlintrc-untyped.tmp.json >/dev/null 2>&1; true
+oxlint-untyped-js,2,3.88,3.5,6.1,441,440,0,2026-10-26T14:58:39,sh -c node_modules/.bin/oxlint -c oxlintrc-untyped.tmp.json >/dev/null 2>&1; true
+oxlint-untyped-js,3,3.89,3.49,6.17,454,449,0,2026-10-26T14:58:43,sh -c node_modules/.bin/oxlint -c oxlintrc-untyped.tmp.json >/dev/null 2>&1; true
+oxlint-untyped-js,4,3.82,3.52,6.19,453,448,0,2026-10-26T14:58:47,sh -c node_modules/.bin/oxlint -c oxlintrc-untyped.tmp.json >/dev/null 2>&1; true
+oxlint-native-typed,0,3.82,2.45,14.78,1331,1112,0,2026-10-26T14:58:49,sh -c node_modules/.bin/oxlint -c oxlintrc-native.tmp.json --type-aware >/dev/null 2>&1; true
+oxlint-native-typed,1,3.59,2.47,14.72,1198,1004,0,2026-10-26T14:58:52,sh -c node_modules/.bin/oxlint -c oxlintrc-native.tmp.json --type-aware >/dev/null 2>&1; true
+oxlint-native-typed,2,3.59,2.39,14.58,1490,1174,0,2026-10-26T14:58:54,sh -c node_modules/.bin/oxlint -c oxlintrc-native.tmp.json --type-aware >/dev/null 2>&1; true
+oxlint-native-untyped,0,5.23,0.07,0.7,3,293,0,2026-10-26T14:58:54,sh -c node_modules/.bin/oxlint -c oxlintrc-native-untyped.tmp.json >/dev/null 2>&1; true
+oxlint-native-untyped,1,5.23,0.07,0.69,3,295,0,2026-10-26T14:58:55,sh -c node_modules/.bin/oxlint -c oxlintrc-native-untyped.tmp.json >/dev/null 2>&1; true
+oxlint-native-untyped,2,5.23,0.08,0.7,3,294,0,2026-10-26T14:58:55,sh -c node_modules/.bin/oxlint -c oxlintrc-native-untyped.tmp.json >/dev/null 2>&1; true
+oxlint-native-untyped,3,5.23,0.08,0.7,2,295,0,2026-10-26T14:58:55,sh -c node_modules/.bin/oxlint -c oxlintrc-native-untyped.tmp.json >/dev/null 2>&1; true
+oxlint-native-untyped,4,5.23,0.08,0.68,2,288,0,2026-10-26T14:58:55,sh -c node_modules/.bin/oxlint -c oxlintrc-native-untyped.tmp.json >/dev/null 2>&1; true
+oxlint-corpus,0,5.05,1.69,3.41,396,391,0,2026-10-26T14:59:07,sh -c node_modules/.bin/oxlint -c oxlintrc-parity.tmp.json >/dev/null 2>&1; true
+oxlint-corpus,1,5.05,1.75,3.6,392,391,0,2026-10-26T14:59:08,sh -c node_modules/.bin/oxlint -c oxlintrc-parity.tmp.json >/dev/null 2>&1; true
+oxlint-corpus,2,4.73,1.69,3.45,389,383,0,2026-10-26T14:59:10,sh -c node_modules/.bin/oxlint -c oxlintrc-parity.tmp.json >/dev/null 2>&1; true
+oxlint-corpus,3,4.73,1.8,3.6,390,392,0,2026-10-26T14:59:12,sh -c node_modules/.bin/oxlint -c oxlintrc-parity.tmp.json >/dev/null 2>&1; true
+oxlint-corpus,4,4.99,1.67,3.47,386,383,0,2026-10-26T14:59:14,sh -c node_modules/.bin/oxlint -c oxlintrc-parity.tmp.json >/dev/null 2>&1; true
+eslint-corpus,0,5.88,5.77,10.36,805,809,1,2026-10-26T14:59:39,node_modules/.bin/eslint --config eslint.parity.tmp.mjs packages/*/test/**/*.ts
+eslint-corpus,1,5.57,5.67,10.45,758,759,1,2026-10-26T14:59:45,node_modules/.bin/eslint --config eslint.parity.tmp.mjs packages/*/test/**/*.ts
+eslint-corpus,2,5.36,5.6,10.3,743,743,1,2026-10-26T14:59:51,node_modules/.bin/eslint --config eslint.parity.tmp.mjs packages/*/test/**/*.ts
+eslint-corpus,3,5.09,5.59,10.21,794,794,1,2026-10-26T14:59:57,node_modules/.bin/eslint --config eslint.parity.tmp.mjs packages/*/test/**/*.ts
+eslint-corpus,4,4.46,5.61,10.26,810,809,1,2026-10-26T15:00:03,node_modules/.bin/eslint --config eslint.parity.tmp.mjs packages/*/test/**/*.ts
+biome-format-check,0,0.88,0.33,5.08,223,242,0,2026-10-26T15:02:13,node_modules/.bin/biome format .
+biome-format-check,1,0.88,0.33,5.01,217,242,0,2026-10-26T15:02:13,node_modules/.bin/biome format .
+biome-format-check,2,0.88,0.33,5.08,221,241,0,2026-10-26T15:02:14,node_modules/.bin/biome format .
+oxfmt-check,0,0.88,0.13,1.06,4,201,0,2026-10-26T15:02:14,sh -c oxfmt -c <scratch>/tmpcfg/oxfmtrc-nosort.json --check $(cat <scratch>/fmt-files.txt) >/dev/null 2>&1; true
+oxfmt-check,1,0.88,0.13,1.07,2,209,0,2026-10-26T15:02:14,sh -c oxfmt -c <scratch>/tmpcfg/oxfmtrc-nosort.json --check $(cat <scratch>/fmt-files.txt) >/dev/null 2>&1; true
+oxfmt-check,2,0.88,0.14,1.04,2,212,0,2026-10-26T15:02:14,sh -c oxfmt -c <scratch>/tmpcfg/oxfmtrc-nosort.json --check $(cat <scratch>/fmt-files.txt) >/dev/null 2>&1; true
+oxfmt-check-dir,0,0.88,0.13,1.78,3,381,0,2026-10-26T15:02:15,sh -c oxfmt -c <scratch>/tmpcfg/oxfmtrc-nosort.json --check . >/dev/null 2>&1; true
+oxfmt-check-dir,1,0.88,0.13,1.74,2,382,0,2026-10-26T15:02:15,sh -c oxfmt -c <scratch>/tmpcfg/oxfmtrc-nosort.json --check . >/dev/null 2>&1; true
+oxfmt-check-dir,2,0.88,0.14,1.78,2,378,0,2026-10-26T15:02:15,sh -c oxfmt -c <scratch>/tmpcfg/oxfmtrc-nosort.json --check . >/dev/null 2>&1; true
+npm-run-format-check,0,0.88,0.4,5.15,232,242,0,2026-10-26T15:02:15,npm run -s format:check
+npm-run-format-check,1,0.88,0.4,5.09,234,243,0,2026-10-26T15:02:16,npm run -s format:check
+npm-run-format-check,2,0.88,0.39,5.13,239,242,0,2026-10-26T15:02:16,npm run -s format:check
+build-clean,0,0.71,1.99,14.08,927,915,0,2026-10-26T15:02:36,npm run -s build
+build-clean,1,0.71,2.07,13.83,863,930,0,2026-10-26T15:02:39,npm run -s build
+build-clean,2,1.46,2.01,14.37,1007,945,0,2026-10-26T15:02:41,npm run -s build
+build-noop,0,1.46,1.38,8.89,733,660,0,2026-10-26T15:02:42,npm run -s build
+build-noop,1,2.22,0.24,0.42,129,66,0,2026-10-26T15:02:43,npm run -s build
+build-noop,2,2.22,0.25,0.42,130,66,0,2026-10-26T15:02:43,npm run -s build
+add-extensions,0,2.22,0.08,0.1,3,60,0,2026-10-26T15:02:43,sh -c node pipeline/monorepo/add-extensions.mjs packages/*/dist
+add-extensions,1,2.22,0.08,0.09,3,59,0,2026-10-26T15:02:44,sh -c node pipeline/monorepo/add-extensions.mjs packages/*/dist
+add-extensions,2,2.22,0.08,0.09,3,59,0,2026-10-26T15:02:44,sh -c node pipeline/monorepo/add-extensions.mjs packages/*/dist
+oxc-transform-js-dts,0,1.84,0.41,0.45,72,75,0,2026-10-26T15:03:55,node <scratch>/scripts/oxc-transform-all.mjs . <scratch>/oxc-out
+oxc-transform-js-dts,1,1.84,0.41,0.45,72,75,0,2026-10-26T15:03:56,node <scratch>/scripts/oxc-transform-all.mjs . <scratch>/oxc-out
+oxc-transform-js-dts,2,1.84,0.41,0.44,72,75,0,2026-10-26T15:03:56,node <scratch>/scripts/oxc-transform-all.mjs . <scratch>/oxc-out
+oxc-transform-js,0,1.84,0.28,0.32,76,75,0,2026-10-26T15:03:57,node <scratch>/scripts/oxc-transform-all.mjs . <scratch>/oxc-out no-dts
+oxc-transform-js,1,1.7,0.29,0.33,75,74,0,2026-10-26T15:03:57,node <scratch>/scripts/oxc-transform-all.mjs . <scratch>/oxc-out no-dts
+oxc-transform-js,2,1.7,0.28,0.31,76,75,0,2026-10-26T15:03:58,node <scratch>/scripts/oxc-transform-all.mjs . <scratch>/oxc-out no-dts
+tsc-b-kernel-clean,0,0.94,0.19,1.01,29,164,0,2026-10-26T15:04:32,node node_modules/@typescript/native/bin/tsc -b packages/kernel
+tsc-b-kernel-clean,1,0.94,0.19,0.99,22,171,0,2026-10-26T15:04:32,node node_modules/@typescript/native/bin/tsc -b packages/kernel
+tsc-b-kernel-clean,2,0.94,0.19,1.06,2,171,0,2026-10-26T15:04:33,node node_modules/@typescript/native/bin/tsc -b packages/kernel
+tsdown-kernel-dts-ts6,0,0.94,2.11,4.22,738,733,0,2026-10-26T15:04:35,sh -c tsdown --no-config 'src/**/*.ts' --unbundle --dts --tsconfig tsconfig.json -d <scratch>/tsdown-kernel --format esm --platform node --no-clean >/dev/null 2>&1
+tsdown-kernel-dts-ts6,1,0.94,2.07,4.42,733,750,0,2026-10-26T15:04:37,sh -c tsdown --no-config 'src/**/*.ts' --unbundle --dts --tsconfig tsconfig.json -d <scratch>/tsdown-kernel --format esm --platform node --no-clean >/dev/null 2>&1
+tsdown-kernel-dts-ts6,2,0.95,2.09,4.42,736,754,0,2026-10-26T15:04:39,sh -c tsdown --no-config 'src/**/*.ts' --unbundle --dts --tsconfig tsconfig.json -d <scratch>/tsdown-kernel --format esm --platform node --no-clean >/dev/null 2>&1
+tsdown-kernel-nodts,0,0.95,0.21,0.92,3,281,0,2026-10-26T15:04:40,sh -c tsdown --no-config 'src/**/*.ts' --unbundle --no-dts --tsconfig tsconfig.json -d <scratch>/tsdown-kernel --format esm --platform node --no-clean >/dev/null 2>&1
+tsdown-kernel-nodts,1,0.95,0.23,0.91,282,282,0,2026-10-26T15:04:40,sh -c tsdown --no-config 'src/**/*.ts' --unbundle --no-dts --tsconfig tsconfig.json -d <scratch>/tsdown-kernel --format esm --platform node --no-clean >/dev/null 2>&1
+tsdown-kernel-nodts,2,0.95,0.22,0.9,291,289,0,2026-10-26T15:04:41,sh -c tsdown --no-config 'src/**/*.ts' --unbundle --no-dts --tsconfig tsconfig.json -d <scratch>/tsdown-kernel --format esm --platform node --no-clean >/dev/null 2>&1
+vitest-kernel-cache-warm,0,2.49,7.4,79.13,4133,1145,0,2026-10-26T15:06:22,npx vitest run packages/kernel
+vitest-kernel-cache-warm,1,4.4,7.38,79.08,4296,1187,0,2026-10-26T15:06:30,npx vitest run packages/kernel
+vitest-kernel-cache-warm,2,5.25,7.63,79.7,4297,1130,0,2026-10-26T15:06:38,npx vitest run packages/kernel
+vitest-kernel-cache-cold,0,6.14,12.2,85.02,4419,1166,0,2026-10-26T15:06:50,npx vitest run packages/kernel
+vitest-kernel-cache-cold,1,6.82,12.18,84.78,4651,1122,0,2026-10-26T15:07:03,npx vitest run packages/kernel
+vitest-kernel-cache-cold,2,6.21,11.8,84.36,4063,1135,0,2026-10-26T15:07:15,npx vitest run packages/kernel
+vitest-kernel-cache-cold,3,7.92,11.93,83.92,4415,1127,0,2026-10-26T15:07:27,npx vitest run packages/kernel
+vitest-kernel-cache-cold,4,9.51,11.78,84.54,4136,1154,0,2026-10-26T15:07:39,npx vitest run packages/kernel
+vitest-kernel-nocache,0,8.21,12.21,85.42,4166,1106,0,2026-10-26T15:07:51,npx vitest run --config <scratch>/vitest.nocache.config.ts packages/kernel
+vitest-kernel-nocache,1,10.06,11.9,84.78,4639,1169,0,2026-10-26T15:08:03,npx vitest run --config <scratch>/vitest.nocache.config.ts packages/kernel
+vitest-kernel-nocache,2,9.46,11.55,84.68,4385,1132,0,2026-10-26T15:08:15,npx vitest run --config <scratch>/vitest.nocache.config.ts packages/kernel
+vitest-kernel-nocache,3,10.16,11.74,84.78,4267,1127,0,2026-10-26T15:08:27,npx vitest run --config <scratch>/vitest.nocache.config.ts packages/kernel
+vitest-kernel-nocache,4,11.62,11.54,84.23,4183,1147,0,2026-10-26T15:08:38,npx vitest run --config <scratch>/vitest.nocache.config.ts packages/kernel
+vitest-kernel-optimizer,0,9.85,11.84,84.92,4253,1124,0,2026-10-26T15:08:50,npx vitest run --config <scratch>/vitest.optimizer.config.ts packages/kernel
+vitest-kernel-optimizer,1,10.86,7.31,78.62,4261,1137,0,2026-10-26T15:08:58,npx vitest run --config <scratch>/vitest.optimizer.config.ts packages/kernel
+vitest-kernel-optimizer,2,11.11,7.35,78.98,4251,1131,0,2026-10-26T15:09:05,npx vitest run --config <scratch>/vitest.optimizer.config.ts packages/kernel
+vitest-kernel-optimizer,3,12.63,7.42,78.87,4087,1137,0,2026-10-26T15:09:13,npx vitest run --config <scratch>/vitest.optimizer.config.ts packages/kernel
+vitest-kernel-optimizer,4,12.77,7.6,82.39,4494,1102,0,2026-10-26T15:09:21,npx vitest run --config <scratch>/vitest.optimizer.config.ts packages/kernel
+vitest-kernel-4w-cache-warm,0,11.54,7.24,67.42,3995,1167,0,2026-10-26T15:09:54,npx vitest run packages/kernel
+vitest-kernel-4w-cache-warm,1,10.56,7.16,67.61,4107,1189,0,2026-10-26T15:10:01,npx vitest run packages/kernel
+vitest-kernel-4w-cache-warm,2,10.51,7.14,67.17,4170,1145,0,2026-10-26T15:10:09,npx vitest run packages/kernel
+vitest-kernel-4w-cache-warm,3,9.76,7.26,67.25,3846,1173,0,2026-10-26T15:10:16,npx vitest run packages/kernel
+vitest-kernel-4w-cache-warm,4,10.18,7.18,67.17,4548,1129,0,2026-10-26T15:10:23,npx vitest run packages/kernel
+vitest-kernel-4w-cache-cold,0,11.73,11.78,73.43,3478,1162,0,2026-10-26T15:10:35,npx vitest run packages/kernel
+vitest-kernel-4w-cache-cold,1,11.25,11.77,73.23,3920,1150,0,2026-10-26T15:10:47,npx vitest run packages/kernel
+vitest-kernel-4w-cache-cold,2,10.85,11.82,73.93,3654,1151,0,2026-10-26T15:10:59,npx vitest run packages/kernel
+vitest-kernel-4w-cache-cold,3,10.52,11.87,74.0,3904,1140,0,2026-10-26T15:11:11,npx vitest run packages/kernel
+vitest-kernel-4w-cache-cold,4,11.02,11.85,74.1,4014,1137,0,2026-10-26T15:11:23,npx vitest run packages/kernel
+vitest-http-cache-warm,0,8.55,4.05,48.62,1956,372,0,2026-10-26T15:11:42,npx vitest run packages/http
+vitest-http-cache-warm,1,8.83,4.12,49.52,1855,381,0,2026-10-26T15:11:46,npx vitest run packages/http
+vitest-http-cache-warm,2,8.83,4.0,48.83,2000,380,0,2026-10-26T15:11:51,npx vitest run packages/http
+vitest-http-cache-warm,3,9.24,4.05,48.82,1930,370,0,2026-10-26T15:11:55,npx vitest run packages/http
+vitest-http-cache-warm,4,9.54,4.49,50.84,1930,369,0,2026-10-26T15:12:00,npx vitest run packages/http
+vitest-http-cache-cold,0,12.54,5.1,52.4,2075,432,0,2026-10-26T15:12:05,npx vitest run packages/http
+vitest-http-cache-cold,1,13.22,5.3,55.71,2070,439,0,2026-10-26T15:12:10,npx vitest run packages/http
+vitest-http-cache-cold,2,17.53,5.43,56.61,2193,431,0,2026-10-26T15:12:16,npx vitest run packages/http
+vitest-http-cache-cold,3,16.28,5.45,57.26,2156,433,0,2026-10-26T15:12:21,npx vitest run packages/http
+vitest-http-cache-cold,4,15.22,5.42,56.38,2134,438,0,2026-10-26T15:12:27,npx vitest run packages/http
+precommit-eslint,0,5.01,1.96,3.57,507,512,0,2026-10-26T15:22:36,sh -c node_modules/.bin/eslint --config eslint.config.mjs --no-warn-ignored packages/cli/src/acceptance/scenarios-in.ts packages/cli/src/commit/run-git.ts packages/cli/src/docs/behaviour-page.ts packages/cli/src/measures/branch-commits.ts packages/cli/src/measures/timeline-of.ts packages/cli/src/progress/build-next-of.ts packages/cli/src/progress/format-progress.ts packages/cli/src/progress/progress.ts packages/cli/src/progress/read-progress.ts packages/cli/test/docs-behaviour.spec.ts packages/cli/test/measures-close.spec.ts packages/cli/test/measures-text.spec.ts packages/cli/test/status.spec.ts 
+precommit-eslint,1,5.01,1.63,3.48,481,482,0,2026-10-26T15:22:37,sh -c node_modules/.bin/eslint --config eslint.config.mjs --no-warn-ignored packages/cli/src/acceptance/scenarios-in.ts packages/cli/src/commit/run-git.ts packages/cli/src/docs/behaviour-page.ts packages/cli/src/measures/branch-commits.ts packages/cli/src/measures/timeline-of.ts packages/cli/src/progress/build-next-of.ts packages/cli/src/progress/format-progress.ts packages/cli/src/progress/progress.ts packages/cli/src/progress/read-progress.ts packages/cli/test/docs-behaviour.spec.ts packages/cli/test/measures-close.spec.ts packages/cli/test/measures-text.spec.ts packages/cli/test/status.spec.ts 
+precommit-eslint,2,5.09,1.63,3.48,456,501,0,2026-10-26T15:22:39,sh -c node_modules/.bin/eslint --config eslint.config.mjs --no-warn-ignored packages/cli/src/acceptance/scenarios-in.ts packages/cli/src/commit/run-git.ts packages/cli/src/docs/behaviour-page.ts packages/cli/src/measures/branch-commits.ts packages/cli/src/measures/timeline-of.ts packages/cli/src/progress/build-next-of.ts packages/cli/src/progress/format-progress.ts packages/cli/src/progress/progress.ts packages/cli/src/progress/read-progress.ts packages/cli/test/docs-behaviour.spec.ts packages/cli/test/measures-close.spec.ts packages/cli/test/measures-text.spec.ts packages/cli/test/status.spec.ts 
+precommit-eslint,3,5.09,1.65,3.52,456,501,0,2026-10-26T15:22:41,sh -c node_modules/.bin/eslint --config eslint.config.mjs --no-warn-ignored packages/cli/src/acceptance/scenarios-in.ts packages/cli/src/commit/run-git.ts packages/cli/src/docs/behaviour-page.ts packages/cli/src/measures/branch-commits.ts packages/cli/src/measures/timeline-of.ts packages/cli/src/progress/build-next-of.ts packages/cli/src/progress/format-progress.ts packages/cli/src/progress/progress.ts packages/cli/src/progress/read-progress.ts packages/cli/test/docs-behaviour.spec.ts packages/cli/test/measures-close.spec.ts packages/cli/test/measures-text.spec.ts packages/cli/test/status.spec.ts 
+precommit-eslint,4,5.09,1.62,3.3,501,508,0,2026-10-26T15:22:43,sh -c node_modules/.bin/eslint --config eslint.config.mjs --no-warn-ignored packages/cli/src/acceptance/scenarios-in.ts packages/cli/src/commit/run-git.ts packages/cli/src/docs/behaviour-page.ts packages/cli/src/measures/branch-commits.ts packages/cli/src/measures/timeline-of.ts packages/cli/src/progress/build-next-of.ts packages/cli/src/progress/format-progress.ts packages/cli/src/progress/progress.ts packages/cli/src/progress/read-progress.ts packages/cli/test/docs-behaviour.spec.ts packages/cli/test/measures-close.spec.ts packages/cli/test/measures-text.spec.ts packages/cli/test/status.spec.ts 
+precommit-oxlint,0,5.0,0.82,2.86,259,286,0,2026-10-26T15:22:43,sh -c node_modules/.bin/oxlint --type-aware packages/cli/src/acceptance/scenarios-in.ts packages/cli/src/commit/run-git.ts packages/cli/src/docs/behaviour-page.ts packages/cli/src/measures/branch-commits.ts packages/cli/src/measures/timeline-of.ts packages/cli/src/progress/build-next-of.ts packages/cli/src/progress/format-progress.ts packages/cli/src/progress/progress.ts packages/cli/src/progress/read-progress.ts packages/cli/test/docs-behaviour.spec.ts packages/cli/test/measures-close.spec.ts packages/cli/test/measures-text.spec.ts packages/cli/test/status.spec.ts 
+precommit-oxlint,1,5.0,0.82,2.84,261,285,0,2026-10-26T15:22:44,sh -c node_modules/.bin/oxlint --type-aware packages/cli/src/acceptance/scenarios-in.ts packages/cli/src/commit/run-git.ts packages/cli/src/docs/behaviour-page.ts packages/cli/src/measures/branch-commits.ts packages/cli/src/measures/timeline-of.ts packages/cli/src/progress/build-next-of.ts packages/cli/src/progress/format-progress.ts packages/cli/src/progress/progress.ts packages/cli/src/progress/read-progress.ts packages/cli/test/docs-behaviour.spec.ts packages/cli/test/measures-close.spec.ts packages/cli/test/measures-text.spec.ts packages/cli/test/status.spec.ts 
+precommit-oxlint,2,5.0,0.82,2.77,262,287,0,2026-10-26T15:22:45,sh -c node_modules/.bin/oxlint --type-aware packages/cli/src/acceptance/scenarios-in.ts packages/cli/src/commit/run-git.ts packages/cli/src/docs/behaviour-page.ts packages/cli/src/measures/branch-commits.ts packages/cli/src/measures/timeline-of.ts packages/cli/src/progress/build-next-of.ts packages/cli/src/progress/format-progress.ts packages/cli/src/progress/progress.ts packages/cli/src/progress/read-progress.ts packages/cli/test/docs-behaviour.spec.ts packages/cli/test/measures-close.spec.ts packages/cli/test/measures-text.spec.ts packages/cli/test/status.spec.ts 
+precommit-oxlint,3,5.0,0.82,2.76,261,285,0,2026-10-26T15:22:46,sh -c node_modules/.bin/oxlint --type-aware packages/cli/src/acceptance/scenarios-in.ts packages/cli/src/commit/run-git.ts packages/cli/src/docs/behaviour-page.ts packages/cli/src/measures/branch-commits.ts packages/cli/src/measures/timeline-of.ts packages/cli/src/progress/build-next-of.ts packages/cli/src/progress/format-progress.ts packages/cli/src/progress/progress.ts packages/cli/src/progress/read-progress.ts packages/cli/test/docs-behaviour.spec.ts packages/cli/test/measures-close.spec.ts packages/cli/test/measures-text.spec.ts packages/cli/test/status.spec.ts 
+precommit-oxlint,4,5.0,0.82,2.81,261,285,0,2026-10-26T15:22:47,sh -c node_modules/.bin/oxlint --type-aware packages/cli/src/acceptance/scenarios-in.ts packages/cli/src/commit/run-git.ts packages/cli/src/docs/behaviour-page.ts packages/cli/src/measures/branch-commits.ts packages/cli/src/measures/timeline-of.ts packages/cli/src/progress/build-next-of.ts packages/cli/src/progress/format-progress.ts packages/cli/src/progress/progress.ts packages/cli/src/progress/read-progress.ts packages/cli/test/docs-behaviour.spec.ts packages/cli/test/measures-close.spec.ts packages/cli/test/measures-text.spec.ts packages/cli/test/status.spec.ts 
+precommit-oxlint-native,0,5.0,0.22,1.66,222,260,0,2026-10-26T15:22:47,sh -c node_modules/.bin/oxlint -c <scratch>/tmpcfg/oxlintrc-native.tmp.json --type-aware packages/cli/src/acceptance/scenarios-in.ts packages/cli/src/commit/run-git.ts packages/cli/src/docs/behaviour-page.ts packages/cli/src/measures/branch-commits.ts packages/cli/src/measures/timeline-of.ts packages/cli/src/progress/build-next-of.ts packages/cli/src/progress/format-progress.ts packages/cli/src/progress/progress.ts packages/cli/src/progress/read-progress.ts packages/cli/test/docs-behaviour.spec.ts packages/cli/test/measures-close.spec.ts packages/cli/test/measures-text.spec.ts packages/cli/test/status.spec.ts  >/dev/null; true
+precommit-oxlint-native,1,5.4,0.24,1.64,483,261,0,2026-10-26T15:22:48,sh -c node_modules/.bin/oxlint -c <scratch>/tmpcfg/oxlintrc-native.tmp.json --type-aware packages/cli/src/acceptance/scenarios-in.ts packages/cli/src/commit/run-git.ts packages/cli/src/docs/behaviour-page.ts packages/cli/src/measures/branch-commits.ts packages/cli/src/measures/timeline-of.ts packages/cli/src/progress/build-next-of.ts packages/cli/src/progress/format-progress.ts packages/cli/src/progress/progress.ts packages/cli/src/progress/read-progress.ts packages/cli/test/docs-behaviour.spec.ts packages/cli/test/measures-close.spec.ts packages/cli/test/measures-text.spec.ts packages/cli/test/status.spec.ts  >/dev/null; true
+precommit-oxlint-native,2,5.4,0.21,1.63,222,253,0,2026-10-26T15:22:48,sh -c node_modules/.bin/oxlint -c <scratch>/tmpcfg/oxlintrc-native.tmp.json --type-aware packages/cli/src/acceptance/scenarios-in.ts packages/cli/src/commit/run-git.ts packages/cli/src/docs/behaviour-page.ts packages/cli/src/measures/branch-commits.ts packages/cli/src/measures/timeline-of.ts packages/cli/src/progress/build-next-of.ts packages/cli/src/progress/format-progress.ts packages/cli/src/progress/progress.ts packages/cli/src/progress/read-progress.ts packages/cli/test/docs-behaviour.spec.ts packages/cli/test/measures-close.spec.ts packages/cli/test/measures-text.spec.ts packages/cli/test/status.spec.ts  >/dev/null; true
+precommit-oxlint-native,3,5.4,0.2,1.55,2,278,0,2026-10-26T15:22:49,sh -c node_modules/.bin/oxlint -c <scratch>/tmpcfg/oxlintrc-native.tmp.json --type-aware packages/cli/src/acceptance/scenarios-in.ts packages/cli/src/commit/run-git.ts packages/cli/src/docs/behaviour-page.ts packages/cli/src/measures/branch-commits.ts packages/cli/src/measures/timeline-of.ts packages/cli/src/progress/build-next-of.ts packages/cli/src/progress/format-progress.ts packages/cli/src/progress/progress.ts packages/cli/src/progress/read-progress.ts packages/cli/test/docs-behaviour.spec.ts packages/cli/test/measures-close.spec.ts packages/cli/test/measures-text.spec.ts packages/cli/test/status.spec.ts  >/dev/null; true
+precommit-oxlint-native,4,5.4,0.21,1.58,3,278,0,2026-10-26T15:22:49,sh -c node_modules/.bin/oxlint -c <scratch>/tmpcfg/oxlintrc-native.tmp.json --type-aware packages/cli/src/acceptance/scenarios-in.ts packages/cli/src/commit/run-git.ts packages/cli/src/docs/behaviour-page.ts packages/cli/src/measures/branch-commits.ts packages/cli/src/measures/timeline-of.ts packages/cli/src/progress/build-next-of.ts packages/cli/src/progress/format-progress.ts packages/cli/src/progress/progress.ts packages/cli/src/progress/read-progress.ts packages/cli/test/docs-behaviour.spec.ts packages/cli/test/measures-close.spec.ts packages/cli/test/measures-text.spec.ts packages/cli/test/status.spec.ts  >/dev/null; true
+gen-typecheck,0,4.64,0.31,1.21,220,202,0,2026-10-26T15:22:59,sh -c npm run -s typecheck >/dev/null 2>&1; echo rc=$?
+gen-typecheck,1,4.64,0.23,1.23,263,194,0,2026-10-26T15:23:00,sh -c npm run -s typecheck >/dev/null 2>&1; echo rc=$?
+gen-typecheck,2,4.64,0.23,1.18,270,203,0,2026-10-26T15:23:00,sh -c npm run -s typecheck >/dev/null 2>&1; echo rc=$?
+gen-typecheck,3,4.64,0.23,1.21,267,197,0,2026-10-26T15:23:00,sh -c npm run -s typecheck >/dev/null 2>&1; echo rc=$?
+gen-typecheck,4,4.64,0.23,1.19,262,196,0,2026-10-26T15:23:01,sh -c npm run -s typecheck >/dev/null 2>&1; echo rc=$?
+gen-eslint-cold,0,4.64,3.2,5.86,680,675,0,2026-10-26T15:23:04,sh -c node_modules/.bin/eslint . >/dev/null 2>&1; echo rc=$?
+gen-eslint-cold,1,4.51,2.93,5.91,661,658,0,2026-10-26T15:23:07,sh -c node_modules/.bin/eslint . >/dev/null 2>&1; echo rc=$?
+gen-eslint-cold,2,4.63,3.05,6.12,646,655,0,2026-10-26T15:23:10,sh -c node_modules/.bin/eslint . >/dev/null 2>&1; echo rc=$?
+gen-eslint-cold,3,4.63,3.23,6.42,638,642,0,2026-10-26T15:23:14,sh -c node_modules/.bin/eslint . >/dev/null 2>&1; echo rc=$?
+gen-eslint-cold,4,4.66,2.89,5.84,646,654,0,2026-10-26T15:23:17,sh -c node_modules/.bin/eslint . >/dev/null 2>&1; echo rc=$?
+gen-lint-kit-warm,0,4.66,3.59,6.59,843,654,0,2026-10-26T15:23:21,sh -c npm run -s lint >/dev/null 2>&1; echo rc=$?
+gen-lint-kit-warm,1,4.37,1.07,1.59,439,249,0,2026-10-26T15:23:22,sh -c npm run -s lint >/dev/null 2>&1; echo rc=$?
+gen-lint-kit-warm,2,4.37,1.1,1.62,427,250,0,2026-10-26T15:23:23,sh -c npm run -s lint >/dev/null 2>&1; echo rc=$?
+gen-lint-kit-warm,3,4.18,1.19,1.69,398,251,0,2026-10-26T15:23:24,sh -c npm run -s lint >/dev/null 2>&1; echo rc=$?
+gen-lint-kit-warm,4,4.18,1.09,1.6,421,235,0,2026-10-26T15:23:25,sh -c npm run -s lint >/dev/null 2>&1; echo rc=$?
+gen-oxlint,0,4.18,1.01,3.12,370,301,0,2026-10-26T15:23:27,sh -c node_modules/.bin/oxlint --type-aware >/dev/null 2>&1; echo rc=$?
+gen-oxlint,1,4.18,1.01,3.16,384,303,0,2026-10-26T15:23:28,sh -c node_modules/.bin/oxlint --type-aware >/dev/null 2>&1; echo rc=$?
+gen-oxlint,2,4.24,1.01,3.17,379,302,0,2026-10-26T15:23:29,sh -c node_modules/.bin/oxlint --type-aware >/dev/null 2>&1; echo rc=$?
+gen-oxlint,3,4.24,1.0,3.14,444,302,0,2026-10-26T15:23:30,sh -c node_modules/.bin/oxlint --type-aware >/dev/null 2>&1; echo rc=$?
+gen-oxlint,4,4.24,1.02,3.17,333,311,0,2026-10-26T15:23:31,sh -c node_modules/.bin/oxlint --type-aware >/dev/null 2>&1; echo rc=$?
+gen-biome,0,4.24,0.13,0.11,2,47,0,2026-10-26T15:23:31,sh -c node_modules/.bin/biome format . >/dev/null 2>&1; echo rc=$?
+gen-biome,1,4.24,0.05,0.1,2,46,0,2026-10-26T15:23:31,sh -c node_modules/.bin/biome format . >/dev/null 2>&1; echo rc=$?
+gen-biome,2,4.24,0.05,0.1,3,46,0,2026-10-26T15:23:31,sh -c node_modules/.bin/biome format . >/dev/null 2>&1; echo rc=$?
+gen-biome,3,4.24,0.04,0.1,2,47,0,2026-10-26T15:23:32,sh -c node_modules/.bin/biome format . >/dev/null 2>&1; echo rc=$?
+gen-biome,4,4.24,0.05,0.11,2,47,0,2026-10-26T15:23:32,sh -c node_modules/.bin/biome format . >/dev/null 2>&1; echo rc=$?
+gen-oxfmt,0,4.24,0.04,0.09,3,180,0,2026-10-26T15:23:32,sh -c oxfmt --check . >/dev/null 2>&1; echo rc=$?
+gen-oxfmt,1,4.24,0.04,0.09,2,184,0,2026-10-26T15:23:32,sh -c oxfmt --check . >/dev/null 2>&1; echo rc=$?
+gen-oxfmt,2,4.79,0.04,0.08,3,164,0,2026-10-26T15:23:32,sh -c oxfmt --check . >/dev/null 2>&1; echo rc=$?
+gen-oxfmt,3,4.79,0.04,0.08,3,166,0,2026-10-26T15:23:33,sh -c oxfmt --check . >/dev/null 2>&1; echo rc=$?
+gen-oxfmt,4,4.79,0.03,0.09,3,182,0,2026-10-26T15:23:33,sh -c oxfmt --check . >/dev/null 2>&1; echo rc=$?
+gen-check-arch,0,4.79,0.46,0.6,194,122,0,2026-10-26T15:23:33,sh -c npm run -s check:arch >/dev/null 2>&1; echo rc=$?
+gen-check-arch,1,4.79,0.44,0.6,194,121,0,2026-10-26T15:23:34,sh -c npm run -s check:arch >/dev/null 2>&1; echo rc=$?
+gen-check-arch,2,4.79,0.46,0.61,193,122,0,2026-10-26T15:23:35,sh -c npm run -s check:arch >/dev/null 2>&1; echo rc=$?
+gen-check-arch,3,4.79,0.43,0.58,194,121,0,2026-10-26T15:23:35,sh -c npm run -s check:arch >/dev/null 2>&1; echo rc=$?
+gen-check-arch,4,4.79,0.59,0.74,168,122,0,2026-10-26T15:23:36,sh -c npm run -s check:arch >/dev/null 2>&1; echo rc=$?
+gen-depcruise,0,4.79,0.88,1.11,240,178,0,2026-10-26T15:23:37,sh -c npm run -s depcruise >/dev/null 2>&1; echo rc=$?
+gen-depcruise,1,4.79,0.82,1.12,203,179,0,2026-10-26T15:23:38,sh -c npm run -s depcruise >/dev/null 2>&1; echo rc=$?
+gen-depcruise,2,4.8,0.78,1.05,208,179,0,2026-10-26T15:23:39,sh -c npm run -s depcruise >/dev/null 2>&1; echo rc=$?
+gen-depcruise,3,4.8,0.77,1.04,210,177,0,2026-10-26T15:23:40,sh -c npm run -s depcruise >/dev/null 2>&1; echo rc=$?
+gen-depcruise,4,4.8,0.78,1.03,210,176,0,2026-10-26T15:23:41,sh -c npm run -s depcruise >/dev/null 2>&1; echo rc=$?
+gen-knip,0,4.8,0.73,0.83,214,167,0,2026-10-26T15:23:41,sh -c npm run -s deadcode >/dev/null 2>&1; echo rc=$?
+gen-knip,1,4.8,0.5,0.69,194,139,0,2026-10-26T15:23:42,sh -c npm run -s deadcode >/dev/null 2>&1; echo rc=$?
+gen-knip,2,4.8,0.48,0.67,201,141,0,2026-10-26T15:23:43,sh -c npm run -s deadcode >/dev/null 2>&1; echo rc=$?
+gen-knip,3,4.66,0.49,0.69,197,139,0,2026-10-26T15:23:43,sh -c npm run -s deadcode >/dev/null 2>&1; echo rc=$?
+gen-knip,4,4.66,0.49,0.68,198,141,0,2026-10-26T15:23:44,sh -c npm run -s deadcode >/dev/null 2>&1; echo rc=$?
+gen-test-coverage,0,3.2,2.79,5.47,1118,1266,0,2026-10-26T15:24:12,sh -c npm run -s test:coverage ><scratch>/gen-gen-test-coverage.log 2>&1; echo rc=$?
+gen-test-coverage,1,3.35,3.68,7.62,1498,1310,0,2026-10-26T15:24:16,sh -c npm run -s test:coverage ><scratch>/gen-gen-test-coverage.log 2>&1; echo rc=$?
+gen-test-coverage,2,3.35,2.51,5.22,1049,1281,0,2026-10-26T15:24:19,sh -c npm run -s test:coverage ><scratch>/gen-gen-test-coverage.log 2>&1; echo rc=$?
+gen-test-e2e,0,3.16,0.25,0.33,185,132,0,2026-10-26T15:24:19,sh -c npm run -s test:e2e ><scratch>/gen-gen-test-e2e.log 2>&1; echo rc=$?
+gen-test-e2e,1,3.16,0.25,0.33,185,129,0,2026-10-26T15:24:20,sh -c npm run -s test:e2e ><scratch>/gen-gen-test-e2e.log 2>&1; echo rc=$?
+gen-test-e2e,2,3.16,0.25,0.33,193,134,0,2026-10-26T15:24:20,sh -c npm run -s test:e2e ><scratch>/gen-gen-test-e2e.log 2>&1; echo rc=$?
+gen-verify,0,2.94,7.71,13.99,1265,1306,0,2026-10-26T15:24:42,sh -c npm run -s verify > <scratch>/gen-verify.log 2>&1; echo rc=$?
+gen-verify,1,2.94,7.41,13.64,1106,1267,0,2026-10-26T15:24:50,sh -c npm run -s verify > <scratch>/gen-verify.log 2>&1; echo rc=$?
+gen-verify,2,2.78,7.74,14.24,1456,1269,0,2026-10-26T15:24:58,sh -c npm run -s verify > <scratch>/gen-verify.log 2>&1; echo rc=$?
+ex-eslint-cold,0,7.52,10.25,18.86,1174,1172,0,2026-10-26T15:29:08,sh -c ../../node_modules/.bin/eslint . >/dev/null 2>&1; true
+ex-eslint-cold,1,6.59,11.43,20.48,1235,1245,0,2026-10-26T15:29:20,sh -c ../../node_modules/.bin/eslint . >/dev/null 2>&1; true
+ex-eslint-cold,2,5.89,10.68,19.06,1455,1466,0,2026-10-26T15:29:30,sh -c ../../node_modules/.bin/eslint . >/dev/null 2>&1; true
+ex-eslint-cold,3,5.6,11.2,19.71,1175,1200,0,2026-10-26T15:29:42,sh -c ../../node_modules/.bin/eslint . >/dev/null 2>&1; true
+ex-eslint-cold,4,6.74,11.18,18.54,1653,1649,0,2026-10-26T15:29:53,sh -c ../../node_modules/.bin/eslint . >/dev/null 2>&1; true
+ex-oxlint-typed-js,0,5.98,2.42,7.08,905,553,0,2026-10-26T15:29:55,sh -c ../../node_modules/.bin/oxlint -c oxlintrc.tmp.json --type-aware >/dev/null 2>&1; true
+ex-oxlint-typed-js,1,5.98,2.44,6.98,856,545,0,2026-10-26T15:29:58,sh -c ../../node_modules/.bin/oxlint -c oxlintrc.tmp.json --type-aware >/dev/null 2>&1; true
+ex-oxlint-typed-js,2,5.74,2.62,7.31,870,545,0,2026-10-26T15:30:00,sh -c ../../node_modules/.bin/oxlint -c oxlintrc.tmp.json --type-aware >/dev/null 2>&1; true
+ex-oxlint-typed-js,3,5.74,3.73,9.05,876,558,0,2026-10-26T15:30:04,sh -c ../../node_modules/.bin/oxlint -c oxlintrc.tmp.json --type-aware >/dev/null 2>&1; true
+ex-oxlint-typed-js,4,7.52,2.64,7.41,864,549,0,2026-10-26T15:30:07,sh -c ../../node_modules/.bin/oxlint -c oxlintrc.tmp.json --type-aware >/dev/null 2>&1; true
+ex-oxlint-typed-native,0,7.52,0.72,4.35,796,552,0,2026-10-26T15:30:08,sh -c ../../node_modules/.bin/oxlint -c oxlintrc-native.tmp.json --type-aware >/dev/null 2>&1; true
+ex-oxlint-typed-native,1,7.32,0.63,3.99,663,554,0,2026-10-26T15:30:09,sh -c ../../node_modules/.bin/oxlint -c oxlintrc-native.tmp.json --type-aware >/dev/null 2>&1; true
+ex-oxlint-typed-native,2,7.32,0.59,3.69,721,547,0,2026-10-26T15:30:09,sh -c ../../node_modules/.bin/oxlint -c oxlintrc-native.tmp.json --type-aware >/dev/null 2>&1; true
+ex-oxlint-typed-native,3,7.32,0.58,3.71,716,546,0,2026-10-26T15:30:10,sh -c ../../node_modules/.bin/oxlint -c oxlintrc-native.tmp.json --type-aware >/dev/null 2>&1; true
+ex-oxlint-typed-native,4,7.32,0.58,3.71,720,546,0,2026-10-26T15:30:11,sh -c ../../node_modules/.bin/oxlint -c oxlintrc-native.tmp.json --type-aware >/dev/null 2>&1; true
+ex-biome,0,7.32,0.19,0.65,2,73,0,2026-10-26T15:30:11,sh -c ../../node_modules/.bin/biome format . >/dev/null 2>&1; true
+ex-biome,1,7.32,0.1,0.62,3,74,0,2026-10-26T15:30:11,sh -c ../../node_modules/.bin/biome format . >/dev/null 2>&1; true
+ex-biome,2,7.32,0.1,0.65,2,74,0,2026-10-26T15:30:11,sh -c ../../node_modules/.bin/biome format . >/dev/null 2>&1; true
+ex-biome,3,7.32,0.1,0.65,2,73,0,2026-10-26T15:30:11,sh -c ../../node_modules/.bin/biome format . >/dev/null 2>&1; true
+ex-biome,4,7.32,0.1,0.64,2,74,0,2026-10-26T15:30:12,sh -c ../../node_modules/.bin/biome format . >/dev/null 2>&1; true
+ex-typecheck,0,7.32,0.45,2.69,486,486,0,2026-10-26T15:30:12,sh -c node ../../node_modules/@typescript/native/bin/tsc -p tsconfig.json --noEmit >/dev/null 2>&1; true
+ex-typecheck,1,6.89,0.44,3.03,332,490,0,2026-10-26T15:30:13,sh -c node ../../node_modules/@typescript/native/bin/tsc -p tsconfig.json --noEmit >/dev/null 2>&1; true
+ex-typecheck,2,6.89,0.46,3.1,495,490,0,2026-10-26T15:30:14,sh -c node ../../node_modules/@typescript/native/bin/tsc -p tsconfig.json --noEmit >/dev/null 2>&1; true
+ex-typecheck,3,6.89,0.45,2.75,488,486,0,2026-10-26T15:30:14,sh -c node ../../node_modules/@typescript/native/bin/tsc -p tsconfig.json --noEmit >/dev/null 2>&1; true
+ex-typecheck,4,6.89,0.44,3.02,497,491,0,2026-10-26T15:30:15,sh -c node ../../node_modules/@typescript/native/bin/tsc -p tsconfig.json --noEmit >/dev/null 2>&1; true
+vitest-all-cache-cold,0,6.05,159.98,1693.02,6925,1311,0,2026-10-26T15:33:05,npx vitest run
+vitest-all-cache-cold,1,17.08,129.49,1620.0,8051,1302,0,2026-10-26T15:35:15,npx vitest run
+vitest-all-cache-cold,2,13.68,123.4,1589.37,7364,1321,0,2026-10-26T15:37:19,npx vitest run
+vitest-all-cache-warm,0,11.05,118.5,1560.85,7247,1306,0,2026-10-26T15:39:26,npx vitest run
+vitest-all-cache-warm,1,14.05,122.24,1613.76,6563,1339,0,2026-10-26T15:41:28,npx vitest run
+vitest-all-cache-warm,2,14.62,122.6,1609.79,6701,1321,0,2026-10-26T15:43:31,npx vitest run

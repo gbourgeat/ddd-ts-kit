@@ -1,5 +1,5 @@
 [English](build-and-test-velocity.md) · **Français**
-<!-- translation-of: build-and-test-velocity.md sha256:efdf678edcecc417 -->
+<!-- translation-of: build-and-test-velocity.md sha256:33acca65cbaf043b -->
 
 # Proposition : vélocité du build, des contrôles et des tests
 
@@ -19,7 +19,7 @@ faite de 743 *workers* isolés et d'un fichier de *spec* qui compile des *fixtur
 suite, et aucun orchestrateur ne changerait l'un ou l'autre ; ce qui aide, c'est la sélection,
 le découpage, le cache du lint et moins de jobs par exécution.
 
-## État (2026-10-23)
+## État (2026-10-23 ; les outils du projet oxc mesurés le 2026-10-26)
 
 **Construit, lignes 1 à 7, en une journée ; deux essais courent pendant un mois.** Chaque ligne a
 été une *pull request* à part, mesurée avant et après sur les indicateurs ci-dessous ; les
@@ -34,7 +34,8 @@ page française et celle-ci gardent l'étude telle qu'elle a été écrite, puis
 | 4. ESLint avec son cache par contenu, la vérification des types des *specs* en parallèle | **construit** (#253) : `npm run lint` de 36,5 s à 1,3 s quand rien n'a changé, le cache abandonné quand les règles du kit telles que construites, la config ou le *lockfile* ont changé (`pipeline/monorepo/lint.mjs`) ; le tronc écrit le cache du *pipeline*, une *pull request* le restaure ; `typecheck:tests` de 5,1 s à 3,3 s ; les projets qu'`init` écrit prennent le même cache dans `ddd-ts-kit lint` et dans leur job de lint avec la *pull request* #262 |
 | 5. Le cache d'installation | **construit autrement** (#254) : la clé suivait déjà le *lockfile* et les manifestes qu'elle contient gardent le *lockfile*, donc la clé reste ; la moitié des 10 Go étaient les caches de *pull requests* fusionnées, supprimés désormais à la fermeture d'une *pull request* ; 10 052 Mo à 5 637 Mo le jour où le *workflow* est arrivé |
 | 6. Les familles lourdes exécutent deux fichiers à la fois, leur géant d'un seul fichier coupé (réécrite : le job unitaire a cessé d'être le plus long après la ligne 2) | **construit** (#255) : les projets générés et les exécutions de l'alias deux fichiers à la fois avec deux *workers* chacun, `alias-runtime.spec.ts` en deux moitiés, les *shards* de bout en bout équilibrés sur des secondes mesurées (505 à 521 s chacun, de 352 à 715 s) ; sur quatre cœurs la famille *managers* de 521 s à 308 s ; deux fichiers à la fois a été essayé sur les *shards* aussi et a fait expirer les *specs* d'un projet généré : ils restent à un à la fois |
-| 7. Oxlint avec tsgolint et les règles du kit comme *plugin* JS ; *runners* arm64 | **à l'essai** (#256) : la seule règle qui cassait sous l'API de *plugins* corrigée (#257 répare la règle *stepdown* sur les scripts, qu'Oxlint a révélée), `npm run lint:oxlint` 6 s et 1,0 Go contre 35 s et 3,0 Go, un job du tronc et de la nuit à côté d'ESLint ; les *specs* unitaires et le troisième *shard* de bout en bout sur `ubuntu-26.04-arm` la nuit ; verdicts après un mois |
+| 7. Oxlint avec tsgolint et les règles du kit comme *plugin* JS ; *runners* arm64 | **à l'essai** (#256) : la seule règle qui cassait sous l'API de *plugins* corrigée (#257 répare la règle *stepdown* sur les scripts, qu'Oxlint a révélée), `npm run lint:oxlint` 6 s et 1,0 Go contre 35 s et 3,0 Go, un job du tronc et de la nuit à côté d'ESLint ; les *specs* unitaires et le troisième *shard* de bout en bout sur `ubuntu-26.04-arm` la nuit ; verdicts après un mois. Mesuré de nouveau le 2026-10-26 ([Les outils du projet oxc](#les-outils-du-projet-oxc-mesurés-le-2026-10-26)) : le *plugin* tourne entier sur cet arbre et les règles natives sont à parité (1 197 constats sur 1 197 sur un corpus, trois constats vrais de plus), mais trois règles du kit lisent ce qu'Oxlint ne donne pas à un *plugin* JS (les types, le *parser*), et `clean-no-commented-out-code`, active dans ce dépôt, ne rapporte rien sous lui : pas la porte avant la correction du *plugin* |
+| Oxfmt, tsdown, oxc-transform, le cache de modules de Vitest gardé dans le *pipeline* | **pas maintenant** (2026-10-26) : le contrôle du format prend 0,33 s, le build 2 s et s'exécute une fois par état des sources, le cache de modules fait gagner 5 % de toute la suite unitaire ; rien à gagner contre un reformatage, des déclarations perdues ou un cache de 122 Mo |
 | pnpm pour ce dépôt | **pas maintenant** : 1 s au lieu de 8 s par installation, derrière la même restauration de cache ; le filtre qu'il offre existe déjà |
 | Nx, Turborepo, moon, Lage, Rush | **non** : plus rien à mettre en cache, la sélection des *packages* atteints existe, un cache distant coûte ou expose |
 | Biome comme *linter*, bun test ou node:test comme *runner* | **non** : les types, les modules natifs et la couverture |
@@ -286,16 +287,6 @@ les mêmes choses que l'exécution de référence d'ESLint (un avertissement sur
 | Oxlint | `--type-aware --type-check` | 6,2 s | 1,7 Go | 5 erreurs de types que `tsc` ne rapporte pas, toutes sous `test/` : les fichiers ont été vérifiés contre le `tsconfig.json` de leur *package* (les sources seules), pas contre leur `tsconfig.test.json` |
 | Oxlint | les 70 règles du kit comme *plugin* JS, sans types (deux fois) | 4,1 s | 0,4 Go | **le *plugin* échoue sur 2 494 fichiers** (« Error running JS plugin: cannot convert undefined or null to object ») et rapporte 43 constats `clean-stepdown` qu'ESLint ne rapporte pas : l'API de l'alpha ne porte pas ce que les règles lisent |
 | Oxlint | la même avec `--type-aware` (deux fois) | 6,1 s | 1,3 à 1,5 Go | idem |
-
-Oxlint lit tout l'arbre en 2 s et ses règles typées en 4 s, contre 35 s pour ESLint : la
-vitesse rapportée par les autres équipes tient ici. Les constats, non : avec les règles de
-typescript-eslint et d'ESLint seules, 16 à 17 constats apparaissent qu'ESLint ne rapporte pas,
-une règle à désactiver (`no-redeclare`) et trois à examiner ; avec les règles du kit chargées
-par l'API de *plugins* JS, qui est en alpha, le *plugin* casse sur 2 494 des fichiers et la
-règle *stepdown* rapporte 43 constats qu'ESLint ne rapporte pas. La parité des constats n'y est
-pas, et tant que le *plugin* ne tourne pas entier sous cette API, Oxlint ne peut pas être la
-porte d'un projet qui utilise le kit. Il peut tourner à côté d'ESLint, sans bloquer, pour
-mesurer l'écart à mesure que l'API mûrit.
 | vérification des types des *specs* | 25 `tsc -p` à la suite | 5,1 s | 0,4 Go | le job typecheck du *pipeline* (39 à 44 s) est sa mise en place et le build, pas la vérification |
 | vérification des types des *specs* | les 25 à la fois | 2,3 s | 2,4 Go | six fois la mémoire pour la moitié du temps : plafonner aux cœurs du *runner* |
 | `check --self` | 665 *fixtures* de règles | 2,0 s | 0,1 Go | le job architecture (138 à 170 s) tient à ses autres étapes : le script de version, dependency-cruiser et neuf fichiers `node --test` |
@@ -309,6 +300,16 @@ mesurer l'écart à mesure que l'API mûrit.
 | installation | la même, *store* chaud, vérification en cache | **0,6 à 2,0 s** | 0,06 Go | des liens durs depuis le *store* : 1 361 *packages* en moins d'une seconde |
 | installation | la même avec `minimumReleaseAge: 0` | 0,6 s | 0,2 Go | la vérification sautée |
 | installation | rien à faire (`node_modules` présent) | pnpm 0,05 s, npm 8,2 s | | npm réinstalle, pnpm répond |
+
+Oxlint lit tout l'arbre en 2 s et ses règles typées en 4 s, contre 35 s pour ESLint : la
+vitesse rapportée par les autres équipes tient ici. Les constats, non : avec les règles de
+typescript-eslint et d'ESLint seules, 16 à 17 constats apparaissent qu'ESLint ne rapporte pas,
+une règle à désactiver (`no-redeclare`) et trois à examiner ; avec les règles du kit chargées
+par l'API de *plugins* JS, qui est en alpha, le *plugin* casse sur 2 494 des fichiers et la
+règle *stepdown* rapporte 43 constats qu'ESLint ne rapporte pas. La parité des constats n'y est
+pas, et tant que le *plugin* ne tourne pas entier sous cette API, Oxlint ne peut pas être la
+porte d'un projet qui utilise le kit. Il peut tourner à côté d'ESLint, sans bloquer, pour
+mesurer l'écart à mesure que l'API mûrit.
 
 ## Ce que d'autres équipes ont trouvé
 
@@ -489,7 +490,9 @@ description, mesuré avant et après sur les mêmes exécutions.
    lit quelque chose que l'alpha ne porte pas), signalée en amont ou contournée dans le
    *plugin* ; les jobs unitaires et de bout en bout sur `ubuntu-26.04-arm` aux exécutions de
    nuit, leurs p50 comparés aux exécutions x64. Chacun finit par un verdict écrit sur cette
-   page.
+   page. L'essai d'Oxlint continue comme le dit le plan de
+   [Les outils du projet oxc](#les-outils-du-projet-oxc-mesurés-le-2026-10-26) : le *plugin*
+   corrigé d'abord, puis les constats comparés, puis la porte.
 
 Ce que ce plan ne fait pas : il n'ajoute aucun outil qu'un contributeur doive apprendre, aucun
 démon, aucun cache distant avec un secret, et il garde toute la matrice sur le tronc et la nuit,
@@ -506,11 +509,337 @@ au *commit*, un job porte qui lit tous les autres. Ce que cette étude ajoute à
 mesure avant de changer d'outil. Aucun orchestrateur n'est ajouté aux *templates*, pour les
 raisons ci-dessus.
 
+## Les outils du projet oxc, mesurés le 2026-10-26
+
+L'oxc-project (VoidZero) publie une famille d'outils en Rust pour JavaScript et TypeScript : Oxlint
+et son moteur typé tsgolint, le formateur Oxfmt, le transformateur `oxc-transform` avec ses
+déclarations isolées et, sur Rolldown, le *bundler* de bibliothèques tsdown ; Vite 8, sous
+Vitest 5, transforme déjà avec Oxc. Cette section mesure chacun contre l'outil qu'il remplacerait
+dans ce dépôt et dans les projets qu'`init` écrit, sur les indicateurs de la méthode : la parité
+des constats d'abord (un outil plus rapide qui ne fait pas le même travail n'est pas candidat),
+puis le temps de mur, le temps CPU et le pic de mémoire. Rien n'est adopté ici : le plan de la fin
+liste les *pull requests* qui le feraient.
+
+### Où le *pipeline* passe son temps
+
+Médianes de 17 exécutions du 2026-10-24 au 2026-10-26 (sept du tronc, huit *pull requests*, deux
+nuits), par job, en secondes de *runner*, lues dans l'API de GitHub Actions :
+
+| Job | Tronc | *Pull request* | Nuit |
+|---|---|---|---|
+| Tests de bout en bout, les quatre *shards* ensemble | 3 494 | 3 450 | 2 953 |
+| Projet généré sur npm, sur pnpm | 840, 568 | 865, non exécuté | 824, 597 |
+| Tests unitaires, Node 24 avec couverture, Node 22 | 651, 627 | 450, 330 | 612, 473 |
+| Alias d'import à l'exécution, Node 22, Node 24 | 445, 385 | non exécuté, 533 | 464, 490 |
+| Application d'exemple | 400 | 397 | 358 |
+| Intégration, architecture, chaque règle cassée une fois | 204, 189, 171 | 29, 183, 175 | 196, 166, 139 |
+| Contrôles statiques (vérification des types 24 s, *pack* 51 s, site 31 s) | 137 | 138 | 141 |
+| **Lint** (ESLint 70 s sur le tronc, qui écrit son cache ; contrôle du format 2 s) | **97** | **38** | **77** |
+| Essai, Oxlint à côté d'ESLint (Oxlint lui-même 13 s) | 38 | non exécuté | 33 |
+| Installation et build (le build restauré de son cache) | 33 | 33 | 23 |
+| **Une exécution entière** | **environ 8 300** | **environ 7 700** | **7 500 à 11 800** |
+
+Le lint et le contrôle du format de ce dépôt font 1,2 % d'une exécution du tronc et 0,5 % d'une
+exécution de *pull request*, et le build s'exécute une fois par état des sources, chaque autre
+job le restaurant. Environ 6 300 des 8 300 secondes d'une exécution du tronc vont aux familles
+qui génèrent des projets et exécutent leur porte (installation, compilateur, ESLint, Biome,
+*specs* avec couverture, vérificateur, graphe, code mort). Un outil plus rapide raccourcit le
+*pipeline* là où il tourne dans ces projets, ce qui est la partie 5, plus que dans les jobs du
+dépôt lui-même ; sur une station de travail, il raccourcit ce qu'une personne ou un agent attend.
+
+### Méthode du jour
+
+La station de travail de l'étude (20 cœurs, 32 Go, Linux 6.8), Node 24.22.1, npm 11.19.1.
+Versions : ESLint 10 et typescript-eslint 8 tels que verrouillés, Oxlint 1.89.0 avec
+oxlint-tsgolint 7.0.2005 (TypeScript 7.0.2 à l'intérieur), @oxlint/migrate 1.89.0, Biome 2.6.2,
+Oxfmt 0.74.0, TypeScript natif 7.0.2, TypeScript 6.0.3, oxc-transform 0.155.0, tsdown 0.23.2 sur
+Rolldown 1.2.15, Vitest 5.0.5 sur Vite 8.3.4 et Rolldown 1.2.13. Chaque commande a tourné sous
+`nice`, une à la fois, trois fois, cinq quand la charge moyenne de la dernière minute dépassait 4
+juste avant (la suite unitaire entière : trois exécutions quelle que soit la charge, ses propres
+*workers* la font monter) ; les tableaux donnent le minimum et la médiane du temps de mur, la
+médiane du temps CPU (utilisateur et système, `/usr/bin/time`) et la médiane du pic de mémoire
+de tout l'arbre de processus, la mémoire résidente de chaque processus sous la commande, sommée
+toutes les 200 ms depuis `/proc`. Une commande de moins de 200 ms échappe à cet échantillonnage :
+son pic est alors celui que `/usr/bin/time` donne pour son seul processus principal (`%M`), le
+plus grand des deux étant gardé. La machine était partagée avec d'autres sessions d'agents de code
+(charge de 0,7 à 17 avant une exécution, chacune notée) ; un chiffre mesuré sous une charge n'est
+comparé qu'à un chiffre mesuré sous une charge semblable. Les outils que le dépôt n'installe pas
+ont tourné depuis le cache de `npx -y <package>@<version exacte>`, ce qui laisse le dépôt intact.
+Les exécutions brutes sont dans [build-and-test-velocity-oxc.csv](build-and-test-velocity-oxc.csv)
+(le code de sortie d'une commande enveloppée dans `sh -c '...; true'` est celui de l'enveloppe).
+
+### 1. Oxlint et tsgolint contre ESLint et typescript-eslint
+
+**Ce qu'il remplace.** ESLint, typescript-eslint et les règles du kit, chargées comme *plugin*
+JS : `npm run lint`, le job Lint et l'étape ESLint du *hook* de *pre-commit* ici ;
+`ddd-ts-kit lint` et son job dans un projet généré.
+
+**Parité.** Quatre arbres, les mêmes règles des deux côtés.
+
+| Arbre | ESLint | Oxlint | Même fichier, ligne et règle | Oxlint seul |
+|---|---|---|---|---|
+| ce dépôt, la porte telle que configurée (6 084 fichiers) | 3 | 6 | 3 | 3 |
+| les 1 326 fichiers de *spec* sous les règles non typées des sources, un corpus à constats | 1 197 | 1 199 | 1 197 | 2 |
+| la copie de l'exemple, intacte, le *preset* du kit (985 fichiers) | 0 | 345 | 0 | 345 |
+| la même avec chaque règle du catalogue cassée une fois, `naming-business-name` désactivée dans Oxlint | 89 | 97 | 86 | 11 |
+
+- **Ce dépôt.** Le *plugin* du kit tourne désormais entier sous l'API de *plugins* JS (il cassait
+  sur 2 494 fichiers le 2026-10-23, avant #257). Les trois constats qu'ESLint ne rapporte pas sont
+  vrais : `no-unsafe-optional-chaining` deux fois sur `(x?.y as T)['200']` dans deux *specs*, où
+  Oxlint voit à travers l'assertion de type et la règle de base d'ESLint non, et `unbound-method`
+  une fois sur `(this.options.follow ?? followWithFetch)(request)` dans `packages/testing`, où
+  `follow` est déclarée comme méthode : l'appel perd son `this`, et typescript-eslint le manque.
+- **Le corpus.** Les règles non typées des sources (les règles `clean-*` du kit, la mise en page de
+  `@stylistic`, `complexity`, `max-depth`, le jeu strict de typescript-eslint) appliquées aux
+  *specs*, qui n'y sont pas tenues : 755 `clean-stepdown`, 225 `clean-no-escape-hatch`, 173
+  `clean-function-size`, 22 `complexity`, 13 `consistent-type-imports` et 9 autres, chacun au
+  même endroit dans les deux outils, aux deux mêmes `no-unsafe-optional-chaining` près.
+- **L'exemple, où la parité casse.** La suite de conformité casse chaque règle du catalogue une
+  fois dans une copie de l'exemple ; la même copie, passée aux deux outils dans les mêmes tours,
+  dit ce que le corpus ne pouvait pas dire :
+  - `naming-business-name` lit les types par `getParserServices`, qu'un *plugin* JS d'Oxlint ne
+    reçoit pas : la règle lève une exception, et l'exception arrête **toutes les règles du kit**
+    sur le fichier. Sur la copie intacte, cela fait 303 fichiers sur 985 où aucune règle du kit
+    ne tourne, et 50 des 77 injections qu'ESLint rapporte manquées.
+  - `clean-no-commented-out-code` et `language-declared-vocabulary` analysent du texte avec
+    `context.languageOptions.parser`, qu'Oxlint ne transmet pas : elles ne rapportent rien, en
+    silence. `clean-no-commented-out-code` est active dans ce dépôt aussi ; un fichier sonde avec
+    `// const doubled = value * 2;` reçoit le constat d'ESLint et aucun d'Oxlint.
+  - `consistent-type-imports` d'Oxlint ne connaît pas `emitDecoratorMetadata`, que les projets en
+    `--dependencies signature` activent : 41 constats sur la copie intacte et 10 de plus dans les
+    tours, tous faux (les paramètres du constructeur sont lus à l'exécution ; sa correction
+    casserait le câblage).
+  - Avec `naming-business-name` désactivée, 74 des 77 injections qu'ESLint rapporte le sont par
+    les deux, 86 des 89 constats au même endroit ; les manques sont les trois règles ci-dessus.
+
+**Ce qui diffère dans la configuration.** La parité tient une fois que la configuration dit la
+même chose, ce que l'outil de migration ne fait pas seul :
+
+- `@oxlint/migrate` ne sait pas exprimer un bloc dont les `files` se combinent avec les `files`
+  d'une configuration qu'il étend (16 avertissements « AND glob patterns » ici) : il abandonne
+  quatre règles des sources (`no-var`, `prefer-const`, `prefer-rest-params`, `prefer-spread`) et
+  laisse actives treize règles de base que typescript-eslint désactive parce que le compilateur
+  les vérifie (`constructor-super`, `no-dupe-keys`, `no-unreachable` et dix autres). Le
+  `.oxlintrc.json` versionné a les deux écarts, et il lui manque l'exclusion de
+  `packages/audit/test/generated/`. Le *preset* d'un projet généré n'a pas cette imbrication, et
+  ses jeux de règles concordent.
+- Non implémentée : `@typescript-eslint/no-unsafe-enum-assignment` (dans `strictTypeChecked`).
+  `no-octal` et `no-dupe-args` sont des erreurs de syntaxe dans un module et n'ont pas besoin de
+  règle.
+- Dans la *nursery* d'Oxlint (inactives sauf si nommées) : `no-unnecessary-condition` (typée,
+  dans `typedCleanCode` du kit), `no-useless-assignment`, `no-undef`. Nommées, elles ne rapportent
+  rien sur ce dépôt, comme ESLint ; sur un fichier sonde, `no-unnecessary-condition` a trouvé ses
+  deux fautes et `no-useless-assignment` a manqué celle qu'elle devait rapporter.
+- `no-undef` d'Oxlint ne traite pas un fichier `.cjs` comme du CommonJS : sur un projet généré,
+  elle rapporte `module` dans `.dependency-cruiser.cjs` ; un `env` `commonjs` pour `**/*.cjs` le
+  règle.
+- Oxlint n'a pas de cache, et n'en a pas besoin à ces temps-là.
+
+**Coût sur la station de travail :**
+
+| Exécution | Mur min / médiane | CPU | Pic de mémoire |
+|---|---|---|---|
+| ESLint, tout le dépôt, sans cache (`eslint .`) | 35,7 / 36,4 s | 58,5 s | 3,0 Go |
+| ESLint, cache par contenu, rien de changé (`npm run lint`) | 1,16 / 1,17 s | 1,7 s | 0,39 Go |
+| ESLint, cache par contenu, un fichier source changé | 1,65 / 1,69 s | 2,8 s | 0,50 Go |
+| Oxlint, tout le dépôt, typé, règles du kit comme *plugin* JS (`npm run lint:oxlint`) | 5,75 / 5,85 s | 20,2 s | 1,63 Go |
+| Oxlint, typé, règles natives seules | 2,39 / 2,45 s | 14,7 s | 1,33 Go |
+| Oxlint, non typé, avec le *plugin* JS | 3,42 / 3,50 s | 6,2 s | 0,45 Go |
+| Oxlint, non typé, règles natives seules | 0,07 / 0,08 s | 0,7 s | 0,29 Go |
+| les 13 fichiers d'un *commit* typique (#405), ESLint comme le *hook* de *pre-commit* l'exécute (sans cache) | 1,62 / 1,63 s | 3,5 s | 0,50 Go |
+| les mêmes, Oxlint typé avec le *plugin* JS | 0,82 / 0,82 s | 2,8 s | 0,29 Go |
+| le corpus des *specs*, ESLint / Oxlint, non typé, *plugin* du kit | 5,59 / 5,61 s, 1,67 / 1,69 s | 10,3 s, 3,5 s | 0,79 Go, 0,39 Go |
+
+Lecture : sans cache, Oxlint est six fois plus rapide qu'ESLint et prend la moitié de sa mémoire ;
+de ses 5,9 s, 3,4 s sont le *plugin* du kit qui tourne en JavaScript et 2,4 s les règles typées,
+les règles natives seules prenant 80 ms. Avec son cache par contenu, ESLint répond sur une station
+de travail en 1,2 à 1,7 s, plus vite qu'Oxlint : le gain est sur une exécution à froid (un
+*worktree* neuf, une configuration ou un *lockfile* changés, le job du tronc qui écrit le cache :
+70 s d'ESLint contre 13 s d'Oxlint sur le même *runner*) et dans le *hook* de *pre-commit*
+(0,8 s par *commit*).
+
+**Verdict pour ce dépôt : pas encore ; essayer en CI une fois que le *plugin* tourne entier.** Sur
+les règles qu'Oxlint porte nativement, la parité est atteinte (1 197 sur 1 197 sur le corpus, trois
+constats vrais de plus sur l'arbre), ce que l'étude du 2026-10-23 ne pouvait pas dire. C'est le
+*plugin* du kit qui l'arrête : une règle qui lève une exception sans les types et deux qui ne
+rapportent rien sans *parser*, dont une active dans ce dépôt. Le gain, une fois cela corrigé, est
+faible pour le *pipeline* (environ 57 s d'une exécution du tronc, 0,7 %) et réel sur une station
+de travail à froid (36 s, 58 s CPU et 3,0 Go à 6 s, 20 s CPU et 1,6 Go).
+
+### 2. Oxfmt contre le formateur de Biome
+
+**Ce qu'il remplace.** `biome format` : le contrôle du format du job Lint et du *hook* de
+*pre-commit*, `npm run format`. Le *linter* de Biome est désactivé dans ce dépôt.
+
+**Parité.** `oxfmt --migrate=biome` reprend la largeur 120, les guillemets simples, les virgules
+finales, les points-virgules et les parenthèses autour des paramètres des fonctions fléchées. Sur
+les 7 171 fichiers que Biome formate (6 985 `.ts`), Oxfmt en réécrirait 73 : 30 `package.json`
+dont il trie les champs par défaut (`sortPackageJson`, désactivable), et 43 fichiers TypeScript sur
+314 lignes où Oxfmt imprime comme Prettier et Biome autrement : un en-tête de classe avec un long
+`implements` (11 endroits), un dernier argument qui est une fonction fléchée avec un type de
+retour, collé (12), une longue liste d'exports remise sur une ligne, une chaîne de membres coupée,
+le `; )` d'une clause `for` vide. Rien qui change le code : un reformatage unique de 43 fichiers,
+puis un style qui suit Prettier plutôt que Biome. Par défaut, il formate aussi le Markdown, le
+YAML et les autres fichiers que Biome laisse (18 fichiers d'un projet généré, son README parmi
+eux).
+
+| Exécution | Mur min / médiane | CPU | Pic de mémoire |
+|---|---|---|---|
+| Biome 2.6.2, contrôle du format du dépôt | 0,33 / 0,33 s | 5,1 s | 0,24 Go |
+| Oxfmt 0.74.0, les mêmes 7 171 fichiers | 0,13 / 0,13 s | 1,1 s | 0,21 Go |
+| Biome / Oxfmt, un projet généré (`init`, 82 `.ts`) | 0,04 / 0,05 s, 0,03 / 0,04 s | 0,1 s, 0,1 s | 0,05 Go, 0,18 Go |
+
+**Verdict : pas maintenant.** Oxfmt est 2,5 fois plus rapide et dépense un cinquième du CPU sur
+une étape d'un tiers de seconde, 2 s d'un job du *pipeline* : rien à gagner, un reformatage à
+payer, une bêta (0.x depuis février 2026) au lieu d'une 2.x. À regarder de nouveau si le contrôle
+du format devient une étape lente, ou une fois qu'Oxlint est le *linter* et qu'une seule chaîne
+d'outils veut dire un outil de moins.
+
+### 3. Le build : tsdown et oxc-transform contre le compilateur natif
+
+**Ce qu'ils remplaceraient.** `tsc -b` des 26 *packages*, qui vérifie les types et écrit le
+JavaScript, les déclarations et les *maps*, et `pipeline/monorepo/add-extensions.mjs`, qui écrit
+les `.js` que les sources omettent.
+
+| Exécution | Mur min / médiane | CPU | Pic de mémoire | Ce qu'il ne fait pas |
+|---|---|---|---|---|
+| `npm run build` depuis zéro, 26 *packages* | 1,99 / 2,01 s | 14,1 s | 0,93 Go | |
+| `npm run build`, rien à faire | 0,24 / 0,25 s | 0,4 s | 0,13 Go | |
+| `add-extensions` seul | 0,08 / 0,08 s | 0,1 s | 0,06 Go | |
+| `tsc -b packages/kernel` depuis zéro, 644 fichiers | 0,19 / 0,19 s | 1,0 s | 0,17 Go | |
+| tsdown, le *kernel* non regroupé, déclarations par TypeScript 6 | 2,07 / 2,09 s | 4,4 s | 0,75 Go | vérification des types ; écrit des `.mjs` et `.d.mts` |
+| tsdown, le *kernel* non regroupé, sans déclarations | 0,21 / 0,22 s | 0,9 s | 0,28 Go | déclarations, vérification des types |
+| oxc-transform, les 4 582 sources, JavaScript et déclarations isolées | 0,41 / 0,41 s | 0,5 s | 0,08 Go | vérification des types, `.js` dans les imports ; 305 erreurs de déclarations |
+| oxc-transform, JavaScript seul | 0,28 / 0,28 s | 0,3 s | 0,08 Go | déclarations, vérification des types, `.js` dans les imports |
+
+Lecture : le compilateur natif construit le *kernel* en 0,19 s avec sa vérification des types ;
+tsdown n'est pas plus rapide sans déclarations et onze fois plus lent avec, car son *plugin* de
+déclarations appelle l'API JavaScript de TypeScript 6 (TypeScript 7 n'en a pas encore).
+oxc-transform écrit tout l'arbre en 0,4 s sur un cœur, mais ses déclarations demandent
+`isolatedDeclarations`, que 183 fichiers sources enfreignent 298 fois (`tsc --isolatedDeclarations` :
+des types de retour et de propriétés explicites manquent, TS9010 115 fois, TS9013 113), il ne
+vérifie aucun type, si bien qu'un `tsc --noEmit` reste à côté, et il laisse les imports sans
+extension tels quels.
+
+**Verdict : pas maintenant, rien à gagner.** Le build coûte 2 s depuis zéro et un quart de seconde
+quand rien n'a changé ; changer d'outil échangerait les déclarations ou la vérification des types
+contre au plus une seconde et demie, une fois par état des sources dans le *pipeline*. À regarder
+de nouveau si un *package* doit livrer un *bundle*, ou quand TypeScript 7.1 donnera à tsdown une
+voie native pour les déclarations.
+
+### 4. Vitest sur Vite 8 : ce que la transformation d'Oxc donne déjà
+
+Les configurations Vitest du dépôt et des projets générés ne fixent aucune transformation :
+Vitest 5.0.5 tourne sur Vite 8.3.4, qui transforme avec Oxc et regroupe avec Rolldown ; il ne reste
+ni esbuild ni SWC à remplacer. Essayé à côté des *pools* et de l'isolation que l'étude a déjà
+écartés :
+
+| Réglage | Mur min / médiane | CPU | Pic de mémoire |
+|---|---|---|---|
+| `vitest run packages/kernel` (59 fichiers, la moitié des cœurs), le cache de modules de Vitest chaud (`experimental.fsModuleCache`, actif par défaut) | 7,38 / 7,40 s | 79,1 s | 4,3 Go |
+| le même, ce cache vidé avant chaque exécution | 11,78 / 11,93 s | 84,5 s | 4,4 Go |
+| le même, ce cache désactivé | 11,54 / 11,74 s | 84,8 s | 4,3 Go |
+| le même, quatre *workers*, chaud / froid, sous la même charge | 7,14 / 7,18 s, 11,77 / 11,82 s | 67,3 s, 73,9 s | 4,1 Go, 3,9 Go |
+| `deps.optimizer.ssr.enabled`, cache chaud | 7,31 / 7,42 s | 79,0 s | 4,3 Go |
+| `vitest run packages/http` (47 fichiers), chaud / froid | 4,00 / 4,05 s, 5,10 / 5,42 s | 48,8 s, 56,4 s | 1,9 Go, 2,1 Go |
+| toute la suite unitaire (844 fichiers), chaud / froid | 118,5 / 122,2 s, 123,4 / 129,5 s | 1 610 s, 1 620 s | 6,7 Go, 7,4 Go |
+| `experimental.viteModuleRunner: false` (le *loader* de Node) | échoue | | |
+
+Lecture : la transformation d'Oxc tourne dans le processus principal, qui nourrit chaque *worker* ;
+sur un petit *package*, le cache de modules de Vitest 5 fait gagner 38 % du temps de mur (le
+*kernel*, chaud et froid sous la même charge ; 25 % sur http, froid sous une charge plus lourde) ;
+sur toute la suite, où les *specs* elles-mêmes dominent (compilateurs enfants, PGlite), il fait
+gagner 5 % du temps de mur et 1 % du CPU, pour un cache de 122 Mo. L'optimiseur de dépendances
+n'apporte rien. Le *loader* de Node ne sait pas résoudre les imports sans extension des sources.
+Sur une station de travail, le cache est déjà actif ; dans le *pipeline*, il est toujours froid,
+car il vit dans `node_modules`, que le job d'installation sauvegarde avant qu'aucune *spec* ait
+tourné.
+
+**Verdict : rien à changer.** Garder ce cache dans le *pipeline* gagnerait environ 5 % d'un job
+unitaire (quelque 30 s sur 650) pour 122 Mo de plus dans un cache de 10 Go déjà à moitié plein :
+pas maintenant.
+
+### 5. Ce qu'un projet généré reçoit
+
+`init` écrit ESLint avec le *preset* du kit, Biome comme formateur, le compilateur natif et
+Vitest. Mesurés : un projet d'`init --context billing:core --package-manager npm`, installé depuis
+le registre (kit 0.92.0, 82 fichiers TypeScript), et l'application d'exemple (985 fichiers) comme
+projet qui a grandi.
+
+| Étape | Projet d'`init` | L'exemple |
+|---|---|---|
+| toute la porte (`npm run verify`, le lint depuis son cache) | 7,41 / 7,71 s, 14,0 s CPU, 1,3 Go | |
+| ESLint, sans cache (le job d'un clone neuf, et chaque porte des familles de ce *pipeline*) | 2,89 / 3,05 s, 5,9 s CPU, 0,66 Go | 10,25 / 11,18 s, 19,1 s CPU, 1,2 Go |
+| `ddd-ts-kit lint`, cache chaud | 1,07 / 1,10 s, 1,6 s CPU, 0,43 Go | |
+| Oxlint, typé, le *preset* tel que migré | 1,00 / 1,01 s, 3,2 s CPU, 0,38 Go | 2,42 / 2,62 s, 7,3 s CPU, 0,87 Go (`naming-business-name` désactivée) |
+| Oxlint, typé, règles natives seules | | 0,58 / 0,59 s, 3,7 s CPU, 0,72 Go |
+| vérification des types | 0,23 s, 1,2 s CPU | 0,44 / 0,45 s, 3,0 s CPU, 0,49 Go |
+| Biome, contrôle du format | 0,05 s | 0,10 s |
+| *specs* avec couverture | 2,51 / 2,79 s, 5,5 s CPU, 1,3 Go | |
+
+Lecture : un ESLint à froid fait le tiers de la porte d'un projet neuf et la plus grosse étape
+statique d'un projet qui a grandi, 25 fois la vérification des types ; Oxlint le ferait passer de
+3 s à 1 s et de 11 s à 2,6 s, avec 40 à 55 % du CPU et 60 à 70 % de la mémoire. Dans ce *pipeline*,
+les familles de bout en bout exécutent la porte d'environ 35 projets d'échantillon, chacune à
+froid, si bien que le gain serait de l'ordre d'une à cinq minutes de *runners* par exécution, au
+plus 3 % ; dans le *pipeline* du projet d'un utilisateur, dont le job de lint lit le cache ESLint
+de son tronc, il ne porte que sur les exécutions à froid.
+
+**Verdict : pas maintenant.** La parité n'y est pas sur le *preset* (partie 1) : une règle du kit
+qui arrête toutes les autres sur 303 fichiers sur 985, deux qui ne rapportent rien, une règle
+native qui rapporte 41 faux constats sur les projets qui câblent par la signature du constructeur
+et dont la correction les casserait. La CLI, le *guard* et `ddd-ts-kit lint` exécutent ESLint, et
+le *plugin* est un *plugin* ESLint ; un second *linter* dans les *templates* est un choix qu'un
+projet fait, après les corrections ci-dessous, pas un défaut.
+
+### Verdicts, et le plan des *pull requests* qui suivent
+
+| Outil | Remplace | Chiffre décisif | Verdict |
+|---|---|---|---|
+| Oxlint + tsgolint, règles du kit comme *plugin* JS, dans ce dépôt | ESLint + typescript-eslint | parité native 1 197 sur 1 197 ; mais `clean-no-commented-out-code` ne rapporte rien sous Oxlint ; 36 s à 6 s à froid, ESLint déjà à 1,2 s avec son cache | **pas encore : essayer en CI après la correction du *plugin*** |
+| le même dans les projets qu'`init` écrit | le même | 74 injections sur 77, une règle qui arrête le *plugin* sur 303 fichiers sur 985, 41 faux `consistent-type-imports` | **pas maintenant ; une option après les corrections** |
+| Oxfmt | le formateur de Biome | 0,33 s à 0,13 s sur une étape de 2 s dans le *pipeline* ; 43 fichiers reformatés | **pas maintenant** |
+| tsdown, oxc-transform | `tsc -b` et `add-extensions` | build 2,0 s ; tsdown onze fois plus lent avec les déclarations ; 298 erreurs de déclarations isolées | **pas maintenant** |
+| le cache de modules de Vitest gardé dans le *pipeline* | rien (un réglage) | 5 % de toute la suite pour 122 Mo | **pas maintenant** |
+| l'optimiseur de dépendances, le *loader* de Node dans Vitest | | aucun gain ; échoue sur les imports sans extension | **non** |
+
+Le plan, dans l'ordre ; chaque ligne est une *pull request*, mesurée avant et après sur les
+indicateurs de cette page :
+
+1. **Le *plugin* du kit tourne entier sous Oxlint.** `clean-no-commented-out-code` et
+   `language-declared-vocabulary` analysent avec un *parser* à elles quand
+   `context.languageOptions.parser` est absent ; `naming-business-name` se rabat sur les noms du
+   code quand les services du *parser* sont absents, au lieu de lever une exception. Une *spec*
+   exécute les règles du *plugin* sur les mêmes échantillons sous les deux *linters*. Gain : aucun
+   à lui seul ; la condition du reste (77 injections sur 77 attendues).
+2. **Le job d'essai compare, et la configuration d'Oxlint dit ce que dit celle d'ESLint.** Les
+   quatre règles abandonnées rétablies, les treize de trop désactivées, les règles de la *nursery*
+   nommées, `commonjs` pour les `.cjs`, l'exclusion manquante ; le job de nuit compare les
+   constats des deux outils (fichier, ligne, règle) sur ce dépôt et sur la copie cassée de
+   l'exemple, et écrit la différence dans son résumé, sans rien faire échouer. Gain : aucun ; il
+   fait du verdict un chiffre.
+3. **Oxlint comme porte de lint de ce dépôt**, après un mois de nuits sans différence :
+   `npm run lint`, le job Lint et le *hook* de *pre-commit* sur Oxlint, ESLint gardé la nuit pour
+   `no-unsafe-enum-assignment` et comme référence du *plugin*. Attendu : le job Lint du tronc de
+   97 s à environ 40 s (une minute CPU par exécution du tronc), un lint à froid sur une station de
+   travail de 36 s, 58 s CPU et 3,0 Go à 6 s, 20 s CPU et 1,6 Go, le *hook* de 1,6 s à 0,8 s par
+   *commit*.
+4. **Oxlint comme option d'`init`**, si le mainteneur veut un second *linter* dans les
+   *templates* : le *preset* écrit aussi pour Oxlint, `consistent-type-imports` désactivée là où le
+   projet câble par la signature du constructeur, une paire de la matrice de support pour lui.
+   Attendu : le lint à froid d'un projet de 3 s à 1 s, d'un projet qui a grandi de 11 s à 2,6 s
+   (19 à 7 s CPU, 1,2 à 0,9 Go).
+5. Oxfmt, tsdown, oxc-transform et le cache de modules de Vitest dans le *pipeline* restent
+   dehors ; cette section est le chiffre auquel se comparer quand l'un d'eux change.
+
 ## Reste à vérifier
 
 - Les constats d'Oxlint avec les règles du kit comme *plugin* JS contre ceux d'ESLint, sur cet
   arbre et sur un projet généré, sur plusieurs semaines de changements : le job d'essai de #256
-  les écrit dans le résumé de chaque exécution du tronc et de la nuit.
+  les écrit dans le résumé de chaque exécution du tronc et de la nuit. Le 2026-10-26, les
+  règles natives étaient à parité et trois règles du kit ne l'étaient pas (voir le plan de la
+  section sur le projet oxc) ; la comparaison est à refaire sur la copie cassée de l'exemple une
+  fois le *plugin* corrigé.
 - Le p50 des jobs unitaires et de bout en bout sur des *runners* arm64 contre x64, sur dix
   exécutions de nuit.
 - Le rappel de la sélection de bout en bout par *stack* : un changement de *template* qui
@@ -525,7 +854,16 @@ raisons ci-dessus.
 
 Mesures de ce dépôt : les scripts de la méthode ne sont pas conservés dans le dépôt ; les
 chiffres sont ceux du 2026-10-23, reproductibles avec `/usr/bin/time -v` et l'API de GitHub
-Actions (`gh api repos/<owner>/<repo>/actions/runs/<id>/jobs`).
+Actions (`gh api repos/<owner>/<repo>/actions/runs/<id>/jobs`). Ceux du 2026-10-26 sont dans
+[build-and-test-velocity-oxc.csv](build-and-test-velocity-oxc.csv), une ligne par exécution.
+
+Le projet oxc, lu le 2026-10-26 :
+
+- Oxlint, *plugins* JS (alpha ; pas de règles typées, pas de *parsers* personnalisés) : https://oxc.rs/docs/guide/usage/linter/js-plugins.html
+- Oxfmt, le formateur (la sortie de Prettier comme base, environ 30 fois Prettier et 2 fois Biome, « vendeur ») : https://oxc.rs/docs/guide/usage/formatter.html
+- Oxfmt bêta (2026-02-24 ; 100 % des tests de conformité JavaScript et TypeScript de Prettier, `--migrate biome`, `package.json` trié par défaut) : https://oxc.rs/blog/2026-02-24-oxfmt-beta
+- Vite 8 (2026-03-12 ; Rolldown et Oxc à la place d'esbuild et de Rollup) : https://vite.dev/blog/announcing-vite8
+- Les versions d'oxlint 1.89.0, oxfmt 0.74.0 et @oxlint/migrate 1.89.0 (2026-10-19), oxlint-tsgolint 7.0.2005 (2026-10-22), oxc-transform 0.155.0 (2026-10-19), tsdown 0.23.2 (2026-10-23), Rolldown 1.2.15 (2026-10-21) : le registre npm (`npm view <package> time`)
 
 Compilateurs :
 
