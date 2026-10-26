@@ -1,0 +1,145 @@
+kind,subject,where,runs,median_s,p95_or_max_s,queue_median_s,queue_p95_s,cpu_s,peak_gb,load1
+job,"Architecture",pull request 2026-10-26,35,184,195,97,1643,,,
+job,"Architecture",trunk 2026-10-26,17,184,,,,,,
+job,"Architecture",night 2026-10-26,1,197,,,,,,
+job,"Coverage report (Codecov)",trunk 2026-10-26,17,19,,,,,,
+job,"Coverage report (Codecov)",night 2026-10-26,1,16,,,,,,
+job,"End-to-end tests (1/4)",pull request 2026-10-26,35,593,702,151,1656,,,
+job,"End-to-end tests (1/4)",trunk 2026-10-26,17,564,,,,,,
+job,"End-to-end tests (1/4)",night 2026-10-26,1,415,,,,,,
+job,"End-to-end tests (2/4)",pull request 2026-10-26,35,758,958,144,1126,,,
+job,"End-to-end tests (2/4)",trunk 2026-10-26,17,738,,,,,,
+job,"End-to-end tests (2/4)",night 2026-10-26,1,902,,,,,,
+job,"End-to-end tests (3/4)",pull request 2026-10-26,35,1195,1274,259,1297,,,
+job,"End-to-end tests (3/4)",trunk 2026-10-26,17,1191,,,,,,
+job,"End-to-end tests (3/4)",night 2026-10-26,1,1234,,,,,,
+job,"End-to-end tests (4/4)",pull request 2026-10-26,35,968,1044,239,1705,,,
+job,"End-to-end tests (4/4)",trunk 2026-10-26,17,984,,,,,,
+job,"End-to-end tests (4/4)",night 2026-10-26,1,731,,,,,,
+job,"Every pair of capability values, generated and type-checked",pull request 2026-10-26,1,126,126,2,2,,,
+job,"Every pair of capability values, generated and type-checked",night 2026-10-26,1,118,,,,,,
+job,"Every rule broken once in a copy of the example",pull request 2026-10-26,35,171,186,136,1244,,,
+job,"Every rule broken once in a copy of the example",trunk 2026-10-26,17,173,,,,,,
+job,"Every rule broken once in a copy of the example",night 2026-10-26,1,173,,,,,,
+job,"Example application (examples/scheduling)",pull request 2026-10-26,35,400,417,130,1906,,,
+job,"Example application (examples/scheduling)",trunk 2026-10-26,17,393,,,,,,
+job,"Example application (examples/scheduling)",night 2026-10-26,1,322,,,,,,
+job,"First migration of a generated project, on a real PostgreSQL",pull request 2026-10-26,1,214,214,2,2,,,
+job,"First migration of a generated project, on a real PostgreSQL",night 2026-10-26,1,199,,,,,,
+job,"Generated project on npm",pull request 2026-10-26,35,784,891,84,762,,,
+job,"Generated project on npm",trunk 2026-10-26,17,748,,,,,,
+job,"Generated project on npm",night 2026-10-26,1,988,,,,,,
+job,"Generated project on pnpm",pull request 2026-10-26,1,410,410,2,2,,,
+job,"Generated project on pnpm",trunk 2026-10-26,17,566,,,,,,
+job,"Generated project on pnpm",night 2026-10-26,1,703,,,,,,
+job,"Import alias at run time (Node 22)",trunk 2026-10-26,17,461,,,,,,
+job,"Import alias at run time (Node 22)",night 2026-10-26,1,438,,,,,,
+job,"Import alias at run time (Node 24)",pull request 2026-10-26,35,521,552,60,755,,,
+job,"Import alias at run time (Node 24)",trunk 2026-10-26,17,511,,,,,,
+job,"Import alias at run time (Node 24)",night 2026-10-26,1,530,,,,,,
+job,"Install and build",pull request 2026-10-26,35,32,39,2,220,,,
+job,"Install and build",trunk 2026-10-26,17,34,,,,,,
+job,"Install and build",night 2026-10-26,1,24,,,,,,
+job,"Integration tests",pull request 2026-10-26,35,29,223,102,1342,,,
+job,"Integration tests",trunk 2026-10-26,17,206,,,,,,
+job,"Integration tests",night 2026-10-26,1,199,,,,,,
+job,"Lint",pull request 2026-10-26,35,35,105,119,1481,,,
+job,"Lint",trunk 2026-10-26,17,94,,,,,,
+job,"Lint",night 2026-10-26,1,77,,,,,,
+job,"Mutation score of the change, on the example",pull request 2026-10-26,35,1133,1474,162,1309,,,
+job,"Mutation score of the example, every night",night 2026-10-26,1,1448,,,,,,
+job,"Security",pull request 2026-10-26,35,42,52,191,1260,,,
+job,"Security",trunk 2026-10-26,17,40,,,,,,
+job,"Security",night 2026-10-26,1,35,,,,,,
+job,"Static checks",pull request 2026-10-26,35,138,148,57,672,,,
+job,"Static checks",trunk 2026-10-26,17,129,,,,,,
+job,"Static checks",night 2026-10-26,1,144,,,,,,
+job,"Trial, Oxlint beside ESLint",trunk 2026-10-26,17,39,,,,,,
+job,"Trial, Oxlint beside ESLint",night 2026-10-26,1,30,,,,,,
+job,"Trial, end-to-end tests (3/4) on arm64",night 2026-10-26,1,1052,,,,,,
+job,"Trial, unit tests on arm64",night 2026-10-26,1,461,,,,,,
+job,"Unit tests (Node 22)",pull request 2026-10-26,35,356,673,43,1150,,,
+job,"Unit tests (Node 22)",trunk 2026-10-26,17,627,,,,,,
+job,"Unit tests (Node 22)",night 2026-10-26,1,547,,,,,,
+job,"Unit tests (Node 24, coverage floors)",pull request 2026-10-26,35,451,745,103,884,,,
+job,"Unit tests (Node 24, coverage floors)",trunk 2026-10-26,17,720,,,,,,
+job,"Unit tests (Node 24, coverage floors)",night 2026-10-26,1,764,,,,,,
+job,"gate",pull request 2026-10-26,1,5,5,26,26,,,
+spec file,first-minute-no-context.spec.ts,"End-to-end tests (4/4) in the 16 runs of 2026-10-26",16,664,688,,,,,
+spec file,first-minute-two-contexts.spec.ts,"End-to-end tests (3/4) in the 16 runs of 2026-10-26",16,661,700,,,,,
+spec file,coverage-gate.spec.ts,"End-to-end tests (2/4) in the 16 runs of 2026-10-26",16,519,558,,,,,
+spec file,first-minute-proven.spec.ts,"Generated project on npm or pnpm in the 16 runs of 2026-10-26",25,411,575,,,,,
+spec file,proven-stacks.spec.ts,"End-to-end tests (1/4) in the 16 runs of 2026-10-26",16,362,442,,,,,
+spec file,alias-runtime.spec.ts,"Import alias at run time on Node 22 or 24 in the 16 runs of 2026-10-26",24,351,442,,,,,
+spec file,alias-runtime-second-half.spec.ts,"Import alias at run time on Node 22 or 24 in the 16 runs of 2026-10-26",24,326,430,,,,,
+spec file,preset-identity.spec.ts,"End-to-end tests (3/4) in the 16 runs of 2026-10-26",16,303,323,,,,,
+spec file,package-managers.spec.ts,"Generated project on npm or pnpm in the 16 runs of 2026-10-26",25,224,321,,,,,
+spec file,first-minute.spec.ts,"Generated project on npm or pnpm in the 16 runs of 2026-10-26",25,216,299,,,,,
+spec file,first-class.spec.ts,"End-to-end tests (4/4) in the 16 runs of 2026-10-26",16,208,221,,,,,
+spec file,first-minute-js.spec.ts,"Generated project on npm or pnpm in the 16 runs of 2026-10-26",25,135,192,,,,,
+spec file,typecheck.spec.ts,"End-to-end tests (2/4) in the 16 runs of 2026-10-26",16,130,148,,,,,
+spec file,rpc-procedures.spec.ts,"End-to-end tests (2/4) in the 16 runs of 2026-10-26",16,122,135,,,,,
+spec file,alias-tools.spec.ts,"Import alias at run time on Node 22 or 24 in the 16 runs of 2026-10-26",24,110,134,,,,,
+spec file,new-rule-violations.spec.ts,"End-to-end tests (1/4) in the 16 runs of 2026-10-26",16,74,91,,,,,
+spec file,contract-pairs.spec.ts,"End-to-end tests (3/4) in the 16 runs of 2026-10-26",16,60,65,,,,,
+spec file,zero-violation.spec.ts,"End-to-end tests (2/4) in the 16 runs of 2026-10-26",16,57,66,,,,,
+spec file,event-sourced.spec.ts,"End-to-end tests (3/4) in the 16 runs of 2026-10-26",16,56,61,,,,,
+spec file,formatted.spec.ts,"End-to-end tests (4/4) in the 16 runs of 2026-10-26",16,56,60,,,,,
+spec file,alias-fixes.spec.ts,"Import alias at run time on Node 22 or 24 in the 16 runs of 2026-10-26",24,53,69,,,,,
+spec file,preset-identity-generated.spec.ts,"End-to-end tests (3/4) in the 16 runs of 2026-10-26",16,39,41,,,,,
+spec file,file-uploads.spec.ts,"End-to-end tests (3/4) in the 16 runs of 2026-10-26",16,34,36,,,,,
+spec file,error-reporting.spec.ts,"End-to-end tests (1/4) in the 16 runs of 2026-10-26",16,20,24,,,,,
+spec file,violations.spec.ts,"End-to-end tests (3/4) in the 16 runs of 2026-10-26",16,20,21,,,,,
+spec file,service-composition.spec.ts,"End-to-end tests (1/4) in the 16 runs of 2026-10-26",3,16,20,,,,,
+spec file,error-rule-violations.spec.ts,"End-to-end tests (2/4) in the 16 runs of 2026-10-26",16,15,16,,,,,
+spec file,nest-controllers.spec.ts,"End-to-end tests (4/4) in the 16 runs of 2026-10-26",16,13,14,,,,,
+spec file,manual-module.spec.ts,"End-to-end tests (1/4) in the 16 runs of 2026-10-26",16,12,15,,,,,
+spec file,client-sdk.spec.ts,"End-to-end tests (2/4) in the 16 runs of 2026-10-26",16,12,13,,,,,
+spec file,personal-fields.spec.ts,"End-to-end tests (4/4) in the 16 runs of 2026-10-26",16,12,13,,,,,
+spec file,dev-reload.spec.ts,"End-to-end tests (3/4) in the 16 runs of 2026-10-26",16,11,11,,,,,
+spec file,alias-example.spec.ts,"Import alias at run time on Node 22 or 24 in the 16 runs of 2026-10-26",24,7,9,,,,,
+spec file,platform-error-mapper.spec.ts,"End-to-end tests (1/4) in the 16 runs of 2026-10-26",16,2,2,,,,,
+spec file,merge-trunk-example.spec.ts,"End-to-end tests (2/4) in the 16 runs of 2026-10-26",16,2,3,,,,,
+workstation,"init-alone#1 init",20 cores under nice one command at a time,1,0.39,,,,0.5,0.09,5.18
+workstation,"init-alone#1 install as published (copy)",20 cores under nice one command at a time,1,0.31,,,,0.3,0.06,5.18
+workstation,"init-alone#1 eslint --print-config",20 cores under nice one command at a time,1,0.52,,,,0.8,0.20,5.18
+workstation,"init-alone#1 check --json",20 cores under nice one command at a time,1,0.37,,,,0.5,0.09,5.00
+workstation,"init-alone#1 depcruise-config --check",20 cores under nice one command at a time,1,0.29,,,,0.4,0.09,5.00
+workstation,"init-alone#1 eslint . (cold)",20 cores under nice one command at a time,1,3.05,,,,6.2,0.63,5.00
+workstation,"init-alone#1 depcruise",20 cores under nice one command at a time,1,0.62,,,,0.6,0.16,5.00
+workstation,"init-alone#1 knip",20 cores under nice one command at a time,1,0.66,,,,0.8,0.16,5.00
+workstation,"init-alone#1 knip again",20 cores under nice one command at a time,1,0.47,,,,0.7,0.13,4.92
+workstation,"init-alone#1 vitest run",20 cores under nice one command at a time,1,2.36,,,,5.0,1.01,4.92
+workstation,"init-alone#1 tsc build",20 cores under nice one command at a time,1,0.18,,,,1.1,0.00,4.92
+workstation,"init-alone#1 build-aliases",20 cores under nice one command at a time,1,0.32,,,,0.4,0.09,4.92
+workstation,"init-alone#1 docs --check",20 cores under nice one command at a time,1,0.32,,,,0.4,0.09,4.92
+workstation,"init-alone#1 events --check",20 cores under nice one command at a time,1,0.12,,,,0.1,0.00,4.92
+workstation,"init-alone#1 openapi --check",20 cores under nice one command at a time,1,0.58,,,,0.8,0.20,4.92
+workstation,"init-alone#2 init",20 cores under nice one command at a time,1,0.34,,,,0.4,0.09,4.79
+workstation,"init-alone#2 install as published (copy)",20 cores under nice one command at a time,1,0.29,,,,0.3,0.06,4.79
+workstation,"init-alone#2 eslint --print-config",20 cores under nice one command at a time,1,0.54,,,,0.8,0.20,4.79
+workstation,"init-alone#2 check --json",20 cores under nice one command at a time,1,0.39,,,,0.5,0.09,4.79
+workstation,"init-alone#2 depcruise-config --check",20 cores under nice one command at a time,1,0.30,,,,0.4,0.09,4.79
+workstation,"init-alone#2 eslint . (cold)",20 cores under nice one command at a time,1,3.04,,,,6.3,0.61,4.79
+workstation,"init-alone#2 depcruise",20 cores under nice one command at a time,1,0.46,,,,0.6,0.17,4.64
+workstation,"init-alone#2 knip",20 cores under nice one command at a time,1,0.54,,,,0.7,0.13,4.64
+workstation,"init-alone#2 knip again",20 cores under nice one command at a time,1,0.45,,,,0.6,0.14,4.64
+workstation,"init-alone#2 vitest run",20 cores under nice one command at a time,1,2.32,,,,5.0,1.13,4.64
+workstation,"init-alone#2 tsc build",20 cores under nice one command at a time,1,0.23,,,,1.2,0.19,4.67
+workstation,"init-alone#2 build-aliases",20 cores under nice one command at a time,1,0.31,,,,0.4,0.09,4.67
+workstation,"init-alone#2 docs --check",20 cores under nice one command at a time,1,0.32,,,,0.4,0.09,4.67
+workstation,"init-alone#2 events --check",20 cores under nice one command at a time,1,0.18,,,,0.2,0.00,4.67
+workstation,"init-alone#2 openapi --check",20 cores under nice one command at a time,1,0.53,,,,0.7,0.25,4.67
+workstation,"npm pack of the 26 packages",20 cores under nice one command at a time,1,12.36,,,,16.8,0.23,3.85
+workstation,"real npm",20 cores under nice one command at a time,1, cold cache init,,,,0.32,0.4,0.09
+workstation,"real npm",20 cores under nice one command at a time,1, cold cache npm install,,,,145.54,36.0,0.53
+workstation,"real npm",20 cores under nice one command at a time,1, cold cache npm ci,,,,8.20,11.1,1.00
+workstation,"real npm",20 cores under nice one command at a time,1, cold cache npm run verify,,,,10.52,20.2,1.37
+workstation,"real npm",20 cores under nice one command at a time,1, warm cache init,,,,0.31,0.4,0.09
+workstation,"real npm",20 cores under nice one command at a time,1, warm cache npm install,,,,10.67,19.1,1.19
+workstation,"real npm",20 cores under nice one command at a time,1, warm cache npm ci,,,,7.55,12.5,1.07
+workstation,"real npm",20 cores under nice one command at a time,1, warm cache npm run verify,,,,13.33,22.7,1.19
+workstation,"stryker incremental on the night report",20 cores under nice one command at a time,1, concurrency 4,,,,69.73,98.9,2.55
+workstation,"stryker incremental on the night report",20 cores under nice one command at a time,1, concurrency 4 (2),,,,127.59,167.2,2.64
+workstation,"unit run of zero-violation.spec.ts (54 stacks generated)",20 cores under nice one command at a time,1,49.34,,,,54.2,1.27,11.88
+workstation,"unit run of formatted.spec.ts (54 stacks generated)",20 cores under nice one command at a time,1,57.08,,,,64.0,0.89,9.26
