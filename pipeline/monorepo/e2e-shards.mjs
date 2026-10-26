@@ -45,6 +45,7 @@ export const SHARDS = [
     'personal-fields.spec.ts': 20,
     'error-reporting.spec.ts': 17,
     'platform-error-mapper.spec.ts': 20,
+    'manual-module.spec.ts': 40,
   },
   {
     'coverage-gate.spec.ts': 328,

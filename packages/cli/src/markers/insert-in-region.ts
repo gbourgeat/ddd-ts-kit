@@ -6,7 +6,7 @@ import { mergeImports } from './merge-imports';
 const LINEWISE = new Set(['imports']);
 
 /** Regions made of statements: each block added there is a paragraph, set apart by a blank line. */
-const PARAGRAPHS = new Set(['registrations', 'start']);
+const PARAGRAPHS = new Set(['registrations', 'infrastructure', 'handlers', 'reactions', 'jobs', 'start']);
 
 /**
  * Inserts `block` at the end of the region, with the indentation of its closing marker.
