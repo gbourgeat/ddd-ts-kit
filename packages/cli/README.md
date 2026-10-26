@@ -1467,7 +1467,7 @@ nothing and asks nothing of the platform.
 |---|---|
 | design time | the first commit of `docs/architecture/stories/<code>.md` to the commit of `test/acceptance/<code>.acceptance.lock.json` |
 | build time | the lock commit to the first commit whose `## Report` holds text |
-| lead time | the first commit of the story file to the commit of the current branch whose subject names `story/<code>` (a merge commit first, else a squash commit that names the branch); `open` without one |
+| lead time | the first commit of the story file to the close: the first commit of the first-parent history of the current branch that contains the last commit of the story, whatever its subject (a merge, a squash; the merge of the trunk into the story branch is never it); `open` without a report or without a close |
 | requirements rework | the commits that changed `## Acceptance criteria` after the first commit carrying a `Slice: <code>.<n>` trailer; the amendments of the lock (each an `amend` verdict); the `refuse` verdicts of `test/acceptance/verdicts/` |
 | provisional decisions | the `D<n>` lines of the story file |
 | compromises | the items under `### Compromises` of the report |

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f9728c17b021be67 -->
+<!-- translation-of: README.md sha256:74cdb0c5ad181a01 -->
 
 # ddd-ts-kit
 
@@ -1549,7 +1549,7 @@ n'écrit rien et ne demande rien à la plateforme.
 |---|---|
 | temps de conception | du premier *commit* de `docs/architecture/stories/<code>.md` au *commit* de `test/acceptance/<code>.acceptance.lock.json` |
 | temps de construction | du *commit* du verrou au premier *commit* dont le `## Report` contient du texte |
-| délai de livraison | du premier *commit* du fichier de la *story* au *commit* de la branche courante dont le sujet nomme `story/<code>` (un *commit* de fusion d'abord, sinon un *commit* de *squash* qui nomme la branche) ; `open` sans lui |
+| délai de livraison | du premier *commit* du fichier de la *story* à la clôture : le premier *commit* de l'historique en premier parent de la branche courante qui contient le dernier *commit* de la *story*, quel que soit son sujet (une fusion, un *squash* ; la fusion du tronc dans la branche de la *story* n'est jamais la clôture) ; `open` sans rapport ou sans clôture |
 | retravail des exigences | les *commits* qui ont changé `## Acceptance criteria` après le premier *commit* portant un *trailer* `Slice: <code>.<n>` ; les amendements du verrou (chacun un verdict `amend`) ; les verdicts `refuse` de `test/acceptance/verdicts/` |
 | décisions provisoires | les lignes `D<n>` du fichier de la *story* |
 | compromis | les éléments sous `### Compromises` du rapport |
