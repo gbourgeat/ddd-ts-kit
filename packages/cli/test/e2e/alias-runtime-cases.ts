@@ -17,7 +17,7 @@ import {
 } from './compiled-project';
 import { bin, findingsOf, runIn } from './run-in';
 import { FAILED_COUNT } from './run-specs';
-import { FIRST_CLASS, label, SLOW, STACKS } from './stacks';
+import { FIRST_CLASS, label, SLOW, STACKS, swept } from './stacks';
 import { type Started, started } from './started';
 
 const installed = (name: string): boolean => fs.existsSync(path.join(REPO_ROOT, 'node_modules', name));
@@ -28,7 +28,7 @@ const MISSING: Readonly<Record<string, string>> = { typeorm: 'typeorm' };
 const loadable = (stack: StackFlags): boolean =>
   MISSING[stack.orm] === undefined || installed(MISSING[stack.orm] ?? '');
 
-const RUNNABLE = STACKS.filter(loadable);
+const RUNNABLE = swept(STACKS.filter(loadable));
 const READS_TSCONFIG = /\n\s*resolve: \{ tsconfigPaths: true \},/;
 const JEST_MAPPER = /\n\s*moduleNameMapper: \{[^}]*\},/;
 

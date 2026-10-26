@@ -252,65 +252,50 @@ export const EVERY_STACK: readonly StackFlags[] = [
   { ...DEFAULT_STACK, privacy: 'off' },
 ];
 
-/** The flags whose value names a package of the kit a project installs for it: an orm, a broker, a cache, a queue, an error reporter, a logger, a file storage. */
-const NAMED_BY_A_FLAG: readonly (keyof StackFlags)[] = [
-  'orm',
-  'broker',
-  'cache',
-  'queue',
-  'errors',
-  'logger',
-  'storage',
-];
-
-/** The error reporter a flag names under another name than its package. */
-const PACKAGE_OF_VALUE: Readonly<Record<string, string>> = { glitchtip: 'sentry' };
-
-/** The packages every generated project installs or is built, checked and tested with: a change there reaches every stack. */
-const EVERYWHERE: readonly string[] = [
-  'cli',
-  'kernel',
-  'testing',
-  'eslint-plugin',
-  'http',
-  'validation',
-  'di',
-  'events',
-  'auth',
-  'audit',
-  'tracing',
-  'scheduling',
-  'aspects',
-];
-
 /**
- * Whether a change of the packages `affected` reaches a stack: always when nothing is named
- * (the trunk, the night, a laptop) or when a package every project is built with is; otherwise
- * when a flag of the stack names one of them.
+ * A set of the stacks in which every value of every flag appears at least once, chosen greedily: each
+ * round keeps the stack that brings the most values not met yet, the first of them on a tie. A flag a
+ * stack leaves out takes its default, which counts as a value too. Computed from the stacks it is given,
+ * so a value added to one of them is covered the day it lands.
  */
-export function reachedBy(affected: readonly string[], stack: StackFlags): boolean {
-  if (affected.length === 0 || affected.some((name) => EVERYWHERE.includes(name))) {
-    return true;
+export function coverOf(stacks: readonly StackFlags[]): readonly StackFlags[] {
+  const flags = [...new Set(stacks.flatMap((stack) => Object.keys(stack)))].sort();
+
+  const valuesOf = (stack: StackFlags): readonly string[] => {
+    const chosen = new Map<string, unknown>(Object.entries(stack));
+
+    return flags.map((flag) => `${flag}=${String(chosen.get(flag) ?? '(default)')}`);
+  };
+
+  const missing = new Set(stacks.flatMap(valuesOf));
+  const kept: StackFlags[] = [];
+
+  while (missing.size > 0) {
+    const best = stacks
+      .map((stack) => ({ stack, gain: valuesOf(stack).filter((value) => missing.has(value)).length }))
+      .reduce((most, candidate) => (candidate.gain > most.gain ? candidate : most));
+
+    kept.push(best.stack);
+    valuesOf(best.stack).forEach((value) => missing.delete(value));
   }
 
-  return NAMED_BY_A_FLAG.some((flag) => {
-    const value = stack[flag];
-
-    return typeof value === 'string' && affected.includes(PACKAGE_OF_VALUE[value] ?? value);
-  });
+  return kept;
 }
 
-/** What a pull request reaches, handed over by the pipeline (`pipeline/monorepo/affected-packages.mjs`); empty elsewhere. */
-const AFFECTED = (process.env['KIT_AFFECTED'] ?? '').split(',').filter((name) => name !== '');
+/**
+ * What the pipeline hands over (`stacks` of `pipeline/monorepo/affected-packages.mjs`): `cover` on a
+ * pull request that touches a template or a generator, `all` on the trunk, at night and on a release
+ * (a pull request that touches neither runs none of these files). Unset on a workstation: every stack.
+ */
+const COVER = process.env['KIT_STACKS'] === 'cover';
 
-/** The stacks of a run: every one on the trunk and at night, the ones a change reaches on a pull request, the first at least so that every file runs something. */
-function reached(stacks: readonly StackFlags[]): readonly StackFlags[] {
-  const kept = stacks.filter((stack) => reachedBy(AFFECTED, stack));
-
-  return kept.length === 0 ? stacks.slice(0, 1) : kept;
+/** The stacks of a sweep: every one, or the cover of them on a pull request. */
+export function swept(stacks: readonly StackFlags[]): readonly StackFlags[] {
+  return COVER ? coverOf(stacks) : stacks;
 }
 
-export const STACKS: readonly StackFlags[] = reached(EVERY_STACK);
+/** Every stack the generator is held to: generated, checked, formatted and type-checked, on a pull request too. */
+export const STACKS: readonly StackFlags[] = EVERY_STACK;
 
 /** The stacks held to everything a project runs in its pipeline, as generated. */
 export const PROVEN: readonly (readonly [string, StackFlags])[] = [
@@ -337,10 +322,11 @@ export function label(stack: StackFlags): string {
 /**
  * The stacks the workspace can run as generated, on Vitest or on Jest (both installed at the workspace
  * root). Left out: prisma (its client has to be generated and a database reached) and typeorm (not
- * installed at the workspace root); the type check reads them, this does not run them.
+ * installed at the workspace root); the type check reads them, this does not run them. On a pull request,
+ * the cover of them (`swept`).
  */
-export const RUNNABLE: readonly StackFlags[] = STACKS.filter(
-  (stack) => stack.orm !== 'prisma' && stack.orm !== 'typeorm',
+export const RUNNABLE: readonly StackFlags[] = swept(
+  STACKS.filter((stack) => stack.orm !== 'prisma' && stack.orm !== 'typeorm'),
 );
 
 export const SLOW = process.env['DDD_TS_KIT_E2E'] === '1';

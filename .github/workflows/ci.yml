@@ -29,6 +29,8 @@ jobs:
       filters: ${{ steps.affected.outputs.filters }}
       integration: ${{ steps.affected.outputs.integration }}
       integrated: ${{ steps.affected.outputs.integrated }}
+      stacks: ${{ steps.kind.outputs.stacks }}
+      release: ${{ steps.kind.outputs.release }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -41,6 +43,21 @@ jobs:
         env:
           BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }}
         run: node pipeline/monorepo/affected-packages.mjs --base "$BASE" --format github | tee -a "$GITHUB_OUTPUT"
+      # `all` on the default branch, at night and on a release; on another pull request the script says `cover` when the change
+      # touches a template or a generator and `none` when it touches neither (docs/proposals/generated-project-families.md).
+      - name: Which stacks the jobs that generate projects take, and whether this is the pull request of a release
+        id: kind
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+          HEAD_REF: ${{ github.head_ref }}
+          STACKS: ${{ steps.affected.outputs.stacks }}
+        run: |
+          release=false
+          case "$HEAD_REF" in release/*) release=true ;; esac
+          case "$TITLE" in 'chore(release)'*) release=true ;; esac
+          if [ "$release" = true ]; then STACKS=all; fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "stacks=$STACKS" >> "$GITHUB_OUTPUT"
 
   # The gates that take under three minutes each, in one job: a run has fewer jobs to queue against the
   # 20 the plan allows at a time, and a failure still names its step (docs/proposals/build-and-test-velocity.md).
@@ -208,8 +225,8 @@ jobs:
   alias:
     name: Import alias at run time (Node ${{ matrix.node }})
     needs: install
-    # The runs that integrate every package: left out when nothing but documents they do not read changed.
-    if: ${{ needs.install.outputs.integrated == 'true' }}
+    # Left out when nothing but documents they do not read changed, and when the change touches no template and no generator.
+    if: ${{ needs.install.outputs.integrated == 'true' && needs.install.outputs.stacks != 'none' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 25
     strategy:
@@ -224,9 +241,9 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           node-version: ${{ matrix.node }}
-      - name: Every stack built, run compiled with plain node, from sources under tsx and vitest (on a pull request, the stacks the change reaches)
+      - name: Every stack built, run compiled with plain node, from sources under tsx and vitest (on a pull request, a cover of them)
         env:
-          KIT_AFFECTED: ${{ needs.install.outputs.packages }}
+          KIT_STACKS: ${{ needs.install.outputs.stacks }}
         run: npm run ci:test:alias
 
   integration:
@@ -306,8 +323,8 @@ jobs:
   e2e:
     name: End-to-end tests (${{ matrix.shard }}/4)
     needs: install
-    # The runs that integrate every package: left out when nothing but documents they do not read changed.
-    if: ${{ needs.install.outputs.integrated == 'true' }}
+    # Left out when nothing but documents they do not read changed, and when the change touches no template and no generator.
+    if: ${{ needs.install.outputs.integrated == 'true' && needs.install.outputs.stacks != 'none' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
@@ -319,9 +336,9 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      - name: Every stack generated and held to its own pipeline, a quarter of the spec files on each runner (on a pull request, the stacks the change reaches)
+      - name: Every stack generated and held to its own pipeline, a quarter of the spec files on each runner (the two sweeps of `init` alone, on a pull request, on a cover of the stacks)
         env:
-          KIT_AFFECTED: ${{ needs.install.outputs.packages }}
+          KIT_STACKS: ${{ needs.install.outputs.stacks }}
         run: npm run ci:test:e2e:stacks -- --shard=${{ matrix.shard }}/4
 
   pairwise:
@@ -361,8 +378,8 @@ jobs:
   managers:
     name: Generated project on ${{ matrix.manager }}
     needs: install
-    # The runs that integrate every package: left out when nothing but documents they do not read changed.
-    if: ${{ needs.install.outputs.integrated == 'true' }}
+    # Left out when nothing but documents they do not read changed, and when the change touches no template and no generator.
+    if: ${{ needs.install.outputs.integrated == 'true' && needs.install.outputs.stacks != 'none' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
@@ -586,16 +603,24 @@ jobs:
         env:
           # Every job this one needs, read whole: a job added later is held without being listed here.
           NEEDS: ${{ toJSON(needs) }}
-          # The runs that integrate every package, skipped when the change is documents alone (`integrated` of the install job), and then only.
-          MAY_SKIP: alias e2e managers example conformance
+          # A job is skipped without failing the gate only where its own `if:` skips it, and then only:
+          # the runs that integrate every package, when the change is documents alone (`integrated` of the install job);
+          # the jobs that generate projects, also when the change touches no template and no generator (`stacks` is `none`).
+          SKIP_WHEN_DOCUMENTS_ALONE: alias e2e managers example conformance
+          SKIP_WHEN_NO_STACKS: alias e2e managers
           INTEGRATED: ${{ needs.install.outputs.integrated }}
+          STACKS: ${{ needs.install.outputs.stacks }}
         run: |
           echo "Results: $(echo "$NEEDS" | jq -r 'to_entries | map("\(.key)=\(.value.result)") | join(" ")')"
-          failed=$(echo "$NEEDS" | jq -r --arg may "$MAY_SKIP" --arg integrated "$INTEGRATED" '
-            ($may | split(" ")) as $skippable
+          failed=$(echo "$NEEDS" | jq -r --arg documents "$SKIP_WHEN_DOCUMENTS_ALONE" --arg none "$SKIP_WHEN_NO_STACKS" --arg integrated "$INTEGRATED" --arg stacks "$STACKS" '
+            ($documents | split(" ")) as $byDocuments
+            | ($none | split(" ")) as $byStacks
             | to_entries[]
             | select(.value.result != "success")
-            | select(.value.result != "skipped" or $integrated == "true" or ((.key | IN($skippable[])) | not))
+            | select(
+                .value.result != "skipped"
+                or ((((.key | IN($byDocuments[])) and $integrated != "true") or ((.key | IN($byStacks[])) and $stacks == "none")) | not)
+              )
             | "\(.key)=\(.value.result)"')
           if [ -n "$failed" ]; then
             echo "::error::A required job did not pass: $failed"
