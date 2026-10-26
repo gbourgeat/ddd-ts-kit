@@ -11,7 +11,14 @@
  * do not.
  */
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { NodeSDK, resources, tracing } from '@opentelemetry/sdk-node';
+import { defaultResource, type Resource, resourceFromAttributes } from '@opentelemetry/resources';
+import { NodeSDK } from '@opentelemetry/sdk-node';
+import {
+  BatchSpanProcessor,
+  ParentBasedSampler,
+  type SpanProcessor,
+  TraceIdRatioBasedSampler,
+} from '@opentelemetry/sdk-trace';
 import { LocalRootTracker } from '../local-root/local-root-tracker';
 import { AttributeAllowList } from '../processors/attribute-allow-list';
 import { ErrorMessageScrubber } from '../processors/error-message-scrubber';
@@ -48,7 +55,7 @@ export interface InitTracingOptions {
   /** Attribute names, or prefixes ending with a dot, kept on spans besides `DEFAULT_ALLOWED_ATTRIBUTES`. */
   readonly allowedAttributes?: readonly string[];
   /** Run after the built-in scrubbing processors and before the exporter. */
-  readonly extraSpanProcessors?: readonly tracing.SpanProcessor[];
+  readonly extraSpanProcessors?: readonly SpanProcessor[];
   readonly enabled?: boolean;
 }
 
@@ -70,8 +77,8 @@ export function initTracing(options: InitTracingOptions): TracingHandle {
     ...(options.sampleRatio === undefined
       ? {}
       : {
-          sampler: new tracing.ParentBasedSampler({
-            root: new tracing.TraceIdRatioBasedSampler(options.sampleRatio),
+          sampler: new ParentBasedSampler({
+            root: new TraceIdRatioBasedSampler(options.sampleRatio),
           }),
         }),
   });
@@ -91,16 +98,16 @@ function instrumentationsOf({
   });
 }
 
-function resourceOf(options: InitTracingOptions): resources.Resource {
-  return resources.defaultResource().merge(
-    resources.resourceFromAttributes({
+function resourceOf(options: InitTracingOptions): Resource {
+  return defaultResource().merge(
+    resourceFromAttributes({
       ...(options.serviceVersion === undefined ? {} : { 'service.version': options.serviceVersion }),
       ...(options.environment === undefined ? {} : { 'deployment.environment.name': options.environment }),
     }),
   );
 }
 
-function spanProcessorsOf(options: InitTracingOptions): tracing.SpanProcessor[] {
+function spanProcessorsOf(options: InitTracingOptions): SpanProcessor[] {
   const exporter = exporterFor(options);
 
   return [
@@ -109,7 +116,7 @@ function spanProcessorsOf(options: InitTracingOptions): tracing.SpanProcessor[] 
     new ErrorMessageScrubber(),
     new AttributeAllowList(options.allowedAttributes === undefined ? {} : { alsoAllowed: options.allowedAttributes }),
     ...(options.extraSpanProcessors ?? []),
-    ...(exporter === undefined ? [] : [new tracing.BatchSpanProcessor(exporter)]),
+    ...(exporter === undefined ? [] : [new BatchSpanProcessor({ exporter })]),
   ];
 }
 

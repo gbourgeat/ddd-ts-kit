@@ -1,5 +1,5 @@
 import { trace } from '@opentelemetry/api';
-import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace';
 import { initTracing } from '@ddd-ts-kit/tracing/node';
 import { expect } from 'vitest';
 import { aTracker, type Tracker } from './a-tracker';
@@ -13,7 +13,7 @@ type Setup = 'tracing' | 'sentry';
  */
 export async function expectCoexistence(order: readonly [Setup, Setup]): Promise<void> {
   const exporter = new InMemorySpanExporter();
-  const processor = new SimpleSpanProcessor(exporter);
+  const processor = new SimpleSpanProcessor({ exporter });
   let tracker: Tracker | undefined;
   let tracing: ReturnType<typeof initTracing> | undefined;
 

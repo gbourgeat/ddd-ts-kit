@@ -65,7 +65,7 @@
   "peerDependencies": {
     "@ddd-ts-kit/di": "0.91.0",
     "@ddd-ts-kit/testing": "0.91.0",
-    "jose": "^6.0.0"
+    "jose": "^6.2.13"
   },
   "peerDependenciesMeta": {
     "@ddd-ts-kit/di": {
@@ -85,7 +85,7 @@
     "@nestjs/common": "^12.2.0",
     "@nestjs/passport": "^12.0.0",
     "@types/passport-jwt": "^4.0.1",
-    "jose": "^6.0.0",
+    "jose": "^6.2.13",
     "jwks-rsa": "^4.1.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1"

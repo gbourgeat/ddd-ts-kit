@@ -9,9 +9,9 @@ composition root, and one user action reads as one trace.
 ```
 npm i @ddd-ts-kit/tracing @opentelemetry/api
 # for the Node bootstrap (@ddd-ts-kit/tracing/node)
-npm i @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-trace-otlp-http
+npm i @opentelemetry/sdk-node @opentelemetry/resources @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-trace-otlp-http
 # for the test harness (@ddd-ts-kit/tracing/testing)
-npm i -D @opentelemetry/sdk-trace-base @opentelemetry/context-async-hooks
+npm i -D @opentelemetry/sdk-trace @opentelemetry/context-async-hooks
 ```
 
 ![Where the package sits: the platform wraps each place where work enters or leaves a bounded context, and each wrapper opens one kind of span. tracedRoutes around the HTTP pipeline opens the SERVER span of the request. traceApplication, given once to kernelModule, holds the wrappers that open spans: traceUseCases on the buses opens command and query spans, traceBindings on repositories, gateways and handlers opens their spans, tracedDomainEvents on the domain event dispatcher opens the unit-of-work and domain-event spans, tracedPublisher on the publisher of the kernel opens outbox append, tracedConsumer opens process, and tracedJob and tracedBackgroundJob open job; it also hands the error reporter and the execution scope to the tracing. tracedPublisher around the publisher of the outbox relay opens publish. initTracing starts the OpenTelemetry SDK with its instrumentations and span processors, and exports over OTLP to Jaeger or a collector. The code of the contexts imports none of it](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/tracing-package-place.svg)
