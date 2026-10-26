@@ -40,14 +40,12 @@ export const SHARDS = [
     // With NestJS on Nest controllers and Passport, 20 seconds on a workstation, three times that on a runner.
     'proven-stacks.spec.ts': 431,
     'new-rule-violations.spec.ts': 65,
-    'zero-violation.spec.ts': 33,
-    // A repository that declares personal columns, with the erasure of its context, installed as published.
-    'personal-fields.spec.ts': 20,
     'error-reporting.spec.ts': 17,
     'platform-error-mapper.spec.ts': 20,
     'manual-module.spec.ts': 40,
   },
   {
+    'zero-violation.spec.ts': 33,
     'coverage-gate.spec.ts': 328,
     // The Jest stack too, a few seconds over the measure.
     'typecheck.spec.ts': 70,
@@ -57,9 +55,9 @@ export const SHARDS = [
     'client-sdk.spec.ts': 9,
     // A copy of the example application, merge-trunk run in two of its worktrees.
     'merge-trunk-example.spec.ts': 2,
-    'event-sourced.spec.ts': 19,
   },
   {
+    'event-sourced.spec.ts': 19,
     'first-minute-two-contexts.spec.ts': 322,
     'preset-identity.spec.ts': 135,
     // With the client SDK of each pair.
@@ -71,6 +69,8 @@ export const SHARDS = [
     'violations.spec.ts': 15,
   },
   {
+    // A repository that declares personal columns, with the erasure of its context, installed as published.
+    'personal-fields.spec.ts': 20,
     'first-minute-no-context.spec.ts': 312,
     'first-class.spec.ts': 209,
     // Every route generator on Nest controllers, one project (7 s on a workstation, three times that on a runner).
