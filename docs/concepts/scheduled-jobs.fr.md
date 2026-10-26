@@ -1,5 +1,5 @@
 [English](scheduled-jobs.md) · **Français**
-<!-- translation-of: scheduled-jobs.md sha256:68a61b38bd749800 -->
+<!-- translation-of: scheduled-jobs.md sha256:b06276ab29e943f9 -->
 
 # Jobs planifiés
 
@@ -109,12 +109,35 @@ Dans un projet avec *tenancy* (`stack.tenancy` autre que `none`), `generate job`
 `tenancy: 'per-tenant'`, car un *job* global s'exécute dans aucun *tenant* et un *repository*
 confiné à un *tenant* le refuse (`NoCurrentTenantError`) à chaque exécution réelle ; `--global`
 écrit `tenancy: 'global'` pour un travail à travers les *tenants*, et la note de la commande dit
-lequel a été écrit. `init` donne au planificateur les *tenants* de `TENANTS` (identifiants séparés
-par des virgules, `config.tenants`, transmis à l'application sous le nom `tenants`) : liez un
-annuaire à vous quand les *tenants* vivent dans une table. La *spec* générée exécute le *job* pour
-deux *tenants*. Un *job* écrit à la main sous *tenancy* doit aussi le dire : `scheduling/tenancy-declared`
-(une erreur) signale un `@Scheduled` ou un `builder.job` dont les options ne portent ni
-`tenancy: 'per-tenant'` ni `tenancy: 'global'`.
+lequel a été écrit. Le planificateur interroge à nouveau le `TenantDirectory` à **chaque
+occurrence**, et ce que l'annuaire liste dépend du projet :
+
+- Avec le *preset* d'identité (`--preset identity`), les *tenants* sont ses organisations, lues
+  dans la base à chaque occurrence : une organisation ouverte après le démarrage du processus a son
+  exécution à l'occurrence suivante, sans redémarrage. `init` écrit l'annuaire
+  (`src/platform/composition/tenant-directory.ts`) au-dessus des organisations du contexte, sur
+  Drizzle, Knex et Prisma.
+- Sans source de *tenants*, `init` donne au planificateur les *tenants* de `TENANTS` (identifiants
+  séparés par des virgules, `config.tenants`, transmis à l'application sous le nom `tenants`), lus
+  **une seule fois au démarrage du processus**. Une liste fixe manque une organisation ou un client
+  créé plus tard : ses *jobs* par *tenant* (rappels, purges, échéances) ne s'exécutent jamais pour
+  lui, sans erreur, jusqu'au redémarrage du processus avec une nouvelle liste. Quand les *tenants*
+  vivent dans une table à vous, faites lire cet annuaire dans cette table, comme le *preset*
+  d'identité le fait dans `tenant-directory.ts`.
+
+La *spec* générée exécute le *job* pour deux *tenants*. Un *job* écrit à la main sous *tenancy* doit aussi le dire :
+`scheduling/tenancy-declared` (une erreur) signale un `@Scheduled` ou un `builder.job` dont les
+options ne portent ni `tenancy: 'per-tenant'` ni `tenancy: 'global'`.
+
+### Une exécution lit son propre tenant
+
+Une exécution par *tenant* ouvre la portée d'exécution de son *tenant* : un *repository*
+confiné à un *tenant* ne lit et n'écrit que celui-là. Prouvez-le sur le vrai *repository*, pas sur
+un faux, quand un *handler* en dépend : enregistrez une ligne par *tenant* dans la base de test,
+exécutez le *job* par l'application de test, et lisez les deux lignes par le *repository* depuis
+l'exécution. Chaque exécution doit trouver sa ligne et pas l'autre. La suite de bout en bout du kit
+fait exactement cela contre le *repository* généré d'un projet multi-*tenant* ; un faux *repository*
+qui ignore le *tenant* passerait pour une mauvaise raison.
 
 La commande écrit le *job*, sa *spec*, son interrupteur dans les réglages des *jobs* de la plateforme
 (`src/platform/jobs/job-settings.ts`, désactivé par `JOB_<CONTEXT>_<JOB>_ENABLED=false`) et, là où le

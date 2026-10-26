@@ -124,7 +124,7 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
       const compose = platform(root, 'composition/compose-application.ts');
 
       expect(foundations).toContain('const errors = traced.errorReporter(options.errors ?? new NoopErrorReporter());');
-      expect(foundations).toContain('{ clock, lock, scope, ids, logger, metrics, onRun: reportFailedRuns(errors) }');
+      expect(foundations).toContain('{ ...parts, onRun: reportFailedRuns(errors) }');
 
       expect(platform(root, 'buses/create-command-bus.ts')).toContain(
         '    .use(errorReportingMiddleware(foundations.errors, foundations.scope))\n    .use(loggingMiddleware(foundations.logger))',

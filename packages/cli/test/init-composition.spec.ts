@@ -188,9 +188,7 @@ describe('the composition root init writes, by hand', () => {
 
     expect(platform(root, 'composition/platform.ts')).toContain('readonly jobs: JobScheduler;');
 
-    expect(platform(root, 'composition/lay-foundations.ts')).toContain(
-      'jobs: schedulerOf(options, traced, { clock, lock, scope, ids, logger, metrics }),',
-    );
+    expect(platform(root, 'composition/lay-foundations.ts')).toContain('jobs: schedulerOf(options, traced, parts),');
 
     expect(platform(root, 'composition/lay-foundations.ts')).toContain(
       'return new ConfiguredJobScheduler(new InProcessJobScheduler(parts), options.jobs?.settings ?? {}, traced.job);',

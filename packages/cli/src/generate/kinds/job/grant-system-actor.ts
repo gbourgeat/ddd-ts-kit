@@ -88,8 +88,8 @@ function operatorOfContext(scope: Scope, actor: string, permission: string): Pla
 
   return {
     file: platformPath(scope, 'auth/relationships/relate-system-actors.ts'),
-    line: `{ object: 'context:${context}', relation: 'operator', subject: 'system:${actor}' },`,
-    anchor: `subject: 'system:${actor}'`,
+    line: `{ object: 'context:${context}', relation: 'operator', subject: '${actor}' },`,
+    anchor: `subject: '${actor}'`,
     check: `check this relationship: \`${actor}\` now operates the context \`${context}\`, which gives it \`${permission}\` and every permission the schema derives from \`operator\` there.`,
   };
 }

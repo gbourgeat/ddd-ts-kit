@@ -27,7 +27,7 @@ export interface AppConfig {
   /** Whether this process runs the scheduled jobs (`RUN_JOBS`): off for the API of a project that has a worker. */
   readonly runJobs: boolean;
   {{#if tenancy.any}}
-  /** The tenants that exist (`TENANTS`, comma separated): a job declared `per-tenant` runs once for each. Bind a directory of your own in `main.ts` once the tenants live in a table. */
+  /** The tenants that exist (`TENANTS`, comma separated): a job declared `per-tenant` runs once for each. Read once at the start: a tenant created later is missed. Once the tenants live in a table, make `composition/tenant-directory.ts` read it (the identity preset does). */
   readonly tenants: readonly string[];
   {{/if}}
   {{#if persistence.needsUrl}}

@@ -47,7 +47,7 @@ describe('generate job, the grant of its system actor', () => {
     const generated = report(cli(root, ...EVERY_QUARTER));
 
     const tuple =
-      "  { object: 'context:billing', relation: 'operator', subject: 'system:system:billing.cancel-stale-invoices' },";
+      "  { object: 'context:billing', relation: 'operator', subject: 'system:billing.cancel-stale-invoices' },";
 
     expect(read(root, `${AUTH}/relationships/relate-system-actors.ts`)).toContain(
       `  // ddd-ts-kit:system-grants\n${tuple}\n  // /ddd-ts-kit:system-grants`,

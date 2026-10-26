@@ -13,6 +13,7 @@ import { platformPath } from '../generate/platform-path';
 import { grantToSignedIn } from './grant-to-signed-in';
 import { layOutPrismaModels } from './lay-out-prisma-models';
 import { NO_FLAGS } from './no-flags';
+import { organisationsAsTenantDirectory } from './organisations-as-tenant-directory';
 import { organisationsAsTenants } from './organisations-as-tenants';
 import type { PresetFile } from './preset-file';
 import type { Preset } from './preset';
@@ -52,6 +53,10 @@ export function applyPreset(ws: Workspace, config: Config, request: PresetReques
   );
 
   const wired = runSteps(scope, preset);
+
+  if (preset.organisationsAreTenants) {
+    organisationsAsTenantDirectory({ ...scope, config: wired }, rendering.context);
+  }
 
   layOutAfterSteps({ ...scope, config: wired }, preset, rendering);
 

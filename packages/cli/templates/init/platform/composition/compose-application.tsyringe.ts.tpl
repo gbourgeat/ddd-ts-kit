@@ -38,9 +38,6 @@ import {
 {{#if files.any}}
   InMemoryFileStorage,
 {{/if}}
-{{#if tenancy.any}}
-  InMemoryTenantDirectory,
-{{/if}}
 {{#unless broker.external}}
   IntegrationEventSubscriber,
 {{/unless}}
@@ -100,6 +97,9 @@ import type { ContextSelection } from '{{alias.platform}}/composition/context-se
 import { routesOf } from '{{alias.platform}}/composition/routes-of{{alias.ext}}';
 {{/if}}
 import { layFoundations, type Foundations } from '{{alias.platform}}/composition/lay-foundations{{alias.ext}}';
+{{#if tenancy.any}}
+import { tenantDirectory } from '{{alias.platform}}/composition/tenant-directory{{alias.ext}}';
+{{/if}}
 import { platformModule, type PlatformOptions } from '{{alias.platform}}/composition/platform.module{{alias.ext}}';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
@@ -265,8 +265,8 @@ function kernel(foundations: Foundations, persistence: Persistence, options: App
     metrics,
     eventBus: bus,
 {{#if tenancy.any}}
-    // The tenants a job declared `per-tenant` runs for.
-    tenants: new InMemoryTenantDirectory(options.tenants ?? []),
+    // The tenants a job declared `per-tenant` runs for, asked at each occurrence.
+    tenants: tenantDirectory(persistence, options.tenants),
 {{/if}}
 {{#if events.outbox}}
     // Use cases publish to the outbox, in the transaction of their command; the relay of `main.ts` delivers to the provider.

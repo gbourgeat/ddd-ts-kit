@@ -9,6 +9,9 @@ import { composeApplication } from '{{alias.platform}}/composition/compose-appli
 import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
 {{/if}}
 import { openPersistence } from '{{alias.platform}}/database/open-persistence{{alias.ext}}';
+{{#if tenancy.any}}
+import { tenantDirectory } from '{{alias.platform}}/composition/tenant-directory{{alias.ext}}';
+{{/if}}
 import { inProcessEvents } from '{{alias.platform}}/events/in-process-events{{alias.ext}}';
 import { runExport } from '{{alias.platform}}/privacy/run-export{{alias.ext}}';
 
@@ -17,7 +20,7 @@ import { runExport } from '{{alias.platform}}/privacy/run-export{{alias.ext}}';
 //   npm run privacy:export -- <subject-id> [--operator <who-asks>] > export.json
 // One JSON document on the standard output (`format`, `subject`, `exportedAt`, `records`): every
 // record each context declared in src/platform/privacy/data-subject-exports.ts keeps of the
-// person{{#if tenancy.any}}, in each tenant of TENANTS (comma separated){{/if}}, as plain data. Hand it over to the person, then delete
+// person{{#if tenancy.any}}, in each tenant the tenant directory lists (TENANTS, or the organisations of the identity context){{/if}}, as plain data. Hand it over to the person, then delete
 // the file{{#if audit.on}}; the audit trail keeps the entry of each export, never the values. Every run is a
 // handover and leaves its entry, a trial included: try it on a test subject, never on a real person{{/if}}.
 {{#if eventSourcing.on}}
@@ -40,12 +43,8 @@ if (subject === undefined || positionals.length > 1) {
 }
 {{#if tenancy.any}}
 
-const tenants = (process.env['TENANTS'] ?? '').split(',').map((tenant) => tenant.trim()).filter((tenant) => tenant !== '');
-
-if (tenants.length === 0) {
-  console.error('TENANTS names the tenants the records are gathered in, comma separated.');
-  process.exit(2);
-}
+// The tenants of a project with no source of tenants (comma separated); the identity preset reads its organisations instead.
+const fixedTenants = (process.env['TENANTS'] ?? '').split(',').map((tenant) => tenant.trim()).filter((tenant) => tenant !== '');
 {{/if}}
 
 {{#if persistence.needsUrl}}
@@ -61,6 +60,17 @@ const application = composeApplication(persistence, {
   authenticator: offlineAuthenticator,
 {{/if}}
 });
+
+{{#if tenancy.any}}
+const tenants = await tenantDirectory(persistence, fixedTenants).tenants();
+
+if (tenants.length === 0) {
+  console.error('The tenant directory lists no tenant to gather the records in. Name them in TENANTS, comma separated, or open an organisation first.');
+  await application.stop();
+  await persistence.close();
+  process.exit(2);
+}
+{{/if}}
 
 try {
   const document = await runExport(subject, {
