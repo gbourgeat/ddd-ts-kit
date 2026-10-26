@@ -8,9 +8,6 @@ import {
 {{#if cache.rateLimit}}
   InMemoryRateLimiter,
 {{/if}}
-{{#if tenancy.any}}
-  InMemoryTenantDirectory,
-{{/if}}
 {{#if errors.sentry}}
   NoopErrorReporter,
 {{/if}}
@@ -34,6 +31,9 @@ import { logDecisions } from '{{alias.platform}}/auth/authorization/log-decision
 import type { Platform } from '{{alias.platform}}/composition/platform{{alias.ext}}';
 import type { PlatformOptions } from '{{alias.platform}}/composition/platform-options{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+{{#if tenancy.any}}
+import { tenantDirectory } from '{{alias.platform}}/composition/tenant-directory{{alias.ext}}';
+{{/if}}
 {{#if eventSourcing.on}}
 import { createEventSourcing } from '{{alias.platform}}/event-sourcing/create-event-sourcing{{alias.ext}}';
 {{/if}}
@@ -102,11 +102,11 @@ export function layFoundations(persistence: Persistence, options: PlatformOption
     rateLimiter: options.redis?.rateLimiter ?? new InMemoryRateLimiter(clock),
 {{/if}}
 {{#if errors.none}}
-    jobs: schedulerOf(options, traced, { clock, lock, scope, ids, logger, metrics }),
+    jobs: schedulerOf({{#if tenancy.any}}persistence, {{/if}}options, traced, { clock, lock, scope, ids, logger, metrics }),
 {{/if}}
 {{#if errors.sentry}}
     // A run that failed, a timeout included, is reported; a skipped or missed occurrence is not.
-    jobs: schedulerOf(options, traced, { clock, lock, scope, ids, logger, metrics, onRun: reportFailedRuns(errors) }),
+    jobs: schedulerOf({{#if tenancy.any}}persistence, {{/if}}options, traced, { clock, lock, scope, ids, logger, metrics, onRun: reportFailedRuns(errors) }),
 {{/if}}
 {{#if audit.on}}
     audit,
@@ -125,13 +125,16 @@ export function layFoundations(persistence: Persistence, options: PlatformOption
 
 /** The scheduler of the process, with the settings of the configuration applied and each run observed from outside. */
 function schedulerOf(
+{{#if tenancy.any}}
+  persistence: Persistence,
+{{/if}}
   options: PlatformOptions,
   traced: TracedApplication,
   parts: InProcessJobSchedulerOptions,
 ): JobScheduler {
 {{#if tenancy.any}}
-  // The tenants a job declared `per-tenant` runs for; left out (the tools, the tests), none.
-  const tenants = new InMemoryTenantDirectory(options.tenants ?? []);
+  // The tenants a job declared `per-tenant` runs for, asked at each occurrence.
+  const tenants = tenantDirectory(persistence, options.tenants);
 
   return new ConfiguredJobScheduler(
     new InProcessJobScheduler({ ...parts, tenants }),

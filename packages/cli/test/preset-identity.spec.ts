@@ -56,7 +56,7 @@ describe('init --preset identity', () => {
 
     const reader = read(root, `${CONTEXT}/infrastructure/persistence/knex-search-members-reader.repository.ts`);
 
-    expect(cli(root, 'check').stdout).toContain('0 errors, 0 warnings, 6 suppressions');
+    expect(cli(root, 'check').stdout).toContain('0 errors, 0 warnings, 7 suppressions');
     expect(reader).toContain('ADR-0001: the identity context is the control plane of the tenants');
     expect(read(root, 'docs/adr/0001-identity-is-the-control-plane-of-the-tenants.md')).toContain('Status: accepted');
 
@@ -128,6 +128,49 @@ describe('init --preset identity', () => {
 
     expect(read(alone, 'src/platform/auth/authentication/create-authenticator.ts')).not.toContain('tenantClaim');
     expect(read(jwt, 'src/platform/auth/authentication/create-authenticator.ts')).not.toContain('tenantClaim');
+  });
+});
+
+describe('the tenant directory of a project with the identity preset', () => {
+  const DIRECTORY = 'src/platform/composition/tenant-directory.ts';
+
+  it.each([
+    ['drizzle', 'Drizzle'],
+    ['knex', 'Knex'],
+    ['prisma', 'Prisma'],
+  ])('reads the organisations from the database at each occurrence (%s)', (orm, adapter) => {
+    const root = initProject('--tenancy', 'shared-table', '--orm', orm, '--preset', 'identity');
+    const directory = read(root, DIRECTORY);
+
+    expect(directory).toContain(`new ${adapter}OrganisationTenantDirectory(persistence.database)`);
+
+    expect(directory).not.toContain('InMemoryTenantDirectory');
+
+    expect(
+      read(root, `src/contexts/identity/infrastructure/persistence/${orm}-organisation-tenant-directory.reader.ts`),
+    ).toContain(`export class ${adapter}OrganisationTenantDirectory implements TenantDirectory`);
+
+    expect(read(root, 'src/contexts/identity/test/integration/organisation-tenant-directory.spec.ts')).toContain(
+      'lists an organisation opened after the first read',
+    );
+  });
+
+  it('keeps the list of TENANTS in the same way without the preset, and writes no file without tenancy', () => {
+    const fixed = initProject('--tenancy', 'shared-table');
+    const none = initProject('--preset', 'identity');
+
+    expect(read(fixed, DIRECTORY)).toContain('new InMemoryTenantDirectory(fixed)');
+    expect(() => read(none, DIRECTORY)).toThrow();
+  });
+
+  it('is written for the wired by hand family too', () => {
+    const root = initProject('--tenancy', 'shared-table', '--di', 'manual', '--preset', 'identity');
+
+    expect(read(root, DIRECTORY)).toContain('DrizzleOrganisationTenantDirectory');
+
+    expect(read(root, 'src/platform/composition/lay-foundations.ts')).toContain(
+      'tenantDirectory(persistence, options.tenants)',
+    );
   });
 });
 
