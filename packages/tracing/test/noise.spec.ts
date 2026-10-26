@@ -1,5 +1,5 @@
 import { SpanKind, context, trace, type Attributes } from '@opentelemetry/api';
-import { ParentBasedSampler, TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
+import { ParentBasedSampler, TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   AttributeAllowList,
