@@ -33,6 +33,17 @@ export abstract class ContractSuite<Subject> {
     this.runner.it(name, test);
   }
 
+  /** A case waiting for what it needs: shown as pending where the runner knows `it.todo`. */
+  protected todo(name: string): void {
+    const { it } = this.runner;
+
+    if (it.todo === undefined) {
+      this.runner.it(name, async () => undefined);
+    } else {
+      it.todo(name);
+    }
+  }
+
   protected expect(actual: unknown): Expectation {
     return this.runner.expect(actual);
   }

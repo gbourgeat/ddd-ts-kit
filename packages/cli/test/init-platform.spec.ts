@@ -131,6 +131,20 @@ describe('the platform init writes', () => {
     );
   });
 
+  it('keeps the bytes of a body for a controller that declares rawBody, on Express and on Nest', () => {
+    const express = read(initProject(), 'src/platform/http/start-http-server.ts');
+    const nest = read(initProject('--http', 'nest'), 'src/platform/http/start-http-server.ts');
+
+    const nestWithControllers = read(
+      initProject('--http', 'nest', '--routes', 'controllers'),
+      'src/platform/http/start-http-server.ts',
+    );
+
+    expect(express).toContain('Object.assign(request, { rawBody: bytes })');
+    expect(nest).toContain('rawBody: true');
+    expect(nestWithControllers).toContain('rawBody: true');
+  });
+
   it('makes a Nest project validate with class-validator and write its routes as Nest controllers, unless told otherwise', () => {
     const nest = readJson(initProject('--http', 'nest'), 'ddd-ts-kit.config.json');
     const zod = readJson(initProject('--http', 'nest', '--validation', 'zod'), 'ddd-ts-kit.config.json');

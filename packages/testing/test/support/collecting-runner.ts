@@ -17,17 +17,22 @@ export class CollectingRunner implements ContractRunner {
     suite();
   }
 
-  it(name: string, test: () => Promise<void>): void {
-    this.groups.at(-1)?.tests.push({ name, test });
-  }
+  readonly pending = new Array<string>();
+
+  readonly it = Object.assign(
+    (name: string, test: () => Promise<void>): void => {
+      this.groups.at(-1)?.tests.push({ name, test });
+    },
+    { todo: (name: string): void => void this.pending.push(name) },
+  );
 
   beforeEach(setup: () => Promise<void>): void {
     this.groups.at(-1)?.setups.push(setup);
   }
 
   /** Runs every test after the setups of its group, and answers the names of those that failed and of those that passed. */
-  async run(): Promise<{ failed: string[]; passed: string[] }> {
-    const outcome = { failed: new Array<string>(), passed: new Array<string>() };
+  async run(): Promise<{ failed: string[]; passed: string[]; messages: string[] }> {
+    const outcome = { failed: new Array<string>(), passed: new Array<string>(), messages: new Array<string>() };
 
     for (const { setups, tests } of this.groups) {
       for (const { name, test } of tests) {
@@ -37,7 +42,10 @@ export class CollectingRunner implements ContractRunner {
 
         await test().then(
           () => outcome.passed.push(name),
-          () => outcome.failed.push(name),
+          (error: unknown) => {
+            outcome.failed.push(name);
+            outcome.messages.push(error instanceof Error ? error.message : String(error));
+          },
         );
       }
     }

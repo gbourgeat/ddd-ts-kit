@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { read, REPO_ROOT } from './helpers';
+import { committedProject } from './support/committed-project';
+import { git } from './support/git';
 import { initProject } from './support/init-project';
 import { pipelineAsset } from './support/pipeline-asset';
 import { readJson } from './support/read-json';
@@ -21,13 +23,15 @@ const KIT_STATE = '      "!**/.ddd-ts-kit",\n';
 const kitFormatter = (): string => inRepository('biome.json').replace(CLIENT_SOURCES, '');
 
 /** The formatter of the kit, run in a project: what it reports, empty when it has nothing to change. */
-function formatFindings(root: string): string {
+function formatFindings(root: string, paths: readonly string[] = ['.']): string {
   try {
-    execFileSync(path.join(REPO_ROOT, 'node_modules/.bin/biome'), ['format', '.'], { cwd: root, stdio: 'pipe' });
+    execFileSync(path.join(REPO_ROOT, 'node_modules/.bin/biome'), ['format', ...paths], { cwd: root, stdio: 'pipe' });
 
     return '';
   } catch (error) {
-    return error instanceof Error && 'stdout' in error ? String(error.stdout) : String(error);
+    return error instanceof Error && 'stdout' in error && 'stderr' in error
+      ? `${error.stdout}${error.stderr}`
+      : String(error);
   }
 }
 
@@ -48,6 +52,12 @@ describe('the formatter configuration', () => {
 
   it('of the example extends the one of the kit instead of copying it', () => {
     expect(JSON.parse(inRepository('examples/scheduling/biome.json'))).toMatchObject({ root: false, extends: '//' });
+  });
+
+  it('leaves the worktrees of the project to their own checkout, anchored at the root of the configuration', () => {
+    expect(inRepository('biome.json')).toContain('      "!.worktrees",\n');
+    expect(inRepository('biome.json')).not.toContain('**/.worktrees');
+    expect(pipelineAsset('template', 'biome.json.tpl')).toContain('      "!.worktrees",\n');
   });
 
   it('formats without linting nor organising imports, at a line width of 120', () => {
@@ -91,6 +101,17 @@ describe('a project init writes', () => {
     fs.writeFileSync(path.join(root, '.ddd-ts-kit', 'guard', 'stories.json'), JSON.stringify({ stories: ['one'] }));
     fs.writeFileSync(path.join(root, '.ddd-ts-kit', 'worker.json'), JSON.stringify({ context: 'invoicing' }));
 
+    expect(formatFindings(root)).toBe('');
+  });
+
+  it('formats the files of a worktree under .worktrees/, and skips that folder from the root', () => {
+    const root = committedProject('worktree-format', '--package-manager', 'npm');
+    const worktree = path.join(root, '.worktrees', 'w');
+
+    git(root, 'worktree', 'add', '--quiet', '-b', 'w', worktree);
+    fs.writeFileSync(path.join(worktree, 'src', 'unformatted.ts'), 'export const value=1\n');
+
+    expect(formatFindings(worktree)).toContain('unformatted.ts');
     expect(formatFindings(root)).toBe('');
   });
 

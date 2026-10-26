@@ -17,6 +17,8 @@ describeAdapter(
     const app = await NestFactory.create(createRoutesModule(routes, options), {
       logger: false,
       abortOnError: false,
+      // Nest keeps the bytes of a JSON body in `request.rawBody`, which a raw body route reads.
+      rawBody: true,
     });
 
     await app.listen(0, '127.0.0.1');

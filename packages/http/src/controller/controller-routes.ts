@@ -1,5 +1,6 @@
 import type { Schema } from '@ddd-ts-kit/validation';
 import { DomainError } from '@ddd-ts-kit/kernel';
+import { isRecord } from '../support/is-record';
 import { assertCacheDeclaration } from '../cache/assert-cache-declaration';
 import { assertUniqueRoutes } from '../route/assert-unique-routes';
 import type { RequestSchemas } from '../route/request-schemas';
@@ -59,7 +60,7 @@ type Documentation = Omit<RouteSpec, 'method' | 'path' | 'operationId' | 'securi
   Pick<Route, 'groups'>;
 
 function documentationOf({ spec, declared, guards }: ResolvedController): Documentation {
-  const { status, body, description } = spec.response;
+  const { status, body, description, headers } = spec.response;
 
   return {
     summary: spec.summary,
@@ -68,7 +69,10 @@ function documentationOf({ spec, declared, guards }: ResolvedController): Docume
     ...(declared.groups.length === 0 ? {} : { groups: declared.groups }),
     ...requestOf(spec),
     ...(spec.upload === undefined ? {} : { upload: spec.upload }),
-    responses: { [status]: { description: description ?? defaultDescription(body), ...bodyOf(body) } },
+    ...(spec.rawBody === true ? { rawBody: true } : {}),
+    responses: {
+      [status]: { description: description ?? defaultDescription(body), ...bodyOf(body), ...headersOf(headers) },
+    },
     errors: [...new Set([...declared.errors, ...guards.flatMap((guard) => guard.documents?.errors ?? [])])],
     ...(spec.deprecated === true ? { deprecated: true } : {}),
     ...presentationOf(spec),
@@ -106,14 +110,20 @@ function handlerOf(
 ): Route['handle'] {
   const { controller } = resolved;
   const guards = options.guards === 'skip' ? [] : resolved.guards;
-  const { status, body } = resolved.spec.response;
+  const { status, body, headers } = resolved.spec.response;
 
   return async (input: RouteInput): Promise<RouteOutput> => {
     await passedGuards(guards, guardRequest(identity, input));
 
     const answer: unknown = await controller.handle({ ...input, actor: input.context.execution.actor });
 
-    return body === undefined ? { status } : { status, body: answer };
+    if (headers === undefined) {
+      return body === undefined ? { status } : { status, body: answer };
+    }
+
+    const written = answerWithHeaders(answer, Object.keys(headers));
+
+    return body === undefined ? { status, headers: written.headers } : { status, ...written };
   };
 }
 
@@ -153,6 +163,32 @@ function presentationOf({ produces, consumes, form }: ControllerSpec): Pick<Rout
     ...(consumes === undefined ? {} : { consumes: [...consumes] }),
     ...(form === undefined ? {} : { form }),
   };
+}
+
+/** `{ body, headers }` as `handle` returned it: every declared header is written, none else. */
+function answerWithHeaders(
+  answer: unknown,
+  declared: readonly string[],
+): { body: unknown; headers: Record<string, string> } {
+  const body: unknown = isRecord(answer) ? answer['body'] : undefined;
+  const given: unknown = isRecord(answer) ? answer['headers'] : undefined;
+  const written: Record<string, string> = {};
+
+  for (const name of declared) {
+    const value: unknown = isRecord(given) ? given[name] : undefined;
+
+    if (typeof value !== 'string') {
+      throw new Error(`handle declares the header ${name} and returned none: return { body, headers } with it.`);
+    }
+
+    written[name] = value;
+  }
+
+  return { body, headers: written };
+}
+
+function headersOf(headers: ControllerSpec['response']['headers']): { headers?: Readonly<Record<string, string>> } {
+  return headers === undefined ? {} : { headers };
 }
 
 function bodyOf(body: Schema<unknown> | undefined): { body?: Schema<unknown> } {

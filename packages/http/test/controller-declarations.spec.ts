@@ -22,6 +22,25 @@ class LedgerRoutes {}
 RouteGroup({ prefix: '/ledger', guards: [Authenticated] })(LedgerRoutes);
 
 describe('a controller declaration', () => {
+  it('is refused when it declares a raw body and also reads one', () => {
+    const declare = (): void => {
+      class ReceiveAlertController {
+        handle(): void {}
+      }
+
+      Controller({
+        ...answer,
+        method: 'POST',
+        path: '/alerts',
+        guards: [Public],
+        rawBody: true,
+        consumes: ['text/xml'],
+      })(ReceiveAlertController);
+    };
+
+    expect(declare).toThrow(/ReceiveAlertController declares rawBody and consumes: the body is left unparsed/);
+  });
+
   it('is refused when nothing says who may call the route', () => {
     class UnguardedRoutes {}
 

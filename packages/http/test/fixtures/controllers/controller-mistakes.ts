@@ -54,3 +54,11 @@ export class ReadsAnotherParameterController {
 export class WithoutHandleController {
   execute(): void {}
 }
+
+// @ts-expect-error -- a declared header is left out of the answer
+@Controller({ ...route, body, response: { status: 201, body: booked, headers: { Location: 'The URL.' } } })
+export class LeavesOutAHeaderController {
+  handle(): { body: { id: string }; headers: Record<never, string> } {
+    return { body: { id: 'visit-1' }, headers: {} };
+  }
+}

@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:9386195828353248 -->
+<!-- translation-of: event-sourcing.md sha256:2f2af4ad909d0331 -->
 
 # Event sourcing, par agrégat
 
@@ -70,12 +70,26 @@ l'agrégat.
 
 `ddd-ts-kit generate aggregate <context> <Name> --event-sourced` écrit l'agrégat avec son
 événement de naissance et sa méthode apply, le codec, un *builder* qui rejoue un historique et une
-*spec* en événements donnés ; `generate domain-event` sur un tel agrégat ajoute l'événement à son
-union, à `appliers()` avec une méthode apply vide, et au codec. `describe`, `list` et `CONTEXT.md`
-disent quels agrégats sont en *event sourcing*. Le store par lequel ils sont enregistrés est câblé
-par `init --event-sourcing on` (`init --force --event-sourcing on` sur un projet existant), et le
-générateur refuse un agrégat *event-sourced* sans lui : un projet dont tous les agrégats sont des
-lignes ne paie aucune table pour cela.
+*spec* en événements donnés. L'événement de naissance est `<Name>Created` sauf si
+`--birth <Event>` nomme le fait que dit le métier (`--birth Triggered` écrit `IncidentTriggered`,
+`incidents.incident.triggered`), vérifié contre le glossaire comme tout autre nom : le nom d'un
+événement stocké est conservé pour toujours. `generate domain-event` sur un tel agrégat ajoute
+l'événement à son union, à `appliers()` avec une méthode apply vide, et au codec. `describe`,
+`list` et `CONTEXT.md` disent quels agrégats sont en *event sourcing*. Le store par lequel ils sont
+enregistrés est câblé par `init --event-sourcing on` (`init --force --event-sourcing on` sur un
+projet existant), et le générateur refuse un agrégat *event-sourced* sans lui : un projet dont tous
+les agrégats sont des lignes ne paie aucune table pour cela.
+
+`generate repository <context> <Name>` sur un agrégat *event-sourced* (sa classe étend
+`EventSourcedAggregate`) n'écrit ni table ni *mapper* de lignes : `event-store-<name>.repository.ts`
+délègue à `EventSourcedRepository` au-dessus de l'`EventStore` et du `PersonalDataCipher` que lie la
+plateforme, avec le codec de l'agrégat, sa politique de *snapshot* laissée en `TODO(domain)` ; le
+*fake* est cet adaptateur sur les stores en mémoire du kernel, et le contrat de *repository*
+s'exécute sur le *fake* et sur l'adaptateur au-dessus d'`InMemoryEventStore` (son cas de sauvegarde
+périmée reste en attente tant qu'un `mutate` qui enregistre un événement n'est pas ajouté, ce qui
+demande une méthode métier). L'event store ne garde
+aucun *tenant* : un flux est `<context>.<aggregate>-<id>`, donc c'est la couche application qui
+décide qui peut charger un identifiant.
 
 **Pas de double écriture.** Ajouter les événements et publier les événements d'intégration ne
 font qu'une transaction : le store rejoint la transaction de l'unité de travail, et le
