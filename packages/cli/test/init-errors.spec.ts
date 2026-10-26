@@ -236,7 +236,7 @@ describe('the configuration of error reporting', () => {
     expect(dependencies).toMatchObject({
       '@ddd-ts-kit/sentry': KIT_RANGE,
       '@sentry/node': '^11.6.0',
-      '@opentelemetry/api': '^1.9.1',
+      '@opentelemetry/api': '^1.10.0',
     });
 
     expect(textsAt(readJson(reported('--di', 'manual'), 'package.json'), 'dependencies')).toMatchObject({

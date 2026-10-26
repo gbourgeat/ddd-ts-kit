@@ -66,7 +66,7 @@ describe('the package.json init writes', () => {
       '@ddd-ts-kit/events': KIT_RANGE,
       // The jobs table of the default queue: its store and its worker.
       '@ddd-ts-kit/scheduling': KIT_RANGE,
-      '@opentelemetry/api': '^1.9.1',
+      '@opentelemetry/api': '^1.10.0',
       express: '^5.3.0',
       tsyringe: '^4.10.0',
       'reflect-metadata': '^0.2.2',

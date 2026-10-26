@@ -30,7 +30,7 @@ describe('tracing/platform-only', () => {
       [`${BILLING}/infrastructure/external/stripe-payment.gateway.ts`]: lines(
         '',
         TRACING,
-        "import type { Span } from '@opentelemetry/sdk-trace-base';",
+        "import type { Span } from '@opentelemetry/sdk-trace';",
       ),
       [`${BILLING}/presentation/http/issue-invoice.route.ts`]: lines(
         "const { trace } = await import('@opentelemetry/api');",
@@ -48,7 +48,7 @@ describe('tracing/platform-only', () => {
       'src/contexts/billing/billing.module.ts:1 "@ddd-ts-kit/tracing" is imported in the module file of "billing"',
       'src/contexts/billing/domain/aggregates/invoice.aggregate.ts:1 "@opentelemetry/api" is imported in domain/',
       'src/contexts/billing/infrastructure/external/stripe-payment.gateway.ts:2 "@ddd-ts-kit/tracing" is imported in infrastructure/',
-      'src/contexts/billing/infrastructure/external/stripe-payment.gateway.ts:3 "@opentelemetry/sdk-trace-base" is imported in infrastructure/',
+      'src/contexts/billing/infrastructure/external/stripe-payment.gateway.ts:3 "@opentelemetry/sdk-trace" is imported in infrastructure/',
       'src/contexts/billing/presentation/http/issue-invoice.route.ts:1 "@opentelemetry/api" is imported in presentation/',
       'src/contexts/billing/test/integration/stripe-payment.gateway.spec.ts:1 "@ddd-ts-kit/tracing/testing" is imported in test/',
       'src/shared-kernel/money.vo.ts:1 "@opentelemetry/api" is imported in the shared kernel',
