@@ -17,8 +17,7 @@ const runner = { describe, it, expect, beforeEach, afterEach };
 
 const expectations = {
   createAggregate: () => aNotification().build(),
-  // A notification is born sent and never changes: the suite saves it again as it is.
-  mutate: () => undefined,
+  // No `mutate`: a notification never changes once recorded, so the stale-save case stays pending.
   idOf: (subject: Notification) => subject.id,
   stateOf: (subject: Notification) => subject.toState(),
 };
@@ -86,6 +85,8 @@ async function createKnexRepository(): Promise<KnexNotificationRepository> {
 /** No read and no write of one network reaches another, whatever the work in progress asks. */
 tenantIsolationContract<Notification>(runner, {
   ...expectations,
+  // The tenant contract saves the notification as it is: nothing changes it.
+  mutate: () => undefined,
   name: 'KnexNotificationRepository',
   createRepository: async (scope) => {
     await database.reset();
