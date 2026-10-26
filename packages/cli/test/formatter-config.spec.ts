@@ -29,7 +29,9 @@ function formatFindings(root: string, paths: readonly string[] = ['.']): string 
 
     return '';
   } catch (error) {
-    return error instanceof Error && 'stdout' in error ? `${error.stdout}${error.stderr}` : String(error);
+    return error instanceof Error && 'stdout' in error && 'stderr' in error
+      ? `${error.stdout}${error.stderr}`
+      : String(error);
   }
 }
 
