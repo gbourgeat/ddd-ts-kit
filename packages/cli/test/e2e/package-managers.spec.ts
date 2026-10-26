@@ -45,7 +45,7 @@ describe.runIf(SLOW).each(CASES)('a project on %s (%s)', (manager, _label, stack
   beforeAll(() => {
     root = tempDir(`on-${manager}`);
     scaffoldEverything(root, stack, ['--package-manager', manager, '--ci', 'both', ...more]);
-    frozen = installForReal(root, manager);
+    frozen = installForReal(root, manager, { frozen: true });
   }, 600_000);
 
   it('installs the kit as published, writes its lockfile and passes the frozen install of a pipeline', () => {

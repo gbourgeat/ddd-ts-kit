@@ -7,7 +7,7 @@ export type Manager = 'npm' | 'pnpm';
 type Manifest = Record<string, Record<string, string> | undefined>;
 
 /** The install that writes the lockfile, then the one a pipeline runs, which refuses a lockfile that does not match. */
-const INSTALLS: Readonly<Record<Manager, readonly (readonly string[])[]>> = {
+const INSTALLS: Readonly<Record<Manager, readonly [install: readonly string[], frozen: readonly string[]]>> = {
   npm: [
     ['install', '--no-audit', '--no-fund'],
     ['ci', '--no-audit', '--no-fund'],
@@ -18,17 +18,19 @@ const INSTALLS: Readonly<Record<Manager, readonly (readonly string[])[]>> = {
 /**
  * Installs a generated project with its own package manager, the kit taken from its packed
  * tarballs since no registry serves it yet: nothing is linked to the workspace, so the layout
- * of node_modules is the one a team gets. Answers what the frozen install printed.
+ * of node_modules is the one a team gets. The frozen install of a pipeline, which proves that
+ * the lockfile it just wrote is accepted, runs only where asked (`package-managers.spec.ts`
+ * proves it, for the default stack and a heavy one, on both managers). Answers what the last
+ * install printed.
  */
-export function installForReal(root: string, manager: Manager): string {
+export function installForReal(root: string, manager: Manager, { frozen = false } = {}): string {
   pointAtTarballs(root, manager);
 
-  const [first = [], frozen = []] = INSTALLS[manager];
+  const [install, frozenInstall] = INSTALLS[manager];
   const env = { COREPACK_ENABLE_DOWNLOAD_PROMPT: '0' };
+  const printed = runIn(root, { command: manager, args: install, env });
 
-  runIn(root, { command: manager, args: first, env });
-
-  return runIn(root, { command: manager, args: frozen, env });
+  return frozen ? runIn(root, { command: manager, args: frozenInstall, env }) : printed;
 }
 
 /** Each manager has its own way to replace a package wherever it is asked for, a dependency of the kit on the kit included. */
