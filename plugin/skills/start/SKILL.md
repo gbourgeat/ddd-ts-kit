@@ -35,7 +35,7 @@ the start. The reference of each step is `docs/guides/methodology.md` of ddd-ts-
 
 Read `docs/architecture/plan.md`, and nothing else yet. In a bootstrapped project
 `npx ddd-ts-kit status` gives the same answer in one call: the `Next:` line of the plan,
-the slices by status and by owner, the `TODO(domain)` and `it.todo` left in each context.
+the slices by status and by owner (at step 7 the next step is derived from the rows, and the line of the plan is printed beside it when the two disagree), the `TODO(domain)` and `it.todo` left in each context.
 
 - It exists: its `Next:` line names the step. Go to that step. Do not re-read the artefacts of
   finished steps; each step skill reads the one it needs.
@@ -69,7 +69,7 @@ After each step, in `docs/architecture/plan.md` and in the same commit as the ar
 1. mark the step `done`;
 2. add each decision taken as one line under `## Decisions`: what, why, who decided;
 3. move anything unanswered to `## Open questions`;
-4. rewrite the `Next:` line: step number, skill, and the one thing to do first.
+4. rewrite the `Next:` line: step number, skill, and the one thing to do first. At step 7 the line is not kept row by row: `status` derives the next step from `docs/architecture/slices.md`, and the build closes with `Next: done` once every row is done.
 
 Then say what was decided, what is next, and stop. One step per turn unless the owner asks to
 go on. Commit sizes: skill `ddd-ts-kit:commit-discipline`.

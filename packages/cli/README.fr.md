@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f9728c17b021be67 -->
+<!-- translation-of: README.md sha256:a4c003ddb3225f0a -->
 
 # ddd-ts-kit
 
@@ -962,7 +962,7 @@ Régénère ce qui dérive de la configuration et du code, et rien d'autre :
   par l'équipe garde ses lignes, le bloc ajouté à leur suite ; sans aucun propriétaire, rien
   n'est écrit.
 
-`--behaviour` n'écrit que les pages de `docs/behaviour/`, tout autre document généré laissé tel quel : c'est ce que lance le *hook* de pre-commit quand une *spec* est indexée ; avec `--check`, seules ces pages sont comparées.
+`--behaviour` n'écrit que les pages de `docs/behaviour/`, tout autre document généré laissé tel quel : c'est ce que lance le *hook* de pre-commit quand une *spec* est indexée ; avec `--check`, seules ces pages sont comparées. Une règle est écrite comme son titre sans les identifiants de ligne et les critères qui l'ouvrent (`#FIX1 `, `#US1.04 AC1 `), qui la datent du changement qui l'a apportée et ne disent rien à un lecteur métier.
 
 `--stored-events` enregistre aussi dans `stored-events.lock.json` la forme de chaque version d'un
 événement stocké déclarée dans les codecs de `infrastructure/persistence/`, sans jamais réécrire
@@ -1232,7 +1232,7 @@ ddd-ts-kit todo [<context>]
 `status` affiche la ligne `Next:` de `docs/architecture/plan.md`, les lignes de
 `docs/architecture/slices.md` par statut et par responsable, et par contexte les `TODO(domain)`,
 `TODO(platform)` et `it.todo` restants, puis ceux hors des contextes. Un fichier manquant n'est
-pas une erreur. Chaque ligne qui n'est pas faite dit si elle peut commencer : prête sur le tronc
+pas une erreur. Quand le plan est à l'étape 7 (la construction), la ligne `Next:` est déduite des lignes (la prochaine ligne prête sur le tronc, ou `7 build done` quand toutes sont faites) et la ligne du plan est affichée à côté, `planNext` dans `--json`. Chaque ligne qui n'est pas faite dit si elle peut commencer : prête sur le tronc
 quand toutes ses dépendances sont faites, prête sur une branche quand chaque dépendance non faite
 est une ligne confiée à un *worker* dont le *worktree* a des *commits* d'avance sur sa base (les
 `rows` de son `.ddd-ts-kit/worker.json`, tels que `status --workers` les lit), et en attente
@@ -1240,7 +1240,7 @@ sinon, avec les identifiants qu'elle attend. Une story ou un jalon dont toutes l
 faites mais que des marqueurs qui lui appartiennent gardent ouvert a sa propre ligne (seuls les
 marqueurs qui peuvent garder une telle story ouverte passent par git blame, un appel par fichier), avec la commande qui les liste :
 `story M1: every row done, 3 markers left: npx ddd-ts-kit story-check M1` (voir
-[story-check](#story-check)). `--json` affiche `{ next, slices, remaining }` :
+[story-check](#story-check)). `--json` affiche `{ next, planNext, slices, remaining }` :
 `next` et `slices` valent `null` quand leur fichier manque, `slices` contient
 `{ file, rows, byStatus, byOwner, duplicates, unscoped, unclosed }`, `unclosed` valant
 `[{ story, markers, command }]`, une ligne non faite portant
@@ -1549,7 +1549,7 @@ n'écrit rien et ne demande rien à la plateforme.
 |---|---|
 | temps de conception | du premier *commit* de `docs/architecture/stories/<code>.md` au *commit* de `test/acceptance/<code>.acceptance.lock.json` |
 | temps de construction | du *commit* du verrou au premier *commit* dont le `## Report` contient du texte |
-| délai de livraison | du premier *commit* du fichier de la *story* au *commit* de la branche courante dont le sujet nomme `story/<code>` (un *commit* de fusion d'abord, sinon un *commit* de *squash* qui nomme la branche) ; `open` sans lui |
+| délai de livraison | du premier *commit* du fichier de la *story* à la clôture : le premier *commit* de l'historique en premier parent de la branche courante qui contient le dernier *commit* de la *story*, quel que soit son sujet (une fusion, un *squash* ; la fusion du tronc dans la branche de la *story* n'est jamais la clôture) ; `open` sans rapport ou sans clôture |
 | retravail des exigences | les *commits* qui ont changé `## Acceptance criteria` après le premier *commit* portant un *trailer* `Slice: <code>.<n>` ; les amendements du verrou (chacun un verdict `amend`) ; les verdicts `refuse` de `test/acceptance/verdicts/` |
 | décisions provisoires | les lignes `D<n>` du fichier de la *story* |
 | compromis | les éléments sous `### Compromises` du rapport |
