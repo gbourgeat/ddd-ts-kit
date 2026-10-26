@@ -1,4 +1,5 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
+import { parserOf } from '../support/parse/parser-of';
 import type { LintedFile } from '../project/linted-file';
 import { defineRule } from '../support/rule/define-rule';
 import type { DeclaredValue } from '../support/vocabularies/declared-value';
@@ -30,7 +31,7 @@ export const languageDeclaredVocabulary = defineRule<MessageId>({
       return {};
     }
 
-    const declared = projectVocabularies(file, context.languageOptions.parser);
+    const declared = projectVocabularies(file, parserOf(context));
 
     let read: Map<string, string> | undefined;
     const otherLanguage = (): Map<string, string> => (read ??= otherLanguageOf(file, sourceCode.ast));

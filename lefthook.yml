@@ -6,9 +6,11 @@ lefthook: node_modules/.bin/lefthook
 pre-commit:
   parallel: true
   jobs:
-    - name: eslint
+    - name: oxlint
+      # The staged files, type-aware, with the rules of the kit as a JS plugin (.oxlintrc.json): 0.8 s for a commit of
+      # thirteen files where ESLint needs 1.7. The pipeline runs ESLint on the trunk and at night, as the reference.
       glob: '*.{ts,mts,cts,js,mjs,cjs}'
-      run: npx --no -- eslint --config eslint.config.mjs --no-warn-ignored {staged_files}
+      run: npx --no -- oxlint --type-aware --no-error-on-unmatched-pattern {staged_files}
     - name: format
       glob: '*.{ts,mts,cts,js,mjs,cjs,json,jsonc}'
       run: npx --no -- biome format --no-errors-on-unmatched {staged_files}

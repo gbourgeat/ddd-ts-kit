@@ -1,4 +1,5 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
+import { parserOf } from '../support/parse/parser-of';
 import { calleeName } from '../support/calls/callee-name';
 import { hasSpread } from '../support/calls/has-spread';
 import { methodChain } from '../support/calls/method-chain';
@@ -50,7 +51,7 @@ export const authzDeclared = defineRule<MessageId>({
     }
 
     const isModule = inLayer(file, 'module') !== undefined;
-    const findClass = classFinder(file, sourceCode.ast, context.languageOptions.parser);
+    const findClass = classFinder(file, sourceCode.ast, parserOf(context));
 
     const tell = (finding: Finding): void => {
       if (finding !== undefined) {

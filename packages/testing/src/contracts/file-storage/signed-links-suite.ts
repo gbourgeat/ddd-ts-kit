@@ -118,6 +118,6 @@ export class SignedLinksSuite extends FileStorageSuite {
   }
 
   private follow(request: SignedRequest): Promise<FollowedResponse> {
-    return (this.options.follow ?? followWithFetch)(request);
+    return this.options.follow === undefined ? followWithFetch(request) : this.options.follow(request);
   }
 }

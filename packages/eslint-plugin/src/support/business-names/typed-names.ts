@@ -22,14 +22,14 @@ interface DeclaredType {
   readonly many: boolean;
 }
 
-/** Undefined when the parser was given no program: the rule then reads the names of the code. */
+/** Undefined when the parser was given no program or no services at all (Oxlint): the rule then reads the names of the code. */
 export function typedNames(
   context: Readonly<TSESLint.RuleContext<string, readonly unknown[]>>,
   file: LintedFile,
 ): TypedNames | undefined {
-  const services = ESLintUtils.getParserServices(context, true);
+  const services = servicesOf(context);
 
-  if (services.program === null) {
+  if (services === undefined || services.program === null) {
     return undefined;
   }
 
@@ -64,6 +64,17 @@ export function typedNames(
       return place?.area === 'context' && place.layer === 'domain' && place.inside[0] === 'repositories';
     },
   };
+}
+
+/** The services of the parser, undefined when the linter offers none: asking a linter that has none throws. */
+function servicesOf(
+  context: Readonly<TSESLint.RuleContext<string, readonly unknown[]>>,
+): ReturnType<typeof ESLintUtils.getParserServices> | undefined {
+  try {
+    return ESLintUtils.getParserServices(context, true);
+  } catch {
+    return undefined;
+  }
 }
 
 function placeOf(file: LintedFile, absolute: string): ReturnType<typeof locate> | undefined {
