@@ -194,7 +194,8 @@ the schemas of `spec` produce and returns the body `spec.response` declares:
   `body` schema whose output is assignable to it. A controller that reads a part its
   declaration does not validate, or reads it as another type, does not compile.
 - `handle` returns the output type of `response.body`, or nothing when the response has no
-  body.
+  body. When the response declares `headers`, it returns `{ body, headers }` (`{ headers }` with
+  no body) and a declared header left out does not compile.
 - The request is contravariant: `handle` names only the parts it reads, and may take no
   parameter at all.
 
@@ -465,11 +466,41 @@ callers is marked on the response schema (`withFieldAccess`), and the media type
 answers in are `produces` of its declaration, both explained in
 [representations, field access and forms](representations-and-forms.md).
 
+## Response headers
+
+A response declares the headers it answers, each with what it holds; the contract lists them
+under `responses.<status>.headers`, and `handle` returns them beside the body, on every adapter.
+A creation answers its `Location`:
+
+```ts
+@Controller({
+  group: AppointmentRoutes,
+  method: 'POST',
+  path: '/',
+  summary: 'Book appointment',
+  body: bookAppointmentBody,
+  response: { status: 201, body: acceptedSchema, headers: { Location: 'The URL of the appointment.' } },
+})
+export class BookAppointmentController {
+  constructor(private readonly commands: CommandBus) {}
+
+  async handle({ body, actor }: HttpRequest<{ body: BookAppointmentBody }>) {
+    const { appointmentId } = await this.commands.execute(new BookAppointment(body.patientId, actor));
+
+    return { body: { appointmentId }, headers: { Location: `/appointments/${appointmentId}` } };
+  }
+}
+```
+
+A response that declares no header keeps returning the body alone. On a Nest controller,
+`@KitRoute({ response: { body, headers } })` declares them the same way and the method returns
+`{ body, headers }`; `body` is then declared there, as its return type is not read for it.
+
 ## When to keep a function route
 
 `defineRoute` stays supported and both forms run in one project. Keep a function when the
-route answers several success statuses, sets response headers of its own (`Location`), answers
-bytes or text, or is built from data at run time: a controller has one response and answers its
+route answers several success statuses, sets response headers that depend on the outcome (a `Location`
+only when it creates), answers bytes or text, or is built from data at run time: a controller has one response and answers its
 body. Caching headers are not a reason: a controller declares its cache policy, its validators
 and its cache tags (`cache`), and the pipeline answers them ([HTTP caching](http-caching.md)).
 

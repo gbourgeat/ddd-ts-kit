@@ -73,7 +73,12 @@ function describeTheFrontDesk(label: string, load: () => Promise<FrontDesk>): vo
     it('answer the declared status with what handle returned, through the mapper and the actor of the request', async () => {
       const response = await call('bookVisit', { body: { patientId: 'patient-7', day: '2026-03-02' }, as: nurse });
 
-      expect(response).toMatchObject({ status: 201, body: { id: 'visit-1' } });
+      expect(response).toMatchObject({
+        status: 201,
+        body: { id: 'visit-1' },
+        headers: { location: '/visits/visit-1' },
+      });
+
       expect(desk.booked).toEqual([{ patientId: 'patient-7', day: '2026-03-02', bookedBy: 'grace' }]);
     });
 
@@ -123,6 +128,11 @@ function describeTheFrontDesk(label: string, load: () => Promise<FrontDesk>): vo
 
       expect(book).toMatchObject({ operationId: 'bookVisit', security: [{ bearer: [] }], tags: ['visits'] });
       expect(Object.keys(book?.['responses'] ?? {})).toEqual(['201', '401', '403', '422']);
+
+      expect(JSON.stringify(book?.['responses'])).toContain(
+        '"Location":{"description":"The URL of the visit.","schema":{"type":"string"}}',
+      );
+
       expect(hours).toMatchObject({ security: [], deprecated: true });
     });
   });

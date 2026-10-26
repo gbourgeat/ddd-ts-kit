@@ -54,6 +54,7 @@ describe.each(PLATFORMS)('a Nest controller served by the kit, on Nest over %s',
 
     expect(response.status).toBe(201);
     expect(await response.json()).toEqual({ invoiceId: 'inv-1', customerId: 'c-1', issuedBy: 'ada' });
+    expect(response.headers.get('location')).toBe('/invoices/inv-1');
     expect(ledger.issued).toContain('inv-1');
   });
 
