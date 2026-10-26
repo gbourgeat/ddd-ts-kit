@@ -1,5 +1,5 @@
 [English](generated-project-families.md) · **Français**
-<!-- translation-of: generated-project-families.md sha256:555bd7fabfb36536 -->
+<!-- translation-of: generated-project-families.md sha256:d57e2e1a0db1d747 -->
 
 # Proposition : les familles qui génèrent des projets, dans le *pipeline* et sur une station de travail
 
@@ -446,6 +446,18 @@ lieu de quatre, un job de moins contre la limite, pour environ 100 s de temps de
 l'indicateur à surveiller : moins de secondes de *runner* au même trafic devraient sortir le dépôt
 de sa limite la plus grande partie de la journée, ce que seules les exécutions des jours suivants
 peuvent dire.
+
+### État du plan
+
+Construit sur `fix/families-quick`, un commit chacun (le gain est le chiffre de la page, pas
+encore mesuré après le changement) :
+
+- **Ligne 1, les modèles.** Le job de mutation de la *pull request* ou de la *merge request* que
+  `init` écrit (GitHub et GitLab, et les copies de `pipeline/` et de `examples/scheduling`) copie
+  le rapport json de la nuit dans `incremental.json` avant de lancer Stryker, comme la CI du kit.
+  Attendu : les mêmes -990 secondes de *runner* par exécution pour un projet dont l'exemple a la
+  taille de celui-ci, en proportion de ses mutants ; un fichier de `changes/` porte l'étape aux
+  projets existants.
 
 ## Ce qu'une *pull request* doit encore prouver
 

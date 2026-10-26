@@ -419,6 +419,17 @@ Node 24 with coverage, 451 s median and 745 s p95, the npm job at about 500 s, t
 should take the repository off its limit for most of the day, which only the runs of the following
 days can say.
 
+### Plan status
+
+Built on `fix/families-quick`, one commit each (the gain is the page's figure, not yet measured
+after the change):
+
+- **Line 1, the templates.** The mutation job of the pull request or merge request that `init`
+  writes (GitHub and GitLab, and the copies in `pipeline/` and `examples/scheduling`) copies the
+  json report of the night to `incremental.json` before Stryker runs, as the CI of the kit does.
+  Expected: the same -990 runner seconds per run of a project whose example is the size of this
+  one, in proportion to its mutants; a file of `changes/` carries the step to existing projects.
+
 ## What a pull request must still prove
 
 The levers that need a decision trade a proof before the merge for a proof within the hour (the
