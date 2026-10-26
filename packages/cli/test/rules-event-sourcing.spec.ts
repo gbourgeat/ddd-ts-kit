@@ -227,6 +227,25 @@ describe('event-sourcing/upcaster-required and the lock of the stored shapes', (
     ]);
   });
 
+  it('records an event that carries nothing written as Record<string, never>, and refuses an empty interface', () => {
+    const none = codec('', 1).replace(
+      'interface InvoicePaidData {  }',
+      'type InvoicePaidData = Record<string, never>;',
+    );
+
+    const root = projectWith({ [CODEC]: none });
+    const recorded = lockOf(root);
+
+    expect(recorded).toEqual({ 'billing.invoice.paid': { 1: expect.stringMatching(/^sha256:/) } });
+    expect(JSON.stringify(recorded)).not.toContain('e3b0c44298fc1c14');
+
+    const empty = projectWith({ [CODEC]: codec('', 1) });
+
+    expect(() => lockOf(empty)).toThrow(
+      /declares no member: fill its fields, or write `type InvoicePaidData = Record<string, never>`/,
+    );
+  });
+
   it('writes no lock for a project without stored events, and reads a broken lock as empty', () => {
     const root = projectWith({ [LOCK]: '{ not json' });
 

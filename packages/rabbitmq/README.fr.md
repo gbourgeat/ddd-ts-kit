@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c47420de486f4b8c -->
+<!-- translation-of: README.md sha256:e2638cccf4898f12 -->
 
 # @ddd-ts-kit/rabbitmq
 
@@ -346,6 +346,9 @@ liées, et la file de travail continue de se remplir.
 - **`onUnroutable: 'fail'`** rejette un événement pour lequel aucune file n'est liée ; derrière le
   relais de l'outbox, un tel enregistrement est retenté, puis passe à l'état mort (*dead*). Ne
   l'utilisez que lorsqu'un consommateur manquant est un incident.
+- **`publishTimeoutMs`** (30000 par défaut) : une publication que le broker n'a pas confirmée
+  d'ici là est rejetée avec `PUBLISH_NOT_CONFIRMED`, comme sur NATS et Kafka, si bien que le
+  relais la retente au lieu d'attendre une confirmation qu'un broker bloqué n'envoie jamais.
 - **Un consommateur qui plante en plein gestionnaire** récupère ses messages sans que `x-attempt`
   soit incrémenté. Les files quorum bornent cela par leur limite de livraisons, au-delà de
   laquelle le *broker* envoie le message dans la file de rejet ; les files classiques ne le

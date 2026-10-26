@@ -1,4 +1,3 @@
-import type { ExecutionScope } from '@ddd-ts-kit/kernel';
 import type { RedisSource } from '../../connection/redis-source';
 import type { DeduplicationOptions } from './deduplication-options';
 import type { ReconnectOptions } from './reconnect-options';
@@ -51,9 +50,6 @@ export interface RedisStreamsEventBusOptions {
 
   /** A publish-side guard against the duplicates of a relay retry. Default: none, consumers deduplicate. */
   readonly deduplication?: DeduplicationOptions;
-
-  /** When given, every handler runs inside it, in the execution context of its event. */
-  readonly scope?: ExecutionScope;
 
   /** Observability hook. It receives codes only, so it is safe to log as is. */
   readonly onFailure?: (failure: RedisStreamsFailure) => void;

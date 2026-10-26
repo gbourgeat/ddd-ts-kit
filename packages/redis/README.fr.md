@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:58ba86e2e0cabcce -->
+<!-- translation-of: README.md sha256:9aea6521e0bff4e9 -->
 
 # @ddd-ts-kit/redis
 
@@ -702,9 +702,9 @@ process.on('SIGTERM', async () => {
 - La corrélation fait l'aller-retour. Publiez par `scopedPublisher(publisher, scope)` du noyau et
   consommez avec `consume(definition, { ..., scope }, handler)` : le consommateur s'exécute dans un
   contexte d'exécution dont le `correlationId` est celui de la requête qui a publié, dont le
-  `causationId` est l'événement, et une relivraison s'exécute dans le même contexte. Ou donnez au
-  bus l'option `scope` : chaque gestionnaire s'exécute alors à l'intérieur, sous le nom de son
-  consommateur.
+  `causationId` est l'événement, et une relivraison s'exécute dans le même contexte, comme sur
+  chaque bus du kit (les consommateurs de `@ddd-ts-kit/events` et de `@ddd-ts-kit/di` le font
+  pour vous).
 - Un contexte extrait dans son propre service garde son nom de consommateur, donc ses groupes :
   rien ne change sur le serveur.
 - La connexion de publication est celle que vous donnez, partagée avec les autres adaptateurs de
@@ -725,7 +725,6 @@ process.on('SIGTERM', async () => {
 | `startFrom` | `new` | où commence un groupe que ce bus crée : ce qui est publié à partir de ce moment, ou `beginning` pour tout le flux |
 | `retention` | aucune | `{ maxLength }` ou `{ maxAgeMs }` : élagage appliqué par chaque publication. Voir les limites |
 | `deduplication` | aucune | `{ windowMs }` : la garde côté publication décrite plus bas |
-| `scope` | aucune | une `ExecutionScope` dans laquelle s'exécute chaque gestionnaire |
 | `reconnect` | 200 ms, doublé jusqu'à 30 s | délai entre les reconnexions, et entre les tentatives d'un lecteur qui échoue |
 
 ### Topologie

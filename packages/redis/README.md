@@ -684,8 +684,8 @@ process.on('SIGTERM', async () => {
 - The correlation makes the round trip. Publish through `scopedPublisher(publisher, scope)` of
   the kernel and consume with `consume(definition, { ..., scope }, handler)`: the consumer runs
   in an execution context whose `correlationId` is the one of the request that published,
-  whose `causationId` is the event, and a redelivery runs in the same one. Or give the bus the
-  `scope` option: every handler then runs inside it, under the name of its consumer.
+  whose `causationId` is the event, and a redelivery runs in the same one, as on every bus of
+  the kit (the consumers of `@ddd-ts-kit/events` and `@ddd-ts-kit/di` do it for you).
 - A context extracted to its own service keeps its consumer name and so its groups: nothing
   changes on the server.
 - The publishing connection is the one you give, shared with the other adapters of this
@@ -706,7 +706,6 @@ process.on('SIGTERM', async () => {
 | `startFrom` | `new` | where a group this bus creates starts: what is published from then on, or `beginning` for the whole stream |
 | `retention` | none | `{ maxLength }` or `{ maxAgeMs }`: trimming applied by each publication. See the limits |
 | `deduplication` | none | `{ windowMs }`: the publish-side guard below |
-| `scope` | none | an `ExecutionScope` every handler runs inside |
 | `reconnect` | 200 ms doubling up to 30 s | delay between reconnections, and between the attempts of a reader that fails |
 
 ### Topology
