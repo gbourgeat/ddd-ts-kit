@@ -36,7 +36,7 @@ import { auditModule } from '{{alias.platform}}/audit/audit.module{{alias.ext}}'
 import { httpBoundary, type HttpBoundary } from '{{alias.platform}}/auth/authentication/http-boundary{{alias.ext}}';
 {{/if}}
 {{#if presentation.any}}
-import { presentationOf } from '{{alias.platform}}/http/presentation-of{{alias.ext}}';
+import { presentationOf, type Presentation } from '{{alias.platform}}/http/presentation-of{{alias.ext}}';
 {{/if}}
 {{#if presentation.forms}}
 import { withForms } from '{{alias.platform}}/http/with-forms{{alias.ext}}';
@@ -199,22 +199,7 @@ export function composeApplication(
 {{#if routes.nest}}
     controllers,
 {{/if}}
-    boundary: httpBoundary({
-      authenticator: options.authenticator,
-      executionScope: platform.scope,
-      errorMapper: platformErrorMapper(),
-      clock,
-      logger,
-{{#if audit.on}}
-      refusals: platform.audit.refusals,
-{{/if}}
-{{#if errors.sentry}}
-      errors: platform.errors,
-{{/if}}
-{{#if presentation.any}}
-      presentation,
-{{/if}}
-    }),
+    boundary: boundaryOf(platform, options{{#if presentation.any}}, presentation{{/if}}),
 {{/if}}
 {{#unless http.any}}
     routes: [],
@@ -243,6 +228,28 @@ export function composeApplication(
     stop: () => stop(platform, options),
   };
 }
+{{#if http.any}}
+
+/** Who calls, in which scope, and how a refusal or an error is answered, at the edge of the HTTP server. */
+function boundaryOf(platform: Platform, options: ApplicationOptions{{#if presentation.any}}, presentation: Presentation{{/if}}): HttpBoundary {
+  return httpBoundary({
+    authenticator: options.authenticator,
+    executionScope: platform.scope,
+    errorMapper: platformErrorMapper(),
+    clock: platform.clock,
+    logger: platform.logger,
+{{#if audit.on}}
+    refusals: platform.audit.refusals,
+{{/if}}
+{{#if errors.sentry}}
+    errors: platform.errors,
+{{/if}}
+{{#if presentation.any}}
+    presentation,
+{{/if}}
+  });
+}
+{{/if}}
 
 /**
  * The consumers first, then the jobs: a job sends commands whose events must find their handlers.
