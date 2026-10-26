@@ -69,6 +69,8 @@ function publicAccess(useCase: UseCaseMessage): RenderContext {
     manualImport: "import { publicUseCase } from '@ddd-ts-kit/auth';",
     manualDeclaration: `publicUseCase(${useCase.name.pascal}${useCase.kind}),`,
     permissionsImport: '',
+    resourceTodo: '',
+    resourceUnnamed: false,
     holder: '',
     requirement: '',
     useCasePermissionsImport: '',
@@ -93,6 +95,8 @@ function protectedAccess(scope: Scope, useCase: UseCaseMessage, permission: stri
     manualImport: "import { requires } from '@ddd-ts-kit/auth';",
     manualDeclaration: `requires(${useCase.name.pascal}${useCase.kind}, ${requirement}),`,
     permissionsImport: permissions,
+    resourceTodo: resourceTodo(scope, useCase, permission),
+    resourceUnnamed: scope.config.stack.authz === 'rebac',
     holder: 'holder',
     requirement,
     useCasePermissionsImport: permissions,
@@ -110,4 +114,21 @@ function resourceOption(scope: Scope): string {
   }
 
   return `, { resource: () => ({ type: 'context', id: '${scope.context.kebab}' }) }`;
+}
+
+/**
+ * Under relationships a protected use case names its context until the element is modelled, and the
+ * schema derives no permission on the context that another type derives: the marker says which
+ * element to decide, so that `todo` lists it.
+ */
+function resourceTodo(scope: Scope, useCase: UseCaseMessage, permission: string): string {
+  if (scope.config.stack.authz !== 'rebac') {
+    return '';
+  }
+
+  const element = permission.split('.')[0] ?? '';
+  const camel = element.replace(/-(\w)/g, (_, letter: string) => letter.toUpperCase());
+  const message = useCase.kind.toLowerCase();
+
+  return `TODO(domain): name the ${element} this ${message} is about, \`{ type: '${element}', id: ${message}.${camel}Id }\`, once its constructor declares it, and derive '${permission}' on that type in the relationship schema; the context is the resource of a use case on no element.`;
 }
