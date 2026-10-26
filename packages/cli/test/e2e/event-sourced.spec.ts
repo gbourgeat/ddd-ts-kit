@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { cli, DEFAULT_STACK } from '../helpers';
+import { cli, DEFAULT_STACK, read } from '../helpers';
 import { EditedProject } from './edited-project';
 import { bin, runIn } from './run-in';
 import { SLOW } from './stacks';
@@ -122,4 +122,52 @@ describe.runIf(SLOW)('an event-sourced aggregate as generated', () => {
     },
     120_000,
   );
+});
+
+/** Slow, opt-in (DDD_TS_KIT_E2E=1): under shared-table tenancy the platform hands the execution scope to the event store. */
+describe.runIf(SLOW).each([
+  ['drizzle and tsyringe', {}],
+  ['knex and the manual composition', { orm: 'knex', di: 'manual' }],
+  ['typeorm', { orm: 'typeorm' }],
+])('an event-sourced aggregate under shared-table tenancy, on %s', (_name, flags) => {
+  let project: EditedProject;
+
+  beforeAll(() => {
+    project = EditedProject.generate(
+      (root) => {
+        cli(
+          root,
+          'generate',
+          'aggregate',
+          'billing',
+          'Ledger',
+          '--event-sourced',
+          '--term',
+          'Ledger=The payments of a customer',
+          '--term',
+          'Create=To open',
+        );
+      },
+      { ...EVENT_SOURCED, ...flags, tenancy: 'shared-table' },
+    );
+  }, 240_000);
+
+  it('gives the event store the scope, type-checks, and holds the store to the tenant contract case', () => {
+    const wiring = read(project.root, 'src/platform/event-sourcing/create-event-sourcing.ts');
+
+    expect(wiring).toContain('persistence.eventSourcing(');
+
+    expect(
+      runIn(project.root, { command: process.execPath, args: [NATIVE_COMPILER, '-p', 'tsconfig.json', '--noEmit'] }),
+    ).toBe('');
+
+    const specs = runIn(project.root, {
+      command: bin('vitest'),
+      args: ['run', 'src/platform/database', `${BILLING}/test/unit/ledger`],
+    });
+
+    // The contract file of the platform holds the event store, the tenant case included.
+    expect(specs).toMatch(/persistence\.contract\.spec\.ts \(\d+ tests\)/);
+    expect(specs).toMatch(/Test Files\s+3 passed \(3\)/);
+  }, 240_000);
 });

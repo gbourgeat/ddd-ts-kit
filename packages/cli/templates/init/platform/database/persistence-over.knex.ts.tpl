@@ -51,7 +51,12 @@ export function persistenceOver(connection: DatabaseConnection): Persistence {
     processes: ({{#if tenancy.any}}tenant{{/if}}) => new KnexProcessStore(unitOfWork, { schema: MESSAGING_SCHEMA{{#if tenancy.any}}, tenant{{/if}} }),
     {{/if}}
     {{#if eventSourcing.on}}
+{{#if tenancy.any}}
+    eventSourcing: (scope) => createKnexEventSourcing(unitOfWork, { schema: EVENT_STORE_SCHEMA, scope }),
+{{/if}}
+{{#unless tenancy.any}}
     eventSourcing: createKnexEventSourcing(unitOfWork, { schema: EVENT_STORE_SCHEMA }),
+{{/unless}}
     {{/if}}
     close: () => connection.close(),
   };

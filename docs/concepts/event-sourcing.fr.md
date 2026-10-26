@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:8cd18c66ce46ef71 -->
+<!-- translation-of: event-sourcing.md sha256:0dc0dccac07f88ec -->
 
 # Event sourcing, par agrégat
 
@@ -664,8 +664,10 @@ chacun est tenu par les mêmes suites de contrat.
   et par instant.
 - La vérification du passé est une liste de mots, pas une grammaire ; un verbe irrégulier qu'elle
   ne connaît pas est désactivé avec une raison.
-- Le câblage que `init` écrit ne passe pas encore la portée à l'event store : un projet à tables
-  partagées passe `scope` à ses stores à la main.
+- Sous une multitenance, `init` donne la portée d'exécution à l'event store
+  (`persistence.eventSourcing` est alors une fonction de la portée). Il ne génère aucun abonnement
+  de rattrapage : un projet qui en exécute un passe la même `scope` à `CatchUpSubscription` et à
+  `EventStoreProjectionRebuild`.
 - `generate projection` et `generate repository` n'ont pas encore de forme *event sourcing* : la
   projection alimentée par le store et l'adaptateur du *repository* s'écrivent à la main
   (l'exemple montre les deux).

@@ -43,12 +43,22 @@ export function openPersistence(): Persistence {
 {{/unless}}
     processedEvents: new InMemoryProcessedEventStore(),
 {{#if eventSourcing.on}}
+{{#if tenancy.any}}
+    eventSourcing: (scope) => ({
+      events: new InMemoryEventStore(scope),
+      snapshots: new InMemorySnapshotStore(),
+      checkpoints: new InMemoryCheckpointStore(),
+      subjectKeys: new InMemorySubjectKeyStore(),
+    }),
+{{/if}}
+{{#unless tenancy.any}}
     eventSourcing: {
       events: new InMemoryEventStore(),
       snapshots: new InMemorySnapshotStore(),
       checkpoints: new InMemoryCheckpointStore(),
       subjectKeys: new InMemorySubjectKeyStore(),
     },
+{{/unless}}
 {{/if}}
     close: () => Promise.resolve(),
   };

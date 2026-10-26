@@ -641,8 +641,9 @@ same contract suites.
   stream version alone: stamp it by event id and instant.
 - The past-tense check is a list of words, not a grammar; an irregular verb it does not know is
   suppressed with a reason.
-- The wiring that `init` writes does not pass the scope to the event store yet: a project under
-  shared-table tenancy passes `scope` to its stores by hand.
+- Under a tenancy, `init` hands the execution scope to the event store (`persistence.eventSourcing`
+  is then a function of the scope). It generates no catch-up subscription: a project that runs
+  one passes the same `scope` to `CatchUpSubscription` and `EventStoreProjectionRebuild`.
 - `generate projection` and `generate repository` have no event-sourced form yet: the
   projection fed by the store and the repository adapter are written by hand (the example shows
   both).
