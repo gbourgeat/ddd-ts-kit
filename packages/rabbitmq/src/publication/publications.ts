@@ -1,5 +1,6 @@
 import type { ChannelModel, ConfirmChannel } from 'amqplib';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { within } from '../connection/within';
 import { encode } from '../codec/encode';
 import { BrokerUnavailableError } from '../errors/broker-unavailable-error';
 import { PublishNotConfirmedError } from '../errors/publish-not-confirmed-error';
@@ -75,13 +76,16 @@ export class Publications {
     }
   }
 
-  /** Lets the confirmations in flight arrive, then closes the channel. */
+  /**
+   * Lets the confirmations in flight arrive, for `publishTimeoutMs` at most (one that did not come
+   * in time never will), then closes the channel.
+   */
   async close(): Promise<void> {
     const channel = this.channel;
 
     this.channel = undefined;
-    await channel?.waitForConfirms().catch(ignore);
-    await channel?.close().catch(ignore);
+    await within(this.settings.publishTimeoutMs, channel?.waitForConfirms().catch(ignore));
+    await within(this.settings.publishTimeoutMs, channel?.close().catch(ignore));
   }
 
   private send(channel: ConfirmChannel, event: IntegrationEvent): Promise<void> {

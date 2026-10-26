@@ -20,6 +20,7 @@ import type { TopologySettings } from '../topology/topology-settings';
 import { failureOf } from './failure-of';
 import { POISON_MESSAGE } from './poison-message';
 import { track } from './track';
+import { within } from '../connection/within';
 
 export interface ConsumptionSettings {
   readonly topology: TopologySettings;
@@ -27,6 +28,8 @@ export interface ConsumptionSettings {
   readonly retry: Required<RetryOptions>;
   readonly onFailure: (failure: RabbitMqFailure) => void;
   readonly onDelivery: (delivery: RabbitMqDelivery) => void;
+  /** How long a close waits for each answer of the broker: one that stopped answering does not hold it. */
+  readonly publishTimeoutMs: number;
   /** Called when the channel dies while the connection lives. */
   readonly channelLost: () => void;
 }
@@ -123,13 +126,13 @@ export class Consumption {
     this.channel = undefined;
     const tags = [...this.subscriptions.values()].flatMap(({ consumerTag }) => consumerTag ?? []);
 
-    await Promise.allSettled(tags.map(async (tag) => channel?.cancel(tag)));
+    await within(this.settings.publishTimeoutMs, Promise.allSettled(tags.map(async (tag) => channel?.cancel(tag))));
 
     while (this.handling.size > 0) {
       await Promise.allSettled([...this.handling]);
     }
 
-    await channel?.close().catch(ignore);
+    await within(this.settings.publishTimeoutMs, channel?.close().catch(ignore));
   }
 
   private subscriptionOf(binding: ConsumerBinding): QueueSubscription {
