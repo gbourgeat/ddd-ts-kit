@@ -52,10 +52,10 @@ ruleTester.run('tracing-platform-only', tracingPlatformOnly, {
   invalid: [
     { ...at(ADAPTER, TRACING), errors: [refused('@ddd-ts-kit/tracing', 'infrastructure/')] },
     {
-      ...at(ADAPTER, `${API}\nimport type { Span } from '@opentelemetry/sdk-trace-base';`),
+      ...at(ADAPTER, `${API}\nimport type { Span } from '@opentelemetry/sdk-trace';`),
       errors: [
         refused('@opentelemetry/api', 'infrastructure/'),
-        refused('@opentelemetry/sdk-trace-base', 'infrastructure/'),
+        refused('@opentelemetry/sdk-trace', 'infrastructure/'),
       ],
     },
     {

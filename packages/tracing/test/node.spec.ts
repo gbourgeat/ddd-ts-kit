@@ -1,5 +1,5 @@
 import { trace } from '@opentelemetry/api';
-import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   DROPPED_SPANS_ATTRIBUTE,
@@ -33,7 +33,7 @@ describe('initTracing', () => {
 
   it('starts an SDK with the tracker and the scrubbing processors installed', async () => {
     const exporter = new InMemorySpanExporter();
-    const processor = new SimpleSpanProcessor(exporter);
+    const processor = new SimpleSpanProcessor({ exporter });
 
     const tracing = initTracing({
       serviceName: 'billing',

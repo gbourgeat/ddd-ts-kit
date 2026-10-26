@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module';
-import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace';
 import { defineRoute, executeRoute } from '@ddd-ts-kit/http';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { tracedRoutes } from '../src';
@@ -34,7 +34,7 @@ const health = defineRoute(
 
 describe('a real HTTP server under the default instrumentations', () => {
   const exporter = new InMemorySpanExporter();
-  const processor = new SimpleSpanProcessor(exporter);
+  const processor = new SimpleSpanProcessor({ exporter });
   let tracing: TracingHandle;
   let origin: string;
   let close: () => void;
