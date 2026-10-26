@@ -20,7 +20,7 @@ export interface ModelledPermission {
 }
 
 /** A part of the schema the checker cannot read, and where it stands. */
-export interface UnreadSchema {
+interface UnreadSchema {
   readonly line: number;
   readonly what: string;
 }
