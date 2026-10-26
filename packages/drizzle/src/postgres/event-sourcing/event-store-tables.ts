@@ -37,6 +37,7 @@ function eventsTable(schemaName: string | undefined) {
       data: jsonb('data').notNull(),
       metadata: jsonb('metadata').notNull(),
       occurredAt: instant('occurred_at').notNull(),
+      tenantId: text('tenant_id'),
       recordedAt: instant('recorded_at').notNull().defaultNow(),
     },
     (events) => [

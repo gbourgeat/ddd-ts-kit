@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { FixedExecutionScope } from '@ddd-ts-kit/kernel';
 import { eventStoreContract, eventStoreUnitOfWorkContract } from '@ddd-ts-kit/testing/contracts';
 import { PrismaOutboxStore, createPrismaEventSourcing, createPrismaUnitOfWork } from '../../src';
 import { createDatabase, type TestDatabase } from '../support/database';
@@ -26,6 +27,13 @@ eventStoreContract(runner, {
   name: 'createPrismaEventSourcing on PostgreSQL',
   createStore: async () => (await stores()).events,
   createCompanions: stores,
+  createTenantStore: async () => {
+    await database.truncate();
+
+    const scope = new FixedExecutionScope();
+
+    return { scope, store: createPrismaEventSourcing(createPrismaUnitOfWork(database.prisma), { scope }).events };
+  },
 });
 
 eventStoreUnitOfWorkContract(runner, {

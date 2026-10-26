@@ -1,19 +1,35 @@
 import type { Appended } from '../../application/event-sourcing/appended';
 import type { EventToAppend } from '../../application/event-sourcing/event-to-append';
 import type { StoredEvent } from '../../application/event-sourcing/stored-event';
+import { assertStreamReach } from '../../application/event-sourcing/assert-stream-reach';
 import type { EventStore } from '../../application/ports/event-store';
+import type { ExecutionScope } from '../../application/ports/execution-scope';
 import { ConcurrencyError } from '../../domain/errors/concurrency-error';
 
-/** Reference implementation, for tests and single-process apps. Not transactional: a failed unit of work keeps what it appended. */
+/** Reference implementation, for tests and single-process apps. Not transactional: a failed unit of work keeps what it appended.
+ *
+ * Given the execution scope, it records the tenant of the work at the first append of a stream and
+ * refuses a read or an append of a stream of another tenant (`EventStreamTenantError`), as the SQL stores do.
+ */
 export class InMemoryEventStore implements EventStore {
   private readonly events: StoredEvent[] = [];
 
+  constructor(private readonly scope?: ExecutionScope) {}
+
   async append(stream: string, expectedVersion: number, events: readonly EventToAppend[]): Promise<Appended> {
-    const version = this.versionOf(stream);
+    const held = this.streamOf(stream);
+    const version = held.length;
+    const context = this.scope?.current();
+
+    if (held.length > 0) {
+      assertStreamReach(context, { stream, recorded: held[0]?.tenantId }, 'write');
+    }
 
     if (version !== expectedVersion) {
       throw new ConcurrencyError(stream);
     }
+
+    const tenantId = held[0]?.tenantId ?? context?.tenantId;
 
     events.forEach((event, index) => {
       this.events.push(
@@ -21,6 +37,7 @@ export class InMemoryEventStore implements EventStore {
           ...event,
           metadata: event.metadata ?? {},
           stream,
+          ...(tenantId === undefined ? {} : { tenantId }),
           version: version + index + 1,
           position: this.events.length + 1,
         }),
@@ -31,7 +48,13 @@ export class InMemoryEventStore implements EventStore {
   }
 
   async readStream(stream: string, after = 0): Promise<readonly StoredEvent[]> {
-    return this.events.filter((event) => event.stream === stream && event.version > after).map(copy);
+    const held = this.streamOf(stream);
+
+    if (held.length > 0) {
+      assertStreamReach(this.scope?.current(), { stream, recorded: held[0]?.tenantId }, 'read');
+    }
+
+    return held.filter((event) => event.version > after).map(copy);
   }
 
   async readAll(after: number, limit: number): Promise<readonly StoredEvent[]> {
@@ -42,8 +65,8 @@ export class InMemoryEventStore implements EventStore {
     return this.events.length;
   }
 
-  private versionOf(stream: string): number {
-    return this.events.filter((event) => event.stream === stream).length;
+  private streamOf(stream: string): StoredEvent[] {
+    return this.events.filter((event) => event.stream === stream);
   }
 }
 

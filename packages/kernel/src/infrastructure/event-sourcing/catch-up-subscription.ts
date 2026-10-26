@@ -1,7 +1,9 @@
 import type { StoredEvent } from '../../application/event-sourcing/stored-event';
 import type { CheckpointStore } from '../../application/ports/checkpoint-store';
 import type { EventStore } from '../../application/ports/event-store';
+import type { ExecutionScope } from '../../application/ports/execution-scope';
 import type { UnitOfWork } from '../../application/ports/unit-of-work';
+import { inTenantOfEvent } from './in-tenant-of-event';
 
 export interface CatchUpSubscriptionParts {
   /** The subscriber, `<context>.<name>`: the name of the projection it feeds, and of its checkpoint. */
@@ -12,6 +14,11 @@ export interface CatchUpSubscriptionParts {
   readonly unitOfWork: UnitOfWork;
   /** Applies one event of the store; passes over the events it does not apply. */
   apply(event: StoredEvent): Promise<void>;
+  /**
+   * With a scope, each event is applied in the tenant its stream recorded (`StoredEvent.tenantId`),
+   * so the projection reads and writes that tenant only; the event store must be given the same scope.
+   */
+  readonly scope?: ExecutionScope;
   /** Events applied per unit of work. Default 100. */
   readonly batchSize?: number;
 }
@@ -37,7 +44,7 @@ export class CatchUpSubscription {
       const last = events.at(-1);
 
       for (const event of events) {
-        await this.parts.apply(event);
+        await inTenantOfEvent(this.parts.scope, name, event, () => this.parts.apply(event));
       }
 
       if (last !== undefined) {

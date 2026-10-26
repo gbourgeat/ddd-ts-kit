@@ -1,5 +1,5 @@
 [English](multitenancy.md) · **Français**
-<!-- translation-of: multitenancy.md sha256:9b520117fd45c7e5 -->
+<!-- translation-of: multitenancy.md sha256:548d0b690bd6419d -->
 
 # Multitenance
 
@@ -206,6 +206,15 @@ L'outbox garde le *tenant* de chaque événement sur Knex (`tenant: true`), Driz
 (`tenantOutboxTable`), Prisma (`tenant: true`, sur un modèle qui porte le champ `tenantId` que le
 fragment livré laisse en commentaire) et TypeORM (`outboxEntity({ tenant: true })`), si bien que
 ses consommateurs s'exécutent dans ce *tenant*.
+
+L'event store d'un agrégat en *event sourcing* garde le *tenant* de chaque flux de la même façon.
+À qui l'on donne la portée d'exécution, il enregistre le *tenant* au premier ajout dans la colonne
+`tenant_id`, nullable, des événements et refuse de lire un flux d'un autre *tenant*, ou d'y
+ajouter (`EventStreamTenantError`), l'élévation ne faisant que lire ; les projections qu'il
+alimente appliquent chaque événement dans le *tenant* de son flux. Sur Knex,
+`addEventStoreTenantColumn(knex, { schema, tenantOfExistingStreams })` migre un store existant ;
+sur Drizzle, Prisma et TypeORM, la colonne rejoint les tables livrées et l'outillage de l'ORM écrit
+la migration. Voir [l'*event sourcing*](event-sourcing.fr.md#sous-des-tables-partagées-entre-tenants).
 
 Trois règles tiennent quelle que soit la stratégie :
 

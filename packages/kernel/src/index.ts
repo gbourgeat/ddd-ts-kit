@@ -278,6 +278,7 @@ export * from './infrastructure/event-sourcing/event-sourced-repository';
 export * from './infrastructure/event-sourcing/event-store-projection-rebuild';
 export * from './infrastructure/event-sourcing/personal-data-cipher';
 export * from './infrastructure/event-sourcing/postgres/event-store-tables-sql';
+export * from './infrastructure/event-sourcing/postgres/event-store-tenant-column-sql';
 export * from './infrastructure/event-sourcing/postgres/event-store-tables-options';
 export * from './infrastructure/event-sourcing/postgres/event-store-tables';
 export * from './infrastructure/event-sourcing/postgres/postgres-checkpoint-store';

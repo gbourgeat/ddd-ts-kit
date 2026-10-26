@@ -256,7 +256,7 @@ describe('what the event store hands the composition root', () => {
     const unaudited = initProject('--audit', 'off', ...EVENT_SOURCED);
 
     expect(platform(audited, 'event-sourcing/create-event-sourcing.ts')).toContain(
-      'const subjectKeys = auditedSubjectKeys(persistence.eventSourcing.subjectKeys, audit.trail, source);',
+      'const subjectKeys = auditedSubjectKeys(stores.subjectKeys, audit.trail, source);',
     );
 
     expect(platform(audited, 'composition/lay-foundations.ts')).toContain(
@@ -265,9 +265,7 @@ describe('what the event store hands the composition root', () => {
 
     expect(platform(unaudited, 'event-sourcing/create-event-sourcing.ts')).not.toContain('auditedSubjectKeys');
 
-    expect(platform(unaudited, 'event-sourcing/create-event-sourcing.ts')).toContain(
-      'const { subjectKeys } = persistence.eventSourcing;',
-    );
+    expect(platform(unaudited, 'event-sourcing/create-event-sourcing.ts')).toContain('const { subjectKeys } = stores;');
 
     expect(platform(unaudited, 'composition/lay-foundations.ts')).toContain(
       'eventSourcing: createEventSourcing(persistence),',

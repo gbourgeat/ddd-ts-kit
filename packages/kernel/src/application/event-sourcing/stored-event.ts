@@ -9,4 +9,6 @@ export interface StoredEvent extends EventToAppend {
   /** Its rank in the store, from 1, in the order the appends committed: what a subscription remembers. */
   readonly position: number;
   readonly metadata: StoredData;
+  /** The tenant of its stream, recorded at the first append by a store given an execution scope; absent otherwise. */
+  readonly tenantId?: string;
 }

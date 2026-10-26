@@ -5,7 +5,8 @@ import { qualifiedTable } from './qualified-table';
  * The statements that create the tables of an event store on PostgreSQL, for a migration of the
  * project: the events, the head of the store (the position the next append starts after), the
  * snapshots, the checkpoints of the subscriptions and the keys of the data subjects. Each one
- * can run again.
+ * can run again. The events carry a nullable `tenant_id`, which the store reads and writes when it is
+ * given an execution scope; a table created without it takes `eventStoreTenantColumnSql`.
  */
 export function eventStoreTablesSql(options: EventStoreTablesOptions = {}): readonly string[] {
   const { schema } = options;
@@ -24,6 +25,7 @@ export function eventStoreTablesSql(options: EventStoreTablesOptions = {}): read
   data jsonb not null,
   metadata jsonb not null,
   occurred_at timestamptz(3) not null,
+  tenant_id text,
   recorded_at timestamptz(3) not null default now(),
   unique (stream, version)
 )`,

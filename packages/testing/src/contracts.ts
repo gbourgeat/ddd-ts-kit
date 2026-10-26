@@ -33,6 +33,7 @@ export {
   type JobSchedulerUnderContract,
 } from './contracts/job-scheduler-contract';
 export { eventStoreContract, type EventStoreContractOptions } from './contracts/event-store-contract';
+export type { TenantEventStore } from './contracts/event-store/tenant-suite';
 export type { EventStoreUnderContract } from './contracts/event-store/event-store-under-contract';
 export {
   eventStoreUnitOfWorkContract,

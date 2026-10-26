@@ -6,6 +6,7 @@ import {
   RepeatedCachePurger,
   InMemoryEventBus,
   InMemoryCheckpointStore,
+  FixedExecutionScope,
   InMemoryEventStore,
   InMemorySnapshotStore,
   InMemorySubjectKeyStore,
@@ -110,6 +111,11 @@ outboxStoreContract(runner, {
 eventStoreContract(runner, {
   name: 'InMemoryEventStore',
   createStore: () => new InMemoryEventStore(),
+  createTenantStore: () => {
+    const scope = new FixedExecutionScope();
+
+    return { scope, store: new InMemoryEventStore(scope) };
+  },
   createCompanions: () => ({
     snapshots: new InMemorySnapshotStore(),
     checkpoints: new InMemoryCheckpointStore(),

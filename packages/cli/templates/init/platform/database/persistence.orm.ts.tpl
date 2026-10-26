@@ -1,5 +1,5 @@
 import type { OutboxStore } from '@ddd-ts-kit/events';
-import type { {{#if eventSourcing.on}}EventSourcingStores, {{/if}}{{#if queue.processTable}}ExecutionScope, {{/if}}ProcessedEventStore, {{#if queue.processTable}}ProcessStore, {{/if}}UnitOfWork } from '@ddd-ts-kit/kernel';
+import type { {{#if eventSourcing.on}}EventSourcingStores, {{/if}}{{#if queue.processTable}}ExecutionScope, {{/if}}{{#unless queue.processTable}}{{#if tenancy.any}}{{#if eventSourcing.on}}ExecutionScope, {{/if}}{{/if}}{{/unless}}ProcessedEventStore, {{#if queue.processTable}}ProcessStore, {{/if}}UnitOfWork } from '@ddd-ts-kit/kernel';
 {{#if queue.database}}
 import type { JobStore } from '@ddd-ts-kit/scheduling';
 {{/if}}
@@ -35,8 +35,16 @@ export interface Persistence {
    * The event store, the snapshots, the checkpoints of the projections it feeds and the keys of the
    * data subjects, in the `event_store` schema: what an event-sourced aggregate is loaded and saved
    * through, and what seals its personal values. The platform binds each store to its port.
+{{#if tenancy.any}}
+   * It is given the execution scope: each stream keeps the tenant of the work that first appended to it.
+{{/if}}
    */
+{{#if tenancy.any}}
+  readonly eventSourcing: (scope: ExecutionScope) => EventSourcingStores;
+{{/if}}
+{{#unless tenancy.any}}
   readonly eventSourcing: EventSourcingStores;
+{{/unless}}
   {{/if}}
 
   close(): Promise<void>;

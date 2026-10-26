@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:2f2af4ad909d0331 -->
+<!-- translation-of: event-sourcing.md sha256:c8a1627e0779d637 -->
 
 # Event sourcing, par agrégat
 
@@ -541,6 +541,26 @@ en silence. Une projection alimentée par le store suit les événements d'un se
 *event sourcing* ; un modèle de lecture qui en joint deux est fait de deux projections, ou d'une
 projection alimentée par le distributeur.
 
+### Sous des tables partagées entre *tenants*
+
+Un event store à qui l'on donne la portée d'exécution (`InMemoryEventStore(scope)`, ou `scope` dans
+les options de `createKnexEventSourcing`, `createDrizzleEventSourcing`, `createPrismaEventSourcing`
+et `createTypeOrmEventSourcing`) enregistre le *tenant* du travail au premier ajout d'un flux, dans
+la colonne `tenant_id`, nullable, des événements, et le rend sur chaque événement stocké
+(`StoredEvent.tenantId`). Lire un flux d'un autre *tenant*, ou y ajouter, est alors refusé par une
+`EventStreamTenantError`, qui nomme le flux et jamais l'autre *tenant* ; le personnel de la
+plateforme élevé sur ce *tenant* (`acrossTenants`) peut le lire, jamais y ajouter. Un travail qui
+ne nomme aucun *tenant* n'est pas borné : rien n'est enregistré et rien n'est refusé, de sorte
+qu'un projet sans multitenance ne change pas. Un flux stocké avant que la colonne existe n'a pas de
+*tenant* et est refusé à tous, jusqu'à ce qu'une migration lui en donne un. Tout *repository*
+d'agrégat en *event sourcing* s'y appuie, `generate repository --tenant-scoped` compris : c'est le
+store qui isole le flux, pas une condition sur une instruction. Le même cas de contrat tient le
+store en mémoire et les quatre ORM.
+
+Un `CatchUpSubscription` ou un `EventStoreProjectionRebuild` à qui l'on donne la même `scope`
+applique chaque événement dans le *tenant* de son flux (origine `event`, comme un consommateur de
+l'outbox), si bien que la projection ne lit et n'écrit que ce *tenant*.
+
 ## Tester
 
 - `givenEvents(rehydrate, events).when(command).thenEvents([...])` : le comportement de
@@ -650,6 +670,9 @@ chacun est tenu par les mêmes suites de contrat.
 
 ## Limites
 
+- `readAll` et `head` ne sont pas bornés par *tenant* : ils alimentent les abonnements, qui
+  tournent dans un contexte à eux et appliquent chaque événement dans son *tenant*. Réservez-les à
+  l'infrastructure.
 - Un event store par schéma de base de données : `init --event-sourcing on` en câble un, dans le
   schéma `event_store`, lié par `src/platform/event-sourcing/` avec les clés des personnes concernées
   et le chiffre ; un contexte qui garde le sien lie ses stores dans son module plutôt que dans la
@@ -660,6 +683,10 @@ chacun est tenu par les mêmes suites de contrat.
   et par instant.
 - La vérification du passé est une liste de mots, pas une grammaire ; un verbe irrégulier qu'elle
   ne connaît pas est désactivé avec une raison.
+- Sous une multitenance, `init` donne la portée d'exécution à l'event store
+  (`persistence.eventSourcing` est alors une fonction de la portée). Il ne génère aucun abonnement
+  de rattrapage : un projet qui en exécute un passe la même `scope` à `CatchUpSubscription` et à
+  `EventStoreProjectionRebuild`.
 - `generate projection` et `generate repository` n'ont pas encore de forme *event sourcing* : la
   projection alimentée par le store et l'adaptateur du *repository* s'écrivent à la main
   (l'exemple montre les deux).
