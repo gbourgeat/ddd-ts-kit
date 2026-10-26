@@ -917,7 +917,7 @@ Regenerates what is derived from the config and the code, and nothing else:
   platform owners. A file the team wrote keeps its lines, the block appended after them; without
   any owner nothing is written.
 
-`--behaviour` writes the pages of `docs/behaviour/` alone, every other generated document left as it is: what the pre-commit hook runs when a spec is staged; with `--check`, those pages alone are compared.
+`--behaviour` writes the pages of `docs/behaviour/` alone, every other generated document left as it is: what the pre-commit hook runs when a spec is staged; with `--check`, those pages alone are compared. A rule is written as its title without the row ids and criteria it opens with (`#FIX1 `, `#US1.04 AC1 `), which date it to the change that brought it and mean nothing to a reader of the business.
 
 `--stored-events` also records in `stored-events.lock.json` the shape of each version of a stored
 event declared in the codecs of `infrastructure/persistence/`, never rewriting a recorded version:

@@ -1,3 +1,4 @@
+import { CRITERION, ROW } from '../acceptance/scenarios-in';
 import { countsOf, type PageCounts } from './counts-of';
 import type { PageSection, SpecOfPage } from './page-section';
 import type { RuleGroup, SpecRules } from './rules-in';
@@ -83,7 +84,7 @@ function rulesLines(rules: SpecRules, depth: number): string[] {
   const indent = '  '.repeat(depth);
 
   return [
-    ...rules.rules.map((rule) => `${indent}- ${rule.title}${suffix(rule.state)}`),
+    ...rules.rules.map((rule) => `${indent}- ${ruleText(rule.title)}${suffix(rule.state)}`),
     ...rules.groups.flatMap((group) => groupLines(group, depth)),
   ];
 }
@@ -94,4 +95,14 @@ function groupLines(group: RuleGroup, depth: number): string[] {
 
 function suffix(state: 'stated' | 'planned' | 'aside'): string {
   return state === 'planned' ? ' (planned)' : state === 'aside' ? ' (put aside)' : '';
+}
+
+/** The ids a title may open with: a row (`#US1.04`, `#FIX1`) and a criterion (`AC1`), as `acceptance` reads them. */
+const LEADING_IDS = new RegExp(`^(?:\\s*(?:${ROW.source}|${CRITERION.source})[\\s,:;-]*)+`);
+
+/** A rule as the business reads it: the title without the row ids and criteria it opens with, which date it to a change. */
+function ruleText(title: string): string {
+  const text = title.replace(LEADING_IDS, '').trim();
+
+  return text === '' ? title : text;
 }

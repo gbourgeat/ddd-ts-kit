@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1a00ce7d539ca1cc -->
+<!-- translation-of: README.md sha256:a4c003ddb3225f0a -->
 
 # ddd-ts-kit
 
@@ -962,7 +962,7 @@ Régénère ce qui dérive de la configuration et du code, et rien d'autre :
   par l'équipe garde ses lignes, le bloc ajouté à leur suite ; sans aucun propriétaire, rien
   n'est écrit.
 
-`--behaviour` n'écrit que les pages de `docs/behaviour/`, tout autre document généré laissé tel quel : c'est ce que lance le *hook* de pre-commit quand une *spec* est indexée ; avec `--check`, seules ces pages sont comparées.
+`--behaviour` n'écrit que les pages de `docs/behaviour/`, tout autre document généré laissé tel quel : c'est ce que lance le *hook* de pre-commit quand une *spec* est indexée ; avec `--check`, seules ces pages sont comparées. Une règle est écrite comme son titre sans les identifiants de ligne et les critères qui l'ouvrent (`#FIX1 `, `#US1.04 AC1 `), qui la datent du changement qui l'a apportée et ne disent rien à un lecteur métier.
 
 `--stored-events` enregistre aussi dans `stored-events.lock.json` la forme de chaque version d'un
 événement stocké déclarée dans les codecs de `infrastructure/persistence/`, sans jamais réécrire
