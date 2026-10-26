@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:dd5e00a932614ab4 -->
+<!-- translation-of: agent-sandbox.md sha256:539220eb062ff3ea -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -89,7 +89,7 @@ ligne apporte, en termes de contrôle :
 | `sandbox.network.allowedDomains: ["registry.npmjs.org", "<hôte git>"]` | projet | une commande joint le registre des paquets et l'hôte git du projet (lu dans `repository` de `package.json`, sinon dans le *remote* `origin` ; ajoutez votre miroir si vous en tenez un) et rien d'autre : aucune exfiltration par `curl`, aucun paquet d'un hôte inconnu |
 | `sandbox.credentials.files` : `~/.ssh`, `~/.aws`, `~/.config/gcloud`, `~/.azure` refusés | projet | une commande ne peut pas lire les clés du développeur : une injection de *prompt* ne peut pas les envoyer |
 | `sandbox.credentials.envVars` : `GITHUB_TOKEN`, `GH_TOKEN`, `GITLAB_TOKEN`, `NPM_TOKEN`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, `GOOGLE_APPLICATION_CREDENTIALS`, `AZURE_CLIENT_SECRET` refusées | projet | les variables sont retirées avant chaque commande en bac à sable : un jeton dans le *shell* du développeur n'est pas dans celui de l'agent |
-| `permissions.deny: Read(./.env)`, `Read(./.env.*)` | projet, écrit aussi sans le profil | les secrets du projet restent hors du contexte de l'agent : le bac à sable ne couvre que les commandes *shell*, pas l'outil Read, donc une règle de permission tient celui-ci |
+| `permissions.deny: Read(./.env)`, `Read(./.env.local)`, `Read(./.env.*.local)`, `Read(./.env.production)`, `Read(./.env.development)`, `Read(./.env.test)` | projet, écrit aussi sans le profil | les secrets du projet restent hors du contexte de l'agent : le bac à sable ne couvre que les commandes *shell*, pas l'outil Read, donc une règle de permission tient celui-ci |
 | `allowManagedPermissionRulesOnly: true` | réglages gérés | les règles de permission de l'organisation sont les seules : un fichier de projet ou d'utilisateur ne peut pas les élargir |
 | `permissions.disableBypassPermissionsMode: "disable"` | gérés | le mode qui saute chaque demande de permission est refusé : aucune session ne tourne sans les portes |
 | `allowManagedHooksOnly: true` | gérés | seuls les *hooks* de l'organisation tournent ; copiez-y les *hooks* du profil, sinon un fichier de projet ne peut pas les garder. Un projet ne peut pas retirer la porte de production |

@@ -37,7 +37,9 @@ On `init`, the preset writes the context of its name, `identity`, declared `gene
 context named, with the classification and purpose of the preset unless `--classification` or
 `--purpose` say otherwise. Either way it runs the generators of the kit for what they wire outside
 the context (the tables of the platform, the published language, the registries, the audited
-events), then lays out the files those generators keep adding to.
+events), then lays out the files those generators keep adding to. The preset's terms win: its
+glossary is written into the context, and the glossaries of the contexts downstream refer to
+those terms rather than rename them (`Organisation` is the tenant, `Member` a membership).
 
 A project holds one context written from a preset of a kind: two identity contexts would declare
 the same integration events and tables in the files of the platform (the audited events, the

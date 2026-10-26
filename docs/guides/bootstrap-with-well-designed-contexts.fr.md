@@ -1,5 +1,5 @@
 [English](bootstrap-with-well-designed-contexts.md) · **Français**
-<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:d39649197bfd4674 -->
+<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:ae46e12482405840 -->
 
 # Démarrer avec des contextes bien conçus
 
@@ -41,6 +41,9 @@ contexte nommé, avec la classification et l'objet du *preset* sauf si `--classi
 `--purpose` disent autre chose. Dans les deux cas, il exécute les générateurs du kit pour ce
 qu'ils câblent hors du contexte (les tables de la plateforme, le langage publié, les registres,
 les événements audités), puis dispose les fichiers auxquels ces générateurs continuent d'ajouter.
+Les termes du *preset* l'emportent : son glossaire est écrit dans le contexte, et les glossaires
+des contextes en aval s'y réfèrent au lieu de les renommer (`Organisation` est le *tenant*,
+`Member` une appartenance).
 
 Un projet contient un seul contexte écrit depuis un *preset* d'un même genre : deux contextes
 d'identité déclareraient les mêmes événements d'intégration et les mêmes tables dans les fichiers

@@ -98,7 +98,9 @@ Once the owner agreed, `npx ddd-ts-kit generate module <context> <module> --purp
 
 Names are kebab-case nouns of the business (`ordering`, `claims-handling`), never technical
 (`core`, `common`, `api`, `data`). In an existing project a new context is created with
-`npx ddd-ts-kit generate context` (skill `ddd-ts-kit:scaffold`) once the owner agreed.
+`npx ddd-ts-kit generate context` (skill `ddd-ts-kit:scaffold`) once the owner agreed. A row
+that is a preset of the kit (`identity`) says so in its Purpose cell (`preset: identity`): its
+glossary is the preset's, see `ddd-ts-kit:glossary`.
 
 ## Done when
 

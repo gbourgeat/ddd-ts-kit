@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:2a45dfa033e09ff8 -->
+<!-- translation-of: parallel-work.md sha256:537acd09740932ff -->
 
 # Travailler en parallèle sans collisions
 
@@ -131,7 +131,9 @@ garde un marqueur de conflit, puis pose les migrations, régénère, et lance `v
 résultat non commité : une ligne ajoutée par un côté qui manque au résultat, une ligne de
 `slices.md` qui n'est plus terminée, un test, un fichier de *spec* ou une migration disparu
 l'arrête (sortie 1), avec `file:line` et le côté d'où la rétablir (`git show ORIG_HEAD:<file>`
-pour cette branche). Une suppression voulue : `merge-trunk --continue --accept-lost`, qui la
+pour cette branche). Ce que la branche principale a elle-même supprimé ou remplacé depuis la base,
+dans un fichier que la branche n'a pas touché depuis qu'elle l'a quittée, est son changement, pas une
+perte. Une suppression voulue : `merge-trunk --continue --accept-lost`, qui la
 consigne dans le *commit* de fusion par un *trailer* `Lost-Accepted: <file:line>,...`, listé par
 chaque passe suivante sans faire échouer. Le *commit* ne porte que les chemins de la fusion (les
 chemins en conflit, les fichiers dérivés, les migrations, les décisions, le fichier de

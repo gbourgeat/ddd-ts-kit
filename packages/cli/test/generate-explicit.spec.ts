@@ -225,6 +225,8 @@ describe('the files of an explicit context', () => {
 
     expect(contract.match(/repositoryContract<Invoice>\(runner, \{/g)).toHaveLength(2);
     expect(contract).toContain('database = await openTestDatabase();');
+    expect(contract).toContain('TODO(domain): add `mutate: (changed: Invoice) =>');
+    expect(contract).not.toMatch(/^ {2}mutate:/m);
   });
 
   it('splits a query into its message, its result and its handler, with a read port that is an abstract class', () => {

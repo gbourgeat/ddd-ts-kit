@@ -47,6 +47,7 @@ export function frontDeskRoutes(fixture: FrontDesk, desk: Desk): readonly Route[
       fixture.GetVisitController,
       fixture.CancelVisitController,
       new fixture.OpeningHoursController(),
+      new fixture.ReceiveAlertController(),
     ],
     { resolve },
   );

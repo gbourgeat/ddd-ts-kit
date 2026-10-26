@@ -687,6 +687,11 @@ test('in the main checkout of the trunk the code of a context waits for a worktr
   assert.equal(run('pre-write', write(join(root, 'docs/architecture/plan.md'))).output, undefined);
   assert.equal(decision(run('pre-bash', bash(root, 'npx ddd-ts-kit generate aggregate ordering Order'))), 'deny');
   assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit generate context billing:supporting')).output, undefined);
+  const module = bash(
+    root,
+    'npx ddd-ts-kit generate module ordering checkout --purpose "Checkout" --term "Checkout=the purchase flow"',
+  );
+  assert.equal(run('pre-bash', module).output, undefined);
   assert.match(
     run('session', { cwd: root }).output.hookSpecificOutput.additionalContext,
     /Main checkout of the trunk \(branch main\): the code of the contexts is written in a worktree, refused here/,

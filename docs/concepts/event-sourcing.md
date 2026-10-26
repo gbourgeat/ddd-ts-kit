@@ -66,12 +66,24 @@ An audit trail is not a reason by itself: the kit records who did what around ev
 
 `ddd-ts-kit generate aggregate <context> <Name> --event-sourced` writes the aggregate with its
 birth event and apply method, the codec, a builder that replays a history and a given-events
-spec; `generate domain-event` on such an aggregate adds the event to its union, to
-`appliers()` with an empty apply method, and to the codec. `describe`, `list` and `CONTEXT.md`
-say which aggregates are event-sourced. The store they are saved through is wired by
+spec. The birth event is `<Name>Created` unless `--birth <Event>` names the fact the business
+says (`--birth Triggered` writes `IncidentTriggered`, `incidents.incident.triggered`), checked
+against the glossary like any other name: the name of a stored event is kept forever.
+`generate domain-event` on such an aggregate adds the event to its union, to `appliers()` with
+an empty apply method, and to the codec. `describe`, `list` and `CONTEXT.md` say which
+aggregates are event-sourced. The store they are saved through is wired by
 `init --event-sourcing on` (`init --force --event-sourcing on` on an existing project), and the
 generator refuses an event-sourced aggregate without it: a project whose aggregates are all rows
 pays no table for it.
+
+`generate repository <context> <Name>` on an event-sourced aggregate (its class extends
+`EventSourcedAggregate`) writes no table and no row mapper: `event-store-<name>.repository.ts`
+delegates to `EventSourcedRepository` over the `EventStore` and the `PersonalDataCipher` the
+platform binds, with the codec of the aggregate, its snapshot policy left as a `TODO(domain)`; the
+fake is that adapter over the in-memory stores of the kernel, and the repository contract runs on
+the fake and on the adapter over `InMemoryEventStore` (its stale-save case stays pending until
+a `mutate` that records an event is added, which needs a business method). The event store keeps no tenant: a stream is
+`<context>.<aggregate>-<id>`, so the application layer decides who may load an id.
 
 **No double write.** Appending the events and publishing the integration events are one
 transaction: the store joins the transaction of the unit of work, and the publisher is a

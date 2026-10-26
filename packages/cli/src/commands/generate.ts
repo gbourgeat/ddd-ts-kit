@@ -94,6 +94,7 @@ const OPTIONS = {
   cache: TEXT,
   module: TEXT,
   'event-sourced': SWITCH,
+  birth: TEXT,
   reason: TEXT,
   number: TEXT,
   name: TEXT,
@@ -168,6 +169,7 @@ const TEXT_FLAGS = [
   'module',
   'personal',
   'subject',
+  'birth',
   'erasure',
   'retention',
 ] as const;

@@ -80,6 +80,8 @@ export interface KindFlags {
   readonly cache?: string;
   /** An aggregate keeps its state as the stream of its events. */
   readonly eventSourced: boolean;
+  /** The fact an event-sourced aggregate is born with, as `--birth <Fact>`; `Created` when absent. */
+  readonly birth?: string;
   /** The module of the model of the context the files of its layers and their specs are written in. */
   readonly module?: string;
 }
