@@ -4,8 +4,9 @@ description: >-
   Repairs one defect in its own worktree, the proof first: finds the layer of the defect,
   writes the spec that reproduces it at that level, sees it fail on an assertion, locks it
   (`ddd-ts-kit acceptance <code> --lock`) and commits it before any code; the guard then
-  holds that spec while the fix is built, and a spec that turns out wrong goes to the
-  acceptance-judge agent with the statement of the defect as the criterion. Closes with the
+  holds that spec from the sub-agents while the fix is built, and a spec that turns out wrong
+  is rewritten by the session and ruled on by the acceptance-judge agent, with the statement
+  of the defect as the criterion. Closes with the
   verification, the review and the pull request, as a story does. Run by the user, with
   /ddd-ts-kit:fix, once per defect.
 argument-hint: "<fix code> [the defect in plain words, an issue key, an incident record]"
@@ -74,6 +75,11 @@ reproduces nothing: the layer, the data or the statement is wrong, not the test.
 List each spec under `## Regression` of `docs/architecture/stories/$0.md`, one item per path
 relative to the project root (`- test/unit/appointment.aggregate.spec.ts`, or the spec next to
 the code). `npx ddd-ts-kit acceptance $0 --gate written` names what is left; then
+Before locking, run the formatter and the linter of the project on the specs (`npm run format`,
+then `npm run lint -- <spec files>`) and fix what they report: a locked spec is not touched
+again, and the close fails on a spec that fails them (a blank line the padding rule wants, a test
+over the size the lint allows, logic in a test). `--lock` runs both on those files and refuses
+to lock while they fail. Then
 `npx ddd-ts-kit acceptance $0 --lock` records the fingerprint of each test in
 `test/acceptance/<code>.acceptance.lock.json`. One commit, the story file, the specs and the
 lock together: `test(<context>): $0 reproduce <defect>`. The guard opens the code of the
@@ -82,14 +88,16 @@ contexts once the lock exists.
 ## 3. Fix
 
 Change the code until the locked specs pass and nothing else fails: `npm test -- <file>`, then
-`npx ddd-ts-kit verify-slice <context> --since <base>`. The locked specs do not change, by you,
-by a sub-agent or by the shell: the guard refuses it, and `npx ddd-ts-kit acceptance $0`
+`npx ddd-ts-kit verify-slice <context> --since <base>`. The locked specs do not change to make the code pass,
+and a sub-agent never writes them: the guard refuses it, and `npx ddd-ts-kit acceptance $0`
 reports a change since the lock as a drift that no verdict lets through. A spec that turns out
-wrong is not edited to pass: compare it with `## Statement`; when the statement is what is
-wrong, correct the statement, and launch the `ddd-ts-kit:acceptance-judge` agent on the change
-with the subject and the fingerprint `acceptance $0` prints, the statement of the fix being the
-criterion; a `Verdict: amend` lets `--lock` take the new version, a `refuse` means restore it
-(git). A host without the agents of the plugin asks the owner to write the verdict. Commit the
+wrong (a wrong expectation, or one that fails the lint) is not edited to pass: compare it with
+`## Statement`. You, the session of the fix, write the new version, run `npx ddd-ts-kit
+acceptance $0` (it reports the change with its subject and fingerprint; a change of layout alone
+needs no verdict), launch the `ddd-ts-kit:acceptance-judge` agent on it with that subject and
+fingerprint, the statement of the fix being the criterion (correct the statement first when it is
+what is wrong), and lock again with `--lock` once it wrote `Verdict: amend`; a `refuse` means
+restore the spec (git). A host without the agents of the plugin asks the owner to write the verdict. Commit the
 fix on its own: `fix(<context>): $0 <what was wrong>`.
 
 ## 4. Close

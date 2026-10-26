@@ -1306,10 +1306,14 @@ write; a test the runner puts aside is reported whatever the gate), and that the
 A locked test changed or removed is reported as a changed scenario is, as the subject
 `test "<title>" of <file>` with its fingerprint, until the `acceptance-judge` agent lets that
 version through, the `## Statement` of the fix being the criterion; a new test only needs locking
-again. `--gate passing` holds that each locked test is there, unchanged and no longer wrapped in
+again. `--lock` also runs the formatter (the `format` script, in check mode) and the linter (the
+`lint` script) of the project on the files it locks, a fix's regression specs or a story's
+acceptance spec, and only on those: it refuses, naming the file and what the tool reports, while they
+fail, since a locked file can no longer be touched. A project without those scripts or tools is locked
+as before. `--gate passing` holds that each locked test is there, unchanged and no longer wrapped in
 `pending(...)`; the test runner, not this command, proves it passes. The guard of the plugin reads
 the same lock in the worktree of a fix (`"kind": "fix"` in `.ddd-ts-kit/story.json`): it opens the
-code once the lock exists and refuses every edit of a locked spec (skill `fix`,
+code once the lock exists and refuses every edit of a locked spec by a sub-agent, the session writing a new version for the judge to rule on (skill `fix`,
 [story workflow](../../docs/guides/story-workflow.md)).
 
 ```

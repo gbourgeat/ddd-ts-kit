@@ -1106,7 +1106,7 @@ function acceptanceReason(project, input, { file, written, replaced }) {
   if (judging || path.startsWith('test/acceptance/verdicts/')) {
     return judging === ACCEPTANCE_VERDICT.test(path) ? undefined : verdictReason(judging, path);
   }
-  const held = lockedRegressionReason(project, path);
+  const held = lockedRegressionReason(project, path, input);
   if (held) {
     return held;
   }
@@ -1138,12 +1138,15 @@ function fixOf(project) {
   return { story: scope.story, locked: existsSync(lock), files: [...new Set(files)] };
 }
 
-// The regression spec of a fix, once locked, is the proof of the fix: no one rewrites it while the fix
-// is built, neither the session nor a sub-agent; a spec that is wrong is judged, as a scenario is.
-function lockedRegressionReason(project, path) {
+// The regression spec of a fix, once locked, is the proof of the fix: a sub-agent never rewrites it. The
+// main session of the fix may write a new version, as the main session of a story writes its acceptance:
+// `acceptance <fix>` then reports the change since the lock, `--lock` refuses it until the acceptance-judge
+// agent has ruled on that very version, and a change of layout alone (the fingerprint ignores white space)
+// needs no verdict.
+function lockedRegressionReason(project, path, input) {
   const fix = fixOf(project);
-  return fix?.files.includes(path)
-    ? `${path} is a regression spec of fix ${fix.story}, locked: it is the proof of the fix, written before its code, and it does not change while the fix is built, by this session or by a sub-agent. Fix the code instead. A spec that is wrong goes to the acceptance-judge agent with the statement of the fix (\`## Statement\` of docs/architecture/stories/${fix.story}.md) as the criterion: \`npx ddd-ts-kit acceptance ${fix.story}\` prints its subject and fingerprint, and a verdict \`amend\` lets \`--lock\` take the new version.`
+  return fix?.files.includes(path) && input.agent_type
+    ? `${path} is a regression spec of fix ${fix.story}, locked: it is the proof of the fix, and a sub-agent does not change it. Fix the code instead, and if the spec seems wrong, name it and the statement it fails in your report: the main session of the fix writes a new version, runs \`npx ddd-ts-kit acceptance ${fix.story}\` (it reports the change since the lock with its subject and fingerprint), has the acceptance-judge agent rule on it with the statement of the fix (\`## Statement\` of docs/architecture/stories/${fix.story}.md) as the criterion, and locks again with \`--lock\` once the verdict is \`amend\`. ${REPORT_TO_CONDUCTOR}`
     : undefined;
 }
 
@@ -1155,10 +1158,10 @@ function verdictReason(judging, path) {
 
 // Outside the judge, a command that names the lock or a verdict only reads it, versions it or runs the kit;
 // the judge itself only reads, and writes its verdict with the editor tool. A command that names a locked
-// regression spec of a fix may also run it, with a test runner; never rewrite it.
+// regression spec of a fix may also run it, with a test runner; a sub-agent never rewrites it (the main session may).
 async function acceptanceFilesShellReason(project, input, command) {
   const judging = isJudge(input);
-  const held = (fixOf(project)?.files ?? []).filter(
+  const held = (input.agent_type ? (fixOf(project)?.files ?? []) : []).filter(
     (file) => command.includes(file) || command.includes(file.split('/').pop()),
   );
   if (!judging && held.length === 0 && !/acceptance\/verdicts|\.acceptance\.lock\.json/.test(command)) {
@@ -1181,7 +1184,7 @@ async function acceptanceFilesShellReason(project, input, command) {
   const [spec] = held;
   return spec === undefined
     ? 'The lock of an acceptance and its verdicts are written by `npx ddd-ts-kit acceptance <story> --lock` and by the acceptance-judge agent only; a command may read them, version them or run the kit.'
-    : `${lockedRegressionReason(project, spec)} A command may read it, version it or run it (\`npm test -- ${spec}\`).`;
+    : `${lockedRegressionReason(project, spec, input)} A command may read it, version it or run it (\`npm test -- ${spec}\`).`;
 }
 
 // A test runner, however it is launched, as long as it runs no inline code of its own.

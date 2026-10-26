@@ -849,7 +849,7 @@ function fixWorktree() {
   return root;
 }
 
-test('once the regression spec of a fix is locked, the code opens and no one edits the spec', () => {
+test('once the regression spec of a fix is locked, the code opens, the session may amend the spec and a sub-agent may not', () => {
   const root = fixWorktree();
   const code = join(root, 'src/contexts/ordering/domain/order-number.ts');
   lockTheFix(root);
@@ -858,16 +858,11 @@ test('once the regression spec of a fix is locked, the code opens and no one edi
     run('pre-bash', bash(root, 'npx ddd-ts-kit generate command ordering PlaceOrder --public')).output,
     undefined,
   );
-  for (const writer of [
-    {},
-    { agent_type: 'ddd-ts-kit:context-builder' },
-    { agent_type: 'ddd-ts-kit:domain-test-writer' },
-  ]) {
-    const held = run('pre-write', edit(join(root, FIX_SPEC), { from: "'refused'", to: "'cancelled'" }, writer));
-    assert.equal(decision(held), 'deny');
-    assert.match(reason(held), /is a regression spec of fix FIX-412, locked: it is the proof of the fix/);
-    assert.match(reason(held), /acceptance-judge agent with the statement of the fix/);
-  }
+  assertSubAgentsRefusedTheLockedSpec(root);
+  assert.equal(
+    run('pre-write', edit(join(root, FIX_SPEC), { from: "'refused'", to: "'cancelled'" })).output,
+    undefined,
+  );
   assert.equal(
     decision(run('pre-write', write(join(root, FIX_SPEC), { agent_type: 'ddd-ts-kit:acceptance-judge' }))),
     'deny',
@@ -878,6 +873,19 @@ test('once the regression spec of a fix is locked, the code opens and no one edi
   );
   assert.equal(decision(run('pre-write', write(join(root, 'test/acceptance/fix-412.acceptance.lock.json')))), 'deny');
 });
+
+function assertSubAgentsRefusedTheLockedSpec(root) {
+  for (const writer of [
+    { agent_type: 'ddd-ts-kit:context-builder' },
+    { agent_type: 'ddd-ts-kit:domain-test-writer' },
+  ]) {
+    const held = run('pre-write', edit(join(root, FIX_SPEC), { from: "'refused'", to: "'cancelled'" }, writer));
+    assert.equal(decision(held), 'deny');
+    assert.match(reason(held), /is a regression spec of fix FIX-412, locked: it is the proof of the fix/);
+    assert.match(reason(held), /the main session of the fix writes a new version/);
+    assert.match(reason(held), /acceptance-judge agent rule on it with the statement of the fix/);
+  }
+}
 
 function lockTheFix(root) {
   put(root, FIX_SPEC, FIX_TEST);
@@ -893,7 +901,7 @@ function edit(file, { from, to }, extra = {}) {
   };
 }
 
-test('the shell runs and versions a locked regression spec of a fix, and never rewrites it', () => {
+test('the shell runs and versions a locked regression spec of a fix, and a sub-agent never rewrites it', () => {
   const root = fixWorktree();
   lockTheFix(root);
   for (const command of [
@@ -917,12 +925,20 @@ test('the shell runs and versions a locked regression spec of a fix, and never r
     const held = run('pre-bash', bash(root, command, { agent_type: 'ddd-ts-kit:context-builder' }));
     assert.equal(decision(held), 'deny', command);
     assert.match(reason(held), /A command may read it, version it or run it/);
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, `the session: ${command}`);
   }
+  assertSessionFormatsTheLockedSpec(root);
   assert.equal(
     run('pre-bash', bash(root, `sed -i s/a/b/ src/contexts/ordering/test/unit/other.spec.ts`)).output,
     undefined,
   );
 });
+
+function assertSessionFormatsTheLockedSpec(root) {
+  for (const command of [`npx biome format --write ${FIX_SPEC}`, `npx eslint --fix ${FIX_SPEC}`]) {
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
+  }
+}
 
 test('at stop in the worktree of a story, a done row that departed from its design is said once, without blocking', () => {
   const root = storyWorktree();
