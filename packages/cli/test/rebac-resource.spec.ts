@@ -3,6 +3,7 @@ import { cli, read, tempDir } from './helpers';
 
 const COMMANDS = 'src/contexts/billing/application/commands';
 const QUERIES = 'src/contexts/billing/application/queries';
+const SCHEMA = 'src/platform/auth/relationships/relationship-schema.ts';
 
 describe('relationships: the resource of a use case', () => {
   it('leaves a marker naming the element when the resource is the context', () => {
@@ -33,6 +34,14 @@ describe('relationships: the resource of a use case', () => {
     const root = project('rebac');
 
     expect(read(root, `${QUERIES}/search-invoices/search-invoices.query.ts`)).not.toContain('name the invoice');
+  });
+
+  it('takes from the context the permissions an element derives', () => {
+    const schema = read(project('rebac'), SCHEMA);
+
+    expect(schema).toContain('const elements: SchemaDefinition = {};');
+    expect(schema).toContain('.filter((permission) => !modelledOnAnElement.has(permission.id))');
+    expect(schema).toContain('  ...elements,');
   });
 });
 
