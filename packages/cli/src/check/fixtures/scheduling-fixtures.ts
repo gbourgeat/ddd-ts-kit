@@ -1,3 +1,5 @@
+import { CONFIG_FILE } from '../../config';
+import { config } from './config';
 import { DECLARED } from './declared';
 import { declaredProject } from './declared-project';
 import type { Fixture } from './fixture';
@@ -151,7 +153,81 @@ const JOB_NAME: readonly Fixture[] = [
   },
 ];
 
-export const SCHEDULING_FIXTURES: readonly Fixture[] = [...TRIGGERS_USE_CASE, ...JOB_NAME];
+const TENANCY_RULE = 'scheduling/tenancy-declared';
+const TENANT_CONFIG = { [CONFIG_FILE]: config({ stack: { style: 'declared', tenancy: 'shared-table' } }) };
+const PER_TENANT = "{ every: '15m', tenancy: 'per-tenant' }";
+
+const TENANCY_DECLARED: readonly Fixture[] = [
+  {
+    ruleId: TENANCY_RULE,
+    name: 'a job that runs per tenant',
+    expect: 'pass',
+    files: declaredProject({ [JOB]: tenantJob(PER_TENANT), [JOB_SPEC]: SPEC }, TENANT_CONFIG),
+  },
+  {
+    ruleId: TENANCY_RULE,
+    name: 'a job that is global on purpose',
+    expect: 'pass',
+    files: declaredProject(
+      { [JOB]: tenantJob("{ every: '15m', tenancy: 'global' }"), [JOB_SPEC]: SPEC },
+      TENANT_CONFIG,
+    ),
+  },
+  {
+    ruleId: TENANCY_RULE,
+    name: 'a job without tenancy, in a project without tenants',
+    expect: 'pass',
+    files: declaredProject({ [JOB]: DECLARED.job, [JOB_SPEC]: SPEC }),
+  },
+  {
+    ruleId: TENANCY_RULE,
+    name: 'a job that does not say whether it runs per tenant or globally',
+    expect: { file: JOB },
+    files: declaredProject({ [JOB]: DECLARED.job, [JOB_SPEC]: SPEC }, TENANT_CONFIG),
+  },
+  {
+    ruleId: TENANCY_RULE,
+    name: 'explicit style: a job registered by the module file without tenancy',
+    expect: { file: MODULE },
+    files: project(
+      {
+        [JOB]: PLAIN_JOB,
+        [JOB_SPEC]: SPEC,
+        [MODULE]: moduleRegistering(
+          '@/contexts/billing/application/scheduling/send-reminders.job.js',
+          'billing.send-reminders',
+        ),
+      },
+      { [CONFIG_FILE]: config({ stack: { tenancy: 'shared-table' } }) },
+    ),
+  },
+  {
+    ruleId: TENANCY_RULE,
+    name: 'options the checker cannot read, a constant',
+    expect: { file: JOB },
+    files: declaredProject({ [JOB]: tenantJob('JOB_OPTIONS'), [JOB_SPEC]: SPEC }, TENANT_CONFIG),
+  },
+  {
+    ruleId: TENANCY_RULE,
+    name: 'options the checker cannot read, a spread',
+    expect: { file: JOB },
+    files: declaredProject({ [JOB]: tenantJob("{ ...BASE, every: '15m' }"), [JOB_SPEC]: SPEC }, TENANT_CONFIG),
+  },
+  {
+    ruleId: TENANCY_RULE,
+    name: 'a tenancy the checker cannot read, a constant',
+    expect: { file: JOB },
+    files: declaredProject({ [JOB]: tenantJob("{ every: '15m', tenancy: TENANCY }"), [JOB_SPEC]: SPEC }, TENANT_CONFIG),
+  },
+  {
+    ruleId: TENANCY_RULE,
+    name: 'a tenancy written as a shorthand',
+    expect: { file: JOB },
+    files: declaredProject({ [JOB]: tenantJob("{ every: '15m', tenancy }"), [JOB_SPEC]: SPEC }, TENANT_CONFIG),
+  },
+];
+
+export const SCHEDULING_FIXTURES: readonly Fixture[] = [...TRIGGERS_USE_CASE, ...JOB_NAME, ...TENANCY_DECLARED];
 
 function moduleRegistering(jobFile: string, name: string): string {
   return source(
@@ -163,4 +239,8 @@ function moduleRegistering(jobFile: string, name: string): string {
     `  builder.job('${name}', { every: '15m' }).handledBy(SendRemindersJob, [CommandBus]);`,
     '});',
   );
+}
+
+function tenantJob(options: string): string {
+  return DECLARED.job.replace("{ every: '15m' }", options);
 }

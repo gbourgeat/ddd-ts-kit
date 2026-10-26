@@ -66,7 +66,7 @@ export function auditModule(audit: Audit): ContextModule {
       // Registered by the process that runs the jobs of the platform; a service of the deployment passes `jobs: false`.
       if (jobs) {
         builder
-          .job('audit.archive', { cron: '0 4 1 * *' })
+          .job('audit.archive', { cron: '0 4 1 * *', tenancy: 'global' })
           .handledByFactory((resolve) => new ArchiveAuditEntries(audit.trail, resolve(FileStorage), resolve(Clock)));
       }
 {{/if}}

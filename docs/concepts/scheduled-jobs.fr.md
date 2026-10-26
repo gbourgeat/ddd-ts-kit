@@ -1,5 +1,5 @@
 [English](scheduled-jobs.md) · **Français**
-<!-- translation-of: scheduled-jobs.md sha256:ee4026f813b47053 -->
+<!-- translation-of: scheduled-jobs.md sha256:b06276ab29e943f9 -->
 
 # Jobs planifiés
 
@@ -125,7 +125,9 @@ occurrence**, et ce que l'annuaire liste dépend du projet :
   vivent dans une table à vous, faites lire cet annuaire dans cette table, comme le *preset*
   d'identité le fait dans `tenant-directory.ts`.
 
-La *spec* générée exécute le *job* pour deux *tenants*.
+La *spec* générée exécute le *job* pour deux *tenants*. Un *job* écrit à la main sous *tenancy* doit aussi le dire :
+`scheduling/tenancy-declared` (une erreur) signale un `@Scheduled` ou un `builder.job` dont les
+options ne portent ni `tenancy: 'per-tenant'` ni `tenancy: 'global'`.
 
 ### Une exécution lit son propre tenant
 

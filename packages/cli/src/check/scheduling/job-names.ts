@@ -1,12 +1,7 @@
-import { argumentsOf } from '../declarations/arguments-of';
-import { classesOf } from '../declarations/classes-of';
 import { wholeLiteral } from '../declarations/whole-literal';
 import type { SourceFile } from '../model/source-file';
-import { importsPackage } from '../support/imports-package';
-import { callArguments } from '../text/call-arguments';
+import { jobsDeclared } from './jobs-declared';
 import type { ListPart } from '../text/list-part';
-
-const JOB_CALL = /\.\s*job\s*\(/g;
 
 /** The name a job is declared or registered under: the first argument of `@Scheduled(..)` or of `.job(..)`. */
 export interface JobName {
@@ -17,31 +12,9 @@ export interface JobName {
   readonly literal: string | undefined;
 }
 
-/** The job names a source writes; `.job(..)` is read in a module file and in a file that imports `@ddd-ts-kit/di`. */
+/** The job names a source writes. */
 export function jobNames(file: SourceFile): JobName[] {
-  const { scan } = file;
-
-  const declared = classesOf(scan).flatMap(({ decorations }) =>
-    decorations
-      .filter(({ name }) => name === 'Scheduled')
-      .map((decoration) => ({ owner: '@Scheduled', line: decoration.line, name: argumentsOf(scan, decoration)[0] })),
-  );
-
-  const registered = registersJobs(file)
-    ? [...scan.code.matchAll(JOB_CALL)].map((match) => ({
-        owner: 'job(...)',
-        line: scan.lineAt(match.index),
-        name: callArguments(scan.code, match.index + match[0].length - 1)[0],
-      }))
-    : [];
-
-  return [...declared, ...registered].map(({ owner, line, name }) => ({ owner, line, literal: literalOf(file, name) }));
-}
-
-function registersJobs(file: SourceFile): boolean {
-  return (
-    (file.location.area === 'context' && file.location.layer === 'module') || importsPackage(file, '@ddd-ts-kit/di')
-  );
+  return jobsDeclared(file).map(({ owner, line, args }) => ({ owner, line, literal: literalOf(file, args[0]) }));
 }
 
 function literalOf(file: SourceFile, name: ListPart | undefined): string | undefined {

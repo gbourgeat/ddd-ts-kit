@@ -184,6 +184,13 @@ export const WIRING_INJECTIONS: readonly Injection[] = [
     eslint: 'ddd-ts-kit/scheduling-job-name',
   },
   {
+    rule: 'scheduling/tenancy-declared',
+    what: 'a job that no longer says whether it runs per tenant or globally',
+    file: JOB,
+    changes: [{ file: JOB, from: ", tenancy: 'per-tenant'", to: '' }],
+    checker: true,
+  },
+  {
     rule: 'imports/alias-only',
     what: 'a relative import of the same directory',
     file: PLAN_HANDLER,

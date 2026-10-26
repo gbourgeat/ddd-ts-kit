@@ -14,7 +14,7 @@ describe('the purge of what outlived its retention, every night', () => {
     const byHand = initProject(...BY_HAND);
 
     expect(platform(tsyringe, 'privacy/privacy.module.ts')).toContain(
-      "builder.job('privacy.purge-expired', { cron: '0 3 * * *' })",
+      "builder.job('privacy.purge-expired', { cron: '0 3 * * *', tenancy: 'global' })",
     );
 
     expect(platform(tsyringe, 'composition/compose-application.ts')).toContain(

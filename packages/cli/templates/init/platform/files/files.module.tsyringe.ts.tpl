@@ -15,7 +15,7 @@ export function filesModule(storage: FileStorage, { jobs = true }: { readonly jo
 
       // Registered by the process that runs the jobs of the platform; a service of the deployment passes `jobs: false`.
       if (jobs) {
-        builder.job('files.purge-staged', { every: '1h' }).handledBy(PurgeStagedFiles, [FileStaging, Clock]);
+        builder.job('files.purge-staged', { every: '1h', tenancy: 'global' }).handledBy(PurgeStagedFiles, [FileStaging, Clock]);
       }
     },
   });
