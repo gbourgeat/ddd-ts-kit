@@ -36,11 +36,13 @@ test('lets two commands hold a slot and makes a third wait for one', { skip: !HA
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'heavy-lock-'));
   const env = environment(directory);
   const release = path.join(directory, 'release');
-  const hold = `while [ ! -e ${release} ]; do sleep 0.1; done`;
   const started = (name) => path.join(directory, name);
-  const run = (name, command) =>
+  // The paths reach the shell as its positional arguments, never inside the text of the command.
+  const holding = 'touch "$1"; while [ ! -e "$2" ]; do sleep 0.1; done';
+  const run = (name, waitsForRelease) =>
     new Promise((resolve) => {
-      const child = spawn('bash', [SCRIPT, 'sh', '-c', `touch ${started(name)}; ${command}`], { env, stdio: 'ignore' });
+      const script = waitsForRelease ? holding : 'touch "$1"';
+      const child = spawn('bash', [SCRIPT, 'sh', '-c', script, 'sh', started(name), release], { env, stdio: 'ignore' });
 
       child.on('close', resolve);
     });
@@ -50,13 +52,13 @@ test('lets two commands hold a slot and makes a third wait for one', { skip: !HA
     }
   };
 
-  const first = run('first', hold);
-  const second = run('second', hold);
+  const first = run('first', true);
+  const second = run('second', true);
 
   await until(started('first'));
   await until(started('second'));
 
-  const third = run('third', 'true');
+  const third = run('third', false);
 
   await new Promise((resolve) => setTimeout(resolve, 1000));
   assert.equal(fs.existsSync(started('third')), false, 'the third command started with two slots taken');
