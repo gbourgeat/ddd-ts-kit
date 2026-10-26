@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { createHmac } from 'node:crypto';
 import * as fixture from '../fixtures/controllers/front-desk';
 import { frontDeskRoutes, manager, nurse, RecordingDesk } from './front-desk';
 import type { ReadAuthorization, RunningServer, StartServer } from './running-server';
@@ -63,6 +64,27 @@ export function mountsControllers(start: StartServer, readAuthorization: ReadAut
       expect(withoutRole.status).toBe(403);
       expect(allowed.status).toBe(204);
       expect(await open.json()).toEqual({ opens: '08:00' });
+    });
+
+    it('hands a controller that declares rawBody the bytes as they were sent, to verify a signature over them', async () => {
+      // Spaces and key order that a parse and a stringify would not give back.
+      const payload = '{ "title":  "Disk full",   "severity": "high" }';
+      const sign = (body: string): string => createHmac('sha256', fixture.WEBHOOK_SECRET).update(body).digest('hex');
+
+      const send = (body: string, signature: string): Promise<Response> =>
+        fetch(`${server.url}/alerts`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-signature': signature },
+          body,
+        });
+
+      const signed = await send(payload, sign(payload));
+      const forged = await send(payload, sign('{}'));
+
+      expect(signed.status).toBe(200);
+      expect(await signed.json()).toEqual({ title: 'Disk full' });
+      expect(forged.status).toBe(422);
+      expect(await forged.json()).toMatchObject({ code: 'BAD_SIGNATURE' });
     });
 
     it('validates the parameters of the path with the schema of the controller', async () => {

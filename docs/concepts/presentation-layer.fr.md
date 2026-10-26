@@ -1,5 +1,5 @@
 [English](presentation-layer.md) · **Français**
-<!-- translation-of: presentation-layer.md sha256:4046edbfcc08e229 -->
+<!-- translation-of: presentation-layer.md sha256:6b22d5d4909e46ae -->
 
 # La couche présentation : contrôleurs, groupes de routes, gardes
 
@@ -509,6 +509,48 @@ Une réponse qui ne déclare aucun en-tête continue de renvoyer le corps seul. 
 Nest, `@KitRoute({ response: { body, headers } })` les déclare de la même façon et la méthode
 renvoie `{ body, headers }` ; `body` y est alors déclaré, son type de retour n'étant pas lu pour
 cela.
+
+## Un webhook signé : le corps brut
+
+Un outil de supervision ou un prestataire de paiement signe ses appels par un HMAC sur les octets exacts du
+corps : le corps doit donc arriver à la route sans avoir été lu. Un contrôleur déclare `rawBody: true` : le
+serveur ne lit ni ne valide plus rien du corps (le contrat le décrit comme `application/octet-stream`), et
+`handle` trouve les octets dans `context.stream` et les en-têtes tels qu'ils sont arrivés dans
+`context.rawHeaders`. Il vérifie la signature, puis lit la charge utile et la confie à la couche
+anticorruption. `rawBody` ne se déclare pas avec `body`, `upload` ni `consumes`.
+
+```ts
+@Controller({
+  method: 'POST',
+  path: '/webhooks/monitoring',
+  summary: 'Receive a monitoring alert',
+  guards: [Public],
+  rawBody: true,
+  errors: ['BAD_SIGNATURE'],
+  response: { status: 204 },
+})
+export class ReceiveAlertController {
+  constructor(
+    private readonly signature: SignatureVerifier,
+    private readonly commands: CommandBus,
+  ) {}
+
+  async handle({ context }: HttpRequest<{ rawBody: true }>): Promise<void> {
+    const bytes = Buffer.concat(await Array.fromAsync(context.stream, (chunk) => Buffer.from(chunk)));
+
+    this.signature.verify(bytes, context.rawHeaders?.['x-signature']); // lève BadSignature
+
+    await this.commands.execute(MonitoringAlertTranslator.toCommand(JSON.parse(bytes.toString('utf8'))));
+  }
+}
+```
+
+Une route sans appelant à authentifier le dit avec `Public` : c'est la signature qui laisse entrer l'appel.
+Sur un contrôleur Nest, `@KitRoute({ rawBody: true })` le déclare et `@RouteContext()` donne le contexte à la
+méthode. Sur Express, un analyseur JSON installé avant les routes a déjà lu un corps JSON : gardez-en les octets
+avec `express.json({ verify: (request, _response, bytes) => { Object.assign(request, { rawBody: bytes }); } })`,
+que la route lit ensuite ; une application Nest se crée avec `rawBody: true` pour la même raison. Fastify et Hono
+n'ont besoin de rien.
 
 ## Quand garder une route fonction
 
