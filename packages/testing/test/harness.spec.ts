@@ -229,39 +229,6 @@ describe('InMemoryRepository', () => {
     expect((await orders.findById('order-1'))?.version).toBe(1);
 
     await orders.save(order);
-    expect((await orders.findById('order-1'))?.version).toBe(1);
-
-    order.pay(at);
-    await orders.save(order);
-    expect((await orders.findById('order-1'))?.version).toBe(2);
-  });
-
-  it('takes a save of an aggregate with no change for a no-op, even one that has not seen the last version', async () => {
-    const orders = new InMemoryOrders();
-
-    await orders.save(place('order-1'));
-
-    const mine = await orders.findById('order-1');
-    const theirs = await orders.findById('order-1');
-
-    theirs?.pay(at);
-    await orders.save(theirs ?? place('x'));
-    await orders.save(mine ?? place('x'));
-
-    expect((await orders.findById('order-1'))?.version).toBe(2);
-  });
-
-  it('moves the version on every save with versionsEverySave, an unchanged one included', async () => {
-    const orders = new InMemoryRepository<Order>({
-      clone: (order) => Order.rehydrate(order.toSnapshot()),
-      versionsEverySave: true,
-    });
-
-    const order = place('order-1');
-
-    await orders.save(order);
-    await orders.save(order);
-
     expect((await orders.findById('order-1'))?.version).toBe(2);
   });
 

@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:9cce1ad75b33b0f0 -->
+<!-- translation-of: persistence.md sha256:e0e8ed91b28aade6 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -336,13 +336,14 @@ séparés, que les sauvegardes suivantes sont enregistrées, qu'une modification
 l'est pas, et qu'une sauvegarde par-dessus une version qu'elle n'a pas lue est refusée avec
 `CONCURRENCY_CONFLICT`.
 
-Une sauvegarde d'un agrégat sans changement en attente ne fait rien pour la concurrence, comme
-pour un event store, qui n'ajoute rien : pas de nouvelle version, pas de conflit, sur le faux comme
-sur l'adaptateur. Le cas de la sauvegarde périmée demande donc un `mutate` qui enregistre un
-changement d'état ; quand il n'en enregistre aucun, le cas échoue avec `mutate changed nothing: give
-the contract a change of state` au lieu d'attendre un conflit qui ne vient jamais. `mutate` est facultatif : sans lui, le cas reste en
-attente (`it.todo`, avec la raison `give the contract a mutate that records a change of state`), ce qui
-est l'état de départ d'un spec de contrat tout juste généré.
+Le cas de la sauvegarde périmée demande un `mutate` qui enregistre un changement d'état : le
+contrat change les deux copies, pour qu'un adaptateur de table comme un event store refusent la
+périmée. Quand `mutate` n'enregistre rien, le cas échoue avec `mutate changed nothing: give the
+contract a change of state` au lieu d'attendre un conflit qui ne vient jamais. `mutate` est
+facultatif : sans lui, le cas reste en attente (`it.todo`, avec la raison `give the contract a
+mutate that records a change of state`), ce qui est l'état de départ d'un spec de contrat tout juste
+généré. Une sauvegarde sans changement n'est pas jugée : un adaptateur de table avance la version,
+un event store n'ajoute rien.
 
 ## Comparaison
 
