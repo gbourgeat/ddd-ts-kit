@@ -1,7 +1,9 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { FixedExecutionScope } from '@ddd-ts-kit/kernel';
 import { eventStoreContract, eventStoreUnitOfWorkContract } from '@ddd-ts-kit/testing/contracts';
 import {
   KnexOutboxStore,
+  addEventStoreTenantColumn,
   createEventStoreTables,
   createKnexEventSourcing,
   createKnexUnitOfWork,
@@ -45,6 +47,16 @@ eventStoreContract(runner, {
   name: 'createKnexEventSourcing on PostgreSQL',
   createStore: async () => (await stores()).events,
   createCompanions: stores,
+  createTenantStore: async () => {
+    await database.truncate();
+
+    const scope = new FixedExecutionScope();
+
+    return {
+      scope,
+      store: createKnexEventSourcing(createKnexUnitOfWork(database.knex), { schema: 'scheduling', scope }).events,
+    };
+  },
 });
 
 eventStoreUnitOfWorkContract(runner, {
@@ -60,6 +72,32 @@ eventStoreUnitOfWorkContract(runner, {
       outbox: new KnexOutboxStore(unitOfWork),
     };
   },
+});
+
+describe('addEventStoreTenantColumn', () => {
+  it('adds the column to the events of a store created without it, and gives the streams there to the tenant named', async () => {
+    await database.truncate();
+    await database.knex.raw('alter table scheduling.stored_events drop column tenant_id');
+
+    await database.knex('stored_events').withSchema('scheduling').insert({
+      position: 1,
+      stream: 's-1',
+      version: 1,
+      event_id: 'old',
+      type: 't',
+      schema_version: 1,
+      data: '{}',
+      metadata: '{}',
+      occurred_at: new Date(),
+    });
+
+    await addEventStoreTenantColumn(database.knex, { schema: 'scheduling', tenantOfExistingStreams: 'acme' });
+    await addEventStoreTenantColumn(database.knex, { schema: 'scheduling' });
+
+    expect(await database.knex('stored_events').withSchema('scheduling').select('event_id', 'tenant_id')).toEqual([
+      { event_id: 'old', tenant_id: 'acme' },
+    ]);
+  });
 });
 
 describe('createKnexEventSourcing', () => {

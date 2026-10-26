@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { FixedExecutionScope } from '@ddd-ts-kit/kernel';
 import { eventStoreContract, eventStoreUnitOfWorkContract } from '@ddd-ts-kit/testing/contracts';
 import {
   TypeOrmOutboxStore,
@@ -33,6 +34,17 @@ eventStoreContract(runner, {
   name: 'createTypeOrmEventSourcing on PostgreSQL',
   createStore: async () => (await stores()).events,
   createCompanions: stores,
+  createTenantStore: async () => {
+    await database.truncate();
+
+    const scope = new FixedExecutionScope();
+
+    return {
+      scope,
+      store: createTypeOrmEventSourcing(createTypeOrmUnitOfWork(database.dataSource), { schema: 'scheduling', scope })
+        .events,
+    };
+  },
 });
 
 eventStoreUnitOfWorkContract(runner, {

@@ -51,6 +51,7 @@ const EVENTS: Table = {
     data: { type: 'jsonb' },
     metadata: { type: 'jsonb' },
     occurredAt: instant('occurred_at'),
+    tenantId: { name: 'tenant_id', type: 'text', nullable: true },
     recordedAt: instant('recorded_at', true),
   },
   uniques: [['stream', 'version']],

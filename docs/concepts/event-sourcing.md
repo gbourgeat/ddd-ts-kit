@@ -505,6 +505,25 @@ serializer does not declare: such an event would otherwise be passed over at eve
 silently. A projection fed by the store follows the events of one event-sourced aggregate; a
 read model that joins two of them is two projections, or a projection fed by the dispatcher.
 
+### Under shared-table tenancy
+
+An event store given the execution scope (`InMemoryEventStore(scope)`, or `scope` in the options
+of `createKnexEventSourcing`, `createDrizzleEventSourcing`, `createPrismaEventSourcing` and
+`createTypeOrmEventSourcing`) records the tenant of the work at the first append of a stream, in
+the nullable `tenant_id` column of the events, and gives it back on each stored event
+(`StoredEvent.tenantId`). A read or an append of a stream of another tenant is then refused
+with an `EventStreamTenantError`, which names the stream and never the other tenant; platform
+staff elevated over the tenant (`acrossTenants`) may read it, never append to it. Work that names
+no tenant is not scoped: nothing is recorded and nothing is refused, so a project without tenancy
+is unchanged. A stream stored before the column existed has no tenant and is refused to every
+tenant until a migration gives it one. Every repository of an event-sourced aggregate relies on
+it, `generate repository --tenant-scoped` included: the store is what isolates the stream, not a
+condition on a statement. The same contract case holds the in-memory store and the four ORM.
+
+A `CatchUpSubscription` or an `EventStoreProjectionRebuild` given the same `scope` applies each
+event in the tenant of its stream (origin `event`, as a consumer of the outbox runs), so the
+projection reads and writes that tenant only.
+
 ## Testing
 
 - `givenEvents(rehydrate, events).when(command).thenEvents([...])`: the behaviour of the aggregate
@@ -612,6 +631,8 @@ same contract suites.
 
 ## Limits
 
+- `readAll` and `head` are not tenant-scoped: they feed the subscriptions, which run on a context
+  of their own and apply each event in its tenant. Give them to infrastructure only.
 - One event store per database schema: `init --event-sourcing on` wires one, in the `event_store`
   schema, bound by `src/platform/event-sourcing/` with the keys of the data subjects and the
   cipher; a context that keeps its own binds its stores in its module rather than in the platform.
@@ -620,6 +641,8 @@ same contract suites.
   stream version alone: stamp it by event id and instant.
 - The past-tense check is a list of words, not a grammar; an irregular verb it does not know is
   suppressed with a reason.
+- The wiring that `init` writes does not pass the scope to the event store yet: a project under
+  shared-table tenancy passes `scope` to its stores by hand.
 - `generate projection` and `generate repository` have no event-sourced form yet: the
   projection fed by the store and the repository adapter are written by hand (the example shows
   both).

@@ -198,6 +198,14 @@ The outbox keeps the tenant of each event on Knex (`tenant: true`), Drizzle (`te
 Prisma (`tenant: true`, on a model with the `tenantId` field the shipped fragment leaves commented
 out) and TypeORM (`outboxEntity({ tenant: true })`), so that its consumers run in that tenant.
 
+The event store of an event-sourced aggregate keeps the tenant of each stream the same way. Given
+the execution scope, it records the tenant at the first append in the nullable `tenant_id` of the
+events and refuses a read or an append of a stream of another tenant (`EventStreamTenantError`),
+elevation reading only; the projections it feeds apply each event in the tenant of its stream. On
+Knex, `addEventStoreTenantColumn(knex, { schema, tenantOfExistingStreams })` migrates an existing
+store; on Drizzle, Prisma and TypeORM the column joins the shipped tables and the tooling of the
+ORM writes the migration. See [event sourcing](event-sourcing.md#under-shared-table-tenancy).
+
 Three rules hold whatever the strategy:
 
 - **Reads may widen, writes never.** An elevation widens what a read reaches; an update or a
