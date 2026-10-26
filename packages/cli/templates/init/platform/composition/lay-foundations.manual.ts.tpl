@@ -82,6 +82,14 @@ export function layFoundations(persistence: Persistence, options: PlatformOption
   const audit = createAudit(persistence, { scope, clock, ids });
 {{/if}}
 
+{{#if tenancy.any}}
+  // The tenants a job declared `per-tenant` runs for, asked at each occurrence.
+  const parts = { clock, lock, scope, ids, logger, metrics, tenants: tenantDirectory(persistence, options.tenants) };
+{{/if}}
+{{#unless tenancy.any}}
+  const parts = { clock, lock, scope, ids, logger, metrics };
+{{/unless}}
+
   return {
     traced,
     scope,
@@ -102,11 +110,11 @@ export function layFoundations(persistence: Persistence, options: PlatformOption
     rateLimiter: options.redis?.rateLimiter ?? new InMemoryRateLimiter(clock),
 {{/if}}
 {{#if errors.none}}
-    jobs: schedulerOf({{#if tenancy.any}}persistence, {{/if}}options, traced, { clock, lock, scope, ids, logger, metrics }),
+    jobs: schedulerOf(options, traced, parts),
 {{/if}}
 {{#if errors.sentry}}
     // A run that failed, a timeout included, is reported; a skipped or missed occurrence is not.
-    jobs: schedulerOf({{#if tenancy.any}}persistence, {{/if}}options, traced, { clock, lock, scope, ids, logger, metrics, onRun: reportFailedRuns(errors) }),
+    jobs: schedulerOf(options, traced, { ...parts, onRun: reportFailedRuns(errors) }),
 {{/if}}
 {{#if audit.on}}
     audit,
@@ -125,24 +133,9 @@ export function layFoundations(persistence: Persistence, options: PlatformOption
 
 /** The scheduler of the process, with the settings of the configuration applied and each run observed from outside. */
 function schedulerOf(
-{{#if tenancy.any}}
-  persistence: Persistence,
-{{/if}}
   options: PlatformOptions,
   traced: TracedApplication,
   parts: InProcessJobSchedulerOptions,
 ): JobScheduler {
-{{#if tenancy.any}}
-  // The tenants a job declared `per-tenant` runs for, asked at each occurrence.
-  const tenants = tenantDirectory(persistence, options.tenants);
-
-  return new ConfiguredJobScheduler(
-    new InProcessJobScheduler({ ...parts, tenants }),
-    options.jobs?.settings ?? {},
-    traced.job,
-  );
-{{/if}}
-{{#unless tenancy.any}}
   return new ConfiguredJobScheduler(new InProcessJobScheduler(parts), options.jobs?.settings ?? {}, traced.job);
-{{/unless}}
 }
