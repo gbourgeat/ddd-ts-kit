@@ -1276,7 +1276,7 @@ async function writesCode(input, command, aside) {
 }
 
 async function worktreeGeneratorReason(project, input, command) {
-  return (await writesCode(input, command, ['acceptance', 'adr', 'context']))
+  return (await writesCode(input, command, ['acceptance', 'adr', 'context', 'module']))
     ? worktreePlaceReason(project)
     : undefined;
 }

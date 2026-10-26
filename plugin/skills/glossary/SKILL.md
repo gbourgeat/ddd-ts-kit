@@ -34,6 +34,15 @@ qualifiers of a refusal besides: `invalid`, `unknown`, `already`, `too`, `no`, `
 | before the bootstrap | `docs/architecture/glossary.md`, one section per context; the bootstrap turns each row into a `--term` and deletes the file |
 | after | `src/contexts/<context>/CONTEXT.md`, section `## Ubiquitous language`; there is no second copy |
 
+## A context a preset writes
+
+A context that `generate context <name> --preset <preset>` will write (today `identity`) takes
+the preset's glossary as its draft, not an empty one: its terms are in
+`packages/cli/src/presets/identity-terms.ts` (`IDENTITY_TERMS`, the rows the preset writes into
+its CONTEXT.md; no command prints them). Keep the preset's word for each concept it names
+(`Organisation` is the tenant, `Member` a membership), and add only the business terms beyond it,
+one row each. The preset's terms win: the glossaries downstream refer to them.
+
 ## Collect the terms
 
 From the discovery timeline (or from the owner), for one context at a time:

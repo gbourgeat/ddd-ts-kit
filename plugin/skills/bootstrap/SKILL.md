@@ -88,6 +88,13 @@ pnpm exec ddd-ts-kit generate context <name> --classification <core|supporting|g
   --upstream <upstream>:<pattern> --json
 ```
 
+A context whose row of `contexts.md` names modules gets, right after its `generate context`, one
+command per module, on the trunk too (the module name is a glossary term, hence the `--term`):
+
+```bash
+pnpm exec ddd-ts-kit generate module <context> <module> --purpose "<one sentence>" --term "<Module>=<meaning>"
+```
+
 A `generic` context whose language is the one of a preset of the kit is written whole instead:
 `generate context <name> --preset identity --json` for accounts provisioned from the identity
 provider, organisations, members with roles, invitations and delegations. Propose it only when
