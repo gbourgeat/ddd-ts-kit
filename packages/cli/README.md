@@ -1752,7 +1752,9 @@ A line inserted between base lines the other side left alone stays an error even
 side inserted at the same place: dropping one of two new methods is the loss the check exists
 for. So does a rewrite that lost more lines than the base lines or the other side's rewrite it
 competed with (an edit with a new method under it). What one side deleted, or reopened, is never
-reported. A removal decided on purpose is recorded in the merge commit as a trailer
+reported. Nor is a line of the branch in a file the branch did not touch since its fork from the trunk
+(the file is the same on the branch and at `git merge-base`): what the trunk removed or replaced
+there since is the trunk's change, whatever base the merge is computed from. A removal decided on purpose is recorded in the merge commit as a trailer
 `Lost-Accepted: <file:line>,...` (a file alone accepts all of its lines): those findings are
 listed and never fail. For a merge older than HEAD, a finding HEAD no longer shows was repaired
 by a later commit: listed too.
