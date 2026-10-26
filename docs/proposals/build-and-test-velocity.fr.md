@@ -1,5 +1,5 @@
 [English](build-and-test-velocity.md) · **Français**
-<!-- translation-of: build-and-test-velocity.md sha256:33acca65cbaf043b -->
+<!-- translation-of: build-and-test-velocity.md sha256:d8a285ce2209b605 -->
 
 # Proposition : vélocité du build, des contrôles et des tests
 
@@ -831,6 +831,62 @@ indicateurs de cette page :
    (19 à 7 s CPU, 1,2 à 0,9 Go).
 5. Oxfmt, tsdown, oxc-transform et le cache de modules de Vitest dans le *pipeline* restent
    dehors ; cette section est le chiffre auquel se comparer quand l'un d'eux change.
+
+### Résultats du plan : points 1 et 2 (branche `fix/oxlint-plugin-whole`)
+
+**Point 1, le *plugin* tourne entier.** Trois changements dans `packages/eslint-plugin` :
+`naming-business-name` demande les services du *parser* dans un `try` et lit les noms du code quand
+le *linter* n'en offre aucun ; quatre règles qui analysent un texte à elles
+(`clean-no-commented-out-code`, `language-declared-vocabulary`, `authz-declared`,
+`ports-implements-never-extends`) prennent le *parser* de typescript-eslint quand la
+configuration n'en donne aucun. Le *parser* qu'Oxlint remet à ses *plugins* JS dans
+`languageOptions.parser` est une doublure nommée `oxlint` dont `parse` lève « not implemented yet » :
+elle est traitée comme l'absence de *parser*, ce qui explique que le premier essai (prendre
+`languageOptions.parser` quand il existe) manquait encore deux règles. Une *spec* du paquet exécute
+trois règles sur un fichier sous ESLint et sous Oxlint et les compare. La mesure est celle de
+l'étude, le harnais de la suite de conformité (chaque injection par tours sur une copie de l'exemple,
+les deux outils, les mêmes fichiers) :
+
+| Copie de l'exemple, 115 fichiers en 7 tours | Avant | Après |
+|---|---|---|
+| fichiers où aucune règle du kit n'a tourné (`fatal`) | 303 sur 985 | 0 |
+| constats sur la copie intacte | 345 (303 `fatal`, 41 `consistent-type-imports`, 1 `no-undef`) | 42 (41 `consistent-type-imports`, 1 `no-undef`) |
+| injections qu'ESLint rapporte et qu'Oxlint rapporte aussi, `naming-business-name` activée | 27 sur 77 | **77 sur 77** |
+| idem, `naming-business-name` désactivée | 74 sur 77 | 77 sur 77 (la règle n'a plus à être coupée) |
+| constats des tours, ESLint / Oxlint / au même endroit | 89 / 108 / 29 | 89 / 100 / **89** |
+| constats d'Oxlint seul | 68 `fatal`, 11 `consistent-type-imports` | 11 `consistent-type-imports` |
+| constats d'ESLint seul | 60 | 0 |
+
+Ce qui reste est hors du *plugin* : `consistent-type-imports` d'Oxlint ignore
+`emitDecoratorMetadata` (41 sur la copie intacte, 11 dans les tours, tous faux) et `no-undef` lit un
+`.cjs` comme un module ; les deux relèvent du point 4, le *preset* Oxlint d'un projet généré.
+
+**Point 2, la configuration et la comparaison.** `.oxlintrc.json` retrouve les quatre règles
+(`no-var`, `prefer-const`, `prefer-rest-params`, `prefer-spread`, sur les sources et les tests),
+désactive les quinze règles du noyau que typescript-eslint coupe pour TypeScript (l'étude en
+comptait treize ; lues dans `eslint --print-config` d'un fichier source, ce sont `constructor-super`,
+`getter-return`, `no-class-assign`, `no-const-assign`, `no-dupe-class-members`, `no-dupe-keys`,
+`no-func-assign`, `no-import-assign`, `no-new-native-nonconstructor`, `no-obj-calls`,
+`no-setter-return`, `no-this-before-super`, `no-unreachable`, `no-unsafe-negation`, `no-with`),
+ajoute l'exclusion de `packages/audit/test/generated/` et coupe `no-unused-vars` sur les scripts
+comme ESLint. Oxlint a alors rapporté trois constats vrais qu'ESLint ne fait pas (deux
+`no-unsafe-optional-chaining` sur `(x?.y as T)['200']` dans des *specs* de `packages/http`, un
+`unbound-method` sur `(this.options.follow ?? followWithFetch)(request)` dans `packages/testing`) ;
+ils sont corrigés dans le code, pour que les deux outils disent la même chose sur cet arbre. Le job
+d'essai lance les deux outils avec leur sortie JSON et `pipeline/monorepo/compare-linters.mjs`
+écrit dans son résumé les totaux et chaque constat qu'un seul côté fait, par fichier, ligne et
+règle, `no-unsafe-enum-assignment` mis à part comme attendu. Il reste hors de la porte
+(`continue-on-error`, non requis par le job de porte) ; l'exécution d'ESLint du job est à froid,
+ce qui ajoute environ 70 s à un job de 38 s qui ne tourne que sur le tronc et la nuit. La
+comparaison sur la copie cassée de l'exemple n'est pas en CI : elle demande toute la suite de
+conformité (un *build* de chaque paquet et une configuration Oxlint générée pour l'exemple, que le
+migrateur écrit et que le dépôt ne garde pas), environ 40 s sur une station ; la mesure ci-dessus en
+est la trace.
+
+| Ce dépôt, 6 084 fichiers | ESLint | Oxlint | Au même endroit | Oxlint seul |
+|---|---|---|---|---|
+| avant (la porte telle que configurée le 2026-10-26) | 3 | 6 | 3 | 3 |
+| après | 3 | 3 | **3** | 0 |
 
 ## Reste à vérifier
 
