@@ -8,6 +8,7 @@ import type { TodoLocation } from './todo-location';
 import { todosIn } from './todos-in';
 import { cannotWrite } from './cannot-write';
 import { isFileOrAbsent } from './is-file-or-absent';
+import { pruneEmptied } from './prune-emptied';
 import { writeIfAllowed } from './write-if-allowed';
 import type { WorkspaceReport } from './workspace-report';
 
@@ -29,8 +30,8 @@ export class Workspace {
 
   private readonly skipped = new Set<string>();
 
-  /** Files this command cannot write where it runs, such as a path the sandbox of an agent protects. */
-  private readonly unwritable = new Set<string>();
+  /** Files where a device stands, such as a path the sandbox of an agent masks: reported unwritable. */
+  private readonly masked = new Set<string>();
 
   /** Files on disk this command removes: no longer derived from anything. */
   private readonly removed = new Set<string>();
@@ -121,7 +122,7 @@ export class Workspace {
 
     if (this.exists(file) && !this.force) {
       if (onDisk) {
-        (isFileOrAbsent(this.absolute(file)) ? this.skipped : this.unwritable).add(file);
+        (isFileOrAbsent(this.absolute(file)) ? this.skipped : this.masked).add(file);
       }
 
       return false;
@@ -237,10 +238,14 @@ export class Workspace {
 
   /**
    * Writes the plan, or (dry run) only says it. A file it cannot write here (a path the sandbox of an
-   * agent protects) is reported as unwritable, in `skipped` too, and every other file is written.
+   * agent protects) is reported as unwritable, in `skipped` too, and every other file is written;
+   * then no file is deleted, so that a move loses nothing.
    */
   commit(dryRun: boolean): WorkspaceReport {
-    const written = this.writtenOf(dryRun);
+    const unwritten: string[] = [];
+    const written = this.writtenOf(dryRun, unwritten);
+    const unwritable = [...new Set([...this.masked, ...unwritten])].sort();
+    const deleted = unwritable.length === 0 ? [...this.removed].sort() : [];
 
     const left = written
       .filter(({ existed }) => !existed || this.force)
@@ -249,7 +254,7 @@ export class Workspace {
     const todos = [...left, ...this.steps.map((step) => this.located(step))];
 
     if (!dryRun) {
-      this.removed.forEach((file) => this.remove(file));
+      deleted.forEach((file) => this.remove(file));
     }
 
     // The language comes before the code: its definition is the first thing to do.
@@ -258,24 +263,24 @@ export class Workspace {
     return {
       created: written.filter(({ existed }) => !existed).map(({ file }) => file),
       updated: written.filter(({ existed }) => existed).map(({ file }) => file),
-      deleted: [...this.removed].sort(),
-      skipped: [...new Set([...this.skipped, ...this.unwritable])].sort(),
-      unwritable: [...this.unwritable].sort(),
+      deleted,
+      skipped: [...new Set([...this.skipped, ...unwritable])].sort(),
+      unwritable,
       next: todos.map((todo) => `${todo.file}:${todo.line}`),
       todos,
       notes: this.notes.map((note) => this.spoken(note)),
     };
   }
 
-  /** The planned files written, or (dry run) that could be: the others are recorded as unwritable. */
-  private writtenOf(dryRun: boolean): { file: string; content: string; existed: boolean }[] {
+  /** The planned files written, or (dry run) that could be: the others go to `unwritten`. */
+  private writtenOf(dryRun: boolean, unwritten: string[]): { file: string; content: string; existed: boolean }[] {
     const planned = [...this.pending].map(([file, { content, existed }]) => ({ file, content, existed }));
 
     return planned.filter(({ file, content }) => {
       const writable = dryRun ? !cannotWrite(this.absolute(file)) : writeIfAllowed(this.absolute(file), content);
 
       if (!writable) {
-        this.unwritable.add(file);
+        unwritten.push(file);
       }
 
       return writable;
@@ -286,7 +291,7 @@ export class Workspace {
     fs.rmSync(this.absolute(file), { force: true });
 
     if (this.pruning) {
-      this.pruneEmptied(path.posix.dirname(file));
+      pruneEmptied(this.root, path.posix.dirname(file));
     }
   }
 
@@ -316,18 +321,6 @@ export class Workspace {
     }
 
     return false;
-  }
-
-  /** A folder a removed file leaves empty goes with it, and so does its parent once empty: a moved use case leaves no folder behind. */
-  private pruneEmptied(directory: string): void {
-    const absolute = this.absolute(directory);
-
-    if (directory === '.' || directory === '' || !fs.existsSync(absolute) || fs.readdirSync(absolute).length > 0) {
-      return;
-    }
-
-    fs.rmdirSync(absolute);
-    this.pruneEmptied(path.posix.dirname(directory));
   }
 
   private absolute(file: string): string {

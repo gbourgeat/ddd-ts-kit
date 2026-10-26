@@ -76,9 +76,7 @@ export const initCommand: Command = (argv, io) => {
     fs.mkdirSync(root, { recursive: true });
   }
 
-  printReport(io, args, runInit(root, { ...initOptions(args, dryRun), rerun: rerunOf(argv) }));
-
-  return 0;
+  return printReport(io, args, runInit(root, { ...initOptions(args, dryRun), rerun: rerunOf(argv) }));
 };
 
 /** The command the owner runs outside a sandbox to write what this one could not: the same flags, written for real. */

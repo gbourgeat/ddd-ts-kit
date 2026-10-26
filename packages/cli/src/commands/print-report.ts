@@ -1,15 +1,15 @@
-import type { WorkspaceReport } from '../workspace';
+import { exitCodeOf, type WorkspaceReport } from '../workspace';
 import type { Arguments } from './arguments';
 import type { Io } from './io';
 
-/** Prints what a command wrote (or would write), then where the next human decisions are. */
-export function printReport(io: Io, args: Arguments, report: WorkspaceReport): void {
+/** Prints what a command wrote (or would write), then where the next human decisions are; answers its exit code. */
+export function printReport(io: Io, args: Arguments, report: WorkspaceReport): number {
   const dryRun = args.flag('dry-run');
 
   if (args.json) {
     io.out(JSON.stringify({ dryRun, ...report }, null, 2));
 
-    return;
+    return exitCodeOf(report);
   }
 
   const lines = fileLines(report, dryRun);
@@ -30,6 +30,8 @@ export function printReport(io: Io, args: Arguments, report: WorkspaceReport): v
   }
 
   io.out(lines.join('\n'));
+
+  return exitCodeOf(report);
 }
 
 function fileLines(report: WorkspaceReport, dryRun: boolean): string[] {

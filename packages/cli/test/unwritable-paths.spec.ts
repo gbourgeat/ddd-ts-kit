@@ -1,11 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { cli, read, tempDir, walk } from './helpers';
+import { cli, exists, read, tempDir, walk } from './helpers';
+import { explicitProject } from './support/explicit-project';
 import { NPM } from './support/npm';
 import { VERSION } from '../src/version';
 import { cannotWrite } from '../src/workspace/cannot-write';
+import { UNWRITTEN_EXIT_CODE } from '../src/workspace/exit-code-of';
 import { writeIfAllowed } from '../src/workspace/write-if-allowed';
+import { Workspace } from '../src/workspace';
 
 const FLAGS = [...NPM, '--agent-profile', 'regulated'];
 const HOOKS = ['.claude/hooks/change-reference.mjs', '.claude/hooks/production-gate.mjs'];
@@ -59,9 +62,9 @@ describe.skipIf(process.platform === 'win32')('init where a sandbox protects the
     const dryRun = cli(root, 'init', ...FLAGS, '--dry-run', '--json');
     const run = cli(root, 'init', ...FLAGS, '--json');
 
-    expect(dryRun.code).toBe(0);
+    expect(dryRun.code).toBe(UNWRITTEN_EXIT_CODE);
     expect(reportOf(dryRun.stdout).unwritable).toEqual([...HOOKS, SETTINGS]);
-    expect(run.code).toBe(0);
+    expect(run.code).toBe(UNWRITTEN_EXIT_CODE);
     expect(run.stderr).toBe('');
 
     const report = reportOf(run.stdout);
@@ -93,6 +96,7 @@ describe.skipIf(process.platform === 'win32')('init where a sandbox protects the
 
     const finished = cli(root, 'init', ...FLAGS, '--json');
 
+    expect(finished.code).toBe(0);
     expect(reportOf(finished.stdout).created.sort()).toEqual([...HOOKS, SETTINGS]);
     expect(reportOf(finished.stdout).unwritable).toEqual([]);
     expect(contents(root)).toEqual(contents(reference));
@@ -113,9 +117,31 @@ describe.skipIf(process.platform === 'win32')('init where a sandbox protects the
       'skipped      .claude/hooks/production-gate.mjs (cannot be written here: a sandbox or the permissions protect the path)',
     );
 
-    expect(run.code).toBe(0);
+    expect(dryRun.code).toBe(UNWRITTEN_EXIT_CODE);
+    expect(run.code).toBe(UNWRITTEN_EXIT_CODE);
     expect(run.stdout).toContain('note: 2 file(s) could not be written here');
     expect(walk(root)).toEqual(everyFile.filter((file) => !HOOKS.includes(file)));
+  });
+});
+
+describe.skipIf(process.platform === 'win32')('generate where a sandbox protects a folder of the slice', () => {
+  it('writes the other files of the slice and exits 3, so that a half-written slice never reads as done', () => {
+    const root = explicitProject('generate-unwritable');
+
+    expect(cli(root, 'generate', 'aggregate', 'billing', 'Invoice').code).toBe(0);
+    mask(root, 'src/contexts/billing/domain/services');
+
+    const service = 'src/contexts/billing/domain/services/invoice-issuing.service.ts';
+    const dryRun = cli(root, 'generate', 'domain-service', 'billing', 'InvoiceIssuing', '--dry-run', '--json');
+    const run = cli(root, 'generate', 'domain-service', 'billing', 'InvoiceIssuing', '--json');
+    const report = reportOf(run.stdout);
+
+    expect(dryRun.code).toBe(UNWRITTEN_EXIT_CODE);
+    expect(reportOf(dryRun.stdout).unwritable).toEqual([service]);
+    expect(run.code).toBe(UNWRITTEN_EXIT_CODE);
+    expect(report.unwritable).toEqual([service]);
+    expect(report.created.length).toBeGreaterThan(0);
+    expect(report.created.filter((file) => !exists(root, file))).toEqual([]);
   });
 });
 
@@ -125,6 +151,19 @@ describe('a path the workspace cannot write', () => {
   it('is any path it cannot even look at', () => {
     expect(cannotWrite(tooLong())).toBe(true);
     expect(cannotWrite(path.join(tempDir('init-unwritable'), 'a', 'b.txt'))).toBe(false);
+  });
+
+  it('keeps every file the command would delete, so that a move whose target is protected loses nothing', () => {
+    const root = tempDir('init-unwritable');
+    const ws = new Workspace(root, false);
+
+    fs.writeFileSync(path.join(root, 'moved.ts'), 'export {};\n');
+    mask(root, 'protected');
+    ws.create('protected/moved.ts', 'export {};\n');
+    ws.delete('moved.ts');
+
+    expect(ws.commit(false)).toMatchObject({ unwritable: ['protected/moved.ts'], deleted: [] });
+    expect(exists(root, 'moved.ts')).toBe(true);
   });
 
   it('is skipped on the errors of a protected path only: any other error is thrown', () => {

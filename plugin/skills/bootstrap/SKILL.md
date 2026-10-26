@@ -67,12 +67,13 @@ pnpm run verify                                       # the bare project is gree
 ```
 
 In a sandboxed session (the sandbox of Claude Code, which the regulated profile turns on), or
-whenever the dry run lists files under `unwritable`, the real `init` is the owner's: the sandbox
-keeps the agent from writing `.claude/settings.json` and `.claude/hooks/`. Run the dry run, show
-the owner the same command without `--dry-run` and `--json`, to run from a terminal outside the
-sandbox, and wait for their word that it ran; resume at `pnpm install`. An `init` run in the sandbox anyway writes
-every other file and ends with a note that gives the command to finish: hand it to the owner the
-same way.
+whenever the dry run exits 3 with files under `unwritable`, the real `init` is the owner's: the
+sandbox keeps the agent from writing `.claude/settings.json` and `.claude/hooks/`. Exit code 3
+with `unwritable` means "hand `init` to the owner", not a failure to retry or to work around. Run
+the dry run, show the owner the same command without `--dry-run` and `--json`, to run from a
+terminal outside the sandbox, and wait for their word that it ran; resume at `pnpm install`. An
+`init` run in the sandbox anyway exits 3 too, after writing every other file, and ends with a
+note that gives the command to finish: hand it to the owner the same way.
 
 On an existing project, a note of the dry run that starts with `package.json depends on` is a
 dependency the flags contradict: put it to the owner, and run the dry run again with the flag it

@@ -46,9 +46,7 @@ export const generateCommand: Command = (argv, io) => {
     stopIgnoringValidation(ws, config);
   }
 
-  printReport(io, args, ws.commit(args.flag('dry-run')));
-
-  return 0;
+  return printReport(io, args, ws.commit(args.flag('dry-run')));
 };
 
 const TEXT = { type: 'string' } as const;

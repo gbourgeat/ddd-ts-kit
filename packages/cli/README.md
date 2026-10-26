@@ -44,7 +44,9 @@ CLI is the one the project pins: `pnpm exec ddd-ts-kit <command>`, or `npx ddd-t
 Every command accepts `--json` (machine-readable output, errors included) and `--cwd <dir>`.
 Commands other than `init` look for `ddd-ts-kit.config.json` in the directory and its parents.
 Exit codes: `0` success, `1` violations, stale documentation or, under `--strict`, a commit over
-its limits, `2` wrong usage (the message says what to do).
+its limits, `2` wrong usage (the message says what to do), `3` a command that writes files could
+not write some of them where it ran (a path the sandbox of an agent protects): they are listed
+under `unwritable`, every other file is written and none is deleted.
 
 ## init
 

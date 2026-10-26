@@ -226,6 +226,13 @@ owner's agreement and a decision record (the last row of the table above).
 Every command and flag, as `npx ddd-ts-kit --help` prints them. A test of the CLI fails when a
 command or a flag is added without this part being regenerated.
 
+Exit codes: `0` success; `1` violations, a gate not met, stale documentation; `2` wrong usage or a
+refusal (the message says what to do); `3` a command that writes files (`init`, `generate`,
+`docs`, `sdk`, a move) could not write some of them where it ran, such as the paths the sandbox of
+an agent protects. With `3` the report lists them under `unwritable` (and in `skipped`), a dry run
+included; every other file is written and none is deleted. Run the same command where they can be
+written, outside the sandbox: `init` gives the command in a note.
+
 <!-- ddd-ts-kit:commands -->
 <!-- Generated from the help of the CLI: `npm run build`, then `node pipeline/monorepo/commands-guide.mjs`. -->
 
