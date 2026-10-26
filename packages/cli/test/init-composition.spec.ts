@@ -227,6 +227,27 @@ describe('the composition root init writes, by hand', () => {
       '  await platform.jobs.stop();\n  await platform.backgroundJobs.stop();\n  await options.events.close();\n  await platform.logger.flush();\n}',
     );
   });
+
+  it('keeps composeApplication within 30 lines and imports nothing unused when every option adds to it', () => {
+    // The stack of the lending example: each of these options writes a line of the composition or of its boundary.
+    const root = initProject(
+      ...['--http', 'nest', '--di', 'nest', '--routes', 'nest', '--validation', 'class-validator'],
+      ...['--orm', 'prisma', '--database', 'postgres', '--events', 'outbox', '--broker', 'kafka'],
+      ...['--cache', 'redis', '--queue', 'redis', '--storage', 's3', '--authn', 'keycloak', '--authz', 'rebac'],
+      ...['--audit', 'on', '--event-sourcing', 'on', '--privacy', 'on', '--tenancy', 'shared-table'],
+      ...['--errors', 'sentry', '--docs-ui', 'scalar'],
+    );
+
+    const lines = platform(root, 'composition/compose-application.ts').split('\n');
+    const opening = lines.indexOf('): Application {', lines.indexOf('export function composeApplication('));
+    // The lines of the body that hold code, as clean/function-size counts them.
+    const body = lines.slice(opening + 1, lines.indexOf('}', opening));
+    const code = body.filter((line) => line.trim() !== '' && !line.trim().startsWith('//'));
+
+    expect(code.length).toBeLessThanOrEqual(30);
+    expect(lines).toContain('    boundary: boundaryOf(platform, options, presentation),');
+    expect(platform(root, 'event-sourcing/create-event-sourcing.ts')).not.toContain('ExecutionScope');
+  });
 });
 
 describe('the error mapper of the platform, written in one place', () => {

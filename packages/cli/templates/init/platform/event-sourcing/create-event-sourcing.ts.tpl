@@ -1,7 +1,7 @@
 {{#if audit.on}}
 import { auditedSubjectKeys, type AuditSource } from '@ddd-ts-kit/audit';
 {{/if}}
-import { PersonalDataCipher, type EventSourcingStores{{#if tenancy.any}}, type ExecutionScope{{/if}} } from '@ddd-ts-kit/kernel';
+import { PersonalDataCipher, type EventSourcingStores{{#if tenancy.any}}{{#unless audit.on}}, type ExecutionScope{{/unless}}{{/if}} } from '@ddd-ts-kit/kernel';
 {{#if audit.on}}
 import type { Audit } from '{{alias.platform}}/audit/create-audit{{alias.ext}}';
 {{/if}}
