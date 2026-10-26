@@ -16,6 +16,7 @@ const BASE = [
   '@ddd-ts-kit/aspects',
   '@opentelemetry/api',
   '@opentelemetry/sdk-node',
+  '@opentelemetry/resources',
   '@opentelemetry/auto-instrumentations-node',
   '@opentelemetry/exporter-trace-otlp-http',
 ];
@@ -23,7 +24,7 @@ const BASE = [
 const BASE_DEV = ['ddd-ts-kit', 'tsx', '@types/node', '@ddd-ts-kit/testing', '@faker-js/faker'];
 
 /** What `@ddd-ts-kit/tracing/testing` is written against: the end-to-end specs assert the trace of a request. */
-const TRACE_ASSERTIONS = ['@opentelemetry/sdk-trace-base', '@opentelemetry/context-async-hooks'];
+const TRACE_ASSERTIONS = ['@opentelemetry/sdk-trace', '@opentelemetry/context-async-hooks'];
 
 /** What each choice of the stack adds: [runtime dependencies, development dependencies]. */
 const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly string[]]>> = {

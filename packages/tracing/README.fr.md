@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:582c2a4a48eecd3d -->
+<!-- translation-of: README.md sha256:22b81551feed5823 -->
 
 # @ddd-ts-kit/tracing
 
@@ -11,9 +11,9 @@ l'utilisateur se lit comme une seule trace.
 ```
 npm i @ddd-ts-kit/tracing @opentelemetry/api
 # pour le démarrage Node (@ddd-ts-kit/tracing/node)
-npm i @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-trace-otlp-http
+npm i @opentelemetry/sdk-node @opentelemetry/resources @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-trace-otlp-http
 # pour le banc de test (@ddd-ts-kit/tracing/testing)
-npm i -D @opentelemetry/sdk-trace-base @opentelemetry/context-async-hooks
+npm i -D @opentelemetry/sdk-trace @opentelemetry/context-async-hooks
 ```
 
 ![La place du package : la plateforme enveloppe chaque endroit où le travail entre dans un contexte délimité ou en sort, et chaque enveloppe ouvre une sorte de span. tracedRoutes autour du pipeline HTTP ouvre le span SERVER de la requête HTTP. traceApplication, donné une fois à kernelModule, réunit les enveloppes qui ouvrent des spans : traceUseCases sur les bus ouvre les spans command et query, traceBindings sur les repositories, les gateways et les gestionnaires ouvre leurs spans, tracedDomainEvents sur le répartiteur des événements du domaine ouvre les spans unit-of-work et domain-event, tracedPublisher sur le publisher du noyau ouvre outbox append, tracedConsumer ouvre process, et tracedJob et tracedBackgroundJob ouvrent job ; il confie aussi au traçage le rapporteur d'erreurs et la portée d'exécution. tracedPublisher autour du publisher du relais de l'outbox ouvre publish. initTracing démarre le SDK OpenTelemetry avec ses instrumentations et ses processeurs de spans, et exporte en OTLP vers Jaeger ou un collecteur. Le code des contextes n'en importe rien](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/tracing-package-place.fr.svg)
