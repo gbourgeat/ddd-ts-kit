@@ -5,7 +5,7 @@ import { isRecord } from '../check/support/is-record';
 import { findProjectFormatter } from '../migration/find-project-formatter';
 
 /** What a tool answered: its exit code and everything it printed. */
-export interface ToolRun {
+interface ToolRun {
   readonly status: number;
   readonly output: string;
 }
