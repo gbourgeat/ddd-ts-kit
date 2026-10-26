@@ -74,9 +74,10 @@ describe('the repository contract without a mutate', () => {
   it('leaves the stale-save case pending with its reason, and passes the others', async () => {
     const collecting = new CollectingRunner();
 
+    const { mutate: _left, ...withoutMutate } = orders;
+
     repositoryContract<Order>(collecting, {
-      ...orders,
-      mutate: undefined,
+      ...withoutMutate,
       name: 'no mutate',
       createRepository: () => new InMemoryRepository<Order>({ clone: (order) => Order.rehydrate(order.toSnapshot()) }),
     });
