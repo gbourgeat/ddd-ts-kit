@@ -17,6 +17,7 @@ import type { MergeSides } from './merge-sides';
 import type { MergeToVerify } from './merge-to-verify';
 import { revisionFiles, WORKTREE } from './revision-files';
 import { sideHunks } from './side-hunks';
+import { untouchedByBranch } from './untouched-by-branch';
 
 const WARNINGS: ReadonlySet<MergeFinding['kind']> = new Set(['revived', 'rewritten', 'superseded']);
 
@@ -61,7 +62,7 @@ function findingsAt(
   const read = (revision: string): Map<string, string> => revisionFiles(repo.top, revision, paths);
   const sides: MergeSides = { base: read(base), ours: read(ours), theirs: read(theirs), result: read(at.result) };
 
-  return [
+  const findings = [
     ...lineFindings(linesOf(sides, repo), changesOf(repo.top, merge, at.result)),
     ...keptRows(sides, `${repo.prefix}${SLICES_FILE}`),
     ...lostTests(sides),
@@ -69,6 +70,12 @@ function findingsAt(
     ...lostMigrations(sides),
     ...conflictMarkers(sides),
   ];
+
+  const fork = runGit(repo.top, ['merge-base', ours, theirs])?.trim();
+
+  return fork === undefined || fork === ''
+    ? findings
+    : untouchedByBranch(findings, { ours: sides.ours, fork: read(fork) });
 }
 
 /** The hunks of each side against the base, and from each side to the result. */

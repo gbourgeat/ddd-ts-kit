@@ -123,7 +123,9 @@ sub-agent. `--continue` refuses while a path is unmerged or keeps a conflict mar
 the migrations, regenerates, and runs `verify-merge` on the uncommitted result: a line one side
 added that the result lacks, a row of `slices.md` no longer done, a test, a spec file or a
 migration gone stops it (exit 1), with `file:line` and the side to restore it from
-(`git show ORIG_HEAD:<file>` for this branch). A removal decided on purpose:
+(`git show ORIG_HEAD:<file>` for this branch). What the trunk itself removed or replaced since the
+base, in a file the branch did not touch since it left the trunk, is the trunk's change, not a loss.
+A removal decided on purpose:
 `merge-trunk --continue --accept-lost`, which records it in the merge commit as a trailer
 `Lost-Accepted: <file:line>,...`, listed by every later run without failing. The commit holds the
 paths of the merge only (the conflicted ones, the derived files, the migrations, the decision

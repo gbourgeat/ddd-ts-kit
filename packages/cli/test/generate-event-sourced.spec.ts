@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { checkJsonOf } from './check-support';
-import { cli, DEFAULT_STACK, exists, read, scaffoldEverything, tempDir, write } from './helpers';
+import { cli, type CliResult, DEFAULT_STACK, exists, read, scaffoldEverything, tempDir, write } from './helpers';
 import { type Report, report } from './reports';
 import { initProject } from './support/init-project';
 
@@ -137,6 +137,79 @@ describe('generate aggregate --event-sourced', () => {
     expect(read(root, `${BILLING}/CONTEXT.md`)).toContain('- `Invoice`\n- `Ledger` (event-sourced)');
     expect(cli(root, 'describe', 'billing').stdout).toContain('    Ledger (event-sourced)');
     expect(cli(root, 'list').stdout).toContain('aggregates: Invoice, Ledger (event-sourced)');
+  });
+});
+
+describe('generate aggregate --event-sourced --birth', () => {
+  const INCIDENTS = 'src/contexts/incidents';
+  const TERMS = ['--term', 'Incident=Something gone wrong', '--term', 'Trigger=To raise'];
+
+  function incidents(...flags: string[]): CliResult & { readonly project: string } {
+    const project = initProject('--context', 'incidents:core', '--event-sourcing', 'on');
+
+    return {
+      ...cli(project, 'generate', 'aggregate', 'incidents', 'Incident', '--event-sourced', ...flags, ...TERMS),
+      project,
+    };
+  }
+
+  it('names the birth event after the fact it is given, in the class, the type, the codec, the builder and the specs', () => {
+    const { project, code, stderr } = incidents('--birth', 'Triggered');
+
+    expect(code, stderr).toBe(0);
+
+    const written = [
+      `${INCIDENTS}/domain/aggregates/incident.aggregate.ts`,
+      `${INCIDENTS}/infrastructure/persistence/incident-events.mapper.ts`,
+      `${INCIDENTS}/test/builders/incident.builder.ts`,
+      `${INCIDENTS}/test/unit/incident.aggregate.spec.ts`,
+      `${INCIDENTS}/domain/events/incident-triggered.event.ts`,
+      `${INCIDENTS}/test/unit/incident-triggered.event.spec.ts`,
+    ];
+
+    for (const file of written) {
+      expect(exists(project, file), file).toBe(true);
+      expect(read(project, file), file).not.toContain('Created');
+    }
+
+    expect(read(project, written[0] ?? '')).toContain(
+      '[IncidentTriggered.eventName]: (event) => this.applyTriggered(event),',
+    );
+
+    expect(read(project, `${INCIDENTS}/domain/events/incident-triggered.event.ts`)).toContain(
+      'incidents.incident.triggered',
+    );
+
+    expect(exists(project, `${INCIDENTS}/domain/events/incident-created.event.ts`)).toBe(false);
+  });
+
+  it('refuses a birth fact the glossary does not define', () => {
+    const project = initProject('--context', 'incidents:core', '--event-sourcing', 'on');
+
+    const unknown = cli(
+      project,
+      'generate',
+      'aggregate',
+      'incidents',
+      'Incident',
+      '--event-sourced',
+      '--birth',
+      'Opened',
+      '--term',
+      'Incident=Something gone wrong',
+    );
+
+    expect(unknown.code).not.toBe(0);
+    expect(unknown.stderr).toContain('"Opened" uses "opened"');
+  });
+
+  it('refuses --birth on an aggregate that is not event-sourced', () => {
+    const project = initProject('--context', 'incidents:core');
+
+    const refused = cli(project, 'generate', 'aggregate', 'incidents', 'Incident', '--birth', 'Triggered', ...TERMS);
+
+    expect(refused.code).not.toBe(0);
+    expect(refused.stderr).toContain('--birth names the birth event of an event-sourced aggregate');
   });
 });
 

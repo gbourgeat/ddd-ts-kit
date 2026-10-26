@@ -15,6 +15,10 @@ export function requestBody(route: Route, { definitions, representations }: Docu
     return multipartBody(route.upload, fields);
   }
 
+  if (route.rawBody === true) {
+    return rawBody();
+  }
+
   if (fields === undefined) {
     return undefined;
   }
@@ -24,6 +28,16 @@ export function requestBody(route: Route, { definitions, representations }: Docu
   return {
     required: true,
     content: Object.fromEntries(mediaTypes.map((mediaType) => [mediaType, { schema: fields }])),
+  };
+}
+
+/** The bytes as they arrive: no schema, nothing validates them before the handler. */
+function rawBody(): JsonSchema {
+  return {
+    required: true,
+    description:
+      'The body as it is sent, not parsed and not validated by the server: the route checks it itself, for example a signature over its bytes.',
+    content: { 'application/octet-stream': { schema: { type: 'string', format: 'binary' } } },
   };
 }
 

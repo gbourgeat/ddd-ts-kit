@@ -194,7 +194,8 @@ the schemas of `spec` produce and returns the body `spec.response` declares:
   `body` schema whose output is assignable to it. A controller that reads a part its
   declaration does not validate, or reads it as another type, does not compile.
 - `handle` returns the output type of `response.body`, or nothing when the response has no
-  body.
+  body. When the response declares `headers`, it returns `{ body, headers }` (`{ headers }` with
+  no body) and a declared header left out does not compile.
 - The request is contravariant: `handle` names only the parts it reads, and may take no
   parameter at all.
 
@@ -465,11 +466,83 @@ callers is marked on the response schema (`withFieldAccess`), and the media type
 answers in are `produces` of its declaration, both explained in
 [representations, field access and forms](representations-and-forms.md).
 
+## Response headers
+
+A response declares the headers it answers, each with what it holds; the contract lists them
+under `responses.<status>.headers`, and `handle` returns them beside the body, on every adapter.
+A creation answers its `Location`:
+
+```ts
+@Controller({
+  group: AppointmentRoutes,
+  method: 'POST',
+  path: '/',
+  summary: 'Book appointment',
+  body: bookAppointmentBody,
+  response: { status: 201, body: acceptedSchema, headers: { Location: 'The URL of the appointment.' } },
+})
+export class BookAppointmentController {
+  constructor(private readonly commands: CommandBus) {}
+
+  async handle({ body, actor }: HttpRequest<{ body: BookAppointmentBody }>) {
+    const { appointmentId } = await this.commands.execute(new BookAppointment(body.patientId, actor));
+
+    return { body: { appointmentId }, headers: { Location: `/appointments/${appointmentId}` } };
+  }
+}
+```
+
+A response that declares no header keeps returning the body alone. On a Nest controller,
+`@KitRoute({ response: { body, headers } })` declares them the same way and the method returns
+`{ body, headers }`; `body` is then declared there, as its return type is not read for it.
+
+## A signed webhook: the raw body
+
+A monitoring tool or a payment provider signs its calls with an HMAC over the exact bytes of the body,
+so the body must reach the route unparsed. A controller declares `rawBody: true`: the server then reads
+nothing and validates nothing of the body (the contract describes it as `application/octet-stream`),
+and `handle` finds the bytes in `context.stream` and the headers as they arrived in `context.rawHeaders`.
+It verifies the signature, then parses the payload and hands it to the anti-corruption layer. `rawBody`
+cannot be declared with `body`, `upload` or `consumes`.
+
+```ts
+@Controller({
+  method: 'POST',
+  path: '/webhooks/monitoring',
+  summary: 'Receive a monitoring alert',
+  guards: [Public],
+  rawBody: true,
+  errors: ['BAD_SIGNATURE'],
+  response: { status: 204 },
+})
+export class ReceiveAlertController {
+  constructor(
+    private readonly signature: SignatureVerifier,
+    private readonly commands: CommandBus,
+  ) {}
+
+  async handle({ context }: HttpRequest<{ rawBody: true }>): Promise<void> {
+    const bytes = Buffer.concat(await Array.fromAsync(context.stream, (chunk) => Buffer.from(chunk)));
+
+    this.signature.verify(bytes, context.rawHeaders?.['x-signature']); // throws BadSignature
+
+    await this.commands.execute(MonitoringAlertTranslator.toCommand(JSON.parse(bytes.toString('utf8'))));
+  }
+}
+```
+
+A route that has no caller to authenticate says so with `Public`: the signature is what lets the call in.
+On a Nest controller, `@KitRoute({ rawBody: true })` declares it and `@RouteContext()` gives the method the
+context. On Express, a JSON parser installed before the routes has already read a JSON body: keep its bytes
+with `express.json({ verify: (request, _response, bytes) => { Object.assign(request, { rawBody: bytes }); } })`,
+which the route then reads; a Nest application is created with `rawBody: true` for the same reason. Fastify
+and Hono need nothing.
+
 ## When to keep a function route
 
 `defineRoute` stays supported and both forms run in one project. Keep a function when the
-route answers several success statuses, sets response headers of its own (`Location`), answers
-bytes or text, or is built from data at run time: a controller has one response and answers its
+route answers several success statuses, sets response headers that depend on the outcome (a `Location`
+only when it creates), answers bytes or text, or is built from data at run time: a controller has one response and answers its
 body. Caching headers are not a reason: a controller declares its cache policy, its validators
 and its cache tags (`cache`), and the pipeline answers them ([HTTP caching](http-caching.md)).
 
