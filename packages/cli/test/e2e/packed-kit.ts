@@ -7,33 +7,21 @@ let packed: Readonly<Record<string, string>> | undefined;
 
 /**
  * Every package of the kit as `npm pack` makes it, which is what a registry would serve: the
- * name of each package and the `file:` specifier of its tarball. Packed once per run, from the
- * built workspace (`npm run build` at the root first).
+ * name of each package and the `file:` specifier of its tarball. Read from the file the pipeline
+ * wrote once for the whole job (`DDD_TS_KIT_PACKED_KIT`, `pipeline/monorepo/pack-kit.mjs`), else packed
+ * once per run, from the built workspace (`npm run build` at the root first).
  */
 export function packedKit(): Readonly<Record<string, string>> {
-  packed ??= pack();
+  packed ??= JSON.parse(fs.readFileSync(process.env['DDD_TS_KIT_PACKED_KIT'] ?? pack(), 'utf8')) as Record<
+    string,
+    string
+  >;
 
   return packed;
 }
 
-function pack(): Record<string, string> {
-  const destination = tempDir('packed');
-  const packages = path.join(REPO_ROOT, 'packages');
+function pack(): string {
+  const script = path.join(REPO_ROOT, 'pipeline/monorepo/pack-kit.mjs');
 
-  return Object.fromEntries(
-    fs.readdirSync(packages).map((directory) => {
-      const source = path.join(packages, directory);
-      const { name } = JSON.parse(fs.readFileSync(path.join(source, 'package.json'), 'utf8')) as { name: string };
-
-      const [tarball = ''] = execFileSync('npm', ['pack', '--silent', '--pack-destination', destination], {
-        cwd: source,
-        encoding: 'utf8',
-      })
-        .trim()
-        .split('\n')
-        .slice(-1);
-
-      return [name, `file:${path.join(destination, tarball)}`];
-    }),
-  );
+  return execFileSync(process.execPath, [script, tempDir('packed')], { encoding: 'utf8' }).trim();
 }

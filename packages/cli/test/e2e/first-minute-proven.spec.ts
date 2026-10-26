@@ -3,7 +3,7 @@ import { cli, tempDir } from '../helpers';
 import { grantOf } from '../support/grant-of';
 import { initFlags } from '../support/init-flags';
 import { installForReal, type Manager } from './install-for-real';
-import { NIGHT, NIGHT_ONLY, PROVEN_AT_NIGHT } from './night-stacks';
+import { DEEP, NIGHT, NIGHT_ONLY, PROVEN_AT_NIGHT } from './night-stacks';
 import { PROVEN, SLOW } from './stacks';
 import { verified } from './verified';
 
@@ -26,8 +26,8 @@ const OTHERS = [...PROVEN.slice(1), ...(NIGHT || NIGHT_ONLY ? PROVEN_AT_NIGHT : 
 /**
  * Slow, opt-in (DDD_TS_KIT_E2E=1): on each proven stack a project is installed for real from
  * the packed kit right after `init`, with nothing generated, and held to its own `verify`; then
- * again with one context, with a second one downstream of the first, and with its first use
- * case. The other suites generate every kind before they verify: this one is the path a team
+ * again with its first use case; at night and before a release also with one context, then with a
+ * second one downstream of the first (`DEEP`), the states in between that no pull request waits for. The other suites generate every kind before they verify: this one is the path a team
  * takes, where the first gate runs on an empty project.
  */
 describe.runIf(SLOW).each(OTHERS)('from its first minute, a project on %s (%s)', (_label, manager: Manager, stack) => {
@@ -51,11 +51,18 @@ describe.runIf(SLOW).each(OTHERS)('from its first minute, a project on %s (%s)',
     verified(root, manager);
   }, 600_000);
 
-  it('is green with one context, then with a second one downstream of it', () => {
+  it('has one context, then a second one downstream of it, and is green after each of them at night and before a release', () => {
     generate('context', 'billing', '--classification', 'core', ...TERMS);
-    verified(root, manager);
+
+    if (DEEP) {
+      verified(root, manager);
+    }
+
     generate('context', 'shipping', '--classification', 'supporting', '--upstream', 'billing:customer-supplier');
-    verified(root, manager);
+
+    if (DEEP) {
+      verified(root, manager);
+    }
   }, 900_000);
 
   it('is green with its first use case, as generated', () => {

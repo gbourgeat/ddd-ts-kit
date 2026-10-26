@@ -33,3 +33,10 @@ export const NIGHT = process.env['DDD_TS_KIT_NIGHT'] === '1';
 
 /** The release runs them alone: the other proven stacks ran on every pull request. */
 export const NIGHT_ONLY = process.env['DDD_TS_KIT_NIGHT'] === 'only';
+
+/**
+ * What the night and the pull request of a release prove and no other run does: the intermediate states of
+ * the first minute (after one context, then two) and the coverage gate on every proven stack. Every other
+ * run, a workstation included, keeps the first state, the last one and one stack.
+ */
+export const DEEP = NIGHT || NIGHT_ONLY;

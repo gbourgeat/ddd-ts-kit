@@ -2,6 +2,7 @@ import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { read, REPO_ROOT, tempDir } from '../helpers';
 import { installForReal, type Manager } from './install-for-real';
+import { DEEP } from './night-stacks';
 import { quickStart } from './quick-start';
 import { runIn } from './run-in';
 import { SLOW } from './stacks';
@@ -19,7 +20,8 @@ const managers = (['pnpm', 'npm'] as const).filter((manager) => only === undefin
  * of `init` names; then each context, a use case and its route, the documents and the gate again.
  * Two things differ from what a reader gets, both because no registry serves this tree yet:
  * `init` is the CLI the workspace built, and the install takes the kit from its packed tarballs.
- * The suite adds one `verify` after each new context: no step of the life of a project is red.
+ * At night and before a release (`DEEP`) the suite adds one `verify` after each new context: no step of the
+ * life of a project is red. Another run keeps the first state and the last.
  * `DDD_TS_KIT_PACKAGE_MANAGER` narrows the run to one manager, which is how the pipeline splits it.
  */
 describe.runIf(SLOW).each(managers)('the quick start of the README, typed on %s', (manager) => {
@@ -59,7 +61,7 @@ describe.runIf(SLOW).each(managers)('the quick start of the README, typed on %s'
     for (const line of then) {
       typed(root, line);
 
-      if (contexts.includes(line)) {
+      if (DEEP && contexts.includes(line)) {
         verified(root, manager);
       }
     }

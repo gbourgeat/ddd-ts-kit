@@ -1,5 +1,5 @@
 [English](generated-project-families.md) · **Français**
-<!-- translation-of: generated-project-families.md sha256:467a958c6f2f5098 -->
+<!-- translation-of: generated-project-families.md sha256:4153c77f187f7b9c -->
 
 # Proposition : les familles qui génèrent des projets, dans le *pipeline* et sur une station de travail
 
@@ -33,6 +33,10 @@ qu'environ 6 300 des 8 300 secondes de *runner* d'une exécution du tronc vont �
 qu'un *linter* plus rapide en économiserait au plus 3 %. Cette page prend ces familles pour sujet.
 Le seul changement qu'elle fait est la ligne du [premier levier](#1-la-lecture-de-mutation-lit-le-rapport-de-la-nuit),
 dans un *commit* à part ; chaque autre levier est une *pull request* du [plan](#le-plan).
+
+**Décidé et construit (2026-10-26).** Le mainteneur a retenu les leviers 3, 4, 6, 7 et 8, avec les
+choix listés sous [ce qu'une *pull request* doit encore
+prouver](#décidé-le-2026-10-26-et-construit) ; ce sont quatre *commits* de `fix/families-decided`.
 
 ## La question
 
@@ -515,6 +519,84 @@ Ce qu'une *pull request* garde dans tous les cas : toute la porte des 9 *stacks*
 l'installation réelle de la *stack* par défaut et de la lourde sur npm, le démarrage rapide du
 README tapé tel qu'il est écrit, l'exemple et chaque règle enfreinte dans sa copie, chaque *stack*
 générée, contrôlée, formatée et vérifiée en types.
+
+### Décidé le 2026-10-26, et construit
+
+Le mainteneur a décidé quatre choses ; chacune est un *commit* de `fix/families-decided`, avec le
+gain que les chiffres de cette page lui donnent (estimé depuis les médianes par fichier et par
+étape, à relire sur les premières exécutions) :
+
+1. **Un ensemble couvrant de 16 *stacks* sur une *pull request* qui change ce qu'un projet exécute,
+   toutes les *stacks* sur le tronc, les paires la nuit.** La sélection par *stack* de
+   #260 lisait les *packages* qu'un changement atteint, et toute *pull request* atteignait `cli`.
+   Le job d'installation dit maintenant `stacks` : `none` quand le
+   changement ne touche rien de ce qu'un projet généré exécute ou dont il est fait, `cover` quand il
+   touche un fichier de `packages/` (sources, *templates*, manifestes et *specs* de chaque
+   *package*, hors fichiers Markdown), de `pipeline/`, le manifeste, le verrou ou la configuration
+   de la racine, ou le *workflow* qui les exécute ; les documents, le site, le texte du *plugin*,
+   l'exemple (il a son propre job) et les modèles d'issues donnent `none` ; `all` sur le tronc, la nuit et sur la *pull request*
+   d'une *release* (titre `chore(release)` ou branche `release/*`). `none` saute les *shards*, les
+   exécutions de l'alias et le job des gestionnaires ; `cover` donne aux deux balayages d'`init`
+   seul et aux cas de l'alias les 16 *stacks* où chaque valeur de chaque drapeau apparaît
+   (`coverOf` dans `packages/cli/test/e2e/stacks.ts`, calculé depuis `EVERY_STACK` : 16 des 48
+   *stacks* exécutables et des 55 *stacks*). `zero-violation`, `formatted` et `typecheck` gardent
+   toutes les *stacks* sur une *pull request* qui génère : elles coûtent 57, 56 et 130 s.
+   **Gain :** environ 1 180 secondes de *runner* pour une *pull request* qui change ce qu'un projet
+   exécute, environ 4 800 pour une qui ne change que des documents (*shards* 3 514, gestionnaires
+   784, alias 521) ; au trafic du 2026-10-26, où 9 *pull requests* sur 113 seulement ne changeaient
+   que des documents, environ 1 300 par exécution de *pull request*. Tronc : 0.
+2. **À la nuit, et à la *pull request* d'une *release* : pnpm, les exécutions de l'alias sur
+   Node 22, les états intermédiaires de la première minute, la porte de couverture sur ses dix
+   *stacks*.** Le job d'installation dit `deep` pour la nuit, une exécution à la demande et une
+   *release*, et pour aucune autre. Ailleurs, le tronc compris, le job des gestionnaires installe
+   sur npm, l'alias s'exécute sur Node 24, un projet de la première minute lance `verify` avant
+   tout contexte et après son premier cas d'usage (pas après un contexte, puis deux), et la porte
+   de couverture s'exécute sur la *stack* par défaut. **Gain :** une exécution du tronc environ
+   1 800 secondes de *runner* (pnpm 566, alias sur Node 22 461, porte de couverture sur une
+   *stack* environ 465, une vingtaine de `verify` intermédiaires environ 300) et deux jobs de
+   moins contre la limite de 20 ; une exécution de *pull request* environ 770 ; le troisième
+   *shard*, le plus long, d'environ 1 195 s à environ 730 s.
+3. **Une *pull request* en brouillon n'exécute que les vérifications rapides ; la marquer prête
+   exécute toute la CI.** Les *shards*, les exécutions de l'alias, le job des gestionnaires,
+   l'exemple, la copie de l'exemple et la lecture de mutation sautent un brouillon
+   (`pull_request` liste `ready_for_review`). Le job `gate` lit les sorties du job d'installation
+   qui lui disent quels sauts sont légitimes (`generates`, `whole`), de sorte qu'un job sauté qui
+   aurait dû s'exécuter fait échouer la porte et qu'un brouillon ne peut pas être fusionné au vert.
+   **Gain :** environ 6 500 secondes de *runner* par exécution d'un brouillon, jusqu'à 20 heures de
+   *runner* par jour au trafic des trois jours, et la file qu'elles causaient. Une *pull request*
+   prête et le tronc : 0. Les agents ouvrent leur *pull request* en brouillon jusqu'à ce que la
+   branche soit définitive.
+4. **Deux leviers qui ne changent rien à ce qu'une *pull request* prouve.** `proven-stacks` et
+   `coverage-gate` construisent les *stacks* éprouvées une fois (un projet chacune, ses *specs*
+   sous `test:coverage` ; les exécutions découpées et la *spec* retirée dans le même projet, sur la
+   première *stack* d'une *pull request* ou du tronc et sur toutes la nuit). Le job des
+   gestionnaires empaquette le kit une fois (`pipeline/monorepo/pack-kit.mjs`) au lieu d'une fois
+   par fichier de *spec*, et installe une fois un projet de la première minute : l'installation
+   figée est prouvée par `package-managers.spec.ts`. **Gain :** environ 215 secondes de *runner*
+   par exécution de *pull request* et du tronc (la fusion environ 40, les empaquetages environ 75,
+   environ sept installations figées environ 100), environ 600 la nuit. La fusion gagne moins que
+   les 400 s du levier 4 ci-dessus parce que la décision 2 a déjà ramené la porte de couverture à
+   une *stack*.
+
+Là où la construction diffère du plan ci-dessus : l'ensemble couvrant ne s'applique qu'aux
+balayages et aux exécutions de l'alias (le levier 3 le disait ; la décision disait « pas les 48 ») ;
+un changement d'un *package* d'exécution
+(le noyau, le *package* de test, le *plugin* ESLint, un adaptateur) génère l'ensemble couvrant, comme
+un changement de *template* ; seul un changement qui ne touche rien de ce qu'un projet généré exécute
+ne génère rien ; le tronc exécute la porte de couverture sur une
+*stack*, comme une *pull request*.
+
+Attendu, avec ces quatre et les lignes de `fix/families-quick` : une exécution de *pull request*
+qui touche un *template*, d'environ 7 700 à environ 4 400 secondes de *runner* ; une qui n'en
+ne change que des documents, à environ 1 900 ; une exécution du tronc d'environ 8 000 à environ 5 900. Le temps de
+mur d'une *pull request* suit le job unitaire sur Node 24 et le job npm.
+
+Ce que les premières exécutions doivent montrer : les sorties `stacks`, `deep`, `generates` et
+`whole` du job d'installation sur une *pull request* qui ne touche qu'un document (les cinq sauts
+passent la porte), sur une qui touche un *template* (`cover`, les balayages à 16 *stacks*), sur un
+brouillon et sur la même *pull request* marquée prête (une nouvelle exécution, la porte attendant
+chaque job), sur une *pull request* de *release* (`all`, pnpm, Node 22, les paires), et sur la
+première exécution du tronc (les 48 *stacks*, npm seulement).
 
 ## Reste à vérifier
 

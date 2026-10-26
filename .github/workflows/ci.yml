@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+    # A pull request in draft runs the fast checks only; marking it ready runs the whole of them (ready_for_review).
+    types: [opened, synchronize, reopened, ready_for_review]
   schedule:
     # Every night, everything, on both Node lines: a pull request runs the unit specs of the packages its change reaches.
     - cron: '0 3 * * *'
@@ -29,6 +31,12 @@ jobs:
       filters: ${{ steps.affected.outputs.filters }}
       integration: ${{ steps.affected.outputs.integration }}
       integrated: ${{ steps.affected.outputs.integrated }}
+      stacks: ${{ steps.kind.outputs.stacks }}
+      release: ${{ steps.kind.outputs.release }}
+      deep: ${{ steps.kind.outputs.deep }}
+      draft: ${{ steps.kind.outputs.draft }}
+      whole: ${{ steps.kind.outputs.whole }}
+      generates: ${{ steps.kind.outputs.generates }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -41,6 +49,39 @@ jobs:
         env:
           BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }}
         run: node pipeline/monorepo/affected-packages.mjs --base "$BASE" --format github | tee -a "$GITHUB_OUTPUT"
+      # `all` on the default branch, at night and on a release; on another pull request the script says `cover` when the change
+      # touches anything a generated project runs or is built from (`packages/`, `pipeline/`, the root configuration) and `none` when it touches none of it (docs/proposals/generated-project-families.md).
+      - name: Which of the slow families this run starts (not in draft, not on documents alone, not on a change that touches nothing a project runs), the stacks they take, and whether it goes deep (the night, on demand, a release)
+        id: kind
+        env:
+          EVENT: ${{ github.event_name }}
+          DRAFT: ${{ github.event.pull_request.draft }}
+          INTEGRATED: ${{ steps.affected.outputs.integrated }}
+          TITLE: ${{ github.event.pull_request.title }}
+          HEAD_REF: ${{ github.head_ref }}
+          STACKS: ${{ steps.affected.outputs.stacks }}
+        run: |
+          release=false
+          case "$HEAD_REF" in release/*) release=true ;; esac
+          case "$TITLE" in 'chore(release)'*) release=true ;; esac
+          if [ "$release" = true ]; then STACKS=all; fi
+          # The slow proofs (pnpm, Node 22 for the alias runs, the intermediate states of the first minute, the coverage gate on
+          # its ten stacks, the pairs, the migrations) are the night's and the release's: the trunk and the other pull requests keep the rest.
+          deep=false
+          case "$EVENT" in schedule|workflow_dispatch) deep=true ;; esac
+          if [ "$release" = true ]; then deep=true; fi
+          # `whole`: the example and the copy of the example, which integrate every package; `generates`: the jobs that generate projects.
+          whole=false; generates=false
+          if [ "$INTEGRATED" = true ] && [ "$DRAFT" != true ]; then
+            whole=true
+            if [ "$STACKS" != none ]; then generates=true; fi
+          fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "deep=$deep" >> "$GITHUB_OUTPUT"
+          echo "draft=$([ "$DRAFT" = true ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "whole=$whole" >> "$GITHUB_OUTPUT"
+          echo "generates=$generates" >> "$GITHUB_OUTPUT"
+          echo "stacks=$STACKS" >> "$GITHUB_OUTPUT"
 
   # The gates that take under three minutes each, in one job: a run has fewer jobs to queue against the
   # 20 the plan allows at a time, and a failure still names its step (docs/proposals/build-and-test-velocity.md).
@@ -208,15 +249,15 @@ jobs:
   alias:
     name: Import alias at run time (Node ${{ matrix.node }})
     needs: install
-    # The runs that integrate every package: left out when nothing but documents they do not read changed.
-    if: ${{ needs.install.outputs.integrated == 'true' }}
+    # Left out of a draft, when nothing but documents they do not read changed, and when the change touches nothing a generated project runs.
+    if: ${{ needs.install.outputs.generates == 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        # Both Node lines on the default branch and at night; a pull request runs the newest one, the trunk holds the oldest.
-        node: ${{ fromJSON(github.event_name == 'pull_request' && '[24]' || '[22, 24]') }}
+        # Both Node lines at night and on the pull request of a release; every other run, the trunk included, runs the newest one.
+        node: ${{ fromJSON(needs.install.outputs.deep == 'true' && '[22, 24]' || '[24]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -224,9 +265,9 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           node-version: ${{ matrix.node }}
-      - name: Every stack built, run compiled with plain node, from sources under tsx and vitest (on a pull request, the stacks the change reaches)
+      - name: Every stack built, run compiled with plain node, from sources under tsx and vitest (on a pull request, a cover of them)
         env:
-          KIT_AFFECTED: ${{ needs.install.outputs.packages }}
+          KIT_STACKS: ${{ needs.install.outputs.stacks }}
         run: npm run ci:test:alias
 
   integration:
@@ -306,8 +347,8 @@ jobs:
   e2e:
     name: End-to-end tests (${{ matrix.shard }}/4)
     needs: install
-    # The runs that integrate every package: left out when nothing but documents they do not read changed.
-    if: ${{ needs.install.outputs.integrated == 'true' }}
+    # Left out of a draft, when nothing but documents they do not read changed, and when the change touches nothing a generated project runs.
+    if: ${{ needs.install.outputs.generates == 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
@@ -319,16 +360,18 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      - name: Every stack generated and held to its own pipeline, a quarter of the spec files on each runner (on a pull request, the stacks the change reaches)
+      - name: Every stack generated and held to its own pipeline, a quarter of the spec files on each runner (the two sweeps of `init` alone, on a pull request, on a cover of the stacks)
         env:
-          KIT_AFFECTED: ${{ needs.install.outputs.packages }}
+          KIT_STACKS: ${{ needs.install.outputs.stacks }}
+          # The coverage gate of the generated projects on its ten stacks at night and on a release, on one stack otherwise.
+          DDD_TS_KIT_NIGHT: ${{ needs.install.outputs.deep == 'true' && '1' || '' }}
         run: npm run ci:test:e2e:stacks -- --shard=${{ matrix.shard }}/4
 
   pairwise:
     name: Every pair of capability values, generated and type-checked
     needs: install
     # At night and on the pull request of a release: the stacks generated to meet every pair of values of two capability flags.
-    if: ${{ needs.install.outputs.integrated == 'true' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.event.pull_request.title, 'chore(release)')) }}
+    if: ${{ needs.install.outputs.generates == 'true' && needs.install.outputs.deep == 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 45
     steps:
@@ -343,7 +386,7 @@ jobs:
     name: First migration of a generated project, on a real PostgreSQL
     needs: install
     # At night, on demand and on the pull request of a release: the tool of each ORM generates, the audit guard is added, the migration is applied.
-    if: ${{ needs.install.outputs.integrated == 'true' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.event.pull_request.title, 'chore(release)')) }}
+    if: ${{ needs.install.outputs.generates == 'true' && needs.install.outputs.deep == 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 45
     env:
@@ -361,15 +404,15 @@ jobs:
   managers:
     name: Generated project on ${{ matrix.manager }}
     needs: install
-    # The runs that integrate every package: left out when nothing but documents they do not read changed.
-    if: ${{ needs.install.outputs.integrated == 'true' }}
+    # Left out of a draft, when nothing but documents they do not read changed, and when the change touches nothing a generated project runs.
+    if: ${{ needs.install.outputs.generates == 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        # Both package managers on the default branch, at night and on the pull request of a release; another pull request installs on npm, the dialect the templates are written in, the trunk holds pnpm.
-        manager: ${{ fromJSON(github.event_name == 'pull_request' && !startsWith(github.event.pull_request.title, 'chore(release)') && '["npm"]' || '["npm", "pnpm"]') }}
+        # Both package managers at night and on the pull request of a release; every other run, the trunk included, installs on npm, the dialect the templates are written in.
+        manager: ${{ fromJSON(needs.install.outputs.deep == 'true' && '["npm", "pnpm"]' || '["npm"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -377,18 +420,22 @@ jobs:
       - uses: ./.github/actions/setup
       - name: The package manager a generated project pins
         run: corepack enable
+      # Packed once for the whole job: each spec file packed the 26 packages again.
+      - name: The kit as npm packs it, once, for every project this job installs
+        run: echo "DDD_TS_KIT_PACKED_KIT=$(node pipeline/monorepo/pack-kit.mjs "$RUNNER_TEMP/packed-kit")" >> "$GITHUB_ENV"
       - name: Installed for real from the packed kit and held to verify (every kind generated on the default stack and a heavy one; from the first minute, the quick start of the README and the other proven stacks)
         env:
           DDD_TS_KIT_PACKAGE_MANAGER: ${{ matrix.manager }}
-          # At night and on the pull request of a release, the stacks the workspace cannot run too (Prisma, TypeORM), with every capability on.
-          DDD_TS_KIT_NIGHT: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.event.pull_request.title, 'chore(release)')) && '1' || '' }}
+          # At night and on the pull request of a release, the stacks the workspace cannot run too (Prisma, TypeORM), with every capability on,
+          # and the intermediate states of the first minute (after one context, then two); another run keeps the first state and the last.
+          DDD_TS_KIT_NIGHT: ${{ needs.install.outputs.deep == 'true' && '1' || '' }}
         run: npm run ci:test:managers
 
   example:
     name: Example application (examples/scheduling)
     needs: install
-    # The runs that integrate every package: left out when nothing but documents they do not read changed.
-    if: ${{ needs.install.outputs.integrated == 'true' }}
+    # The runs that integrate every package: left out of a draft, and when nothing but documents they do not read changed.
+    if: ${{ needs.install.outputs.whole == 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
@@ -418,8 +465,8 @@ jobs:
   conformance:
     name: Every rule broken once in a copy of the example
     needs: install
-    # The runs that integrate every package: left out when nothing but documents they do not read changed.
-    if: ${{ needs.install.outputs.integrated == 'true' }}
+    # The runs that integrate every package: left out of a draft, and when nothing but documents they do not read changed.
+    if: ${{ needs.install.outputs.whole == 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
@@ -521,7 +568,9 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      - name: The third shard, the longest, as the x64 job runs it
+      - name: The third shard, the longest, as the x64 job runs it at night
+        env:
+          DDD_TS_KIT_NIGHT: '1'
         run: npm run ci:test:e2e:stacks -- --shard=3/4
 
   mutation:
@@ -549,8 +598,8 @@ jobs:
   mutation-changed:
     name: Mutation score of the change, on the example
     needs: install
-    # A pull request: the report of the last night is reused for what the change leaves alone, and the survivors of the files of the example it touched are listed. A reading, not a gate: the floor is held by the night.
-    if: ${{ github.event_name == 'pull_request' }}
+    # A pull request, not in draft: the report of the last night is reused for what the change leaves alone, and the survivors of the files of the example it touched are listed. A reading, not a gate: the floor is held by the night.
+    if: ${{ github.event_name == 'pull_request' && needs.install.outputs.draft != 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
@@ -586,16 +635,24 @@ jobs:
         env:
           # Every job this one needs, read whole: a job added later is held without being listed here.
           NEEDS: ${{ toJSON(needs) }}
-          # The runs that integrate every package, skipped when the change is documents alone (`integrated` of the install job), and then only.
-          MAY_SKIP: alias e2e managers example conformance
-          INTEGRATED: ${{ needs.install.outputs.integrated }}
+          # A job is skipped without failing the gate only where the install job says its own `if:` skips it, and then only:
+          # `generates` is false for a draft, for a change of documents alone and for a change that touches nothing a project runs and no
+          # generator; `whole` is false for a draft and for a change of documents alone.
+          SKIP_WITHOUT_GENERATES: alias e2e managers
+          SKIP_WITHOUT_WHOLE: example conformance
+          GENERATES: ${{ needs.install.outputs.generates }}
+          WHOLE: ${{ needs.install.outputs.whole }}
         run: |
           echo "Results: $(echo "$NEEDS" | jq -r 'to_entries | map("\(.key)=\(.value.result)") | join(" ")')"
-          failed=$(echo "$NEEDS" | jq -r --arg may "$MAY_SKIP" --arg integrated "$INTEGRATED" '
-            ($may | split(" ")) as $skippable
+          failed=$(echo "$NEEDS" | jq -r --arg generating "$SKIP_WITHOUT_GENERATES" --arg whole "$SKIP_WITHOUT_WHOLE" --arg generates "$GENERATES" --arg wholly "$WHOLE" '
+            ($generating | split(" ")) as $byGenerates
+            | ($whole | split(" ")) as $byWhole
             | to_entries[]
             | select(.value.result != "success")
-            | select(.value.result != "skipped" or $integrated == "true" or ((.key | IN($skippable[])) | not))
+            | select(
+                .value.result != "skipped"
+                or ((((.key | IN($byGenerates[])) and $generates != "true") or ((.key | IN($byWhole[])) and $wholly != "true")) | not)
+              )
             | "\(.key)=\(.value.result)"')
           if [ -n "$failed" ]; then
             echo "::error::A required job did not pass: $failed"

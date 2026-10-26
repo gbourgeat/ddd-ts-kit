@@ -11,10 +11,10 @@
 // request (the pre-push hook: `--base origin/main --run test`). Without it, the selection is
 // printed. The unit run takes `filters` as its path filters and `packages` as KIT_AFFECTED, which
 // vitest.config.ts reads to hold the coverage floor of those packages only. The end-to-end
-// shards and the alias runs read KIT_AFFECTED too, to generate the stacks the change reaches
-// (`packages/cli/test/e2e/stacks.ts`); the generated projects, the example and the conformance
-// run integrate every package whole; all of them are skipped only when nothing but documents
-// changed (`integrated`).
+// shards and the alias runs generate the `stacks` the output names: none when the change touches no
+// package, script or configuration a project runs, a cover of the values of every flag when it does, every stack on the trunk
+// and at night (`packages/cli/test/e2e/stacks.ts`); the example and the conformance run integrate
+// every package whole; all of these are skipped when nothing but documents changed (`integrated`).
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -48,6 +48,22 @@ export const ON_A_SERVER = [
   'nats',
   'rabbitmq',
   'kafka',
+];
+
+/**
+ * What a generated project runs or is built from, and what proves it: every source, template, manifest and spec of
+ * `packages/` (a Markdown file apart, unless it is a template), the scripts of `pipeline/`, the manifest, lockfile and
+ * configuration of the root, and the workflow and actions that run them. A change to none of them (documents, the
+ * website, the plugin text, the example, which has its own job, the issue templates) leaves the projects the
+ * end-to-end, alias and managers jobs generate exactly as they were.
+ */
+const GENERATES = [
+  /^packages\/[^/]+\/templates\//,
+  /^packages\/(?!.*\.md$)/,
+  /^pipeline\/(?!.*\.md$)/,
+  /^(package|package-lock)\.json$/,
+  /^(tsconfig[^/]*\.json|vitest[^/]*\.[cm]?ts|eslint\.config\.[cm]?js|biome\.json)$/,
+  /^\.github\/(workflows\/ci\.yml|actions\/)/,
 ];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
@@ -116,6 +132,15 @@ function sinceBase(base) {
 }
 
 /**
+ * The stacks the jobs that generate projects take on a pull request: `none` when the change touches nothing a
+ * generated project is made of, else `cover`, a set in which every value of every flag appears
+ * (`packages/cli/test/e2e/stacks.ts`). `all` is for the trunk, the night and a release, which name no base.
+ */
+export function stacksOf(changed) {
+  return changed.some((file) => GENERATES.some((pattern) => pattern.test(file))) ? 'cover' : 'none';
+}
+
+/**
  * The packages of the workspace, each with the packages of the workspace it depends on, development
  * and peer dependencies included, and the packages whose sources its specs import by a relative path:
  * a spec that replays the code of another package must run when that code changes, and counts in
@@ -165,12 +190,13 @@ function sourcesReadBySpecs(root, directory) {
 /** `graph` maps a package to what it depends on; `changed` are paths from the root of the repository. */
 export function select(graph, changed) {
   const reached = new Set();
+  const stacks = stacksOf(changed);
 
   for (const file of changed) {
     const reach = reachOf(graph, file);
 
     if (reach === 'everything') {
-      return everything(`${file} is shared by every package`, graph);
+      return { ...everything(`${file} is shared by every package`, graph), stacks };
     }
 
     for (const name of reach) {
@@ -182,7 +208,7 @@ export function select(graph, changed) {
   const packages = Object.keys(graph).filter((name) => reached.has(name));
 
   if (packages.length === Object.keys(graph).length) {
-    return everything('every package is reached', graph);
+    return { ...everything('every package is reached', graph), stacks };
   }
 
   return {
@@ -190,6 +216,7 @@ export function select(graph, changed) {
     reason: 'the changed packages and the packages that depend on them',
     packages,
     integrated: changed.some(integrates),
+    stacks,
   };
 }
 
@@ -242,12 +269,12 @@ export function dependentsOf(graph, name) {
 }
 
 function everything(reason, graph = readGraph(ROOT)) {
-  return { scope: 'all', reason, packages: Object.keys(graph), integrated: true };
+  return { scope: 'all', reason, packages: Object.keys(graph), integrated: true, stacks: 'all' };
 }
 
 /** `packages` and `filters` are empty for everything: no filter, every floor held. */
 /** The outputs of the install job: what the other jobs of the CI read, among them whether the integration job starts its servers. */
-export function asOutputs({ scope, packages, integrated }) {
+export function asOutputs({ scope, packages, integrated, stacks }) {
   const partial = scope === 'packages';
 
   return [
@@ -256,6 +283,7 @@ export function asOutputs({ scope, packages, integrated }) {
     `filters=${partial ? packages.map((name) => `packages/${name}/`).join(' ') : ''}`,
     `integration=${scope === 'all' || (partial && packages.some((name) => ON_A_SERVER.includes(name)))}`,
     `integrated=${integrated}`,
+    `stacks=${stacks}`,
   ].join('\n');
 }
 

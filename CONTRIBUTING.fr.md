@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:d23e35bdc6131a68 -->
+<!-- translation-of: CONTRIBUTING.md sha256:27ed3ca800f62ef5 -->
 
 # Contribuer
 
@@ -239,6 +239,16 @@ résolue. Activez la fusion automatique et passez à autre chose :
 gh pr create --fill
 gh pr merge --auto --squash
 ```
+
+Ce que la CI exécute dépend de la pull request (`docs/proposals/generated-project-families.fr.md`).
+Ouvrez-la en brouillon tant que la branche n'est pas définitive : un brouillon n'exécute que les
+vérifications rapides, et la marquer prête exécute toute la CI. Une pull request qui ne change que des
+documents, le site, le texte du plugin ou l'exemple ne génère aucun projet ; une qui touche quoi que
+ce soit sous `packages/` ou `pipeline/`, ou la configuration racine, génère un ensemble couvrant de 16 stacks où chaque valeur de chaque drapeau apparaît.
+Le tronc génère toutes les stacks, installe sur npm et exécute l'alias sur Node 24 ; la nuit et la
+pull request d'une release (titre `chore(release)` ou branche `release/*`) ajoutent pnpm, Node 22,
+les états intermédiaires de la première minute, la porte de couverture sur dix stacks, les paires et
+les migrations.
 
 Les workflows épinglent chaque action à un commit, avec sa version en commentaire ; Dependabot
 propose les mises à jour. Une vulnérabilité se signale en privé : voir

@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { asOutputs, commandOf, dependentsOf, readGraph, select } from './affected-packages.mjs';
+import { asOutputs, commandOf, dependentsOf, readGraph, select, stacksOf } from './affected-packages.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const graph = readGraph(ROOT);
@@ -48,6 +49,7 @@ test('a leaf is selected alone, the kernel selects every package that is built o
     reason: 'the changed packages and the packages that depend on them',
     packages: ['winston'],
     integrated: true,
+    stacks: 'cover',
   });
 
   // The ESLint plugin does not build on the kernel, but its specs replay the checker of the CLI, which does.
@@ -132,4 +134,74 @@ test('a script runs on the packages reached as path filters, on everything witho
   assert.deepEqual(whole.env, { KIT_AFFECTED: '' });
 
   assert.equal(select(graph, ['README.md']).scope, 'none');
+});
+
+test('a pull request that changes anything a project runs or is built from generates a cover of the stacks', () => {
+  for (const file of [
+    'packages/cli/templates/init/CLAUDE.md.tpl',
+    'packages/pino/templates/pino.ts.tpl',
+    'packages/cli/src/generate/aggregate.ts',
+    'packages/cli/test/e2e/stacks.ts',
+    'packages/kernel/package.json',
+    'packages/kernel/src/aggregate.ts',
+    'packages/knex/src/index.ts',
+    'packages/eslint-plugin/src/index.ts',
+    'packages/kernel/test/aggregate.spec.ts',
+    'pipeline/monorepo/e2e-shards.mjs',
+    'pipeline/depcruise-config.mjs',
+    'package-lock.json',
+    'tsconfig.json',
+    'vitest.config.ts',
+    'eslint.config.mjs',
+    '.github/workflows/ci.yml',
+    'package.json',
+  ]) {
+    assert.equal(stacksOf([file]), 'cover', file);
+    assert.equal(select(graph, [file]).stacks, 'cover', file);
+  }
+});
+
+test('a pull request that changes nothing a project runs generates no stack', () => {
+  for (const file of [
+    'packages/kernel/README.md',
+    'pipeline/README.md',
+    'plugin/skills/testing/SKILL.md',
+    'examples/scheduling/src/main.ts',
+    '.github/ISSUE_TEMPLATE/bug.yml',
+    'docs/guides/commands.md',
+    'README.md',
+    'changes/a.md',
+    'site/astro.config.mjs',
+  ]) {
+    assert.equal(stacksOf([file]), 'none', file);
+  }
+
+  assert.equal(stacksOf(['README.md', 'packages/cli/src/run.ts']), 'cover');
+  assert.equal(stacksOf([]), 'none');
+});
+
+test('the trunk, the night and a release, which name no base, generate every stack', () => {
+  const lines = asOutputs({ scope: 'all', packages: names, integrated: true, stacks: 'all' }).split('\n');
+
+  assert.ok(lines.includes('stacks=all'));
+  assert.ok(
+    asOutputs(select(graph, ['README.md']))
+      .split('\n')
+      .includes('stacks=none'),
+  );
+});
+
+test('run as the install job runs it, the script answers the stacks of the run', () => {
+  const run = (...args) =>
+    spawnSync(
+      process.execPath,
+      [path.join(ROOT, 'pipeline/monorepo/affected-packages.mjs'), ...args, '--format', 'github'],
+      {
+        encoding: 'utf8',
+      },
+    );
+
+  // The trunk and the night name no base: every stack. A base that is HEAD itself changes nothing: none.
+  assert.match(run('--base', '').stdout, /^stacks=all$/m);
+  assert.match(run('--base', 'HEAD').stdout, /^stacks=none$/m);
 });
