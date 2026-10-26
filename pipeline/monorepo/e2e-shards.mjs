@@ -44,6 +44,7 @@ export const SHARDS = [
     // A repository that declares personal columns, with the erasure of its context, installed as published.
     'personal-fields.spec.ts': 20,
     'error-reporting.spec.ts': 17,
+    'platform-error-mapper.spec.ts': 20,
   },
   {
     'coverage-gate.spec.ts': 328,

@@ -11,7 +11,7 @@ import { defineContextModule, type ContextModule } from '@ddd-ts-kit/di';
 import { OutboxStore } from '@ddd-ts-kit/events';
 {{/if}}
 {{#if http.any}}
-import { ErrorMapper, createErrorMapper } from '@ddd-ts-kit/http';
+import { ErrorMapper } from '@ddd-ts-kit/http';
 {{/if}}
 {{#if cache.redis}}
 {{#if broker.external}}
@@ -79,6 +79,9 @@ import { Database } from '{{alias.platform}}/database/database{{alias.ext}}';
 {{/if}}
 import type { ConsumerTrace } from '@ddd-ts-kit/tracing';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+{{#if http.any}}
+import { platformErrorMapper } from '{{alias.platform}}/composition/platform-error-mapper{{alias.ext}}';
+{{/if}}
 import type { EventProvider } from '{{alias.platform}}/events/event-provider{{alias.ext}}';
 import type { LogSettings } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
 {{#if cache.redis}}
@@ -153,7 +156,7 @@ export function platformModule(persistence: Persistence, options: PlatformOption
       builder.rebind(EventSubscribers).toValue({ forContext: (name) => options.events.forConsumer(name) });
       {{/if}}
       {{#if http.any}}
-      builder.bind(ErrorMapper).toValue(createErrorMapper());
+      builder.bind(ErrorMapper).toValue(platformErrorMapper());
       {{/if}}
       // Cross-cutting behaviour stays out of the contexts. Inside the span and the dispatch the kernel module puts around a binding, outside the aspects a binding states for itself (`ownPolicy`).
       builder.around(['external', 'gateway'], () => defaultPolicy(options.resilience ?? defaultResilienceSettings));

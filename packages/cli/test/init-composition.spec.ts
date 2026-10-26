@@ -66,7 +66,7 @@ describe('the composition root init writes, on tsyringe', () => {
       'eventPublisher: scopedPublisher(new OutboxPublisher(persistence.outbox), scope),',
     );
 
-    expect(module).toContain('builder.bind(ErrorMapper).toValue(createErrorMapper());');
+    expect(module).toContain('builder.bind(ErrorMapper).toValue(platformErrorMapper());');
     expect(module).toContain("import { Database } from '@/platform/database/database';");
   });
 
@@ -226,5 +226,43 @@ describe('the composition root init writes, by hand', () => {
     expect(composition).toContain(
       '  await platform.jobs.stop();\n  await platform.backgroundJobs.stop();\n  await options.events.close();\n  await platform.logger.flush();\n}',
     );
+  });
+});
+
+describe('the error mapper of the platform, written in one place', () => {
+  it('is bound by the platform and by the test platform on tsyringe, so a route spec answers what the application answers', () => {
+    const root = initProject();
+    const binding = 'builder.bind(ErrorMapper).toValue(platformErrorMapper());';
+    const importing = "import { platformErrorMapper } from '@/platform/composition/platform-error-mapper';";
+
+    expect(platform(root, 'composition/platform-error-mapper.ts')).toContain('return createErrorMapper();');
+
+    for (const module of ['platform.module.ts', 'platform-test.module.ts']) {
+      expect(platform(root, `composition/${module}`)).toContain(binding);
+      expect(platform(root, `composition/${module}`)).toContain(importing);
+    }
+
+    expect(platform(root, 'composition/platform.module.ts')).not.toContain('createErrorMapper');
+  });
+
+  it('is used by the composition by hand, on manual DI and on Nest', () => {
+    for (const flags of [
+      ['--di', 'manual'],
+      ['--http', 'nest', '--validation', 'class-validator', '--di', 'nest'],
+    ]) {
+      const root = initProject(...flags);
+      const composition = platform(root, 'composition/compose-application.ts');
+
+      expect(composition, flags.join(' ')).toContain('errorMapper: platformErrorMapper(),');
+      expect(composition).not.toContain('createErrorMapper');
+      expect(platform(root, 'composition/platform-error-mapper.ts')).toContain('createErrorMapper');
+    }
+  });
+
+  it('is not written for a project without HTTP', () => {
+    const root = initProject('--http', 'none');
+
+    expect(() => platform(root, 'composition/platform-error-mapper.ts')).toThrow();
+    expect(platform(root, 'composition/platform-test.module.ts')).not.toContain('ErrorMapper');
   });
 });
