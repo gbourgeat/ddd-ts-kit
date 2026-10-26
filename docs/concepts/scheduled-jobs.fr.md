@@ -1,5 +1,5 @@
 [English](scheduled-jobs.md) · **Français**
-<!-- translation-of: scheduled-jobs.md sha256:e4b3e524f6d3f541 -->
+<!-- translation-of: scheduled-jobs.md sha256:68a61b38bd749800 -->
 
 # Jobs planifiés
 
@@ -112,7 +112,9 @@ confiné à un *tenant* le refuse (`NoCurrentTenantError`) à chaque exécution 
 lequel a été écrit. `init` donne au planificateur les *tenants* de `TENANTS` (identifiants séparés
 par des virgules, `config.tenants`, transmis à l'application sous le nom `tenants`) : liez un
 annuaire à vous quand les *tenants* vivent dans une table. La *spec* générée exécute le *job* pour
-deux *tenants*.
+deux *tenants*. Un *job* écrit à la main sous *tenancy* doit aussi le dire : `scheduling/tenancy-declared`
+(une erreur) signale un `@Scheduled` ou un `builder.job` dont les options ne portent ni
+`tenancy: 'per-tenant'` ni `tenancy: 'global'`.
 
 La commande écrit le *job*, sa *spec*, son interrupteur dans les réglages des *jobs* de la plateforme
 (`src/platform/jobs/job-settings.ts`, désactivé par `JOB_<CONTEXT>_<JOB>_ENABLED=false`) et, là où le

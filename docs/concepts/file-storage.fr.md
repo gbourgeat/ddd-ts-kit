@@ -1,5 +1,5 @@
 [English](file-storage.md) · **Français**
-<!-- translation-of: file-storage.md sha256:24646fa2c4bbddab -->
+<!-- translation-of: file-storage.md sha256:80476fa58babea90 -->
 
 # Stockage de fichiers
 
@@ -112,7 +112,7 @@ export function filesModule(storage: FileStorage): ContextModule {
         .bind(FileStaging)
         .toFactory((resolve) => new FileStaging(resolve(FileStorage), resolve(FileScanner), resolve(ErrorReporter)));
       // toutes les heures, les fichiers en attente depuis plus d'un jour sont supprimés
-      builder.job('files.purge-staged', { every: '1h' }).handledBy(PurgeStagedFiles, [FileStaging, Clock]);
+      builder.job('files.purge-staged', { every: '1h', tenancy: 'global' }).handledBy(PurgeStagedFiles, [FileStaging, Clock]);
     },
   });
 }

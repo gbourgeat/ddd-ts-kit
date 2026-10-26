@@ -106,7 +106,9 @@ refuses it (`NoCurrentTenantError`) on every real run; `--global` writes `tenanc
 work across tenants, and the note of the command says which was written. `init` gives the scheduler
 the tenants of `TENANTS` (comma separated ids, `config.tenants`, passed to the application as
 `tenants`): bind a directory of your own once the tenants live in a table. The generated spec
-runs the job for two tenants.
+runs the job for two tenants. A job written by hand under tenancy must say it too:
+`scheduling/tenancy-declared` (an error) reports a `@Scheduled` or `builder.job` whose options carry
+neither `tenancy: 'per-tenant'` nor `tenancy: 'global'`.
 
 The command writes the job, its spec, its switch in the job settings of the platform
 (`src/platform/jobs/job-settings.ts`, switched off with `JOB_<CONTEXT>_<JOB>_ENABLED=false`) and,

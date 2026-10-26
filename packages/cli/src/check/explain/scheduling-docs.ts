@@ -40,4 +40,11 @@ new SendRemindersCommand(systemActor('billing.reminders'), execution.scheduledAt
 builder.job('billing.send-reminders', { every: '15m' }).handledBy(SendRemindersJob, [CommandBus]);
 new SendRemindersCommand(systemActor('billing.send-reminders'), execution.scheduledAt);`,
   },
+  'scheduling/tenancy-declared': {
+    why: "Under tenancy, a job that declares no `tenancy` runs globally: one run per occurrence, in no tenant, as a system actor that names none. The tenant-scoped repository the handler reads refuses it at run time (`NoCurrentTenantError`), and the specs that use fakes never see it. The job says which it is: `tenancy: 'per-tenant'` runs it once per tenant of the `TenantDirectory`, each run in the execution scope of that tenant, so it reads one tenant at a time and one failing tenant does not stop the others; `tenancy: 'global'` is work across tenants, chosen on purpose. Judged on the options of every `@Scheduled(..)` and `builder.job(..)` outside the tests, in a project whose `stack.tenancy` is not `none`. What it cannot read is reported, never taken as safe: options that are not an object literal, a spread or a computed key in them, a `tenancy` that is not the literal `'per-tenant'` or `'global'`. An error from the first day.",
+    bad: `@Scheduled('billing.send-reminders', { every: '15m' })
+export class SendRemindersJob implements ScheduledJob {}`,
+    good: `@Scheduled('billing.send-reminders', { every: '15m', tenancy: 'per-tenant' })
+export class SendRemindersJob implements ScheduledJob {}`,
+  },
 };

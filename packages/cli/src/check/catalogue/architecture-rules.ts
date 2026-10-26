@@ -85,6 +85,7 @@ import { processSendsCommandsOnly } from '../rules/process-sends-commands-only';
 import { purityNoAmbientRandomness } from '../rules/purity-no-ambient-randomness';
 import { purityNoEnvironment } from '../rules/purity-no-environment';
 import { purityNoSystemClock } from '../rules/purity-no-system-clock';
+import { schedulingTenancyDeclared } from '../rules/scheduling-tenancy-declared';
 import { schedulingJobName } from '../rules/scheduling-job-name';
 import { schedulingJobTriggersUseCase } from '../rules/scheduling-job-triggers-use-case';
 import { schemaNoDuplicateShape } from '../rules/schema-no-duplicate-shape';
@@ -198,6 +199,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   lifecycleStatusThroughMachine,
   processSendsCommandsOnly,
   schedulingJobName,
+  schedulingTenancyDeclared,
   importsAliasOnly,
   importsExtension,
   importsAliasDeclared,
