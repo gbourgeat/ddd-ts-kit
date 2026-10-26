@@ -4,6 +4,7 @@ import type { Kind } from '../kind';
 import { openScope } from '../open-scope';
 import type { Scope } from '../scope';
 import { applyWiring } from '../apply-wiring';
+import { platformPath } from '../platform-path';
 import { vars } from '../vars';
 import { wiringFamily } from '../wiring-family';
 import { addComposeService } from './extraction/add-compose-service';
@@ -19,7 +20,7 @@ export const serviceKind: Kind = {
   aliases: [],
   usage: 'service <context>',
   summary:
-    'The context run alone, with its scheduled jobs: its entry point under apps/, a start script, a compose service, `deployable` in the config, and a proof that it registers no job of the platform.',
+    'The context run alone, with its scheduled jobs: its entry point under apps/, a start script, a compose service, `deployable` in the config, and its departure from the whole application (consumers, processes and jobs run once).',
   positionals: ['context'],
   writesShared: true,
   run: (request) => {
@@ -32,7 +33,7 @@ export const serviceKind: Kind = {
     entry.declareIn(ws);
     editJson(ws, CONFIG_FILE, (raw) => markDeployable(raw, context.kebab));
     addComposeService(ws, context.kebab, renderTemplate('service/compose.tpl', vars(scope, { service })));
-    proveTheService(scope);
+    leaveTheWholeApplication(scope);
 
     ws.note(
       `Build the image of the service with \`docker build --build-arg ENTRY=${entry.compiled} .\`, or start it with \`docker compose --profile services up ${context.kebab}\`.`,
@@ -43,15 +44,27 @@ export const serviceKind: Kind = {
     );
 
     ws.note(
-      'Set the same DEPLOYMENT_NAME in every container of the deployment (the keys of the lock, the cache and the job store), and a different OTEL_SERVICE_NAME for each (the traces).',
+      `${context.pascal} leaves the application of src/main.ts and the worker: \`hostedContexts\` of the composition root omits it, so its consumers, its processes, its jobs and its routes run in the service only. \`everyContext\` stays the full list for the contracts and the end-to-end tests. Set the same DEPLOYMENT_NAME in every container, and a different OTEL_SERVICE_NAME.`,
     );
   },
 };
 
-/** A proof composes the root of the service and checks that it registers no job of the platform. */
-function proveTheService(scope: Scope): void {
+/**
+ * The context stops being hosted by the whole application: the root of `main.ts` and of the worker
+ * composes `hostedContexts`, the settings of its jobs leave the whole application, and a proof
+ * composes both roots and checks that nothing is registered twice.
+ */
+function leaveTheWholeApplication(scope: Scope): void {
   const { ws, config } = scope;
   const rendered = vars(scope, {});
+
+  applyWiring(
+    ws,
+    platformPath(scope, 'composition/compose-application.ts'),
+    renderTemplate(`service/extracted.${wiringFamily(config)}.tpl`, rendered),
+  );
+
+  applyWiring(ws, platformPath(scope, 'jobs/job-settings.ts'), renderTemplate('service/extracted-name.tpl', rendered));
 
   if (!ws.exists(HOSTING_PROOF)) {
     ws.create(HOSTING_PROOF, renderTemplate(`architecture/hosting.${wiringFamily(config)}.spec.ts.tpl`, rendered));

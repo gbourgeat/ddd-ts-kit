@@ -135,7 +135,17 @@ mechanisms keep that true while the application is still one process:
 A context can also be given its own entry point: `npx ddd-ts-kit generate service <context>`
 writes `src/apps/<context>/main.ts`, which composes that context, the kernel and the platform,
 and sets `contexts.<name>.deployable` in the config ([CONFIG.md](../CONFIG.md)). The same
-code then runs in the monolith and as a service.
+code then runs in the monolith and as a service, and the context leaves the monolith when it
+does: `hostedContexts` of the composition root, which `src/main.ts` and the worker compose, omits
+it, so its consumers, its processes, its jobs and its routes run in the service only (two
+processes subscribing the same durable consumer, driving the same process store and scheduling the
+same jobs would do the work twice). `everyContext` stays the full list, the default of the tools,
+the generated contracts and the end-to-end tests, which see the whole system in one process.
+`test/architecture/hosting.spec.ts` composes both roots and fails when a module, a consumer or a
+job of a service is registered in the whole application, or when a consumer is registered twice.
+The jobs of the platform (`audit.archive`, `privacy.purge-expired`) stay with the whole
+application, and the processes of one deployment share the `DEPLOYMENT_NAME` that namespaces their
+lock, cache and job store keys.
 
 The discipline has a price inside the monolith: an in-process call that could have been a join
 becomes an event and a projection. That price is the option being paid for. Whether and when to

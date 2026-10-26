@@ -1,5 +1,5 @@
 [English](modular-monolith.md) · **Français**
-<!-- translation-of: modular-monolith.md sha256:2ce5ae8367f115fb -->
+<!-- translation-of: modular-monolith.md sha256:aaf72ee25663c3f6 -->
 
 # Monolithe modulaire
 
@@ -143,7 +143,19 @@ encore un seul processus :
 Un contexte peut aussi recevoir son propre point d'entrée : `npx ddd-ts-kit generate service
 <context>` écrit `src/apps/<context>/main.ts`, qui compose ce contexte, le noyau du kit et la
 plateforme, et pose `contexts.<name>.deployable` dans la configuration
-([CONFIG.md](../CONFIG.fr.md)). Le même code tourne alors dans le monolithe et comme service.
+([CONFIG.md](../CONFIG.fr.md)). Le même code tourne alors dans le monolithe et comme service, et
+le contexte quitte le monolithe en même temps : `hostedContexts`, dans la racine de composition
+que `src/main.ts` et le *worker* composent, l'omet, de sorte que ses consommateurs, ses processus,
+ses *jobs* et ses routes tournent dans le service seul (deux processus qui souscrivent le même
+consommateur durable, pilotent le même magasin de processus et planifient les mêmes *jobs*
+feraient le travail deux fois). `everyContext` reste la liste complète, la valeur par défaut des
+outils, des contrats générés et des tests de bout en bout, qui voient tout le système dans un seul
+processus. `test/architecture/hosting.spec.ts` compose les deux racines et échoue quand un module,
+un consommateur ou un *job* d'un service est enregistré dans l'application entière, ou quand un
+consommateur l'est deux fois. Les *jobs* de la plateforme (`audit.archive`,
+`privacy.purge-expired`) restent à l'application entière, et les processus d'un même déploiement
+partagent le `DEPLOYMENT_NAME` qui préfixe les clés de leur verrou, de leur cache et de leur
+magasin de *jobs*.
 
 Cette discipline a un prix à l'intérieur du monolithe : un appel en processus qui aurait pu être
 une jointure devient un événement et une projection. Ce prix est celui de l'option que l'on

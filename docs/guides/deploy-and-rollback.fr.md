@@ -1,5 +1,5 @@
 [English](deploy-and-rollback.md) · **Français**
-<!-- translation-of: deploy-and-rollback.md sha256:c390491b78788ca7 -->
+<!-- translation-of: deploy-and-rollback.md sha256:ca5e52d6e3226abc -->
 
 # Déployer et revenir en arrière
 
@@ -23,7 +23,7 @@ scripts de cette page sont ceux du projet, et la page le dit là où cela compte
 | les migrations | `npm run db:generate <what-it-does>` | `migrations/` (`prisma/migrations/` sur Prisma), appliquées par `npm run db:migrate` contre la base cible, comme une étape de la mise en production et jamais au démarrage du processus |
 | l'API | `src/main.ts` | le serveur HTTP, les bus, les consommateurs d'événements d'intégration et, avec `--events outbox`, le relais de l'outbox (`startOutboxRelay`, toutes les `OUTBOX_RELAY_INTERVAL_MS`) : les événements qu'une commande a stockés sont publiés par ce processus |
 | le *worker* | `npx ddd-ts-kit generate worker` | `src/apps/worker/main.ts` : les mêmes modules sans le serveur HTTP, les *jobs* planifiés démarrés quoi que dise `RUN_JOBS`, et `RUN_JOBS=false` par défaut pour l'API. Il ne fait tourner aucun relais de l'outbox : les événements que ses commandes stockent sont relayés par l'API |
-| un contexte en service | `npx ddd-ts-kit generate service <context>` | `src/apps/<context>/main.ts`, ses *jobs* avec lui : la même image avec un autre `ENTRY` ([quand extraire des microservices](when-to-extract-microservices.fr.md)) |
+| un contexte en service | `npx ddd-ts-kit generate service <context>` | `src/apps/<context>/main.ts`, ses *jobs* avec lui et hors de l'application entière, aucun *job* de la plateforme : la même image avec un autre `ENTRY`, le même `DEPLOYMENT_NAME` dans chaque conteneur ([quand extraire des microservices](when-to-extract-microservices.fr.md)) |
 | la route de disponibilité | le démarrage HTTP de `src/platform/http/`, avec `--cache redis` seulement | `GET /health/ready` répond 200 quand Redis est joignable et 503 sinon, avant le limiteur de débit et toute route. Sans Redis le kit n'écrit aucune route de santé : une plateforme qui en sonde une a besoin d'une route que le projet ajoute. Aucune route de vivacité (*liveness*) n'est écrite |
 | l'export OpenTelemetry | `src/platform/observability/` | les traces vers `OTEL_EXPORTER_OTLP_ENDPOINT` (rien ne sort du processus quand elle n'est pas définie), `TRACE_SAMPLE_RATIO`, et les métriques qu'émettent chaque cas d'usage et chaque appel d'adaptateur, `use_case_*` et `dependency_call_*`, avec les jauges de l'outbox et des *jobs* ([observabilité](../concepts/observability.fr.md)) |
 | la configuration | `src/platform/config/` | des variables d'environnement lues une fois au démarrage (`docker/.env.example` les liste) : une variable fausse arrête le processus avant qu'il écoute, pas à la première requête |

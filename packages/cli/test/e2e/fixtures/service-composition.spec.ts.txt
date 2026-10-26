@@ -1,0 +1,43 @@
+import { describe, expect, it } from 'vitest';
+import { offlineAuthenticator } from '@/platform/auth/authentication/offline-authenticator';
+import { composeApplication, everyContext, hostedContexts } from '@/platform/composition/compose-application';
+import { inertPersistence } from '@/platform/database/inert-persistence';
+import { inProcessEvents } from '@/platform/events/in-process-events';
+
+const options = { events: inProcessEvents(), authenticator: offlineAuthenticator, tenants: ['acme', 'globex'] };
+
+describe('the real roots of the project', () => {
+  it('boots the whole application with the per-tenant job of billing, and the jobs of the platform', () => {
+    const whole = composeApplication(inertPersistence(), options, hostedContexts).container.describe();
+    const jobs = whole.jobs.map((job) => job.name);
+
+    expect(jobs).toContain('billing.cancel-stale-invoices');
+    expect(jobs).toEqual(expect.arrayContaining(['audit.archive', 'privacy.purge-expired']));
+    expect(whole.jobs.find((job) => job.name === 'billing.cancel-stale-invoices')).toMatchObject({ tenancy: 'per-tenant' });
+    expect(whole.modules).not.toContain('shipping');
+  });
+
+  it('boots the service of shipping with its own jobs only, and no job of the platform', () => {
+    const service = composeApplication(
+      inertPersistence(),
+      { ...options, platformJobs: false },
+      { modules: everyContext.modules.filter((module) => module.name === 'shipping') },
+    ).container.describe();
+
+    expect(service.modules).toContain('shipping');
+    expect(service.jobs.filter((job) => !job.name.startsWith('shipping.'))).toEqual([]);
+  });
+
+  it('registers each consumer of shipping once across the two roots', () => {
+    const roots = [hostedContexts, { modules: everyContext.modules.filter((module) => module.name === 'shipping') }];
+
+    const consumers = roots
+      .map((contexts) => composeApplication(inertPersistence(), options, contexts).container.describe())
+      .flatMap((description) => description.integrationEventHandlers)
+      .filter((handler) => handler.module === 'shipping')
+      .map((handler) => `${handler.consumer}:${handler.event}`);
+
+    expect(consumers.length).toBeGreaterThan(0);
+    expect(new Set(consumers).size).toBe(consumers.length);
+  });
+});

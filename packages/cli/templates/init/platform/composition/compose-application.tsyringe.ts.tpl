@@ -167,6 +167,27 @@ export const everyContext: ContextSelection = {
 {{/if}}
 };
 
+/** The contexts run as services of their own (`generate service`): `main.ts` and the worker leave them out, routes included. */
+const extractedModules: readonly string[] = [
+  // ddd-ts-kit:extracted
+  // /ddd-ts-kit:extracted
+];
+{{#if http.any}}
+
+const extractedRoutes: NonNullable<ContextSelection['routes']> = [
+  // ddd-ts-kit:extracted-routes
+  // /ddd-ts-kit:extracted-routes
+];
+{{/if}}
+
+/** What `main.ts` and the worker host; `everyContext` stays the full list for the tools, the contracts and the end-to-end tests. */
+export const hostedContexts: ContextSelection = {
+  modules: everyContext.modules.filter((module) => !extractedModules.includes(module.name)),
+{{#if http.any}}
+  routes: (everyContext.routes ?? []).filter((routes) => !extractedRoutes.includes(routes)),
+{{/if}}
+};
+
 /** Wires the bounded contexts on the kernel and the platform. Also used to generate the contracts and by the end-to-end tests. */
 export function composeApplication(
   persistence: Persistence,

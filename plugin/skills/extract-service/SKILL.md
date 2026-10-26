@@ -58,8 +58,16 @@ platform only: a hidden dependency on another context makes it fail.
 
 1. `npx ddd-ts-kit generate service <context>`: `src/apps/<context>/main.ts` composing that
    context, the kernel and the platform, with its own start script and compose service
-   (the same image, another entry point), and `deployable` in the config. Its
-   scheduled jobs leave with it (`npx ddd-ts-kit generate worker` gives the jobs of the
+   (the same image, another entry point), and `deployable` in the config. The context
+   **leaves the whole application**: `src/main.ts` and the worker compose `hostedContexts`
+   (every context but the extracted ones, listed in the `extracted` regions of the composition
+   root), so its consumers, processes, jobs and routes run in the service only, and
+   `everyContext` stays the full list for the contracts and the end-to-end tests. Its
+   scheduled jobs leave with it, the jobs of the platform (`audit.archive`,
+   `privacy.purge-expired`) stay with the whole application (the service composes with
+   `platformJobs: false`), and every container shares one `DEPLOYMENT_NAME` while its
+   `OTEL_SERVICE_NAME` stays its own. `test/architecture/hosting.spec.ts` composes both roots and
+   proves nothing is registered twice (`npx ddd-ts-kit generate worker` gives the jobs of the
    remaining contexts a process of their own).
 2. Replace each in-process `gateway` adapter that points to it, in the remaining contexts,
    by a remote adapter of the same port. Same contract suite.

@@ -13,7 +13,11 @@ describe('generate worker', () => {
     const worker = read(withWorker(), WORKER);
 
     expect(worker.split('\n')[1]).toBe("import { tracing } from '@/platform/observability/tracing';");
-    expect(worker).toContain("import { composeApplication } from '@/platform/composition/compose-application';");
+
+    expect(worker).toContain(
+      "import { composeApplication, hostedContexts } from '@/platform/composition/compose-application';",
+    );
+
     expect(worker).toContain('jobs: { start: true, settings: jobSettings(process.env) },');
     expect(worker).toContain('authenticator: createAuthenticator(config),');
     expect(worker).not.toContain('startHttpServer');
@@ -30,7 +34,7 @@ describe('generate worker', () => {
       '  await application.stop();\n  await redis.close();\n  await persistence.close();\n  await tracing.shutdown();',
     );
 
-    expect(worker).toContain('  redis,\n  files: openFiles(config.files),\n});');
+    expect(worker).toContain('    redis,\n    files: openFiles(config.files),\n  },\n  hostedContexts,\n);');
   });
 
   it('adds the start script, the compose service and the entry knip needs', () => {

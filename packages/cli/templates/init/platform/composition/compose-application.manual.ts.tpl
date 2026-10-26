@@ -91,6 +91,23 @@ export const everyContext: readonly ContextModule[] = [
   // /ddd-ts-kit:contexts
 ];
 
+/**
+ * The contexts run as services of their own (`ddd-ts-kit generate service`): the application
+ * `main.ts` and the worker run leaves them out, since their consumers, their processes and their
+ * jobs belong to the service, not to both.
+ */
+const extracted: readonly ContextModule[] = [
+  // ddd-ts-kit:extracted
+  // /ddd-ts-kit:extracted
+];
+
+/**
+ * What the application of `main.ts` and the worker host: every context but the extracted ones.
+ * `everyContext` stays the full list, the default of the tools, the contracts and the end-to-end
+ * tests, which see the whole system in one process.
+ */
+export const hostedContexts: readonly ContextModule[] = everyContext.filter((module) => !extracted.includes(module));
+
 export interface Application {
 {{#if http.any}}
   readonly routes: readonly Route[];

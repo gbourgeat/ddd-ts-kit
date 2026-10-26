@@ -1,5 +1,5 @@
 [English](when-to-extract-microservices.md) · **Français**
-<!-- translation-of: when-to-extract-microservices.md sha256:6b8adf572bb0df53 -->
+<!-- translation-of: when-to-extract-microservices.md sha256:8288522fd4a2d8ca -->
 
 # Quand extraire un microservice, et quand ne pas le faire
 
@@ -212,7 +212,14 @@ Telles que la *skill* `extract-service` les conduit :
    `deployable: true` pour le contexte dans la configuration, ce que la carte des contextes montre
    dans sa colonne « Deployable alone » une fois `npx ddd-ts-kit docs` lancé. Le service emporte
    avec lui les *jobs* planifiés de son contexte (sauf avec `RUN_JOBS=false`), et aucun *job* d'un
-   autre.
+   autre contexte ni de la plateforme. Le contexte **quitte aussi l'application entière** : la
+   commande l'ajoute aux régions `extracted` de la racine de composition, `src/main.ts` et le
+   *worker* composent `hostedContexts` (tous les contextes sauf les extraits), et ses
+   consommateurs, ses processus, ses *jobs* et ses routes tournent dans le service seul.
+   `everyContext` reste la liste complète pour les contrats et les tests de bout en bout. Donnez à
+   chaque conteneur le même `DEPLOYMENT_NAME` (les clés du verrou, du cache et du magasin de
+   *jobs*) et son propre `OTEL_SERVICE_NAME` (les traces). `test/architecture/hosting.spec.ts` le
+   prouve.
 2. **Remplacer les *gateways* dans le processus par des adaptateurs distants.** Dans les contextes
    qui restent, chaque adaptateur `gateway` qui visait le contexte extrait devient un adaptateur
    distant du même port, tenu à la même suite de contrat.

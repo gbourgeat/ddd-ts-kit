@@ -41,6 +41,7 @@ export const SHARDS = [
     'proven-stacks.spec.ts': 431,
     'new-rule-violations.spec.ts': 65,
     'error-reporting.spec.ts': 17,
+    'service-composition.spec.ts': 60,
     'platform-error-mapper.spec.ts': 20,
     'manual-module.spec.ts': 40,
   },
