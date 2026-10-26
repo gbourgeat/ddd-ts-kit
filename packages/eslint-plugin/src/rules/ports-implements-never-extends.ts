@@ -1,4 +1,5 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
+import { parserOf } from '../support/parse/parser-of';
 import { calleeName } from '../support/calls/callee-name';
 import { className, type ClassNode } from '../support/classes/class-name';
 import { declarationReader } from '../support/declarations/declaration-reader';
@@ -27,7 +28,7 @@ export const portsImplementsNeverExtends = defineRule<MessageId>({
   },
   create({ file, sourceCode, context, report }) {
     const declarationsOf = declarationReader(sourceCode.ast);
-    const findClass = classFinder(file, sourceCode.ast, context.languageOptions.parser);
+    const findClass = classFinder(file, sourceCode.ast, parserOf(context));
     const imported = importedBindings(file, sourceCode.ast);
     const isAdapterLayer = inContext(file)?.layer === 'infrastructure' && !file.isTest;
 

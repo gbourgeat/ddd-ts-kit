@@ -99,26 +99,17 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      # A pull request restores the cache the trunk wrote last for this lockfile and this config, and lints the files
-      # that changed since (docs/proposals/build-and-test-velocity.md); the lint script drops it when the rules as built,
-      # the config or the lockfile differ from what it was written for. The trunk and the night restore nothing: they
-      # lint everything, which also sees a type changed in another file, and write the cache the pull requests read.
-      - name: The cache of ESLint, as the trunk wrote it last
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: .eslintcache/
-          # One cache per lockfile and lint config (the rules of the kit included), keyed by the content of each file.
-          key: eslint-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs', 'packages/eslint-plugin/src/**') }}-${{ github.sha }}
-          restore-keys: eslint-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs', 'packages/eslint-plugin/src/**') }}-
+      # A pull request is linted by Oxlint (type-aware by tsgolint, the rules of the kit as a JS plugin): six seconds
+      # without any cache, where ESLint needs 36. The trunk and the night keep ESLint on the whole tree: it holds
+      # typescript-eslint's `no-unsafe-enum-assignment`, which Oxlint lacks, and is the reference the trial job
+      # compares Oxlint with (docs/proposals/build-and-test-velocity.md).
       - run: npm run ci:format
-      - run: npm run ci:lint
-      - name: The cache of ESLint, for the pull requests that follow
+      - name: Oxlint
+        if: ${{ github.event_name == 'pull_request' }}
+        run: npm run lint:oxlint
+      - name: ESLint
         if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: .eslintcache/
-          key: eslint-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs', 'packages/eslint-plugin/src/**') }}-${{ github.sha }}
+        run: npx eslint --config eslint.config.mjs .
 
   architecture:
     name: Architecture
@@ -477,27 +468,29 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      - name: Oxlint with tsgolint and the rules of the kit as a JS plugin, its findings and its time kept
+      - name: ESLint and Oxlint on this repository, the findings compared by file, line and rule
         run: |
-          start=$(date +%s)
-          npm run -s lint:oxlint > oxlint.txt 2>&1 || true
-          end=$(date +%s)
-          findings=$(grep -cE '^\S+:[0-9]+:[0-9]+: (error|warning)' oxlint.txt || true)
+          t0=$(date +%s)
+          npx oxlint --type-aware -f json > oxlint.json 2> oxlint.err || true
+          t1=$(date +%s)
+          npx eslint --config eslint.config.mjs --format json . > eslint.json 2> eslint.err || true
+          t2=$(date +%s)
           {
-            echo "## Oxlint, type-aware, the rules of the kit as a JS plugin"
+            echo "| tool | wall, no cache |"
+            echo "|---|---|"
+            echo "| Oxlint, type-aware, the rules of the kit as a JS plugin | $((t1 - t0)) s |"
+            echo "| ESLint, typescript-eslint, no cache | $((t2 - t1)) s |"
             echo
-            echo "| wall | findings | ESLint on the same tree |"
-            echo "|---|---|---|"
-            echo "| $((end - start)) s | $findings | the lint job of this run |"
-            echo
-            echo '```'
-            grep -oE '(error|warning) [a-z@-]+\([a-z0-9/-]+\)' oxlint.txt | sed -E 's/.* //' | sort | uniq -c | sort -rn | head -20
-            echo '```'
+            node pipeline/monorepo/compare-linters.mjs eslint.json oxlint.json .
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: oxlint-${{ github.run_id }}
-          path: oxlint.txt
+          path: |
+            oxlint.json
+            oxlint.err
+            eslint.json
+            eslint.err
           retention-days: 30
 
   unit-arm:
@@ -573,6 +566,8 @@ jobs:
         run: |
           run=$(gh run list --workflow "${{ github.workflow }}" --event schedule --branch "${{ github.event.repository.default_branch }}" --status success --limit 1 --json databaseId --jq '.[0].databaseId')
           if [ -n "$run" ]; then gh run download "$run" --name mutation --dir examples/scheduling/reports/mutation || echo "The last night kept no report: a full run."; fi
+          # The night runs without a base and writes no incremental file: its json report is the same object, which Stryker reads back (docs/proposals/generated-project-families.md).
+          if [ -f examples/scheduling/reports/mutation/mutation.json ]; then cp examples/scheduling/reports/mutation/mutation.json examples/scheduling/reports/mutation/incremental.json; fi
       - name: Stryker on what the change touches in the example, then the survivors of its files
         run: |
           mkdir -p examples/scheduling/reports/mutation

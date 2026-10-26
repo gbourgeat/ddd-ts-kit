@@ -1,5 +1,5 @@
 [English](build-and-test-velocity.md) · **Français**
-<!-- translation-of: build-and-test-velocity.md sha256:33acca65cbaf043b -->
+<!-- translation-of: build-and-test-velocity.md sha256:b8b4787c1fce713b -->
 
 # Proposition : vélocité du build, des contrôles et des tests
 
@@ -831,6 +831,124 @@ indicateurs de cette page :
    (19 à 7 s CPU, 1,2 à 0,9 Go).
 5. Oxfmt, tsdown, oxc-transform et le cache de modules de Vitest dans le *pipeline* restent
    dehors ; cette section est le chiffre auquel se comparer quand l'un d'eux change.
+
+### Résultats du plan : points 1 et 2 (branche `fix/oxlint-plugin-whole`)
+
+**Point 1, le *plugin* tourne entier.** Trois changements dans `packages/eslint-plugin` :
+`naming-business-name` demande les services du *parser* dans un `try` et lit les noms du code quand
+le *linter* n'en offre aucun ; quatre règles qui analysent un texte à elles
+(`clean-no-commented-out-code`, `language-declared-vocabulary`, `authz-declared`,
+`ports-implements-never-extends`) prennent le *parser* de typescript-eslint quand la
+configuration n'en donne aucun. Le *parser* qu'Oxlint remet à ses *plugins* JS dans
+`languageOptions.parser` est une doublure nommée `oxlint` dont `parse` lève « not implemented yet » :
+elle est traitée comme l'absence de *parser*, ce qui explique que le premier essai (prendre
+`languageOptions.parser` quand il existe) manquait encore deux règles. Une *spec* du paquet exécute
+trois règles sur un fichier sous ESLint et sous Oxlint et les compare. La mesure est celle de
+l'étude, le harnais de la suite de conformité (chaque injection par tours sur une copie de l'exemple,
+les deux outils, les mêmes fichiers) :
+
+| Copie de l'exemple, 115 fichiers en 7 tours | Avant | Après |
+|---|---|---|
+| fichiers où aucune règle du kit n'a tourné (`fatal`) | 303 sur 985 | 0 |
+| constats sur la copie intacte | 345 (303 `fatal`, 41 `consistent-type-imports`, 1 `no-undef`) | 42 (41 `consistent-type-imports`, 1 `no-undef`) |
+| injections qu'ESLint rapporte et qu'Oxlint rapporte aussi, `naming-business-name` activée | 27 sur 77 | **77 sur 77** |
+| idem, `naming-business-name` désactivée | 74 sur 77 | 77 sur 77 (la règle n'a plus à être coupée) |
+| constats des tours, ESLint / Oxlint / au même endroit | 89 / 108 / 29 | 89 / 100 / **89** |
+| constats d'Oxlint seul | 68 `fatal`, 11 `consistent-type-imports` | 11 `consistent-type-imports` |
+| constats d'ESLint seul | 60 | 0 |
+
+Ce qui reste est hors du *plugin* : `consistent-type-imports` d'Oxlint ignore
+`emitDecoratorMetadata` (41 sur la copie intacte, 11 dans les tours, tous faux) et `no-undef` lit un
+`.cjs` comme un module ; les deux relèvent du point 4, le *preset* Oxlint d'un projet généré.
+
+**Point 2, la configuration et la comparaison.** `.oxlintrc.json` retrouve les quatre règles
+(`no-var`, `prefer-const`, `prefer-rest-params`, `prefer-spread`, sur les sources et les tests),
+désactive les quinze règles du noyau que typescript-eslint coupe pour TypeScript (l'étude en
+comptait treize ; lues dans `eslint --print-config` d'un fichier source, ce sont `constructor-super`,
+`getter-return`, `no-class-assign`, `no-const-assign`, `no-dupe-class-members`, `no-dupe-keys`,
+`no-func-assign`, `no-import-assign`, `no-new-native-nonconstructor`, `no-obj-calls`,
+`no-setter-return`, `no-this-before-super`, `no-unreachable`, `no-unsafe-negation`, `no-with`),
+ajoute l'exclusion de `packages/audit/test/generated/` et coupe `no-unused-vars` sur les scripts
+comme ESLint. Oxlint a alors rapporté trois constats vrais qu'ESLint ne fait pas (deux
+`no-unsafe-optional-chaining` sur `(x?.y as T)['200']` dans des *specs* de `packages/http`, un
+`unbound-method` sur `(this.options.follow ?? followWithFetch)(request)` dans `packages/testing`) ;
+ils sont corrigés dans le code, pour que les deux outils disent la même chose sur cet arbre. Le job
+d'essai lance les deux outils avec leur sortie JSON et `pipeline/monorepo/compare-linters.mjs`
+écrit dans son résumé les totaux et chaque constat qu'un seul côté fait, par fichier, ligne et
+règle, `no-unsafe-enum-assignment` mis à part comme attendu. Il reste hors de la porte
+(`continue-on-error`, non requis par le job de porte) ; l'exécution d'ESLint du job est à froid,
+ce qui ajoute environ 70 s à un job de 38 s qui ne tourne que sur le tronc et la nuit. La
+comparaison sur la copie cassée de l'exemple n'est pas en CI : elle demande toute la suite de
+conformité (un *build* de chaque paquet et une configuration Oxlint générée pour l'exemple, que le
+migrateur écrit et que le dépôt ne garde pas), environ 40 s sur une station ; la mesure ci-dessus en
+est la trace.
+
+| Ce dépôt, 6 084 fichiers | ESLint | Oxlint | Au même endroit | Oxlint seul |
+|---|---|---|---|---|
+| avant (la porte telle que configurée le 2026-10-26) | 3 | 6 | 3 | 3 |
+| après | 3 | 3 | **3** | 0 |
+
+### Résultats du plan : point 3, le job Lint d'une pull request sous Oxlint
+
+La condition (aucune différence avec ESLint sur ce dépôt, fichier, ligne et règle) tient : 3 constats
+de chaque côté, 3 au même endroit, `no-unsafe-enum-assignment` seule règle qu'ESLint a et
+qu'Oxlint n'a pas, et elle ne rapporte rien ici. Le job Lint d'une *pull request* lance maintenant la
+vérification du format et `npm run lint:oxlint` ; le tronc et la nuit lancent ESLint sur tout
+l'arbre, comme avant, sans le cache (que seules les *pull requests* lisaient). `npm run lint` reste
+ESLint avec son cache par contenu. Mesuré sur la station de l'étude, sous `nice`, une commande à la
+fois, charge moyenne de la dernière minute avant chaque exécution :
+
+| Exécution | Charge | Durée min / médiane | CPU (médiane) | Mémoire de pointe (médiane) |
+|---|---|---|---|---|
+| `npm run lint`, cache par contenu d'ESLint, rien de changé (3 exécutions) | 4,4 ; 3,4 ; 3,3 | 1,22 / 1,24 s | 1,75 s | 0,38 Go |
+| `npm run lint:oxlint`, tout le dépôt, avec types, *plugin* du kit (3 exécutions) | 3,0 à 3,2 | 5,86 / 5,93 s | 20,3 s | 1,55 Go |
+| `eslint .`, sans cache, ce que lance le tronc (3 exécutions) | 2,6 à 3,1 | 36,9 / 37,2 s | 59,5 s | 3,0 Go |
+
+À lire : face à une *pull request* qui trouve son cache, Oxlint n'est pas plus rapide : 5,9 s contre
+1,2 à 1,7 s de lint (le job dure 38 s en médiane, mise en place comprise). Ce que le changement
+apporte, c'est que la *pull request* ne dépend plus du cache : la première après un changement de la
+configuration, du *lockfile* ou d'une règle du kit (le cache est alors abandonné) lint tout l'arbre en
+6 s d'Oxlint au lieu de 37 à 70 s d'ESLint, et le job perd ses deux étapes de cache. Le job du tronc,
+qui écrit le cache, est inchangé à environ 97 s, donc pas d'économie des 57 s que le plan attendait
+là : le tronc garde ESLint comme référence. Le temps final du job Lint d'une *pull request* est estimé à
+ses 38 s actuelles moins la restauration du cache, plus environ 4 s : aucun changement mesurable quand
+le cache est trouvé, 30 à 60 s de moins quand il ne l'est pas.
+
+### Résultats du plan : point 4 de la demande, le *hook* de pre-commit sous Oxlint
+
+Le *hook* lint les fichiers indexés avec `oxlint --type-aware --no-error-on-unmatched-pattern` au
+lieu d'ESLint (l'option est nécessaire : Oxlint sort en code 1 quand tous les fichiers donnés sont
+ignorés, un *commit* de *templates* seuls, puis lint le répertoire courant, ce qui coûte une
+exécution et ne fait rien échouer). Les 13 fichiers d'un *commit* typique (#405), cinq exécutions
+chacun car la charge moyenne dépassait 4 :
+
+| Exécution | Charge | Durée min / médiane | CPU (médiane) | Mémoire de pointe (médiane) |
+|---|---|---|---|---|
+| ESLint, `--no-warn-ignored`, sans cache (le *hook* d'avant) | 4,6 à 4,8 | 1,66 / 1,70 s | 3,71 s | 0,48 Go |
+| Oxlint, avec types, *plugin* du kit (le *hook* maintenant) | 4,4 à 4,7 | 0,79 / 0,81 s | 2,80 s | 0,29 Go |
+
+Le *hook* est deux fois plus rapide, sur les mêmes fichiers et avec la même parité que le job Lint.
+
+### Résultats du plan : point 5 de la demande, le cache de modules de Vitest sur la station
+
+Confirmé, et rien à activer : Vitest 5 garde les modules transformés dans
+`node_modules/.vitest-cache` par défaut (`experimental.fsModuleCache`), `node_modules` est ignoré par
+git, et le *pipeline* ne le garde jamais (le job d'installation sauvegarde `node_modules` avant qu'aucune
+*spec* n'ait tourné). `CONTRIBUTING.md` dit maintenant où il se trouve et que
+`rm -rf node_modules/.vitest-cache` le vide. Mesuré avec ce répertoire gardé (chaud) et supprimé avant
+chaque exécution (froid), sur une machine chargée (charge de 2,5 à 13,8, cinq exécutions au-dessus
+de 4) :
+
+| Exécution | Durée min / médiane | CPU (médiane) | Mémoire de pointe (médiane) |
+|---|---|---|---|
+| `vitest run packages/kernel` (59 fichiers), chaud | 7,22 / 7,87 s | 80,5 s | 4,1 Go |
+| idem, cache vidé | 11,71 / 11,84 s | 84,1 s | 4,1 Go |
+| `vitest run packages/http` (47 fichiers), chaud | 3,86 / 4,02 s | 50,5 s | 1,9 Go |
+| idem, cache vidé | 5,08 / 5,14 s | 54,4 s | 2,0 Go |
+
+Le gain est de 33 % du temps mesuré sur le noyau et de 22 % sur http (38 et 25 % à la première
+mesure), 5 % sur toute la suite ; le cache pèse 14 Mo pour http et 54 Mo pour les *specs* du noyau.
+Non gardé dans le *pipeline*, comme décidé.
 
 ## Reste à vérifier
 

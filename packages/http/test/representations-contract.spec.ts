@@ -21,8 +21,9 @@ describe('the contract of a route that answers in several media types', () => {
     (paths[path] ?? {})[method] as Operation;
 
   it('lists every media type it answers in, with the schema of the response', () => {
-    const content = (operations['get']?.['responses'] as Record<string, { content: Record<string, unknown> }>)['200']
-      ?.content;
+    const content = (
+      operations['get']?.['responses'] as Record<string, { content: Record<string, unknown> }> | undefined
+    )?.['200']?.content;
 
     expect(Object.keys(content ?? {})).toEqual(['application/json', 'application/xml', 'text/csv']);
   });
