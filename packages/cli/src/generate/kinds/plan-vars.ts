@@ -20,6 +20,7 @@ export function planVars(
   composition = `${config.platformDir}/composition`,
 ): RenderContext {
   const terms = request.terms ?? [];
+  const classification = config.contexts[context.kebab]?.classification ?? '';
   const toContext = (from: string): string => `${relativeTo(from, config.contextsDir)}/${context.kebab}/`;
 
   return {
@@ -29,10 +30,13 @@ export function planVars(
       proofModule: assembledContext({ config, context }, toContext('test/architecture')),
     },
     doc: {
-      classification: config.contexts[context.kebab]?.classification ?? '',
+      classification,
+      classificationReason:
+        request.classificationReason?.trim() ||
+        `TODO(domain): say in one sentence why this context is ${classification}.`,
       purpose: request.purpose?.trim() || PURPOSE_TODO,
       glossaryHint: terms.length > 0 ? '' : `\n${GLOSSARY_TODO}\n`,
-      glossaryRows: terms.map((row) => `\n| ${row.term} | ${row.meaning} |  |`).join(''),
+      glossaryRows: terms.map((row) => `\n| ${row.term} | ${row.meaning} | ${row.notConfusedWith ?? ''} |`).join(''),
     },
   };
 }

@@ -46,9 +46,13 @@ describe('glossary', () => {
       addGlossaryRows(DOC, [
         { term: 'Pay', meaning: 'To settle' },
         { term: 'invoice', meaning: 'again' },
+        { term: 'Refund', meaning: 'Money paid back', notConfusedWith: 'Credit note' },
       ]) ?? '';
 
-    expect(next).toContain('| **Issue** | To make final |  |\n| Pay | To settle |  |\n\n## Aggregates');
+    expect(next).toContain(
+      '| **Issue** | To make final |  |\n| Pay | To settle |  |\n| Refund | Money paid back | Credit note |\n\n## Aggregates',
+    );
+
     expect(next.match(/\| invoice \|/gi)).toHaveLength(1);
     expect(addGlossaryRows('# No table', [{ term: 'Pay', meaning: 'To settle' }])).toBeUndefined();
   });
