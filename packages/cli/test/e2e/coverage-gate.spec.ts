@@ -3,6 +3,7 @@ import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { read, scaffoldEverything, tempDir } from '../helpers';
 import { installAsPublished } from './install-as-published';
+import { DEEP } from './night-stacks';
 import { bin, findingsOf, runIn } from './run-in';
 import { FIRST_CLASS, PROVEN, SLOW } from './stacks';
 
@@ -12,7 +13,10 @@ const REMOVED_SPEC = 'src/contexts/billing/test/unit/money.vo.spec.ts';
 const UNMET =
   /Coverage for \w+ \([\d.]+%\) does not meet "src\/contexts\/billing\/domain\/\*\*\/\*\.ts" threshold \(\d+%\)/;
 
-const HELD = [...PROVEN, ['the stack of the example: class-validator, legacy decorators', FIRST_CLASS] as const];
+const EVERY_HELD = [...PROVEN, ['the stack of the example: class-validator, legacy decorators', FIRST_CLASS] as const];
+
+/** Every proven stack and the stack of the example at night and before a release; the first of them on every other run. */
+const HELD = DEEP ? EVERY_HELD : EVERY_HELD.slice(0, 1);
 
 /**
  * Slow, opt-in (DDD_TS_KIT_E2E=1): the coverage gate of a generated project, as its scripts run it.

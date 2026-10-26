@@ -31,6 +31,7 @@ jobs:
       integrated: ${{ steps.affected.outputs.integrated }}
       stacks: ${{ steps.kind.outputs.stacks }}
       release: ${{ steps.kind.outputs.release }}
+      deep: ${{ steps.kind.outputs.deep }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -45,9 +46,10 @@ jobs:
         run: node pipeline/monorepo/affected-packages.mjs --base "$BASE" --format github | tee -a "$GITHUB_OUTPUT"
       # `all` on the default branch, at night and on a release; on another pull request the script says `cover` when the change
       # touches a template or a generator and `none` when it touches neither (docs/proposals/generated-project-families.md).
-      - name: Which stacks the jobs that generate projects take, and whether this is the pull request of a release
+      - name: Which stacks the jobs that generate projects take, and whether this run goes deep (the night, on demand, a release)
         id: kind
         env:
+          EVENT: ${{ github.event_name }}
           TITLE: ${{ github.event.pull_request.title }}
           HEAD_REF: ${{ github.head_ref }}
           STACKS: ${{ steps.affected.outputs.stacks }}
@@ -56,7 +58,13 @@ jobs:
           case "$HEAD_REF" in release/*) release=true ;; esac
           case "$TITLE" in 'chore(release)'*) release=true ;; esac
           if [ "$release" = true ]; then STACKS=all; fi
+          # The slow proofs (pnpm, Node 22 for the alias runs, the intermediate states of the first minute, the coverage gate on
+          # its ten stacks, the pairs, the migrations) are the night's and the release's: the trunk and the other pull requests keep the rest.
+          deep=false
+          case "$EVENT" in schedule|workflow_dispatch) deep=true ;; esac
+          if [ "$release" = true ]; then deep=true; fi
           echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "deep=$deep" >> "$GITHUB_OUTPUT"
           echo "stacks=$STACKS" >> "$GITHUB_OUTPUT"
 
   # The gates that take under three minutes each, in one job: a run has fewer jobs to queue against the
@@ -232,8 +240,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Both Node lines on the default branch and at night; a pull request runs the newest one, the trunk holds the oldest.
-        node: ${{ fromJSON(github.event_name == 'pull_request' && '[24]' || '[22, 24]') }}
+        # Both Node lines at night and on the pull request of a release; every other run, the trunk included, runs the newest one.
+        node: ${{ fromJSON(needs.install.outputs.deep == 'true' && '[22, 24]' || '[24]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -339,13 +347,15 @@ jobs:
       - name: Every stack generated and held to its own pipeline, a quarter of the spec files on each runner (the two sweeps of `init` alone, on a pull request, on a cover of the stacks)
         env:
           KIT_STACKS: ${{ needs.install.outputs.stacks }}
+          # The coverage gate of the generated projects on its ten stacks at night and on a release, on one stack otherwise.
+          DDD_TS_KIT_NIGHT: ${{ needs.install.outputs.deep == 'true' && '1' || '' }}
         run: npm run ci:test:e2e:stacks -- --shard=${{ matrix.shard }}/4
 
   pairwise:
     name: Every pair of capability values, generated and type-checked
     needs: install
     # At night and on the pull request of a release: the stacks generated to meet every pair of values of two capability flags.
-    if: ${{ needs.install.outputs.integrated == 'true' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.event.pull_request.title, 'chore(release)')) }}
+    if: ${{ needs.install.outputs.integrated == 'true' && needs.install.outputs.deep == 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 45
     steps:
@@ -360,7 +370,7 @@ jobs:
     name: First migration of a generated project, on a real PostgreSQL
     needs: install
     # At night, on demand and on the pull request of a release: the tool of each ORM generates, the audit guard is added, the migration is applied.
-    if: ${{ needs.install.outputs.integrated == 'true' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.event.pull_request.title, 'chore(release)')) }}
+    if: ${{ needs.install.outputs.integrated == 'true' && needs.install.outputs.deep == 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 45
     env:
@@ -385,8 +395,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Both package managers on the default branch, at night and on the pull request of a release; another pull request installs on npm, the dialect the templates are written in, the trunk holds pnpm.
-        manager: ${{ fromJSON(github.event_name == 'pull_request' && !startsWith(github.event.pull_request.title, 'chore(release)') && '["npm"]' || '["npm", "pnpm"]') }}
+        # Both package managers at night and on the pull request of a release; every other run, the trunk included, installs on npm, the dialect the templates are written in.
+        manager: ${{ fromJSON(needs.install.outputs.deep == 'true' && '["npm", "pnpm"]' || '["npm"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -397,8 +407,9 @@ jobs:
       - name: Installed for real from the packed kit and held to verify (every kind generated on the default stack and a heavy one; from the first minute, the quick start of the README and the other proven stacks)
         env:
           DDD_TS_KIT_PACKAGE_MANAGER: ${{ matrix.manager }}
-          # At night and on the pull request of a release, the stacks the workspace cannot run too (Prisma, TypeORM), with every capability on.
-          DDD_TS_KIT_NIGHT: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.event.pull_request.title, 'chore(release)')) && '1' || '' }}
+          # At night and on the pull request of a release, the stacks the workspace cannot run too (Prisma, TypeORM), with every capability on,
+          # and the intermediate states of the first minute (after one context, then two); another run keeps the first state and the last.
+          DDD_TS_KIT_NIGHT: ${{ needs.install.outputs.deep == 'true' && '1' || '' }}
         run: npm run ci:test:managers
 
   example:

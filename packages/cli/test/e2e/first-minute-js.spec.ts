@@ -3,6 +3,7 @@ import { cli, DEFAULT_STACK, exists, read, tempDir, walk } from '../helpers';
 import { grantOf } from '../support/grant-of';
 import { initFlags } from '../support/init-flags';
 import { installForReal, type Manager } from './install-for-real';
+import { DEEP } from './night-stacks';
 import { runIn } from './run-in';
 import { PROVEN, SLOW } from './stacks';
 import { started } from './started';
@@ -61,10 +62,14 @@ describe.runIf(SLOW).each(CASES)(
       verified(root, manager);
     }, 600_000);
 
-    it('is green with one context, a second one downstream of it, and its first use case', () => {
+    it('is green with its first use case, in a project of two contexts', () => {
       generate('context', 'billing', '--classification', 'core', ...TERMS);
       generate('context', 'shipping', '--classification', 'supporting', '--upstream', 'billing:customer-supplier');
-      verified(root, manager);
+
+      if (DEEP) {
+        verified(root, manager);
+      }
+
       generate('aggregate', 'billing', 'Invoice');
 
       generate(
