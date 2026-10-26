@@ -1,13 +1,16 @@
 import 'reflect-metadata';
+import { createServer, type Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { SignJWT } from 'jose';
+import { SignJWT, exportJWK, generateKeyPair } from 'jose';
+import { passportJwtSecret } from 'jwks-rsa';
 import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { defineRoute, executeRoute, type RawRequest } from '@ddd-ts-kit/http';
-import { anonymousSession, type Actor } from '@ddd-ts-kit/kernel';
-import { InvalidCredentialError, actorOf } from '../src';
-import { passportPrincipal, type PassportStrategyLike } from '../src/passport';
+import { anonymousActor, anonymousSession, type Actor } from '@ddd-ts-kit/kernel';
+import { InvalidCredentialError, actorOf, actorOfClaims } from '../src';
+import { passportAuthenticator, passportPrincipal, type PassportStrategyLike } from '../src/passport';
 
 const SECRET = 'a secret of the tests, long enough for HS256';
 
@@ -209,6 +212,117 @@ describe('passportPrincipal, on the strategies of passport-jwt and @nestjs/passp
       status: 401,
       body: { code: 'UNAUTHORIZED' },
     });
+  });
+});
+
+describe('passportAuthenticator, a strategy of Passport behind the port of the kit', () => {
+  const strategy = new JwtStrategy(
+    { jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), secretOrKey: SECRET },
+    (payload: unknown, done: (error: unknown, user?: unknown) => void) => {
+      done(null, payload);
+    },
+  );
+
+  const authenticator = passportAuthenticator(strategy, {
+    actorOf: (user) => actorOfClaims(typeof user === 'object' && user !== null ? { ...user } : {}),
+  });
+
+  const signed = (secret: string) =>
+    new SignJWT({ realm_access: { roles: ['accountant'] }, tenant_id: 'acme', email: 'ada@example.test' })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setSubject('ada')
+      .setExpirationTime('5m')
+      .sign(new TextEncoder().encode(secret));
+
+  it('answers the actor the claims of a verified token stand for, as JwtAuthenticator reads them', async () => {
+    await expect(authenticator.authenticate(await signed(SECRET))).resolves.toEqual({
+      id: 'ada',
+      type: 'user',
+      tenantId: 'acme',
+      roles: ['accountant'],
+      attributes: { email: 'ada@example.test' },
+    });
+  });
+
+  it('refuses a forged credential, and answers the anonymous actor without one', async () => {
+    await expect(authenticator.authenticate(await signed('another secret, long enough too'))).rejects.toBeInstanceOf(
+      InvalidCredentialError,
+    );
+
+    await expect(authenticator.authenticate(undefined)).resolves.toEqual(anonymousActor());
+    await expect(authenticator.authenticate('')).resolves.toEqual(anonymousActor());
+  });
+});
+
+describe('passportAuthenticator, on the key set an issuer publishes, as init --authn passport writes it', () => {
+  let server: Server;
+  let jwksUri = '';
+  let sign: (subject: string) => Promise<string>;
+
+  beforeAll(async () => {
+    const { publicKey, privateKey } = await generateKeyPair('RS256');
+
+    const keys = JSON.stringify({
+      keys: [{ ...(await exportJWK(publicKey)), kid: 'key-1', alg: 'RS256', use: 'sig' }],
+    });
+
+    server = createServer((_request, response) => {
+      response.writeHead(200, { 'content-type': 'application/json' }).end(keys);
+    });
+
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    jwksUri = `http://127.0.0.1:${String((server.address() as AddressInfo).port)}/certs`;
+
+    sign = (subject) =>
+      new SignJWT({ roles: ['accountant'] })
+        .setProtectedHeader({ alg: 'RS256', kid: 'key-1' })
+        .setSubject(subject)
+        .setIssuer('https://issuer.test')
+        .setAudience('api')
+        .setExpirationTime('5m')
+        .sign(privateKey);
+  });
+
+  afterAll(() => new Promise<void>((resolve) => server.close(() => resolve())));
+
+  it('verifies a token signed by a key of the set, and refuses one for another audience', async () => {
+    const strategy = new JwtStrategy(
+      {
+        jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+        issuer: 'https://issuer.test',
+        audience: 'api',
+        algorithms: ['RS256'],
+        secretOrKeyProvider: passportJwtSecret({ jwksUri, cache: true }),
+      },
+      (payload: unknown, done: (error: unknown, user?: unknown) => void) => {
+        done(null, payload);
+      },
+    );
+
+    const authenticator = passportAuthenticator(strategy, {
+      actorOf: (user) => actorOfClaims(typeof user === 'object' && user !== null ? { ...user } : {}),
+    });
+
+    await expect(authenticator.authenticate(await sign('ada'))).resolves.toMatchObject({
+      id: 'ada',
+      roles: ['accountant'],
+    });
+
+    const elsewhere = passportAuthenticator(
+      new JwtStrategy(
+        {
+          jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+          audience: 'another-api',
+          secretOrKeyProvider: passportJwtSecret({ jwksUri }),
+        },
+        (payload: unknown, done: (error: unknown, user?: unknown) => void) => {
+          done(null, payload);
+        },
+      ),
+      { actorOf: () => anonymousActor() },
+    );
+
+    await expect(elsewhere.authenticate(await sign('ada'))).rejects.toBeInstanceOf(InvalidCredentialError);
   });
 });
 

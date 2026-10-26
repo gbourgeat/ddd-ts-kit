@@ -139,6 +139,22 @@ describe('the platform init writes', () => {
     expect([jsonAt(zod, 'stack', 'validation'), jsonAt(zod, 'stack', 'routes')]).toEqual(['zod', 'controllers']);
   });
 
+  it('verifies the bearer tokens with a strategy of Passport under --authn passport, its end-to-end credentials signed for it', () => {
+    const root = initProject('--http', 'nest', '--authn', 'passport');
+    const manifest = readJson(root, 'package.json');
+
+    expect(read(root, 'src/platform/auth/authentication/create-authenticator.ts')).toContain(
+      'return passportAuthenticator(bearerStrategy(config.auth), { actorOf: actorOfToken });',
+    );
+
+    expect(read(root, 'src/platform/auth/authentication/bearer-strategy.ts')).toContain('passportJwtSecret({');
+    expect(read(root, 'src/platform/auth/authentication/actor-of-token.ts')).toContain('actorOfClaims({ ...payload })');
+    expect(read(root, 'test/e2e/support/create-credentials.ts')).toContain('passportAuthenticator(strategy');
+    expect(read(root, '.env.example')).toContain('AUTH_JWKS_URI=');
+    expect(jsonAt(manifest, 'dependencies', 'passport-jwt')).toBe('^4.0.1');
+    expect(jsonAt(manifest, 'devDependencies', 'jose')).toBe('^6.0.0');
+  });
+
   it('names the end-to-end support after what each file exports', () => {
     const root = initProject();
 

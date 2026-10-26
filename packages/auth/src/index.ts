@@ -54,6 +54,8 @@ export type { PolicyInput } from './abac/policy-input';
 export type { ResourceAttributeValues } from './abac/resource-attribute-values';
 export { ResourceAttributes } from './abac/resource-attributes';
 export { actorOf } from './authentication/actor-of';
+export { actorOfClaims } from './jwt/actor-of-claims';
+export type { Claims } from './jwt/claims';
 export { Authenticator } from './authentication/authenticator';
 export { bearerCredential } from './authentication/bearer-credential';
 export type { HeaderValues } from './authentication/header-values';

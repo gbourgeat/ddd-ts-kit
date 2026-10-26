@@ -65,6 +65,11 @@ const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly s
   ],
   'authn:jwt': [['jose'], []],
   'authn:keycloak': [['jose'], []],
+  // The strategy of Passport verifies the tokens; jose signs those of the end-to-end tests.
+  'authn:passport': [
+    ['passport-jwt', 'jwks-rsa'],
+    ['@types/passport-jwt', 'jose'],
+  ],
   'cache:redis': [['@ddd-ts-kit/redis', 'ioredis'], []],
   // The server of oRPC, the optional peer of `@ddd-ts-kit/http/orpc`, which the HTTP server mounts under /rpc.
   'rpc:orpc': [['@orpc/server'], []],

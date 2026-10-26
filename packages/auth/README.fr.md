@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b32b1ed7cb24f9a1 -->
+<!-- translation-of: README.md sha256:ed293f77e4a42c57 -->
 
 # @ddd-ts-kit/auth
 
@@ -651,6 +651,20 @@ Il refuse par défaut :
 
 Un identifiant est présenté quand la requête porte un en-tête `Authorization` ; une stratégie qui
 lit un cookie dit où avec `presented: (raw) => ...`.
+
+`passportAuthenticator(strategy, { actorOf })` est la même stratégie derrière le port
+`Authenticator` : l'identifiant bearer est remis à la stratégie comme `Authorization: Bearer
+<identifiant>`, de sorte que les procédures, les scripts et les tests de bout en bout
+s'authentifient aussi par elle. `actorOfClaims(claims)` lit les *claims* d'un jeton comme
+`JwtAuthenticator`, pour l'`actorOf` d'une stratégie qui transmet sa charge utile.
+`ddd-ts-kit init --authn passport` écrit cette plateforme : une stratégie de `passport-jwt` sur le
+jeu de clés de l'émetteur (`jwks-rsa`), son `actorOf`, et les identifiants de bout en bout signés
+pour elle. Elle vérifie des jetons bearer, comme `--authn jwt`, avec la stratégie dans le code du
+projet : une autre stratégie qui lit un jeton bearer (des jetons opaques par
+`passport-http-bearer`, une introspection) prend sa place dans `bearer-strategy.ts`. Une stratégie
+qui lit un cookie ou une session ne passe pas par le port `Authenticator`, qui ne reçoit qu'un
+identifiant : donnez-la à `passportPrincipal`, qui reçoit la requête elle-même, comme
+`resolvePrincipal` de la frontière, et déclarez son schéma de sécurité dans le contrat.
 
 ## Choisir un modèle
 

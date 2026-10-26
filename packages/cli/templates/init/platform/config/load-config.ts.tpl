@@ -47,7 +47,7 @@ export function loadConfig(variables: Variables): AppConfig {
     {{#if broker.addressed}}
     {{broker.key}}: env.{{broker.reader}}('{{broker.variable}}'),
     {{/if}}
-    {{#if authn.jwt}}
+    {{#if authn.jwks}}
     auth: readAuth(env),
     {{/if}}
     {{#if authn.keycloak}}
@@ -134,7 +134,7 @@ function readErrorReporting(env: Environment, environment: string): AppConfig['e
   };
 }
 {{/if}}
-{{#if authn.jwt}}
+{{#if authn.jwks}}
 
 function readAuth(env: Environment): AppConfig['auth'] {
   return {

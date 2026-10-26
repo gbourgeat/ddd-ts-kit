@@ -12,6 +12,8 @@ export const PLATFORM_LAYOUT = [
       'auth/security-schemes.ts': 'auth/authentication/security-schemes.ts',
       'auth/http-boundary.ts': 'auth/authentication/http-boundary.ts',
       'auth/offline-authenticator.ts': 'auth/authentication/offline-authenticator.ts',
+      'auth/bearer-strategy.ts': 'auth/authentication/bearer-strategy.ts',
+      'auth/actor-of-token.ts': 'auth/authentication/actor-of-token.ts',
       'auth/development-actor-header.ts': 'auth/authentication/development-actor-header.ts',
       'auth/development-header-authenticator.ts': 'auth/authentication/development-header-authenticator.ts',
       'auth/authorization.ts': 'auth/authorization/authorization.ts',
