@@ -49,6 +49,8 @@ export const USAGE = `Usage
   ddd-ts-kit build-aliases [--project <tsconfig>]
   ddd-ts-kit drizzle-generate --name <what-it-does> [--custom]
   ddd-ts-kit drizzle-generate --replay [--base <git-ref>]
+  ddd-ts-kit prisma-generate --name <what-it-does>
+  ddd-ts-kit typeorm-generate <folder>/<what-it-does>
   ddd-ts-kit error-factories --plan | --apply [--to named|factories] [--dry-run]
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]

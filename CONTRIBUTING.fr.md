@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:b46b2d880f0663ed -->
+<!-- translation-of: CONTRIBUTING.md sha256:ce20f7e00172d7cc -->
 
 # Contribuer
 
@@ -228,11 +228,12 @@ git tag v0.2.0 && git push origin v0.2.0
 
 La pull request d'une release (son titre commence par `chore(release)`) fait tourner les projets
 générés sur Prisma et TypeORM installés pour de vrai, comme la nuit (`npm run
-ci:test:stacks-at-night`) et les *stacks* qui font se rencontrer chaque paire de valeurs de
-capacité (`npm run ci:test:pairwise`) : la CI d'une autre pull request ne fait que typer les
+ci:test:stacks-at-night`) les *stacks* qui font se rencontrer chaque paire de valeurs de
+capacité (`npm run ci:test:pairwise`) et la première migration de chaque ORM sur un vrai
+PostgreSQL (`npm run ci:test:migrations`) : la CI d'une autre pull request ne fait que typer les
 premiers et laisse les secondes à la nuit. L'étiquette
 lance le workflow `Release` : il les fait tourner une fois de plus et ne publie rien tant que l'un
-d'eux est rouge (posez l'étiquette une fois les jobs `managers` et `pairwise` de la pull request de la release
+d'eux est rouge (posez l'étiquette une fois les jobs `managers`, `pairwise` et `migrations` de la pull request de la release
 verts, ou un run de la nuit demandé sur `main`, `gh workflow run ci.yml --ref main` : l'étiquette pointe sur ce code ; si `generated-stacks` échoue quand même, rien n'a atteint
 npm : corrigez sur `main`, supprimez l'étiquette, `git push --delete origin v0.2.0 && git tag -d
 v0.2.0`, et posez-la sur le commit corrigé avec la même version), puis vérifie que l'étiquette est la version qu'annonce chaque package, construit, vérifie les archives, publie chaque package sur le registre npm avec

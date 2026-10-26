@@ -23,6 +23,48 @@ function projectWithDrizzleKit(script: string): string {
 const PROMPT_REFUSED =
   "console.log('Error: Interactive prompts require a TTY terminal (process.stdin.isTTY or process.stdout.isTTY is false).'); process.exit(0);";
 
+describe('ddd-ts-kit drizzle-generate, what it adds to a migration drizzle-kit wrote', () => {
+  it('creates a schema only if it is missing, so that a database that has it already migrates', () => {
+    const root = projectWithDrizzleKit(
+      "const fs = require('node:fs'); fs.mkdirSync('migrations', { recursive: true }); fs.writeFileSync('migrations/0000_init.sql', 'CREATE SCHEMA \"messaging\";\\n--> statement-breakpoint\\nCREATE SCHEMA IF NOT EXISTS \"audit\";\\n');",
+    );
+
+    expect(cli(root, 'drizzle-generate', '--name', 'init').code).toBe(0);
+
+    expect(read(root, 'migrations/0000_init.sql')).toBe(
+      'CREATE SCHEMA IF NOT EXISTS "messaging";\n--> statement-breakpoint\nCREATE SCHEMA IF NOT EXISTS "audit";\n',
+    );
+  });
+
+  it('makes the audit trail append-only in the migration that creates it, with the statements of the installed package', () => {
+    const root = projectWithDrizzleKit(
+      "const fs = require('node:fs'); fs.mkdirSync('migrations', { recursive: true }); fs.writeFileSync('migrations/0000_init.sql', 'CREATE TABLE \"audit\".\"audit_entries\" (\"id\" text);\\n');",
+    );
+
+    write(root, 'ddd-ts-kit.config.json', JSON.stringify({ contexts: {}, stack: { audit: 'on' } }));
+
+    write(
+      root,
+      'node_modules/@ddd-ts-kit/audit/package.json',
+      JSON.stringify({ type: 'module', exports: { './drizzle': './drizzle.js' } }),
+    );
+
+    write(
+      root,
+      'node_modules/@ddd-ts-kit/audit/drizzle.js',
+      'export const auditGuardStatements = (schema) => [`create function "${schema}"."audit_entries_append_only"()`];\n',
+    );
+
+    const result = cli(root, 'drizzle-generate', '--name', 'init');
+
+    expect(result.stdout).toContain('audit guard   migrations/0000_init.sql');
+
+    expect(read(root, 'migrations/0000_init.sql')).toBe(
+      'CREATE TABLE "audit"."audit_entries" ("id" text);\n--> statement-breakpoint\ncreate function "audit"."audit_entries_append_only"();\n',
+    );
+  });
+});
+
 describe('ddd-ts-kit drizzle-generate', () => {
   it('runs drizzle-kit generate with the name of the migration, in the project root, and prints what it printed', () => {
     const root = projectWithDrizzleKit("console.log('Your SQL migration file is migrations/1_add-invoices.sql');");
