@@ -9,5 +9,8 @@ import type { {{name.pascal}}Result } from '{{alias.context}}/application/querie
 @{{access.decoration}}
 {{/if}}
 export class {{name.pascal}}Query extends {{access.queryBase}}<{{name.pascal}}Result> {
+{{#if access.resourceUnnamed}}
+  // {{access.resourceTodo}}
+{{/if}}
   // TODO(domain): declare the criteria of "{{name.words}}" as a constructor with readonly primitives (filters, page), for example `{{access.constructorSample}}`.
 }

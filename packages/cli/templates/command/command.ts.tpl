@@ -9,6 +9,9 @@ import { Requires } from '@ddd-ts-kit/kernel/declarations';
 @{{access.decoration}}
 {{/if}}
 export class {{name.pascal}}Command extends AuthorizedCommand<{{command.result}}> {
+{{#if access.resourceUnnamed}}
+  // {{access.resourceTodo}}
+{{/if}}
   // TODO(domain): declare the input of "{{name.words}}" as a constructor with the actor first, then readonly primitives and ids, for example `constructor(actor: Actor, readonly customerId: string) { super(actor); }`; the handler turns them into value objects.
 }
 {{/if}}

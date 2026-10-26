@@ -1,5 +1,5 @@
 [English](authorization-in-practice.md) · **Français**
-<!-- translation-of: authorization-in-practice.md sha256:be286d8e917344d1 -->
+<!-- translation-of: authorization-in-practice.md sha256:8d84c26fe2554203 -->
 
 # L'autorisation en pratique
 
@@ -346,4 +346,4 @@ adaptateur pour un service dédié est le sujet de
 - [Moteurs d'autorisation](../tools/authorization-engines.fr.md)
 - [`@ddd-ts-kit/auth`](../../packages/auth/README.fr.md) : la référence de l'API
 - [Référence d'architecture](../ARCHITECTURE.fr.md) : règles `authz/declared`, `authz/in-application`,
-  `authz/actor-explicit`, `authz/granted`, `authz/scope-narrows`
+  `authz/actor-explicit`, `authz/granted`, `authz/scope-narrows`, `authz/resource-modelled`

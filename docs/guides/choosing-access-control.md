@@ -404,6 +404,16 @@ export async function adaReadsTheQuarterlyReport(): Promise<void> {
 
 ![The three stored tuples of the example as a graph: ada is a member of the team finance, the members of finance are viewers of the folder reports, the folder reports is the parent of the document q3; the schema derives from them that ada may view q3](../assets/diagrams/choosing-access-control-relationships.svg)
 
+A use case names the element its permission is checked on, in the `resource` of its requirement
+(`{ type: 'document', id: command.documentId }`). The generators write the context
+(`{ type: 'context', id: '<context>' }`) with a `TODO(domain)` that names the element, because the
+context is the right resource only for a use case on no element (declaring one, running a search
+whose scope narrows the ids). The schema written by `init` derives on the `context` type only the
+permissions no element derives: a permission modelled on an element leaves the operators of the
+context, so a check that still names the context is refused instead of granted to every operator.
+A search keeps two permissions for that reason: one held on the context to run it, one derived on
+the element for its scope.
+
 Tuples are written through a port in the words of the application, in the transaction of the
 command when the store is the PostgreSQL one. The handler says what happened ("this user owns
 this document"); only the adapter knows the tuples:
