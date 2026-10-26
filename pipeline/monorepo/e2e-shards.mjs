@@ -29,54 +29,53 @@ export const ELSEWHERE = [
 ];
 
 /**
- * One list per runner, with the seconds each file took on a runner of the pipeline (the median of
- * the 16 runs of the trunk and of pull requests of 2026-10-26, four cores, the files one after the
- * other), each file given, longest first, to the runner with the most room. The earlier table
- * (2026-10-23) had the two `first-minute` sweeps at 312 and 322 seconds; they doubled to 664 and 661
- * as the templates grew, and the third runner ended at 1,195 s against 593 s for the first. The
- * runners now end at 870, 867, 870 and 873 seconds. The two sweeps are not split in halves: each is
- * shorter than a runner's share, so a split would not shorten the longest runner.
+ * One list per runner, with the seconds each file took on a runner of the pipeline (the run of pull
+ * request #419 on 2026-10-26, the first with the cover of 16 stacks and the deep runs moved to the
+ * night: the first-minute sweeps fell from about 660 to 151 and 234 s, proven-stacks grew from 362 to
+ * 469 s, and the coverage gate runs on one stack, counted 60 s), each file given, longest first, to
+ * the runner with the most room. The fourth runner ended at 1,047 s against 330 s for the first; the
+ * runners now end at 550, 546, 547, 550 seconds.
  */
 export const SHARDS = [
   {
-    'first-minute-no-context.spec.ts': 664,
+    // With NestJS on Nest controllers and Passport.
+    'proven-stacks.spec.ts': 469,
+    'event-sourced.spec.ts': 38,
+    'violations.spec.ts': 20,
+    // Every route generator on Nest controllers, one project.
+    'nest-controllers.spec.ts': 14,
+    'client-sdk.spec.ts': 9,
+  },
+  {
+    'preset-identity.spec.ts': 314,
     // oRPC and tRPC on the four servers and on Nest controllers.
-    'rpc-procedures.spec.ts': 122,
-    'event-sourced.spec.ts': 56,
+    'rpc-procedures.spec.ts': 87,
+    'zero-violation.spec.ts': 62,
+    'preset-identity-generated.spec.ts': 42,
+    'error-reporting.spec.ts': 24,
+    'manual-module.spec.ts': 14,
+    // A copy of the example application, merge-trunk run in two of its worktrees.
+    'merge-trunk-example.spec.ts': 3,
+  },
+  {
+    'first-minute-two-contexts.spec.ts': 234,
+    // The Jest stack too.
+    'typecheck.spec.ts': 142,
+    'contract-pairs.spec.ts': 62,
+    'coverage-gate.spec.ts': 60,
+    'file-uploads.spec.ts': 34,
+    // A repository that declares personal columns, with the erasure of its context, installed as published.
+    'personal-fields.spec.ts': 13,
+    'platform-error-mapper.spec.ts': 2,
+  },
+  {
+    'first-class.spec.ts': 213,
+    'first-minute-no-context.spec.ts': 151,
+    'new-rule-violations.spec.ts': 86,
+    'formatted.spec.ts': 57,
     // A multi-tenant project with a service, its roots composed.
     'service-composition.spec.ts': 16,
-    'client-sdk.spec.ts': 12,
-  },
-  {
-    'first-minute-two-contexts.spec.ts': 661,
-    // The Jest stack too.
-    'typecheck.spec.ts': 130,
-    'preset-identity-generated.spec.ts': 39,
-    'error-reporting.spec.ts': 20,
-    // Every route generator on Nest controllers, one project.
-    'nest-controllers.spec.ts': 13,
-    'platform-error-mapper.spec.ts': 2,
-    // A copy of the example application, merge-trunk run in two of its worktrees.
-    'merge-trunk-example.spec.ts': 2,
-  },
-  {
-    'coverage-gate.spec.ts': 519,
-    'first-class.spec.ts': 208,
-    'contract-pairs.spec.ts': 60,
-    'formatted.spec.ts': 56,
-    'error-rule-violations.spec.ts': 15,
-    // A repository that declares personal columns, with the erasure of its context, installed as published.
-    'personal-fields.spec.ts': 12,
-  },
-  {
-    // With NestJS on Nest controllers and Passport.
-    'proven-stacks.spec.ts': 362,
-    'preset-identity.spec.ts': 303,
-    'new-rule-violations.spec.ts': 74,
-    'zero-violation.spec.ts': 57,
-    'file-uploads.spec.ts': 34,
-    'violations.spec.ts': 20,
-    'manual-module.spec.ts': 12,
+    'error-rule-violations.spec.ts': 16,
     'dev-reload.spec.ts': 11,
   },
 ];
