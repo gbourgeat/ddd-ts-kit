@@ -1,3 +1,0 @@
-**`todo` and `status` no longer count an `it.todo` in `test/architecture/extractable.spec.ts`.** The spec kept one in the branch for a project with no context, which never runs once a context exists, so a gate that wants nothing left had to explain it away. The branch is now a passing case, `has no context to wire alone yet`, in the three variants of the template (tsyringe, declared, manual); Jest still gets no table without rows.
-
-To move: a project already generated keeps its `it.todo` until the spec is regenerated, or replace that line by `it('has no context to wire alone yet', () => expect(contexts).toHaveLength(0));`.
