@@ -332,6 +332,9 @@ the work queue keeps filling.
   taken by the broker. The relay publishes one by one and retries, consumers deduplicate.
 - **`onUnroutable: 'fail'`** rejects an event no queue is bound for; behind the outbox relay
   such a record is retried, then dead. Use it only when a missing consumer is an incident.
+- **`publishTimeoutMs`** (default 30000): a publication the broker has not confirmed by then is
+  rejected with `PUBLISH_NOT_CONFIRMED`, as on NATS and Kafka, so the relay retries it instead of
+  waiting for a confirmation that a stalled broker never sends.
 - **A consumer that crashes mid-handler** gets its messages back without `x-attempt` being
   incremented. Quorum queues bound that with their delivery limit, after which the message is
   dead-lettered to the dead queue by the broker; classic queues do not bound it. This path is

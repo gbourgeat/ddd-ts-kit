@@ -584,7 +584,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   --stored-events  docs records the shape of each version of the stored events in stored-events.lock.json,
                    never rewriting a recorded one but one recorded by 0.82.0 or earlier, recorded again as
                    the kit reads it now: run it once the shape of a version is the one to store; docs --check
-                   fails while a declared version is not recorded, or recorded by 0.82.0 or earlier
+                   fails while a declared version is not recorded, or recorded by 0.82.0 or earlier, or
+                   recorded as the hash of nothing; the codecs of each module of a context are read too, and a
+                   codec whose data type is not found or declares no member is refused, nothing recorded
   --sdk            init records "sdk" in the config and generates the clients with the project
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
                    "generate --help --json" says which kinds do

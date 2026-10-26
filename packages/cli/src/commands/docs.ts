@@ -7,6 +7,7 @@ import { writeBehaviour } from '../docs/write-behaviour';
 import { writeDocs } from '../docs/write-docs';
 import type { KeptContext } from '../generate/refresh-barrels';
 import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file';
+import { emptilyRecordedStoredEvents } from '../docs/emptily-recorded-stored-events';
 import { formerlyRecordedStoredEvents } from '../docs/formerly-recorded-stored-events';
 import { unrecordedStoredEvents } from '../docs/unrecorded-stored-events';
 import { writeStoredEventsLock } from '../docs/write-stored-events-lock';
@@ -91,15 +92,23 @@ function reportCheck(io: Io, args: Arguments, { ws, config, kept }: DocsRun): nu
   const recording = args.flag('stored-events');
   const unrecorded = recording ? [] : unrecordedStoredEvents(ws, config, contextsOnDisk(ws, config));
   const formerlyRecorded = recording ? [] : formerlyRecordedStoredEvents(ws, config, contextsOnDisk(ws, config));
-  const ok = stale.length === 0 && unrecorded.length === 0 && formerlyRecorded.length === 0;
+  const emptilyRecorded = emptilyRecordedStoredEvents(ws.root);
+
+  const ok =
+    stale.length === 0 && unrecorded.length === 0 && formerlyRecorded.length === 0 && emptilyRecorded.length === 0;
+
   const warnings = kept.map((context) => earlierLayoutWarning(config, context));
 
   if (args.json) {
-    io.out(JSON.stringify({ ok, stale, drift, unrecorded, formerlyRecorded, warnings }, null, 2));
+    io.out(JSON.stringify({ ok, stale, drift, unrecorded, formerlyRecorded, emptilyRecorded, warnings }, null, 2));
   } else if (ok) {
     io.out(['The generated documentation is up to date.', ...warningLines(warnings)].join('\n'));
   } else {
-    io.out([...staleLines(stale, drift, { unrecorded, formerlyRecorded }), ...warningLines(warnings)].join('\n'));
+    io.out(
+      [...staleLines(stale, drift, { unrecorded, formerlyRecorded, emptilyRecorded }), ...warningLines(warnings)].join(
+        '\n',
+      ),
+    );
   }
 
   return ok ? 0 : 1;
@@ -124,18 +133,23 @@ function warningLines(warnings: readonly EarlierLayoutWarning[]): string[] {
 interface LockGaps {
   readonly unrecorded: readonly string[];
   readonly formerlyRecorded: readonly string[];
+  readonly emptilyRecorded: readonly string[];
 }
 
 function staleLines(
   stale: readonly string[],
   drift: Readonly<Record<string, string>>,
-  { unrecorded, formerlyRecorded }: LockGaps,
+  { unrecorded, formerlyRecorded, emptilyRecorded }: LockGaps,
 ): string[] {
   const lines = stale.map((file) => `stale  ${file}${drift[file] === undefined ? '' : `: ${drift[file]}`}`);
   const versions = unrecorded.map((version) => `unrecorded  ${version} in ${STORED_EVENTS_LOCK}`);
 
   const former = formerlyRecorded.map(
     (version) => `formerly recorded  ${version} in ${STORED_EVENTS_LOCK}, by 0.82.0 or earlier`,
+  );
+
+  const empty = emptilyRecorded.map(
+    (version) => `recorded empty  ${version} in ${STORED_EVENTS_LOCK}: the hash of nothing vouches for no shape`,
   );
 
   const runDocs = stale.length === 0 ? [] : ['Run `ddd-ts-kit docs` and commit the result.'];
@@ -154,7 +168,14 @@ function staleLines(
           'Once the shape of these versions is the one to keep, run `ddd-ts-kit docs --stored-events` and commit the lock: event-sourcing/upcaster-required then refuses any change of it.',
         ];
 
-  return [...lines, ...versions, ...former, '', ...runDocs, ...runStoredEvents, ...recordAgain];
+  const fillEmpty =
+    emptilyRecorded.length === 0
+      ? []
+      : [
+          'Declare the fields of these versions in their codec, remove their entries from the lock and run `ddd-ts-kit docs --stored-events` again.',
+        ];
+
+  return [...lines, ...versions, ...former, ...empty, '', ...runDocs, ...runStoredEvents, ...recordAgain, ...fillEmpty];
 }
 
 function contextsOnDisk(ws: Workspace, config: Config): string[] {

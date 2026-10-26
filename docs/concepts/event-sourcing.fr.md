@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:749e97f7748dc711 -->
+<!-- translation-of: event-sourcing.md sha256:c8a1627e0779d637 -->
 
 # Event sourcing, par agrégat
 
@@ -298,7 +298,12 @@ passée du code. Le kit applique la même discipline avec son propre mécanisme 
    sans que personne ne le voie, donc le codec le traduit en un type stocké qui lui est propre.
 2. `ddd-ts-kit docs --stored-events` enregistre l'empreinte de ce type, et des types qu'il
    atteint, pour chaque version, dans `stored-events.lock.json`, une fois que la forme de la
-   version est celle à stocker. Une version enregistrée n'est jamais réécrite, sauf une version
+   version est celle à stocker. Elle lit les codecs de `infrastructure/persistence/` du contexte
+   et de chaque module de son modèle, et refuse, en nommant le fichier du codec et la raison, un
+   type de données qu'elle ne sait pas lire (non déclaré dans le fichier) ou qui ne déclare aucun
+   membre : le hachage du vide ne garantirait aucune forme (un événement qui ne porte rien s'écrit `type <Event>Data = Record<string, never>`),
+   et `docs --check` signale une entrée
+   du fichier de verrouillage qui le contient. Une version enregistrée n'est jamais réécrite, sauf une version
    enregistrée par la 0.82.0 ou une version antérieure : celle-ci lisait à part les arguments de
    type d'un membre (`Record<string, number>`), si bien que deux formes pouvaient partager une
    empreinte, et `docs --stored-events` l'enregistre à nouveau telle que le kit la lit désormais.

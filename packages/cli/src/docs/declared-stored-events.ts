@@ -7,27 +7,26 @@ import { workspaceSources } from '../generate/workspace-sources';
 import type { Workspace } from '../workspace';
 import { roleFoldersOf, treeOf } from '../model-modules';
 
+/** A stored event declaration with the codec file that holds it. */
+export type CodecDeclaration = StoredEventDeclaration & { readonly file: string };
+
 /**
- * The stored events the codecs of `infrastructure/persistence/` of these contexts declare, a key
+ * The stored events the codecs of `infrastructure/persistence/` of these contexts, and of each module of their model, declare, a key
  * `[<Event>.eventName]` read from the events of `domain/events/`.
  */
-export function declaredStoredEvents(
-  ws: Workspace,
-  config: Config,
-  contexts: readonly string[],
-): StoredEventDeclaration[] {
+export function declaredStoredEvents(ws: Workspace, config: Config, contexts: readonly string[]): CodecDeclaration[] {
   const sources = workspaceSources(ws, config);
 
   return contexts.flatMap((context) => {
-    const root = `${config.contextsDir}/${context}`;
-
     const eventNameOf = eventNameResolver(
       roleFoldersOf(ws, treeOf(config, context), 'domain/events').flatMap((folder) => sourcesIn(ws, folder, sources)),
     );
 
-    return sourcesIn(ws, `${root}/infrastructure/persistence`, sources).flatMap((file) =>
-      storedEventDeclarations(file, eventNameOf),
-    );
+    return roleFoldersOf(ws, treeOf(config, context), 'infrastructure/persistence')
+      .flatMap((folder) => sourcesIn(ws, folder, sources))
+      .flatMap((file) =>
+        storedEventDeclarations(file, eventNameOf).map((declaration) => ({ ...declaration, file: file.path })),
+      );
   });
 }
 
