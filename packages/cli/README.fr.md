@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:74cdb0c5ad181a01 -->
+<!-- translation-of: README.md sha256:1a00ce7d539ca1cc -->
 
 # ddd-ts-kit
 
@@ -1232,7 +1232,7 @@ ddd-ts-kit todo [<context>]
 `status` affiche la ligne `Next:` de `docs/architecture/plan.md`, les lignes de
 `docs/architecture/slices.md` par statut et par responsable, et par contexte les `TODO(domain)`,
 `TODO(platform)` et `it.todo` restants, puis ceux hors des contextes. Un fichier manquant n'est
-pas une erreur. Chaque ligne qui n'est pas faite dit si elle peut commencer : prête sur le tronc
+pas une erreur. Quand le plan est à l'étape 7 (la construction), la ligne `Next:` est déduite des lignes (la prochaine ligne prête sur le tronc, ou `7 build done` quand toutes sont faites) et la ligne du plan est affichée à côté, `planNext` dans `--json`. Chaque ligne qui n'est pas faite dit si elle peut commencer : prête sur le tronc
 quand toutes ses dépendances sont faites, prête sur une branche quand chaque dépendance non faite
 est une ligne confiée à un *worker* dont le *worktree* a des *commits* d'avance sur sa base (les
 `rows` de son `.ddd-ts-kit/worker.json`, tels que `status --workers` les lit), et en attente
@@ -1240,7 +1240,7 @@ sinon, avec les identifiants qu'elle attend. Une story ou un jalon dont toutes l
 faites mais que des marqueurs qui lui appartiennent gardent ouvert a sa propre ligne (seuls les
 marqueurs qui peuvent garder une telle story ouverte passent par git blame, un appel par fichier), avec la commande qui les liste :
 `story M1: every row done, 3 markers left: npx ddd-ts-kit story-check M1` (voir
-[story-check](#story-check)). `--json` affiche `{ next, slices, remaining }` :
+[story-check](#story-check)). `--json` affiche `{ next, planNext, slices, remaining }` :
 `next` et `slices` valent `null` quand leur fichier manque, `slices` contient
 `{ file, rows, byStatus, byOwner, duplicates, unscoped, unclosed }`, `unclosed` valant
 `[{ story, markers, command }]`, une ligne non faite portant

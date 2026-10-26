@@ -5,6 +5,7 @@ import { projectContexts } from '../story/project-contexts';
 import { unclosedStories } from '../story/unclosed-stories';
 import type { Workspace } from '../workspace';
 import type { Progress, RemainingCount, SlicesProgress } from './progress';
+import { buildNextOf } from './build-next-of';
 import { readRemaining } from './read-remaining';
 import { readSlices, SLICES_FILE } from './read-slices';
 import type { Remaining } from './remaining';
@@ -30,9 +31,14 @@ export function readProgress(ws: Workspace, config: Config, workers: RowsOfWorke
   const remaining = readRemaining(ws, config);
   const around = { root: ws.root, ...workers, remaining, contexts: projectContexts(ws, config) };
 
+  const planned = /^Next:[ \t]*(\S.*?)\s*$/m.exec(ws.read(PLAN_FILE) ?? '')?.[1] ?? null;
+  const progress = slices === undefined ? null : slicesProgress(slices, around);
+  const derived = buildNextOf(planned, progress?.rows ?? []);
+
   return {
-    next: /^Next:[ \t]*(\S.*?)\s*$/m.exec(ws.read(PLAN_FILE) ?? '')?.[1] ?? null,
-    slices: slices === undefined ? null : slicesProgress(slices, around),
+    next: derived ?? planned,
+    planNext: derived === undefined || derived === planned ? null : planned,
+    slices: progress,
     remaining: countsOf(remaining, Object.keys(config.contexts)),
   };
 }
