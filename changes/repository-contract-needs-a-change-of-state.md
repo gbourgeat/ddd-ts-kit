@@ -1,0 +1,5 @@
+**The repository contract says when its `mutate` changes nothing, and `InMemoryRepository` treats a save with no change as a no-op.** The case `refuses to overwrite a change it has not seen` passed on a fake that bumped its version on every save and failed on an event-sourced adapter, which appends nothing for no pending event. Both now mean the same: a save of an aggregate that is as it was when loaded or last saved changes nothing (no new version, no conflict). The case requires `mutate` to record a change, and fails with `mutate changed nothing: give the contract a change of state` when it does not.
+
+`mutate` is optional in the options of `repositoryContract`: without it, the stale-save case is registered as pending (`it.todo`) with the reason `give the contract a mutate that records a change of state`, so a freshly generated repository is green and the case shows in `ddd-ts-kit todo`. A `mutate` that changes nothing fails the case with `mutate changed nothing: give the contract a change of state`.
+
+To move: add a `mutate` that records a change to each contract spec; the case stays pending until then.

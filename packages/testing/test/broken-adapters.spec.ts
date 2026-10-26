@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FixedClock, type Lock, type LockHandle, type Repository } from '@ddd-ts-kit/kernel';
-import { resetSequences } from '../src';
+import { InMemoryRepository, resetSequences } from '../src';
 import { lockContract, repositoryContract } from '../src/contracts';
 import { anOrder } from './support/builders';
 import { CollectingRunner } from './support/collecting-runner';
@@ -51,6 +51,46 @@ class LastWriteWinsOrders implements Repository<Order> {
     this.rows.set(order.id, { snapshot: order.toSnapshot(), version: order.version });
   }
 }
+
+describe('the repository contract and a mutate that changes nothing', () => {
+  it('says so in the stale-save case instead of waiting for a conflict', async () => {
+    const collecting = new CollectingRunner();
+
+    repositoryContract<Order>(collecting, {
+      ...orders,
+      mutate: () => undefined,
+      name: 'unchanged',
+      createRepository: () => new InMemoryRepository<Order>({ clone: (order) => Order.rehydrate(order.toSnapshot()) }),
+    });
+
+    const { failed, messages } = await collecting.run();
+
+    expect(failed).toEqual(['refuses to overwrite a change it has not seen']);
+    expect(messages.join('\n')).toContain('mutate changed nothing: give the contract a change of state');
+  });
+});
+
+describe('the repository contract without a mutate', () => {
+  it('leaves the stale-save case pending with its reason, and passes the others', async () => {
+    const collecting = new CollectingRunner();
+
+    repositoryContract<Order>(collecting, {
+      ...orders,
+      mutate: undefined,
+      name: 'no mutate',
+      createRepository: () => new InMemoryRepository<Order>({ clone: (order) => Order.rehydrate(order.toSnapshot()) }),
+    });
+
+    const { failed, passed } = await collecting.run();
+
+    expect(failed).toEqual([]);
+    expect(passed).toHaveLength(6);
+
+    expect(collecting.pending).toEqual([
+      expect.stringContaining('give the contract a mutate that records a change of state'),
+    ]);
+  });
+});
 
 describe('the repository contract and a broken repository', () => {
   it('fails a repository that loses what it saved wherever a saved aggregate is read back', async () => {

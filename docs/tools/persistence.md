@@ -326,6 +326,14 @@ The contract checks that a saved aggregate is found with its state, that two agg
 apart, that later saves are stored, that a change not saved is not, and that a save over a
 version it did not read is refused with `CONCURRENCY_CONFLICT`.
 
+A save of an aggregate with no pending change is a no-op for concurrency, as it is for an event
+store, which appends nothing: no new version, no conflict, on the fake as on the adapter. So the
+stale-save case needs a `mutate` that records a change of state; when it records nothing, the
+case fails with `mutate changed nothing: give the contract a change of state` instead of
+waiting for a conflict that never comes. `mutate` is optional: without it the case stays pending
+(`it.todo`, with the reason `give the contract a mutate that records a change of state`), which is
+how a freshly generated contract spec starts.
+
 ## Comparison
 
 Versions checked on 2026-10-10 against the npm registry.
