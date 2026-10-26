@@ -48,6 +48,7 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
   // Before the JSON parser, which would read first a JSON file sent through a signed link.
   mountExpress(app, served.fileRoutes, served.boundary);
 {{/if}}
+
   // The bytes of a JSON body are kept for a controller that declares `rawBody` (a signed webhook).
   app.use(
     express.json({
@@ -56,6 +57,7 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
       },
     }),
   );
+
 {{#unless rpc.none}}
   serveProcedures(app, served);
 {{/unless}}
