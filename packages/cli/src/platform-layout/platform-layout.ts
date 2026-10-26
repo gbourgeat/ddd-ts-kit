@@ -41,6 +41,7 @@ export const PLATFORM_LAYOUT = [
       'compose-application.ts': 'composition/compose-application.ts',
       'platform.module.ts': 'composition/platform.module.ts',
       'platform-test.module.ts': 'composition/platform-test.module.ts',
+      'platform-error-mapper.ts': 'composition/platform-error-mapper.ts',
       'lay-foundations.ts': 'composition/lay-foundations.ts',
       'platform.ts': 'composition/platform.ts',
       'create-platform.ts': 'composition/create-platform.ts',

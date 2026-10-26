@@ -1,6 +1,6 @@
 @@imports
 import { {{name.pascal}}Job } from '{{alias.context}}/application/scheduling/{{name.kebab}}.job{{alias.ext}}';
-@@registrations
+@@jobs
 const {{name.camel}}Job = new {{name.pascal}}Job(platform.commands);
 
 platform.jobs.register({

@@ -11,7 +11,7 @@ import { {{upstream.definition}} as {{name.camel}}Definition } from '{{alias.con
 import { idempotent, inEventScope } from '@ddd-ts-kit/kernel';
 {{/if}}
 import { {{name.pascal}}IntegrationHandler } from '{{alias.context}}/application/integration/handlers/{{name.kebab}}.integration-handler{{alias.ext}}';
-@@registrations
+@@reactions
 const {{name.camel}}IntegrationHandler = new {{name.pascal}}IntegrationHandler(platform.commands);
 
 {{#if consumer.declarative}}

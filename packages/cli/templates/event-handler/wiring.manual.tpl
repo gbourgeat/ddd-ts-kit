@@ -1,7 +1,7 @@
 @@imports
 import { {{handler.pascal}}EventHandler } from '{{alias.context}}/application/event-handlers/{{handler.kebab}}.event-handler{{alias.ext}}';
 import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event{{alias.ext}}';
-@@registrations
+@@reactions
 const {{handler.camel}}EventHandler = platform.adapter(new {{handler.pascal}}EventHandler(), { kind: 'domain-event-handler', context: '{{context.kebab}}' });
 
 {{#if handler.afterCommit}}

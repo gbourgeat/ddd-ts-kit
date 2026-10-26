@@ -1,3 +1,6 @@
+{{#if http.any}}
+import { ErrorMapper } from '@ddd-ts-kit/http';
+{{/if}}
 {{#if eventSourcing.on}}
 import { defineContextModule, type ModuleBuilder } from '@ddd-ts-kit/di';
 import {
@@ -21,6 +24,9 @@ import { defineContextModule } from '@ddd-ts-kit/di';
 import { InMemoryFileStorage } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{/unless}}
+{{#if http.any}}
+import { platformErrorMapper } from '{{alias.platform}}/composition/platform-error-mapper{{alias.ext}}';
+{{/if}}
 {{#if persistence.packagedToken}}
 import { {{persistence.token}} } from '{{persistence.tokenPackage}}';
 {{/if}}
@@ -41,6 +47,11 @@ export const platformTestModule = defineContextModule({
     builder.bind({{persistence.token}}).toFactory(() => {
       throw new Error('A handler spec has no database: give a fake for the repository it uses.');
     });
+
+    {{/if}}
+    {{#if http.any}}
+    // The mapper of the application: a route spec answers what the running application answers.
+    builder.bind(ErrorMapper).toValue(platformErrorMapper());
 
     {{/if}}
     {{#if files.any}}
