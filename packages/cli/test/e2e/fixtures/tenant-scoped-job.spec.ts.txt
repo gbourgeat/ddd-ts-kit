@@ -1,0 +1,86 @@
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { contextModule, createTestApplication } from '@ddd-ts-kit/di';
+import {
+  ExecutionScope,
+  FixedClock,
+  FixedExecutionScope,
+  executionContext,
+  type Actor,
+  type ExecutionContext,
+  type JobExecution,
+  type ScheduledJob,
+} from '@ddd-ts-kit/kernel';
+import { Scheduled } from '@ddd-ts-kit/kernel/declarations';
+import { DrizzleInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/drizzle-invoice.repository';
+import { anInvoice } from '@/contexts/billing/test/builders/invoice.builder';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
+
+const clock = new FixedClock(new Date('2026-01-01T00:00:00.000Z'));
+const INVOICES = { acme: 'invoice-of-acme', globex: 'invoice-of-globex' } as const;
+
+let database: TestDatabase;
+
+beforeAll(async () => {
+  database = await openTestDatabase();
+});
+
+afterAll(async () => {
+  await database.close();
+});
+
+describe('a job per tenant that reads the tenant-scoped repository of the project', () => {
+  it('reads the rows of its own tenant only on each run, and none of the other tenants', async () => {
+    await database.reset();
+    await openTheInvoices();
+
+    const { application, found } = arrange();
+
+    await application.jobs.runNow('probe.read-invoices');
+
+    expect(found).toEqual([
+      { tenant: 'acme', invoices: [INVOICES.acme] },
+      { tenant: 'globex', invoices: [INVOICES.globex] },
+    ]);
+  });
+});
+
+/** One invoice for each tenant, saved as that tenant. */
+async function openTheInvoices(): Promise<void> {
+  for (const tenant of ['acme', 'globex'] as const) {
+    const scope = new FixedExecutionScope(workOf(tenant));
+    const repository = new DrizzleInvoiceRepository(database.persistence.database, scope, clock);
+
+    await repository.save(anInvoice().identifiedBy(INVOICES[tenant]).build());
+  }
+}
+
+/** The job reads both invoices by id, through the real repository, in the scope the scheduler gives its run. */
+function arrange() {
+  const found: { tenant: string | undefined; invoices: string[] }[] = [];
+
+  class ReadInvoices implements ScheduledJob {
+    constructor(private readonly scope: ExecutionScope) {}
+
+    async run(execution: JobExecution): Promise<void> {
+      const repository = new DrizzleInvoiceRepository(database.persistence.database, this.scope, clock);
+      const read = await Promise.all(Object.values(INVOICES).map((id) => repository.findById(id)));
+
+      found.push({ tenant: execution.tenantId, invoices: read.flatMap((invoice) => (invoice === undefined ? [] : [invoice.id])) });
+    }
+  }
+
+  Scheduled('probe.read-invoices', { every: '1d', tenancy: 'per-tenant' }, [ExecutionScope])(ReadInvoices);
+
+  const application = createTestApplication({
+    modules: [contextModule('probe', [ReadInvoices])],
+    tenants: ['acme', 'globex'],
+  });
+
+  return { application, found };
+}
+
+function workOf(tenantId: string): ExecutionContext {
+  const actor: Actor = { id: `member-of-${tenantId}`, type: 'user', tenantId, roles: [], attributes: {} };
+
+  return executionContext({ correlationId: 'tenant-scoped-job-spec', actor, origin: 'test' });
+}

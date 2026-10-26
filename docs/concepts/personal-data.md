@@ -110,7 +110,8 @@ context of origin `cli` with the operator as actor, and runs `eraseDataSubject` 
    event of the person reads `[erased]` at the next replay, and audited when the trail is on;
 2. every copy listed in `data-subject-copies.ts`, one port per context, resolved from the
    application: each adapter erases or pseudonymises the rows of its declared tables, in the tenant
-   of the work; with `--tenancy shared-table`, `TENANTS` names the tenants, comma separated, and a
+   of the work; with `--tenancy shared-table`, the tenant directory names the tenants (the organisations of the
+   identity context when the project has it, else `TENANTS`, comma separated) and a
    copy runs once per tenant, since a write of tenant data is never widened;
 3. the projections fed by the store, rebuilt once the key is gone: given by hand for now, where the
    runner says `TODO(platform)`.
@@ -150,7 +151,7 @@ holds of a person and forgets them at the first erasure, like the fake of a repo
 access and to portability (GDPR articles 15 and 20) the same way: the script composes the
 application, opens an execution context of origin `cli` with the operator as actor, and runs
 `exportDataSubject` of the kernel over every export listed in `data-subject-exports.ts`, one port
-per context, in every tenant named by `TENANTS` with shared tables, since a read of tenant data is
+per context, in every tenant the tenant directory lists with shared tables (the organisations of the identity context, else `TENANTS`), since a read of tenant data is
 confined to its tenant as a write is. Each adapter reads the same declarations as the erasure and
 answers one record per row about the person, under `<context>.<table>`, with the personal columns
 and the keys of the files as plain data, no other column and nothing of anyone else; a row

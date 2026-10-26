@@ -69,7 +69,7 @@ function tenancyOf(scope: Scope, name: Name): JobTenancy {
   scope.ws.note(
     global
       ? `${name.pascal}Job is global (\`tenancy: 'global'\`): it runs once per occurrence, in no tenant, so a tenant-scoped repository refuses it. Drop --global for a job that works one tenant at a time.`
-      : `${name.pascal}Job runs per tenant (\`tenancy: 'per-tenant'\`): once per tenant of the TenantDirectory (TENANTS) for each occurrence, each run in the scope of its tenant. Pass --global for work across tenants.`,
+      : `${name.pascal}Job runs per tenant (\`tenancy: 'per-tenant'\`): once per tenant of the TenantDirectory for each occurrence (the organisations of the identity context when the project has it, else the list of TENANTS, read once at the boot), each run in the scope of its tenant. Pass --global for work across tenants.`,
   );
 
   return global ? 'global' : 'per-tenant';

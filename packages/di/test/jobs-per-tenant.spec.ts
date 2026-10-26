@@ -41,6 +41,22 @@ describe('a job that runs per tenant on the default scheduler', () => {
     expect(app.resolve(TenantDirectory)).toBe(tenants);
   });
 
+  it('asks the directory at each occurrence, so a tenant created after the boot gets its run', async () => {
+    const seen: (string | undefined)[] = [];
+    const listed: string[] = ['north'];
+    const tenants: TenantDirectory = { tenants: async () => [...listed] };
+
+    const app = createApplication({
+      modules: [kernelModule({ tenants }), contextModule('desk', [tenantsJob(seen)])],
+    });
+
+    await app.resolve(JobScheduler).runNow('desk.close-the-day');
+    listed.push('south');
+    await app.resolve(JobScheduler).runNow('desk.close-the-day');
+
+    expect(seen).toEqual(['north', 'north', 'south']);
+  });
+
   it('is refused when it is registered, and no directory is bound, when the kernel module names no tenants', () => {
     const composing = () => createApplication({ modules: [kernelModule(), contextModule('desk', [tenantsJob([])])] });
 

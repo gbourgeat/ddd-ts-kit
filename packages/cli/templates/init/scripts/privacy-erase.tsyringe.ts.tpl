@@ -9,6 +9,9 @@ import { composeApplication } from '{{alias.platform}}/composition/compose-appli
 import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
 {{/if}}
 import { openPersistence } from '{{alias.platform}}/database/open-persistence{{alias.ext}}';
+{{#if tenancy.any}}
+import { tenantDirectory } from '{{alias.platform}}/composition/tenant-directory{{alias.ext}}';
+{{/if}}
 import { inProcessEvents } from '{{alias.platform}}/events/in-process-events{{alias.ext}}';
 import { runErasure } from '{{alias.platform}}/privacy/run-erasure{{alias.ext}}';
 
@@ -17,11 +20,11 @@ import { runErasure } from '{{alias.platform}}/privacy/run-erasure{{alias.ext}}'
 {{#if eventSourcing.on}}
 // The key of the subject is destroyed first, so every personal value of its stored events reads as
 // erased{{#if audit.on}}, and the erasure leaves a dated entry in the audit trail{{/if}}; then every copy a context declared in
-// src/platform/privacy/data-subject-copies.ts is erased{{#if tenancy.any}}, in each tenant of TENANTS (comma separated){{/if}}.
+// src/platform/privacy/data-subject-copies.ts is erased{{#if tenancy.any}}, in each tenant the tenant directory lists (TENANTS, or the organisations of the identity context){{/if}}.
 {{/if}}
 {{#unless eventSourcing.on}}
 // Every copy a context declared in src/platform/privacy/data-subject-copies.ts is erased or
-// pseudonymised where it lies{{#if tenancy.any}}, in each tenant of TENANTS (comma separated){{/if}}: the aggregates of
+// pseudonymised where it lies{{#if tenancy.any}}, in each tenant the tenant directory lists (TENANTS, or the organisations of the identity context){{/if}}: the aggregates of
 // this project are rows, so there is no key to destroy.
 {{/unless}}
 // The report says what was reached. Running it again completes an erasure that failed half way.
@@ -39,12 +42,8 @@ if (subject === undefined || positionals.length > 1) {
 }
 {{#if tenancy.any}}
 
-const tenants = (process.env['TENANTS'] ?? '').split(',').map((tenant) => tenant.trim()).filter((tenant) => tenant !== '');
-
-if (tenants.length === 0) {
-  console.error('TENANTS names the tenants the copies are erased in, comma separated: a write of tenant data is never widened.');
-  process.exit(2);
-}
+// The tenants of a project with no source of tenants (comma separated); the identity preset reads its organisations instead.
+const fixedTenants = (process.env['TENANTS'] ?? '').split(',').map((tenant) => tenant.trim()).filter((tenant) => tenant !== '');
 {{/if}}
 
 {{#if persistence.needsUrl}}
@@ -60,6 +59,17 @@ const application = composeApplication(persistence, {
   authenticator: offlineAuthenticator,
 {{/if}}
 });
+
+{{#if tenancy.any}}
+const tenants = await tenantDirectory(persistence, fixedTenants).tenants();
+
+if (tenants.length === 0) {
+  console.error('The tenant directory lists no tenant: a write of tenant data is never widened. Name them in TENANTS, comma separated, or open an organisation first.');
+  await application.stop();
+  await persistence.close();
+  process.exit(2);
+}
+{{/if}}
 
 try {
   const report = await runErasure(subject, {
