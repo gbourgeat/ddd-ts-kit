@@ -53,7 +53,7 @@ const bodyOf = (operationId: string) =>
   document.paths[`/${operationId}`]?.['post']?.['requestBody'] as { content: { 'application/json': unknown } };
 
 const answerOf = (operationId: string) =>
-  (document.paths[`/${operationId}`]?.['post']?.['responses'] as Record<string, unknown>)['201'];
+  (document.paths[`/${operationId}`]?.['post']?.['responses'] as Record<string, unknown> | undefined)?.['201'];
 
 describe('a schema shared by several routes', () => {
   it('lands once in the components, whatever library declared it', () => {

@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:ce20f7e00172d7cc -->
+<!-- translation-of: CONTRIBUTING.md sha256:e7327798ac2c44ed -->
 
 # Contribuer
 
@@ -56,6 +56,14 @@ npm run docs:translations
 npm run docs:samples
 node --test plugin/hooks/guard.test.mjs
 ```
+
+`npm run lint` est ESLint avec un cache par contenu (`.eslintcache/`, 1 à 2 secondes quand rien n'a changé). Le hook de
+pre-commit et le job Lint d'une pull request lancent Oxlint à la place (`npm run lint:oxlint`, avec les types, les
+règles du kit chargées comme plugin JS, configuré par `.oxlintrc.json`) ; le trunk et la nuit lancent ESLint sur tout
+l'arbre, qui porte aussi `no-unsafe-enum-assignment`, et le job d'essai compare les deux. Un changement de
+`eslint.config.mjs` atteint `.oxlintrc.json` dans le même commit. Vitest garde les modules transformés des sources dans
+`node_modules/.vitest-cache` (actif par défaut, ignoré par git, non conservé par la pipeline) : il rend une deuxième
+exécution d'un package environ 40 pour cent plus rapide, et `rm -rf node_modules/.vitest-cache` le vide.
 
 ## Règles de base
 
