@@ -73,10 +73,15 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 {{#if routes.nest}}
   const app = await NestFactory.create(createAppModule(routes, served.boundary, served.controllers), {
     logger: ['error', 'warn'],
+    // Keeps the bytes of the body for a controller that declares `rawBody` (a signed webhook).
+    rawBody: true,
   });
 {{/if}}
 {{#unless routes.nest}}
-  const app = await NestFactory.create(createAppModule(routes, served.boundary), { logger: ['error', 'warn'] });
+  const app = await NestFactory.create(createAppModule(routes, served.boundary), {
+    logger: ['error', 'warn'],
+    rawBody: true,
+  });
 {{/unless}}
 
 {{#if cache.rateLimit}}

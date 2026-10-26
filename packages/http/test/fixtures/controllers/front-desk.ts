@@ -1,5 +1,6 @@
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
-import { err, ok } from '@ddd-ts-kit/kernel';
+import { DomainError, err, ok } from '@ddd-ts-kit/kernel';
 import { customSchema } from '@ddd-ts-kit/validation';
 import { standardSchema } from '@ddd-ts-kit/validation/standard-schema';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
@@ -167,4 +168,42 @@ export class OpeningHoursController {
   handle(): { opens: string } {
     return { opens: '08:00' };
   }
+}
+
+/** The secret a monitoring tool signs its alerts with. */
+export const WEBHOOK_SECRET = 'whsec-test';
+
+/** A webhook signed over the bytes it was sent in: the controller reads them as they arrived, before any parsing. */
+@Controller({
+  method: 'POST',
+  path: '/alerts',
+  operationId: 'receiveAlert',
+  summary: 'Receive an alert',
+  guards: [Public],
+  rawBody: true,
+  errors: ['BAD_SIGNATURE'],
+  response: { status: 200, body: zodSchema(z.object({ title: z.string() }), { io: 'output' }) },
+})
+export class ReceiveAlertController {
+  async handle({ context }: HttpRequest<{ rawBody: true }>): Promise<{ title: string }> {
+    const bytes: Buffer[] = [];
+
+    for await (const chunk of context.stream) {
+      bytes.push(Buffer.from(chunk));
+    }
+
+    const body = Buffer.concat(bytes);
+    const given = Buffer.from(String(context.rawHeaders?.['x-signature'] ?? ''));
+    const expected = Buffer.from(createHmac('sha256', WEBHOOK_SECRET).update(body).digest('hex'));
+
+    if (given.length !== expected.length || !timingSafeEqual(given, expected)) {
+      throw new BadSignature('The signature does not match the body.');
+    }
+
+    return { title: JSON.parse(body.toString('utf8')).title };
+  }
+}
+
+class BadSignature extends DomainError {
+  readonly code = 'BAD_SIGNATURE';
 }

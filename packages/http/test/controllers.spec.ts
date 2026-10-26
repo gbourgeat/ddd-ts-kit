@@ -43,6 +43,7 @@ function describeTheFrontDesk(label: string, load: () => Promise<FrontDesk>): vo
         'GET /visits/:visitId getVisit',
         'DELETE /visits/clinics/:clinicId/visits/:visitId cancelVisit',
         'GET /opening-hours readOpeningHours',
+        'POST /alerts receiveAlert',
       ]);
     });
 

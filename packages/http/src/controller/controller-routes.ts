@@ -69,6 +69,7 @@ function documentationOf({ spec, declared, guards }: ResolvedController): Docume
     ...(declared.groups.length === 0 ? {} : { groups: declared.groups }),
     ...requestOf(spec),
     ...(spec.upload === undefined ? {} : { upload: spec.upload }),
+    ...(spec.rawBody === true ? { rawBody: true } : {}),
     responses: {
       [status]: { description: description ?? defaultDescription(body), ...bodyOf(body), ...headersOf(headers) },
     },

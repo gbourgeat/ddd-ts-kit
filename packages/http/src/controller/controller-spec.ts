@@ -31,6 +31,13 @@ export interface ControllerSpec {
    * text fields before the file: what follows it is not read.
    */
   readonly upload?: UploadSpec;
+  /**
+   * The body is left as it arrives, unparsed and not validated: `handle` reads the bytes in
+   * `context.stream` and the headers as they came in `context.rawHeaders`, to verify a signature made
+   * over them (a webhook) before parsing anything. The contract describes it as `application/octet-stream`.
+   * With `body`, `upload` or `consumes` it is refused: they read the body, and this one is not read.
+   */
+  readonly rawBody?: boolean;
   readonly response: ControllerResponse;
   /** Domain error codes the route may answer, added to those of its group and of its guards. */
   readonly errors?: readonly string[];

@@ -21,7 +21,8 @@ type Registrar = Record<HttpMethod, (path: string, ...handlers: RequestHandler[]
  * Registers the routes on an Express 5 application or router. A JSON body parser
  * (`express.json()`) must be installed before, otherwise bodies reach validation as `undefined`.
  * An upload and a raw body are read from the request stream, which that parser leaves alone
- * unless the request is JSON; a route that consumes another media type (`consumes`) gets a text
+ * unless the request is JSON, whose bytes a raw body then takes from `request.rawBody`
+ * (`express.json({ verify: (request, _, bytes) => { request.rawBody = bytes; } })`); a route that consumes another media type (`consumes`) gets a text
  * parser of its own for it. A body that is a stream is piped to the response, a streamed list
  * written chunk by chunk.
  */
@@ -59,7 +60,12 @@ function handlerOf(route: Route, options: ExpressMountOptions): ExpressHandler {
   return async (request, response) => {
     const { params, query, headers } = request;
     const body: unknown = request.body;
-    const result = await executeRoute(route, { params, query, headers, body, raw: request, stream: request }, options);
+
+    const result = await executeRoute(
+      route,
+      { params, query, headers, body, raw: request, stream: streamOf(request) },
+      options,
+    );
 
     response.status(result.status);
 
@@ -75,4 +81,15 @@ function handlerOf(route: Route, options: ExpressMountOptions): ExpressHandler {
       await writeStream(response, result.stream);
     }
   };
+}
+
+/**
+ * The body as it arrived. A JSON parser installed before the route has read the request already:
+ * the bytes it kept in `request.rawBody` (`express.json({ verify })`, or Nest created with
+ * `rawBody: true`) are then the stream.
+ */
+function streamOf(request: Request): Readable {
+  const kept: unknown = Reflect.get(request, 'rawBody');
+
+  return request.readableEnded && Buffer.isBuffer(kept) ? Readable.from([kept]) : request;
 }

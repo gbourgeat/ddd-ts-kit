@@ -8,7 +8,15 @@ describeAdapter(
   async (routes, options) => {
     const app = express();
 
-    app.use(express.json());
+    app.use(
+      express.json({
+        // What a project that signs webhooks keeps: the bytes a raw body route reads after the parser.
+        verify: (request, _response, bytes) => {
+          Object.assign(request, { rawBody: bytes });
+        },
+      }),
+    );
+
     // Mounted on a router to prove a router is as good a target as the application.
     const router = express.Router();
 

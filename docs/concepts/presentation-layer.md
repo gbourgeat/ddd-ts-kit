@@ -496,6 +496,48 @@ A response that declares no header keeps returning the body alone. On a Nest con
 `@KitRoute({ response: { body, headers } })` declares them the same way and the method returns
 `{ body, headers }`; `body` is then declared there, as its return type is not read for it.
 
+## A signed webhook: the raw body
+
+A monitoring tool or a payment provider signs its calls with an HMAC over the exact bytes of the body,
+so the body must reach the route unparsed. A controller declares `rawBody: true`: the server then reads
+nothing and validates nothing of the body (the contract describes it as `application/octet-stream`),
+and `handle` finds the bytes in `context.stream` and the headers as they arrived in `context.rawHeaders`.
+It verifies the signature, then parses the payload and hands it to the anti-corruption layer. `rawBody`
+cannot be declared with `body`, `upload` or `consumes`.
+
+```ts
+@Controller({
+  method: 'POST',
+  path: '/webhooks/monitoring',
+  summary: 'Receive a monitoring alert',
+  guards: [Public],
+  rawBody: true,
+  errors: ['BAD_SIGNATURE'],
+  response: { status: 204 },
+})
+export class ReceiveAlertController {
+  constructor(
+    private readonly signature: SignatureVerifier,
+    private readonly commands: CommandBus,
+  ) {}
+
+  async handle({ context }: HttpRequest<{ rawBody: true }>): Promise<void> {
+    const bytes = Buffer.concat(await Array.fromAsync(context.stream, (chunk) => Buffer.from(chunk)));
+
+    this.signature.verify(bytes, context.rawHeaders?.['x-signature']); // throws BadSignature
+
+    await this.commands.execute(MonitoringAlertTranslator.toCommand(JSON.parse(bytes.toString('utf8'))));
+  }
+}
+```
+
+A route that has no caller to authenticate says so with `Public`: the signature is what lets the call in.
+On a Nest controller, `@KitRoute({ rawBody: true })` declares it and `@RouteContext()` gives the method the
+context. On Express, a JSON parser installed before the routes has already read a JSON body: keep its bytes
+with `express.json({ verify: (request, _response, bytes) => { Object.assign(request, { rawBody: bytes }); } })`,
+which the route then reads; a Nest application is created with `rawBody: true` for the same reason. Fastify
+and Hono need nothing.
+
 ## When to keep a function route
 
 `defineRoute` stays supported and both forms run in one project. Keep a function when the
