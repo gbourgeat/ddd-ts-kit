@@ -31,6 +31,9 @@ save at most 3 percent of them. This page takes those families as its subject. T
 it makes is the line of the [first lever](#1-the-mutation-reading-reads-the-report-of-the-night),
 in a commit of its own; every other lever is a pull request of the [plan](#the-plan).
 
+**Decided and built (2026-10-26).** The maintainer took the levers 3, 4, 6, 7 and 8, with the choices listed under [what a pull request must still
+prove](#decided-on-2026-10-26-and-built); they are four commits of `fix/families-decided`.
+
 ## The question
 
 What do the families that generate projects cost, per run and per day, on a pull request, on the
@@ -479,6 +482,70 @@ What a pull request keeps in every case: the whole gate of the 9 proven stacks, 
 of the default and the heavy stack on npm, the quick start of the README typed as written, the
 example and every rule broken in its copy, every stack generated, checked, formatted and
 type-checked.
+
+### Decided on 2026-10-26, and built
+
+The maintainer decided four things; each is a commit of `fix/families-decided`, with the gain the
+figures of this page give for it (estimated from the per-file and per-step medians, to be read on
+the first runs):
+
+1. **A cover of 16 stacks on a pull request that touches a template or a generator, every stack on
+   the trunk, the pairs at night.** The selection by stack of #260 read the packages a change
+   reaches, and every pull request reached `cli`. The install job now says `stacks`: `none` when no
+   template (`packages/*/templates/`), generator (`packages/cli/src/`), package manifest,
+   end-to-end spec or file that runs them (`ci.yml`, the shards, the packing of the kit) changed,
+   `cover` when one did, `all` on the trunk, at night and on the pull request of a release (title
+   `chore(release)` or branch `release/*`). `none` skips the shards, the alias runs and the managers
+   job; `cover` gives the two sweeps of `init` alone and the alias cases the 16 stacks in which
+   every value of every flag appears (`coverOf` in `packages/cli/test/e2e/stacks.ts`, computed from
+   `EVERY_STACK`: 16 of the 48 runnable ones and of the 55 stacks). `zero-violation`, `formatted`
+   and `typecheck` keep every stack on a pull request that generates: they cost 57, 56 and 130 s.
+   **Gain:** about 1,180 runner seconds of a pull request that touches a template or a generator,
+   about 4,800 of one that touches none (shards 3,514, managers 784, alias 521); on the traffic of
+   2026-10-26, where 63 of 104 pull requests touched one, about 2,600 per pull request run. Trunk 0.
+2. **To the night, and to the pull request of a release: pnpm, the alias runs on Node 22, the
+   intermediate states of the first minute, the coverage gate on its ten stacks.** The install job
+   says `deep` for the night, a run on demand and a release, and for no other run. Elsewhere, the
+   trunk included, the managers job installs on npm, the alias runs on Node 24, a first-minute
+   project runs `verify` before any context and after its first use case (not after one context,
+   then two), and the coverage gate runs on the default stack. **Gain:** a trunk run about 1,800
+   runner seconds (pnpm 566, alias on Node 22 461, coverage gate on one stack about 465, about 20
+   intermediate verifies about 300) and two jobs fewer against the limit of 20; a pull request run
+   about 770; the third shard, the longest, from about 1,195 s to about 730 s.
+3. **A draft pull request runs the fast checks only; marking it ready runs the whole CI.** The
+   shards, the alias runs, the managers job, the example, the copy of the example and the mutation
+   reading skip a draft (`pull_request` lists `ready_for_review`). The `gate` job reads the
+   outputs of the install job that tell it which skips are legitimate (`generates`, `whole`), so
+   that a skipped job that should have run fails the gate and a draft cannot be merged green.
+   **Gain:** about 6,500 runner seconds of each run of a draft, up to 20 runner hours a day on the
+   traffic of the three days, and the queue they caused. A ready pull request and the trunk: 0.
+   Agents open their pull request as a draft until the branch is final.
+4. **Two levers that change nothing a pull request proves.** `proven-stacks` and `coverage-gate`
+   build the proven stacks once (one project each, its specs under `test:coverage`; the split runs
+   and the removed spec in the same project, on the first stack of a pull request or the trunk and
+   on every stack at night). The managers job packs the kit once
+   (`pipeline/monorepo/pack-kit.mjs`) instead of once per spec file, and installs a first-minute
+   project once: the frozen install is proved by `package-managers.spec.ts`. **Gain:** about 215
+   runner seconds per pull request and per trunk run (the merge about 40, the packings about 75,
+   about seven frozen installs about 100), about 600 at night. The merge gains less than the 400 s
+   of lever 4 above because decision 2 already took the coverage gate to one stack.
+
+Where the build differs from the plan above: the cover applies to the sweeps and to the alias runs
+only (lever 3 said so; the decision said "not all 48"); a change that touches no template and no
+generator generates nothing even when it touches a package that every generated project installs
+(the kernel, the testing package, the ESLint plugin: their own unit jobs, and the trunk, hold
+them); the trunk runs the coverage gate on one stack, as a pull request does.
+
+Expected, with these four and the lines of `fix/families-quick`: a pull request run that touches a
+template, from about 7,700 to about 4,400 runner seconds; one that touches none, to about 1,900;
+a trunk run from about 8,000 to about 5,900. The wall time of a pull request follows the unit job
+on Node 24 and the npm job.
+
+What the first runs must show: the `stacks`, `deep`, `generates` and `whole` outputs of the install
+job on a pull request that touches only a document (all five skips pass the gate), on one that
+touches a template (`cover`, the sweeps at 16 stacks), on a draft and on the same pull request
+marked ready (a new run, the gate waiting for every job), on a release pull request (`all`, pnpm,
+Node 22, the pairs), and on the first trunk run (the 48 stacks, npm only).
 
 ## Still to verify
 
