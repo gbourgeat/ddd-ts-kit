@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:dd5e00a932614ab4 -->
+<!-- translation-of: agent-sandbox.md sha256:6d30f57762a36470 -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -160,6 +160,29 @@ dans un environnement hébergé par GitHub dont la liste d'hôtes autorisés se 
 réglages du dépôt sur GitHub, pas dans un fichier du projet ; `.github/copilot/settings.json` n'a
 pas de clé de bac à sable, donc le profil n'écrit rien pour Copilot. Les deux *hooks* du profil
 ne tournent que dans Claude Code, comme dit plus haut.
+
+#### Les contrats générés sous le bac à sable
+
+`init` écrit des règles de refus pour les contrats que le kit génère (`Edit(./openapi/**)`,
+`Edit(./docs/integration/asyncapi.*)`, `Edit(./docs/integration/event-catalog.md)`,
+`Edit(./test/acceptance/*.acceptance.lock.json)`), pour que l'outil Edit n'en modifie jamais un à
+la main. Le bac à sable de Claude Code transforme une règle de refus sur `Edit` en montage en
+lecture seule du chemin, y compris pour les commandes du shell. Les règles restent, et voici la
+conséquence : dans une session sous le bac à sable, une commande qui écrit l'un de ces fichiers
+échoue, quelle que soit la commande.
+
+- **La fusion d'une branche qui a régénéré les contrats** (`git merge --no-ff work/wave1` dans le
+  dépôt principal) s'arrête à mi-chemin, après avoir écrit des copies non suivies des nouveaux
+  fichiers de la branche. Il en va de même de `npm run docs:generate` dans le dépôt principal.
+- **Que faire** : jouer ces deux gestes hors du bac à sable, depuis un terminal à vous (fusionner
+  la branche, puis lancer `docs:generate` et valider ce qu'il a changé), ou démarrer la session
+  avec `claude --setting-sources local`, qui ne lit pas les réglages du projet, règles de refus et
+  bloc `sandbox` compris : cela ne vaut que pour une session que vous décidez de lancer ainsi,
+  puisque cela retire aussi les autres contrôles du fichier du projet. Dans les deux cas, la
+  garde du plugin refuse toujours la modification à la main d'un fichier généré, et
+  `docs:generate` reste le seul auteur de ces contrats.
+- Après une fusion hors du bac à sable, lancez `npm run docs:generate` et vérifiez que rien ne
+  change : un contrat régénéré par la fusion doit être égal à celui que la branche porte.
 
 ### 3. NVIDIA OpenShell
 
