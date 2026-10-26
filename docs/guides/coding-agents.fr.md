@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:55f03b93140ba23c -->
+<!-- translation-of: coding-agents.md sha256:19fe8c41791ab80c -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -95,7 +95,8 @@ refuse une fois de finir la session avant son rapport
 ([parcours d'une story](story-workflow.fr.md)). Dans le *worktree* d'un correctif
 (`"kind": "fix"` dans ce fichier), il ouvre le code dès que la *spec* de régression est
 verrouillée, et refuse toute modification d'une *spec* verrouillée, par les outils d'édition
-comme par le *shell*, à la session comme à ses sous-agents. Aucun *hook* ne tourne sur
+comme par le *shell*, à ses sous-agents ; la session elle-même peut en écrire une nouvelle version,
+que `acceptance` signale et sur laquelle l'agent `acceptance-judge` se prononce. Aucun *hook* ne tourne sur
 chaque appel d'outil : une session ordinaire ne lance pas plus de processus qu'avant. En cas de
 panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
 configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le faire taire.
@@ -159,7 +160,7 @@ ligne.
 | `parallel-work` | la garde du *worker* (`.ddd-ts-kit/worker.json` : une écriture hors du contexte est refusée, par les outils d'édition et par le *shell*), `verify-merge`, `merge-trunk`, `status --workers` | |
 | `intent` | `story-scope --from` refuse une intention dont le statut n'est pas `accepted` ; le bloc `## Origin` de la *story*, que `story --gate close` exige | le contenu d'une intention est lu par des personnes, pas vérifié |
 | `story` | `story --gate build` et `--gate close`, la garde dans le *worktree* d'une *story* (pas de code avant la revue de conception et le verrou), `acceptance --lock`, `test/acceptance-black-box`, l'agent `acceptance-judge` | la passe de conception de `story-check` tient les noms, pas le comportement |
-| `fix` | `story-scope --kind fix`, `acceptance <code> --gate written` et `--lock` sur les *specs* de régression de `## Regression`, la garde dans le *worktree* d'un correctif (pas de code avant le verrou, aucune édition d'une *spec* verrouillée, par personne), l'agent `acceptance-judge` | la *spec* verrouillée est tenue inchangée ; qu'elle passe est prouvé par le lanceur de tests, pas par `acceptance` |
+| `fix` | `story-scope --kind fix`, `acceptance <code> --gate written` et `--lock` sur les *specs* de régression de `## Regression`, la garde dans le *worktree* d'un correctif (pas de code avant le verrou, aucune édition d'une *spec* verrouillée par un sous-agent), l'agent `acceptance-judge` | la *spec* verrouillée est tenue inchangée ; qu'elle passe est prouvé par le lanceur de tests, pas par `acceptance` |
 | `pull-request` | les vérifications de la *pull request* et la protection de branche (un *code owner* approuve) ; la garde du *worktree* de la *story* pendant qu'il travaille | rien du kit ne lit les fils de revue : le skill le fait |
 | `scaffold` | la garde refuse un fichier de rôle écrit à la main ; `tree/closed`, `tree/documented-paths`, `naming/suffix`, `naming/one-concept-per-file`, `naming/business-name`, `naming/search-not-list`, `test/spec-required`, `test/builder-required`, `lifecycle/status-through-machine`, `process/sends-commands-only`, `scheduling/job-name`, `scheduling/job-triggers-use-case` | |
 | `use-case` | les contrôles de `scaffold`, puis `application/handler-shape`, `application/command-query-separation`, `domain/aggregate-encapsulation`, `domain/value-object-class`, `domain/value-object-immutability`, `domain/no-generic-error`, `domain-events/dispatched-on-save`, `domain-events/transactional-before-commit`, `errors/code-listed`, `errors/code-unique`, `errors/through-factory`, `presentation/controller-shape`, `presentation/controller-delegates`, `schema/presentation-only`, `schema/no-duplicate-shape`, les tests du contexte lancés par `verify-slice` | |

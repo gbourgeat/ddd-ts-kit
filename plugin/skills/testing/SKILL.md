@@ -190,9 +190,10 @@ A defect is repaired by skill `ddd-ts-kit:fix` (`/ddd-ts-kit:fix <code>`), the p
 spec that reproduces it, at the level of the defect (an aggregate spec, a handler spec, a case
 of a contract suite, an end-to-end scenario), named after it (`'#FIX-412 refuses ...'`), run
 once to fail on an assertion, listed under `## Regression` of its story file and locked with
-`npx ddd-ts-kit acceptance <code> --lock` before any code. A locked regression spec is never
-changed to make the fix pass: the guard refuses it, and a spec that is wrong is judged against
-the `## Statement` of the fix, as a scenario is against its criterion.
+`npx ddd-ts-kit acceptance <code> --lock` before any code. Format and lint the spec first (`--lock` refuses a spec that fails the formatter or the linter of
+the project). A locked regression spec is never changed to make the fix pass: the guard refuses a
+sub-agent, and a spec that is wrong is rewritten by the session of the fix and judged against the
+`## Statement` of the fix, as a scenario is against its criterion.
 
 ## Shape
 

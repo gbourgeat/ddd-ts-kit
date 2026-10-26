@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a4c003ddb3225f0a -->
+<!-- translation-of: README.md sha256:625e334eec9dcf53 -->
 
 # ddd-ts-kit
 
@@ -1377,11 +1377,16 @@ chacun) et refuse tant qu'une spec listée manque ou ne contient aucun test. Un 
 changé ou supprimé est signalé comme l'est un scénario changé, sous le sujet
 `test "<title>" of <file>` avec son empreinte, jusqu'à ce que l'agent `acceptance-judge` laisse
 passer cette version, le `## Statement` du correctif étant le critère ; un nouveau test n'a
-besoin que d'un nouveau verrou. `--gate passing` tient que chaque test verrouillé est là,
+besoin que d'un nouveau verrou. `--lock` lance aussi le formateur (le script `format`, en mode
+vérification) et le *linter* (le script `lint`) du projet sur les fichiers qu'il verrouille, les
+*specs* de régression d'un correctif ou la *spec* d'acceptation d'une *story*, et sur eux seuls : il
+refuse, en nommant le fichier et ce que l'outil signale, tant qu'ils échouent, puisqu'un fichier
+verrouillé ne se touche plus. Un projet sans ces scripts ni ces outils est verrouillé comme avant.
+`--gate passing` tient que chaque test verrouillé est là,
 inchangé et plus enveloppé dans `pending(...)` ; c'est le lanceur de tests, pas cette commande,
 qui prouve qu'il passe. La garde du plugin lit le même verrou dans le *worktree* d'un correctif
 (`"kind": "fix"` dans `.ddd-ts-kit/story.json`) : elle ouvre le code dès que le verrou existe
-et refuse toute modification d'une spec verrouillée (skill `fix`,
+et refuse toute modification d'une spec verrouillée par un sous-agent, la session en écrivant une nouvelle version sur laquelle le juge se prononce (skill `fix`,
 [parcours d'une story](../../docs/guides/story-workflow.fr.md)).
 
 ```

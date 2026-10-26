@@ -87,7 +87,8 @@ session start with where it meets the other open stories, says once per file whe
 writes a file another open story changes, and refuses once to end the session before its report
 ([story workflow](story-workflow.md)). In the worktree of a fix (`"kind": "fix"` in that file),
 it opens the code once the regression spec is locked, and refuses every edit of a locked spec,
-by the editor tools and by the shell, to the session and to its sub-agents. No hook
+by the editor tools and by the shell, to its sub-agents; the session itself may write a new version,
+which `acceptance` reports and the `acceptance-judge` agent rules on. No hook
 runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 
@@ -145,7 +146,7 @@ rule id named here is unknown to the CLI, or when a skill has no row.
 | `parallel-work` | the worker guard (`.ddd-ts-kit/worker.json`: a write outside the context is refused, by the editor tools and by the shell), `verify-merge`, `merge-trunk`, `status --workers` | |
 | `intent` | `story-scope --from` refuses an intent whose status is not `accepted`; the `## Origin` block of the story, which `story --gate close` requires | the content of an intent is read by people, not checked |
 | `story` | `story --gate build` and `--gate close`, the guard in the worktree of a story (no code before the design review and the lock), `acceptance --lock`, `test/acceptance-black-box`, the `acceptance-judge` agent | the design pass of `story-check` holds names, not behaviour |
-| `fix` | `story-scope --kind fix`, `acceptance <code> --gate written` and `--lock` on the regression specs of `## Regression`, the guard in the worktree of a fix (no code before the lock, no edit of a locked spec by anyone), the `acceptance-judge` agent | the locked spec is held unchanged; that it passes is proven by the test runner, not by `acceptance` |
+| `fix` | `story-scope --kind fix`, `acceptance <code> --gate written` and `--lock` on the regression specs of `## Regression`, the guard in the worktree of a fix (no code before the lock, no edit of a locked spec by a sub-agent), the `acceptance-judge` agent | the locked spec is held unchanged; that it passes is proven by the test runner, not by `acceptance` |
 | `pull-request` | the checks of the pull request and the branch protection (a code owner approves); the guard of the worktree of the story while it works | nothing of the kit reads the review threads: the skill does |
 | `scaffold` | the guard refuses a hand-written file of a role; `tree/closed`, `tree/documented-paths`, `naming/suffix`, `naming/one-concept-per-file`, `naming/business-name`, `naming/search-not-list`, `test/spec-required`, `test/builder-required`, `lifecycle/status-through-machine`, `process/sends-commands-only`, `scheduling/job-name`, `scheduling/job-triggers-use-case` | |
 | `use-case` | the controls of `scaffold`, then `application/handler-shape`, `application/command-query-separation`, `domain/aggregate-encapsulation`, `domain/value-object-class`, `domain/value-object-immutability`, `domain/no-generic-error`, `domain-events/dispatched-on-save`, `domain-events/transactional-before-commit`, `errors/code-listed`, `errors/code-unique`, `errors/through-factory`, `presentation/controller-shape`, `presentation/controller-delegates`, `schema/presentation-only`, `schema/no-duplicate-shape`, the tests of the context run by `verify-slice` | |

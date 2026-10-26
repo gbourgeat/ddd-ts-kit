@@ -140,10 +140,16 @@ defect under `## Statement` and lists each spec under `## Regression`, one path 
 `npx ddd-ts-kit acceptance <code> --lock` records the fingerprint of each test of those files in
 `test/acceptance/<code>.acceptance.lock.json`, and that commit comes before any code. The guard
 opens the code of the contexts once the lock exists, and from then on refuses every edit of a
-locked spec, by the editor tools and by the shell, to the session and to its sub-agents: the
-proof of the fix predates the fix and stays out of the fixer's reach. A spec that turns out wrong
-is judged as a scenario is, by the `acceptance-judge` agent, the statement of the defect being
-the criterion. `acceptance <code> --gate passing` holds that each locked test is there, unchanged
+locked spec, by the editor tools and by the shell, to its sub-agents: the proof of the fix
+predates the fix and stays out of the builders' reach. A spec that turns out wrong is amended by
+the session of the fix, as the acceptance of a story is: it writes the new version,
+`acceptance <code>` reports the change since the lock, the `acceptance-judge` agent rules on that
+version, the statement of the defect being the criterion, and `--lock` takes it on an `amend`
+verdict and refuses it otherwise. `--lock` also refuses a spec (a regression spec, or the
+acceptance spec of a story) that fails the formatter or the linter of the project, run on those
+files only and named with their findings, since a locked file can no longer be touched: run
+`npm run format` and `npm run lint -- <file>` before locking. A project without a `format` or a
+`lint` script, or without the tool installed, is locked as before. `acceptance <code> --gate passing` holds that each locked test is there, unchanged
 and no longer pending; the test runner proves it passes (`npm run verify`). The fix closes as a
 story does: the review of the diff, the report with its origin and its verification, the pull
 request. The failing test first, committed, and a hook that stops the agent editing it during
@@ -223,7 +229,7 @@ share. The pull requests merge one after the other, each on a green trunk.
 |---|---|
 | no code of a context before each row is designed and the acceptance written and locked | the guard, in the worktree of a story (`story --gate build`, read once per change of its inputs) |
 | a locked scenario changed while its criterion was not, or a criterion changed | `ddd-ts-kit acceptance` and `--lock`, until a verdict of the `acceptance-judge` agent; the guard, which lets only the judge write a verdict |
-| the regression spec of a fix, once locked | `ddd-ts-kit acceptance <code> --lock`; the guard, in the worktree of a fix (`"kind": "fix"` in `.ddd-ts-kit/story.json`), which refuses every edit of a locked spec and opens the code once the lock exists |
+| the regression spec of a fix, once locked | `ddd-ts-kit acceptance <code> --lock`; the guard, in the worktree of a fix (`"kind": "fix"` in `.ddd-ts-kit/story.json`), which refuses every edit of a locked spec by a sub-agent and opens the code once the lock exists |
 | an agent outside its context | the guard, from `.ddd-ts-kit/worker.json` |
 | the same story in two sessions | `story-scope` |
 | two stories that change the same file | `stories`; the guard, at session start and on the first write of such a file |

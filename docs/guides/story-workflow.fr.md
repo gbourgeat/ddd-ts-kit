@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:c77a3fca85b2da0e -->
+<!-- translation-of: story-workflow.md sha256:39d8094e454d1ff6 -->
 
 # Parcours d'une story : une session par user story
 
@@ -149,10 +149,17 @@ sous `## Statement` et liste chaque *spec* sous `## Regression`, un chemin par �
 `npx ddd-ts-kit acceptance <code> --lock` enregistre l'empreinte de chaque test de ces fichiers
 dans `test/acceptance/<code>.acceptance.lock.json`, et ce *commit* vient avant tout code. La
 garde ouvre le code des contextes dès que le verrou existe, et refuse dès lors toute
-modification d'une *spec* verrouillée, par les outils d'édition comme par le *shell*, à la
-session comme à ses sous-agents : la preuve du correctif précède le correctif et reste hors de
-portée de qui le fait. Une *spec* qui se révèle fausse est jugée comme l'est un scénario, par
-l'agent `acceptance-judge`, l'énoncé du défaut étant le critère. `acceptance <code> --gate passing`
+modification d'une *spec* verrouillée, par les outils d'édition comme par le *shell*, à ses
+sous-agents : la preuve du correctif précède le correctif et reste hors de portée de ceux qui le
+construisent. Une *spec* qui se révèle fausse est amendée par la session du correctif, comme
+l'acceptation d'une *story* : elle écrit la nouvelle version, `acceptance <code>` signale le
+changement depuis le verrou, l'agent `acceptance-judge` se prononce sur cette version, l'énoncé
+du défaut étant le critère, et `--lock` la prend sur un verdict `amend` et la refuse sinon.
+`--lock` refuse aussi une *spec* (de régression, ou d'acceptation d'une *story*) qui échoue au
+formateur ou au *linter* du projet, lancés sur ces seuls fichiers et nommés avec leurs
+constats, puisqu'un fichier verrouillé ne se touche plus : lancez `npm run format` et
+`npm run lint -- <fichier>` avant de verrouiller. Un projet sans script `format` ou `lint`, ou
+sans l'outil installé, est verrouillé comme avant. `acceptance <code> --gate passing`
 tient que chaque test verrouillé est là, inchangé et plus en attente ; le lanceur de tests
 prouve qu'il passe (`npm run verify`). Le correctif se clôt comme une *story* : la revue du
 diff, le rapport avec son origine et sa vérification, la *pull request*. Le test qui échoue
@@ -242,7 +249,7 @@ l'autre, chacune sur un tronc vert.
 |---|---|
 | aucun code d'un contexte avant que chaque ligne soit conçue et l'acceptation écrite et verrouillée | la garde, dans le *worktree* d'une *story* (`story --gate build`, relu à chaque changement de ses entrées) |
 | un scénario verrouillé changé alors que son critère ne l'est pas, ou un critère changé | `ddd-ts-kit acceptance` et `--lock`, jusqu'à un verdict de l'agent `acceptance-judge` ; la garde, qui ne laisse que le juge écrire un verdict |
-| la *spec* de régression d'un correctif, une fois verrouillée | `ddd-ts-kit acceptance <code> --lock` ; la garde, dans le *worktree* d'un correctif (`"kind": "fix"` dans `.ddd-ts-kit/story.json`), qui refuse toute modification d'une *spec* verrouillée et ouvre le code dès que le verrou existe |
+| la *spec* de régression d'un correctif, une fois verrouillée | `ddd-ts-kit acceptance <code> --lock` ; la garde, dans le *worktree* d'un correctif (`"kind": "fix"` dans `.ddd-ts-kit/story.json`), qui refuse toute modification d'une *spec* verrouillée par un sous-agent et ouvre le code dès que le verrou existe |
 | un agent hors de son contexte | la garde, d'après `.ddd-ts-kit/worker.json` |
 | la même *story* dans deux sessions | `story-scope` |
 | deux *stories* qui changent le même fichier | `stories` ; la garde, au démarrage de la session et à la première écriture d'un tel fichier |
