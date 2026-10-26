@@ -64,6 +64,17 @@ describe.each(BROKERS)('RabbitMqEventBus: publishing, %s', { timeout: 30_000 }, 
     await network.close();
   });
 
+  it('rejects a publication the broker does not confirm in time, the connection left as it is', async () => {
+    const network = await broker.network();
+    const bus = broker.bus({ connection: network.connection, publishTimeoutMs: 200 });
+
+    await bus.assertTopology();
+    network.holdReplies();
+
+    await expect(bus.publish([anEvent('evt-1')])).rejects.toMatchObject({ code: 'PUBLISH_NOT_CONFIRMED' });
+    await network.close();
+  });
+
   it('accepts an event no queue is bound for, unless told to fail', async () => {
     const exchange = unique('test-events');
     const lenient = broker.bus({ exchange });

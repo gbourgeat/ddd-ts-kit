@@ -1,5 +1,5 @@
 import type { Redis } from 'ioredis';
-import { inEventScope, type IntegrationEventCallback, type Subscription } from '@ddd-ts-kit/kernel';
+import type { IntegrationEventCallback, Subscription } from '@ddd-ts-kit/kernel';
 import { closeRedis } from '../connection/close-redis';
 import { claimDue, type RedeliverySettings } from './claim-due';
 import { entriesByStream } from './codec/entries-by-stream';
@@ -72,16 +72,14 @@ export class GroupReader {
   subscribe(type: string, handler: IntegrationEventCallback): Subscription {
     const stream = this.settings.streamOf(type);
     const subscription = this.subscriptions.get(stream) ?? { type, handlers: new Set() };
-    const { scope } = this.settings;
-    const scoped = scope === undefined ? handler : inEventScope(scope, { consumer: this.consumer }, handler);
 
-    subscription.handlers.add(scoped);
+    subscription.handlers.add(handler);
     this.subscriptions.set(stream, subscription);
     this.running ??= this.run();
 
     return {
       unsubscribe: () => {
-        this.remove(stream, scoped);
+        this.remove(stream, handler);
       },
     };
   }

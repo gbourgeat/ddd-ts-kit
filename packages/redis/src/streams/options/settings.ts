@@ -1,4 +1,3 @@
-import type { ExecutionScope } from '@ddd-ts-kit/kernel';
 import type { DeduplicationOptions } from './deduplication-options';
 import type { ReconnectOptions } from './reconnect-options';
 import type { RedisStreamsDelivery } from './redis-streams-delivery';
@@ -22,7 +21,6 @@ export interface Settings {
   readonly reconnect: Required<ReconnectOptions>;
   readonly retention: RetentionOptions | undefined;
   readonly deduplication: DeduplicationOptions | undefined;
-  readonly scope: ExecutionScope | undefined;
   readonly onFailure: (failure: RedisStreamsFailure) => void;
   readonly onDelivery: (delivery: RedisStreamsDelivery) => void;
 }
