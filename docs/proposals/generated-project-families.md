@@ -449,6 +449,14 @@ after the change):
   which two unit specs now hold (a registration with no requirement; `--tenant-scoped` on a
   custom store).
 
+- **Line 9, the workstation.** `pipeline/monorepo/heavy-lock.sh` holds one of two machine-wide
+  slots (`flock` on files of `$XDG_RUNTIME_DIR`) around the `ci:test:*` scripts and the unit step
+  of the pre-push hook; a Stryker run goes through it by hand (CONTRIBUTING.md). The end-to-end
+  scripts start `VITEST_MAX_WORKERS=2` outside a pipeline (`ci:test:e2e` and the shards script
+  now; the managers, alias, pairwise and night scripts already did). No gain in time: a bound on
+  the peak memory of several sessions together, two heavy runs (about 7 GB each) instead of as
+  many as there are sessions. An agent that finds both slots taken waits and says so.
+
 ## What a pull request must still prove
 
 The levers that need a decision trade a proof before the merge for a proof within the hour (the

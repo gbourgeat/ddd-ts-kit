@@ -63,6 +63,23 @@ faster, and `rm -rf node_modules/.vitest-cache` empties it.
 `zero-violation.spec.ts` and `formatted.spec.ts` generate every stack: they run in the end-to-end shards
 only (`DDD_TS_KIT_E2E=1`), not in `npm test` nor in the pre-push hook.
 
+### Heavy commands on a workstation
+
+A run of the unit suite, of the integration suite or of a family of end-to-end specs takes 2.5 to
+7 GB, and several of them at once (several coding sessions, a pre-push hook beside a run) have
+restarted a desktop. Two things bound them:
+
+- **One lock for the machine.** The `ci:test:*` scripts and the unit step of the pre-push hook
+  run under `pipeline/monorepo/heavy-lock.sh`, which holds one of two slots (lock files in
+  `$XDG_RUNTIME_DIR`, `DDD_TS_KIT_HEAVY_SLOTS` changes the number): a third heavy command waits for
+  a slot and says so, instead of adding its memory to the others. Any other heavy command goes
+  through it by hand, a Stryker run of the example for one:
+  `bash pipeline/monorepo/heavy-lock.sh npm run test:mutation`. In a pipeline (`CI` set), or
+  without `flock`, the command runs at once.
+- **Two Vitest workers in the end-to-end scripts.** `ci:test:e2e`, `ci:test:e2e:stacks` and the
+  other `ci:test:*` scripts of the families start `VITEST_MAX_WORKERS=2`, so the projects they
+  generate do not each take half the cores. Set `VITEST_MAX_WORKERS` yourself to change it.
+
 ## Ground rules
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) is the single normative document. A change of

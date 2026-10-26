@@ -1,5 +1,5 @@
 [English](generated-project-families.md) · **Français**
-<!-- translation-of: generated-project-families.md sha256:c40e44a7a886b19e -->
+<!-- translation-of: generated-project-families.md sha256:467a958c6f2f5098 -->
 
 # Proposition : les familles qui génèrent des projets, dans le *pipeline* et sur une station de travail
 
@@ -479,6 +479,16 @@ encore mesuré après le changement) :
   unitaire de `cli` passait de deux lignes sous son plancher de 98 pour cent (97,99 contre 98,00) :
   deux specs unitaires la tiennent désormais (un enregistrement sans exigence ; `--tenant-scoped`
   sur un stockage personnalisé).
+
+- **Ligne 9, la station de travail.** `pipeline/monorepo/heavy-lock.sh` tient l'une de deux
+  places pour toute la machine (`flock` sur des fichiers de `$XDG_RUNTIME_DIR`) autour des
+  scripts `ci:test:*` et de l'étape unitaire du *hook* `pre-push` ; une exécution de Stryker y
+  passe à la main (CONTRIBUTING.md). Les scripts de bout en bout démarrent `VITEST_MAX_WORKERS=2`
+  hors d'un *pipeline* (`ci:test:e2e` et le script des tranches désormais ; ceux des
+  gestionnaires, de l'alias, des paires et de la nuit le faisaient déjà). Aucun gain de temps : une
+  borne sur la mémoire de crête de plusieurs sessions ensemble, deux exécutions lourdes (environ
+  7 Go chacune) au lieu d'autant que de sessions. Un agent qui trouve les deux places prises attend
+  et le dit.
 
 ## Ce qu'une *pull request* doit encore prouver
 

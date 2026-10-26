@@ -81,6 +81,13 @@ export const SHARDS = [
   },
 ];
 
+/**
+ * On a workstation the projects these specs generate start two Vitest workers, not half the cores each (a family run
+ * reached about 2.5 GB with two files at a time, docs/proposals/generated-project-families.md); a pipeline runner has its
+ * own cores, and a value set in the environment wins.
+ */
+const WORKERS = process.env['CI'] ? {} : { VITEST_MAX_WORKERS: '2' };
+
 /** The spec files of the directory that a shard has to run. */
 export function specFiles(root = ROOT) {
   return fs
@@ -147,7 +154,7 @@ function main(args) {
       ...files.map((file) => `${DIRECTORY}/${file}`),
       ...passed,
     ],
-    { cwd: ROOT, stdio: 'inherit', env: { ...process.env, DDD_TS_KIT_E2E: '1' } },
+    { cwd: ROOT, stdio: 'inherit', env: { ...WORKERS, ...process.env, DDD_TS_KIT_E2E: '1' } },
   );
 
   return run.status ?? 1;

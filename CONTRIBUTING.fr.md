@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:620af7affd82471e -->
+<!-- translation-of: CONTRIBUTING.md sha256:d23e35bdc6131a68 -->
 
 # Contribuer
 
@@ -67,6 +67,24 @@ exécution d'un package environ 40 pour cent plus rapide, et `rm -rf node_module
 
 `zero-violation.spec.ts` et `formatted.spec.ts` génèrent chaque pile : ils ne tournent que dans les
 tranches de bout en bout (`DDD_TS_KIT_E2E=1`), ni dans `npm test` ni dans le *hook* `pre-push`.
+
+### Les commandes lourdes sur une station de travail
+
+Une exécution de la suite unitaire, de la suite d'intégration ou d'une famille de specs de bout en
+bout prend 2,5 à 7 Go, et plusieurs à la fois (plusieurs sessions de code, un *hook*
+`pre-push` à côté d'une exécution) ont déjà fait redémarrer un poste. Deux choses les bornent :
+
+- **Un verrou pour la machine.** Les scripts `ci:test:*` et l'étape unitaire du *hook* `pre-push`
+  passent par `pipeline/monorepo/heavy-lock.sh`, qui tient l'une de deux places (des fichiers de
+  verrou dans `$XDG_RUNTIME_DIR`, `DDD_TS_KIT_HEAVY_SLOTS` change le nombre) : une troisième
+  commande lourde attend une place et le dit, au lieu d'ajouter sa mémoire aux autres. Toute autre
+  commande lourde y passe à la main, une exécution de Stryker sur l'exemple par exemple :
+  `bash pipeline/monorepo/heavy-lock.sh npm run test:mutation`. Dans un *pipeline* (`CI` défini),
+  ou sans `flock`, la commande s'exécute aussitôt.
+- **Deux travailleurs Vitest dans les scripts de bout en bout.** `ci:test:e2e`,
+  `ci:test:e2e:stacks` et les autres scripts `ci:test:*` des familles démarrent
+  `VITEST_MAX_WORKERS=2` : les projets qu'ils génèrent ne prennent pas chacun la moitié des cœurs.
+  Définissez `VITEST_MAX_WORKERS` vous-même pour le changer.
 
 ## Règles de base
 

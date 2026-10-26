@@ -29,7 +29,8 @@ pre-push:
       # The specs of the packages the branch reaches and of the packages that depend on them, as on a pull request,
       # without coverage (the pipeline measures it); everything when a file shared by every package changed; nothing
       # when only documents did (docs/proposals/build-and-test-velocity.md).
-      run: node pipeline/monorepo/affected-packages.mjs --base origin/main --run test
+      # Under the lock of the machine: two heavy commands at most, whoever started them (CONTRIBUTING.md).
+      run: bash pipeline/monorepo/heavy-lock.sh node pipeline/monorepo/affected-packages.mjs --base origin/main --run test
 
 commit-msg:
   jobs:
