@@ -57,6 +57,10 @@ function authenticationFiles(config: Config): InitFile[] {
     file('auth/authentication/security-schemes.ts', credential),
     file('auth/authentication/offline-authenticator.ts'),
     file('auth/authentication/http-boundary.ts'),
+    ...when(authn === 'passport', [
+      file('auth/authentication/bearer-strategy.ts'),
+      file('auth/authentication/actor-of-token.ts'),
+    ]),
     ...when(authn === 'none', [
       file('auth/authentication/development-actor-header.ts'),
       file('auth/authentication/development-header-authenticator.ts'),

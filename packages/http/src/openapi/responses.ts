@@ -46,12 +46,26 @@ function declaredResponses(route: Route, { definitions, representations }: Docum
   for (const [key, declared] of Object.entries(declaredByKey)) {
     byStatus.set(Number(key), {
       description: declared.description,
-      ...cacheResponseHeaders(route, Number(key), varies),
+      ...headersOf(declared, cacheResponseHeaders(route, Number(key), varies)),
       ...(declared.body === undefined ? {} : { content: contentOf(mediaTypes, definitions.embed(declared.body)) }),
     });
   }
 
   return byStatus;
+}
+
+/** The headers the answer is declared to carry, beside the caching headers the pipeline sends. */
+function headersOf(declared: ResponseSpec, cached: { headers?: JsonSchema }): { headers?: JsonSchema } {
+  const written = Object.fromEntries(
+    Object.entries(declared.headers ?? {}).map(([name, description]) => [
+      name,
+      { description, schema: { type: 'string' } },
+    ]),
+  );
+
+  const headers = { ...written, ...cached.headers };
+
+  return Object.keys(headers).length === 0 ? {} : { headers };
 }
 
 function contentOf(mediaTypes: readonly string[], schema: JsonSchema): JsonSchema {

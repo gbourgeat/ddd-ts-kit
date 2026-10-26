@@ -4,6 +4,9 @@ import { usesLegacyDecorators } from '../stack/uses-legacy-decorators';
 import type { Workspace } from '../workspace';
 import { formatJson } from '../json/format-json';
 
+/** What the compiler reads beside the sources by ORM: the client Prisma generates, the migrations TypeORM writes in TypeScript. */
+const ORM_FOLDERS: Readonly<Record<string, readonly string[]>> = { prisma: ['generated'], typeorm: ['migrations'] };
+
 /**
  * `tsconfig.json` for the editor and the type check, `tsconfig.build.json` for what ships: no test,
  * no test database. `paths` declares the import alias for the compiler and for every tool that
@@ -11,7 +14,8 @@ import { formatJson } from '../json/format-json';
  * is resolved follows "importExtension".
  */
 export function writeTypeScriptConfigs(ws: Workspace, config: Config): void {
-  const include = [config.sourceRoot, 'scripts', 'test', ...(config.stack.orm === 'prisma' ? ['generated'] : [])];
+  const orm = ORM_FOLDERS[config.stack.orm] ?? [];
+  const include = [config.sourceRoot, 'scripts', 'test', ...orm];
 
   ws.create('tsconfig.json', serialize({ compilerOptions: compilerOptions(config), include }));
 

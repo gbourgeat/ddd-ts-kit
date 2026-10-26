@@ -131,12 +131,42 @@ describe('the platform init writes', () => {
     );
   });
 
+  it('keeps the bytes of a body for a controller that declares rawBody, on Express and on Nest', () => {
+    const express = read(initProject(), 'src/platform/http/start-http-server.ts');
+    const nest = read(initProject('--http', 'nest'), 'src/platform/http/start-http-server.ts');
+
+    const nestWithControllers = read(
+      initProject('--http', 'nest', '--routes', 'controllers'),
+      'src/platform/http/start-http-server.ts',
+    );
+
+    expect(express).toContain('Object.assign(request, { rawBody: bytes })');
+    expect(nest).toContain('rawBody: true');
+    expect(nestWithControllers).toContain('rawBody: true');
+  });
+
   it('makes a Nest project validate with class-validator and write its routes as Nest controllers, unless told otherwise', () => {
     const nest = readJson(initProject('--http', 'nest'), 'ddd-ts-kit.config.json');
     const zod = readJson(initProject('--http', 'nest', '--validation', 'zod'), 'ddd-ts-kit.config.json');
 
     expect([jsonAt(nest, 'stack', 'validation'), jsonAt(nest, 'stack', 'routes')]).toEqual(['class-validator', 'nest']);
     expect([jsonAt(zod, 'stack', 'validation'), jsonAt(zod, 'stack', 'routes')]).toEqual(['zod', 'controllers']);
+  });
+
+  it('verifies the bearer tokens with a strategy of Passport under --authn passport, its end-to-end credentials signed for it', () => {
+    const root = initProject('--http', 'nest', '--authn', 'passport');
+    const manifest = readJson(root, 'package.json');
+
+    expect(read(root, 'src/platform/auth/authentication/create-authenticator.ts')).toContain(
+      'return passportAuthenticator(bearerStrategy(config.auth), { actorOf: actorOfToken });',
+    );
+
+    expect(read(root, 'src/platform/auth/authentication/bearer-strategy.ts')).toContain('passportJwtSecret({');
+    expect(read(root, 'src/platform/auth/authentication/actor-of-token.ts')).toContain('actorOfClaims({ ...payload })');
+    expect(read(root, 'test/e2e/support/create-credentials.ts')).toContain('passportAuthenticator(strategy');
+    expect(read(root, '.env.example')).toContain('AUTH_JWKS_URI=');
+    expect(jsonAt(manifest, 'dependencies', 'passport-jwt')).toBe('^4.0.1');
+    expect(jsonAt(manifest, 'devDependencies', 'jose')).toBe('^6.0.0');
   });
 
   it('names the end-to-end support after what each file exports', () => {

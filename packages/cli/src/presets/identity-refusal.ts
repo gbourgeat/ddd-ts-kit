@@ -18,8 +18,8 @@ const NEEDED: readonly {
   { key: 'http', values: ['express', 'fastify', 'nest'], flag: '--http express, --http fastify or --http nest' },
   {
     key: 'authn',
-    values: ['jwt', 'keycloak'],
-    flag: '--authn jwt or --authn keycloak (an account is the subject of a token)',
+    values: ['jwt', 'keycloak', 'passport'],
+    flag: '--authn jwt, --authn keycloak or --authn passport (an account is the subject of a token)',
   },
   { key: 'database', values: ['postgres'], flag: '--database postgres (its tables use partial unique indexes)' },
 ];

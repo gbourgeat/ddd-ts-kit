@@ -23,7 +23,7 @@ jobs:
   generated-stacks:
     name: Generated projects on Prisma and TypeORM, installed for real
     runs-on: ubuntu-26.04
-    timeout-minutes: 75
+    timeout-minutes: 100
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -35,6 +35,12 @@ jobs:
         run: npm run ci:test:stacks-at-night
       - name: Every pair of capability values, generated whole and type-checked
         run: npm run ci:test:pairwise
+      - name: PostgreSQL
+        run: sh pipeline/github/scripts/start-postgres.sh
+      - name: The first migration of each ORM generated, guarded and applied
+        env:
+          DDD_TS_KIT_MIGRATIONS_SERVER: postgres://app:app@localhost:5432
+        run: npm run ci:test:migrations
 
   publish:
     name: Publish to npm

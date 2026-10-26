@@ -111,14 +111,19 @@ function traitGaps(generated: Map<string, Generated>, lines: readonly DeclaredDi
 }
 
 function staleLines(generated: Map<string, Generated>, lines: readonly DeclaredDifference[]): string[] {
-  return lines.flatMap((line) =>
-    Object.keys(line.without)
+  const traits = [...generated.values()].flatMap((project) => project.anonymous);
+
+  return lines.flatMap((line) => [
+    ...(traits.some((trait) => line.trait.test(trait))
+      ? []
+      : [`no member gets ${String(line.trait)} any more: remove it from the declared differences`]),
+    ...Object.keys(line.without)
       .filter((member) => generated.get(member)?.anonymous.some((trait) => line.trait.test(trait)) ?? true)
       .map(
         (member) =>
           `${member} now gets ${String(line.trait)}, or is no member: remove it from the declared differences`,
       ),
-  );
+  ]);
 }
 
 function generate(family: GeneratedFamily, member: string, flags: Flags): Generated {

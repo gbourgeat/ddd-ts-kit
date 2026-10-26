@@ -12,8 +12,11 @@ const permissions = (root: string, kind: string): string[] => stringsAt(readJson
 
 const DENIED = [
   'Read(./.env)',
-  'Read(./.env.*)',
-  'Read(!./.env.example)',
+  'Read(./.env.local)',
+  'Read(./.env.*.local)',
+  'Read(./.env.production)',
+  'Read(./.env.development)',
+  'Read(./.env.test)',
   'Edit(./openapi/**)',
   'Edit(./docs/integration/asyncapi.*)',
   'Edit(./docs/integration/event-catalog.md)',
@@ -73,6 +76,22 @@ describe('agent settings', () => {
     expect(permissions(root, 'ask')).toEqual(ASKED);
   });
 
+  it('names the secret files, and no rule negates a pattern inside its parentheses: the sandbox ignores the negation', () => {
+    const root = initProject(...NPM);
+    const rules = ['allow', 'deny', 'ask'].flatMap((kind) => permissions(root, kind));
+
+    expect(rules.filter((rule) => /\(.*!/.test(rule))).toEqual([]);
+
+    expect(permissions(root, 'deny').filter((rule) => rule.startsWith('Read('))).toEqual([
+      'Read(./.env)',
+      'Read(./.env.local)',
+      'Read(./.env.*.local)',
+      'Read(./.env.production)',
+      'Read(./.env.development)',
+      'Read(./.env.test)',
+    ]);
+  });
+
   it('asks before a migration of the ORM of the project, and never names a folder the project has no migration in', () => {
     const prisma = permissions(initProject(...NPM, '--orm', 'prisma'), 'ask');
     const knex = permissions(initProject(...NPM, '--orm', 'knex'), 'ask');
@@ -107,7 +126,7 @@ describe('agent settings', () => {
     expect(permissions(root, 'deny')).toContain('Edit(./openapi/**)');
 
     expect(stringsAt(report, 'notes').join('\n')).toMatch(
-      /\.claude\/settings\.json gained 56 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
+      /\.claude\/settings\.json gained 59 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
     );
 
     expect(stringsAt(cli(root, 'init', '--json').json(), 'updated')).not.toContain(SETTINGS);

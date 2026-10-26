@@ -6,7 +6,7 @@ export const USAGE = `Usage
                   [--orm drizzle|knex|prisma|typeorm|custom|none] [--database postgres|mysql|sqlite|none]
                   [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
                   [--ci github|gitlab|both|none] [--ci-extras <extra>,...|none]
-                  [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
+                  [--authn jwt|keycloak|passport|none] [--authz rbac|abac|rebac|custom]
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--http-cache none|varnish]
                   [--rpc none|orpc|trpc]
                   [--storage local|s3|none]
@@ -49,6 +49,8 @@ export const USAGE = `Usage
   ddd-ts-kit build-aliases [--project <tsconfig>]
   ddd-ts-kit drizzle-generate --name <what-it-does> [--custom]
   ddd-ts-kit drizzle-generate --replay [--base <git-ref>]
+  ddd-ts-kit prisma-generate --name <what-it-does>
+  ddd-ts-kit typeorm-generate <folder>/<what-it-does>
   ddd-ts-kit error-factories --plan | --apply [--to named|factories] [--dry-run]
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]

@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util';
 import { CONCURRENCY_CONFLICT } from '@ddd-ts-kit/kernel';
 import type { AggregateRoot, Repository } from '@ddd-ts-kit/kernel';
 import type { Awaitable } from './awaitable';
@@ -11,8 +12,12 @@ export interface RepositoryContractOptions<A extends AggregateRoot<Id>, Id exten
   createRepository(): Awaitable<Repository<A, Id>>;
   /** A new valid aggregate with an id of its own at each call. */
   createAggregate(): A;
-  /** Any business operation that changes what `stateOf` returns. */
-  mutate(aggregate: A): void;
+  /**
+   * Any business operation that changes what `stateOf` returns, and records a change (an event, for an
+   * event-sourced aggregate): a save of an aggregate with no pending change is a no-op for concurrency.
+   * Optional: without it, the case of the stale save stays pending until the contract is given one.
+   */
+  mutate?(aggregate: A): void;
   idOf(aggregate: A): Id;
   /** A plain-data view of the business state (not of `version`), compared with `toEqual`. */
   stateOf(aggregate: A): unknown;
@@ -74,7 +79,7 @@ class RepositorySuite<A extends AggregateRoot<Id>, Id extends string | number> e
       const first = options.createAggregate();
       const second = options.createAggregate();
 
-      options.mutate(second);
+      options.mutate?.(second);
       await this.subject.save(first);
       await this.subject.save(second);
 
@@ -93,7 +98,7 @@ class RepositorySuite<A extends AggregateRoot<Id>, Id extends string | number> e
 
       const loaded = await this.reload(aggregate);
 
-      options.mutate(loaded);
+      options.mutate?.(loaded);
       await this.subject.save(loaded);
 
       this.expect(options.stateOf(await this.reload(aggregate))).toEqual(options.stateOf(loaded));
@@ -103,7 +108,7 @@ class RepositorySuite<A extends AggregateRoot<Id>, Id extends string | number> e
       const aggregate = options.createAggregate();
 
       await this.subject.save(aggregate);
-      options.mutate(aggregate);
+      options.mutate?.(aggregate);
       await this.subject.save(aggregate);
 
       this.expect(options.stateOf(await this.reload(aggregate))).toEqual(options.stateOf(aggregate));
@@ -120,8 +125,8 @@ class RepositorySuite<A extends AggregateRoot<Id>, Id extends string | number> e
 
       await this.subject.save(aggregate);
 
-      options.mutate(aggregate);
-      options.mutate(await this.reload(aggregate));
+      options.mutate?.(aggregate);
+      options.mutate?.(await this.reload(aggregate));
 
       this.expect(options.stateOf(await this.reload(aggregate))).toEqual(saved);
     });
@@ -130,6 +135,14 @@ class RepositorySuite<A extends AggregateRoot<Id>, Id extends string | number> e
   private refusesToOverwriteAnUnseenChange(): void {
     const { options } = this;
 
+    if (options.mutate === undefined) {
+      this.todo(
+        'refuses to overwrite a change it has not seen (give the contract a mutate that records a change of state)',
+      );
+
+      return;
+    }
+
     this.it('refuses to overwrite a change it has not seen', async () => {
       const aggregate = options.createAggregate();
 
@@ -137,8 +150,18 @@ class RepositorySuite<A extends AggregateRoot<Id>, Id extends string | number> e
       const mine = await this.reload(aggregate);
       const theirs = await this.reload(aggregate);
 
-      options.mutate(theirs);
+      // Copied: `stateOf` may hand out a live view of the aggregate about to be mutated.
+      const before = structuredClone(options.stateOf(theirs));
+
+      options.mutate?.(theirs);
+
+      if (isDeepStrictEqual(before, options.stateOf(theirs))) {
+        throw new Error('mutate changed nothing: give the contract a change of state');
+      }
+
       await this.subject.save(theirs);
+      // A save with no pending change refuses nothing, so the stale copy has a change of its own to save.
+      options.mutate?.(mine);
       const failure = await failureOf(() => this.subject.save(mine));
 
       this.expect(codeOf(failure)).toBe(CONCURRENCY_CONFLICT);

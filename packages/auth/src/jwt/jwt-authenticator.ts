@@ -8,9 +8,8 @@ import {
 import { createRemoteJWKSet, errors, jwtVerify, type JWTPayload, type JWTVerifyGetKey, type KeyInput } from 'jose';
 import type { SessionAuthenticator } from '../authentication/session-authenticator';
 import { InvalidCredentialError } from '../errors/invalid-credential-error';
-import { profileAttributesOf } from './profile-attributes-of';
+import { actorOfClaims } from './actor-of-claims';
 import { sessionOfClaims } from './session-of-claims';
-import { tenancyOfClaim } from './tenancy-of-claim';
 
 interface CommonOptions {
   readonly issuer: string;
@@ -131,47 +130,4 @@ function refusalOf(error: unknown): unknown {
   const reason = REASONS[error.code];
 
   return reason === undefined ? error : new InvalidCredentialError(reason);
-}
-
-function actorOfClaims(claims: JWTPayload, tenantClaim: string): Actor {
-  if (claims.sub === undefined || claims.sub === '') {
-    throw new InvalidCredentialError('NO_SUBJECT');
-  }
-
-  const { tenantId, tenants } = tenancyOfClaim(claims[tenantClaim]);
-
-  return {
-    id: claims.sub,
-    type: 'user',
-    ...(tenantId === undefined ? {} : { tenantId }),
-    roles: rolesOf(claims),
-    attributes: { ...profileAttributesOf(claims), ...(tenants === undefined ? {} : { tenants }) },
-  };
-}
-
-/**
- * The first claim present wins, in the order realm roles (`realm_access.roles`), a `roles`
- * claim, OAuth scopes. They are never merged: a scope a client asked for must not pass for a role.
- */
-function rolesOf(claims: JWTPayload): readonly string[] {
-  const realmAccess = claims['realm_access'];
-
-  const realmRoles =
-    typeof realmAccess === 'object' && realmAccess !== null && 'roles' in realmAccess ? realmAccess.roles : undefined;
-
-  const candidates = [stringsOf(realmRoles), stringsOf(claims['roles']), stringsOf(claims['scope'])];
-
-  return candidates.find((roles) => roles !== undefined) ?? [];
-}
-
-function stringsOf(claim: unknown): readonly string[] | undefined {
-  if (typeof claim === 'string') {
-    return claim.split(' ').filter((item) => item !== '');
-  }
-
-  if (!Array.isArray(claim)) {
-    return undefined;
-  }
-
-  return claim.filter((item): item is string => typeof item === 'string');
 }

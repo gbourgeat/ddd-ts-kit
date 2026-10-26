@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:010b0daace5c980a -->
+<!-- translation-of: commands.md sha256:f597b66462de15e5 -->
 
 # Quelle commande, quand
 
@@ -242,7 +242,7 @@ Usage
                   [--orm drizzle|knex|prisma|typeorm|custom|none] [--database postgres|mysql|sqlite|none]
                   [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
                   [--ci github|gitlab|both|none] [--ci-extras <extra>,...|none]
-                  [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
+                  [--authn jwt|keycloak|passport|none] [--authz rbac|abac|rebac|custom]
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--http-cache none|varnish]
                   [--rpc none|orpc|trpc]
                   [--storage local|s3|none]
@@ -285,6 +285,8 @@ Usage
   ddd-ts-kit build-aliases [--project <tsconfig>]
   ddd-ts-kit drizzle-generate --name <what-it-does> [--custom]
   ddd-ts-kit drizzle-generate --replay [--base <git-ref>]
+  ddd-ts-kit prisma-generate --name <what-it-does>
+  ddd-ts-kit typeorm-generate <folder>/<what-it-does>
   ddd-ts-kit error-factories --plan | --apply [--to named|factories] [--dry-run]
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]
@@ -600,7 +602,7 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
 Kinds
   context <name> --classification <core|supporting|generic> [--purpose "<two sentences>"] [--term "<Term>=<meaning>"]... [--upstream <ctx>[:relationship]]... [--preset identity]
   module <context> <module> [--purpose "<what it holds>"] [--classification <core|supporting|generic>] [--term "<Term>=<meaning>"]...
-  aggregate <context> <Name> [--event-sourced] [--term "<Term>=<meaning>"]...
+  aggregate <context> <Name> [--event-sourced [--birth <Event>]] [--term "<Term>=<meaning>"]...
   builder <context> <Aggregate>
   test-world <context> [Name]
   entity <context> <Name> [--term "<Term>=<meaning>"]...

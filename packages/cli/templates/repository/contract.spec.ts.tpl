@@ -26,9 +26,7 @@ const runner = { describe, it, expect, beforeEach, afterEach };
 
 const expectations = {
   createAggregate: () => {{aggregate.article}}{{aggregate.pascal}}().build(),
-  mutate: (changed: {{aggregate.pascal}}) => {
-    // TODO(domain): call a business method of {{aggregate.pascal}} on `changed` that alters its state, so that the suite proves an update is really stored.
-  },
+  // TODO(domain): add `mutate: (changed: {{aggregate.pascal}}) => changed.<a business method that records a change of state>(...)`, so that the suite proves an update is stored and a stale save is refused; the case stays pending until then.
   idOf: (subject: {{aggregate.pascal}}) => subject.id,
   stateOf: (subject: {{aggregate.pascal}}) => subject.toState(),
 };

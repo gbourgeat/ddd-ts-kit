@@ -17,6 +17,7 @@ npm i jose            # only for @ddd-ts-kit/auth/jwt
 | `@ddd-ts-kit/auth` | permissions, `requires`, `AuthorizationMap`, `authorizationMiddleware`, the ports `Authorizer`, `Access`, `Authenticator` and `SessionAuthenticator`, policies and `PolicyAccess`, `RoleBasedAuthorizer`, `PolicyBasedAuthorizer`, HTTP glue | the kernel only |
 | `@ddd-ts-kit/auth/rebac` | schema DSL, relation tuples, `RelationTupleStore`, `RelationBasedAuthorizer` | the kernel only |
 | `@ddd-ts-kit/auth/jwt` | `JwtAuthenticator`, `keycloakAuthenticator` | `jose` (optional peer), the only file that does |
+| `@ddd-ts-kit/auth/passport` | `passportPrincipal`: a strategy of Passport as the `resolvePrincipal` of the HTTP boundary | nothing: it runs the strategy it is given |
 | `@ddd-ts-kit/auth/di` | `authorizationModule`, `authorizationMapOf`, and again the classes the module binds: `Authorizer`, `Authenticator`, `Access`, `AuthorizationMap` | `@ddd-ts-kit/di` (optional peer) |
 | `@ddd-ts-kit/auth/testing` | `anActor()` and its `ActorBuilder`, `AllowAll`, `DenyAll`, `RecordingAuthorizer`, `FakeAuthenticator`, the two contract suites | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
 
@@ -585,6 +586,61 @@ What to configure in the realm, for these claims to be in the access token:
 `preferred_username` and `email` come from the built-in `profile` and `email` scopes. The
 preset never calls Keycloak beyond the key set: a revoked session is refused when its access
 token expires, so keep the access token lifespan short.
+
+### Passport
+
+A project that authenticates with a strategy of Passport keeps it: `passportPrincipal` runs the
+strategy on each request, as `passport.authenticate` does, and answers the session the pipeline
+puts in the execution context. The guards of the routes and the permissions of the use cases
+then decide, on every door, as with the authenticators above.
+
+```ts
+import { passportPrincipal } from '@ddd-ts-kit/auth/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+
+const strategy = new Strategy(
+  { jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), secretOrKey: settings.jwtSecret },
+  (payload, done) => done(null, payload),
+);
+
+const resolvePrincipal = passportPrincipal(strategy, {
+  // What the verify callback handed to `done`, read as a mapper reads what enters.
+  actorOf: (user) => accountActorOf(user),
+});
+```
+
+A class written with `PassportStrategy` of `@nestjs/passport` is a strategy too: what its
+`validate` answers is the user `actorOf` reads. Nest may build it with what it injects; give
+`passportPrincipal` a function that answers the instance once Nest has started.
+
+It fails closed:
+
+| The strategy | The call |
+|---|---|
+| succeeds | goes on as the actor `actorOf` answers |
+| fails a request that presents a credential | is refused, 401 (`InvalidCredentialError`) |
+| fails a request that presents none | goes on anonymous, for the guards of the route to decide |
+| passes | goes on anonymous |
+| errs, or throws | is refused, the error reported as any other |
+| redirects (an OAuth sign-in) | is refused: a sign-in flow is served by the platform, not by the authentication of a call |
+| answers nothing within `timeoutMs` (10 s) | is refused |
+
+A credential is presented when the request carries an `Authorization` header; a strategy that
+reads a cookie says where with `presented: (raw) => ...`.
+
+`passportAuthenticator(strategy, { actorOf })` is the same strategy behind the `Authenticator`
+port: the bearer credential is handed to the strategy as `Authorization: Bearer <credential>`,
+so that the procedures, the scripts and the end-to-end tests authenticate through it too.
+`actorOfClaims(claims)` reads the claims of a token as `JwtAuthenticator` does, for the
+`actorOf` of a strategy that hands its payload on. `ddd-ts-kit init --authn passport` writes
+that platform: a strategy of `passport-jwt` on the key set of the issuer (`jwks-rsa`), its
+`actorOf`, and the end-to-end credentials signed for it. It verifies bearer tokens, as
+`--authn jwt` does, with the strategy in the code of the project: another strategy that reads a
+bearer token (opaque tokens through `passport-http-bearer`, an introspection) takes its place in
+`bearer-strategy.ts`. A strategy that reads a cookie or a session does not go through the
+`Authenticator` port, which only receives a credential: give it to `passportPrincipal`, which
+receives the request itself, as the `resolvePrincipal` of the boundary, and declare its security
+scheme in the contract.
 
 ## Choosing a model
 

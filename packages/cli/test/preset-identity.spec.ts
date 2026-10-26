@@ -96,7 +96,7 @@ describe('init --preset identity', () => {
     expect(typeorm.message).toBe('The identity preset is not written for "stack.orm": "typeorm".');
     expect(typeorm.fix).toContain('--orm knex, --orm drizzle or --orm prisma');
     expect(anonymous.message).toBe('The identity preset is not written for "stack.authn": "none".');
-    expect(anonymous.fix).toContain('--authn jwt or --authn keycloak');
+    expect(anonymous.fix).toContain('--authn jwt, --authn keycloak or --authn passport');
     expect(unknown.message).toBe('Unknown preset "billing".');
     expect(classes.fix).toContain('--refusals named or --refusals factories');
   });

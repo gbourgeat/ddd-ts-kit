@@ -326,6 +326,14 @@ The contract checks that a saved aggregate is found with its state, that two agg
 apart, that later saves are stored, that a change not saved is not, and that a save over a
 version it did not read is refused with `CONCURRENCY_CONFLICT`.
 
+The stale-save case needs a `mutate` that records a change of state: the contract changes both
+copies, so that a table adapter and an event store alike refuse the stale one. When `mutate`
+records nothing, the case fails with `mutate changed nothing: give the contract a change of state`
+instead of waiting for a conflict that never comes. `mutate` is optional: without it the case
+stays pending (`it.todo`, with the reason `give the contract a mutate that records a change of
+state`), which is how a freshly generated contract spec starts. A save without a change is not
+judged: a table adapter moves the version, an event store appends nothing.
+
 ## Comparison
 
 Versions checked on 2026-10-10 against the npm registry.
@@ -425,8 +433,9 @@ From [`packages/cli/README.md`](../../packages/cli/README.md) and
   `--tenancy shared-table`, is implemented for the four ORMs; with `custom` or no ORM the regular
   adapter is written and a note says what to add, and `init` refuses the strategy.
 - The SQL audit trail exists for the four ORMs, on PostgreSQL only; the append-only guard is
-  created by the first migration on Knex and pasted in a migration by hand on Drizzle, Prisma and
-  TypeORM (`npm run db:audit-guard`). With `custom` or no ORM the generated project starts on an
+  created by the first migration on Knex, and on Drizzle, Prisma and TypeORM `npm run db:generate`
+  adds its statements to the migration that creates the audit tables, which the tool of the ORM
+  cannot write (`npm run db:audit-guard` prints them for a migration written by hand). With `custom` or no ORM the generated project starts on an
   in-memory trail behind a `TODO(platform)`.
 - Fast adapter specs run on PGlite; Docker Compose provides the real server.
 - The erasure of a data subject from the tables declared with `personalFields` exists on the four
@@ -480,11 +489,14 @@ refuses to run without the description: two branches never write the same file.
 |---|---|---|---|
 | drizzle-kit 0.31 | `ddd-ts-kit drizzle-generate --name`, which runs `drizzle-kit generate --name` (`migrations.prefix: 'timestamp'` in `drizzle.config.ts`) | `migrations/20261012093000_add-invoices.sql`, its snapshot `meta/20261012093000_snapshot.json`, one entry of `meta/_journal.json` | **skipped without a word**: the migrator applies the entries newer than the last one recorded |
 | knex 3 | `knex migrate:make` (the ES module stub of knex, set in `knexfile.js`) | `migrations/20261012093000_add-invoices.js` | applied: knex runs every file it has not recorded |
-| Prisma 7 | `prisma migrate dev --create-only --name` | `prisma/migrations/20261012093000_add_invoices/migration.sql` (Prisma turns `-` into `_`) | applied by `migrate deploy`, which runs every migration it has not recorded (its documentation; not measured here) |
-| TypeORM 1.1 | `typeorm migration:generate -d <data source>`, given the path: `npm run db:generate migrations/add-invoices` | `migrations/1791829645467-add-invoices.ts` (milliseconds, and a `-`: TypeORM fixes both) | applied: TypeORM runs every migration it has not recorded |
+| Prisma 7 | `ddd-ts-kit prisma-generate --name`, which runs `prisma migrate dev --create-only --name` | `prisma/migrations/20261012093000_add_invoices/migration.sql` (Prisma turns `-` into `_`) | applied by `migrate deploy`, which runs every migration it has not recorded (its documentation; not measured here) |
+| TypeORM 1.1 | `ddd-ts-kit typeorm-generate`, which runs `typeorm migration:generate -d <data source>`, given the path: `npm run db:generate migrations/add-invoices` | `migrations/1791829645467-add-invoices.ts` (milliseconds, and a `-`: TypeORM fixes both) | applied: TypeORM runs every migration it has not recorded |
 
 The command takes the description after the script: `npm run db:generate add-invoices`
-(`npm run db:generate -- audit-guard --custom` for a hand-written drizzle-kit migration).
+(`npm run db:generate -- audit-guard --custom` for a hand-written drizzle-kit migration). With
+an audit trail, the commands of the kit add the statements of its append-only guard to the
+migration that creates the audit tables, once: a project whose migrations hold them is left as it
+is.
 
 **Two migrations kept apart.** A tool that generates from the schema writes, in one migration,
 the difference between the schema files and the last migration: two changes made before one

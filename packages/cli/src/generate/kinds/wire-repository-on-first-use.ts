@@ -3,6 +3,7 @@ import { named } from '../named';
 import type { Scope } from '../scope';
 import { vars } from '../vars';
 import { wire } from '../wire';
+import { isEventSourced } from './is-event-sourced';
 import { repositoryPrefix } from './repository-prefix';
 
 /**
@@ -14,7 +15,7 @@ import { repositoryPrefix } from './repository-prefix';
 export function wireRepositoryOnFirstUse(scope: Scope, aggregate: Name): void {
   wire(
     scope,
-    'repository/first-use',
+    isEventSourced(scope, aggregate) ? 'repository/event-sourced-first-use' : 'repository/first-use',
     vars(scope, { aggregate: named(aggregate), adapter: repositoryPrefix(scope.config.stack.orm) }),
   );
 }
