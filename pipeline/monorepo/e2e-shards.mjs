@@ -41,9 +41,10 @@ export const SHARDS = [
     'proven-stacks.spec.ts': 431,
     'new-rule-violations.spec.ts': 65,
     'error-reporting.spec.ts': 17,
-    'service-composition.spec.ts': 60,
     'platform-error-mapper.spec.ts': 20,
     'manual-module.spec.ts': 40,
+    // A multi-tenant project with a service, its roots composed (17 s on a workstation).
+    'service-composition.spec.ts': 40,
   },
   {
     'zero-violation.spec.ts': 33,
