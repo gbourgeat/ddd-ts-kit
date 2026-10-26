@@ -83,7 +83,6 @@ missing. Rows with no path between them can be built in parallel.
   row that serves two modules is split.
 - `--grant <role>` is written only when `stack.authz` is `rbac`. On `rebac` or `abac` the right
   is decided by the relationship schema or a policy, never by `--grant`: the generator refuses it.
-- The `--grant` of the rows above is for an `rbac` project; on a `rebac` one, leave it out.
 - `Owner` is `conductor`, the name of a context (one worker per context) or a person.
 - `Status` is `todo`, `in progress`, `done`. Only the conductor edits this file: a worker
   reports, the conductor marks the row at the merge. A story or a milestone is closed when
