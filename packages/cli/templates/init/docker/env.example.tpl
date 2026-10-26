@@ -165,7 +165,11 @@ MINIO_PORT=9000
 # TRACE_SAMPLE_RATIO=1
 # continue: a consumed event stays in the trace of the request that published it. link: each delivery starts its own trace, linked to it.
 # TRACE_CONSUMERS=continue
+# What this process is called in traces and logs: one name per container (the worker, a service) tells the processes apart.
 OTEL_SERVICE_NAME={{project.name}}
+# What every process of one deployment shares: the namespace of the keys they exchange through the server (the lock of a job, the cache,
+# the rate limiter, the job store). The same for the API, the worker and the services; never the name of a container.
+DEPLOYMENT_NAME={{project.name}}
 {{#if tenancy.any}}
 # The tenants that exist, comma separated: a scheduled job declared per-tenant runs once for each, and the privacy scripts reach each.
 TENANTS=

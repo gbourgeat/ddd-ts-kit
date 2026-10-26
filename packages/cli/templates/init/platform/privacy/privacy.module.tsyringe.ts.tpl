@@ -6,15 +6,18 @@ import { runPurge } from '{{alias.platform}}/privacy/run-purge{{alias.ext}}';
  * retention their declaration gives are purged (`privacy.purge-expired`, switched off in one
  * environment with `JOB_PRIVACY_PURGE_EXPIRED_ENABLED=false`).
  */
-export function privacyModule(): ContextModule {
+export function privacyModule({ jobs = true }: { readonly jobs?: boolean } = {}): ContextModule {
   return defineContextModule({
     name: 'privacy',
     register(builder) {
-      builder.job('privacy.purge-expired', { cron: '0 3 * * *' }).handledByFactory((resolve) => ({
-        run: async () => {
-          await runPurge(resolve);
-        },
-      }));
+      // Registered by the process that runs the jobs of the platform; a service of the deployment passes `jobs: false`.
+      if (jobs) {
+        builder.job('privacy.purge-expired', { cron: '0 3 * * *' }).handledByFactory((resolve) => ({
+          run: async () => {
+            await runPurge(resolve);
+          },
+        }));
+      }
     },
   });
 }

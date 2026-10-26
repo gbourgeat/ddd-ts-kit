@@ -107,6 +107,8 @@ import { platformModule, type PlatformOptions } from '{{alias.platform}}/composi
 export interface ApplicationOptions extends PlatformOptions {
   /** Whether this process runs the scheduled jobs, and their settings; left out (the tools, the tests), no job runs by time. */
   readonly jobs?: JobsOptions;
+  /** Whether the jobs of the platform itself are registered: a service passes `false`, they run in the whole application. Default `true`. */
+  readonly platformJobs?: boolean;
 {{#if tenancy.any}}
   /** The ids of the tenants that exist (`TENANTS`): a job declared `per-tenant` runs once for each. Left out (the tools, the tests), none, and such a job runs for nobody. */
   readonly tenants?: readonly string[];
@@ -152,7 +154,7 @@ export interface Application {
   stop(): Promise<void>;
 }
 
-const everyContext: ContextSelection = {
+export const everyContext: ContextSelection = {
   modules: [
     // ddd-ts-kit:contexts
     // /ddd-ts-kit:contexts
@@ -188,13 +190,18 @@ export function composeApplication(
 {{/if}}
       guard,
 {{#if audit.on}}
+{{#if audit.archive}}
+      auditModule(foundations.audit, { jobs: options.platformJobs !== false }),
+{{/if}}
+{{#unless audit.archive}}
       auditModule(foundations.audit),
+{{/unless}}
 {{/if}}
 {{#if files.any}}
-      filesModule(options.files ?? new InMemoryFileStorage()),
+      filesModule(options.files ?? new InMemoryFileStorage(), { jobs: options.platformJobs !== false }),
 {{/if}}
 {{#if privacy.on}}
-      privacyModule(),
+      privacyModule({ jobs: options.platformJobs !== false }),
 {{/if}}
       ...contexts.modules,
     ],

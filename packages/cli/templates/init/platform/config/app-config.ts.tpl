@@ -12,7 +12,10 @@ import type { TracingConfig } from '{{alias.platform}}/config/read-tracing{{alia
 
 /** The validated configuration of the process: `loadConfig` is the only reader of the environment. */
 export interface AppConfig {
+  /** What this process is called in traces and logs (`OTEL_SERVICE_NAME`): one per container, so it tells the processes of a deployment apart. */
   readonly serviceName: string;
+  /** What the processes of one deployment share (`DEPLOYMENT_NAME`, the name of the project when left out): the namespace of the keys they exchange through the server, never `serviceName`. */
+  readonly deploymentName: string;
   readonly serviceVersion: string;
   readonly environment: 'development' | 'test' | 'production';
   readonly port: number;

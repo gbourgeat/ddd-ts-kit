@@ -67,25 +67,30 @@ export interface RedisServices {
 
 interface RedisSettings {
   readonly redisUrl: string;
-  /** Prefix of every key, so that several services share one server. */
-  readonly serviceName: string;
+  /**
+   * Prefix of every key. The same for every process of one deployment (`DEPLOYMENT_NAME`), never
+   * the name of the container: the lock that keeps an occurrence of a job to one run, the cache
+   * a purge reaches and the jobs waiting in the store are shared by the API, the worker and the
+   * services, and each would otherwise find only its own keys.
+   */
+  readonly deploymentName: string;
 }
 
-export function openRedis({ redisUrl, serviceName }: RedisSettings): RedisServices {
+export function openRedis({ redisUrl, deploymentName }: RedisSettings): RedisServices {
   const connection = connectRedis(redisUrl);
   {{#if cache.relaySignal}}
-  const relaySignal = new RedisRelaySignal(connection.client, { channel: serviceName + ':outbox' });
+  const relaySignal = new RedisRelaySignal(connection.client, { channel: deploymentName + ':outbox' });
   {{/if}}
 
   return {
-    cache: (metrics) => new RedisCache(connection.client, { namespace: serviceName, metrics }),
+    cache: (metrics) => new RedisCache(connection.client, { namespace: deploymentName, metrics }),
     // While the server is away the API keeps serving, without a limit: a limiter must not take the application down.
-    rateLimiter: new RedisRateLimiter(connection.client, { namespace: serviceName + ':rate', onError: 'allow' }),
-    lock: new RedisLock(connection.client, { namespace: serviceName + ':lock' }),
+    rateLimiter: new RedisRateLimiter(connection.client, { namespace: deploymentName + ':rate', onError: 'allow' }),
+    lock: new RedisLock(connection.client, { namespace: deploymentName + ':lock' }),
     {{#if queue.redis}}
     jobs: (logger, errors) =>
       new RedisJobStore(connection.client, {
-        namespace: serviceName + ':jobs',
+        namespace: deploymentName + ':jobs',
         onLostJob: reportLostJobs(logger, errors),
       }),
     {{/if}}

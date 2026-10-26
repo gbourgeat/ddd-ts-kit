@@ -27,7 +27,7 @@ describe('init --cache', () => {
     expect(stack(root)).toMatchObject({ cache: 'redis' });
 
     expect(read(root, 'src/platform/redis/open-redis.ts')).toContain(
-      'new RedisCache(connection.client, { namespace: serviceName, metrics })',
+      'new RedisCache(connection.client, { namespace: deploymentName, metrics })',
     );
 
     expect(read(root, 'src/platform/buses/create-command-bus.ts')).toContain(

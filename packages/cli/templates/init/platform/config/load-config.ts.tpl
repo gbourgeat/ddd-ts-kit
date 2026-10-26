@@ -33,6 +33,7 @@ export function loadConfig(variables: Variables): AppConfig {
 
   const config: AppConfig = {
     serviceName: env.optional('OTEL_SERVICE_NAME') ?? '{{project.name}}',
+    deploymentName: env.optional('DEPLOYMENT_NAME') ?? '{{project.name}}',
     serviceVersion: env.optional('SERVICE_VERSION') ?? '0.0.0',
     environment,
     port: env.integer('PORT', { fallback: 3000, min: 0, max: 65535 }),

@@ -43,6 +43,11 @@ export interface PlatformOptions {
   readonly resilience?: ResilienceSettings;
   /** Whether this process runs the scheduled jobs and consumes the background jobs, and the settings of the scheduled ones; left out (the tools, the tests), no job runs by time. */
   readonly jobs?: JobsOptions;
+  /**
+   * Whether this composition registers the jobs of the platform itself. They belong to one process of a deployment, the
+   * whole application: a service passes `false`, or each of its containers would run them on the same database. Default: `true`.
+   */
+  readonly platformJobs?: boolean;
 {{#if tenancy.any}}
   /** The ids of the tenants that exist (`TENANTS`): a job declared `per-tenant` runs once for each. Left out (the tools, the tests), none, and such a job runs for nobody. */
   readonly tenants?: readonly string[];

@@ -86,7 +86,7 @@ export type ApplicationOptions = PlatformOptions;
 /** Wires one context on the platform. An application hosts all of them here, one alone in `apps/<context>/main.ts`. */
 type ContextModule = (platform: Platform) => ContextWiring;
 
-const everyContext: readonly ContextModule[] = [
+export const everyContext: readonly ContextModule[] = [
   // ddd-ts-kit:contexts
   // /ddd-ts-kit:contexts
 ];
@@ -142,7 +142,7 @@ export function composeApplication(
 
   installAspectRuntime({ logger, metrics, cache, clock });
 {{#if platformJobs.any}}
-  registerPlatformJobs(platform);
+  registerPlatformJobs(platform, options);
 {{/if}}
 
 {{#if audit.route}}
@@ -276,8 +276,12 @@ async function stop(platform: Platform, options: ApplicationOptions): Promise<vo
 }
 {{#if platformJobs.any}}
 
-/** The jobs of the platform itself, run by the process that runs the jobs. */
-function registerPlatformJobs(platform: Platform): void {
+/** The jobs of the platform itself, run by the whole application: a service passes `platformJobs: false`. */
+function registerPlatformJobs(platform: Platform, options: ApplicationOptions): void {
+  if (options.platformJobs === false) {
+    return;
+  }
+
 {{#if files.any}}
   purgeStagedFiles(platform);
 {{/if}}

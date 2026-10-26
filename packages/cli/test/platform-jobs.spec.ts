@@ -93,7 +93,7 @@ describe('the lock that keeps a job to one instance', () => {
     const root = initProject('--cache', 'redis');
 
     expect(platform(root, 'redis/open-redis.ts')).toContain(
-      "lock: new RedisLock(connection.client, { namespace: serviceName + ':lock' }),",
+      "lock: new RedisLock(connection.client, { namespace: deploymentName + ':lock' }),",
     );
 
     expect(platform(root, 'composition/platform.module.ts')).toContain('builder.rebind(Lock).toValue(redis.lock);');

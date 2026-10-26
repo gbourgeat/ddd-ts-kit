@@ -329,6 +329,16 @@ process.on('SIGTERM', () => void app.stop());
 runs one. Keep the single-run lock on even with one worker: a rolling deployment runs two for a
 while.
 
+### Services and the jobs of the platform
+
+The jobs of the platform itself (`audit.archive`, `privacy.purge-expired`, `files.purge-staged`)
+belong to the whole application. A service written by `generate service` composes with
+`platformJobs: false`, and its `jobSettings(env, '<context>')` keeps the settings of its own jobs
+only; the whole application leaves out the jobs of the contexts run as services. The lock that
+keeps an occurrence to one run is shared through Redis under `DEPLOYMENT_NAME` (like the cache,
+the rate limiter and the job store), never under `OTEL_SERVICE_NAME`: that one names the container
+in the traces, and a lock per container is no lock.
+
 ## Testing
 
 A spec of a job is a spec of the use case it triggers: run the job once through the test

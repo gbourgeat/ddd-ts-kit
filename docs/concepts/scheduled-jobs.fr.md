@@ -343,6 +343,17 @@ process.on('SIGTERM', () => void app.stop());
 toujours un. Gardez le verrou d'exécution unique même avec un seul *worker* : un déploiement
 progressif en fait tourner deux pendant un moment.
 
+### Les services et les *jobs* de la plateforme
+
+Les *jobs* de la plateforme elle-même (`audit.archive`, `privacy.purge-expired`,
+`files.purge-staged`) appartiennent à l'application entière. Un service écrit par `generate
+service` se compose avec `platformJobs: false`, et son `jobSettings(env, '<context>')` ne garde que
+les réglages de ses propres *jobs* ; l'application entière laisse de côté les *jobs* des contextes
+exécutés comme services. Le verrou qui limite une occurrence à une exécution est partagé par Redis
+sous `DEPLOYMENT_NAME` (comme le cache, le limiteur de débit et le magasin de *jobs*), jamais sous
+`OTEL_SERVICE_NAME` : celui-ci nomme le conteneur dans les traces, et un verrou par conteneur n'est
+pas un verrou.
+
 ## Tests
 
 Une *spec* de *job* est une *spec* du cas d'usage qu'il déclenche : exécutez le *job* une fois
