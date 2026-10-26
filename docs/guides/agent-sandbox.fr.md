@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:5b4be79bf2a98361 -->
+<!-- translation-of: agent-sandbox.md sha256:d9bf1081aa4aa41d -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -183,6 +183,22 @@ conséquence : dans une session sous le bac à sable, une commande qui écrit l'
   `docs:generate` reste le seul auteur de ces contrats.
 - Après une fusion hors du bac à sable, lancez `npm run docs:generate` et vérifiez que rien ne
   change : un contrat régénéré par la fusion doit être égal à celui que la branche porte.
+
+#### Les fichiers vides que laisse le bac à sable
+
+Là où le bac à sable de Claude Code monte un chemin qu'il protège et que ce chemin n'existe pas,
+il laisse dans le projet un fichier vide ou un périphérique `/dev/null` : `.mcp.json`,
+`.claude/launch.json`, `.claude/scheduled_tasks.json`, `.claude/settings.local.json`, `loop.md`
+et des fichiers cachés comme `.bashrc`. Ils ne font pas partie du projet, et un fichier JSON vide
+n'est pas du JSON valide. Les configurations que `init` écrit passent à côté : `biome.json` écarte
+`.claude` et `.mcp.json` et lit le fichier d'exclusion de git (pour qu'un magasin pnpm écrit dans
+le projet, `.pnpm-store/`, que `.gitignore` liste avec pnpm, ne soit pas parcouru), et `knip.json`
+pose `"mcp": false`, pour que Knip ne charge pas `.mcp.json`. Un projet écrit avant cela garde ses
+anciens fichiers : ajoutez-y ces lignes, ou lancez `init --force`.
+
+Le bac à sable peut aussi laisser un `.git/config.lock` en lecture seule. Supprimez-le depuis un
+terminal hors du bac à sable avant `git config` ou `git branch -d`, qui refusent de s'exécuter
+tant qu'il existe.
 
 ### 3. NVIDIA OpenShell
 

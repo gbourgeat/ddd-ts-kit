@@ -1,5 +1,10 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.6.2/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "files": {
     "includes": [
       "**/*.ts",
@@ -14,6 +19,8 @@
       "!**/coverage",
       "!**/reports",
       "!.worktrees",
+      "!**/.claude",
+      "!.mcp.json",
       "!**/.ddd-ts-kit",
       "!**/generated",
       "!**/package-lock.json",
