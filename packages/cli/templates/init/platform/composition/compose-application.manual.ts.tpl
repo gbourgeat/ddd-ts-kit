@@ -9,7 +9,7 @@ import type { UseCaseDeclaration } from '@ddd-ts-kit/auth';
 import { subscribeAll } from '@ddd-ts-kit/events';
 {{/if}}
 {{#if http.any}}
-import { createErrorMapper, defineRoutes, type Route } from '@ddd-ts-kit/http';
+import { defineRoutes, type Route } from '@ddd-ts-kit/http';
 {{/if}}
 {{#if routes.nest}}
 import type { Type } from '@nestjs/common';
@@ -45,6 +45,9 @@ import { withForms } from '{{alias.platform}}/http/with-forms{{alias.ext}}';
 import { relateSystemActors } from '{{alias.platform}}/auth/relationships/relate-system-actors{{alias.ext}}';
 {{/if}}
 import { createPlatform } from '{{alias.platform}}/composition/create-platform{{alias.ext}}';
+{{#if http.any}}
+import { platformErrorMapper } from '{{alias.platform}}/composition/platform-error-mapper{{alias.ext}}';
+{{/if}}
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 {{#if files.http}}
 import { fileRoutes } from '{{alias.platform}}/files/file-routes{{alias.ext}}';
@@ -182,7 +185,7 @@ export function composeApplication(
     boundary: httpBoundary({
       authenticator: options.authenticator,
       executionScope: platform.scope,
-      errorMapper: createErrorMapper(),
+      errorMapper: platformErrorMapper(),
       clock,
       logger,
 {{#if audit.on}}
