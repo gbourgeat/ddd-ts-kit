@@ -145,6 +145,7 @@ describe('the tenant directory of a project with the identity preset', () => {
     expect(directory).toContain(`new ${adapter}OrganisationTenantDirectory(persistence.database)`);
 
     expect(directory).not.toContain('InMemoryTenantDirectory');
+    expect(read(root, 'scripts/privacy-erase.ts')).toContain('tenantDirectory(persistence, fixedTenants)');
 
     expect(
       read(root, `src/contexts/identity/infrastructure/persistence/${orm}-organisation-tenant-directory.reader.ts`),

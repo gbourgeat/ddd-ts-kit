@@ -11,6 +11,10 @@ no source of tenants keeps `TENANTS`, and the documentation says plainly that a 
 a tenant created later. The adapter is integration-tested on PostgreSQL, including an
 organisation opened after the first read and, on tsyringe, its run of a per-tenant job.
 
+`privacy:erase` and `privacy:export` go through the same directory: with the identity preset they
+reach the organisations of the database, not only the tenants of `TENANTS`, and they refuse to
+run when the directory lists none.
+
 A per-tenant run reading its own tenant only is now proven end to end on the real tenant-scoped
 repository of a generated multi-tenant project, and the generated job spec points to that
 pattern where it kept an `it.todo`.
