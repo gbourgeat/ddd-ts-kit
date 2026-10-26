@@ -153,7 +153,7 @@ to open.
    (`presentation/http/<resource>/<use-case>/<use-case>.controller.ts`): its decorator declares
    the method, the path after the prefix of its route group, the schemas (shape only), the
    response and the `errors` it can answer; `handle` builds the command with `request.actor`
-   and returns the body. Add `--mapper` or `--serializer` when the translation is more than a
+   and returns the body (`{ body, headers }` when the response declares `headers`, a `Location` on a 201). Add `--mapper` or `--serializer` when the translation is more than a
    line; the controller is given nothing but its bus and those two. Its group
    (`<resource>.routes.ts`) holds the guards: a guard is a control at the edge, the permission
    stays on the command. In a project of function routes (`"stack.routes": "functions"`, or no

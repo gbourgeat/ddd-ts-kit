@@ -98,7 +98,12 @@ export class VisitSerializer implements Serializer<StoredVisit, VisitView> {
   path: '/',
   summary: 'Book visit',
   body: bookVisitBody,
-  response: { status: 201, description: 'Booked; the body carries the identifier.', body: booked },
+  response: {
+    status: 201,
+    description: 'Booked; the body carries the identifier.',
+    body: booked,
+    headers: { Location: 'The URL of the visit.' },
+  },
   errors: ['SLOT_TAKEN'],
 })
 export class BookVisitController {
@@ -107,8 +112,10 @@ export class BookVisitController {
     private readonly mapper: BookVisitMapper,
   ) {}
 
-  async handle(request: HttpRequest<{ body: BookVisitBody }>): Promise<{ id: string }> {
-    return { id: this.desk.book(this.mapper.map(request)) };
+  async handle(request: HttpRequest<{ body: BookVisitBody }>) {
+    const id = this.desk.book(this.mapper.map(request));
+
+    return { body: { id }, headers: { Location: `/visits/${id}` } };
   }
 }
 

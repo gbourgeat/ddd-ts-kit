@@ -44,6 +44,13 @@ export function mountsControllers(start: StartServer, readAuthorization: ReadAut
       expect(desk.booked.at(-1)).toMatchObject({ bookedBy: 'grace' });
     });
 
+    it('writes the headers a controller declares beside its body', async () => {
+      const response = await call('POST', '/visits', 'nurse', { patientId: 'patient-7', day: '2026-03-02' });
+
+      expect(response.status).toBe(201);
+      expect(response.headers.get('location')).toBe(`/visits/visit-${desk.booked.length}`);
+    });
+
     it('answers the problem of a guard that refuses, and lets a public controller through', async () => {
       const anonymous = await call('POST', '/visits', undefined, { patientId: 'patient-7', day: '2026-03-02' });
       const withoutRole = await call('DELETE', '/visits/clinics/clinic-1/visits/visit-1', 'nurse');

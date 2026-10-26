@@ -1,5 +1,5 @@
 [English](presentation-layer.md) · **Français**
-<!-- translation-of: presentation-layer.md sha256:e20b2be6a7f6a1ad -->
+<!-- translation-of: presentation-layer.md sha256:4046edbfcc08e229 -->
 
 # La couche présentation : contrôleurs, groupes de routes, gardes
 
@@ -200,7 +200,8 @@ prend ce que produisent les schémas de `spec` et renvoie le corps que déclare 
   `body` dont la sortie lui est assignable. Un contrôleur qui lit une partie que sa déclaration ne
   valide pas, ou qui la lit sous un autre type, ne compile pas.
 - `handle` renvoie le type de sortie de `response.body`, ou rien quand la réponse n'a pas de
-  corps.
+  corps. Quand la réponse déclare des `headers`, il renvoie `{ body, headers }` (`{ headers }` sans
+  corps) et un en-tête déclaré mais omis ne compile pas.
 - La requête HTTP est contravariante : `handle` ne nomme que les parties qu'il lit, et peut ne
   prendre aucun paramètre.
 
@@ -478,11 +479,42 @@ certains appelants est marqué sur le schéma de réponse (`withFieldAccess`), e
 dans lesquels une route répond sont les `produces` de sa déclaration, tous deux expliqués dans
 [représentations, accès aux champs et formulaires](representations-and-forms.fr.md).
 
+## En-têtes de réponse
+
+Une réponse déclare les en-têtes qu'elle renvoie, chacun avec ce qu'il contient ; le contrat les
+liste sous `responses.<statut>.headers`, et `handle` les renvoie à côté du corps, sur tous les
+adaptateurs. Une création renvoie son `Location` :
+
+```ts
+@Controller({
+  group: AppointmentRoutes,
+  method: 'POST',
+  path: '/',
+  summary: 'Book appointment',
+  body: bookAppointmentBody,
+  response: { status: 201, body: acceptedSchema, headers: { Location: "L'URL du rendez-vous." } },
+})
+export class BookAppointmentController {
+  constructor(private readonly commands: CommandBus) {}
+
+  async handle({ body, actor }: HttpRequest<{ body: BookAppointmentBody }>) {
+    const { appointmentId } = await this.commands.execute(new BookAppointment(body.patientId, actor));
+
+    return { body: { appointmentId }, headers: { Location: `/appointments/${appointmentId}` } };
+  }
+}
+```
+
+Une réponse qui ne déclare aucun en-tête continue de renvoyer le corps seul. Sur un contrôleur
+Nest, `@KitRoute({ response: { body, headers } })` les déclare de la même façon et la méthode
+renvoie `{ body, headers }` ; `body` y est alors déclaré, son type de retour n'étant pas lu pour
+cela.
+
 ## Quand garder une route fonction
 
 `defineRoute` reste pris en charge et les deux formes coexistent dans un même projet. Gardez une
 fonction quand la route répond par plusieurs statuts de succès, pose ses propres en-têtes de
-réponse (`Location`), renvoie des octets ou du texte, ou est construite à partir de données à l'exécution :
+réponse qui dépendent du résultat (un `Location` seulement quand elle crée), renvoie des octets ou du texte, ou est construite à partir de données à l'exécution :
 un contrôleur a une seule réponse et renvoie son corps. Les en-têtes de cache ne sont pas une
 raison : un contrôleur déclare sa politique de cache, ses validateurs et ses étiquettes de cache
 (`cache`), et le *pipeline* y répond ([Cache HTTP](http-caching.fr.md)).
