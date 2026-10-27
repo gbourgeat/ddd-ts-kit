@@ -21,7 +21,7 @@ export interface InstallScript {
  * @parcel/watcher load the prebuilt binary of an optional dependency without theirs; lefthook's
  * installs the git hooks, which `hooks:install` does.
  */
-export const INSTALL_SCRIPTS: readonly InstallScript[] = [
+const INSTALL_SCRIPTS: readonly InstallScript[] = [
   {
     name: '@prisma/engines',
     does: 'downloads the schema engine that `prisma migrate` and `db:client` run (the CLI fetches it at first use otherwise)',
