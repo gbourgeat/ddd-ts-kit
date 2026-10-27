@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b2257e8f78dcf54f -->
+<!-- translation-of: README.md sha256:7b1435aaca04c29a -->
 
 # ddd-ts-kit
 
@@ -880,7 +880,9 @@ Next, in this order: the language of the context first, then the business decisi
   du pluriel, du participe passé et en -ing sont reconnues). `--term "<Term>=<meaning>"`,
   répétable, ajoute les lignes dans la même commande. Les mots techniques (`Manager`, `Helper`,
   `Data`, `Impl`, `Model`...) et un fait d'événement qui ne se lit pas au passé sont refusés eux
-  aussi. `--allow-name` passe outre les trois vérifications ; `check` signalera tout de même ce
+  aussi ; un mot technique passe quand un terme du glossaire le tient
+  (`--term "Scoring model=<meaning>"` laisse passer `ScoringModel`), parce que le langage du
+  métier l'emporte. `--allow-name` passe outre les trois vérifications ; `check` signalera tout de même ce
   que le glossaire ne définit pas.
 - Le code généré compile tel quel et passe `check`, le preset ESLint, dependency-cruiser et knip
   aux sévérités par défaut : un export par fichier, des fichiers bien en dessous de 350 lignes,
@@ -2203,7 +2205,7 @@ règle.
 | `events/defined-in-published-language` | `defineIntegrationEvent` hors d'un langage publié, sans charge utile, deux fois pour une même version ; un événement décrit à la main |
 | `language/glossary-term` | une classe du modèle nommée avec un mot que le glossaire de son contexte ne définit pas ; un glossaire vide ; sous `"stack.refusals": "factories"` ou `"named"`, une classe de `domain/errors/` aussi, une classe de refus de `named` ayant droit en plus aux qualificatifs `invalid`, `unknown`, `already`, `too`, `no`, `missing` et `required` (`<context>.codes.ts` n'est pas jugé) |
 | `language/declared-vocabulary` | une chaîne littérale dont la valeur est une valeur d'un vocabulaire fermé que le projet déclare (un objet `as const` exporté avec le type union de son nom, un ensemble de permissions de `definePermissions`), hors du fichier qui le déclare, à l'endroit qui parle son langage (son contexte ; la plateforme et les groupes de routes pour la plateforme ; partout pour un identifiant de permission ou le noyau partagé) ; les tests, les langages publiés et le schéma de relations ne sont pas jugés, ni, hors de `domain/`, un mot typé par un autre langage (une clé d'un `Record<T, ..>`, une valeur d'un `Record<.., T>`, `'x' satisfies T`, `T` un type d'un langage publié, d'un paquet ou de `infrastructure/anti-corruption/` ou `infrastructure/external/`) ; sous `"stack.literals": "named"` |
-| `language/no-technical-name` | `Manager`, `Helper`, `Util`, `Utils`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`, `Abstract`, `Dto`, `Entity`, `Model` dans un type déclaré sous `domain/` ou dans un dossier de cas d'usage |
+| `language/no-technical-name` | `Manager`, `Helper`, `Util`, `Utils`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`, `Abstract`, `Dto`, `Entity`, `Model` dans un type déclaré sous `domain/` ou dans un dossier de cas d'usage, sauf quand un terme du glossaire du contexte tient le mot (`Scoring model` tient `ScoringModel`) |
 | `purity/no-system-clock` | `new Date()` sans argument, `Date.now()`, `performance.now()` dans `domain/` ou `application/` |
 | `purity/no-ambient-randomness` | `Math.random`, la source aléatoire de `crypto`, une bibliothèque d'identifiants |
 | `purity/no-environment` | `process.env` et apparentés, `console`, `fetch`, les modules de système de fichiers et de réseau |
