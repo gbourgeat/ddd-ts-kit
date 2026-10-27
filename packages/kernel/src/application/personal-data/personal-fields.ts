@@ -16,6 +16,8 @@ export interface PersonalFields<Row, Table = unknown> {
   readonly files: readonly (keyof Row & string)[];
   /** How long the rows keep it, counted from a date column: past that, the purge erases them as `erasure` says. Absent: kept until the person asks. */
   readonly retention?: Retention<Row>;
+  /** The key of the configuration that gives the retention, when the project reads it at run time: the register names it. Never with `retention`. */
+  readonly configuredRetention?: string;
 }
 
 export interface PersonalFieldsOptions<Row> {
@@ -24,6 +26,12 @@ export interface PersonalFieldsOptions<Row> {
   readonly erasure: ErasureMode;
   readonly files?: readonly (keyof Row & string)[];
   readonly retention?: Retention<Row>;
+  /**
+   * For a retention the project reads from configuration and purges by itself: the name of the
+   * variable or key (`'RETENTION_PERIODS'`). The generated register then says "configured by" it,
+   * instead of "until erased". The kit's own purge runs only from a literal `retention`.
+   */
+  readonly configuredRetention?: string;
 }
 
 /**
@@ -37,7 +45,7 @@ export interface PersonalFieldsOptions<Row> {
  */
 export function personalFields<Row, Table = unknown>(
   table: Table,
-  { subject, fields, erasure, files = [], retention }: PersonalFieldsOptions<Row>,
+  { subject, fields, erasure, files = [], retention, configuredRetention }: PersonalFieldsOptions<Row>,
 ): PersonalFields<Row, Table> {
   const personal = [...fields, ...files];
 
@@ -59,5 +67,23 @@ export function personalFields<Row, Table = unknown>(
     assertRetention(retention, personal);
   }
 
-  return { table, subject, fields, erasure, files, ...(retention === undefined ? {} : { retention }) };
+  assertConfiguredRetention(configuredRetention, retention);
+
+  return {
+    table,
+    subject,
+    fields,
+    erasure,
+    files,
+    ...(retention === undefined ? {} : { retention }),
+    ...(configuredRetention === undefined ? {} : { configuredRetention }),
+  };
+}
+
+function assertConfiguredRetention(configuredRetention: string | undefined, retention: unknown): void {
+  if (configuredRetention !== undefined && (retention !== undefined || configuredRetention.trim() === '')) {
+    throw new InvalidPersonalFieldsError(
+      'gives a retention and a configuration key for it: a literal retention, or the key of the configuration, not both and not empty',
+    );
+  }
 }

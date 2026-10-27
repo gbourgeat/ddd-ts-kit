@@ -52,7 +52,7 @@ function declaredIn(source: Source, open: number, table: DeclaredTable): Declare
   };
 
   const columns = (name: string): string[] => quotedIn(written(name)).map((column) => table.column(column));
-  const retention = retentionOf(written('retention'), table);
+  const retention = retentionOf(written('retention'), table) ?? configuredRetentionOf(written('configuredRetention'));
 
   return {
     table: table.name,
@@ -94,4 +94,11 @@ function retentionOf(written: string, table: DeclaredTable): string | undefined 
   const unit = amount === 1 ? (period[1] ?? '').slice(0, -1) : (period[1] ?? '');
 
   return `${String(amount)} ${unit} after ${table.column(after)}`;
+}
+
+/** `configuredRetention: 'RETENTION_PERIODS'` as `configured by RETENTION_PERIODS`. */
+function configuredRetentionOf(written: string): string | undefined {
+  const key = quotedIn(written)[0]?.trim();
+
+  return key === undefined || key === '' ? undefined : `configured by ${key}`;
 }

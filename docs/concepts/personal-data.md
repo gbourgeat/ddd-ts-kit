@@ -219,6 +219,14 @@ number of rows, `0` included, and no person. `JOB_PRIVACY_PURGE_EXPIRED_ENABLED=
 job off in one environment, and `npm run privacy:purge` runs it by hand and prints the rows reached
 per context. A table whose declaration gives no retention keeps its rows until the person asks.
 
+A project that reads its periods from configuration (an environment variable such as
+`RETENTION_PERIODS`, a JSON object from copy to period) and purges by its own job declares no
+literal `retention`, which the register would write as `until erased`: it names the configuration
+instead, `configuredRetention: 'RETENTION_PERIODS'`, and the register says
+``configured by `RETENTION_PERIODS` ``. The kit reads the key from the text of the source and never
+the value, and its own purge runs only from a literal `retention`; the two are refused together.
+The period itself stays the project's to state, in the controller section of the register.
+
 How long is the project's decision, not the tool's: the duration a law imposes (accounting,
 health), or the one the purpose needs. Write it in the register with its reason.
 

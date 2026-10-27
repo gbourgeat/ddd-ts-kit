@@ -173,3 +173,27 @@ describe('InMemoryPersonalData', () => {
     ]).toEqual(['2026-03-02T09:00:00.000Z', 'Ada', 62, true, null, null, '{"city":"Lyon"}']);
   });
 });
+
+describe('personalFields: a retention read from configuration', () => {
+  it('keeps the key of a retention read from configuration, and refuses it beside a literal one or empty', () => {
+    const base = { subject: 'id', fields: ['email'], erasure: 'row' } as const;
+
+    expect(
+      personalFields<{ id: string; email: string }>('t', { ...base, configuredRetention: 'RETENTION_PERIODS' }),
+    ).toMatchObject({
+      configuredRetention: 'RETENTION_PERIODS',
+    });
+
+    expect(() =>
+      personalFields<{ id: string; email: string; ended_at: Date }>('t', {
+        ...base,
+        retention: { after: 'ended_at', months: 1 },
+        configuredRetention: 'RETENTION_PERIODS',
+      }),
+    ).toThrow(InvalidPersonalFieldsError);
+
+    expect(() => personalFields<{ id: string; email: string }>('t', { ...base, configuredRetention: ' ' })).toThrow(
+      InvalidPersonalFieldsError,
+    );
+  });
+});
