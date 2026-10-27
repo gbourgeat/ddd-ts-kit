@@ -26,6 +26,7 @@ import { ignoreWorktrees } from './ignore-worktrees';
 import { writeManifest } from './manifest/write-manifest';
 import { dependenciesAgainstStack } from './manifest/dependencies-against-stack';
 import { writeOverrides } from './manifest/write-overrides';
+import { writeInstallScripts } from './manifest/write-install-scripts';
 import { recordAgentProfile } from './record-agent-profile';
 import { recordNoOutbox } from './record-no-outbox';
 import { resolveStack, type StackOptions } from './stack/resolve-stack';
@@ -231,6 +232,7 @@ function writeFiles(ws: Workspace, { config, projectName, flat, force, earlier }
 
   // After the files: under pnpm the overrides join the pnpm-workspace.yaml just written.
   writeOverrides(ws, config, force);
+  writeInstallScripts(ws, config);
 
   // Initialised again, a project may keep code lists where 0.86 and 0.87 wrote them: knip is told of both places.
   ignoreCodeTypesWhereTheyAre(ws, config);

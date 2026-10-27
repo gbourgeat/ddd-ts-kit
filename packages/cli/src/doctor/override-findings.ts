@@ -5,6 +5,7 @@ import { isRecord } from '../config/values/is-record';
 import { PINNED_BELOW_A_FIX, type PinnedBelowAFix } from '../init/manifest/pinned-below-a-fix';
 import type { DoctorFinding } from './doctor-finding';
 import { inRange } from './in-range';
+import { installedFrom } from './installed-from';
 
 /**
  * The versions init forces under a dependency that pins one below a security fix, judged on what
@@ -82,20 +83,6 @@ function askedOf(root: string, pin: PinnedBelowAFix): Asked | undefined {
   const parent = pin.through.at(-1);
 
   return typeof range === 'string' && parent !== undefined ? { parent, range } : undefined;
-}
-
-function installedFrom(start: string, name: string): string | undefined {
-  for (let directory = path.resolve(start); ; directory = path.dirname(directory)) {
-    const candidate = path.join(directory, 'node_modules', name);
-
-    if (fs.existsSync(path.join(candidate, 'package.json'))) {
-      return fs.realpathSync(candidate);
-    }
-
-    if (path.dirname(directory) === directory) {
-      return undefined;
-    }
-  }
 }
 
 function manifestIn(directory: string): Record<string, unknown> | undefined {

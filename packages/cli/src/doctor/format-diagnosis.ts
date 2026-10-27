@@ -36,6 +36,7 @@ function projectLines(findings: readonly DoctorFinding[], version: string, manag
     ...fixesOf(findings),
     ...folderFixesOf(findings),
     ...hookFixesOf(findings).map((fix) => inDialect(fix, manager)),
+    ...installScriptFixesOf(findings, manager),
   ];
 }
 
@@ -70,7 +71,11 @@ function version(area: DoctorFinding['area']): string {
 
 function fixesOf(findings: readonly DoctorFinding[]): string[] {
   const ofTheProject = findings.filter(
-    (finding) => finding.area !== 'hook' && finding.area !== 'folder' && finding.problem !== 'no longer needed',
+    (finding) =>
+      finding.area !== 'hook' &&
+      finding.area !== 'folder' &&
+      finding.problem !== 'no longer needed' &&
+      (finding.area !== 'install-script' || finding.problem === 'missing'),
   );
 
   const fixes =
@@ -90,9 +95,36 @@ function fixesOf(findings: readonly DoctorFinding[]): string[] {
     );
   }
 
-  if (ofTheProject.some((finding) => finding.problem === 'written otherwise')) {
+  if (ofTheProject.some((finding) => finding.area === 'script' && finding.problem === 'written otherwise')) {
     fixes.push(
       "note: a script written otherwise may be yours on purpose; `npx ddd-ts-kit init --force` writes the kit's version over it.",
+    );
+  }
+
+  return fixes;
+}
+
+/**
+ * A pin the last bump left behind is approved again once the new script was read; a denial of a
+ * script the stack needs is lifted, or kept on purpose. Said for the package manager of the project.
+ */
+function installScriptFixesOf(findings: readonly DoctorFinding[], manager: Stack['packageManager']): string[] {
+  const scripts = findings.filter((finding) => finding.area === 'install-script');
+  const pinned = scripts.filter((finding) => finding.problem === 'other version').map((finding) => finding.name);
+  const denied = scripts.filter((finding) => finding.problem === 'written otherwise').map((finding) => finding.name);
+  const fixes: string[] = [];
+
+  if (pinned.length > 0) {
+    fixes.push(
+      manager === 'pnpm'
+        ? `fix: read what the install script of the version installed does, then write it in allowBuilds of pnpm-workspace.yaml (\`'<package>@<version>': true\`, the version above) and run \`pnpm rebuild ${pinned.join(' ')}\`.`
+        : `fix: read what the install script of the version installed does, then \`npm install-scripts approve ${pinned.join(' ')}\` pins it to that version, and \`npm rebuild ${pinned.join(' ')}\` runs it.`,
+    );
+  }
+
+  if (denied.length > 0) {
+    fixes.push(
+      `note: the stack needs the install script of ${denied.join(', ')}: remove the denial (${manager === 'pnpm' ? 'allowBuilds of pnpm-workspace.yaml' : 'allowScripts of package.json'}) unless the project builds it another way.`,
     );
   }
 

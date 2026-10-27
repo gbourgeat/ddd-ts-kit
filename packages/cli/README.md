@@ -137,6 +137,20 @@ The project forces the versions that close a vulnerability its stack still pins 
 nothing of `package.json`: qs `^6.16.0`, which Stryker asks for at 6.15.1 through
 `typed-rest-client`, and under `--http nest` multer `^2.5.0`, which `@nestjs/platform-express`
 asks for at 2.4.0. An override the project already sets for one of them is kept, and said.
+The install scripts the stack needs are allowed by name: `@prisma/engines` under `--orm prisma`
+(it downloads the schema engine that `prisma migrate` and `db:client` run) and
+`@confluentinc/kafka-javascript` under `--broker kafka` (it downloads the prebuilt native client,
+or builds it), in `allowScripts` of `package.json` under npm and in `allowBuilds` of
+`pnpm-workspace.yaml` under pnpm. pnpm runs no build script of a dependency it is not told to;
+npm 11 lists every install script not in `allowScripts` as not yet reviewed, still runs it in
+11.19 with a warning, and says a later release blocks it. By name, because the version is known
+once the install resolved the range, and npm drops an entry written with a range; a team that
+reviews each version pins them after the first install (`npm install-scripts approve <package>`
+turns a name into the installed version), which the regulated profile asks. An entry the project
+has for one of them, a pin or a denial, is kept; a denial is said. The other install scripts an
+install lists (esbuild, `@swc/core`, `unrs-resolver`, `protobufjs`, `@parcel/watcher`, lefthook,
+the preinstall of `prisma`) are not needed by the kit: lefthook's installs the git hooks, which
+`hooks:install` does.
 
 **Pipelines.** A pull or merge request runs the unit specs, the integration specs and the lint of
 the contexts its change reaches through the context map ([`ddd-ts-kit affected`](#affected)); types,
@@ -599,7 +613,9 @@ Prisma, `github.com` and `release-assets.githubusercontent.com` with the Kafka c
 hosts, the credential files (`~/.ssh`, `~/.aws`, `~/.config/gcloud`, `~/.azure`) and the usual secret variables denied to every sandboxed command; a key the project
 already set is kept, and a list it holds gains the entries the stack needs. It also prints, as a
 note, that the owner runs the first install outside the agent (a path missing when a session
-starts stays read-only to it), and the block of managed settings a project file
+starts stays read-only to it) and then pins the install scripts of the stack to the versions read
+(`npm install-scripts approve <package>...`, or `'<package>@<version>': true` in `allowBuilds`
+under pnpm), a bump of one of them asking the same again, and the block of managed settings a project file
 cannot set (`allowManagedHooksOnly`, `allowManagedPermissionRulesOnly`,
 `permissions.disableBypassPermissionsMode`, `strictKnownMarketplaces` with the marketplace of
 the kit, `requiredMinimumVersion`), for the platform team to paste, and writes the two hooks of
@@ -1581,14 +1597,26 @@ project keeps once the parent asks for the fixed version itself is `no longer ne
 as it would hold the package back when a later major is asked for. A chain that is not installed
 is not judged.
 
+And each install script the stack needs, the engines of Prisma (`@prisma/engines`) and the Kafka
+client (`@confluentinc/kafka-javascript`), judged on the version installed against `allowScripts`
+of `package.json` under npm or `allowBuilds` of `pnpm-workspace.yaml` under pnpm, read as npm
+reads them (the name alone, `name@*`, or exact versions joined by `||`; a denial wins): no entry is
+`missing`, and `init` adds the name; an entry pinned to other versions only, the pin a bump left
+behind, is `other version`, with `npm install-scripts approve <package>` then `npm rebuild
+<package>` (under pnpm, the version written in `allowBuilds`, then `pnpm rebuild <package>`) once
+the new script was read; a denial is `written otherwise`. A package that is not installed is not
+judged.
+
 `--strict` exits 1 while something is missing or at another range, or while the checkout cannot
 run the project: a Node outside `engines.node`, no `node_modules`, a package of the kit not
 installed or at another version, a submodule not initialised, an override missing. A script
 written otherwise, a hook this clone has not installed, a Node `.nvmrc` does not name while
 `engines.node` accepts it, a lockfile changed since the install (a checkout may rewrite it with
-what `node_modules` already holds), and an override no longer needed are said without failing it. `--json` prints `{ version, findings: [{ area, name, problem,
+what `node_modules` already holds), an override no longer needed and a denied install script (the
+team may build the package another way) are said without failing it; an install script missing or
+pinned to another version fails it. `--json` prints `{ version, findings: [{ area, name, problem,
 expected, found }] }`, `area` being `script`, `package`, `permission`, `hook`, `guidance`, `node`,
-`install`, `submodule` or `override`.
+`install`, `submodule`, `override` or `install-script`.
 
 ## worker-scope
 

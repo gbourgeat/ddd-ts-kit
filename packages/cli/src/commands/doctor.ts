@@ -25,6 +25,8 @@ const STRICT_PROBLEMS: Readonly<Record<DoctorFinding['area'], ReadonlySet<Doctor
   install: new Set(['missing', 'not installed', 'other version']),
   submodule: new Set(['not initialised']),
   override: new Set(['missing']),
+  // A denial may be the team's on purpose; a script left unreviewed by the last bump is not.
+  'install-script': new Set(['missing', 'other version']),
 };
 
 /**

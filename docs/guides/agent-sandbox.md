@@ -195,6 +195,16 @@ by the project file, and `init` says them in its notes:
   creates the caches, and it runs the install scripts of the stack under the owner's eyes. The
   agent resumes at `npm run verify`, as the `bootstrap` skill says, and its installs afterwards,
   `npm ci` in a worktree included, run in the sandbox.
+  Those scripts run because `init` allows them by name: `@prisma/engines` and
+  `@confluentinc/kafka-javascript`, in `allowScripts` of `package.json` under npm, in `allowBuilds`
+  of `pnpm-workspace.yaml` under pnpm, which runs no other. A name allows every later version, and
+  the profile asks for each version to be read: after the first install the owner pins them,
+  `npm install-scripts approve @prisma/engines @confluentinc/kafka-javascript` turning each name
+  into the installed version (under pnpm, `'<package>@<version>': true` in `allowBuilds`, the
+  version `pnpm why <package>` gives). A bump of one of them, a Dependabot pull request for one,
+  then needs the same step once its new script was read: until then `npx ddd-ts-kit doctor`
+  reports it and `doctor --strict` fails, while npm 11.19 still runs the new script with a warning
+  and pnpm skips it (both checked with npm 11.19.1 and pnpm 12.11.2).
 - **No prebuilt binary of the Kafka client.** Where none fits the machine (an unusual platform or
   Node version), the client builds librdkafka from sources: a compiler, `~/.cache/node-gyp`,
   `nodejs.org`, `zlib.net` and `curl.se`. The profile opens none of them, since the build could

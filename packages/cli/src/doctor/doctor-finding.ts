@@ -14,7 +14,8 @@ export interface DoctorFinding {
     | 'node'
     | 'install'
     | 'submodule'
-    | 'override';
+    | 'override'
+    | 'install-script';
   readonly name: string;
   /**
    * `not installed`: a git hook this clone lacks, or a package of the kit node_modules lacks.

@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:a20348c00dbc35dc -->
+<!-- translation-of: agent-sandbox.md sha256:5ea9d51aa458eae5 -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -206,6 +206,18 @@ pas couverts par le fichier du projet, et `init` les dit dans ses notes :
   scripts d'installation de la pile sous les yeux du propriétaire. L'agent reprend à
   `npm run verify`, comme le dit le *skill* `bootstrap`, et ses installations suivantes,
   `npm ci` dans un *worktree* compris, tournent dans le bac à sable.
+  Ces scripts s'exécutent parce qu'`init` les autorise par leur nom : `@prisma/engines` et
+  `@confluentinc/kafka-javascript`, dans `allowScripts` de `package.json` sous npm, dans
+  `allowBuilds` de `pnpm-workspace.yaml` sous pnpm, qui n'en exécute aucun autre. Un nom autorise
+  toutes les versions suivantes, et le profil demande que chaque version soit relue : après la
+  première installation le propriétaire les épingle,
+  `npm install-scripts approve @prisma/engines @confluentinc/kafka-javascript` changeant chaque nom
+  en la version installée (sous pnpm, `'<package>@<version>': true` dans `allowBuilds`, la version
+  que donne `pnpm why <package>`). Une montée de version de l'un d'eux, une *pull request* de
+  Dependabot par exemple, demande alors la même étape une fois son nouveau script relu : d'ici là
+  `npx ddd-ts-kit doctor` la signale et `doctor --strict` échoue, tandis que npm 11.19 exécute
+  encore le nouveau script avec un avertissement et que pnpm l'ignore (vérifié avec npm 11.19.1 et
+  pnpm 12.11.2).
 - **Pas de binaire précompilé du client Kafka.** Là où aucun ne convient à la machine (une
   plateforme ou une version de Node peu courante), le client compile librdkafka depuis les
   sources : un compilateur, `~/.cache/node-gyp`, `nodejs.org`, `zlib.net` et `curl.se`. Le profil

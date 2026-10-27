@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b3bdda600c2ea647 -->
+<!-- translation-of: README.md sha256:84672fb8ed017c79 -->
 
 # ddd-ts-kit
 
@@ -146,6 +146,22 @@ correctif, dans les `overrides` de `package.json` sous npm et de `pnpm-workspace
 qui ne lit rien de `package.json` : qs `^6.16.0`, que Stryker demande en 6.15.1 par
 `typed-rest-client`, et avec `--http nest` multer `^2.5.0`, que `@nestjs/platform-express`
 demande en 2.4.0. Un override que le projet pose déjà pour l'un d'eux est gardé, et signalé.
+Les scripts d'installation dont la pile a besoin sont autorisés par leur nom : `@prisma/engines`
+avec `--orm prisma` (il télécharge le moteur de schéma que lancent `prisma migrate` et
+`db:client`) et `@confluentinc/kafka-javascript` avec `--broker kafka` (il télécharge le client
+natif précompilé, ou le construit), dans `allowScripts` de `package.json` sous npm et dans
+`allowBuilds` de `pnpm-workspace.yaml` sous pnpm. pnpm n'exécute aucun script de build d'une
+dépendance qu'on ne lui nomme pas ; npm 11 liste chaque script d'installation absent
+d'`allowScripts` comme pas encore relu, l'exécute encore en 11.19 avec un avertissement, et
+annonce qu'une version ultérieure le bloquera. Par leur nom, parce que la version n'est connue
+qu'une fois la plage résolue par l'installation, et que npm écarte une entrée écrite avec une
+plage ; une équipe qui relit chaque version les épingle après la première installation
+(`npm install-scripts approve <package>` change un nom en la version installée), ce que demande
+le profil réglementé. Une entrée que le projet a pour l'un d'eux, une épingle ou un refus, est
+gardée ; un refus est signalé. Les autres scripts d'installation qu'une installation liste
+(esbuild, `@swc/core`, `unrs-resolver`, `protobufjs`, `@parcel/watcher`, lefthook, le
+*preinstall* de `prisma`) ne sont pas nécessaires au kit : celui de lefthook installe les *hooks*
+git, ce que fait `hooks:install`.
 
 **Pipelines.** Une *pull request* ou une *merge request* exécute les *specs* unitaires, les
 *specs* d'intégration et le lint des contextes que son changement atteint par la carte des
@@ -621,7 +637,9 @@ client Kafka) comme seuls hôtes, les fichiers d'identifiants
 chaque commande en bac à sable ; une clé que le projet avait déjà posée est gardée, et une liste
 qu'il porte gagne les entrées dont la pile a besoin. Elle affiche aussi, en note, que le
 propriétaire lance la première installation hors de l'agent (un chemin absent au démarrage d'une
-session y reste en lecture seule), et le bloc de réglages gérés qu'un fichier de projet ne peut pas poser
+session y reste en lecture seule) puis épingle les scripts d'installation de la pile sur les
+versions relues (`npm install-scripts approve <package>...`, ou `'<package>@<version>': true` dans
+`allowBuilds` sous pnpm), une montée de version de l'un d'eux demandant la même chose, et le bloc de réglages gérés qu'un fichier de projet ne peut pas poser
 (`allowManagedHooksOnly`, `allowManagedPermissionRulesOnly`,
 `permissions.disableBypassPermissionsMode`, `strictKnownMarketplaces` avec la *marketplace* du
 kit, `requiredMinimumVersion`), pour que l'équipe plateforme le colle, et écrit les deux *hooks*
@@ -1675,15 +1693,27 @@ manque au projet tant que le parent épingle encore le paquet sous le correctif 
 version corrigée est `no longer needed`, à retirer, car il retiendrait le paquet quand une majeure
 suivante sera demandée. Une chaîne qui n'est pas installée n'est pas jugée.
 
+Et chaque script d'installation dont la pile a besoin, les moteurs de Prisma (`@prisma/engines`) et
+le client Kafka (`@confluentinc/kafka-javascript`), jugé sur la version installée face à
+`allowScripts` de `package.json` sous npm ou à `allowBuilds` de `pnpm-workspace.yaml` sous pnpm,
+lus comme npm les lit (le nom seul, `name@*`, ou des versions exactes jointes par `||` ; un refus
+l'emporte) : aucune entrée donne `missing`, et `init` ajoute le nom ; des entrées épinglées sur
+d'autres versions seulement, l'épingle qu'une montée de version a laissée, donnent `other
+version`, avec `npm install-scripts approve <package>` puis `npm rebuild <package>` (sous pnpm, la
+version écrite dans `allowBuilds`, puis `pnpm rebuild <package>`) une fois le nouveau script lu ; un
+refus donne `written otherwise`. Un paquet qui n'est pas installé n'est pas jugé.
+
 `--strict` sort avec 1 tant que quelque chose manque ou est à une autre plage, ou tant que le
 *checkout* ne peut pas faire tourner le projet : un Node hors d'`engines.node`, pas de
 `node_modules`, un paquet du kit non installé ou à une autre version, un sous-module non
 initialisé, un *override* qui manque. Un script écrit autrement, un *hook* que ce clone n'a pas
 installé, un Node que `.nvmrc` ne nomme pas quand `engines.node` l'accepte, un *lockfile* modifié
-depuis l'installation (un *checkout* peut le réécrire avec ce que `node_modules` contient déjà), et
-un *override* qui n'est plus nécessaire sont signalés sans le faire échouer. `--json` affiche `{ version, findings: [{ area, name, problem,
+depuis l'installation (un *checkout* peut le réécrire avec ce que `node_modules` contient déjà), un
+*override* qui n'est plus nécessaire et un script d'installation refusé (l'équipe peut construire le
+paquet autrement) sont signalés sans le faire échouer ; un script d'installation qui manque ou
+épinglé sur une autre version le fait échouer. `--json` affiche `{ version, findings: [{ area, name, problem,
 expected, found }] }`, `area` valant `script`, `package`, `permission`, `hook`, `guidance`,
-`node`, `install`, `submodule` ou `override`.
+`node`, `install`, `submodule`, `override` ou `install-script`.
 
 ## worker-scope
 

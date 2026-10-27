@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:990828bd6402e9cf -->
+<!-- translation-of: README.md sha256:87192420045846d2 -->
 
 # @ddd-ts-kit/kafka
 
@@ -42,8 +42,9 @@ Ce que cela demande à la CI et aux images :
 
 - le script d'installation doit s'exécuter : pas de `--ignore-scripts`, et avec un gestionnaire
   de paquets qui demande d'approuver les scripts d'installation (npm 11 avertit, pnpm bloque),
-  approuvez ce *package* ; le client documente npm comme pris en charge, Yarn et pnpm comme
-  expérimentaux ;
+  approuvez ce *package* (un projet généré avec `--broker kafka` l'autorise par son nom :
+  `allowScripts` de `package.json`, `allowBuilds` de `pnpm-workspace.yaml`) ; le client documente
+  npm comme pris en charge, Yarn et pnpm comme expérimentaux ;
 - l'installation doit pouvoir joindre `github.com` ; derrière un proxy qui l'interdit, faites un
   miroir du binaire et pointez `node-pre-gyp` vers ce miroir, sinon l'installation se rabat sur la
   compilation de librdkafka, qui demande Python, make et un compilateur C++ et prend des minutes ;
