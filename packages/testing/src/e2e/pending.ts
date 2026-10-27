@@ -1,4 +1,5 @@
 import { inspect } from 'node:util';
+import { isErrorLike } from '../scenarios/is-error-like';
 
 /** The body of an acceptance scenario: requests to the application and assertions on what it answers. */
 export type ScenarioBody = () => Promise<void>;
@@ -47,17 +48,23 @@ async function failureOf(body: ScenarioBody): Promise<unknown> {
 /**
  * An assertion failure, through the causes a helper wraps it in (`eventually`): `node:assert` and
  * the `expect` of Vitest name it `AssertionError`, the `expect` of Jest carries its `matcherResult`.
+ * Each failure is read by its shape: under Jest, an `AssertionError` of `node:assert` comes from
+ * another realm and is not an instance of the `Error` this module sees.
  */
 function isAssertion(failure: unknown): boolean {
-  for (let current = failure; current instanceof Error; current = current.cause) {
+  const seen = new Set<unknown>();
+
+  for (let current = failure; isErrorLike(current) && !seen.has(current); current = current.cause) {
     if (current.name === 'AssertionError' || 'matcherResult' in current) {
       return true;
     }
+
+    seen.add(current);
   }
 
   return false;
 }
 
 function shown(failure: unknown): string {
-  return failure instanceof Error ? `${failure.name}: ${failure.message}` : inspect(failure);
+  return isErrorLike(failure) ? `${failure.name}: ${failure.message}` : inspect(failure);
 }

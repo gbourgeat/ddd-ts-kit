@@ -1,4 +1,5 @@
 import { AssertionError } from 'node:assert';
+import { runInNewContext } from 'node:vm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
 import { given, resetSequences, scenario } from '../src';
@@ -218,6 +219,10 @@ describe('failure messages', () => {
       });
 
     expect(failureOf(() => failing(new TypeError('no ledger')).thenError('EMPTY_ORDER'))).toBe(
+      'Expected the action to fail with code EMPTY_ORDER, but it failed with TypeError: no ledger.',
+    );
+
+    expect(failureOf(() => failing(runInNewContext("new TypeError('no ledger')")).thenError('EMPTY_ORDER'))).toBe(
       'Expected the action to fail with code EMPTY_ORDER, but it failed with TypeError: no ledger.',
     );
 

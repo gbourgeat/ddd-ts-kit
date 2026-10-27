@@ -1,4 +1,6 @@
 import { AssertionError } from 'node:assert';
+import { errorClassOf } from '../scenarios/error-class-of';
+import { isErrorLike } from '../scenarios/is-error-like';
 import { isPromiseLike } from '../scenarios/is-promise-like';
 import { show } from '../scenarios/show';
 import type { ExpectedFacts } from './expected-facts';
@@ -98,11 +100,11 @@ function codeOf(error: unknown): string | undefined {
 }
 
 function described(error: unknown): string {
-  if (!(error instanceof Error)) {
+  if (!isErrorLike(error)) {
     return show(error);
   }
 
   const code = codeOf(error);
 
-  return `${error.constructor.name}${code === undefined ? '' : ` (code ${code})`}: ${error.message}`;
+  return `${errorClassOf(error)}${code === undefined ? '' : ` (code ${code})`}: ${error.message}`;
 }
