@@ -81,11 +81,12 @@ describe('generate --help --json', () => {
     expect(kinds).toContainEqual({
       name: 'value-object',
       aliases: ['vo'],
-      usage: expect.stringContaining('value-object <context> <Name>'),
+      usage: expect.stringMatching(/^value-object <context> <Name> .*\[--module <module>\]$/),
       summary: expect.any(String),
       writesShared: false,
       shared: [],
       sharedWhen: null,
+      writesInModules: true,
     });
 
     expect(kinds).toContainEqual(

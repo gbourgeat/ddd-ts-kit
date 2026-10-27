@@ -1,3 +1,6 @@
+import type { Stack } from '../config';
+import { stackSandbox } from './stack-sandbox';
+
 /** Where npm, pnpm and yarn fetch the packages; the git host of the project is added next to it. */
 const REGISTRY = 'registry.npmjs.org';
 
@@ -19,16 +22,22 @@ const SECRET_VARIABLES = [
 
 /**
  * The `sandbox` block of `.claude/settings.json` of a regulated organisation, with the keys of
- * the settings reference of Claude Code (read on 2026-10-23): the sandbox on, the session failing
- * when it is unavailable, no unsandboxed retry, the registry and the git host as the only hosts,
- * the credential files and the secret variables denied to every sandboxed command.
+ * the settings reference of Claude Code (read on 2026-10-27): the sandbox on, the session failing
+ * when it is unavailable, no unsandboxed retry, the caches the install of the stack writes, the
+ * registry, the git host and the hosts of the install scripts of the stack as the only hosts, the
+ * credential files and the secret variables denied to every sandboxed command.
  */
-export function regulatedSandbox(gitHost: string | undefined): Record<string, unknown> {
+export function regulatedSandbox(gitHost: string | undefined, stack: Stack): Record<string, unknown> {
+  const install = stackSandbox(stack);
+
   return {
     enabled: true,
     failIfUnavailable: true,
     allowUnsandboxedCommands: false,
-    network: { allowedDomains: [REGISTRY, ...(gitHost === undefined ? [] : [gitHost])] },
+    filesystem: { allowWrite: install.writes },
+    network: {
+      allowedDomains: [...new Set([REGISTRY, ...(gitHost === undefined ? [] : [gitHost]), ...install.hosts])],
+    },
     credentials: {
       files: CREDENTIAL_FILES.map((file) => ({ path: file, mode: 'deny' })),
       envVars: SECRET_VARIABLES.map((name) => ({ name, mode: 'deny' })),

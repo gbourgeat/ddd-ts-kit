@@ -20,6 +20,7 @@ export const queryKind: Kind = {
     'A query, its result, its handler, its read port with an in-memory adapter and a fake, its spec and its registration on the query bus; with --search, one page of a search filtered by the access scope of the actor.',
   positionals: ['context', 'UseCaseName'],
   writesShared: true,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
 

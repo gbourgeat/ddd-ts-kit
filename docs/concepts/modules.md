@@ -196,6 +196,12 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   `--module` is refused, with the list of the modules and the same command with `--module`: the
   generator guides, it never leaves the choice unsaid. A context still in the layout of 0.86 and 0.87 is
   refused too, with `context-layout` as the way out.
+- The kinds that take `--module` show `[--module <module>]` in their usage
+  (`npx ddd-ts-kit generate --help --json`, `writesInModules`): the model, the use cases, their
+  routes, ports, adapters, gateways, policies and events. A kind that writes only what the context
+  keeps aside or what lies outside the contexts (`builder`, `test-world`, `route-group`, `guard`,
+  `schema`, `e2e`, `service`, `module`, `context`, `acceptance`, `worker`, `adr`) refuses
+  `--module`, which would have no effect on it.
 - `move-to-module` takes paths relative to the context, files or folders of a role of any layer,
   or specs, moves them into a declared module (a spec into `test/<unit|integration>/<module>/`),
   takes the specs named after a moved file with it, and rewrites every import of them under the

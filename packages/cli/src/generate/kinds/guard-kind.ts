@@ -15,6 +15,7 @@ export const guardKind: Kind = {
     'A guard of the project: a declared class in presentation/http/guards/ that a route group or a controller names in `guards`, and its spec. It controls the caller at the edge; permissions stay on the use cases.',
   positionals: ['context', 'Name'],
   writesShared: false,
+  writesInModules: false,
   run: (request) => {
     const scope = openScope(request);
 

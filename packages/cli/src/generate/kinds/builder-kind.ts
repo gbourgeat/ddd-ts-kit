@@ -12,6 +12,7 @@ export const builderKind: Kind = {
   summary: 'The test data builder of an existing aggregate, in test/builders/.',
   positionals: ['context', 'Aggregate'],
   writesShared: false,
+  writesInModules: false,
   run: (request) => {
     const scope = openScope(request);
     const aggregate = existingAggregate(scope, request.args[1] ?? '');

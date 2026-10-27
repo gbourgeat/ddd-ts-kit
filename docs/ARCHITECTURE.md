@@ -157,7 +157,8 @@ subject, `generate module <context> <module>` declares one, and
 `move-to-module <context> <module> <path>...` moves existing files into it with their imports,
 the specs named after them following. In a context that declares modules, the generator refuses
 to write a file of a layer without `--module`, the files the context keeps aside, and names the
-modules. The layout of 0.86 and 0.87, a module under `domain/<module>/` and `application/<module>/`, is
+modules. The kinds that write such a file show `[--module <module>]` in their usage, and the
+others refuse `--module`. The layout of 0.86 and 0.87, a module under `domain/<module>/` and `application/<module>/`, is
 read for one minor version, warned about by `module/complete`, and `ddd-ts-kit context-layout`
 moves it, telling the module of each adapter, route and spec by what it imports. Why and when:
 [Modules of the model](concepts/modules.md).

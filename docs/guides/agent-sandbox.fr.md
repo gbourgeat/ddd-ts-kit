@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:73e41ef4ecd4a5eb -->
+<!-- translation-of: agent-sandbox.md sha256:a20348c00dbc35dc -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -86,7 +86,8 @@ ligne apporte, en termes de contrôle :
 | `sandbox.enabled: true` | `.claude/settings.json` | chaque commande *shell* de l'agent tourne dans le bac à sable (bubblewrap et socat sous Linux) : elle écrit où le bac à sable l'autorise et joint le réseau par son *proxy* |
 | `sandbox.failIfUnavailable: true` | projet | sur une machine sans bac à sable, la session s'arrête au démarrage au lieu de lancer les commandes hors bac à sable : aucune dégradation silencieuse |
 | `sandbox.allowUnsandboxedCommands: false` | projet | l'agent ne peut pas lancer une commande hors du bac à sable (la demande `dangerouslyDisableSandbox` est ignorée) : aucune nouvelle tentative en contournant le contrôle |
-| `sandbox.network.allowedDomains: ["registry.npmjs.org", "<hôte git>"]` | projet | une commande joint le registre des paquets et l'hôte git du projet (lu dans `repository` de `package.json`, sinon dans le *remote* `origin` ; ajoutez votre miroir si vous en tenez un) et rien d'autre : aucune exfiltration par `curl`, aucun paquet d'un hôte inconnu |
+| `sandbox.network.allowedDomains: ["registry.npmjs.org", "<hôte git>", ...]` | projet | une commande joint le registre des paquets, l'hôte git du projet (lu dans `repository` de `package.json`, sinon dans le *remote* `origin` ; ajoutez votre miroir si vous en tenez un) et les hôtes d'où les scripts d'installation de la pile téléchargent (plus bas), et rien d'autre : aucune exfiltration par `curl`, aucun paquet d'un hôte inconnu |
+| `sandbox.filesystem.allowWrite` : les caches qu'écrit l'installation de la pile | projet | une commande n'écrit que le projet, le répertoire temporaire et ces caches : `~/.npm` avec npm, le *store* et le cache de pnpm, `~/.cache/prisma` avec Prisma (plus bas) |
 | `sandbox.credentials.files` : `~/.ssh`, `~/.aws`, `~/.config/gcloud`, `~/.azure` refusés | projet | une commande ne peut pas lire les clés du développeur : une injection de *prompt* ne peut pas les envoyer |
 | `sandbox.credentials.envVars` : `GITHUB_TOKEN`, `GH_TOKEN`, `GITLAB_TOKEN`, `NPM_TOKEN`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, `GOOGLE_APPLICATION_CREDENTIALS`, `AZURE_CLIENT_SECRET` refusées | projet | les variables sont retirées avant chaque commande en bac à sable : un jeton dans le *shell* du développeur n'est pas dans celui de l'agent |
 | `permissions.deny: Read(./.env)`, `Read(./.env.local)`, `Read(./.env.*.local)`, `Read(./.env.production)`, `Read(./.env.development)`, `Read(./.env.test)` | projet, écrit aussi sans le profil | les secrets du projet restent hors du contexte de l'agent : le bac à sable ne couvre que les commandes *shell*, pas l'outil Read, donc une règle de permission tient celui-ci |
@@ -139,7 +140,8 @@ sortie d'erreur comme raison, le code 0 avec un `hookSpecificOutput` de `permiss
 que seul Claude Code lit : Codex et Copilot ne lancent ni l'un ni l'autre, et ce qu'ils portent
 y reste une règle de l'équipe.
 
-Les noms et les formes des clés ci-dessus ont été vérifiés le 2026-10-23 dans la documentation de
+Les noms et les formes des clés ci-dessus ont été vérifiés le 2026-10-23, et les listes du système
+de fichiers et le bac à sable exigé par l'administrateur le 2026-10-27, dans la documentation de
 Claude Code : [settings](https://code.claude.com/docs/en/settings),
 [sandboxing](https://code.claude.com/docs/en/sandboxing),
 [permissions](https://code.claude.com/docs/en/permissions) et
@@ -163,26 +165,66 @@ ne tournent que dans Claude Code, comme dit plus haut.
 
 #### Les contrats générés sous le bac à sable
 
-`init` écrit des règles de refus pour les contrats que le kit génère (`Edit(./openapi/**)`,
-`Edit(./docs/integration/asyncapi.*)`, `Edit(./docs/integration/event-catalog.md)`,
-`Edit(./test/acceptance/*.acceptance.lock.json)`), pour que l'outil Edit n'en modifie jamais un à
-la main. Le bac à sable de Claude Code transforme une règle de refus sur `Edit` en montage en
-lecture seule du chemin, y compris pour les commandes du shell. Les règles restent, et voici la
-conséquence : dans une session sous le bac à sable, une commande qui écrit l'un de ces fichiers
-échoue, quelle que soit la commande.
+Le bac à sable de Claude Code transforme une règle de permission sur un fichier en règle du bac à
+sable : une règle de refus `Read` en chemin qu'aucune commande du shell ne lit, une règle de refus
+`Edit` en chemin qu'aucune commande du shell n'écrit, une règle d'autorisation `Edit` en chemin
+qu'elles écrivent ([settings reference](https://code.claude.com/docs/en/settings-reference#sandbox-filesystem),
+lue le 2026-10-27). Une règle `ask` reste une règle des outils de fichiers. `init` n'écrit donc
+aucune règle de refus `Edit` sur un fichier qu'écrit une commande du kit : les contrats
+(`openapi/**`, `docs/integration/asyncapi.*`, `docs/integration/event-catalog.md`) et le verrou
+d'une acceptation (`test/acceptance/*.acceptance.lock.json`) sont des règles `ask`, et la garde du
+plugin refuse d'emblée leur modification par l'outil `Write` ou `Edit`. `npm run docs:generate`,
+la fusion d'une branche qui les a régénérés et `ddd-ts-kit acceptance <story> --lock` les écrivent
+dans le bac à sable.
 
-- **La fusion d'une branche qui a régénéré les contrats** (`git merge --no-ff work/wave1` dans le
-  dépôt principal) s'arrête à mi-chemin, après avoir écrit des copies non suivies des nouveaux
-  fichiers de la branche. Il en va de même de `npm run docs:generate` dans le dépôt principal.
-- **Que faire** : jouer ces deux gestes hors du bac à sable, depuis un terminal à vous (fusionner
-  la branche, puis lancer `docs:generate` et valider ce qu'il a changé), ou démarrer la session
-  avec `claude --setting-sources local`, qui ne lit pas les réglages du projet, règles de refus et
-  bloc `sandbox` compris : cela ne vaut que pour une session que vous décidez de lancer ainsi,
-  puisque cela retire aussi les autres contrôles du fichier du projet. Dans les deux cas, la
-  garde du plugin refuse toujours la modification à la main d'un fichier généré, et
-  `docs:generate` reste le seul auteur de ces contrats.
-- Après une fusion hors du bac à sable, lancez `npm run docs:generate` et vérifiez que rien ne
-  change : un contrat régénéré par la fusion doit être égal à celui que la branche porte.
+Les versions précédentes les refusaient : dans une session sous le bac à sable, `docs:generate`
+s'arrêtait alors sur `EROFS` au premier contrat. `init` relancé retire les quatre règles de
+`permissions.deny`, les demande à la place et le dit dans ses notes. Une entrée `allowWrite` ne
+lève pas une règle de refus sur le même chemin (constaté sous Linux avec Claude Code 2.1.311) :
+déplacer les règles est la correction, pas ajouter des chemins.
+
+#### Installer la pile sous le bac à sable
+
+L'installation d'une pile écrit hors du projet et télécharge depuis d'autres hôtes que le registre.
+Le profil réglementé ouvre ce dont la pile choisie par `init` a besoin, et rien de plus :
+
+| Pile | `filesystem.allowWrite` | `network.allowedDomains` | Pourquoi |
+|---|---|---|---|
+| npm | `~/.npm` | le registre | le cache de npm |
+| pnpm | `~/.local/share/pnpm/store`, `~/.cache/pnpm`, `~/Library/pnpm/store`, `~/Library/Caches/pnpm` | le registre | le *store* et le cache de pnpm, sous Linux puis sous macOS : le bac à sable ignore un chemin que la machine n'a pas |
+| `--orm prisma` | `~/.cache/prisma` | `binaries.prisma.sh` | l'installation de `@prisma/engines` télécharge les moteurs dans ce cache, et `prisma generate` les y touche |
+| `--broker kafka` | rien | `github.com`, `release-assets.githubusercontent.com` | `@confluentinc/kafka-javascript` télécharge son binaire précompilé depuis les *releases* de son dépôt, qui redirigent vers l'hôte des fichiers de *release* |
+
+Avec ces entrées, un `npm install` du client Kafka, `prisma generate` et `prisma migrate diff`
+réussissent sous le bac à sable (constaté sous Linux avec Claude Code 2.1.311). Trois cas ne sont
+pas couverts par le fichier du projet, et `init` les dit dans ses notes :
+
+- **La première installation.** Un chemin d'`allowWrite` qui n'existe pas au démarrage de la
+  session reste en lecture seule pour toute la session : le bac à sable ne rend aucun nouveau
+  répertoire inscriptible. Le propriétaire lance le premier `npm install` (ou `pnpm install`)
+  depuis un terminal hors de l'agent, juste après `init` : il crée les caches, et il exécute les
+  scripts d'installation de la pile sous les yeux du propriétaire. L'agent reprend à
+  `npm run verify`, comme le dit le *skill* `bootstrap`, et ses installations suivantes,
+  `npm ci` dans un *worktree* compris, tournent dans le bac à sable.
+- **Pas de binaire précompilé du client Kafka.** Là où aucun ne convient à la machine (une
+  plateforme ou une version de Node peu courante), le client compile librdkafka depuis les
+  sources : un compilateur, `~/.cache/node-gyp`, `nodejs.org`, `zlib.net` et `curl.se`. Le profil
+  n'en ouvre aucun, puisque la compilation ne pourrait pas réussir sans tous : cette installation
+  se fait hors de l'agent à chaque fois.
+- **Un bac à sable que les réglages gérés exigent.** Quand les réglages gérés, ou les `--settings`
+  d'une session, mettent `sandbox.allowUnsandboxedCommands` à `false` (ou que les réglages gérés
+  mettent `sandbox.network.allowManagedDomainsOnly`), Claude Code ignore `filesystem.allowWrite` et
+  `network.allowedDomains` de `.claude/settings.json`
+  ([sandboxing](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox)) :
+  l'équipe plateforme recopie les entrées du projet dans les réglages gérés.
+
+Un cache inscriptible est partagé avec les autres projets du développeur. npm et pnpm vérifient ce
+qu'ils y prennent contre l'intégrité du fichier de verrouillage ; Prisma vérifie un moteur contre
+une somme de contrôle gardée à côté, dans le même cache, si bien qu'une session pourrait y laisser
+un moteur qu'un autre projet exécuterait ensuite hors du bac à sable. Une équipe qui ne l'accepte
+pas retire `~/.cache/prisma` de la liste, et le propriétaire lance `prisma generate` hors de
+l'agent. `init` relancé ajoute une entrée dont la pile a besoin à une liste que le projet a déjà,
+et garde les siennes ; `doctor` nomme une entrée qui manque à la liste.
 
 #### Les fichiers vides que laisse le bac à sable
 
@@ -210,7 +252,9 @@ avec le code 3 et finit par une note qui donne la commande pour finir : le même
 sable, qui écrit les fichiers manquants et garde ceux déjà écrits. Le *skill* `bootstrap` confie
 les deux au propriétaire du projet dès le départ : l'agent lance le *dry run* et montre la
 commande, le propriétaire lance `init`, l'agent reprend à `npm install`, et le propriétaire lance
-`npm run hooks:install` avant le premier *commit*.
+`npm run hooks:install` avant le premier *commit*. Sous le profil réglementé, le propriétaire
+lance aussi ce premier `npm install`, juste après `init`, et l'agent reprend à `npm run verify`
+([Installer la pile sous le bac à sable](#installer-la-pile-sous-le-bac-à-sable)).
 
 ### 3. NVIDIA OpenShell
 
@@ -314,7 +358,9 @@ refusées : n'y autorisez un hôte que quand le travail en a besoin.
   [settings](https://code.claude.com/docs/en/settings),
   [permissions](https://code.claude.com/docs/en/permissions),
   [managed settings](https://code.claude.com/docs/en/managed-settings),
-  [hooks](https://code.claude.com/docs/en/hooks), lus le 2026-10-23.
+  [hooks](https://code.claude.com/docs/en/hooks), lus le 2026-10-23 ; la page sandboxing et la
+  [settings reference](https://code.claude.com/docs/en/settings-reference) de nouveau le
+  2026-10-27, pour les listes du système de fichiers et le bac à sable exigé par l'administrateur.
 - Anthropic, *AI-Native SDLC Playbook*
   ([PDF](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)) :
   l'exemple d'une organisation réglementée que suit le profil.
