@@ -102,9 +102,9 @@ function withStoredEvent(source: string, names: EventNames, importLine: string):
 
   const data = `${names.event.pascal}Data`;
 
-  const typed = new RegExp(`\\binterface\\s+${data}\\b`).test(source)
+  const typed = new RegExp(`\\b(?:interface|type)\\s+${data}\\b`).test(source)
     ? source
-    : `${source.slice(0, declared)}\ninterface ${data} {}\n${source.slice(declared)}`;
+    : `${source.slice(0, declared)}\ntype ${data} = Record<string, never>;\n${source.slice(declared)}`;
 
   if (source.includes(`[${names.event.pascal}.eventName]`)) {
     return withImport(typed, importLine, names.event.pascal);

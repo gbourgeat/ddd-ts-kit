@@ -113,7 +113,7 @@ describe('generate aggregate --event-sourced', () => {
     );
 
     expect(aggregate).toContain('  private applyCredited(event: LedgerCredited): void {');
-    expect(read(root, CODEC)).toContain('interface LedgerCreditedData {}');
+    expect(read(root, CODEC)).toContain('type LedgerCreditedData = Record<string, never>;');
 
     expect(read(root, CODEC)).toContain(
       '  [LedgerCredited.eventName]: defineStoredEvent(LedgerCredited, {\n    version: 1,',
@@ -215,7 +215,19 @@ describe('generate aggregate --event-sourced --birth', () => {
 });
 
 describe('docs --stored-events', () => {
+  it('records the data of an event that carries nothing as the generator wrote it, and never the hash of nothing', () => {
+    expect(read(root, CODEC)).toContain('type LedgerCreatedData = Record<string, never>;');
+
+    const recorded = cli(root, 'docs', '--stored-events');
+
+    expect(recorded.code, recorded.stderr).toBe(0);
+    expect(read(root, LOCK)).not.toContain('e3b0c44298fc1c14');
+    fs.rmSync(path.join(root, LOCK));
+  });
+
   it('records the stored shapes on purpose, and the checker then refuses a shape changed in place', () => {
+    write(root, CODEC, read(root, CODEC).replace(/type (\w+Data) = Record<string, never>;/g, 'interface $1 {}'));
+
     const unrecorded = cli(root, 'docs', '--check');
 
     expect(unrecorded.code).toBe(1);

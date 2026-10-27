@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:d3342d4ce3f53088 -->
+<!-- translation-of: coding-agents.md sha256:b376584f29433f34 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -61,7 +61,9 @@ Le hook est la partie qui rend le reste contraignant. Dans un projet qui a un
 session, signale quand les packages installés ne sont pas la version que décrivent les skills, refuse un fichier écrit à la main là où un générateur existe, toute
 modification d'un contrat généré et l'écriture de la *baseline* des erreurs (`check --baseline
 write`, ou une modification de `ddd-ts-kit-baseline.json` : le propriétaire du projet l'écrit,
-dans un terminal), demande l'avis du propriétaire du projet avant qu'une
+dans un terminal), refuse une commande git qui saute les hooks du projet (`--no-verify`, `-n` sur un
+commit, `-c core.hooksPath=...`, `LEFTHOOK=0` ou `HUSKY=0` : les hooks sont la barrière locale du
+pipeline), demande l'avis du propriétaire du projet avant qu'une
 désactivation, un test sauté ou un changement des règles soit écrit, vérifie chaque fichier
 écrit et renvoie les violations avec leur correction (avec `"dependenciesBeforeWrite": true`, à
 l'essai, il refuse avant l'écriture un nouvel import qui enfreint une règle de dépendance), et

@@ -2139,6 +2139,51 @@ test('the baseline of the errors is never written by an agent, on any host; prun
   assert.equal(decision(run('pre-bash', bash(advised, 'npx ddd-ts-kit check --baseline write'))), 'ask');
 });
 
+test('a git command that skips the hooks of the project is refused, with the hooks as the local gate', () => {
+  const root = project();
+  for (const command of [
+    'git commit --no-verify -m "x"',
+    'git commit -n -m x',
+    'git commit -anm x',
+    'git commit -m x --no-verif',
+    'git -C sub commit --no-verify',
+    'git push --no-verify',
+    'git push origin main --no-verify',
+    'git merge --no-verify feature',
+    'git pull --no-verify',
+    'git -c core.hooksPath=/dev/null commit -m x',
+    'git -c core.hooksPath=. push',
+    'git config core.hooksPath /dev/null',
+    'LEFTHOOK=0 git commit -m x',
+    'HUSKY=0 git push',
+    'env HUSKY=0 git commit -m x',
+    'export LEFTHOOK=0; git commit -m x',
+    'git add . && git commit --no-verify -m x',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command))), 'deny', command);
+    assert.match(reason(run('pre-bash', bash(root, command))), /local gate of the pipeline/, command);
+  }
+  for (const command of [
+    'git commit -m "fix"',
+    'git commit -m "no-verify"',
+    'git commit -mnote',
+    'git commit -am "n"',
+    'git commit --no-edit',
+    'git push -n',
+    'git push --dry-run',
+    'git -c user.name=x commit -m x',
+    'git commit -m x -- -n',
+    'HUSKY=0 npm test',
+    'echo --no-verify',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
+  }
+  const advised = project({ guard: 'advise' });
+  assert.equal(decision(run('pre-bash', bash(advised, 'git commit --no-verify -m x'))), 'ask');
+  const off = project({ guard: 'off' });
+  assert.equal(run('pre-bash', bash(off, 'git commit --no-verify -m x')).output, undefined);
+});
+
 test('on trial, an import a dependency rule refuses is refused before the write, an import the file held is not', () => {
   const root = project({ dependenciesBeforeWrite: true });
   const file = pricingService(root, "import { z } from 'zod';\nexport class Pricing { shape() { return z; } }\n");

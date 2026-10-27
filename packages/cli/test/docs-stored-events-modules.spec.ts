@@ -40,6 +40,8 @@ describe('docs --stored-events on a context divided into modules', () => {
   it('refuses the codec of a module whose data declares no member, naming the file and the reason, and writes no lock', () => {
     expect(exists(root, CODEC)).toBe(true);
 
+    write(root, CODEC, read(root, CODEC).replace(/type (\w+Data) = Record<string, never>;/g, 'interface $1 {}'));
+
     const refused = cli(root, 'docs', '--stored-events');
 
     expect(refused.code).not.toBe(0);
