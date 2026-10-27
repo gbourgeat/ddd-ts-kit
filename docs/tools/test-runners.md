@@ -256,9 +256,21 @@ in the standard decorator mode (4 s on the identity preset).
 **Install.** `npm ci` of the new project on a warm npm cache: 4.5 s for Vitest, 5.2 s for Jest;
 `node_modules` weighs 563 MB with 743 packages against 620 MB with 1,015.
 
-**Mutation testing.** Stryker on the identity preset, as `init` configures it, under Vitest: 659
-mutants, score 85.0 %, 1 min 46 s, 1,621 CPU s, 11.6 GB of summed memory at the peak, one run.
-Under Jest it is not measured.
+**Mutation testing.** Stryker on the identity preset, as `init` configures it (659 mutants), one
+run each. A run was stopped once the machine had less than 5 GB of memory available, and taken again.
+
+| Test runner processes | Vitest | Jest |
+|---|---|---|
+| 19 (what Stryker picks here) | 1 min 46 s, score 85.0 %, 1,621 CPU s, 11.6 GB | stopped, 8 attempts |
+| 8 (`--concurrency 8`) | 1 min 54 s, score 85.0 %, 980 CPU s, 5.4 GB | stopped, 8 attempts |
+| 8, each restarted after 10 runs (`--maxTestRunnerReuse 10`) | | stopped, 2 attempts |
+
+Under Jest the first run of the specs passes, in 6 s against 19 under Vitest; then the memory
+available falls from about 25 GB to under 5 GB within the first minute, after some 65 mutants,
+about 2.5 GB per Jest process. The restart after 10 runs never came into play: each process had
+run about 8 by then. Before each stop, Stryker estimated the whole run at about 12 minutes, six to
+seven times the Vitest run at the same number of processes. Under Vitest, 8 processes take 8 s
+more than 19 for half the memory.
 
 Neither runner wins every row: the choice stays a matter of the criteria below, speed weighing
 for Jest on these projects, with coverage too since its template measures through `babel`, and
@@ -282,7 +294,7 @@ which runner the kit verifies.
 | Working on one file | `vitest related --run <file>`, `jest --findRelatedTests <file>`, or watch mode | example 25.4 to 5.3 s (Vitest), 18.1 to 4.7 s (Jest) for an aggregate | a file imported everywhere picks a third of the suite |
 | A pipeline | keep the cache of the runner between runs: `node_modules/.vite` for Vitest, the `cacheDirectory` of Jest (by default under the system temporary folder, so name it in the config to cache it) | Jest 25 to 59 s on the example; Vitest 4 s in the standard decorator mode, nothing in the legacy one | a cache keyed on the lockfile and the configuration, so that a new transform does not reuse stale output |
 | Fewer than ten spec files | either runner | 2.1 s on both | the start of the runner is the whole run |
-| Mutation testing | at night, as shipped, not on each push | | 1 min 46 s and 11.6 GB of summed memory on the identity preset, under Vitest |
+| Mutation testing | at night, as shipped, not on each push; on Vitest, `--concurrency 8` on a workstation | 19 to 8 processes: 11.6 to 5.4 GB for 8 s more (1 min 54 s) on the identity preset | under Jest, Stryker did not complete the identity preset on a workstation of 31 GB, even at 8 processes: plan the job on Vitest, or try fewer processes restarted every few runs, not measured here |
 
 ## Selection criteria
 
@@ -488,6 +500,9 @@ export default {
 - Coverage goes through the `babel` provider, which the template sets: on the example it takes a
   run from 18 to 21 s, where `v8` took it to 48 s (measured above). It reads `istanbul ignore`,
   not `v8 ignore`, and counts the branches as the `v8` provider of Vitest does.
+- Mutation testing: Stryker under Jest did not complete the identity preset on a workstation of
+  31 GB, at 19 or 8 processes, each Jest process reaching about 2.5 GB within the first minute
+  (measured above); under Vitest it takes under two minutes.
 - An import without an ending can name a directory: each alias is mapped to the source, then to
   the barrel of the directory (`['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts']`). On Prisma,
   the client `prisma generate` writes names its own modules with `.js`, mapped back to their
@@ -509,7 +524,7 @@ export default {
 | NestJS or class-validator project (legacy decorators) | Vitest works without the plugin; Jest if the team's NestJS tooling is built on it |
 | Existing codebase with a large Jest suite adopting the kit | Jest, adding the project split and thresholds by hand; plan a migration only if it pays |
 | A library or adapter published for others | write its contract with `ContractSuite`, so consumers run it under either runner |
-| Wanting mutation testing | shipped on both: `npm run test:mutation` and the job of the night, each context held to the `mutation` floor of the config. Vitest runs the unit specs of `vitest.mutation.config.ts`; Jest those of `jest.mutation.config.js`, as ES modules under the flag of the `test` script |
+| Wanting mutation testing | shipped on both: `npm run test:mutation` and the job of the night, each context held to the `mutation` floor of the config. Vitest runs the unit specs of `vitest.mutation.config.ts`; Jest those of `jest.mutation.config.js`, as ES modules under the flag of the `test` script. Measured on the identity preset, only the Vitest run completed (above) |
 | Wanting the specs held to a time budget | both: the reporter of the kit, `@ddd-ts-kit/testing/budget/vitest` or `/budget/jest`, named in the runner config `init` writes; five seconds per unit spec file and thirty per integration spec file by the reference |
 | Wanting property-based tests | `fast-check`, added with the first property (`npm i -D fast-check`), under either runner: a law of a value object stated once and checked on generated values, `fc.assert` an assertion for `test/assertion-present` |
 

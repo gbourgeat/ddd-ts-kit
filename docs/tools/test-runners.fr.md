@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:92780f1aaec099cc -->
+<!-- translation-of: test-runners.md sha256:3ff8680d7907ce23 -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -274,9 +274,22 @@ chose que dans le mode standard des décorateurs (4 s sur le *preset* identity).
 **Installation.** `npm ci` du nouveau projet avec un cache npm chaud : 4,5 s pour Vitest, 5,2 s
 pour Jest ; `node_modules` pèse 563 Mo pour 743 paquets contre 620 Mo pour 1 015.
 
-**Tests de mutation.** Stryker sur le *preset* identity, tel que `init` le configure, sous Vitest :
-659 mutants, score de 85,0 %, 1 min 46 s, 1 621 s de CPU, 11,6 Go de mémoire additionnée au pic,
-une exécution. Sous Jest, ce n'est pas mesuré.
+**Tests de mutation.** Stryker sur le *preset* identity, tel que `init` le configure (659 mutants),
+une exécution chacun. Une exécution était arrêtée dès que la machine avait moins de 5 Go de
+mémoire disponible, puis reprise.
+
+| Processus de lanceur de tests | Vitest | Jest |
+|---|---|---|
+| 19 (ce que Stryker choisit ici) | 1 min 46 s, score de 85,0 %, 1 621 s de CPU, 11,6 Go | arrêté, 8 tentatives |
+| 8 (`--concurrency 8`) | 1 min 54 s, score de 85,0 %, 980 s de CPU, 5,4 Go | arrêté, 8 tentatives |
+| 8, chacun redémarré après 10 exécutions (`--maxTestRunnerReuse 10`) | | arrêté, 2 tentatives |
+
+Sous Jest, la première exécution des *specs* passe, en 6 s contre 19 sous Vitest ; puis la mémoire
+disponible tombe d'environ 25 Go à moins de 5 Go dans la première minute, après quelque 65
+mutants, soit environ 2,5 Go par processus Jest. Le redémarrage après 10 exécutions n'a jamais
+joué : chaque processus en avait fait environ 8 à ce moment. Avant chaque arrêt, Stryker estimait
+l'exécution complète à environ 12 minutes, six à sept fois l'exécution Vitest au même nombre de
+processus. Sous Vitest, 8 processus prennent 8 s de plus que 19 pour la moitié de la mémoire.
 
 Aucun lanceur ne gagne toutes les lignes : le choix reste une affaire des critères ci-dessous, la
 vitesse pesant pour Jest sur ces projets, avec couverture aussi puisque son *template* la mesure
@@ -300,7 +313,7 @@ change le lanceur que le kit vérifie.
 | Travailler sur un fichier | `vitest related --run <fichier>`, `jest --findRelatedTests <fichier>`, ou le mode *watch* | exemple de 25,4 à 5,3 s (Vitest), de 18,1 à 4,7 s (Jest) pour un agrégat | un fichier importé partout choisit un tiers de la suite |
 | Un *pipeline* | garder le cache du lanceur entre deux exécutions : `node_modules/.vite` pour Vitest, le `cacheDirectory` de Jest (par défaut sous le dossier temporaire du système, donc à nommer dans la configuration pour le mettre en cache) | Jest 25 à 59 s sur l'exemple ; Vitest 4 s dans le mode standard des décorateurs, rien dans le mode legacy | une clé de cache sur le *lockfile* et la configuration, pour qu'une nouvelle transformation ne réutilise pas une sortie périmée |
 | Moins de dix fichiers de *spec* | l'un ou l'autre lanceur | 2,1 s des deux côtés | le démarrage du lanceur est toute l'exécution |
-| Tests de mutation | la nuit, comme livré, pas à chaque *push* | | 1 min 46 s et 11,6 Go de mémoire additionnée sur le *preset* identity, sous Vitest |
+| Tests de mutation | la nuit, comme livré, pas à chaque *push* ; sous Vitest, `--concurrency 8` sur un poste | de 19 à 8 processus : de 11,6 à 5,4 Go pour 8 s de plus (1 min 54 s) sur le *preset* identity | sous Jest, Stryker n'a pas terminé le *preset* identity sur un poste de 31 Go, même à 8 processus : prévoir le *job* sous Vitest, ou essayer moins de processus redémarrés toutes les quelques exécutions, non mesuré ici |
 
 ## Critères de choix
 
@@ -516,6 +529,9 @@ export default {
 - La couverture passe par le fournisseur `babel`, que fixe le *template* : sur l'exemple, elle fait
   passer une exécution de 18 à 21 s, là où `v8` la menait à 48 s (mesuré plus haut). Il lit
   `istanbul ignore`, et non `v8 ignore`, et compte les branches comme le fournisseur `v8` de Vitest.
+- Tests de mutation : Stryker sous Jest n'a pas terminé le *preset* identity sur un poste de 31 Go,
+  à 19 ou 8 processus, chaque processus Jest atteignant environ 2,5 Go dans la première minute
+  (mesuré plus haut) ; sous Vitest, il prend moins de deux minutes.
 - Un import sans terminaison peut nommer un dossier : chaque alias vise la source, puis la
   barrière du dossier (`['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts']`). Sur Prisma, le
   client qu'écrit `prisma generate` nomme ses propres modules en `.js`, ramenés à leurs sources
@@ -537,7 +553,7 @@ export default {
 | Projet NestJS ou class-validator (décorateurs legacy) | Vitest fonctionne sans le *plugin* ; Jest si l'outillage NestJS de l'équipe repose dessus |
 | Base de code existante avec une grosse suite Jest qui adopte le kit | Jest, en ajoutant à la main la séparation des projets et les seuils ; ne planifiez une migration que si elle est rentable |
 | Une bibliothèque ou un adaptateur publié pour d'autres | écrivez son contrat avec `ContractSuite`, pour que les consommateurs l'exécutent sous l'un ou l'autre lanceur |
-| Vouloir des tests de mutation | livré sous les deux : `npm run test:mutation` et le *job* de la nuit, chaque contexte tenu au plancher `mutation` de la config. Vitest fait tourner les *specs* unitaires de `vitest.mutation.config.ts` ; Jest celles de `jest.mutation.config.js`, en modules ES sous le drapeau du script `test` |
+| Vouloir des tests de mutation | livré sous les deux : `npm run test:mutation` et le *job* de la nuit, chaque contexte tenu au plancher `mutation` de la config. Vitest fait tourner les *specs* unitaires de `vitest.mutation.config.ts` ; Jest celles de `jest.mutation.config.js`, en modules ES sous le drapeau du script `test`. Mesuré sur le *preset* identity, seule l'exécution Vitest a abouti (plus haut) |
 | Vouloir des *specs* tenues à un budget de temps | les deux : le reporter du kit, `@ddd-ts-kit/testing/budget/vitest` ou `/budget/jest`, nommé dans la config du runner qu'écrit `init` ; cinq secondes par fichier de *spec* unitaire et trente par fichier de *spec* d'intégration par la référence |
 | Vouloir des tests par propriétés | `fast-check`, ajouté avec la première propriété (`npm i -D fast-check`), sous l'un comme l'autre lanceur : une loi d'un objet-valeur énoncée une fois et vérifiée sur des valeurs générées, `fc.assert` une assertion pour `test/assertion-present` |
 
