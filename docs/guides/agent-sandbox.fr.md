@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:a44ed8f4630231ee -->
+<!-- translation-of: agent-sandbox.md sha256:a20348c00dbc35dc -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -202,8 +202,9 @@ pas couverts par le fichier du projet, et `init` les dit dans ses notes :
 - **La première installation.** Un chemin d'`allowWrite` qui n'existe pas au démarrage de la
   session reste en lecture seule pour toute la session : le bac à sable ne rend aucun nouveau
   répertoire inscriptible. Le propriétaire lance le premier `npm install` (ou `pnpm install`)
-  depuis un terminal hors de l'agent, après `init` : il crée les caches, et il exécute les scripts
-  d'installation de la pile sous les yeux du propriétaire. Les installations suivantes de l'agent,
+  depuis un terminal hors de l'agent, juste après `init` : il crée les caches, et il exécute les
+  scripts d'installation de la pile sous les yeux du propriétaire. L'agent reprend à
+  `npm run verify`, comme le dit le *skill* `bootstrap`, et ses installations suivantes,
   `npm ci` dans un *worktree* compris, tournent dans le bac à sable.
 - **Pas de binaire précompilé du client Kafka.** Là où aucun ne convient à la machine (une
   plateforme ou une version de Node peu courante), le client compile librdkafka depuis les
@@ -240,6 +241,20 @@ anciens fichiers : ajoutez-y ces lignes, ou lancez `init --force`.
 Le bac à sable peut aussi laisser un `.git/config.lock` en lecture seule. Supprimez-le depuis un
 terminal hors du bac à sable avant `git config` ou `git branch -d`, qui refusent de s'exécuter
 tant qu'il existe.
+
+#### Créer le projet sous le bac à sable
+
+Le bac à sable de Claude Code empêche l'agent d'écrire `.claude/settings.json`, `.claude/hooks/`
+et `.git/hooks` : là où `init` écrit les réglages de l'agent et les *hooks* du profil réglementé,
+et là où `npm run hooks:install` installe les *hooks* git. `init` écrit tous les autres fichiers
+et liste ceux-là sous `unwritable` (et dans `skipped`) de son rapport, *dry run* compris, sort
+avec le code 3 et finit par une note qui donne la commande pour finir : le même `init`, lancé depuis un terminal hors du bac à
+sable, qui écrit les fichiers manquants et garde ceux déjà écrits. Le *skill* `bootstrap` confie
+les deux au propriétaire du projet dès le départ : l'agent lance le *dry run* et montre la
+commande, le propriétaire lance `init`, l'agent reprend à `npm install`, et le propriétaire lance
+`npm run hooks:install` avant le premier *commit*. Sous le profil réglementé, le propriétaire
+lance aussi ce premier `npm install`, juste après `init`, et l'agent reprend à `npm run verify`
+([Installer la pile sous le bac à sable](#installer-la-pile-sous-le-bac-à-sable)).
 
 ### 3. NVIDIA OpenShell
 

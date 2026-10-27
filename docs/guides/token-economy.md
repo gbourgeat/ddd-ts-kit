@@ -111,6 +111,7 @@ answers, abbreviated (`todos` repeats each place of `next` with the decision to 
   ],
   "deleted": [],
   "skipped": [],
+  "unwritable": [],
   "next": [
     "src/contexts/ordering/application/commands/place-order/place-order.command.ts:7",
     "src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16",

@@ -31,7 +31,7 @@ qualifiers of a refusal besides: `invalid`, `unknown`, `already`, `too`, `no`, `
 
 | Project state | File |
 |---|---|
-| before the bootstrap | `docs/architecture/glossary.md`, one section per context; the bootstrap turns each row into a `--term` and deletes the file |
+| before the bootstrap | `docs/architecture/glossary.md`, one section per context; the bootstrap turns each row into a `--term "<Term>=<meaning>\|<not to be confused with>"`, three cells kept, and deletes the file |
 | after | `src/contexts/<context>/CONTEXT.md`, section `## Ubiquitous language`; there is no second copy |
 
 ## A context a preset writes
@@ -73,13 +73,14 @@ It is what an agent reads instead of the code of the context. Keep it true and s
 | Section | Written by | Content |
 |---|---|---|
 | `## Purpose` | you | two sentences in business terms; the first one feeds the context map |
-| `## Classification` | you | the classification and one sentence of why |
+| `## Classification` | `generate context --classification <c> --reason "..."` | the classification and one sentence of why |
 | `## Ubiquitous language` | you | the table above |
 | `## Aggregates`, `## Published events`, `## Permissions`, `## Scheduled jobs`, `## Background jobs`, `## State machines`, `## Process managers`, `## Relationships`, `## Reference` | `npx ddd-ts-kit docs`, between markers | never edit between the markers; add below a list one line per aggregate with the invariant it guards |
 
 A new term enters with the code that needs it:
 `npx ddd-ts-kit generate <kind> ... --term "<Term>=<meaning>"` adds the row in the same
-command. Fill "Not to be confused with" by hand, for homonyms only. Finish with
+command; `--term "<Term>=<meaning>|<not to be confused with>"` fills the third cell too, for
+homonyms only (a cell never holds a `|`, so it cannot clash with a meaning). Finish with
 `npx ddd-ts-kit check --rule tree/context-doc --rule language/glossary-term`.
 
 ## Done when

@@ -52,9 +52,7 @@ function generate(io: Io, args: Arguments, { ws, config }: Run): number {
     ws.note(unlockedNote(unlocked));
   }
 
-  printReport(io, args, ws.commit(args.flag('dry-run')));
-
-  return 0;
+  return printReport(io, args, ws.commit(args.flag('dry-run')));
 }
 
 /** Records "sdk" with its default name, and tells the agents: the clients are asked for from now on. */

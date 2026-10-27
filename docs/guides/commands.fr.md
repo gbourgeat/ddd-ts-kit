@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:af46bdf97bace9f2 -->
+<!-- translation-of: commands.md sha256:1bd67d0d39e344e5 -->
 
 # Quelle commande, quand
 
@@ -80,7 +80,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 | `/ddd-ts-kit:bounded-contexts` | trouve et classe les contextes, avec la raison de chaque frontière | étape 2 | `docs/architecture/contexts.md` | `/ddd-ts-kit:glossary` |
 | `/ddd-ts-kit:glossary` | le langage omniprésent d'un contexte | étape 3, et avant tout nouveau nom | `docs/architecture/glossary.md`, puis le `## Ubiquitous language` de chaque `CONTEXT.md` | `/ddd-ts-kit:context-map` |
 | `/ddd-ts-kit:context-map` | amont, aval, patron et contrat de chaque paire | étape 4, et quand deux contextes commencent à dépendre l'un de l'autre | `docs/architecture/context-map.md`, puis les amonts de la configuration | l'amorçage, ou la tranche qui en a besoin |
-| `npx ddd-ts-kit generate context <name> --classification <c> --term ... --upstream ...` | déclare un contexte avec son langage et ses relations | après l'amorçage, un par ligne de `contexts.md`, les amonts d'abord | le répertoire du contexte, son `CONTEXT.md`, l'entrée de configuration | `npx ddd-ts-kit docs` |
+| `npx ddd-ts-kit generate context <name> --classification <c> --reason "..." --term "<Term>=<meaning>\|<not to be confused with>" ... --upstream ...` | déclare un contexte avec son langage, la phrase qui dit pourquoi il a sa classification, et ses relations | après l'amorçage, un par ligne de `contexts.md`, les amonts d'abord | le répertoire du contexte, son `CONTEXT.md`, l'entrée de configuration | `npx ddd-ts-kit docs` |
 | `npx ddd-ts-kit list`, `describe <context>` | ce qui existe, par contexte ou pour un seul | avant de planifier ou de modifier un contexte | une carte des contextes, ou un contexte sous forme de faits (`--json`) | `/ddd-ts-kit:plan-slices` |
 | `npx ddd-ts-kit generate module <context> <module> --purpose "..." [--term ...]` | déclare un [module du modèle](../concepts/modules.fr.md) : l'entrée de la configuration, sa ligne de `## Modules` dans `CONTEXT.md`, ses termes ; peut être relancé, il ajoute ce qui manque | quand un contexte tient des groupes de concepts d'un même langage qu'un lecteur ouvre séparément ; jamais pour cacher un second langage | le module, déclaré et documenté | `move-to-module`, puis `generate ... --module` |
 | `npx ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]` | déplace des fichiers et des dossiers de `domain/` et `application/` dans un module déclaré, avec chacun de leurs imports dans le projet | un groupe par commit, jusqu'à ce que `module/complete` n'avertisse plus | les fichiers déplacés et les imports réécrits | `npm run verify` |
@@ -231,6 +231,14 @@ tableau ci-dessus).
 Chaque commande et chaque option, telles que `npx ddd-ts-kit --help` les affiche. Un test de la
 CLI échoue quand une commande ou une option est ajoutée sans que cette partie soit régénérée.
 
+Codes de sortie : `0` succès ; `1` des violations, une porte non franchie, une documentation
+périmée ; `2` un mauvais usage ou un refus (le message dit quoi faire) ; `3` une commande qui écrit
+des fichiers (`init`, `generate`, `docs`, `sdk`, un déplacement) n'a pas pu en écrire certains là
+où elle tournait, comme les chemins que protège le bac à sable d'un agent. Avec `3`, le rapport les
+liste sous `unwritable` (et dans `skipped`), *dry run* compris ; tous les autres fichiers sont
+écrits et aucun n'est supprimé. Relancez la même commande là où ils peuvent être écrits, hors du
+bac à sable : `init` donne la commande dans une note.
+
 <!-- ddd-ts-kit:commands -->
 <!-- Generated from the help of the CLI: `npm run build`, then `node pipeline/monorepo/commands-guide.mjs`. -->
 
@@ -255,7 +263,7 @@ Usage
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                   [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
-  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--module <module>] [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
+  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--module <module>] [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
   ddd-ts-kit generate --help --json
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
@@ -593,6 +601,11 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    recorded as the hash of nothing; the codecs of each module of a context are read too, and a
                    codec whose data type is not found or declares no member is refused, nothing recorded
   --sdk            init records "sdk" in the config and generates the clients with the project
+  --term           generate adds the row "<Term>=<meaning>" to the glossary of the CONTEXT.md before it judges
+                   a name; "<Term>=<meaning>|<not to be confused with>" fills the third cell too, a pipe being
+                   the one character a cell of the table cannot hold
+  --reason         generate context writes it under ## Classification, the sentence of why the context is
+                   of its classification; generate adr --deviation records it as the reason of the deviation
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
                    "generate --help --json" says which kinds do
   --module         generate writes the files of the layers into that module of the model of the context
@@ -602,7 +615,7 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    modules, what the modules share staying at the level of the context
 
 Kinds
-  context <name> --classification <core|supporting|generic> [--purpose "<two sentences>"] [--term "<Term>=<meaning>"]... [--upstream <ctx>[:relationship]]... [--preset identity]
+  context <name> --classification <core|supporting|generic> [--reason "<why it is of that classification>"] [--purpose "<two sentences>"] [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--upstream <ctx>[:relationship]]... [--preset identity]
   module <context> <module> [--purpose "<what it holds>"] [--classification <core|supporting|generic>] [--term "<Term>=<meaning>"]...
   aggregate <context> <Name> [--event-sourced [--birth <Event>]] [--term "<Term>=<meaning>"]...
   builder <context> <Aggregate>

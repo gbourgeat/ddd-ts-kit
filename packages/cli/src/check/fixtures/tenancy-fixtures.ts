@@ -1,6 +1,7 @@
 import type { Fixture } from './fixture';
 import { PATHS } from './paths';
 import { project } from './project';
+import { controlPlaneFixtures } from './control-plane-fixtures';
 import { tenancyBypass } from './tenancy-bypass';
 import { tenancyConfig } from './tenancy-config';
 import { TENANCY_PRISMA_FIXTURES } from './tenancy-prisma-fixtures';
@@ -86,6 +87,7 @@ const readModel = (name: string, source: string, expected: Fixture['expect']): F
 export const TENANCY_FIXTURES: readonly Fixture[] = [
   ...TENANCY_PRISMA_FIXTURES,
   ...TENANCY_TYPEORM_FIXTURES,
+  ...controlPlaneFixtures(),
   {
     ruleId: RULE,
     name: 'a knex adapter reaching tenant data through the helpers',

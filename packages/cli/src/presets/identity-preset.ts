@@ -56,10 +56,7 @@ export const identityPreset: Preset = {
     ...AGGREGATES.map((aggregate) => ({
       kind: repositoryKind,
       args: [aggregate],
-      flags: (config: Config) => ({
-        tenantFree: true,
-        ...(config.stack.privacy === 'on' ? (PERSONAL[aggregate] ?? {}) : {}),
-      }),
+      flags: (config: Config) => (config.stack.privacy === 'on' ? (PERSONAL[aggregate] ?? {}) : {}),
     })),
     ...PUBLISHED.map((fact) => ({ kind: integrationEventKind, args: fact })),
   ],

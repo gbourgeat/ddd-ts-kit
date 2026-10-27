@@ -68,8 +68,25 @@ describe('generate, the language first', () => {
     );
 
     expect(failure(cli(root, 'generate', 'entity', 'billing', 'Line', '--term', 'Line', '--json')).fix).toContain(
-      '--term "<Term>=<what it means for the business>"',
+      '--term "<Term>=<what it means for the business>[|<what it must not be confused with>]"',
     );
+  });
+
+  it('writes what a term must not be confused with in the third cell, and refuses a second pipe', () => {
+    const refund = 'Refund=Money paid back to a customer, an = sign kept|Credit note: the document that cancels a debt';
+
+    expect(cli(root, 'generate', 'value-object', 'billing', 'Refund', '--term', refund).code).toBe(0);
+
+    expect(read(root, 'src/contexts/billing/CONTEXT.md')).toContain(
+      '| Refund | Money paid back to a customer, an = sign kept | Credit note: the document that cancels a debt |',
+    );
+
+    const twoPipes = failure(
+      cli(root, 'generate', 'entity', 'billing', 'Payer', '--term', 'Payer=Who pays|a|b', '--json'),
+    );
+
+    expect(twoPipes.message).toContain('holds more than one |');
+    expect(exists(root, 'src/contexts/billing/domain/entities/payer.entity.ts')).toBe(false);
   });
 
   it('asks for the language first in a context whose glossary is empty', () => {
@@ -184,5 +201,45 @@ describe('generate, the next steps and the document of a new context', () => {
     );
 
     expect(read(root, 'docs/context-map.md')).toContain('| `pricing` | supporting | Sets the price of every item. |');
+
+    expect(read(root, 'src/contexts/catalog/CONTEXT.md')).toContain(
+      'TODO(domain): say in one sentence why this context is',
+    );
+  });
+});
+
+describe('generate context, its glossary from the draft', () => {
+  it('writes the three cells of each row and the sentence of its classification given to a new context', () => {
+    cli(
+      root,
+      'generate',
+      'context',
+      'lending',
+      '--classification',
+      'core',
+      '--reason',
+      'Lending is how the bank earns: its rules set it apart from the other banks.',
+      '--term',
+      'Delegation=The amount up to which a level may decide|identity: Delegation, the lending of rights',
+      '--term',
+      'Decider=The staff member entitled to decide',
+    );
+
+    const doc = read(root, 'src/contexts/lending/CONTEXT.md');
+
+    expect(doc).toContain(
+      '## Classification\n\ncore\n\nLending is how the bank earns: its rules set it apart from the other banks.\n',
+    );
+
+    expect(doc).not.toContain('say in one sentence why');
+
+    expect(doc).toContain(
+      [
+        '| Term | Meaning | Not to be confused with |',
+        '|---|---|---|',
+        '| Delegation | The amount up to which a level may decide | identity: Delegation, the lending of rights |',
+        '| Decider | The staff member entitled to decide |  |',
+      ].join('\n'),
+    );
   });
 });

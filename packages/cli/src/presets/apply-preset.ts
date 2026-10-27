@@ -17,6 +17,7 @@ import { organisationsAsTenantDirectory } from './organisations-as-tenant-direct
 import { organisationsAsTenants } from './organisations-as-tenants';
 import type { PresetFile } from './preset-file';
 import type { Preset } from './preset';
+import { outsideTheTenancy } from './outside-the-tenancy';
 import { presetDecision } from './preset-decision';
 
 /** The context a preset is written into, which `generate context` or `init` declared just before. */
@@ -40,8 +41,9 @@ export function applyPreset(ws: Workspace, config: Config, request: PresetReques
 
   assertNoTwin(ws, config, request);
 
-  const scope = scopeOf(ws, config, request);
-  const adr = presetDecision(scope, preset.name);
+  const first = scopeOf(ws, config, request);
+  const adr = presetDecision(first, preset.name);
+  const scope = adr === '' ? first : { ...first, config: outsideTheTenancy(first, adr) };
   const rendering = { preset: preset.name, context: vars(scope, { preset: { adr, adapter: adapterOf(config) } }) };
 
   learnTerms(scope);
@@ -131,7 +133,10 @@ function adapterOf(config: Config): RenderContext {
 
 function scopeOf(ws: Workspace, config: Config, { context, preset }: PresetRequest): Scope {
   const name = parseContextName(context);
-  const term = preset.terms.map((row) => `${row.term}=${row.meaning}`);
+
+  const term = preset.terms.map(
+    (row) => `${row.term}=${row.meaning}${row.notConfusedWith === undefined ? '' : `|${row.notConfusedWith}`}`,
+  );
 
   return { ws, config, context: name, dir: `${config.contextsDir}/${name.kebab}`, flags: { ...NO_FLAGS, term } };
 }

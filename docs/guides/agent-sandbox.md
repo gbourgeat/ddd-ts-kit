@@ -191,9 +191,10 @@ by the project file, and `init` says them in its notes:
 
 - **The first install.** A path of `allowWrite` that does not exist when the session starts stays
   read-only for the whole session: the sandbox makes no new directory writable. The owner runs the
-  first `npm install` (or `pnpm install`) from a terminal outside the agent, after `init`: it
+  first `npm install` (or `pnpm install`) from a terminal outside the agent, right after `init`: it
   creates the caches, and it runs the install scripts of the stack under the owner's eyes. The
-  installs of the agent afterwards, `npm ci` in a worktree included, run in the sandbox.
+  agent resumes at `npm run verify`, as the `bootstrap` skill says, and its installs afterwards,
+  `npm ci` in a worktree included, run in the sandbox.
 - **No prebuilt binary of the Kafka client.** Where none fits the machine (an unusual platform or
   Node version), the client builds librdkafka from sources: a compiler, `~/.cache/node-gyp`,
   `nodejs.org`, `zlib.net` and `curl.se`. The profile opens none of them, since the build could
@@ -227,6 +228,20 @@ them, or run `init --force`.
 
 The sandbox may also leave a read-only `.git/config.lock`. Delete it from a terminal outside the
 sandbox before `git config` or `git branch -d`, which refuse to run while it exists.
+
+#### Creating the project under the sandbox
+
+The sandbox of Claude Code keeps the agent from writing `.claude/settings.json`, `.claude/hooks/`
+and `.git/hooks`: where `init` writes the agent settings and the hooks of the regulated profile,
+and where `npm run hooks:install` installs the git hooks. `init` writes every other file and lists
+these under `unwritable` (and in `skipped`) of its report, a dry run included, exits 3, and ends
+with a note that gives the command to finish: the same `init`, run from a terminal outside the sandbox, which
+writes the missing files and keeps the ones written. The `bootstrap` skill hands both to the owner
+from the start: the agent runs the dry run and shows the command, the owner runs `init`, the agent
+resumes at `npm install`, and the owner runs `npm run hooks:install` before the first commit.
+Under the regulated profile the owner also runs that first `npm install`, right after `init`, and
+the agent resumes at `npm run verify`
+([Installing the stack under the sandbox](#installing-the-stack-under-the-sandbox)).
 
 ### 3. NVIDIA OpenShell
 

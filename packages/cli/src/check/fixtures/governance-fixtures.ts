@@ -118,6 +118,24 @@ export const GOVERNANCE_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'governance/recorded-deviation',
+    name: 'a context declared the control plane of the tenants without a deviation',
+    expect: { file: CONFIG_FILE },
+    files: project(
+      {},
+      {
+        [CONFIG_FILE]: config({
+          stack: { orm: 'knex', tenancy: 'shared-table' },
+          contexts: {
+            billing: { classification: 'core', upstreams: ['catalog'] },
+            catalog: { classification: 'supporting', upstreams: [], tenancy: 'control-plane' },
+          },
+          deviations: [],
+        }),
+      },
+    ),
+  },
+  {
+    ruleId: 'governance/recorded-deviation',
     name: 'a deviation without a reason, pointing to a missing record',
     expect: { file: CONFIG_FILE },
     files: project(

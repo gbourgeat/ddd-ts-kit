@@ -545,6 +545,7 @@ of a person then declares it with `personalFields` and lists its port in
 | `contexts.<name>.upstreams[].relationship` | `published-language`, `customer-supplier`, `conformist`, `anti-corruption-layer`, `open-host-service`, `shared-kernel` | `published-language` |
 | `contexts.<name>.extraDirectories[]` | a path inside the context, or `{ "path", "reason" }`: a directory added to the canonical tree. Each one is a deviation | `[]` |
 | `contexts.<name>.deployable` | `true`, `false`: the context has its own entry point `src/apps/<name>/main.ts`; `generate service <name>` sets it | `false` |
+| `contexts.<name>.tenancy` | `control-plane`: the context decides who belongs to which tenant, and its tables belong to none (the identity preset writes it under a tenancy, with its decision record). `generate repository` then confines none of its repositories, unless `--tenant-scoped` is passed, and `tenancy/scoped-statement` does not judge its adapters, with no suppression per statement. A deviation: `deviations` holds `contexts.<name>.tenancy`. `config/valid` reports another value | none: the tenancy of the project |
 | `contexts.<name>.owners[]` | the handles of who owns the context, as the platform of the repository knows them (`@org/team`, `@person`, an email): `ddd-ts-kit docs` writes them to `CODEOWNERS` for the tree of the context and its `published-language/` ([Owners](#owners)) | `[]`: no line for the context |
 | `contexts.<name>.modules` | `{ "<module>": {} }`: the modules of the model of the context, each one folder of the context holding its own layers, `<module>/domain/` to `<module>/presentation/`, its specs in `test/unit/<module>/` ([Modules of the model](concepts/modules.md)). A name is in kebab-case, unique in the context, and never the name of a role folder (`aggregates`, `commands`...) nor of a folder of the context (`domain`, `test`...); `generate module <context> <module>` writes it | none |
 | `contexts.<name>.modules.<module>.classification` | `core`, `supporting`, `generic`: the subdomain the module holds, when it differs from the classification of its context | the classification of the context |
@@ -613,6 +614,7 @@ has no entry in `deviations`:
 |---|---|
 | a rule set to `off`, or to `warn` when its default is `error`, for the whole project or for some files | `rules.<id>` |
 | an extra directory in a context | `contexts.<name>.extraDirectories.<path>` |
+| a context declared the control plane of the tenants | `contexts.<name>.tenancy` |
 | a package added to an allow-list | `domainAllowedPackages.<package>`, `applicationAllowedPackages.<package>`, `publishedLanguageAllowedPackages.<package>` |
 | a coverage threshold under the reference | `coverage.<layer>.<rate>`, for example `coverage.infrastructure.branches` |
 | a guard that is not `enforce` | `guard` |

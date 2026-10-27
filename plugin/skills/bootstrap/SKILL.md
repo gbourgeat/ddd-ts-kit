@@ -60,11 +60,28 @@ the command under `## Decisions` of the plan.
 ## 3. Create the project
 
 ```bash
-npx ddd-ts-kit@latest init <flags> --dry-run --json   # read `created`, `skipped` and `notes`
+npx ddd-ts-kit@latest init <flags> --dry-run --json   # read `created`, `skipped`, `unwritable` and `notes`
 npx ddd-ts-kit@latest init <flags> --json             # its `notes` end with the two commands to run next
 pnpm install                                          # `npm install` with --package-manager npm
 pnpm run verify                                       # the bare project is green before its first context
 ```
+
+In a sandboxed session (the sandbox of Claude Code, which the regulated profile turns on), or
+whenever the dry run exits 3 with files under `unwritable`, the real `init` is the owner's: the
+sandbox keeps the agent from writing `.claude/settings.json` and `.claude/hooks/`. Exit code 3
+with `unwritable` means "hand `init` to the owner", not a failure to retry or to work around. Run
+the dry run, show the owner the same command without `--dry-run` and `--json`, to run from a
+terminal outside the sandbox, and wait for their word that it ran; resume at `pnpm install`. An
+`init` run in the sandbox anyway exits 3 too, after writing every other file, and ends with a
+note that gives the command to finish: hand it to the owner the same way.
+
+Under `--agent-profile regulated`, the first `pnpm install` is the owner's too, from the same
+terminal outside the agent, right after `init`; resume at `pnpm run verify`. The sandbox makes no
+directory writable that is missing when the session starts, so this first install creates the
+caches the agent may write afterwards (the pnpm store or `~/.npm`, `~/.cache/prisma`), and it runs
+the install scripts of the stack (the engines of Prisma, the prebuilt binary of the Kafka client)
+under the owner's eyes. Later installs, `pnpm install --frozen-lockfile` in a worktree included,
+run in the sandbox. `init` says the same in its `notes`.
 
 On an existing project, a note of the dry run that starts with `package.json depends on` is a
 dependency the flags contradict: put it to the owner, and run the dry run again with the flag it
@@ -80,13 +97,19 @@ No `--context` here: contexts come next, with their language.
 ## 4. Create the contexts, upstreams first
 
 One command per row of `contexts.md`, in the order of the context map (a context after its
-upstreams), with the purpose, every term of its glossary and its relationships:
+upstreams), with the purpose, the sentence of why it is of its classification, every row of its
+section of `glossary.md` with its three cells, and its relationships:
 
 ```bash
 pnpm exec ddd-ts-kit generate context <name> --classification <core|supporting|generic> \
-  --purpose "<two sentences>" --term "<Term>=<meaning>" --term ... \
+  --reason "<one sentence: why it is core, supporting or generic>" --purpose "<two sentences>" \
+  --term "<Term>=<meaning>|<not to be confused with>" --term "<Term>=<meaning>" ... \
   --upstream <upstream>:<pattern> --json
 ```
+
+The `|` opens the third cell, "Not to be confused with"; leave it out of a row whose cell is
+empty. A cell never holds a `|`, so a meaning cannot clash with it. Read `CONTEXT.md` after each
+command: every row of the draft is there, three cells each.
 
 A context whose row of `contexts.md` names modules gets, right after its `generate context`, one
 command per module, on the trunk too (the module name is a glossary term, hence the `--term`):
@@ -106,9 +129,8 @@ the running application: run it before `verify`, then read its
 `## Design` with the owner. Why and when:
 `docs/guides/bootstrap-with-well-designed-contexts.md` of the kit.
 
-Then, by hand, only what a flag cannot carry: the sentence under `## Classification` of each
-`CONTEXT.md`, the "Not to be confused with" cells, and in `docs/context-map.md`, outside the
-markers, the reasons from the draft map and from `contexts.md`. Delete
+Then, by hand, only what a flag cannot carry: in `docs/context-map.md`, outside the markers,
+the reasons from the draft map and from `contexts.md`. Delete
 `docs/architecture/glossary.md` and `docs/architecture/context-map.md`: their content now
 lives in the `CONTEXT.md` files, the config and `docs/context-map.md`, and a second copy
 would drift.
@@ -119,6 +141,11 @@ would drift.
 pnpm run verify          # types, lint, format, tests, end to end, architecture, import graph, dead code, docs drift
 pnpm run hooks:install   # pre-commit checks and conventional commit messages
 ```
+
+In a sandboxed session `.git/hooks` is read-only to the agent: `hooks:install` is the owner's too,
+from a terminal outside the sandbox, once `pnpm install` has run (lefthook comes with the
+dependencies). Commit after their word that it ran, so that the first commit goes through the
+hooks.
 
 Report the real output. Propose the commits (skill `ddd-ts-kit:commit-discipline`): one for
 the bare project (`chore: bootstrap the project`), then one per context

@@ -6,7 +6,10 @@ export interface WorkspaceReport {
   readonly updated: string[];
   /** Derived files removed because nothing derives them any more. */
   readonly deleted: string[];
+  /** Files left as they are: the ones that exist (unless --force) and the unwritable ones. */
   readonly skipped: string[];
+  /** Files this command could not write where it ran, such as paths the sandbox of an agent protects; also in `skipped`. */
+  readonly unwritable: string[];
   readonly next: string[];
   readonly todos: TodoLocation[];
   readonly notes: string[];

@@ -7,7 +7,7 @@ import { readAcceptance } from '../acceptance/read-acceptance';
 import type { StoryAcceptance } from '../acceptance/story-acceptance';
 import { CliError } from '../cli-error';
 import { readSlices } from '../progress/read-slices';
-import { Workspace } from '../workspace';
+import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
@@ -70,7 +70,13 @@ function lock(ws: Workspace, { asked, story, json }: LockRequest, io: Io): numbe
 
   refuseUnchecked(ws, story);
 
-  ws.commit(false);
+  const report = ws.commit(false);
+
+  if (report.unwritable.length > 0) {
+    tellUnwritable(io, report);
+
+    return exitCodeOf(report);
+  }
 
   io.out(
     json

@@ -20,6 +20,13 @@ export interface ContextConfig {
   readonly deployable: boolean;
   /** The handles of who owns the context (`@team`, `@person`, an email), written to `CODEOWNERS` by `docs`; none: no line for it. */
   readonly owners: readonly string[];
+  /**
+   * `control-plane`: the context decides who belongs to which tenant, and its tables belong to none
+   * (`tenancy/scoped-statement` does not judge its adapters, `generate repository` confines none),
+   * a deviation recorded under `contexts.<name>.tenancy`. Absent: the tenancy of the project. Kept
+   * as written, `check` reports a wrong value.
+   */
+  readonly tenancy?: string;
 }
 
 /** How the coding agents of the project are held: a profile of permissions, or none. */

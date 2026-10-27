@@ -50,6 +50,8 @@ export interface InitOptions extends StackOptions {
   /** Presets of the kit, each written into the context of its name (declared by the preset when no `--context` names it). */
   readonly presets?: readonly string[];
   readonly dryRun: boolean;
+  /** This very command, as the person runs it again outside the sandbox that kept files from being written. */
+  readonly rerun?: string;
 }
 
 export function runInit(root: string, options: InitOptions): WorkspaceReport {
@@ -85,12 +87,39 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
 
   const report = ws.commit(options.dryRun);
 
-  if (!options.dryRun && report.created.includes('package.json')) {
-    report.notes.push(inDialect('Run `npm install`, then `npm run verify`.', config.stack.packageManager));
-    report.notes.push(inDialect(NEXT_STEP, config.stack.packageManager));
-  }
+  report.notes.push(...closingNotes(report, options, config));
 
   return report;
+}
+
+/** What the person does next: write what a sandbox kept from being written, then install and verify a new project. */
+function closingNotes(report: WorkspaceReport, options: InitOptions, config: Config): string[] {
+  const unwritable = report.unwritable.length > 0 ? [unwritableNote(report.unwritable, options)] : [];
+  const created = !options.dryRun && report.created.includes('package.json');
+
+  return [
+    ...unwritable,
+    ...(created
+      ? [
+          inDialect('Run `npm install`, then `npm run verify`.', config.stack.packageManager),
+          inDialect(NEXT_STEP, config.stack.packageManager),
+        ]
+      : []),
+  ];
+}
+
+/**
+ * What a sandbox kept `init` from writing, such as `.claude/settings.json` and `.claude/hooks/`
+ * that the sandbox of Claude Code protects from the agent: every other file is written, and the
+ * same command run outside the sandbox adds these and keeps the ones written.
+ */
+function unwritableNote(files: readonly string[], options: InitOptions): string {
+  const command = options.rerun ?? 'npx ddd-ts-kit init <the same flags>';
+  const listed = `${files.length} file(s) ${options.dryRun ? 'cannot' : 'could not'} be written here, where a sandbox or the permissions protect them: ${files.join(', ')}.`;
+
+  return options.dryRun
+    ? `${listed} The real run would write every other file and skip these; to write them all, the owner runs it from a terminal outside the sandbox: \`${command}\`.`
+    : `${listed} Every other file is written. To finish, the owner runs the same command from a terminal outside the sandbox, which writes these and keeps the files already written: \`${command}\`.`;
 }
 
 /**

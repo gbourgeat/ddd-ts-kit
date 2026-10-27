@@ -5,7 +5,7 @@ import { refreshDocs } from '../generate/refresh-docs';
 import { declaredModule } from '../model-modules';
 import { type ModuleMoves, moveToModule } from '../move-to-module';
 import { toName } from '../naming';
-import { Workspace } from '../workspace';
+import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
@@ -51,7 +51,9 @@ export const moveToModuleCommand: Command = (argv, io) => {
     deleted: report.deleted,
   });
 
-  return 0;
+  tellUnwritable(io, report);
+
+  return exitCodeOf(report);
 };
 
 function assertDeclared(config: Config, context: string, module: string): void {

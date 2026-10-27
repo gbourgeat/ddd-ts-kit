@@ -11,7 +11,7 @@ export const contextKind: Kind = {
   name: 'context',
   aliases: [],
   usage:
-    'context <name> --classification <core|supporting|generic> [--purpose "<two sentences>"] [--term "<Term>=<meaning>"]... [--upstream <ctx>[:relationship]]... [--preset identity]',
+    'context <name> --classification <core|supporting|generic> [--reason "<why it is of that classification>"] [--purpose "<two sentences>"] [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--upstream <ctx>[:relationship]]... [--preset identity]',
   summary:
     'A bounded context: CONTEXT.md with its glossary, published language, config entry, and what assembles it (its declarations, or its module file); with --preset, written whole from a preset of the kit.',
   positionals: ['name'],
@@ -25,6 +25,7 @@ export const contextKind: Kind = {
       classification: flags.classification ?? preset?.classification,
       upstreams: flags.upstream.map(parseUpstreamFlag),
       purpose: flags.purpose ?? preset?.purpose,
+      classificationReason: flags.reason ?? preset?.classificationReason,
       terms: parseTerms(flags.term),
     });
 

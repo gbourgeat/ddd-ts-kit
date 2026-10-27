@@ -49,6 +49,7 @@ function writtenContexts(config: Config): Record<string, unknown> {
       ...(context.deployable ? { deployable: true } : {}),
       ...(context.owners.length > 0 ? { owners: context.owners } : {}),
       ...(context.modules.length > 0 ? { modules: writtenModules(context.modules) } : {}),
+      ...(context.tenancy === undefined ? {} : { tenancy: context.tenancy }),
     },
   ]);
 

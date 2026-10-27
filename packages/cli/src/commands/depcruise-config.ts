@@ -1,9 +1,10 @@
 import { readConfig } from '../config';
 import { DEPCRUISE_FILE } from '../depcruise/depcruise-file';
 import { renderCruiseFile } from '../depcruise/render-cruise-file';
-import { Workspace } from '../workspace';
+import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import { type Command } from './command';
+import type { Io } from './io';
 
 /** Prints the dependency-cruiser configuration of the project, writes it, or checks that the file on disk is current. */
 export const depcruiseConfigCommand: Command = (argv, io) => {
@@ -17,11 +18,7 @@ export const depcruiseConfigCommand: Command = (argv, io) => {
   const ws = new Workspace(root, true);
 
   if (args.flag('write')) {
-    ws.create(DEPCRUISE_FILE, expected);
-    ws.commit(false);
-    io.out(`written  ${DEPCRUISE_FILE}`);
-
-    return 0;
+    return writeCruiseFile(ws, expected, io);
   }
 
   if (!args.flag('check')) {
@@ -44,3 +41,17 @@ export const depcruiseConfigCommand: Command = (argv, io) => {
 
   return current ? 0 : 1;
 };
+
+function writeCruiseFile(ws: Workspace, expected: string, io: Io): number {
+  ws.create(DEPCRUISE_FILE, expected);
+
+  const report = ws.commit(false);
+
+  if (report.unwritable.length > 0) {
+    tellUnwritable(io, report);
+  } else {
+    io.out(`written  ${DEPCRUISE_FILE}`);
+  }
+
+  return exitCodeOf(report);
+}
