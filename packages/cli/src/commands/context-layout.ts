@@ -2,7 +2,7 @@ import { CliError } from '../cli-error';
 import { readConfig } from '../config';
 import { contextLayout, type ContextLayout } from '../context-layout';
 import { toName } from '../naming';
-import { Workspace } from '../workspace';
+import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
@@ -41,7 +41,9 @@ export const contextLayoutCommand: Command = (argv, io) => {
     manual: [...layout.manual, ...(layout.moved.length > 0 ? [MANUAL] : [])],
   });
 
-  return 0;
+  tellUnwritable(io, report);
+
+  return exitCodeOf(report);
 };
 
 interface Outcome extends ContextLayout {

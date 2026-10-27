@@ -37,6 +37,22 @@ export const CONFIG_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'config/valid',
+    name: 'a context whose tenancy is not control-plane',
+    expect: { file: CONFIG_FILE },
+    files: project(
+      {},
+      {
+        [CONFIG_FILE]: config({
+          contexts: {
+            billing: { classification: 'core', upstreams: ['catalog'] },
+            catalog: { classification: 'supporting', upstreams: [], tenancy: 'outside' },
+          },
+        }),
+      },
+    ),
+  },
+  {
+    ruleId: 'config/valid',
     name: 'a function limit above the ceiling of 100 lines',
     expect: { file: CONFIG_FILE },
     files: project({}, { [CONFIG_FILE]: config({ limits: { maxFunctionLines: 250 } }) }),

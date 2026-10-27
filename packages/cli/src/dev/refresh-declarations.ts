@@ -21,7 +21,7 @@ export function refreshDeclarations(start: string, tell: (line: string) => void)
     refreshBarrels(ws, config);
     refreshNestControllers(ws, config);
 
-    const { created, updated, deleted, notes } = ws.commit(false);
+    const { created, updated, deleted, notes, unwritable } = ws.commit(false);
     const rewritten = [...created, ...updated];
 
     rewritten.forEach((file) => tell(`ddd-ts-kit: rewrote ${file} from the role files and their constructors`));
@@ -33,6 +33,10 @@ export function refreshDeclarations(start: string, tell: (line: string) => void)
     );
 
     notes.forEach((note) => tell(`ddd-ts-kit: ${note}`));
+
+    unwritable.forEach((file) =>
+      tell(`ddd-ts-kit: ${file} could not be written here: a sandbox or the permissions protect it`),
+    );
 
     return [...rewritten, ...deleted];
   } catch (error) {

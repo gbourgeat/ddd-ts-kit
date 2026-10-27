@@ -50,7 +50,7 @@ interface ConfigFinding extends Flaw {
 export const governanceRecordedDeviation: Rule = {
   id: 'governance/recorded-deviation',
   description:
-    'A suppression, a lowered severity, a lowered coverage threshold, an extra directory or an extra allowed package carries a reason and points to a decision record in docs/adr/.',
+    'A suppression, a lowered severity, a lowered coverage threshold, an extra directory, a context outside the tenancy or an extra allowed package carries a reason and points to a decision record in docs/adr/.',
   scope: 'file',
   run(project) {
     const records = new DecisionRecords(project.root);
@@ -134,6 +134,7 @@ function unrecordedRelaxations(config: Config): ConfigFinding[] {
     ...raisedBudget(config),
     ...loweredMutation(config),
     ...extraDirectories(config),
+    ...controlPlanes(config),
     ...extraPackages(config),
     ...guardMode(config),
     ...eventsWithoutOutbox(config),
@@ -202,6 +203,21 @@ function extraDirectories({ contexts }: Config): Relaxation[] {
       said: `The context "${name}" adds the directory "${directory}" to the canonical tree`,
       where: ['"contexts"', `"${name}":`, '"extraDirectories"', `"${directory}"`],
     })),
+  );
+}
+
+/** A context outside the tenancy: no statement of its adapters is confined to a tenant. */
+function controlPlanes({ contexts }: Config): Relaxation[] {
+  return Object.entries(contexts).flatMap(([name, { tenancy }]) =>
+    tenancy === undefined
+      ? []
+      : [
+          {
+            what: `contexts.${name}.tenancy`,
+            said: `The context "${name}" is declared "${tenancy}": its tables belong to no tenant`,
+            where: ['"contexts"', `"${name}":`, '"tenancy"'],
+          },
+        ],
   );
 }
 

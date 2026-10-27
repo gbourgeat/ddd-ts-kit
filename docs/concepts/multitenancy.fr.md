@@ -1,5 +1,5 @@
 [English](multitenancy.md) · **Français**
-<!-- translation-of: multitenancy.md sha256:87ce9ceb9941bd92 -->
+<!-- translation-of: multitenancy.md sha256:40d9370a2524db3f -->
 
 # Multitenance
 
@@ -110,6 +110,14 @@ Ce que fournit chaque adaptateur, prouvé par `tenantIsolationContract`
 depuis l'exécuteur, le client ou le *manager*, une ligne atteinte par sa seule clé, un registre de
 modèles de lecture construit sans son *tenant*. Les trois autres se câblent à la main à partir des *packages* pour l'instant ;
 `init` les refuse et dit quoi ajouter.
+
+Un contexte dont les tables n'appartiennent à aucun *tenant*, parce qu'il décide qui appartient à
+quel *tenant*, est déclaré tel dans la configuration plutôt que désactivé instruction par
+instruction : `"tenancy": "control-plane"` sous `contexts.<name>`, une dérogation enregistrée dans
+`deviations` avec son enregistrement de décision. La règle laisse alors ses adaptateurs de côté et
+`generate repository` n'en cloisonne aucun. Le *preset* identity écrit les trois, la clé, l'entrée
+et l'enregistrement. Une table d'un autre contexte qui ne contient aucune donnée de *tenant* reste
+une désactivation qui nomme son enregistrement.
 
 Un *repository* sur tables partagées, version simplifiée de ce qu'écrit le générateur sur Knex (les
 colonnes d'audit et le `Clock` qu'elles demandent sont omis) : chaque instruction

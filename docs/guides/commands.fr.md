@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:fc5a4ba23a43dfe9 -->
+<!-- translation-of: commands.md sha256:f76d6af9f2bd6b06 -->
 
 # Quelle commande, quand
 
@@ -230,6 +230,14 @@ tableau ci-dessus).
 
 Chaque commande et chaque option, telles que `npx ddd-ts-kit --help` les affiche. Un test de la
 CLI échoue quand une commande ou une option est ajoutée sans que cette partie soit régénérée.
+
+Codes de sortie : `0` succès ; `1` des violations, une porte non franchie, une documentation
+périmée ; `2` un mauvais usage ou un refus (le message dit quoi faire) ; `3` une commande qui écrit
+des fichiers (`init`, `generate`, `docs`, `sdk`, un déplacement) n'a pas pu en écrire certains là
+où elle tournait, comme les chemins que protège le bac à sable d'un agent. Avec `3`, le rapport les
+liste sous `unwritable` (et dans `skipped`), *dry run* compris ; tous les autres fichiers sont
+écrits et aucun n'est supprimé. Relancez la même commande là où ils peuvent être écrits, hors du
+bac à sable : `init` donne la commande dans une note.
 
 <!-- ddd-ts-kit:commands -->
 <!-- Generated from the help of the CLI: `npm run build`, then `node pipeline/monorepo/commands-guide.mjs`. -->

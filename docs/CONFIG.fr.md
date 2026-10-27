@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:783f3df6fa039421 -->
+<!-- translation-of: CONFIG.md sha256:e4e437ac79d9f843 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -567,6 +567,7 @@ aussi tant que `--event-sourcing on` n'est pas demandé.
 | `contexts.<name>.upstreams[].relationship` | `published-language`, `customer-supplier`, `conformist`, `anti-corruption-layer`, `open-host-service`, `shared-kernel` | `published-language` |
 | `contexts.<name>.extraDirectories[]` | un chemin dans le contexte, ou `{ "path", "reason" }` : un répertoire ajouté à l'arborescence canonique. Chacun est une dérogation | `[]` |
 | `contexts.<name>.deployable` | `true`, `false` : le contexte a son propre point d'entrée `src/apps/<name>/main.ts` ; `generate service <name>` la pose | `false` |
+| `contexts.<name>.tenancy` | `control-plane` : le contexte décide qui appartient à quel *tenant*, et ses tables n'appartiennent à aucun (le *preset* identity l'écrit sous une multitenance, avec son enregistrement de décision). `generate repository` ne cloisonne alors aucun de ses registres, sauf avec `--tenant-scoped`, et `tenancy/scoped-statement` ne juge pas ses adaptateurs, sans désactivation par instruction. Une dérogation : `deviations` contient `contexts.<name>.tenancy`. `config/valid` signale une autre valeur | aucune : la multitenance du projet |
 | `contexts.<name>.owners[]` | les identifiants de qui possède le contexte, tels que la plateforme du dépôt les connaît (`@org/equipe`, `@personne`, un courriel) : `ddd-ts-kit docs` les écrit dans `CODEOWNERS` pour l'arborescence du contexte et son `published-language/` ([Propriétaires](#propriétaires)) | `[]` : aucune ligne pour le contexte |
 | `contexts.<name>.modules` | `{ "<module>": {} }` : les modules du modèle du contexte, chacun un dossier du contexte qui contient ses propres couches, de `<module>/domain/` à `<module>/presentation/`, ses *specs* dans `test/unit/<module>/` ([Modules du modèle](concepts/modules.fr.md)). Un nom est en kebab-case, unique dans le contexte, et jamais le nom d'un dossier de rôle (`aggregates`, `commands`...) ni d'un dossier du contexte (`domain`, `test`...) ; `generate module <context> <module>` l'écrit | aucun |
 | `contexts.<name>.modules.<module>.classification` | `core`, `supporting`, `generic` : le sous-domaine que le module porte, quand il diffère de la classification de son contexte | la classification du contexte |
@@ -637,6 +638,7 @@ d'eux qui n'a pas d'entrée dans `deviations` :
 |---|---|
 | une règle passée à `off`, ou à `warn` quand elle vaut `error` par défaut, pour tout le projet ou pour certains fichiers | `rules.<id>` |
 | un répertoire supplémentaire dans un contexte | `contexts.<name>.extraDirectories.<path>` |
+| un contexte déclaré plan de contrôle des *tenants* | `contexts.<name>.tenancy` |
 | un *package* ajouté à une liste d'autorisation | `domainAllowedPackages.<package>`, `applicationAllowedPackages.<package>`, `publishedLanguageAllowedPackages.<package>` |
 | un seuil de couverture sous la référence | `coverage.<layer>.<rate>`, par exemple `coverage.infrastructure.branches` |
 | une garde qui ne vaut pas `enforce` | `guard` |

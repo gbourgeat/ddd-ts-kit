@@ -4,6 +4,7 @@ import { runInit, type InitOptions } from '../init/run-init';
 import { Arguments } from './arguments';
 import { type Command } from './command';
 import { printReport } from './print-report';
+import { VERSION } from '../version';
 
 const STACK_FLAGS = [
   'http',
@@ -75,10 +76,19 @@ export const initCommand: Command = (argv, io) => {
     fs.mkdirSync(root, { recursive: true });
   }
 
-  printReport(io, args, runInit(root, initOptions(args, dryRun)));
-
-  return 0;
+  return printReport(io, args, runInit(root, { ...initOptions(args, dryRun), rerun: rerunOf(argv) }));
 };
+
+/** The command the owner runs outside a sandbox to write what this one could not: the same flags, written for real. */
+function rerunOf(argv: readonly string[]): string {
+  const flags = argv.filter((arg) => arg !== '--json' && arg !== '--dry-run').map(quoted);
+
+  return ['npx', `ddd-ts-kit@${VERSION}`, 'init', ...flags].join(' ');
+}
+
+function quoted(arg: string): string {
+  return /^[\w./:=@,+-]+$/.test(arg) ? arg : `'${arg.replaceAll("'", "'\\''")}'`;
+}
 
 function initOptions(args: Arguments, dryRun: boolean): InitOptions {
   return {
