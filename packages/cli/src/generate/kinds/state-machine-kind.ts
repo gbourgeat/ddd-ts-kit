@@ -18,6 +18,7 @@ export const stateMachineKind: Kind = {
     'The lifecycle of an aggregate: its status as the closed vocabulary <Aggregate>Status (created, or extended with the --value it misses, the first one initial), the machine of domain/state-machines/ with the transitions asked, and its spec. CONTEXT.md draws it.',
   positionals: ['context', 'Aggregate'],
   writesShared: false,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
 

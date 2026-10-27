@@ -20,6 +20,7 @@ export const propertyKind: Kind = {
     'The laws of a value object checked on generated values (fast-check): a spec beside its own, with fast-check added to the development dependencies when it is missing.',
   positionals: ['context', 'ValueObject'],
   writesShared: true,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
 

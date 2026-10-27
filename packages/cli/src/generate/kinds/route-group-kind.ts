@@ -22,6 +22,7 @@ export const routeGroupKind: Kind = {
     'A route group: an empty class carrying @RouteGroup with its path prefix, its tag and its guards (Authenticated unless --public or --role says otherwise); with --group, it refines that group and inherits from it.',
   positionals: ['context', 'Name'],
   writesShared: true,
+  writesInModules: false,
   run: (request) => {
     const scope = openScope(request);
     const name = label(scope, (request.args[1] ?? '').replace(/Routes$/, ''), { what: 'route group' });

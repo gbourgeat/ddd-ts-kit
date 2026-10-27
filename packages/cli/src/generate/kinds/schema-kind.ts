@@ -25,6 +25,7 @@ export const schemaKind: Kind = {
     'One shape of the HTTP contract, declared once and shared: presentation/http/shared/<name>.schema.ts of a context, or presentation/<name>.schema.ts of the shared kernel when several contexts answer with it. Routes use it whole, nested or in part; the contract documents it once and refers to it.',
   positionals: ['context', 'Name'],
   writesShared: true,
+  writesInModules: false,
   run: (request) => {
     const shared = request.args[0] === SHARED_KERNEL;
     const scope = shared ? sharedKernelScope(request) : openScope(request);

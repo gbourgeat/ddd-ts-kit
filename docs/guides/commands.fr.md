@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:891981bdbb37a578 -->
+<!-- translation-of: commands.md sha256:fc5a4ba23a43dfe9 -->
 
 # Quelle commande, quand
 
@@ -255,7 +255,7 @@ Usage
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                   [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
-  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--module <module>] [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
+  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
   ddd-ts-kit generate --help --json
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
@@ -603,50 +603,54 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   --module         generate writes the files of the layers into that module of the model of the context
                    (declared first with generate module), <module>/domain/ to <module>/presentation/, and
                    their specs into test/unit/<module>/, finds the files it reads in the module that holds
-                   them and writes the imports to where they are; required in a context that declares
-                   modules, what the modules share staying at the level of the context
+                   them and writes the imports to where they are; taken by the kinds whose usage below
+                   shows [--module <module>], and required by them in a context that declares modules
+                   (a file of a use case already in a module goes with it, and another module is
+                   refused); every other kind refuses it, what it writes staying at the level of the
+                   context (code list, permission set, database schema, route groups, guards, shared
+                   shapes, fakes, builders, worlds) or outside the contexts
 
 Kinds
   context <name> --classification <core|supporting|generic> [--reason "<why it is of that classification>"] [--purpose "<two sentences>"] [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--upstream <ctx>[:relationship]]... [--preset identity]
   module <context> <module> [--purpose "<what it holds>"] [--classification <core|supporting|generic>] [--term "<Term>=<meaning>"]...
-  aggregate <context> <Name> [--event-sourced [--birth <Event>]] [--term "<Term>=<meaning>"]...
+  aggregate <context> <Name> [--event-sourced [--birth <Event>]] [--term "<Term>=<meaning>"]... [--module <module>]
   builder <context> <Aggregate>
   test-world <context> [Name]
-  entity <context> <Name> [--term "<Term>=<meaning>"]...
-  value-object <context> <Name> [--term "<Term>=<meaning>"]...   (alias: vo)
-  property <context> <ValueObject>
-  vocabulary <context> <Name> --value <value> [--value <value>]...
-  state-machine <context> <Aggregate> [--value <state>]... [--transition "<intention>:<from>[,<from>]...[><to>]"]... [--term "<Term>=<meaning>"]...
-  domain-event <context> <Aggregate> <Fact> [--term "<Term>=<meaning>"]...
-  error <context> <Refusal> <factory> [--code CODE] [--term "<Term>=<meaning>"]...   (alias: refusal)
-  domain-error <context> <Name> [--code CODE]
-  domain-service <context> <Name> [--term "<Term>=<meaning>"]...
-  repository <context> <Aggregate> [--tenant-scoped] [--personal <column>,<column>... [--subject <column>] [--erasure pseudonymise|row] [--retention <column>:<n><d|m|y>]]
-  command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]...
-  query <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--search] [--term "<Term>=<meaning>"]...
-  port <context> <Name>
-  route <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store]
-  controller <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store]
-  file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> [--grant <role>] | --public) [--method <POST|PUT>] [--group <Name>]
+  entity <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]
+  value-object <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: vo)
+  property <context> <ValueObject> [--module <module>]
+  vocabulary <context> <Name> --value <value> [--value <value>]... [--module <module>]
+  state-machine <context> <Aggregate> [--value <state>]... [--transition "<intention>:<from>[,<from>]...[><to>]"]... [--term "<Term>=<meaning>"]... [--module <module>]
+  domain-event <context> <Aggregate> <Fact> [--term "<Term>=<meaning>"]... [--module <module>]
+  error <context> <Refusal> <factory> [--code CODE] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: refusal)
+  domain-error <context> <Name> [--code CODE] [--module <module>]
+  domain-service <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]
+  repository <context> <Aggregate> [--tenant-scoped] [--personal <column>,<column>... [--subject <column>] [--erasure pseudonymise|row] [--retention <column>:<n><d|m|y>]] [--module <module>]
+  command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
+  query <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--search] [--term "<Term>=<meaning>"]... [--module <module>]
+  port <context> <Name> [--module <module>]
+  route <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store] [--module <module>]
+  controller <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store] [--module <module>]
+  file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> [--grant <role>] | --public) [--method <POST|PUT>] [--group <Name>] [--module <module>]
   route-group <context> <Name> [--prefix <path>] [--group <ParentName>] [--public | --role <role>]   (alias: group)
   guard <context> <Name>
-  representation <context> <UseCase> <xml|csv|media/type>[,...]
-  form <context> <UseCase>
+  representation <context> <UseCase> <xml|csv|media/type>[,...] [--module <module>]
+  form <context> <UseCase> [--module <module>]
   schema <context|shared-kernel> <Name>
-  integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]...
-  integration-handler <context> <upstreamContext> <eventType> [--name <Name>] [--term "<Term>=<meaning>"]...   (alias: consumer)
-  erasure-handler <context>
-  event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--name <Name>] [--term "<Term>=<meaning>"]...
-  projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]...   (alias: projector)
-  job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--global] [--term "<Term>=<meaning>"]...
-  background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]...
-  process <context> <Name> [--term "<Term>=<meaning>"]...   (alias: process-manager)
-  acl <context> <upstreamOrSystemName>
+  integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]... [--module <module>]
+  integration-handler <context> <upstreamContext> <eventType> [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: consumer)
+  erasure-handler <context> [--module <module>]
+  event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
+  projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: projector)
+  job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--global] [--term "<Term>=<meaning>"]... [--module <module>]
+  background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]... [--module <module>]
+  process <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: process-manager)
+  acl <context> <upstreamOrSystemName> [--module <module>]
   e2e <context> <UseCaseName> [--event <eventType>]
   acceptance <story> ["<title>"]
-  policy <context> <Name> --permission <aggregate>.<action>
-  gateway <context> <upstreamContext> <Name>
-  adapter <context> <Port> [--kind external|gateway] [--decorators]
+  policy <context> <Name> --permission <aggregate>.<action> [--module <module>]
+  gateway <context> <upstreamContext> <Name> [--module <module>]
+  adapter <context> <Port> [--kind external|gateway] [--decorators] [--module <module>]
   service <context>
   worker
   adr "<title>" [--number <n>] [--deviation <what>] [--reason "<why>"]

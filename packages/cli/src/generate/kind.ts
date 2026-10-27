@@ -109,6 +109,14 @@ export interface Kind {
   readonly optionalPositionals?: readonly string[];
   /** True when the kind may write outside the context it is given (config, composition root, registries of the platform, documentation): `SHARED_WRITES` says what and when. */
   readonly writesShared: boolean;
+  /**
+   * True when the kind writes a file that the modules of the model of a context divide: a file of
+   * a layer or a spec that `isContextLevel` does not keep at the level of the context. Such a kind
+   * takes `--module` and its usage shows it (`usageOf`); every other kind refuses it, what it writes
+   * staying at the level of the context or outside the contexts. `module-usage.spec.ts` runs every
+   * kind in a context divided into modules to keep this true.
+   */
+  readonly writesInModules: boolean;
   /** The flags this kind reads as a text where the other kinds read a switch: `--command <UseCase>` of a job. */
   readonly textFlags?: readonly string[];
   run(request: KindRequest): void;

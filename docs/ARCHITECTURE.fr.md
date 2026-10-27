@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:71596edf5e46f9b6 -->
+<!-- translation-of: ARCHITECTURE.md sha256:6a1b5e6e2c3aa674 -->
 
 # Référence de l'architecture
 
@@ -161,7 +161,8 @@ sujet, `generate module <context> <module>` en déclare un, et
 `move-to-module <context> <module> <path>...` y déplace des fichiers existants avec leurs imports,
 les *specs* qui portent leur nom les suivant. Dans un contexte qui déclare des modules, le
 générateur refuse d'écrire un fichier d'une couche sans `--module`, les fichiers que le contexte
-garde à part exceptés, et nomme les modules. La disposition de 0.86 et 0.87, un module sous
+garde à part exceptés, et nomme les modules. Les générateurs qui écrivent un tel fichier
+affichent `[--module <module>]` dans leur usage, et les autres refusent `--module`. La disposition de 0.86 et 0.87, un module sous
 `domain/<module>/` et `application/<module>/`, est lue pendant une version mineure, signalée par
 `module/complete`, et `ddd-ts-kit context-layout` la déplace, en reconnaissant le module de
 chaque adaptateur, route et *spec* à ce qu'il importe. Pourquoi et quand :

@@ -11,6 +11,7 @@ export const adrKind: Kind = {
     'A decision record in docs/adr/, numbered after the highest or by --number; with --deviation, the entry of the config that points to it.',
   positionals: ['title'],
   writesShared: true,
+  writesInModules: false,
   run: ({ ws, args, flags }) => {
     const title = (args[0] ?? '').trim();
     const { deviation: what, reason = title, number: asked } = flags;

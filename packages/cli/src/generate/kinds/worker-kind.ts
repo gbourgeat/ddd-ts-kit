@@ -19,6 +19,7 @@ export const workerKind: Kind = {
     'The scheduled jobs in a process of their own: apps/worker/main.ts (the modules of main.ts, no HTTP server), a start script, a compose service, `worker` in the config, and the API started with its jobs off.',
   positionals: [],
   writesShared: true,
+  writesInModules: false,
   run: ({ ws, config }) => {
     if (config.contexts[NAME] !== undefined) {
       throw takenByAContext();
