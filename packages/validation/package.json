@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/validation",
-  "version": "0.95.0",
+  "version": "0.96.0",
   "description": "One Schema contract for input validation, with adapters for zod, class-validator, TypeBox and Standard Schema.",
   "keywords": [
     "ddd",
@@ -54,7 +54,7 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.95.0"
+    "@ddd-ts-kit/kernel": "0.96.0"
   },
   "peerDependencies": {
     "class-transformer": ">=0.5.0",
