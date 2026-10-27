@@ -86,6 +86,11 @@ the notes say. Later installs, `pnpm install --frozen-lockfile` in a worktree in
 sandbox. `init` says the same in its `notes`. A `doctor` line `install-script <package>` after a
 bump is the owner's to approve, never the agent's.
 
+The `allow` rules `init` writes apply only in a workspace trusted on the machine: a headless `claude -p` in a
+clone nobody opened ignores them (stderr: `Ignoring N permissions.allow entries`) and keeps `deny` and `ask`.
+Tell the owner to open the project once in Claude Code, or to set `hasTrustDialogAccepted` for its root in
+`~/.claude.json`, before handing headless runs to the project; never edit that file yourself.
+
 On an existing project, a note of the dry run that starts with `package.json depends on` is a
 dependency the flags contradict: put it to the owner, and run the dry run again with the flag it
 names, or with the owner's reason to change the stack under `## Decisions`.

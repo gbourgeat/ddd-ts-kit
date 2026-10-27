@@ -155,6 +155,32 @@ settings of GitHub, not in a file of the project; `.github/copilot/settings.json
 key, so the profile writes nothing for Copilot. The two hooks of the profile run in Claude Code
 alone, as said above.
 
+#### The allow-list and the trust of the workspace
+
+The `permissions.allow` rules of `.claude/settings.json` (the allow-list `init` writes, and the
+one the regulated profile reviews) apply only in a workspace trusted on the machine that runs the
+session. A headless run (`claude -p`, a fresh clone in CI, a scripted agent) never shows the trust
+dialog; in a workspace nobody accepted it in, Claude Code ignores those entries and prints on
+stderr `Ignoring N permissions.allow entries from .claude/settings.json: this workspace has not
+been trusted`. What was checked, with Claude Code 2.1.311 and a project file holding one `allow`
+and one `deny` rule: the `allow` rule was not applied (the command was refused), the `deny` rule
+was. The Claude Code documentation adds that `ask` rules are not affected either, since they only
+restrict, and that hooks, the `env` block and the `.mcp.json` servers are not gated by trust in a
+`-p` run (the hooks of the profile still run). The session then works only through what
+`--allowedTools` or the permission mode grants, which can hide the gap: a run that passes
+`--allowedTools` does not show that the project's allow-list works.
+
+To trust a workspace for headless runs, open it once in Claude Code and accept the dialog, or
+set `projects["<repository root>"].hasTrustDialogAccepted` to `true` in `~/.claude.json` of the
+account that runs the session (the platform team manages that account in CI). The trust is a
+state of that user file, not of the repository, so a team cannot commit it. The documentation
+keys the trust on the git repository root, and says a git worktree uses the main checkout's root:
+a new worktree path is then not a workspace of its own. That last point was not probed here, nor
+was the effect of the managed settings on the allow rules of a project; with
+`allowManagedPermissionRulesOnly: true` the rules of the organisation are the only ones in any
+case. `ddd-ts-kit doctor` does not report the trust: it would have to open `~/.claude.json`, which
+also holds account data, and a kit command does not read that file.
+
 #### The generated contracts under the sandbox
 
 The sandbox of Claude Code turns a permission rule on a file into a rule of the sandbox: a `Read`
