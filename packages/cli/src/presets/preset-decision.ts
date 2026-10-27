@@ -6,7 +6,7 @@ import { renderTemplate } from '../templating';
 
 /**
  * The decision record a preset writes when the project has tenants: why the tables of its context
- * belong to no tenant, which the suppressions of its adapters name. Answers its reference
+ * belong to no tenant, which the deviation of `contexts.<name>.tenancy` names. Answers its reference
  * (`ADR-0003`), or nothing for a project of one customer.
  */
 export function presetDecision(scope: Scope, preset: string): string {

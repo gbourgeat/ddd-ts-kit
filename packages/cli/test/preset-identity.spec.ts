@@ -7,6 +7,19 @@ import { initProject } from './support/init-project';
 
 const CONTEXT = 'src/contexts/identity';
 
+interface ConfigShape {
+  readonly contexts: Readonly<Record<string, { readonly tenancy?: string }>>;
+  readonly deviations: readonly unknown[];
+}
+
+/** The line the guide of the project says `check` prints when it passes, `N` read as any count. */
+function passingLineOfCheck(guide: string): RegExp {
+  const line = /run check:arch`: `([^`]+)`/.exec(guide)?.[1] ?? 'no passing line in AGENTS.md';
+  const pattern = line.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(' N ', ' \\d+ ');
+
+  return new RegExp(`^${pattern}$`);
+}
+
 describe('init --preset identity', () => {
   it('writes a whole identity context that the checker finds nothing to report in, on the default stack', () => {
     const root = initProject('--context', 'identity:generic', '--preset', 'identity');
@@ -42,7 +55,7 @@ describe('init --preset identity', () => {
     expect(cli(root, 'depcruise-config', '--check').code).toBe(0);
   });
 
-  it('writes the knex and class-validator flavour, and with tenants keeps its tables out of them under a decision record', () => {
+  it('writes the knex and class-validator flavour, and with tenants declares its context outside them under a decision record', () => {
     const root = initProject(
       '--orm',
       'knex',
@@ -56,8 +69,8 @@ describe('init --preset identity', () => {
 
     const reader = read(root, `${CONTEXT}/infrastructure/persistence/knex-search-members-reader.repository.ts`);
 
-    expect(cli(root, 'check').stdout).toContain('0 errors, 0 warnings, 7 suppressions');
-    expect(reader).toContain('ADR-0001: the identity context is the control plane of the tenants');
+    expect(cli(root, 'check').stdout).toContain('0 errors, 0 warnings, 0 suppressions');
+    expect(reader).not.toContain('ddd-ts-kit-disable');
     expect(read(root, 'docs/adr/0001-identity-is-the-control-plane-of-the-tenants.md')).toContain('Status: accepted');
 
     expect(read(root, `${CONTEXT}/presentation/http/organisations/invite-member/invite-member.body.ts`)).toContain(
@@ -128,6 +141,26 @@ describe('init --preset identity', () => {
 
     expect(read(alone, 'src/platform/auth/authentication/create-authenticator.ts')).not.toContain('tenantClaim');
     expect(read(jwt, 'src/platform/auth/authentication/create-authenticator.ts')).not.toContain('tenantClaim');
+  });
+});
+
+describe('the passing line of check in the guide of a project with the identity preset and tenants', () => {
+  it.each(['drizzle', 'knex', 'prisma'])('is what check prints on the fresh project (%s)', (orm) => {
+    const root = initProject('--tenancy', 'shared-table', '--orm', orm, '--preset', 'identity');
+    const passing = passingLineOfCheck(read(root, 'AGENTS.md'));
+    const printed = cli(root, 'check').stdout.split('\n').at(-1);
+
+    expect(passing.source).toBe('^0 errors, 0 warnings, 0 suppressions in \\d+ files\\.$');
+    expect(printed).toMatch(passing);
+  });
+
+  it('holds because the context is declared the control plane of the tenants, under the deviation that names its record', () => {
+    const root = initProject('--tenancy', 'shared-table', '--orm', 'knex', '--preset', 'identity');
+    const config = JSON.parse(read(root, 'ddd-ts-kit.config.json')) as ConfigShape;
+    const deviation = { what: 'contexts.identity.tenancy', adr: '0001' };
+
+    expect(config.contexts.identity?.tenancy).toBe('control-plane');
+    expect(config.deviations).toContainEqual(expect.objectContaining(deviation));
   });
 });
 

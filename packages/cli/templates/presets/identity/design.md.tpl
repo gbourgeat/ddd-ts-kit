@@ -48,7 +48,10 @@ own model, or the tuples of OpenFGA, from these facts.
 
 **Tenants.** Each organisation is a tenant: its slug is the tenant id, the integration events of
 an organisation carry it as their tenant, and the consumers of the other contexts run in it. The
-tables of this context belong to no tenant, since it decides who belongs to which ({{preset.adr}}).
+tables of this context belong to no tenant, since it decides who belongs to which ({{preset.adr}}):
+`ddd-ts-kit.config.json` declares it the control plane of the tenants
+(`contexts.{{context.kebab}}.tenancy` set to `control-plane`), so its repositories are generated
+unconfined and `tenancy/scoped-statement` does not judge its adapters.
 The token names the organisations of the person: with Keycloak, the `organization` claim, which
 `createAuthenticator` reads (`tenantClaim: 'organization'`). One organisation is the tenant of
 every request; several are the `tenants` of the actor, and a request names the one it works in

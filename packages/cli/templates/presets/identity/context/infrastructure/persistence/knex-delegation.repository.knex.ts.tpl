@@ -80,9 +80,6 @@ export class KnexDelegationRepository implements DelegationRepository {
 
 /** A function and not a method: a query builder is thenable, and a method that answers one is read as asynchronous by whatever wraps the adapter (tracing), which then answers a promise. */
 function tableOf(database: KnexContext): Knex.QueryBuilder<DelegationRow, DelegationRow[]> {
-{{#if tenancy.any}}
-  // ddd-ts-kit-disable-next-line tenancy/scoped-statement -- {{preset.adr}}: the {{context.kebab}} context is the control plane of the tenants, and its rows belong to none of them.
-{{/if}}
   const table = database.executor()<DelegationRow, DelegationRow[]>('delegations');
 
   return table.withSchema({{context.constant}}_SCHEMA);

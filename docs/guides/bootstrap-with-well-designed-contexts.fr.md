@@ -1,5 +1,5 @@
 [English](bootstrap-with-well-designed-contexts.md) · **Français**
-<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:ae46e12482405840 -->
+<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:966df13debe21bc1 -->
 
 # Démarrer avec des contextes bien conçus
 
@@ -141,8 +141,10 @@ chaque événement l'organisation comme *tenant*, pour que les consommateurs des
 s'y exécutent. Les tables du contexte d'identité n'appartiennent à aucun *tenant*, puisqu'elles
 décident qui appartient à quoi : elles sont le plan de contrôle des *tenants*, lues à travers eux
 sous un enregistrement de décision que le *preset* écrit
-(`docs/adr/NNNN-identity-is-the-control-plane-of-the-tenants.md`), vers lequel pointent les
-désactivations de `tenancy/scoped-statement`. Voir [Multitenance](../concepts/multitenancy.fr.md).
+(`docs/adr/NNNN-identity-is-the-control-plane-of-the-tenants.md`). La configuration déclare le
+contexte ainsi, `"tenancy": "control-plane"` sous `contexts.identity`, avec l'entrée de
+`deviations` qui nomme l'enregistrement : `tenancy/scoped-statement` laisse ses adaptateurs de
+côté, et `check` ne compte aucune désactivation sur un projet neuf. Voir [Multitenance](../concepts/multitenancy.fr.md).
 
 Le jeton dit à quelles organisations une personne appartient, pour que chaque autre contexte en
 tire son *tenant*. Avec `--authn keycloak`, le *preset* pose `tenantClaim: 'organization'` dans

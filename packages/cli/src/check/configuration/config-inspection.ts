@@ -22,6 +22,7 @@ import type { Violation } from '../model/violation';
 import { isRecord } from '../support/is-record';
 import { lineOf } from '../support/line-of';
 import { lineOfSequence } from '../support/line-of-sequence';
+import { contextTenancy } from './context-tenancy';
 import { measureSettings } from './measure-settings';
 import { moduleProblems } from './module-problems';
 import { rawConfig } from './raw-config';
@@ -36,6 +37,9 @@ export class ConfigInspection {
   declaredContext(name: string, context: ContextConfig): Violation[] {
     return [
       ...this.classification(name, context),
+      ...contextTenancy(name, context, this.project.configText).map(({ line, message, fix }) =>
+        this.report({ file: CONFIG_FILE, line }, message, fix),
+      ),
       ...context.upstreams.flatMap((upstream) => this.upstream(name, upstream)),
       ...this.presence(name, context),
       ...moduleProblems(name, context, this.writtenModules(name)).map(({ needle, message, fix }) =>
