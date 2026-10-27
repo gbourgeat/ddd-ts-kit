@@ -17,6 +17,7 @@ export const aggregateKind: Kind = {
     'An aggregate root with create and rehydrate factories, its test data builder and its spec; with --event-sourced, its state is the replay of its events, with its birth event (Created, or the fact --birth names) and the codec of its stored events.',
   positionals: ['context', 'Name'],
   writesShared: false,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
 

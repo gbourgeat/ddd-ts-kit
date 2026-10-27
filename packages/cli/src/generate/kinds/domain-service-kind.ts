@@ -13,6 +13,7 @@ export const domainServiceKind: Kind = {
   summary: 'A stateless domain service, and its spec.',
   positionals: ['context', 'Name'],
   writesShared: false,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
 

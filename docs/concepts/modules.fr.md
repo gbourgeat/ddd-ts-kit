@@ -1,5 +1,5 @@
 [English](modules.md) · **Français**
-<!-- translation-of: modules.md sha256:c73a40e2b8f63c26 -->
+<!-- translation-of: modules.md sha256:9ded6af1d89cfae1 -->
 
 # Modules du modèle
 
@@ -205,6 +205,12 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   sans `--module` est refusé, avec la liste des modules et la même commande avec `--module` : le
   générateur guide, il ne laisse jamais le choix implicite. Un contexte encore dans la disposition
   de 0.86 et 0.87 est refusé aussi, avec `context-layout` pour issue.
+- Les générateurs qui prennent `--module` affichent `[--module <module>]` dans leur usage
+  (`npx ddd-ts-kit generate --help --json`, `writesInModules`) : le modèle, les cas d'usage, leurs
+  routes, ports, adaptateurs, passerelles, politiques et événements. Un générateur qui n'écrit que
+  ce que le contexte garde à part ou ce qui se trouve hors des contextes (`builder`, `test-world`,
+  `route-group`, `guard`, `schema`, `e2e`, `service`, `module`, `context`, `acceptance`, `worker`,
+  `adr`) refuse `--module`, qui n'aurait aucun effet sur lui.
 - `move-to-module` prend des chemins relatifs au contexte, des fichiers ou des dossiers d'un rôle
   de n'importe quelle couche, ou des *specs*, les déplace dans un module déclaré (une *spec* dans
   `test/<unit|integration>/<module>/`), emmène les *specs* qui portent le nom d'un fichier déplacé,

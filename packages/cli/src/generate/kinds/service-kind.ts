@@ -24,6 +24,7 @@ export const serviceKind: Kind = {
     'The context run alone, with its scheduled jobs: its entry point under apps/, a start script, a compose service, `deployable` in the config, and its departure from the whole application (consumers, processes and jobs run once).',
   positionals: ['context'],
   writesShared: true,
+  writesInModules: false,
   run: (request) => {
     const scope = openScope(request);
     const { ws, config, context } = scope;

@@ -23,6 +23,7 @@ export const integrationHandlerKind: Kind = {
     'An idempotent handler of an integration event of a declared upstream, its spec and its subscription under a consumer name.',
   positionals: ['context', 'upstreamContext', 'eventType'],
   writesShared: false,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
 

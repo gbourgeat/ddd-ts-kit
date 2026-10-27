@@ -7,6 +7,7 @@ import { placeGeneratedFiles } from '../generate/place-generated-files';
 import { refreshDocs } from '../generate/refresh-docs';
 import { refuseSharedWrites } from '../generate/refuse-shared-writes';
 import { stopIgnoringValidation } from '../generate/stop-ignoring-validation';
+import { MODULE_OPTION, usageOf } from '../generate/usage-of';
 import { toName } from '../naming';
 import { Workspace } from '../workspace';
 import { Arguments } from './arguments';
@@ -26,6 +27,9 @@ export const generateCommand: Command = (argv, io) => {
   keepFlatPlatform(ws, config);
 
   const flags = flagsOf(args);
+
+  refuseModuleOf(kind, flags);
+
   const context = kind.positionals[0] === 'context' ? toName(rest[0] ?? '').kebab : undefined;
 
   const stopPlacing = placeGeneratedFiles(ws, config, {
@@ -125,11 +129,23 @@ function requestedKind(name: string | undefined, rest: readonly string[]): Kind 
   if (rest.length < kind.positionals.length || rest.length > kind.positionals.length + optional.length) {
     throw new CliError(
       `${kind.name} expects ${expectedArguments(kind.positionals, optional)}.`,
-      `Usage: ddd-ts-kit generate ${kind.usage}`,
+      `Usage: ddd-ts-kit generate ${usageOf(kind)}`,
     );
   }
 
   return kind;
+}
+
+/** `--module` given to a kind that writes nothing a module of the model divides: it would have no effect. */
+function refuseModuleOf(kind: Kind, flags: KindFlags): void {
+  if (flags.module === undefined || kind.writesInModules) {
+    return;
+  }
+
+  throw new CliError(
+    `generate ${kind.name} writes nothing into a module of the model: what it writes stays at the level of the context, or outside the contexts, so --module ${flags.module} would have no effect.`,
+    `Run it again without --module. The kinds that take it show ${MODULE_OPTION} in their usage (\`ddd-ts-kit generate --help --json\`, writesInModules).`,
+  );
 }
 
 function expectedArguments(required: readonly string[], optional: readonly string[]): string {
