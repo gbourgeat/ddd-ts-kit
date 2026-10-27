@@ -1,4 +1,4 @@
-import { rmSync } from 'node:fs';
+import { mkdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { behaviourPage } from '../src/docs/behaviour-page';
@@ -154,6 +154,15 @@ describe('docs, the pages of what the tests state', () => {
 
     expect(cli(root, 'docs', '--check').code).toBe(1);
     expect(cli(root, 'docs').code).toBe(0);
+  });
+
+  it('writes no page for a dot folder of the contexts directory', () => {
+    mkdirSync(path.join(root, 'src/contexts/.claude/.cc-writes'), { recursive: true });
+
+    expect(cli(root, 'docs').code).toBe(0);
+    expect(exists(root, 'docs/behaviour/.claude.md')).toBe(false);
+    expect(read(root, 'docs/behaviour/README.md')).not.toContain('.claude');
+    expect(cli(root, 'check').stdout).not.toContain('.claude');
   });
 
   it('deletes the page of a context that is gone', () => {

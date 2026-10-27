@@ -97,7 +97,10 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    credentials per security scheme; records "sdk" in the config the first time, wires the
                    scripts (docs:generate regenerates it, docs:check compares it, ci:build builds it);
                    --check writes nothing and exits 1 while a client differs from its contract
-  todo             those markers as file:line, in the project or in one context
+  todo             those markers as file:line, in the project or in one context, read in every kind of file
+                   they are written into: the code, the pages, prisma/schema.prisma (a marker of a model
+                   is of the context whose database schema holds it), the migrations, the configuration
+                   at the root
   mutation         the mutation score of the domain and application layers of each context, read from the
                    json report the last stryker run wrote (reports/mutation/mutation.json, or --report
                    <file>), each held to its "mutation" floor of the config (80 and 75 by default): detected over detected and
@@ -217,7 +220,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
   verify-slice     closes a slice before its commit, in one run: the regenerate script, check on the files
                    changed since --since (new ones included), the test script for the context; then the
                    changed files past 300 of the 350 lines, the paths of the slice to stage (its context, an
-                   end-to-end spec, a working migration, the derived files git tracks) and every other
+                   end-to-end spec, a working migration, the pages of docs/behaviour/ but those of other
+                   contexts, prisma/schema.prisma or the schema index of the platform when every line
+                   changed there is of the context, the derived files git tracks) and every other
                    changed path, left out and never to stage with it; the merges since --since, as
                    verify-merge checks them, reported without failing the slice in this version (a later
                    minor version fails it); exits 1 while a step fails; then the names the slice removes
