@@ -99,6 +99,7 @@ describe('shipped templates', () => {
         'repository',
         'route',
         'sdk',
+        'shared-kernel',
         'state-machine',
         'test-world',
         'value-object',
