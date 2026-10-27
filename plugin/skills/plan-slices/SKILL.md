@@ -73,6 +73,12 @@ missing. Rows with no path between them can be built in parallel.
 | US1.05 | incidents | slice | Open an incident | `generate command incidents OpenIncident --module triage --aggregate Incident --permission incident.open` | US1.01 | incidents | todo |
 ```
 
+- Every aggregate a command row names has a `skeleton` row that generates the aggregate **and its
+  repository** (`generate repository <ctx> <Aggregate>`, no flag: it reads the aggregate, and
+  writes the event store adapter, with no table, when it is event-sourced:
+  `generate aggregate <ctx> <Aggregate> --event-sourced`, which needs `stack.eventSourcing` on).
+  The command rows depend on it. A worker runs `generate command` with `--local-only`, which
+  refuses the command that would create the missing repository (it writes shared files).
 - `Start with` holds the exact generator commands (without `npx ddd-ts-kit` and `--json`), so
   the worker runs them instead of working them out. Every command or query names its
   permission or `--public`; every name is made of glossary terms, or the row adds the term
