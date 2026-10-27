@@ -3,7 +3,8 @@ import { cli, read, write } from './helpers';
 import { initProject } from './support/init-project';
 
 const CONTEXT = 'src/contexts/identity';
-const SCHEMA = 'prisma/schema.prisma';
+const SCHEMA = 'prisma/schema/schema.prisma';
+const MODELS = 'prisma/schema/identity.prisma';
 
 /** The block of one model or enum of the schema, from its header to its closing brace. */
 function blockOf(schema: string, header: string): string {
@@ -13,8 +14,9 @@ function blockOf(schema: string, header: string): string {
 }
 
 describe('the identity preset on Prisma', () => {
-  it('lays out the models of the five aggregates in place of the ones the generators started', () => {
-    const schema = read(initProject('--orm', 'prisma', '--preset', 'identity'), SCHEMA);
+  it('lays out the models of the five aggregates in the file of the context, in place of the ones the generators started', () => {
+    const root = initProject('--orm', 'prisma', '--preset', 'identity');
+    const schema = read(root, MODELS);
     const member = blockOf(schema, 'model IdentityMember');
 
     expect(member).toContain('role           IdentityMemberRole');
@@ -26,10 +28,12 @@ describe('the identity preset on Prisma', () => {
     expect(blockOf(schema, 'model IdentityInvitation')).toContain('@unique @map("token_hash")');
     expect(schema.match(/^model IdentityAccount \{/gm)).toHaveLength(1);
     expect(schema).not.toContain('TODO(domain): add one field per field of');
+    expect(read(root, SCHEMA)).not.toContain('model Identity');
+    expect(read(root, SCHEMA)).toContain('schemas  = ["messaging", "audit", "identity"]');
   });
 
-  it('keeps the closed vocabularies as enums of its schema, inside the models of the contexts', () => {
-    const schema = read(initProject('--orm', 'prisma', '--preset', 'identity'), SCHEMA);
+  it('keeps the closed vocabularies as enums of its schema, inside the models of the context', () => {
+    const schema = read(initProject('--orm', 'prisma', '--preset', 'identity'), MODELS);
     const models = schema.slice(schema.indexOf('// ddd-ts-kit:models'), schema.indexOf('// /ddd-ts-kit:models'));
 
     expect(blockOf(models, 'enum IdentityMemberRole')).toContain('@@schema("identity")');

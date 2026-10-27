@@ -3,6 +3,7 @@ import type { InitFile } from './init-file';
 import { WITH_DATABASE } from '../../stack/with-database';
 import { platformFile } from './platform-file';
 import { when } from './when';
+import { PRISMA_MAIN_SCHEMA } from '../../prisma-schema';
 
 type Variants = readonly (readonly [file: string, variant?: string])[];
 
@@ -60,7 +61,7 @@ const TOOLING: Readonly<Record<string, InitFile[]>> = {
     ['migrations/00000000000000_initial.js', 'init/platform/database/migration.knex.js.tpl'],
   ],
   prisma: [
-    ['prisma/schema.prisma', 'init/platform/database/schema.prisma.tpl'],
+    [PRISMA_MAIN_SCHEMA, 'init/platform/database/schema.prisma.tpl'],
     ['prisma.config.ts', 'init/platform/database/prisma.config.ts.tpl'],
   ],
 };

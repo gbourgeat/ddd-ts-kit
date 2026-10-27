@@ -99,9 +99,9 @@ export const PRIVACY_FIXTURES: readonly Fixture[] = [
   {
     ruleId: 'privacy/declared-field',
     name: 'a column of a Prisma model in the schema of a context, named like personal data',
-    expect: { file: 'prisma/schema.prisma' },
+    expect: { file: 'prisma/schema/billing.prisma' },
     files: privacyOn({
-      'prisma/schema.prisma': source(
+      'prisma/schema/billing.prisma': source(
         'model Invoice {',
         '  id            String @id',
         '  customerEmail String @map("customer_email")',

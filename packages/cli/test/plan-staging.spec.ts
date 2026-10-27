@@ -29,6 +29,25 @@ describe('what a slice stages, by a closed list', () => {
     expect(plan.toStage).toHaveLength(8);
   });
 
+  it('stages the Prisma models of its context with its mapper, never the main schema nor another context', () => {
+    const plan = planStaging(
+      [
+        modified('src/contexts/billing/infrastructure/persistence/invoice.mapper.ts'),
+        modified('prisma/schema/billing.prisma'),
+        modified('prisma/schema/schema.prisma'),
+        modified('prisma/schema/shipping.prisma'),
+      ],
+      { config, context: 'billing' },
+    );
+
+    expect(plan.toStage).toEqual([
+      'src/contexts/billing/infrastructure/persistence/invoice.mapper.ts',
+      'prisma/schema/billing.prisma',
+    ]);
+
+    expect(plan.leftOut).toEqual(['prisma/schema/schema.prisma', 'prisma/schema/shipping.prisma']);
+  });
+
   it('stages the acceptance spec a slice unwraps, never the lock of the story', () => {
     const plan = planStaging(
       [modified('test/acceptance/us5.acceptance.spec.ts'), modified('test/acceptance/us5.acceptance.lock.json')],
@@ -132,15 +151,17 @@ describe('what a slice stages outside its context: what the generators and regen
   });
 
   it('stages a shared file of the storage only when the generator wrote it for the slice', () => {
-    const entries = [modified('prisma/schema.prisma'), modified('src/platform/database/schema.ts')];
+    const entries = [modified('prisma/schema/schema.prisma'), modified('src/platform/database/schema.ts')];
 
     expect(planStaging(entries, { config, context: 'billing' }).leftOut).toEqual([
-      'prisma/schema.prisma',
+      'prisma/schema/schema.prisma',
       'src/platform/database/schema.ts',
     ]);
 
-    expect(planStaging(entries, { config, context: 'billing', storage: new Set(['prisma/schema.prisma']) })).toEqual({
-      toStage: ['prisma/schema.prisma'],
+    const storage = new Set(['prisma/schema/schema.prisma']);
+
+    expect(planStaging(entries, { config, context: 'billing', storage })).toEqual({
+      toStage: ['prisma/schema/schema.prisma'],
       leftOut: ['src/platform/database/schema.ts'],
     });
   });

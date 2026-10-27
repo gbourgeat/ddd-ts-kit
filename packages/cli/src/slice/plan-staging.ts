@@ -3,6 +3,7 @@ import type { ChangedEntry } from './changed-entry';
 import type { StagingPlan } from './staging-plan';
 import type { StagingScope } from './staging-scope';
 import { modulesByContext } from '../model-modules';
+import { prismaSchemaOf } from '../prisma-schema';
 
 /** The kit's own working files: never committed, never listed. */
 const KIT_FILES = '.ddd-ts-kit/';
@@ -20,10 +21,11 @@ const BEHAVIOUR_PAGE = /^docs\/behaviour\/([^/]+)\.md$/;
 
 /**
  * Splits the changed paths of the working tree between the slice of `context` and the rest, by a
- * closed list: a path is staged only when it belongs to the slice. The files of the context, an
- * end-to-end spec, an acceptance spec, a working migration with its snapshot and the journal, the
- * pages of what the tests state but those of another context, the shared files of the storage the
- * generator wrote for the slice alone (`storage`, read by `storageOfSlice`), and the derived files
+ * closed list: a path is staged only when it belongs to the slice. The files of the context, its
+ * Prisma models (`prisma/schema/<context>.prisma`), an end-to-end spec, an acceptance spec, a
+ * working migration with its snapshot and the journal, the pages of what the tests state but those
+ * of another context, the shared files of the storage the generator wrote for the slice alone
+ * (`storage`, read by `storageOfSlice`), and the derived files
  * that `regenerate` rewrites when git already tracks them. Anything else (a file of another
  * context, of the platform, an editor's folder, notes, a document nobody asked to commit) is left
  * out, never proposed: committing it is a decision of a person, not of a slice.
@@ -38,6 +40,7 @@ export function planStaging(
 
   const inSlice = (entry: ChangedEntry): boolean =>
     entry.path.startsWith(`${config.contextsDir}/${context}/`) ||
+    entry.path === prismaSchemaOf(context) ||
     END_TO_END_SPEC.test(entry.path) ||
     ACCEPTANCE_SPEC.test(entry.path) ||
     isWorkingMigration(entry.path, working) ||

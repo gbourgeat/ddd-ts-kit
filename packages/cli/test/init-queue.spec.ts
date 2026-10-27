@@ -132,7 +132,7 @@ describe('init --queue', () => {
 describe('init --queue database on the packages of Prisma and TypeORM', () => {
   it('binds the jobs and the process instances of Prisma, their models in the schema of the messaging tables', () => {
     const root = initProject('--orm', 'prisma', '--di', 'nest', '--http', 'nest', '--queue', 'database');
-    const schema = read(root, 'prisma/schema.prisma');
+    const schema = read(root, 'prisma/schema/schema.prisma');
 
     expect(schema).toContain('model BackgroundJob {');
     expect(schema).toContain('model ProcessInstance {');
@@ -166,8 +166,8 @@ describe('init --queue database on the packages of Prisma and TypeORM', () => {
   it('keeps the process instances of Prisma in the database when the jobs go to the server of the cache', () => {
     const root = initProject('--orm', 'prisma', '--cache', 'redis', '--queue', 'redis');
 
-    expect(read(root, 'prisma/schema.prisma')).not.toContain('model BackgroundJob {');
-    expect(read(root, 'prisma/schema.prisma')).toContain('model ProcessInstance {');
+    expect(read(root, 'prisma/schema/schema.prisma')).not.toContain('model BackgroundJob {');
+    expect(read(root, 'prisma/schema/schema.prisma')).toContain('model ProcessInstance {');
     expect(read(root, PERSISTENCE)).not.toContain('PrismaJobStore');
 
     expect(read(root, PLATFORM)).toContain(
@@ -191,6 +191,8 @@ describe('init --queue database with tenants', () => {
   it('keys the process instances of Prisma by their tenant, so two tenants may use one correlation key', () => {
     const root = initProject('--orm', 'prisma', '--tenancy', 'shared-table');
 
-    expect(read(root, 'prisma/schema.prisma')).toContain('  @@id([tenantId, name, id])\n  @@map("process_instances")');
+    expect(read(root, 'prisma/schema/schema.prisma')).toContain(
+      '  @@id([tenantId, name, id])\n  @@map("process_instances")',
+    );
   });
 });

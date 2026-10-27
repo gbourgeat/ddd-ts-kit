@@ -86,7 +86,7 @@ describe('pipeline templates', () => {
     expect(read(initProject('--package-manager', 'npm', '--ci', 'gitlab'), '.gitlab-ci.yml')).toBe(expected);
 
     expect(read(initProject('--orm', 'prisma', '--ci', 'gitlab'), '.gitlab-ci.yml')).toContain(
-      '    - test -d node_modules || pnpm install --frozen-lockfile\n    # The Prisma client and the schema of the tests are build products of prisma/schema.prisma.\n    - pnpm run db:client\n',
+      '    - test -d node_modules || pnpm install --frozen-lockfile\n    # The Prisma client and the schema of the tests are build products of prisma/schema/.\n    - pnpm run db:client\n',
     );
   });
 

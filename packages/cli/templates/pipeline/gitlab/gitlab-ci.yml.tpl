@@ -80,7 +80,7 @@ default:
 {{/if}}
     - test -d node_modules || npm ci
 {{#if orm.prisma}}
-    # The Prisma client and the schema of the tests are build products of prisma/schema.prisma.
+    # The Prisma client and the schema of the tests are build products of prisma/schema/.
     - npm run db:client
 {{/if}}
 

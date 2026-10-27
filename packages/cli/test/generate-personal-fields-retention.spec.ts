@@ -68,7 +68,11 @@ describe('generate repository --retention: how long the rows keep what they hold
     );
 
     expect(read(prisma, DECLARATION)).toContain("  retention: { after: 'ended_at', years: 3 },");
-    expect(read(prisma, 'prisma/schema.prisma')).toContain('  endedAt DateTime? @map("ended_at") @db.Timestamptz(3)');
+
+    expect(read(prisma, 'prisma/schema/billing.prisma')).toContain(
+      '  endedAt DateTime? @map("ended_at") @db.Timestamptz(3)',
+    );
+
     expect(read(prisma, SPEC)).toContain('    const ada = await saved({ ...OF_ADA, endedAt: LONG_AGO });');
     expect(read(typeorm, DECLARATION)).toContain("  retention: { after: 'endedAt', months: 12 },");
 

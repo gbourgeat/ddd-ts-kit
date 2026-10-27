@@ -62,7 +62,7 @@ model AuditChain {
 `;
 
 /**
- * The three tables of the trail (the entries, the heads of the chains, the archives) as Prisma models, to paste in `prisma/schema.prisma` so that the
+ * The three tables of the trail (the entries, the heads of the chains, the archives) as Prisma models, to paste in the Prisma schema (`prisma/schema/schema.prisma` in a generated project) so that the
  * migrations of the project create them, with the columns, the keys and the indexes the SQL of
  * the package gives them, in the given schema (which the `schemas` of the datasource lists). The
  * models are read by no generated client: the trail writes raw statements. The guard that keeps

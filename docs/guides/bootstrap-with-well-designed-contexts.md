@@ -73,7 +73,7 @@ exists and decides with OpenFGA (`preset-identity-generated.spec.ts`).
 | Authorization | `identityPermissions`, seven policies over `OrganisationRights` (the rights of the actor in one organisation: their role and what active delegations lend them) |
 | Published language | `organisation.opened`, `member.joined`, `member.role-changed`, `member.removed`, `delegation.granted`, `delegation.revoked`, `account.deactivated`, through the outbox |
 | Identity provider | the port `IdentityProviderAdmin`, kept in line by four consumers of the published facts, delivered at least once (organisation known, member added or removed, account disabled), with an in-memory fake and `KeycloakIdentityProviderAdmin`, a recipe for Keycloak 26 or later |
-| Adapters | Knex, Drizzle or Prisma repositories, mappers, tables (on Prisma, the models and the enums of `prisma/schema.prisma`) and the search reader, each with its contract spec |
+| Adapters | Knex, Drizzle or Prisma repositories, mappers, tables (on Prisma, the models and the enums of `prisma/schema/<context>.prisma`) and the search reader, each with its contract spec |
 | Tests | builders, fakes, unit specs of the model and of every handler and controller, contract specs of the repositories, the spec of the Keycloak adapter against a local HTTP server |
 | Documentation | the purpose, the classification, the glossary and a `## Design` section in `CONTEXT.md`; with tenants, a decision record |
 

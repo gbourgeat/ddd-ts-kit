@@ -26,7 +26,7 @@ interface Kept {
  * the erasure, the export, the retention and the register read the declarations, never the
  * columns, and a column left out is a copy of the person nobody erases. Read in the persistence
  * files of the contexts (a Knex table, a Drizzle table, a TypeORM entity schema) and in the
- * models of `prisma/schema.prisma` in the schema of a context. Silent with `stack.privacy` off.
+ * models of `prisma/schema/` in the schema of a context. Silent with `stack.privacy` off.
  */
 export const privacyDeclaredField: Rule = {
   id: 'privacy/declared-field',

@@ -47,9 +47,13 @@ install of its package manager), never an install that names a package.
   scenario your row now satisfies: the guard refuses any other change, and `npx ddd-ts-kit
   acceptance --lock` to you. A scenario that seems wrong is a need of your report, with the
   criterion of the story it fails; never change it to pass.
+- The tables of your context are yours: on Prisma its models in `prisma/schema/<your
+  context>.prisma` too. A stored field changes its column and the mapper in the same commit,
+  with a working migration.
 - Shared files are not yours: the config, `src/main.ts`, `src/platform/**`, `package.json`,
-  the lockfile, migrations (but your working migration, `npm run db:generate working-<what>`),
-  what you would write by hand under `docs/` (but a decision record you generated). Another
+  the lockfile, `prisma/schema/schema.prisma`, migrations (but your working migration,
+  `npm run db:generate working-<what>`), what you would write by hand under `docs/` (but a
+  decision record you generated). Another
   context is not yours either; its `published-language/` is read-only.
 - The derived files (generated documents, barrels, context map, dependency rules) are never
   written by hand: `npm run regenerate` rewrites them, and you commit them with the slice that

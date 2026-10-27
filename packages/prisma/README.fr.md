@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:832d08ed4a85b04c -->
+<!-- translation-of: README.md sha256:a200ed121f4cf2fd -->
 
 # @ddd-ts-kit/prisma
 
@@ -54,7 +54,7 @@ node_modules/@ddd-ts-kit/prisma/prisma/outbox.sqlite.prisma
 ```
 
 ```prisma
-// prisma/schema.prisma (fragment PostgreSQL)
+// prisma/schema/schema.prisma (fragment PostgreSQL)
 model OutboxRecord {
   id            String    @id
   sequence      BigInt    @unique @default(autoincrement())

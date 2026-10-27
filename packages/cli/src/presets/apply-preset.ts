@@ -87,7 +87,7 @@ function layOutAfterSteps(scope: Scope, preset: Preset, rendering: Rendering): v
   }
 
   if (preset.prismaModels !== undefined && orm === 'prisma') {
-    layOutPrismaModels(scope.ws, render(preset.prismaModels));
+    layOutPrismaModels(scope.ws, render(preset.prismaModels), scope.context.kebab);
   }
 }
 

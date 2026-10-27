@@ -224,8 +224,8 @@ describe('the event store of a generated project: --event-sourcing', () => {
       'eventSourcing: createPrismaEventSourcing(unitOfWork, { schema: EVENT_STORE_SCHEMA }),',
     );
 
-    expect(read(prisma, 'prisma/schema.prisma')).toContain('@@schema("event_store")');
-    expect(read(prisma, 'prisma/schema.prisma')).toContain('schemas  = ["messaging", "event_store", "audit"]');
+    expect(read(prisma, 'prisma/schema/schema.prisma')).toContain('@@schema("event_store")');
+    expect(read(prisma, 'prisma/schema/schema.prisma')).toContain('schemas  = ["messaging", "event_store", "audit"]');
 
     expect(platform(typeorm, 'database/persistence-over.ts')).toContain(
       'eventSourcing: createTypeOrmEventSourcing(unitOfWork, { schema: EVENT_STORE_SCHEMA }),',

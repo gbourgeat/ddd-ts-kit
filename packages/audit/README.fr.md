@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:edc3e2606e5c6411 -->
+<!-- translation-of: README.md sha256:2e8a087727d82b23 -->
 
 # @ddd-ts-kit/audit
 
@@ -823,7 +823,7 @@ for (const statement of auditGuardStatements('audit')) {
 
 new DrizzleAuditTrail(unitOfWork, { schema: 'audit' });
 
-// prisma : les modèles dans prisma/schema.prisma (avec "audit" dans les schémas de la datasource), le
+// prisma : les modèles dans prisma/schema/schema.prisma (avec "audit" dans les schémas de la datasource), le
 // garde dans une migration créée par `prisma migrate dev --create-only`
 console.log(auditPrismaModels('audit'));
 new PrismaAuditTrail(unitOfWork, { schema: 'audit' });

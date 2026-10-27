@@ -51,7 +51,7 @@ node_modules/@ddd-ts-kit/prisma/prisma/outbox.sqlite.prisma
 ```
 
 ```prisma
-// prisma/schema.prisma (PostgreSQL fragment)
+// prisma/schema/schema.prisma (PostgreSQL fragment)
 model OutboxRecord {
   id            String    @id
   sequence      BigInt    @unique @default(autoincrement())
