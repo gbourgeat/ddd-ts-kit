@@ -5,6 +5,7 @@ import { authzFieldsBySchema } from '../rules/authz-fields-by-schema';
 import { authzDeclared } from '../rules/authz-declared';
 import { authzGranted } from '../rules/authz-granted';
 import { authzResourceModelled } from '../rules/authz-resource-modelled';
+import { authzSystemActorGranted } from '../rules/authz-system-actor-granted';
 import { authzScopeNarrows } from '../rules/authz-scope-narrows';
 import { privacyDeclaredField } from '../rules/privacy-declared-field';
 import { privacyErasureReachesCopies } from '../rules/privacy-erasure-reaches-copies';
@@ -87,6 +88,7 @@ import { purityNoEnvironment } from '../rules/purity-no-environment';
 import { purityNoSystemClock } from '../rules/purity-no-system-clock';
 import { schedulingTenancyDeclared } from '../rules/scheduling-tenancy-declared';
 import { schedulingJobName } from '../rules/scheduling-job-name';
+import { schedulingJobRegistered } from '../rules/scheduling-job-registered';
 import { schedulingJobTriggersUseCase } from '../rules/scheduling-job-triggers-use-case';
 import { schemaNoDuplicateShape } from '../rules/schema-no-duplicate-shape';
 import { schemaPresentationOnly } from '../rules/schema-presentation-only';
@@ -172,6 +174,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   authzGranted,
   authzScopeNarrows,
   authzResourceModelled,
+  authzSystemActorGranted,
   privacyDeclaredField,
   privacyEventPayloadDeclared,
   privacyErasureReachesCopies,
@@ -199,6 +202,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   lifecycleStatusThroughMachine,
   processSendsCommandsOnly,
   schedulingJobName,
+  schedulingJobRegistered,
   schedulingTenancyDeclared,
   importsAliasOnly,
   importsExtension,

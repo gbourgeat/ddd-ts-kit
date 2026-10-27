@@ -147,7 +147,12 @@ name: `generate command|query|file-upload ... --permission <p> --grant <role>` w
 steps of the generator point at the roles to edit.
 [`authz/granted`](../ARCHITECTURE.md#3-dependency-rules) warns on a permission that only the
 bare `*` reaches; a permission meant for administrators only is granted to `Role.Admin` by
-name, so that review reads the intent.
+name, so that review reads the intent. Under relationships the same rule asks who is an operator:
+a permission the schema leaves on the context is held by the operators of the context, and a
+project that never writes an `operator` relationship on it (a provisioning step, a
+bootstrap, the grant of a system actor) has a use case nobody can run. A system actor that sends a protected command from a
+job or a handler needs its own relationship, which `authz/system-actor-granted` (an error)
+checks in `relate-system-actors.ts`.
 
 ### Attribute policies
 
@@ -333,4 +338,4 @@ dedicated service is the subject of [Authorization engines](../tools/authorizati
 - [Authorization engines](../tools/authorization-engines.md)
 - [`@ddd-ts-kit/auth`](../../packages/auth/README.md): the API reference
 - [Architecture reference](../ARCHITECTURE.md): rules `authz/declared`, `authz/in-application`,
-  `authz/actor-explicit`, `authz/granted`, `authz/scope-narrows`, `authz/resource-modelled`
+  `authz/actor-explicit`, `authz/granted`, `authz/scope-narrows`, `authz/resource-modelled`, `authz/system-actor-granted`

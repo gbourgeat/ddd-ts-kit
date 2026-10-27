@@ -227,7 +227,76 @@ const TENANCY_DECLARED: readonly Fixture[] = [
   },
 ];
 
-export const SCHEDULING_FIXTURES: readonly Fixture[] = [...TRIGGERS_USE_CASE, ...JOB_NAME, ...TENANCY_DECLARED];
+const REGISTERED = 'scheduling/job-registered';
+const BACKGROUND_JOB = `${BILLING}/application/background/purge-drafts.background-job.ts`;
+const BACKGROUND_JOB_SPEC = `${BILLING}/test/unit/purge-drafts.background-job.spec.ts`;
+
+const PURGE_JOB = source(
+  "import type { BackgroundJob, BackgroundJobExecution, CommandBus } from '@ddd-ts-kit/kernel';",
+  '',
+  'export class PurgeDraftsBackgroundJob implements BackgroundJob<Record<string, never>> {',
+  "  static readonly jobName = 'billing.purge-drafts';",
+  '',
+  '  constructor(private readonly commands: CommandBus) {}',
+  '',
+  '  async run(payload: Record<string, never>, execution: BackgroundJobExecution): Promise<void> {}',
+  '}',
+);
+
+const REGISTERING_PURGE = source(
+  "import { PurgeDraftsBackgroundJob } from '@/contexts/billing/application/background/purge-drafts.background-job.js';",
+  '',
+  'export function billingModule(platform: Platform): void {',
+  '  platform.backgroundJobs.register(PurgeDraftsBackgroundJob, [platform.commands]);',
+  '}',
+);
+
+const JOB_REGISTERED: readonly Fixture[] = [
+  {
+    ruleId: REGISTERED,
+    name: 'a declared job that carries @Scheduled',
+    expect: 'pass',
+    files: declaredProject({ [JOB]: DECLARED.job, [JOB_SPEC]: SPEC }),
+  },
+  {
+    ruleId: REGISTERED,
+    name: 'explicit style: a job the module file registers',
+    expect: 'pass',
+    files: project({
+      [JOB]: PLAIN_JOB,
+      [JOB_SPEC]: SPEC,
+      [MODULE]: moduleRegistering(
+        '@/contexts/billing/application/scheduling/send-reminders.job.js',
+        'billing.send-reminders',
+      ),
+    }),
+  },
+  {
+    ruleId: REGISTERED,
+    name: 'explicit style: a background job the module file registers',
+    expect: 'pass',
+    files: project({ [BACKGROUND_JOB]: PURGE_JOB, [BACKGROUND_JOB_SPEC]: SPEC, [MODULE]: REGISTERING_PURGE }),
+  },
+  {
+    ruleId: REGISTERED,
+    name: 'explicit style: a job written and registered by no module file',
+    expect: { file: JOB },
+    files: project({ [JOB]: PLAIN_JOB, [JOB_SPEC]: SPEC }),
+  },
+  {
+    ruleId: REGISTERED,
+    name: 'explicit style: a background job no module file registers',
+    expect: { file: BACKGROUND_JOB },
+    files: project({ [BACKGROUND_JOB]: PURGE_JOB, [BACKGROUND_JOB_SPEC]: SPEC }),
+  },
+];
+
+export const SCHEDULING_FIXTURES: readonly Fixture[] = [
+  ...TRIGGERS_USE_CASE,
+  ...JOB_NAME,
+  ...TENANCY_DECLARED,
+  ...JOB_REGISTERED,
+];
 
 function moduleRegistering(jobFile: string, name: string): string {
   return source(

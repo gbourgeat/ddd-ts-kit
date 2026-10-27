@@ -50,7 +50,13 @@ npx ddd-ts-kit generate query <ctx> <UseCase> --public --json
   super-admin `*` alone does not count: a permission no role names is refused to everybody
   else, and `check` warns (`authz/granted`). One meant for administrators only is granted to
   `Role.Admin` by name. A grant to every signed-in person goes in `authorization/signed-in-grants.ts`.
-  Under attributes or relationships, `--grant` is refused: give the right in that model.
+  Under attributes or relationships, `--grant` is refused: give the right in that model. Under
+  relationships a permission left on the context is held by its operators, and `check` warns
+  (`authz/granted`) until some source writes an `operator` relationship on that context (a provisioning
+  step, a bootstrap, the grant of a system actor) or every signed-in person holds it. A job or a handler that
+  sends a protected command acts as a system actor, which needs its own relationship in
+  `relationships/relate-system-actors.ts` (`generate job` writes it for a job, a handler by hand
+  needs it): `authz/system-actor-granted` is an error without it.
 
 - The permission is named in the ubiquitous language (`invoice.issue`, not `admin.write`),
   joins `<context>.permissions.ts`, and its words are checked
@@ -219,7 +225,7 @@ not hold. Use it in a spec or a console when a decision surprises, never in an a
 | a search permission given to every signed-in person to get it past the bus | a requirement on an enclosing resource; the signed-in grant would make the scope `all` (`authz/scope-narrows`) |
 
 Finish with
-`npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit --rule authz/fields-by-schema --rule authz/policy-asked --rule authz/granted --rule authz/scope-narrows --rule authz/resource-modelled`.
+`npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit --rule authz/fields-by-schema --rule authz/policy-asked --rule authz/granted --rule authz/scope-narrows --rule authz/resource-modelled --rule authz/system-actor-granted`.
 Every decision, denials included, is recorded by the audit trail (skill
 `ddd-ts-kit:cross-cutting`), the refusals of the guards at the edge too (`onGuardRefusal` of the
 HTTP boundary, wired to `auditGuardRefusals`).

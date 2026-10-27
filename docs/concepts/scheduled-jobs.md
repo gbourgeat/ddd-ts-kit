@@ -83,6 +83,12 @@ split:
 - **It moves with its context.** Jobs are declarations of a context. A context extracted as a
   service takes its jobs with it; nothing is global.
 
+A job class that no module file registers never runs, and nothing else notices: in the explicit
+style `scheduling/job-registered` (an error) reports a job or a background job that no
+`platform.jobs.register`, `platform.backgroundJobs.register` or `.handledBy(..)` names. Under
+relationships a job that sends a protected command needs the relationship of its system actor,
+which `authz/system-actor-granted` checks.
+
 The name is `<context>.<job-name>`, written as a literal: it is the actor the job runs as, the
 key of its lock, its label in the metrics and the key of its settings, and it survives the
 renaming of the class. It is unique in the project (`scheduling/job-name`). A job depends on no

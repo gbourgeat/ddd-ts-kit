@@ -10,6 +10,12 @@ import { source } from './source';
 const { BILLING, COMMAND, QUERY, QUERY_HANDLER, QUERY_HANDLER_SPEC } = PATHS;
 const PERMISSIONS = `${BILLING}/billing.permissions.ts`;
 const SCHEMA = 'src/platform/auth/relationships/relationship-schema.ts';
+
+const OPERATORS = {
+  'src/platform/auth/relationships/relate-operators.ts':
+    "export const operators = [{ object: 'context:billing', relation: 'operator', subject: 'user:ada' }];\n",
+};
+
 const REBAC = { [CONFIG_FILE]: config({ stack: { authz: 'rebac' } }) };
 
 const DECLARED = source(
@@ -262,6 +268,7 @@ function requiring(
 ): FixtureFiles {
   return project(
     {
+      ...OPERATORS,
       [PERMISSIONS]: DECLARED,
       [SCHEMA]:
         context === undefined
@@ -287,6 +294,7 @@ function requiring(
 function searching(context = "context: { relations: { operator: ['user'] } }"): FixtureFiles {
   return project(
     {
+      ...OPERATORS,
       [PERMISSIONS]: DECLARED,
       [SCHEMA]: elements("[billingPermissions['invoice.search'].id]: 'owner'").replace(
         "context: { relations: { operator: ['user'] } }",

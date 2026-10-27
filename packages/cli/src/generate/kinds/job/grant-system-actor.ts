@@ -81,6 +81,8 @@ function placementOf(scope: Scope, job: string, permission: string): Placement |
 /** The starting schema derives every permission of the project from `operator` of its context; once the team has remodelled it, the relationship is theirs to write. */
 function operatorOfContext(scope: Scope, actor: string, permission: string): Placement | undefined {
   const context = scope.context.kebab;
+  // The authorizer names a subject `<actor type>:<actor id>`, and the id of a system actor is `system:<name>`.
+  const subject = `system:${actor}`;
 
   if (!SYSTEM_OPERATES.test(scope.ws.read(platformPath(scope, 'auth/relationships/relationship-schema.ts')) ?? '')) {
     return undefined;
@@ -88,8 +90,8 @@ function operatorOfContext(scope: Scope, actor: string, permission: string): Pla
 
   return {
     file: platformPath(scope, 'auth/relationships/relate-system-actors.ts'),
-    line: `{ object: 'context:${context}', relation: 'operator', subject: '${actor}' },`,
-    anchor: `subject: '${actor}'`,
+    line: `{ object: 'context:${context}', relation: 'operator', subject: '${subject}' },`,
+    anchor: `subject: '${subject}'`,
     check: `check this relationship: \`${actor}\` now operates the context \`${context}\`, which gives it \`${permission}\` and every permission the schema derives from \`operator\` there.`,
   };
 }

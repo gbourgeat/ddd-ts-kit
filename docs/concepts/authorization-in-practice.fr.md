@@ -1,5 +1,5 @@
 [English](authorization-in-practice.md) · **Français**
-<!-- translation-of: authorization-in-practice.md sha256:8d84c26fe2554203 -->
+<!-- translation-of: authorization-in-practice.md sha256:6ca3076b046b01a8 -->
 
 # L'autorisation en pratique
 
@@ -154,7 +154,13 @@ le rôle à `platform/auth/authorization/role.ts` s'il est nouveau), et sans `--
 générateur désignent les rôles à modifier.
 [`authz/granted`](../ARCHITECTURE.fr.md#3-règles-de-dépendance) avertit sur une permission que
 seul le `*` nu atteint ; une permission réservée aux administrateurs est accordée à
-`Role.Admin` par son nom, pour que la revue lise l'intention.
+`Role.Admin` par son nom, pour que la revue lise l'intention. Avec des relations, la même règle
+demande qui est opérateur : une permission que le schéma laisse sur le contexte est tenue par les
+opérateurs du contexte, et un projet qui n'écrit jamais de relation `operator` sur lui (une étape
+de provisionnement, un amorçage, le droit d'un acteur système) a un cas d'usage que personne ne peut lancer. Un
+acteur système qui envoie une commande protégée depuis un *job* ou un *handler* a besoin de sa
+propre relation, que `authz/system-actor-granted` (une erreur) vérifie dans
+`relate-system-actors.ts`.
 
 ### Politiques par attributs
 
@@ -346,4 +352,4 @@ adaptateur pour un service dédié est le sujet de
 - [Moteurs d'autorisation](../tools/authorization-engines.fr.md)
 - [`@ddd-ts-kit/auth`](../../packages/auth/README.fr.md) : la référence de l'API
 - [Référence d'architecture](../ARCHITECTURE.fr.md) : règles `authz/declared`, `authz/in-application`,
-  `authz/actor-explicit`, `authz/granted`, `authz/scope-narrows`, `authz/resource-modelled`
+  `authz/actor-explicit`, `authz/granted`, `authz/scope-narrows`, `authz/resource-modelled`, `authz/system-actor-granted`

@@ -98,7 +98,10 @@ missing. Rows with no path between them can be built in parallel.
 - `--grant <role>` is written only when `stack.authz` is `rbac`. On `rebac` or `abac` the right
   is decided by the relationship schema or a policy, never by `--grant`: the generator refuses it.
 - `Owner` is `conductor`, the name of a context (one worker per context) or a person.
-- `Status` is `todo`, `in progress`, `done`. Only the conductor edits this file: a worker
+- `Status` is `todo`, `in progress`, `done`. A row is `done` when the started application does
+  what it says, not when the specs on fakes pass: `check` must report no `authz/granted`,
+  `authz/system-actor-granted` nor `scheduling/job-registered` for the permission, job or system
+  actor the row adds. Only the conductor edits this file: a worker
   reports, the conductor marks the row at the merge. A story or a milestone is closed when
   `npx ddd-ts-kit story-check <code>` exits 0: its rows are `done` and no marker of its own is
   left, a marker being its own when its text or the commit that wrote it names one of its rows
