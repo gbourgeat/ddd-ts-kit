@@ -1,7 +1,7 @@
 # Generator kinds
 
 `npx ddd-ts-kit generate <kind> ... --json`. Common options: `--term "<Term>=<meaning>"`
-(repeatable), `--module <module>` (required in a context that declares modules of the model:
+(repeatable; `"<Term>=<meaning>|<not to be confused with>"` fills the third cell of the row), `--module <module>` (required in a context that declares modules of the model:
 the files of each layer land in `<module>/domain/`, `<module>/application/`,
 `<module>/infrastructure/` and `<module>/presentation/`, their specs in `test/unit/<module>/`), `--local-only`, `--dry-run`, `--force`. The authoritative list is
 `npx ddd-ts-kit --help`; `npx ddd-ts-kit generate --help --json` gives it as data, with the
@@ -9,7 +9,7 @@ shared files each kind writes (`writesShared`, `shared`, `sharedWhen`).
 
 | Kind | Arguments | Lands in |
 |---|---|---|
-| `context` | `<name> --classification <core\|supporting\|generic> [--purpose "<two sentences>"] [--upstream <ctx>[:pattern]]...` | `contexts/<name>/`: `CONTEXT.md`, published language, barrel (or module file), route list; config, composition root, context map |
+| `context` | `<name> --classification <core\|supporting\|generic> [--reason "<why it is of that classification>"] [--purpose "<two sentences>"] [--upstream <ctx>[:pattern]]...` | `contexts/<name>/`: `CONTEXT.md`, published language, barrel (or module file), route list; config, composition root, context map |
 | `module` | `<ctx> <module> [--purpose "<one sentence>"] [--classification <core\|supporting\|generic>]` | `contexts.<ctx>.modules` of the config, its row of `## Modules` in `CONTEXT.md`, the `--term` rows of the glossary; run again, it adds what is missing. Existing files move with `npx ddd-ts-kit move-to-module <ctx> <module> <path>...` |
 | `aggregate` | `<ctx> <Name> [--event-sourced [--birth <Event>]]` | `domain/aggregates/`, builder, spec; event-sourced: its birth event `<Name>Created` (pass `--birth <Fact>` with the word of the glossary when the business does not say created: placed, opened, triggered) and apply method, the codec `infrastructure/persistence/<name>-events.mapper.ts`, a builder that replays a history; needs `stack.eventSourcing` on (`init --force --event-sourcing on`), refused otherwise |
 | `entity` | `<ctx> <Name>` | `domain/entities/`, spec |
