@@ -106,15 +106,9 @@ function askedModule(
   config: Config,
   { context, module }: ModuleRequest,
 ): { context: string; module: string } | undefined {
-  if (module === undefined) {
+  // `generate` refuses --module to a kind that writes nothing into a module, every kind with no context among them.
+  if (module === undefined || context === undefined) {
     return undefined;
-  }
-
-  if (context === undefined) {
-    throw new CliError(
-      '--module applies to a kind that writes in a context.',
-      'Give the module to the kinds that write the model or its use cases: `ddd-ts-kit generate <kind> <context> ... --module <module>`.',
-    );
   }
 
   // An unknown context is refused by the kind, with the contexts the project has.

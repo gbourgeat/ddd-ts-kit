@@ -84,11 +84,12 @@ describe('generate --help --json', () => {
     expect(kinds).toContainEqual({
       name: 'value-object',
       aliases: ['vo'],
-      usage: expect.stringContaining('value-object <context|shared-kernel> <Name>'),
+      usage: expect.stringMatching(/^value-object <context\|shared-kernel> <Name> .*\[--module <module>\]$/),
       summary: expect.any(String),
       writesShared: true,
       shared: expect.arrayContaining(['<sharedKernelDir>/<name>.vo.ts and its spec']),
       sharedWhen: 'the first argument is shared-kernel: a value at least two contexts use',
+      writesInModules: true,
     });
 
     expect(kinds).toContainEqual(

@@ -4,8 +4,10 @@ import type { ExpectedFacts } from '../refusals/expected-facts';
 import { factMismatches } from '../refusals/fact-mismatches';
 import { describeEvent } from './describe-event';
 import type { ErrorClass } from './error-class';
+import { errorClassOf } from './error-class-of';
 import type { EventMatcher } from './event-matcher';
 import { eventMismatches } from './event-mismatches';
+import { isErrorLike } from './is-error-like';
 import type { Outcome } from './outcome';
 import type { Recorded } from './recorded';
 import { show } from './show';
@@ -193,11 +195,11 @@ function codeOf(error: unknown): string | undefined {
 }
 
 function describeError(error: unknown): string {
-  if (!(error instanceof Error)) {
+  if (!isErrorLike(error)) {
     return show(error);
   }
 
   const code = codeOf(error);
 
-  return `${error.constructor.name}${code === undefined ? '' : ` (code ${code})`}: ${error.message}`;
+  return `${errorClassOf(error)}${code === undefined ? '' : ` (code ${code})`}: ${error.message}`;
 }

@@ -54,10 +54,12 @@ const COUNTED_FILE_BYTES = 1_000_000;
 const FORMATTED_FILE = /\.(?:[cm]?[jt]sx?|jsonc?)$/;
 const FORMAT_TIMEOUT = 5000;
 
-// The contracts in YAML or JSON (openapi/<document>, the AsyncAPI document), the event catalog
-// and the split of the contract that `ddd-ts-kit docs` writes in the platform.
+// The contracts in YAML or JSON (openapi/<document>, the form of a route in openapi/forms/, the
+// AsyncAPI document), the event catalog and the split of the contract that `ddd-ts-kit docs`
+// writes in the platform. The settings of the project only ask before an edit of them: a deny
+// rule there would make them read-only to `docs:generate` too, under the sandbox of Claude Code.
 const GENERATED_DOCUMENT =
-  /^(?:openapi\/[^/]+|docs\/integration\/asyncapi)\.(?:ya?ml|json)$|^docs\/integration\/event-catalog\.md$|(?:^|\/)http\/openapi-documents\.ts$/;
+  /^(?:openapi\/(?:forms\/)?[^/]+|docs\/integration\/asyncapi)\.(?:ya?ml|json)$|^docs\/integration\/event-catalog\.md$|(?:^|\/)http\/openapi-documents\.ts$/;
 const LOCKFILES = ['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lock', 'bun.lockb'];
 // Rewritten by a command: counted in no commit size, merged by regenerating.
 const DERIVED_FILES = [...LOCKFILES, '.dependency-cruiser.cjs', 'docs/context-map.md'];
@@ -117,10 +119,15 @@ const READING_PROGRAMS = new Set([
   'rg',
   'wc',
   'diff',
+  'jq',
   'npx',
   'pnpm',
   'ddd-ts-kit',
 ]);
+// What touches no file: a command line moves to a worktree or checks a path before it reads or versions one.
+const NEUTRAL_PROGRAMS = new Set(['cd', 'pushd', 'popd', 'pwd', 'true', 'test', '[']);
+// awk reads, unless its program comes from a file or may write (`print > "f"`, a pipe, `system`, `@include`).
+const AWK_PROGRAMS = new Set(['awk', 'gawk', 'mawk', 'nawk']);
 // What a command may also do with the locked regression spec of a fix: run it, however the runner is launched.
 const RUNNING_PROGRAMS = new Set(['npm', 'yarn', 'bun', 'bunx', 'node', 'vitest', 'jest']);
 // A test or a spec, inside a context: the proof of a fix is written there before its code.
@@ -1182,7 +1189,7 @@ async function acceptanceFilesShellReason(project, input, command) {
     .simpleCommands(command, input.cwd ?? process.cwd())
     .some(
       (simple) =>
-        !(READING_PROGRAMS.has(shell.commandName(simple.words)) || (held.length > 0 && runsTests(simple))) ||
+        !(readsOnly(simple.words) || (held.length > 0 && runsTests(simple))) ||
         simple.redirects.some(({ operator, target }) => operator.includes('>') && target !== '/dev/null'),
     );
   if (!writing) {
@@ -1195,6 +1202,103 @@ async function acceptanceFilesShellReason(project, input, command) {
   return spec === undefined
     ? 'The lock of an acceptance and its verdicts are written by `npx ddd-ts-kit acceptance <story> --lock` and by the acceptance-judge agent only; a command may read them, version them or run the kit.'
     : `${lockedRegressionReason(project, spec, input)} A command may read it, version it or run it (\`npm test -- ${spec}\`).`;
+}
+
+// A command that writes no file by itself, its redirections aside: a neutral one (`cd`, `test`), a reader,
+// `sed` without an in-place edit nor a script that writes, `awk` whose program writes nothing, `less` without a log.
+function readsOnly(words) {
+  const name = shell.commandName(words);
+  const args = words.slice(1);
+  if (NEUTRAL_PROGRAMS.has(name) || READING_PROGRAMS.has(name)) {
+    return true;
+  }
+  if (name === 'sed') {
+    return !inPlaceFlag(args) && !sedWrites(args);
+  }
+  if (AWK_PROGRAMS.has(name)) {
+    return !args.some(
+      (word) => /^(?:-[a-zA-Z]*[fEil]|--(?:file|exec|include|load))/.test(word) || /[>|@]|\bsystem\b/.test(word),
+    );
+  }
+  return name === 'less' && !args.some((word) => /^(?:-[a-zA-Z]*[oO]|--log-file|--LOG-FILE)/.test(word));
+}
+
+// Whether a sed command writes a file or runs a command by its scripts: a script file, which cannot be read
+// in advance, the commands `w`, `W` and `e`, the flags `w` and `e` of `s`. An address or a pattern is skipped.
+function sedWrites(args) {
+  if (args.some((word) => /^(?:-[a-zA-Z]*f|--file)/.test(word))) {
+    return true;
+  }
+  const scripts = [];
+  for (let index = 0; index < args.length; index += 1) {
+    if (/^-[a-zA-Z]*e$/.test(args[index]) || args[index] === '--expression') {
+      scripts.push(args[index + 1] ?? '');
+      index += 1;
+    } else if (args[index].startsWith('--expression=')) {
+      scripts.push(args[index].slice('--expression='.length));
+    }
+  }
+  const [first = ''] = shell.operands(args, ['-l', '--line-length']);
+  return (scripts.length > 0 ? scripts : [first]).some(sedScriptWrites);
+}
+
+// The commands of a sed script, each address and pattern skipped: whether one writes a file or runs a command.
+function sedScriptWrites(script) {
+  const scan = { script, at: 0 };
+  while (scan.at < script.length) {
+    const char = script[scan.at];
+    scan.at += 1;
+    if ('wWe'.includes(char) || (char === 's' && substitutionWrites(scan))) {
+      return true;
+    }
+    skipOperand(scan, char);
+  }
+  return false;
+}
+
+// `s/pattern/text/flags`: the flags `w` and `e` write a file or run a command.
+function substitutionWrites(scan) {
+  skipDelimited(scan, 2);
+  const flags = /^[^;}\n]*/.exec(scan.script.slice(scan.at))?.[0] ?? '';
+  scan.at += flags.length;
+  return /[we]/.test(flags);
+}
+
+// What no command lies in: the pattern of an address, the text of `a`, `i`, `c`, the label or file of the others.
+function skipOperand(scan, char) {
+  if (char === '/') {
+    scan.at -= 1;
+    skipDelimited(scan, 1);
+  } else if (char === '\\' || char === 'y') {
+    skipDelimited(scan, char === 'y' ? 2 : 1);
+  } else if ('aic'.includes(char)) {
+    skipTo(scan, '\n');
+  } else if (':btTrRqQlLv'.includes(char)) {
+    skipTo(scan, ';\n');
+  }
+}
+
+// From the delimiter at the cursor, past the `count` parts it closes, escapes included.
+function skipDelimited(scan, count) {
+  const delimiter = scan.script[scan.at];
+  scan.at += 1;
+  for (let part = 0; part < count; part += 1) {
+    while (scan.at < scan.script.length && scan.script[scan.at] !== delimiter) {
+      scan.at += scan.script[scan.at] === '\\' ? 2 : 1;
+    }
+    scan.at += 1;
+  }
+}
+
+function skipTo(scan, ends) {
+  while (scan.at < scan.script.length && !ends.includes(scan.script[scan.at])) {
+    scan.at += 1;
+  }
+}
+
+// `-i`, `-ni`, `--in-place`: an edit of the files given in place.
+function inPlaceFlag(args) {
+  return args.some((word) => (/^-[a-zA-Z]*i/.test(word) && !word.startsWith('--')) || word.startsWith('--in-place'));
 }
 
 // A test runner, however it is launched, as long as it runs no inline code of its own.
@@ -1619,7 +1723,7 @@ function count(text, pattern) {
 function commandDirectory(command, cwd) {
   const named =
     /--cwd[= ]\s*("[^"]+"|'[^']+'|\S+)/.exec(command) ??
-    /^\s*cd\s+("[^"]+"|'[^']+'|[^\s;&|]+)\s*(?:&&|;)/.exec(command);
+    /^\s*(?:cd|pushd)\s+("[^"]+"|'[^']+'|[^\s;&|]+)\s*(?:&&|;)/.exec(command);
   const directory = named?.[1]?.replace(/^["']|["']$/g, '');
   if (!directory) {
     return cwd;
@@ -1900,7 +2004,7 @@ function inPlaceTargets({ words }) {
 
 // The files of an in-place edit: every operand once the script is given by `-e` or `-f`, else all but the first.
 function inPlaceFiles(args) {
-  if (!args.some((word) => (/^-[a-zA-Z]*i/.test(word) && !word.startsWith('--')) || word.startsWith('--in-place'))) {
+  if (!inPlaceFlag(args)) {
     return [];
   }
   const files = [];

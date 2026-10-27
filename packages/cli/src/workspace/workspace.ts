@@ -97,7 +97,11 @@ export class Workspace {
     return [...new Set([...onDisk, ...planned])].sort();
   }
 
-  /** Names of the directories directly inside `directory`, on disk or planned. */
+  /**
+   * Names of the directories directly inside `directory`, on disk or planned. A name that starts
+   * with a dot is a tool's folder (the Claude Code sandbox leaves `.claude/.cc-writes` where a
+   * command wrote), never a context, a module nor a source folder: it is left out.
+   */
   directories(directory: string): string[] {
     const prefix = `${directory}/`;
 
@@ -107,7 +111,9 @@ export class Workspace {
       return child !== undefined && rest.length > 0 ? [child] : [];
     });
 
-    return [...new Set([...this.onDisk(directory, (entry) => entry.isDirectory()), ...planned])].sort();
+    return [...new Set([...this.onDisk(directory, (entry) => entry.isDirectory()), ...planned])]
+      .filter((name) => !name.startsWith('.'))
+      .sort();
   }
 
   /** True when this command already wrote the file, whether it is on disk or not. */

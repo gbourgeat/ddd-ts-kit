@@ -97,7 +97,10 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    credentials per security scheme; records "sdk" in the config the first time, wires the
                    scripts (docs:generate regenerates it, docs:check compares it, ci:build builds it);
                    --check writes nothing and exits 1 while a client differs from its contract
-  todo             those markers as file:line, in the project or in one context
+  todo             those markers as file:line, in the project or in one context, read in every kind of file
+                   they are written into: the code, the pages, prisma/schema.prisma (a marker of a model
+                   is of the context whose database schema holds it), the migrations, the configuration
+                   at the root
   mutation         the mutation score of the domain and application layers of each context, read from the
                    json report the last stryker run wrote (reports/mutation/mutation.json, or --report
                    <file>), each held to its "mutation" floor of the config (80 and 75 by default): detected over detected and
@@ -217,7 +220,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
   verify-slice     closes a slice before its commit, in one run: the regenerate script, check on the files
                    changed since --since (new ones included), the test script for the context; then the
                    changed files past 300 of the 350 lines, the paths of the slice to stage (its context, an
-                   end-to-end spec, a working migration, the derived files git tracks) and every other
+                   end-to-end spec, a working migration, the pages of docs/behaviour/ but those of other
+                   contexts, prisma/schema.prisma or the schema index of the platform when every line
+                   changed there is of the context, the derived files git tracks) and every other
                    changed path, left out and never to stage with it; the merges since --since, as
                    verify-merge checks them, reported without failing the slice in this version (a later
                    minor version fails it); exits 1 while a step fails; then the names the slice removes
@@ -296,5 +301,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
   --module         generate writes the files of the layers into that module of the model of the context
                    (declared first with generate module), <module>/domain/ to <module>/presentation/, and
                    their specs into test/unit/<module>/, finds the files it reads in the module that holds
-                   them and writes the imports to where they are; required in a context that declares
-                   modules, what the modules share staying at the level of the context`;
+                   them and writes the imports to where they are; taken by the kinds whose usage below
+                   shows [--module <module>], and required by them in a context that declares modules
+                   (a file of a use case already in a module goes with it, and another module is
+                   refused); every other kind refuses it, what it writes staying at the level of the
+                   context (code list, permission set, database schema, route groups, guards, shared
+                   shapes, fakes, builders, worlds) or outside the contexts`;

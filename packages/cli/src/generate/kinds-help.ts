@@ -1,5 +1,6 @@
 import type { Kind } from './kind';
 import { SHARED_WRITES } from './shared-writes';
+import { usageOf } from './usage-of';
 
 /** One kind as `generate --help --json` lists it. */
 export interface KindHelp {
@@ -13,21 +14,25 @@ export interface KindHelp {
   readonly shared: readonly string[];
   /** When it writes them; null when it always does, or never. */
   readonly sharedWhen: string | null;
+  /** True when it takes `--module`: it writes files the modules of the model of a context divide. */
+  readonly writesInModules: boolean;
 }
 
 /** Every kind with what it takes and whether it stays inside its context. */
 export function kindsHelp(kinds: readonly Kind[]): KindHelp[] {
-  return kinds.map(({ name, aliases, usage, summary, writesShared }) => {
+  return kinds.map((kind) => {
+    const { name, aliases, summary, writesShared, writesInModules } = kind;
     const shared = writesShared ? SHARED_WRITES[name] : undefined;
 
     return {
       name,
       aliases,
-      usage,
+      usage: usageOf(kind),
       summary,
       writesShared,
       shared: shared?.files ?? [],
       sharedWhen: shared?.when ?? null,
+      writesInModules,
     };
   });
 }

@@ -17,6 +17,7 @@ export const domainErrorKind: Kind = {
     'One class per error, built with `new`, and its spec: the form of a project whose "stack.refusals" is "classes", or says nothing. With shared-kernel, at the root of the shared kernel.',
   positionals: ['context', 'Name'],
   writesShared: true,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request, { sharedKernel: true });
 

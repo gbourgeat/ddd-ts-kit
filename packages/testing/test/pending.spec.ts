@@ -1,6 +1,16 @@
 import { AssertionError, strictEqual } from 'node:assert';
+import { runInNewContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
 import { eventually, pending } from '../src/e2e';
+
+/**
+ * An error built in another realm, as Jest shows an `AssertionError` of `node:assert` to a spec
+ * that runs in its vm context: an error by its shape, not an instance of the `Error` seen here.
+ */
+const fromAnotherRealm = (source: string): unknown => runInNewContext(source);
+
+const foreignAssertion = (): unknown =>
+  fromAnotherRealm("Object.assign(new Error('Expected status 200, received 404'), { name: 'AssertionError' })");
 
 describe('pending', () => {
   it('passes while an assertion of the scenario fails: the code it waits for is not built', async () => {
@@ -68,5 +78,62 @@ describe('pending', () => {
         throw failure;
       })(),
     ).resolves.toBeUndefined();
+  });
+
+  it('treats an assertion error from another realm as an assertion, as Jest throws those of node:assert', async () => {
+    const failure = foreignAssertion();
+
+    expect(failure instanceof Error).toBe(false);
+
+    await expect(
+      pending(async () => {
+        throw failure;
+      })(),
+    ).resolves.toBeUndefined();
+  });
+
+  it('treats an assertion error from another realm that eventually wraps as an assertion', async () => {
+    const scenario = pending(async () => {
+      await eventually(
+        () => {
+          throw foreignAssertion();
+        },
+        { timeoutMs: 30, intervalMs: 10 },
+      );
+    });
+
+    await expect(scenario()).resolves.toBeUndefined();
+  });
+
+  it('treats a thrown object shaped like an assertion error as an assertion', async () => {
+    await expect(
+      pending(async () => {
+        throw { name: 'AssertionError', message: 'Expected status 200, received 404' };
+      })(),
+    ).resolves.toBeUndefined();
+  });
+
+  it('fails on an error from another realm that is not an assertion, naming it', async () => {
+    const broken = fromAnotherRealm("new TypeError('Cannot read properties of undefined')");
+
+    const scenario = pending(async () => {
+      throw broken;
+    });
+
+    await expect(scenario()).rejects.toThrow(/stops on TypeError: Cannot read properties of undefined/);
+    await expect(scenario()).rejects.toMatchObject({ cause: broken });
+  });
+
+  it('fails on errors whose causes loop without an assertion, instead of walking them forever', async () => {
+    const first = new Error('first');
+    const second = new Error('second', { cause: first });
+
+    first.cause = second;
+
+    await expect(
+      pending(async () => {
+        throw first;
+      })(),
+    ).rejects.toThrow(/stops on Error: first/);
   });
 });

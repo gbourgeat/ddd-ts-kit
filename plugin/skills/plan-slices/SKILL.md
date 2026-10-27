@@ -78,12 +78,17 @@ missing. Rows with no path between them can be built in parallel.
   permission or `--public`; every name is made of glossary terms, or the row adds the term
   (`--term "<Term>=<meaning>"`).
 - When `contexts.<name>.modules` of `ddd-ts-kit.config.json` is not empty, each row of that
-  context names its module, and every generator command of the row carries `--module <module>`,
-  a policy, an integration event and an integration handler included: the generator refuses a
-  command of that context without it. The generator itself keeps at the level of the context
-  what the modules share (codes, permissions, the schema of the database, route groups, fakes
-  and builders), so no row leaves `--module` out to put a file there. A row that serves two
-  modules is split, one row per module.
+  context names its module, and every generator command of the row whose usage shows
+  `[--module <module>]` (`npx ddd-ts-kit generate --help --json`, `writesInModules: true`)
+  carries `--module <module>`: aggregates, entities, value objects, domain events, errors,
+  domain services, repositories, commands, queries, ports, adapters, gateways, ACLs, routes,
+  policies, integration events and handlers, jobs and projections included. The generator
+  refuses such a command of that context without it. The generator itself keeps at the level of
+  the context what the modules share (codes, permissions, the schema of the database, route
+  groups, guards, shared schemas, fakes, builders and worlds): the kinds that write only those
+  (`builder`, `test-world`, `route-group`, `guard`, `schema`), an `e2e` spec and a `service`
+  refuse `--module`, so their commands never carry it. A row that serves two modules is split,
+  one row per module.
 - `--grant <role>` is written only when `stack.authz` is `rbac`. On `rebac` or `abac` the right
   is decided by the relationship schema or a policy, never by `--grant`: the generator refuses it.
 - `Owner` is `conductor`, the name of a context (one worker per context) or a person.

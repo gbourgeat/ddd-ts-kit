@@ -6,8 +6,10 @@ const EVENT_SOURCED = /\bextends\s+EventSourcedAggregate\b/;
 
 /**
  * A new event of an event-sourced aggregate joins its union of events, gets its entry in
- * `appliers()` and an empty apply method, and an entry in the codec of the stored events. What
- * cannot be placed (a file reshaped by hand) is said, with the lines to write.
+ * `appliers()` and an empty apply method, and an entry in the codec of the stored events. Each
+ * piece is added only when it is absent: an event already there (the birth event written by
+ * `aggregate --birth`, or a second run) leaves both files as they are. What cannot be placed (a
+ * file reshaped by hand) is said, with the lines to write.
  */
 export function extendEventSourcedAggregate(scope: Scope, names: EventNames): void {
   const aggregateFile = `${scope.dir}/domain/aggregates/${names.aggregate.kebab}.aggregate.ts`;
@@ -44,19 +46,50 @@ function importOf(scope: Scope, names: EventNames): string {
 
 function extendedAggregate(source: string, names: EventNames, importLine: string): string | undefined {
   const union = new RegExp(`(export type ${names.aggregate.pascal}Event =[^;]*);`);
-  const appliers = source.indexOf('protected appliers(');
-  const entriesEnd = appliers < 0 ? -1 : source.indexOf('\n    };', appliers);
-  const end = source.lastIndexOf('}');
+  const members = union.exec(source)?.[1];
 
-  if (!union.test(source) || entriesEnd < 0 || end < entriesEnd) {
+  if (members === undefined) {
     return undefined;
   }
 
-  const entry = `\n      [${names.event.pascal}.eventName]: (event) => this.apply${names.fact.pascal}(event),`;
-  const method = `\n  private apply${names.fact.pascal}(event: ${names.event.pascal}): void {\n    // TODO(domain): change \`this.state\` from what "${names.event.words}" says, and nothing else.\n  }\n`;
-  const withEntry = `${source.slice(0, entriesEnd)}${entry}${source.slice(entriesEnd, end).trimEnd()}\n${method}}\n`;
+  const joined = mentions(members, names.event.pascal) ? source : source.replace(union, `$1 | ${names.event.pascal};`);
+  const applied = withApplier(joined, names);
 
-  return withImport(withEntry.replace(union, `$1 | ${names.event.pascal};`), importLine);
+  return applied === undefined
+    ? undefined
+    : withImport(withApplyMethod(applied, names), importLine, names.event.pascal);
+}
+
+function withApplier(source: string, names: EventNames): string | undefined {
+  const key = `[${names.event.pascal}.eventName]`;
+
+  if (source.includes(key)) {
+    return source;
+  }
+
+  const appliers = source.indexOf('protected appliers(');
+  const entriesEnd = appliers < 0 ? -1 : source.indexOf('\n    };', appliers);
+
+  if (entriesEnd < 0) {
+    return undefined;
+  }
+
+  const entry = `\n      ${key}: (event) => this.apply${names.fact.pascal}(event),`;
+
+  return `${source.slice(0, entriesEnd)}${entry}${source.slice(entriesEnd)}`;
+}
+
+function withApplyMethod(source: string, names: EventNames): string {
+  const declared = new RegExp(`^\\s*(?:private\\s+|protected\\s+)?apply${names.fact.pascal}\\s*\\(`, 'm');
+
+  if (declared.test(source)) {
+    return source;
+  }
+
+  const end = source.lastIndexOf('}');
+  const method = `\n  private apply${names.fact.pascal}(event: ${names.event.pascal}): void {\n    // TODO(domain): change \`this.state\` from what "${names.event.words}" says, and nothing else.\n  }\n`;
+
+  return `${source.slice(0, end).trimEnd()}\n${method}}\n`;
 }
 
 function withStoredEvent(source: string, names: EventNames, importLine: string): string | undefined {
@@ -69,6 +102,14 @@ function withStoredEvent(source: string, names: EventNames, importLine: string):
 
   const data = `${names.event.pascal}Data`;
 
+  const typed = new RegExp(`\\binterface\\s+${data}\\b`).test(source)
+    ? source
+    : `${source.slice(0, declared)}\ninterface ${data} {}\n${source.slice(declared)}`;
+
+  if (source.includes(`[${names.event.pascal}.eventName]`)) {
+    return withImport(typed, importLine, names.event.pascal);
+  }
+
   const entry = [
     `  [${names.event.pascal}.eventName]: defineStoredEvent(${names.event.pascal}, {`,
     '    version: 1,',
@@ -77,16 +118,24 @@ function withStoredEvent(source: string, names: EventNames, importLine: string):
     '  }),',
   ].join('\n');
 
-  const typed = `${source.slice(0, declared)}\ninterface ${data} {}\n${source.slice(declared, entriesEnd)}\n${entry}${source.slice(entriesEnd)}`;
+  const end = typed.lastIndexOf('\n};');
 
-  return withImport(typed, importLine);
+  return withImport(`${typed.slice(0, end)}\n${entry}${typed.slice(end)}`, importLine, names.event.pascal);
 }
 
-function withImport(source: string, importLine: string): string {
+function withImport(source: string, importLine: string, imported: string): string {
+  if (new RegExp(`^import\\s[^;]*\\b${imported}\\b[^;]*;`, 'm').test(source)) {
+    return source;
+  }
+
   const lines = source.split('\n');
   const last = lines.reduce((found, line, index) => (line.startsWith('import ') ? index : found), -1);
 
   lines.splice(last + 1, 0, importLine);
 
   return lines.join('\n');
+}
+
+function mentions(text: string, identifier: string): boolean {
+  return new RegExp(`\\b${identifier}\\b`).test(text);
 }

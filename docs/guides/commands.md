@@ -97,7 +97,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | `npx ddd-ts-kit acceptance [<story>] [--gate written\|passing]` | the scenarios of each story against its rows and criteria: left to write, pending, drifted from the lock, inconsistent, and the amendments to validate | before the code of a story (`written`), before closing it (`passing`) | a short text, `--json` for data; exits 1 while the gate is not met | write, lock, build, or report the amendments |
 | `/ddd-ts-kit:use-case <UseCase>` | one slice end to end, test first | for each row of the slices | domain, handler, route and specs, filled | `npm run verify` |
 | `npx ddd-ts-kit generate <kind> ...` | one file of a role with its spec, fake and registration (list below); `--module <module>` writes into a module of the model, and is required in a context that declares modules | whenever a file of a role is needed, never by hand | the file and the `TODO(domain)` places, `--json` for the list | fill the places, then `todo` |
-| `npx ddd-ts-kit todo [<context>]` | each `TODO(domain)`, `TODO(platform)`, `it.todo` and `TODO(review)` left | before closing a slice, a story or a milestone | `file:line` entries | write them, then `npm test`; settle each `TODO(review)` or dismiss it with `generate adr` before the story or milestone is closed |
+| `npx ddd-ts-kit todo [<context>]` | each `TODO(domain)`, `TODO(platform)`, `it.todo` and `TODO(review)` left, in the code, the pages, `prisma/schema.prisma` (under the context of the model), the migrations and the configuration at the root | before closing a slice, a story or a milestone | `file:line` entries | write them, then `npm test`; settle each `TODO(review)` or dismiss it with `generate adr` before the story or milestone is closed |
 | `npx ddd-ts-kit story-check <code> [--strict]` | whether a story or a milestone (`M1` for the rows `M1.*`) can close: every row `done`, no marker of its own left, a marker being its own when its text, the commit that wrote it or the worker holding it names one of its rows, or when it belongs to no row in a context no other open story works in | before a story or a milestone is declared closed; `status` names one whose rows are done while markers keep it open | one line when it can close; else each blocker with why it is the story's, its `file:line` and its fix, then the unattributed markers it lists without blocking; exits 0, 1, or 2 on an unknown code | handle each blocker or dismiss it with `generate adr`, then delete the marker; name the row in an unattributed one (`TODO(review): #M1.03 ...`) |
 | `npx ddd-ts-kit measures [--since <date>] [--story <code>]` | what the loop of each story cost and left, from git and `docs/architecture/`: design, build and lead time, the requirements changed after the build started, the provisional decisions, the compromises, the review markers settled and the findings repeated across stories, the verification, the stories built at the same time, the origin, the incidents repeated; then the medians of the period; `--by-author` only when the team agreed on it | once a month, by whoever tunes the setup; before a retrospective | one line per story and the medians, `--json` for a dashboard; exits 0 | a repeated remark becomes a line of `AGENTS.md` or a rule of the config; a long design time, a question asked earlier |
 | `/ddd-ts-kit:parallel-work` | splits the slices between workers, one context each | when several agents or people build at once | a briefing per worker, `npx ddd-ts-kit worker-scope <context>` worktrees, with the documents of each row's design and the names they cite the trunk does not have | each worker's `use-case` |
@@ -126,7 +126,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 
 | Command or skill | Does | When | Produces | Then |
 |---|---|---|---|---|
-| `npx ddd-ts-kit verify-slice <context> --since <ref>` | in one run: `npm run regenerate`, the architecture rules on the files changed since the ref (new ones included), the tests of the context, the merges since the ref (as `verify-merge` checks them, reported without failing the slice in this version), the changed files near the 350-line limit | before the commit of a slice, again until it passes | each step with its cause, then the paths of the slice to stage, every other changed path, left out and never staged with it, and the names the slice removes that the design of a row not done still cites (never a failure) | the commit of the slice, of the paths it lists to stage only; those names go to the conductor as notes |
+| `npx ddd-ts-kit verify-slice <context> --since <ref>` | in one run: `npm run regenerate`, the architecture rules on the files changed since the ref (new ones included), the tests of the context, the merges since the ref (as `verify-merge` checks them, reported without failing the slice in this version), the changed files near the 350-line limit | before the commit of a slice, again until it passes | each step with its cause, then the paths of the slice to stage (with the pages of `docs/behaviour/` and the schema of the ORM the generator changed for its context alone), every other changed path, left out and never staged with it, and the names the slice removes that the design of a row not done still cites (never a failure) | the commit of the slice, of the paths it lists to stage only; those names go to the conductor as notes |
 | `npx ddd-ts-kit check --changed-since <ref>` | the architecture rules on what changed | while iterating | violations with their fix, then, with `--explain`, the reason of each rule reported, once | `npx ddd-ts-kit explain <rule-id>` when one is unclear |
 | `npm run regenerate` (`npx ddd-ts-kit depcruise-config --write`, then `npm run docs:generate`, which runs `npx ddd-ts-kit docs`) | regenerate every derived file: `.dependency-cruiser.cjs`, the context map, the `CONTEXT.md` lists, the barrels and the contracts | after a change of a route, a schema, an event or the config | the generated files, committed with the code | `/ddd-ts-kit:commit-discipline` |
 | `/ddd-ts-kit:commit-discipline`, `npx ddd-ts-kit check --commit-size --staged` | one slice per commit, its size against the config | before `git commit` (the hook runs the check) | a message `<type>(<context>): ...` | the next slice |
@@ -257,7 +257,7 @@ Usage
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                   [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
-  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--module <module>] [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
+  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
   ddd-ts-kit generate --help --json
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
@@ -406,7 +406,10 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    credentials per security scheme; records "sdk" in the config the first time, wires the
                    scripts (docs:generate regenerates it, docs:check compares it, ci:build builds it);
                    --check writes nothing and exits 1 while a client differs from its contract
-  todo             those markers as file:line, in the project or in one context
+  todo             those markers as file:line, in the project or in one context, read in every kind of file
+                   they are written into: the code, the pages, prisma/schema.prisma (a marker of a model
+                   is of the context whose database schema holds it), the migrations, the configuration
+                   at the root
   mutation         the mutation score of the domain and application layers of each context, read from the
                    json report the last stryker run wrote (reports/mutation/mutation.json, or --report
                    <file>), each held to its "mutation" floor of the config (80 and 75 by default): detected over detected and
@@ -526,7 +529,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   verify-slice     closes a slice before its commit, in one run: the regenerate script, check on the files
                    changed since --since (new ones included), the test script for the context; then the
                    changed files past 300 of the 350 lines, the paths of the slice to stage (its context, an
-                   end-to-end spec, a working migration, the derived files git tracks) and every other
+                   end-to-end spec, a working migration, the pages of docs/behaviour/ but those of other
+                   contexts, prisma/schema.prisma or the schema index of the platform when every line
+                   changed there is of the context, the derived files git tracks) and every other
                    changed path, left out and never to stage with it; the merges since --since, as
                    verify-merge checks them, reported without failing the slice in this version (a later
                    minor version fails it); exits 1 while a step fails; then the names the slice removes
@@ -605,50 +610,54 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   --module         generate writes the files of the layers into that module of the model of the context
                    (declared first with generate module), <module>/domain/ to <module>/presentation/, and
                    their specs into test/unit/<module>/, finds the files it reads in the module that holds
-                   them and writes the imports to where they are; required in a context that declares
-                   modules, what the modules share staying at the level of the context
+                   them and writes the imports to where they are; taken by the kinds whose usage below
+                   shows [--module <module>], and required by them in a context that declares modules
+                   (a file of a use case already in a module goes with it, and another module is
+                   refused); every other kind refuses it, what it writes staying at the level of the
+                   context (code list, permission set, database schema, route groups, guards, shared
+                   shapes, fakes, builders, worlds) or outside the contexts
 
 Kinds
   context <name> --classification <core|supporting|generic> [--reason "<why it is of that classification>"] [--purpose "<two sentences>"] [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--upstream <ctx>[:relationship]]... [--preset identity]
   module <context> <module> [--purpose "<what it holds>"] [--classification <core|supporting|generic>] [--term "<Term>=<meaning>"]...
-  aggregate <context> <Name> [--event-sourced [--birth <Event>]] [--term "<Term>=<meaning>"]...
+  aggregate <context> <Name> [--event-sourced [--birth <Event>]] [--term "<Term>=<meaning>"]... [--module <module>]
   builder <context> <Aggregate>
   test-world <context> [Name]
-  entity <context> <Name> [--term "<Term>=<meaning>"]...
-  value-object <context|shared-kernel> <Name> [--term "<Term>=<meaning>"]...   (alias: vo)
-  property <context> <ValueObject>
-  vocabulary <context> <Name> --value <value> [--value <value>]...
-  state-machine <context> <Aggregate> [--value <state>]... [--transition "<intention>:<from>[,<from>]...[><to>]"]... [--term "<Term>=<meaning>"]...
-  domain-event <context> <Aggregate> <Fact> [--term "<Term>=<meaning>"]...
-  error <context|shared-kernel> <Refusal> <factory> [--code CODE] [--term "<Term>=<meaning>"]...   (alias: refusal)
-  domain-error <context|shared-kernel> <Name> [--code CODE] [--term "<Term>=<meaning>"]...
-  domain-service <context> <Name> [--term "<Term>=<meaning>"]...
-  repository <context> <Aggregate> [--tenant-scoped] [--personal <column>,<column>... [--subject <column>] [--erasure pseudonymise|row] [--retention <column>:<n><d|m|y>]]
-  command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]...
-  query <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--search] [--term "<Term>=<meaning>"]...
-  port <context> <Name>
-  route <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store]
-  controller <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store]
-  file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> [--grant <role>] | --public) [--method <POST|PUT>] [--group <Name>]
+  entity <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]
+  value-object <context|shared-kernel> <Name> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: vo)
+  property <context> <ValueObject> [--module <module>]
+  vocabulary <context> <Name> --value <value> [--value <value>]... [--module <module>]
+  state-machine <context> <Aggregate> [--value <state>]... [--transition "<intention>:<from>[,<from>]...[><to>]"]... [--term "<Term>=<meaning>"]... [--module <module>]
+  domain-event <context> <Aggregate> <Fact> [--term "<Term>=<meaning>"]... [--module <module>]
+  error <context|shared-kernel> <Refusal> <factory> [--code CODE] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: refusal)
+  domain-error <context|shared-kernel> <Name> [--code CODE] [--term "<Term>=<meaning>"]... [--module <module>]
+  domain-service <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]
+  repository <context> <Aggregate> [--tenant-scoped] [--personal <column>,<column>... [--subject <column>] [--erasure pseudonymise|row] [--retention <column>:<n><d|m|y>]] [--module <module>]
+  command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
+  query <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--search] [--term "<Term>=<meaning>"]... [--module <module>]
+  port <context> <Name> [--module <module>]
+  route <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store] [--module <module>]
+  controller <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store] [--module <module>]
+  file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> [--grant <role>] | --public) [--method <POST|PUT>] [--group <Name>] [--module <module>]
   route-group <context> <Name> [--prefix <path>] [--group <ParentName>] [--public | --role <role>]   (alias: group)
   guard <context> <Name>
-  representation <context> <UseCase> <xml|csv|media/type>[,...]
-  form <context> <UseCase>
+  representation <context> <UseCase> <xml|csv|media/type>[,...] [--module <module>]
+  form <context> <UseCase> [--module <module>]
   schema <context|shared-kernel> <Name>
-  integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]...
-  integration-handler <context> <upstreamContext> <eventType> [--name <Name>] [--term "<Term>=<meaning>"]...   (alias: consumer)
-  erasure-handler <context>
-  event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--name <Name>] [--term "<Term>=<meaning>"]...
-  projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]...   (alias: projector)
-  job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--global] [--term "<Term>=<meaning>"]...
-  background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]...
-  process <context> <Name> [--term "<Term>=<meaning>"]...   (alias: process-manager)
-  acl <context> <upstreamOrSystemName>
+  integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]... [--module <module>]
+  integration-handler <context> <upstreamContext> <eventType> [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: consumer)
+  erasure-handler <context> [--module <module>]
+  event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
+  projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: projector)
+  job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--global] [--term "<Term>=<meaning>"]... [--module <module>]
+  background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]... [--module <module>]
+  process <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: process-manager)
+  acl <context> <upstreamOrSystemName> [--module <module>]
   e2e <context> <UseCaseName> [--event <eventType>]
   acceptance <story> ["<title>"]
-  policy <context> <Name> --permission <aggregate>.<action>
-  gateway <context> <upstreamContext> <Name>
-  adapter <context> <Port> [--kind external|gateway] [--decorators]
+  policy <context> <Name> --permission <aggregate>.<action> [--module <module>]
+  gateway <context> <upstreamContext> <Name> [--module <module>]
+  adapter <context> <Port> [--kind external|gateway] [--decorators] [--module <module>]
   service <context>
   worker
   adr "<title>" [--number <n>] [--deviation <what>] [--reason "<why>"]

@@ -13,6 +13,7 @@ export const entityKind: Kind = {
   summary: 'An entity living inside an aggregate, and its spec.',
   positionals: ['context', 'Name'],
   writesShared: false,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
 

@@ -19,6 +19,7 @@ export const moduleKind: Kind = {
     'A module of the model of a context (Evans, Modules): declared in contexts.<name>.modules, given its row in the "## Modules" table of CONTEXT.md, its terms added to the glossary. Run again, it adds what is missing. Generate into it with --module, move files into it with `ddd-ts-kit move-to-module`.',
   positionals: ['context', 'module'],
   writesShared: true,
+  writesInModules: false,
   run: (request) => {
     const scope = openScope(request);
 

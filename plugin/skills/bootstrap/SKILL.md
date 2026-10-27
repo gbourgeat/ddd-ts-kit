@@ -75,6 +75,14 @@ terminal outside the sandbox, and wait for their word that it ran; resume at `pn
 `init` run in the sandbox anyway exits 3 too, after writing every other file, and ends with a
 note that gives the command to finish: hand it to the owner the same way.
 
+Under `--agent-profile regulated`, the first `pnpm install` is the owner's too, from the same
+terminal outside the agent, right after `init`; resume at `pnpm run verify`. The sandbox makes no
+directory writable that is missing when the session starts, so this first install creates the
+caches the agent may write afterwards (the pnpm store or `~/.npm`, `~/.cache/prisma`), and it runs
+the install scripts of the stack (the engines of Prisma, the prebuilt binary of the Kafka client)
+under the owner's eyes. Later installs, `pnpm install --frozen-lockfile` in a worktree included,
+run in the sandbox. `init` says the same in its `notes`.
+
 On an existing project, a note of the dry run that starts with `package.json depends on` is a
 dependency the flags contradict: put it to the owner, and run the dry run again with the flag it
 names, or with the owner's reason to change the stack under `## Decisions`.

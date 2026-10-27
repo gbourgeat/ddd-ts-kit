@@ -24,6 +24,7 @@ export const integrationEventKind: Kind = {
   summary: 'A versioned declaration in the published language, its publisher, its spec and its registration.',
   positionals: ['context', 'Aggregate', 'Fact'],
   writesShared: true,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
 

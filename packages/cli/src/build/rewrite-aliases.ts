@@ -84,7 +84,7 @@ function refuse(problems: readonly string[]): void {
 function emittedUnder(root: string, outDir: string): string[] {
   const files: string[] = [];
 
-  walkDirectory(root, outDir, (file, isDirectoryEntry) => {
+  walkDirectory({ root, directory: outDir }, (file, isDirectoryEntry) => {
     if (!isDirectoryEntry && EMITTED.test(file)) {
       files.push(file);
     }

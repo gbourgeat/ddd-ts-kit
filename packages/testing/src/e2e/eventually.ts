@@ -1,5 +1,6 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 import { inspect } from 'node:util';
+import { isErrorLike } from '../scenarios/is-error-like';
 
 export interface EventuallyOptions {
   /** Default 2000. */
@@ -31,7 +32,7 @@ export async function eventually<T>(assertion: () => T | Promise<T>, options: Ev
 }
 
 function stillFailing(error: unknown, timeoutMs: number): Error {
-  const last = error instanceof Error ? error.message : inspect(error);
+  const last = isErrorLike(error) ? error.message : inspect(error);
 
   return new Error(`Still failing after ${timeoutMs} ms: ${last}`, { cause: error });
 }

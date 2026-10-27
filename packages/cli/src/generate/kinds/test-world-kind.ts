@@ -16,6 +16,7 @@ export const testWorldKind: Kind = {
   positionals: ['context'],
   optionalPositionals: ['Name'],
   writesShared: false,
+  writesInModules: false,
   run: (request) => {
     const scope = openScope(request);
     const name = toName(request.args[1] ?? scope.context.kebab);

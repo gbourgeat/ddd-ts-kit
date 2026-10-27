@@ -31,6 +31,7 @@ export const errorKind: Kind = {
     'A refusal: under "stack.refusals": "named", its class, its code in <context>.codes.ts and a static factory, each created when absent, and its spec case; under factories or classes, `<Concept> <refusal>` adds a static factory to the error class of a concept. With shared-kernel, the refusal of a value object of the shared kernel, at its root.',
   positionals: ['context', 'Refusal', 'factory'],
   writesShared: true,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request, { sharedKernel: true });
 

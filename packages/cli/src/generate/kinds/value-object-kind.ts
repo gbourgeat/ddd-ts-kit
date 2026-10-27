@@ -14,6 +14,7 @@ export const valueObjectKind: Kind = {
     'An immutable value object validated in create, and its spec: in domain/value-objects/ of a context, or at the root of the shared kernel, beside its spec, when at least two contexts use it.',
   positionals: ['context', 'Name'],
   writesShared: true,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request, { sharedKernel: true });
 

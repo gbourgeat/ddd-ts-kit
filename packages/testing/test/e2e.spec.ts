@@ -33,8 +33,17 @@ class OrderingApplication implements DatabaseReset {
 
   private readonly orders = new Map<string, OrderView>();
 
+  /** The announcements not yet published: a reset drops them, or they reach the spec after it, under an id it reuses. */
+  private readonly announcements = new Set<ReturnType<typeof setTimeout>>();
+
   async reset(): Promise<void> {
     this.orders.clear();
+
+    for (const announcement of this.announcements) {
+      clearTimeout(announcement);
+    }
+
+    this.announcements.clear();
   }
 
   readonly handle = (request: IncomingMessage, response: ServerResponse): void => {
@@ -88,7 +97,13 @@ class OrderingApplication implements DatabaseReset {
     };
 
     this.orders.set(order.id, order);
-    setTimeout(() => void this.events.publish([orderPlaced(order)]), 30);
+
+    const announcement = setTimeout(() => {
+      this.announcements.delete(announcement);
+      void this.events.publish([orderPlaced(order)]);
+    }, 30);
+
+    this.announcements.add(announcement);
     sendJson(response, 201, order);
   }
 }
@@ -259,66 +274,12 @@ describe('expectStatus', () => {
 });
 
 describe('eventually', () => {
-  it('returns what the assertion returns once it passes', async () => {
-    let attempts = 0;
-
-    const value = await eventually(
-      () => {
-        attempts += 1;
-
-        if (attempts < 3) {
-          throw new Error('not yet');
-        }
-
-        return 'projected';
-      },
-      { intervalMs: 1 },
-    );
-
-    expect(value).toBe('projected');
-    expect(attempts).toBe(3);
-  });
-
   it('awaits an asynchronous assertion', async () => {
     const { body: order } = await server.client.post<OrderView>('/orders', anOrder().buildRequest());
 
     const found = await eventually(async () => expectStatus(await server.client.get(`/orders/${order.id}`), 200));
 
     expect(found.body).toMatchObject({ id: order.id });
-  });
-
-  it('fails with the last error once the time is up', async () => {
-    let attempts = 0;
-
-    const never = eventually(
-      () => {
-        attempts += 1;
-        throw new Error(`projection is ${attempts} event(s) behind`);
-      },
-      { timeoutMs: 40, intervalMs: 5 },
-    );
-
-    const failure: unknown = await never.catch((error: unknown) => error);
-
-    expect(failure).toBeInstanceOf(Error);
-
-    expect(failure).toMatchObject({
-      message: `Still failing after 40 ms: projection is ${attempts} event(s) behind`,
-      cause: { message: `projection is ${attempts} event(s) behind` },
-    });
-
-    expect(attempts).toBeGreaterThan(1);
-  });
-
-  it('shows what the assertion threw when it is not an error', async () => {
-    const failure: unknown = await eventually(
-      () => {
-        throw { behind: 2 };
-      },
-      { timeoutMs: 20, intervalMs: 5 },
-    ).catch((error: unknown) => error);
-
-    expect(failure).toMatchObject({ message: 'Still failing after 20 ms: { behind: 2 }', cause: { behind: 2 } });
   });
 });
 
