@@ -93,6 +93,12 @@ the tree, so a generated file conforms by construction and costs no tokens.
 - `schema` writes one shape of the HTTP contract several routes use, declared once and shared,
   in `presentation/http/shared/` of the context, or in `presentation/` of the shared kernel with
   `schema shared-kernel <Name>`; a command route answers an identifier with `acceptedSchema`.
+- **The shared kernel** takes a value at least two contexts use and its refusals, nothing else:
+  `value-object shared-kernel <Name> --term "<Term>=<meaning>"`, then `error shared-kernel
+  <Refusal> <factory>` (`domain-error` under `classes`). They land at its root, specs beside
+  them, and their terms in its own glossary, `<sharedKernelDir>/CONTEXT.md`. Any other kind
+  given `shared-kernel` is refused: it belongs to the context that owns it. A worker confined
+  to its context does not write there (`--local-only` refuses it): report the need.
 - **Documents.** The generated lists of `CONTEXT.md` and the generated documentation are
   refreshed.
 

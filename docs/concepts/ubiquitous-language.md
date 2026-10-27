@@ -461,7 +461,10 @@ export class ReminderOnAppointmentBookedHandler {
 
 A shared word with a shared meaning, used by two contexts or more (a `TimeSlot` value object,
 for example), may move to the shared kernel. Keep that rare: every shared type is a coupling
-both sides must agree to change.
+both sides must agree to change. Its term then moves with it, to the glossary of the shared
+kernel, `src/shared-kernel/CONTEXT.md`, which `generate value-object shared-kernel <Name> --term
+"<Term>=<meaning>"` starts and `language/glossary-term` reads for the value objects and the
+refusals of the shared kernel.
 
 ## Keeping it alive
 

@@ -625,13 +625,13 @@ Kinds
   builder <context> <Aggregate>
   test-world <context> [Name]
   entity <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]
-  value-object <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: vo)
+  value-object <context|shared-kernel> <Name> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: vo)
   property <context> <ValueObject> [--module <module>]
   vocabulary <context> <Name> --value <value> [--value <value>]... [--module <module>]
   state-machine <context> <Aggregate> [--value <state>]... [--transition "<intention>:<from>[,<from>]...[><to>]"]... [--term "<Term>=<meaning>"]... [--module <module>]
   domain-event <context> <Aggregate> <Fact> [--term "<Term>=<meaning>"]... [--module <module>]
-  error <context> <Refusal> <factory> [--code CODE] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: refusal)
-  domain-error <context> <Name> [--code CODE] [--module <module>]
+  error <context|shared-kernel> <Refusal> <factory> [--code CODE] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: refusal)
+  domain-error <context|shared-kernel> <Name> [--code CODE] [--term "<Term>=<meaning>"]... [--module <module>]
   domain-service <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]
   repository <context> <Aggregate> [--tenant-scoped] [--personal <column>,<column>... [--subject <column>] [--erasure pseudonymise|row] [--retention <column>:<n><d|m|y>]] [--module <module>]
   command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
@@ -658,7 +658,7 @@ Kinds
   acceptance <story> ["<title>"]
   policy <context> <Name> --permission <aggregate>.<action> [--module <module>]
   gateway <context> <upstreamContext> <Name> [--module <module>]
-  adapter <context> <Port> [--kind external|gateway] [--decorators] [--module <module>]
+  adapter <context> <Port> [--kind external|gateway|simulated] [--decorators] [--module <module>]
   service <context>
   worker
   adr "<title>" [--number <n>] [--deviation <what>] [--reason "<why>"]

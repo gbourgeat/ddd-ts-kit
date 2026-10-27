@@ -33,6 +33,7 @@ qualifiers of a refusal besides: `invalid`, `unknown`, `already`, `too`, `no`, `
 |---|---|
 | before the bootstrap | `docs/architecture/glossary.md`, one section per context; the bootstrap turns each row into a `--term "<Term>=<meaning>\|<not to be confused with>"`, three cells kept, and deletes the file |
 | after | `src/contexts/<context>/CONTEXT.md`, section `## Ubiquitous language`; there is no second copy |
+| a value two contexts share | `<sharedKernelDir>/CONTEXT.md` (`src/shared-kernel/CONTEXT.md`), the glossary of the shared kernel: its first `generate value-object shared-kernel <Name> --term ...` creates it, and `language/glossary-term` names the value objects and refusals of the shared kernel after it. A word with another meaning in one context stays in that context's glossary |
 
 ## A context a preset writes
 

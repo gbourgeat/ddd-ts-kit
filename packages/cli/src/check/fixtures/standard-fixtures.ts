@@ -3,6 +3,7 @@ import { config } from './config';
 import type { Fixture } from './fixture';
 import { PATHS } from './paths';
 import { project } from './project';
+import { MONEY_GLOSSARY } from './shared-kernel-glossary';
 
 const { ADAPTER, BILLING, MODULE, ROUTE } = PATHS;
 
@@ -45,6 +46,7 @@ export const STANDARD_FIXTURES: readonly Fixture[] = [
     files: project({
       'src/shared-kernel/money.vo.ts':
         "import { Cached } from '@ddd-ts-kit/aspects/decorators';\nexport class Money {}\nexport { Cached };\n",
+      ...MONEY_GLOSSARY,
     }),
   },
   {

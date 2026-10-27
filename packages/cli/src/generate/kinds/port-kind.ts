@@ -26,10 +26,13 @@ export const portKind: Kind = {
       ['port/fake.ts.tpl', `test/fakes/${name.kebab}.fake.ts`],
     ]);
 
+    const simulated =
+      'with `--kind simulated`, one that answers in memory, for an environment whose provider is simulated';
+
     scope.ws.note(
       isDeclared(scope.config)
-        ? `${name.pascal} has no adapter yet: ${adapter} writes one that declares itself in infrastructure/external.`
-        : `${name.pascal} has no adapter yet: ${adapter} writes one in infrastructure/external and binds it in ${scope.context.kebab}.module.ts.`,
+        ? `${name.pascal} has no adapter yet: ${adapter} writes one that declares itself in infrastructure/external (${simulated}).`
+        : `${name.pascal} has no adapter yet: ${adapter} writes one in infrastructure/external and binds it in ${scope.context.kebab}.module.ts (${simulated}).`,
     );
   },
 };

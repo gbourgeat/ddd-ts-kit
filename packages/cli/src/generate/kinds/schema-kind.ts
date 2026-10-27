@@ -1,14 +1,10 @@
-import { toName } from '../../naming';
 import { emit } from '../emit';
-import type { Kind, KindRequest } from '../kind';
+import type { Kind } from '../kind';
 import { label } from '../label';
 import { named } from '../named';
 import { openScope } from '../open-scope';
-import type { Scope } from '../scope';
+import { isSharedKernel } from '../is-shared-kernel';
 import { vars } from '../vars';
-
-/** The first argument that writes in the shared kernel instead of a context. */
-const SHARED_KERNEL = 'shared-kernel';
 
 /** The schema libraries that have a template of their own; any other writes a schema wrapped by the kit. */
 const WRITTEN_WITH: Readonly<Record<string, string>> = {
@@ -27,18 +23,13 @@ export const schemaKind: Kind = {
   writesShared: true,
   writesInModules: false,
   run: (request) => {
-    const shared = request.args[0] === SHARED_KERNEL;
-    const scope = shared ? sharedKernelScope(request) : openScope(request);
+    const scope = openScope(request, { sharedKernel: true });
     const name = label(scope, request.args[1] ?? '', { what: 'schema', strip: ['schema', 'dto'] });
     const library = WRITTEN_WITH[scope.config.stack.validation] ?? 'custom';
-    const directory = shared ? 'presentation' : 'presentation/http/shared';
+    const directory = isSharedKernel(scope) ? 'presentation' : 'presentation/http/shared';
 
     emit(scope, vars(scope, { name: named(name) }), [
       [`schema/schema.${library}.ts.tpl`, `${directory}/${name.kebab}.schema.ts`],
     ]);
   },
 };
-
-function sharedKernelScope({ ws, config, flags }: KindRequest): Scope {
-  return { ws, config, flags, context: toName(SHARED_KERNEL), dir: config.sharedKernelDir };
-}

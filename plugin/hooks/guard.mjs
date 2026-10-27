@@ -182,6 +182,15 @@ const ESCAPES = [
   [/\bas any\b/g, 'an `any` assertion'],
 ];
 
+// The roles of the shared kernel a generator writes, at its root: `generate <kind> shared-kernel ...`.
+const SHARED_KERNEL_GENERATORS = [
+  [/\.vo\.ts$/, 'value-object shared-kernel <Name>'],
+  [
+    /\.error\.ts$/,
+    'error shared-kernel <Refusal> <factory> (under "stack.refusals": "classes": domain-error shared-kernel <Name>)',
+  ],
+];
+
 // Generators that write outside the context they are given: the config, registries of the platform, the schema.
 const SHARED_GENERATORS = [
   'context',
@@ -727,6 +736,7 @@ function describeProject(root) {
     cli: installedCli(root),
     sourceRoot: config.sourceRoot ?? 'src',
     contextsDir: config.contextsDir ?? 'src/contexts',
+    sharedKernelDir: config.sharedKernelDir ?? `${config.sourceRoot ?? 'src'}/shared-kernel`,
     // The modules of the model each context declares: one folder of the context holding its layers.
     modules: modulesByContext(config.contexts),
     platformDir: config.platformDir ?? 'src/platform',
@@ -1568,6 +1578,9 @@ function filesBelow(path) {
 
 function handWrittenRoleReason(project, file) {
   const path = projectPath(project, file);
+  if (path.startsWith(`${project.sharedKernelDir}/`)) {
+    return handWrittenSharedReason(path, existsSync(file));
+  }
   if (
     existsSync(file) ||
     JOURNEY.test(path) ||
@@ -1585,6 +1598,14 @@ function handWrittenRoleReason(project, file) {
   const generator = GENERATORS.find(([suffix]) => suffix.test(path));
   return generator
     ? `${path} is a new file of a generated role. Create it with \`npx ddd-ts-kit generate ${generator[1]} --json\`, then fill the TODO(domain) markers.`
+    : undefined;
+}
+
+// A value object of the shared kernel and its refusals are generated as those of a context are.
+function handWrittenSharedReason(path, exists) {
+  const generator = exists ? undefined : SHARED_KERNEL_GENERATORS.find(([suffix]) => suffix.test(path));
+  return generator
+    ? `${path} is a new file of a generated role of the shared kernel. Create it with \`npx ddd-ts-kit generate ${generator[1]} --term "<Term>=<meaning>" --json\`, which also writes its term in the glossary of the shared kernel, then fill the TODO(domain) markers.`
     : undefined;
 }
 

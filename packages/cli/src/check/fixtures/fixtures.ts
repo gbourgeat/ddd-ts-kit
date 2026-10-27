@@ -43,6 +43,7 @@ import { PERSISTENCE_FIXTURES } from './persistence-fixtures';
 import { PORTS_FIXTURES } from './ports-fixtures';
 import { PURITY_FIXTURES } from './purity-fixtures';
 import { SCHEDULING_FIXTURES } from './scheduling-fixtures';
+import { SHARED_KERNEL_FIXTURES } from './shared-kernel-fixtures';
 import { SCHEMA_FIXTURES } from './schema-fixtures';
 import { STANDARD_FIXTURES } from './standard-fixtures';
 import { PRIVACY_FIXTURES } from './privacy-fixtures';
@@ -83,6 +84,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...ERRORS_FIXTURES,
   ...NAMED_REFUSAL_FIXTURES,
   ...SCHEMA_FIXTURES,
+  ...SHARED_KERNEL_FIXTURES,
   ...EVENT_SOURCING_FIXTURES,
   ...EVENTS_FIXTURES,
   ...EXTENSION_FIXTURES,

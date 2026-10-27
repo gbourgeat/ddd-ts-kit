@@ -160,6 +160,12 @@ dialects: `@ddd-ts-kit/drizzle` (the default, PostgreSQL, one schema per context
 `@ddd-ts-kit/knex`, `@ddd-ts-kit/prisma`, `@ddd-ts-kit/typeorm`. With `none` or `custom` the
 generated adapter is in-memory, held to the same contract suite, behind a `TODO(platform)`.
 
+An outside system is not storage: a provider an environment runs without (a sandbox, a demo,
+an environment for examiners, a provider not ready yet) is simulated by an adapter of
+production code, `npx ddd-ts-kit generate adapter <ctx> <Port> --kind simulated`, never by a
+repository nor by the fake of `test/fakes/`, which production code never imports. Its records
+keep the shape the system sends and go through the translator of `infrastructure/anti-corruption/`.
+
 Anything else (another query builder, a document store) is `stack.orm: custom`: provide in
 `src/platform/database/` a `UnitOfWork`, an `OutboxStore` and a `ProcessedEventStore`, each
 passing its contract suite of `@ddd-ts-kit/testing/contracts`, then the repository adapters.

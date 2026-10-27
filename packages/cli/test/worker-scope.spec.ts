@@ -151,13 +151,13 @@ describe('worker-scope, the generators of a worker', () => {
       'builder',
       'test-world',
       'entity',
-      'value-object',
+      'value-object (in its own context)',
       'property (once fast-check is installed)',
       'vocabulary',
       'state-machine',
       'domain-event',
-      'error',
-      'domain-error',
+      'error (in its own context)',
+      'domain-error (in its own context)',
       'domain-service',
       'command (on an aggregate that has its repository, without --grant)',
       'query (without --grant)',
@@ -183,7 +183,7 @@ describe('worker-scope, the generators of a worker', () => {
     ]);
 
     expect(String(jsonAt(scope, 'briefing'))).toContain(
-      '- Generators you may run: aggregate, builder, test-world, entity, value-object, property (once fast-check is installed), vocabulary,',
+      '- Generators you may run: aggregate, builder, test-world, entity, value-object (in its own context), property (once fast-check is installed), vocabulary,',
     );
   });
 });

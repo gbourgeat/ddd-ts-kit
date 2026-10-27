@@ -137,6 +137,13 @@ which holds only what at least two contexts use. A `TimeSlot` value object could
 all the patterns: every change needs both owners, so the kernel must stay small, and a kernel
 that keeps growing is a signal that a boundary is wrong.
 
+Its words are shared too. `generate value-object shared-kernel TimeSlot --term "TimeSlot=<meaning>"`
+writes `src/shared-kernel/time-slot.vo.ts`, its spec beside it, and the row of the term in
+`src/shared-kernel/CONTEXT.md`, the glossary both contexts agree on; `generate error shared-kernel
+<Refusal> <factory>` writes the refusal of such a value. `language/glossary-term` names them after
+that glossary, and every other role stays in its context: `generate aggregate shared-kernel ...`
+is refused.
+
 ### Partnership and separate ways
 
 Evans describes two more. **Partnership**: two teams with mutual dependence coordinate their

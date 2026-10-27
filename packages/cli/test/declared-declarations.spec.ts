@@ -48,6 +48,7 @@ describe('the declarations of a context generated in the declared style', () => 
       "export * from '@/contexts/billing/application/scheduling/issue-invoices-monthly.job';",
       "export * from '@/contexts/billing/infrastructure/external/remote-payment-gateway.adapter';",
       "export * from '@/contexts/billing/infrastructure/external/remote-tax-rates.adapter';",
+      "export * from '@/contexts/billing/infrastructure/external/simulated-exchange-rates.adapter';",
       "export * from '@/contexts/billing/infrastructure/persistence/drizzle-invoice.repository';",
       "export * from '@/contexts/billing/infrastructure/persistence/in-memory-search-invoices-reader.repository';",
       "export * from '@/contexts/billing/presentation/http/invoices/cancel-invoice/cancel-invoice.controller';",

@@ -116,6 +116,17 @@ test('a new file of a generated role is refused with the generator command', () 
   assert.match(output.hookSpecificOutput.permissionDecisionReason, /generate aggregate/);
 });
 
+test('a new value object or refusal of the shared kernel is refused with its generator, its spec is not', () => {
+  const root = project();
+  const money = run('pre-write', write(join(root, 'src/shared-kernel/money.vo.ts')));
+  assert.equal(decision(money), 'deny');
+  assert.match(reason(money), /generate value-object shared-kernel <Name> --term/);
+  const refusal = run('pre-write', write(join(root, 'src/shared-kernel/invalid-money.error.ts')));
+  assert.match(reason(refusal), /generate error shared-kernel <Refusal> <factory>/);
+  assert.equal(run('pre-write', write(join(root, 'src/shared-kernel/money.vo.spec.ts'))).output, undefined);
+  assert.equal(run('pre-write', write(join(root, 'src/shared-kernel/storable-stamp.ts'))).output, undefined);
+});
+
 test('in advise mode the same write asks instead of refusing', () => {
   const root = project({ guard: 'advise' });
   const { output } = run('pre-write', write(join(root, 'src/contexts/ordering/domain/aggregates/order.aggregate.ts')));

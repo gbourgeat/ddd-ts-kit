@@ -36,13 +36,15 @@ imported by the platform, `main.ts` and `apps/` only (`tracing/platform-only`).
 | who did what | around the use cases, in `src/platform/audit/` | [audit-trail.md](audit-trail.md) |
 | retry, timeout, circuit breaker on an outside call | the adapter's declaration or binding; defaults in `src/platform/resilience/` | `@Adapter(Port, { kind, aspects })`, or `.with(retry(...), timeout(...))` in an explicit module |
 | the same, when the policy is part of what the adapter is | the adapter class, in `infrastructure/` only | `@Retry`, `@Timeout` of `@ddd-ts-kit/aspects/decorators` (`aspects/outside-in`) |
+| run without an outside system (a sandbox, a demo, an environment for examiners, a provider not ready yet) | a simulated adapter in `infrastructure/external/`, bound to the port like the remote one, never the fake of `test/fakes/` | `generate adapter <ctx> <Port> --kind simulated`: answers in memory as the system would, through its translator of `infrastructure/anti-corruption/`; no retry nor timeout, nothing leaves the process |
 | cache a read of another system or context | the gateway or external adapter | `cached({...})`; never a repository of aggregates |
 | keep the answers of a read in the browser or a shared cache (Varnish, a CDN) | `cache` of the controller or its route group, never in the use case | a cache policy of `@ddd-ts-kit/http` (`private` with `etag` for a caller, `public` with `tags` only for what is the same for everybody); `stack.httpCache: varnish` puts Varnish in front. A `public` answer of a route that knows its caller names `Authorization`, `Cookie` or the tenant header in `vary`, and Cloudflare or Bunny ignore `Vary`. Never a decision of authorization shared across actors: the HTTP caching concept page |
 | purge the answers a change made stale | a `before-commit` handler of the domain event | `CacheInvalidation.invalidate([cacheTag('calendar', id)])` of the kernel (`platform.cacheInvalidation` when wired by hand), from every event that changes what a kept answer shows, its version included: purged after the commit, through the outbox; never `CachePurger` in a use case |
 | rate limit | in front of the HTTP layer | the kernel `RateLimiter` port |
 
 `npx ddd-ts-kit generate adapter <ctx> <Port> [--kind external|gateway] [--decorators]`
-writes an adapter with its policy attached (`retry` then `timeout`). Order when composing,
+writes an adapter with its policy attached (`retry` then `timeout`); `--kind simulated` writes
+one with no policy, which answers in memory. Order when composing,
 outermost first: logging and metrics, then retry, then circuit breaker, then timeout. Each
 attempt then counts for the breaker and has its own time limit, and an open circuit ends
 the retries at once.

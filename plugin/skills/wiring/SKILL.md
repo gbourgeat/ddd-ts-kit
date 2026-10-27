@@ -39,6 +39,12 @@ change it by hand.
   `bind(Port)`), the port is imported as a value (`ports/value-import`).
 - A value that is not a port (settings, a database handle) is carried the same way: an
   abstract class with readonly members, bound to a plain object in the platform.
+- A fake of `test/fakes/` is bound in tests only. An outside system the application runs
+  without (a sandbox, a demo) gets a simulated adapter instead,
+  `npx ddd-ts-kit generate adapter <ctx> <Port> --kind simulated`: production code under
+  `infrastructure/external/`, bound to the port like any adapter (kind `external`). A port has
+  one adapter, so the simulated one and the remote one take turns; nothing picks one per
+  environment.
 
 ## Declared style (default with tsyringe)
 

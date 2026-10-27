@@ -21,6 +21,9 @@ const SHARED_KINDS = [
   'worker',
   'adr',
   'schema',
+  'value-object',
+  'domain-error',
+  'error',
   'route-group',
   'acceptance',
   'property',
@@ -81,13 +84,17 @@ describe('generate --help --json', () => {
     expect(kinds).toContainEqual({
       name: 'value-object',
       aliases: ['vo'],
-      usage: expect.stringMatching(/^value-object <context> <Name> .*\[--module <module>\]$/),
+      usage: expect.stringMatching(/^value-object <context\|shared-kernel> <Name> .*\[--module <module>\]$/),
       summary: expect.any(String),
-      writesShared: false,
-      shared: [],
-      sharedWhen: null,
+      writesShared: true,
+      shared: expect.arrayContaining(['<sharedKernelDir>/<name>.vo.ts and its spec']),
+      sharedWhen: 'the first argument is shared-kernel: a value at least two contexts use',
       writesInModules: true,
     });
+
+    expect(kinds).toContainEqual(
+      expect.objectContaining({ name: 'aggregate', writesShared: false, shared: [], sharedWhen: null }),
+    );
 
     expect(kinds).toContainEqual(
       expect.objectContaining({

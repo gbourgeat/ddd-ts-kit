@@ -1,7 +1,9 @@
 import { addGlossaryRows } from '../check/language/add-glossary-rows';
 import { CliError } from '../cli-error';
+import { renderTemplate } from '../templating';
 import { parseTerms } from './parse-terms';
 import type { Scope } from './scope';
+import { isSharedKernel } from './is-shared-kernel';
 
 /** Writes the `--term` rows into the glossary of the context. Called once per command, before any name is judged. */
 export function learnTerms(scope: Scope): void {
@@ -12,7 +14,7 @@ export function learnTerms(scope: Scope): void {
   }
 
   const file = `${scope.dir}/CONTEXT.md`;
-  const next = addGlossaryRows(scope.ws.read(file) ?? '', rows);
+  const next = addGlossaryRows(scope.ws.read(file) ?? startingDoc(scope), rows);
 
   if (next === undefined) {
     throw new CliError(
@@ -22,4 +24,9 @@ export function learnTerms(scope: Scope): void {
   }
 
   scope.ws.update(file, next);
+}
+
+/** The glossary of the shared kernel starts with its first term: a context has its CONTEXT.md from `generate context`. */
+function startingDoc(scope: Scope): string {
+  return isSharedKernel(scope) ? renderTemplate('shared-kernel/CONTEXT.md.tpl', {}) : '';
 }
