@@ -10,6 +10,7 @@ import { scaffoldBillingJobs } from './support/scaffold-billing-jobs';
 import { scaffoldBillingLifecycle } from './support/scaffold-billing-lifecycle';
 import { scaffoldNamedReactions } from './support/scaffold-named-reactions';
 import { scaffoldShippingReaction } from './support/scaffold-shipping-reaction';
+import { STORY_SLICES } from './support/story-slices';
 import type { StackFlags } from './support/stack-flags';
 
 export type { StackFlags } from './support/stack-flags';
@@ -134,14 +135,6 @@ export function scaffoldEverything(root: string, stack = DEFAULT_STACK, more: re
 
 type Step = (...args: string[]) => void;
 
-const STORY_SLICES = `# Slices
-
-| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |
-|---|---|---|---|---|---|---|---|
-| US1.01 | billing | skeleton | Invoice | \`generate aggregate billing Invoice\` | | conductor | done |
-| US1.02 | billing | slice | Issue invoice | \`generate command billing IssueInvoice --aggregate Invoice --permission invoice.issue\` | US1.01 | billing | todo |
-`;
-
 /** The style `init` gives a stack that does not name one: declared wherever the declarations are read, on tsyringe. */
 export function isDeclared(stack: StackFlags): boolean {
   return (stack.style ?? (stack.di === 'tsyringe' ? 'declared' : 'explicit')) === 'declared';
@@ -203,6 +196,9 @@ function scaffoldBilling(step: Step, withHttp: boolean, grant: (role: string) =>
 
   step('generate', 'port', 'billing', 'PaymentGateway');
   step('generate', 'adapter', 'billing', 'PaymentGateway');
+  // An outside system the project simulates: answered in memory by an adapter of production code.
+  step('generate', 'port', 'billing', 'ExchangeRates');
+  step('generate', 'adapter', 'billing', 'ExchangeRates', '--kind', 'simulated');
   step('generate', 'policy', 'billing', 'OnlyIssuerCancels', '--permission', 'invoice.cancel');
 
   if (withHttp) {

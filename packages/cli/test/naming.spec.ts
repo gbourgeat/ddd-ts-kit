@@ -36,25 +36,12 @@ describe('names', () => {
   });
 
   it('strips the role suffix the generator adds itself', () => {
-    expect(parseConceptName('PricingService', 'domain service', { allowName: false, strip: ['service'] }).pascal).toBe(
-      'Pricing',
-    );
-  });
-
-  it.each(['InvoiceManager', 'PriceHelper', 'DateUtil', 'StringUtils', 'CustomerData', 'OrderInfo'])(
-    'refuses the vague name %s',
-    (input) => {
-      expect(fixOf(() => parseConceptName(input, 'aggregate', { allowName: false }))).toMatch(/ubiquitous language/);
-    },
-  );
-
-  it('accepts a vague suffix with --allow-name', () => {
-    expect(parseConceptName('MarketData', 'aggregate', { allowName: true }).pascal).toBe('MarketData');
+    expect(parseConceptName('PricingService', 'domain service', { strip: ['service'] }).pascal).toBe('Pricing');
   });
 
   it('refuses names that are not identifiers', () => {
-    expect(() => parseConceptName('1Invoice', 'aggregate', { allowName: false })).toThrow(CliError);
-    expect(() => parseConceptName('Invoice!', 'aggregate', { allowName: false })).toThrow(CliError);
+    expect(() => parseConceptName('1Invoice', 'aggregate')).toThrow(CliError);
+    expect(() => parseConceptName('Invoice!', 'aggregate')).toThrow(CliError);
     expect(() => parseContextName('9lives')).toThrow(CliError);
   });
 

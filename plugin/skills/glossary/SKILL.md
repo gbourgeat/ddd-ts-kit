@@ -56,7 +56,10 @@ From the discovery timeline (or from the owner), for one context at a time:
 
 For each, one sentence of meaning **in this context**, and for a word a neighbour also uses,
 what it must not be confused with there. Refuse technical words (`record`, `data`, `item`,
-`manager`, `info`, `status` alone) and ask for the business word. One word per concept: pick
+`manager`, `info`, `status` alone) and ask for the business word. When the business does name a
+concept with one, write the term as it says it (`Scoring model`, `Copy of data`): the generator
+and `language/no-technical-name` then accept `ScoringModel` and `CopyOfData`, whose words say
+the whole term. That is what their refusal points to; a row added only to pass it is a deviation. One word per concept: pick
 `cancel` or `void`, not both. Ten precise terms beat fifty vague ones.
 
 ```markdown
