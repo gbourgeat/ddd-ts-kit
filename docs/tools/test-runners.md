@@ -176,10 +176,10 @@ What the figures say:
   as warm. A pipeline that does not keep `node_modules/.vite` pays the cold figure.
 - **The integration specs measure the template as much as the runner.** The Vitest template
   starts PostgreSQL in process once per run and each spec opens a copy of it (a global setup,
-  `test/support/test-database-template.ts`); the Jest template starts one per spec file. On the
-  identity preset that costs Jest 45 CPU s against 28 for the same wall time; the same Jest run
-  given the Vitest template as a `globalSetup` took 3.1 s and 26 CPU s. The example opens its
-  database the same way under both runners.
+  `test/support/test-database-template.ts`); the Jest template of 0.97.0, measured here, started
+  one per spec file. On the identity preset that cost Jest 45 CPU s against 28 for the same wall
+  time; the same Jest run given that global setup took 3.1 s and 26 CPU s, and the Jest template
+  now writes it. The example opens its database the same way under both runners.
 - **One file, the loop of a developer:** under half a second on both for a file of the example;
   1.3 s on Vitest against 0.5 s on Jest on the identity preset, most likely the decorator plugin
   of Vitest starting for that one file: on the example, which has none, the gap is 0.07 s.
@@ -272,7 +272,7 @@ which runner the kit verifies.
 | Case | Setting | Measured gain | What to watch |
 |---|---|---|---|
 | Jest project whose pipeline runs coverage (every generated one) | `coverageProvider: 'babel'` in `jest.config.js` instead of `'v8'` | example 48.0 to 20.6 s warm, 201 to 65 s on four CPUs, 260 to 89 s cold; identity preset 19.8 to 16.4 s on four CPUs | branches reported drop two to three points (97.6 to 95.3 % on the example): read the figures again before the next threshold change; the identity preset takes 14 percent more CPU |
-| Jest project with specs against PGlite | start PostgreSQL once in a `globalSetup` and give each spec a copy, as the Vitest template does (not in the Jest template yet) | identity preset 45 to 26 CPU s, 3.4 to 3.1 s | the setup and teardown files are written by hand |
+| Jest project with specs against PGlite | start PostgreSQL once in a `globalSetup` and give each spec a copy, as both templates now do (`test/support/test-database-template.ts`, and `test-database-teardown.ts` under Jest) | identity preset 45 to 26 CPU s, 3.4 to 3.1 s | a project generated before keeps one initdb per spec file until it takes the two files of a new project and names them in `jest.config.js` |
 | Vitest project with coverage | keep `v8`, the template's provider | `istanbul` is 3.4 s faster on the example, 1.2 s slower on the identity preset | `istanbul` counts more branches in the legacy decorator mode: one folder of the example fails its threshold |
 | A workstation | keep the generated `maxWorkers: '50%'` | doubling it gains 1.5 s on Vitest and loses 0.9 s on Jest, for twice the memory (15 to 17 GB on the example) | on a machine short of memory, 4 workers take 36 s (Vitest) and 27 s (Jest) at 4 to 5 GB |
 | Vitest on a workstation, the whole suite often | `--pool=threads` | 25.4 to 20.1 s, 31 percent less CPU | threads share one process: a spec that calls `process.chdir`, changes `process.env` for good or loads a native module behaves differently; the example passes |
@@ -444,6 +444,9 @@ export default {
 ```
 
 - a `jest.e2e.config.js` extending it, with a longer timeout and one worker;
+- on an ORM, the global setup that starts PostgreSQL in process once per run and saves its
+  cluster (`test/support/test-database-template.ts`), each spec opening a copy, and its global
+  teardown (`test/support/test-database-teardown.ts`), both named in `jest.config.js`;
 - `jest`, `@jest/globals`, `@swc/core` and `@swc/jest` as development dependencies; generated
   specs import their globals from `@jest/globals`;
 - one test script for unit and adapter specs together, run with
@@ -481,9 +484,6 @@ export default {
   its mode there changes the `transform` options of `jest.config.js` too.
 - No unit and integration split: the specs run in one Jest project, given 60 seconds per test
   and per hook (`testTimeout`), as Vitest gives the hooks that open the test database.
-- Each spec file against the database starts PostgreSQL in process from nothing, where the Vitest
-  template starts it once per run and gives each spec a copy: the same wall time on the identity
-  preset, 60 percent more CPU (measured above).
 - Coverage goes through the `v8` provider, which the template sets: on the example it takes a
   run from 18 to 48 s, and from 56 to 201 s on four CPUs, where the `babel` provider takes 21 and
   65 s (measured above).

@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:e8228f37a28e43e0 -->
+<!-- translation-of: test-runners.md sha256:98c7e31fb2862255 -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -188,11 +188,11 @@ Ce que disent les chiffres :
   le chiffre à froid.
 - **Les *specs* d'intégration mesurent le *template* autant que le lanceur.** Le *template* Vitest
   démarre PostgreSQL dans le processus une fois par exécution et chaque *spec* en ouvre une copie
-  (une mise en place globale, `test/support/test-database-template.ts`) ; le *template* Jest en
-  démarre un par fichier de *spec*. Sur le *preset* identity, cela coûte à Jest 45 s de CPU contre
-  28 pour le même temps écoulé ; la même exécution Jest, avec le modèle de Vitest en
-  `globalSetup`, a pris 3,1 s et 26 s de CPU. L'exemple ouvre sa base de la même façon sous les
-  deux lanceurs.
+  (une mise en place globale, `test/support/test-database-template.ts`) ; le *template* Jest de
+  0.97.0, mesuré ici, en démarrait un par fichier de *spec*. Sur le *preset* identity, cela coûtait
+  à Jest 45 s de CPU contre 28 pour le même temps écoulé ; la même exécution Jest, avec cette mise
+  en place globale, a pris 3,1 s et 26 s de CPU, et le *template* Jest l'écrit désormais. L'exemple
+  ouvre sa base de la même façon sous les deux lanceurs.
 - **Un fichier, la boucle d'un développeur :** moins d'une demi-seconde des deux côtés pour un
   fichier de l'exemple ; 1,3 s sous Vitest contre 0,5 s sous Jest sur le *preset* identity, très
   probablement le *plugin* de décorateurs de Vitest qui démarre pour ce seul fichier : sur
@@ -290,7 +290,7 @@ change le lanceur que le kit vérifie.
 | Cas | Réglage | Gain mesuré | À surveiller |
 |---|---|---|---|
 | Projet Jest dont le *pipeline* lance la couverture (tout projet généré) | `coverageProvider: 'babel'` dans `jest.config.js` au lieu de `'v8'` | exemple de 48,0 à 20,6 s à chaud, de 201 à 65 s sur quatre CPU, de 260 à 89 s à froid ; *preset* identity de 19,8 à 16,4 s sur quatre CPU | les branches rapportées baissent de deux à trois points (97,6 à 95,3 % sur l'exemple) : relire les chiffres avant le prochain changement de seuil ; le *preset* identity prend 14 % de CPU en plus |
-| Projet Jest avec des *specs* sur PGlite | démarrer PostgreSQL une fois dans un `globalSetup` et donner une copie à chaque *spec*, comme le fait le *template* Vitest (pas encore dans le *template* Jest) | *preset* identity de 45 à 26 s de CPU, de 3,4 à 3,1 s | les fichiers de mise en place et de démontage s'écrivent à la main |
+| Projet Jest avec des *specs* sur PGlite | démarrer PostgreSQL une fois dans un `globalSetup` et donner une copie à chaque *spec*, comme le font désormais les deux *templates* (`test/support/test-database-template.ts`, et `test-database-teardown.ts` sous Jest) | *preset* identity de 45 à 26 s de CPU, de 3,4 à 3,1 s | un projet généré avant garde un initdb par fichier de *spec* jusqu'à ce qu'il reprenne les deux fichiers d'un nouveau projet et les nomme dans `jest.config.js` |
 | Projet Vitest avec couverture | garder `v8`, le fournisseur du *template* | `istanbul` est plus rapide de 3,4 s sur l'exemple, plus lent de 1,2 s sur le *preset* identity | `istanbul` compte plus de branches en mode legacy des décorateurs : un dossier de l'exemple échoue sur son seuil |
 | Un poste de travail | garder le `maxWorkers: '50%'` généré | le doubler gagne 1,5 s sous Vitest et perd 0,9 s sous Jest, pour deux fois la mémoire (15 à 17 Go sur l'exemple) | sur une machine à court de mémoire, 4 *workers* prennent 36 s (Vitest) et 27 s (Jest) pour 4 à 5 Go |
 | Vitest sur un poste, toute la suite souvent | `--pool=threads` | de 25,4 à 20,1 s, 31 % de CPU en moins | les *threads* partagent un processus : une *spec* qui appelle `process.chdir`, change `process.env` pour de bon ou charge un module natif se comporte autrement ; l'exemple passe |
@@ -468,6 +468,10 @@ export default {
 ```
 
 - un `jest.e2e.config.js` qui l'étend, avec un délai plus long et un seul *worker* ;
+- sur un ORM, la mise en place globale qui démarre PostgreSQL dans le processus une fois par
+  exécution et enregistre son cluster (`test/support/test-database-template.ts`), chaque *spec* en
+  ouvrant une copie, et son démontage global (`test/support/test-database-teardown.ts`), tous deux
+  nommés dans `jest.config.js` ;
 - `jest`, `@jest/globals`, `@swc/core` et `@swc/jest` en dépendances de développement ; les
   *specs* générées importent leurs globales depuis `@jest/globals` ;
 - un seul script de test pour les *specs* unitaires et d'adaptateurs ensemble, lancé avec
@@ -509,9 +513,6 @@ export default {
 - Pas de séparation unit et integration : les *specs* tournent dans un seul projet Jest, avec
   60 secondes par test et par *hook* (`testTimeout`), comme Vitest en donne aux *hooks* qui ouvrent
   la base de test.
-- Chaque fichier de *spec* qui touche la base démarre PostgreSQL dans le processus à partir de
-  rien, là où le *template* Vitest le démarre une fois par exécution et donne une copie à chaque
-  *spec* : le même temps écoulé sur le *preset* identity, 60 % de CPU en plus (mesuré plus haut).
 - La couverture passe par le fournisseur `v8`, que fixe le *template* : sur l'exemple, elle fait
   passer une exécution de 18 à 48 s, et de 56 à 201 s sur quatre CPU, là où le fournisseur
   `babel` prend 21 et 65 s (mesuré plus haut).

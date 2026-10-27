@@ -73,9 +73,12 @@ export function persistenceFiles(config: Config): InitFile[] {
   return [
     ...files.map(([file, variant]) => platformFile(config, `database/${file}`, variant)),
     ...(TOOLING[orm] ?? []),
-    // The global setup of Vitest that saves the test database once per run, for each spec to open a copy of it.
-    ...when(tests === 'vitest' && WITH_DATABASE.includes(orm), [
+    // The global setup that saves the test database once per run, for each spec to open a copy of it; Jest names its teardown apart.
+    ...when(WITH_DATABASE.includes(orm), [
       ['test/support/test-database-template.ts', 'init/platform/database/test-database-template.ts.tpl'],
+    ]),
+    ...when(tests === 'jest' && WITH_DATABASE.includes(orm), [
+      ['test/support/test-database-teardown.ts', 'init/platform/database/test-database-teardown.ts.tpl'],
     ]),
   ];
 }

@@ -1,6 +1,4 @@
-{{#if tests.vitest}}
 import { openAsBlob } from 'node:fs';
-{{/if}}
 import { PGlite } from '@electric-sql/pglite';
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
 import type { Knex } from 'knex';
@@ -33,7 +31,7 @@ export function openTestDatabase(url?: string): Promise<TestDatabase> {
 }
 
 async function openInProcess(): Promise<TestDatabase> {
-  const engine = await {{#if tests.vitest}}inProcessPostgres(){{/if}}{{#if tests.jest}}PGlite.create(){{/if}};
+  const engine = await inProcessPostgres();
   const server = new PGLiteSocketServer({ db: engine, host: '127.0.0.1', port: 0, maxConnections: 10 });
 
   await server.start();
@@ -54,7 +52,6 @@ async function openInProcess(): Promise<TestDatabase> {
   return { persistence: persistenceOver({ db: connection.db, close }), reset: () => emptyTables(connection.db), close };
 }
 
-{{#if tests.vitest}}
 /**
  * A copy of the cluster the global setup of the run initialised once (test/support/test-database-template.ts),
  * which spares each spec the initdb of its own; a cluster initialised here when the run names no
@@ -66,7 +63,6 @@ async function inProcessPostgres(): Promise<PGlite> {
   return PGlite.create(template === undefined ? {} : { loadDataDir: await openAsBlob(template) });
 }
 
-{{/if}}
 async function openServer(url: string): Promise<TestDatabase> {
   const connection = connectToDatabase(url);
 

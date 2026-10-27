@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:cde8d45ff4d53f99 -->
+<!-- translation-of: testing-strategy.md sha256:e67d954fa8badbb3 -->
 
 # Stratégie de test
 
@@ -423,7 +423,7 @@ contexte (connecter une personne, un monde) vit dans `test/e2e/support/<context>
 d'être copié dans chacune.
 
 Les *specs* d'adaptateur et de bout en bout d'un projet généré s'exécutent sur PostgreSQL dans le
-processus (PGlite). Avec Vitest, une mise en place globale (`test/support/test-database-template.ts`)
+processus (PGlite). Une mise en place globale (`test/support/test-database-template.ts`)
 le démarre une fois par exécution et enregistre son cluster initialisé ; chaque *spec* en ouvre une
 copie au lieu de lancer son propre initdb, la partie lente du démarrage, si bien qu'une machine
 chargée ne fait plus dépasser son délai au *hook* qui ouvre la base. Chaque *spec* crée encore ses
@@ -435,13 +435,13 @@ la copie épargnerait ces 25 ms et laisserait non exécuté le code qui les cré
 fait. Contre un serveur (une URL), la base est migrée à l'avance et chaque *spec* ne fait que
 vider ses tables : une base modèle n'épargnerait rien.
 
-Avec Jest, chaque *spec* initialise encore le sien. Une mise en place globale de Jest se charge
-comme un module ES sous `--experimental-vm-modules`, et aucune exécution de bout en bout du kit ne
-tient un projet Jest avec une base de données : la copie n'est pas proposée là où rien ne
-verrait qu'elle casse. Un projet Jest qui en a besoin peut écrire la même mise en place globale
-(`globalSetup` et `globalTeardown` de `jest.config.js`) qui définit `TEST_DATABASE_TEMPLATE`, et
-ouvrir la copie dans `src/platform/database/open-test-database.ts` comme le fait le fichier
-généré pour Vitest.
+Sous Vitest, la mise en place globale renvoie son démontage, qui supprime le cluster enregistré.
+Sous Jest, la mise en place est l'export par défaut de ce fichier, et
+`test/support/test-database-teardown.ts`, nommé par `globalTeardown` dans `jest.config.js`, le
+supprime ; les *workers* que Jest démarre après la mise en place héritent de la variable qui nomme
+le fichier (`TEST_DATABASE_TEMPLATE`). Sur le *preset* identity, les *specs* d'intégration sous
+Jest prenaient 45 secondes de CPU avec un initdb par fichier de *spec*, et 26 avec la copie
+([mesuré](../tools/test-runners.fr.md#vitesse-mesurée)).
 
 Ce qui se passe après la réponse (l'outbox relayée, les gestionnaires qu'elle atteint, ce qu'ils
 enregistrent à leur tour) s'attend avec `await application.settled()`, puis se vérifie aussitôt.

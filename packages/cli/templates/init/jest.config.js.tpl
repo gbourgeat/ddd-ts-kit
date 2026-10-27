@@ -12,7 +12,15 @@ export default {
 {{/if}}
   },
   testMatch: ['<rootDir>/{{config.sourceRoot}}/**/*.spec.ts', '<rootDir>/test/architecture/**/*.spec.ts'],
-  // A hook opens the test database (PGlite started and its tables created, or a server reached): on a busy machine it outlasts the 5 seconds Jest gives a test and its hooks, as Vitest is given 60.
+{{#if persistence.hasDatabase}}
+  // PostgreSQL in process is initialised once per run, and each spec opens a copy of that cluster instead of an initdb of its own.
+  globalSetup: '<rootDir>/test/support/test-database-template.ts',
+  globalTeardown: '<rootDir>/test/support/test-database-teardown.ts',
+  // A hook opens a copy of that cluster and creates its tables, or reaches a server: on a busy machine it can outlast the 5 seconds Jest gives a test and its hooks, as Vitest is given 60.
+{{/if}}
+{{#unless persistence.hasDatabase}}
+  // A hook opens the test database: on a busy machine it can outlast the 5 seconds Jest gives a test and its hooks, as Vitest is given 60.
+{{/unless}}
   testTimeout: 60_000,
   // Each spec file is held to the time budget of its level ("budget" in ddd-ts-kit.config.json, the reference when it is absent): the slowest named at the end of the run, a file over its budget fails it.
   reporters: ['default', '@ddd-ts-kit/testing/budget/jest'],
