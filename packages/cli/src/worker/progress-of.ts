@@ -6,6 +6,7 @@ import { readRemaining } from '../progress/read-remaining';
 import { readSlices } from '../progress/read-slices';
 import { changedEntries } from '../slice/changed-entries';
 import { planStaging } from '../slice/plan-staging';
+import { storageOfSlice } from '../slice/storage-of-slice';
 import { Workspace } from '../workspace';
 import { nextStepOf } from './next-step-of';
 import { readAgentRecord } from './read-agent-record';
@@ -38,7 +39,9 @@ export function progressOf(
   }
 
   const ws = new Workspace(project, false);
-  const { toStage: inSlice, leftOut } = planStaging(changedEntries(project), config, scope.context);
+  const entries = changedEntries(project);
+  const storage = storageOfSlice({ root: project, config, context: scope.context }, entries);
+  const { toStage: inSlice, leftOut } = planStaging(entries, { config, context: scope.context, storage });
   const changed = inSlice.map((file) => modifiedAt(path.join(project, file)));
   const head = runGit(project, ['rev-parse', 'HEAD'])?.trim();
   const rows = rowsOf(project, scope, { ws, uncommitted: inSlice.length > 0 });
