@@ -134,7 +134,7 @@ aside. The message carries `Merge-Base: <commit>`, `Trunk: <commit>` and, when t
 found squashed there, `Landed: <commit>`: `verify-merge` judges the merge on that base later too.
 A merge finished by hand with `git commit` keeps those trailers.
 
-`--dry-run` previews (nothing changes), `--abort` undoes the merge in progress. The tree must be
+`--dry-run` previews (nothing changes), `--abort` undoes the merge in progress (a file the kit regenerates that was modified after the merge staged it is restored and named; any other file changed by hand makes it refuse, exit 2). The tree must be
 clean and no other merge, rebase or cherry-pick in progress (exit 2 otherwise); the trunk is never
 fetched, the commit it names is printed. `merge-trunk` needs git 2.40; an older git merges only
 from the base git computes (`--since <merge base>`), with `git merge` itself.
