@@ -152,7 +152,9 @@ a permission the schema leaves on the context is held by the operators of the co
 project that never writes an `operator` relationship on it (a provisioning step, a
 bootstrap, the grant of a system actor) has a use case nobody can run. A system actor that sends a protected command from a
 job or a handler needs its own relationship, which `authz/system-actor-granted` (an error)
-checks in `relate-system-actors.ts`.
+checks in `relate-system-actors.ts`. The application writes those relationships when it starts, and
+so does `reset()` of the end-to-end support after it emptied the database, so a spec's second test
+finds the system actors as granted as its first.
 
 ### Attribute policies
 
