@@ -209,9 +209,9 @@ found.
   (kernel README, "Criteria", "Hydration" and "Projections"). The CLI generates part of it:
   `generate query --search` writes a read port with an in-memory adapter and a fake, and
   `generate projection <context> <Name> <event-type>` writes a projector and its spec, in the
-  declared style only (in the explicit style the generator refuses: the projector is written by
-  hand in `application/projections/` and included in the module file of its context with
-  `builder.include(<Name>Projection)`); the port of the read model and its store adapter come
+  both styles (in the explicit style on tsyringe the module file of the context includes it with
+  `builder.include(<Name>Projection)`; on a platform wired by hand the class is plain and the module
+  subscribes it under its consumer name); the port of the read model and its store adapter come
   from `generate port` and the ORM package. The
   status of each part is in the [read side proposal](../proposals/read-side.md).
 - **No performance by itself.** Two code paths over one database scale like one database.

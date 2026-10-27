@@ -446,9 +446,11 @@ export async function deliveredOutOfOrder(): Promise<PractitionerName | undefine
 
 - **In the CLI.** What is generated since 2026-10-12 is in the status table:
   `generate projection <context> <Name> <event-type>` writes the projector of one integration
-  event and its spec, and the barrel registers it. This holds in the declared style only: in the
-  explicit style the generator refuses, and the projector is a class written by hand, registered
-  with `builder.include(...)`. Still proposed: one projector for several
+  event and its spec, and the barrel registers it. In the explicit style on tsyringe the module file
+  of the context includes the class with `builder.include(<Name>Projection)`; on a platform wired
+  by hand the projector is a plain class that the module subscribes under its consumer name, with
+  the processed mark of any consumer but without the projection metrics of the declared wiring.
+  Still proposed: one projector for several
   events (`--on <event>...`), a `--store sql|search` that writes the read model's port with
   its adapter and its fake (today `generate port` and the ORM package, by hand), and the
   rebuild job.

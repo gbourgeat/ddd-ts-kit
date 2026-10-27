@@ -1,5 +1,5 @@
 [English](read-side.md) · **Français**
-<!-- translation-of: read-side.md sha256:b8c13410cf8766bd -->
+<!-- translation-of: read-side.md sha256:35655e8238605fe3 -->
 
 # Proposition : le côté lecture
 
@@ -469,9 +469,11 @@ export async function deliveredOutOfOrder(): Promise<PractitionerName | undefine
 
 - **Dans la CLI.** Ce qui est généré depuis le 2026-10-12 figure dans le tableau d'état :
   `generate projection <context> <Name> <event-type>` écrit le projecteur d'un événement
-  d'intégration et sa *spec*, et le *barrel* l'enregistre. Cela vaut dans le style déclaré
-  seulement : dans le style explicite, le générateur refuse, et le projecteur est une classe écrite
-  à la main, enregistrée avec `builder.include(...)`. Toujours proposés : un projecteur pour
+  d'intégration et sa *spec*, et le *barrel* l'enregistre. Dans le style explicite sur tsyringe,
+  le fichier de module du contexte inclut la classe par `builder.include(<Name>Projection)` ; sur
+  une plateforme câblée à la main, le projecteur est une classe simple que le module souscrit sous
+  son nom de consommateur, avec la marque de traitement de tout consommateur mais sans les métriques
+  de projection du câblage déclaré. Toujours proposés : un projecteur pour
   plusieurs événements (`--on <event>...`), un `--store sql|search` qui écrit le port du modèle
   de lecture avec son adaptateur et son *fake* (aujourd'hui `generate port` et le *package* de
   l'ORM, à la main), et le *job* de reconstruction.

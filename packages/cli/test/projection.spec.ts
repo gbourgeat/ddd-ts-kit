@@ -91,18 +91,57 @@ describe('generate projection', () => {
     );
   });
 
-  it('is refused in the explicit style, where nothing assembles a declaration', () => {
+  it('in the explicit style keeps the declarations of the class and includes it in the module file of its context', () => {
     const explicit = tempDir('projection-explicit');
 
     scaffoldEverything(explicit, EXPLICIT_STACK);
 
+    const generated = report(
+      cli(explicit, 'generate', 'projection', 'shipping', 'InvoicesToShip', 'billing.invoice.issued', '--json'),
+    );
+
+    expect(generated.created).toEqual([PROJECTION, SPEC]);
+    expect(generated.updated).toContain(`${SHIPPING}/shipping.module.ts`);
+    expect(read(explicit, PROJECTION)).toContain("@Projection('shipping.invoices-to-ship')");
+
+    const module = read(explicit, `${SHIPPING}/shipping.module.ts`);
+
+    expect(module).toContain(
+      "import { InvoicesToShipProjection } from '@/contexts/shipping/application/projections/invoices-to-ship.projection';",
+    );
+
+    expect(module).toContain('builder.include(InvoicesToShipProjection);');
+    expect(read(explicit, SPEC)).toContain('await expect(projection.issued(event)).resolves.toBeUndefined();');
+
     expect(
-      failure(
-        cli(explicit, 'generate', 'projection', 'shipping', 'InvoicesToShip', 'billing.invoice.issued', '--json'),
-      ),
-    ).toMatchObject({
-      message: 'A projection declares itself with @Projection, which only the declared style assembles.',
-      fix: expect.stringContaining('builder.include(<Name>Projection)'),
+      checkJsonOf(cli(explicit, 'check', '--json')).violations.filter(({ file }) => file.includes('projection')),
+    ).toEqual([]);
+  });
+
+  it('on a platform wired by hand writes a plain class and subscribes it under its consumer name in the module function', () => {
+    const manual = tempDir('projection-manual');
+
+    scaffoldEverything(manual, {
+      http: 'fastify',
+      validation: 'class-validator',
+      di: 'manual',
+      tests: 'vitest',
+      orm: 'knex',
+      events: 'outbox',
     });
+
+    const generated = report(
+      cli(manual, 'generate', 'projection', 'shipping', 'InvoicesToShip', 'billing.invoice.issued', '--json'),
+    );
+
+    expect(generated.created).toEqual([PROJECTION, SPEC]);
+    expect(read(manual, PROJECTION)).not.toContain('@Projection');
+    expect(read(manual, PROJECTION)).toContain('export class InvoicesToShipProjection {\n  async issued(');
+
+    const module = read(manual, `${SHIPPING}/shipping.module.ts`);
+
+    expect(module).toContain('const invoicesToShipProjection = new InvoicesToShipProjection();');
+    expect(module).toContain("consumer: 'shipping.invoices-to-ship',");
+    expect(module).toContain('invoicesToShipProjection.issued(event)');
   });
 });
