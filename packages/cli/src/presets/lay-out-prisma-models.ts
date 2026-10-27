@@ -1,6 +1,5 @@
-import { PRISMA_MAIN_SCHEMA } from '../stack/prisma-main-schema';
-import { prismaSchemaOf } from '../stack/prisma-schema-of';
 import type { Workspace } from '../workspace';
+import { PRISMA_MAIN_SCHEMA, prismaSchemaOf } from '../prisma-schema';
 
 /** Where the models end in the file of a context the repository generator starts. */
 const END_OF_MODELS = '// /ddd-ts-kit:models';

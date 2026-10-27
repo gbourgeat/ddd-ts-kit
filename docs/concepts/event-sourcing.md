@@ -70,7 +70,8 @@ spec. The birth event is `<Name>Created` unless `--birth <Event>` names the fact
 says (`--birth Triggered` writes `IncidentTriggered`, `incidents.incident.triggered`), checked
 against the glossary like any other name: the name of a stored event is kept forever.
 `generate domain-event` on such an aggregate adds the event to its union, to `appliers()` with
-an empty apply method, and to the codec. `describe`, `list` and `CONTEXT.md` say which
+an empty apply method, and to the codec, each only where it is absent: run on the birth event, or
+a second time, it leaves both files as they are. `describe`, `list` and `CONTEXT.md` say which
 aggregates are event-sourced. The store they are saved through is wired by
 `init --event-sourcing on` (`init --force --event-sourcing on` on an existing project), and the
 generator refuses an event-sourced aggregate without it: a project whose aggregates are all rows

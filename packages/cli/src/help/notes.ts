@@ -97,7 +97,10 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    credentials per security scheme; records "sdk" in the config the first time, wires the
                    scripts (docs:generate regenerates it, docs:check compares it, ci:build builds it);
                    --check writes nothing and exits 1 while a client differs from its contract
-  todo             those markers as file:line, in the project or in one context
+  todo             those markers as file:line, in the project or in one context, read in every kind of file
+                   they are written into: the code, the pages, the files of prisma/schema/ (a marker of
+                   prisma/schema/<context>.prisma is of that context, another of the context whose
+                   database schema holds its model), the migrations, the configuration at the root
   mutation         the mutation score of the domain and application layers of each context, read from the
                    json report the last stryker run wrote (reports/mutation/mutation.json, or --report
                    <file>), each held to its "mutation" floor of the config (80 and 75 by default): detected over detected and
@@ -217,8 +220,11 @@ export const NOTES = `  affected         what a pull request has to run: the con
   verify-slice     closes a slice before its commit, in one run: the regenerate script, check on the files
                    changed since --since (new ones included), the test script for the context; then the
                    changed files past 300 of the 350 lines, the paths of the slice to stage (its context, its
-                   Prisma models, an end-to-end spec, a working migration, the derived files git tracks) and
-                   every other changed path, left out and never to stage with it; the merges since --since, as
+                   Prisma models, an end-to-end spec, a working migration, the pages of docs/behaviour/ but
+                   those of other contexts, prisma/schema/schema.prisma when its one change is the context
+                   joining the schemas of the datasource, the schema index of the platform when every line
+                   changed there is of the context, the derived files git tracks) and every other
+                   changed path, left out and never to stage with it; the merges since --since, as
                    verify-merge checks them, reported without failing the slice in this version (a later
                    minor version fails it); exits 1 while a step fails; then the names the slice removes
                    that the design of a row not done still cites (never a failure); in the worktree of a

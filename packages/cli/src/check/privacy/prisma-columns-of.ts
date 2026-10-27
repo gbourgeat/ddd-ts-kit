@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PRISMA_SCHEMA_FOLDER } from '../../stack/prisma-schema-folder';
 import type { Project } from '../model/project';
+import { PRISMA_SCHEMA_FOLDER } from '../../prisma-schema';
 
 /** A column of a model of the Prisma schema (`prisma/schema/`) that lives in the schema of a context. */
 export interface PrismaColumn {

@@ -1,9 +1,9 @@
 import { inDialect } from '../package-manager/in-dialect';
-import { prismaSchemaOf } from '../stack/prisma-schema-of';
 import type { BriefedSlice } from './briefed-slice';
 import { designLine } from './design-line';
 import { staleNamesBlock } from './stale-names-block';
 import type { WorkerPlace } from './worker-place';
+import { prismaSchemaOf } from '../prisma-schema';
 
 /**
  * A need marked blocking stops the row until the conductor does it; a note waits for the merge

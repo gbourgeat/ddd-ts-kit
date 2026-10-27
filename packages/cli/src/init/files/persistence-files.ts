@@ -1,9 +1,9 @@
 import type { Config } from '../../config';
 import type { InitFile } from './init-file';
-import { PRISMA_MAIN_SCHEMA } from '../../stack/prisma-main-schema';
 import { WITH_DATABASE } from '../../stack/with-database';
 import { platformFile } from './platform-file';
 import { when } from './when';
+import { PRISMA_MAIN_SCHEMA } from '../../prisma-schema';
 
 type Variants = readonly (readonly [file: string, variant?: string])[];
 

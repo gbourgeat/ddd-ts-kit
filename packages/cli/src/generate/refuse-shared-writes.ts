@@ -1,7 +1,7 @@
 import { CliError } from '../cli-error';
 import type { Config } from '../config';
-import { prismaSchemaOf } from '../stack/prisma-schema-of';
 import type { Workspace } from '../workspace';
+import { prismaSchemaOf } from '../prisma-schema';
 
 const E2E_SPEC = /^test\/e2e\/[^/]+\.e2e\.spec\.ts$/;
 

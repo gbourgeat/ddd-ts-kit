@@ -2,8 +2,7 @@ import type { RenderContext } from '../../templating';
 import { renderTemplate } from '../../templating';
 import { applyWiring } from '../apply-wiring';
 import type { Scope } from '../scope';
-import { PRISMA_MAIN_SCHEMA } from '../../stack/prisma-main-schema';
-import { prismaSchemaOf } from '../../stack/prisma-schema-of';
+import { PRISMA_MAIN_SCHEMA, prismaSchemaOf, schemaOfContext } from '../../prisma-schema';
 
 /** Where each ORM declares the tables of a context: the file its migration tooling reads, and the template that starts it. */
 const TABLES_FILES: Readonly<Record<string, (context: string) => string>> = {
@@ -61,7 +60,7 @@ function declarePrismaModel(scope: Scope, context: RenderContext): void {
 
   applyWiring(scope.ws, models, renderTemplate('repository/prisma/model.tpl', context));
 
-  const schema = scope.context.kebab.replaceAll('-', '_');
+  const schema = schemaOfContext(scope.context.kebab);
   const content = scope.ws.read(PRISMA_MAIN_SCHEMA);
 
   if (content !== undefined && !new RegExp(`schemas\\s*=\\s*\\[[^\\]]*"${schema}"`).test(content)) {

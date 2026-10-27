@@ -22,8 +22,7 @@ describe('what a slice stages, by a closed list', () => {
         modified('src/contexts/shipping/CONTEXT.md'),
         modified('.dependency-cruiser.cjs'),
       ],
-      config,
-      'billing',
+      { config, context: 'billing' },
     );
 
     expect(plan.leftOut).toEqual([]);
@@ -38,8 +37,7 @@ describe('what a slice stages, by a closed list', () => {
         modified('prisma/schema/schema.prisma'),
         modified('prisma/schema/shipping.prisma'),
       ],
-      config,
-      'billing',
+      { config, context: 'billing' },
     );
 
     expect(plan.toStage).toEqual([
@@ -53,8 +51,7 @@ describe('what a slice stages, by a closed list', () => {
   it('stages the acceptance spec a slice unwraps, never the lock of the story', () => {
     const plan = planStaging(
       [modified('test/acceptance/us5.acceptance.spec.ts'), modified('test/acceptance/us5.acceptance.lock.json')],
-      config,
-      'billing',
+      { config, context: 'billing' },
     );
 
     expect(plan.toStage).toEqual(['test/acceptance/us5.acceptance.spec.ts']);
@@ -74,8 +71,7 @@ describe('what a slice stages, by a closed list', () => {
         fresh('test/e2e/support/start-application.ts'),
         fresh('.ddd-ts-kit/report.md'),
       ],
-      config,
-      'billing',
+      { config, context: 'billing' },
     );
 
     expect(plan.toStage).toEqual([]);
@@ -101,8 +97,7 @@ describe('what a slice stages, by a closed list', () => {
         fresh('migrations/0005_add-discounts.sql'),
         fresh('migrations/meta/0005_snapshot.json'),
       ],
-      config,
-      'billing',
+      { config, context: 'billing' },
     );
 
     expect(plan.toStage).toEqual([
@@ -115,8 +110,59 @@ describe('what a slice stages, by a closed list', () => {
   });
 
   it('leaves out the journal when there is no working migration', () => {
-    expect(planStaging([modified('migrations/meta/_journal.json')], config, 'billing').leftOut).toEqual([
+    expect(planStaging([modified('migrations/meta/_journal.json')], { config, context: 'billing' }).leftOut).toEqual([
       'migrations/meta/_journal.json',
     ]);
+  });
+});
+
+describe('what a slice stages outside its context: what the generators and regenerate wrote for it', () => {
+  it('stages the working migration of Prisma, a folder holding migration.sql, and no other', () => {
+    const plan = planStaging(
+      [
+        fresh('prisma/migrations/20261027101500_working_add_refunds/migration.sql'),
+        fresh('prisma/migrations/20261027101600_add_discounts/migration.sql'),
+      ],
+      { config, context: 'billing' },
+    );
+
+    expect(plan.toStage).toEqual(['prisma/migrations/20261027101500_working_add_refunds/migration.sql']);
+    expect(plan.leftOut).toEqual(['prisma/migrations/20261027101600_add_discounts/migration.sql']);
+  });
+
+  it('stages the pages of what the tests state, new or changed, but the page of another context', () => {
+    const plan = planStaging(
+      [
+        fresh('docs/behaviour/billing.md'),
+        modified('docs/behaviour/README.md'),
+        modified('docs/behaviour/application.md'),
+        modified('docs/behaviour/shipping.md'),
+      ],
+      { config, context: 'billing' },
+    );
+
+    expect(plan.toStage).toEqual([
+      'docs/behaviour/billing.md',
+      'docs/behaviour/README.md',
+      'docs/behaviour/application.md',
+    ]);
+
+    expect(plan.leftOut).toEqual(['docs/behaviour/shipping.md']);
+  });
+
+  it('stages a shared file of the storage only when the generator wrote it for the slice', () => {
+    const entries = [modified('prisma/schema/schema.prisma'), modified('src/platform/database/schema.ts')];
+
+    expect(planStaging(entries, { config, context: 'billing' }).leftOut).toEqual([
+      'prisma/schema/schema.prisma',
+      'src/platform/database/schema.ts',
+    ]);
+
+    const storage = new Set(['prisma/schema/schema.prisma']);
+
+    expect(planStaging(entries, { config, context: 'billing', storage })).toEqual({
+      toStage: ['prisma/schema/schema.prisma'],
+      leftOut: ['src/platform/database/schema.ts'],
+    });
   });
 });
