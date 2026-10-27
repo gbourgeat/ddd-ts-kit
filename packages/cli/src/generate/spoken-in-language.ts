@@ -9,10 +9,17 @@ import type { Scope } from './scope';
 /**
  * Refuses a name that carries a technical word no term of the glossary holds, or a word the
  * glossary of the context does not define, the `qualifiers` aside (those of a refusal:
- * `InvalidAppointment`, `BookingTooLate`). `--allow-name` lets any name through.
+ * `InvalidAppointment`, `BookingTooLate`). `--allow-name` lets any name through. A probe of the
+ * language hears the name instead, and the generator goes on.
  */
 export function spokenInLanguage(scope: Scope, name: Name, qualifiers: readonly string[] = []): void {
   if (scope.flags.allowName) {
+    return;
+  }
+
+  if (scope.flags.language !== undefined) {
+    scope.flags.language({ context: scope.context.kebab, dir: scope.dir, name: name.pascal, qualifiers });
+
     return;
   }
 

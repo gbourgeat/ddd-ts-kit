@@ -1,5 +1,6 @@
 import type { Config } from '../config';
 import type { Workspace } from '../workspace';
+import type { LanguageProbe } from './language-probe';
 
 export interface KindFlags {
   readonly classification?: string;
@@ -80,6 +81,8 @@ export interface KindFlags {
   readonly birth?: string;
   /** The module of the model of the context the files of its layers and their specs are written in. */
   readonly module?: string;
+  /** No flag of the command line: hears the names to judge against the glossary instead of judging them (`plan-waves`). */
+  readonly language?: LanguageProbe;
 }
 
 export interface KindRequest {

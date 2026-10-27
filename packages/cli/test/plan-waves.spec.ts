@@ -25,10 +25,25 @@ ${HEADER}| US2.01 | billing | skeleton | Customer | \`generate aggregate billing
 | US2.05 | shipping | slice | Ship a paid invoice | \`generate integration-handler shipping billing billing.invoice.paid\` | US1.04 | shipping | todo |
 `;
 
+/** The words of the planned names, defined with the aggregate of the row done. */
+const TERMS = [
+  'Invoice=What a customer owes for one order',
+  'Issue=Send an invoice to its customer',
+  'Cancel=Withdraw an invoice not paid',
+  'Pay=Settle an invoice',
+  'Credit=Give back the amount of a paid invoice',
+  'Overdue=Said of an invoice not paid by its due date',
+  'Read=See an invoice without changing it',
+  'Customer=Whom an invoice is issued to',
+  'Register=Make a customer known to billing',
+  'Search=Read a page of the invoices that match',
+].flatMap((term) => ['--term', term]);
+
 let root: string;
 
 beforeAll(() => {
   root = initProject('--context', 'billing:core', '--context', 'shipping:supporting');
+  cli(root, 'generate', 'aggregate', 'billing', 'Invoice', ...TERMS);
   write(root, 'docs/architecture/slices.md', TWO_STORIES);
 });
 

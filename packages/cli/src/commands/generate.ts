@@ -2,6 +2,7 @@ import { readConfig } from '../config';
 import { CliError } from '../cli-error';
 import { findKind } from '../generate/find-kind';
 import type { Kind, KindFlags } from '../generate/kind';
+import type { LanguageProbe } from '../generate/language-probe';
 import { KINDS } from '../generate/kinds';
 import { placeGeneratedFiles } from '../generate/place-generated-files';
 import { refreshDocs } from '../generate/refresh-docs';
@@ -11,11 +12,15 @@ import { MODULE_OPTION, usageOf } from '../generate/usage-of';
 import { toName } from '../naming';
 import { Workspace } from '../workspace';
 import { Arguments } from './arguments';
+import type { Io } from './io';
 import type { Command } from './command';
 import { printReport } from './print-report';
 import { keepFlatPlatform } from '../platform-folders';
 
-export const generateCommand: Command = (argv, io) => {
+export const generateCommand: Command = (argv, io) => generate(argv, io);
+
+/** `generate`, and with a probe of the language, the same command hearing its names instead of judging them. */
+export function generate(argv: readonly string[], io: Io, language?: LanguageProbe): number {
   const asked = findKind(argv.find((argument) => !argument.startsWith('-')) ?? '');
   const args = Arguments.parse(argv, optionsOf(asked));
   const [kindName, ...rest] = args.positionals;
@@ -26,7 +31,7 @@ export const generateCommand: Command = (argv, io) => {
 
   keepFlatPlatform(ws, config);
 
-  const flags = flagsOf(args);
+  const flags = { ...flagsOf(args), ...(language === undefined ? {} : { language }) };
 
   refuseModuleOf(kind, flags);
 
@@ -51,7 +56,7 @@ export const generateCommand: Command = (argv, io) => {
   }
 
   return printReport(io, args, ws.commit(args.flag('dry-run')));
-};
+}
 
 const TEXT = { type: 'string' } as const;
 const SWITCH = { type: 'boolean', default: false } as const;
