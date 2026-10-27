@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:1a86c77702f670ec -->
+<!-- translation-of: commands.md sha256:78d2e372436f11c5 -->
 
 # Quelle commande, quand
 
@@ -437,7 +437,11 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    and story when it is of another story or outside the context shown), the rows of other
                    stories the planned rows wait for, not done, in a section of their own, the merge order
                    and what runs before each merge (merge-trunk --to-land); a cycle, a dependency on an
-                   unknown id or a row without owner is reported alone, and exits 1
+                   unknown id or a row without owner is reported alone, and exits 1. Then replays the
+                   generator commands of the rows in a copy of the project, in the order of the waves,
+                   and reports without waves, exiting 1, each name whose words the glossary of its
+                   context does not define with the --term of its row and of the rows it waits for;
+                   the commands refused for another reason are listed, without failing
   story-check      whether a story or a milestone can close, <code> being the start of the ids of its rows
                    (M1 for M1.01, M1.02: the id without its last .<number>): every row of it done in
                    slices.md (the others listed with their status), and no marker of its own left

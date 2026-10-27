@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a28dedd0419aabc6 -->
+<!-- translation-of: README.md sha256:394c7a01325d2a48 -->
 
 # ddd-ts-kit
 
@@ -1331,8 +1331,26 @@ porte.
 Un cycle dans `Depends on`, une dépendance vers un identifiant qu'aucune ligne ne porte, une ligne
 sans responsable et un identifiant que portent deux lignes rendent les lignes impossibles à
 ordonner : ils sont signalés seuls, sans vagues, et la commande sort avec 1. Un fichier sans table
-de tranches, ou un contexte qu'aucune ligne ne nomme, est refusé. `--json` affiche
-`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }] }`,
+de tranches, ou un contexte qu'aucune ligne ne nomme, est refusé.
+
+Une fois les lignes ordonnables, les commandes de génération de leurs cellules `Start with` (entre
+accents graves, `generate ...` ou `npx ddd-ts-kit generate ...`) sont rejouées dans une copie du
+projet (les fichiers que git voit ; le projet reste tel quel), dans l'ordre des vagues, pour
+qu'une commande trouve ce que génèrent les lignes d'avant. Le générateur dit lui-même quels noms
+introduit chaque commande (le cas d'usage, l'agrégat et le fait d'un événement, un `--name`, les
+mots d'une `--permission`, ...), et chacun est jugé comme le générateur le juge, contre le
+glossaire de son contexte tel qu'il est, plus les `--term` de la ligne et des lignes qu'elle
+attend, directement ou non : un terme qu'ajoute une ligne qu'elle n'attend pas ne compte pas, car
+cette ligne peut ne pas être fusionnée quand celle-ci se construit. Chaque mot que le glossaire ne
+définit pas (`undefined-word`) et chaque mot technique qu'aucun terme ne porte (`technical-word`)
+est signalé une fois par ligne, avec le `--term` à ajouter, sans vagues, et la commande sort avec
+1 : un worker qui suivrait cette ligne telle qu'écrite serait refusé. Les commandes que le
+générateur a refusées pour une autre raison (un `--module` manquant, un agrégat qu'aucune ligne ne
+génère, un amont non déclaré, un handler écrit à la main dont un spec de bout en bout a besoin)
+sont listées après les vagues sous `Refused for another reason than a word when the plan was
+replayed`, sans échec : les noms qu'elles introduiraient après ce refus ne sont pas jugés. Le rejeu
+coûte environ un dixième de seconde par commande. `--json` affiche
+`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }], notReplayed: [{ row, command, refusal }] }`,
 `story` valant `null` pour une ligne dont l'identifiant n'en nomme aucune, et `batch` `null` pour
 une ligne que le contexte demandé ne montre pas.
 

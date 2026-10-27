@@ -31,11 +31,36 @@ function planOf(overrides: Partial<WavePlan>): WavePlan {
     waves: [],
     mergeOrder: [],
     otherStories: [],
+    notReplayed: [],
     ...overrides,
   };
 }
 
 describe('plan-waves for a reader', () => {
+  it('says the names to define first when only words are refused, then the commands refused for another reason', () => {
+    const text = formatPlan(
+      planOf({
+        problems: [
+          { kind: 'undefined-word', rows: ['2'], message: '#2 `generate command billing RefundInvoice`: ...' },
+        ],
+        notReplayed: [
+          {
+            row: '3',
+            command: 'generate command billing PayInvoice --aggregate Order',
+            refusal: 'No aggregate Order.',
+          },
+        ],
+      }),
+    );
+
+    expect(text.split('\n')).toEqual([
+      'Waves (docs/architecture/slices.md): none, the generator refuses names of these rows: add their terms first',
+      '  #2 `generate command billing RefundInvoice`: ...',
+      'Refused for another reason than a word when the plan was replayed (the names after the refusal not judged):',
+      '  #3 `generate command billing PayInvoice --aggregate Order`: No aggregate Order.',
+    ]);
+  });
+
   it('says every row is done when no batch is left', () => {
     expect(formatPlan(planOf({ waves: [{ wave: 1, batches: [] }] }))).toBe(
       'Waves (docs/architecture/slices.md): none, every row is done',

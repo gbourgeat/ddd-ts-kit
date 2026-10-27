@@ -1262,9 +1262,25 @@ anyone carries it.
 
 A cycle in `Depends on`, a dependency on an id no row carries, a row without owner and an id two
 rows carry make the rows impossible to order: they are reported alone, without waves, and the
-command exits 1. A file without a slices table, or a context no row names, is refused. `--json`
-prints
-`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }] }`,
+command exits 1. A file without a slices table, or a context no row names, is refused.
+
+Once the rows can be ordered, the generator commands of their `Start with` cells (between
+backquotes, `generate ...` or `npx ddd-ts-kit generate ...`) are replayed in a copy of the
+project (the files git sees; the project is left as it was), in the order of the waves, so that a
+command finds what the rows before it generate. The generator itself says which names each
+command introduces (the use case, the aggregate and the fact of an event, a `--name`, the words of
+a `--permission`, ...), and each is judged as the generator judges it, against the glossary of its
+context as it stands plus the `--term` of the row and of the rows it waits for, directly or not: a
+term a row it does not wait for adds is not counted, since that row may not be merged when this
+one is built. Each word it does not define (`undefined-word`) and each technical word no term
+holds (`technical-word`) is reported once per row, with the `--term` to add, without waves, and
+the command exits 1: a worker following that row as written would be refused. The commands the
+generator refused for another reason (a missing `--module`, an aggregate no row generates, an
+upstream not declared, a handler written by hand that an end-to-end spec needs) are listed after
+the waves under `Refused for another reason than a word when the plan was replayed`, without
+failing: the names they would introduce after that refusal are not judged. The replay costs about
+a tenth of a second per command. `--json` prints
+`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }], notReplayed: [{ row, command, refusal }] }`,
 `story` being `null` for a row whose id names none and `batch` `null` for a row the context asked
 for does not show.
 

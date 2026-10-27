@@ -133,8 +133,14 @@ is written, wrapped in `pending(...)`, locked and committed before the first row
 `npx ddd-ts-kit acceptance <story> --gate written` says when. Each `slice` row is named by at
 least one scenario: a row no client can observe is a `skeleton` or a `contract`.
 
-Then run `npx ddd-ts-kit plan-waves`: it refuses a cycle in `Depends on`, an id no row carries
-and a row without owner, and otherwise shows the rows in waves (wave 1 can start now), cut into
+Then run `npx ddd-ts-kit plan-waves`, and commit the plan only once it exits 0. It refuses a cycle
+in `Depends on`, an id no row carries and a row without owner. It then replays the generator
+commands of the rows, in a copy of the project and in the order of the waves, and refuses each
+name a command introduces whose words the glossary of its context does not define, counting the
+`--term` of the row and of the rows it waits for: add the `--term` it names to that row, or to a
+row it depends on, rather than renaming against the glossary. It lists apart, without failing,
+the commands the generator refused for another reason (a missing `--module`, an aggregate no
+earlier row generates): fix those that the plan got wrong. Otherwise it shows the rows in waves (wave 1 can start now), cut into
 batches of one or two rows that `parallel-work` hands out, each row with the status of the rows it
 waits for, and apart the rows of another story that it waits for. A batch it says names no aggregate
 gets one in `Start with` (`--aggregate <Name>`) when the slice works on one.

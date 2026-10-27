@@ -10,13 +10,24 @@ export interface WavePlan {
   readonly mergeOrder: readonly string[];
   /** The rows not done that a planned row of another story depends on, in the order of the file. */
   readonly otherStories: readonly OtherStoryRow[];
+  /** The planned commands the generator refused, replayed, for another reason than a word; empty when they were not replayed. */
+  readonly notReplayed: readonly NotReplayed[];
 }
 
 export interface PlanProblem {
-  readonly kind: 'cycle' | 'unknown-dependency' | 'no-owner' | 'duplicate-id';
+  /** The first four keep the rows from being ordered; a word keeps a row from being run as written. */
+  readonly kind: 'cycle' | 'unknown-dependency' | 'no-owner' | 'duplicate-id' | 'undefined-word' | 'technical-word';
   /** The ids involved, in order: the rows of a cycle, a row then the id it names. */
   readonly rows: readonly string[];
   readonly message: string;
+}
+
+/** A planned command the generator refused when the plan was replayed: the names it would introduce after the refusal are not judged. */
+export interface NotReplayed {
+  readonly row: string;
+  /** `generate <kind> ...`, as the row writes it. */
+  readonly command: string;
+  readonly refusal: string;
 }
 
 /** Wave 1 holds the rows whose dependencies are all done; wave n the rows whose dependencies are done or in earlier waves. */
