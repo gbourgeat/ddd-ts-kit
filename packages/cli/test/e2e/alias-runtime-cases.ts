@@ -16,7 +16,7 @@ import {
   spelled,
 } from './compiled-project';
 import { bin, findingsOf, runIn } from './run-in';
-import { FAILED_COUNT } from './run-specs';
+import { allPassed, FAILED_COUNT, runSpecs } from './run-specs';
 import { FIRST_CLASS, label, SLOW, STACKS, swept } from './stacks';
 import { type Started, started } from './started';
 
@@ -33,6 +33,23 @@ const READS_TSCONFIG = /\n\s*resolve: \{ tsconfigPaths: true \},/;
 const JEST_MAPPER = /\n\s*moduleNameMapper: \{[^}]*\},/;
 
 const WITH_JS = ['--import-extension', 'js'];
+
+/** A scenario held in `pending(...)` on an assertion of `node:assert`, which Jest loads in another realm than the spec. */
+const PENDING_SPEC = 'src/pending-realm.spec.ts';
+
+const PENDING_SCENARIO = `import { strictEqual } from 'node:assert';
+import { it } from '@jest/globals';
+import { eventually, pending } from '@ddd-ts-kit/testing/e2e';
+
+it('waits on an assertion of node:assert', pending(async () => strictEqual(404, 200)));
+
+it(
+  'waits on an assertion of node:assert that eventually wraps',
+  pending(async () => {
+    await eventually(() => strictEqual(404, 200), { timeoutMs: 30, intervalMs: 10 });
+  }),
+);
+`;
 
 /** Kept alive next to the default: the default stack, the stack of the example, and jest, whose mapping differs. */
 const WRITTEN_WITH_JS = [STACKS[0], { ...FIRST_CLASS, broker: 'redis' }, STACKS.find((stack) => stack.tests === 'jest')]
@@ -167,30 +184,46 @@ export function describeTheAliasAtRunTime(cases: readonly AliasCase[]): void {
       120_000,
     );
 
-    it.runIf(stack.tests === 'jest')(
-      'the jest config maps each alias to its source, never to the compiled copy',
-      () => {
-        const mapper = JEST_MAPPER.exec(read(root, 'jest.config.js'))?.[0] ?? '';
-
-        const ending = bareSpelling ? '' : '\\\\.js';
-
-        expect(mapper).toContain(`'^@/(.*)${ending}$': ${jestTarget(bareSpelling, 'src')},`);
-        expect(mapper).toContain(`'^\\\\$test/(.*)${ending}$': ${jestTarget(bareSpelling, 'test')},`);
-        expect(mapper).not.toContain('dist');
-      },
-    );
-
-    it.runIf(stack.tests === 'jest' && installed('jest'))(
-      'jest runs a spec on the source an alias names',
-      () => {
-        const jest = path.join(REPO_ROOT, 'node_modules/jest/bin/jest.js');
-        const run = runIn(root, { command: process.execPath, args: ['--experimental-vm-modules', jest, PROBE_SPEC] });
-
-        expect(run).not.toMatch(FAILED_COUNT);
-      },
-      120_000,
-    );
+    describeJest(stack, bareSpelling, () => root);
   });
+}
+
+/** What Jest is held to on a jest stack: its mapper, a spec on the source an alias names, a scenario held in `pending(...)`. */
+function describeJest(stack: StackFlags, bareSpelling: boolean, root: () => string): void {
+  it.runIf(stack.tests === 'jest')('the jest config maps each alias to its source, never to the compiled copy', () => {
+    const mapper = JEST_MAPPER.exec(read(root(), 'jest.config.js'))?.[0] ?? '';
+
+    const ending = bareSpelling ? '' : '\\\\.js';
+
+    expect(mapper).toContain(`'^@/(.*)${ending}$': ${jestTarget(bareSpelling, 'src')},`);
+    expect(mapper).toContain(`'^\\\\$test/(.*)${ending}$': ${jestTarget(bareSpelling, 'test')},`);
+    expect(mapper).not.toContain('dist');
+  });
+
+  it.runIf(stack.tests === 'jest' && installed('jest'))(
+    'jest runs a spec on the source an alias names',
+    () => {
+      const jest = path.join(REPO_ROOT, 'node_modules/jest/bin/jest.js');
+      const run = runIn(root(), { command: process.execPath, args: ['--experimental-vm-modules', jest, PROBE_SPEC] });
+
+      expect(run).not.toMatch(FAILED_COUNT);
+    },
+    120_000,
+  );
+
+  it.runIf(stack.tests === 'jest' && installed('jest'))(
+    'jest holds a scenario in pending() on an assertion of node:assert, an error of another realm under its vm',
+    () => {
+      write(root(), PENDING_SPEC, PENDING_SCENARIO);
+
+      const run = runSpecs(root(), 'jest', PENDING_SPEC);
+
+      expect(run).toMatch(allPassed('jest'));
+      expect(run).toMatch(/Tests:\s+2 passed/);
+      expect(run).not.toMatch(FAILED_COUNT);
+    },
+    120_000,
+  );
 }
 
 const PROJECT_IMPORT = /(?:\bfrom|\bimport\(?)\s*['"]((?:@|\$[a-z][a-z0-9-]*)\/[^'"]*)['"]/g;

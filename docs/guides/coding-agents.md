@@ -88,7 +88,10 @@ writes a file another open story changes, and refuses once to end the session be
 ([story workflow](story-workflow.md)). In the worktree of a fix (`"kind": "fix"` in that file),
 it opens the code once the regression spec is locked, and refuses every edit of a locked spec,
 by the editor tools and by the shell, to its sub-agents; the session itself may write a new version,
-which `acceptance` reports and the `acceptance-judge` agent rules on. No hook
+which `acceptance` reports and the `acceptance-judge` agent rules on. A command that names the lock
+of an acceptance or a verdict may move or check a path (`cd`, `pushd`, `popd`, `pwd`, `test`), read
+the file (`cat`, `grep`, `sed` without `-i`, `awk`, `less`, `jq`), version it (`git`) or run the kit;
+any other program, or a redirection to a file, is a write, which only the CLI and that agent make. No hook
 runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 

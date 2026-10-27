@@ -13,6 +13,7 @@ import { changedEntries } from './changed-entries';
 import { planStaging } from './plan-staging';
 import { recordVerification } from './record-verification';
 import { runScript } from './run-script';
+import { storageOfSlice } from './storage-of-slice';
 import type { SliceToVerify } from './slice-to-verify';
 import type { SliceVerification } from './slice-verification';
 import { workerSliceOf } from './worker-slice-of';
@@ -45,6 +46,7 @@ export function verifySlice({ root, config, context, since }: SliceToVerify): Sl
 
   const tests = runScript({ root, manager, script: 'test', args: [context] });
   const merges = verifyMerges({ root, since });
+  const entries = changedEntries(root);
 
   return closedByWorker(root, {
     context,
@@ -54,7 +56,7 @@ export function verifySlice({ root, config, context, since }: SliceToVerify): Sl
     tests,
     merges,
     nearTheLimit: nearTheLimit(root, changed),
-    ...planStaging(changedEntries(root), config, context),
+    ...planStaging(entries, { config, context, storage: storageOfSlice({ root, config, context }, entries) }),
     citedRemovals: citedRemovals(project, since),
     ok: regenerate.ok && check.errorCount === 0 && tests.ok,
   });

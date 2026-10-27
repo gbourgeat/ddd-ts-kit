@@ -14,7 +14,7 @@ export function loadLooseProject(root: string, directories: readonly string[]): 
   const files: SourceFile[] = [];
 
   for (const directory of directories) {
-    walkDirectory(root, directory, (file, isDirectory) => {
+    walkDirectory({ root, directory }, (file, isDirectory) => {
       if (isDirectory || !isSource(file)) {
         return;
       }

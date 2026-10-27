@@ -43,6 +43,15 @@ export const TREE_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'tree/closed',
+    name: 'a dot-directory a tool leaves in a context',
+    expect: 'pass',
+    files: project({
+      [`${BILLING}/.claude/.cc-writes/marker`]: '',
+      [`${BILLING}/domain/.cache/stale.ts`]: 'export const stale = 1;\n',
+    }),
+  },
+  {
+    ruleId: 'tree/closed',
     name: 'an ad hoc directory',
     expect: { file: `${BILLING}/domain/utils` },
     files: project({ [`${BILLING}/domain/utils/rounding.ts`]: 'export const rounding = 1;\n' }),
@@ -251,6 +260,14 @@ export const TREE_FIXTURES: readonly Fixture[] = [
       'docs/architecture/slices.md':
         '# Slices\n\nAdd `src/contexts/billing/application/ports/credit-limit-reader.port.ts` and fill `src/contexts/billing/domain/aggregates/invoice.aggregate.ts:42`, then `src/platform/auth/roles/roles.ts` and `npm test`.\n',
       'docs/architecture/reviews/billing.md': 'See `src/contexts/billing/infrastructure/persistence/`.\n',
+    }),
+  },
+  {
+    ruleId: 'tree/documented-paths',
+    name: 'a note naming the dot-directory a tool left in a context',
+    expect: 'pass',
+    files: project({
+      'docs/architecture/reviews/billing.md': 'The sandbox left `src/contexts/billing/.claude/.cc-writes/` behind.\n',
     }),
   },
   {

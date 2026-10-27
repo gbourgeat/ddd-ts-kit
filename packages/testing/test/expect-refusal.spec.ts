@@ -1,3 +1,4 @@
+import { runInNewContext } from 'node:vm';
 import { ConceptError, DomainError, err, ok } from '@ddd-ts-kit/kernel';
 import { describe, expect, it } from 'vitest';
 import { expectProblem } from '../src/e2e';
@@ -90,6 +91,32 @@ describe('expectRefusal', () => {
   it('fails on an error without a code, naming its class', () => {
     expect(failureOf(() => expectRefusal(new TypeError('No ledger.'), 'EMPTY_ORDER'))).toBe(
       'Expected a refusal with code EMPTY_ORDER, but got TypeError: No ledger..',
+    );
+  });
+
+  it('names the class of an error from another realm, as Jest shows those of a core module', () => {
+    const foreign: unknown = runInNewContext("new TypeError('No ledger.')");
+
+    expect(failureOf(() => expectRefusal(foreign, 'EMPTY_ORDER'))).toBe(
+      'Expected a refusal with code EMPTY_ORDER, but got TypeError: No ledger..',
+    );
+  });
+
+  it('names an error by its name when no class of its own made it: a literal object, one without a prototype, an anonymous class', () => {
+    const literal = { name: 'LedgerClosed', message: 'No ledger.' };
+    const bare: unknown = Object.assign(Object.create(null), literal);
+    const anonymous = new (class extends Error {})('No ledger.');
+
+    expect(failureOf(() => expectRefusal(literal, 'EMPTY_ORDER'))).toBe(
+      'Expected a refusal with code EMPTY_ORDER, but got LedgerClosed: No ledger..',
+    );
+
+    expect(failureOf(() => expectRefusal(bare, 'EMPTY_ORDER'))).toBe(
+      'Expected a refusal with code EMPTY_ORDER, but got LedgerClosed: No ledger..',
+    );
+
+    expect(failureOf(() => expectRefusal(anonymous, 'EMPTY_ORDER'))).toBe(
+      'Expected a refusal with code EMPTY_ORDER, but got Error: No ledger..',
     );
   });
 
