@@ -66,7 +66,7 @@ describe('the identity preset on Prisma', () => {
     const members = read(root, `${CONTEXT}/infrastructure/persistence/prisma-member.repository.ts`);
 
     expect(members).toContain('where: { organisationId, role: MemberRole.Owner, removedAt: null }');
-    expect(members).toContain('// ddd-ts-kit-disable-next-line tenancy/scoped-statement');
+    expect(members).not.toContain('ddd-ts-kit-disable');
 
     expect(read(root, `${CONTEXT}/infrastructure/persistence/account.personal-fields.ts`)).toContain(
       "fields: ['email', 'display_name'],",

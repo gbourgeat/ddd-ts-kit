@@ -16,6 +16,7 @@ export function parseContext(value: unknown): ContextConfig {
     deployable: raw['deployable'] === true,
     owners: strings(raw['owners'], []),
     modules: isRecord(raw['modules']) ? Object.entries(raw['modules']).map(parseModule) : [],
+    ...(raw['tenancy'] === undefined ? {} : { tenancy: text(raw['tenancy'], '') }),
   };
 }
 
