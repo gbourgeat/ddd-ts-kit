@@ -28,10 +28,10 @@ import { createPrismaUnitOfWork, PrismaOutboxStore, PrismaProcessedEventStore } 
 import type { PrismaClient } from '{{alias.generated}}/prisma/client{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 
-/** The schema of the messaging tables{{#if queue.processTable}} and of the background work{{/if}}, as prisma/schema.prisma names it. */
+/** The schema of the messaging tables{{#if queue.processTable}} and of the background work{{/if}}, as prisma/schema/schema.prisma names it. */
 const MESSAGING_SCHEMA = 'messaging';
 {{#if eventSourcing.on}}
-/** The schema of the event store, as prisma/schema.prisma names it. */
+/** The schema of the event store, as prisma/schema/schema.prisma names it. */
 const EVENT_STORE_SCHEMA = 'event_store';
 {{/if}}
 

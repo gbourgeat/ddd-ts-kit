@@ -155,7 +155,7 @@ describe('init --audit', () => {
     );
 
     // The models the audit package proves against its SQL, as they are.
-    expect(read(prisma, 'prisma/schema.prisma')).toContain(auditPrismaModels('audit'));
+    expect(read(prisma, 'prisma/schema/schema.prisma')).toContain(auditPrismaModels('audit'));
 
     expect(read(typeorm, 'src/platform/audit/create-audit.ts')).toContain(
       'return new TypeOrmAuditTrail(persistence.database, { schema: AUDIT_SCHEMA });',

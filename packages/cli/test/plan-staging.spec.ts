@@ -30,6 +30,26 @@ describe('what a slice stages, by a closed list', () => {
     expect(plan.toStage).toHaveLength(8);
   });
 
+  it('stages the Prisma models of its context with its mapper, never the main schema nor another context', () => {
+    const plan = planStaging(
+      [
+        modified('src/contexts/billing/infrastructure/persistence/invoice.mapper.ts'),
+        modified('prisma/schema/billing.prisma'),
+        modified('prisma/schema/schema.prisma'),
+        modified('prisma/schema/shipping.prisma'),
+      ],
+      config,
+      'billing',
+    );
+
+    expect(plan.toStage).toEqual([
+      'src/contexts/billing/infrastructure/persistence/invoice.mapper.ts',
+      'prisma/schema/billing.prisma',
+    ]);
+
+    expect(plan.leftOut).toEqual(['prisma/schema/schema.prisma', 'prisma/schema/shipping.prisma']);
+  });
+
   it('stages the acceptance spec a slice unwraps, never the lock of the story', () => {
     const plan = planStaging(
       [modified('test/acceptance/us5.acceptance.spec.ts'), modified('test/acceptance/us5.acceptance.lock.json')],

@@ -790,7 +790,7 @@ for (const statement of auditGuardStatements('audit')) {
 
 new DrizzleAuditTrail(unitOfWork, { schema: 'audit' });
 
-// prisma: the models in prisma/schema.prisma (with "audit" in the schemas of the datasource), the
+// prisma: the models in prisma/schema/schema.prisma (with "audit" in the schemas of the datasource), the
 // guard in a migration created with `prisma migrate dev --create-only`
 console.log(auditPrismaModels('audit'));
 new PrismaAuditTrail(unitOfWork, { schema: 'audit' });

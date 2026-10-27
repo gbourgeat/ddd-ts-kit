@@ -200,6 +200,9 @@ const DECISION_RECORD = /^docs\/adr\/[^/]+\.md$/;
 // The migration a worker generates in its worktree, `npm run db:generate working-<what>`, as each
 // migration tool writes it; the conductor generates the real one on the trunk at merge.
 const WORKING_MIGRATION = /(^|\/)migrations\/(.+\/)?\d+[_-]working[_-][\w-]*(\.(sql|[cm]?[jt]s)|\/migration\.sql)$/;
+// The models of one context on Prisma, `prisma/schema/<context>.prisma`: its worker changes a column
+// with the mapper; `prisma/schema/schema.prisma` (the client, the datasource, the platform) is shared.
+const PRISMA_CONTEXT_SCHEMA = /^prisma\/schema\/([a-z][a-z0-9-]*)\.prisma$/;
 const REPORT_TO_CONDUCTOR = 'Do not work around it: finish what you can and report the need to the conductor.';
 // Where the guard keeps the state of a worker between two of its calls: the kit's ignored folder.
 const GUARD_STATE = '.ddd-ts-kit/guard';
@@ -898,7 +901,7 @@ function workerNotice(project, input) {
   const context = workerContext(project, input);
   return context
     ? [
-        `Worker scope: bounded context "${context}" only (${project.contextsDir}/${context}/). Shared files belong to the conductor.`,
+        `Worker scope: bounded context "${context}" only (${project.contextsDir}/${context}/, with Prisma its models in prisma/schema/${context}.prisma). Shared files belong to the conductor.`,
       ]
     : [];
 }
@@ -1075,16 +1078,24 @@ function workerScopeReason(project, file, input) {
     E2E_SPEC.test(path) ||
     path.startsWith(`test/e2e/support/${context}/`) ||
     path === WORKER_REPORT ||
+    prismaSchemaContext(path) === context ||
     isWorkingMigration(project, path) ||
     isOwnDecisionRecord(project, path)
   ) {
     return undefined;
   }
-  const owner = insideContexts(project, path)
-    ? 'belongs to another bounded context, which has its own worker'
-    : 'is a shared file (config, composition root, platform, generated documents, migrations, dependencies) that only the conductor or a generator changes';
+  const owner =
+    insideContexts(project, path) || prismaSchemaContext(path)
+      ? 'belongs to another bounded context, which has its own worker'
+      : 'is a shared file (config, composition root, platform, generated documents, migrations, dependencies) that only the conductor or a generator changes';
 
-  return `You build the context "${context}": writes are limited to ${project.contextsDir}/${context}/, its end-to-end specs and their support in test/e2e/support/${context}/. ${path} ${owner}. ${REPORT_TO_CONDUCTOR}`;
+  return `You build the context "${context}": writes are limited to ${project.contextsDir}/${context}/, its models on Prisma (prisma/schema/${context}.prisma), its end-to-end specs and their support in test/e2e/support/${context}/. ${path} ${owner}. ${REPORT_TO_CONDUCTOR}`;
+}
+
+// The context whose models a file of the Prisma schema holds; the main file holds none.
+function prismaSchemaContext(path) {
+  const context = PRISMA_CONTEXT_SCHEMA.exec(path)?.[1];
+  return context === 'schema' ? undefined : context;
 }
 
 // A record the worker generated and has not committed yet; the records of the trunk are not its to rewrite.

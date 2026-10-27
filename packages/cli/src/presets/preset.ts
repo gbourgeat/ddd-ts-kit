@@ -35,7 +35,7 @@ export interface Preset {
   files(config: Config): readonly PresetFile[];
   /**
    * The models and enums of the context on Prisma, a template of `templates/presets/<name>/`: laid
-   * out in `prisma/schema.prisma` once the generators ran, each in place of the model they started.
+   * out in `prisma/schema/<context>.prisma` once the generators ran, each in place of the model they started.
    */
   readonly prismaModels?: string;
   /**

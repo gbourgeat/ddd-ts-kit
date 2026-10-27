@@ -525,9 +525,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    a new agent whatever the last one did; several worktrees of the context need --worktree
   verify-slice     closes a slice before its commit, in one run: the regenerate script, check on the files
                    changed since --since (new ones included), the test script for the context; then the
-                   changed files past 300 of the 350 lines, the paths of the slice to stage (its context, an
-                   end-to-end spec, a working migration, the derived files git tracks) and every other
-                   changed path, left out and never to stage with it; the merges since --since, as
+                   changed files past 300 of the 350 lines, the paths of the slice to stage (its context, its
+                   Prisma models, an end-to-end spec, a working migration, the derived files git tracks) and
+                   every other changed path, left out and never to stage with it; the merges since --since, as
                    verify-merge checks them, reported without failing the slice in this version (a later
                    minor version fails it); exits 1 while a step fails; then the names the slice removes
                    that the design of a row not done still cites (never a failure); in the worktree of a

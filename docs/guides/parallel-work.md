@@ -36,7 +36,7 @@ until the other exists, and the two meet in every file.
 | two use case folders of one context | different workers | mostly | they meet in the aggregate, the declarations of their layer and the routes file: merge often |
 | `ddd-ts-kit.config.json` | `init`, `generate context`, `generate service`, `generate worker`, `generate adr --deviation` | **no** | create all contexts and relationships in the bootstrap; later changes one at a time, by the platform owner |
 | `src/platform/composition/compose-application.ts`, `src/platform/composition/platform.module.ts`, `src/platform/composition/platform-test.module.ts` | `generate context` (the composition root), `generate gateway` (the two modules, in the declared style), hand edits | **no** | registration regions are written between markers; two branches adding a context both touch them |
-| the registries of the platform: `src/platform/database/schema.ts` (with Prisma, `prisma/schema.prisma`), `src/platform/auth/authorization/permissions.ts`, `src/platform/auth/authorization/role.ts`, `src/platform/auth/authorization/access-policies.ts` (explicit style), `src/platform/audit/audited-events.ts`, `src/platform/jobs/job-settings.ts`, the grants under `src/platform/auth/`, and the helper `src/platform/resilience/own-policy.ts` | `generate context`, `generate repository` (the first of a context; every one with Prisma), `generate command --aggregate` on an aggregate that has no repository yet, `generate route-group --role` with a new role, `generate policy` (explicit style), `generate integration-event`, `generate job`, `generate adapter` (the first of a project wired on tsyringe) | **no** | run these generators on the trunk before the workers start; `generate --help --json` says which kinds write shared files (`writesShared`) and which ones |
+| the registries of the platform: `src/platform/database/schema.ts` (with Prisma, the datasource of `prisma/schema/schema.prisma`), `src/platform/auth/authorization/permissions.ts`, `src/platform/auth/authorization/role.ts`, `src/platform/auth/authorization/access-policies.ts` (explicit style), `src/platform/audit/audited-events.ts`, `src/platform/jobs/job-settings.ts`, the grants under `src/platform/auth/`, and the helper `src/platform/resilience/own-policy.ts` | `generate context`, `generate repository` (the first of a context), `generate command --aggregate` on an aggregate that has no repository yet, `generate route-group --role` with a new role, `generate policy` (explicit style), `generate integration-event`, `generate job`, `generate adapter` (the first of a project wired on tsyringe) | **no** | run these generators on the trunk before the workers start; `generate --help --json` says which kinds write shared files (`writesShared`) and which ones |
 | `src/main.ts` | hand edits | **no** | the platform owner |
 | `test/architecture/extractable.spec.ts`, `knip.json` (the first context) | `init`, `generate context` | **no** | same: written with each context |
 | `<context>.declarations.ts` and the `<layer>.declarations.ts` of each layer (what each constructor is injected), `<context>.dependencies.ts` under discovery | every `generate` in that context, `docs`, and `npm run dev` | per context | derived: never merge by hand, regenerate (below) |
@@ -156,7 +156,12 @@ derived file, regenerates and commits the result.
 ### Migrations
 
 Each context owns its tables in its own database schema, so two contexts never alter the same
-table. What they share is the ordered list of migration files. Generate the migration last,
+table, and declares them in a file of its own, its worker's: the tables file of its
+`infrastructure/persistence/` (Drizzle, Knex, TypeORM) or, on Prisma, `prisma/schema/<context>.prisma`,
+beside the shared main file `prisma/schema/schema.prisma` (the client, the datasource, the
+tables of the platform). A stored field changes its column and the mapper in one commit on the
+worker's branch: a column written on the trunk alone breaks the typecheck of the mapper there.
+What the contexts share is the ordered list of migration files. Generate the migration last,
 just before merging, on top of the current default branch; if two branches each added "the
 next" migration, the second one regenerates its own. Never edit a migration that has run
 somewhere.

@@ -95,9 +95,9 @@ export const FILES_FIXTURES: readonly Fixture[] = [
   {
     ruleId: 'persistence/no-file-content',
     name: 'a Prisma field of bytes',
-    expect: { file: 'prisma/schema.prisma' },
+    expect: { file: 'prisma/schema/billing.prisma' },
     files: project({
-      'prisma/schema.prisma': 'model Receipt {\n  id      String @id\n  content Bytes\n}\n',
+      'prisma/schema/billing.prisma': 'model Receipt {\n  id      String @id\n  content Bytes\n}\n',
     }),
   },
 ];

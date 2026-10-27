@@ -1,5 +1,5 @@
 [English](bootstrap-with-well-designed-contexts.md) · **Français**
-<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:966df13debe21bc1 -->
+<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:713f2207263239d5 -->
 
 # Démarrer avec des contextes bien conçus
 
@@ -79,7 +79,7 @@ dans un projet qui existe et décide avec OpenFGA (`preset-identity-generated.sp
 | Autorisation | `identityPermissions`, sept politiques sur `OrganisationRights` (les droits de l'acteur dans une organisation : son rôle et ce que lui prêtent les délégations actives) |
 | Langage publié | `organisation.opened`, `member.joined`, `member.role-changed`, `member.removed`, `delegation.granted`, `delegation.revoked`, `account.deactivated`, par l'outbox |
 | Fournisseur d'identité | le port `IdentityProviderAdmin`, tenu à jour par quatre consommateurs des faits publiés, livrés au moins une fois (organisation connue, membre ajouté ou retiré, compte désactivé), avec un *fake* en mémoire et `KeycloakIdentityProviderAdmin`, une recette pour Keycloak 26 ou plus récent |
-| Adaptateurs | des *repositories* Knex, Drizzle ou Prisma, des *mappers*, des tables (sur Prisma, les modèles et les *enums* de `prisma/schema.prisma`) et le lecteur de recherche, chacun avec sa *spec* de contrat |
+| Adaptateurs | des *repositories* Knex, Drizzle ou Prisma, des *mappers*, des tables (sur Prisma, les modèles et les *enums* de `prisma/schema/<context>.prisma`) et le lecteur de recherche, chacun avec sa *spec* de contrat |
 | Tests | des *builders*, des *fakes*, des *specs* unitaires du modèle et de chaque gestionnaire et contrôleur, les *specs* de contrat des *repositories*, la *spec* de l'adaptateur Keycloak contre un serveur HTTP local |
 | Documentation | l'objet, la classification, le glossaire et une section `## Design` dans `CONTEXT.md` ; avec des *tenants*, un enregistrement de décision |
 

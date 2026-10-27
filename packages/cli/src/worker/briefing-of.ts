@@ -1,4 +1,5 @@
 import { inDialect } from '../package-manager/in-dialect';
+import { prismaSchemaOf } from '../stack/prisma-schema-of';
 import type { BriefedSlice } from './briefed-slice';
 import { designLine } from './design-line';
 import { staleNamesBlock } from './stale-names-block';
@@ -92,6 +93,12 @@ function scopeLines({ config, context, generators }: WorkerPlace, directory: str
     `- You may write: ${directory}/**, test/e2e/<use-case>.e2e.spec.ts of your slices (split by behaviour into`,
     `  test/e2e/<use-case>-<behaviour>.e2e.spec.ts when one grows long), and their helpers and worlds in`,
     `  test/e2e/support/${context}/.`,
+    ...(config.stack.orm === 'prisma'
+      ? [
+          `- The models of your context are yours too: ${prismaSchemaOf(context)}. A stored field changes its`,
+          `  column there and the mapper in the same commit; then \`${inDialect('npm run db:client', config.stack.packageManager)}\`.`,
+        ]
+      : []),
     `- You may not write anything else. Shared files (config, ${config.platformDir}, ${config.sourceRoot}/main.ts,`,
     '  package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:',
     '  report the need, do not work around it. The shell writes inside your scope only, as the editor tools do:',

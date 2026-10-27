@@ -9,10 +9,10 @@ const DATABASE_SCRIPTS: Readonly<Record<string, Record<string, string>>> = {
   // Through the CLI: without a terminal drizzle-kit cannot ask whether a column is renamed, writes nothing and exits 0; `drizzle-generate` fails then, with the fix.
   drizzle: { 'db:generate': 'ddd-ts-kit drizzle-generate --name', 'db:migrate': 'drizzle-kit migrate' },
   knex: { 'db:generate': 'knex migrate:make', 'db:migrate': 'npm run build && knex migrate:latest' },
-  // The client and the schema of the tests are build products of prisma/schema.prisma: every entry point refreshes them.
+  // The client and the schema of the tests are build products of the files of prisma/schema/: every entry point refreshes them.
   prisma: {
     'db:client':
-      'prisma generate && prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script -o generated/schema.sql',
+      'prisma generate && prisma migrate diff --from-empty --to-schema prisma/schema --script -o generated/schema.sql',
     // Through the CLI: with an audit trail, the migration that creates it is made append-only, which Prisma cannot write.
     'db:generate': 'ddd-ts-kit prisma-generate --name',
     'db:migrate': 'prisma migrate deploy',

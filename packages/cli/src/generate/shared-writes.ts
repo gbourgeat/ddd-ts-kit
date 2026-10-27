@@ -8,7 +8,10 @@ export interface SharedWrite {
   readonly worker?: string;
 }
 
-const STORAGE = ['the schema index of the platform (<platformDir>/database/schema.ts)', 'prisma/schema.prisma'];
+const STORAGE = [
+  'the schema index of the platform (<platformDir>/database/schema.ts)',
+  'the datasource of the Prisma schema (prisma/schema/schema.prisma)',
+];
 
 const GRANTS = [
   'the roles of the platform (<platformDir>/auth/roles/roles.ts)',
@@ -18,7 +21,7 @@ const GRANTS = [
 const GRANTED = '--grant <role> names the role that holds the permission (stack.authz rbac)';
 
 const STORED =
-  'the repository is the first of its context with drizzle, knex or typeorm (the tables file of the context joins the schema index), or stack.orm is prisma (every model joins the one schema)';
+  'the repository is the first of its context: with drizzle, knex or typeorm the tables file of the context joins the schema index, with prisma the database schema of the context joins the datasource (its models go to prisma/schema/<context>.prisma, the file of the context)';
 
 /** One entry per kind whose `writesShared` is true: `--local-only` refuses those writes, the conductor of a parallel build makes them on the trunk. */
 export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {

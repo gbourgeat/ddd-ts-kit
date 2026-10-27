@@ -20,7 +20,7 @@ npm run db:migrate
 npm run db:migrate      # builds, then applies migrations/ (the first one creates every table)
 {{/if}}
 {{#if orm.prisma}}
-npm run db:client       # the Prisma client and the schema of the tests, from prisma/schema.prisma
+npm run db:client       # the Prisma client and the schema of the tests, from the files of prisma/schema/
 npm run db:generate initial   # prisma/migrations/<timestamp>_initial/, from the schema
 npm run db:migrate
 {{/if}}

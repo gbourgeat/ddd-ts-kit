@@ -102,7 +102,7 @@ describe('generate repository --personal declares the personal columns of the ta
 
     expect(read(prisma, DECLARATION)).toContain("  fields: ['customer_email', 'customer_name'],");
 
-    expect(read(prisma, 'prisma/schema.prisma')).toContain(
+    expect(read(prisma, 'prisma/schema/billing.prisma')).toContain(
       '  customerEmail String? @map("customer_email")\n  customerName String? @map("customer_name")\n',
     );
 

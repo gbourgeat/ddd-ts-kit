@@ -33,16 +33,16 @@ describe('init --tenancy', () => {
       'export const outbox = tenantOutboxTable(MESSAGING_SCHEMA);',
     );
 
-    expect(read(prisma, 'prisma/schema.prisma')).toContain('  tenantId      String?   @map("tenant_id")\n');
+    expect(read(prisma, 'prisma/schema/schema.prisma')).toContain('  tenantId      String?   @map("tenant_id")\n');
     expect(read(prisma, 'src/platform/database/persistence-over.ts')).toContain('      tenant: true,\n    }),');
-    expect(read(prisma, 'prisma/schema.prisma')).not.toContain('tenant_id") @db.VarChar');
+    expect(read(prisma, 'prisma/schema/schema.prisma')).not.toContain('tenant_id") @db.VarChar');
 
     expect(read(typeorm, 'src/platform/database/schema.ts')).toContain(
       'export const outbox = outboxEntity({ schema: MESSAGING_SCHEMA, tenant: true });',
     );
 
     // The jobs table keeps a tenant in every project: the scope of an idempotency key, not a tenancy.
-    const singleTenant = read(initProject('--orm', 'prisma', '--audit', 'off'), 'prisma/schema.prisma');
+    const singleTenant = read(initProject('--orm', 'prisma', '--audit', 'off'), 'prisma/schema/schema.prisma');
 
     expect(
       singleTenant.slice(singleTenant.indexOf('model OutboxRecord'), singleTenant.indexOf('model ProcessedEvent')),
@@ -106,7 +106,7 @@ describe('init --tenancy on Prisma and TypeORM', () => {
     }
 
     const prismaAdapter = read(prisma, 'src/contexts/billing/infrastructure/persistence/prisma-invoice.repository.ts');
-    const model = read(prisma, 'prisma/schema.prisma');
+    const model = read(prisma, 'prisma/schema/billing.prisma');
 
     const typeormAdapter = read(
       typeorm,

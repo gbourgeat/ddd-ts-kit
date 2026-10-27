@@ -1,10 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { PRISMA_SCHEMA_FOLDER } from '../../stack/prisma-schema-folder';
 import type { Project } from '../model/project';
 
-const PRISMA_SCHEMA = 'prisma/schema.prisma';
-
-/** A column of a model of `prisma/schema.prisma` that lives in the schema of a context. */
+/** A column of a model of the Prisma schema (`prisma/schema/`) that lives in the schema of a context. */
 export interface PrismaColumn {
   readonly file: string;
   readonly context: string;
@@ -16,17 +15,27 @@ export interface PrismaColumn {
 const FIELD = /^\s{2}([A-Za-z_]\w*)\s+[A-Z]\w*(?:\[\]|\?)?(.*)$/;
 
 /**
- * The columns of the models of `prisma/schema.prisma` whose `@@schema` is the schema of a context
- * (its name, `-` written `_`): the name `@map` gives, or the name of the field. Read from the
- * disk: the file is no TypeScript source. Relations (a field whose type is another model) and the
- * attributes of a model are not columns.
+ * The columns of the models of the Prisma schema (every `.prisma` file of `prisma/schema/`) whose
+ * `@@schema` is the schema of a context (its name, `-` written `_`): the name `@map` gives, or the
+ * name of the field. Read from the disk: the files are no TypeScript source. Relations (a field
+ * whose type is another model) and the attributes of a model are not columns.
  */
 export function prismaColumnsOf(project: Project): PrismaColumn[] {
-  const text = readIfPresent(path.join(project.root, PRISMA_SCHEMA));
+  const files = prismaFilesOf(project.root).map(({ file, text }) => ({ file, lines: text.split('\n') }));
   const contexts = new Map(project.contextsOnDisk.map((context) => [context.replaceAll('-', '_'), context]));
-  const lines = text.split('\n');
-  const models = new Set(lines.flatMap((line) => /^model\s+(\w+)\s*\{/.exec(line)?.[1] ?? []));
 
+  const models = new Set(
+    files.flatMap(({ lines }) => lines.flatMap((line) => /^model\s+(\w+)\s*\{/.exec(line)?.[1] ?? [])),
+  );
+
+  return files.flatMap(({ file, lines }) => columnsOf(file, lines, { contexts, models }));
+}
+
+function columnsOf(
+  file: string,
+  lines: readonly string[],
+  { contexts, models }: { readonly contexts: ReadonlyMap<string, string>; readonly models: ReadonlySet<string> },
+): PrismaColumn[] {
   return blocksOf(lines).flatMap(({ start, end }) => {
     const body = lines.slice(start + 1, end);
     const schema = body.map((line) => /@@schema\("([^"]+)"\)/.exec(line)?.[1]).find((found) => found !== undefined);
@@ -44,7 +53,7 @@ export function prismaColumnsOf(project: Project): PrismaColumn[] {
 
           return [
             {
-              file: PRISMA_SCHEMA,
+              file,
               context,
               field,
               column: /@map\("([^"]+)"\)/.exec(rest)?.[1] ?? field,
@@ -68,10 +77,22 @@ function blocksOf(lines: readonly string[]): { readonly start: number; readonly 
   });
 }
 
-function readIfPresent(file: string): string {
+/** The `.prisma` files of the schema folder, by their path from the root, as Prisma reads them: subfolders included. */
+function prismaFilesOf(root: string): { readonly file: string; readonly text: string }[] {
+  return readTree(path.join(root, PRISMA_SCHEMA_FOLDER))
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.prisma'))
+    .map((entry) => path.join(entry.parentPath, entry.name))
+    .sort()
+    .map((absolute) => ({
+      file: path.relative(root, absolute).split(path.sep).join('/'),
+      text: fs.readFileSync(absolute, 'utf8'),
+    }));
+}
+
+function readTree(directory: string): fs.Dirent[] {
   try {
-    return fs.readFileSync(file, 'utf8');
+    return fs.readdirSync(directory, { recursive: true, withFileTypes: true });
   } catch {
-    return '';
+    return [];
   }
 }

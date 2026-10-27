@@ -34,7 +34,7 @@ runs:
       shell: bash
       run: npm ci
 {{#if orm.prisma}}
-    - name: The Prisma client and the schema of the tests, build products of prisma/schema.prisma
+    - name: The Prisma client and the schema of the tests, build products of prisma/schema/
       shell: bash
       run: npm run db:client
 {{/if}}

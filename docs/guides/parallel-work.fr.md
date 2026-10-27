@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:0582d5a4db531cc3 -->
+<!-- translation-of: parallel-work.md sha256:72253fce99b2c424 -->
 
 # Travailler en parallèle sans collisions
 
@@ -37,7 +37,7 @@ est intestable tant que l'autre n'existe pas, et les deux se rencontrent dans ch
 | deux dossiers de cas d'usage d'un même contexte | des *workers* différents | en grande partie | ils se rencontrent dans l'agrégat, les déclarations de leur couche et le fichier des routes : fusionnez souvent |
 | `ddd-ts-kit.config.json` | `init`, `generate context`, `generate service`, `generate worker`, `generate adr --deviation` | **non** | créez tous les contextes et toutes les relations à l'amorçage ; les changements ultérieurs un par un, par le propriétaire de la plateforme |
 | `src/platform/composition/compose-application.ts`, `src/platform/composition/platform.module.ts`, `src/platform/composition/platform-test.module.ts` | `generate context` (la racine de composition), `generate gateway` (les deux modules, dans le style déclaré), des modifications à la main | **non** | les régions d'enregistrement sont écrites entre des marqueurs ; deux branches qui ajoutent chacune un contexte les touchent toutes les deux |
-| les registres de la plateforme : `src/platform/database/schema.ts` (avec Prisma, `prisma/schema.prisma`), `src/platform/auth/authorization/permissions.ts`, `src/platform/auth/authorization/role.ts`, `src/platform/auth/authorization/access-policies.ts` (style explicite), `src/platform/audit/audited-events.ts`, `src/platform/jobs/job-settings.ts`, les attributions sous `src/platform/auth/`, et l'utilitaire `src/platform/resilience/own-policy.ts` | `generate context`, `generate repository` (le premier d'un contexte ; chacun avec Prisma), `generate command --aggregate` sur un agrégat qui n'a pas encore de *repository*, `generate route-group --role` avec un nouveau rôle, `generate policy` (style explicite), `generate integration-event`, `generate job`, `generate adapter` (le premier d'un projet câblé sur tsyringe) | **non** | lancez ces générateurs sur le tronc avant que les *workers* ne commencent ; `generate --help --json` dit quelles sortes écrivent des fichiers partagés (`writesShared`) et lesquels |
+| les registres de la plateforme : `src/platform/database/schema.ts` (avec Prisma, la datasource de `prisma/schema/schema.prisma`), `src/platform/auth/authorization/permissions.ts`, `src/platform/auth/authorization/role.ts`, `src/platform/auth/authorization/access-policies.ts` (style explicite), `src/platform/audit/audited-events.ts`, `src/platform/jobs/job-settings.ts`, les attributions sous `src/platform/auth/`, et l'utilitaire `src/platform/resilience/own-policy.ts` | `generate context`, `generate repository` (le premier d'un contexte), `generate command --aggregate` sur un agrégat qui n'a pas encore de *repository*, `generate route-group --role` avec un nouveau rôle, `generate policy` (style explicite), `generate integration-event`, `generate job`, `generate adapter` (le premier d'un projet câblé sur tsyringe) | **non** | lancez ces générateurs sur le tronc avant que les *workers* ne commencent ; `generate --help --json` dit quelles sortes écrivent des fichiers partagés (`writesShared`) et lesquels |
 | `src/main.ts` | des modifications à la main | **non** | le propriétaire de la plateforme |
 | `test/architecture/extractable.spec.ts`, `knip.json` (le premier contexte) | `init`, `generate context` | **non** | de même : écrits avec chaque contexte |
 | `<context>.declarations.ts` et le `<layer>.declarations.ts` de chaque couche (ce qui est injecté dans chaque constructeur), `<context>.dependencies.ts` en mode découverte | chaque `generate` dans ce contexte, `docs`, et `npm run dev` | par contexte | dérivés : ne jamais fusionner à la main, régénérer (ci-dessous) |
@@ -166,8 +166,13 @@ qui prend le côté du tronc de chaque fichier dérivé, régénère et commite 
 ### Les migrations
 
 Chaque contexte possède ses tables dans son propre schéma de base de données, si bien que deux
-contextes ne modifient jamais la même table. Ce qu'ils partagent, c'est la liste ordonnée des
-fichiers de migration. Générez la migration en dernier, juste avant la fusion, au-dessus de la
+contextes ne modifient jamais la même table, et les déclare dans un fichier à lui, celui de son
+*worker* : le fichier des tables de son `infrastructure/persistence/` (Drizzle, Knex, TypeORM) ou,
+sur Prisma, `prisma/schema/<context>.prisma`, à côté du fichier principal partagé
+`prisma/schema/schema.prisma` (le client, la datasource, les tables de la plateforme). Un champ
+stocké change sa colonne et le *mapper* dans un même commit sur la branche du *worker* : une
+colonne écrite seule sur le tronc y casse la vérification de types du *mapper*. Ce que les
+contextes partagent, c'est la liste ordonnée des fichiers de migration. Générez la migration en dernier, juste avant la fusion, au-dessus de la
 branche par défaut à jour ; si deux branches ont chacune ajouté « la prochaine » migration, la
 seconde régénère la sienne. Ne modifiez jamais une migration qui a été exécutée quelque part.
 
