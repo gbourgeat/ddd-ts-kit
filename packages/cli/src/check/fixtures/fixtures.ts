@@ -4,6 +4,7 @@ import { AUTHZ_DECLARED_FIXTURES } from './authz-declared-fixtures';
 import { AUTHZ_FIXTURES } from './authz-fixtures';
 import { AUTHZ_GRANTED_FIXTURES } from './authz-granted-fixtures';
 import { AUTHZ_POLICY_FIXTURES } from './authz-policy-fixtures';
+import { AUTHZ_SYSTEM_ACTOR_GRANTED_FIXTURES } from './authz-system-actor-granted-fixtures';
 import { AUTHZ_SCOPE_NARROWS_FIXTURES } from './authz-scope-narrows-fixtures';
 import { AUTHZ_RESOURCE_MODELLED_FIXTURES } from './authz-resource-modelled-fixtures';
 import { CLEAN_FIXTURES } from './clean-fixtures';
@@ -68,6 +69,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...AUTHZ_GRANTED_FIXTURES,
   ...AUTHZ_SCOPE_NARROWS_FIXTURES,
   ...AUTHZ_RESOURCE_MODELLED_FIXTURES,
+  ...AUTHZ_SYSTEM_ACTOR_GRANTED_FIXTURES,
   ...CLEAN_FIXTURES,
   ...COMPOSITION_FIXTURES,
   ...CONFIG_FIXTURES,

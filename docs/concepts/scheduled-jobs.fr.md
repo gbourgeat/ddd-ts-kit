@@ -1,5 +1,5 @@
 [English](scheduled-jobs.md) · **Français**
-<!-- translation-of: scheduled-jobs.md sha256:b06276ab29e943f9 -->
+<!-- translation-of: scheduled-jobs.md sha256:f8e503b882baa393 -->
 
 # Jobs planifiés
 
@@ -85,6 +85,12 @@ Pourquoi ce découpage :
   publique quand rien d'autre ne peut l'envoyer.
 - **Il se déplace avec son contexte.** Les *jobs* sont des déclarations d'un contexte. Un
   contexte extrait en service emporte ses *jobs* ; rien n'est global.
+
+Une classe de *job* qu'aucun fichier de module n'enregistre ne tourne jamais, et rien d'autre ne le
+remarque : dans le style explicite, `scheduling/job-registered` (une erreur) signale un *job* ou un
+*job* d'arrière-plan qu'aucun `platform.jobs.register`, `platform.backgroundJobs.register` ni
+`.handledBy(..)` ne nomme. Avec des relations, un *job* qui envoie une commande protégée a besoin
+de la relation de son acteur système, que `authz/system-actor-granted` vérifie.
 
 Le nom est `<context>.<job-name>`, écrit comme un littéral : c'est l'acteur sous lequel le *job*
 s'exécute, la clé de son verrou, son étiquette dans les métriques et la clé de ses réglages, et

@@ -182,6 +182,14 @@ remove it, and nothing else of the scenario. One that still fails on what this r
 means the slice is not done. A scenario that seems wrong is never changed to pass: skill
 `ddd-ts-kit:testing`, "Acceptance of a story".
 
+The slice runs only when the started application can do it, which `verify-slice` and the specs on
+fakes do not start: before it is `done`, run
+`npx ddd-ts-kit check --rule authz/granted --rule authz/system-actor-granted --rule scheduling/job-registered`.
+A permission nobody holds, a job no module file registers and a handler acting as a system actor
+without its relationship each pass every spec and are refused or never run once the application
+starts. A warning of `authz/granted` left on purpose (the grant comes with a later slice) is said
+in the report and the row stays `in progress`.
+
 Then one commit for the slice (skill `ddd-ts-kit:commit-discipline`), and its row marked in
 `slices.md` when you are the conductor. Report in a few lines: the rules encoded and where,
 test results, contract changes. A marker `todo` still lists in the slice means not done:
