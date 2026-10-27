@@ -313,3 +313,11 @@ describe('generate domain-event on an event-sourced aggregate reshaped by hand',
     expect(read(reshaped, AGGREGATE)).not.toContain('LedgerCredited');
   });
 });
+
+describe('the spec of an event-sourced aggregate', () => {
+  it('uses the builder written with it, so the deadcode gate (knip) finds no unused file', () => {
+    expect(read(root, `${BILLING}/test/unit/ledger.aggregate.spec.ts`)).toMatch(
+      /builders\/ledger\.builder'[\s\S]*aLedger\(\)/,
+    );
+  });
+});
