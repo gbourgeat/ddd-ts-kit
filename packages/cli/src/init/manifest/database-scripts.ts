@@ -1,4 +1,6 @@
 import type { Config } from '../../config';
+import { PRISMA_SCHEMA_FOLDER } from '../../prisma-schema';
+import { prismaClientScript } from './prisma-client-script';
 
 /** The pipelines call `db:migrate` before the adapter specs whatever the stack: without a database it says so and succeeds. */
 const DATABASE_SCRIPTS: Readonly<Record<string, Record<string, string>>> = {
@@ -11,8 +13,7 @@ const DATABASE_SCRIPTS: Readonly<Record<string, Record<string, string>>> = {
   knex: { 'db:generate': 'knex migrate:make', 'db:migrate': 'npm run build && knex migrate:latest' },
   // The client and the schema of the tests are build products of the files of prisma/schema/: every entry point refreshes them.
   prisma: {
-    'db:client':
-      'prisma generate && prisma migrate diff --from-empty --to-schema prisma/schema --script -o generated/schema.sql',
+    'db:client': prismaClientScript(PRISMA_SCHEMA_FOLDER),
     // Through the CLI: with an audit trail, the migration that creates it is made append-only, which Prisma cannot write.
     'db:generate': 'ddd-ts-kit prisma-generate --name',
     'db:migrate': 'prisma migrate deploy',

@@ -2,7 +2,16 @@ import type { RenderContext } from '../../templating';
 import { renderTemplate } from '../../templating';
 import { applyWiring } from '../apply-wiring';
 import type { Scope } from '../scope';
-import { PRISMA_MAIN_SCHEMA, prismaSchemaOf, schemaOfContext } from '../../prisma-schema';
+import { CliError } from '../../cli-error';
+import {
+  keepsSinglePrismaSchema,
+  PRISMA_MAIN_SCHEMA,
+  PRISMA_SCHEMA_FOLDER,
+  prismaSchemaOf,
+  schemaOfContext,
+  singlePrismaSchemaFound,
+  singlePrismaSchemaSteps,
+} from '../../prisma-schema';
 
 /** Where each ORM declares the tables of a context: the file its migration tooling reads, and the template that starts it. */
 const TABLES_FILES: Readonly<Record<string, (context: string) => string>> = {
@@ -53,6 +62,13 @@ export function declareStorage(scope: Scope, context: RenderContext): void {
  */
 function declarePrismaModel(scope: Scope, context: RenderContext): void {
   const models = prismaSchemaOf(scope.context.kebab);
+
+  if (keepsSinglePrismaSchema((file) => scope.ws.exists(file))) {
+    throw new CliError(
+      `${singlePrismaSchemaFound()} The model would go to ${models}, which Prisma reads only once prisma.config.ts names ${PRISMA_SCHEMA_FOLDER}.`,
+      `${singlePrismaSchemaSteps(Object.keys(scope.config.contexts))} Then run this command again.`,
+    );
+  }
 
   if (scope.ws.read(models) === undefined) {
     scope.ws.create(models, renderTemplate('repository/prisma/schema.prisma.tpl', context));
