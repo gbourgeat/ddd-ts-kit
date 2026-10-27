@@ -24,4 +24,16 @@ describe('list, on contexts the config and the disk do not agree on', () => {
       'end-to-end specs: none',
     ]);
   });
+
+  it('does not read a dot folder of the contexts directory as a context', () => {
+    const root = initProject('--context', 'billing:core');
+
+    fs.mkdirSync(path.join(root, 'src/contexts/.claude/.cc-writes'), { recursive: true });
+
+    const headings = cli(root, 'list')
+      .stdout.split('\n')
+      .filter((line) => /^\S/.test(line));
+
+    expect(headings).toEqual(['billing [core]', 'end-to-end specs: none']);
+  });
 });
