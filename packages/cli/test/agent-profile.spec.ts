@@ -58,6 +58,8 @@ describe('init --agent-profile regulated', () => {
     expect(notes).toContain('"repo": "gbourgeat/ddd-ts-kit"');
     expect(notes).toContain('"requiredMinimumVersion": "<the oldest version of Claude Code the team accepts>"');
     expect(notes).toContain('copy the hooks of .claude/settings.json into the managed settings too');
+    expect(notes).toContain('a headless run (claude -p) in an untrusted workspace ignores them');
+    expect(notes).toContain('hasTrustDialogAccepted');
     expect(read(root, SETTINGS)).not.toContain('allowManagedHooksOnly');
     expect(notes).toContain('Run the first `npm install` of this project yourself, outside the agent');
     expect(notes).not.toContain('install scripts of the stack');

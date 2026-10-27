@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:5ea9d51aa458eae5 -->
+<!-- translation-of: agent-sandbox.md sha256:c3b5b85298c46438 -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -162,6 +162,35 @@ dans un environnement hébergé par GitHub dont la liste d'hôtes autorisés se 
 réglages du dépôt sur GitHub, pas dans un fichier du projet ; `.github/copilot/settings.json` n'a
 pas de clé de bac à sable, donc le profil n'écrit rien pour Copilot. Les deux *hooks* du profil
 ne tournent que dans Claude Code, comme dit plus haut.
+
+#### La liste d'autorisations et la confiance dans l'espace de travail
+
+Les règles `permissions.allow` de `.claude/settings.json` (la liste d'autorisations qu'écrit `init`,
+et que relit le profil réglementé) ne s'appliquent que dans un espace de travail de confiance sur
+la machine qui lance la session. Une exécution sans interface (`claude -p`, un clone neuf en CI,
+un agent scripté) n'affiche jamais le dialogue de confiance ; dans un espace où personne ne l'a
+accepté, Claude Code ignore ces entrées et écrit sur stderr `Ignoring N permissions.allow entries
+from .claude/settings.json: this workspace has not been trusted`. Ce qui a été vérifié, avec
+Claude Code 2.1.311 et un fichier de projet portant une règle `allow` et une règle `deny` : la
+règle `allow` n'a pas été appliquée (la commande a été refusée), la règle `deny` l'a été. La
+documentation de Claude Code ajoute que les règles `ask` ne sont pas touchées non plus, puisqu'elles
+ne font que restreindre, et que les *hooks*, le bloc `env` et les serveurs de `.mcp.json` ne sont
+pas soumis à la confiance dans une exécution `-p` (les *hooks* du profil tournent donc). La session
+ne travaille alors qu'avec ce qu'accordent `--allowedTools` ou le mode de permission, ce qui peut
+masquer le manque : une exécution qui passe `--allowedTools` ne prouve pas que la liste du projet
+fonctionne.
+
+Pour faire confiance à un espace de travail en exécution sans interface, ouvrez-le une fois dans
+Claude Code et acceptez le dialogue, ou mettez `projects["<racine du dépôt>"].hasTrustDialogAccepted`
+à `true` dans `~/.claude.json` du compte qui lance la session (l'équipe plateforme gère ce compte
+en CI). La confiance est un état de ce fichier utilisateur, pas du dépôt : une équipe ne peut pas
+la versionner. La documentation indexe la confiance sur la racine du dépôt git et dit qu'un
+*worktree* git utilise la racine du dépôt principal : un nouveau chemin de *worktree* n'est donc
+pas un espace de travail à part. Ce dernier point n'a pas été sondé ici, pas plus que l'effet des
+réglages gérés sur les règles `allow` d'un projet ; avec `allowManagedPermissionRulesOnly: true`,
+les règles de l'organisation sont de toute façon les seules. `ddd-ts-kit doctor` ne rapporte pas
+la confiance : il faudrait ouvrir `~/.claude.json`, qui contient aussi des données de compte, et
+une commande du kit ne lit pas ce fichier.
 
 #### Les contrats générés sous le bac à sable
 
