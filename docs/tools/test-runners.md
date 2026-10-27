@@ -168,8 +168,8 @@ What the figures say:
   the example Vitest takes 29.5 s against 47.9 s, and 85 s against 201 s on four CPUs. Jest's `v8`
   provider is the cost: the same Jest run with the `babel` provider takes 20.5 s, and 64.7 s on
   four CPUs, faster than Vitest on both (below). The pipeline a project gets runs its specs with
-  coverage (`ci:test:unit`), so on a runner the example's unit job, as generated, is faster on
-  Vitest.
+  coverage (`ci:test:unit`): with the `v8` provider the Jest template of 0.97.0 set, measured
+  here, the example's unit job was faster on Vitest; the template now sets `babel`.
 - **A cold start costs Vitest in the standard decorator mode:** 10.2 s against 6.3 s warm on the
   identity preset, since the `decorators()` plugin compiles each decorated file once (see the
   limits below); the example, in the legacy mode, does not need that plugin and runs as fast cold
@@ -261,8 +261,9 @@ mutants, score 85.0 %, 1 min 46 s, 1,621 CPU s, 11.6 GB of summed memory at the 
 Under Jest it is not measured.
 
 Neither runner wins every row: the choice stays a matter of the criteria below, speed weighing
-for Jest on runs without coverage and for Vitest on the runs with coverage of a grown project as
-generated. The settings that move these figures are in the next section.
+for Jest on these projects, with coverage too since its template measures through `babel`, and
+for Vitest on a cold pipeline of the example (85 s against 89). The settings that move these
+figures are in the next section.
 
 ## Recommendations by case, for speed
 
@@ -271,7 +272,7 @@ which runner the kit verifies.
 
 | Case | Setting | Measured gain | What to watch |
 |---|---|---|---|
-| Jest project whose pipeline runs coverage (every generated one) | `coverageProvider: 'babel'` in `jest.config.js` instead of `'v8'` | example 48.0 to 20.6 s warm, 201 to 65 s on four CPUs, 260 to 89 s cold; identity preset 19.8 to 16.4 s on four CPUs | branches reported drop two to three points (97.6 to 95.3 % on the example): read the figures again before the next threshold change; the identity preset takes 14 percent more CPU |
+| Jest project whose pipeline runs coverage (every generated one) | `coverageProvider: 'babel'` in `jest.config.js`, which the template now sets; a project generated before had `'v8'` | example 48.0 to 20.6 s warm, 201 to 65 s on four CPUs, 260 to 89 s cold; identity preset 19.8 to 16.4 s on four CPUs | branches reported drop two to three points (97.6 to 95.3 % on the example): read the figures again before the next threshold change; a line left out of the measure carries `istanbul ignore`, which `babel` reads, not `v8 ignore`; the identity preset takes 14 percent more CPU |
 | Jest project with specs against PGlite | start PostgreSQL once in a `globalSetup` and give each spec a copy, as both templates now do (`test/support/test-database-template.ts`, and `test-database-teardown.ts` under Jest) | identity preset 45 to 26 CPU s, 3.4 to 3.1 s | a project generated before keeps one initdb per spec file until it takes the two files of a new project and names them in `jest.config.js` |
 | Vitest project with coverage | keep `v8`, the template's provider | `istanbul` is 3.4 s faster on the example, 1.2 s slower on the identity preset | `istanbul` counts more branches in the legacy decorator mode: one folder of the example fails its threshold |
 | A workstation | keep the generated `maxWorkers: '50%'` | doubling it gains 1.5 s on Vitest and loses 0.9 s on Jest, for twice the memory (15 to 17 GB on the example) | on a machine short of memory, 4 workers take 36 s (Vitest) and 27 s (Jest) at 4 to 5 GB |
@@ -294,10 +295,10 @@ which runner the kit verifies.
   plugin line, which the generated config has; the Jest template sets the standard mode in the
   options of `@swc/jest`.
 - **Coverage gates per layer.** Both configs read the thresholds from `ddd-ts-kit.config.json` (`governedCoverage`, `governedJestCoverage`). The Vitest gate is run on generated projects by the end-to-end suite of the CLI; the Jest one is written and not run there, although the suite runs the specs of a Jest stack (below).
-- **Speed.** Measured above: Jest runs the specs of these projects faster without coverage;
-  with coverage as generated Vitest is 1.6 to 2.4 times faster on the example, and the two are
-  close on the identity preset (6.4 to 7.2 s warm). Jest given the `babel` coverage provider is
-  the fastest of the three on both (recommendations above).
+- **Speed.** Measured above: Jest runs the specs of these projects faster without coverage,
+  and with coverage through the `babel` provider its template sets (20.6 s against 29.5 on the
+  example); through `v8`, the provider of its template until then, it was 1.6 to 2.4 times slower
+  than Vitest there.
 - **Framework habits.** NestJS documentation and generators assume Jest; that is a habit, not
   a constraint, since handlers and aggregates of the kit are tested without the framework.
 
@@ -438,7 +439,7 @@ export default {
     '^.+\\.ts$': ['@swc/jest', { jsc: { parser: { syntax: 'typescript', decorators: true }, transform: { decoratorVersion: '2022-03' }, target: 'es2022' } }],
   },
   ...(process.env.CI ? {} : { maxWorkers: '50%' }), // half of the cores outside a pipeline
-  coverageProvider: 'v8',
+  coverageProvider: 'babel', // faster than v8 under @swc/jest; reads `istanbul ignore`
   ...governedJestCoverage(),
 };
 ```
@@ -452,7 +453,7 @@ export default {
 - one test script for unit and adapter specs together, run with
   `node --experimental-vm-modules`: the integration script of the pipeline only prints that
   adapter specs run with the unit specs;
-- `jest.config.js` with the `v8` coverage provider and the thresholds of the config file, per
+- `jest.config.js` with the `babel` coverage provider and the thresholds of the config file, per
   context and layer, in the one run Jest makes (`npm run test:coverage`);
 - unit tests of the CLI check that these files and the recorded stack are produced. No
   evidence was found that a generated Jest project is installed and run by the kit's own
@@ -484,9 +485,9 @@ export default {
   its mode there changes the `transform` options of `jest.config.js` too.
 - No unit and integration split: the specs run in one Jest project, given 60 seconds per test
   and per hook (`testTimeout`), as Vitest gives the hooks that open the test database.
-- Coverage goes through the `v8` provider, which the template sets: on the example it takes a
-  run from 18 to 48 s, and from 56 to 201 s on four CPUs, where the `babel` provider takes 21 and
-  65 s (measured above).
+- Coverage goes through the `babel` provider, which the template sets: on the example it takes a
+  run from 18 to 21 s, where `v8` took it to 48 s (measured above). It reads `istanbul ignore`,
+  not `v8 ignore`, and counts the branches as the `v8` provider of Vitest does.
 - An import without an ending can name a directory: each alias is mapped to the source, then to
   the barrel of the directory (`['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts']`). On Prisma,
   the client `prisma generate` writes names its own modules with `.js`, mapped back to their

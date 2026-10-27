@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:828c5e7a76a980c8 -->
+<!-- translation-of: CONFIG.md sha256:1217c481b6d4d104 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -750,7 +750,7 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-Sous jest, `export default { coverageProvider: 'v8', ...governedJestCoverage() };`. Dans
+Sous jest, `export default { coverageProvider: 'babel', ...governedJestCoverage() };`. Dans
 l'application d'exemple, `governedCoverage('unit')` mesure trois couches de chaque contexte et
 donne un plancher par contexte et par couche qui contient un fichier source ; voici ceux de son
 premier contexte, `analytics`, à la référence, puisque l'exemple ne pose pas `coverage` :

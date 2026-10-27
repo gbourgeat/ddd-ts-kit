@@ -724,7 +724,7 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-Under jest, `export default { coverageProvider: 'v8', ...governedJestCoverage() };`. In the
+Under jest, `export default { coverageProvider: 'babel', ...governedJestCoverage() };`. In the
 example application, `governedCoverage('unit')` measures three layers of every context and gives
 one floor per context and layer that holds a source file; here those of its first context,
 `analytics`, at the reference, since the example sets no `coverage`:
