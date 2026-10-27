@@ -4,6 +4,7 @@ import { concept } from '../concept';
 import { emit } from '../emit';
 import { ERROR_CODE } from '../errors/error-code-pattern';
 import type { Kind } from '../kind';
+import { learnTerms } from '../learn-terms';
 import { named } from '../named';
 import { openScope } from '../open-scope';
 import { vars } from '../vars';
@@ -11,15 +12,16 @@ import { vars } from '../vars';
 export const domainErrorKind: Kind = {
   name: 'domain-error',
   aliases: [],
-  usage: 'domain-error <context> <Name> [--code CODE]',
+  usage: 'domain-error <context|shared-kernel> <Name> [--code CODE] [--term "<Term>=<meaning>"]...',
   summary:
-    'One class per error, built with `new`, and its spec: the form of a project whose "stack.refusals" is "classes", or says nothing.',
+    'One class per error, built with `new`, and its spec: the form of a project whose "stack.refusals" is "classes", or says nothing. With shared-kernel, at the root of the shared kernel.',
   positionals: ['context', 'Name'],
-  writesShared: false,
+  writesShared: true,
   run: (request) => {
-    const scope = openScope(request);
+    const scope = openScope(request, { sharedKernel: true });
 
     refuseBuiltThroughFactories(request.config.stack.refusals, scope.context.kebab);
+    learnTerms(scope);
 
     const name = concept({ ...scope, flags: { ...scope.flags, allowName: true } }, request.args[1] ?? '', {
       what: 'domain error',

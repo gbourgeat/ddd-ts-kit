@@ -2,6 +2,7 @@ import type { Fixture } from './fixture';
 import { PATHS } from './paths';
 import { project } from './project';
 import { SAMPLES } from './samples';
+import { MONEY_GLOSSARY } from './shared-kernel-glossary';
 import { VALUE_FILES, VALUES } from './value-object-files';
 
 const { RULE, MONEY, INVOICE_MONEY, SHARED, PROPS, PRIVATE, OF, PLAIN, KERNEL } = VALUES;
@@ -33,6 +34,7 @@ export const VALUE_OBJECT_FILE_FIXTURES: readonly Fixture[] = [
       [INVOICE_MONEY]: `${VALUES.IMPORT_MONEY}export class InvoiceMoney extends Money {\n  static due(cents: number): InvoiceMoney {\n    return new InvoiceMoney({ cents });\n  }\n}\n`,
       [`${PATHS.BILLING}/test/unit/invoice-money.vo.spec.ts`]: SAMPLES.SPEC,
       [SHARED]: VALUE_OBJECT,
+      ...MONEY_GLOSSARY,
     }),
   ),
   passing(

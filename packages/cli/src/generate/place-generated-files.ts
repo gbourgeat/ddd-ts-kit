@@ -7,6 +7,7 @@ import { declaredModule, declaredModules, modulePlacement, placedImports } from 
 import type { Workspace } from '../workspace';
 import { filesUnder } from './files-under';
 import { refuseEarlierLayout } from './refuse-earlier-layout';
+import { sharedKernelPlacement } from './shared-kernel-placement';
 
 /** What `generate` was asked: the context its kind writes in, the `--module` given, and the command as typed. */
 export interface ModuleRequest {
@@ -19,16 +20,17 @@ export interface ModuleRequest {
  * Where the generators read and write the files of a context, named as they are without modules
  * and at their place of today: the workspace reads each where it is and writes it in the module
  * `--module` names, writes the code list and the permission set of a context at its root unless
- * the project still holds them where 0.86 and 0.87 wrote them (`contextFilePlacement`), and the imports
- * written follow. Answers what stops it, before the generated declarations are derived from the
+ * the project still holds them where 0.86 and 0.87 wrote them (`contextFilePlacement`), writes a
+ * file of the shared kernel at its root (`sharedKernelPlacement`), and the imports written follow. Answers what stops it, before the generated declarations are derived from the
  * tree.
  */
 export function placeGeneratedFiles(ws: Workspace, config: Config, request: ModuleRequest): () => void {
   const inModules = modulesPlacement(ws, config, request);
   const contextFile = contextFilePlacement(config.contextsDir, (file) => ws.existsAsIs(file));
+  const sharedKernel = sharedKernelPlacement(config, (file) => ws.existsAsIs(file));
 
   const place = (file: string, writing: boolean): string =>
-    contextFile(inModules === undefined ? file : inModules(file, writing));
+    sharedKernel(contextFile(inModules === undefined ? file : inModules(file, writing)));
 
   let active = true;
 

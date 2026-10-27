@@ -132,7 +132,7 @@ below. The exact rules of the parser are in [Limits](#limits).
 |---|---|---|
 | `sourceRoot` | where the sources live | `src` |
 | `contextsDir` | the bounded contexts, one directory each | `<sourceRoot>/contexts` |
-| `sharedKernelDir` | the shared kernel | `<sourceRoot>/shared-kernel` |
+| `sharedKernelDir` | the shared kernel: its value objects and their refusals at its root, its glossary `CONTEXT.md`, the schemas several contexts answer with in `presentation/` | `<sourceRoot>/shared-kernel` |
 | `platformDir` | the technical platform | `<sourceRoot>/platform` |
 | `importAlias` | the prefix that names `sourceRoot` in imports: `@/`, or `$`, one name in lower case (letters, digits, hyphens) and `/`. Every file of the project is imported by it (`imports/alias-only`) | `@/` |
 | `importExtension` | what an import of a file of the project ends with: `none`, nothing (`@/contexts/billing/domain/aggregates/invoice.aggregate`), or `js`, the extension of the file the compiler emits (`.../invoice.aggregate.js`). Held by `imports/extension` | `none` in what `init` writes; `js` when the key is absent |

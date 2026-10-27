@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:1bd67d0d39e344e5 -->
+<!-- translation-of: commands.md sha256:e0a93f560d8f60d7 -->
 
 # Quelle commande, quand
 
@@ -621,13 +621,13 @@ Kinds
   builder <context> <Aggregate>
   test-world <context> [Name]
   entity <context> <Name> [--term "<Term>=<meaning>"]...
-  value-object <context> <Name> [--term "<Term>=<meaning>"]...   (alias: vo)
+  value-object <context|shared-kernel> <Name> [--term "<Term>=<meaning>"]...   (alias: vo)
   property <context> <ValueObject>
   vocabulary <context> <Name> --value <value> [--value <value>]...
   state-machine <context> <Aggregate> [--value <state>]... [--transition "<intention>:<from>[,<from>]...[><to>]"]... [--term "<Term>=<meaning>"]...
   domain-event <context> <Aggregate> <Fact> [--term "<Term>=<meaning>"]...
-  error <context> <Refusal> <factory> [--code CODE] [--term "<Term>=<meaning>"]...   (alias: refusal)
-  domain-error <context> <Name> [--code CODE]
+  error <context|shared-kernel> <Refusal> <factory> [--code CODE] [--term "<Term>=<meaning>"]...   (alias: refusal)
+  domain-error <context|shared-kernel> <Name> [--code CODE] [--term "<Term>=<meaning>"]...
   domain-service <context> <Name> [--term "<Term>=<meaning>"]...
   repository <context> <Aggregate> [--tenant-scoped] [--personal <column>,<column>... [--subject <column>] [--erasure pseudonymise|row] [--retention <column>:<n><d|m|y>]]
   command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]...

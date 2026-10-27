@@ -9,12 +9,13 @@ import { vars } from '../vars';
 export const valueObjectKind: Kind = {
   name: 'value-object',
   aliases: ['vo'],
-  usage: 'value-object <context> <Name> [--term "<Term>=<meaning>"]...',
-  summary: 'An immutable value object validated in create, and its spec.',
+  usage: 'value-object <context|shared-kernel> <Name> [--term "<Term>=<meaning>"]...',
+  summary:
+    'An immutable value object validated in create, and its spec: in domain/value-objects/ of a context, or at the root of the shared kernel, beside its spec, when at least two contexts use it.',
   positionals: ['context', 'Name'],
-  writesShared: false,
+  writesShared: true,
   run: (request) => {
-    const scope = openScope(request);
+    const scope = openScope(request, { sharedKernel: true });
 
     learnTerms(scope);
 
