@@ -1635,6 +1635,31 @@ test('inline code of a worker runs, and what it changed outside the scope stops 
   assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'), agent)).output, undefined);
 });
 
+test('what regenerate rewrites outside the scope, run by verify-slice inside inline code, does not stop the worker', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'inline', agent_id: 'builder-2' };
+  const inline = "python3 - <<'EOF'\nprint(1)\nEOF";
+
+  put(root, 'clients/api/src/index.ts', 'export const first = 1;\n');
+  git(root, 'add', '.');
+  git(root, 'commit', '--quiet', '--message', 'chore: client');
+
+  // verify-slice piped into inline code: regenerate rewrites the client and the pages meanwhile.
+  assert.equal(run('pre-bash', bash(root, inline, agent)).output, undefined);
+  put(root, 'clients/api/src/index.ts', 'export const first = 2;\n');
+  put(root, 'docs/behaviour/application.md', '# Behaviour\n');
+  put(root, 'docs/context-map.md', '# Map\n');
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+
+  // A shared file that is not derived still stops the worker.
+  assert.equal(run('pre-bash', bash(root, inline, agent)).output, undefined);
+  put(root, 'src/platform/extra.ts', 'export const extra = 1;\n');
+  assert.match(
+    reason(run('pre-bash', bash(root, 'npm test', agent))),
+    /changed files outside your scope: src\/platform\/extra\.ts/,
+  );
+});
+
 test('inline code of the conductor is not watched', () => {
   const root = committed();
   worker(root, 'ordering');

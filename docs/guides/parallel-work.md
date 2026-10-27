@@ -158,7 +158,11 @@ people regenerating from the same sources get the same bytes. `docs --check` and
 after each slice and commits the derived files with it, so that its branch passes `docs:check`
 alone and never stops on "regenerate" as a need. The first branch to land is consistent by
 itself; the second one runs `npx ddd-ts-kit merge-trunk`, which takes the trunk's side of each
-derived file, regenerates and commits the result.
+derived file, regenerates and commits the result. The guard knows it: `verify-slice` runs
+`regenerate` in the worktree, which rewrites the derived files outside the worker's context
+(`clients/`, `docs/behaviour/`, `docs/context-map.md`, `openapi/`, `docs/integration/`,
+`.dependency-cruiser.cjs`), and a worker whose inline code ran meanwhile (`verify-slice --json |
+node -e ...`) is not stopped for them; any other file outside its scope still is.
 
 ### Migrations
 

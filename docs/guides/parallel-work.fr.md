@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:dff6cb907918d05d -->
+<!-- translation-of: parallel-work.md sha256:8a8182d5f0ae4c9c -->
 
 # Travailler en parallèle sans collisions
 
@@ -168,7 +168,12 @@ bien que deux personnes qui régénèrent à partir des mêmes sources obtiennen
 `npm run regenerate` après chaque *slice* et commite les fichiers dérivés avec elle, pour que sa
 branche passe `docs:check` seule et ne s'arrête jamais sur « régénérer » comme besoin. La première
 branche à arriver est cohérente par elle-même ; la seconde lance `npx ddd-ts-kit merge-trunk`,
-qui prend le côté du tronc de chaque fichier dérivé, régénère et commite le résultat.
+qui prend le côté du tronc de chaque fichier dérivé, régénère et commite le résultat. La garde le
+sait : `verify-slice` lance `regenerate` dans le *worktree*, ce qui réécrit les fichiers dérivés
+hors du contexte du *worker* (`clients/`, `docs/behaviour/`, `docs/context-map.md`, `openapi/`,
+`docs/integration/`, `.dependency-cruiser.cjs`), et un *worker* dont du code en ligne a tourné
+entre-temps (`verify-slice --json | node -e ...`) n'est pas arrêté pour eux ; tout autre fichier
+hors de son périmètre l'arrête encore.
 
 ### Les migrations
 

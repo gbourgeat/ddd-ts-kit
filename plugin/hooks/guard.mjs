@@ -63,6 +63,11 @@ const GENERATED_DOCUMENT =
 const LOCKFILES = ['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lock', 'bun.lockb'];
 // Rewritten by a command: counted in no commit size, merged by regenerating.
 const DERIVED_FILES = [...LOCKFILES, '.dependency-cruiser.cjs', 'docs/context-map.md'];
+// What `npm run regenerate` rewrites outside every context (the CLI's `isDerived`): the contracts
+// and the documents derived from them, the clients of an SDK, the pages of what the tests state,
+// the context map and the dependency rules. A worker runs it through `verify-slice`.
+const REGENERATED_FILES =
+  /^(?:openapi|docs\/integration|docs\/behaviour|clients)\/|^docs\/context-map\.md$|^\.dependency-cruiser\.cjs$/;
 
 const GENERATORS = [
   [/\.aggregate\.ts$/, 'aggregate <context> <Name>'],
@@ -2229,7 +2234,8 @@ function putBackReason(left, now) {
 }
 
 // The files outside the scope that differ from HEAD, each with the hash of its content (null when
-// deleted) and whether git tracks it; generated files are left out: a generator rewrites them.
+// deleted) and whether git tracks it; generated files are left out: a generator rewrites them, and
+// so does `regenerate`, which `verify-slice` runs in the worktree of a worker.
 function outsideChanges(project, input) {
   const status = git(project, ['status', '--porcelain=v1', '-z', '--untracked-files=all']) ?? '';
   const entries = status.split('\0');
@@ -2245,7 +2251,11 @@ function outsideChanges(project, input) {
       continue;
     }
     const file = join(project.root, path);
-    if (workerScopeReason(project, file, input) && !generatedFileReason(project, file)) {
+    if (
+      workerScopeReason(project, file, input) &&
+      !generatedFileReason(project, file) &&
+      !REGENERATED_FILES.test(path)
+    ) {
       changes.set(path, { hash: contentHash(file), untracked: entry.startsWith('??') });
     }
   }
