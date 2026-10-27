@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:0582d5a4db531cc3 -->
+<!-- translation-of: parallel-work.md sha256:8591754555d4223f -->
 
 # Travailler en parallèle sans collisions
 
@@ -142,7 +142,7 @@ mis de côté. Le message porte `Merge-Base: <commit>`, `Trunk: <commit>` et, qu
 trouvée écrasée sur le tronc, `Landed: <commit>` : `verify-merge` juge ensuite la fusion sur cette
 base. Une fusion terminée à la main par `git commit` garde ces *trailers*.
 
-`--dry-run` donne l'aperçu (rien ne change), `--abort` défait la fusion en cours. L'arbre doit
+`--dry-run` donne l'aperçu (rien ne change), `--abort` défait la fusion en cours (un fichier que le kit régénère et modifié après avoir été indexé par la fusion est restauré et nommé ; tout autre fichier changé à la main la fait refuser, code 2). L'arbre doit
 être propre et aucune autre fusion, aucun *rebase* ni *cherry-pick* en cours (sortie 2 sinon) ;
 le tronc n'est jamais récupéré, le *commit* qu'il nomme est affiché. `merge-trunk` demande
 git 2.40 ; un git plus ancien ne fusionne qu'à partir de la base que git calcule

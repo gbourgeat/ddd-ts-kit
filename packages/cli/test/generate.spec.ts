@@ -116,6 +116,51 @@ describe('generate, the language first', () => {
   });
 });
 
+describe('generate, a technical word the ubiquitous language defines', () => {
+  it('refuses ScoringModel without the term, says to define it, then writes it once the glossary holds it', () => {
+    const refused = failure(cli(root, 'generate', 'aggregate', 'billing', 'ScoringModel', '--json'));
+
+    expect(refused.message).toBe('"ScoringModel" carries the technical word "model".');
+    expect(refused.fix).toContain('define the term in the glossary of src/contexts/billing/CONTEXT.md');
+    expect(refused.fix).toContain('--term "Scoring model=<what it means for the business>"');
+    expect(exists(root, 'src/contexts/billing/domain/aggregates/scoring-model.aggregate.ts')).toBe(false);
+
+    const term = 'Scoring model=The versioned rule that turns an application into a score';
+
+    expect(cli(root, 'generate', 'aggregate', 'billing', 'ScoringModel', '--term', term).code).toBe(0);
+    expect(exists(root, 'src/contexts/billing/domain/aggregates/scoring-model.aggregate.ts')).toBe(true);
+  });
+
+  it('refuses CopyOfData without the term and accepts it with the row "Copy of data"', () => {
+    expect(failure(cli(root, 'generate', 'value-object', 'billing', 'CopyOfData', '--json')).message).toBe(
+      '"CopyOfData" carries the technical word "data".',
+    );
+
+    const term = 'Copy of data=What the right of access hands to a customer';
+
+    expect(cli(root, 'generate', 'value-object', 'billing', 'CopyOfData', '--term', term).code).toBe(0);
+    expect(exists(root, 'src/contexts/billing/domain/value-objects/copy-of-data.vo.ts')).toBe(true);
+  });
+
+  it('still refuses the technical word outside the run of words that says the term', () => {
+    expect(failure(cli(root, 'generate', 'aggregate', 'billing', 'InvoiceData', '--json')).message).toBe(
+      '"InvoiceData" carries the technical word "data".',
+    );
+  });
+
+  it('judges the last word of a name outside the model, a policy, against the same glossary', () => {
+    const policy = (name: string) =>
+      cli(root, 'generate', 'policy', 'billing', name, '--permission', 'invoice.issue', '--dry-run', '--json');
+
+    expect(failure(policy('InvoiceData')).message).toBe(
+      '"InvoiceData" ends with "Data", which names a technical bucket, not a concept.',
+    );
+
+    expect(failure(policy('InvoiceData')).fix).toContain('add the row "Invoice data"');
+    expect(policy('CopyOfData').code).toBe(0);
+  });
+});
+
 describe('generate, the next steps and the document of a new context', () => {
   it('lists every TODO(domain) of the created files as file:line', () => {
     const result = report(

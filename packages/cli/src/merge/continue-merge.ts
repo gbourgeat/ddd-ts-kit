@@ -9,6 +9,7 @@ import type { MergeReport, StepRun } from './merge-report';
 import { type MergeState, mergeState } from './merge-state';
 import { MERGE_STEPS } from './merge-steps';
 import { NEXT_STEPS } from './next-steps';
+import { stageRewritten } from './stage-rewritten';
 import { unmergedEntries } from './unmerged-entries';
 
 /** How `--continue` goes on. */
@@ -53,6 +54,8 @@ export function continueMerge(context: MergeContext, state: MergeState, options:
 
 function checkedAndCommitted(context: MergeContext, state: MergeState, options: ContinueOptions): MergeReport {
   const regenerate = regenerated(context);
+
+  stageRewritten(context.repo);
   const withRegenerate: MergeState = { ...state, report: { ...state.report, regenerate } };
 
   if (regenerate.status === 'failed') {

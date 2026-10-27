@@ -66,6 +66,9 @@ How to write it, following the `glossary` skill:
 - For each, one sentence of meaning in this context, and what it must not be confused with in
   a neighbouring one.
 - Reject technical words (`record`, `data`, `item`, `manager`) and ask for the business word.
+  When the business itself names a concept with one (the scoring model of credit risk, the copy
+  of data of the right of access), the term goes in the glossary as the business says it, and
+  the name that says it is accepted.
 - Ten precise terms beat fifty vague ones.
 
 A missing word is information: the concept is not understood yet. The answer is a question to
@@ -76,8 +79,8 @@ the domain expert, not a placeholder name.
 | Mechanism | What it does |
 |---|---|
 | `language/glossary-term` | every aggregate, entity, value object, domain service, domain event, command and query is named with terms of the glossary of its context, and, under `"stack.refusals": "factories"` or `"named"`, every class of `domain/errors/` too (`AppointmentError`, `SlotTaken`); a refusal class of `named` may also use the qualifiers `invalid`, `unknown`, `already`, `too`, `no`, `missing` and `required` (`BookingTooLate`) |
-| `language/no-technical-name` | no `Manager`, `Helper`, `Data`, `Impl`, `Model` and the like in a name under `domain/` or in a use case name |
-| the generator | refuses a name with an undefined word, a technical word, or an event fact that does not read as past tense |
+| `language/no-technical-name` | no `Manager`, `Helper`, `Data`, `Impl`, `Model` and the like in a name under `domain/` or in a use case name, unless a term of the glossary holds the word (`Scoring model` holds `ScoringModel`) |
+| the generator | refuses a name with an undefined word, a technical word no term of the glossary holds, or an event fact that does not read as past tense |
 | `--term "<Term>=<meaning>"` | adds the glossary rows in the same command that needs them, repeatable; `--term "<Term>=<meaning>\|<not to be confused with>"` fills the third cell too, the pipe being the one character a cell of the table cannot hold |
 | `events/name-format` | events are named `<context>.<aggregate>.<fact>` |
 | `language/declared-vocabulary` | a value of a closed vocabulary (a status, a role, a permission id) is read through its declaration, never written again as a string |
@@ -483,8 +486,9 @@ The checker's reading of the language is deliberately simple. The CLI README sta
 - `events/name-format` checks the shape and the context prefix, **not the grammar of the
   fact**; the generator's past-tense check is a heuristic too.
 - `language/no-technical-name` works from a fixed list. A technical name outside the list is
-  not reported, and a business concept that is legitimately called "Model" in some domain needs
-  a recorded exception.
+  not reported. A business concept that is legitimately called "Model" in some domain is a term
+  of the glossary (`Scoring model`), and that row is what lets the name through: the rule does
+  not judge whether the row is honest, a review does.
 - The glossary is **English-shaped**: a team whose domain experts speak another language must
   decide which language the code uses. The kit's own tooling and inflection assume English.
 - A glossary can be gamed by adding vague terms ("Item=A thing"). The tool accepts it; a
