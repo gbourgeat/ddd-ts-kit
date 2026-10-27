@@ -434,8 +434,13 @@ the command then refuses, and writes nothing, when the kind would write outside 
 ```text
 $ npx ddd-ts-kit generate job notification SendDueConfirmations --every 15m --command SendNotification --local-only
 Error: --local-only: this command would write 2 shared files: src/platform/auth/relationships/relate-system-actors.ts, src/platform/jobs/job-settings.ts.
-  fix: Nothing was written. Have it run on the trunk without --local-only (the conductor of a parallel build does it), merge the trunk, then go on; a generated document listed alone means the trunk is stale: run `ddd-ts-kit docs` there first.
+  fix: Nothing was written. A job of a row is a step of the conductor, before the row of the worker: on the trunk, run `ddd-ts-kit generate job notification SendDueConfirmations --every 15m --command SendNotification`, commit it there, merge the trunk into the worker's branch (`ddd-ts-kit merge-trunk`), then fill its TODOs. Have it run on the trunk without --local-only (the conductor of a parallel build does it), merge the trunk, then go on; a generated document listed alone means the trunk is stale: run `ddd-ts-kit docs` there first.
 ```
+
+The refusal of a `job` or an `integration-event` prints the exact command (the same one, without
+`--local-only`). A job or an integration event of a worker's row is a step of the conductor on the
+trunk, before the row of the worker (the contracts first): the plan holds it as a `skeleton` or
+`contract` row the worker's row depends on, the worker merges the trunk, then fills the TODOs.
 
 ### When an agent stops
 

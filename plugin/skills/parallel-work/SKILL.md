@@ -91,7 +91,10 @@ blocked; plan it, or hold those rows back.
 1. **Contracts first.** For every `contract` row a worker depends on: generate it
    (`generate integration-event`, `generate gateway`), write its payload schema or read
    contract in the upstream's `published-language/` with the owners of both sides, commit. A
-   downstream starts only against a committed contract. Route paths and methods of each
+   downstream starts only against a committed contract. A job or an integration event that a
+   worker's row needs is such a step too, run here before that row starts: a worker's
+   `generate job` or `generate integration-event` with `--local-only` is refused (they write
+   shared files), and the refusal prints the exact command to run on the trunk. Route paths and methods of each
    context are the ones written in the slices table.
 2. **Skeleton next.** Run every `skeleton` row: `generate aggregate` (with
    `--event-sourced` when planned so) with its `generate repository` (no flag, an aggregate
