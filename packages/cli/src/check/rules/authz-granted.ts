@@ -30,7 +30,8 @@ import { isInProject } from '../authz/is-in-project';
  * use cases write at run time, which the tree does not show: not judged. Silent when the
  * project decides with an authorizer of its own (`createAuthorizer` imports one from the project),
  * when the checker cannot read the schema, and when an operator tuple names a context it cannot
- * read.
+ * read, and when no source makes a person operator of any context: such a project provisions its
+ * operators out of the tree (a seed, an administration tool) and nothing here says otherwise.
  *
  * Silent when the rights are attributes or an authorizer of the project's own.
  */
@@ -95,7 +96,7 @@ function unheldByOperators(project: Project): Violation[] {
   const schema = modelledPermissions(schemaFile, sets);
   const operators = operatorTuples(project);
 
-  if (schema.unread.length > 0 || operators.unreadable) {
+  if (schema.unread.length > 0 || operators.unreadable || !operators.provisioned) {
     return [];
   }
 

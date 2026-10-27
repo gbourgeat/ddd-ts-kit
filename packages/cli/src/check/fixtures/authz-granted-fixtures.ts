@@ -134,9 +134,15 @@ export const AUTHZ_GRANTED_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: rule,
-    name: 'relationships: a permission held on the context and no operator written anywhere',
-    expect: { file: PERMISSIONS },
+    name: 'relationships: no operator written anywhere, the operators are provisioned out of the tree',
+    expect: 'pass',
     files: relating(),
+  },
+  {
+    ruleId: rule,
+    name: 'relationships: operators are written for another context, none for the context of the permission',
+    expect: { file: PERMISSIONS },
+    files: relating(operatorOf("'context:catalog'", "'user:ada'")),
   },
   {
     ruleId: rule,
