@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/nats",
-  "version": "0.95.0",
+  "version": "0.96.0",
   "description": "NATS JetStream provider for integration events: acknowledged publishing with message deduplication for the outbox relay, one durable consumer per consumer, explicit acknowledgement, bounded redelivery and a dead-letter subject.",
   "keywords": [
     "ddd",
@@ -38,11 +38,11 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/events": "0.95.0",
-    "@ddd-ts-kit/kernel": "0.95.0"
+    "@ddd-ts-kit/events": "0.96.0",
+    "@ddd-ts-kit/kernel": "0.96.0"
   },
   "devDependencies": {
-    "@ddd-ts-kit/testing": "0.95.0",
+    "@ddd-ts-kit/testing": "0.96.0",
     "@nats-io/jetstream": "^3.4.0",
     "@nats-io/transport-node": "^3.4.0"
   },

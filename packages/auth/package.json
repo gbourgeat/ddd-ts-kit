@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/auth",
-  "version": "0.95.0",
+  "version": "0.96.0",
   "description": "Authentication and authorization behind ports: actors, permissions declared per use case, role, attribute and relationship (Zanzibar-style) based authorizers, deny by default.",
   "keywords": [
     "ddd",
@@ -60,11 +60,11 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.95.0"
+    "@ddd-ts-kit/kernel": "0.96.0"
   },
   "peerDependencies": {
-    "@ddd-ts-kit/di": "0.95.0",
-    "@ddd-ts-kit/testing": "0.95.0",
+    "@ddd-ts-kit/di": "0.96.0",
+    "@ddd-ts-kit/testing": "0.96.0",
     "jose": "^6.2.13"
   },
   "peerDependenciesMeta": {
@@ -79,9 +79,9 @@
     }
   },
   "devDependencies": {
-    "@ddd-ts-kit/di": "0.95.0",
-    "@ddd-ts-kit/http": "0.95.0",
-    "@ddd-ts-kit/testing": "0.95.0",
+    "@ddd-ts-kit/di": "0.96.0",
+    "@ddd-ts-kit/http": "0.96.0",
+    "@ddd-ts-kit/testing": "0.96.0",
     "@nestjs/common": "^12.2.0",
     "@nestjs/passport": "^12.0.0",
     "@types/passport-jwt": "^4.0.1",
