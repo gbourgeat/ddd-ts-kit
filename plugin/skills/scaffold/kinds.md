@@ -27,7 +27,7 @@ shared files each kind writes (`writesShared`, `shared`, `sharedWhen`) and wheth
 | `command` | `<ctx> <UseCase> (--permission <aggregate>.<action> [--grant <role>] \| --public) [--aggregate <Name>]` | `application/commands/<use-case>/`, handler spec |
 | `query` | `<ctx> <UseCase> (--permission <aggregate>.<action> [--grant <role>] \| --public) [--search]` | `application/queries/<use-case>/`, read port, in-memory reader, fake, spec |
 | `port` | `<ctx> <Name>` | `application/ports/<name>.port.ts`, fake |
-| `adapter` | `<ctx> <Port> [--kind external\|gateway] [--decorators]` | `infrastructure/external/remote-<port>.adapter.ts`, spec |
+| `adapter` | `<ctx> <Port> [--kind external\|gateway\|simulated] [--decorators]` | `infrastructure/external/remote-<port>.adapter.ts`, spec; with `--kind simulated`, `simulated-<port>.adapter.ts`, an adapter of production code that answers in memory for an environment whose provider is simulated, no policy |
 | `gateway` | `<ctx> <upstream> <Name>` | read contract in the upstream's published language, port, in-process adapter, fake, contract suite |
 | `policy` | `<ctx> <Name> --permission <aggregate>.<action>` | `application/authorization/<name>.policy.ts`, spec |
 | `route` | `<ctx> <UseCase> --method <M> --path <p> [--command\|--query]` | `presentation/http/`, spec |

@@ -118,7 +118,7 @@ src/
         handlers/                *.integration-handler.ts (integration event to command)
     infrastructure/
       persistence/               *.repository.ts adapters, *.mapper.ts, *.reader.ts, *.schema.ts, *.personal-fields.ts
-      external/                  adapters of outside systems
+      external/                  adapters of outside systems, remote or simulated
       anti-corruption/           translators of another context's or system's model
     presentation/
       http/                      <name>.routes.ts  (a route group: prefix, tags, guards)
@@ -985,6 +985,19 @@ See [Sagas and process managers](concepts/sagas-and-process-managers.md).
 
 **Ports and adapters.** A port is named for what the application needs
 (`PaymentGateway`), not for the technology (`StripeClient`). Each port has a fake in `test/fakes/`.
+
+**Simulated outside systems.** An application that must run without an outside system (a
+sandbox, a demo, an environment kept for examiners, a provider not ready yet) answers its port
+with a simulated adapter, never with the fake: `generate adapter <context> <Port> --kind simulated`
+writes `infrastructure/external/simulated-<port>.adapter.ts`, a class of production code that
+answers in the memory of the process the way the outside system would. It is bound to the port
+like any adapter (kind `external`, by `@Adapter` or in the module file) and carries no policy of
+its own, since nothing it does leaves the process. Its records keep the shape the outside system
+sends and go through the translator of `infrastructure/anti-corruption/` when the system has one,
+so the simulation runs the same anti-corruption layer as the remote adapter. The fake stays in
+the tests, where it records what it received; no production file imports it (`not-to-test` of
+the import graph). A port has one adapter: the simulated one answers until the remote one
+replaces it, and the kit does not choose between the two by environment.
 
 **Errors.** Expected business failures are `DomainError`s with codes; presentation maps codes to
 transport statuses in one place. Infrastructure faults are plain errors and become a 5xx.

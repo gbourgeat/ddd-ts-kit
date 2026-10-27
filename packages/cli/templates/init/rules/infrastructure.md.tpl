@@ -8,6 +8,7 @@ paths:
 
 - An adapter `implements` a port of `application/ports/` or a repository port of `domain/repositories/`, and never `extends` it (`ports/implements-never-extends`). It never imports `presentation/` (`layer/infrastructure-no-presentation`).
 - `persistence/` holds repository adapters, mappers and rows, `external/` the adapters of outside systems, `anti-corruption/` the translators of another model.
+- An outside system the application runs without (a sandbox, a demo, a provider not ready yet) is answered by a simulated adapter of `external/`, `npx ddd-ts-kit generate adapter <context> <Port> --kind simulated`, which answers in memory as the system would, through its translator of `anti-corruption/`; never by a fake of `test/fakes/`, which production code never imports. A port has one adapter: the simulated one or the remote one.
 {{#if literals.named}}
 - A word of the other model stays its word: a translator keys its tables by the type of that model, `Record<TheirRecord['code'], InvoiceStatus>` (an annotation or `satisfies`), and compares with `'code' satisfies TheirRecord['code']`, so that the compiler holds its spelling; the value of the context it produces is read from its vocabulary (`language/declared-vocabulary`).
 {{/if}}
