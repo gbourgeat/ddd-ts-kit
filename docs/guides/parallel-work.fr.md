@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:4e3884c5129b9070 -->
+<!-- translation-of: parallel-work.md sha256:dff6cb907918d05d -->
 
 # Travailler en parallèle sans collisions
 
@@ -143,10 +143,17 @@ trouvée écrasée sur le tronc, `Landed: <commit>` : `verify-merge` juge ensuit
 base. Une fusion terminée à la main par `git commit` garde ces *trailers*.
 
 `--dry-run` donne l'aperçu (rien ne change), `--abort` défait la fusion en cours (un fichier que le kit régénère et modifié après avoir été indexé par la fusion est restauré et nommé ; tout autre fichier changé à la main la fait refuser, code 2). L'arbre doit
-être propre et aucune autre fusion, aucun *rebase* ni *cherry-pick* en cours (sortie 2 sinon) ;
+être propre (les fichiers de périphérique que le *sandbox* monte sur les chemins qu'il interdit ne comptent pas) et aucune autre fusion, aucun *rebase* ni *cherry-pick* en cours (sortie 2 sinon) ;
 le tronc n'est jamais récupéré, le *commit* qu'il nomme est affiché. `merge-trunk` demande
 git 2.40 ; un git plus ancien ne fusionne qu'à partir de la base que git calcule
 (`--since <merge base>`), avec `git merge` lui-même.
+
+Sous le *sandbox* de Claude Code, la fusion d'un tronc qui change un chemin que la session ne peut
+pas écrire (`.claude/settings.json`, que le *sandbox* monte toujours en lecture seule, un dossier
+sous une règle de refus d'édition) revient au propriétaire. Avant d'écrire quoi que ce soit,
+`merge-trunk` sonde chaque chemin que le tronc change (ou son dossier, pour un nouveau chemin) ;
+quand l'un n'est pas inscriptible, il s'arrête sans rien changer, nomme les chemins et sort avec le
+code 3, comme `init`. Le propriétaire lance la même commande depuis un terminal hors du *sandbox*.
 
 `verify-merge` seul ne lit que git et liste, fusion par fusion, ce qu'une fusion a perdu ; il se
 tait sans fusion : le *hook* de *pre-push* d'`init` le lance à chaque *push*, et `verify-slice`

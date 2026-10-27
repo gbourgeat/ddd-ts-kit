@@ -216,6 +216,10 @@ both sides, never by taking one side of a source file or a test (`-X theirs`, `-
 sub-agent), `git add` it, then `npx ddd-ts-kit merge-trunk --continue`: it replays the
 migrations, regenerates, runs `verify-merge` on the result and commits only once no line, row
 or test is lost (a removal decided on purpose: `--continue --accept-lost`; `--abort` undoes).
+Under the sandbox, a trunk that changes the settings of the project (`.claude/settings.json`) or
+another path the session cannot write is the owner's merge: `merge-trunk` stops with nothing
+changed and exit 3, naming the paths; hand the owner the same command to run from a terminal
+outside the sandbox, and do not merge by hand or reset the worktree.
 Then one
 review of the batch (`architecture-reviewer`, `--changed-since <base>`), `npm run verify` on the
 merged branch, then the branch merges or opens its pull request. The blocking findings of the
