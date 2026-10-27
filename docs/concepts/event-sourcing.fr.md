@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:c8a1627e0779d637 -->
+<!-- translation-of: event-sourcing.md sha256:ff16c30dea1cd795 -->
 
 # Event sourcing, par agrégat
 
@@ -74,7 +74,9 @@ l'agrégat.
 `--birth <Event>` nomme le fait que dit le métier (`--birth Triggered` écrit `IncidentTriggered`,
 `incidents.incident.triggered`), vérifié contre le glossaire comme tout autre nom : le nom d'un
 événement stocké est conservé pour toujours. `generate domain-event` sur un tel agrégat ajoute
-l'événement à son union, à `appliers()` avec une méthode apply vide, et au codec. `describe`,
+l'événement à son union, à `appliers()` avec une méthode apply vide, et au codec, chacun là où il
+manque : lancé sur l'événement de naissance, ou une seconde fois, il laisse les deux fichiers tels
+quels. `describe`,
 `list` et `CONTEXT.md` disent quels agrégats sont en *event sourcing*. Le store par lequel ils sont
 enregistrés est câblé par `init --event-sourcing on` (`init --force --event-sourcing on` sur un
 projet existant), et le générateur refuse un agrégat *event-sourced* sans lui : un projet dont tous
