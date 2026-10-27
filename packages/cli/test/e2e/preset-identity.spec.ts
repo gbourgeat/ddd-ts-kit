@@ -75,7 +75,7 @@ describe.runIf(SLOW).each(FLAVOURS)('a project bootstrapped with the identity pr
     installAsPublished(root);
 
     if (flags.includes('prisma')) {
-      // The client and the schema of the tests, which the scripts of the project derive from prisma/schema.prisma.
+      // The client and the schema of the tests, which the scripts of the project derive from the files of prisma/schema/.
       runIn(root, { command: 'npm', args: ['run', 'db:client'] });
     }
   }, 120_000);

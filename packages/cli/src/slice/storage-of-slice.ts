@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { runGit } from '../commit/run-git';
-import { PRISMA_SCHEMA, prismaBlocks, schemaAt, schemaOfContext } from '../prisma-schema';
+import { PRISMA_MAIN_SCHEMA, schemaOfContext } from '../prisma-schema';
 import type { ChangedEntry } from './changed-entry';
 import type { SliceToVerify } from './slice-to-verify';
 
@@ -17,13 +17,14 @@ const HUNK = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/;
 const SCHEMAS = /^\s*schemas\s*=\s*\[([^\]]*)\]/;
 
 /**
- * The shared files of the storage that `generate` wrote for the slice of `context`: the
- * `prisma/schema.prisma` of a Prisma project and the schema index of the platform
+ * The shared files of the storage that `generate` wrote for the slice of `context`: the main file
+ * of the Prisma schema (`prisma/schema/schema.prisma`) and the schema index of the platform
  * (`<platformDir>/database/schema.ts`) of the other ORMs, each when every line changed since
- * `HEAD` belongs to the context. In the schema of Prisma, a line of a model, an enum or a view of
- * its database schema, and that schema joining the `schemas` of the datasource; in the schema
- * index, a line that names the tables file of the context or what it is imported as. A file that
- * holds a change of another context, or of the platform, stays left out: a person decides about it.
+ * `HEAD` belongs to the context. In the main Prisma file, the database schema of the context
+ * joining the `schemas` of the datasource, its models being in the file of the context
+ * (`prisma/schema/<context>.prisma`, in the slice already); in the schema index, a line that names
+ * the tables file of the context or what it is imported as. A file that holds a change of another
+ * context, or of the platform, stays left out: a person decides about it.
  */
 export function storageOfSlice(
   { root, config, context }: Omit<SliceToVerify, 'since'>,
@@ -32,35 +33,32 @@ export function storageOfSlice(
   const index = `${config.platformDir}/database/schema.ts`;
 
   const owned = (file: string): boolean =>
-    file === PRISMA_SCHEMA
+    file === PRISMA_MAIN_SCHEMA
       ? ofTheContextInPrisma(schemaOfContext(context), changedFile(root, file))
       : ofTheContextInIndex(context, changedFile(root, file));
 
   return new Set(
     entries
-      .filter((entry) => entry.tracked && (entry.path === PRISMA_SCHEMA || entry.path === index))
+      .filter((entry) => entry.tracked && (entry.path === PRISMA_MAIN_SCHEMA || entry.path === index))
       .map((entry) => entry.path)
       .filter(owned),
   );
 }
 
-/** Every changed line is blank, of a block of the schema, or the `schemas` of the datasource that the schema joins. */
+/** Every changed line is blank or the `schemas` of the datasource, which the schema of the context joins and nothing else. */
 function ofTheContextInPrisma(schema: string, { before, after, removed, added }: ChangedFile): boolean {
-  const ofTheSchema = (lines: readonly string[], changed: readonly number[]): boolean => {
-    const blocks = prismaBlocks(lines);
-
-    return changed.every((at) => {
+  const joinsOnly = (lines: readonly string[], changed: readonly number[]): boolean =>
+    changed.every((at) => {
       const line = lines[at] ?? '';
 
-      return line.trim() === '' || SCHEMAS.test(line) || schemaAt(blocks, at) === schema;
+      return line.trim() === '' || SCHEMAS.test(line);
     });
-  };
 
   const was = schemasListed(before, removed);
   const is = schemasListed(after, added);
   const joined = [...was].every((name) => is.has(name)) && [...is].every((name) => name === schema || was.has(name));
 
-  return ofTheSchema(before, removed) && ofTheSchema(after, added) && joined;
+  return joinsOnly(before, removed) && joinsOnly(after, added) && joined;
 }
 
 /** The database schemas the changed `schemas = [...]` line of the datasource lists. */

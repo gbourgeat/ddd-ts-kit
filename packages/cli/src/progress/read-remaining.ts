@@ -2,7 +2,7 @@ import type { Config } from '../config';
 import { filesUnder } from '../generate/files-under';
 import { type ContextTree, roleDirectoriesOf, treeOf } from '../model-modules';
 import type { Workspace } from '../workspace';
-import { PRISMA_SCHEMA, prismaBlocks, schemaAt, schemaOfContext } from '../prisma-schema';
+import { PRISMA_SCHEMA_FOLDER, prismaBlocks, prismaSchemaOf, schemaAt, schemaOfContext } from '../prisma-schema';
 import type { Remaining } from './remaining';
 import { remainingIn } from './remaining-in';
 
@@ -33,21 +33,28 @@ export function readRemaining(ws: Workspace, config: Config, only?: string): Rem
   ];
 }
 
-/** The markers of `prisma/schema.prisma`, each of the context whose database schema holds its model. */
+/**
+ * The markers of the files of the Prisma schema (`prisma/schema/`): those of
+ * `prisma/schema/<context>.prisma` are of that context, the others of the context whose database
+ * schema holds their model.
+ */
 function inPrismaSchema(ws: Workspace, config: Config): Remaining[] {
-  const content = ws.read(PRISMA_SCHEMA);
+  const names = ws.directories(config.contextsDir);
+  const contexts = new Map(names.map((name) => [schemaOfContext(name), name]));
 
-  if (content === undefined) {
-    return [];
-  }
+  return filesUnder(ws, PRISMA_SCHEMA_FOLDER)
+    .filter((file) => file.endsWith('.prisma'))
+    .flatMap((file) => {
+      const path = `${PRISMA_SCHEMA_FOLDER}/${file}`;
+      const content = ws.read(path) ?? '';
+      const own = names.find((name) => prismaSchemaOf(name) === path);
+      const blocks = prismaBlocks(content.split('\n'));
 
-  const blocks = prismaBlocks(content.split('\n'));
-  const contexts = new Map(ws.directories(config.contextsDir).map((name) => [schemaOfContext(name), name]));
-
-  return remainingIn('', PRISMA_SCHEMA, content).map((left) => ({
-    ...left,
-    context: contexts.get(schemaAt(blocks, left.line - 1) ?? '') ?? '',
-  }));
+      return remainingIn('', path, content).map((left) => ({
+        ...left,
+        context: own ?? contexts.get(schemaAt(blocks, left.line - 1) ?? '') ?? '',
+      }));
+    });
 }
 
 /** True when the end-to-end spec is named after a use case of the context. */
@@ -65,7 +72,7 @@ function drives(ws: Workspace, tree: ContextTree, spec: string): boolean {
  */
 function outside(ws: Workspace, config: Config): Remaining[] {
   const readElsewhere = (file: string): boolean =>
-    file.startsWith(`${config.contextsDir}/`) || file.startsWith(`${E2E}/`) || file === PRISMA_SCHEMA;
+    file.startsWith(`${config.contextsDir}/`) || file.startsWith(`${E2E}/`) || isPrismaSchema(file);
 
   const atRoot = ws
     .list('.')
@@ -78,6 +85,11 @@ function outside(ws: Workspace, config: Config): Remaining[] {
       .filter((left) => !readElsewhere(left.file)),
     ...atRoot,
   ];
+}
+
+/** A file of the Prisma schema, which `inPrismaSchema` reads. */
+function isPrismaSchema(file: string): boolean {
+  return file.startsWith(`${PRISMA_SCHEMA_FOLDER}/`) && file.endsWith('.prisma');
 }
 
 function scan(ws: Workspace, context: string, directory: string): Remaining[] {

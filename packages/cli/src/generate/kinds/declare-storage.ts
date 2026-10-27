@@ -2,6 +2,7 @@ import type { RenderContext } from '../../templating';
 import { renderTemplate } from '../../templating';
 import { applyWiring } from '../apply-wiring';
 import type { Scope } from '../scope';
+import { PRISMA_MAIN_SCHEMA, prismaSchemaOf, schemaOfContext } from '../../prisma-schema';
 
 /** Where each ORM declares the tables of a context: the file its migration tooling reads, and the template that starts it. */
 const TABLES_FILES: Readonly<Record<string, (context: string) => string>> = {
@@ -46,22 +47,25 @@ export function declareStorage(scope: Scope, context: RenderContext): void {
   );
 }
 
-const PRISMA_SCHEMA = 'prisma/schema.prisma';
-
-/** Prisma has one schema file for the whole project: the model joins it, and its database schema the datasource. */
+/**
+ * Prisma reads the files of one folder: the model joins the file of its context, which the worker
+ * of the context owns, and the database schema of the context the datasource of the main file.
+ */
 function declarePrismaModel(scope: Scope, context: RenderContext): void {
-  applyWiring(scope.ws, PRISMA_SCHEMA, renderTemplate('repository/prisma/model.tpl', context));
+  const models = prismaSchemaOf(scope.context.kebab);
 
-  const schema = scope.context.kebab.replaceAll('-', '_');
-  const content = scope.ws.read(PRISMA_SCHEMA);
-
-  if (content === undefined || new RegExp(`schemas\\s*=\\s*\\[[^\\]]*"${schema}"`).test(content)) {
-    return;
+  if (scope.ws.read(models) === undefined) {
+    scope.ws.create(models, renderTemplate('repository/prisma/schema.prisma.tpl', context));
   }
 
-  scope.ws.update(PRISMA_SCHEMA, content.replace(/(schemas\s*=\s*\[[^\]]*)\]/, `$1, "${schema}"]`));
+  applyWiring(scope.ws, models, renderTemplate('repository/prisma/model.tpl', context));
 
-  scope.ws.note(
-    'prisma/schema.prisma changed: run `npm run db:client` to regenerate the client and the schema of the tests.',
-  );
+  const schema = schemaOfContext(scope.context.kebab);
+  const content = scope.ws.read(PRISMA_MAIN_SCHEMA);
+
+  if (content !== undefined && !new RegExp(`schemas\\s*=\\s*\\[[^\\]]*"${schema}"`).test(content)) {
+    scope.ws.update(PRISMA_MAIN_SCHEMA, content.replace(/(schemas\s*=\s*\[[^\]]*)\]/, `$1, "${schema}"]`));
+  }
+
+  scope.ws.note(`${models} changed: run \`npm run db:client\` to regenerate the client and the schema of the tests.`);
 }

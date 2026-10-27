@@ -150,7 +150,7 @@ describe('the storage token of each ORM', () => {
     ],
     [
       'prisma',
-      ['prisma/schema.prisma', 'prisma.config.ts', 'src/platform/database/create-client.ts'],
+      ['prisma/schema/schema.prisma', 'prisma.config.ts', 'src/platform/database/create-client.ts'],
       '@ddd-ts-kit/prisma',
     ],
     [

@@ -16,7 +16,7 @@ export function auditVars(config: Config): RenderContext {
     memory: on && !sql,
     ...archiveOf(sql, storage),
     ...storeOf(on ? orm : 'none'),
-    /** The ORMs whose platform declares the schema of the trail in `database/schema.ts`; Prisma declares it in `prisma/schema.prisma`. */
+    /** The ORMs whose platform declares the schema of the trail in `database/schema.ts`; Prisma declares it in `prisma/schema/schema.prisma`. */
     schemaFile: sql && orm !== 'prisma',
     ...readSideOf(on && http !== 'none', routes),
   };

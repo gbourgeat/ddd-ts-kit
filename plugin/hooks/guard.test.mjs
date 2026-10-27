@@ -1286,6 +1286,25 @@ test('a context worker writes its working migration, and no other migration', ()
   }
 });
 
+test('a context worker changes the Prisma models of its context, and no other file of the schema', () => {
+  const root = project();
+  const agent = worker(root);
+  assert.equal(run('pre-write', write(join(root, 'prisma/schema/ordering.prisma'), agent)).output, undefined);
+  put(root, 'prisma/schema/ordering.prisma', 'model OrderingOrder {\n  id String @id\n}\n');
+  assert.equal(
+    run('pre-bash', bash(root, 'sed -i s/String/Text/ prisma/schema/ordering.prisma', agent)).output,
+    undefined,
+  );
+  const neighbour = run('pre-write', write(join(root, 'prisma/schema/billing.prisma'), agent));
+  assert.equal(decision(neighbour), 'deny');
+  assert.match(reason(neighbour), /another bounded context/);
+  for (const path of ['prisma/schema/schema.prisma', 'prisma/schema.prisma', 'prisma/schema/ordering/extra.prisma']) {
+    const shared = run('pre-write', write(join(root, path), agent));
+    assert.equal(decision(shared), 'deny', path);
+    assert.match(reason(shared), /shared file .* conductor/, path);
+  }
+});
+
 test('a context worker generates a working migration only', () => {
   const root = project();
   const agent = worker(root);

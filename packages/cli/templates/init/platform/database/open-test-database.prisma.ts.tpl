@@ -24,7 +24,7 @@ export interface TestDatabase {
 
 /**
  * PostgreSQL in process (PGlite, served over the wire protocol) by default, with the tables of
- * generated/schema.sql, which `npm run db:client` derives from prisma/schema.prisma: adapter
+ * generated/schema.sql, which `npm run db:client` derives from prisma/schema/: adapter
  * and end-to-end specs need no container. With a URL, the tests run on that server instead,
  * which must already be migrated (`npm run db:migrate`).
  */

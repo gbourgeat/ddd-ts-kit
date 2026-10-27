@@ -46,7 +46,7 @@ describe('init: the monthly archive of the audit trail', () => {
   });
 
   it('declares the archives with the rest of the trail on Prisma and TypeORM', () => {
-    expect(read(initProject('--orm', 'prisma'), 'prisma/schema.prisma')).toContain(auditPrismaModels('audit'));
+    expect(read(initProject('--orm', 'prisma'), 'prisma/schema/schema.prisma')).toContain(auditPrismaModels('audit'));
     expect(auditPrismaModels('audit')).toContain('model AuditArchive {');
     expect(platform(initProject('--orm', 'typeorm'), 'database/schema.ts')).toContain('...auditTrail,');
   });

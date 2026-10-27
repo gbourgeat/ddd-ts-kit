@@ -42,28 +42,43 @@ function plan(root: string): { toStage: unknown; leftOut: unknown } {
 }
 
 describe('verify-slice counts what the generator wrote for the slice outside its context', () => {
-  it('stages prisma/schema.prisma when the slice added its model, and the page of what its tests state', () => {
+  it('stages the Prisma file of the context and the datasource it joined, and the page of what its tests state', () => {
     const root = billingSlice('prisma');
 
     write(root, 'docs/behaviour/billing.md', '# billing: what its tests state\n');
 
     const { toStage, leftOut } = plan(root);
 
-    expect(toStage).toEqual(expect.arrayContaining(['prisma/schema.prisma', 'docs/behaviour/billing.md']));
+    expect(toStage).toEqual(
+      expect.arrayContaining([
+        'prisma/schema/billing.prisma',
+        'prisma/schema/schema.prisma',
+        'docs/behaviour/billing.md',
+      ]),
+    );
+
     expect(leftOut).toEqual([]);
   });
 
-  it('leaves prisma/schema.prisma out once it holds a change of a model outside the context', () => {
+  it('leaves the main Prisma file out once it holds more than the context joining the datasource', () => {
     const root = billingSlice('prisma');
-    const schema = read(root, 'prisma/schema.prisma');
+    const schema = read(root, 'prisma/schema/schema.prisma');
 
     write(
       root,
-      'prisma/schema.prisma',
+      'prisma/schema/schema.prisma',
       schema.replace('  traceparent   String?\n', '  traceparent   String?\n  tracestate    String?\n'),
     );
 
-    expect(plan(root).leftOut).toEqual(['prisma/schema.prisma']);
+    expect(plan(root).leftOut).toEqual(['prisma/schema/schema.prisma']);
+
+    write(
+      root,
+      'prisma/schema/schema.prisma',
+      `${schema}\nmodel BillingLedger {\n  id String @id\n\n  @@schema("billing")\n}\n`,
+    );
+
+    expect(plan(root).leftOut).toEqual(['prisma/schema/schema.prisma']);
   });
 
   it.each(['drizzle', 'knex', 'typeorm'])(

@@ -1,6 +1,6 @@
 generator client {
   provider            = "prisma-client"
-  output              = "../generated/prisma"
+  output              = "../../generated/prisma"
   moduleFormat        = "esm"
   importFileExtension = "js"
 }
@@ -100,9 +100,8 @@ model ProcessInstance {
 }
 {{/if}}
 
-// One schema per bounded context, no relation across contexts.
-// ddd-ts-kit:models
-// /ddd-ts-kit:models
+// The models of each bounded context are in a file of their own beside this one,
+// prisma/schema/<context>.prisma, in the database schema of the context: no relation across contexts.
 {{#if eventSourcing.on}}
 
 // The event store of @ddd-ts-kit/prisma: the events, the snapshots, the checkpoints and the

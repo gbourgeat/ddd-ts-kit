@@ -18,6 +18,8 @@ Scope
 - You may write: src/contexts/<context>/**, test/e2e/<use-case>.e2e.spec.ts of your slices (split by behaviour into
   test/e2e/<use-case>-<behaviour>.e2e.spec.ts when one grows long), and their helpers and worlds in
   test/e2e/support/<context>/.
+- On Prisma: the models of your context are yours too: prisma/schema/<context>.prisma. A stored field changes its
+  column there and the mapper in the same commit; then `npm run db:client`.
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
   report the need, do not work around it. The shell writes inside your scope only, as the editor tools do:

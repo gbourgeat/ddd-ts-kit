@@ -1,8 +1,7 @@
 import type { Workspace } from '../workspace';
+import { PRISMA_MAIN_SCHEMA, prismaSchemaOf } from '../prisma-schema';
 
-const PRISMA_SCHEMA = 'prisma/schema.prisma';
-
-/** Where the models of the contexts end in the schema `init` writes. */
+/** Where the models end in the file of a context the repository generator starts. */
 const END_OF_MODELS = '// /ddd-ts-kit:models';
 
 /** One model or enum of a schema, its documentation comments included. */
@@ -12,26 +11,31 @@ const BLOCK = /^(?:\/\/\/[^\n]*\n)*(model|enum) (\w+) \{\n[\s\S]*?^\}$/gm;
 const PARTIAL_INDEXES = 'partialIndexes';
 
 /**
- * The models of a preset in `prisma/schema.prisma`: each takes the place of the model of the same
- * name its repository generator started, the others join the models region, and the generator of
- * the client turns on the partial indexes the preset relies on.
+ * The models of a preset in the file of its context (`prisma/schema/<context>.prisma`): each takes
+ * the place of the model of the same name its repository generator started, the others join the
+ * models region, and the generator of the client turns on the partial indexes the preset relies on.
  */
-export function layOutPrismaModels(ws: Workspace, models: string): void {
-  const schema = ws.read(PRISMA_SCHEMA);
+export function layOutPrismaModels(ws: Workspace, models: string, context: string): void {
+  const file = prismaSchemaOf(context);
+  const own = ws.read(file);
+  const main = ws.read(PRISMA_MAIN_SCHEMA);
 
-  if (schema === undefined) {
-    ws.note(`${PRISMA_SCHEMA} does not exist: copy the models of the preset into it by hand.`);
+  if (own === undefined || main === undefined) {
+    ws.note(
+      `${own === undefined ? file : PRISMA_MAIN_SCHEMA} does not exist: copy the models of the preset into ${file} by hand.`,
+    );
 
     return;
   }
 
   const laidOut = [...models.matchAll(BLOCK)].reduce(
     (content, [block, kind, name]) => withBlock(content, block, `${kind ?? ''} ${name ?? ''}`),
-    withPreviewFeature(schema, PARTIAL_INDEXES),
+    own,
   );
 
-  ws.update(PRISMA_SCHEMA, laidOut);
-  ws.note(`${PRISMA_SCHEMA} changed: run \`npm run db:client\` to regenerate the client and the schema of the tests.`);
+  ws.update(file, laidOut);
+  ws.update(PRISMA_MAIN_SCHEMA, withPreviewFeature(main, PARTIAL_INDEXES));
+  ws.note(`${file} changed: run \`npm run db:client\` to regenerate the client and the schema of the tests.`);
 }
 
 function withBlock(content: string, block: string, header: string): string {

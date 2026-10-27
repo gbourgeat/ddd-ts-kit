@@ -1,4 +1,6 @@
 export { prismaBlocks } from './prisma-blocks';
-export { PRISMA_SCHEMA } from './prisma-schema-file';
+export { PRISMA_MAIN_SCHEMA } from './prisma-main-schema';
+export { PRISMA_SCHEMA_FOLDER } from './prisma-schema-folder';
+export { prismaSchemaOf } from './prisma-schema-of';
 export { schemaAt } from './schema-at';
 export { schemaOfContext } from './schema-of-context';

@@ -154,6 +154,13 @@ stale `node_modules`, packages of the kit at another version and submodules not 
 Another context's `published-language/` is read-only for a worker: a missing field is
 reported, agreed, and added on the trunk.
 
+The tables of a context are its worker's, not shared: a stored field changes its column and the
+mapper in one commit, on the worker's branch, with a working migration. They live in the context
+(`infrastructure/persistence/` on Drizzle, Knex and TypeORM) or, on Prisma, in the file of the
+context `prisma/schema/<context>.prisma`, which the guard lets its worker write. Only the main
+file `prisma/schema/schema.prisma` (the client, the datasource, the tables of the platform) is
+shared: never write a column of a context on the trunk, where its mapper has not changed.
+
 ## 5. Brief and launch
 
 `worker-scope` prints the briefing of the rows of `--rows` (by default the first batch
