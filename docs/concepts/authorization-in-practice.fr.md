@@ -1,5 +1,5 @@
 [English](authorization-in-practice.md) · **Français**
-<!-- translation-of: authorization-in-practice.md sha256:6ca3076b046b01a8 -->
+<!-- translation-of: authorization-in-practice.md sha256:131f0049211c4fb8 -->
 
 # L'autorisation en pratique
 
@@ -160,7 +160,9 @@ opérateurs du contexte, et un projet qui n'écrit jamais de relation `operator`
 de provisionnement, un amorçage, le droit d'un acteur système) a un cas d'usage que personne ne peut lancer. Un
 acteur système qui envoie une commande protégée depuis un *job* ou un *handler* a besoin de sa
 propre relation, que `authz/system-actor-granted` (une erreur) vérifie dans
-`relate-system-actors.ts`.
+`relate-system-actors.ts`. L'application écrit ces relations au démarrage, et `reset()` du support
+de bout en bout les écrit de nouveau après avoir vidé la base : le deuxième test d'une spec trouve
+les acteurs système aussi habilités que le premier.
 
 ### Politiques par attributs
 

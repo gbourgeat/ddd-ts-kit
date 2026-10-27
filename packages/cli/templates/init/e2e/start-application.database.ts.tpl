@@ -14,6 +14,7 @@ import type { IntegrationEvent, IntegrationEventSubscriber } from '@ddd-ts-kit/k
 {{/unless}}
 import { createHttpClient, settled, type HttpClient, type SettledOptions } from '@ddd-ts-kit/testing/e2e';
 {{#if authz.rebac}}
+import { relateSystemActors } from '{{alias.platform}}/auth/relationships/relate-system-actors{{alias.ext}}';
 import { relationTuples } from '{{alias.platform}}/auth/relationships/relation-tuples{{alias.ext}}';
 {{/if}}
 import { composeApplication } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
@@ -98,7 +99,15 @@ export interface RunningApplication {
   relate(tuple: RelationTuple): Promise<void>;
 {{/if}}
 
+{{#if authz.rebac}}
+  /**
+   * Empties the database and writes the relationships of the system actors again, the state right
+   * after start: call it before each test.
+   */
+{{/if}}
+{{#unless authz.rebac}}
   /** Empties the database: call it before each test. */
+{{/unless}}
   reset(): Promise<void>;
 
   close(): Promise<void>;
@@ -128,7 +137,15 @@ export async function startApplication(): Promise<RunningApplication> {
     relate: (tuple) => relationTuples.write([tuple]),
 {{/if}}
     settled: (options) => started.settled(options),
+{{#if authz.rebac}}
+    reset: async () => {
+      await database.reset();
+      await relateSystemActors();
+    },
+{{/if}}
+{{#unless authz.rebac}}
     reset: () => database.reset(),
+{{/unless}}
     close: () => started.close(),
   };
 }

@@ -26,6 +26,28 @@ describe('the test database of a project on an ORM', () => {
     },
   );
 
+  it.each(['drizzle', 'knex', 'prisma', 'typeorm'])(
+    'with %s and ReBAC, writes the grants of the system actors again once reset has emptied the relation tuples',
+    (orm) => {
+      const root = initProject('--orm', orm, '--authz', 'rebac');
+      const support = read(root, SUPPORT);
+
+      expect(support).toContain("import { relateSystemActors } from '");
+
+      expect(support).toMatch(
+        /reset: async \(\) => \{\n\s+await database\.reset\(\);\n\s+await relateSystemActors\(\);\n\s+\},/,
+      );
+    },
+  );
+
+  it('without ReBAC, a reset only empties the database', () => {
+    const support = read(initProject('--orm', 'prisma'), SUPPORT);
+
+    expect(support).toContain('reset: () => database.reset(),');
+
+    expect(support).not.toContain('relateSystemActors');
+  });
+
   it('with Jest, starts from the same cluster, saved by a global setup and deleted by a global teardown', () => {
     const root = initProject('--tests', 'jest');
 
