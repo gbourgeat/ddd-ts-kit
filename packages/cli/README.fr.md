@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b852bd7eaf571333 -->
+<!-- translation-of: README.md sha256:b2e4171c0c5cda81 -->
 
 # ddd-ts-kit
 
@@ -49,7 +49,9 @@ Chaque commande accepte `--json` (sortie lisible par une machine, erreurs compri
 `--cwd <dir>`. Les commandes autres que `init` cherchent `ddd-ts-kit.config.json` dans le
 répertoire et ses parents. Codes de sortie : `0` succès, `1` violations, documentation périmée
 ou, sous `--strict`, un *commit* au-delà de ses limites, `2` mauvais usage (le message dit quoi
-faire).
+faire), `3` une commande qui écrit des fichiers n'a pas pu en écrire certains là où elle tournait
+(un chemin que protège le bac à sable d'un agent) : ils sont listés sous `unwritable`, tous les
+autres fichiers sont écrits et aucun n'est supprimé.
 
 ## init
 

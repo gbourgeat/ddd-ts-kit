@@ -44,9 +44,8 @@ export const docsCommand: Command = (argv, io) => {
 
   if (!check) {
     stopIgnoringValidation(ws, config);
-    printReport(io, args, ws.commit(args.flag('dry-run')));
 
-    return 0;
+    return printReport(io, args, ws.commit(args.flag('dry-run')));
   }
 
   return reportCheck(io, args, { ws, config, kept });
@@ -67,9 +66,7 @@ function behaviourOnly(io: Io, args: Arguments, run: DocsRun): number {
   writeBehaviour(run.ws, run.config, readContexts(run.ws, run.config));
 
   if (!args.flag('check')) {
-    printReport(io, args, run.ws.commit(args.flag('dry-run')));
-
-    return 0;
+    return printReport(io, args, run.ws.commit(args.flag('dry-run')));
   }
 
   const report = run.ws.commit(true);
