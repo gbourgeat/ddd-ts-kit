@@ -2,6 +2,7 @@ import { describe, expect, it } from '{{tests.module}}';
 import { givenEvents } from '@ddd-ts-kit/testing';
 import { {{name.pascal}} } from '{{alias.context}}/domain/aggregates/{{name.kebab}}.aggregate{{alias.ext}}';
 import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event{{alias.ext}}';
+import { {{name.article}}{{name.pascal}} } from '{{alias.context}}/test/builders/{{name.kebab}}.builder{{alias.ext}}';
 
 const bornAt = new Date('2026-03-01T00:00:00.000Z');
 
@@ -18,6 +19,13 @@ describe('{{name.pascal}}', () => {
       .when((loaded) => loaded.toState())
       .thenNoEvent()
       .thenState((loaded) => expect(loaded.version).toBe(1));
+  });
+
+  it('is loaded by its builder in the state its birth gives, recording nothing', () => {
+    const loaded = {{name.article}}{{name.pascal}}().identifiedBy('{{name.kebab}}-7').bornAt(bornAt).build();
+
+    expect(loaded.registeredAt).toEqual(bornAt);
+    expect(loaded.pullEvents()).toEqual([]);
   });
 
   // TODO(domain): replace each entry below by a test named after the business rule it proves: given the events of a history, when one command, then the events it records (`thenEvents`) or the refusal (`thenError`).
