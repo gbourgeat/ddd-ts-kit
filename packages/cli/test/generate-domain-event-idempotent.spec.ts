@@ -45,7 +45,7 @@ describe('generate domain-event on an event the aggregate already has', () => {
     const extended = contents(project, files(INCIDENTS));
 
     expect(extended[0]?.match(/private applyClosed\(/g)).toHaveLength(1);
-    expect(extended[1]?.match(/interface IncidentClosedData/g)).toHaveLength(1);
+    expect(extended[1]?.match(/type IncidentClosedData =/g)).toHaveLength(1);
     expect(generate(project, 'domain-event', 'incidents', 'Incident', 'Closed').updated).toEqual([]);
     expect(contents(project, files(INCIDENTS))).toEqual(extended);
   });

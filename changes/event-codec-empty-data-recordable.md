@@ -1,0 +1,3 @@
+**The codec `generate aggregate --event-sourced` and `generate domain-event` write now declares an event without data in the shape `docs --stored-events` accepts.** The generator wrote `interface LedgerCreditedData {}`, which the command refuses ("declares no member"). It now writes `type LedgerCreditedData = Record<string, never>;`, which is recorded as it stands; an event that carries fields gets an `interface` with them, as before.
+
+To move: nothing for a codec already filled. A generated codec you left with an empty `interface XData {}` for an event that carries nothing: write `type XData = Record<string, never>;`.
