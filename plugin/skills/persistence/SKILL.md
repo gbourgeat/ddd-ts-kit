@@ -131,6 +131,7 @@ lookups of the port, the columns, the mapper.
   without a terminal it fails: add then drop in a later migration, or `-- <name> --custom`;
   never under `script` or another pseudo-terminal, where it waits), applied with
   `npm run db:migrate`, committed, forward-only, and compatible with the version still running.
+  Under the sandbox of the regulated profile a command cannot reach the database, whatever `sandbox.network` allows: `db:generate` on Prisma and TypeORM exits 3 with that sentence when `DATABASE_URL` does not answer, and `db:migrate` fails on the connection. Those migrations and the specs that name a `DATABASE_URL` are the owner's, from a terminal outside the sandbox, or the CI's; hand over the command and wait. Drizzle generates without a connection.
   When a merge brings a migration from the main branch before yours is merged, yours is
   generated again on top: `npx ddd-ts-kit merge-trunk` does it as it brings the main branch in
   (under drizzle-kit it takes the main branch's journal and replays the branch's migrations, in

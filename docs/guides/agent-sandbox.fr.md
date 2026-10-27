@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:c3b5b85298c46438 -->
+<!-- translation-of: agent-sandbox.md sha256:01ef87aaa435f39f -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -266,6 +266,36 @@ un moteur qu'un autre projet exécuterait ensuite hors du bac à sable. Une équ
 pas retire `~/.cache/prisma` de la liste, et le propriétaire lance `prisma generate` hors de
 l'agent. `init` relancé ajoute une entrée dont la pile a besoin à une liste que le projet a déjà,
 et garde les siennes ; `doctor` nomme une entrée qui manque à la liste.
+
+#### La base de données sous le bac à sable
+
+Une commande du bac à sable ne peut pas ouvrir de connexion TCP vers la base de données du projet,
+quoi que contienne le bloc `sandbox.network`. Sondé sur Claude Code 2.1.311 sous Linux, avec
+PostgreSQL à l'écoute sur `127.0.0.1` et un simple `net.connect` dans la session : `allowedDomains`
+avec `localhost` et `127.0.0.1`, avec ou sans port, `allowLocalBinding: true` et
+`allowAllUnixSockets: true` finissent tous en `ECONNREFUSED`. Le bac à sable donne à une commande
+son propre réseau, dont la seule sortie est le proxy de la liste de domaines, et ce proxy relaie
+HTTP et HTTPS, pas le protocole d'une base ; `allowLocalBinding` et `allowUnixSockets` sont des
+réglages de macOS, ignorés sous Linux. Aucun réglage du bac à sable n'atteint une base locale : le
+profil n'en écrit donc pas, et le seul réglage qui élargirait quelque chose (`allowAllUnixSockets`)
+atteint un fichier socket, pas un port, et ouvre toutes les sockets de la machine, celle du moteur
+de conteneurs comprise.
+
+Dans une session sous le profil régulé, l'agent écrit donc le schéma et le code, et le propriétaire
+(ou la chaîne) lance ce qui demande la base, depuis un terminal hors du bac à sable :
+
+- les migrations : `npm run db:generate <nom>` sous Prisma (`prisma migrate dev --create-only` a
+  besoin d'une base pour sa base fantôme) et TypeORM (`migration:generate` lit le schéma vivant), et
+  `npm run db:migrate` sous tous les ORM (qui échoue sur la connexion) ; `drizzle-kit generate` et les fichiers Knex écrits à la
+  main n'ont besoin d'aucune connexion, donc Drizzle génère dans le bac à sable ;
+- les specs d'intégration et de bout en bout qui nomment une `DATABASE_URL` ; les specs sur les
+  doublures en mémoire et les specs de bout en bout sans `DATABASE_URL` (base en processus) tournent
+  dans la session.
+
+Quand `DATABASE_URL` est définie et que son serveur ne répond pas, `prisma-generate` et
+`typeorm-generate` s'arrêtent avant l'outil, sortent en 3 (le code de ce qu'une session ne peut pas
+faire ici) et le disent, au lieu d'une erreur de connexion brute ; la commande est alors remise au
+propriétaire telle quelle.
 
 #### Les fichiers vides que laisse le bac à sable
 

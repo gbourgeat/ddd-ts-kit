@@ -2,7 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { CliError } from '../cli-error';
 import { readConfig } from '../config';
-import { formatAsTheProject, generateGuarded, runOrmTool, schemasFirst, typeOnlyImports } from '../migration';
+import {
+  ensureDatabaseReachable,
+  formatAsTheProject,
+  generateGuarded,
+  runOrmTool,
+  schemasFirst,
+  typeOnlyImports,
+} from '../migration';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 
@@ -24,6 +31,8 @@ export const typeormGenerateCommand: Command = (argv, io) => {
       'Run `npm run db:generate migrations/<what-it-does>`, for example `npm run db:generate migrations/add-invoices`.',
     );
   }
+
+  ensureDatabaseReachable();
 
   const dataSource = `dist/${readConfig(root).config.platformDir}/database/data-source.js`;
 

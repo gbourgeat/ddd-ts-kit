@@ -1,5 +1,5 @@
 import { CliError } from '../cli-error';
-import { generateGuarded, runOrmTool } from '../migration';
+import { ensureDatabaseReachable, generateGuarded, runOrmTool } from '../migration';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 
@@ -18,6 +18,8 @@ export const prismaGenerateCommand: Command = (argv, io) => {
       'Run `npm run db:generate <what-it-does>`, for example `npm run db:generate add-invoices`.',
     );
   }
+
+  ensureDatabaseReachable();
 
   return generateGuarded(
     {
