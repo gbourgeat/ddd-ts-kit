@@ -16,7 +16,7 @@ import type { NotReplayed, PlanProblem } from './wave-plan';
 import { waveNumbers } from './wave-numbers';
 
 /** Runs `generate` with the arguments that follow it, hearing its names with the probe; throws what the generator refuses. */
-export type Generate = (argv: readonly string[], language: LanguageProbe) => void;
+type Generate = (argv: readonly string[], language: LanguageProbe) => void;
 
 export interface WordsRequest {
   /** The context whose rows to judge; null for every row. */
