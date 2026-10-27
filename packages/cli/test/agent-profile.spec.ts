@@ -32,6 +32,7 @@ describe('init --agent-profile regulated', () => {
       enabled: true,
       failIfUnavailable: true,
       allowUnsandboxedCommands: false,
+      filesystem: { allowWrite: ['~/.npm'] },
       network: { allowedDomains: ['registry.npmjs.org'] },
       credentials: {
         files: [
@@ -58,8 +59,94 @@ describe('init --agent-profile regulated', () => {
     expect(notes).toContain('"requiredMinimumVersion": "<the oldest version of Claude Code the team accepts>"');
     expect(notes).toContain('copy the hooks of .claude/settings.json into the managed settings too');
     expect(read(root, SETTINGS)).not.toContain('allowManagedHooksOnly');
+    expect(notes).toContain('Run the first `npm install` of this project yourself, outside the agent');
+    expect(notes).not.toContain('install scripts of the stack');
+  });
+});
+
+describe('init --agent-profile regulated, and the install of the stack', () => {
+  it('lets the agent install the stack init chose: the caches of the package manager and of Prisma, the hosts of the engines of Prisma and of the Kafka client', () => {
+    const root = tempDir('regulated');
+
+    write(root, 'package.json', JSON.stringify({ name: 'lending', repository: 'gitlab:acme/lending' }));
+
+    const result = cli(
+      root,
+      'init',
+      ...NPM,
+      '--orm',
+      'prisma',
+      '--broker',
+      'kafka',
+      '--agent-profile',
+      'regulated',
+      '--json',
+    );
+
+    expect(result.code).toBe(0);
+    expect(jsonAt(sandboxOf(root), 'filesystem', 'allowWrite')).toEqual(['~/.npm', '~/.cache/prisma']);
+
+    expect(jsonAt(sandboxOf(root), 'network', 'allowedDomains')).toEqual([
+      'registry.npmjs.org',
+      'gitlab.com',
+      'binaries.prisma.sh',
+      'github.com',
+      'release-assets.githubusercontent.com',
+    ]);
+
+    const notes = stringsAt(result.json(), 'notes').join('\n');
+
+    expect(notes).toContain('a path missing when the session starts stays read-only for the whole session');
+    expect(notes).toContain('the engines of Prisma from binaries.prisma.sh');
+    expect(notes).toContain('the prebuilt client of Kafka from github.com and release-assets.githubusercontent.com');
+    expect(notes).toContain('builds librdkafka from sources');
+    expect(notes).toContain('Claude Code ignores sandbox.filesystem.allowWrite and sandbox.network.allowedDomains');
+
+    const pnpm = tempDir('regulated');
+
+    cli(pnpm, 'init', '--package-manager', 'pnpm', '--orm', 'drizzle', '--agent-profile', 'regulated');
+
+    expect(jsonAt(sandboxOf(pnpm), 'filesystem', 'allowWrite')).toEqual([
+      '~/.local/share/pnpm/store',
+      '~/.cache/pnpm',
+      '~/Library/pnpm/store',
+      '~/Library/Caches/pnpm',
+    ]);
+
+    expect(jsonAt(sandboxOf(pnpm), 'network', 'allowedDomains')).toEqual(['registry.npmjs.org']);
   });
 
+  it('adds the entries of a stack chosen later to the lists a project already holds, and doctor names a missing one', () => {
+    const root = initProject(...NPM, '--orm', 'drizzle', '--agent-profile', 'regulated');
+    const settings = readJson(root, SETTINGS) as Record<string, unknown>;
+
+    write(
+      root,
+      SETTINGS,
+      JSON.stringify({
+        ...settings,
+        sandbox: { ...sandboxOf(root), filesystem: { allowWrite: ['/tmp/build'] } },
+      }),
+    );
+
+    write(root, CONFIG, read(root, CONFIG).replace('"orm": "drizzle"', '"orm": "prisma"'));
+
+    expect(cli(root, 'doctor').stdout).toContain(
+      '  permission sandbox.filesystem.allowWrite: missing (~/.npm, ~/.cache/prisma)',
+    );
+
+    expect(cli(root, 'doctor').stdout).toContain(
+      '  permission sandbox.network.allowedDomains: missing (the npm registry, the git host and binaries.prisma.sh)',
+    );
+
+    cli(root, 'init');
+
+    expect(jsonAt(sandboxOf(root), 'filesystem', 'allowWrite')).toEqual(['/tmp/build', '~/.npm', '~/.cache/prisma']);
+    expect(jsonAt(sandboxOf(root), 'network', 'allowedDomains')).toEqual(['registry.npmjs.org', 'binaries.prisma.sh']);
+  });
+});
+
+describe('init --agent-profile regulated, and the hosts and keys of the project', () => {
   it('allows the git host of the project, from package.json or from the origin remote', () => {
     const declared = tempDir('regulated');
 

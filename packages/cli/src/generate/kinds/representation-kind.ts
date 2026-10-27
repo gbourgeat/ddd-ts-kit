@@ -18,6 +18,7 @@ export const representationKind: Kind = {
     'Makes a controller answer in more media types than JSON: `produces` in `@Controller` (`@KitRoute` of a Nest controller), and `consumes` of XML for a route that receives a body. The request chooses by its Accept header when "stack.representations" is "negotiated"; the contract lists every media type.',
   positionals: ['context', 'UseCase', 'media'],
   writesShared: false,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
     const useCase = label(scope, request.args[1] ?? '', { what: 'use case', strip: ['controller'] });

@@ -132,13 +132,16 @@ test('editing an existing role file and creating an ordinary file are allowed', 
   );
 });
 
-test('a generated contract is never edited by hand, in YAML, in JSON or split into documents', () => {
+test('a generated contract is never edited by hand, in YAML, in JSON, split into documents or as the form of a route', () => {
   const root = project();
   for (const file of [
     'openapi/openapi.yaml',
     'openapi/openapi.json',
     'openapi/back-office.yaml',
+    'openapi/forms/createOrder.json',
     'docs/integration/asyncapi.yaml',
+    'docs/integration/asyncapi.json',
+    'docs/integration/event-catalog.md',
     'src/platform/http/openapi-documents.ts',
   ]) {
     const { output } = run('pre-write', write(join(root, file)));

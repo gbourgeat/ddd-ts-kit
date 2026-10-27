@@ -296,5 +296,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
   --module         generate writes the files of the layers into that module of the model of the context
                    (declared first with generate module), <module>/domain/ to <module>/presentation/, and
                    their specs into test/unit/<module>/, finds the files it reads in the module that holds
-                   them and writes the imports to where they are; required in a context that declares
-                   modules, what the modules share staying at the level of the context`;
+                   them and writes the imports to where they are; taken by the kinds whose usage below
+                   shows [--module <module>], and required by them in a context that declares modules
+                   (a file of a use case already in a module goes with it, and another module is
+                   refused); every other kind refuses it, what it writes staying at the level of the
+                   context (code list, permission set, database schema, route groups, guards, shared
+                   shapes, fakes, builders, worlds) or outside the contexts`;

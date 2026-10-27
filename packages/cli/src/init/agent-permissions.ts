@@ -55,12 +55,12 @@ const ALLOW: readonly string[] = [
   'Bash(npm run events:check)',
 ];
 
-// Secrets, then the generated contracts: those are regenerated, never edited, and the lock of
-// an acceptance, which `ddd-ts-kit acceptance <story> --lock` alone writes. The secrets are
-// named one by one: the sandbox of Claude Code masks every path a Read rule matches, and it
-// ignores the negation of a `!` pattern, so a glob such as `.env.*` would also mask
-// `.env.example` and break git. The compose file reads `.env` at the root, denied here;
-// nothing under `docker/` holds a secret.
+// The secrets, named one by one. The sandbox of Claude Code turns every Read deny rule into a
+// path no shell command reads, and every Edit deny rule into a path no shell command writes: an
+// Edit deny rule on a file a command of the kit writes would stop that command too, so none is
+// written here (the generated contracts are asked below). The sandbox also ignores the negation of
+// a `!` pattern, so a glob such as `.env.*` would mask `.env.example` and break git. The compose
+// file reads `.env` at the root, denied here; nothing under `docker/` holds a secret.
 const DENY: readonly string[] = [
   'Read(./.env)',
   'Read(./.env.local)',
@@ -68,19 +68,31 @@ const DENY: readonly string[] = [
   'Read(./.env.production)',
   'Read(./.env.development)',
   'Read(./.env.test)',
+];
+
+/**
+ * The generated contracts and the lock of an acceptance, which `docs:generate` and
+ * `ddd-ts-kit acceptance <story> --lock` write. Earlier versions denied them, and under the sandbox
+ * those commands then failed on a read-only path: `init` takes them out of the deny rules of a
+ * project and asks for them instead.
+ */
+export const GENERATED_FILES: readonly string[] = [
   'Edit(./openapi/**)',
   'Edit(./docs/integration/asyncapi.*)',
   'Edit(./docs/integration/event-catalog.md)',
   'Edit(./test/acceptance/*.acceptance.lock.json)',
 ];
 
-// Then the files that hold the rules and the pipeline: changing one is a decision of the
-// project owner, the same list as the editor hook of the plugin asks about. The review policy
+// Then the generated files: an ask rule keeps the Edit tool off them without reaching the sandbox,
+// which takes the allow and deny rules only, and the guard of the plugin refuses a hand edit of
+// one outright. Then the files that hold the rules and the pipeline: changing one is a decision of
+// the project owner, the same list as the editor hook of the plugin asks about. The review policy
 // holds a rule of the project too.
 const ASK: readonly string[] = [
   'Bash(git push *)',
   'Bash(npm publish *)',
   'Bash(npx ddd-ts-kit check --baseline write*)',
+  ...GENERATED_FILES,
   'Edit(./ddd-ts-kit.config.json)',
   'Edit(./ddd-ts-kit-baseline.json)',
   'Edit(./REVIEW.md)',

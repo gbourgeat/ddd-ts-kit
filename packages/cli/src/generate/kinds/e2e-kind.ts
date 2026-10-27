@@ -21,6 +21,7 @@ export const e2eKind: Kind = {
     'An end-to-end spec on the whole application, in test/e2e/ at the project root: driving the route of a use case, or, for a use case no route reaches, publishing the integration event its handler receives (--event names it when several do).',
   positionals: ['context', 'UseCaseName'],
   writesShared: false,
+  writesInModules: false,
   run: (request) => {
     const scope = openScope(request);
     const name = label(scope, request.args[1] ?? '', { what: 'use case', strip: ['route', 'controller', 'handler'] });

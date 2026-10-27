@@ -13,6 +13,7 @@ export const domainEventKind: Kind = {
     'A domain event named <context>.<aggregate>.<fact>, and its spec; for an event-sourced aggregate, its apply method and its stored form too.',
   positionals: ['context', 'Aggregate', 'Fact'],
   writesShared: false,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
 

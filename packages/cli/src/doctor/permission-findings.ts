@@ -4,6 +4,7 @@ import { hookCommand } from '../init/hook-command';
 import { PROFILE_HOOKS } from '../init/profile-hooks';
 import { registeredHookCommands } from '../init/registered-hook-commands';
 import { regulatedSandbox } from '../init/regulated-sandbox';
+import { stackSandbox } from '../init/stack-sandbox';
 import { isRecord } from '../config/values/is-record';
 import { inDialect } from '../package-manager/in-dialect';
 import type { DoctorFinding } from './doctor-finding';
@@ -53,13 +54,20 @@ function sandboxFindings(config: Config, settings: unknown): DoctorFinding[] {
   }
 
   const sandbox = isRecord(settings) && isRecord(settings['sandbox']) ? settings['sandbox'] : {};
-  const expected = regulatedSandbox(undefined);
+  const expected = regulatedSandbox(undefined, config.stack);
+  const install = stackSandbox(config.stack);
+  const hosts = ['the npm registry', 'the git host', ...install.hosts];
 
   const checks: readonly (readonly [key: string, held: boolean, expected: string])[] = [
     ['enabled', sandbox['enabled'] === true, 'true'],
     ['failIfUnavailable', sandbox['failIfUnavailable'] === true, 'true'],
     ['allowUnsandboxedCommands', sandbox['allowUnsandboxedCommands'] === false, 'false'],
-    ['network.allowedDomains', listed(sandbox['network'], 'allowedDomains'), 'the npm registry and the git host'],
+    ['filesystem.allowWrite', holds(sandbox['filesystem'], 'allowWrite', install.writes), install.writes.join(', ')],
+    [
+      'network.allowedDomains',
+      listed(sandbox['network'], 'allowedDomains') && holds(sandbox['network'], 'allowedDomains', install.hosts),
+      `${hosts.slice(0, -1).join(', ')} and ${hosts.at(-1) ?? ''}`,
+    ],
     ['credentials.files', listed(sandbox['credentials'], 'files'), `${count(expected, 'credentials', 'files')} denied`],
     [
       'credentials.envVars',
@@ -77,6 +85,13 @@ function listed(block: unknown, key: string): boolean {
   const value = isRecord(block) ? block[key] : undefined;
 
   return Array.isArray(value) && value.length > 0;
+}
+
+/** Every entry the stack needs is in the list: a project may list more. */
+function holds(block: unknown, key: string, wanted: readonly string[]): boolean {
+  const value = isRecord(block) ? block[key] : undefined;
+
+  return Array.isArray(value) && wanted.every((entry) => value.includes(entry));
 }
 
 function count(block: Record<string, unknown>, ...keys: readonly string[]): number {

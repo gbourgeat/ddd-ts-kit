@@ -83,7 +83,8 @@ terms:
 | `sandbox.enabled: true` | `.claude/settings.json` | every shell command of the agent runs in the sandbox (bubblewrap and socat on Linux): it writes where the sandbox allows and reaches the network through its proxy |
 | `sandbox.failIfUnavailable: true` | project | on a machine without the sandbox the session stops at startup instead of running commands unsandboxed: no silent downgrade |
 | `sandbox.allowUnsandboxedCommands: false` | project | the agent cannot run a command outside the sandbox (the `dangerouslyDisableSandbox` request is ignored): no retry around the control |
-| `sandbox.network.allowedDomains: ["registry.npmjs.org", "<git host>"]` | project | a command reaches the package registry and the git host of the project (read from `repository` of `package.json`, else from the `origin` remote; add your mirror if you keep one) and nothing else: no exfiltration by `curl`, no package from an unknown host |
+| `sandbox.network.allowedDomains: ["registry.npmjs.org", "<git host>", ...]` | project | a command reaches the package registry, the git host of the project (read from `repository` of `package.json`, else from the `origin` remote; add your mirror if you keep one) and the hosts the install scripts of the stack download from (below), and nothing else: no exfiltration by `curl`, no package from an unknown host |
+| `sandbox.filesystem.allowWrite`: the caches the install of the stack writes | project | a command writes the project, the temporary directory and these caches only: `~/.npm` with npm, the store and the cache of pnpm, `~/.cache/prisma` with Prisma (below) |
 | `sandbox.credentials.files`: `~/.ssh`, `~/.aws`, `~/.config/gcloud`, `~/.azure` denied | project | a command cannot read the keys of the developer: a prompt injection cannot send them |
 | `sandbox.credentials.envVars`: `GITHUB_TOKEN`, `GH_TOKEN`, `GITLAB_TOKEN`, `NPM_TOKEN`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, `GOOGLE_APPLICATION_CREDENTIALS`, `AZURE_CLIENT_SECRET` denied | project | the variables are unset before each sandboxed command: a token in the shell of the developer is not in the shell of the agent |
 | `permissions.deny: Read(./.env)`, `Read(./.env.local)`, `Read(./.env.*.local)`, `Read(./.env.production)`, `Read(./.env.development)`, `Read(./.env.test)` | project, written without the profile too | the secrets of the project stay out of the context of the agent: the sandbox covers shell commands only, not the Read tool, so a permission rule holds this one |
@@ -133,8 +134,8 @@ error as the reason, exit code 0 with a `hookSpecificOutput` of `permissionDecis
 prompt the person. Both hooks are registered in `.claude/settings.json`, which Claude Code alone
 reads: Codex and Copilot run neither, and what they hold stays a rule of the team there.
 
-The key names and shapes above were verified on 2026-10-23 against the Claude Code
-documentation: [settings](https://code.claude.com/docs/en/settings),
+The key names and shapes above were verified on 2026-10-23, and the filesystem lists and the
+admin-required sandbox on 2026-10-27, against the Claude Code documentation: [settings](https://code.claude.com/docs/en/settings),
 [sandboxing](https://code.claude.com/docs/en/sandboxing),
 [permissions](https://code.claude.com/docs/en/permissions) and
 [managed settings](https://code.claude.com/docs/en/managed-settings). What was not verified:
@@ -156,24 +157,62 @@ alone, as said above.
 
 #### The generated contracts under the sandbox
 
-`init` writes deny rules for the contracts the kit generates (`Edit(./openapi/**)`,
-`Edit(./docs/integration/asyncapi.*)`, `Edit(./docs/integration/event-catalog.md)`,
-`Edit(./test/acceptance/*.acceptance.lock.json)`), so that the Edit tool never changes one by
-hand. The sandbox of Claude Code turns a deny rule on `Edit` into a read-only mount of the path,
-for the shell commands too. The rules stay, and this is the consequence: in a session in the
-sandbox, a command that writes one of these files fails, whatever the command is.
+The sandbox of Claude Code turns a permission rule on a file into a rule of the sandbox: a `Read`
+deny rule into a path no shell command reads, an `Edit` deny rule into a path no shell command
+writes, an `Edit` allow rule into a path they write
+([settings reference](https://code.claude.com/docs/en/settings-reference#sandbox-filesystem),
+read on 2026-10-27). An `ask` rule stays a rule of the file tools. So `init` writes no `Edit` deny
+rule on a file a command of the kit writes: the contracts (`openapi/**`,
+`docs/integration/asyncapi.*`, `docs/integration/event-catalog.md`) and the lock of an acceptance
+(`test/acceptance/*.acceptance.lock.json`) are `ask` rules, and the guard of the plugin refuses an
+edit of one by the `Write` or `Edit` tool outright. `npm run docs:generate`, a merge of a branch
+that regenerated them and `ddd-ts-kit acceptance <story> --lock` write them inside the sandbox.
 
-- **A merge of a branch that regenerated the contracts** (`git merge --no-ff work/wave1` in the
-  main checkout) stops half-way, after writing untracked copies of the new files of the branch.
-  The same goes for `npm run docs:generate` in the main checkout.
-- **What to do**: do these two gestures outside the sandbox, from a terminal of yours (merge the
-  branch, then run `docs:generate` and commit what it changed), or start the session with
-  `claude --setting-sources local`, which does not read the project settings, deny rules and
-  sandbox block included: it holds only for a session you decide to run that way, since it also
-  drops the other controls of the project file. Either way the guard of the plugin still refuses
-  a hand edit of a generated file, and `docs:generate` is the only author of these contracts.
-- After a merge outside the sandbox, run `npm run docs:generate` and check that nothing changes:
-  a contract regenerated by the merge must equal the one the branch holds.
+Earlier versions denied them: in a sandboxed session `docs:generate` then stopped on `EROFS` at the
+first contract. `init` run again takes the four rules out of `permissions.deny`, asks for them
+instead, and says so in its notes. An `allowWrite` entry does not lift a deny rule on the same path
+(seen on Linux with Claude Code 2.1.311), so moving the rules is the fix, not adding paths.
+
+#### Installing the stack under the sandbox
+
+The install of a stack writes outside the project and downloads from hosts other than the
+registry. The regulated profile opens what the stack `init` chose needs, and nothing more:
+
+| Stack | `filesystem.allowWrite` | `network.allowedDomains` | Why |
+|---|---|---|---|
+| npm | `~/.npm` | the registry | the cache of npm |
+| pnpm | `~/.local/share/pnpm/store`, `~/.cache/pnpm`, `~/Library/pnpm/store`, `~/Library/Caches/pnpm` | the registry | the store and the cache of pnpm, on Linux then on macOS: the sandbox skips a path the machine does not have |
+| `--orm prisma` | `~/.cache/prisma` | `binaries.prisma.sh` | the install of `@prisma/engines` downloads the engines into that cache, and `prisma generate` touches them there |
+| `--broker kafka` | nothing | `github.com`, `release-assets.githubusercontent.com` | `@confluentinc/kafka-javascript` downloads its prebuilt binary from the releases of its repository, which redirect to the host of release assets |
+
+With these entries, a sandboxed `npm install` of the Kafka client, `prisma generate` and
+`prisma migrate diff` succeed (seen on Linux with Claude Code 2.1.311). Three cases are not covered
+by the project file, and `init` says them in its notes:
+
+- **The first install.** A path of `allowWrite` that does not exist when the session starts stays
+  read-only for the whole session: the sandbox makes no new directory writable. The owner runs the
+  first `npm install` (or `pnpm install`) from a terminal outside the agent, right after `init`: it
+  creates the caches, and it runs the install scripts of the stack under the owner's eyes. The
+  agent resumes at `npm run verify`, as the `bootstrap` skill says, and its installs afterwards,
+  `npm ci` in a worktree included, run in the sandbox.
+- **No prebuilt binary of the Kafka client.** Where none fits the machine (an unusual platform or
+  Node version), the client builds librdkafka from sources: a compiler, `~/.cache/node-gyp`,
+  `nodejs.org`, `zlib.net` and `curl.se`. The profile opens none of them, since the build could
+  not succeed without all of them: that install runs outside the agent every time.
+- **A sandbox the managed settings require.** When the managed settings, or the `--settings` of a
+  session, set `sandbox.allowUnsandboxedCommands` to `false` (or the managed settings set
+  `sandbox.network.allowManagedDomainsOnly`), Claude Code ignores `filesystem.allowWrite` and
+  `network.allowedDomains` of `.claude/settings.json`
+  ([sandboxing](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox)):
+  the platform team copies the entries of the project into the managed settings.
+
+A writable cache is shared with the other projects of the developer. npm and pnpm check what they
+take from it against the integrity of the lockfile; Prisma checks an engine against a checksum kept
+beside it, in the same cache, so a session could leave an engine there that another project then
+runs outside the sandbox. A team that will not take this removes `~/.cache/prisma` from the list,
+and the owner runs `prisma generate` outside the agent. `init` run again adds an entry the stack
+needs to a list the project already holds, and keeps the project's own; `doctor` names an entry
+the list lacks.
 
 #### The empty files the sandbox leaves
 
@@ -200,6 +239,9 @@ with a note that gives the command to finish: the same `init`, run from a termin
 writes the missing files and keeps the ones written. The `bootstrap` skill hands both to the owner
 from the start: the agent runs the dry run and shows the command, the owner runs `init`, the agent
 resumes at `npm install`, and the owner runs `npm run hooks:install` before the first commit.
+Under the regulated profile the owner also runs that first `npm install`, right after `init`, and
+the agent resumes at `npm run verify`
+([Installing the stack under the sandbox](#installing-the-stack-under-the-sandbox)).
 
 ### 3. NVIDIA OpenShell
 
@@ -296,7 +338,9 @@ allow a host there only when the work needs it.
   [settings](https://code.claude.com/docs/en/settings),
   [permissions](https://code.claude.com/docs/en/permissions),
   [managed settings](https://code.claude.com/docs/en/managed-settings),
-  [hooks](https://code.claude.com/docs/en/hooks), read on 2026-10-23.
+  [hooks](https://code.claude.com/docs/en/hooks), read on 2026-10-23; the sandboxing page and the
+  [settings reference](https://code.claude.com/docs/en/settings-reference) again on 2026-10-27, for
+  the filesystem lists and the admin-required sandbox.
 - Anthropic, *AI-Native SDLC Playbook*
   ([PDF](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)):
   the worked example of a regulated organisation the profile follows.

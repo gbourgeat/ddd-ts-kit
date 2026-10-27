@@ -28,6 +28,7 @@ export const jobKind: Kind = {
     'A job run by time (once per tenant under tenancy, or `--global`) that sends one command as its own system actor, its spec, its registration, its switch in the job settings of the platform and, where the authorization model makes it one line, the grant of that actor.',
   positionals: ['context', 'Name'],
   writesShared: true,
+  writesInModules: true,
   textFlags: ['command'],
   run: (request) => {
     const scope = openScope(request);

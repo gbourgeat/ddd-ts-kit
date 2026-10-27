@@ -26,6 +26,7 @@ export const adapterKind: Kind = {
     'An infrastructure adapter of an existing port towards an outside system, its spec and its registration with a retry and timeout policy; with --decorators its outbound method carries the policy itself.',
   positionals: ['context', 'Port'],
   writesShared: true,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
     const name = label(scope, request.args[1] ?? '', { what: 'port', strip: ['port'] });

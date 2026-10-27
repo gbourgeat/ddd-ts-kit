@@ -54,10 +54,12 @@ const COUNTED_FILE_BYTES = 1_000_000;
 const FORMATTED_FILE = /\.(?:[cm]?[jt]sx?|jsonc?)$/;
 const FORMAT_TIMEOUT = 5000;
 
-// The contracts in YAML or JSON (openapi/<document>, the AsyncAPI document), the event catalog
-// and the split of the contract that `ddd-ts-kit docs` writes in the platform.
+// The contracts in YAML or JSON (openapi/<document>, the form of a route in openapi/forms/, the
+// AsyncAPI document), the event catalog and the split of the contract that `ddd-ts-kit docs`
+// writes in the platform. The settings of the project only ask before an edit of them: a deny
+// rule there would make them read-only to `docs:generate` too, under the sandbox of Claude Code.
 const GENERATED_DOCUMENT =
-  /^(?:openapi\/[^/]+|docs\/integration\/asyncapi)\.(?:ya?ml|json)$|^docs\/integration\/event-catalog\.md$|(?:^|\/)http\/openapi-documents\.ts$/;
+  /^(?:openapi\/(?:forms\/)?[^/]+|docs\/integration\/asyncapi)\.(?:ya?ml|json)$|^docs\/integration\/event-catalog\.md$|(?:^|\/)http\/openapi-documents\.ts$/;
 const LOCKFILES = ['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lock', 'bun.lockb'];
 // Rewritten by a command: counted in no commit size, merged by regenerating.
 const DERIVED_FILES = [...LOCKFILES, '.dependency-cruiser.cjs', 'docs/context-map.md'];

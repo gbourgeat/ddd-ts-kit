@@ -13,6 +13,7 @@ export const valueObjectKind: Kind = {
   summary: 'An immutable value object validated in create, and its spec.',
   positionals: ['context', 'Name'],
   writesShared: false,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
 
