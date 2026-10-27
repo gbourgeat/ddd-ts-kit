@@ -73,6 +73,8 @@ const PATHS = [
   'src/shared-kernel/money.vo.ts',
   'src/platform/database/database.ts',
   'src/contexts',
+  'src/contexts/.claude/.cc-writes/x.ts',
+  'src/contexts/.claude/domain/a.ts',
   'src/contexts/billing',
   'src/contexts/billing/billing.module.ts',
   'src/contexts/billing/CONTEXT.md',
@@ -258,3 +260,12 @@ function keysReadByThePlugin(cli: unknown, plugin: unknown): unknown {
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
+
+describe('locate, a dot folder of the contexts directory', () => {
+  it('is no context, in the plugin as in the CLI', () => {
+    const config = parseConfig({});
+
+    expect(locate(config, 'src/contexts/.claude/domain/a.ts')).toEqual({ area: 'other' });
+    expect(cliLocate(cliParseConfig({}), 'src/contexts/.claude/domain/a.ts')).toEqual({ area: 'other' });
+  });
+});
