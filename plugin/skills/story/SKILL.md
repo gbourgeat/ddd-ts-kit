@@ -165,6 +165,7 @@ plugin builds each row itself with skill `ddd-ts-kit:use-case`.
    it, then `npx ddd-ts-kit merge-trunk --continue`. When it exits 3 (the trunk changes the settings
    of the project or another path the sandbox protects), nothing was changed: the merge is the
    owner's, from a terminal outside the sandbox; hand over the command and wait.
+   A migration to generate (Prisma, TypeORM) or a spec against a real database exits 3 under the sandbox too (no setting reaches the database): the owner or the CI runs it.
 2. The `architecture-reviewer` agent on the branch (`--changed-since <base>`): blocking findings
    fixed, the others settled or written as `TODO(review): #<row> ...`. The rule of two: a
    finding that repeats one already recorded for the project (the same rule id or the same

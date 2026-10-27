@@ -250,6 +250,33 @@ and the owner runs `prisma generate` outside the agent. `init` run again adds an
 needs to a list the project already holds, and keeps the project's own; `doctor` names an entry
 the list lacks.
 
+#### The database under the sandbox
+
+A sandboxed command cannot open a TCP connection to the database of the project, whatever the
+`sandbox.network` block holds. Probed on Claude Code 2.1.311 on Linux, with PostgreSQL listening on
+`127.0.0.1` and a plain `net.connect` in the session: `allowedDomains` with `localhost` and
+`127.0.0.1`, with or without a port, `allowLocalBinding: true` and `allowAllUnixSockets: true` all
+end in `ECONNREFUSED`. The sandbox gives a command its own network, whose only way out is the proxy
+of the domain list, and the proxy relays HTTP and HTTPS, not the protocol of a database;
+`allowLocalBinding` and `allowUnixSockets` are settings of macOS and are ignored on Linux. No
+setting of the sandbox reaches a local database, so the profile does not write one, and the only
+setting that would widen anything (`allowAllUnixSockets`) reaches a socket file, not a port, and
+opens every socket of the machine, the container engine's included.
+
+So in a session under the regulated profile the agent writes the schema and the code, and the owner
+(or the pipeline) runs what needs the database, from a terminal outside the sandbox:
+
+- the migrations: `npm run db:generate <name>` under Prisma (`prisma migrate dev --create-only`
+  needs a database for its shadow) and TypeORM (`migration:generate` reads the live schema), and
+  `npm run db:migrate` under every ORM (which fails on the connection); `drizzle-kit generate` and Knex files written by hand need
+  no connection, so Drizzle generates inside the sandbox;
+- the integration and end-to-end specs that name a `DATABASE_URL`; the specs on the in-memory fakes
+  and the end-to-end specs without `DATABASE_URL` (an in-process database) run in the session.
+
+When `DATABASE_URL` is set and its server does not answer, `prisma-generate` and `typeorm-generate`
+stop before the tool, exit 3 (the code of what a session cannot do here) and say it, instead of a
+raw connection error; the command is then handed to the owner as it stands.
+
 #### The empty files the sandbox leaves
 
 Where the sandbox of Claude Code mounts a path it protects and the path does not exist, it leaves

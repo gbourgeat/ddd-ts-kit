@@ -31,6 +31,7 @@ export function firstInstallNote(stack: Stack): string {
           'Where no prebuilt binary fits the machine, @confluentinc/kafka-javascript builds librdkafka from sources (a compiler, ~/.cache/node-gyp, nodejs.org, zlib.net and curl.se), which the sandbox does not allow: that install runs outside the agent every time.',
         ]
       : []),
+    'No setting of the sandbox lets a command reach the local database: the migrations (db:generate on Prisma and TypeORM, db:migrate) and the specs that name a DATABASE_URL run outside the agent, by the owner or the CI.',
     'When the managed settings, or the --settings of a session, set sandbox.allowUnsandboxedCommands to false (or the managed settings set sandbox.network.allowManagedDomainsOnly), the sandbox is admin-required and Claude Code ignores sandbox.filesystem.allowWrite and sandbox.network.allowedDomains of .claude/settings.json: copy them into the managed settings.',
   ].join(' ');
 }
