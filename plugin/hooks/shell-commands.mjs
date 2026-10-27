@@ -33,16 +33,38 @@ export function simpleCommands(text, directory, depth = 0) {
   const { commands, substitutions } = parseShell(text);
   const found = substitutions.flatMap((inner) => simpleCommands(inner, directory, depth + 1));
   let current = directory;
+  const stack = [];
   for (const command of commands) {
     const words = unwrapped(command.words);
     found.push({ ...command, words, directory: current });
-    if (commandName(words) === 'cd') {
-      current = changedDirectory(words[1], current);
-    }
+    current = movedTo(words, current, stack);
     found.push(...nestedCommands(words, current, depth));
   }
 
   return found;
+}
+
+/** Where `cd`, `pushd` and `popd` leave the commands after them, `stack` being the one `pushd` fills. */
+function movedTo(words, current, stack) {
+  const name = commandName(words);
+  if (name === 'cd') {
+    return changedDirectory(words[1], current);
+  }
+  const target = words[1];
+  if (name === 'pushd') {
+    stack.push(current);
+    // Without a directory, `pushd` swaps or rotates the stack: where it lands only the shell knows.
+    return target === undefined || /^[+-]\d+$/.test(target) ? undefined : placeOf(target, current);
+  }
+  if (name === 'popd') {
+    // `popd +N` takes an entry off the stack and stays: which one only the shell knows.
+    if (target !== undefined && /^[+-]\d+$/.test(target)) {
+      stack.length = 0;
+      return current;
+    }
+    return stack.pop();
+  }
+  return current;
 }
 
 /** The name of the program a simple command runs: `/usr/bin/sed` is `sed`. */

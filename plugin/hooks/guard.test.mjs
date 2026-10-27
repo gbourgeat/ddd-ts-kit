@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { after, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
@@ -1081,6 +1081,38 @@ test('the shell only reads, versions or checks the lock and the verdicts of an a
   assert.equal(decision(run('pre-bash', bash(root, 'npx ddd-ts-kit acceptance US5 --lock', judge))), 'deny');
 });
 
+test('a command that moves to a worktree or checks a path before it reads or versions a verdict is not a write', () => {
+  const root = project();
+  const verdict = 'test/acceptance/verdicts/us5-1.md';
+  // The session stands above the worktree, as the main checkout stands above .worktrees/<name>.
+  const into = `cd ${basename(root)}`;
+  const above = (command) => bash(dirname(root), command);
+  for (const input of [
+    above(`${into} && git add ${verdict} && git commit -m x`),
+    above(`${into} && sed -n 1p ${verdict}`),
+    above(`${into} && sed -n '/^Verdict/p' ${verdict}`),
+    above(`pushd ${basename(root)} && test -f ${verdict} && pwd && popd && true`),
+    bash(root, `[ -f ${verdict} ] && jq . test/acceptance/us5.acceptance.lock.json`),
+    bash(root, `awk 'NR == 1' ${verdict}`),
+    bash(root, `less -N ${verdict}`),
+  ]) {
+    assert.equal(run('pre-bash', input).output, undefined, input.tool_input.command);
+  }
+  for (const input of [
+    above(`${into} && echo x > ${verdict}`),
+    above(`pushd ${basename(root)} && sed -n 1p ${verdict} > ${verdict}.bak`),
+    bash(root, `sed -i s/a/b/ ${verdict}`),
+    bash(root, `sed --in-place=.bak s/a/b/ ${verdict}`),
+    bash(root, `sed -n 'w ${verdict}' /tmp/forged.md`),
+    bash(root, `sed 's/a/b/w ${verdict}' /tmp/forged.md`),
+    bash(root, `sed -f /tmp/script.sed ${verdict}`),
+    bash(root, `awk '{ print > "${verdict}" }' /tmp/forged.md`),
+    bash(root, `less -o ${verdict} /tmp/forged.md`),
+  ]) {
+    assert.equal(decision(run('pre-bash', input)), 'deny', input.tool_input.command);
+  }
+});
+
 test('the declarations of a module of the model are generated too, and a module is declared by the conductor', () => {
   const root = project();
   const declared = spawnSync(
@@ -1432,6 +1464,7 @@ const WORKER_COMMANDS_ALLOWED = [
   'npm test > "$TMPDIR/invoicing-tests.log" 2>&1',
   'ls src/contexts >&2',
   'git add src/contexts/invoicing && git status --porcelain',
+  'pushd src/contexts/invoicing && git add . && popd && git status --porcelain',
   'git diff --stat main',
   'git log --oneline -5',
   "git commit -F - <<'EOF'\nfeat(invoicing): issue an invoice\n\nA total > 0 is checked; rm -rf src is a sentence here.\nEOF",
@@ -1512,6 +1545,9 @@ const WORKER_COMMANDS_REFUSED = [
   ['eval "rm src/main.ts"', /`rm`/],
   ['echo $(rm src/main.ts)', /`rm`/],
   ['cd src && rm main.ts', /`rm` changes src\/main\.ts/],
+  ['pushd src && rm main.ts', /`rm` changes src\/main\.ts/],
+  ['pushd src && popd && rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['pushd src && popd && popd && rm main.ts', /`rm` changes files only the shell knows/],
   ['FORCE=1 rm src/main.ts', /`rm`/],
   ['sudo rm src/main.ts', /`rm`/],
   ['npx prettier --write src', /not the formatter of this project.*npm run format/],
