@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:eaab321a25238a2f -->
+<!-- translation-of: README.md sha256:b3bdda600c2ea647 -->
 
 # ddd-ts-kit
 
@@ -654,7 +654,10 @@ appellent par son chemin (`node node_modules/@typescript/native/bin/tsc`). `npx 
 l'ancien.
 
 `init` et `generate context` commencent par le langage : la première entrée de `next` est le
-glossaire du contexte à remplir.
+glossaire du contexte à remplir. Tous deux refusent un contexte nommé `schema`, quel que soit
+l'ORM : sous Prisma les modèles d'un contexte vivent dans `prisma/schema/<context>.prisma`, et
+`prisma/schema/schema.prisma` est le fichier principal que tous les contextes partagent (un projet
+passe à Prisma par `init --force`).
 
 ### Presets
 

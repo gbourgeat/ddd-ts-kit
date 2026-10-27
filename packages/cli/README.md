@@ -630,7 +630,9 @@ and `@typescript/native` (`npm:typescript@~7.0.2`), which `build` and `typecheck
 (`node node_modules/@typescript/native/bin/tsc`). `npx tsc` would run the older one.
 
 `init` and `generate context` start with the language: the first entry of `next` is the glossary
-of the context to fill in.
+of the context to fill in. Both refuse a context named `schema`, on every ORM: on Prisma the models
+of a context live in `prisma/schema/<context>.prisma`, and `prisma/schema/schema.prisma` is the
+main file every context shares (`init --force` moves a project to Prisma).
 
 ### Presets
 
