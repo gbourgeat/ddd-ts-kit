@@ -80,8 +80,11 @@ terminal outside the agent, right after `init`; resume at `pnpm run verify`. The
 directory writable that is missing when the session starts, so this first install creates the
 caches the agent may write afterwards (the pnpm store or `~/.npm`, `~/.cache/prisma`), and it runs
 the install scripts of the stack (the engines of Prisma, the prebuilt binary of the Kafka client)
-under the owner's eyes. Later installs, `pnpm install --frozen-lockfile` in a worktree included,
-run in the sandbox. `init` says the same in its `notes`.
+under the owner's eyes: `init` allows them by name (`allowBuilds` of `pnpm-workspace.yaml`,
+`allowScripts` of `package.json` on npm), and the owner then pins them to the versions read, as
+the notes say. Later installs, `pnpm install --frozen-lockfile` in a worktree included, run in the
+sandbox. `init` says the same in its `notes`. A `doctor` line `install-script <package>` after a
+bump is the owner's to approve, never the agent's.
 
 On an existing project, a note of the dry run that starts with `package.json depends on` is a
 dependency the flags contradict: put it to the owner, and run the dry run again with the flag it

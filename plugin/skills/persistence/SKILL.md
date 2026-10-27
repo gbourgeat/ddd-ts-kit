@@ -39,8 +39,9 @@ lookups of the port, the columns, the mapper.
   the one place where a type assertion is acceptable. No ORM type crosses the port.
 - **Each context owns its tables**, in its own database schema and in a file of its own: the
   tables file of `infrastructure/persistence/` (Drizzle, Knex, TypeORM) or, on Prisma,
-  `prisma/schema/<context>.prisma` beside the main `prisma/schema/schema.prisma`. A stored field
-  changes its column and the mapper in one commit. No foreign key, join or
+  `prisma/schema/<context>.prisma` beside the main `prisma/schema/schema.prisma` (a project still
+  on the one `prisma/schema.prisma` of versions before 0.95 moves it first: `generate repository`
+  refuses with the steps). A stored field changes its column and the mapper in one commit. No foreign key, join or
   query across contexts: reference by identifier, read through a published contract or a
   local projection fed by integration events (`context/extractable`).
 - **Transactions belong to the application.** The unit of work is a middleware of the command

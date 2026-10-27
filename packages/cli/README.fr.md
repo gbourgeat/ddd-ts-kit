@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:460e289c9012dcfc -->
+<!-- translation-of: README.md sha256:84672fb8ed017c79 -->
 
 # ddd-ts-kit
 
@@ -146,6 +146,22 @@ correctif, dans les `overrides` de `package.json` sous npm et de `pnpm-workspace
 qui ne lit rien de `package.json` : qs `^6.16.0`, que Stryker demande en 6.15.1 par
 `typed-rest-client`, et avec `--http nest` multer `^2.5.0`, que `@nestjs/platform-express`
 demande en 2.4.0. Un override que le projet pose déjà pour l'un d'eux est gardé, et signalé.
+Les scripts d'installation dont la pile a besoin sont autorisés par leur nom : `@prisma/engines`
+avec `--orm prisma` (il télécharge le moteur de schéma que lancent `prisma migrate` et
+`db:client`) et `@confluentinc/kafka-javascript` avec `--broker kafka` (il télécharge le client
+natif précompilé, ou le construit), dans `allowScripts` de `package.json` sous npm et dans
+`allowBuilds` de `pnpm-workspace.yaml` sous pnpm. pnpm n'exécute aucun script de build d'une
+dépendance qu'on ne lui nomme pas ; npm 11 liste chaque script d'installation absent
+d'`allowScripts` comme pas encore relu, l'exécute encore en 11.19 avec un avertissement, et
+annonce qu'une version ultérieure le bloquera. Par leur nom, parce que la version n'est connue
+qu'une fois la plage résolue par l'installation, et que npm écarte une entrée écrite avec une
+plage ; une équipe qui relit chaque version les épingle après la première installation
+(`npm install-scripts approve <package>` change un nom en la version installée), ce que demande
+le profil réglementé. Une entrée que le projet a pour l'un d'eux, une épingle ou un refus, est
+gardée ; un refus est signalé. Les autres scripts d'installation qu'une installation liste
+(esbuild, `@swc/core`, `unrs-resolver`, `protobufjs`, `@parcel/watcher`, lefthook, le
+*preinstall* de `prisma`) ne sont pas nécessaires au kit : celui de lefthook installe les *hooks*
+git, ce que fait `hooks:install`.
 
 **Pipelines.** Une *pull request* ou une *merge request* exécute les *specs* unitaires, les
 *specs* d'intégration et le lint des contextes que son changement atteint par la carte des
@@ -581,7 +597,7 @@ choix sont enregistrés sous `stack` dans la configuration, `docsUi`, `ci` et `l
 | `--storage local\|s3` | enregistré comme `stack.storage` : où vit le contenu des fichiers, jamais dans la base de données. `src/platform/config/read-files.ts` et `src/platform/files/open-files.ts`, un par choix : `local`, un répertoire en développement (`FILES_DIRECTORY`, `.data/files`) et les liens signés servis par l'application sous `/files` (`FILES_PUBLIC_URL` et `FILES_SIGNING_SECRET` requises en production) ; `s3`, un bucket de n'importe quel fournisseur du protocole S3 au moyen de `@ddd-ts-kit/s3` (les variables `S3_*`, MinIO dans la stack compose) ; la mémoire du processus dans les tests et les outils, dans les deux cas. Avec `--di tsyringe` : `files/bind-files.ts`, `files/files.module.ts` et `files/staging-uploads.ts` ; en câblage manuel, `files/create-files.ts` ; avec une *stack* HTTP, `files/file-routes.ts`. Ils lient `FileStorage`, `FileKeys`, `FileScanner` et `FileStaging`, enregistrent la purge horaire des fichiers en attente et mettent en attente le fichier que porte une commande avant sa transaction ; `generate file-upload` en a besoin. `--storage none` n'écrit rien de tout cela ([Stockage de fichiers](../../docs/concepts/file-storage.fr.md)) |
 | `src/platform/events/` | `event-provider.ts` (`bus`, `forConsumer(name)`, `start()`, `close()`), `in-process-events.ts`, et pour `--broker` `create-event-provider.ts` : `RabbitMqEventBus` (`AMQP_URL`), `KafkaEventBus` (`KAFKA_BROKERS`, avec `aggregate-key-of.ts` pour l'ordre par agrégat), `NatsEventBus` (`NATS_URL`) ou `RedisStreamsEventBus` de `@ddd-ts-kit/redis/event-bus` (`REDIS_URL` : Redis, Dragonfly ou Valkey), chacun avec un abonné par contexte consommateur (`forConsumer`), `assertTopology` au démarrage, son adresse validée et un service compose avec un contrôle de santé ; ou `custom-event-bus.ts` avec sa *spec* `eventBusContract`. `start-outbox-relay.ts` avec l'outbox. `--broker redis` avec `--cache redis` fait un seul serveur et un seul service compose, `cache` ; seul, le service s'appelle `streams` |
 | `src/platform/database/` | `persistence.ts` (`interface Persistence` : unité de travail, magasins de l'outbox et des événements traités du *package* de l'ORM, la poignée de stockage), `open-persistence.ts`, `persistence-over.ts`, `inert-persistence.ts`, la connexion (`connect-to-database.ts`, `create-client.ts` ou `create-data-source.ts`), `schema.ts` (`MESSAGING_SCHEMA`, le schéma de ce que le kit stocke pour l'application), `open-test-database.ts` (PostgreSQL dans le processus, ou le serveur nommé par une URL ; avec Vitest chaque *spec* ouvre une copie du cluster que `test/support/test-database-template.ts`, la mise en place globale de l'exécution, initialise une fois, et y crée ses tables ; avec drizzle depuis `table-statements.ts`, le SQL des tables de `schema.ts`, puisque drizzle-kit écrit des migrations, pas des tables, ses index uniques compris), `persistence.contract.spec.ts` (les stores de l'outbox, des événements traités, des *jobs* et des processus tels que la plateforme les branche, tenus aux contrats de `@ddd-ts-kit/testing` avec ce que la pile active : le *tenant* sous `--tenancy`, l'unité de travail). La classe de stockage qu'un adaptateur de *repository* nomme dans sa liste de dépendances : `database.ts` avec drizzle et prisma (`abstract class Database extends` le type de contexte du *package* de l'ORM), `KnexContext` de `@ddd-ts-kit/knex`, `TypeOrmContext` de `@ddd-ts-kit/typeorm` |
-| outillage des migrations | `drizzle.config.ts`, `knexfile.js` et `migrations/00000000000000_initial.js`, `prisma/schema/schema.prisma` (le client, la datasource et les tables de la plateforme ; `generate repository` ajoute le fichier de chaque contexte, `prisma/schema/<context>.prisma`) et `prisma.config.ts`, ou `data-source.ts` |
+| outillage des migrations | `drizzle.config.ts`, `knexfile.js` et `migrations/00000000000000_initial.js`, `prisma/schema/schema.prisma` (le client, la datasource et les tables de la plateforme ; `generate repository` ajoute le fichier de chaque contexte, `prisma/schema/<context>.prisma`) et `prisma.config.ts`, ou `data-source.ts`. Un projet qui garde le seul `prisma/schema.prisma` des versions antérieures à 0.95 le garde avec son `prisma.config.ts` et son `db:client`, même sous `--force` : `init` n'écrit rien sous `prisma/schema/`, ses notes donnent les étapes du déplacement en nommant les contextes du projet, et `generate repository` refuse jusqu'au déplacement |
 | `scripts/openapi.ts`, `scripts/events.ts` | écrivent `openapi/openapi.yaml` (un fichier par document de `openapi.documents`), `docs/integration/asyncapi.yaml` et `docs/integration/event-catalog.md`, en JSON sous `openapi.format: json` ; `--check` échoue sur une différence |
 | `scripts/privacy-erase.ts`, `scripts/privacy-export.ts` | avec `--privacy on`, les deux demandes d'une personne concernée, traitées en ligne de commande sur les sources avec les variables de `.env` (`npm run privacy:erase -- <subject-id> [--operator <qui-demande>]`, `npm run privacy:export -- <subject-id> > export.json`) : l'effacement détruit d'abord la clé de la personne quand le projet a un event store (`--event-sourcing on` : ses événements stockés se lisent effacés ; audité avec `--audit on`), puis efface chaque copie listée dans `src/platform/privacy/data-subject-copies.ts` ; `privacy:purge` lance à la main ce que le *job* `privacy.purge-expired` lance chaque nuit à 03:00 UTC, la purge de ce qui a dépassé sa durée de conservation (`JOB_PRIVACY_PURGE_EXPIRED_ENABLED=false` coupe le *job*) ; l'export rassemble chaque enregistrement listé dans `data-subject-exports.ts` en un document JSON daté (`format`, `subject`, `exportedAt`, `records`), l'export de chaque contexte audité avec `--audit on`, jamais les valeurs (chaque exécution laisse son entrée, un essai compris : essayez-le sur une personne de test). Avec `--tenancy shared-table`, `TENANTS` nomme les tenants, séparés par des virgules : une écriture de données de tenant n'est jamais élargie. Ni l'un ni l'autre n'atteint les sauvegardes, les journaux ou une copie qu'aucun contexte n'a déclarée |
 | `docker-compose.yml`, `.env.example`, `Dockerfile`, `.dockerignore` | la base de données avec un contrôle de santé et un volume nommé, `jaegertracing/jaeger:2.22.0` derrière le profil `observability` (son interface et son port OTLP liés à 127.0.0.1), les ports depuis `.env` ; une image multi-étapes, sans root, avec les seules dépendances de production |
@@ -621,7 +637,9 @@ client Kafka) comme seuls hôtes, les fichiers d'identifiants
 chaque commande en bac à sable ; une clé que le projet avait déjà posée est gardée, et une liste
 qu'il porte gagne les entrées dont la pile a besoin. Elle affiche aussi, en note, que le
 propriétaire lance la première installation hors de l'agent (un chemin absent au démarrage d'une
-session y reste en lecture seule), et le bloc de réglages gérés qu'un fichier de projet ne peut pas poser
+session y reste en lecture seule) puis épingle les scripts d'installation de la pile sur les
+versions relues (`npm install-scripts approve <package>...`, ou `'<package>@<version>': true` dans
+`allowBuilds` sous pnpm), une montée de version de l'un d'eux demandant la même chose, et le bloc de réglages gérés qu'un fichier de projet ne peut pas poser
 (`allowManagedHooksOnly`, `allowManagedPermissionRulesOnly`,
 `permissions.disableBypassPermissionsMode`, `strictKnownMarketplaces` avec la *marketplace* du
 kit, `requiredMinimumVersion`), pour que l'équipe plateforme le colle, et écrit les deux *hooks*
@@ -654,7 +672,10 @@ appellent par son chemin (`node node_modules/@typescript/native/bin/tsc`). `npx 
 l'ancien.
 
 `init` et `generate context` commencent par le langage : la première entrée de `next` est le
-glossaire du contexte à remplir.
+glossaire du contexte à remplir. Tous deux refusent un contexte nommé `schema`, quel que soit
+l'ORM : sous Prisma les modèles d'un contexte vivent dans `prisma/schema/<context>.prisma`, et
+`prisma/schema/schema.prisma` est le fichier principal que tous les contextes partagent (un projet
+passe à Prisma par `init --force`).
 
 ### Presets
 
@@ -1672,15 +1693,27 @@ manque au projet tant que le parent épingle encore le paquet sous le correctif 
 version corrigée est `no longer needed`, à retirer, car il retiendrait le paquet quand une majeure
 suivante sera demandée. Une chaîne qui n'est pas installée n'est pas jugée.
 
+Et chaque script d'installation dont la pile a besoin, les moteurs de Prisma (`@prisma/engines`) et
+le client Kafka (`@confluentinc/kafka-javascript`), jugé sur la version installée face à
+`allowScripts` de `package.json` sous npm ou à `allowBuilds` de `pnpm-workspace.yaml` sous pnpm,
+lus comme npm les lit (le nom seul, `name@*`, ou des versions exactes jointes par `||` ; un refus
+l'emporte) : aucune entrée donne `missing`, et `init` ajoute le nom ; des entrées épinglées sur
+d'autres versions seulement, l'épingle qu'une montée de version a laissée, donnent `other
+version`, avec `npm install-scripts approve <package>` puis `npm rebuild <package>` (sous pnpm, la
+version écrite dans `allowBuilds`, puis `pnpm rebuild <package>`) une fois le nouveau script lu ; un
+refus donne `written otherwise`. Un paquet qui n'est pas installé n'est pas jugé.
+
 `--strict` sort avec 1 tant que quelque chose manque ou est à une autre plage, ou tant que le
 *checkout* ne peut pas faire tourner le projet : un Node hors d'`engines.node`, pas de
 `node_modules`, un paquet du kit non installé ou à une autre version, un sous-module non
 initialisé, un *override* qui manque. Un script écrit autrement, un *hook* que ce clone n'a pas
 installé, un Node que `.nvmrc` ne nomme pas quand `engines.node` l'accepte, un *lockfile* modifié
-depuis l'installation (un *checkout* peut le réécrire avec ce que `node_modules` contient déjà), et
-un *override* qui n'est plus nécessaire sont signalés sans le faire échouer. `--json` affiche `{ version, findings: [{ area, name, problem,
+depuis l'installation (un *checkout* peut le réécrire avec ce que `node_modules` contient déjà), un
+*override* qui n'est plus nécessaire et un script d'installation refusé (l'équipe peut construire le
+paquet autrement) sont signalés sans le faire échouer ; un script d'installation qui manque ou
+épinglé sur une autre version le fait échouer. `--json` affiche `{ version, findings: [{ area, name, problem,
 expected, found }] }`, `area` valant `script`, `package`, `permission`, `hook`, `guidance`,
-`node`, `install`, `submodule` ou `override`.
+`node`, `install`, `submodule`, `override` ou `install-script`.
 
 ## worker-scope
 

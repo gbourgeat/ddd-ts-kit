@@ -37,8 +37,10 @@ Windows x64, for Node 18 to 24. Verified here: Ubuntu with Node 24.21, and the i
 What it asks of CI and of images:
 
 - the install script must run: no `--ignore-scripts`, and with a package manager that asks
-  for install scripts to be approved (npm 11 warns, pnpm blocks), approve this package; the
-  client documents npm as supported and Yarn and pnpm as experimental;
+  for install scripts to be approved (npm 11 warns, pnpm blocks), approve this package (a
+  project generated with `--broker kafka` allows it by name: `allowScripts` of `package.json`,
+  `allowBuilds` of `pnpm-workspace.yaml`); the client documents npm as supported and Yarn and
+  pnpm as experimental;
 - the install needs to reach `github.com`; behind a proxy that forbids it, mirror the binary
   and point `node-pre-gyp` at the mirror, or the install falls back to compiling librdkafka,
   which needs Python, make and a C++ compiler and takes minutes;

@@ -8,6 +8,8 @@ import { isRecord } from '../is-record';
 import { scriptsFor } from './scripts-for';
 import { VERSIONS } from './versions';
 import { platformFileIn } from '../../platform-layout';
+import { keepsSinglePrismaSchema, SINGLE_PRISMA_SCHEMA } from '../../prisma-schema';
+import { prismaClientScript } from './prisma-client-script';
 
 export interface ManifestRequest {
   readonly config: Config;
@@ -18,7 +20,7 @@ export interface ManifestRequest {
 /** Creates package.json, or adds what is missing to an existing one without touching what is there. */
 export function writeManifest(ws: Workspace, request: ManifestRequest): void {
   const tracing = platformFileIn(request.config, 'observability/tracing.ts', (path) => ws.exists(path));
-  const scripts = scriptsFor(request.config, tracing);
+  const scripts = withPrismaSchemaKept(ws, request.config, scriptsFor(request.config, tracing));
   const wanted = dependenciesFor(request.config);
   const existing = ws.read('package.json');
 
@@ -48,6 +50,13 @@ export function writeManifest(ws: Workspace, request: ManifestRequest): void {
 
   pinPackageManager(ws, manifest, request);
   ws.update('package.json', serialize(manifest));
+}
+
+/** A project that keeps its Prisma schema in one file, as before 0.95, derives its client from that file until it moves it. */
+function withPrismaSchemaKept(ws: Workspace, config: Config, scripts: Record<string, string>): Record<string, string> {
+  return config.stack.orm === 'prisma' && keepsSinglePrismaSchema((file) => ws.exists(file))
+    ? { ...scripts, 'db:client': prismaClientScript(SINGLE_PRISMA_SCHEMA) }
+    : scripts;
 }
 
 /** corepack reads `packageManager`: an existing project that pins another release keeps it, and is told. */

@@ -4,3 +4,7 @@ export { PRISMA_SCHEMA_FOLDER } from './prisma-schema-folder';
 export { prismaSchemaOf } from './prisma-schema-of';
 export { schemaAt } from './schema-at';
 export { schemaOfContext } from './schema-of-context';
+export { keepsSinglePrismaSchema } from './keeps-single-prisma-schema';
+export { SINGLE_PRISMA_SCHEMA } from './single-prisma-schema';
+export { singlePrismaSchemaFound } from './single-prisma-schema-found';
+export { singlePrismaSchemaSteps } from './single-prisma-schema-steps';

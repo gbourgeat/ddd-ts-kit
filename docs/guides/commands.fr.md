@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:fc1f574c599ee741 -->
+<!-- translation-of: commands.md sha256:5002916d6a3eecab -->
 
 # Quelle commande, quand
 
@@ -385,10 +385,14 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    engines.node and .nvmrc, node_modules installed since the lockfile last changed, each
                    package of the kit installed at the version of this CLI, the submodules initialised;
                    last, the overrides init writes under a dependency that pins a package below a
-                   security fix, missing or no longer needed once it asks for the fix itself;
+                   security fix, missing or no longer needed once it asks for the fix itself; and each
+                   install script the stack needs (the engines of Prisma, the Kafka client) that
+                   allowScripts of package.json or allowBuilds of pnpm-workspace.yaml does not allow for
+                   the version installed: missing, pinned to another version, or denied;
                    each with its fix; --strict exits 1 while something is missing or the checkout cannot
                    run the project, never for a hook this clone has not installed, a Node .nvmrc does not
-                   name, a lockfile changed since the install or an override no longer needed
+                   name, a lockfile changed since the install, an override no longer needed or a denied
+                   install script
   lint             the ESLint of the project (lint and ci:lint run it): fails on an error, and on a warning
                    as on an error, but on one of a rule of the kit in transition, a new rule that becomes an
                    error in the version it names, whose warnings are listed apart; --format and --fix as ESLint

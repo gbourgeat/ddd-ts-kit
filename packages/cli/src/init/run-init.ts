@@ -26,6 +26,7 @@ import { ignoreWorktrees } from './ignore-worktrees';
 import { writeManifest } from './manifest/write-manifest';
 import { dependenciesAgainstStack } from './manifest/dependencies-against-stack';
 import { writeOverrides } from './manifest/write-overrides';
+import { writeInstallScripts } from './manifest/write-install-scripts';
 import { recordAgentProfile } from './record-agent-profile';
 import { recordNoOutbox } from './record-no-outbox';
 import { resolveStack, type StackOptions } from './stack/resolve-stack';
@@ -37,6 +38,12 @@ import { writeCopilotInstructions } from './write-copilot-instructions';
 import { writeCopilotSettings } from './write-copilot-settings';
 import { writeTypeScriptConfigs } from './write-type-script-configs';
 import type { Relocation } from '../platform-folders/moved-specifier';
+import {
+  keepsSinglePrismaSchema,
+  PRISMA_MAIN_SCHEMA,
+  singlePrismaSchemaFound,
+  singlePrismaSchemaSteps,
+} from '../prisma-schema';
 
 const KNIP_FILE = 'knip.json';
 
@@ -60,12 +67,13 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
 
   const projectName = existingName(root) ?? (toName(path.basename(path.resolve(root))).kebab || 'app');
   const flat = keepFlatPlatform(ws, config);
+  const earlier = keptPrismaFiles(ws, config);
 
   writeConfig(ws, config);
   recordAgentProfile(ws, config);
   writeManifest(ws, { config, projectName, force: options.force });
   writeTypeScriptConfigs(ws, config);
-  writeFiles(ws, { config, projectName, flat, force: options.force });
+  writeFiles(ws, { config, projectName, flat, force: options.force, earlier });
   ignoreWorktrees(ws);
   writeCopilotInstructions(ws);
   ws.create(DEPCRUISE_FILE, renderCruiseFile(config));
@@ -212,10 +220,10 @@ function addPresets(ws: Workspace, config: Config, names: readonly string[]): Co
  * A template ending in `.tpl` is rendered; any other is copied as it is. A file of the platform a
  * version before the folders wrote flat is written flat again, its imports with it.
  */
-function writeFiles(ws: Workspace, { config, projectName, flat, force }: Written): void {
+function writeFiles(ws: Workspace, { config, projectName, flat, force, earlier }: Written): void {
   const context = templateVars(config, projectName);
 
-  for (const [target, template] of initFiles(config, projectName)) {
+  for (const [target, template] of initFiles(config, projectName).filter(([file]) => !earlier.includes(file))) {
     const content = template.endsWith('.tpl') ? renderTemplate(template, context) : readTemplate(template);
     const kept = flat.moved.get(target.replace(/\.ts$/, ''));
 
@@ -224,6 +232,7 @@ function writeFiles(ws: Workspace, { config, projectName, flat, force }: Written
 
   // After the files: under pnpm the overrides join the pnpm-workspace.yaml just written.
   writeOverrides(ws, config, force);
+  writeInstallScripts(ws, config);
 
   // Initialised again, a project may keep code lists where 0.86 and 0.87 wrote them: knip is told of both places.
   ignoreCodeTypesWhereTheyAre(ws, config);
@@ -251,6 +260,26 @@ interface Written {
   readonly projectName: string;
   readonly flat: Relocation;
   readonly force: boolean;
+  /** Files of the stack the project keeps in an earlier layout: not written, not even with --force. */
+  readonly earlier: readonly string[];
+}
+
+/**
+ * A project on Prisma that keeps its schema in one file, as versions before 0.95 laid it out, keeps
+ * it with the config that names it: the main file of the folder written beside it would be a second
+ * generator and datasource, and would stand where the move puts the file. The move is the team's,
+ * since it parts the models by context and edits files they may have changed: the steps are said.
+ */
+function keptPrismaFiles(ws: Workspace, config: Config): readonly string[] {
+  if (config.stack.orm !== 'prisma' || !keepsSinglePrismaSchema((file) => ws.exists(file))) {
+    return [];
+  }
+
+  ws.note(
+    `${singlePrismaSchemaFound()} init left it, prisma.config.ts and the \`db:client\` script as they are, and wrote nothing under prisma/schema/. ${singlePrismaSchemaSteps(Object.keys(config.contexts))} Until then \`generate repository\` refuses to write a model.`,
+  );
+
+  return [PRISMA_MAIN_SCHEMA, 'prisma.config.ts'];
 }
 
 /** The lists of knip.json depend on the stack: they are laid out as the formatter of the project would, whatever their length. */

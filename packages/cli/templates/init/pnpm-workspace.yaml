@@ -1,8 +1,5 @@
-# No dependency runs a build script at install, as under npm: one whose script the
-# project needs (a native client, for instance) is allowed by name, once its script was read:
-#
-#   allowBuilds:
-#     '<package>': true
+# pnpm runs the build script of a dependency only when `allowBuilds` names it (`'<package>': true`):
+# init allows those the stack needs, and another one is added the same way, once its script was read.
 #
 # Without this line pnpm refuses to install as long as one script is neither allowed nor refused.
 strictDepBuilds: false

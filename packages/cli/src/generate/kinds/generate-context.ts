@@ -9,6 +9,7 @@ import {
 import { refreshContextDoc } from '../../docs/refresh-context-doc';
 import { CliError } from '../../cli-error';
 import { parseContextName, type Name } from '../../naming';
+import { PRISMA_MAIN_SCHEMA, prismaSchemaOf } from '../../prisma-schema';
 import type { Workspace } from '../../workspace';
 import type { ContextRequest } from './context-request';
 import { declareContextEntries } from './declare-context-entries';
@@ -17,6 +18,9 @@ import { writeContextFiles } from './write-context-files';
 /** Shared by `generate context` and `init`, so both create exactly the same context. */
 export function generateContext(ws: Workspace, config: Config, request: ContextRequest): Config {
   const context = parseContextName(request.name);
+
+  refuseReservedName(context);
+
   const classification = knownClassification(context, request.classification);
 
   assertUpstreamsExist(config, context, request.upstreams);
@@ -49,6 +53,23 @@ export function generateContext(ws: Workspace, config: Config, request: ContextR
   refreshContextDoc(ws, next, context.kebab);
 
   return next;
+}
+
+/**
+ * The models of a context on Prisma live in `prisma/schema/<context>.prisma`, beside the main file
+ * `prisma/schema/schema.prisma`: a context named `schema` would write its models into the main
+ * file, and the guard reads that file as no context's. Refused on every ORM: `init --force`
+ * changes the ORM of a project, and the word names the storage, not a capability of the business.
+ */
+function refuseReservedName(context: Name): void {
+  if (prismaSchemaOf(context.kebab) !== PRISMA_MAIN_SCHEMA) {
+    return;
+  }
+
+  throw new CliError(
+    `"${context.kebab}" cannot name a bounded context: on Prisma the models of a context live in ${prismaSchemaOf('<context>')}, and ${PRISMA_MAIN_SCHEMA} is the main file of the schema (the generator, the datasource, the tables of the platform), shared by every context.`,
+    'Name the context after the business capability it serves, for example billing or order-fulfilment. The name is refused on every ORM, since `init --force` can move a project to Prisma.',
+  );
 }
 
 function knownClassification(context: Name, classification: string | undefined): string {

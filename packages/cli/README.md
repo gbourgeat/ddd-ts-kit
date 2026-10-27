@@ -137,6 +137,20 @@ The project forces the versions that close a vulnerability its stack still pins 
 nothing of `package.json`: qs `^6.16.0`, which Stryker asks for at 6.15.1 through
 `typed-rest-client`, and under `--http nest` multer `^2.5.0`, which `@nestjs/platform-express`
 asks for at 2.4.0. An override the project already sets for one of them is kept, and said.
+The install scripts the stack needs are allowed by name: `@prisma/engines` under `--orm prisma`
+(it downloads the schema engine that `prisma migrate` and `db:client` run) and
+`@confluentinc/kafka-javascript` under `--broker kafka` (it downloads the prebuilt native client,
+or builds it), in `allowScripts` of `package.json` under npm and in `allowBuilds` of
+`pnpm-workspace.yaml` under pnpm. pnpm runs no build script of a dependency it is not told to;
+npm 11 lists every install script not in `allowScripts` as not yet reviewed, still runs it in
+11.19 with a warning, and says a later release blocks it. By name, because the version is known
+once the install resolved the range, and npm drops an entry written with a range; a team that
+reviews each version pins them after the first install (`npm install-scripts approve <package>`
+turns a name into the installed version), which the regulated profile asks. An entry the project
+has for one of them, a pin or a denial, is kept; a denial is said. The other install scripts an
+install lists (esbuild, `@swc/core`, `unrs-resolver`, `protobufjs`, `@parcel/watcher`, lefthook,
+the preinstall of `prisma`) are not needed by the kit: lefthook's installs the git hooks, which
+`hooks:install` does.
 
 **Pipelines.** A pull or merge request runs the unit specs, the integration specs and the lint of
 the contexts its change reaches through the context map ([`ddd-ts-kit affected`](#affected)); types,
@@ -561,7 +575,7 @@ config, `docsUi`, `ci` and `logger` included.
 | `--storage local\|s3` | recorded as `stack.storage`: where the content of files lives, never in the database. `src/platform/config/read-files.ts` and `src/platform/files/open-files.ts`, one per choice: `local`, a directory in development (`FILES_DIRECTORY`, `.data/files`) and the signed links answered by the application under `/files` (`FILES_PUBLIC_URL` and `FILES_SIGNING_SECRET` required in production); `s3`, a bucket of any provider of the S3 protocol through `@ddd-ts-kit/s3` (the `S3_*` variables, MinIO in the compose stack); the memory of the process in the tests and the tools, either way. With `--di tsyringe`: `files/bind-files.ts`, `files/files.module.ts` and `files/staging-uploads.ts`; with hand wiring `files/create-files.ts`; with an HTTP stack `files/file-routes.ts`. They bind `FileStorage`, `FileKeys`, `FileScanner` and `FileStaging`, register the hourly purge of staged files and stage the file a command carries before its transaction; `generate file-upload` needs them. `--storage none` writes none of this ([File storage](../../docs/concepts/file-storage.md)) |
 | `src/platform/events/` | `event-provider.ts` (`bus`, `forConsumer(name)`, `start()`, `close()`), `in-process-events.ts`, and for `--broker` `create-event-provider.ts`: `RabbitMqEventBus` (`AMQP_URL`), `KafkaEventBus` (`KAFKA_BROKERS`, with `aggregate-key-of.ts` for per-aggregate order), `NatsEventBus` (`NATS_URL`) or `RedisStreamsEventBus` of `@ddd-ts-kit/redis/event-bus` (`REDIS_URL`: Redis, Dragonfly or Valkey), each with one subscriber per consuming context (`forConsumer`), `assertTopology` at start, its address validated and a compose service with a healthcheck; or `custom-event-bus.ts` with its `eventBusContract` spec. `start-outbox-relay.ts` with the outbox. `--broker redis` with `--cache redis` is one server and one compose service, `cache`; alone, the service is `streams` |
 | `src/platform/database/` | `persistence.ts` (`interface Persistence`: unit of work, outbox and processed-event stores of the ORM package, the storage handle), `open-persistence.ts`, `persistence-over.ts`, `inert-persistence.ts`, the connection (`connect-to-database.ts`, `create-client.ts` or `create-data-source.ts`), `schema.ts` (`MESSAGING_SCHEMA`, the schema of what the kit stores for the application), `open-test-database.ts` (PostgreSQL in process, or the server named by a URL; with Vitest each spec opens a copy of the cluster `test/support/test-database-template.ts`, the global setup of the run, initialised once, and creates its tables there; with drizzle from `table-statements.ts`, the SQL of the tables of `schema.ts`, since drizzle-kit writes migrations, not tables, its unique indexes included), `persistence.contract.spec.ts` (the outbox, processed-event, job and process stores as the platform wires them, held to the contracts of `@ddd-ts-kit/testing` with what the stack turns on: the tenant under `--tenancy`, the unit of work). The storage class a repository adapter names in its dependency list: `database.ts` with drizzle and prisma (`abstract class Database extends` the context type of the ORM package), `KnexContext` of `@ddd-ts-kit/knex`, `TypeOrmContext` of `@ddd-ts-kit/typeorm` |
-| migration tooling | `drizzle.config.ts`, `knexfile.js` and `migrations/00000000000000_initial.js`, `prisma/schema/schema.prisma` (the client, the datasource and the tables of the platform; `generate repository` adds the file of each context, `prisma/schema/<context>.prisma`) and `prisma.config.ts`, or `data-source.ts` |
+| migration tooling | `drizzle.config.ts`, `knexfile.js` and `migrations/00000000000000_initial.js`, `prisma/schema/schema.prisma` (the client, the datasource and the tables of the platform; `generate repository` adds the file of each context, `prisma/schema/<context>.prisma`) and `prisma.config.ts`, or `data-source.ts`. A project that keeps the one `prisma/schema.prisma` of versions before 0.95 keeps it with its `prisma.config.ts` and its `db:client`, even under `--force`: `init` writes nothing under `prisma/schema/`, its notes give the steps of the move with the contexts of the project named, and `generate repository` refuses until the move |
 | `scripts/openapi.ts`, `scripts/events.ts` | write `openapi/openapi.yaml` (one file per document of `openapi.documents`), `docs/integration/asyncapi.yaml` and `docs/integration/event-catalog.md`, in JSON under `openapi.format: json`; `--check` fails on a difference |
 | `scripts/privacy-erase.ts`, `scripts/privacy-export.ts` | with `--privacy on`, the two requests of a data subject, answered from the command line on the sources with the variables of `.env` (`npm run privacy:erase -- <subject-id> [--operator <who-asks>]`, `npm run privacy:export -- <subject-id> > export.json`): the erasure destroys the key of the subject first when the project has an event store (`--event-sourcing on`: its stored events read as erased; audited with `--audit on`), then erases every copy listed in `src/platform/privacy/data-subject-copies.ts`; `privacy:purge` runs by hand what the job `privacy.purge-expired` runs every night at 03:00 UTC, the purge of what outlived its retention (`JOB_PRIVACY_PURGE_EXPIRED_ENABLED=false` switches the job off); the export gathers every record listed in `data-subject-exports.ts` into one dated JSON document (`format`, `subject`, `exportedAt`, `records`), the export of each context audited with `--audit on`, never the values (every run leaves its entry, a trial included: try it on a test subject). With `--tenancy shared-table`, `TENANTS` names the tenants, comma separated: a write of tenant data is never widened. Neither reaches backups, logs or a copy no context declared |
 | `docker-compose.yml`, `.env.example`, `Dockerfile`, `.dockerignore` | the database with a healthcheck and a named volume, `jaegertracing/jaeger:2.22.0` behind the `observability` profile (its UI and its OTLP port bound to 127.0.0.1), ports from `.env`; a multi-stage, non-root image with production dependencies only |
@@ -599,7 +613,9 @@ Prisma, `github.com` and `release-assets.githubusercontent.com` with the Kafka c
 hosts, the credential files (`~/.ssh`, `~/.aws`, `~/.config/gcloud`, `~/.azure`) and the usual secret variables denied to every sandboxed command; a key the project
 already set is kept, and a list it holds gains the entries the stack needs. It also prints, as a
 note, that the owner runs the first install outside the agent (a path missing when a session
-starts stays read-only to it), and the block of managed settings a project file
+starts stays read-only to it) and then pins the install scripts of the stack to the versions read
+(`npm install-scripts approve <package>...`, or `'<package>@<version>': true` in `allowBuilds`
+under pnpm), a bump of one of them asking the same again, and the block of managed settings a project file
 cannot set (`allowManagedHooksOnly`, `allowManagedPermissionRulesOnly`,
 `permissions.disableBypassPermissionsMode`, `strictKnownMarketplaces` with the marketplace of
 the kit, `requiredMinimumVersion`), for the platform team to paste, and writes the two hooks of
@@ -630,7 +646,9 @@ and `@typescript/native` (`npm:typescript@~7.0.2`), which `build` and `typecheck
 (`node node_modules/@typescript/native/bin/tsc`). `npx tsc` would run the older one.
 
 `init` and `generate context` start with the language: the first entry of `next` is the glossary
-of the context to fill in.
+of the context to fill in. Both refuse a context named `schema`, on every ORM: on Prisma the models
+of a context live in `prisma/schema/<context>.prisma`, and `prisma/schema/schema.prisma` is the
+main file every context shares (`init --force` moves a project to Prisma).
 
 ### Presets
 
@@ -1579,14 +1597,26 @@ project keeps once the parent asks for the fixed version itself is `no longer ne
 as it would hold the package back when a later major is asked for. A chain that is not installed
 is not judged.
 
+And each install script the stack needs, the engines of Prisma (`@prisma/engines`) and the Kafka
+client (`@confluentinc/kafka-javascript`), judged on the version installed against `allowScripts`
+of `package.json` under npm or `allowBuilds` of `pnpm-workspace.yaml` under pnpm, read as npm
+reads them (the name alone, `name@*`, or exact versions joined by `||`; a denial wins): no entry is
+`missing`, and `init` adds the name; an entry pinned to other versions only, the pin a bump left
+behind, is `other version`, with `npm install-scripts approve <package>` then `npm rebuild
+<package>` (under pnpm, the version written in `allowBuilds`, then `pnpm rebuild <package>`) once
+the new script was read; a denial is `written otherwise`. A package that is not installed is not
+judged.
+
 `--strict` exits 1 while something is missing or at another range, or while the checkout cannot
 run the project: a Node outside `engines.node`, no `node_modules`, a package of the kit not
 installed or at another version, a submodule not initialised, an override missing. A script
 written otherwise, a hook this clone has not installed, a Node `.nvmrc` does not name while
 `engines.node` accepts it, a lockfile changed since the install (a checkout may rewrite it with
-what `node_modules` already holds), and an override no longer needed are said without failing it. `--json` prints `{ version, findings: [{ area, name, problem,
+what `node_modules` already holds), an override no longer needed and a denied install script (the
+team may build the package another way) are said without failing it; an install script missing or
+pinned to another version fails it. `--json` prints `{ version, findings: [{ area, name, problem,
 expected, found }] }`, `area` being `script`, `package`, `permission`, `hook`, `guidance`, `node`,
-`install`, `submodule` or `override`.
+`install`, `submodule`, `override` or `install-script`.
 
 ## worker-scope
 
