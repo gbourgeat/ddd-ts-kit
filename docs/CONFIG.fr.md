@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:828c5e7a76a980c8 -->
+<!-- translation-of: CONFIG.md sha256:5f843ff8ab8e7503 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -750,7 +750,7 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-Sous jest, `export default { coverageProvider: 'v8', ...governedJestCoverage() };`. Dans
+Sous jest, `export default { coverageProvider: 'babel', ...governedJestCoverage() };`. Dans
 l'application d'exemple, `governedCoverage('unit')` mesure trois couches de chaque contexte et
 donne un plancher par contexte et par couche qui contient un fichier source ; voici ceux de son
 premier contexte, `analytics`, à la référence, puisque l'exemple ne pose pas `coverage` :
@@ -787,7 +787,7 @@ dérogation :
 - **Chaque contexte est tenu séparément** : les seuils d'une couche s'appliquent à `contexts/<name>/<layer>/` de chaque contexte, si bien qu'un contexte bien testé n'en cache pas un autre.
 - **Une couche vide n'est tenue à rien, et à son seuil dès son premier fichier source** (une *spec* ou un document n'en est pas un). Un projet tout juste initialisé passe ; la première route d'un contexte apporte avec elle le plancher de la présentation.
 - **Une exécution est tenue aux couches qu'elle exécute** : `npm run test:coverage`, l'exécution de `verify`, lance chaque *spec* et mesure les quatre couches ; dans le *pipeline*, `ci:test:unit` (`--mode unit`) mesure domain, application et presentation, `ci:test:integration` (`--mode integration`) mesure infrastructure. Jest lance chaque *spec* en une seule exécution.
-- **La mesure ne peut pas être restreinte en silence** (`test/coverage-governed`) : ni `include`, ni `exclude`, ni `thresholds` à la main dans la configuration du lanceur, aucune option de ce genre dans un script, aucun commentaire `v8 ignore` ou `istanbul ignore` sans `-- ADR-NNNN: <reason>`.
+- **La mesure ne peut pas être restreinte en silence** (`test/coverage-governed`) : ni `include`, ni `exclude`, ni `thresholds` à la main dans la configuration du lanceur, aucune option de ce genre dans un script, aucun commentaire `v8 ignore` ou `istanbul ignore` sans `-- ADR-NNNN: <reason>`. Un commentaire avec sa décision nomme l'indication que lit le fournisseur du projet : `v8 ignore` sous Vitest, `istanbul ignore` sous Jest (`babel`) ; l'autre n'est pas lue, et la ligne reste comptée.
 - Sous le mode des décorateurs historiques (legacy), la configuration Vitest générée liste `decoratorCoverage()` de `@ddd-ts-kit/testing/vitest` : les instructions qu'écrit la transformation pour appliquer les décorateurs portent une branche par type nommé qu'aucun test ne peut prendre, et sont tenues hors de la mesure.
 
 ## Budget de temps

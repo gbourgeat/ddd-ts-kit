@@ -20,7 +20,7 @@ export interface GovernedJestCoverage {
  *
  *     // jest.config.js
  *     import { governedJestCoverage } from '@ddd-ts-kit/testing/coverage';
- *     export default { coverageProvider: 'v8', ...governedJestCoverage() };
+ *     export default { coverageProvider: 'babel', ...governedJestCoverage() };
  */
 export function governedJestCoverage(root: string = process.cwd()): GovernedJestCoverage {
   const { contextsDir, thresholds } = governedSettings(root);

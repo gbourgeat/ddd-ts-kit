@@ -48,7 +48,8 @@ export default {
   },
   // A developer machine shares its cores with the editor, the coding agents and their worktrees: the specs take half of them. A pipeline runner has its own.
   ...(process.env.CI ? {} : { maxWorkers: '50%' }),
-  coverageProvider: 'v8',
+  // Babel instruments the code @swc/jest has transformed: two to three times faster than `v8` on a grown project, the same branches as the `v8` provider of Vitest. A line left out of the measure carries `istanbul ignore`, the hint it reads.
+  coverageProvider: 'babel',
   coverageReporters: ['text', 'cobertura', 'lcov'],
   coverageDirectory: 'coverage',
   // What is measured and the floor of each layer come from "coverage" in ddd-ts-kit.config.json, the reference when it is absent: a threshold is written nowhere else.
