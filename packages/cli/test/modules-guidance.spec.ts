@@ -38,7 +38,7 @@ describe('what guides the move into modules, and what refuses it', () => {
     const refused = cli(root, 'generate', 'worker', '--module', 'invoices');
 
     expect(refused.code).not.toBe(0);
-    expect(refused.stderr).toContain('--module applies to a kind that writes in a context');
+    expect(refused.stderr).toContain('generate worker writes nothing into a module of the model');
   });
 
   it('points the next steps at the file in its module, not at the path without it', () => {

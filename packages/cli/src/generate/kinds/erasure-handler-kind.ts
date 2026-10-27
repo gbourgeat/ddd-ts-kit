@@ -16,6 +16,7 @@ export const erasureHandlerKind: Kind = {
     'The idempotent handler of privacy.data-subject.erased that erases what the context keeps of the person through its PersonalDataErasure, its spec and its subscription: for a context that runs as a service of its own, or that copies personal data from integration events.',
   positionals: ['context'],
   writesShared: false,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
     const names = personalNames(scope.config.stack.orm, scope.context);

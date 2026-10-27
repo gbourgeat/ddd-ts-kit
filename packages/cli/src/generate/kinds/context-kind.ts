@@ -16,6 +16,7 @@ export const contextKind: Kind = {
     'A bounded context: CONTEXT.md with its glossary, published language, config entry, and what assembles it (its declarations, or its module file); with --preset, written whole from a preset of the kit.',
   positionals: ['name'],
   writesShared: true,
+  writesInModules: false,
   run: ({ ws, config, args, flags }) => {
     const name = args[0] ?? '';
     const preset = flags.preset === undefined ? undefined : presetNamed(flags.preset);

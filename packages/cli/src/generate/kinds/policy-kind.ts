@@ -21,6 +21,7 @@ export const policyKind: Kind = {
     'A rule about one element (only the author, not after closing), its spec and its registration with the policies Access asks.',
   positionals: ['context', 'Name'],
   writesShared: true,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
     const name = label(scope, request.args[1] ?? '', { what: 'policy', strip: ['policy'] });

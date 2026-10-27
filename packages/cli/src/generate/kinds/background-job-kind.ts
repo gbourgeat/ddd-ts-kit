@@ -25,6 +25,7 @@ export const backgroundJobKind: Kind = {
     'A job a use case enqueues, run later by a worker as the actor that enqueued it, with retries and a lease: the class named by its static jobName, its spec through a queue in memory and its registration.',
   positionals: ['context', 'Name'],
   writesShared: false,
+  writesInModules: true,
   textFlags: ['command'],
   run: (request) => {
     const scope = openScope(request);

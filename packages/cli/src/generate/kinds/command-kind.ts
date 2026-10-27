@@ -19,6 +19,7 @@ export const commandKind: Kind = {
   summary: 'A command, its handler with injected ports, its spec and its registration on the command bus.',
   positionals: ['context', 'UseCaseName'],
   writesShared: true,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
 

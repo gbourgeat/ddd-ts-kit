@@ -33,8 +33,10 @@ the tree, so a generated file conforms by construction and costs no tokens.
    A generator that derives its name from another argument (`event-handler`,
    `integration-handler`) takes `--name <Name>` when the design names it otherwise.
    In a context that declares modules of the model (`## Modules` of its `CONTEXT.md`), add
-   `--module <module>`, the module whose glossary terms the name uses; the generator refuses
-   without it and lists the modules. A new module: `generate module <ctx> <module> --purpose
+   `--module <module>` to a kind whose usage shows `[--module <module>]`, the module whose
+   glossary terms the name uses; the generator refuses without it and lists the modules. The
+   other kinds (`builder`, `test-world`, `route-group`, `guard`, `schema`, `e2e`, ...) write
+   what the modules share and refuse `--module`. A new module: `generate module <ctx> <module> --purpose
    "..."`, after the owner agreed (`docs/concepts/modules.md`).
 2. **Run with `--json`** (`--dry-run` first when unsure):
    ```bash

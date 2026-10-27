@@ -21,6 +21,7 @@ export const projectionKind: Kind = {
     'A projector, the class that keeps one read model up to date from integration events of its own context or of a declared upstream, and its spec: declared style only.',
   positionals: ['context', 'Name', 'eventType'],
   writesShared: false,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
 

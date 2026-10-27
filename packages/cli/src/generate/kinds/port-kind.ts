@@ -14,6 +14,7 @@ export const portKind: Kind = {
   summary: 'A port of the application layer, an abstract class that is also its injection token, and its fake.',
   positionals: ['context', 'Name'],
   writesShared: false,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
     const name = label(scope, request.args[1] ?? '', { what: 'port', strip: ['port'] });

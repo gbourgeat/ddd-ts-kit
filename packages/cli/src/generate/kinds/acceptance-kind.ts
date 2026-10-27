@@ -22,6 +22,7 @@ export const acceptanceKind: Kind = {
   positionals: ['story'],
   optionalPositionals: ['title'],
   writesShared: true,
+  writesInModules: false,
   run: ({ ws, config, args }) => {
     const story = storyNamed(args[0] ?? '');
 

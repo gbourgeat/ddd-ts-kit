@@ -12,6 +12,7 @@ export const aclKind: Kind = {
   summary: 'An anti-corruption translator for the model of another context or system, and its spec.',
   positionals: ['context', 'upstreamOrSystemName'],
   writesShared: false,
+  writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
     const name = label(scope, request.args[1] ?? '', { what: 'upstream', strip: ['translator'] });
