@@ -3,6 +3,7 @@ import { exists, read } from './helpers';
 import { initProject } from './support/init-project';
 
 const TEMPLATE = 'test/support/test-database-template.ts';
+const TEARDOWN = 'test/support/test-database-teardown.ts';
 const GLOBAL_SETUP = `globalSetup: ['${TEMPLATE}'],`;
 const OPEN = 'src/platform/database/open-test-database.ts';
 const SUPPORT = 'test/e2e/support/start-application.ts';
@@ -25,11 +26,22 @@ describe('the test database of a project on an ORM', () => {
     },
   );
 
-  it('with Jest, is initialised by each spec, as no global setup names a cluster', () => {
+  it('with Jest, starts from the same cluster, saved by a global setup and deleted by a global teardown', () => {
     const root = initProject('--tests', 'jest');
 
-    expect(exists(root, TEMPLATE)).toBe(false);
-    expect(read(root, OPEN)).not.toContain('TEST_DATABASE_TEMPLATE');
+    expect(read(root, TEMPLATE)).toContain('export default async function setup(): Promise<void> {');
+    expect(read(root, TEMPLATE)).toContain("process.env['TEST_DATABASE_TEMPLATE'] = file;");
+    expect(read(root, TEARDOWN)).toContain('await rm(path.dirname(file), { recursive: true, force: true });');
+    expect(read(root, 'jest.config.js')).toContain(`globalSetup: '<rootDir>/${TEMPLATE}',`);
+    expect(read(root, 'jest.config.js')).toContain(`globalTeardown: '<rootDir>/${TEARDOWN}',`);
+    expect(read(root, OPEN)).toContain('= await inProcessPostgres();');
+  });
+
+  it('with Vitest, needs no teardown file: the setup resolves its own', () => {
+    const root = initProject();
+
+    expect(read(root, TEMPLATE)).toContain('return () => rm(directory, { recursive: true, force: true });');
+    expect(exists(root, TEARDOWN)).toBe(false);
   });
 
   it('without an ORM, does not exist: no global setup is named', () => {
@@ -38,6 +50,15 @@ describe('the test database of a project on an ORM', () => {
     expect(exists(root, TEMPLATE)).toBe(false);
     expect(read(root, 'vitest.config.ts')).not.toContain('globalSetup');
     expect(read(root, 'vitest.e2e.config.ts')).not.toContain('globalSetup');
+  });
+
+  it('with Jest and without an ORM, does not exist: no global setup nor teardown is named', () => {
+    const root = initProject('--tests', 'jest', '--orm', 'none');
+
+    expect(exists(root, TEMPLATE)).toBe(false);
+    expect(exists(root, TEARDOWN)).toBe(false);
+    expect(read(root, 'jest.config.js')).not.toContain('globalSetup');
+    expect(read(root, 'jest.config.js')).not.toContain('globalTeardown');
   });
 });
 

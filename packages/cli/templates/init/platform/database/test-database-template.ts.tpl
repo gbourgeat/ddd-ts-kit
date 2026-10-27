@@ -1,8 +1,9 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, {{#if tests.vitest}}rm, {{/if}}writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 
+{{#if tests.vitest}}
 /**
  * The global setup of the test runs (vitest.config.ts, vitest.e2e.config.ts): starts PostgreSQL in
  * process once and saves its initialised cluster to a file. Each spec of the run opens a copy of it
@@ -11,6 +12,18 @@ import { PGlite } from '@electric-sql/pglite';
  * resolves is the teardown, which deletes the file.
  */
 export async function setup(): Promise<() => Promise<void>> {
+{{/if}}
+{{#if tests.jest}}
+/**
+ * The global setup of the test runs (`globalSetup` of jest.config.js, which jest.e2e.config.js
+ * extends): starts PostgreSQL in process once and saves its initialised cluster to a file. Each spec
+ * of the run opens a copy of it (open-test-database.ts) instead of running an initdb of its own, the
+ * slow part of starting, then creates its tables there, so that what creates them stays run and
+ * measured in every spec. The workers Jest starts next inherit the variable that names the file;
+ * test-database-teardown.ts deletes it.
+ */
+export default async function setup(): Promise<void> {
+{{/if}}
   const directory = await mkdtemp(path.join(tmpdir(), 'test-database-'));
   const file = path.join(directory, 'cluster.tar');
   const engine = await PGlite.create();
@@ -18,6 +31,8 @@ export async function setup(): Promise<() => Promise<void>> {
   await writeFile(file, new Uint8Array(await (await engine.dumpDataDir('none')).arrayBuffer()));
   await engine.close();
   process.env['TEST_DATABASE_TEMPLATE'] = file;
+{{#if tests.vitest}}
 
   return () => rm(directory, { recursive: true, force: true });
+{{/if}}
 }

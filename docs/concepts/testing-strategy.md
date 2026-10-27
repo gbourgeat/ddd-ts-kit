@@ -404,8 +404,8 @@ assert what a client observes (responses, published events), never the database 
 and refuses any other new end-to-end spec. What the specs of one context share (signing a
 person in, a world) lives in `test/e2e/support/<context>/`, instead of being copied into each.
 
-Adapter and end-to-end specs of a generated project run on PostgreSQL in process (PGlite). With
-Vitest, a global setup (`test/support/test-database-template.ts`) starts it once per run and saves
+Adapter and end-to-end specs of a generated project run on PostgreSQL in process (PGlite). A
+global setup (`test/support/test-database-template.ts`) starts it once per run and saves
 its initialised cluster; each spec opens a copy of it instead of running an initdb of its own, the
 slow part of starting, so that a busy machine no longer makes the hook that opens the database
 outlast its timeout. Each spec still creates its tables on that copy: the code of the contexts that
@@ -416,12 +416,12 @@ tables in the copy as well would spare those 25 ms and leave the code that creat
 is not done. Against a server (a URL), the database is migrated beforehand and each spec only
 empties its tables, so a template database would spare nothing.
 
-With Jest, each spec still initialises its own. A global setup of Jest loads as an ES module
-under `--experimental-vm-modules`, and no end-to-end run of the kit holds a Jest project with a
-database, so the copy is not offered where nothing would catch it breaking. A Jest project that
-needs it can write the same global setup (`globalSetup` and `globalTeardown` of
-`jest.config.js`) that sets `TEST_DATABASE_TEMPLATE`, and open the copy in
-`src/platform/database/open-test-database.ts` as the file generated for Vitest does.
+Under Vitest the global setup returns its teardown, which deletes the saved cluster. Under Jest
+the setup is the default export of that file, and `test/support/test-database-teardown.ts`, named
+by `globalTeardown` of `jest.config.js`, deletes it; the workers Jest starts after the setup
+inherit the variable that names the file (`TEST_DATABASE_TEMPLATE`). On the identity preset, the
+integration specs under Jest took 45 CPU seconds with an initdb per spec file and 26 with the copy
+([measured](../tools/test-runners.md#speed-measured)).
 
 What happens after the answer (the outbox relayed, the handlers it reaches, what they store in
 turn) is awaited with `await application.settled()`, then asserted at once. A fixed delay is slow
