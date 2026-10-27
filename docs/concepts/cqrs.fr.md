@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:6afc7febcaea7666 -->
+<!-- translation-of: cqrs.md sha256:b84f801c87e18d6c -->
 
 # CQRS tel qu'utilisé ici
 
@@ -219,9 +219,9 @@ qu'on le trouve.
   « Projections »). La CLI en génère une partie : `generate query --search` écrit un port de
   lecture avec un adaptateur en mémoire et un *fake*, et
   `generate projection <context> <Name> <event-type>` écrit un projecteur et sa *spec*, dans le
-  style déclaré seulement (dans le style explicite, le générateur refuse : le projecteur s'écrit
-  à la main dans `application/projections/` et s'inclut dans le fichier de module de son contexte
-  par `builder.include(<Name>Projection)`) ; le port du modèle de lecture et son adaptateur de
+  les deux styles (dans le style explicite sur tsyringe, le fichier de module du contexte
+  l'inclut par `builder.include(<Name>Projection)` ; sur une plateforme câblée à la main, la
+  classe est simple et le module la souscrit sous son nom de consommateur) ; le port du modèle de lecture et son adaptateur de
   stockage viennent de `generate port` et du *package* ORM. L'état de chaque partie est dans la
   [proposition sur le côté lecture](../proposals/read-side.fr.md).
 - **Pas de performance en soi.** Deux chemins de code sur une seule base de données passent à

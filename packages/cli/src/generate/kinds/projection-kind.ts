@@ -3,7 +3,6 @@ import { CliError } from '../../cli-error';
 import { parseContextName, toName, type Name } from '../../naming';
 import type { RenderContext } from '../../templating';
 import { emit } from '../emit';
-import { isDeclared } from '../is-declared';
 import { label } from '../label';
 import type { Kind } from '../kind';
 import { learnTerms } from '../learn-terms';
@@ -11,6 +10,9 @@ import { named } from '../named';
 import { openScope } from '../open-scope';
 import type { Scope } from '../scope';
 import { vars } from '../vars';
+import { wire } from '../wire';
+import { wiringFamily } from '../wiring-family';
+import { subscriptionVars } from './subscription-vars';
 import type { EventDeclaration } from './event-declaration';
 import { findEventDeclaration } from './find-event-declaration';
 
@@ -19,16 +21,12 @@ export const projectionKind: Kind = {
   aliases: ['projector'],
   usage: 'projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]...',
   summary:
-    'A projector, the class that keeps one read model up to date from integration events of its own context or of a declared upstream, and its spec: declared style only.',
+    'A projector, the class that keeps one read model up to date from integration events of its own context or of a declared upstream, and its spec; registered in the module file of its context in the explicit style.',
   positionals: ['context', 'Name', 'eventType'],
   writesShared: false,
   writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
-
-    if (!isDeclared(scope.config)) {
-      throw explicitStyle();
-    }
 
     learnTerms(scope);
 
@@ -42,23 +40,25 @@ export const projectionKind: Kind = {
       throw undeclaredEvent(publisher, eventType);
     }
 
-    emit(
-      scope,
-      vars(scope, { name: named(name), publisher: named(publisher), event: eventVars(eventType, declaration) }),
-      [
-        ['projection/projection.ts.tpl', `application/projections/${name.kebab}.projection.ts`],
-        ['projection/projection.spec.ts.tpl', `test/unit/${name.kebab}.projection.spec.ts`],
-      ],
-    );
+    const context = vars(scope, {
+      name: named(name),
+      publisher: named(publisher),
+      event: eventVars(eventType, declaration),
+      consumer: subscriptionVars(scope, true),
+    });
+
+    // Without a container to include a declared class in (a hand-wired platform), the class is plain and subscribed by hand.
+    const source =
+      wiringFamily(scope.config) === 'manual' ? 'projection/projection.manual.ts.tpl' : 'projection/projection.ts.tpl';
+
+    emit(scope, context, [
+      [source, `application/projections/${name.kebab}.projection.ts`],
+      ['projection/projection.spec.ts.tpl', `test/unit/${name.kebab}.projection.spec.ts`],
+    ]);
+
+    wire(scope, 'projection', context);
   },
 };
-
-function explicitStyle(): CliError {
-  return new CliError(
-    'A projection declares itself with @Projection, which only the declared style assembles.',
-    `Set "stack.style" to "declared" in ${CONFIG_FILE}, or write the class by hand in application/projections/ and add it to the module file of its context with \`builder.include(<Name>Projection)\`.`,
-  );
-}
 
 /** The context that publishes the event: this one, or one of its declared upstreams. */
 function publisherOf(scope: Scope, eventType: string): Name {

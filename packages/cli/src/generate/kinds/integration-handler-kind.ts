@@ -12,6 +12,7 @@ import { vars } from '../vars';
 import { wire } from '../wire';
 import type { EventDeclaration } from './event-declaration';
 import { findEventDeclaration } from './find-event-declaration';
+import { subscriptionVars } from './subscription-vars';
 import { givenName } from '../given-name';
 import { learnTerms } from '../learn-terms';
 
@@ -75,21 +76,6 @@ function undeclaredEvent(upstream: Name, eventType: string): CliError {
     `${upstream.kebab} declares no ${eventType} in its published language.`,
     `An integration event handler declares itself with @IntegrationEventHandler(<definition>, ...), which needs the declaration of the event: create it first with \`ddd-ts-kit generate integration-event ${upstream.kebab} ${toName(aggregate).pascal} ${toName(fact).pascal}\`, then run the command again.`,
   );
-}
-
-/**
- * How a hand-wired handler subscribes. In the process, the subscription deduplicates; behind a
- * broker, each context listens under its own name and the mark commits with the work of the handler.
- */
-function subscriptionVars(scope: Scope, isTyped: boolean): RenderContext {
-  const external = scope.config.stack.broker !== 'none';
-
-  return {
-    declarative: isTyped && !external,
-    transactional: isTyped && external,
-    untyped: !isTyped,
-    subscriber: external ? `platform.subscriberFor('${scope.context.kebab}')` : 'platform.subscriber',
-  };
 }
 
 function declaredUpstream(scope: Scope, input: string): Name {
