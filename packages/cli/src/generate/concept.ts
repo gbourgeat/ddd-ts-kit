@@ -4,11 +4,11 @@ import type { Scope } from './scope';
 import { spokenInLanguage } from './spoken-in-language';
 
 /**
- * The name of a concept of the model: normalized, free of technical words, and spoken in the
- * ubiquitous language of the context. The terms given with `--term` join the glossary first.
+ * The name of a concept of the model: normalized, free of technical words no term of the glossary
+ * holds, and spoken in the ubiquitous language of the context. The terms given with `--term` join the glossary first.
  */
 export function concept(scope: Scope, input: string, role: ConceptRole): Name {
-  const name = parseConceptName(input, role.what, { allowName: scope.flags.allowName, strip: role.strip ?? [] });
+  const name = parseConceptName(input, role.what, { strip: role.strip ?? [] });
 
   spokenInLanguage(scope, name);
 

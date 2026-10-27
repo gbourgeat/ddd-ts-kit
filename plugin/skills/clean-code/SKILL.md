@@ -29,7 +29,10 @@ without fighting them. Reference: `docs/ARCHITECTURE.md` section 6.
 - No `Manager`, `Helper`, `Util`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`,
   `Abstract`, `Dto`, `Entity`, `Model` in a name of the domain or of a use case
   (`language/no-technical-name`). A technical suffix is allowed only where it names the architectural role outside the
-  domain (`OrderRepository`, `PlaceOrderHandler`).
+  domain (`OrderRepository`, `PlaceOrderHandler`), or where the business itself says the word:
+  a term of the glossary holds it (`Scoring model` lets `ScoringModel` through, `Copy of data`
+  lets `CopyOfData` through). Add that row only when a domain expert uses the term, never to
+  silence the rule; without it the generator and the checker refuse the name.
 - A variable, a parameter, a property, a destructured name and a loop variable name the concept
   they hold, from the glossary: `const appointment = await this.appointmentRepository.findById(id)`,
   `for (const reminder of due)`. Never `target`, `data`, `item`, `obj`, `info`, `element`, `tmp`

@@ -39,7 +39,7 @@ export const errorKind: Kind = {
 
     if (request.config.stack.refusals === 'named') {
       writeNamedRefusal(scope, {
-        refusal: refusalClassName(request.args[1] ?? '', scope.flags.allowName),
+        refusal: refusalClassName(request.args[1] ?? ''),
         factory: refusalFactoryName(request.args[2] ?? ''),
         asked: request.flags.code,
       });
