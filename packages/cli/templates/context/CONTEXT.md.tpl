@@ -8,7 +8,7 @@
 
 {{doc.classification}}
 
-TODO(domain): say in one sentence why this context is {{doc.classification}}.
+{{doc.classificationReason}}
 
 ## Ubiquitous language
 {{doc.glossaryHint}}

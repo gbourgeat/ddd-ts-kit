@@ -78,7 +78,7 @@ the domain expert, not a placeholder name.
 | `language/glossary-term` | every aggregate, entity, value object, domain service, domain event, command and query is named with terms of the glossary of its context, and, under `"stack.refusals": "factories"` or `"named"`, every class of `domain/errors/` too (`AppointmentError`, `SlotTaken`); a refusal class of `named` may also use the qualifiers `invalid`, `unknown`, `already`, `too`, `no`, `missing` and `required` (`BookingTooLate`) |
 | `language/no-technical-name` | no `Manager`, `Helper`, `Data`, `Impl`, `Model` and the like in a name under `domain/` or in a use case name |
 | the generator | refuses a name with an undefined word, a technical word, or an event fact that does not read as past tense |
-| `--term "<Term>=<meaning>"` | adds the glossary rows in the same command that needs them, repeatable |
+| `--term "<Term>=<meaning>"` | adds the glossary rows in the same command that needs them, repeatable; `--term "<Term>=<meaning>\|<not to be confused with>"` fills the third cell too, the pipe being the one character a cell of the table cannot hold |
 | `events/name-format` | events are named `<context>.<aggregate>.<fact>` |
 | `language/declared-vocabulary` | a value of a closed vocabulary (a status, a role, a permission id) is read through its declaration, never written again as a string |
 | `tree/context-doc` | the `CONTEXT.md` and its sections exist |
