@@ -15,7 +15,7 @@ export function besideTheSources(project: Pick<Project, 'root' | 'config'>): Sou
   const files: SourceFile[] = [];
 
   for (const directory of BESIDE_THE_SOURCES) {
-    walkDirectory(project.root, directory, (file, isDirectory) => {
+    walkDirectory({ root: project.root, directory }, (file, isDirectory) => {
       if (!isDirectory && isSource(file)) {
         files.push(loadSourceFile(project.config, file, fs.readFileSync(path.join(project.root, file), 'utf8')));
       }

@@ -661,7 +661,7 @@ afterAll(() => server.close());
 | `expectProblem(response, { status, code, facts })` | asserts an RFC 9457 `application/problem+json` answer and returns the document; `code` and `facts` are optional, and `facts` names the facts the document must expose, as JSON writes them (a date is its ISO text) |
 | `settled(sources, { timeoutMs = 2000, intervalMs = 10 })` | resolves as soon as every source counts no pending work; when the time is up, fails naming each source still pending, how much it holds and how much of it failed |
 | `eventually(assertion, { timeoutMs = 2000, intervalMs = 20 })` | retries until the assertion passes; when the time is up, fails quoting the last error |
-| `pending(body)` | holds an acceptance scenario written before its code: passes while an assertion of `body` fails, fails once `body` passes (remove the wrapper) or stops on anything but an assertion (the scenario is broken); `it('#US5.02 AC1 ...', pending(async () => { ... }))` |
+| `pending(body)` | holds an acceptance scenario written before its code: passes while an assertion of `body` fails, fails once `body` passes (remove the wrapper) or stops on anything but an assertion (the scenario is broken); `it('#US5.02 AC1 ...', pending(async () => { ... }))`. An assertion is read by its shape, never by `instanceof Error`: an `AssertionError` of `node:assert`, which Jest loads in another realm than the spec, or a failed matcher of Vitest or Jest, also as the cause of the failure of `eventually` |
 | `collectEvents(subscriber, types)` | records published integration events: `received(type?)`, `waitFor(type, predicate?, options?)`, `stop()` |
 
 The assertions are those of `node:assert`: they read the same under any runner.

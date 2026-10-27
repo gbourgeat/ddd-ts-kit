@@ -38,7 +38,8 @@ export function locate(config: Config, file: string): Location {
 function locateInContexts(config: Config, relative: string): Location {
   const [context, first, ...rest] = relative.split('/');
 
-  if (context === undefined || context === '' || first === undefined) {
+  // A dot folder is a tool's, never a context.
+  if (context === undefined || context === '' || context.startsWith('.') || first === undefined) {
     return { area: 'other' };
   }
 

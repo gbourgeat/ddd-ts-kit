@@ -28,11 +28,19 @@ export function strayEntry(entry: string, config: Config): Flaw | undefined {
   const placed = place(entry, config);
 
   // The folder of a declared module holds its layers: it is canonical as the context itself is.
-  if (placed === undefined || (placed.module !== undefined && placed.inside === '')) {
+  if (placed === undefined || (placed.module !== undefined && placed.inside === '') || inDotDirectory(entry)) {
     return undefined;
   }
 
   return entry.endsWith('/') ? strayDirectory(placed) : straySource(placed);
+}
+
+/** A dot-directory of a context (the `.claude/` a sandbox leaves) is written by a tool: it is no part of the tree. */
+function inDotDirectory(entry: string): boolean {
+  const segments = entry.split('/');
+  const directories = entry.endsWith('/') ? segments : segments.slice(0, -1);
+
+  return directories.some((segment) => segment.startsWith('.') && segment !== '.' && segment !== '..');
 }
 
 function place(entry: string, config: Config): Placed | undefined {

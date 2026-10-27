@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:af8a525040f74e14 -->
+<!-- translation-of: coding-agents.md sha256:6856c92c77a03535 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -96,7 +96,11 @@ refuse une fois de finir la session avant son rapport
 (`"kind": "fix"` dans ce fichier), il ouvre le code dès que la *spec* de régression est
 verrouillée, et refuse toute modification d'une *spec* verrouillée, par les outils d'édition
 comme par le *shell*, à ses sous-agents ; la session elle-même peut en écrire une nouvelle version,
-que `acceptance` signale et sur laquelle l'agent `acceptance-judge` se prononce. Aucun *hook* ne tourne sur
+que `acceptance` signale et sur laquelle l'agent `acceptance-judge` se prononce. Une commande qui nomme
+le verrou d'une acceptation ou un verdict peut changer de répertoire ou tester un chemin (`cd`,
+`pushd`, `popd`, `pwd`, `test`), lire le fichier (`cat`, `grep`, `sed` sans `-i`, `awk`, `less`,
+`jq`), le versionner (`git`) ou lancer le kit ; tout autre programme, ou une redirection vers un
+fichier, est une écriture, que seuls la CLI et cet agent font. Aucun *hook* ne tourne sur
 chaque appel d'outil : une session ordinaire ne lance pas plus de processus qu'avant. En cas de
 panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
 configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le faire taire.
