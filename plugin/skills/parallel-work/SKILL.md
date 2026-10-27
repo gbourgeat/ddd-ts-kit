@@ -93,8 +93,9 @@ blocked; plan it, or hold those rows back.
    contract in the upstream's `published-language/` with the owners of both sides, commit. A
    downstream starts only against a committed contract. Route paths and methods of each
    context are the ones written in the slices table.
-2. **Skeleton next.** Run every `skeleton` row: `generate aggregate` with its
-   `generate repository`, `generate job`, `generate policy`, any new `generate context`, and,
+2. **Skeleton next.** Run every `skeleton` row: `generate aggregate` (with
+   `--event-sourced` when planned so) with its `generate repository` (no flag, an aggregate
+   a command row names always has one), `generate job`, `generate policy`, any new `generate context`, and,
    when a slice plans an adapter and the project has none yet, the first `generate adapter`
    (it writes `platform/resilience/own-policy.ts`, which the next ones only import).
    These kinds write shared files (`generate --help --json` says which, under
