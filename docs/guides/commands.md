@@ -77,7 +77,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | `/ddd-ts-kit:bounded-contexts` | finds and classifies the contexts, with the reason of each boundary | step 2 | `docs/architecture/contexts.md` | `/ddd-ts-kit:glossary` |
 | `/ddd-ts-kit:glossary` | the ubiquitous language of a context | step 3, and before any new name | `docs/architecture/glossary.md`, then `## Ubiquitous language` of each `CONTEXT.md` | `/ddd-ts-kit:context-map` |
 | `/ddd-ts-kit:context-map` | upstream, downstream, pattern and contract of each pair | step 4, and when two contexts start depending on each other | `docs/architecture/context-map.md`, then the upstreams of the config | the bootstrap, or the slice that needs it |
-| `npx ddd-ts-kit generate context <name> --classification <c> --term ... --upstream ...` | declares a context with its language and relationships | after the bootstrap, one per row of `contexts.md`, upstreams first | the context directory, its `CONTEXT.md`, the config entry | `npx ddd-ts-kit docs` |
+| `npx ddd-ts-kit generate context <name> --classification <c> --reason "..." --term "<Term>=<meaning>\|<not to be confused with>" ... --upstream ...` | declares a context with its language, the sentence of why it is of its classification, and its relationships | after the bootstrap, one per row of `contexts.md`, upstreams first | the context directory, its `CONTEXT.md`, the config entry | `npx ddd-ts-kit docs` |
 | `npx ddd-ts-kit list`, `describe <context>` | what exists, per context or for one | before planning or changing a context | a map of the contexts, or one as facts (`--json`) | `/ddd-ts-kit:plan-slices` |
 | `npx ddd-ts-kit generate module <context> <module> --purpose "..." [--term ...]` | declares a [module of the model](../concepts/modules.md): the config entry, its row of `## Modules` in `CONTEXT.md`, its terms; re-runnable, it adds what is missing | when one context holds clusters of concepts of one language that a reader opens separately; never to hide a second language | the module, declared and documented | `move-to-module`, then `generate ... --module` |
 | `npx ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]` | moves files and folders of `domain/` and `application/` into a declared module, with every import of them in the project | one cluster per commit, until `module/complete` warns no more | the moved files and the rewritten imports | `npm run verify` |
@@ -257,7 +257,7 @@ Usage
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                   [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
-  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--module <module>] [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
+  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--module <module>] [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
   ddd-ts-kit generate --help --json
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
@@ -595,6 +595,11 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    recorded as the hash of nothing; the codecs of each module of a context are read too, and a
                    codec whose data type is not found or declares no member is refused, nothing recorded
   --sdk            init records "sdk" in the config and generates the clients with the project
+  --term           generate adds the row "<Term>=<meaning>" to the glossary of the CONTEXT.md before it judges
+                   a name; "<Term>=<meaning>|<not to be confused with>" fills the third cell too, a pipe being
+                   the one character a cell of the table cannot hold
+  --reason         generate context writes it under ## Classification, the sentence of why the context is
+                   of its classification; generate adr --deviation records it as the reason of the deviation
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
                    "generate --help --json" says which kinds do
   --module         generate writes the files of the layers into that module of the model of the context
@@ -604,7 +609,7 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    modules, what the modules share staying at the level of the context
 
 Kinds
-  context <name> --classification <core|supporting|generic> [--purpose "<two sentences>"] [--term "<Term>=<meaning>"]... [--upstream <ctx>[:relationship]]... [--preset identity]
+  context <name> --classification <core|supporting|generic> [--reason "<why it is of that classification>"] [--purpose "<two sentences>"] [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--upstream <ctx>[:relationship]]... [--preset identity]
   module <context> <module> [--purpose "<what it holds>"] [--classification <core|supporting|generic>] [--term "<Term>=<meaning>"]...
   aggregate <context> <Name> [--event-sourced [--birth <Event>]] [--term "<Term>=<meaning>"]...
   builder <context> <Aggregate>

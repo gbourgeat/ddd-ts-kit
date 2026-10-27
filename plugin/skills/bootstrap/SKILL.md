@@ -89,13 +89,19 @@ No `--context` here: contexts come next, with their language.
 ## 4. Create the contexts, upstreams first
 
 One command per row of `contexts.md`, in the order of the context map (a context after its
-upstreams), with the purpose, every term of its glossary and its relationships:
+upstreams), with the purpose, the sentence of why it is of its classification, every row of its
+section of `glossary.md` with its three cells, and its relationships:
 
 ```bash
 pnpm exec ddd-ts-kit generate context <name> --classification <core|supporting|generic> \
-  --purpose "<two sentences>" --term "<Term>=<meaning>" --term ... \
+  --reason "<one sentence: why it is core, supporting or generic>" --purpose "<two sentences>" \
+  --term "<Term>=<meaning>|<not to be confused with>" --term "<Term>=<meaning>" ... \
   --upstream <upstream>:<pattern> --json
 ```
+
+The `|` opens the third cell, "Not to be confused with"; leave it out of a row whose cell is
+empty. A cell never holds a `|`, so a meaning cannot clash with it. Read `CONTEXT.md` after each
+command: every row of the draft is there, three cells each.
 
 A context whose row of `contexts.md` names modules gets, right after its `generate context`, one
 command per module, on the trunk too (the module name is a glossary term, hence the `--term`):
@@ -115,9 +121,8 @@ the running application: run it before `verify`, then read its
 `## Design` with the owner. Why and when:
 `docs/guides/bootstrap-with-well-designed-contexts.md` of the kit.
 
-Then, by hand, only what a flag cannot carry: the sentence under `## Classification` of each
-`CONTEXT.md`, the "Not to be confused with" cells, and in `docs/context-map.md`, outside the
-markers, the reasons from the draft map and from `contexts.md`. Delete
+Then, by hand, only what a flag cannot carry: in `docs/context-map.md`, outside the markers,
+the reasons from the draft map and from `contexts.md`. Delete
 `docs/architecture/glossary.md` and `docs/architecture/context-map.md`: their content now
 lives in the `CONTEXT.md` files, the config and `docs/context-map.md`, and a second copy
 would drift.

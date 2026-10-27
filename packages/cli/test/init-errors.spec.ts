@@ -133,7 +133,7 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
       expect(platform(root, 'composition/platform.ts')).toContain('  readonly errors: ErrorReporter;\n');
 
       expect(compose).toContain(
-        'clock,\n      logger,\n      refusals: platform.audit.refusals,\n      errors: platform.errors,\n      presentation,\n    }),',
+        'clock: platform.clock,\n    logger: platform.logger,\n    refusals: platform.audit.refusals,\n    errors: platform.errors,\n    presentation,\n  });',
       );
 
       expect(compose).toContain('    stop: () => stop(platform, options),\n');

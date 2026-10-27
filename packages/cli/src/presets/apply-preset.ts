@@ -131,7 +131,10 @@ function adapterOf(config: Config): RenderContext {
 
 function scopeOf(ws: Workspace, config: Config, { context, preset }: PresetRequest): Scope {
   const name = parseContextName(context);
-  const term = preset.terms.map((row) => `${row.term}=${row.meaning}`);
+
+  const term = preset.terms.map(
+    (row) => `${row.term}=${row.meaning}${row.notConfusedWith === undefined ? '' : `|${row.notConfusedWith}`}`,
+  );
 
   return { ws, config, context: name, dir: `${config.contextsDir}/${name.kebab}`, flags: { ...NO_FLAGS, term } };
 }

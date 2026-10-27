@@ -1,5 +1,5 @@
 [English](ubiquitous-language.md) · **Français**
-<!-- translation-of: ubiquitous-language.md sha256:da17bdff91ae0b16 -->
+<!-- translation-of: ubiquitous-language.md sha256:cd286a5c2174f568 -->
 
 # Langage omniprésent
 
@@ -82,7 +82,7 @@ question à l'expert du domaine, pas un nom provisoire.
 | `language/glossary-term` | chaque agrégat, entité, objet-valeur, service du domaine, événement du domaine, commande et requête est nommé avec des termes du glossaire de son contexte, et, sous `"stack.refusals": "factories"` ou `"named"`, chaque classe de `domain/errors/` aussi (`AppointmentError`, `SlotTaken`) ; une classe de refus de `named` peut aussi employer les qualificatifs `invalid`, `unknown`, `already`, `too`, `no`, `missing` et `required` (`BookingTooLate`) |
 | `language/no-technical-name` | pas de `Manager`, `Helper`, `Data`, `Impl`, `Model` ni rien de semblable dans un nom sous `domain/` ou dans le nom d'un cas d'usage |
 | le générateur | refuse un nom qui contient un mot non défini, un mot technique, ou un fait d'événement qui ne se lit pas au passé |
-| `--term "<Term>=<meaning>"` | ajoute les lignes du glossaire dans la commande même qui en a besoin, répétable |
+| `--term "<Term>=<meaning>"` | ajoute les lignes du glossaire dans la commande même qui en a besoin, répétable ; `--term "<Term>=<meaning>\|<not to be confused with>"` remplit aussi la troisième cellule, la barre verticale étant le seul caractère qu'une cellule du tableau ne peut pas contenir |
 | `events/name-format` | les événements sont nommés `<context>.<aggregate>.<fact>` |
 | `language/declared-vocabulary` | une valeur d'un vocabulaire fermé (un statut, un rôle, un identifiant de permission) est lue par sa déclaration, jamais réécrite sous forme de chaîne |
 | `tree/context-doc` | le `CONTEXT.md` et ses sections existent |
