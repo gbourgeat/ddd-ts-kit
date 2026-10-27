@@ -112,7 +112,10 @@ lookups of the port, the columns, the mapper.
   `@ddd-ts-kit/testing` holds the adapter and the fake (`InMemoryPersonalData`) to the same behaviour.
   How long the rows keep the person goes on the same declaration, `retention: { after: 'ended_at',
   months: 36 }` (`generate repository ... --retention ended_at:36m`): the job `privacy.purge-expired`
-  erases what outlived it every night, `npm run privacy:purge` by hand.
+  erases what outlived it every night, `npm run privacy:purge` by hand. A period the project reads
+  from configuration and purges by itself is not a literal: declare `configuredRetention:
+  'RETENTION_PERIODS'` (the key, never the value, and never beside `retention`) so the register
+  says "configured by" it instead of "until erased".
   The adapter of a context extends the one of its ORM package (`KnexPersonalDataErasure`,
   `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`), given
   the declarations, the scope for tenant data and the file storage; a personal column that is not a

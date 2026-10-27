@@ -16,8 +16,16 @@ export function personalTableCells(table: PersonalTableFacts): PersonalTableCell
     subject: `\`${table.subject}\``,
     kept: table.files.length === 0 ? codes(table.fields) : `${codes(table.fields)}; files ${codes(table.files)}`,
     erasure: table.erasure === 'row' ? 'row deleted' : 'pseudonymised',
-    retention: table.retention === undefined ? 'until erased' : table.retention.replace(/after (\S+)$/, 'after `$1`'),
+    retention: retentionCell(table.retention),
   };
+}
+
+function retentionCell(retention: string | undefined): string {
+  if (retention === undefined) {
+    return 'until erased';
+  }
+
+  return retention.replace(/^(configured by) (\S+)$/, '$1 `$2`').replace(/after (\S+)$/, 'after `$1`');
 }
 
 function codes(names: readonly string[]): string {

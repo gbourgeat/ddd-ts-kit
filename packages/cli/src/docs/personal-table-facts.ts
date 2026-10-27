@@ -11,6 +11,6 @@ export interface PersonalTableFacts {
   readonly files: readonly string[];
   /** What an erasure does: `pseudonymise` or `row`. */
   readonly erasure: string;
-  /** `36 months after ends_at`, absent when the rows are kept until the person asks. */
+  /** `36 months after ends_at`, `configured by RETENTION_PERIODS` when the project reads it from configuration, absent when the rows are kept until the person asks. */
   readonly retention?: string;
 }

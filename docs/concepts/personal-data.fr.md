@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:cd60a1bb1ae35c08 -->
+<!-- translation-of: personal-data.md sha256:cac768648dc950cf -->
 
 # Les données personnelles dans un projet généré
 
@@ -224,6 +224,14 @@ chaque copie laisse une entrée `personal-data:purge` avec le nombre de lignes, 
 aucune personne. `JOB_PRIVACY_PURGE_EXPIRED_ENABLED=false` coupe le *job* dans un environnement, et
 `npm run privacy:purge` le lance à la main et imprime les lignes atteintes par contexte. Une table
 dont la déclaration ne donne aucune durée garde ses lignes jusqu'à ce que la personne le demande.
+
+Un projet qui lit ses durées dans la configuration (une variable d'environnement comme
+`RETENTION_PERIODS`, un objet JSON de la copie à la durée) et purge par son propre job ne déclare
+aucune `retention` littérale, que le registre écrirait `until erased` : il nomme la configuration,
+`configuredRetention: 'RETENTION_PERIODS'`, et le registre écrit ``configured by `RETENTION_PERIODS` ``.
+Le kit lit la clé dans le texte de la source et jamais la valeur, et sa propre purge ne part que d'une
+`retention` littérale ; les deux ensemble sont refusées. La durée elle-même reste au projet de
+l'énoncer, dans la section du responsable de traitement du registre.
 
 Combien de temps est une décision du projet, pas de l'outil : la durée qu'une loi impose
 (comptabilité, santé), ou celle dont la finalité a besoin. Écrivez-la au registre avec sa raison.

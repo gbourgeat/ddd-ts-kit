@@ -118,6 +118,19 @@ describe('docs: where personal data leaves its context, and declarations written
     );
   });
 
+  it('writes a retention read from configuration as configured, never as until erased', () => {
+    const root = billingWithPersonalInvoices(['--orm', 'knex']);
+
+    rewrite(root, DECLARATION, (content) =>
+      content.replace(/erasure: '(\w+)'/, "erasure: '$1', configuredRetention: 'RETENTION_PERIODS'"),
+    );
+
+    expectOk(cli(root, 'docs'));
+
+    expect(read(root, REGISTER)).toContain('| pseudonymised | configured by `RETENTION_PERIODS` |');
+    expect(read(root, REGISTER)).not.toContain('until erased');
+  });
+
   it('fails docs --check when a declaration changed by hand, and keeps what the team wrote around the markers', () => {
     const root = billingWithPersonalInvoices(['--orm', 'knex']);
 
