@@ -7,8 +7,8 @@ import { VAGUE_REFUSAL_NAMES } from './vague-refusal-names';
  * `insufficient-funds` or `InsufficientFundsError`: what is refused, in PascalCase, never ending
  * in `Error`. Its words are judged against the glossary once its code is known (`writeNamedRefusal`).
  */
-export function refusalClassName(input: string, allowName: boolean): Name {
-  const name = parseConceptName(input, 'refusal', { allowName, strip: ['error'] });
+export function refusalClassName(input: string): Name {
+  const name = parseConceptName(input, 'refusal', { strip: ['error'] });
 
   if (VAGUE_REFUSAL_NAMES.includes(name.camel.toLowerCase()) || name.pascal.endsWith('Error')) {
     throw new CliError(

@@ -1,26 +1,30 @@
-import { parseGlossary } from '../check/language/parse-glossary';
-import { TECHNICAL_WORDS } from '../check/language/technical-words';
+import type { Glossary } from '../check/language/parse-glossary';
+import { technicalWordsOf } from '../check/language/technical-words-of';
 import { unknownWords } from '../check/language/unknown-words';
 import { CliError } from '../cli-error';
-import { splitWords, toName, type Name } from '../naming';
+import { toName, type Name } from '../naming';
+import { glossaryOf } from './glossary-of';
 import type { Scope } from './scope';
 
 /**
- * Refuses a name that carries a technical word, or a word the glossary of the context does not
- * define, the `qualifiers` aside (those of a refusal: `InvalidAppointment`, `BookingTooLate`).
- * `--allow-name` lets any name through.
+ * Refuses a name that carries a technical word no term of the glossary holds, or a word the
+ * glossary of the context does not define, the `qualifiers` aside (those of a refusal:
+ * `InvalidAppointment`, `BookingTooLate`). `--allow-name` lets any name through.
  */
 export function spokenInLanguage(scope: Scope, name: Name, qualifiers: readonly string[] = []): void {
   if (scope.flags.allowName) {
     return;
   }
 
-  refuseTechnicalWords(name);
-  refuseUnknownWords(scope, name, qualifiers);
+  const glossary = glossaryOf(scope);
+  const file = `${scope.dir}/CONTEXT.md`;
+
+  refuseTechnicalWords(name, glossary, file);
+  refuseUnknownWords(name, { glossary, file, qualifiers });
 }
 
-function refuseTechnicalWords(name: Name): void {
-  const technical = splitWords(name.pascal).filter((word) => TECHNICAL_WORDS.includes(word));
+function refuseTechnicalWords(name: Name, glossary: Glossary, file: string): void {
+  const technical = technicalWordsOf(name.pascal, glossary);
 
   if (technical.length === 0) {
     return;
@@ -28,13 +32,18 @@ function refuseTechnicalWords(name: Name): void {
 
   throw new CliError(
     `"${name.pascal}" carries the technical word "${technical.join('", "')}".`,
-    'Use the noun or verb a domain expert uses for it (rule language/no-technical-name), or pass --allow-name if this really is the business term.',
+    `Use the noun or verb a domain expert uses for it, a term of the ubiquitous language (rule language/no-technical-name). If the business does say "${name.title}", define the term in the glossary of ${file}, in the same command: --term "${name.title}=<what it means for the business>". --allow-name lets the name through without it.`,
   );
 }
 
-function refuseUnknownWords(scope: Scope, name: Name, qualifiers: readonly string[]): void {
-  const file = `${scope.dir}/CONTEXT.md`;
-  const glossary = parseGlossary(scope.ws.read(file) ?? '');
+interface Language {
+  readonly glossary: Glossary;
+  /** The CONTEXT.md that holds the glossary. */
+  readonly file: string;
+  readonly qualifiers: readonly string[];
+}
+
+function refuseUnknownWords(name: Name, { glossary, file, qualifiers }: Language): void {
   const unknown = unknownWords(name.pascal, glossary, qualifiers);
 
   if (unknown.length === 0) {

@@ -1,5 +1,5 @@
 [English](ubiquitous-language.md) · **Français**
-<!-- translation-of: ubiquitous-language.md sha256:cd286a5c2174f568 -->
+<!-- translation-of: ubiquitous-language.md sha256:a65bd08154732f7b -->
 
 # Langage omniprésent
 
@@ -69,7 +69,9 @@ Comment l'écrire, en suivant la *skill* `glossary` :
 - Pour chacun, une phrase de signification dans ce contexte, et ce avec quoi il ne doit pas
   être confondu dans un contexte voisin.
 - Rejetez les mots techniques (`record`, `data`, `item`, `manager`) et demandez le mot du
-  métier.
+  métier. Quand le métier lui-même nomme un concept avec l'un d'eux (le modèle de notation du
+  risque de crédit, la copie des données du droit d'accès), le terme entre au glossaire tel que
+  le métier le dit, et le nom qui le dit est accepté.
 - Dix termes précis valent mieux que cinquante termes vagues.
 
 Un mot manquant est une information : le concept n'est pas encore compris. La réponse est une
@@ -80,8 +82,8 @@ question à l'expert du domaine, pas un nom provisoire.
 | Mécanisme | Ce qu'il fait |
 |---|---|
 | `language/glossary-term` | chaque agrégat, entité, objet-valeur, service du domaine, événement du domaine, commande et requête est nommé avec des termes du glossaire de son contexte, et, sous `"stack.refusals": "factories"` ou `"named"`, chaque classe de `domain/errors/` aussi (`AppointmentError`, `SlotTaken`) ; une classe de refus de `named` peut aussi employer les qualificatifs `invalid`, `unknown`, `already`, `too`, `no`, `missing` et `required` (`BookingTooLate`) |
-| `language/no-technical-name` | pas de `Manager`, `Helper`, `Data`, `Impl`, `Model` ni rien de semblable dans un nom sous `domain/` ou dans le nom d'un cas d'usage |
-| le générateur | refuse un nom qui contient un mot non défini, un mot technique, ou un fait d'événement qui ne se lit pas au passé |
+| `language/no-technical-name` | pas de `Manager`, `Helper`, `Data`, `Impl`, `Model` ni rien de semblable dans un nom sous `domain/` ou dans le nom d'un cas d'usage, sauf quand un terme du glossaire tient le mot (`Scoring model` tient `ScoringModel`) |
+| le générateur | refuse un nom qui contient un mot non défini, un mot technique qu'aucun terme du glossaire ne tient, ou un fait d'événement qui ne se lit pas au passé |
 | `--term "<Term>=<meaning>"` | ajoute les lignes du glossaire dans la commande même qui en a besoin, répétable ; `--term "<Term>=<meaning>\|<not to be confused with>"` remplit aussi la troisième cellule, la barre verticale étant le seul caractère qu'une cellule du tableau ne peut pas contenir |
 | `events/name-format` | les événements sont nommés `<context>.<aggregate>.<fact>` |
 | `language/declared-vocabulary` | une valeur d'un vocabulaire fermé (un statut, un rôle, un identifiant de permission) est lue par sa déclaration, jamais réécrite sous forme de chaîne |
@@ -503,8 +505,9 @@ les limites :
 - `events/name-format` vérifie la forme et le préfixe du contexte, **pas la grammaire du fait** ;
   la vérification du passé par le générateur est elle aussi une heuristique.
 - `language/no-technical-name` fonctionne à partir d'une liste fixe. Un nom technique hors de la
-  liste n'est pas signalé, et un concept métier qui s'appelle légitimement « Model » dans un
-  domaine donné a besoin d'une exception enregistrée.
+  liste n'est pas signalé. Un concept métier qui s'appelle légitimement « Model » dans un domaine
+  donné est un terme du glossaire (`Scoring model`), et c'est cette ligne qui laisse passer le
+  nom : la règle ne juge pas si la ligne est honnête, une revue le fait.
 - Le glossaire est **taillé pour l'anglais** : une équipe dont les experts du domaine parlent une
   autre langue doit décider de la langue du code. L'outillage et la flexion du kit supposent
   l'anglais.

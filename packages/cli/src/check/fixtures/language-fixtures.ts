@@ -9,6 +9,10 @@ import { SAMPLES } from './samples';
 const { AGGREGATE, BILLING, EVENT } = PATHS;
 const { SPEC } = SAMPLES;
 
+const SCORING_MODEL = `${BILLING}/domain/services/scoring-model.service.ts`;
+
+const TERMS_OF_TECHNICAL_WORDS = `${SAMPLES.GLOSSARY}\n| Scoring model | The versioned rule that turns an application into a score. |\n| Copy of data | What the right of access hands to a customer. |`;
+
 export const LANGUAGE_FIXTURES: readonly Fixture[] = [
   {
     ruleId: 'language/glossary-term',
@@ -70,6 +74,29 @@ export const LANGUAGE_FIXTURES: readonly Fixture[] = [
     files: project({
       [`${BILLING}/domain/services/invoice-manager.service.ts`]: 'export class InvoiceManager {}\n',
       [`${BILLING}/test/unit/invoice-manager.service.spec.ts`]: SPEC,
+    }),
+  },
+  {
+    ruleId: 'language/no-technical-name',
+    name: 'a technical word a term of the glossary holds: the ubiquitous language wins',
+    expect: 'pass',
+    files: project(
+      {
+        ...aggregate('export type CopyOfData = { readonly sentAt: Date };\nexport class Invoice {}\n'),
+        [SCORING_MODEL]: 'export class ScoringModel {}\n',
+        [`${BILLING}/test/unit/scoring-model.service.spec.ts`]: SPEC,
+      },
+      { [`${BILLING}/CONTEXT.md`]: contextDoc('core', CONTEXT_DOC_HEADINGS, TERMS_OF_TECHNICAL_WORDS) },
+    ),
+  },
+  {
+    ruleId: 'language/no-technical-name',
+    name: 'the same class name without the term of the glossary',
+    expect: { file: SCORING_MODEL },
+    also: ['language/glossary-term'],
+    files: project({
+      [SCORING_MODEL]: 'export class ScoringModel {}\n',
+      [`${BILLING}/test/unit/scoring-model.service.spec.ts`]: SPEC,
     }),
   },
   {

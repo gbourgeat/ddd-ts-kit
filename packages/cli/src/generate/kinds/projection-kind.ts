@@ -1,9 +1,10 @@
 import { CONFIG_FILE } from '../../config';
 import { CliError } from '../../cli-error';
-import { parseConceptName, parseContextName, toName, type Name } from '../../naming';
+import { parseContextName, toName, type Name } from '../../naming';
 import type { RenderContext } from '../../templating';
 import { emit } from '../emit';
 import { isDeclared } from '../is-declared';
+import { label } from '../label';
 import type { Kind } from '../kind';
 import { learnTerms } from '../learn-terms';
 import { named } from '../named';
@@ -31,10 +32,7 @@ export const projectionKind: Kind = {
 
     learnTerms(scope);
 
-    const name = parseConceptName(request.args[1] ?? '', 'projection', {
-      allowName: scope.flags.allowName,
-      strip: ['projection', 'projector'],
-    });
+    const name = label(scope, request.args[1] ?? '', { what: 'projection', strip: ['projection', 'projector'] });
 
     const eventType = request.args[2] ?? '';
     const publisher = publisherOf(scope, eventType);

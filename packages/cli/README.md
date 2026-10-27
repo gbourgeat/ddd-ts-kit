@@ -843,7 +843,9 @@ Next, in this order: the language of the context first, then the business decisi
   `## Ubiquitous language` table of the context (plural, past participle and -ing forms are
   recognised). `--term "<Term>=<meaning>"`, repeatable, adds the rows in the same command.
   Technical words (`Manager`, `Helper`, `Data`, `Impl`, `Model`...) and an event fact that does
-  not read as past tense are refused too. `--allow-name` overrides the three checks; `check`
+  not read as past tense are refused too; a technical word passes when a term of the glossary
+  holds it (`--term "Scoring model=<meaning>"` lets `ScoringModel` through), because the language
+  of the business wins. `--allow-name` overrides the three checks; `check`
   will still report what the glossary does not define.
 - Generated code compiles as is and passes `check`, the ESLint preset, dependency-cruiser and knip
   at the default severities: one export per file, files far under 350 lines, `private` members,
@@ -2073,7 +2075,7 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 | `events/defined-in-published-language` | `defineIntegrationEvent` outside a published language, without a payload, twice for one version; an event described by hand |
 | `language/glossary-term` | a class of the model named with a word the glossary of its context does not define; an empty glossary; under `"stack.refusals": "factories"` or `"named"`, a class of `domain/errors/` too, a refusal class of `named` allowed the qualifiers `invalid`, `unknown`, `already`, `too`, `no`, `missing` and `required` besides (`<context>.codes.ts` is not judged) |
 | `language/declared-vocabulary` | a string literal whose value is a value of a closed vocabulary the project declares (an object `as const` exported with the union type of its name, a permission set of `definePermissions`), outside the file that declares it, in the place that speaks its language (its context; the platform and the route groups for the platform; everywhere for a permission id or the shared kernel); tests, published languages and the relationship schema are not judged, nor, outside `domain/`, a word typed by another language (a key of a `Record<T, ..>`, a value of a `Record<.., T>`, `'x' satisfies T`, `T` a type of a published language, of a package or of `infrastructure/anti-corruption/` or `infrastructure/external/`); under `"stack.literals": "named"` |
-| `language/no-technical-name` | `Manager`, `Helper`, `Util`, `Utils`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`, `Abstract`, `Dto`, `Entity`, `Model` in a type declared under `domain/` or in a use case folder |
+| `language/no-technical-name` | `Manager`, `Helper`, `Util`, `Utils`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`, `Abstract`, `Dto`, `Entity`, `Model` in a type declared under `domain/` or in a use case folder, unless a term of the glossary of the context holds the word (`Scoring model` holds `ScoringModel`) |
 | `purity/no-system-clock` | `new Date()` without argument, `Date.now()`, `performance.now()` in `domain/` or `application/` |
 | `purity/no-ambient-randomness` | `Math.random`, the random source of `crypto`, an id library |
 | `purity/no-environment` | `process.env` and friends, `console`, `fetch`, file system and network modules |

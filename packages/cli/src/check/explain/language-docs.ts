@@ -9,7 +9,7 @@ export class BillDispatcher {}`,
 export class IssueInvoiceCommand {}`,
   },
   'language/no-technical-name': {
-    why: 'Manager, Helper, Data or Impl say how a class is built, not what it means. In the domain such a name marks a concept that was not discussed: the behaviour ends up in a bag that keeps growing. A domain expert never says "invoice manager".',
+    why: 'Manager, Helper, Data or Impl say how a class is built, not what it means. In the domain such a name marks a concept that was not discussed: the behaviour ends up in a bag that keeps growing. A domain expert never says "invoice manager". The ubiquitous language wins, though: when the business does name a concept with such a word (the scoring model of credit risk, the copy of data of the right of access), its term in the glossary of the context holds the word, and `ScoringModel` stands once `Scoring model` is a row of CONTEXT.md. Without that row the name is refused.',
     bad: `export class InvoiceManager {}`,
     good: `export class InvoiceNumbering {}`,
   },
