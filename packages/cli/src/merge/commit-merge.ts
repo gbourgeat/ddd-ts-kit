@@ -1,12 +1,7 @@
-import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file';
-import { ADR_DIRECTORY } from '../check/governance/adr-directory';
 import { runGit } from '../commit/run-git';
-import { isDerived } from '../derived/is-derived';
-import { SLICES_FILE } from '../progress/read-slices';
 import { gitProcess } from './git-process';
+import { isMergePath } from './is-merge-path';
 import type { MergeRepository } from './lost/merge-repository';
-
-const LOCKFILES = new Set(['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lock']);
 
 /** What committing the merge gave: the paths that blocked it, the commit, or why git refused. */
 export interface MergeCommit {
@@ -55,19 +50,4 @@ export function commitMerge(repo: MergeRepository): MergeCommit {
   }
 
   return { leftOut, commit: runGit(top, ['rev-parse', 'HEAD'])?.trim() ?? '' };
-}
-
-function isMergePath(file: string, repo: MergeRepository): boolean {
-  const { prefix } = repo;
-  const inProject = file.startsWith(prefix) ? file.slice(prefix.length) : undefined;
-
-  return (
-    inProject !== undefined &&
-    (isDerived(inProject, repo) ||
-      /(?:^|\/)migrations\//.test(inProject) ||
-      inProject.startsWith(`${ADR_DIRECTORY}/`) ||
-      LOCKFILES.has(inProject.split('/').at(-1) ?? '') ||
-      inProject === SLICES_FILE ||
-      inProject === STORED_EVENTS_LOCK)
-  );
 }

@@ -200,6 +200,7 @@ describe.each([
 
     expect(command.code).toBe(2);
     expect(String(jsonAt(command.json(), 'error', 'message'))).toContain('src/platform/database/schema.ts');
+    expect(JSON.stringify(command.json())).toContain('ddd-ts-kit generate repository shipping Parcel');
 
     expect(cli(root, 'generate', 'context', 'catalog', '--classification', 'generic', '--local-only').stderr).toContain(
       'ddd-ts-kit.config.json',
