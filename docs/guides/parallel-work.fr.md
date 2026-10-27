@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:8a8182d5f0ae4c9c -->
+<!-- translation-of: parallel-work.md sha256:4cef11c38d740ae1 -->
 
 # Travailler en parallèle sans collisions
 
@@ -464,8 +464,14 @@ contexte :
 ```text
 $ npx ddd-ts-kit generate job notification SendDueConfirmations --every 15m --command SendNotification --local-only
 Error: --local-only: this command would write 2 shared files: src/platform/auth/relationships/relate-system-actors.ts, src/platform/jobs/job-settings.ts.
-  fix: Nothing was written. Have it run on the trunk without --local-only (the conductor of a parallel build does it), merge the trunk, then go on; a generated document listed alone means the trunk is stale: run `ddd-ts-kit docs` there first.
+  fix: Nothing was written. A job of a row is a step of the conductor, before the row of the worker: on the trunk, run `ddd-ts-kit generate job notification SendDueConfirmations --every 15m --command SendNotification`, commit it there, merge the trunk into the worker's branch (`ddd-ts-kit merge-trunk`), then fill its TODOs. Have it run on the trunk without --local-only (the conductor of a parallel build does it), merge the trunk, then go on; a generated document listed alone means the trunk is stale: run `ddd-ts-kit docs` there first.
 ```
+
+Le refus d'un `job` ou d'un `integration-event` affiche la commande exacte (la même, sans
+`--local-only`). Un job ou un événement d'intégration de la ligne d'un *worker* est une étape du
+chef d'orchestre sur le tronc, avant la ligne du *worker* (les contrats d'abord) : le plan la tient
+pour une ligne `skeleton` ou `contract` dont dépend la ligne du *worker*, qui fusionne le tronc
+puis remplit les TODO.
 
 ### Quand un agent s'arrête
 

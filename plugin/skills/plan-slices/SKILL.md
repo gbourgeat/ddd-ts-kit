@@ -79,6 +79,10 @@ missing. Rows with no path between them can be built in parallel.
   `generate aggregate <ctx> <Aggregate> --event-sourced`, which needs `stack.eventSourcing` on).
   The command rows depend on it. A worker runs `generate command` with `--local-only`, which
   refuses the command that would create the missing repository (it writes shared files).
+- A job or an integration event that a row needs is a conductor row of its own (`skeleton` for
+  `generate job`, `contract` for `generate integration-event`), planned before the row of the
+  worker, which depends on it: a worker's `--local-only` run of either is refused because both
+  write shared files. The worker merges the trunk, then fills the TODOs.
 - `Start with` holds the exact generator commands (without `npx ddd-ts-kit` and `--json`), so
   the worker runs them instead of working them out. Every command or query names its
   permission or `--public`; every name is made of glossary terms, or the row adds the term
