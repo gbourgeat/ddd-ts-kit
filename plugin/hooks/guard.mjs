@@ -430,6 +430,7 @@ async function preBash(input) {
 async function preparingReason(project, input, command) {
   return (
     baselineWriteReason(command) ??
+    (await hooksSkippedReason(input, command)) ??
     (await workerPlaceReason(input, command)) ??
     (await landingReason(input, command)) ??
     oneSideMergeReason(project, input, command) ??
@@ -1627,6 +1628,74 @@ function isPartOfSpec(project, path) {
 
 function baselineFileReason(project, file) {
   return BASELINE_FILE.test(projectPath(project, file)) ? `ddd-ts-kit-baseline.json: ${BASELINE_OWNER}` : undefined;
+}
+
+const HOOKS_LOCAL_GATE =
+  'the hooks of the project (pre-commit, commit-msg, pre-push) are the local gate of the pipeline: they run the checks before a change leaves the machine. An agent never skips them; fix what the hook reports instead. If the hook itself is broken, report it to the project owner, who can skip it in a terminal.';
+const HOOK_ENVIRONMENT = /(?:^|[\s;&|(])(?:LEFTHOOK|HUSKY)=(?:0|false)(?![\w])/;
+const HOOK_SKIPPING_COMMANDS = new Set(['commit', 'push', 'merge', 'pull', 'rebase']);
+// Options of `git` that take their value as the next word, and those of `git commit` that do.
+const GIT_VALUED_OPTIONS = new Set(['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--exec-path']);
+const COMMIT_VALUED_OPTIONS = new Set(['-m', '-F', '-C', '-c', '-t', '--message', '--file', '--author', '--date']);
+
+// A git command that skips the hooks of the project: `--no-verify` (and `-n` on a commit),
+// `-c core.hooksPath=...`, or `LEFTHOOK=0` / `HUSKY=0` set for the command.
+async function hooksSkippedReason(input, command) {
+  if (!/\bgit\b/.test(command)) {
+    return undefined;
+  }
+  shell = await import('./shell-commands.mjs');
+  const gits = shell
+    .simpleCommands(command, input.cwd ?? process.cwd())
+    .filter(({ words }) => shell.commandName(words) === 'git');
+  if (gits.length === 0) {
+    return undefined;
+  }
+  if (HOOK_ENVIRONMENT.test(command)) {
+    return `LEFTHOOK=0 or HUSKY=0 turns the hooks off for a git command: ${HOOKS_LOCAL_GATE}`;
+  }
+  for (const { words } of gits) {
+    const skipped = hooksSkippedBy(words);
+    if (skipped) {
+      return `${skipped}: ${HOOKS_LOCAL_GATE}`;
+    }
+  }
+  return undefined;
+}
+
+function hooksSkippedBy(words) {
+  let index = 1;
+  while (index < words.length && words[index].startsWith('-')) {
+    const word = words[index];
+    const configured = word === '-c' ? words[index + 1] : /^--config-env=(.*)$/.exec(word)?.[1];
+    if (configured !== undefined && /^core\.hookspath\b/i.test(configured)) {
+      return '`git -c core.hooksPath` points git at other hooks';
+    }
+    index += GIT_VALUED_OPTIONS.has(word) ? 2 : 1;
+  }
+  const subcommand = words[index];
+  const rest = words.slice(index + 1);
+  if (subcommand === 'config' && rest.some((word) => /^core\.hookspath$/i.test(word))) {
+    return '`git config core.hooksPath` points git at other hooks';
+  }
+  if (!HOOK_SKIPPING_COMMANDS.has(subcommand)) {
+    return undefined;
+  }
+  for (let position = 0; position < rest.length; position++) {
+    const word = rest[position];
+    if (word === '--') {
+      return undefined;
+    }
+    if (word.startsWith('--no-ve') && '--no-verify'.startsWith(word)) {
+      return `\`git ${subcommand} --no-verify\` skips the hooks`;
+    }
+    if (subcommand === 'commit' && COMMIT_VALUED_OPTIONS.has(word)) {
+      position++;
+    } else if (subcommand === 'commit' && /^-[^-mFCct]*n/.test(word)) {
+      return '`git commit -n` is `--no-verify`, it skips the hooks';
+    }
+  }
+  return undefined;
 }
 
 function baselineWriteReason(command) {

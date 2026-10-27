@@ -80,7 +80,10 @@ Conventional commits, checked by commitlint at `commit-msg`:
    story, within the limits?
 5. Commit. The pre-commit hook runs the linter and the architecture check on the staged
    files, regenerates and adds the pages of what the tests state when a spec is staged, and reads
-   the commit size; never pass `--no-verify`.
+   the commit size. Never skip them: not `--no-verify` (on `commit`, `push`, `merge`), not `git commit -n`,
+   not `-c core.hooksPath=...`, not `LEFTHOOK=0` or `HUSKY=0`. The hooks are the local gate of the
+   pipeline and the guard refuses the command. If a hook fails, fix what it reports; if the hook is
+   itself broken, report it to the project owner.
 
 Propose the commit (files and message) and let the user confirm, unless you were asked to
 commit or you are a worker in your own worktree, where each finished slice is committed.

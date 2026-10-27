@@ -59,7 +59,9 @@ The hook is the part that makes the rest binding. In a project that has a
 when the installed packages are not the version the skills describe, refuses
 a hand-written file where a generator exists, any edit of a generated contract and the writing
 of the baseline of the errors (`check --baseline write`, or an edit of `ddd-ts-kit-baseline.json`:
-the project owner writes it, in a terminal), asks the
+the project owner writes it, in a terminal), refuses a git command that skips the hooks of the
+project (`--no-verify`, `-n` on a commit, `-c core.hooksPath=...`, `LEFTHOOK=0` or `HUSKY=0`: the hooks are the local gate
+of the pipeline), asks the
 project owner before a suppression, a skipped test or a change of the rules is written, checks
 every written file and returns the violations with their fix (with `"dependenciesBeforeWrite": true`, on trial,
 it refuses before the write a new import that breaks a dependency rule), and refuses to finish while
