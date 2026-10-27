@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:f76d6af9f2bd6b06 -->
+<!-- translation-of: commands.md sha256:a4966ba8c68a922b -->
 
 # Quelle commande, quand
 
@@ -658,7 +658,7 @@ Kinds
   acceptance <story> ["<title>"]
   policy <context> <Name> --permission <aggregate>.<action> [--module <module>]
   gateway <context> <upstreamContext> <Name> [--module <module>]
-  adapter <context> <Port> [--kind external|gateway] [--decorators] [--module <module>]
+  adapter <context> <Port> [--kind external|gateway|simulated] [--decorators] [--module <module>]
   service <context>
   worker
   adr "<title>" [--number <n>] [--deviation <what>] [--reason "<why>"]

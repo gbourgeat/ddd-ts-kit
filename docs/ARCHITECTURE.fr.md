@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:91d5a604999b46d5 -->
+<!-- translation-of: ARCHITECTURE.md sha256:f8e36ccbadb7f276 -->
 
 # Référence de l'architecture
 
@@ -121,7 +121,7 @@ src/
         handlers/                *.integration-handler.ts (de l'événement d'intégration à la commande)
     infrastructure/
       persistence/               adaptateurs *.repository.ts, *.mapper.ts, *.reader.ts, *.schema.ts, *.personal-fields.ts
-      external/                  adaptateurs des systèmes extérieurs
+      external/                  adaptateurs des systèmes extérieurs, distants ou simulés
       anti-corruption/           traducteurs du modèle d'un autre contexte ou système
     presentation/
       http/                      <name>.routes.ts  (un groupe de routes : préfixe, tags, gardes)
@@ -1015,6 +1015,21 @@ Voir [Sagas et gestionnaires de processus](concepts/sagas-and-process-managers.f
 **Ports et adaptateurs.** Un port se nomme d'après ce dont l'application a besoin
 (`PaymentGateway`), pas d'après la technologie (`StripeClient`). Chaque port a un *fake* dans
 `test/fakes/`.
+
+**Systèmes extérieurs simulés.** Une application qui doit tourner sans un système extérieur (un
+bac à sable, une démonstration, un environnement gardé pour les examinateurs, un fournisseur qui
+n'est pas encore prêt) répond à son port par un adaptateur simulé, jamais par le *fake* :
+`generate adapter <context> <Port> --kind simulated` écrit
+`infrastructure/external/simulated-<port>.adapter.ts`, une classe du code de production qui répond
+dans la mémoire du processus comme le système extérieur répondrait. Il est lié au port comme tout
+adaptateur (genre `external`, par `@Adapter` ou dans le fichier de module) et ne porte aucune
+politique à lui, puisque rien de ce qu'il fait ne quitte le processus. Ses enregistrements gardent
+la forme que le système extérieur envoie et passent par le traducteur de
+`infrastructure/anti-corruption/` quand le système en a un : la simulation traverse la même couche
+anti-corruption que l'adaptateur distant. Le *fake* reste dans les tests, où il garde ce qu'il a
+reçu ; aucun fichier de production ne l'importe (`not-to-test` du graphe des imports). Un port a
+un adaptateur : le simulé répond jusqu'à ce que le distant le remplace, et le kit ne choisit pas
+entre les deux selon l'environnement.
 
 **Erreurs.** Les échecs métier attendus sont des `DomainError` avec des codes ; la présentation
 traduit les codes en statuts du transport, à un seul endroit. Les pannes de l'infrastructure

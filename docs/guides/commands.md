@@ -652,7 +652,7 @@ Kinds
   acceptance <story> ["<title>"]
   policy <context> <Name> --permission <aggregate>.<action> [--module <module>]
   gateway <context> <upstreamContext> <Name> [--module <module>]
-  adapter <context> <Port> [--kind external|gateway] [--decorators] [--module <module>]
+  adapter <context> <Port> [--kind external|gateway|simulated] [--decorators] [--module <module>]
   service <context>
   worker
   adr "<title>" [--number <n>] [--deviation <what>] [--reason "<why>"]

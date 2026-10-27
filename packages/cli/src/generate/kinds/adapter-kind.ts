@@ -16,14 +16,14 @@ import { vars } from '../vars';
 import { wire } from '../wire';
 import { writeOwnPolicy } from './write-own-policy';
 
-const ADAPTER_KINDS = ['external', 'gateway'];
+const ADAPTER_KINDS = ['external', 'gateway', 'simulated'];
 
 export const adapterKind: Kind = {
   name: 'adapter',
   aliases: [],
-  usage: 'adapter <context> <Port> [--kind external|gateway] [--decorators]',
+  usage: 'adapter <context> <Port> [--kind external|gateway|simulated] [--decorators]',
   summary:
-    'An infrastructure adapter of an existing port towards an outside system, its spec and its registration with a retry and timeout policy; with --decorators its outbound method carries the policy itself.',
+    'An infrastructure adapter of an existing port towards an outside system, its spec and its registration with a retry and timeout policy; with --decorators its outbound method carries the policy itself. With --kind simulated, an adapter that answers in the memory of the process, for an environment whose provider is simulated.',
   positionals: ['context', 'Port'],
   writesShared: true,
   writesInModules: true,
@@ -39,10 +39,16 @@ export const adapterKind: Kind = {
 
     placeWithItsPort(scope, { name, asked: request.flags.module });
 
+    if (scope.flags.kind === 'simulated') {
+      writeSimulated(scope, name);
+
+      return;
+    }
+
     const adapter = adapterVars(scope, name);
 
     if (isDeclared(scope.config)) {
-      refuseSecondAdapter(scope, name);
+      refuseSecondAdapter(scope, { name, simulated: false });
     }
 
     const context = vars(scope, { name: named(name), adapter });
@@ -90,7 +96,7 @@ function bindingKind(scope: Scope): string {
 
   throw new CliError(
     `Unknown value "${kind}" for --kind.`,
-    `Use one of: ${ADAPTER_KINDS.join(', ')} (external: a system outside the application; gateway: another bounded context).`,
+    `Use one of: ${ADAPTER_KINDS.join(', ')} (external: a system outside the application; gateway: another bounded context; simulated: an outside system answered in the memory of the process).`,
   );
 }
 
@@ -120,8 +126,14 @@ function placeWithItsPort(scope: Scope, { name, asked }: PortOfAdapter): void {
   );
 }
 
+/** The port a second adapter would be declared for, and whether that adapter simulates the outside system. */
+interface SecondAdapter {
+  readonly name: Name;
+  readonly simulated: boolean;
+}
+
 /** A port has one adapter: a second class declaring itself for it would stop the application at startup. */
-function refuseSecondAdapter(scope: Scope, name: Name): void {
+function refuseSecondAdapter(scope: Scope, { name, simulated }: SecondAdapter): void {
   const declaration = new RegExp(`@(?:Repository|Gateway|Adapter)\\(\\s*${name.pascal}\\b`);
 
   // The infrastructure of the context and that of each module of its model.
@@ -135,8 +147,67 @@ function refuseSecondAdapter(scope: Scope, name: Name): void {
 
   throw new CliError(
     `${name.pascal} is already bound by ${bound.slice(scope.dir.length + 1)}.`,
-    `A port has one adapter. When the outside system is ready, turn that class into the remote adapter (its declaration stays), or remove it and run the command again.`,
+    secondAdapterFix(bound, simulated),
   );
+}
+
+/** What to do with the adapter already declared: the remote one and the simulated one take turns, never both at once. */
+function secondAdapterFix(bound: string, simulated: boolean): string {
+  if (simulated) {
+    return 'A port has one adapter. To answer it in memory instead, remove that class and its spec, and run the command again.';
+  }
+
+  if (/\/simulated-[^/]+\.adapter\.ts$/.test(bound)) {
+    return 'A port has one adapter, and that one simulates the outside system. When the real system is ready, remove it and its spec, and run the command again.';
+  }
+
+  return 'A port has one adapter. When the outside system is ready, turn that class into the remote adapter (its declaration stays), or remove it and run the command again.';
+}
+
+/**
+ * The adapter of a port whose outside system is simulated: it answers in the memory of the
+ * process, under infrastructure like the remote one, so production code never reaches a fake of
+ * the tests. Nothing leaves the process, so it carries no policy of its own.
+ */
+function writeSimulated(scope: Scope, name: Name): void {
+  if (scope.flags.decorators) {
+    throw new CliError(
+      'A simulated adapter carries no policy: nothing it does leaves the process.',
+      `Run it without --decorators: \`ddd-ts-kit generate adapter ${scope.context.kebab} ${name.pascal} --kind simulated\`.`,
+    );
+  }
+
+  if (isDeclared(scope.config)) {
+    refuseSecondAdapter(scope, { name, simulated: true });
+  }
+
+  const context = vars(scope, { name: named(name) });
+
+  emit(scope, context, [
+    ['adapter/simulated.ts.tpl', `infrastructure/external/simulated-${name.kebab}.adapter.ts`],
+    ['adapter/simulated.spec.ts.tpl', `test/integration/simulated-${name.kebab}.adapter.spec.ts`],
+  ]);
+
+  registerSimulated(scope, context, name.pascal);
+}
+
+/** Declared, the class binds itself; in a module file the generator binds it, or says where it goes. */
+function registerSimulated(scope: Scope, context: RenderContext, port: string): void {
+  const module = `${scope.context.kebab}.module.ts`;
+
+  if (isDeclared(scope.config)) {
+    return;
+  }
+
+  if (isBound(scope, port)) {
+    scope.ws.note(`${port} is already bound in ${module}: bind Simulated${port} in its place, with .as('external').`);
+  } else if (scope.config.stack.di === 'tsyringe') {
+    wire(scope, 'adapter/simulated', context);
+  } else {
+    scope.ws.note(
+      `Instantiate Simulated${port} in ${module} and give it to the handlers that need it: platform.adapter(new Simulated${port}(), { kind: 'external', context: '${scope.context.kebab}' }).`,
+    );
+  }
 }
 
 interface Registration {
