@@ -761,7 +761,7 @@ deviation:
 - **Each context is held on its own**: the thresholds of a layer apply to `contexts/<name>/<layer>/` of every context, so a well tested context does not hide another.
 - **An empty layer is held to nothing, and to its threshold from its first source file** (a spec or a document is not one). A project just initialised passes; the first route of a context brings the presentation floor with it.
 - **A run is held to the layers it executes**: `npm run test:coverage`, the run of `verify`, executes every spec and measures the four layers; in the pipeline `ci:test:unit` (`--mode unit`) measures domain, application and presentation, `ci:test:integration` (`--mode integration`) measures infrastructure. Jest runs every spec in one run.
-- **The measure cannot be narrowed quietly** (`test/coverage-governed`): no `include`, `exclude` or `thresholds` by hand in the runner config, no such flag in a script, no `v8 ignore` or `istanbul ignore` comment without `-- ADR-NNNN: <reason>`.
+- **The measure cannot be narrowed quietly** (`test/coverage-governed`): no `include`, `exclude` or `thresholds` by hand in the runner config, no such flag in a script, no `v8 ignore` or `istanbul ignore` comment without `-- ADR-NNNN: <reason>`. A comment with its record names the hint the provider of the project reads: `v8 ignore` under Vitest, `istanbul ignore` under Jest (`babel`); the other one is not read, and the line stays counted.
 - Under the legacy decorator mode the generated Vitest config lists `decoratorCoverage()` of `@ddd-ts-kit/testing/vitest`: the statements the transform writes to apply decorators hold a branch per named type that no test can take, and are kept out of the measure.
 
 ## Time budget
