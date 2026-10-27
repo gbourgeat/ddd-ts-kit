@@ -162,7 +162,9 @@ plugin builds each row itself with skill `ddd-ts-kit:use-case`.
 
 1. Bring the trunk in: commit, `git fetch`, then `npx ddd-ts-kit merge-trunk --trunk <base>`. It settles what
    the kit derives and leaves the rest to you, as skill `ddd-ts-kit:parallel-work` says; settle
-   it, then `npx ddd-ts-kit merge-trunk --continue`.
+   it, then `npx ddd-ts-kit merge-trunk --continue`. When it exits 3 (the trunk changes the settings
+   of the project or another path the sandbox protects), nothing was changed: the merge is the
+   owner's, from a terminal outside the sandbox; hand over the command and wait.
 2. The `architecture-reviewer` agent on the branch (`--changed-since <base>`): blocking findings
    fixed, the others settled or written as `TODO(review): #<row> ...`. The rule of two: a
    finding that repeats one already recorded for the project (the same rule id or the same

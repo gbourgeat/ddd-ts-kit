@@ -1,7 +1,9 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import { CliError } from '../cli-error';
 import { gitPath } from './git-path';
 import { gitProcess } from './git-process';
+import { isSandboxMask } from './is-sandbox-mask';
 
 /** What git leaves in its directory while an operation waits for a person, and its name. */
 const OPERATIONS: readonly (readonly [string, string])[] = [
@@ -34,6 +36,7 @@ export function ensureMergeable(top: string, mergeTrunkInProgress: boolean): voi
   const changed = gitProcess(top, ['status', '--porcelain', '-z', '--untracked-files=all'])
     .stdout.split('\0')
     .filter((entry) => /^.. /.test(entry))
+    .filter((entry) => !maskedUntracked(top, entry))
     .map((entry) => entry.slice(3))
     .filter((file) => !/(?:^|\/)\.ddd-ts-kit\//.test(file));
 
@@ -54,5 +57,18 @@ function ensureCommitter(top: string): void {
       `git does not know who commits in this repository: ${ident.stderr.trim().split('\n').at(-1) ?? 'no identity'}.`,
       'Set it first (`git config user.name "<name>"` and `git config user.email "<email>"`), then merge-trunk again: the merge ends with a commit.',
     );
+  }
+}
+
+/** An untracked path that is such a mask: git lists it, nobody wrote it and nobody can commit it. */
+function maskedUntracked(top: string, entry: string): boolean {
+  if (!entry.startsWith('?? ')) {
+    return false;
+  }
+
+  try {
+    return isSandboxMask(fs.lstatSync(path.join(top, entry.slice(3))));
+  } catch {
+    return false;
   }
 }

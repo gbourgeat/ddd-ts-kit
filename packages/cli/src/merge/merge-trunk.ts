@@ -20,6 +20,7 @@ import { resolveConflict } from './resolve-conflict';
 import type { Resolution } from './resolution';
 import { startMerge } from './start-merge';
 import { trunkOf } from './trunk-of';
+import { ensureWritable } from './ensure-writable';
 
 /** What the caller asks of `merge-trunk`, before any merge is in progress. */
 export interface MergeTrunkRequest {
@@ -106,6 +107,10 @@ function opened(opening: Opening): MergeReport {
     const stop = `the base recorded for this worker (${report.base.commit.slice(0, 7)}) is not proven: some of its lines are not on the trunk`;
 
     return { ...report, status: 'stopped', lostLines, stop, next: NEXT_STEPS.confirmBase };
+  }
+
+  if (!request.dryRun) {
+    ensureWritable(top, report.trunk.commit);
   }
 
   const git = gitVersion(top, request.gitVersion);

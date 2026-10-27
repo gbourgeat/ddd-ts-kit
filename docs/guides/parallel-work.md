@@ -135,9 +135,16 @@ found squashed there, `Landed: <commit>`: `verify-merge` judges the merge on tha
 A merge finished by hand with `git commit` keeps those trailers.
 
 `--dry-run` previews (nothing changes), `--abort` undoes the merge in progress (a file the kit regenerates that was modified after the merge staged it is restored and named; any other file changed by hand makes it refuse, exit 2). The tree must be
-clean and no other merge, rebase or cherry-pick in progress (exit 2 otherwise); the trunk is never
+clean (the character devices a sandbox binds over the paths it denies are not counted) and no other merge, rebase or cherry-pick in progress (exit 2 otherwise); the trunk is never
 fetched, the commit it names is printed. `merge-trunk` needs git 2.40; an older git merges only
 from the base git computes (`--since <merge base>`), with `git merge` itself.
+
+Under the sandbox of Claude Code, a merge of a trunk that changes a path the session cannot write
+(`.claude/settings.json`, which the sandbox always mounts read-only, a folder under an Edit deny
+rule) is the owner's. Before it writes anything, `merge-trunk` probes each path the trunk changes
+(or its folder, for a new path); when one is not writable it stops with nothing changed, names the
+paths and exits 3, as `init` does. The owner runs the same command from a terminal outside the
+sandbox.
 
 `verify-merge` alone reads git only and lists, merge by merge, what a merge lost; it is silent
 without a merge, so the pre-push hook of `init` runs it on every push, and `verify-slice` runs it
