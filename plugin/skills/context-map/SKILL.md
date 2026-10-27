@@ -49,7 +49,7 @@ see Z"), or from `npx ddd-ts-kit list --json`. For each: who knows a fact first 
 | `conformist` | the downstream accepts the upstream model as it is | the downstream moves when the upstream does |
 | `anti-corruption-layer` | the upstream model is foreign, legacy or generic: the downstream translates it | a translator to maintain in `infrastructure/anti-corruption/` |
 | `open-host-service` | the upstream serves many consumers through one protocol | a public contract, hard to change |
-| `shared-kernel` | two contexts co-own a small model | joint ownership of every change; justify it |
+| `shared-kernel` | two contexts co-own a small model | joint ownership of every change; justify it. Its values are generated there (`generate value-object shared-kernel <Name> --term ...`), its terms in its own `CONTEXT.md` |
 
 No cycle. If A needs B and B needs A, ask in this order
 (`docs/guides/cycle-between-contexts.md`): 1. one language, one model? then one context,

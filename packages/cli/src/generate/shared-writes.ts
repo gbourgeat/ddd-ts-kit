@@ -15,6 +15,10 @@ const GRANTS = [
   'the role vocabulary of the platform (<platformDir>/auth/authorization/role.ts)',
 ];
 
+const IN_SHARED_KERNEL = 'the first argument is shared-kernel';
+
+const SHARED_GLOSSARY = 'the glossary of the shared kernel (<sharedKernelDir>/CONTEXT.md), with --term';
+
 const GRANTED = '--grant <role> names the role that holds the permission (stack.authz rbac)';
 
 const STORED =
@@ -103,5 +107,24 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
     files: ['<sharedKernelDir>/presentation/<name>.schema.ts'],
     when: 'the first argument is shared-kernel: a schema several contexts answer with',
     worker: 'in its own context: generate schema <context> <Name>',
+  },
+  'value-object': {
+    files: ['<sharedKernelDir>/<name>.vo.ts and its spec', SHARED_GLOSSARY],
+    when: `${IN_SHARED_KERNEL}: a value at least two contexts use`,
+    worker: 'in its own context',
+  },
+  'domain-error': {
+    files: ['<sharedKernelDir>/<name>.error.ts and its spec', SHARED_GLOSSARY],
+    when: `${IN_SHARED_KERNEL}: the refusal of a value of the shared kernel`,
+    worker: 'in its own context',
+  },
+  error: {
+    files: [
+      '<sharedKernelDir>/<refusal>.error.ts and its spec',
+      '<sharedKernelDir>/shared-kernel.codes.ts (stack.refusals named)',
+      SHARED_GLOSSARY,
+    ],
+    when: `${IN_SHARED_KERNEL}: the refusal of a value of the shared kernel`,
+    worker: 'in its own context',
   },
 };

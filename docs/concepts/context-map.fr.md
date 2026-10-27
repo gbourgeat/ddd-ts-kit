@@ -1,5 +1,5 @@
 [English](context-map.md) · **Français**
-<!-- translation-of: context-map.md sha256:77b8f591de923c7d -->
+<!-- translation-of: context-map.md sha256:23aa4fcfc2762d6d -->
 
 # Carte des contextes
 
@@ -142,6 +142,13 @@ Deux contextes partagent une petite partie du modèle, dans le code. Dans le kit
 par ce mot. C'est le plus couplant de tous les patrons : chaque changement demande l'accord des
 deux propriétaires, donc le noyau doit rester petit, et un noyau qui ne cesse de grossir signale
 qu'une frontière est mal placée.
+
+Ses mots sont partagés aussi. `generate value-object shared-kernel TimeSlot --term "TimeSlot=<sens>"`
+écrit `src/shared-kernel/time-slot.vo.ts`, sa *spec* à côté, et la ligne du terme dans
+`src/shared-kernel/CONTEXT.md`, le glossaire sur lequel les deux contextes s'accordent ;
+`generate error shared-kernel <Refusal> <factory>` écrit le refus d'une telle valeur.
+`language/glossary-term` les nomme d'après ce glossaire, et tout autre rôle reste dans son
+contexte : `generate aggregate shared-kernel ...` est refusé.
 
 ### Partenariat et chemins séparés
 

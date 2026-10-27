@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:e4e437ac79d9f843 -->
+<!-- translation-of: CONFIG.md sha256:828c5e7a76a980c8 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -136,7 +136,7 @@ et `importExtension` plus bas. Les règles exactes de l'analyseur sont dans [Lim
 |---|---|---|
 | `sourceRoot` | où vivent les sources | `src` |
 | `contextsDir` | les contextes délimités (bounded contexts), un répertoire chacun | `<sourceRoot>/contexts` |
-| `sharedKernelDir` | le noyau partagé | `<sourceRoot>/shared-kernel` |
+| `sharedKernelDir` | le noyau partagé : ses objets-valeurs et leurs refus à sa racine, son glossaire `CONTEXT.md`, les schémas par lesquels plusieurs contextes répondent dans `presentation/` | `<sourceRoot>/shared-kernel` |
 | `platformDir` | la plateforme technique | `<sourceRoot>/platform` |
 | `importAlias` | le préfixe qui nomme `sourceRoot` dans les imports : `@/`, ou `$`, un nom en minuscules (lettres, chiffres, traits d'union) et `/`. Chaque fichier du projet est importé par lui (`imports/alias-only`) | `@/` |
 | `importExtension` | ce par quoi se termine l'import d'un fichier du projet : `none`, rien (`@/contexts/billing/domain/aggregates/invoice.aggregate`), ou `js`, l'extension du fichier qu'émet le compilateur (`.../invoice.aggregate.js`). Tenu par `imports/extension` | `none` dans ce qu'écrit `init` ; `js` quand la clé est absente |

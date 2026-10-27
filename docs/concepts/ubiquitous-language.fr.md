@@ -1,5 +1,5 @@
 [English](ubiquitous-language.md) · **Français**
-<!-- translation-of: ubiquitous-language.md sha256:a65bd08154732f7b -->
+<!-- translation-of: ubiquitous-language.md sha256:e2e73d77eda9f755 -->
 
 # Langage omniprésent
 
@@ -479,7 +479,10 @@ export class ReminderOnAppointmentBookedHandler {
 
 Un mot commun au sens commun, employé par deux contextes ou plus (un objet-valeur `TimeSlot`,
 par exemple), peut rejoindre le noyau partagé. Que cela reste rare : chaque type partagé est un
-couplage que les deux côtés doivent accepter de changer ensemble.
+couplage que les deux côtés doivent accepter de changer ensemble. Son terme le suit alors, dans le
+glossaire du noyau partagé, `src/shared-kernel/CONTEXT.md`, que `generate value-object
+shared-kernel <Name> --term "<Term>=<meaning>"` commence et que `language/glossary-term` lit pour
+les objets-valeurs et les refus du noyau partagé.
 
 ## Le garder vivant
 
